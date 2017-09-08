@@ -9,6 +9,7 @@ extern "C" {
 #endif
 
 #include <switch/types.h>
+#include <switch/result.h>
 #include <switch/svc.h>
 
 #ifdef __cplusplus
