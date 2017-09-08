@@ -1,0 +1,15 @@
+ifeq ($(strip $(DEVKITPRO)),)
+$(error "Please set DEVKITPRO in your environment. export DEVKITPRO=<path to>devkitPro)
+endif
+
+include $(DEVKITA64)/base_rules
+
+PORTLIBS	:=	$(PORTLIBS_PATH)/armv8-a $(PORTLIBS_PATH)/switch
+
+LIBNX	?=	$(DEVKITPRO)/libnx
+
+#---------------------------------------------------------------------------------
+%.elf:
+	@echo linking $(notdir $@)
+	@$(LD) $(LDFLAGS) $(OFILES) $(LIBPATHS) $(LIBS) -o $@
+	@$(NM) -CSn $@ > $(notdir $*.lst)
