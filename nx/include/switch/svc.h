@@ -19,7 +19,7 @@
 static inline void* getThreadLocalStorage(void)
 {
 	void* ret;
-	__asm__ ("mrs %[data], tpidrro_el0" : [data] "=x" (ret));
+	__asm__ ("mrs %x[data], tpidrro_el0" : [data] "=r" (ret));
 	return ret;
 }
 
