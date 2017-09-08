@@ -11,27 +11,26 @@
 	.cfi_endproc
 .endm
 
-SVC_BEGIN svcReplyAndReceive
+SVC_BEGIN svcConnectToNamedPort
 	str x0, [sp, #-16]!
-	svc  0x43
-	ldr  x2, [sp], #16
-	str  w1, [x2]
+	svc 0x1f
+	ldr x2, [sp], #16
+	str w1, [x2]
 	ret
 SVC_END
 
-SVC_BEGIN svcQueryIoMapping
+SVC_BEGIN svcReplyAndReceive
 	str x0, [sp, #-16]!
-	svc  0x43
-	ldr  x2, [sp], #16
-	str  x1, [x2]
+	svc 0x43
+	ldr x2, [sp], #16
+	str w1, [x2]
 	ret
 SVC_END
 
 SVC_BEGIN svcManageNamedPort
 	str x0, [sp, #-16]!
-	svc  0x71
-	ldr  x2, [sp], #16
-	str  w1, [x2]
+	svc 0x71
+	ldr x2, [sp], #16
+	str w1, [x2]
 	ret
 SVC_END
-
