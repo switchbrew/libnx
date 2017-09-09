@@ -110,7 +110,7 @@ int main(int argc, char* argv[]) {
     size_t file_off = sizeof(NsoHeader);
 
     uint8_t* comp_buf[3];
-    size_t comp_sz[3];
+    int comp_sz[3];
 
     for (i=0; i<3; i++, phdr++) {
         nso_hdr.Segments[i].FileOff = file_off;
