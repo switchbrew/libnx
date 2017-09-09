@@ -63,6 +63,7 @@ SECTIONS
 		*(.data.*)
 		*(.gnu.linkonce.d*)
 		CONSTRUCTORS
+		*(.got)
 		. = ALIGN(4);
 	} : data
 

@@ -12,27 +12,13 @@
 /// Pseudo handle for the current thread
 #define CUR_THREAD_HANDLE 0xFFFF8000
 
-/**
- * @brief Gets the thread local storage buffer.
- * @return The thread local storage buffer.
- */
-static inline void* getThreadLocalStorage(void)
-{
-	void* ret;
-	__asm__ ("mrs %x[data], tpidrro_el0" : [data] "=r" (ret));
-	return ret;
+static inline void* armGetTls(void) {
+    void* ret;
+    __asm__ ("mrs %x[data], tpidrro_el0" : [data] "=r" (ret));
+    return ret;
 }
 
-/**
- * @brief Gets the thread command buffer.
- * @return The thread command buffer.
- */
-static inline u32* getThreadCommandBuffer(void)
-{
-	return (u32*)getThreadLocalStorage();
-}
-
-Result svcConnectToNamedPort();
+Result svcConnectToNamedPort(Handle* session, const char* name);
 Result svcReplyAndReceive(s32* index, const Handle* handles, s32 handleCount, Handle replyTarget, u64 timeout);
 Result svcManageNamedPort(Handle* portServer, const char* name, s32 maxSessions);
 

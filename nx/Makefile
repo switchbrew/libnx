@@ -24,7 +24,7 @@ VERSION	:=	$(LIBNX_MAJOR).$(LIBNX_MINOR).$(LIBNX_PATCH)
 #---------------------------------------------------------------------------------
 TARGET		:=	nx
 #BUILD		:=	build
-SOURCES		:=	source
+SOURCES		:=	source source/srv
 
 DATA		:=	data
 INCLUDES	:=	include
@@ -34,7 +34,7 @@ INCLUDES	:=	include
 #---------------------------------------------------------------------------------
 ARCH	:=	-march=armv8-a
 
-CFLAGS	:=	-g -Wall -Werror -fPIE \
+CFLAGS	:=	-g -Wall -Werror -fPIC \
 			-ffunction-sections \
 			-fdata-sections \
 			$(ARCH) \
