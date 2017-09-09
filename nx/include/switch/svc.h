@@ -24,5 +24,6 @@ Result svcConnectToNamedPort(Handle* session, const char* name);
 Result svcBreak(u32 BreakReason, u64 inval1, u64 inval2);
 Result svcAcceptSession(Handle *session_handle, Handle port_handle);
 Result svcReplyAndReceive(s32* index, const Handle* handles, s32 handleCount, Handle replyTarget, u64 timeout);
+Result svcQueryIoMapping(u64* virtaddr, u64 physaddr, u64 size);
 Result svcManageNamedPort(Handle* portServer, const char* name, s32 maxSessions);
 
