@@ -34,10 +34,9 @@ bss_loop:
     add  x0, x0, x30 // relocate ptr
 
 got_loop: 
-    ldr  x2, [x0]
-    ldr  x3, [x2]
+    ldr  x3, [x0]
     add  x3, x3, x30
-    str  x3, [x2]
+    str  x3, [x0], #8
     subs x1, x1, #8
     bne  got_loop
 
@@ -45,6 +44,7 @@ got_loop:
     mov  x1, #0 // argv
 
     ldr  x3, =main
+    add  x3, x3, x30
     blr  x3
 
 _sysexit:
