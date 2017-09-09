@@ -58,6 +58,24 @@ SVC_BEGIN svcReplyAndReceive
 	ret
 SVC_END
 
+SVC_BEGIN svcQueryPhysicalAddress
+	str x0, [sp, #-16]!
+	svc 0x54
+	ldr x2, [sp], #16
+	str x1, [x2]
+	str x2, [x2, #8]
+	str x3, [x2, #16]
+	ret
+SVC_END
+
+SVC_BEGIN svcQueryIoMapping
+	str x0, [sp, #-16]!
+	svc 0x55
+	ldr x2, [sp], #16
+	str x1, [x2]
+	ret
+SVC_END
+
 SVC_BEGIN svcManageNamedPort
 	str x0, [sp, #-16]!
 	svc 0x71
