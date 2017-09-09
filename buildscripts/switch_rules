@@ -9,6 +9,19 @@ PORTLIBS	:=	$(PORTLIBS_PATH)/armv8-a $(PORTLIBS_PATH)/switch
 LIBNX	?=	$(DEVKITPRO)/libnx
 
 #---------------------------------------------------------------------------------
+%.pfs0: %.nso
+	@mkdir -p exefs
+	@cp -R $(BUILD_EXEFS_SRC)/* exefs/
+	@cp $< exefs/main
+	@build_pfs0 exefs $@
+	@echo built ... $(notdir $@)
+
+#---------------------------------------------------------------------------------
+%.nso: %.elf
+	@elf2nso $< $@
+	@echo built ... $(notdir $@)
+
+#---------------------------------------------------------------------------------
 %.elf:
 	@echo linking $(notdir $@)
 	@$(LD) $(LDFLAGS) $(OFILES) $(LIBPATHS) $(LIBS) -o $@

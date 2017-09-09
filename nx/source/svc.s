@@ -19,6 +19,11 @@ SVC_BEGIN svcConnectToNamedPort
 	ret
 SVC_END
 
+SVC_BEGIN svcBreak
+	svc 0x26
+	ret
+SVC_END
+
 SVC_BEGIN svcReplyAndReceive
 	str x0, [sp, #-16]!
 	svc 0x43
