@@ -29,15 +29,15 @@ bss_loop:
     ldr  x0, =__got_start__
     ldr  x1, =__got_end__
     sub  x1, x1, x0  // calculate size
-    add  x1, x1, #3  // round up to 4
-    bic  x1, x1, #3
+    add  x1, x1, #7  // round up to 8
+    bic  x1, x1, #7
     add  x0, x0, x30 // relocate ptr
 
 got_loop: 
     ldr  x2, [x0]
     ldr  x3, [x2]
     add  x3, x3, x30
-    str  x3, [x2], #8
+    str  x3, [x2]
     subs x1, x1, #8
     bne  got_loop
 
