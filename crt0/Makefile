@@ -3,3 +3,6 @@ switch_crt0.o: *.s
 
 install: switch_crt0.o
 	cp $^ $(DEVKITA64)/aarch64-none-elf/lib/$^
+
+clean:
+	rm -f switch_crt0.o
