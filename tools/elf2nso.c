@@ -14,7 +14,7 @@ typedef struct {
     u32 FileOff;
     u32 DstOff;
     u32 DecompSz;
-    u32 Align;
+    u32 AlignOrTotalSz;
 } NsoSegment;
 
 typedef u8 Sha2Hash[0x20];
@@ -112,11 +112,16 @@ int main(int argc, char* argv[]) {
     uint8_t* comp_buf[3];
     size_t comp_sz[3];
 
-    for (i=0; i<hdr->e_phnum; i++, phdr++) {
+    for (i=0; i<3; i++, phdr++) {
         nso_hdr.Segments[i].FileOff = file_off;
         nso_hdr.Segments[i].DstOff = phdr->p_vaddr;
         nso_hdr.Segments[i].DecompSz = phdr->p_filesz;
-        nso_hdr.Segments[i].Align = 1;
+
+        // for .data segment this field contains total sz including bss
+        if (i == 2)
+            nso_hdr.Segments[i].AlignOrTotalSz = phdr->p_memsz;
+        else
+            nso_hdr.Segments[i].AlignOrTotalSz = 1;
 
         SHA256_CTX ctx;
         sha256_init(&ctx);
