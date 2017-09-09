@@ -63,9 +63,12 @@ SECTIONS
 		*(.data.*)
 		*(.gnu.linkonce.d*)
 		CONSTRUCTORS
-		*(.got)
 		. = ALIGN(4);
+                __got_start__ = .;
+                *(.got)
+	        __got_end__ = .;
 	} : data
+
 
 	.tdata ALIGN(4) :
 	{
