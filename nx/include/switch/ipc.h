@@ -22,7 +22,8 @@ static inline void ipcInitialize(IpcCommand* cmd) {
     cmd->NumStaticRecv = 0;
 
     cmd->SendPid = false;
-    cmd->NumHandles = 0;
+    cmd->NumHandlesCopy = 0;
+    cmd->NumHandlesMove = 0;
 }
 
 typedef struct { // todo: Make sure sizeof isn't 16 bytes!
@@ -36,7 +37,7 @@ typedef struct {
     u32 Addr;
 } IpcStaticSendDescriptor;
 
-static inline void ipcAddSendBuffer(IpcCommand* cmd, void* buffer, size_t size, u8 Flags) {
+static inline void ipcAddSendBuffer(IpcCommand* cmd, void* buffer, size_t size, u8 flags) {
     size_t off = cmd->NumSend;
     cmd->Buffers[off] = buffer;
     cmd->Sizes[off] = size;
@@ -44,7 +45,7 @@ static inline void ipcAddSendBuffer(IpcCommand* cmd, void* buffer, size_t size, 
     cmd->NumSend++;
 }
 
-static inline void ipcAddRecvBuffer(IpcCommand* cmd, void* buffer, size_t size, u8 Flags) {
+static inline void ipcAddRecvBuffer(IpcCommand* cmd, void* buffer, size_t size, u8 flags) {
     size_t off = cmd->NumSend + cmd->NumRecv;
     cmd->Buffers[off] = buffer;
     cmd->Sizes[off] = size;
@@ -65,10 +66,9 @@ static inline void ipcSendHandleMove(IpcCommand* cmd, Handle h) {
 }
 
 static inline void* ipcPrepareHeader(IpcCommand* cmd, size_t sizeof_raw) {
-    u32* buf = armGetTlsPtr();
+    u32* buf = armGetTls();
     *buf++ = 4 | (cmd->NumSend << 20) | (cmd->NumRecv << 24);
 
-    u32 flag = 0;
     if (cmd->SendPid || cmd->NumHandlesCopy > 0 || cmd->NumHandlesMove > 0) {
         *buf++ = (sizeof_raw/4) | 0x80000000;
         *buf++ = (!!cmd->SendPid) | (cmd->NumHandlesCopy << 1) | (cmd->NumHandlesMove << 1);
@@ -81,16 +81,15 @@ static inline void* ipcPrepareHeader(IpcCommand* cmd, size_t sizeof_raw) {
     for (i=0; i<(cmd->NumSend + cmd->NumRecv); i++, buf+=3) {
         IpcBufferDescriptor* desc = (IpcBufferDescriptor*) buf;
         desc->Size = cmd->Sizes[i];
-        desc->Addr = cmd->Buffers[i];
-        uintptr_t ptr = (uintptr_t) cmd->Buffers[i]
+
+        uintptr_t ptr = (uintptr_t) cmd->Buffers[i];
+        desc->Addr = ptr;
         desc->Packed =
-            (((ptr) >> 36) << 28) |
-            (((ptr >> 32) & 15) << 28) |
-            cmd->Flags[i];
+            (((ptr) >> 36) << 28) | (((ptr >> 32) & 15) << 28) | cmd->Flags[i];
     }
 
     // todo: More
-    return (void*) ((uintptr_t)buf + 15) &~ 15;
+    return (void*) ((((uintptr_t)buf) + 15) &~ 15);
 }
 
 static inline Result ipcDispatch(Handle session) {

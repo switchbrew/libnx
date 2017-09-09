@@ -32,6 +32,11 @@ SVC_BEGIN svcConnectToNamedPort
 	ret
 SVC_END
 
+SVC_BEGIN svcSendSyncRequest
+	svc 0x21
+	ret
+SVC_END
+
 SVC_BEGIN svcBreak
 	svc 0x26
 	ret
