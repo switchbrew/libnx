@@ -31,6 +31,11 @@ void heapInit(void* base, size_t size) {
     g_LastFree.Prev = hdr;
 }
 
+void heapSetup() {
+    static u8 g_Heap[0x20000];
+    heapInit(g_Heap, sizeof(g_Heap));
+}
+
 void* heapAllocPages(size_t size) {
     void* ptr = heapAlloc(size + 0x1000);
 

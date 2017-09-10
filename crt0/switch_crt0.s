@@ -9,7 +9,7 @@ _start:
 
 startup:
     // get aslr base
-    sub  x30, x30, #4
+    sub  x28, x30, #4
 
     // clear .bss
     ldr  x0, =__bss_start__
@@ -18,7 +18,7 @@ startup:
     add  x1, x1, #7  // round up to 8
     bic  x1, x1, #7
     mov  x2, #0
-    add  x0, x0, x30 // relocate ptr
+    add  x0, x0, x28 // relocate ptr
 
 bss_loop: 
     str  x2, [x0], #8
@@ -31,30 +31,24 @@ bss_loop:
     sub  x1, x1, x0  // calculate size
     add  x1, x1, #7  // round up to 8
     bic  x1, x1, #7
-    add  x0, x0, x30 // relocate ptr
+    add  x0, x0, x28 // relocate ptr
 
 got_loop: 
-    ldr  x3, [x0]
-    add  x3, x3, x30
-    str  x3, [x0], #8
+    ldr  x2, [x0]
+    add  x2, x2, x28
+    str  x2, [x0], #8
     subs x1, x1, #8
     bne  got_loop
 
-
-    // setup heap
-    ldr  x1, =HEAP_SIZE
-    svc  1          // check retval?
-    mov  x0, x1
-    ldr  x1, =HEAP_SIZE
-    ldr  x3, =heapInit
-    add  x3, x3, x30
+    ldr  x3, =heapSetup
+    add  x3, x3, x28
     blr  x3
 
     mov  x0, #0 // argc
     mov  x1, #0 // argv
 
     ldr  x3, =main
-    add  x3, x3, x30
+    add  x3, x3, x28
     blr  x3
 
 _sysexit:
