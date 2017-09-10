@@ -42,9 +42,10 @@ got_loop:
 
 
     // setup heap
-    ldr x1, =HEAP_SIZE
-    svc 1
-    ldr x1, =HEAP_SIZE
+    ldr  x1, =HEAP_SIZE
+    svc  1          // check retval?
+    mov  x0, x1
+    ldr  x1, =HEAP_SIZE
     ldr  x3, =heapInit
     add  x3, x3, x30
     blr  x3
