@@ -18,6 +18,7 @@ static inline void* armGetTls(void) {
     return ret;
 }
 
+Result svcQueryMemory(u32 *meminfo_ptr, u32 *pageinfo, u64 addr);
 Result svcCloseHandle(Handle handle);
 Result svcWaitSynchronization(s32* index, const Handle* handles, s32 handleCount, u64 timeout);
 Result svcConnectToNamedPort(Handle* session, const char* name);
