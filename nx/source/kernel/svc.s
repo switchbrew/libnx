@@ -24,6 +24,14 @@ SVC_BEGIN svcCloseHandle
 	ret
 SVC_END
 
+SVC_BEGIN svcCreateTransferMemory
+	str x0, [sp, #-16]!
+	svc 0x15
+	ldr x2, [sp], #16
+	str w1, [x2]
+	ret
+SVC_END
+
 SVC_BEGIN svcWaitSynchronization
 	str x0, [sp, #-16]!
 	svc 0x18
