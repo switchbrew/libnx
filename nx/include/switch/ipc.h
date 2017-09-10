@@ -1,3 +1,4 @@
+// Copyright 2017 plutoo
 #define SFCI_MAGIC 0x49434653
 #define SFCO_MAGIC 0x4f434653
 

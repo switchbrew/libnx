@@ -13,6 +13,8 @@ extern "C" {
 #include <switch/svc.h>
 #include <switch/ipc.h>
 
+#include <switch/services/sm.h>
+
 #ifdef __cplusplus
 }
 #endif
