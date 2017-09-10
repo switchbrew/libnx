@@ -47,7 +47,7 @@ Result smGetService(Handle* handle_out, const char* name) {
 
     size_t i;
     for (i=0; i<8; i++) {
-        name_encoded = (name_encoded << 8) | name[i];
+        name_encoded = (name_encoded >> 8) | (((u64) name[i]) << 56);
 
         if (name[i] == '\0')
             break;
