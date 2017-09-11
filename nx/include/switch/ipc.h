@@ -184,7 +184,7 @@ static inline Result ipcParseResponse(IpcCommandResponse* r) {
             num_handles = 8;
 
         for (i=0; i<num_handles; i++)
-            r->Handles[i] = *(buf-i);
+            r->Handles[i] = *(buf-i-1);
 
         r->NumHandles = num_handles;
     }
