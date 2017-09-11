@@ -19,7 +19,6 @@ struct HeapHeader {
 static HeapHeader g_LastFree;
 
 void heapInit(void* base, size_t size) {
-    // Called by crt0.
     HeapHeader* hdr = (HeapHeader*) base;
 
     hdr->Next = &g_LastFree;
@@ -32,8 +31,10 @@ void heapInit(void* base, size_t size) {
 }
 
 void heapSetup() {
-    static u8 g_Heap[0x20000];
-    heapInit(g_Heap, sizeof(g_Heap));
+    // Called by crt0.
+    #define HEAP_SIZE 0x20000
+    static u8 g_Heap[HEAP_SIZE];
+    heapInit(&g_Heap[0], HEAP_SIZE);
 }
 
 void* heapAllocPages(size_t size) {

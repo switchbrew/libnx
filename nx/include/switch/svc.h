@@ -18,6 +18,7 @@ static inline void* armGetTls(void) {
     return ret;
 }
 
+Result svcSetHeapSize(void** out_addr, u64 size);
 Result svcQueryMemory(u32 *meminfo_ptr, u32 *pageinfo, u64 addr);
 Result svcCloseHandle(Handle handle);
 Result svcCreateTransferMemory(Handle* out, void* addr, size_t size, u32 perm);

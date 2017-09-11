@@ -33,6 +33,8 @@ Result bsdInitialize(TransferMemory* tmem) {
         raw->unk[3] = 0;
         raw->unk[4] = 0;
         raw->tmem_sz = tmem->Size;
+
+        rc = ipcDispatch(g_bsdHandle);
     }
 
     return rc;

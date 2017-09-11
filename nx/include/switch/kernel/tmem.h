@@ -8,3 +8,7 @@ typedef enum {
     PERM_R    = 1,
     PERM_RW   = 3
 } Permission;
+
+Result tmemCreate(TransferMemory* t, size_t size, Permission perm);
+Result tmemClose(TransferMemory* t);
+

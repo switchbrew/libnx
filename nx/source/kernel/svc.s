@@ -11,6 +11,14 @@
 	.cfi_endproc
 .endm
 
+SVC_BEGIN svcSetHeapSize
+	str x0, [sp, #-16]!
+	svc 1
+	ldr x2, [sp], #16
+	str x1, [x2]
+	ret
+SVC_END
+
 SVC_BEGIN svcQueryMemory
 	str x1, [sp, #-16]!
 	svc 0x6

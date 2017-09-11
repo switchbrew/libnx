@@ -5,8 +5,9 @@ static Handle g_smHandle = -1;
 
 Result smInitialize() {
     Result rc = svcConnectToNamedPort(&g_smHandle, "sm:");
+    Handle tmp;
 
-    if (R_SUCCEEDED(rc)) {
+    if (R_SUCCEEDED(rc) && smGetService(&tmp, "") == 0x415) {
         IpcCommand c;
         ipcInitialize(&c);
         ipcSendPid(&c);
@@ -47,10 +48,10 @@ Result smGetService(Handle* handle_out, const char* name) {
 
     size_t i;
     for (i=0; i<8; i++) {
-        name_encoded = (name_encoded >> 8) | (((u64) name[i]) << 56);
-
         if (name[i] == '\0')
             break;
+
+        name_encoded |= ((u64) name[i]) << (8*i);
     }
 
     IpcCommand c;

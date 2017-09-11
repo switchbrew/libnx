@@ -100,23 +100,23 @@ static inline void ipcSendHandleMove(IpcCommand* cmd, Handle h) {
 
 static inline void* ipcPrepareHeader(IpcCommand* cmd, size_t sizeof_raw) {
     u32* buf = armGetTls();
+    size_t i;
     *buf++ = 4 | (cmd->NumStaticIn << 16) | (cmd->NumSend << 20) | (cmd->NumRecv << 24) | (cmd->NumTransfer << 28);
 
     if (cmd->SendPid || cmd->NumHandlesCopy > 0 || cmd->NumHandlesMove > 0) {
         *buf++ = (sizeof_raw/4) | 0x80000000;
-        *buf++ = (!!cmd->SendPid) | (cmd->NumHandlesCopy << 1) | (cmd->NumHandlesMove << 1);
+        *buf++ = (!!cmd->SendPid) | (cmd->NumHandlesCopy << 1) | (cmd->NumHandlesMove << 5);
 
         if (cmd->SendPid)
             buf += 2;
 
-        buf += cmd->NumHandlesCopy;
-        buf += cmd->NumHandlesMove;
+        for (i=0; i<(cmd->NumHandlesCopy + cmd->NumHandlesMove); i++)
+            *buf++ = cmd->Handles[i];
     }
     else {
         *buf++ = sizeof_raw/4;
     }
 
-    size_t i;
     for (i=0; i<cmd->NumStaticIn; i++, buf+=2) {
         IpcStaticSendDescriptor* desc = (IpcStaticSendDescriptor*) buf;
         uintptr_t ptr = (uintptr_t) cmd->Statics[i];
