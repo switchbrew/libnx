@@ -17,6 +17,7 @@ extern "C" {
 #include <switch/kernel/tmem.h>
 
 #include <switch/services/sm.h>
+#include <switch/services/bsd.h>
 
 #ifdef __cplusplus
 }

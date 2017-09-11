@@ -119,6 +119,7 @@ static inline void* ipcPrepareHeader(IpcCommand* cmd, size_t sizeof_raw) {
 
     for (i=0; i<cmd->NumStaticIn; i++, buf+=2) {
         IpcStaticSendDescriptor* desc = (IpcStaticSendDescriptor*) buf;
+
         uintptr_t ptr = (uintptr_t) cmd->Statics[i];
         desc->Addr = ptr;
         desc->Packed = cmd->Indices[i] | (cmd->StaticSizes[i] << 16) |
