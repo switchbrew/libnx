@@ -32,7 +32,7 @@ void heapInit(void* base, size_t size) {
 
 void heapSetup() {
     // Called by crt0.
-    #define HEAP_SIZE 0x20000
+    #define HEAP_SIZE 0x2000000
     static u8 g_Heap[HEAP_SIZE];
     heapInit(&g_Heap[0], HEAP_SIZE);
 }

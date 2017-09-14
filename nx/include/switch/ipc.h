@@ -46,6 +46,11 @@ typedef struct {
     u32 Addr;
 } IpcStaticSendDescriptor;
 
+typedef struct {
+    u32 Addr;
+    u32 Packed;
+} IpcStaticRecvDescriptor;
+
 static inline void ipcAddSendBuffer(IpcCommand* cmd, void* buffer, size_t size, u8 flags) {
     size_t off = cmd->NumSend;
     cmd->Buffers[off] = buffer;
@@ -103,8 +108,17 @@ static inline void* ipcPrepareHeader(IpcCommand* cmd, size_t sizeof_raw) {
     size_t i;
     *buf++ = 4 | (cmd->NumStaticIn << 16) | (cmd->NumSend << 20) | (cmd->NumRecv << 24) | (cmd->NumTransfer << 28);
 
+    u32* fill_in_size_later = buf;
+
+    if (cmd->NumStaticOut > 0) {
+        *buf = (cmd->NumStaticOut + 2) << 10;
+    }
+    else {
+        *buf = 0;
+    }
+
     if (cmd->SendPid || cmd->NumHandlesCopy > 0 || cmd->NumHandlesMove > 0) {
-        *buf++ = (sizeof_raw/4) | 0x80000000;
+        *buf++ |= 0x80000000;
         *buf++ = (!!cmd->SendPid) | (cmd->NumHandlesCopy << 1) | (cmd->NumHandlesMove << 5);
 
         if (cmd->SendPid)
@@ -114,7 +128,7 @@ static inline void* ipcPrepareHeader(IpcCommand* cmd, size_t sizeof_raw) {
             *buf++ = cmd->Handles[i];
     }
     else {
-        *buf++ = sizeof_raw/4;
+        buf++;
     }
 
     for (i=0; i<cmd->NumStaticIn; i++, buf+=2) {
@@ -136,14 +150,32 @@ static inline void* ipcPrepareHeader(IpcCommand* cmd, size_t sizeof_raw) {
             (((ptr >> 32) & 15) << 28) | ((ptr >> 36) << 2);
     }
 
-    // todo: More
-    return (void*) ((((uintptr_t)buf) + 15) &~ 15);
+    u32 padding = ((16 - (((uintptr_t) buf) & 15)) & 15) / 4;
+    u32* raw = (u32*) (buf + padding);
+
+    size_t raw_size = (sizeof_raw/4) + 4;
+    raw_size += ((cmd->NumStaticOut*2) + 3)/4; // todo: these contain u16 lengths for StaticOuts
+
+    buf += raw_size;
+    *fill_in_size_later |= raw_size;
+
+    for (i=0; i<cmd->NumStaticOut; i++, buf+=2) {
+        IpcStaticRecvDescriptor* desc = (IpcStaticRecvDescriptor*) buf;
+        size_t off = cmd->NumStaticIn + i;
+
+        uintptr_t ptr = (uintptr_t) cmd->Statics[off];
+        desc->Addr = ptr;
+        desc->Packed = (ptr >> 32) | (cmd->StaticSizes[off] << 16);
+    }
+
+    return (void*) raw;
 }
 
 static inline Result ipcDispatch(Handle session) {
     return svcSendSyncRequest(session);
 }
 
+// Response parsing
 typedef struct {
     bool HasPid;
     u64  Pid;
@@ -210,4 +242,68 @@ static inline Result ipcParseResponse(IpcCommandResponse* r) {
 
     r->NumBuffers = num_bufs;
     return 0;
+}
+
+// Domain shit
+static inline Result ipcConvertSessionToDomain(Handle session, u32* object_id_out) {
+    u32* buf = armGetTls();
+
+    buf[0] = 5;
+    buf[1] = 8;
+    buf[4] = SFCI_MAGIC;
+    buf[5] = 0;
+    buf[6] = 0;
+    buf[7] = 0;
+
+    Result rc = ipcDispatch(session);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcCommandResponse r;
+        ipcParseResponse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u32 object_id;
+        } *raw = r.Raw;
+
+        rc = raw->result;
+
+        if (R_SUCCEEDED(rc)) {
+            *object_id_out = raw->object_id;
+        }
+    }
+
+    return rc;
+}
+
+typedef struct {
+    u8  Type;
+    u8  Pad0;
+    u16 Length;
+    u32 ObjectId;
+    u32 Pad1[2];
+} DomainMessageHeader;
+
+static inline void* ipcPrepareHeaderForDomain(IpcCommand* cmd, size_t sizeof_raw, size_t object_id) {
+    void* raw = ipcPrepareHeader(cmd, sizeof_raw + sizeof(DomainMessageHeader));
+    DomainMessageHeader* hdr = (DomainMessageHeader*) raw;
+
+    hdr->Type = 1;
+    hdr->Length = sizeof_raw;
+    hdr->ObjectId = object_id;
+
+    hdr->Pad0 = hdr->Pad1[0] = hdr->Pad1[1] = 0;
+
+    return (void*)(((uintptr_t) raw) + sizeof(DomainMessageHeader)); 
+}
+
+static inline Result ipcParseResponseForDomain(IpcCommandResponse* r) {
+    Result rc = ipcParseResponse(r);
+
+    if (R_SUCCEEDED(rc)) {
+        r->Raw = (void*)(((uintptr_t) r->Raw) + sizeof(DomainMessageHeader)); 
+    }
+
+    return rc;
 }
