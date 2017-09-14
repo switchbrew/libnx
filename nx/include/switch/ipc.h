@@ -2,6 +2,8 @@
 #define SFCI_MAGIC 0x49434653
 #define SFCO_MAGIC 0x4f434653
 
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+
 typedef struct {
     size_t NumSend; // A
     size_t NumRecv; // B
