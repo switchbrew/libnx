@@ -1,5 +1,5 @@
 .section ".crt0","ax"
-.global _start, _sysexit, main
+.global _start
 
 _start:
     bl startup
@@ -40,6 +40,7 @@ got_loop:
     subs x1, x1, #8
     bne  got_loop
 
+    mov  x0, x28
     ldr  x3, =initSystem
     add  x3, x3, x28
     blr  x3
