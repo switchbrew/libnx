@@ -32,9 +32,19 @@ void heapInit(void* base, size_t size) {
 
 void heapSetup() {
     // Called by crt0.
-    #define HEAP_SIZE 0x1000000
-    static u8 g_Heap[HEAP_SIZE];
-    heapInit(&g_Heap[0], HEAP_SIZE);
+    #define INNER_HEAP_SIZE 0x20000
+    #define OUTER_HEAP_SIZE (0x2000000*4)
+
+    void* addr;
+    Result rc = svcSetHeapSize(&addr, OUTER_HEAP_SIZE);
+
+    if (R_SUCCEEDED(rc)) {
+        heapInit(addr, OUTER_HEAP_SIZE);
+    }
+    else {
+        static u8 g_Heap[INNER_HEAP_SIZE];
+        heapInit(&g_Heap[0], INNER_HEAP_SIZE);
+    }
 }
 
 void* heapAllocPages(size_t size) {
