@@ -40,7 +40,7 @@ got_loop:
     subs x1, x1, #8
     bne  got_loop
 
-    ldr  x3, =heapSetup
+    ldr  x3, =initSystem
     add  x3, x3, x28
     blr  x3
 
@@ -49,7 +49,8 @@ got_loop:
 
     ldr  x3, =main
     add  x3, x3, x28
-    blr  x3
+    ldr  x2, =__nx_exit
+    add  x2, x2, x28
+    mov  x30, x2
+    br  x3
 
-_sysexit:
-    svc  0x7
