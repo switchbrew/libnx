@@ -32,9 +32,17 @@ void heapInit(void* base, size_t size) {
 
 void heapSetup() {
     // Called by crt0.
-    #define HEAP_SIZE 0x2000000
-    static u8 g_Heap[HEAP_SIZE];
-    heapInit(&g_Heap[0], HEAP_SIZE);
+    void* addr;
+    Result rc = svcSetHeapSize(&addr, 0x2000000);
+
+    if (R_SUCCEEDED(rc)) {
+        heapInit(addr, 0x2000000);
+    }
+    else {
+        #define HEAP_SIZE 0x20000
+        static u8 g_Heap[HEAP_SIZE];
+        heapInit(&g_Heap[0], HEAP_SIZE);
+    }
 }
 
 void* heapAllocPages(size_t size) {

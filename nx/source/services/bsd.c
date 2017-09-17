@@ -1,65 +1,110 @@
 // Copyright 2017 plutoo
 #include <switch.h>
 
-static Handle g_bsdHandle = -1;
-static u32 g_bsdObjectId = -1;
+static Handle g_bsdClientHandle = -1;
+static Handle g_bsdMonitorHandle = -1;
+static u64 g_bsdClientPid = -1;
 static int g_Errno = 0;
 
 #define EPIPE 32
 
-Result bsdInitialize(TransferMemory* tmem) {
-    Result rc = smGetService(&g_bsdHandle, "bsd:s");
+static Result _bsdRegisterClient(Handle h, TransferMemory* tmem, u64* pid_out) {
+    IpcCommand c;
+    ipcInitialize(&c);
+    ipcSendPid(&c);
+    ipcSendHandleCopy(&c, tmem->MemHandle);
 
-    if (R_FAILED(rc)) {
-        rc = smGetService(&g_bsdHandle, "bsd:u");
-    }
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 unk0[5];
+        u64 tmem_sz;
+        u64 pad[2];
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 0;
+    raw->unk0[0] = 1;
+    raw->unk0[1] = 0x10000;
+    raw->unk0[2] = 0x40000;
+    raw->unk0[3] = 0xA500;
+    raw->unk0[4] = 13;
+    raw->tmem_sz = tmem->Size;
+
+    Result rc = ipcDispatch(h);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommand c;
-        ipcInitialize(&c);
-        ipcSendPid(&c);
-        ipcSendHandleCopy(&c, tmem->MemHandle);
+        IpcCommandResponse r;
+        ipcParseResponse(&r);
 
         struct {
             u64 magic;
-            u64 cmd_id;
-            u64 unk0[5];
-            u64 tmem_sz;
-            u64 pad[2];
-        } *raw;
+            u64 result;
+            u64 pid;
+        } *resp = r.Raw;
 
-        raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-        raw->magic = SFCI_MAGIC;
-        raw->cmd_id = 0;
-        raw->unk0[0] = 0x4000;
-        raw->unk0[1] = 0x4000;
-        raw->unk0[2] = 0x4000;
-        raw->unk0[3] = 0x4000;
-        raw->unk0[4] = 0;
-        raw->tmem_sz = tmem->Size;
-
-        rc = ipcDispatch(g_bsdHandle);
-
-        if (R_SUCCEEDED(rc)) {
-            IpcCommandResponse r;
-            ipcParseResponse(&r);
-
-            struct {
-                u64 magic;
-                u64 result;
-            } *resp = r.Raw;
-
-            rc = resp->result;
-
-            if (R_SUCCEEDED(rc)) {
-                rc = ipcConvertSessionToDomain(g_bsdHandle, &g_bsdObjectId);
-            }
-        }
+        *pid_out = resp->pid;
+        rc = resp->result;
     }
 
+    return rc;
+}
+
+static Result _bsdStartMonitor(Handle h, u64 pid) {
+    IpcCommand c;
+    ipcInitialize(&c);
+    ipcSendPid(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 pid;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 1;
+    raw->pid = pid;
+
+    Result rc = ipcDispatch(h);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcCommandResponse r;
+        ipcParseResponse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result bsdInitialize(TransferMemory* tmem) {
+    const char* bsd_srv = "bsd:s";
+    Result rc = smGetService(&g_bsdClientHandle, bsd_srv);
+
     if (R_FAILED(rc)) {
-        g_Errno = EPIPE;
+        bsd_srv = "bsd:u";
+        rc = smGetService(&g_bsdClientHandle, bsd_srv);
+    }
+
+    if (R_SUCCEEDED(rc)) {
+        rc = smGetService(&g_bsdMonitorHandle, bsd_srv);
+
+        if (R_SUCCEEDED(rc)) {
+            rc = _bsdRegisterClient(g_bsdClientHandle, tmem, &g_bsdClientPid);
+
+            if (R_SUCCEEDED(rc)) {
+                rc = _bsdStartMonitor(g_bsdMonitorHandle, g_bsdClientPid);
+            }
+        }
     }
 
     return rc;
@@ -82,7 +127,7 @@ int bsdSocket(int domain, int type, int protocol) {
         u32 pad[4];
     } *raw;
 
-    raw = ipcPrepareHeaderForDomain(&c, sizeof(*raw), g_bsdObjectId);
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 2;
@@ -90,12 +135,12 @@ int bsdSocket(int domain, int type, int protocol) {
     raw->type = type;
     raw->protocol = protocol;
 
-    Result rc = ipcDispatch(g_bsdHandle);
+    Result rc = ipcDispatch(g_bsdClientHandle);
     int fd = -1;
 
     if (R_SUCCEEDED(rc)) {
         IpcCommandResponse r;
-        ipcParseResponseForDomain(&r);
+        ipcParseResponse(&r);
 
         struct {
             u64 magic;
@@ -131,19 +176,19 @@ int bsdRecv(int sockfd, void* buffer, size_t length, int flags) {
         u32 flags;
     } *raw;
 
-    raw = ipcPrepareHeaderForDomain(&c, sizeof(*raw), g_bsdObjectId);
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 8;
     raw->sockfd = sockfd;
     raw->flags = flags;
 
-    Result rc = ipcDispatch(g_bsdHandle);
+    Result rc = ipcDispatch(g_bsdClientHandle);
     int ret = -1;
 
     if (R_SUCCEEDED(rc)) {
         IpcCommandResponse r;
-        ipcParseResponseForDomain(&r);
+        ipcParseResponse(&r);
 
         struct {
             u64 magic;
@@ -180,19 +225,19 @@ int bsdSend(int sockfd, void* buffer, size_t length, int flags) {
         u32 flags;
     } *raw;
 
-    raw = ipcPrepareHeaderForDomain(&c, sizeof(*raw), g_bsdObjectId);
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 10;
     raw->sockfd = sockfd;
     raw->flags = flags;
 
-    Result rc = ipcDispatch(g_bsdHandle);
+    Result rc = ipcDispatch(g_bsdClientHandle);
     int ret = -1;
 
     if (R_SUCCEEDED(rc)) {
         IpcCommandResponse r;
-        ipcParseResponseForDomain(&r);
+        ipcParseResponse(&r);
 
         struct {
             u64 magic;
@@ -229,18 +274,18 @@ int bsdConnect(int sockfd, void* addr, u32 addrlen) {
         u32 pad[4];
     } *raw;
 
-    raw = ipcPrepareHeaderForDomain(&c, sizeof(*raw), g_bsdObjectId);
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 14;
     raw->sockfd = sockfd;
 
-    Result rc = ipcDispatch(g_bsdHandle);
+    Result rc = ipcDispatch(g_bsdClientHandle);
     int fd = -1;
 
     if (R_SUCCEEDED(rc)) {
         IpcCommandResponse r;
-        ipcParseResponseForDomain(&r);
+        ipcParseResponse(&r);
 
         struct {
             u64 magic;
@@ -276,17 +321,17 @@ int bsdBind(int sockfd, void* addr, u32 addrlen) {
         u32 pad[5];
     } *raw;
 
-    raw = ipcPrepareHeaderForDomain(&c, sizeof(*raw), g_bsdObjectId);
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 13;
 
-    Result rc = ipcDispatch(g_bsdHandle);
+    Result rc = ipcDispatch(g_bsdClientHandle);
     int ret = -1;
 
     if (R_SUCCEEDED(rc)) {
         IpcCommandResponse r;
-        ipcParseResponseForDomain(&r);
+        ipcParseResponse(&r);
 
         struct {
             u64 magic;
@@ -322,19 +367,19 @@ int bsdListen(int sockfd, int backlog) {
         u32 pad[4];
     } *raw;
 
-    raw = ipcPrepareHeaderForDomain(&c, sizeof(*raw), g_bsdObjectId);
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 18;
     raw->sockfd = sockfd;
     raw->backlog = backlog;
 
-    Result rc = ipcDispatch(g_bsdHandle);
+    Result rc = ipcDispatch(g_bsdClientHandle);
     int ret = -1;
 
     if (R_SUCCEEDED(rc)) {
         IpcCommandResponse r;
-        ipcParseResponseForDomain(&r);
+        ipcParseResponse(&r);
 
         struct {
             u64 magic;
@@ -370,18 +415,18 @@ int bsdWrite(int sockfd, void* buffer, size_t length) {
         u32 sockfd;
     } *raw;
 
-    raw = ipcPrepareHeaderForDomain(&c, sizeof(*raw), g_bsdObjectId);
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 24;
     raw->sockfd = sockfd;
 
-    Result rc = ipcDispatch(g_bsdHandle);
+    Result rc = ipcDispatch(g_bsdClientHandle);
     int ret = -1;
 
     if (R_SUCCEEDED(rc)) {
         IpcCommandResponse r;
-        ipcParseResponseForDomain(&r);
+        ipcParseResponse(&r);
 
         struct {
             u64 magic;
