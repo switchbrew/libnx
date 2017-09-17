@@ -32,16 +32,18 @@ void heapInit(void* base, size_t size) {
 
 void heapSetup() {
     // Called by crt0.
+    #define INNER_HEAP_SIZE 0x20000
+    #define OUTER_HEAP_SIZE (0x2000000*4)
+
     void* addr;
-    Result rc = svcSetHeapSize(&addr, 0x2000000);
+    Result rc = svcSetHeapSize(&addr, OUTER_HEAP_SIZE);
 
     if (R_SUCCEEDED(rc)) {
-        heapInit(addr, 0x2000000);
+        heapInit(addr, OUTER_HEAP_SIZE);
     }
     else {
-        #define HEAP_SIZE 0x20000
-        static u8 g_Heap[HEAP_SIZE];
-        heapInit(&g_Heap[0], HEAP_SIZE);
+        static u8 g_Heap[INNER_HEAP_SIZE];
+        heapInit(&g_Heap[0], INNER_HEAP_SIZE);
     }
 }
 
