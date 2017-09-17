@@ -12,3 +12,4 @@ install:
 clean:
 	make -C crt0/ clean
 	make -C nx/ clean
+	make -C tools/ clean

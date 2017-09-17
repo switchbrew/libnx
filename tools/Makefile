@@ -12,3 +12,4 @@ install: all
 
 clean:
 	rm -f elf2nso
+	rm -f build_pfs0
