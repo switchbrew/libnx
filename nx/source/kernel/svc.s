@@ -147,6 +147,32 @@ SVC_BEGIN svcUnmapDeviceAddressSpace
 	ret
 SVC_END
 
+SVC_BEGIN svcDebugActiveProcess
+	str x0, [sp, #-16]!
+	svc 0x60
+	ldr x2, [sp], #16
+	str w1, [x2]
+	ret
+SVC_END
+
+SVC_BEGIN svcContinueDebugEvent
+	svc 0x64
+	ret
+SVC_END
+
+SVC_BEGIN svcQueryDebugProcessMemory
+	str x1, [sp, #-16]!
+	svc 0x69
+	ldr x2, [sp], #16
+	str w1, [x2]
+	ret
+SVC_END
+
+SVC_BEGIN svcReadDebugProcessMemory
+	svc 0x6A
+	ret
+SVC_END
+
 SVC_BEGIN svcManageNamedPort
 	str x0, [sp, #-16]!
 	svc 0x71

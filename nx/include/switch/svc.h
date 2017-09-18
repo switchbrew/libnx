@@ -18,6 +18,17 @@ static inline void* armGetTls(void) {
     return ret;
 }
 
+typedef struct {
+	u64 base_addr;
+	u64 size;
+	u32 memorytype;
+	u32 memoryattribute;
+	u32 perm;
+	u32 devicerefcount;
+	u32 ipcrefcount;
+	u32 padding;
+} MemInfo;
+
 typedef struct _regs_t
 {
 	u64 X0;
@@ -31,7 +42,7 @@ typedef struct _regs_t
 } __attribute__((packed)) regs_t;
 
 Result svcSetHeapSize(void** out_addr, u64 size);
-Result svcQueryMemory(u32 *meminfo_ptr, u32 *pageinfo, u64 addr);
+Result svcQueryMemory(MemInfo* meminfo_ptr, u32 *pageinfo, u64 addr);
 void svcExitProcess() __attribute__((noreturn));
 Result svcSleepThread(u64 nano);
 Result svcCloseHandle(Handle handle);
@@ -50,5 +61,9 @@ Result svcAttachDeviceAddressSpace(u64 device, Handle handle);
 Result svcDetachDeviceAddressSpace(u64 device, Handle handle);
 Result svcMapDeviceAddressSpaceAligned(Handle handle, Handle proc_handle, u64 dev_addr, u64 dev_size, u64 map_addr, u64 perm);
 Result svcUnmapDeviceAddressSpace(Handle handle, Handle proc_handle, u64 map_addr, u64 map_size, u64 perm);
-u64 svcCallSecureMonitor(regs_t *regs);
+Result svcDebugActiveProcess(Handle* debug, u32 processID);
+Result svcContinueDebugEvent(Handle debug, u32 flags, u64 unk);
+Result svcQueryDebugProcessMemory(MemInfo* meminfo_ptr, u32* pageinfo, Handle debug, u64 addr);
+Result svcReadDebugProcessMemory(void* buffer, Handle debug, u64 addr, u64 size);
 Result svcManageNamedPort(Handle* portServer, const char* name, s32 maxSessions);
+u64 svcCallSecureMonitor(regs_t *regs);
