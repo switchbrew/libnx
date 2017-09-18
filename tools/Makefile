@@ -1,10 +1,10 @@
 all: elf2nso build_pfs0
 
 build_pfs0: build_pfs0.c
-	gcc -o $@ $^
+	gcc $(CFLAGS) -o $@ $^
 
 elf2nso: elf2nso.c sha256.c
-	gcc -o $@ $^ -llz4
+	gcc $(CFLAGS) -o $@ $^ -llz4
 
 install: all
 	cp build_pfs0 /usr/local/bin/
