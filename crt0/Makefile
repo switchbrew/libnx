@@ -1,3 +1,5 @@
+export PATH	:=	$(DEVKITA64)/bin:$(PATH)
+
 switch_crt0.o: *.s
 	aarch64-none-elf-gcc -march=armv8-a -x assembler-with-cpp -c $^ -o $@
 
