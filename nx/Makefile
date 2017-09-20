@@ -102,8 +102,8 @@ dist-src:
 dist: dist-src dist-bin
 
 install: dist-bin
-	mkdir -p $(DEVKITPRO)/libnx
-	bzip2 -cd libnx-$(VERSION).tar.bz2 | tar -xf - -C $(DEVKITPRO)/libnx
+	mkdir -p $(DEVKITA64)/libnx
+	bzip2 -cd libnx-$(VERSION).tar.bz2 | tar -xf - -C $(DEVKITA64)/libnx
 
 #dox:
 #	@doxygen Doxyfile
