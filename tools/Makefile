@@ -11,4 +11,4 @@ install: all
 	cp elf2nso $(DEVKITA64)/bin/
 
 clean:
-	rm -f elf2nso
+	rm -f elf2nso build_pfs0
