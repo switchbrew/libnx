@@ -1,12 +1,12 @@
-ifeq ($(strip $(DEVKITPRO)),)
-$(error "Please set DEVKITPRO in your environment. export DEVKITPRO=<path to>devkitPro)
+ifeq ($(strip $(DEVKITA64)),)
+$(error "Please set DEVKITA64 in your environment. export DEVKITA64=<path to>devkitA64)
 endif
 
 include $(DEVKITA64)/base_rules
 
 PORTLIBS	:=	$(PORTLIBS_PATH)/armv8-a $(PORTLIBS_PATH)/switch
 
-LIBNX	?=	$(DEVKITPRO)/libnx
+LIBNX	?=	$(DEVKITA64)/libnx
 
 #---------------------------------------------------------------------------------
 %.pfs0: %.nso
