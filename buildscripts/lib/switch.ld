@@ -6,6 +6,7 @@ PHDRS
 	code   PT_LOAD FLAGS(5) /* Read | Execute */;
 	rodata PT_LOAD FLAGS(4) /* Read */;
 	data   PT_LOAD FLAGS(6) /* Read | Write */;
+	dyn    PT_DYNAMIC;
 }
 
 SECTIONS
@@ -63,6 +64,7 @@ SECTIONS
 	.gcc_except_table : ONLY_IF_RO { *(.gcc_except_table .gcc_except_table.*) } :rodata
 	.gnu_extab        : ONLY_IF_RO { *(.gnu_extab*) } : rodata
 
+	.dynamic           : { *(.dynamic) } :rodata :dyn
 	.interp            : { *(.interp) } :rodata
 	.note.gnu.build-id : { *(.note.gnu.build-id) } :rodata
 	.hash              : { *(.hash) } :rodata
@@ -146,11 +148,6 @@ SECTIONS
 	{
 		*(.data .data.* .gnu.linkonce.d.*)
 		SORT(CONSTRUCTORS)
-	} :data
-
-	.dynamic ALIGN(8) :
-	{
-		*(.dynamic)
 	} :data
 
 	__bss_start__ = .;
