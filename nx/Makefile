@@ -32,9 +32,9 @@ INCLUDES	:=	include
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
-ARCH	:=	-march=armv8-a
+ARCH	:=	-march=armv8-a -fPIC
 
-CFLAGS	:=	-g -Wall -Werror -fPIC \
+CFLAGS	:=	-g -Wall -Werror \
 			-ffunction-sections \
 			-fdata-sections \
 			$(ARCH) \
