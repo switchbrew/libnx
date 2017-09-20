@@ -62,8 +62,8 @@ uint8_t* ReadEntireFile(const char* fn, size_t* len_out) {
 
 int main(int argc, char* argv[]) {
     if (argc != 3) {
-        printf("%s <elf-file> <nso-file>\n", argv[0]);
-        return 1;
+        fprintf(stderr, "%s <elf-file> <nso-file>\n", argv[0]);
+        return EXIT_FAILURE;
     }
 
     NsoHeader nso_hdr;
@@ -72,48 +72,57 @@ int main(int argc, char* argv[]) {
     nso_hdr.Unk3 = 0x3f;
 
     if (sizeof(NsoHeader) != 0x100) {
-        printf("Bad compile environment!\n");
-        return 1;
+        fprintf(stderr, "Bad compile environment!\n");
+        return EXIT_FAILURE;
     }
 
     size_t elf_len;
     uint8_t* elf = ReadEntireFile(argv[1], &elf_len);
     if (elf == NULL) {
-        printf("Failed to open input!\n");
-        return 1;
+        fprintf(stderr, "Failed to open input!\n");
+        return EXIT_FAILURE;
     }
 
     if (elf_len < sizeof(Elf64_Ehdr)) {
-        printf("Input file doesn't fit ELF header!\n");
-        return 1;
+        fprintf(stderr, "Input file doesn't fit ELF header!\n");
+        return EXIT_FAILURE;
     }
 
     Elf64_Ehdr* hdr = (Elf64_Ehdr*) elf;
     if (hdr->e_machine != EM_AARCH64) {
-        printf("Invalid ELF: expected AArch64!\n");
-        return 1;
+        fprintf(stderr, "Invalid ELF: expected AArch64!\n");
+        return EXIT_FAILURE;
     }
 
-    Elf64_Off ph_end = hdr->e_phoff + 3 * sizeof(Elf64_Phdr);
+    Elf64_Off ph_end = hdr->e_phoff + hdr->e_phnum * sizeof(Elf64_Phdr);
 
     if (ph_end < hdr->e_phoff || ph_end > elf_len) {
-        printf("Invalid ELF: phdrs outside file!\n");
-        return 1;
+        fprintf(stderr, "Invalid ELF: phdrs outside file!\n");
+        return EXIT_FAILURE;
     }
 
-    if (hdr->e_phnum != 3) {
-        printf("Invalid ELF: expected 3 phdrs!\n");
-        return 1;
-    }
-
-    Elf64_Phdr* phdr = (Elf64_Phdr*) &elf[hdr->e_phoff];
-    size_t i;
+    Elf64_Phdr* phdrs = (Elf64_Phdr*) &elf[hdr->e_phoff];
+    size_t i, j = 0;
     size_t file_off = sizeof(NsoHeader);
 
     uint8_t* comp_buf[3];
     int comp_sz[3];
 
-    for (i=0; i<3; i++, phdr++) {
+    for (i=0; i<3; i++) {
+        Elf64_Phdr* phdr = NULL;
+        while (j < hdr->e_phnum) {
+            Elf64_Phdr* cur = &phdrs[j++];
+            if (cur->p_type == PT_LOAD) {
+                phdr = cur;
+                break;
+            }
+        }
+
+        if (phdr == NULL) {
+            fprintf(stderr, "Invalid ELF: expected 3 loadable phdrs!\n");
+            return EXIT_FAILURE;
+        }
+
         nso_hdr.Segments[i].FileOff = file_off;
         nso_hdr.Segments[i].DstOff = phdr->p_vaddr;
         nso_hdr.Segments[i].DecompSz = phdr->p_filesz;
@@ -133,16 +142,16 @@ int main(int argc, char* argv[]) {
         comp_buf[i] = malloc(comp_max);
 
         if (comp_buf[i] == NULL) {
-            printf("Compressing: Out of memory!\n");
-            return 1;
+            fprintf(stderr, "Compressing: Out of memory!\n");
+            return EXIT_FAILURE;
         }
 
         // TODO check p_offset
         comp_sz[i] = LZ4_compress_default(&elf[phdr->p_offset], comp_buf[i], phdr->p_filesz, comp_max);
 
         if (comp_sz[i] < 0) {
-            printf("Failed to compress!\n");
-            return 1;
+            fprintf(stderr, "Failed to compress!\n");
+            return EXIT_FAILURE;
         }
 
         nso_hdr.CompSz[i] = comp_sz[i];
@@ -152,8 +161,8 @@ int main(int argc, char* argv[]) {
     FILE* out = fopen(argv[2], "wb");
 
     if (out == NULL) {
-        printf("Failed to open output file!\n");
-        return 1;
+        fprintf(stderr, "Failed to open output file!\n");
+        return EXIT_FAILURE;
     }
 
     // TODO check retvals
@@ -162,5 +171,5 @@ int main(int argc, char* argv[]) {
     for (i=0; i<3; i++)
         fwrite(comp_buf[i], comp_sz[i], 1, out);
 
-    return 0;
+    return EXIT_SUCCESS;
 }
