@@ -6,137 +6,157 @@ PHDRS
 	code   PT_LOAD FLAGS(5) /* Read | Execute */;
 	rodata PT_LOAD FLAGS(4) /* Read */;
 	data   PT_LOAD FLAGS(6) /* Read | Write */;
+	dyn    PT_DYNAMIC;
 }
 
 SECTIONS
 {
 	/* =========== CODE section =========== */
-
 	PROVIDE(__start__ = 0x0);
 	. = __start__;
 
-	.text ALIGN(0x1000) :
+	.crt0 :
 	{
-		/* .init */
-		KEEP( *(.crt0) )
+		KEEP (*(.crt0))
+		. = ALIGN(8);
+	} :code
+
+	.init :
+	{
 		KEEP( *(.init) )
-		. = ALIGN(4);
+		. = ALIGN(8);
+	} :code
 
-		/* .text */
-		*(.text)
-		*(.text.*)
-		*(.glue_7)
-		*(.glue_7t)
-		*(.stub)
-		*(.gnu.warning)
-		*(.gnu.linkonce.t*)
-		. = ALIGN(4);
+	.plt :
+	{
+		*(.plt)
+		*(.iplt)
+		. = ALIGN(8);
+	} :code
 
-		/* .fini */
+	.text :
+	{
+		*(.text.unlikely .text.*_unlikely .text.unlikely.*)
+		*(.text.exit .text.exit.*)
+		*(.text.startup .text.startup.*)
+		*(.text.hot .text.hot.*)
+		*(.text .stub .text.* .gnu.linkonce.t.*)
+		. = ALIGN(8);
+	} :code
+
+	.fini :
+	{
 		KEEP( *(.fini) )
-		. = ALIGN(4);
-	} : code
+		. = ALIGN(8);
+	} :code
 
 	/* =========== RODATA section =========== */
+	. = ALIGN(0x1000);
 
-	.rodata ALIGN(0x1000) :
+	.rodata :
 	{
-		*(.rodata)
-		*(.roda)
-		*(.rodata.*)
-		*all.rodata*(*)
-		*(.gnu.linkonce.r*)
-		SORT(CONSTRUCTORS)
-		. = ALIGN(4);
-	} : rodata
+		*(.rodata .rodata.* .gnu.linkonce.r.*)
+		. = ALIGN(8);
+	} :rodata
 
-	.ARM.extab : { *(.ARM.extab* .gnu.linkonce.armextab.*) } : rodata
-	__exidx_start = .;
-	ARM.exidx : { *(.ARM.exidx* .gnu.linkonce.armexidx.*) } : rodata
-	__exidx_end = .;
+	.eh_frame_hdr     : { *(.eh_frame_hdr) *(.eh_frame_entry .eh_frame_entry.*) } :rodata
+	.eh_frame         : ONLY_IF_RO { KEEP (*(.eh_frame)) *(.eh_frame.*) } :rodata
+	.gcc_except_table : ONLY_IF_RO { *(.gcc_except_table .gcc_except_table.*) } :rodata
+	.gnu_extab        : ONLY_IF_RO { *(.gnu_extab*) } : rodata
+
+	.dynamic           : { *(.dynamic) } :rodata :dyn
+	.interp            : { *(.interp) } :rodata
+	.note.gnu.build-id : { *(.note.gnu.build-id) } :rodata
+	.hash              : { *(.hash) } :rodata
+	.gnu.hash          : { *(.gnu.hash) } :rodata
+	.gnu.version       : { *(.gnu.version) } :rodata
+	.gnu.version_d     : { *(.gnu.version_d) } :rodata
+	.gnu.version_r     : { *(.gnu.version_r) } :rodata
+	.dynsym            : { *(.dynsym) } :rodata
+	.dynstr            : { *(.dynstr) } :rodata
+	.rela.dyn          : { *(.rela.*) } :rodata
 
 	/* =========== DATA section =========== */
+	. = ALIGN(0x1000);
 
-	.data ALIGN(0x1000) :
-	{
-		*(.data)
-		*(.data.*)
-		*(.gnu.linkonce.d*)
-		CONSTRUCTORS
-		. = ALIGN(4);
-                __got_start__ = .;
-                *(.got)
-	        __got_end__ = .;
-	} : data
+	.eh_frame : ONLY_IF_RW { KEEP (*(.eh_frame)) *(.eh_frame.*) } :data
+	.gcc_except_table : ONLY_IF_RW { *(.gcc_except_table .gcc_except_table.*) } :data
+	.gnu_extab : ONLY_IF_RW { *(.gnu_extab*) } : data
+	.exception_ranges : ONLY_IF_RW { *(.exception_ranges .exception_ranges*) } :data
 
-
-	.tdata ALIGN(4) :
+	.tdata ALIGN(8) :
 	{
 		__tdata_lma = .;
-		*(.tdata)
-		*(.tdata.*)
-		*(.gnu.linkonce.td.*)
-		. = ALIGN(4);
+		*(.tdata .tdata.* .gnu.linkonce.td.*)
+		. = ALIGN(8);
 		__tdata_lma_end = .;
-	} : data
+	} :data
 
-	.tbss ALIGN(4) :
+	.tbss ALIGN(8) :
 	{
-		*(.tbss)
-		*(.tbss.*)
-		*(.gnu.linkonce.tb.*)
-		*(.tcommon)
-		. = ALIGN(4);
-	} : data
+		*(.tbss .tbss.* .gnu.linkonce.tb.*) *(.tcommon)
+		. = ALIGN(8);
+	} :data
 
-	.preinit_array ALIGN(4) :
+	.preinit_array ALIGN(8) :
 	{
 		PROVIDE (__preinit_array_start = .);
 		KEEP (*(.preinit_array))
 		PROVIDE (__preinit_array_end = .);
-	} : data
+	} :data
 
-	.init_array ALIGN(4) :
+	.init_array ALIGN(8) :
 	{
 		PROVIDE (__init_array_start = .);
 		KEEP (*(SORT(.init_array.*)))
 		KEEP (*(.init_array))
 		PROVIDE (__init_array_end = .);
-	} : data
+	} :data
 
-	.fini_array ALIGN(4) :
+	.fini_array ALIGN(8) :
 	{
 		PROVIDE (__fini_array_start = .);
 		KEEP (*(.fini_array))
 		KEEP (*(SORT(.fini_array.*)))
 		PROVIDE (__fini_array_end = .);
-	} : data
+	} :data
 
-	.ctors ALIGN(4) :
+	.ctors ALIGN(8) :
 	{
 		KEEP (*crtbegin.o(.ctors)) /* MUST be first -- GCC requires it */
 		KEEP (*(EXCLUDE_FILE (*crtend.o) .ctors))
 		KEEP (*(SORT(.ctors.*)))
 		KEEP (*(.ctors))
-	} : data
+	} :data
 
-	.dtors ALIGN(4) :
+	.dtors ALIGN(8) :
 	{
 		KEEP (*crtbegin.o(.dtors))
 		KEEP (*(EXCLUDE_FILE (*crtend.o) .dtors))
 		KEEP (*(SORT(.dtors.*)))
 		KEEP (*(.dtors))
-	} : data
+	} :data
+
+	__got_start__ = .;
+
+	.got            : { *(.got) *(.igot) } :data
+	.got.plt        : { *(.got.plt)  *(.igot.plt) } :data
+
+	__got_end__ = .;
+
+	.data ALIGN(8) :
+	{
+		*(.data .data.* .gnu.linkonce.d.*)
+		SORT(CONSTRUCTORS)
+	} :data
 
 	__bss_start__ = .;
-	.bss ALIGN(4) :
+	.bss ALIGN(8) :
 	{
 		*(.dynbss)
-		*(.bss)
-		*(.bss.*)
-		*(.gnu.linkonce.b*)
+		*(.bss .bss.* .gnu.linkonce.b.*)
 		*(COMMON)
-		. = ALIGN(4);
+		. = ALIGN(8);
 
 		/* Reserve space for the TLS segment of the main thread */
 		__tls_start = .;

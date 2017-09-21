@@ -1,7 +1,7 @@
 %rename link                old_link
 
 *link:
-%(old_link) -T switch.ld%s -d --gc-sections
+%(old_link) -T switch.ld%s -pie --gc-sections -z text
 
 *startfile:
 switch_crt0%O%s crti%O%s crtbegin%O%s
