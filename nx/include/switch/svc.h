@@ -52,6 +52,7 @@ Result svcConnectToNamedPort(Handle* session, const char* name);
 Result svcSendSyncRequest(Handle session);
 Result svcBreak(u32 breakReason, u64 inval1, u64 inval2);
 Result svcGetInfo(u64* out, u64 id0, Handle handle, u64 id1);
+Result svcCreateSession(Handle *server_handle, Handle *client_handle, u32 unk0, u64 unk1);//unk* are normally 0?
 Result svcAcceptSession(Handle *session_handle, Handle port_handle);
 Result svcReplyAndReceive(s32* index, const Handle* handles, s32 handleCount, Handle replyTarget, u64 timeout);
 Result svcQueryPhysicalAddress(u64 out[3], u64 virtaddr);

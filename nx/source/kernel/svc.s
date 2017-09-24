@@ -84,6 +84,16 @@ SVC_BEGIN svcGetInfo
 	ret
 SVC_END
 
+SVC_BEGIN svcCreateSession
+	stp x0, x1, [sp, #-16]!
+	svc 0x40
+	ldr x3, [sp], #8
+	str w1, [x3]
+	ldr x3, [sp], #8
+	str w2, [x3]
+	ret
+SVC_END
+
 SVC_BEGIN svcAcceptSession
 	str x0, [sp, #-16]!
 	svc 0x41
