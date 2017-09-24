@@ -15,6 +15,7 @@ extern "C" {
 #include <switch/heap.h>
 
 #include <switch/kernel/tmem.h>
+#include <switch/kernel/mutex.h>
 
 #include <switch/services/sm.h>
 #include <switch/services/bsd.h>

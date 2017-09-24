@@ -58,6 +58,14 @@ SVC_BEGIN svcWaitSynchronization
 	ret
 SVC_END
 
+SVC_BEGIN svcArbitrateLock
+    svc 0x1a
+SVC_END
+
+SVC_BEGIN svcArbitrateUnlock
+    svc 0x1b
+SVC_END
+
 SVC_BEGIN svcConnectToNamedPort
 	str x0, [sp, #-16]!
 	svc 0x1F
