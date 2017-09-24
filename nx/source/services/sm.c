@@ -3,6 +3,10 @@
 
 static Handle g_smHandle = -1;
 
+bool smHasInitialized() {
+    return g_smHandle != -1;
+}
+
 Result smInitialize() {
     Result rc = svcConnectToNamedPort(&g_smHandle, "sm:");
     Handle tmp;

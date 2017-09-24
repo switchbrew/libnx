@@ -18,6 +18,7 @@ extern "C" {
 
 #include <switch/services/sm.h>
 #include <switch/services/bsd.h>
+#include <switch/services/fatal.h>
 
 #ifdef __cplusplus
 }

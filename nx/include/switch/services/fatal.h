@@ -1,0 +1,1 @@
+void fatalSimple(Result err);

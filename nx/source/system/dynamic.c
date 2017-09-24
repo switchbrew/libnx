@@ -1,4 +1,4 @@
-#include <switch/types.h>
+#include <switch.h>
 #include <elf.h>
 
 void __nx_dynamic(uintptr_t base, const Elf64_Dyn* dyn)
@@ -20,7 +20,7 @@ void __nx_dynamic(uintptr_t base, const Elf64_Dyn* dyn)
 	}
 
 	if (rela == NULL)
-		for (;;); // Panic
+		fatalSimple(MAKERESULT(MODULE_LIBNX, MODULE_BADRELOC));
 
 	for (; relasz--; rela++)
 	{
