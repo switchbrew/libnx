@@ -156,9 +156,21 @@ static inline void* ipcPrepareHeader(IpcCommand* cmd, size_t sizeof_raw) {
     u32* raw = (u32*) (buf + padding);
 
     size_t raw_size = (sizeof_raw/4) + 4;
-    raw_size += ((cmd->NumStaticOut*2) + 3)/4; // todo: these contain u16 lengths for StaticOuts
-
     buf += raw_size;
+
+    u16* buf_u16 = (u16*) buf;
+
+    for (i=0; i<cmd->NumStaticOut; i++) {
+        size_t off = cmd->NumStaticIn + i;
+        size_t sz = (uintptr_t) cmd->StaticSizes[off];
+
+        buf_u16[i] = (sz > 0xFFFF) ? 0 : sz;
+    }
+
+    size_t u16s_size = ((2*cmd->NumStaticOut) + 3)/4;
+    buf += u16s_size;
+    raw_size += u16s_size;
+
     *fill_in_size_later |= raw_size;
 
     for (i=0; i<cmd->NumStaticOut; i++, buf+=2) {
@@ -219,7 +231,7 @@ static inline Result ipcParseResponse(IpcCommandResponse* r) {
             num_handles = 8;
 
         for (i=0; i<num_handles; i++)
-            r->Handles[i] = *(buf-i-1);
+            r->Handles[i] = *(buf-num_handles+i);
 
         r->NumHandles = num_handles;
     }
