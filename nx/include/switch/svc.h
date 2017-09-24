@@ -48,6 +48,8 @@ Result svcSleepThread(u64 nano);
 Result svcCloseHandle(Handle handle);
 Result svcCreateTransferMemory(Handle* out, void* addr, size_t size, u32 perm);
 Result svcWaitSynchronization(s32* index, const Handle* handles, s32 handleCount, u64 timeout);
+Result svcArbitrateLock(u32 wait_tag, u32* tag_location, u32 self_tag);
+Result svcArbitrateUnlock(u32* tag_location);
 Result svcConnectToNamedPort(Handle* session, const char* name);
 Result svcSendSyncRequest(Handle session);
 Result svcBreak(u32 breakReason, u64 inval1, u64 inval2);
