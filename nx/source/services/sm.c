@@ -8,6 +8,8 @@ bool smHasInitialized() {
 }
 
 Result smInitialize() {
+    if(smHasInitialized())return 0;
+
     Result rc = svcConnectToNamedPort(&g_smHandle, "sm:");
     Handle tmp;
 
