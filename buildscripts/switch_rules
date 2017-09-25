@@ -11,7 +11,7 @@ LIBNX	?=	$(DEVKITPRO)/libnx
 #---------------------------------------------------------------------------------
 %.pfs0: %.nso
 	@mkdir -p exefs
-	@cp -R $(BUILD_EXEFS_SRC)/* exefs/
+	@[ -d $(BUILD_EXEFS_SRC) ] && cp -R $(BUILD_EXEFS_SRC)/* exefs || echo > /dev/null
 	@cp $< exefs/main
 	@build_pfs0 exefs $@
 	@echo built ... $(notdir $@)
