@@ -7,36 +7,34 @@ Result fsInitialize() {
     Result rc = smGetService(&g_fsHandle, "fsp-srv");
 
     if (R_SUCCEEDED(rc)) {
+        IpcCommand c;
+        ipcInitialize(&c);
+        ipcSendPid(&c);
+
+        struct {
+            u64 magic;
+            u64 cmd_id;
+            u64 unk;
+        } *raw;
+
+        raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+        raw->magic = SFCI_MAGIC;
+        raw->cmd_id = 1;
+        raw->unk = 0;
+
+        rc = ipcDispatch(g_fsHandle);
+
         if (R_SUCCEEDED(rc)) {
-            IpcCommand c;
-            ipcInitialize(&c);
-            ipcSendPid(&c);
+            IpcCommandResponse r;
+            ipcParseResponse(&r);
 
             struct {
                 u64 magic;
-                u64 cmd_id;
-                u64 unk;
-            } *raw;
+                u64 result;
+            } *resp = r.Raw;
 
-            raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-            raw->magic = SFCI_MAGIC;
-            raw->cmd_id = 1;
-            raw->unk = 0;
-
-            rc = ipcDispatch(g_fsHandle);
-
-            if (R_SUCCEEDED(rc)) {
-                IpcCommandResponse r;
-                ipcParseResponse(&r);
-
-                struct {
-                    u64 magic;
-                    u64 result;
-                } *resp = r.Raw;
-
-                rc = resp->result;
-            }
+            rc = resp->result;
         }
     }
 

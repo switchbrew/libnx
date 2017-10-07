@@ -13,12 +13,12 @@ void mutexLock(Mutex* m) {
     u32 self = _GetTag();
     u32 cur = __sync_val_compare_and_swap(&m->Tag, 0, self);
 
-    if (cur == 0) {
-        // We won the race!
-        return;
-    }
-
     while (1) {
+        if (cur == 0) {
+            // We won the race!
+            return;
+        }
+
         if ((cur &~ HAS_LISTENERS) == self) {
             // Kernel assigned it to us!
             return;
@@ -39,11 +39,6 @@ void mutexLock(Mutex* m) {
         }
 
         cur = __sync_val_compare_and_swap(&m->Tag, 0, self);
-
-        if (cur == 0) {
-            // We won the race!
-            return;
-        }
     }
 }
 
