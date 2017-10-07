@@ -18,5 +18,7 @@
 #define MAKERESULT(module,description) \
     ((((module)&0x1FF)) | ((description)&0x1FFF)<<9)
 
-#define MODULE_LIBNX    345
-#define MODULE_BADRELOC   1
+#define MODULE_LIBNX       345
+#define LIBNX_BADRELOC       1
+#define LIBNX_OUTOFMEM       2
+#define LIBNX_ALREADYMAPPED  3

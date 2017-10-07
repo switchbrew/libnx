@@ -20,7 +20,7 @@ void __nx_dynamic(uintptr_t base, const Elf64_Dyn* dyn)
 	}
 
 	if (rela == NULL)
-		fatalSimple(MAKERESULT(MODULE_LIBNX, MODULE_BADRELOC));
+		fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_BADRELOC));
 
 	for (; relasz--; rela++)
 	{

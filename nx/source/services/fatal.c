@@ -27,7 +27,7 @@ void fatalSimple(Result err) {
             raw = ipcPrepareHeader(&c, sizeof(*raw));
 
             raw->magic = SFCI_MAGIC;
-            raw->cmd_id = 1;
+            raw->cmd_id = 0;
             raw->result = err;
             raw->unknown = 0;
 

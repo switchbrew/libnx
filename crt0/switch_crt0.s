@@ -31,11 +31,11 @@ bss_loop:
 
     // initialize system
     mov  x0, x28
-    bl   __nx_init
+    bl   __libnx_init
 
     // call entrypoint
     mov  x0, #0 // argc
     mov  x1, #0 // argv
-    adrp x30, __nx_exit
-    add  x30, x30, #:lo12:__nx_exit
+    adrp x30, __libnx_exit
+    add  x30, x30, #:lo12:__libnx_exit
     b    main

@@ -1,14 +1,16 @@
 typedef struct {
-    Handle MemHandle;
-    size_t Size;
+    Handle      MemHandle;
+    size_t      Size;
+    Permission  Perm;
+    void*       SourceAddr;
+    void*       MappedAddr;
 } TransferMemory;
 
-typedef enum {
-    PERM_NONE = 0,
-    PERM_R    = 1,
-    PERM_RW   = 3
-} Permission;
-
 Result tmemCreate(TransferMemory* t, size_t size, Permission perm);
-Result tmemClose(TransferMemory* t);
+void   tmemLoadRemote(TransferMemory* t, Handle handle, size_t size, Permission perm);
 
+Result tmemMap(TransferMemory* t);
+Result tmemUnmap(TransferMemory* t);
+void*  tmemGetAddr(TransferMemory* t);
+
+Result tmemClose(TransferMemory* t);

@@ -118,6 +118,16 @@ SVC_BEGIN svcReplyAndReceive
 	ret
 SVC_END
 
+SVC_BEGIN svcMapTransferMemory
+	svc 0x51
+	ret
+SVC_END
+
+SVC_BEGIN svcUnmapTransferMemory
+	svc 0x52
+	ret
+SVC_END
+
 SVC_BEGIN svcQueryPhysicalAddress
 	str x0, [sp, #-16]!
 	svc 0x54

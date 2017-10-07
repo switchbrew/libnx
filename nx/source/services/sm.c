@@ -49,13 +49,11 @@ Result smInitialize() {
     return rc;
 }
 
-void smExit(void)
-{
-	if(smHasInitialized())
-	{
-		svcCloseHandle(g_smHandle);
-		g_smHandle = -1;
-	}
+void smExit(void) {
+    if(smHasInitialized()) {
+        svcCloseHandle(g_smHandle);
+        g_smHandle = -1;
+    }
 }
 
 static u64 _EncodeName(const char* name) {

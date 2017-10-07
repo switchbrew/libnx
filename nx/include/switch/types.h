@@ -43,6 +43,14 @@ typedef u32 Result;                 ///< Function result.
 typedef void (*ThreadFunc)(void *); ///< Thread entrypoint function.
 typedef void (*voidfn)(void);
 
+typedef enum {
+    PERM_NONE = 0,
+    PERM_R    = 1,
+    PERM_W    = 2,
+    PERM_RW   = PERM_R | PERM_W,
+    PERM_DONTCARE = 0x10000000
+} Permission;
+
 /// Creates a bitmask from a bit number.
 #define BIT(n) (1U<<(n))
 
@@ -50,6 +58,9 @@ typedef void (*voidfn)(void);
 #define ALIGN(m)   __attribute__((aligned(m)))
 /// Packs a struct (and other types?) so it won't include padding bytes.
 #define PACKED     __attribute__((packed))
+
+#define NORETURN   __attribute__((noreturn))
+#define IGNORE_ARG(x) (void)(x)
 
 #ifndef LIBCTRU_NO_DEPRECATION
 /// Flags a function as deprecated.
@@ -59,3 +70,4 @@ typedef void (*voidfn)(void);
 #define DEPRECATED
 #endif
 
+#define INVALID_HANDLE ((Handle) -1)

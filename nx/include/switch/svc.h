@@ -29,8 +29,7 @@ typedef struct {
 	u32 padding;
 } MemInfo;
 
-typedef struct _regs_t
-{
+typedef struct {
 	u64 X0;
 	u64 X1;
 	u64 X2;
@@ -39,11 +38,11 @@ typedef struct _regs_t
 	u64 X5;
 	u64 X6;
 	u64 X7;
-} __attribute__((packed)) regs_t;
+} __attribute__((packed)) SecmonArgs;
 
 Result svcSetHeapSize(void** out_addr, u64 size);
 Result svcQueryMemory(MemInfo* meminfo_ptr, u32 *pageinfo, u64 addr);
-void svcExitProcess() __attribute__((noreturn));
+void NORETURN svcExitProcess();
 Result svcSleepThread(u64 nano);
 Result svcCloseHandle(Handle handle);
 Result svcCreateTransferMemory(Handle* out, void* addr, size_t size, u32 perm);
@@ -57,6 +56,8 @@ Result svcGetInfo(u64* out, u64 id0, Handle handle, u64 id1);
 Result svcCreateSession(Handle *server_handle, Handle *client_handle, u32 unk0, u64 unk1);//unk* are normally 0?
 Result svcAcceptSession(Handle *session_handle, Handle port_handle);
 Result svcReplyAndReceive(s32* index, const Handle* handles, s32 handleCount, Handle replyTarget, u64 timeout);
+Result svcMapTransferMemory(Handle tmem_handle, void* addr, size_t size, u32 perm);
+Result svcUnmapTransferMemory(Handle tmem_handle, void* addr, size_t size);
 Result svcQueryPhysicalAddress(u64 out[3], u64 virtaddr);
 Result svcQueryIoMapping(u64* virtaddr, u64 physaddr, u64 size);
 Result svcCreateDeviceAddressSpace(Handle *handle, u64 dev_addr, u64 dev_size);
@@ -69,4 +70,4 @@ Result svcContinueDebugEvent(Handle debug, u32 flags, u64 unk);
 Result svcQueryDebugProcessMemory(MemInfo* meminfo_ptr, u32* pageinfo, Handle debug, u64 addr);
 Result svcReadDebugProcessMemory(void* buffer, Handle debug, u64 addr, u64 size);
 Result svcManageNamedPort(Handle* portServer, const char* name, s32 maxSessions);
-u64 svcCallSecureMonitor(regs_t *regs);
+u64 svcCallSecureMonitor(SecmonArgs* regs);
