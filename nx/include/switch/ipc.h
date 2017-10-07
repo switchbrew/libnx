@@ -8,13 +8,13 @@ typedef struct {
     size_t NumSend; // A
     size_t NumRecv; // B
     size_t NumTransfer; // W
-    void*  Buffers[4];
+    const void* Buffers[4];
     size_t BufferSizes[4];
     u8     Flags[4];
 
     size_t NumStaticIn;  // X
     size_t NumStaticOut; // C
-    void*  Statics[4];
+    const void* Statics[4];
     size_t StaticSizes[4];
     u8     Indices[4];
 
@@ -53,7 +53,7 @@ typedef struct {
     u32 Packed;
 } IpcStaticRecvDescriptor;
 
-static inline void ipcAddSendBuffer(IpcCommand* cmd, void* buffer, size_t size, u8 flags) {
+static inline void ipcAddSendBuffer(IpcCommand* cmd, const void* buffer, size_t size, u8 flags) {
     size_t off = cmd->NumSend;
     cmd->Buffers[off] = buffer;
     cmd->BufferSizes[off] = size;
@@ -77,7 +77,7 @@ static inline void ipcAddTransferBuffer(IpcCommand* cmd, void* buffer, size_t si
     cmd->NumTransfer++;
 }
 
-static inline void ipcAddSendStatic(IpcCommand* cmd, void* buffer, size_t size, u8 index) {
+static inline void ipcAddSendStatic(IpcCommand* cmd, const void* buffer, size_t size, u8 index) {
     size_t off = cmd->NumStaticIn;
     cmd->Statics[off] = buffer;
     cmd->StaticSizes[off] = size;

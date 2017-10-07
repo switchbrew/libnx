@@ -19,6 +19,7 @@ extern "C" {
 #include <switch/kernel/virtmem.h>
 
 #include <switch/services/sm.h>
+#include <switch/services/fs.h>
 #include <switch/services/bsd.h>
 #include <switch/services/fatal.h>
 #include <switch/services/vi.h>
