@@ -22,3 +22,5 @@
 #define LIBNX_BADRELOC       1
 #define LIBNX_OUTOFMEM       2
 #define LIBNX_ALREADYMAPPED  3
+#define LIBNX_BADGETINFO     4
+#define LIBNX_BADQUERYMEMORY 5
