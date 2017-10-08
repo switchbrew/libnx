@@ -15,6 +15,7 @@ enum {
 static VirtualRegion g_AddressSpace;
 static VirtualRegion g_Region[REGION_MAX];
 static u64 g_CurrentAddr;
+static u64 g_CurrentMapAddr;
 
 static Result _GetRegionFromInfo(VirtualRegion* r, u64 id0_addr, u32 id0_sz) {
     u64 base;
@@ -124,6 +125,56 @@ void* virtmemReserve(size_t size) {
 }
 
 void  virtmemFree(void* addr, size_t size) {
+    IGNORE_ARG(addr);
+    IGNORE_ARG(size);
+}
+
+void* virtmemReserveMap(size_t size)
+{
+    Result  rc;
+    MemInfo meminfo;
+    u32     pageinfo;
+
+    size = (size + 0xFFF) &~ 0xFFF;
+
+    u64 addr = g_CurrentMapAddr;
+    while (1)
+    {
+        // Add a guard page.
+        addr += 0x1000;
+
+        // Make sure we stay inside the reserved map region.
+        if (!_InRegion(&g_Region[REGION_MAP], addr)) {
+            addr = g_Region[REGION_MAP].start;
+        }
+
+        // Query information about address.
+        rc = svcQueryMemory(&meminfo, &pageinfo, addr);
+
+        if (R_FAILED(rc)) {
+            fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_BADQUERYMEMORY));
+        }
+
+        if (meminfo.memorytype != 0) {
+            // Address is already taken, let's move past it.
+            addr = meminfo.base_addr + meminfo.size;
+            continue;
+        }
+
+        if (size > meminfo.size) {
+            // We can't fit in this region, let's move past it.
+            addr = meminfo.base_addr + meminfo.size;
+            continue;
+        }
+
+        break;
+    }
+
+    g_CurrentMapAddr = addr + size;
+    return (void*) addr;
+}
+
+void  virtmemFreeMap(void* addr, size_t size) {
     IGNORE_ARG(addr);
     IGNORE_ARG(size);
 }

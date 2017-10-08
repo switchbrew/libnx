@@ -19,6 +19,16 @@ SVC_BEGIN svcSetHeapSize
 	ret
 SVC_END
 
+SVC_BEGIN svcMapMemory
+	svc 0x4
+	ret
+SVC_END
+
+SVC_BEGIN svcUnmapMemory
+	svc 0x5
+	ret
+SVC_END
+
 SVC_BEGIN svcQueryMemory
 	str x1, [sp, #-16]!
 	svc 0x6
@@ -29,6 +39,25 @@ SVC_END
 
 SVC_BEGIN svcExitProcess
 	svc  0x7
+	ret
+SVC_END
+
+SVC_BEGIN svcCreateThread
+    str x0, [sp, #-16]!
+	svc 0x8
+    ldr x2, [sp]
+    str w1, [x2]
+    add sp, sp, #16
+	ret
+SVC_END
+
+SVC_BEGIN svcStartThread
+	svc  0x9
+	ret
+SVC_END
+
+SVC_BEGIN svcExitThread
+	svc  0xA
 	ret
 SVC_END
 

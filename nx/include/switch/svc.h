@@ -41,8 +41,13 @@ typedef struct {
 } __attribute__((packed)) SecmonArgs;
 
 Result svcSetHeapSize(void** out_addr, u64 size);
+Result svcMapMemory(void* dst_addr, void* src_addr, u64 size);
+Result svcUnmapMemory(void* dst_addr, void* src_addr, u64 size);
 Result svcQueryMemory(MemInfo* meminfo_ptr, u32 *pageinfo, u64 addr);
 void NORETURN svcExitProcess();
+Result svcCreateThread(Handle* out, void* entry, void* arg, void* stack_top, int prio, int cpuid);
+Result svcStartThread(Handle handle);
+void NORETURN svcExitThread();
 Result svcSleepThread(u64 nano);
 Result svcCloseHandle(Handle handle);
 Result svcCreateTransferMemory(Handle* out, void* addr, size_t size, u32 perm);
