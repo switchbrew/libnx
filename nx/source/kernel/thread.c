@@ -1,5 +1,6 @@
 // Copyright 2017 plutoo
 #include <switch.h>
+#include <malloc.h>
 
 static void _EntryWrap(Thread* t) {
     t->entry(t->arg);
@@ -11,7 +12,7 @@ Result threadCreate(
     int cpuid)
 {
     Result rc = 0;
-    void*  stack = heapAllocPages(stack_sz);
+    void*  stack = memalign(0x1000, stack_sz);
 
     if (stack == NULL) {
         rc = MAKERESULT(MODULE_LIBNX, LIBNX_OUTOFMEM);
@@ -47,7 +48,7 @@ Result threadCreate(
 
         if (R_FAILED(rc)) {
             virtmemFreeMap(stack_mirror, stack_sz);
-            //heapFree(stack);
+            free(stack);
         }
     }
 
@@ -69,7 +70,7 @@ Result threadClose(Thread* t) {
 
     rc = svcUnmapMemory(t->stack_mirror, t->stack_mem, t->stack_sz);
     virtmemFreeMap(t->stack_mirror, t->stack_sz);
-    //heapFree(t->stack);
+    free(t->stack_mem);
     svcCloseHandle(t->handle);
 
     return rc;

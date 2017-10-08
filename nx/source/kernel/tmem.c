@@ -1,5 +1,6 @@
 // Copyright 2017 plutoo
 #include <switch.h>
+#include <malloc.h>
 
 Result tmemCreate(TransferMemory* t, size_t size, Permission perm)
 {
@@ -9,7 +10,7 @@ Result tmemCreate(TransferMemory* t, size_t size, Permission perm)
     t->Size = size;
     t->Perm = perm;
     t->MappedAddr = NULL;
-    t->SourceAddr = heapAllocPages(size);
+    t->SourceAddr = memalign(0x1000, size);
 
     if (t->SourceAddr == NULL) {
         rc = MAKERESULT(MODULE_LIBNX, LIBNX_OUTOFMEM);
@@ -77,8 +78,7 @@ Result tmemClose(TransferMemory* t)
     Result rc = 0;
 
     if (t->SourceAddr != NULL) {
-        // todo: Free is currently broken for page-aligned allocs.
-        //heapFree(t->SourceAddr);
+        free(t->SourceAddr);
     }
 
     if (t->MappedAddr != NULL) {
