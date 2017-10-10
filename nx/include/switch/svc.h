@@ -49,6 +49,7 @@ Result svcCreateThread(Handle* out, void* entry, void* arg, void* stack_top, int
 Result svcStartThread(Handle handle);
 void NORETURN svcExitThread();
 Result svcSleepThread(u64 nano);
+Result svcClearEvent(Handle handle);
 Result svcCloseHandle(Handle handle);
 Result svcCreateTransferMemory(Handle* out, void* addr, size_t size, u32 perm);
 Result svcWaitSynchronization(s32* index, const Handle* handles, s32 handleCount, u64 timeout);

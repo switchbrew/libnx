@@ -66,6 +66,11 @@ SVC_BEGIN svcSleepThread
 	ret
 SVC_END
 
+SVC_BEGIN svcClearEvent
+	svc 0x12
+	ret
+SVC_END
+
 SVC_BEGIN svcCloseHandle
 	svc 0x16
 	ret

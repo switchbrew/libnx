@@ -13,7 +13,7 @@ static Result _viGetSession(Handle sessionhandle, Handle* handle_out, void* inra
 static Result _viGetSessionNoParams(Handle sessionhandle, Handle* handle_out, u64 cmd_id);
 
 Result viInitialize(viServiceType servicetype) {
-    if(g_viServiceType!=-1)return -1;
+    if(g_viServiceType!=-1)return MAKERESULT(MODULE_LIBNX, LIBNX_ALREADYINITIALIZED);
 
     Result rc = 0;
 
