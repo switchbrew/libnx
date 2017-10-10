@@ -193,7 +193,11 @@ void usbDsExit(void);
 Handle usbDsGetServiceSession(void);
 Handle usbDsGetStateChangeEvent(void);
 
+Result usbDsGetState(u32 *out);
 Result usbDsGetDsInterface(UsbDsInterface** interface, struct usb_interface_descriptor* descriptor, const char *interface_name);
+
+/// Wait for initialization to finish where data-transfer is usable.
+Result usbDsWaitReady(void);
 
 /// IDsInterface
 void usbDsInterface_Close(UsbDsInterface* interface);

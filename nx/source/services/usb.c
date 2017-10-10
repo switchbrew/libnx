@@ -271,6 +271,59 @@ static Result _usbDsGetEvent(Handle sessionhandle, Handle* handle_out, u64 cmd_i
     return rc;
 }
 
+Result usbDsGetState(u32 *out) {
+    if(g_usbDsServiceSession==0)return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 4;
+
+    Result rc = ipcDispatch(g_usbDsServiceSession);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcCommandResponse r;
+        ipcParseResponse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u32 out;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+        if (R_SUCCEEDED(rc) && out)*out = resp->out;
+    }
+
+    return rc;
+}
+
+Result usbDsWaitReady(void) {
+    Result rc = 0;
+    u32 state=0;
+    s32 tmpindex = 0;
+
+    rc = usbDsGetState(&state);
+    if (R_FAILED(rc)) return rc;
+
+    while(R_SUCCEEDED(rc) && state!=5)
+    {
+        svcWaitSynchronization(&tmpindex, &g_usbDsStateChangeEvent, 1, U64_MAX);
+        svcClearEvent(g_usbDsStateChangeEvent);
+        rc = usbDsGetState(&state);
+    }
+
+    return rc;
+}
+
 static Result _usbDsSetVidPidBcd(const usbDsDeviceInfo* deviceinfo) {
     if(g_usbDsServiceSession==0)return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
 
