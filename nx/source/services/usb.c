@@ -382,7 +382,7 @@ static Result _usbDsCmdNoParams(Handle sessionhandle, u64 cmd_id) {
 static Result _usbDsPostBuffer(Handle sessionhandle, u64 cmd_id, void* buffer, size_t size, u32 *out) {
     if(sessionhandle==0)return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
 
-    //TODO: Add dache-flush code here, breaks otherwise.
+    osDCacheFlush(buffer, size);
 
     IpcCommand c;
     ipcInitialize(&c);
