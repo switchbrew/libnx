@@ -24,7 +24,7 @@ VERSION	:=	$(LIBNX_MAJOR).$(LIBNX_MINOR).$(LIBNX_PATCH)
 #---------------------------------------------------------------------------------
 TARGET		:=	nx
 #BUILD		:=	build
-SOURCES		:=	source/system source/kernel source/services
+SOURCES		:=	source/system source/kernel source/services source/devices
 
 DATA		:=	data
 INCLUDES	:=	include
