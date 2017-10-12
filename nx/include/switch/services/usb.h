@@ -214,6 +214,6 @@ Result usbDsInterface_StallCtrl(UsbDsInterface* interface);
 
 void usbDsEndpoint_Close(UsbDsEndpoint* endpoint);
 Result usbDsEndpoint_PostBufferAsync(UsbDsEndpoint* endpoint, void* buffer, size_t size, u32 *out);
-Result usbDsEndpoint_GetCtrlOutReportData(UsbDsEndpoint* endpoint, u8 out[0x84]);
+Result usbDsEndpoint_GetReportData(UsbDsEndpoint* endpoint, u8 out[0x84]);
 Result usbDsEndpoint_StallCtrl(UsbDsEndpoint* endpoint);
 

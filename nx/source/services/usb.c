@@ -614,7 +614,7 @@ Result usbDsEndpoint_PostBufferAsync(UsbDsEndpoint* endpoint, void* buffer, size
 	return _usbDsPostBuffer(endpoint->h, 0, buffer, size, out);
 }
 
-Result usbDsEndpoint_GetCtrlOutReportData(UsbDsEndpoint* endpoint, u8 out[0x84])
+Result usbDsEndpoint_GetReportData(UsbDsEndpoint* endpoint, u8 out[0x84])
 {
         if(!endpoint->initialized)return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
 
