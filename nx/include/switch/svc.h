@@ -19,25 +19,18 @@ static inline void* armGetTls(void) {
 }
 
 typedef struct {
-	u64 base_addr;
-	u64 size;
-	u32 memorytype;
-	u32 memoryattribute;
-	u32 perm;
-	u32 devicerefcount;
-	u32 ipcrefcount;
-	u32 padding;
+    u64 base_addr;
+    u64 size;
+    u32 memorytype;
+    u32 memoryattribute;
+    u32 perm;
+    u32 devicerefcount;
+    u32 ipcrefcount;
+    u32 padding;
 } MemInfo;
 
 typedef struct {
-	u64 X0;
-	u64 X1;
-	u64 X2;
-	u64 X3;
-	u64 X4;
-	u64 X5;
-	u64 X6;
-	u64 X7;
+    u64 X[8];
 } __attribute__((packed)) SecmonArgs;
 
 Result svcSetHeapSize(void** out_addr, u64 size);
@@ -51,6 +44,8 @@ void NORETURN svcExitThread();
 Result svcSleepThread(u64 nano);
 Result svcClearEvent(Handle handle);
 Result svcCloseHandle(Handle handle);
+Result svcMapSharedMemory(Handle handle, void* addr, size_t size, u32 perm);
+Result svcUnmapSharedMemory(Handle handle, void* addr, size_t size);
 Result svcCreateTransferMemory(Handle* out, void* addr, size_t size, u32 perm);
 Result svcWaitSynchronization(s32* index, const Handle* handles, s32 handleCount, u64 timeout);
 Result svcArbitrateLock(u32 wait_tag, u32* tag_location, u32 self_tag);
@@ -62,6 +57,7 @@ Result svcGetInfo(u64* out, u64 id0, Handle handle, u64 id1);
 Result svcCreateSession(Handle *server_handle, Handle *client_handle, u32 unk0, u64 unk1);//unk* are normally 0?
 Result svcAcceptSession(Handle *session_handle, Handle port_handle);
 Result svcReplyAndReceive(s32* index, const Handle* handles, s32 handleCount, Handle replyTarget, u64 timeout);
+Result svcCreateSharedMemory(Handle* out, size_t size, u32 local_perm, u32 other_perm);
 Result svcMapTransferMemory(Handle tmem_handle, void* addr, size_t size, u32 perm);
 Result svcUnmapTransferMemory(Handle tmem_handle, void* addr, size_t size);
 Result svcQueryPhysicalAddress(u64 out[3], u64 virtaddr);

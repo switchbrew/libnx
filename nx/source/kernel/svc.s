@@ -71,8 +71,13 @@ SVC_BEGIN svcClearEvent
 	ret
 SVC_END
 
-SVC_BEGIN svcCloseHandle
-	svc 0x16
+SVC_BEGIN svcMapSharedMemory
+	svc 0x13
+	ret
+SVC_END
+
+SVC_BEGIN svcUnmapSharedMemory
+	svc 0x14
 	ret
 SVC_END
 
@@ -81,6 +86,11 @@ SVC_BEGIN svcCreateTransferMemory
 	svc 0x15
 	ldr x2, [sp], #16
 	str w1, [x2]
+	ret
+SVC_END
+
+SVC_BEGIN svcCloseHandle
+	svc 0x16
 	ret
 SVC_END
 
@@ -147,6 +157,14 @@ SVC_END
 SVC_BEGIN svcReplyAndReceive
 	str x0, [sp, #-16]!
 	svc 0x43
+	ldr x2, [sp], #16
+	str w1, [x2]
+	ret
+SVC_END
+
+SVC_BEGIN svcCreateSharedMemory
+	str x0, [sp, #-16]!
+	svc 0x50
 	ldr x2, [sp], #16
 	str w1, [x2]
 	ret

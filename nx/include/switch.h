@@ -15,6 +15,7 @@ extern "C" {
 #include <switch/os.h>
 
 #include <switch/kernel/tmem.h>
+#include <switch/kernel/shmem.h>
 #include <switch/kernel/mutex.h>
 #include <switch/kernel/thread.h>
 #include <switch/kernel/virtmem.h>
