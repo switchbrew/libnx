@@ -26,6 +26,10 @@ typedef enum {
 #define FS_MAX_PATH 0x301
 
 Result fsInitialize();
+void fsExit(void);
+
+Handle fsGetServiceSession(void);
+
 Result fsMountSdcard(FsFileSystem* out);
 // todo: Rest of commands here
 

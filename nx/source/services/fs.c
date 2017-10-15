@@ -1,9 +1,10 @@
 // Copyright 2017 plutoo
 #include <switch.h>
 
-static Handle g_fsHandle = -1;
+static Handle g_fsHandle = INVALID_HANDLE;
 
 Result fsInitialize() {
+    if(g_fsHandle != INVALID_HANDLE)return 0;
     Result rc = smGetService(&g_fsHandle, "fsp-srv");
 
     if (R_SUCCEEDED(rc)) {
@@ -39,6 +40,16 @@ Result fsInitialize() {
     }
 
     return rc;
+}
+
+void fsExit(void) {
+    if(g_fsHandle == INVALID_HANDLE)return;
+    svcCloseHandle(g_fsHandle);
+    g_fsHandle = INVALID_HANDLE;
+}
+
+Handle fsGetServiceSession(void) {
+    return g_fsHandle;
 }
 
 Result fsMountSdcard(FsFileSystem* out) {

@@ -31,11 +31,13 @@ void __attribute__((weak)) __appInit(void)
 {
     // Initialize default services.
     smInitialize();
+    fsInitialize();
 }
 
 void __attribute__((weak)) __appExit(void)
 {
     // Cleanup default services.
+    fsExit();
     smExit();
 }
 
