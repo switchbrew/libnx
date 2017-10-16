@@ -1,4 +1,5 @@
 /// Switch-as-device<>host USB comms for serial, uses usbDs. Do not directly use usbDs when using this.
+/// WARNING: This doesn't always work properly.
 
 /// usbDevInitialize will not return until the newline data transfer to the host finishes, aka when the host reads that data.
 Result usbDevInitialize(void);
