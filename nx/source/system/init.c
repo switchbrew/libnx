@@ -5,18 +5,19 @@ void __nx_exit(int rc);
 void virtmemSetup();
 void newlibSetup();
 
-static void _SetupHeap() {
-    #define INNER_HEAP_SIZE 0x20000
-    #define OUTER_HEAP_SIZE (0x2000000*4)
+#define INNER_HEAP_SIZE 0x20000
+__attribute__((weak)) size_t __nx_inner_heap_size = INNER_HEAP_SIZE;
+__attribute__((weak)) char __nx_inner_heap[INNER_HEAP_SIZE];
+__attribute__((weak)) size_t __nx_outer_heap_size = 0x2000000*4;//Must be a multiple of 0x2000000.
 
+static void _SetupHeap() {
     char* addr;
-    Result rc   = svcSetHeapSize((void**)&addr, OUTER_HEAP_SIZE);
-    size_t size = OUTER_HEAP_SIZE;
+    Result rc   = svcSetHeapSize((void**)&addr, __nx_outer_heap_size);
+    size_t size = __nx_outer_heap_size;
 
     if (R_FAILED(rc)) {
-        static char g_Heap[INNER_HEAP_SIZE];
-        addr = &g_Heap[0];
-        size = INNER_HEAP_SIZE;
+        addr = &__nx_inner_heap[0];
+        size = __nx_inner_heap_size;
     }
 
     // Multilib
