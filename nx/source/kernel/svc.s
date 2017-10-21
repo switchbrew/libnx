@@ -240,6 +240,14 @@ SVC_BEGIN svcContinueDebugEvent
 	ret
 SVC_END
 
+SVC_BEGIN svcGetProcessList
+	str x0, [sp, #-16]!
+	svc 0x65
+	ldr x2, [sp], #16
+	str w1, [x2]
+	ret
+SVC_END
+
 SVC_BEGIN svcQueryDebugProcessMemory
 	str x1, [sp, #-16]!
 	svc 0x69

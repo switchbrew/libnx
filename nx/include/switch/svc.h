@@ -69,6 +69,7 @@ Result svcMapDeviceAddressSpaceAligned(Handle handle, Handle proc_handle, u64 de
 Result svcUnmapDeviceAddressSpace(Handle handle, Handle proc_handle, u64 map_addr, u64 map_size, u64 perm);
 Result svcDebugActiveProcess(Handle* debug, u32 processID);
 Result svcContinueDebugEvent(Handle debug, u32 flags, u64 unk);
+Result svcGetProcessList(u32 *num_out, u64 *pids_out, u32 max_pids);
 Result svcQueryDebugProcessMemory(MemInfo* meminfo_ptr, u32* pageinfo, Handle debug, u64 addr);
 Result svcReadDebugProcessMemory(void* buffer, Handle debug, u64 addr, u64 size);
 Result svcManageNamedPort(Handle* portServer, const char* name, s32 maxSessions);
