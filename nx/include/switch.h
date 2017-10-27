@@ -26,6 +26,7 @@ extern "C" {
 #include <switch/services/bsd.h>
 #include <switch/services/fatal.h>
 #include <switch/services/usb.h>
+#include <switch/services/hid.h>
 #include <switch/services/vi.h>
 
 #include <switch/devices/usb_dev.h>

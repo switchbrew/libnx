@@ -34,11 +34,13 @@ void __attribute__((weak)) __appInit(void)
     smInitialize();
     fsInitialize();
     appletInitialize();
+    hidInitialize();
 }
 
 void __attribute__((weak)) __appExit(void)
 {
     // Cleanup default services.
+    hidExit();
     appletExit();
     fsExit();
     smExit();
