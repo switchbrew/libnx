@@ -33,11 +33,13 @@ void __attribute__((weak)) __appInit(void)
     // Initialize default services.
     smInitialize();
     fsInitialize();
+    appletInitialize();
 }
 
 void __attribute__((weak)) __appExit(void)
 {
     // Cleanup default services.
+    appletExit();
     fsExit();
     smExit();
 }
