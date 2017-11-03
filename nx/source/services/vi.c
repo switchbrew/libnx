@@ -175,7 +175,7 @@ Result viOpenDisplay(const char *DisplayName, viDisplay *display) {
 
     memset(display, 0, sizeof(viDisplay));
 
-    raw = ipcPrepareHeader(&c, sizeof(raw));
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 1010;
 
@@ -217,7 +217,7 @@ Result viCloseDisplay(viDisplay *display) {
         u64 DisplayId;
     } *raw;
 
-    raw = ipcPrepareHeader(&c, sizeof(raw));
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 1020;
     raw->DisplayId = display->DisplayId;
@@ -241,7 +241,6 @@ Result viCloseDisplay(viDisplay *display) {
     return rc;
 }
 
-//TODO: BROKEN
 static Result _viOpenLayer(u8 NativeWindow[0x100], u64 *NativeWindow_Size, const viDisplay *display, u64 LayerId, u64 AppletResourceUserId) {
     IpcCommand c;
     ipcInitialize(&c);
@@ -257,7 +256,7 @@ static Result _viOpenLayer(u8 NativeWindow[0x100], u64 *NativeWindow_Size, const
     ipcSendPid(&c);
     ipcAddRecvBuffer(&c, NativeWindow, 0x100, 0);
 
-    raw = ipcPrepareHeader(&c, sizeof(raw));
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 2020;
 
@@ -288,7 +287,6 @@ static Result _viOpenLayer(u8 NativeWindow[0x100], u64 *NativeWindow_Size, const
     return rc;
 }
 
-//TODO: BROKEN
 static Result _viCreateStrayLayer(u8 NativeWindow[0x100], u64 *NativeWindow_Size, const viDisplay *display, u32 LayerFlags, u64 *LayerId) {
     IpcCommand c;
     ipcInitialize(&c);
@@ -303,7 +301,7 @@ static Result _viCreateStrayLayer(u8 NativeWindow[0x100], u64 *NativeWindow_Size
 
     ipcAddRecvBuffer(&c, NativeWindow, 0x100, 0);
 
-    raw = ipcPrepareHeader(&c, sizeof(raw));
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 2030;
     raw->LayerFlags = LayerFlags;
@@ -371,7 +369,7 @@ Result viCloseLayer(viLayer *layer) {
         u64 LayerId;
     } *raw;
 
-    raw = ipcPrepareHeader(&c, sizeof(raw));
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = layer->StrayLayer==0 ? 2021 : 2031;
     raw->LayerId = layer->LayerId;
