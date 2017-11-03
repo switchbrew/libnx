@@ -309,3 +309,39 @@ static Result _appletNotifyRunning(u8 *out) {
     return rc;
 }
 
+Result appletCreateManagedDisplayLayer(u64 *out) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 40;
+
+    Result rc = ipcDispatch(g_appletISelfController);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcCommandResponse r;
+        ipcParseResponse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u64 out;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            *out = resp->out;
+        }
+    }
+
+    return rc;
+}
+

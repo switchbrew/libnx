@@ -31,6 +31,8 @@ extern "C" {
 
 #include <switch/devices/usb_dev.h>
 
+#include <switch/gfx/gfx.h>
+
 #ifdef __cplusplus
 }
 #endif

@@ -12,3 +12,5 @@ typedef enum
 Result appletInitialize(void);
 void appletExit(void);
 Result appletGetAppletResourceUserId(u64 *out);
+
+Result appletCreateManagedDisplayLayer(u64 *out);
