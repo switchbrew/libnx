@@ -241,6 +241,7 @@ Result viCloseDisplay(viDisplay *display) {
     return rc;
 }
 
+//TODO: BROKEN
 static Result _viOpenLayer(u8 NativeWindow[0x100], u64 *NativeWindow_Size, const viDisplay *display, u64 LayerId, u64 AppletResourceUserId) {
     IpcCommand c;
     ipcInitialize(&c);
@@ -287,6 +288,7 @@ static Result _viOpenLayer(u8 NativeWindow[0x100], u64 *NativeWindow_Size, const
     return rc;
 }
 
+//TODO: BROKEN
 static Result _viCreateStrayLayer(u8 NativeWindow[0x100], u64 *NativeWindow_Size, const viDisplay *display, u32 LayerFlags, u64 *LayerId) {
     IpcCommand c;
     ipcInitialize(&c);

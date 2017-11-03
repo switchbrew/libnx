@@ -26,7 +26,7 @@ static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 L
 
     if (R_SUCCEEDED(rc)) g_gfxInitialized = 1;
 
-    return 0;
+    return rc;
 }
 
 void gfxInitDefault(void) {
