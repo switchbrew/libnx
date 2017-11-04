@@ -73,4 +73,7 @@ Result svcGetProcessList(u32 *num_out, u64 *pids_out, u32 max_pids);
 Result svcQueryDebugProcessMemory(MemInfo* meminfo_ptr, u32* pageinfo, Handle debug, u64 addr);
 Result svcReadDebugProcessMemory(void* buffer, Handle debug, u64 addr, u64 size);
 Result svcManageNamedPort(Handle* portServer, const char* name, s32 maxSessions);
+Result svcMapProcessMemory(void* dst, Handle proc, u64 src, u64 size);
+Result svcCreateProcess(Handle* out, void* proc_info, u32* caps, u64 cap_num);
+Result svcStartProcess(Handle proc, s32 main_prio, s32 default_cpu, u32 stack_size);
 u64 svcCallSecureMonitor(SecmonArgs* regs);

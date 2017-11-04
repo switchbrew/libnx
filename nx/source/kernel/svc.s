@@ -269,6 +269,24 @@ SVC_BEGIN svcManageNamedPort
 	ret
 SVC_END
 
+SVC_BEGIN svcMapProcessMemory
+	svc 0x74
+	ret
+SVC_END
+
+SVC_BEGIN svcCreateProcess
+	str x0, [sp, #-16]!
+	svc 0x79
+	ldr x2, [sp], #16
+	str w1, [x2]
+	ret
+SVC_END
+
+SVC_BEGIN svcStartProcess
+	svc 0x7A
+	ret
+SVC_END
+
 SVC_BEGIN svcCallSecureMonitor
 	str x0, [sp, #-16]!
 	mov x8, x0
