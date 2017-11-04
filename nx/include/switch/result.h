@@ -28,3 +28,4 @@
 #define LIBNX_NOTINITIALIZED 7
 #define LIBNX_NOTFOUND       8
 #define LIBNX_IOERROR        9
+#define LIBNX_BADINPUT       10

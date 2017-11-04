@@ -340,6 +340,7 @@ Result viOpenLayer(u8 NativeWindow[0x100], u64 *NativeWindow_Size, const viDispl
     if (LayerId==0) rc = appletGetAppletResourceUserId(&AppletResourceUserId);
     if (LayerId==0 && (R_FAILED(rc) || AppletResourceUserId == 0)) {
         rc = _viCreateStrayLayer(NativeWindow, NativeWindow_Size, display, LayerFlags, &layer->LayerId);
+        if (R_SUCCEEDED(rc)) layer->StrayLayer = 1;
     }
     else {
         if (LayerId==0) {
