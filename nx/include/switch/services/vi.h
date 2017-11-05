@@ -22,6 +22,11 @@ typedef enum {
     VILAYERFLAGS_Default = 0x1,
 } viLayerFlags;
 
+/// Used with viSetLayerScalingMode.
+typedef enum {
+    VISCALINGMODE_Default = 0x2,
+} viScalingMode;
+
 Result viInitialize(viServiceType servicetype);
 void viExit(void);
 Handle viGetSessionService(void);
@@ -35,3 +40,8 @@ Result viOpenDisplay(const char *DisplayName, viDisplay *display);
 Result viCloseDisplay(viDisplay *display);
 Result viOpenLayer(u8 NativeWindow[0x100], u64 *NativeWindow_Size, const viDisplay *display, viLayer *layer, u32 LayerFlags, u64 LayerId);
 Result viCloseLayer(viLayer *layer);
+
+/// See viScalingMode.
+Result viSetLayerScalingMode(viLayer *layer, u32 ScalingMode);
+
+Result viGetDisplayVsyncEvent(viDisplay *display, Handle *handle_out);

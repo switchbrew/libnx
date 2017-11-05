@@ -305,6 +305,7 @@ static Result _viCreateStrayLayer(u8 NativeWindow[0x100], u64 *NativeWindow_Size
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 2030;
     raw->LayerFlags = LayerFlags;
+    raw->pad = 0;
     raw->DisplayId = display->DisplayId;
 
     Result rc = ipcDispatch(g_viIApplicationDisplayService);
@@ -389,6 +390,81 @@ Result viCloseLayer(viLayer *layer) {
         rc = resp->result;
 
         memset(layer, 0, sizeof(viLayer));
+    }
+
+    return rc;
+}
+
+Result viSetLayerScalingMode(viLayer *layer, u32 ScalingMode) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    if (!layer->initialized) return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 ScalingMode;
+        u32 pad;
+        u64 LayerId;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 2101;
+    raw->ScalingMode = ScalingMode;
+    raw->pad = 0;
+    raw->LayerId = layer->LayerId;
+
+    Result rc = ipcDispatch(g_viIApplicationDisplayService);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcCommandResponse r;
+        ipcParseResponse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result viGetDisplayVsyncEvent(viDisplay *display, Handle *handle_out) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 DisplayId;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 5202;
+    raw->DisplayId = display->DisplayId;
+
+    Result rc = ipcDispatch(g_viIApplicationDisplayService);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcCommandResponse r;
+        ipcParseResponse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            *handle_out = r.Handles[0];
+        }
     }
 
     return rc;

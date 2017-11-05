@@ -3,6 +3,7 @@
 
 static bool g_gfxInitialized = 0;
 static viDisplay g_gfxDisplay;
+static Handle g_gfxDisplayVsyncEvent = INVALID_HANDLE;
 static viLayer g_gfxLayer;
 static u8 g_gfxNativeWindow[0x100];
 static u64 g_gfxNativeWindow_Size;
@@ -30,13 +31,18 @@ static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 L
     if(g_gfxInitialized)return 0;
 
     g_gfxNativeWindow_ID = 0;
+    g_gfxDisplayVsyncEvent = INVALID_HANDLE;
 
     rc = viInitialize(servicetype);
     if (R_FAILED(rc)) return rc;
 
     rc = viOpenDisplay(DisplayName, &g_gfxDisplay);
 
+    if (R_SUCCEEDED(rc)) rc = viGetDisplayVsyncEvent(&g_gfxDisplay, &g_gfxDisplayVsyncEvent);
+
     if (R_SUCCEEDED(rc)) rc = viOpenLayer(g_gfxNativeWindow, &g_gfxNativeWindow_Size, &g_gfxDisplay, &g_gfxLayer, LayerFlags, LayerId);
+
+    if (R_SUCCEEDED(rc)) rc = viSetLayerScalingMode(&g_gfxLayer, VISCALINGMODE_Default);
 
     if (R_SUCCEEDED(rc)) rc = _gfxGetNativeWindowID(g_gfxNativeWindow, g_gfxNativeWindow_Size, &g_gfxNativeWindow_ID);
 
@@ -70,11 +76,23 @@ void gfxExit(void) {
     binderExitSession(&g_gfxBinderSession);
 
     viCloseLayer(&g_gfxLayer);
+
+    if(g_gfxDisplayVsyncEvent != INVALID_HANDLE) {
+        svcCloseHandle(g_gfxDisplayVsyncEvent);
+        g_gfxDisplayVsyncEvent = INVALID_HANDLE;
+    }
+
     viCloseDisplay(&g_gfxDisplay);
 
     viExit();
 
     g_gfxInitialized = 0;
     g_gfxNativeWindow_ID = 0;
+}
+
+void gfxWaitForVsync() {
+    s32 tmpindex=0;
+    svcClearEvent(g_gfxDisplayVsyncEvent);
+    svcWaitSynchronization(&tmpindex, &g_gfxDisplayVsyncEvent, 1, U64_MAX);
 }
 
