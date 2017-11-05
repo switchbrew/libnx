@@ -12,12 +12,6 @@
 /// Pseudo handle for the current thread
 #define CUR_THREAD_HANDLE 0xFFFF8000
 
-static inline void* armGetTls(void) {
-    void* ret;
-    __asm__ ("mrs %x[data], tpidrro_el0" : [data] "=r" (ret));
-    return ret;
-}
-
 typedef struct {
     u64 base_addr;
     u64 size;

@@ -11,7 +11,7 @@
 	.cfi_endproc
 .endm
 
-CODE_BEGIN osDCacheFlush
+CODE_BEGIN armDCacheFlush
 	add x1, x1, x0
 	mrs x8, CTR_EL0
 	lsr x8, x8, #16
@@ -22,11 +22,11 @@ CODE_BEGIN osDCacheFlush
 	bic x8, x0, x10
 	mov x10, x1
 
-osDCacheFlush_L0:
+armDCacheFlush_L0:
 	dc civac, x8
 	add x8, x8, x9
 	cmp x8, x10
-	bcc osDCacheFlush_L0
+	bcc armDCacheFlush_L0
 
 	dsb sy
 	ret
