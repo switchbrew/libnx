@@ -478,7 +478,7 @@ static Result _usbDsCmdNoParams(Handle sessionhandle, u64 cmd_id) {
 static Result _usbDsPostBuffer(Handle sessionhandle, u64 cmd_id, void* buffer, size_t size, u32 *urbId) {
     if(sessionhandle==0)return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
 
-    osDCacheFlush(buffer, size);
+    armDCacheFlush(buffer, size);
 
     IpcCommand c;
     ipcInitialize(&c);

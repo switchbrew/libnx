@@ -4,4 +4,4 @@ static inline void* armGetTls(void) {
     return ret;
 }
 
-void osDCacheFlush(void* addr, size_t size);
+void armDCacheFlush(void* addr, size_t size);
