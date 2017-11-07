@@ -29,3 +29,4 @@
 #define LIBNX_NOTFOUND       8
 #define LIBNX_IOERROR        9
 #define LIBNX_BADINPUT       10
+#define LIBNX_PARCEL_ERRBASE 100

@@ -1,3 +1,5 @@
+#define BINDER_FIRST_CALL_TRANSACTION 0x1
+
 typedef struct {
     bool initialized;
     Handle sessionhandle;

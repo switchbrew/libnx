@@ -2,3 +2,4 @@
 void gfxInitDefault(void);
 void gfxExit(void);
 void gfxWaitForVsync();
+void gfxSwapBuffers();

@@ -118,6 +118,11 @@ SVC_BEGIN svcConnectToNamedPort
 	ret
 SVC_END
 
+SVC_BEGIN svcGetSystemTick
+	svc 0x1E
+	ret
+SVC_END
+
 SVC_BEGIN svcSendSyncRequest
 	svc 0x21
 	ret

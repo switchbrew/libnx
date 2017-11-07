@@ -32,6 +32,8 @@ extern "C" {
 #include <switch/services/vi.h>
 
 #include <switch/gfx/gfx.h>
+#include <switch/gfx/parcel.h>
+#include <switch/gfx/gfxproducer.h>
 
 #ifdef __cplusplus
 }
