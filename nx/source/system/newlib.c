@@ -11,8 +11,10 @@ void newlibSetup() {
     __syscalls.exit = __libnx_exit;
 
     // Register locking syscalls
+    __syscalls.lock_init              = mutexInit;
     __syscalls.lock_acquire           = mutexLock;
     __syscalls.lock_release           = mutexUnlock;
+    __syscalls.lock_init_recursive    = rmutexInit;
     __syscalls.lock_acquire_recursive = rmutexLock;
     __syscalls.lock_release_recursive = rmutexUnlock;
 }
