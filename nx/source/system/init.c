@@ -63,7 +63,7 @@ void __attribute__((weak)) __libnx_init(void)
     __libc_init_array();
 }
 
-void __attribute__((weak)) NORETURN __libnx_exit(void)
+void __attribute__((weak)) NORETURN __libnx_exit(int rc)
 {
     // Call destructors.
     void __libc_fini_array(void);

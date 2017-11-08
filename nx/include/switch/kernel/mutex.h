@@ -1,13 +1,9 @@
 // Copyright 2017 plutoo
-typedef struct {
-    u32 Tag;
-} Mutex;
+#pragma once
+#include <sys/lock.h>
 
-typedef struct {
-    u32    Owner;
-    Mutex  Lock;
-    size_t Count;
-} RMutex;
+typedef _LOCK_T Mutex;
+typedef _LOCK_RECURSIVE_T RMutex;
 
 void mutexLock(Mutex* m);
 void mutexUnlock(Mutex* m);
