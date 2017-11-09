@@ -47,6 +47,7 @@ Result svcArbitrateUnlock(u32* tag_location);
 Result svcConnectToNamedPort(Handle* session, const char* name);
 u64    svcGetSystemTick(void);
 Result svcSendSyncRequest(Handle session);
+Result svcGetProcessId(u64 *processID, Handle handle);
 Result svcBreak(u32 breakReason, u64 inval1, u64 inval2);
 Result svcGetInfo(u64* out, u64 id0, Handle handle, u64 id1);
 Result svcCreateSession(Handle *server_handle, Handle *client_handle, u32 unk0, u64 unk1);//unk* are normally 0?
@@ -62,7 +63,7 @@ Result svcAttachDeviceAddressSpace(u64 device, Handle handle);
 Result svcDetachDeviceAddressSpace(u64 device, Handle handle);
 Result svcMapDeviceAddressSpaceAligned(Handle handle, Handle proc_handle, u64 dev_addr, u64 dev_size, u64 map_addr, u64 perm);
 Result svcUnmapDeviceAddressSpace(Handle handle, Handle proc_handle, u64 map_addr, u64 map_size, u64 perm);
-Result svcDebugActiveProcess(Handle* debug, u32 processID);
+Result svcDebugActiveProcess(Handle* debug, u64 processID);
 Result svcContinueDebugEvent(Handle debug, u32 flags, u64 unk);
 Result svcGetProcessList(u32 *num_out, u64 *pids_out, u32 max_pids);
 Result svcQueryDebugProcessMemory(MemInfo* meminfo_ptr, u32* pageinfo, Handle debug, u64 addr);
