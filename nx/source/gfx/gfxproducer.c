@@ -145,7 +145,7 @@ Result gfxproducerConnect(s32 api, bool producerControlledByApp) {
     rc = parcelTransact(g_gfxproducerBinderSession, CONNECT, &parcel, &parcel_reply);
     if (R_FAILED(rc)) return rc;
 
-    //TODO: parse reply
+    //TODO: parse reply (contains 32bit width and height)
 
     return 0;
 }

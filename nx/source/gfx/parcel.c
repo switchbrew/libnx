@@ -11,12 +11,11 @@ void parcelInitializeContext(parcelContext *ctx) {
     ctx->ParcelData_maxsize = sizeof(ctx->ParcelData);
 }
 
-//outparcel is allzero with this. This is presumably invalid?
-Result parcelTransact(binderSession *session, u32 code, parcelContext *in_parcel, parcelContext *out_parcel) {
+Result parcelTransact(binderSession *session, u32 code, parcelContext *in_parcel, parcelContext *parcel_reply) {
     Result rc=0;
     u8 inparcel[0x400];
-    static u8 outparcel[0x1000];
-    size_t outparcel_size = 0x1000;
+    u8 outparcel[0x400];
+    size_t outparcel_size = sizeof(outparcel);
     u32 *inparcel32 = (u32*)inparcel;
     u32 *outparcel32 = (u32*)outparcel;
     u32 ParcelDataSize = in_parcel->ParcelData_size;
@@ -42,24 +41,28 @@ Result parcelTransact(binderSession *session, u32 code, parcelContext *in_parcel
     if((size_t)outparcel32[2] >= outparcel_size || ((size_t)outparcel32[2])+((size_t)outparcel32[3]) >= outparcel_size) return MAKERESULT(MODULE_LIBNX, LIBNX_BADINPUT);
     if((size_t)outparcel32[0] >= outparcel_size || (size_t)outparcel32[3] >= outparcel_size) return MAKERESULT(MODULE_LIBNX, LIBNX_BADINPUT);
 
-    memcpy(out_parcel->ParcelData, &outparcel[outparcel32[1]], outparcel32[0]);
-    out_parcel->ParcelData_size = outparcel32[0];
+    memcpy(parcel_reply->ParcelData, &outparcel[outparcel32[1]], outparcel32[0]);
+    parcel_reply->ParcelData_size = outparcel32[0];
 
-    /*memcpy(&parcel_reply_log[parcel_reply_log_size], out_parcel, outparcel_size);
-    parcel_reply_log_size+= outparcel_size;*/
+    /*if(parcel_reply_log_size + sizeof(inparcel) + outparcel_size <= sizeof(parcel_reply_log)) {
+        memcpy(&parcel_reply_log[parcel_reply_log_size], inparcel, sizeof(inparcel));
+        parcel_reply_log_size+= sizeof(inparcel);
+        memcpy(&parcel_reply_log[parcel_reply_log_size], outparcel, outparcel_size);
+        parcel_reply_log_size+= outparcel_size;
+    }*/
 
     return 0;
 }
 
 void* parcelWriteData(parcelContext *ctx, void* data, size_t data_size) {
-    void* ptr = ctx->ParcelData;
+    void* ptr = &ctx->ParcelData[ctx->ParcelData_size];
 
     if(data_size & BIT(31)) return NULL;
     data_size = (data_size+3) & ~3;
 
     if(ctx->ParcelData_size + data_size >= ctx->ParcelData_maxsize) return NULL;
 
-    if(data)memcpy(&ctx->ParcelData[ctx->ParcelData_size], data, data_size);
+    if(data)memcpy(ptr, data, data_size);
     ctx->ParcelData_size+= data_size;
 
     return ptr;

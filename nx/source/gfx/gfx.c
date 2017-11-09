@@ -70,7 +70,7 @@ static Result _gfxGetNativeWindowID(u8 *buf, u64 size, s32 *out_ID) {
 }
 
 static Result _gfxDequeueBuffer() {
-    return gfxproducerDequeueBuffer(1, 1280, 720, 0, 0x300);
+    return gfxproducerDequeueBuffer(1, 1280, 720, 0, 0x300);//reply_parcel currently contains error(s), presumably due to nv not being initialized for this.
 }
 
 static Result _gfxQueueBuffer(s32 buf) {
@@ -94,7 +94,7 @@ static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 L
     Result rc=0;
     s32 tmp=0;
     u32 i=0;
-    u64 *ptr64 = (u64*)g_gfxQueueBufferData;
+    u64 *ptr64 = (u64*)g_gfxBufferInitData;
 
     if(g_gfxInitialized)return 0;
 
@@ -129,9 +129,9 @@ static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 L
     if (R_SUCCEEDED(rc)) {
        for(i=0; i<2; i++) {
            g_gfxBufferInitData[0xa] = i;
-           g_gfxBufferInitData[0x20] = 0x3c0000*i;
+           g_gfxBufferInitData[0x21] = 0x3c0000*i;
            ptr64[0x170>>3] = svcGetSystemTick();
-           rc = gfxproducerBufferInit(0, (u8*)g_gfxBufferInitData);
+           rc = gfxproducerBufferInit(i, (u8*)g_gfxBufferInitData);
            if (R_FAILED(rc)) break;
        }
     }
@@ -141,10 +141,10 @@ static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 L
            rc = _gfxDequeueBuffer();
            if (R_FAILED(rc)) break;
 
-           rc = gfxproducerRequestBuffer(i);
+           rc = gfxproducerRequestBuffer(i);//reply_parcel currently contains an error, presumably due to _gfxDequeueBuffer() failing as mentioned above.
            if (R_FAILED(rc)) break;
 
-           rc = _gfxQueueBuffer(i);
+           rc = _gfxQueueBuffer(i);//reply_parcel currently contains the same error as gfxproducerRequestBuffer() above.
            if (R_FAILED(rc)) break;
        }
     }

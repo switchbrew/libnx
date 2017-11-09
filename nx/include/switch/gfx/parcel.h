@@ -12,7 +12,7 @@ typedef struct {
 } parcelContext;
 
 void parcelInitializeContext(parcelContext *ctx);
-Result parcelTransact(binderSession *session, u32 code, parcelContext *in_parcel, parcelContext *out_parcel);
+Result parcelTransact(binderSession *session, u32 code, parcelContext *in_parcel, parcelContext *reply_parcel);
 
 void* parcelWriteData(parcelContext *ctx, void* data, size_t data_size);
 void* parcelReadData(parcelContext *ctx, void* data, size_t data_size);
