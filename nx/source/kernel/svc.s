@@ -248,6 +248,16 @@ SVC_BEGIN svcDebugActiveProcess
 	ret
 SVC_END
 
+SVC_BEGIN svcBreakDebugProcess
+	svc 0x61
+	ret
+SVC_END
+
+SVC_BEGIN svcGetDebugEvent
+	svc 0x63
+	ret
+SVC_END
+
 SVC_BEGIN svcContinueDebugEvent
 	svc 0x64
 	ret
@@ -261,6 +271,11 @@ SVC_BEGIN svcGetProcessList
 	ret
 SVC_END
 
+SVC_BEGIN svcGetDebugThreadContext
+	svc 0x67
+	ret
+SVC_END
+
 SVC_BEGIN svcQueryDebugProcessMemory
 	str x1, [sp, #-16]!
 	svc 0x69
@@ -271,6 +286,11 @@ SVC_END
 
 SVC_BEGIN svcReadDebugProcessMemory
 	svc 0x6A
+	ret
+SVC_END
+
+SVC_BEGIN svcWriteDebugProcessMemory
+	svc 0x6B
 	ret
 SVC_END
 
