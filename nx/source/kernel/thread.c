@@ -1,9 +1,32 @@
 // Copyright 2017 plutoo
 #include <switch.h>
 #include <malloc.h>
+#include "../internal.h"
 
-static void _EntryWrap(Thread* t) {
-    t->entry(t->arg);
+extern const u8 __tdata_lma[];
+extern const u8 __tdata_lma_end[];
+extern u8 __tls_start[];
+extern u8 __tls_end[];
+
+typedef struct {
+    Thread*        t;
+    ThreadFunc     entry;
+    void*          arg;
+    struct _reent* reent;
+    void*          tls;
+    void*          padding;
+} ThreadEntryArgs;
+
+static void _EntryWrap(ThreadEntryArgs* args) {
+    // Initialize thread vars
+    ThreadVars* tv = getThreadVars();
+    tv->magic      = THREADVARS_MAGIC;
+    tv->thread_ptr = args->t;
+    tv->reent      = args->reent;
+    tv->tls_tp     = (u8*)args->tls-2*sizeof(void*); // subtract size of Thread Control Block (TCB)
+
+    // Launch thread entrypoint
+    args->entry(args->arg);
     svcExitThread();
 }
 
@@ -11,8 +34,12 @@ Result threadCreate(
     Thread* t, ThreadFunc entry, void* arg, size_t stack_sz, int prio,
     int cpuid)
 {
+    stack_sz = (stack_sz+0xF) &~ 0xF;
+
     Result rc = 0;
-    void*  stack = memalign(0x1000, stack_sz);
+    size_t reent_sz = (sizeof(struct _reent)+0xF) &~ 0xF;
+    size_t tls_sz = (__tls_end-__tls_start+0xF) &~ 0xF;
+    void*  stack = memalign(0x1000, stack_sz + reent_sz + tls_sz);
 
     if (stack == NULL) {
         rc = MAKERESULT(MODULE_LIBNX, LIBNX_OUTOFMEM);
@@ -24,21 +51,41 @@ Result threadCreate(
 
         if (R_SUCCEEDED(rc))
         {
-            u64 stack_top = ((u64)stack_mirror) + t->stack_sz;
+            u64 stack_top = ((u64)stack_mirror) + t->stack_sz - sizeof(ThreadEntryArgs);
+            ThreadEntryArgs* args = (ThreadEntryArgs*) stack_top;
             Handle handle;
 
             rc = svcCreateThread(
-                &handle, (ThreadFunc) &_EntryWrap, (void*) t, (void*) stack_top,
+                &handle, (ThreadFunc) &_EntryWrap, args, (void*)stack_top,
                 prio, cpuid);
 
             if (R_SUCCEEDED(rc))
             {
                 t->handle = handle;
-                t->entry = entry;
-                t->arg = arg;
                 t->stack_mem = stack;
                 t->stack_mirror = stack_mirror;
                 t->stack_sz = stack_sz;
+
+                args->t = t;
+                args->entry = entry;
+                args->arg = arg;
+                args->reent = (struct _reent*)((u8*)stack + stack_sz);
+                args->tls = (u8*)stack + stack_sz + reent_sz;
+
+                // Set up child thread's reent struct, inheriting standard file handles
+                _REENT_INIT_PTR(args->reent);
+                struct _reent* cur = getThreadVars()->reent;
+                args->reent->_stdin  = cur->_stdin;
+                args->reent->_stdout = cur->_stdout;
+                args->reent->_stderr = cur->_stderr;
+
+                // Set up child thread's TLS segment
+                size_t tls_load_sz = __tdata_lma_end-__tdata_lma;
+                size_t tls_bss_sz = tls_sz - tls_load_sz;
+                if (tls_load_sz)
+                    memcpy(args->tls, __tdata_lma, tls_load_sz);
+                if (tls_bss_sz)
+                    memset(args->tls+tls_load_sz, 0, tls_bss_sz);
             }
 
             if (R_FAILED(rc)) {
