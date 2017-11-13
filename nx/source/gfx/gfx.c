@@ -11,6 +11,8 @@ static s32 g_gfxNativeWindow_ID;
 static binderSession g_gfxBinderSession;
 static s32 g_gfxCurrentBuffer = 0;
 
+extern u32 __nx_applet_type;
+
 static u32 g_gfxQueueBufferData[0x5c>>2] = {
 0x54, 0x0,
 0x0, 0x0, //u64 timestamp
@@ -90,7 +92,7 @@ static Result _gfxQueueBuffer(s32 buf) {
     return rc;
 }
 
-static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 LayerFlags, u64 LayerId) {
+static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 LayerFlags, u64 LayerId, nvServiceType nv_servicetype, size_t nv_transfermem_size) {
     Result rc=0;
     s32 tmp=0;
     u32 i=0;
@@ -119,6 +121,8 @@ static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 L
         binderCreateSession(&g_gfxBinderSession, viGetSession_IHOSBinderDriverRelay(), g_gfxNativeWindow_ID);
         rc = binderInitSession(&g_gfxBinderSession, 0x0f);
     }
+
+    if (R_SUCCEEDED(rc)) rc = nvInitialize(nv_servicetype, nv_transfermem_size);
 
     if (R_SUCCEEDED(rc)) rc = gfxproducerInitialize(&g_gfxBinderSession);
 
@@ -152,6 +156,8 @@ static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 L
     if (R_SUCCEEDED(rc)) rc = _gfxDequeueBuffer();
 
     if (R_FAILED(rc)) {
+        gfxproducerExit();
+        nvExit();
         binderExitSession(&g_gfxBinderSession);
         viCloseLayer(&g_gfxLayer);
         viCloseDisplay(&g_gfxDisplay);
@@ -164,7 +170,24 @@ static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 L
 }
 
 void gfxInitDefault(void) {
-    Result rc = _gfxInit(VILAYERFLAGS_Default, "Default", VILAYERFLAGS_Default, 0);
+    nvServiceType nv_servicetype = NVSERVTYPE_Default;
+
+    if(__nx_applet_type != APPLET_TYPE_None) {
+        switch(__nx_applet_type) {
+            case APPLET_TYPE_Application:
+            case APPLET_TYPE_SystemApplication:
+               nv_servicetype = NVSERVTYPE_Application;
+            break;
+
+            case APPLET_TYPE_SystemApplet:
+            case APPLET_TYPE_LibraryApplet:
+            case APPLET_TYPE_OverlayApplet:
+               nv_servicetype = NVSERVTYPE_Applet;
+            break;
+        }
+    }
+
+    Result rc = _gfxInit(VILAYERFLAGS_Default, "Default", VILAYERFLAGS_Default, 0, nv_servicetype, 0x300000);
     if (R_FAILED(rc)) fatalSimple(rc);
 }
 
@@ -172,6 +195,8 @@ void gfxExit(void) {
     if(!g_gfxInitialized)return;
 
     gfxproducerExit();
+
+    nvExit();
 
     binderExitSession(&g_gfxBinderSession);
 

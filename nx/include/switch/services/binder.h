@@ -6,6 +6,9 @@ typedef struct {
     s32 ID;
 
     Handle nativehandle;
+
+    size_t IpcBufferSize;
+    bool TransactAuto;
 } binderSession;
 
 //binderExitSession will not close the sessionhandle since it's user-specified via binderCreateSession and may be used elsewhere.

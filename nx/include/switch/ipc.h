@@ -258,6 +258,40 @@ static inline Result ipcParseResponse(IpcCommandResponse* r) {
     return 0;
 }
 
+static inline Result ipcQueryPointerBufferSize(Handle session, size_t *size) {
+    u32* buf = armGetTls();
+
+    buf[0] = 5;
+    buf[1] = 8;
+    buf[2] = 0;
+    buf[3] = 0;
+    buf[4] = SFCI_MAGIC;
+    buf[5] = 0;
+    buf[6] = 3;
+    buf[7] = 0;
+
+    Result rc = ipcDispatch(session);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcCommandResponse r;
+        ipcParseResponse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u32 size;
+        } *raw = r.Raw;
+
+        rc = raw->result;
+
+        if (R_SUCCEEDED(rc)) {
+            *size = raw->size & 0xffff;
+        }
+    }
+
+    return rc;
+}
+
 // Domain shit
 static inline Result ipcConvertSessionToDomain(Handle session, u32* object_id_out) {
     u32* buf = armGetTls();

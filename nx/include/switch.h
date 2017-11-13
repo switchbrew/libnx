@@ -30,6 +30,7 @@ extern "C" {
 #include <switch/services/usb.h>
 #include <switch/services/hid.h>
 #include <switch/services/vi.h>
+#include <switch/services/nv.h>
 
 #include <switch/gfx/gfx.h>
 #include <switch/gfx/parcel.h>
