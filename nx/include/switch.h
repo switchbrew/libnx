@@ -37,6 +37,8 @@ extern "C" {
 #include <switch/gfx/gfxproducer.h>
 #include <switch/gfx/ioctl.h>
 
+#include <switch/devices/usb_comms.h>
+
 #ifdef __cplusplus
 }
 #endif

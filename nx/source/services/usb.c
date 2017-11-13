@@ -30,7 +30,7 @@ Result usbDsInitialize(usbComplexId complexId, const usbDsDeviceInfo* deviceinfo
     if (R_SUCCEEDED(rc))rc = _usbDsBindClientProcess(CUR_PROCESS_HANDLE);
     if (R_SUCCEEDED(rc))rc = _usbDsGetEvent(g_usbDsServiceSession, &g_usbDsStateChangeEvent, 3);// GetStateChangeEvent
 
-    if (R_SUCCEEDED(rc) && kernelAbove200()) {
+    if (R_SUCCEEDED(rc) && deviceinfo && kernelAbove200()) {
         rc = _usbDsSetVidPidBcd(deviceinfo);
     }
 
