@@ -35,6 +35,7 @@ extern "C" {
 #include <switch/gfx/gfx.h>
 #include <switch/gfx/parcel.h>
 #include <switch/gfx/gfxproducer.h>
+#include <switch/gfx/ioctl.h>
 
 #ifdef __cplusplus
 }

@@ -176,9 +176,11 @@ Result nvOpen(u32 *fd, const char *devicepath) {
             u64 magic;
             u64 result;
             u32 fd;
+            u32 error;
         } *resp = r.Raw;
 
         rc = resp->result;
+        if (R_SUCCEEDED(rc)) rc = resp->error;
         if (R_SUCCEEDED(rc)) *fd = resp->fd;
     }
 
@@ -231,9 +233,11 @@ Result nvIoctl(u32 fd, u32 request, void* argp) {
         struct {
             u64 magic;
             u64 result;
+            u32 error;
         } *resp = r.Raw;
 
         rc = resp->result;
+        if (R_SUCCEEDED(rc)) rc = resp->error;
     }
 
     return rc;
@@ -263,9 +267,11 @@ Result nvClose(u32 fd) {
         struct {
             u64 magic;
             u64 result;
+            u32 error;
         } *resp = r.Raw;
 
         rc = resp->result;
+        if (R_SUCCEEDED(rc)) rc = resp->error;
     }
 
     return rc;
