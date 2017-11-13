@@ -38,3 +38,10 @@ typedef struct {
 
 Result nvioctlNvhostCtrlGpu_GetCharacteristics(u32 fd, gpu_characteristics *out);
 
+Result nvioctlNvhostAsGpu_AllocSpace(u32 fd, u32 pages, u32 page_size, u32 flags, u64 align, u64 *offset);
+Result nvioctlNvhostAsGpu_MapBufferEx(u32 fd, u32 flags, u32 kind, u32 nvmap_handle, u32 page_size, u64 buffer_offset, u64 mapping_size, u64 *offset);
+Result nvioctlNvhostAsGpu_InitializeEx(u32 fd, u32 big_page_size);
+
+Result nvioctlNvmap_Create(u32 fd, u32 size, u32 *nvmap_handle);
+Result nvioctlNvmap_Alloc(u32 fd, u32 nvmap_handle, u32 heapmask, u32 flags, u32 align, u8 kind, void* addr);
+
