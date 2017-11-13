@@ -124,6 +124,8 @@ static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 L
 
     if (R_SUCCEEDED(rc)) rc = nvInitialize(nv_servicetype, nv_transfermem_size);
 
+    if (R_SUCCEEDED(rc)) rc = nvgfxInitialize();
+
     if (R_SUCCEEDED(rc)) rc = gfxproducerInitialize(&g_gfxBinderSession);
 
     if (R_SUCCEEDED(rc)) rc = gfxproducerConnect(2, 0);
@@ -157,6 +159,7 @@ static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 L
 
     if (R_FAILED(rc)) {
         gfxproducerExit();
+        nvgfxExit();
         nvExit();
         binderExitSession(&g_gfxBinderSession);
         viCloseLayer(&g_gfxLayer);
@@ -196,6 +199,7 @@ void gfxExit(void) {
 
     gfxproducerExit();
 
+    nvgfxExit();
     nvExit();
 
     binderExitSession(&g_gfxBinderSession);

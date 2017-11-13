@@ -41,6 +41,7 @@ extern "C" {
 #include <switch/gfx/gfxproducer.h>
 #include <switch/gfx/ioctl.h>
 #include <switch/gfx/nvioctl.h>
+#include <switch/gfx/nvgfx.h>
 
 #include <switch/devices/usb_comms.h>
 #include <switch/devices/fs_dev.h>
