@@ -86,6 +86,8 @@ Result nvgfxInitialize(void) {
     if (R_SUCCEEDED(rc)) rc = -1;
     if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 4, 0xfe, g_nvgfx_nvmapobj1, 0x10000, 0, 0, NULL);
 
+    //Officially NVGPU_GPU_IOCTL_GET_L2_STATE is used here.
+
     if (R_FAILED(rc)) {
         nvClose(g_nvgfx_fd_nvmap);
         nvClose(g_nvgfx_fd_nvhostasgpu);
