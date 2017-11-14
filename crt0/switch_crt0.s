@@ -3,8 +3,10 @@
 
 _start:
     bl startup
+    .word 0
     .ascii "HOMEBREW"
 
+.org _start+0x80
 startup:
     // get aslr base
     sub  x28, x30, #4

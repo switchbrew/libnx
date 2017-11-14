@@ -163,8 +163,7 @@ int main(int argc, char* argv[]) {
         fwrite(buf[i], nro_hdr.Segments[i].Size, 1, out);
     }
 
-    fseek(out, 0, SEEK_SET);
-    fwrite(&nro_start, sizeof(nro_start), 1, out);
+    fseek(out, sizeof(nro_start), SEEK_SET);
     fwrite(&nro_hdr, sizeof(nro_hdr), 1, out);
 
     return EXIT_SUCCESS;
