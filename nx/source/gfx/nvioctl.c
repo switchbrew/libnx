@@ -103,7 +103,7 @@ Result nvioctlNvhostAsGpu_AllocSpace(u32 fd, u32 pages, u32 page_size, u32 flags
     return rc;
 }
 
-Result nvioctlNvhostAsGpu_MapBufferEx(u32 fd, u32 flags, u32 kind, u32 nvmap_handle, u32 page_size, u64 buffer_offset, u64 mapping_size, u64 *offset) {
+Result nvioctlNvhostAsGpu_MapBufferEx(u32 fd, u32 flags, u32 kind, u32 nvmap_handle, u32 page_size, u64 buffer_offset, u64 mapping_size, u64 input_offset, u64 *offset) {
     Result rc=0;
 
     struct {
@@ -113,7 +113,7 @@ Result nvioctlNvhostAsGpu_MapBufferEx(u32 fd, u32 flags, u32 kind, u32 nvmap_han
         u32 page_size;      // inout 0 means don't care
         u64 buffer_offset;  // in
         u64 mapping_size;   // in
-        u64 offset;         // out
+        u64 offset;         // inout
     } data;
 
     memset(&data, 0, sizeof(data));
@@ -123,6 +123,7 @@ Result nvioctlNvhostAsGpu_MapBufferEx(u32 fd, u32 flags, u32 kind, u32 nvmap_han
     data.page_size = page_size;
     data.buffer_offset = buffer_offset;
     data.mapping_size = mapping_size;
+    data.offset = input_offset;
 
     rc = nvIoctl(fd, _IOWR(0x41, 0x06, data), &data);
     if (R_FAILED(rc)) return rc;

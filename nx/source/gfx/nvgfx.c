@@ -77,16 +77,15 @@ Result nvgfxInitialize(void) {
     if (R_SUCCEEDED(rc)) rc = nvioctlNvmap_Create(g_nvgfx_fd_nvmap, g_nvgfx_nvmap0_mem_size, &g_nvgfx_nvmapobj0);
     if (R_SUCCEEDED(rc)) rc = nvioctlNvmap_Alloc(g_nvgfx_fd_nvmap, g_nvgfx_nvmapobj0, 0, 0, 0x20000, 0, g_nvgfx_nvmap0_mem);
 
-    if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 0, 0, g_nvgfx_nvmapobj0, 0x10000, 0, 0, NULL);
-    if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 0, 0xfe, g_nvgfx_nvmapobj0, 0x10000, 0, 0, NULL);
+    if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 0, 0, g_nvgfx_nvmapobj0, 0x10000, 0, 0, 0, NULL);
+    if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 0, 0xfe, g_nvgfx_nvmapobj0, 0x10000, 0, 0, 0, NULL);
 
     if (R_SUCCEEDED(rc)) rc = nvioctlNvmap_Create(g_nvgfx_fd_nvmap, g_nvgfx_nvmap1_mem_size, &g_nvgfx_nvmapobj1);
     if (R_SUCCEEDED(rc)) rc = nvioctlNvmap_Alloc(g_nvgfx_fd_nvmap, g_nvgfx_nvmapobj1, 0, 0, 0x20000, 0, g_nvgfx_nvmap1_mem);
 
-    //Currently broken.
-    if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 5, 0, g_nvgfx_nvmapobj1, 0x10000, 0, 0x10000, NULL);
-    if (R_SUCCEEDED(rc)) rc = -1;
-    if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 4, 0xfe, g_nvgfx_nvmapobj1, 0x10000, 0, 0, NULL);
+    if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 5, 0, g_nvgfx_nvmapobj1, 0x10000, 0, 0x10000, g_nvgfx_nvhostasgpu_allocspace_offset, NULL);
+    if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 4, 0xfe, g_nvgfx_nvmapobj1, 0x10000, 0, 0, 0, NULL);
+    //if (R_SUCCEEDED(rc)) rc = -1;
 
     //Officially NVGPU_GPU_IOCTL_GET_L2_STATE is used here.
 
