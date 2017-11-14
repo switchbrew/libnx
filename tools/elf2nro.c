@@ -105,10 +105,9 @@ int main(int argc, char* argv[]) {
 
     Elf64_Phdr* phdrs = (Elf64_Phdr*) &elf[hdr->e_phoff];
     size_t i, j = 0;
-    size_t file_off = sizeof(NroHeader) + sizeof(NroStart);
+    size_t file_off = 0;
 
-    uint8_t* comp_buf[3];
-    int comp_sz[3];
+    uint8_t* buf[3];
 
     for (i=0; i<4; i++) {
         Elf64_Phdr* phdr = NULL;
@@ -131,19 +130,19 @@ int main(int argc, char* argv[]) {
             break;
         }
 
-        nro_hdr.Segments[i].FileOff = file_off;
-        nro_hdr.Segments[i].Size = phdr->p_filesz + phdr->p_memsz;
-        nro_hdr.Segments[i].Size = (nro_hdr.Segments[i].Size + 0xFFF) & ~0xFFF;
-        comp_buf[i] = malloc(phdr->p_filesz);
+        nro_hdr.Segments[i].FileOff = phdr->p_vaddr;
+        nro_hdr.Segments[i].Size = (phdr->p_memsz + 0xFFF) & ~0xFFF;
+        buf[i] = malloc(nro_hdr.Segments[i].Size);
+        memset(buf[i], 0, nro_hdr.Segments[i].Size);
 
-        if (comp_buf[i] == NULL) {
+        if (buf[i] == NULL) {
             fprintf(stderr, "Out of memory!\n");
             return EXIT_FAILURE;
         }
         
-        memcpy(comp_buf[i], &elf[phdr->p_offset], phdr->p_filesz);
+        memcpy(buf[i], &elf[phdr->p_offset], phdr->p_filesz);
 
-        file_off += phdr->p_filesz + phdr->p_memsz;
+        file_off += nro_hdr.Segments[i].Size;
         file_off = (file_off + 0xFFF) & ~0xFFF;
     }
 
@@ -157,14 +156,16 @@ int main(int argc, char* argv[]) {
     nro_hdr.size = file_off;
 
     // TODO check retvals
-    fwrite(&nro_start, sizeof(nro_start), 1, out);
-    fwrite(&nro_hdr, sizeof(nro_hdr), 1, out);
 
     for (i=0; i<3; i++)
     {
         fseek(out, nro_hdr.Segments[i].FileOff, SEEK_SET);
-        fwrite(comp_buf[i], comp_sz[i], 1, out);
+        fwrite(buf[i], nro_hdr.Segments[i].Size, 1, out);
     }
+
+    fseek(out, 0, SEEK_SET);
+    fwrite(&nro_start, sizeof(nro_start), 1, out);
+    fwrite(&nro_hdr, sizeof(nro_hdr), 1, out);
 
     return EXIT_SUCCESS;
 }
