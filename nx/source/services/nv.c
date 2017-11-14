@@ -199,24 +199,44 @@ Result nvIoctl(u32 fd, u32 request, void* argp) {
     } *raw;
 
     size_t bufsize = _IOC_SIZE(request);
+    u32 dir = _IOC_DIR(request);
 
-    void* buf_static = argp, *buf_transfer = argp;
-    size_t buf_static_size = bufsize, buf_transfer_size = bufsize;
+    void* buf_send = NULL, *buf_recv = NULL;
+    size_t buf_send_size = 0, buf_recv_size = 0;
+
+    if(dir & _IOC_WRITE) {
+        buf_send = argp;
+        buf_send_size = bufsize;
+    }
+
+    if(dir & _IOC_READ) {
+        buf_recv = argp;
+        buf_recv_size = bufsize;
+    }
+
+    void* bufs_send[2] = {buf_send, buf_send};
+    void* bufs_recv[2] = {buf_recv, buf_recv};
+    size_t bufs_send_size[2] = {buf_send_size, buf_send_size};
+    size_t bufs_recv_size[2] = {buf_recv_size, buf_recv_size};
 
     if(g_nvIpcBufferSize!=0 && bufsize <= g_nvIpcBufferSize) {
-        buf_transfer = NULL;
-        buf_transfer_size = 0;
+        bufs_send[0] = NULL;
+        bufs_send_size[0] = 0;
+        bufs_recv[0] = NULL;
+        bufs_recv_size[0] = 0;
     }
     else {
-        buf_static = NULL;
-        buf_static_size = 0;
+        bufs_send[1] = NULL;
+        bufs_send_size[1] = 0;
+        bufs_recv[1] = NULL;
+        bufs_recv_size[1] = 0;
     }
 
-    ipcAddSendBuffer(&c, buf_transfer, buf_transfer_size, 0);
-    ipcAddRecvBuffer(&c, buf_transfer, buf_transfer_size, 0);
+    ipcAddSendBuffer(&c, bufs_send[0], bufs_send_size[0], 0);
+    ipcAddRecvBuffer(&c, bufs_recv[0], bufs_recv_size[0], 0);
 
-    ipcAddSendStatic(&c, buf_static, buf_static_size, 0);
-    ipcAddRecvStatic(&c, buf_static, buf_static_size, 0);
+    ipcAddSendStatic(&c, bufs_send[1], bufs_send_size[1], 0);
+    ipcAddRecvStatic(&c, bufs_recv[1], bufs_recv_size[1], 0);
 
     raw = ipcPrepareHeader(&c, sizeof(*raw));
     raw->magic = SFCI_MAGIC;
