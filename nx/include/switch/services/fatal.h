@@ -1,1 +1,1 @@
-void fatalSimple(Result err);
+__attribute__((noreturn)) void fatalSimple(Result err);

@@ -13,10 +13,8 @@ extern u8 __tls_start[];
 
 static struct _reent* __libnx_get_reent() {
     ThreadVars* tv = getThreadVars();
-    if (tv->magic != THREADVARS_MAGIC) {
+    if (tv->magic != THREADVARS_MAGIC)
         fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_BADREENT));
-        for (;;);
-    }
     return tv->reent;
 }
 
