@@ -75,6 +75,23 @@ Result nvioctlNvhostCtrlGpu_GetTpcMasks(u32 fd, u32 inval, u32 out[24>>2]) {
     return rc;
 }
 
+Result nvioctlNvhostCtrlGpu_GetL2State(u32 fd, nvioctl_l2_state *out) {
+    Result rc = 0;
+
+    struct {
+        nvioctl_l2_state out;
+    } data;
+
+    memset(&data, 0, sizeof(data));
+
+    rc = nvIoctl(fd, _IOR(0x47, 0x14, data), &data);
+    if (R_FAILED(rc)) return rc;
+
+    memcpy(out, &data.out, sizeof(data.out));
+
+    return rc;
+}
+
 Result nvioctlNvhostAsGpu_AllocSpace(u32 fd, u32 pages, u32 page_size, u32 flags, u64 align, u64 *offset) {
     Result rc=0;
 

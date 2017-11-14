@@ -43,10 +43,16 @@ typedef struct {
     u64 pages;
 } nvioctl_va_region;
 
+typedef struct {
+    u32 mask;        // always 0x07
+    u32 flush;       // active flush bit field
+} nvioctl_l2_state;
+
 Result nvioctlNvhostCtrlGpu_ZCullGetCtxSize(u32 fd, u32 *out);
 Result nvioctlNvhostCtrlGpu_ZCullGetInfo(u32 fd, u32 out[40>>2]);
 Result nvioctlNvhostCtrlGpu_GetCharacteristics(u32 fd, gpu_characteristics *out);
 Result nvioctlNvhostCtrlGpu_GetTpcMasks(u32 fd, u32 inval, u32 out[24>>2]);
+Result nvioctlNvhostCtrlGpu_GetL2State(u32 fd, nvioctl_l2_state *out);
 
 Result nvioctlNvhostAsGpu_AllocSpace(u32 fd, u32 pages, u32 page_size, u32 flags, u64 align, u64 *offset);
 Result nvioctlNvhostAsGpu_MapBufferEx(u32 fd, u32 flags, u32 kind, u32 nvmap_handle, u32 page_size, u64 buffer_offset, u64 mapping_size, u64 input_offset, u64 *offset);
