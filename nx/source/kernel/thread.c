@@ -8,6 +8,7 @@ extern const u8 __tdata_lma_end[];
 extern u8 __tls_start[];
 extern u8 __tls_end[];
 
+// Thread creation args; keep this struct's size 16-byte aligned
 typedef struct {
     Thread*        t;
     ThreadFunc     entry;
@@ -34,7 +35,7 @@ Result threadCreate(
     Thread* t, ThreadFunc entry, void* arg, size_t stack_sz, int prio,
     int cpuid)
 {
-    stack_sz = (stack_sz+0xF) &~ 0xF;
+    stack_sz = (stack_sz+0xFFF) &~ 0xFFF;
 
     Result rc = 0;
     size_t reent_sz = (sizeof(struct _reent)+0xF) &~ 0xF;
