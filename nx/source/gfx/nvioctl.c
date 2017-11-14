@@ -92,6 +92,17 @@ Result nvioctlNvhostCtrlGpu_GetL2State(u32 fd, nvioctl_l2_state *out) {
     return rc;
 }
 
+Result nvioctlNvhostAsGpu_BindChannel(u32 fd, u32 channel_fd) {
+    struct {
+        u32 fd;//in
+    } data;
+
+    memset(&data, 0, sizeof(data));
+    data.fd = channel_fd;
+
+    return nvIoctl(fd, _IOW(0x41, 0x01, data), &data);
+}
+
 Result nvioctlNvhostAsGpu_AllocSpace(u32 fd, u32 pages, u32 page_size, u32 flags, u64 align, u64 *offset) {
     Result rc=0;
 
@@ -186,7 +197,6 @@ Result nvioctlNvhostAsGpu_InitializeEx(u32 fd, u32 big_page_size) {
     data.big_page_size = big_page_size;
 
     return nvIoctl(fd, _IOW(0x41, 0x09, data), &data);
-
 }
 
 Result nvioctlNvmap_Create(u32 fd, u32 size, u32 *nvmap_handle) {
@@ -228,5 +238,98 @@ Result nvioctlNvmap_Alloc(u32 fd, u32 nvmap_handle, u32 heapmask, u32 flags, u32
     data.addr = (u64)addr;
 
     return nvIoctl(fd, _IOWR(0x01, 0x04, data), &data);
+}
+
+Result nvioctlChannel_SetNvmapFd(u32 fd, u32 nvmap_fd) {
+    struct {
+        u32 fd;//in
+    } data;
+
+    memset(&data, 0, sizeof(data));
+    data.fd = nvmap_fd;
+
+    return nvIoctl(fd, _IOW(0x48, 0x01, data), &data);
+}
+
+Result nvioctlChannel_AllocObjCtx(u32 fd, u32 class_num, u32 flags) {
+    struct {
+        u32 class_num;    // 0x902D=2d, 0xB197=3d, 0xB1C0=compute, 0xA140=kepler, 0xB0B5=DMA, 0xB06F=channel_gpfifo
+        u32 flags;
+        u64 obj_id;       // (ignored) used for FREE_OBJ_CTX ioctl, which is not supported
+    } data;
+
+    memset(&data, 0, sizeof(data));
+    data.class_num = class_num;
+    data.flags = flags;
+    data.obj_id = 0xDEADBEEF;
+
+    return nvIoctl(fd, _IOWR(0x48, 0x09, data), &data);
+}
+
+Result nvioctlChannel_SetErrorNotifier(u32 fd, u64 offset, u64 size, u32 nvmap_handle) {
+    struct {
+        u64 offset;//in
+        u64 size;//in
+        u32 mem;       //in nvmap object handle
+        u32 padding;//in
+    } data;
+
+    memset(&data, 0, sizeof(data));
+    data.offset = offset;
+    data.size = size;
+    data.mem = nvmap_handle;
+
+    return nvIoctl(fd, _IOWR(0x48, 0x0C, data), &data);
+}
+
+Result nvioctlChannel_SetPriority(u32 fd, u32 priority) {
+    struct {
+        u32 priority;    //in 0x32 is low, 0x64 is medium and 0x96 is high
+    } data;
+
+    memset(&data, 0, sizeof(data));
+    data.priority = priority;
+
+    return nvIoctl(fd, _IOW(0x48, 0x0D, data), &data);
+}
+
+Result nvioctlChannel_AllocGPFIFOEx2(u32 fd, u32 num_entries, u32 flags, u32 unk0, u32 unk1, u32 unk2, u32 unk3, nvioctl_fence *fence_out) {
+    Result rc=0;
+
+    struct {
+        u32 num_entries;         // in
+        u32 flags;               // in
+        u32 unk0;                // in (1 works)
+        nvioctl_fence fence_out;  // out
+        u32 unk1;                // in
+        u32 unk2;                // in
+        u32 unk3;                // in
+    } data;
+
+    memset(&data, 0, sizeof(data));
+    data.num_entries = num_entries;
+    data.flags = flags;
+    data.unk0 = unk0;
+    data.unk1 = unk1;
+    data.unk2 = unk2;
+    data.unk3 = unk3;
+
+    rc = nvIoctl(fd, _IOWR(0x48, 0x1A, data), &data);
+    if (R_FAILED(rc)) return rc;
+
+    if(fence_out) memcpy(fence_out, &data.fence_out, sizeof(data.fence_out));
+
+    return rc;
+}
+
+Result nvioctlChannel_SetUserData(u32 fd, void* addr) {
+    struct {
+        u64 addr;
+    } data;
+
+    memset(&data, 0, sizeof(data));
+    data.addr = (u64)addr;
+
+    return nvIoctl(fd, _IOW(0x47, 0x14, data), &data);
 }
 

@@ -48,12 +48,35 @@ typedef struct {
     u32 flush;       // active flush bit field
 } nvioctl_l2_state;
 
+typedef struct {
+    u32 id;
+    u32 value;
+} nvioctl_fence;
+
+//Used with nvioctlChannel_AllocObjCtx().
+enum nvioctl_channel_obj_classnum {
+    NVIOCTL_CHANNEL_OBJ_CLASSNUM_2d = 0x902D,
+    NVIOCTL_CHANNEL_OBJ_CLASSNUM_3d = 0xB197,
+    NVIOCTL_CHANNEL_OBJ_CLASSNUM_compute = 0xB1C0,
+    NVIOCTL_CHANNEL_OBJ_CLASSNUM_kepler = 0xA140,
+    NVIOCTL_CHANNEL_OBJ_CLASSNUM_DMA = 0xB0B5,
+    NVIOCTL_CHANNEL_OBJ_CLASSNUM_channel_gpfifo = 0xB06F
+};
+
+//Used with nvioctlChannel_SetPriority().
+enum nvioctl_channel_priority {
+    NVIOCTL_CHANNEL_PRIORITY_low = 0x32,
+    NVIOCTL_CHANNEL_PRIORITY_medium = 0x64,
+    NVIOCTL_CHANNEL_PRIORITY_high = 0x96
+};
+
 Result nvioctlNvhostCtrlGpu_ZCullGetCtxSize(u32 fd, u32 *out);
 Result nvioctlNvhostCtrlGpu_ZCullGetInfo(u32 fd, u32 out[40>>2]);
 Result nvioctlNvhostCtrlGpu_GetCharacteristics(u32 fd, gpu_characteristics *out);
 Result nvioctlNvhostCtrlGpu_GetTpcMasks(u32 fd, u32 inval, u32 out[24>>2]);
 Result nvioctlNvhostCtrlGpu_GetL2State(u32 fd, nvioctl_l2_state *out);
 
+Result nvioctlNvhostAsGpu_BindChannel(u32 fd, u32 channel_fd);
 Result nvioctlNvhostAsGpu_AllocSpace(u32 fd, u32 pages, u32 page_size, u32 flags, u64 align, u64 *offset);
 Result nvioctlNvhostAsGpu_MapBufferEx(u32 fd, u32 flags, u32 kind, u32 nvmap_handle, u32 page_size, u64 buffer_offset, u64 mapping_size, u64 input_offset, u64 *offset);
 Result nvioctlNvhostAsGpu_GetVARegions(u32 fd, nvioctl_va_region regions[2]);
@@ -61,4 +84,11 @@ Result nvioctlNvhostAsGpu_InitializeEx(u32 fd, u32 big_page_size);
 
 Result nvioctlNvmap_Create(u32 fd, u32 size, u32 *nvmap_handle);
 Result nvioctlNvmap_Alloc(u32 fd, u32 nvmap_handle, u32 heapmask, u32 flags, u32 align, u8 kind, void* addr);
+
+Result nvioctlChannel_SetNvmapFd(u32 fd, u32 nvmap_fd);
+Result nvioctlChannel_AllocObjCtx(u32 fd, u32 class_num, u32 flags);
+Result nvioctlChannel_SetErrorNotifier(u32 fd, u64 offset, u64 size, u32 nvmap_handle);
+Result nvioctlChannel_SetPriority(u32 fd, u32 priority);
+Result nvioctlChannel_AllocGPFIFOEx2(u32 fd, u32 num_entries, u32 flags, u32 unk0, u32 unk1, u32 unk2, u32 unk3, nvioctl_fence *fence_out);
+Result nvioctlChannel_SetUserData(u32 fd, void* addr);
 
