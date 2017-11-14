@@ -1,6 +1,40 @@
 #include <string.h>
 #include <switch.h>
 
+Result nvioctlNvhostCtrlGpu_ZCullGetCtxSize(u32 fd, u32 *out) {
+    Result rc = 0;
+
+    struct {
+        u32 out;
+    } data;
+
+    memset(&data, 0, sizeof(data));
+
+    rc = nvIoctl(fd, _IOR(0x47, 0x01, data), &data);
+    if (R_FAILED(rc)) return rc;
+
+    *out = data.out;
+
+    return rc;
+}
+
+Result nvioctlNvhostCtrlGpu_ZCullGetInfo(u32 fd, u32 out[40>>2]) {
+    Result rc = 0;
+
+    struct {
+        u32 out[40>>2];
+    } data;
+
+    memset(&data, 0, sizeof(data));
+
+    rc = nvIoctl(fd, _IOR(0x47, 0x02, data), &data);
+    if (R_FAILED(rc)) return rc;
+
+    memcpy(out, data.out, sizeof(data.out));
+
+    return rc;
+}
+
 Result nvioctlNvhostCtrlGpu_GetCharacteristics(u32 fd, gpu_characteristics *out) {
     Result rc = 0;
 
@@ -18,6 +52,25 @@ Result nvioctlNvhostCtrlGpu_GetCharacteristics(u32 fd, gpu_characteristics *out)
     if (R_FAILED(rc)) return rc;
 
     memcpy(out, &data.gc, sizeof(gpu_characteristics));
+
+    return rc;
+}
+
+Result nvioctlNvhostCtrlGpu_GetTpcMasks(u32 fd, u32 inval, u32 out[24>>2]) {
+    Result rc = 0;
+
+    struct {
+        u32 unk[24>>2];
+    } data;
+
+    memset(&data, 0, sizeof(data));
+    data.unk[0] = inval;
+    data.unk[2] = 1;//addr?
+
+    rc = nvIoctl(fd, _IOWR(0x47, 0x06, data), &data);
+    if (R_FAILED(rc)) return rc;
+
+    memcpy(out, &data.unk, sizeof(data.unk));
 
     return rc;
 }
@@ -71,10 +124,31 @@ Result nvioctlNvhostAsGpu_MapBufferEx(u32 fd, u32 flags, u32 kind, u32 nvmap_han
     data.buffer_offset = buffer_offset;
     data.mapping_size = mapping_size;
 
-    rc = nvIoctl(fd, _IOW(0x41, 0x06, data), &data);
+    rc = nvIoctl(fd, _IOWR(0x41, 0x06, data), &data);
     if (R_FAILED(rc)) return rc;
 
     if (offset) *offset = data.offset;
+
+    return rc;
+}
+
+Result nvioctlNvhostAsGpu_GetVARegions(u32 fd, nvioctl_va_region regions[2]) {
+    Result rc=0;
+ 
+    struct {
+        u64 not_used;   // (contained output user ptr on linux, ignored)
+        u32 bufsize;    //inout forced to 2*sizeof(struct va_region)
+        u32 pad;
+        nvioctl_va_region regions[2];//out
+    } data;
+
+    memset(&data, 0, sizeof(data));
+    data.bufsize = sizeof(data.regions);
+
+    rc = nvIoctl(fd, _IOWR(0x41, 0x08, data), &data);
+    if (R_FAILED(rc)) return rc;
+
+    memcpy(regions, data.regions, sizeof(data.regions));
 
     return rc;
 }
