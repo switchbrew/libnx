@@ -26,7 +26,7 @@ static nvioctl_fence g_nvgfx_nvhost_fence;
 static u8 *g_nvgfx_nvhost_userdata;
 static size_t g_nvgfx_nvhost_userdata_size;
 
-static nvmapobj nvmap_objs[3];
+static nvmapobj nvmap_objs[5];
 
 Result nvmapobjInitialize(nvmapobj *obj, size_t size) {
     Result rc=0;
@@ -76,6 +76,8 @@ Result nvgfxInitialize(void) {
     Result rc=0;
     if(g_nvgfxInitialized)return 0;
 
+    u32 zcullbind_data[4] = {0x58000, 0x5, 0x2, 0x0};
+
     g_nvgfx_fd_nvhostctrlgpu = 0;
     g_nvgfx_fd_nvhostasgpu = 0;
     g_nvgfx_fd_nvmap = 0;
@@ -95,6 +97,8 @@ Result nvgfxInitialize(void) {
     if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[0], 0x1000);
     if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[1], 0x10000);
     if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[2], 0x1000);
+    if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[3], 0x10000);
+    if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[4], 0x59000);
 
     if (R_SUCCEEDED(rc)) { //Unknown what size/etc is used officially.
         g_nvgfx_nvhost_userdata_size = 0x1000;
@@ -154,6 +158,20 @@ Result nvgfxInitialize(void) {
     if (R_SUCCEEDED(rc)) rc = nvioctlChannel_SetUserData(g_nvgfx_fd_nvhostgpu, g_nvgfx_nvhost_userdata);
 
     if (R_SUCCEEDED(rc)) rc = nvioctlChannel_SetPriority(g_nvgfx_fd_nvhostgpu, NVIOCTL_CHANNEL_PRIORITY_medium);
+
+    if (R_SUCCEEDED(rc)) rc = nvmapobjSetup(&nvmap_objs[3], 0, 0, 0x20000, 0);
+
+    if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 0, 0, nvmap_objs[3].handle, 0x10000, 0, 0, 0, NULL);
+    if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 0, 0xfe, nvmap_objs[3].handle, 0x10000, 0, 0, 0, NULL);
+
+    if (R_SUCCEEDED(rc)) rc = nvmapobjSetup(&nvmap_objs[4], 0, 0x1, 0x20000, 0);
+
+    if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 4, 0, nvmap_objs[4].handle, 0x10000, 0, 0, 0, NULL);
+    if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 4, 0xfe, nvmap_objs[4].handle, 0x10000, 0, 0, 0, NULL);
+
+    if (R_SUCCEEDED(rc)) rc = nvioctlChannel_ZCullBind(g_nvgfx_fd_nvhostgpu, zcullbind_data);
+
+    //Officially, ipcQueryPointerBufferSize and NVGPU_IOCTL_CHANNEL_SUBMIT_GPFIFO are used here with the duplicate session setup during nv serv init.
 
     //if (R_SUCCEEDED(rc)) rc = -1;
 

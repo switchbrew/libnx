@@ -87,6 +87,7 @@ Result nvioctlNvmap_Alloc(u32 fd, u32 nvmap_handle, u32 heapmask, u32 flags, u32
 
 Result nvioctlChannel_SetNvmapFd(u32 fd, u32 nvmap_fd);
 Result nvioctlChannel_AllocObjCtx(u32 fd, u32 class_num, u32 flags);
+Result nvioctlChannel_ZCullBind(u32 fd, u32 in[4]);
 Result nvioctlChannel_SetErrorNotifier(u32 fd, u64 offset, u64 size, u32 nvmap_handle);
 Result nvioctlChannel_SetPriority(u32 fd, u32 priority);
 Result nvioctlChannel_AllocGPFIFOEx2(u32 fd, u32 num_entries, u32 flags, u32 unk0, u32 unk1, u32 unk2, u32 unk3, nvioctl_fence *fence_out);
