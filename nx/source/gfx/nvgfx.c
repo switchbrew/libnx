@@ -218,7 +218,7 @@ Result nvgfxInitialize(void) {
 
     if (R_SUCCEEDED(rc)) {
          for(pos=0; pos<4; pos++) {
-             rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 0x100, 0xdb, framebuf_nvmap_handle, 0, pos*0x3c0000, 0x3c0000, nvmap_obj6_mapbuffer_xdb_offset, NULL);
+             rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 0x100, pos<3 ? 0xdb : 0x86, framebuf_nvmap_handle, 0, pos*0x3c0000, 0x3c0000, nvmap_obj6_mapbuffer_xdb_offset, NULL);
              if (R_FAILED(rc)) break;
 
              //Officially NVMAP_IOC_GET_ID, NVMAP_IOC_FROM_ID, NVMAP_IOC_GET_ID, and NVMAP_IOC_FROM_ID are used after the second *MapBufferEx.
