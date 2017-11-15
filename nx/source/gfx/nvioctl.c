@@ -36,6 +36,17 @@ Result nvioctlNvhostCtrl_EventWait(u32 fd, u32 unk0, u32 unk1, s32 timeout, u32 
     return rc;
 }
 
+Result nvioctlNvhostCtrl_EventRegister(u32 fd, u32 event_id) {
+    struct {
+        u32 event_id;      //in ranges from 0x01 to 0x3F
+    } data;
+
+    memset(&data, 0, sizeof(data));
+    data.event_id = event_id;
+
+    return nvIoctl(fd, _IOWR(0x40, 0x1F, data), &data);
+}
+
 Result nvioctlNvhostCtrlGpu_ZCullGetCtxSize(u32 fd, u32 *out) {
     Result rc = 0;
 
