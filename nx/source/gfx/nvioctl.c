@@ -1,6 +1,41 @@
 #include <string.h>
 #include <switch.h>
 
+Result nvioctlNvhostCtrl_EventSignal(u32 fd, u32 event_id) {
+    struct {
+        u32 event_id;      //in ranges from 0x01 to 0x3F
+    } data;
+
+    memset(&data, 0, sizeof(data));
+    data.event_id = event_id;
+
+    return nvIoctl(fd, _IOWR(0x00, 0x1C, data), &data);
+}
+
+Result nvioctlNvhostCtrl_EventWait(u32 fd, u32 unk0, u32 unk1, s32 timeout, u32 event_id, u32 *out) {
+    Result rc = 0;
+
+    struct {
+        u32 unk0;//in
+        u32 unk1;//in
+        s32 timeout;//in
+        u32 event;// in=event_id; out=result
+    } data;
+
+    memset(&data, 0, sizeof(data));
+    data.unk0 = unk0;
+    data.unk1 = unk1;
+    data.timeout = timeout;
+    data.event = event_id;
+
+    rc = nvIoctl(fd, _IOWR(0x00, 0x1D, data), &data);
+    if (R_FAILED(rc)) return rc;
+
+    if(out) *out = data.event;
+
+    return rc;
+}
+
 Result nvioctlNvhostCtrlGpu_ZCullGetCtxSize(u32 fd, u32 *out) {
     Result rc = 0;
 

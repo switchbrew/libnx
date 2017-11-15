@@ -14,6 +14,7 @@ static u32 g_nvgfx_fd_nvhostctrlgpu;
 static u32 g_nvgfx_fd_nvhostasgpu;
 static u32 g_nvgfx_fd_nvmap;
 static u32 g_nvgfx_fd_nvhostgpu;
+static u32 g_nvgfx_fd_nvhostctrl;
 
 static gpu_characteristics g_nvgfx_gpu_characteristics;
 static u64 g_nvgfx_nvhostasgpu_allocspace_offset;
@@ -26,6 +27,7 @@ static nvioctl_fence g_nvgfx_nvhost_fence;
 static nvioctl_fence g_nvgfx_nvhostgpu_gpfifo_fence;
 static u8 *g_nvgfx_nvhost_userdata;
 static size_t g_nvgfx_nvhost_userdata_size;
+static u32 g_nvgfx_nvhostctrl_eventres;
 
 static nvmapobj nvmap_objs[18];
 
@@ -89,6 +91,7 @@ Result nvgfxInitialize(void) {
     g_nvgfx_fd_nvhostasgpu = 0;
     g_nvgfx_fd_nvmap = 0;
     g_nvgfx_fd_nvhostgpu = 0;
+    g_nvgfx_fd_nvhostctrl = 0;
 
     memset(nvmap_objs, 0, sizeof(nvmap_objs));
 
@@ -102,6 +105,7 @@ Result nvgfxInitialize(void) {
     g_nvgfx_nvhostasgpu_allocspace_offset = 0;
     g_nvgfx_zcullctxsize = 0;
     nvmap_obj6_mapbuffer_xdb_offset = 0;
+    g_nvgfx_nvhostctrl_eventres = 0;
 
     //All of the below sizes for nvmapobjInitialize are from certain official sw.
     if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[0], 0x1000);
@@ -275,13 +279,26 @@ Result nvgfxInitialize(void) {
     if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 5, 0, nvmap_objs[16].handle, 0x10000, 0, 0x10000, g_nvgfx_nvhostasgpu_allocspace_offset+0x10000+0x800000+0x10000+0x10000+0x10000, NULL);
     if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 4, 0xfe, nvmap_objs[16].handle, 0x10000, 0, 0, 0, NULL);
 
+    if (R_SUCCEEDED(rc)) rc = nvOpen(&g_nvgfx_fd_nvhostctrl, "/dev/nvhost-ctrl");
+
+    if (R_SUCCEEDED(rc)) {
+        do {
+            rc = nvioctlNvhostCtrl_EventWait(g_nvgfx_fd_nvhostctrl, 0x42, 0x1ca7, 0x64, 0, &g_nvgfx_nvhostctrl_eventres);
+        } while(rc==5);//timeout error
+    }
+
+    //Currently broken.
+    //if (R_SUCCEEDED(rc)) rc = nvioctlNvhostCtrl_EventSignal(g_nvgfx_fd_nvhostctrl, g_nvgfx_nvhostctrl_eventres);
+
     //if (R_SUCCEEDED(rc)) rc = -1;
 
     if (R_FAILED(rc)) {
+        nvClose(g_nvgfx_fd_nvhostctrl);
         nvClose(g_nvgfx_fd_nvhostgpu);
         nvClose(g_nvgfx_fd_nvmap);
         nvClose(g_nvgfx_fd_nvhostasgpu);
         nvClose(g_nvgfx_fd_nvhostctrlgpu);
+        g_nvgfx_fd_nvhostctrl = 0;
         g_nvgfx_fd_nvhostgpu = 0;
         g_nvgfx_fd_nvmap = 0;
         g_nvgfx_fd_nvhostasgpu = 0;
@@ -303,10 +320,12 @@ Result nvgfxInitialize(void) {
 void nvgfxExit(void) {
     if(!g_nvgfxInitialized)return;
 
+    nvClose(g_nvgfx_fd_nvhostctrl);
     nvClose(g_nvgfx_fd_nvhostgpu);
     nvClose(g_nvgfx_fd_nvmap);
     nvClose(g_nvgfx_fd_nvhostasgpu);
     nvClose(g_nvgfx_fd_nvhostctrlgpu);
+    g_nvgfx_fd_nvhostctrl = 0;
     g_nvgfx_fd_nvhostgpu = 0;
     g_nvgfx_fd_nvmap = 0;
     g_nvgfx_fd_nvhostasgpu = 0;
