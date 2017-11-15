@@ -27,7 +27,9 @@ static nvioctl_fence g_nvgfx_nvhostgpu_gpfifo_fence;
 static u8 *g_nvgfx_nvhost_userdata;
 static size_t g_nvgfx_nvhost_userdata_size;
 
-static nvmapobj nvmap_objs[5];
+static nvmapobj nvmap_objs[9];
+
+static u64 nvmap_obj6_mapbuffer_xdb_offset;
 
 Result nvmapobjInitialize(nvmapobj *obj, size_t size) {
     Result rc=0;
@@ -75,11 +77,13 @@ Result nvmapobjSetup(nvmapobj *obj, u32 heapmask, u32 flags, u32 align, u8 kind)
 
 Result nvgfxInitialize(void) {
     Result rc=0;
+    u32 pos=0;
     if(g_nvgfxInitialized)return 0;
 
     u32 zcullbind_data[4] = {0x58000, 0x5, 0x2, 0x0};
+    u32 framebuf_nvmap_handle = 0;//Special handle ID for framebuf/windowbuf.
 
-    nvioctl_gpfifo_entry gpfifo_entries[2] = {{0x00030000, 0x00177a05}, {0x00031778, 0x80002e05}};
+    //nvioctl_gpfifo_entry gpfifo_entries[2] = {{0x00030000, 0x00177a05}, {0x00031778, 0x80002e05}};
 
     g_nvgfx_fd_nvhostctrlgpu = 0;
     g_nvgfx_fd_nvhostasgpu = 0;
@@ -97,12 +101,18 @@ Result nvgfxInitialize(void) {
     memset(&g_nvgfx_nvhostgpu_gpfifo_fence, 0, sizeof(g_nvgfx_nvhostgpu_gpfifo_fence));
     g_nvgfx_nvhostasgpu_allocspace_offset = 0;
     g_nvgfx_zcullctxsize = 0;
+    nvmap_obj6_mapbuffer_xdb_offset = 0;
 
+    //All of the below sizes for nvmapobjInitialize are from certain official sw.
     if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[0], 0x1000);
     if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[1], 0x10000);
     if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[2], 0x1000);
     if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[3], 0x10000);
     if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[4], 0x59000);
+    if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[5], 0x1000000);
+    if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[6], 0x4000000);
+    if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[7], 0x1000000);
+    if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[8], 0x800000);
 
     if (R_SUCCEEDED(rc)) { //Unknown what size/etc is used officially.
         g_nvgfx_nvhost_userdata_size = 0x1000;
@@ -179,6 +189,39 @@ Result nvgfxInitialize(void) {
     //TODO: This is probably used for GPU rendering? Is this really needed when not doing actual GPU rendering?
     //Skip this since this causes a white-screen hang.
     //if (R_SUCCEEDED(rc)) rc = nvioctlChannel_SubmitGPFIFO(g_nvgfx_fd_nvhostgpu, gpfifo_entries, 2, 0x104, &g_nvgfx_nvhostgpu_gpfifo_fence);
+
+    if (R_SUCCEEDED(rc)) rc = nvmapobjSetup(&nvmap_objs[5], 0, 0, 0x20000, 0);
+
+    if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 0, 0, nvmap_objs[5].handle, 0x10000, 0, 0, 0, NULL);
+    if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 0, 0xfe, nvmap_objs[5].handle, 0x10000, 0, 0, 0, NULL);
+
+    if (R_SUCCEEDED(rc)) rc = nvmapobjSetup(&nvmap_objs[6], 0, 0x1, 0x20000, 0);
+
+    if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 4, 0, nvmap_objs[6].handle, 0x10000, 0, 0, 0, NULL);
+    if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 4, 0xfe, nvmap_objs[6].handle, 0x10000, 0, 0, 0, NULL);
+    if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 4, 0xdb, nvmap_objs[6].handle, 0x10000, 0, 0, 0, &nvmap_obj6_mapbuffer_xdb_offset);
+
+    if (R_SUCCEEDED(rc)) rc = nvmapobjSetup(&nvmap_objs[7], 0, 0, 0x20000, 0);
+
+    if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 4, 0, nvmap_objs[7].handle, 0x10000, 0, 0, 0, NULL);
+    if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 4, 0xfe, nvmap_objs[7].handle, 0x10000, 0, 0, 0, NULL);
+
+    if (R_SUCCEEDED(rc)) rc = nvmapobjSetup(&nvmap_objs[8], 0, 0x1, 0x20000, 0);
+
+    //Currently broken.
+    //if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 5, 0, nvmap_objs[8].handle, 0x10000, 0, 0x800000, g_nvgfx_nvhostasgpu_allocspace_offset+0x10000, NULL);
+    if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 4, 0xfe, nvmap_objs[8].handle, 0x10000, 0, 0, 0, NULL);
+
+    //Skip init for 0x10000000-byte nvmap obj done by certain official sw.
+
+    if (R_SUCCEEDED(rc)) {
+         for(pos=0; pos<2; pos++) {
+             rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 0x100, 0xdb, framebuf_nvmap_handle, 0, pos*0x3c0000, 0x3c0000, nvmap_obj6_mapbuffer_xdb_offset, NULL);
+             if (R_FAILED(rc)) break;
+         }
+    }
+
+    //Officially NVMAP_IOC_GET_ID, NVMAP_IOC_FROM_ID, NVMAP_IOC_GET_ID, and NVMAP_IOC_FROM_ID are used here.
 
     //if (R_SUCCEEDED(rc)) rc = -1;
 
