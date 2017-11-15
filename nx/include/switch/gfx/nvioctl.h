@@ -53,6 +53,11 @@ typedef struct {
     u32 value;
 } nvioctl_fence;
 
+typedef struct {
+    u32 entry0;
+    u32 entry1;
+} nvioctl_gpfifo_entry;
+
 //Used with nvioctlChannel_AllocObjCtx().
 enum nvioctl_channel_obj_classnum {
     NVIOCTL_CHANNEL_OBJ_CLASSNUM_2d = 0x902D,
@@ -86,6 +91,7 @@ Result nvioctlNvmap_Create(u32 fd, u32 size, u32 *nvmap_handle);
 Result nvioctlNvmap_Alloc(u32 fd, u32 nvmap_handle, u32 heapmask, u32 flags, u32 align, u8 kind, void* addr);
 
 Result nvioctlChannel_SetNvmapFd(u32 fd, u32 nvmap_fd);
+Result nvioctlChannel_SubmitGPFIFO(u32 fd, nvioctl_gpfifo_entry *entries, u32 num_entries, u32 flags, nvioctl_fence *fence_out);
 Result nvioctlChannel_AllocObjCtx(u32 fd, u32 class_num, u32 flags);
 Result nvioctlChannel_ZCullBind(u32 fd, u32 in[4]);
 Result nvioctlChannel_SetErrorNotifier(u32 fd, u64 offset, u64 size, u32 nvmap_handle);

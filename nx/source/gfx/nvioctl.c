@@ -251,6 +251,34 @@ Result nvioctlChannel_SetNvmapFd(u32 fd, u32 nvmap_fd) {
     return nvIoctl(fd, _IOW(0x48, 0x01, data), &data);
 }
 
+Result nvioctlChannel_SubmitGPFIFO(u32 fd, nvioctl_gpfifo_entry *entries, u32 num_entries, u32 flags, nvioctl_fence *fence_out) {
+    Result rc=0;
+
+    if(num_entries > 0x200) return MAKERESULT(MODULE_LIBNX, LIBNX_OUTOFMEM);//Make sure stack data doesn't get very large.
+
+    struct {
+        u64 gpfifo;                      // in (ignored) pointer to gpfifo fence structs
+        u32 num_entries;                 // in number of fence objects being submitted
+        u32 flags;                       // in
+        nvioctl_fence fence_out;          // out returned new fence object for others to wait on
+        nvioctl_gpfifo_entry entries[num_entries];   // in depends on num_entries
+    } data;
+
+
+    memset(&data, 0, sizeof(data));
+    data.gpfifo = 1;
+    data.num_entries = num_entries;
+    data.flags = flags;
+    memcpy(data.entries, entries, sizeof(data.entries));
+
+    rc = nvIoctl(fd, _IOWR(0x48, 0x08, data), &data);
+    if (R_FAILED(rc)) return rc;
+
+    if(fence_out) memcpy(fence_out, &data.fence_out, sizeof(data.fence_out));
+
+    return rc;
+}
+
 Result nvioctlChannel_AllocObjCtx(u32 fd, u32 class_num, u32 flags) {
     struct {
         u32 class_num;    // 0x902D=2d, 0xB197=3d, 0xB1C0=compute, 0xA140=kepler, 0xB0B5=DMA, 0xB06F=channel_gpfifo

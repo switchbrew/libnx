@@ -23,6 +23,7 @@ static u32 g_nvgfx_zcullinfo[40>>2];
 static nvioctl_va_region g_nvgfx_nvhostasgpu_varegions[2];
 static nvioctl_l2_state g_nvgfx_l2state;
 static nvioctl_fence g_nvgfx_nvhost_fence;
+static nvioctl_fence g_nvgfx_nvhostgpu_gpfifo_fence;
 static u8 *g_nvgfx_nvhost_userdata;
 static size_t g_nvgfx_nvhost_userdata_size;
 
@@ -78,6 +79,8 @@ Result nvgfxInitialize(void) {
 
     u32 zcullbind_data[4] = {0x58000, 0x5, 0x2, 0x0};
 
+    nvioctl_gpfifo_entry gpfifo_entries[2] = {{0x00030000, 0x00177a05}, {0x00031778, 0x80002e05}};
+
     g_nvgfx_fd_nvhostctrlgpu = 0;
     g_nvgfx_fd_nvhostasgpu = 0;
     g_nvgfx_fd_nvmap = 0;
@@ -91,6 +94,7 @@ Result nvgfxInitialize(void) {
     memset(g_nvgfx_nvhostasgpu_varegions, 0, sizeof(g_nvgfx_nvhostasgpu_varegions));
     memset(&g_nvgfx_l2state, 0, sizeof(nvioctl_l2_state));
     memset(&g_nvgfx_nvhost_fence, 0, sizeof(g_nvgfx_nvhost_fence));
+    memset(&g_nvgfx_nvhostgpu_gpfifo_fence, 0, sizeof(g_nvgfx_nvhostgpu_gpfifo_fence));
     g_nvgfx_nvhostasgpu_allocspace_offset = 0;
     g_nvgfx_zcullctxsize = 0;
 
@@ -171,7 +175,10 @@ Result nvgfxInitialize(void) {
 
     if (R_SUCCEEDED(rc)) rc = nvioctlChannel_ZCullBind(g_nvgfx_fd_nvhostgpu, zcullbind_data);
 
-    //Officially, ipcQueryPointerBufferSize and NVGPU_IOCTL_CHANNEL_SUBMIT_GPFIFO are used here with the duplicate session setup during nv serv init.
+    //Officially, ipcQueryPointerBufferSize and NVGPU_IOCTL_CHANNEL_SUBMIT_GPFIFO(nvioctlChannel_SubmitGPFIFO) are used here with the duplicate service session setup during nv serv init.
+    //TODO: This is probably used for GPU rendering? Is this really needed when not doing actual GPU rendering?
+    //Skip this since this causes a white-screen hang.
+    //if (R_SUCCEEDED(rc)) rc = nvioctlChannel_SubmitGPFIFO(g_nvgfx_fd_nvhostgpu, gpfifo_entries, 2, 0x104, &g_nvgfx_nvhostgpu_gpfifo_fence);
 
     //if (R_SUCCEEDED(rc)) rc = -1;
 
