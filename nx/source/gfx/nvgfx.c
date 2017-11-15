@@ -27,7 +27,7 @@ static nvioctl_fence g_nvgfx_nvhostgpu_gpfifo_fence;
 static u8 *g_nvgfx_nvhost_userdata;
 static size_t g_nvgfx_nvhost_userdata_size;
 
-static nvmapobj nvmap_objs[17];
+static nvmapobj nvmap_objs[18];
 
 static u64 nvmap_obj6_mapbuffer_xdb_offset;
 
@@ -120,6 +120,7 @@ Result nvgfxInitialize(void) {
     if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[13], 0x1000);
     if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[14], 0x1000);
     if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[15], 0x6000);
+    if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[16], 0x1000);
 
     if (R_SUCCEEDED(rc)) memset(nvmap_objs[6].mem, 0x77, nvmap_objs[6].mem_size);
 
@@ -268,6 +269,11 @@ Result nvgfxInitialize(void) {
     //Currently broken.
     //if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 5, 0, nvmap_objs[15].handle, 0x10000, 0, 0x10000, g_nvgfx_nvhostasgpu_allocspace_offset+0x10000+0x800000+0x10000+0x10000, NULL);
     if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 4, 0xfe, nvmap_objs[15].handle, 0x10000, 0, 0, 0, NULL);
+
+    if (R_SUCCEEDED(rc)) rc = nvmapobjSetup(&nvmap_objs[16], 0, 0x1, 0x20000, 0);
+
+    if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 5, 0, nvmap_objs[16].handle, 0x10000, 0, 0x10000, g_nvgfx_nvhostasgpu_allocspace_offset+0x10000+0x800000+0x10000+0x10000+0x10000, NULL);
+    if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 4, 0xfe, nvmap_objs[16].handle, 0x10000, 0, 0, 0, NULL);
 
     //if (R_SUCCEEDED(rc)) rc = -1;
 
