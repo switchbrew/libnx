@@ -114,6 +114,8 @@ Result nvgfxInitialize(void) {
     if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[7], 0x1000000);
     if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[8], 0x800000);
 
+    if (R_SUCCEEDED(rc)) memset(nvmap_objs[6].mem, 0x77, nvmap_objs[6].mem_size);
+
     if (R_SUCCEEDED(rc)) { //Unknown what size/etc is used officially.
         g_nvgfx_nvhost_userdata_size = 0x1000;
         g_nvgfx_nvhost_userdata = memalign(0x1000, g_nvgfx_nvhost_userdata_size);
@@ -215,13 +217,13 @@ Result nvgfxInitialize(void) {
     //Skip init for 0x10000000-byte nvmap obj done by certain official sw.
 
     if (R_SUCCEEDED(rc)) {
-         for(pos=0; pos<2; pos++) {
+         for(pos=0; pos<4; pos++) {
              rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 0x100, 0xdb, framebuf_nvmap_handle, 0, pos*0x3c0000, 0x3c0000, nvmap_obj6_mapbuffer_xdb_offset, NULL);
              if (R_FAILED(rc)) break;
+
+             //Officially NVMAP_IOC_GET_ID, NVMAP_IOC_FROM_ID, NVMAP_IOC_GET_ID, and NVMAP_IOC_FROM_ID are used after the second *MapBufferEx.
          }
     }
-
-    //Officially NVMAP_IOC_GET_ID, NVMAP_IOC_FROM_ID, NVMAP_IOC_GET_ID, and NVMAP_IOC_FROM_ID are used here.
 
     //if (R_SUCCEEDED(rc)) rc = -1;
 
