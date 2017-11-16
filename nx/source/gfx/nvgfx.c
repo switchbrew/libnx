@@ -17,6 +17,8 @@ static u32 g_nvgfx_fd_nvhostgpu;
 static u32 g_nvgfx_fd_nvhostctrl;
 
 static Handle g_nvgfx_nvhostctrl_eventhandle = INVALID_HANDLE;
+static Handle g_nvgfx_nvhostctrlgpu_event2 = INVALID_HANDLE;
+static Handle g_nvgfx_nvhostgpu_event3 = INVALID_HANDLE;
 
 static gpu_characteristics g_nvgfx_gpu_characteristics;
 static u64 g_nvgfx_nvhostasgpu_allocspace_offset;
@@ -139,7 +141,7 @@ Result nvgfxInitialize(void) {
         if (R_SUCCEEDED(rc)) memset(g_nvgfx_nvhost_userdata, 0, g_nvgfx_nvhost_userdata_size);
     }
 
-    //Officially NVHOST_IOCTL_CTRL_GET_CONFIG is used a lot (here and later), skip that.
+    //Officially NVHOST_IOCTL_CTRL_GET_CONFIG is used a lot (here and later), skip that. This is done with a /dev/nvhost-ctrl fd, seperate from the one used later.
 
     if (R_SUCCEEDED(rc)) rc = nvOpen(&g_nvgfx_fd_nvhostctrlgpu, "/dev/nvhost-ctrl-gpu");
     if (R_SUCCEEDED(rc)) rc = nvioctlNvhostCtrlGpu_GetCharacteristics(g_nvgfx_fd_nvhostctrlgpu, &g_nvgfx_gpu_characteristics);
@@ -149,7 +151,7 @@ Result nvgfxInitialize(void) {
     if (R_SUCCEEDED(rc)) rc = nvioctlNvhostCtrlGpu_ZCullGetCtxSize(g_nvgfx_fd_nvhostctrlgpu, &g_nvgfx_zcullctxsize);
     if (R_SUCCEEDED(rc)) rc = nvioctlNvhostCtrlGpu_ZCullGetInfo(g_nvgfx_fd_nvhostctrlgpu, g_nvgfx_zcullinfo);
 
-    //Officially nvQueryEvent is used here.
+    if (R_SUCCEEDED(rc)) rc = nvQueryEvent(g_nvgfx_fd_nvhostctrlgpu, 2, &g_nvgfx_nvhostctrlgpu_event2);
 
     if (R_SUCCEEDED(rc)) rc = nvOpen(&g_nvgfx_fd_nvhostasgpu, "/dev/nvhost-as-gpu");
 
@@ -184,6 +186,9 @@ Result nvgfxInitialize(void) {
     if (R_SUCCEEDED(rc)) rc = nvioctlChannel_AllocGPFIFOEx2(g_nvgfx_fd_nvhostgpu, 0x800, 0x1, 0, 0, 0, 0, &g_nvgfx_nvhost_fence);
 
     if (R_SUCCEEDED(rc)) rc = nvioctlChannel_AllocObjCtx(g_nvgfx_fd_nvhostgpu, NVIOCTL_CHANNEL_OBJ_CLASSNUM_3d, 0);
+
+    //Currently broken.
+    //if (R_SUCCEEDED(rc)) rc = nvQueryEvent(g_nvgfx_fd_nvhostgpu, 3, &g_nvgfx_nvhostgpu_event3);
 
     if (R_SUCCEEDED(rc)) rc = nvioctlChannel_SetErrorNotifier(g_nvgfx_fd_nvhostgpu, 0, 0x1000, nvmap_objs[2].handle);
 
@@ -304,6 +309,16 @@ Result nvgfxInitialize(void) {
             g_nvgfx_nvhostctrl_eventhandle = INVALID_HANDLE;
        }
 
+       if (g_nvgfx_nvhostgpu_event3 != INVALID_HANDLE) {
+           svcCloseHandle(g_nvgfx_nvhostgpu_event3);
+           g_nvgfx_nvhostgpu_event3 = INVALID_HANDLE;
+       }
+
+       if (g_nvgfx_nvhostctrlgpu_event2 != INVALID_HANDLE) {
+           svcCloseHandle(g_nvgfx_nvhostctrlgpu_event2);
+           g_nvgfx_nvhostctrlgpu_event2 = INVALID_HANDLE;
+       }
+
         nvClose(g_nvgfx_fd_nvhostctrl);
         nvClose(g_nvgfx_fd_nvhostgpu);
         nvClose(g_nvgfx_fd_nvmap);
@@ -334,6 +349,16 @@ void nvgfxExit(void) {
     if (g_nvgfx_nvhostctrl_eventhandle != INVALID_HANDLE) {
         svcCloseHandle(g_nvgfx_nvhostctrl_eventhandle);
         g_nvgfx_nvhostctrl_eventhandle = INVALID_HANDLE;
+    }
+
+    if (g_nvgfx_nvhostgpu_event3 != INVALID_HANDLE) {
+        svcCloseHandle(g_nvgfx_nvhostgpu_event3);
+        g_nvgfx_nvhostgpu_event3 = INVALID_HANDLE;
+    }
+
+    if (g_nvgfx_nvhostctrlgpu_event2 != INVALID_HANDLE) {
+        svcCloseHandle(g_nvgfx_nvhostctrlgpu_event2);
+        g_nvgfx_nvhostctrlgpu_event2 = INVALID_HANDLE;
     }
 
     nvClose(g_nvgfx_fd_nvhostctrl);
