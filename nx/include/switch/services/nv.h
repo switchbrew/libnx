@@ -12,4 +12,5 @@ void nvExit(void);
 Result nvOpen(u32 *fd, const char *devicepath);
 Result nvIoctl(u32 fd, u32 request, void* argp);
 Result nvClose(u32 fd);
+Result nvQueryEvent(u32 fd, u32 event_id, Handle *handle_out);
 

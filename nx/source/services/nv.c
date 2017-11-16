@@ -297,3 +297,40 @@ Result nvClose(u32 fd) {
     return rc;
 }
 
+Result nvQueryEvent(u32 fd, u32 event_id, Handle *handle_out) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 fd;
+        u32 event_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 4;
+    raw->fd = fd;
+    raw->event_id = event_id;
+
+    Result rc = ipcDispatch(g_nvServiceSession);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcCommandResponse r;
+        ipcParseResponse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u32 error;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+        if (R_SUCCEEDED(rc)) rc = resp->error;
+        if (R_SUCCEEDED(rc)) *handle_out = r.Handles[0];
+    }
+
+    return rc;
+}
+
