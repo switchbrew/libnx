@@ -1,7 +1,5 @@
 typedef struct {
     Handle     handle;
-    ThreadFunc entry;
-    void*      arg;
     void*      stack_mem;
     void*      stack_mirror;
     size_t     stack_sz;

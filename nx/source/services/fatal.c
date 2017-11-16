@@ -36,4 +36,5 @@ void fatalSimple(Result err) {
     }
 
     ((void(*)())0xBADC0DE)();
+    __builtin_unreachable();
 }

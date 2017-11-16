@@ -11,7 +11,7 @@ static u32 _GetTag() {
 
 void mutexLock(Mutex* m) {
     u32 self = _GetTag();
-    u32 cur = __sync_val_compare_and_swap(&m->Tag, 0, self);
+    u32 cur = __sync_val_compare_and_swap(m, 0, self);
 
     while (1) {
         if (cur == 0) {
@@ -26,44 +26,44 @@ void mutexLock(Mutex* m) {
 
         if (cur & HAS_LISTENERS) {
             // The flag is already set, we can use the syscall.
-            svcArbitrateLock(cur &~ HAS_LISTENERS, &m->Tag, self);
+            svcArbitrateLock(cur &~ HAS_LISTENERS, (u32*)m, self);
         }
         else {
             // The flag is not set, we need to set it.
-            u32 old = __sync_val_compare_and_swap(&m->Tag, cur, cur | HAS_LISTENERS);
+            u32 old = __sync_val_compare_and_swap(m, cur, cur | HAS_LISTENERS);
 
             if (old == cur) {
                 // Flag was set successfully.
-                svcArbitrateLock(cur &~ HAS_LISTENERS, &m->Tag, self);
+                svcArbitrateLock(cur &~ HAS_LISTENERS, (u32*)m, self);
             }
         }
 
-        cur = __sync_val_compare_and_swap(&m->Tag, 0, self);
+        cur = __sync_val_compare_and_swap(m, 0, self);
     }
 }
 
 void mutexUnlock(Mutex* m) {
     u32 self = _GetTag();
-    u32 old = __sync_val_compare_and_swap(&m->Tag, self, 0);
+    u32 old = __sync_val_compare_and_swap(m, self, 0);
 
     if (old & HAS_LISTENERS) {
-        svcArbitrateUnlock(&m->Tag);
+        svcArbitrateUnlock((u32*)m);
     }
 }
 
 void rmutexLock(RMutex* m) {
-    if (m->Owner == _GetTag()) {
-        m->Count++;
+    if (m->thread_tag == _GetTag()) {
+        m->counter++;
     }
     else {
-        mutexLock(&m->Lock);
-        m->Owner = _GetTag();
+        mutexLock(&m->lock);
+        m->thread_tag = _GetTag();
     }
 }
 
 void rmutexUnlock(RMutex* m) {
-    if (--m->Count == 0) {
-        m->Owner = 0;
-        mutexUnlock(&m->Lock);
+    if (--m->counter == 0) {
+        m->thread_tag = 0;
+        mutexUnlock(&m->lock);
     }
 }
