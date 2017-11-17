@@ -40,7 +40,7 @@ static Result _gfxGetNativeWindowID(u8 *buf, u64 size, s32 *out_ID) {
 }
 
 static Result _gfxDequeueBuffer() {
-    return gfxproducerDequeueBuffer(1, 1280, 720, 0, 0x300);//reply_parcel currently contains error(s), presumably due to nv not being initialized for this.
+    return gfxproducerDequeueBuffer(1, 1280, 720, 0, 0x300);
 }
 
 static Result _gfxQueueBuffer(s32 buf) {
@@ -101,12 +101,12 @@ static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 L
            rc = _gfxDequeueBuffer();
            if (R_FAILED(rc)) break;
 
-           rc = gfxproducerRequestBuffer(i);//reply_parcel currently contains an error, presumably due to _gfxDequeueBuffer() failing as mentioned above.
+           rc = gfxproducerRequestBuffer(i);
            if (R_FAILED(rc)) break;
 
            //Officially, nvioctlNvmap_FromID() and nvioctlChannel_SubmitGPFIFO() are used here.
 
-           rc = _gfxQueueBuffer(i);//reply_parcel currently contains the same error as gfxproducerRequestBuffer() above.
+           rc = _gfxQueueBuffer(i);
            if (R_FAILED(rc)) break;
        }
     }
