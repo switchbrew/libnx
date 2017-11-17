@@ -169,8 +169,6 @@ Result nvgfxInitialize(void) {
     if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[15], 0x6000);
     if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[16], 0x1000);
 
-    if (R_SUCCEEDED(rc)) memset(nvmap_objs[6].mem, 0x77, nvmap_objs[6].mem_size);
-
     if (R_SUCCEEDED(rc)) { //Unknown what size/etc is used officially.
         g_nvgfx_nvhost_userdata_size = 0x1000;
         g_nvgfx_nvhost_userdata = memalign(0x1000, g_nvgfx_nvhost_userdata_size);
@@ -452,5 +450,14 @@ Result nvgfxEventInit(void) {
     //if (R_SUCCEEDED(rc)) rc = nvioctlNvhostCtrl_EventSignal(g_nvgfx_fd_nvhostctrl, g_nvgfx_nvhostctrl_eventres);
 
     return rc;
+}
+
+Result nvgfxGetFramebuffer(u8 **buffer, size_t *size) {
+    if(!g_nvgfxInitialized)return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
+
+    if(buffer) *buffer = nvmap_objs[6].mem;
+    if(size) *size = nvmap_objs[6].mem_size;
+
+    return 0;
 }
 

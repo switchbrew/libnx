@@ -10,6 +10,9 @@ static u64 g_gfxNativeWindow_Size;
 static s32 g_gfxNativeWindow_ID;
 static binderSession g_gfxBinderSession;
 static s32 g_gfxCurrentBuffer = 0;
+static u8 *g_gfxFramebuf;
+static size_t g_gfxFramebufSize;
+static size_t g_gfxFramebufSingleSize = 0x3c0000;
 
 extern u32 __nx_applet_type;
 
@@ -69,6 +72,8 @@ static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 L
     g_gfxNativeWindow_ID = 0;
     g_gfxDisplayVsyncEvent = INVALID_HANDLE;
     g_gfxCurrentBuffer = 0;
+    g_gfxFramebuf = NULL;
+    g_gfxFramebufSize = 0;
 
     rc = viInitialize(servicetype);
     if (R_FAILED(rc)) return rc;
@@ -115,6 +120,10 @@ static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 L
 
     if (R_SUCCEEDED(rc)) rc = _gfxDequeueBuffer();
 
+    if (R_SUCCEEDED(rc)) rc = nvgfxGetFramebuffer(&g_gfxFramebuf, &g_gfxFramebufSize);
+
+    if (R_SUCCEEDED(rc)) gfxFlushBuffers();
+
     if (R_FAILED(rc)) {
         nvgfxExit();
         gfxproducerExit();
@@ -123,6 +132,16 @@ static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 L
         viCloseLayer(&g_gfxLayer);
         viCloseDisplay(&g_gfxDisplay);
         viExit();
+
+        if(g_gfxDisplayVsyncEvent != INVALID_HANDLE) {
+            svcCloseHandle(g_gfxDisplayVsyncEvent);
+            g_gfxDisplayVsyncEvent = INVALID_HANDLE;
+        }
+
+        g_gfxNativeWindow_ID = 0;
+        g_gfxCurrentBuffer = 0;
+        g_gfxFramebuf = NULL;
+        g_gfxFramebufSize = 0;
     }
 
     if (R_SUCCEEDED(rc)) g_gfxInitialized = 1;
@@ -176,6 +195,10 @@ void gfxExit(void) {
 
     g_gfxInitialized = 0;
     g_gfxNativeWindow_ID = 0;
+
+    g_gfxCurrentBuffer = 0;
+    g_gfxFramebuf = NULL;
+    g_gfxFramebufSize = 0;
 }
 
 void gfxWaitForVsync() {
@@ -193,5 +216,16 @@ void gfxSwapBuffers() {
     if (R_SUCCEEDED(rc)) rc = _gfxDequeueBuffer();
 
     if (R_FAILED(rc)) fatalSimple(rc);
+}
+
+u8* gfxGetFramebuffer(u16* width, u16* height) {
+    if(width) *width = 1280;
+    if(height) *height = 720;
+
+    return &g_gfxFramebuf[g_gfxCurrentBuffer*g_gfxFramebufSingleSize];
+}
+
+void gfxFlushBuffers(void) {
+    armDCacheFlush(&g_gfxFramebuf[g_gfxCurrentBuffer*g_gfxFramebufSingleSize], g_gfxFramebufSingleSize);
 }
 
