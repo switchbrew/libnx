@@ -8,6 +8,9 @@ _start:
 
 .org _start+0x80
 startup:
+    // save main thread handle
+    mov  x27, x1
+
     // get aslr base
     sub  x28, x30, #4
 
@@ -32,7 +35,7 @@ bss_loop:
     bl   __nx_dynamic
 
     // initialize system
-    mov  x0, x28
+    mov  x0, x27
     bl   __libnx_init
 
     // call entrypoint

@@ -9,6 +9,9 @@ typedef struct {
     // Magic value used to check if the struct is initialized
     u32 magic;
 
+    // Thread handle, for mutexes
+    Handle handle;
+
     // Pointer to the current thread (if exists)
     Thread* thread_ptr;
 

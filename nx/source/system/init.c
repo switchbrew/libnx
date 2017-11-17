@@ -3,7 +3,7 @@
 void __nx_exit(int rc);
 
 void virtmemSetup();
-void newlibSetup();
+void newlibSetup(Handle main_thread);
 
 #define INNER_HEAP_SIZE 0x20000
 __attribute__((weak)) size_t __nx_inner_heap_size = INNER_HEAP_SIZE;
@@ -11,12 +11,12 @@ __attribute__((weak)) char __nx_inner_heap[INNER_HEAP_SIZE];
 __attribute__((weak)) size_t __nx_outer_heap_size = 0x2000000*4;//Must be a multiple of 0x2000000.
 
 static void _SetupHeap() {
-    char* addr;
+    u64 addr;
     Result rc   = svcSetHeapSize((void**)&addr, __nx_outer_heap_size);
     size_t size = __nx_outer_heap_size;
 
     if (R_FAILED(rc)) {
-        addr = &__nx_inner_heap[0];
+        addr = (u64) &__nx_inner_heap[0];
         size = __nx_inner_heap_size;
     }
 
@@ -24,8 +24,8 @@ static void _SetupHeap() {
     extern char* fake_heap_start;
     extern char* fake_heap_end;
 
-    fake_heap_start = addr;
-    fake_heap_end   = addr + size;
+    fake_heap_start = (char*)addr;
+    fake_heap_end   = (char*)addr + size;
 }
 
 void __attribute__((weak)) __appInit(void)
@@ -46,12 +46,12 @@ void __attribute__((weak)) __appExit(void)
     smExit();
 }
 
-void __attribute__((weak)) __libnx_init(void)
+void __attribute__((weak)) __libnx_init(Handle main_thread)
 {
     // Called by crt0.
 
     // Libnx initialization goes here.
-    newlibSetup();
+    newlibSetup(main_thread);
     virtmemSetup();
     _SetupHeap();
 

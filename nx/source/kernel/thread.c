@@ -25,6 +25,7 @@ static void _EntryWrap(ThreadEntryArgs* args) {
     tv->thread_ptr = args->t;
     tv->reent      = args->reent;
     tv->tls_tp     = (u8*)args->tls-2*sizeof(void*); // subtract size of Thread Control Block (TCB)
+    tv->handle     = args->t->handle;
 
     // Launch thread entrypoint
     args->entry(args->arg);

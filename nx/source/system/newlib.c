@@ -18,7 +18,7 @@ static struct _reent* __libnx_get_reent() {
     return tv->reent;
 }
 
-void newlibSetup() {
+void newlibSetup(Handle main_thread) {
     // Register newlib syscalls
     __syscalls.exit     = __libnx_exit;
     __syscalls.getreent = __libnx_get_reent;
@@ -37,6 +37,7 @@ void newlibSetup() {
     tv->thread_ptr = NULL;
     tv->reent      = _impure_ptr;
     tv->tls_tp     = __tls_start-2*sizeof(void*); // subtract size of Thread Control Block (TCB)
+    tv->handle     = main_thread;
 
     u32 tls_size = __tdata_lma_end - __tdata_lma;
     if (tls_size)

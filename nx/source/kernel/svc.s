@@ -104,10 +104,12 @@ SVC_END
 
 SVC_BEGIN svcArbitrateLock
     svc 0x1a
+    ret
 SVC_END
 
 SVC_BEGIN svcArbitrateUnlock
     svc 0x1b
+    ret
 SVC_END
 
 SVC_BEGIN svcConnectToNamedPort

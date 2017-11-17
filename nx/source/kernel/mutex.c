@@ -1,19 +1,19 @@
 // Copyright 2017 plutoo
 #include <switch.h>
+#include "../internal.h"
 
 #define HAS_LISTENERS 0x40000000
 
 static u32 _GetTag() {
-    // todo: Needs filling in at thread creation.
-    // todo: Must always be assigned non-zero.
-    return ((u32*)armGetTls()) [0x1FC/4];
+    return getThreadVars()->handle;
 }
 
 void mutexLock(Mutex* m) {
     u32 self = _GetTag();
-    u32 cur = __sync_val_compare_and_swap(m, 0, self);
 
     while (1) {
+        u32 cur = __sync_val_compare_and_swap((u32*)m, 0, self);
+
         if (cur == 0) {
             // We won the race!
             return;
@@ -30,21 +30,18 @@ void mutexLock(Mutex* m) {
         }
         else {
             // The flag is not set, we need to set it.
-            u32 old = __sync_val_compare_and_swap(m, cur, cur | HAS_LISTENERS);
+            u32 old = __sync_val_compare_and_swap((u32*)m, cur, cur | HAS_LISTENERS);
 
             if (old == cur) {
                 // Flag was set successfully.
                 svcArbitrateLock(cur &~ HAS_LISTENERS, (u32*)m, self);
             }
         }
-
-        cur = __sync_val_compare_and_swap(m, 0, self);
     }
 }
 
 void mutexUnlock(Mutex* m) {
-    u32 self = _GetTag();
-    u32 old = __sync_val_compare_and_swap(m, self, 0);
+    u32 old = __sync_lock_test_and_set((u32*)m, 0);
 
     if (old & HAS_LISTENERS) {
         svcArbitrateUnlock((u32*)m);
