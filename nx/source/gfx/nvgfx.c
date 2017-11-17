@@ -37,6 +37,40 @@ static nvmapobj nvmap_objs[18];
 
 static u64 nvmap_obj6_mapbuffer_xdb_offset;
 
+static u32 g_gfxprod_BufferInitData[0x178>>2] = {
+0x1, 0x16c, 0x0,
+0x47424652,
+1280, 720,
+1280,
+0x1, 0xb00, 0x2a, 0x0,
+0x0, 0x51, 0xffffffff,
+0x0, //nvmap handle
+0x0, 0xdaffcaff, 0x2a, 0x0,
+0xb00, 0x1, 0x1, 1280,
+0x3c0000, 0x1, 0x0, 1280,
+720, 0x532120, 0x1, 0x3,
+0x1400,
+0x0, //nvmap handle
+0x0,
+0xfe,
+0x4, 0x0, 0x0, 0x0,
+0x0, 0x3c0000, 0x0, 0x0,
+0x0, 0x0, 0x0, 0x0,
+0x0, 0x0, 0x0, 0x0,
+0x0, 0x0, 0x0, 0x0,
+0x0, 0x0, 0x0, 0x0,
+0x0, 0x0, 0x0, 0x0,
+0x0, 0x0, 0x0, 0x0,
+0x0, 0x0, 0x0, 0x0,
+0x0, 0x0, 0x0, 0x0,
+0x0, 0x0, 0x0, 0x0,
+0x0, 0x0, 0x0, 0x0,
+0x0, 0x0, 0x0, 0x0,
+0x0, 0x0, 0x0, 0x0,
+0x0,
+0x0, 0x0 //Unknown, some timestamp perhaps?
+};
+
 Result nvmapobjInitialize(nvmapobj *obj, size_t size) {
     Result rc=0;
 
@@ -83,7 +117,10 @@ Result nvmapobjSetup(nvmapobj *obj, u32 heapmask, u32 flags, u32 align, u8 kind)
 
 Result nvgfxInitialize(void) {
     Result rc=0;
-    u32 pos=0;
+    u32 pos=0, i=0;
+    s32 tmp=0;
+    u32 tmpval=0;
+    u64 *ptr64 = (u64*)g_gfxprod_BufferInitData;
     if(g_nvgfxInitialized)return 0;
 
     u32 zcullbind_data[4] = {0x58000, 0x5, 0x2, 0x0};
@@ -151,7 +188,8 @@ Result nvgfxInitialize(void) {
     if (R_SUCCEEDED(rc)) rc = nvioctlNvhostCtrlGpu_ZCullGetCtxSize(g_nvgfx_fd_nvhostctrlgpu, &g_nvgfx_zcullctxsize);
     if (R_SUCCEEDED(rc)) rc = nvioctlNvhostCtrlGpu_ZCullGetInfo(g_nvgfx_fd_nvhostctrlgpu, g_nvgfx_zcullinfo);
 
-    if (R_SUCCEEDED(rc)) rc = nvQueryEvent(g_nvgfx_fd_nvhostctrlgpu, 2, &g_nvgfx_nvhostctrlgpu_event2);
+    //Currently broken.
+    //if (R_SUCCEEDED(rc)) rc = nvQueryEvent(g_nvgfx_fd_nvhostctrlgpu, 2, &g_nvgfx_nvhostctrlgpu_event2);
 
     if (R_SUCCEEDED(rc)) rc = nvOpen(&g_nvgfx_fd_nvhostasgpu, "/dev/nvhost-as-gpu");
 
@@ -242,7 +280,35 @@ Result nvgfxInitialize(void) {
              rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 0x100, pos<3 ? 0xdb : 0x86, framebuf_nvmap_handle, 0, pos*0x3c0000, 0x3c0000, nvmap_obj6_mapbuffer_xdb_offset, NULL);
              if (R_FAILED(rc)) break;
 
-             //Officially NVMAP_IOC_GET_ID, NVMAP_IOC_FROM_ID, NVMAP_IOC_GET_ID, and NVMAP_IOC_FROM_ID are used after the second *MapBufferEx.
+             if(pos==2) {
+                 rc = gfxproducerQuery(2, &tmp);//"NATIVE_WINDOW_FORMAT"
+                 if (R_FAILED(rc)) break;
+
+                 for(i=0; i<2; i++) {
+                     tmpval = 0;
+                     rc = nvioctlNvmap_GetID(g_nvgfx_fd_nvmap, nvmap_objs[6].handle, &tmpval);
+                     if (R_FAILED(rc)) break;
+
+                     if(tmpval==~0) {
+                         rc = 6;//official error
+                         break;
+                     }
+
+                     rc = nvioctlNvmap_FromID(g_nvgfx_fd_nvmap, tmpval, &tmpval);
+                     if (R_FAILED(rc)) break;
+
+                     //The above gets a nvmap_handle, but normally it's the same value passed to nvioctlNvmap_GetID().
+
+                     g_gfxprod_BufferInitData[0xa] = i;
+                     g_gfxprod_BufferInitData[0xe] = tmpval;
+                     g_gfxprod_BufferInitData[0x20] = tmpval;
+                     g_gfxprod_BufferInitData[0x21] = 0x3c0000*i;
+                     ptr64[0x170>>3] = svcGetSystemTick();
+                     rc = gfxproducerBufferInit(i, (u8*)g_gfxprod_BufferInitData);
+                     if (R_FAILED(rc)) break;
+                 }
+                 if (R_FAILED(rc)) break;
+             }
          }
     }
 
@@ -289,17 +355,6 @@ Result nvgfxInitialize(void) {
     if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 4, 0xfe, nvmap_objs[16].handle, 0x10000, 0, 0, 0, NULL);
 
     if (R_SUCCEEDED(rc)) rc = nvOpen(&g_nvgfx_fd_nvhostctrl, "/dev/nvhost-ctrl");
-
-    if (R_SUCCEEDED(rc)) {
-        do {
-            rc = nvioctlNvhostCtrl_EventWait(g_nvgfx_fd_nvhostctrl, 0x42, 0x1ca7, 0x64, 0, &g_nvgfx_nvhostctrl_eventres);
-        } while(rc==5);//timeout error
-    }
-
-    //Currently broken.
-    //if (R_SUCCEEDED(rc)) rc = nvQueryEvent(g_nvgfx_fd_nvhostctrl, g_nvgfx_nvhostctrl_eventres, &g_nvgfx_nvhostctrl_eventhandle);
-
-    //if (R_SUCCEEDED(rc)) rc = nvioctlNvhostCtrl_EventSignal(g_nvgfx_fd_nvhostctrl, g_nvgfx_nvhostctrl_eventres);
 
     //if (R_SUCCEEDED(rc)) rc = -1;
 
@@ -380,5 +435,22 @@ void nvgfxExit(void) {
     }
 
     g_nvgfxInitialized = 0;
+}
+
+Result nvgfxEventInit(void) {
+    Result rc=0;
+
+    if (R_SUCCEEDED(rc)) {
+        do {
+            rc = nvioctlNvhostCtrl_EventWait(g_nvgfx_fd_nvhostctrl, 0x42, 0x1ca7, 0x64, 0, &g_nvgfx_nvhostctrl_eventres);
+        } while(rc==5);//timeout error
+    }
+
+    //Currently broken.
+    //if (R_SUCCEEDED(rc)) rc = nvQueryEvent(g_nvgfx_fd_nvhostctrl, g_nvgfx_nvhostctrl_eventres, &g_nvgfx_nvhostctrl_eventhandle);
+
+    //if (R_SUCCEEDED(rc)) rc = nvioctlNvhostCtrl_EventSignal(g_nvgfx_fd_nvhostctrl, g_nvgfx_nvhostctrl_eventres);
+
+    return rc;
 }
 

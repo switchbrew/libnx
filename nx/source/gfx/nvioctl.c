@@ -264,6 +264,25 @@ Result nvioctlNvmap_Create(u32 fd, u32 size, u32 *nvmap_handle) {
     return rc;
 }
 
+Result nvioctlNvmap_FromID(u32 fd, u32 id, u32 *nvmap_handle) {
+    Result rc=0;
+
+    struct {
+        u32 id;//in
+        u32 handle;//out
+    } data;
+
+    memset(&data, 0, sizeof(data));
+    data.id = id;
+
+    rc = nvIoctl(fd, _IOWR(0x01, 0x03, data), &data);
+    if (R_FAILED(rc)) return rc;
+
+    *nvmap_handle = data.handle;
+
+    return rc;
+}
+
 Result nvioctlNvmap_Alloc(u32 fd, u32 nvmap_handle, u32 heapmask, u32 flags, u32 align, u8 kind, void* addr) {
     struct {
         u32 handle;//in
@@ -284,6 +303,25 @@ Result nvioctlNvmap_Alloc(u32 fd, u32 nvmap_handle, u32 heapmask, u32 flags, u32
     data.addr = (u64)addr;
 
     return nvIoctl(fd, _IOWR(0x01, 0x04, data), &data);
+}
+
+Result nvioctlNvmap_GetID(u32 fd, u32 nvmap_handle, u32 *id) {
+    Result rc=0;
+
+    struct {
+        u32 id;//out
+        u32 handle;//in
+    } data;
+
+    memset(&data, 0, sizeof(data));
+    data.handle = nvmap_handle;
+
+    rc = nvIoctl(fd, _IOWR(0x01, 0x0E, data), &data);
+    if (R_FAILED(rc)) return rc;
+
+    *id = data.id;
+
+    return rc;
 }
 
 Result nvioctlChannel_SetNvmapFd(u32 fd, u32 nvmap_fd) {

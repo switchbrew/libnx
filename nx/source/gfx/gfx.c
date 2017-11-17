@@ -24,38 +24,6 @@ static u32 g_gfxQueueBufferData[0x5c>>2] = {
 0xffffffff, 0x0,
 0xffffffff, 0x0, 0xffffffff, 0x0};
 
-static u32 g_gfxBufferInitData[0x178>>2] = {
-0x1, 0x16c, 0x0,
-0x47424652,
-1280, 720,
-1280,
-0x1, 0xb00, 0x2a, 0x0,
-0x0, 0x51, 0xffffffff, 0xcb8,
-0x0, 0xdaffcaff, 0x2a, 0x0,
-0xb00, 0x1, 0x1, 1280,
-0x3c0000, 0x1, 0x0, 1280,
-720, 0x532120, 0x1, 0x3,
-0x1400, 0xcb8,
-0x0,
-0xfe,
-0x4, 0x0, 0x0, 0x0,
-0x0, 0x3c0000, 0x0, 0x0,
-0x0, 0x0, 0x0, 0x0,
-0x0, 0x0, 0x0, 0x0,
-0x0, 0x0, 0x0, 0x0,
-0x0, 0x0, 0x0, 0x0,
-0x0, 0x0, 0x0, 0x0,
-0x0, 0x0, 0x0, 0x0,
-0x0, 0x0, 0x0, 0x0,
-0x0, 0x0, 0x0, 0x0,
-0x0, 0x0, 0x0, 0x0,
-0x0, 0x0, 0x0, 0x0,
-0x0, 0x0, 0x0, 0x0,
-0x0, 0x0, 0x0, 0x0,
-0x0,
-0x0, 0x0 //Unknown, some timestamp perhaps?
-};
-
 static Result _gfxGetNativeWindowID(u8 *buf, u64 size, s32 *out_ID) {
     u32 *bufptr = (u32*)buf;
 
@@ -94,9 +62,7 @@ static Result _gfxQueueBuffer(s32 buf) {
 
 static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 LayerFlags, u64 LayerId, nvServiceType nv_servicetype, size_t nv_transfermem_size) {
     Result rc=0;
-    s32 tmp=0;
     u32 i=0;
-    u64 *ptr64 = (u64*)g_gfxBufferInitData;
 
     if(g_gfxInitialized)return 0;
 
@@ -124,23 +90,11 @@ static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 L
 
     if (R_SUCCEEDED(rc)) rc = nvInitialize(nv_servicetype, nv_transfermem_size);
 
-    if (R_SUCCEEDED(rc)) rc = nvgfxInitialize();
-
     if (R_SUCCEEDED(rc)) rc = gfxproducerInitialize(&g_gfxBinderSession);
 
     if (R_SUCCEEDED(rc)) rc = gfxproducerConnect(2, 0);
 
-    if (R_SUCCEEDED(rc)) rc = gfxproducerQuery(2, &tmp);//"NATIVE_WINDOW_FORMAT"
-
-    if (R_SUCCEEDED(rc)) {
-       for(i=0; i<2; i++) {
-           g_gfxBufferInitData[0xa] = i;
-           g_gfxBufferInitData[0x21] = 0x3c0000*i;
-           ptr64[0x170>>3] = svcGetSystemTick();
-           rc = gfxproducerBufferInit(i, (u8*)g_gfxBufferInitData);
-           if (R_FAILED(rc)) break;
-       }
-    }
+    if (R_SUCCEEDED(rc)) rc = nvgfxInitialize();
 
     if (R_SUCCEEDED(rc)) {
        for(i=0; i<2; i++) {
@@ -150,16 +104,20 @@ static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 L
            rc = gfxproducerRequestBuffer(i);//reply_parcel currently contains an error, presumably due to _gfxDequeueBuffer() failing as mentioned above.
            if (R_FAILED(rc)) break;
 
+           //Officially, nvioctlNvmap_FromID() and nvioctlChannel_SubmitGPFIFO() are used here.
+
            rc = _gfxQueueBuffer(i);//reply_parcel currently contains the same error as gfxproducerRequestBuffer() above.
            if (R_FAILED(rc)) break;
        }
     }
 
+    if (R_SUCCEEDED(rc)) rc = nvgfxEventInit();
+
     if (R_SUCCEEDED(rc)) rc = _gfxDequeueBuffer();
 
     if (R_FAILED(rc)) {
-        gfxproducerExit();
         nvgfxExit();
+        gfxproducerExit();
         nvExit();
         binderExitSession(&g_gfxBinderSession);
         viCloseLayer(&g_gfxLayer);
@@ -197,9 +155,10 @@ void gfxInitDefault(void) {
 void gfxExit(void) {
     if(!g_gfxInitialized)return;
 
+    nvgfxExit();
+
     gfxproducerExit();
 
-    nvgfxExit();
     nvExit();
 
     binderExitSession(&g_gfxBinderSession);

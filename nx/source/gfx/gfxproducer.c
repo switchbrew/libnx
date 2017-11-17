@@ -94,7 +94,7 @@ Result gfxproducerQueueBuffer(s32 buf, u8 input[0x5c]) {
     parcelWriteInt32(&parcel, buf);
     parcelWriteData(&parcel, input, 0x5c);
 
-    rc = parcelTransact(g_gfxproducerBinderSession, DEQUEUE_BUFFER, &parcel, &parcel_reply);
+    rc = parcelTransact(g_gfxproducerBinderSession, QUEUE_BUFFER, &parcel, &parcel_reply);
     if (R_FAILED(rc)) return rc;
 
     //TODO: parse reply

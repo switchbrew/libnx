@@ -3,8 +3,12 @@
 
 //This implements Android Parcel, hence names etc here are based on Android Parcel.cpp.
 
-/*u8 parcel_reply_log[0x10000] = {0};
-size_t parcel_reply_log_size = 0;*/
+//#define PARCEL_LOGGING
+
+#ifdef PARCEL_LOGGING
+u8 parcel_reply_log[0x10000] = {0};
+size_t parcel_reply_log_size = 0;
+#endif
 
 void parcelInitializeContext(parcelContext *ctx) {
     memset(ctx, 0, sizeof(parcelContext));
@@ -44,12 +48,14 @@ Result parcelTransact(binderSession *session, u32 code, parcelContext *in_parcel
     memcpy(parcel_reply->ParcelData, &outparcel[outparcel32[1]], outparcel32[0]);
     parcel_reply->ParcelData_size = outparcel32[0];
 
-    /*if(parcel_reply_log_size + sizeof(inparcel) + outparcel_size <= sizeof(parcel_reply_log)) {
+    #ifdef PARCEL_LOGGING
+    if(parcel_reply_log_size + sizeof(inparcel) + outparcel_size <= sizeof(parcel_reply_log)) {
         memcpy(&parcel_reply_log[parcel_reply_log_size], inparcel, sizeof(inparcel));
         parcel_reply_log_size+= sizeof(inparcel);
         memcpy(&parcel_reply_log[parcel_reply_log_size], outparcel, outparcel_size);
         parcel_reply_log_size+= outparcel_size;
-    }*/
+    }
+    #endif
 
     return 0;
 }
