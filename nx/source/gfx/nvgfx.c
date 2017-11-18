@@ -186,8 +186,7 @@ Result nvgfxInitialize(void) {
     if (R_SUCCEEDED(rc)) rc = nvioctlNvhostCtrlGpu_ZCullGetCtxSize(g_nvgfx_fd_nvhostctrlgpu, &g_nvgfx_zcullctxsize);
     if (R_SUCCEEDED(rc)) rc = nvioctlNvhostCtrlGpu_ZCullGetInfo(g_nvgfx_fd_nvhostctrlgpu, g_nvgfx_zcullinfo);
 
-    //Currently broken.
-    //if (R_SUCCEEDED(rc)) rc = nvQueryEvent(g_nvgfx_fd_nvhostctrlgpu, 2, &g_nvgfx_nvhostctrlgpu_event2);
+    if (R_SUCCEEDED(rc)) rc = nvQueryEvent(g_nvgfx_fd_nvhostctrlgpu, 2, &g_nvgfx_nvhostctrlgpu_event2);
 
     if (R_SUCCEEDED(rc)) rc = nvOpen(&g_nvgfx_fd_nvhostasgpu, "/dev/nvhost-as-gpu");
 
@@ -223,8 +222,7 @@ Result nvgfxInitialize(void) {
 
     if (R_SUCCEEDED(rc)) rc = nvioctlChannel_AllocObjCtx(g_nvgfx_fd_nvhostgpu, NVIOCTL_CHANNEL_OBJ_CLASSNUM_3d, 0);
 
-    //Currently broken.
-    //if (R_SUCCEEDED(rc)) rc = nvQueryEvent(g_nvgfx_fd_nvhostgpu, 3, &g_nvgfx_nvhostgpu_event3);
+    if (R_SUCCEEDED(rc)) rc = nvQueryEvent(g_nvgfx_fd_nvhostgpu, 3, &g_nvgfx_nvhostgpu_event3);
 
     if (R_SUCCEEDED(rc)) rc = nvioctlChannel_SetErrorNotifier(g_nvgfx_fd_nvhostgpu, 0, 0x1000, nvmap_objs[2].handle);
 
@@ -278,7 +276,7 @@ Result nvgfxInitialize(void) {
              rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 0x100, pos<3 ? 0xdb : 0x86, framebuf_nvmap_handle, 0, pos*0x3c0000, 0x3c0000, nvmap_obj6_mapbuffer_xdb_offset, NULL);
              if (R_FAILED(rc)) break;
 
-             if(pos==2) {
+             if(pos==1) {
                  rc = gfxproducerQuery(2, &tmp);//"NATIVE_WINDOW_FORMAT"
                  if (R_FAILED(rc)) break;
 
@@ -438,11 +436,11 @@ void nvgfxExit(void) {
 Result nvgfxEventInit(void) {
     Result rc=0;
 
-    if (R_SUCCEEDED(rc)) {
+    /*if (R_SUCCEEDED(rc)) {
         do {
             rc = nvioctlNvhostCtrl_EventWait(g_nvgfx_fd_nvhostctrl, 0x42, 0x1ca7, 0x64, 0, &g_nvgfx_nvhostctrl_eventres);
         } while(rc==5);//timeout error
-    }
+    }*/
 
     //Currently broken.
     //if (R_SUCCEEDED(rc)) rc = nvQueryEvent(g_nvgfx_fd_nvhostctrl, g_nvgfx_nvhostctrl_eventres, &g_nvgfx_nvhostctrl_eventhandle);

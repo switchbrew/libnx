@@ -54,11 +54,11 @@ static Result _gfxQueueBuffer(s32 buf) {
     rc = gfxproducerQueueBuffer(buf, (u8*)g_gfxQueueBufferData);
     if (R_FAILED(rc)) return rc;
 
-    if(buf==0) {
+    /*if(buf==0) {
         g_gfxQueueBufferData[0x10]+= 0x6;
     } else {
         g_gfxQueueBufferData[0x10]+= 0x7;
-    }
+    }*/
 
     return rc;
 }
