@@ -55,7 +55,7 @@ Result gfxproducerRequestBuffer(s32 bufferIdx) {
     return 0;
 }
 
-Result gfxproducerDequeueBuffer(bool async, u32 width, u32 height, s32 format, u32 usage) {
+Result gfxproducerDequeueBuffer(bool async, u32 width, u32 height, s32 format, u32 usage, s32 *buf) {
     Result rc;
     parcelContext parcel, parcel_reply;
 
@@ -76,6 +76,8 @@ Result gfxproducerDequeueBuffer(bool async, u32 width, u32 height, s32 format, u
     if (R_FAILED(rc)) return rc;
 
     //TODO: parse reply
+
+    *buf = parcelReadInt32(&parcel_reply);
 
     return 0;
 }

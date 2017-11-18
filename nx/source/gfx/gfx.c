@@ -10,6 +10,7 @@ static u64 g_gfxNativeWindow_Size;
 static s32 g_gfxNativeWindow_ID;
 static binderSession g_gfxBinderSession;
 static s32 g_gfxCurrentBuffer = 0;
+static s32 g_gfxCurrentProducerBuffer = 0;
 static u8 *g_gfxFramebuf;
 static size_t g_gfxFramebufSize;
 static size_t g_gfxFramebufSingleSize = 0x3c0000;
@@ -23,7 +24,7 @@ static u32 g_gfxQueueBufferData[0x5c>>2] = {
 0x0, 0x0, 0x0, 0x2,
 0x0, 0x0, 0x1, 0x1,
 0x42,
-0x13f4, //Increased by 6/7 each time.
+0x13f4,
 0xffffffff, 0x0,
 0xffffffff, 0x0, 0xffffffff, 0x0};
 
@@ -43,7 +44,13 @@ static Result _gfxGetNativeWindowID(u8 *buf, u64 size, s32 *out_ID) {
 }
 
 static Result _gfxDequeueBuffer() {
-    return gfxproducerDequeueBuffer(1, 1280, 720, 0, 0x300);
+    Result rc=0;
+
+    rc = gfxproducerDequeueBuffer(1, 1280, 720, 0, 0x300, &g_gfxCurrentProducerBuffer);
+
+    if (R_SUCCEEDED(rc)) g_gfxCurrentBuffer = g_gfxCurrentProducerBuffer & 1;
+
+    return rc;
 }
 
 static Result _gfxQueueBuffer(s32 buf) {
@@ -72,6 +79,7 @@ static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 L
     g_gfxNativeWindow_ID = 0;
     g_gfxDisplayVsyncEvent = INVALID_HANDLE;
     g_gfxCurrentBuffer = 0;
+    g_gfxCurrentProducerBuffer = 0;
     g_gfxFramebuf = NULL;
     g_gfxFramebufSize = 0;
 
@@ -106,12 +114,12 @@ static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 L
            rc = _gfxDequeueBuffer();
            if (R_FAILED(rc)) break;
 
-           rc = gfxproducerRequestBuffer(i);
+           rc = gfxproducerRequestBuffer(g_gfxCurrentProducerBuffer);
            if (R_FAILED(rc)) break;
 
            //Officially, nvioctlNvmap_FromID() and nvioctlChannel_SubmitGPFIFO() are used here.
 
-           rc = _gfxQueueBuffer(i);
+           rc = _gfxQueueBuffer(g_gfxCurrentProducerBuffer);
            if (R_FAILED(rc)) break;
        }
     }
@@ -140,6 +148,7 @@ static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 L
 
         g_gfxNativeWindow_ID = 0;
         g_gfxCurrentBuffer = 0;
+        g_gfxCurrentProducerBuffer = 0;
         g_gfxFramebuf = NULL;
         g_gfxFramebufSize = 0;
     }
@@ -197,6 +206,7 @@ void gfxExit(void) {
     g_gfxNativeWindow_ID = 0;
 
     g_gfxCurrentBuffer = 0;
+    g_gfxCurrentProducerBuffer = 0;
     g_gfxFramebuf = NULL;
     g_gfxFramebufSize = 0;
 }
@@ -210,8 +220,7 @@ void gfxWaitForVsync() {
 void gfxSwapBuffers() {
     Result rc=0;
 
-    rc = _gfxQueueBuffer(g_gfxCurrentBuffer);
-    g_gfxCurrentBuffer ^= 1;
+    rc = _gfxQueueBuffer(g_gfxCurrentProducerBuffer);
 
     if (R_SUCCEEDED(rc)) rc = _gfxDequeueBuffer();
 
