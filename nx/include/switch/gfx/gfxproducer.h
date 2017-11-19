@@ -6,4 +6,4 @@ Result gfxproducerDequeueBuffer(bool async, u32 width, u32 height, s32 format, u
 Result gfxproducerQueueBuffer(s32 buf, u8 input[0x5c]);
 Result gfxproducerQuery(s32 what, s32* value);
 Result gfxproducerConnect(s32 api, bool producerControlledByApp);
-Result gfxproducerBufferInit(s32 buf, u8 input[0x178]);
+Result gfxproducerTegraBufferInit(s32 buf, u8 input[0x178]);

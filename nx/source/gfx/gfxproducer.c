@@ -19,6 +19,7 @@ enum {
     DISCONNECT, //0xB
     SET_SIDEBAND_STREAM, //0xC
     ALLOCATE_BUFFERS, //0xD
+    TEGRA_BUFFER_INIT, //0xE (Custom Switch-specific command - unofficial name)
 };
 
 static char _gfxproducer_InterfaceDescriptor[] = "android.gui.IGraphicBufferProducer";
@@ -152,8 +153,7 @@ Result gfxproducerConnect(s32 api, bool producerControlledByApp) {
     return 0;
 }
 
-//Unknown what this is.
-Result gfxproducerBufferInit(s32 buf, u8 input[0x178]) {
+Result gfxproducerTegraBufferInit(s32 buf, u8 input[0x178]) {
     Result rc;
     parcelContext parcel, parcel_reply;
 
@@ -167,7 +167,7 @@ Result gfxproducerBufferInit(s32 buf, u8 input[0x178]) {
     parcelWriteInt32(&parcel, buf);
     parcelWriteData(&parcel, input, 0x178);
 
-    rc = parcelTransact(g_gfxproducerBinderSession, 0xE, &parcel, &parcel_reply);
+    rc = parcelTransact(g_gfxproducerBinderSession, TEGRA_BUFFER_INIT, &parcel, &parcel_reply);
     if (R_FAILED(rc)) return rc;
 
     //TODO: parse reply

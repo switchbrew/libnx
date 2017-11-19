@@ -37,6 +37,7 @@ static nvmapobj nvmap_objs[18];
 
 static u64 nvmap_obj6_mapbuffer_xdb_offset;
 
+//Some of this struct is based on tegra_dc_ext_flip_windowattr.
 static u32 g_gfxprod_BufferInitData[0x178>>2] = {
 0x1, 0x16c, 0x0,
 0x47424652,
@@ -48,7 +49,7 @@ static u32 g_gfxprod_BufferInitData[0x178>>2] = {
 0x0, 0xdaffcaff, 0x2a, 0x0,
 0xb00, 0x1, 0x1, 1280,
 0x3c0000, 0x1, 0x0, 1280,
-720, 0x532120, 0x1, 0x3,
+720, 0x532120, 0x1, 0x3, //0x52* field is flags
 0x1400,
 0x0, //nvmap handle
 0x0,
@@ -300,7 +301,7 @@ Result nvgfxInitialize(void) {
                      g_gfxprod_BufferInitData[0x20] = tmpval;
                      g_gfxprod_BufferInitData[0x21] = 0x3c0000*i;
                      ptr64[0x170>>3] = svcGetSystemTick();
-                     rc = gfxproducerBufferInit(i, (u8*)g_gfxprod_BufferInitData);
+                     rc = gfxproducerTegraBufferInit(i, (u8*)g_gfxprod_BufferInitData);
                      if (R_FAILED(rc)) break;
                  }
                  if (R_FAILED(rc)) break;
