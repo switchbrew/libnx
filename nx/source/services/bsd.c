@@ -261,6 +261,58 @@ int bsdSend(int sockfd, void* buffer, size_t length, int flags) {
     return ret;
 }
 
+int bsdSendTo(int sockfd, void* buffer, size_t length, int flags, const struct bsd_sockaddr_in *dest_addr, size_t dest_len) {
+    IpcCommand c;
+    ipcInitialize(&c);
+    ipcAddSendBuffer(&c, buffer, length, 0);
+    ipcAddSendStatic(&c, buffer, length, 0);
+
+    ipcAddSendBuffer(&c, dest_addr, dest_len, 0);
+    ipcAddSendStatic(&c, dest_addr, dest_len, 0);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 sockfd;
+        u32 flags;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 11;
+    raw->sockfd = sockfd;
+    raw->flags = flags;
+
+    Result rc = ipcDispatch(g_bsdClientHandle);
+    int ret = -1;
+
+    if (R_SUCCEEDED(rc)) {
+        IpcCommandResponse r;
+        ipcParseResponse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u32 ret;
+            u32 errno;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            g_Errno = resp->errno;
+            ret = resp->ret;
+        }
+    }
+
+    if (R_FAILED(rc)) {
+        g_Errno = EPIPE;
+    }
+
+    return ret;
+}
+
 int bsdConnect(int sockfd, void* addr, u32 addrlen) {
     IpcCommand c;
     ipcInitialize(&c);
@@ -373,6 +425,58 @@ int bsdListen(int sockfd, int backlog) {
     raw->cmd_id = 18;
     raw->sockfd = sockfd;
     raw->backlog = backlog;
+
+    Result rc = ipcDispatch(g_bsdClientHandle);
+    int ret = -1;
+
+    if (R_SUCCEEDED(rc)) {
+        IpcCommandResponse r;
+        ipcParseResponse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u32 ret;
+            u32 errno;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            g_Errno = resp->errno;
+            ret = resp->ret;
+        }
+    }
+
+    if (R_FAILED(rc)) {
+        g_Errno = EPIPE;
+    }
+
+    return ret;
+}
+
+int bsdSetSockOpt(int sockfd, int level, int option_name, const void *option_value, size_t option_size) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    ipcAddSendBuffer(&c, option_value, option_size, 0);
+    ipcAddSendStatic(&c, option_value, option_size, 0);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 sockfd;
+        u32 level;
+        u32 option_name;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 21;
+    raw->sockfd = sockfd;
+    raw->level = level;
+    raw->option_name = option_name;
 
     Result rc = ipcDispatch(g_bsdClientHandle);
     int ret = -1;
