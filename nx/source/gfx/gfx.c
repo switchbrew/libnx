@@ -17,6 +17,8 @@ static size_t g_gfxFramebufSingleSize = 0x3c0000;
 
 extern u32 __nx_applet_type;
 
+extern u32 g_nvgfx_totalframebufs;
+
 static u32 g_gfxQueueBufferData[0x5c>>2] = {
 0x54, 0x0,
 0x0, 0x0, //u64 timestamp
@@ -48,7 +50,7 @@ static Result _gfxDequeueBuffer() {
 
     rc = gfxproducerDequeueBuffer(1, 1280, 720, 0, 0x300, &g_gfxCurrentProducerBuffer);
 
-    if (R_SUCCEEDED(rc)) g_gfxCurrentBuffer = (g_gfxCurrentBuffer+1) & 3;
+    if (R_SUCCEEDED(rc)) g_gfxCurrentBuffer = (g_gfxCurrentBuffer+1) & (g_nvgfx_totalframebufs-1);
 
     return rc;
 }
