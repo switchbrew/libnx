@@ -489,6 +489,26 @@ static_assert(sizeof(HIDSharedMemory) == 0x40000, "HID Shared Memory structure h
 
 Result hidInitialize(void);
 void hidExit(void);
+void hidReset(void);
 
 Handle hidGetSessionService(void);
 void* hidGetSharedmemAddr(void);
+
+void hidSetControllerLayout(HIDControllerID id, HIDControllerLayoutType layoutType);
+void hidScanInput(void);
+
+u64 hidKeysHeld(HIDControllerID id);
+u64 hidKeysDown(HIDControllerID id);
+u64 hidKeysUp(HIDControllerID id);
+
+u64 hidMouseButtonsHeld(void);
+u64 hidMouseButtonsDown(void);
+u64 hidMouseButtonsUp(void);
+
+bool hidKeyboardModifierHeld(HIDKeyboardModifier modifier);
+bool hidKeyboardModifierDown(HIDKeyboardModifier modifier);
+bool hidKeyboardModifierUp(HIDKeyboardModifier modifier);
+
+bool hidKeyboardHeld(HIDKeyboardScancode key);
+bool hidKeyboardDown(HIDKeyboardScancode key);
+bool hidKeyboardUp(HIDKeyboardScancode key);
