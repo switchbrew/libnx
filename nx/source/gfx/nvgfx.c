@@ -34,6 +34,7 @@ static size_t g_nvgfx_nvhost_userdata_size;
 static u32 g_nvgfx_nvhostctrl_eventres;
 
 u32 g_nvgfx_totalframebufs = 0;
+size_t g_nvgfx_singleframebuf_size = /*0x3c0000*/ 1280*768*4;
 
 static nvmapobj nvmap_objs[18];
 
@@ -51,7 +52,7 @@ static u32 g_gfxprod_BufferInitData[0x178>>2] = {
 0x0, 0xdaffcaff, 0x2a, 0x0,
 0xb00, 0x1, 0x1, 1280,
 0x3c0000, 0x1, 0x0, 1280,
-720, 0x532120/* & ~0x20*/, 0x1, 0x3, //0x52* field is flags
+720, 0x532120, 0x1, 0x3, //0x52* field is flags
 0x1400,
 0x0, //nvmap handle
 0x0,
@@ -164,7 +165,7 @@ Result nvgfxInitialize(void) {
     if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[3], 0x10000);
     if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[4], 0x59000);
     if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[5], 0x1000000);
-    if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[6], g_nvgfx_totalframebufs*0x3c0000);
+    if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[6], g_nvgfx_totalframebufs*g_nvgfx_singleframebuf_size);
     if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[7], 0x1000000);
     if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[8], 0x800000);
     if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[9], 0x100000);
@@ -280,7 +281,7 @@ Result nvgfxInitialize(void) {
 
     if (R_SUCCEEDED(rc)) {
          for(pos=0; pos<g_nvgfx_totalframebufs; pos++) {
-             rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 0x100, pos<3 ? 0xdb : 0x86, framebuf_nvmap_handle, 0, pos*0x3c0000, 0x3c0000, nvmap_obj6_mapbuffer_xdb_offset, NULL);
+             rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 0x100, pos<3 ? 0xdb : 0x86, framebuf_nvmap_handle, 0, pos*g_nvgfx_singleframebuf_size, g_nvgfx_singleframebuf_size, nvmap_obj6_mapbuffer_xdb_offset, NULL);
              if (R_FAILED(rc)) break;
 
              if(pos==1) {
@@ -305,7 +306,7 @@ Result nvgfxInitialize(void) {
                      g_gfxprod_BufferInitData[0xa] = i;
                      g_gfxprod_BufferInitData[0xe] = tmpval;
                      g_gfxprod_BufferInitData[0x20] = tmpval;
-                     g_gfxprod_BufferInitData[0x21] = 0x3c0000*i;
+                     g_gfxprod_BufferInitData[0x21] = g_nvgfx_singleframebuf_size*i;
                      ptr64[0x170>>3] = svcGetSystemTick();
                      rc = gfxproducerTegraBufferInit(i, (u8*)g_gfxprod_BufferInitData);
                      if (R_FAILED(rc)) break;

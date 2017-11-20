@@ -13,11 +13,11 @@ static s32 g_gfxCurrentBuffer = 0;
 static s32 g_gfxCurrentProducerBuffer = 0;
 static u8 *g_gfxFramebuf;
 static size_t g_gfxFramebufSize;
-static size_t g_gfxFramebufSingleSize = 0x3c0000;
 
 extern u32 __nx_applet_type;
 
 extern u32 g_nvgfx_totalframebufs;
+extern size_t g_nvgfx_singleframebuf_size;
 
 static u32 g_gfxQueueBufferData[0x5c>>2] = {
 0x54, 0x0,
@@ -235,10 +235,10 @@ u8* gfxGetFramebuffer(u16* width, u16* height) {
     if(width) *width = 1280;
     if(height) *height = 720;
 
-    return &g_gfxFramebuf[g_gfxCurrentBuffer*g_gfxFramebufSingleSize];
+    return &g_gfxFramebuf[g_gfxCurrentBuffer*g_nvgfx_singleframebuf_size];
 }
 
 void gfxFlushBuffers(void) {
-    armDCacheFlush(&g_gfxFramebuf[g_gfxCurrentBuffer*g_gfxFramebufSingleSize], g_gfxFramebufSingleSize);
+    armDCacheFlush(&g_gfxFramebuf[g_gfxCurrentBuffer*g_nvgfx_singleframebuf_size], g_nvgfx_singleframebuf_size);
 }
 
