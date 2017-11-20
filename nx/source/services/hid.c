@@ -76,8 +76,7 @@ void hidExit(void)
     shmemClose(&g_hidSharedmem);
 }
 
-void hidReset(void)
-{
+void hidReset(void) {
     // Reset internal state
     memset(&touchEntry, 0, sizeof(HIDTouchScreenEntry));
     memset(&mouseEntry, 0, sizeof(HIDMouseEntry));
@@ -107,13 +106,11 @@ void* hidGetSharedmemAddr(void) {
     return shmemGetAddr(&g_hidSharedmem);
 }
 
-void hidSetControllerLayout(HIDControllerID id, HIDControllerLayoutType layoutType)
-{
+void hidSetControllerLayout(HIDControllerID id, HIDControllerLayoutType layoutType) {
     controllerLayout[id] = layoutType;
 }
 
-void hidScanInput(void)
-{
+void hidScanInput(void) {
     if (g_hidServiceSession == INVALID_HANDLE) return;
     HIDSharedMemory *sharedMem = (HIDSharedMemory*)hidGetSharedmemAddr();
 
@@ -184,69 +181,57 @@ void hidScanInput(void)
     }
 }
 
-u64 hidKeysHeld(HIDControllerID id)
-{
+u64 hidKeysHeld(HIDControllerID id) {
     if (id < 0 || id > 9) return 0;
 
     return controllerHeld[id];
 }
 
-u64 hidKeysDown(HIDControllerID id)
-{
+u64 hidKeysDown(HIDControllerID id) {
     if (id < 0 || id > 9) return 0;
 
     return controllerDown[id];
 }
 
-u64 hidKeysUp(HIDControllerID id)
-{
+u64 hidKeysUp(HIDControllerID id) {
     if (id < 0 || id > 9) return 0;
 
     return controllerUp[id];
 }
 
-u64 hidMouseButtonsHeld(void)
-{
+u64 hidMouseButtonsHeld(void) {
     return mouseHeld;
 }
 
-u64 hidMouseButtonsDown(void)
-{
+u64 hidMouseButtonsDown(void) {
     return mouseDown;
 }
 
-u64 hidMouseButtonsUp(void)
-{
+u64 hidMouseButtonsUp(void) {
     return mouseUp;
 }
 
-bool hidKeyboardModifierHeld(HIDKeyboardModifier modifier)
-{
+bool hidKeyboardModifierHeld(HIDKeyboardModifier modifier) {
     return keyboardModHeld & modifier;
 }
 
-bool hidKeyboardModifierDown(HIDKeyboardModifier modifier)
-{
+bool hidKeyboardModifierDown(HIDKeyboardModifier modifier) {
     return keyboardModDown & modifier;
 }
 
-bool hidKeyboardModifierUp(HIDKeyboardModifier modifier)
-{
+bool hidKeyboardModifierUp(HIDKeyboardModifier modifier) {
     return keyboardModUp & modifier;
 }
 
-bool hidKeyboardHeld(HIDKeyboardScancode key)
-{
+bool hidKeyboardHeld(HIDKeyboardScancode key) {
     return keyboardHeld[key / 32] & (1 << (key % 32));
 }
 
-bool hidKeyboardDown(HIDKeyboardScancode key)
-{
+bool hidKeyboardDown(HIDKeyboardScancode key) {
     return keyboardDown[key / 32] & (1 << (key % 32));
 }
 
-bool hidKeyboardUp(HIDKeyboardScancode key)
-{
+bool hidKeyboardUp(HIDKeyboardScancode key) {
     return keyboardUp[key / 32] & (1 << (key % 32));
 }
 
