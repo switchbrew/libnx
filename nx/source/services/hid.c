@@ -5,18 +5,18 @@ static Handle g_hidServiceSession = INVALID_HANDLE;
 static Handle g_hidIAppletResource = INVALID_HANDLE;
 static SharedMemory g_hidSharedmem;
 
-static HIDTouchScreenEntry touchEntry;
-static HIDMouseEntry mouseEntry;
-static HIDKeyboardEntry keyboardEntry;
-static HIDControllerInputEntry controllerEntries[10];
+static HIDTouchScreenEntry g_touchEntry;
+static HIDMouseEntry g_mouseEntry;
+static HIDKeyboardEntry g_keyboardEntry;
+static HIDControllerInputEntry g_controllerEntries[10];
 
-static u64 mouseOld, mouseHeld, mouseDown, mouseUp;
-static u64 keyboardModOld, keyboardModHeld, keyboardModDown, keyboardModUp;
-static u32 keyboardOld[8], keyboardHeld[8], keyboardDown[8], keyboardUp[8];
-static u64 controllerOld[10], controllerHeld[10], controllerDown[10], controllerUp[10];
+static u64 g_mouseOld, g_mouseHeld, g_mouseDown, g_mouseUp;
+static u64 g_keyboardModOld, g_keyboardModHeld, g_keyboardModDown, g_keyboardModUp;
+static u32 g_keyboardOld[8], g_keyboardHeld[8], g_keyboardDown[8], g_keyboardUp[8];
+static u64 g_controllerOld[10], g_controllerHeld[10], g_controllerDown[10], g_controllerUp[10];
 
-static HIDControllerLayoutType controllerLayout[10];
-static u64 touchTimestamp, mouseTimestamp, keyboardTimestamp, controllerTimestamps[10];
+static HIDControllerLayoutType g_controllerLayout[10];
+static u64 g_touchTimestamp, g_mouseTimestamp, g_keyboardTimestamp, g_controllerTimestamps[10];
 
 static Result _hidCreateAppletResource(Handle sessionhandle, Handle* handle_out, u64 AppletResourceUserId);
 static Result _hidGetSharedMemoryHandle(Handle sessionhandle, Handle* handle_out);
@@ -78,24 +78,24 @@ void hidExit(void)
 
 void hidReset(void) {
     // Reset internal state
-    memset(&touchEntry, 0, sizeof(HIDTouchScreenEntry));
-    memset(&mouseEntry, 0, sizeof(HIDMouseEntry));
-    memset(&keyboardEntry, 0, sizeof(HIDKeyboardEntry));
-    memset(&controllerEntries, 0, sizeof(HIDControllerInputEntry));
+    memset(&g_touchEntry, 0, sizeof(HIDTouchScreenEntry));
+    memset(&g_mouseEntry, 0, sizeof(HIDMouseEntry));
+    memset(&g_keyboardEntry, 0, sizeof(HIDKeyboardEntry));
+    memset(g_controllerEntries, 0, sizeof(g_controllerEntries));
 
-    mouseOld = mouseHeld = mouseDown = mouseUp = 0;
-    keyboardModOld = keyboardModHeld = keyboardModDown = keyboardModUp = 0;
+    g_mouseOld = g_mouseHeld = g_mouseDown = g_mouseUp = 0;
+    g_keyboardModOld = g_keyboardModHeld = g_keyboardModDown = g_keyboardModUp = 0;
     for (int i = 0; i < 8; i++)
-        keyboardOld[i] = keyboardHeld[i] = keyboardDown[i] = keyboardUp[i] = 0;
+        g_keyboardOld[i] = g_keyboardHeld[i] = g_keyboardDown[i] = g_keyboardUp[i] = 0;
     for (int i = 0; i < 10; i++)
-        controllerOld[i] = controllerHeld[i] = controllerDown[i] = controllerUp[i] = 0;
+        g_controllerOld[i] = g_controllerHeld[i] = g_controllerDown[i] = g_controllerUp[i] = 0;
 
     for (int i = 0; i < 10; i++)
-        controllerLayout[i] = LAYOUT_DEFAULT;
+        g_controllerLayout[i] = LAYOUT_DEFAULT;
 
-    touchTimestamp = mouseTimestamp = keyboardTimestamp = 0;
+    g_touchTimestamp = g_mouseTimestamp = g_keyboardTimestamp = 0;
     for (int i = 0; i < 10; i++)
-        controllerTimestamps[i] = 0;
+        g_controllerTimestamps[i] = 0;
 }
 
 Handle hidGetSessionService(void) {
@@ -107,132 +107,131 @@ void* hidGetSharedmemAddr(void) {
 }
 
 void hidSetControllerLayout(HIDControllerID id, HIDControllerLayoutType layoutType) {
-    controllerLayout[id] = layoutType;
+    g_controllerLayout[id] = layoutType;
 }
 
 void hidScanInput(void) {
     if (g_hidServiceSession == INVALID_HANDLE) return;
     HIDSharedMemory *sharedMem = (HIDSharedMemory*)hidGetSharedmemAddr();
 
-    mouseOld = mouseHeld;
-    keyboardModOld = keyboardModHeld;
-    memcpy(keyboardOld, keyboardHeld, sizeof(keyboardOld));
-    memcpy(controllerOld, controllerHeld, sizeof(controllerOld));
+    g_mouseOld = g_mouseHeld;
+    g_keyboardModOld = g_keyboardModHeld;
+    memcpy(g_keyboardOld, g_keyboardHeld, sizeof(g_keyboardOld));
+    memcpy(g_controllerOld, g_controllerHeld, sizeof(g_controllerOld));
 
-    mouseHeld = 0;
-    keyboardModHeld = 0;
-    memset(keyboardHeld, 0, sizeof(keyboardHeld));
-    memset(controllerHeld, 0, sizeof(controllerHeld));
-    memset(&touchEntry, 0, sizeof(HIDTouchScreenEntry));
-    memset(&mouseEntry, 0, sizeof(HIDMouseEntry));
-    memset(&keyboardEntry, 0, sizeof(HIDKeyboardEntry));
-    for (int i = 0; i < 10; i++)
-        memset(&controllerEntries[i], 0, sizeof(HIDControllerInputEntry));
+    g_mouseHeld = 0;
+    g_keyboardModHeld = 0;
+    memset(g_keyboardHeld, 0, sizeof(g_keyboardHeld));
+    memset(g_controllerHeld, 0, sizeof(g_controllerHeld));
+    memset(&g_touchEntry, 0, sizeof(HIDTouchScreenEntry));
+    memset(&g_mouseEntry, 0, sizeof(HIDMouseEntry));
+    memset(&g_keyboardEntry, 0, sizeof(HIDKeyboardEntry));
+    memset(g_controllerEntries, 0, sizeof(g_controllerEntries));
 
     u64 latestTouchEntry = sharedMem->touchscreen.header.latestEntry;
     HIDTouchScreenEntry *newTouchEntry = &sharedMem->touchscreen.entries[latestTouchEntry];
-    if (newTouchEntry->header.timestamp - touchTimestamp) {
-        memcpy(&touchEntry, newTouchEntry, sizeof(HIDTouchScreenEntry));
-        touchTimestamp = newTouchEntry->header.timestamp;
+    if ((s64)(newTouchEntry->header.timestamp - g_touchTimestamp) > 0) {
+        memcpy(&g_touchEntry, newTouchEntry, sizeof(HIDTouchScreenEntry));
+        g_touchTimestamp = newTouchEntry->header.timestamp;
     }
 
     u64 latestMouseEntry = sharedMem->mouse.header.latestEntry;
     HIDMouseEntry *newMouseEntry = &sharedMem->mouse.entries[latestMouseEntry];
-    if (newMouseEntry->timestamp - mouseTimestamp) {
-        memcpy(&mouseEntry, newMouseEntry, sizeof(HIDMouseEntry));
-        mouseTimestamp = newMouseEntry->timestamp;
+    if ((s64)(newMouseEntry->timestamp - g_mouseTimestamp) > 0) {
+        memcpy(&g_mouseEntry, newMouseEntry, sizeof(HIDMouseEntry));
+        g_mouseTimestamp = newMouseEntry->timestamp;
 
-        mouseHeld = mouseEntry.buttons;
+        g_mouseHeld = g_mouseEntry.buttons;
     }
-    mouseDown = (~mouseOld) & mouseHeld;
-    mouseUp = mouseOld & (~mouseHeld);
+    g_mouseDown = (~g_mouseOld) & g_mouseHeld;
+    g_mouseUp = g_mouseOld & (~g_mouseHeld);
 
     u64 latestKeyboardEntry = sharedMem->keyboard.header.latestEntry;
     HIDKeyboardEntry *newKeyboardEntry = &sharedMem->keyboard.entries[latestKeyboardEntry];
-    if (newKeyboardEntry->timestamp - keyboardTimestamp) {
-        memcpy(&keyboardEntry, newKeyboardEntry, sizeof(HIDKeyboardEntry));
-        keyboardTimestamp = newKeyboardEntry->timestamp;
+    if ((s64)(newKeyboardEntry->timestamp - g_keyboardTimestamp) > 0) {
+        memcpy(&g_keyboardEntry, newKeyboardEntry, sizeof(HIDKeyboardEntry));
+        g_keyboardTimestamp = newKeyboardEntry->timestamp;
 
-        keyboardModHeld = keyboardEntry.modifier;
+        g_keyboardModHeld = g_keyboardEntry.modifier;
         for (int i = 0; i < 8; i++) {
-            keyboardHeld[i] = keyboardEntry.keys[i];
+            g_keyboardHeld[i] = g_keyboardEntry.keys[i];
         }
     }
-    keyboardModDown = (~keyboardModOld) & keyboardModHeld;
-    keyboardModUp = keyboardModOld & (~keyboardModHeld);
+    g_keyboardModDown = (~g_keyboardModOld) & g_keyboardModHeld;
+    g_keyboardModUp = g_keyboardModOld & (~g_keyboardModHeld);
     for (int i = 0; i < 8; i++) {
-        keyboardDown[i] = (~keyboardOld[i]) & keyboardHeld[i];
-        keyboardUp[i] = keyboardOld[i] & (~keyboardHeld[i]);
+        g_keyboardDown[i] = (~g_keyboardOld[i]) & g_keyboardHeld[i];
+        g_keyboardUp[i] = g_keyboardOld[i] & (~g_keyboardHeld[i]);
     }
 
     for (int i = 0; i < 10; i++) {
-        HIDControllerLayout *currentLayout = &sharedMem->controllers[i].layouts[controllerLayout[i]];
+        HIDControllerLayout *currentLayout = &sharedMem->controllers[i].layouts[g_controllerLayout[i]];
         u64 latestControllerEntry = currentLayout->header.latestEntry;
         HIDControllerInputEntry *newInputEntry = &currentLayout->entries[latestControllerEntry];
-        if (newInputEntry->timestamp - controllerTimestamps[i]) {
-            memcpy(&controllerEntries[i], newInputEntry, sizeof(HIDControllerInputEntry));
-            controllerTimestamps[i] = newInputEntry->timestamp;
+        if ((s64)(newInputEntry->timestamp - g_controllerTimestamps[i]) > 0) {
+            memcpy(&g_controllerEntries[i], newInputEntry, sizeof(HIDControllerInputEntry));
+            g_controllerTimestamps[i] = newInputEntry->timestamp;
 
-            controllerHeld[i] = controllerEntries[i].buttons;
+            g_controllerHeld[i] = g_controllerEntries[i].buttons;
         }
 
-        controllerDown[i] = (~controllerOld[i]) & controllerHeld[i];
-        controllerUp[i] = controllerOld[i] & (~controllerHeld[i]);
+        g_controllerDown[i] = (~g_controllerOld[i]) & g_controllerHeld[i];
+        g_controllerUp[i] = g_controllerOld[i] & (~g_controllerHeld[i]);
     }
 }
 
 u64 hidKeysHeld(HIDControllerID id) {
     if (id < 0 || id > 9) return 0;
 
-    return controllerHeld[id];
+    return g_controllerHeld[id];
 }
 
 u64 hidKeysDown(HIDControllerID id) {
     if (id < 0 || id > 9) return 0;
 
-    return controllerDown[id];
+    return g_controllerDown[id];
 }
 
 u64 hidKeysUp(HIDControllerID id) {
     if (id < 0 || id > 9) return 0;
 
-    return controllerUp[id];
+    return g_controllerUp[id];
 }
 
 u64 hidMouseButtonsHeld(void) {
-    return mouseHeld;
+    return g_mouseHeld;
 }
 
 u64 hidMouseButtonsDown(void) {
-    return mouseDown;
+    return g_mouseDown;
 }
 
 u64 hidMouseButtonsUp(void) {
-    return mouseUp;
+    return g_mouseUp;
 }
 
 bool hidKeyboardModifierHeld(HIDKeyboardModifier modifier) {
-    return keyboardModHeld & modifier;
+    return g_keyboardModHeld & modifier;
 }
 
 bool hidKeyboardModifierDown(HIDKeyboardModifier modifier) {
-    return keyboardModDown & modifier;
+    return g_keyboardModDown & modifier;
 }
 
 bool hidKeyboardModifierUp(HIDKeyboardModifier modifier) {
-    return keyboardModUp & modifier;
+    return g_keyboardModUp & modifier;
 }
 
 bool hidKeyboardHeld(HIDKeyboardScancode key) {
-    return keyboardHeld[key / 32] & (1 << (key % 32));
+    return g_keyboardHeld[key / 32] & (1 << (key % 32));
 }
 
 bool hidKeyboardDown(HIDKeyboardScancode key) {
-    return keyboardDown[key / 32] & (1 << (key % 32));
+    return g_keyboardDown[key / 32] & (1 << (key % 32));
 }
 
 bool hidKeyboardUp(HIDKeyboardScancode key) {
-    return keyboardUp[key / 32] & (1 << (key % 32));
+    return g_keyboardUp[key / 32] & (1 << (key % 32));
 }
 
 static Result _hidCreateAppletResource(Handle sessionhandle, Handle* handle_out, u64 AppletResourceUserId) {
