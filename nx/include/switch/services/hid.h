@@ -504,6 +504,7 @@ Handle hidGetSessionService(void);
 void* hidGetSharedmemAddr(void);
 
 void hidSetControllerLayout(HIDControllerID id, HIDControllerLayoutType layoutType);
+HIDControllerLayoutType hidGetControllerLayout(HIDControllerID id);
 void hidScanInput(void);
 
 u64 hidKeysHeld(HIDControllerID id);

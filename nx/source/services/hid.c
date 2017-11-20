@@ -110,6 +110,10 @@ void hidSetControllerLayout(HIDControllerID id, HIDControllerLayoutType layoutTy
     g_controllerLayout[id] = layoutType;
 }
 
+HIDControllerLayoutType hidGetControllerLayout(HIDControllerID id) {
+    return g_controllerLayout[id];
+}
+
 void hidScanInput(void) {
     if (g_hidServiceSession == INVALID_HANDLE) return;
     HIDSharedMemory *sharedMem = (HIDSharedMemory*)hidGetSharedmemAddr();
