@@ -48,9 +48,9 @@ static Result _gfxGetNativeWindowID(u8 *buf, u64 size, s32 *out_ID) {
 static Result _gfxDequeueBuffer() {
     Result rc=0;
 
-    rc = gfxproducerDequeueBuffer(1, 1280, 720, 0, 0x300, &g_gfxCurrentProducerBuffer);
+    rc = gfxproducerDequeueBuffer(/*1*/0, 1280, 720, 0, 0x300, &g_gfxCurrentProducerBuffer);
 
-    if (R_SUCCEEDED(rc)) g_gfxCurrentBuffer = (g_gfxCurrentBuffer+1) & (g_nvgfx_totalframebufs-1);
+    if (R_SUCCEEDED(rc)) g_gfxCurrentBuffer = /*(g_gfxCurrentBuffer+1)*/(g_gfxCurrentProducerBuffer) & (g_nvgfx_totalframebufs-1);
 
     return rc;
 }
@@ -80,7 +80,7 @@ static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 L
 
     g_gfxNativeWindow_ID = 0;
     g_gfxDisplayVsyncEvent = INVALID_HANDLE;
-    g_gfxCurrentBuffer = 0;
+    g_gfxCurrentBuffer = -1;
     g_gfxCurrentProducerBuffer = 0;
     g_gfxFramebuf = NULL;
     g_gfxFramebufSize = 0;
@@ -111,6 +111,8 @@ static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 L
 
     if (R_SUCCEEDED(rc)) rc = nvgfxInitialize();
 
+    if (R_SUCCEEDED(rc)) rc = nvgfxGetFramebuffer(&g_gfxFramebuf, &g_gfxFramebufSize);
+
     if (R_SUCCEEDED(rc)) {
        for(i=0; i<2; i++) {
            rc = _gfxDequeueBuffer();
@@ -130,9 +132,9 @@ static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 L
 
     if (R_SUCCEEDED(rc)) rc = _gfxDequeueBuffer();
 
-    if (R_SUCCEEDED(rc)) rc = nvgfxGetFramebuffer(&g_gfxFramebuf, &g_gfxFramebufSize);
-
-    if (R_SUCCEEDED(rc)) gfxFlushBuffers();
+    if (R_SUCCEEDED(rc)) { //Workaround a gfx display issue.
+        for(i=0; i<2; i++)gfxWaitForVsync();
+    }
 
     if (R_FAILED(rc)) {
         nvgfxExit();

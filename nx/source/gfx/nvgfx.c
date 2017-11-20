@@ -87,6 +87,8 @@ Result nvmapobjInitialize(nvmapobj *obj, size_t size) {
     if (obj->mem==NULL) rc = MAKERESULT(MODULE_LIBNX, LIBNX_OUTOFMEM);
     if (R_SUCCEEDED(rc)) memset(obj->mem, 0, size);
 
+    if (R_SUCCEEDED(rc)) armDCacheFlush(obj->mem, size);
+
     if (R_SUCCEEDED(rc)) obj->initialized = 1;
 
     return rc;
@@ -139,7 +141,7 @@ Result nvgfxInitialize(void) {
 
     g_nvgfx_nvhostctrl_eventhandle = INVALID_HANDLE;
 
-    g_nvgfx_totalframebufs = 4;
+    g_nvgfx_totalframebufs = 2;//4;
 
     memset(nvmap_objs, 0, sizeof(nvmap_objs));
 
