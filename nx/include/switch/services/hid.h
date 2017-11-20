@@ -5,6 +5,15 @@
 
 typedef enum
 {
+    MOUSE_LEFT    = BIT(0),
+    MOUSE_RIGHT   = BIT(1),
+    MOUSE_MIDDLE  = BIT(2),
+    MOUSE_FORWARD = BIT(3),
+    MOUSE_BACK    = BIT(4),
+} HIDMouseButton;
+
+typedef enum
+{
     KBD_MOD_LCTRL      = BIT(0),
     KBD_MOD_LSHIFT     = BIT(1),
     KBD_MOD_LALT       = BIT(2),
