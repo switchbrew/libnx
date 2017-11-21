@@ -22,7 +22,7 @@ enum {
     TEGRA_BUFFER_INIT, //0xE (Custom Switch-specific command - unofficial name)
 };
 
-static char _gfxproducer_InterfaceDescriptor[] = "android.gui.IGraphicBufferProducer";
+static char g_gfxproducer_InterfaceDescriptor[] = "android.gui.IGraphicBufferProducer";
 
 static binderSession *g_gfxproducerBinderSession;
 
@@ -45,7 +45,7 @@ Result gfxproducerRequestBuffer(s32 bufferIdx) {
     parcelInitializeContext(&parcel);
     parcelInitializeContext(&parcel_reply);
 
-    parcelWriteInterfaceToken(&parcel, _gfxproducer_InterfaceDescriptor);
+    parcelWriteInterfaceToken(&parcel, g_gfxproducer_InterfaceDescriptor);
     parcelWriteInt32(&parcel, bufferIdx);
 
     rc = parcelTransact(g_gfxproducerBinderSession, REQUEST_BUFFER, &parcel, &parcel_reply);
@@ -65,7 +65,7 @@ Result gfxproducerDequeueBuffer(bool async, u32 width, u32 height, s32 format, u
     parcelInitializeContext(&parcel);
     parcelInitializeContext(&parcel_reply);
 
-    parcelWriteInterfaceToken(&parcel, _gfxproducer_InterfaceDescriptor);
+    parcelWriteInterfaceToken(&parcel, g_gfxproducer_InterfaceDescriptor);
 
     parcelWriteInt32(&parcel, async);
     parcelWriteUInt32(&parcel, width);
@@ -83,6 +83,26 @@ Result gfxproducerDequeueBuffer(bool async, u32 width, u32 height, s32 format, u
     return 0;
 }
 
+Result gfxproducerDetachBuffer(s32 slot) {
+    Result rc;
+    parcelContext parcel, parcel_reply;
+
+    if (g_gfxproducerBinderSession==NULL) return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
+
+    parcelInitializeContext(&parcel);
+    parcelInitializeContext(&parcel_reply);
+
+    parcelWriteInterfaceToken(&parcel, g_gfxproducer_InterfaceDescriptor);
+    parcelWriteInt32(&parcel, slot);
+
+    rc = parcelTransact(g_gfxproducerBinderSession, DETACH_BUFFER, &parcel, &parcel_reply);
+    if (R_FAILED(rc)) return rc;
+
+    //TODO: parse reply
+
+    return 0;
+}
+
 Result gfxproducerQueueBuffer(s32 buf, u8 input[0x5c]) {
     Result rc;
     parcelContext parcel, parcel_reply;
@@ -92,7 +112,7 @@ Result gfxproducerQueueBuffer(s32 buf, u8 input[0x5c]) {
     parcelInitializeContext(&parcel);
     parcelInitializeContext(&parcel_reply);
 
-    parcelWriteInterfaceToken(&parcel, _gfxproducer_InterfaceDescriptor);
+    parcelWriteInterfaceToken(&parcel, g_gfxproducer_InterfaceDescriptor);
 
     parcelWriteInt32(&parcel, buf);
     parcelWriteData(&parcel, input, 0x5c);
@@ -114,7 +134,7 @@ Result gfxproducerQuery(s32 what, s32* value) {
     parcelInitializeContext(&parcel);
     parcelInitializeContext(&parcel_reply);
 
-    parcelWriteInterfaceToken(&parcel, _gfxproducer_InterfaceDescriptor);
+    parcelWriteInterfaceToken(&parcel, g_gfxproducer_InterfaceDescriptor);
 
     parcelWriteInt32(&parcel, what);
 
@@ -137,7 +157,7 @@ Result gfxproducerConnect(s32 api, bool producerControlledByApp) {
     parcelInitializeContext(&parcel);
     parcelInitializeContext(&parcel_reply);
 
-    parcelWriteInterfaceToken(&parcel, _gfxproducer_InterfaceDescriptor);
+    parcelWriteInterfaceToken(&parcel, g_gfxproducer_InterfaceDescriptor);
 
     //Hard-code this as if listener==NULL, since that's not known to be used officially.
     parcelWriteInt32(&parcel, 0);
@@ -153,6 +173,27 @@ Result gfxproducerConnect(s32 api, bool producerControlledByApp) {
     return 0;
 }
 
+Result gfxproducerDisconnect(s32 api) {
+    Result rc;
+    parcelContext parcel, parcel_reply;
+
+    if (g_gfxproducerBinderSession==NULL) return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
+
+    parcelInitializeContext(&parcel);
+    parcelInitializeContext(&parcel_reply);
+
+    parcelWriteInterfaceToken(&parcel, g_gfxproducer_InterfaceDescriptor);
+
+    parcelWriteInt32(&parcel, api);
+
+    rc = parcelTransact(g_gfxproducerBinderSession, DISCONNECT, &parcel, &parcel_reply);
+    if (R_FAILED(rc)) return rc;
+
+    //TODO: parse reply
+
+    return 0;
+}
+
 Result gfxproducerTegraBufferInit(s32 buf, u8 input[0x178]) {
     Result rc;
     parcelContext parcel, parcel_reply;
@@ -162,7 +203,7 @@ Result gfxproducerTegraBufferInit(s32 buf, u8 input[0x178]) {
     parcelInitializeContext(&parcel);
     parcelInitializeContext(&parcel_reply);
 
-    parcelWriteInterfaceToken(&parcel, _gfxproducer_InterfaceDescriptor);
+    parcelWriteInterfaceToken(&parcel, g_gfxproducer_InterfaceDescriptor);
 
     parcelWriteInt32(&parcel, buf);
     parcelWriteData(&parcel, input, 0x178);
