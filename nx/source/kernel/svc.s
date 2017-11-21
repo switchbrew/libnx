@@ -143,6 +143,11 @@ SVC_BEGIN svcBreak
 	ret
 SVC_END
 
+SVC_BEGIN svcOutputDebugString
+	svc 0x27
+	ret
+SVC_END
+
 SVC_BEGIN svcGetInfo
 	str x0, [sp, #-16]!
 	svc 0x29

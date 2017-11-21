@@ -49,6 +49,7 @@ u64    svcGetSystemTick(void);
 Result svcSendSyncRequest(Handle session);
 Result svcGetProcessId(u64 *processID, Handle handle);
 Result svcBreak(u32 breakReason, u64 inval1, u64 inval2);
+Result svcOutputDebugString(const char *str, u64 size);
 Result svcGetInfo(u64* out, u64 id0, Handle handle, u64 id1);
 Result svcCreateSession(Handle *server_handle, Handle *client_handle, u32 unk0, u64 unk1);//unk* are normally 0?
 Result svcAcceptSession(Handle *session_handle, Handle port_handle);
