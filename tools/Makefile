@@ -12,6 +12,7 @@ elf2nro: elf2nro.c
 install: all
 	cp build_pfs0 $(DEVKITA64)/bin/
 	cp elf2nso $(DEVKITA64)/bin/
+	cp elf2nro $(DEVKITA64)/bin/
 
 clean:
 	rm -f elf2nso elf2nro build_pfs0

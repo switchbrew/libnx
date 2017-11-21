@@ -22,6 +22,10 @@ LIBNX	?=	$(DEVKITPRO)/libnx
 	@echo built ... $(notdir $@)
 
 #---------------------------------------------------------------------------------
+%.nro: %.elf
+	@elf2nro $< $@
+	@echo built ... $(notdir $@)
+#---------------------------------------------------------------------------------
 %.elf:
 	@echo linking $(notdir $@)
 	@$(LD) $(LDFLAGS) $(OFILES) $(LIBPATHS) $(LIBS) -o $@
