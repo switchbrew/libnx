@@ -259,6 +259,6 @@ u32 gfxGetFramebufferDisplayOffset(u32 x, u32 y) {
 
     tmp_pos = ((y%16)/8)*512 + ((x%16)/8)*256 + ((y%8)/2)*64 + ((x%8)/4)*32 + (y%2)*16 + (x%4)*4;//This line is a modified version of code from the Tegra X1 datasheet.
 
-    return tilepos + tmp_pos;
+    return (tilepos + tmp_pos) / 4;
 }
 
