@@ -14,6 +14,8 @@ static s32 g_gfxCurrentProducerBuffer = 0;
 static u8 *g_gfxFramebuf;
 static size_t g_gfxFramebufSize;
 
+static bool g_gfxDoubleBuf = 1;
+
 extern u32 __nx_applet_type;
 
 extern u32 g_nvgfx_totalframebufs;
@@ -48,9 +50,14 @@ static Result _gfxGetNativeWindowID(u8 *buf, u64 size, s32 *out_ID) {
 static Result _gfxDequeueBuffer() {
     Result rc=0;
 
+    if (!g_gfxDoubleBuf) {
+        g_gfxCurrentProducerBuffer = -1;
+        return 0;
+    }
+
     rc = gfxproducerDequeueBuffer(/*1*/0, 1280, 720, 0, 0x300, &g_gfxCurrentProducerBuffer);
 
-    if (R_SUCCEEDED(rc)) g_gfxCurrentBuffer = /*(g_gfxCurrentBuffer+1)*/(g_gfxCurrentProducerBuffer) & (g_nvgfx_totalframebufs-1);
+    if (R_SUCCEEDED(rc)) g_gfxCurrentBuffer = (g_gfxCurrentBuffer+1) & (g_nvgfx_totalframebufs-1);
 
     return rc;
 }
@@ -58,6 +65,9 @@ static Result _gfxDequeueBuffer() {
 static Result _gfxQueueBuffer(s32 buf) {
     Result rc=0;
     u64 *ptr64 = (u64*)&g_gfxQueueBufferData;
+
+    if (buf == -1) return 0;
+
     ptr64[1] = svcGetSystemTick();//Unknown what is actually used for timestamp, but shouldn't(?) matter.
 
     rc = gfxproducerQueueBuffer(buf, (u8*)g_gfxQueueBufferData);
@@ -84,6 +94,7 @@ static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 L
     g_gfxCurrentProducerBuffer = 0;
     g_gfxFramebuf = NULL;
     g_gfxFramebufSize = 0;
+    g_gfxDoubleBuf = 1;
 
     rc = viInitialize(servicetype);
     if (R_FAILED(rc)) return rc;
@@ -236,6 +247,10 @@ u8* gfxGetFramebuffer(u32* width, u32* height) {
     if(height) *height = 720;
 
     return &g_gfxFramebuf[g_gfxCurrentBuffer*g_nvgfx_singleframebuf_size];
+}
+
+void gfxSetDoubleBuffering(bool doubleBuffering) {
+    g_gfxDoubleBuf = doubleBuffering;
 }
 
 void gfxFlushBuffers(void) {
