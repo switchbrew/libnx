@@ -44,4 +44,5 @@ Result viCloseLayer(viLayer *layer);
 /// See viScalingMode.
 Result viSetLayerScalingMode(viLayer *layer, u32 ScalingMode);
 
+Result viGetDisplayResolution(viDisplay *display, u64 *width, u64 *height);
 Result viGetDisplayVsyncEvent(viDisplay *display, Handle *handle_out);

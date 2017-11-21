@@ -440,6 +440,46 @@ Result viSetLayerScalingMode(viLayer *layer, u32 ScalingMode) {
     return rc;
 }
 
+Result viGetDisplayResolution(viDisplay *display, u64 *width, u64 *height) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 DisplayId;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 1102;
+    raw->DisplayId = display->DisplayId;
+
+    Result rc = ipcDispatch(g_viIApplicationDisplayService);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcCommandResponse r;
+        ipcParseResponse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u64 width;
+            u64 height;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            if (width) *width = resp->width;
+            if (height) *height = resp->height;
+        }
+    }
+
+    return rc;
+}
+
 Result viGetDisplayVsyncEvent(viDisplay *display, Handle *handle_out) {
     IpcCommand c;
     ipcInitialize(&c);
