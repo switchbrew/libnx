@@ -249,6 +249,9 @@ u32 gfxGetFramebufferDisplayOffset(u32 x, u32 y) {
 
     gfxGetFramebuffer(&width, &height);
 
+    if (x >= width) x = width-1;
+    if (y >= height) y = height-1;
+
     y = height-1-y;
 
     tilepos = ((y & 127) / 16) + (x/16*8) + ((y/16/8)*(width/16*8));
