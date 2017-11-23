@@ -3,6 +3,7 @@
 
 __attribute__((weak)) u32 __nx_applet_type = APPLET_TYPE_Default;
 __attribute__((weak)) bool __nx_applet_auto_notifyrunning = true;
+__attribute__((weak)) u8 __nx_applet_AppletAttribute[0x80];
 
 static Handle g_appletServiceSession = INVALID_HANDLE;
 static Handle g_appletProxySession = INVALID_HANDLE;
@@ -22,7 +23,7 @@ static u64 g_appletResourceUserId = 0;
 void appletExit(void);
 
 static Result _appletGetSession(Handle sessionhandle, Handle* handle_out, u64 cmd_id);
-static Result _appletGetSessionProxy(Handle sessionhandle, Handle* handle_out, u64 cmd_id, Handle prochandle);
+static Result _appletGetSessionProxy(Handle sessionhandle, Handle* handle_out, u64 cmd_id, Handle prochandle, u8 *AppletAttribute);
 
 static Result _appletGetAppletResourceUserId(u64 *out);
 static Result _appletNotifyRunning(u8 *out);
@@ -55,23 +56,23 @@ Result appletInitialize(void) {
                 break;
 
                 case APPLET_TYPE_Application:
-                    rc = _appletGetSessionProxy(g_appletServiceSession, &g_appletProxySession, 0, prochandle);
+                    rc = _appletGetSessionProxy(g_appletServiceSession, &g_appletProxySession, 0, prochandle, NULL);
                 break;
 
                 case APPLET_TYPE_SystemApplet:
-                    rc = _appletGetSessionProxy(g_appletServiceSession, &g_appletProxySession, 100, prochandle);
+                    rc = _appletGetSessionProxy(g_appletServiceSession, &g_appletProxySession, 100, prochandle, NULL);
                 break;
 
                 case APPLET_TYPE_LibraryApplet:
-                    rc = _appletGetSessionProxy(g_appletServiceSession, &g_appletProxySession, 201, prochandle);
+                    rc = _appletGetSessionProxy(g_appletServiceSession, &g_appletProxySession, /*201*/200, prochandle, /*__nx_applet_AppletAttribute*/NULL);
                 break;
 
                 case APPLET_TYPE_OverlayApplet:
-                    rc = _appletGetSessionProxy(g_appletServiceSession, &g_appletProxySession, 300, prochandle);
+                    rc = _appletGetSessionProxy(g_appletServiceSession, &g_appletProxySession, 300, prochandle, NULL);
                 break;
 
                 case APPLET_TYPE_SystemApplication:
-                    rc = _appletGetSessionProxy(g_appletServiceSession, &g_appletProxySession, 350, prochandle);
+                    rc = _appletGetSessionProxy(g_appletServiceSession, &g_appletProxySession, 350, prochandle, NULL);
                 break;
             }
 
@@ -190,7 +191,7 @@ static Result _appletGetSession(Handle sessionhandle, Handle* handle_out, u64 cm
     return rc;
 }
 
-static Result _appletGetSessionProxy(Handle sessionhandle, Handle* handle_out, u64 cmd_id, Handle prochandle) {
+static Result _appletGetSessionProxy(Handle sessionhandle, Handle* handle_out, u64 cmd_id, Handle prochandle, u8 *AppletAttribute) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -202,6 +203,7 @@ static Result _appletGetSessionProxy(Handle sessionhandle, Handle* handle_out, u
 
     ipcSendPid(&c);
     ipcSendHandleCopy(&c, prochandle);
+    if (AppletAttribute) ipcAddSendBuffer(&c, AppletAttribute, 0x80, 0);
 
     raw = ipcPrepareHeader(&c, sizeof(*raw));
 
