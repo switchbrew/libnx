@@ -2,6 +2,8 @@
 
 // We use wrapped handles for type safety.
 
+#define FS_MAX_PATH 0x301
+
 typedef struct {
     Handle  h;
 } FsFileSystem;
@@ -18,12 +20,39 @@ typedef struct {
     Handle  h;
 } FsStorage;
 
+/// Directory entry.
+typedef struct
+{
+	char name[FS_MAX_PATH];      ///< Entry name.
+	u8 pad[3];
+	u32 attributes;       ///< Attributes.
+	u64 fileSize;         ///< File size.
+} FsDirectoryEntry;
+
 typedef enum {
     ENTRYTYPE_FILE=0,
     ENTRYTYPE_DIR =1
 } FsEntryType;
 
-#define FS_MAX_PATH 0x301
+typedef enum
+{
+	FS_OPEN_READ   = BIT(0), ///< Open for reading.
+	FS_OPEN_WRITE  = BIT(1), ///< Open for writing.
+	FS_OPEN_APPEND = BIT(2), ///< Append file.
+} FsFileFlags;
+
+/// For use with fsFsOpenDirectory.
+typedef enum
+{
+	FS_DIROPEN_DIRECTORY   = BIT(0), ///< Enable reading directory entries.
+	FS_DIROPEN_FILE  = BIT(1),       ///< Enable reading file entries.
+} FsDirectoryFlags;
+
+/// Attribute flags.
+typedef enum
+{
+	FS_ATTRIBUTE_FILE = BIT(0),  ///< File.
+} FsAttribute;
 
 Result fsInitialize();
 void fsExit(void);
@@ -51,11 +80,15 @@ void fsFsClose(FsFileSystem* fs);
 
 // IFile
 Result fsFileRead(FsFile* f, u64 off, void* buf, size_t len, size_t* out);
-Result fsFileWrite(FsFile* f, u64 off, void* buf, size_t len, size_t* out);
+Result fsFileWrite(FsFile* f, u64 off, const void* buf, size_t len, size_t* out);
 Result fsFileFlush(FsFile* f);
 Result fsFileSetSize(FsFile* f, u64 sz);
 Result fsFileGetSize(FsFile* f, u64* out);
 void fsFileClose(FsFile* f);
 
-// todo: IDirectory
+// IDirectory
+Result fsDirRead(FsDir* d, u64 inval, size_t* total_entries, size_t max_entries, FsDirectoryEntry *buf);
+Result fsDirGetEntryCount(FsDir* d, u64* count);
+void fsDirClose(FsDir* d);
+
 // todo: IStorage

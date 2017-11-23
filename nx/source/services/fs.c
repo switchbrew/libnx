@@ -254,7 +254,7 @@ Result fsFsDeleteDirectoryRecursively(FsFileSystem* fs, const char* path) {
     return rc;
 }
 
-Result fsRenameFile(FsFileSystem* fs, const char* path0, const char* path1) {
+Result fsFsRenameFile(FsFileSystem* fs, const char* path0, const char* path1) {
     IpcCommand c;
     ipcInitialize(&c);
     ipcAddSendStatic(&c, path0, FS_MAX_PATH, 0);
@@ -287,7 +287,7 @@ Result fsRenameFile(FsFileSystem* fs, const char* path0, const char* path1) {
     return rc;
 }
 
-Result fsRenameDirectory(FsFileSystem* fs, const char* path0, const char* path1) {
+Result fsFsRenameDirectory(FsFileSystem* fs, const char* path0, const char* path1) {
     IpcCommand c;
     ipcInitialize(&c);
     ipcAddSendStatic(&c, path0, FS_MAX_PATH, 0);
@@ -584,7 +584,7 @@ Result fsFileRead(FsFile* f, u64 off, void* buf, size_t len, size_t* out) {
     return rc;
 }
 
-Result fsFileWrite(FsFile* f, u64 off, void* buf, size_t len, size_t* out) {
+Result fsFileWrite(FsFile* f, u64 off, const void* buf, size_t len, size_t* out) {
     IpcCommand c;
     ipcInitialize(&c);
     ipcAddSendBuffer(&c, buf, len, 1);
@@ -717,7 +717,8 @@ Result fsFileGetSize(FsFile* f, u64* out) {
             u64 size;
         } *resp = r.Raw;
 
-        rc = resp->size;
+        rc = resp->result;
+        if (R_SUCCEEDED(rc) && out) *out = resp->size;
     }
 
     return rc;
@@ -725,5 +726,82 @@ Result fsFileGetSize(FsFile* f, u64* out) {
 
 void fsFileClose(FsFile* f) {
     svcCloseHandle(f->h);
+}
+
+// IDirectory implementation
+void fsDirClose(FsDir* d) {
+    svcCloseHandle(d->h);
+}
+
+Result fsDirRead(FsDir* d, u64 inval, size_t* total_entries, size_t max_entries, FsDirectoryEntry *buf) {
+    IpcCommand c;
+    ipcInitialize(&c);
+    ipcAddRecvBuffer(&c, buf, sizeof(FsDirectoryEntry)*max_entries, 0);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 inval;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 0;
+    raw->inval = inval;
+
+    Result rc = ipcDispatch(d->h);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcCommandResponse r;
+        ipcParseResponse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u64 total_entries;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            if (total_entries) *total_entries = resp->total_entries;
+        }
+    }
+
+    return rc;
+}
+
+Result fsDirGetEntryCount(FsDir* d, u64* count) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 1;
+
+    Result rc = ipcDispatch(d->h);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcCommandResponse r;
+        ipcParseResponse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u64 count;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+        if (R_SUCCEEDED(rc) && count) *count = resp->count;
+    }
+
+    return rc;
 }
 

@@ -32,17 +32,21 @@ void __attribute__((weak)) __appInit(void)
 {
     // Initialize default services.
     smInitialize();
-    fsInitialize();
     appletInitialize();
     hidInitialize();
+
+    fsInitialize();
+    //fsdevInit();
 }
 
 void __attribute__((weak)) __appExit(void)
 {
     // Cleanup default services.
+    //fsdevExit();
+    fsExit();
+
     hidExit();
     appletExit();
-    fsExit();
     smExit();
 }
 
