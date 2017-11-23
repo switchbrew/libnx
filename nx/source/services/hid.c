@@ -137,6 +137,9 @@ void hidScanInput(void) {
     if ((s64)(newTouchEntry->header.timestamp - g_touchTimestamp) > 0) {
         memcpy(&g_touchEntry, newTouchEntry, sizeof(HIDTouchScreenEntry));
         g_touchTimestamp = newTouchEntry->header.timestamp;
+
+        if (hidTouchCount())
+            g_controllerHeld[CONTROLLER_HANDHELD] |= KEY_TOUCH;
     }
 
     u64 latestMouseEntry = sharedMem->mouse.header.latestEntry;
@@ -176,7 +179,7 @@ void hidScanInput(void) {
             memcpy(&g_controllerEntries[i], newInputEntry, sizeof(HIDControllerInputEntry));
             g_controllerTimestamps[i] = newInputEntry->timestamp;
 
-            g_controllerHeld[i] = g_controllerEntries[i].buttons;
+            g_controllerHeld[i] |= g_controllerEntries[i].buttons;
         }
 
         g_controllerDown[i] = (~g_controllerOld[i]) & g_controllerHeld[i];
@@ -236,6 +239,25 @@ bool hidKeyboardDown(HIDKeyboardScancode key) {
 
 bool hidKeyboardUp(HIDKeyboardScancode key) {
     return g_keyboardUp[key / 32] & (1 << (key % 32));
+}
+
+u32 hidTouchCount(void) {
+    return g_touchEntry.header.numTouches;
+}
+
+void hidTouchRead(touchPosition *pos, u32 point_id) {
+    if (pos) {
+        if (point_id >= g_touchEntry.header.numTouches) {
+            memset(pos, 0, sizeof(touchPosition));
+            return;
+        }
+
+        pos->px = g_touchEntry.touches[point_id].x;
+        pos->py = g_touchEntry.touches[point_id].y;
+        pos->dx = g_touchEntry.touches[point_id].diameterX;
+        pos->dy = g_touchEntry.touches[point_id].diameterY;
+        pos->angle = g_touchEntry.touches[point_id].angle;
+    }
 }
 
 static Result _hidCreateAppletResource(Handle sessionhandle, Handle* handle_out, u64 AppletResourceUserId) {

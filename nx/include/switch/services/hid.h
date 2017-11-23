@@ -1,7 +1,7 @@
 #include <assert.h>
 #include <switch/types.h>
 
-// Begin enums
+// Begin enums and output structs
 
 typedef enum
 {
@@ -259,6 +259,9 @@ typedef enum
     KEY_SL           = BIT(24),      ///< SL
     KEY_SR           = BIT(25),      ///< SR
 
+    // Pseudo-key for at least one finger on the touch screen
+    KEY_TOUCH       = BIT(26),
+
     // Buttons by orientation (for single Joy-Con), also works with Joy-Con pairs, Pro Controller
     KEY_JOYCON_RIGHT = BIT(0),
     KEY_JOYCON_DOWN  = BIT(1),
@@ -292,17 +295,26 @@ typedef enum
     CONTROLLER_UNKNOWN  = 9,
 } HIDControllerID;
 
-// End enums
+typedef struct touchPosition
+{
+    u32 px;
+    u32 py;
+    u32 dx;
+    u32 dy;
+    u32 angle;
+} touchPosition;
+
+// End enums and output structs
 
 // Begin HIDTouchScreen
 
 typedef struct HIDTouchScreenHeader
 {
-    u64 timestamp;
+    u64 timestampTicks;
     u64 numEntries;
     u64 latestEntry;
     u64 maxEntryIndex;
-    u64 timestamp_2;
+    u64 timestamp;
 } HIDTouchScreenHeader;
 static_assert(sizeof(HIDTouchScreenHeader) == 0x28, "HID touch screen header structure has incorrect size");
 
@@ -316,13 +328,14 @@ static_assert(sizeof(HIDTouchScreenEntryHeader) == 0x10, "HID touch screen entry
 typedef struct HIDTouchScreenEntryTouch
 {
     u64 timestamp;
-    u64 unk_1;
+    u32 padding;
+    u32 touchIndex;
     u32 x;
     u32 y;
     u32 diameterX;
     u32 diameterY;
     u32 angle;
-    u32 unk_2;
+    u32 padding_2;
 } HIDTouchScreenEntryTouch;
 static_assert(sizeof(HIDTouchScreenEntryTouch) == 0x28, "HID touch screen touch structure has incorrect size");
 
@@ -330,14 +343,15 @@ typedef struct HIDTouchScreenEntry
 {
     HIDTouchScreenEntryHeader header;
     HIDTouchScreenEntryTouch touches[16];
+    u64 unk;
 } HIDTouchScreenEntry;
-static_assert(sizeof(HIDTouchScreenEntry) == 0x290, "HID touch screen entry structure has incorrect size");
+static_assert(sizeof(HIDTouchScreenEntry) == 0x298, "HID touch screen entry structure has incorrect size");
 
 typedef struct HIDTouchScreen
 {
     HIDTouchScreenHeader header;
     HIDTouchScreenEntry entries[17];
-    u8 padding[0x448];
+    u8 padding[0x3c0];
 } HIDTouchScreen;
 static_assert(sizeof(HIDTouchScreen) == 0x3000, "HID touch screen structure has incorrect size");
 
@@ -347,7 +361,7 @@ static_assert(sizeof(HIDTouchScreen) == 0x3000, "HID touch screen structure has 
 
 typedef struct HIDMouseHeader
 {
-    u64 timestamp;
+    u64 timestampTicks;
     u64 numEntries;
     u64 latestEntry;
     u64 maxEntryIndex;
@@ -382,7 +396,7 @@ static_assert(sizeof(HIDMouse) == 0x400, "HID mouse structure has incorrect size
 
 typedef struct HIDKeyboardHeader
 {
-    u64 timestamp;
+    u64 timestampTicks;
     u64 numEntries;
     u64 latestEntry;
     u64 maxEntryIndex;
@@ -436,7 +450,7 @@ static_assert(sizeof(HIDControllerHeader) == 0x28, "HID controller header struct
 
 typedef struct HIDControllerLayoutHeader
 {
-    u64 timestamp;
+    u64 timestampTicks;
     u64 numEntries;
     u64 latestEntry;
     u64 maxEntryIndex;
@@ -522,3 +536,6 @@ bool hidKeyboardModifierUp(HIDKeyboardModifier modifier);
 bool hidKeyboardHeld(HIDKeyboardScancode key);
 bool hidKeyboardDown(HIDKeyboardScancode key);
 bool hidKeyboardUp(HIDKeyboardScancode key);
+
+u32 hidTouchCount(void);
+void hidTouchRead(touchPosition *pos, u32 point_id);
