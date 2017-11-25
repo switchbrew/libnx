@@ -5,10 +5,10 @@ void __nx_exit(int rc);
 void virtmemSetup();
 void newlibSetup(Handle main_thread);
 
-#define INNER_HEAP_SIZE 0x20000
+#define INNER_HEAP_SIZE 0x200000
 __attribute__((weak)) size_t __nx_inner_heap_size = INNER_HEAP_SIZE;
-__attribute__((weak)) char __nx_inner_heap[INNER_HEAP_SIZE];
-__attribute__((weak)) size_t __nx_outer_heap_size = 0x2000000*4;//Must be a multiple of 0x2000000.
+__attribute__((weak)) char   __nx_inner_heap[INNER_HEAP_SIZE];
+__attribute__((weak)) size_t __nx_outer_heap_size = 0x2000000*16;//Must be a multiple of 0x2000000.
 
 static void _SetupHeap() {
     u64 addr;

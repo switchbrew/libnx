@@ -35,15 +35,15 @@ static Result _GetRegionFromInfo(VirtualRegion* r, u64 id0_addr, u32 id0_sz) {
 }
 
 static inline bool _InRegion(VirtualRegion* r, u64 addr) {
-    return (addr >= r->start) && (addr < (r->end-1));
+    return (addr >= r->start) && (addr < r->end);
 }
 
 void virtmemSetup() {
     if (R_FAILED(_GetRegionFromInfo(&g_AddressSpace, 12, 13))) {
         // Default values in case we're running on 1.0.0
-        // Assumes 36-bit address space
-        g_AddressSpace.start =    0x8000000ull;
-        g_AddressSpace.end   = 0x1000000000ull;
+        // Assumes 32-bit address space
+        g_AddressSpace.start = 0ull;
+        g_AddressSpace.end   = 0x100000000ull;
     }
 
     if (R_FAILED(_GetRegionFromInfo(&g_Region[REGION_MAP], 2, 3))) {
