@@ -110,14 +110,23 @@ static fsdev_fsdevice fsdev_fsdevices[32];
 /*! @endcond */
 
 static char     __cwd[PATH_MAX+1] = "/";
-static __thread char     __fixedpath[PATH_MAX+1];
-//static __thread uint16_t __utf16path[PATH_MAX+1];
+static /*__thread*/ char     __fixedpath[PATH_MAX+1];
+//static /*__thread*/ uint16_t __utf16path[PATH_MAX+1];
 
 static fsdev_fsdevice *fsdevFindDevice(const char *name)
 {
   u32 i;
   u32 total = sizeof(fsdev_fsdevices) / sizeof(fsdev_fsdevice);
   fsdev_fsdevice *device = NULL;
+
+  if(name && name[0] == '/') //Return the default device.
+  {
+    device = &fsdev_fsdevices[0];
+    if(!device->setup)
+      device = NULL;
+
+    return device;
+  }
 
   for(i=0; i<total; i++)
   {
@@ -148,7 +157,14 @@ fsdev_fixpath(struct _reent *r,
   const uint8_t *p = (const uint8_t*)path;
 
   if(device)
+  {
     *device = fsdevFindDevice(path);
+    if(*device == NULL)
+    {
+      r->_errno = ENODEV;
+      return NULL;
+    }
+  }
 
   // Move the path pointer to the start of the actual path
   do
@@ -295,7 +311,7 @@ static int _fsdevUnmountDeviceStruct(fsdev_fsdevice *device)
   if(!device->setup)
     return 0;
 
-  RemoveDevice(device->name);
+  RemoveDevice(device->name);//TODO: Use name with ':' appended.
   fsFsClose(&device->fs);
 
   memset(device, 0, sizeof(fsdev_fsdevice));
@@ -442,7 +458,7 @@ fsdev_open(struct _reent *r,
   u32           attributes = 0;
   char          fs_path[FS_MAX_PATH];
   fsdev_fsdevice *device = NULL;
-return -1;
+
   if(fsdev_getfspath(r, path, &device, fs_path)==-1)
     return -1;
 
@@ -642,7 +658,7 @@ fsdev_write_safe(struct _reent *r,
   /* Copy to internal buffer and write in chunks.
    * You cannot write from read-only memory.
    */
-  static __thread char tmp_buffer[8192];
+  static /*__thread*/ char tmp_buffer[8192];
   while(len > 0)
   {
     size_t toWrite = len;
