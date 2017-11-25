@@ -53,7 +53,7 @@ Result threadCreate(
 
         if (R_SUCCEEDED(rc))
         {
-            u64 stack_top = ((u64)stack_mirror) + t->stack_sz - sizeof(ThreadEntryArgs);
+            u64 stack_top = ((u64)stack_mirror) + stack_sz - sizeof(ThreadEntryArgs);
             ThreadEntryArgs* args = (ThreadEntryArgs*) stack_top;
             Handle handle;
 
