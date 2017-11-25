@@ -32,7 +32,7 @@ INCLUDES	:=	include
 #---------------------------------------------------------------------------------
 # options for code generation
 #---------------------------------------------------------------------------------
-ARCH	:=	-march=armv8-a -mtp=soft -fPIC
+ARCH	:=	-march=armv8-a -mtp=soft -fPIC -ftls-model=local-exec
 
 CFLAGS	:=	-g -Wall -Werror \
 			-ffunction-sections \

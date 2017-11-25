@@ -110,8 +110,8 @@ static fsdev_fsdevice fsdev_fsdevices[32];
 /*! @endcond */
 
 static char     __cwd[PATH_MAX+1] = "/";
-static /*__thread*/ char     __fixedpath[PATH_MAX+1];
-//static /*__thread*/ uint16_t __utf16path[PATH_MAX+1];
+static __thread char     __fixedpath[PATH_MAX+1];
+//static __thread uint16_t __utf16path[PATH_MAX+1];
 
 static fsdev_fsdevice *fsdevFindDevice(const char *name)
 {
@@ -658,7 +658,7 @@ fsdev_write_safe(struct _reent *r,
   /* Copy to internal buffer and write in chunks.
    * You cannot write from read-only memory.
    */
-  static /*__thread*/ char tmp_buffer[8192];
+  static __thread char tmp_buffer[8192];
   while(len > 0)
   {
     size_t toWrite = len;
