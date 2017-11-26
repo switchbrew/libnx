@@ -10,12 +10,12 @@ u8 parcel_reply_log[0x10000] = {0};
 size_t parcel_reply_log_size = 0;
 #endif
 
-void parcelInitializeContext(parcelContext *ctx) {
-    memset(ctx, 0, sizeof(parcelContext));
+void parcelInitialize(Parcel *ctx) {
+    memset(ctx, 0, sizeof(Parcel));
     ctx->capacity = sizeof(ctx->payload);
 }
 
-Result parcelTransact(binderSession *session, u32 code, parcelContext *in_parcel, parcelContext *parcel_reply) {
+Result parcelTransact(binderSession *session, u32 code, Parcel *in_parcel, Parcel *parcel_reply) {
     Result rc=0;
     u8 inparcel[0x400];
     u8 outparcel[0x400];
@@ -65,7 +65,7 @@ Result parcelTransact(binderSession *session, u32 code, parcelContext *in_parcel
     return 0;
 }
 
-void* parcelWriteData(parcelContext *ctx, void* data, size_t data_size) {
+void* parcelWriteData(Parcel *ctx, void* data, size_t data_size) {
     void* ptr = &ctx->payload[ctx->size];
 
     if(data_size & BIT(31))
@@ -84,7 +84,7 @@ void* parcelWriteData(parcelContext *ctx, void* data, size_t data_size) {
     return ptr;
 }
 
-void* parcelReadData(parcelContext *ctx, void* data, size_t data_size) {
+void* parcelReadData(Parcel *ctx, void* data, size_t data_size) {
     void* ptr = ctx->payload;
 
     if(data_size & BIT(31))
@@ -103,7 +103,7 @@ void* parcelReadData(parcelContext *ctx, void* data, size_t data_size) {
     return ptr;
 }
 
-void parcelWriteString16(parcelContext *ctx, const char *str) {
+void parcelWriteString16(Parcel *ctx, const char *str) {
     u32 pos, len;
     u16 *ptr;
 
@@ -120,27 +120,27 @@ void parcelWriteString16(parcelContext *ctx, const char *str) {
     }
 }
 
-s32 parcelReadInt32(parcelContext *ctx) {
+s32 parcelReadInt32(Parcel *ctx) {
     s32 val = 0;
     parcelReadData(ctx, &val, sizeof(val));
     return val;
 }
 
-u32 parcelReadUInt32(parcelContext *ctx) {
+u32 parcelReadUInt32(Parcel *ctx) {
     u32 val = 0;
     parcelReadData(ctx, &val, sizeof(val));
     return val;
 }
 
-void parcelWriteInt32(parcelContext *ctx, s32 val) {
+void parcelWriteInt32(Parcel *ctx, s32 val) {
     parcelWriteData(ctx, &val, sizeof(val));
 }
 
-void parcelWriteUInt32(parcelContext *ctx, u32 val) {
+void parcelWriteUInt32(Parcel *ctx, u32 val) {
     parcelWriteData(ctx, &val, sizeof(val));
 }
 
-void parcelWriteInterfaceToken(parcelContext *ctx, const char *interface) {
+void parcelWriteInterfaceToken(Parcel *ctx, const char *interface) {
     parcelWriteInt32(ctx, 0x100);
     parcelWriteString16(ctx, interface);
 }

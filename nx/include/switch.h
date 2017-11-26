@@ -38,7 +38,7 @@ extern "C" {
 
 #include <switch/gfx/gfx.h>
 #include <switch/gfx/parcel.h>
-#include <switch/gfx/gfxproducer.h>
+#include <switch/gfx/buffer_producer.h>
 #include <switch/gfx/ioctl.h>
 #include <switch/gfx/nvioctl.h>
 #include <switch/gfx/nvgfx.h>

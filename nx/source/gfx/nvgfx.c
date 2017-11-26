@@ -286,7 +286,7 @@ Result nvgfxInitialize(void) {
              if (R_FAILED(rc)) break;
 
              if(pos==1) {
-                 rc = gfxproducerQuery(2, &tmp);//"NATIVE_WINDOW_FORMAT"
+                 rc = bufferProducerQuery(2, &tmp);//"NATIVE_WINDOW_FORMAT"
                  if (R_FAILED(rc)) break;
 
                  for(i=0; i<2; i++) {
@@ -309,7 +309,7 @@ Result nvgfxInitialize(void) {
                      g_gfxprod_BufferInitData[0x20] = tmpval;
                      g_gfxprod_BufferInitData[0x21] = g_nvgfx_singleframebuf_size*i;
                      ptr64[0x170>>3] = svcGetSystemTick();
-                     rc = gfxproducerTegraBufferInit(i, (u8*)g_gfxprod_BufferInitData);
+                     rc = bufferProducerTegraBufferInit(i, (u8*)g_gfxprod_BufferInitData);
                      if (R_FAILED(rc)) break;
                  }
                  if (R_FAILED(rc)) break;

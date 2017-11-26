@@ -57,7 +57,7 @@ static Result _gfxDequeueBuffer() {
         return 0;
     }
 
-    rc = gfxproducerDequeueBuffer(/*1*/0, 1280, 720, 0, 0x300, &g_gfxCurrentProducerBuffer);
+    rc = bufferProducerDequeueBuffer(/*1*/0, 1280, 720, 0, 0x300, &g_gfxCurrentProducerBuffer);
 
     if (R_SUCCEEDED(rc)) g_gfxCurrentBuffer = (g_gfxCurrentBuffer + 1) & (g_nvgfx_totalframebufs-1);
 
@@ -72,7 +72,7 @@ static Result _gfxQueueBuffer(s32 buf) {
 
     ptr64[1] = svcGetSystemTick();//Unknown what is actually used for timestamp, but shouldn't(?) matter.
 
-    rc = gfxproducerQueueBuffer(buf, (u8*)g_gfxQueueBufferData);
+    rc = bufferProducerQueueBuffer(buf, (u8*)g_gfxQueueBufferData);
     if (R_FAILED(rc)) return rc;
 
     /*if(buf==0) {
@@ -121,9 +121,9 @@ static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 L
 
     if (R_SUCCEEDED(rc)) rc = nvInitialize(nv_servicetype, nv_transfermem_size);
 
-    if (R_SUCCEEDED(rc)) rc = gfxproducerInitialize(&g_gfxBinderSession);
+    if (R_SUCCEEDED(rc)) rc = bufferProducerInitialize(&g_gfxBinderSession);
 
-    if (R_SUCCEEDED(rc)) rc = gfxproducerConnect(2, 0);
+    if (R_SUCCEEDED(rc)) rc = bufferProducerConnect(2, 0);
 
     if (R_SUCCEEDED(rc)) g_gfx_ProducerConnected = 1;
 
@@ -136,7 +136,7 @@ static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 L
            rc = _gfxDequeueBuffer();
            if (R_FAILED(rc)) break;
 
-           rc = gfxproducerRequestBuffer(g_gfxCurrentProducerBuffer);
+           rc = bufferProducerRequestBuffer(g_gfxCurrentProducerBuffer);
            if (R_FAILED(rc)) break;
 
            g_gfx_ProducerSlotsRequested[i] = 1;
@@ -162,12 +162,12 @@ static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 L
     if (R_FAILED(rc)) {
         _gfxQueueBuffer(g_gfxCurrentProducerBuffer);
         for(i=0; i<2; i++) {
-            if (g_gfx_ProducerSlotsRequested[i]) gfxproducerDetachBuffer(i);
+            if (g_gfx_ProducerSlotsRequested[i]) bufferProducerDetachBuffer(i);
         }
-        if (g_gfx_ProducerConnected) gfxproducerDisconnect(2);
+        if (g_gfx_ProducerConnected) bufferProducerDisconnect(2);
 
         nvgfxExit();
-        gfxproducerExit();
+        bufferProducerExit();
         binderExitSession(&g_gfxBinderSession);
         nvExit();
 
@@ -223,13 +223,13 @@ void gfxExit(void) {
 
     _gfxQueueBuffer(g_gfxCurrentProducerBuffer);
     for(i=0; i<2; i++) {
-        if (g_gfx_ProducerSlotsRequested[i]) gfxproducerDetachBuffer(i);
+        if (g_gfx_ProducerSlotsRequested[i]) bufferProducerDetachBuffer(i);
     }
-    if (g_gfx_ProducerConnected) gfxproducerDisconnect(2);
+    if (g_gfx_ProducerConnected) bufferProducerDisconnect(2);
 
     nvgfxExit();
 
-    gfxproducerExit();
+    bufferProducerExit();
     binderExitSession(&g_gfxBinderSession);
 
     nvExit();
