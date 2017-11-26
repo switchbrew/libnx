@@ -2,10 +2,10 @@
 #include <switch.h>
 
 typedef struct {
-    u8 ParcelData[0x400];
-    u32 ParcelData_maxsize;
-    u32 ParcelData_size;
-    u32 ParcelData_pos;
+    u8  payload[0x400];
+    u32 capacity;
+    u32 size;
+    u32 read_pos;
 
     u8 *ParcelObjects;
     u32 ParcelObjectsSize;
@@ -19,7 +19,7 @@ void* parcelReadData(parcelContext *ctx, void* data, size_t data_size);
 
 void parcelWriteInt32(parcelContext *ctx, s32 val);
 void parcelWriteUInt32(parcelContext *ctx, u32 val);
-void parcelWriteString16_fromchar(parcelContext *ctx, const char *str);
+void parcelWriteString16(parcelContext *ctx, const char *str);
 
 void parcelWriteInterfaceToken(parcelContext *ctx, const char *interface);
 
