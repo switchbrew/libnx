@@ -187,6 +187,7 @@ Result nvgfxInitialize(void) {
     //Officially NVHOST_IOCTL_CTRL_GET_CONFIG is used a lot (here and later), skip that. This is done with a /dev/nvhost-ctrl fd, seperate from the one used later.
 
     if (R_SUCCEEDED(rc)) rc = nvOpen(&g_nvgfx_fd_nvhostctrlgpu, "/dev/nvhost-ctrl-gpu");
+
     if (R_SUCCEEDED(rc)) rc = nvioctlNvhostCtrlGpu_GetCharacteristics(g_nvgfx_fd_nvhostctrlgpu, &g_nvgfx_gpu_characteristics);
 
     if (R_SUCCEEDED(rc)) rc = nvioctlNvhostCtrlGpu_GetTpcMasks(g_nvgfx_fd_nvhostctrlgpu, 4, g_nvgfx_tpcmasks);
@@ -226,7 +227,7 @@ Result nvgfxInitialize(void) {
 
     if (R_SUCCEEDED(rc)) rc = nvioctlChannel_SetNvmapFd(g_nvgfx_fd_nvhostgpu, g_nvgfx_fd_nvmap);
 
-    if (R_SUCCEEDED(rc)) rc = nvioctlChannel_AllocGPFIFOEx2(g_nvgfx_fd_nvhostgpu, 0x800, 0x1, 0, 0, 0, 0, &g_nvgfx_nvhost_fence);
+    if (R_SUCCEEDED(rc)) rc = nvioctlChannel_AllocGpfifoEx2(g_nvgfx_fd_nvhostgpu, 0x800, 0x1, 0, 0, 0, 0, &g_nvgfx_nvhost_fence);
 
     if (R_SUCCEEDED(rc)) rc = nvioctlChannel_AllocObjCtx(g_nvgfx_fd_nvhostgpu, NVIOCTL_CHANNEL_OBJ_CLASSNUM_3d, 0);
 
@@ -290,7 +291,7 @@ Result nvgfxInitialize(void) {
 
                  for(i=0; i<2; i++) {
                      tmpval = 0;
-                     rc = nvioctlNvmap_GetID(g_nvgfx_fd_nvmap, nvmap_objs[6].handle, &tmpval);
+                     rc = nvioctlNvmap_GetId(g_nvgfx_fd_nvmap, nvmap_objs[6].handle, &tmpval);
                      if (R_FAILED(rc)) break;
 
                      if(tmpval==~0) {
@@ -298,10 +299,10 @@ Result nvgfxInitialize(void) {
                          break;
                      }
 
-                     rc = nvioctlNvmap_FromID(g_nvgfx_fd_nvmap, tmpval, &tmpval);
+                     rc = nvioctlNvmap_FromId(g_nvgfx_fd_nvmap, tmpval, &tmpval);
                      if (R_FAILED(rc)) break;
 
-                     //The above gets a nvmap_handle, but normally it's the same value passed to nvioctlNvmap_GetID().
+                     //The above gets a nvmap_handle, but normally it's the same value passed to nvioctlNvmap_GetId().
 
                      g_gfxprod_BufferInitData[0xa] = i;
                      g_gfxprod_BufferInitData[0xe] = tmpval;

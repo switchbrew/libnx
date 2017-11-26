@@ -59,7 +59,7 @@ static Result _gfxDequeueBuffer() {
 
     rc = gfxproducerDequeueBuffer(/*1*/0, 1280, 720, 0, 0x300, &g_gfxCurrentProducerBuffer);
 
-    if (R_SUCCEEDED(rc)) g_gfxCurrentBuffer = (g_gfxCurrentBuffer+1) & (g_nvgfx_totalframebufs-1);
+    if (R_SUCCEEDED(rc)) g_gfxCurrentBuffer = (g_gfxCurrentBuffer + 1) & (g_nvgfx_totalframebufs-1);
 
     return rc;
 }
