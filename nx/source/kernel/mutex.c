@@ -49,13 +49,12 @@ void mutexUnlock(Mutex* m) {
 }
 
 void rmutexLock(RMutex* m) {
-    if (m->thread_tag == _GetTag()) {
-        m->counter++;
-    }
-    else {
+    if (m->thread_tag != _GetTag()) {
         mutexLock(&m->lock);
         m->thread_tag = _GetTag();
     }
+
+    m->counter++;
 }
 
 void rmutexUnlock(RMutex* m) {
