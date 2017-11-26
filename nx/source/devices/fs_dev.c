@@ -100,11 +100,13 @@ fsdev_devoptab =
 typedef struct
 {
     bool setup;
+    s32 id;
     devoptab_t device;
     FsFileSystem fs;
     char name[32];
 } fsdev_fsdevice;
 
+static s32 fsdev_fsdevice_default = -1;
 static fsdev_fsdevice fsdev_fsdevices[32];
 
 /*! @endcond */
@@ -121,7 +123,10 @@ static fsdev_fsdevice *fsdevFindDevice(const char *name)
 
   if(name && name[0] == '/') //Return the default device.
   {
-    device = &fsdev_fsdevices[0];
+    if(fsdev_fsdevice_default==-1)
+      return NULL;
+
+    device = &fsdev_fsdevices[fsdev_fsdevice_default];
     if(!device->setup)
       device = NULL;
 
@@ -277,13 +282,21 @@ static void fsdevUpdateDevices(void)
   {
     memcpy(&fsdev_fsdevices[i].device, &fsdev_devoptab, sizeof(fsdev_devoptab));
     fsdev_fsdevices[i].device.name = fsdev_fsdevices[i].name;
+    fsdev_fsdevices[i].id = i;
   }
 }
 
-int fsdevMountDevice(const char *name, FsFileSystem fs)
+int _fsdevMountDevice(const char *name, FsFileSystem fs, fsdev_fsdevice **out_device)
 {
-  fsdev_fsdevice *device = fsdevFindDevice(NULL);
+  fsdev_fsdevice *device = NULL;
 
+  if(fsdevFindDevice(name)) //Device is already mounted with the same name.
+  {
+    fsFsClose(&fs);
+    return -1;
+  }
+
+  device = fsdevFindDevice(NULL);
   if(device==NULL)
   {
     fsFsClose(&fs);
@@ -303,15 +316,28 @@ int fsdevMountDevice(const char *name, FsFileSystem fs)
 
   device->setup = 1;
 
+  if(out_device)
+    *out_device = device;
+
   return dev;
+}
+int fsdevMountDevice(const char *name, FsFileSystem fs)
+{
+  return _fsdevMountDevice(name, fs, NULL);
 }
 
 static int _fsdevUnmountDeviceStruct(fsdev_fsdevice *device)
 {
+  char name[34];
+
   if(!device->setup)
     return 0;
 
-  RemoveDevice(device->name);//TODO: Use name with ':' appended.
+  memset(name, 0, sizeof(name));
+  strncpy(name, device->name, sizeof(name)-2);
+  strncat(name, ":", sizeof(name)-1);
+
+  RemoveDevice(name);
   fsFsClose(&device->fs);
 
   memset(device, 0, sizeof(fsdev_fsdevice));
@@ -338,21 +364,28 @@ Result fsdevInit(void)
   char     *p;*/
   Result   rc = 0;
   FsFileSystem fs;
+  fsdev_fsdevice *device = NULL;
 
-  if(fsdevInitialised)
-    return rc;
+  if(!fsdevInitialised)
+  {
+    memset(fsdev_fsdevices, 0, sizeof(fsdev_fsdevices));
+    fsdevUpdateDevices();
 
-  memset(fsdev_fsdevices, 0, sizeof(fsdev_fsdevices));
-  fsdevUpdateDevices();
+    fsdev_fsdevice_default = -1;
+    fsdevInitialised = true;
+  }
 
   rc = fsMountSdcard(&fs);
   if(R_SUCCEEDED(rc))
   {
-    int dev = fsdevMountDevice("sdmc", fs);
+    int dev = _fsdevMountDevice("sdmc", fs, &device);
 
     if(dev != -1)
     {
       setDefaultDevice(dev);
+      if(device)
+        fsdev_fsdevice_default = device->id;
+
       //TODO: Re-enable this once __system_argc/__system_argv are actually defined.
       /*if(__system_argc != 0 && __system_argv[0] != NULL)
       {
@@ -393,19 +426,17 @@ Result fsdevInit(void)
     }
   }
 
-  fsdevInitialised = true;
-
   return rc;
 }
 
 /*! Enable/disable safe fsdev_write
  *
- *  Safe fsdev_write is enabled by default. If it is disabled, you will be
+ *  Safe fsdev_write is disabled by default. If it is disabled, you will be
  *  unable to write from read-only buffers.
  *
  *  @param[in] enable Whether to enable
  */
-void fsdevWriteSafe(bool enable)
+void fsdevWriteSafe(bool enable)//TODO: Is this really needed?
 {
   if(enable)
     fsdev_devoptab.write_r = fsdev_write_safe;
@@ -429,6 +460,7 @@ Result fsdevExit(void)
     _fsdevUnmountDeviceStruct(&fsdev_fsdevices[i]);
   }
 
+  fsdev_fsdevice_default = -1;
   fsdevInitialised = false;
 
   return 0;
@@ -968,21 +1000,27 @@ fsdev_rename(struct _reent *r,
             const char    *newName)
 {
   Result  rc;
-  fsdev_fsdevice *device = NULL;
+  fsdev_fsdevice *device_old = NULL, *device_new = NULL;
   char fs_path_old[FS_MAX_PATH];
   char fs_path_new[FS_MAX_PATH];
 
-  if(fsdev_getfspath(r, oldName, &device, fs_path_old)==-1)
+  if(fsdev_getfspath(r, oldName, &device_old, fs_path_old)==-1)
     return -1;
 
-  if(fsdev_getfspath(r, newName, NULL, fs_path_new)==-1)
+  if(fsdev_getfspath(r, newName, &device_new, fs_path_new)==-1)
     return -1;
 
-  rc = fsFsRenameFile(&device->fs, fs_path_old, fs_path_new);
+  if(device_old->id != device_new->id)
+  {
+    r->_errno = EXDEV;
+    return -1;
+  }
+
+  rc = fsFsRenameFile(&device_old->fs, fs_path_old, fs_path_new);
   if(R_SUCCEEDED(rc))
     return 0;
 
-  rc = fsFsRenameDirectory(&device->fs, fs_path_old, fs_path_new);
+  rc = fsFsRenameDirectory(&device_old->fs, fs_path_old, fs_path_new);
   if(R_SUCCEEDED(rc))
     return 0;
 
