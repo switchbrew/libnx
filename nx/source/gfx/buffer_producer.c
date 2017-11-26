@@ -41,13 +41,13 @@ void bufferProducerExit()
 Result bufferProducerRequestBuffer(s32 bufferIdx)
 {
     Result rc;
-    parcelContext parcel, parcel_reply;
+    Parcel parcel, parcel_reply;
 
     if (g_bufferProducerBinderSession == NULL)
         return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
 
-    parcelInitializeContext(&parcel);
-    parcelInitializeContext(&parcel_reply);
+    parcelInitialize(&parcel);
+    parcelInitialize(&parcel_reply);
 
     parcelWriteInterfaceToken(&parcel, g_bufferProducer_InterfaceDescriptor);
     parcelWriteInt32(&parcel, bufferIdx);
@@ -77,13 +77,13 @@ Result bufferProducerRequestBuffer(s32 bufferIdx)
 Result bufferProducerDequeueBuffer(bool async, u32 width, u32 height, s32 format, u32 usage, s32 *buf)
 {
     Result rc;
-    parcelContext parcel, parcel_reply;
+    Parcel parcel, parcel_reply;
 
     if (g_bufferProducerBinderSession == NULL)
         return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
 
-    parcelInitializeContext(&parcel);
-    parcelInitializeContext(&parcel_reply);
+    parcelInitialize(&parcel);
+    parcelInitialize(&parcel_reply);
 
     parcelWriteInterfaceToken(&parcel, g_bufferProducer_InterfaceDescriptor);
 
@@ -106,13 +106,13 @@ Result bufferProducerDequeueBuffer(bool async, u32 width, u32 height, s32 format
 Result bufferProducerDetachBuffer(s32 slot)
 {
     Result rc;
-    parcelContext parcel, parcel_reply;
+    Parcel parcel, parcel_reply;
 
     if (g_bufferProducerBinderSession == NULL)
         return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
 
-    parcelInitializeContext(&parcel);
-    parcelInitializeContext(&parcel_reply);
+    parcelInitialize(&parcel);
+    parcelInitialize(&parcel_reply);
 
     parcelWriteInterfaceToken(&parcel, g_bufferProducer_InterfaceDescriptor);
     parcelWriteInt32(&parcel, slot);
@@ -129,13 +129,13 @@ Result bufferProducerDetachBuffer(s32 slot)
 Result bufferProducerQueueBuffer(s32 buf, u8 input[0x5c])
 {
     Result rc;
-    parcelContext parcel, parcel_reply;
+    Parcel parcel, parcel_reply;
 
     if (g_bufferProducerBinderSession == NULL)
         return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
 
-    parcelInitializeContext(&parcel);
-    parcelInitializeContext(&parcel_reply);
+    parcelInitialize(&parcel);
+    parcelInitialize(&parcel_reply);
 
     parcelWriteInterfaceToken(&parcel, g_bufferProducer_InterfaceDescriptor);
     parcelWriteInt32(&parcel, buf);
@@ -153,13 +153,13 @@ Result bufferProducerQueueBuffer(s32 buf, u8 input[0x5c])
 Result bufferProducerQuery(s32 what, s32* value)
 {
     Result rc;
-    parcelContext parcel, parcel_reply;
+    Parcel parcel, parcel_reply;
 
     if (g_bufferProducerBinderSession == NULL)
         return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
 
-    parcelInitializeContext(&parcel);
-    parcelInitializeContext(&parcel_reply);
+    parcelInitialize(&parcel);
+    parcelInitialize(&parcel_reply);
 
     parcelWriteInterfaceToken(&parcel, g_bufferProducer_InterfaceDescriptor);
     parcelWriteInt32(&parcel, what);
@@ -180,13 +180,13 @@ Result bufferProducerQuery(s32 what, s32* value)
 Result bufferProducerConnect(s32 api, bool producerControlledByApp)
 {
     Result rc;
-    parcelContext parcel, parcel_reply;
+    Parcel parcel, parcel_reply;
 
     if (g_bufferProducerBinderSession == NULL)
         return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
 
-    parcelInitializeContext(&parcel);
-    parcelInitializeContext(&parcel_reply);
+    parcelInitialize(&parcel);
+    parcelInitialize(&parcel_reply);
 
     parcelWriteInterfaceToken(&parcel, g_bufferProducer_InterfaceDescriptor);
 
@@ -207,13 +207,13 @@ Result bufferProducerConnect(s32 api, bool producerControlledByApp)
 Result bufferProducerDisconnect(s32 api)
 {
     Result rc;
-    parcelContext parcel, parcel_reply;
+    Parcel parcel, parcel_reply;
 
     if (g_bufferProducerBinderSession == NULL)
         return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
 
-    parcelInitializeContext(&parcel);
-    parcelInitializeContext(&parcel_reply);
+    parcelInitialize(&parcel);
+    parcelInitialize(&parcel_reply);
 
     parcelWriteInterfaceToken(&parcel, g_bufferProducer_InterfaceDescriptor);
     parcelWriteInt32(&parcel, api);
@@ -230,12 +230,12 @@ Result bufferProducerDisconnect(s32 api)
 Result bufferProducerTegraBufferInit(s32 buf, u8 input[0x178])
 {
     Result rc;
-    parcelContext parcel, parcel_reply;
+    Parcel parcel, parcel_reply;
 
     if (g_bufferProducerBinderSession==NULL) return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
 
-    parcelInitializeContext(&parcel);
-    parcelInitializeContext(&parcel_reply);
+    parcelInitialize(&parcel);
+    parcelInitialize(&parcel_reply);
 
     parcelWriteInterfaceToken(&parcel, g_bufferProducer_InterfaceDescriptor);
     parcelWriteInt32(&parcel, buf);
