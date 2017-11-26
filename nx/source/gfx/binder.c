@@ -1,64 +1,84 @@
 #include <string.h>
 #include <switch.h>
 
-void binderCreateSession(binderSession *session, Handle sessionhandle, s32 ID) {
+void binderCreateSession(binderSession *session, Handle sessionHandle, s32 id)
+{
     memset(session, 0, sizeof(binderSession));
-    session->sessionhandle = sessionhandle;
-    session->ID = ID;
-    session->TransactAuto = 0;
-    session->initialized = 1;
+    session->sessionHandle = sessionHandle;
+    session->id = id;
+    session->nativeHandle = INVALID_HANDLE;
+    session->hasTransactAuto = 0;
 }
 
-Result binderInitSession(binderSession *session, u32 nativehandle_inval) {
+Result binderInitSession(binderSession *session, u32 unk0)
+{
     Result rc = 0;
 
     rc = binderAdjustRefcount(session, 1, 0);
-    if (R_FAILED(rc)) return rc;
+
+    if (R_FAILED(rc))
+        return rc;
 
     rc = binderAdjustRefcount(session, 1, 1);
-    if (R_FAILED(rc)) return rc;
 
-    rc = binderGetNativeHandle(session, nativehandle_inval, &session->nativehandle);
-    if (R_FAILED(rc)) return rc;
-
-    //When the output nativehandle is 0 the binderSession ID is probably invalid.
-    if(session->nativehandle == 0) return MAKERESULT(MODULE_LIBNX, LIBNX_BADINPUT);
-
-    rc = ipcQueryPointerBufferSize(session->sessionhandle, &session->IpcBufferSize);
-    if (R_FAILED(rc)) return rc;
-
-    if (kernelAbove300()) session->TransactAuto = 1;//Call this to check whether TransactParcelAuto is available, since sysmodule would close the session on invalid cmdid.
-
-    return rc;
-}
-
-Result binderExitSession(binderSession *session) {
-    Result rc = 0;
-
-    if(!session->initialized)return 0;
-
-    rc = binderAdjustRefcount(session, -1, 1);
-
-    if (R_SUCCEEDED(rc)) rc = binderAdjustRefcount(session, -1, 0);
-
-    if(session->nativehandle) {
-        svcCloseHandle(session->nativehandle);
-        session->nativehandle = 0;
+    if (R_FAILED(rc)) {
+        rc = binderAdjustRefcount(session, -1, 0);
+        return rc;
     }
 
-    session->initialized = 0;
+    rc = binderGetNativeHandle(session, unk0, &session->nativeHandle);
+
+    if (R_FAILED(rc)) {
+        rc = binderAdjustRefcount(session, -1, 1);
+        rc = binderAdjustRefcount(session, -1, 0);
+        return rc;
+    }
+
+    // When the output nativeHandle is 0 the binderSession ID is probably invalid.
+    if(session->nativeHandle == 0) {
+        rc = binderAdjustRefcount(session, -1, 1);
+        rc = binderAdjustRefcount(session, -1, 0);
+        return MAKERESULT(MODULE_LIBNX, LIBNX_BADINPUT);
+    }
+
+    rc = ipcQueryPointerBufferSize(session->sessionHandle, &session->ipcBufferSize);
+
+    if (R_FAILED(rc)) {
+        binderExitSession(session);
+        return rc;
+    }
+
+    // Use TransactParcelAuto when available.
+    if (kernelAbove300())
+        session->hasTransactAuto = 1;
 
     return rc;
 }
 
-static Result _binderTransactParcel(binderSession *session, u32 code, void* parcel_data, size_t parcel_data_size, void* parcel_reply, size_t parcel_reply_size, u32 flags) {
+void binderExitSession(binderSession *session)
+{
+    binderAdjustRefcount(session, -1, 1);
+    binderAdjustRefcount(session, -1, 0);
+
+    if (session->nativeHandle != INVALID_HANDLE) {
+        svcCloseHandle(session->nativeHandle);
+        session->nativeHandle = INVALID_HANDLE;
+    }
+}
+
+static Result _binderTransactParcel(
+    binderSession *session, u32 code,
+    void* parcel_data,  size_t parcel_data_size,
+    void* parcel_reply, size_t parcel_reply_size,
+    u32 flags)
+{
     IpcCommand c;
     ipcInitialize(&c);
 
     struct {
         u64 magic;
         u64 cmd_id;
-        s32 ID;
+        s32 session_id;
         u32 code;
         u32 flags;
     } *raw;
@@ -69,11 +89,11 @@ static Result _binderTransactParcel(binderSession *session, u32 code, void* parc
     raw = ipcPrepareHeader(&c, sizeof(*raw));
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 0;
-    raw->ID = session->ID;
+    raw->session_id = session->id;
     raw->code = code;
     raw->flags = flags;
 
-    Result rc = ipcDispatch(session->sessionhandle);
+    Result rc = ipcDispatch(session->sessionHandle);
 
     if (R_SUCCEEDED(rc)) {
         IpcCommandResponse r;
@@ -90,14 +110,19 @@ static Result _binderTransactParcel(binderSession *session, u32 code, void* parc
     return rc;
 }
 
-static Result _binderTransactParcelAuto(binderSession *session, u32 code, void* parcel_data, size_t parcel_data_size, void* parcel_reply, size_t parcel_reply_size, u32 flags) {
+static Result _binderTransactParcelAuto(
+    binderSession *session, u32 code,
+    void* parcel_data,  size_t parcel_data_size,
+    void* parcel_reply, size_t parcel_reply_size,
+    u32 flags)
+{
     IpcCommand c;
     ipcInitialize(&c);
 
     struct {
         u64 magic;
         u64 cmd_id;
-        s32 ID;
+        s32 session_id;
         u32 code;
         u32 flags;
     } *raw;
@@ -107,7 +132,7 @@ static Result _binderTransactParcelAuto(binderSession *session, u32 code, void* 
     size_t buf_static_size[2] = {parcel_data_size, parcel_reply_size};
     size_t buf_transfer_size[2] = {parcel_data_size, parcel_reply_size};
 
-    if(session->IpcBufferSize!=0 && buf_static_size[0] <= session->IpcBufferSize) {
+    if(session->ipcBufferSize!=0 && buf_static_size[0] <= session->ipcBufferSize) {
         buf_transfer[0] = NULL;
         buf_transfer[1] = NULL;
         buf_transfer_size[0] = 0;
@@ -129,11 +154,11 @@ static Result _binderTransactParcelAuto(binderSession *session, u32 code, void* 
     raw = ipcPrepareHeader(&c, sizeof(*raw));
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 3;
-    raw->ID = session->ID;
+    raw->session_id = session->id;
     raw->code = code;
     raw->flags = flags;
 
-    Result rc = ipcDispatch(session->sessionhandle);
+    Result rc = ipcDispatch(session->sessionHandle);
 
     if (R_SUCCEEDED(rc)) {
         IpcCommandResponse r;
@@ -150,21 +175,31 @@ static Result _binderTransactParcelAuto(binderSession *session, u32 code, void* 
     return rc;
 }
 
-Result binderTransactParcel(binderSession *session, u32 code, void* parcel_data, size_t parcel_data_size, void* parcel_reply, size_t parcel_reply_size, u32 flags) {
+Result binderTransactParcel(
+    binderSession *session, u32 code,
+    void* parcel_data,  size_t parcel_data_size,
+    void* parcel_reply, size_t parcel_reply_size,
+    u32 flags)
+{
     Result rc = 0;
-    if (session->TransactAuto==0) rc = _binderTransactParcel(session, code, parcel_data, parcel_data_size, parcel_reply, parcel_reply_size, flags);
-    if (session->TransactAuto) rc = _binderTransactParcelAuto(session, code, parcel_data, parcel_data_size, parcel_reply, parcel_reply_size, flags);
+
+    if (session->hasTransactAuto)
+        rc = _binderTransactParcelAuto(session, code, parcel_data, parcel_data_size, parcel_reply, parcel_reply_size, flags);
+    else
+        rc = _binderTransactParcel(session, code, parcel_data, parcel_data_size, parcel_reply, parcel_reply_size, flags);
+
     return rc;
 }
 
-Result binderAdjustRefcount(binderSession *session, s32 addval, s32 type) {
+Result binderAdjustRefcount(binderSession *session, s32 addval, s32 type)
+{
     IpcCommand c;
     ipcInitialize(&c);
 
     struct {
         u64 magic;
         u64 cmd_id;
-        s32 ID;
+        s32 session_id;
         s32 addval;
         s32 type;
     } *raw;
@@ -172,11 +207,11 @@ Result binderAdjustRefcount(binderSession *session, s32 addval, s32 type) {
     raw = ipcPrepareHeader(&c, sizeof(*raw));
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 1;
-    raw->ID = session->ID;
+    raw->session_id = session->id;
     raw->addval = addval;
     raw->type = type;
 
-    Result rc = ipcDispatch(session->sessionhandle);
+    Result rc = ipcDispatch(session->sessionHandle);
 
     if (R_SUCCEEDED(rc)) {
         IpcCommandResponse r;
@@ -193,14 +228,15 @@ Result binderAdjustRefcount(binderSession *session, s32 addval, s32 type) {
     return rc;
 }
 
-Result binderGetNativeHandle(binderSession *session, u32 inval, Handle *handle_out) {
+Result binderGetNativeHandle(binderSession *session, u32 inval, Handle *handle_out)
+{
     IpcCommand c;
     ipcInitialize(&c);
 
     struct {
         u64 magic;
         u64 cmd_id;
-        s32 ID;
+        s32 session_id;
         u32 inval;
     } *raw;
 
@@ -208,10 +244,10 @@ Result binderGetNativeHandle(binderSession *session, u32 inval, Handle *handle_o
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 2;
-    raw->ID = session->ID;
+    raw->session_id = session->id;
     raw->inval = inval;
 
-    Result rc = ipcDispatch(session->sessionhandle);
+    Result rc = ipcDispatch(session->sessionHandle);
 
     if (R_SUCCEEDED(rc)) {
         IpcCommandResponse r;
@@ -231,4 +267,3 @@ Result binderGetNativeHandle(binderSession *session, u32 inval, Handle *handle_o
 
     return rc;
 }
-
