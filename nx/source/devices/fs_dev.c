@@ -432,11 +432,11 @@ Result fsdevInit(void)
 /*! Enable/disable safe fsdev_write
  *
  *  Safe fsdev_write is disabled by default. If it is disabled, you will be
- *  unable to write from read-only buffers.
+ *  unable to write from certain memory-regions.
  *
  *  @param[in] enable Whether to enable
  */
-void fsdevWriteSafe(bool enable)//TODO: Is this really needed?
+void fsdevWriteSafe(bool enable)
 {
   if(enable)
     fsdev_devoptab.write_r = fsdev_write_safe;
