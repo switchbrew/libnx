@@ -584,7 +584,7 @@ Result fsFileRead(FsFile* f, u64 off, void* buf, size_t len, size_t* out) {
     return rc;
 }
 
-Result fsFileWrite(FsFile* f, u64 off, const void* buf, size_t len, size_t* out) {
+Result fsFileWrite(FsFile* f, u64 off, const void* buf, size_t len) {
     IpcCommand c;
     ipcInitialize(&c);
     ipcAddSendBuffer(&c, buf, len, 1);
@@ -614,14 +614,9 @@ Result fsFileWrite(FsFile* f, u64 off, const void* buf, size_t len, size_t* out)
         struct {
             u64 magic;
             u64 result;
-            u64 bytes_written;
         } *resp = r.Raw;
 
         rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            *out = resp->bytes_written;
-        }
     }
 
     return rc;

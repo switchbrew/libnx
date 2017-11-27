@@ -80,7 +80,7 @@ void fsFsClose(FsFileSystem* fs);
 
 // IFile
 Result fsFileRead(FsFile* f, u64 off, void* buf, size_t len, size_t* out);
-Result fsFileWrite(FsFile* f, u64 off, const void* buf, size_t len, size_t* out);
+Result fsFileWrite(FsFile* f, u64 off, const void* buf, size_t len);
 Result fsFileFlush(FsFile* f);
 Result fsFileSetSize(FsFile* f, u64 sz);
 Result fsFileGetSize(FsFile* f, u64* out);

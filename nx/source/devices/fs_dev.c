@@ -512,12 +512,12 @@ fsdev_open(struct _reent *r,
 
     /* write-only */
     case O_WRONLY:
-      fsdev_flags |= FS_OPEN_WRITE;
+      fsdev_flags |= FS_OPEN_WRITE | FS_OPEN_APPEND;
       break;
 
     /* read and write */
     case O_RDWR:
-      fsdev_flags |= (FS_OPEN_READ | FS_OPEN_WRITE);
+      fsdev_flags |= (FS_OPEN_READ | FS_OPEN_WRITE | FS_OPEN_APPEND);
       break;
 
     /* an invalid option was supplied */
@@ -527,13 +527,16 @@ fsdev_open(struct _reent *r,
   }
 
   /* Test O_EXCL. */
-  if((flags & O_CREAT) && (flags & O_EXCL))
+  if((flags & O_CREAT))
   {
     rc = fsFsCreateFile(&device->fs, fs_path, 0, attributes);
-    if(R_FAILED(rc))
+    if(flags & O_EXCL)
     {
-      r->_errno = fsdev_translate_error(rc);
-      return -1;
+      if(R_FAILED(rc))
+      {
+        r->_errno = fsdev_translate_error(rc);
+        return -1;
+      }
     }
   }
 
@@ -608,7 +611,6 @@ fsdev_write(struct _reent *r,
            size_t        len)
 {
   Result      rc;
-  size_t      bytes;
 
   /* get pointer to our data */
   fsdev_file_t *file = (fsdev_file_t*)fd;
@@ -631,20 +633,20 @@ fsdev_write(struct _reent *r,
     }
   }
 
-  rc = fsFileWrite(&file->fd, file->offset, ptr, len, &bytes);
+  rc = fsFileWrite(&file->fd, file->offset, ptr, len);
   if(R_FAILED(rc))
   {
     r->_errno = fsdev_translate_error(rc);
     return -1;
   }
 
-  file->offset += bytes;
+  file->offset += len;
 
   /* check if this is synchronous or not */
   if(file->flags & O_SYNC)
     fsFileFlush(&file->fd);
 
-  return bytes;
+  return len;
 }
 
 /*! Write to an open file
@@ -664,7 +666,7 @@ fsdev_write_safe(struct _reent *r,
                 size_t        len)
 {
   Result      rc;
-  size_t      bytes, bytesWritten = 0;
+  size_t      bytesWritten = 0;
 
   /* get pointer to our data */
   fsdev_file_t *file = (fsdev_file_t*)fd;
@@ -701,7 +703,7 @@ fsdev_write_safe(struct _reent *r,
     memcpy(tmp_buffer, ptr, toWrite);
 
     /* write the data */
-    rc = fsFileWrite(&file->fd, file->offset, tmp_buffer, toWrite, &bytes);
+    rc = fsFileWrite(&file->fd, file->offset, tmp_buffer, toWrite);
 
     if(R_FAILED(rc))
     {
@@ -717,10 +719,10 @@ fsdev_write_safe(struct _reent *r,
     if(file->flags & O_SYNC)
       fsFileFlush(&file->fd);
 
-    file->offset += bytes;
-    bytesWritten += bytes;
-    ptr          += bytes;
-    len          -= bytes;
+    file->offset += toWrite;
+    bytesWritten += toWrite;
+    ptr          += toWrite;
+    len          -= toWrite;
   }
 
   return bytesWritten;
