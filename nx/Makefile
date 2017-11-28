@@ -40,7 +40,7 @@ CFLAGS	:=	-g -Wall -Werror \
 			$(ARCH) \
 			$(BUILD_CFLAGS)
 
-CFLAGS	+=	$(INCLUDE)
+CFLAGS	+=	$(INCLUDE) -DSWITCH
 
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
 
