@@ -107,6 +107,7 @@ typedef struct
 } fsdev_fsdevice;
 
 static s32 fsdev_fsdevice_default = -1;
+static s32 fsdev_fsdevice_cwd = -1;
 static fsdev_fsdevice fsdev_fsdevices[32];
 
 /*! @endcond */
@@ -160,16 +161,7 @@ fsdev_fixpath(struct _reent *r,
   ssize_t       units;
   uint32_t      code;
   const uint8_t *p = (const uint8_t*)path;
-
-  if(device)
-  {
-    *device = fsdevFindDevice(path);
-    if(*device == NULL)
-    {
-      r->_errno = ENODEV;
-      return NULL;
-    }
-  }
+  const char *device_path = path;
 
   // Move the path pointer to the start of the actual path
   do
@@ -222,6 +214,25 @@ fsdev_fixpath(struct _reent *r,
     __fixedpath[PATH_MAX] = 0;
     r->_errno = ENAMETOOLONG;
     return NULL;
+  }
+
+  if(device)
+  {
+    if(path[0] == '/')
+    {
+      *device = fsdevFindDevice(device_path);
+    }
+    else
+    {
+      *device = NULL;
+      if(fsdev_fsdevice_cwd != -1)
+        *device = &fsdev_fsdevices[fsdev_fsdevice_cwd];
+    }
+    if(*device == NULL)
+    {
+      r->_errno = ENODEV;
+      return NULL;
+    }
   }
 
   return __fixedpath;
@@ -342,6 +353,12 @@ static int _fsdevUnmountDeviceStruct(fsdev_fsdevice *device)
 
   memset(device, 0, sizeof(fsdev_fsdevice));
 
+  if(device->id == fsdev_fsdevice_default)
+    fsdev_fsdevice_default = -1;
+
+  if(device->id == fsdev_fsdevice_cwd)
+    fsdev_fsdevice_cwd = fsdev_fsdevice_default;
+
   return 0;
 }
 
@@ -384,7 +401,10 @@ Result fsdevInit(void)
     {
       setDefaultDevice(dev);
       if(device)
+      {
         fsdev_fsdevice_default = device->id;
+        fsdev_fsdevice_cwd = fsdev_fsdevice_default;
+      }
 
       //TODO: Re-enable this once __system_argc/__system_argv are actually defined.
       /*if(__system_argc != 0 && __system_argv[0] != NULL)
@@ -460,7 +480,6 @@ Result fsdevExit(void)
     _fsdevUnmountDeviceStruct(&fsdev_fsdevices[i]);
   }
 
-  fsdev_fsdevice_default = -1;
   fsdevInitialised = false;
 
   return 0;
@@ -885,25 +904,41 @@ fsdev_stat(struct _reent *r,
   Result  rc;
   char    fs_path[FS_MAX_PATH];
   fsdev_fsdevice *device = NULL;
+  FsEntryType type;
 
   if(fsdev_getfspath(r, file, &device, fs_path)==-1)
     return -1;
 
-  if(R_SUCCEEDED(rc = fsFsOpenFile(&device->fs, fs_path, FS_OPEN_READ, &fd)))
+  rc = fsFsGetEntryType(&device->fs, fs_path, &type);
+  if(R_SUCCEEDED(rc))
   {
-    fsdev_file_t tmpfd = { .fd = fd };
-    rc = fsdev_fstat(r, &tmpfd, st);
-    fsFileClose(&fd);
+    if(type == ENTRYTYPE_DIR)
+    {
+      if(R_SUCCEEDED(rc = fsFsOpenDirectory(&device->fs, fs_path, FS_DIROPEN_DIRECTORY | FS_DIROPEN_FILE, &fdir)))
+      {
+        memset(st, 0, sizeof(struct stat));
+        st->st_nlink = 1;
+        st->st_mode = S_IFDIR | S_IRWXU | S_IRWXG | S_IRWXO;
+        fsDirClose(&fdir);
+        return 0;
+      }
+    }
+    else if(type == ENTRYTYPE_FILE)
+    {
+      if(R_SUCCEEDED(rc = fsFsOpenFile(&device->fs, fs_path, FS_OPEN_READ, &fd)))
+      {
+        fsdev_file_t tmpfd = { .fd = fd };
+        rc = fsdev_fstat(r, &tmpfd, st);
+        fsFileClose(&fd);
 
-    return rc;
-  }
-  else if(R_SUCCEEDED(rc = fsFsOpenDirectory(&device->fs, fs_path, FS_DIROPEN_DIRECTORY | FS_DIROPEN_FILE, &fdir)))
-  {
-    memset(st, 0, sizeof(struct stat));
-    st->st_nlink = 1;
-    st->st_mode = S_IFDIR | S_IRWXU | S_IRWXG | S_IRWXO;
-    fsDirClose(&fdir);
-    return 0;
+        return rc;
+      }
+    }
+    else
+    {
+      r->_errno = EINVAL;
+      return -1;
+    }
   }
 
   r->_errno = fsdev_translate_error(rc);
@@ -980,6 +1015,7 @@ fsdev_chdir(struct _reent *r,
   {
     fsDirClose(&fd);
     strncpy(__cwd, __fixedpath, PATH_MAX);
+    fsdev_fsdevice_cwd = device->id;
     return 0;
   }
 
@@ -1002,6 +1038,7 @@ fsdev_rename(struct _reent *r,
             const char    *newName)
 {
   Result  rc;
+  FsEntryType type;
   fsdev_fsdevice *device_old = NULL, *device_new = NULL;
   char fs_path_old[FS_MAX_PATH];
   char fs_path_new[FS_MAX_PATH];
@@ -1018,13 +1055,27 @@ fsdev_rename(struct _reent *r,
     return -1;
   }
 
-  rc = fsFsRenameFile(&device_old->fs, fs_path_old, fs_path_new);
+  rc = fsFsGetEntryType(&device_old->fs, fs_path_old, &type);
   if(R_SUCCEEDED(rc))
-    return 0;
-
-  rc = fsFsRenameDirectory(&device_old->fs, fs_path_old, fs_path_new);
-  if(R_SUCCEEDED(rc))
-    return 0;
+  {
+    if(type == ENTRYTYPE_DIR)
+    {
+      rc = fsFsRenameDirectory(&device_old->fs, fs_path_old, fs_path_new);
+      if(R_SUCCEEDED(rc))
+      return 0;
+    }
+    else if(type == ENTRYTYPE_FILE)
+    {
+      rc = fsFsRenameFile(&device_old->fs, fs_path_old, fs_path_new);
+      if(R_SUCCEEDED(rc))
+      return 0;
+    }
+    else
+    {
+      r->_errno = EINVAL;
+      return -1;
+    }
+  }
 
   r->_errno = fsdev_translate_error(rc);
   return -1;
@@ -1176,12 +1227,20 @@ fsdev_dirnext(struct _reent *r,
 
     /* fill in the stat info */
     filestat->st_ino = 0;
-    if(entry->attributes & FS_ATTRIBUTE_FILE)
-      filestat->st_mode = S_IFREG;
-    else
+    if(entry->type == ENTRYTYPE_DIR)
       filestat->st_mode = S_IFDIR;
+    else if(entry->type == ENTRYTYPE_FILE)
+    {
+      filestat->st_mode = S_IFREG;
+      filestat->st_size = entry->fileSize;
+    }
+    else
+    {
+      r->_errno = EINVAL;
+      return -1;
+    }
 
-    /* convert name from UTF-16 to UTF-8 */
+    /* convert name from fs-path to UTF-8 */
     memset(filename, 0, NAME_MAX);
     units = fsdev_convertfromfspath((uint8_t*)filename, (uint8_t*)entry->name, NAME_MAX);
     if(units < 0)
@@ -1244,28 +1303,31 @@ fsdev_statvfs(struct _reent  *r,
              struct statvfs *buf)
 {
   Result rc=0;
-  //FS_ArchiveResource resource;
-  //bool writable = false;
+  char    fs_path[FS_MAX_PATH];
+  fsdev_fsdevice *device = NULL;
+  u64 freespace = 0, total_space = 0;
 
-  //rc = FSUSER_GetSdmcArchiveResource(&resource);
+  if(fsdev_getfspath(r, path, &device, fs_path)==-1)
+    return -1;
+
+  rc = fsFsGetFreeSpace(&device->fs, fs_path, &freespace);
+
+  if(R_SUCCEEDED(rc))
+    rc = fsFsGetTotalSpace(&device->fs, fs_path, &total_space);
 
   if(R_SUCCEEDED(rc))
   {
-    buf->f_bsize   = 0;//resource.clusterSize;
-    buf->f_frsize  = 0;//resource.clusterSize;
-    buf->f_blocks  = 0;//resource.totalClusters;
-    buf->f_bfree   = 0;//resource.freeClusters;
-    buf->f_bavail  = 0;//resource.freeClusters;
-    buf->f_files   = 0; //??? how to get
-    buf->f_ffree   = 0;//resource.freeClusters;
-    buf->f_favail  = 0;//resource.freeClusters;
-    buf->f_fsid    = 0; //??? how to get
+    buf->f_bsize   = 1;
+    buf->f_frsize  = 1;
+    buf->f_blocks  = total_space;
+    buf->f_bfree   = freespace;
+    buf->f_bavail  = freespace;
+    buf->f_files   = 0;
+    buf->f_ffree   = 0;
+    buf->f_favail  = 0;
+    buf->f_fsid    = 0;
     buf->f_flag    = ST_NOSUID;
-    buf->f_namemax = 0; //??? how to get
-
-    /*rc = FSUSER_IsSdmcWritable(&writable);
-    if(R_FAILED(rc) || !writable)
-      buf->f_flag |= ST_RDONLY;*/
+    buf->f_namemax = 0;
 
     return 0;
   }

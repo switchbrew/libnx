@@ -464,9 +464,10 @@ Result fsFsCommit(FsFileSystem* fs) {
     return rc;
 }
 
-Result fsFsGetFreeSpace(FsFileSystem* fs, u64* out) {
+Result fsFsGetFreeSpace(FsFileSystem* fs, const char* path, u64* out) {
     IpcCommand c;
     ipcInitialize(&c);
+    ipcAddSendStatic(&c, path, FS_MAX_PATH, 0);
 
     struct {
         u64 magic;
@@ -500,9 +501,10 @@ Result fsFsGetFreeSpace(FsFileSystem* fs, u64* out) {
     return rc;
 }
 
-Result fsFsGetTotalSpace(FsFileSystem* fs, u64* out) {
+Result fsFsGetTotalSpace(FsFileSystem* fs, const char* path, u64* out) {
     IpcCommand c;
     ipcInitialize(&c);
+    ipcAddSendStatic(&c, path, FS_MAX_PATH, 0);
 
     struct {
         u64 magic;

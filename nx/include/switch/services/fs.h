@@ -25,13 +25,14 @@ typedef struct
 {
 	char name[FS_MAX_PATH];      ///< Entry name.
 	u8 pad[3];
-	u32 attributes;       ///< Attributes.
+	s8 type;       ///< See FsEntryType.
+        u8 pad2[3];     ///< ?
 	u64 fileSize;         ///< File size.
 } FsDirectoryEntry;
 
 typedef enum {
-    ENTRYTYPE_FILE=0,
-    ENTRYTYPE_DIR =1
+    ENTRYTYPE_DIR = 0,
+    ENTRYTYPE_FILE = 1
 } FsEntryType;
 
 typedef enum
@@ -47,12 +48,6 @@ typedef enum
 	FS_DIROPEN_DIRECTORY   = BIT(0), ///< Enable reading directory entries.
 	FS_DIROPEN_FILE  = BIT(1),       ///< Enable reading file entries.
 } FsDirectoryFlags;
-
-/// Attribute flags.
-typedef enum
-{
-	FS_ATTRIBUTE_FILE = BIT(0),  ///< File.
-} FsAttribute;
 
 Result fsInitialize();
 void fsExit(void);
@@ -74,8 +69,8 @@ Result fsFsGetEntryType(FsFileSystem* fs, const char* path, FsEntryType* out);
 Result fsFsOpenFile(FsFileSystem* fs, const char* path, int flags, FsFile* out);
 Result fsFsOpenDirectory(FsFileSystem* fs, const char* path, int flags, FsDir* out);
 Result fsFsCommit(FsFileSystem* fs);
-Result fsFsGetFreeSpace(FsFileSystem* fs, u64* out);
-Result fsFsGetTotalSpace(FsFileSystem* fs, u64* out);
+Result fsFsGetFreeSpace(FsFileSystem* fs, const char* path, u64* out);
+Result fsFsGetTotalSpace(FsFileSystem* fs, const char* path, u64* out);
 void fsFsClose(FsFileSystem* fs);
 
 // IFile
