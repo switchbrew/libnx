@@ -87,6 +87,57 @@ Result fsMountSdcard(FsFileSystem* out) {
     return rc;
 }
 
+Result fsMountSaveData(FsFileSystem* out, u8 inval, FsSave *save) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 inval;//Actually u8.
+        FsSave save;
+    } PACKED *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 51;
+    raw->inval = (u64)inval;
+    memcpy(&raw->save, save, sizeof(FsSave));
+
+    Result rc = ipcDispatch(g_fsHandle);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcCommandResponse r;
+        ipcParseResponse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            out->h = r.Handles[0];
+        }
+    }
+
+    return rc;
+}
+
+// Wrapper(s) for fsMountSaveData.
+Result fsMount_SaveData(FsFileSystem* out, u64 titleID, u128 userID) {
+    FsSave save;
+
+    memset(&save, 0, sizeof(save));
+    save.titleID = titleID;
+    save.userID = userID;
+    save.ContentStorageId = FS_CONTENTSTORAGEID_NandUser;
+
+    return fsMountSaveData(out, FS_MOUNTSAVEDATA_INVAL_DEFAULT, &save);
+}
+
 // IFileSystem impl
 Result fsFsCreateFile(FsFileSystem* fs, const char* path, size_t size, int flags) {
     IpcCommand c;

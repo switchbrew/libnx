@@ -4,6 +4,15 @@
 
 #define FS_MAX_PATH 0x301
 
+/// For use with fsMountSaveData().
+#define FS_MOUNTSAVEDATA_INVAL_DEFAULT 0x1
+
+/// For use with FsSave.
+#define FS_SAVEDATA_CURRENT_TITLEID 0
+
+/// For use with FsSave.
+#define FS_SAVEDATA_USERID_COMMONSAVE 0
+
 typedef struct {
     Handle  h;
 } FsFileSystem;
@@ -23,12 +32,24 @@ typedef struct {
 /// Directory entry.
 typedef struct
 {
-	char name[FS_MAX_PATH];      ///< Entry name.
-	u8 pad[3];
-	s8 type;       ///< See FsEntryType.
-        u8 pad2[3];     ///< ?
-	u64 fileSize;         ///< File size.
+    char name[FS_MAX_PATH];      ///< Entry name.
+    u8 pad[3];
+    s8 type;       ///< See FsEntryType.
+    u8 pad2[3];     ///< ?
+    u64 fileSize;         ///< File size.
 } FsDirectoryEntry;
+
+/// Save Struct
+typedef struct
+{
+    u64 titleID;          ///< titleID of the savedata to access when accessing other titles' savedata via SaveData, otherwise FS_SAVEDATA_CURRENT_TITLEID.
+    u128 userID;          ///< userID of the user-specific savedata to access, otherwise FS_SAVEDATA_USERID_COMMONSAVE. See account.h.
+    u64 saveID;           ///< saveID, 0 for SaveData.
+    u64 ContentStorageId; ///< ContentStorageId? See FsContentStorageId.
+    u64 unk_x28;          ///< 0 for SystemSaveData/SaveData.
+    u64 unk_x30;          ///< 0 for SystemSaveData/SaveData.
+    u64 unk_x38;          ///< 0 for SystemSaveData/SaveData.
+} PACKED FsSave;
 
 typedef enum {
     ENTRYTYPE_DIR = 0,
@@ -37,17 +58,24 @@ typedef enum {
 
 typedef enum
 {
-	FS_OPEN_READ   = BIT(0), ///< Open for reading.
-	FS_OPEN_WRITE  = BIT(1), ///< Open for writing.
-	FS_OPEN_APPEND = BIT(2), ///< Append file.
+    FS_OPEN_READ   = BIT(0), ///< Open for reading.
+    FS_OPEN_WRITE  = BIT(1), ///< Open for writing.
+    FS_OPEN_APPEND = BIT(2), ///< Append file.
 } FsFileFlags;
 
 /// For use with fsFsOpenDirectory.
 typedef enum
 {
-	FS_DIROPEN_DIRECTORY   = BIT(0), ///< Enable reading directory entries.
-	FS_DIROPEN_FILE  = BIT(1),       ///< Enable reading file entries.
+    FS_DIROPEN_DIRECTORY   = BIT(0), ///< Enable reading directory entries.
+    FS_DIROPEN_FILE  = BIT(1),       ///< Enable reading file entries.
 } FsDirectoryFlags;
+
+typedef enum
+{
+    FS_CONTENTSTORAGEID_NandSystem = 0,
+    FS_CONTENTSTORAGEID_NandUser   = 1,
+    FS_CONTENTSTORAGEID_SdCard     = 2,
+} FsContentStorageId;
 
 Result fsInitialize();
 void fsExit(void);
@@ -55,7 +83,14 @@ void fsExit(void);
 Handle fsGetServiceSession(void);
 
 Result fsMountSdcard(FsFileSystem* out);
+Result fsMountSaveData(FsFileSystem* out, u8 inval, FsSave *save);
 // todo: Rest of commands here
+
+/// FsFileSystem can be mounted with fs_dev for use with stdio, see fs_dev.h.
+
+/// Wrapper(s) for fsMountSaveData.
+/// See FsSave for titleID and userID.
+Result fsMount_SaveData(FsFileSystem* out, u64 titleID, u128 userID);
 
 // IFileSystem
 Result fsFsCreateFile(FsFileSystem* fs, const char* path, size_t size, int flags);

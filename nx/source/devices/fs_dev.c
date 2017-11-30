@@ -308,6 +308,7 @@ static int _fsdevMountDevice(const char *name, FsFileSystem fs, fsdev_fsdevice *
 
   return dev;
 }
+
 int fsdevMountDevice(const char *name, FsFileSystem fs)
 {
   return _fsdevMountDevice(name, fs, NULL);
