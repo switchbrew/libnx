@@ -328,13 +328,14 @@ static int _fsdevUnmountDeviceStruct(fsdev_fsdevice *device)
   RemoveDevice(name);
   fsFsClose(&device->fs);
 
-  memset(device, 0, sizeof(fsdev_fsdevice));
-
   if(device->id == fsdev_fsdevice_default)
     fsdev_fsdevice_default = -1;
 
   if(device->id == fsdev_fsdevice_cwd)
     fsdev_fsdevice_cwd = fsdev_fsdevice_default;
+
+  device->setup = 0;
+  memset(device->name, 0, sizeof(device->name));
 
   return 0;
 }
@@ -348,6 +349,17 @@ int fsdevUnmountDevice(const char *name)
     return -1;
 
   return _fsdevUnmountDeviceStruct(device);
+}
+
+Result fsdevCommitDevice(const char *name)
+{
+  fsdev_fsdevice *device;
+
+  device = fsdevFindDevice(name);
+  if(device==NULL)
+    return MAKERESULT(MODULE_LIBNX, LIBNX_NOTFOUND);
+
+  return fsFsCommit(&device->fs);
 }
 
 /*! Initialize SDMC device */
@@ -376,6 +388,9 @@ Result fsdevInit(void)
     fsdev_fsdevice_default = -1;
     fsdevInitialised = true;
   }
+
+  if(fsdevFindDevice("sdmc"))
+    return 0;
 
   rc = fsMountSdcard(&fs);
   if(R_SUCCEEDED(rc))

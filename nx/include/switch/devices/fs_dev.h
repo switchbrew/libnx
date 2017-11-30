@@ -18,10 +18,10 @@ typedef struct
   FsDirectoryEntry entry_data[32]; /*! Temporary storage for reading entries */
 } fsdev_dir_t;
 
-/// Initializes the FS driver.
+/// Initializes the FS driver. Automatically initializes the sdmc device if accessible. If called again, sdmc mounting will be attempted again if it's not mounted.
 Result fsdevInit(void);
 
-/// Exits the FS driver.
+/// Exits the FS driver. Any devices still mounted are unmounted.
 Result fsdevExit(void);
 
 /// Mounts the input fs with the specified device name. fsdev will handle closing the fs when required, including when fsdevMountDevice() fails.
@@ -30,4 +30,8 @@ int fsdevMountDevice(const char *name, FsFileSystem fs);
 
 /// Unmounts the specified device.
 int fsdevUnmountDevice(const char *name);
+
+/// Uses fsFsCommit() with the specified device. This must be used after any savedata-write operations(not just file-write).
+/// This is not used automatically at device unmount.
+Result fsdevCommitDevice(const char *name);
 
