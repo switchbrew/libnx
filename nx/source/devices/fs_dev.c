@@ -352,9 +352,9 @@ int fsdevUnmountDevice(const char *name)
 /*! Initialize SDMC device */
 Result fsdevInit(void)
 {
-  /*ssize_t  units;
+  ssize_t  units;
   uint32_t code;
-  char     *p;*/
+  char     *p;
   Result   rc = 0;
   FsFileSystem fs;
   fsdev_fsdevice *device = NULL;
@@ -390,8 +390,7 @@ Result fsdevInit(void)
         fsdev_fsdevice_cwd = fsdev_fsdevice_default;
       }
 
-      //TODO: Re-enable this once __system_argc/__system_argv are actually defined.
-      /*if(__system_argc != 0 && __system_argv[0] != NULL)
+      if(__system_argc != 0 && __system_argv[0] != NULL)
       {
         if(FindDevice(__system_argv[0]) == dev)
         {
@@ -426,7 +425,7 @@ Result fsdevInit(void)
             }
           }
         }
-      }*/
+      }
     }
   }
 

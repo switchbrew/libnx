@@ -5,6 +5,8 @@ void __nx_exit(int rc);
 void virtmemSetup();
 void newlibSetup(Handle main_thread);
 
+void __system_initArgv(void);
+
 #define INNER_HEAP_SIZE 0x200000
 __attribute__((weak)) size_t __nx_inner_heap_size = INNER_HEAP_SIZE;
 __attribute__((weak)) char   __nx_inner_heap[INNER_HEAP_SIZE];
@@ -58,6 +60,9 @@ void __attribute__((weak)) __libnx_init(Handle main_thread)
     newlibSetup(main_thread);
     virtmemSetup();
     _SetupHeap();
+
+    // Build argc/argv if present
+    __system_initArgv();
 
     // Initialize services.
     __appInit();

@@ -39,8 +39,10 @@ bss_loop:
     bl   __libnx_init
 
     // call entrypoint
-    mov  x0, #0 // argc
-    mov  x1, #0 // argv
+    adrp x0, __system_argc // argc
+    ldr  w0, [x0, #:lo12:__system_argc]
+    adrp x1, __system_argv // argv
+    ldr  x1, [x1, #:lo12:__system_argv]
     adrp x30, __libnx_exit
     add  x30, x30, #:lo12:__libnx_exit
     b    main
