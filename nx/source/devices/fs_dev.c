@@ -25,6 +25,7 @@ static int       fsdev_close(struct _reent *r, void *fd);
 static ssize_t   fsdev_write(struct _reent *r, void *fd, const char *ptr, size_t len);
 static ssize_t   fsdev_write_safe(struct _reent *r, void *fd, const char *ptr, size_t len);
 static ssize_t   fsdev_read(struct _reent *r, void *fd, char *ptr, size_t len);
+static ssize_t   fsdev_read_safe(struct _reent *r, void *fd, char *ptr, size_t len);
 static off_t     fsdev_seek(struct _reent *r, void *fd, off_t pos, int dir);
 static int       fsdev_fstat(struct _reent *r, void *fd, struct stat *st);
 static int       fsdev_stat(struct _reent *r, const char *file, struct stat *st);
@@ -53,18 +54,6 @@ typedef struct
   int    flags;  /*! Flags used in open(2) */
   u64    offset; /*! Current file offset */
 } fsdev_file_t;
-
-#define FSDEV_DIRITER_MAGIC 0x66736476 /* "fsdv" */
-
-/*! Open directory struct */
-typedef struct
-{
-  u32               magic;          /*! "fsdv" */
-  FsDir             fd;
-  ssize_t           index;          /*! Current entry index */
-  size_t            size;           /*! Current batch size */
-  FsDirectoryEntry entry_data[32]; /*! Temporary storage for reading entries */
-} fsdev_dir_t;
 
 /*! fsdev devoptab */
 static devoptab_t
@@ -284,20 +273,7 @@ extern char** __system_argv;
 
 static bool fsdevInitialised = false;
 
-static void fsdevUpdateDevices(void)
-{
-  u32 i;
-  u32 total = sizeof(fsdev_fsdevices) / sizeof(fsdev_fsdevice);
-
-  for(i=0; i<total; i++)
-  {
-    memcpy(&fsdev_fsdevices[i].device, &fsdev_devoptab, sizeof(fsdev_devoptab));
-    fsdev_fsdevices[i].device.name = fsdev_fsdevices[i].name;
-    fsdev_fsdevices[i].id = i;
-  }
-}
-
-int _fsdevMountDevice(const char *name, FsFileSystem fs, fsdev_fsdevice **out_device)
+static int _fsdevMountDevice(const char *name, FsFileSystem fs, fsdev_fsdevice **out_device)
 {
   fsdev_fsdevice *device = NULL;
 
@@ -382,11 +358,19 @@ Result fsdevInit(void)
   Result   rc = 0;
   FsFileSystem fs;
   fsdev_fsdevice *device = NULL;
+  u32 i;
+  u32 total = sizeof(fsdev_fsdevices) / sizeof(fsdev_fsdevice);
 
   if(!fsdevInitialised)
   {
     memset(fsdev_fsdevices, 0, sizeof(fsdev_fsdevices));
-    fsdevUpdateDevices();
+
+    for(i=0; i<total; i++)
+    {
+      memcpy(&fsdev_fsdevices[i].device, &fsdev_devoptab, sizeof(fsdev_devoptab));
+      fsdev_fsdevices[i].device.name = fsdev_fsdevices[i].name;
+      fsdev_fsdevices[i].id = i;
+    }
 
     fsdev_fsdevice_default = -1;
     fsdevInitialised = true;
@@ -447,23 +431,6 @@ Result fsdevInit(void)
   }
 
   return rc;
-}
-
-/*! Enable/disable safe fsdev_write
- *
- *  Safe fsdev_write is disabled by default. If it is disabled, you will be
- *  unable to write from certain memory-regions.
- *
- *  @param[in] enable Whether to enable
- */
-void fsdevWriteSafe(bool enable)
-{
-  if(enable)
-    fsdev_devoptab.write_r = fsdev_write_safe;
-  else
-    fsdev_devoptab.write_r = fsdev_write;
-
-  fsdevUpdateDevices();
 }
 
 /*! Clean up fsdev devices */
@@ -653,6 +620,8 @@ fsdev_write(struct _reent *r,
   }
 
   rc = fsFileWrite(&file->fd, file->offset, ptr, len);
+  if(rc == 0xD401)
+    return fsdev_write_safe(r, fd, ptr, len);
   if(R_FAILED(rc))
   {
     r->_errno = fsdev_translate_error(rc);
@@ -690,26 +659,8 @@ fsdev_write_safe(struct _reent *r,
   /* get pointer to our data */
   fsdev_file_t *file = (fsdev_file_t*)fd;
 
-  /* check that the file was opened with write access */
-  if((file->flags & O_ACCMODE) == O_RDONLY)
-  {
-    r->_errno = EBADF;
-    return -1;
-  }
-
-  if(file->flags & O_APPEND)
-  {
-    /* append means write from the end of the file */
-    rc = fsFileGetSize(&file->fd, &file->offset);
-    if(R_FAILED(rc))
-    {
-      r->_errno = fsdev_translate_error(rc);
-      return -1;
-    }
-  }
-
-  /* Copy to internal buffer and write in chunks.
-   * You cannot write from read-only memory.
+  /* Copy to internal buffer and transfer in chunks.
+   * You cannot use FS read/write with certain memory.
    */
   static __thread char tmp_buffer[8192];
   while(len > 0)
@@ -778,6 +729,8 @@ fsdev_read(struct _reent *r,
 
   /* read the data */
   rc = fsFileRead(&file->fd, file->offset, ptr, len, &bytes);
+  if(rc == 0xD401)
+    return fsdev_read_safe(r, fd, ptr, len);
   if(R_SUCCEEDED(rc))
   {
     /* update current file offset */
@@ -787,6 +740,66 @@ fsdev_read(struct _reent *r,
 
   r->_errno = fsdev_translate_error(rc);
   return -1;
+}
+
+/*! Read from an open file
+ *
+ *  @param[in,out] r   newlib reentrancy struct
+ *  @param[in,out] fd  Pointer to fsdev_file_t
+ *  @param[out]    ptr Pointer to buffer to read into
+ *  @param[in]     len Length of data to read
+ *
+ *  @returns number of bytes written
+ *  @returns -1 for error
+ */
+static ssize_t
+fsdev_read_safe(struct _reent *r,
+                void          *fd,
+                char          *ptr,
+                size_t        len)
+{
+  Result      rc;
+  size_t      bytesRead = 0, bytes = 0;
+
+  /* get pointer to our data */
+  fsdev_file_t *file = (fsdev_file_t*)fd;
+
+  /* Transfer in chunks with internal buffer.
+   * You cannot use FS read/write with certain memory.
+   */
+  static __thread char tmp_buffer[8192];
+  while(len > 0)
+  {
+    size_t toRead = len;
+    if(toRead > sizeof(tmp_buffer))
+      toRead = sizeof(tmp_buffer);
+
+    /* read the data */
+    rc = fsFileRead(&file->fd, file->offset, tmp_buffer, toRead, &bytes);
+
+    if(bytes > toRead)
+      bytes = toRead;
+
+    /* copy from internal buffer */
+    memcpy(ptr, tmp_buffer, bytes);
+
+    if(R_FAILED(rc))
+    {
+      /* return partial transfer */
+      if(bytesRead > 0)
+        return bytesRead;
+
+      r->_errno = fsdev_translate_error(rc);
+      return -1;
+    }
+
+    file->offset += bytes;
+    bytesRead    += bytes;
+    ptr          += bytes;
+    len          -= bytes;
+  }
+
+  return bytesRead;
 }
 
 /*! Update an open file's current offset
