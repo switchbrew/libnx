@@ -1,5 +1,541 @@
+#include <assert.h>
+#include <switch/types.h>
+
+// Begin enums and output structs
+
+typedef enum
+{
+    MOUSE_LEFT    = BIT(0),
+    MOUSE_RIGHT   = BIT(1),
+    MOUSE_MIDDLE  = BIT(2),
+    MOUSE_FORWARD = BIT(3),
+    MOUSE_BACK    = BIT(4),
+} HIDMouseButton;
+
+typedef enum
+{
+    KBD_MOD_LCTRL      = BIT(0),
+    KBD_MOD_LSHIFT     = BIT(1),
+    KBD_MOD_LALT       = BIT(2),
+    KBD_MOD_LMETA      = BIT(3),
+    KBD_MOD_RCTRL      = BIT(4),
+    KBD_MOD_RSHIFT     = BIT(5),
+    KBD_MOD_RALT       = BIT(6),
+    KBD_MOD_RMETA      = BIT(7),
+    KBD_MOD_CAPSLOCK   = BIT(8),
+    KBD_MOD_SCROLLLOCK = BIT(9),
+    KBD_MOD_NUMLOCK    = BIT(10),
+} HIDKeyboardModifier;
+
+typedef enum
+{
+    KBD_NONE = 0x00,
+    KBD_ERR_OVF = 0x01,
+
+    KBD_A = 0x04,
+    KBD_B = 0x05,
+    KBD_C = 0x06,
+    KBD_D = 0x07,
+    KBD_E = 0x08,
+    KBD_F = 0x09,
+    KBD_G = 0x0a,
+    KBD_H = 0x0b,
+    KBD_I = 0x0c,
+    KBD_J = 0x0d,
+    KBD_K = 0x0e,
+    KBD_L = 0x0f,
+    KBD_M = 0x10,
+    KBD_N = 0x11,
+    KBD_O = 0x12,
+    KBD_P = 0x13,
+    KBD_Q = 0x14,
+    KBD_R = 0x15,
+    KBD_S = 0x16,
+    KBD_T = 0x17,
+    KBD_U = 0x18,
+    KBD_V = 0x19,
+    KBD_W = 0x1a,
+    KBD_X = 0x1b,
+    KBD_Y = 0x1c,
+    KBD_Z = 0x1d,
+
+    KBD_1 = 0x1e,
+    KBD_2 = 0x1f,
+    KBD_3 = 0x20,
+    KBD_4 = 0x21,
+    KBD_5 = 0x22,
+    KBD_6 = 0x23,
+    KBD_7 = 0x24,
+    KBD_8 = 0x25,
+    KBD_9 = 0x26,
+    KBD_0 = 0x27,
+
+    KBD_ENTER = 0x28,
+    KBD_ESC = 0x29,
+    KBD_BACKSPACE = 0x2a,
+    KBD_TAB = 0x2b,
+    KBD_SPACE = 0x2c,
+    KBD_MINUS = 0x2d,
+    KBD_EQUAL = 0x2e,
+    KBD_LEFTBRACE = 0x2f,
+    KBD_RIGHTBRACE = 0x30,
+    KBD_BACKSLASH = 0x31,
+    KBD_HASHTILDE = 0x32,
+    KBD_SEMICOLON = 0x33,
+    KBD_APOSTROPHE = 0x34,
+    KBD_GRAVE = 0x35,
+    KBD_COMMA = 0x36,
+    KBD_DOT = 0x37,
+    KBD_SLASH = 0x38,
+    KBD_CAPSLOCK = 0x39,
+
+    KBD_F1 = 0x3a,
+    KBD_F2 = 0x3b,
+    KBD_F3 = 0x3c,
+    KBD_F4 = 0x3d,
+    KBD_F5 = 0x3e,
+    KBD_F6 = 0x3f,
+    KBD_F7 = 0x40,
+    KBD_F8 = 0x41,
+    KBD_F9 = 0x42,
+    KBD_F10 = 0x43,
+    KBD_F11 = 0x44,
+    KBD_F12 = 0x45,
+
+    KBD_SYSRQ = 0x46,
+    KBD_SCROLLLOCK = 0x47,
+    KBD_PAUSE = 0x48,
+    KBD_INSERT = 0x49,
+    KBD_HOME = 0x4a,
+    KBD_PAGEUP = 0x4b,
+    KBD_DELETE = 0x4c,
+    KBD_END = 0x4d,
+    KBD_PAGEDOWN = 0x4e,
+    KBD_RIGHT = 0x4f,
+    KBD_LEFT = 0x50,
+    KBD_DOWN = 0x51,
+    KBD_UP = 0x52,
+
+    KBD_NUMLOCK = 0x53,
+    KBD_KPSLASH = 0x54,
+    KBD_KPASTERISK = 0x55,
+    KBD_KPMINUS = 0x56,
+    KBD_KPPLUS = 0x57,
+    KBD_KPENTER = 0x58,
+    KBD_KP1 = 0x59,
+    KBD_KP2 = 0x5a,
+    KBD_KP3 = 0x5b,
+    KBD_KP4 = 0x5c,
+    KBD_KP5 = 0x5d,
+    KBD_KP6 = 0x5e,
+    KBD_KP7 = 0x5f,
+    KBD_KP8 = 0x60,
+    KBD_KP9 = 0x61,
+    KBD_KP0 = 0x62,
+    KBD_KPDOT = 0x63,
+
+    KBD_102ND = 0x64,
+    KBD_COMPOSE = 0x65,
+    KBD_POWER = 0x66,
+    KBD_KPEQUAL = 0x67,
+
+    KBD_F13 = 0x68,
+    KBD_F14 = 0x69,
+    KBD_F15 = 0x6a,
+    KBD_F16 = 0x6b,
+    KBD_F17 = 0x6c,
+    KBD_F18 = 0x6d,
+    KBD_F19 = 0x6e,
+    KBD_F20 = 0x6f,
+    KBD_F21 = 0x70,
+    KBD_F22 = 0x71,
+    KBD_F23 = 0x72,
+    KBD_F24 = 0x73,
+
+    KBD_OPEN = 0x74,
+    KBD_HELP = 0x75,
+    KBD_PROPS = 0x76,
+    KBD_FRONT = 0x77,
+    KBD_STOP = 0x78,
+    KBD_AGAIN = 0x79,
+    KBD_UNDO = 0x7a,
+    KBD_CUT = 0x7b,
+    KBD_COPY = 0x7c,
+    KBD_PASTE = 0x7d,
+    KBD_FIND = 0x7e,
+    KBD_MUTE = 0x7f,
+    KBD_VOLUMEUP = 0x80,
+    KBD_VOLUMEDOWN = 0x81,
+    KBD_CAPSLOCK_ACTIVE = 0x82 ,
+    KBD_NUMLOCK_ACTIVE = 0x83 ,
+    KBD_SCROLLLOCK_ACTIVE = 0x84 ,
+    KBD_KPCOMMA = 0x85,
+
+    KBD_KPLEFTPAREN = 0xb6,
+    KBD_KPRIGHTPAREN = 0xb7,
+
+    KBD_LEFTCTRL = 0xe0,
+    KBD_LEFTSHIFT = 0xe1,
+    KBD_LEFTALT = 0xe2,
+    KBD_LEFTMETA = 0xe3,
+    KBD_RIGHTCTRL = 0xe4,
+    KBD_RIGHTSHIFT = 0xe5,
+    KBD_RIGHTALT = 0xe6,
+    KBD_RIGHTMETA = 0xe7,
+
+    KBD_MEDIA_PLAYPAUSE = 0xe8,
+    KBD_MEDIA_STOPCD = 0xe9,
+    KBD_MEDIA_PREVIOUSSONG = 0xea,
+    KBD_MEDIA_NEXTSONG = 0xeb,
+    KBD_MEDIA_EJECTCD = 0xec,
+    KBD_MEDIA_VOLUMEUP = 0xed,
+    KBD_MEDIA_VOLUMEDOWN = 0xee,
+    KBD_MEDIA_MUTE = 0xef,
+    KBD_MEDIA_WWW = 0xf0,
+    KBD_MEDIA_BACK = 0xf1,
+    KBD_MEDIA_FORWARD = 0xf2,
+    KBD_MEDIA_STOP = 0xf3,
+    KBD_MEDIA_FIND = 0xf4,
+    KBD_MEDIA_SCROLLUP = 0xf5,
+    KBD_MEDIA_SCROLLDOWN = 0xf6,
+    KBD_MEDIA_EDIT = 0xf7,
+    KBD_MEDIA_SLEEP = 0xf8,
+    KBD_MEDIA_COFFEE = 0xf9,
+    KBD_MEDIA_REFRESH = 0xfa,
+    KBD_MEDIA_CALC = 0xfb
+} HIDKeyboardScancode;
+
+typedef enum
+{
+    TYPE_PROCONTROLLER = BIT(0),
+    TYPE_HANDHELD      = BIT(1),
+    TYPE_JOYCON_PAIR   = BIT(2),
+    TYPE_JOYCON_LEFT   = BIT(3),
+    TYPE_JOYCON_RIGHT  = BIT(4),
+} HIDControllerType;
+
+typedef enum
+{
+    LAYOUT_PROCONTROLLER   = 0, // Pro Controller or HID gamepad
+    LAYOUT_HANDHELD        = 1, // Two Joy-Con docked to rails
+    LAYOUT_SINGLE          = 2, // Horizontal single Joy-Con or pair of Joy-Con, adjusted for orientation
+    LAYOUT_LEFT            = 3, // Only raw left Joy-Con state, no orientation adjustment
+    LAYOUT_RIGHT           = 4, // Only raw right Joy-Con state, no orientation adjustment
+    LAYOUT_DEFAULT_DIGITAL = 5, // Same as next, but sticks have 8-direction values only
+    LAYOUT_DEFAULT         = 6, // Safe default, single Joy-Con have buttons/sticks rotated for orientation
+} HIDControllerLayoutType;
+
+typedef enum
+{
+    COLORS_NONEXISTENT = BIT(1),
+} HIDControllerColorDescription;
+
+typedef enum
+{
+    KEY_A            = BIT(0),       ///< A
+    KEY_B            = BIT(1),       ///< B
+    KEY_X            = BIT(2),       ///< X
+    KEY_Y            = BIT(3),       ///< Y
+    KEY_LSTICK       = BIT(4),       ///< Left Stick Button
+    KEY_RSTICK       = BIT(5),       ///< Right Stick Button
+    KEY_L            = BIT(6),       ///< L
+    KEY_R            = BIT(7),       ///< R
+    KEY_ZL           = BIT(8),       ///< ZL
+    KEY_ZR           = BIT(9),       ///< ZR
+    KEY_PLUS         = BIT(10),      ///< Plus
+    KEY_MINUS        = BIT(11),      ///< Minus
+    KEY_DLEFT        = BIT(12),      ///< D-Pad Left
+    KEY_DUP          = BIT(13),      ///< D-Pad Up
+    KEY_DRIGHT       = BIT(14),      ///< D-Pad Right
+    KEY_DDOWN        = BIT(15),      ///< D-Pad Down
+    KEY_LSTICK_LEFT  = BIT(16),      ///< Left Stick Left
+    KEY_LSTICK_UP    = BIT(17),      ///< Left Stick Up
+    KEY_LSTICK_RIGHT = BIT(18),      ///< Left Stick Right
+    KEY_LSTICK_DOWN  = BIT(19),      ///< Left Stick Down
+    KEY_RSTICK_LEFT  = BIT(20),      ///< Right Stick Left
+    KEY_RSTICK_UP    = BIT(21),      ///< Right Stick Up
+    KEY_RSTICK_RIGHT = BIT(22),      ///< Right Stick Right
+    KEY_RSTICK_DOWN  = BIT(23),      ///< Right Stick Down
+    KEY_SL           = BIT(24),      ///< SL
+    KEY_SR           = BIT(25),      ///< SR
+
+    // Pseudo-key for at least one finger on the touch screen
+    KEY_TOUCH       = BIT(26),
+
+    // Buttons by orientation (for single Joy-Con), also works with Joy-Con pairs, Pro Controller
+    KEY_JOYCON_RIGHT = BIT(0),
+    KEY_JOYCON_DOWN  = BIT(1),
+    KEY_JOYCON_UP    = BIT(2),
+    KEY_JOYCON_LEFT  = BIT(3),
+
+    // Generic catch-all directions, also works for single Joy-Con
+    KEY_UP    = KEY_DUP    | KEY_LSTICK_UP    | KEY_RSTICK_UP,    ///< D-Pad Up or Sticks Up
+    KEY_DOWN  = KEY_DDOWN  | KEY_LSTICK_DOWN  | KEY_RSTICK_DOWN,  ///< D-Pad Down or Sticks Down
+    KEY_LEFT  = KEY_DLEFT  | KEY_LSTICK_LEFT  | KEY_RSTICK_LEFT,  ///< D-Pad Left or Sticks Left
+    KEY_RIGHT = KEY_DRIGHT | KEY_LSTICK_RIGHT | KEY_RSTICK_RIGHT, ///< D-Pad Right or Sticks Right
+} HIDControllerKeys;
+
+typedef enum
+{
+    CONTROLLER_STATE_CONNECTED = BIT(0),
+    CONTROLLER_STATE_WIRED     = BIT(1),
+} HIDControllerConnectionState;
+
+typedef enum
+{
+    CONTROLLER_PLAYER_1 = 0,
+    CONTROLLER_PLAYER_2 = 1,
+    CONTROLLER_PLAYER_3 = 2,
+    CONTROLLER_PLAYER_4 = 3,
+    CONTROLLER_PLAYER_5 = 4,
+    CONTROLLER_PLAYER_6 = 5,
+    CONTROLLER_PLAYER_7 = 6,
+    CONTROLLER_PLAYER_8 = 7,
+    CONTROLLER_HANDHELD = 8,
+    CONTROLLER_UNKNOWN  = 9,
+} HIDControllerID;
+
+typedef struct touchPosition
+{
+    u32 px;
+    u32 py;
+    u32 dx;
+    u32 dy;
+    u32 angle;
+} touchPosition;
+
+// End enums and output structs
+
+// Begin HIDTouchScreen
+
+typedef struct HIDTouchScreenHeader
+{
+    u64 timestampTicks;
+    u64 numEntries;
+    u64 latestEntry;
+    u64 maxEntryIndex;
+    u64 timestamp;
+} HIDTouchScreenHeader;
+static_assert(sizeof(HIDTouchScreenHeader) == 0x28, "HID touch screen header structure has incorrect size");
+
+typedef struct HIDTouchScreenEntryHeader
+{
+    u64 timestamp;
+    u64 numTouches;
+} HIDTouchScreenEntryHeader;
+static_assert(sizeof(HIDTouchScreenEntryHeader) == 0x10, "HID touch screen entry header structure has incorrect size");
+
+typedef struct HIDTouchScreenEntryTouch
+{
+    u64 timestamp;
+    u32 padding;
+    u32 touchIndex;
+    u32 x;
+    u32 y;
+    u32 diameterX;
+    u32 diameterY;
+    u32 angle;
+    u32 padding_2;
+} HIDTouchScreenEntryTouch;
+static_assert(sizeof(HIDTouchScreenEntryTouch) == 0x28, "HID touch screen touch structure has incorrect size");
+
+typedef struct HIDTouchScreenEntry
+{
+    HIDTouchScreenEntryHeader header;
+    HIDTouchScreenEntryTouch touches[16];
+    u64 unk;
+} HIDTouchScreenEntry;
+static_assert(sizeof(HIDTouchScreenEntry) == 0x298, "HID touch screen entry structure has incorrect size");
+
+typedef struct HIDTouchScreen
+{
+    HIDTouchScreenHeader header;
+    HIDTouchScreenEntry entries[17];
+    u8 padding[0x3c0];
+} HIDTouchScreen;
+static_assert(sizeof(HIDTouchScreen) == 0x3000, "HID touch screen structure has incorrect size");
+
+// End HIDTouchScreen
+
+// Begin HIDMouse
+
+typedef struct HIDMouseHeader
+{
+    u64 timestampTicks;
+    u64 numEntries;
+    u64 latestEntry;
+    u64 maxEntryIndex;
+} HIDMouseHeader;
+static_assert(sizeof(HIDMouseHeader) == 0x20, "HID mouse header structure has incorrect size");
+
+typedef struct HIDMouseEntry
+{
+    u64 timestamp;
+    u64 timestamp_2;
+    u32 x;
+    u32 y;
+    u32 velocityX;
+    u32 velocityY;
+    u32 scrollVelocityX;
+    u32 scrollVelocityY;
+    u64 buttons;
+} HIDMouseEntry;
+static_assert(sizeof(HIDMouseEntry) == 0x30, "HID mouse entry structure has incorrect size");
+
+typedef struct HIDMouse
+{
+    HIDMouseHeader header;
+    HIDMouseEntry entries[17];
+    u8 padding[0xB0];
+} HIDMouse;
+static_assert(sizeof(HIDMouse) == 0x400, "HID mouse structure has incorrect size");
+
+// End HIDMouse
+
+// Begin HIDKeyboard
+
+typedef struct HIDKeyboardHeader
+{
+    u64 timestampTicks;
+    u64 numEntries;
+    u64 latestEntry;
+    u64 maxEntryIndex;
+} HIDKeyboardHeader;
+static_assert(sizeof(HIDKeyboardHeader) == 0x20, "HID keyboard header structure has incorrect size");
+
+typedef struct HIDKeyboardEntry
+{
+    u64 timestamp;
+    u64 timestamp_2;
+    u64 modifier;
+    u32 keys[8];
+} HIDKeyboardEntry;
+static_assert(sizeof(HIDKeyboardEntry) == 0x38, "HID keyboard entry structure has incorrect size");
+
+typedef struct HIDKeyboard
+{
+    HIDKeyboardHeader header;
+    HIDKeyboardEntry entries[17];
+    u8 padding[0x28];
+} HIDKeyboard;
+static_assert(sizeof(HIDKeyboard) == 0x400, "HID keyboard structure has incorrect size");
+
+// End HIDKeyboard
+
+// Begin HIDController
+
+typedef struct HIDControllerMAC
+{
+    u64 timestamp;
+    u8 mac[0x8];
+    u64 unk;
+    u64 timestamp_2;
+} HIDControllerMAC;
+static_assert(sizeof(HIDControllerMAC) == 0x20, "HID controller MAC structure has incorrect size");
+
+typedef struct HIDControllerHeader
+{
+    u32 type;
+    u32 isHalf;
+    u32 singleColorsDescriptor;
+    u32 singleColorBody;
+    u32 singleColorButtons;
+    u32 splitColorsDescriptor;
+    u32 leftColorBody;
+    u32 leftColorButtons;
+    u32 rightColorBody;
+    u32 rightColorbuttons;
+} HIDControllerHeader;
+static_assert(sizeof(HIDControllerHeader) == 0x28, "HID controller header structure has incorrect size");
+
+typedef struct HIDControllerLayoutHeader
+{
+    u64 timestampTicks;
+    u64 numEntries;
+    u64 latestEntry;
+    u64 maxEntryIndex;
+} HIDControllerLayoutHeader;
+static_assert(sizeof(HIDControllerLayoutHeader) == 0x20, "HID controller layout header structure has incorrect size");
+
+typedef struct HIDControllerInputEntry
+{
+    u64 timestamp;
+    u64 timestamp_2;
+    u64 buttons;
+    u32 joystickLeftX;
+    u32 joystickLeftY;
+    u32 joystickRightX;
+    u32 joystickRightY;
+    u64 connectionState;
+} HIDControllerInputEntry;
+static_assert(sizeof(HIDControllerInputEntry) == 0x30, "HID controller input entry structure has incorrect size");
+
+typedef struct HIDControllerLayout
+{
+    HIDControllerLayoutHeader header;
+    HIDControllerInputEntry entries[17];
+} HIDControllerLayout;
+static_assert(sizeof(HIDControllerLayout) == 0x350, "HID controller layout structure has incorrect size");
+
+typedef struct HIDController
+{
+    HIDControllerHeader header;
+    HIDControllerLayout layouts[7];
+    u8 unk_1[0x2A70];
+    HIDControllerMAC macLeft;
+    HIDControllerMAC macRight;
+    u8 unk_2[0xDF8];
+} HIDController;
+static_assert(sizeof(HIDController) == 0x5000, "HID controller structure has incorrect size");
+
+// End HIDController
+
+typedef struct HIDSharedMemory
+{
+    u8 header[0x400];
+    HIDTouchScreen touchscreen;
+    HIDMouse mouse;
+    HIDKeyboard keyboard;
+    u8 unkSection1[0x400];
+    u8 unkSection2[0x400];
+    u8 unkSection3[0x400];
+    u8 unkSection4[0x400];
+    u8 unkSection5[0x200];
+    u8 unkSection6[0x200];
+    u8 unkSection7[0x200];
+    u8 unkSection8[0x800];
+    u8 controllerSerials[0x4000];
+    HIDController controllers[10];
+    u8 unkSection9[0x4600];
+} HIDSharedMemory;
+static_assert(sizeof(HIDSharedMemory) == 0x40000, "HID Shared Memory structure has incorrect size");
+
 Result hidInitialize(void);
 void hidExit(void);
+void hidReset(void);
 
 Handle hidGetSessionService(void);
 void* hidGetSharedmemAddr(void);
+
+void hidSetControllerLayout(HIDControllerID id, HIDControllerLayoutType layoutType);
+HIDControllerLayoutType hidGetControllerLayout(HIDControllerID id);
+void hidScanInput(void);
+
+u64 hidKeysHeld(HIDControllerID id);
+u64 hidKeysDown(HIDControllerID id);
+u64 hidKeysUp(HIDControllerID id);
+
+u64 hidMouseButtonsHeld(void);
+u64 hidMouseButtonsDown(void);
+u64 hidMouseButtonsUp(void);
+
+bool hidKeyboardModifierHeld(HIDKeyboardModifier modifier);
+bool hidKeyboardModifierDown(HIDKeyboardModifier modifier);
+bool hidKeyboardModifierUp(HIDKeyboardModifier modifier);
+
+bool hidKeyboardHeld(HIDKeyboardScancode key);
+bool hidKeyboardDown(HIDKeyboardScancode key);
+bool hidKeyboardUp(HIDKeyboardScancode key);
+
+u32 hidTouchCount(void);
+void hidTouchRead(touchPosition *pos, u32 point_id);
