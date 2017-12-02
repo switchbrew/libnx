@@ -94,6 +94,11 @@ SVC_BEGIN svcCloseHandle
 	ret
 SVC_END
 
+SVC_BEGIN svcResetSignal
+	svc 0x17
+	ret
+SVC_END
+
 SVC_BEGIN svcWaitSynchronization
 	str x0, [sp, #-16]!
 	svc 0x18

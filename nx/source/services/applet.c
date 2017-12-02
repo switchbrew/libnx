@@ -18,6 +18,8 @@ static Handle g_appletIAudioController = INVALID_HANDLE;
 static Handle g_appletIDisplayController = INVALID_HANDLE;
 static Handle g_appletIDebugFunctions = INVALID_HANDLE;
 
+static Handle g_appletMessageEventHandle = INVALID_HANDLE;
+
 static u64 g_appletResourceUserId = 0;
 
 void appletExit(void);
@@ -28,11 +30,22 @@ static Result _appletGetSessionProxy(Handle sessionhandle, Handle* handle_out, u
 static Result _appletGetAppletResourceUserId(u64 *out);
 static Result _appletNotifyRunning(u8 *out);
 
+static Result appletSetFocusHandlingMode(u32 mode);
+
+static Result _appletReceiveMessage(u32 *out);
+static Result _appletGetCurrentFocusState(u8 *out);
+static Result _appletAcquireForegroundRights(void);
+static Result _appletSetFocusHandlingMode(u8 inval0, u8 inval1, u8 inval2);
+static Result _appletSetOutOfFocusSuspendingEnabled(u8 inval);
+
 Result appletInitialize(void) {
     if (g_appletServiceSession != INVALID_HANDLE) return MAKERESULT(MODULE_LIBNX, LIBNX_ALREADYINITIALIZED);
 
     Result rc = 0;
     Handle prochandle = CUR_PROCESS_HANDLE;
+    s32 tmpindex=0;
+    u32 msg=0;
+    u8 tmp8=0;
 
     if (__nx_applet_type==APPLET_TYPE_None) return 0;
 
@@ -92,6 +105,31 @@ Result appletInitialize(void) {
     if (R_SUCCEEDED(rc)) rc = _appletGetSession(g_appletProxySession, &g_appletIDisplayController, 4);//GetDisplayController
     if (R_SUCCEEDED(rc)) rc = _appletGetSession(g_appletProxySession, &g_appletIDebugFunctions, 1000);//GetDebugFunctions
 
+    if (R_SUCCEEDED(rc) && __nx_applet_type==APPLET_TYPE_Application) {
+        rc = _appletGetSession(g_appletICommonStateGetter, &g_appletMessageEventHandle, 0);//Reuse _appletGetSession since ipc input/output is the same. (ICommonStateGetter GetEventHandle)
+
+        if (R_SUCCEEDED(rc)) {
+            do {
+                while(R_FAILED(svcWaitSynchronization(&tmpindex, &g_appletMessageEventHandle, 1, U64_MAX)));
+
+                rc = _appletReceiveMessage(&msg);
+                if (R_FAILED(rc)) {
+                    if ((rc & 0x3fffff) == 0x680) continue;
+                    break;
+                }
+
+                if (msg==0 || msg!=0xF) continue;
+
+                rc = _appletGetCurrentFocusState(&tmp8);
+                if (R_FAILED(rc)) break;
+            } while(tmp8!=1);
+        }
+
+        if (R_SUCCEEDED(rc)) rc = _appletAcquireForegroundRights();
+
+        if (R_SUCCEEDED(rc)) rc = appletSetFocusHandlingMode(0);
+    }
+
     if (R_SUCCEEDED(rc) && __nx_applet_auto_notifyrunning && __nx_applet_type==APPLET_TYPE_Application) rc = _appletNotifyRunning(NULL);
 
     if (R_FAILED(rc)) appletExit();
@@ -102,6 +140,11 @@ Result appletInitialize(void) {
 void appletExit(void)
 {
     if (g_appletServiceSession == INVALID_HANDLE) return;
+
+    if (g_appletMessageEventHandle != INVALID_HANDLE) {
+        svcCloseHandle(g_appletMessageEventHandle);
+        g_appletMessageEventHandle = INVALID_HANDLE;
+    }
 
     if (g_appletServiceSession != INVALID_HANDLE) {
         svcCloseHandle(g_appletServiceSession);
@@ -154,6 +197,45 @@ void appletExit(void)
     }
 
     g_appletResourceUserId = 0;
+}
+
+static Result appletSetFocusHandlingMode(u32 mode) {
+    Result rc=0;
+    u8 invals[4];
+
+    if (mode>3) return MAKERESULT(MODULE_LIBNX, LIBNX_BADINPUT);
+
+    memset(invals, 0, sizeof(invals));
+
+    if (mode==0 || mode==3) {
+        invals[0] = 0;
+        invals[1] = 0;
+        invals[2] = 1;
+    }
+
+    if (mode!=3) {
+        invals[3] = 0;
+
+        if (mode==1) {
+            invals[0] = 1;
+            invals[1] = 1;
+            invals[2] = 0;
+        }
+        else if (mode==2) {
+            invals[0] = 1;
+            invals[1] = 0;
+            invals[2] = 1;
+        }
+    }
+    else {
+        invals[3] = 1;
+    }
+
+    rc = _appletSetFocusHandlingMode(invals[0], invals[1], invals[2]);
+
+    if (R_SUCCEEDED(rc)) rc = _appletSetOutOfFocusSuspendingEnabled(invals[3]);
+
+    return rc;
 }
 
 static Result _appletGetSession(Handle sessionhandle, Handle* handle_out, u64 cmd_id) {
@@ -268,6 +350,37 @@ static Result _appletGetAppletResourceUserId(u64 *out) {
     return rc;
 }
 
+static Result _appletAcquireForegroundRights(void) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 10;
+
+    Result rc = ipcDispatch(g_appletIWindowController);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcCommandResponse r;
+        ipcParseResponse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
 Result appletGetAppletResourceUserId(u64 *out) {
     if (g_appletServiceSession == INVALID_HANDLE) return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
 
@@ -306,6 +419,148 @@ static Result _appletNotifyRunning(u8 *out) {
         if (R_SUCCEEDED(rc) && out) {
             *out = resp->out;
         }
+    }
+
+    return rc;
+}
+
+static Result _appletReceiveMessage(u32 *out) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 1;
+
+    Result rc = ipcDispatch(g_appletICommonStateGetter);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcCommandResponse r;
+        ipcParseResponse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u32 out;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            *out = resp->out;
+        }
+    }
+
+    return rc;
+}
+
+static Result _appletGetCurrentFocusState(u8 *out) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 9;
+
+    Result rc = ipcDispatch(g_appletICommonStateGetter);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcCommandResponse r;
+        ipcParseResponse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u8 out;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            *out = resp->out;
+        }
+    }
+
+    return rc;
+}
+
+static Result _appletSetFocusHandlingMode(u8 inval0, u8 inval1, u8 inval2) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u8 inval0;
+        u8 inval1;
+        u8 inval2;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 13;
+    raw->inval0 = inval0;
+    raw->inval1 = inval1;
+    raw->inval2 = inval2;
+
+    Result rc = ipcDispatch(g_appletISelfController);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcCommandResponse r;
+        ipcParseResponse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+static Result _appletSetOutOfFocusSuspendingEnabled(u8 inval) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u8 inval;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 16;
+    raw->inval = inval;
+
+    Result rc = ipcDispatch(g_appletISelfController);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcCommandResponse r;
+        ipcParseResponse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
     }
 
     return rc;

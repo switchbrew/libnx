@@ -38,6 +38,7 @@ void NORETURN svcExitThread();
 Result svcSleepThread(u64 nano);
 Result svcClearEvent(Handle handle);
 Result svcCloseHandle(Handle handle);
+Result svcResetSignal(Handle handle);
 Result svcMapSharedMemory(Handle handle, void* addr, size_t size, u32 perm);
 Result svcUnmapSharedMemory(Handle handle, void* addr, size_t size);
 Result svcCreateTransferMemory(Handle* out, void* addr, size_t size, u32 perm);
