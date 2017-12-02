@@ -1,3 +1,5 @@
+#pragma once
+
 typedef struct {
     u32 arch;                           // 0x120 (NVGPU_GPU_ARCH_GM200)
     u32 impl;                           // 0xB (NVGPU_GPU_IMPL_GM20B)

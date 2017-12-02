@@ -142,3 +142,22 @@ u32 parcelReadUInt32(Parcel *ctx) {
     parcelReadData(ctx, &val, sizeof(val));
     return val;
 }
+
+void* parcelReadFlattenedObject(Parcel *ctx, size_t *size) {
+    s32 len = parcelReadInt32(ctx);
+    s32 fd_count = parcelReadInt32(ctx);
+
+    if (size) *size = (u32)len;
+
+    if(fd_count!=0)return NULL;//Not going to support fds.
+
+    return parcelReadData(ctx, NULL, len);
+}
+
+void* parcelWriteFlattenedObject(Parcel *ctx, void* data, size_t size) {
+    parcelWriteInt32(ctx, size);//len
+    parcelWriteInt32(ctx, 0);//fd_count
+
+    return parcelWriteData(ctx, data, size);
+}
+

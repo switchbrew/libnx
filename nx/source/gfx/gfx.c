@@ -23,16 +23,26 @@ extern u32 __nx_applet_type;
 extern u32 g_nvgfx_totalframebufs;
 extern size_t g_nvgfx_singleframebuf_size;
 
-static u32 g_gfxQueueBufferData[0x5c>>2] = {
-0x54, 0x0,
-0x0, 0x0, //u64 timestamp
-0x1, 0x0, 0x0,
-0x0, 0x0, 0x0, 0x2,
-0x0, 0x0, 0x1, 0x1,
-0x42,
-0x13f4,
-0xffffffff, 0x0,
-0xffffffff, 0x0, 0xffffffff, 0x0};
+static bufferProducerQueueBufferInput g_gfxQueueBufferData = {
+    .timestamp = 0x0,
+    .isAutoTimestamp = 0x1,
+    .crop = {0x0, 0x0, 0x0, 0x0},
+    .scalingMode = 0x0,
+    .transform = 0x2,
+    .stickyTransform = 0x0,
+    /*.unk = {0x0, 0x1},
+
+    .fence = {
+        .unk_x0 = 0x1,
+        .nv_fence = {
+            .id = 0x42,
+            .value = 0x13f4,
+        },
+        .unk_xc = {
+            0xffffffff, 0x0, 0xffffffff, 0x0, 0xffffffff, 0x0
+        },
+    }*/
+};
 
 static Result _gfxGetNativeWindowID(u8 *buf, u64 size, s32 *out_ID) {
     u32 *bufptr = (u32*)buf;
@@ -49,7 +59,7 @@ static Result _gfxGetNativeWindowID(u8 *buf, u64 size, s32 *out_ID) {
     return 0;
 }
 
-static Result _gfxDequeueBuffer() {
+static Result _gfxDequeueBuffer(bufferProducerFence *fence) {
     Result rc=0;
 
     if (!g_gfxDoubleBuf) {
@@ -57,7 +67,7 @@ static Result _gfxDequeueBuffer() {
         return 0;
     }
 
-    rc = bufferProducerDequeueBuffer(/*1*/0, 1280, 720, 0, 0x300, &g_gfxCurrentProducerBuffer);
+    rc = bufferProducerDequeueBuffer(/*1*/0, 1280, 720, 0, 0x300, &g_gfxCurrentProducerBuffer, fence);
 
     if (R_SUCCEEDED(rc)) g_gfxCurrentBuffer = (g_gfxCurrentBuffer + 1) & (g_nvgfx_totalframebufs-1);
 
@@ -66,19 +76,18 @@ static Result _gfxDequeueBuffer() {
 
 static Result _gfxQueueBuffer(s32 buf) {
     Result rc=0;
-    u64 *ptr64 = (u64*)&g_gfxQueueBufferData;
 
     if (buf == -1) return 0;
 
-    ptr64[1] = svcGetSystemTick();//Unknown what is actually used for timestamp, but shouldn't(?) matter.
+    g_gfxQueueBufferData.timestamp = svcGetSystemTick();//This is probably not the proper value for the timestamp, but shouldn't(?) matter.
 
-    rc = bufferProducerQueueBuffer(buf, (u8*)g_gfxQueueBufferData);
+    rc = bufferProducerQueueBuffer(buf, &g_gfxQueueBufferData, NULL);
     if (R_FAILED(rc)) return rc;
 
-    /*if(buf==0) {
-        g_gfxQueueBufferData[0x10]+= 0x6;
+    /*if(buf==0) {//
+        g_gfxQueueBufferData.nv_fence.value+= 0x6;
     } else {
-        g_gfxQueueBufferData[0x10]+= 0x7;
+        g_gfxQueueBufferData.nv_fence.value+= 0x7;
     }*/
 
     return rc;
@@ -133,7 +142,7 @@ static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 L
 
     if (R_SUCCEEDED(rc)) {
        for(i=0; i<2; i++) {
-           rc = _gfxDequeueBuffer();
+           rc = _gfxDequeueBuffer(NULL);
            if (R_FAILED(rc)) break;
 
            rc = bufferProducerRequestBuffer(g_gfxCurrentProducerBuffer);
@@ -153,11 +162,13 @@ static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 L
 
     if (R_SUCCEEDED(rc)) rc = nvgfxEventInit();
 
-    if (R_SUCCEEDED(rc)) rc = _gfxDequeueBuffer();
+    if (R_SUCCEEDED(rc)) svcSleepThread(3000000000);
 
-    if (R_SUCCEEDED(rc)) { //Workaround a gfx display issue.
+    if (R_SUCCEEDED(rc)) rc = _gfxDequeueBuffer(NULL);
+
+    /*if (R_SUCCEEDED(rc)) { //Workaround a gfx display issue.
         for(i=0; i<2; i++)gfxWaitForVsync();
-    }
+    }*/
 
     if (R_FAILED(rc)) {
         _gfxQueueBuffer(g_gfxCurrentProducerBuffer);
@@ -257,10 +268,20 @@ void gfxExit(void) {
     memset(g_gfx_ProducerSlotsRequested, 0, sizeof(g_gfx_ProducerSlotsRequested));
 }
 
+static void _waitevent(Handle *handle) {
+    s32 tmpindex=0;
+    Result rc=0, rc2=0;
+
+    do {
+        rc = svcWaitSynchronization(&tmpindex, handle, 1, U64_MAX);
+        if (R_SUCCEEDED(rc)) rc2 = svcResetSignal(*handle);
+    } while(R_FAILED(rc) || (rc2 & 0x3FFFFF)==0xFA01);
+
+    if (R_FAILED(rc2)) fatalSimple(rc2);
+}
+
 void gfxWaitForVsync() {
-    s32 tmp = 0;
-    svcWaitSynchronization(&tmp, &g_gfxDisplayVsyncEvent, 1, U64_MAX);
-    svcClearEvent(g_gfxDisplayVsyncEvent);
+    _waitevent(&g_gfxDisplayVsyncEvent);
 }
 
 void gfxSwapBuffers() {
@@ -268,7 +289,7 @@ void gfxSwapBuffers() {
 
     rc = _gfxQueueBuffer(g_gfxCurrentProducerBuffer);
 
-    if (R_SUCCEEDED(rc)) rc = _gfxDequeueBuffer();
+    if (R_SUCCEEDED(rc)) rc = _gfxDequeueBuffer(NULL);
 
     if (R_FAILED(rc)) fatalSimple(rc);
 }

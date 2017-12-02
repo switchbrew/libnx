@@ -25,3 +25,6 @@ s32 parcelReadInt32(Parcel *ctx);
 u32 parcelReadUInt32(Parcel *ctx);
 void parcelWriteInterfaceToken(Parcel *ctx, const char *str);
 
+void* parcelReadFlattenedObject(Parcel *ctx, size_t *size);
+void* parcelWriteFlattenedObject(Parcel *ctx, void* data, size_t size);
+

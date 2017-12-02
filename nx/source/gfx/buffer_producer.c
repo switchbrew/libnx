@@ -74,7 +74,7 @@ Result bufferProducerRequestBuffer(s32 bufferIdx)
     return rc;
 }
 
-Result bufferProducerDequeueBuffer(bool async, u32 width, u32 height, s32 format, u32 usage, s32 *buf)
+Result bufferProducerDequeueBuffer(bool async, u32 width, u32 height, s32 format, u32 usage, s32 *buf, bufferProducerFence *fence)
 {
     Result rc;
     Parcel parcel, parcel_reply;
@@ -96,8 +96,20 @@ Result bufferProducerDequeueBuffer(bool async, u32 width, u32 height, s32 format
     rc = parcelTransact(g_bufferProducerBinderSession, DEQUEUE_BUFFER, &parcel, &parcel_reply);
 
     if (R_SUCCEEDED(rc)) {
-        // TODO: parse reply
         *buf = parcelReadInt32(&parcel_reply);
+
+        if(parcelReadInt32(&parcel_reply)) {
+            size_t tmpsize=0;
+            void* tmp_ptr;
+
+            tmp_ptr = parcelReadFlattenedObject(&parcel_reply, &tmpsize);
+            if (tmp_ptr==NULL || tmpsize!=0x24) return MAKERESULT(MODULE_LIBNX, LIBNX_BADINPUT);
+            if (fence) memcpy(fence, tmp_ptr, 0x24);
+        }
+
+        int result = parcelReadInt32(&parcel_reply);
+        if (result != 0)
+            rc = MAKERESULT(MODULE_LIBNX, LIBNX_BUFFERPRODUCER_ERROR);
     }
 
     return rc;
@@ -126,7 +138,7 @@ Result bufferProducerDetachBuffer(s32 slot)
     return rc;
 }
 
-Result bufferProducerQueueBuffer(s32 buf, u8 input[0x5c])
+Result bufferProducerQueueBuffer(s32 buf, bufferProducerQueueBufferInput *input, bufferProducerQueueBufferOutput *output)
 {
     Result rc;
     Parcel parcel, parcel_reply;
@@ -139,12 +151,16 @@ Result bufferProducerQueueBuffer(s32 buf, u8 input[0x5c])
 
     parcelWriteInterfaceToken(&parcel, g_bufferProducer_InterfaceDescriptor);
     parcelWriteInt32(&parcel, buf);
-    parcelWriteData(&parcel, input, 0x5c);
+    parcelWriteFlattenedObject(&parcel, input, sizeof(bufferProducerQueueBufferInput));
 
     rc = parcelTransact(g_bufferProducerBinderSession, QUEUE_BUFFER, &parcel, &parcel_reply);
 
     if (R_SUCCEEDED(rc)) {
-        //TODO: parse reply
+        if (parcelReadData(&parcel_reply, output, sizeof(bufferProducerQueueBufferOutput))==NULL) return MAKERESULT(MODULE_LIBNX, LIBNX_BADINPUT);
+
+        int result = parcelReadInt32(&parcel_reply);
+        if (result != 0)
+            rc = MAKERESULT(MODULE_LIBNX, LIBNX_BUFFERPRODUCER_ERROR);
     }
 
     return rc;
