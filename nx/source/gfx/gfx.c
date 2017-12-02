@@ -258,9 +258,9 @@ void gfxExit(void) {
 }
 
 void gfxWaitForVsync() {
-    s32 tmpindex=0;
+    s32 tmp = 0;
+    svcWaitSynchronization(&tmp, &g_gfxDisplayVsyncEvent, 1, U64_MAX);
     svcClearEvent(g_gfxDisplayVsyncEvent);
-    svcWaitSynchronization(&tmpindex, &g_gfxDisplayVsyncEvent, 1, U64_MAX);
 }
 
 void gfxSwapBuffers() {
