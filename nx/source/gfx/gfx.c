@@ -15,6 +15,7 @@ static bool g_gfx_ProducerConnected = 0;
 static bool g_gfx_ProducerSlotsRequested[2] = {0, 0};
 static u8 *g_gfxFramebuf;
 static size_t g_gfxFramebufSize;
+static bufferProducerFence g_gfx_DequeueBuffer_fence;
 
 static bool g_gfxDoubleBuf = 1;
 
@@ -289,7 +290,7 @@ void gfxSwapBuffers() {
 
     rc = _gfxQueueBuffer(g_gfxCurrentProducerBuffer);
 
-    if (R_SUCCEEDED(rc)) rc = _gfxDequeueBuffer(NULL);
+    if (R_SUCCEEDED(rc)) rc = _gfxDequeueBuffer(&g_gfx_DequeueBuffer_fence);
 
     if (R_FAILED(rc)) fatalSimple(rc);
 }

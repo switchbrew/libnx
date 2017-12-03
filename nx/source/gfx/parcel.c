@@ -83,7 +83,7 @@ void* parcelWriteData(Parcel *ctx, void* data, size_t data_size)
 
 void* parcelReadData(Parcel *ctx, void* data, size_t data_size)
 {
-    void* ptr = ctx->payload;
+    void* ptr = &ctx->payload[ctx->pos];
     size_t aligned_data_size;
 
     if(data_size & BIT(31))
@@ -95,7 +95,7 @@ void* parcelReadData(Parcel *ctx, void* data, size_t data_size)
         return NULL;
 
     if(data)
-        memcpy(data, &ctx->payload[ctx->pos], data_size);
+        memcpy(data, ptr, data_size);
 
     ctx->pos += aligned_data_size;
     return ptr;
