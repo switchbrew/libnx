@@ -46,6 +46,44 @@ Result pmdmntStartProcess(u64 pid) {
     return rc;
 }
 
+Result pmdmntGetTitlePid(u64* pid_out, u64 title_id) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 title_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 3;
+    raw->title_id = title_id;
+
+    Result rc = ipcDispatch(g_pmdmntHandle);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcCommandResponse r;
+        ipcParseResponse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u64 pid;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            *pid_out = resp->pid;
+        }
+    }
+
+    return rc;
+}
+
 Result pmdmntEnableDebugForTitleId(Handle* handle_out, u64 title_id) {
     IpcCommand c;
     ipcInitialize(&c);
