@@ -25,7 +25,7 @@ extern "C" {
 
 #include <switch/services/sm.h>
 #include <switch/services/fs.h>
-#include <switch/services/account.h>
+#include <switch/services/acc.h>
 #include <switch/services/applet.h>
 #include <switch/services/binder.h>
 #include <switch/services/bsd.h>
