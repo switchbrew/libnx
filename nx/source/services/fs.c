@@ -4,7 +4,9 @@
 static Handle g_fsHandle = INVALID_HANDLE;
 
 Result fsInitialize() {
-    if(g_fsHandle != INVALID_HANDLE)return 0;
+    if (g_fsHandle != INVALID_HANDLE)
+        return 0;
+
     Result rc = smGetService(&g_fsHandle, "fsp-srv");
 
     if (R_SUCCEEDED(rc)) {
