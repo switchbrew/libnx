@@ -24,6 +24,7 @@ extern u32 __nx_applet_type;
 extern u32 g_nvgfx_totalframebufs;
 extern size_t g_nvgfx_singleframebuf_size;
 
+//TODO: Let the user configure some of this?
 static bufferProducerQueueBufferInput g_gfxQueueBufferData = {
     .timestamp = 0x0,
     .isAutoTimestamp = 0x1,
@@ -31,27 +32,26 @@ static bufferProducerQueueBufferInput g_gfxQueueBufferData = {
     .scalingMode = 0x0,
     .transform = 0x2,
     .stickyTransform = 0x0,
-    /*.unk = {0x0, 0x1},
+    .unk = {0x0, 0x1},
 
     .fence = {
-        .unk_x0 = 0x1,
-        .nv_fence = {
-            .id = 0x42,
-            .value = 0x13f4,
+        .is_valid = 0x1,
+        .nv_fences = {
+            {
+            .id = /*0x42*/0xffffffff,
+            .value = /*0x13f4*/0x0,
+            },
+            {0xffffffff, 0x0}, {0xffffffff, 0x0}, {0xffffffff, 0x0},
         },
-        .unk_xc = {
-            0xffffffff, 0x0, 0xffffffff, 0x0, 0xffffffff, 0x0
-        },
-    }*/
+    }
 };
 
 static Result _gfxGetNativeWindowID(u8 *buf, u64 size, s32 *out_ID) {
     u32 *bufptr = (u32*)buf;
 
     //Validate ParcelData{Size|Offset}.
-    if((u64)bufptr[1] >= size || (u64)bufptr[0] >= size || ((u64)bufptr[1])+((u64)bufptr[0]) >= size) return MAKERESULT(MODULE_LIBNX, LIBNX_BADINPUT);
+    if((u64)bufptr[1] > size || (u64)bufptr[0] > size || ((u64)bufptr[1])+((u64)bufptr[0]) > size) return MAKERESULT(MODULE_LIBNX, LIBNX_BADINPUT);
     if(bufptr[0] < 0xc) return MAKERESULT(MODULE_LIBNX, LIBNX_BADINPUT);
-
     //bufptr = start of ParcelData
     bufptr = (u32*)&buf[bufptr[1]];
 
@@ -69,6 +69,8 @@ static Result _gfxDequeueBuffer(bufferProducerFence *fence) {
     }
 
     rc = bufferProducerDequeueBuffer(/*1*/0, 1280, 720, 0, 0x300, &g_gfxCurrentProducerBuffer, fence);
+
+    //if (R_SUCCEEDED(rc) && fence) rc = nvgfxEventWait(fence->nv_fences[0].id, fence->nv_fences[0].value);
 
     if (R_SUCCEEDED(rc)) g_gfxCurrentBuffer = (g_gfxCurrentBuffer + 1) & (g_nvgfx_totalframebufs-1);
 
@@ -161,11 +163,9 @@ static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 L
        }
     }
 
-    if (R_SUCCEEDED(rc)) rc = nvgfxEventInit();
-
     if (R_SUCCEEDED(rc)) svcSleepThread(3000000000);
 
-    if (R_SUCCEEDED(rc)) rc = _gfxDequeueBuffer(NULL);
+    if (R_SUCCEEDED(rc)) rc = _gfxDequeueBuffer(&g_gfx_DequeueBuffer_fence);
 
     /*if (R_SUCCEEDED(rc)) { //Workaround a gfx display issue.
         for(i=0; i<2; i++)gfxWaitForVsync();
@@ -291,6 +291,11 @@ void gfxSwapBuffers() {
     rc = _gfxQueueBuffer(g_gfxCurrentProducerBuffer);
 
     if (R_SUCCEEDED(rc)) rc = _gfxDequeueBuffer(&g_gfx_DequeueBuffer_fence);
+
+    #ifdef BUFFERSWAP_DELAY_HACK
+    gfxWaitForVsync();
+    gfxWaitForVsync();
+    #endif
 
     if (R_FAILED(rc)) fatalSimple(rc);
 }

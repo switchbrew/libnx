@@ -4,6 +4,7 @@
 void binderCreateSession(binderSession *session, Handle sessionHandle, s32 id)
 {
     memset(session, 0, sizeof(binderSession));
+    session->created = 1;
     session->sessionHandle = sessionHandle;
     session->id = id;
     session->nativeHandle = INVALID_HANDLE;
@@ -13,6 +14,9 @@ void binderCreateSession(binderSession *session, Handle sessionHandle, s32 id)
 Result binderInitSession(binderSession *session, u32 unk0)
 {
     Result rc = 0;
+
+    if (!session->created) return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
+    if (session->initialized) return MAKERESULT(MODULE_LIBNX, LIBNX_ALREADYINITIALIZED);
 
     rc = binderAdjustRefcount(session, 1, 0);
 
@@ -41,6 +45,8 @@ Result binderInitSession(binderSession *session, u32 unk0)
         return MAKERESULT(MODULE_LIBNX, LIBNX_BADINPUT);
     }
 
+    session->initialized = 1;
+
     rc = ipcQueryPointerBufferSize(session->sessionHandle, &session->ipcBufferSize);
 
     if (R_FAILED(rc)) {
@@ -57,13 +63,23 @@ Result binderInitSession(binderSession *session, u32 unk0)
 
 void binderExitSession(binderSession *session)
 {
-    binderAdjustRefcount(session, -1, 1);
-    binderAdjustRefcount(session, -1, 0);
+    if (!session->created) return;
 
-    if (session->nativeHandle != INVALID_HANDLE) {
-        svcCloseHandle(session->nativeHandle);
-        session->nativeHandle = INVALID_HANDLE;
+    if (session->initialized) {
+        binderAdjustRefcount(session, -1, 1);
+        binderAdjustRefcount(session, -1, 0);
+
+        if (session->nativeHandle != INVALID_HANDLE) {
+            svcCloseHandle(session->nativeHandle);
+            session->nativeHandle = INVALID_HANDLE;
+        }
     }
+
+    session->sessionHandle = INVALID_HANDLE;
+    session->id = 0;
+
+    session->created = 0;
+    session->initialized = 0;
 }
 
 static Result _binderTransactParcel(
@@ -72,6 +88,8 @@ static Result _binderTransactParcel(
     void* parcel_reply, size_t parcel_reply_size,
     u32 flags)
 {
+    if (!session->created || !session->initialized) return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
+
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -116,6 +134,8 @@ static Result _binderTransactParcelAuto(
     void* parcel_reply, size_t parcel_reply_size,
     u32 flags)
 {
+    if (!session->created || !session->initialized) return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
+
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -193,6 +213,8 @@ Result binderTransactParcel(
 
 Result binderAdjustRefcount(binderSession *session, s32 addval, s32 type)
 {
+    if (!session->created) return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
+
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -230,6 +252,8 @@ Result binderAdjustRefcount(binderSession *session, s32 addval, s32 type)
 
 Result binderGetNativeHandle(binderSession *session, u32 inval, Handle *handle_out)
 {
+    if (!session->created) return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
+
     IpcCommand c;
     ipcInitialize(&c);
 

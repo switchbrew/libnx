@@ -3,9 +3,8 @@
 #include <switch/gfx/nvioctl.h>
 
 typedef struct {
-    u32 unk_x0;
-    nvioctl_fence nv_fence;
-    u32 unk_xc[0x18>>2];
+    u32 is_valid;
+    nvioctl_fence nv_fences[4];
 } PACKED bufferProducerFence;
 
 typedef struct {

@@ -103,8 +103,8 @@ Result bufferProducerDequeueBuffer(bool async, u32 width, u32 height, s32 format
             void* tmp_ptr;
 
             tmp_ptr = parcelReadFlattenedObject(&parcel_reply, &tmpsize);
-            if (tmp_ptr==NULL || tmpsize!=0x24) return MAKERESULT(MODULE_LIBNX, LIBNX_BADINPUT);
-            if (fence) memcpy(fence, tmp_ptr, 0x24);
+            if (tmp_ptr==NULL || tmpsize!=sizeof(bufferProducerFence)) return MAKERESULT(MODULE_LIBNX, LIBNX_BADINPUT);
+            if (fence) memcpy(fence, tmp_ptr, sizeof(bufferProducerFence));
         }
 
         int result = parcelReadInt32(&parcel_reply);
