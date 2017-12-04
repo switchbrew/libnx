@@ -33,6 +33,6 @@ Result bufferProducerDequeueBuffer(bool async, u32 width, u32 height, s32 format
 Result bufferProducerDetachBuffer(s32 slot);
 Result bufferProducerQueueBuffer(s32 buf, bufferProducerQueueBufferInput *input, bufferProducerQueueBufferOutput *output);
 Result bufferProducerQuery(s32 what, s32* value);
-Result bufferProducerConnect(s32 api, bool producerControlledByApp);
+Result bufferProducerConnect(s32 api, bool producerControlledByApp, bufferProducerQueueBufferOutput *output);
 Result bufferProducerDisconnect(s32 api);
 Result bufferProducerTegraBufferInit(s32 buf, u8 input[0x178]);

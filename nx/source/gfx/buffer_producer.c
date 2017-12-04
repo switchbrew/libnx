@@ -193,7 +193,7 @@ Result bufferProducerQuery(s32 what, s32* value)
     return rc;
 }
 
-Result bufferProducerConnect(s32 api, bool producerControlledByApp)
+Result bufferProducerConnect(s32 api, bool producerControlledByApp, bufferProducerQueueBufferOutput *output)
 {
     Result rc;
     Parcel parcel, parcel_reply;
@@ -214,7 +214,11 @@ Result bufferProducerConnect(s32 api, bool producerControlledByApp)
     rc = parcelTransact(g_bufferProducerBinderSession, CONNECT, &parcel, &parcel_reply);
 
     if (R_SUCCEEDED(rc)) {
-        //TODO: parse reply (contains 32bit width and height)
+        if (parcelReadData(&parcel_reply, output, sizeof(bufferProducerQueueBufferOutput))==NULL) return MAKERESULT(MODULE_LIBNX, LIBNX_BADINPUT);
+
+        int result = parcelReadInt32(&parcel_reply);
+        if (result != 0)
+            rc = MAKERESULT(MODULE_LIBNX, LIBNX_BUFFERPRODUCER_ERROR);
     }
 
     return rc;

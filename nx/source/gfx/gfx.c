@@ -16,6 +16,8 @@ static bool g_gfx_ProducerSlotsRequested[2] = {0, 0};
 static u8 *g_gfxFramebuf;
 static size_t g_gfxFramebufSize;
 static bufferProducerFence g_gfx_DequeueBuffer_fence;
+static bufferProducerQueueBufferOutput g_gfx_Connect_QueueBufferOutput;
+static bufferProducerQueueBufferOutput g_gfx_QueueBuffer_QueueBufferOutput;
 
 static bool g_gfxDoubleBuf = 1;
 
@@ -84,7 +86,7 @@ static Result _gfxQueueBuffer(s32 buf) {
 
     g_gfxQueueBufferData.timestamp = svcGetSystemTick();//This is probably not the proper value for the timestamp, but shouldn't(?) matter.
 
-    rc = bufferProducerQueueBuffer(buf, &g_gfxQueueBufferData, NULL);
+    rc = bufferProducerQueueBuffer(buf, &g_gfxQueueBufferData, &g_gfx_QueueBuffer_QueueBufferOutput);
     if (R_FAILED(rc)) return rc;
 
     /*if(buf==0) {//
@@ -135,7 +137,7 @@ static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 L
 
     if (R_SUCCEEDED(rc)) rc = bufferProducerInitialize(&g_gfxBinderSession);
 
-    if (R_SUCCEEDED(rc)) rc = bufferProducerConnect(2, 0);
+    if (R_SUCCEEDED(rc)) rc = bufferProducerConnect(2, 0, &g_gfx_Connect_QueueBufferOutput);
 
     if (R_SUCCEEDED(rc)) g_gfx_ProducerConnected = 1;
 
