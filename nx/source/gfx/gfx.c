@@ -15,6 +15,8 @@ static bool g_gfx_ProducerConnected = 0;
 static bool g_gfx_ProducerSlotsRequested[2] = {0, 0};
 static u8 *g_gfxFramebuf;
 static size_t g_gfxFramebufSize;
+/*static u64 g_gfx_DisplayResolution_width, g_gfx_DisplayResolution_height;
+static s32 g_gfx_Query_width, g_gfx_Query_height;*/
 static bufferProducerFence g_gfx_DequeueBuffer_fence;
 static bufferProducerQueueBufferOutput g_gfx_Connect_QueueBufferOutput;
 static bufferProducerQueueBufferOutput g_gfx_QueueBuffer_QueueBufferOutput;
@@ -25,6 +27,8 @@ extern u32 __nx_applet_type;
 
 extern u32 g_nvgfx_totalframebufs;
 extern size_t g_nvgfx_singleframebuf_size;
+
+//static Result _gfxGetDisplayResolution(u64 *width, u64 *height);
 
 //TODO: Let the user configure some of this?
 static bufferProducerQueueBufferInput g_gfxQueueBufferData = {
@@ -72,7 +76,7 @@ static Result _gfxDequeueBuffer(bufferProducerFence *fence) {
 
     rc = bufferProducerDequeueBuffer(/*1*/0, 1280, 720, 0, 0x300, &g_gfxCurrentProducerBuffer, fence);
 
-    //if (R_SUCCEEDED(rc) && fence) rc = nvgfxEventWait(fence->nv_fences[0].id, fence->nv_fences[0].value);
+    //if (R_SUCCEEDED(rc) && fence && fence->is_valid) rc = nvgfxEventWait(fence->nv_fences[0].id, fence->nv_fences[0].value);
 
     if (R_SUCCEEDED(rc)) g_gfxCurrentBuffer = (g_gfxCurrentBuffer + 1) & (g_nvgfx_totalframebufs-1);
 
@@ -168,6 +172,11 @@ static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 L
     if (R_SUCCEEDED(rc)) svcSleepThread(3000000000);
 
     if (R_SUCCEEDED(rc)) rc = _gfxDequeueBuffer(&g_gfx_DequeueBuffer_fence);
+
+    /*if (R_SUCCEEDED(rc)) rc = _gfxGetDisplayResolution(&g_gfx_DisplayResolution_width, &g_gfx_DisplayResolution_height);
+
+    if (R_SUCCEEDED(rc)) rc = bufferProducerQuery(NATIVE_WINDOW_WIDTH, &g_gfx_Query_width);
+    if (R_SUCCEEDED(rc)) rc = bufferProducerQuery(NATIVE_WINDOW_HEIGHT, &g_gfx_Query_height);*/
 
     /*if (R_SUCCEEDED(rc)) { //Workaround a gfx display issue.
         for(i=0; i<2; i++)gfxWaitForVsync();
@@ -317,7 +326,7 @@ void gfxFlushBuffers(void) {
     armDCacheFlush(&g_gfxFramebuf[g_gfxCurrentBuffer*g_nvgfx_singleframebuf_size], g_nvgfx_singleframebuf_size);
 }
 
-Result gfxGetDisplayResolution(u64 *width, u64 *height) {
+/*static Result _gfxGetDisplayResolution(u64 *width, u64 *height) {
     return viGetDisplayResolution(&g_gfxDisplay, width, height);
-}
+}*/
 

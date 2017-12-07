@@ -286,7 +286,7 @@ Result nvgfxInitialize(void) {
              if (R_FAILED(rc)) break;
 
              if(pos==1) {
-                 rc = bufferProducerQuery(2, &tmp);//"NATIVE_WINDOW_FORMAT"
+                 rc = bufferProducerQuery(NATIVE_WINDOW_FORMAT, &tmp);
                  if (R_FAILED(rc)) break;
 
                  for(i=0; i<2; i++) {

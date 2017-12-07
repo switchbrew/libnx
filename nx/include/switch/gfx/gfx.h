@@ -10,9 +10,6 @@ u8* gfxGetFramebuffer(u32* width, u32* height);
 void gfxSetDoubleBuffering(bool doubleBuffering);
 void gfxFlushBuffers(void);
 
-//Do not use this for getting the framebuffer width/height, use gfxGetFramebuffer for getting that.
-Result gfxGetDisplayResolution(u64 *width, u64 *height);
-
 /// Use this to get the pixel-offset in the framebuffer. Returned value is in pixels, not bytes.
 /// This implements tegra blocklinear, with hard-coded constants etc.
 static inline u32 gfxGetFramebufferDisplayOffset(u32 x, u32 y) {

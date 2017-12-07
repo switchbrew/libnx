@@ -25,6 +25,17 @@ typedef struct {
     u32 numPendingBuffers;
 } PACKED bufferProducerQueueBufferOutput;
 
+//From Android window.h.
+/* attributes queriable with query() */
+enum {
+    NATIVE_WINDOW_WIDTH     = 0,
+    NATIVE_WINDOW_HEIGHT    = 1,
+    NATIVE_WINDOW_FORMAT    = 2,
+//...
+//    NATIVE_WINDOW_DEFAULT_WIDTH = 6, //These two return invalid data.
+//    NATIVE_WINDOW_DEFAULT_HEIGHT = 7,
+};
+
 Result bufferProducerInitialize(binderSession *session);
 void bufferProducerExit();
 
