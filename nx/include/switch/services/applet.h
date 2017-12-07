@@ -14,3 +14,9 @@ void appletExit(void);
 Result appletGetAppletResourceUserId(u64 *out);
 
 Result appletCreateManagedDisplayLayer(u64 *out);
+
+/**
+ * @brief Processes the current applet status. Generally used within a main loop.
+ * @return Whether the application should continue running.
+ */
+bool appletMainLoop(void);

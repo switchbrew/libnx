@@ -602,3 +602,7 @@ Result appletCreateManagedDisplayLayer(u64 *out) {
     return rc;
 }
 
+bool appletMainLoop(void) {
+    return true;
+}
+
