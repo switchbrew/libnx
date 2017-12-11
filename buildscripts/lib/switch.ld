@@ -167,6 +167,9 @@ SECTIONS
 
 	__end__ = ABSOLUTE(.) ;
 
+	. = ALIGN(0x1000);
+	__argdata__ = ABSOLUTE(.) ;
+
 	/* ==================
 	   ==== Metadata ====
 	   ================== */
