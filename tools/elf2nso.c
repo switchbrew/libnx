@@ -127,9 +127,9 @@ int main(int argc, char* argv[]) {
         nso_hdr.Segments[i].DstOff = phdr->p_vaddr;
         nso_hdr.Segments[i].DecompSz = phdr->p_filesz;
 
-        // for .data segment this field contains total sz including bss
+        // for .data segment this field contains bss size
         if (i == 2)
-            nso_hdr.Segments[i].AlignOrTotalSz = phdr->p_memsz;
+            nso_hdr.Segments[i].AlignOrTotalSz = phdr->p_memsz - phdr->p_filesz;
         else
             nso_hdr.Segments[i].AlignOrTotalSz = 1;
 

@@ -126,7 +126,7 @@ int main(int argc, char* argv[]) {
         
         // .bss is special
         if (i == 3) {
-            nro_hdr.bssSize = (phdr->p_memsz + 0xFFF) & ~0xFFF;
+            nro_hdr.bssSize = ((phdr->p_memsz - phdr->p_filesz) + 0xFFF) & ~0xFFF;
             break;
         }
 
