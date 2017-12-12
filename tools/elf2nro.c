@@ -112,7 +112,8 @@ int main(int argc, char* argv[]) {
     for (i=0; i<4; i++) {
         Elf64_Phdr* phdr = NULL;
         while (j < hdr->e_phnum) {
-            Elf64_Phdr* cur = &phdrs[j++];
+            Elf64_Phdr* cur = &phdrs[j];
+            if (i < 2 || (i==2 && cur->p_type != PT_LOAD)) j++;
             if (cur->p_type == PT_LOAD || i == 3) {
                 phdr = cur;
                 break;
@@ -131,7 +132,7 @@ int main(int argc, char* argv[]) {
         }
 
         nro_hdr.Segments[i].FileOff = phdr->p_vaddr;
-        nro_hdr.Segments[i].Size = (phdr->p_memsz + 0xFFF) & ~0xFFF;
+        nro_hdr.Segments[i].Size = (phdr->p_filesz + 0xFFF) & ~0xFFF;
         buf[i] = malloc(nro_hdr.Segments[i].Size);
         memset(buf[i], 0, nro_hdr.Segments[i].Size);
 
