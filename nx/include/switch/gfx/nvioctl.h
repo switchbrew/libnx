@@ -78,7 +78,7 @@ enum nvioctl_channel_priority {
 };
 
 Result nvioctlNvhostCtrl_EventSignal(u32 fd, u32 event_id);
-Result nvioctlNvhostCtrl_EventWait(u32 fd, u32 unk0, u32 unk1, s32 timeout, u32 event_id, u32 *out);
+Result nvioctlNvhostCtrl_EventWait(u32 fd, u32 syncpt_id, u32 threshold, s32 timeout, u32 event_id, u32 *out);
 Result nvioctlNvhostCtrl_EventRegister(u32 fd, u32 event_id);
 
 Result nvioctlNvhostCtrlGpu_ZCullGetCtxSize(u32 fd, u32 *out);

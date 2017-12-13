@@ -442,17 +442,22 @@ void nvgfxExit(void) {
     g_nvgfxInitialized = 0;
 }
 
-Result nvgfxEventWait(u32 syncpt_id, u32 threshold) {
+Result nvgfxEventWait(u32 syncpt_id, u32 threshold, s32 timeout) {
     Result rc=0;
 
     if (R_SUCCEEDED(rc)) {
         do {
-            rc = nvioctlNvhostCtrl_EventWait(g_nvgfx_fd_nvhostctrl, /*0x42, 0x1ca7*/syncpt_id, threshold, 0x64, 0, &g_nvgfx_nvhostctrl_eventres);
+            rc = nvioctlNvhostCtrl_EventWait(g_nvgfx_fd_nvhostctrl, /*0x42, 0x1ca7*/syncpt_id, threshold, /*0x64*/timeout, 0, &g_nvgfx_nvhostctrl_eventres);
         } while(rc==5);//timeout error
     }
 
     //Currently broken.
     //if (R_SUCCEEDED(rc)) rc = nvQueryEvent(g_nvgfx_fd_nvhostctrl, g_nvgfx_nvhostctrl_eventres, &g_nvgfx_nvhostctrl_eventhandle);
+
+    /*if (R_SUCCEEDED(rc)) {
+        svcCloseHandle(g_nvgfx_nvhostctrl_eventhandle);
+        g_nvgfx_nvhostctrl_eventhandle = INVALID_HANDLE;
+    }*/
 
     //if (R_SUCCEEDED(rc)) rc = nvioctlNvhostCtrl_EventSignal(g_nvgfx_fd_nvhostctrl, g_nvgfx_nvhostctrl_eventres);
 
