@@ -5,37 +5,34 @@
 
 #include "default_font_bin.h"
 
-/// Converts red, green, and blue components to packed RGBA8, with alpha=0xff.
-#define RGBA8(r,g,b)  (((r)&0xff)|(((g)&0xff)<<8)|(((b)&0xff)<<16)|(0xff<<24))
-
 //set up the palette for color printing
 static u32 colorTable[] = {
-	RGBA8(  0,  0,  0),	// black
-	RGBA8(128,  0,  0),	// red
-	RGBA8(  0,128,  0),	// green
-	RGBA8(128,128,  0),	// yellow
-	RGBA8(  0,  0,128),	// blue
-	RGBA8(128,  0,128),	// magenta
-	RGBA8(  0,128,128),	// cyan
-	RGBA8(192,192,192),	// white
+	RGBA8_MAXALPHA(  0,  0,  0),	// black
+	RGBA8_MAXALPHA(128,  0,  0),	// red
+	RGBA8_MAXALPHA(  0,128,  0),	// green
+	RGBA8_MAXALPHA(128,128,  0),	// yellow
+	RGBA8_MAXALPHA(  0,  0,128),	// blue
+	RGBA8_MAXALPHA(128,  0,128),	// magenta
+	RGBA8_MAXALPHA(  0,128,128),	// cyan
+	RGBA8_MAXALPHA(192,192,192),	// white
 
-	RGBA8(128,128,128),	// bright black
-	RGBA8(255,  0,  0),	// bright red
-	RGBA8(  0,255,  0),	// bright green
-	RGBA8(255,255,  0),	// bright yellow
-	RGBA8(  0,  0,255),	// bright blue
-	RGBA8(255,  0,255),	// bright magenta
-	RGBA8(  0,255,255),	// bright cyan
-	RGBA8(255,255,255),	// bright white
+	RGBA8_MAXALPHA(128,128,128),	// bright black
+	RGBA8_MAXALPHA(255,  0,  0),	// bright red
+	RGBA8_MAXALPHA(  0,255,  0),	// bright green
+	RGBA8_MAXALPHA(255,255,  0),	// bright yellow
+	RGBA8_MAXALPHA(  0,  0,255),	// bright blue
+	RGBA8_MAXALPHA(255,  0,255),	// bright magenta
+	RGBA8_MAXALPHA(  0,255,255),	// bright cyan
+	RGBA8_MAXALPHA(255,255,255),	// bright white
 
-	RGBA8(  0,  0,  0),	// faint black
-	RGBA8( 64,  0,  0),	// faint red
-	RGBA8(  0, 64,  0),	// faint green
-	RGBA8( 64, 64,  0),	// faint yellow
-	RGBA8(  0,  0, 64),	// faint blue
-	RGBA8( 64,  0, 64),	// faint magenta
-	RGBA8(  0, 64, 64),	// faint cyan
-	RGBA8( 96, 96, 96),	// faint white
+	RGBA8_MAXALPHA(  0,  0,  0),	// faint black
+	RGBA8_MAXALPHA( 64,  0,  0),	// faint red
+	RGBA8_MAXALPHA(  0, 64,  0),	// faint green
+	RGBA8_MAXALPHA( 64, 64,  0),	// faint yellow
+	RGBA8_MAXALPHA(  0,  0, 64),	// faint blue
+	RGBA8_MAXALPHA( 64,  0, 64),	// faint magenta
+	RGBA8_MAXALPHA(  0, 64, 64),	// faint cyan
+	RGBA8_MAXALPHA( 96, 96, 96),	// faint white
 };
 
 //The below width/height is for 720p.

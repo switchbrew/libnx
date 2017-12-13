@@ -30,6 +30,8 @@ extern size_t g_nvgfx_singleframebuf_size;
 
 //static Result _gfxGetDisplayResolution(u64 *width, u64 *height);
 
+//TODO: Figure out what all is required to use non-720p width/height.
+
 //TODO: Let the user configure some of this?
 static bufferProducerQueueBufferInput g_gfxQueueBufferData = {
     .timestamp = 0x0,
