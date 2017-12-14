@@ -38,6 +38,7 @@ size_t g_nvgfx_singleframebuf_size = /*0x3c0000*/ 1280*768*4;
 
 static nvmapobj nvmap_objs[18];
 
+static u64 nvmap_obj4_mapbuffer_x0_offset;
 static u64 nvmap_obj6_mapbuffer_xdb_offset;
 
 //Some of this struct is based on tegra_dc_ext_flip_windowattr.
@@ -129,7 +130,6 @@ Result nvgfxInitialize(void) {
     u64 *ptr64 = (u64*)g_gfxprod_BufferInitData;
     if(g_nvgfxInitialized)return 0;
 
-    u32 zcullbind_data[4] = {0x58000, 0x5, 0x2, 0x0};
     u32 framebuf_nvmap_handle = 0;//Special handle ID for framebuf/windowbuf.
 
     //nvioctl_gpfifo_entry gpfifo_entries[2] = {{0x00030000, 0x00177a05}, {0x00031778, 0x80002e05}};
@@ -155,6 +155,7 @@ Result nvgfxInitialize(void) {
     memset(&g_nvgfx_nvhostgpu_gpfifo_fence, 0, sizeof(g_nvgfx_nvhostgpu_gpfifo_fence));
     g_nvgfx_nvhostasgpu_allocspace_offset = 0;
     g_nvgfx_zcullctxsize = 0;
+    nvmap_obj4_mapbuffer_x0_offset = 0;
     nvmap_obj6_mapbuffer_xdb_offset = 0;
     g_nvgfx_nvhostctrl_eventres = 0;
 
@@ -246,10 +247,10 @@ Result nvgfxInitialize(void) {
 
     if (R_SUCCEEDED(rc)) rc = nvmapobjSetup(&nvmap_objs[4], 0, 0x1, 0x20000, 0);
 
-    if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 4, 0, nvmap_objs[4].handle, 0x10000, 0, 0, 0, NULL);
+    if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 4, 0, nvmap_objs[4].handle, 0x10000, 0, 0, 0, &nvmap_obj4_mapbuffer_x0_offset);
     if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 4, 0xfe, nvmap_objs[4].handle, 0x10000, 0, 0, 0, NULL);
 
-    if (R_SUCCEEDED(rc)) rc = nvioctlChannel_ZCullBind(g_nvgfx_fd_nvhostgpu, zcullbind_data);
+    if (R_SUCCEEDED(rc)) rc = nvioctlChannel_ZCullBind(g_nvgfx_fd_nvhostgpu, nvmap_obj4_mapbuffer_x0_offset+0x8000, 0x2);
 
     //Officially, ipcQueryPointerBufferSize and NVGPU_IOCTL_CHANNEL_SUBMIT_GPFIFO(nvioctlChannel_SubmitGPFIFO) are used here with the duplicate service session setup during nv serv init.
     //TODO: This is probably used for GPU rendering? Is this really needed when not doing actual GPU rendering?

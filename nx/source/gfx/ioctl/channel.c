@@ -58,14 +58,16 @@ Result nvioctlChannel_AllocObjCtx(u32 fd, u32 class_num, u32 flags) {
     return nvIoctl(fd, _IOWR(0x48, 0x09, data), &data);
 }
 
-Result nvioctlChannel_ZCullBind(u32 fd, u32 in[4]) {
-    // Fixme: Needs work
+Result nvioctlChannel_ZCullBind(u32 fd, u64 gpu_va, u32 mode) {
     struct {
-        u32 in[4];
+        __in u64 gpu_va;
+        __in u32 mode;
+        __in u32 padding;
     } data;
 
     memset(&data, 0, sizeof(data));
-    memcpy(data.in, in, sizeof(data.in));
+    data.gpu_va = gpu_va;
+    data.mode = mode;
 
     return nvIoctl(fd, _IOWR(0x48, 0x0B, data), &data);
 }
