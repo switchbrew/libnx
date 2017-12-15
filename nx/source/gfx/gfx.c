@@ -46,8 +46,8 @@ static bufferProducerQueueBufferInput g_gfxQueueBufferData = {
         .is_valid = 0x1,
         .nv_fences = {
             {
-            .id = /*0x42*/0xffffffff,
-            .value = /*0x13f4*/0x0,
+            .id = 0xffffffff, //Official sw sets this to the output fence from the last nvioctlChannel_SubmitGPFIFO().
+            .value = 0x0,
             },
             {0xffffffff, 0x0}, {0xffffffff, 0x0}, {0xffffffff, 0x0},
         },
@@ -99,12 +99,6 @@ static Result _gfxQueueBuffer(s32 buf) {
 
     rc = bufferProducerQueueBuffer(buf, &g_gfxQueueBufferData, &g_gfx_QueueBuffer_QueueBufferOutput);
     if (R_FAILED(rc)) return rc;
-
-    /*if(buf==0) {//
-        g_gfxQueueBufferData.nv_fence.value+= 0x6;
-    } else {
-        g_gfxQueueBufferData.nv_fence.value+= 0x7;
-    }*/
 
     return rc;
 }
