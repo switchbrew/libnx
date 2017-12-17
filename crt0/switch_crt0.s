@@ -2,17 +2,18 @@
 .global _start
 
 _start:
-    bl startup
+    b startup
     .word 0
     .ascii "HOMEBREW"
 
 .org _start+0x80
 startup:
+    // get aslr base
+    bl   +4
+    sub  x28, x30, #0x84
+
     // save main thread handle
     mov  x27, x1
-
-    // get aslr base
-    sub  x28, x30, #4
 
     // clear .bss
     adrp x0, __bss_start__

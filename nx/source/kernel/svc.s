@@ -107,6 +107,11 @@ SVC_BEGIN svcWaitSynchronization
 	ret
 SVC_END
 
+SVC_BEGIN svcCancelSynchronization
+    svc 0x19
+    ret
+SVC_END
+
 SVC_BEGIN svcArbitrateLock
     svc 0x1a
     ret

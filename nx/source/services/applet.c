@@ -233,7 +233,8 @@ static Result appletSetFocusHandlingMode(u32 mode) {
 
     rc = _appletSetFocusHandlingMode(invals[0], invals[1], invals[2]);
 
-    if (R_SUCCEEDED(rc)) rc = _appletSetOutOfFocusSuspendingEnabled(invals[3]);
+    if (R_SUCCEEDED(rc) && kernelAbove200())
+        rc = _appletSetOutOfFocusSuspendingEnabled(invals[3]);
 
     return rc;
 }
