@@ -302,6 +302,7 @@ static void _waitevent(Handle *handle) {
 
 void gfxWaitForVsync() {
     _waitevent(&g_gfxDisplayVsyncEvent);
+    _waitevent(&g_gfxDisplayVsyncEvent);
 }
 
 void gfxSwapBuffers() {
@@ -310,11 +311,6 @@ void gfxSwapBuffers() {
     rc = _gfxQueueBuffer(g_gfxCurrentProducerBuffer);
 
     if (R_SUCCEEDED(rc)) rc = _gfxDequeueBuffer();
-
-    #ifdef BUFFERSWAP_DELAY_HACK
-    gfxWaitForVsync();
-    gfxWaitForVsync();
-    #endif
 
     if (R_FAILED(rc)) fatalSimple(rc);
 }
