@@ -69,10 +69,10 @@ static Result _gfxGetNativeWindowID(u8 *buf, u64 size, s32 *out_ID) {
     return 0;
 }
 
-static Result _gfxDequeueBuffer(bool handle_fence) {
+static Result _gfxDequeueBuffer(void) {
     Result rc=0;
     bufferProducerFence *fence = &g_gfx_DequeueBuffer_fence;
-    nvioctl_fence original_fence;
+    bufferProducerFence tmp_fence;
     bool async=0;
 
     if (!g_gfxDoubleBuf) {
@@ -80,11 +80,11 @@ static Result _gfxDequeueBuffer(bool handle_fence) {
         return 0;
     }
 
-    if (handle_fence) memcpy(&original_fence, &fence->nv_fences[0], sizeof(nvioctl_fence));
+    memcpy(&tmp_fence, fence, sizeof(bufferProducerFence));//Offical sw waits on the fence from the previous DequeueBuffer call. Using the fence from the current DequeueBuffer call results in nvgfxEventWait() failing.
 
     rc = bufferProducerDequeueBuffer(async, 1280, 720, 0, 0x300, &g_gfxCurrentProducerBuffer, fence);
 
-    if (R_SUCCEEDED(rc) && async && handle_fence && fence->is_valid) rc = nvgfxEventWait(original_fence.id, original_fence.value, -1);
+    if (R_SUCCEEDED(rc) && tmp_fence.is_valid) rc = nvgfxEventWait(tmp_fence.nv_fences[0].id, tmp_fence.nv_fences[0].value, -1);
 
     if (R_SUCCEEDED(rc)) g_gfxCurrentBuffer = (g_gfxCurrentBuffer + 1) & (g_nvgfx_totalframebufs-1);
 
@@ -125,6 +125,7 @@ static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 L
     g_gfxDoubleBuf = 1;
 
     memset(g_gfx_ProducerSlotsRequested, 0, sizeof(g_gfx_ProducerSlotsRequested));
+    memset(&g_gfx_DequeueBuffer_fence, 0, sizeof(g_gfx_DequeueBuffer_fence));
 
     rc = viInitialize(servicetype);
     if (R_FAILED(rc)) return rc;
@@ -158,7 +159,7 @@ static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 L
 
     if (R_SUCCEEDED(rc)) { //TODO: Merge this into gfxSwapBuffers()?
        for(i=0; i<2; i++) {
-           rc = _gfxDequeueBuffer(0);
+           rc = _gfxDequeueBuffer();
            if (R_FAILED(rc)) break;
 
            rc = bufferProducerRequestBuffer(g_gfxCurrentProducerBuffer);
@@ -178,7 +179,7 @@ static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 L
 
     if (R_SUCCEEDED(rc)) svcSleepThread(3000000000);
 
-    if (R_SUCCEEDED(rc)) rc = _gfxDequeueBuffer(0);
+    if (R_SUCCEEDED(rc)) rc = _gfxDequeueBuffer();
 
     /*if (R_SUCCEEDED(rc)) rc = _gfxGetDisplayResolution(&g_gfx_DisplayResolution_width, &g_gfx_DisplayResolution_height);
 
@@ -308,7 +309,7 @@ void gfxSwapBuffers() {
 
     rc = _gfxQueueBuffer(g_gfxCurrentProducerBuffer);
 
-    if (R_SUCCEEDED(rc)) rc = _gfxDequeueBuffer(1);
+    if (R_SUCCEEDED(rc)) rc = _gfxDequeueBuffer();
 
     #ifdef BUFFERSWAP_DELAY_HACK
     gfxWaitForVsync();
