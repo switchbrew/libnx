@@ -157,7 +157,7 @@ static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 L
 
     if (R_SUCCEEDED(rc)) rc = nvgfxGetFramebuffer(&g_gfxFramebuf, &g_gfxFramebufSize);
 
-    if (R_SUCCEEDED(rc)) { //TODO: Merge this into gfxSwapBuffers()?
+    if (R_SUCCEEDED(rc)) { //Official sw would use bufferProducerRequestBuffer() when required during swap-buffers/or similar, but that's not really an option here due to gfxSetDoubleBuffering().
        for(i=0; i<2; i++) {
            rc = _gfxDequeueBuffer();
            if (R_FAILED(rc)) break;
