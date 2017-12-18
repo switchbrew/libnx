@@ -36,6 +36,16 @@ enum {
 //    NATIVE_WINDOW_DEFAULT_HEIGHT = 7,
 };
 
+//From Android window.h.
+/* parameter for NATIVE_WINDOW_[API_][DIS]CONNECT */
+enum {
+    //...
+    /* Buffers will be queued after being filled using the CPU
+     */
+    NATIVE_WINDOW_API_CPU = 2,
+    //...
+};
+
 Result bufferProducerInitialize(binderSession *session);
 void bufferProducerExit();
 

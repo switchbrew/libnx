@@ -149,7 +149,7 @@ static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 L
 
     if (R_SUCCEEDED(rc)) rc = bufferProducerInitialize(&g_gfxBinderSession);
 
-    if (R_SUCCEEDED(rc)) rc = bufferProducerConnect(2, 0, &g_gfx_Connect_QueueBufferOutput);
+    if (R_SUCCEEDED(rc)) rc = bufferProducerConnect(NATIVE_WINDOW_API_CPU, 0, &g_gfx_Connect_QueueBufferOutput);
 
     if (R_SUCCEEDED(rc)) g_gfx_ProducerConnected = 1;
 
@@ -195,7 +195,7 @@ static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 L
         for(i=0; i<2; i++) {
             if (g_gfx_ProducerSlotsRequested[i]) bufferProducerDetachBuffer(i);
         }
-        if (g_gfx_ProducerConnected) bufferProducerDisconnect(2);
+        if (g_gfx_ProducerConnected) bufferProducerDisconnect(NATIVE_WINDOW_API_CPU);
 
         nvgfxExit();
         bufferProducerExit();
