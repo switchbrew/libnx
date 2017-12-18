@@ -13,6 +13,7 @@ void gfxExit(void);
 void gfxWaitForVsync();
 void gfxSwapBuffers();
 u8* gfxGetFramebuffer(u32* width, u32* height);
+size_t gfxGetFramebufferSize(void); /// Use this to get the actual byte-size of the buffer for use with memset/etc, do not calculate the byte-size manually with the width and height from gfxGetFramebuffer. The height returned by gfxGetFramebuffer is the display height not the aligned height.
 void gfxSetDoubleBuffering(bool doubleBuffering);
 void gfxFlushBuffers(void);
 

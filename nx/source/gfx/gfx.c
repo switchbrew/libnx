@@ -326,6 +326,10 @@ u8* gfxGetFramebuffer(u32* width, u32* height) {
     return &g_gfxFramebuf[g_gfxCurrentBuffer*g_nvgfx_singleframebuf_size];
 }
 
+size_t gfxGetFramebufferSize(void) {
+    return g_nvgfx_singleframebuf_size;
+}
+
 void gfxSetDoubleBuffering(bool doubleBuffering) {
     g_gfxDoubleBuf = doubleBuffering;
 }
