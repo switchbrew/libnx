@@ -27,6 +27,7 @@ extern u32 __nx_applet_type;
 
 extern u32 g_nvgfx_totalframebufs;
 extern size_t g_nvgfx_singleframebuf_size;
+extern nvioctl_fence g_nvgfx_nvhostgpu_gpfifo_fence;
 
 //static Result _gfxGetDisplayResolution(u64 *width, u64 *height);
 
@@ -87,6 +88,8 @@ static Result _gfxDequeueBuffer(bool handle_fence) {
 
     if (R_SUCCEEDED(rc)) g_gfxCurrentBuffer = (g_gfxCurrentBuffer + 1) & (g_nvgfx_totalframebufs-1);
 
+    //if (R_SUCCEEDED(rc)) rc = nvgfxSubmitGpfifo();
+
     return rc;
 }
 
@@ -96,6 +99,9 @@ static Result _gfxQueueBuffer(s32 buf) {
     if (buf == -1) return 0;
 
     g_gfxQueueBufferData.timestamp = svcGetSystemTick();//This is probably not the proper value for the timestamp, but shouldn't(?) matter.
+    //if (g_nvgfx_nvhostgpu_gpfifo_fence.id) memcpy(&g_gfxQueueBufferData.fence.nv_fences[0], &g_nvgfx_nvhostgpu_gpfifo_fence, sizeof(nvioctl_fence));
+    //if (g_nvgfx_nvhostgpu_gpfifo_fence.id) rc = nvgfxEventWait(g_nvgfx_nvhostgpu_gpfifo_fence.id, g_nvgfx_nvhostgpu_gpfifo_fence.value, -1);
+    if (R_FAILED(rc)) return rc;
 
     rc = bufferProducerQueueBuffer(buf, &g_gfxQueueBufferData, &g_gfx_QueueBuffer_QueueBufferOutput);
     if (R_FAILED(rc)) return rc;
@@ -150,7 +156,7 @@ static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 L
 
     if (R_SUCCEEDED(rc)) rc = nvgfxGetFramebuffer(&g_gfxFramebuf, &g_gfxFramebufSize);
 
-    if (R_SUCCEEDED(rc)) {
+    if (R_SUCCEEDED(rc)) { //TODO: Merge this into gfxSwapBuffers()?
        for(i=0; i<2; i++) {
            rc = _gfxDequeueBuffer(0);
            if (R_FAILED(rc)) break;

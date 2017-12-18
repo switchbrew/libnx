@@ -2,6 +2,8 @@
 #include <malloc.h>
 #include <switch.h>
 
+//#include "nvgfx_gpu_gpfifo_data0_bin.h"
+
 typedef struct {
     bool initialized;
     u32 handle;
@@ -28,7 +30,7 @@ static u32 g_nvgfx_zcullinfo[40>>2];
 static nvioctl_va_region g_nvgfx_nvhostasgpu_varegions[2];
 static nvioctl_l2_state g_nvgfx_l2state;
 static nvioctl_fence g_nvgfx_nvhost_fence;
-static nvioctl_fence g_nvgfx_nvhostgpu_gpfifo_fence;
+nvioctl_fence g_nvgfx_nvhostgpu_gpfifo_fence;
 static u8 *g_nvgfx_nvhost_userdata;
 static size_t g_nvgfx_nvhost_userdata_size;
 static u32 g_nvgfx_nvhostctrl_eventres;
@@ -38,8 +40,11 @@ size_t g_nvgfx_singleframebuf_size = /*0x3c0000*/ 1280*768*4;
 
 static nvmapobj nvmap_objs[18];
 
+static u64 nvmap_obj3_mapbuffer_x0_offset;
 static u64 nvmap_obj4_mapbuffer_x0_offset;
 static u64 nvmap_obj6_mapbuffer_xdb_offset;
+
+static u64 g_nvgfx_gpfifo_pos = 0;
 
 //Some of this struct is based on tegra_dc_ext_flip_windowattr.
 static u32 g_gfxprod_BufferInitData[0x178>>2] = {
@@ -132,8 +137,6 @@ Result nvgfxInitialize(void) {
 
     u32 framebuf_nvmap_handle = 0;//Special handle ID for framebuf/windowbuf.
 
-    //nvioctl_gpfifo_entry gpfifo_entries[2] = {{0x00030000, 0x00177a05}, {0x00031778, 0x80002e05}};
-
     g_nvgfx_fd_nvhostctrlgpu = 0;
     g_nvgfx_fd_nvhostasgpu = 0;
     g_nvgfx_fd_nvmap = 0;
@@ -155,9 +158,12 @@ Result nvgfxInitialize(void) {
     memset(&g_nvgfx_nvhostgpu_gpfifo_fence, 0, sizeof(g_nvgfx_nvhostgpu_gpfifo_fence));
     g_nvgfx_nvhostasgpu_allocspace_offset = 0;
     g_nvgfx_zcullctxsize = 0;
+    nvmap_obj3_mapbuffer_x0_offset = 0;
     nvmap_obj4_mapbuffer_x0_offset = 0;
     nvmap_obj6_mapbuffer_xdb_offset = 0;
     g_nvgfx_nvhostctrl_eventres = 0;
+
+    g_nvgfx_gpfifo_pos = 0;
 
     //All of the below sizes for nvmapobjInitialize are from certain official sw.
     if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[0], 0x1000);
@@ -230,7 +236,7 @@ Result nvgfxInitialize(void) {
 
     if (R_SUCCEEDED(rc)) rc = nvioctlChannel_AllocGpfifoEx2(g_nvgfx_fd_nvhostgpu, 0x800, 0x1, 0, 0, 0, 0, &g_nvgfx_nvhost_fence);
 
-    if (R_SUCCEEDED(rc)) rc = nvioctlChannel_AllocObjCtx(g_nvgfx_fd_nvhostgpu, NVIOCTL_CHANNEL_OBJ_CLASSNUM_3d, 0);
+    if (R_SUCCEEDED(rc)) rc = nvioctlChannel_AllocObjCtx(g_nvgfx_fd_nvhostgpu, g_nvgfx_gpu_characteristics.threed_class, 0);
 
     if (R_SUCCEEDED(rc)) rc = nvQueryEvent(g_nvgfx_fd_nvhostgpu, 3, &g_nvgfx_nvhostgpu_event3);
 
@@ -242,7 +248,7 @@ Result nvgfxInitialize(void) {
 
     if (R_SUCCEEDED(rc)) rc = nvmapobjSetup(&nvmap_objs[3], 0, 0, 0x20000, 0);
 
-    if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 0, 0, nvmap_objs[3].handle, 0x10000, 0, 0, 0, NULL);
+    if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 0, 0, nvmap_objs[3].handle, 0x10000, 0, 0, 0, &nvmap_obj3_mapbuffer_x0_offset);
     if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 0, 0xfe, nvmap_objs[3].handle, 0x10000, 0, 0, 0, NULL);
 
     if (R_SUCCEEDED(rc)) rc = nvmapobjSetup(&nvmap_objs[4], 0, 0x1, 0x20000, 0);
@@ -252,10 +258,10 @@ Result nvgfxInitialize(void) {
 
     if (R_SUCCEEDED(rc)) rc = nvioctlChannel_ZCullBind(g_nvgfx_fd_nvhostgpu, nvmap_obj4_mapbuffer_x0_offset+0x8000, 0x2);
 
-    //Officially, ipcQueryPointerBufferSize and NVGPU_IOCTL_CHANNEL_SUBMIT_GPFIFO(nvioctlChannel_SubmitGPFIFO) are used here with the duplicate service session setup during nv serv init.
-    //TODO: This is probably used for GPU rendering? Is this really needed when not doing actual GPU rendering?
-    //Skip this since this causes a white-screen hang.
-    //if (R_SUCCEEDED(rc)) rc = nvioctlChannel_SubmitGPFIFO(g_nvgfx_fd_nvhostgpu, gpfifo_entries, 2, 0x104, &g_nvgfx_nvhostgpu_gpfifo_fence);
+    //Officially, ipcQueryPointerBufferSize and NVGPU_IOCTL_CHANNEL_SUBMIT_GPFIFO(nvioctlChannel_SubmitGpfifo) are used here with the duplicate service session setup during nv serv init.
+    //This is used for GPU rendering.
+    //TODO: Is this really needed when not doing actual GPU rendering?
+    //if (R_SUCCEEDED(rc)) rc = nvgfxSubmitGpfifo();
 
     if (R_SUCCEEDED(rc)) rc = nvmapobjSetup(&nvmap_objs[5], 0, 0, 0x20000, 0);
 
@@ -448,10 +454,11 @@ Result nvgfxEventWait(u32 syncpt_id, u32 threshold, s32 timeout) {
 
     if (R_SUCCEEDED(rc)) {
         do {
-            rc = nvioctlNvhostCtrl_EventWait(g_nvgfx_fd_nvhostctrl, /*0x42, 0x1ca7*/syncpt_id, threshold, /*0x64*/timeout, 0, &g_nvgfx_nvhostctrl_eventres);
+            rc = nvioctlNvhostCtrl_EventWait(g_nvgfx_fd_nvhostctrl, syncpt_id, threshold, timeout, 0, &g_nvgfx_nvhostctrl_eventres);
         } while(rc==5);//timeout error
     }
 
+    //Official sw only uses the below block when event-waiting timeout occurs.
     //Currently broken.
     //if (R_SUCCEEDED(rc)) rc = nvQueryEvent(g_nvgfx_fd_nvhostctrl, g_nvgfx_nvhostctrl_eventres, &g_nvgfx_nvhostctrl_eventhandle);
 
@@ -461,6 +468,36 @@ Result nvgfxEventWait(u32 syncpt_id, u32 threshold, s32 timeout) {
     }*/
 
     //if (R_SUCCEEDED(rc)) rc = nvioctlNvhostCtrl_EventSignal(g_nvgfx_fd_nvhostctrl, g_nvgfx_nvhostctrl_eventres);
+
+    return rc;
+}
+
+Result nvgfxSubmitGpfifo(void) {
+    //Extracted from memory of certain official sw.
+    u8 gpfifo_data[] = {0x00, 0x00, 0x00, 0x00, 0x51, 0x04, 0x00, 0x80, 0xB2, 0x00, 0x01, 0x20, 0x42, 0x00, 0x10, 0x00, 0x51, 0x04, 0x00, 0x80, 0xC0, 0x06, 0x04, 0x20, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x10, 0xF0, 0x00, 0x10, 0xE0, 0x03, 0x00, 0x80};
+
+    nvioctl_gpfifo_entry gpfifo_entries[2];
+
+    u64 total_size = 0x1778+sizeof(gpfifo_data);
+    u64 tmpva;
+
+    if (g_nvgfx_gpfifo_pos >= nvmap_objs[3].mem_size || g_nvgfx_gpfifo_pos+total_size >= nvmap_objs[3].mem_size) g_nvgfx_gpfifo_pos = 0;
+
+    //memcpy(&nvmap_objs[3].mem[g_nvgfx_gpfifo_pos], nvgfx_gpu_gpfifo_data0_bin, nvgfx_gpu_gpfifo_data0_bin_size);
+    memcpy(&nvmap_objs[3].mem[g_nvgfx_gpfifo_pos+0x1778], gpfifo_data, sizeof(gpfifo_data));
+    armDCacheFlush(nvmap_objs[3].mem, nvmap_objs[3].mem_size);
+
+    tmpva = nvmap_obj3_mapbuffer_x0_offset+g_nvgfx_gpfifo_pos;
+    gpfifo_entries[0].entry0 = (u32)tmpva | (0x00177aULL<<40);
+    gpfifo_entries[0].entry1 = ((u32)(tmpva>>32)) | (0x00177a<<8);
+
+    tmpva = nvmap_obj3_mapbuffer_x0_offset+g_nvgfx_gpfifo_pos+0x1778;
+    gpfifo_entries[1].entry0 = (u32)tmpva;
+    gpfifo_entries[1].entry1 = ((u32)(tmpva>>32)) | (0x80002e<<8);
+
+    g_nvgfx_gpfifo_pos+= total_size;
+
+    Result rc = nvioctlChannel_SubmitGpfifo(g_nvgfx_fd_nvhostgpu, gpfifo_entries, 2, 0x104, &g_nvgfx_nvhostgpu_gpfifo_fence);
 
     return rc;
 }
