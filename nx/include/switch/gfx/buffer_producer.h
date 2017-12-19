@@ -25,6 +25,10 @@ typedef struct {
     u32 numPendingBuffers;
 } PACKED bufferProducerQueueBufferOutput;
 
+typedef struct {
+    u32 unk[0x16c>>2];
+} PACKED bufferProducerGraphicBuffer;
+
 //From Android window.h.
 /* attributes queriable with query() */
 enum {
@@ -49,11 +53,11 @@ enum {
 Result bufferProducerInitialize(binderSession *session);
 void bufferProducerExit();
 
-Result bufferProducerRequestBuffer(s32 bufferIdx);
+Result bufferProducerRequestBuffer(s32 bufferIdx, bufferProducerGraphicBuffer *buf);
 Result bufferProducerDequeueBuffer(bool async, u32 width, u32 height, s32 format, u32 usage, s32 *buf, bufferProducerFence *fence);
 Result bufferProducerDetachBuffer(s32 slot);
 Result bufferProducerQueueBuffer(s32 buf, bufferProducerQueueBufferInput *input, bufferProducerQueueBufferOutput *output);
 Result bufferProducerQuery(s32 what, s32* value);
 Result bufferProducerConnect(s32 api, bool producerControlledByApp, bufferProducerQueueBufferOutput *output);
 Result bufferProducerDisconnect(s32 api);
-Result bufferProducerTegraBufferInit(s32 buf, u8 input[0x178]);
+Result bufferProducerGraphicBufferInit(s32 buf, bufferProducerGraphicBuffer *input);

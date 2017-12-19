@@ -162,7 +162,7 @@ static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 L
            rc = _gfxDequeueBuffer();
            if (R_FAILED(rc)) break;
 
-           rc = bufferProducerRequestBuffer(g_gfxCurrentProducerBuffer);
+           rc = bufferProducerRequestBuffer(g_gfxCurrentProducerBuffer, NULL);
            if (R_FAILED(rc)) break;
 
            g_gfx_ProducerSlotsRequested[i] = 1;

@@ -47,8 +47,9 @@ static u64 nvmap_obj6_mapbuffer_xdb_offset;
 static u64 g_nvgfx_gpfifo_pos = 0;
 
 //Some of this struct is based on tegra_dc_ext_flip_windowattr.
-static u32 g_gfxprod_BufferInitData[0x178>>2] = {
-0x1, 0x16c, 0x0,
+//TODO: How much of this struct do official apps really set? Most of it seems to be used as-is from the bufferProducerRequestBuffer() output.
+static bufferProducerGraphicBuffer g_gfxprod_BufferInitData = {
+.unk = {
 0x47424652,
 1280, 720,
 1280,
@@ -79,6 +80,7 @@ static u32 g_gfxprod_BufferInitData[0x178>>2] = {
 0x0, 0x0, 0x0, 0x0,
 0x0,
 0x0, 0x0 //Unknown, some timestamp perhaps?
+}
 };
 
 Result nvmapobjInitialize(nvmapobj *obj, size_t size) {
@@ -132,7 +134,7 @@ Result nvgfxInitialize(void) {
     u32 pos=0, i=0;
     s32 tmp=0;
     u32 tmpval=0;
-    u64 *ptr64 = (u64*)g_gfxprod_BufferInitData;
+    u64 *ptr64 = (u64*)g_gfxprod_BufferInitData.unk;
     if(g_nvgfxInitialized)return 0;
 
     u32 framebuf_nvmap_handle = 0;//Special handle ID for framebuf/windowbuf.
@@ -311,12 +313,12 @@ Result nvgfxInitialize(void) {
 
                      //The above gets a nvmap_handle, but normally it's the same value passed to nvioctlNvmap_GetId().
 
-                     g_gfxprod_BufferInitData[0xa] = i;
-                     g_gfxprod_BufferInitData[0xe] = tmpval;
-                     g_gfxprod_BufferInitData[0x20] = tmpval;
-                     g_gfxprod_BufferInitData[0x21] = g_nvgfx_singleframebuf_size*i;
-                     ptr64[0x170>>3] = svcGetSystemTick();
-                     rc = bufferProducerTegraBufferInit(i, (u8*)g_gfxprod_BufferInitData);
+                     g_gfxprod_BufferInitData.unk[0x7] = i;
+                     g_gfxprod_BufferInitData.unk[0xb] = tmpval;
+                     g_gfxprod_BufferInitData.unk[0x1d] = tmpval;
+                     g_gfxprod_BufferInitData.unk[0x1e] = g_nvgfx_singleframebuf_size*i;
+                     ptr64[0x164>>3] = svcGetSystemTick();
+                     rc = bufferProducerGraphicBufferInit(i, &g_gfxprod_BufferInitData);
                      if (R_FAILED(rc)) break;
                  }
                  if (R_FAILED(rc)) break;

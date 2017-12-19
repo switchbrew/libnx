@@ -20,7 +20,7 @@ enum {
     /* 0xB */ DISCONNECT,
     /* 0xC */ SET_SIDEBAND_STREAM,
     /* 0xD */ ALLOCATE_BUFFERS,
-    /* 0xE */ TEGRA_BUFFER_INIT, // Custom Switch-specific command - unofficial name.
+    /* 0xE */ GRAPHIC_BUFFER_INIT, // Custom Switch-specific command - unofficial name.
 };
 
 static char g_bufferProducer_InterfaceDescriptor[] = "android.gui.IGraphicBufferProducer";
@@ -38,7 +38,7 @@ void bufferProducerExit()
     g_bufferProducerBinderSession = NULL;
 }
 
-Result bufferProducerRequestBuffer(s32 bufferIdx)
+Result bufferProducerRequestBuffer(s32 bufferIdx, bufferProducerGraphicBuffer *buf)
 {
     Result rc;
     Parcel parcel, parcel_reply;
@@ -55,12 +55,15 @@ Result bufferProducerRequestBuffer(s32 bufferIdx)
     rc = parcelTransact(g_bufferProducerBinderSession, REQUEST_BUFFER, &parcel, &parcel_reply);
 
     if (R_SUCCEEDED(rc)) {
-        /*
         int nonNull = parcelReadInt32(&parcel_reply);
 
         if (nonNull != 0) {
-            // Fixme
-            fatalSimple(222 | (100 << 9));
+            size_t tmpsize=0;
+            void* tmp_ptr;
+
+            tmp_ptr = parcelReadFlattenedObject(&parcel_reply, &tmpsize);
+            if (tmp_ptr==NULL || tmpsize!=sizeof(bufferProducerGraphicBuffer)) return MAKERESULT(MODULE_LIBNX, LIBNX_BADINPUT);
+            if (buf) memcpy(buf, tmp_ptr, sizeof(bufferProducerGraphicBuffer));
         }
 
         int status = parcelReadInt32(&parcel_reply);
@@ -68,7 +71,6 @@ Result bufferProducerRequestBuffer(s32 bufferIdx)
         if (status != 0) {
             rc = MAKERESULT(MODULE_LIBNX, LIBNX_BUFFERPRODUCER_ERROR);
         }
-        */
     }
 
     return rc;
@@ -247,10 +249,11 @@ Result bufferProducerDisconnect(s32 api)
     return rc;
 }
 
-Result bufferProducerTegraBufferInit(s32 buf, u8 input[0x178])
+Result bufferProducerGraphicBufferInit(s32 buf, bufferProducerGraphicBuffer *input)
 {
     Result rc;
     Parcel parcel, parcel_reply;
+    bool flag = 0;
 
     if (g_bufferProducerBinderSession==NULL) return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
 
@@ -259,14 +262,19 @@ Result bufferProducerTegraBufferInit(s32 buf, u8 input[0x178])
 
     parcelWriteInterfaceToken(&parcel, g_bufferProducer_InterfaceDescriptor);
     parcelWriteInt32(&parcel, buf);
-    parcelWriteData(&parcel, input, 0x178);
 
-    rc = parcelTransact(g_bufferProducerBinderSession, TEGRA_BUFFER_INIT, &parcel, &parcel_reply);
+    if (input!=NULL) flag = 1;
+    parcelWriteInt32(&parcel, flag);
+    if (flag) parcelWriteFlattenedObject(&parcel, input, sizeof(bufferProducerGraphicBuffer));
+
+    rc = parcelTransact(g_bufferProducerBinderSession, GRAPHIC_BUFFER_INIT, &parcel, &parcel_reply);
 
     if (R_SUCCEEDED(rc)) {
-        // TODO: parse reply
+        int result = parcelReadInt32(&parcel_reply);
+        if (result != 0)
+            rc = MAKERESULT(MODULE_LIBNX, LIBNX_BUFFERPRODUCER_ERROR);
     }
 
-    return 0;
+    return rc;
 }
 
