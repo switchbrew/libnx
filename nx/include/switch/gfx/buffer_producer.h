@@ -26,7 +26,20 @@ typedef struct {
 } PACKED bufferProducerQueueBufferOutput;
 
 typedef struct {
-    u32 unk[0x16c>>2];
+    u32 magic;
+    u32 width;
+    u32 height;
+    u32 stride;
+    u32 format;
+    u32 usage;
+
+    u32 pid;
+    u32 refcount;
+
+    u32 numFds;
+    u32 numInts;
+
+    u32 data[0x144>>2];//Actual size is numFds*4 + numInts*4.
 } PACKED bufferProducerGraphicBuffer;
 
 //From Android window.h.

@@ -49,12 +49,21 @@ static u64 g_nvgfx_gpfifo_pos = 0;
 //Some of this struct is based on tegra_dc_ext_flip_windowattr.
 //TODO: How much of this struct do official apps really set? Most of it seems to be used as-is from the bufferProducerRequestBuffer() output.
 static bufferProducerGraphicBuffer g_gfxprod_BufferInitData = {
-.unk = {
-0x47424652,
-1280, 720,
-1280,
-0x1, 0xb00, 0x2a, 0x0,
-0x0, 0x51, 0xffffffff,
+.magic = 0x47424652,//"RFBG"/'GBFR'
+.width = 1280,
+.height = 720,
+.stride = 1280,
+.format = 0x1,
+.usage = 0xb00,
+
+.pid = 0x2a, //Official sw sets this to the output of "getpid()", which calls a func which is hard-coded for returning 0x2a.
+.refcount = 0x0,  //Official sw sets this to the output of "android_atomic_inc()".
+
+.numFds = 0x0,
+.numInts = sizeof(g_gfxprod_BufferInitData.data)>>2,//0x51
+
+.data = {
+0xffffffff,
 0x0, //nvmap handle
 0x0, 0xdaffcaff, 0x2a, 0x0,
 0xb00, 0x1, 0x1, 1280,
@@ -134,7 +143,7 @@ Result nvgfxInitialize(void) {
     u32 pos=0, i=0;
     s32 tmp=0;
     u32 tmpval=0;
-    u64 *ptr64 = (u64*)g_gfxprod_BufferInitData.unk;
+    u64 *ptr64 = (u64*)g_gfxprod_BufferInitData.data;
     if(g_nvgfxInitialized)return 0;
 
     u32 framebuf_nvmap_handle = 0;//Special handle ID for framebuf/windowbuf.
@@ -313,11 +322,11 @@ Result nvgfxInitialize(void) {
 
                      //The above gets a nvmap_handle, but normally it's the same value passed to nvioctlNvmap_GetId().
 
-                     g_gfxprod_BufferInitData.unk[0x7] = i;
-                     g_gfxprod_BufferInitData.unk[0xb] = tmpval;
-                     g_gfxprod_BufferInitData.unk[0x1d] = tmpval;
-                     g_gfxprod_BufferInitData.unk[0x1e] = g_nvgfx_singleframebuf_size*i;
-                     ptr64[0x164>>3] = svcGetSystemTick();
+                     g_gfxprod_BufferInitData.refcount = i;
+                     g_gfxprod_BufferInitData.data[0x1] = tmpval;
+                     g_gfxprod_BufferInitData.data[0x13] = tmpval;
+                     g_gfxprod_BufferInitData.data[0x14] = g_nvgfx_singleframebuf_size*i;
+                     ptr64[0x13c>>3] = svcGetSystemTick();
                      rc = bufferProducerGraphicBufferInit(i, &g_gfxprod_BufferInitData);
                      if (R_FAILED(rc)) break;
                  }
