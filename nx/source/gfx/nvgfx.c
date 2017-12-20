@@ -36,7 +36,9 @@ static size_t g_nvgfx_nvhost_userdata_size;
 static u32 g_nvgfx_nvhostctrl_eventres;
 
 u32 g_nvgfx_totalframebufs = 0;
-size_t g_nvgfx_singleframebuf_size = /*0x3c0000*/ 1280*768*4;
+size_t g_nvgfx_framebuf_width=0, g_nvgfx_framebuf_aligned_width=0;
+size_t g_nvgfx_framebuf_height=0, g_nvgfx_framebuf_aligned_height=0;
+size_t g_nvgfx_singleframebuf_size=0;
 
 static nvmapobj nvmap_objs[18];
 
@@ -49,47 +51,33 @@ static u64 g_nvgfx_gpfifo_pos = 0;
 //Some of this struct is based on tegra_dc_ext_flip_windowattr.
 //TODO: How much of this struct do official apps really set? Most of it seems to be used as-is from the bufferProducerRequestBuffer() output.
 static bufferProducerGraphicBuffer g_gfxprod_BufferInitData = {
-.magic = 0x47424652,//"RFBG"/'GBFR'
-.width = 1280,
-.height = 720,
-.stride = 1280,
-.format = 0x1,
-.usage = 0xb00,
+    .magic = 0x47424652,//"RFBG"/'GBFR'
+    .format = 0x1,
+    .usage = 0xb00,
 
-.pid = 0x2a, //Official sw sets this to the output of "getpid()", which calls a func which is hard-coded for returning 0x2a.
-.refcount = 0x0,  //Official sw sets this to the output of "android_atomic_inc()".
+    .pid = 0x2a, //Official sw sets this to the output of "getpid()", which calls a func which is hard-coded for returning 0x2a.
+    .refcount = 0x0,  //Official sw sets this to the output of "android_atomic_inc()".
 
-.numFds = 0x0,
-.numInts = sizeof(g_gfxprod_BufferInitData.data)>>2,//0x51
+    .numFds = 0x0,
+    .numInts = sizeof(g_gfxprod_BufferInitData.data)>>2,//0x51
 
-.data = {
-0xffffffff,
-0x0, //nvmap handle
-0x0, 0xdaffcaff, 0x2a, 0x0,
-0xb00, 0x1, 0x1, 1280,
-0x3c0000, 0x1, 0x0, 1280,
-720, 0x532120, 0x1, 0x3, //0x52* field is flags
-0x1400,
-0x0, //nvmap handle
-0x0,
-0xfe,
-0x4, 0x0, 0x0, 0x0,
-0x0, 0x3c0000, 0x0, 0x0,
-0x0, 0x0, 0x0, 0x0,
-0x0, 0x0, 0x0, 0x0,
-0x0, 0x0, 0x0, 0x0,
-0x0, 0x0, 0x0, 0x0,
-0x0, 0x0, 0x0, 0x0,
-0x0, 0x0, 0x0, 0x0,
-0x0, 0x0, 0x0, 0x0,
-0x0, 0x0, 0x0, 0x0,
-0x0, 0x0, 0x0, 0x0,
-0x0, 0x0, 0x0, 0x0,
-0x0, 0x0, 0x0, 0x0,
-0x0, 0x0, 0x0, 0x0,
-0x0,
-0x0, 0x0 //Unknown, some timestamp perhaps?
-}
+    .data = {
+        .unk_x0 = 0xffffffff,
+        .unk_x8 = 0x0,
+        .unk_xc = 0xdaffcaff,
+        .unk_x10 = 0x2a,
+        .unk_x14 = 0x0,
+        .unk_x18 = 0xb00,
+        .unk_x1c = 0x1,
+        .unk_x20 = 0x1,
+        .unk_x2c = 0x1,
+        .unk_x30 = 0x0,
+        .flags = 0x532120,
+        .unk_x40 = 0x1,
+        .unk_x44 = 0x3,
+        .unk_x54 = 0xfe,
+        .unk_x58 = 0x4,
+    }
 };
 
 Result nvmapobjInitialize(nvmapobj *obj, size_t size) {
@@ -143,7 +131,6 @@ Result nvgfxInitialize(void) {
     u32 pos=0, i=0;
     s32 tmp=0;
     u32 tmpval=0;
-    u64 *ptr64 = (u64*)g_gfxprod_BufferInitData.data;
     if(g_nvgfxInitialized)return 0;
 
     u32 framebuf_nvmap_handle = 0;//Special handle ID for framebuf/windowbuf.
@@ -175,6 +162,16 @@ Result nvgfxInitialize(void) {
     g_nvgfx_nvhostctrl_eventres = 0;
 
     g_nvgfx_gpfifo_pos = 0;
+
+    if (g_nvgfx_framebuf_width==0 || g_nvgfx_framebuf_height==0) {
+        g_nvgfx_framebuf_width = 1280;
+        g_nvgfx_framebuf_aligned_width = (g_nvgfx_framebuf_width+15) & ~15;//Align to 16.
+
+        g_nvgfx_framebuf_height = 720;
+        g_nvgfx_framebuf_aligned_height = (g_nvgfx_framebuf_height+127) & ~127;//Align to 128.
+    }
+
+    g_nvgfx_singleframebuf_size = g_nvgfx_framebuf_aligned_width*g_nvgfx_framebuf_aligned_height*4;
 
     //All of the below sizes for nvmapobjInitialize are from certain official sw.
     if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[0], 0x1000);
@@ -304,6 +301,19 @@ Result nvgfxInitialize(void) {
              if (R_FAILED(rc)) break;
 
              if(pos==1) {
+                 g_gfxprod_BufferInitData.width = g_nvgfx_framebuf_width;
+                 g_gfxprod_BufferInitData.height = g_nvgfx_framebuf_height;
+                 g_gfxprod_BufferInitData.stride = g_nvgfx_framebuf_aligned_width;
+
+                 g_gfxprod_BufferInitData.data.width_unk0 = g_nvgfx_framebuf_width;
+                 g_gfxprod_BufferInitData.data.width_unk1 = g_nvgfx_framebuf_width;
+                 g_gfxprod_BufferInitData.data.height_unk = g_nvgfx_framebuf_height;
+
+                 g_gfxprod_BufferInitData.data.byte_stride = g_nvgfx_framebuf_aligned_width*4;
+
+                 g_gfxprod_BufferInitData.data.buffer_size0 = g_nvgfx_singleframebuf_size;
+                 g_gfxprod_BufferInitData.data.buffer_size1 = g_nvgfx_singleframebuf_size;
+
                  rc = bufferProducerQuery(NATIVE_WINDOW_FORMAT, &tmp);
                  if (R_FAILED(rc)) break;
 
@@ -323,10 +333,10 @@ Result nvgfxInitialize(void) {
                      //The above gets a nvmap_handle, but normally it's the same value passed to nvioctlNvmap_GetId().
 
                      g_gfxprod_BufferInitData.refcount = i;
-                     g_gfxprod_BufferInitData.data[0x1] = tmpval;
-                     g_gfxprod_BufferInitData.data[0x13] = tmpval;
-                     g_gfxprod_BufferInitData.data[0x14] = g_nvgfx_singleframebuf_size*i;
-                     ptr64[0x13c>>3] = svcGetSystemTick();
+                     g_gfxprod_BufferInitData.data.nvmap_handle0 = tmpval;
+                     g_gfxprod_BufferInitData.data.nvmap_handle1 = tmpval;
+                     g_gfxprod_BufferInitData.data.buffer_offset = g_nvgfx_singleframebuf_size*i;
+                     g_gfxprod_BufferInitData.data.timestamp = svcGetSystemTick();
                      rc = bufferProducerGraphicBufferInit(i, &g_gfxprod_BufferInitData);
                      if (R_FAILED(rc)) break;
                  }
@@ -408,6 +418,9 @@ Result nvgfxInitialize(void) {
         g_nvgfx_fd_nvhostasgpu = 0;
         g_nvgfx_fd_nvhostctrlgpu = 0;
 
+        g_nvgfx_framebuf_width = 0;
+        g_nvgfx_framebuf_height = 0;
+
         nvmapobjCloseAll();
 
         if(g_nvgfx_nvhost_userdata) {
@@ -449,6 +462,9 @@ void nvgfxExit(void) {
     g_nvgfx_fd_nvmap = 0;
     g_nvgfx_fd_nvhostasgpu = 0;
     g_nvgfx_fd_nvhostctrlgpu = 0;
+
+    g_nvgfx_framebuf_width = 0;
+    g_nvgfx_framebuf_height = 0;
 
     nvmapobjCloseAll();
 
