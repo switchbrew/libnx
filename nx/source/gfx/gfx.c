@@ -23,10 +23,13 @@ static bufferProducerQueueBufferOutput g_gfx_QueueBuffer_QueueBufferOutput;
 
 static bool g_gfxDoubleBuf = 1;
 
+static size_t g_gfx_framebuf_width=0, g_gfx_framebuf_aligned_width=0;
+static size_t g_gfx_framebuf_height=0, g_gfx_framebuf_aligned_height=0;
+size_t g_gfx_singleframebuf_size=0;
+
 extern u32 __nx_applet_type;
 
 extern u32 g_nvgfx_totalframebufs;
-extern size_t g_nvgfx_singleframebuf_size;
 extern nvioctl_fence g_nvgfx_nvhostgpu_gpfifo_fence;
 
 //static Result _gfxGetDisplayResolution(u64 *width, u64 *height);
@@ -52,6 +55,38 @@ static bufferProducerQueueBufferInput g_gfxQueueBufferData = {
             },
             {0xffffffff, 0x0}, {0xffffffff, 0x0}, {0xffffffff, 0x0},
         },
+    }
+};
+
+//Some of this struct is based on tegra_dc_ext_flip_windowattr.
+//TODO: How much of this struct do official apps really set? Most of it seems to be used as-is from the bufferProducerRequestBuffer() output.
+static bufferProducerGraphicBuffer g_gfx_BufferInitData = {
+    .magic = 0x47424652,//"RFBG"/'GBFR'
+    .format = 0x1,
+    .usage = 0xb00,
+
+    .pid = 0x2a, //Official sw sets this to the output of "getpid()", which calls a func which is hard-coded for returning 0x2a.
+    .refcount = 0x0,  //Official sw sets this to the output of "android_atomic_inc()".
+
+    .numFds = 0x0,
+    .numInts = sizeof(g_gfx_BufferInitData.data)>>2,//0x51
+
+    .data = {
+        .unk_x0 = 0xffffffff,
+        .unk_x8 = 0x0,
+        .unk_xc = 0xdaffcaff,
+        .unk_x10 = 0x2a,
+        .unk_x14 = 0x0,
+        .unk_x18 = 0xb00,
+        .unk_x1c = 0x1,
+        .unk_x20 = 0x1,
+        .unk_x2c = 0x1,
+        .unk_x30 = 0x0,
+        .flags = 0x532120,
+        .unk_x40 = 0x1,
+        .unk_x44 = 0x3,
+        .unk_x54 = 0xfe,
+        .unk_x58 = 0x4,
     }
 };
 
@@ -82,7 +117,7 @@ static Result _gfxDequeueBuffer(void) {
 
     memcpy(&tmp_fence, fence, sizeof(bufferProducerFence));//Offical sw waits on the fence from the previous DequeueBuffer call. Using the fence from the current DequeueBuffer call results in nvgfxEventWait() failing.
 
-    rc = bufferProducerDequeueBuffer(async, 1280, 720, 0, 0x300, &g_gfxCurrentProducerBuffer, fence);
+    rc = bufferProducerDequeueBuffer(async, g_gfx_framebuf_width, g_gfx_framebuf_height, 0, 0x300, &g_gfxCurrentProducerBuffer, fence);
 
     if (R_SUCCEEDED(rc) && tmp_fence.is_valid) rc = nvgfxEventWait(tmp_fence.nv_fences[0].id, tmp_fence.nv_fences[0].value, -1);
 
@@ -126,6 +161,29 @@ static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 L
 
     memset(g_gfx_ProducerSlotsRequested, 0, sizeof(g_gfx_ProducerSlotsRequested));
     memset(&g_gfx_DequeueBuffer_fence, 0, sizeof(g_gfx_DequeueBuffer_fence));
+
+    if (g_gfx_framebuf_width==0 || g_gfx_framebuf_height==0) {
+        g_gfx_framebuf_width = 1280;
+        g_gfx_framebuf_aligned_width = (g_gfx_framebuf_width+15) & ~15;//Align to 16.
+
+        g_gfx_framebuf_height = 720;
+        g_gfx_framebuf_aligned_height = (g_gfx_framebuf_height+127) & ~127;//Align to 128.
+    }
+
+    g_gfx_singleframebuf_size = g_gfx_framebuf_aligned_width*g_gfx_framebuf_aligned_height*4;
+
+    g_gfx_BufferInitData.width = g_gfx_framebuf_width;
+    g_gfx_BufferInitData.height = g_gfx_framebuf_height;
+    g_gfx_BufferInitData.stride = g_gfx_framebuf_aligned_width;
+
+    g_gfx_BufferInitData.data.width_unk0 = g_gfx_framebuf_width;
+    g_gfx_BufferInitData.data.width_unk1 = g_gfx_framebuf_width;
+    g_gfx_BufferInitData.data.height_unk = g_gfx_framebuf_height;
+
+    g_gfx_BufferInitData.data.byte_stride = g_gfx_framebuf_aligned_width*4;
+
+    g_gfx_BufferInitData.data.buffer_size0 = g_gfx_singleframebuf_size;
+    g_gfx_BufferInitData.data.buffer_size1 = g_gfx_singleframebuf_size;
 
     rc = viInitialize(servicetype);
     if (R_FAILED(rc)) return rc;
@@ -218,6 +276,9 @@ static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 L
         g_gfxFramebuf = NULL;
         g_gfxFramebufSize = 0;
 
+        g_gfx_framebuf_width = 0;
+        g_gfx_framebuf_height = 0;
+
         memset(g_gfx_ProducerSlotsRequested, 0, sizeof(g_gfx_ProducerSlotsRequested));
     }
 
@@ -285,7 +346,20 @@ void gfxExit(void) {
     g_gfxFramebuf = NULL;
     g_gfxFramebufSize = 0;
 
+    g_gfx_framebuf_width = 0;
+    g_gfx_framebuf_height = 0;
+
     memset(g_gfx_ProducerSlotsRequested, 0, sizeof(g_gfx_ProducerSlotsRequested));
+}
+
+Result _gfxGraphicBufferInit(s32 buf, u32 nvmap_handle) {
+    g_gfx_BufferInitData.refcount = buf;
+    g_gfx_BufferInitData.data.nvmap_handle0 = nvmap_handle;
+    g_gfx_BufferInitData.data.nvmap_handle1 = nvmap_handle;
+    g_gfx_BufferInitData.data.buffer_offset = g_gfx_singleframebuf_size*buf;
+    g_gfx_BufferInitData.data.timestamp = svcGetSystemTick();
+
+    return bufferProducerGraphicBufferInit(buf, &g_gfx_BufferInitData);
 }
 
 static void _waitevent(Handle *handle) {
@@ -316,14 +390,14 @@ void gfxSwapBuffers() {
 }
 
 u8* gfxGetFramebuffer(u32* width, u32* height) {
-    if(width) *width = 1280;
-    if(height) *height = 720;
+    if(width) *width = g_gfx_framebuf_width;
+    if(height) *height = g_gfx_framebuf_height;
 
-    return &g_gfxFramebuf[g_gfxCurrentBuffer*g_nvgfx_singleframebuf_size];
+    return &g_gfxFramebuf[g_gfxCurrentBuffer*g_gfx_singleframebuf_size];
 }
 
 size_t gfxGetFramebufferSize(void) {
-    return g_nvgfx_singleframebuf_size;
+    return g_gfx_singleframebuf_size;
 }
 
 void gfxSetDoubleBuffering(bool doubleBuffering) {
@@ -331,7 +405,7 @@ void gfxSetDoubleBuffering(bool doubleBuffering) {
 }
 
 void gfxFlushBuffers(void) {
-    armDCacheFlush(&g_gfxFramebuf[g_gfxCurrentBuffer*g_nvgfx_singleframebuf_size], g_nvgfx_singleframebuf_size);
+    armDCacheFlush(&g_gfxFramebuf[g_gfxCurrentBuffer*g_gfx_singleframebuf_size], g_gfx_singleframebuf_size);
 }
 
 /*static Result _gfxGetDisplayResolution(u64 *width, u64 *height) {
