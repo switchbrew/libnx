@@ -174,20 +174,20 @@ Result nvgfxInitialize(void) {
     g_nvgfx_singleframebuf_size = g_nvgfx_framebuf_aligned_width*g_nvgfx_framebuf_aligned_height*4;
 
     //All of the below sizes for nvmapobjInitialize are from certain official sw.
-    if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[0], 0x1000);
+    //if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[0], 0x1000);
     if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[1], 0x10000);
     if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[2], 0x1000);
     if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[3], 0x10000);
     if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[4], 0x59000);
-    if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[5], 0x1000000);
+    //if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[5], 0x1000000);
     if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[6], g_nvgfx_totalframebufs*g_nvgfx_singleframebuf_size);
-    if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[7], 0x1000000);
-    if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[8], 0x800000);
-    if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[9], 0x100000);
+    //if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[7], 0x1000000);
+    //if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[8], 0x800000);
+    //if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[9], 0x100000);
     if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[10], 0x3000);
-    if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[11], 0x1000);
-    if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[12], 0x1000);
-    if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[13], 0x1000);
+    //if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[11], 0x1000);
+    //if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[12], 0x1000);
+    //if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[13], 0x1000);
     if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[14], 0x1000);
     if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[15], 0x6000);
     if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_objs[16], 0x1000);
@@ -222,10 +222,10 @@ Result nvgfxInitialize(void) {
     if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_AllocSpace(g_nvgfx_fd_nvhostasgpu, 0x10000, 0x20000, 0, 0x10000, &g_nvgfx_nvhostasgpu_allocspace_offset);
     if (R_SUCCEEDED(rc)) rc = nvOpen(&g_nvgfx_fd_nvmap, "/dev/nvmap");
 
-    if (R_SUCCEEDED(rc)) rc = nvmapobjSetup(&nvmap_objs[0], 0, 0, 0x20000, 0);
+    /*if (R_SUCCEEDED(rc)) rc = nvmapobjSetup(&nvmap_objs[0], 0, 0, 0x20000, 0);
 
     if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 0, 0, nvmap_objs[0].handle, 0x10000, 0, 0, 0, NULL);
-    if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 0, 0xfe, nvmap_objs[0].handle, 0x10000, 0, 0, 0, NULL);
+    if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 0, 0xfe, nvmap_objs[0].handle, 0x10000, 0, 0, 0, NULL);*/
 
     if (R_SUCCEEDED(rc)) rc = nvmapobjSetup(&nvmap_objs[1], 0, 0, 0x20000, 0);
 
@@ -268,13 +268,12 @@ Result nvgfxInitialize(void) {
 
     //Officially, ipcQueryPointerBufferSize and NVGPU_IOCTL_CHANNEL_SUBMIT_GPFIFO(nvioctlChannel_SubmitGpfifo) are used here with the duplicate service session setup during nv serv init.
     //This is used for GPU rendering.
-    //TODO: Is this really needed when not doing actual GPU rendering?
     //if (R_SUCCEEDED(rc)) rc = nvgfxSubmitGpfifo();
 
-    if (R_SUCCEEDED(rc)) rc = nvmapobjSetup(&nvmap_objs[5], 0, 0, 0x20000, 0);
+    /*if (R_SUCCEEDED(rc)) rc = nvmapobjSetup(&nvmap_objs[5], 0, 0, 0x20000, 0);
 
     if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 0, 0, nvmap_objs[5].handle, 0x10000, 0, 0, 0, NULL);
-    if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 0, 0xfe, nvmap_objs[5].handle, 0x10000, 0, 0, 0, NULL);
+    if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 0, 0xfe, nvmap_objs[5].handle, 0x10000, 0, 0, 0, NULL);*/
 
     if (R_SUCCEEDED(rc)) rc = nvmapobjSetup(&nvmap_objs[6], 0, 0x1, 0x20000, 0);
 
@@ -282,73 +281,74 @@ Result nvgfxInitialize(void) {
     if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 4, 0xfe, nvmap_objs[6].handle, 0x10000, 0, 0, 0, NULL);
     if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 4, 0xdb, nvmap_objs[6].handle, 0x10000, 0, 0, 0, &nvmap_obj6_mapbuffer_xdb_offset);
 
-    if (R_SUCCEEDED(rc)) rc = nvmapobjSetup(&nvmap_objs[7], 0, 0, 0x20000, 0);
+    /*if (R_SUCCEEDED(rc)) rc = nvmapobjSetup(&nvmap_objs[7], 0, 0, 0x20000, 0);
 
     if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 4, 0, nvmap_objs[7].handle, 0x10000, 0, 0, 0, NULL);
-    if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 4, 0xfe, nvmap_objs[7].handle, 0x10000, 0, 0, 0, NULL);
+    if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 4, 0xfe, nvmap_objs[7].handle, 0x10000, 0, 0, 0, NULL);*/
 
-    if (R_SUCCEEDED(rc)) rc = nvmapobjSetup(&nvmap_objs[8], 0, 0x1, 0x20000, 0);
+    /*if (R_SUCCEEDED(rc)) rc = nvmapobjSetup(&nvmap_objs[8], 0, 0x1, 0x20000, 0);
 
     //Currently broken.
     //if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 5, 0, nvmap_objs[8].handle, 0x10000, 0, 0x800000, g_nvgfx_nvhostasgpu_allocspace_offset+0x10000, NULL);
-    if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 4, 0xfe, nvmap_objs[8].handle, 0x10000, 0, 0, 0, NULL);
+    if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 4, 0xfe, nvmap_objs[8].handle, 0x10000, 0, 0, 0, NULL);*/
 
     //Skip init for 0x10000000-byte nvmap obj done by certain official sw.
 
     if (R_SUCCEEDED(rc)) {
          for(pos=0; pos<g_nvgfx_totalframebufs; pos++) {
-             rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 0x100, pos<3 ? 0xdb : 0x86, framebuf_nvmap_handle, 0, pos*g_nvgfx_singleframebuf_size, g_nvgfx_singleframebuf_size, nvmap_obj6_mapbuffer_xdb_offset, NULL);
+             rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 0x100, 0xdb, framebuf_nvmap_handle, 0, pos*g_nvgfx_singleframebuf_size, g_nvgfx_singleframebuf_size, nvmap_obj6_mapbuffer_xdb_offset, NULL);
              if (R_FAILED(rc)) break;
-
-             if(pos==1) {
-                 g_gfxprod_BufferInitData.width = g_nvgfx_framebuf_width;
-                 g_gfxprod_BufferInitData.height = g_nvgfx_framebuf_height;
-                 g_gfxprod_BufferInitData.stride = g_nvgfx_framebuf_aligned_width;
-
-                 g_gfxprod_BufferInitData.data.width_unk0 = g_nvgfx_framebuf_width;
-                 g_gfxprod_BufferInitData.data.width_unk1 = g_nvgfx_framebuf_width;
-                 g_gfxprod_BufferInitData.data.height_unk = g_nvgfx_framebuf_height;
-
-                 g_gfxprod_BufferInitData.data.byte_stride = g_nvgfx_framebuf_aligned_width*4;
-
-                 g_gfxprod_BufferInitData.data.buffer_size0 = g_nvgfx_singleframebuf_size;
-                 g_gfxprod_BufferInitData.data.buffer_size1 = g_nvgfx_singleframebuf_size;
-
-                 rc = bufferProducerQuery(NATIVE_WINDOW_FORMAT, &tmp);
-                 if (R_FAILED(rc)) break;
-
-                 for(i=0; i<2; i++) {
-                     tmpval = 0;
-                     rc = nvioctlNvmap_GetId(g_nvgfx_fd_nvmap, nvmap_objs[6].handle, &tmpval);
-                     if (R_FAILED(rc)) break;
-
-                     if(tmpval==~0) {
-                         rc = 6;//official error
-                         break;
-                     }
-
-                     rc = nvioctlNvmap_FromId(g_nvgfx_fd_nvmap, tmpval, &tmpval);
-                     if (R_FAILED(rc)) break;
-
-                     //The above gets a nvmap_handle, but normally it's the same value passed to nvioctlNvmap_GetId().
-
-                     g_gfxprod_BufferInitData.refcount = i;
-                     g_gfxprod_BufferInitData.data.nvmap_handle0 = tmpval;
-                     g_gfxprod_BufferInitData.data.nvmap_handle1 = tmpval;
-                     g_gfxprod_BufferInitData.data.buffer_offset = g_nvgfx_singleframebuf_size*i;
-                     g_gfxprod_BufferInitData.data.timestamp = svcGetSystemTick();
-                     rc = bufferProducerGraphicBufferInit(i, &g_gfxprod_BufferInitData);
-                     if (R_FAILED(rc)) break;
-                 }
-                 if (R_FAILED(rc)) break;
-             }
          }
     }
 
-    if (R_SUCCEEDED(rc)) rc = nvmapobjSetup(&nvmap_objs[9], 0, 0, 0x20000, 0);
+    if (R_SUCCEEDED(rc)) {
+        g_gfxprod_BufferInitData.width = g_nvgfx_framebuf_width;
+        g_gfxprod_BufferInitData.height = g_nvgfx_framebuf_height;
+        g_gfxprod_BufferInitData.stride = g_nvgfx_framebuf_aligned_width;
+
+        g_gfxprod_BufferInitData.data.width_unk0 = g_nvgfx_framebuf_width;
+        g_gfxprod_BufferInitData.data.width_unk1 = g_nvgfx_framebuf_width;
+        g_gfxprod_BufferInitData.data.height_unk = g_nvgfx_framebuf_height;
+
+        g_gfxprod_BufferInitData.data.byte_stride = g_nvgfx_framebuf_aligned_width*4;
+
+        g_gfxprod_BufferInitData.data.buffer_size0 = g_nvgfx_singleframebuf_size;
+        g_gfxprod_BufferInitData.data.buffer_size1 = g_nvgfx_singleframebuf_size;
+
+        rc = bufferProducerQuery(NATIVE_WINDOW_FORMAT, &tmp);//TODO: What does official sw use the output from this for?
+
+        if (R_SUCCEEDED(rc)) {
+            for(i=0; i<2; i++) {
+                tmpval = 0;
+                rc = nvioctlNvmap_GetId(g_nvgfx_fd_nvmap, nvmap_objs[6].handle, &tmpval);
+                if (R_FAILED(rc)) break;
+
+                if(tmpval==~0) {
+                    rc = 6;//official error
+                    break;
+                }
+
+                rc = nvioctlNvmap_FromId(g_nvgfx_fd_nvmap, tmpval, &tmpval);
+                if (R_FAILED(rc)) break;
+
+                //The above gets a nvmap_handle, but normally it's the same value passed to nvioctlNvmap_GetId().
+
+                g_gfxprod_BufferInitData.refcount = i;
+                g_gfxprod_BufferInitData.data.nvmap_handle0 = tmpval;
+                g_gfxprod_BufferInitData.data.nvmap_handle1 = tmpval;
+                g_gfxprod_BufferInitData.data.buffer_offset = g_nvgfx_singleframebuf_size*i;
+                g_gfxprod_BufferInitData.data.timestamp = svcGetSystemTick();
+
+                rc = bufferProducerGraphicBufferInit(i, &g_gfxprod_BufferInitData);
+                if (R_FAILED(rc)) break;
+            }
+        }
+    }
+
+    /*if (R_SUCCEEDED(rc)) rc = nvmapobjSetup(&nvmap_objs[9], 0, 0, 0x20000, 0);
 
     if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 4, 0, nvmap_objs[9].handle, 0x10000, 0, 0, 0, NULL);
-    if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 4, 0xfe, nvmap_objs[9].handle, 0x10000, 0, 0, 0, NULL);
+    if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 4, 0xfe, nvmap_objs[9].handle, 0x10000, 0, 0, 0, NULL);*/
 
     if (R_SUCCEEDED(rc)) rc = nvmapobjSetup(&nvmap_objs[10], 0, 0x1, 0x20000, 0);
 
@@ -356,20 +356,20 @@ Result nvgfxInitialize(void) {
     //if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 5, 0, nvmap_objs[10].handle, 0x10000, 0, 0x10000, g_nvgfx_nvhostasgpu_allocspace_offset+0x10000+0x800000, NULL);
     if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 4, 0xfe, nvmap_objs[10].handle, 0x10000, 0, 0, 0, NULL);
 
-    if (R_SUCCEEDED(rc)) rc = nvmapobjSetup(&nvmap_objs[11], 0, 0, 0x20000, 0);
+    /*if (R_SUCCEEDED(rc)) rc = nvmapobjSetup(&nvmap_objs[11], 0, 0, 0x20000, 0);
 
     if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 4, 0, nvmap_objs[11].handle, 0x10000, 0, 0, 0, NULL);
-    if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 4, 0xfe, nvmap_objs[11].handle, 0x10000, 0, 0, 0, NULL);
+    if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 4, 0xfe, nvmap_objs[11].handle, 0x10000, 0, 0, 0, NULL);*/
 
-    if (R_SUCCEEDED(rc)) rc = nvmapobjSetup(&nvmap_objs[12], 0, 0, 0x20000, 0);
+    /*if (R_SUCCEEDED(rc)) rc = nvmapobjSetup(&nvmap_objs[12], 0, 0, 0x20000, 0);
 
     if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 4, 0, nvmap_objs[12].handle, 0x10000, 0, 0, 0, NULL);
-    if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 4, 0xfe, nvmap_objs[12].handle, 0x10000, 0, 0, 0, NULL);
+    if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 4, 0xfe, nvmap_objs[12].handle, 0x10000, 0, 0, 0, NULL);*/
 
-    if (R_SUCCEEDED(rc)) rc = nvmapobjSetup(&nvmap_objs[13], 0, 0, 0x20000, 0);
+    /*if (R_SUCCEEDED(rc)) rc = nvmapobjSetup(&nvmap_objs[13], 0, 0, 0x20000, 0);
 
     if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 4, 0, nvmap_objs[13].handle, 0x10000, 0, 0, 0, NULL);
-    if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 4, 0xfe, nvmap_objs[13].handle, 0x10000, 0, 0, 0, NULL);
+    if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 4, 0xfe, nvmap_objs[13].handle, 0x10000, 0, 0, 0, NULL);*/
 
     if (R_SUCCEEDED(rc)) rc = nvmapobjSetup(&nvmap_objs[14], 0, 0x1, 0x20000, 0);
 
