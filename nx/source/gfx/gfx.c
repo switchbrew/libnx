@@ -31,13 +31,13 @@ extern nvioctl_fence g_nvgfx_nvhostgpu_gpfifo_fence;
 
 //static Result _gfxGetDisplayResolution(u64 *width, u64 *height);
 
-//TODO: Figure out what all is required to use non-720p width/height.
+//TODO: Implement support for non-720p width/height.
 
 //TODO: Let the user configure some of this?
 static bufferProducerQueueBufferInput g_gfxQueueBufferData = {
     .timestamp = 0x0,
     .isAutoTimestamp = 0x1,
-    .crop = {0x0, 0x0, 0x0, 0x0},
+    .crop = {0x0, 0x0, 0x0, 0x0}, //Official apps which use multiple resolutions configure this for the currently used resolution, depending on the current appletOperationMode.
     .scalingMode = 0x0,
     .transform = 0x2,
     .stickyTransform = 0x0,

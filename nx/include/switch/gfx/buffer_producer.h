@@ -8,9 +8,16 @@ typedef struct {
 } PACKED bufferProducerFence;
 
 typedef struct {
+    s32 left;
+    s32 top;
+    s32 right;
+    s32 bottom;
+} PACKED bufferProducerRect;
+
+typedef struct {
     s64 timestamp;
     s32 isAutoTimestamp;
-    u32 crop[4];//Rect
+    bufferProducerRect crop;
     s32 scalingMode;
     u32 transform;
     u32 stickyTransform;
