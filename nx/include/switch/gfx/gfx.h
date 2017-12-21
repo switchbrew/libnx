@@ -12,13 +12,32 @@ void gfxExit(void);
 
 /// The default resolution is 720p, however you should use gfxGetFramebuffer() to get the current width/height.
 
-/// This can only be used before calling gfxInitDefault(), this will use fatalSimple() otherwise. If the input is 0, the default resolution will be used during gfxInitDefault(). This sets the maximum resolution for the framebuffer, used during gfxInitDefault(). This is also used as the current resolution. The width/height are reset to the default when gfxExit() is used.
+/// This can only be used before calling gfxInitDefault(), this will use fatalSimple() otherwise. If the input is 0, the default resolution will be used during gfxInitDefault(). This sets the maximum resolution for the framebuffer, used during gfxInitDefault(). This is also used as the current resolution when crop isn't set. The width/height are reset to the default when gfxExit() is used.
+/// Normally you should only use this when you need a maximum resolution larger than the default, see above.
 void gfxInitResolution(u32 width, u32 height);
+
+/// Configure framebuffer crop, by default crop is all-zero. Use all-zero input to reset to default. gfxExit() resets this to the default.
+/// When the input is invalid this returns without changing the crop data, this includes the input values being larger than the framebuf width/height.
+/// This will update the display width/height returned by gfxGetFramebuffer(), with that width/height being reset to the default when required.
+/// gfxGetFramebufferDisplayOffset() uses absolute x/y, it will not adjust for non-zero crop left/top.
+/// The new crop config will not take affect with double-buffering disabled. When used during frame-drawing, this should be called before gfxGetFramebuffer().
+void gfxConfigureCrop(s32 left, s32 top, s32 right, s32 bottom);
+
+/// Wrapper for gfxConfigureCrop(). Use this to set the resolution, within the bounds of the maximum resolution. Use all-zero input to reset to default.
+void gfxConfigureResolution(s32 width, s32 height);
 
 void gfxWaitForVsync();
 void gfxSwapBuffers();
+
+/// Get the current framebuffer address, with optional output ptrs for the display width/height. The display width/height is adjusted by gfxConfigureCrop()/gfxConfigureResolution().
 u8* gfxGetFramebuffer(u32* width, u32* height);
-size_t gfxGetFramebufferSize(void); /// Use this to get the actual byte-size of the buffer for use with memset/etc, do not calculate the byte-size manually with the width and height from gfxGetFramebuffer. The height returned by gfxGetFramebuffer is the display height not the aligned height.
+
+/// Get the original framebuffer width/height without crop.
+void gfxGetFramebufferResolution(u32* width, u32* height);
+
+/// Use this to get the actual byte-size of the buffer for use with memset/etc, do not calculate the byte-size manually with the width and height from gfxGetFramebuffer/gfxGetFramebufferResolution.
+size_t gfxGetFramebufferSize(void);
+
 void gfxSetDoubleBuffering(bool doubleBuffering);
 void gfxFlushBuffers(void);
 
@@ -28,7 +47,8 @@ static inline u32 gfxGetFramebufferDisplayOffset(u32 x, u32 y) {
     u32 width=0, height=0;
     u32 tilepos, tmp_pos;
 
-    gfxGetFramebuffer(&width, &height);
+    gfxGetFramebufferResolution(&width, NULL);
+    gfxGetFramebuffer(NULL, &height);
 
     if (x >= width || y >= height) return (gfxGetFramebufferSize()-4)/4;//Return the last pixel-offset in the buffer, the data located here is not displayed due to alignment.
 

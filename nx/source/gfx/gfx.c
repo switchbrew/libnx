@@ -25,6 +25,7 @@ static bool g_gfxDoubleBuf = 1;
 
 static size_t g_gfx_framebuf_width=0, g_gfx_framebuf_aligned_width=0;
 static size_t g_gfx_framebuf_height=0, g_gfx_framebuf_aligned_height=0;
+static size_t g_gfx_framebuf_display_width=0, g_gfx_framebuf_display_height=0;
 size_t g_gfx_singleframebuf_size=0;
 
 extern u32 __nx_applet_type;
@@ -166,6 +167,9 @@ static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 L
         g_gfx_framebuf_width = 1280;
         g_gfx_framebuf_height = 720;
     }
+
+    g_gfx_framebuf_display_width = g_gfx_framebuf_width;
+    g_gfx_framebuf_display_height = g_gfx_framebuf_height;
 
     g_gfx_framebuf_aligned_width = (g_gfx_framebuf_width+15) & ~15;//Align to 16.
     g_gfx_framebuf_aligned_height = (g_gfx_framebuf_height+127) & ~127;//Align to 128.
@@ -350,6 +354,8 @@ void gfxExit(void) {
     g_gfx_framebuf_height = 0;
 
     memset(g_gfx_ProducerSlotsRequested, 0, sizeof(g_gfx_ProducerSlotsRequested));
+
+    memset(&g_gfxQueueBufferData.crop, 0, sizeof(g_gfxQueueBufferData.crop));
 }
 
 void gfxInitResolution(u32 width, u32 height) {
@@ -357,6 +363,32 @@ void gfxInitResolution(u32 width, u32 height) {
 
     g_gfx_framebuf_width = width;
     g_gfx_framebuf_height = height;
+}
+
+void gfxConfigureCrop(s32 left, s32 top, s32 right, s32 bottom) {
+    if (right==0 || bottom==0) {
+        g_gfx_framebuf_display_width = g_gfx_framebuf_width;
+        g_gfx_framebuf_display_height = g_gfx_framebuf_height;
+    }
+
+    if (left < 0 || top < 0 || right < 0 || bottom < 0) return;
+    if (right < left || bottom < top) return;
+    if (left > g_gfx_framebuf_width || top > g_gfx_framebuf_height) return;
+    if (right > g_gfx_framebuf_width || bottom > g_gfx_framebuf_height) return;
+
+    g_gfxQueueBufferData.crop.left = left;
+    g_gfxQueueBufferData.crop.top = top;
+    g_gfxQueueBufferData.crop.right = right;
+    g_gfxQueueBufferData.crop.bottom = bottom;
+
+    if (right!=0 && bottom!=0) {
+        g_gfx_framebuf_display_width = right;
+        g_gfx_framebuf_display_height = bottom;
+    }
+}
+
+void gfxConfigureResolution(s32 width, s32 height) {
+    gfxConfigureCrop(0, 0, width, height);
 }
 
 Result _gfxGraphicBufferInit(s32 buf, u32 nvmap_handle) {
@@ -397,10 +429,15 @@ void gfxSwapBuffers() {
 }
 
 u8* gfxGetFramebuffer(u32* width, u32* height) {
-    if(width) *width = g_gfx_framebuf_width;
-    if(height) *height = g_gfx_framebuf_height;
+    if(width) *width = g_gfx_framebuf_display_width;
+    if(height) *height = g_gfx_framebuf_display_height;
 
     return &g_gfxFramebuf[g_gfxCurrentBuffer*g_gfx_singleframebuf_size];
+}
+
+void gfxGetFramebufferResolution(u32* width, u32* height) {
+    if(width) *width = g_gfx_framebuf_width;
+    if(height) *height = g_gfx_framebuf_height;
 }
 
 size_t gfxGetFramebufferSize(void) {
