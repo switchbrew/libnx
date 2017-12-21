@@ -164,11 +164,11 @@ static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 L
 
     if (g_gfx_framebuf_width==0 || g_gfx_framebuf_height==0) {
         g_gfx_framebuf_width = 1280;
-        g_gfx_framebuf_aligned_width = (g_gfx_framebuf_width+15) & ~15;//Align to 16.
-
         g_gfx_framebuf_height = 720;
-        g_gfx_framebuf_aligned_height = (g_gfx_framebuf_height+127) & ~127;//Align to 128.
     }
+
+    g_gfx_framebuf_aligned_width = (g_gfx_framebuf_width+15) & ~15;//Align to 16.
+    g_gfx_framebuf_aligned_height = (g_gfx_framebuf_height+127) & ~127;//Align to 128.
 
     g_gfx_singleframebuf_size = g_gfx_framebuf_aligned_width*g_gfx_framebuf_aligned_height*4;
 
@@ -350,6 +350,13 @@ void gfxExit(void) {
     g_gfx_framebuf_height = 0;
 
     memset(g_gfx_ProducerSlotsRequested, 0, sizeof(g_gfx_ProducerSlotsRequested));
+}
+
+void gfxInitResolution(u32 width, u32 height) {
+    if (g_gfxInitialized) fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_ALREADYINITIALIZED));
+
+    g_gfx_framebuf_width = width;
+    g_gfx_framebuf_height = height;
 }
 
 Result _gfxGraphicBufferInit(s32 buf, u32 nvmap_handle) {

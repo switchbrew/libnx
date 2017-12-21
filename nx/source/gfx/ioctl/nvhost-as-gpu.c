@@ -96,7 +96,7 @@ Result nvioctlNvhostAsGpu_GetVARegions(u32 fd, nvioctl_va_region regions[2]) {
     return rc;
 }
 
-Result nvioctlNvhostAsGpu_InitializeEx(u32 fd, u32 big_page_size) {
+Result nvioctlNvhostAsGpu_InitializeEx(u32 fd, u32 big_page_size, u32 flags) {
     struct {
         __in u32 big_page_size;   // depends on GPU's available_big_page_sizes; 0=default
         __in s32 as_fd;           // ignored; passes 0
@@ -109,6 +109,7 @@ Result nvioctlNvhostAsGpu_InitializeEx(u32 fd, u32 big_page_size) {
 
     memset(&data, 0, sizeof(data));
     data.big_page_size = big_page_size;
+    data.flags = flags;
 
     return nvIoctl(fd, _IOW(0x41, 0x09, data), &data);
 }

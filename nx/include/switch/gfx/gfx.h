@@ -10,6 +10,11 @@ void gfxExit(void);
 
 /// Note that "framebuffer" here is technically windowbuffer.
 
+/// The default resolution is 720p, however you should use gfxGetFramebuffer() to get the current width/height.
+
+/// This can only be used before calling gfxInitDefault(), this will use fatalSimple() otherwise. If the input is 0, the default resolution will be used during gfxInitDefault(). This sets the maximum resolution for the framebuffer, used during gfxInitDefault(). This is also used as the current resolution. The width/height are reset to the default when gfxExit() is used.
+void gfxInitResolution(u32 width, u32 height);
+
 void gfxWaitForVsync();
 void gfxSwapBuffers();
 u8* gfxGetFramebuffer(u32* width, u32* height);
@@ -25,8 +30,7 @@ static inline u32 gfxGetFramebufferDisplayOffset(u32 x, u32 y) {
 
     gfxGetFramebuffer(&width, &height);
 
-    if (x >= width) x = width-1;
-    if (y >= height) y = height-1;
+    if (x >= width || y >= height) return (gfxGetFramebufferSize()-4)/4;//Return the last pixel-offset in the buffer, the data located here is not displayed due to alignment.
 
     y = height-1-y;
 

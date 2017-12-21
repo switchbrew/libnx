@@ -91,7 +91,7 @@ Result nvioctlNvhostAsGpu_BindChannel(u32 fd, u32 channel_fd);
 Result nvioctlNvhostAsGpu_AllocSpace(u32 fd, u32 pages, u32 page_size, u32 flags, u64 align, u64 *offset);
 Result nvioctlNvhostAsGpu_MapBufferEx(u32 fd, u32 flags, u32 kind, u32 nvmap_handle, u32 page_size, u64 buffer_offset, u64 mapping_size, u64 input_offset, u64 *offset);
 Result nvioctlNvhostAsGpu_GetVARegions(u32 fd, nvioctl_va_region regions[2]);
-Result nvioctlNvhostAsGpu_InitializeEx(u32 fd, u32 big_page_size);
+Result nvioctlNvhostAsGpu_InitializeEx(u32 fd, u32 big_page_size, u32 flags);
 
 Result nvioctlNvmap_Create(u32 fd, u32 size, u32 *nvmap_handle);
 Result nvioctlNvmap_FromId(u32 fd, u32 id, u32 *nvmap_handle);
