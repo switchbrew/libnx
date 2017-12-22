@@ -22,6 +22,12 @@ static Handle g_appletMessageEventHandle = INVALID_HANDLE;
 
 static u64 g_appletResourceUserId = 0;
 
+static u8 g_appletOperationMode;
+static u32 g_appletPerformanceMode;
+static u8 g_appletFocusState;
+
+static appletHookCookie appletFirstHook;
+
 void appletExit(void);
 
 static Result _appletGetSession(Handle sessionhandle, Handle* handle_out, u64 cmd_id);
@@ -38,6 +44,12 @@ static Result _appletAcquireForegroundRights(void);
 static Result _appletSetFocusHandlingMode(u8 inval0, u8 inval1, u8 inval2);
 static Result _appletSetOutOfFocusSuspendingEnabled(u8 inval);
 
+static Result _appletGetOperationMode(u8 *out);
+static Result _appletGetPerformanceMode(u32 *out);
+
+static Result _appletSetOperationModeChangedNotification(u8 flag);
+static Result _appletSetPerformanceModeChangedNotification(u8 flag);
+
 Result appletInitialize(void) {
     if (g_appletServiceSession != INVALID_HANDLE) return MAKERESULT(MODULE_LIBNX, LIBNX_ALREADYINITIALIZED);
 
@@ -45,7 +57,6 @@ Result appletInitialize(void) {
     Handle prochandle = CUR_PROCESS_HANDLE;
     s32 tmpindex=0;
     u32 msg=0;
-    u8 tmp8=0;
 
     if (__nx_applet_type==APPLET_TYPE_None) return 0;
 
@@ -120,9 +131,9 @@ Result appletInitialize(void) {
 
                 if (msg==0 || msg!=0xF) continue;
 
-                rc = _appletGetCurrentFocusState(&tmp8);
+                rc = _appletGetCurrentFocusState(&g_appletFocusState);
                 if (R_FAILED(rc)) break;
-            } while(tmp8!=1);
+            } while(g_appletFocusState!=1);
         }
 
         if (R_SUCCEEDED(rc)) rc = _appletAcquireForegroundRights();
@@ -131,6 +142,14 @@ Result appletInitialize(void) {
     }
 
     if (R_SUCCEEDED(rc) && __nx_applet_auto_notifyrunning && __nx_applet_type==APPLET_TYPE_Application) rc = _appletNotifyRunning(NULL);
+
+    if (R_SUCCEEDED(rc)) rc = _appletGetOperationMode(&g_appletOperationMode);
+    if (R_SUCCEEDED(rc)) rc = _appletGetPerformanceMode(&g_appletPerformanceMode);
+
+    if (R_SUCCEEDED(rc) && __nx_applet_type!=APPLET_TYPE_Application) rc = _appletGetCurrentFocusState(&g_appletFocusState);
+
+    if (R_SUCCEEDED(rc)) rc = _appletSetOperationModeChangedNotification(1);
+    if (R_SUCCEEDED(rc)) rc = _appletSetPerformanceModeChangedNotification(1);
 
     if (R_FAILED(rc)) appletExit();
 
@@ -197,6 +216,37 @@ void appletExit(void)
     }
 
     g_appletResourceUserId = 0;
+}
+
+static void appletCallHook(applet_HookType hookType)
+{
+	appletHookCookie* c;
+	for (c = &appletFirstHook; c && c->callback; c = c->next)
+		c->callback(hookType, c->param);
+}
+
+void appletHook(appletHookCookie* cookie, appletHookFn callback, void* param)
+{
+	if (!callback) return;
+
+	appletHookCookie* hook = &appletFirstHook;
+	*cookie = *hook; // Structure copy.
+	hook->next = cookie;
+	hook->callback = callback;
+	hook->param = param;
+}
+
+void appletUnhook(appletHookCookie* cookie)
+{
+	appletHookCookie* hook;
+	for (hook = &appletFirstHook; hook; hook = hook->next)
+	{
+		if (hook->next == cookie)
+		{
+			*hook = *cookie; // Structure copy.
+			break;
+		}
+	}
 }
 
 static Result appletSetFocusHandlingMode(u32 mode) {
@@ -461,6 +511,77 @@ static Result _appletReceiveMessage(u32 *out) {
     return rc;
 }
 
+static Result _appletGetOperationMode(u8 *out) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 5;
+
+    Result rc = ipcDispatch(g_appletICommonStateGetter);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcCommandResponse r;
+        ipcParseResponse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u8 out;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            *out = resp->out;
+        }
+    }
+
+    return rc;
+}
+static Result _appletGetPerformanceMode(u32 *out) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 6;
+
+    Result rc = ipcDispatch(g_appletICommonStateGetter);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcCommandResponse r;
+        ipcParseResponse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u32 out;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            *out = resp->out;
+        }
+    }
+
+    return rc;
+}
+
 static Result _appletGetCurrentFocusState(u8 *out) {
     IpcCommand c;
     ipcInitialize(&c);
@@ -492,6 +613,72 @@ static Result _appletGetCurrentFocusState(u8 *out) {
         if (R_SUCCEEDED(rc)) {
             *out = resp->out;
         }
+    }
+
+    return rc;
+}
+
+static Result _appletSetOperationModeChangedNotification(u8 flag) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u8 flag;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 11;
+    raw->flag = flag;
+
+    Result rc = ipcDispatch(g_appletISelfController);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcCommandResponse r;
+        ipcParseResponse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+static Result _appletSetPerformanceModeChangedNotification(u8 flag) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u8 flag;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 12;
+    raw->flag = flag;
+
+    Result rc = ipcDispatch(g_appletISelfController);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcCommandResponse r;
+        ipcParseResponse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
     }
 
     return rc;
@@ -603,7 +790,50 @@ Result appletCreateManagedDisplayLayer(u64 *out) {
     return rc;
 }
 
+u8 appletGetOperationMode(void) {
+    return g_appletOperationMode;
+}
+
+u32 appletGetPerformanceMode(void) {
+    return g_appletPerformanceMode;
+}
+
+u8 appletGetFocusState(void) {
+    return g_appletFocusState;
+}
+
 bool appletMainLoop(void) {
+    Result rc=0;
+    u32 msg=0;
+    s32 tmpindex=0;
+
+    if (R_FAILED(svcWaitSynchronization(&tmpindex, &g_appletMessageEventHandle, 1, 0))) return true;
+
+    rc = _appletReceiveMessage(&msg);
+    if (R_FAILED(rc)) {
+        if ((rc & 0x3fffff) == 0x680) return true;
+        fatalSimple(rc);
+    }
+
+    switch(msg) {
+        case 0xF:
+            rc = _appletGetCurrentFocusState(&g_appletFocusState);
+            if (R_SUCCEEDED(rc)) appletCallHook(APPLETHOOK_ONFOCUSSTATE);
+        break;
+
+        case 0x1E:
+            rc = _appletGetOperationMode(&g_appletOperationMode);
+            if (R_SUCCEEDED(rc)) appletCallHook(APPLETHOOK_ONOPERATIONMODE);
+        break;
+
+        case 0x1F:
+            rc = _appletGetPerformanceMode(&g_appletPerformanceMode);
+            if (R_SUCCEEDED(rc)) appletCallHook(APPLETHOOK_ONPERFORMANCEMODE);
+        break;
+    }
+
+    if (R_FAILED(rc)) fatalSimple(rc);
+
     return true;
 }
 
