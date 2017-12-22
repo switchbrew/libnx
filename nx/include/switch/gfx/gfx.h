@@ -16,6 +16,9 @@ void gfxExit(void);
 /// Normally you should only use this when you need a maximum resolution larger than the default, see above.
 void gfxInitResolution(u32 width, u32 height);
 
+/// Wrapper for gfxInitResolution() with resolution=1080p. Use this if you want to support 1080p or >720p in docked-mode.
+void gfxInitResolutionDefault(void);
+
 /// Configure framebuffer crop, by default crop is all-zero. Use all-zero input to reset to default. gfxExit() resets this to the default.
 /// When the input is invalid this returns without changing the crop data, this includes the input values being larger than the framebuf width/height.
 /// This will update the display width/height returned by gfxGetFramebuffer(), with that width/height being reset to the default when required.
@@ -25,6 +28,12 @@ void gfxConfigureCrop(s32 left, s32 top, s32 right, s32 bottom);
 
 /// Wrapper for gfxConfigureCrop(). Use this to set the resolution, within the bounds of the maximum resolution. Use all-zero input to reset to default.
 void gfxConfigureResolution(s32 width, s32 height);
+
+/// If enabled, gfxConfigureResolution() will be used with the input resolution for the current OperationMode. Then gfxConfigureResolution() will automatically be used with the specified resolution each time OperationMode changes.
+void gfxConfigureAutoResolution(bool enable, s32 handheld_width, s32 handheld_height, s32 docked_width, s32 docked_height);
+
+/// Wrapper for gfxConfigureAutoResolution(). handheld_resolution=720p, docked_resolution={all-zero for using current maximum resolution}.
+void gfxConfigureAutoResolutionDefault(bool enable);
 
 void gfxWaitForVsync();
 void gfxSwapBuffers();

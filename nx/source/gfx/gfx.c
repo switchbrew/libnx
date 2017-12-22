@@ -28,6 +28,14 @@ static size_t g_gfx_framebuf_height=0, g_gfx_framebuf_aligned_height=0;
 static size_t g_gfx_framebuf_display_width=0, g_gfx_framebuf_display_height=0;
 size_t g_gfx_singleframebuf_size=0;
 
+static appletHookCookie g_gfx_autoresolution_applethookcookie;
+static bool g_gfx_autoresolution_enabled;
+
+static s32 g_gfx_autoresolution_handheld_width;
+static s32 g_gfx_autoresolution_handheld_height;
+static s32 g_gfx_autoresolution_docked_width;
+static s32 g_gfx_autoresolution_docked_height;
+
 extern u32 __nx_applet_type;
 
 extern u32 g_nvgfx_totalframebufs;
@@ -353,6 +361,8 @@ void gfxExit(void) {
     g_gfx_framebuf_width = 0;
     g_gfx_framebuf_height = 0;
 
+    gfxConfigureAutoResolution(0, 0, 0, 0, 0);
+
     memset(g_gfx_ProducerSlotsRequested, 0, sizeof(g_gfx_ProducerSlotsRequested));
 
     memset(&g_gfxQueueBufferData.crop, 0, sizeof(g_gfxQueueBufferData.crop));
@@ -363,6 +373,10 @@ void gfxInitResolution(u32 width, u32 height) {
 
     g_gfx_framebuf_width = width;
     g_gfx_framebuf_height = height;
+}
+
+void gfxInitResolutionDefault(void) {
+    gfxInitResolution(1920, 1080);
 }
 
 void gfxConfigureCrop(s32 left, s32 top, s32 right, s32 bottom) {
@@ -389,6 +403,42 @@ void gfxConfigureCrop(s32 left, s32 top, s32 right, s32 bottom) {
 
 void gfxConfigureResolution(s32 width, s32 height) {
     gfxConfigureCrop(0, 0, width, height);
+}
+
+static void _gfxAutoResolutionAppletHook(applet_HookType hook, void* param) {
+    u8 mode=0;
+
+    if (hook != APPLETHOOK_ONOPERATIONMODE) return;
+
+    mode = appletGetOperationMode();
+
+    if (mode == APPLET_OperationMode_Handheld) {
+        gfxConfigureResolution(g_gfx_autoresolution_handheld_width, g_gfx_autoresolution_handheld_height);
+    }
+    else if(mode == APPLET_OperationMode_Docked) {
+        gfxConfigureResolution(g_gfx_autoresolution_docked_width, g_gfx_autoresolution_docked_height);
+    }
+}
+
+void gfxConfigureAutoResolution(bool enable, s32 handheld_width, s32 handheld_height, s32 docked_width, s32 docked_height) {
+    if (g_gfx_autoresolution_enabled != enable) {
+        if(enable) appletHook(&g_gfx_autoresolution_applethookcookie, _gfxAutoResolutionAppletHook, 0);
+        if (!enable) appletUnhook(&g_gfx_autoresolution_applethookcookie);
+    }
+
+    g_gfx_autoresolution_enabled = enable;
+
+    g_gfx_autoresolution_handheld_width = handheld_width;
+    g_gfx_autoresolution_handheld_height = handheld_height;
+    g_gfx_autoresolution_docked_width = docked_width;
+    g_gfx_autoresolution_docked_height = docked_height;
+
+    if (enable) _gfxAutoResolutionAppletHook(APPLETHOOK_ONOPERATIONMODE, 0);
+    if (!enable) gfxConfigureResolution(0, 0);
+}
+
+void gfxConfigureAutoResolutionDefault(bool enable) {
+    gfxConfigureAutoResolution(enable, 1280, 720, 0, 0);
 }
 
 Result _gfxGraphicBufferInit(s32 buf, u32 nvmap_handle) {
