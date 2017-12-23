@@ -465,7 +465,7 @@ static void _waitevent(Handle *handle) {
 
 void gfxWaitForVsync() {
     _waitevent(&g_gfxDisplayVsyncEvent);
-    _waitevent(&g_gfxDisplayVsyncEvent);
+    _waitevent(&g_gfxDisplayVsyncEvent);//The display refresh-rate is supposed to be 60Hz. So why is it only refreshed at 30Hz?(Hardware register(s) are updated by the time _gfxDequeueBuffer() finishes, but not yet used by the display at that time)
 }
 
 void gfxSwapBuffers() {
