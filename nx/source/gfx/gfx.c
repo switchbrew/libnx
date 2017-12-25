@@ -15,8 +15,6 @@ static bool g_gfx_ProducerConnected = 0;
 static bool g_gfx_ProducerSlotsRequested[2] = {0, 0};
 static u8 *g_gfxFramebuf;
 static size_t g_gfxFramebufSize;
-/*static u64 g_gfx_DisplayResolution_width, g_gfx_DisplayResolution_height;
-static s32 g_gfx_Query_width, g_gfx_Query_height;*/
 static bufferProducerFence g_gfx_DequeueBuffer_fence;
 static bufferProducerQueueBufferOutput g_gfx_Connect_QueueBufferOutput;
 static bufferProducerQueueBufferOutput g_gfx_QueueBuffer_QueueBufferOutput;
@@ -247,18 +245,16 @@ static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 L
        }
     }
 
-    if (R_SUCCEEDED(rc)) svcSleepThread(3000000000);
-
     if (R_SUCCEEDED(rc)) rc = _gfxDequeueBuffer();
 
-    /*if (R_SUCCEEDED(rc)) rc = _gfxGetDisplayResolution(&g_gfx_DisplayResolution_width, &g_gfx_DisplayResolution_height);
-
-    if (R_SUCCEEDED(rc)) rc = bufferProducerQuery(NATIVE_WINDOW_WIDTH, &g_gfx_Query_width);
-    if (R_SUCCEEDED(rc)) rc = bufferProducerQuery(NATIVE_WINDOW_HEIGHT, &g_gfx_Query_height);*/
-
-    /*if (R_SUCCEEDED(rc)) { //Workaround a gfx display issue.
-        for(i=0; i<2; i++)gfxWaitForVsync();
-    }*/
+    if (R_SUCCEEDED(rc)) {
+        if(__nx_applet_type == APPLET_TYPE_Application) { //It's unknown whether there's a better way to handle this.
+            svcSleepThread(2000000000);
+        }
+        else {
+            for(i=0; i<2; i++) gfxWaitForVsync();
+        }
+    }
 
     if (R_FAILED(rc)) {
         _gfxQueueBuffer(g_gfxCurrentProducerBuffer);
