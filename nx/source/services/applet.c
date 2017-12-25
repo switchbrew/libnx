@@ -26,6 +26,8 @@ static u8 g_appletOperationMode;
 static u32 g_appletPerformanceMode;
 static u8 g_appletFocusState;
 
+static bool g_appletNotifiedRunning = 0;
+
 static appletHookCookie appletFirstHook;
 
 void appletExit(void);
@@ -34,7 +36,6 @@ static Result _appletGetSession(Handle sessionhandle, Handle* handle_out, u64 cm
 static Result _appletGetSessionProxy(Handle sessionhandle, Handle* handle_out, u64 cmd_id, Handle prochandle, u8 *AppletAttribute);
 
 static Result _appletGetAppletResourceUserId(u64 *out);
-static Result _appletNotifyRunning(u8 *out);
 
 static Result appletSetFocusHandlingMode(u32 mode);
 
@@ -61,6 +62,7 @@ Result appletInitialize(void) {
     if (__nx_applet_type==APPLET_TYPE_None) return 0;
 
     g_appletResourceUserId = 0;
+    g_appletNotifiedRunning = 0;
 
     if (__nx_applet_type==APPLET_TYPE_Default) __nx_applet_type = APPLET_TYPE_Application;
 
@@ -141,7 +143,7 @@ Result appletInitialize(void) {
         if (R_SUCCEEDED(rc)) rc = appletSetFocusHandlingMode(0);
     }
 
-    if (R_SUCCEEDED(rc) && __nx_applet_auto_notifyrunning && __nx_applet_type==APPLET_TYPE_Application) rc = _appletNotifyRunning(NULL);
+    if (R_SUCCEEDED(rc) && __nx_applet_auto_notifyrunning) appletNotifyRunning(NULL);
 
     if (R_SUCCEEDED(rc)) rc = _appletGetOperationMode(&g_appletOperationMode);
     if (R_SUCCEEDED(rc)) rc = _appletGetPerformanceMode(&g_appletPerformanceMode);
@@ -439,9 +441,12 @@ Result appletGetAppletResourceUserId(u64 *out) {
     return 0;
 }
 
-static Result _appletNotifyRunning(u8 *out) {
+void appletNotifyRunning(u8 *out) {
     IpcCommand c;
     ipcInitialize(&c);
+
+    if (__nx_applet_type!=APPLET_TYPE_Application || g_appletNotifiedRunning) return;
+    g_appletNotifiedRunning = 1;
 
     struct {
         u64 magic;
@@ -472,7 +477,7 @@ static Result _appletNotifyRunning(u8 *out) {
         }
     }
 
-    return rc;
+    if (R_FAILED(rc)) fatalSimple(rc);
 }
 
 static Result _appletReceiveMessage(u32 *out) {
