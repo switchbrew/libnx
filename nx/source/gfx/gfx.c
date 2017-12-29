@@ -451,6 +451,8 @@ static void _waitevent(Handle *handle) {
     s32 tmpindex=0;
     Result rc=0, rc2=0;
 
+    svcResetSignal(*handle);
+
     do {
         rc = svcWaitSynchronization(&tmpindex, handle, 1, U64_MAX);
         if (R_SUCCEEDED(rc)) rc2 = svcResetSignal(*handle);
@@ -461,7 +463,6 @@ static void _waitevent(Handle *handle) {
 
 void gfxWaitForVsync() {
     _waitevent(&g_gfxDisplayVsyncEvent);
-    _waitevent(&g_gfxDisplayVsyncEvent);//The display refresh-rate is supposed to be 60Hz. So why is it only refreshed at 30Hz?(Hardware register(s) are updated by the time _gfxDequeueBuffer() finishes, but not yet used by the display at that time)
 }
 
 void gfxSwapBuffers() {
