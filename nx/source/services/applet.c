@@ -4,6 +4,7 @@
 __attribute__((weak)) u32 __nx_applet_type = APPLET_TYPE_Default;
 __attribute__((weak)) bool __nx_applet_auto_notifyrunning = true;
 __attribute__((weak)) u8 __nx_applet_AppletAttribute[0x80];
+__attribute__((weak)) u32 __nx_applet_PerformanceConfiguration[2] = {/*0x92220008*//*0x20004*//*0x92220007*/0, 0};
 
 static Handle g_appletServiceSession = INVALID_HANDLE;
 static Handle g_appletProxySession = INVALID_HANDLE;
@@ -57,6 +58,7 @@ Result appletInitialize(void) {
     Result rc = 0;
     Handle prochandle = CUR_PROCESS_HANDLE;
     s32 tmpindex=0;
+    u32 i;
     u32 msg=0;
 
     if (__nx_applet_type==APPLET_TYPE_None) return 0;
@@ -153,6 +155,15 @@ Result appletInitialize(void) {
     if (R_SUCCEEDED(rc)) rc = _appletSetOperationModeChangedNotification(1);
     if (R_SUCCEEDED(rc)) rc = _appletSetPerformanceModeChangedNotification(1);
 
+    if (R_SUCCEEDED(rc)) rc = apmInitialize();
+
+    if (R_SUCCEEDED(rc)) {//Official apps aren't known to use apmSetPerformanceConfiguration with mode=1.
+        for (i=0; i<2; i++) {//This is broken with the regular "apm" service.
+            if (__nx_applet_PerformanceConfiguration[i]) rc = apmSetPerformanceConfiguration(i, __nx_applet_PerformanceConfiguration[i]);
+            if (R_FAILED(rc)) break;
+        }
+    }
+
     if (R_FAILED(rc)) appletExit();
 
     return rc;
@@ -161,6 +172,8 @@ Result appletInitialize(void) {
 void appletExit(void)
 {
     if (g_appletServiceSession == INVALID_HANDLE) return;
+
+    apmExit();
 
     if (g_appletMessageEventHandle != INVALID_HANDLE) {
         svcCloseHandle(g_appletMessageEventHandle);
