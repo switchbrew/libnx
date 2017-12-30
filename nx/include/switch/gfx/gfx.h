@@ -53,13 +53,16 @@ void gfxFlushBuffers(void);
 /// Use this to get the pixel-offset in the framebuffer. Returned value is in pixels, not bytes.
 /// This implements tegra blocklinear, with hard-coded constants etc.
 static inline u32 gfxGetFramebufferDisplayOffset(u32 x, u32 y) {
-    u32 width=0, height=0;
+    u32 width, height;
     u32 tilepos, tmp_pos;
 
-    gfxGetFramebufferResolution(&width, NULL);
-    gfxGetFramebuffer(NULL, &height);
+    extern size_t g_gfx_framebuf_width;
+    extern size_t g_gfx_framebuf_display_height;
 
-    if (x >= width || y >= height) return (gfxGetFramebufferSize()-4)/4;//Return the last pixel-offset in the buffer, the data located here is not displayed due to alignment.
+    width =  g_gfx_framebuf_width;
+    height = g_gfx_framebuf_display_height;
+
+    //if (x >= width || y >= height) return (gfxGetFramebufferSize()-4)/4;//Return the last pixel-offset in the buffer, the data located here is not displayed due to alignment. (Disabled for perf)
 
     y = height-1-y;
 

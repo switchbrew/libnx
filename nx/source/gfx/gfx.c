@@ -21,9 +21,9 @@ static bufferProducerQueueBufferOutput g_gfx_QueueBuffer_QueueBufferOutput;
 
 static bool g_gfxDoubleBuf = 1;
 
-static size_t g_gfx_framebuf_width=0, g_gfx_framebuf_aligned_width=0;
-static size_t g_gfx_framebuf_height=0, g_gfx_framebuf_aligned_height=0;
-static size_t g_gfx_framebuf_display_width=0, g_gfx_framebuf_display_height=0;
+size_t g_gfx_framebuf_width=0, g_gfx_framebuf_aligned_width=0;
+size_t g_gfx_framebuf_height=0, g_gfx_framebuf_aligned_height=0;
+size_t g_gfx_framebuf_display_width=0, g_gfx_framebuf_display_height=0;
 size_t g_gfx_singleframebuf_size=0;
 
 static appletHookCookie g_gfx_autoresolution_applethookcookie;
