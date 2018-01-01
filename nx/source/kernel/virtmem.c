@@ -6,9 +6,9 @@ typedef struct {
 } VirtualRegion;
 
 enum {
-    REGION_MAP =0,
+    REGION_STACK=0,
     REGION_HEAP=1,
-    REGION_UNK =2,
+    REGION_NEW_STACK=2,
     REGION_MAX
 };
 
@@ -46,7 +46,7 @@ void virtmemSetup() {
         g_AddressSpace.end   = 0x100000000ull;
     }
 
-    if (R_FAILED(_GetRegionFromInfo(&g_Region[REGION_MAP], 2, 3))) {
+    if (R_FAILED(_GetRegionFromInfo(&g_Region[REGION_STACK], 2, 3))) {
         fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_BADGETINFO));
     }
 
@@ -56,7 +56,7 @@ void virtmemSetup() {
 
     // Failure is OK, happens on 1.0.0
     // In that case, g_UnkRegion will default to (0, 0).
-    _GetRegionFromInfo(&g_Region[REGION_UNK], 14, 15);
+    _GetRegionFromInfo(&g_Region[REGION_NEW_STACK], 14, 15);
 }
 
 void* virtmemReserve(size_t size) {
@@ -137,6 +137,8 @@ void* virtmemReserveMap(size_t size)
 
     size = (size + 0xFFF) &~ 0xFFF;
 
+    int region_idx = kernelAbove200() ? REGION_NEW_STACK : REGION_STACK;
+
     u64 addr = g_CurrentMapAddr;
     while (1)
     {
@@ -144,8 +146,8 @@ void* virtmemReserveMap(size_t size)
         addr += 0x1000;
 
         // Make sure we stay inside the reserved map region.
-        if (!_InRegion(&g_Region[REGION_MAP], addr)) {
-            addr = g_Region[REGION_MAP].start;
+        if (!_InRegion(&g_Region[region_idx], addr)) {
+            addr = g_Region[region_idx].start;
         }
 
         // Query information about address.

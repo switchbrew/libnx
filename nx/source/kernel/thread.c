@@ -48,8 +48,8 @@ Result threadCreate(
     }
     else {
         // todo: svcMapMemory returns 0xDC01
-        void* stack_mirror = stack;//virtmemReserveMap(stack_sz);
-        //rc = svcMapMemory(stack_mirror, stack, stack_sz);
+        void* stack_mirror = virtmemReserveMap(stack_sz);
+        rc = svcMapMemory(stack_mirror, stack, stack_sz);
 
         if (R_SUCCEEDED(rc))
         {
@@ -82,7 +82,7 @@ Result threadCreate(
                 args->reent->_stderr = cur->_stderr;
 
                 // Set up child thread's TLS segment
-                size_t tls_load_sz = __tdata_lma_end-__tdata_lma;
+                size_t tls_load_sz = __tdata_lma_end - __tdata_lma;
                 size_t tls_bss_sz = tls_sz - tls_load_sz;
                 if (tls_load_sz)
                     memcpy(args->tls, __tdata_lma, tls_load_sz);
