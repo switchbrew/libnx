@@ -31,5 +31,5 @@ bool kernelAbove300() {
 
 bool kernelAbove400() {
     _CacheValues();
-    return g_IsAbove300;
+    return g_IsAbove400;
 }
