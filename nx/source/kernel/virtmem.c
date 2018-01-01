@@ -16,6 +16,7 @@ static VirtualRegion g_AddressSpace;
 static VirtualRegion g_Region[REGION_MAX];
 static u64 g_CurrentAddr;
 static u64 g_CurrentMapAddr;
+static Mutex g_VirtMemMutex;
 
 static Result _GetRegionFromInfo(VirtualRegion* r, u64 id0_addr, u32 id0_sz) {
     u64 base;
@@ -67,7 +68,9 @@ void* virtmemReserve(size_t size) {
 
     size = (size + 0xFFF) &~ 0xFFF;
 
+    mutexLock(&g_VirtMemMutex);
     u64 addr = g_CurrentAddr;
+
     while (1)
     {
         // Add a guard page.
@@ -121,6 +124,8 @@ void* virtmemReserve(size_t size) {
     }
 
     g_CurrentAddr = addr + size;
+
+    mutexUnlock(&g_VirtMemMutex);
     return (void*) addr;
 }
 
@@ -135,11 +140,12 @@ void* virtmemReserveMap(size_t size)
     MemInfo meminfo;
     u32     pageinfo;
 
+    int region_idx = kernelAbove200() ? REGION_NEW_STACK : REGION_STACK;
     size = (size + 0xFFF) &~ 0xFFF;
 
-    int region_idx = kernelAbove200() ? REGION_NEW_STACK : REGION_STACK;
-
+    mutexLock(&g_VirtMemMutex);
     u64 addr = g_CurrentMapAddr;
+
     while (1)
     {
         // Add a guard page.
@@ -173,10 +179,12 @@ void* virtmemReserveMap(size_t size)
     }
 
     g_CurrentMapAddr = addr + size;
+
+    mutexUnlock(&g_VirtMemMutex);
     return (void*) addr;
 }
 
-void  virtmemFreeMap(void* addr, size_t size) {
+void virtmemFreeMap(void* addr, size_t size) {
     IGNORE_ARG(addr);
     IGNORE_ARG(size);
 }
