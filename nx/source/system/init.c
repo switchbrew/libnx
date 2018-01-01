@@ -12,7 +12,8 @@ __attribute__((weak)) size_t __nx_inner_heap_size = INNER_HEAP_SIZE;
 __attribute__((weak)) char   __nx_inner_heap[INNER_HEAP_SIZE];
 __attribute__((weak)) size_t __nx_outer_heap_size = 0x2000000*16;//Must be a multiple of 0x2000000.
 
-static void _SetupHeap() {
+void __attribute__((weak)) __libnx_initheap()
+{
     u64 addr;
     Result rc   = svcSetHeapSize((void**)&addr, __nx_outer_heap_size);
     size_t size = __nx_outer_heap_size;
@@ -22,7 +23,7 @@ static void _SetupHeap() {
         size = __nx_inner_heap_size;
     }
 
-    // Multilib
+    // Newlib
     extern char* fake_heap_start;
     extern char* fake_heap_end;
 
@@ -59,7 +60,7 @@ void __attribute__((weak)) __libnx_init(Handle main_thread)
     // Libnx initialization goes here.
     newlibSetup(main_thread);
     virtmemSetup();
-    _SetupHeap();
+    __libnx_initheap();
 
     // Build argc/argv if present
     __system_initArgv();
