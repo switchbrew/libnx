@@ -12,3 +12,6 @@ Result threadCreate(
 Result threadStart(Thread* t);
 Result threadWaitForExit(Thread* t);
 Result threadClose(Thread* t);
+
+Result threadPause(Thread* t);
+Result threadResume(Thread* t);

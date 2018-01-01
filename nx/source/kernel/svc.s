@@ -166,6 +166,11 @@ SVC_BEGIN svcGetInfo
 	ret
 SVC_END
 
+SVC_BEGIN svcSetThreadActivity
+	svc 0x32
+	ret
+SVC_END
+
 SVC_BEGIN svcCreateSession
 	stp x0, x1, [sp, #-16]!
 	svc 0x40

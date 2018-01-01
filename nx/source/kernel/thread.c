@@ -124,3 +124,11 @@ Result threadClose(Thread* t) {
 
     return rc;
 }
+
+Result threadPause(Thread* t) {
+    return svcSetThreadActivity(t->handle, 1);
+}
+
+Result threadResume(Thread* t) {
+    return svcSetThreadActivity(t->handle, 0);
+}
