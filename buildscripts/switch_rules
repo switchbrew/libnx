@@ -20,6 +20,10 @@ ifeq ($(strip $(APP_VERSION)),)
 APP_VERSION	:=	1.0.0
 endif
 
+ifeq ($(strip $(APP_ICON)),)
+APP_ICON	:=	$(LIBNX)/default_icon.jpg
+endif
+
 #---------------------------------------------------------------------------------
 %.nacp: $(MAKEFILE_LIST)
 	@nacptool --create "$(APP_TITLE)" "$(APP_AUTHOR)" "$(APP_VERSION)" $@ $(NACPFLAGS)
