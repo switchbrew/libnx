@@ -10,10 +10,8 @@ extern "C" {
 
 #include <switch/types.h>
 #include <switch/result.h>
-#include <switch/svc.h>
-#include <switch/arm.h>
-#include <switch/ipc.h>
 
+#include <switch/kernel/svc.h>
 #include <switch/kernel/tmem.h>
 #include <switch/kernel/shmem.h>
 #include <switch/kernel/mutex.h>
@@ -21,14 +19,14 @@ extern "C" {
 #include <switch/kernel/virtmem.h>
 #include <switch/kernel/version.h>
 
-#include <switch/util/utf.h>
+#include <switch/arm.h>
+#include <switch/ipc.h>
 
 #include <switch/services/sm.h>
 #include <switch/services/fs.h>
 #include <switch/services/acc.h>
 #include <switch/services/apm.h>
 #include <switch/services/applet.h>
-#include <switch/services/binder.h>
 #include <switch/services/bsd.h>
 #include <switch/services/fatal.h>
 #include <switch/services/usb.h>
@@ -38,11 +36,14 @@ extern "C" {
 #include <switch/services/pm.h>
 
 #include <switch/gfx/gfx.h>
+#include <switch/gfx/binder.h>
 #include <switch/gfx/parcel.h>
 #include <switch/gfx/buffer_producer.h>
 #include <switch/gfx/ioctl.h>
 #include <switch/gfx/nvioctl.h>
 #include <switch/gfx/nvgfx.h>
+
+#include <switch/util/utf.h>
 
 #include <switch/devices/console.h>
 #include <switch/devices/usb_comms.h>

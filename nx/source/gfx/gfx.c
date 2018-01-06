@@ -26,7 +26,7 @@ size_t g_gfx_framebuf_height=0, g_gfx_framebuf_aligned_height=0;
 size_t g_gfx_framebuf_display_width=0, g_gfx_framebuf_display_height=0;
 size_t g_gfx_singleframebuf_size=0;
 
-static appletHookCookie g_gfx_autoresolution_applethookcookie;
+static AppletHookCookie g_gfx_autoresolution_applethookcookie;
 static bool g_gfx_autoresolution_enabled;
 
 static s32 g_gfx_autoresolution_handheld_width;
@@ -248,7 +248,7 @@ static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 L
     if (R_SUCCEEDED(rc)) rc = _gfxDequeueBuffer();
 
     if (R_SUCCEEDED(rc)) {
-        if(__nx_applet_type == APPLET_TYPE_Application) { //It's unknown whether there's a better way to handle this.
+        if (__nx_applet_type == AppletType_Application) { //It's unknown whether there's a better way to handle this.
             svcSleepThread(2000000000);
         }
         else {
@@ -295,34 +295,35 @@ static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 L
     return rc;
 }
 
-void gfxInitDefault(void) {
-    nvServiceType nv_servicetype = NVSERVTYPE_Default;
+void gfxInitDefault()
+{
+    nvServiceType nv_servicetype;
 
-    if(__nx_applet_type != APPLET_TYPE_None) {
-        switch(__nx_applet_type) {
-            case APPLET_TYPE_Application:
-            case APPLET_TYPE_SystemApplication:
-               nv_servicetype = NVSERVTYPE_Application;
-            break;
+    switch(__nx_applet_type) {
+    case AppletType_Application:
+    case AppletType_SystemApplication:
+        nv_servicetype = NVSERVTYPE_Application;
+        break;
 
-            case APPLET_TYPE_SystemApplet:
-            case APPLET_TYPE_LibraryApplet:
-            case APPLET_TYPE_OverlayApplet:
-               nv_servicetype = NVSERVTYPE_Applet;
-            break;
-        }
+    case AppletType_SystemApplet:
+    case AppletType_LibraryApplet:
+    case AppletType_OverlayApplet:
+    default:
+        nv_servicetype = NVSERVTYPE_Applet;
+        break;
     }
 
     Result rc = _gfxInit(VILAYERFLAGS_Default, "Default", VILAYERFLAGS_Default, 0, nv_servicetype, 0x300000);
     if (R_FAILED(rc)) fatalSimple(rc);
 }
 
-void gfxExit(void) {
-    u32 i=0;
-    if(!g_gfxInitialized)return;
+void gfxExit() {
+    u32 i = 0;
+    if (!g_gfxInitialized)
+        return;
 
     _gfxQueueBuffer(g_gfxCurrentProducerBuffer);
-    for(i=0; i<2; i++) {
+    for (i=0; i<2; i++) {
         if (g_gfx_ProducerSlotsRequested[i]) bufferProducerDetachBuffer(i);
     }
     if (g_gfx_ProducerConnected) bufferProducerDisconnect(2);
@@ -401,17 +402,18 @@ void gfxConfigureResolution(s32 width, s32 height) {
     gfxConfigureCrop(0, 0, width, height);
 }
 
-static void _gfxAutoResolutionAppletHook(applet_HookType hook, void* param) {
+static void _gfxAutoResolutionAppletHook(AppletHookType hook, void* param) {
     u8 mode=0;
 
-    if (hook != APPLETHOOK_ONOPERATIONMODE) return;
+    if (hook != AppletHookType_OnOperationMode)
+        return;
 
     mode = appletGetOperationMode();
 
-    if (mode == APPLET_OperationMode_Handheld) {
+    if (mode == AppletOperationMode_Handheld) {
         gfxConfigureResolution(g_gfx_autoresolution_handheld_width, g_gfx_autoresolution_handheld_height);
     }
-    else if(mode == APPLET_OperationMode_Docked) {
+    else if (mode == AppletOperationMode_Docked) {
         gfxConfigureResolution(g_gfx_autoresolution_docked_width, g_gfx_autoresolution_docked_height);
     }
 }
@@ -429,7 +431,7 @@ void gfxConfigureAutoResolution(bool enable, s32 handheld_width, s32 handheld_he
     g_gfx_autoresolution_docked_width = docked_width;
     g_gfx_autoresolution_docked_height = docked_height;
 
-    if (enable) _gfxAutoResolutionAppletHook(APPLETHOOK_ONOPERATIONMODE, 0);
+    if (enable) _gfxAutoResolutionAppletHook(AppletHookType_OnOperationMode, 0);
     if (!enable) gfxConfigureResolution(0, 0);
 }
 

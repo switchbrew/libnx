@@ -1,7 +1,7 @@
 #include <string.h>
 #include <switch.h>
 
-__attribute__((weak)) u32 __nx_applet_type = APPLET_TYPE_Default;
+__attribute__((weak)) u32 __nx_applet_type = AppletType_Default;
 __attribute__((weak)) bool __nx_applet_auto_notifyrunning = true;
 __attribute__((weak)) u8 __nx_applet_AppletAttribute[0x80];
 __attribute__((weak)) u32 __nx_applet_PerformanceConfiguration[2] = {/*0x92220008*//*0x20004*//*0x92220007*/0, 0};
@@ -9,7 +9,8 @@ __attribute__((weak)) u32 __nx_applet_PerformanceConfiguration[2] = {/*0x9222000
 static Handle g_appletServiceSession = INVALID_HANDLE;
 static Handle g_appletProxySession = INVALID_HANDLE;
 
-static Handle g_appletIFunctions = INVALID_HANDLE;//From Get*Functions, for ILibraryAppletProxy this is GetLibraryAppletSelfAccessor
+// From Get*Functions, for ILibraryAppletProxy. This is GetLibraryAppletSelfAccessor
+static Handle g_appletIFunctions = INVALID_HANDLE;
 
 static Handle g_appletILibraryAppletCreator = INVALID_HANDLE;
 static Handle g_appletICommonStateGetter = INVALID_HANDLE;
@@ -29,7 +30,7 @@ static u8 g_appletFocusState;
 
 static bool g_appletNotifiedRunning = 0;
 
-static appletHookCookie appletFirstHook;
+static AppletHookCookie g_appletFirstHook;
 
 void appletExit(void);
 
@@ -52,126 +53,169 @@ static Result _appletGetPerformanceMode(u32 *out);
 static Result _appletSetOperationModeChangedNotification(u8 flag);
 static Result _appletSetPerformanceModeChangedNotification(u8 flag);
 
-Result appletInitialize(void) {
-    if (g_appletServiceSession != INVALID_HANDLE) return MAKERESULT(MODULE_LIBNX, LIBNX_ALREADYINITIALIZED);
+
+Result appletInitialize(void)
+{
+    if (g_appletServiceSession != INVALID_HANDLE)
+        return MAKERESULT(MODULE_LIBNX, LIBNX_ALREADYINITIALIZED);
+
+    if (__nx_applet_type==AppletType_None)
+        return 0;
 
     Result rc = 0;
-    Handle prochandle = CUR_PROCESS_HANDLE;
-    s32 tmpindex=0;
-    u32 i;
-    u32 msg=0;
-
-    if (__nx_applet_type==APPLET_TYPE_None) return 0;
 
     g_appletResourceUserId = 0;
     g_appletNotifiedRunning = 0;
 
-    if (__nx_applet_type==APPLET_TYPE_Default) __nx_applet_type = APPLET_TYPE_Application;
-
-    if (__nx_applet_type==APPLET_TYPE_Application) {
+    switch (__nx_applet_type) {
+    case AppletType_Default:
+        __nx_applet_type = AppletType_Application;
+        // Fallthrough.
+    case AppletType_Application:
         rc = smGetService(&g_appletServiceSession, "appletOE");
-    }
-
-    if (__nx_applet_type!=APPLET_TYPE_Application) {
+        break;
+    default:
         rc = smGetService(&g_appletServiceSession, "appletAE");
+        break;
     }
 
     if (R_SUCCEEDED(rc)) {
+        #define APT_BUSY_ERROR 0x19280
+
         do {
+            u32 cmd_id;
+
             switch(__nx_applet_type) {
-                default:
-                    rc = MAKERESULT(MODULE_LIBNX, LIBNX_NOTFOUND);
-                break;
-
-                case APPLET_TYPE_Application:
-                    rc = _appletGetSessionProxy(g_appletServiceSession, &g_appletProxySession, 0, prochandle, NULL);
-                break;
-
-                case APPLET_TYPE_SystemApplet:
-                    rc = _appletGetSessionProxy(g_appletServiceSession, &g_appletProxySession, 100, prochandle, NULL);
-                break;
-
-                case APPLET_TYPE_LibraryApplet:
-                    rc = _appletGetSessionProxy(g_appletServiceSession, &g_appletProxySession, /*201*/200, prochandle, /*__nx_applet_AppletAttribute*/NULL);
-                break;
-
-                case APPLET_TYPE_OverlayApplet:
-                    rc = _appletGetSessionProxy(g_appletServiceSession, &g_appletProxySession, 300, prochandle, NULL);
-                break;
-
-                case APPLET_TYPE_SystemApplication:
-                    rc = _appletGetSessionProxy(g_appletServiceSession, &g_appletProxySession, 350, prochandle, NULL);
-                break;
+            case AppletType_Application:       cmd_id = 0;   break;
+            case AppletType_SystemApplet:      cmd_id = 100; break;
+            case AppletType_LibraryApplet:     cmd_id = 200; break;
+            case AppletType_OverlayApplet:     cmd_id = 300; break;
+            case AppletType_SystemApplication: cmd_id = 350; break;
+            default: fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_NOTFOUND));
             }
 
-            if ((rc & 0x3fffff) == 0x19280) svcSleepThread(10000000);
-        } while((rc & 0x3fffff) == 0x19280);
+            rc = _appletGetSessionProxy(g_appletServiceSession, &g_appletProxySession, cmd_id, CUR_PROCESS_HANDLE, NULL);
+
+            if (rc == APT_BUSY_ERROR) {
+                svcSleepThread(10000000);
+            }
+
+        } while (rc == APT_BUSY_ERROR);
     }
 
-    if (R_SUCCEEDED(rc)) rc = _appletGetSession(g_appletProxySession, &g_appletIFunctions, 20);//Get*Functions, for ILibraryAppletProxy this is GetLibraryAppletSelfAccessor
-    //TODO: Add non-application type-specific session init here.
+    // Get*Functions, for ILibraryAppletProxy this is GetLibraryAppletSelfAccessor
+    if (R_SUCCEEDED(rc))
+        rc = _appletGetSession(g_appletProxySession, &g_appletIFunctions, 20);
 
-    if (R_SUCCEEDED(rc)) rc = _appletGetSession(g_appletProxySession, &g_appletILibraryAppletCreator, 11);//GetLibraryAppletCreator
-    if (R_SUCCEEDED(rc)) rc = _appletGetSession(g_appletProxySession, &g_appletICommonStateGetter, 0);//GetCommonStateGetter
-    if (R_SUCCEEDED(rc)) rc = _appletGetSession(g_appletProxySession, &g_appletISelfController, 1);//GetSelfController
-    if (R_SUCCEEDED(rc)) rc = _appletGetSession(g_appletProxySession, &g_appletIWindowController, 2);//GetWindowController (get GetAppletResourceUserId from this)
-    if (R_SUCCEEDED(rc)) rc = _appletGetAppletResourceUserId(&g_appletResourceUserId);
-    if (R_SUCCEEDED(rc)) rc = _appletGetSession(g_appletProxySession, &g_appletIAudioController, 3);//GetAudioController
-    if (R_SUCCEEDED(rc)) rc = _appletGetSession(g_appletProxySession, &g_appletIDisplayController, 4);//GetDisplayController
-    if (R_SUCCEEDED(rc)) rc = _appletGetSession(g_appletProxySession, &g_appletIDebugFunctions, 1000);//GetDebugFunctions
+    // TODO: Add non-application type-specific session init here.
 
-    if (R_SUCCEEDED(rc) && __nx_applet_type==APPLET_TYPE_Application) {
-        rc = _appletGetSession(g_appletICommonStateGetter, &g_appletMessageEventHandle, 0);//Reuse _appletGetSession since ipc input/output is the same. (ICommonStateGetter GetEventHandle)
+    // GetLibraryAppletCreator
+    if (R_SUCCEEDED(rc))
+        rc = _appletGetSession(g_appletProxySession, &g_appletILibraryAppletCreator, 11);
+    // GetCommonStateGetter
+    if (R_SUCCEEDED(rc))
+        rc = _appletGetSession(g_appletProxySession, &g_appletICommonStateGetter, 0);
+    // GetSelfController
+    if (R_SUCCEEDED(rc))
+        rc = _appletGetSession(g_appletProxySession, &g_appletISelfController, 1);
+    // GetWindowController
+    if (R_SUCCEEDED(rc))
+        rc = _appletGetSession(g_appletProxySession, &g_appletIWindowController, 2);
+    // Get AppletResourceUserId.
+    if (R_SUCCEEDED(rc))
+        rc = _appletGetAppletResourceUserId(&g_appletResourceUserId);
+    // GetAudioController
+    if (R_SUCCEEDED(rc))
+        rc = _appletGetSession(g_appletProxySession, &g_appletIAudioController, 3);
+    // GetDisplayController
+    if (R_SUCCEEDED(rc))
+        rc = _appletGetSession(g_appletProxySession, &g_appletIDisplayController, 4);
+    // GetDebugFunctions
+    if (R_SUCCEEDED(rc))
+        rc = _appletGetSession(g_appletProxySession, &g_appletIDebugFunctions, 1000);
+
+    if (R_SUCCEEDED(rc) && (__nx_applet_type == AppletType_Application))
+    {
+        // Reuse _appletGetSession since ipc input/output is the same. This is ICommonStateGetter::GetEventHandle.
+        rc = _appletGetSession(g_appletICommonStateGetter, &g_appletMessageEventHandle, 0);
 
         if (R_SUCCEEDED(rc)) {
             do {
-                while(R_FAILED(svcWaitSynchronization(&tmpindex, &g_appletMessageEventHandle, 1, U64_MAX)));
+                s32 tmp_index=0;
+                svcWaitSynchronization(&tmp_index, &g_appletMessageEventHandle, 1, U64_MAX);
 
+                u32 msg;
                 rc = _appletReceiveMessage(&msg);
-                if (R_FAILED(rc)) {
-                    if ((rc & 0x3fffff) == 0x680) continue;
+
+                if (R_FAILED(rc))
+                {
+                    if ((rc & 0x3fffff) == 0x680)
+                        continue;
+
                     break;
                 }
 
-                if (msg==0 || msg!=0xF) continue;
+                if (msg != 0xF)
+                    continue;
 
                 rc = _appletGetCurrentFocusState(&g_appletFocusState);
-                if (R_FAILED(rc)) break;
+
+                if (R_FAILED(rc))
+                    break;
+
             } while(g_appletFocusState!=1);
         }
 
-        if (R_SUCCEEDED(rc)) rc = _appletAcquireForegroundRights();
+        if (R_SUCCEEDED(rc))
+            rc = _appletAcquireForegroundRights();
 
-        if (R_SUCCEEDED(rc)) rc = appletSetFocusHandlingMode(0);
+        if (R_SUCCEEDED(rc))
+            rc = appletSetFocusHandlingMode(0);
     }
 
-    if (R_SUCCEEDED(rc) && __nx_applet_auto_notifyrunning) appletNotifyRunning(NULL);
+    if (R_SUCCEEDED(rc) && __nx_applet_auto_notifyrunning)
+        appletNotifyRunning(NULL);
 
-    if (R_SUCCEEDED(rc)) rc = _appletGetOperationMode(&g_appletOperationMode);
-    if (R_SUCCEEDED(rc)) rc = _appletGetPerformanceMode(&g_appletPerformanceMode);
+    if (R_SUCCEEDED(rc))
+        rc = _appletGetOperationMode(&g_appletOperationMode);
+    if (R_SUCCEEDED(rc))
+        rc = _appletGetPerformanceMode(&g_appletPerformanceMode);
 
-    if (R_SUCCEEDED(rc) && __nx_applet_type!=APPLET_TYPE_Application) rc = _appletGetCurrentFocusState(&g_appletFocusState);
+    if (R_SUCCEEDED(rc) && __nx_applet_type!=AppletType_Application)
+        rc = _appletGetCurrentFocusState(&g_appletFocusState);
 
-    if (R_SUCCEEDED(rc)) rc = _appletSetOperationModeChangedNotification(1);
-    if (R_SUCCEEDED(rc)) rc = _appletSetPerformanceModeChangedNotification(1);
+    if (R_SUCCEEDED(rc))
+        rc = _appletSetOperationModeChangedNotification(1);
+    if (R_SUCCEEDED(rc))
+        rc = _appletSetPerformanceModeChangedNotification(1);
 
-    if (R_SUCCEEDED(rc)) rc = apmInitialize();
+    if (R_SUCCEEDED(rc))
+        rc = apmInitialize();
 
-    if (R_SUCCEEDED(rc)) {//Official apps aren't known to use apmSetPerformanceConfiguration with mode=1.
-        for (i=0; i<2; i++) {//This is broken with the regular "apm" service.
-            if (__nx_applet_PerformanceConfiguration[i]) rc = apmSetPerformanceConfiguration(i, __nx_applet_PerformanceConfiguration[i]);
-            if (R_FAILED(rc)) break;
+    // Official apps aren't known to use apmSetPerformanceConfiguration with mode=1.
+    if (R_SUCCEEDED(rc)) {
+        // This is broken with the regular "apm" service.
+        u32 i;
+        for (i=0; i<2; i++)
+        {
+            if (__nx_applet_PerformanceConfiguration[i])
+                rc = apmSetPerformanceConfiguration(i, __nx_applet_PerformanceConfiguration[i]);
+
+            if (R_FAILED(rc))
+                break;
         }
     }
 
-    if (R_FAILED(rc)) appletExit();
+    if (R_FAILED(rc))
+        appletExit();
 
     return rc;
 }
 
 void appletExit(void)
 {
-    if (g_appletServiceSession == INVALID_HANDLE) return;
+    if (g_appletServiceSession == INVALID_HANDLE)
+        return;
 
     apmExit();
 
@@ -233,60 +277,62 @@ void appletExit(void)
     g_appletResourceUserId = 0;
 }
 
-static void appletCallHook(applet_HookType hookType)
+static void appletCallHook(AppletHookType hookType)
 {
-	appletHookCookie* c;
-	for (c = &appletFirstHook; c && c->callback; c = c->next)
-		c->callback(hookType, c->param);
+    AppletHookCookie* c;
+    for (c = &g_appletFirstHook; c && c->callback; c = c->next)
+        c->callback(hookType, c->param);
 }
 
-void appletHook(appletHookCookie* cookie, appletHookFn callback, void* param)
+void appletHook(AppletHookCookie* cookie, AppletHookFn callback, void* param)
 {
-	if (!callback) return;
+    if (!callback)
+        return;
 
-	appletHookCookie* hook = &appletFirstHook;
-	*cookie = *hook; // Structure copy.
-	hook->next = cookie;
-	hook->callback = callback;
-	hook->param = param;
+    AppletHookCookie* hook = &g_appletFirstHook;
+    *cookie = *hook; // Structure copy.
+    hook->next = cookie;
+    hook->callback = callback;
+    hook->param = param;
 }
 
-void appletUnhook(appletHookCookie* cookie)
+void appletUnhook(AppletHookCookie* cookie)
 {
-	appletHookCookie* hook;
-	for (hook = &appletFirstHook; hook; hook = hook->next)
-	{
-		if (hook->next == cookie)
-		{
-			*hook = *cookie; // Structure copy.
-			break;
-		}
-	}
+    AppletHookCookie* hook;
+    for (hook = &g_appletFirstHook; hook; hook = hook->next)
+    {
+        if (hook->next == cookie)
+        {
+            *hook = *cookie; // Structure copy.
+            break;
+        }
+    }
 }
 
 static Result appletSetFocusHandlingMode(u32 mode) {
-    Result rc=0;
+    Result rc;
     u8 invals[4];
 
-    if (mode>3) return MAKERESULT(MODULE_LIBNX, LIBNX_BADINPUT);
+    if (mode > 3)
+        return MAKERESULT(MODULE_LIBNX, LIBNX_BADINPUT);
 
     memset(invals, 0, sizeof(invals));
 
-    if (mode==0 || mode==3) {
+    if ((mode == 0) || (mode == 3)) {
         invals[0] = 0;
         invals[1] = 0;
         invals[2] = 1;
     }
 
-    if (mode!=3) {
+    if (mode != 3) {
         invals[3] = 0;
 
-        if (mode==1) {
+        if (mode == 1) {
             invals[0] = 1;
             invals[1] = 1;
             invals[2] = 0;
         }
-        else if (mode==2) {
+        else if (mode == 2) {
             invals[0] = 1;
             invals[1] = 0;
             invals[2] = 1;
@@ -458,7 +504,7 @@ void appletNotifyRunning(u8 *out) {
     IpcCommand c;
     ipcInitialize(&c);
 
-    if (__nx_applet_type!=APPLET_TYPE_Application || g_appletNotifiedRunning) return;
+    if (__nx_applet_type!=AppletType_Application || g_appletNotifiedRunning) return;
     g_appletNotifiedRunning = 1;
 
     struct {
@@ -825,32 +871,44 @@ bool appletMainLoop(void) {
     u32 msg=0;
     s32 tmpindex=0;
 
-    if (R_FAILED(svcWaitSynchronization(&tmpindex, &g_appletMessageEventHandle, 1, 0))) return true;
+    if (R_FAILED(svcWaitSynchronization(&tmpindex, &g_appletMessageEventHandle, 1, 0)))
+        return true;
 
     rc = _appletReceiveMessage(&msg);
-    if (R_FAILED(rc)) {
-        if ((rc & 0x3fffff) == 0x680) return true;
+
+    if (R_FAILED(rc))
+    {
+        if ((rc & 0x3fffff) == 0x680)
+            return true;
+
         fatalSimple(rc);
     }
 
     switch(msg) {
         case 0xF:
             rc = _appletGetCurrentFocusState(&g_appletFocusState);
-            if (R_SUCCEEDED(rc)) appletCallHook(APPLETHOOK_ONFOCUSSTATE);
+
+            if (R_SUCCEEDED(rc))
+                appletCallHook(AppletHookType_OnFocusState);
         break;
 
         case 0x1E:
             rc = _appletGetOperationMode(&g_appletOperationMode);
-            if (R_SUCCEEDED(rc)) appletCallHook(APPLETHOOK_ONOPERATIONMODE);
+
+            if (R_SUCCEEDED(rc))
+                appletCallHook(AppletHookType_OnOperationMode);
         break;
 
         case 0x1F:
             rc = _appletGetPerformanceMode(&g_appletPerformanceMode);
-            if (R_SUCCEEDED(rc)) appletCallHook(APPLETHOOK_ONPERFORMANCEMODE);
+
+            if (R_SUCCEEDED(rc))
+                appletCallHook(AppletHookType_OnPerformanceMode);
         break;
     }
 
-    if (R_FAILED(rc)) fatalSimple(rc);
+    if (R_FAILED(rc))
+        fatalSimple(rc);
 
     return true;
 }
