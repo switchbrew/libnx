@@ -211,7 +211,7 @@ Result nvgfxInitialize(void) {
 
     if (R_SUCCEEDED(rc)) rc = nvioctlChannel_SetUserData(g_nvgfx_fd_nvhostgpu, g_nvgfx_nvhost_userdata);
 
-    if (R_SUCCEEDED(rc)) rc = nvioctlChannel_SetPriority(g_nvgfx_fd_nvhostgpu, NVIOCTL_CHANNEL_PRIORITY_medium);
+    if (R_SUCCEEDED(rc)) rc = nvioctlChannel_SetPriority(g_nvgfx_fd_nvhostgpu, NvChannelPriority_Medium);
 
     if (R_SUCCEEDED(rc)) rc = nvmapobjSetup(&nvmap_objs[3], 0, 0, 0x20000, 0);
 

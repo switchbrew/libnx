@@ -62,19 +62,19 @@ typedef struct {
 
 //Used with nvioctlChannel_AllocObjCtx().
 enum nvioctl_channel_obj_classnum {
-    NVIOCTL_CHANNEL_OBJ_CLASSNUM_2d = 0x902D,
-    NVIOCTL_CHANNEL_OBJ_CLASSNUM_3d = 0xB197,
-    NVIOCTL_CHANNEL_OBJ_CLASSNUM_compute = 0xB1C0,
-    NVIOCTL_CHANNEL_OBJ_CLASSNUM_kepler = 0xA140,
-    NVIOCTL_CHANNEL_OBJ_CLASSNUM_DMA = 0xB0B5,
-    NVIOCTL_CHANNEL_OBJ_CLASSNUM_channel_gpfifo = 0xB06F
+    NvChannelObjClassNum_2D = 0x902D,
+    NvChannelObjClassNum_3D = 0xB197,
+    NvChannelObjClassNum_Compute = 0xB1C0,
+    NvChannelObjClassNum_Kepler = 0xA140,
+    NvChannelObjClassNum_DMA = 0xB0B5,
+    NvChannelObjClassNum_ChannelGpfifo = 0xB06F
 };
 
 //Used with nvioctlChannel_SetPriority().
 enum nvioctl_channel_priority {
-    NVIOCTL_CHANNEL_PRIORITY_low = 0x32,
-    NVIOCTL_CHANNEL_PRIORITY_medium = 0x64,
-    NVIOCTL_CHANNEL_PRIORITY_high = 0x96
+    NvChannelPriority_Low = 0x32,
+    NvChannelPriority_Medium = 0x64,
+    NvChannelPriority_High = 0x96
 };
 
 Result nvioctlNvhostCtrl_EventSignal(u32 fd, u32 event_id);
