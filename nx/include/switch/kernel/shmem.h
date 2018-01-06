@@ -1,8 +1,8 @@
 typedef struct {
-    Handle      MemHandle;
-    size_t      Size;
-    Permission  Perm;
-    void*       MappedAddr;
+    Handle      handle;
+    size_t      size;
+    Permission  perm;
+    void*       map_addr;
 } SharedMemory;
 
 Result shmemCreate(SharedMemory* s, size_t size, Permission local_perm, Permission remote_perm);

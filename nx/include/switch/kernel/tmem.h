@@ -1,9 +1,9 @@
 typedef struct {
-    Handle      MemHandle;
-    size_t      Size;
-    Permission  Perm;
-    void*       SourceAddr;
-    void*       MappedAddr;
+    Handle      handle;
+    size_t      size;
+    Permission  perm;
+    void*       src_addr;
+    void*       map_addr;
 } TransferMemory;
 
 Result tmemCreate(TransferMemory* t, size_t size, Permission perm);

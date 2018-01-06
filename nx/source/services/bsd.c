@@ -12,7 +12,7 @@ static Result _bsdRegisterClient(Handle h, TransferMemory* tmem, u64* pid_out) {
     IpcCommand c;
     ipcInitialize(&c);
     ipcSendPid(&c);
-    ipcSendHandleCopy(&c, tmem->MemHandle);
+    ipcSendHandleCopy(&c, tmem->handle);
 
     struct {
         u64 magic;
@@ -31,7 +31,7 @@ static Result _bsdRegisterClient(Handle h, TransferMemory* tmem, u64* pid_out) {
     raw->unk0[2] = 0x40000;
     raw->unk0[3] = 0xA500;
     raw->unk0[4] = 13;
-    raw->tmem_sz = tmem->Size;
+    raw->tmem_sz = tmem->size;
 
     Result rc = ipcDispatch(h);
 

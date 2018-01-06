@@ -6,39 +6,39 @@ Result shmemCreate(SharedMemory* s, size_t size, Permission local_perm, Permissi
 {
     Result rc;
 
-    s->MemHandle = INVALID_HANDLE;
-    s->Size = size;
-    s->MappedAddr = NULL;
-    s->Perm = local_perm;
+    s->handle = INVALID_HANDLE;
+    s->size = size;
+    s->map_addr = NULL;
+    s->perm = local_perm;
 
-    rc = svcCreateSharedMemory(&s->MemHandle, size, local_perm, remote_perm);
+    rc = svcCreateSharedMemory(&s->handle, size, local_perm, remote_perm);
 
     return rc;
 }
 
 void shmemLoadRemote(SharedMemory* s, Handle handle, size_t size, Permission perm)
 {
-    s->MemHandle = handle;
-    s->Size = size;
-    s->MappedAddr = NULL;
-    s->Perm = perm;
+    s->handle = handle;
+    s->size = size;
+    s->map_addr = NULL;
+    s->perm = perm;
 }
 
 Result shmemMap(SharedMemory* s)
 {
     Result rc = 0;
 
-    if (s->MappedAddr == NULL)
+    if (s->map_addr == NULL)
     {
-        void* addr = virtmemReserve(s->Size);
+        void* addr = virtmemReserve(s->size);
 
-        rc = svcMapSharedMemory(s->MemHandle, addr, s->Size, s->Perm);
+        rc = svcMapSharedMemory(s->handle, addr, s->size, s->perm);
 
         if (R_SUCCEEDED(rc)) {
-            s->MappedAddr = addr;
+            s->map_addr = addr;
         }
         else {
-            virtmemFree(addr, s->Size);
+            virtmemFree(addr, s->size);
         }
     }
     else {
@@ -52,33 +52,33 @@ Result shmemUnmap(SharedMemory* s)
 {
     Result rc;
 
-    rc = svcUnmapSharedMemory(s->MemHandle, s->MappedAddr, s->Size);
+    rc = svcUnmapSharedMemory(s->handle, s->map_addr, s->size);
 
     if (R_SUCCEEDED(rc)) {
-        s->MappedAddr = NULL;
+        s->map_addr = NULL;
     }
 
     return rc;
 }
 
 void* shmemGetAddr(SharedMemory* s) {
-    return s->MappedAddr;
+    return s->map_addr;
 }
 
 Result shmemClose(SharedMemory* s)
 {
     Result rc = 0;
 
-    if (s->MappedAddr != NULL) {
+    if (s->map_addr != NULL) {
         rc = shmemUnmap(s);
     }
 
     if (R_SUCCEEDED(rc)) {
-        if (s->MemHandle != INVALID_HANDLE) {
-            rc = svcCloseHandle(s->MemHandle);
+        if (s->handle != INVALID_HANDLE) {
+            rc = svcCloseHandle(s->handle);
         }
 
-        s->MemHandle = INVALID_HANDLE;
+        s->handle = INVALID_HANDLE;
     }
 
     return rc;
