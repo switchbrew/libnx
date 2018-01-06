@@ -1,4 +1,4 @@
-### Types
+#### Types
 TypesAreCapitalizedLikeThis
 
 #### Enums
@@ -7,8 +7,18 @@ EnumType_EnumName
 #### Struct members
 like_this
 
-### Local variables
+notlikethis
+
+#### Local variables
 like_this
 
-### Functions
+notlikethis
+
+#### Global variables (or global statics)
+g_variableName
+
+#### Functions
 modulenameFunctionName
+
+#### Macros
+LIKE_THIS
