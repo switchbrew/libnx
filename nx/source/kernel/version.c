@@ -6,7 +6,7 @@ static bool g_IsAbove300;
 static bool g_IsAbove400;
 static bool g_HasCached = 0;
 
-static void _CacheValues()
+static void _CacheValues(void)
 {
     // This is actually thread safe, might cache twice but that's fine.
     if (!g_HasCached)
@@ -19,17 +19,17 @@ static void _CacheValues()
     }
 }
 
-bool kernelAbove200() {
+bool kernelAbove200(void) {
     _CacheValues();
     return g_IsAbove200;
 }
 
-bool kernelAbove300() {
+bool kernelAbove300(void) {
     _CacheValues();
     return g_IsAbove300;
 }
 
-bool kernelAbove400() {
+bool kernelAbove400(void) {
     _CacheValues();
     return g_IsAbove400;
 }

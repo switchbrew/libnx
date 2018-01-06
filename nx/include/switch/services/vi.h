@@ -28,13 +28,13 @@ typedef enum {
 } ViScalingMode;
 
 Result viInitialize(ViServiceType servicetype);
-void viExit();
-Handle viGetSessionService();
-Handle viGetSession_IApplicationDisplayService();
-Handle viGetSession_IHOSBinderDriverRelay();
-Handle viGetSession_ISystemDisplayService();
-Handle viGetSession_IManagerDisplayService();
-Handle viGetSession_IHOSBinderDriverIndirect();
+void viExit(void);
+Handle viGetSessionService(void);
+Handle viGetSession_IApplicationDisplayService(void);
+Handle viGetSession_IHOSBinderDriverRelay(void);
+Handle viGetSession_ISystemDisplayService(void);
+Handle viGetSession_IManagerDisplayService(void);
+Handle viGetSession_IHOSBinderDriverIndirect(void);
 
 Result viOpenDisplay(const char *DisplayName, ViDisplay *display);
 Result viCloseDisplay(ViDisplay *display);

@@ -2,7 +2,7 @@
 
 void __nx_exit(int rc);
 
-void virtmemSetup();
+void virtmemSetup(void);
 void newlibSetup(Handle main_thread);
 
 void __system_initArgv(void);
@@ -12,7 +12,7 @@ __attribute__((weak)) size_t __nx_inner_heap_size = INNER_HEAP_SIZE;
 __attribute__((weak)) char   __nx_inner_heap[INNER_HEAP_SIZE];
 __attribute__((weak)) size_t __nx_outer_heap_size = 0x2000000*16;//Must be a multiple of 0x2000000.
 
-void __attribute__((weak)) __libnx_initheap()
+void __attribute__((weak)) __libnx_initheap(void)
 {
     u64 addr;
     Result rc   = svcSetHeapSize((void**)&addr, __nx_outer_heap_size);

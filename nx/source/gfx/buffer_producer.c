@@ -33,7 +33,7 @@ Result bufferProducerInitialize(Binder *session)
     return 0;
 }
 
-void bufferProducerExit()
+void bufferProducerExit(void)
 {
     g_bufferProducerBinderSession = NULL;
 }

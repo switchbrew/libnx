@@ -4,7 +4,7 @@
 
 #define HAS_LISTENERS 0x40000000
 
-static u32 _GetTag() {
+static u32 _GetTag(void) {
     return getThreadVars()->handle;
 }
 

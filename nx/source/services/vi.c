@@ -69,7 +69,7 @@ Result viInitialize(ViServiceType servicetype)
     return rc;
 }
 
-void viExit()
+void viExit(void)
 {
     if(g_viServiceType == -1)
         return;
@@ -102,32 +102,32 @@ void viExit()
     }
 }
 
-Handle viGetSessionService()
+Handle viGetSessionService(void)
 {
     return g_viServiceSession;
 }
 
-Handle viGetSession_IApplicationDisplayService()
+Handle viGetSession_IApplicationDisplayService(void)
 {
     return g_viIApplicationDisplayService;
 }
 
-Handle viGetSession_IHOSBinderDriverRelay()
+Handle viGetSession_IHOSBinderDriverRelay(void)
 {
     return g_viIHOSBinderDriverRelay;
 }
 
-Handle viGetSession_ISystemDisplayService()
+Handle viGetSession_ISystemDisplayService(void)
 {
     return g_viISystemDisplayService;
 }
 
-Handle viGetSession_IManagerDisplayService()
+Handle viGetSession_IManagerDisplayService(void)
 {
     return g_viIManagerDisplayService;
 }
 
-Handle viGetSession_IHOSBinderDriverIndirect()
+Handle viGetSession_IHOSBinderDriverIndirect(void)
 {
     return g_viIHOSBinderDriverIndirect;
 }

@@ -11,7 +11,7 @@ extern const u8 __tdata_lma[];
 extern const u8 __tdata_lma_end[];
 extern u8 __tls_start[];
 
-static struct _reent* __libnx_get_reent() {
+static struct _reent* __libnx_get_reent(void) {
     ThreadVars* tv = getThreadVars();
     if (tv->magic != THREADVARS_MAGIC)
         fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_BADREENT));

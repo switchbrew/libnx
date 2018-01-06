@@ -39,7 +39,7 @@ static inline bool _InRegion(VirtualRegion* r, u64 addr) {
     return (addr >= r->start) && (addr < r->end);
 }
 
-void virtmemSetup() {
+void virtmemSetup(void) {
     if (R_FAILED(_GetRegionFromInfo(&g_AddressSpace, 12, 13))) {
         // Default values in case we're running on 1.0.0
         // Assumes 32-bit address space

@@ -110,7 +110,7 @@ Result bsdInitialize(TransferMemory* tmem) {
     return rc;
 }
 
-int bsdGetErrno() {
+int bsdGetErrno(void) {
     return g_Errno;
 }
 

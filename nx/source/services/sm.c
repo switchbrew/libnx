@@ -3,12 +3,13 @@
 
 static Handle g_smHandle = -1;
 
-bool smHasInitialized() {
+bool smHasInitialized(void) {
     return g_smHandle != -1;
 }
 
-Result smInitialize() {
-    if(smHasInitialized())return 0;
+Result smInitialize(void) {
+    if (smHasInitialized())
+        return 0;
 
     Result rc = svcConnectToNamedPort(&g_smHandle, "sm:");
     Handle tmp;
@@ -50,7 +51,7 @@ Result smInitialize() {
 }
 
 void smExit(void) {
-    if(smHasInitialized()) {
+    if (smHasInitialized()) {
         svcCloseHandle(g_smHandle);
         g_smHandle = -1;
     }

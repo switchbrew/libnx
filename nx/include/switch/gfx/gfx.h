@@ -35,8 +35,8 @@ void gfxConfigureAutoResolution(bool enable, s32 handheld_width, s32 handheld_he
 /// Wrapper for gfxConfigureAutoResolution(). handheld_resolution=720p, docked_resolution={all-zero for using current maximum resolution}.
 void gfxConfigureAutoResolutionDefault(bool enable);
 
-void gfxWaitForVsync();
-void gfxSwapBuffers();
+void gfxWaitForVsync(void);
+void gfxSwapBuffers(void);
 
 /// Get the current framebuffer address, with optional output ptrs for the display width/height. The display width/height is adjusted by gfxConfigureCrop()/gfxConfigureResolution().
 u8* gfxGetFramebuffer(u32* width, u32* height);

@@ -3,7 +3,7 @@
 
 static Handle g_pmdmntHandle = INVALID_HANDLE;
 
-Result pmdmntInitialize() {
+Result pmdmntInitialize(void) {
     Result rc = smGetService(&g_pmdmntHandle, "pm:dmnt");
 
     if (R_FAILED(rc)) {

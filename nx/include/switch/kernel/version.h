@@ -1,4 +1,4 @@
 // Copyright 2017 plutoo
-bool kernelAbove200();
-bool kernelAbove300();
-bool kernelAbove400();
+bool kernelAbove200(void);
+bool kernelAbove300(void);
+bool kernelAbove400(void);

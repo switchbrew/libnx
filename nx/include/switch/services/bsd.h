@@ -7,7 +7,7 @@ struct bsd_sockaddr_in {
 };
 
 Result bsdInitialize(TransferMemory* tmem);
-int bsdGetErrno();
+int bsdGetErrno(void);
 int bsdConnect(int sockfd, void* addr, u32 addrlen);
 int bsdSocket(int domain, int type, int protocol);
 int bsdBind(int sockfd, void* addr, u32 addrlen);

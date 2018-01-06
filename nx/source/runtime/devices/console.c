@@ -600,7 +600,7 @@ void consoleSetFont(PrintConsole* console, ConsoleFont* font){
 }
 
 //---------------------------------------------------------------------------------
-static void newRow() {
+static void newRow(void) {
 //---------------------------------------------------------------------------------
 
 

@@ -3,7 +3,7 @@
 
 static Handle g_fsHandle = INVALID_HANDLE;
 
-Result fsInitialize() {
+Result fsInitialize(void) {
     if (g_fsHandle != INVALID_HANDLE)
         return 0;
 

@@ -295,7 +295,7 @@ static Result _gfxInit(ViServiceType servicetype, const char *DisplayName, u32 L
     return rc;
 }
 
-void gfxInitDefault()
+void gfxInitDefault(void)
 {
     nvServiceType nv_servicetype;
 
@@ -317,7 +317,8 @@ void gfxInitDefault()
     if (R_FAILED(rc)) fatalSimple(rc);
 }
 
-void gfxExit() {
+void gfxExit(void)
+{
     u32 i = 0;
     if (!g_gfxInitialized)
         return;
@@ -463,11 +464,11 @@ static void _waitevent(Handle *handle) {
     if (R_FAILED(rc2)) fatalSimple(rc2);
 }
 
-void gfxWaitForVsync() {
+void gfxWaitForVsync(void) {
     _waitevent(&g_gfxDisplayVsyncEvent);
 }
 
-void gfxSwapBuffers() {
+void gfxSwapBuffers(void) {
     Result rc=0;
 
     rc = _gfxQueueBuffer(g_gfxCurrentProducerBuffer);

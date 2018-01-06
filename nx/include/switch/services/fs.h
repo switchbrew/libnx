@@ -77,7 +77,7 @@ typedef enum
     FS_CONTENTSTORAGEID_SdCard     = 2,
 } FsContentStorageId;
 
-Result fsInitialize();
+Result fsInitialize(void);
 void fsExit(void);
 
 Handle fsGetServiceSession(void);
