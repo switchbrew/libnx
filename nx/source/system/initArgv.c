@@ -15,7 +15,7 @@ extern u32 __argdata__;
 void __system_initArgv(void)
 {
     Result rc=0;
-    MemInfo meminfo;
+    MemoryInfo meminfo;
     u32 pageinfo=0;
 
     u8 *argdata = (u8*)&__argdata__;
@@ -36,7 +36,10 @@ void __system_initArgv(void)
     __system_argv = NULL;
 
     rc = svcQueryMemory(&meminfo, &pageinfo, (u64)argdata);
-    if (R_FAILED(rc) || meminfo.perm!=0x3) return; //This memory is only mapped when arguments were passed.
+
+    // This memory is only mapped when arguments were passed.
+    if (R_FAILED(rc) || meminfo.perm != 0x3)
+        return;
 
     argdata_allocsize = arg32[0];
     argdata_strsize = arg32[1];

@@ -13,15 +13,15 @@
 #define CUR_THREAD_HANDLE 0xFFFF8000
 
 typedef struct {
-    u64 base_addr;
+    u64 addr;
     u64 size;
-    u32 memorytype;
-    u32 memoryattribute;
+    u32 type;
+    u32 attr;
     u32 perm;
-    u32 devicerefcount;
-    u32 ipcrefcount;
+    u32 device_refcount;
+    u32 ipc_refcount;
     u32 padding;
-} MemInfo;
+} MemoryInfo;
 
 typedef struct {
     u64 X[8];
@@ -30,7 +30,7 @@ typedef struct {
 Result svcSetHeapSize(void** out_addr, u64 size);
 Result svcMapMemory(void* dst_addr, void* src_addr, u64 size);
 Result svcUnmapMemory(void* dst_addr, void* src_addr, u64 size);
-Result svcQueryMemory(MemInfo* meminfo_ptr, u32 *pageinfo, u64 addr);
+Result svcQueryMemory(MemoryInfo* meminfo_ptr, u32 *pageinfo, u64 addr);
 void NORETURN svcExitProcess();
 Result svcCreateThread(Handle* out, void* entry, void* arg, void* stack_top, int prio, int cpuid);
 Result svcStartThread(Handle handle);
@@ -73,7 +73,7 @@ Result svcGetDebugEvent(u8* event_out, Handle* debug);
 Result svcContinueDebugEvent(Handle debug, u32 flags, u64 unk);
 Result svcGetDebugThreadContext(u8* out, Handle debug, u64 threadID, u32 flags);
 Result svcGetProcessList(u32 *num_out, u64 *pids_out, u32 max_pids);
-Result svcQueryDebugProcessMemory(MemInfo* meminfo_ptr, u32* pageinfo, Handle debug, u64 addr);
+Result svcQueryDebugProcessMemory(MemoryInfo* meminfo_ptr, u32* pageinfo, Handle debug, u64 addr);
 Result svcReadDebugProcessMemory(void* buffer, Handle debug, u64 addr, u64 size);
 Result svcWriteDebugProcessMemory(Handle debug, void* buffer, u64 addr, u64 size);
 Result svcManageNamedPort(Handle* portServer, const char* name, s32 maxSessions);

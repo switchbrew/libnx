@@ -61,10 +61,10 @@ void virtmemSetup() {
 }
 
 void* virtmemReserve(size_t size) {
-    Result  rc;
-    MemInfo meminfo;
-    u32     pageinfo;
-    size_t  i;
+    Result rc;
+    MemoryInfo meminfo;
+    u32 pageinfo;
+    size_t i;
 
     size = (size + 0xFFF) &~ 0xFFF;
 
@@ -87,15 +87,15 @@ void* virtmemReserve(size_t size) {
             fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_BADQUERYMEMORY));
         }
 
-        if (meminfo.memorytype != 0) {
+        if (meminfo.type != 0) {
             // Address is already taken, let's move past it.
-            addr = meminfo.base_addr + meminfo.size;
+            addr = meminfo.addr + meminfo.size;
             continue;
         }
 
         if (size > meminfo.size) {
             // We can't fit in this region, let's move past it.
-            addr = meminfo.base_addr + meminfo.size;
+            addr = meminfo.addr + meminfo.size;
             continue;
         }
 
@@ -136,9 +136,9 @@ void  virtmemFree(void* addr, size_t size) {
 
 void* virtmemReserveMap(size_t size)
 {
-    Result  rc;
-    MemInfo meminfo;
-    u32     pageinfo;
+    Result rc;
+    MemoryInfo meminfo;
+    u32 pageinfo;
 
     int region_idx = kernelAbove200() ? REGION_NEW_STACK : REGION_STACK;
     size = (size + 0xFFF) &~ 0xFFF;
@@ -163,15 +163,15 @@ void* virtmemReserveMap(size_t size)
             fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_BADQUERYMEMORY));
         }
 
-        if (meminfo.memorytype != 0) {
+        if (meminfo.type != 0) {
             // Address is already taken, let's move past it.
-            addr = meminfo.base_addr + meminfo.size;
+            addr = meminfo.addr + meminfo.size;
             continue;
         }
 
         if (size > meminfo.size) {
             // We can't fit in this region, let's move past it.
-            addr = meminfo.base_addr + meminfo.size;
+            addr = meminfo.addr + meminfo.size;
             continue;
         }
 
