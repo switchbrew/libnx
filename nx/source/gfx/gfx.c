@@ -2,9 +2,9 @@
 #include <switch.h>
 
 static bool g_gfxInitialized = 0;
-static viDisplay g_gfxDisplay;
+static ViDisplay g_gfxDisplay;
 static Handle g_gfxDisplayVsyncEvent = INVALID_HANDLE;
-static viLayer g_gfxLayer;
+static ViLayer g_gfxLayer;
 static u8 g_gfxNativeWindow[0x100];
 static u64 g_gfxNativeWindow_Size;
 static s32 g_gfxNativeWindow_ID;
@@ -151,7 +151,7 @@ static Result _gfxQueueBuffer(s32 buf) {
     return rc;
 }
 
-static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 LayerFlags, u64 LayerId, nvServiceType nv_servicetype, size_t nv_transfermem_size) {
+static Result _gfxInit(ViServiceType servicetype, const char *DisplayName, u32 LayerFlags, u64 LayerId, nvServiceType nv_servicetype, size_t nv_transfermem_size) {
     Result rc=0;
     u32 i=0;
 
@@ -204,7 +204,7 @@ static Result _gfxInit(viServiceType servicetype, const char *DisplayName, u32 L
 
     if (R_SUCCEEDED(rc)) rc = viOpenLayer(g_gfxNativeWindow, &g_gfxNativeWindow_Size, &g_gfxDisplay, &g_gfxLayer, LayerFlags, LayerId);
 
-    if (R_SUCCEEDED(rc)) rc = viSetLayerScalingMode(&g_gfxLayer, VISCALINGMODE_Default);
+    if (R_SUCCEEDED(rc)) rc = viSetLayerScalingMode(&g_gfxLayer, ViScalingMode_Default);
 
     if (R_SUCCEEDED(rc)) rc = _gfxGetNativeWindowID(g_gfxNativeWindow, g_gfxNativeWindow_Size, &g_gfxNativeWindow_ID);
 
@@ -313,7 +313,7 @@ void gfxInitDefault()
         break;
     }
 
-    Result rc = _gfxInit(VILAYERFLAGS_Default, "Default", VILAYERFLAGS_Default, 0, nv_servicetype, 0x300000);
+    Result rc = _gfxInit(ViLayerFlags_Default, "Default", ViLayerFlags_Default, 0, nv_servicetype, 0x300000);
     if (R_FAILED(rc)) fatalSimple(rc);
 }
 

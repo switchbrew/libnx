@@ -12,23 +12,24 @@ static Handle g_viIHOSBinderDriverIndirect = INVALID_HANDLE;
 static Result _viGetSession(Handle sessionhandle, Handle* handle_out, void* inraw, size_t rawsize);
 static Result _viGetSessionNoParams(Handle sessionhandle, Handle* handle_out, u64 cmd_id);
 
-Result viInitialize(viServiceType servicetype) {
-    if(g_viServiceType!=-1)
+Result viInitialize(ViServiceType servicetype)
+{
+    if(g_viServiceType != -1)
         return MAKERESULT(MODULE_LIBNX, LIBNX_ALREADYINITIALIZED);
 
     Result rc = 0;
 
-    if (servicetype==VISERVTYPE_Default || servicetype==VISERVTYPE_Manager) {
+    if (servicetype==ViServiceType_Default || servicetype==ViServiceType_Manager) {
         rc = smGetService(&g_viServiceSession, "vi:m");
         g_viServiceType = 2;
     }
 
-    if ((servicetype==VISERVTYPE_Default && R_FAILED(rc)) || servicetype==VISERVTYPE_System) {
+    if ((servicetype==ViServiceType_Default && R_FAILED(rc)) || servicetype==ViServiceType_System) {
         rc = smGetService(&g_viServiceSession, "vi:s");
         g_viServiceType = 1;
     }
 
-    if ((servicetype==VISERVTYPE_Default && R_FAILED(rc)) || servicetype==VISERVTYPE_Application)
+    if ((servicetype==ViServiceType_Default && R_FAILED(rc)) || servicetype==ViServiceType_Application)
     {
         rc = smGetService(&g_viServiceSession, "vi:u");
         g_viServiceType = 0;
@@ -51,13 +52,13 @@ Result viInitialize(viServiceType servicetype) {
     if (R_SUCCEEDED(rc))
         rc = _viGetSessionNoParams(g_viIApplicationDisplayService, &g_viIHOSBinderDriverRelay, 100);
 
-    if (g_viServiceType>=VISERVTYPE_System && R_SUCCEEDED(rc))
+    if (g_viServiceType>=ViServiceType_System && R_SUCCEEDED(rc))
         rc = _viGetSessionNoParams(g_viIApplicationDisplayService, &g_viISystemDisplayService, 101);
 
-    if (g_viServiceType>=VISERVTYPE_Manager && R_SUCCEEDED(rc))
+    if (g_viServiceType>=ViServiceType_Manager && R_SUCCEEDED(rc))
         rc = _viGetSessionNoParams(g_viIApplicationDisplayService, &g_viIManagerDisplayService, 102);
 
-    if (g_viServiceType>=VISERVTYPE_System && R_SUCCEEDED(rc) && kernelAbove200())
+    if (g_viServiceType>=ViServiceType_System && R_SUCCEEDED(rc) && kernelAbove200())
         rc = _viGetSessionNoParams(g_viIApplicationDisplayService, &g_viIHOSBinderDriverIndirect, 103);
 
     if (R_FAILED(rc)) {
@@ -68,7 +69,7 @@ Result viInitialize(viServiceType servicetype) {
     return rc;
 }
 
-void viExit(void)
+void viExit()
 {
     if(g_viServiceType == -1)
         return;
@@ -101,32 +102,32 @@ void viExit(void)
     }
 }
 
-Handle viGetSessionService(void)
+Handle viGetSessionService()
 {
     return g_viServiceSession;
 }
 
-Handle viGetSession_IApplicationDisplayService(void)
+Handle viGetSession_IApplicationDisplayService()
 {
     return g_viIApplicationDisplayService;
 }
 
-Handle viGetSession_IHOSBinderDriverRelay(void)
+Handle viGetSession_IHOSBinderDriverRelay()
 {
     return g_viIHOSBinderDriverRelay;
 }
 
-Handle viGetSession_ISystemDisplayService(void)
+Handle viGetSession_ISystemDisplayService()
 {
     return g_viISystemDisplayService;
 }
 
-Handle viGetSession_IManagerDisplayService(void)
+Handle viGetSession_IManagerDisplayService()
 {
     return g_viIManagerDisplayService;
 }
 
-Handle viGetSession_IHOSBinderDriverIndirect(void)
+Handle viGetSession_IHOSBinderDriverIndirect()
 {
     return g_viIHOSBinderDriverIndirect;
 }
@@ -170,24 +171,24 @@ static Result _viGetSessionNoParams(Handle sessionhandle, Handle* handle_out, u6
     return _viGetSession(sessionhandle, handle_out, &raw, sizeof(raw));
 }
 
-Result viOpenDisplay(const char *DisplayName, viDisplay *display) {
+Result viOpenDisplay(const char *display_name, ViDisplay *display) {
     IpcCommand c;
     ipcInitialize(&c);
 
     struct {
         u64 magic;
         u64 cmd_id;
-        char DisplayName[0x40];
+        char display_name[0x40];
     } *raw;
 
-    memset(display, 0, sizeof(viDisplay));
+    memset(display, 0, sizeof(ViDisplay));
 
     raw = ipcPrepareHeader(&c, sizeof(*raw));
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 1010;
 
-    strncpy(display->DisplayName, DisplayName, sizeof(display->DisplayName)-1);
-    memcpy(raw->DisplayName, display->DisplayName, sizeof(display->DisplayName));
+    strncpy(display->display_name, display_name, sizeof(display->display_name)-1);
+    memcpy(raw->display_name, display->display_name, sizeof(display->display_name));
 
     Result rc = ipcDispatch(g_viIApplicationDisplayService);
 
@@ -198,13 +199,13 @@ Result viOpenDisplay(const char *DisplayName, viDisplay *display) {
         struct {
             u64 magic;
             u64 result;
-            u64 DisplayId;
+            u64 display_id;
         } *resp = r.Raw;
 
         rc = resp->result;
 
         if (R_SUCCEEDED(rc)) {
-            display->DisplayId = resp->DisplayId;
+            display->display_id = resp->display_id;
             display->initialized = 1;
         }
     }
@@ -212,7 +213,7 @@ Result viOpenDisplay(const char *DisplayName, viDisplay *display) {
     return rc;
 }
 
-Result viCloseDisplay(viDisplay *display) {
+Result viCloseDisplay(ViDisplay *display) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -221,13 +222,13 @@ Result viCloseDisplay(viDisplay *display) {
     struct {
         u64 magic;
         u64 cmd_id;
-        u64 DisplayId;
+        u64 display_id;
     } *raw;
 
     raw = ipcPrepareHeader(&c, sizeof(*raw));
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 1020;
-    raw->DisplayId = display->DisplayId;
+    raw->display_id = display->display_id;
 
     Result rc = ipcDispatch(g_viIApplicationDisplayService);
 
@@ -248,15 +249,15 @@ Result viCloseDisplay(viDisplay *display) {
     return rc;
 }
 
-static Result _viOpenLayer(u8 NativeWindow[0x100], u64 *NativeWindow_Size, const viDisplay *display, u64 LayerId, u64 AppletResourceUserId) {
+static Result _viOpenLayer(u8 NativeWindow[0x100], u64 *NativeWindow_Size, const ViDisplay *display, u64 layer_id, u64 AppletResourceUserId) {
     IpcCommand c;
     ipcInitialize(&c);
 
     struct {
         u64 magic;
         u64 cmd_id;
-        char DisplayName[0x40];
-        u64 LayerId;
+        char display_name[0x40];
+        u64 layer_id;
         u64 AppletResourceUserId;
     } *raw;
 
@@ -267,9 +268,9 @@ static Result _viOpenLayer(u8 NativeWindow[0x100], u64 *NativeWindow_Size, const
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 2020;
 
-    memcpy(raw->DisplayName, display->DisplayName, sizeof(display->DisplayName));
+    memcpy(raw->display_name, display->display_name, sizeof(display->display_name));
 
-    raw->LayerId = LayerId;
+    raw->layer_id = layer_id;
     raw->AppletResourceUserId = AppletResourceUserId;
 
     Result rc = ipcDispatch(g_viIApplicationDisplayService);
@@ -294,7 +295,7 @@ static Result _viOpenLayer(u8 NativeWindow[0x100], u64 *NativeWindow_Size, const
     return rc;
 }
 
-static Result _viCreateStrayLayer(u8 NativeWindow[0x100], u64 *NativeWindow_Size, const viDisplay *display, u32 LayerFlags, u64 *LayerId) {
+static Result _viCreatestray_layer(u8 NativeWindow[0x100], u64 *NativeWindow_Size, const ViDisplay *display, u32 LayerFlags, u64 *layer_id) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -303,7 +304,7 @@ static Result _viCreateStrayLayer(u8 NativeWindow[0x100], u64 *NativeWindow_Size
         u64 cmd_id;
         u32 LayerFlags;
         u32 pad;
-        u64 DisplayId;
+        u64 display_id;
     } *raw;
 
     ipcAddRecvBuffer(&c, NativeWindow, 0x100, 0);
@@ -313,7 +314,7 @@ static Result _viCreateStrayLayer(u8 NativeWindow[0x100], u64 *NativeWindow_Size
     raw->cmd_id = 2030;
     raw->LayerFlags = LayerFlags;
     raw->pad = 0;
-    raw->DisplayId = display->DisplayId;
+    raw->display_id = display->display_id;
 
     Result rc = ipcDispatch(g_viIApplicationDisplayService);
 
@@ -324,14 +325,14 @@ static Result _viCreateStrayLayer(u8 NativeWindow[0x100], u64 *NativeWindow_Size
         struct {
             u64 magic;
             u64 result;
-            u64 LayerId;
+            u64 layer_id;
             u64 NativeWindow_Size;
         } *resp = r.Raw;
 
         rc = resp->result;
 
         if (R_SUCCEEDED(rc)) {
-            *LayerId = resp->LayerId;
+            *layer_id = resp->layer_id;
             *NativeWindow_Size = resp->NativeWindow_Size;
         }
     }
@@ -339,26 +340,26 @@ static Result _viCreateStrayLayer(u8 NativeWindow[0x100], u64 *NativeWindow_Size
     return rc;
 }
 
-Result viOpenLayer(u8 NativeWindow[0x100], u64 *NativeWindow_Size, const viDisplay *display, viLayer *layer, u32 LayerFlags, u64 LayerId) {
+Result viOpenLayer(u8 NativeWindow[0x100], u64 *NativeWindow_Size, const ViDisplay *display, ViLayer *layer, u32 LayerFlags, u64 layer_id) {
     Result rc = 0;
     u64 AppletResourceUserId = 0;
 
-    memset(layer, 0, sizeof(viLayer));
+    memset(layer, 0, sizeof(ViLayer));
 
-    if (LayerId==0) rc = appletGetAppletResourceUserId(&AppletResourceUserId);
-    if (LayerId==0 && (R_FAILED(rc) || AppletResourceUserId == 0)) {
-        rc = _viCreateStrayLayer(NativeWindow, NativeWindow_Size, display, LayerFlags, &layer->LayerId);
-        if (R_SUCCEEDED(rc)) layer->StrayLayer = 1;
+    if (layer_id==0) rc = appletGetAppletResourceUserId(&AppletResourceUserId);
+    if (layer_id==0 && (R_FAILED(rc) || AppletResourceUserId == 0)) {
+        rc = _viCreatestray_layer(NativeWindow, NativeWindow_Size, display, LayerFlags, &layer->layer_id);
+        if (R_SUCCEEDED(rc)) layer->stray_layer = 1;
     }
     else {
-        if (LayerId==0) {
-            rc = appletCreateManagedDisplayLayer(&LayerId);
+        if (layer_id==0) {
+            rc = appletCreateManagedDisplayLayer(&layer_id);
             if (R_FAILED(rc)) return rc;
         }
 
-        rc = _viOpenLayer(NativeWindow, NativeWindow_Size, display, LayerId, AppletResourceUserId);
+        rc = _viOpenLayer(NativeWindow, NativeWindow_Size, display, layer_id, AppletResourceUserId);
 
-        if (R_SUCCEEDED(rc)) layer->LayerId = LayerId;
+        if (R_SUCCEEDED(rc)) layer->layer_id = layer_id;
     }
 
     if (R_SUCCEEDED(rc)) layer->initialized = 1;
@@ -366,7 +367,7 @@ Result viOpenLayer(u8 NativeWindow[0x100], u64 *NativeWindow_Size, const viDispl
     return rc;
 }
 
-Result viCloseLayer(viLayer *layer) {
+Result viCloseLayer(ViLayer *layer) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -375,13 +376,13 @@ Result viCloseLayer(viLayer *layer) {
     struct {
         u64 magic;
         u64 cmd_id;
-        u64 LayerId;
+        u64 layer_id;
     } *raw;
 
     raw = ipcPrepareHeader(&c, sizeof(*raw));
     raw->magic = SFCI_MAGIC;
-    raw->cmd_id = layer->StrayLayer==0 ? 2021 : 2031;
-    raw->LayerId = layer->LayerId;
+    raw->cmd_id = layer->stray_layer == 0 ? 2021 : 2031;
+    raw->layer_id = layer->layer_id;
 
     Result rc = ipcDispatch(g_viIApplicationDisplayService);
 
@@ -396,13 +397,13 @@ Result viCloseLayer(viLayer *layer) {
 
         rc = resp->result;
 
-        memset(layer, 0, sizeof(viLayer));
+        memset(layer, 0, sizeof(ViLayer));
     }
 
     return rc;
 }
 
-Result viSetLayerScalingMode(viLayer *layer, u32 ScalingMode) {
+Result viSetLayerScalingMode(ViLayer *layer, u32 ScalingMode) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -413,7 +414,7 @@ Result viSetLayerScalingMode(viLayer *layer, u32 ScalingMode) {
         u64 cmd_id;
         u32 ScalingMode;
         u32 pad;
-        u64 LayerId;
+        u64 layer_id;
     } *raw;
 
     raw = ipcPrepareHeader(&c, sizeof(*raw));
@@ -421,7 +422,7 @@ Result viSetLayerScalingMode(viLayer *layer, u32 ScalingMode) {
     raw->cmd_id = 2101;
     raw->ScalingMode = ScalingMode;
     raw->pad = 0;
-    raw->LayerId = layer->LayerId;
+    raw->layer_id = layer->layer_id;
 
     Result rc = ipcDispatch(g_viIApplicationDisplayService);
 
@@ -440,21 +441,21 @@ Result viSetLayerScalingMode(viLayer *layer, u32 ScalingMode) {
     return rc;
 }
 
-Result viGetDisplayResolution(viDisplay *display, u64 *width, u64 *height) {
+Result viGetDisplayResolution(ViDisplay *display, u64 *width, u64 *height) {
     IpcCommand c;
     ipcInitialize(&c);
 
     struct {
         u64 magic;
         u64 cmd_id;
-        u64 DisplayId;
+        u64 display_id;
     } *raw;
 
     raw = ipcPrepareHeader(&c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 1102;
-    raw->DisplayId = display->DisplayId;
+    raw->display_id = display->display_id;
 
     Result rc = ipcDispatch(g_viIApplicationDisplayService);
 
@@ -480,21 +481,21 @@ Result viGetDisplayResolution(viDisplay *display, u64 *width, u64 *height) {
     return rc;
 }
 
-Result viGetDisplayVsyncEvent(viDisplay *display, Handle *handle_out) {
+Result viGetDisplayVsyncEvent(ViDisplay *display, Handle *handle_out) {
     IpcCommand c;
     ipcInitialize(&c);
 
     struct {
         u64 magic;
         u64 cmd_id;
-        u64 DisplayId;
+        u64 display_id;
     } *raw;
 
     raw = ipcPrepareHeader(&c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 5202;
-    raw->DisplayId = display->DisplayId;
+    raw->display_id = display->display_id;
 
     Result rc = ipcDispatch(g_viIApplicationDisplayService);
 

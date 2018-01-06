@@ -1,48 +1,48 @@
 typedef struct {
-    u64 DisplayId;
-    char DisplayName[0x40];
+    u64  display_id;
+    char display_name[0x40];
     bool initialized;
-} viDisplay;
+} ViDisplay;
 
 typedef struct {
-    u64 LayerId;
-    bool StrayLayer;
+    u64  layer_id;
+    bool stray_layer;
     bool initialized;
-} viLayer;
+} ViLayer;
 
 typedef enum {
-	VISERVTYPE_Default = -1,
-	VISERVTYPE_Application = 0,
-	VISERVTYPE_System = 1,
-	VISERVTYPE_Manager = 2,
-} viServiceType;
+    ViServiceType_Default = -1,
+    ViServiceType_Application = 0,
+    ViServiceType_System = 1,
+    ViServiceType_Manager = 2,
+} ViServiceType;
 
 /// Used by viOpenLayer when CreateStrayLayer is used internally.
 typedef enum {
-    VILAYERFLAGS_Default = 0x1,
-} viLayerFlags;
+    ViLayerFlags_Default = 0x1,
+} ViLayerFlags;
 
 /// Used with viSetLayerScalingMode.
 typedef enum {
-    VISCALINGMODE_Default = 0x2,
-} viScalingMode;
+    ViScalingMode_Default = 0x2,
+} ViScalingMode;
 
-Result viInitialize(viServiceType servicetype);
-void viExit(void);
-Handle viGetSessionService(void);
-Handle viGetSession_IApplicationDisplayService(void);
-Handle viGetSession_IHOSBinderDriverRelay(void);
-Handle viGetSession_ISystemDisplayService(void);
-Handle viGetSession_IManagerDisplayService(void);
-Handle viGetSession_IHOSBinderDriverIndirect(void);
+Result viInitialize(ViServiceType servicetype);
+void viExit();
+Handle viGetSessionService();
+Handle viGetSession_IApplicationDisplayService();
+Handle viGetSession_IHOSBinderDriverRelay();
+Handle viGetSession_ISystemDisplayService();
+Handle viGetSession_IManagerDisplayService();
+Handle viGetSession_IHOSBinderDriverIndirect();
 
-Result viOpenDisplay(const char *DisplayName, viDisplay *display);
-Result viCloseDisplay(viDisplay *display);
-Result viOpenLayer(u8 NativeWindow[0x100], u64 *NativeWindow_Size, const viDisplay *display, viLayer *layer, u32 LayerFlags, u64 LayerId);
-Result viCloseLayer(viLayer *layer);
+Result viOpenDisplay(const char *DisplayName, ViDisplay *display);
+Result viCloseDisplay(ViDisplay *display);
+Result viOpenLayer(u8 NativeWindow[0x100], u64 *NativeWindow_Size, const ViDisplay *display, ViLayer *layer, u32 LayerFlags, u64 LayerId);
+Result viCloseLayer(ViLayer *layer);
 
-/// See viScalingMode.
-Result viSetLayerScalingMode(viLayer *layer, u32 ScalingMode);
+/// See ViScalingMode.
+Result viSetLayerScalingMode(ViLayer *layer, u32 ScalingMode);
 
-Result viGetDisplayResolution(viDisplay *display, u64 *width, u64 *height);
-Result viGetDisplayVsyncEvent(viDisplay *display, Handle *handle_out);
+Result viGetDisplayResolution(ViDisplay *display, u64 *width, u64 *height);
+Result viGetDisplayVsyncEvent(ViDisplay *display, Handle *handle_out);
