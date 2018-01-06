@@ -105,7 +105,7 @@ enum {
     //...
 };
 
-Result bufferProducerInitialize(binderSession *session);
+Result bufferProducerInitialize(Binder *session);
 void bufferProducerExit();
 
 Result bufferProducerRequestBuffer(s32 bufferIdx, bufferProducerGraphicBuffer *buf);

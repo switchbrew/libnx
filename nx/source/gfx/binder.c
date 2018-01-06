@@ -1,9 +1,9 @@
 #include <string.h>
 #include <switch.h>
 
-void binderCreateSession(binderSession *session, Handle sessionHandle, s32 id)
+void binderCreateSession(Binder *session, Handle sessionHandle, s32 id)
 {
-    memset(session, 0, sizeof(binderSession));
+    memset(session, 0, sizeof(Binder));
     session->created = 1;
     session->sessionHandle = sessionHandle;
     session->id = id;
@@ -11,7 +11,7 @@ void binderCreateSession(binderSession *session, Handle sessionHandle, s32 id)
     session->hasTransactAuto = 0;
 }
 
-Result binderInitSession(binderSession *session, u32 unk0)
+Result binderInitSession(Binder *session, u32 unk0)
 {
     Result rc = 0;
 
@@ -38,7 +38,7 @@ Result binderInitSession(binderSession *session, u32 unk0)
         return rc;
     }
 
-    // When the output nativeHandle is 0 the binderSession ID is probably invalid.
+    // When the output nativeHandle is 0 the Binder ID is probably invalid.
     if(session->nativeHandle == 0) {
         rc = binderAdjustRefcount(session, -1, 1);
         rc = binderAdjustRefcount(session, -1, 0);
@@ -61,7 +61,7 @@ Result binderInitSession(binderSession *session, u32 unk0)
     return rc;
 }
 
-void binderExitSession(binderSession *session)
+void binderExitSession(Binder *session)
 {
     if (!session->created) return;
 
@@ -83,7 +83,7 @@ void binderExitSession(binderSession *session)
 }
 
 static Result _binderTransactParcel(
-    binderSession *session, u32 code,
+    Binder *session, u32 code,
     void* parcel_data,  size_t parcel_data_size,
     void* parcel_reply, size_t parcel_reply_size,
     u32 flags)
@@ -129,7 +129,7 @@ static Result _binderTransactParcel(
 }
 
 static Result _binderTransactParcelAuto(
-    binderSession *session, u32 code,
+    Binder *session, u32 code,
     void* parcel_data,  size_t parcel_data_size,
     void* parcel_reply, size_t parcel_reply_size,
     u32 flags)
@@ -196,7 +196,7 @@ static Result _binderTransactParcelAuto(
 }
 
 Result binderTransactParcel(
-    binderSession *session, u32 code,
+    Binder *session, u32 code,
     void* parcel_data,  size_t parcel_data_size,
     void* parcel_reply, size_t parcel_reply_size,
     u32 flags)
@@ -211,7 +211,7 @@ Result binderTransactParcel(
     return rc;
 }
 
-Result binderAdjustRefcount(binderSession *session, s32 addval, s32 type)
+Result binderAdjustRefcount(Binder *session, s32 addval, s32 type)
 {
     if (!session->created) return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
 
@@ -250,7 +250,7 @@ Result binderAdjustRefcount(binderSession *session, s32 addval, s32 type)
     return rc;
 }
 
-Result binderGetNativeHandle(binderSession *session, u32 inval, Handle *handle_out)
+Result binderGetNativeHandle(Binder *session, u32 inval, Handle *handle_out)
 {
     if (!session->created) return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
 

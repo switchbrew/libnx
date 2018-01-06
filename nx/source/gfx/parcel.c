@@ -16,7 +16,7 @@ void parcelInitialize(Parcel *ctx)
     ctx->capacity = sizeof(ctx->payload);
 }
 
-Result parcelTransact(binderSession *session, u32 code, Parcel *in_parcel, Parcel *parcel_reply)
+Result parcelTransact(Binder *session, u32 code, Parcel *in_parcel, Parcel *parcel_reply)
 {
     Result rc=0;
     u8 inparcel[0x400];

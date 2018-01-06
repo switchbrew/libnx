@@ -8,19 +8,19 @@ typedef struct {
     Handle nativeHandle;
     size_t ipcBufferSize;
     bool   hasTransactAuto;
-} binderSession;
+} Binder;
 
 // binderExitSession will not close the sessionHandle since it's user-specified via binderCreateSession and may be used elsewhere.
-void binderCreateSession(binderSession *session, Handle sessionHandle, s32 ID);
-Result binderInitSession(binderSession *session, u32 unk0);
-void binderExitSession(binderSession *session);
+void binderCreateSession(Binder *session, Handle sessionHandle, s32 ID);
+Result binderInitSession(Binder *session, u32 unk0);
+void binderExitSession(Binder *session);
 
 Result binderTransactParcel(
-    binderSession *session, u32 code,
+    Binder *session, u32 code,
     void* parcel_data, size_t parcel_data_size,
     void* parcel_reply, size_t parcel_reply_size,
     u32 flags);
 
-Result binderAdjustRefcount(binderSession *session, s32 addval, s32 type);
-Result binderGetNativeHandle(binderSession *session, u32 unk0, Handle *handle_out);
+Result binderAdjustRefcount(Binder *session, s32 addval, s32 type);
+Result binderGetNativeHandle(Binder *session, u32 unk0, Handle *handle_out);
 

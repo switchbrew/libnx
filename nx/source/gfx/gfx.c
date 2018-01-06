@@ -8,7 +8,7 @@ static ViLayer g_gfxLayer;
 static u8 g_gfxNativeWindow[0x100];
 static u64 g_gfxNativeWindow_Size;
 static s32 g_gfxNativeWindow_ID;
-static binderSession g_gfxBinderSession;
+static Binder g_gfxBinderSession;
 static s32 g_gfxCurrentBuffer = 0;
 static s32 g_gfxCurrentProducerBuffer = 0;
 static bool g_gfx_ProducerConnected = 0;

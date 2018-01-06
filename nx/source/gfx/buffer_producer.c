@@ -25,9 +25,9 @@ enum {
 
 static char g_bufferProducer_InterfaceDescriptor[] = "android.gui.IGraphicBufferProducer";
 
-static binderSession *g_bufferProducerBinderSession;
+static Binder *g_bufferProducerBinderSession;
 
-Result bufferProducerInitialize(binderSession *session)
+Result bufferProducerInitialize(Binder *session)
 {
     g_bufferProducerBinderSession = session;
     return 0;
