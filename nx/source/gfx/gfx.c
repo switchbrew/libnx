@@ -313,7 +313,7 @@ void gfxInitDefault(void)
         break;
     }
 
-    Result rc = _gfxInit(ViLayerFlags_Default, "Default", ViLayerFlags_Default, 0, nv_servicetype, 0x300000);
+    Result rc = _gfxInit(ViServiceType_Default, "Default", ViLayerFlags_Default, 0, nv_servicetype, 0x300000);
     if (R_FAILED(rc)) fatalSimple(rc);
 }
 
