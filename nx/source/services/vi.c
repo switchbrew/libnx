@@ -249,6 +249,49 @@ Result viCloseDisplay(ViDisplay *display) {
     return rc;
 }
 
+static Result _viCreateManagedLayer(const ViDisplay *display, u32 LayerFlags, u64 AppletResourceUserId, u64 *layer_id) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 LayerFlags;
+        u32 pad;
+        u64 display_id;
+        u64 AppletResourceUserId;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 2010;
+    raw->LayerFlags = LayerFlags;
+    raw->pad = 0;
+    raw->display_id = display->display_id;
+    raw->AppletResourceUserId = AppletResourceUserId;
+
+    Result rc = ipcDispatch(g_viIManagerDisplayService);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcCommandResponse r;
+        ipcParseResponse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u64 layer_id;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            *layer_id = resp->layer_id;
+        }
+    }
+
+    return rc;
+}
+
 static Result _viOpenLayer(u8 NativeWindow[0x100], u64 *NativeWindow_Size, const ViDisplay *display, u64 layer_id, u64 AppletResourceUserId) {
     IpcCommand c;
     ipcInitialize(&c);
@@ -353,7 +396,9 @@ Result viOpenLayer(u8 NativeWindow[0x100], u64 *NativeWindow_Size, const ViDispl
     }
     else {
         if (layer_id==0) {
-            rc = appletCreateManagedDisplayLayer(&layer_id);
+            rc = _viCreateManagedLayer(display, LayerFlags, AppletResourceUserId, &layer_id);
+            if (R_FAILED(rc)) rc = appletCreateManagedDisplayLayer(&layer_id);
+
             if (R_FAILED(rc)) return rc;
         }
 
