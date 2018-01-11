@@ -18,25 +18,32 @@ static u64 g_controllerOld[10], g_controllerHeld[10], g_controllerDown[10], g_co
 static HIDControllerLayoutType g_controllerLayout[10];
 static u64 g_touchTimestamp, g_mouseTimestamp, g_keyboardTimestamp, g_controllerTimestamps[10];
 
+static RwLock g_hidLock;
+
 static Result _hidCreateAppletResource(Handle sessionhandle, Handle* handle_out, u64 AppletResourceUserId);
 static Result _hidGetSharedMemoryHandle(Handle sessionhandle, Handle* handle_out);
 
-Result hidInitialize(void) {
-    if (g_hidServiceSession != INVALID_HANDLE) return MAKERESULT(MODULE_LIBNX, LIBNX_ALREADYINITIALIZED);
+Result hidInitialize(void)
+{
+    if (g_hidServiceSession != INVALID_HANDLE)
+        return MAKERESULT(MODULE_LIBNX, LIBNX_ALREADYINITIALIZED);
 
     Result rc = 0;
     u64 AppletResourceUserId = 0;
     Handle sharedmem_handle=0;
 
     rc = appletGetAppletResourceUserId(&AppletResourceUserId);
-    if (R_FAILED(rc)) return rc;
+    if (R_FAILED(rc))
+        return rc;
 
     rc = smGetService(&g_hidServiceSession, "hid");
-    if (R_FAILED(rc)) return rc;
+    if (R_FAILED(rc))
+        return rc;
 
     rc = _hidCreateAppletResource(g_hidServiceSession, &g_hidIAppletResource, AppletResourceUserId);
 
-    if (R_SUCCEEDED(rc)) rc = _hidGetSharedMemoryHandle(g_hidIAppletResource, &sharedmem_handle);
+    if (R_SUCCEEDED(rc))
+        rc = _hidGetSharedMemoryHandle(g_hidIAppletResource, &sharedmem_handle);
 
     if (R_SUCCEEDED(rc)) {
         shmemLoadRemote(&g_hidSharedmem, sharedmem_handle, 0x40000, PERM_R);
@@ -47,8 +54,11 @@ Result hidInitialize(void) {
     }
 
     if (R_FAILED(rc)) {
-        if (g_hidServiceSession != INVALID_HANDLE) svcCloseHandle(g_hidServiceSession);
-        if (g_hidIAppletResource != INVALID_HANDLE) svcCloseHandle(g_hidIAppletResource);
+        if (g_hidServiceSession != INVALID_HANDLE)
+            svcCloseHandle(g_hidServiceSession);
+
+        if (g_hidIAppletResource != INVALID_HANDLE)
+            svcCloseHandle(g_hidIAppletResource);
 
         g_hidServiceSession = INVALID_HANDLE;
         g_hidIAppletResource = INVALID_HANDLE;
@@ -61,7 +71,8 @@ Result hidInitialize(void) {
 
 void hidExit(void)
 {
-    if (g_hidServiceSession == INVALID_HANDLE) return;
+    if (g_hidServiceSession == INVALID_HANDLE)
+        return;
 
     if (g_hidServiceSession != INVALID_HANDLE) {
         svcCloseHandle(g_hidServiceSession);
@@ -76,7 +87,10 @@ void hidExit(void)
     shmemClose(&g_hidSharedmem);
 }
 
-void hidReset(void) {
+void hidReset(void)
+{
+    rwlockWriteLock(&g_hidLock);
+
     // Reset internal state
     memset(&g_touchEntry, 0, sizeof(HIDTouchScreenEntry));
     memset(&g_mouseEntry, 0, sizeof(HIDMouseEntry));
@@ -96,6 +110,8 @@ void hidReset(void) {
     g_touchTimestamp = g_mouseTimestamp = g_keyboardTimestamp = 0;
     for (int i = 0; i < 10; i++)
         g_controllerTimestamps[i] = 0;
+
+    rwlockWriteUnlock(&g_hidLock);
 }
 
 Handle hidGetSessionService(void) {
@@ -107,15 +123,25 @@ void* hidGetSharedmemAddr(void) {
 }
 
 void hidSetControllerLayout(HIDControllerID id, HIDControllerLayoutType layoutType) {
+    rwlockWriteLock(&g_hidLock);
     g_controllerLayout[id] = layoutType;
+    rwlockWriteUnlock(&g_hidLock);
 }
 
 HIDControllerLayoutType hidGetControllerLayout(HIDControllerID id) {
-    return g_controllerLayout[id];
+    rwlockReadLock(&g_hidLock);
+    HIDControllerLayoutType tmp = g_controllerLayout[id];
+    rwlockReadUnlock(&g_hidLock);
+
+    return tmp;
 }
 
 void hidScanInput(void) {
-    if (g_hidServiceSession == INVALID_HANDLE) return;
+    if (g_hidServiceSession == INVALID_HANDLE)
+        return;
+
+    rwlockWriteLock(&g_hidLock);
+
     HIDSharedMemory *sharedMem = (HIDSharedMemory*)hidGetSharedmemAddr();
 
     g_mouseOld = g_mouseHeld;
@@ -185,60 +211,110 @@ void hidScanInput(void) {
         g_controllerDown[i] = (~g_controllerOld[i]) & g_controllerHeld[i];
         g_controllerUp[i] = g_controllerOld[i] & (~g_controllerHeld[i]);
     }
+
+    rwlockWriteUnlock(&g_hidLock);
 }
 
 u64 hidKeysHeld(HIDControllerID id) {
     if (id < 0 || id > 9) return 0;
 
-    return g_controllerHeld[id];
+    rwlockReadLock(&g_hidLock);
+    u64 tmp = g_controllerHeld[id];
+    rwlockReadUnlock(&g_hidLock);
+
+    return tmp;
 }
 
 u64 hidKeysDown(HIDControllerID id) {
     if (id < 0 || id > 9) return 0;
 
-    return g_controllerDown[id];
+    rwlockReadLock(&g_hidLock);
+    u64 tmp = g_controllerDown[id];
+    rwlockReadUnlock(&g_hidLock);
+
+    return tmp;
 }
 
 u64 hidKeysUp(HIDControllerID id) {
     if (id < 0 || id > 9) return 0;
 
-    return g_controllerUp[id];
+    rwlockReadLock(&g_hidLock);
+    u64 tmp = g_controllerUp[id];
+    rwlockReadUnlock(&g_hidLock);
+
+    return tmp;
 }
 
 u64 hidMouseButtonsHeld(void) {
-    return g_mouseHeld;
+    rwlockReadLock(&g_hidLock);
+    u64 tmp = g_mouseHeld;
+    rwlockReadUnlock(&g_hidLock);
+
+    return tmp;
 }
 
 u64 hidMouseButtonsDown(void) {
-    return g_mouseDown;
+    rwlockReadLock(&g_hidLock);
+    u64 tmp = g_mouseDown;
+    rwlockReadUnlock(&g_hidLock);
+
+    return tmp;
 }
 
 u64 hidMouseButtonsUp(void) {
-    return g_mouseUp;
+    rwlockReadLock(&g_hidLock);
+    u64 tmp = g_mouseUp;
+    rwlockReadUnlock(&g_hidLock);
+
+    return tmp;
 }
 
 bool hidKeyboardModifierHeld(HIDKeyboardModifier modifier) {
-    return g_keyboardModHeld & modifier;
+    rwlockReadLock(&g_hidLock);
+    bool tmp = g_keyboardModHeld & modifier;
+    rwlockReadUnlock(&g_hidLock);
+
+    return tmp;
 }
 
 bool hidKeyboardModifierDown(HIDKeyboardModifier modifier) {
-    return g_keyboardModDown & modifier;
+    rwlockReadLock(&g_hidLock);
+    bool tmp = g_keyboardModDown & modifier;
+    rwlockReadUnlock(&g_hidLock);
+
+    return tmp;
 }
 
 bool hidKeyboardModifierUp(HIDKeyboardModifier modifier) {
-    return g_keyboardModUp & modifier;
+    rwlockReadLock(&g_hidLock);
+    bool tmp = g_keyboardModUp & modifier;
+    rwlockReadUnlock(&g_hidLock);
+
+    return tmp;
 }
 
 bool hidKeyboardHeld(HIDKeyboardScancode key) {
-    return g_keyboardHeld[key / 32] & (1 << (key % 32));
+    rwlockReadLock(&g_hidLock);
+    u32 tmp = g_keyboardHeld[key / 32] & (1 << (key % 32));
+    rwlockReadUnlock(&g_hidLock);
+
+    return !!tmp;
 }
 
 bool hidKeyboardDown(HIDKeyboardScancode key) {
-    return g_keyboardDown[key / 32] & (1 << (key % 32));
+    rwlockReadLock(&g_hidLock);
+    u32 tmp = g_keyboardDown[key / 32] & (1 << (key % 32));
+    rwlockReadUnlock(&g_hidLock);
+
+    return !!tmp;
 }
 
 bool hidKeyboardUp(HIDKeyboardScancode key) {
-    return g_keyboardUp[key / 32] & (1 << (key % 32));
+    rwlockReadLock(&g_hidLock);
+    u32 tmp = g_keyboardUp[key / 32] & (1 << (key % 32));
+    rwlockReadUnlock(&g_hidLock);
+
+    return !!tmp;
 }
 
 u32 hidTouchCount(void) {
