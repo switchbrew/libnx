@@ -1,4 +1,4 @@
-#include "switch/util/utf.h"
+#include "switch/runtime/util/utf.h"
 
 ssize_t
 decode_utf8(uint32_t      *out,

@@ -1,10 +1,10 @@
 #include "switch/types.h"
-#include "switch/util/utf.h"
+#include "switch/runtime/util/utf.h"
 
 ssize_t
-utf16_to_utf32(uint32_t       *out,
-               const uint16_t *in,
-               size_t         len)
+utf8_to_utf32(uint32_t      *out,
+              const uint8_t *in,
+              size_t        len)
 {
   ssize_t  rc = 0;
   ssize_t  units;
@@ -12,7 +12,7 @@ utf16_to_utf32(uint32_t       *out,
 
   do
   {
-    units = decode_utf16(&code, in);
+    units = decode_utf8(&code, in);
     if(units == -1)
       return -1;
 

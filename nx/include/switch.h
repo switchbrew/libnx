@@ -43,11 +43,11 @@ extern "C" {
 #include <switch/gfx/nvioctl.h>
 #include <switch/gfx/nvgfx.h>
 
-#include <switch/util/utf.h>
+#include <switch/runtime/util/utf.h>
 
-#include <switch/devices/console.h>
-#include <switch/devices/usb_comms.h>
-#include <switch/devices/fs_dev.h>
+#include <switch/runtime/devices/console.h>
+#include <switch/runtime/devices/usb_comms.h>
+#include <switch/runtime/devices/fs_dev.h>
 
 #ifdef __cplusplus
 }
