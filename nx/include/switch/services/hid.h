@@ -10,7 +10,7 @@ typedef enum
     MOUSE_MIDDLE  = BIT(2),
     MOUSE_FORWARD = BIT(3),
     MOUSE_BACK    = BIT(4),
-} HIDMouseButton;
+} HidMouseButton;
 
 typedef enum
 {
@@ -25,7 +25,7 @@ typedef enum
     KBD_MOD_CAPSLOCK   = BIT(8),
     KBD_MOD_SCROLLLOCK = BIT(9),
     KBD_MOD_NUMLOCK    = BIT(10),
-} HIDKeyboardModifier;
+} HidKeyboardModifier;
 
 typedef enum
 {
@@ -203,7 +203,7 @@ typedef enum
     KBD_MEDIA_COFFEE = 0xf9,
     KBD_MEDIA_REFRESH = 0xfa,
     KBD_MEDIA_CALC = 0xfb
-} HIDKeyboardScancode;
+} HidKeyboardScancode;
 
 typedef enum
 {
@@ -212,23 +212,23 @@ typedef enum
     TYPE_JOYCON_PAIR   = BIT(2),
     TYPE_JOYCON_LEFT   = BIT(3),
     TYPE_JOYCON_RIGHT  = BIT(4),
-} HIDControllerType;
+} HidControllerType;
 
 typedef enum
 {
-    LAYOUT_PROCONTROLLER   = 0, // Pro Controller or HID gamepad
+    LAYOUT_PROCONTROLLER   = 0, // Pro Controller or Hid gamepad
     LAYOUT_HANDHELD        = 1, // Two Joy-Con docked to rails
     LAYOUT_SINGLE          = 2, // Horizontal single Joy-Con or pair of Joy-Con, adjusted for orientation
     LAYOUT_LEFT            = 3, // Only raw left Joy-Con state, no orientation adjustment
     LAYOUT_RIGHT           = 4, // Only raw right Joy-Con state, no orientation adjustment
     LAYOUT_DEFAULT_DIGITAL = 5, // Same as next, but sticks have 8-direction values only
     LAYOUT_DEFAULT         = 6, // Safe default, single Joy-Con have buttons/sticks rotated for orientation
-} HIDControllerLayoutType;
+} HidControllerLayoutType;
 
 typedef enum
 {
     COLORS_NONEXISTENT = BIT(1),
-} HIDControllerColorDescription;
+} HidControllerColorDescription;
 
 typedef enum
 {
@@ -273,13 +273,13 @@ typedef enum
     KEY_DOWN  = KEY_DDOWN  | KEY_LSTICK_DOWN  | KEY_RSTICK_DOWN,  ///< D-Pad Down or Sticks Down
     KEY_LEFT  = KEY_DLEFT  | KEY_LSTICK_LEFT  | KEY_RSTICK_LEFT,  ///< D-Pad Left or Sticks Left
     KEY_RIGHT = KEY_DRIGHT | KEY_LSTICK_RIGHT | KEY_RSTICK_RIGHT, ///< D-Pad Right or Sticks Right
-} HIDControllerKeys;
+} HidControllerKeys;
 
 typedef enum
 {
     CONTROLLER_STATE_CONNECTED = BIT(0),
     CONTROLLER_STATE_WIRED     = BIT(1),
-} HIDControllerConnectionState;
+} HidControllerConnectionState;
 
 typedef enum
 {
@@ -293,7 +293,7 @@ typedef enum
     CONTROLLER_PLAYER_8 = 7,
     CONTROLLER_HANDHELD = 8,
     CONTROLLER_UNKNOWN  = 9,
-} HIDControllerID;
+} HidControllerID;
 
 typedef struct touchPosition
 {
@@ -306,26 +306,26 @@ typedef struct touchPosition
 
 // End enums and output structs
 
-// Begin HIDTouchScreen
+// Begin HidTouchScreen
 
-typedef struct HIDTouchScreenHeader
+typedef struct HidTouchScreenHeader
 {
     u64 timestampTicks;
     u64 numEntries;
     u64 latestEntry;
     u64 maxEntryIndex;
     u64 timestamp;
-} HIDTouchScreenHeader;
-static_assert(sizeof(HIDTouchScreenHeader) == 0x28, "HID touch screen header structure has incorrect size");
+} HidTouchScreenHeader;
+static_assert(sizeof(HidTouchScreenHeader) == 0x28, "Hid touch screen header structure has incorrect size");
 
-typedef struct HIDTouchScreenEntryHeader
+typedef struct HidTouchScreenEntryHeader
 {
     u64 timestamp;
     u64 numTouches;
-} HIDTouchScreenEntryHeader;
-static_assert(sizeof(HIDTouchScreenEntryHeader) == 0x10, "HID touch screen entry header structure has incorrect size");
+} HidTouchScreenEntryHeader;
+static_assert(sizeof(HidTouchScreenEntryHeader) == 0x10, "Hid touch screen entry header structure has incorrect size");
 
-typedef struct HIDTouchScreenEntryTouch
+typedef struct HidTouchScreenEntryTouch
 {
     u64 timestamp;
     u32 padding;
@@ -336,39 +336,39 @@ typedef struct HIDTouchScreenEntryTouch
     u32 diameterY;
     u32 angle;
     u32 padding_2;
-} HIDTouchScreenEntryTouch;
-static_assert(sizeof(HIDTouchScreenEntryTouch) == 0x28, "HID touch screen touch structure has incorrect size");
+} HidTouchScreenEntryTouch;
+static_assert(sizeof(HidTouchScreenEntryTouch) == 0x28, "Hid touch screen touch structure has incorrect size");
 
-typedef struct HIDTouchScreenEntry
+typedef struct HidTouchScreenEntry
 {
-    HIDTouchScreenEntryHeader header;
-    HIDTouchScreenEntryTouch touches[16];
+    HidTouchScreenEntryHeader header;
+    HidTouchScreenEntryTouch touches[16];
     u64 unk;
-} HIDTouchScreenEntry;
-static_assert(sizeof(HIDTouchScreenEntry) == 0x298, "HID touch screen entry structure has incorrect size");
+} HidTouchScreenEntry;
+static_assert(sizeof(HidTouchScreenEntry) == 0x298, "Hid touch screen entry structure has incorrect size");
 
-typedef struct HIDTouchScreen
+typedef struct HidTouchScreen
 {
-    HIDTouchScreenHeader header;
-    HIDTouchScreenEntry entries[17];
+    HidTouchScreenHeader header;
+    HidTouchScreenEntry entries[17];
     u8 padding[0x3c0];
-} HIDTouchScreen;
-static_assert(sizeof(HIDTouchScreen) == 0x3000, "HID touch screen structure has incorrect size");
+} HidTouchScreen;
+static_assert(sizeof(HidTouchScreen) == 0x3000, "Hid touch screen structure has incorrect size");
 
-// End HIDTouchScreen
+// End HidTouchScreen
 
-// Begin HIDMouse
+// Begin HidMouse
 
-typedef struct HIDMouseHeader
+typedef struct HidMouseHeader
 {
     u64 timestampTicks;
     u64 numEntries;
     u64 latestEntry;
     u64 maxEntryIndex;
-} HIDMouseHeader;
-static_assert(sizeof(HIDMouseHeader) == 0x20, "HID mouse header structure has incorrect size");
+} HidMouseHeader;
+static_assert(sizeof(HidMouseHeader) == 0x20, "Hid mouse header structure has incorrect size");
 
-typedef struct HIDMouseEntry
+typedef struct HidMouseEntry
 {
     u64 timestamp;
     u64 timestamp_2;
@@ -379,61 +379,61 @@ typedef struct HIDMouseEntry
     u32 scrollVelocityX;
     u32 scrollVelocityY;
     u64 buttons;
-} HIDMouseEntry;
-static_assert(sizeof(HIDMouseEntry) == 0x30, "HID mouse entry structure has incorrect size");
+} HidMouseEntry;
+static_assert(sizeof(HidMouseEntry) == 0x30, "Hid mouse entry structure has incorrect size");
 
-typedef struct HIDMouse
+typedef struct HidMouse
 {
-    HIDMouseHeader header;
-    HIDMouseEntry entries[17];
+    HidMouseHeader header;
+    HidMouseEntry entries[17];
     u8 padding[0xB0];
-} HIDMouse;
-static_assert(sizeof(HIDMouse) == 0x400, "HID mouse structure has incorrect size");
+} HidMouse;
+static_assert(sizeof(HidMouse) == 0x400, "Hid mouse structure has incorrect size");
 
-// End HIDMouse
+// End HidMouse
 
-// Begin HIDKeyboard
+// Begin HidKeyboard
 
-typedef struct HIDKeyboardHeader
+typedef struct HidKeyboardHeader
 {
     u64 timestampTicks;
     u64 numEntries;
     u64 latestEntry;
     u64 maxEntryIndex;
-} HIDKeyboardHeader;
-static_assert(sizeof(HIDKeyboardHeader) == 0x20, "HID keyboard header structure has incorrect size");
+} HidKeyboardHeader;
+static_assert(sizeof(HidKeyboardHeader) == 0x20, "Hid keyboard header structure has incorrect size");
 
-typedef struct HIDKeyboardEntry
+typedef struct HidKeyboardEntry
 {
     u64 timestamp;
     u64 timestamp_2;
     u64 modifier;
     u32 keys[8];
-} HIDKeyboardEntry;
-static_assert(sizeof(HIDKeyboardEntry) == 0x38, "HID keyboard entry structure has incorrect size");
+} HidKeyboardEntry;
+static_assert(sizeof(HidKeyboardEntry) == 0x38, "Hid keyboard entry structure has incorrect size");
 
-typedef struct HIDKeyboard
+typedef struct HidKeyboard
 {
-    HIDKeyboardHeader header;
-    HIDKeyboardEntry entries[17];
+    HidKeyboardHeader header;
+    HidKeyboardEntry entries[17];
     u8 padding[0x28];
-} HIDKeyboard;
-static_assert(sizeof(HIDKeyboard) == 0x400, "HID keyboard structure has incorrect size");
+} HidKeyboard;
+static_assert(sizeof(HidKeyboard) == 0x400, "Hid keyboard structure has incorrect size");
 
-// End HIDKeyboard
+// End HidKeyboard
 
-// Begin HIDController
+// Begin HidController
 
-typedef struct HIDControllerMAC
+typedef struct HidControllerMAC
 {
     u64 timestamp;
     u8 mac[0x8];
     u64 unk;
     u64 timestamp_2;
-} HIDControllerMAC;
-static_assert(sizeof(HIDControllerMAC) == 0x20, "HID controller MAC structure has incorrect size");
+} HidControllerMAC;
+static_assert(sizeof(HidControllerMAC) == 0x20, "Hid controller MAC structure has incorrect size");
 
-typedef struct HIDControllerHeader
+typedef struct HidControllerHeader
 {
     u32 type;
     u32 isHalf;
@@ -445,19 +445,19 @@ typedef struct HIDControllerHeader
     u32 leftColorButtons;
     u32 rightColorBody;
     u32 rightColorbuttons;
-} HIDControllerHeader;
-static_assert(sizeof(HIDControllerHeader) == 0x28, "HID controller header structure has incorrect size");
+} HidControllerHeader;
+static_assert(sizeof(HidControllerHeader) == 0x28, "Hid controller header structure has incorrect size");
 
-typedef struct HIDControllerLayoutHeader
+typedef struct HidControllerLayoutHeader
 {
     u64 timestampTicks;
     u64 numEntries;
     u64 latestEntry;
     u64 maxEntryIndex;
-} HIDControllerLayoutHeader;
-static_assert(sizeof(HIDControllerLayoutHeader) == 0x20, "HID controller layout header structure has incorrect size");
+} HidControllerLayoutHeader;
+static_assert(sizeof(HidControllerLayoutHeader) == 0x20, "Hid controller layout header structure has incorrect size");
 
-typedef struct HIDControllerInputEntry
+typedef struct HidControllerInputEntry
 {
     u64 timestamp;
     u64 timestamp_2;
@@ -467,35 +467,35 @@ typedef struct HIDControllerInputEntry
     u32 joystickRightX;
     u32 joystickRightY;
     u64 connectionState;
-} HIDControllerInputEntry;
-static_assert(sizeof(HIDControllerInputEntry) == 0x30, "HID controller input entry structure has incorrect size");
+} HidControllerInputEntry;
+static_assert(sizeof(HidControllerInputEntry) == 0x30, "Hid controller input entry structure has incorrect size");
 
-typedef struct HIDControllerLayout
+typedef struct HidControllerLayout
 {
-    HIDControllerLayoutHeader header;
-    HIDControllerInputEntry entries[17];
-} HIDControllerLayout;
-static_assert(sizeof(HIDControllerLayout) == 0x350, "HID controller layout structure has incorrect size");
+    HidControllerLayoutHeader header;
+    HidControllerInputEntry entries[17];
+} HidControllerLayout;
+static_assert(sizeof(HidControllerLayout) == 0x350, "Hid controller layout structure has incorrect size");
 
-typedef struct HIDController
+typedef struct HidController
 {
-    HIDControllerHeader header;
-    HIDControllerLayout layouts[7];
+    HidControllerHeader header;
+    HidControllerLayout layouts[7];
     u8 unk_1[0x2A70];
-    HIDControllerMAC macLeft;
-    HIDControllerMAC macRight;
+    HidControllerMAC macLeft;
+    HidControllerMAC macRight;
     u8 unk_2[0xDF8];
-} HIDController;
-static_assert(sizeof(HIDController) == 0x5000, "HID controller structure has incorrect size");
+} HidController;
+static_assert(sizeof(HidController) == 0x5000, "Hid controller structure has incorrect size");
 
-// End HIDController
+// End HidController
 
-typedef struct HIDSharedMemory
+typedef struct HidSharedMemory
 {
     u8 header[0x400];
-    HIDTouchScreen touchscreen;
-    HIDMouse mouse;
-    HIDKeyboard keyboard;
+    HidTouchScreen touchscreen;
+    HidMouse mouse;
+    HidKeyboard keyboard;
     u8 unkSection1[0x400];
     u8 unkSection2[0x400];
     u8 unkSection3[0x400];
@@ -505,10 +505,10 @@ typedef struct HIDSharedMemory
     u8 unkSection7[0x200];
     u8 unkSection8[0x800];
     u8 controllerSerials[0x4000];
-    HIDController controllers[10];
+    HidController controllers[10];
     u8 unkSection9[0x4600];
-} HIDSharedMemory;
-static_assert(sizeof(HIDSharedMemory) == 0x40000, "HID Shared Memory structure has incorrect size");
+} HidSharedMemory;
+static_assert(sizeof(HidSharedMemory) == 0x40000, "Hid Shared Memory structure has incorrect size");
 
 Result hidInitialize(void);
 void hidExit(void);
@@ -517,25 +517,25 @@ void hidReset(void);
 Handle hidGetSessionService(void);
 void* hidGetSharedmemAddr(void);
 
-void hidSetControllerLayout(HIDControllerID id, HIDControllerLayoutType layoutType);
-HIDControllerLayoutType hidGetControllerLayout(HIDControllerID id);
+void hidSetControllerLayout(HidControllerID id, HidControllerLayoutType layoutType);
+HidControllerLayoutType hidGetControllerLayout(HidControllerID id);
 void hidScanInput(void);
 
-u64 hidKeysHeld(HIDControllerID id);
-u64 hidKeysDown(HIDControllerID id);
-u64 hidKeysUp(HIDControllerID id);
+u64 hidKeysHeld(HidControllerID id);
+u64 hidKeysDown(HidControllerID id);
+u64 hidKeysUp(HidControllerID id);
 
 u64 hidMouseButtonsHeld(void);
 u64 hidMouseButtonsDown(void);
 u64 hidMouseButtonsUp(void);
 
-bool hidKeyboardModifierHeld(HIDKeyboardModifier modifier);
-bool hidKeyboardModifierDown(HIDKeyboardModifier modifier);
-bool hidKeyboardModifierUp(HIDKeyboardModifier modifier);
+bool hidKeyboardModifierHeld(HidKeyboardModifier modifier);
+bool hidKeyboardModifierDown(HidKeyboardModifier modifier);
+bool hidKeyboardModifierUp(HidKeyboardModifier modifier);
 
-bool hidKeyboardHeld(HIDKeyboardScancode key);
-bool hidKeyboardDown(HIDKeyboardScancode key);
-bool hidKeyboardUp(HIDKeyboardScancode key);
+bool hidKeyboardHeld(HidKeyboardScancode key);
+bool hidKeyboardDown(HidKeyboardScancode key);
+bool hidKeyboardUp(HidKeyboardScancode key);
 
 u32 hidTouchCount(void);
 void hidTouchRead(touchPosition *pos, u32 point_id);
