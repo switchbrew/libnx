@@ -17,7 +17,7 @@ extern "C" {
 #include <switch/kernel/mutex.h>
 #include <switch/kernel/thread.h>
 #include <switch/kernel/virtmem.h>
-#include <switch/kernel/version.h>
+#include <switch/kernel/detect.h>
 
 #include <switch/arm.h>
 #include <switch/ipc.h>
