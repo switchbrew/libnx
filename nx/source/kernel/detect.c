@@ -33,3 +33,9 @@ bool kernelAbove400(void) {
     _CacheValues();
     return g_IsAbove400;
 }
+
+bool detectDebugger(void) {
+    u64 tmp;
+    svcGetInfo(&tmp, 8, 0, 0);
+    return !!tmp;
+}

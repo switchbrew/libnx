@@ -4,6 +4,10 @@
 void fatalSimple(Result err) {
     Result rc = 0;
 
+    if (detectDebugger()) {
+        svcBreak(0x80000000, err, 0);
+    }
+
     if (!smHasInitialized()) {
         rc = smInitialize();
     }
