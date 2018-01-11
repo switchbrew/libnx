@@ -44,6 +44,8 @@ extern "C" {
 #include <switch/gfx/nvioctl.h>
 #include <switch/gfx/nvgfx.h>
 
+#include <switch/runtime/env.h>
+
 #include <switch/runtime/util/utf.h>
 
 #include <switch/runtime/devices/console.h>

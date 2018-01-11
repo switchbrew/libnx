@@ -12,7 +12,8 @@ startup:
     bl   +4
     sub  x28, x30, #0x84
 
-    // save main thread handle
+    // save context ptr and main thread handle
+    mov  x26, x0
     mov  x27, x1
 
     // clear .bss
@@ -36,7 +37,8 @@ bss_loop:
     bl   __nx_dynamic
 
     // initialize system
-    mov  x0, x27
+    mov  x0, x26
+    mov  x1, x27
     bl   __libnx_init
 
     // call entrypoint

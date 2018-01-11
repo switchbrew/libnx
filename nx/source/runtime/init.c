@@ -3,7 +3,7 @@
 void __nx_exit(int rc);
 
 void virtmemSetup(void);
-void newlibSetup(Handle main_thread);
+void newlibSetup(void);
 
 void __system_initArgv(void);
 
@@ -53,12 +53,13 @@ void __attribute__((weak)) __appExit(void)
     smExit();
 }
 
-void __attribute__((weak)) __libnx_init(Handle main_thread)
+void __attribute__((weak)) __libnx_init(void* ctx, Handle main_thread)
 {
     // Called by crt0.
 
     // Libnx initialization goes here.
-    newlibSetup(main_thread);
+    envParse(ctx, main_thread);
+    newlibSetup();
     virtmemSetup();
     __libnx_initheap();
 
