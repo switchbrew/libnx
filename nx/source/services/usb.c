@@ -188,8 +188,8 @@ static Result _usbDsBindDevice(usbComplexId complexId) {
     Result rc = ipcDispatch(g_usbDsServiceSession);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -223,8 +223,8 @@ static Result _usbDsBindClientProcess(Handle prochandle) {
     Result rc = ipcDispatch(g_usbDsServiceSession);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -256,8 +256,8 @@ static Result _usbDsGetEvent(Handle sessionhandle, Handle* handle_out, u64 cmd_i
     Result rc = ipcDispatch(sessionhandle);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -293,8 +293,8 @@ Result usbDsGetState(u32 *out) {
     Result rc = ipcDispatch(g_usbDsServiceSession);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -388,8 +388,8 @@ static Result _usbDsSetVidPidBcd(const usbDsDeviceInfo* deviceinfo) {
     Result rc = ipcDispatch(g_usbDsServiceSession);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -424,8 +424,8 @@ static Result _usbDsGetSession(Handle sessionhandle, Handle* handle_out, u64 cmd
     Result rc = ipcDispatch(sessionhandle);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -461,8 +461,8 @@ static Result _usbDsCmdNoParams(Handle sessionhandle, u64 cmd_id) {
     Result rc = ipcDispatch(sessionhandle);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -502,8 +502,8 @@ static Result _usbDsPostBuffer(Handle sessionhandle, u64 cmd_id, void* buffer, s
     Result rc = ipcDispatch(sessionhandle);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -537,8 +537,8 @@ static Result _usbDsGetReport(Handle sessionhandle, u64 cmd_id, usbDsReportData 
     Result rc = ipcDispatch(sessionhandle);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;

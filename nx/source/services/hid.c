@@ -281,8 +281,8 @@ static Result _hidCreateAppletResource(Handle sessionhandle, Handle* handle_out,
     Result rc = ipcDispatch(sessionhandle);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -316,8 +316,8 @@ static Result _hidGetSharedMemoryHandle(Handle sessionhandle, Handle* handle_out
     Result rc = ipcDispatch(sessionhandle);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;

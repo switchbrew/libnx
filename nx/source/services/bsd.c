@@ -36,8 +36,8 @@ static Result _bsdRegisterClient(Handle h, TransferMemory* tmem, u64* pid_out) {
     Result rc = ipcDispatch(h);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -72,8 +72,8 @@ static Result _bsdStartMonitor(Handle h, u64 pid) {
     Result rc = ipcDispatch(h);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -139,8 +139,8 @@ int bsdSocket(int domain, int type, int protocol) {
     int fd = -1;
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -187,8 +187,8 @@ int bsdRecv(int sockfd, void* buffer, size_t length, int flags) {
     int ret = -1;
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -236,8 +236,8 @@ int bsdSend(int sockfd, void* buffer, size_t length, int flags) {
     int ret = -1;
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -288,8 +288,8 @@ int bsdSendTo(int sockfd, void* buffer, size_t length, int flags, const struct b
     int ret = -1;
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -336,8 +336,8 @@ int bsdConnect(int sockfd, void* addr, u32 addrlen) {
     int fd = -1;
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -382,8 +382,8 @@ int bsdBind(int sockfd, void* addr, u32 addrlen) {
     int ret = -1;
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -430,8 +430,8 @@ int bsdListen(int sockfd, int backlog) {
     int ret = -1;
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -482,8 +482,8 @@ int bsdSetSockOpt(int sockfd, int level, int option_name, const void *option_val
     int ret = -1;
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -529,8 +529,8 @@ int bsdWrite(int sockfd, void* buffer, size_t length) {
     int ret = -1;
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;

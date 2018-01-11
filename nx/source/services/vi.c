@@ -141,8 +141,8 @@ static Result _viGetSession(Handle sessionhandle, Handle* handle_out, void* inra
     Result rc = ipcDispatch(sessionhandle);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -193,8 +193,8 @@ Result viOpenDisplay(const char *display_name, ViDisplay *display) {
     Result rc = ipcDispatch(g_viIApplicationDisplayService);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -233,8 +233,8 @@ Result viCloseDisplay(ViDisplay *display) {
     Result rc = ipcDispatch(g_viIApplicationDisplayService);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -276,8 +276,8 @@ static Result _viOpenLayer(u8 NativeWindow[0x100], u64 *NativeWindow_Size, const
     Result rc = ipcDispatch(g_viIApplicationDisplayService);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -319,8 +319,8 @@ static Result _viCreatestray_layer(u8 NativeWindow[0x100], u64 *NativeWindow_Siz
     Result rc = ipcDispatch(g_viIApplicationDisplayService);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -387,8 +387,8 @@ Result viCloseLayer(ViLayer *layer) {
     Result rc = ipcDispatch(g_viIApplicationDisplayService);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -427,8 +427,8 @@ Result viSetLayerScalingMode(ViLayer *layer, u32 ScalingMode) {
     Result rc = ipcDispatch(g_viIApplicationDisplayService);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -460,8 +460,8 @@ Result viGetDisplayResolution(ViDisplay *display, u64 *width, u64 *height) {
     Result rc = ipcDispatch(g_viIApplicationDisplayService);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -500,8 +500,8 @@ Result viGetDisplayVsyncEvent(ViDisplay *display, Handle *handle_out) {
     Result rc = ipcDispatch(g_viIApplicationDisplayService);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;

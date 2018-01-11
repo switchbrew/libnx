@@ -367,8 +367,8 @@ static Result _appletGetSession(Handle sessionhandle, Handle* handle_out, u64 cm
     Result rc = ipcDispatch(sessionhandle);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -408,8 +408,8 @@ static Result _appletGetSessionProxy(Handle sessionhandle, Handle* handle_out, u
     Result rc = ipcDispatch(sessionhandle);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -443,8 +443,8 @@ static Result _appletGetAppletResourceUserId(u64 *out) {
     Result rc = ipcDispatch(g_appletIWindowController);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -479,8 +479,8 @@ static Result _appletAcquireForegroundRights(void) {
     Result rc = ipcDispatch(g_appletIWindowController);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -520,8 +520,8 @@ void appletNotifyRunning(u8 *out) {
     Result rc = ipcDispatch(g_appletIFunctions);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -556,8 +556,8 @@ static Result _appletReceiveMessage(u32 *out) {
     Result rc = ipcDispatch(g_appletICommonStateGetter);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -592,8 +592,8 @@ static Result _appletGetOperationMode(u8 *out) {
     Result rc = ipcDispatch(g_appletICommonStateGetter);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -627,8 +627,8 @@ static Result _appletGetPerformanceMode(u32 *out) {
     Result rc = ipcDispatch(g_appletICommonStateGetter);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -663,8 +663,8 @@ static Result _appletGetCurrentFocusState(u8 *out) {
     Result rc = ipcDispatch(g_appletICommonStateGetter);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -701,8 +701,8 @@ static Result _appletSetOperationModeChangedNotification(u8 flag) {
     Result rc = ipcDispatch(g_appletISelfController);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -734,8 +734,8 @@ static Result _appletSetPerformanceModeChangedNotification(u8 flag) {
     Result rc = ipcDispatch(g_appletISelfController);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -771,8 +771,8 @@ static Result _appletSetFocusHandlingMode(u8 inval0, u8 inval1, u8 inval2) {
     Result rc = ipcDispatch(g_appletISelfController);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -804,8 +804,8 @@ static Result _appletSetOutOfFocusSuspendingEnabled(u8 inval) {
     Result rc = ipcDispatch(g_appletISelfController);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -835,8 +835,8 @@ Result appletCreateManagedDisplayLayer(u64 *out) {
     Result rc = ipcDispatch(g_appletISelfController);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;

@@ -53,8 +53,8 @@ static Result _apmGetSession(Handle sessionhandle, Handle* handle_out, u64 cmd_i
     Result rc = ipcDispatch(sessionhandle);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -92,8 +92,8 @@ Result apmSetPerformanceConfiguration(u32 PerformanceMode, u32 PerformanceConfig
     Result rc = ipcDispatch(g_apmISession);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -125,8 +125,8 @@ Result apmGetPerformanceConfiguration(u32 PerformanceMode, u32 *PerformanceConfi
     Result rc = ipcDispatch(g_apmISession);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;

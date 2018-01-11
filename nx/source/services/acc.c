@@ -47,8 +47,8 @@ Result accountGetActiveUser(u128 *userID, bool *account_selected) {
     Result rc = ipcDispatch(g_accountServiceSession);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;

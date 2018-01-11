@@ -29,8 +29,8 @@ Result fsInitialize(void) {
         rc = ipcDispatch(g_fsHandle);
 
         if (R_SUCCEEDED(rc)) {
-            IpcCommandResponse r;
-            ipcParseResponse(&r);
+            IpcParsedCommand r;
+            ipcParse(&r);
 
             struct {
                 u64 magic;
@@ -71,8 +71,8 @@ Result fsMountSdcard(FsFileSystem* out) {
     Result rc = ipcDispatch(g_fsHandle);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -110,8 +110,8 @@ Result fsMountSaveData(FsFileSystem* out, u8 inval, FsSave *save) {
     Result rc = ipcDispatch(g_fsHandle);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -165,8 +165,8 @@ Result fsFsCreateFile(FsFileSystem* fs, const char* path, size_t size, int flags
     Result rc = ipcDispatch(fs->h);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -197,8 +197,8 @@ Result fsFsDeleteFile(FsFileSystem* fs, const char* path) {
     Result rc = ipcDispatch(fs->h);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -229,8 +229,8 @@ Result fsFsCreateDirectory(FsFileSystem* fs, const char* path) {
     Result rc = ipcDispatch(fs->h);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -261,8 +261,8 @@ Result fsFsDeleteDirectory(FsFileSystem* fs, const char* path) {
     Result rc = ipcDispatch(fs->h);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -293,8 +293,8 @@ Result fsFsDeleteDirectoryRecursively(FsFileSystem* fs, const char* path) {
     Result rc = ipcDispatch(fs->h);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -326,8 +326,8 @@ Result fsFsRenameFile(FsFileSystem* fs, const char* path0, const char* path1) {
     Result rc = ipcDispatch(fs->h);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -359,8 +359,8 @@ Result fsFsRenameDirectory(FsFileSystem* fs, const char* path0, const char* path
     Result rc = ipcDispatch(fs->h);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -391,8 +391,8 @@ Result fsFsGetEntryType(FsFileSystem* fs, const char* path, FsEntryType* out) {
     Result rc = ipcDispatch(fs->h);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -430,8 +430,8 @@ Result fsFsOpenFile(FsFileSystem* fs, const char* path, int flags, FsFile* out) 
     Result rc = ipcDispatch(fs->h);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -468,8 +468,8 @@ Result fsFsOpenDirectory(FsFileSystem* fs, const char* path, int flags, FsDir* o
     Result rc = ipcDispatch(fs->h);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -503,8 +503,8 @@ Result fsFsCommit(FsFileSystem* fs) {
     Result rc = ipcDispatch(fs->h);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -535,8 +535,8 @@ Result fsFsGetFreeSpace(FsFileSystem* fs, const char* path, u64* out) {
     Result rc = ipcDispatch(fs->h);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -572,8 +572,8 @@ Result fsFsGetTotalSpace(FsFileSystem* fs, const char* path, u64* out) {
     Result rc = ipcDispatch(fs->h);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -620,8 +620,8 @@ Result fsFileRead(FsFile* f, u64 off, void* buf, size_t len, size_t* out) {
     Result rc = ipcDispatch(f->h);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -663,8 +663,8 @@ Result fsFileWrite(FsFile* f, u64 off, const void* buf, size_t len) {
     Result rc = ipcDispatch(f->h);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -694,8 +694,8 @@ Result fsFileFlush(FsFile* f) {
     Result rc = ipcDispatch(f->h);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -727,8 +727,8 @@ Result fsFileSetSize(FsFile* f, u64 sz) {
     Result rc = ipcDispatch(f->h);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -758,8 +758,8 @@ Result fsFileGetSize(FsFile* f, u64* out) {
     Result rc = ipcDispatch(f->h);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -803,8 +803,8 @@ Result fsDirRead(FsDir* d, u64 inval, size_t* total_entries, size_t max_entries,
     Result rc = ipcDispatch(d->h);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -839,8 +839,8 @@ Result fsDirGetEntryCount(FsDir* d, u64* count) {
     Result rc = ipcDispatch(d->h);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;

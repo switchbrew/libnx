@@ -203,9 +203,9 @@ typedef struct {
 
     void*  Raw;
     size_t RawSize;
-} IpcCommandResponse;
+} IpcParsedCommand;
 
-static inline Result ipcParseResponse(IpcCommandResponse* r) {
+static inline Result ipcParse(IpcParsedCommand* r) {
     u32* buf = armGetTls();
     u32 ctrl0 = *buf++;
     u32 ctrl1 = *buf++;
@@ -273,8 +273,8 @@ static inline Result ipcQueryPointerBufferSize(Handle session, size_t *size) {
     Result rc = ipcDispatch(session);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -306,8 +306,8 @@ static inline Result ipcConvertSessionToDomain(Handle session, u32* object_id_ou
     Result rc = ipcDispatch(session);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -346,8 +346,8 @@ static inline void* ipcPrepareHeaderForDomain(IpcCommand* cmd, size_t sizeof_raw
     return (void*)(((uintptr_t) raw) + sizeof(DomainMessageHeader)); 
 }
 
-static inline Result ipcParseResponseForDomain(IpcCommandResponse* r) {
-    Result rc = ipcParseResponse(r);
+static inline Result ipcParseForDomain(IpcParsedCommand* r) {
+    Result rc = ipcParse(r);
 
     if (R_SUCCEEDED(rc)) {
         r->Raw = (void*)(((uintptr_t) r->Raw) + sizeof(DomainMessageHeader)); 

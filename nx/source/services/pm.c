@@ -32,8 +32,8 @@ Result pmdmntStartProcess(u64 pid) {
     Result rc = ipcDispatch(g_pmdmntHandle);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -65,8 +65,8 @@ Result pmdmntGetTitlePid(u64* pid_out, u64 title_id) {
     Result rc = ipcDispatch(g_pmdmntHandle);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -103,8 +103,8 @@ Result pmdmntEnableDebugForTitleId(Handle* handle_out, u64 title_id) {
     Result rc = ipcDispatch(g_pmdmntHandle);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -138,8 +138,8 @@ Result pmdmntGetApplicationPid(u64* pid_out) {
     Result rc = ipcDispatch(g_pmdmntHandle);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -174,8 +174,8 @@ Result pmdmntEnableDebugForApplication(Handle* handle_out) {
     Result rc = ipcDispatch(g_pmdmntHandle);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;

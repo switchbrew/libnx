@@ -103,8 +103,8 @@ static Result _nvInitialize(Handle proc, Handle sharedmem, u32 transfermem_size)
     Result rc = ipcDispatch(g_nvServiceSession);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -137,8 +137,8 @@ static Result _nvSetClientPID(u64 AppletResourceUserId) {
     Result rc = ipcDispatch(g_nvServiceSession);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -169,8 +169,8 @@ Result nvOpen(u32 *fd, const char *devicepath) {
     Result rc = ipcDispatch(g_nvServiceSession);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -247,8 +247,8 @@ Result nvIoctl(u32 fd, u32 request, void* argp) {
     Result rc = ipcDispatch(g_nvServiceSession);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -281,8 +281,8 @@ Result nvClose(u32 fd) {
     Result rc = ipcDispatch(g_nvServiceSession);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -317,8 +317,8 @@ Result nvQueryEvent(u32 fd, u32 event_id, Handle *handle_out) {
     Result rc = ipcDispatch(g_nvServiceSession);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;

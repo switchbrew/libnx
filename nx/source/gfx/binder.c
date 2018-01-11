@@ -114,8 +114,8 @@ static Result _binderTransactParcel(
     Result rc = ipcDispatch(session->sessionHandle);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -181,8 +181,8 @@ static Result _binderTransactParcelAuto(
     Result rc = ipcDispatch(session->sessionHandle);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -236,8 +236,8 @@ Result binderAdjustRefcount(Binder *session, s32 addval, s32 type)
     Result rc = ipcDispatch(session->sessionHandle);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -274,8 +274,8 @@ Result binderGetNativeHandle(Binder *session, u32 inval, Handle *handle_out)
     Result rc = ipcDispatch(session->sessionHandle);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;

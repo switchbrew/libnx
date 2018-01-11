@@ -35,8 +35,8 @@ Result smInitialize(void) {
         rc = ipcDispatch(g_smHandle);
 
         if (R_SUCCEEDED(rc)) {
-            IpcCommandResponse r;
-            ipcParseResponse(&r);
+            IpcParsedCommand r;
+            ipcParse(&r);
 
             struct {
                 u64 magic;
@@ -91,8 +91,8 @@ Result smGetService(Handle* handle_out, const char* name) {
     Result rc = ipcDispatch(g_smHandle);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -132,8 +132,8 @@ Result smRegisterService(Handle* handle_out, const char* name, bool is_light, in
     Result rc = ipcDispatch(g_smHandle);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
@@ -170,8 +170,8 @@ Result smUnregisterService(const char* name) {
     Result rc = ipcDispatch(g_smHandle);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
