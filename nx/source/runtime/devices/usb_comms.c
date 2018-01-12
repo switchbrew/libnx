@@ -139,7 +139,6 @@ static Result _usbCommsRead(void* buffer, size_t size, size_t *transferredSize)
     u8 *bufptr = (u8*)buffer;
     u8 *transfer_buffer = NULL;
     u8 transfer_type=0;
-    s32 tmpindex=0;
     u32 chunksize=0;
     u32 tmp_transferredSize = 0;
     size_t total_transferredSize=0;
@@ -175,7 +174,7 @@ static Result _usbCommsRead(void* buffer, size_t size, size_t *transferredSize)
         if (R_FAILED(ret)) return ret;
 
         //Wait for the transfer to finish.
-        svcWaitSynchronization(&tmpindex, &g_usbComms_endpoint_out->CompletionEvent, 1, U64_MAX);
+        svcWaitSynchronizationSingle(g_usbComms_endpoint_out->CompletionEvent, U64_MAX);
         svcClearEvent(g_usbComms_endpoint_out->CompletionEvent);
 
         ret = usbDsEndpoint_GetReportData(g_usbComms_endpoint_out, &reportdata);
@@ -206,7 +205,6 @@ static Result _usbCommsWrite(const void* buffer, size_t size, size_t *transferre
     u32 chunksize=0;
     u8 *bufptr = (u8*)buffer;
     u8 *transfer_buffer = NULL;
-    s32 tmpindex=0;
     u32 tmp_transferredSize = 0;
     size_t total_transferredSize=0;
     usbDsReportData reportdata;
@@ -239,7 +237,7 @@ static Result _usbCommsWrite(const void* buffer, size_t size, size_t *transferre
         if(R_FAILED(ret))return ret;
 
         //Wait for the transfer to finish.
-        svcWaitSynchronization(&tmpindex, &g_usbComms_endpoint_in->CompletionEvent, 1, U64_MAX);
+        svcWaitSynchronizationSingle(g_usbComms_endpoint_in->CompletionEvent, U64_MAX);
         svcClearEvent(g_usbComms_endpoint_in->CompletionEvent);
 
         ret = usbDsEndpoint_GetReportData(g_usbComms_endpoint_in, &reportdata);

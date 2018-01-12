@@ -451,14 +451,16 @@ Result _gfxGraphicBufferInit(s32 buf, u32 nvmap_handle) {
 }
 
 static void _waitevent(Handle *handle) {
-    s32 tmpindex=0;
     Result rc=0, rc2=0;
 
     svcResetSignal(*handle);
 
     do {
-        rc = svcWaitSynchronization(&tmpindex, handle, 1, U64_MAX);
-        if (R_SUCCEEDED(rc)) rc2 = svcResetSignal(*handle);
+        rc = svcWaitSynchronizationSingle(*handle, U64_MAX);
+
+        if (R_SUCCEEDED(rc))
+            rc2 = svcResetSignal(*handle);
+
     } while(R_FAILED(rc) || (rc2 & 0x3FFFFF)==0xFA01);
 
     if (R_FAILED(rc2)) fatalSimple(rc2);

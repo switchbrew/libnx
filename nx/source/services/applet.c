@@ -142,8 +142,7 @@ Result appletInitialize(void)
 
         if (R_SUCCEEDED(rc)) {
             do {
-                s32 tmp_index=0;
-                svcWaitSynchronization(&tmp_index, &g_appletMessageEventHandle, 1, U64_MAX);
+                svcWaitSynchronizationSingle(g_appletMessageEventHandle, U64_MAX);
 
                 u32 msg;
                 rc = _appletReceiveMessage(&msg);
@@ -839,11 +838,10 @@ u8 appletGetFocusState(void) {
 }
 
 bool appletMainLoop(void) {
-    Result rc=0;
-    u32 msg=0;
-    s32 tmpindex=0;
+    Result rc;
+    u32    msg = 0;
 
-    if (R_FAILED(svcWaitSynchronization(&tmpindex, &g_appletMessageEventHandle, 1, 0)))
+    if (R_FAILED(svcWaitSynchronizationSingle(g_appletMessageEventHandle, 0)))
         return true;
 
     rc = _appletReceiveMessage(&msg);

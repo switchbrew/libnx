@@ -299,16 +299,15 @@ Result usbDsGetState(u32 *out) {
 }
 
 Result usbDsWaitReady(void) {
-    Result rc = 0;
-    u32 state=0;
-    s32 tmpindex = 0;
+    Result rc;
+    u32 state = 0;
 
     rc = usbDsGetState(&state);
     if (R_FAILED(rc)) return rc;
 
-    while(R_SUCCEEDED(rc) && state!=5)
+    while (R_SUCCEEDED(rc) && state != 5)
     {
-        svcWaitSynchronization(&tmpindex, &g_usbDsStateChangeEvent, 1, U64_MAX);
+        svcWaitSynchronizationSingle(g_usbDsStateChangeEvent, U64_MAX);
         svcClearEvent(g_usbDsStateChangeEvent);
         rc = usbDsGetState(&state);
     }

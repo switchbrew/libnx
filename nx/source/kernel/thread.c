@@ -109,9 +109,7 @@ Result threadStart(Thread* t) {
 }
 
 Result threadWaitForExit(Thread* t) {
-    Handle handle = t->handle;
-    s32    idx = 0;
-    return svcWaitSynchronization(&idx, &handle, 1, -1);
+    return svcWaitSynchronizationSingle(t->handle, -1);
 }
 
 Result threadClose(Thread* t) {

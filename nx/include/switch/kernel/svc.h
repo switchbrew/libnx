@@ -81,3 +81,8 @@ Result svcMapProcessMemory(void* dst, Handle proc, u64 src, u64 size);
 Result svcCreateProcess(Handle* out, void* proc_info, u32* caps, u64 cap_num);
 Result svcStartProcess(Handle proc, s32 main_prio, s32 default_cpu, u32 stack_size);
 u64    svcCallSecureMonitor(SecmonArgs* regs);
+
+static inline Result svcWaitSynchronizationSingle(Handle handle, u64 timeout) {
+    s32 tmp;
+    return svcWaitSynchronization(&tmp, &handle, 1, timeout);
+}
