@@ -17,7 +17,7 @@ static inline bool serviceIsActive(Service* s) {
     return s->type != ServiceType_Uninitialized;
 }
 
-static inline bool serviceIpcDispatch(Service* s) {
+static inline Result serviceIpcDispatch(Service* s) {
     return ipcDispatch(s->handle);
 }
 
