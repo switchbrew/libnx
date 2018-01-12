@@ -61,12 +61,25 @@ void __attribute__((weak)) __libnx_initheap(void)
 
 void __attribute__((weak)) __appInit(void)
 {
-    // Initialize default services.
-    smInitialize();
-    appletInitialize();
-    hidInitialize();
+    Result rc;
 
-    fsInitialize();
+    // Initialize default services.
+    rc = smInitialize();
+    if (R_FAILED(rc))
+        fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_INITFAIL_SM));
+
+    rc = appletInitialize();
+    if (R_FAILED(rc))
+        fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_INITFAIL_AM));
+
+    rc = hidInitialize();
+    if (R_FAILED(rc))
+        fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_INITFAIL_HID));
+
+    rc = fsInitialize();
+    if (R_FAILED(rc))
+        fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_INITFAIL_FS));
+
     //fsdevInit();
 }
 
@@ -75,7 +88,6 @@ void __attribute__((weak)) __appExit(void)
     // Cleanup default services.
     //fsdevExit();
     fsExit();
-
     hidExit();
     appletExit();
     smExit();
