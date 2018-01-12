@@ -38,6 +38,7 @@ Handle viGetSession_IHOSBinderDriverIndirect(void);
 
 Result viOpenDisplay(const char *DisplayName, ViDisplay *display);
 Result viCloseDisplay(ViDisplay *display);
+Result viCreateManagedLayer(const ViDisplay *display, u32 LayerFlags, u64 AppletResourceUserId, u64 *layer_id);
 Result viOpenLayer(u8 NativeWindow[0x100], u64 *NativeWindow_Size, const ViDisplay *display, ViLayer *layer, u32 LayerFlags, u64 LayerId);
 Result viCloseLayer(ViLayer *layer);
 

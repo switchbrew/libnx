@@ -249,7 +249,7 @@ Result viCloseDisplay(ViDisplay *display) {
     return rc;
 }
 
-static Result _viCreateManagedLayer(const ViDisplay *display, u32 LayerFlags, u64 AppletResourceUserId, u64 *layer_id) {
+Result viCreateManagedLayer(const ViDisplay *display, u32 LayerFlags, u64 AppletResourceUserId, u64 *layer_id) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -396,8 +396,7 @@ Result viOpenLayer(u8 NativeWindow[0x100], u64 *NativeWindow_Size, const ViDispl
     }
     else {
         if (layer_id==0) {
-            rc = _viCreateManagedLayer(display, LayerFlags, AppletResourceUserId, &layer_id);
-            if (R_FAILED(rc)) rc = appletCreateManagedDisplayLayer(&layer_id);
+            rc = appletCreateManagedDisplayLayer(&layer_id);
 
             if (R_FAILED(rc)) return rc;
         }
