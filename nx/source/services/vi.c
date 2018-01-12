@@ -273,8 +273,8 @@ Result viCreateManagedLayer(const ViDisplay *display, u32 LayerFlags, u64 Applet
     Result rc = ipcDispatch(g_viIManagerDisplayService);
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommandResponse r;
-        ipcParseResponse(&r);
+        IpcParsedCommand r;
+        ipcParse(&r);
 
         struct {
             u64 magic;
