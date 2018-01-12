@@ -37,6 +37,8 @@ void __system_initArgv(void)
 
     rc = svcQueryMemory(&meminfo, &pageinfo, (u64)argdata);
 
+    // TODO: Use envHasArgv() here.
+
     // This memory is only mapped when arguments were passed.
     if (R_FAILED(rc) || meminfo.perm != 0x3)
         return;
@@ -110,46 +112,5 @@ void __system_initArgv(void)
     }
 
     __system_argv[__system_argc] = NULL;
-
-    //TODO: How to handle args for NRO?
-
-    /*
-    int i;
-    const char* arglist = envGetSystemArgList();
-    const char* temp = arglist;
-
-    // Check if the argument list is present
-    if (!temp)
-        return;
-
-    // Retrieve argc
-    __system_argc = *(u32*)temp;
-    temp += sizeof(u32);
-
-    // Find the end of the argument data
-    for (i = 0; i < __system_argc; i ++)
-    {
-        for (; *temp; temp ++);
-        temp ++;
-    }
-
-    // Reserve heap memory for argv data
-    u32 argSize = temp - arglist - sizeof(u32);
-    __system_argv = (char**)fake_heap_start;
-    fake_heap_start += sizeof(char**)*(__system_argc + 1);
-    char* argCopy = fake_heap_start;
-    fake_heap_start += argSize;
-
-    // Fill argv array
-    memcpy(argCopy, &arglist[4], argSize);
-    temp = argCopy;
-    for (i = 0; i < __system_argc; i ++)
-    {
-        __system_argv[i] = (char*)temp;
-        for (; *temp; temp ++);
-        temp ++;
-    }
-    __system_argv[__system_argc] = NULL;
-    */
 }
 

@@ -3,15 +3,22 @@
 
 static bool   g_isNso = false;
 static Handle g_mainThreadHandle = INVALID_HANDLE;
-static void*  g_loaderRetAddr = NULL;
+static LoaderReturnFn  g_loaderRetAddr = NULL;
 static void*  g_overrideHeapAddr = NULL;
 static u64    g_overrideHeapSize = 0;
+static u64    g_overrideArgc = 0;
+static void*  g_overrideArgv = NULL;
+static u64    g_syscallHints[0x80/8];
 
 typedef struct {
     u32 Key;
     u32 Flags;
     u64 Value[2];
 } ConfigEntry;
+
+enum {
+    IsMandatory = BIT(0),
+};
 
 enum {
     EntryType_EndOfList=0,
@@ -30,6 +37,10 @@ void envParse(void* ctx, Handle main_thread)
     {
         g_mainThreadHandle = main_thread;
         g_isNso = true;
+
+        // For NSO we assume kernelhax thus access to all syscalls.
+        memset((void*) &g_syscallHints, 0xFF, sizeof(g_syscallHints));
+
         return;
     }
 
@@ -53,23 +64,39 @@ void envParse(void* ctx, Handle main_thread)
             break;
 
         case EntryType_OverrideService:
-            // TODO
+            smAddOverrideHandle(ent->Value[0], ent->Value[1]);
             break;
 
         case EntryType_Argv:
-            // TODO
+            g_overrideArgc = ent->Value[0];
+            g_overrideArgv = (void*) ent->Value[1];
             break;
 
-        case EntryType_SyscallAvailableHint:
-            // TODO
+        case EntryType_SyscallAvailableHint: {
+            int i, j;
+
+            for (i=0; i<2; i++) for (j=0; j<8; j++)
+            {
+                u8 svc = ent->Value[i] >> (8*j);
+
+                if (svc < 0x80)
+                    g_syscallHints[svc/64] |= 1llu << (svc%64);
+            }
+
             break;
+        }
 
         case EntryType_AppletType:
             // TODO
             break;
 
         default:
-            // TODO
+            if (ent->Flags & IsMandatory)
+            {
+                // Encountered unknown but mandatory key, bail back to loader.
+                g_loaderRetAddr(346 | ((100 + ent->Key) << 9));
+            }
+
             break;
         }
 
@@ -100,4 +127,20 @@ void* envGetHeapOverrideAddr(void) {
 
 u64 envGetHeapOverrideSize(void) {
     return g_overrideHeapSize;
+}
+
+bool envHasArgv(void) {
+    return g_overrideArgv != NULL;
+}
+
+u64 envGetArgc(void) {
+    return g_overrideArgc;
+}
+
+void* envGetArgv(void) {
+    return g_overrideArgv;
+}
+
+bool envIsSyscallHinted(u8 svc) {
+    return !!(g_syscallHints[svc/64] & (1llu << (svc%64)));
 }

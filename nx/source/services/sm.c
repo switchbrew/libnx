@@ -15,7 +15,7 @@ static size_t g_smOverridesNum = 0;
 void smAddOverrideHandle(u64 name, Handle handle)
 {
     if (g_smOverridesNum == MAX_OVERRIDES)
-        fatalSimple(1);
+        fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_TOOMANYOVERRIDES));
 
     size_t i = g_smOverridesNum;
 
