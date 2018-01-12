@@ -83,9 +83,21 @@ Handle envGetMainThreadHandle(void) {
         return g_mainThreadHandle;
     }
 
-    fatalSimple(1);
+    fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_HANDLETOOEARLY));
 }
 
 bool envIsNso(void) {
     return g_isNso;
+}
+
+bool envHasHeapOverride(void) {
+    return g_overrideHeapAddr != NULL;
+}
+
+void* envGetHeapOverrideAddr(void) {
+    return g_overrideHeapAddr;
+}
+
+u64 envGetHeapOverrideSize(void) {
+    return g_overrideHeapSize;
 }

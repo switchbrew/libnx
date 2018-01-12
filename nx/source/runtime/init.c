@@ -7,20 +7,48 @@ void newlibSetup(void);
 
 void __system_initArgv(void);
 
-#define INNER_HEAP_SIZE 0x200000
-__attribute__((weak)) size_t __nx_inner_heap_size = INNER_HEAP_SIZE;
-__attribute__((weak)) char   __nx_inner_heap[INNER_HEAP_SIZE];
-__attribute__((weak)) size_t __nx_outer_heap_size = 0x2000000*16;//Must be a multiple of 0x2000000.
+// Must be a multiple of 0x2000000.
+__attribute__((weak)) size_t __nx_heap_size = 0x2000000*16;
+
+/*
+  There are three ways of allocating heap:
+
+    - Normal syscall:
+
+    Allocates heap using |svcSetHeapSize|. The size is provided by a weak symbol
+    called |__nx_heap_size|.
+
+    - Heap override:
+
+    Uses existing heap segment as provided by the homebrew loader environment
+    block. This happens automatically if such a setting is provided by the
+    homebrew environment.
+
+    - Custom override:
+
+    A program can override the weak symbol |__libnx_initheap| to setup a
+    different heap. In this case, the global variables |fake_heap_start|
+    and |fake_heap_end| needs to be set appropriately.
+
+    A custom override be used to implement an "inner heap" located in the .bss
+    segment of a process, for example.
+ */
 
 void __attribute__((weak)) __libnx_initheap(void)
 {
-    u64 addr;
-    Result rc   = svcSetHeapSize((void**)&addr, __nx_outer_heap_size);
-    size_t size = __nx_outer_heap_size;
+    void*  addr;
+    size_t size;
 
-    if (R_FAILED(rc)) {
-        addr = (u64) &__nx_inner_heap[0];
-        size = __nx_inner_heap_size;
+    if (envHasHeapOverride()) {
+        addr = envGetHeapOverrideAddr();
+        size = envGetHeapOverrideSize();
+    }
+    else {
+        Result rc = svcSetHeapSize(&addr, __nx_heap_size);
+        size = __nx_heap_size;
+
+        if (R_FAILED(rc))
+            fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_HEAPALLOCFAILED));
     }
 
     // Newlib
