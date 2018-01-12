@@ -209,7 +209,7 @@ static Result _gfxInit(ViServiceType servicetype, const char *DisplayName, u32 L
     if (R_SUCCEEDED(rc)) rc = _gfxGetNativeWindowID(g_gfxNativeWindow, g_gfxNativeWindow_Size, &g_gfxNativeWindow_ID);
 
     if (R_SUCCEEDED(rc)) {
-        binderCreateSession(&g_gfxBinderSession, viGetSession_IHOSBinderDriverRelay(), g_gfxNativeWindow_ID);
+        binderCreateSession(&g_gfxBinderSession, viGetSession_IHOSBinderDriverRelay()->handle, g_gfxNativeWindow_ID);
         rc = binderInitSession(&g_gfxBinderSession, 0x0f);
     }
 

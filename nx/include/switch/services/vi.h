@@ -29,12 +29,13 @@ typedef enum {
 
 Result viInitialize(ViServiceType servicetype);
 void viExit(void);
-Handle viGetSessionService(void);
-Handle viGetSession_IApplicationDisplayService(void);
-Handle viGetSession_IHOSBinderDriverRelay(void);
-Handle viGetSession_ISystemDisplayService(void);
-Handle viGetSession_IManagerDisplayService(void);
-Handle viGetSession_IHOSBinderDriverIndirect(void);
+
+Service* viGetSessionService(void);
+Service* viGetSession_IApplicationDisplayService(void);
+Service* viGetSession_IHOSBinderDriverRelay(void);
+Service* viGetSession_ISystemDisplayService(void);
+Service* viGetSession_IManagerDisplayService(void);
+Service* viGetSession_IHOSBinderDriverIndirect(void);
 
 Result viOpenDisplay(const char *DisplayName, ViDisplay *display);
 Result viCloseDisplay(ViDisplay *display);

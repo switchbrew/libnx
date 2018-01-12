@@ -1,37 +1,39 @@
 #include <string.h>
 #include <switch.h>
 
-static Service g_viServiceSession;
-static u32 g_viServiceType = -1;
-static Handle g_viIApplicationDisplayService = INVALID_HANDLE;
-static Handle g_viIHOSBinderDriverRelay = INVALID_HANDLE;
-static Handle g_viISystemDisplayService = INVALID_HANDLE;
-static Handle g_viIManagerDisplayService = INVALID_HANDLE;
-static Handle g_viIHOSBinderDriverIndirect = INVALID_HANDLE;
+static Service g_viSrv;
 
-static Result _viGetSession(Handle sessionhandle, Handle* handle_out, void* inraw, size_t rawsize);
-static Result _viGetSessionNoParams(Handle sessionhandle, Handle* handle_out, u64 cmd_id);
+static Service g_viIApplicationDisplayService;
+static Service g_viIHOSBinderDriverRelay;
+static Service g_viISystemDisplayService;
+static Service g_viIManagerDisplayService;
+static Service g_viIHOSBinderDriverIndirect;
+
+static u32 g_viServiceType = -1;
+
+static Result _viGetSession(Service* srv, Service* srv_out, void* inraw, size_t rawsize);
+static Result _viGetSessionNoParams(Service* srv, Service* srv_out, u64 cmd_id);
 
 Result viInitialize(ViServiceType servicetype)
 {
-    if(g_viServiceType != -1)
+    if (serviceIsActive(&g_viSrv))
         return MAKERESULT(MODULE_LIBNX, LIBNX_ALREADYINITIALIZED);
 
     Result rc = 0;
 
     if (servicetype == ViServiceType_Default || servicetype == ViServiceType_Manager) {
-        rc = smGetService(&g_viServiceSession, "vi:m");
+        rc = smGetService(&g_viSrv, "vi:m");
         g_viServiceType = 2;
     }
 
     if ((servicetype == ViServiceType_Default && R_FAILED(rc)) || servicetype == ViServiceType_System) {
-        rc = smGetService(&g_viServiceSession, "vi:s");
+        rc = smGetService(&g_viSrv, "vi:s");
         g_viServiceType = 1;
     }
 
     if ((servicetype == ViServiceType_Default && R_FAILED(rc)) || servicetype == ViServiceType_Application)
     {
-        rc = smGetService(&g_viServiceSession, "vi:u");
+        rc = smGetService(&g_viSrv, "vi:u");
         g_viServiceType = 0;
     }
 
@@ -46,24 +48,23 @@ Result viInitialize(ViServiceType servicetype)
         raw.cmd_id = g_viServiceType;
         raw.inval0 = 0;
 
-        rc = _viGetSession(g_viServiceSession.handle, &g_viIApplicationDisplayService, &raw, sizeof(raw));
+        rc = _viGetSession(&g_viSrv, &g_viIApplicationDisplayService, &raw, sizeof(raw));
     }
 
     if (R_SUCCEEDED(rc))
-        rc = _viGetSessionNoParams(g_viIApplicationDisplayService, &g_viIHOSBinderDriverRelay, 100);
+        rc = _viGetSessionNoParams(&g_viIApplicationDisplayService, &g_viIHOSBinderDriverRelay, 100);
 
     if (g_viServiceType >= ViServiceType_System && R_SUCCEEDED(rc))
-        rc = _viGetSessionNoParams(g_viIApplicationDisplayService, &g_viISystemDisplayService, 101);
+        rc = _viGetSessionNoParams(&g_viIApplicationDisplayService, &g_viISystemDisplayService, 101);
 
     if (g_viServiceType >= ViServiceType_Manager && R_SUCCEEDED(rc))
-        rc = _viGetSessionNoParams(g_viIApplicationDisplayService, &g_viIManagerDisplayService, 102);
+        rc = _viGetSessionNoParams(&g_viIApplicationDisplayService, &g_viIManagerDisplayService, 102);
 
     if (g_viServiceType >= ViServiceType_System && R_SUCCEEDED(rc) && kernelAbove200())
-        rc = _viGetSessionNoParams(g_viIApplicationDisplayService, &g_viIHOSBinderDriverIndirect, 103);
+        rc = _viGetSessionNoParams(&g_viIApplicationDisplayService, &g_viIHOSBinderDriverIndirect, 103);
 
     if (R_FAILED(rc)) {
         viExit();
-        g_viServiceType = -1;
     }
 
     return rc;
@@ -71,65 +72,47 @@ Result viInitialize(ViServiceType servicetype)
 
 void viExit(void)
 {
-    if(g_viServiceType == -1)
-        return;
-
     g_viServiceType = -1;
 
-    if(g_viIApplicationDisplayService != INVALID_HANDLE) {
-        svcCloseHandle(g_viIApplicationDisplayService);
-        g_viIApplicationDisplayService = 0;
-    }
+    serviceClose(&g_viIApplicationDisplayService);
+    serviceClose(&g_viISystemDisplayService);
+    serviceClose(&g_viIManagerDisplayService);
+    serviceClose(&g_viIHOSBinderDriverIndirect);
 
-    if(g_viISystemDisplayService != INVALID_HANDLE) {
-        svcCloseHandle(g_viISystemDisplayService);
-        g_viISystemDisplayService = 0;
-    }
-
-    if(g_viIManagerDisplayService != INVALID_HANDLE) {
-        svcCloseHandle(g_viIManagerDisplayService);
-        g_viIManagerDisplayService = 0;
-    }
-
-    if(g_viIHOSBinderDriverIndirect != INVALID_HANDLE) {
-        svcCloseHandle(g_viIHOSBinderDriverIndirect);
-        g_viIHOSBinderDriverIndirect = 0;
-    }
-
-    serviceClose(&g_viServiceSession);
+    serviceClose(&g_viSrv);
 }
 
-Handle viGetSessionService(void) {
-    return g_viServiceSession.handle;
+Service* viGetSessionService(void) {
+    return &g_viSrv;
 }
 
-Handle viGetSession_IApplicationDisplayService(void) {
-    return g_viIApplicationDisplayService;
+Service* viGetSession_IApplicationDisplayService(void) {
+    return &g_viIApplicationDisplayService;
 }
 
-Handle viGetSession_IHOSBinderDriverRelay(void) {
-    return g_viIHOSBinderDriverRelay;
+Service* viGetSession_IHOSBinderDriverRelay(void) {
+    return &g_viIHOSBinderDriverRelay;
 }
 
-Handle viGetSession_ISystemDisplayService(void) {
-    return g_viISystemDisplayService;
+Service* viGetSession_ISystemDisplayService(void) {
+    return &g_viISystemDisplayService;
 }
 
-Handle viGetSession_IManagerDisplayService(void) {
-    return g_viIManagerDisplayService;
+Service* viGetSession_IManagerDisplayService(void) {
+    return &g_viIManagerDisplayService;
 }
 
-Handle viGetSession_IHOSBinderDriverIndirect(void) {
-    return g_viIHOSBinderDriverIndirect;
+Service* viGetSession_IHOSBinderDriverIndirect(void) {
+    return &g_viIHOSBinderDriverIndirect;
 }
 
-static Result _viGetSession(Handle sessionhandle, Handle* handle_out, void* inraw, size_t rawsize) {
+static Result _viGetSession(Service* srv, Service* srv_out, void* inraw, size_t rawsize) {
     IpcCommand c;
     ipcInitialize(&c);
 
     memcpy(ipcPrepareHeader(&c, rawsize), inraw, rawsize);
 
-    Result rc = ipcDispatch(sessionhandle);
+    Result rc = serviceIpcDispatch(srv);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -143,14 +126,14 @@ static Result _viGetSession(Handle sessionhandle, Handle* handle_out, void* inra
         rc = resp->result;
 
         if (R_SUCCEEDED(rc)) {
-            *handle_out = r.Handles[0];
+            serviceCreate(srv_out, r.Handles[0]);
         }
     }
 
     return rc;
 }
 
-static Result _viGetSessionNoParams(Handle sessionhandle, Handle* handle_out, u64 cmd_id) {
+static Result _viGetSessionNoParams(Service* srv, Service* srv_out, u64 cmd_id) {
     struct {
         u64 magic;
         u64 cmd_id;
@@ -159,7 +142,7 @@ static Result _viGetSessionNoParams(Handle sessionhandle, Handle* handle_out, u6
     raw.magic = SFCI_MAGIC;
     raw.cmd_id = cmd_id;
 
-    return _viGetSession(sessionhandle, handle_out, &raw, sizeof(raw));
+    return _viGetSession(srv, srv_out, &raw, sizeof(raw));
 }
 
 Result viOpenDisplay(const char *display_name, ViDisplay *display) {
@@ -181,7 +164,7 @@ Result viOpenDisplay(const char *display_name, ViDisplay *display) {
     strncpy(display->display_name, display_name, sizeof(display->display_name)-1);
     memcpy(raw->display_name, display->display_name, sizeof(display->display_name));
 
-    Result rc = ipcDispatch(g_viIApplicationDisplayService);
+    Result rc = serviceIpcDispatch(&g_viIApplicationDisplayService);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -221,7 +204,7 @@ Result viCloseDisplay(ViDisplay *display) {
     raw->cmd_id = 1020;
     raw->display_id = display->display_id;
 
-    Result rc = ipcDispatch(g_viIApplicationDisplayService);
+    Result rc = serviceIpcDispatch(&g_viIApplicationDisplayService);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -261,7 +244,7 @@ Result viCreateManagedLayer(const ViDisplay *display, u32 LayerFlags, u64 Applet
     raw->display_id = display->display_id;
     raw->AppletResourceUserId = AppletResourceUserId;
 
-    Result rc = ipcDispatch(g_viIManagerDisplayService);
+    Result rc = serviceIpcDispatch(&g_viIManagerDisplayService);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -307,7 +290,7 @@ static Result _viOpenLayer(u8 NativeWindow[0x100], u64 *NativeWindow_Size, const
     raw->layer_id = layer_id;
     raw->AppletResourceUserId = AppletResourceUserId;
 
-    Result rc = ipcDispatch(g_viIApplicationDisplayService);
+    Result rc = serviceIpcDispatch(&g_viIApplicationDisplayService);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -350,7 +333,7 @@ static Result _viCreatestray_layer(u8 NativeWindow[0x100], u64 *NativeWindow_Siz
     raw->pad = 0;
     raw->display_id = display->display_id;
 
-    Result rc = ipcDispatch(g_viIApplicationDisplayService);
+    Result rc = serviceIpcDispatch(&g_viIApplicationDisplayService);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -419,7 +402,7 @@ Result viCloseLayer(ViLayer *layer) {
     raw->cmd_id = layer->stray_layer == 0 ? 2021 : 2031;
     raw->layer_id = layer->layer_id;
 
-    Result rc = ipcDispatch(g_viIApplicationDisplayService);
+    Result rc = serviceIpcDispatch(&g_viIApplicationDisplayService);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -459,7 +442,7 @@ Result viSetLayerScalingMode(ViLayer *layer, u32 ScalingMode) {
     raw->pad = 0;
     raw->layer_id = layer->layer_id;
 
-    Result rc = ipcDispatch(g_viIApplicationDisplayService);
+    Result rc = serviceIpcDispatch(&g_viIApplicationDisplayService);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -492,7 +475,7 @@ Result viGetDisplayResolution(ViDisplay *display, u64 *width, u64 *height) {
     raw->cmd_id = 1102;
     raw->display_id = display->display_id;
 
-    Result rc = ipcDispatch(g_viIApplicationDisplayService);
+    Result rc = serviceIpcDispatch(&g_viIApplicationDisplayService);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -532,7 +515,7 @@ Result viGetDisplayVsyncEvent(ViDisplay *display, Handle *handle_out) {
     raw->cmd_id = 5202;
     raw->display_id = display->display_id;
 
-    Result rc = ipcDispatch(g_viIApplicationDisplayService);
+    Result rc = serviceIpcDispatch(&g_viIApplicationDisplayService);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
