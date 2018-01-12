@@ -54,7 +54,3 @@ Result smUnregisterService(const char* name);
 bool   smHasInitialized(void);
 u64    smEncodeName(const char* name);
 void   smAddOverrideHandle(u64 name, Handle handle);
-
-bool serviceIsOverride(Service* s);
-bool serviceIsInitialized(Service* s);
-void serviceClose(Service* s);

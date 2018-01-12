@@ -94,7 +94,7 @@ void envParse(void* ctx, Handle main_thread)
             if (ent->Flags & IsMandatory)
             {
                 // Encountered unknown but mandatory key, bail back to loader.
-                g_loaderRetAddr(346 | ((100 + ent->Key) << 9));
+                g_loaderRetAddr(MAKERESULT(346, 100 + ent->Key));
             }
 
             break;
