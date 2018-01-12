@@ -1,16 +1,10 @@
 // Copyright 2017 plutoo
 #include <switch.h>
 
-static Handle g_pmdmntHandle = INVALID_HANDLE;
+static Service g_pmdmntSrv;
 
 Result pmdmntInitialize(void) {
-    Result rc = smGetService(&g_pmdmntHandle, "pm:dmnt");
-
-    if (R_FAILED(rc)) {
-        g_pmdmntHandle = INVALID_HANDLE;
-    }
-
-    return rc;
+    return smGetService(&g_pmdmntSrv, "pm:dmnt");
 }
 
 Result pmdmntStartProcess(u64 pid) {
@@ -29,7 +23,7 @@ Result pmdmntStartProcess(u64 pid) {
     raw->cmd_id = 2;
     raw->pid = pid;
 
-    Result rc = ipcDispatch(g_pmdmntHandle);
+    Result rc = serviceIpcDispatch(&g_pmdmntSrv);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -62,7 +56,7 @@ Result pmdmntGetTitlePid(u64* pid_out, u64 title_id) {
     raw->cmd_id = 3;
     raw->title_id = title_id;
 
-    Result rc = ipcDispatch(g_pmdmntHandle);
+    Result rc = serviceIpcDispatch(&g_pmdmntSrv);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -100,7 +94,7 @@ Result pmdmntEnableDebugForTitleId(Handle* handle_out, u64 title_id) {
     raw->cmd_id = 4;
     raw->title_id = title_id;
 
-    Result rc = ipcDispatch(g_pmdmntHandle);
+    Result rc = serviceIpcDispatch(&g_pmdmntSrv);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -135,7 +129,7 @@ Result pmdmntGetApplicationPid(u64* pid_out) {
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 5;
 
-    Result rc = ipcDispatch(g_pmdmntHandle);
+    Result rc = serviceIpcDispatch(&g_pmdmntSrv);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -171,7 +165,7 @@ Result pmdmntEnableDebugForApplication(Handle* handle_out) {
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 6;
 
-    Result rc = ipcDispatch(g_pmdmntHandle);
+    Result rc = serviceIpcDispatch(&g_pmdmntSrv);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;

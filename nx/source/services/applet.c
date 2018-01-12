@@ -6,27 +6,26 @@ __attribute__((weak)) bool __nx_applet_auto_notifyrunning = true;
 __attribute__((weak)) u8 __nx_applet_AppletAttribute[0x80];
 __attribute__((weak)) u32 __nx_applet_PerformanceConfiguration[2] = {/*0x92220008*//*0x20004*//*0x92220007*/0, 0};
 
-static Handle g_appletServiceSession = INVALID_HANDLE;
-static Handle g_appletProxySession = INVALID_HANDLE;
+static Service g_appletSrv;
+static Service g_appletProxySession;
 
 // From Get*Functions, for ILibraryAppletProxy. This is GetLibraryAppletSelfAccessor
-static Handle g_appletIFunctions = INVALID_HANDLE;
+static Service g_appletIFunctions;
 
-static Handle g_appletILibraryAppletCreator = INVALID_HANDLE;
-static Handle g_appletICommonStateGetter = INVALID_HANDLE;
-static Handle g_appletISelfController = INVALID_HANDLE;
-static Handle g_appletIWindowController = INVALID_HANDLE;
-static Handle g_appletIAudioController = INVALID_HANDLE;
-static Handle g_appletIDisplayController = INVALID_HANDLE;
-static Handle g_appletIDebugFunctions = INVALID_HANDLE;
+static Service g_appletILibraryAppletCreator;
+static Service g_appletICommonStateGetter;
+static Service g_appletISelfController;
+static Service g_appletIWindowController;
+static Service g_appletIAudioController;
+static Service g_appletIDisplayController;
+static Service g_appletIDebugFunctions;
 
 static Handle g_appletMessageEventHandle = INVALID_HANDLE;
 
 static u64 g_appletResourceUserId = 0;
-
-static u8 g_appletOperationMode;
+static u8  g_appletOperationMode;
 static u32 g_appletPerformanceMode;
-static u8 g_appletFocusState;
+static u8  g_appletFocusState;
 
 static bool g_appletNotifiedRunning = 0;
 
@@ -34,18 +33,19 @@ static AppletHookCookie g_appletFirstHook;
 
 void appletExit(void);
 
-static Result _appletGetSession(Handle sessionhandle, Handle* handle_out, u64 cmd_id);
-static Result _appletGetSessionProxy(Handle sessionhandle, Handle* handle_out, u64 cmd_id, Handle prochandle, u8 *AppletAttribute);
+static Result _appletGetHandle(Service* srv, Handle* handle_out, u64 cmd_id);
+static Result _appletGetSession(Service* srv, Service* srv_out, u64 cmd_id);
+static Result _appletGetSessionProxy(Service* srv_out, u64 cmd_id, Handle prochandle, u8 *AppletAttribute);
 
 static Result _appletGetAppletResourceUserId(u64 *out);
 
 static Result appletSetFocusHandlingMode(u32 mode);
-
-static Result _appletReceiveMessage(u32 *out);
 static Result _appletGetCurrentFocusState(u8 *out);
-static Result _appletAcquireForegroundRights(void);
 static Result _appletSetFocusHandlingMode(u8 inval0, u8 inval1, u8 inval2);
 static Result _appletSetOutOfFocusSuspendingEnabled(u8 inval);
+
+static Result _appletReceiveMessage(u32 *out);
+static Result _appletAcquireForegroundRights(void);
 
 static Result _appletGetOperationMode(u8 *out);
 static Result _appletGetPerformanceMode(u32 *out);
@@ -56,10 +56,10 @@ static Result _appletSetPerformanceModeChangedNotification(u8 flag);
 
 Result appletInitialize(void)
 {
-    if (g_appletServiceSession != INVALID_HANDLE)
+    if (serviceIsActive(&g_appletSrv))
         return MAKERESULT(MODULE_LIBNX, LIBNX_ALREADYINITIALIZED);
 
-    if (__nx_applet_type==AppletType_None)
+    if (__nx_applet_type == AppletType_None)
         return 0;
 
     Result rc = 0;
@@ -72,10 +72,10 @@ Result appletInitialize(void)
         __nx_applet_type = AppletType_Application;
         // Fallthrough.
     case AppletType_Application:
-        rc = smGetService(&g_appletServiceSession, "appletOE");
+        rc = smGetService(&g_appletSrv, "appletOE");
         break;
     default:
-        rc = smGetService(&g_appletServiceSession, "appletAE");
+        rc = smGetService(&g_appletSrv, "appletAE");
         break;
     }
 
@@ -91,10 +91,11 @@ Result appletInitialize(void)
             case AppletType_LibraryApplet:     cmd_id = 200; break;
             case AppletType_OverlayApplet:     cmd_id = 300; break;
             case AppletType_SystemApplication: cmd_id = 350; break;
+            // TODO: Replace error code
             default: fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_NOTFOUND));
             }
 
-            rc = _appletGetSessionProxy(g_appletServiceSession, &g_appletProxySession, cmd_id, CUR_PROCESS_HANDLE, NULL);
+            rc = _appletGetSessionProxy(&g_appletProxySession, cmd_id, CUR_PROCESS_HANDLE, NULL);
 
             if (rc == APT_BUSY_ERROR) {
                 svcSleepThread(10000000);
@@ -105,39 +106,39 @@ Result appletInitialize(void)
 
     // Get*Functions, for ILibraryAppletProxy this is GetLibraryAppletSelfAccessor
     if (R_SUCCEEDED(rc))
-        rc = _appletGetSession(g_appletProxySession, &g_appletIFunctions, 20);
+        rc = _appletGetSession(&g_appletSrv, &g_appletIFunctions, 20);
 
     // TODO: Add non-application type-specific session init here.
 
     // GetLibraryAppletCreator
     if (R_SUCCEEDED(rc))
-        rc = _appletGetSession(g_appletProxySession, &g_appletILibraryAppletCreator, 11);
+        rc = _appletGetSession(&g_appletSrv, &g_appletILibraryAppletCreator, 11);
     // GetCommonStateGetter
     if (R_SUCCEEDED(rc))
-        rc = _appletGetSession(g_appletProxySession, &g_appletICommonStateGetter, 0);
+        rc = _appletGetSession(&g_appletSrv, &g_appletICommonStateGetter, 0);
     // GetSelfController
     if (R_SUCCEEDED(rc))
-        rc = _appletGetSession(g_appletProxySession, &g_appletISelfController, 1);
+        rc = _appletGetSession(&g_appletSrv, &g_appletISelfController, 1);
     // GetWindowController
     if (R_SUCCEEDED(rc))
-        rc = _appletGetSession(g_appletProxySession, &g_appletIWindowController, 2);
+        rc = _appletGetSession(&g_appletSrv, &g_appletIWindowController, 2);
     // Get AppletResourceUserId.
     if (R_SUCCEEDED(rc))
         rc = _appletGetAppletResourceUserId(&g_appletResourceUserId);
     // GetAudioController
     if (R_SUCCEEDED(rc))
-        rc = _appletGetSession(g_appletProxySession, &g_appletIAudioController, 3);
+        rc = _appletGetSession(&g_appletSrv, &g_appletIAudioController, 3);
     // GetDisplayController
     if (R_SUCCEEDED(rc))
-        rc = _appletGetSession(g_appletProxySession, &g_appletIDisplayController, 4);
+        rc = _appletGetSession(&g_appletSrv, &g_appletIDisplayController, 4);
     // GetDebugFunctions
     if (R_SUCCEEDED(rc))
-        rc = _appletGetSession(g_appletProxySession, &g_appletIDebugFunctions, 1000);
+        rc = _appletGetSession(&g_appletSrv, &g_appletIDebugFunctions, 1000);
 
     if (R_SUCCEEDED(rc) && (__nx_applet_type == AppletType_Application))
     {
-        // Reuse _appletGetSession since ipc input/output is the same. This is ICommonStateGetter::GetEventHandle.
-        rc = _appletGetSession(g_appletICommonStateGetter, &g_appletMessageEventHandle, 0);
+        // ICommonStateGetter::GetEventHandle
+        rc = _appletGetHandle(&g_appletICommonStateGetter, &g_appletMessageEventHandle, 0);
 
         if (R_SUCCEEDED(rc)) {
             do {
@@ -214,9 +215,6 @@ Result appletInitialize(void)
 
 void appletExit(void)
 {
-    if (g_appletServiceSession == INVALID_HANDLE)
-        return;
-
     apmExit();
 
     if (g_appletMessageEventHandle != INVALID_HANDLE) {
@@ -224,56 +222,16 @@ void appletExit(void)
         g_appletMessageEventHandle = INVALID_HANDLE;
     }
 
-    if (g_appletServiceSession != INVALID_HANDLE) {
-        svcCloseHandle(g_appletServiceSession);
-        g_appletServiceSession = INVALID_HANDLE;
-    }
+    serviceClose(&g_appletIFunctions);
+    serviceClose(&g_appletILibraryAppletCreator);
+    serviceClose(&g_appletICommonStateGetter);
+    serviceClose(&g_appletISelfController);
+    serviceClose(&g_appletIWindowController);
+    serviceClose(&g_appletIAudioController);
+    serviceClose(&g_appletIDisplayController);
+    serviceClose(&g_appletIDebugFunctions);
 
-    if (g_appletProxySession != INVALID_HANDLE) {
-        svcCloseHandle(g_appletProxySession);
-        g_appletProxySession = INVALID_HANDLE;
-    }
-
-    if (g_appletIFunctions != INVALID_HANDLE) {
-        svcCloseHandle(g_appletIFunctions);
-        g_appletIFunctions = INVALID_HANDLE;
-    }
-
-    if (g_appletILibraryAppletCreator != INVALID_HANDLE) {
-        svcCloseHandle(g_appletILibraryAppletCreator);
-        g_appletILibraryAppletCreator = INVALID_HANDLE;
-    }
-
-    if (g_appletICommonStateGetter != INVALID_HANDLE) {
-        svcCloseHandle(g_appletICommonStateGetter);
-        g_appletICommonStateGetter = INVALID_HANDLE;
-    }
-
-    if (g_appletISelfController != INVALID_HANDLE) {
-        svcCloseHandle(g_appletISelfController);
-        g_appletISelfController = INVALID_HANDLE;
-    }
-
-    if (g_appletIWindowController != INVALID_HANDLE) {
-        svcCloseHandle(g_appletIWindowController);
-        g_appletIWindowController = INVALID_HANDLE;
-    }
-
-    if (g_appletIAudioController != INVALID_HANDLE) {
-        svcCloseHandle(g_appletIAudioController);
-        g_appletIAudioController = INVALID_HANDLE;
-    }
-
-    if (g_appletIDisplayController != INVALID_HANDLE) {
-        svcCloseHandle(g_appletIDisplayController);
-        g_appletIDisplayController = INVALID_HANDLE;
-    }
-
-    if (g_appletIDebugFunctions != INVALID_HANDLE) {
-        svcCloseHandle(g_appletIDebugFunctions);
-        g_appletIDebugFunctions = INVALID_HANDLE;
-    }
-
+    serviceClose(&g_appletSrv);
     g_appletResourceUserId = 0;
 }
 
@@ -286,7 +244,7 @@ static void appletCallHook(AppletHookType hookType)
 
 void appletHook(AppletHookCookie* cookie, AppletHookFn callback, void* param)
 {
-    if (!callback)
+    if (callback == NULL)
         return;
 
     AppletHookCookie* hook = &g_appletFirstHook;
@@ -350,7 +308,7 @@ static Result appletSetFocusHandlingMode(u32 mode) {
     return rc;
 }
 
-static Result _appletGetSession(Handle sessionhandle, Handle* handle_out, u64 cmd_id) {
+static Result _appletGetHandle(Service* srv, Handle* handle_out, u64 cmd_id) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -364,7 +322,7 @@ static Result _appletGetSession(Handle sessionhandle, Handle* handle_out, u64 cm
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = cmd_id;
 
-    Result rc = ipcDispatch(sessionhandle);
+    Result rc = serviceIpcDispatch(srv);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -385,7 +343,20 @@ static Result _appletGetSession(Handle sessionhandle, Handle* handle_out, u64 cm
     return rc;
 }
 
-static Result _appletGetSessionProxy(Handle sessionhandle, Handle* handle_out, u64 cmd_id, Handle prochandle, u8 *AppletAttribute) {
+static Result _appletGetSession(Service* srv, Service* srv_out, u64 cmd_id) {
+    Result rc;
+    Handle handle;
+
+    rc = _appletGetHandle(srv, &handle, cmd_id);
+
+    if (R_SUCCEEDED(rc)) {
+        serviceCreate(srv_out, handle);
+    }
+
+    return rc;
+}
+
+static Result _appletGetSessionProxy(Service* srv_out, u64 cmd_id, Handle prochandle, u8 *AppletAttribute) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -405,7 +376,7 @@ static Result _appletGetSessionProxy(Handle sessionhandle, Handle* handle_out, u
     raw->cmd_id = cmd_id;
     raw->reserved = 0;
 
-    Result rc = ipcDispatch(sessionhandle);
+    Result rc = serviceIpcDispatch(&g_appletSrv);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -419,7 +390,7 @@ static Result _appletGetSessionProxy(Handle sessionhandle, Handle* handle_out, u
         rc = resp->result;
 
         if (R_SUCCEEDED(rc)) {
-            *handle_out = r.Handles[0];
+            serviceCreate(srv_out, r.Handles[0]);
         }
     }
 
@@ -440,7 +411,7 @@ static Result _appletGetAppletResourceUserId(u64 *out) {
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 1;
 
-    Result rc = ipcDispatch(g_appletIWindowController);
+    Result rc = serviceIpcDispatch(&g_appletIWindowController);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -476,7 +447,7 @@ static Result _appletAcquireForegroundRights(void) {
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 10;
 
-    Result rc = ipcDispatch(g_appletIWindowController);
+    Result rc = serviceIpcDispatch(&g_appletIWindowController);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -494,7 +465,8 @@ static Result _appletAcquireForegroundRights(void) {
 }
 
 Result appletGetAppletResourceUserId(u64 *out) {
-    if (g_appletServiceSession == INVALID_HANDLE) return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
+    if (!serviceIsActive(&g_appletSrv))
+        return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
 
     *out = g_appletResourceUserId;
     return 0;
@@ -517,7 +489,7 @@ void appletNotifyRunning(u8 *out) {
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 40;
 
-    Result rc = ipcDispatch(g_appletIFunctions);
+    Result rc = serviceIpcDispatch(&g_appletIFunctions);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -553,7 +525,7 @@ static Result _appletReceiveMessage(u32 *out) {
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 1;
 
-    Result rc = ipcDispatch(g_appletICommonStateGetter);
+    Result rc = serviceIpcDispatch(&g_appletICommonStateGetter);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -589,7 +561,7 @@ static Result _appletGetOperationMode(u8 *out) {
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 5;
 
-    Result rc = ipcDispatch(g_appletICommonStateGetter);
+    Result rc = serviceIpcDispatch(&g_appletICommonStateGetter);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -624,7 +596,7 @@ static Result _appletGetPerformanceMode(u32 *out) {
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 6;
 
-    Result rc = ipcDispatch(g_appletICommonStateGetter);
+    Result rc = serviceIpcDispatch(&g_appletICommonStateGetter);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -660,7 +632,7 @@ static Result _appletGetCurrentFocusState(u8 *out) {
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 9;
 
-    Result rc = ipcDispatch(g_appletICommonStateGetter);
+    Result rc = serviceIpcDispatch(&g_appletICommonStateGetter);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -698,7 +670,7 @@ static Result _appletSetOperationModeChangedNotification(u8 flag) {
     raw->cmd_id = 11;
     raw->flag = flag;
 
-    Result rc = ipcDispatch(g_appletISelfController);
+    Result rc = serviceIpcDispatch(&g_appletISelfController);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -731,7 +703,7 @@ static Result _appletSetPerformanceModeChangedNotification(u8 flag) {
     raw->cmd_id = 12;
     raw->flag = flag;
 
-    Result rc = ipcDispatch(g_appletISelfController);
+    Result rc = serviceIpcDispatch(&g_appletISelfController);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -768,7 +740,7 @@ static Result _appletSetFocusHandlingMode(u8 inval0, u8 inval1, u8 inval2) {
     raw->inval1 = inval1;
     raw->inval2 = inval2;
 
-    Result rc = ipcDispatch(g_appletISelfController);
+    Result rc = serviceIpcDispatch(&g_appletISelfController);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -801,7 +773,7 @@ static Result _appletSetOutOfFocusSuspendingEnabled(u8 inval) {
     raw->cmd_id = 16;
     raw->inval = inval;
 
-    Result rc = ipcDispatch(g_appletISelfController);
+    Result rc = serviceIpcDispatch(&g_appletISelfController);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -832,7 +804,7 @@ Result appletCreateManagedDisplayLayer(u64 *out) {
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 40;
 
-    Result rc = ipcDispatch(g_appletISelfController);
+    Result rc = serviceIpcDispatch(&g_appletISelfController);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;

@@ -1,20 +1,56 @@
 // Copyright 2017 plutoo
 #include <switch.h>
 
-static Handle g_smHandle = -1;
+static Handle g_smHandle = INVALID_HANDLE;
 
-bool smHasInitialized(void) {
-    return g_smHandle != -1;
+#define MAX_OVERRIDES 32
+
+static struct {
+    u64    name;
+    Handle handle;
+} g_smOverrides[MAX_OVERRIDES];
+
+static size_t g_smOverridesNum = 0;
+
+void smAddOverrideHandle(u64 name, Handle handle)
+{
+    if (g_smOverridesNum == MAX_OVERRIDES)
+        fatalSimple(1);
+
+    size_t i = g_smOverridesNum;
+
+    g_smOverrides[i].name   = name;
+    g_smOverrides[i].handle = handle;
+
+    g_smOverridesNum++;
 }
 
-Result smInitialize(void) {
+Handle smGetServiceOverride(u64 name)
+{
+    size_t i;
+
+    for (i=0; i<g_smOverridesNum; i++)
+    {
+        if (g_smOverrides[i].name == name)
+            return g_smOverrides[i].handle;
+    }
+
+    return INVALID_HANDLE;
+}
+
+bool smHasInitialized(void) {
+    return g_smHandle != INVALID_HANDLE;
+}
+
+Result smInitialize(void)
+{
     if (smHasInitialized())
         return 0;
 
     Result rc = svcConnectToNamedPort(&g_smHandle, "sm:");
     Handle tmp;
 
-    if (R_SUCCEEDED(rc) && smGetService(&tmp, "") == 0x415) {
+    if (R_SUCCEEDED(rc) && smGetServiceOriginal(&tmp, smEncodeName("")) == 0x415) {
         IpcCommand c;
         ipcInitialize(&c);
         ipcSendPid(&c);
@@ -47,21 +83,24 @@ Result smInitialize(void) {
         }
     }
 
+    if (R_FAILED(rc))
+        smExit();
+
     return rc;
 }
 
 void smExit(void) {
-    if (smHasInitialized()) {
-        svcCloseHandle(g_smHandle);
-        g_smHandle = -1;
-    }
+    svcCloseHandle(g_smHandle);
+    g_smHandle = INVALID_HANDLE;
 }
 
-static u64 _EncodeName(const char* name) {
+u64 smEncodeName(const char* name)
+{
     u64 name_encoded = 0;
-
     size_t i;
-    for (i=0; i<8; i++) {
+
+    for (i=0; i<8; i++)
+    {
         if (name[i] == '\0')
             break;
 
@@ -71,7 +110,34 @@ static u64 _EncodeName(const char* name) {
     return name_encoded;
 }
 
-Result smGetService(Handle* handle_out, const char* name) {
+Result smGetService(Service* service_out, const char* name)
+{
+    u64 name_encoded = smEncodeName(name);
+    Handle handle = smGetServiceOverride(name_encoded);
+    Result rc;
+
+    if (handle != INVALID_HANDLE)
+    {
+        service_out->type = ServiceType_Override;
+        service_out->handle = handle;
+        rc = 0;
+    }
+    else
+    {
+        rc = smGetServiceOriginal(&handle, name_encoded);
+
+        if (R_SUCCEEDED(rc))
+        {
+            service_out->type = ServiceType_Normal;
+            service_out->handle = handle;
+        }
+    }
+
+    return rc;
+}
+
+Result smGetServiceOriginal(Handle* handle_out, u64 name)
+{
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -86,7 +152,7 @@ Result smGetService(Handle* handle_out, const char* name) {
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 1;
-    raw->service_name = _EncodeName(name);
+    raw->service_name = name;
 
     Result rc = ipcDispatch(g_smHandle);
 
@@ -125,7 +191,7 @@ Result smRegisterService(Handle* handle_out, const char* name, bool is_light, in
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 2;
-    raw->service_name = _EncodeName(name);
+    raw->service_name = smEncodeName(name);
     raw->is_light = !!is_light;
     raw->max_sessions = max_sessions;
 
@@ -165,7 +231,7 @@ Result smUnregisterService(const char* name) {
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 3;
-    raw->service_name = _EncodeName(name);
+    raw->service_name = smEncodeName(name);
 
     Result rc = ipcDispatch(g_smHandle);
 

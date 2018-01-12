@@ -1,14 +1,14 @@
 // Copyright 2017 plutoo
 #include <switch.h>
 
-static Handle g_bsdClientHandle = -1;
-static Handle g_bsdMonitorHandle = -1;
+static Service g_bsdSrv;
+static Service g_bsdMonitor;
 static u64 g_bsdClientPid = -1;
 static int g_Errno = 0;
 
 #define EPIPE 32
 
-static Result _bsdRegisterClient(Handle h, TransferMemory* tmem, u64* pid_out) {
+static Result _bsdRegisterClient(Service* srv, TransferMemory* tmem, u64* pid_out) {
     IpcCommand c;
     ipcInitialize(&c);
     ipcSendPid(&c);
@@ -33,7 +33,7 @@ static Result _bsdRegisterClient(Handle h, TransferMemory* tmem, u64* pid_out) {
     raw->unk0[4] = 13;
     raw->tmem_sz = tmem->size;
 
-    Result rc = ipcDispatch(h);
+    Result rc = serviceIpcDispatch(srv);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -52,7 +52,7 @@ static Result _bsdRegisterClient(Handle h, TransferMemory* tmem, u64* pid_out) {
     return rc;
 }
 
-static Result _bsdStartMonitor(Handle h, u64 pid) {
+static Result _bsdStartMonitor(Service* srv, u64 pid) {
     IpcCommand c;
     ipcInitialize(&c);
     ipcSendPid(&c);
@@ -69,7 +69,7 @@ static Result _bsdStartMonitor(Handle h, u64 pid) {
     raw->cmd_id = 1;
     raw->pid = pid;
 
-    Result rc = ipcDispatch(h);
+    Result rc = serviceIpcDispatch(srv);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -88,21 +88,21 @@ static Result _bsdStartMonitor(Handle h, u64 pid) {
 
 Result bsdInitialize(TransferMemory* tmem) {
     const char* bsd_srv = "bsd:s";
-    Result rc = smGetService(&g_bsdClientHandle, bsd_srv);
+    Result rc = smGetService(&g_bsdSrv, bsd_srv);
 
     if (R_FAILED(rc)) {
         bsd_srv = "bsd:u";
-        rc = smGetService(&g_bsdClientHandle, bsd_srv);
+        rc = smGetService(&g_bsdSrv, bsd_srv);
     }
 
     if (R_SUCCEEDED(rc)) {
-        rc = smGetService(&g_bsdMonitorHandle, bsd_srv);
+        rc = smGetService(&g_bsdMonitor, bsd_srv);
 
         if (R_SUCCEEDED(rc)) {
-            rc = _bsdRegisterClient(g_bsdClientHandle, tmem, &g_bsdClientPid);
+            rc = _bsdRegisterClient(&g_bsdSrv, tmem, &g_bsdClientPid);
 
             if (R_SUCCEEDED(rc)) {
-                rc = _bsdStartMonitor(g_bsdMonitorHandle, g_bsdClientPid);
+                rc = _bsdStartMonitor(&g_bsdMonitor, g_bsdClientPid);
             }
         }
     }
@@ -135,7 +135,7 @@ int bsdSocket(int domain, int type, int protocol) {
     raw->type = type;
     raw->protocol = protocol;
 
-    Result rc = ipcDispatch(g_bsdClientHandle);
+    Result rc = serviceIpcDispatch(&g_bsdSrv);
     int fd = -1;
 
     if (R_SUCCEEDED(rc)) {
@@ -183,7 +183,7 @@ int bsdRecv(int sockfd, void* buffer, size_t length, int flags) {
     raw->sockfd = sockfd;
     raw->flags = flags;
 
-    Result rc = ipcDispatch(g_bsdClientHandle);
+    Result rc = serviceIpcDispatch(&g_bsdSrv);
     int ret = -1;
 
     if (R_SUCCEEDED(rc)) {
@@ -232,7 +232,7 @@ int bsdSend(int sockfd, void* buffer, size_t length, int flags) {
     raw->sockfd = sockfd;
     raw->flags = flags;
 
-    Result rc = ipcDispatch(g_bsdClientHandle);
+    Result rc = serviceIpcDispatch(&g_bsdSrv);
     int ret = -1;
 
     if (R_SUCCEEDED(rc)) {
@@ -284,7 +284,7 @@ int bsdSendTo(int sockfd, void* buffer, size_t length, int flags, const struct b
     raw->sockfd = sockfd;
     raw->flags = flags;
 
-    Result rc = ipcDispatch(g_bsdClientHandle);
+    Result rc = serviceIpcDispatch(&g_bsdSrv);
     int ret = -1;
 
     if (R_SUCCEEDED(rc)) {
@@ -332,7 +332,7 @@ int bsdConnect(int sockfd, void* addr, u32 addrlen) {
     raw->cmd_id = 14;
     raw->sockfd = sockfd;
 
-    Result rc = ipcDispatch(g_bsdClientHandle);
+    Result rc = serviceIpcDispatch(&g_bsdSrv);
     int fd = -1;
 
     if (R_SUCCEEDED(rc)) {
@@ -378,7 +378,7 @@ int bsdBind(int sockfd, void* addr, u32 addrlen) {
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 13;
 
-    Result rc = ipcDispatch(g_bsdClientHandle);
+    Result rc = serviceIpcDispatch(&g_bsdSrv);
     int ret = -1;
 
     if (R_SUCCEEDED(rc)) {
@@ -426,7 +426,7 @@ int bsdListen(int sockfd, int backlog) {
     raw->sockfd = sockfd;
     raw->backlog = backlog;
 
-    Result rc = ipcDispatch(g_bsdClientHandle);
+    Result rc = serviceIpcDispatch(&g_bsdSrv);
     int ret = -1;
 
     if (R_SUCCEEDED(rc)) {
@@ -478,7 +478,7 @@ int bsdSetSockOpt(int sockfd, int level, int option_name, const void *option_val
     raw->level = level;
     raw->option_name = option_name;
 
-    Result rc = ipcDispatch(g_bsdClientHandle);
+    Result rc = serviceIpcDispatch(&g_bsdSrv);
     int ret = -1;
 
     if (R_SUCCEEDED(rc)) {
@@ -525,7 +525,7 @@ int bsdWrite(int sockfd, void* buffer, size_t length) {
     raw->cmd_id = 24;
     raw->sockfd = sockfd;
 
-    Result rc = ipcDispatch(g_bsdClientHandle);
+    Result rc = serviceIpcDispatch(&g_bsdSrv);
     int ret = -1;
 
     if (R_SUCCEEDED(rc)) {

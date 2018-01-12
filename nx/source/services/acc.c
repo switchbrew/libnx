@@ -1,36 +1,26 @@
 #include <string.h>
 #include <switch.h>
 
-static Handle g_accountServiceSession = INVALID_HANDLE;
+static Service g_accSrv;
 
-Result accountInitialize(void) {
-    if (g_accountServiceSession != INVALID_HANDLE) return MAKERESULT(MODULE_LIBNX, LIBNX_ALREADYINITIALIZED);
-
-    Result rc = 0;
-
-    rc = smGetService(&g_accountServiceSession, "acc:u1");
-    if (R_FAILED(rc)) return rc;
-
-    return rc;
-}
-
-void accountExit(void)
+Result accountInitialize(void)
 {
-    if (g_accountServiceSession == INVALID_HANDLE) return;
+    if (serviceIsActive(&g_accSrv))
+        return MAKERESULT(MODULE_LIBNX, LIBNX_ALREADYINITIALIZED);
 
-    if (g_accountServiceSession != INVALID_HANDLE) {
-        svcCloseHandle(g_accountServiceSession);
-        g_accountServiceSession = INVALID_HANDLE;
-    }
+    return smGetService(&g_accSrv, "acc:u1");
 }
 
-Handle accountGetSessionService(void) {
-    return g_accountServiceSession;
+void accountExit(void) {
+    serviceClose(&g_accSrv);
 }
 
-Result accountGetActiveUser(u128 *userID, bool *account_selected) {
-    if (g_accountServiceSession == INVALID_HANDLE) return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
+Service* accountGetService(void) {
+    return &g_accSrv;
+}
 
+Result accountGetActiveUser(u128 *userID, bool *account_selected)
+{
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -44,7 +34,7 @@ Result accountGetActiveUser(u128 *userID, bool *account_selected) {
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 4;
 
-    Result rc = ipcDispatch(g_accountServiceSession);
+    Result rc = serviceIpcDispatch(&g_accSrv);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;

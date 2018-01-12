@@ -14,7 +14,7 @@ void fatalSimple(Result err) {
 
     if (R_SUCCEEDED(rc)) {
         Handle srv;
-        rc = smGetService(&srv, "fatal:u");
+        rc = smGetServiceOriginal(&srv, smEncodeName("fatal:u"));
 
         if (R_SUCCEEDED(rc)) {
             IpcCommand c;

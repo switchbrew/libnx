@@ -19,7 +19,7 @@ Result usbCommsInitialize(void)
 
     Result ret=0;
 
-    ret = usbDsInitialize(USBCOMPLEXID_Default, NULL);
+    ret = usbDsInitialize(UsbComplexId_Default, NULL);
 
     if (R_SUCCEEDED(ret)) {
         //The buffer for PostBufferAsync commands must be 0x1000-byte aligned.

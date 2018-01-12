@@ -1,7 +1,7 @@
 #include <string.h>
 #include <switch.h>
 
-static Handle g_nvServiceSession = INVALID_HANDLE;
+static Service g_nvSrv;
 static size_t g_nvIpcBufferSize = 0;
 static u32 g_nvServiceType = -1;
 static TransferMemory g_nvTransfermem;
@@ -16,30 +16,30 @@ Result nvInitialize(nvServiceType servicetype, size_t transfermem_size) {
     u64 AppletResourceUserId = 0;
 
     if (servicetype==NVSERVTYPE_Default || servicetype==NVSERVTYPE_Application) {
-        rc = smGetService(&g_nvServiceSession, "nvdrv");
+        rc = smGetService(&g_nvSrv, "nvdrv");
         g_nvServiceType = 0;
     }
 
     if ((servicetype==NVSERVTYPE_Default && R_FAILED(rc)) || servicetype==NVSERVTYPE_Applet) {
-        rc = smGetService(&g_nvServiceSession, "nvdrv:a");
+        rc = smGetService(&g_nvSrv, "nvdrv:a");
         g_nvServiceType = 1;
     }
 
     if ((servicetype==NVSERVTYPE_Default && R_FAILED(rc)) || servicetype==NVSERVTYPE_Sysmodule)
     {
-        rc = smGetService(&g_nvServiceSession, "nvdrv:s");
+        rc = smGetService(&g_nvSrv, "nvdrv:s");
         g_nvServiceType = 2;
     }
 
     if ((servicetype==NVSERVTYPE_Default && R_FAILED(rc)) || servicetype==NVSERVTYPE_T)
     {
-        rc = smGetService(&g_nvServiceSession, "nvdrv:t");
+        rc = smGetService(&g_nvSrv, "nvdrv:t");
         g_nvServiceType = 3;
     }
 
     if (R_SUCCEEDED(rc)) {
         g_nvIpcBufferSize = 0;
-        rc = ipcQueryPointerBufferSize(g_nvServiceSession, &g_nvIpcBufferSize);
+        rc = ipcQueryPointerBufferSize(g_nvSrv.handle, &g_nvIpcBufferSize);
 
         if (R_SUCCEEDED(rc)) rc = tmemCreate(&g_nvTransfermem, transfermem_size, PERM_NONE);
 
@@ -53,15 +53,7 @@ Result nvInitialize(nvServiceType servicetype, size_t transfermem_size) {
     }
 
     if (R_FAILED(rc)) {
-        g_nvServiceType = -1;
-
-        if(g_nvServiceSession != INVALID_HANDLE)
-        {
-            svcCloseHandle(g_nvServiceSession);
-            g_nvServiceSession = INVALID_HANDLE;
-        }
-
-        tmemClose(&g_nvTransfermem);
+        nvExit();
     }
 
     return rc;
@@ -69,16 +61,12 @@ Result nvInitialize(nvServiceType servicetype, size_t transfermem_size) {
 
 void nvExit(void)
 {
-    if(g_nvServiceType==-1)return;
+    if(g_nvServiceType == -1)
+        return;
 
     g_nvServiceType = -1;
 
-    if(g_nvServiceSession != INVALID_HANDLE)
-    {
-        svcCloseHandle(g_nvServiceSession);
-        g_nvServiceSession = INVALID_HANDLE;
-    }
-
+    serviceClose(&g_nvSrv);
     tmemClose(&g_nvTransfermem);
 }
 
@@ -100,7 +88,7 @@ static Result _nvInitialize(Handle proc, Handle sharedmem, u32 transfermem_size)
     raw->cmd_id = 3;
     raw->transfermem_size = transfermem_size;
 
-    Result rc = ipcDispatch(g_nvServiceSession);
+    Result rc = serviceIpcDispatch(&g_nvSrv);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -134,7 +122,7 @@ static Result _nvSetClientPID(u64 AppletResourceUserId) {
     raw->cmd_id = 8;
     raw->AppletResourceUserId = AppletResourceUserId;
 
-    Result rc = ipcDispatch(g_nvServiceSession);
+    Result rc = serviceIpcDispatch(&g_nvSrv);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -166,7 +154,7 @@ Result nvOpen(u32 *fd, const char *devicepath) {
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 0;
 
-    Result rc = ipcDispatch(g_nvServiceSession);
+    Result rc = serviceIpcDispatch(&g_nvSrv);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -244,7 +232,7 @@ Result nvIoctl(u32 fd, u32 request, void* argp) {
     raw->fd = fd;
     raw->request = request;
 
-    Result rc = ipcDispatch(g_nvServiceSession);
+    Result rc = serviceIpcDispatch(&g_nvSrv);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -278,7 +266,7 @@ Result nvClose(u32 fd) {
     raw->cmd_id = 2;
     raw->fd = fd;
 
-    Result rc = ipcDispatch(g_nvServiceSession);
+    Result rc = serviceIpcDispatch(&g_nvSrv);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -314,7 +302,7 @@ Result nvQueryEvent(u32 fd, u32 event_id, Handle *handle_out) {
     raw->fd = fd;
     raw->event_id = event_id;
 
-    Result rc = ipcDispatch(g_nvServiceSession);
+    Result rc = serviceIpcDispatch(&g_nvSrv);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;

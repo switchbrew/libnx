@@ -1,13 +1,13 @@
 // Copyright 2017 plutoo
 #include <switch.h>
 
-static Handle g_fsHandle = INVALID_HANDLE;
+static Service g_fsSrv;
 
 Result fsInitialize(void) {
-    if (g_fsHandle != INVALID_HANDLE)
+    if (serviceIsActive(&g_fsSrv))
         return 0;
 
-    Result rc = smGetService(&g_fsHandle, "fsp-srv");
+    Result rc = smGetService(&g_fsSrv, "fsp-srv");
 
     if (R_SUCCEEDED(rc)) {
         IpcCommand c;
@@ -26,7 +26,7 @@ Result fsInitialize(void) {
         raw->cmd_id = 1;
         raw->unk = 0;
 
-        rc = ipcDispatch(g_fsHandle);
+        rc = serviceIpcDispatch(&g_fsSrv);
 
         if (R_SUCCEEDED(rc)) {
             IpcParsedCommand r;
@@ -45,13 +45,11 @@ Result fsInitialize(void) {
 }
 
 void fsExit(void) {
-    if(g_fsHandle == INVALID_HANDLE)return;
-    svcCloseHandle(g_fsHandle);
-    g_fsHandle = INVALID_HANDLE;
+    serviceClose(&g_fsSrv);
 }
 
-Handle fsGetServiceSession(void) {
-    return g_fsHandle;
+Service* fsGetServiceSession(void) {
+    return &g_fsSrv;
 }
 
 Result fsMountSdcard(FsFileSystem* out) {
@@ -68,7 +66,7 @@ Result fsMountSdcard(FsFileSystem* out) {
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 18;
 
-    Result rc = ipcDispatch(g_fsHandle);
+    Result rc = serviceIpcDispatch(&g_fsSrv);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -107,7 +105,7 @@ Result fsMountSaveData(FsFileSystem* out, u8 inval, FsSave *save) {
     raw->inval = (u64)inval;
     memcpy(&raw->save, save, sizeof(FsSave));
 
-    Result rc = ipcDispatch(g_fsHandle);
+    Result rc = serviceIpcDispatch(&g_fsSrv);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;

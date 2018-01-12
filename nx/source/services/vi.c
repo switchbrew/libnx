@@ -1,7 +1,7 @@
 #include <string.h>
 #include <switch.h>
 
-static Handle g_viServiceSession = INVALID_HANDLE;
+static Service g_viServiceSession;
 static u32 g_viServiceType = -1;
 static Handle g_viIApplicationDisplayService = INVALID_HANDLE;
 static Handle g_viIHOSBinderDriverRelay = INVALID_HANDLE;
@@ -19,17 +19,17 @@ Result viInitialize(ViServiceType servicetype)
 
     Result rc = 0;
 
-    if (servicetype==ViServiceType_Default || servicetype==ViServiceType_Manager) {
+    if (servicetype == ViServiceType_Default || servicetype == ViServiceType_Manager) {
         rc = smGetService(&g_viServiceSession, "vi:m");
         g_viServiceType = 2;
     }
 
-    if ((servicetype==ViServiceType_Default && R_FAILED(rc)) || servicetype==ViServiceType_System) {
+    if ((servicetype == ViServiceType_Default && R_FAILED(rc)) || servicetype == ViServiceType_System) {
         rc = smGetService(&g_viServiceSession, "vi:s");
         g_viServiceType = 1;
     }
 
-    if ((servicetype==ViServiceType_Default && R_FAILED(rc)) || servicetype==ViServiceType_Application)
+    if ((servicetype == ViServiceType_Default && R_FAILED(rc)) || servicetype == ViServiceType_Application)
     {
         rc = smGetService(&g_viServiceSession, "vi:u");
         g_viServiceType = 0;
@@ -46,19 +46,19 @@ Result viInitialize(ViServiceType servicetype)
         raw.cmd_id = g_viServiceType;
         raw.inval0 = 0;
 
-        rc = _viGetSession(g_viServiceSession, &g_viIApplicationDisplayService, &raw, sizeof(raw));
+        rc = _viGetSession(g_viServiceSession.handle, &g_viIApplicationDisplayService, &raw, sizeof(raw));
     }
 
     if (R_SUCCEEDED(rc))
         rc = _viGetSessionNoParams(g_viIApplicationDisplayService, &g_viIHOSBinderDriverRelay, 100);
 
-    if (g_viServiceType>=ViServiceType_System && R_SUCCEEDED(rc))
+    if (g_viServiceType >= ViServiceType_System && R_SUCCEEDED(rc))
         rc = _viGetSessionNoParams(g_viIApplicationDisplayService, &g_viISystemDisplayService, 101);
 
-    if (g_viServiceType>=ViServiceType_Manager && R_SUCCEEDED(rc))
+    if (g_viServiceType >= ViServiceType_Manager && R_SUCCEEDED(rc))
         rc = _viGetSessionNoParams(g_viIApplicationDisplayService, &g_viIManagerDisplayService, 102);
 
-    if (g_viServiceType>=ViServiceType_System && R_SUCCEEDED(rc) && kernelAbove200())
+    if (g_viServiceType >= ViServiceType_System && R_SUCCEEDED(rc) && kernelAbove200())
         rc = _viGetSessionNoParams(g_viIApplicationDisplayService, &g_viIHOSBinderDriverIndirect, 103);
 
     if (R_FAILED(rc)) {
@@ -75,11 +75,6 @@ void viExit(void)
         return;
 
     g_viServiceType = -1;
-
-    if(g_viServiceSession != INVALID_HANDLE) {
-        svcCloseHandle(g_viServiceSession);
-        g_viServiceSession = 0;
-    }
 
     if(g_viIApplicationDisplayService != INVALID_HANDLE) {
         svcCloseHandle(g_viIApplicationDisplayService);
@@ -100,35 +95,31 @@ void viExit(void)
         svcCloseHandle(g_viIHOSBinderDriverIndirect);
         g_viIHOSBinderDriverIndirect = 0;
     }
+
+    serviceClose(&g_viServiceSession);
 }
 
-Handle viGetSessionService(void)
-{
-    return g_viServiceSession;
+Handle viGetSessionService(void) {
+    return g_viServiceSession.handle;
 }
 
-Handle viGetSession_IApplicationDisplayService(void)
-{
+Handle viGetSession_IApplicationDisplayService(void) {
     return g_viIApplicationDisplayService;
 }
 
-Handle viGetSession_IHOSBinderDriverRelay(void)
-{
+Handle viGetSession_IHOSBinderDriverRelay(void) {
     return g_viIHOSBinderDriverRelay;
 }
 
-Handle viGetSession_ISystemDisplayService(void)
-{
+Handle viGetSession_ISystemDisplayService(void) {
     return g_viISystemDisplayService;
 }
 
-Handle viGetSession_IManagerDisplayService(void)
-{
+Handle viGetSession_IManagerDisplayService(void) {
     return g_viIManagerDisplayService;
 }
 
-Handle viGetSession_IHOSBinderDriverIndirect(void)
-{
+Handle viGetSession_IHOSBinderDriverIndirect(void) {
     return g_viIHOSBinderDriverIndirect;
 }
 

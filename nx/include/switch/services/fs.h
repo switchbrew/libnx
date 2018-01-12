@@ -80,7 +80,7 @@ typedef enum
 Result fsInitialize(void);
 void fsExit(void);
 
-Handle fsGetServiceSession(void);
+Service* fsGetServiceSession(void);
 
 Result fsMountSdcard(FsFileSystem* out);
 Result fsMountSaveData(FsFileSystem* out, u8 inval, FsSave *save);

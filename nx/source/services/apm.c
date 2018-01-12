@@ -1,42 +1,41 @@
 #include <string.h>
 #include <switch.h>
 
-static Handle g_apmServiceSession = INVALID_HANDLE;
-static Handle g_apmISession = INVALID_HANDLE;
+static Service g_apmSrv;
+static Service g_apmISession;
 
-static Result _apmGetSession(Handle sessionhandle, Handle* handle_out, u64 cmd_id);
+static Result _apmGetSession(Service* srv, Service* srv_out, u64 cmd_id);
 
-Result apmInitialize(void) {
-    if (g_apmServiceSession != INVALID_HANDLE) return 0;
+Result apmInitialize(void)
+{
+    if (serviceIsActive(&g_apmSrv))
+        return MAKERESULT(MODULE_LIBNX, LIBNX_ALREADYINITIALIZED);
 
     Result rc = 0;
 
-    rc = smGetService(&g_apmServiceSession, "apm:p");
-    if (R_FAILED(rc)) rc = smGetService(&g_apmServiceSession, "apm");
+    rc = smGetService(&g_apmSrv, "apm:p");
 
-    if (R_SUCCEEDED(rc)) rc = _apmGetSession(g_apmServiceSession, &g_apmISession, 0);//OpenSession. Official sw doesn't open this until using commands which need it, when it wasn't already opened.
+    if (R_FAILED(rc))
+        rc = smGetService(&g_apmSrv, "apm");
 
-    if (R_FAILED(rc)) apmExit();
+    // OpenSession.
+    // Official sw doesn't open this until using commands which need it, when it wasn't already opened.
+    if (R_SUCCEEDED(rc))
+        rc = _apmGetSession(&g_apmSrv, &g_apmISession, 0);
+
+    if (R_FAILED(rc))
+        apmExit();
 
     return rc;
 }
 
 void apmExit(void)
 {
-    if (g_apmServiceSession == INVALID_HANDLE) return;
-
-    if (g_apmServiceSession != INVALID_HANDLE) {
-        svcCloseHandle(g_apmServiceSession);
-        g_apmServiceSession = INVALID_HANDLE;
-    }
-
-    if (g_apmISession != INVALID_HANDLE) {
-        svcCloseHandle(g_apmISession);
-        g_apmISession = INVALID_HANDLE;
-    }
+    serviceClose(&g_apmISession);
+    serviceClose(&g_apmSrv);
 }
 
-static Result _apmGetSession(Handle sessionhandle, Handle* handle_out, u64 cmd_id) {
+static Result _apmGetSession(Service* srv, Service* srv_out, u64 cmd_id) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -50,7 +49,7 @@ static Result _apmGetSession(Handle sessionhandle, Handle* handle_out, u64 cmd_i
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = cmd_id;
 
-    Result rc = ipcDispatch(sessionhandle);
+    Result rc = serviceIpcDispatch(srv);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -64,7 +63,7 @@ static Result _apmGetSession(Handle sessionhandle, Handle* handle_out, u64 cmd_i
         rc = resp->result;
 
         if (R_SUCCEEDED(rc)) {
-            *handle_out = r.Handles[0];
+            serviceCreate(srv_out, r.Handles[0]);
         }
     }
 
@@ -89,7 +88,7 @@ Result apmSetPerformanceConfiguration(u32 PerformanceMode, u32 PerformanceConfig
     raw->PerformanceMode = PerformanceMode;
     raw->PerformanceConfiguration = PerformanceConfiguration;
 
-    Result rc = ipcDispatch(g_apmISession);
+    Result rc = serviceIpcDispatch(&g_apmISession);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -122,7 +121,7 @@ Result apmGetPerformanceConfiguration(u32 PerformanceMode, u32 *PerformanceConfi
     raw->cmd_id = 1;
     raw->PerformanceMode = PerformanceMode;
 
-    Result rc = ipcDispatch(g_apmISession);
+    Result rc = serviceIpcDispatch(&g_apmISession);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;

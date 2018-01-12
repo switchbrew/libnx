@@ -1,8 +1,8 @@
 #include <string.h>
 #include <switch.h>
 
-static Handle g_hidServiceSession = INVALID_HANDLE;
-static Handle g_hidIAppletResource = INVALID_HANDLE;
+static Service g_hidSrv;
+static Service g_hidIAppletResource;
 static SharedMemory g_hidSharedmem;
 
 static HidTouchScreenEntry g_touchEntry;
@@ -20,70 +20,49 @@ static u64 g_touchTimestamp, g_mouseTimestamp, g_keyboardTimestamp, g_controller
 
 static RwLock g_hidLock;
 
-static Result _hidCreateAppletResource(Handle sessionhandle, Handle* handle_out, u64 AppletResourceUserId);
-static Result _hidGetSharedMemoryHandle(Handle sessionhandle, Handle* handle_out);
+static Result _hidCreateAppletResource(Service* srv, Service* srv_out, u64 AppletResourceUserId);
+static Result _hidGetSharedMemoryHandle(Service* srv, Handle* handle_out);
 
 Result hidInitialize(void)
 {
-    if (g_hidServiceSession != INVALID_HANDLE)
+    if (serviceIsActive(&g_hidSrv))
         return MAKERESULT(MODULE_LIBNX, LIBNX_ALREADYINITIALIZED);
 
-    Result rc = 0;
-    u64 AppletResourceUserId = 0;
-    Handle sharedmem_handle=0;
+    Result rc;
+    Handle sharedmem_handle;
+    u64 AppletResourceUserId;
 
     rc = appletGetAppletResourceUserId(&AppletResourceUserId);
     if (R_FAILED(rc))
         return rc;
 
-    rc = smGetService(&g_hidServiceSession, "hid");
+    rc = smGetService(&g_hidSrv, "hid");
     if (R_FAILED(rc))
         return rc;
 
-    rc = _hidCreateAppletResource(g_hidServiceSession, &g_hidIAppletResource, AppletResourceUserId);
+    rc = _hidCreateAppletResource(&g_hidSrv, &g_hidIAppletResource, AppletResourceUserId);
 
     if (R_SUCCEEDED(rc))
-        rc = _hidGetSharedMemoryHandle(g_hidIAppletResource, &sharedmem_handle);
+        rc = _hidGetSharedMemoryHandle(&g_hidIAppletResource, &sharedmem_handle);
 
-    if (R_SUCCEEDED(rc)) {
+    if (R_SUCCEEDED(rc))
+    {
         shmemLoadRemote(&g_hidSharedmem, sharedmem_handle, 0x40000, PERM_R);
 
         rc = shmemMap(&g_hidSharedmem);
-
-        if (R_FAILED(rc)) svcCloseHandle(sharedmem_handle);
     }
 
-    if (R_FAILED(rc)) {
-        if (g_hidServiceSession != INVALID_HANDLE)
-            svcCloseHandle(g_hidServiceSession);
-
-        if (g_hidIAppletResource != INVALID_HANDLE)
-            svcCloseHandle(g_hidIAppletResource);
-
-        g_hidServiceSession = INVALID_HANDLE;
-        g_hidIAppletResource = INVALID_HANDLE;
-    }
+    if (R_FAILED(rc))
+        hidExit();
 
     hidReset();
-
     return rc;
 }
 
 void hidExit(void)
 {
-    if (g_hidServiceSession == INVALID_HANDLE)
-        return;
-
-    if (g_hidServiceSession != INVALID_HANDLE) {
-        svcCloseHandle(g_hidServiceSession);
-        g_hidServiceSession = INVALID_HANDLE;
-    }
-
-    if (g_hidIAppletResource != INVALID_HANDLE) {
-        svcCloseHandle(g_hidIAppletResource);
-        g_hidIAppletResource = INVALID_HANDLE;
-    }
-
+    serviceClose(&g_hidIAppletResource);
+    serviceClose(&g_hidSrv);
     shmemClose(&g_hidSharedmem);
 }
 
@@ -114,8 +93,8 @@ void hidReset(void)
     rwlockWriteUnlock(&g_hidLock);
 }
 
-Handle hidGetSessionService(void) {
-    return g_hidServiceSession;
+Service* hidGetSessionService(void) {
+    return &g_hidSrv;
 }
 
 void* hidGetSharedmemAddr(void) {
@@ -137,9 +116,6 @@ HidControllerLayoutType hidGetControllerLayout(HidControllerID id) {
 }
 
 void hidScanInput(void) {
-    if (g_hidServiceSession == INVALID_HANDLE)
-        return;
-
     rwlockWriteLock(&g_hidLock);
 
     HidSharedMemory *sharedMem = (HidSharedMemory*)hidGetSharedmemAddr();
@@ -336,7 +312,7 @@ void hidTouchRead(touchPosition *pos, u32 point_id) {
     }
 }
 
-static Result _hidCreateAppletResource(Handle sessionhandle, Handle* handle_out, u64 AppletResourceUserId) {
+static Result _hidCreateAppletResource(Service* srv, Service* srv_out, u64 AppletResourceUserId) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -354,7 +330,7 @@ static Result _hidCreateAppletResource(Handle sessionhandle, Handle* handle_out,
     raw->cmd_id = 0;
     raw->AppletResourceUserId = AppletResourceUserId;
 
-    Result rc = ipcDispatch(sessionhandle);
+    Result rc = serviceIpcDispatch(srv);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -368,14 +344,14 @@ static Result _hidCreateAppletResource(Handle sessionhandle, Handle* handle_out,
         rc = resp->result;
 
         if (R_SUCCEEDED(rc)) {
-            *handle_out = r.Handles[0];
+            serviceCreate(srv_out, r.Handles[0]);
         }
     }
 
     return rc;
 }
 
-static Result _hidGetSharedMemoryHandle(Handle sessionhandle, Handle* handle_out) {
+static Result _hidGetSharedMemoryHandle(Service* srv, Handle* handle_out) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -389,7 +365,7 @@ static Result _hidGetSharedMemoryHandle(Handle sessionhandle, Handle* handle_out
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 0;
 
-    Result rc = ipcDispatch(sessionhandle);
+    Result rc = serviceIpcDispatch(srv);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
