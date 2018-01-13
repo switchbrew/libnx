@@ -106,34 +106,34 @@ Result appletInitialize(void)
 
     // Get*Functions, for ILibraryAppletProxy this is GetLibraryAppletSelfAccessor
     if (R_SUCCEEDED(rc))
-        rc = _appletGetSession(&g_appletSrv, &g_appletIFunctions, 20);
+        rc = _appletGetSession(&g_appletProxySession, &g_appletIFunctions, 20);
 
     // TODO: Add non-application type-specific session init here.
 
     // GetLibraryAppletCreator
     if (R_SUCCEEDED(rc))
-        rc = _appletGetSession(&g_appletSrv, &g_appletILibraryAppletCreator, 11);
+        rc = _appletGetSession(&g_appletProxySession, &g_appletILibraryAppletCreator, 11);
     // GetCommonStateGetter
     if (R_SUCCEEDED(rc))
-        rc = _appletGetSession(&g_appletSrv, &g_appletICommonStateGetter, 0);
+        rc = _appletGetSession(&g_appletProxySession, &g_appletICommonStateGetter, 0);
     // GetSelfController
     if (R_SUCCEEDED(rc))
-        rc = _appletGetSession(&g_appletSrv, &g_appletISelfController, 1);
+        rc = _appletGetSession(&g_appletProxySession, &g_appletISelfController, 1);
     // GetWindowController
     if (R_SUCCEEDED(rc))
-        rc = _appletGetSession(&g_appletSrv, &g_appletIWindowController, 2);
+        rc = _appletGetSession(&g_appletProxySession, &g_appletIWindowController, 2);
     // Get AppletResourceUserId.
     if (R_SUCCEEDED(rc))
         rc = _appletGetAppletResourceUserId(&g_appletResourceUserId);
     // GetAudioController
     if (R_SUCCEEDED(rc))
-        rc = _appletGetSession(&g_appletSrv, &g_appletIAudioController, 3);
+        rc = _appletGetSession(&g_appletProxySession, &g_appletIAudioController, 3);
     // GetDisplayController
     if (R_SUCCEEDED(rc))
-        rc = _appletGetSession(&g_appletSrv, &g_appletIDisplayController, 4);
+        rc = _appletGetSession(&g_appletProxySession, &g_appletIDisplayController, 4);
     // GetDebugFunctions
     if (R_SUCCEEDED(rc))
-        rc = _appletGetSession(&g_appletSrv, &g_appletIDebugFunctions, 1000);
+        rc = _appletGetSession(&g_appletProxySession, &g_appletIDebugFunctions, 1000);
 
     if (R_SUCCEEDED(rc) && (__nx_applet_type == AppletType_Application))
     {
