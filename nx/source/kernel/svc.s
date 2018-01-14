@@ -324,8 +324,23 @@ SVC_BEGIN svcManageNamedPort
 	ret
 SVC_END
 
+SVC_BEGIN svcSetProcessMemoryPermission
+	svc 0x73
+	ret
+SVC_END
+
 SVC_BEGIN svcMapProcessMemory
 	svc 0x74
+	ret
+SVC_END
+
+SVC_BEGIN svcMapProcessCodeMemory
+	svc 0x77
+	ret
+SVC_END
+
+SVC_BEGIN svcUnmapProcessCodeMemory
+	svc 0x78
 	ret
 SVC_END
 
