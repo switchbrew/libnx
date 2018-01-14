@@ -93,7 +93,7 @@ export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 all: lib/libnx.a lib/libnxd.a
 
 dist-bin: all
-	@tar --exclude=*~ -cjf libnx-$(VERSION).tar.bz2 include lib
+	@tar --exclude=*~ -cjf libnx-$(VERSION).tar.bz2 include lib default_icon.jpg
 
 dist-src:
 	@tar --exclude=*~ -cjf libnx-src-$(VERSION).tar.bz2 include source data Makefile # Doxyfile Doxyfile.internal
