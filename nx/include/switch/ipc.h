@@ -106,7 +106,7 @@ static inline void ipcSendHandleMove(IpcCommand* cmd, Handle h) {
 }
 
 static inline void* ipcPrepareHeader(IpcCommand* cmd, size_t sizeof_raw) {
-    u32* buf = armGetTls();
+    u32* buf = (u32*)armGetTls();
     size_t i;
     *buf++ = 4 | (cmd->NumStaticIn << 16) | (cmd->NumSend << 20) | (cmd->NumRecv << 24) | (cmd->NumTransfer << 28);
 
@@ -206,7 +206,7 @@ typedef struct {
 } IpcParsedCommand;
 
 static inline Result ipcParse(IpcParsedCommand* r) {
-    u32* buf = armGetTls();
+    u32* buf = (u32*)armGetTls();
     u32 ctrl0 = *buf++;
     u32 ctrl1 = *buf++;
     size_t i;
@@ -259,7 +259,7 @@ static inline Result ipcParse(IpcParsedCommand* r) {
 }
 
 static inline Result ipcQueryPointerBufferSize(Handle session, size_t *size) {
-    u32* buf = armGetTls();
+    u32* buf = (u32*)armGetTls();
 
     buf[0] = 5;
     buf[1] = 8;
@@ -276,11 +276,11 @@ static inline Result ipcQueryPointerBufferSize(Handle session, size_t *size) {
         IpcParsedCommand r;
         ipcParse(&r);
 
-        struct {
+        struct ipcQueryPointerBufferSizeResponse {
             u64 magic;
             u64 result;
             u32 size;
-        } *raw = r.Raw;
+        } *raw = (struct ipcQueryPointerBufferSizeResponse*)r.Raw;
 
         rc = raw->result;
 
@@ -294,7 +294,7 @@ static inline Result ipcQueryPointerBufferSize(Handle session, size_t *size) {
 
 // Domain shit
 static inline Result ipcConvertSessionToDomain(Handle session, u32* object_id_out) {
-    u32* buf = armGetTls();
+    u32* buf = (u32*)armGetTls();
 
     buf[0] = 5;
     buf[1] = 8;
@@ -309,11 +309,11 @@ static inline Result ipcConvertSessionToDomain(Handle session, u32* object_id_ou
         IpcParsedCommand r;
         ipcParse(&r);
 
-        struct {
+        struct ipcConvertSessionToDomainResponse {
             u64 magic;
             u64 result;
             u32 object_id;
-        } *raw = r.Raw;
+        } *raw = (struct ipcConvertSessionToDomainResponse*) r.Raw;
 
         rc = raw->result;
 
