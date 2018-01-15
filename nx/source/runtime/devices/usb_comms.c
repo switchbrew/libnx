@@ -272,7 +272,7 @@ size_t usbCommsRead(void* buffer, size_t size)
         if (R_SUCCEEDED(ret2)) {
             if (state!=5) ret = _usbCommsRead(buffer, size, &transferredSize); //If state changed during transfer, try again. usbDsWaitReady() will be called from this.
         }
-        if (R_FAILED(ret))fatalSimple(ret);
+        if (R_FAILED(ret))fatalSimple(LIBNX_BADUSBCOMMSREAD);
     }
     return transferredSize;
 }
