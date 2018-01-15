@@ -48,11 +48,11 @@ void virtmemSetup(void) {
     }
 
     if (R_FAILED(_GetRegionFromInfo(&g_Region[REGION_STACK], 2, 3))) {
-        fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_BADGETINFO));
+        fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_BADGETINFO_STACK));
     }
 
     if (R_FAILED(_GetRegionFromInfo(&g_Region[REGION_HEAP], 4, 5))) {
-        fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_BADGETINFO));
+        fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_BADGETINFO_HEAP));
     }
 
     // Failure is OK, happens on 1.0.0

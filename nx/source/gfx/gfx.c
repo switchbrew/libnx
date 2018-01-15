@@ -314,7 +314,7 @@ void gfxInitDefault(void)
     }
 
     Result rc = _gfxInit(ViServiceType_Default, "Default", ViLayerFlags_Default, 0, nv_servicetype, 0x300000);
-    if (R_FAILED(rc)) fatalSimple(rc);
+    if (R_FAILED(rc)) fatalSimple(LIBNX_BADGFXINIT);
 }
 
 void gfxExit(void)

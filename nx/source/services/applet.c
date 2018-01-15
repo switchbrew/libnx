@@ -92,7 +92,7 @@ Result appletInitialize(void)
             case AppletType_OverlayApplet:     cmd_id = 300; break;
             case AppletType_SystemApplication: cmd_id = 350; break;
             // TODO: Replace error code
-            default: fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_NOTFOUND));
+            default: fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_APPLETCMDIDNOTFOUND));
             }
 
             rc = _appletGetSessionProxy(&g_appletProxySession, cmd_id, CUR_PROCESS_HANDLE, NULL);
@@ -507,7 +507,7 @@ void appletNotifyRunning(u8 *out) {
         }
     }
 
-    if (R_FAILED(rc)) fatalSimple(rc);
+    if (R_FAILED(rc)) fatalSimple(LIBNX_BADAPPLETNOTIFYRUNNING);
 }
 
 static Result _appletReceiveMessage(u32 *out) {
@@ -851,7 +851,7 @@ bool appletMainLoop(void) {
         if ((rc & 0x3fffff) == 0x680)
             return true;
 
-        fatalSimple(rc);
+        fatalSimple(LIBNX_BADAPPLETRECEIVEMESSAGE);
     }
 
     switch(msg) {
@@ -860,6 +860,8 @@ bool appletMainLoop(void) {
 
             if (R_SUCCEEDED(rc))
                 appletCallHook(AppletHookType_OnFocusState);
+            else
+                fatalSimple(LIBNX_BADAPPLETGETCURRENTFOCUSSTATE);
         break;
 
         case 0x1E:
@@ -867,6 +869,8 @@ bool appletMainLoop(void) {
 
             if (R_SUCCEEDED(rc))
                 appletCallHook(AppletHookType_OnOperationMode);
+            else
+                fatalSimple(LIBNX_BADAPPLETGETOPERATIONMODE);
         break;
 
         case 0x1F:
@@ -874,11 +878,10 @@ bool appletMainLoop(void) {
 
             if (R_SUCCEEDED(rc))
                 appletCallHook(AppletHookType_OnPerformanceMode);
+            else
+                fatalSimple(LIBNX_BADAPPLETGETPERFORMANCEMODE);
         break;
     }
-
-    if (R_FAILED(rc))
-        fatalSimple(rc);
 
     return true;
 }
