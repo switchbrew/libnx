@@ -7,6 +7,8 @@ void newlibSetup(void);
 
 void __system_initArgv(void);
 
+extern u32 __nx_applet_type;
+
 // Must be a multiple of 0x2000000.
 __attribute__((weak)) size_t __nx_heap_size = 0x2000000*16;
 
@@ -72,9 +74,11 @@ void __attribute__((weak)) __appInit(void)
     if (R_FAILED(rc))
         fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_INITFAIL_AM));
 
-    rc = hidInitialize();
-    if (R_FAILED(rc))
-        fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_INITFAIL_HID));
+    if (__nx_applet_type != AppletType_None) {
+        rc = hidInitialize();
+        if (R_FAILED(rc))
+            fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_INITFAIL_HID));
+    }
 
     rc = fsInitialize();
     if (R_FAILED(rc))
