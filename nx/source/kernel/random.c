@@ -128,6 +128,7 @@ void _randomInit(void)
     int i;
     for (i=0; i<4; i++)
     {
+        // Get process TRNG seeds from kernel.
         if (R_FAILED(svcGetInfo(&seed[i], 11, 0, i)))
             fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_BADGETINFO_RNG));
     }
