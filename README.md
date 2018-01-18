@@ -7,7 +7,7 @@ Based on libctru.
 * Setup $DEVKITA64 in your environment.
 * make install
 
-See also the switch-tools repo if you want to manually build those.
+See also the [switch-tools](https://github.com/switchbrew/switch-tools) repo if you want to manually build those.
 
 # Icon
 
