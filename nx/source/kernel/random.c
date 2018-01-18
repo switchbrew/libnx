@@ -151,7 +151,7 @@ void randomGet(u8* buf, size_t len)
     mutexUnlock(&g_randMutex);
 }
 
-u64 randomGet64(u8* buf, size_t len)
+u64 randomGet64(void)
 {
     u64 tmp;
     randomGet((u8*) &tmp, sizeof(tmp));
