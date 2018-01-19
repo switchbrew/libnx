@@ -8,13 +8,16 @@ _start:
 
 .org _start+0x80
 startup:
+    // save lr
+    mov  x27, x30
+
     // get aslr base
     bl   +4
-    sub  x28, x30, #0x84
+    sub  x28, x30, #0x88
 
-    // save context ptr and main thread handle
-    mov  x26, x0
-    mov  x27, x1
+    // context ptr and main thread handle
+    mov  x25, x0
+    mov  x26, x1
 
     // clear .bss
     adrp x0, __bss_start__
@@ -37,8 +40,9 @@ bss_loop:
     bl   __nx_dynamic
 
     // initialize system
-    mov  x0, x26
-    mov  x1, x27
+    mov  x0, x25
+    mov  x1, x26
+    mov  x2, x27
     bl   __libnx_init
 
     // call entrypoint

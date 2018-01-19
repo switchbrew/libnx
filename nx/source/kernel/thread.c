@@ -47,7 +47,6 @@ Result threadCreate(
         rc = MAKERESULT(MODULE_LIBNX, LIBNX_OUTOFMEM);
     }
     else {
-        // todo: svcMapMemory returns 0xDC01
         void* stack_mirror = virtmemReserveMap(stack_sz);
         rc = svcMapMemory(stack_mirror, stack, stack_sz);
 

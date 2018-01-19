@@ -97,12 +97,12 @@ void __attribute__((weak)) __appExit(void)
     smExit();
 }
 
-void __attribute__((weak)) __libnx_init(void* ctx, Handle main_thread)
+void __attribute__((weak)) __libnx_init(void* ctx, Handle main_thread, void* saved_lr)
 {
     // Called by crt0.
 
     // Libnx initialization goes here.
-    envParse(ctx, main_thread);
+    envParse(ctx, main_thread, saved_lr);
     newlibSetup();
     virtmemSetup();
     __libnx_initheap();
@@ -127,6 +127,6 @@ void __attribute__((weak)) NORETURN __libnx_exit(int rc)
     // Clean up services.
     __appExit();
 
-    svcExitProcess();
+    envGetExitFuncPtr()(0);
     while(1);
 }

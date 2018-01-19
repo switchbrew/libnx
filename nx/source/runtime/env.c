@@ -3,47 +3,40 @@
 
 static bool   g_isNso = false;
 static Handle g_mainThreadHandle = INVALID_HANDLE;
-static LoaderReturnFn  g_loaderRetAddr = NULL;
+static LoaderReturnFn g_loaderRetAddr = NULL;
 static void*  g_overrideHeapAddr = NULL;
 static u64    g_overrideHeapSize = 0;
 static u64    g_overrideArgc = 0;
 static void*  g_overrideArgv = NULL;
-static u64    g_syscallHints[0x80/8];
+static u64    g_syscallHints[2];
+static Handle g_processHandle = INVALID_HANDLE;
 
-typedef struct {
-    u32 Key;
-    u32 Flags;
-    u64 Value[2];
-} ConfigEntry;
+extern __attribute__((weak)) u32 __nx_applet_type;
 
-enum {
-    IsMandatory = BIT(0),
-};
-
-enum {
-    EntryType_EndOfList=0,
-    EntryType_MainThreadHandle=1,
-    EntryType_LoaderReturnAddr=2,
-    EntryType_OverrideHeap=3,
-    EntryType_OverrideService=4,
-    EntryType_Argv=5,
-    EntryType_SyscallAvailableHint=6,
-    EntryType_AppletType=7
-};
-
-void envParse(void* ctx, Handle main_thread)
+void envParse(void* ctx, Handle main_thread, LoaderReturnFn saved_lr)
 {
+    // If we're running under NSO, we should just call svcExitProcess.
+    // Otherwise we should return to loader via LR.
+    if (saved_lr == NULL) {
+        g_loaderRetAddr = (LoaderReturnFn) &svcExitProcess;
+    }
+    else {
+        g_loaderRetAddr = saved_lr;
+    }
+
+    // Detect NSO environment.
     if (main_thread != INVALID_HANDLE)
     {
         g_mainThreadHandle = main_thread;
         g_isNso = true;
 
         // For NSO we assume kernelhax thus access to all syscalls.
-        memset((void*) &g_syscallHints, 0xFF, sizeof(g_syscallHints));
+        g_syscallHints[0] = g_syscallHints[1] = -1ull;
 
         return;
     }
 
+    // Parse NRO config entries.
     ConfigEntry* ent = ctx;
 
     while (ent->Key != EntryType_EndOfList)
@@ -54,8 +47,8 @@ void envParse(void* ctx, Handle main_thread)
             g_mainThreadHandle = ent->Value[0];
             break;
 
-        case EntryType_LoaderReturnAddr:
-            g_loaderRetAddr = (void*) ent->Value[0];
+        case EntryType_NextLoadPath:
+            // TODO
             break;
 
         case EntryType_OverrideHeap:
@@ -72,26 +65,21 @@ void envParse(void* ctx, Handle main_thread)
             g_overrideArgv = (void*) ent->Value[1];
             break;
 
-        case EntryType_SyscallAvailableHint: {
-            int i, j;
-
-            for (i=0; i<2; i++) for (j=0; j<8; j++)
-            {
-                u8 svc = ent->Value[i] >> (8*j);
-
-                if (svc < 0x80)
-                    g_syscallHints[svc/64] |= 1llu << (svc%64);
-            }
-
+        case EntryType_SyscallAvailableHint:
+            g_syscallHints[0] = ent->Value[0];
+            g_syscallHints[1] = ent->Value[1];
             break;
-        }
 
         case EntryType_AppletType:
-            // TODO
+            __nx_applet_type = ent->Value[0];
+            break;
+
+        case EntryType_ProcessHandle:
+            g_processHandle = ent->Value[0];
             break;
 
         default:
-            if (ent->Flags & IsMandatory)
+            if (ent->Flags & EntryFlag_IsMandatory)
             {
                 // Encountered unknown but mandatory key, bail back to loader.
                 g_loaderRetAddr(MAKERESULT(346, 100 + ent->Key));
@@ -142,5 +130,13 @@ void* envGetArgv(void) {
 }
 
 bool envIsSyscallHinted(u8 svc) {
-    return !!(g_syscallHints[svc/64] & (1llu << (svc%64)));
+    return !!(g_syscallHints[svc/64] & (1ull << (svc%64)));
+}
+
+Handle envGetOwnProcessHandle(void) {
+    return g_processHandle;
+}
+
+LoaderReturnFn envGetExitFuncPtr(void) {
+    return g_loaderRetAddr;
 }
