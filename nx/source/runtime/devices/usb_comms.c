@@ -44,15 +44,11 @@ Result usbCommsInitialize(void)
         if (R_FAILED(ret)) {
             usbDsExit();
 
-            if (g_usbComms_endpoint_in_buffer) {
-                free(g_usbComms_endpoint_in_buffer);
-                g_usbComms_endpoint_in_buffer = NULL;
-            }
+            free(g_usbComms_endpoint_in_buffer);
+            g_usbComms_endpoint_in_buffer = NULL;
 
-            if (g_usbComms_endpoint_out) {
-                free(g_usbComms_endpoint_out_buffer);
-                g_usbComms_endpoint_out_buffer = NULL;
-            }
+            free(g_usbComms_endpoint_out_buffer);
+            g_usbComms_endpoint_out_buffer = NULL;
         }
     }
     else {
@@ -75,15 +71,11 @@ void usbCommsExit(void)
     g_usbComms_endpoint_in = NULL;
     g_usbComms_endpoint_out = NULL;
 
-    if (g_usbComms_endpoint_in_buffer) {
-        free(g_usbComms_endpoint_in_buffer);
-        g_usbComms_endpoint_in_buffer = NULL;
-    }
+    free(g_usbComms_endpoint_in_buffer);
+    g_usbComms_endpoint_in_buffer = NULL;
 
-    if (g_usbComms_endpoint_out) {
-        free(g_usbComms_endpoint_out_buffer);
-        g_usbComms_endpoint_out_buffer = NULL;
-    }
+    free(g_usbComms_endpoint_out_buffer);
+    g_usbComms_endpoint_out_buffer = NULL;
 }
 
 static Result _usbCommsInit(void)
