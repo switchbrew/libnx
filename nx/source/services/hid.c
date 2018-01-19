@@ -18,6 +18,8 @@ static u64 g_controllerOld[10], g_controllerHeld[10], g_controllerDown[10], g_co
 static HidControllerLayoutType g_controllerLayout[10];
 static u64 g_touchTimestamp, g_mouseTimestamp, g_keyboardTimestamp, g_controllerTimestamps[10];
 
+static HidControllerID g_controllerP1AutoID;
+
 static RwLock g_hidLock;
 
 static Result _hidCreateAppletResource(Service* srv, Service* srv_out, u64 AppletResourceUserId);
@@ -90,6 +92,8 @@ void hidReset(void)
     for (int i = 0; i < 10; i++)
         g_controllerTimestamps[i] = 0;
 
+    g_controllerP1AutoID = CONTROLLER_HANDHELD;
+
     rwlockWriteUnlock(&g_hidLock);
 }
 
@@ -102,12 +106,16 @@ void* hidGetSharedmemAddr(void) {
 }
 
 void hidSetControllerLayout(HidControllerID id, HidControllerLayoutType layoutType) {
+    if (id < 0 || id > 9) return;
+
     rwlockWriteLock(&g_hidLock);
     g_controllerLayout[id] = layoutType;
     rwlockWriteUnlock(&g_hidLock);
 }
 
 HidControllerLayoutType hidGetControllerLayout(HidControllerID id) {
+    if (id < 0 || id > 9) return LAYOUT_DEFAULT;
+
     rwlockReadLock(&g_hidLock);
     HidControllerLayoutType tmp = g_controllerLayout[id];
     rwlockReadUnlock(&g_hidLock);
@@ -188,10 +196,15 @@ void hidScanInput(void) {
         g_controllerUp[i] = g_controllerOld[i] & (~g_controllerHeld[i]);
     }
 
+    g_controllerP1AutoID = CONTROLLER_HANDHELD;
+    if (g_controllerEntries[CONTROLLER_PLAYER_1].connectionState & CONTROLLER_STATE_CONNECTED)
+       g_controllerP1AutoID = CONTROLLER_PLAYER_1;
+
     rwlockWriteUnlock(&g_hidLock);
 }
 
 u64 hidKeysHeld(HidControllerID id) {
+    if (id==CONTROLLER_P1_AUTO) return hidKeysHeld(g_controllerP1AutoID);
     if (id < 0 || id > 9) return 0;
 
     rwlockReadLock(&g_hidLock);
@@ -202,6 +215,7 @@ u64 hidKeysHeld(HidControllerID id) {
 }
 
 u64 hidKeysDown(HidControllerID id) {
+    if (id==CONTROLLER_P1_AUTO) return hidKeysDown(g_controllerP1AutoID);
     if (id < 0 || id > 9) return 0;
 
     rwlockReadLock(&g_hidLock);
@@ -212,6 +226,7 @@ u64 hidKeysDown(HidControllerID id) {
 }
 
 u64 hidKeysUp(HidControllerID id) {
+    if (id==CONTROLLER_P1_AUTO) return hidKeysUp(g_controllerP1AutoID);
     if (id < 0 || id > 9) return 0;
 
     rwlockReadLock(&g_hidLock);
