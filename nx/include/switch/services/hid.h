@@ -277,6 +277,14 @@ typedef enum
 
 typedef enum
 {
+    JOYSTICK_LEFT  = 0,
+    JOYSTICK_RIGHT = 1,
+
+    JOYSTICK_NUM_STICKS = 2,
+} HidControllerJoystick;
+
+typedef enum
+{
     CONTROLLER_STATE_CONNECTED = BIT(0),
     CONTROLLER_STATE_WIRED     = BIT(1),
 } HidControllerConnectionState;
@@ -304,6 +312,15 @@ typedef struct touchPosition
     u32 dy;
     u32 angle;
 } touchPosition;
+
+typedef struct circlePosition
+{
+    s32 dx;
+    s32 dy;
+} circlePosition;
+
+#define JOYSTICK_MAX (0x8000)
+#define JOYSTICK_MIN (-0x8000)
 
 // End enums and output structs
 
@@ -463,10 +480,7 @@ typedef struct HidControllerInputEntry
     u64 timestamp;
     u64 timestamp_2;
     u64 buttons;
-    u32 joystickLeftX;
-    u32 joystickLeftY;
-    u32 joystickRightX;
-    u32 joystickRightY;
+    circlePosition joysticks[JOYSTICK_NUM_STICKS];
     u64 connectionState;
 } HidControllerInputEntry;
 static_assert(sizeof(HidControllerInputEntry) == 0x30, "Hid controller input entry structure has incorrect size");
@@ -540,3 +554,5 @@ bool hidKeyboardUp(HidKeyboardScancode key);
 
 u32 hidTouchCount(void);
 void hidTouchRead(touchPosition *pos, u32 point_id);
+
+void hidJoystickRead(circlePosition *pos, HidControllerID id, HidControllerJoystick stick);

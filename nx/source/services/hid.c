@@ -327,6 +327,22 @@ void hidTouchRead(touchPosition *pos, u32 point_id) {
     }
 }
 
+void hidJoystickRead(circlePosition *pos, HidControllerID id, HidControllerJoystick stick) {
+    if (id == CONTROLLER_P1_AUTO) return hidJoystickRead(pos, g_controllerP1AutoID, stick);
+
+    if (pos) {
+        if (id < 0 || id > 9 || stick >= JOYSTICK_NUM_STICKS) {
+            memset(pos, 0, sizeof(touchPosition));
+            return;
+        }
+
+        rwlockReadLock(&g_hidLock);
+        pos->dx = g_controllerEntries[id].joysticks[stick].dx;
+        pos->dy = g_controllerEntries[id].joysticks[stick].dy;
+        rwlockReadUnlock(&g_hidLock);
+    }
+}
+
 static Result _hidCreateAppletResource(Service* srv, Service* srv_out, u64 AppletResourceUserId) {
     IpcCommand c;
     ipcInitialize(&c);
