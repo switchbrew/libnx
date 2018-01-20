@@ -77,10 +77,6 @@ Result tmemClose(TransferMemory* t)
 {
     Result rc = 0;
 
-    if (t->src_addr != NULL) {
-        free(t->src_addr);
-    }
-
     if (t->map_addr != NULL) {
         rc = tmemUnmap(t);
     }
@@ -88,6 +84,10 @@ Result tmemClose(TransferMemory* t)
     if (R_SUCCEEDED(rc)) {
         if (t->handle != INVALID_HANDLE) {
             rc = svcCloseHandle(t->handle);
+        }
+
+        if (t->src_addr != NULL) {
+            free(t->src_addr);
         }
 
         t->src_addr = NULL;
