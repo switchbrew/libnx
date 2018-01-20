@@ -27,6 +27,13 @@ typedef struct {
     u64 X[8];
 } __attribute__((packed)) SecmonArgs;
 
+typedef enum {
+    JitMapOperation_MapOwner=0,
+    JitMapOperation_MapSlave=1,
+    JitMapOperation_UnmapOwner=2,
+    JitMapOperation_UnmapSlave=3
+} JitMapOperation;
+
 Result svcSetHeapSize(void** out_addr, u64 size);
 Result svcMapMemory(void* dst_addr, void* src_addr, u64 size);
 Result svcUnmapMemory(void* dst_addr, void* src_addr, u64 size);
@@ -57,6 +64,8 @@ Result svcSetThreadActivity(Handle thread, bool paused);
 Result svcCreateSession(Handle *server_handle, Handle *client_handle, u32 unk0, u64 unk1);//unk* are normally 0?
 Result svcAcceptSession(Handle *session_handle, Handle port_handle);
 Result svcReplyAndReceive(s32* index, const Handle* handles, s32 handleCount, Handle replyTarget, u64 timeout);
+Result svcCreateJitMemory(Handle* jit_handle, void* src_addr, u64 size);
+Result svcMapJitMemory(Handle jit_handle, JitMapOperation op, void* dst_addr, u64 size, u64 perm);
 Result svcCreateSharedMemory(Handle* out, size_t size, u32 local_perm, u32 other_perm);
 Result svcMapTransferMemory(Handle tmem_handle, void* addr, size_t size, u32 perm);
 Result svcUnmapTransferMemory(Handle tmem_handle, void* addr, size_t size);

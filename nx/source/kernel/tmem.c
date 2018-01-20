@@ -63,6 +63,7 @@ Result tmemUnmap(TransferMemory* t)
     rc = svcUnmapTransferMemory(t->handle, t->map_addr, t->size);
 
     if (R_SUCCEEDED(rc)) {
+        virtmemFree(t->map_addr, t->size);
         t->map_addr = NULL;
     }
 

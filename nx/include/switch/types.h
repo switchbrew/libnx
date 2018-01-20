@@ -50,6 +50,7 @@ typedef enum {
     PERM_W    = 2,
     PERM_X    = 4,
     PERM_RW   = PERM_R | PERM_W,
+    PERM_RX   = PERM_R | PERM_X,
     PERM_DONTCARE = 0x10000000
 } Permission;
 

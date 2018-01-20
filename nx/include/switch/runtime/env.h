@@ -42,4 +42,6 @@ void* envGetArgv(void);
 
 bool envIsSyscallHinted(u8 svc);
 
+Handle envGetOwnProcessHandle(void);
+
 LoaderReturnFn envGetExitFuncPtr(void);

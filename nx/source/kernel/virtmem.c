@@ -41,10 +41,27 @@ static inline bool _InRegion(VirtualRegion* r, u64 addr) {
 
 void virtmemSetup(void) {
     if (R_FAILED(_GetRegionFromInfo(&g_AddressSpace, 12, 13))) {
-        // Default values in case we're running on 1.0.0
-        // Assumes 32-bit address space
-        g_AddressSpace.start = 0ull;
-        g_AddressSpace.end   = 0x100000000ull;
+        // 1.0.0 doesn't expose address space size so we have to do this dirty hack to detect it.
+        // Forgive me.
+
+        Result rc = svcUnmapMemory((void*) 0xFFFFFFFFFFFFE000ULL, (void*) 0xFFFFFE000ull, 0x1000);
+
+        if (rc == 0xD401) {
+            // Invalid src-address error means that a valid 36-bit address was rejected.
+            // Thus we are 32-bit.
+            g_AddressSpace.start = 0x200000ull;
+            g_AddressSpace.end   = 0x100000000ull;
+        }
+        else if (rc == 0xDC01) {
+            // Invalid dst-address error means our 36-bit src-address was valid.
+            // Thus we are 36-bit.
+            g_AddressSpace.start = 0x8000000ull;
+            g_AddressSpace.end   = 0x1000000000ull;
+        }
+        else {
+            // Wat.
+            fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_WEIRDKERNEL));
+        }
     }
 
     if (R_FAILED(_GetRegionFromInfo(&g_Region[REGION_STACK], 2, 3))) {

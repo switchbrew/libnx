@@ -55,6 +55,7 @@ Result shmemUnmap(SharedMemory* s)
     rc = svcUnmapSharedMemory(s->handle, s->map_addr, s->size);
 
     if (R_SUCCEEDED(rc)) {
+        virtmemFree(s->map_addr, s->size);
         s->map_addr = NULL;
     }
 

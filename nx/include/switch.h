@@ -20,6 +20,7 @@ extern "C" {
 #include <switch/kernel/virtmem.h>
 #include <switch/kernel/detect.h>
 #include <switch/kernel/random.h>
+#include <switch/kernel/jit.h>
 
 #include <switch/arm.h>
 #include <switch/ipc.h>
