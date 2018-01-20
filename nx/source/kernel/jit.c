@@ -149,7 +149,7 @@ Result jitClose(Jit* j)
             j->src_addr = NULL;
         }
     }
-    return 0;
+    return rc;
 }
 
 void* jitGetRwAddr(Jit* j) {
