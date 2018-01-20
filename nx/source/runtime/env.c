@@ -161,3 +161,7 @@ Result envSetNextLoad(const char* path, const char* argv)
 
     return 0;
 }
+
+bool envHasNextLoad(void) {
+    return g_nextLoadPath != NULL;
+}
