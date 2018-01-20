@@ -507,7 +507,7 @@ void appletNotifyRunning(u8 *out) {
         }
     }
 
-    if (R_FAILED(rc)) fatalSimple(LIBNX_BADAPPLETNOTIFYRUNNING);
+    if (R_FAILED(rc)) fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_BADAPPLETNOTIFYRUNNING));
 }
 
 static Result _appletReceiveMessage(u32 *out) {
@@ -851,7 +851,7 @@ bool appletMainLoop(void) {
         if ((rc & 0x3fffff) == 0x680)
             return true;
 
-        fatalSimple(LIBNX_BADAPPLETRECEIVEMESSAGE);
+        fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_BADAPPLETRECEIVEMESSAGE));
     }
 
     switch(msg) {
@@ -861,7 +861,7 @@ bool appletMainLoop(void) {
             if (R_SUCCEEDED(rc))
                 appletCallHook(AppletHookType_OnFocusState);
             else
-                fatalSimple(LIBNX_BADAPPLETGETCURRENTFOCUSSTATE);
+                fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_BADAPPLETGETCURRENTFOCUSSTATE));
         break;
 
         case 0x1E:
@@ -870,7 +870,7 @@ bool appletMainLoop(void) {
             if (R_SUCCEEDED(rc))
                 appletCallHook(AppletHookType_OnOperationMode);
             else
-                fatalSimple(LIBNX_BADAPPLETGETOPERATIONMODE);
+                fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_BADAPPLETGETOPERATIONMODE));
         break;
 
         case 0x1F:
@@ -879,7 +879,7 @@ bool appletMainLoop(void) {
             if (R_SUCCEEDED(rc))
                 appletCallHook(AppletHookType_OnPerformanceMode);
             else
-                fatalSimple(LIBNX_BADAPPLETGETPERFORMANCEMODE);
+                fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_BADAPPLETGETPERFORMANCEMODE));
         break;
     }
 
