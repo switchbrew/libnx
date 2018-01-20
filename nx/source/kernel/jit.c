@@ -157,5 +157,5 @@ void* jitGetRwAddr(Jit* j) {
 }
 
 void* jitGetRxAddr(Jit* j) {
-    return j->rw_addr;
+    return j->rx_addr;
 }
