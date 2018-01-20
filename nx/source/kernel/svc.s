@@ -43,11 +43,11 @@ SVC_BEGIN svcExitProcess
 SVC_END
 
 SVC_BEGIN svcCreateThread
-    str x0, [sp, #-16]!
+	str x0, [sp, #-16]!
 	svc 0x8
-    ldr x2, [sp]
-    str w1, [x2]
-    add sp, sp, #16
+	ldr x2, [sp]
+	str w1, [x2]
+	add sp, sp, #16
 	ret
 SVC_END
 
@@ -108,18 +108,18 @@ SVC_BEGIN svcWaitSynchronization
 SVC_END
 
 SVC_BEGIN svcCancelSynchronization
-    svc 0x19
-    ret
+	svc 0x19
+	ret
 SVC_END
 
 SVC_BEGIN svcArbitrateLock
-    svc 0x1a
-    ret
+	svc 0x1a
+	ret
 SVC_END
 
 SVC_BEGIN svcArbitrateUnlock
-    svc 0x1b
-    ret
+	svc 0x1b
+	ret
 SVC_END
 
 SVC_BEGIN svcConnectToNamedPort
@@ -198,11 +198,11 @@ SVC_BEGIN svcReplyAndReceive
 SVC_END
 
 SVC_BEGIN svcCreateJitMemory
-    str x0, [sp, #-16]!
+	str x0, [sp, #-16]!
 	svc 0x4B
-    ldr x2, [sp]
-    str w1, [x2]
-    add sp, sp, #16
+	ldr x2, [sp]
+	str w1, [x2]
+	add sp, sp, #16
 	ret
 SVC_END
 
