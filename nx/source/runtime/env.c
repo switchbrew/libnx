@@ -15,7 +15,7 @@ static char*  g_nextLoadArgv = NULL;
 
 extern __attribute__((weak)) u32 __nx_applet_type;
 
-void envParse(void* ctx, Handle main_thread, LoaderReturnFn saved_lr)
+void envSetup(void* ctx, Handle main_thread, LoaderReturnFn saved_lr)
 {
     // If we're running under NSO, we should just call svcExitProcess.
     // Otherwise we should return to loader via LR.

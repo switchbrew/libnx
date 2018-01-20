@@ -12,7 +12,7 @@ extern char* fake_heap_end;
 
 extern u32 __argdata__;
 
-void __system_initArgv(void)
+void argvSetup(void)
 {
     Result rc=0;
     MemoryInfo meminfo;

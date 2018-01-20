@@ -27,7 +27,7 @@ enum {
 
 typedef void NORETURN (*LoaderReturnFn)(int result_code);
 
-void envParse(void* ctx, Handle main_thread, LoaderReturnFn saved_lr);
+void envSetup(void* ctx, Handle main_thread, LoaderReturnFn saved_lr);
 
 Handle envGetMainThreadHandle(void);
 bool envIsNso(void);

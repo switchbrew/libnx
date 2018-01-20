@@ -4,8 +4,7 @@ void __nx_exit(int rc);
 
 void virtmemSetup(void);
 void newlibSetup(void);
-
-void __system_initArgv(void);
+void argvSetup(void);
 
 extern u32 __nx_applet_type;
 
@@ -102,13 +101,13 @@ void __attribute__((weak)) __libnx_init(void* ctx, Handle main_thread, void* sav
     // Called by crt0.
 
     // Libnx initialization goes here.
-    envParse(ctx, main_thread, saved_lr);
+    envSetup(ctx, main_thread, saved_lr);
     newlibSetup();
     virtmemSetup();
     __libnx_initheap();
 
     // Build argc/argv if present
-    __system_initArgv();
+    argvSetup();
 
     // Initialize services.
     __appInit();
