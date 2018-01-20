@@ -2,9 +2,9 @@ ifeq ($(strip $(DEVKITPRO)),)
 $(error "Please set DEVKITPRO in your environment. export DEVKITPRO=<path to>devkitPro)
 endif
 
-include $(DEVKITA64)/base_rules
+include $(DEVKITPRO)/devkitA64/base_rules
 
-PORTLIBS	:=	$(PORTLIBS_PATH)/armv8-a $(PORTLIBS_PATH)/switch
+PORTLIBS	:=	$(PORTLIBS_PATH)/switch $(PORTLIBS_PATH)/armv8-a
 
 LIBNX	?=	$(DEVKITPRO)/libnx
 
