@@ -10,6 +10,8 @@ static u64    g_overrideArgc = 0;
 static void*  g_overrideArgv = NULL;
 static u64    g_syscallHints[2];
 static Handle g_processHandle = INVALID_HANDLE;
+static char*  g_nextLoadPath = NULL;
+static char*  g_nextLoadArgv = NULL;
 
 extern __attribute__((weak)) u32 __nx_applet_type;
 
@@ -48,7 +50,8 @@ void envParse(void* ctx, Handle main_thread, LoaderReturnFn saved_lr)
             break;
 
         case EntryType_NextLoadPath:
-            // TODO
+            g_nextLoadPath = (char*) ent->Value[0];
+            g_nextLoadArgv = (char*) ent->Value[1];
             break;
 
         case EntryType_OverrideHeap:
@@ -139,4 +142,22 @@ Handle envGetOwnProcessHandle(void) {
 
 LoaderReturnFn envGetExitFuncPtr(void) {
     return g_loaderRetAddr;
+}
+
+Result envSetNextLoad(const char* path, const char* argv)
+{
+    if (g_nextLoadPath == NULL)
+        return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
+
+    strcpy(g_nextLoadPath, path);
+
+    if (g_nextLoadArgv != NULL)
+    {
+        if (argv == NULL)
+            g_nextLoadArgv[0] = '\0';
+        else
+            strcpy(g_nextLoadArgv, argv);
+    }
+
+    return 0;
 }

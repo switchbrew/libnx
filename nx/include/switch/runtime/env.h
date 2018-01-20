@@ -45,3 +45,5 @@ bool envIsSyscallHinted(u8 svc);
 Handle envGetOwnProcessHandle(void);
 
 LoaderReturnFn envGetExitFuncPtr(void);
+
+Result envSetNextLoad(const char* path, const char* argv);

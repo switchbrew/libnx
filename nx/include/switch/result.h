@@ -18,7 +18,8 @@
 #define MAKERESULT(module,description) \
     ((((module)&0x1FF)) | ((description)&0x1FFF)<<9)
 
-#define MODULE_LIBNX       345
+#define MODULE_LIBNX 345
+
 enum {
     LIBNX_BADRELOC=1,
     LIBNX_OUTOFMEM,
