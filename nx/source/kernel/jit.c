@@ -103,6 +103,14 @@ Result jitTransitionToExecutable(Jit* j)
     switch (j->type) {
     case JitType_CodeMemory:
         rc = svcMapProcessCodeMemory(envGetOwnProcessHandle(), (u64) j->rx_addr, (u64) j->src_addr, j->size);
+
+        if (R_SUCCEEDED(rc)) {
+            rc = svcSetProcessMemoryPermission(envGetOwnProcessHandle(), (u64) j->rx_addr, j->size, PERM_RX);
+
+            if (R_FAILED(rc)) {
+                jitTransitionToWritable(j);
+            }
+        }
         break;
 
     case JitType_JitMemory:
