@@ -264,7 +264,7 @@ size_t usbCommsRead(void* buffer, size_t size)
         if (R_SUCCEEDED(ret2)) {
             if (state!=5) ret = _usbCommsRead(buffer, size, &transferredSize); //If state changed during transfer, try again. usbDsWaitReady() will be called from this.
         }
-        if (R_FAILED(ret))fatalSimple(LIBNX_BADUSBCOMMSREAD);
+        if (R_FAILED(ret))fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_BADUSBCOMMSREAD));
     }
     return transferredSize;
 }
@@ -280,7 +280,7 @@ size_t usbCommsWrite(const void* buffer, size_t size)
         if (R_SUCCEEDED(ret2)) {
             if (state!=5) ret = _usbCommsWrite(buffer, size, &transferredSize); //If state changed during transfer, try again. usbDsWaitReady() will be called from this.
         }
-        if (R_FAILED(ret))fatalSimple(ret);
+        if (R_FAILED(ret))fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_BADUSBCOMMSWRITE));
     }
     return transferredSize;
 }

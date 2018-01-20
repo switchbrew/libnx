@@ -314,7 +314,7 @@ void gfxInitDefault(void)
     }
 
     Result rc = _gfxInit(ViServiceType_Default, "Default", ViLayerFlags_Default, 0, nv_servicetype, 0x300000);
-    if (R_FAILED(rc)) fatalSimple(LIBNX_BADGFXINIT);
+    if (R_FAILED(rc)) fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_BADGFXINIT));
 }
 
 void gfxExit(void)
@@ -463,7 +463,7 @@ static void _waitevent(Handle *handle) {
 
     } while(R_FAILED(rc) || (rc2 & 0x3FFFFF)==0xFA01);
 
-    if (R_FAILED(rc2)) fatalSimple(rc2);
+    if (R_FAILED(rc2)) fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_BADGFXEVENTWAIT));
 }
 
 void gfxWaitForVsync(void) {
@@ -475,9 +475,11 @@ void gfxSwapBuffers(void) {
 
     rc = _gfxQueueBuffer(g_gfxCurrentProducerBuffer);
 
-    if (R_SUCCEEDED(rc)) rc = _gfxDequeueBuffer();
+    if (R_FAILED(rc)) fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_BADGFXQUEUEBUFFER));
 
-    if (R_FAILED(rc)) fatalSimple(rc);
+    rc = _gfxDequeueBuffer();
+
+    if (R_FAILED(rc)) fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_BADGFXDEQUEUEBUFFER));
 }
 
 u8* gfxGetFramebuffer(u32* width, u32* height) {
