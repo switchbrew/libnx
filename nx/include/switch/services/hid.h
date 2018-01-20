@@ -313,11 +313,11 @@ typedef struct touchPosition
     u32 angle;
 } touchPosition;
 
-typedef struct joystickPosition
+typedef struct JoystickPosition
 {
     s32 dx;
     s32 dy;
-} joystickPosition;
+} JoystickPosition;
 
 #define JOYSTICK_MAX (0x8000)
 #define JOYSTICK_MIN (-0x8000)
@@ -480,7 +480,7 @@ typedef struct HidControllerInputEntry
     u64 timestamp;
     u64 timestamp_2;
     u64 buttons;
-    joystickPosition joysticks[JOYSTICK_NUM_STICKS];
+    JoystickPosition joysticks[JOYSTICK_NUM_STICKS];
     u64 connectionState;
 } HidControllerInputEntry;
 static_assert(sizeof(HidControllerInputEntry) == 0x30, "Hid controller input entry structure has incorrect size");
@@ -555,4 +555,4 @@ bool hidKeyboardUp(HidKeyboardScancode key);
 u32 hidTouchCount(void);
 void hidTouchRead(touchPosition *pos, u32 point_id);
 
-void hidJoystickRead(joystickPosition *pos, HidControllerID id, HidControllerJoystick stick);
+void hidJoystickRead(JoystickPosition *pos, HidControllerID id, HidControllerJoystick stick);

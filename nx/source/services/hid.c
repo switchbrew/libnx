@@ -327,7 +327,7 @@ void hidTouchRead(touchPosition *pos, u32 point_id) {
     }
 }
 
-void hidJoystickRead(joystickPosition *pos, HidControllerID id, HidControllerJoystick stick) {
+void hidJoystickRead(JoystickPosition *pos, HidControllerID id, HidControllerJoystick stick) {
     if (id == CONTROLLER_P1_AUTO) return hidJoystickRead(pos, g_controllerP1AutoID, stick);
 
     if (pos) {
