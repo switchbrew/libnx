@@ -857,32 +857,28 @@ bool appletMainLoop(void) {
     switch(msg) {
         case 0xF:
             rc = _appletGetCurrentFocusState(&g_appletFocusState);
-
-            if (R_SUCCEEDED(rc))
-                appletCallHook(AppletHookType_OnFocusState);
-            else
+            if (R_FAILED(rc))
                 fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_BADAPPLETGETCURRENTFOCUSSTATE));
+
+            appletCallHook(AppletHookType_OnFocusState);
         break;
 
         case 0x1E:
             rc = _appletGetOperationMode(&g_appletOperationMode);
-
-            if (R_SUCCEEDED(rc))
-                appletCallHook(AppletHookType_OnOperationMode);
-            else
+            if (R_FAILED(rc))
                 fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_BADAPPLETGETOPERATIONMODE));
+
+            appletCallHook(AppletHookType_OnOperationMode);
         break;
 
         case 0x1F:
             rc = _appletGetPerformanceMode(&g_appletPerformanceMode);
-
-            if (R_SUCCEEDED(rc))
-                appletCallHook(AppletHookType_OnPerformanceMode);
-            else
+            if (R_FAILED(rc))
                 fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_BADAPPLETGETPERFORMANCEMODE));
+
+            appletCallHook(AppletHookType_OnPerformanceMode);
         break;
     }
 
     return true;
 }
-
