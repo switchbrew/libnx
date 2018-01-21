@@ -9,8 +9,10 @@ static TransferMemory g_nvTransfermem;
 static Result _nvInitialize(Handle proc, Handle sharedmem, u32 transfermem_size);
 static Result _nvSetClientPID(u64 AppletResourceUserId);
 
-Result nvInitialize(nvServiceType servicetype, size_t transfermem_size) {
-    if(g_nvServiceType!=-1)return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
+Result nvInitialize(nvServiceType servicetype, size_t transfermem_size)
+{
+    if(g_nvServiceType!=-1)
+        return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
 
     Result rc = 0;
     u64 AppletResourceUserId = 0;
@@ -168,8 +170,12 @@ Result nvOpen(u32 *fd, const char *devicepath) {
         } *resp = r.Raw;
 
         rc = resp->result;
-        if (R_SUCCEEDED(rc)) rc = resp->error;
-        if (R_SUCCEEDED(rc)) *fd = resp->fd;
+
+        if (R_SUCCEEDED(rc))
+            rc = nvConvertError(resp->error);
+
+        if (R_SUCCEEDED(rc))
+            *fd = resp->fd;
     }
 
     return rc;
@@ -245,7 +251,9 @@ Result nvIoctl(u32 fd, u32 request, void* argp) {
         } *resp = r.Raw;
 
         rc = resp->result;
-        if (R_SUCCEEDED(rc)) rc = resp->error;
+
+        if (R_SUCCEEDED(rc))
+            rc = nvConvertError(resp->error);
     }
 
     return rc;
@@ -279,7 +287,9 @@ Result nvClose(u32 fd) {
         } *resp = r.Raw;
 
         rc = resp->result;
-        if (R_SUCCEEDED(rc)) rc = resp->error;
+
+        if (R_SUCCEEDED(rc))
+            rc = nvConvertError(resp->error);
     }
 
     return rc;
@@ -315,10 +325,44 @@ Result nvQueryEvent(u32 fd, u32 event_id, Handle *handle_out) {
         } *resp = r.Raw;
 
         rc = resp->result;
-        if (R_SUCCEEDED(rc)) rc = resp->error;
-        if (R_SUCCEEDED(rc)) *handle_out = r.Handles[0];
+
+        if (R_SUCCEEDED(rc))
+            rc = nvConvertError(resp->error);
+
+        if (R_SUCCEEDED(rc))
+            *handle_out = r.Handles[0];
     }
 
     return rc;
 }
 
+Result nvConvertError(int rc)
+{
+    if (rc == 0) // Fast path.
+        return 0;
+
+    int desc;
+    switch (rc) {
+    case 1:  desc = LibnxNvidiaError_NotImplemented; break;
+    case 2:  desc = LibnxNvidiaError_NotSupported; break;
+    case 3:  desc = LibnxNvidiaError_NotInitialized; break;
+    case 4:  desc = LibnxNvidiaError_BadParameter; break;
+    case 5:  desc = LibnxNvidiaError_Timeout; break;
+    case 6:  desc = LibnxNvidiaError_InsufficientMemory; break;
+    case 7:  desc = LibnxNvidiaError_ReadOnlyAttribute; break;
+    case 8:  desc = LibnxNvidiaError_InvalidState; break;
+    case 9:  desc = LibnxNvidiaError_InvalidAddress; break;
+    case 10: desc = LibnxNvidiaError_InvalidSize; break;
+    case 11: desc = LibnxNvidiaError_BadValue; break;
+    case 13: desc = LibnxNvidiaError_AlreadyAllocated; break;
+    case 14: desc = LibnxNvidiaError_Busy; break;
+    case 15: desc = LibnxNvidiaError_ResourceError; break;
+    case 16: desc = LibnxNvidiaError_CountMismatch; break;
+    case 0x1000: desc = LibnxNvidiaError_SharedMemoryTooSmall; break;
+    case 0x30003: desc = LibnxNvidiaError_FileOperationFailed; break;
+    case 0x3000F: desc = LibnxNvidiaError_IoctlFailed; break;
+    default: desc = LibnxNvidiaError_Unknown; break;
+    }
+
+    return MAKERESULT(Module_LibnxNvidia, desc);
+}
