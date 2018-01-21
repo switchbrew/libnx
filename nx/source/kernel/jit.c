@@ -11,7 +11,8 @@ Result jitCreate(Jit* j, size_t size)
         type = JitType_JitMemory;
     }
     // Fall back to MapProcessCodeMemory if available.
-    else if (envIsSyscallHinted(0x73) && envIsSyscallHinted(0x77) && envIsSyscallHinted(0x78)) {
+    else if (envIsSyscallHinted(0x73) && envIsSyscallHinted(0x77) && envIsSyscallHinted(0x78)
+             && (envGetOwnProcessHandle() != INVALID_HANDLE)) {
         type = JitType_CodeMemory;
     }
     else {
