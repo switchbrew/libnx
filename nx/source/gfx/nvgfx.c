@@ -59,7 +59,7 @@ Result nvmapobjInitialize(nvmapobj *obj, size_t size) {
     obj->mem_size = size;
 
     obj->mem = memalign(0x1000, size);
-    if (obj->mem==NULL) rc = MAKERESULT(MODULE_LIBNX, LIBNX_OUTOFMEM);
+    if (obj->mem==NULL) rc = MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
     if (R_SUCCEEDED(rc)) memset(obj->mem, 0, size);
 
     if (R_SUCCEEDED(rc)) armDCacheFlush(obj->mem, size);
@@ -154,7 +154,7 @@ Result nvgfxInitialize(void) {
     if (R_SUCCEEDED(rc)) { //Unknown what size/etc is used officially.
         g_nvgfx_nvhost_userdata_size = 0x1000;
         g_nvgfx_nvhost_userdata = memalign(0x1000, g_nvgfx_nvhost_userdata_size);
-        if (g_nvgfx_nvhost_userdata==NULL) rc = MAKERESULT(MODULE_LIBNX, LIBNX_OUTOFMEM);
+        if (g_nvgfx_nvhost_userdata==NULL) rc = MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
         if (R_SUCCEEDED(rc)) memset(g_nvgfx_nvhost_userdata, 0, g_nvgfx_nvhost_userdata_size);
     }
 
@@ -464,7 +464,7 @@ Result nvgfxSubmitGpfifo(void) {
 }
 
 Result nvgfxGetFramebuffer(u8 **buffer, size_t *size) {
-    if(!g_nvgfxInitialized)return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
+    if(!g_nvgfxInitialized)return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     if(buffer) *buffer = nvmap_objs[6].mem;
     if(size) *size = nvmap_objs[6].mem_size;

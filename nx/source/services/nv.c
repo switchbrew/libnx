@@ -10,7 +10,7 @@ static Result _nvInitialize(Handle proc, Handle sharedmem, u32 transfermem_size)
 static Result _nvSetClientPID(u64 AppletResourceUserId);
 
 Result nvInitialize(nvServiceType servicetype, size_t transfermem_size) {
-    if(g_nvServiceType!=-1)return MAKERESULT(MODULE_LIBNX, LIBNX_ALREADYINITIALIZED);
+    if(g_nvServiceType!=-1)return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
 
     Result rc = 0;
     u64 AppletResourceUserId = 0;

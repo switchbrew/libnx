@@ -17,7 +17,7 @@ Result jitCreate(Jit* j, size_t size)
     }
     else {
         // Jit is unavailable. :(
-        return MAKERESULT(MODULE_LIBNX, LIBNX_JITUNAVAILABLE);
+        return MAKERESULT(Module_Libnx, LibnxError_JitUnavailable);
     }
 
     size = (size + 0xFFF) &~ 0xFFF;
@@ -25,7 +25,7 @@ Result jitCreate(Jit* j, size_t size)
     void* src_addr = memalign(size, 0x1000);
 
     if (src_addr == NULL)
-        return MAKERESULT(MODULE_LIBNX, LIBNX_OUTOFMEM);
+        return MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
 
     j->type = type;
     j->size = size;

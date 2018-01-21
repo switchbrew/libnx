@@ -21,7 +21,7 @@ static Result _usbDsGetSession(Service* srv, Service* srv_out, u64 cmd_id, const
 
 Result usbDsInitialize(UsbComplexId complexId, const usbDsDeviceInfo* deviceinfo) {
     if (serviceIsActive(&g_usbDsSrv))
-        return MAKERESULT(MODULE_LIBNX, LIBNX_ALREADYINITIALIZED);
+        return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
 
     Result rc = 0;
 
@@ -327,7 +327,7 @@ Result usbDsParseReportData(usbDsReportData *reportdata, u32 urbId, u32 *request
         if (entry->id == urbId) break;
     }
 
-    if (pos == count) return MAKERESULT(MODULE_LIBNX, LIBNX_NOTFOUND);
+    if (pos == count) return MAKERESULT(Module_Libnx, LibnxError_NotFound);
 
     switch(entry->urb_status) {
 	    case 0x3:
@@ -539,7 +539,7 @@ Result usbDsGetDsInterface(UsbDsInterface** interface, struct usb_interface_desc
 {
     UsbDsInterface* ptr = _usbDsAllocateInterface();
     if(ptr == NULL)
-        return MAKERESULT(MODULE_LIBNX, LIBNX_OUTOFMEM);
+        return MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
 
     Result rc = _usbDsGetSession(&g_usbDsSrv, &ptr->h, 2, descriptor, sizeof(struct usb_interface_descriptor), interface_name, strlen(interface_name)+1);
 
@@ -571,10 +571,10 @@ void usbDsInterface_Close(UsbDsInterface* interface)
 
 Result usbDsInterface_GetDsEndpoint(UsbDsInterface* interface, UsbDsEndpoint** endpoint, struct usb_endpoint_descriptor* descriptor)
 {
-    if(!interface->initialized)return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
+    if(!interface->initialized)return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     UsbDsEndpoint* ptr = _usbDsAllocateEndpoint(interface);
-    if(ptr==NULL)return MAKERESULT(MODULE_LIBNX, LIBNX_OUTOFMEM);
+    if(ptr==NULL)return MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
 
     Result rc = _usbDsGetSession(&interface->h, &ptr->h, 0, descriptor, sizeof(struct usb_endpoint_descriptor), NULL, 0);
 
@@ -588,49 +588,49 @@ Result usbDsInterface_GetDsEndpoint(UsbDsInterface* interface, UsbDsEndpoint** e
 
 Result usbDsInterface_EnableInterface(UsbDsInterface* interface)
 {
-    if(!interface->initialized)return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
+    if(!interface->initialized)return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     return _usbDsCmdNoParams(&interface->h, 3);
 }
 
 Result usbDsInterface_DisableInterface(UsbDsInterface* interface)
 {
-    if(!interface->initialized)return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
+    if(!interface->initialized)return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     return _usbDsCmdNoParams(&interface->h, 4);
 }
 
 Result usbDsInterface_CtrlInPostBufferAsync(UsbDsInterface* interface, void* buffer, size_t size, u32 *urbId)
 {
-    if(!interface->initialized)return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
+    if(!interface->initialized)return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     return _usbDsPostBuffer(&interface->h, 5, buffer, size, urbId);
 }
 
 Result usbDsInterface_CtrlOutPostBufferAsync(UsbDsInterface* interface, void* buffer, size_t size, u32 *urbId)
 {
-    if(!interface->initialized)return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
+    if(!interface->initialized)return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     return _usbDsPostBuffer(&interface->h, 6, buffer, size, urbId);
 }
 
 Result usbDsInterface_GetCtrlInReportData(UsbDsInterface* interface, usbDsReportData *out)
 {
-    if(!interface->initialized)return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
+    if(!interface->initialized)return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     return _usbDsGetReport(&interface->h, 8, out);
 }
 
 Result usbDsInterface_GetCtrlOutReportData(UsbDsInterface* interface, usbDsReportData *out)
 {
-    if(!interface->initialized)return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
+    if(!interface->initialized)return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     return _usbDsGetReport(&interface->h, 10, out);
 }
 
 Result usbDsInterface_StallCtrl(UsbDsInterface* interface)
 {
-    if(!interface->initialized)return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
+    if(!interface->initialized)return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     return _usbDsCmdNoParams(&interface->h, 11);
 }
@@ -644,21 +644,21 @@ void usbDsEndpoint_Close(UsbDsEndpoint* endpoint)
 
 Result usbDsEndpoint_PostBufferAsync(UsbDsEndpoint* endpoint, void* buffer, size_t size, u32 *urbId)
 {
-    if(!endpoint->initialized)return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
+    if(!endpoint->initialized)return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     return _usbDsPostBuffer(&endpoint->h, 0, buffer, size, urbId);
 }
 
 Result usbDsEndpoint_GetReportData(UsbDsEndpoint* endpoint, usbDsReportData *out)
 {
-    if(!endpoint->initialized)return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
+    if(!endpoint->initialized)return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     return _usbDsGetReport(&endpoint->h, 3, out);
 }
 
 Result usbDsEndpoint_StallCtrl(UsbDsEndpoint* endpoint)
 {
-    if(!endpoint->initialized)return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
+    if(!endpoint->initialized)return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     return _usbDsCmdNoParams(&endpoint->h, 4);
 }

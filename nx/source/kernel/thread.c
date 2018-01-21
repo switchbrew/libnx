@@ -44,7 +44,7 @@ Result threadCreate(
     void*  stack = memalign(0x1000, stack_sz + reent_sz + tls_sz);
 
     if (stack == NULL) {
-        rc = MAKERESULT(MODULE_LIBNX, LIBNX_OUTOFMEM);
+        rc = MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
     }
     else {
         void* stack_mirror = virtmemReserveMap(stack_sz);

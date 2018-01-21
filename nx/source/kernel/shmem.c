@@ -42,7 +42,7 @@ Result shmemMap(SharedMemory* s)
         }
     }
     else {
-        rc = LIBNX_ALREADYMAPPED;
+        rc = LibnxError_AlreadyMapped;
     }
 
     return rc;

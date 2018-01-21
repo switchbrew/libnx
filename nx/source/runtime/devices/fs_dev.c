@@ -357,7 +357,7 @@ Result fsdevCommitDevice(const char *name)
 
   device = fsdevFindDevice(name);
   if(device==NULL)
-    return MAKERESULT(MODULE_LIBNX, LIBNX_NOTFOUND);
+    return MAKERESULT(Module_Libnx, LibnxError_NotFound);
 
   return fsFsCommit(&device->fs);
 }

@@ -17,7 +17,7 @@ static Result _viGetSessionNoParams(Service* srv, Service* srv_out, u64 cmd_id);
 Result viInitialize(ViServiceType servicetype)
 {
     if (serviceIsActive(&g_viSrv))
-        return MAKERESULT(MODULE_LIBNX, LIBNX_ALREADYINITIALIZED);
+        return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
 
     Result rc = 0;
 
@@ -425,7 +425,7 @@ Result viSetLayerScalingMode(ViLayer *layer, u32 ScalingMode) {
     IpcCommand c;
     ipcInitialize(&c);
 
-    if (!layer->initialized) return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
+    if (!layer->initialized) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     struct {
         u64 magic;

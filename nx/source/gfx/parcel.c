@@ -30,7 +30,7 @@ Result parcelTransact(Binder *session, u32 code, Parcel *in_parcel, Parcel *parc
     memset(inparcel, 0, sizeof(inparcel));
     memset(outparcel, 0, outparcel_size);
 
-    if((size_t)payloadSize >= sizeof(inparcel) || (size_t)ParcelObjectsSize >= sizeof(inparcel) || ((size_t)payloadSize)+((size_t)ParcelObjectsSize)+0x10 >= sizeof(inparcel)) return MAKERESULT(MODULE_LIBNX, LIBNX_BADINPUT);
+    if((size_t)payloadSize >= sizeof(inparcel) || (size_t)ParcelObjectsSize >= sizeof(inparcel) || ((size_t)payloadSize)+((size_t)ParcelObjectsSize)+0x10 >= sizeof(inparcel)) return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
     inparcel32[0] = payloadSize;//payloadSize
     inparcel32[1] = 0x10;//payloadOffset
@@ -43,9 +43,9 @@ Result parcelTransact(Binder *session, u32 code, Parcel *in_parcel, Parcel *parc
     rc = binderTransactParcel(session, code, inparcel, payloadSize+ParcelObjectsSize+0x10, outparcel, outparcel_size, 0);
     if (R_FAILED(rc)) return rc;
 
-    if((size_t)outparcel32[1] >= outparcel_size || ((size_t)outparcel32[0])+((size_t)outparcel32[1]) >= outparcel_size) return MAKERESULT(MODULE_LIBNX, LIBNX_BADINPUT);
-    if((size_t)outparcel32[2] >= outparcel_size || ((size_t)outparcel32[2])+((size_t)outparcel32[3]) >= outparcel_size) return MAKERESULT(MODULE_LIBNX, LIBNX_BADINPUT);
-    if((size_t)outparcel32[0] >= outparcel_size || (size_t)outparcel32[3] >= outparcel_size) return MAKERESULT(MODULE_LIBNX, LIBNX_BADINPUT);
+    if((size_t)outparcel32[1] >= outparcel_size || ((size_t)outparcel32[0])+((size_t)outparcel32[1]) >= outparcel_size) return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+    if((size_t)outparcel32[2] >= outparcel_size || ((size_t)outparcel32[2])+((size_t)outparcel32[3]) >= outparcel_size) return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+    if((size_t)outparcel32[0] >= outparcel_size || (size_t)outparcel32[3] >= outparcel_size) return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
     memcpy(parcel_reply->payload, &outparcel[outparcel32[1]], outparcel32[0]);
     parcel_reply->size = outparcel32[0];

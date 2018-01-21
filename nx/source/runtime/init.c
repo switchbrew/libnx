@@ -49,7 +49,7 @@ void __attribute__((weak)) __libnx_initheap(void)
         size = __nx_heap_size;
 
         if (R_FAILED(rc))
-            fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_HEAPALLOCFAILED));
+            fatalSimple(MAKERESULT(Module_Libnx, LibnxError_HeapAllocFailed));
     }
 
     // Newlib
@@ -67,21 +67,21 @@ void __attribute__((weak)) __appInit(void)
     // Initialize default services.
     rc = smInitialize();
     if (R_FAILED(rc))
-        fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_INITFAIL_SM));
+        fatalSimple(MAKERESULT(Module_Libnx, LibnxError_InitFail_SM));
 
     rc = appletInitialize();
     if (R_FAILED(rc))
-        fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_INITFAIL_AM));
+        fatalSimple(MAKERESULT(Module_Libnx, LibnxError_InitFail_AM));
 
     if (__nx_applet_type != AppletType_None) {
         rc = hidInitialize();
         if (R_FAILED(rc))
-            fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_INITFAIL_HID));
+            fatalSimple(MAKERESULT(Module_Libnx, LibnxError_InitFail_HID));
     }
 
     rc = fsInitialize();
     if (R_FAILED(rc))
-        fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_INITFAIL_FS));
+        fatalSimple(MAKERESULT(Module_Libnx, LibnxError_InitFail_FS));
 
     //fsdevInit();
 }

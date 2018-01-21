@@ -44,7 +44,7 @@ Result bufferProducerRequestBuffer(s32 bufferIdx, bufferProducerGraphicBuffer *b
     Parcel parcel, parcel_reply;
 
     if (g_bufferProducerBinderSession == NULL)
-        return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     parcelInitialize(&parcel);
     parcelInitialize(&parcel_reply);
@@ -62,14 +62,14 @@ Result bufferProducerRequestBuffer(s32 bufferIdx, bufferProducerGraphicBuffer *b
             void* tmp_ptr;
 
             tmp_ptr = parcelReadFlattenedObject(&parcel_reply, &tmpsize);
-            if (tmp_ptr==NULL || tmpsize!=sizeof(bufferProducerGraphicBuffer)) return MAKERESULT(MODULE_LIBNX, LIBNX_BADINPUT);
+            if (tmp_ptr==NULL || tmpsize!=sizeof(bufferProducerGraphicBuffer)) return MAKERESULT(Module_Libnx, LibnxError_BadInput);
             if (buf) memcpy(buf, tmp_ptr, sizeof(bufferProducerGraphicBuffer));
         }
 
         int status = parcelReadInt32(&parcel_reply);
 
         if (status != 0) {
-            rc = MAKERESULT(MODULE_LIBNX, LIBNX_BUFFERPRODUCER_ERROR);
+            rc = MAKERESULT(Module_Libnx, LibnxError_BufferProducerError);
         }
     }
 
@@ -82,7 +82,7 @@ Result bufferProducerDequeueBuffer(bool async, u32 width, u32 height, s32 format
     Parcel parcel, parcel_reply;
 
     if (g_bufferProducerBinderSession == NULL)
-        return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     parcelInitialize(&parcel);
     parcelInitialize(&parcel_reply);
@@ -105,13 +105,13 @@ Result bufferProducerDequeueBuffer(bool async, u32 width, u32 height, s32 format
             void* tmp_ptr;
 
             tmp_ptr = parcelReadFlattenedObject(&parcel_reply, &tmpsize);
-            if (tmp_ptr==NULL || tmpsize!=sizeof(bufferProducerFence)) return MAKERESULT(MODULE_LIBNX, LIBNX_BADINPUT);
+            if (tmp_ptr==NULL || tmpsize!=sizeof(bufferProducerFence)) return MAKERESULT(Module_Libnx, LibnxError_BadInput);
             if (fence) memcpy(fence, tmp_ptr, sizeof(bufferProducerFence));
         }
 
         int result = parcelReadInt32(&parcel_reply);
         if (result != 0)
-            rc = MAKERESULT(MODULE_LIBNX, LIBNX_BUFFERPRODUCER_ERROR);
+            rc = MAKERESULT(Module_Libnx, LibnxError_BufferProducerError);
     }
 
     return rc;
@@ -123,7 +123,7 @@ Result bufferProducerDetachBuffer(s32 slot)
     Parcel parcel, parcel_reply;
 
     if (g_bufferProducerBinderSession == NULL)
-        return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     parcelInitialize(&parcel);
     parcelInitialize(&parcel_reply);
@@ -146,7 +146,7 @@ Result bufferProducerQueueBuffer(s32 buf, bufferProducerQueueBufferInput *input,
     Parcel parcel, parcel_reply;
 
     if (g_bufferProducerBinderSession == NULL)
-        return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     parcelInitialize(&parcel);
     parcelInitialize(&parcel_reply);
@@ -158,11 +158,11 @@ Result bufferProducerQueueBuffer(s32 buf, bufferProducerQueueBufferInput *input,
     rc = parcelTransact(g_bufferProducerBinderSession, QUEUE_BUFFER, &parcel, &parcel_reply);
 
     if (R_SUCCEEDED(rc)) {
-        if (parcelReadData(&parcel_reply, output, sizeof(bufferProducerQueueBufferOutput))==NULL) return MAKERESULT(MODULE_LIBNX, LIBNX_BADINPUT);
+        if (parcelReadData(&parcel_reply, output, sizeof(bufferProducerQueueBufferOutput))==NULL) return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
         int result = parcelReadInt32(&parcel_reply);
         if (result != 0)
-            rc = MAKERESULT(MODULE_LIBNX, LIBNX_BUFFERPRODUCER_ERROR);
+            rc = MAKERESULT(Module_Libnx, LibnxError_BufferProducerError);
     }
 
     return rc;
@@ -174,7 +174,7 @@ Result bufferProducerQuery(s32 what, s32* value)
     Parcel parcel, parcel_reply;
 
     if (g_bufferProducerBinderSession == NULL)
-        return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     parcelInitialize(&parcel);
     parcelInitialize(&parcel_reply);
@@ -189,7 +189,7 @@ Result bufferProducerQuery(s32 what, s32* value)
 
         int result = parcelReadInt32(&parcel_reply);
         if (result != 0)
-            rc = MAKERESULT(MODULE_LIBNX, LIBNX_BUFFERPRODUCER_ERROR);
+            rc = MAKERESULT(Module_Libnx, LibnxError_BufferProducerError);
     }
 
     return rc;
@@ -201,7 +201,7 @@ Result bufferProducerConnect(s32 api, bool producerControlledByApp, bufferProduc
     Parcel parcel, parcel_reply;
 
     if (g_bufferProducerBinderSession == NULL)
-        return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     parcelInitialize(&parcel);
     parcelInitialize(&parcel_reply);
@@ -216,11 +216,11 @@ Result bufferProducerConnect(s32 api, bool producerControlledByApp, bufferProduc
     rc = parcelTransact(g_bufferProducerBinderSession, CONNECT, &parcel, &parcel_reply);
 
     if (R_SUCCEEDED(rc)) {
-        if (parcelReadData(&parcel_reply, output, sizeof(bufferProducerQueueBufferOutput))==NULL) return MAKERESULT(MODULE_LIBNX, LIBNX_BADINPUT);
+        if (parcelReadData(&parcel_reply, output, sizeof(bufferProducerQueueBufferOutput))==NULL) return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
         int result = parcelReadInt32(&parcel_reply);
         if (result != 0)
-            rc = MAKERESULT(MODULE_LIBNX, LIBNX_BUFFERPRODUCER_ERROR);
+            rc = MAKERESULT(Module_Libnx, LibnxError_BufferProducerError);
     }
 
     return rc;
@@ -232,7 +232,7 @@ Result bufferProducerDisconnect(s32 api)
     Parcel parcel, parcel_reply;
 
     if (g_bufferProducerBinderSession == NULL)
-        return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     parcelInitialize(&parcel);
     parcelInitialize(&parcel_reply);
@@ -255,7 +255,7 @@ Result bufferProducerGraphicBufferInit(s32 buf, bufferProducerGraphicBuffer *inp
     Parcel parcel, parcel_reply;
     bool flag = 0;
 
-    if (g_bufferProducerBinderSession==NULL) return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
+    if (g_bufferProducerBinderSession==NULL) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     parcelInitialize(&parcel);
     parcelInitialize(&parcel_reply);
@@ -272,7 +272,7 @@ Result bufferProducerGraphicBufferInit(s32 buf, bufferProducerGraphicBuffer *inp
     if (R_SUCCEEDED(rc)) {
         int result = parcelReadInt32(&parcel_reply);
         if (result != 0)
-            rc = MAKERESULT(MODULE_LIBNX, LIBNX_BUFFERPRODUCER_ERROR);
+            rc = MAKERESULT(Module_Libnx, LibnxError_BufferProducerError);
     }
 
     return rc;

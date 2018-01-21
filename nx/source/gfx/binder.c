@@ -15,8 +15,8 @@ Result binderInitSession(Binder *session, u32 unk0)
 {
     Result rc = 0;
 
-    if (!session->created) return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
-    if (session->initialized) return MAKERESULT(MODULE_LIBNX, LIBNX_ALREADYINITIALIZED);
+    if (!session->created) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (session->initialized) return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
 
     rc = binderAdjustRefcount(session, 1, 0);
 
@@ -42,7 +42,7 @@ Result binderInitSession(Binder *session, u32 unk0)
     if(session->nativeHandle == 0) {
         rc = binderAdjustRefcount(session, -1, 1);
         rc = binderAdjustRefcount(session, -1, 0);
-        return MAKERESULT(MODULE_LIBNX, LIBNX_BADINPUT);
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
     }
 
     session->initialized = 1;
@@ -88,7 +88,7 @@ static Result _binderTransactParcel(
     void* parcel_reply, size_t parcel_reply_size,
     u32 flags)
 {
-    if (!session->created || !session->initialized) return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
+    if (!session->created || !session->initialized) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     IpcCommand c;
     ipcInitialize(&c);
@@ -134,7 +134,7 @@ static Result _binderTransactParcelAuto(
     void* parcel_reply, size_t parcel_reply_size,
     u32 flags)
 {
-    if (!session->created || !session->initialized) return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
+    if (!session->created || !session->initialized) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     IpcCommand c;
     ipcInitialize(&c);
@@ -213,7 +213,7 @@ Result binderTransactParcel(
 
 Result binderAdjustRefcount(Binder *session, s32 addval, s32 type)
 {
-    if (!session->created) return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
+    if (!session->created) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     IpcCommand c;
     ipcInitialize(&c);
@@ -252,7 +252,7 @@ Result binderAdjustRefcount(Binder *session, s32 addval, s32 type)
 
 Result binderGetNativeHandle(Binder *session, u32 inval, Handle *handle_out)
 {
-    if (!session->created) return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
+    if (!session->created) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     IpcCommand c;
     ipcInitialize(&c);

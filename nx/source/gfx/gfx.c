@@ -101,8 +101,8 @@ static Result _gfxGetNativeWindowID(u8 *buf, u64 size, s32 *out_ID) {
     u32 *bufptr = (u32*)buf;
 
     //Validate ParcelData{Size|Offset}.
-    if((u64)bufptr[1] > size || (u64)bufptr[0] > size || ((u64)bufptr[1])+((u64)bufptr[0]) > size) return MAKERESULT(MODULE_LIBNX, LIBNX_BADINPUT);
-    if(bufptr[0] < 0xc) return MAKERESULT(MODULE_LIBNX, LIBNX_BADINPUT);
+    if((u64)bufptr[1] > size || (u64)bufptr[0] > size || ((u64)bufptr[1])+((u64)bufptr[0]) > size) return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+    if(bufptr[0] < 0xc) return MAKERESULT(Module_Libnx, LibnxError_BadInput);
     //bufptr = start of ParcelData
     bufptr = (u32*)&buf[bufptr[1]];
 
@@ -314,7 +314,7 @@ void gfxInitDefault(void)
     }
 
     Result rc = _gfxInit(ViServiceType_Default, "Default", ViLayerFlags_Default, 0, nv_servicetype, 0x300000);
-    if (R_FAILED(rc)) fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_BADGFXINIT));
+    if (R_FAILED(rc)) fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadGfxInit));
 }
 
 void gfxExit(void)
@@ -367,7 +367,7 @@ void gfxExit(void)
 }
 
 void gfxInitResolution(u32 width, u32 height) {
-    if (g_gfxInitialized) fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_ALREADYINITIALIZED));
+    if (g_gfxInitialized) fatalSimple(MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized));
 
     g_gfx_framebuf_width = width;
     g_gfx_framebuf_height = height;
@@ -463,7 +463,7 @@ static void _waitevent(Handle *handle) {
 
     } while(R_FAILED(rc) || (rc2 & 0x3FFFFF)==0xFA01);
 
-    if (R_FAILED(rc2)) fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_BADGFXEVENTWAIT));
+    if (R_FAILED(rc2)) fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadGfxEventWait));
 }
 
 void gfxWaitForVsync(void) {
@@ -475,11 +475,11 @@ void gfxSwapBuffers(void) {
 
     rc = _gfxQueueBuffer(g_gfxCurrentProducerBuffer);
 
-    if (R_FAILED(rc)) fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_BADGFXQUEUEBUFFER));
+    if (R_FAILED(rc)) fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadGfxQueueBuffer));
 
     rc = _gfxDequeueBuffer();
 
-    if (R_FAILED(rc)) fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_BADGFXDEQUEUEBUFFER));
+    if (R_FAILED(rc)) fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadGfxDequeueBuffer));
 }
 
 u8* gfxGetFramebuffer(u32* width, u32* height) {

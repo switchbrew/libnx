@@ -18,43 +18,68 @@
 #define MAKERESULT(module,description) \
     ((((module)&0x1FF)) | ((description)&0x1FFF)<<9)
 
-#define MODULE_LIBNX 345
+enum {
+    Module_Libnx=345,
+    Module_LibnxNvidia=348
+};
 
 enum {
-    LIBNX_BADRELOC=1,
-    LIBNX_OUTOFMEM,
-    LIBNX_ALREADYMAPPED,
-    LIBNX_BADGETINFO_STACK,
-    LIBNX_BADGETINFO_HEAP,
-    LIBNX_BADQUERYMEMORY,
-    LIBNX_ALREADYINITIALIZED,
-    LIBNX_NOTINITIALIZED,
-    LIBNX_NOTFOUND,
-    LIBNX_IOERROR,
-    LIBNX_BADINPUT,
-    LIBNX_BADREENT,
-    LIBNX_BUFFERPRODUCER_ERROR,
-    LIBNX_HANDLETOOEARLY,
-    LIBNX_HEAPALLOCFAILED,
-    LIBNX_TOOMANYOVERRIDES,
-    LIBNX_PARCELERROR,
-    LIBNX_BADGFXINIT,
-    LIBNX_BADGFXEVENTWAIT,
-    LIBNX_BADGFXQUEUEBUFFER,
-    LIBNX_BADGFXDEQUEUEBUFFER,
-    LIBNX_APPLETCMDIDNOTFOUND,
-    LIBNX_BADAPPLETRECEIVEMESSAGE,
-    LIBNX_BADAPPLETNOTIFYRUNNING,
-    LIBNX_BADAPPLETGETCURRENTFOCUSSTATE,
-    LIBNX_BADAPPLETGETOPERATIONMODE,
-    LIBNX_BADAPPLETGETPERFORMANCEMODE,
-    LIBNX_BADUSBCOMMSREAD,
-    LIBNX_BADUSBCOMMSWRITE,
-    LIBNX_INITFAIL_SM,
-    LIBNX_INITFAIL_AM,
-    LIBNX_INITFAIL_HID,
-    LIBNX_INITFAIL_FS,
-    LIBNX_BADGETINFO_RNG,
-    LIBNX_JITUNAVAILABLE,
-    LIBNX_WEIRDKERNEL,
+    LibnxError_BadReloc=1,
+    LibnxError_OutOfMemory,
+    LibnxError_AlreadyMapped,
+    LibnxError_BadGetInfo_Stack,
+    LibnxError_BadGetInfo_Heap,
+    LibnxError_BadQueryMemory,
+    LibnxError_AlreadyInitialized,
+    LibnxError_NotInitialized,
+    LibnxError_NotFound,
+    LibnxError_IoError,
+    LibnxError_BadInput,
+    LibnxError_BadReent,
+    LibnxError_BufferProducerError,
+    LibnxError_HandleTooEarly,
+    LibnxError_HeapAllocFailed,
+    LibnxError_TooManyOverrides,
+    LibnxError_ParcelError,
+    LibnxError_BadGfxInit,
+    LibnxError_BadGfxEventWait,
+    LibnxError_BadGfxQueueBuffer,
+    LibnxError_BadGfxDequeueBuffer,
+    LibnxError_AppletCmdidNotFound,
+    LibnxError_BadAppletReceiveMessage,
+    LibnxError_BadAppletNotifyRunning,
+    LibnxError_BadAppletGetCurrentFocusState,
+    LibnxError_BadAppletGetOperationMode,
+    LibnxError_BadAppletGetPerformanceMode,
+    LibnxError_BadUsbCommsRead,
+    LibnxError_BadUsbCommsWrite,
+    LibnxError_InitFail_SM,
+    LibnxError_InitFail_AM,
+    LibnxError_InitFail_HID,
+    LibnxError_InitFail_FS,
+    LibnxError_BadGetInfo_Rng,
+    LibnxError_JitUnavailable,
+    LibnxError_WeirdKernel,
+};
+
+enum {
+    LibnxNvidiaError_Unknown=1,
+    LibnxNvidiaError_NotImplemented,       // Maps to Nvidia: 1
+    LibnxNvidiaError_NotSupported,         // Maps to Nvidia: 2
+    LibnxNvidiaError_NotInitialized,       // Maps to Nvidia: 3
+    LibnxNvidiaError_BadParameter,         // Maps to Nvidia: 4
+    LibnxNvidiaError_Timeout,              // Maps to Nvidia: 5
+    LibnxNvidiaError_InsufficientMemory,   // Maps to Nvidia: 6
+    LibnxNvidiaError_ReadOnlyAttribute,    // Maps to Nvidia: 7
+    LibnxNvidiaError_InvalidState,         // Maps to Nvidia: 8
+    LibnxNvidiaError_InvalidAddress,       // Maps to Nvidia: 9
+    LibnxNvidiaError_InvalidSize,          // Maps to Nvidia: 10
+    LibnxNvidiaError_BadValue,             // Maps to Nvidia: 11
+    LibnxNvidiaError_AlreadyAllocated,     // Maps to Nvidia: 13
+    LibnxNvidiaError_Busy,                 // Maps to Nvidia: 14
+    LibnxNvidiaError_ResourceError,        // Maps to Nvidia: 15
+    LibnxNvidiaError_CountMismatch,        // Maps to Nvidia: 16
+    LibnxNvidiaError_SharedMemoryTooSmall, // Maps to Nvidia: 0x1000
+    LibnxNvidiaError_FileOperationFailed,  // Maps to Nvidia: 0x30003
+    LibnxNvidiaError_IoctlFailed,          // Maps to Nvidia: 0x3000F
 };

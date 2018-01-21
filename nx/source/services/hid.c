@@ -28,7 +28,7 @@ static Result _hidGetSharedMemoryHandle(Service* srv, Handle* handle_out);
 Result hidInitialize(void)
 {
     if (serviceIsActive(&g_hidSrv))
-        return MAKERESULT(MODULE_LIBNX, LIBNX_ALREADYINITIALIZED);
+        return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
 
     Result rc;
     Handle sharedmem_handle;

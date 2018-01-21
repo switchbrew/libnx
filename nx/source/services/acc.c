@@ -6,7 +6,7 @@ static Service g_accSrv;
 Result accountInitialize(void)
 {
     if (serviceIsActive(&g_accSrv))
-        return MAKERESULT(MODULE_LIBNX, LIBNX_ALREADYINITIALIZED);
+        return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
 
     return smGetService(&g_accSrv, "acc:u1");
 }

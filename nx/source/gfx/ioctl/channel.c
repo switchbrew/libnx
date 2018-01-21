@@ -17,7 +17,7 @@ Result nvioctlChannel_SubmitGpfifo(u32 fd, nvioctl_gpfifo_entry *entries, u32 nu
 
     // Make sure stack data doesn't get very large.
     if(num_entries > 0x200)
-        return MAKERESULT(MODULE_LIBNX, LIBNX_OUTOFMEM);
+        return MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
 
     struct {
         __in  u64 gpfifo;              // (ignored) pointer to gpfifo entry structs

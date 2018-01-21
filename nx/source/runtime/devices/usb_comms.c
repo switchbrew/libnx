@@ -24,11 +24,11 @@ Result usbCommsInitialize(void)
     if (R_SUCCEEDED(ret)) {
         //The buffer for PostBufferAsync commands must be 0x1000-byte aligned.
 		g_usbComms_endpoint_in_buffer = memalign(0x1000, 0x1000);
-		if (g_usbComms_endpoint_in_buffer==NULL) ret = MAKERESULT(MODULE_LIBNX, LIBNX_OUTOFMEM);
+		if (g_usbComms_endpoint_in_buffer==NULL) ret = MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
 
         if (R_SUCCEEDED(ret)) {
 		    g_usbComms_endpoint_out_buffer = memalign(0x1000, 0x1000);
-		    if (g_usbComms_endpoint_out_buffer==NULL) ret = MAKERESULT(MODULE_LIBNX, LIBNX_OUTOFMEM);
+		    if (g_usbComms_endpoint_out_buffer==NULL) ret = MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
         }
 
         if (R_SUCCEEDED(ret)) {
@@ -264,7 +264,7 @@ size_t usbCommsRead(void* buffer, size_t size)
         if (R_SUCCEEDED(ret2)) {
             if (state!=5) ret = _usbCommsRead(buffer, size, &transferredSize); //If state changed during transfer, try again. usbDsWaitReady() will be called from this.
         }
-        if (R_FAILED(ret))fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_BADUSBCOMMSREAD));
+        if (R_FAILED(ret))fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadUsbCommsRead));
     }
     return transferredSize;
 }
@@ -280,7 +280,7 @@ size_t usbCommsWrite(const void* buffer, size_t size)
         if (R_SUCCEEDED(ret2)) {
             if (state!=5) ret = _usbCommsWrite(buffer, size, &transferredSize); //If state changed during transfer, try again. usbDsWaitReady() will be called from this.
         }
-        if (R_FAILED(ret))fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_BADUSBCOMMSWRITE));
+        if (R_FAILED(ret))fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadUsbCommsWrite));
     }
     return transferredSize;
 }

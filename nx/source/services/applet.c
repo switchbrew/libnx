@@ -57,7 +57,7 @@ static Result _appletSetPerformanceModeChangedNotification(u8 flag);
 Result appletInitialize(void)
 {
     if (serviceIsActive(&g_appletSrv))
-        return MAKERESULT(MODULE_LIBNX, LIBNX_ALREADYINITIALIZED);
+        return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
 
     if (__nx_applet_type == AppletType_None)
         return 0;
@@ -92,7 +92,7 @@ Result appletInitialize(void)
             case AppletType_OverlayApplet:     cmd_id = 300; break;
             case AppletType_SystemApplication: cmd_id = 350; break;
             // TODO: Replace error code
-            default: fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_APPLETCMDIDNOTFOUND));
+            default: fatalSimple(MAKERESULT(Module_Libnx, LibnxError_AppletCmdidNotFound));
             }
 
             rc = _appletGetSessionProxy(&g_appletProxySession, cmd_id, CUR_PROCESS_HANDLE, NULL);
@@ -271,7 +271,7 @@ static Result appletSetFocusHandlingMode(u32 mode) {
     u8 invals[4];
 
     if (mode > 3)
-        return MAKERESULT(MODULE_LIBNX, LIBNX_BADINPUT);
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
     memset(invals, 0, sizeof(invals));
 
@@ -465,7 +465,7 @@ static Result _appletAcquireForegroundRights(void) {
 
 Result appletGetAppletResourceUserId(u64 *out) {
     if (!serviceIsActive(&g_appletSrv))
-        return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     *out = g_appletResourceUserId;
     return 0;
@@ -507,7 +507,7 @@ void appletNotifyRunning(u8 *out) {
         }
     }
 
-    if (R_FAILED(rc)) fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_BADAPPLETNOTIFYRUNNING));
+    if (R_FAILED(rc)) fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadAppletNotifyRunning));
 }
 
 static Result _appletReceiveMessage(u32 *out) {
@@ -851,14 +851,14 @@ bool appletMainLoop(void) {
         if ((rc & 0x3fffff) == 0x680)
             return true;
 
-        fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_BADAPPLETRECEIVEMESSAGE));
+        fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadAppletReceiveMessage));
     }
 
     switch(msg) {
         case 0xF:
             rc = _appletGetCurrentFocusState(&g_appletFocusState);
             if (R_FAILED(rc))
-                fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_BADAPPLETGETCURRENTFOCUSSTATE));
+                fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadAppletGetCurrentFocusState));
 
             appletCallHook(AppletHookType_OnFocusState);
         break;
@@ -866,7 +866,7 @@ bool appletMainLoop(void) {
         case 0x1E:
             rc = _appletGetOperationMode(&g_appletOperationMode);
             if (R_FAILED(rc))
-                fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_BADAPPLETGETOPERATIONMODE));
+                fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadAppletGetOperationMode));
 
             appletCallHook(AppletHookType_OnOperationMode);
         break;
@@ -874,7 +874,7 @@ bool appletMainLoop(void) {
         case 0x1F:
             rc = _appletGetPerformanceMode(&g_appletPerformanceMode);
             if (R_FAILED(rc))
-                fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_BADAPPLETGETPERFORMANCEMODE));
+                fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadAppletGetPerformanceMode));
 
             appletCallHook(AppletHookType_OnPerformanceMode);
         break;

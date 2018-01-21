@@ -9,7 +9,7 @@ static Result _apmGetSession(Service* srv, Service* srv_out, u64 cmd_id);
 Result apmInitialize(void)
 {
     if (serviceIsActive(&g_apmSrv))
-        return MAKERESULT(MODULE_LIBNX, LIBNX_ALREADYINITIALIZED);
+        return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
 
     Result rc = 0;
 

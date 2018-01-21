@@ -130,7 +130,7 @@ void _randomInit(void)
     {
         // Get process TRNG seeds from kernel.
         if (R_FAILED(svcGetInfo(&seed[i], 11, 0, i)))
-            fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_BADGETINFO_RNG));
+            fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadGetInfo_Rng));
     }
 
     u8 iv[8];

@@ -60,16 +60,16 @@ void virtmemSetup(void) {
         }
         else {
             // Wat.
-            fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_WEIRDKERNEL));
+            fatalSimple(MAKERESULT(Module_Libnx, LibnxError_WeirdKernel));
         }
     }
 
     if (R_FAILED(_GetRegionFromInfo(&g_Region[REGION_STACK], 2, 3))) {
-        fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_BADGETINFO_STACK));
+        fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadGetInfo_Stack));
     }
 
     if (R_FAILED(_GetRegionFromInfo(&g_Region[REGION_HEAP], 4, 5))) {
-        fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_BADGETINFO_HEAP));
+        fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadGetInfo_Heap));
     }
 
     // Failure is OK, happens on 1.0.0
@@ -101,7 +101,7 @@ void* virtmemReserve(size_t size) {
         rc = svcQueryMemory(&meminfo, &pageinfo, addr);
 
         if (R_FAILED(rc)) {
-            fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_BADQUERYMEMORY));
+            fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadQueryMemory));
         }
 
         if (meminfo.type != 0) {
@@ -177,7 +177,7 @@ void* virtmemReserveMap(size_t size)
         rc = svcQueryMemory(&meminfo, &pageinfo, addr);
 
         if (R_FAILED(rc)) {
-            fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_BADQUERYMEMORY));
+            fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadQueryMemory));
         }
 
         if (meminfo.type != 0) {

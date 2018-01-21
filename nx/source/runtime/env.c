@@ -101,7 +101,7 @@ Handle envGetMainThreadHandle(void) {
         return g_mainThreadHandle;
     }
 
-    fatalSimple(MAKERESULT(MODULE_LIBNX, LIBNX_HANDLETOOEARLY));
+    fatalSimple(MAKERESULT(Module_Libnx, LibnxError_HandleTooEarly));
 }
 
 bool envIsNso(void) {
@@ -147,7 +147,7 @@ LoaderReturnFn envGetExitFuncPtr(void) {
 Result envSetNextLoad(const char* path, const char* argv)
 {
     if (g_nextLoadPath == NULL)
-        return MAKERESULT(MODULE_LIBNX, LIBNX_NOTINITIALIZED);
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     strcpy(g_nextLoadPath, path);
 

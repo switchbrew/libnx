@@ -13,7 +13,7 @@ Result tmemCreate(TransferMemory* t, size_t size, Permission perm)
     t->src_addr = memalign(0x1000, size);
 
     if (t->src_addr == NULL) {
-        rc = MAKERESULT(MODULE_LIBNX, LIBNX_OUTOFMEM);
+        rc = MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
     }
 
     if (R_SUCCEEDED(rc)) {
@@ -50,7 +50,7 @@ Result tmemMap(TransferMemory* t)
         }
     }
     else {
-        rc = LIBNX_ALREADYMAPPED;
+        rc = LibnxError_AlreadyMapped;
     }
 
     return rc;
