@@ -1,3 +1,6 @@
+#pragma once
+#include <switch/types.h>
+
 // Copyright 2017 plutoo
 Result pmdmntInitialize(void);
 Result pmdmntStartProcess(u64 pid);

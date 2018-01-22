@@ -4,8 +4,8 @@
  */
 #pragma once
 
-#include <stdint.h>
 #include <sys/types.h>
+#include <switch/types.h>
 
 /** Convert a UTF-8 sequence into a UTF-32 codepoint
  *

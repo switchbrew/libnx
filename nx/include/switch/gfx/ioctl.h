@@ -1,3 +1,5 @@
+#pragma once
+
 //The below defines are from Linux kernel ioctl.h.
 
 #define _IOC_NRBITS	8

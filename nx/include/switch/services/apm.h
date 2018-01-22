@@ -1,3 +1,6 @@
+#pragma once
+#include <switch/types.h>
+
 /// These are used internally by applet.
 
 Result apmInitialize(void);

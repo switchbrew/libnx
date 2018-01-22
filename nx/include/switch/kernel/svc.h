@@ -3,8 +3,7 @@
  * @brief Syscall wrappers.
  */
 #pragma once
-
-#include "../types.h"
+#include <switch/types.h>
 
 /// Pseudo handle for the current process
 #define CUR_PROCESS_HANDLE 0xFFFF8001

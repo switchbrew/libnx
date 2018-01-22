@@ -1,3 +1,6 @@
+#pragma once
+#include <switch/types.h>
+
 /// Converts red, green, blue, and alpha components to packed RGBA8.
 #define RGBA8(r,g,b,a)  (((r)&0xff)|(((g)&0xff)<<8)|(((b)&0xff)<<16)|(((a)&0xff)<<24))
 

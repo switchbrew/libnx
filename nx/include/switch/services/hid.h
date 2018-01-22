@@ -1,5 +1,8 @@
+#pragma once
+
 #include <assert.h>
 #include <switch/types.h>
+#include <switch/services/sm.h>
 
 // Begin enums and output structs
 

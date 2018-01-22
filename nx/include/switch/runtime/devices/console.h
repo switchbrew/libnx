@@ -15,8 +15,7 @@
  * @endcode
  */
 #pragma once
-
-#include <switch.h>
+#include <switch/types.h>
 
 #define CONSOLE_ESC(x) "\x1b[" #x
 #define CONSOLE_RESET   CONSOLE_ESC(0m)

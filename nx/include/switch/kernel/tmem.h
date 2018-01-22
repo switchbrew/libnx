@@ -1,3 +1,6 @@
+#pragma once
+#include <switch/types.h>
+
 typedef struct {
     Handle      handle;
     size_t      size;

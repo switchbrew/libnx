@@ -1,5 +1,12 @@
 #include <string.h>
-#include <switch.h>
+#include <switch/types.h>
+#include <switch/result.h>
+#include <switch/ipc.h>
+#include <switch/services/applet.h>
+#include <switch/gfx/ioctl.h>
+#include <switch/services/nv.h>
+#include <switch/services/sm.h>
+#include <switch/kernel/tmem.h>
 
 static Service g_nvSrv;
 static size_t g_nvIpcBufferSize = 0;

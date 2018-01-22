@@ -1,4 +1,7 @@
 // Copyright 2017 plutoo
+#pragma once
+#include <switch/types.h>
+#include <switch/services/sm.h>
 
 // We use wrapped handles for type safety.
 

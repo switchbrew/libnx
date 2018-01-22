@@ -1,3 +1,6 @@
+#pragma once
+#include <switch/types.h>
+
 Result nvgfxInitialize(void);
 void nvgfxExit(void);
 Result nvgfxEventWait(u32 syncpt_id, u32 threshold, s32 timeout);

@@ -1,4 +1,11 @@
-#include <switch.h>
+#include <switch/types.h>
+#include <switch/runtime/env.h>
+#include <switch/services/sm.h>
+#include <switch/services/fatal.h>
+#include <switch/services/fs.h>
+#include <switch/services/hid.h>
+#include <switch/services/applet.h>
+
 
 void __nx_exit(int rc);
 

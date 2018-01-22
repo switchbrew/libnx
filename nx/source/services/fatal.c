@@ -1,5 +1,11 @@
 // Copyright 2017 plutoo
-#include <switch.h>
+#include <switch/types.h>
+#include <switch/result.h>
+#include <switch/ipc.h>
+#include <switch/services/fatal.h>
+#include <switch/services/sm.h>
+#include <switch/kernel/detect.h>
+#include <switch/kernel/svc.h>
 
 void fatalSimple(Result err) {
     Result rc = 0;

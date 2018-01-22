@@ -1,3 +1,6 @@
+#pragma once
+#include <switch/types.h>
+
 typedef enum {
     AppletType_None = -2,
     AppletType_Default = -1,

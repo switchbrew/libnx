@@ -1,3 +1,6 @@
+#pragma once
+#include <switch/types.h>
+
 Result usbCommsInitialize(void);
 void usbCommsExit(void);
 

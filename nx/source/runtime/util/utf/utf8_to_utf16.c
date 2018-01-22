@@ -1,5 +1,4 @@
-#include "switch/types.h"
-#include "switch/runtime/util/utf.h"
+#include <switch/runtime/util/utf.h>
 
 ssize_t
 utf8_to_utf16(uint16_t      *out,

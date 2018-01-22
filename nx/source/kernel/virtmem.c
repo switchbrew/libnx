@@ -1,4 +1,10 @@
-#include <switch.h>
+#include <switch/types.h>
+#include <switch/result.h>
+#include <switch/services/fatal.h>
+#include <switch/kernel/detect.h>
+#include <switch/kernel/mutex.h>
+#include <switch/kernel/svc.h>
+#include <switch/kernel/virtmem.h>
 
 typedef struct {
     u64  start;

@@ -1,3 +1,6 @@
+#pragma once
+#include <switch/types.h>
+
 Result accountInitialize(void);
 void accountExit(void);
 Handle accountGetSessionService(void);

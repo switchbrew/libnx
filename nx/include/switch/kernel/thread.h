@@ -1,3 +1,6 @@
+#pragma once
+#include <switch/types.h>
+
 typedef struct {
     Handle     handle;
     void*      stack_mem;

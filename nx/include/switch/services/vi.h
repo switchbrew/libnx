@@ -1,3 +1,7 @@
+#pragma once
+#include <switch/types.h>
+#include <switch/services/sm.h>
+
 typedef struct {
     u64  display_id;
     char display_name[0x40];
