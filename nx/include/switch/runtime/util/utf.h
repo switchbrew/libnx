@@ -3,7 +3,6 @@
  * @brief UTF conversion functions.
  */
 #pragma once
-
 #include <sys/types.h>
 #include "types.h"
 

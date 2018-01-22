@@ -1,6 +1,5 @@
 // Copyright 2018 plutoo
 #include <malloc.h>
-
 #include "types.h"
 #include "result.h"
 #include "runtime/env.h"
