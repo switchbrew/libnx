@@ -1,11 +1,11 @@
 // Copyright 2017 plutoo
-#include <switch/types.h>
-#include <switch/result.h>
-#include <switch/ipc.h>
-#include <switch/services/bsd.h>
-#include <switch/services/sm.h>
-#include <switch/kernel/shmem.h>
-#include <switch/kernel/rwlock.h>
+#include "types.h"
+#include "result.h"
+#include "ipc.h"
+#include "services/bsd.h"
+#include "services/sm.h"
+#include "kernel/shmem.h"
+#include "kernel/rwlock.h"
 
 static Service g_bsdSrv;
 static Service g_bsdMonitor;

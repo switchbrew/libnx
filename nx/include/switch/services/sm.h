@@ -1,7 +1,7 @@
 #pragma once
-#include <switch/types.h>
-#include <switch/kernel/svc.h>
-#include <switch/ipc.h>
+#include "types.h"
+#include "kernel/svc.h"
+#include "ipc.h"
 
 typedef enum {
     ServiceType_Uninitialized,

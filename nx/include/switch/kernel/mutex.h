@@ -1,7 +1,7 @@
 // Copyright 2017 plutoo
 #pragma once
 #include <sys/lock.h>
-#include <switch/types.h> // not needed in this file, still including it
+#include "types.h" // not needed in this file, still including it
 
 typedef _LOCK_T Mutex;
 typedef _LOCK_RECURSIVE_T RMutex;

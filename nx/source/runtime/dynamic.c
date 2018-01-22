@@ -1,5 +1,5 @@
-#include <switch/result.h>
-#include <switch/services/fatal.h>
+#include "result.h"
+#include "services/fatal.h"
 #include <elf.h>
 
 void __nx_dynamic(uintptr_t base, const Elf64_Dyn* dyn)

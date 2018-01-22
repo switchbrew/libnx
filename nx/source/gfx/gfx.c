@@ -1,14 +1,14 @@
 #include <string.h>
-#include <switch/types.h>
-#include <switch/result.h>
-#include <switch/services/fatal.h>
-#include <switch/services/vi.h>
-#include <switch/services/applet.h>
-#include <switch/services/nv.h>
-#include <switch/gfx/binder.h>
-#include <switch/gfx/buffer_producer.h>
-#include <switch/gfx/nvgfx.h>
-#include <switch/gfx/gfx.h>
+#include "types.h"
+#include "result.h"
+#include "services/fatal.h"
+#include "services/vi.h"
+#include "services/applet.h"
+#include "services/nv.h"
+#include "gfx/binder.h"
+#include "gfx/buffer_producer.h"
+#include "gfx/nvgfx.h"
+#include "gfx/gfx.h"
 
 static bool g_gfxInitialized = 0;
 static ViDisplay g_gfxDisplay;

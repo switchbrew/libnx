@@ -1,5 +1,5 @@
 #pragma once
-#include <switch/types.h>
+#include "types.h"
 
 #define BINDER_FIRST_CALL_TRANSACTION 0x1
 

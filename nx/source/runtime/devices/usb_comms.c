@@ -1,10 +1,10 @@
 #include <string.h>
 #include <malloc.h>
-#include <switch/types.h>
-#include <switch/result.h>
-#include <switch/services/fatal.h>
-#include <switch/services/usb.h>
-#include <switch/runtime/devices/usb_comms.h>
+#include "types.h"
+#include "result.h"
+#include "services/fatal.h"
+#include "services/usb.h"
+#include "runtime/devices/usb_comms.h"
 
 static bool g_usbCommsInitialized = false;
 

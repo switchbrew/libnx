@@ -1,6 +1,6 @@
 // Copyright 2017 plutoo
-#include <switch/kernel/svc.h>
-#include <switch/kernel/mutex.h>
+#include "kernel/svc.h"
+#include "kernel/mutex.h"
 #include "../internal.h"
 
 #define HAS_LISTENERS 0x40000000

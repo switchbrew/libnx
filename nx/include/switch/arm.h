@@ -1,5 +1,5 @@
 #pragma once
-#include <switch/types.h>
+#include "types.h"
 
 static inline void* armGetTls(void) {
     void* ret;

@@ -1,10 +1,10 @@
 #include <string.h>
-#include <switch/types.h>
-#include <switch/result.h>
-#include <switch/ipc.h>
-#include <switch/kernel/detect.h>
-#include <switch/services/usb.h>
-#include <switch/services/sm.h>
+#include "types.h"
+#include "result.h"
+#include "ipc.h"
+#include "kernel/detect.h"
+#include "services/usb.h"
+#include "services/sm.h"
 
 #define TOTAL_INTERFACES 4
 #define TOTAL_ENDPOINTS 15*2

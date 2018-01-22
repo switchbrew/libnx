@@ -5,7 +5,7 @@
 #pragma once
 
 #include <sys/types.h>
-#include <switch/types.h>
+#include "types.h"
 
 /** Convert a UTF-8 sequence into a UTF-32 codepoint
  *

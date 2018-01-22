@@ -3,7 +3,7 @@
  * @brief Switch result code tools
  */
 #pragma once
-#include <switch/types.h>
+#include "types.h"
 
 /// Checks whether a result code indicates success.
 #define R_SUCCEEDED(res)   ((res)==0)

@@ -1,8 +1,8 @@
 // Copyright 2017 plutoo
 #pragma once
-#include <switch/arm.h>
-#include <switch/result.h>
-#include <switch/kernel/svc.h>
+#include "arm.h"
+#include "result.h"
+#include "kernel/svc.h"
 
 #define SFCI_MAGIC 0x49434653
 #define SFCO_MAGIC 0x4f434653

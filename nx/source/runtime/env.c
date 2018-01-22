@@ -1,8 +1,8 @@
 // Copyright 2018 plutoo
 #include <string.h>
-#include <switch/runtime/env.h>
-#include <switch/services/sm.h>
-#include <switch/services/fatal.h>
+#include "runtime/env.h"
+#include "services/sm.h"
+#include "services/fatal.h"
 
 static bool   g_isNso = false;
 static Handle g_mainThreadHandle = INVALID_HANDLE;

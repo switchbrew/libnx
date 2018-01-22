@@ -1,5 +1,5 @@
 #pragma once
-#include <switch/types.h>
+#include "types.h"
 
 // Copyright 2017 plutoo
 Result pmdmntInitialize(void);

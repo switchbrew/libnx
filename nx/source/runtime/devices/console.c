@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/iosupport.h>
-#include <switch/runtime/devices/console.h>
-#include <switch/kernel/svc.h>
-#include <switch/gfx/gfx.h>
+#include "runtime/devices/console.h"
+#include "kernel/svc.h"
+#include "gfx/gfx.h"
 
 #include "default_font_bin.h"
 

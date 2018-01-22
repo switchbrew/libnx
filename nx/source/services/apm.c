@@ -1,8 +1,8 @@
-#include <switch/types.h>
-#include <switch/result.h>
-#include <switch/ipc.h>
-#include <switch/services/apm.h>
-#include <switch/services/sm.h>
+#include "types.h"
+#include "result.h"
+#include "ipc.h"
+#include "services/apm.h"
+#include "services/sm.h"
 
 static Service g_apmSrv;
 static Service g_apmISession;

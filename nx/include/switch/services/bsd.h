@@ -1,6 +1,6 @@
 #pragma once
-#include <switch/types.h>
-#include <switch/kernel/tmem.h>
+#include "types.h"
+#include "kernel/tmem.h"
 
 struct bsd_sockaddr_in {
     u8  sin_len;

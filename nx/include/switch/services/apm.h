@@ -1,5 +1,5 @@
 #pragma once
-#include <switch/types.h>
+#include "types.h"
 
 /// These are used internally by applet.
 

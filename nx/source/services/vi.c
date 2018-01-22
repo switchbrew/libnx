@@ -1,10 +1,10 @@
 #include <string.h>
-#include <switch/types.h>
-#include <switch/result.h>
-#include <switch/ipc.h>
-#include <switch/services/applet.h>
-#include <switch/services/vi.h>
-#include <switch/kernel/detect.h>
+#include "types.h"
+#include "result.h"
+#include "ipc.h"
+#include "services/applet.h"
+#include "services/vi.h"
+#include "kernel/detect.h"
 
 static Service g_viSrv;
 

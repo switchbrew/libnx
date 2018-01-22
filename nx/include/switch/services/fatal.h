@@ -1,4 +1,4 @@
 #pragma once
-#include <switch/types.h>
+#include "types.h"
 
 __attribute__((noreturn)) void fatalSimple(Result err);

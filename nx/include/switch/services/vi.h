@@ -1,6 +1,6 @@
 #pragma once
-#include <switch/types.h>
-#include <switch/services/sm.h>
+#include "types.h"
+#include "services/sm.h"
 
 typedef struct {
     u64  display_id;

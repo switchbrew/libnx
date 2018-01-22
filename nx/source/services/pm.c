@@ -1,9 +1,9 @@
 // Copyright 2017 plutoo
-#include <switch/types.h>
-#include <switch/result.h>
-#include <switch/ipc.h>
-#include <switch/services/pm.h>
-#include <switch/services/sm.h>
+#include "types.h"
+#include "result.h"
+#include "ipc.h"
+#include "services/pm.h"
+#include "services/sm.h"
 
 static Service g_pmdmntSrv;
 

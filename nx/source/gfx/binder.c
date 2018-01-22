@@ -1,9 +1,9 @@
 #include <string.h>
-#include <switch/types.h>
-#include <switch/result.h>
-#include <switch/ipc.h>
-#include <switch/kernel/detect.h>
-#include <switch/gfx/binder.h>
+#include "types.h"
+#include "result.h"
+#include "ipc.h"
+#include "kernel/detect.h"
+#include "gfx/binder.h"
 
 void binderCreateSession(Binder *session, Handle sessionHandle, s32 id)
 {

@@ -4,11 +4,11 @@
 #include <sys/lock.h>
 #include <sys/reent.h>
 #include "../internal.h"
-#include <switch/types.h>
-#include <switch/runtime/env.h>
-#include <switch/kernel/mutex.h>
-#include <switch/services/fatal.h>
-#include <switch/result.h>
+#include "types.h"
+#include "runtime/env.h"
+#include "kernel/mutex.h"
+#include "services/fatal.h"
+#include "result.h"
 
 void __attribute__((weak)) NORETURN __libnx_exit(int rc);
 

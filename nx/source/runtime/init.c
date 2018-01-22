@@ -1,10 +1,10 @@
-#include <switch/types.h>
-#include <switch/runtime/env.h>
-#include <switch/services/sm.h>
-#include <switch/services/fatal.h>
-#include <switch/services/fs.h>
-#include <switch/services/hid.h>
-#include <switch/services/applet.h>
+#include "types.h"
+#include "runtime/env.h"
+#include "services/sm.h"
+#include "services/fatal.h"
+#include "services/fs.h"
+#include "services/hid.h"
+#include "services/applet.h"
 
 
 void __nx_exit(int rc);

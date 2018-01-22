@@ -1,6 +1,6 @@
 #pragma once
-#include <switch/types.h>
-#include <switch/services/sm.h>
+#include "types.h"
+#include "services/sm.h"
 
 /// usb:ds Switch-as-device<>host USB comms, see also here: http://switchbrew.org/index.php?title=USB_services
 

@@ -1,6 +1,6 @@
 // Copyright 2018 plutoo
-#include <switch/kernel/mutex.h>
-#include <switch/kernel/rwlock.h>
+#include "kernel/mutex.h"
+#include "kernel/rwlock.h"
 
 void rwlockReadLock(RwLock* r) {
     rmutexLock(&r->r);

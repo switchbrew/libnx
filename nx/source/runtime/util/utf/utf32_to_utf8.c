@@ -1,4 +1,4 @@
-#include <switch/runtime/util/utf.h>
+#include "runtime/util/utf.h"
 
 ssize_t
 utf32_to_utf8(uint8_t        *out,

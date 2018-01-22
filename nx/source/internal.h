@@ -1,7 +1,7 @@
 #pragma once
-#include <switch/arm.h>
-#include <switch/types.h>
-#include <switch/kernel/thread.h>
+#include "arm.h"
+#include "types.h"
+#include "kernel/thread.h"
 
 #define THREADVARS_MAGIC 0x21545624 // !TV$
 

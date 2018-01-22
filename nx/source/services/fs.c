@@ -1,10 +1,10 @@
 // Copyright 2017 plutoo
 #include <string.h>
-#include <switch/types.h>
-#include <switch/result.h>
-#include <switch/ipc.h>
-#include <switch/services/fs.h>
-#include <switch/services/sm.h>
+#include "types.h"
+#include "result.h"
+#include "ipc.h"
+#include "services/fs.h"
+#include "services/sm.h"
 
 static Service g_fsSrv;
 

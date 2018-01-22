@@ -1,14 +1,14 @@
 #include <string.h>
 #include <malloc.h>
-#include <switch/types.h>
-#include <switch/arm.h>
-#include <switch/result.h>
-#include <switch/kernel/svc.h>
-#include <switch/services/nv.h>
-#include <switch/gfx/binder.h>
-#include <switch/gfx/buffer_producer.h>
-#include <switch/gfx/nvioctl.h>
-#include <switch/gfx/nvgfx.h>
+#include "types.h"
+#include "arm.h"
+#include "result.h"
+#include "kernel/svc.h"
+#include "services/nv.h"
+#include "gfx/binder.h"
+#include "gfx/buffer_producer.h"
+#include "gfx/nvioctl.h"
+#include "gfx/nvgfx.h"
 
 //#include "nvgfx_gpu_gpfifo_data0_bin.h"
 

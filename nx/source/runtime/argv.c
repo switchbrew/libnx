@@ -1,7 +1,7 @@
 #include <string.h>
 #include <ctype.h>
-#include <switch/result.h>
-#include <switch/kernel/svc.h>
+#include "result.h"
+#include "kernel/svc.h"
 
 // System globals we define here
 int __system_argc;

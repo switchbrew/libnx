@@ -1,6 +1,6 @@
 // Copyright 2018 plutoo
 #pragma once
-#include <switch/types.h>
+#include "types.h"
 
 typedef enum {
     JitType_CodeMemory,
