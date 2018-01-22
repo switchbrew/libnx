@@ -30,7 +30,7 @@ void envSetup(void* ctx, Handle main_thread, LoaderReturnFn saved_lr)
     }
 
     // Detect NSO environment.
-    if (main_thread != INVALID_HANDLE)
+    if (main_thread != -1)
     {
         g_mainThreadHandle = main_thread;
         g_isNso = true;

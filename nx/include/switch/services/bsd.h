@@ -26,7 +26,8 @@ struct bsd_sockaddr_in {
 };
 
 const BsdConfig *bsdGetDefaultConfig(void);
-Result bsdInitialize(TransferMemory* tmem, const BsdConfig *config);
+Result bsdInitialize(const BsdConfig *config);
+void bsdExit(void);
 int bsdGetErrno(void);
 int bsdConnect(int sockfd, const void* addr, u32 addrlen);
 int bsdSocket(int domain, int type, int protocol);
@@ -38,30 +39,9 @@ int bsdRecv(int sockfd, void* buffer, size_t length, int flags);
 int bsdSetSockOpt(int sockfd, int level, int option_name, const void *option_value, size_t option_size);
 int bsdWrite(int sockfd, const void* buffer, size_t length);
 
-/**
- * @brief Computes the minimal size of the transfer memory to be passed to @ref bsdInitalize.
- *        Should the transfer memory be smaller than that, the BSD sockets service would only send
- *        ZeroWindow packets (for TCP), resulting in a transfer rate not exceeding 1 byte/s.
- * @param config Pointer to the BSD sockets service configuration.
- */
-static inline size_t bsdGetTransferMemSizeForConfig(const BsdConfig *config)
+static inline Result bsdInitializeDefault(void)
 {
-    u32 tcp_tx_buf_max_size = config->tcp_tx_buf_max_size != 0 ? config->tcp_tx_buf_max_size : config->tcp_tx_buf_size;
-    u32 tcp_rx_buf_max_size = config->tcp_rx_buf_max_size != 0 ? config->tcp_rx_buf_max_size : config->tcp_rx_buf_size;
-    u32 sum = tcp_tx_buf_max_size + tcp_rx_buf_max_size + config->udp_tx_buf_size + config->udp_rx_buf_size;
-
-    sum = ((sum + 0xFFF) >> 12) << 12; // page round-up
-    return (size_t)(config->sb_efficiency * sum);
-}
-
-static inline size_t bsdGetTransferMemSizeForDefaultConfig(void)
-{
-    return bsdGetTransferMemSizeForConfig(bsdGetDefaultConfig());
-}
-
-static inline Result bsdInitializeDefault(TransferMemory* tmem)
-{
-    return bsdInitialize(tmem, bsdGetDefaultConfig());
+    return bsdInitialize(bsdGetDefaultConfig());
 }
 
 #define BSD_AF_INET 2

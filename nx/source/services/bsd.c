@@ -7,13 +7,17 @@
 #include "kernel/shmem.h"
 #include "kernel/rwlock.h"
 
+#define EPIPE 32
+
 static Service g_bsdSrv;
 static Service g_bsdMonitor;
 static u64 g_bsdClientPid = -1;
 static int g_Errno = 0;
 
+static TransferMemory g_bsdTmem;
+
 static const BsdConfig g_defaultBsdConfig = {
-    .version = 2,
+    .version = 1,
 
     .tcp_tx_buf_size        = 0x8000,
     .tcp_rx_buf_size        = 0x10000,
@@ -26,7 +30,20 @@ static const BsdConfig g_defaultBsdConfig = {
     .sb_efficiency = 4,
 };
 
-#define EPIPE 32
+/*
+    This function computes the minimal size of the transfer memory to be passed to @ref bsdInitalize.
+    Should the transfer memory be smaller than that, the BSD sockets service would only send
+    ZeroWindow packets (for TCP), resulting in a transfer rate not exceeding 1 byte/s.
+*/
+static size_t _bsdGetTransferMemSizeForConfig(const BsdConfig *config)
+{
+    u32 tcp_tx_buf_max_size = config->tcp_tx_buf_max_size != 0 ? config->tcp_tx_buf_max_size : config->tcp_tx_buf_size;
+    u32 tcp_rx_buf_max_size = config->tcp_rx_buf_max_size != 0 ? config->tcp_rx_buf_max_size : config->tcp_rx_buf_size;
+    u32 sum = tcp_tx_buf_max_size + tcp_rx_buf_max_size + config->udp_tx_buf_size + config->udp_rx_buf_size;
+
+    sum = ((sum + 0xFFF) >> 12) << 12; // page round-up
+    return (size_t)(config->sb_efficiency * sum);
+}
 
 static Result _bsdRegisterClient(Service* srv, TransferMemory* tmem, const BsdConfig *config, u64* pid_out) {
     IpcCommand c;
@@ -108,28 +125,43 @@ const BsdConfig *bsdGetDefaultConfig(void) {
     return &g_defaultBsdConfig;
 }
 
-Result bsdInitialize(TransferMemory* tmem, const BsdConfig *config) {
+Result bsdInitialize(const BsdConfig *config) {
     const char* bsd_srv = "bsd:s";
+
+    if(serviceIsActive(&g_bsdSrv) || serviceIsActive(&g_bsdMonitor))
+        return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
+
     Result rc = smGetService(&g_bsdSrv, bsd_srv);
 
     if (R_FAILED(rc)) {
         bsd_srv = "bsd:u";
         rc = smGetService(&g_bsdSrv, bsd_srv);
     }
+    if(R_FAILED(rc)) goto error;
 
-    if (R_SUCCEEDED(rc)) {
-        rc = smGetService(&g_bsdMonitor, bsd_srv);
+    rc = smGetService(&g_bsdMonitor, bsd_srv);
+    if(R_FAILED(rc)) goto error;
 
-        if (R_SUCCEEDED(rc)) {
-            rc = _bsdRegisterClient(&g_bsdSrv, tmem, config, &g_bsdClientPid);
+    rc = tmemCreate(&g_bsdTmem, _bsdGetTransferMemSizeForConfig(config), 0);
+    if(R_FAILED(rc)) goto error;
 
-            if (R_SUCCEEDED(rc)) {
-                rc = _bsdStartMonitor(&g_bsdMonitor, g_bsdClientPid);
-            }
-        }
-    }
+    rc = _bsdRegisterClient(&g_bsdSrv, &g_bsdTmem, config, &g_bsdClientPid);
+    if(R_FAILED(rc)) goto error;
+
+    rc = _bsdStartMonitor(&g_bsdMonitor, g_bsdClientPid);
+    if(R_FAILED(rc)) goto error;
 
     return rc;
+
+error:
+    bsdExit();
+    return rc;
+}
+
+void bsdExit(void) {
+    serviceClose(&g_bsdMonitor);
+    serviceClose(&g_bsdSrv);
+    tmemClose(&g_bsdTmem);
 }
 
 int bsdGetErrno(void) {

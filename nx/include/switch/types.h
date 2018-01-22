@@ -73,4 +73,4 @@ typedef enum {
 #define DEPRECATED
 #endif
 
-#define INVALID_HANDLE ((Handle) -1)
+#define INVALID_HANDLE ((Handle) 0)
