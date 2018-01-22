@@ -1,6 +1,11 @@
 // Copyright 2017 plutoo
-#include <switch.h>
 #include <malloc.h>
+#include <string.h>
+#include <switch/types.h>
+#include <switch/result.h>
+#include <switch/kernel/svc.h>
+#include <switch/kernel/virtmem.h>
+#include <switch/kernel/thread.h>
 #include "../internal.h"
 
 extern const u8 __tdata_lma[];

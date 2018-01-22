@@ -1,5 +1,9 @@
 #include <string.h>
-#include <switch.h>
+#include <switch/types.h>
+#include <switch/result.h>
+#include <switch/gfx/parcel.h>
+#include <switch/gfx/buffer_producer.h>
+
 
 // This implements the version of Android IGraphicBufferProducer used by Switch.
 // Hence names/params etc here are based on Android IGraphicBufferProducer.cpp.

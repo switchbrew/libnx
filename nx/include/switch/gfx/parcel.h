@@ -1,5 +1,6 @@
-#include <string.h>
-#include <switch.h>
+#pragma once
+#include <switch/result.h>
+#include <switch/gfx/binder.h>
 
 typedef struct {
     u8 payload[0x400];

@@ -1,3 +1,6 @@
+#pragma once
+#include <switch/types.h>
+
 typedef enum {
 	NVSERVTYPE_Default = -1,
 	NVSERVTYPE_Application = 0,

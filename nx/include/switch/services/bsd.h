@@ -1,3 +1,7 @@
+#pragma once
+#include <switch/types.h>
+#include <switch/kernel/tmem.h>
+
 struct bsd_sockaddr_in {
     u8  sin_len;
     u8  sin_family;

@@ -1,6 +1,14 @@
 #include <string.h>
 #include <malloc.h>
-#include <switch.h>
+#include <switch/types.h>
+#include <switch/arm.h>
+#include <switch/result.h>
+#include <switch/kernel/svc.h>
+#include <switch/services/nv.h>
+#include <switch/gfx/binder.h>
+#include <switch/gfx/buffer_producer.h>
+#include <switch/gfx/nvioctl.h>
+#include <switch/gfx/nvgfx.h>
 
 //#include "nvgfx_gpu_gpfifo_data0_bin.h"
 

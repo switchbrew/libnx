@@ -65,7 +65,7 @@ typedef enum {
 #define NORETURN   __attribute__((noreturn))
 #define IGNORE_ARG(x) (void)(x)
 
-#ifndef LIBCTRU_NO_DEPRECATION
+#ifndef LIBNX_NO_DEPRECATION
 /// Flags a function as deprecated.
 #define DEPRECATED __attribute__ ((deprecated))
 #else

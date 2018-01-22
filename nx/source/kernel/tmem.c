@@ -1,6 +1,10 @@
 // Copyright 2017 plutoo
-#include <switch.h>
 #include <malloc.h>
+#include <switch/types.h>
+#include <switch/result.h>
+#include <switch/kernel/svc.h>
+#include <switch/kernel/tmem.h>
+#include <switch/kernel/virtmem.h>
 
 Result tmemCreate(TransferMemory* t, size_t size, Permission perm)
 {

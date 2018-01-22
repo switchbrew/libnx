@@ -1,5 +1,12 @@
 #include <string.h>
-#include <switch.h>
+#include <switch/types.h>
+#include <switch/result.h>
+#include <switch/ipc.h>
+#include <switch/services/applet.h>
+#include <switch/services/hid.h>
+#include <switch/services/sm.h>
+#include <switch/kernel/shmem.h>
+#include <switch/kernel/rwlock.h>
 
 static Service g_hidSrv;
 static Service g_hidIAppletResource;

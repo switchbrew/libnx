@@ -1,5 +1,7 @@
 // Copyright 2017 plutoo
-#include <switch.h>
+#include <switch/types.h>
+#include <switch/kernel/detect.h>
+#include <switch/kernel/svc.h>
 
 static bool g_IsAbove200;
 static bool g_IsAbove300;

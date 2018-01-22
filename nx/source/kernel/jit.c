@@ -1,6 +1,13 @@
 // Copyright 2018 plutoo
-#include <switch.h>
 #include <malloc.h>
+
+#include <switch/types.h>
+#include <switch/result.h>
+#include <switch/runtime/env.h>
+#include <switch/kernel/svc.h>
+#include <switch/kernel/detect.h>
+#include <switch/kernel/virtmem.h>
+#include <switch/kernel/jit.h>
 
 Result jitCreate(Jit* j, size_t size)
 {

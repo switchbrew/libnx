@@ -1,5 +1,10 @@
 #include <string.h>
-#include <switch.h>
+#include <switch/types.h>
+#include <switch/result.h>
+#include <switch/ipc.h>
+#include <switch/services/applet.h>
+#include <switch/services/vi.h>
+#include <switch/kernel/detect.h>
 
 static Service g_viSrv;
 

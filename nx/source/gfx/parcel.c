@@ -1,5 +1,6 @@
 #include <string.h>
-#include <switch.h>
+#include <switch/result.h>
+#include <switch/gfx/parcel.h>
 
 //This implements Android Parcel, hence names etc here are based on Android Parcel.cpp.
 

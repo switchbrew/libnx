@@ -6,7 +6,13 @@
   Modified by plutoo.
 */
 
-#include <switch.h>
+#include <string.h>
+#include <switch/types.h>
+#include <switch/result.h>
+#include <switch/services/fatal.h>
+#include <switch/kernel/mutex.h>
+#include <switch/kernel/svc.h>
+#include <switch/kernel/random.h>
 
 #define ROTL32(x, n) (((x) << (n)) | ((x) >> (32-(n))))
 

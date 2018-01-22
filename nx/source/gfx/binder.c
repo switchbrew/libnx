@@ -1,5 +1,9 @@
 #include <string.h>
-#include <switch.h>
+#include <switch/types.h>
+#include <switch/result.h>
+#include <switch/ipc.h>
+#include <switch/kernel/detect.h>
+#include <switch/gfx/binder.h>
 
 void binderCreateSession(Binder *session, Handle sessionHandle, s32 id)
 {

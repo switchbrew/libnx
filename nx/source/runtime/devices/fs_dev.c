@@ -8,7 +8,9 @@
 #include <sys/param.h>
 #include <unistd.h>
 
-#include <switch.h>
+#include <switch/runtime/devices/fs_dev.h>
+#include <switch/runtime/util/utf.h>
+#include <switch/services/fs.h>
 
 
 /*! @internal

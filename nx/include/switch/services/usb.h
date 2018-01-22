@@ -1,3 +1,7 @@
+#pragma once
+#include <switch/types.h>
+#include <switch/services/sm.h>
+
 /// usb:ds Switch-as-device<>host USB comms, see also here: http://switchbrew.org/index.php?title=USB_services
 
 /// Names starting with "libusb" were changed to "usb" to avoid collision with actual libusb if it's ever used.

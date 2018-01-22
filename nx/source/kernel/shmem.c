@@ -1,6 +1,10 @@
 // Copyright 2017 plutoo
-#include <switch.h>
 #include <malloc.h>
+#include <switch/types.h>
+#include <switch/result.h>
+#include <switch/kernel/svc.h>
+#include <switch/kernel/virtmem.h>
+#include <switch/kernel/shmem.h>
 
 Result shmemCreate(SharedMemory* s, size_t size, Permission local_perm, Permission remote_perm)
 {

@@ -1,5 +1,6 @@
-#include <string.h>
-#include <switch.h>
+#include <switch/types.h>
+#include <switch/services/acc.h>
+#include <switch/services/sm.h>
 
 static Service g_accSrv;
 

@@ -1,5 +1,12 @@
 #include <string.h>
-#include <switch.h>
+#include <switch/types.h>
+#include <switch/result.h>
+#include <switch/ipc.h>
+#include <switch/services/fatal.h>
+#include <switch/services/applet.h>
+#include <switch/services/apm.h>
+#include <switch/services/sm.h>
+#include <switch/kernel/detect.h>
 
 __attribute__((weak)) u32 __nx_applet_type = AppletType_Default;
 __attribute__((weak)) bool __nx_applet_auto_notifyrunning = true;

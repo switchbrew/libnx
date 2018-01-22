@@ -1,5 +1,9 @@
-#include <switch.h>
 #include <string.h>
+#include <switch/types.h>
+#include <switch/result.h>
+#include <switch/services/nv.h>
+#include <switch/gfx/ioctl.h>
+#include <switch/gfx/nvioctl.h>
 
 Result nvioctlNvhostCtrl_EventSignal(u32 fd, u32 event_id) {
     struct {

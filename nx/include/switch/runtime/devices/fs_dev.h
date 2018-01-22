@@ -3,6 +3,7 @@
  * @brief FS driver.
  */
 #pragma once
+#include <switch/services/fs.h>
 
 //NOTE: This is currently not usable.
 

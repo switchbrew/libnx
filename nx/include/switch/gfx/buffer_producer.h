@@ -1,5 +1,4 @@
 #pragma once
-
 #include <switch/gfx/nvioctl.h>
 
 typedef struct {
