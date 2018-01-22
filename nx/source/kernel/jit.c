@@ -3,6 +3,7 @@
 #include "types.h"
 #include "result.h"
 #include "runtime/env.h"
+#include "arm/cache.h"
 #include "kernel/svc.h"
 #include "kernel/detect.h"
 #include "kernel/virtmem.h"
@@ -121,7 +122,8 @@ Result jitTransitionToExecutable(Jit* j)
         break;
 
     case JitType_JitMemory:
-        // todo: Clean dcache, invalidate icache.
+        armDCacheFlush(j->rw_addr, j->size);
+        armICacheInvalidate(j->rx_addr, j->size);
         break;
     }
 
