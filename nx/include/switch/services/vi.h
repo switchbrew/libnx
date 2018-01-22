@@ -1,6 +1,6 @@
 #pragma once
-#include "types.h"
-#include "services/sm.h"
+#include "../types.h"
+#include "../services/sm.h"
 
 typedef struct {
     u64  display_id;

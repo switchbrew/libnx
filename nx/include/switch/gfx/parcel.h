@@ -1,6 +1,6 @@
 #pragma once
-#include "result.h"
-#include "gfx/binder.h"
+#include "../result.h"
+#include "../gfx/binder.h"
 
 typedef struct {
     u8 payload[0x400];

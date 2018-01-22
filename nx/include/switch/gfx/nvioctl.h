@@ -1,5 +1,5 @@
 #pragma once
-#include "types.h"
+#include "../types.h"
 
 typedef struct {
     u32 arch;                           // 0x120 (NVGPU_GPU_ARCH_GM200)

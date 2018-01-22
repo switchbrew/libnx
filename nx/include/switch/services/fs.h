@@ -1,7 +1,7 @@
 // Copyright 2017 plutoo
 #pragma once
-#include "types.h"
-#include "services/sm.h"
+#include "../types.h"
+#include "../services/sm.h"
 
 // We use wrapped handles for type safety.
 

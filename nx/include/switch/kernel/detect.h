@@ -1,6 +1,6 @@
 // Copyright 2017 plutoo
 #pragma once
-#include "types.h"
+#include "../types.h"
 
 bool kernelAbove200(void);
 bool kernelAbove300(void);

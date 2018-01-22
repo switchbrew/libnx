@@ -1,5 +1,5 @@
 #pragma once
-#include "types.h"
+#include "../types.h"
 
 Result nvgfxInitialize(void);
 void nvgfxExit(void);

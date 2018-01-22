@@ -1,7 +1,7 @@
 #pragma once
-#include "types.h"
-#include "kernel/svc.h"
-#include "ipc.h"
+#include "../types.h"
+#include "../kernel/svc.h"
+#include "../ipc.h"
 
 typedef enum {
     ServiceType_Uninitialized,

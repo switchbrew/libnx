@@ -1,5 +1,5 @@
 #pragma once
-#include "types.h"
+#include "../../types.h"
 
 Result usbCommsInitialize(void);
 void usbCommsExit(void);

@@ -1,6 +1,6 @@
 #pragma once
-#include "types.h"
-#include "kernel/tmem.h"
+#include "../types.h"
+#include "../kernel/tmem.h"
 
 /// Configuration structure for bsdInitalize
 typedef struct  {

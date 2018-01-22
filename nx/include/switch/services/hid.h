@@ -1,8 +1,8 @@
 #pragma once
 
 #include <assert.h>
-#include "types.h"
-#include "services/sm.h"
+#include "../types.h"
+#include "../services/sm.h"
 
 // Begin enums and output structs
 

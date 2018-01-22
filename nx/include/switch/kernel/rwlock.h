@@ -1,6 +1,6 @@
 // Copyright 2018 plutoo
 #pragma once
-#include "kernel/mutex.h"
+#include "../kernel/mutex.h"
 
 typedef struct {
     RMutex r;

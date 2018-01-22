@@ -1,5 +1,5 @@
 #pragma once
-#include "types.h"
+#include "../types.h"
 
 typedef enum {
     AppletType_None = -2,

@@ -1,6 +1,6 @@
 // Copyright 2018 plutoo
 #pragma once
-#include "types.h"
+#include "../types.h"
 
 typedef struct {
     u32 Key;
