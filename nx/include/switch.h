@@ -22,7 +22,8 @@ extern "C" {
 #include "switch/kernel/random.h"
 #include "switch/kernel/jit.h"
 
-#include "switch/arm.h"
+#include "switch/arm/tls.h"
+#include "switch/arm/cache.h"
 #include "switch/ipc.h"
 
 #include "switch/services/sm.h"

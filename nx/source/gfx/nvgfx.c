@@ -1,8 +1,8 @@
 #include <string.h>
 #include <malloc.h>
 #include "types.h"
-#include "arm.h"
 #include "result.h"
+#include "arm/cache.h"
 #include "kernel/svc.h"
 #include "services/nv.h"
 #include "gfx/binder.h"

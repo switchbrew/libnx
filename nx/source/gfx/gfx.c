@@ -1,6 +1,7 @@
 #include <string.h>
 #include "types.h"
 #include "result.h"
+#include "arm/cache.h"
 #include "services/fatal.h"
 #include "services/vi.h"
 #include "services/applet.h"

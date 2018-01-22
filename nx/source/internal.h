@@ -1,6 +1,6 @@
 #pragma once
-#include "arm.h"
 #include "types.h"
+#include "arm/tls.h"
 #include "kernel/thread.h"
 
 #define THREADVARS_MAGIC 0x21545624 // !TV$

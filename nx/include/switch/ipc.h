@@ -1,7 +1,7 @@
 // Copyright 2017 plutoo
 #pragma once
-#include "arm.h"
 #include "result.h"
+#include "arm/tls.h"
 #include "kernel/svc.h"
 
 #define SFCI_MAGIC 0x49434653
