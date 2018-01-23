@@ -22,42 +22,42 @@ typedef struct  {
     u32 udp_rx_buf_size;        ///< Size of the UDP receive buffer (typically 0xA500 bytes).
 
     u32 sb_efficiency;          ///< Number of buffers for each socket (standard values range from 1 to 8).
-} BsdConfig;
+} BsdBufferConfig;
 
-struct bsd_sockaddr_in {
-    u8  sin_len;
-    u8  sin_family;
-    u16 sin_port;
-    u32 sin_addr;
-    u8  sin_zero[8];
-};
-
-const BsdConfig *bsdGetDefaultConfig(void);
-Result bsdInitialize(const BsdConfig *config);
+const BsdBufferConfig *bsdGetDefaultBufferConfig(void);
+Result bsdInitialize(const BsdBufferConfig *config);
 void bsdExit(void);
-int bsdGetErrno(void);
-int bsdConnect(int sockfd, const void* addr, u32 addrlen);
+
 int bsdSocket(int domain, int type, int protocol);
-int bsdBind(int sockfd, const void* addr, u32 addrlen);
+int bsdSocketExempt(int domain, int type, int protocol);
+int bsdOpen(const char *pathname, int flags);
+int bsdSelect(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout);
+int bsdPoll(struct pollfd *fds, nfds_t nfds, int timeout);
+int bsdSysctl(const int *name, size_t namelen, void *oldp, size_t *oldlenp, const void *newp, size_t newlen);
+ssize_t bsdRecv(int sockfd, void *buf, size_t len, int flags);
+ssize_t bsdRecvFrom(int sockfd, void *buf, size_t len, int flags, struct sockaddr *src_addr, socklen_t *addrlen);
+int bsdSend(int sockfd, const void* buf, size_t len, int flags);
+int bsdSendTo(int sockfd, const void *buf, size_t len, int flags, const struct sockaddr *dest_addr, socklen_t addrlen);
+int bsdAccept(int sockfd, struct sockaddr *address, socklen_t *addrlen);
+int bsdBind(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+int bsdConnect(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+int bsdGetPeerName(int sockfd, struct sockaddr *address, socklen_t *addrlen);
+int bsdGetSockName(int sockfd, struct sockaddr *address, socklen_t *addrlen);
+int bsdGetSockOpt(int sockfd, int level, int optname, void *optval, socklen_t *optlen);
 int bsdListen(int sockfd, int backlog);
-int bsdSend(int sockfd, const void* buffer, size_t length, int flags);
-int bsdSendTo(int sockfd, const void* buffer, size_t length, int flags, const struct bsd_sockaddr_in *dest_addr, size_t dest_len);
-int bsdRecv(int sockfd, void* buffer, size_t length, int flags);
-int bsdSetSockOpt(int sockfd, int level, int option_name, const void *option_value, size_t option_size);
-int bsdWrite(int sockfd, const void* buffer, size_t length);
+int bsdIoctl(int fd, int request, ...);
+int bsdFnctl(int fd, int cmd, ...);
+int bsdSetSockOpt(int sockfd, int level, int optname, const void *optval, size_t optlen);
+int bsdShutdown(int sockfd, int how);
+int bsdShutdownAllSockets(int how);
+ssize_t bsdWrite(int fd, const void *buf, size_t count);
+ssize_t bsdRead(int fd, void *buf, size_t count);
+int bsdClose(int fd);
+int bsdDuplicateSocket(int sockfd);
+
+//TODO: Reverse-engineer GetResourceStatistics, sendmmsg/recvmmsg (custom (un)serialization)
 
 static inline Result bsdInitializeDefault(void)
 {
-    return bsdInitialize(bsdGetDefaultConfig());
+    return bsdInitialize(bsdGetDefaultBufferConfig());
 }
-
-#define BSD_AF_INET 2
-#define BSD_AF_INET6 10
-#define BSD_IPPROTO_IP 0
-#define BSD_IPPROTO_TCP 6
-#define BSD_IPPROTO_UDP 17
-
-#define BSD_SOCK_STREAM 1
-#define BSD_SOCK_DGRAM 2
-
-#define BSD_MSG_RECV_ALL 0x40
