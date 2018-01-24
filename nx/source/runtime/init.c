@@ -5,7 +5,7 @@
 #include "services/fs.h"
 #include "services/hid.h"
 #include "services/applet.h"
-
+#include "runtime/devices/fs_dev.h"
 
 void __nx_exit(int rc);
 

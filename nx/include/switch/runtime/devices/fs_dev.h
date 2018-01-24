@@ -3,6 +3,8 @@
  * @brief FS driver.
  */
 #pragma once
+
+#include <sys/types.h>
 #include "../../services/fs.h"
 
 //NOTE: This is currently not usable.
