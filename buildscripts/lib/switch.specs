@@ -4,5 +4,5 @@
 %(old_link) -T switch.ld%s -pie --gc-sections -z text -z nodynamic-undefined-weak
 
 *startfile:
-switch_crt0%O%s crti%O%s crtbegin%O%s
+crti%O%s crtbegin%O%s
 
