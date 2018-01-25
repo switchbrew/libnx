@@ -87,7 +87,7 @@ Result appletInitialize(void)
     }
 
     if (R_SUCCEEDED(rc)) {
-        #define APT_BUSY_ERROR 0x19280
+        #define AM_BUSY_ERROR 0x19280
 
         do {
             u32 cmd_id;
@@ -104,11 +104,11 @@ Result appletInitialize(void)
 
             rc = _appletGetSessionProxy(&g_appletProxySession, cmd_id, CUR_PROCESS_HANDLE, NULL);
 
-            if (rc == APT_BUSY_ERROR) {
+            if (rc == AM_BUSY_ERROR) {
                 svcSleepThread(10000000);
             }
 
-        } while (rc == APT_BUSY_ERROR);
+        } while (rc == AM_BUSY_ERROR);
     }
 
     // Get*Functions, for ILibraryAppletProxy this is GetLibraryAppletSelfAccessor
@@ -187,7 +187,6 @@ Result appletInitialize(void)
         rc = _appletGetOperationMode(&g_appletOperationMode);
     if (R_SUCCEEDED(rc))
         rc = _appletGetPerformanceMode(&g_appletPerformanceMode);
-
     if (R_SUCCEEDED(rc) && __nx_applet_type!=AppletType_Application)
         rc = _appletGetCurrentFocusState(&g_appletFocusState);
 
@@ -237,6 +236,7 @@ void appletExit(void)
     serviceClose(&g_appletIDisplayController);
     serviceClose(&g_appletIDebugFunctions);
 
+    serviceClose(&g_appletProxySession);
     serviceClose(&g_appletSrv);
     g_appletResourceUserId = 0;
 }
