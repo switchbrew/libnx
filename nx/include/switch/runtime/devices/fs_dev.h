@@ -7,8 +7,6 @@
 #include <sys/types.h>
 #include "../../services/fs.h"
 
-//NOTE: This is currently not usable.
-
 #define FSDEV_DIRITER_MAGIC 0x66736476 /* "fsdv" */
 
 /*! Open directory struct */

@@ -90,13 +90,13 @@ void __attribute__((weak)) __appInit(void)
     if (R_FAILED(rc))
         fatalSimple(MAKERESULT(Module_Libnx, LibnxError_InitFail_FS));
 
-    //fsdevInit();
+    fsdevInit();
 }
 
 void __attribute__((weak)) __appExit(void)
 {
     // Cleanup default services.
-    //fsdevExit();
+    fsdevExit();
     fsExit();
     hidExit();
     appletExit();
