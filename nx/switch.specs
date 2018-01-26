@@ -1,0 +1,8 @@
+%rename link                old_link
+
+*link:
+%(old_link) -T %:getenv(DEVKITPRO /libnx/switch.ld) -pie --gc-sections -z text -z nodynamic-undefined-weak
+
+*startfile:
+crti%O%s crtbegin%O%s
+
