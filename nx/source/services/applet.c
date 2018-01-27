@@ -38,8 +38,6 @@ static bool g_appletNotifiedRunning = 0;
 
 static AppletHookCookie g_appletFirstHook;
 
-void appletExit(void);
-
 static Result _appletGetHandle(Service* srv, Handle* handle_out, u64 cmd_id);
 static Result _appletGetSession(Service* srv, Service* srv_out, u64 cmd_id);
 static Result _appletGetSessionProxy(Service* srv_out, u64 cmd_id, Handle prochandle, u8 *AppletAttribute);
