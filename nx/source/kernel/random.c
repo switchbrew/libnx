@@ -65,7 +65,7 @@ static void _Round(u8 output[64], const u32 input[16])
 
 static const char sigma[16] = "expand 32-byte k";
 
-void chachaInit(ChaCha* x, const u8* key, const u8* iv)
+static void chachaInit(ChaCha* x, const u8* key, const u8* iv)
 {
     // Setup key.
     x->input[0]  = U8TO32_LITTLE(sigma + 0);
@@ -88,7 +88,7 @@ void chachaInit(ChaCha* x, const u8* key, const u8* iv)
     x->input[15] = U8TO32_LITTLE(iv + 4);
 }
 
-void chachaEncrypt(ChaCha* x, const u8* m, u8* c, size_t bytes)
+static void chachaEncrypt(ChaCha* x, const u8* m, u8* c, size_t bytes)
 {
     u8 output[64];
     int i;
@@ -123,7 +123,7 @@ static ChaCha g_chacha;
 static bool   g_randInit = false;
 static Mutex  g_randMutex;
 
-void _randomInit(void)
+static void _randomInit(void)
 {
     // Has already initialized?
     if (g_randInit)

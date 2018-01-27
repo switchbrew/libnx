@@ -105,7 +105,7 @@ enum {
 };
 
 Result bufferProducerInitialize(Binder *session);
-void bufferProducerExit();
+void bufferProducerExit(void);
 
 Result bufferProducerRequestBuffer(s32 bufferIdx, bufferProducerGraphicBuffer *buf);
 Result bufferProducerDequeueBuffer(bool async, u32 width, u32 height, s32 format, u32 usage, s32 *buf, bufferProducerFence *fence);

@@ -23,7 +23,7 @@ static struct _reent* __libnx_get_reent(void) {
     return tv->reent;
 }
 
-void newlibSetup() {
+void newlibSetup(void) {
     // Register newlib syscalls
     __syscalls.exit     = __libnx_exit;
     __syscalls.getreent = __libnx_get_reent;

@@ -204,7 +204,7 @@ static inline void consolePosition(int x, int y) {
 }
 
 //---------------------------------------------------------------------------------
-ssize_t con_write(struct _reent *r,void *fd,const char *ptr, size_t len) {
+static ssize_t con_write(struct _reent *r,void *fd,const char *ptr, size_t len) {
 //---------------------------------------------------------------------------------
 
 	char chr;
