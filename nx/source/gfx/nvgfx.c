@@ -57,7 +57,7 @@ extern size_t g_gfx_singleframebuf_size;
 
 Result _gfxGraphicBufferInit(s32 buf, u32 nvmap_handle);
 
-Result nvmapobjInitialize(nvmapobj *obj, size_t size) {
+static Result nvmapobjInitialize(nvmapobj *obj, size_t size) {
     Result rc=0;
 
     if(obj->initialized)return 0;
@@ -77,7 +77,7 @@ Result nvmapobjInitialize(nvmapobj *obj, size_t size) {
     return rc;
 }
 
-void nvmapobjClose(nvmapobj *obj) {
+static void nvmapobjClose(nvmapobj *obj) {
     if(!obj->initialized)return;
 
     if (obj->mem) {
@@ -88,13 +88,13 @@ void nvmapobjClose(nvmapobj *obj) {
     memset(obj, 0, sizeof(nvmapobj));
 }
 
-void nvmapobjCloseAll(void) {
+static void nvmapobjCloseAll(void) {
     u32 pos=0;
 
     for(pos=0; pos<sizeof(nvmap_objs)/sizeof(nvmapobj); pos++) nvmapobjClose(&nvmap_objs[pos]);
 }
 
-Result nvmapobjSetup(nvmapobj *obj, u32 heapmask, u32 flags, u32 align, u8 kind) {
+static Result nvmapobjSetup(nvmapobj *obj, u32 heapmask, u32 flags, u32 align, u8 kind) {
     Result rc=0;
 
     rc = nvioctlNvmap_Create(g_nvgfx_fd_nvmap, obj->mem_size, &obj->handle);
