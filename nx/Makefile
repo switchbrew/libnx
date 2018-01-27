@@ -2,11 +2,11 @@
 .SUFFIXES:
 #---------------------------------------------------------------------------------
 
-ifeq ($(strip $(DEVKITA64)),)
-$(error "Please set DEVKITA64 in your environment. export DEVKITA64=<path to>devkitA64")
+ifeq ($(strip $(DEVKITPRO)),)
+$(error "Please set DEVKITPRO in your environment. export DEVKITPRO=<path to>/devkitpro")
 endif
 
-include $(DEVKITA64)/base_rules
+include $(DEVKITPRO)/devkitA64/base_rules
 
 export LIBNX_MAJOR	:= 1
 export LIBNX_MINOR	:= 0
