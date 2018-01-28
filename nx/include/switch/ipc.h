@@ -1,14 +1,22 @@
-// Copyright 2017 plutoo
+/**
+ * @file ipc.h
+ * @brief Inter-process communication handling
+ * @author plutoo
+ * @copyright libnx Authors
+ */
 #pragma once
 #include "result.h"
 #include "arm/tls.h"
 #include "kernel/svc.h"
 
+/// IPC input header magic
 #define SFCI_MAGIC 0x49434653
+/// IPC output header magic
 #define SFCO_MAGIC 0x4f434653
 
 #pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
 
+/// IPC command structure.
 typedef struct {
     size_t NumSend; // A
     size_t NumRecv; // B

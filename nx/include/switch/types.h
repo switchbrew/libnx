@@ -1,6 +1,7 @@
 /**
  * @file types.h
  * @brief Various system types.
+ * @copyright libnx Authors
  */
 #pragma once
 
@@ -11,7 +12,6 @@
 /// The maximum value of a u64.
 #define U64_MAX	UINT64_MAX
 
-/// would be nice if newlib had this already
 #ifndef SSIZE_MAX
 #ifdef SIZE_MAX
 #define SSIZE_MAX ((SIZE_MAX) >> 1)
@@ -39,19 +39,20 @@ typedef volatile s16 vs16; ///< 16-bit volatile signed integer.
 typedef volatile s32 vs32; ///< 32-bit volatile signed integer.
 typedef volatile s64 vs64; ///< 64-bit volatile signed integer.
 
-typedef u32 Handle;                 ///< Resource handle.
-typedef u32 Result;                 ///< Function result.
+typedef u32 Handle;                 ///< Kernel object handle.
+typedef u32 Result;                 ///< Function error code result type.
 typedef void (*ThreadFunc)(void *); ///< Thread entrypoint function.
-typedef void (*voidfn)(void);
+typedef void (*voidfn)(void);       ///< Function without arguments nor return value.
 
+/// Permission bitmasks
 typedef enum {
-    PERM_NONE = 0,
-    PERM_R    = 1,
-    PERM_W    = 2,
-    PERM_X    = 4,
-    PERM_RW   = PERM_R | PERM_W,
-    PERM_RX   = PERM_R | PERM_X,
-    PERM_DONTCARE = 0x10000000
+    PERM_NONE = 0,               ///< No permissions.
+    PERM_R    = 1,               ///< Read permission.
+    PERM_W    = 2,               ///< Write permission.
+    PERM_X    = 4,               ///< Execute permission.
+    PERM_RW   = PERM_R | PERM_W, ///< Read/write permissions.
+    PERM_RX   = PERM_R | PERM_X, ///< Read/execute permissions.
+    PERM_DONTCARE = 0x10000000,  ///< Don't care
 } Permission;
 
 /// Creates a bitmask from a bit number.
