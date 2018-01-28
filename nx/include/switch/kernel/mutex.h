@@ -16,6 +16,7 @@ typedef _LOCK_RECURSIVE_T RMutex;
 /**
  * @brief Initializes a mutex.
  * @param m Mutex object.
+ * @note A mutex can also be statically initialized by assigning 0 to it.
  */
 static inline void mutexInit(Mutex* m)
 {
@@ -37,6 +38,7 @@ void mutexUnlock(Mutex* m);
 /**
  * @brief Initializes a recursive mutex.
  * @param m Recursive mutex object.
+ * @note A recursive mutex can also be statically initialized by assigning {0,0,0} to it.
  */
 static inline void rmutexInit(RMutex* m)
 {

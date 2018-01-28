@@ -11,7 +11,7 @@
 bool kernelAbove200(void);
 /// Returns true if the kernel version is equal to or above 3.0.0.
 bool kernelAbove300(void);
-/// Returns true if the kernel version is equal to or above 2.0.0.
+/// Returns true if the kernel version is equal to or above 4.0.0.
 bool kernelAbove400(void);
-/// Returns true if code is running under a debugger.
+/// Returns true if the process has a debugger attached.
 bool detectDebugger(void);
