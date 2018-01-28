@@ -39,7 +39,7 @@ enum {
 typedef void NORETURN (*LoaderReturnFn)(int result_code);
 
 /**
- * @brief Sets up the homebrew environment (internally called).
+ * @brief Parses the homebrew loader environment block (internally called).
  * @param ctx Reserved.
  * @param main_thread Reserved.
  * @param saved_lr Reserved.

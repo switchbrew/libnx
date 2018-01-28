@@ -57,10 +57,7 @@ static inline void ipcInitialize(IpcCommand* cmd) {
     cmd->NumHandlesMove = 0;
 }
 
-/**
- * @brief IPC buffer descriptor.
- * @todo Make sure sizeof isn't 16 bytes!
- */
+/// IPC buffer descriptor.
 typedef struct {
     u32 Size;   ///< Size of the buffer.
     u32 Addr;   ///< Lower 32-bits of the address of the buffer
