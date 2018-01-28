@@ -146,14 +146,14 @@ static void _randomInit(void)
     g_randInit = true;
 }
 
-void randomGet(u8* buf, size_t len)
+void randomGet(void* buf, size_t len)
 {
     mutexLock(&g_randMutex);
 
     _randomInit();
 
     memset(buf, 0, len);
-    chachaEncrypt(&g_chacha, buf, buf, len);
+    chachaEncrypt(&g_chacha, (const u8*)buf, (u8*)buf, len);
 
     mutexUnlock(&g_randMutex);
 }
@@ -161,6 +161,6 @@ void randomGet(u8* buf, size_t len)
 u64 randomGet64(void)
 {
     u64 tmp;
-    randomGet((u8*) &tmp, sizeof(tmp));
+    randomGet(&tmp, sizeof(tmp));
     return tmp;
 }
