@@ -1,24 +1,26 @@
-#### Types
-TypesAreCapitalizedLikeThis
+# Code Style
 
-#### Enums
-EnumType_EnumName
+## Types
+`TypesAreCapitalizedLikeThis`
 
-#### Struct members
-like_this
+## Enums
+`EnumType_EnumName`
 
-notlikethis
+## Struct members
+`like_this`
 
-#### Local variables
-like_this
+`notlikethis`
 
-notlikethis
+## Local variables
+`like_this`
 
-#### Global variables (or global statics)
-g_variableName
+`notlikethis`
 
-#### Functions
-modulenameFunctionName
+## Global variables (or global statics)
+`g_variableName`
 
-#### Macros
-LIKE_THIS
+## Functions
+`modulenameFunctionName`
+
+## Macros
+`LIKE_THIS`

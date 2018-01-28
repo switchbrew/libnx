@@ -1,6 +1,7 @@
 /**
  * @file svc.h
  * @brief Syscall wrappers.
+ * @copyright libnx Authors
  */
 #pragma once
 #include "../types.h"
@@ -24,7 +25,7 @@ typedef struct {
 
 typedef struct {
     u64 X[8];
-} __attribute__((packed)) SecmonArgs;
+} PACKED SecmonArgs;
 
 typedef enum {
     JitMapOperation_MapOwner=0,

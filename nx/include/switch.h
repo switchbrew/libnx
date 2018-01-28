@@ -1,6 +1,7 @@
 /**
  * @file switch.h
  * @brief Central Switch header. Includes all others.
+ * @copyright libnx Authors
  */
 #pragma once
 

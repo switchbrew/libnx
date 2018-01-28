@@ -1,6 +1,9 @@
 /**
  * @file console.h
- * @brief Switch stdio support.
+ * @brief Framebuffer text console.
+ * @author yellows8
+ * @author WinterMute
+ * @copyright libnx Authors
  *
  * Provides stdio integration for printing to the Switch screen as well as debug print
  * functionality provided by stderr.
@@ -161,4 +164,3 @@ void consoleDebugInit(debugDevice device);
 
 /// Clears the screan by using iprintf("\x1b[2J");
 void consoleClear(void);
-

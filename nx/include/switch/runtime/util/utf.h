@@ -1,6 +1,8 @@
 /**
  * @file utf.h
  * @brief UTF conversion functions.
+ * @author mtheall
+ * @copyright libnx Authors
  */
 #pragma once
 #include <sys/types.h>

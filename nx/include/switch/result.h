@@ -1,6 +1,7 @@
 /**
  * @file result.h
- * @brief Switch result code tools
+ * @brief Switch result code tools.
+ * @copyright libnx Authors
  */
 #pragma once
 #include "types.h"
@@ -18,11 +19,13 @@
 #define MAKERESULT(module,description) \
     ((((module)&0x1FF)) | ((description)&0x1FFF)<<9)
 
+/// Module values
 enum {
     Module_Libnx=345,
-    Module_LibnxNvidia=348
+    Module_LibnxNvidia=348,
 };
 
+/// libnx error codes
 enum {
     LibnxError_BadReloc=1,
     LibnxError_OutOfMemory,
@@ -63,24 +66,25 @@ enum {
     LibnxError_IncompatSysVer,
 };
 
+/// libnx nvidia error codes
 enum {
     LibnxNvidiaError_Unknown=1,
-    LibnxNvidiaError_NotImplemented,       // Maps to Nvidia: 1
-    LibnxNvidiaError_NotSupported,         // Maps to Nvidia: 2
-    LibnxNvidiaError_NotInitialized,       // Maps to Nvidia: 3
-    LibnxNvidiaError_BadParameter,         // Maps to Nvidia: 4
-    LibnxNvidiaError_Timeout,              // Maps to Nvidia: 5
-    LibnxNvidiaError_InsufficientMemory,   // Maps to Nvidia: 6
-    LibnxNvidiaError_ReadOnlyAttribute,    // Maps to Nvidia: 7
-    LibnxNvidiaError_InvalidState,         // Maps to Nvidia: 8
-    LibnxNvidiaError_InvalidAddress,       // Maps to Nvidia: 9
-    LibnxNvidiaError_InvalidSize,          // Maps to Nvidia: 10
-    LibnxNvidiaError_BadValue,             // Maps to Nvidia: 11
-    LibnxNvidiaError_AlreadyAllocated,     // Maps to Nvidia: 13
-    LibnxNvidiaError_Busy,                 // Maps to Nvidia: 14
-    LibnxNvidiaError_ResourceError,        // Maps to Nvidia: 15
-    LibnxNvidiaError_CountMismatch,        // Maps to Nvidia: 16
-    LibnxNvidiaError_SharedMemoryTooSmall, // Maps to Nvidia: 0x1000
-    LibnxNvidiaError_FileOperationFailed,  // Maps to Nvidia: 0x30003
-    LibnxNvidiaError_IoctlFailed,          // Maps to Nvidia: 0x3000F
+    LibnxNvidiaError_NotImplemented,       ///< Maps to Nvidia: 1
+    LibnxNvidiaError_NotSupported,         ///< Maps to Nvidia: 2
+    LibnxNvidiaError_NotInitialized,       ///< Maps to Nvidia: 3
+    LibnxNvidiaError_BadParameter,         ///< Maps to Nvidia: 4
+    LibnxNvidiaError_Timeout,              ///< Maps to Nvidia: 5
+    LibnxNvidiaError_InsufficientMemory,   ///< Maps to Nvidia: 6
+    LibnxNvidiaError_ReadOnlyAttribute,    ///< Maps to Nvidia: 7
+    LibnxNvidiaError_InvalidState,         ///< Maps to Nvidia: 8
+    LibnxNvidiaError_InvalidAddress,       ///< Maps to Nvidia: 9
+    LibnxNvidiaError_InvalidSize,          ///< Maps to Nvidia: 10
+    LibnxNvidiaError_BadValue,             ///< Maps to Nvidia: 11
+    LibnxNvidiaError_AlreadyAllocated,     ///< Maps to Nvidia: 13
+    LibnxNvidiaError_Busy,                 ///< Maps to Nvidia: 14
+    LibnxNvidiaError_ResourceError,        ///< Maps to Nvidia: 15
+    LibnxNvidiaError_CountMismatch,        ///< Maps to Nvidia: 16
+    LibnxNvidiaError_SharedMemoryTooSmall, ///< Maps to Nvidia: 0x1000
+    LibnxNvidiaError_FileOperationFailed,  ///< Maps to Nvidia: 0x30003
+    LibnxNvidiaError_IoctlFailed,          ///< Maps to Nvidia: 0x3000F
 };

@@ -1,3 +1,14 @@
+*~
 *.o
 *.bz2
-
+*.nro
+*.nso
+*.elf
+*.npdm
+*.pfs0
+Thumbs.db
+.*/
+debug/
+release/
+lib/
+docs/
