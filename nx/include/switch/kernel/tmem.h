@@ -21,7 +21,7 @@ typedef struct {
  * @brief Creates a transfer memory object.
  * @param t Transfer memory information structure that will be filled in.
  * @param size Size of the transfer memory object to create.
- * @param perm Permissions to assign to the transfer memory object.
+ * @param perm Permissions with which to protect the transfer memory in the local process.
  * @return Result code.
  */
 Result tmemCreate(TransferMemory* t, size_t size, Permission perm);
@@ -30,8 +30,8 @@ Result tmemCreate(TransferMemory* t, size_t size, Permission perm);
  * @brief Loads a transfer memory object coming from a remote process.
  * @param t Transfer memory information structure which will be filled in.
  * @param handle Handle of the transfer memory object.
- * @param size Size of the transfer memory object to create.
- * @param perm Permissions with which the transfer memory object will be mapped in the local process.
+ * @param size Size of the transfer memory object that is being loaded.
+ * @param perm Permissions which the transfer memory is expected to have in the process that owns the memory.
  * @warning This is a privileged operation; in normal circumstances applications shouldn't use this function.
  */
 void tmemLoadRemote(TransferMemory* t, Handle handle, size_t size, Permission perm);

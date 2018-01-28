@@ -21,7 +21,7 @@ typedef struct {
  * @param s Shared memory information structure which will be filled in.
  * @param size Size of the shared memory object to create.
  * @param local_perm Permissions with which the shared memory object will be mapped in the local process.
- * @param remote_perm Permissions with which the shared memory object will be mapped in the remote process.
+ * @param remote_perm Permissions with which the shared memory object will be mapped in the remote process (can be Perm_DontCare).
  * @return Result code.
  * @warning This is a privileged operation; in normal circumstances applications cannot use this function.
  */
@@ -31,7 +31,7 @@ Result shmemCreate(SharedMemory* s, size_t size, Permission local_perm, Permissi
  * @brief Loads a shared memory object coming from a remote process.
  * @param s Shared memory information structure which will be filled in.
  * @param handle Handle of the shared memory object.
- * @param size Size of the shared memory object to create.
+ * @param size Size of the shared memory object that is being loaded.
  * @param perm Permissions with which the shared memory object will be mapped in the local process.
  */
 void shmemLoadRemote(SharedMemory* s, Handle handle, size_t size, Permission perm);
