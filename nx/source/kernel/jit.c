@@ -54,10 +54,10 @@ Result jitCreate(Jit* j, size_t size)
         rc = svcCreateJitMemory(&j->handle, j->src_addr, j->size);
         if (R_SUCCEEDED(rc))
         {
-            rc = svcMapJitMemory(j->handle, JitMapOperation_MapOwner, j->rw_addr, j->size, PERM_RW);
+            rc = svcMapJitMemory(j->handle, JitMapOperation_MapOwner, j->rw_addr, j->size, Perm_Rw);
             if (R_SUCCEEDED(rc))
             {
-                rc = svcMapJitMemory(j->handle, JitMapOperation_MapSlave, j->rx_addr, j->size, PERM_RX);
+                rc = svcMapJitMemory(j->handle, JitMapOperation_MapSlave, j->rx_addr, j->size, Perm_Rx);
 
                 if (R_FAILED(rc)) {
                     svcMapJitMemory(j->handle, JitMapOperation_UnmapOwner, j->rw_addr, j->size, 0);
@@ -113,7 +113,7 @@ Result jitTransitionToExecutable(Jit* j)
         rc = svcMapProcessCodeMemory(envGetOwnProcessHandle(), (u64) j->rx_addr, (u64) j->src_addr, j->size);
 
         if (R_SUCCEEDED(rc)) {
-            rc = svcSetProcessMemoryPermission(envGetOwnProcessHandle(), (u64) j->rx_addr, j->size, PERM_RX);
+            rc = svcSetProcessMemoryPermission(envGetOwnProcessHandle(), (u64) j->rx_addr, j->size, Perm_Rx);
 
             if (R_FAILED(rc)) {
                 jitTransitionToWritable(j);

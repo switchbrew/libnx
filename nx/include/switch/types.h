@@ -18,42 +18,34 @@
 #endif
 #endif
 
-typedef uint8_t u8;       ///<  8-bit unsigned integer
-typedef uint16_t u16;     ///< 16-bit unsigned integer
-typedef uint32_t u32;     ///< 32-bit unsigned integer
-typedef uint64_t u64;     ///< 64-bit unsigned integer
-typedef __uint128_t u128; ///< 128-bit unsigned integer
+typedef uint8_t u8;       ///<   8-bit unsigned integer.
+typedef uint16_t u16;     ///<  16-bit unsigned integer.
+typedef uint32_t u32;     ///<  32-bit unsigned integer.
+typedef uint64_t u64;     ///<  64-bit unsigned integer.
+typedef __uint128_t u128; ///< 128-bit unsigned integer.
 
-typedef int8_t s8;   ///<  8-bit signed integer
-typedef int16_t s16; ///< 16-bit signed integer
-typedef int32_t s32; ///< 32-bit signed integer
-typedef int64_t s64; ///< 64-bit signed integer
+typedef int8_t s8;       ///<   8-bit signed integer.
+typedef int16_t s16;     ///<  16-bit signed integer.
+typedef int32_t s32;     ///<  32-bit signed integer.
+typedef int64_t s64;     ///<  64-bit signed integer.
+typedef __int128_t s128; ///< 128-bit unsigned integer.
 
-typedef volatile u8 vu8;   ///<  8-bit volatile unsigned integer.
-typedef volatile u16 vu16; ///< 16-bit volatile unsigned integer.
-typedef volatile u32 vu32; ///< 32-bit volatile unsigned integer.
-typedef volatile u64 vu64; ///< 64-bit volatile unsigned integer.
+typedef volatile u8 vu8;     ///<   8-bit volatile unsigned integer.
+typedef volatile u16 vu16;   ///<  16-bit volatile unsigned integer.
+typedef volatile u32 vu32;   ///<  32-bit volatile unsigned integer.
+typedef volatile u64 vu64;   ///<  64-bit volatile unsigned integer.
+typedef volatile u128 vu128; ///< 128-bit volatile unsigned integer.
 
-typedef volatile s8 vs8;   ///<  8-bit volatile signed integer.
-typedef volatile s16 vs16; ///< 16-bit volatile signed integer.
-typedef volatile s32 vs32; ///< 32-bit volatile signed integer.
-typedef volatile s64 vs64; ///< 64-bit volatile signed integer.
+typedef volatile s8 vs8;     ///<   8-bit volatile signed integer.
+typedef volatile s16 vs16;   ///<  16-bit volatile signed integer.
+typedef volatile s32 vs32;   ///<  32-bit volatile signed integer.
+typedef volatile s64 vs64;   ///<  64-bit volatile signed integer.
+typedef volatile s128 vs128; ///< 128-bit volatile signed integer.
 
 typedef u32 Handle;                 ///< Kernel object handle.
 typedef u32 Result;                 ///< Function error code result type.
 typedef void (*ThreadFunc)(void *); ///< Thread entrypoint function.
-typedef void (*voidfn)(void);       ///< Function without arguments nor return value.
-
-/// Permission bitmasks
-typedef enum {
-    PERM_NONE = 0,               ///< No permissions.
-    PERM_R    = 1,               ///< Read permission.
-    PERM_W    = 2,               ///< Write permission.
-    PERM_X    = 4,               ///< Execute permission.
-    PERM_RW   = PERM_R | PERM_W, ///< Read/write permissions.
-    PERM_RX   = PERM_R | PERM_X, ///< Read/execute permissions.
-    PERM_DONTCARE = 0x10000000,  ///< Don't care
-} Permission;
+typedef void (*VoidFn)(void);       ///< Function without arguments nor return value.
 
 /// Creates a bitmask from a bit number.
 #define BIT(n) (1U<<(n))

@@ -56,7 +56,7 @@ Result hidInitialize(void)
 
     if (R_SUCCEEDED(rc))
     {
-        shmemLoadRemote(&g_hidSharedmem, sharedmem_handle, 0x40000, PERM_R);
+        shmemLoadRemote(&g_hidSharedmem, sharedmem_handle, 0x40000, Perm_R);
 
         rc = shmemMap(&g_hidSharedmem);
     }
