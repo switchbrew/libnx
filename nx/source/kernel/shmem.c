@@ -66,10 +66,6 @@ Result shmemUnmap(SharedMemory* s)
     return rc;
 }
 
-void* shmemGetAddr(SharedMemory* s) {
-    return s->map_addr;
-}
-
 Result shmemClose(SharedMemory* s)
 {
     Result rc = 0;

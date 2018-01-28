@@ -1,19 +1,69 @@
+/**
+ * @file tmem.h
+ * @brief Transfer memory handling
+ * @author plutoo
+ * @copyright libnx Authors
+ * @remark Transfer memory differs from shared memory in the fact that the user process (as opposed to the kernel) allocates and owns its backing memory.
+ */
 #pragma once
 #include "../types.h"
 
+/// Transfer memory information structure.
 typedef struct {
-    Handle      handle;
-    size_t      size;
-    Permission  perm;
-    void*       src_addr;
-    void*       map_addr;
+    Handle      handle;   ///< Kernel object handle.
+    size_t      size;     ///< Size of the transfer memory object.
+    Permission  perm;     ///< Permissions of the transfer memory object.
+    void*       src_addr; ///< Address of the source backing memory.
+    void*       map_addr; ///< Address to which the transfer memory object is mapped.
 } TransferMemory;
 
+/**
+ * @brief Creates a transfer memory object.
+ * @param t Transfer memory information structure that will be filled in.
+ * @param size Size of the transfer memory object to create.
+ * @param perm Permissions to assign to the transfer memory object.
+ * @return Result code.
+ */
 Result tmemCreate(TransferMemory* t, size_t size, Permission perm);
-void   tmemLoadRemote(TransferMemory* t, Handle handle, size_t size, Permission perm);
 
+/**
+ * @brief Loads a transfer memory object coming from a remote process.
+ * @param t Transfer memory information structure which will be filled in.
+ * @param handle Handle of the transfer memory object.
+ * @param size Size of the transfer memory object to create.
+ * @param perm Permissions with which the transfer memory object will be mapped in the local process.
+ * @warning This is a privileged operation; in normal circumstances applications shouldn't use this function.
+ */
+void tmemLoadRemote(TransferMemory* t, Handle handle, size_t size, Permission perm);
+
+/**
+ * @brief Maps a transfer memory object.
+ * @param t Transfer memory information structure.
+ * @return Result code.
+ * @warning This is a privileged operation; in normal circumstances applications cannot use this function.
+ */
 Result tmemMap(TransferMemory* t);
-Result tmemUnmap(TransferMemory* t);
-void*  tmemGetAddr(TransferMemory* t);
 
+/**
+ * @brief Unmaps a transfer memory object.
+ * @param t Transfer memory information structure.
+ * @return Result code.
+ * @warning This is a privileged operation; in normal circumstances applications cannot use this function.
+ */
+Result tmemUnmap(TransferMemory* t);
+
+/**
+ * @brief Retrieves the mapped address of a transfer memory object.
+ * @param t Transfer memory information structure.
+ * @return Mapped address of the transfer memory object.
+ */
+static inline void* tmemGetAddr(TransferMemory* t){
+    return t->map_addr;
+}
+
+/**
+ * @brief Frees up resources used by a transfer memory object, unmapping and closing handles, etc.
+ * @param t Transfer memory information structure.
+ * @return Result code.
+ */
 Result tmemClose(TransferMemory* t);
