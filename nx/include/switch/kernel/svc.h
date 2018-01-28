@@ -12,6 +12,17 @@
 /// Pseudo handle for the current thread
 #define CUR_THREAD_HANDLE 0xFFFF8000
 
+/// Memory permission bitmasks.
+typedef enum {
+    Perm_None     = 0,               ///< No permissions.
+    Perm_R        = BIT(0),          ///< Read permission.
+    Perm_W        = BIT(1),          ///< Write permission.
+    Perm_X        = BIT(2),          ///< Execute permission.
+    Perm_Rw       = Perm_R | Perm_W, ///< Read/write permissions.
+    Perm_Rx       = Perm_R | Perm_X, ///< Read/execute permissions.
+    Perm_DontCare = BIT(28),         ///< Don't care
+} Permission;
+
 typedef struct {
     u64 addr;
     u64 size;

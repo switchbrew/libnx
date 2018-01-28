@@ -50,7 +50,7 @@ Result nvInitialize(nvServiceType servicetype, size_t transfermem_size)
         g_nvIpcBufferSize = 0;
         rc = ipcQueryPointerBufferSize(g_nvSrv.handle, &g_nvIpcBufferSize);
 
-        if (R_SUCCEEDED(rc)) rc = tmemCreate(&g_nvTransfermem, transfermem_size, PERM_NONE);
+        if (R_SUCCEEDED(rc)) rc = tmemCreate(&g_nvTransfermem, transfermem_size, Perm_None);
 
         if (R_SUCCEEDED(rc)) rc = _nvInitialize(CUR_PROCESS_HANDLE, g_nvTransfermem.handle, transfermem_size);
 
