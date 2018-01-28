@@ -74,10 +74,6 @@ Result tmemUnmap(TransferMemory* t)
     return rc;
 }
 
-void* tmemGetAddr(TransferMemory* t) {
-    return t->map_addr;
-}
-
 Result tmemClose(TransferMemory* t)
 {
     Result rc = 0;

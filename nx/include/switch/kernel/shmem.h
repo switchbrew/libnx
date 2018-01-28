@@ -1,18 +1,67 @@
+/**
+ * @file shmem.h
+ * @brief Shared memory object handling
+ * @author plutoo
+ * @copyright libnx Authors
+ * @remark Shared memory differs from transfer memory in the fact that the kernel (as opposed to the user process) allocates and owns its backing memory.
+ */
 #pragma once
 #include "../types.h"
 
+/// Shared memory information structure.
 typedef struct {
-    Handle      handle;
-    size_t      size;
-    Permission  perm;
-    void*       map_addr;
+    Handle      handle;   ///< Kernel object handle.
+    size_t      size;     ///< Size of the shared memory object.
+    Permission  perm;     ///< Permissions.
+    void*       map_addr; ///< Address to which the shared memory object is mapped.
 } SharedMemory;
 
+/**
+ * @brief Creates a shared memory object.
+ * @param s Shared memory information structure which will be filled in.
+ * @param size Size of the shared memory object to create.
+ * @param local_perm Permissions with which the shared memory object will be mapped in the local process.
+ * @param remote_perm Permissions with which the shared memory object will be mapped in the remote process.
+ * @return Result code.
+ * @warning This is a privileged operation; in normal circumstances applications cannot use this function.
+ */
 Result shmemCreate(SharedMemory* s, size_t size, Permission local_perm, Permission remote_perm);
-void shmemLoadRemote(SharedMemory* t, Handle handle, size_t size, Permission perm);
 
-Result shmemMap(SharedMemory* t);
-Result shmemUnmap(SharedMemory* t);
-void*  shmemGetAddr(SharedMemory* t);
+/**
+ * @brief Loads a shared memory object coming from a remote process.
+ * @param s Shared memory information structure which will be filled in.
+ * @param handle Handle of the shared memory object.
+ * @param size Size of the shared memory object to create.
+ * @param perm Permissions with which the shared memory object will be mapped in the local process.
+ */
+void shmemLoadRemote(SharedMemory* s, Handle handle, size_t size, Permission perm);
 
-Result shmemClose(SharedMemory* t);
+/**
+ * @brief Maps a shared memory object.
+ * @param s Shared memory information structure.
+ * @return Result code.
+ */
+Result shmemMap(SharedMemory* s);
+
+/**
+ * @brief Unmaps a shared memory object.
+ * @param s Shared memory information structure.
+ * @return Result code.
+ */
+Result shmemUnmap(SharedMemory* s);
+
+/**
+ * @brief Retrieves the mapped address of a shared memory object.
+ * @param s Shared memory information structure.
+ * @return Mapped address of the shared memory object.
+ */
+static inline void* shmemGetAddr(SharedMemory* s) {
+    return s->map_addr;
+}
+
+/**
+ * @brief Frees up resources used by a shared memory object, unmapping and closing handles, etc.
+ * @param s Shared memory information structure.
+ * @return Result code.
+ */
+Result shmemClose(SharedMemory* s);
