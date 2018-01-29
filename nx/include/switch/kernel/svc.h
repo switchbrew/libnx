@@ -1,6 +1,6 @@
 /**
  * @file svc.h
- * @brief Syscall wrappers.
+ * @brief Wrappers for kernel syscalls.
  * @copyright libnx Authors
  */
 #pragma once
@@ -11,6 +11,63 @@
 
 /// Pseudo handle for the current thread
 #define CUR_THREAD_HANDLE 0xFFFF8000
+
+/// Memory type enumeration (lower 8 bits of MemoryState)
+typedef enum {
+    MemType_Unmapped=0x00,            ///< Unmapped memory.
+    MemType_Io=0x01,                  ///< Mapped by kernel capability parsing in \ref svcCreateProcess.
+    MemType_Normal=0x02,              ///< Mapped by kernel capability parsing in \ref svcCreateProcess.
+    MemType_CodeStatic=0x03,          ///< Mapped during \ref svcCreateProcess.
+    MemType_CodeMutable=0x04,         ///< Transition from MemType_CodeStatic performed by \ref svcSetProcessMemoryPermission.
+    MemType_Heap=0x05,                ///< Mapped using \ref svcSetHeapSize.
+    MemType_SharedMem=0x06,           ///< Mapped using \ref svcMapSharedMemory.
+    MemType_WeirdSharedMem=0x07,      ///< Mapped using \ref svcMapMemory.
+    MemType_ModuleCodeStatic=0x08,    ///< Mapped using \ref svcMapProcessCodeMemory.
+    MemType_ModuleCodeMutable=0x09,   ///< Transition from \ref MemType_ModuleCodeStatic performed by \ref svcSetProcessMemoryPermission.
+    MemType_IpcBuffer0=0x0A,          ///< IPC buffers with descriptor flags=0.
+    MemType_MappedMemory=0x0B,        ///< Mapped using \ref svcMapMemory.
+    MemType_ThreadLocal=0x0C,         ///< Mapped during \ref svcCreateThread.
+    MemType_TransferMemIsolated=0x0D, ///< Mapped using \ref svcMapTransferMemory when the owning process has perm=0.
+    MemType_TransferMem=0x0E,         ///< Mapped using \ref svcMapTransferMemory when the owning process has perm!=0.
+    MemType_ProcessMem=0x0F,          ///< Mapped using \ref svcMapProcessMemory.
+    MemType_Reserved=0x10,            ///< Reserved.
+    MemType_IpcBuffer1=0x11,          ///< IPC buffers with descriptor flags=1.
+    MemType_IpcBuffer3=0x12,          ///< IPC buffers with descriptor flags=3.
+    MemType_KernelStack=0x13,         ///< Mapped in kernel during \ref svcCreateThread.
+    MemType_JitReadOnly=0x14,         ///< Mapped in kernel during \ref svcMapJitMemory.
+    MemType_JitWritable=0x15,         ///< Mapped in kernel during \ref svcMapJitMemory.
+} MemoryType;
+
+/// Memory state bitmasks.
+typedef enum {
+    MemState_Type=0xFF,                             ///< Type field (see \ref MemoryType).
+    MemState_PermChangeAllowed=BIT(8),              ///< Permission change allowed.
+    MemState_ForceRwByDebugSyscalls=BIT(9),         ///< Force read/writable by debug syscalls.
+    MemState_IpcSendAllowed_Type0=BIT(10),          ///< IPC type 0 send allowed.
+    MemState_IpcSendAllowed_Type3=BIT(11),          ///< IPC type 3 send allowed.
+    MemState_IpcSendAllowed_Type1=BIT(12),          ///< IPC type 1 send allowed.
+    MemState_ProcessPermChangeAllowed=BIT(14),      ///< Process permission change allowed.
+    MemState_MapAllowed=BIT(15),                    ///< Map allowed.
+    MemState_UnmapProcessCodeMemAllowed=BIT(16),    ///< Unmap process code memory allowed.
+    MemState_TransferMemAllowed=BIT(17),            ///< Transfer memory allowed.
+    MemState_QueryPAddrAllowed=BIT(18),             ///< Query physical address allowed.
+    MemState_MapDeviceAllowed=BIT(19),              ///< Map device allowed (\ref svcMapDeviceAddressSpace and \ref svcMapDeviceAddressSpaceByForce).
+    MemState_MapDeviceAlignedAllowed=BIT(20),       ///< Map device aligned allowed.
+    MemState_IpcBufferAllowed=BIT(21),              ///< IPC buffer allowed.
+    MemState_IsPoolAllocated=BIT(22),               ///< Is pool allocated.
+    MemState_IsRefCounted=MemState_IsPoolAllocated, ///< Alias for \ref MemState_IsPoolAllocated.
+    MemState_MapProcessAllowed=BIT(23),             ///< Map process allowed.
+    MemState_AttrChangeAllowed=BIT(24),             ///< Attribute change allowed.
+    MemState_JitMemAllowed=BIT(25),                 ///< JIT memory allowed.
+} MemoryState;
+
+/// Memory attribute bitmasks.
+typedef enum {
+    MemAttr_IsBorrowed=BIT(0),     ///< Is borrowed memory.
+    MemAttr_IsIpcMapped=BIT(1),    ///< Is IPC mapped (when IpcRefCount > 0).
+    MemAttr_IsDeviceMapped=BIT(2), ///< Is device mapped (when DeviceRefCount > 0).
+    MemAttr_IsUncached=BIT(3),     ///< Is uncached.
+} MemoryAttribute;
 
 /// Memory permission bitmasks.
 typedef enum {
@@ -23,15 +80,16 @@ typedef enum {
     Perm_DontCare = BIT(28),         ///< Don't care
 } Permission;
 
+/// Memory information structure.
 typedef struct {
-    u64 addr;
-    u64 size;
-    u32 type;
-    u32 attr;
-    u32 perm;
-    u32 device_refcount;
-    u32 ipc_refcount;
-    u32 padding;
+    u64 addr;            ///< Base address.
+    u64 size;            ///< Size.
+    u32 type;            ///< Memory type (see lower 8 bits of \ref MemoryState).
+    u32 attr;            ///< Memory attributes (see \ref MemoryAttribute).
+    u32 perm;            ///< Memory permissions (see \ref Permission).
+    u32 device_refcount; ///< Device reference count.
+    u32 ipc_refcount;    ///< IPC reference count.
+    u32 padding;         ///< Padding.
 } MemoryInfo;
 
 typedef struct {
