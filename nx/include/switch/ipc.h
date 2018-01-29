@@ -20,19 +20,21 @@
 ///@{
 
 /// IPC command (request) structure.
+#define IPC_MAX_BUFFERS 8
+
 typedef struct {
     size_t NumSend; // A
     size_t NumRecv; // B
     size_t NumTransfer; // W
-    const void* Buffers[4];
-    size_t BufferSizes[4];
-    u8     Flags[4];
+    const void* Buffers[IPC_MAX_BUFFERS];
+    size_t BufferSizes[IPC_MAX_BUFFERS];
+    u8     Flags[IPC_MAX_BUFFERS];
 
     size_t NumStaticIn;  // X
     size_t NumStaticOut; // C
-    const void* Statics[4];
-    size_t StaticSizes[4];
-    u8     Indices[4];
+    const void* Statics[IPC_MAX_BUFFERS];
+    size_t StaticSizes[IPC_MAX_BUFFERS];
+    u8     Indices[IPC_MAX_BUFFERS];
 
     bool   SendPid;
     size_t NumHandlesCopy;
