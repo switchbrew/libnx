@@ -55,9 +55,8 @@ SVC_END
 SVC_BEGIN svcCreateThread
 	str x0, [sp, #-16]!
 	svc 0x8
-	ldr x2, [sp]
+	ldr x2, [sp], #16
 	str w1, [x2]
-	add sp, sp, #16
 	ret
 SVC_END
 
@@ -194,10 +193,9 @@ SVC_END
 SVC_BEGIN svcCreateSession
 	stp x0, x1, [sp, #-16]!
 	svc 0x40
-	ldr x3, [sp], #8
+	ldp x3, x4, [sp], #16
 	str w1, [x3]
-	ldr x3, [sp], #8
-	str w2, [x3]
+	str w2, [x4]
 	ret
 SVC_END
 
@@ -220,9 +218,8 @@ SVC_END
 SVC_BEGIN svcCreateJitMemory
 	str x0, [sp, #-16]!
 	svc 0x4B
-	ldr x2, [sp]
+	ldr x2, [sp], #16
 	str w1, [x2]
-	add sp, sp, #16
 	ret
 SVC_END
 
@@ -252,10 +249,9 @@ SVC_END
 SVC_BEGIN svcQueryPhysicalAddress
 	str x0, [sp, #-16]!
 	svc 0x54
-	ldr x2, [sp], #16
-	str x1, [x2]
-	str x2, [x2, #8]
-	str x3, [x2, #16]
+	ldr x4, [sp], #16
+	stp x1, x2, [x4]
+	str x3, [x4, #16]
 	ret
 SVC_END
 
@@ -270,9 +266,8 @@ SVC_END
 SVC_BEGIN svcCreateDeviceAddressSpace
 	str x0, [sp, #-16]!
 	svc 0x56
-	ldr x2, [sp]
+	ldr x2, [sp], #16
 	str w1, [x2]
-	add sp, sp, #0x10
 	ret
 SVC_END
 
@@ -399,12 +394,10 @@ SVC_BEGIN svcCallSecureMonitor
 	ldp x4, x5, [x8, #0x20]
 	ldp x6, x7, [x8, #0x30]
 	svc 0x7F
-	ldr x8, [SP]
+	ldr x8, [sp], #16
 	stp x0, x1, [x8]
 	stp x2, x3, [x8, #0x10]
 	stp x4, x5, [x8, #0x20]
 	stp x6, x7, [x8, #0x30]
-	add sp, sp, #0x10
 	ret
 SVC_END
-
