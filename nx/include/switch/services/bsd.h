@@ -9,6 +9,11 @@
 #include "../types.h"
 #include "../kernel/tmem.h"
 
+#include <sys/types.h>  // for ssize_t, etc.
+#include <sys/socket.h> // for socklen_t
+#include <sys/select.h> // for fd_set
+#include <poll.h>       // for struct pollfd, ndfs_t
+
 /// Configuration structure for bsdInitalize
 typedef struct  {
     u32 version;                ///< Observed 1 on 2.0 LibAppletWeb, 2 on 3.0.
@@ -33,11 +38,11 @@ int bsdSocketExempt(int domain, int type, int protocol);
 int bsdOpen(const char *pathname, int flags);
 int bsdSelect(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout);
 int bsdPoll(struct pollfd *fds, nfds_t nfds, int timeout);
-int bsdSysctl(const int *name, size_t namelen, void *oldp, size_t *oldlenp, const void *newp, size_t newlen);
+int bsdSysctl(const int *name, unsigned int namelen, void *oldp, size_t *oldlenp, const void *newp, size_t newlen);
 ssize_t bsdRecv(int sockfd, void *buf, size_t len, int flags);
 ssize_t bsdRecvFrom(int sockfd, void *buf, size_t len, int flags, struct sockaddr *src_addr, socklen_t *addrlen);
-int bsdSend(int sockfd, const void* buf, size_t len, int flags);
-int bsdSendTo(int sockfd, const void *buf, size_t len, int flags, const struct sockaddr *dest_addr, socklen_t addrlen);
+ssize_t bsdSend(int sockfd, const void* buf, size_t len, int flags);
+ssize_t bsdSendTo(int sockfd, const void *buf, size_t len, int flags, const struct sockaddr *dest_addr, socklen_t addrlen);
 int bsdAccept(int sockfd, struct sockaddr *address, socklen_t *addrlen);
 int bsdBind(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
 int bsdConnect(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
@@ -47,7 +52,7 @@ int bsdGetSockOpt(int sockfd, int level, int optname, void *optval, socklen_t *o
 int bsdListen(int sockfd, int backlog);
 int bsdIoctl(int fd, int request, ...);
 int bsdFnctl(int fd, int cmd, ...);
-int bsdSetSockOpt(int sockfd, int level, int optname, const void *optval, size_t optlen);
+int bsdSetSockOpt(int sockfd, int level, int optname, const void *optval, socklen_t optlen);
 int bsdShutdown(int sockfd, int how);
 int bsdShutdownAllSockets(int how);
 ssize_t bsdWrite(int fd, const void *buf, size_t count);

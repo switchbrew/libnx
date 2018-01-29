@@ -1,5 +1,7 @@
 // Copyright 2017 plutoo
 #include <stdarg.h>
+#include <errno.h>
+#include <string.h>
 
 #include "types.h"
 #include "result.h"
@@ -9,7 +11,16 @@
 #include "kernel/shmem.h"
 #include "kernel/rwlock.h"
 
-#define EPIPE 32
+// Complete definition of struct timeout:
+#include <sys/time.h>
+
+#include <fcntl.h>
+
+// For ioctls:
+#include <sys/ioctl.h>
+#include <net/if.h>
+#include <net/if_media.h>
+
 
 static Service g_bsdSrv;
 static Service g_bsdMonitor;
@@ -55,7 +66,7 @@ static Result _bsdRegisterClient(Service* srv, TransferMemory* tmem, const BsdBu
     struct {
         u64 magic;
         u64 cmd_id;
-        BsdConfig config;
+        BsdBufferConfig config;
         u64 pid_reserved;
         u64 tmem_sz;
     } *raw;
@@ -158,8 +169,8 @@ static int _bsdDispatchBasicCommand(IpcCommand *c, IpcParsedCommand *rOut) {
 static int _bsdDispatchCommandWithOutAddrlen(IpcCommand *c, socklen_t *addrlen)
 {
     IpcParsedCommand r;
-    int ret = _bsdDispatchBasicCommand(&c, &r);
-    if(ret != -1 && *addrlen != NULL)
+    int ret = _bsdDispatchBasicCommand(c, &r);
+    if(ret != -1 && addrlen != NULL)
     {
         struct {
             BsdIpcResponseBase bsd_resp;
@@ -217,8 +228,8 @@ static int _bsdSocketCreationCommand(u32 cmd_id, int domain, int type, int proto
     return _bsdDispatchBasicCommand(&c, NULL);
 }
 
-const BsdConfig *bsdGetDefaultBufferConfig(void) {
-    return &g_defaultBsdConfig;
+const BsdBufferConfig *bsdGetDefaultBufferConfig(void) {
+    return &g_defaultBsdBufferConfig;
 }
 
 Result bsdInitialize(const BsdBufferConfig *config) {
@@ -273,8 +284,8 @@ int bsdOpen(const char *pathname, int flags) {
     ipcInitialize(&c);
 
     size_t pathlen = strnlen(pathname, 256);
-    ipcAddSendBuffer(&c, pathname, flags, 0);
-    ipcAddSendStatic(&c, pathname, flags, 0);
+    ipcAddSendBuffer(&c, pathname, pathlen, 0);
+    ipcAddSendStatic(&c, pathname, pathlen, 0);
 
     struct {
         u64 magic;
@@ -313,7 +324,7 @@ int bsdSelect(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, st
         u64 magic;
         u64 cmd_id;
         int nfds;
-        struct timeout timeout;
+        struct timeval timeout;
         bool nullTimeout;
     } *raw;
 
@@ -357,6 +368,8 @@ int bsdPoll(struct pollfd *fds, nfds_t nfds, int timeout) {
 
 int bsdSysctl(const int *name, unsigned int namelen, void *oldp, size_t *oldlenp, const void *newp, size_t newlen) {
     IpcCommand c;
+    size_t inlen = oldlenp == NULL ? 0 : *oldlenp;
+
     ipcInitialize(&c);
 
     ipcAddSendBuffer(&c, name, 4 * namelen, 0);
@@ -364,8 +377,8 @@ int bsdSysctl(const int *name, unsigned int namelen, void *oldp, size_t *oldlenp
     ipcAddSendBuffer(&c, newp, newlen, 0);
     ipcAddSendStatic(&c, newp, newlen, 0);
 
-    ipcAddRecvBuffer(&c, oldp, oldlenp, 0);
-    ipcAddRecvStatic(&c, oldp, oldlenp, 0);
+    ipcAddRecvBuffer(&c, oldp, inlen, 0);
+    ipcAddRecvStatic(&c, oldp, inlen, 0);
 
     struct {
         u64 magic;
@@ -377,7 +390,17 @@ int bsdSysctl(const int *name, unsigned int namelen, void *oldp, size_t *oldlenp
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 7;
 
-    return _bsdDispatchBasicCommand(&c, NULL);
+    IpcParsedCommand r;
+    int ret = _bsdDispatchBasicCommand(&c, &r);
+    if(ret != -1 && oldlenp != NULL)
+    {
+        struct {
+            BsdIpcResponseBase bsd_resp;
+            size_t oldlenp;
+        } *resp = r.Raw;
+        *oldlenp = resp->oldlenp;
+    }
+    return ret;
 }
 
 ssize_t bsdRecv(int sockfd, void *buf, size_t len, int flags) {
@@ -431,7 +454,7 @@ ssize_t bsdRecvFrom(int sockfd, void *buf, size_t len, int flags, struct sockadd
     return _bsdDispatchCommandWithOutAddrlen(&c, addrlen);
 }
 
-int bsdSend(int sockfd, const void* buf, size_t len, int flags) {
+ssize_t bsdSend(int sockfd, const void* buf, size_t len, int flags) {
     IpcCommand c;
     ipcInitialize(&c);
     ipcAddSendBuffer(&c, buf, len, 0);
@@ -454,11 +477,11 @@ int bsdSend(int sockfd, const void* buf, size_t len, int flags) {
     return _bsdDispatchBasicCommand(&c, NULL);
 }
 
-int bsdSendTo(int sockfd, const void *buf, size_t len, int flags, const struct sockaddr *dest_addr, socklen_t addrlen) {
+ssize_t bsdSendTo(int sockfd, const void *buf, size_t len, int flags, const struct sockaddr *dest_addr, socklen_t addrlen) {
     IpcCommand c;
     ipcInitialize(&c);
-    ipcAddSendBuffer(&c, buffer, len, 0);
-    ipcAddSendStatic(&c, buffer, len, 0);
+    ipcAddSendBuffer(&c, buf, len, 0);
+    ipcAddSendStatic(&c, buf, len, 0);
 
     ipcAddSendBuffer(&c, dest_addr, addrlen, 1);
     ipcAddSendStatic(&c, dest_addr, addrlen, 1);
@@ -585,11 +608,11 @@ int bsdListen(int sockfd, int backlog) {
 int bsdIoctl_v(int fd, int request, va_list args) {
     IpcCommand c;
 
-    const void *data = NULL, in2 = NULL, in3 = NULL, in4 = NULL;
-    size_t in1sz = 0, in2sz = 0, in3sz = 0;
+    const void *in1 = NULL, *in2 = NULL, *in3 = NULL, *in4 = NULL;
+    size_t in1sz = 0, in2sz = 0, in3sz = 0, in4sz = 0;
 
-    const void *out1 = NULL, out2 = NULL, out3 = NULL, out4 = NULL;
-    size_t out1sz = 0, out2sz = 0, out3sz = 0;
+    void *out1 = NULL, *out2 = NULL, *out3 = NULL, *out4 = NULL;
+    size_t out1sz = 0, out2sz = 0, out3sz = 0, out4sz = 0;
 
     int bufcount = 1;
 
@@ -796,7 +819,7 @@ int bsdShutdownAllSockets(int how) {
     return _bsdDispatchBasicCommand(&c, NULL);
 }
 
-ssize_t bsdWrite(int fd, const char *buf, size_t count) {
+ssize_t bsdWrite(int fd, const void *buf, size_t count) {
     IpcCommand c;
     ipcInitialize(&c);
     ipcAddSendBuffer(&c, buf, count, 0);
