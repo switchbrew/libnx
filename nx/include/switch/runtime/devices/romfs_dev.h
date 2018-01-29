@@ -1,5 +1,5 @@
 /**
- * @file romfs.h
+ * @file romfs_dev.h
  * @brief RomFS driver.
  */
 #pragma once
