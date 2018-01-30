@@ -33,6 +33,11 @@ bss_loop:
     subs x1, x1, #8
     bne  bss_loop
 
+    // store stack pointer
+    mov  x1, sp
+    adrp x0, __stack_top
+    str  x1, [x0, #:lo12:__stack_top]
+
     // process .dynamic section
     mov  x0, x28
     adrp x1, _DYNAMIC
@@ -53,3 +58,17 @@ bss_loop:
     adrp x30, __libnx_exit
     add  x30, x30, #:lo12:__libnx_exit
     b    main
+
+.global __nx_exit
+.type   __nx_exit, %function
+__nx_exit:
+    mov  x8, x0
+
+    // restore stack pointer
+    adrp x0, __stack_top
+    ldr  x0, [x0, #:lo12:__stack_top]
+    mov  sp, x0
+
+    // jump back to loader
+    mov  x0, #0
+    br   x8
