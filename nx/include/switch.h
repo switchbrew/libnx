@@ -35,6 +35,7 @@ extern "C" {
 #include "switch/services/fatal.h"
 #include "switch/services/usb.h"
 #include "switch/services/hid.h"
+#include "switch/services/irs.h"
 #include "switch/services/vi.h"
 #include "switch/services/nv.h"
 #include "switch/services/pm.h"
