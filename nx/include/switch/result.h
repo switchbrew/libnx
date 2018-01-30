@@ -65,6 +65,7 @@ enum {
     LibnxError_WeirdKernel,
     LibnxError_IncompatSysVer,
     LibnxError_InitFail_Time,
+    LibnxError_TooManyDevOpTabs,
 };
 
 /// libnx nvidia error codes

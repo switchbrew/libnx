@@ -20,8 +20,8 @@
 #include <net/if.h>
 #include <net/if_media.h>
 
-__thread Result t_bsdResult;
-__thread int t_bsdErrno;
+__thread Result g_bsdResult;
+__thread int g_bsdErrno;
 
 static Service g_bsdSrv;
 static Service g_bsdMonitor;
@@ -29,7 +29,7 @@ static u64 g_bsdClientPid = -1;
 
 static TransferMemory g_bsdTmem;
 
-static const BsdBufferConfig g_defaultBsdBufferConfig = {
+static const BsdInitConfig g_defaultBsdInitConfig = {
     .version = 1,
 
     .tcp_tx_buf_size        = 0x8000,
@@ -48,8 +48,7 @@ static const BsdBufferConfig g_defaultBsdBufferConfig = {
     Should the transfer memory be smaller than that, the BSD sockets service would only send
     ZeroWindow packets (for TCP), resulting in a transfer rate not exceeding 1 byte/s.
 */
-static size_t _bsdGetTransferMemSizeForConfig(const BsdBufferConfig *config)
-{
+static size_t _bsdGetTransferMemSizeForConfig(const BsdInitConfig *config) {
     u32 tcp_tx_buf_max_size = config->tcp_tx_buf_max_size != 0 ? config->tcp_tx_buf_max_size : config->tcp_tx_buf_size;
     u32 tcp_rx_buf_max_size = config->tcp_rx_buf_max_size != 0 ? config->tcp_rx_buf_max_size : config->tcp_rx_buf_size;
     u32 sum = tcp_tx_buf_max_size + tcp_rx_buf_max_size + config->udp_tx_buf_size + config->udp_rx_buf_size;
@@ -58,7 +57,7 @@ static size_t _bsdGetTransferMemSizeForConfig(const BsdBufferConfig *config)
     return (size_t)(config->sb_efficiency * sum);
 }
 
-static Result _bsdRegisterClient(Service* srv, TransferMemory* tmem, const BsdBufferConfig *config, u64* pid_out) {
+static Result _bsdRegisterClient(Service* srv, TransferMemory* tmem, const BsdInitConfig *config, u64* pid_out) {
     IpcCommand c;
     ipcInitialize(&c);
     ipcSendPid(&c);
@@ -67,7 +66,7 @@ static Result _bsdRegisterClient(Service* srv, TransferMemory* tmem, const BsdBu
     struct {
         u64 magic;
         u64 cmd_id;
-        BsdBufferConfig config;
+        BsdInitConfig config;
         u64 pid_reserved;
         u64 tmem_sz;
     } *raw;
@@ -93,8 +92,8 @@ static Result _bsdRegisterClient(Service* srv, TransferMemory* tmem, const BsdBu
         } *resp = r.Raw;
 
         *pid_out = resp->pid;
-        t_bsdResult = rc = resp->result;
-        t_bsdErrno = 0;
+        g_bsdResult = rc = resp->result;
+        g_bsdErrno = 0;
     }
 
     return rc;
@@ -128,8 +127,8 @@ static Result _bsdStartMonitor(Service* srv, u64 pid) {
             u64 result;
         } *resp = r.Raw;
 
-        t_bsdResult = rc = resp->result;
-        t_bsdErrno = 0;
+        g_bsdResult = rc = resp->result;
+        g_bsdErrno = 0;
     }
 
     return rc;
@@ -155,26 +154,25 @@ static int _bsdDispatchBasicCommand(IpcCommand *c, IpcParsedCommand *rOut) {
         rc = resp->result;
 
         if (R_SUCCEEDED(rc)) {
-            t_bsdErrno = resp->errno_;
-            t_bsdResult = rc = resp->ret;
+            ret = resp->ret;
+            g_bsdErrno = (ret < 0) ? resp->errno_ : 0;
         }
     }
 
     if (R_FAILED(rc))
-        t_bsdErrno = -1;
+        g_bsdErrno = -1;
 
     if(rOut != NULL)
         *rOut = r;
 
+    g_bsdResult = rc;
     return ret;
 }
 
-static int _bsdDispatchCommandWithOutAddrlen(IpcCommand *c, socklen_t *addrlen)
-{
+static int _bsdDispatchCommandWithOutAddrlen(IpcCommand *c, socklen_t *addrlen) {
     IpcParsedCommand r;
     int ret = _bsdDispatchBasicCommand(c, &r);
-    if(ret != -1 && addrlen != NULL)
-    {
+    if(ret != -1 && addrlen != NULL) {
         struct {
             BsdIpcResponseBase bsd_resp;
             socklen_t addrlen;
@@ -231,11 +229,11 @@ static int _bsdSocketCreationCommand(u32 cmd_id, int domain, int type, int proto
     return _bsdDispatchBasicCommand(&c, NULL);
 }
 
-const BsdBufferConfig *bsdGetDefaultBufferConfig(void) {
-    return &g_defaultBsdBufferConfig;
+const BsdInitConfig *bsdGetDefaultInitConfig(void) {
+    return &g_defaultBsdInitConfig;
 }
 
-Result bsdInitialize(const BsdBufferConfig *config) {
+Result bsdInitialize(const BsdInitConfig *config) {
     const char* bsd_srv = "bsd:s";
 
     if(serviceIsActive(&g_bsdSrv) || serviceIsActive(&g_bsdMonitor))
@@ -309,19 +307,19 @@ int bsdSelect(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, st
     IpcCommand c;
     ipcInitialize(&c);
 
-    ipcAddSendBuffer(&c, readfds, sizeof(fd_set), 0);
-    ipcAddSendStatic(&c, readfds, sizeof(fd_set), 0);
-    ipcAddSendBuffer(&c, writefds, sizeof(fd_set), 0);
-    ipcAddSendStatic(&c, writefds, sizeof(fd_set), 0);
-    ipcAddSendBuffer(&c, exceptfds, sizeof(fd_set), 0);
-    ipcAddSendStatic(&c, exceptfds, sizeof(fd_set), 0);
+    ipcAddSendBuffer(&c, readfds, readfds == NULL ? 0 : sizeof(fd_set), 0);
+    ipcAddSendStatic(&c, readfds, readfds == NULL ? 0 : sizeof(fd_set), 0);
+    ipcAddSendBuffer(&c, writefds, writefds == NULL ? 0 : sizeof(fd_set), 0);
+    ipcAddSendStatic(&c, writefds, writefds == NULL ? 0 : sizeof(fd_set), 0);
+    ipcAddSendBuffer(&c, exceptfds, exceptfds == NULL ? 0 : sizeof(fd_set), 0);
+    ipcAddSendStatic(&c, exceptfds, exceptfds == NULL ? 0 : sizeof(fd_set), 0);
 
-    ipcAddRecvBuffer(&c, readfds, sizeof(fd_set), 0);
-    ipcAddRecvStatic(&c, readfds, sizeof(fd_set), 0);
-    ipcAddRecvBuffer(&c, writefds, sizeof(fd_set), 0);
-    ipcAddRecvStatic(&c, writefds, sizeof(fd_set), 0);
-    ipcAddRecvBuffer(&c, exceptfds, sizeof(fd_set), 0);
-    ipcAddRecvStatic(&c, exceptfds, sizeof(fd_set), 0);
+    ipcAddRecvBuffer(&c, readfds, readfds == NULL ? 0 : sizeof(fd_set), 0);
+    ipcAddRecvStatic(&c, readfds, readfds == NULL ? 0 : sizeof(fd_set), 0);
+    ipcAddRecvBuffer(&c, writefds, writefds == NULL ? 0 : sizeof(fd_set), 0);
+    ipcAddRecvStatic(&c, writefds, writefds == NULL ? 0 : sizeof(fd_set), 0);
+    ipcAddRecvBuffer(&c, exceptfds, exceptfds == NULL ? 0 : sizeof(fd_set), 0);
+    ipcAddRecvStatic(&c, exceptfds, exceptfds == NULL ? 0 : sizeof(fd_set), 0);
 
     struct {
         u64 magic;
@@ -346,11 +344,11 @@ int bsdPoll(struct pollfd *fds, nfds_t nfds, int timeout) {
     IpcCommand c;
     ipcInitialize(&c);
 
-    ipcAddSendBuffer(&c, fds, sizeof(struct pollfd), 0);
-    ipcAddSendStatic(&c, fds, sizeof(struct pollfd), 0);
+    ipcAddSendBuffer(&c, fds, nfds * sizeof(struct pollfd), 0);
+    ipcAddSendStatic(&c, fds, nfds * sizeof(struct pollfd), 0);
 
-    ipcAddRecvBuffer(&c, fds, sizeof(struct pollfd), 0);
-    ipcAddRecvStatic(&c, fds, sizeof(struct pollfd), 0);
+    ipcAddRecvBuffer(&c, fds, nfds * sizeof(struct pollfd), 0);
+    ipcAddRecvStatic(&c, fds, nfds * sizeof(struct pollfd), 0);
 
     struct {
         u64 magic;
@@ -395,8 +393,7 @@ int bsdSysctl(const int *name, unsigned int namelen, void *oldp, size_t *oldlenp
 
     IpcParsedCommand r;
     int ret = _bsdDispatchBasicCommand(&c, &r);
-    if(ret != -1 && oldlenp != NULL)
-    {
+    if(ret != -1 && oldlenp != NULL) {
         struct {
             BsdIpcResponseBase bsd_resp;
             size_t oldlenp;
@@ -519,12 +516,14 @@ int bsdBind(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
     struct {
         u64 magic;
         u64 cmd_id;
+        int sockfd;
     } *raw;
 
     raw = ipcPrepareHeader(&c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 13;
+    raw->sockfd = sockfd;
 
     return _bsdDispatchBasicCommand(&c, NULL);
 }
@@ -619,8 +618,7 @@ int bsdIoctl(int fd, int request, void *data) {
     int bufcount = 1;
 
     switch(request) {
-        case SIOCGIFCONF:
-        {
+        case SIOCGIFCONF: {
             struct ifconf *data_ = (struct ifconf *)data;
             in1 = out1 = data;
             in1sz = out1sz = sizeof(struct ifconf);
@@ -630,8 +628,7 @@ int bsdIoctl(int fd, int request, void *data) {
             break;
         }
         case SIOCGIFMEDIA:
-        case SIOCGIFXMEDIA:
-        {
+        case SIOCGIFXMEDIA: {
             struct ifmediareq *data_ = (struct ifmediareq *)data;
             in1 = out1 = data;
             in1sz = out1sz = sizeof(struct ifmediareq);
@@ -641,18 +638,15 @@ int bsdIoctl(int fd, int request, void *data) {
             break;
         }
         // Generic ioctl
-        default:
-        {
+        default: {
             void *data_ = NULL;
             if(request & IOC_INOUT)
                 data_ = data;
-            if(request & IOC_IN)
-            {
+            if(request & IOC_IN) {
                 in1 = data_;
                 in1sz = IOCPARM_LEN(request);
             }
-            if(request & IOC_OUT)
-            {
+            if(request & IOC_OUT) {
                 out1 = data_;
                 out1sz = IOCPARM_LEN(request);
             }
@@ -699,12 +693,12 @@ int bsdIoctl(int fd, int request, void *data) {
     return _bsdDispatchBasicCommand(&c, NULL);
 }
 
-int bsdFnctl(int fd, int cmd, int flags) {
+int bsdFcntl(int fd, int cmd, int flags) {
     IpcCommand c;
 
-    if(cmd == F_GETFL || cmd == F_SETFL) {
-        t_bsdResult = 0;
-        t_bsdErrno = EINVAL;
+    if(cmd != F_GETFL && cmd != F_SETFL) {
+        g_bsdResult = 0;
+        g_bsdErrno = EOPNOTSUPP;
         return -1;
     }
 

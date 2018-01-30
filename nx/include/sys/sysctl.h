@@ -1,4 +1,5 @@
 // TuxSH: removed definitions under _KERNEL ifdef blocks, modify the prototype of some functions, some other cleanup, etc.
+// Note: I didn't provide <vm/vm_param.h>
 #ifndef __BSD_VISIBLE
 #define __BSD_VISIBLE
 #endif
@@ -311,7 +312,7 @@ struct ctlname {
 // Modified: added arg names, etc
 
 __BEGIN_DECLS
-int sysctl(const int *name, u_int namelen, void *oldp, size_t *oldlenp, const void *newp, size_t newlen);
+int sysctl(const int *name, unsigned int namelen, void *oldp, size_t *oldlenp, const void *newp, size_t newlen);
 int sysctlbyname(const char *name, void *oldp, size_t *oldlenp, const void *newp, size_t newlen);
 int sysctlnametomib(const char *name, int *mibp, size_t *sizep);
 __END_DECLS
