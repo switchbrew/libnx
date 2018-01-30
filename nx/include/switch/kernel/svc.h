@@ -52,6 +52,8 @@ Result svcWaitSynchronization(s32* index, const Handle* handles, s32 handleCount
 Result svcCancelSynchronization(Handle thread);
 Result svcArbitrateLock(u32 wait_tag, u32* tag_location, u32 self_tag);
 Result svcArbitrateUnlock(u32* tag_location);
+Result svcWaitProcessWideKeyAtomic(u32* key, u32* tag_location, u32 self_tag, u64 timeout);
+Result svcSignalProcessWideKey(u32* key, s32 num);
 Result svcConnectToNamedPort(Handle* session, const char* name);
 u64    svcGetSystemTick(void);
 Result svcSendSyncRequest(Handle session);

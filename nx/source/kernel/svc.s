@@ -122,6 +122,16 @@ SVC_BEGIN svcArbitrateUnlock
 	ret
 SVC_END
 
+SVC_BEGIN svcWaitProcessWideKeyAtomic
+	svc 0x1c
+	ret
+SVC_END
+
+SVC_BEGIN svcSignalProcessWideKey
+	svc 0x1d
+	ret
+SVC_END
+
 SVC_BEGIN svcConnectToNamedPort
 	str x0, [sp, #-16]!
 	svc 0x1F
