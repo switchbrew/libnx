@@ -36,7 +36,7 @@ extern "C" {
 #include "switch/services/apm.h"
 #include "switch/services/applet.h"
 #include "switch/services/audout.h"
-#include "switch/services/bsd.h"
+//#include "switch/services/bsd.h" Use switch/runtime/devices/socket.h instead
 #include "switch/services/fatal.h"
 #include "switch/services/time.h"
 #include "switch/services/usb.h"
@@ -63,6 +63,7 @@ extern "C" {
 #include "switch/runtime/devices/usb_comms.h"
 #include "switch/runtime/devices/fs_dev.h"
 #include "switch/runtime/devices/romfs_dev.h"
+#include "switch/runtime/devices/socket.h"
 
 #ifdef __cplusplus
 }

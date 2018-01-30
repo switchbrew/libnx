@@ -27,13 +27,13 @@ typedef struct  {
     u32 udp_rx_buf_size;        ///< Size of the UDP receive buffer (typically 0xA500 bytes).
 
     u32 sb_efficiency;          ///< Number of buffers for each socket (standard values range from 1 to 8).
-} BsdBufferConfig;
+} BsdInitConfig;
 
-__thread Result t_bsdResult;    ///< Last Switch "result", per-thread
-__thread int t_bsdErrno;        ///< Last errno, per-thread
+extern __thread Result g_bsdResult;    ///< Last Switch "result", per-thread
+extern __thread int g_bsdErrno;        ///< Last errno, per-thread
 
-const BsdBufferConfig *bsdGetDefaultBufferConfig(void);
-Result bsdInitialize(const BsdBufferConfig *config);
+const BsdInitConfig *bsdGetDefaultConfig(void);
+Result bsdInitialize(const BsdInitConfig *config);
 void bsdExit(void);
 
 int bsdSocket(int domain, int type, int protocol);
@@ -46,16 +46,16 @@ ssize_t bsdRecv(int sockfd, void *buf, size_t len, int flags);
 ssize_t bsdRecvFrom(int sockfd, void *buf, size_t len, int flags, struct sockaddr *src_addr, socklen_t *addrlen);
 ssize_t bsdSend(int sockfd, const void* buf, size_t len, int flags);
 ssize_t bsdSendTo(int sockfd, const void *buf, size_t len, int flags, const struct sockaddr *dest_addr, socklen_t addrlen);
-int bsdAccept(int sockfd, struct sockaddr *address, socklen_t *addrlen);
+int bsdAccept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
 int bsdBind(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
 int bsdConnect(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
-int bsdGetPeerName(int sockfd, struct sockaddr *address, socklen_t *addrlen);
-int bsdGetSockName(int sockfd, struct sockaddr *address, socklen_t *addrlen);
+int bsdGetPeerName(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
+int bsdGetSockName(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
 int bsdGetSockOpt(int sockfd, int level, int optname, void *optval, socklen_t *optlen);
 int bsdListen(int sockfd, int backlog);
 // The following two functions are supposed to be variadic
 int bsdIoctl(int fd, int request, void *data);
-int bsdFnctl(int fd, int cmd, int flags);
+int bsdFcntl(int fd, int cmd, int flags);
 int bsdSetSockOpt(int sockfd, int level, int optname, const void *optval, socklen_t optlen);
 int bsdShutdown(int sockfd, int how);
 int bsdShutdownAllSockets(int how);
@@ -68,5 +68,5 @@ int bsdDuplicateSocket(int sockfd);
 
 static inline Result bsdInitializeDefault(void)
 {
-    return bsdInitialize(bsdGetDefaultBufferConfig());
+    return bsdInitialize(bsdGetDefaultConfig());
 }

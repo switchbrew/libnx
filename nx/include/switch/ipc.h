@@ -14,8 +14,6 @@
 /// IPC output header magic
 #define SFCO_MAGIC 0x4f434653
 
-#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
-
 ///@name IPC request building
 ///@{
 
@@ -47,16 +45,7 @@ typedef struct {
  * @param cmd IPC command structure.
  */
 static inline void ipcInitialize(IpcCommand* cmd) {
-    cmd->NumSend = 0;
-    cmd->NumRecv = 0;
-    cmd->NumTransfer = 0;
-
-    cmd->NumStaticIn  = 0;
-    cmd->NumStaticOut = 0;
-
-    cmd->SendPid = false;
-    cmd->NumHandlesCopy = 0;
-    cmd->NumHandlesMove = 0;
+    *cmd = (IpcCommand){0};
 }
 
 /// IPC buffer descriptor.

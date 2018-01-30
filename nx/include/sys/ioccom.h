@@ -67,7 +67,8 @@
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int	ioctl(int, unsigned long, ...);
+// Modified declaration
+int ioctl(int fd, int request, ...);
 __END_DECLS
 
 #endif /* !_SYS_IOCCOM_H_ */
