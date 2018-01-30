@@ -29,6 +29,9 @@ typedef struct  {
     u32 sb_efficiency;          ///< Number of buffers for each socket (standard values range from 1 to 8).
 } BsdBufferConfig;
 
+__thread Result t_bsdResult;    ///< Last Switch "result", per-thread
+__thread int t_bsdErrno;        ///< Last errno, per-thread
+
 const BsdBufferConfig *bsdGetDefaultBufferConfig(void);
 Result bsdInitialize(const BsdBufferConfig *config);
 void bsdExit(void);
@@ -50,8 +53,9 @@ int bsdGetPeerName(int sockfd, struct sockaddr *address, socklen_t *addrlen);
 int bsdGetSockName(int sockfd, struct sockaddr *address, socklen_t *addrlen);
 int bsdGetSockOpt(int sockfd, int level, int optname, void *optval, socklen_t *optlen);
 int bsdListen(int sockfd, int backlog);
-int bsdIoctl(int fd, int request, ...);
-int bsdFnctl(int fd, int cmd, ...);
+// The following two functions are supposed to be variadic
+int bsdIoctl(int fd, int request, void *data);
+int bsdFnctl(int fd, int cmd, int flags);
 int bsdSetSockOpt(int sockfd, int level, int optname, const void *optval, socklen_t optlen);
 int bsdShutdown(int sockfd, int how);
 int bsdShutdownAllSockets(int how);
