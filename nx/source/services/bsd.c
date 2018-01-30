@@ -1,5 +1,4 @@
 // Copyright 2017 plutoo
-#include <stdarg.h>
 #include <errno.h>
 #include <string.h>
 
@@ -21,6 +20,8 @@
 #include <net/if.h>
 #include <net/if_media.h>
 
+__thread Result t_bsdResult;
+__thread int t_bsdErrno;
 
 static Service g_bsdSrv;
 static Service g_bsdMonitor;
@@ -92,7 +93,8 @@ static Result _bsdRegisterClient(Service* srv, TransferMemory* tmem, const BsdBu
         } *resp = r.Raw;
 
         *pid_out = resp->pid;
-        rc = resp->result;
+        t_bsdResult = rc = resp->result;
+        t_bsdErrno = 0;
     }
 
     return rc;
@@ -126,7 +128,8 @@ static Result _bsdStartMonitor(Service* srv, u64 pid) {
             u64 result;
         } *resp = r.Raw;
 
-        rc = resp->result;
+        t_bsdResult = rc = resp->result;
+        t_bsdErrno = 0;
     }
 
     return rc;
@@ -152,13 +155,13 @@ static int _bsdDispatchBasicCommand(IpcCommand *c, IpcParsedCommand *rOut) {
         rc = resp->result;
 
         if (R_SUCCEEDED(rc)) {
-            errno = resp->errno_;
-            ret = resp->ret;
+            t_bsdErrno = resp->errno_;
+            t_bsdResult = rc = resp->ret;
         }
     }
 
     if (R_FAILED(rc))
-        errno = EPIPE;
+        t_bsdErrno = -1;
 
     if(rOut != NULL)
         *rOut = r;
@@ -604,8 +607,7 @@ int bsdListen(int sockfd, int backlog) {
     return _bsdDispatchBasicCommand(&c, NULL);
 }
 
-// Not in bsd.h, exposed for the newlib compatibility wrapper
-int bsdIoctl_v(int fd, int request, va_list args) {
+int bsdIoctl(int fd, int request, void *data) {
     IpcCommand c;
 
     const void *in1 = NULL, *in2 = NULL, *in3 = NULL, *in4 = NULL;
@@ -619,39 +621,39 @@ int bsdIoctl_v(int fd, int request, va_list args) {
     switch(request) {
         case SIOCGIFCONF:
         {
-            struct ifconf *data = va_arg(args, struct ifconf *);
+            struct ifconf *data_ = (struct ifconf *)data;
             in1 = out1 = data;
             in1sz = out1sz = sizeof(struct ifconf);
-            in2 = out2 = data->ifc_req;
-            in2sz = out2sz = data->ifc_len;
+            in2 = out2 = data_->ifc_req;
+            in2sz = out2sz = data_->ifc_len;
             bufcount = 2;
             break;
         }
         case SIOCGIFMEDIA:
         case SIOCGIFXMEDIA:
         {
-            struct ifmediareq *data = va_arg(args, struct ifmediareq *);
+            struct ifmediareq *data_ = (struct ifmediareq *)data;
             in1 = out1 = data;
             in1sz = out1sz = sizeof(struct ifmediareq);
-            in2 = out2 = data->ifm_ulist;
-            in2sz = out2sz = 8 * data->ifm_count;
+            in2 = out2 = data_->ifm_ulist;
+            in2sz = out2sz = 8 * data_->ifm_count;
             bufcount = 2;
             break;
         }
         // Generic ioctl
         default:
         {
-            void *data = NULL;
+            void *data_ = NULL;
             if(request & IOC_INOUT)
-                data = va_arg(args, void *);
+                data_ = data;
             if(request & IOC_IN)
             {
-                in1 = data;
+                in1 = data_;
                 in1sz = IOCPARM_LEN(request);
             }
             if(request & IOC_OUT)
             {
-                out1 = data;
+                out1 = data_;
                 out1sz = IOCPARM_LEN(request);
             }
             break;
@@ -697,29 +699,17 @@ int bsdIoctl_v(int fd, int request, va_list args) {
     return _bsdDispatchBasicCommand(&c, NULL);
 }
 
-int bsdIoctl(int fd, int request, ...) {
-    int ret;
-
-    va_list args;
-    va_start(args, request);
-    ret = bsdIoctl_v(fd, request, args);
-    va_end(args);
-
-    return ret;
-}
-
-// Not in bsd.h, exposed for the newlib compatibility wrapper
-int bsdFnctl_v(int fd, int cmd, va_list args) {
+int bsdFnctl(int fd, int cmd, int flags) {
     IpcCommand c;
-    int arg = 0;
 
     if(cmd == F_GETFL || cmd == F_SETFL) {
-        errno = 0;
+        t_bsdResult = 0;
+        t_bsdErrno = EINVAL;
         return -1;
     }
 
-    if(cmd == F_SETFL)
-        arg = va_arg(args, int);
+    if(cmd == F_GETFL)
+        flags = 0;
 
     ipcInitialize(&c);
 
@@ -728,7 +718,7 @@ int bsdFnctl_v(int fd, int cmd, va_list args) {
         u64 cmd_id;
         int fd;
         int cmd;
-        int arg;
+        int flags;
     } *raw;
 
     raw = ipcPrepareHeader(&c, sizeof(*raw));
@@ -737,20 +727,9 @@ int bsdFnctl_v(int fd, int cmd, va_list args) {
     raw->cmd_id = 20;
     raw->fd = fd;
     raw->cmd = cmd;
-    raw->arg = arg;
+    raw->flags = flags;
 
     return _bsdDispatchBasicCommand(&c, NULL);
-}
-
-int bsdFnctl(int fd, int cmd, ...) {
-    int ret;
-
-    va_list args;
-    va_start(args, cmd);
-    ret = bsdFnctl_v(fd, cmd, args);
-    va_end(args);
-
-    return ret;
 }
 
 int bsdSetSockOpt(int sockfd, int level, int optname, const void *optval, socklen_t optlen) {
