@@ -7,7 +7,8 @@
 #include "services/applet.h"
 #include "runtime/devices/fs_dev.h"
 
-void __nx_exit(int rc);
+void* __stack_top;
+void NORETURN __nx_exit(LoaderReturnFn retaddr, Result rc);
 
 void virtmemSetup(void);
 void newlibSetup(void);
@@ -133,6 +134,5 @@ void __attribute__((weak)) NORETURN __libnx_exit(int rc)
     // Clean up services.
     __appExit();
 
-    envGetExitFuncPtr()(0);
-    while(1);
+    __nx_exit(envGetExitFuncPtr(), 0);
 }
