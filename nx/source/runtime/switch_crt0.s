@@ -62,13 +62,10 @@ bss_loop:
 .global __nx_exit
 .type   __nx_exit, %function
 __nx_exit:
-    mov  x8, x0
-
     // restore stack pointer
-    adrp x0, __stack_top
-    ldr  x0, [x0, #:lo12:__stack_top]
-    mov  sp, x0
+    adrp x8, __stack_top
+    ldr  x8, [x8, #:lo12:__stack_top]
+    mov  sp, x8
 
     // jump back to loader
-    mov  x0, #0
-    br   x8
+    br   x1

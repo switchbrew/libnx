@@ -4,7 +4,7 @@
 #include "services/sm.h"
 #include "services/fatal.h"
 
-void NORETURN __nx_exit(LoaderReturnFn retaddr, Result rc);
+void NORETURN __nx_exit(Result rc, LoaderReturnFn retaddr);
 
 static bool   g_isNso = false;
 static Handle g_mainThreadHandle = INVALID_HANDLE;
@@ -90,7 +90,7 @@ void envSetup(void* ctx, Handle main_thread, LoaderReturnFn saved_lr)
             if (ent->Flags & EntryFlag_IsMandatory)
             {
                 // Encountered unknown but mandatory key, bail back to loader.
-                __nx_exit(g_loaderRetAddr, MAKERESULT(346, 100 + ent->Key));
+                __nx_exit(MAKERESULT(346, 100 + ent->Key), g_loaderRetAddr);
             }
 
             break;
