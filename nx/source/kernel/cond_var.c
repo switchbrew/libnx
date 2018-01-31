@@ -21,7 +21,7 @@ void condvarWaitTimeout(CondVar* c, u64 timeout) {
 }
 
 void condvarWait(CondVar* c) {
-    return condvarWaitTimeout(c, -1);
+    return condvarWaitTimeout(c, -1ull);
 }
 
 Result condvarWake(CondVar* c, int num) {
