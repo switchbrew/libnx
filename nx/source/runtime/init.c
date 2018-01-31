@@ -8,7 +8,7 @@
 #include "runtime/devices/fs_dev.h"
 
 void* __stack_top;
-void NORETURN __nx_exit(LoaderReturnFn retaddr, Result rc);
+void NORETURN __nx_exit(Result rc, LoaderReturnFn retaddr);
 
 void virtmemSetup(void);
 void newlibSetup(void);
@@ -134,5 +134,5 @@ void __attribute__((weak)) NORETURN __libnx_exit(int rc)
     // Clean up services.
     __appExit();
 
-    __nx_exit(envGetExitFuncPtr(), 0);
+    __nx_exit(0, envGetExitFuncPtr());
 }
