@@ -2,7 +2,7 @@
 #include "types.h"
 #include "result.h"
 #include "kernel/svc.h"
-#include "kernel/cond_var.h"
+#include "kernel/condvar.h"
 #include "../internal.h"
 
 void condvarInit(CondVar* c, Mutex* m) {
