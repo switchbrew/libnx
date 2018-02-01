@@ -19,6 +19,16 @@ SVC_BEGIN svcSetHeapSize
 	ret
 SVC_END
 
+SVC_BEGIN svcSetMemoryPermission
+	svc 0x2
+	ret
+SVC_END
+
+SVC_BEGIN svcSetMemoryAttribute
+	svc 0x3
+	ret
+SVC_END
+
 SVC_BEGIN svcMapMemory
 	svc 0x4
 	ret

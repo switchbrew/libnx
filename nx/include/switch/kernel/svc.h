@@ -34,6 +34,8 @@ typedef enum {
 } JitMapOperation;
 
 Result svcSetHeapSize(void** out_addr, u64 size);
+Result svcSetMemoryPermission(void* addr, u64 size, u32 perm);
+Result svcSetMemoryAttribute(void* addr, u64 size, u32 val0, u32 val1);
 Result svcMapMemory(void* dst_addr, void* src_addr, u64 size);
 Result svcUnmapMemory(void* dst_addr, void* src_addr, u64 size);
 Result svcQueryMemory(MemoryInfo* meminfo_ptr, u32 *pageinfo, u64 addr);
