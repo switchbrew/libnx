@@ -3,7 +3,7 @@
     "lib": {
       "buildenv": "xenial-amd64",
       "builddeps": [
-        "wget", "p7zip-full", "build-essential"
+        "wget", "p7zip-full", "build-essential", "git"
       ],
 
       "environment": {
