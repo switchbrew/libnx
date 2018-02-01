@@ -16,7 +16,7 @@
 
         "DEVKITPRO=${DEVKITPATH} make -j${PARALLEL}",
         "git clone --depth 1 https://github.com/switchbrew/switch-examples",
-        "DEVKITPRO=${DEVKITPATH} make -C switch_examples/"
+        "DEVKITPRO=${DEVKITPATH} make -C switch-examples/"
       ]
     }
   }
