@@ -14,7 +14,8 @@
       "buildcmd": [
         "[ ! -d ${DEVKITPATH} ] && (rm -rf ${DEVKITPATH} && mkdir ${DEVKITPATH} && wget -O /tmp/devkita64.7z ${DEVKITURL} && cd ${DEVKITPATH} && 7z x -y /tmp/devkita64.7z) || /bin/true",
 
-        "DEVKITPRO=${DEVKITPATH} make -j${PARALLEL}"
+        "DEVKITPRO=${DEVKITPATH} make -j${PARALLEL}",
+        "git clone https://github.com/switchbrew/switch-examples && make -C switch_examples/"
       ]
     }
   }
