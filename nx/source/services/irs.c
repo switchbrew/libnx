@@ -35,7 +35,7 @@ Result irsInitialize(void)
 
     if (R_SUCCEEDED(rc))
     {
-        shmemLoadRemote(&g_irsSharedmem, sharedmem_handle, 0x8000, PERM_R);
+        shmemLoadRemote(&g_irsSharedmem, sharedmem_handle, 0x8000, Perm_R);
 
         rc = shmemMap(&g_irsSharedmem);
     }
