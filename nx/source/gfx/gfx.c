@@ -51,8 +51,6 @@ extern nvioctl_fence g_nvgfx_nvhostgpu_gpfifo_fence;
 
 //static Result _gfxGetDisplayResolution(u64 *width, u64 *height);
 
-//TODO: Implement support for non-720p width/height.
-
 //TODO: Let the user configure some of this?
 static bufferProducerQueueBufferInput g_gfxQueueBufferData = {
     .timestamp = 0x0,
