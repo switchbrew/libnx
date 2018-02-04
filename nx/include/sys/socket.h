@@ -53,7 +53,7 @@
  */
 
 // Stripped some of them
-
+#include <sys/types.h>  // for ssize_t, etc.
 #include <stdint.h>
 
 #ifndef _SA_FAMILY_T_DECLARED

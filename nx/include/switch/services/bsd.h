@@ -9,7 +9,6 @@
 #include "../types.h"
 #include "../kernel/tmem.h"
 
-#include <sys/types.h>  // for ssize_t, etc.
 #include <sys/socket.h> // for socklen_t
 #include <sys/select.h> // for fd_set
 #include <poll.h>       // for struct pollfd, ndfs_t
