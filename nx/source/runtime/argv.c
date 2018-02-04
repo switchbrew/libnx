@@ -1,6 +1,7 @@
 #include <string.h>
 #include <ctype.h>
 #include "result.h"
+#include "runtime/env.h"
 #include "kernel/svc.h"
 
 // System globals we define here
@@ -35,86 +36,88 @@ void argvSetup(void)
     __system_argc = 0;
     __system_argv = NULL;
 
-    memset(&meminfo, 0, sizeof(meminfo));
-    rc = svcQueryMemory(&meminfo, &pageinfo, (u64)argdata);
+    // TODO: Use envHasArgv() here for the NRO case.
 
-    // TODO: Use envHasArgv() here.
+    if (envIsNso()) {
+        memset(&meminfo, 0, sizeof(meminfo));
+        rc = svcQueryMemory(&meminfo, &pageinfo, (u64)argdata);
 
-    // This memory is only mapped when arguments were passed.
-    if (R_FAILED(rc) || meminfo.perm != 0x3)
-        return;
+        // This memory is only mapped when arguments were passed.
+        if (R_FAILED(rc) || meminfo.perm != 0x3)
+            return;
 
-    argdata_allocsize = (u64)arg32[0];
-    argdata_strsize = (u64)arg32[1];
-    args = (char*)&argdata[0x20];
+        argdata_allocsize = (u64)arg32[0];
+        argdata_strsize = (u64)arg32[1];
+        args = (char*)&argdata[0x20];
 
-    if (argdata_allocsize==0 || argdata_strsize==0) return;
+        if (argdata_allocsize==0 || argdata_strsize==0) return;
 
-    if ((u64)argdata < meminfo.addr) return;
-    if (((u64)argdata - meminfo.addr) + argdata_allocsize > meminfo.size) return;
+        if ((u64)argdata < meminfo.addr) return;
+        if (((u64)argdata - meminfo.addr) + argdata_allocsize > meminfo.size) return;
 
-    argvptr_pos = 0x20 + argdata_strsize+1;
-    if (argvptr_pos >= argdata_allocsize) return;
-    argstorage = (char*)&argdata[argvptr_pos];
+        argvptr_pos = 0x20 + argdata_strsize+1;
+        if (argvptr_pos >= argdata_allocsize) return;
+        argstorage = (char*)&argdata[argvptr_pos];
 
-    argvptr_pos += (argdata_strsize+1 + 0x9) & ~0x7;
-    if (argvptr_pos >= argdata_allocsize) return;
+        argvptr_pos += (argdata_strsize+1 + 0x9) & ~0x7;
+        if (argvptr_pos >= argdata_allocsize) return;
 
-    max_argv = (argdata_allocsize - argvptr_pos) >> 3;
-    if (max_argv < 2) return;
+        max_argv = (argdata_allocsize - argvptr_pos) >> 3;
+        if (max_argv < 2) return;
 
-    __system_argv = (char**)&argdata[argvptr_pos];
+        __system_argv = (char**)&argdata[argvptr_pos];
 
-    argstart = NULL;
+        argstart = NULL;
 
-    for(argi=0; argi<argdata_strsize; argi++) {
-        if (argstart == NULL && isspace(args[argi])) continue;
+        for(argi=0; argi<argdata_strsize; argi++) {
+            if (argstart == NULL && isspace(args[argi])) continue;
 
-        if (argstart == NULL) {
-            if (args[argi] == '"') {
-                argstart = &args[argi+1];
-                quote_flag = 1;
+            if (argstart == NULL) {
+                if (args[argi] == '"') {
+                    argstart = &args[argi+1];
+                    quote_flag = 1;
+                }
+                else if(args[argi]!=0) {
+                    argstart = &args[argi];
+                    arglen++;
+                }
             }
-            else if(args[argi]!=0) {
-                argstart = &args[argi];
-                arglen++;
+            else {
+                end_flag = 0;
+
+                if (quote_flag && args[argi] == '"') {
+                    end_flag = 1;
+                }
+                else if (isspace(args[argi])) {
+                    end_flag = 1;
+                }
+                else if(args[argi]!=0) {
+                    arglen++;
+                }
+
+                if ((args[argi]==0 || end_flag) && arglen) {
+                    strncpy(argstorage, argstart, arglen);
+                    argstorage[arglen] = 0;
+                    __system_argv[__system_argc] = argstorage;
+                    __system_argc++;
+                    argstart = NULL;
+                    quote_flag = 0;
+                    argstorage+= arglen+1;
+                    arglen = 0;
+
+                    if (__system_argc >= max_argv) break;
+                }
             }
         }
-        else {
-            end_flag = 0;
 
-            if (quote_flag && args[argi] == '"') {
-                end_flag = 1;
-            }
-            else if (isspace(args[argi])) {
-                end_flag = 1;
-            }
-            else if(args[argi]!=0) {
-                arglen++;
-            }
-
-            if ((args[argi]==0 || end_flag) && arglen) {
-                strncpy(argstorage, argstart, arglen);
-                argstorage[arglen] = 0;
-                __system_argv[__system_argc] = argstorage;
-                __system_argc++;
-                argstart = NULL;
-                quote_flag = 0;
-                argstorage+= arglen+1;
-                arglen = 0;
-
-                if (__system_argc >= max_argv) break;
-            }
+        if (arglen && __system_argc < max_argv) {
+            strncpy(argstorage, argstart, arglen);
+            argstorage[arglen] = 0;
+            __system_argv[__system_argc] = argstorage;
+            __system_argc++;
         }
-    }
 
-    if (arglen && __system_argc < max_argv) {
-        strncpy(argstorage, argstart, arglen);
-        argstorage[arglen] = 0;
-        __system_argv[__system_argc] = argstorage;
-        __system_argc++;
+        __system_argv[__system_argc] = NULL;
     }
-
-    __system_argv[__system_argc] = NULL;
 }
 
