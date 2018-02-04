@@ -20,8 +20,8 @@ void argvSetup(void)
 
     u8 *argdata = (u8*)&__argdata__;
     u32 *arg32 = (u32*)argdata;
-    u32 argdata_allocsize;
-    u32 argdata_strsize;
+    u64 argdata_allocsize;
+    u64 argdata_strsize;
     u32 argvptr_pos;
     u32 max_argv;
     u32 argi;
@@ -35,6 +35,7 @@ void argvSetup(void)
     __system_argc = 0;
     __system_argv = NULL;
 
+    memset(&meminfo, 0, sizeof(meminfo));
     rc = svcQueryMemory(&meminfo, &pageinfo, (u64)argdata);
 
     // TODO: Use envHasArgv() here.
@@ -43,11 +44,14 @@ void argvSetup(void)
     if (R_FAILED(rc) || meminfo.perm != 0x3)
         return;
 
-    argdata_allocsize = arg32[0];
-    argdata_strsize = arg32[1];
+    argdata_allocsize = (u64)arg32[0];
+    argdata_strsize = (u64)arg32[1];
     args = (char*)&argdata[0x20];
 
     if (argdata_allocsize==0 || argdata_strsize==0) return;
+
+    if ((u64)argdata < meminfo.addr) return;
+    if (((u64)argdata - meminfo.addr) + argdata_allocsize > meminfo.size) return;
 
     argvptr_pos = 0x20 + argdata_strsize+1;
     if (argvptr_pos >= argdata_allocsize) return;
