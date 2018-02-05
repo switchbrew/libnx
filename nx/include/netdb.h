@@ -228,7 +228,7 @@ int getaddrinfo(const char *node, const char *service,
 		        struct addrinfo **res);
 void freeaddrinfo(struct addrinfo *ai);
 
-const char *gai_strerror(int ecode);
+const char *gai_strerror(int err);
 void		setservent(int);
 
 #if __BSD_VISIBLE

@@ -1,7 +1,7 @@
 #include <stdarg.h>
+#include <stdio.h>
 #include <errno.h>
 #include <ctype.h>
-//#include <stdlib.h>
 #include <string.h>
 #include <malloc.h>
 //#include <sys/dirent.h>
@@ -19,10 +19,17 @@
 #include <net/bpf.h>
 
 #include <arpa/inet.h>
+#include <netdb.h>
 
 #include "runtime/devices/socket.h"
 #include "services/bsd.h"
+#include "services/sfdnsres.h"
 #include "result.h"
+
+__thread int h_errno;
+
+static SfdnsresConfig g_sfdnsresConfig;
+static __thread Result g_sfdnsresResult;
 
 const struct in6_addr in6addr_any = {0};
 const struct in6_addr in6addr_loopback = {.__u6_addr32 = {0, 0, 0, __builtin_bswap32(1)}};
@@ -73,6 +80,11 @@ static const SocketInitConfig g_defaultSocketInitConfig = {
     .udp_rx_buf_size = 0xA500,
 
     .sb_efficiency = 4,
+
+    .serialized_out_addrinfos_max_size  = 0x1000,
+    .serialized_out_hostent_max_size    = 0x200,
+    .bypass_nsd                         = false,
+    .dns_timeout                        = 0,
 };
 
 static int _socketParseBsdResult(struct _reent *r, int ret) {
@@ -527,18 +539,31 @@ Result socketInitialize(const SocketInitConfig *config) {
         .sb_efficiency = config->sb_efficiency,
     };
 
+    SfdnsresConfig sfdnsresConfig = {
+        .serialized_out_addrinfos_max_size  = config->serialized_out_addrinfos_max_size,
+        .serialized_out_hostent_max_size    = config->serialized_out_hostent_max_size,
+        .bypass_nsd                         = config->bypass_nsd,
+        .timeout                            = config->dns_timeout,
+    };
+
     int dev = FindDevice("soc:");
     if(dev != -1)
         return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
 
     ret = bsdInitialize(&bcfg);
-
     if(R_SUCCEEDED(ret))
         dev = AddDevice(&g_socketDevoptab);
 
     if(dev == -1) {
         socketExit();
         return MAKERESULT(Module_Libnx, LibnxError_TooManyDevOpTabs);
+    }
+    else {
+        g_bsdResult = 0;
+        g_bsdErrno = 0;
+
+        g_sfdnsresConfig = sfdnsresConfig;
+        g_sfdnsresResult = 0;
     }
 
     return ret;
@@ -549,8 +574,12 @@ void socketExit(void) {
     bsdExit();
 }
 
-Result socketGetLastResult(void) {
+Result socketGetLastBsdResult(void) {
     return g_bsdResult;
+}
+
+Result socketGetLastSfdnsresResult(void) {
+    return g_sfdnsresResult;
 }
 
 /*
@@ -1009,7 +1038,7 @@ int inet_pton(int af, const char *src, void *dst) {
 }
 
 char *inet_ntoa(struct in_addr in) {
-    static char buffer[INET_ADDRSTRLEN];
+    static __thread char buffer[INET_ADDRSTRLEN];
     inet_ntop(AF_INET, &in.s_addr, buffer, INET_ADDRSTRLEN);
     return buffer;
 }
@@ -1037,3 +1066,459 @@ int gethostname(char *name, size_t namelen)
     const char *hostname = inet_ntop(AF_INET, &hostid, name, namelen);
     return hostname == NULL ? -1 : 0;
 }
+
+static struct hostent *_socketDeserializeHostent(int *err, const void *out_he_serialized) {
+    const char *buf = (const char *)out_he_serialized;
+    const char *pos, *pos_aliases, *pos_addresses;
+    size_t name_size, total_aliases_size = 0;
+    size_t nb_addresses;
+    size_t nb_aliases = 0;
+    size_t len;
+
+    int addrtype, addrlen;
+    struct hostent *he;
+
+    // Calculate the size of the buffer to allocate
+    pos = buf;
+    name_size = strlen(pos) + 1;
+    pos += name_size;
+    pos_aliases = pos;
+    for(pos = buf, len = 1; len != 0; pos += len + 1) {
+        len = strlen(buf);
+        if(len != 0)
+            nb_aliases++;
+    }
+
+    total_aliases_size = pos - pos_aliases - 1;
+
+    // Nintendo uses unsigned short here...
+    addrtype = ntohl(*(const u16 *)pos);
+    pos += 2;
+    addrlen = ntohl(*(const u16 *)pos);
+    pos += 2;
+
+    // sfdnsres will only return IPv4 addresses for the "host" commands
+    if(addrtype != AF_INET || addrlen != sizeof(struct in_addr)) {
+        *err = NO_ADDRESS;
+        return NULL;
+    }
+
+    // The official hostent (de)serializer doesn't support IPv6, at least not currently.
+    pos_addresses = pos;
+    for(nb_addresses = 0; ((const struct in_addr *)pos)->s_addr != 0; nb_addresses++);
+
+    he = (struct hostent *)malloc(
+        sizeof(struct hostent)
+        + name_size
+        + 8 * (nb_aliases + 1 + nb_addresses + 1)
+        + total_aliases_size
+        + addrlen * nb_addresses
+    );
+
+    if(he == NULL) {
+        *err = NO_RECOVERY;
+        return NULL;
+    }
+
+    he->h_name = (char*)he + sizeof(struct hostent);
+    he->h_aliases = (char **)(he->h_name + name_size);
+    he->h_addrtype = addrtype;
+    he->h_length = addrlen;
+    he->h_addr_list = he->h_aliases + nb_aliases + 1;
+
+    memcpy(he->h_name, buf, name_size);
+
+    char *alias = (char *)(he->h_addr_list + nb_addresses + 1);
+    memcpy(alias, pos_aliases, total_aliases_size);
+    for(size_t i = 0; i < nb_aliases; i++) {
+        he->h_aliases[i] = alias;
+        alias += strlen(alias) + 1;
+    }
+    he->h_aliases[nb_aliases] = NULL;
+
+    struct in_addr *addresses = (struct in_addr *)(he->h_addr_list + nb_addresses + 1 + total_aliases_size);
+    memcpy(addresses, pos_addresses, addrlen * nb_addresses);
+    for(size_t i = 0; i < nb_addresses; i++) {
+        he->h_addr_list[i] = (char *)&addresses[i];
+        addresses[i].s_addr = ntohl(addresses[i].s_addr); // lol Nintendo
+    }
+    he->h_addr_list[nb_addresses] = NULL;
+
+    return he;
+}
+
+struct addrinfo_serialized_hdr {
+    u32 magic;
+    int ai_flags;
+    int ai_family;
+    int ai_socktype;
+    int ai_protocol;
+    u32 ai_addrlen;
+};
+
+static size_t _socketSerializeAddrInfo(struct addrinfo_serialized_hdr *hdr, const struct addrinfo *ai) {
+    size_t subsize1 = ai->ai_addrlen == 0 ? 4 : ai->ai_addrlen; // not posix-compliant ?
+    size_t subsize2 = strlen(ai->ai_canonname) + 1;
+
+    hdr->magic = htonl(0xBEEFCAFE); // Seriously.
+    hdr->ai_flags = htonl(ai->ai_flags);
+    hdr->ai_family = htonl(ai->ai_family);
+    hdr->ai_socktype = htonl(ai->ai_socktype);
+    hdr->ai_protocol = htonl(ai->ai_protocol);
+    hdr->ai_addrlen = htonl((u32)ai->ai_addrlen);
+
+    // Nintendo just byteswaps everything recursively... even fields that are already byteswapped.
+    switch(ai->ai_family) {
+        case AF_INET: {
+            struct sockaddr_in sa = {0};
+            memcpy(&sa, ai->ai_addr, subsize1 <= sizeof(struct sockaddr_in) ? subsize1 : sizeof(struct sockaddr_in));
+            sa.sin_port = htons(sa.sin_port);
+            sa.sin_addr.s_addr = htonl(sa.sin_addr.s_addr);
+            memcpy((u8 *)hdr + sizeof(struct addrinfo_serialized_hdr), &sa, sizeof(struct sockaddr_in));
+            break;
+        }
+        case AF_INET6: {
+            struct sockaddr_in6 sa6 = {0};
+            memcpy(&sa6, ai->ai_addr, subsize1 <= sizeof(struct sockaddr_in6) ? subsize1 : sizeof(struct sockaddr_in6));
+            sa6.sin6_port = htons(sa6.sin6_port);
+            sa6.sin6_flowinfo = htonl(sa6.sin6_flowinfo);
+            sa6.sin6_scope_id = htonl(sa6.sin6_scope_id);
+            memcpy((u8 *)hdr + sizeof(struct addrinfo_serialized_hdr), &sa6, sizeof(struct sockaddr_in6));
+            break;
+        }
+        default:
+            memcpy((u8 *)hdr + sizeof(struct addrinfo_serialized_hdr), ai->ai_addr, subsize1);
+    }
+
+    memcpy((u8 *)hdr + sizeof(struct addrinfo_serialized_hdr) + subsize1, ai->ai_canonname, subsize2);
+
+    return sizeof(struct addrinfo_serialized_hdr) + subsize1 + subsize2;
+}
+
+static struct addrinfo_serialized_hdr *_socketSerializeAddrInfoList(size_t *out_size, const struct addrinfo *ai) {
+    size_t total_addrlen = 0, total_namelen = 0, n = 0;
+    struct addrinfo_serialized_hdr *out, *pos;
+
+    for(const struct addrinfo *node = ai; node != NULL; node = node->ai_next) {
+        total_addrlen += node->ai_addrlen == 0 ? 4 : node->ai_addrlen;
+        total_namelen += strlen(node->ai_canonname) + 1;
+        n++;
+    }
+
+    out = (struct addrinfo_serialized_hdr *)malloc(sizeof(struct addrinfo_serialized_hdr) * n + total_addrlen + total_namelen + 4);
+    if(out == NULL)
+        return NULL;
+
+    pos = out;
+    for(const struct addrinfo *node = ai; node != NULL; node = node->ai_next) {
+        size_t len = _socketSerializeAddrInfo(pos, node);
+        pos = (struct addrinfo_serialized_hdr *)((u8 *)pos + len);
+    }
+    *(u32 *)pos = 0; // Sentinel value
+
+    *out_size = (u8 *)pos - (u8 *)out + 4;
+    return out;
+}
+
+static struct addrinfo *_socketDeserializeAddrInfo(size_t *out_len, const struct addrinfo_serialized_hdr *hdr) {
+    struct addrinfo_node {
+        struct addrinfo info;
+        struct sockaddr_storage addr;
+        char canonname[];
+    };
+
+    size_t subsize1 = hdr->ai_addrlen == 0 ? 4 : ntohl(hdr->ai_addrlen);
+    size_t subsize2 = strlen((const char *)hdr + sizeof(struct addrinfo_serialized_hdr) + subsize1) + 1;
+    struct addrinfo_node *node = (struct addrinfo_node *)malloc(sizeof(struct addrinfo_node) + subsize2);
+
+    *out_len = sizeof(struct addrinfo_serialized_hdr) + subsize1 + subsize2;
+    if(node == NULL)
+        return NULL;
+
+    node->info.ai_flags = ntohl(hdr->ai_flags);
+    node->info.ai_family = ntohl(hdr->ai_family);
+    node->info.ai_socktype = ntohl(hdr->ai_socktype);
+    node->info.ai_protocol = ntohl(hdr->ai_protocol);
+    node->info.ai_addrlen = ntohl(hdr->ai_addrlen);
+
+    node->info.ai_addr = (struct sockaddr *)&node->addr;
+    node->info.ai_canonname = node->canonname;
+    // getaddrinfo enforces addrlen = sizeof(struct sockaddr) and family = AF_INET, ie. only IPv4, anyways...
+    if(node->info.ai_addrlen > sizeof(struct sockaddr_storage))
+        node->info.ai_addrlen = sizeof(struct sockaddr_storage);
+    memcpy(node->info.ai_addr, (const u8 *)hdr + sizeof(struct addrinfo_serialized_hdr), node->info.ai_addrlen);
+    memcpy(node->info.ai_canonname, (const u8 *)hdr + sizeof(struct addrinfo_serialized_hdr) + subsize1, subsize2);
+
+    // Nintendo just byteswaps everything recursively... even fields that are already byteswapped.
+    switch(node->info.ai_family) {
+        case AF_INET: {
+            struct sockaddr_in *sa = (struct sockaddr_in *)&node->info.ai_addr;
+            sa->sin_port = ntohs(sa->sin_port);
+            sa->sin_addr.s_addr = ntohl(sa->sin_addr.s_addr);
+            break;
+        }
+        case AF_INET6: {
+            struct sockaddr_in6 *sa6 = (struct sockaddr_in6 *)&node->info.ai_addr;
+            sa6->sin6_port = ntohs(sa6->sin6_port);
+            sa6->sin6_flowinfo = ntohl(sa6->sin6_flowinfo);
+            sa6->sin6_scope_id = ntohl(sa6->sin6_scope_id);
+            break;
+        }
+        default:
+            break;
+    }
+    node->info.ai_next = NULL;
+
+    return &node->info;
+}
+
+static struct addrinfo *_socketDeserializeAddrInfoList(struct addrinfo_serialized_hdr *hdr) {
+    struct addrinfo *first = NULL, *prev = NULL;
+
+    while(hdr->magic == htonl(0xBEEFCAFE)) {
+        size_t len;
+        struct addrinfo *node = _socketDeserializeAddrInfo(&len, hdr);
+        if(node == NULL) {
+            if(first != NULL)
+                freeaddrinfo(first);
+            return NULL;
+        }
+
+        if(first == NULL)
+            first = node;
+
+        if(prev != NULL)
+            prev->ai_next = node;
+
+        prev = node;
+        hdr = (struct addrinfo_serialized_hdr *)((u8 *)hdr + len);
+    }
+
+    return first;
+}
+
+void freehostent(struct hostent *he) {
+    free(he);
+}
+
+void freeaddrinfo(struct addrinfo *ai) {
+    for(struct addrinfo *node = ai, *next; node != NULL; node = next) {
+        next = node->ai_next;
+        free(node);
+    }
+}
+
+struct hostent *gethostbyname(const char *name) {
+    Result rc = 0;
+    void *out_he_serialized = malloc(g_sfdnsresConfig.serialized_out_hostent_max_size);
+    struct hostent *he = NULL;
+    SfdnsresRequestResults ret; 
+
+    if(out_he_serialized == NULL) {
+        h_errno = NO_RECOVERY;
+        errno = ENOMEM; // POSIX leaves this unspecified
+        goto cleanup;
+    }
+    rc = sfdnsresGetHostByName(&ret, &g_sfdnsresConfig, out_he_serialized, name);
+    if(rc == 0xD401) {
+        h_errno = NO_RECOVERY;
+        errno = EFAULT; // POSIX leaves this unspecified
+        goto cleanup;
+    }
+    else if(R_FAILED(rc) && R_MODULE(rc) == 1) { // Kernel
+        h_errno = TRY_AGAIN;
+        errno = EAGAIN; // POSIX leaves this unspecified
+        goto cleanup;
+    }
+    else if(R_FAILED(rc)) {
+        h_errno = NO_RECOVERY;
+        errno = EINVAL; // POSIX leaves this unspecified
+        goto cleanup;
+    }
+    if(ret.ret != NETDB_SUCCESS) {
+        h_errno = ret.ret;
+        errno = ret.errno_; // POSIX leaves this unspecified
+        goto cleanup;
+    }
+
+    he = _socketDeserializeHostent(&h_errno, out_he_serialized);
+    if(he == NULL) {
+        h_errno = NO_RECOVERY;
+        errno = ENOMEM; // POSIX leaves this unspecified
+    }
+cleanup:
+    g_sfdnsresResult = rc;
+    free(out_he_serialized);
+    return he;
+}
+
+struct hostent *gethostbyaddr(const void *addr, socklen_t len, int type) {
+    Result rc = 0;
+    void *out_he_serialized = malloc(g_sfdnsresConfig.serialized_out_hostent_max_size);
+    struct hostent *he = NULL;
+    SfdnsresRequestResults ret; 
+
+    if(out_he_serialized == NULL) {
+        h_errno = NO_RECOVERY;
+        errno = ENOMEM; // POSIX leaves this unspecified
+        goto cleanup;
+    }
+    rc = sfdnsresGetHostByAddr(&ret, &g_sfdnsresConfig, out_he_serialized, addr, len, type);
+    if(rc == 0xD401) {
+        h_errno = NO_RECOVERY; // POSIX leaves this unspecified
+        errno = EFAULT;
+        goto cleanup;
+    }
+    else if(R_FAILED(rc) && R_MODULE(rc) == 1) { // Kernel
+        h_errno = TRY_AGAIN;
+        errno = EAGAIN; // POSIX leaves this unspecified
+        goto cleanup;
+    }
+    else if(R_FAILED(rc)) {
+        h_errno = NO_RECOVERY;
+        errno = EINVAL; // POSIX leaves this unspecified
+        goto cleanup;
+    }
+    if(ret.ret != NETDB_SUCCESS) {
+        h_errno = ret.ret;
+        errno = ret.errno_; // POSIX leaves this unspecified
+        goto cleanup;
+    }
+
+    he = _socketDeserializeHostent(&h_errno, out_he_serialized);
+    if(he == NULL) {
+        h_errno = NO_RECOVERY;
+        errno = ENOMEM; // POSIX leaves this unspecified
+    }
+cleanup:
+    g_sfdnsresResult = rc;
+    free(out_he_serialized);
+    return he;
+}
+
+const char *hstrerror(int err) {
+    static __thread char buf[0x80];
+    Result rc = sfdnsresGetHostStringError(err, buf, 0x80);
+    if(R_FAILED(rc)) // a bit limiting, given the broad range of errors the kernel can give to us...
+        strcpy(buf, "System busy, try again.");
+    g_sfdnsresResult = rc;
+    return buf;
+}
+
+void herror(const char *str) {
+    fprintf(stderr, "%s: %s\n", str, hstrerror(h_errno));
+}
+
+const char *gai_strerror(int err) {
+    static __thread char buf[0x80];
+    Result rc = sfdnsresGetGaiStringError(err, buf, 0x80);
+    if(R_FAILED(rc))
+        strcpy(buf, "System busy, try again.");
+    g_sfdnsresResult = rc;
+    return buf;
+}
+
+int getaddrinfo(const char *node, const char *service, const struct addrinfo *hints, struct addrinfo **res) {
+    int gaie = 0;
+    Result rc = 0;
+    size_t hints_sz;
+    struct addrinfo_serialized_hdr *hints_serialized = _socketSerializeAddrInfoList(&hints_sz, hints);
+    struct addrinfo_serialized_hdr *out_serialized = NULL;
+    struct addrinfo *out = NULL;
+    SfdnsresRequestResults ret; 
+
+    if(hints_serialized == NULL) {
+        gaie = EAI_MEMORY;
+        goto cleanup;
+    }
+
+    out_serialized = (struct addrinfo_serialized_hdr *)malloc(g_sfdnsresConfig.serialized_out_addrinfos_max_size);
+
+    if(out_serialized == NULL) {
+        gaie = EAI_MEMORY;
+        goto cleanup;
+    }
+
+    rc = sfdnsresGetAddrInfo(&ret, &g_sfdnsresConfig, node, service, hints_serialized, hints_sz, out_serialized);
+    if(rc == 0xD401) {
+        gaie = EAI_SYSTEM;
+        errno = EFAULT;
+        goto cleanup;
+    }
+    else if(R_FAILED(rc) && R_MODULE(rc) == 1) { // Kernel
+        gaie = EAI_AGAIN;
+        goto cleanup;
+    }
+    else if(R_FAILED(rc)) {
+        gaie = EAI_FAIL;
+        goto cleanup;
+    }
+
+    gaie = ret.ret;
+    if(gaie != 0) {
+        if(gaie == EAI_SYSTEM)
+            errno = ret.errno_;
+        goto cleanup;
+    }
+
+    out = _socketDeserializeAddrInfoList(out_serialized);
+    if(out == NULL)
+        gaie = EAI_MEMORY;
+    *res = out;
+cleanup:
+    free(hints_serialized);
+    free(out_serialized);
+    g_sfdnsresResult = rc;
+
+    return gaie;
+}
+
+int getnameinfo(const struct sockaddr *sa, socklen_t salen,
+                char *host, socklen_t hostlen,
+                char *serv, socklen_t servlen,
+                int flags) {
+    int gaie = 0;
+    Result rc = 0;
+    SfdnsresRequestResults ret;
+
+    rc = sfdnsresGetNameInfo(&ret, &g_sfdnsresConfig, sa, salen, host, hostlen, serv, servlen, flags);
+    if(rc == 0xD401) {
+        gaie = EAI_SYSTEM;
+        errno = EFAULT;
+        goto cleanup;
+    }
+    else if(R_FAILED(rc) && R_MODULE(rc) == 1) { // Kernel
+        gaie = EAI_AGAIN;
+        goto cleanup;
+    }
+    else if(R_FAILED(rc)) {
+        gaie = EAI_FAIL;
+        goto cleanup;
+    }
+
+
+    gaie = ret.ret;
+    if(gaie != 0) {
+        if(gaie == EAI_SYSTEM)
+            errno = ret.errno_;
+    }
+
+cleanup:
+    g_sfdnsresResult = rc;
+    return gaie;
+}
+
+// Unimplementable functions, left for compliance:
+struct hostent *gethostent(void) { return NULL; }
+struct netent *getnetbyaddr(uint32_t a, int b) { (void)a; (void)b; return NULL; }
+struct netent *getnetbyname(const char *s) { (void)s; return NULL; }
+struct netent *getnetent(void) { return NULL; }
+struct protoent *getprotobyname(const char *s) { (void)s; return NULL; }
+struct protoent *getprotobynumber(int a) { (void)a; return NULL; }
+struct protoent *getprotoent(void) { return NULL; }
+struct servent *getservbyname(const char *s1, const char *s2) { (void)s1; (void)s2; return NULL; }
+struct servent *getservbyport(int a, const char *s) { (void)a; (void)s; return NULL; }
+struct servent *getservent(void) { return NULL; }
+void sethostent(int a) { (void)a;}
+void setnetent(int a) { (void)a;}
+void setprotoent(int a) { (void)a; }

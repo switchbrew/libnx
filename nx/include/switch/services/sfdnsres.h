@@ -7,7 +7,7 @@
 typedef struct {
     size_t serialized_out_addrinfos_max_size;   ///< For getaddrinfo.
     size_t serialized_out_hostent_max_size;     ///< For gethostbyname/gethostbyaddr.
-    bool bypass_nsd;                            ///< For DNS requests: bypass the Name Server Daemon.
+    bool bypass_nsd;                            ///< For name gethostbyname/getaddrinfo: bypass the Name Server Daemon.
     int timeout;                                ///< For DNS requests: timeout or 0.
 } SfdnsresConfig;
 
@@ -23,8 +23,8 @@ typedef struct {
 Result sfdnsresGetHostByName(SfdnsresRequestResults *ret, const SfdnsresConfig *config, void *out_he_serialized, const char *name);
 Result sfdnsresGetHostByAddr(SfdnsresRequestResults *ret, const SfdnsresConfig *config, void *out_he_serialized, const void *addr, socklen_t len, int type);
 
-Result sfdnsresGetHostStringError(char *str, size_t str_size);
-Result sfdnsresGetGaiStringError(char *str, size_t str_size);
+Result sfdnsresGetHostStringError(int err, char *str, size_t str_size);
+Result sfdnsresGetGaiStringError(int err, char *str, size_t str_size);
 
 Result sfdnsresGetAddrInfo(SfdnsresRequestResults *ret, const SfdnsresConfig *config, const char *node, const char *service,
                            const void *hints_serialized, size_t hints_serialized_size, void *res_serialized);

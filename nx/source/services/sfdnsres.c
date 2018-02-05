@@ -24,24 +24,10 @@ cleanup:
     return rc;
 }
 
-static Result _sfdnsresDnsRequestCommand(IpcCommand *c, u64 cmd_id, SfdnsresRequestResults *ret, const SfdnsresConfig *config, bool has_serialized_data_out, int *arg) {
+static Result _sfdnsresDispatchDnsRequest(IpcCommand *c, SfdnsresRequestResults *ret, const void *raw, size_t raw_size, bool has_serialized_data_out) {
     Result rc;
     IpcParsedCommand r;
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        int arg;
-        int timeout;
-        u64 pid_placeholder;
-    } raw;
-
     ipcSendPid(c);
-
-    raw.magic = SFCI_MAGIC;
-    raw.cmd_id = cmd_id;
-    raw.arg = arg == NULL ? (config->bypass_nsd ? 0 : 1) : *arg;
-    raw.timeout = config->timeout;
-    raw.pid_placeholder = 0;
 
     rc = _sfdnsresDispatchCommand(&r, c, &raw, sizeof(raw));
     if(R_FAILED(rc)) return rc;
@@ -64,7 +50,25 @@ static Result _sfdnsresDnsRequestCommand(IpcCommand *c, u64 cmd_id, SfdnsresRequ
     return rc;
 }
 
-static Result _sfdnsresErrorStringGetterCommand(u64 cmd_id, char *str, size_t str_size) {
+static Result _sfdnsresDnsRequestCommand(IpcCommand *c, u64 cmd_id, SfdnsresRequestResults *ret, const SfdnsresConfig *config, bool has_serialized_data_out, int *arg) {
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        int arg;
+        int timeout;
+        u64 pid_placeholder;
+    } raw;
+
+    raw.magic = SFCI_MAGIC;
+    raw.cmd_id = cmd_id;
+    raw.arg = arg == NULL ? (config->bypass_nsd ? 0 : 1) : *arg;
+    raw.timeout = config->timeout;
+    raw.pid_placeholder = 0;
+
+    return _sfdnsresDispatchDnsRequest(c, ret, &raw, sizeof(raw), has_serialized_data_out);
+}
+
+static Result _sfdnsresErrorStringGetterCommand(u64 cmd_id, int err, char *str, size_t str_size) {
     IpcCommand c;
     Result rc;
     IpcParsedCommand r;
@@ -75,10 +79,12 @@ static Result _sfdnsresErrorStringGetterCommand(u64 cmd_id, char *str, size_t st
     struct {
         u64 magic;
         u64 cmd_id;
+        int err;
     } raw;
 
     raw.magic = SFCI_MAGIC;
     raw.cmd_id = cmd_id;
+    raw.err = err;
 
     rc = _sfdnsresDispatchCommand(&r, &c, &raw, sizeof(raw));
     if(R_FAILED(rc)) return rc;
@@ -104,18 +110,35 @@ Result sfdnsresGetHostByName(SfdnsresRequestResults *ret, const SfdnsresConfig *
 
 Result sfdnsresGetHostByAddr(SfdnsresRequestResults *ret, const SfdnsresConfig *config, void *out_he_serialized, const void *addr, socklen_t len, int type) {
     IpcCommand c;
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        socklen_t len; // wtf nintendo
+        int type;
+        int timeout;
+        u64 pid_placeholder;
+    } raw;
+
     ipcInitialize(&c);
+    ipcAddSendBuffer(&c, addr, len, 0);
     ipcAddRecvBuffer(&c, out_he_serialized, config->serialized_out_hostent_max_size, 0);
 
-    return _sfdnsresDnsRequestCommand(&c, 3, ret, config, true, &type);
+    raw.magic = SFCI_MAGIC;
+    raw.cmd_id = 3;
+    raw.len = len;
+    raw.type = type;
+    raw.timeout = config->timeout;
+    raw.pid_placeholder = 0;
+
+    return _sfdnsresDispatchDnsRequest(&c, ret, &raw, sizeof(raw), true);
 }
 
-Result sfdnsresGetHostStringError(char *str, size_t str_size) {
-    return _sfdnsresErrorStringGetterCommand(4, str, str_size);
+Result sfdnsresGetHostStringError(int err, char *str, size_t str_size) {
+    return _sfdnsresErrorStringGetterCommand(4, err, str, str_size);
 }
 
-Result sfdnsresGetGaiStringError(char *str, size_t str_size) {
-    return _sfdnsresErrorStringGetterCommand(5, str, str_size);
+Result sfdnsresGetGaiStringError(int err, char *str, size_t str_size) {
+    return _sfdnsresErrorStringGetterCommand(5, err, str, str_size);
 }
 
 Result sfdnsresGetAddrInfo(SfdnsresRequestResults *ret, const SfdnsresConfig *config, const char *node, const char *service,
@@ -181,9 +204,7 @@ Result sfdnsresRequestCancelHandle(u32 *out_handle) {
 
 /// Bug: always sets errno ?
 Result sfdnsresCancelSocketCall(SfdnsresRequestResults *ret, u32 handle) {
-    Result rc;
     IpcCommand c;
-    IpcParsedCommand r;
     struct {
         u64 magic;
         u64 cmd_id;
@@ -192,37 +213,18 @@ Result sfdnsresCancelSocketCall(SfdnsresRequestResults *ret, u32 handle) {
     } raw;
 
     ipcInitialize(&c);
-    ipcSendPid(&c);
 
     raw.magic = SFCI_MAGIC;
     raw.cmd_id = 9;
     raw.handle = handle;
     raw.pid_placeholder = 0;
 
-    rc = _sfdnsresDispatchCommand(&r, &c, &raw, sizeof(raw));
-    if(R_FAILED(rc)) return rc;
-
-    struct {
-        u64 magic;
-        u64 result;
-        int ret;
-        int errno_;
-    } *resp = r.Raw;
-
-    rc = resp->result;
-    if(R_FAILED(rc)) return rc;
-
-    ret->ret = resp->ret;
-    ret->errno_ = resp->errno_;
-
-    return rc; 
+    return _sfdnsresDispatchDnsRequest(&c, ret, &raw, sizeof(raw), false);
 }
 
 /// Bug: always sets errno ?
 Result sfdnsresCancelAllSocketCalls(SfdnsresRequestResults *ret) {
-    Result rc;
     IpcCommand c;
-    IpcParsedCommand r;
     struct {
         u64 magic;
         u64 cmd_id;
@@ -230,29 +232,12 @@ Result sfdnsresCancelAllSocketCalls(SfdnsresRequestResults *ret) {
     } raw;
 
     ipcInitialize(&c);
-    ipcSendPid(&c);
 
     raw.magic = SFCI_MAGIC;
     raw.cmd_id = 10;
     raw.pid_placeholder = 0;
 
-    rc = _sfdnsresDispatchCommand(&r, &c, &raw, sizeof(raw));
-    if(R_FAILED(rc)) return rc;
-
-    struct {
-        u64 magic;
-        u64 result;
-        int ret;
-        int errno_;
-    } *resp = r.Raw;
-
-    rc = resp->result;
-    if(R_FAILED(rc)) return rc;
-
-    ret->ret = resp->ret;
-    ret->errno_ = resp->errno_;
-
-    return rc; 
+    return _sfdnsresDispatchDnsRequest(&c, ret, &raw, sizeof(raw), false);
 }
 
 Result sfdnsresClearDnsIpServerAddressArray(void) {
