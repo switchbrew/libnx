@@ -16,8 +16,8 @@ void argvSetup(void);
 
 extern u32 __nx_applet_type;
 
-// Must be a multiple of 0x2000000.
-__attribute__((weak)) size_t __nx_heap_size = 0x2000000*16;
+// Must be a multiple of 0x200000.
+__attribute__((weak)) size_t __nx_heap_size = 0;
 
 /*
   There are three ways of allocating heap:
@@ -25,7 +25,9 @@ __attribute__((weak)) size_t __nx_heap_size = 0x2000000*16;
     - Normal syscall:
 
     Allocates heap using |svcSetHeapSize|. The size is provided by a weak symbol
-    called |__nx_heap_size|.
+    called |__nx_heap_size|. With the default 0 value, the size is automatically
+    determined with svcGetInfo. If running under a process where heap was already
+    allocated with svcSetHeapSize, __nx_heap_size should be set manually.
 
     - Heap override:
 
@@ -39,22 +41,34 @@ __attribute__((weak)) size_t __nx_heap_size = 0x2000000*16;
     different heap. In this case, the global variables |fake_heap_start|
     and |fake_heap_end| needs to be set appropriately.
 
-    A custom override be used to implement an "inner heap" located in the .bss
+    A custom override can be used to implement an "inner heap" located in the .bss
     segment of a process, for example.
  */
 
 void __attribute__((weak)) __libnx_initheap(void)
 {
     void*  addr;
-    size_t size;
+    size_t size = 0;
+    size_t mem_available = 0, mem_used = 0;
 
     if (envHasHeapOverride()) {
         addr = envGetHeapOverrideAddr();
         size = envGetHeapOverrideSize();
     }
     else {
-        Result rc = svcSetHeapSize(&addr, __nx_heap_size);
-        size = __nx_heap_size;
+        if (__nx_heap_size==0) {
+            svcGetInfo(&mem_available, 6, CUR_PROCESS_HANDLE, 0);
+            svcGetInfo(&mem_used, 7, CUR_PROCESS_HANDLE, 0);
+            if (mem_available > mem_used+0x200000)
+                size = (mem_available - mem_used - 0x200000) & ~0x1FFFFF;
+            if (size==0)
+                size = 0x2000000*16;
+        }
+        else {
+            size = __nx_heap_size;
+        }
+
+        Result rc = svcSetHeapSize(&addr, size);
 
         if (R_FAILED(rc))
             fatalSimple(MAKERESULT(Module_Libnx, LibnxError_HeapAllocFailed));
