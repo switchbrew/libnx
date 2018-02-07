@@ -888,16 +888,17 @@ inet_ntop6(src, dst, size)
         //TuxSH:
         //sprintf(tp, "%x", words[i]);
         {
-            char *e = tp + 7;
-            memset(e, '0', 4);
+            char hexbuf[8];
+            char *e = hexbuf + 7;
             u_int word = words[i];
             while(word > 0) {
                 static const char digits[] = "0123456789abcdef";
                 *e-- = digits[word & 0xF];
                 word >>= 4;
             }
+
+            memcpy(tp, e + 1, hexbuf + 8 - (e + 1));
         }
-        tp += strlen(tp);
     }
     /* Was it a trailing run of 0x00's? */
     if (best.base != -1 && (best.base + best.len) == (IN6ADDRSZ / INT16SZ))
