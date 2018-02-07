@@ -284,7 +284,7 @@ int bsdOpen(const char *pathname, int flags) {
     IpcCommand c;
     ipcInitialize(&c);
 
-    size_t pathlen = strnlen(pathname, 256);
+    size_t pathlen = strlen(pathname) + 1;
     ipcAddSendBuffer(&c, pathname, pathlen, 0);
     ipcAddSendStatic(&c, pathname, pathlen, 0);
 
