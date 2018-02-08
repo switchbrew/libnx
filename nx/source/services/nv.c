@@ -199,18 +199,18 @@ Result nvIoctl(u32 fd, u32 request, void* argp) {
         u32 request;
     } *raw;
 
-    size_t bufsize = _IOC_SIZE(request);
-    u32 dir = _IOC_DIR(request);
+    size_t bufsize = _NV_IOC_SIZE(request);
+    u32 dir = _NV_IOC_DIR(request);
 
     void* buf_send = NULL, *buf_recv = NULL;
     size_t buf_send_size = 0, buf_recv_size = 0;
 
-    if(dir & _IOC_WRITE) {
+    if(dir & _NV_IOC_WRITE) {
         buf_send = argp;
         buf_send_size = bufsize;
     }
 
-    if(dir & _IOC_READ) {
+    if(dir & _NV_IOC_READ) {
         buf_recv = argp;
         buf_recv_size = bufsize;
     }

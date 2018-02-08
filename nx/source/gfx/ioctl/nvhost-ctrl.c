@@ -7,13 +7,13 @@
 
 Result nvioctlNvhostCtrl_EventSignal(u32 fd, u32 event_id) {
     struct {
-        _in_ u32 event_id;
+        __nv_in u32 event_id;
     } data;
 
     memset(&data, 0, sizeof(data));
     data.event_id = event_id;
 
-    return nvIoctl(fd, _IOWR(0x00, 0x1C, data), &data);
+    return nvIoctl(fd, _NV_IOWR(0x00, 0x1C, data), &data);
 }
 
 Result nvioctlNvhostCtrl_EventWait(u32 fd, u32 syncpt_id, u32 threshold, s32 timeout, u32 event_id, u32 *out)
@@ -21,10 +21,10 @@ Result nvioctlNvhostCtrl_EventWait(u32 fd, u32 syncpt_id, u32 threshold, s32 tim
     Result rc = 0;
 
     struct {
-        _in_ u32 syncpt_id;
-        _in_ u32 threshold;
-        _in_ s32 timeout;
-        _inout_ u32 value;
+        __nv_in u32 syncpt_id;
+        __nv_in u32 threshold;
+        __nv_in s32 timeout;
+        __nv_inout u32 value;
     } data;
 
     memset(&data, 0, sizeof(data));
@@ -33,7 +33,7 @@ Result nvioctlNvhostCtrl_EventWait(u32 fd, u32 syncpt_id, u32 threshold, s32 tim
     data.timeout = timeout;
     data.value = event_id;
 
-    rc = nvIoctl(fd, _IOWR(0x00, 0x1D, data), &data);
+    rc = nvIoctl(fd, _NV_IOWR(0x00, 0x1D, data), &data);
 
     if (R_SUCCEEDED(rc))
         *out = data.value;
@@ -43,11 +43,11 @@ Result nvioctlNvhostCtrl_EventWait(u32 fd, u32 syncpt_id, u32 threshold, s32 tim
 
 Result nvioctlNvhostCtrl_EventRegister(u32 fd, u32 event_id) {
     struct {
-        _in_ u32 event_id;
+        __nv_in u32 event_id;
     } data;
 
     memset(&data, 0, sizeof(data));
     data.event_id = event_id;
 
-    return nvIoctl(fd, _IOWR(0x40, 0x1F, data), &data);
+    return nvIoctl(fd, _NV_IOWR(0x40, 0x1F, data), &data);
 }
