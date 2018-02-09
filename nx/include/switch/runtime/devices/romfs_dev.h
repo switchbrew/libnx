@@ -1,6 +1,10 @@
 /**
  * @file romfs_dev.h
  * @brief RomFS driver.
+ * @author yellows8
+ * @author mtheall
+ * @author fincs
+ * @copyright libnx Authors
  */
 #pragma once
 
