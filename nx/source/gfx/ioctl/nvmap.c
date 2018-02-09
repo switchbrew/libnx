@@ -9,8 +9,8 @@ Result nvioctlNvmap_Create(u32 fd, u32 size, u32 *nvmap_handle) {
     Result rc=0;
 
     struct {
-        __in  u32 size;
-        __out u32 handle;
+        _in_  u32 size;
+        _out_ u32 handle;
     } data;
 
     memset(&data, 0, sizeof(data));
@@ -29,8 +29,8 @@ Result nvioctlNvmap_FromId(u32 fd, u32 id, u32 *nvmap_handle) {
     Result rc=0;
 
     struct {
-        __in  u32 id;
-        __out u32 handle;
+        _in_  u32 id;
+        _out_ u32 handle;
     } data;
 
     memset(&data, 0, sizeof(data));
@@ -47,13 +47,13 @@ Result nvioctlNvmap_FromId(u32 fd, u32 id, u32 *nvmap_handle) {
 
 Result nvioctlNvmap_Alloc(u32 fd, u32 nvmap_handle, u32 heapmask, u32 flags, u32 align, u8 kind, void* addr) {
     struct {
-        __in u32 handle;
-        __in u32 heapmask;
-        __in u32 flags;    // (0=read-only, 1=read-write)
-        __in u32 align;
-        __in u8  kind;
+        _in_ u32 handle;
+        _in_ u32 heapmask;
+        _in_ u32 flags;    // (0=read-only, 1=read-write)
+        _in_ u32 align;
+        _in_ u8  kind;
         u8       pad[7];
-        __in u64 addr;
+        _in_ u64 addr;
     } data;
 
     memset(&data, 0, sizeof(data));
@@ -71,8 +71,8 @@ Result nvioctlNvmap_GetId(u32 fd, u32 nvmap_handle, u32 *id) {
     Result rc=0;
 
     struct {
-        __out u32 id;
-        __in  u32 handle;
+        _out_ u32 id;
+        _in_  u32 handle;
     } data;
 
     memset(&data, 0, sizeof(data));
