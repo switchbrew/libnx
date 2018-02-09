@@ -60,6 +60,7 @@ enum {
     LibnxError_BadGetInfo_Rng,
     LibnxError_JitUnavailable,
     LibnxError_WeirdKernel,
+    LibnxError_IncompatSysVer,
 };
 
 enum {

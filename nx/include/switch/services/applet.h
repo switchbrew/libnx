@@ -46,6 +46,14 @@ void appletNotifyRunning(u8 *out);
 Result appletCreateManagedDisplayLayer(u64 *out);
 
 /**
+ * @brief Controls whether screenshot-capture is allowed.
+ * @param val 0 = disable, 1 = enable.
+ */
+Result appletSetScreenShotPermission(s32 val);
+
+Result appletSetScreenShotImageOrientation(s32 val);
+
+/**
  * @brief Processes the current applet status. Generally used within a main loop.
  * @return Whether the application should continue running.
  */

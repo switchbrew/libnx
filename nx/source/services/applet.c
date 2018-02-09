@@ -658,6 +658,39 @@ static Result _appletGetCurrentFocusState(u8 *out) {
     return rc;
 }
 
+Result appletSetScreenShotPermission(s32 val) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        s32 val;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 10;
+    raw->val = val;
+
+    Result rc = serviceIpcDispatch(&g_appletISelfController);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
 static Result _appletSetOperationModeChangedNotification(u8 flag) {
     IpcCommand c;
     ipcInitialize(&c);
@@ -776,6 +809,42 @@ static Result _appletSetOutOfFocusSuspendingEnabled(u8 inval) {
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 16;
     raw->inval = inval;
+
+    Result rc = serviceIpcDispatch(&g_appletISelfController);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result appletSetScreenShotImageOrientation(s32 val) {
+    if (!kernelAbove300())
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        s32 val;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 19;
+    raw->val = val;
 
     Result rc = serviceIpcDispatch(&g_appletISelfController);
 
