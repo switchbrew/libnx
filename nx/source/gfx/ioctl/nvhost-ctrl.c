@@ -7,7 +7,7 @@
 
 Result nvioctlNvhostCtrl_EventSignal(u32 fd, u32 event_id) {
     struct {
-        __in u32 event_id;
+        _in_ u32 event_id;
     } data;
 
     memset(&data, 0, sizeof(data));
@@ -21,10 +21,10 @@ Result nvioctlNvhostCtrl_EventWait(u32 fd, u32 syncpt_id, u32 threshold, s32 tim
     Result rc = 0;
 
     struct {
-        __in u32 syncpt_id;
-        __in u32 threshold;
-        __in s32 timeout;
-        __inout u32 value;
+        _in_ u32 syncpt_id;
+        _in_ u32 threshold;
+        _in_ s32 timeout;
+        _inout_ u32 value;
     } data;
 
     memset(&data, 0, sizeof(data));
@@ -43,7 +43,7 @@ Result nvioctlNvhostCtrl_EventWait(u32 fd, u32 syncpt_id, u32 threshold, s32 tim
 
 Result nvioctlNvhostCtrl_EventRegister(u32 fd, u32 event_id) {
     struct {
-        __in u32 event_id;
+        _in_ u32 event_id;
     } data;
 
     memset(&data, 0, sizeof(data));

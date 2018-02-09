@@ -9,7 +9,7 @@ Result nvioctlNvhostCtrlGpu_ZCullGetCtxSize(u32 fd, u32 *out) {
     Result rc = 0;
 
     struct {
-        __out u32 out;
+        _out_ u32 out;
     } data;
 
     memset(&data, 0, sizeof(data));
@@ -27,7 +27,7 @@ Result nvioctlNvhostCtrlGpu_ZCullGetInfo(u32 fd, u32 out[40>>2]) {
     Result rc = 0;
 
     struct {
-        __out u32 out[40>>2];
+        _out_ u32 out[40>>2];
     } data;
 
     memset(&data, 0, sizeof(data));
@@ -45,9 +45,9 @@ Result nvioctlNvhostCtrlGpu_GetCharacteristics(u32 fd, gpu_characteristics *out)
     Result rc = 0;
 
     struct {
-        __in  u64 gc_buf_size;   // must not be NULL, but gets overwritten with 0xA0=max_size
-        __in  u64 gc_buf_addr;   // ignored, but must not be NULL
-        __out gpu_characteristics gc;
+        _in_  u64 gc_buf_size;   // must not be NULL, but gets overwritten with 0xA0=max_size
+        _in_  u64 gc_buf_addr;   // ignored, but must not be NULL
+        _out_ gpu_characteristics gc;
     } data;
 
     memset(&data, 0, sizeof(data));
@@ -68,7 +68,7 @@ Result nvioctlNvhostCtrlGpu_GetTpcMasks(u32 fd, u32 inval, u32 out[24>>2]) {
 
     // Fixme: This one is wrong.
     struct {
-        __inout u32 unk[24>>2];
+        _inout_ u32 unk[24>>2];
     } data;
 
     memset(&data, 0, sizeof(data));
@@ -87,7 +87,7 @@ Result nvioctlNvhostCtrlGpu_GetL2State(u32 fd, nvioctl_l2_state *out) {
     Result rc = 0;
 
     struct {
-        __out nvioctl_l2_state out;
+        _out_ nvioctl_l2_state out;
     } data;
 
     memset(&data, 0, sizeof(data));
