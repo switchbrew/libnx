@@ -101,7 +101,7 @@ static Result _sfdnsresErrorStringGetterCommand(u64 cmd_id, int err, char *str, 
 Result sfdnsresGetHostByName(SfdnsresRequestResults *ret, const SfdnsresConfig *config, void *out_he_serialized, const char *name) {
     IpcCommand c;
     ipcInitialize(&c);
-    ipcAddSendBuffer(&c, name, strlen(name) + 1, 0);
+    ipcAddSendBuffer(&c, name, name == NULL ? 0 : strlen(name) + 1, 0);
 
     ipcAddRecvBuffer(&c, out_he_serialized, config->serialized_out_hostent_max_size, 0);
 
@@ -120,7 +120,7 @@ Result sfdnsresGetHostByAddr(SfdnsresRequestResults *ret, const SfdnsresConfig *
     } raw;
 
     ipcInitialize(&c);
-    ipcAddSendBuffer(&c, addr, len, 0);
+    ipcAddSendBuffer(&c, addr, addr == NULL ? 0 : len, 0);
     ipcAddRecvBuffer(&c, out_he_serialized, config->serialized_out_hostent_max_size, 0);
 
     raw.magic = SFCI_MAGIC;
@@ -144,10 +144,13 @@ Result sfdnsresGetGaiStringError(int err, char *str, size_t str_size) {
 Result sfdnsresGetAddrInfo(SfdnsresRequestResults *ret, const SfdnsresConfig *config, const char *node, const char *service,
                            const void *hints_serialized, size_t hints_serialized_size, void *res_serialized) {
     IpcCommand c;
-    ipcInitialize(&c);
+    size_t node_size = node == NULL ? 0 : strlen(node) + 1;
+    size_t service_size = service == NULL ? 0 : strlen(service) + 1;
+    hints_serialized_size = hints_serialized == NULL ? 0 : hints_serialized_size;
 
-    ipcAddSendBuffer(&c, node, strlen(node) + 1, 0);
-    ipcAddSendBuffer(&c, node, strlen(service) + 1, 0);
+    ipcInitialize(&c);
+    ipcAddSendBuffer(&c, node, node_size, 0);
+    ipcAddSendBuffer(&c, service, service_size, 0);
     ipcAddSendBuffer(&c, hints_serialized, hints_serialized_size, 0);
 
     ipcAddRecvBuffer(&c, res_serialized, config->serialized_out_hostent_max_size, 0);
@@ -159,6 +162,11 @@ Result sfdnsresGetNameInfo(SfdnsresRequestResults *ret, const SfdnsresConfig *co
                            const struct sockaddr *sa, socklen_t salen, char *host, size_t hostlen,
                            char *serv, size_t servlen, int flags) {
     IpcCommand c;
+
+    salen = sa == NULL ? 0 : salen;
+    hostlen = host == NULL ? 0 : hostlen;
+    servlen = serv == NULL ? 0 : servlen;
+
     ipcInitialize(&c);
     ipcAddSendBuffer(&c, sa, salen, 0);
 
