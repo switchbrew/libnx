@@ -266,8 +266,8 @@ static inline void* ipcPrepareHeader(IpcCommand* cmd, size_t sizeof_raw) {
 }
 
 /**
- * @brief Dispatches an IPC command structure.
- * @param cmd IPC command structure.
+ * @brief Dispatches an IPC request.
+ * @param session IPC session handle.
  * @return Result code.
  */
 static inline Result ipcDispatch(Handle session) {

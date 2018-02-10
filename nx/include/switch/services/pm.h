@@ -1,4 +1,9 @@
-// Copyright 2017 plutoo
+/**
+ * @file pm.h
+ * @brief Process management (pm*) service IPC wrapper.
+ * @author plutoo
+ * @copyright libnx Authors
+ */
 #pragma once
 #include "../types.h"
 

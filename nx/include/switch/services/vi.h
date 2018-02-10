@@ -1,3 +1,9 @@
+/**
+ * @file vi.h
+ * @brief Display (vi:*) service IPC wrapper.
+ * @author yellows8
+ * @copyright libnx Authors
+ */
 #pragma once
 #include "../types.h"
 #include "../services/sm.h"
