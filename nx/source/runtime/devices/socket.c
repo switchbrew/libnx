@@ -1113,13 +1113,17 @@ static struct hostent *_socketDeserializeHostent(int *err, const void *out_he_se
         return NULL;
     }
 
-    he->h_name = (char*)he + sizeof(struct hostent);
     he->h_aliases = (char **)(he->h_name + name_size);
     he->h_addrtype = addrtype;
     he->h_length = addrlen;
     he->h_addr_list = he->h_aliases + nb_aliases + 1;
 
-    memcpy(he->h_name, buf, name_size);
+    if(name_size == 1)
+        he->h_name = NULL;
+    else {
+        he->h_name = (char*)he + sizeof(struct hostent);
+        memcpy(he->h_name, buf, name_size);
+    }
 
     char *alias = (char *)(he->h_addr_list + nb_addresses + 1);
     memcpy(alias, pos_aliases, total_aliases_size);
@@ -1150,40 +1154,47 @@ struct addrinfo_serialized_hdr {
 };
 
 static size_t _socketSerializeAddrInfo(struct addrinfo_serialized_hdr *hdr, const struct addrinfo *ai) {
-    size_t subsize1 = ai->ai_addrlen == 0 ? 4 : ai->ai_addrlen; // not posix-compliant ?
-    size_t subsize2 = strlen(ai->ai_canonname) + 1;
+    size_t subsize1 = (ai->ai_addr == NULL || ai->ai_addrlen == 0) ? 4 : ai->ai_addrlen; // not posix-compliant ?
+    size_t subsize2 = ai->ai_canonname == NULL ? 1 : (strlen(ai->ai_canonname) + 1);
 
     hdr->magic = htonl(0xBEEFCAFE); // Seriously.
     hdr->ai_flags = htonl(ai->ai_flags);
     hdr->ai_family = htonl(ai->ai_family);
     hdr->ai_socktype = htonl(ai->ai_socktype);
     hdr->ai_protocol = htonl(ai->ai_protocol);
-    hdr->ai_addrlen = htonl((u32)ai->ai_addrlen);
+    hdr->ai_addrlen = ai->ai_addr == NULL ? 0 : htonl((u32)ai->ai_addrlen);
 
-    // Nintendo just byteswaps everything recursively... even fields that are already byteswapped.
-    switch(ai->ai_family) {
-        case AF_INET: {
-            struct sockaddr_in sa = {0};
-            memcpy(&sa, ai->ai_addr, subsize1 <= sizeof(struct sockaddr_in) ? subsize1 : sizeof(struct sockaddr_in));
-            sa.sin_port = htons(sa.sin_port);
-            sa.sin_addr.s_addr = htonl(sa.sin_addr.s_addr);
-            memcpy((u8 *)hdr + sizeof(struct addrinfo_serialized_hdr), &sa, sizeof(struct sockaddr_in));
-            break;
+    if(hdr->ai_addrlen == 0)
+        *(u32 *)((u8 *)hdr + sizeof(struct addrinfo_serialized_hdr)) = 0;
+    else {
+        // Nintendo just byteswaps everything recursively... even fields that are already byteswapped.
+        switch(ai->ai_family) {
+            case AF_INET: {
+                struct sockaddr_in sa = {0};
+                memcpy(&sa, ai->ai_addr, subsize1 <= sizeof(struct sockaddr_in) ? subsize1 : sizeof(struct sockaddr_in));
+                sa.sin_port = htons(sa.sin_port);
+                sa.sin_addr.s_addr = htonl(sa.sin_addr.s_addr);
+                memcpy((u8 *)hdr + sizeof(struct addrinfo_serialized_hdr), &sa, sizeof(struct sockaddr_in));
+                break;
+            }
+            case AF_INET6: {
+                struct sockaddr_in6 sa6 = {0};
+                memcpy(&sa6, ai->ai_addr, subsize1 <= sizeof(struct sockaddr_in6) ? subsize1 : sizeof(struct sockaddr_in6));
+                sa6.sin6_port = htons(sa6.sin6_port);
+                sa6.sin6_flowinfo = htonl(sa6.sin6_flowinfo);
+                sa6.sin6_scope_id = htonl(sa6.sin6_scope_id);
+                memcpy((u8 *)hdr + sizeof(struct addrinfo_serialized_hdr), &sa6, sizeof(struct sockaddr_in6));
+                break;
+            }
+            default:
+                memcpy((u8 *)hdr + sizeof(struct addrinfo_serialized_hdr), ai->ai_addr, subsize1);
         }
-        case AF_INET6: {
-            struct sockaddr_in6 sa6 = {0};
-            memcpy(&sa6, ai->ai_addr, subsize1 <= sizeof(struct sockaddr_in6) ? subsize1 : sizeof(struct sockaddr_in6));
-            sa6.sin6_port = htons(sa6.sin6_port);
-            sa6.sin6_flowinfo = htonl(sa6.sin6_flowinfo);
-            sa6.sin6_scope_id = htonl(sa6.sin6_scope_id);
-            memcpy((u8 *)hdr + sizeof(struct addrinfo_serialized_hdr), &sa6, sizeof(struct sockaddr_in6));
-            break;
-        }
-        default:
-            memcpy((u8 *)hdr + sizeof(struct addrinfo_serialized_hdr), ai->ai_addr, subsize1);
     }
 
-    memcpy((u8 *)hdr + sizeof(struct addrinfo_serialized_hdr) + subsize1, ai->ai_canonname, subsize2);
+    if(ai->ai_canonname == NULL)
+        *((u8 *)hdr + sizeof(struct addrinfo_serialized_hdr) + subsize1) = 0;
+    else
+        memcpy((u8 *)hdr + sizeof(struct addrinfo_serialized_hdr) + subsize1, ai->ai_canonname, subsize2);
 
     return sizeof(struct addrinfo_serialized_hdr) + subsize1 + subsize2;
 }
@@ -1194,7 +1205,7 @@ static struct addrinfo_serialized_hdr *_socketSerializeAddrInfoList(size_t *out_
 
     for(const struct addrinfo *node = ai; node != NULL; node = node->ai_next) {
         total_addrlen += node->ai_addrlen == 0 ? 4 : node->ai_addrlen;
-        total_namelen += strlen(node->ai_canonname) + 1;
+        total_namelen += node->ai_canonname == NULL ? 1 : (strlen(node->ai_canonname) + 1);
         n++;
     }
 
@@ -1234,32 +1245,42 @@ static struct addrinfo *_socketDeserializeAddrInfo(size_t *out_len, const struct
     node->info.ai_protocol = ntohl(hdr->ai_protocol);
     node->info.ai_addrlen = ntohl(hdr->ai_addrlen);
 
-    node->info.ai_addr = (struct sockaddr *)&node->addr;
-    node->info.ai_canonname = node->canonname;
     // getaddrinfo enforces addrlen = sizeof(struct sockaddr) and family = AF_INET, ie. only IPv4, anyways...
     if(node->info.ai_addrlen > sizeof(struct sockaddr_storage))
         node->info.ai_addrlen = sizeof(struct sockaddr_storage);
-    memcpy(node->info.ai_addr, (const u8 *)hdr + sizeof(struct addrinfo_serialized_hdr), node->info.ai_addrlen);
-    memcpy(node->info.ai_canonname, (const u8 *)hdr + sizeof(struct addrinfo_serialized_hdr) + subsize1, subsize2);
 
-    // Nintendo just byteswaps everything recursively... even fields that are already byteswapped.
-    switch(node->info.ai_family) {
-        case AF_INET: {
-            struct sockaddr_in *sa = (struct sockaddr_in *)&node->info.ai_addr;
-            sa->sin_port = ntohs(sa->sin_port);
-            sa->sin_addr.s_addr = ntohl(sa->sin_addr.s_addr);
-            break;
+    if(node->info.ai_addrlen == 0)
+        node->info.ai_addr = NULL;
+    else {
+        node->info.ai_addr = (struct sockaddr *)&node->addr;
+        memcpy(node->info.ai_addr, (const u8 *)hdr + sizeof(struct addrinfo_serialized_hdr), node->info.ai_addrlen);
+        // Nintendo just byteswaps everything recursively... even fields that are already byteswapped.
+        switch(node->info.ai_family) {
+            case AF_INET: {
+                struct sockaddr_in *sa = (struct sockaddr_in *)&node->info.ai_addr;
+                sa->sin_port = ntohs(sa->sin_port);
+                sa->sin_addr.s_addr = ntohl(sa->sin_addr.s_addr);
+                break;
+            }
+            case AF_INET6: {
+                struct sockaddr_in6 *sa6 = (struct sockaddr_in6 *)&node->info.ai_addr;
+                sa6->sin6_port = ntohs(sa6->sin6_port);
+                sa6->sin6_flowinfo = ntohl(sa6->sin6_flowinfo);
+                sa6->sin6_scope_id = ntohl(sa6->sin6_scope_id);
+                break;
+            }
+            default:
+                break;
         }
-        case AF_INET6: {
-            struct sockaddr_in6 *sa6 = (struct sockaddr_in6 *)&node->info.ai_addr;
-            sa6->sin6_port = ntohs(sa6->sin6_port);
-            sa6->sin6_flowinfo = ntohl(sa6->sin6_flowinfo);
-            sa6->sin6_scope_id = ntohl(sa6->sin6_scope_id);
-            break;
-        }
-        default:
-            break;
     }
+
+    if(subsize2 == 1)
+        node->info.ai_canonname = NULL;
+    else {
+        node->info.ai_canonname = node->canonname;
+        memcpy(node->info.ai_canonname, (const u8 *)hdr + sizeof(struct addrinfo_serialized_hdr) + subsize1, subsize2);
+    }
+
     node->info.ai_next = NULL;
 
     return &node->info;
@@ -1295,6 +1316,7 @@ void freehostent(struct hostent *he) {
 }
 
 void freeaddrinfo(struct addrinfo *ai) {
+    if(ai == NULL) return; // not specified by POSIX, but that's convenient (FreeBSD does this too, etc.).
     for(struct addrinfo *node = ai, *next; node != NULL; node = next) {
         next = node->ai_next;
         free(node);
@@ -1418,7 +1440,7 @@ int getaddrinfo(const char *node, const char *service, const struct addrinfo *hi
     struct addrinfo_serialized_hdr *hints_serialized = _socketSerializeAddrInfoList(&hints_sz, hints);
     struct addrinfo_serialized_hdr *out_serialized = NULL;
     struct addrinfo *out = NULL;
-    SfdnsresRequestResults ret; 
+    SfdnsresRequestResults ret;
 
     if(hints_serialized == NULL) {
         gaie = EAI_MEMORY;
@@ -1433,6 +1455,7 @@ int getaddrinfo(const char *node, const char *service, const struct addrinfo *hi
     }
 
     rc = sfdnsresGetAddrInfo(&ret, &g_sfdnsresConfig, node, service, hints_serialized, hints_sz, out_serialized);
+
     if(rc == 0xD401) {
         gaie = EAI_SYSTEM;
         errno = EFAULT;
@@ -1457,8 +1480,8 @@ int getaddrinfo(const char *node, const char *service, const struct addrinfo *hi
     out = _socketDeserializeAddrInfoList(out_serialized);
     if(out == NULL)
         gaie = EAI_MEMORY;
-    *res = out;
 cleanup:
+    *res = out;
     free(hints_serialized);
     free(out_serialized);
     g_sfdnsresResult = rc;
