@@ -1,3 +1,9 @@
+/**
+ * @file usb.h
+ * @brief USB (usb:*) service IPC wrapper.
+ * @author yellows8
+ * @copyright libnx Authors
+ */
 #pragma once
 #include "../types.h"
 #include "../services/sm.h"

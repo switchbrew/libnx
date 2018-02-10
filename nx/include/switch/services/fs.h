@@ -1,4 +1,10 @@
-// Copyright 2017 plutoo
+/**
+ * @file fs.h
+ * @brief Filesystem (fsp-srv) service IPC wrapper.
+ * @author plutoo
+ * @author yellows8
+ * @copyright libnx Authors
+ */
 #pragma once
 #include "../types.h"
 #include "../services/sm.h"

@@ -1,3 +1,10 @@
+/**
+ * @file bsd.h
+ * @brief BSD sockets (bsd:u/s) service IPC wrapper.
+ * @author plutoo
+ * @author TuxSH
+ * @copyright libnx Authors
+ */
 #pragma once
 #include "../types.h"
 #include "../kernel/tmem.h"

@@ -1,3 +1,9 @@
+/**
+ * @file nv.h
+ * @brief NVIDIA low level driver (nvdrv*) service IPC wrapper.
+ * @author yellows8
+ * @copyright libnx Authors
+ */
 #pragma once
 #include "../types.h"
 

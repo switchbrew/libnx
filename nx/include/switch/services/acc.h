@@ -1,3 +1,9 @@
+/**
+ * @file acc.h
+ * @brief Account (acc:*) service IPC wrapper.
+ * @author yellows8
+ * @copyright libnx Authors
+ */
 #pragma once
 #include "../types.h"
 #include "sm.h"

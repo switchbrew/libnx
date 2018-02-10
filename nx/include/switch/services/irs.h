@@ -1,6 +1,6 @@
 /**
  * @file irs.h
- * @brief HID IR sensor service.
+ * @brief HID IR sensor (irs) service IPC wrapper.
  * @author yellows8
  * @copyright libnx Authors
  */

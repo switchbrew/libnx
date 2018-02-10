@@ -1,5 +1,11 @@
+/**
+ * @file hid.h
+ * @brief Human input device (hid) service IPC wrapper.
+ * @author shinyquagsire23
+ * @author yellows8
+ * @copyright libnx Authors
+ */
 #pragma once
-
 #include <assert.h>
 #include "../types.h"
 #include "../services/sm.h"
