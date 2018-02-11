@@ -58,6 +58,9 @@ static Result _appletGetPerformanceMode(u32 *out);
 static Result _appletSetOperationModeChangedNotification(u8 flag);
 static Result _appletSetPerformanceModeChangedNotification(u8 flag);
 
+//static Result _appletSelfExit(void);
+//static Result _appletLockExit(void);
+//static Result _appletUnlockExit(void);
 
 Result appletInitialize(void)
 {
@@ -657,6 +660,49 @@ static Result _appletGetCurrentFocusState(u8 *out) {
 
     return rc;
 }
+
+/*static Result _appletCmdNoIO(Service* session, u64 cmd_id) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = cmd_id;
+
+    Result rc = serviceIpcDispatch(session);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}*/
+
+/*static Result _appletSelfExit(void) {
+    return _appletCmdNoIO(&g_appletISelfController, 0);
+}*/
+
+/*static Result _appletLockExit(void) {
+    return _appletCmdNoIO(&g_appletISelfController, 1);
+}
+
+static Result _appletUnlockExit(void) {
+    return _appletCmdNoIO(&g_appletISelfController, 2);
+}*/
 
 Result appletSetScreenShotPermission(s32 val) {
     IpcCommand c;
