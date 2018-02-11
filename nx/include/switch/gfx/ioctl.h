@@ -1,6 +1,6 @@
 #pragma once
 
-//The below defines are from Linux kernel ioctl.h.
+//The below defines are based on Linux kernel ioctl.h.
 
 #define _NV_IOC_NRBITS	8
 #define _NV_IOC_TYPEBITS	8
