@@ -7,6 +7,7 @@
  */
 #pragma once
 #include "../types.h"
+#include "../kernel/svc.h"
 
 /// Transfer memory information structure.
 typedef struct {
