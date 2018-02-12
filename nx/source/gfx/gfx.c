@@ -57,7 +57,7 @@ static bufferProducerQueueBufferInput g_gfxQueueBufferData = {
     .isAutoTimestamp = 0x1,
     .crop = {0x0, 0x0, 0x0, 0x0}, //Official apps which use multiple resolutions configure this for the currently used resolution, depending on the current appletOperationMode.
     .scalingMode = 0x0,
-    .transform = 0x2,
+    .transform = NATIVE_WINDOW_TRANSFORM_FLIP_V,
     .stickyTransform = 0x0,
     .unk = {0x0, 0x1},
 

@@ -18,7 +18,7 @@ typedef struct {
     s32 isAutoTimestamp;
     bufferProducerRect crop;
     s32 scalingMode;
-    u32 transform;
+    u32 transform;//See the NATIVE_WINDOW_TRANSFORM_* enums.
     u32 stickyTransform;
     u32 unk[2];
     bufferProducerFence fence;
@@ -102,6 +102,44 @@ enum {
      */
     NATIVE_WINDOW_API_CPU = 2,
     //...
+};
+
+//From Android hardware.h.
+
+/**
+ * Transformation definitions
+ *
+ * IMPORTANT NOTE:
+ * HAL_TRANSFORM_ROT_90 is applied CLOCKWISE and AFTER HAL_TRANSFORM_FLIP_{H|V}.
+ *
+ */
+
+enum {
+    /* flip source image horizontally (around the vertical axis) */
+    HAL_TRANSFORM_FLIP_H    = 0x01,
+    /* flip source image vertically (around the horizontal axis)*/
+    HAL_TRANSFORM_FLIP_V    = 0x02,
+    /* rotate source image 90 degrees clockwise */
+    HAL_TRANSFORM_ROT_90    = 0x04,
+    /* rotate source image 180 degrees */
+    HAL_TRANSFORM_ROT_180   = 0x03,
+    /* rotate source image 270 degrees clockwise */
+    HAL_TRANSFORM_ROT_270   = 0x07,
+};
+
+//From Android window.h.
+/* parameter for NATIVE_WINDOW_SET_BUFFERS_TRANSFORM */
+enum {
+    /* flip source image horizontally */
+    NATIVE_WINDOW_TRANSFORM_FLIP_H = HAL_TRANSFORM_FLIP_H,
+    /* flip source image vertically */
+    NATIVE_WINDOW_TRANSFORM_FLIP_V = HAL_TRANSFORM_FLIP_V,
+    /* rotate source image 90 degrees clock-wise */
+    NATIVE_WINDOW_TRANSFORM_ROT_90 = HAL_TRANSFORM_ROT_90,
+    /* rotate source image 180 degrees */
+    NATIVE_WINDOW_TRANSFORM_ROT_180 = HAL_TRANSFORM_ROT_180,
+    /* rotate source image 270 degrees clock-wise */
+    NATIVE_WINDOW_TRANSFORM_ROT_270 = HAL_TRANSFORM_ROT_270,
 };
 
 Result bufferProducerInitialize(Binder *session);
