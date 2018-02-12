@@ -1,4 +1,5 @@
 #include <string.h>
+#include <malloc.h>
 #include "types.h"
 #include "result.h"
 #include "arm/cache.h"
@@ -29,12 +30,15 @@ static bufferProducerFence g_gfx_DequeueBuffer_fence;
 static bufferProducerQueueBufferOutput g_gfx_Connect_QueueBufferOutput;
 static bufferProducerQueueBufferOutput g_gfx_QueueBuffer_QueueBufferOutput;
 
-static bool g_gfxDoubleBuf = 1;
+static GfxMode g_gfxMode = GfxMode_LinearDouble;
+
+static u8 *g_gfxFramebufLinear;
 
 size_t g_gfx_framebuf_width=0, g_gfx_framebuf_aligned_width=0;
 size_t g_gfx_framebuf_height=0, g_gfx_framebuf_aligned_height=0;
 size_t g_gfx_framebuf_display_width=0, g_gfx_framebuf_display_height=0;
 size_t g_gfx_singleframebuf_size=0;
+size_t g_gfx_singleframebuf_linear_size=0;
 
 static AppletHookCookie g_gfx_autoresolution_applethookcookie;
 static bool g_gfx_autoresolution_enabled;
@@ -125,7 +129,7 @@ static Result _gfxDequeueBuffer(void) {
     bufferProducerFence tmp_fence;
     bool async=0;
 
-    if (!g_gfxDoubleBuf) {
+    if (g_gfxMode == GfxMode_TiledSingle) {
         g_gfxCurrentProducerBuffer = -1;
         return 0;
     }
@@ -173,7 +177,7 @@ static Result _gfxInit(ViServiceType servicetype, const char *DisplayName, u32 L
     g_gfx_ProducerConnected = 0;
     g_gfxFramebuf = NULL;
     g_gfxFramebufSize = 0;
-    g_gfxDoubleBuf = 1;
+    g_gfxMode = GfxMode_LinearDouble;
 
     memset(g_gfx_ProducerSlotsRequested, 0, sizeof(g_gfx_ProducerSlotsRequested));
     memset(&g_gfx_DequeueBuffer_fence, 0, sizeof(g_gfx_DequeueBuffer_fence));
@@ -190,6 +194,7 @@ static Result _gfxInit(ViServiceType servicetype, const char *DisplayName, u32 L
     g_gfx_framebuf_aligned_height = (g_gfx_framebuf_height+127) & ~127;//Align to 128.
 
     g_gfx_singleframebuf_size = g_gfx_framebuf_aligned_width*g_gfx_framebuf_aligned_height*4;
+    g_gfx_singleframebuf_linear_size = g_gfx_framebuf_width*g_gfx_framebuf_height*4;
 
     g_gfx_BufferInitData.width = g_gfx_framebuf_width;
     g_gfx_BufferInitData.height = g_gfx_framebuf_height;
@@ -204,10 +209,18 @@ static Result _gfxInit(ViServiceType servicetype, const char *DisplayName, u32 L
     g_gfx_BufferInitData.data.buffer_size0 = g_gfx_singleframebuf_size;
     g_gfx_BufferInitData.data.buffer_size1 = g_gfx_singleframebuf_size;
 
-    rc = viInitialize(servicetype);
-    if (R_FAILED(rc)) return rc;
+    g_gfxFramebufLinear = memalign(0x1000, g_gfx_singleframebuf_linear_size);
+    if (g_gfxFramebufLinear) {
+        memset(g_gfxFramebufLinear, 0, g_gfx_singleframebuf_linear_size);
+    }
+    else {
+        rc = MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
+        return rc;
+    }
 
-    rc = viOpenDisplay(DisplayName, &g_gfxDisplay);
+    rc = viInitialize(servicetype);
+
+    if (R_SUCCEEDED(rc)) rc = viOpenDisplay(DisplayName, &g_gfxDisplay);
 
     if (R_SUCCEEDED(rc)) rc = viGetDisplayVsyncEvent(&g_gfxDisplay, &g_gfxDisplayVsyncEvent);
 
@@ -286,6 +299,9 @@ static Result _gfxInit(ViServiceType servicetype, const char *DisplayName, u32 L
             g_gfxDisplayVsyncEvent = INVALID_HANDLE;
         }
 
+        free(g_gfxFramebufLinear);
+        g_gfxFramebufLinear = NULL;
+
         g_gfxNativeWindow_ID = 0;
         g_gfxCurrentBuffer = 0;
         g_gfxCurrentProducerBuffer = -1;
@@ -355,6 +371,9 @@ void gfxExit(void)
     viCloseDisplay(&g_gfxDisplay);
 
     viExit();
+
+    free(g_gfxFramebufLinear);
+    g_gfxFramebufLinear = NULL;
 
     g_gfxInitialized = 0;
     g_gfxNativeWindow_ID = 0;
@@ -495,6 +514,9 @@ u8* gfxGetFramebuffer(u32* width, u32* height) {
     if(width) *width = g_gfx_framebuf_display_width;
     if(height) *height = g_gfx_framebuf_display_height;
 
+    if (g_gfxMode == GfxMode_LinearDouble)
+        return g_gfxFramebufLinear;
+
     return &g_gfxFramebuf[g_gfxCurrentBuffer*g_gfx_singleframebuf_size];
 }
 
@@ -504,15 +526,40 @@ void gfxGetFramebufferResolution(u32* width, u32* height) {
 }
 
 size_t gfxGetFramebufferSize(void) {
+    if (g_gfxMode == GfxMode_LinearDouble)
+        return g_gfx_singleframebuf_linear_size;
+
     return g_gfx_singleframebuf_size;
 }
 
-void gfxSetDoubleBuffering(bool doubleBuffering) {
-    g_gfxDoubleBuf = doubleBuffering;
+void gfxSetMode(GfxMode mode) {
+    g_gfxMode = mode;
 }
 
 void gfxFlushBuffers(void) {
-    armDCacheFlush(&g_gfxFramebuf[g_gfxCurrentBuffer*g_gfx_singleframebuf_size], g_gfx_singleframebuf_size);
+    u32 *actual_framebuf = (u32*)&g_gfxFramebuf[g_gfxCurrentBuffer*g_gfx_singleframebuf_size];
+
+    if (g_gfxMode == GfxMode_LinearDouble) {
+        //TODO: Implement block-linear here without re-calculating the entire offset with gfxGetFramebufferDisplayOffset().
+
+        size_t x, y, j, tmpoff;
+        size_t width = g_gfx_framebuf_display_width;
+        size_t height = g_gfx_framebuf_display_height;
+        u32 *in_framebuf = (u32*)g_gfxFramebufLinear;
+
+        for (y=0; y<height; y++) {
+            for (x=0; x<width; x+=4) {
+                tmpoff = gfxGetFramebufferDisplayOffset(x, y);
+                for(j=0; j<4; j++) {
+                    if (x+j >= width)
+                        break;
+                    actual_framebuf[tmpoff+j] = in_framebuf[y * width + x+j];
+                }
+            }
+        }
+    }
+
+    armDCacheFlush(actual_framebuf, g_gfx_singleframebuf_size);
 }
 
 /*static Result _gfxGetDisplayResolution(u64 *width, u64 *height) {

@@ -547,7 +547,7 @@ PrintConsole* consoleInit(PrintConsole* console) {
 
 	console->consoleInitialised = 1;
 
-	gfxSetDoubleBuffering(false);
+	gfxSetMode(GfxMode_TiledSingle);
 	gfxFlushBuffers();
 	gfxWaitForVsync();
 

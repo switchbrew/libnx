@@ -14,6 +14,14 @@
 /// Same as \ref RGBA8 except with alpha=0xff.
 #define RGBA8_MAXALPHA(r,g,b) RGBA8(r,g,b,0xff)
 
+/// GfxMode set by \ref gfxSetMode. The default is GfxMode_LinearDouble.
+typedef enum
+{
+    GfxMode_TiledSingle, /// Single-buffering with raw tiled (block-linear) framebuffer.
+    GfxMode_TiledDouble, /// Double-buffering with raw tiled (block-linear) framebuffer.
+    GfxMode_LinearDouble /// Double-buffering with linear framebuffer, which is transferred to the actual framebuffer by \ref gfxFlushBuffers().
+} GfxMode;
+
 /**
  * @brief Initializes the graphics subsystem.
  * @warning Do not use \ref viInitialize when using this function.
@@ -30,7 +38,7 @@ void gfxExit(void);
  * @brief Sets the resolution to be used when initializing the graphics subsystem.
  * @param[in] width Horizontal resolution, in pixels.
  * @param[in] height Vertical resolution, in pixels.
- * @note The default resolution is 720p, however you should use \ref gfxGetFramebuffer to get the current width/height.
+ * @note The default resolution is 720p.
  * @note This can only be used before calling \ref gfxInitDefault, this will use \ref fatalSimple otherwise. If the input is 0, the default resolution will be used during \ref gfxInitDefault. This sets the maximum resolution for the framebuffer, used during \ref gfxInitDefault. This is also used as the current resolution when crop isn't set. The width/height are reset to the default when \ref gfxExit is used.
  * @note Normally you should only use this when you need a maximum resolution larger than the default, see above.
  */
@@ -61,34 +69,35 @@ void gfxWaitForVsync(void);
 /// Swaps the framebuffers (for double-buffering).
 void gfxSwapBuffers(void);
 
-/// Get the current framebuffer address, with optional output ptrs for the display width/height. The display width/height is adjusted by \ref gfxConfigureCrop and \ref gfxConfigureResolution.
+/// Get the current framebuffer address, with optional output ptrs for the display framebuffer width/height. The display width/height is adjusted by \ref gfxConfigureCrop and \ref gfxConfigureResolution.
 u8* gfxGetFramebuffer(u32* width, u32* height);
 
-/// Get the original framebuffer width/height without crop.
+/// Get the framebuffer width/height without crop.
 void gfxGetFramebufferResolution(u32* width, u32* height);
 
-/// Use this to get the actual byte-size of the buffer for use with memset/etc, do not calculate the byte-size manually with the width and height from \ref gfxGetFramebuffer or \ref gfxGetFramebufferResolution.
+/// Use this to get the actual byte-size of the framebuffer for use with memset/etc.
 size_t gfxGetFramebufferSize(void);
 
-/// Enables or disables double-buffering.
-void gfxSetDoubleBuffering(bool doubleBuffering);
+/// Sets the \ref GfxMode.
+void gfxSetMode(GfxMode mode);
 
-/// Flushes the framebuffer in the data cache.
+/// Flushes the framebuffer in the data cache. When \ref GfxMode is GfxMode_LinearDouble, this also transfers the linear-framebuffer to the actual framebuffer.
 void gfxFlushBuffers(void);
 
 /// Use this to get the pixel-offset in the framebuffer. Returned value is in pixels, not bytes.
 /// This implements tegra blocklinear, with hard-coded constants etc.
+/// Do not use this when \ref GfxMode is GfxMode_LinearDouble.
 static inline u32 gfxGetFramebufferDisplayOffset(u32 x, u32 y) {
     u32 tmp_pos;
 
-    extern size_t g_gfx_framebuf_width;
+    extern size_t g_gfx_framebuf_aligned_width;
     extern size_t g_gfx_framebuf_display_height;
 
     //if (x >= g_gfx_framebuf_width || y >= g_gfx_framebuf_display_height) return (gfxGetFramebufferSize()-4)/4;//Return the last pixel-offset in the buffer, the data located here is not displayed due to alignment. (Disabled for perf)
 
     y = g_gfx_framebuf_display_height-1-y;
 
-    tmp_pos = ((y & 127) / 16) + (x/16*8) + ((y/16/8)*(g_gfx_framebuf_width/16*8));
+    tmp_pos = ((y & 127) / 16) + (x/16*8) + ((y/16/8)*(g_gfx_framebuf_aligned_width/16*8));
     tmp_pos *= 16*16 * 4;
 
     tmp_pos += ((y%16)/8)*512 + ((x%16)/8)*256 + ((y%8)/2)*64 + ((x%8)/4)*32 + (y%2)*16 + (x%4)*4;//This line is a modified version of code from the Tegra X1 datasheet.
