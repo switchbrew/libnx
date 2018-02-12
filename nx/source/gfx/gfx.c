@@ -550,10 +550,15 @@ void gfxFlushBuffers(void) {
         for (y=0; y<height; y++) {
             for (x=0; x<width; x+=4) {
                 tmpoff = gfxGetFramebufferDisplayOffset(x, y);
-                for(j=0; j<4; j++) {
-                    if (x+j >= width)
-                        break;
-                    actual_framebuf[tmpoff+j] = in_framebuf[y * width + x+j];
+                if(width & 3) {
+                    for(j=0; j<4; j++) {
+                        if (x+j >= width)
+                            break;
+                        actual_framebuf[tmpoff+j] = in_framebuf[y * width + x+j];
+                    }
+                }
+                else {
+                   *((u128*)&actual_framebuf[tmpoff]) = *((u128*)&in_framebuf[y * width + x]);
                 }
             }
         }
