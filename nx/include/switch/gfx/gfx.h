@@ -14,7 +14,7 @@
 /// Same as \ref RGBA8 except with alpha=0xff.
 #define RGBA8_MAXALPHA(r,g,b) RGBA8(r,g,b,0xff)
 
-/// GfxMode set by \ref gfxSetMode. The default is GfxMode_LinearDouble.
+/// GfxMode set by \ref gfxSetMode. The default is GfxMode_LinearDouble. Note that the text-console (see console.h) sets this to GfxMode_TiledSingle.
 typedef enum
 {
     GfxMode_TiledSingle, /// Single-buffering with raw tiled (block-linear) framebuffer.
