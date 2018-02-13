@@ -23,9 +23,9 @@ typedef enum {
     AudioOutState_Stopped = 1,
 } AudioOutState;
 
-/// audio output buffer format
 typedef struct AudioOutBuffer AudioOutBuffer;
 
+/// audio output buffer format
 struct AudioOutBuffer
 {
     AudioOutBuffer* next;       ///< Next buffer.
