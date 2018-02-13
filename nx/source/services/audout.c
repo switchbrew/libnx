@@ -29,8 +29,8 @@ Result audoutInitialize(void)
         AudioOutState State = 0;
         
         // Passing an empty device name will open the default "DeviceOut"
-        char DeviceNameIn[DEVICE_NAME_LENGTH];
-        char DeviceNameOut[DEVICE_NAME_LENGTH];
+        char DeviceNameIn[DEVICE_NAME_LENGTH] = {0};
+        char DeviceNameOut[DEVICE_NAME_LENGTH] = {0};
         
         rc = audoutOpenAudioOut(DeviceNameIn, DeviceNameOut, DEFAULT_SAMPLE_RATE, CHANNEL_COUNT_MAGIC, &SampleRate, &ChannelCount, &Format, &State);
     }
