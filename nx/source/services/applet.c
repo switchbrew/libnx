@@ -65,6 +65,8 @@ static Result _appletSetPerformanceModeChangedNotification(u8 flag);
 //static Result _appletLockExit(void);
 //static Result _appletUnlockExit(void);
 
+//static Result _appletExitProcessAndReturn(void);
+
 Result appletInitialize(void)
 {
     if (serviceIsActive(&g_appletSrv))
@@ -234,6 +236,10 @@ Result appletInitialize(void)
 void appletExit(void)
 {
     apmExit();
+
+    //TODO: Enable this somehow later with more condition(s)?
+    /*if (__nx_applet_type == AppletType_LibraryApplet)
+        _appletExitProcessAndReturn();*/
 
     if (g_appletMessageEventHandle != INVALID_HANDLE) {
         svcCloseHandle(g_appletMessageEventHandle);
@@ -963,6 +969,10 @@ Result appletCreateManagedDisplayLayer(u64 *out) {
 
     return rc;
 }
+
+/*static Result _appletExitProcessAndReturn(void) {
+    return _appletCmdNoIO(&g_appletILibraryAppletSelfAccessor, 10);
+}*/
 
 u8 appletGetOperationMode(void) {
     return g_appletOperationMode;
