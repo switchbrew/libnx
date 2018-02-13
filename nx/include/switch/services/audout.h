@@ -23,9 +23,9 @@ typedef enum {
     AudioOutState_Stopped = 1,
 } AudioOutState;
 
+/// audio output buffer format
 typedef struct AudioOutBuffer AudioOutBuffer;
 
-/// audio output buffer format
 struct AudioOutBuffer
 {
     AudioOutBuffer* next;       ///< Next buffer.
@@ -47,3 +47,9 @@ Result audoutAppendAudioOutBuffer(AudioOutBuffer *Buffer);
 Result audoutRegisterBufferEvent(Handle *BufferEvent);
 Result audoutGetReleasedAudioOutBuffer(AudioOutBuffer *Buffer, u32 *ReleasedBuffersCount);
 Result audoutContainsAudioOutBuffer(AudioOutBuffer *Buffer, bool *ContainsBuffer);
+
+/// These return the state associated with the currently active audio output device.
+u32 audoutGetSampleRate(void);
+u32 audoutGetChannelCount(void);
+PcmFormat audoutGetPcmFormat(void);
+AudioOutState audoutGetDeviceState(void);
