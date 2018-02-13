@@ -12,6 +12,11 @@
 static Service g_audoutSrv;
 static Service g_audoutIAudioOut;
 
+static u32 g_sampleRate = 0;
+static u32 g_channelCount = 0;
+static PcmFormat g_pcmFormat = PcmFormat_Invalid;
+static AudioOutState g_deviceState = AudioOutState_Stopped;
+
 Result audoutInitialize(void)
 {
     if (serviceIsActive(&g_audoutSrv))
@@ -22,17 +27,12 @@ Result audoutInitialize(void)
     
     // Setup the default device
     if (R_SUCCEEDED(rc))
-    {
-        u32 SampleRate = 0;
-        u32 ChannelCount = 0;
-        PcmFormat Format = 0;
-        AudioOutState State = 0;
-        
+    {        
         // Passing an empty device name will open the default "DeviceOut"
         char DeviceNameIn[DEVICE_NAME_LENGTH] = {0};
         char DeviceNameOut[DEVICE_NAME_LENGTH] = {0};
         
-        rc = audoutOpenAudioOut(DeviceNameIn, DeviceNameOut, DEFAULT_SAMPLE_RATE, CHANNEL_COUNT_MAGIC, &SampleRate, &ChannelCount, &Format, &State);
+        rc = audoutOpenAudioOut(DeviceNameIn, DeviceNameOut, DEFAULT_SAMPLE_RATE, CHANNEL_COUNT_MAGIC, &g_sampleRate, &g_channelCount, &g_pcmFormat, &g_deviceState);
     }
     
     if (R_FAILED(rc))
@@ -43,8 +43,29 @@ Result audoutInitialize(void)
 
 void audoutExit(void)
 {
+    g_sampleRate = 0;
+    g_channelCount = 0;
+    g_pcmFormat = PcmFormat_Invalid;
+    g_deviceState = AudioOutState_Stopped;
+
     serviceClose(&g_audoutIAudioOut);
     serviceClose(&g_audoutSrv);
+}
+
+u32 audoutGetSampleRate(void) {
+    return g_sampleRate;
+}
+
+u32 audoutGetChannelCount(void) {
+    return g_channelCount;
+}
+
+PcmFormat audoutGetPcmFormat(void) {
+    return g_pcmFormat;
+}
+
+AudioOutState audoutGetDeviceState(void) {
+    return g_deviceState;
 }
 
 Result audoutListAudioOuts(char *DeviceNames, u32 *DeviceNamesCount) {
