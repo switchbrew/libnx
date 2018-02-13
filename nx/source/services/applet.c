@@ -16,8 +16,11 @@ __attribute__((weak)) u32 __nx_applet_PerformanceConfiguration[2] = {/*0x9222000
 static Service g_appletSrv;
 static Service g_appletProxySession;
 
-// From Get*Functions, for ILibraryAppletProxy. This is GetLibraryAppletSelfAccessor
+// From Get*Functions.
 static Service g_appletIFunctions;
+
+static Service g_appletILibraryAppletSelfAccessor;
+static Service g_appletIProcessWindingController;
 
 static Service g_appletILibraryAppletCreator;
 static Service g_appletICommonStateGetter;
@@ -112,11 +115,20 @@ Result appletInitialize(void)
         } while (rc == AM_BUSY_ERROR);
     }
 
-    // Get*Functions, for ILibraryAppletProxy this is GetLibraryAppletSelfAccessor
-    if (R_SUCCEEDED(rc))
+    // Get*Functions
+    if (R_SUCCEEDED(rc) && __nx_applet_type != AppletType_LibraryApplet)
         rc = _appletGetSession(&g_appletProxySession, &g_appletIFunctions, 20);
 
-    // TODO: Add non-application type-specific session init here.
+    // TODO: Add non-{Application/LibraryApplet} type-specific session init here.
+
+    if (R_SUCCEEDED(rc) && __nx_applet_type == AppletType_LibraryApplet) {
+        //GetLibraryAppletSelfAccessor
+        rc = _appletGetSession(&g_appletProxySession, &g_appletILibraryAppletSelfAccessor, 20);
+
+        //GetProcessWindingController
+        if (R_SUCCEEDED(rc))
+            rc = _appletGetSession(&g_appletProxySession, &g_appletIProcessWindingController, 10);
+    }
 
     // GetLibraryAppletCreator
     if (R_SUCCEEDED(rc))
@@ -228,14 +240,21 @@ void appletExit(void)
         g_appletMessageEventHandle = INVALID_HANDLE;
     }
 
-    serviceClose(&g_appletIFunctions);
-    serviceClose(&g_appletILibraryAppletCreator);
-    serviceClose(&g_appletICommonStateGetter);
-    serviceClose(&g_appletISelfController);
-    serviceClose(&g_appletIWindowController);
-    serviceClose(&g_appletIAudioController);
-    serviceClose(&g_appletIDisplayController);
     serviceClose(&g_appletIDebugFunctions);
+    serviceClose(&g_appletIDisplayController);
+    serviceClose(&g_appletIAudioController);
+    serviceClose(&g_appletIWindowController);
+    serviceClose(&g_appletISelfController);
+    serviceClose(&g_appletICommonStateGetter);
+    serviceClose(&g_appletILibraryAppletCreator);
+
+    if (__nx_applet_type != AppletType_LibraryApplet)
+        serviceClose(&g_appletIFunctions);
+
+    if (__nx_applet_type == AppletType_LibraryApplet) {
+        serviceClose(&g_appletIProcessWindingController);
+        serviceClose(&g_appletILibraryAppletSelfAccessor);
+    }
 
     serviceClose(&g_appletProxySession);
     serviceClose(&g_appletSrv);
