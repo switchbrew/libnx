@@ -18,6 +18,28 @@
         "git clone --depth 1 https://github.com/switchbrew/switch-examples",
         "DEVKITPRO=${DEVKITPATH} make -C switch-examples/"
       ]
+    },
+
+    "docs": {
+       // Only invoke docs target when building from master branch
+      "branch": "master",
+
+      "buildenv": "xenial-amd64",
+      "builddeps": [
+        "doxygen"
+      ],
+
+      "buildcmd": [
+        "cd nx", "doxygen"
+      ],
+
+      "artifacts": [{
+        "source": "nx/docs/html",
+        "destination": {
+          "type": "git",
+          "branch": "gh-pages"
+        }
+      }]
     }
   }
 }
