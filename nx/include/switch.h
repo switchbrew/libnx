@@ -32,6 +32,7 @@ extern "C" {
 #include "switch/services/acc.h"
 #include "switch/services/apm.h"
 #include "switch/services/applet.h"
+#include "switch/services/audout.h"
 #include "switch/services/bsd.h"
 #include "switch/services/fatal.h"
 #include "switch/services/usb.h"
