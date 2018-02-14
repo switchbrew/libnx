@@ -23,7 +23,7 @@ typedef enum {
     AudioOutState_Stopped = 1,
 } AudioOutState;
 
-/// audio output buffer format
+/// Audio output buffer format
 typedef struct AudioOutBuffer AudioOutBuffer;
 
 struct AudioOutBuffer
@@ -47,6 +47,16 @@ Result audoutAppendAudioOutBuffer(AudioOutBuffer *Buffer);
 Result audoutRegisterBufferEvent(Handle *BufferEvent);
 Result audoutGetReleasedAudioOutBuffer(AudioOutBuffer *Buffer, u32 *ReleasedBuffersCount);
 Result audoutContainsAudioOutBuffer(AudioOutBuffer *Buffer, bool *ContainsBuffer);
+
+/**
+ * @brief Submits an audio sample data buffer for playing.
+ * @param event Handle obtained from audoutRegisterBufferEvent.
+ * @param source AudioOutBuffer containing the source sample data to be played.
+ * @param released AudioOutBuffer to receive the last played buffer.
+ * @param duration Playback duration in ticks.
+ * @return Whether a timeout occurred while waiting for data to be played.
+ */
+bool audoutPlayBuffer(Handle *event, AudioOutBuffer *source, AudioOutBuffer *released, u64 duration);
 
 /// These return the state associated with the currently active audio output device.
 u32 audoutGetSampleRate(void);
