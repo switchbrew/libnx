@@ -7,7 +7,7 @@
 
 #define DEVICE_NAME_LENGTH 0x100
 #define DEFAULT_SAMPLE_RATE 0xBB80
-#define CHANNEL_COUNT_MAGIC 0xCAFE0000
+#define DEFAULT_CHANNEL_COUNT 0x00020000
 
 static Service g_audoutSrv;
 static Service g_audoutIAudioOut;
@@ -32,7 +32,7 @@ Result audoutInitialize(void)
         char DeviceNameIn[DEVICE_NAME_LENGTH] = {0};
         char DeviceNameOut[DEVICE_NAME_LENGTH] = {0};
         
-        rc = audoutOpenAudioOut(DeviceNameIn, DeviceNameOut, DEFAULT_SAMPLE_RATE, CHANNEL_COUNT_MAGIC, &g_sampleRate, &g_channelCount, &g_pcmFormat, &g_deviceState);
+        rc = audoutOpenAudioOut(DeviceNameIn, DeviceNameOut, DEFAULT_SAMPLE_RATE, DEFAULT_CHANNEL_COUNT, &g_sampleRate, &g_channelCount, &g_pcmFormat, &g_deviceState);
     }
     
     if (R_FAILED(rc))
@@ -66,6 +66,37 @@ PcmFormat audoutGetPcmFormat(void) {
 
 AudioOutState audoutGetDeviceState(void) {
     return g_deviceState;
+}
+
+bool audoutPlayBuffer(Handle *event, AudioOutBuffer *source, AudioOutBuffer *released, u64 duration) {
+    bool timeout = false;
+    u64 time_now = svcGetSystemTick();
+    
+    while ((svcGetSystemTick() - time_now) < duration)
+    {
+        Result do_wait = svcWaitSynchronizationSingle(*event, U64_MAX);
+        
+        if (R_SUCCEEDED(do_wait))
+        {
+            svcResetSignal(*event);
+            
+            u32 released_count = 0;
+            Result do_release = audoutGetReleasedAudioOutBuffer(released, &released_count);
+            
+            while (R_SUCCEEDED(do_release) && (released_count > 0))
+            {
+                do_release = audoutGetReleasedAudioOutBuffer(released, &released_count);
+                audoutAppendAudioOutBuffer(source);
+            }
+        }
+        else
+        {
+            timeout = true;
+            break;
+        }
+    }
+    
+    return timeout;
 }
 
 Result audoutListAudioOuts(char *DeviceNames, u32 *DeviceNamesCount) {
