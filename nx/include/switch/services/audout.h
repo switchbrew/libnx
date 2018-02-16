@@ -44,7 +44,6 @@ Result audoutGetAudioOutState(AudioOutState *State);
 Result audoutStartAudioOut(void);
 Result audoutStopAudioOut(void);
 Result audoutAppendAudioOutBuffer(AudioOutBuffer *Buffer);
-Result audoutRegisterBufferEvent(Handle *BufferEvent);
 Result audoutGetReleasedAudioOutBuffer(AudioOutBuffer *Buffer, u32 *ReleasedBuffersCount);
 Result audoutContainsAudioOutBuffer(AudioOutBuffer *Buffer, bool *ContainsBuffer);
 
@@ -56,7 +55,7 @@ Result audoutContainsAudioOutBuffer(AudioOutBuffer *Buffer, bool *ContainsBuffer
 void audoutPlayBuffer(AudioOutBuffer *source, AudioOutBuffer *released);
 
 /// These return the state associated with the currently active audio output device.
-u32 audoutGetSampleRate(void);
-u32 audoutGetChannelCount(void);
-PcmFormat audoutGetPcmFormat(void);
-AudioOutState audoutGetDeviceState(void);
+u32 audoutGetSampleRate(void);                      ///< Supported sample rate (48000Hz).
+u32 audoutGetChannelCount(void);                    ///< Supported channel count (2 channels).
+PcmFormat audoutGetPcmFormat(void);                 ///< Supported PCM format (INT16).
+AudioOutState audoutGetDeviceState(void);           ///< Initial device state (stopped).
