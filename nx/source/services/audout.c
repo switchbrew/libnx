@@ -19,6 +19,8 @@ static u32 g_channelCount = 0;
 static PcmFormat g_pcmFormat = PcmFormat_Invalid;
 static AudioOutState g_deviceState = AudioOutState_Stopped;
 
+static Result _audoutRegisterBufferEvent(Handle *BufferEvent);
+
 Result audoutInitialize(void)
 {
     if (serviceIsActive(&g_audoutSrv))
@@ -40,7 +42,7 @@ Result audoutInitialize(void)
     
     // Register global handle for buffer events
     if (R_SUCCEEDED(rc))
-        rc = audoutRegisterBufferEvent(&g_audoutBufferEventHandle);
+        rc = _audoutRegisterBufferEvent(&g_audoutBufferEventHandle);
     
     if (R_FAILED(rc))
         audoutExit();
@@ -334,7 +336,7 @@ Result audoutAppendAudioOutBuffer(AudioOutBuffer *Buffer) {
     return rc;
 }
 
-Result audoutRegisterBufferEvent(Handle *BufferEvent) {
+static Result _audoutRegisterBufferEvent(Handle *BufferEvent) {
     IpcCommand c;
     ipcInitialize(&c);
 
