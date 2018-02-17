@@ -11,7 +11,6 @@ static Handle g_mainThreadHandle = INVALID_HANDLE;
 static LoaderReturnFn g_loaderRetAddr = NULL;
 static void*  g_overrideHeapAddr = NULL;
 static u64    g_overrideHeapSize = 0;
-static u64    g_overrideArgc = 0;
 static void*  g_overrideArgv = NULL;
 static u64    g_syscallHints[2];
 static Handle g_processHandle = INVALID_HANDLE;
@@ -69,7 +68,6 @@ void envSetup(void* ctx, Handle main_thread, LoaderReturnFn saved_lr)
             break;
 
         case EntryType_Argv:
-            g_overrideArgc = ent->Value[0];
             g_overrideArgv = (void*) ent->Value[1];
             break;
 
@@ -127,10 +125,6 @@ u64 envGetHeapOverrideSize(void) {
 
 bool envHasArgv(void) {
     return g_overrideArgv != NULL;
-}
-
-u64 envGetArgc(void) {
-    return g_overrideArgc;
 }
 
 void* envGetArgv(void) {

@@ -36,7 +36,7 @@ void argvSetup(void)
     __system_argc = 0;
     __system_argv = NULL;
 
-    // TODO: Use envHasArgv() here for the NRO case.
+    // TODO: Use envHasArgv()/envGetArgv() here for the NRO case.
 
     if (envIsNso()) {
         memset(&meminfo, 0, sizeof(meminfo));
