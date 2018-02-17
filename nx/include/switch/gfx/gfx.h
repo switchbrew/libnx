@@ -41,6 +41,7 @@ void gfxExit(void);
  * @note The default resolution is 720p.
  * @note This can only be used before calling \ref gfxInitDefault, this will use \ref fatalSimple otherwise. If the input is 0, the default resolution will be used during \ref gfxInitDefault. This sets the maximum resolution for the framebuffer, used during \ref gfxInitDefault. This is also used as the current resolution when crop isn't set. The width/height are reset to the default when \ref gfxExit is used.
  * @note Normally you should only use this when you need a maximum resolution larger than the default, see above.
+ * @note The width and height are aligned to 4.
  */
 void gfxInitResolution(u32 width, u32 height);
 
@@ -52,6 +53,7 @@ void gfxInitResolutionDefault(void);
 /// This will update the display width/height returned by \ref gfxGetFramebuffer, with that width/height being reset to the default when required.
 /// \ref gfxGetFramebufferDisplayOffset uses absolute x/y, it will not adjust for non-zero crop left/top.
 /// The new crop config will not take affect with double-buffering disabled. When used during frame-drawing, this should be called before \ref gfxGetFramebuffer.
+/// The right and bottom params are aligned to 4.
 void gfxConfigureCrop(s32 left, s32 top, s32 right, s32 bottom);
 
 /// Wrapper for \ref gfxConfigureCrop. Use this to set the resolution, within the bounds of the maximum resolution. Use all-zero input to reset to default.

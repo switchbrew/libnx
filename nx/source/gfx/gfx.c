@@ -397,8 +397,8 @@ void gfxExit(void)
 void gfxInitResolution(u32 width, u32 height) {
     if (g_gfxInitialized) fatalSimple(MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized));
 
-    g_gfx_framebuf_width = width;
-    g_gfx_framebuf_height = height;
+    g_gfx_framebuf_width = (width+3) & ~3;
+    g_gfx_framebuf_height = (height+3) & ~3;
 }
 
 void gfxInitResolutionDefault(void) {
@@ -412,6 +412,10 @@ void gfxConfigureCrop(s32 left, s32 top, s32 right, s32 bottom) {
     }
 
     if (left < 0 || top < 0 || right < 0 || bottom < 0) return;
+
+    right = (right+3) & ~3;
+    bottom = (bottom+3) & ~3;
+
     if (right < left || bottom < top) return;
     if (left > g_gfx_framebuf_width || top > g_gfx_framebuf_height) return;
     if (right > g_gfx_framebuf_width || bottom > g_gfx_framebuf_height) return;
@@ -540,26 +544,14 @@ void gfxFlushBuffers(void) {
     u32 *actual_framebuf = (u32*)&g_gfxFramebuf[g_gfxCurrentBuffer*g_gfx_singleframebuf_size];
 
     if (g_gfxMode == GfxMode_LinearDouble) {
-        //TODO: Implement block-linear here without re-calculating the entire offset with gfxGetFramebufferDisplayOffset().
-
-        size_t x, y, j, tmpoff;
+        size_t x, y;
         size_t width = g_gfx_framebuf_display_width;
         size_t height = g_gfx_framebuf_display_height;
         u32 *in_framebuf = (u32*)g_gfxFramebufLinear;
 
         for (y=0; y<height; y++) {
             for (x=0; x<width; x+=4) {
-                tmpoff = gfxGetFramebufferDisplayOffset(x, y);
-                if(width & 3) {
-                    for(j=0; j<4; j++) {
-                        if (x+j >= width)
-                            break;
-                        actual_framebuf[tmpoff+j] = in_framebuf[y * width + x+j];
-                    }
-                }
-                else {
-                   *((u128*)&actual_framebuf[tmpoff]) = *((u128*)&in_framebuf[y * width + x]);
-                }
+                *((u128*)&actual_framebuf[gfxGetFramebufferDisplayOffset(x, y)]) = *((u128*)&in_framebuf[y * width + x]);
             }
         }
     }
