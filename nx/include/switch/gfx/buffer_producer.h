@@ -45,42 +45,38 @@ typedef struct {
     u32 numFds;
     u32 numInts;
 
-    union {
-        u32 rawdata[0x144>>2];//Actual size is numFds*4 + numInts*4.
-
-        struct {
-            u32 unk_x0;
-            u32 nvmap_handle0;
-            u32 unk_x8;
-            u32 unk_xc;
-            u32 unk_x10;
-            u32 unk_x14;
-            u32 unk_x18;
-            u32 unk_x1c;
-            u32 unk_x20;
-            u32 width_unk0;
-            u32 buffer_size0;
-            u32 unk_x2c;
-            u32 unk_x30;
-            u32 width_unk1;
-            u32 height_unk;
-            u32 flags;
-            u32 unk_x40;
-            u32 unk_x44;
-            u32 byte_stride;
-            u32 nvmap_handle1;
-            u32 buffer_offset;
-            u32 unk_x54;
-            u32 unk_x58;
-            u32 unk_x5c;
-            u32 unk_x60;
-            u32 unk_x64;
-            u32 unk_x68;
-            u32 buffer_size1;
-            u32 unk_x70[0x33];//Normally all-zero.
-            u64 timestamp;//Unknown, some timestamp perhaps?
-        } data;
-    };
+    struct {//Actual size is numFds*4 + numInts*4.
+        u32 unk_x0;
+        u32 nvmap_handle0;
+        u32 unk_x8;
+        u32 unk_xc;
+        u32 unk_x10;
+        u32 unk_x14;
+        u32 unk_x18;
+        u32 unk_x1c;
+        u32 unk_x20;
+        u32 width_unk0;
+        u32 buffer_size0;
+        u32 unk_x2c;
+        u32 unk_x30;
+        u32 width_unk1;
+        u32 height_unk;
+        u32 flags;
+        u32 unk_x40;
+        u32 unk_x44;
+        u32 byte_stride;
+        u32 nvmap_handle1;
+        u32 buffer_offset;
+        u32 unk_x54;
+        u32 unk_x58;
+        u32 unk_x5c;
+        u32 unk_x60;
+        u32 unk_x64;
+        u32 unk_x68;
+        u32 buffer_size1;
+        u32 unk_x70[0x33];//Normally all-zero.
+        u64 timestamp;
+    } PACKED data;
 } PACKED bufferProducerGraphicBuffer;
 
 //From Android window.h.

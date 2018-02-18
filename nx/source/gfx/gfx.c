@@ -78,7 +78,6 @@ static bufferProducerQueueBufferInput g_gfxQueueBufferData = {
 };
 
 //Some of this struct is based on tegra_dc_ext_flip_windowattr.
-//TODO: How much of this struct do official apps really set? Most of it seems to be used as-is from the bufferProducerRequestBuffer() output.
 static bufferProducerGraphicBuffer g_gfx_BufferInitData = {
     .magic = 0x47424652,//"RFBG"/'GBFR'
     .format = 0x1,
