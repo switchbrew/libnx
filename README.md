@@ -7,7 +7,7 @@ Based on libctru.
 * Install [devkitA64](https://sourceforge.net/projects/devkitpro/files/devkitA64/) to `$DEVKITPRO/devkitA64`.
 * `make install`
 
-See also the [switch-tools](https://github.com/switchbrew/switch-tools) repo if you want to manually build those.
+See also the [switch-tools](https://github.com/switchbrew/switch-tools) repo if you want to manually build those - devkitA64 includes switch-tools. See also [switch-examples](https://github.com/switchbrew/switch-examples).
 
 # Icon
 
