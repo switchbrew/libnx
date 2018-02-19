@@ -5,7 +5,7 @@ Based on libctru.
 
 # Install instructions
 * Install [devkitA64](https://sourceforge.net/projects/devkitpro/files/devkitA64/) to `$DEVKITPRO/devkitA64`.
-* `make install`
+* Install libnx with the [latest](https://github.com/switchbrew/libnx/releases/latest) release. If building from source, use: `make install`
 
 See also the [switch-tools](https://github.com/switchbrew/switch-tools) repo if you want to manually build those - devkitA64 includes switch-tools. See also [switch-examples](https://github.com/switchbrew/switch-examples).
 
