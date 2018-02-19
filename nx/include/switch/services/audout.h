@@ -29,7 +29,7 @@ typedef struct AudioOutBuffer AudioOutBuffer;
 struct AudioOutBuffer
 {
     AudioOutBuffer* next;       ///< Next buffer.
-    void* buffer;               ///< Sample buffer.
+    void* buffer;               ///< Sample buffer (aligned to 0x1000 bytes).
     u64 buffer_size;            ///< Sample buffer size.
     u64 data_size;              ///< Size of data inside the buffer.
     u64 data_offset;            ///< Offset of data inside the buffer.
