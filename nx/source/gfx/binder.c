@@ -30,22 +30,22 @@ Result binderInitSession(Binder *session, u32 unk0)
     rc = binderAdjustRefcount(session, 1, 1);
 
     if (R_FAILED(rc)) {
-        rc = binderAdjustRefcount(session, -1, 0);
+        binderAdjustRefcount(session, -1, 0);
         return rc;
     }
 
     rc = binderGetNativeHandle(session, unk0, &session->nativeHandle);
 
     if (R_FAILED(rc)) {
-        rc = binderAdjustRefcount(session, -1, 1);
-        rc = binderAdjustRefcount(session, -1, 0);
+        binderAdjustRefcount(session, -1, 1);
+        binderAdjustRefcount(session, -1, 0);
         return rc;
     }
 
     // When the output nativeHandle is 0 the Binder ID is probably invalid.
-    if(session->nativeHandle == 0) {
-        rc = binderAdjustRefcount(session, -1, 1);
-        rc = binderAdjustRefcount(session, -1, 0);
+    if (session->nativeHandle == 0) {
+        binderAdjustRefcount(session, -1, 1);
+        binderAdjustRefcount(session, -1, 0);
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
     }
 
