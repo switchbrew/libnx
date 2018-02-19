@@ -1,7 +1,7 @@
 // TuxSH: removed definitions under _KERNEL ifdef blocks, modify the prototype of some functions, some other cleanup, etc.
 // Note: I didn't provide <vm/vm_param.h>
 #ifndef __BSD_VISIBLE
-#define __BSD_VISIBLE
+#define __BSD_VISIBLE 1
 #endif
 
 /*-

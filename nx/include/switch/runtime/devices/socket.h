@@ -29,12 +29,11 @@ Result socketInitialize(const SocketInitConfig *config);
 Result socketGetLastBsdResult(void);
 /// Fetch the last sfdnsres Switch result code (thread-local).
 Result socketGetLastSfdnsresResult(void);
-/// Deinitializes the socket driver.
+/// Deinitialize the socket driver.
 void socketExit(void);
 
 /// Initalize the socket driver using the default configuration.
-static inline Result socketInitializeDefault(void)
-{
+static inline Result socketInitializeDefault(void) {
     return socketInitialize(socketGetDefaultInitConfig());
 }
 

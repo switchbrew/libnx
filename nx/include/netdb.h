@@ -1,6 +1,6 @@
 // TuxSH: define __BSD_VISIBLE, change a lot of symbols, etc
 #ifndef __BSD_VISIBLE
-#define __BSD_VISIBLE
+#define __BSD_VISIBLE 1
 #endif
 
 /*-

@@ -2,14 +2,6 @@
 #include <errno.h>
 #include <string.h>
 
-#include "types.h"
-#include "result.h"
-#include "ipc.h"
-#include "services/bsd.h"
-#include "services/sm.h"
-#include "kernel/shmem.h"
-#include "kernel/rwlock.h"
-
 // Complete definition of struct timeout:
 #include <sys/time.h>
 
@@ -19,6 +11,14 @@
 #include <sys/ioctl.h>
 #include <net/if.h>
 #include <net/if_media.h>
+
+#include "types.h"
+#include "result.h"
+#include "ipc.h"
+#include "services/bsd.h"
+#include "services/sm.h"
+#include "kernel/shmem.h"
+#include "kernel/rwlock.h"
 
 __thread Result g_bsdResult;
 __thread int g_bsdErrno;
