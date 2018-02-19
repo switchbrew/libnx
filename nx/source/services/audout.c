@@ -82,7 +82,7 @@ AudioOutState audoutGetDeviceState(void) {
     return g_deviceState;
 }
 
-void audoutPlayBuffer(AudioOutBuffer *source, AudioOutBuffer *released) {
+Result audoutPlayBuffer(AudioOutBuffer *source, AudioOutBuffer *released) {
     // Try to push the supplied buffer to the audio output device
     Result do_append = audoutAppendAudioOutBuffer(source);
     
@@ -103,6 +103,8 @@ void audoutPlayBuffer(AudioOutBuffer *source, AudioOutBuffer *released) {
                 do_release = audoutGetReleasedAudioOutBuffer(released, &released_count);
         }
     }
+    
+    return do_append;
 }
 
 Result audoutListAudioOuts(char *DeviceNames, u32 *DeviceNamesCount) {
