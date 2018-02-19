@@ -4,10 +4,7 @@ Based on libctru.
 [![Build status](https://doozer.io/badge/switchbrew/libnx/buildstatus/master)](https://doozer.io/switchbrew/libnx)
 
 # Install instructions
-* Install [devkitA64](https://sourceforge.net/projects/devkitpro/files/devkitA64/) to `$DEVKITPRO/devkitA64`.
-* Install libnx with the [latest](https://github.com/switchbrew/libnx/releases/latest) release. If building from source, use: `make install`
-
-See also the [switch-tools](https://github.com/switchbrew/switch-tools) repo if you want to manually build those - devkitA64 includes switch-tools. See also [switch-examples](https://github.com/switchbrew/switch-examples).
+See [Switchbrew](http://switchbrew.org/index.php?title=Setting_up_Development_Environment).
 
 # Icon
 
