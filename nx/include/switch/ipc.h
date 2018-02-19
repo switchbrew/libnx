@@ -14,11 +14,15 @@
 /// IPC output header magic
 #define SFCO_MAGIC 0x4f434653
 
+/// IPC invalid object ID
+#define IPC_INVALID_OBJECT_ID UINT32_MAX
+
 ///@name IPC request building
 ///@{
 
 /// IPC command (request) structure.
 #define IPC_MAX_BUFFERS 8
+#define IPC_MAX_OBJECTS 8
 
 typedef struct {
     size_t NumSend; // A
@@ -37,7 +41,10 @@ typedef struct {
     bool   SendPid;
     size_t NumHandlesCopy;
     size_t NumHandlesMove;
-    Handle Handles[8];
+    Handle Handles[IPC_MAX_OBJECTS];
+
+    size_t NumObjectIds;
+    u32    ObjectIds[IPC_MAX_OBJECTS];
 } IpcCommand;
 
 /**
@@ -272,18 +279,22 @@ static inline Result ipcDispatch(Handle session) {
 
 /// IPC parsed command (response) structure.
 typedef struct {
-    bool HasPid;           ///< true if the 'Pid' field is filled out.
-    u64  Pid;              ///< PID included in the response (only if HasPid is true)
+    bool HasPid;                            ///< true if the 'Pid' field is filled out.
+    u64  Pid;                               ///< PID included in the response (only if HasPid is true)
 
-    size_t NumHandles;     ///< Number of handles in the response.
-    Handle Handles[8];     ///< Handles.
+    size_t NumHandles;                      ///< Number of handles in the response.
+    Handle Handles[IPC_MAX_OBJECTS];        ///< Handles.
 
-    size_t NumBuffers;     ///< Number of buffers in the response.
-    void*  Buffers[4];     ///< Pointers to the buffers.
-    size_t BufferSizes[4]; ///< Sizes of the buffers.
+    u32    ThisObjectId;                    ///< Object ID to call the command on (for domain messages).
+    size_t NumObjectIds;                    ///< Number of object IDs (for domain messages).
+    u32    ObjectIds[IPC_MAX_OBJECTS];      ///< Object IDs (for domain messages).
 
-    void*  Raw;            ///< Pointer to the raw embedded data structure in the response.
-    size_t RawSize;        ///< Size of the raw embedded data.
+    size_t NumBuffers;                      ///< Number of buffers in the response.
+    void*  Buffers[IPC_MAX_BUFFERS];        ///< Pointers to the buffers.
+    size_t BufferSizes[IPC_MAX_BUFFERS];    ///< Sizes of the buffers.
+
+    void*  Raw;                             ///< Pointer to the raw embedded data structure in the response.
+    size_t RawSize;                         ///< Size of the raw embedded data.
 } IpcParsedCommand;
 
 /**
@@ -313,8 +324,8 @@ static inline Result ipcParse(IpcParsedCommand* r) {
         size_t num_handles = ((ctrl2 >> 1) & 15) + ((ctrl2 >> 5) & 15);
         buf += num_handles;
 
-        if (num_handles > 8)
-            num_handles = 8;
+        if (num_handles > IPC_MAX_OBJECTS)
+            num_handles = IPC_MAX_OBJECTS;
 
         for (i=0; i<num_handles; i++)
             r->Handles[i] = *(buf-num_handles+i);
@@ -328,8 +339,8 @@ static inline Result ipcParse(IpcParsedCommand* r) {
     size_t num_bufs = ((ctrl0 >> 20) & 15) + ((ctrl0 >> 24) & 15) + (((ctrl0 >> 28) & 15));
     r->Raw = (void*)(((uintptr_t)(buf + num_bufs*3) + 15) &~ 15);
 
-    if (num_bufs > 4)
-        num_bufs = 4;
+    if (num_bufs > IPC_MAX_BUFFERS)
+        num_bufs = IPC_MAX_BUFFERS;
 
     for (i=0; i<num_bufs; i++, buf+=3) {
         IpcBufferDescriptor* desc = (IpcBufferDescriptor*) buf;
@@ -415,7 +426,7 @@ static inline Result ipcConvertSessionToDomain(Handle session, u32* object_id_ou
             u64 magic;
             u64 result;
             u32 object_id;
-        } *raw = (struct ipcConvertSessionToDomainResponse*) r.Raw;
+        } *raw = (struct ipcConvertSessionToDomainResponse*)r.Raw;
 
         rc = raw->result;
 
@@ -427,13 +438,22 @@ static inline Result ipcConvertSessionToDomain(Handle session, u32* object_id_ou
     return rc;
 }
 
+/**
+ * @brief Adds an object ID to be sent through an IPC domain command structure.
+ * @param cmd IPC domain command structure.
+ * @param object_id Object ID to send.
+ */
+static inline void ipcSendObjectId(IpcCommand* cmd, u32 object_id) {
+    cmd->ObjectIds[cmd->NumObjectIds++] = object_id;
+}
+
 /// IPC domain message header.
 typedef struct {
     u8  Type;
-    u8  Pad0;
+    u8  NumObjectIds;
     u16 Length;
-    u32 ObjectId;
-    u32 Pad1[2];
+    u32 ThisObjectId;
+    u32 Pad[2];
 } DomainMessageHeader;
 
 /**
@@ -443,17 +463,20 @@ typedef struct {
  * @oaram object_id Domain object ID.
  * @return Pointer to the raw embedded data structure in the request, ready to be filled out.
  */
-static inline void* ipcPrepareHeaderForDomain(IpcCommand* cmd, size_t sizeof_raw, size_t object_id) {
+static inline void* ipcPrepareHeaderForDomain(IpcCommand* cmd, size_t sizeof_raw, u32 object_id) {
     void* raw = ipcPrepareHeader(cmd, sizeof_raw + sizeof(DomainMessageHeader));
     DomainMessageHeader* hdr = (DomainMessageHeader*) raw;
+    u32 *object_ids = (u32*)(((uintptr_t) raw) + sizeof(DomainMessageHeader) + sizeof_raw);
 
     hdr->Type = 1;
+    hdr->NumObjectIds = (u8)cmd->NumObjectIds;
     hdr->Length = sizeof_raw;
-    hdr->ObjectId = object_id;
+    hdr->ThisObjectId = object_id;
+    hdr->Pad[0] = hdr->Pad[1] = 0;
 
-    hdr->Pad0 = hdr->Pad1[0] = hdr->Pad1[1] = 0;
-
-    return (void*)(((uintptr_t) raw) + sizeof(DomainMessageHeader)); 
+    for(size_t i = 0; i < cmd->NumObjectIds; i++)
+        object_ids[i] = cmd->ObjectIds[i];
+    return (void*)(((uintptr_t) raw) + sizeof(DomainMessageHeader));
 }
 
 /**
@@ -463,12 +486,43 @@ static inline void* ipcPrepareHeaderForDomain(IpcCommand* cmd, size_t sizeof_raw
  */
 static inline Result ipcParseForDomain(IpcParsedCommand* r) {
     Result rc = ipcParse(r);
+    DomainMessageHeader* hdr;
+    u32 *object_ids;
+    if(R_FAILED(rc))
+        return rc;
 
-    if (R_SUCCEEDED(rc)) {
-        r->Raw = (void*)(((uintptr_t) r->Raw) + sizeof(DomainMessageHeader)); 
-    }
+    hdr = (DomainMessageHeader*) r->Raw;
+    object_ids = (u32*)(((uintptr_t) hdr) + sizeof(DomainMessageHeader) + hdr->Length);
+    r->Raw = (void*)(((uintptr_t) r->Raw) + sizeof(DomainMessageHeader));
+
+    r->ThisObjectId = hdr->ThisObjectId;
+    r->NumObjectIds = hdr->NumObjectIds > 8 ? 8 : hdr->NumObjectIds;
+    for(size_t i = 0; i < r->NumObjectIds; i++)
+        r->ObjectIds[i] = object_ids[i];
 
     return rc;
+}
+
+/**
+ * @brief Closes a domain object by ID.
+ * @param session IPC session handle.
+ * @param object_id ID of the object to close.
+ * @return Result code.
+ */
+static inline Result ipcCloseObjectById(Handle session, u32 object_id) {
+    IpcCommand c;
+    DomainMessageHeader* hdr;
+
+    ipcInitialize(&c);
+    hdr = (DomainMessageHeader*)ipcPrepareHeader(&c, sizeof(DomainMessageHeader));
+
+    hdr->Type = 2;
+    hdr->NumObjectIds = 0;
+    hdr->Length = 0;
+    hdr->ThisObjectId = object_id;
+    hdr->Pad[0] = hdr->Pad[1] = 0;
+
+    return ipcDispatch(session); // this command has no associated response
 }
 
 ///@}
