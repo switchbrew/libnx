@@ -157,36 +157,35 @@ Result appletInitialize(void)
     if (R_SUCCEEDED(rc))
         rc = _appletGetSession(&g_appletProxySession, &g_appletIDebugFunctions, 1000);
 
-    if (R_SUCCEEDED(rc) && (__nx_applet_type == AppletType_Application))
-    {
-        // ICommonStateGetter::GetEventHandle
+    // ICommonStateGetter::GetEventHandle
+    if (R_SUCCEEDED(rc))
         rc = _appletGetHandle(&g_appletICommonStateGetter, &g_appletMessageEventHandle, 0);
 
-        if (R_SUCCEEDED(rc)) {
-            do {
-                svcWaitSynchronizationSingle(g_appletMessageEventHandle, U64_MAX);
+    if (R_SUCCEEDED(rc) && (__nx_applet_type == AppletType_Application))
+    {
+        do {
+            svcWaitSynchronizationSingle(g_appletMessageEventHandle, U64_MAX);
 
-                u32 msg;
-                rc = _appletReceiveMessage(&msg);
+            u32 msg;
+            rc = _appletReceiveMessage(&msg);
 
-                if (R_FAILED(rc))
-                {
-                    if ((rc & 0x3fffff) == 0x680)
-                        continue;
-
-                    break;
-                }
-
-                if (msg != 0xF)
+            if (R_FAILED(rc))
+            {
+                if ((rc & 0x3fffff) == 0x680)
                     continue;
 
-                rc = _appletGetCurrentFocusState(&g_appletFocusState);
+                break;
+            }
 
-                if (R_FAILED(rc))
-                    break;
+            if (msg != 0xF)
+                continue;
 
-            } while(g_appletFocusState!=1);
-        }
+            rc = _appletGetCurrentFocusState(&g_appletFocusState);
+
+            if (R_FAILED(rc))
+                break;
+
+        } while(g_appletFocusState!=1);
 
         if (R_SUCCEEDED(rc))
             rc = _appletAcquireForegroundRights();

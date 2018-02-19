@@ -60,8 +60,6 @@ u64   envGetHeapOverrideSize(void);
 
 /// Returns true if the environment has an argv array.
 bool  envHasArgv(void);
-/// Returns the number of arguments in the argv array.
-u64   envGetArgc(void);
 /// Returns the pointer to the argv array.
 void* envGetArgv(void);
 

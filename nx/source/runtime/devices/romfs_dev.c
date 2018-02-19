@@ -294,7 +294,7 @@ Result romfsMountCommon(romfs_mount *mount)
     mount->dirTable = malloc(mount->header.dirTableSize);
     if (!mount->dirTable)
         goto fail;
-    if (!_romfs_read_chk(mount, mount->header.dirTableOff + 4, mount->dirTable, mount->header.dirTableSize))
+    if (!_romfs_read_chk(mount, mount->header.dirTableOff, mount->dirTable, mount->header.dirTableSize))
         goto fail;
 
     mount->fileHashTable = (u32*)malloc(mount->header.fileHashTableSize);
@@ -411,7 +411,7 @@ static romfs_dir* searchForDir(romfs_mount *mount, romfs_dir* parent, const uint
     for (curOff = mount->dirHashTable[hash]; curOff != romFS_none; curOff = curDir->nextHash)
     {
         curDir = romFS_dir(mount, curOff);
-        //if (curDir->parent != parentOff) continue;//TODO: How to handle parent here?
+        if (curDir->parent != parentOff) continue;
         if (curDir->nameLen != namelen) continue;
         if (memcmp(curDir->name, name, namelen) != 0) continue;
         return curDir;
@@ -478,7 +478,7 @@ static int navigateToDir(romfs_mount *mount, romfs_dir** ppDir, const char** pPa
             if (!component[1]) continue;
             if (component[1]=='.' && !component[2])
             {
-                //*ppDir = romFS_dir(mount, (*ppDir)->parent);//TODO: How to handle parent here?
+                *ppDir = romFS_dir(mount, (*ppDir)->parent);
                 continue;
             }
         }
@@ -762,10 +762,10 @@ int romfs_dirnext(struct _reent *r, DIR_ITER *dirState, char *filename, struct s
     else if(iter->state == 1)
     {
         /* '..' entry */
-        //romfs_dir* dir = romFS_dir(iter->mount, iter->dir->parent);//TODO: How to handle parent here?
+        romfs_dir* dir = romFS_dir(iter->mount, iter->dir->parent);
 
         memset(filestat, 0, sizeof(*filestat));
-        //filestat->st_ino = dir_inode(iter->mount, dir);
+        filestat->st_ino = dir_inode(iter->mount, dir);
         filestat->st_mode = romFS_dir_mode;
 
         strcpy(filename, "..");
