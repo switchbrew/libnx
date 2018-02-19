@@ -97,7 +97,7 @@ dist-bin: all
 	@tar --exclude=*~ -cjf libnx-$(VERSION).tar.bz2 include lib default_icon.jpg switch_rules switch.ld switch.specs
 
 dist-src:
-	@tar --exclude=*~ -cjf libnx-src-$(VERSION).tar.bz2 include source data Makefile switch_rules switch.ld switch.specs
+	@tar --exclude=*~ -cjf libnx-src-$(VERSION).tar.bz2 include source data Makefile default_icon.jpg switch_rules switch.ld switch.specs
 
 dist: dist-src dist-bin
 
