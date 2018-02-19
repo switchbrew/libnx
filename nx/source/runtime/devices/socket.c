@@ -147,7 +147,6 @@ Result socketGetLastSfdnsresResult(void) {
     return g_sfdnsresResult;
 }
 
-/********************************************* BSD:U FUNCTIONS AND RELATED *********************************************/
 /***********************************************************************************************************************/
 
 static int _socketGetFd(int fd) {
@@ -659,8 +658,6 @@ int recvmmsg(int sockfd, struct mmsghdr *msgvec, unsigned int vlen, int flags, s
     return -1;
 }
 
-
-/****************************************** ARPA/INET.H FUNCTIONS AND RELATED ******************************************/
 /***********************************************************************************************************************/
 
 // Adapted from ctrulib
@@ -1057,7 +1054,6 @@ in_addr_t inet_addr(const char *cp) {
     return addr.s_addr;
 }
 
-/******************************************** NETDB.H FUNCTIONS AND RELATED ********************************************/
 /***********************************************************************************************************************/
 
 static struct hostent *_socketDeserializeHostent(int *err, const void *out_he_serialized) {
@@ -1327,7 +1323,7 @@ struct hostent *gethostbyname(const char *name) {
     Result rc = 0;
     void *out_he_serialized = malloc(g_sfdnsresConfig.serialized_out_hostent_max_size);
     struct hostent *he = NULL;
-    SfdnsresRequestResults ret; 
+    SfdnsresRequestResults ret;
 
     if(out_he_serialized == NULL) {
         h_errno = NO_RECOVERY;
@@ -1371,7 +1367,7 @@ struct hostent *gethostbyaddr(const void *addr, socklen_t len, int type) {
     Result rc = 0;
     void *out_he_serialized = malloc(g_sfdnsresConfig.serialized_out_hostent_max_size);
     struct hostent *he = NULL;
-    SfdnsresRequestResults ret; 
+    SfdnsresRequestResults ret;
 
     if(out_he_serialized == NULL) {
         h_errno = NO_RECOVERY;
@@ -1539,7 +1535,6 @@ void sethostent(int a) { (void)a;}
 void setnetent(int a) { (void)a;}
 void setprotoent(int a) { (void)a; }
 
-/******************************************** UNISTD.H FUNCTIONS AND RELATED ********************************************/
 /************************************************************************************************************************/
 
 long gethostid(void) {

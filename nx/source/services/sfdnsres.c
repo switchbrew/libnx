@@ -102,7 +102,6 @@ Result sfdnsresGetHostByName(SfdnsresRequestResults *ret, const SfdnsresConfig *
     IpcCommand c;
     ipcInitialize(&c);
     ipcAddSendBuffer(&c, name, name == NULL ? 0 : strlen(name) + 1, 0);
-
     ipcAddRecvBuffer(&c, out_he_serialized, config->serialized_out_hostent_max_size, 0);
 
     return _sfdnsresDnsRequestCommand(&c, 2, ret, config, true, NULL);

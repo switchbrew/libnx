@@ -1,17 +1,17 @@
 /**
  * @file bsd.h
- * @brief BSD sockets (bsd:u/s) service IPC wrapper.
+ * @brief BSD sockets (bsd:u/s) service IPC wrapper. Please use socket.c instead.
  * @author plutoo
  * @author TuxSH
  * @copyright libnx Authors
  */
 #pragma once
-#include "../types.h"
-#include "../kernel/tmem.h"
-
 #include <sys/socket.h> // for socklen_t
 #include <sys/select.h> // for fd_set
 #include <poll.h>       // for struct pollfd, ndfs_t
+
+#include "../types.h"
+#include "../kernel/tmem.h"
 
 /// Configuration structure for bsdInitalize
 typedef struct  {
@@ -31,11 +31,15 @@ typedef struct  {
 extern __thread Result g_bsdResult;    ///< Last Switch "result", per-thread
 extern __thread int g_bsdErrno;        ///< Last errno, per-thread
 
-const BsdInitConfig *bsdGetDefaultConfig(void);
+/// Fetch the default configuration for bsdInitialize.
+const BsdInitConfig *bsdGetDefaultInitConfig(void);
+/// Initialize the BSD service.
 Result bsdInitialize(const BsdInitConfig *config);
+/// Deinitialize the BSD service.
 void bsdExit(void);
 
 int bsdSocket(int domain, int type, int protocol);
+/// Like @ref bsdSocket but the newly created socket is immediately shut down.
 int bsdSocketExempt(int domain, int type, int protocol);
 int bsdOpen(const char *pathname, int flags);
 int bsdSelect(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout);
@@ -52,8 +56,9 @@ int bsdGetPeerName(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
 int bsdGetSockName(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
 int bsdGetSockOpt(int sockfd, int level, int optname, void *optval, socklen_t *optlen);
 int bsdListen(int sockfd, int backlog);
-// The following two functions are supposed to be variadic
+/// Made non-variadic for convenience.
 int bsdIoctl(int fd, int request, void *data);
+/// Made non-variadic for convenience.
 int bsdFcntl(int fd, int cmd, int flags);
 int bsdSetSockOpt(int sockfd, int level, int optname, const void *optval, socklen_t optlen);
 int bsdShutdown(int sockfd, int how);
@@ -61,11 +66,12 @@ int bsdShutdownAllSockets(int how);
 ssize_t bsdWrite(int fd, const void *buf, size_t count);
 ssize_t bsdRead(int fd, void *buf, size_t count);
 int bsdClose(int fd);
+/// Duplicate a socket (bsd:s).
 int bsdDuplicateSocket(int sockfd);
 
-//TODO: Reverse-engineer GetResourceStatistics, sendmmsg/recvmmsg (custom (un)serialization)
+// TODO: Reverse-engineer GetResourceStatistics. Implement sendmmsg/recvmmsg (custom (un)serialization)
 
-static inline Result bsdInitializeDefault(void)
-{
-    return bsdInitialize(bsdGetDefaultConfig());
+/// Initialize the BSD service using the default configuration.
+static inline Result bsdInitializeDefault(void) {
+    return bsdInitialize(bsdGetDefaultInitConfig());
 }

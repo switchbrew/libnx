@@ -1,3 +1,9 @@
+/**
+ * @file sfdnsres.h
+ * @brief Domain name resolution service IPC wrapper. Please use socket.c instead.
+ * @author TuxSH
+ * @copyright libnx Authors
+ */
 #pragma once
 #include "../types.h"
 
@@ -32,9 +38,11 @@ Result sfdnsresGetNameInfo(SfdnsresRequestResults *ret, const SfdnsresConfig *co
                            const struct sockaddr *sa, socklen_t salen, char *host, size_t hostlen,
                            char *serv, size_t servlen, int flags);
 
+/// Requests an handle for use with @ref sfdnsresCancelSocketCall.
 Result sfdnsresRequestCancelHandle(u32 *out_handle);
-/// Bug: always sets errno ?
+/// Cancels a DNS request (how? which requests?). Bug: always sets errno?
 Result sfdnsresCancelSocketCall(SfdnsresRequestResults *ret, u32 handle);
-/// Bug: always sets errno ?
+/// Cancels all DNS requests made by the current process (how? which requests?). Bug: always sets errno?
 Result sfdnsresCancelAllSocketCalls(SfdnsresRequestResults *ret);
+/// Clears up to 4 DNS server IPs registered by bsdcfg (DHCP client, etc.).
 Result sfdnsresClearDnsIpServerAddressArray(void); 
