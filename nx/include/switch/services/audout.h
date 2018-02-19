@@ -52,7 +52,7 @@ Result audoutContainsAudioOutBuffer(AudioOutBuffer *Buffer, bool *ContainsBuffer
  * @param source AudioOutBuffer containing the source sample data to be played.
  * @param released AudioOutBuffer to receive the last played buffer.
  */
-void audoutPlayBuffer(AudioOutBuffer *source, AudioOutBuffer *released);
+Result audoutPlayBuffer(AudioOutBuffer *source, AudioOutBuffer *released);
 
 /// These return the state associated with the currently active audio output device.
 u32 audoutGetSampleRate(void);                      ///< Supported sample rate (48000Hz).
