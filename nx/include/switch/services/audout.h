@@ -29,7 +29,7 @@ typedef struct AudioOutBuffer AudioOutBuffer;
 struct AudioOutBuffer
 {
     AudioOutBuffer* next;       ///< Next buffer.
-    void* buffer;               ///< Sample buffer.
+    void* buffer;               ///< Sample buffer (aligned to 0x1000 bytes).
     u64 buffer_size;            ///< Sample buffer size.
     u64 data_size;              ///< Size of data inside the buffer.
     u64 data_offset;            ///< Offset of data inside the buffer.
@@ -52,7 +52,7 @@ Result audoutContainsAudioOutBuffer(AudioOutBuffer *Buffer, bool *ContainsBuffer
  * @param source AudioOutBuffer containing the source sample data to be played.
  * @param released AudioOutBuffer to receive the last played buffer.
  */
-void audoutPlayBuffer(AudioOutBuffer *source, AudioOutBuffer *released);
+Result audoutPlayBuffer(AudioOutBuffer *source, AudioOutBuffer *released);
 
 /// These return the state associated with the currently active audio output device.
 u32 audoutGetSampleRate(void);                      ///< Supported sample rate (48000Hz).
