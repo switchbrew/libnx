@@ -2,8 +2,8 @@
 #include "types.h"
 #include "result.h"
 #include "services/nv.h"
-#include "gfx/ioctl.h"
-#include "gfx/nvioctl.h"
+#include "display/ioctl.h"
+#include "display/nvioctl.h"
 
 Result nvioctlChannel_SetNvmapFd(u32 fd, u32 nvmap_fd) {
     struct {

@@ -65,13 +65,13 @@ extern "C" {
 #include "switch/services/spl.h"
 #include "switch/services/ncm.h"
 
-#include "switch/gfx/gfx.h"
-#include "switch/gfx/binder.h"
-#include "switch/gfx/parcel.h"
-#include "switch/gfx/buffer_producer.h"
-#include "switch/gfx/ioctl.h"
-#include "switch/gfx/nvioctl.h"
-#include "switch/gfx/nvgfx.h"
+#include "switch/display/gfx.h"
+#include "switch/display/binder.h"
+#include "switch/display/parcel.h"
+#include "switch/display/buffer_producer.h"
+#include "switch/display/ioctl.h"
+#include "switch/display/nvioctl.h"
+#include "switch/display/nvgfx.h"
 
 #include "switch/audio/driver.h"
 
