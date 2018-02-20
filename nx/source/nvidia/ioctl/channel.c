@@ -2,8 +2,7 @@
 #include "types.h"
 #include "result.h"
 #include "services/nv.h"
-#include "display/ioctl.h"
-#include "display/nvioctl.h"
+#include "nvidia/ioctl.h"
 
 Result nvioctlChannel_SetNvmapFd(u32 fd, u32 nvmap_fd) {
     struct {

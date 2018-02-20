@@ -1,6 +1,49 @@
 #pragma once
 #include "../types.h"
 
+// The below defines are based on Linux kernel ioctl.h.
+#define _NV_IOC_NRBITS	8
+#define _NV_IOC_TYPEBITS	8
+#define _NV_IOC_SIZEBITS	14
+#define _NV_IOC_DIRBITS	2
+
+#define _NV_IOC_NRMASK	((1 << _NV_IOC_NRBITS)-1)
+#define _NV_IOC_TYPEMASK	((1 << _NV_IOC_TYPEBITS)-1)
+#define _NV_IOC_SIZEMASK	((1 << _NV_IOC_SIZEBITS)-1)
+#define _NV_IOC_DIRMASK	((1 << _NV_IOC_DIRBITS)-1)
+
+#define _NV_IOC_NRSHIFT	0
+#define _NV_IOC_TYPESHIFT	(_NV_IOC_NRSHIFT+_NV_IOC_NRBITS)
+#define _NV_IOC_SIZESHIFT	(_NV_IOC_TYPESHIFT+_NV_IOC_TYPEBITS)
+#define _NV_IOC_DIRSHIFT	(_NV_IOC_SIZESHIFT+_NV_IOC_SIZEBITS)
+
+// Direction bits.
+#define _NV_IOC_NONE	0U
+#define _NV_IOC_WRITE	1U
+#define _NV_IOC_READ	2U
+
+#define _NV_IOC(dir,type,nr,size) \
+	(((dir)  << _NV_IOC_DIRSHIFT) | \
+	 ((type) << _NV_IOC_TYPESHIFT) | \
+	 ((nr)   << _NV_IOC_NRSHIFT) | \
+	 ((size) << _NV_IOC_SIZESHIFT))
+
+/* used to create numbers */
+#define _NV_IO(type,nr)		_NV_IOC(_NV_IOC_NONE,(type),(nr),0)
+#define _NV_IOR(type,nr,size)	_NV_IOC(_NV_IOC_READ,(type),(nr),sizeof(size))
+#define _NV_IOW(type,nr,size)	_NV_IOC(_NV_IOC_WRITE,(type),(nr),sizeof(size))
+#define _NV_IOWR(type,nr,size)	_NV_IOC(_NV_IOC_READ|_NV_IOC_WRITE,(type),(nr),sizeof(size))
+
+/* used to decode ioctl numbers.. */
+#define _NV_IOC_DIR(nr)		(((nr) >> _NV_IOC_DIRSHIFT) & _NV_IOC_DIRMASK)
+#define _NV_IOC_TYPE(nr)		(((nr) >> _NV_IOC_TYPESHIFT) & _NV_IOC_TYPEMASK)
+#define _NV_IOC_NR(nr)		(((nr) >> _NV_IOC_NRSHIFT) & _NV_IOC_NRMASK)
+#define _NV_IOC_SIZE(nr)		(((nr) >> _NV_IOC_SIZESHIFT) & _NV_IOC_SIZEMASK)
+
+#define __nv_in
+#define __nv_out
+#define __nv_inout
+
 typedef struct {
     u32 arch;                           // 0x120 (NVGPU_GPU_ARCH_GM200)
     u32 impl;                           // 0xB (NVGPU_GPU_IMPL_GM20B)
@@ -37,7 +80,7 @@ typedef struct {
     u32 rop_l2_en_mask_1;               // 0x0
     u64 chipname;                       // 0x6230326D67 ("gm20b")
     u64 gr_compbit_store_base_hw;       // 0x0 (not supported)
-} gpu_characteristics;
+} nvioctl_gpu_characteristics;
 
 typedef struct {
     u64 offset;
@@ -84,7 +127,7 @@ Result nvioctlNvhostCtrl_EventRegister(u32 fd, u32 event_id);
 
 Result nvioctlNvhostCtrlGpu_ZCullGetCtxSize(u32 fd, u32 *out);
 Result nvioctlNvhostCtrlGpu_ZCullGetInfo(u32 fd, u32 out[40>>2]);
-Result nvioctlNvhostCtrlGpu_GetCharacteristics(u32 fd, gpu_characteristics *out);
+Result nvioctlNvhostCtrlGpu_GetCharacteristics(u32 fd, nvioctl_gpu_characteristics *out);
 Result nvioctlNvhostCtrlGpu_GetTpcMasks(u32 fd, u32 inval, u32 out[24>>2]);
 Result nvioctlNvhostCtrlGpu_GetL2State(u32 fd, nvioctl_l2_state *out);
 

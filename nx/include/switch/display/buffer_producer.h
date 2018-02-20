@@ -1,5 +1,5 @@
 #pragma once
-#include "../display/nvioctl.h"
+#include "../nvidia/ioctl.h"
 
 typedef struct {
     u32 is_valid;
