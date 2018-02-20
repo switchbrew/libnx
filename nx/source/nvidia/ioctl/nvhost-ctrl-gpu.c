@@ -2,8 +2,7 @@
 #include "types.h"
 #include "result.h"
 #include "services/nv.h"
-#include "display/ioctl.h"
-#include "display/nvioctl.h"
+#include "nvidia/ioctl.h"
 
 Result nvioctlNvhostCtrlGpu_ZCullGetCtxSize(u32 fd, u32 *out) {
     Result rc = 0;
@@ -41,23 +40,23 @@ Result nvioctlNvhostCtrlGpu_ZCullGetInfo(u32 fd, u32 out[40>>2]) {
     return rc;
 }
 
-Result nvioctlNvhostCtrlGpu_GetCharacteristics(u32 fd, gpu_characteristics *out) {
+Result nvioctlNvhostCtrlGpu_GetCharacteristics(u32 fd, nvioctl_gpu_characteristics *out) {
     Result rc = 0;
 
     struct {
         __nv_in  u64 gc_buf_size;   // must not be NULL, but gets overwritten with 0xA0=max_size
         __nv_in  u64 gc_buf_addr;   // ignored, but must not be NULL
-        __nv_out gpu_characteristics gc;
+        __nv_out nvioctl_gpu_characteristics gc;
     } data;
 
     memset(&data, 0, sizeof(data));
-    data.gc_buf_size = sizeof(gpu_characteristics);
+    data.gc_buf_size = sizeof(nvioctl_gpu_characteristics);
     data.gc_buf_addr = 1;
 
     rc = nvIoctl(fd, _NV_IOWR(0x47, 0x05, data), &data);
 
     if (R_SUCCEEDED(rc)) {
-        memcpy(out, &data.gc, sizeof(gpu_characteristics));
+        memcpy(out, &data.gc, sizeof(nvioctl_gpu_characteristics));
     }
 
     return rc;

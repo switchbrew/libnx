@@ -7,8 +7,8 @@
 #include "services/nv.h"
 #include "display/binder.h"
 #include "display/buffer_producer.h"
-#include "display/nvioctl.h"
 #include "display/nvgfx.h"
+#include "nvidia/ioctl.h"
 
 //#include "nvgfx_gpu_gpfifo_data0_bin.h"
 
@@ -30,7 +30,7 @@ static Handle g_nvgfx_nvhostctrl_eventhandle = INVALID_HANDLE;
 static Handle g_nvgfx_nvhostctrlgpu_event2 = INVALID_HANDLE;
 static Handle g_nvgfx_nvhostgpu_event3 = INVALID_HANDLE;
 
-static gpu_characteristics g_nvgfx_gpu_characteristics;
+static nvioctl_gpu_characteristics g_nvgfx_gpu_characteristics;
 static u64 g_nvgfx_nvhostasgpu_allocspace_offset;
 static u32 g_nvgfx_tpcmasks[24>>2];
 static u32 g_nvgfx_zcullctxsize;
@@ -124,7 +124,7 @@ Result nvgfxInitialize(void) {
 
     memset(nvmap_objs, 0, sizeof(nvmap_objs));
 
-    memset(&g_nvgfx_gpu_characteristics, 0, sizeof(gpu_characteristics));
+    memset(&g_nvgfx_gpu_characteristics, 0, sizeof(nvioctl_gpu_characteristics));
     memset(g_nvgfx_tpcmasks, 0, sizeof(g_nvgfx_tpcmasks));
     memset(g_nvgfx_zcullinfo, 0, sizeof(g_nvgfx_zcullinfo));
     memset(g_nvgfx_nvhostasgpu_varegions, 0, sizeof(g_nvgfx_nvhostasgpu_varegions));

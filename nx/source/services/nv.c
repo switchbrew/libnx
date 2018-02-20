@@ -3,7 +3,7 @@
 #include "result.h"
 #include "kernel/ipc.h"
 #include "services/applet.h"
-#include "display/ioctl.h"
+#include "nvidia/ioctl.h"
 #include "services/nv.h"
 #include "services/sm.h"
 #include "kernel/tmem.h"
