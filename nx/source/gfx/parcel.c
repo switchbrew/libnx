@@ -2,14 +2,14 @@
 #include "result.h"
 #include "gfx/parcel.h"
 
-//This implements Android Parcel, hence names etc here are based on Android Parcel.cpp.
+// This implements Android Parcel, hence names etc here are based on Android Parcel.cpp.
 
-//#define PARCEL_LOGGING
-
-#ifdef PARCEL_LOGGING
-u8 parcel_reply_log[0x10000] = {0};
-size_t parcel_reply_log_size = 0;
-#endif
+typedef struct {
+    u32 payload_size;
+    u32 payload_off;
+    u32 objects_size;
+    u32 objects_off;
+} ParcelHeader;
 
 void parcelInitialize(Parcel *ctx)
 {
@@ -17,68 +17,86 @@ void parcelInitialize(Parcel *ctx)
     ctx->capacity = sizeof(ctx->payload);
 }
 
-Result parcelTransact(Binder *session, u32 code, Parcel *in_parcel, Parcel *parcel_reply)
+Result parcelTransact(Binder *session, u32 code, Parcel *in_parcel, Parcel *out_parcel)
 {
-    Result rc=0;
-    u8 inparcel[0x400];
-    u8 outparcel[0x400];
-    size_t outparcel_size = sizeof(outparcel);
-    u32 *inparcel32 = (u32*)inparcel;
-    u32 *outparcel32 = (u32*)outparcel;
-    u32 payloadSize = in_parcel->size;
-    u32 ParcelObjectsSize = in_parcel->ParcelObjectsSize;
+    Result rc;
+    char in[PARCEL_MAX_PAYLOAD];
+    char out[PARCEL_MAX_PAYLOAD];
 
-    memset(inparcel, 0, sizeof(inparcel));
-    memset(outparcel, 0, outparcel_size);
+    memset(in,  0, sizeof(in));
+    memset(out, 0, sizeof(out));
 
-    if((size_t)payloadSize >= sizeof(inparcel) || (size_t)ParcelObjectsSize >= sizeof(inparcel) || ((size_t)payloadSize)+((size_t)ParcelObjectsSize)+0x10 >= sizeof(inparcel)) return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+    if (in_parcel->payload_size > sizeof(in))
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+    if (in_parcel->objects_size > sizeof(in))
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
-    inparcel32[0] = payloadSize;//payloadSize
-    inparcel32[1] = 0x10;//payloadOffset
-    inparcel32[2] = ParcelObjectsSize;//ParcelObjectsSize
-    inparcel32[3] = 0x10+payloadSize;//ParcelObjectsOffset
+    size_t total_size = 0;
+    total_size += sizeof(ParcelHeader);
+    total_size += in_parcel->payload_size;
+    total_size += in_parcel->objects_size;
 
-    if(in_parcel->payload && payloadSize)memcpy(&inparcel[inparcel32[1]], in_parcel->payload, payloadSize);
-    if(in_parcel->ParcelObjects && ParcelObjectsSize)memcpy(&inparcel[inparcel32[3]], in_parcel->ParcelObjects, ParcelObjectsSize);
+    if (total_size > sizeof(in))
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
-    rc = binderTransactParcel(session, code, inparcel, payloadSize+ParcelObjectsSize+0x10, outparcel, outparcel_size, 0);
-    if (R_FAILED(rc)) return rc;
+    ParcelHeader* in_hdr = (ParcelHeader*) &in;
+    in_hdr->payload_size = in_parcel->payload_size;
+    in_hdr->payload_off  = sizeof(ParcelHeader);
+    in_hdr->objects_size = in_parcel->objects_size;
+    in_hdr->objects_off  = sizeof(ParcelHeader) + in_parcel->payload_size;
 
-    if((size_t)outparcel32[1] >= outparcel_size || ((size_t)outparcel32[0])+((size_t)outparcel32[1]) >= outparcel_size) return MAKERESULT(Module_Libnx, LibnxError_BadInput);
-    if((size_t)outparcel32[2] >= outparcel_size || ((size_t)outparcel32[2])+((size_t)outparcel32[3]) >= outparcel_size) return MAKERESULT(Module_Libnx, LibnxError_BadInput);
-    if((size_t)outparcel32[0] >= outparcel_size || (size_t)outparcel32[3] >= outparcel_size) return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+    if (in_parcel->payload != NULL)
+        memcpy(&in[in_hdr->payload_off], in_parcel->payload, in_parcel->payload_size);
 
-    memcpy(parcel_reply->payload, &outparcel[outparcel32[1]], outparcel32[0]);
-    parcel_reply->size = outparcel32[0];
+    if (in_parcel->objects != NULL)
+        memcpy(&in[in_hdr->objects_off], in_parcel->objects, in_parcel->objects_size);
 
-    #ifdef PARCEL_LOGGING
-    if(parcel_reply_log_size + sizeof(inparcel) + outparcel_size <= sizeof(parcel_reply_log)) {
-        memcpy(&parcel_reply_log[parcel_reply_log_size], inparcel, sizeof(inparcel));
-        parcel_reply_log_size+= sizeof(inparcel);
-        memcpy(&parcel_reply_log[parcel_reply_log_size], outparcel, outparcel_size);
-        parcel_reply_log_size+= outparcel_size;
+    rc = binderTransactParcel(session, code, in, total_size, out, sizeof(out), 0);
+
+    if (R_SUCCEEDED(rc))
+    {
+        ParcelHeader* out_hdr = (ParcelHeader*) &out;
+
+        if (out_hdr->payload_size > sizeof(out))
+            return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+        if (out_hdr->objects_size > sizeof(out))
+            return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+        if (out_hdr->payload_off > sizeof(out))
+            return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+        if (out_hdr->objects_off > sizeof(out))
+            return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+        if ((out_hdr->payload_off+out_hdr->payload_size) > sizeof(out))
+            return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+        if ((out_hdr->objects_off+out_hdr->objects_size) > sizeof(out))
+            return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+
+        memcpy(out_parcel->payload, &out[out_hdr->payload_off], out_hdr->payload_size);
+        out_parcel->payload_size = out_hdr->payload_size;
+
+        // TODO: Objects are not populated on response.
+        out_parcel->objects = NULL;
+        out_parcel->objects_size = 0;
     }
-    #endif
 
-    return 0;
+    return rc;
 }
 
 void* parcelWriteData(Parcel *ctx, void* data, size_t data_size)
 {
-    void* ptr = &ctx->payload[ctx->size];
+    void* ptr = &ctx->payload[ctx->payload_size];
 
-    if(data_size & BIT(31))
+    if (data_size & BIT(31))
         return NULL;
 
     data_size = (data_size+3) & ~3;
 
-    if(ctx->size + data_size >= ctx->capacity)
+    if (ctx->payload_size + data_size >= ctx->capacity)
         return NULL;
 
-    if(data)
+    if (data)
         memcpy(ptr, data, data_size);
 
-    ctx->size += data_size;
+    ctx->payload_size += data_size;
     return ptr;
 }
 
@@ -87,15 +105,15 @@ void* parcelReadData(Parcel *ctx, void* data, size_t data_size)
     void* ptr = &ctx->payload[ctx->pos];
     size_t aligned_data_size;
 
-    if(data_size & BIT(31))
+    if (data_size & BIT(31))
         return NULL;
 
     aligned_data_size = (data_size+3) & ~3;
 
-    if(ctx->pos + aligned_data_size >= ctx->size)
+    if (ctx->pos + aligned_data_size >= ctx->payload_size)
         return NULL;
 
-    if(data)
+    if (data)
         memcpy(data, ptr, data_size);
 
     ctx->pos += aligned_data_size;
@@ -110,8 +128,7 @@ void parcelWriteUInt32(Parcel *ctx, u32 val) {
     parcelWriteData(ctx, &val, sizeof(val));
 }
 
-void parcelWriteString16(Parcel *ctx, const char *str)
-{
+void parcelWriteString16(Parcel *ctx, const char *str) {
     u32 pos, len;
     u16 *ptr;
 
@@ -120,9 +137,10 @@ void parcelWriteString16(Parcel *ctx, const char *str)
     len++;
 
     ptr = parcelWriteData(ctx, NULL, len*2);
-    if(ptr==NULL)return;
+    if (ptr == NULL)
+        return;
 
-    for(pos=0; pos<len; pos++) {
+    for (pos=0; pos<len; pos++) {
         ptr[pos] = (u16)str[pos];
     }
 }
@@ -148,16 +166,18 @@ void* parcelReadFlattenedObject(Parcel *ctx, size_t *size) {
     s32 len = parcelReadInt32(ctx);
     s32 fd_count = parcelReadInt32(ctx);
 
-    if (size) *size = (u32)len;
+    if (size)
+        *size = (u32)len;
 
-    if(fd_count!=0)return NULL;//Not going to support fds.
+    if (fd_count != 0)
+        return NULL; // Not going to support fds.
 
     return parcelReadData(ctx, NULL, len);
 }
 
 void* parcelWriteFlattenedObject(Parcel *ctx, void* data, size_t size) {
-    parcelWriteInt32(ctx, size);//len
-    parcelWriteInt32(ctx, 0);//fd_count
+    parcelWriteInt32(ctx, size); // len
+    parcelWriteInt32(ctx, 0); // fd_count
 
     return parcelWriteData(ctx, data, size);
 }

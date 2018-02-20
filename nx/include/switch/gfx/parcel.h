@@ -2,14 +2,16 @@
 #include "../result.h"
 #include "../gfx/binder.h"
 
-typedef struct {
-    u8 payload[0x400];
-    u32 capacity;
-    u32 size;
-    u32 pos;
+#define PARCEL_MAX_PAYLOAD 0x400
 
-    u8 *ParcelObjects;
-    u32 ParcelObjectsSize;
+typedef struct {
+    u8  payload[PARCEL_MAX_PAYLOAD];
+    u32 payload_size;
+    u8* objects;
+    u32 objects_size;
+
+    u32 capacity;
+    u32 pos;
 } Parcel;
 
 void parcelInitialize(Parcel *ctx);

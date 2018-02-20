@@ -26,9 +26,9 @@ static bool g_gfx_ProducerConnected = 0;
 static bool g_gfx_ProducerSlotsRequested[2] = {0, 0};
 static u8 *g_gfxFramebuf;
 static size_t g_gfxFramebufSize;
-static bufferProducerFence g_gfx_DequeueBuffer_fence;
-static bufferProducerQueueBufferOutput g_gfx_Connect_QueueBufferOutput;
-static bufferProducerQueueBufferOutput g_gfx_QueueBuffer_QueueBufferOutput;
+static BqFence g_gfx_DequeueBuffer_fence;
+static BqQueueBufferOutput g_gfx_Connect_QueueBufferOutput;
+static BqQueueBufferOutput g_gfx_QueueBuffer_QueueBufferOutput;
 
 static GfxMode g_gfxMode = GfxMode_LinearDouble;
 
@@ -57,7 +57,8 @@ extern nvioctl_fence g_nvgfx_nvhostgpu_gpfifo_fence;
 
 //static Result _gfxGetDisplayResolution(u64 *width, u64 *height);
 
-static bufferProducerQueueBufferInput g_gfxQueueBufferData = {
+// TODO: Let the user configure some of this?
+static BqQueueBufferInput g_gfxQueueBufferData = {
     .timestamp = 0x0,
     .isAutoTimestamp = 0x1,
     .crop = {0x0, 0x0, 0x0, 0x0}, //Official apps which use multiple resolutions configure this for the currently used resolution, depending on the current appletOperationMode.
@@ -78,8 +79,8 @@ static bufferProducerQueueBufferInput g_gfxQueueBufferData = {
     }
 };
 
-//Some of this struct is based on tegra_dc_ext_flip_windowattr.
-static bufferProducerGraphicBuffer g_gfx_BufferInitData = {
+// Some of this struct is based on tegra_dc_ext_flip_windowattr.
+static BqGraphicBuffer g_gfx_BufferInitData = {
     .magic = 0x47424652,//"RFBG"/'GBFR'
     .format = 0x1,
     .usage = 0xb00,
@@ -125,8 +126,8 @@ static Result _gfxGetNativeWindowID(u8 *buf, u64 size, s32 *out_ID) {
 
 static Result _gfxDequeueBuffer(void) {
     Result rc=0;
-    bufferProducerFence *fence = &g_gfx_DequeueBuffer_fence;
-    bufferProducerFence tmp_fence;
+    BqFence *fence = &g_gfx_DequeueBuffer_fence;
+    BqFence tmp_fence;
     bool async=0;
 
     if (g_gfxMode == GfxMode_TiledSingle) {
@@ -134,9 +135,9 @@ static Result _gfxDequeueBuffer(void) {
         return 0;
     }
 
-    memcpy(&tmp_fence, fence, sizeof(bufferProducerFence));//Offical sw waits on the fence from the previous DequeueBuffer call. Using the fence from the current DequeueBuffer call results in nvgfxEventWait() failing.
+    memcpy(&tmp_fence, fence, sizeof(BqFence));//Offical sw waits on the fence from the previous DequeueBuffer call. Using the fence from the current DequeueBuffer call results in nvgfxEventWait() failing.
 
-    rc = bufferProducerDequeueBuffer(async, g_gfx_framebuf_width, g_gfx_framebuf_height, 0, 0x300, &g_gfxCurrentProducerBuffer, fence);
+    rc = bqDequeueBuffer(async, g_gfx_framebuf_width, g_gfx_framebuf_height, 0, 0x300, &g_gfxCurrentProducerBuffer, fence);
 
     //Only run nvgfxEventWait when the fence is valid and the id is not NO_FENCE.
     if (R_SUCCEEDED(rc) && tmp_fence.is_valid && tmp_fence.nv_fences[0].id!=0xffffffff) rc = nvgfxEventWait(tmp_fence.nv_fences[0].id, tmp_fence.nv_fences[0].value, -1);
@@ -158,7 +159,7 @@ static Result _gfxQueueBuffer(s32 buf) {
     //if (g_nvgfx_nvhostgpu_gpfifo_fence.id) rc = nvgfxEventWait(g_nvgfx_nvhostgpu_gpfifo_fence.id, g_nvgfx_nvhostgpu_gpfifo_fence.value, -1);
     if (R_FAILED(rc)) return rc;
 
-    rc = bufferProducerQueueBuffer(buf, &g_gfxQueueBufferData, &g_gfx_QueueBuffer_QueueBufferOutput);
+    rc = bqQueueBuffer(buf, &g_gfxQueueBufferData, &g_gfx_QueueBuffer_QueueBufferOutput);
     if (R_FAILED(rc)) return rc;
 
     return rc;
@@ -240,9 +241,9 @@ static Result _gfxInit(ViServiceType servicetype, const char *DisplayName, u32 L
 
     if (R_SUCCEEDED(rc)) rc = nvInitialize(nv_servicetype, nv_transfermem_size);
 
-    if (R_SUCCEEDED(rc)) rc = bufferProducerInitialize(&g_gfxBinderSession);
+    if (R_SUCCEEDED(rc)) rc = bqInitialize(&g_gfxBinderSession);
 
-    if (R_SUCCEEDED(rc)) rc = bufferProducerConnect(NATIVE_WINDOW_API_CPU, 0, &g_gfx_Connect_QueueBufferOutput);
+    if (R_SUCCEEDED(rc)) rc = bqConnect(NATIVE_WINDOW_API_CPU, 0, &g_gfx_Connect_QueueBufferOutput);
 
     if (R_SUCCEEDED(rc)) g_gfx_ProducerConnected = 1;
 
@@ -250,12 +251,12 @@ static Result _gfxInit(ViServiceType servicetype, const char *DisplayName, u32 L
 
     if (R_SUCCEEDED(rc)) rc = nvgfxGetFramebuffer(&g_gfxFramebuf, &g_gfxFramebufSize);
 
-    if (R_SUCCEEDED(rc)) { //Official sw would use bufferProducerRequestBuffer() when required during swap-buffers/or similar, but that's not really an option here due to gfxSetDoubleBuffering().
+    if (R_SUCCEEDED(rc)) { //Official sw would use bqRequestBuffer() when required during swap-buffers/or similar, but that's not really an option here due to gfxSetDoubleBuffering().
        for(i=0; i<2; i++) {
            rc = _gfxDequeueBuffer();
            if (R_FAILED(rc)) break;
 
-           rc = bufferProducerRequestBuffer(g_gfxCurrentProducerBuffer, NULL);
+           rc = bqRequestBuffer(g_gfxCurrentProducerBuffer, NULL);
            if (R_FAILED(rc)) break;
 
            g_gfx_ProducerSlotsRequested[i] = 1;
@@ -284,12 +285,12 @@ static Result _gfxInit(ViServiceType servicetype, const char *DisplayName, u32 L
     if (R_FAILED(rc)) {
         _gfxQueueBuffer(g_gfxCurrentProducerBuffer);
         for(i=0; i<2; i++) {
-            if (g_gfx_ProducerSlotsRequested[i]) bufferProducerDetachBuffer(i);
+            if (g_gfx_ProducerSlotsRequested[i]) bqDetachBuffer(i);
         }
-        if (g_gfx_ProducerConnected) bufferProducerDisconnect(NATIVE_WINDOW_API_CPU);
+        if (g_gfx_ProducerConnected) bqDisconnect(NATIVE_WINDOW_API_CPU);
 
         nvgfxExit();
-        bufferProducerExit();
+        bqExit();
         binderExitSession(&g_gfxBinderSession);
         nvExit();
 
@@ -353,13 +354,13 @@ void gfxExit(void)
 
     _gfxQueueBuffer(g_gfxCurrentProducerBuffer);
     for (i=0; i<2; i++) {
-        if (g_gfx_ProducerSlotsRequested[i]) bufferProducerDetachBuffer(i);
+        if (g_gfx_ProducerSlotsRequested[i]) bqDetachBuffer(i);
     }
-    if (g_gfx_ProducerConnected) bufferProducerDisconnect(2);
+    if (g_gfx_ProducerConnected) bqDisconnect(2);
 
     nvgfxExit();
 
-    bufferProducerExit();
+    bqExit();
     binderExitSession(&g_gfxBinderSession);
 
     nvExit();
@@ -482,7 +483,7 @@ Result _gfxGraphicBufferInit(s32 buf, u32 nvmap_handle) {
     g_gfx_BufferInitData.data.buffer_offset = g_gfx_singleframebuf_size*buf;
     g_gfx_BufferInitData.data.timestamp = svcGetSystemTick();
 
-    return bufferProducerGraphicBufferInit(buf, &g_gfx_BufferInitData);
+    return bqGraphicBufferInit(buf, &g_gfx_BufferInitData);
 }
 
 static void _waitevent(Handle *handle) {

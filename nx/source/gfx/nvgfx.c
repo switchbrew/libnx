@@ -269,7 +269,7 @@ Result nvgfxInitialize(void) {
     }
 
     if (R_SUCCEEDED(rc)) {
-        rc = bufferProducerQuery(NATIVE_WINDOW_FORMAT, &tmp);//TODO: What does official sw use the output from this for?
+        rc = bqQuery(NATIVE_WINDOW_FORMAT, &tmp);//TODO: What does official sw use the output from this for?
 
         if (R_SUCCEEDED(rc)) {
             for(i=0; i<2; i++) {
