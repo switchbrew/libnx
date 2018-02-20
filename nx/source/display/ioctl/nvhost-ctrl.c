@@ -2,8 +2,8 @@
 #include "types.h"
 #include "result.h"
 #include "services/nv.h"
-#include "gfx/ioctl.h"
-#include "gfx/nvioctl.h"
+#include "display/ioctl.h"
+#include "display/nvioctl.h"
 
 Result nvioctlNvhostCtrl_EventSignal(u32 fd, u32 event_id) {
     struct {

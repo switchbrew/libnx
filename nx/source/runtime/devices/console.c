@@ -3,7 +3,7 @@
 #include <sys/iosupport.h>
 #include "runtime/devices/console.h"
 #include "kernel/svc.h"
-#include "gfx/gfx.h"
+#include "display/gfx.h"
 
 #include "default_font_bin.h"
 

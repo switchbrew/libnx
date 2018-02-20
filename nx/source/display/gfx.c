@@ -7,10 +7,10 @@
 #include "services/vi.h"
 #include "services/applet.h"
 #include "services/nv.h"
-#include "gfx/binder.h"
-#include "gfx/buffer_producer.h"
-#include "gfx/nvgfx.h"
-#include "gfx/gfx.h"
+#include "display/binder.h"
+#include "display/buffer_producer.h"
+#include "display/nvgfx.h"
+#include "display/gfx.h"
 
 static bool g_gfxInitialized = 0;
 static ViDisplay g_gfxDisplay;

@@ -1,6 +1,6 @@
 #include <string.h>
 #include "result.h"
-#include "gfx/parcel.h"
+#include "display/parcel.h"
 
 // This implements Android Parcel, hence names etc here are based on Android Parcel.cpp.
 

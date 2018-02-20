@@ -5,10 +5,10 @@
 #include "arm/cache.h"
 #include "kernel/svc.h"
 #include "services/nv.h"
-#include "gfx/binder.h"
-#include "gfx/buffer_producer.h"
-#include "gfx/nvioctl.h"
-#include "gfx/nvgfx.h"
+#include "display/binder.h"
+#include "display/buffer_producer.h"
+#include "display/nvioctl.h"
+#include "display/nvgfx.h"
 
 //#include "nvgfx_gpu_gpfifo_data0_bin.h"
 

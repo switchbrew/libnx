@@ -1,6 +1,6 @@
 #pragma once
 #include "../result.h"
-#include "../gfx/binder.h"
+#include "../display/binder.h"
 
 #define PARCEL_MAX_PAYLOAD 0x400
 

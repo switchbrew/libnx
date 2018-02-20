@@ -3,7 +3,7 @@
 #include "result.h"
 #include "ipc.h"
 #include "kernel/detect.h"
-#include "gfx/binder.h"
+#include "display/binder.h"
 
 void binderCreateSession(Binder *session, Handle sessionHandle, s32 id)
 {
