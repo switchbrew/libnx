@@ -4,32 +4,32 @@
 typedef struct {
     u32 is_valid;
     nvioctl_fence nv_fences[4];
-} PACKED bufferProducerFence;
+} PACKED BqFence;
 
 typedef struct {
     s32 left;
     s32 top;
     s32 right;
     s32 bottom;
-} PACKED bufferProducerRect;
+} PACKED BqRect;
 
 typedef struct {
     s64 timestamp;
     s32 isAutoTimestamp;
-    bufferProducerRect crop;
+    BqRect crop;
     s32 scalingMode;
-    u32 transform;//See the NATIVE_WINDOW_TRANSFORM_* enums.
+    u32 transform; // See the NATIVE_WINDOW_TRANSFORM_* enums.
     u32 stickyTransform;
     u32 unk[2];
-    bufferProducerFence fence;
-} PACKED bufferProducerQueueBufferInput;
+    BqFence fence;
+} PACKED BqQueueBufferInput;
 
 typedef struct {
     u32 width;
     u32 height;
     u32 transformHint;
     u32 numPendingBuffers;
-} PACKED bufferProducerQueueBufferOutput;
+} PACKED BqQueueBufferOutput;
 
 typedef struct {
     u32 magic;
@@ -45,7 +45,7 @@ typedef struct {
     u32 numFds;
     u32 numInts;
 
-    struct {//Actual size is numFds*4 + numInts*4.
+    struct { // Actual size is numFds*4 + numInts*4.
         u32 unk_x0;
         u32 nvmap_handle0;
         u32 unk_x8;
@@ -74,12 +74,12 @@ typedef struct {
         u32 unk_x64;
         u32 unk_x68;
         u32 buffer_size1;
-        u32 unk_x70[0x33];//Normally all-zero.
+        u32 unk_x70[0x33]; // Normally all-zero.
         u64 timestamp;
     } PACKED data;
-} PACKED bufferProducerGraphicBuffer;
+} PACKED BqGraphicBuffer;
 
-//From Android window.h.
+// From Android window.h.
 /* attributes queriable with query() */
 enum {
     NATIVE_WINDOW_WIDTH     = 0,
@@ -90,7 +90,7 @@ enum {
 //    NATIVE_WINDOW_DEFAULT_HEIGHT = 7,
 };
 
-//From Android window.h.
+// From Android window.h.
 /* parameter for NATIVE_WINDOW_[API_][DIS]CONNECT */
 enum {
     //...
@@ -100,7 +100,7 @@ enum {
     //...
 };
 
-//From Android hardware.h.
+// From Android hardware.h.
 
 /**
  * Transformation definitions
@@ -123,7 +123,7 @@ enum {
     HAL_TRANSFORM_ROT_270   = 0x07,
 };
 
-//From Android window.h.
+// From Android window.h.
 /* parameter for NATIVE_WINDOW_SET_BUFFERS_TRANSFORM */
 enum {
     /* flip source image horizontally */
@@ -138,14 +138,14 @@ enum {
     NATIVE_WINDOW_TRANSFORM_ROT_270 = HAL_TRANSFORM_ROT_270,
 };
 
-Result bufferProducerInitialize(Binder *session);
-void bufferProducerExit(void);
+Result bqInitialize(Binder *session);
+void bqExit(void);
 
-Result bufferProducerRequestBuffer(s32 bufferIdx, bufferProducerGraphicBuffer *buf);
-Result bufferProducerDequeueBuffer(bool async, u32 width, u32 height, s32 format, u32 usage, s32 *buf, bufferProducerFence *fence);
-Result bufferProducerDetachBuffer(s32 slot);
-Result bufferProducerQueueBuffer(s32 buf, bufferProducerQueueBufferInput *input, bufferProducerQueueBufferOutput *output);
-Result bufferProducerQuery(s32 what, s32* value);
-Result bufferProducerConnect(s32 api, bool producerControlledByApp, bufferProducerQueueBufferOutput *output);
-Result bufferProducerDisconnect(s32 api);
-Result bufferProducerGraphicBufferInit(s32 buf, bufferProducerGraphicBuffer *input);
+Result bqRequestBuffer(s32 bufferIdx, BqGraphicBuffer *buf);
+Result bqDequeueBuffer(bool async, u32 width, u32 height, s32 format, u32 usage, s32 *buf, BqFence *fence);
+Result bqDetachBuffer(s32 slot);
+Result bqQueueBuffer(s32 buf, BqQueueBufferInput *input, BqQueueBufferOutput *output);
+Result bqQuery(s32 what, s32* value);
+Result bqConnect(s32 api, bool producerControlledByApp, BqQueueBufferOutput *output);
+Result bqDisconnect(s32 api);
+Result bqGraphicBufferInit(s32 buf, BqGraphicBuffer *input);
