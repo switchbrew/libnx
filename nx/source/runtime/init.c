@@ -4,6 +4,7 @@
 #include "services/fatal.h"
 #include "services/fs.h"
 #include "services/hid.h"
+#include "services/time.h"
 #include "services/applet.h"
 #include "runtime/devices/fs_dev.h"
 
@@ -101,6 +102,10 @@ void __attribute__((weak)) __appInit(void)
             fatalSimple(MAKERESULT(Module_Libnx, LibnxError_InitFail_HID));
     }
 
+    rc = timeInitialize();
+    if (R_FAILED(rc))
+        fatalSimple(MAKERESULT(Module_Libnx, LibnxError_InitFail_Time));
+
     rc = fsInitialize();
     if (R_FAILED(rc))
         fatalSimple(MAKERESULT(Module_Libnx, LibnxError_InitFail_FS));
@@ -113,6 +118,7 @@ void __attribute__((weak)) __appExit(void)
     // Cleanup default services.
     fsdevExit();
     fsExit();
+    timeExit();
     hidExit();
     appletExit();
     smExit();

@@ -1,4 +1,5 @@
 #include <string.h>
+#include <errno.h>
 #include <sys/iosupport.h>
 #include <sys/time.h>
 #include <sys/lock.h>
@@ -8,6 +9,7 @@
 #include "runtime/env.h"
 #include "kernel/mutex.h"
 #include "services/fatal.h"
+#include "services/time.h"
 #include "result.h"
 
 void __attribute__((weak)) NORETURN __libnx_exit(int rc);
@@ -16,6 +18,9 @@ extern const u8 __tdata_lma[];
 extern const u8 __tdata_lma_end[];
 extern u8 __tls_start[];
 
+/// TimeType passed to timeGetCurrentTime() by __libnx_gtod().
+__attribute__((weak)) TimeType __nx_time_type = TimeType_Default;
+
 static struct _reent* __libnx_get_reent(void) {
     ThreadVars* tv = getThreadVars();
     if (tv->magic != THREADVARS_MAGIC)
@@ -23,9 +28,33 @@ static struct _reent* __libnx_get_reent(void) {
     return tv->reent;
 }
 
+int __libnx_gtod(struct _reent *ptr, struct timeval *tp, struct timezone *tz) {
+    if (tp != NULL) {
+        u64 now=0;
+        Result rc=0;
+
+        rc = timeGetCurrentTime(__nx_time_type, &now);
+        if (R_FAILED(rc)) {
+            ptr->_errno = EINVAL;
+            return -1;
+        }
+
+        tp->tv_sec =  now;
+        tp->tv_usec = 0;//timeGetCurrentTime() only returns seconds.
+    }
+
+    if (tz != NULL) {//TODO: This needs handled properly, timeGetCurrentTime() returns UTC time.
+        tz->tz_minuteswest = 0;
+        tz->tz_dsttime = 0;
+    }
+
+    return 0;
+}
+
 void newlibSetup(void) {
     // Register newlib syscalls
     __syscalls.exit     = __libnx_exit;
+    __syscalls.gettod_r = __libnx_gtod;
     __syscalls.getreent = __libnx_get_reent;
 
     // Register locking syscalls
