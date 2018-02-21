@@ -47,6 +47,7 @@ PrintConsole defaultConsole =
 		256 //number of characters in the font set
 	},
 	(u32*)NULL,
+	(u32*)NULL,
 	0,0,	//cursorX cursorY
 	0,0,	//prevcursorX prevcursorY
 	160,		//console width
@@ -123,6 +124,8 @@ static void consoleCls(char mode) {
 		}
 	}
 	gfxFlushBuffers();
+	gfxSwapBuffers();
+	gfxWaitForVsync();
 }
 //---------------------------------------------------------------------------------
 static void consoleClearLine(char mode) {
@@ -176,6 +179,8 @@ static void consoleClearLine(char mode) {
 		}
 	}
 	gfxFlushBuffers();
+	gfxSwapBuffers();
+	gfxWaitForVsync();
 }
 
 
@@ -547,12 +552,15 @@ PrintConsole* consoleInit(PrintConsole* console) {
 
 	console->consoleInitialised = 1;
 
-	gfxSetMode(GfxMode_TiledSingle);
+	gfxSetMode(GfxMode_TiledDouble);
+
+	console->frameBuffer  = (u32*)gfxGetFramebuffer(NULL, NULL);
+	gfxSwapBuffers();
+	console->frameBuffer2 = (u32*)gfxGetFramebuffer(NULL, NULL);
+
 	gfxFlushBuffers();
+	gfxSwapBuffers();
 	gfxWaitForVsync();
-
-	console->frameBuffer = (u32*)gfxGetFramebuffer(NULL, NULL);
-
 
 	consoleCls('2');
 
@@ -625,6 +633,9 @@ static void newRow(void) {
 				to = &currentConsole->frameBuffer[gfxGetFramebufferDisplayOffset(x + i, y + j)];
 				from = &currentConsole->frameBuffer[gfxGetFramebufferDisplayOffset(x + i, y + 8 + j)];
 				*to = *from;
+				to = &currentConsole->frameBuffer2[gfxGetFramebufferDisplayOffset(x + i, y + j)];
+				from = &currentConsole->frameBuffer2[gfxGetFramebufferDisplayOffset(x + i, y + 8 + j)];
+				*to = *from;
 			}
 		}
 
@@ -675,6 +686,8 @@ void consoleDrawChar(int c) {
 	for (i=0;i<8;i++) {
 		for (j=0;j<8;j++) {
 			screen = &currentConsole->frameBuffer[gfxGetFramebufferDisplayOffset(x + i, y + j)];
+			if (bval >> (8*j) & mask) { *screen = fg; }else{ *screen = bg; }
+			screen = &currentConsole->frameBuffer2[gfxGetFramebufferDisplayOffset(x + i, y + j)];
 			if (bval >> (8*j) & mask) { *screen = fg; }else{ *screen = bg; }
 		}
 		mask >>= 1;
@@ -730,6 +743,8 @@ void consolePrintChar(int c) {
 		case 13:
 			currentConsole->cursorX  = 0;
 			gfxFlushBuffers();
+			gfxSwapBuffers();
+			gfxWaitForVsync();
 			break;
 		default:
 			consoleDrawChar(c);

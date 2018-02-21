@@ -75,6 +75,7 @@ typedef struct PrintConsole
 	ConsoleFont font;        ///< Font of the console
 
 	u32 *frameBuffer;        ///< Framebuffer address
+	u32 *frameBuffer2;       ///< Framebuffer address
 
 	int cursorX;             ///< Current X location of the cursor (as a tile offset by default)
 	int cursorY;             ///< Current Y location of the cursor (as a tile offset by default)
