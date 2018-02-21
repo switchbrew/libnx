@@ -267,6 +267,12 @@ u64 hidMouseButtonsUp(void) {
     return tmp;
 }
 
+void hidMouseRead(MousePosition *pos) {
+    rwlockReadLock(&g_hidLock);
+    *pos = g_mouseEntry.position;
+    rwlockReadUnlock(&g_hidLock);
+}
+
 bool hidKeyboardModifierHeld(HidKeyboardModifier modifier) {
     rwlockReadLock(&g_hidLock);
     bool tmp = g_keyboardModHeld & modifier;
