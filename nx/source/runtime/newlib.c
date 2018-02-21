@@ -28,6 +28,8 @@ static struct _reent* __libnx_get_reent(void) {
     return tv->reent;
 }
 
+//TODO: timeGetCurrentTime() returns UTC time. How to handle timezones?
+
 int __libnx_gtod(struct _reent *ptr, struct timeval *tp, struct timezone *tz) {
     if (tp != NULL) {
         u64 now=0;
@@ -40,10 +42,10 @@ int __libnx_gtod(struct _reent *ptr, struct timeval *tp, struct timezone *tz) {
         }
 
         tp->tv_sec =  now;
-        tp->tv_usec = 0;//timeGetCurrentTime() only returns seconds.
+        tp->tv_usec = now*1000000;//timeGetCurrentTime() only returns seconds.
     }
 
-    if (tz != NULL) {//TODO: This needs handled properly, timeGetCurrentTime() returns UTC time.
+    if (tz != NULL) {
         tz->tz_minuteswest = 0;
         tz->tz_dsttime = 0;
     }
