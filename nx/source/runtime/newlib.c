@@ -53,6 +53,12 @@ int __libnx_gtod(struct _reent *ptr, struct timeval *tp, struct timezone *tz) {
     return 0;
 }
 
+int usleep(useconds_t useconds)
+{
+    svcSleepThread(useconds * 1000ull);
+    return 0;
+}
+
 void newlibSetup(void) {
     // Register newlib syscalls
     __syscalls.exit     = __libnx_exit;
