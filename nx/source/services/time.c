@@ -20,7 +20,10 @@ Result timeInitialize(void)
 
     Result rc;
 
-    rc = smGetService(&g_timeSrv, "time:u");
+    rc = smGetService(&g_timeSrv, "time:s");
+    if (R_FAILED(rc))
+        rc = smGetService(&g_timeSrv, "time:u");
+
     if (R_FAILED(rc))
         return rc;
 
@@ -92,21 +95,26 @@ static Result _timeGetSession(Service* srv_out, u64 cmd_id) {
     return rc;
 }
 
-Result timeGetCurrentTime(TimeType type, u64 *timestamp) {
-    Service *srv = NULL;
-
+static Service* _timeGetClockSession(TimeType type) {
     if (type==TimeType_UserSystemClock) {
-        srv = &g_timeUserSystemClock;
+        return &g_timeUserSystemClock;
     }
     else if (type==TimeType_NetworkSystemClock) {
-        srv = &g_timeNetworkSystemClock;
+        return &g_timeNetworkSystemClock;
     }
     else if (type==TimeType_LocalSystemClock) {
-        srv = &g_timeLocalSystemClock;
+        return &g_timeLocalSystemClock;
     }
     else {
-        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+        return NULL;
     }
+}
+
+Result timeGetCurrentTime(TimeType type, u64 *timestamp) {
+    Service *srv = _timeGetClockSession(type);
+
+    if (srv==NULL)
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
     IpcCommand c;
     ipcInitialize(&c);
@@ -136,6 +144,44 @@ Result timeGetCurrentTime(TimeType type, u64 *timestamp) {
         rc = resp->result;
 
         if (R_SUCCEEDED(rc) && timestamp) *timestamp = resp->timestamp;
+    }
+
+    return rc;
+}
+
+Result timeSetCurrentTime(TimeType type, u64 timestamp) {
+    Service *srv = _timeGetClockSession(type);
+
+    if (srv==NULL)
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 timestamp;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 1;
+    raw->timestamp = timestamp;
+
+    Result rc = serviceIpcDispatch(srv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
     }
 
     return rc;

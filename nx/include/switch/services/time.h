@@ -9,6 +9,7 @@
 #include "../types.h"
 #include "../services/sm.h"
 
+/// Time clock type.
 typedef enum {
     TimeType_UserSystemClock,
     TimeType_NetworkSystemClock,
@@ -22,3 +23,11 @@ void timeExit(void);
 Service* timeGetSessionService(void);
 
 Result timeGetCurrentTime(TimeType type, u64 *timestamp);
+
+/**
+ * @brief Sets the time for the specified clock.
+ * @param[in] type Clock to use.
+ * @param[in] timestamp POSIX UTC timestamp.
+ * @return Result code.
+ */
+Result timeSetCurrentTime(TimeType type, u64 timestamp);
