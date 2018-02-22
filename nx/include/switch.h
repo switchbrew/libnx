@@ -42,6 +42,7 @@ extern "C" {
 #include "switch/services/vi.h"
 #include "switch/services/nv.h"
 #include "switch/services/pm.h"
+#include "switch/services/set.h"
 
 #include "switch/gfx/gfx.h"
 #include "switch/gfx/binder.h"
