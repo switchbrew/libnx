@@ -1,5 +1,5 @@
 // Copyright 2018 plutoo
-#include "result.h"
+#include "../result.h"
 
 typedef enum {
     ColorSetId_Light=0,
