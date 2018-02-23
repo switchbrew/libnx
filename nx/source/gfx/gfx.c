@@ -40,6 +40,8 @@ size_t g_gfx_framebuf_display_width=0, g_gfx_framebuf_display_height=0;
 size_t g_gfx_singleframebuf_size=0;
 size_t g_gfx_singleframebuf_linear_size=0;
 
+bool g_gfx_drawflip = true;
+
 static AppletHookCookie g_gfx_autoresolution_applethookcookie;
 static bool g_gfx_autoresolution_enabled;
 
@@ -55,7 +57,6 @@ extern nvioctl_fence g_nvgfx_nvhostgpu_gpfifo_fence;
 
 //static Result _gfxGetDisplayResolution(u64 *width, u64 *height);
 
-//TODO: Let the user configure some of this?
 static bufferProducerQueueBufferInput g_gfxQueueBufferData = {
     .timestamp = 0x0,
     .isAutoTimestamp = 0x1,
@@ -177,6 +178,9 @@ static Result _gfxInit(ViServiceType servicetype, const char *DisplayName, u32 L
     g_gfxFramebuf = NULL;
     g_gfxFramebufSize = 0;
     g_gfxMode = GfxMode_LinearDouble;
+
+    g_gfx_drawflip = true;
+    g_gfxQueueBufferData.transform = NATIVE_WINDOW_TRANSFORM_FLIP_V;
 
     memset(g_gfx_ProducerSlotsRequested, 0, sizeof(g_gfx_ProducerSlotsRequested));
     memset(&g_gfx_DequeueBuffer_fence, 0, sizeof(g_gfx_DequeueBuffer_fence));
@@ -537,6 +541,14 @@ size_t gfxGetFramebufferSize(void) {
 
 void gfxSetMode(GfxMode mode) {
     g_gfxMode = mode;
+}
+
+void gfxSetDrawFlip(bool flip) {
+    g_gfx_drawflip = flip;
+}
+
+void gfxConfigureTransform(u32 transform) {
+    g_gfxQueueBufferData.transform = transform;
 }
 
 void gfxFlushBuffers(void) {
