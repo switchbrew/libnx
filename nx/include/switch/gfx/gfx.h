@@ -22,6 +22,8 @@ typedef enum
     GfxMode_LinearDouble ///< Double-buffering with linear framebuffer, which is transferred to the actual framebuffer by \ref gfxFlushBuffers().
 } GfxMode;
 
+/// Framebuffer pixel-format is RGBA8888, there's no known way to change this.
+
 /**
  * @brief Initializes the graphics subsystem.
  * @warning Do not use \ref viInitialize when using this function.
