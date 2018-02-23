@@ -5,7 +5,3 @@ Based on libctru.
 
 # Install instructions
 See [Switchbrew](http://switchbrew.org/index.php?title=Setting_up_Development_Environment).
-
-# Icon
-
-`nx/default_icon.jpg` is based on the icon by [Sweet Farm from the Noun Project](https://thenounproject.com/term/nintendo-switch/694750/).
