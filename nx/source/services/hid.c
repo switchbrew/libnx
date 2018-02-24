@@ -28,6 +28,8 @@ static u64 g_touchTimestamp, g_mouseTimestamp, g_keyboardTimestamp, g_controller
 
 static HidControllerID g_controllerP1AutoID;
 static HidControllerID g_controllerP1StickAutoID;
+static HidControllerID g_controllerAnyID;
+static HidControllerID g_controllerStickAnyID;
 
 static RwLock g_hidLock;
 
@@ -106,6 +108,8 @@ void hidReset(void)
 
     g_controllerP1AutoID = CONTROLLER_HANDHELD;
     g_controllerP1StickAutoID = CONTROLLER_HANDHELD;
+    g_controllerAnyID = CONTROLLER_HANDHELD;
+    g_controllerStickAnyID = CONTROLLER_HANDHELD;
 
     rwlockWriteUnlock(&g_hidLock);
 }
@@ -225,35 +229,55 @@ void hidScanInput(void) {
         g_controllerUp[i] = g_controllerOld[i] & (~g_controllerHeld[i]);
     }
 
-    // For P1_AUTO, newer inputs > older inputs
+    // For P1_AUTO and ANY, newer inputs > older inputs
     for (int i = 0; i < 10; i++)
     {
-        if (g_controllerHeldStartTime[i] > g_controllerHeldStartTime[g_controllerP1AutoID])
-            g_controllerP1AutoID = i;
+        if (g_controllerHeldStartTime[i] > g_controllerHeldStartTime[g_controllerAnyID])
+            g_controllerAnyID = i;
     }
+
+    if (g_controllerHeldStartTime[CONTROLLER_HANDHELD] > g_controllerHeldStartTime[CONTROLLER_PLAYER_1])
+        g_controllerP1AutoID = CONTROLLER_HANDHELD;
+    else
+        g_controllerP1AutoID = CONTROLLER_PLAYER_1;
 
     // and older joystick values > newer joystick values
     bool noCommandingJoystick = true;
+    bool noCommandingJoystickAuto = true;
     for (int i = 0; i < 10; i++)
     {
         if (!g_controllerStickHeldStartTime[i]) continue;
         noCommandingJoystick = false;
 
-        if (g_controllerStickHeldStartTime[i] < g_controllerStickHeldStartTime[g_controllerP1StickAutoID]
+        if (g_controllerStickHeldStartTime[i] < g_controllerStickHeldStartTime[g_controllerStickAnyID]
+            || !g_controllerStickHeldStartTime[g_controllerStickAnyID])
+            g_controllerStickAnyID = i;
+    }
+
+    int p1AutoIDs[2] = {CONTROLLER_HANDHELD, CONTROLLER_PLAYER_1};
+    for (int i = 0; i < 2; i++)
+    {
+        int id = p1AutoIDs[i];
+        if (!g_controllerStickHeldStartTime[id]) continue;
+        noCommandingJoystickAuto = false;
+
+        if (g_controllerStickHeldStartTime[id] < g_controllerStickHeldStartTime[g_controllerP1StickAutoID]
             || !g_controllerStickHeldStartTime[g_controllerP1StickAutoID])
-            g_controllerP1StickAutoID = i;
+            g_controllerP1StickAutoID = id;
     }
 
     // Fall back to the commanding controller if no joysticks are held
     // Note: The commanding stick controller is what actually gets shown
     //       in the home menu, album, etc in the lower left corner.
-    if (noCommandingJoystick) g_controllerP1StickAutoID = g_controllerP1AutoID;
+    if (noCommandingJoystick) g_controllerStickAnyID = g_controllerAnyID;
+    if (noCommandingJoystickAuto) g_controllerP1StickAutoID = g_controllerP1AutoID;
 
     rwlockWriteUnlock(&g_hidLock);
 }
 
 u64 hidKeysHeld(HidControllerID id) {
     if (id==CONTROLLER_P1_AUTO) return hidKeysHeld(g_controllerP1AutoID);
+    if (id==CONTROLLER_ANY) return hidKeysHeld(g_controllerAnyID);
     if (id < 0 || id > 9) return 0;
 
     rwlockReadLock(&g_hidLock);
@@ -265,6 +289,7 @@ u64 hidKeysHeld(HidControllerID id) {
 
 u64 hidKeysDown(HidControllerID id) {
     if (id==CONTROLLER_P1_AUTO) return hidKeysDown(g_controllerP1AutoID);
+    if (id==CONTROLLER_ANY) return hidKeysDown(g_controllerAnyID);
     if (id < 0 || id > 9) return 0;
 
     rwlockReadLock(&g_hidLock);
@@ -276,6 +301,7 @@ u64 hidKeysDown(HidControllerID id) {
 
 u64 hidKeysUp(HidControllerID id) {
     if (id==CONTROLLER_P1_AUTO) return hidKeysUp(g_controllerP1AutoID);
+    if (id==CONTROLLER_ANY) return hidKeysUp(g_controllerAnyID);
     if (id < 0 || id > 9) return 0;
 
     rwlockReadLock(&g_hidLock);
@@ -384,6 +410,7 @@ void hidTouchRead(touchPosition *pos, u32 point_id) {
 
 void hidJoystickRead(JoystickPosition *pos, HidControllerID id, HidControllerJoystick stick) {
     if (id == CONTROLLER_P1_AUTO) return hidJoystickRead(pos, g_controllerP1StickAutoID, stick);
+    if (id == CONTROLLER_ANY) return hidJoystickRead(pos, g_controllerStickAnyID, stick);
 
     if (pos) {
         if (id < 0 || id > 9 || stick >= JOYSTICK_NUM_STICKS) {
