@@ -8,8 +8,8 @@
 
 #define NROHEADER_MAGICNUM 0x304f524e
 
-#define ASSETHEADER_MAGICNUM 0x54455341
-#define ASSETHEADER_VERSION 0
+#define NROASSETHEADER_MAGICNUM 0x54455341
+#define NROASSETHEADER_VERSION 0
 
 /// Entry for each segment in the codebin.
 typedef struct {
@@ -41,14 +41,14 @@ typedef struct {
 typedef struct {
     u64 offset;
     u64 size;
-} AssetSection;
+} NroAssetSection;
 
 /// Custom asset header.
 typedef struct {
     u32 magic;
     u32 version;
-    AssetSection icon;
-    AssetSection nacp;
-    AssetSection romfs;
-} AssetHeader;
+    NroAssetSection icon;
+    NroAssetSection nacp;
+    NroAssetSection romfs;
+} NroAssetHeader;
 

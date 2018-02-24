@@ -213,14 +213,14 @@ Result romfsMount(struct romfs_mount **p)
         romfsInitMtime(mount);
 
         NroHeader hdr;
-        AssetHeader asset_header;
+        NroAssetHeader asset_header;
 
         if (!_romfs_read_chk(mount, sizeof(NroStart), &hdr, sizeof(hdr))) goto _fail0;
         if (hdr.Magic != NROHEADER_MAGICNUM) goto _fail0;
         if (!_romfs_read_chk(mount, hdr.size, &asset_header, sizeof(asset_header))) goto _fail0;
 
-        if (asset_header.magic != ASSETHEADER_MAGICNUM
-            || asset_header.version > ASSETHEADER_VERSION
+        if (asset_header.magic != NROASSETHEADER_MAGICNUM
+            || asset_header.version > NROASSETHEADER_VERSION
             || asset_header.romfs.offset == 0
             || asset_header.romfs.size == 0)
         goto _fail0;
