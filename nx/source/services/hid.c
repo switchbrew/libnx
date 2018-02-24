@@ -207,26 +207,26 @@ void hidScanInput(void) {
             g_controllerTimestamps[i] = newInputEntry->timestamp;
 
             g_controllerHeld[i] |= g_controllerEntries[i].buttons;
-
-            if (g_controllerDown[i]) {
-                g_controllerHeldStartTime[i] = g_controllerTimestamps[i];
-            } else if (g_controllerUp[i]) {
-                g_controllerHeldStartTime[i] = 0;
-            }
-
-            bool sticksActive = (g_controllerEntries[i].joysticks[JOYSTICK_LEFT].dx
-                                 || g_controllerEntries[i].joysticks[JOYSTICK_RIGHT].dx
-                                 || g_controllerEntries[i].joysticks[JOYSTICK_LEFT].dy
-                                 || g_controllerEntries[i].joysticks[JOYSTICK_RIGHT].dy);
-            if (sticksActive && !g_controllerStickHeldStartTime[i]) {
-                g_controllerStickHeldStartTime[i] = g_controllerTimestamps[i];
-            } else if (!sticksActive && g_controllerStickHeldStartTime[i]){
-                g_controllerStickHeldStartTime[i] = 0;
-            }
         }
 
         g_controllerDown[i] = (~g_controllerOld[i]) & g_controllerHeld[i];
         g_controllerUp[i] = g_controllerOld[i] & (~g_controllerHeld[i]);
+
+        if (g_controllerDown[i]) {
+            g_controllerHeldStartTime[i] = g_controllerTimestamps[i];
+        } else if (g_controllerUp[i]) {
+            g_controllerHeldStartTime[i] = 0;
+        }
+
+        bool sticksActive = (g_controllerEntries[i].joysticks[JOYSTICK_LEFT].dx
+                             || g_controllerEntries[i].joysticks[JOYSTICK_RIGHT].dx
+                             || g_controllerEntries[i].joysticks[JOYSTICK_LEFT].dy
+                             || g_controllerEntries[i].joysticks[JOYSTICK_RIGHT].dy);
+        if (sticksActive && !g_controllerStickHeldStartTime[i]) {
+            g_controllerStickHeldStartTime[i] = g_controllerTimestamps[i];
+        } else if (!sticksActive && g_controllerStickHeldStartTime[i]){
+            g_controllerStickHeldStartTime[i] = 0;
+        }
     }
 
     // For P1_AUTO and ANY, newer inputs > older inputs
