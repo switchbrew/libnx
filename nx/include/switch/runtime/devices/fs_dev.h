@@ -38,3 +38,6 @@ int fsdevUnmountDevice(const char *name);
 /// Uses fsFsCommit() with the specified device. This must be used after any savedata-write operations(not just file-write).
 /// This is not used automatically at device unmount.
 Result fsdevCommitDevice(const char *name);
+
+/// Returns the FsFileSystem for the default device (SD card), if mounted. Used internally by romfs_dev.
+FsFileSystem* fsdevGetDefaultFileSystem(void);

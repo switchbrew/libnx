@@ -131,6 +131,41 @@ Result fsMountSaveData(FsFileSystem* out, u8 inval, FsSave *save) {
     return rc;
 }
 
+Result fsOpenDataStorageByCurrentProcess(FsStorage* out) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 200;
+
+    Result rc = serviceIpcDispatch(&g_fsSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            out->h = r.Handles[0];
+        }
+    }
+
+    return rc;
+}
+
 // Wrapper(s) for fsMountSaveData.
 Result fsMount_SaveData(FsFileSystem* out, u64 titleID, u128 userID) {
     FsSave save;
@@ -595,7 +630,7 @@ Result fsFsGetTotalSpace(FsFileSystem* fs, const char* path, u64* out) {
 }
 
 void fsFsClose(FsFileSystem* fs) {
-    svcCloseHandle(fs->h);
+    if(fs->h != INVALID_HANDLE) svcCloseHandle(fs->h);
 }
 
 // IFile implementation
@@ -778,12 +813,12 @@ Result fsFileGetSize(FsFile* f, u64* out) {
 }
 
 void fsFileClose(FsFile* f) {
-    svcCloseHandle(f->h);
+    if(f->h != INVALID_HANDLE) svcCloseHandle(f->h);
 }
 
 // IDirectory implementation
 void fsDirClose(FsDir* d) {
-    svcCloseHandle(d->h);
+     if(d->h != INVALID_HANDLE) svcCloseHandle(d->h);
 }
 
 Result fsDirRead(FsDir* d, u64 inval, size_t* total_entries, size_t max_entries, FsDirectoryEntry *buf) {
@@ -856,5 +891,46 @@ Result fsDirGetEntryCount(FsDir* d, u64* count) {
     }
 
     return rc;
+}
+
+// IStorage implementation
+Result fsStorageRead(FsStorage* s, u64 off, void* buf, size_t len) {
+    IpcCommand c;
+    ipcInitialize(&c);
+    ipcAddRecvBuffer(&c, buf, len, 1);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 offset;
+        u64 read_size;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 0;
+    raw->offset = off;
+    raw->read_size = len;
+
+    Result rc = ipcDispatch(s->h);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+void fsStorageClose(FsStorage* s) {
+    if(s->h != INVALID_HANDLE) svcCloseHandle(s->h);
 }
 

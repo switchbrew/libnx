@@ -93,6 +93,7 @@ Service* fsGetServiceSession(void);
 
 Result fsMountSdcard(FsFileSystem* out);
 Result fsMountSaveData(FsFileSystem* out, u8 inval, FsSave *save);
+Result fsOpenDataStorageByCurrentProcess(FsStorage* out);
 // todo: Rest of commands here
 
 /// FsFileSystem can be mounted with fs_dev for use with stdio, see fs_dev.h.
@@ -130,4 +131,6 @@ Result fsDirRead(FsDir* d, u64 inval, size_t* total_entries, size_t max_entries,
 Result fsDirGetEntryCount(FsDir* d, u64* count);
 void fsDirClose(FsDir* d);
 
-// todo: IStorage
+// IStorage
+Result fsStorageRead(FsStorage* s, u64 off, void* buf, size_t len);
+void fsStorageClose(FsStorage* s);

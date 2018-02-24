@@ -9,14 +9,17 @@
 #include <unistd.h>
 
 #include "runtime/devices/romfs_dev.h"
+#include "runtime/devices/fs_dev.h"
 #include "runtime/util/utf.h"
 #include "services/fs.h"
-
-/// WARNING: This is not ready to be used.
+#include "runtime/env.h"
+#include "nro.h"
 
 typedef struct romfs_mount
 {
+    bool               fd_type;
     FsFile             fd;
+    FsStorage          fd_storage;
     time_t             mtime;
     u64                offset;
     romfs_header       header;
@@ -30,7 +33,6 @@ extern int __system_argc;
 extern char** __system_argv;
 
 static char __component[PATH_MAX+1];
-//static uint16_t __utf16path[PATH_MAX+1];
 
 #define romFS_root(m)   ((romfs_dir*)(m)->dirTable)
 #define romFS_dir(m,x)  ((romfs_dir*) ((u8*)(m)->dirTable  + (x)))
@@ -39,16 +41,25 @@ static char __component[PATH_MAX+1];
 #define romFS_dir_mode  (S_IFDIR | S_IRUSR | S_IRGRP | S_IROTH)
 #define romFS_file_mode (S_IFREG | S_IRUSR | S_IRGRP | S_IROTH)
 
-static ssize_t _romfs_read(romfs_mount *mount, u64 offset, void* buffer, u32 size)
+static ssize_t _romfs_read(romfs_mount *mount, u64 offset, void* buffer, u64 size)
 {
     u64 pos = mount->offset + offset;
     size_t read = 0;
-    Result rc = fsFileRead(&mount->fd, pos, buffer, size, &read);
+    Result rc = 0;
+    if(!mount->fd_type)
+    {
+        rc = fsFileRead(&mount->fd, pos, buffer, size, &read);
+    }
+    else
+    {
+        rc = fsStorageRead(&mount->fd_storage, pos, buffer, size);
+        read = size;
+    }
     if (R_FAILED(rc)) return -1;
     return read;
 }
 
-static bool _romfs_read_chk(romfs_mount *mount, u64 offset, void* buffer, u32 size)
+static bool _romfs_read_chk(romfs_mount *mount, u64 offset, void* buffer, u64 size)
 {
     return _romfs_read(mount, offset, buffer, size) == size;
 }
@@ -104,26 +115,8 @@ static devoptab_t romFS_devoptab =
 
 //-----------------------------------------------------------------------------
 
-// File header
-/*#define _3DSX_MAGIC 0x58534433 // '3DSX'
-typedef struct
-{
-    u32 magic;
-    u16 headerSize, relocHdrSize;
-    u32 formatVer;
-    u32 flags;
-
-    // Sizes of the code, rodata and data segments +
-    // size of the BSS section (uninitialized latter half of the data segment)
-    u32 codeSegSize, rodataSegSize, dataSegSize, bssSize;
-    // offset and size of smdh
-    u32 smdhOffset, smdhSize;
-    // offset to filesystem
-    u32 fsOffset;
-} _3DSX_Header;*/
-
 static Result romfsMountCommon(romfs_mount *mount);
-//static void   romfsInitMtime(romfs_mount *mount, FS_ArchiveID archId, FS_Path archPath, FS_Path filePath);
+static void romfsInitMtime(romfs_mount *mount);
 
 __attribute__((weak)) const char* __romfs_path = NULL;
 
@@ -173,9 +166,19 @@ Result romfsMount(struct romfs_mount **p)
     if(mount == NULL)
         return 99;
 
-    if (/*envIsHomebrew()*/1)//TODO: How to handle?
+    if (!envIsNso())
     {
-        // RomFS appended to a 3DSX file
+        // RomFS embedded in a NRO
+
+        mount->fd_type = 0;
+
+        FsFileSystem *sdfs = fsdevGetDefaultFileSystem();
+        if(sdfs==NULL)
+        {
+            romfs_free(mount);
+            return 1;
+        }
+
         const char* filename = __romfs_path;
         if (__system_argc > 0 && __system_argv[0])
             filename = __system_argv[0];
@@ -187,69 +190,57 @@ Result romfsMount(struct romfs_mount **p)
 
         if (strncmp(filename, "sdmc:/", 6) == 0)
             filename += 5;
-        /*else if (strncmp(filename, "3dslink:/", 9) == 0)
+        else if (strncmp(filename, "nxlink:/", 8) == 0)
         {
-            strncpy(__component, "/3ds",     PATH_MAX);
-            strncat(__component, filename+8, PATH_MAX);
+            strncpy(__component, "/switch",     PATH_MAX);
+            strncat(__component, filename+7, PATH_MAX);
             __component[PATH_MAX] = 0;
             filename = __component;
-        }*/
+        }
         else
         {
             romfs_free(mount);
             return 2;
         }
 
-        //TODO
-        /*ssize_t units = utf8_to_utf16(__utf16path, (const uint8_t*)filename, PATH_MAX);
-        if (units < 0)
-        {
-            romfs_free(mount);
-            return 3;
-        }
-        if (units >= PATH_MAX)
-        {
-            romfs_free(mount);
-            return 4;
-        }
-        __utf16path[units] = 0;
-
-        FS_Path archPath = { PATH_EMPTY, 1, (u8*)"" };
-        FS_Path filePath = { PATH_UTF16, (units+1)*2, (u8*)__utf16path };
-
-        Result rc = FSUSER_OpenFileDirectly(&mount->fd, ARCHIVE_SDMC, archPath, filePath, FS_OPEN_READ, 0);
+        Result rc = fsFsOpenFile(sdfs, filename, FS_OPEN_READ, &mount->fd);
         if (R_FAILED(rc))
         {
             romfs_free(mount);
             return rc;
         }
 
-        //romfsInitMtime(mount, ARCHIVE_SDMC, archPath, filePath);
+        romfsInitMtime(mount);
 
-        _3DSX_Header hdr;
-        if (!_romfs_read_chk(mount, 0, &hdr, sizeof(hdr))) goto _fail0;
-        if (hdr.magic != _3DSX_MAGIC) goto _fail0;
-        if (hdr.headerSize < sizeof(hdr)) goto _fail0;
-        mount->offset = hdr.fsOffset;
-        if (!mount->offset) goto _fail0;*/
+        NroHeader hdr;
+        AssetHeader asset_header;
+
+        if (!_romfs_read_chk(mount, sizeof(NroStart), &hdr, sizeof(hdr))) goto _fail0;
+        if (hdr.Magic != NROHEADER_MAGICNUM) goto _fail0;
+        if (!_romfs_read_chk(mount, hdr.size, &asset_header, sizeof(asset_header))) goto _fail0;
+
+        if (asset_header.magic != ASSETHEADER_MAGICNUM
+            || asset_header.version > ASSETHEADER_VERSION
+            || asset_header.romfs.offset == 0
+            || asset_header.romfs.size == 0)
+        goto _fail0;
+
+        mount->offset = hdr.size + asset_header.romfs.offset;
     }
-    else//TODO
+    else
     {
         // Regular RomFS
-        /*u8 zeros[0xC];
-        memset(zeros, 0, sizeof(zeros));
 
-        FS_Path archPath = { PATH_EMPTY, 1, (u8*)"" };
-        FS_Path filePath = { PATH_BINARY, sizeof(zeros), zeros };
+        mount->fd_type = 1;
 
-        Result rc = FSUSER_OpenFileDirectly(&mount->fd, ARCHIVE_ROMFS, archPath, filePath, FS_OPEN_READ, 0);
+        Result rc = fsOpenDataStorageByCurrentProcess(&mount->fd_storage);
         if (R_FAILED(rc))
         {
             romfs_free(mount);
             return rc;
         }
 
-        //romfsInitMtime(mount, ARCHIVE_ROMFS, archPath, filePath);*/
+        romfsInitMtime(mount);
     }
 
     Result ret = romfsMountCommon(mount);
@@ -258,8 +249,9 @@ Result romfsMount(struct romfs_mount **p)
 
     return ret;
 
-//_fail0:
-    fsFileClose(&mount->fd);
+_fail0:
+    if(!mount->fd_type)fsFileClose(&mount->fd);
+    if(mount->fd_type)fsStorageClose(&mount->fd_storage);
     romfs_free(mount);
     return 10;
 }
@@ -270,7 +262,25 @@ Result romfsMountFromFile(FsFile file, u64 offset, struct romfs_mount **p)
     if(mount == NULL)
         return 99;
 
+    mount->fd_type = 0;
     mount->fd     = file;
+    mount->offset = offset;
+
+    Result ret = romfsMountCommon(mount);
+    if(R_SUCCEEDED(ret) && p)
+        *p = mount;
+
+    return ret;
+}
+
+Result romfsMountFromStorage(FsStorage storage, u64 offset, struct romfs_mount **p)
+{
+    romfs_mount *mount = romfs_alloc();
+    if(mount == NULL)
+        return 99;
+
+    mount->fd_type = 1;
+    mount->fd_storage = storage;
     mount->offset = offset;
 
     Result ret = romfsMountCommon(mount);
@@ -318,35 +328,16 @@ Result romfsMountCommon(romfs_mount *mount)
     return 0;
 
 fail:
-    fsFileClose(&mount->fd);
+    if(!mount->fd_type)fsFileClose(&mount->fd);
+    if(mount->fd_type)fsStorageClose(&mount->fd_storage);
     romfs_free(mount);
     return 10;
 }
 
-/*static void romfsInitMtime(romfs_mount *mount, FS_ArchiveID archId, FS_Path archPath, FS_Path filePath)
+static void romfsInitMtime(romfs_mount *mount)
 {
-    u64 mtime;
-    FS_Archive arch;
-    Result rc;
-
     mount->mtime = time(NULL);
-    rc = FSUSER_OpenArchive(&arch, archId, archPath);
-    if (R_FAILED(rc))
-        return;
-
-    rc = FSUSER_ControlArchive(arch, ARCHIVE_ACTION_GET_TIMESTAMP,
-                               (void*)filePath.data, filePath.size,
-                               &mtime, sizeof(mtime));
-    FSUSER_CloseArchive(arch);
-    if (R_FAILED(rc))
-        return;*/
-
-    /* convert from milliseconds to seconds */
-    //mtime /= 1000;
-    /* convert from 2000-based timestamp to UNIX timestamp */
-    /*mtime += 946684800;
-    mount->mtime = mtime;
-}*/
+}
 
 Result romfsBind(struct romfs_mount *mount)
 {
@@ -368,7 +359,8 @@ Result romfsUnmount(struct romfs_mount *mount)
     if(mount)
     {
         // unmount specific
-        fsFileClose(&mount->fd);
+        if(!mount->fd_type)fsFileClose(&mount->fd);
+        if(mount->fd_type)fsStorageClose(&mount->fd_storage);
         romfs_free(mount);
     }
     else
@@ -376,7 +368,8 @@ Result romfsUnmount(struct romfs_mount *mount)
         // unmount everything
         while(romfs_mount_list)
         {
-            fsFileClose(&romfs_mount_list->fd);
+            if(!romfs_mount_list->fd_type)fsFileClose(&romfs_mount_list->fd);
+            if(romfs_mount_list->fd_type)fsStorageClose(&romfs_mount_list->fd_storage);
             romfs_free(romfs_mount_list);
         }
     }
@@ -483,7 +476,7 @@ static int navigateToDir(romfs_mount *mount, romfs_dir** ppDir, const char** pPa
             }
         }
 
-        *ppDir = searchForDir(mount, *ppDir, (uint8_t*)component, strlen(component)+1);
+        *ppDir = searchForDir(mount, *ppDir, (uint8_t*)component, strlen(component));
         if (!*ppDir)
             return EEXIST;
     }
@@ -551,7 +544,7 @@ int romfs_open(struct _reent *r, void *fileStruct, const char *path, int flags, 
     if (r->_errno != 0)
         return -1;
 
-    romfs_file* file = searchForFile(fileobj->mount, curDir, (uint8_t*)path, strlen(path)+1);
+    romfs_file* file = searchForFile(fileobj->mount, curDir, (uint8_t*)path, strlen(path));
     if (!file)
     {
         if(flags & O_CREAT)
@@ -567,7 +560,7 @@ int romfs_open(struct _reent *r, void *fileStruct, const char *path, int flags, 
     }
 
     fileobj->file   = file;
-    fileobj->offset = (u64)fileobj->mount->header.fileDataOff + file->dataOff;
+    fileobj->offset = fileobj->mount->header.fileDataOff + file->dataOff;
     fileobj->pos    = 0;
 
     return 0;
@@ -669,7 +662,7 @@ int romfs_stat(struct _reent *r, const char *path, struct stat *st)
     if(r->_errno != 0)
         return -1;
 
-    romfs_dir* dir = searchForDir(mount, curDir, (uint8_t*)path, strlen(path)+1);
+    romfs_dir* dir = searchForDir(mount, curDir, (uint8_t*)path, strlen(path));
     if(dir)
     {
         memset(st, 0, sizeof(*st));
@@ -684,7 +677,7 @@ int romfs_stat(struct _reent *r, const char *path, struct stat *st)
         return 0;
     }
 
-    romfs_file* file = searchForFile(mount, curDir, (uint8_t*)path, strlen(path)+1);
+    romfs_file* file = searchForFile(mount, curDir, (uint8_t*)path, strlen(path));
     if(file)
     {
         memset(st, 0, sizeof(*st));

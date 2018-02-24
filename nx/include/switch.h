@@ -12,6 +12,8 @@ extern "C" {
 #include "switch/types.h"
 #include "switch/result.h"
 
+#include "switch/nro.h"
+
 #include "switch/kernel/svc.h"
 #include "switch/kernel/tmem.h"
 #include "switch/kernel/shmem.h"
@@ -59,6 +61,7 @@ extern "C" {
 #include "switch/runtime/devices/console.h"
 #include "switch/runtime/devices/usb_comms.h"
 #include "switch/runtime/devices/fs_dev.h"
+#include "switch/runtime/devices/romfs_dev.h"
 
 #ifdef __cplusplus
 }
