@@ -26,7 +26,7 @@ TARGET		:=	nx
 #BUILD		:=	build
 SOURCES		:=	source/arm source/runtime source/kernel source/runtime/devices source/services source/gfx source/gfx/ioctl source/runtime/util/utf
 DATA		:=	data
-INCLUDES	:=	include
+INCLUDES	:=	include external/bsd/include
 
 #---------------------------------------------------------------------------------
 # options for code generation
@@ -94,10 +94,10 @@ export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 all: lib/libnx.a lib/libnxd.a
 
 dist-bin: all
-	@tar --exclude=*~ -cjf libnx-$(VERSION).tar.bz2 include lib default_icon.jpg switch_rules switch.ld switch.specs
+	@tar --exclude=*~ -cjf libnx-$(VERSION).tar.bz2 include lib default_icon.jpg switch_rules switch.ld switch.specs -C external/bsd include 
 
 dist-src:
-	@tar --exclude=*~ -cjf libnx-src-$(VERSION).tar.bz2 include source data Makefile default_icon.jpg switch_rules switch.ld switch.specs
+	@tar --exclude=*~ -cjf libnx-src-$(VERSION).tar.bz2 include source data external Makefile default_icon.jpg switch_rules switch.ld switch.specs
 
 dist: dist-src dist-bin
 
