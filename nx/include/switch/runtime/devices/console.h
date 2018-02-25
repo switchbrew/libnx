@@ -37,7 +37,7 @@ typedef bool(*ConsolePrint)(void* con, int c);
 /// A font struct for the console.
 typedef struct ConsoleFont
 {
-	u8* gfx;         ///< A pointer to the font graphics
+	u16* gfx;         ///< A pointer to the font graphics
 	u16 asciiOffset; ///< Offset to the first valid character in the font table
 	u16 numChars;    ///< Number of characters in the font graphics
 }ConsoleFont;
@@ -51,18 +51,18 @@ typedef struct ConsoleFont
  * {
  * 	//Font:
  * 	{
- * 		(u8*)default_font_bin, //font gfx
+ * 		(u16*)default_font_bin, //font gfx
  * 		0, //first ascii character in the set
  * 		128, //number of characters in the font set
  *	},
  *	0,0, //cursorX cursorY
  *	0,0, //prevcursorX prevcursorY
- *	160, //console width
- *	90, //console height
+ *	80, //console width
+ *	45, //console height
  *	0,  //window x
  *	0,  //window y
- *	160, //window width
- *	90, //window height
+ *	80, //window width
+ *	45, //window height
  *	3, //tab size
  *	0, //font character offset
  *	0,  //print callback
