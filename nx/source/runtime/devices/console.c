@@ -42,7 +42,7 @@ PrintConsole defaultConsole =
 {
 	//Font:
 	{
-		(u8*)default_font_bin, //font gfx
+		(u16*)default_font_bin, //font gfx
 		0, //first ascii character in the set
 		256 //number of characters in the font set
 	},
@@ -50,12 +50,12 @@ PrintConsole defaultConsole =
 	(u32*)NULL,
 	0,0,	//cursorX cursorY
 	0,0,	//prevcursorX prevcursorY
-	160,		//console width
-	90,		//console height
+	80,		//console width
+	45,		//console height
 	0,		//window x
 	0,		//window y
-	160,		//window width
-	90,		//window height
+	80,		//window width
+	45,		//window height
 	3,		//tab size
 	7,		// foreground color
 	0,		// background color
@@ -623,18 +623,18 @@ static void newRow(void) {
 		int i,j;
 		u32 x, y;
 
-		x = currentConsole->windowX * 8;
-		y = currentConsole->windowY * 8;
+		x = currentConsole->windowX * 16;
+		y = currentConsole->windowY * 16;
 
-		for (i=0; i<currentConsole->windowWidth*8; i++) {
+		for (i=0; i<currentConsole->windowWidth*16; i++) {
 			u32 *from;
 			u32 *to;
-			for (j=0;j<(currentConsole->windowHeight-1)*8;j++) {
+			for (j=0;j<(currentConsole->windowHeight-1)*16;j++) {
 				to = &currentConsole->frameBuffer[gfxGetFramebufferDisplayOffset(x + i, y + j)];
-				from = &currentConsole->frameBuffer[gfxGetFramebufferDisplayOffset(x + i, y + 8 + j)];
+				from = &currentConsole->frameBuffer[gfxGetFramebufferDisplayOffset(x + i, y + 16 + j)];
 				*to = *from;
 				to = &currentConsole->frameBuffer2[gfxGetFramebufferDisplayOffset(x + i, y + j)];
-				from = &currentConsole->frameBuffer2[gfxGetFramebufferDisplayOffset(x + i, y + 8 + j)];
+				from = &currentConsole->frameBuffer2[gfxGetFramebufferDisplayOffset(x + i, y + 16 + j)];
 				*to = *from;
 			}
 		}
@@ -648,7 +648,7 @@ void consoleDrawChar(int c) {
 	c -= currentConsole->font.asciiOffset;
 	if ( c < 0 || c > currentConsole->font.numChars ) return;
 
-	u8 *fontdata = currentConsole->font.gfx + (8 * c);
+	u16 *fontdata = currentConsole->font.gfx + (16 * c);
 
 	int writingColor = currentConsole->fg;
 	int screenColor = currentConsole->bg;
@@ -668,27 +668,37 @@ void consoleDrawChar(int c) {
 	u32 bg = colorTable[screenColor];
 	u32 fg = colorTable[writingColor];
 
-	u64 bval = *((u64*)fontdata);
+	u128 *tmp = (u128*)fontdata;
 
-	if (currentConsole->flags & CONSOLE_UNDERLINE) bval |= 0xffUL << 7*8;
+	u128 bvaltop = tmp[0];
+	u128 bvalbtm = tmp[1];
 
-	if (currentConsole->flags & CONSOLE_CROSSED_OUT) bval |= 0xff << 3*8;
+	if (currentConsole->flags & CONSOLE_UNDERLINE)  bvalbtm |= (u128)0xffffULL << 7*16;
 
-	u8 mask = 0x80;
+	if (currentConsole->flags & CONSOLE_CROSSED_OUT) bvaltop |= (u128)0xffffULL << 7*16;
+
+	u16 mask = 0x8000;
 
 	int i, j;
 
-	int x = (currentConsole->cursorX + currentConsole->windowX) * 8;
-	int y = ((currentConsole->cursorY + currentConsole->windowY) *8 );
+	int x = (currentConsole->cursorX + currentConsole->windowX) * 16;
+	int y = ((currentConsole->cursorY + currentConsole->windowY) *16 );
 
 	u32 *screen;
 
-	for (i=0;i<8;i++) {
+	for (i=0;i<16;i++) {
 		for (j=0;j<8;j++) {
-			screen = &currentConsole->frameBuffer[gfxGetFramebufferDisplayOffset(x + i, y + j)];
-			if (bval >> (8*j) & mask) { *screen = fg; }else{ *screen = bg; }
-			screen = &currentConsole->frameBuffer2[gfxGetFramebufferDisplayOffset(x + i, y + j)];
-			if (bval >> (8*j) & mask) { *screen = fg; }else{ *screen = bg; }
+			uint32_t screenOffset = gfxGetFramebufferDisplayOffset(x + i, y + j);
+			screen = &currentConsole->frameBuffer[screenOffset];
+			if (bvaltop >> (16*j) & mask) { *screen = fg; }else{ *screen = bg; }
+			screen = &currentConsole->frameBuffer2[screenOffset];
+			if (bvaltop >> (16*j) & mask) { *screen = fg; }else{ *screen = bg; }
+
+			screenOffset = gfxGetFramebufferDisplayOffset(x + i, y + j + 8);
+			screen = &currentConsole->frameBuffer[screenOffset];
+			if (bvalbtm >> (16*j) & mask) { *screen = fg; }else{ *screen = bg; }
+			screen = &currentConsole->frameBuffer2[screenOffset];
+			if (bvalbtm >> (16*j) & mask) { *screen = fg; }else{ *screen = bg; }
 		}
 		mask >>= 1;
 	}
