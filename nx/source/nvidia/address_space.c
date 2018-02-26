@@ -2,27 +2,33 @@
 
 Result nvasCreate(NvAddressSpace* a)
 {
-    Result rc = nvOpen(&a->fd, "/dev/nvhost-as-gpu");
+    Result rc;
+
+    a->has_init = true;
+
+    rc = nvOpen(&a->fd, "/dev/nvhost-as-gpu");
+
+    if (R_FAILED(rc))
+        a->fd = -1;
 
     if (R_SUCCEEDED(rc))
-    {
         rc = nvioctlNvhostAsGpu_InitializeEx(a->fd, 1, 0x100);
 
-        if (R_FAILED(rc))
-            nvasClose(a);
-    }
+    if (R_FAILED(rc))
+        nvasClose(a);
 
     return rc;
 }
 
-Result nvasClose(NvAddressSpace* a)
+void nvasClose(NvAddressSpace* a)
 {
-    Result rc;
+    if (!a->has_init)
+        return;
 
-    rc = nvClose(a->fd);
+    if (a->fd != -1)
+        nvClose(a->fd);
+
     a->fd = -1;
-
-    return rc;
 }
 
 Result nvasReserveAlign(NvAddressSpace* a, NvPageSize align, u32 pages, NvPageSize page_sz, iova_t* iova_out) {
@@ -39,4 +45,8 @@ Result nvasReserveFull(NvAddressSpace* a) {
 
 Result nvasMapBuffer(NvAddressSpace* a, NvBuffer* buffer, NvBufferKind kind, iova_t* iova_out) {
     return nvioctlNvhostAsGpu_MapBufferEx(a->fd, 0, kind, buffer->fd, 0, 0, buffer->size, 0, iova_out);
+}
+
+Result nvasBindToChannel(NvAddressSpace* a, NvChannel* channel) {
+    return nvioctlNvhostAsGpu_BindChannel(a->fd, channel->fd);
 }

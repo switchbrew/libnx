@@ -51,6 +51,7 @@ extern "C" {
 #include "switch/nvidia/ioctl.h"
 #include "switch/nvidia/buffer.h"
 #include "switch/nvidia/address_space.h"
+#include "switch/nvidia/channel.h"
 
 #include "switch/runtime/env.h"
 
