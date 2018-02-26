@@ -216,10 +216,10 @@ Result romfsMount(struct romfs_mount **p)
         NroAssetHeader asset_header;
 
         if (!_romfs_read_chk(mount, sizeof(NroStart), &hdr, sizeof(hdr))) goto _fail0;
-        if (hdr.Magic != NROHEADER_MAGICNUM) goto _fail0;
+        if (hdr.magic != NROHEADER_MAGIC) goto _fail0;
         if (!_romfs_read_chk(mount, hdr.size, &asset_header, sizeof(asset_header))) goto _fail0;
 
-        if (asset_header.magic != NROASSETHEADER_MAGICNUM
+        if (asset_header.magic != NROASSETHEADER_MAGIC
             || asset_header.version > NROASSETHEADER_VERSION
             || asset_header.romfs.offset == 0
             || asset_header.romfs.size == 0)
