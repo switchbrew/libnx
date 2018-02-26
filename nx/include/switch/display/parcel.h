@@ -14,7 +14,7 @@ typedef struct {
     u32 pos;
 } Parcel;
 
-void parcelInitialize(Parcel *ctx);
+void parcelCreate(Parcel *ctx);
 Result parcelTransact(Binder *session, u32 code, Parcel *in_parcel, Parcel *reply_parcel);
 
 void* parcelWriteData(Parcel *ctx, void* data, size_t data_size);

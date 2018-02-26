@@ -46,9 +46,11 @@ extern "C" {
 #include "switch/display/binder.h"
 #include "switch/display/parcel.h"
 #include "switch/display/buffer_producer.h"
-#include "switch/display/ioctl.h"
-#include "switch/display/nvioctl.h"
 #include "switch/display/nvgfx.h"
+
+#include "switch/nvidia/ioctl.h"
+#include "switch/nvidia/nvmap.h"
+#include "switch/nvidia/address_space.h"
 
 #include "switch/runtime/env.h"
 

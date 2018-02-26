@@ -15,7 +15,7 @@ Result nvioctlNvhostAsGpu_BindChannel(u32 fd, u32 channel_fd) {
     return nvIoctl(fd, _NV_IOW(0x41, 0x01, data), &data);
 }
 
-Result nvioctlNvhostAsGpu_AllocSpace(u32 fd, u32 pages, u32 page_size, u32 flags, u64 align, u64 *offset) {
+Result nvioctlNvhostAsGpu_AllocSpace(u32 fd, u32 pages, u32 page_size, u32 flags, u64 align_or_offset, u64 *offset) {
     Result rc = 0;
 
     struct {
@@ -33,12 +33,13 @@ Result nvioctlNvhostAsGpu_AllocSpace(u32 fd, u32 pages, u32 page_size, u32 flags
     data.pages = pages;
     data.page_size = page_size;
     data.flags = flags;
-    data.align = align;
+    data.align = align_or_offset;
 
     rc = nvIoctl(fd, _NV_IOWR(0x41, 0x02, data), &data);
     if (R_FAILED(rc)) return rc;
 
-    *offset = data.offset;
+    if (offset != NULL)
+        *offset = data.offset;
 
     return rc;
 }
