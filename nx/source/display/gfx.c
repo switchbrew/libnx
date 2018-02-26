@@ -319,7 +319,7 @@ static Result _gfxInit(ViServiceType servicetype, const char *DisplayName, u32 L
     return rc;
 }
 
-void gfxInitDefault(void)
+Result gfxInitDefault(void)
 {
     nvServiceType nv_servicetype;
 
@@ -337,8 +337,7 @@ void gfxInitDefault(void)
         break;
     }
 
-    Result rc = _gfxInit(ViServiceType_Default, "Default", ViLayerFlags_Default, 0, nv_servicetype, 0x300000);
-    if (R_FAILED(rc)) fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadGfxInit));
+    return _gfxInit(ViServiceType_Default, "Default", ViLayerFlags_Default, 0, nv_servicetype, 0x300000);
 }
 
 void gfxExit(void)
