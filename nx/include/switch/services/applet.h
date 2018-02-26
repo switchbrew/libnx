@@ -51,6 +51,8 @@ Result appletGetAppletResourceUserId(u64 *out);
 void appletNotifyRunning(u8 *out);
 Result appletCreateManagedDisplayLayer(u64 *out);
 
+Result appletGetDesiredLanguage(u64 *LanguageCode);
+
 /**
  * @brief Controls whether screenshot-capture is allowed.
  * @param val 0 = disable, 1 = enable.
