@@ -47,6 +47,14 @@ Result nvasMapBuffer(NvAddressSpace* a, NvBuffer* buffer, NvBufferKind kind, iov
     return nvioctlNvhostAsGpu_MapBufferEx(a->fd, 0, kind, buffer->fd, 0, 0, buffer->size, 0, iova_out);
 }
 
-Result nvasBindToChannel(NvAddressSpace* a, NvChannel* channel) {
-    return nvioctlNvhostAsGpu_BindChannel(a->fd, channel->fd);
+Result nvasBindToChannel(NvAddressSpace* a, NvChannel* channel)
+{
+    Result rc;
+
+    rc = nvioctlNvhostAsGpu_BindChannel(a->fd, channel->fd);
+
+    if (R_SUCCEEDED(rc))
+        rc = nvioctlChannel_SetNvmapFd(channel->fd, a->fd);
+
+    return rc;
 }
