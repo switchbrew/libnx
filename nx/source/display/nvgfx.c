@@ -22,11 +22,9 @@ static u32 g_nvgfx_fd_nvhostctrlgpu;
 static u32 g_nvgfx_fd_nvhostasgpu;
 static u32 g_nvgfx_fd_nvmap;
 static u32 g_nvgfx_fd_nvhostgpu;
+static u32 g_nvgfx_fd_nvhostctrl;
 
 static nvioctl_gpu_characteristics g_nvgfx_gpu_characteristics;
-static u64 g_nvgfx_nvhostasgpu_allocspace_offset;
-static u32 g_nvgfx_zcullctxsize;
-static u32 g_nvgfx_zcullinfo[40>>2];
 static nvioctl_fence g_nvgfx_nvhost_fence;
 
 u32 g_nvgfx_totalframebufs = 0;
@@ -106,10 +104,7 @@ Result nvgfxInitialize(void) {
     memset(nvmap_objs, 0, sizeof(nvmap_objs));
 
     memset(&g_nvgfx_gpu_characteristics, 0, sizeof(nvioctl_gpu_characteristics));
-    memset(g_nvgfx_zcullinfo, 0, sizeof(g_nvgfx_zcullinfo));
     memset(&g_nvgfx_nvhost_fence, 0, sizeof(g_nvgfx_nvhost_fence));
-    g_nvgfx_nvhostasgpu_allocspace_offset = 0;
-    g_nvgfx_zcullctxsize = 0;
     nvmap_obj4_mapbuffer_x0_offset = 0;
     nvmap_obj6_mapbuffer_xdb_offset = 0;
 
@@ -123,13 +118,10 @@ Result nvgfxInitialize(void) {
 
     if (R_SUCCEEDED(rc)) rc = nvioctlNvhostCtrlGpu_GetCharacteristics(g_nvgfx_fd_nvhostctrlgpu, &g_nvgfx_gpu_characteristics);
 
-    if (R_SUCCEEDED(rc)) rc = nvioctlNvhostCtrlGpu_ZCullGetCtxSize(g_nvgfx_fd_nvhostctrlgpu, &g_nvgfx_zcullctxsize);
-    if (R_SUCCEEDED(rc)) rc = nvioctlNvhostCtrlGpu_ZCullGetInfo(g_nvgfx_fd_nvhostctrlgpu, g_nvgfx_zcullinfo);
-
     if (R_SUCCEEDED(rc)) rc = nvOpen(&g_nvgfx_fd_nvhostasgpu, "/dev/nvhost-as-gpu");
 
     if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_InitializeEx(g_nvgfx_fd_nvhostasgpu, 1, /*0*/0x10000);
-    if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_AllocSpace(g_nvgfx_fd_nvhostasgpu, 0x10000, /*0x20000*/0x10000, 0, 0x10000, &g_nvgfx_nvhostasgpu_allocspace_offset);
+    if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_AllocSpace(g_nvgfx_fd_nvhostasgpu, 0x10000, /*0x20000*/0x10000, 0, 0x10000, NULL);
     if (R_SUCCEEDED(rc)) rc = nvOpen(&g_nvgfx_fd_nvmap, "/dev/nvmap");
     if (R_SUCCEEDED(rc)) rc = nvOpen(&g_nvgfx_fd_nvhostgpu, "/dev/nvhost-gpu");
 
@@ -151,6 +143,7 @@ Result nvgfxInitialize(void) {
     if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 4, 0, nvmap_objs[6].handle, 0x10000, 0, 0, 0, NULL);
     if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 4, 0xfe, nvmap_objs[6].handle, 0x10000, 0, 0, 0, NULL);
     if (R_SUCCEEDED(rc)) rc = nvioctlNvhostAsGpu_MapBufferEx(g_nvgfx_fd_nvhostasgpu, 4, 0xdb, nvmap_objs[6].handle, 0x10000, 0, 0, 0, &nvmap_obj6_mapbuffer_xdb_offset);
+    if (R_SUCCEEDED(rc)) rc = nvOpen(&g_nvgfx_fd_nvhostctrl, "/dev/nvhost-ctrl");
 
     if (R_SUCCEEDED(rc))
     {
@@ -232,7 +225,7 @@ Result nvgfxEventWait(u32 syncpt_id, u32 threshold, s32 timeout)
     Result rc;
 
     do {
-        int event_res;
+        u32 event_res;
         rc = nvioctlNvhostCtrl_EventWait(g_nvgfx_fd_nvhostctrl, syncpt_id, threshold, timeout, 0, &event_res);
     } while (rc == MAKERESULT(Module_LibnxNvidia, LibnxNvidiaError_Timeout)); // todo: Fix timeout error
 
