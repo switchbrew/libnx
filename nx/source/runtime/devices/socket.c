@@ -118,6 +118,10 @@ Result socketInitialize(const SocketInitConfig *config) {
     ret = bsdInitialize(&bcfg);
     if(R_SUCCEEDED(ret))
         dev = AddDevice(&g_socketDevoptab);
+    else {
+        socketExit();
+        return ret;
+    }
 
     if(dev == -1) {
         socketExit();
