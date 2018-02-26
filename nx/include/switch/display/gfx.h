@@ -28,7 +28,7 @@ typedef enum
  * @brief Initializes the graphics subsystem.
  * @warning Do not use \ref viInitialize when using this function.
  */
-void gfxInitDefault(void);
+Result gfxInitDefault(void);
 
 /**
  * @brief Uninitializes the graphics subsystem.
