@@ -3,19 +3,19 @@
 #include "result.h"
 #include "services/nv.h"
 #include "nvidia/ioctl.h"
-#include "nvidia/nvmap.h"
+#include "nvidia/buffer.h"
 
 static u32 g_nvmap_fd;
 
-Result nvmapInit() {
+Result nvbufInit() {
     return nvOpen(&g_nvmap_fd, "/dev/nvmap");
 }
 
-Result nvmapExit() {
+Result nvbufExit() {
     return nvClose(g_nvmap_fd);
 }
 
-static Result _nvmapCreate(Nvmap* m, size_t size, u32 flags, u32 align, NvmapKind kind)
+static Result _nvbufCreate(NvBuffer* m, size_t size, u32 flags, u32 align, NvBufferKind kind)
 {
     Result rc;
 
@@ -45,15 +45,15 @@ static Result _nvmapCreate(Nvmap* m, size_t size, u32 flags, u32 align, NvmapKin
     return rc;
 }
 
-Result nvmapCreate(Nvmap* m, size_t size, u32 align, NvmapKind kind) {
-    return _nvmapCreate(m, size, 0, align, kind);
+Result nvbufCreate(NvBuffer* m, size_t size, u32 align, NvBufferKind kind) {
+    return _nvbufCreate(m, size, 0, align, kind);
 }
 
-Result nvmapCreateRw(Nvmap* m, size_t size, u32 align, NvmapKind kind) {
-    return _nvmapCreate(m, size, NvmapFlags_Writable, align, kind);
+Result nvbufCreateRw(NvBuffer* m, size_t size, u32 align, NvBufferKind kind) {
+    return _nvbufCreate(m, size, NvBufferFlags_Writable, align, kind);
 }
 
-void nvmapFree(Nvmap* m)
+void nvbufFree(NvBuffer* m)
 {
     free(m->ptr);
     m->ptr = NULL;
@@ -62,6 +62,6 @@ void nvmapFree(Nvmap* m)
     m->fd = -1;
 }
 
-void* nvmapGetAddr(Nvmap* m) {
+void* nvbufGetAddr(NvBuffer* m) {
     return m->ptr;
 }

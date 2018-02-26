@@ -72,7 +72,7 @@ extern "C" {
 #include "switch/display/nvgfx.h"
 
 #include "switch/nvidia/ioctl.h"
-#include "switch/nvidia/nvmap.h"
+#include "switch/nvidia/buffer.h"
 #include "switch/nvidia/address_space.h"
 
 #include "switch/audio/driver.h"
