@@ -2,8 +2,7 @@
 #include "types.h"
 #include "result.h"
 #include "services/nv.h"
-#include "display/ioctl.h"
-#include "display/nvioctl.h"
+#include "nvidia/ioctl.h"
 
 Result nvioctlNvmap_Create(u32 fd, u32 size, u32 *nvmap_handle) {
     Result rc=0;
