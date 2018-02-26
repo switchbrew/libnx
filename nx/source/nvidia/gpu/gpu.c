@@ -1,10 +1,5 @@
 #include <switch.h>
 
-typedef struct {
-    NvAddressSpace addr_space;
-    NvChannel gpu_channel;
-} NvGpu;
-
 Result nvgpuCreate(NvGpu* g)
 {
     Result rc;
