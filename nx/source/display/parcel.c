@@ -11,7 +11,7 @@ typedef struct {
     u32 objects_off;
 } ParcelHeader;
 
-void parcelInitialize(Parcel *ctx)
+void parcelCreate(Parcel *ctx)
 {
     memset(ctx, 0, sizeof(Parcel));
     ctx->capacity = sizeof(ctx->payload);

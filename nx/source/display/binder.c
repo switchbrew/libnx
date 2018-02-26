@@ -5,94 +5,99 @@
 #include "kernel/detect.h"
 #include "display/binder.h"
 
-void binderCreateSession(Binder *session, Handle sessionHandle, s32 id)
+void binderCreate(Binder* b, Handle session_handle, s32 id)
 {
-    memset(session, 0, sizeof(Binder));
-    session->created = 1;
-    session->sessionHandle = sessionHandle;
-    session->id = id;
-    session->nativeHandle = INVALID_HANDLE;
-    session->hasTransactAuto = 0;
+    memset(b, 0, sizeof(Binder));
+    b->created = true;
+    b->session_handle = session_handle;
+    b->id = id;
+    b->native_handle = INVALID_HANDLE;
+    b->has_transact_auto = false;
 }
 
-Result binderInitSession(Binder *session, u32 unk0)
+Result binderInitSession(Binder* b, u32 unk0)
 {
     Result rc = 0;
 
-    if (!session->created) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-    if (session->initialized) return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
+    if (!b->created)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    rc = binderAdjustRefcount(session, 1, 0);
+    if (b->initialized)
+        return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
+
+    rc = binderAdjustRefcount(b, 1, 0);
 
     if (R_FAILED(rc))
         return rc;
 
-    rc = binderAdjustRefcount(session, 1, 1);
+    rc = binderAdjustRefcount(b, 1, 1);
 
     if (R_FAILED(rc)) {
-        binderAdjustRefcount(session, -1, 0);
+        binderAdjustRefcount(b, -1, 0);
         return rc;
     }
 
-    rc = binderGetNativeHandle(session, unk0, &session->nativeHandle);
+    rc = binderGetNativeHandle(b, unk0, &b->native_handle);
 
     if (R_FAILED(rc)) {
-        binderAdjustRefcount(session, -1, 1);
-        binderAdjustRefcount(session, -1, 0);
+        binderAdjustRefcount(b, -1, 1);
+        binderAdjustRefcount(b, -1, 0);
         return rc;
     }
 
-    // When the output nativeHandle is 0 the Binder ID is probably invalid.
-    if (session->nativeHandle == 0) {
-        binderAdjustRefcount(session, -1, 1);
-        binderAdjustRefcount(session, -1, 0);
+    // When the output native_handle is 0 the Binder ID is probably invalid.
+    if (b->native_handle == 0) {
+        binderAdjustRefcount(b, -1, 1);
+        binderAdjustRefcount(b, -1, 0);
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
     }
 
-    session->initialized = 1;
+    b->initialized = true;
 
-    rc = ipcQueryPointerBufferSize(session->sessionHandle, &session->ipcBufferSize);
+    rc = ipcQueryPointerBufferSize(b->session_handle, &b->ipc_buffer_size);
 
     if (R_FAILED(rc)) {
-        binderExitSession(session);
+        binderClose(b);
         return rc;
     }
 
     // Use TransactParcelAuto when available.
     if (kernelAbove300())
-        session->hasTransactAuto = 1;
+        b->has_transact_auto = true;
 
     return rc;
 }
 
-void binderExitSession(Binder *session)
+void binderExitSession(Binder* b)
 {
-    if (!session->created) return;
+    if (!b->created)
+        return;
 
-    if (session->initialized) {
-        binderAdjustRefcount(session, -1, 1);
-        binderAdjustRefcount(session, -1, 0);
+    if (b->initialized) {
+        binderAdjustRefcount(b, -1, 1);
+        binderAdjustRefcount(b, -1, 0);
 
-        if (session->nativeHandle != INVALID_HANDLE) {
-            svcCloseHandle(session->nativeHandle);
-            session->nativeHandle = INVALID_HANDLE;
+        if (b->native_handle != INVALID_HANDLE) {
+            svcCloseHandle(b->native_handle);
+            b->native_handle = INVALID_HANDLE;
         }
     }
 
-    session->sessionHandle = INVALID_HANDLE;
-    session->id = 0;
+    b->session_handle = INVALID_HANDLE;
+    b->id = 0;
 
-    session->created = 0;
-    session->initialized = 0;
+    b->created = false;
+    b->initialized = false;
 }
 
 static Result _binderTransactParcel(
-    Binder *session, u32 code,
+    Binder* b, u32 code,
     void* parcel_data,  size_t parcel_data_size,
     void* parcel_reply, size_t parcel_reply_size,
     u32 flags)
 {
-    if (!session->created || !session->initialized) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (!b->created || !b->initialized)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     IpcCommand c;
     ipcInitialize(&c);
@@ -111,11 +116,11 @@ static Result _binderTransactParcel(
     raw = ipcPrepareHeader(&c, sizeof(*raw));
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 0;
-    raw->session_id = session->id;
+    raw->session_id = b->id;
     raw->code = code;
     raw->flags = flags;
 
-    Result rc = ipcDispatch(session->sessionHandle);
+    Result rc = ipcDispatch(b->session_handle);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -133,12 +138,13 @@ static Result _binderTransactParcel(
 }
 
 static Result _binderTransactParcelAuto(
-    Binder *session, u32 code,
+    Binder* b, u32 code,
     void* parcel_data,  size_t parcel_data_size,
     void* parcel_reply, size_t parcel_reply_size,
     u32 flags)
 {
-    if (!session->created || !session->initialized) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (!b->created || !b->initialized)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     IpcCommand c;
     ipcInitialize(&c);
@@ -151,17 +157,17 @@ static Result _binderTransactParcelAuto(
         u32 flags;
     } *raw;
 
-    ipcAddSendSmart(&c, session->ipcBufferSize, parcel_data, parcel_data_size, 0);
-    ipcAddRecvSmart(&c, session->ipcBufferSize, parcel_reply, parcel_reply_size, 0);
+    ipcAddSendSmart(&c, b->ipc_buffer_size, parcel_data, parcel_data_size, 0);
+    ipcAddRecvSmart(&c, b->ipc_buffer_size, parcel_reply, parcel_reply_size, 0);
 
     raw = ipcPrepareHeader(&c, sizeof(*raw));
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 3;
-    raw->session_id = session->id;
+    raw->session_id = b->id;
     raw->code = code;
     raw->flags = flags;
 
-    Result rc = ipcDispatch(session->sessionHandle);
+    Result rc = ipcDispatch(b->session_handle);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -179,24 +185,25 @@ static Result _binderTransactParcelAuto(
 }
 
 Result binderTransactParcel(
-    Binder *session, u32 code,
+    Binder* b, u32 code,
     void* parcel_data,  size_t parcel_data_size,
     void* parcel_reply, size_t parcel_reply_size,
     u32 flags)
 {
     Result rc = 0;
 
-    if (session->hasTransactAuto)
-        rc = _binderTransactParcelAuto(session, code, parcel_data, parcel_data_size, parcel_reply, parcel_reply_size, flags);
+    if (b->has_transact_auto)
+        rc = _binderTransactParcelAuto(b, code, parcel_data, parcel_data_size, parcel_reply, parcel_reply_size, flags);
     else
-        rc = _binderTransactParcel(session, code, parcel_data, parcel_data_size, parcel_reply, parcel_reply_size, flags);
+        rc = _binderTransactParcel(b, code, parcel_data, parcel_data_size, parcel_reply, parcel_reply_size, flags);
 
     return rc;
 }
 
-Result binderAdjustRefcount(Binder *session, s32 addval, s32 type)
+Result binderAdjustRefcount(Binder* b, s32 addval, s32 type)
 {
-    if (!session->created) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (!b->created)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     IpcCommand c;
     ipcInitialize(&c);
@@ -212,11 +219,11 @@ Result binderAdjustRefcount(Binder *session, s32 addval, s32 type)
     raw = ipcPrepareHeader(&c, sizeof(*raw));
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 1;
-    raw->session_id = session->id;
+    raw->session_id = b->id;
     raw->addval = addval;
     raw->type = type;
 
-    Result rc = ipcDispatch(session->sessionHandle);
+    Result rc = ipcDispatch(b->session_handle);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -233,9 +240,10 @@ Result binderAdjustRefcount(Binder *session, s32 addval, s32 type)
     return rc;
 }
 
-Result binderGetNativeHandle(Binder *session, u32 inval, Handle *handle_out)
+Result binderGetNativeHandle(Binder* b, u32 inval, Handle *handle_out)
 {
-    if (!session->created) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (!b->created)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     IpcCommand c;
     ipcInitialize(&c);
@@ -251,10 +259,10 @@ Result binderGetNativeHandle(Binder *session, u32 inval, Handle *handle_out)
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 2;
-    raw->session_id = session->id;
+    raw->session_id = b->id;
     raw->inval = inval;
 
-    Result rc = ipcDispatch(session->sessionHandle);
+    Result rc = ipcDispatch(b->session_handle);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
