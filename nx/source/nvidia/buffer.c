@@ -19,6 +19,7 @@ static Result _nvbufCreate(NvBuffer* m, size_t size, u32 flags, u32 align, NvBuf
 {
     Result rc;
 
+    m->has_init = true;
     m->size = size;
     m->fd = -1;
     m->ptr = memalign(size, align);
@@ -28,19 +29,14 @@ static Result _nvbufCreate(NvBuffer* m, size_t size, u32 flags, u32 align, NvBuf
 
     rc = nvioctlNvmap_Create(g_nvmap_fd, size, &m->fd);
 
-    if (R_SUCCEEDED(rc)) {
+    if (R_FAILED(rc))
+        m->fd = -1;
+
+    if (R_SUCCEEDED(rc))
         rc = nvioctlNvmap_Alloc(g_nvmap_fd, m->fd, 0, flags, align, kind, m->ptr);
 
-        if (R_FAILED(rc)) {
-            nvClose(m->fd);
-            m->fd = -1;
-        }
-    }
-
-    if (R_FAILED(rc)) {
-        free(m->ptr);
-        m->ptr = NULL;
-    }
+    if (R_FAILED(rc))
+        nvbufFree(m);
 
     return rc;
 }
@@ -55,10 +51,15 @@ Result nvbufCreateRw(NvBuffer* m, size_t size, u32 align, NvBufferKind kind) {
 
 void nvbufFree(NvBuffer* m)
 {
+    if (!m->has_init)
+        return;
+
     free(m->ptr);
     m->ptr = NULL;
 
-    nvClose(m->fd);
+    if (m->fd != -1)
+        nvClose(m->fd);
+
     m->fd = -1;
 }
 

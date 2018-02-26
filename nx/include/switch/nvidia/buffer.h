@@ -6,6 +6,7 @@ typedef struct {
     u32   fd;
     u32   size;
     void* ptr;
+    bool  has_init;
 } NvBuffer;
 
 typedef enum {
