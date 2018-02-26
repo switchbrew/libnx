@@ -68,7 +68,7 @@ Result binderInitSession(Binder* b, u32 unk0)
     return rc;
 }
 
-void binderExitSession(Binder* b)
+void binderClose(Binder* b)
 {
     if (!b->created)
         return;
