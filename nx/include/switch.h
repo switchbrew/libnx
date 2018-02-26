@@ -78,6 +78,7 @@ extern "C" {
 #include "switch/nvidia/info.h"
 #include "switch/nvidia/gpu/gpfifo.h"
 #include "switch/nvidia/gpu/zcull_ctx.h"
+#include "switch/nvidia/gpu/3d_ctx.h"
 #include "switch/nvidia/gpu/gpu.h"
 
 #include "switch/audio/driver.h"
