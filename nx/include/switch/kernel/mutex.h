@@ -30,6 +30,13 @@ static inline void mutexInit(Mutex* m)
 void mutexLock(Mutex* m);
 
 /**
+ * @brief Attempts to lock a mutex without waiting.
+ * @param m Mutex object.
+ * @return 1 if the mutex has been acquired successfully, and 0 on contention.
+ */
+u32 mutexTryLock(Mutex* m);
+
+/**
  * @brief Unlocks a mutex.
  * @param m Mutex object.
  */
@@ -52,6 +59,13 @@ static inline void rmutexInit(RMutex* m)
  * @param m Recursive mutex object.
  */
 void rmutexLock(RMutex* m);
+
+/**
+ * @brief Attempts to lock a recursive mutex without waiting.
+ * @param m Recursive mutex object.
+ * @return 1 if the mutex has been acquired successfully, and 0 on contention.
+ */
+u32 rmutexTryLock(RMutex* m);
 
 /**
  * @brief Unlocks a recursive mutex.
