@@ -14,13 +14,15 @@
 /// Same as \ref RGBA8 except with alpha=0xff.
 #define RGBA8_MAXALPHA(r,g,b) RGBA8(r,g,b,0xff)
 
-/// GfxMode set by \ref gfxSetMode. The default is GfxMode_LinearDouble. Note that the text-console (see console.h) sets this to GfxMode_TiledSingle.
+/// GfxMode set by \ref gfxSetMode. The default is GfxMode_LinearDouble. Note that the text-console (see console.h) sets this to GfxMode_TiledDouble.
 typedef enum
 {
     GfxMode_TiledSingle, ///< Single-buffering with raw tiled (block-linear) framebuffer.
     GfxMode_TiledDouble, ///< Double-buffering with raw tiled (block-linear) framebuffer.
     GfxMode_LinearDouble ///< Double-buffering with linear framebuffer, which is transferred to the actual framebuffer by \ref gfxFlushBuffers().
 } GfxMode;
+
+/// Framebuffer pixel-format is RGBA8888, there's no known way to change this.
 
 /**
  * @brief Initializes the graphics subsystem.
@@ -83,6 +85,12 @@ size_t gfxGetFramebufferSize(void);
 /// Sets the \ref GfxMode.
 void gfxSetMode(GfxMode mode);
 
+/// Controls whether a vertical-flip is done when determining the pixel-offset within the actual framebuffer. By default this is enabled.
+void gfxSetDrawFlip(bool flip);
+
+/// Configures transform. See the NATIVE_WINDOW_TRANSFORM_* enums in buffer_producer.h. The default is NATIVE_WINDOW_TRANSFORM_FLIP_V.
+void gfxConfigureTransform(u32 transform);
+
 /// Flushes the framebuffer in the data cache. When \ref GfxMode is GfxMode_LinearDouble, this also transfers the linear-framebuffer to the actual framebuffer.
 void gfxFlushBuffers(void);
 
@@ -94,10 +102,11 @@ static inline u32 gfxGetFramebufferDisplayOffset(u32 x, u32 y) {
 
     extern size_t g_gfx_framebuf_aligned_width;
     extern size_t g_gfx_framebuf_display_height;
+    extern bool g_gfx_drawflip;
 
     //if (x >= g_gfx_framebuf_width || y >= g_gfx_framebuf_display_height) return (gfxGetFramebufferSize()-4)/4;//Return the last pixel-offset in the buffer, the data located here is not displayed due to alignment. (Disabled for perf)
 
-    y = g_gfx_framebuf_display_height-1-y;
+    if (g_gfx_drawflip) y = g_gfx_framebuf_display_height-1-y;
 
     tmp_pos = ((y & 127) / 16) + (x/16*8) + ((y/16/8)*(g_gfx_framebuf_aligned_width/16*8));
     tmp_pos *= 16*16 * 4;

@@ -1,6 +1,7 @@
 /**
  * @file fs.h
  * @brief Filesystem (fsp-srv) service IPC wrapper.
+ * Normally applications should just use standard stdio not FS-serv directly. However this can be used if obtaining a FsFileSystem, FsFile, or FsStorage, for mounting with fs_dev/romfs_dev.
  * @author plutoo
  * @author yellows8
  * @copyright libnx Authors
@@ -91,8 +92,11 @@ void fsExit(void);
 
 Service* fsGetServiceSession(void);
 
+/// Do not call this directly, see fs_dev.h.
 Result fsMountSdcard(FsFileSystem* out);
+
 Result fsMountSaveData(FsFileSystem* out, u8 inval, FsSave *save);
+Result fsOpenDataStorageByCurrentProcess(FsStorage* out);
 // todo: Rest of commands here
 
 /// FsFileSystem can be mounted with fs_dev for use with stdio, see fs_dev.h.
@@ -130,4 +134,6 @@ Result fsDirRead(FsDir* d, u64 inval, size_t* total_entries, size_t max_entries,
 Result fsDirGetEntryCount(FsDir* d, u64* count);
 void fsDirClose(FsDir* d);
 
-// todo: IStorage
+// IStorage
+Result fsStorageRead(FsStorage* s, u64 off, void* buf, size_t len);
+void fsStorageClose(FsStorage* s);

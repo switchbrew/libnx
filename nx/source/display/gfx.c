@@ -34,11 +34,15 @@ static GfxMode g_gfxMode = GfxMode_LinearDouble;
 
 static u8 *g_gfxFramebufLinear;
 
+static s32 g_gfxPixelFormat = 0;
+
 size_t g_gfx_framebuf_width=0, g_gfx_framebuf_aligned_width=0;
 size_t g_gfx_framebuf_height=0, g_gfx_framebuf_aligned_height=0;
 size_t g_gfx_framebuf_display_width=0, g_gfx_framebuf_display_height=0;
 size_t g_gfx_singleframebuf_size=0;
 size_t g_gfx_singleframebuf_linear_size=0;
+
+bool g_gfx_drawflip = true;
 
 static AppletHookCookie g_gfx_autoresolution_applethookcookie;
 static bool g_gfx_autoresolution_enabled;
@@ -55,7 +59,6 @@ extern nvioctl_fence g_nvgfx_nvhostgpu_gpfifo_fence;
 
 //static Result _gfxGetDisplayResolution(u64 *width, u64 *height);
 
-// TODO: Let the user configure some of this?
 static BqQueueBufferInput g_gfxQueueBufferData = {
     .timestamp = 0x0,
     .isAutoTimestamp = 0x1,
@@ -135,7 +138,7 @@ static Result _gfxDequeueBuffer(void) {
 
     memcpy(&tmp_fence, fence, sizeof(BqFence));//Offical sw waits on the fence from the previous DequeueBuffer call. Using the fence from the current DequeueBuffer call results in nvgfxEventWait() failing.
 
-    rc = bqDequeueBuffer(async, g_gfx_framebuf_width, g_gfx_framebuf_height, 0, 0x300, &g_gfxCurrentProducerBuffer, fence);
+    rc = bqDequeueBuffer(async, g_gfx_framebuf_width, g_gfx_framebuf_height, g_gfxPixelFormat, 0x300, &g_gfxCurrentProducerBuffer, fence);
 
     //Only run nvgfxEventWait when the fence is valid and the id is not NO_FENCE.
     if (R_SUCCEEDED(rc) && tmp_fence.is_valid && tmp_fence.nv_fences[0].id!=0xffffffff) rc = nvgfxEventWait(tmp_fence.nv_fences[0].id, tmp_fence.nv_fences[0].value, -1);
@@ -177,6 +180,10 @@ static Result _gfxInit(ViServiceType servicetype, const char *DisplayName, u32 L
     g_gfxFramebuf = NULL;
     g_gfxFramebufSize = 0;
     g_gfxMode = GfxMode_LinearDouble;
+
+    g_gfx_drawflip = true;
+    g_gfxQueueBufferData.transform = NATIVE_WINDOW_TRANSFORM_FLIP_V;
+    g_gfxPixelFormat = 0;
 
     memset(g_gfx_ProducerSlotsRequested, 0, sizeof(g_gfx_ProducerSlotsRequested));
     memset(&g_gfx_DequeueBuffer_fence, 0, sizeof(g_gfx_DequeueBuffer_fence));
@@ -537,6 +544,18 @@ size_t gfxGetFramebufferSize(void) {
 void gfxSetMode(GfxMode mode) {
     g_gfxMode = mode;
 }
+
+void gfxSetDrawFlip(bool flip) {
+    g_gfx_drawflip = flip;
+}
+
+void gfxConfigureTransform(u32 transform) {
+    g_gfxQueueBufferData.transform = transform;
+}
+
+/*void gfxSetPixelFormat(s32 format) {
+    g_gfxPixelFormat = format;
+}*/
 
 void gfxFlushBuffers(void) {
     u32 *actual_framebuf = (u32*)&g_gfxFramebuf[g_gfxCurrentBuffer*g_gfx_singleframebuf_size];

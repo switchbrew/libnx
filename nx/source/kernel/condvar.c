@@ -13,7 +13,7 @@ void condvarInit(CondVar* c, Mutex* m) {
 Result condvarWaitTimeout(CondVar* c, u64 timeout) {
     Result rc;
 
-    rc = svcWaitProcessWideKeyAtomic(&c->tag, (u32*) c->mutex, getThreadVars()->handle, timeout);
+    rc = svcWaitProcessWideKeyAtomic((u32*) c->mutex, &c->tag, getThreadVars()->handle, timeout);
 
     // On timeout, we need to acquire it manually.
     if (rc == 0xEA01)

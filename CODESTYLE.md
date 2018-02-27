@@ -22,5 +22,10 @@
 ## Functions
 `modulenameFunctionName`
 
+### Submodule function naming
+Singletons use names like smInitialize/smExit
+
+Objects use names like tmemCreate/tmemClose
+
 ## Macros
 `LIKE_THIS`

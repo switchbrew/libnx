@@ -12,11 +12,14 @@ extern "C" {
 #include "switch/types.h"
 #include "switch/result.h"
 
+#include "switch/nro.h"
+
 #include "switch/kernel/svc.h"
 #include "switch/kernel/tmem.h"
 #include "switch/kernel/shmem.h"
 #include "switch/kernel/mutex.h"
 #include "switch/kernel/rwlock.h"
+#include "switch/kernel/condvar.h"
 #include "switch/kernel/thread.h"
 #include "switch/kernel/virtmem.h"
 #include "switch/kernel/detect.h"
@@ -35,12 +38,14 @@ extern "C" {
 #include "switch/services/audout.h"
 #include "switch/services/bsd.h"
 #include "switch/services/fatal.h"
+#include "switch/services/time.h"
 #include "switch/services/usb.h"
 #include "switch/services/hid.h"
 #include "switch/services/irs.h"
 #include "switch/services/vi.h"
 #include "switch/services/nv.h"
 #include "switch/services/pm.h"
+#include "switch/services/set.h"
 
 #include "switch/display/gfx.h"
 #include "switch/display/binder.h"
@@ -65,6 +70,7 @@ extern "C" {
 #include "switch/runtime/devices/console.h"
 #include "switch/runtime/devices/usb_comms.h"
 #include "switch/runtime/devices/fs_dev.h"
+#include "switch/runtime/devices/romfs_dev.h"
 
 #ifdef __cplusplus
 }

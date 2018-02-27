@@ -64,6 +64,7 @@ enum {
     LibnxError_JitUnavailable,
     LibnxError_WeirdKernel,
     LibnxError_IncompatSysVer,
+    LibnxError_InitFail_Time,
 };
 
 /// libnx nvidia error codes

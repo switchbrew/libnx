@@ -503,6 +503,45 @@ Result appletGetAppletResourceUserId(u64 *out) {
     return 0;
 }
 
+Result appletGetDesiredLanguage(u64 *LanguageCode) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    if (!serviceIsActive(&g_appletSrv) || __nx_applet_type!=AppletType_Application)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 21;
+
+    Result rc = serviceIpcDispatch(&g_appletIFunctions);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u64 LanguageCode;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && LanguageCode) {
+            *LanguageCode = resp->LanguageCode;
+        }
+    }
+
+    return rc;
+}
+
 void appletNotifyRunning(u8 *out) {
     IpcCommand c;
     ipcInitialize(&c);

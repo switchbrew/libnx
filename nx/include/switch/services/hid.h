@@ -328,6 +328,16 @@ typedef struct JoystickPosition
     s32 dy;
 } JoystickPosition;
 
+typedef struct MousePosition
+{
+    u32 x;
+    u32 y;
+    u32 velocityX;
+    u32 velocityY;
+    u32 scrollVelocityX;
+    u32 scrollVelocityY;
+} MousePosition;
+
 #define JOYSTICK_MAX (0x8000)
 #define JOYSTICK_MIN (-0x8000)
 
@@ -399,12 +409,7 @@ typedef struct HidMouseEntry
 {
     u64 timestamp;
     u64 timestamp_2;
-    u32 x;
-    u32 y;
-    u32 velocityX;
-    u32 velocityY;
-    u32 scrollVelocityX;
-    u32 scrollVelocityY;
+    MousePosition position;
     u64 buttons;
 } HidMouseEntry;
 static_assert(sizeof(HidMouseEntry) == 0x30, "Hid mouse entry structure has incorrect size");
@@ -552,6 +557,7 @@ u64 hidKeysUp(HidControllerID id);
 u64 hidMouseButtonsHeld(void);
 u64 hidMouseButtonsDown(void);
 u64 hidMouseButtonsUp(void);
+void hidMouseRead(MousePosition *pos);
 
 bool hidKeyboardModifierHeld(HidKeyboardModifier modifier);
 bool hidKeyboardModifierDown(HidKeyboardModifier modifier);

@@ -66,7 +66,7 @@ static inline Result romfsInit(void)
 
 /**
  * @brief Mounts RomFS from an open file.
- * @param file Handle of the RomFS file.
+ * @param file FsFile of the RomFS image.
  * @param offset Offset of the RomFS within the file.
  * @param mount Output mount handle
  */
@@ -74,6 +74,18 @@ Result romfsMountFromFile(FsFile file, u64 offset, struct romfs_mount **mount);
 static inline Result romfsInitFromFile(FsFile file, u64 offset)
 {
     return romfsMountFromFile(file, offset, NULL);
+}
+
+/**
+ * @brief Mounts RomFS from an open storage.
+ * @param storage FsStorage of the RomFS image.
+ * @param offset Offset of the RomFS within the storage.
+ * @param mount Output mount handle
+ */
+Result romfsMountFromStorage(FsStorage storage, u64 offset, struct romfs_mount **mount);
+static inline Result romfsInitFromStorage(FsStorage storage, u64 offset)
+{
+    return romfsMountFromStorage(storage, offset, NULL);
 }
 
 /// Bind the RomFS mount

@@ -469,6 +469,13 @@ Result fsdevExit(void)
   return 0;
 }
 
+FsFileSystem* fsdevGetDefaultFileSystem(void)
+{
+  if(fsdev_fsdevice_default==-1) return NULL;
+
+  return &fsdev_fsdevices[fsdev_fsdevice_default].fs;
+}
+
 /*! Open a file
  *
  *  @param[in,out] r          newlib reentrancy struct
