@@ -41,18 +41,18 @@ void mutexLock(Mutex* m) {
     }
 }
 
-u32 mutexTryLock(Mutex* m) {
+bool mutexTryLock(Mutex* m) {
     u32 self = _GetTag();
     u32 cur = __sync_val_compare_and_swap((u32*)m, 0, self);
 
     if (cur == 0) {
         // We won the race!
-        return 1;
+        return true;
     }
 
     if ((cur &~ HAS_LISTENERS) == self) {
         // Kernel assigned it to us!
-        return 1;
+        return true;
     }
     
     return 0;
@@ -75,16 +75,16 @@ void rmutexLock(RMutex* m) {
     m->counter++;
 }
 
-u32 rmutexTryLock(RMutex* m) {
+bool rmutexTryLock(RMutex* m) {
     if (m->thread_tag != _GetTag()) {
         if (!mutexTryLock(&m->lock)) {
-            return 0;
+            return false;
         }
         m->thread_tag = _GetTag();
     }
 
     m->counter++;
-    return 1;
+    return true;
 }
 
 void rmutexUnlock(RMutex* m) {
