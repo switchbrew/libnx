@@ -151,7 +151,7 @@ void hidScanInput(void) {
 
     u64 latestTouchEntry = sharedMem->touchscreen.header.latestEntry;
     HidTouchScreenEntry *newTouchEntry = &sharedMem->touchscreen.entries[latestTouchEntry];
-    if ((s64)(newTouchEntry->header.timestamp - g_touchTimestamp) > 0) {
+    if ((s64)(newTouchEntry->header.timestamp - g_touchTimestamp) >= 0) {
         memcpy(&g_touchEntry, newTouchEntry, sizeof(HidTouchScreenEntry));
         g_touchTimestamp = newTouchEntry->header.timestamp;
 
@@ -161,7 +161,7 @@ void hidScanInput(void) {
 
     u64 latestMouseEntry = sharedMem->mouse.header.latestEntry;
     HidMouseEntry *newMouseEntry = &sharedMem->mouse.entries[latestMouseEntry];
-    if ((s64)(newMouseEntry->timestamp - g_mouseTimestamp) > 0) {
+    if ((s64)(newMouseEntry->timestamp - g_mouseTimestamp) >= 0) {
         memcpy(&g_mouseEntry, newMouseEntry, sizeof(HidMouseEntry));
         g_mouseTimestamp = newMouseEntry->timestamp;
 
@@ -172,7 +172,7 @@ void hidScanInput(void) {
 
     u64 latestKeyboardEntry = sharedMem->keyboard.header.latestEntry;
     HidKeyboardEntry *newKeyboardEntry = &sharedMem->keyboard.entries[latestKeyboardEntry];
-    if ((s64)(newKeyboardEntry->timestamp - g_keyboardTimestamp) > 0) {
+    if ((s64)(newKeyboardEntry->timestamp - g_keyboardTimestamp) >= 0) {
         memcpy(&g_keyboardEntry, newKeyboardEntry, sizeof(HidKeyboardEntry));
         g_keyboardTimestamp = newKeyboardEntry->timestamp;
 
@@ -192,7 +192,7 @@ void hidScanInput(void) {
         HidControllerLayout *currentLayout = &sharedMem->controllers[i].layouts[g_controllerLayout[i]];
         u64 latestControllerEntry = currentLayout->header.latestEntry;
         HidControllerInputEntry *newInputEntry = &currentLayout->entries[latestControllerEntry];
-        if ((s64)(newInputEntry->timestamp - g_controllerTimestamps[i]) > 0) {
+        if ((s64)(newInputEntry->timestamp - g_controllerTimestamps[i]) >= 0) {
             memcpy(&g_controllerEntries[i], newInputEntry, sizeof(HidControllerInputEntry));
             g_controllerTimestamps[i] = newInputEntry->timestamp;
 
