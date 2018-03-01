@@ -11,8 +11,6 @@
 #include "../../types.h"
 #include "../../services/fs.h"
 
-/// WARNING: This is not ready to be used.
-
 /// RomFS header.
 typedef struct
 {
