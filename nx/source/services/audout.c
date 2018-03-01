@@ -82,26 +82,32 @@ AudioOutState audoutGetDeviceState(void) {
     return g_deviceState;
 }
 
+Result audoutWaitPlayFinish(AudioOutBuffer *released, u64 timeout) {
+    // Wait on the buffer event handle
+    Result do_wait = svcWaitSynchronizationSingle(g_audoutBufferEventHandle, timeout);
+        
+    if (R_SUCCEEDED(do_wait))
+    {
+        svcResetSignal(g_audoutBufferEventHandle);
+        
+        u32 released_count = 0;
+        Result do_release = audoutGetReleasedAudioOutBuffer(released, &released_count);
+        
+        // Ensure that all buffers are released and return the last one only
+        while (R_SUCCEEDED(do_release) && (released_count > 0))
+            do_release = audoutGetReleasedAudioOutBuffer(released, &released_count);
+    }
+    
+    return do_wait;
+}
+
 Result audoutPlayBuffer(AudioOutBuffer *source, AudioOutBuffer *released) {
     // Try to push the supplied buffer to the audio output device
     Result do_append = audoutAppendAudioOutBuffer(source);
     
     if (R_SUCCEEDED(do_append))
     {
-        // Wait on the buffer event handle
-        Result do_wait = svcWaitSynchronizationSingle(g_audoutBufferEventHandle, U64_MAX);
-        
-        if (R_SUCCEEDED(do_wait))
-        {
-            svcResetSignal(g_audoutBufferEventHandle);
-            
-            u32 released_count = 0;
-            Result do_release = audoutGetReleasedAudioOutBuffer(released, &released_count);
-            
-            // Ensure that all buffers are released and return the last one only
-            while (R_SUCCEEDED(do_release) && (released_count > 0))
-                do_release = audoutGetReleasedAudioOutBuffer(released, &released_count);
-        }
+        audoutWaitPlayFinish(released, U64_MAX);
     }
     
     return do_append;
@@ -319,7 +325,7 @@ Result audoutAppendAudioOutBuffer(AudioOutBuffer *Buffer) {
     
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 3;
-    raw->tag = (u64)&Buffer;
+    raw->tag = (u64)Buffer;
 
     Result rc = serviceIpcDispatch(&g_audoutIAudioOut);
 

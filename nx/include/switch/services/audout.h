@@ -28,11 +28,11 @@ typedef struct AudioOutBuffer AudioOutBuffer;
 
 struct AudioOutBuffer
 {
-    AudioOutBuffer* next;       ///< Next buffer.
+    AudioOutBuffer* next;       ///< Next buffer. (Unused)
     void* buffer;               ///< Sample buffer (aligned to 0x1000 bytes).
     u64 buffer_size;            ///< Sample buffer size.
     u64 data_size;              ///< Size of data inside the buffer.
-    u64 data_offset;            ///< Offset of data inside the buffer.
+    u64 data_offset;            ///< Offset of data inside the buffer. (Unused?)
 };
 
 Result audoutInitialize(void);
@@ -48,11 +48,19 @@ Result audoutGetReleasedAudioOutBuffer(AudioOutBuffer *Buffer, u32 *ReleasedBuff
 Result audoutContainsAudioOutBuffer(AudioOutBuffer *Buffer, bool *ContainsBuffer);
 
 /**
- * @brief Submits an audio sample data buffer for playing.
+ * @brief Submits an audio sample data buffer for playing and waits for it to finish playing.
+ * @brief Uses \ref audoutAppendAudioOutBuffer and \ref audoutWaitPlayFinish internally.
  * @param source AudioOutBuffer containing the source sample data to be played.
  * @param released AudioOutBuffer to receive the last played buffer.
  */
 Result audoutPlayBuffer(AudioOutBuffer *source, AudioOutBuffer *released);
+
+/**
+ * @brief Waits for audio playback to finish.
+ * @param released AudioOutBuffer to receive the last played buffer.
+ * @param timeout Timeout value, use U64_MAX to wait until all finished.
+ */
+Result audoutWaitPlayFinish(AudioOutBuffer *released, u64 timeout);
 
 /// These return the state associated with the currently active audio output device.
 u32 audoutGetSampleRate(void);                      ///< Supported sample rate (48000Hz).
