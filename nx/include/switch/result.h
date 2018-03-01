@@ -21,8 +21,14 @@
 
 /// Module values
 enum {
+    Module_Kernel=1,
     Module_Libnx=345,
     Module_LibnxNvidia=348,
+};
+
+/// Kernel error codes
+enum {
+    KernelError_Timeout=117,
 };
 
 /// libnx error codes
