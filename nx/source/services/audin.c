@@ -32,7 +32,7 @@ Result audinInitialize(void)
     // Setup the default device
     if (R_SUCCEEDED(rc))
     {        
-        // Passing an empty device name will open the default "DeviceOut"
+        // Passing an empty device name will open the default "BuiltInHeadset"
         char DeviceNameIn[DEVICE_NAME_LENGTH] = {0};
         char DeviceNameOut[DEVICE_NAME_LENGTH] = {0};
         
