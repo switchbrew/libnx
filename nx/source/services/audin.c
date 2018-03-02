@@ -2,32 +2,32 @@
 #include "types.h"
 #include "result.h"
 #include "ipc.h"
-#include "services/audout.h"
+#include "services/audin.h"
 #include "services/sm.h"
 
 #define DEVICE_NAME_LENGTH 0x100
 #define DEFAULT_SAMPLE_RATE 0xBB80
 #define DEFAULT_CHANNEL_COUNT 0x00020000
 
-static Service g_audoutSrv;
-static Service g_audoutIAudioOut;
+static Service g_audinSrv;
+static Service g_audinIAudioIn;
 
-static Handle g_audoutBufferEventHandle = INVALID_HANDLE;
+static Handle g_audinBufferEventHandle = INVALID_HANDLE;
 
 static u32 g_sampleRate = 0;
 static u32 g_channelCount = 0;
 static PcmFormat g_pcmFormat = PcmFormat_Invalid;
-static AudioOutState g_deviceState = AudioOutState_Stopped;
+static AudioInState g_deviceState = AudioInState_Stopped;
 
-static Result _audoutRegisterBufferEvent(Handle *BufferEvent);
+static Result _audinRegisterBufferEvent(Handle *BufferEvent);
 
-Result audoutInitialize(void)
+Result audinInitialize(void)
 {
-    if (serviceIsActive(&g_audoutSrv))
+    if (serviceIsActive(&g_audinSrv))
         return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
 
     Result rc = 0;
-    rc = smGetService(&g_audoutSrv, "audout:u");
+    rc = smGetService(&g_audinSrv, "audin:u");
     
     // Setup the default device
     if (R_SUCCEEDED(rc))
@@ -36,82 +36,82 @@ Result audoutInitialize(void)
         char DeviceNameIn[DEVICE_NAME_LENGTH] = {0};
         char DeviceNameOut[DEVICE_NAME_LENGTH] = {0};
         
-        // Open audio output device
-        rc = audoutOpenAudioOut(DeviceNameIn, DeviceNameOut, DEFAULT_SAMPLE_RATE, DEFAULT_CHANNEL_COUNT, &g_sampleRate, &g_channelCount, &g_pcmFormat, &g_deviceState);
+        // Open audio input device
+        rc = audinOpenAudioIn(DeviceNameIn, DeviceNameOut, DEFAULT_SAMPLE_RATE, DEFAULT_CHANNEL_COUNT, &g_sampleRate, &g_channelCount, &g_pcmFormat, &g_deviceState);
     }
     
     // Register global handle for buffer events
     if (R_SUCCEEDED(rc))
-        rc = _audoutRegisterBufferEvent(&g_audoutBufferEventHandle);
+        rc = _audinRegisterBufferEvent(&g_audinBufferEventHandle);
     
     if (R_FAILED(rc))
-        audoutExit();
+        audinExit();
 
     return rc;
 }
 
-void audoutExit(void)
+void audinExit(void)
 {
-    if (g_audoutBufferEventHandle != INVALID_HANDLE) {
-        svcCloseHandle(g_audoutBufferEventHandle);
-        g_audoutBufferEventHandle = INVALID_HANDLE;
+    if (g_audinBufferEventHandle != INVALID_HANDLE) {
+        svcCloseHandle(g_audinBufferEventHandle);
+        g_audinBufferEventHandle = INVALID_HANDLE;
     }
 
     g_sampleRate = 0;
     g_channelCount = 0;
     g_pcmFormat = PcmFormat_Invalid;
-    g_deviceState = AudioOutState_Stopped;
+    g_deviceState = AudioInState_Stopped;
 
-    serviceClose(&g_audoutIAudioOut);
-    serviceClose(&g_audoutSrv);
+    serviceClose(&g_audinIAudioIn);
+    serviceClose(&g_audinSrv);
 }
 
-u32 audoutGetSampleRate(void) {
+u32 audinGetSampleRate(void) {
     return g_sampleRate;
 }
 
-u32 audoutGetChannelCount(void) {
+u32 audinGetChannelCount(void) {
     return g_channelCount;
 }
 
-PcmFormat audoutGetPcmFormat(void) {
+PcmFormat audinGetPcmFormat(void) {
     return g_pcmFormat;
 }
 
-AudioOutState audoutGetDeviceState(void) {
+AudioInState audinGetDeviceState(void) {
     return g_deviceState;
 }
 
-Result audoutWaitPlayFinish(AudioOutBuffer **released, u32* released_count, u64 timeout) {
+Result audinWaitCaptureFinish(AudioInBuffer **released, u32* released_count, u64 timeout) {
     // Wait on the buffer event handle
-    Result rc = svcWaitSynchronizationSingle(g_audoutBufferEventHandle, timeout);
+    Result rc = svcWaitSynchronizationSingle(g_audinBufferEventHandle, timeout);
         
     if (R_SUCCEEDED(rc))
     {
         // Signal the buffer event handle right away
-        svcResetSignal(g_audoutBufferEventHandle);
+        svcResetSignal(g_audinBufferEventHandle);
         
         // Grab the released buffer
-        rc = audoutGetReleasedAudioOutBuffer(released, released_count);
+        rc = audinGetReleasedAudioInBuffer(released, released_count);
     }
     
     return rc;
 }
 
-Result audoutPlayBuffer(AudioOutBuffer *source, AudioOutBuffer **released) {
+Result audinCaptureBuffer(AudioInBuffer *source, AudioInBuffer **released) {
     Result rc = 0;
     u32 released_count = 0;
     
     // Try to push the supplied buffer to the audio output device
-    rc = audoutAppendAudioOutBuffer(source);
+    rc = audinAppendAudioInBuffer(source);
     
     if (R_SUCCEEDED(rc))
-        rc = audoutWaitPlayFinish(released, &released_count, U64_MAX);
+        rc = audinWaitCaptureFinish(released, &released_count, U64_MAX);
     
     return rc;
 }
 
-Result audoutListAudioOuts(char *DeviceNames, u32 *DeviceNamesCount) {
+Result audinListAudioIns(char *DeviceNames, u32 *DeviceNamesCount) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -127,7 +127,7 @@ Result audoutListAudioOuts(char *DeviceNames, u32 *DeviceNamesCount) {
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 0;
 
-    Result rc = serviceIpcDispatch(&g_audoutSrv);
+    Result rc = serviceIpcDispatch(&g_audinSrv);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -148,7 +148,7 @@ Result audoutListAudioOuts(char *DeviceNames, u32 *DeviceNamesCount) {
     return rc;
 }
 
-Result audoutOpenAudioOut(const char *DeviceNameIn, char *DeviceNameOut, u32 SampleRateIn, u32 ChannelCountIn, u32 *SampleRateOut, u32 *ChannelCountOut, PcmFormat *Format, AudioOutState *State) {
+Result audinOpenAudioIn(const char *DeviceNameIn, char *DeviceNameOut, u32 SampleRateIn, u32 ChannelCountIn, u32 *SampleRateOut, u32 *ChannelCountOut, PcmFormat *Format, AudioInState *State) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -173,7 +173,7 @@ Result audoutOpenAudioOut(const char *DeviceNameIn, char *DeviceNameOut, u32 Sam
     raw->channel_count = ChannelCountIn;
     raw->client_pid = 0;
 
-    Result rc = serviceIpcDispatch(&g_audoutSrv);
+    Result rc = serviceIpcDispatch(&g_audinSrv);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -191,7 +191,7 @@ Result audoutOpenAudioOut(const char *DeviceNameIn, char *DeviceNameOut, u32 Sam
         rc = resp->result;
 
         if (R_SUCCEEDED(rc)) {
-            serviceCreate(&g_audoutIAudioOut, r.Handles[0]);
+            serviceCreate(&g_audinIAudioIn, r.Handles[0]);
             
             if (SampleRateOut)
                 *SampleRateOut = resp->sample_rate;
@@ -210,7 +210,7 @@ Result audoutOpenAudioOut(const char *DeviceNameIn, char *DeviceNameOut, u32 Sam
     return rc;
 }
 
-Result audoutGetAudioOutState(AudioOutState *State) {
+Result audinGetAudioInState(AudioInState *State) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -224,7 +224,7 @@ Result audoutGetAudioOutState(AudioOutState *State) {
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 0;
 
-    Result rc = serviceIpcDispatch(&g_audoutIAudioOut);
+    Result rc = serviceIpcDispatch(&g_audinIAudioIn);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -245,7 +245,7 @@ Result audoutGetAudioOutState(AudioOutState *State) {
     return rc;
 }
 
-Result audoutStartAudioOut(void) {
+Result audinStartAudioIn(void) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -259,7 +259,7 @@ Result audoutStartAudioOut(void) {
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 1;
 
-    Result rc = serviceIpcDispatch(&g_audoutIAudioOut);
+    Result rc = serviceIpcDispatch(&g_audinIAudioIn);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -276,7 +276,7 @@ Result audoutStartAudioOut(void) {
     return rc;
 }
 
-Result audoutStopAudioOut(void) {
+Result audinStopAudioIn(void) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -290,7 +290,7 @@ Result audoutStopAudioOut(void) {
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 2;
 
-    Result rc = serviceIpcDispatch(&g_audoutIAudioOut);
+    Result rc = serviceIpcDispatch(&g_audinIAudioIn);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -307,7 +307,7 @@ Result audoutStopAudioOut(void) {
     return rc;
 }
 
-Result audoutAppendAudioOutBuffer(AudioOutBuffer *Buffer) {
+Result audinAppendAudioInBuffer(AudioInBuffer *Buffer) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -325,7 +325,7 @@ Result audoutAppendAudioOutBuffer(AudioOutBuffer *Buffer) {
     raw->cmd_id = 3;
     raw->tag = (u64)Buffer;
 
-    Result rc = serviceIpcDispatch(&g_audoutIAudioOut);
+    Result rc = serviceIpcDispatch(&g_audinIAudioIn);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -342,7 +342,7 @@ Result audoutAppendAudioOutBuffer(AudioOutBuffer *Buffer) {
     return rc;
 }
 
-static Result _audoutRegisterBufferEvent(Handle *BufferEvent) {
+static Result _audinRegisterBufferEvent(Handle *BufferEvent) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -356,7 +356,7 @@ static Result _audoutRegisterBufferEvent(Handle *BufferEvent) {
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 4;
 
-    Result rc = serviceIpcDispatch(&g_audoutIAudioOut);
+    Result rc = serviceIpcDispatch(&g_audinIAudioIn);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -376,7 +376,7 @@ static Result _audoutRegisterBufferEvent(Handle *BufferEvent) {
     return rc;
 }
 
-Result audoutGetReleasedAudioOutBuffer(AudioOutBuffer **Buffer, u32 *ReleasedBuffersCount) {
+Result audinGetReleasedAudioInBuffer(AudioInBuffer **Buffer, u32 *ReleasedBuffersCount) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -392,7 +392,7 @@ Result audoutGetReleasedAudioOutBuffer(AudioOutBuffer **Buffer, u32 *ReleasedBuf
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 5;
 
-    Result rc = serviceIpcDispatch(&g_audoutIAudioOut);
+    Result rc = serviceIpcDispatch(&g_audinIAudioIn);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -413,7 +413,7 @@ Result audoutGetReleasedAudioOutBuffer(AudioOutBuffer **Buffer, u32 *ReleasedBuf
     return rc;
 }
 
-Result audoutContainsAudioOutBuffer(AudioOutBuffer *Buffer, bool *ContainsBuffer) {
+Result audinContainsAudioInBuffer(AudioInBuffer *Buffer, bool *ContainsBuffer) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -429,7 +429,7 @@ Result audoutContainsAudioOutBuffer(AudioOutBuffer *Buffer, bool *ContainsBuffer
     raw->cmd_id = 6;
     raw->tag = (u64)Buffer;
 
-    Result rc = serviceIpcDispatch(&g_audoutIAudioOut);
+    Result rc = serviceIpcDispatch(&g_audinIAudioIn);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
