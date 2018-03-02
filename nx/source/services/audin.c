@@ -102,7 +102,7 @@ Result audinCaptureBuffer(AudioInBuffer *source, AudioInBuffer **released) {
     Result rc = 0;
     u32 released_count = 0;
     
-    // Try to push the supplied buffer to the audio output device
+    // Try to push the supplied buffer to the audio input device
     rc = audinAppendAudioInBuffer(source);
     
     if (R_SUCCEEDED(rc))
