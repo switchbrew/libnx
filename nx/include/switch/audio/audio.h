@@ -10,10 +10,10 @@
 
 typedef enum {
     PcmFormat_Invalid = 0,
-    PcmFormat_INT8 = 1,
-    PcmFormat_INT16 = 2,
-    PcmFormat_INT24 = 3,
-    PcmFormat_INT32 = 4,
-    PcmFormat_FLOAT = 5,
+    PcmFormat_Int8 = 1,
+    PcmFormat_Int16 = 2,
+    PcmFormat_Int24 = 3,
+    PcmFormat_Int32 = 4,
+    PcmFormat_Float = 5,
     PcmFormat_ADPCM = 6,
 } PcmFormat;
