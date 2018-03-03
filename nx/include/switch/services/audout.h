@@ -48,6 +48,7 @@ Result audoutPlayBuffer(AudioOutBuffer *source, AudioOutBuffer **released);
 /**
  * @brief Waits for audio playback to finish.
  * @param released AudioOutBuffer to receive the last played buffer.
+ * @param released_count Pointer to receive the number of played buffers.
  * @param timeout Timeout value, use U64_MAX to wait until all finished.
  */
 Result audoutWaitPlayFinish(AudioOutBuffer **released, u32* released_count, u64 timeout);
