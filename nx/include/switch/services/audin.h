@@ -48,6 +48,7 @@ Result audinCaptureBuffer(AudioInBuffer *source, AudioInBuffer **released);
 /**
  * @brief Waits for audio capture to finish.
  * @param released AudioInBuffer to receive the last captured buffer.
+ * @param released_count Pointer to receive the number of captured buffers.
  * @param timeout Timeout value, use U64_MAX to wait until all finished.
  */
 Result audinWaitCaptureFinish(AudioInBuffer **released, u32* released_count, u64 timeout);
