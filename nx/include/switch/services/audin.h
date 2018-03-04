@@ -56,5 +56,5 @@ Result audinWaitCaptureFinish(AudioInBuffer **released, u32* released_count, u64
 /// These return the state associated with the currently active audio input device.
 u32 audinGetSampleRate(void);                      ///< Supported sample rate (48000Hz).
 u32 audinGetChannelCount(void);                    ///< Supported channel count (2 channels).
-PcmFormat audinGetPcmFormat(void);                 ///< Supported PCM format (INT16).
+PcmFormat audinGetPcmFormat(void);                 ///< Supported PCM format (Int16).
 AudioInState audinGetDeviceState(void);            ///< Initial device state (stopped).
