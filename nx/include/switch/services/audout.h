@@ -41,13 +41,13 @@ Result audoutContainsAudioOutBuffer(AudioOutBuffer *Buffer, bool *ContainsBuffer
  * @brief Submits an audio sample data buffer for playing and waits for it to finish playing.
  * @brief Uses \ref audoutAppendAudioOutBuffer and \ref audoutWaitPlayFinish internally.
  * @param source AudioOutBuffer containing the source sample data to be played.
- * @param released AudioOutBuffer to receive the last played buffer.
+ * @param released AudioOutBuffer to receive the played buffer after being released.
  */
 Result audoutPlayBuffer(AudioOutBuffer *source, AudioOutBuffer **released);
 
 /**
  * @brief Waits for audio playback to finish.
- * @param released AudioOutBuffer to receive the last played buffer.
+ * @param released AudioOutBuffer to receive the first played buffer after being released.
  * @param released_count Pointer to receive the number of played buffers.
  * @param timeout Timeout value, use U64_MAX to wait until all finished.
  */
