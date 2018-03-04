@@ -41,13 +41,13 @@ Result audinContainsAudioInBuffer(AudioInBuffer *Buffer, bool *ContainsBuffer);
  * @brief Submits an audio sample data buffer for capturing and waits for it to finish capturing.
  * @brief Uses \ref audinAppendAudioInBuffer and \ref audinWaitCaptureFinish internally.
  * @param source AudioInBuffer containing the buffer to hold the captured sample data.
- * @param released AudioInBuffer to receive the last captured buffer.
+ * @param released AudioInBuffer to receive the captured buffer after being released.
  */
 Result audinCaptureBuffer(AudioInBuffer *source, AudioInBuffer **released);
 
 /**
  * @brief Waits for audio capture to finish.
- * @param released AudioInBuffer to receive the last captured buffer.
+ * @param released AudioInBuffer to receive the first captured buffer after being released.
  * @param released_count Pointer to receive the number of captured buffers.
  * @param timeout Timeout value, use U64_MAX to wait until all finished.
  */
