@@ -56,5 +56,5 @@ Result audoutWaitPlayFinish(AudioOutBuffer **released, u32* released_count, u64 
 /// These return the state associated with the currently active audio output device.
 u32 audoutGetSampleRate(void);                      ///< Supported sample rate (48000Hz).
 u32 audoutGetChannelCount(void);                    ///< Supported channel count (2 channels).
-PcmFormat audoutGetPcmFormat(void);                 ///< Supported PCM format (INT16).
+PcmFormat audoutGetPcmFormat(void);                 ///< Supported PCM format (Int16).
 AudioOutState audoutGetDeviceState(void);           ///< Initial device state (stopped).
