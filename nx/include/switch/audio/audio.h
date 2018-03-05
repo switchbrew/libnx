@@ -15,5 +15,5 @@ typedef enum {
     PcmFormat_Int24 = 3,
     PcmFormat_Int32 = 4,
     PcmFormat_Float = 5,
-    PcmFormat_ADPCM = 6,
+    PcmFormat_Adpcm = 6,
 } PcmFormat;
