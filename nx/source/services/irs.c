@@ -416,7 +416,6 @@ Result irsGetImageTransferProcessorState(u32 IrCameraHandle, void* buffer, size_
 void irsGetDefaultImageTransferProcessorConfig(irsImageTransferProcessorConfig *config) {
     memset(config, 0, sizeof(irsImageTransferProcessorConfig));
 
-    //Set default exposure 300ms, IR LEDs all ON, 8x digital gain, normal image and resolution 240 x 320.
     config->exposure = 300000;
     config->ir_leds = 0;
     config->digital_gain = 8;
