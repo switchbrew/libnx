@@ -335,11 +335,11 @@ Result irsRunImageTransferProcessor(u32 IrCameraHandle, irsImageTransferProcesso
     memset(&packed_config, 0, sizeof(packed_config));
 
     packed_config.exposure = config->exposure;
-    packed_config.irLeds = config->irLeds;
-    packed_config.digitalGain = config->digitalGain;
+    packed_config.ir_leds = config->ir_leds;
+    packed_config.digital_gain = config->digital_gain;
     packed_config.negative = config->negative;
     packed_config.unk_constant = 0xa0003;
-    packed_config.sensorResolution = config->sensorResolution;
+    packed_config.sensor_res = config->sensor_res;
 
     rc = appletGetAppletResourceUserId(&AppletResourceUserId);
     if (R_FAILED(rc))
@@ -418,10 +418,10 @@ void irsGetDefaultImageTransferProcessorConfig(irsImageTransferProcessorConfig *
 
     //Set default exposure 300ms, IR LEDs all ON, 8x digital gain, normal image and resolution 240 x 320.
     config->exposure = 300000;
-    config->irLeds = 0;
-    config->digitalGain = 8;
+    config->ir_leds = 0;
+    config->digital_gain = 8;
     config->negative = 0;
-    config->sensorResolution = 0;
+    config->sensor_res = 0;
 }
 
 Result irsGetIrCameraHandle(u32 *IrCameraHandle, HidControllerID id) {

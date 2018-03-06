@@ -26,32 +26,22 @@ typedef struct {
 } PACKED irsPackedMomentProcessorConfig;
 
 typedef struct {
-    //exposure controls the sensor's exposure time in microseconds.
-    u64 exposure;
-    //irLedsMode controls which group of IR leds is enabled. Can be all, group 1, group 2 or none.
-    u32 irLeds;
-    //digitalGain controls the signal's digital gain.
-    u32 digitalGain;
-    //negative inverts the captured image.
-    u8  negative;
+    u64 exposure;     ///< IR Sensor exposure time in microseconds.
+    u32 ir_leds;      ///< Controls IR leds. Can be all, group 1, group 2 or none.
+    u32 digital_gain; ///< IR sensor signal's digital gain.
+    u8  negative;     ///< Inverts the captured image.
     u8  pad[7];
-    //sensorResolution controls the sensor's resolution.
-    u32 sensorResolution;
+    u32 sensor_res;   ///< IR Sensor resolution.
 } irsImageTransferProcessorConfig;
 
 typedef struct {
-    //exposure controls the sensor's exposure time in microseconds.
-    u64 exposure;
-    //irLedsMode controls which group of IR leds is enabled. Can be all, group 1, group 2 or none.
-    u8  irLeds;
-    //digitalGain controls the signal's digital gain.
-    u8  digitalGain;
-     //negative inverts the captured image.
-    u8  negative;
+    u64 exposure;     ///< IR Sensor exposure time in microseconds.
+    u8  ir_leds;      ///< Controls IR leds. Can be all, group 1, group 2 or none.
+    u8  digital_gain; ///< IR sensor signal's digital gain.
+    u8  negative;     ///< Inverts the captured image.
     u8  pad[5];
     u32 unk_constant;//offset 0x10
-    //sensorResolution controls the sensor's resolution.
-    u8  sensorResolution;
+    u8  sensor_res;   ///< IR Sensor resolution.
     u8  pad2[3];
 } irsPackedImageTransferProcessorConfig;
 
