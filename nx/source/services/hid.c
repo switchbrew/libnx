@@ -540,3 +540,133 @@ Result hidSetNpadJoyAssignmentModeDual(HidControllerID id) {
     return rc;
 }
 
+static Result _hidCreateActiveVibrationDeviceList(Service* srv_out) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 203;
+
+    Result rc = serviceIpcDispatch(&g_hidSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            serviceCreate(srv_out, r.Handles[0]);
+        }
+    }
+
+    return rc;
+}
+
+static Result _hidActivateVibrationDevice(Service* srv, u32 VibrationDeviceHandle) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 VibrationDeviceHandle;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 0;
+    raw->VibrationDeviceHandle = VibrationDeviceHandle;
+
+    Result rc = serviceIpcDispatch(srv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result hidSendVibrationValue(u32 *VibrationDeviceHandle, HidVibrationValue *VibrationValue) {
+    Result rc;
+    u64 AppletResourceUserId;
+
+    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
+    if (R_FAILED(rc))
+        return rc;
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 VibrationDeviceHandle;
+        HidVibrationValue VibrationValue;
+        u64 AppletResourceUserId;
+    } *raw;
+
+    ipcSendPid(&c);
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 201;
+    raw->VibrationDeviceHandle = *VibrationDeviceHandle;
+    raw->AppletResourceUserId = AppletResourceUserId;
+    memcpy(&raw->VibrationValue, VibrationValue, sizeof(HidVibrationValue));
+
+    rc = serviceIpcDispatch(&g_hidSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result hidInitializeVibrationDevice(u32 *VibrationDeviceHandle, HidControllerID id, HidControllerLayoutType type) {
+    Result rc=0;
+    Service srv;
+
+    //TODO: Is type correct?
+    *VibrationDeviceHandle = (type & 0xff) | (id & 0xff)<<8;
+
+    rc = _hidCreateActiveVibrationDeviceList(&srv);
+    if (R_FAILED(rc))
+        return rc;
+
+    rc = _hidActivateVibrationDevice(&srv, *VibrationDeviceHandle);
+    serviceClose(&srv);
+    return rc;
+}
+

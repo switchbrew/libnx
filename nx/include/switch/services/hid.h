@@ -539,6 +539,12 @@ typedef struct HidSharedMemory
 } HidSharedMemory;
 static_assert(sizeof(HidSharedMemory) == 0x40000, "Hid Shared Memory structure has incorrect size");
 
+typedef struct HidVibrationValue
+{
+    float values[4];
+} HidVibrationValue;
+static_assert(sizeof(HidVibrationValue) == 0x10, "Hid VibrationValue structure has incorrect size");
+
 Result hidInitialize(void);
 void hidExit(void);
 void hidReset(void);
@@ -580,3 +586,7 @@ Result hidSetNpadJoyAssignmentModeSingleByDefault(HidControllerID id);
 /// When used, both joy-cons in a pair should be used with this (CONTROLLER_PLAYER_1 and CONTROLLER_PLAYER_2 for example).
 /// id must be CONTROLLER_PLAYER_*.
 Result hidSetNpadJoyAssignmentModeDual(HidControllerID id);
+
+Result hidInitializeVibrationDevice(u32 *VibrationDeviceHandle, HidControllerID id, HidControllerLayoutType type);
+
+Result hidSendVibrationValue(u32 *VibrationDeviceHandle, HidVibrationValue *VibrationValue);
