@@ -571,3 +571,12 @@ u32 hidTouchCount(void);
 void hidTouchRead(touchPosition *pos, u32 point_id);
 
 void hidJoystickRead(JoystickPosition *pos, HidControllerID id, HidControllerJoystick stick);
+
+/// Use this if you want to use a single joy-con as a dedicated CONTROLLER_PLAYER_*.
+/// When used, both joy-cons in a pair should be used with this (CONTROLLER_PLAYER_1 and CONTROLLER_PLAYER_2 for example).
+/// id must be CONTROLLER_PLAYER_*.
+Result hidSetNpadJoyAssignmentModeSingleByDefault(HidControllerID id);
+/// Used automatically during app startup/exit for all controllers.
+/// When used, both joy-cons in a pair should be used with this (CONTROLLER_PLAYER_1 and CONTROLLER_PLAYER_2 for example).
+/// id must be CONTROLLER_PLAYER_*.
+Result hidSetNpadJoyAssignmentModeDual(HidControllerID id);
