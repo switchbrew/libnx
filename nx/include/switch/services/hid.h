@@ -541,7 +541,10 @@ static_assert(sizeof(HidSharedMemory) == 0x40000, "Hid Shared Memory structure h
 
 typedef struct HidVibrationValue
 {
-    float values[4];
+    float amp_low;   ///< Low Band amplitude. 1.0f: Max amplitude.
+    float freq_low;  ///< Low Band frequency in Hz.
+    float amp_high;  ///< High Band amplitude. 1.0f: Max amplitude.
+    float freq_high; ///< High Band frequency in Hz.
 } HidVibrationValue;
 static_assert(sizeof(HidVibrationValue) == 0x10, "Hid VibrationValue structure has incorrect size");
 
