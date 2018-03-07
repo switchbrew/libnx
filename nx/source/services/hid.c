@@ -654,6 +654,74 @@ Result hidSendVibrationValue(u32 *VibrationDeviceHandle, HidVibrationValue *Vibr
     return rc;
 }
 
+Result hidPermitVibration(bool flag) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u8 flag;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 204;
+    raw->flag = !!flag;
+
+    Result rc = serviceIpcDispatch(&g_hidSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result hidIsVibrationPermitted(bool *flag) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 205;
+
+    Result rc = serviceIpcDispatch(&g_hidSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u8 flag;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && flag)
+            *flag = resp->flag & 1;
+    }
+
+    return rc;
+}
+
 Result hidInitializeVibrationDevice(u32 *VibrationDeviceHandle, HidControllerID id, HidControllerLayoutType type) {
     Result rc=0;
     Service srv;

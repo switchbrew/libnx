@@ -590,3 +590,9 @@ Result hidSetNpadJoyAssignmentModeDual(HidControllerID id);
 Result hidInitializeVibrationDevice(u32 *VibrationDeviceHandle, HidControllerID id, HidControllerLayoutType type);
 
 Result hidSendVibrationValue(u32 *VibrationDeviceHandle, HidVibrationValue *VibrationValue);
+
+/// Sets whether vibration is allowed, this also affects the config displayed by System Settings.
+Result hidPermitVibration(bool flag);
+
+/// Gets whether vibration is allowed.
+Result hidIsVibrationPermitted(bool *flag);
