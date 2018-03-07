@@ -337,7 +337,7 @@ Result irsRunImageTransferProcessor(u32 IrCameraHandle, irsImageTransferProcesso
     packed_config.exposure = config->exposure;
     packed_config.ir_leds = config->ir_leds;
     packed_config.digital_gain = config->digital_gain;
-    packed_config.negative = config->negative;
+    packed_config.color_invert = config->color_invert;
     packed_config.unk_constant = 0xa0003;
     packed_config.sensor_res = config->sensor_res;
 
@@ -419,7 +419,7 @@ void irsGetDefaultImageTransferProcessorConfig(irsImageTransferProcessorConfig *
     config->exposure = 300000;
     config->ir_leds = 0;
     config->digital_gain = 8;
-    config->negative = 0;
+    config->color_invert = 0;
     config->sensor_res = 0;
 }
 
