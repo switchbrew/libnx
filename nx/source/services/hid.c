@@ -722,19 +722,49 @@ Result hidIsVibrationPermitted(bool *flag) {
     return rc;
 }
 
-Result hidInitializeVibrationDevice(u32 *VibrationDeviceHandle, HidControllerID id, HidControllerLayoutType type) {
+Result hidInitializeVibrationDevices(u32 *VibrationDeviceHandles, size_t total_handles, HidControllerID id, HidControllerLayoutType type) {
     Result rc=0;
     Service srv;
+    u32 tmp_type = type & 0xff;
+    size_t i;
+
+    if (total_handles == 0 || total_handles > 2)
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+
+    if (tmp_type < 5) {
+        if (tmp_type == 4) tmp_type |= 0x010000;
+        tmp_type+= 3;
+    }
+    else {
+        if (tmp_type == 5) tmp_type = 0x20;
+        if (tmp_type == 6) tmp_type = 0x21;
+    }
 
     //TODO: Is type correct?
-    *VibrationDeviceHandle = (type & 0xff) | (id & 0xff)<<8;
+    VibrationDeviceHandles[0] = tmp_type | (id & 0xff)<<8;
 
-    rc = _hidCreateActiveVibrationDeviceList(&srv);
-    if (R_FAILED(rc))
-        return rc;
+    if (total_handles > 1) {
+        tmp_type &= 0xff;
+        if (tmp_type!=6 && tmp_type!=7) {
+            VibrationDeviceHandles[1] = VibrationDeviceHandles[0] | 0x010000;
+        }
+        else {
+            return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+        }
+    }
 
-    rc = _hidActivateVibrationDevice(&srv, *VibrationDeviceHandle);
-    serviceClose(&srv);
+    for (i=0; i<total_handles; i++) {
+        rc = _hidCreateActiveVibrationDeviceList(&srv);
+        if (R_FAILED(rc))
+            break;
+
+        rc = _hidActivateVibrationDevice(&srv, VibrationDeviceHandles[i]);
+        serviceClose(&srv);
+
+        if (R_FAILED(rc))
+            break;
+    }
+
     return rc;
 }
 

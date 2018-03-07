@@ -587,7 +587,7 @@ Result hidSetNpadJoyAssignmentModeSingleByDefault(HidControllerID id);
 /// id must be CONTROLLER_PLAYER_*.
 Result hidSetNpadJoyAssignmentModeDual(HidControllerID id);
 
-Result hidInitializeVibrationDevice(u32 *VibrationDeviceHandle, HidControllerID id, HidControllerLayoutType type);
+Result hidInitializeVibrationDevices(u32 *VibrationDeviceHandles, size_t total_handles, HidControllerID id, HidControllerLayoutType type);
 
 Result hidSendVibrationValue(u32 *VibrationDeviceHandle, HidVibrationValue *VibrationValue);
 
