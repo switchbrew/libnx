@@ -334,12 +334,12 @@ Result irsRunImageTransferProcessor(u32 IrCameraHandle, irsImageTransferProcesso
 
     memset(&packed_config, 0, sizeof(packed_config));
 
-    packed_config.unk_x0 = config->unk_x0;
-    packed_config.unk_x8 = config->unk_x8;
-    packed_config.unk_x9 = config->unk_xc;
-    packed_config.unk_xa = config->unk_x10;
+    packed_config.exposure = config->exposure;
+    packed_config.ir_leds = config->ir_leds;
+    packed_config.digital_gain = config->digital_gain;
+    packed_config.color_invert = config->color_invert;
     packed_config.unk_constant = 0xa0003;
-    packed_config.unk_x14 = config->unk_x18;
+    packed_config.sensor_res = config->sensor_res;
 
     rc = appletGetAppletResourceUserId(&AppletResourceUserId);
     if (R_FAILED(rc))
@@ -416,8 +416,11 @@ Result irsGetImageTransferProcessorState(u32 IrCameraHandle, void* buffer, size_
 void irsGetDefaultImageTransferProcessorConfig(irsImageTransferProcessorConfig *config) {
     memset(config, 0, sizeof(irsImageTransferProcessorConfig));
 
-    config->unk_x0 = 0x493E0;
-    config->unk_xc = 0x8;
+    config->exposure = 300000;
+    config->ir_leds = 0;
+    config->digital_gain = 8;
+    config->color_invert = 0;
+    config->sensor_res = 0;
 }
 
 Result irsGetIrCameraHandle(u32 *IrCameraHandle, HidControllerID id) {
