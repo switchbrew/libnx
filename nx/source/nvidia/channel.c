@@ -31,3 +31,7 @@ void nvchannelClose(NvChannel* c)
 Result nvchannelSetPriority(NvChannel* c, NvChannelPriority prio) {
     return nvioctlChannel_SetPriority(c->fd, prio);
 }
+
+Result nvchannelSetNvmapFd(NvChannel* c) {
+    return nvioctlChannel_SetNvmapFd(c->fd, nvbufGetNvmapFd());
+}

@@ -22,6 +22,9 @@ Result nvgpuCreate(NvGpu* g)
         rc = nvasBindToChannel(&g->addr_space, &g->gpu_channel);
 
     if (R_SUCCEEDED(rc))
+        rc = nvchannelSetNvmapFd(&g->gpu_channel);
+
+    if (R_SUCCEEDED(rc))
         rc = nvfifoCreate(&g->gpfifo, &g->gpu_channel);
 
     if (R_SUCCEEDED(rc))

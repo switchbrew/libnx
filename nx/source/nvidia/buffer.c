@@ -35,6 +35,10 @@ void nvbufExit(void)
     }
 }
 
+u32 nvbufGetNvmapFd(void) {
+    return g_nvmap_fd;
+}
+
 static Result _nvbufCreate(NvBuffer* m, size_t size, u32 flags, u32 align, NvBufferKind kind)
 {
     Result rc;
