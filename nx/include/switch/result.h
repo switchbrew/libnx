@@ -75,6 +75,7 @@ enum {
     LibnxError_DomainMessageUnknownType,
     LibnxError_DomainMessageTooManyObjectIds,
     LibnxError_AppletFailedToInitialize,
+    LibnxError_ApmFailedToInitialize,
 };
 
 /// libnx nvidia error codes

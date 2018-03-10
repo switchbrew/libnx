@@ -24,6 +24,9 @@ Result viInitialize(ViServiceType servicetype)
     if (serviceIsActive(&g_viSrv))
         return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
 
+    if (R_FAILED(appletInitialize()))
+        return MAKERESULT(Module_Libnx, LibnxError_AppletFailedToInitialize);
+
     Result rc = 0;
 
     if (servicetype == ViServiceType_Default || servicetype == ViServiceType_Manager) {
@@ -36,8 +39,7 @@ Result viInitialize(ViServiceType servicetype)
         g_viServiceType = 1;
     }
 
-    if ((servicetype == ViServiceType_Default && R_FAILED(rc)) || servicetype == ViServiceType_Application)
-    {
+    if ((servicetype == ViServiceType_Default && R_FAILED(rc)) || servicetype == ViServiceType_Application) {
         rc = smGetService(&g_viSrv, "vi:u");
         g_viServiceType = 0;
     }
@@ -85,6 +87,7 @@ void viExit(void)
     serviceClose(&g_viIHOSBinderDriverIndirect);
 
     serviceClose(&g_viSrv);
+    appletExit();
 }
 
 Service* viGetSessionService(void) {

@@ -32,6 +32,9 @@ Result irsInitialize(void)
     if (serviceIsActive(&g_irsSrv))
         return 0;
 
+    if (R_FAILED(appletInitialize()))
+        return MAKERESULT(Module_Libnx, LibnxError_AppletFailedToInitialize);
+
     Result rc;
     Handle sharedmem_handle;
     u64 AppletResourceUserId=0;
@@ -80,6 +83,7 @@ void irsExit(void)
 
         serviceClose(&g_irsSrv);
         shmemClose(&g_irsSharedmem);
+        appletExit();
     }
 }
 
