@@ -131,7 +131,7 @@ Result nvgfxInitialize(void) {
 
     if (R_SUCCEEDED(rc)) rc = nvioctlChannel_AllocGpfifoEx2(g_nvgfx_fd_nvhostgpu, 0x800, 0x1, 0, 0, 0, 0, &g_nvgfx_nvhost_fence);
 
-    if (R_SUCCEEDED(rc)) rc = nvioctlChannel_AllocObjCtx(g_nvgfx_fd_nvhostgpu, g_nvgfx_gpu_characteristics.threed_class, 0);
+    if (R_SUCCEEDED(rc)) rc = nvioctlChannel_AllocObjCtx(g_nvgfx_fd_nvhostgpu, g_nvgfx_gpu_characteristics.threed_class, 0, NULL);
     if (R_SUCCEEDED(rc)) rc = nvioctlChannel_SetPriority(g_nvgfx_fd_nvhostgpu, NvChannelPriority_Medium);
 
     if (R_SUCCEEDED(rc)) rc = nvmapobjSetup(&nvmap_objs[4], 0, 0x1, 0x20000, 0);

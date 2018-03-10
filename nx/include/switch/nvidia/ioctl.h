@@ -144,7 +144,7 @@ Result nvioctlNvmap_GetId(u32 fd, u32 nvmap_handle, u32 *id);
 
 Result nvioctlChannel_SetNvmapFd(u32 fd, u32 nvmap_fd);
 Result nvioctlChannel_SubmitGpfifo(u32 fd, nvioctl_gpfifo_entry *entries, u32 num_entries, u32 flags, nvioctl_fence *fence_out);
-Result nvioctlChannel_AllocObjCtx(u32 fd, u32 class_num, u32 flags);
+Result nvioctlChannel_AllocObjCtx(u32 fd, u32 class_num, u32 flags, u64* id_out);
 Result nvioctlChannel_ZCullBind(u32 fd, u64 gpu_va, u32 mode);
 Result nvioctlChannel_SetErrorNotifier(u32 fd, u64 offset, u64 size, u32 nvmap_handle);
 Result nvioctlChannel_SetPriority(u32 fd, u32 priority);
