@@ -7,7 +7,7 @@
 #pragma once
 #include "../types.h"
 
-Result nvInitialize(size_t sharedmem_size);
+Result nvInitialize(void);
 void nvExit(void);
 
 Result nvOpen(u32 *fd, const char *devicepath);
