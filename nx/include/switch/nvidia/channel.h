@@ -9,3 +9,4 @@ Result nvchannelCreate(NvChannel* c, const char* dev);
 void   nvchannelClose(NvChannel* c);
 
 Result nvchannelSetPriority(NvChannel* c, NvChannelPriority prio);
+Result nvchannelSetNvmapFd(NvChannel* c);

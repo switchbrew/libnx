@@ -250,6 +250,7 @@ typedef struct {
 } NvBuffer;
 
 Result nvbufInit(void);
+u32    nvbufGetNvmapFd(void);
 void   nvbufExit(void);
 
 Result nvbufCreate(NvBuffer* m, size_t size, u32 align, NvBufferKind kind);
