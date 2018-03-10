@@ -74,6 +74,8 @@ enum {
     LibnxError_TooManyDevOpTabs,
     LibnxError_AppletFailedToInitialize,
     LibnxError_ApmFailedToInitialize,
+    LibnxError_NvinfoFailedToInitialize,
+    LibnxError_NvbufFailedToInitialize,
 };
 
 /// libnx nvidia error codes
