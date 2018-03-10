@@ -2,19 +2,12 @@
 
 #include "../types.h"
 
-typedef struct {
-    u32   fd;
-    u32   size;
-    void* ptr;
-    bool  has_init;
-} NvBuffer;
-
 typedef enum {
     NvBufferFlags_Writable=1
 } NvBufferFlags;
 
 typedef enum {
-    NvBufferKind_PitCh=0x0,
+    NvBufferKind_Pitch=0x0,
     NvBufferKind_Z16=0x1,
     NvBufferKind_Z16_2C=0x2,
     NvBufferKind_Z16_MS2_2C=0x3,
@@ -249,8 +242,16 @@ typedef enum {
     NvBufferKind_Invalid=0xff,
 } NvBufferKind;
 
+typedef struct {
+    u32   fd;
+    u32   size;
+    void* ptr;
+    NvBufferKind kind;
+    bool  has_init;
+} NvBuffer;
+
 Result nvbufInit(void);
-void nvbufExit(void);
+void   nvbufExit(void);
 
 Result nvbufCreate(NvBuffer* m, size_t size, u32 align, NvBufferKind kind);
 Result nvbufCreateRw(NvBuffer* m, size_t size, u32 align, NvBufferKind kind);

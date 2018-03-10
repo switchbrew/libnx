@@ -3,9 +3,7 @@
 Result nv3dCreate(Nv3dContext* t, NvGpu* parent)
 {
     t->parent = parent;
-
-    // TODO: Get class number from nvinfo*().
-    return nvioctlChannel_AllocObjCtx(parent->gpu_channel.fd, 0xB197, 0, &t->obj_id);
+    return nvioctlChannel_AllocObjCtx(parent->gpu_channel.fd, NvClassNumber_3D, 0, &t->obj_id);
 }
 
 void nv3dClose(Nv3dContext* t) {

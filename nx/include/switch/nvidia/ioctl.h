@@ -104,22 +104,30 @@ typedef struct {
     u32 entry1;
 } nvioctl_gpfifo_entry;
 
-//Used with nvioctlChannel_AllocObjCtx().
-enum nvioctl_channel_obj_classnum {
-    NvChannelObjClassNum_2D = 0x902D,
-    NvChannelObjClassNum_3D = 0xB197,
-    NvChannelObjClassNum_Compute = 0xB1C0,
-    NvChannelObjClassNum_Kepler = 0xA140,
-    NvChannelObjClassNum_DMA = 0xB0B5,
-    NvChannelObjClassNum_ChannelGpfifo = 0xB06F
-};
+// Used with nvioctlChannel_AllocObjCtx().
+typedef enum nvioctl_channel_obj_classnum {
+    NvClassNumber_2D = 0x902D,
+    NvClassNumber_3D = 0xB197,
+    NvClassNumber_Compute = 0xB1C0,
+    NvClassNumber_Kepler = 0xA140,
+    NvClassNumber_DMA = 0xB0B5,
+    NvClassNumber_ChannelGpfifo = 0xB06F
+} NvClassNumber;
 
-//Used with nvioctlChannel_SetPriority().
-enum nvioctl_channel_priority {
-    NvChannelPriority_Low = 0x32,
-    NvChannelPriority_Medium = 0x64,
-    NvChannelPriority_High = 0x96
-};
+// Used with nvioctlChannel_SetPriority().
+typedef enum nvioctl_channel_priority {
+    NvChannelPriority_Low    = 50,
+    NvChannelPriority_Medium = 100,
+    NvChannelPriority_High   = 150
+} NvChannelPriority;
+
+// Used with nvioctlChannel_ZCullBind().
+typedef enum {
+    NvZcullConfig_Global = 0,
+    NvZcullConfig_NoCtxSwitch = 1,
+    NvZcullConfig_SeparateBuffer = 2,
+    NvZcullConfig_PartOfRegularBuffer = 3
+} NvZcullConfig;
 
 Result nvioctlNvhostCtrl_EventSignal(u32 fd, u32 event_id);
 Result nvioctlNvhostCtrl_EventWait(u32 fd, u32 syncpt_id, u32 threshold, s32 timeout, u32 event_id, u32 *out);

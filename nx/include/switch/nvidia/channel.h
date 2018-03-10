@@ -1,4 +1,5 @@
 #pragma once
+#include "ioctl.h"
 
 typedef struct NvChannel {
     u32  fd;
@@ -6,4 +7,6 @@ typedef struct NvChannel {
 } NvChannel;
 
 Result nvchannelCreate(NvChannel* c, const char* dev);
-void nvchannelClose(NvChannel* c);
+void   nvchannelClose(NvChannel* c);
+
+Result nvchannelSetPriority(NvChannel* c, NvChannelPriority prio);

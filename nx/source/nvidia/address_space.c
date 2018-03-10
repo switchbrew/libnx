@@ -43,8 +43,8 @@ Result nvasReserveFull(NvAddressSpace* a) {
     return nvasReserveAlign(a, NvPageSize_64K, 0x10000, NvPageSize_64K, NULL);
 }
 
-Result nvasMapBuffer(NvAddressSpace* a, NvBuffer* buffer, NvBufferKind kind, iova_t* iova_out) {
-    return nvioctlNvhostAsGpu_MapBufferEx(a->fd, 0, kind, buffer->fd, 0, 0, buffer->size, 0, iova_out);
+Result nvasMapBuffer(NvAddressSpace* a, NvBuffer* buffer, iova_t* iova_out) {
+    return nvioctlNvhostAsGpu_MapBufferEx(a->fd, 0, buffer->kind, buffer->fd, 0, 0, buffer->size, 0, iova_out);
 }
 
 Result nvasBindToChannel(NvAddressSpace* a, NvChannel* channel)

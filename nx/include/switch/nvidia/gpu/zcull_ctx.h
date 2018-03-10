@@ -3,7 +3,8 @@
 typedef struct NvGpu NvGpu;
 
 typedef struct {
-    NvGpu* parent;
+    NvGpu*   parent;
+    NvBuffer ctx_buf;
 } NvZcullContext;
 
 Result nvzcullCreate(NvZcullContext* z, NvGpu* parent);

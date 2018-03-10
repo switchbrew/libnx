@@ -27,3 +27,7 @@ void nvchannelClose(NvChannel* c)
 
     c->fd = -1;
 }
+
+Result nvchannelSetPriority(NvChannel* c, NvChannelPriority prio) {
+    return nvioctlChannel_SetPriority(c->fd, prio);
+}
