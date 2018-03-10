@@ -46,17 +46,18 @@ Result nvioctlChannel_SubmitGpfifo(u32 fd, nvioctl_gpfifo_entry *entries, u32 nu
     return rc;
 }
 
-Result nvioctlChannel_AllocObjCtx(u32 fd, u32 class_num, u32 flags) {
+Result nvioctlChannel_AllocObjCtx(u32 fd, u32 class_num, u32 flags, u64* id_out) {
     struct {
         __nv_in u32 class_num;
         __nv_in u32 flags;
-        __nv_in u64 obj_id;  // (ignored) used for FREE_OBJ_CTX ioctl, which is not supported
+        __nv_out u64 obj_id;  // (ignored) used for FREE_OBJ_CTX ioctl, which is not supported
     } data;
 
     memset(&data, 0, sizeof(data));
     data.class_num = class_num;
     data.flags = flags;
-    data.obj_id = 0xDEADBEEF;
+    if (id_out != NULL)
+        *id_out = data.obj_id;
 
     return nvIoctl(fd, _NV_IOWR(0x48, 0x09, data), &data);
 }
