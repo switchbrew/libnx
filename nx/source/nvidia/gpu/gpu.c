@@ -4,6 +4,12 @@ Result nvgpuCreate(NvGpu* g)
 {
     Result rc;
 
+    if (R_FAILED(nvinfoInit()))
+        return MAKERESULT(Module_Libnx, LibnxError_NvinfoFailedToInitialize);
+
+    if (R_FAILED(nvbufInit()))
+        return MAKERESULT(Module_Libnx, LibnxError_NvbufFailedToInitialize);
+
     rc = nvchannelCreate(&g->gpu_channel, "/dev/nvhost-gpu");
 
     if (R_SUCCEEDED(rc))
@@ -29,6 +35,9 @@ Result nvgpuCreate(NvGpu* g)
 
 void nvgpuClose(NvGpu* g)
 {
+    nvbufExit();
+    nvinfoExit();
+
     nvfifoClose(&g->gpfifo);
     nvasClose(&g->addr_space);
     nvchannelClose(&g->gpu_channel);
