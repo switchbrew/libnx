@@ -18,7 +18,7 @@ static Result _nvSetClientPID(u64 AppletResourceUserId);
 
 Result nvInitialize(nvServiceType servicetype, size_t transfermem_size)
 {
-    if(g_nvServiceType!=-1)
+    if (g_nvServiceType != -1)
         return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
 
     Result rc = 0;
@@ -70,7 +70,7 @@ Result nvInitialize(nvServiceType servicetype, size_t transfermem_size)
 
 void nvExit(void)
 {
-    if(g_nvServiceType == -1)
+    if (g_nvServiceType == -1)
         return;
 
     g_nvServiceType = -1;

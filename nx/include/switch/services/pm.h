@@ -8,6 +8,8 @@
 #include "../types.h"
 
 Result pmdmntInitialize(void);
+void pmdmntExit(void);
+
 Result pmdmntStartProcess(u64 pid);
 Result pmdmntGetTitlePid(u64* pid_out, u64 title_id);
 Result pmdmntEnableDebugForTitleId(Handle* handle_out, u64 title_id);

@@ -1,12 +1,13 @@
 #include <string.h>
 #include "types.h"
 #include "result.h"
+#include "arm/atomics.h"
 #include "kernel/ipc.h"
+#include "kernel/detect.h"
 #include "services/fatal.h"
 #include "services/applet.h"
 #include "services/apm.h"
 #include "services/sm.h"
-#include "kernel/detect.h"
 
 __attribute__((weak)) u32 __nx_applet_type = AppletType_Default;
 __attribute__((weak)) bool __nx_applet_auto_notifyrunning = true;
@@ -15,6 +16,7 @@ __attribute__((weak)) u32 __nx_applet_PerformanceConfiguration[2] = {/*0x9222000
 
 static Service g_appletSrv;
 static Service g_appletProxySession;
+static u64 g_refCnt;
 
 // From Get*Functions.
 static Service g_appletIFunctions;
@@ -69,8 +71,10 @@ static Result _appletSetPerformanceModeChangedNotification(u8 flag);
 
 Result appletInitialize(void)
 {
+    atomicIncrement64(&g_refCnt);
+
     if (serviceIsActive(&g_appletSrv))
-        return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
+        return 0;
 
     if (__nx_applet_type == AppletType_None)
         return 0;
@@ -234,36 +238,39 @@ Result appletInitialize(void)
 
 void appletExit(void)
 {
-    apmExit();
+    if (atomicDecrement64(&g_refCnt) == 0)
+    {
+        apmExit();
 
-    //TODO: Enable this somehow later with more condition(s)?
-    /*if (__nx_applet_type == AppletType_LibraryApplet)
-        _appletExitProcessAndReturn();*/
+        //TODO: Enable this somehow later with more condition(s)?
+        /*if (__nx_applet_type == AppletType_LibraryApplet)
+            _appletExitProcessAndReturn();*/
 
-    if (g_appletMessageEventHandle != INVALID_HANDLE) {
-        svcCloseHandle(g_appletMessageEventHandle);
-        g_appletMessageEventHandle = INVALID_HANDLE;
+        if (g_appletMessageEventHandle != INVALID_HANDLE) {
+            svcCloseHandle(g_appletMessageEventHandle);
+            g_appletMessageEventHandle = INVALID_HANDLE;
+        }
+
+        serviceClose(&g_appletIDebugFunctions);
+        serviceClose(&g_appletIDisplayController);
+        serviceClose(&g_appletIAudioController);
+        serviceClose(&g_appletIWindowController);
+        serviceClose(&g_appletISelfController);
+        serviceClose(&g_appletICommonStateGetter);
+        serviceClose(&g_appletILibraryAppletCreator);
+
+        if (__nx_applet_type != AppletType_LibraryApplet)
+            serviceClose(&g_appletIFunctions);
+
+        if (__nx_applet_type == AppletType_LibraryApplet) {
+            serviceClose(&g_appletIProcessWindingController);
+            serviceClose(&g_appletILibraryAppletSelfAccessor);
+        }
+
+        serviceClose(&g_appletProxySession);
+        serviceClose(&g_appletSrv);
+        g_appletResourceUserId = 0;
     }
-
-    serviceClose(&g_appletIDebugFunctions);
-    serviceClose(&g_appletIDisplayController);
-    serviceClose(&g_appletIAudioController);
-    serviceClose(&g_appletIWindowController);
-    serviceClose(&g_appletISelfController);
-    serviceClose(&g_appletICommonStateGetter);
-    serviceClose(&g_appletILibraryAppletCreator);
-
-    if (__nx_applet_type != AppletType_LibraryApplet)
-        serviceClose(&g_appletIFunctions);
-
-    if (__nx_applet_type == AppletType_LibraryApplet) {
-        serviceClose(&g_appletIProcessWindingController);
-        serviceClose(&g_appletILibraryAppletSelfAccessor);
-    }
-
-    serviceClose(&g_appletProxySession);
-    serviceClose(&g_appletSrv);
-    g_appletResourceUserId = 0;
 }
 
 static void appletCallHook(AppletHookType hookType)

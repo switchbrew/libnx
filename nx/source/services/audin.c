@@ -1,6 +1,7 @@
 #include <string.h>
 #include "types.h"
 #include "result.h"
+#include "arm/atomics.h"
 #include "kernel/ipc.h"
 #include "services/audin.h"
 #include "services/sm.h"
@@ -11,6 +12,7 @@
 
 static Service g_audinSrv;
 static Service g_audinIAudioIn;
+static u64 g_refCnt;
 
 static Handle g_audinBufferEventHandle = INVALID_HANDLE;
 
@@ -23,8 +25,10 @@ static Result _audinRegisterBufferEvent(Handle *BufferEvent);
 
 Result audinInitialize(void)
 {
+    atomicIncrement64(&g_refCnt);
+
     if (serviceIsActive(&g_audinSrv))
-        return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
+        return 0;
 
     Result rc = 0;
     rc = smGetService(&g_audinSrv, "audin:u");
@@ -52,18 +56,21 @@ Result audinInitialize(void)
 
 void audinExit(void)
 {
-    if (g_audinBufferEventHandle != INVALID_HANDLE) {
-        svcCloseHandle(g_audinBufferEventHandle);
-        g_audinBufferEventHandle = INVALID_HANDLE;
+    if (atomicDecrement64(&g_refCnt) == 0)
+    {
+        if (g_audinBufferEventHandle != INVALID_HANDLE) {
+            svcCloseHandle(g_audinBufferEventHandle);
+            g_audinBufferEventHandle = INVALID_HANDLE;
+        }
+
+        g_sampleRate = 0;
+        g_channelCount = 0;
+        g_pcmFormat = PcmFormat_Invalid;
+        g_deviceState = AudioInState_Stopped;
+
+        serviceClose(&g_audinIAudioIn);
+        serviceClose(&g_audinSrv);
     }
-
-    g_sampleRate = 0;
-    g_channelCount = 0;
-    g_pcmFormat = PcmFormat_Invalid;
-    g_deviceState = AudioInState_Stopped;
-
-    serviceClose(&g_audinIAudioIn);
-    serviceClose(&g_audinSrv);
 }
 
 u32 audinGetSampleRate(void) {

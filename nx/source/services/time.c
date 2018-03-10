@@ -1,6 +1,7 @@
 #include <string.h>
 #include "types.h"
 #include "result.h"
+#include "arm/atomics.h"
 #include "kernel/ipc.h"
 #include "services/time.h"
 #include "services/sm.h"
@@ -10,13 +11,16 @@ static Service g_timeUserSystemClock;
 static Service g_timeNetworkSystemClock;
 static Service g_timeTimeZoneService;
 static Service g_timeLocalSystemClock;
+static u64 g_refCnt;
 
 static Result _timeGetSession(Service* srv_out, u64 cmd_id);
 
 Result timeInitialize(void)
 {
+    atomicIncrement64(&g_refCnt);
+
     if (serviceIsActive(&g_timeSrv))
-        return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
+        return 0;
 
     Result rc;
 
@@ -46,14 +50,14 @@ Result timeInitialize(void)
 
 void timeExit(void)
 {
-    if (!serviceIsActive(&g_timeSrv))
-        return;
-
-    serviceClose(&g_timeLocalSystemClock);
-    serviceClose(&g_timeTimeZoneService);
-    serviceClose(&g_timeNetworkSystemClock);
-    serviceClose(&g_timeUserSystemClock);
-    serviceClose(&g_timeSrv);
+    if (atomicDecrement64(&g_refCnt) == 0)
+    {
+        serviceClose(&g_timeLocalSystemClock);
+        serviceClose(&g_timeTimeZoneService);
+        serviceClose(&g_timeNetworkSystemClock);
+        serviceClose(&g_timeUserSystemClock);
+        serviceClose(&g_timeSrv);
+    }
 }
 
 Service* timeGetSessionService(void) {

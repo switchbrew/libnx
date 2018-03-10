@@ -1,6 +1,7 @@
 #include <string.h>
 #include "types.h"
 #include "result.h"
+#include "arm/atomics.h"
 #include "kernel/ipc.h"
 #include "kernel/shmem.h"
 #include "kernel/tmem.h"
@@ -16,6 +17,7 @@ typedef struct {
 } irsCameraEntry;
 
 static Service g_irsSrv;
+static u64 g_refCnt;
 static SharedMemory g_irsSharedmem;
 static bool g_irsSensorActivated;
 
@@ -25,8 +27,10 @@ static Result _irsGetIrsensorSharedMemoryHandle(Handle* handle_out, u64 AppletRe
 
 Result irsInitialize(void)
 {
+    atomicIncrement64(&g_refCnt);
+
     if (serviceIsActive(&g_irsSrv))
-        return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
+        return 0;
 
     Result rc;
     Handle sharedmem_handle;
@@ -60,20 +64,23 @@ Result irsInitialize(void)
 
 void irsExit(void)
 {
-    int i;
-    size_t entrycount = sizeof(g_irsCameras)/sizeof(irsCameraEntry);
-    irsCameraEntry *entry;
+    if (atomicDecrement64(&g_refCnt) == 0)
+    {
+        size_t entrycount = sizeof(g_irsCameras)/sizeof(irsCameraEntry);
+        irsCameraEntry *entry;
 
-    for(i=0; i<entrycount; i++) {
-        entry = &g_irsCameras[i];
-        if (!entry->initialized) continue;
-        irsStopImageProcessor(entry->IrCameraHandle);
+        int i;
+        for(i=0; i<entrycount; i++) {
+            entry = &g_irsCameras[i];
+            if (!entry->initialized) continue;
+            irsStopImageProcessor(entry->IrCameraHandle);
+        }
+
+        irsActivateIrsensor(0);
+
+        serviceClose(&g_irsSrv);
+        shmemClose(&g_irsSharedmem);
     }
-
-    irsActivateIrsensor(0);
-
-    serviceClose(&g_irsSrv);
-    shmemClose(&g_irsSharedmem);
 }
 
 static Result _irsCameraEntryAlloc(u32 IrCameraHandle, irsCameraEntry **out_entry) {

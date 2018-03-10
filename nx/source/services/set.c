@@ -7,6 +7,7 @@
  */
 #include "types.h"
 #include "result.h"
+#include "arm/atomics.h"
 #include "kernel/ipc.h"
 #include "kernel/detect.h"
 #include "services/set.h"
@@ -15,6 +16,8 @@
 
 static Service g_setSrv;
 static Service g_setsysSrv;
+static u64 g_refCnt;
+static u64 g_refCntSys;
 
 static bool g_setLanguageCodesInitialized;
 static u64 g_setLanguageCodes[0x40];
@@ -24,8 +27,10 @@ static Result _setMakeLanguageCode(s32 Language, u64 *LanguageCode);
 
 Result setInitialize(void)
 {
+    atomicIncrement64(&g_refCnt);
+
     if (serviceIsActive(&g_setSrv))
-        return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
+        return 0;
 
     g_setLanguageCodesInitialized = 0;
 
@@ -34,11 +39,15 @@ Result setInitialize(void)
 
 void setExit(void)
 {
-    serviceClose(&g_setSrv);
+    if (atomicDecrement64(&g_refCnt) == 0) {
+        serviceClose(&g_setSrv);
+    }
 }
 
 Result setsysInitialize(void)
 {
+    atomicIncrement64(&g_refCntSys);
+
     if (serviceIsActive(&g_setsysSrv))
         return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
 
@@ -47,7 +56,9 @@ Result setsysInitialize(void)
 
 void setsysExit(void)
 {
-    serviceClose(&g_setsysSrv);
+    if (atomicDecrement64(&g_refCntSys) == 0) {
+        serviceClose(&g_setsysSrv);
+    }
 }
 
 static Result setInitializeLanguageCodesCache(void) {

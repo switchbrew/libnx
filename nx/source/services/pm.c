@@ -1,14 +1,29 @@
 // Copyright 2017 plutoo
 #include "types.h"
 #include "result.h"
+#include "arm/atomics.h"
 #include "kernel/ipc.h"
 #include "services/pm.h"
 #include "services/sm.h"
 
 static Service g_pmdmntSrv;
+static u64 g_refCnt;
 
-Result pmdmntInitialize(void) {
+Result pmdmntInitialize(void)
+{
+    atomicIncrement64(&g_refCnt);
+
+    if (serviceIsActive(&g_pmdmntSrv))
+        return 0;
+
     return smGetService(&g_pmdmntSrv, "pm:dmnt");
+}
+
+void pmdmntExit(void)
+{
+    if (atomicDecrement64(&g_refCnt) == 0) {
+        serviceClose(&g_pmdmntSrv);
+    }
 }
 
 Result pmdmntStartProcess(u64 pid) {

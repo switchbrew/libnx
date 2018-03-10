@@ -1,6 +1,7 @@
 #include <string.h>
 #include "types.h"
 #include "result.h"
+#include "arm/atomics.h"
 #include "kernel/ipc.h"
 #include "services/audout.h"
 #include "services/sm.h"
@@ -11,6 +12,7 @@
 
 static Service g_audoutSrv;
 static Service g_audoutIAudioOut;
+static u64 g_refCnt;
 
 static Handle g_audoutBufferEventHandle = INVALID_HANDLE;
 
@@ -23,8 +25,10 @@ static Result _audoutRegisterBufferEvent(Handle *BufferEvent);
 
 Result audoutInitialize(void)
 {
+    atomicIncrement64(&g_refCnt);
+
     if (serviceIsActive(&g_audoutSrv))
-        return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
+        return 0;
 
     Result rc = 0;
     rc = smGetService(&g_audoutSrv, "audout:u");
@@ -52,18 +56,21 @@ Result audoutInitialize(void)
 
 void audoutExit(void)
 {
-    if (g_audoutBufferEventHandle != INVALID_HANDLE) {
-        svcCloseHandle(g_audoutBufferEventHandle);
-        g_audoutBufferEventHandle = INVALID_HANDLE;
+    if (atomicDecrement64(&g_refCnt) == 0)
+    {
+        if (g_audoutBufferEventHandle != INVALID_HANDLE) {
+            svcCloseHandle(g_audoutBufferEventHandle);
+            g_audoutBufferEventHandle = INVALID_HANDLE;
+        }
+
+        g_sampleRate = 0;
+        g_channelCount = 0;
+        g_pcmFormat = PcmFormat_Invalid;
+        g_deviceState = AudioOutState_Stopped;
+
+        serviceClose(&g_audoutIAudioOut);
+        serviceClose(&g_audoutSrv);
     }
-
-    g_sampleRate = 0;
-    g_channelCount = 0;
-    g_pcmFormat = PcmFormat_Invalid;
-    g_deviceState = AudioOutState_Stopped;
-
-    serviceClose(&g_audoutIAudioOut);
-    serviceClose(&g_audoutSrv);
 }
 
 u32 audoutGetSampleRate(void) {

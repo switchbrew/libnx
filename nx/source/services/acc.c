@@ -1,19 +1,25 @@
 #include "types.h"
+#include "arm/atomics.h"
 #include "services/acc.h"
 #include "services/sm.h"
 
 static Service g_accSrv;
+static u64 g_refCnt;
 
 Result accountInitialize(void)
 {
+    atomicIncrement64(&g_refCnt);
+
     if (serviceIsActive(&g_accSrv))
-        return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
+        return 0;
 
     return smGetService(&g_accSrv, "acc:u1");
 }
 
-void accountExit(void) {
-    serviceClose(&g_accSrv);
+void accountExit(void)
+{
+    if (atomicDecrement64(&g_refCnt) == 0)
+        serviceClose(&g_accSrv);
 }
 
 Service* accountGetService(void) {

@@ -1,15 +1,17 @@
 #include <string.h>
 #include "types.h"
 #include "result.h"
+#include "arm/atomics.h"
 #include "kernel/ipc.h"
+#include "kernel/shmem.h"
+#include "kernel/rwlock.h"
 #include "services/applet.h"
 #include "services/hid.h"
 #include "services/sm.h"
-#include "kernel/shmem.h"
-#include "kernel/rwlock.h"
 
 static Service g_hidSrv;
 static Service g_hidIAppletResource;
+static u64 g_refCnt;
 static SharedMemory g_hidSharedmem;
 
 static HidTouchScreenEntry g_touchEntry;
@@ -36,8 +38,10 @@ static Result _hidSetDualModeAll(void);
 
 Result hidInitialize(void)
 {
+    atomicIncrement64(&g_refCnt);
+
     if (serviceIsActive(&g_hidSrv))
-        return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
+        return 0;
 
     Result rc;
     Handle sharedmem_handle;
@@ -75,14 +79,14 @@ Result hidInitialize(void)
 
 void hidExit(void)
 {
-    if (!serviceIsActive(&g_hidSrv))
-        return;
+    if (atomicDecrement64(&g_refCnt) == 0)
+    {
+        _hidSetDualModeAll();
 
-    _hidSetDualModeAll();
-
-    serviceClose(&g_hidIAppletResource);
-    serviceClose(&g_hidSrv);
-    shmemClose(&g_hidSharedmem);
+        serviceClose(&g_hidIAppletResource);
+        serviceClose(&g_hidSrv);
+        shmemClose(&g_hidSharedmem);
+    }
 }
 
 void hidReset(void)
@@ -367,7 +371,7 @@ void hidJoystickRead(JoystickPosition *pos, HidControllerID id, HidControllerJoy
 }
 
 static Result _hidSetDualModeAll(void) {
-    Result rc=0;
+    Result rc;
     int i;
 
     for (i=0; i<8; i++) {
