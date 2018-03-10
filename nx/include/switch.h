@@ -16,6 +16,7 @@ extern "C" {
 
 #include "switch/arm/tls.h"
 #include "switch/arm/cache.h"
+#include "switch/arm/atomics.h"
 
 #include "switch/kernel/svc.h"
 #include "switch/kernel/tmem.h"

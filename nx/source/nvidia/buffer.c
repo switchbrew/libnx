@@ -1,18 +1,38 @@
 #include <malloc.h>
 #include "types.h"
 #include "result.h"
+#include "arm/atomics.h"
 #include "services/nv.h"
 #include "nvidia/ioctl.h"
 #include "nvidia/buffer.h"
 
-static u32 g_nvmap_fd;
+static u32 g_nvmap_fd = -1;
+static u64 g_refCnt;
 
-Result nvbufInit() {
-    return nvOpen(&g_nvmap_fd, "/dev/nvmap");
+Result nvbufInit(void)
+{
+    Result rc;
+
+    if (atomicIncrement64(&g_refCnt) > 0)
+        return 0;
+
+     rc = nvOpen(&g_nvmap_fd, "/dev/nvmap");
+
+     if (R_FAILED(rc))
+         atomicDecrement64(&g_refCnt);
+
+     return rc;
 }
 
-Result nvbufExit() {
-    return nvClose(g_nvmap_fd);
+void nvbufExit(void)
+{
+    if (atomicDecrement64(&g_refCnt) == 0)
+    {
+        if (g_nvmap_fd != -1)
+            nvClose(g_nvmap_fd);
+
+        g_nvmap_fd = -1;
+    }
 }
 
 static Result _nvbufCreate(NvBuffer* m, size_t size, u32 flags, u32 align, NvBufferKind kind)
