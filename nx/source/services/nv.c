@@ -1,22 +1,29 @@
 #include <string.h>
 #include "types.h"
 #include "result.h"
+#include "arm/atomics.h"
 #include "kernel/ipc.h"
+#include "kernel/tmem.h"
 #include "services/applet.h"
 #include "nvidia/ioctl.h"
 #include "services/nv.h"
 #include "services/sm.h"
-#include "kernel/tmem.h"
+
+__attribute__((weak)) u32 __nx_nv_transfermem_size = 0x300000;
 
 static Service g_nvSrv;
+static u64 g_refCnt;
+
 static size_t g_nvIpcBufferSize = 0;
 static TransferMemory g_nvTransfermem;
 
 static Result _nvInitialize(Handle proc, Handle sharedmem, u32 transfermem_size);
 static Result _nvSetClientPID(u64 AppletResourceUserId);
 
-Result nvInitialize(size_t transfermem_size)
+Result nvInitialize(void)
 {
+    atomicIncrement64(&g_refCnt);
+
     if (serviceIsActive(&g_nvSrv))
         return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
 
@@ -46,10 +53,10 @@ Result nvInitialize(size_t transfermem_size)
         rc = ipcQueryPointerBufferSize(g_nvSrv.handle, &g_nvIpcBufferSize);
 
         if (R_SUCCEEDED(rc))
-            rc = tmemCreate(&g_nvTransfermem, transfermem_size, Perm_None);
+            rc = tmemCreate(&g_nvTransfermem, __nx_nv_transfermem_size, Perm_None);
 
         if (R_SUCCEEDED(rc))
-            rc = _nvInitialize(CUR_PROCESS_HANDLE, g_nvTransfermem.handle, transfermem_size);
+            rc = _nvInitialize(CUR_PROCESS_HANDLE, g_nvTransfermem.handle, __nx_nv_transfermem_size);
 
         // Officially ipc control DuplicateSessionEx would be used here.
 
@@ -62,7 +69,6 @@ Result nvInitialize(size_t transfermem_size)
     }
 
     if (R_FAILED(rc)) {
-        appletExit();
         nvExit();
     }
 
@@ -71,9 +77,11 @@ Result nvInitialize(size_t transfermem_size)
 
 void nvExit(void)
 {
-    appletExit();
-    serviceClose(&g_nvSrv);
-    tmemClose(&g_nvTransfermem);
+    if (atomicDecrement64(&g_refCnt) == 0) {
+        appletExit();
+        serviceClose(&g_nvSrv);
+        tmemClose(&g_nvTransfermem);
+    }
 }
 
 static Result _nvInitialize(Handle proc, Handle sharedmem, u32 transfermem_size) {
