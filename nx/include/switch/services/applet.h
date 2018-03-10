@@ -47,6 +47,7 @@ struct AppletHookCookie
 Result appletInitialize(void);
 void appletExit(void);
 Result appletGetAppletResourceUserId(u64 *out);
+AppletType appletGetAppletType(void);
 
 void appletNotifyRunning(u8 *out);
 Result appletCreateManagedDisplayLayer(u64 *out);

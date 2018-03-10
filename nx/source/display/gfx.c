@@ -165,7 +165,7 @@ static Result _gfxQueueBuffer(s32 buf) {
     return rc;
 }
 
-static Result _gfxInit(ViServiceType servicetype, const char *DisplayName, u32 LayerFlags, u64 LayerId, nvServiceType nv_servicetype, size_t nv_transfermem_size) {
+static Result _gfxInit(ViServiceType servicetype, const char *DisplayName, u32 LayerFlags, u64 LayerId, size_t nv_transfermem_size) {
     Result rc=0;
     u32 i=0;
 
@@ -239,7 +239,7 @@ static Result _gfxInit(ViServiceType servicetype, const char *DisplayName, u32 L
         rc = binderInitSession(&g_gfxBinderSession, 0x0f);
     }
 
-    if (R_SUCCEEDED(rc)) rc = nvInitialize(nv_servicetype, nv_transfermem_size);
+    if (R_SUCCEEDED(rc)) rc = nvInitialize(nv_transfermem_size);
 
     if (R_SUCCEEDED(rc)) rc = bqInitialize(&g_gfxBinderSession);
 
@@ -324,25 +324,8 @@ static Result _gfxInit(ViServiceType servicetype, const char *DisplayName, u32 L
     return rc;
 }
 
-Result gfxInitDefault(void)
-{
-    nvServiceType nv_servicetype;
-
-    switch(__nx_applet_type) {
-    case AppletType_Application:
-    case AppletType_SystemApplication:
-        nv_servicetype = NVSERVTYPE_Application;
-        break;
-
-    case AppletType_SystemApplet:
-    case AppletType_LibraryApplet:
-    case AppletType_OverlayApplet:
-    default:
-        nv_servicetype = NVSERVTYPE_Applet;
-        break;
-    }
-
-    return _gfxInit(ViServiceType_Default, "Default", ViLayerFlags_Default, 0, nv_servicetype, 0x300000);
+Result gfxInitDefault(void) {
+    return _gfxInit(ViServiceType_Default, "Default", ViLayerFlags_Default, 0, 0x300000);
 }
 
 void gfxExit(void)
