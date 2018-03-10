@@ -346,17 +346,19 @@ static inline Result ipcParse(IpcParsedCommand* r) {
         size_t num_handles_move = ((ctrl2 >> 5) & 15);
 
         size_t num_handles = num_handles_copy + num_handles_move;
+        u32* buf_after_handles = buf + num_handles;
 
         if (num_handles > IPC_MAX_OBJECTS)
             num_handles = IPC_MAX_OBJECTS;
 
         for (i=0; i<num_handles; i++)
         {
-            r->Handles[i] = *(buf-num_handles+i);
+            r->Handles[i] = *(buf+i);
             r->WasHandleCopied[i] = (i < num_handles_copy);
         }
 
         r->NumHandles = num_handles;
+        buf = buf_after_handles;
     }
 
     size_t num_statics = (ctrl0 >> 16) & 15;
