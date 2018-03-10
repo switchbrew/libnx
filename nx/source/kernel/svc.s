@@ -75,6 +75,11 @@ SVC_BEGIN svcSleepThread
 	ret
 SVC_END
 
+SVC_BEGIN svcSignalEvent
+	svc 0x11
+	ret
+SVC_END
+
 SVC_BEGIN svcClearEvent
 	svc 0x12
 	ret
@@ -213,6 +218,16 @@ SVC_BEGIN svcReplyAndReceive
 	ldr x2, [sp], #16
 	str w1, [x2]
 	ret
+SVC_END
+
+SVC_BEGIN svcCreateEvent
+    stp x0, x1, [sp, #-16]!
+    svc 0x45
+    ldr x3, [sp], #8
+    str w1, [x3]
+    ldr x3, [sp], #8
+    str w2, [x3]
+    ret
 SVC_END
 
 SVC_BEGIN svcCreateJitMemory

@@ -217,6 +217,13 @@ Result svcSleepThread(u64 nano);
 ///@{
 
 /**
+ * @brief Signals an event.
+ * @return Result code.
+ * @note Syscall number 0x11.
+ */
+Result svcSignalEvent(Handle handle);
+
+/**
  * @brief Clears an event's signalled status.
  * @return Result code.
  * @note Syscall number 0x12.
