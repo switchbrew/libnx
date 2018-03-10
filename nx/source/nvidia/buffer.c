@@ -54,7 +54,7 @@ static Result _nvbufCreate(NvBuffer* m, size_t size, u32 flags, u32 align, NvBuf
         m->fd = -1;
 
     if (R_SUCCEEDED(rc))
-        rc = nvioctlNvmap_Alloc(g_nvmap_fd, m->fd, 0, flags, align, kind, m->ptr);
+        rc = nvioctlNvmap_Alloc(g_nvmap_fd, m->fd, 0, flags | NvBufferFlags_Nintendo, align, kind, m->ptr);
 
     if (R_FAILED(rc))
         nvbufFree(m);
