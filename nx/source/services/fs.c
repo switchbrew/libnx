@@ -2,13 +2,18 @@
 #include <string.h>
 #include "types.h"
 #include "result.h"
-#include "ipc.h"
+#include "arm/atomics.h"
+#include "kernel/ipc.h"
 #include "services/fs.h"
 #include "services/sm.h"
 
 static Service g_fsSrv;
+static u64 g_refCnt;
 
-Result fsInitialize(void) {
+Result fsInitialize(void)
+{
+    atomicIncrement64(&g_refCnt);
+
     if (serviceIsActive(&g_fsSrv))
         return 0;
 
@@ -49,8 +54,10 @@ Result fsInitialize(void) {
     return rc;
 }
 
-void fsExit(void) {
-    serviceClose(&g_fsSrv);
+void fsExit(void)
+{
+    if (atomicDecrement64(&g_refCnt) == 0)
+        serviceClose(&g_fsSrv);
 }
 
 Service* fsGetServiceSession(void) {

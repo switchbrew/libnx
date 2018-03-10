@@ -1,15 +1,17 @@
 #include <string.h>
 #include "types.h"
 #include "result.h"
-#include "ipc.h"
+#include "arm/atomics.h"
+#include "kernel/ipc.h"
+#include "kernel/shmem.h"
+#include "kernel/rwlock.h"
 #include "services/applet.h"
 #include "services/hid.h"
 #include "services/sm.h"
-#include "kernel/shmem.h"
-#include "kernel/rwlock.h"
 
 static Service g_hidSrv;
 static Service g_hidIAppletResource;
+static u64 g_refCnt;
 static SharedMemory g_hidSharedmem;
 
 static HidTouchScreenEntry g_touchEntry;
@@ -32,10 +34,14 @@ static RwLock g_hidLock;
 static Result _hidCreateAppletResource(Service* srv, Service* srv_out, u64 AppletResourceUserId);
 static Result _hidGetSharedMemoryHandle(Service* srv, Handle* handle_out);
 
+static Result _hidSetDualModeAll(void);
+
 Result hidInitialize(void)
 {
+    atomicIncrement64(&g_refCnt);
+
     if (serviceIsActive(&g_hidSrv))
-        return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
+        return 0;
 
     Result rc;
     Handle sharedmem_handle;
@@ -61,6 +67,9 @@ Result hidInitialize(void)
         rc = shmemMap(&g_hidSharedmem);
     }
 
+    if (R_SUCCEEDED(rc))
+        rc = _hidSetDualModeAll();
+
     if (R_FAILED(rc))
         hidExit();
 
@@ -70,9 +79,14 @@ Result hidInitialize(void)
 
 void hidExit(void)
 {
-    serviceClose(&g_hidIAppletResource);
-    serviceClose(&g_hidSrv);
-    shmemClose(&g_hidSharedmem);
+    if (atomicDecrement64(&g_refCnt) == 0)
+    {
+        _hidSetDualModeAll();
+
+        serviceClose(&g_hidIAppletResource);
+        serviceClose(&g_hidSrv);
+        shmemClose(&g_hidSharedmem);
+    }
 }
 
 void hidReset(void)
@@ -151,7 +165,7 @@ void hidScanInput(void) {
 
     u64 latestTouchEntry = sharedMem->touchscreen.header.latestEntry;
     HidTouchScreenEntry *newTouchEntry = &sharedMem->touchscreen.entries[latestTouchEntry];
-    if ((s64)(newTouchEntry->header.timestamp - g_touchTimestamp) > 0) {
+    if ((s64)(newTouchEntry->header.timestamp - g_touchTimestamp) >= 0) {
         memcpy(&g_touchEntry, newTouchEntry, sizeof(HidTouchScreenEntry));
         g_touchTimestamp = newTouchEntry->header.timestamp;
 
@@ -161,7 +175,7 @@ void hidScanInput(void) {
 
     u64 latestMouseEntry = sharedMem->mouse.header.latestEntry;
     HidMouseEntry *newMouseEntry = &sharedMem->mouse.entries[latestMouseEntry];
-    if ((s64)(newMouseEntry->timestamp - g_mouseTimestamp) > 0) {
+    if ((s64)(newMouseEntry->timestamp - g_mouseTimestamp) >= 0) {
         memcpy(&g_mouseEntry, newMouseEntry, sizeof(HidMouseEntry));
         g_mouseTimestamp = newMouseEntry->timestamp;
 
@@ -172,7 +186,7 @@ void hidScanInput(void) {
 
     u64 latestKeyboardEntry = sharedMem->keyboard.header.latestEntry;
     HidKeyboardEntry *newKeyboardEntry = &sharedMem->keyboard.entries[latestKeyboardEntry];
-    if ((s64)(newKeyboardEntry->timestamp - g_keyboardTimestamp) > 0) {
+    if ((s64)(newKeyboardEntry->timestamp - g_keyboardTimestamp) >= 0) {
         memcpy(&g_keyboardEntry, newKeyboardEntry, sizeof(HidKeyboardEntry));
         g_keyboardTimestamp = newKeyboardEntry->timestamp;
 
@@ -192,7 +206,7 @@ void hidScanInput(void) {
         HidControllerLayout *currentLayout = &sharedMem->controllers[i].layouts[g_controllerLayout[i]];
         u64 latestControllerEntry = currentLayout->header.latestEntry;
         HidControllerInputEntry *newInputEntry = &currentLayout->entries[latestControllerEntry];
-        if ((s64)(newInputEntry->timestamp - g_controllerTimestamps[i]) > 0) {
+        if ((s64)(newInputEntry->timestamp - g_controllerTimestamps[i]) >= 0) {
             memcpy(&g_controllerEntries[i], newInputEntry, sizeof(HidControllerInputEntry));
             g_controllerTimestamps[i] = newInputEntry->timestamp;
 
@@ -356,6 +370,18 @@ void hidJoystickRead(JoystickPosition *pos, HidControllerID id, HidControllerJoy
     }
 }
 
+static Result _hidSetDualModeAll(void) {
+    Result rc;
+    int i;
+
+    for (i=0; i<8; i++) {
+        rc = hidSetNpadJoyAssignmentModeDual(i);
+        if (R_FAILED(rc)) break;
+    }
+
+    return rc;
+}
+
 static Result _hidCreateAppletResource(Service* srv, Service* srv_out, u64 AppletResourceUserId) {
     IpcCommand c;
     ipcInitialize(&c);
@@ -425,6 +451,322 @@ static Result _hidGetSharedMemoryHandle(Service* srv, Handle* handle_out) {
         if (R_SUCCEEDED(rc)) {
             *handle_out = r.Handles[0];
         }
+    }
+
+    return rc;
+}
+
+Result hidSetNpadJoyAssignmentModeSingleByDefault(HidControllerID id) {
+    Result rc;
+    u64 AppletResourceUserId;
+
+    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
+    if (R_FAILED(rc))
+        return rc;
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 id;
+        u64 AppletResourceUserId;
+    } *raw;
+
+    ipcSendPid(&c);
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 122;
+    raw->id = id;
+    raw->AppletResourceUserId = AppletResourceUserId;
+
+    rc = serviceIpcDispatch(&g_hidSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result hidSetNpadJoyAssignmentModeDual(HidControllerID id) {
+    Result rc;
+    u64 AppletResourceUserId;
+
+    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
+    if (R_FAILED(rc))
+        return rc;
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 id;
+        u64 AppletResourceUserId;
+    } *raw;
+
+    ipcSendPid(&c);
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 124;
+    raw->id = id;
+    raw->AppletResourceUserId = AppletResourceUserId;
+
+    rc = serviceIpcDispatch(&g_hidSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+static Result _hidCreateActiveVibrationDeviceList(Service* srv_out) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 203;
+
+    Result rc = serviceIpcDispatch(&g_hidSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            serviceCreate(srv_out, r.Handles[0]);
+        }
+    }
+
+    return rc;
+}
+
+static Result _hidActivateVibrationDevice(Service* srv, u32 VibrationDeviceHandle) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 VibrationDeviceHandle;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 0;
+    raw->VibrationDeviceHandle = VibrationDeviceHandle;
+
+    Result rc = serviceIpcDispatch(srv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result hidSendVibrationValue(u32 *VibrationDeviceHandle, HidVibrationValue *VibrationValue) {
+    Result rc;
+    u64 AppletResourceUserId;
+
+    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
+    if (R_FAILED(rc))
+        return rc;
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 VibrationDeviceHandle;
+        HidVibrationValue VibrationValue;
+        u64 AppletResourceUserId;
+    } *raw;
+
+    ipcSendPid(&c);
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 201;
+    raw->VibrationDeviceHandle = *VibrationDeviceHandle;
+    raw->AppletResourceUserId = AppletResourceUserId;
+    memcpy(&raw->VibrationValue, VibrationValue, sizeof(HidVibrationValue));
+
+    rc = serviceIpcDispatch(&g_hidSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result hidPermitVibration(bool flag) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u8 flag;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 204;
+    raw->flag = !!flag;
+
+    Result rc = serviceIpcDispatch(&g_hidSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result hidIsVibrationPermitted(bool *flag) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 205;
+
+    Result rc = serviceIpcDispatch(&g_hidSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u8 flag;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && flag)
+            *flag = resp->flag & 1;
+    }
+
+    return rc;
+}
+
+Result hidInitializeVibrationDevices(u32 *VibrationDeviceHandles, size_t total_handles, HidControllerID id, HidControllerLayoutType type) {
+    Result rc=0;
+    Service srv;
+    u32 tmp_type = type & 0xff;
+    size_t i;
+
+    if (total_handles == 0 || total_handles > 2)
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+
+    if (tmp_type < 5) {
+        if (tmp_type == 4) tmp_type |= 0x010000;
+        tmp_type+= 3;
+    }
+    else {
+        if (tmp_type == 5) tmp_type = 0x20;
+        if (tmp_type == 6) tmp_type = 0x21;
+    }
+
+    //TODO: Is type correct?
+    VibrationDeviceHandles[0] = tmp_type | (id & 0xff)<<8;
+
+    if (total_handles > 1) {
+        tmp_type &= 0xff;
+        if (tmp_type!=6 && tmp_type!=7) {
+            VibrationDeviceHandles[1] = VibrationDeviceHandles[0] | 0x010000;
+        }
+        else {
+            return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+        }
+    }
+
+    for (i=0; i<total_handles; i++) {
+        rc = _hidCreateActiveVibrationDeviceList(&srv);
+        if (R_FAILED(rc))
+            break;
+
+        rc = _hidActivateVibrationDevice(&srv, VibrationDeviceHandles[i]);
+        serviceClose(&srv);
+
+        if (R_FAILED(rc))
+            break;
     }
 
     return rc;

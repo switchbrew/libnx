@@ -6,7 +6,7 @@
  */
 #pragma once
 #include <sys/lock.h>
-#include "../types.h" // not needed in this file, still including it
+#include "../types.h"
 
 /// Mutex datatype, defined in newlib.
 typedef _LOCK_T Mutex;
@@ -28,6 +28,13 @@ static inline void mutexInit(Mutex* m)
  * @param m Mutex object.
  */
 void mutexLock(Mutex* m);
+
+/**
+ * @brief Attempts to lock a mutex without waiting.
+ * @param m Mutex object.
+ * @return 1 if the mutex has been acquired successfully, and 0 on contention.
+ */
+bool mutexTryLock(Mutex* m);
 
 /**
  * @brief Unlocks a mutex.
@@ -52,6 +59,13 @@ static inline void rmutexInit(RMutex* m)
  * @param m Recursive mutex object.
  */
 void rmutexLock(RMutex* m);
+
+/**
+ * @brief Attempts to lock a recursive mutex without waiting.
+ * @param m Recursive mutex object.
+ * @return 1 if the mutex has been acquired successfully, and 0 on contention.
+ */
+bool rmutexTryLock(RMutex* m);
 
 /**
  * @brief Unlocks a recursive mutex.

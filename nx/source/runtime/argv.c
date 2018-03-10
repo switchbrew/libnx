@@ -103,13 +103,14 @@ void argvSetup(void)
         else {
             end_flag = 0;
 
-            if (quote_flag && args[argi] == '"') {
-                end_flag = 1;
+            if (quote_flag) {
+                if (args[argi] == '"') end_flag = 1;
             }
             else if (isspace(args[argi])) {
                 end_flag = 1;
             }
-            else if(args[argi]!=0) {
+
+            if(end_flag==0 && args[argi]!=0) {
                 arglen++;
             }
 

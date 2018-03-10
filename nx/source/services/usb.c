@@ -1,8 +1,8 @@
 #include <string.h>
 #include "types.h"
 #include "result.h"
-#include "ipc.h"
 #include "arm/cache.h"
+#include "kernel/ipc.h"
 #include "kernel/detect.h"
 #include "services/usb.h"
 #include "services/sm.h"
@@ -25,7 +25,8 @@ static Result _usbDsSetVidPidBcd(const usbDsDeviceInfo* deviceinfo);
 
 static Result _usbDsGetSession(Service* srv, Service* srv_out, u64 cmd_id, const void* buf0, size_t buf0size, const void* buf1, size_t buf1size);
 
-Result usbDsInitialize(UsbComplexId complexId, const usbDsDeviceInfo* deviceinfo) {
+Result usbDsInitialize(UsbComplexId complexId, const usbDsDeviceInfo* deviceinfo)
+{
     if (serviceIsActive(&g_usbDsSrv))
         return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
 

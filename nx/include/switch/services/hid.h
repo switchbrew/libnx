@@ -539,6 +539,15 @@ typedef struct HidSharedMemory
 } HidSharedMemory;
 static_assert(sizeof(HidSharedMemory) == 0x40000, "Hid Shared Memory structure has incorrect size");
 
+typedef struct HidVibrationValue
+{
+    float amp_low;   ///< Low Band amplitude. 1.0f: Max amplitude.
+    float freq_low;  ///< Low Band frequency in Hz.
+    float amp_high;  ///< High Band amplitude. 1.0f: Max amplitude.
+    float freq_high; ///< High Band frequency in Hz.
+} HidVibrationValue;
+static_assert(sizeof(HidVibrationValue) == 0x10, "Hid VibrationValue structure has incorrect size");
+
 Result hidInitialize(void);
 void hidExit(void);
 void hidReset(void);
@@ -571,3 +580,22 @@ u32 hidTouchCount(void);
 void hidTouchRead(touchPosition *pos, u32 point_id);
 
 void hidJoystickRead(JoystickPosition *pos, HidControllerID id, HidControllerJoystick stick);
+
+/// Use this if you want to use a single joy-con as a dedicated CONTROLLER_PLAYER_*.
+/// When used, both joy-cons in a pair should be used with this (CONTROLLER_PLAYER_1 and CONTROLLER_PLAYER_2 for example).
+/// id must be CONTROLLER_PLAYER_*.
+Result hidSetNpadJoyAssignmentModeSingleByDefault(HidControllerID id);
+/// Used automatically during app startup/exit for all controllers.
+/// When used, both joy-cons in a pair should be used with this (CONTROLLER_PLAYER_1 and CONTROLLER_PLAYER_2 for example).
+/// id must be CONTROLLER_PLAYER_*.
+Result hidSetNpadJoyAssignmentModeDual(HidControllerID id);
+
+Result hidInitializeVibrationDevices(u32 *VibrationDeviceHandles, size_t total_handles, HidControllerID id, HidControllerLayoutType type);
+
+Result hidSendVibrationValue(u32 *VibrationDeviceHandle, HidVibrationValue *VibrationValue);
+
+/// Sets whether vibration is allowed, this also affects the config displayed by System Settings.
+Result hidPermitVibration(bool flag);
+
+/// Gets whether vibration is allowed.
+Result hidIsVibrationPermitted(bool *flag);

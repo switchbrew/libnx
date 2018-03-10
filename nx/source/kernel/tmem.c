@@ -1,4 +1,5 @@
 // Copyright 2017 plutoo
+#include <string.h>
 #include <malloc.h>
 #include "types.h"
 #include "result.h"
@@ -18,6 +19,9 @@ Result tmemCreate(TransferMemory* t, size_t size, Permission perm)
 
     if (t->src_addr == NULL) {
         rc = MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
+    }
+    else {
+        memset(t->src_addr, 0, size);
     }
 
     if (R_SUCCEEDED(rc)) {

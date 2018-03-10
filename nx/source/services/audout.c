@@ -1,7 +1,8 @@
 #include <string.h>
 #include "types.h"
 #include "result.h"
-#include "ipc.h"
+#include "arm/atomics.h"
+#include "kernel/ipc.h"
 #include "services/audout.h"
 #include "services/sm.h"
 
@@ -11,6 +12,7 @@
 
 static Service g_audoutSrv;
 static Service g_audoutIAudioOut;
+static u64 g_refCnt;
 
 static Handle g_audoutBufferEventHandle = INVALID_HANDLE;
 
@@ -23,8 +25,10 @@ static Result _audoutRegisterBufferEvent(Handle *BufferEvent);
 
 Result audoutInitialize(void)
 {
+    atomicIncrement64(&g_refCnt);
+
     if (serviceIsActive(&g_audoutSrv))
-        return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
+        return 0;
 
     Result rc = 0;
     rc = smGetService(&g_audoutSrv, "audout:u");
@@ -52,18 +56,21 @@ Result audoutInitialize(void)
 
 void audoutExit(void)
 {
-    if (g_audoutBufferEventHandle != INVALID_HANDLE) {
-        svcCloseHandle(g_audoutBufferEventHandle);
-        g_audoutBufferEventHandle = INVALID_HANDLE;
+    if (atomicDecrement64(&g_refCnt) == 0)
+    {
+        if (g_audoutBufferEventHandle != INVALID_HANDLE) {
+            svcCloseHandle(g_audoutBufferEventHandle);
+            g_audoutBufferEventHandle = INVALID_HANDLE;
+        }
+
+        g_sampleRate = 0;
+        g_channelCount = 0;
+        g_pcmFormat = PcmFormat_Invalid;
+        g_deviceState = AudioOutState_Stopped;
+
+        serviceClose(&g_audoutIAudioOut);
+        serviceClose(&g_audoutSrv);
     }
-
-    g_sampleRate = 0;
-    g_channelCount = 0;
-    g_pcmFormat = PcmFormat_Invalid;
-    g_deviceState = AudioOutState_Stopped;
-
-    serviceClose(&g_audoutIAudioOut);
-    serviceClose(&g_audoutSrv);
 }
 
 u32 audoutGetSampleRate(void) {
@@ -82,29 +89,33 @@ AudioOutState audoutGetDeviceState(void) {
     return g_deviceState;
 }
 
-Result audoutPlayBuffer(AudioOutBuffer *source, AudioOutBuffer *released) {
-    // Try to push the supplied buffer to the audio output device
-    Result do_append = audoutAppendAudioOutBuffer(source);
-    
-    if (R_SUCCEEDED(do_append))
-    {
-        // Wait on the buffer event handle
-        Result do_wait = svcWaitSynchronizationSingle(g_audoutBufferEventHandle, U64_MAX);
+Result audoutWaitPlayFinish(AudioOutBuffer **released, u32* released_count, u64 timeout) {
+    // Wait on the buffer event handle
+    Result rc = svcWaitSynchronizationSingle(g_audoutBufferEventHandle, timeout);
         
-        if (R_SUCCEEDED(do_wait))
-        {
-            svcResetSignal(g_audoutBufferEventHandle);
-            
-            u32 released_count = 0;
-            Result do_release = audoutGetReleasedAudioOutBuffer(released, &released_count);
-            
-            // Ensure that all buffers are released and return the last one only
-            while (R_SUCCEEDED(do_release) && (released_count > 0))
-                do_release = audoutGetReleasedAudioOutBuffer(released, &released_count);
-        }
+    if (R_SUCCEEDED(rc))
+    {
+        // Signal the buffer event handle right away
+        svcResetSignal(g_audoutBufferEventHandle);
+        
+        // Grab the released buffer
+        rc = audoutGetReleasedAudioOutBuffer(released, released_count);
     }
     
-    return do_append;
+    return rc;
+}
+
+Result audoutPlayBuffer(AudioOutBuffer *source, AudioOutBuffer **released) {
+    Result rc = 0;
+    u32 released_count = 0;
+    
+    // Try to push the supplied buffer to the audio output device
+    rc = audoutAppendAudioOutBuffer(source);
+    
+    if (R_SUCCEEDED(rc))
+        rc = audoutWaitPlayFinish(released, &released_count, U64_MAX);
+    
+    return rc;
 }
 
 Result audoutListAudioOuts(char *DeviceNames, u32 *DeviceNamesCount) {
@@ -313,13 +324,13 @@ Result audoutAppendAudioOutBuffer(AudioOutBuffer *Buffer) {
         u64 tag;
     } *raw;
 
-    ipcAddSendBuffer(&c, Buffer, sizeof(AudioOutBuffer), 0);
+    ipcAddSendBuffer(&c, Buffer, sizeof(*Buffer), 0);
     
     raw = ipcPrepareHeader(&c, sizeof(*raw));
     
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 3;
-    raw->tag = (u64)&Buffer;
+    raw->tag = (u64)Buffer;
 
     Result rc = serviceIpcDispatch(&g_audoutIAudioOut);
 
@@ -372,7 +383,7 @@ static Result _audoutRegisterBufferEvent(Handle *BufferEvent) {
     return rc;
 }
 
-Result audoutGetReleasedAudioOutBuffer(AudioOutBuffer *Buffer, u32 *ReleasedBuffersCount) {
+Result audoutGetReleasedAudioOutBuffer(AudioOutBuffer **Buffer, u32 *ReleasedBuffersCount) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -381,7 +392,7 @@ Result audoutGetReleasedAudioOutBuffer(AudioOutBuffer *Buffer, u32 *ReleasedBuff
         u64 cmd_id;
     } *raw;
 
-    ipcAddRecvBuffer(&c, Buffer, sizeof(AudioOutBuffer), 0);
+    ipcAddRecvBuffer(&c, Buffer, sizeof(*Buffer), 0);
     
     raw = ipcPrepareHeader(&c, sizeof(*raw));
     
@@ -423,7 +434,7 @@ Result audoutContainsAudioOutBuffer(AudioOutBuffer *Buffer, bool *ContainsBuffer
     
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 6;
-    raw->tag = (u64)&Buffer;
+    raw->tag = (u64)Buffer;
 
     Result rc = serviceIpcDispatch(&g_audoutIAudioOut);
 

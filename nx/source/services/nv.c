@@ -1,7 +1,7 @@
 #include <string.h>
 #include "types.h"
 #include "result.h"
-#include "ipc.h"
+#include "kernel/ipc.h"
 #include "services/applet.h"
 #include "nvidia/ioctl.h"
 #include "services/nv.h"
@@ -18,7 +18,7 @@ static Result _nvSetClientPID(u64 AppletResourceUserId);
 
 Result nvInitialize(nvServiceType servicetype, size_t transfermem_size)
 {
-    if(g_nvServiceType!=-1)
+    if (g_nvServiceType != -1)
         return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
 
     Result rc = 0;
@@ -70,7 +70,7 @@ Result nvInitialize(nvServiceType servicetype, size_t transfermem_size)
 
 void nvExit(void)
 {
-    if(g_nvServiceType == -1)
+    if (g_nvServiceType == -1)
         return;
 
     g_nvServiceType = -1;

@@ -1,11 +1,15 @@
 /**
  * @file bsd.h
- * @brief BSD sockets (bsd:u/s) service IPC wrapper.
+ * @brief BSD sockets (bsd:u/s) service IPC wrapper. Please use socket.c instead.
  * @author plutoo
  * @author TuxSH
  * @copyright libnx Authors
  */
 #pragma once
+#include <sys/socket.h> // for socklen_t
+#include <sys/select.h> // for fd_set
+#include <poll.h>       // for struct pollfd, ndfs_t
+
 #include "../types.h"
 #include "../kernel/tmem.h"
 
@@ -22,42 +26,52 @@ typedef struct  {
     u32 udp_rx_buf_size;        ///< Size of the UDP receive buffer (typically 0xA500 bytes).
 
     u32 sb_efficiency;          ///< Number of buffers for each socket (standard values range from 1 to 8).
-} BsdConfig;
+} BsdInitConfig;
 
-struct bsd_sockaddr_in {
-    u8  sin_len;
-    u8  sin_family;
-    u16 sin_port;
-    u32 sin_addr;
-    u8  sin_zero[8];
-};
+extern __thread Result g_bsdResult;    ///< Last Switch "result", per-thread
+extern __thread int g_bsdErrno;        ///< Last errno, per-thread
 
-const BsdConfig *bsdGetDefaultConfig(void);
-Result bsdInitialize(const BsdConfig *config);
+/// Fetch the default configuration for bsdInitialize.
+const BsdInitConfig *bsdGetDefaultInitConfig(void);
+/// Initialize the BSD service.
+Result bsdInitialize(const BsdInitConfig *config);
+/// Deinitialize the BSD service.
 void bsdExit(void);
-int bsdGetErrno(void);
-int bsdConnect(int sockfd, const void* addr, u32 addrlen);
+
 int bsdSocket(int domain, int type, int protocol);
-int bsdBind(int sockfd, const void* addr, u32 addrlen);
+/// Like @ref bsdSocket but the newly created socket is immediately shut down.
+int bsdSocketExempt(int domain, int type, int protocol);
+int bsdOpen(const char *pathname, int flags);
+int bsdSelect(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout);
+int bsdPoll(struct pollfd *fds, nfds_t nfds, int timeout);
+int bsdSysctl(const int *name, unsigned int namelen, void *oldp, size_t *oldlenp, const void *newp, size_t newlen);
+ssize_t bsdRecv(int sockfd, void *buf, size_t len, int flags);
+ssize_t bsdRecvFrom(int sockfd, void *buf, size_t len, int flags, struct sockaddr *src_addr, socklen_t *addrlen);
+ssize_t bsdSend(int sockfd, const void* buf, size_t len, int flags);
+ssize_t bsdSendTo(int sockfd, const void *buf, size_t len, int flags, const struct sockaddr *dest_addr, socklen_t addrlen);
+int bsdAccept(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
+int bsdBind(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+int bsdConnect(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+int bsdGetPeerName(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
+int bsdGetSockName(int sockfd, struct sockaddr *addr, socklen_t *addrlen);
+int bsdGetSockOpt(int sockfd, int level, int optname, void *optval, socklen_t *optlen);
 int bsdListen(int sockfd, int backlog);
-int bsdSend(int sockfd, const void* buffer, size_t length, int flags);
-int bsdSendTo(int sockfd, const void* buffer, size_t length, int flags, const struct bsd_sockaddr_in *dest_addr, size_t dest_len);
-int bsdRecv(int sockfd, void* buffer, size_t length, int flags);
-int bsdSetSockOpt(int sockfd, int level, int option_name, const void *option_value, size_t option_size);
-int bsdWrite(int sockfd, const void* buffer, size_t length);
+/// Made non-variadic for convenience.
+int bsdIoctl(int fd, int request, void *data);
+/// Made non-variadic for convenience.
+int bsdFcntl(int fd, int cmd, int flags);
+int bsdSetSockOpt(int sockfd, int level, int optname, const void *optval, socklen_t optlen);
+int bsdShutdown(int sockfd, int how);
+int bsdShutdownAllSockets(int how);
+ssize_t bsdWrite(int fd, const void *buf, size_t count);
+ssize_t bsdRead(int fd, void *buf, size_t count);
+int bsdClose(int fd);
+/// Duplicate a socket (bsd:s).
+int bsdDuplicateSocket(int sockfd);
 
-static inline Result bsdInitializeDefault(void)
-{
-    return bsdInitialize(bsdGetDefaultConfig());
+// TODO: Reverse-engineer GetResourceStatistics. Implement sendmmsg/recvmmsg (custom (un)serialization)
+
+/// Initialize the BSD service using the default configuration.
+static inline Result bsdInitializeDefault(void) {
+    return bsdInitialize(bsdGetDefaultInitConfig());
 }
-
-#define BSD_AF_INET 2
-#define BSD_AF_INET6 10
-#define BSD_IPPROTO_IP 0
-#define BSD_IPPROTO_TCP 6
-#define BSD_IPPROTO_UDP 17
-
-#define BSD_SOCK_STREAM 1
-#define BSD_SOCK_DGRAM 2
-
-#define BSD_MSG_RECV_ALL 0x40

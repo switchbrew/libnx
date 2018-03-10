@@ -21,8 +21,14 @@
 
 /// Module values
 enum {
+    Module_Kernel=1,
     Module_Libnx=345,
     Module_LibnxNvidia=348,
+};
+
+/// Kernel error codes
+enum {
+    KernelError_Timeout=117,
 };
 
 /// libnx error codes
@@ -65,6 +71,7 @@ enum {
     LibnxError_WeirdKernel,
     LibnxError_IncompatSysVer,
     LibnxError_InitFail_Time,
+    LibnxError_TooManyDevOpTabs,
 };
 
 /// libnx nvidia error codes
