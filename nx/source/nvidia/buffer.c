@@ -43,6 +43,8 @@ static Result _nvbufCreate(NvBuffer* m, size_t size, u32 flags, u32 align, NvBuf
 {
     Result rc;
 
+    size = (size + 0xFFF) &~ 0xFFF;
+
     m->has_init = true;
     m->size = size;
     m->fd = -1;
