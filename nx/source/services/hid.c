@@ -43,6 +43,9 @@ Result hidInitialize(void)
     if (serviceIsActive(&g_hidSrv))
         return 0;
 
+    if (R_FAILED(appletInitialize()))
+        return MAKERESULT(Module_Libnx, LibnxError_AppletFailedToInitialize);
+
     Result rc;
     Handle sharedmem_handle;
     u64 AppletResourceUserId;
@@ -86,6 +89,8 @@ void hidExit(void)
         serviceClose(&g_hidIAppletResource);
         serviceClose(&g_hidSrv);
         shmemClose(&g_hidSharedmem);
+
+        appletExit();
     }
 }
 
