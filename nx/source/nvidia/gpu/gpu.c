@@ -28,6 +28,12 @@ Result nvgpuCreate(NvGpu* g)
         rc = nvfifoCreate(&g->gpfifo, &g->gpu_channel);
 
     if (R_SUCCEEDED(rc))
+        rc = nv3dCreate(&g->_3d_ctx, g);
+
+    if (R_SUCCEEDED(rc))
+        rc = nvchannelSetPriority(&g->gpu_channel, NvChannelPriority_Medium);
+
+    if (R_SUCCEEDED(rc))
         rc = nvzcullCreate(&g->zcull_ctx, g);
 
     if (R_FAILED(rc))
@@ -41,6 +47,8 @@ void nvgpuClose(NvGpu* g)
     nvbufExit();
     nvinfoExit();
 
+    nvzcullClose(&g->zcull_ctx);
+    nv3dClose(&g->_3d_ctx);
     nvfifoClose(&g->gpfifo);
     nvasClose(&g->addr_space);
     nvchannelClose(&g->gpu_channel);
