@@ -72,6 +72,7 @@ enum {
     LibnxError_IncompatSysVer,
     LibnxError_InitFail_Time,
     LibnxError_TooManyDevOpTabs,
+    LibnxError_AppletFailedToInitialize,
 };
 
 /// libnx nvidia error codes
