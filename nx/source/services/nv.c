@@ -25,10 +25,12 @@ Result nvInitialize(void)
     atomicIncrement64(&g_refCnt);
 
     if (serviceIsActive(&g_nvSrv))
-        return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
+        return 0;
 
-    if (R_FAILED(appletInitialize()))
+    if (R_FAILED(appletInitialize())) {
+        atomicDecrement64(&g_refCnt);
         return MAKERESULT(Module_Libnx, LibnxError_AppletFailedToInitialize);
+    }
 
     Result rc = 0;
     u64 AppletResourceUserId = 0;
@@ -78,9 +80,9 @@ Result nvInitialize(void)
 void nvExit(void)
 {
     if (atomicDecrement64(&g_refCnt) == 0) {
-        appletExit();
         serviceClose(&g_nvSrv);
         tmemClose(&g_nvTransfermem);
+        appletExit();
     }
 }
 
