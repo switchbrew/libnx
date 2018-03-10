@@ -249,8 +249,8 @@ typedef enum {
     NvBufferKind_Invalid=0xff,
 } NvBufferKind;
 
-Result nvbufInit();
-Result nvbufExit();
+Result nvbufInit(void);
+void nvbufExit(void);
 
 Result nvbufCreate(NvBuffer* m, size_t size, u32 align, NvBufferKind kind);
 Result nvbufCreateRw(NvBuffer* m, size_t size, u32 align, NvBufferKind kind);

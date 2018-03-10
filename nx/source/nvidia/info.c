@@ -1,12 +1,17 @@
 #include <switch.h>
 
 static u32 g_ctrlgpu_fd = -1;
+static u64 g_refCnt;
+
 static nvioctl_gpu_characteristics g_gpu_characteristics;
 static u32 g_zcull_ctx_size;
 
 Result nvinfoInit()
 {
     Result rc;
+
+    if (atomicIncrement64(&g_refCnt) > 0)
+        return 0;
 
     rc = nvOpen(&g_ctrlgpu_fd, "/dev/nvhost-ctrl-gpu");
 
@@ -27,10 +32,13 @@ Result nvinfoInit()
 
 void nvinfoExit()
 {
-    if (g_ctrlgpu_fd != -1)
-        nvClose(g_ctrlgpu_fd);
+    if (atomicDecrement64(&g_refCnt) == 0)
+    {
+        if (g_ctrlgpu_fd != -1)
+            nvClose(g_ctrlgpu_fd);
 
-    g_ctrlgpu_fd = -1;
+        g_ctrlgpu_fd = -1;
+    }
 }
 
 u32 nvinfoGetZcullCtxSize() {
