@@ -5,9 +5,9 @@
  * @copyright libnx Authors
  */
 #pragma once
-#include "result.h"
-#include "arm/tls.h"
-#include "kernel/svc.h"
+#include "../result.h"
+#include "../arm/tls.h"
+#include "../kernel/svc.h"
 
 /// IPC input header magic
 #define SFCI_MAGIC 0x49434653
