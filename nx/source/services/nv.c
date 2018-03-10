@@ -20,6 +20,9 @@ Result nvInitialize(size_t transfermem_size)
     if (serviceIsActive(&g_nvSrv))
         return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
 
+    if (R_FAILED(appletInitialize()))
+        return MAKERESULT(Module_Libnx, LibnxError_AppletFailedToInitialize);
+
     Result rc = 0;
     u64 AppletResourceUserId = 0;
 
@@ -59,6 +62,7 @@ Result nvInitialize(size_t transfermem_size)
     }
 
     if (R_FAILED(rc)) {
+        appletExit();
         nvExit();
     }
 
@@ -67,6 +71,7 @@ Result nvInitialize(size_t transfermem_size)
 
 void nvExit(void)
 {
+    appletExit();
     serviceClose(&g_nvSrv);
     tmemClose(&g_nvTransfermem);
 }

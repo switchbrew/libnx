@@ -74,6 +74,7 @@ enum {
     LibnxError_TooManyDevOpTabs,
     LibnxError_DomainMessageUnknownType,
     LibnxError_DomainMessageTooManyObjectIds,
+    LibnxError_AppletFailedToInitialize,
 };
 
 /// libnx nvidia error codes
