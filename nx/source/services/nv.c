@@ -215,29 +215,8 @@ Result nvIoctl(u32 fd, u32 request, void* argp) {
         buf_recv_size = bufsize;
     }
 
-    void* bufs_send[2] = {buf_send, buf_send};
-    void* bufs_recv[2] = {buf_recv, buf_recv};
-    size_t bufs_send_size[2] = {buf_send_size, buf_send_size};
-    size_t bufs_recv_size[2] = {buf_recv_size, buf_recv_size};
-
-    if(g_nvIpcBufferSize!=0 && bufsize <= g_nvIpcBufferSize) {
-        bufs_send[0] = NULL;
-        bufs_send_size[0] = 0;
-        bufs_recv[0] = NULL;
-        bufs_recv_size[0] = 0;
-    }
-    else {
-        bufs_send[1] = NULL;
-        bufs_send_size[1] = 0;
-        bufs_recv[1] = NULL;
-        bufs_recv_size[1] = 0;
-    }
-
-    ipcAddSendBuffer(&c, bufs_send[0], bufs_send_size[0], 0);
-    ipcAddRecvBuffer(&c, bufs_recv[0], bufs_recv_size[0], 0);
-
-    ipcAddSendStatic(&c, bufs_send[1], bufs_send_size[1], 0);
-    ipcAddRecvStatic(&c, bufs_recv[1], bufs_recv_size[1], 0);
+    ipcAddSendSmart(&c, g_nvIpcBufferSize, buf_send, buf_send_size, 0);
+    ipcAddRecvSmart(&c, g_nvIpcBufferSize, buf_recv, buf_recv_size, 0);
 
     raw = ipcPrepareHeader(&c, sizeof(*raw));
     raw->magic = SFCI_MAGIC;

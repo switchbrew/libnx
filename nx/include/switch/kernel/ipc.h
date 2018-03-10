@@ -174,6 +174,42 @@ static inline void ipcAddRecvStatic(IpcCommand* cmd, void* buffer, size_t size, 
 }
 
 /**
+ * @brief Adds a smart-buffer (buffer + static-buffer pair) to an IPC command structure.
+ * @param cmd IPC command structure.
+ * @param ipc_buffer_size IPC buffer size.
+ * @param buffer Address of the buffer.
+ * @param size Size of the buffer.
+ * @param index Index of buffer.
+ */
+static inline void ipcAddSendSmart(IpcCommand* cmd, size_t ipc_buffer_size, const void* buffer, size_t size, u8 index) {
+    if (ipc_buffer_size != 0 && size <= ipc_buffer_size) {
+        ipcAddSendBuffer(cmd, NULL, 0, 0);
+        ipcAddSendStatic(cmd, buffer, size, index);
+    } else {
+        ipcAddSendBuffer(cmd, buffer, size, 0);
+        ipcAddSendStatic(cmd, NULL, 0, index);
+    }
+}
+
+/**
+ * @brief Adds a smart-receive-buffer (buffer + static-receive-buffer pair) to an IPC command structure.
+ * @param cmd IPC command structure.
+ * @param ipc_buffer_size IPC buffer size.
+ * @param buffer Address of the buffer.
+ * @param size Size of the buffer.
+ * @param index Index of buffer.
+ */
+static inline void ipcAddRecvSmart(IpcCommand* cmd, size_t ipc_buffer_size, void* buffer, size_t size, u8 index) {
+    if (ipc_buffer_size != 0 && size <= ipc_buffer_size) {
+        ipcAddRecvBuffer(cmd, NULL, 0, 0);
+        ipcAddRecvStatic(cmd, buffer, size, index);
+    } else {
+        ipcAddRecvBuffer(cmd, buffer, size, 0);
+        ipcAddRecvStatic(cmd, NULL, 0, index);
+    }
+}
+
+/**
  * @brief Tags an IPC command structure to send the PID.
  * @param cmd IPC command structure.
  */
