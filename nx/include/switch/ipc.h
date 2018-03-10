@@ -25,19 +25,25 @@
 #define IPC_MAX_OBJECTS 8
 
 typedef enum {
-    BufferType_Normal=0,         ///< Regular buffer.
-    BufferType_Type1=1,          ///< Allows ProcessMemory and shared TransferMemory.
-    BufferType_Invalid=2,
-    BufferType_Type3=3           ///< Same as Type1 except remote process is not allowed to use device-mapping.
+    BufferFlag_Normal=0,  ///< Regular buffer.
+    BufferFlag_Type1=1,   ///< Allows ProcessMemory and shared TransferMemory.
+    BufferFlag_Invalid=2,
+    BufferFlag_Type3=3    ///< Same as Type1 except remote process is not allowed to use device-mapping.
+} BufferFlag;
+
+typedef enum {
+    BufferType_Send=0,
+    BufferType_Recv=1,
+    BufferType_Exch=2,
 } BufferType;
 
 typedef struct {
     size_t NumSend; // A
     size_t NumRecv; // B
-    size_t NumTransfer; // W
+    size_t NumExch; // W
     const void* Buffers[IPC_MAX_BUFFERS];
     size_t BufferSizes[IPC_MAX_BUFFERS];
-    BufferType BufferTypes[IPC_MAX_BUFFERS];
+    BufferFlag BufferFlags[IPC_MAX_BUFFERS];
 
     size_t NumStaticIn;  // X
     size_t NumStaticOut; // C
@@ -86,13 +92,13 @@ typedef struct {
  * @param cmd IPC command structure.
  * @param buffer Address of the buffer.
  * @param size Size of the buffer.
- * @param type Type of buffer.
+ * @param flag Buffer flag.
  */
-static inline void ipcAddSendBuffer(IpcCommand* cmd, const void* buffer, size_t size, BufferType type) {
+static inline void ipcAddSendBuffer(IpcCommand* cmd, const void* buffer, size_t size, BufferFlag flag) {
     size_t off = cmd->NumSend;
     cmd->Buffers[off] = buffer;
     cmd->BufferSizes[off] = size;
-    cmd->BufferTypes[off] = type;
+    cmd->BufferFlags[off] = flag;
     cmd->NumSend++;
 }
 
@@ -101,29 +107,29 @@ static inline void ipcAddSendBuffer(IpcCommand* cmd, const void* buffer, size_t 
  * @param cmd IPC command structure.
  * @param buffer Address of the buffer.
  * @param size Size of the buffer.
- * @param type Type of buffer.
+ * @param flag Buffer flag.
  */
-static inline void ipcAddRecvBuffer(IpcCommand* cmd, void* buffer, size_t size, BufferType type) {
+static inline void ipcAddRecvBuffer(IpcCommand* cmd, void* buffer, size_t size, BufferFlag flag) {
     size_t off = cmd->NumSend + cmd->NumRecv;
     cmd->Buffers[off] = buffer;
     cmd->BufferSizes[off] = size;
-    cmd->BufferTypes[off] = type;
+    cmd->BufferFlags[off] = flag;
     cmd->NumRecv++;
 }
 
 /**
- * @brief Adds a transfer-buffer to an IPC command structure.
+ * @brief Adds an exchange-buffer to an IPC command structure.
  * @param cmd IPC command structure.
  * @param buffer Address of the buffer.
  * @param size Size of the buffer.
- * @param type Type of buffer.
+ * @param flag Buffer flag.
  */
-static inline void ipcAddTransferBuffer(IpcCommand* cmd, void* buffer, size_t size, BufferType type) {
-    size_t off = cmd->NumSend + cmd->NumRecv + cmd->NumTransfer;
+static inline void ipcAddExchangeBuffer(IpcCommand* cmd, void* buffer, size_t size, BufferFlag flag) {
+    size_t off = cmd->NumSend + cmd->NumRecv + cmd->NumExch;
     cmd->Buffers[off] = buffer;
     cmd->BufferSizes[off] = size;
-    cmd->BufferTypes[off] = type;
-    cmd->NumTransfer++;
+    cmd->BufferFlags[off] = flag;
+    cmd->NumExch++;
 }
 
 /**
@@ -193,7 +199,7 @@ static inline void ipcSendHandleMove(IpcCommand* cmd, Handle h) {
 static inline void* ipcPrepareHeader(IpcCommand* cmd, size_t sizeof_raw) {
     u32* buf = (u32*)armGetTls();
     size_t i;
-    *buf++ = 4 | (cmd->NumStaticIn << 16) | (cmd->NumSend << 20) | (cmd->NumRecv << 24) | (cmd->NumTransfer << 28);
+    *buf++ = 4 | (cmd->NumStaticIn << 16) | (cmd->NumSend << 20) | (cmd->NumRecv << 24) | (cmd->NumExch << 28);
 
     u32* fill_in_size_later = buf;
 
@@ -227,13 +233,13 @@ static inline void* ipcPrepareHeader(IpcCommand* cmd, size_t sizeof_raw) {
             (((ptr >> 32) & 15) << 12) | (((ptr >> 36) & 15) << 6);
     }
 
-    for (i=0; i<(cmd->NumSend + cmd->NumRecv + cmd->NumTransfer); i++, buf+=3) {
+    for (i=0; i<(cmd->NumSend + cmd->NumRecv + cmd->NumExch); i++, buf+=3) {
         IpcBufferDescriptor* desc = (IpcBufferDescriptor*) buf;
         desc->Size = cmd->BufferSizes[i];
 
         uintptr_t ptr = (uintptr_t) cmd->Buffers[i];
         desc->Addr = ptr;
-        desc->Packed = cmd->BufferTypes[i] |
+        desc->Packed = cmd->BufferFlags[i] |
             (((ptr >> 32) & 15) << 28) | ((ptr >> 36) << 2);
     }
 
@@ -286,28 +292,30 @@ static inline Result ipcDispatch(Handle session) {
 
 /// IPC parsed command (response) structure.
 typedef struct {
-    bool HasPid;                             ///< true if the 'Pid' field is filled out.
-    u64  Pid;                                ///< PID included in the response (only if HasPid is true)
+    bool HasPid;                              ///< true if the 'Pid' field is filled out.
+    u64  Pid;                                 ///< PID included in the response (only if HasPid is true)
 
-    size_t NumHandles;                       ///< Number of handles in the response.
-    Handle Handles[IPC_MAX_OBJECTS];         ///< Handles.
+    size_t NumHandles;                        ///< Number of handles copied.
+    Handle Handles[IPC_MAX_OBJECTS];          ///< Handles.
+    bool   WasHandleCopied[IPC_MAX_OBJECTS];  ///< True if the handle was moved from 
 
-    u32    ThisObjectId;                     ///< Object ID to call the command on (for domain messages).
-    size_t NumObjectIds;                     ///< Number of object IDs (for domain messages).
-    u32    ObjectIds[IPC_MAX_OBJECTS];       ///< Object IDs (for domain messages).
+    u32    ThisObjectId;                      ///< Object ID to call the command on (for domain messages).
+    size_t NumObjectIds;                      ///< Number of object IDs (for domain messages).
+    u32    ObjectIds[IPC_MAX_OBJECTS];        ///< Object IDs (for domain messages).
 
-    size_t NumBuffers;                       ///< Number of buffers in the response.
-    void*  Buffers[IPC_MAX_BUFFERS];         ///< Pointers to the buffers.
-    size_t BufferSizes[IPC_MAX_BUFFERS];     ///< Sizes of the buffers.
-    BufferType BufferTypes[IPC_MAX_BUFFERS]; ///< Types of the buffers.
+    size_t NumBuffers;                        ///< Number of buffers in the response.
+    void*  Buffers[IPC_MAX_BUFFERS];          ///< Pointers to the buffers.
+    size_t BufferSizes[IPC_MAX_BUFFERS];      ///< Sizes of the buffers.
+    BufferFlag BufferFlags[IPC_MAX_BUFFERS];  ///< Flags of the buffers.
+    BufferType BufferTypes[IPC_MAX_BUFFERS];  ///< Types of the buffers.
 
-    size_t NumStatics;                       ///< Number of statics in the response.
-    void*  Statics[IPC_MAX_BUFFERS];         ///< Pointers to the statics.
-    size_t StaticSizes[IPC_MAX_BUFFERS];     ///< Sizes of the statics.
-    u8     StaticIndices[IPC_MAX_BUFFERS];   ///< Indices of the statics.
+    size_t NumStatics;                        ///< Number of statics in the response.
+    void*  Statics[IPC_MAX_BUFFERS];          ///< Pointers to the statics.
+    size_t StaticSizes[IPC_MAX_BUFFERS];      ///< Sizes of the statics.
+    u8     StaticIndices[IPC_MAX_BUFFERS];    ///< Indices of the statics.
 
-    void*  Raw;                              ///< Pointer to the raw embedded data structure in the response.
-    size_t RawSize;                          ///< Size of the raw embedded data.
+    void*  Raw;                               ///< Pointer to the raw embedded data structure in the response.
+    size_t RawSize;                           ///< Size of the raw embedded data.
 } IpcParsedCommand;
 
 /**
@@ -334,14 +342,19 @@ static inline Result ipcParse(IpcParsedCommand* r) {
             r->Pid |= ((u64)(*buf++)) << 32;
         }
 
-        size_t num_handles = ((ctrl2 >> 1) & 15) + ((ctrl2 >> 5) & 15);
-        buf += num_handles;
+        size_t num_handles_copy = ((ctrl2 >> 1) & 15);
+        size_t num_handles_move = ((ctrl2 >> 5) & 15);
+
+        size_t num_handles = num_handles_copy + num_handles_move;
 
         if (num_handles > IPC_MAX_OBJECTS)
             num_handles = IPC_MAX_OBJECTS;
 
         for (i=0; i<num_handles; i++)
+        {
             r->Handles[i] = *(buf-num_handles+i);
+            r->WasHandleCopied[i] = (i < num_handles_copy);
+        }
 
         r->NumHandles = num_handles;
     }
@@ -364,7 +377,11 @@ static inline Result ipcParse(IpcParsedCommand* r) {
     r->NumStatics = num_statics;
     buf = buf_after_statics;
 
-    size_t num_bufs = ((ctrl0 >> 20) & 15) + ((ctrl0 >> 24) & 15) + (((ctrl0 >> 28) & 15));
+    size_t num_bufs_send = (ctrl0 >> 20) & 15;
+    size_t num_bufs_recv = (ctrl0 >> 24) & 15;
+    size_t num_bufs_exch = (ctrl0 >> 28) & 15;
+
+    size_t num_bufs = num_bufs_send + num_bufs_recv + num_bufs_exch;
     r->Raw = (void*)(((uintptr_t)(buf + num_bufs*3) + 15) &~ 15);
 
     if (num_bufs > IPC_MAX_BUFFERS)
@@ -376,7 +393,14 @@ static inline Result ipcParse(IpcParsedCommand* r) {
 
         r->Buffers[i] = (void*) (desc->Addr | ((packed >> 28) << 32) | (((packed >> 2) & 15) << 36));
         r->BufferSizes[i] = desc->Size;
-        r->BufferTypes[i] = packed & 3;
+        r->BufferFlags[i] = packed & 3;
+
+        if (i < num_bufs_send)
+            r->BufferTypes[i] = BufferType_Send;
+        else if (i < (num_bufs_send + num_bufs_recv))
+            r->BufferTypes[i] = BufferType_Recv;
+        else
+            r->BufferTypes[i] = BufferType_Exch;
     }
 
     r->NumBuffers = num_bufs;
