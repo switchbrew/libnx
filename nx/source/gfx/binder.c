@@ -151,29 +151,8 @@ static Result _binderTransactParcelAuto(
         u32 flags;
     } *raw;
 
-    void* buf_static[2] = {parcel_data, parcel_reply};
-    void* buf_transfer[2] = {parcel_data, parcel_reply};
-    size_t buf_static_size[2] = {parcel_data_size, parcel_reply_size};
-    size_t buf_transfer_size[2] = {parcel_data_size, parcel_reply_size};
-
-    if(session->ipcBufferSize!=0 && buf_static_size[0] <= session->ipcBufferSize) {
-        buf_transfer[0] = NULL;
-        buf_transfer[1] = NULL;
-        buf_transfer_size[0] = 0;
-        buf_transfer_size[1] = 0;
-    }
-    else {
-        buf_static[0] = NULL;
-        buf_static[1] = NULL;
-        buf_static_size[0] = 0;
-        buf_static_size[1] = 0;
-    }
-
-    ipcAddSendBuffer(&c, buf_transfer[0], buf_transfer_size[0], 0);
-    ipcAddRecvBuffer(&c, buf_transfer[1], buf_transfer_size[1], 0);
-
-    ipcAddSendStatic(&c, buf_static[0], buf_static_size[0], 0);
-    ipcAddRecvStatic(&c, buf_static[1], buf_static_size[1], 0);
+    ipcAddSendSmart(&c, session->ipcBufferSize, parcel_data, parcel_data_size, 0);
+    ipcAddRecvSmart(&c, session->ipcBufferSize, parcel_reply, parcel_reply_size, 0);
 
     raw = ipcPrepareHeader(&c, sizeof(*raw));
     raw->magic = SFCI_MAGIC;

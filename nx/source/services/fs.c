@@ -455,7 +455,7 @@ Result fsFsRenameFile(FsFileSystem* fs, const char* path0, const char* path1) {
     IpcCommand c;
     ipcInitialize(&c);
     ipcAddSendStatic(&c, path0, FS_MAX_PATH, 0);
-    ipcAddSendStatic(&c, path1, FS_MAX_PATH, 0);
+    ipcAddSendStatic(&c, path1, FS_MAX_PATH, 1);
 
     struct {
         u64 magic;
@@ -488,7 +488,7 @@ Result fsFsRenameDirectory(FsFileSystem* fs, const char* path0, const char* path
     IpcCommand c;
     ipcInitialize(&c);
     ipcAddSendStatic(&c, path0, FS_MAX_PATH, 0);
-    ipcAddSendStatic(&c, path1, FS_MAX_PATH, 0);
+    ipcAddSendStatic(&c, path1, FS_MAX_PATH, 1);
 
     struct {
         u64 magic;

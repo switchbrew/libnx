@@ -24,6 +24,7 @@ __thread Result g_bsdResult;
 __thread int g_bsdErrno;
 
 static Service g_bsdSrv;
+static size_t g_bsdSrvIpcBufferSize;
 static Service g_bsdMonitor;
 static u64 g_bsdClientPid = -1;
 
@@ -188,8 +189,7 @@ static int _bsdNameGetterCommand(u32 cmd_id, int sockfd, struct sockaddr *addr, 
 
     socklen_t maxaddrlen = addrlen == NULL ? 0 : *addrlen;
 
-    ipcAddRecvBuffer(&c, addr, maxaddrlen, 0);
-    ipcAddRecvStatic(&c, addr, maxaddrlen, 0);
+    ipcAddRecvSmart(&c, g_bsdSrvIpcBufferSize, addr, maxaddrlen, 0);
 
     struct {
         u64 magic;
@@ -247,6 +247,9 @@ Result bsdInitialize(const BsdInitConfig *config) {
     }
     if(R_FAILED(rc)) goto error;
 
+    rc = ipcQueryPointerBufferSize(g_bsdSrv.handle, &g_bsdSrvIpcBufferSize);
+    if(R_FAILED(rc)) goto error;
+
     rc = smGetService(&g_bsdMonitor, bsd_srv);
     if(R_FAILED(rc)) goto error;
 
@@ -267,6 +270,8 @@ error:
 }
 
 void bsdExit(void) {
+    g_bsdSrvIpcBufferSize = 0;
+    g_bsdClientPid = 0;
     serviceClose(&g_bsdMonitor);
     serviceClose(&g_bsdSrv);
     tmemClose(&g_bsdTmem);
@@ -285,8 +290,7 @@ int bsdOpen(const char *pathname, int flags) {
     ipcInitialize(&c);
 
     size_t pathlen = strlen(pathname) + 1;
-    ipcAddSendBuffer(&c, pathname, pathlen, 0);
-    ipcAddSendStatic(&c, pathname, pathlen, 0);
+    ipcAddSendSmart(&c, g_bsdSrvIpcBufferSize, pathname, pathlen, 0);
 
     struct {
         u64 magic;
@@ -307,19 +311,16 @@ int bsdSelect(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, st
     IpcCommand c;
     ipcInitialize(&c);
 
-    ipcAddSendBuffer(&c, readfds, readfds == NULL ? 0 : sizeof(fd_set), 0);
-    ipcAddSendStatic(&c, readfds, readfds == NULL ? 0 : sizeof(fd_set), 0);
-    ipcAddSendBuffer(&c, writefds, writefds == NULL ? 0 : sizeof(fd_set), 0);
-    ipcAddSendStatic(&c, writefds, writefds == NULL ? 0 : sizeof(fd_set), 0);
-    ipcAddSendBuffer(&c, exceptfds, exceptfds == NULL ? 0 : sizeof(fd_set), 0);
-    ipcAddSendStatic(&c, exceptfds, exceptfds == NULL ? 0 : sizeof(fd_set), 0);
+    ipcAddSendSmart(&c, g_bsdSrvIpcBufferSize, readfds, readfds == NULL ? 0 : sizeof(fd_set), 0);
+    ipcAddSendSmart(&c, g_bsdSrvIpcBufferSize, writefds, writefds == NULL ? 0 : sizeof(fd_set), 1);
+    ipcAddSendSmart(&c, g_bsdSrvIpcBufferSize, exceptfds, exceptfds == NULL ? 0 : sizeof(fd_set), 2);
+    ipcAddSendSmart(&c, g_bsdSrvIpcBufferSize, exceptfds, exceptfds == NULL ? 0 : sizeof(fd_set), 3);
 
-    ipcAddRecvBuffer(&c, readfds, readfds == NULL ? 0 : sizeof(fd_set), 0);
-    ipcAddRecvStatic(&c, readfds, readfds == NULL ? 0 : sizeof(fd_set), 0);
-    ipcAddRecvBuffer(&c, writefds, writefds == NULL ? 0 : sizeof(fd_set), 0);
-    ipcAddRecvStatic(&c, writefds, writefds == NULL ? 0 : sizeof(fd_set), 0);
-    ipcAddRecvBuffer(&c, exceptfds, exceptfds == NULL ? 0 : sizeof(fd_set), 0);
-    ipcAddRecvStatic(&c, exceptfds, exceptfds == NULL ? 0 : sizeof(fd_set), 0);
+    ipcAddRecvSmart(&c, g_bsdSrvIpcBufferSize, readfds, readfds == NULL ? 0 : sizeof(fd_set), 0);
+    ipcAddRecvSmart(&c, g_bsdSrvIpcBufferSize, writefds, writefds == NULL ? 0 : sizeof(fd_set), 1);
+    ipcAddRecvSmart(&c, g_bsdSrvIpcBufferSize, exceptfds, exceptfds == NULL ? 0 : sizeof(fd_set), 2);
+    ipcAddRecvSmart(&c, g_bsdSrvIpcBufferSize, exceptfds, exceptfds == NULL ? 0 : sizeof(fd_set), 3);
+
 
     struct {
         u64 magic;
@@ -344,11 +345,8 @@ int bsdPoll(struct pollfd *fds, nfds_t nfds, int timeout) {
     IpcCommand c;
     ipcInitialize(&c);
 
-    ipcAddSendBuffer(&c, fds, nfds * sizeof(struct pollfd), 0);
-    ipcAddSendStatic(&c, fds, nfds * sizeof(struct pollfd), 0);
-
-    ipcAddRecvBuffer(&c, fds, nfds * sizeof(struct pollfd), 0);
-    ipcAddRecvStatic(&c, fds, nfds * sizeof(struct pollfd), 0);
+    ipcAddSendSmart(&c, g_bsdSrvIpcBufferSize, fds, nfds * sizeof(struct pollfd), 0);
+    ipcAddRecvSmart(&c, g_bsdSrvIpcBufferSize, fds, nfds * sizeof(struct pollfd), 0);
 
     struct {
         u64 magic;
@@ -373,13 +371,10 @@ int bsdSysctl(const int *name, unsigned int namelen, void *oldp, size_t *oldlenp
 
     ipcInitialize(&c);
 
-    ipcAddSendBuffer(&c, name, 4 * namelen, 0);
-    ipcAddSendStatic(&c, name, 4 * namelen, 0);
-    ipcAddSendBuffer(&c, newp, newlen, 0);
-    ipcAddSendStatic(&c, newp, newlen, 0);
+    ipcAddSendSmart(&c, g_bsdSrvIpcBufferSize, name, 4 * namelen, 0);
+    ipcAddSendSmart(&c, g_bsdSrvIpcBufferSize, newp, newlen, 1);
 
-    ipcAddRecvBuffer(&c, oldp, inlen, 0);
-    ipcAddRecvStatic(&c, oldp, inlen, 0);
+    ipcAddRecvSmart(&c, g_bsdSrvIpcBufferSize, oldp, inlen, 0);
 
     struct {
         u64 magic;
@@ -406,8 +401,7 @@ int bsdSysctl(const int *name, unsigned int namelen, void *oldp, size_t *oldlenp
 ssize_t bsdRecv(int sockfd, void *buf, size_t len, int flags) {
     IpcCommand c;
     ipcInitialize(&c);
-    ipcAddRecvBuffer(&c, buf, len, 0);
-    ipcAddRecvStatic(&c, buf, len, 0);
+    ipcAddRecvSmart(&c, g_bsdSrvIpcBufferSize, buf, len, 0);
 
     struct {
         u64 magic;
@@ -432,10 +426,8 @@ ssize_t bsdRecvFrom(int sockfd, void *buf, size_t len, int flags, struct sockadd
 
     ipcInitialize(&c);
 
-    ipcAddRecvBuffer(&c, buf, len, 0);
-    ipcAddRecvStatic(&c, buf, len, 0);
-    ipcAddRecvBuffer(&c, src_addr, inaddrlen, 0);
-    ipcAddRecvBuffer(&c, src_addr, inaddrlen, 0);
+    ipcAddRecvSmart(&c, g_bsdSrvIpcBufferSize, buf, len, 0);
+    ipcAddRecvSmart(&c, g_bsdSrvIpcBufferSize, src_addr, inaddrlen, 1);
 
     struct {
         u64 magic;
@@ -457,8 +449,7 @@ ssize_t bsdRecvFrom(int sockfd, void *buf, size_t len, int flags, struct sockadd
 ssize_t bsdSend(int sockfd, const void* buf, size_t len, int flags) {
     IpcCommand c;
     ipcInitialize(&c);
-    ipcAddSendBuffer(&c, buf, len, 0);
-    ipcAddSendStatic(&c, buf, len, 0);
+    ipcAddSendSmart(&c, g_bsdSrvIpcBufferSize, buf, len, 0);
 
     struct {
         u64 magic;
@@ -480,11 +471,8 @@ ssize_t bsdSend(int sockfd, const void* buf, size_t len, int flags) {
 ssize_t bsdSendTo(int sockfd, const void *buf, size_t len, int flags, const struct sockaddr *dest_addr, socklen_t addrlen) {
     IpcCommand c;
     ipcInitialize(&c);
-    ipcAddSendBuffer(&c, buf, len, 0);
-    ipcAddSendStatic(&c, buf, len, 0);
-
-    ipcAddSendBuffer(&c, dest_addr, addrlen, 1);
-    ipcAddSendStatic(&c, dest_addr, addrlen, 1);
+    ipcAddSendSmart(&c, g_bsdSrvIpcBufferSize, buf, len, 0);
+    ipcAddSendSmart(&c, g_bsdSrvIpcBufferSize, dest_addr, addrlen, 1);
 
     struct {
         u64 magic;
@@ -510,8 +498,7 @@ int bsdAccept(int sockfd, struct sockaddr *addr, socklen_t *addrlen) {
 int bsdBind(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
     IpcCommand c;
     ipcInitialize(&c);
-    ipcAddSendBuffer(&c, addr, addrlen, 0);
-    ipcAddSendStatic(&c, addr, addrlen, 0);
+    ipcAddSendSmart(&c, g_bsdSrvIpcBufferSize, addr, addrlen, 0);
 
     struct {
         u64 magic;
@@ -531,8 +518,7 @@ int bsdBind(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
 int bsdConnect(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
     IpcCommand c;
     ipcInitialize(&c);
-    ipcAddSendBuffer(&c, addr, addrlen, 0);
-    ipcAddSendStatic(&c, addr, addrlen, 0);
+    ipcAddSendSmart(&c, g_bsdSrvIpcBufferSize, addr, addrlen, 0);
 
     struct {
         u64 magic;
@@ -563,8 +549,7 @@ int bsdGetSockOpt(int sockfd, int level, int optname, void *optval, socklen_t *o
 
     socklen_t inoptlen = optlen == NULL ? 0 : *optlen;
 
-    ipcAddRecvBuffer(&c, optval, inoptlen, 0);
-    ipcAddRecvStatic(&c, optval, inoptlen, 0);
+    ipcAddRecvSmart(&c, g_bsdSrvIpcBufferSize, optval, inoptlen, 0);
 
     struct {
         u64 magic;
@@ -656,23 +641,15 @@ int bsdIoctl(int fd, int request, void *data) {
 
     ipcInitialize(&c);
 
-    ipcAddSendBuffer(&c, in1, in1sz, 0);
-    ipcAddSendStatic(&c, in1, in1sz, 0);
-    ipcAddSendBuffer(&c, in2, in2sz, 0);
-    ipcAddSendStatic(&c, in2, in2sz, 0);
-    ipcAddSendBuffer(&c, in3, in3sz, 0);
-    ipcAddSendStatic(&c, in3, in3sz, 0);
-    ipcAddSendBuffer(&c, in4, in4sz, 0);
-    ipcAddSendStatic(&c, in4, in4sz, 0);
+    ipcAddSendSmart(&c, g_bsdSrvIpcBufferSize, in1, in1sz, 0);
+    ipcAddSendSmart(&c, g_bsdSrvIpcBufferSize, in2, in2sz, 1);
+    ipcAddSendSmart(&c, g_bsdSrvIpcBufferSize, in3, in3sz, 2);
+    ipcAddSendSmart(&c, g_bsdSrvIpcBufferSize, in4, in4sz, 3);
 
-    ipcAddRecvBuffer(&c, out1, out1sz, 0);
-    ipcAddRecvStatic(&c, out1, out1sz, 0);
-    ipcAddRecvBuffer(&c, out2, out2sz, 0);
-    ipcAddRecvStatic(&c, out2, out2sz, 0);
-    ipcAddRecvBuffer(&c, out3, out3sz, 0);
-    ipcAddRecvStatic(&c, out3, out3sz, 0);
-    ipcAddRecvBuffer(&c, out4, out4sz, 0);
-    ipcAddRecvStatic(&c, out4, out4sz, 0);
+    ipcAddRecvSmart(&c, g_bsdSrvIpcBufferSize, out1, out1sz, 0);
+    ipcAddRecvSmart(&c, g_bsdSrvIpcBufferSize, out2, out2sz, 1);
+    ipcAddRecvSmart(&c, g_bsdSrvIpcBufferSize, out3, out3sz, 2);
+    ipcAddRecvSmart(&c, g_bsdSrvIpcBufferSize, out4, out4sz, 3);
 
     struct {
         u64 magic;
@@ -730,8 +707,7 @@ int bsdSetSockOpt(int sockfd, int level, int optname, const void *optval, sockle
     IpcCommand c;
     ipcInitialize(&c);
 
-    ipcAddSendBuffer(&c, optval, optlen, 0);
-    ipcAddSendStatic(&c, optval, optlen, 0);
+    ipcAddSendSmart(&c, g_bsdSrvIpcBufferSize, optval, optlen, 0);
 
     struct {
         u64 magic;
@@ -795,8 +771,7 @@ int bsdShutdownAllSockets(int how) {
 ssize_t bsdWrite(int fd, const void *buf, size_t count) {
     IpcCommand c;
     ipcInitialize(&c);
-    ipcAddSendBuffer(&c, buf, count, 0);
-    ipcAddSendStatic(&c, buf, count, 0);
+    ipcAddSendSmart(&c, g_bsdSrvIpcBufferSize, buf, count, 0);
 
     struct {
         u64 magic;
@@ -816,8 +791,7 @@ ssize_t bsdWrite(int fd, const void *buf, size_t count) {
 ssize_t bsdRead(int fd, void *buf, size_t count) {
     IpcCommand c;
     ipcInitialize(&c);
-    ipcAddRecvBuffer(&c, buf, count, 0);
-    ipcAddRecvStatic(&c, buf, count, 0);
+    ipcAddRecvSmart(&c, g_bsdSrvIpcBufferSize, buf, count, 0);
 
     struct {
         u64 magic;
