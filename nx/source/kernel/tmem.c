@@ -6,6 +6,7 @@
 #include "kernel/svc.h"
 #include "kernel/tmem.h"
 #include "kernel/virtmem.h"
+#include "services/fatal.h"
 
 Result tmemCreate(TransferMemory* t, size_t size, Permission perm)
 {
@@ -91,7 +92,25 @@ Result tmemClose(TransferMemory* t)
             rc = svcCloseHandle(t->handle);
         }
 
-        if (t->src_addr != NULL) {
+        if (t->src_addr != NULL)
+        {
+            // This fixes a race condition where a remote process that has transfer
+            // memory mapped, but has not yet had time to unmap it.
+            // It will still be non-readable in our process until the other process has
+            // unmapped it, and we cannot free() it without crashing.
+            while (1) {
+                MemoryInfo info;
+                u32 who_cares;
+
+                if (R_FAILED(svcQueryMemory(&info, &who_cares, (u64) t->src_addr)))
+                    fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadQueryMemory));
+
+                if (!(info.attr & MemAttr_IsBorrowed))
+                    break;
+
+                svcSleepThread(1000000);
+            }
+
             free(t->src_addr);
         }
 
