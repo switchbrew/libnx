@@ -1,13 +1,13 @@
 #include <string.h>
 #include "types.h"
 #include "result.h"
-#include "ipc.h"
+#include "kernel/ipc.h"
+#include "kernel/shmem.h"
+#include "kernel/tmem.h"
 #include "services/applet.h"
 #include "services/irs.h"
 #include "services/hid.h"
 #include "services/sm.h"
-#include "kernel/shmem.h"
-#include "kernel/tmem.h"
 
 typedef struct {
     bool initialized;

@@ -14,11 +14,11 @@
 
 #include "types.h"
 #include "result.h"
-#include "ipc.h"
-#include "services/bsd.h"
-#include "services/sm.h"
+#include "kernel/ipc.h"
 #include "kernel/shmem.h"
 #include "kernel/rwlock.h"
+#include "services/bsd.h"
+#include "services/sm.h"
 
 __thread Result g_bsdResult;
 __thread int g_bsdErrno;

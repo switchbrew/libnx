@@ -1,9 +1,9 @@
 #include <string.h>
 #include "types.h"
 #include "result.h"
-#include "ipc.h"
 #include "services/applet.h"
 #include "services/vi.h"
+#include "kernel/ipc.h"
 #include "kernel/detect.h"
 
 static Service g_viSrv;

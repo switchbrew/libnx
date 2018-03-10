@@ -8,7 +8,7 @@
 #pragma once
 #include "../types.h"
 #include "../kernel/svc.h"
-#include "../ipc.h"
+#include "../kernel/ipc.h"
 
 /// Service type.
 typedef enum {

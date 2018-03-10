@@ -1,8 +1,8 @@
 #include <string.h>
 #include "types.h"
 #include "result.h"
-#include "ipc.h"
 #include "arm/cache.h"
+#include "kernel/ipc.h"
 #include "kernel/detect.h"
 #include "services/usb.h"
 #include "services/sm.h"

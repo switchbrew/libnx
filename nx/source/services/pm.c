@@ -1,7 +1,7 @@
 // Copyright 2017 plutoo
 #include "types.h"
 #include "result.h"
-#include "ipc.h"
+#include "kernel/ipc.h"
 #include "services/pm.h"
 #include "services/sm.h"
 

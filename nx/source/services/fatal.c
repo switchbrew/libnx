@@ -1,11 +1,11 @@
 // Copyright 2017 plutoo
 #include "types.h"
 #include "result.h"
-#include "ipc.h"
-#include "services/fatal.h"
-#include "services/sm.h"
+#include "kernel/ipc.h"
 #include "kernel/detect.h"
 #include "kernel/svc.h"
+#include "services/fatal.h"
+#include "services/sm.h"
 
 void fatalSimple(Result err) {
     Result rc = 0;

@@ -14,6 +14,9 @@ extern "C" {
 
 #include "switch/nro.h"
 
+#include "switch/arm/tls.h"
+#include "switch/arm/cache.h"
+
 #include "switch/kernel/svc.h"
 #include "switch/kernel/tmem.h"
 #include "switch/kernel/shmem.h"
@@ -25,10 +28,7 @@ extern "C" {
 #include "switch/kernel/detect.h"
 #include "switch/kernel/random.h"
 #include "switch/kernel/jit.h"
-
-#include "switch/arm/tls.h"
-#include "switch/arm/cache.h"
-#include "switch/ipc.h"
+#include "switch/kernel/ipc.h"
 
 #include "switch/services/sm.h"
 #include "switch/services/fs.h"

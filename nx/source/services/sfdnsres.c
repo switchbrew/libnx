@@ -1,6 +1,6 @@
 #include "types.h"
 #include "result.h"
-#include "ipc.h"
+#include "kernel/ipc.h"
 #include "services/sm.h"
 #include "services/sfdnsres.h"
 
