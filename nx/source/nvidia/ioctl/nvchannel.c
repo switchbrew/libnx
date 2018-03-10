@@ -56,10 +56,18 @@ Result nvioctlChannel_AllocObjCtx(u32 fd, u32 class_num, u32 flags, u64* id_out)
     memset(&data, 0, sizeof(data));
     data.class_num = class_num;
     data.flags = flags;
-    if (id_out != NULL)
-        *id_out = data.obj_id;
+    data.obj_id = 0xDEADBEEF;
 
-    return nvIoctl(fd, _NV_IOWR(0x48, 0x09, data), &data);
+    Result rc = nvIoctl(fd, _NV_IOWR(0x48, 0x09, data), &data);
+
+    if (R_SUCCEEDED(rc)) {
+        if (id_out != NULL) {
+            *id_out = data.obj_id;
+        }
+    }
+
+    return rc;
+
 }
 
 Result nvioctlChannel_ZCullBind(u32 fd, u64 gpu_va, u32 mode) {

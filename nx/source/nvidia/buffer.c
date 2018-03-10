@@ -43,6 +43,7 @@ static Result _nvbufCreate(NvBuffer* m, size_t size, u32 flags, u32 align, NvBuf
     m->size = size;
     m->fd = -1;
     m->ptr = memalign(size, align);
+    m->kind = kind;
 
     if (m->ptr == NULL)
         return MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
