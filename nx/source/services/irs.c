@@ -14,14 +14,14 @@ typedef struct {
     bool initialized;
     u32 IrCameraHandle;
     TransferMemory transfermem;
-} irsCameraEntry;
+} IrsCameraEntry;
 
 static Service g_irsSrv;
 static u64 g_refCnt;
 static SharedMemory g_irsSharedmem;
 static bool g_irsSensorActivated;
 
-static irsCameraEntry g_irsCameras[8];
+static IrsCameraEntry g_irsCameras[8];
 
 static Result _irsGetIrsensorSharedMemoryHandle(Handle* handle_out, u64 AppletResourceUserId);
 
@@ -66,8 +66,8 @@ void irsExit(void)
 {
     if (atomicDecrement64(&g_refCnt) == 0)
     {
-        size_t entrycount = sizeof(g_irsCameras)/sizeof(irsCameraEntry);
-        irsCameraEntry *entry;
+        size_t entrycount = sizeof(g_irsCameras)/sizeof(IrsCameraEntry);
+        IrsCameraEntry *entry;
 
         int i;
         for(i=0; i<entrycount; i++) {
@@ -83,11 +83,11 @@ void irsExit(void)
     }
 }
 
-static Result _irsCameraEntryAlloc(u32 IrCameraHandle, irsCameraEntry **out_entry) {
+static Result _IrsCameraEntryAlloc(u32 IrCameraHandle, IrsCameraEntry **out_entry) {
     int i;
-    size_t entrycount = sizeof(g_irsCameras)/sizeof(irsCameraEntry);
+    size_t entrycount = sizeof(g_irsCameras)/sizeof(IrsCameraEntry);
     int empty_entry = -1;
-    irsCameraEntry *entry;
+    IrsCameraEntry *entry;
 
     if (out_entry) *out_entry = NULL;
 
@@ -114,10 +114,10 @@ static Result _irsCameraEntryAlloc(u32 IrCameraHandle, irsCameraEntry **out_entr
     return 0;
 }
 
-static Result _irsCameraEntryGet(u32 IrCameraHandle, irsCameraEntry **out_entry) {
+static Result _IrsCameraEntryGet(u32 IrCameraHandle, IrsCameraEntry **out_entry) {
     int i;
-    size_t entrycount = sizeof(g_irsCameras)/sizeof(irsCameraEntry);
-    irsCameraEntry *entry;
+    size_t entrycount = sizeof(g_irsCameras)/sizeof(IrsCameraEntry);
+    IrsCameraEntry *entry;
     *out_entry = NULL;
 
     for(i=0; i<entrycount; i++) {
@@ -131,9 +131,9 @@ static Result _irsCameraEntryGet(u32 IrCameraHandle, irsCameraEntry **out_entry)
     return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 }
 
-static void _irsCameraEntryFree(irsCameraEntry *entry) {
+static void _IrsCameraEntryFree(IrsCameraEntry *entry) {
     tmemClose(&entry->transfermem);
-    memset(entry, 0, sizeof(irsCameraEntry));
+    memset(entry, 0, sizeof(IrsCameraEntry));
 }
 
 Service* irsGetSessionService(void) {
@@ -269,7 +269,7 @@ static Result _irsStopImageProcessor(u32 IrCameraHandle, u64 AppletResourceUserI
 Result irsStopImageProcessor(u32 IrCameraHandle) {
     Result rc=0;
     u64 AppletResourceUserId=0;
-    irsCameraEntry *entry = NULL;
+    IrsCameraEntry *entry = NULL;
 
     if (!serviceIsActive(&g_irsSrv))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
@@ -278,7 +278,7 @@ Result irsStopImageProcessor(u32 IrCameraHandle) {
     if (R_FAILED(rc))
         return rc;
 
-    rc = _irsCameraEntryGet(IrCameraHandle, &entry);
+    rc = _IrsCameraEntryGet(IrCameraHandle, &entry);
     if (R_FAILED(rc))
         return rc;
 
@@ -286,11 +286,11 @@ Result irsStopImageProcessor(u32 IrCameraHandle) {
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     rc = _irsStopImageProcessor(IrCameraHandle, AppletResourceUserId);
-    _irsCameraEntryFree(entry);
+    _IrsCameraEntryFree(entry);
     return rc;
 }
 
-static Result _irsRunImageTransferProcessor(u32 IrCameraHandle, u64 AppletResourceUserId, irsPackedImageTransferProcessorConfig *config, Handle transfermem, u64 transfermem_size) {
+static Result _irsRunImageTransferProcessor(u32 IrCameraHandle, u64 AppletResourceUserId, IrsPackedImageTransferProcessorConfig *config, Handle transfermem, u64 transfermem_size) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -299,7 +299,7 @@ static Result _irsRunImageTransferProcessor(u32 IrCameraHandle, u64 AppletResour
         u64 cmd_id;
         u32 IrCameraHandle;
         u64 AppletResourceUserId;
-        irsPackedImageTransferProcessorConfig config;
+        IrsPackedImageTransferProcessorConfig config;
         u64 TransferMemory_size;
     } *raw;
 
@@ -333,11 +333,11 @@ static Result _irsRunImageTransferProcessor(u32 IrCameraHandle, u64 AppletResour
     return rc;
 }
 
-Result irsRunImageTransferProcessor(u32 IrCameraHandle, irsImageTransferProcessorConfig *config, size_t size) {
+Result irsRunImageTransferProcessor(u32 IrCameraHandle, IrsImageTransferProcessorConfig *config, size_t size) {
     Result rc=0;
     u64 AppletResourceUserId=0;
-    irsCameraEntry *entry = NULL;
-    irsPackedImageTransferProcessorConfig packed_config;
+    IrsCameraEntry *entry = NULL;
+    IrsPackedImageTransferProcessorConfig packed_config;
 
     memset(&packed_config, 0, sizeof(packed_config));
 
@@ -352,7 +352,7 @@ Result irsRunImageTransferProcessor(u32 IrCameraHandle, irsImageTransferProcesso
     if (R_FAILED(rc))
         return rc;
 
-    rc = _irsCameraEntryAlloc(IrCameraHandle, &entry);
+    rc = _IrsCameraEntryAlloc(IrCameraHandle, &entry);
     if (R_FAILED(rc))
         return rc;
 
@@ -361,12 +361,12 @@ Result irsRunImageTransferProcessor(u32 IrCameraHandle, irsImageTransferProcesso
 
     rc = _irsRunImageTransferProcessor(IrCameraHandle, AppletResourceUserId, &packed_config, entry->transfermem.handle, size);
 
-    if (R_FAILED(rc)) _irsCameraEntryFree(entry);
+    if (R_FAILED(rc)) _IrsCameraEntryFree(entry);
 
     return rc;
 }
 
-static Result _irsGetImageTransferProcessorState(u32 IrCameraHandle, u64 AppletResourceUserId, void* buffer, size_t size, irsImageTransferProcessorState *state) {
+static Result _irsGetImageTransferProcessorState(u32 IrCameraHandle, u64 AppletResourceUserId, void* buffer, size_t size, IrsImageTransferProcessorState *state) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -396,19 +396,19 @@ static Result _irsGetImageTransferProcessorState(u32 IrCameraHandle, u64 AppletR
         struct {
             u64 magic;
             u64 result;
-            irsImageTransferProcessorState state;
+            IrsImageTransferProcessorState state;
         } *resp = r.Raw;
 
         rc = resp->result;
 
         if (R_SUCCEEDED(rc) && state)
-            memcpy(state, &resp->state, sizeof(irsImageTransferProcessorState)); 
+            memcpy(state, &resp->state, sizeof(IrsImageTransferProcessorState)); 
     }
 
     return rc;
 }
 
-Result irsGetImageTransferProcessorState(u32 IrCameraHandle, void* buffer, size_t size, irsImageTransferProcessorState *state) {
+Result irsGetImageTransferProcessorState(u32 IrCameraHandle, void* buffer, size_t size, IrsImageTransferProcessorState *state) {
     Result rc=0;
     u64 AppletResourceUserId=0;
 
@@ -420,8 +420,8 @@ Result irsGetImageTransferProcessorState(u32 IrCameraHandle, void* buffer, size_
     return rc;
 }
 
-void irsGetDefaultImageTransferProcessorConfig(irsImageTransferProcessorConfig *config) {
-    memset(config, 0, sizeof(irsImageTransferProcessorConfig));
+void irsGetDefaultImageTransferProcessorConfig(IrsImageTransferProcessorConfig *config) {
+    memset(config, 0, sizeof(IrsImageTransferProcessorConfig));
 
     config->exposure = 300000;
     config->ir_leds = 0;
