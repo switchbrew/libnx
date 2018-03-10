@@ -10,7 +10,7 @@ Result nvzcullCreate(NvZcullContext* z, NvGpu* parent)
     iova_t iova_out;
 
     if (R_SUCCEEDED(rc))
-        rc = nvasMapBuffer(&parent->addr_space, &z->ctx_buf, &iova_out);
+        rc = nvasMapBuffer(&parent->addr_space, &z->ctx_buf, NvBufferKind_Pitch, &iova_out);
 
     if (R_SUCCEEDED(rc))
         rc = nvioctlChannel_ZCullBind(parent->gpu_channel.fd, iova_out, NvZcullConfig_SeparateBuffer);
