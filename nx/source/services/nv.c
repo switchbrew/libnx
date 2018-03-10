@@ -10,55 +10,52 @@
 
 static Service g_nvSrv;
 static size_t g_nvIpcBufferSize = 0;
-static u32 g_nvServiceType = -1;
 static TransferMemory g_nvTransfermem;
 
 static Result _nvInitialize(Handle proc, Handle sharedmem, u32 transfermem_size);
 static Result _nvSetClientPID(u64 AppletResourceUserId);
 
-Result nvInitialize(nvServiceType servicetype, size_t transfermem_size)
+Result nvInitialize(size_t transfermem_size)
 {
-    if (g_nvServiceType != -1)
+    if (serviceIsActive(&g_nvSrv))
         return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
 
     Result rc = 0;
     u64 AppletResourceUserId = 0;
 
-    if (servicetype==NVSERVTYPE_Default || servicetype==NVSERVTYPE_Application) {
+    switch (appletGetAppletType()) {
+    case AppletType_Default:
+    case AppletType_Application:
+    case AppletType_SystemApplication:
+    default:
         rc = smGetService(&g_nvSrv, "nvdrv");
-        g_nvServiceType = 0;
-    }
+        break;
 
-    if ((servicetype==NVSERVTYPE_Default && R_FAILED(rc)) || servicetype==NVSERVTYPE_Applet) {
+    case AppletType_SystemApplet:
+    case AppletType_LibraryApplet:
+    case AppletType_OverlayApplet:
         rc = smGetService(&g_nvSrv, "nvdrv:a");
-        g_nvServiceType = 1;
-    }
-
-    if ((servicetype==NVSERVTYPE_Default && R_FAILED(rc)) || servicetype==NVSERVTYPE_Sysmodule)
-    {
-        rc = smGetService(&g_nvSrv, "nvdrv:s");
-        g_nvServiceType = 2;
-    }
-
-    if ((servicetype==NVSERVTYPE_Default && R_FAILED(rc)) || servicetype==NVSERVTYPE_T)
-    {
-        rc = smGetService(&g_nvSrv, "nvdrv:t");
-        g_nvServiceType = 3;
+        break;
     }
 
     if (R_SUCCEEDED(rc)) {
         g_nvIpcBufferSize = 0;
         rc = ipcQueryPointerBufferSize(g_nvSrv.handle, &g_nvIpcBufferSize);
 
-        if (R_SUCCEEDED(rc)) rc = tmemCreate(&g_nvTransfermem, transfermem_size, Perm_None);
+        if (R_SUCCEEDED(rc))
+            rc = tmemCreate(&g_nvTransfermem, transfermem_size, Perm_None);
 
-        if (R_SUCCEEDED(rc)) rc = _nvInitialize(CUR_PROCESS_HANDLE, g_nvTransfermem.handle, transfermem_size);
+        if (R_SUCCEEDED(rc))
+            rc = _nvInitialize(CUR_PROCESS_HANDLE, g_nvTransfermem.handle, transfermem_size);
 
-        //Officially ipc control DuplicateSessionEx would be used here.
+        // Officially ipc control DuplicateSessionEx would be used here.
 
-        if (R_SUCCEEDED(rc)) rc = appletGetAppletResourceUserId(&AppletResourceUserId);//TODO: How do sysmodules handle this?
+        // TODO: How do sysmodules handle this?
+        if (R_SUCCEEDED(rc))
+            rc = appletGetAppletResourceUserId(&AppletResourceUserId);
 
-        if (R_SUCCEEDED(rc)) rc = _nvSetClientPID(AppletResourceUserId);
+        if (R_SUCCEEDED(rc))
+            rc = _nvSetClientPID(AppletResourceUserId);
     }
 
     if (R_FAILED(rc)) {
@@ -70,11 +67,6 @@ Result nvInitialize(nvServiceType servicetype, size_t transfermem_size)
 
 void nvExit(void)
 {
-    if (g_nvServiceType == -1)
-        return;
-
-    g_nvServiceType = -1;
-
     serviceClose(&g_nvSrv);
     tmemClose(&g_nvTransfermem);
 }

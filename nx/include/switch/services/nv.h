@@ -7,15 +7,7 @@
 #pragma once
 #include "../types.h"
 
-typedef enum {
-	NVSERVTYPE_Default = -1,
-	NVSERVTYPE_Application = 0,
-	NVSERVTYPE_Applet = 1,
-	NVSERVTYPE_Sysmodule = 2,
-	NVSERVTYPE_T = 3,
-} nvServiceType;
-
-Result nvInitialize(nvServiceType servicetype, size_t sharedmem_size);
+Result nvInitialize(size_t sharedmem_size);
 void nvExit(void);
 
 Result nvOpen(u32 *fd, const char *devicepath);

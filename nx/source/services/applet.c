@@ -273,6 +273,10 @@ void appletExit(void)
     }
 }
 
+AppletType appletGetAppletType(void) {
+    return __nx_applet_type;
+}
+
 static void appletCallHook(AppletHookType hookType)
 {
     AppletHookCookie* c;
@@ -514,7 +518,7 @@ Result appletGetDesiredLanguage(u64 *LanguageCode) {
     IpcCommand c;
     ipcInitialize(&c);
 
-    if (!serviceIsActive(&g_appletSrv) || __nx_applet_type!=AppletType_Application)
+    if (!serviceIsActive(&g_appletSrv) || __nx_applet_type != AppletType_Application)
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     struct {
