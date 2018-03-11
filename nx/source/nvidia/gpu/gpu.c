@@ -7,8 +7,10 @@ Result nvgpuCreate(NvGpu* g)
     if (R_FAILED(nvinfoInit()))
         return MAKERESULT(Module_Libnx, LibnxError_NvinfoFailedToInitialize);
 
-    if (R_FAILED(nvbufInit()))
+    if (R_FAILED(nvbufInit())) {
+        nvinfoExit();
         return MAKERESULT(Module_Libnx, LibnxError_NvbufFailedToInitialize);
+    }
 
     rc = nvchannelCreate(&g->gpu_channel, "/dev/nvhost-gpu");
 
