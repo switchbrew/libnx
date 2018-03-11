@@ -100,8 +100,7 @@ typedef struct {
 } nvioctl_fence;
 
 typedef struct {
-    u32 entry0;
-    u32 entry1;
+    u64 desc;
 } nvioctl_gpfifo_entry;
 
 // Used with nvioctlChannel_AllocObjCtx().
