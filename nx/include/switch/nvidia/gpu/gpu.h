@@ -6,6 +6,7 @@ typedef struct NvGpu {
     NvGpfifo gpfifo;
     NvZcullContext zcull_ctx;
     Nv3dContext _3d_ctx;
+    NvErrorNotifier error_notifier;
 } NvGpu;
 
 Result nvgpuCreate(NvGpu* g);
