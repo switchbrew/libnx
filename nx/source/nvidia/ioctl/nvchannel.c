@@ -84,18 +84,18 @@ Result nvioctlChannel_ZCullBind(u32 fd, u64 gpu_va, u32 mode) {
     return nvIoctl(fd, _NV_IOWR(0x48, 0x0B, data), &data);
 }
 
-Result nvioctlChannel_SetErrorNotifier(u32 fd, u64 offset, u64 size, u32 nvmap_handle) {
+Result nvioctlChannel_SetErrorNotifier(u32 fd, u32 enable) {
     struct {
-        __nv_in  u64 offset;
-        __nv_in  u64 size;
-        __nv_in  u32 nvmap_handle;
+        __nv_in  u64 offset;  // not used
+        __nv_in  u64 size;    // not used
+        __nv_in  u32 enable;
         u32 padding;
     } data;
 
     memset(&data, 0, sizeof(data));
-    data.offset = offset;
-    data.size = size;
-    data.nvmap_handle = nvmap_handle;
+    data.offset = 0;
+    data.size = 0;
+    data.enable = enable;
 
     return nvIoctl(fd, _NV_IOWR(0x48, 0x0C, data), &data);
 }

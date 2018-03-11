@@ -213,7 +213,7 @@ Result svcSleepThread(u64 nano);
 
 ///@}
 
-///@name Synchronization
+///@name Events
 ///@{
 
 /**
@@ -229,6 +229,14 @@ Result svcSignalEvent(Handle handle);
  * @note Syscall number 0x12.
  */
 Result svcClearEvent(Handle handle);
+
+/**
+ * @brief Creates a new event.
+ * @return Result code.
+ * @note Syscall number 0x45.
+ * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
+ */
+Result svcCreateEvent(Handle* rhandle_out, Handle* whandle_out);
 
 ///@}
 

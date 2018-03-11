@@ -63,6 +63,7 @@ extern "C" {
 #include "switch/nvidia/gpu/gpfifo.h"
 #include "switch/nvidia/gpu/zcull_ctx.h"
 #include "switch/nvidia/gpu/3d_ctx.h"
+#include "switch/nvidia/gpu/error_notifier.h"
 #include "switch/nvidia/gpu/gpu.h"
 
 #include "switch/runtime/env.h"

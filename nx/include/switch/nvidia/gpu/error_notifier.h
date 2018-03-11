@@ -1,0 +1,9 @@
+typedef struct NvGpu NvGpu;
+
+typedef struct {
+    NvGpu* parent;
+    bool   has_init;
+} NvErrorNotifier;
+
+Result nverrCreate(NvErrorNotifier* t, NvGpu* parent);
+void   nverrClose(NvErrorNotifier* t);

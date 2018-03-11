@@ -129,6 +129,17 @@ typedef enum {
     NvZcullConfig_PartOfRegularBuffer = 3
 } NvZcullConfig;
 
+typedef enum {
+    NvErrorType_FifoErrorIdleTimeout=8,
+    NvErrorType_GrErrorSwNotify=13,
+    NvErrorType_GrSemaphoreTimeout=24,
+    NvErrorType_GrIllegalNotify=25,
+    NvErrorType_FifoErrorMmuErrFlt=31,
+    NvErrorType_PbdmaError=32,
+    NvErrorType_ResetChannelVerifError=43,
+    NvErrorType_PbdmaPushbufferCrcMismatch=80
+} NvErrorType;
+
 Result nvioctlNvhostCtrl_EventSignal(u32 fd, u32 event_id);
 Result nvioctlNvhostCtrl_EventWait(u32 fd, u32 syncpt_id, u32 threshold, s32 timeout, u32 event_id, u32 *out);
 Result nvioctlNvhostCtrl_EventRegister(u32 fd, u32 event_id);
@@ -154,7 +165,7 @@ Result nvioctlChannel_SetNvmapFd(u32 fd, u32 nvmap_fd);
 Result nvioctlChannel_SubmitGpfifo(u32 fd, nvioctl_gpfifo_entry *entries, u32 num_entries, u32 flags, nvioctl_fence *fence_out);
 Result nvioctlChannel_AllocObjCtx(u32 fd, u32 class_num, u32 flags, u64* id_out);
 Result nvioctlChannel_ZCullBind(u32 fd, u64 gpu_va, u32 mode);
-Result nvioctlChannel_SetErrorNotifier(u32 fd, u64 offset, u64 size, u32 nvmap_handle);
+Result nvioctlChannel_SetErrorNotifier(u32 fd, u32 enable);
 Result nvioctlChannel_SetPriority(u32 fd, u32 priority);
 Result nvioctlChannel_AllocGpfifoEx2(u32 fd, u32 num_entries, u32 flags, u32 unk0, u32 unk1, u32 unk2, u32 unk3, nvioctl_fence *fence_out);
 Result nvioctlChannel_SetUserData(u32 fd, void* addr);
