@@ -100,6 +100,10 @@ Result nvioctlChannel_SetErrorNotifier(u32 fd, u32 enable) {
     return nvIoctl(fd, _NV_IOWR(0x48, 0x0C, data), &data);
 }
 
+Result nvioctlChannel_GetErrorNotification(u32 fd, NvError* out) {
+    return nvIoctl(fd, _NV_IOWR(0x48, 0x17, *out), out);
+}
+
 Result nvioctlChannel_SetPriority(u32 fd, u32 priority) {
     struct {
         __nv_in u32 priority; // 0x32 is low, 0x64 is medium and 0x96 is high
