@@ -20,7 +20,7 @@ Result nvGpfifoSubmit(NvGpfifo* f, NvCmdList* cmd_list, NvFence* fence_out)
     nvioctl_gpfifo_entry ent;
     nvioctl_fence fence;
 
-    ent.desc = nvcmdsGetGpuAddr(cmd_list) | (nvcmdsGetListSize(cmd_list) << 42);
+    ent.desc = nvCmdListGetGpuAddr(cmd_list) | (nvCmdListGetListSize(cmd_list) << 42);
 
     rc = nvioctlChannel_SubmitGpfifo(
         f->parent->fd, &ent, 1, 0/*flags*/, &fence);

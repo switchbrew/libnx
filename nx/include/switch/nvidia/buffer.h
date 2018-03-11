@@ -258,5 +258,8 @@ void   nvBufferExit(void);
 Result nvBufferCreate(NvBuffer* m, size_t size, u32 align, NvBufferKind kind);
 Result nvBufferCreateRw(NvBuffer* m, size_t size, u32 align, NvBufferKind kind);
 void   nvBufferFree(NvBuffer* m);
-
 void*  nvBufferGetAddr(NvBuffer* m);
+
+Result nvBufferMakeCpuUncached(NvBuffer* m);
+Result nvBufferMakeCpuCached(NvBuffer* m);
+

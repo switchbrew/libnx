@@ -2,6 +2,7 @@
 #include "types.h"
 #include "result.h"
 #include "arm/atomics.h"
+#include "kernel/svc.h"
 #include "services/nv.h"
 #include "nvidia/ioctl.h"
 #include "nvidia/buffer.h"
@@ -60,7 +61,8 @@ static Result _nvBufferCreate(NvBuffer* m, size_t size, u32 flags, u32 align, Nv
         m->fd = -1;
 
     if (R_SUCCEEDED(rc))
-        rc = nvioctlNvmap_Alloc(g_nvmap_fd, m->fd, 0, flags | NvBufferFlags_Nintendo, align, kind, m->ptr);
+        rc = nvioctlNvmap_Alloc(
+            g_nvmap_fd, m->fd, 0, flags | NvBufferFlags_Nintendo, align, kind, m->ptr);
 
     if (R_FAILED(rc))
         nvBufferFree(m);
@@ -74,6 +76,14 @@ Result nvBufferCreate(NvBuffer* m, size_t size, u32 align, NvBufferKind kind) {
 
 Result nvBufferCreateRw(NvBuffer* m, size_t size, u32 align, NvBufferKind kind) {
     return _nvBufferCreate(m, size, NvBufferFlags_Writable, align, kind);
+}
+
+Result nvBufferMakeCpuUncached(NvBuffer* m) {
+    return svcSetMemoryAttribute(m->ptr, m->size, 8, 8);
+}
+
+Result nvBufferMakeCpuCached(NvBuffer* m) {
+    return svcSetMemoryAttribute(m->ptr, m->size, 8, 0);
 }
 
 void nvBufferFree(NvBuffer* m)
