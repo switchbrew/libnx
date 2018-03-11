@@ -44,8 +44,8 @@ Result nvasReserveFull(NvAddressSpace* a) {
 }
 
 Result nvasMapBuffer(NvAddressSpace* a, NvBuffer* buffer, NvBufferKind kind, iova_t* iova_out) {
-    // TODO: What is flag==4?
-    return nvioctlNvhostAsGpu_MapBufferEx(a->fd, 4, kind, buffer->fd, 0x10000, 0, 0, 0, iova_out);
+    return nvioctlNvhostAsGpu_MapBufferEx(
+        a->fd, NvMapBufferFlags_IsCachable, kind, buffer->fd, 0x10000, 0, 0, 0, iova_out);
 }
 
 Result nvasBindToChannel(NvAddressSpace* a, NvChannel* channel) {
