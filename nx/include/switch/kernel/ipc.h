@@ -449,6 +449,16 @@ static inline Result ipcQueryPointerBufferSize(Handle session, size_t *size) {
     return rc;
 }
 
+/**
+ * @brief Closes the IPC session with proper clean up.
+ * @param session IPC session handle.
+ * @return Result code.
+ */
+static inline Result ipcCloseSession(Handle session) {
+    u32* buf = (u32*)armGetTls();
+    buf[0] = 2;
+    return ipcDispatch(session);
+}
 ///@}
 
 ///@name IPC domain handling

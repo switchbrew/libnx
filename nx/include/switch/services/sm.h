@@ -134,6 +134,7 @@ static inline void serviceClose(Service* s) {
 
     case ServiceType_Normal:
     case ServiceType_Domain:
+        ipcCloseSession(s->handle);
         svcCloseHandle(s->handle);
         break;
 
