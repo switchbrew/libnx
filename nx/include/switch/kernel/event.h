@@ -1,4 +1,4 @@
-// Copyright plutoo 2018
+// Copyright 2018 plutoo
 #include "../types.h"
 #include "../result.h"
 #include "../kernel/svc.h"
