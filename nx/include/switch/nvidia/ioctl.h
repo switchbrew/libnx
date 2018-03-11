@@ -129,6 +129,12 @@ typedef enum {
     NvZcullConfig_PartOfRegularBuffer = 3
 } NvZcullConfig;
 
+// Used with nvioctlNvhostAsGpu_MapBufferEx().
+typedef enum {
+    NvMapBufferFlags_FixedOffset = 0,
+    NvMapBufferFlags_IsCachable = 4,
+} NvMapBufferFlags;
+
 typedef enum {
     NvErrorType_FifoErrorIdleTimeout=8,
     NvErrorType_GrErrorSwNotify=13,
