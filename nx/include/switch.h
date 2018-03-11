@@ -77,6 +77,8 @@ extern "C" {
 #include "switch/nvidia/address_space.h"
 #include "switch/nvidia/channel.h"
 #include "switch/nvidia/info.h"
+#include "switch/nvidia/fence.h"
+#include "switch/nvidia/gpu/cmd_list.h"
 #include "switch/nvidia/gpu/gpfifo.h"
 #include "switch/nvidia/gpu/zcull_ctx.h"
 #include "switch/nvidia/gpu/3d_ctx.h"
