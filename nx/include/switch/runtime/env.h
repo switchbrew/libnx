@@ -85,3 +85,6 @@ Result envSetNextLoad(const char* path, const char* argv);
 
 /// Returns true if the environment supports envSetNextLoad.
 bool envHasNextLoad(void);
+
+/// Returns the Result from the last NRO.
+Result envGetLastLoadResult(void);

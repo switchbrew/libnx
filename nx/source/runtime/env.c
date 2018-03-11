@@ -16,6 +16,7 @@ static u64    g_syscallHints[2];
 static Handle g_processHandle = INVALID_HANDLE;
 static char*  g_nextLoadPath = NULL;
 static char*  g_nextLoadArgv = NULL;
+static Result g_lastLoadResult = 0;
 
 extern __attribute__((weak)) u32 __nx_applet_type;
 
@@ -82,6 +83,10 @@ void envSetup(void* ctx, Handle main_thread, LoaderReturnFn saved_lr)
 
         case EntryType_ProcessHandle:
             g_processHandle = ent->Value[0];
+            break;
+
+        case EntryType_LastLoadResult:
+            g_lastLoadResult = ent->Value[0];
             break;
 
         default:
@@ -163,4 +168,8 @@ Result envSetNextLoad(const char* path, const char* argv)
 
 bool envHasNextLoad(void) {
     return g_nextLoadPath != NULL;
+}
+
+Result envGetLastLoadResult(void) {
+    return g_lastLoadResult;
 }
