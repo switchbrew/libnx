@@ -6,8 +6,8 @@ typedef struct NvChannel {
     bool has_init;
 } NvChannel;
 
-Result nvchannelCreate(NvChannel* c, const char* dev);
-void   nvchannelClose(NvChannel* c);
+Result nvChannelCreate(NvChannel* c, const char* dev);
+void   nvChannelClose(NvChannel* c);
 
-Result nvchannelSetPriority(NvChannel* c, NvChannelPriority prio);
-Result nvchannelSetNvmapFd(NvChannel* c);
+Result nvChannelSetPriority(NvChannel* c, NvChannelPriority prio);
+Result nvChannelSetNvmapFd(NvChannel* c);

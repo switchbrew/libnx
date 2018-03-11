@@ -251,12 +251,12 @@ typedef struct {
     bool  has_init;
 } NvBuffer;
 
-Result nvbufInit(void);
-u32    nvbufGetNvmapFd(void);
-void   nvbufExit(void);
+Result nvBufferInit(void);
+u32    nvBufferGetNvmapFd(void);
+void   nvBufferExit(void);
 
-Result nvbufCreate(NvBuffer* m, size_t size, u32 align, NvBufferKind kind);
-Result nvbufCreateRw(NvBuffer* m, size_t size, u32 align, NvBufferKind kind);
-void   nvbufFree(NvBuffer* m);
+Result nvBufferCreate(NvBuffer* m, size_t size, u32 align, NvBufferKind kind);
+Result nvBufferCreateRw(NvBuffer* m, size_t size, u32 align, NvBufferKind kind);
+void   nvBufferFree(NvBuffer* m);
 
-void*  nvbufGetAddr(NvBuffer* m);
+void*  nvBufferGetAddr(NvBuffer* m);

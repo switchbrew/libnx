@@ -9,7 +9,7 @@
 static u32 g_nvmap_fd = -1;
 static u64 g_refCnt;
 
-Result nvbufInit(void)
+Result nvBufferInit(void)
 {
     Result rc;
 
@@ -24,7 +24,7 @@ Result nvbufInit(void)
      return rc;
 }
 
-void nvbufExit(void)
+void nvBufferExit(void)
 {
     if (atomicDecrement64(&g_refCnt) == 0)
     {
@@ -35,11 +35,11 @@ void nvbufExit(void)
     }
 }
 
-u32 nvbufGetNvmapFd(void) {
+u32 nvBufferGetNvmapFd(void) {
     return g_nvmap_fd;
 }
 
-static Result _nvbufCreate(NvBuffer* m, size_t size, u32 flags, u32 align, NvBufferKind kind)
+static Result _nvBufferCreate(NvBuffer* m, size_t size, u32 flags, u32 align, NvBufferKind kind)
 {
     Result rc;
 
@@ -63,20 +63,20 @@ static Result _nvbufCreate(NvBuffer* m, size_t size, u32 flags, u32 align, NvBuf
         rc = nvioctlNvmap_Alloc(g_nvmap_fd, m->fd, 0, flags | NvBufferFlags_Nintendo, align, kind, m->ptr);
 
     if (R_FAILED(rc))
-        nvbufFree(m);
+        nvBufferFree(m);
 
     return rc;
 }
 
-Result nvbufCreate(NvBuffer* m, size_t size, u32 align, NvBufferKind kind) {
-    return _nvbufCreate(m, size, 0, align, kind);
+Result nvBufferCreate(NvBuffer* m, size_t size, u32 align, NvBufferKind kind) {
+    return _nvBufferCreate(m, size, 0, align, kind);
 }
 
-Result nvbufCreateRw(NvBuffer* m, size_t size, u32 align, NvBufferKind kind) {
-    return _nvbufCreate(m, size, NvBufferFlags_Writable, align, kind);
+Result nvBufferCreateRw(NvBuffer* m, size_t size, u32 align, NvBufferKind kind) {
+    return _nvBufferCreate(m, size, NvBufferFlags_Writable, align, kind);
 }
 
-void nvbufFree(NvBuffer* m)
+void nvBufferFree(NvBuffer* m)
 {
     if (!m->has_init)
         return;
@@ -90,6 +90,6 @@ void nvbufFree(NvBuffer* m)
     m->fd = -1;
 }
 
-void* nvbufGetAddr(NvBuffer* m) {
+void* nvBufferGetAddr(NvBuffer* m) {
     return m->ptr;
 }

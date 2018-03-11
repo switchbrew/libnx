@@ -13,14 +13,14 @@ typedef enum {
 typedef u64 iova_t;
 
 
-Result nvasCreate(NvAddressSpace* a);
-void   nvasClose(NvAddressSpace* a);
+Result nvAddressSpaceCreate(NvAddressSpace* a);
+void   nvAddressSpaceClose(NvAddressSpace* a);
 
-Result nvasReserveAlign(NvAddressSpace* a, NvPageSize align, u32 pages, NvPageSize page_sz, iova_t* iova_out);
-Result nvasReserveAtFixedAddr(NvAddressSpace* a, iova_t addr, u32 pages, NvPageSize page_sz);
-Result nvasReserveFull(NvAddressSpace* a);
+Result nvAddressSpaceReserveAlign(NvAddressSpace* a, NvPageSize align, u32 pages, NvPageSize page_sz, iova_t* iova_out);
+Result nvAddressSpaceReserveAtFixedAddr(NvAddressSpace* a, iova_t addr, u32 pages, NvPageSize page_sz);
+Result nvAddressSpaceReserveFull(NvAddressSpace* a);
 
-Result nvasMapBuffer(NvAddressSpace* a, NvBuffer* buffer, NvBufferKind kind, iova_t* iova_out);
+Result nvAddressSpaceMapBuffer(NvAddressSpace* a, NvBuffer* buffer, NvBufferKind kind, iova_t* iova_out);
 
 struct NvChannel;
-Result nvasBindToChannel(NvAddressSpace* a, struct NvChannel* channel);
+Result nvAddressSpaceBindToChannel(NvAddressSpace* a, struct NvChannel* channel);

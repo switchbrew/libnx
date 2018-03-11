@@ -1,6 +1,6 @@
 #include <switch.h>
 
-Result nverrCreate(NvErrorNotifier* t, NvGpu* parent)
+Result nvErrorNotifierCreate(NvErrorNotifier* t, NvGpu* parent)
 {
     Result rc;
     Handle handle;
@@ -20,7 +20,7 @@ Result nverrCreate(NvErrorNotifier* t, NvGpu* parent)
     return rc;
 }
 
-void nverrClose(NvErrorNotifier* t)
+void nvErrorNotifierClose(NvErrorNotifier* t)
 {
     if (!t->has_init)
         return;
@@ -29,10 +29,10 @@ void nverrClose(NvErrorNotifier* t)
     eventClose(&t->event);
 }
 
-Result nverrWait(NvErrorNotifier* t, u64 timeout) {
+Result nvErrorNotifierWait(NvErrorNotifier* t, u64 timeout) {
     return eventWait(&t->event, timeout);
 }
 
-Result nverrGetError(NvErrorNotifier* t, NvError* out) {
+Result nvErrorNotifierGetError(NvErrorNotifier* t, NvError* out) {
     return nvioctlChannel_GetErrorNotification(t->parent->gpu_channel.fd, out);
 }

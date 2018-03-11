@@ -7,5 +7,5 @@ typedef struct {
     NvBuffer ctx_buf;
 } NvZcullContext;
 
-Result nvzcullCreate(NvZcullContext* z, NvGpu* parent);
-void   nvzcullClose(NvZcullContext* z);
+Result nvZcullContextCreate(NvZcullContext* z, NvGpu* parent);
+void   nvZcullContextClose(NvZcullContext* z);

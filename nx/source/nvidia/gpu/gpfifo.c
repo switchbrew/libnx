@@ -2,7 +2,7 @@
 
 #define DEFAULT_FIFO_ENTRIES 0x800
 
-Result nvfifoCreate(NvGpfifo* f, NvChannel* parent)
+Result nvGpfifoCreate(NvGpfifo* f, NvChannel* parent)
 {
     f->parent = parent;
 
@@ -10,11 +10,11 @@ Result nvfifoCreate(NvGpfifo* f, NvChannel* parent)
         parent->fd, DEFAULT_FIFO_ENTRIES, 1, 0, 0, 0, 0, &f->fifo_fence);
 }
 
-void nvfifoClose(NvGpfifo* f) {
+void nvGpfifoClose(NvGpfifo* f) {
     /**/
 }
 
-Result nvfifoSubmit(NvGpfifo* f, NvCmdList* cmd_list, NvFence* fence_out)
+Result nvGpfifoSubmit(NvGpfifo* f, NvCmdList* cmd_list, NvFence* fence_out)
 {
     Result rc;
     nvioctl_gpfifo_entry ent;

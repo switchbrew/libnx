@@ -8,5 +8,5 @@ typedef struct {
     bool   has_init;
 } NvErrorNotifier;
 
-Result nverrCreate(NvErrorNotifier* t, NvGpu* parent);
-void   nverrClose(NvErrorNotifier* t);
+Result nvErrorNotifierCreate(NvErrorNotifier* t, NvGpu* parent);
+void   nvErrorNotifierClose(NvErrorNotifier* t);

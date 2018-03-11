@@ -1,6 +1,6 @@
 #include <switch.h>
 
-Result nvasCreate(NvAddressSpace* a)
+Result nvAddressSpaceCreate(NvAddressSpace* a)
 {
     Result rc;
 
@@ -15,12 +15,12 @@ Result nvasCreate(NvAddressSpace* a)
         rc = nvioctlNvhostAsGpu_InitializeEx(a->fd, 1, 0x10000);
 
     if (R_FAILED(rc))
-        nvasClose(a);
+        nvAddressSpaceClose(a);
 
     return rc;
 }
 
-void nvasClose(NvAddressSpace* a)
+void nvAddressSpaceClose(NvAddressSpace* a)
 {
     if (!a->has_init)
         return;
@@ -31,23 +31,23 @@ void nvasClose(NvAddressSpace* a)
     a->fd = -1;
 }
 
-Result nvasReserveAlign(NvAddressSpace* a, NvPageSize align, u32 pages, NvPageSize page_sz, iova_t* iova_out) {
+Result nvAddressSpaceReserveAlign(NvAddressSpace* a, NvPageSize align, u32 pages, NvPageSize page_sz, iova_t* iova_out) {
     return nvioctlNvhostAsGpu_AllocSpace(a->fd, pages, page_sz, 0, align, iova_out);
 }
 
-Result nvasReserveAtFixedAddr(NvAddressSpace* a, iova_t addr, u32 pages, NvPageSize page_sz) {
+Result nvAddressSpaceReserveAtFixedAddr(NvAddressSpace* a, iova_t addr, u32 pages, NvPageSize page_sz) {
     return nvioctlNvhostAsGpu_AllocSpace(a->fd, pages, page_sz, 1, addr, NULL);
 }
 
-Result nvasReserveFull(NvAddressSpace* a) {
-    return nvasReserveAlign(a, NvPageSize_64K, 0x10000, NvPageSize_64K, NULL);
+Result nvAddressSpaceReserveFull(NvAddressSpace* a) {
+    return nvAddressSpaceReserveAlign(a, NvPageSize_64K, 0x10000, NvPageSize_64K, NULL);
 }
 
-Result nvasMapBuffer(NvAddressSpace* a, NvBuffer* buffer, NvBufferKind kind, iova_t* iova_out) {
+Result nvAddressSpaceMapBuffer(NvAddressSpace* a, NvBuffer* buffer, NvBufferKind kind, iova_t* iova_out) {
     return nvioctlNvhostAsGpu_MapBufferEx(
         a->fd, NvMapBufferFlags_IsCachable, kind, buffer->fd, 0x10000, 0, 0, 0, iova_out);
 }
 
-Result nvasBindToChannel(NvAddressSpace* a, NvChannel* channel) {
+Result nvAddressSpaceBindToChannel(NvAddressSpace* a, NvChannel* channel) {
     return nvioctlNvhostAsGpu_BindChannel(a->fd, channel->fd);
 }
