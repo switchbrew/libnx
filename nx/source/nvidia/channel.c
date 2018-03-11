@@ -1,6 +1,6 @@
 #include <switch.h>
 
-Result nvchannelCreate(NvChannel* c, const char* dev)
+Result nvChannelCreate(NvChannel* c, const char* dev)
 {
     Result rc;
 
@@ -12,12 +12,12 @@ Result nvchannelCreate(NvChannel* c, const char* dev)
         c->fd = -1;
 
     if (R_FAILED(rc))
-        nvchannelClose(c);
+        nvChannelClose(c);
 
     return rc;
 }
 
-void nvchannelClose(NvChannel* c)
+void nvChannelClose(NvChannel* c)
 {
     if (!c->has_init)
         return;
@@ -28,10 +28,10 @@ void nvchannelClose(NvChannel* c)
     c->fd = -1;
 }
 
-Result nvchannelSetPriority(NvChannel* c, NvChannelPriority prio) {
+Result nvChannelSetPriority(NvChannel* c, NvChannelPriority prio) {
     return nvioctlChannel_SetPriority(c->fd, prio);
 }
 
-Result nvchannelSetNvmapFd(NvChannel* c) {
-    return nvioctlChannel_SetNvmapFd(c->fd, nvbufGetNvmapFd());
+Result nvChannelSetNvmapFd(NvChannel* c) {
+    return nvioctlChannel_SetNvmapFd(c->fd, nvBufferGetNvmapFd());
 }

@@ -1,4 +1,4 @@
-Result nvinfoInit();
-void nvinfoExit();
+Result nvInfoInit();
+void nvInfoExit();
 
-u32 nvinfoGetZcullCtxSize();
+u32 nvInfoGetZcullCtxSize();

@@ -4,42 +4,42 @@ Result nvgpuCreate(NvGpu* g)
 {
     Result rc;
 
-    if (R_FAILED(nvinfoInit()))
+    if (R_FAILED(nvInfoInit()))
         return MAKERESULT(Module_Libnx, LibnxError_NvinfoFailedToInitialize);
 
-    if (R_FAILED(nvbufInit())) {
-        nvinfoExit();
+    if (R_FAILED(nvBufferInit())) {
+        nvInfoExit();
         return MAKERESULT(Module_Libnx, LibnxError_NvbufFailedToInitialize);
     }
 
-    rc = nvchannelCreate(&g->gpu_channel, "/dev/nvhost-gpu");
+    rc = nvChannelCreate(&g->gpu_channel, "/dev/nvhost-gpu");
 
     if (R_SUCCEEDED(rc))
-        rc = nvasCreate(&g->addr_space);
+        rc = nvAddressSpaceCreate(&g->addr_space);
 
     if (R_SUCCEEDED(rc))
-        rc = nvasReserveFull(&g->addr_space);
+        rc = nvAddressSpaceReserveFull(&g->addr_space);
 
     if (R_SUCCEEDED(rc))
-        rc = nvasBindToChannel(&g->addr_space, &g->gpu_channel);
+        rc = nvAddressSpaceBindToChannel(&g->addr_space, &g->gpu_channel);
 
     if (R_SUCCEEDED(rc))
-        rc = nvchannelSetNvmapFd(&g->gpu_channel);
+        rc = nvChannelSetNvmapFd(&g->gpu_channel);
 
     if (R_SUCCEEDED(rc))
-        rc = nvfifoCreate(&g->gpfifo, &g->gpu_channel);
+        rc = nvGpfifoCreate(&g->gpfifo, &g->gpu_channel);
 
     if (R_SUCCEEDED(rc))
-        rc = nv3dCreate(&g->_3d_ctx, g);
+        rc = nv3DContextCreate(&g->_3d_ctx, g);
 
     if (R_SUCCEEDED(rc))
-        rc = nverrCreate(&g->error_notifier, g);
+        rc = nvErrorNotifierCreate(&g->error_notifier, g);
 
     if (R_SUCCEEDED(rc))
-        rc = nvchannelSetPriority(&g->gpu_channel, NvChannelPriority_Medium);
+        rc = nvChannelSetPriority(&g->gpu_channel, NvChannelPriority_Medium);
 
     if (R_SUCCEEDED(rc))
-        rc = nvzcullCreate(&g->zcull_ctx, g);
+        rc = nvZcullContextCreate(&g->zcull_ctx, g);
 
     if (R_FAILED(rc))
         nvgpuClose(g);
@@ -49,13 +49,13 @@ Result nvgpuCreate(NvGpu* g)
 
 void nvgpuClose(NvGpu* g)
 {
-    nvbufExit();
-    nvinfoExit();
+    nvBufferExit();
+    nvInfoExit();
 
-    nverrClose(&g->error_notifier);
-    nvzcullClose(&g->zcull_ctx);
-    nv3dClose(&g->_3d_ctx);
-    nvfifoClose(&g->gpfifo);
-    nvasClose(&g->addr_space);
-    nvchannelClose(&g->gpu_channel);
+    nvErrorNotifierClose(&g->error_notifier);
+    nvZcullContextClose(&g->zcull_ctx);
+    nv3DContextClose(&g->_3d_ctx);
+    nvGpfifoClose(&g->gpfifo);
+    nvAddressSpaceClose(&g->addr_space);
+    nvChannelClose(&g->gpu_channel);
 }
