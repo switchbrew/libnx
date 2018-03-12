@@ -559,10 +559,23 @@ void gfxFlushBuffers(void) {
         size_t width = g_gfx_framebuf_display_width;
         size_t height = g_gfx_framebuf_display_height;
         u32 *in_framebuf = (u32*)g_gfxFramebufLinear;
+        u128 *out_framebuf = (u128*)actual_framebuf;
 
         for (y=0; y<height; y++) {
-            for (x=0; x<width; x+=4) {
-                *((u128*)&actual_framebuf[gfxGetFramebufferDisplayOffset(x, y)]) = *((u128*)&in_framebuf[y * width + x]);
+            size_t row = y;
+            if (g_gfx_drawflip) row = g_gfx_framebuf_display_height-1-row;
+
+            size_t y_offset = (row & 0x70) * 4 + (row & ~0x7F) * (g_gfx_framebuf_aligned_width / 16) * 4;
+            y_offset += (row & 8) * 4 + (row & 6) * 2 + (row & 1);
+
+            for (x=0; x<width; x+=16) {
+                size_t x_offset = (x & ~0xF) * 0x20;
+                u128 *in_pos = (u128*)&in_framebuf[y * width + x];
+                u128 *out_pos = &out_framebuf[y_offset + x_offset];
+                out_pos[0] = in_pos[0];
+                out_pos[2] = in_pos[1];
+                out_pos[16] = in_pos[2];
+                out_pos[18] = in_pos[3];
             }
         }
     }
