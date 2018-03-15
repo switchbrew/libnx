@@ -590,8 +590,9 @@ Result hidSetNpadJoyAssignmentModeSingleByDefault(HidControllerID id);
 /// id must be CONTROLLER_PLAYER_*.
 Result hidSetNpadJoyAssignmentModeDual(HidControllerID id);
 
-Result hidInitializeVibrationDevices(u32 *VibrationDeviceHandles, size_t total_handles, HidControllerID id, HidControllerLayoutType type);
+Result hidInitializeVibrationDevices(u32 *VibrationDeviceHandles, size_t total_handles, HidControllerID id, HidControllerType type);
 
+/// Send the VibrationValue to the specified VibrationDeviceHandle.
 Result hidSendVibrationValue(u32 *VibrationDeviceHandle, HidVibrationValue *VibrationValue);
 
 /// Sets whether vibration is allowed, this also affects the config displayed by System Settings.
@@ -599,3 +600,6 @@ Result hidPermitVibration(bool flag);
 
 /// Gets whether vibration is allowed.
 Result hidIsVibrationPermitted(bool *flag);
+
+/// Send VibrationValues[index] to VibrationDeviceHandles[index], where count is the number of entries in the VibrationDeviceHandles/VibrationValues arrays.
+Result hidSendVibrationValues(u32 *VibrationDeviceHandles, HidVibrationValue *VibrationValues, size_t count);
