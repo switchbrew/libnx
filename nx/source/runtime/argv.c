@@ -1,5 +1,8 @@
 #include <string.h>
 #include <ctype.h>
+#include <stdlib.h>
+#include <netinet/in.h>
+
 #include "result.h"
 #include "runtime/env.h"
 #include "kernel/svc.h"
@@ -7,6 +10,7 @@
 // System globals we define here
 int __system_argc;
 char** __system_argv;
+struct in_addr __nxlink_host;
 
 extern char* fake_heap_start;
 extern char* fake_heap_end;
@@ -134,6 +138,12 @@ void argvSetup(void)
         argstorage[arglen] = 0;
         __system_argv[__system_argc] = argstorage;
         __system_argc++;
+    }
+
+    if (strncmp(__system_argv[__system_argc - 1], "NXLINKED", 8) == 0 ) {
+        __system_argc--;
+
+        __nxlink_host.s_addr = strtoul(&__system_argv[__system_argc][8], NULL, 16);
     }
 
     __system_argv[__system_argc] = NULL;
