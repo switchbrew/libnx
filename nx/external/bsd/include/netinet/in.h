@@ -678,6 +678,8 @@ struct sockaddr_in6 {
 extern const struct in6_addr in6addr_any;
 extern const struct in6_addr in6addr_loopback;
 
+extern struct in_addr __nxlink_host;
+
 #endif
 
 #endif /* !_NETINET_IN_H_*/
