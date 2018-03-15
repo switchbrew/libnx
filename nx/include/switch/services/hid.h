@@ -585,6 +585,7 @@ void hidJoystickRead(JoystickPosition *pos, HidControllerID id, HidControllerJoy
 /// When used, both joy-cons in a pair should be used with this (CONTROLLER_PLAYER_1 and CONTROLLER_PLAYER_2 for example).
 /// id must be CONTROLLER_PLAYER_*.
 Result hidSetNpadJoyAssignmentModeSingleByDefault(HidControllerID id);
+/// Use this if you want to use a pair of joy-cons as a single CONTROLLER_PLAYER_*. Only necessary if you want to use this mode in your application after \ref hidSetNpadJoyAssignmentModeSingleByDefault was used with this pair of joy-cons.
 /// Used automatically during app startup/exit for all controllers.
 /// When used, both joy-cons in a pair should be used with this (CONTROLLER_PLAYER_1 and CONTROLLER_PLAYER_2 for example).
 /// id must be CONTROLLER_PLAYER_*.
