@@ -140,9 +140,11 @@ void argvSetup(void)
         __system_argc++;
     }
 
-    if (strncmp(__system_argv[__system_argc - 1], "NXLINKED", 8) == 0 ) {
+    if ( __system_argc > 1 &&
+         strlen(__system_argv[__system_argc - 1]) == 16 &&
+         strncmp(__system_argv[__system_argc - 1], "NXLINKED", 8) == 0 )
+    {
         __system_argc--;
-
         __nxlink_host.s_addr = strtoul(&__system_argv[__system_argc][8], NULL, 16);
     }
 
