@@ -370,6 +370,10 @@ void hidJoystickRead(JoystickPosition *pos, HidControllerID id, HidControllerJoy
     }
 }
 
+bool hidGetHandheldMode(void) {
+    return g_controllerP1AutoID == CONTROLLER_HANDHELD;
+}
+
 static Result _hidSetDualModeAll(void) {
     Result rc;
     int i;
