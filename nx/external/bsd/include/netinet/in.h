@@ -680,6 +680,10 @@ extern const struct in6_addr in6addr_loopback;
 
 extern struct in_addr __nxlink_host;
 
+#define NETLOADER_SERVER_PORT 28280
+#define NETLOADER_CLIENT_PORT 28771
+
+
 #endif
 
 #endif /* !_NETINET_IN_H_*/
