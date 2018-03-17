@@ -100,7 +100,10 @@ typedef struct {
 } nvioctl_fence;
 
 typedef struct {
-    u64 desc;
+    union {
+        u64 desc;
+        u32 desc32[2];
+    };
 } nvioctl_gpfifo_entry;
 
 // Used with nvioctlChannel_AllocObjCtx().
@@ -130,7 +133,7 @@ typedef enum {
 
 // Used with nvioctlNvhostAsGpu_MapBufferEx().
 typedef enum {
-    NvMapBufferFlags_FixedOffset = 0,
+    NvMapBufferFlags_FixedOffset = 1,
     NvMapBufferFlags_IsCachable = 4,
 } NvMapBufferFlags;
 
@@ -183,3 +186,4 @@ Result nvioctlChannel_SetPriority(u32 fd, u32 priority);
 Result nvioctlChannel_AllocGpfifoEx2(u32 fd, u32 num_entries, u32 flags, u32 unk0, u32 unk1, u32 unk2, u32 unk3, nvioctl_fence *fence_out);
 Result nvioctlChannel_SetUserData(u32 fd, void* addr);
 
+typedef u64 iova_t;

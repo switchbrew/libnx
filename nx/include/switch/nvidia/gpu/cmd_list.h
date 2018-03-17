@@ -7,7 +7,6 @@ typedef struct {
     size_t   num_cmds;
     size_t   max_cmds;
     NvGpu*   parent;
-    iova_t   gpu_addr;
 } NvCmdList;
 
 Result nvCmdListCreate(NvCmdList* c, NvGpu* parent, size_t max_cmds);

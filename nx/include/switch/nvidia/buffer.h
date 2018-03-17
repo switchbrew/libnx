@@ -20,7 +20,7 @@ typedef enum {
     NvBufferKind_Z16_MS4_2Z=0x9,
     NvBufferKind_Z16_MS8_2Z=0xa,
     NvBufferKind_Z16_MS16_2Z=0xb,
-    NvBufferKind_Z16_4CZ=0xC,
+    NvBufferKind_Z16_4CZ=0xc,
     NvBufferKind_Z16_MS2_4CZ=0xd,
     NvBufferKind_Z16_MS4_4CZ=0xe,
     NvBufferKind_Z16_MS8_4CZ=0xf,
@@ -62,7 +62,7 @@ typedef enum {
     NvBufferKind_V8Z24_MS8_VC24_2CS=0x35,
     NvBufferKind_V8Z24_MS4_VC12_2CZV=0x3a,
     NvBufferKind_V8Z24_MS4_VC4_2CZV=0x3b,
-    NvBufferKind_V8Z24_MS8_VC8_2CZV=0x3C,
+    NvBufferKind_V8Z24_MS8_VC8_2CZV=0x3c,
     NvBufferKind_V8Z24_MS8_VC24_2CZV=0x3d,
     NvBufferKind_V8Z24_MS4_VC12_2ZV=0x3e,
     NvBufferKind_V8Z24_MS4_VC4_2ZV=0x3f,
@@ -78,7 +78,7 @@ typedef enum {
     NvBufferKind_Z24S8_MS4_1Z=0x49,
     NvBufferKind_Z24S8_MS8_1Z=0x4a,
     NvBufferKind_Z24S8_MS16_1Z=0x4b,
-    NvBufferKind_Z24S8_2CS=0x4C,
+    NvBufferKind_Z24S8_2CS=0x4c,
     NvBufferKind_Z24S8_MS2_2CS=0x4d,
     NvBufferKind_Z24S8_MS4_2CS=0x4e,
     NvBufferKind_Z24S8_MS8_2CS=0x4f,
@@ -134,7 +134,7 @@ typedef enum {
     NvBufferKind_ZF32_MS8_2CZ=0x89,
     NvBufferKind_ZF32_MS16_2CZ=0x8a,
     NvBufferKind_X8Z24_X16V8S8_MS4_VC12=0x8b,
-    NvBufferKind_X8Z24_X16V8S8_MS4_VC4=0x8C,
+    NvBufferKind_X8Z24_X16V8S8_MS4_VC4=0x8c,
     NvBufferKind_X8Z24_X16V8S8_MS8_VC8=0x8d,
     NvBufferKind_X8Z24_X16V8S8_MS8_VC24=0x8e,
     NvBufferKind_X8Z24_X16V8S8_MS4_VC12_1CS=0x8f,
@@ -146,7 +146,7 @@ typedef enum {
     NvBufferKind_X8Z24_X16V8S8_MS8_VC8_1ZV=0x99,
     NvBufferKind_X8Z24_X16V8S8_MS8_VC24_1ZV=0x9a,
     NvBufferKind_X8Z24_X16V8S8_MS4_VC12_1CZV=0x9b,
-    NvBufferKind_X8Z24_X16V8S8_MS4_VC4_1CZV=0x9C,
+    NvBufferKind_X8Z24_X16V8S8_MS4_VC4_1CZV=0x9c,
     NvBufferKind_X8Z24_X16V8S8_MS8_VC8_1CZV=0x9d,
     NvBufferKind_X8Z24_X16V8S8_MS8_VC24_1CZV=0x9e,
     NvBufferKind_X8Z24_X16V8S8_MS4_VC12_2CS=0x9f,
@@ -162,7 +162,7 @@ typedef enum {
     NvBufferKind_ZF32_X16V8S8_MS8_VC8=0xa9,
     NvBufferKind_ZF32_X16V8S8_MS8_VC24=0xaa,
     NvBufferKind_ZF32_X16V8S8_MS4_VC12_1CS=0xab,
-    NvBufferKind_ZF32_X16V8S8_MS4_VC4_1CS=0xaC,
+    NvBufferKind_ZF32_X16V8S8_MS4_VC4_1CS=0xac,
     NvBufferKind_ZF32_X16V8S8_MS8_VC8_1CS=0xad,
     NvBufferKind_ZF32_X16V8S8_MS8_VC24_1CS=0xae,
     NvBufferKind_ZF32_X16V8S8_MS4_VC12_1ZV=0xb3,
@@ -174,24 +174,24 @@ typedef enum {
     NvBufferKind_ZF32_X16V8S8_MS8_VC8_1CZV=0xb9,
     NvBufferKind_ZF32_X16V8S8_MS8_VC24_1CZV=0xba,
     NvBufferKind_ZF32_X16V8S8_MS4_VC12_2CS=0xbb,
-    NvBufferKind_ZF32_X16V8S8_MS4_VC4_2CS=0xbC,
+    NvBufferKind_ZF32_X16V8S8_MS4_VC4_2CS=0xbc,
     NvBufferKind_ZF32_X16V8S8_MS8_VC8_2CS=0xbd,
     NvBufferKind_ZF32_X16V8S8_MS8_VC24_2CS=0xbe,
     NvBufferKind_ZF32_X16V8S8_MS4_VC12_2CSZV=0xbf,
-    NvBufferKind_ZF32_X16V8S8_MS4_VC4_2CSZV=0xC0,
-    NvBufferKind_ZF32_X16V8S8_MS8_VC8_2CSZV=0xC1,
-    NvBufferKind_ZF32_X16V8S8_MS8_VC24_2CSZV=0xC2,
-    NvBufferKind_ZF32_X24S8=0xC3,
-    NvBufferKind_ZF32_X24S8_1CS=0xC4,
-    NvBufferKind_ZF32_X24S8_MS2_1CS=0xC5,
-    NvBufferKind_ZF32_X24S8_MS4_1CS=0xC6,
-    NvBufferKind_ZF32_X24S8_MS8_1CS=0xC7,
-    NvBufferKind_ZF32_X24S8_MS16_1CS=0xC8,
-    NvBufferKind_SmskedMessage=0xCa,
-    NvBufferKind_SmhostMessage=0xCb,
-    NvBufferKind_C64_MS2_2CRA=0xCd,
-    NvBufferKind_ZF32_X24S8_2CSZV=0xCe,
-    NvBufferKind_ZF32_X24S8_MS2_2CSZV=0xCf,
+    NvBufferKind_ZF32_X16V8S8_MS4_VC4_2CSZV=0xc0,
+    NvBufferKind_ZF32_X16V8S8_MS8_VC8_2CSZV=0xc1,
+    NvBufferKind_ZF32_X16V8S8_MS8_VC24_2CSZV=0xc2,
+    NvBufferKind_ZF32_X24S8=0xc3,
+    NvBufferKind_ZF32_X24S8_1CS=0xc4,
+    NvBufferKind_ZF32_X24S8_MS2_1CS=0xc5,
+    NvBufferKind_ZF32_X24S8_MS4_1CS=0xc6,
+    NvBufferKind_ZF32_X24S8_MS8_1CS=0xc7,
+    NvBufferKind_ZF32_X24S8_MS16_1CS=0xc8,
+    NvBufferKind_SmskedMessage=0xca,
+    NvBufferKind_SmhostMessage=0xcb,
+    NvBufferKind_C64_MS2_2CRA=0xcd,
+    NvBufferKind_ZF32_X24S8_2CSZV=0xce,
+    NvBufferKind_ZF32_X24S8_MS2_2CSZV=0xcf,
     NvBufferKind_ZF32_X24S8_MS4_2CSZV=0xd0,
     NvBufferKind_ZF32_X24S8_MS8_2CSZV=0xd1,
     NvBufferKind_ZF32_X24S8_MS16_2CSZV=0xd2,
@@ -204,10 +204,10 @@ typedef enum {
     NvBufferKind_C32_2CBR=0xd9,
     NvBufferKind_C32_2CBA=0xda,
     NvBufferKind_C32_2CRA=0xdb,
-    NvBufferKind_C32_2BRA=0xdC,
+    NvBufferKind_C32_2BRA=0xdc,
     NvBufferKind_C32_MS2_2C=0xdd,
     NvBufferKind_C32_MS2_2CBR=0xde,
-    NvBufferKind_C32_MS2_2CRA=0xCC,
+    NvBufferKind_C32_MS2_2CRA=0xcc,
     NvBufferKind_C32_MS4_2C=0xdf,
     NvBufferKind_C32_MS4_2CBR=0xe0,
     NvBufferKind_C32_MS4_2CBA=0xe1,
@@ -221,7 +221,7 @@ typedef enum {
     NvBufferKind_C64_2CRA=0xe9,
     NvBufferKind_C64_2BRA=0xea,
     NvBufferKind_C64_MS2_2C=0xeb,
-    NvBufferKind_C64_MS2_2CBR=0xeC,
+    NvBufferKind_C64_MS2_2CBR=0xec,
     NvBufferKind_C64_MS4_2C=0xed,
     NvBufferKind_C64_MS4_2CBR=0xee,
     NvBufferKind_C64_MS4_2CBA=0xef,
@@ -237,28 +237,38 @@ typedef enum {
     NvBufferKind_C128_MS4_2CR=0xf9,
     NvBufferKind_C128_MS8_MS16_2C=0xfa,
     NvBufferKind_C128_MS8_MS16_2CR=0xfb,
-    NvBufferKind_X8C24=0xfC,
+    NvBufferKind_X8C24=0xfc,
     NvBufferKind_PitchNoSwizzle=0xfd,
     NvBufferKind_Generic_16BX2=0xfe,
     NvBufferKind_Invalid=0xff,
 } NvBufferKind;
 
-typedef struct {
-    u32   fd;
-    u32   size;
-    void* ptr;
+typedef struct NvAddressSpace NvAddressSpace;
+
+typedef struct NvBuffer {
+    u32    fd;
+    u32    size;
+    void*  cpu_addr;
+    iova_t gpu_addr;
+    iova_t gpu_addr_texture;
+    NvAddressSpace* addr_space;
     NvBufferKind kind;
-    bool  has_init;
+    bool   has_init;
 } NvBuffer;
 
 Result nvBufferInit(void);
 u32    nvBufferGetNvmapFd(void);
 void   nvBufferExit(void);
 
-Result nvBufferCreate(NvBuffer* m, size_t size, u32 align, NvBufferKind kind);
-Result nvBufferCreateRw(NvBuffer* m, size_t size, u32 align, NvBufferKind kind);
+Result nvBufferCreate(NvBuffer* m, size_t size, u32 align, NvBufferKind kind, NvAddressSpace* as);
+Result nvBufferCreateRw(NvBuffer* m, size_t size, u32 align, NvBufferKind kind, NvAddressSpace* as);
 void   nvBufferFree(NvBuffer* m);
-void*  nvBufferGetAddr(NvBuffer* m);
+
+void*  nvBufferGetCpuAddr(NvBuffer* m);
+iova_t nvBufferGetGpuAddr(NvBuffer* m);
+
+Result nvBufferMapAsTexture(NvBuffer* m, NvBufferKind kind);
+iova_t nvBufferGetGpuAddrTexture(NvBuffer* m);
 
 Result nvBufferMakeCpuUncached(NvBuffer* m);
 Result nvBufferMakeCpuCached(NvBuffer* m);

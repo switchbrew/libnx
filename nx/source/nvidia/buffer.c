@@ -6,6 +6,7 @@
 #include "services/nv.h"
 #include "nvidia/ioctl.h"
 #include "nvidia/buffer.h"
+#include "nvidia/address_space.h"
 
 static u32 g_nvmap_fd = -1;
 static u64 g_refCnt;
@@ -40,7 +41,9 @@ u32 nvBufferGetNvmapFd(void) {
     return g_nvmap_fd;
 }
 
-static Result _nvBufferCreate(NvBuffer* m, size_t size, u32 flags, u32 align, NvBufferKind kind)
+static Result _nvBufferCreate(
+    NvBuffer* m, size_t size, u32 flags, u32 align, NvBufferKind kind,
+    NvAddressSpace* as)
 {
     Result rc;
 
@@ -49,10 +52,13 @@ static Result _nvBufferCreate(NvBuffer* m, size_t size, u32 flags, u32 align, Nv
     m->has_init = true;
     m->size = size;
     m->fd = -1;
-    m->ptr = memalign(size, align);
+    m->cpu_addr = memalign(size, align);
+    m->gpu_addr = 0;
+    m->gpu_addr_texture = 0;
+    m->addr_space = as;
     m->kind = kind;
 
-    if (m->ptr == NULL)
+    if (m->cpu_addr == NULL)
         return MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
 
     rc = nvioctlNvmap_Create(g_nvmap_fd, size, &m->fd);
@@ -62,7 +68,10 @@ static Result _nvBufferCreate(NvBuffer* m, size_t size, u32 flags, u32 align, Nv
 
     if (R_SUCCEEDED(rc))
         rc = nvioctlNvmap_Alloc(
-            g_nvmap_fd, m->fd, 0, flags | NvBufferFlags_Nintendo, align, kind, m->ptr);
+            g_nvmap_fd, m->fd, 0, flags | NvBufferFlags_Nintendo, align, kind, m->cpu_addr);
+
+    if (R_SUCCEEDED(rc))
+        rc = nvAddressSpaceMapBuffer(as, m, 0, &m->gpu_addr);
 
     if (R_FAILED(rc))
         nvBufferFree(m);
@@ -70,20 +79,22 @@ static Result _nvBufferCreate(NvBuffer* m, size_t size, u32 flags, u32 align, Nv
     return rc;
 }
 
-Result nvBufferCreate(NvBuffer* m, size_t size, u32 align, NvBufferKind kind) {
-    return _nvBufferCreate(m, size, 0, align, kind);
+Result nvBufferCreate(
+        NvBuffer* m, size_t size, u32 align, NvBufferKind kind, NvAddressSpace* as) {
+    return _nvBufferCreate(m, size, 0, align, kind, as);
 }
 
-Result nvBufferCreateRw(NvBuffer* m, size_t size, u32 align, NvBufferKind kind) {
-    return _nvBufferCreate(m, size, NvBufferFlags_Writable, align, kind);
+Result nvBufferCreateRw(
+        NvBuffer* m, size_t size, u32 align, NvBufferKind kind, NvAddressSpace* as) {
+    return _nvBufferCreate(m, size, NvBufferFlags_Writable, align, kind, as);
 }
 
 Result nvBufferMakeCpuUncached(NvBuffer* m) {
-    return svcSetMemoryAttribute(m->ptr, m->size, 8, 8);
+    return svcSetMemoryAttribute(m->cpu_addr, m->size, 8, 8);
 }
 
 Result nvBufferMakeCpuCached(NvBuffer* m) {
-    return svcSetMemoryAttribute(m->ptr, m->size, 8, 0);
+    return svcSetMemoryAttribute(m->cpu_addr, m->size, 8, 0);
 }
 
 void nvBufferFree(NvBuffer* m)
@@ -91,8 +102,12 @@ void nvBufferFree(NvBuffer* m)
     if (!m->has_init)
         return;
 
-    free(m->ptr);
-    m->ptr = NULL;
+    // todo: nvAddressSpaceUnmapBuffer(m->gpu_addr)
+    // todo: nvAddressSpaceUnmapBuffer(m->gpu_addr_texture)
+    nvBufferMakeCpuCached(m);
+
+    free(m->cpu_addr);
+    m->cpu_addr = NULL;
 
     if (m->fd != -1)
         nvClose(m->fd);
@@ -100,6 +115,18 @@ void nvBufferFree(NvBuffer* m)
     m->fd = -1;
 }
 
-void* nvBufferGetAddr(NvBuffer* m) {
-    return m->ptr;
+void* nvBufferGetCpuAddr(NvBuffer* m) {
+    return m->cpu_addr;
+}
+
+iova_t nvBufferGetGpuAddr(NvBuffer* m) {
+    return m->gpu_addr;
+}
+
+Result nvBufferMapAsTexture(NvBuffer* m, NvBufferKind kind) {
+    return nvAddressSpaceMapBuffer(m->addr_space, m, kind, &m->gpu_addr_texture);
+}
+
+iova_t nvBufferGetGpuAddrTexture(NvBuffer* m) {
+    return m->gpu_addr_texture;
 }

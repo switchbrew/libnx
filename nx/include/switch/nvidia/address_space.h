@@ -1,6 +1,6 @@
 #pragma once
 
-typedef struct {
+typedef struct NvAddressSpace {
     u32  fd;
     bool has_init;
 } NvAddressSpace;
@@ -9,9 +9,6 @@ typedef enum {
     NvPageSize_4K  = 0x1000,
     NvPageSize_64K = 0x10000
 } NvPageSize;
-
-typedef u64 iova_t;
-
 
 Result nvAddressSpaceCreate(NvAddressSpace* a);
 void   nvAddressSpaceClose(NvAddressSpace* a);
