@@ -4,6 +4,54 @@
 #include "services/nv.h"
 #include "nvidia/ioctl.h"
 
+Result nvioctlNvhostCtrl_SyncptRead(u32 fd, u32 id, u32* out)
+{
+    struct {
+        __nv_in  u32 syncpt_id;
+        __nv_out u32 value;
+    } data;
+
+    memset(&data, 0, sizeof(data));
+    data.syncpt_id = id;
+
+    rc = nvIoctl(fd, _NV_IOWR(0x00, 0x14, data), &data);
+
+    if (R_SUCCEEDED(rc)) {
+        *out = value;
+    }
+
+    return rc;
+}
+
+Result nvioctlNvhostCtrl_SyncptIncr(u32 fd, u32 id)
+{
+    struct {
+        __nv_in u32 syncpt_id;
+    } data;
+
+    memset(&data, 0, sizeof(data));
+    data.syncpt_id = id;
+
+    return nvIoctl(fd, _NV_IOWR(0x00, 0x15, data), &data);
+}
+
+Result nvioctlNvhostCtrl_SyncptWait(u32 fd, u32 id, u32 threshold, u32 timeout)
+{
+    struct {
+        __nv_in u32 syncpt_id;
+        __nv_in u32 threshold;
+        __nv_in u32 timeout;
+    } data;
+
+    // TODO: Which field is out?
+    memset(&data, 0, sizeof(data));
+    data.syncpt_id = id;
+    data.threshold = threshold;
+    data.timeout = timeout;
+
+    return nvIoctl(fd, _NV_IOWR(0x00, 0x16, data), &data);
+}
+
 Result nvioctlNvhostCtrl_EventSignal(u32 fd, u32 event_id) {
     struct {
         __nv_in u32 event_id;

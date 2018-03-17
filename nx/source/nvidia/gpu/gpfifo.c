@@ -20,10 +20,17 @@ Result nvGpfifoSubmit(NvGpfifo* f, NvCmdList* cmd_list, NvFence* fence_out)
     nvioctl_gpfifo_entry ent;
     nvioctl_fence fence;
 
-    ent.desc = nvCmdListGetGpuAddr(cmd_list) | (nvCmdListGetListSize(cmd_list) << 42);
+    u64 a =
+        nvCmdListGetGpuAddr(cmd_list) | (nvCmdListGetListSize(cmd_list) << 42);
+
+    ent.desc32[0] = a;
+    ent.desc32[1] = a >> 32;
+
+    fence.id = 0;
+    fence.value = 1;
 
     rc = nvioctlChannel_SubmitGpfifo(
-        f->parent->fd, &ent, 1, 0/*flags*/, &fence);
+        f->parent->fd, &ent, 1, /*0x104*/0x104/*flags*/, &fence);
 
     if (R_SUCCEEDED(rc)) {
         nvfenceCreate(fence_out, &fence);

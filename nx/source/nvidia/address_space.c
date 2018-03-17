@@ -31,11 +31,14 @@ void nvAddressSpaceClose(NvAddressSpace* a)
     a->fd = -1;
 }
 
-Result nvAddressSpaceReserveAlign(NvAddressSpace* a, NvPageSize align, u32 pages, NvPageSize page_sz, iova_t* iova_out) {
+Result nvAddressSpaceReserveAlign(
+        NvAddressSpace* a, NvPageSize align, u32 pages, NvPageSize page_sz,
+        iova_t* iova_out) {
     return nvioctlNvhostAsGpu_AllocSpace(a->fd, pages, page_sz, 0, align, iova_out);
 }
 
-Result nvAddressSpaceReserveAtFixedAddr(NvAddressSpace* a, iova_t addr, u32 pages, NvPageSize page_sz) {
+Result nvAddressSpaceReserveAtFixedAddr(
+        NvAddressSpace* a, iova_t addr, u32 pages, NvPageSize page_sz) {
     return nvioctlNvhostAsGpu_AllocSpace(a->fd, pages, page_sz, 1, addr, NULL);
 }
 
@@ -43,7 +46,9 @@ Result nvAddressSpaceReserveFull(NvAddressSpace* a) {
     return nvAddressSpaceReserveAlign(a, NvPageSize_64K, 0x10000, NvPageSize_64K, NULL);
 }
 
-Result nvAddressSpaceMapBuffer(NvAddressSpace* a, NvBuffer* buffer, NvBufferKind kind, iova_t* iova_out) {
+Result nvAddressSpaceMapBuffer(
+        NvAddressSpace* a, NvBuffer* buffer, NvBufferKind kind,
+        iova_t* iova_out) {
     return nvioctlNvhostAsGpu_MapBufferEx(
         a->fd, NvMapBufferFlags_IsCachable, kind, buffer->fd, 0x10000, 0, 0, 0, iova_out);
 }

@@ -5,7 +5,8 @@ Result nvErrorNotifierCreate(NvErrorNotifier* t, NvGpu* parent)
     Result rc;
     Handle handle;
 
-    rc = nvQueryEvent(parent->gpu_channel.fd, NvEventId_Gpu_ErrorNotifier, &handle);
+    rc = nvQueryEvent(
+        parent->gpu_channel.fd, NvEventId_Gpu_ErrorNotifier, &handle);
 
     if (R_SUCCEEDED(rc)) {
         eventLoadRemote(&t->event, handle);
