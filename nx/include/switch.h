@@ -57,6 +57,7 @@ extern "C" {
 #include "switch/gfx/nvgfx.h"
 
 #include "switch/runtime/env.h"
+#include "switch/runtime/nxlink.h"
 
 #include "switch/runtime/util/utf.h"
 
