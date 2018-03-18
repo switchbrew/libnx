@@ -19,6 +19,8 @@ extern u32 __argdata__;
 
 static char* g_argv_empty = NULL;
 
+void nxlinkSetup(void);
+
 void argvSetup(void)
 {
     Result rc=0;
@@ -140,14 +142,12 @@ void argvSetup(void)
         __system_argc++;
     }
 
-    if ( __system_argc > 1 &&
-         strlen(__system_argv[__system_argc - 1]) == 16 &&
-         strncmp(&__system_argv[__system_argc - 1][8], "_NXLINK_", 8) == 0 )
-    {
-        __system_argc--;
-        __nxlink_host.s_addr = strtoul(__system_argv[__system_argc], NULL, 16);
-    }
+
+    // Check for nxlink parameters
+    nxlinkSetup();
 
     __system_argv[__system_argc] = NULL;
+
+
 }
 
