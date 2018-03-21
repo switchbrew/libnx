@@ -553,7 +553,7 @@ int ioctl(int fd, int request, ...) {
             if(flags == -1)
                 return -1;
             flags = *(int *)data != 0 ? (flags | O_NONBLOCK) : (flags & ~O_NONBLOCK);
-            return fcntl(fd, F_SETFL, 0);
+            return fcntl(fd, F_SETFL, flags);
         }
         case BIOCSETF:
         case BIOCSETWF:
