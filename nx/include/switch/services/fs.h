@@ -17,6 +17,9 @@
 /// For use with fsMountSaveData().
 #define FS_MOUNTSAVEDATA_INVAL_DEFAULT 0x1
 
+/// For use with fsMountSystemSaveData().
+#define FS_MOUNTSYSTEMSAVEDATA_INVAL_DEFAULT 0x0
+
 /// For use with FsSave.
 #define FS_SAVEDATA_CURRENT_TITLEID 0
 
@@ -96,6 +99,7 @@ Service* fsGetServiceSession(void);
 Result fsMountSdcard(FsFileSystem* out);
 
 Result fsMountSaveData(FsFileSystem* out, u8 inval, FsSave *save);
+Result fsMountSystemSaveData(FsFileSystem* out, u8 inval, FsSave *save);
 Result fsOpenDataStorageByCurrentProcess(FsStorage* out);
 // todo: Rest of commands here
 
@@ -104,6 +108,10 @@ Result fsOpenDataStorageByCurrentProcess(FsStorage* out);
 /// Wrapper(s) for fsMountSaveData.
 /// See FsSave for titleID and userID.
 Result fsMount_SaveData(FsFileSystem* out, u64 titleID, u128 userID);
+
+/// Wrapper for fsMountSystemSaveData.
+/// WARNING: You can brick when writing to SystemSaveData, if the data is corrupted etc.
+Result fsMount_SystemSaveData(FsFileSystem* out, u64 saveID);
 
 // IFileSystem
 Result fsFsCreateFile(FsFileSystem* fs, const char* path, size_t size, int flags);

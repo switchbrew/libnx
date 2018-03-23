@@ -138,6 +138,45 @@ Result fsMountSaveData(FsFileSystem* out, u8 inval, FsSave *save) {
     return rc;
 }
 
+Result fsMountSystemSaveData(FsFileSystem* out, u8 inval, FsSave *save) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 inval;//Actually u8.
+        FsSave save;
+    } PACKED *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 52;
+    raw->inval = (u64)inval;
+    memcpy(&raw->save, save, sizeof(FsSave));
+
+    Result rc = serviceIpcDispatch(&g_fsSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            out->h = r.Handles[0];
+        }
+    }
+
+    return rc;
+}
+
 Result fsOpenDataStorageByCurrentProcess(FsStorage* out) {
     IpcCommand c;
     ipcInitialize(&c);
@@ -183,6 +222,16 @@ Result fsMount_SaveData(FsFileSystem* out, u64 titleID, u128 userID) {
     save.ContentStorageId = FS_CONTENTSTORAGEID_NandUser;
 
     return fsMountSaveData(out, FS_MOUNTSAVEDATA_INVAL_DEFAULT, &save);
+}
+
+Result fsMount_SystemSaveData(FsFileSystem* out, u64 saveID) {
+    FsSave save;
+
+    memset(&save, 0, sizeof(save));
+    save.saveID = saveID;
+    save.ContentStorageId = FS_CONTENTSTORAGEID_NandSystem;
+
+    return fsMountSystemSaveData(out, FS_MOUNTSYSTEMSAVEDATA_INVAL_DEFAULT, &save);
 }
 
 // IFileSystem impl
