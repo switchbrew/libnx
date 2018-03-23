@@ -18,8 +18,10 @@ static void _CacheValues(void)
 
     mutexLock(&g_Mutex);
 
-    if (g_HasCached)
+    if (g_HasCached) {
+        mutexUnlock(&g_Mutex);
         return;
+    }
 
     u64 tmp;
     g_IsAbove200 = (svcGetInfo(&tmp, 12, INVALID_HANDLE, 0) != 0xF001);
