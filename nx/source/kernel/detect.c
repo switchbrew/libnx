@@ -1,24 +1,39 @@
 // Copyright 2017 plutoo
 #include "types.h"
 #include "kernel/detect.h"
+#include "kernel/mutex.h"
 #include "kernel/svc.h"
 
 static bool g_IsAbove200;
 static bool g_IsAbove300;
 static bool g_IsAbove400;
+static bool g_IsAbove500;
 static bool g_HasCached = 0;
+static Mutex g_Mutex;
 
 static void _CacheValues(void)
 {
-    // This is actually thread safe, might cache twice but that's fine.
-    if (!g_HasCached)
-    {
-        u64 tmp;
-        g_IsAbove200 = (svcGetInfo(&tmp, 12, INVALID_HANDLE, 0) != 0xF001);
-        g_IsAbove300 = (svcGetInfo(&tmp, 18, INVALID_HANDLE, 0) != 0xF001);
-        g_IsAbove400 = (svcGetInfo(&tmp, 19, INVALID_HANDLE, 0) != 0xF001);
-        g_HasCached = true;
-    }
+    if (g_HasCached)
+        return;
+
+    mutexLock(&g_Mutex);
+
+    if (g_HasCached)
+        return;
+
+    u64 tmp;
+    g_IsAbove200 = (svcGetInfo(&tmp, 12, INVALID_HANDLE, 0) != 0xF001);
+    g_IsAbove300 = (svcGetInfo(&tmp, 18, INVALID_HANDLE, 0) != 0xF001);
+    g_IsAbove400 = (svcGetInfo(&tmp, 19, INVALID_HANDLE, 0) != 0xF001);
+    g_IsAbove500 = (svcGetInfo(&tmp, 20, INVALID_HANDLE, 0) != 0xF001);
+
+    g_IsAbove400 |= g_IsAbove500;
+    g_IsAbove300 |= g_IsAbove400;
+    g_IsAbove200 |= g_IsAbove300;
+
+    g_HasCached = true;
+
+    mutexUnlock(&g_Mutex);
 }
 
 bool kernelAbove200(void) {
@@ -34,6 +49,11 @@ bool kernelAbove300(void) {
 bool kernelAbove400(void) {
     _CacheValues();
     return g_IsAbove400;
+}
+
+bool kernelAbove500(void) {
+    _CacheValues();
+    return g_IsAbove500;
 }
 
 bool detectDebugger(void) {
