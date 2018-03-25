@@ -9,10 +9,8 @@ typedef struct {
 
 Result nvCmdListCreate(NvCmdList* c, NvGpu* parent, size_t max_cmds);
 void   nvCmdListClose(NvCmdList* c);
-
 iova_t nvCmdListGetGpuAddr(NvCmdList* c);
 u64    nvCmdListGetListSize(NvCmdList* c);
-
 u32*   nvCmdListInsert(NvCmdList* c, size_t num_cmds);
 
 #define NvCmd(cmd_list, ...) do { \
@@ -20,14 +18,14 @@ u32*   nvCmdListInsert(NvCmdList* c, size_t num_cmds);
         memcpy(nvCmdListInsert(cmd_list, sizeof(_)/4), _, sizeof(_)); \
     } while (0)
 
-#define NvImm(reg, subc, val) \
+#define NvImm(subc, reg, val) \
     (0x80000000 | (reg) | ((subc) << 13) | ((val) << 16))
 
-#define NvRep(reg, subc, ...) \
+#define NvRep(subc, reg, ...) \
     (0x60000000 | ((reg) | ((subc) << 13) | ((sizeof((u32[]) { __VA_ARGS__ })) << 16))), __VA_ARGS__
 
-#define NvIncr(reg, subc, ...) \
+#define NvIncr(subc, reg, ...) \
     (0x20000000 | ((reg) | ((subc) << 13) | ((sizeof((u32[]) { __VA_ARGS__ })) << 16))), __VA_ARGS__
 
-#define NvIncrOnce(reg, subc, ...) \
+#define NvIncrOnce(subc, reg, ...) \
     (0xA0000000 | ((reg) | ((subc) << 13) | ((sizeof((u32[]) { __VA_ARGS__ })) << 16))), __VA_ARGS__

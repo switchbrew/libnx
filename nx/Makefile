@@ -24,7 +24,7 @@ VERSION	:=	$(LIBNX_MAJOR).$(LIBNX_MINOR).$(LIBNX_PATCH)
 #---------------------------------------------------------------------------------
 TARGET		:=	nx
 #BUILD		:=	build
-SOURCES		:=	source/arm source/kernel source/services source/display source/nvidia source/nvidia/gpu source/nvidia/ioctl source/runtime source/runtime/devices source/runtime/util/utf
+SOURCES		:=	source/arm source/kernel source/services source/display source/nvidia source/nvidia/gpu source/nvidia/ioctl source/nvidia/cmds/ source/runtime source/runtime/devices source/runtime/util/utf
 DATA		:=	data
 INCLUDES	:=	include external/bsd/include
 
