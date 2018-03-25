@@ -29,3 +29,8 @@ u32*   nvCmdListInsert(NvCmdList* c, size_t num_cmds);
 
 #define NvIncrOnce(subc, reg, ...) \
     (0xA0000000 | ((reg) | ((subc) << 13) | ((sizeof((u32[]) { __VA_ARGS__ })) << 16))), __VA_ARGS__
+
+static inline u32 f2i(float f) {
+    #pragma GCC diagnostic ignored "-Wstrict-aliasing"
+    return *(u32*) &f;
+}
