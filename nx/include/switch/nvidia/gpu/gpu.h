@@ -9,5 +9,5 @@ typedef struct NvGpu {
     NvErrorNotifier error_notifier;
 } NvGpu;
 
-Result nvgpuCreate(NvGpu* g);
-void   nvgpuClose(NvGpu* g);
+Result nvGpuCreate(NvGpu* g);
+void   nvGpuClose(NvGpu* g);

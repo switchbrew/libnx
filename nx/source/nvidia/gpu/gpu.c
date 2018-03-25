@@ -1,6 +1,6 @@
 #include <switch.h>
 
-Result nvgpuCreate(NvGpu* g)
+Result nvGpuCreate(NvGpu* g)
 {
     Result rc;
 
@@ -42,12 +42,12 @@ Result nvgpuCreate(NvGpu* g)
         rc = nvZcullContextCreate(&g->zcull_ctx, g);
 
     if (R_FAILED(rc))
-        nvgpuClose(g);
+        nvGpuClose(g);
 
     return rc;
 }
 
-void nvgpuClose(NvGpu* g)
+void nvGpuClose(NvGpu* g)
 {
     nvBufferExit();
     nvInfoExit();
