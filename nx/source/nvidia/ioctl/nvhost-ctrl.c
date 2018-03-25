@@ -14,10 +14,12 @@ Result nvioctlNvhostCtrl_SyncptRead(u32 fd, u32 id, u32* out)
     memset(&data, 0, sizeof(data));
     data.syncpt_id = id;
 
+    Result rc;
+
     rc = nvIoctl(fd, _NV_IOWR(0x00, 0x14, data), &data);
 
     if (R_SUCCEEDED(rc)) {
-        *out = value;
+        *out = data.value;
     }
 
     return rc;
