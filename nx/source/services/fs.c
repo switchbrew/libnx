@@ -177,6 +177,56 @@ Result fsMountSystemSaveData(FsFileSystem* out, u8 inval, FsSave *save) {
     return rc;
 }
 
+Result fsOpenSaveDataIterator(FsSaveDataIterator* out, s32 SaveDataSpaceId) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u8 SaveDataSpaceId;
+    } *raw2;
+
+    if (SaveDataSpaceId == FsSaveDataSpaceId_All) {
+        raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+        raw->magic = SFCI_MAGIC;
+        raw->cmd_id = 60;
+    }
+    else {
+        raw2 = ipcPrepareHeader(&c, sizeof(*raw2));
+
+        raw2->magic = SFCI_MAGIC;
+        raw2->cmd_id = 61;
+        raw2->SaveDataSpaceId = SaveDataSpaceId;
+    }
+
+    Result rc = serviceIpcDispatch(&g_fsSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            out->h = r.Handles[0];
+        }
+    }
+
+    return rc;
+}
+
 Result fsOpenDataStorageByCurrentProcess(FsStorage* out) {
     IpcCommand c;
     ipcInitialize(&c);
@@ -219,9 +269,9 @@ Result fsMount_SaveData(FsFileSystem* out, u64 titleID, u128 userID) {
     memset(&save, 0, sizeof(save));
     save.titleID = titleID;
     save.userID = userID;
-    save.ContentStorageId = FS_CONTENTSTORAGEID_NandUser;
+    save.SaveDataType = FsSaveDataType_SaveData;
 
-    return fsMountSaveData(out, FS_MOUNTSAVEDATA_INVAL_DEFAULT, &save);
+    return fsMountSaveData(out, FsSaveDataSpaceId_NandUser, &save);
 }
 
 Result fsMount_SystemSaveData(FsFileSystem* out, u64 saveID) {
@@ -229,9 +279,9 @@ Result fsMount_SystemSaveData(FsFileSystem* out, u64 saveID) {
 
     memset(&save, 0, sizeof(save));
     save.saveID = saveID;
-    save.ContentStorageId = FS_CONTENTSTORAGEID_NandSystem;
+    save.SaveDataType = FsSaveDataType_SystemSaveData;
 
-    return fsMountSystemSaveData(out, FS_MOUNTSYSTEMSAVEDATA_INVAL_DEFAULT, &save);
+    return fsMountSystemSaveData(out, FsSaveDataSpaceId_NandSystem, &save);
 }
 
 // IFileSystem impl
@@ -686,7 +736,10 @@ Result fsFsGetTotalSpace(FsFileSystem* fs, const char* path, u64* out) {
 }
 
 void fsFsClose(FsFileSystem* fs) {
-    if(fs->h != INVALID_HANDLE) svcCloseHandle(fs->h);
+    if(fs->h != INVALID_HANDLE) {
+        svcCloseHandle(fs->h);
+        fs->h = INVALID_HANDLE;
+    }
 }
 
 // IFile implementation
@@ -869,12 +922,18 @@ Result fsFileGetSize(FsFile* f, u64* out) {
 }
 
 void fsFileClose(FsFile* f) {
-    if(f->h != INVALID_HANDLE) svcCloseHandle(f->h);
+    if(f->h != INVALID_HANDLE) {
+        svcCloseHandle(f->h);
+        f->h = INVALID_HANDLE;
+    }
 }
 
 // IDirectory implementation
 void fsDirClose(FsDir* d) {
-     if(d->h != INVALID_HANDLE) svcCloseHandle(d->h);
+    if(d->h != INVALID_HANDLE) {
+        svcCloseHandle(d->h);
+        d->h = INVALID_HANDLE;
+    }
 }
 
 Result fsDirRead(FsDir* d, u64 inval, size_t* total_entries, size_t max_entries, FsDirectoryEntry *buf) {
@@ -987,6 +1046,54 @@ Result fsStorageRead(FsStorage* s, u64 off, void* buf, size_t len) {
 }
 
 void fsStorageClose(FsStorage* s) {
-    if(s->h != INVALID_HANDLE) svcCloseHandle(s->h);
+    if(s->h != INVALID_HANDLE) {
+        svcCloseHandle(s->h);
+        s->h = INVALID_HANDLE;
+    }
+}
+
+// ISaveDataInfoReader
+Result fsSaveDataIteratorRead(FsSaveDataIterator *s, FsSaveDataInfo* buf, size_t max_entries, size_t* total_entries) {
+    IpcCommand c;
+    ipcInitialize(&c);
+    ipcAddRecvBuffer(&c, buf, sizeof(FsSaveDataInfo)*max_entries, 0);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 0;
+
+    Result rc = ipcDispatch(s->h);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u64 total_entries;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            if (total_entries) *total_entries = resp->total_entries;
+        }
+    }
+
+    return rc;
+}
+
+void fsSaveDataIteratorClose(FsSaveDataIterator* s) {
+    if(s->h != INVALID_HANDLE) {
+        svcCloseHandle(s->h);
+        s->h = INVALID_HANDLE;
+    }
 }
 

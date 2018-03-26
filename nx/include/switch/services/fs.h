@@ -1,7 +1,7 @@
 /**
  * @file fs.h
  * @brief Filesystem (fsp-srv) service IPC wrapper.
- * Normally applications should just use standard stdio not FS-serv directly. However this can be used if obtaining a FsFileSystem, FsFile, or FsStorage, for mounting with fs_dev/romfs_dev.
+ * Normally applications should just use standard stdio not FS-serv directly. However this can be used if obtaining a FsFileSystem, FsFile, or FsStorage, for mounting with fs_dev/romfs_dev, etc.
  * @author plutoo
  * @author yellows8
  * @copyright libnx Authors
@@ -14,16 +14,10 @@
 
 #define FS_MAX_PATH 0x301
 
-/// For use with fsMountSaveData().
-#define FS_MOUNTSAVEDATA_INVAL_DEFAULT 0x1
-
-/// For use with fsMountSystemSaveData().
-#define FS_MOUNTSYSTEMSAVEDATA_INVAL_DEFAULT 0x0
-
 /// For use with FsSave.
 #define FS_SAVEDATA_CURRENT_TITLEID 0
 
-/// For use with FsSave.
+/// For use with \ref FsSave and \ref FsSaveDataInfo.
 #define FS_SAVEDATA_USERID_COMMONSAVE 0
 
 typedef struct {
@@ -42,6 +36,10 @@ typedef struct {
     Handle  h;
 } FsStorage;
 
+typedef struct {
+    Handle  h;
+} FsSaveDataIterator;
+
 /// Directory entry.
 typedef struct
 {
@@ -58,11 +56,24 @@ typedef struct
     u64 titleID;          ///< titleID of the savedata to access when accessing other titles' savedata via SaveData, otherwise FS_SAVEDATA_CURRENT_TITLEID.
     u128 userID;          ///< userID of the user-specific savedata to access, otherwise FS_SAVEDATA_USERID_COMMONSAVE. See account.h.
     u64 saveID;           ///< saveID, 0 for SaveData.
-    u64 ContentStorageId; ///< ContentStorageId? See FsContentStorageId.
+    u64 SaveDataType;     ///< See \ref FsSaveDataType.
     u64 unk_x28;          ///< 0 for SystemSaveData/SaveData.
     u64 unk_x30;          ///< 0 for SystemSaveData/SaveData.
     u64 unk_x38;          ///< 0 for SystemSaveData/SaveData.
 } PACKED FsSave;
+
+typedef struct
+{
+    u64 saveID_unk;
+    u8 SaveDataSpaceId; ///< See \ref FsSaveDataSpaceId.
+    u8 SaveDataType;    ///< See \ref FsSaveDataType.
+    u8 pad[6];
+    u128 userID;        ///< See userID for \ref FsSave.
+    u64 saveID;         ///< See saveID for \ref FsSave.
+    u64 titleID;        ///< titleID for FsSaveDataType_SaveData.
+    u64 size;           ///< Raw saveimage size.
+    u8 unk_x38[0x28];   ///< Unknown. Usually zeros?
+} PACKED FsSaveDataInfo;
 
 typedef enum {
     ENTRYTYPE_DIR = 0,
@@ -90,6 +101,26 @@ typedef enum
     FS_CONTENTSTORAGEID_SdCard     = 2,
 } FsContentStorageId;
 
+typedef enum
+{
+    FsSaveDataSpaceId_NandSystem       = 0,
+    FsSaveDataSpaceId_NandUser         = 1,
+    FsSaveDataSpaceId_SdCard           = 2,
+    FsSaveDataSpaceId_TemporaryStorage = 3,
+
+    FsSaveDataSpaceId_All = -1,             ///< Pseudo value for fsOpenSaveDataIterator().
+} FsSaveDataSpaceId;
+
+typedef enum
+{
+    FsSaveDataType_SystemSaveData           = 0,
+    FsSaveDataType_SaveData                 = 1,
+    FsSaveDataType_BcatDeliveryCacheStorage = 2,
+    FsSaveDataType_DeviceSaveData           = 3,
+    FsSaveDataType_TemporaryStorage         = 4, ///< [3.0.0+]
+    FsSaveDataType_CacheStorage             = 5, ///< [3.0.0+]
+} FsSaveDataType;
+
 Result fsInitialize(void);
 void fsExit(void);
 
@@ -100,6 +131,7 @@ Result fsMountSdcard(FsFileSystem* out);
 
 Result fsMountSaveData(FsFileSystem* out, u8 inval, FsSave *save);
 Result fsMountSystemSaveData(FsFileSystem* out, u8 inval, FsSave *save);
+Result fsOpenSaveDataIterator(FsSaveDataIterator* out, s32 SaveDataSpaceId);
 Result fsOpenDataStorageByCurrentProcess(FsStorage* out);
 // todo: Rest of commands here
 
@@ -145,3 +177,9 @@ void fsDirClose(FsDir* d);
 // IStorage
 Result fsStorageRead(FsStorage* s, u64 off, void* buf, size_t len);
 void fsStorageClose(FsStorage* s);
+
+// ISaveDataInfoReader
+
+/// Read FsSaveDataInfo data into the buf array.
+Result fsSaveDataIteratorRead(FsSaveDataIterator *s, FsSaveDataInfo* buf, size_t max_entries, size_t* total_entries);
+void fsSaveDataIteratorClose(FsSaveDataIterator *s);
