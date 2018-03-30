@@ -588,37 +588,37 @@ struct group_source_req {
  * Unspecified
  */
 #define IN6_IS_ADDR_UNSPECIFIED(a)	\
-	((a)->__u6_addr.__u6_addr32[0] == 0 &&	\
-	 (a)->__u6_addr.__u6_addr32[1] == 0 &&	\
-	 (a)->__u6_addr.__u6_addr32[2] == 0 &&	\
-	 (a)->__u6_addr.__u6_addr32[3] == 0)
+	((a)->__u6_addr32[0] == 0 &&	\
+	 (a)->__u6_addr32[1] == 0 &&	\
+	 (a)->__u6_addr32[2] == 0 &&	\
+	 (a)->__u6_addr32[3] == 0)
 
 /*
  * Loopback
  */
 #define IN6_IS_ADDR_LOOPBACK(a)		\
-	((a)->__u6_addr.__u6_addr32[0] == 0 &&	\
-	 (a)->__u6_addr.__u6_addr32[1] == 0 &&	\
-	 (a)->__u6_addr.__u6_addr32[2] == 0 &&	\
-	 (a)->__u6_addr.__u6_addr32[3] == ntohl(1))
+	((a)->__u6_addr32[0] == 0 &&	\
+	 (a)->__u6_addr32[1] == 0 &&	\
+	 (a)->__u6_addr32[2] == 0 &&	\
+	 (a)->__u6_addr32[3] == ntohl(1))
 
 /*
  * IPv4 compatible
  */
 #define IN6_IS_ADDR_V4COMPAT(a)		\
-	((a)->__u6_addr.__u6_addr32[0] == 0 &&	\
-	 (a)->__u6_addr.__u6_addr32[1] == 0 &&	\
-	 (a)->__u6_addr.__u6_addr32[2] == 0 &&	\
-	 (a)->__u6_addr.__u6_addr32[3] != 0 &&	\
-	 (a)->__u6_addr.__u6_addr32[3] != ntohl(1))
+	((a)->__u6_addr32[0] == 0 &&	\
+	 (a)->__u6_addr32[1] == 0 &&	\
+	 (a)->__u6_addr32[2] == 0 &&	\
+	 (a)->__u6_addr32[3] != 0 &&	\
+	 (a)->__u6_addr32[3] != ntohl(1))
 
 /*
  * Mapped
  */
 #define IN6_IS_ADDR_V4MAPPED(a)		      \
-	((a)->__u6_addr.__u6_addr32[0] == 0 &&	\
-	 (a)->__u6_addr.__u6_addr32[1] == 0 &&	\
-	 (a)->__u6_addr.__u6_addr32[2] == ntohl(0x0000ffff))
+	((a)->__u6_addr32[0] == 0 &&	\
+	 (a)->__u6_addr32[1] == 0 &&	\
+	 (a)->__u6_addr32[2] == ntohl(0x0000ffff))
 
 #define __IPV6_ADDR_SCOPE_NODELOCAL	0x01
 #define __IPV6_ADDR_SCOPE_INTFACELOCAL	0x01
