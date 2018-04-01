@@ -8,7 +8,7 @@ Result vnInit3D(Vn* vn) {
         // ???
         NvIncr(0, NvReg3D_MmeShadowScratch(0x1A), 0, 0xffffffff),
         NvImm(0, NvReg3D_MmeShadowScratch(0x19), 0),
-        // Reset multisampling
+        //
         NvImm(0, NvReg3D_MultisampleEnable, 0),
         NvImm(0, NvReg3D_MultisampleCsaaEnable, 0),
         NvImm(0, NvReg3D_MultisampleMode, 0),
@@ -177,6 +177,148 @@ Result vnInit3D(Vn* vn) {
     }
 
     VnCmd(vn, NvImm(0, NvReg3D_ScreenHorizontalControl, 0x10));
+
+    // Reset all the scissors.
+    for (i=0; i<16; i++) {
+        VnCmd(vn,
+            NvIncr(0, NvReg3D_ScissorHorizontal(i),
+                (0xffff << 16) | 0, /* Horizontal */
+                (0xffff << 16) | 0  /* Vertical */
+            )
+        );
+    }
+
+    // Setup RAM for macros.
+    VnCmd(vn,
+        NvImm(0, NvReg3D_MmeShadowRamControl, 1),
+        NvIncr(0, NvReg3D_MmeShadowScratch(0x1c),
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xffffffff)
+    );
+
+    // Reset IndexArrayLimit.
+    VnCmd(vn,
+        NvIncr(0, NvReg3D_IndexArrayLimit, 0xFF, 0xFFFFFFFF),
+        NvImm(0, NvReg3D_PrimRestartWithDrawArrays, 0)
+    );
+
+    // More RAM setup.
+    VnCmd(vn,
+        NvIncr(0, NvReg3D_MmeShadowScratch(0x2a), 0x0500055f),
+        NvIncr(0, NvReg3D_MmeShadowScratch(0x2b), 0x05000561),
+        NvIncr(0, NvReg3D_MmeShadowScratch(0x2c), 0x05000563),
+        NvIncr(0, NvReg3D_MmeShadowScratch(0x2d), 0x05000565),
+        NvIncr(0, NvReg3D_MmeShadowScratch(0x2e), 0x05000567),
+        NvImm(0, NvReg3D_MmeShadowScratch(0x2f), 0x200),
+        NvImm(0, NvReg3D_MmeShadowScratch(0x30), 0x200),
+        NvImm(0, NvReg3D_MmeShadowScratch(0x31), 0x200),
+        NvImm(0, NvReg3D_MmeShadowScratch(0x32), 0x200),
+        NvImm(0, NvReg3D_MmeShadowScratch(0x33), 0x200)
+    );
+
+    VnCmd(vn,
+        NvIncr(0, NvReg3D_SampleCountEnable, 1),
+        NvIncr(0, NvReg3D_ClipDistanceEnable, 0xff),
+        NvIncr(0, NvReg3D_MsaaMask, 0xffff, 0xffff, 0xffff, 0xffff),
+        NvImm(0, 0x367, 0),
+        NvImm(0, NvReg3D_PointSpriteEnable, 1),
+        NvImm(0, NvReg3D_PointCoordReplace, 4),
+        NvImm(0, NvReg3D_VpPointSize, 1),
+        NvImm(0, 0x68b, 0),
+        NvImm(0, NvReg3D_StencilTwoSideEnable, 1),
+        NvImm(0, 0xe2a, 0x184)
+    );
+
+    // TODO: Call macro_206(0x184);
+    VnCmd(vn, NvIncr(0, NvReg3D_ConstantBufferLoadN, 0x44fffe00));
+
+    VnCmd(vn, 
+        NvImm(0, NvReg3D_ZetaArrayMode, 1),
+        NvImm(0, NvReg3D_ConservativeRaster, 0),
+    );
+
+    // TODO: Call macro_14f(0x00418800, 0, 0x01800000);
+
+    VnCmd(vn,
+        NvImm(0, NvReg3D_MmeShadowScratch(0x34), 0),
+        NvImm(0, 0xbb, 0),
+        NvImm(0, NvReg3D_MultisampleRasterEnable, 0),
+        NvImm(0, NvReg3D_CoverageModulationEnable, 0),
+        NvImm(0, 0x44c, 0x13),
+        NvImm(0, NvReg3D_MultisampleCoverageToColor, 0)
+    );
+
+    VnCmd(vn, NvIncr(0, NvReg3D_CodeAddr, 4, 0x00000000));
+
+    VnCmd(vn,
+        NvImm(0, NvReg3D_MmeShadowScratch(0x27), 0x230),
+        NvImm(0, NvReg3D_MmeShadowScratch(0x23), 0x430),
+        NvImm(0, 0x5ad, 0)
+    );
+
+    // TODO: Call macro_14f(0x00418e40, 7, 0xf);
+    // TODO: Call macro_14f(0x00418e58, 0x842, 0xffff);
+    // TODO: Call macro_14f(0x00418e40, 0x70, 0xf0);
+    // TODO: Call macro_14f(0x00418e58, 0x04f10000, 0xffff0000);
+    // TODO: Call macro_14f(0x00418e40, 0x700, 0xf00);
+    // TODO: Call macro_14f(0x00418e5c, 0x53, 0xffff);
+    // TODO: Call macro_14f(0x00418e40, 0x7000, 0xf000);
+    // TODO: Call macro_14f(0x00418e5c, 0xe90000, 0xffff0000);
+    // TODO: Call macro_14f(0x00418e40, 0x70000, 0xf0000);
+    // TODO: Call macro_14f(0x00418e60, 0xea, 0xffff);
+    // TODO: Call macro_14f(0x00418e40, 0x700000, 0xf00000);
+    // TODO: Call macro_14f(0x00418e60, 0x00eb0000, 0xffff0000);
+    // TODO: Call macro_14f(0x00418e40, 0x07000000, 0x0f000000);
+    // TODO: Call macro_14f(0x00418e64, 0x208, 0xffff);
+    // TODO: Call macro_14f(0x00418e40, 0x70000000, 0xf0000000);
+    // TODO: Call macro_14f(0x00418e64, 0x02090000, 0xffff0000);
+    // TODO: Call macro_14f(0x00418e44, 7, 0xf);
+    // TODO: Call macro_14f(0x00418e68, 0x20a, 0xffff);
+    // TODO: Call macro_14f(0x00418e44, 0x70, 0xf0);
+    // TODO: Call macro_14f(0x00418e68, 0x020b0000, 0xffff0000);
+    // TODO: Call macro_14f(0x00418e44, 0x700, 0xf00);
+    // TODO: Call macro_14f(0x00418e6c, 0x644, 0xffff);
+
+    // Setting up TiledCache and other stuff.
+    VnCmd(vn,
+        NvImm(0, 0x3d8, 0),
+        NvIncr(0, 0x3d9, 0x00800080),
+        NvIncr(0, 0x3da, 0x1109),
+        NvIncr(0, 0x3db, 0x08080202),
+        NvImm(0, 0x442, 0x1f),
+        NvIncr(0, 0x3dc, 0x00080001),
+        NvImm(0, 0x44d, 0),
+    );
+
+    // TODO: Subchannel 1:
+    /*
+      NvImm(0, 0x54a, 0),
+      NvImm(0, 0x982, 2),
+      NvIncr(0, NvReg3D_LocalBase, 0x01000000),
+      NvIncr(0, 0x85, 0x03000000),
+      NvIncr(0, NvReg3D_CodeAddr, 4, 0x00000000),
+      NvImm(0xc4, 0x503),
+    */
+
+    // TODO: Subchannel 6:
+    /*
+      2001c00b type: 1, subchannel: 6
+      UNKNOWN (0x00b) <- 0x80000000
+      2001c00b type: 1, subchannel: 6
+      UNKNOWN (0x00b) <- 0x70000000
+    */
+
+    // Flush texture info cache.
+    VnCmd(vn,
+        NvImm(0, 0x4a2, 0),
+        NvImm(0, 0x369, 0x11),
+        NvImm(0, 0x50a, 0),
+        NvImm(0, 0x509, 0)
+    );
+
+    VnCmd(vn,
+        NvIncr(0, 0x1e9, 0x7ff8),
+        NvIncr(0, 0x1ea, 0x7ffc)
+    );
 
     return 0;
 }
