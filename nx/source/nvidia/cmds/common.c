@@ -1,8 +1,11 @@
 #include <switch.h>
 #include <string.h>
 
-void nvCmdsInit(NvCmdList* cmds) {
-    NvCmd(cmds,
+void vnCmdsInit(Vn* vn, NvGpu* parent)
+{
+    vn->parent = parent;
+
+    VnCmd(vn,
         NvIncr(0, NvCmdCommon_BindObject, NvClassNumber_3D),
         NvIncr(1, NvCmdCommon_BindObject, NvClassNumber_Compute),
         NvIncr(2, NvCmdCommon_BindObject, NvClassNumber_Kepler),

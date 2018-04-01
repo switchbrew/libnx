@@ -13,12 +13,13 @@ iova_t nvCmdListGetGpuAddr(NvCmdList* c);
 u64    nvCmdListGetListSize(NvCmdList* c);
 u32*   nvCmdListInsert(NvCmdList* c, size_t num_cmds);
 
-#define NvCmd(cmd_list, ...) do { \
+
+#define NvCmd(cmd_list, ...) do {  \
         u32 _[] = { __VA_ARGS__ }; \
         memcpy(nvCmdListInsert(cmd_list, sizeof(_)/4), _, sizeof(_)); \
     } while (0)
 
-#define NvImm(subc, reg, val) \
+#define NvImm(subc, reg, val)                                   \
     (0x80000000 | (reg) | ((subc) << 13) | ((val) << 16))
 
 #define NvRep(subc, reg, ...) \

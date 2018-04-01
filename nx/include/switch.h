@@ -68,6 +68,7 @@ extern "C" {
 #include "switch/nvidia/gpu/3d_ctx.h"
 #include "switch/nvidia/gpu/error_notifier.h"
 #include "switch/nvidia/gpu/gpu.h"
+#include "switch/nvidia/cmds/vn.h"
 #include "switch/nvidia/cmds/common.h"
 #include "switch/nvidia/cmds/3d.h"
 #include "switch/nvidia/cmds/3d_init.h"
