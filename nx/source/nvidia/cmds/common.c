@@ -1,7 +1,7 @@
 #include <switch.h>
 #include <string.h>
 
-void nvCmdsFifoInit(NvCmdList* cmds) {
+void nvCmdsInit(NvCmdList* cmds) {
     NvCmd(cmds,
         NvIncr(0, NvCmdCommon_BindObject, NvClassNumber_3D),
         NvIncr(1, NvCmdCommon_BindObject, NvClassNumber_Compute),

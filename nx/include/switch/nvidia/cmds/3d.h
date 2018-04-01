@@ -50,5 +50,3 @@ enum {
 
 #define NvReg3D_VertexStreamEnableDivisor(n) \
     ((NvReg3D_VertexStreamNEnableDivisor) + (n))
-
-void nvCmdsClearColor(NvCmdList* cmds, float colors[4]);
