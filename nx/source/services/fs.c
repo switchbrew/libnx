@@ -92,7 +92,7 @@ Result fsMountSdcard(FsFileSystem* out) {
         rc = resp->result;
 
         if (R_SUCCEEDED(rc)) {
-            out->h = r.Handles[0];
+            serviceCreate(&out->s, r.Handles[0]);
         }
     }
 
@@ -131,7 +131,7 @@ Result fsMountSaveData(FsFileSystem* out, u8 inval, FsSave *save) {
         rc = resp->result;
 
         if (R_SUCCEEDED(rc)) {
-            out->h = r.Handles[0];
+            serviceCreate(&out->s, r.Handles[0]);
         }
     }
 
@@ -170,7 +170,7 @@ Result fsMountSystemSaveData(FsFileSystem* out, u8 inval, FsSave *save) {
         rc = resp->result;
 
         if (R_SUCCEEDED(rc)) {
-            out->h = r.Handles[0];
+            serviceCreate(&out->s, r.Handles[0]);
         }
     }
 
@@ -220,7 +220,7 @@ Result fsOpenSaveDataIterator(FsSaveDataIterator* out, s32 SaveDataSpaceId) {
         rc = resp->result;
 
         if (R_SUCCEEDED(rc)) {
-            out->h = r.Handles[0];
+            serviceCreate(&out->s, r.Handles[0]);
         }
     }
 
@@ -255,7 +255,7 @@ Result fsOpenDataStorageByCurrentProcess(FsStorage* out) {
         rc = resp->result;
 
         if (R_SUCCEEDED(rc)) {
-            out->h = r.Handles[0];
+            serviceCreate(&out->s, r.Handles[0]);
         }
     }
 
@@ -306,7 +306,7 @@ Result fsFsCreateFile(FsFileSystem* fs, const char* path, size_t size, int flags
     raw->size = size;
     raw->flags = flags;
 
-    Result rc = ipcDispatch(fs->h);
+    Result rc = serviceIpcDispatch(&fs->s);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -338,7 +338,7 @@ Result fsFsDeleteFile(FsFileSystem* fs, const char* path) {
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 1;
 
-    Result rc = ipcDispatch(fs->h);
+    Result rc = serviceIpcDispatch(&fs->s);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -370,7 +370,7 @@ Result fsFsCreateDirectory(FsFileSystem* fs, const char* path) {
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 2;
 
-    Result rc = ipcDispatch(fs->h);
+    Result rc = serviceIpcDispatch(&fs->s);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -402,7 +402,7 @@ Result fsFsDeleteDirectory(FsFileSystem* fs, const char* path) {
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 3;
 
-    Result rc = ipcDispatch(fs->h);
+    Result rc = serviceIpcDispatch(&fs->s);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -434,7 +434,7 @@ Result fsFsDeleteDirectoryRecursively(FsFileSystem* fs, const char* path) {
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 4;
 
-    Result rc = ipcDispatch(fs->h);
+    Result rc = serviceIpcDispatch(&fs->s);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -467,7 +467,7 @@ Result fsFsRenameFile(FsFileSystem* fs, const char* path0, const char* path1) {
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 5;
 
-    Result rc = ipcDispatch(fs->h);
+    Result rc = serviceIpcDispatch(&fs->s);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -500,7 +500,7 @@ Result fsFsRenameDirectory(FsFileSystem* fs, const char* path0, const char* path
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 6;
 
-    Result rc = ipcDispatch(fs->h);
+    Result rc = serviceIpcDispatch(&fs->s);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -532,7 +532,7 @@ Result fsFsGetEntryType(FsFileSystem* fs, const char* path, FsEntryType* out) {
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 7;
 
-    Result rc = ipcDispatch(fs->h);
+    Result rc = serviceIpcDispatch(&fs->s);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -571,7 +571,7 @@ Result fsFsOpenFile(FsFileSystem* fs, const char* path, int flags, FsFile* out) 
     raw->cmd_id = 8;
     raw->flags = flags;
 
-    Result rc = ipcDispatch(fs->h);
+    Result rc = serviceIpcDispatch(&fs->s);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -585,7 +585,7 @@ Result fsFsOpenFile(FsFileSystem* fs, const char* path, int flags, FsFile* out) 
         rc = resp->result;
 
         if (R_SUCCEEDED(rc)) {
-            out->h = r.Handles[0];
+            serviceCreate(&out->s, r.Handles[0]);
         }
     }
 
@@ -609,7 +609,7 @@ Result fsFsOpenDirectory(FsFileSystem* fs, const char* path, int flags, FsDir* o
     raw->cmd_id = 9;
     raw->flags = flags;
 
-    Result rc = ipcDispatch(fs->h);
+    Result rc = serviceIpcDispatch(&fs->s);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -623,7 +623,7 @@ Result fsFsOpenDirectory(FsFileSystem* fs, const char* path, int flags, FsDir* o
         rc = resp->result;
 
         if (R_SUCCEEDED(rc)) {
-            out->h = r.Handles[0];
+            serviceCreate(&out->s, r.Handles[0]);
         }
     }
 
@@ -644,7 +644,7 @@ Result fsFsCommit(FsFileSystem* fs) {
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 10;
 
-    Result rc = ipcDispatch(fs->h);
+    Result rc = serviceIpcDispatch(&fs->s);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -676,7 +676,7 @@ Result fsFsGetFreeSpace(FsFileSystem* fs, const char* path, u64* out) {
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 11;
 
-    Result rc = ipcDispatch(fs->h);
+    Result rc = serviceIpcDispatch(&fs->s);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -713,7 +713,7 @@ Result fsFsGetTotalSpace(FsFileSystem* fs, const char* path, u64* out) {
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 12;
 
-    Result rc = ipcDispatch(fs->h);
+    Result rc = serviceIpcDispatch(&fs->s);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -736,10 +736,7 @@ Result fsFsGetTotalSpace(FsFileSystem* fs, const char* path, u64* out) {
 }
 
 void fsFsClose(FsFileSystem* fs) {
-    if(fs->h != INVALID_HANDLE) {
-        svcCloseHandle(fs->h);
-        fs->h = INVALID_HANDLE;
-    }
+    serviceClose(&fs->s);
 }
 
 // IFile implementation
@@ -764,7 +761,7 @@ Result fsFileRead(FsFile* f, u64 off, void* buf, size_t len, size_t* out) {
     raw->offset = off;
     raw->read_size = len;
 
-    Result rc = ipcDispatch(f->h);
+    Result rc = serviceIpcDispatch(&f->s);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -807,7 +804,7 @@ Result fsFileWrite(FsFile* f, u64 off, const void* buf, size_t len) {
     raw->offset = off;
     raw->write_size = len;
 
-    Result rc = ipcDispatch(f->h);
+    Result rc = serviceIpcDispatch(&f->s);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -838,7 +835,7 @@ Result fsFileFlush(FsFile* f) {
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 2;
 
-    Result rc = ipcDispatch(f->h);
+    Result rc = serviceIpcDispatch(&f->s);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -871,7 +868,7 @@ Result fsFileSetSize(FsFile* f, u64 sz) {
     raw->cmd_id = 3;
     raw->size = sz;
 
-    Result rc = ipcDispatch(f->h);
+    Result rc = serviceIpcDispatch(&f->s);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -902,7 +899,7 @@ Result fsFileGetSize(FsFile* f, u64* out) {
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 4;
 
-    Result rc = ipcDispatch(f->h);
+    Result rc = serviceIpcDispatch(&f->s);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -922,18 +919,12 @@ Result fsFileGetSize(FsFile* f, u64* out) {
 }
 
 void fsFileClose(FsFile* f) {
-    if(f->h != INVALID_HANDLE) {
-        svcCloseHandle(f->h);
-        f->h = INVALID_HANDLE;
-    }
+    serviceClose(&f->s);
 }
 
 // IDirectory implementation
 void fsDirClose(FsDir* d) {
-    if(d->h != INVALID_HANDLE) {
-        svcCloseHandle(d->h);
-        d->h = INVALID_HANDLE;
-    }
+    serviceClose(&d->s);
 }
 
 Result fsDirRead(FsDir* d, u64 inval, size_t* total_entries, size_t max_entries, FsDirectoryEntry *buf) {
@@ -953,7 +944,7 @@ Result fsDirRead(FsDir* d, u64 inval, size_t* total_entries, size_t max_entries,
     raw->cmd_id = 0;
     raw->inval = inval;
 
-    Result rc = ipcDispatch(d->h);
+    Result rc = serviceIpcDispatch(&d->s);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -989,7 +980,7 @@ Result fsDirGetEntryCount(FsDir* d, u64* count) {
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 1;
 
-    Result rc = ipcDispatch(d->h);
+    Result rc = serviceIpcDispatch(&d->s);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -1028,7 +1019,7 @@ Result fsStorageRead(FsStorage* s, u64 off, void* buf, size_t len) {
     raw->offset = off;
     raw->read_size = len;
 
-    Result rc = ipcDispatch(s->h);
+    Result rc = serviceIpcDispatch(&s->s);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -1046,10 +1037,7 @@ Result fsStorageRead(FsStorage* s, u64 off, void* buf, size_t len) {
 }
 
 void fsStorageClose(FsStorage* s) {
-    if(s->h != INVALID_HANDLE) {
-        svcCloseHandle(s->h);
-        s->h = INVALID_HANDLE;
-    }
+    serviceClose(&s->s);
 }
 
 // ISaveDataInfoReader
@@ -1068,7 +1056,7 @@ Result fsSaveDataIteratorRead(FsSaveDataIterator *s, FsSaveDataInfo* buf, size_t
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 0;
 
-    Result rc = ipcDispatch(s->h);
+    Result rc = serviceIpcDispatch(&s->s);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -1091,9 +1079,6 @@ Result fsSaveDataIteratorRead(FsSaveDataIterator *s, FsSaveDataInfo* buf, size_t
 }
 
 void fsSaveDataIteratorClose(FsSaveDataIterator* s) {
-    if(s->h != INVALID_HANDLE) {
-        svcCloseHandle(s->h);
-        s->h = INVALID_HANDLE;
-    }
+    serviceClose(&s->s);
 }
 

@@ -21,23 +21,23 @@
 #define FS_SAVEDATA_USERID_COMMONSAVE 0
 
 typedef struct {
-    Handle  h;
+    Service  s;
 } FsFileSystem;
 
 typedef struct {
-    Handle  h;
+    Service  s;
 } FsFile;
 
 typedef struct {
-    Handle  h;
+    Service  s;
 } FsDir;
 
 typedef struct {
-    Handle  h;
+    Service  s;
 } FsStorage;
 
 typedef struct {
-    Handle  h;
+    Service  s;
 } FsSaveDataIterator;
 
 /// Directory entry.
