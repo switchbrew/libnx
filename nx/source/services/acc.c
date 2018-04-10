@@ -104,7 +104,7 @@ Result accountGetProfile(AccountProfile* out, u128 userID) {
         rc = resp->result;
 
         if (R_SUCCEEDED(rc)) {
-            out->h = r.Handles[0];
+            serviceCreate(&out->s, r.Handles[0]);
         }
     }
 
@@ -127,7 +127,7 @@ Result accountProfileGet(AccountProfile* profile, AccountUserData* userdata, Acc
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = userdata==NULL ? 1 : 0;
 
-    Result rc = ipcDispatch(profile->h);
+    Result rc = serviceIpcDispatch(&profile->s);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -161,7 +161,7 @@ Result accountProfileGetImageSize(AccountProfile* profile, size_t* image_size) {
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 10;
 
-    Result rc = ipcDispatch(profile->h);
+    Result rc = serviceIpcDispatch(&profile->s);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -198,7 +198,7 @@ Result accountProfileLoadImage(AccountProfile* profile, void* buf, size_t len, s
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 11;
 
-    Result rc = ipcDispatch(profile->h);
+    Result rc = serviceIpcDispatch(&profile->s);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -221,9 +221,6 @@ Result accountProfileLoadImage(AccountProfile* profile, void* buf, size_t len, s
 }
 
 void accountProfileClose(AccountProfile* profile) {
-    if(profile->h != INVALID_HANDLE) {
-        svcCloseHandle(profile->h);
-        profile->h = INVALID_HANDLE;
-    }
+    serviceClose(&profile->s);
 }
 

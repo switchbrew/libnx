@@ -9,7 +9,7 @@
 #include "sm.h"
 
 typedef struct {
-    Handle  h;
+    Service  s;
 } AccountProfile;
 
 typedef struct
