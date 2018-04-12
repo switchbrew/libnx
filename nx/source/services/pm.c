@@ -6,12 +6,12 @@
 #include "services/pm.h"
 #include "services/sm.h"
 
-static Service g_pmdmntSrv;
-static u64 g_refCnt;
+static Service g_pmdmntSrv, g_pmshellSrv;
+static u64 g_pmdmntRefCnt, g_pmshellRefCnt;
 
 Result pmdmntInitialize(void)
 {
-    atomicIncrement64(&g_refCnt);
+    atomicIncrement64(&g_pmdmntRefCnt);
 
     if (serviceIsActive(&g_pmdmntSrv))
         return 0;
@@ -21,8 +21,25 @@ Result pmdmntInitialize(void)
 
 void pmdmntExit(void)
 {
-    if (atomicDecrement64(&g_refCnt) == 0) {
+    if (atomicDecrement64(&g_pmdmntRefCnt) == 0) {
         serviceClose(&g_pmdmntSrv);
+    }
+}
+
+Result pmshellInitialize(void)
+{
+    atomicIncrement64(&g_pmshellRefCnt);
+
+    if (serviceIsActive(&g_pmshellSrv))
+        return 0;
+
+    return smGetService(&g_pmshellSrv, "pm:shell");
+}
+
+void pmshellExit(void)
+{
+    if (atomicDecrement64(&g_pmshellRefCnt) == 0) {
+        serviceClose(&g_pmshellSrv);
     }
 }
 
@@ -200,6 +217,46 @@ Result pmdmntEnableDebugForApplication(Handle* handle_out) {
         if (R_SUCCEEDED(rc)) {
             *handle_out = r.Handles[0];
         }
+    }
+
+    return rc;
+}
+
+Result pmshellLaunchProcess(u32 launch_flags, u64 titleID, u64 storageID, u64 *pid) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 launch_flags;
+        u64 titleID;
+        u64 storageID;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 0;
+    raw->launch_flags = launch_flags;
+    raw->titleID = titleID;
+    raw->storageID = storageID;
+
+    Result rc = serviceIpcDispatch(&g_pmshellSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u64 pid;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && pid) *pid = resp->pid;
     }
 
     return rc;

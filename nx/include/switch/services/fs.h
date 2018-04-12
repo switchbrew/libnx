@@ -96,6 +96,16 @@ typedef enum
 
 typedef enum
 {
+    FsStorageId_None =       0,
+    FsStorageId_Host =       1,
+    FsStorageId_GameCard =   2,
+    FsStorageId_NandSystem = 3,
+    FsStorageId_NandUser   = 4,
+    FsStorageId_SdCard     = 5,
+} FsStorageId;
+
+typedef enum
+{
     FS_CONTENTSTORAGEID_NandSystem = 0,
     FS_CONTENTSTORAGEID_NandUser   = 1,
     FS_CONTENTSTORAGEID_SdCard     = 2,
