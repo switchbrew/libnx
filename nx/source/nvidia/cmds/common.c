@@ -1,9 +1,16 @@
 #include <switch.h>
 #include <string.h>
 
-void vnCmdsInit(Vn* vn, NvGpu* parent)
+Result vnInit(Vn* vn, NvGpu* parent)
 {
+    Result rc;
+
     vn->parent = parent;
+
+    rc = nvCmdListCreate(&vn->cmd_list, parent, 0x1000*4);
+
+    if (R_FAILED(rc))
+        return rc;
 
     VnCmd(vn,
         NvIncr(0, NvCmdCommon_BindObject, NvClassNumber_3D),
@@ -11,4 +18,6 @@ void vnCmdsInit(Vn* vn, NvGpu* parent)
         NvIncr(2, NvCmdCommon_BindObject, NvClassNumber_Kepler),
         NvIncr(3, NvCmdCommon_BindObject, NvClassNumber_2D),
         NvIncr(4, NvCmdCommon_BindObject, NvClassNumber_DMA));
+
+    return rc;
 }
