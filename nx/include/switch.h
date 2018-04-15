@@ -72,6 +72,7 @@ extern "C" {
 #include "switch/nvidia/cmds/common.h"
 #include "switch/nvidia/cmds/3d.h"
 #include "switch/nvidia/cmds/3d_init.h"
+#include "switch/nvidia/cmds/3d_rendertarget.h"
 #include "switch/nvidia/cmds/3d_clear.h"
 
 #include "switch/runtime/env.h"

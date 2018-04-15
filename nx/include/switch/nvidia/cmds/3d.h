@@ -95,6 +95,9 @@ enum {
 #define NvReg3D_ViewportSubpixelPrecisionBias(n) \
     (NvReg3D_ViewportNSubpixelPrecisionBias + 8*(n))
 
+#define NvReg3D_RenderTargetAddr(n) \
+    (NvReg3D_RenderTargetNAddr + 16*(n))
+
 #define NvReg3D_ViewportHorizontal(n) \
     (NvReg3D_ViewportNHorizontal + 4*(n))
 #define NvReg3D_ViewportVertical(n) \

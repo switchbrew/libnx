@@ -78,7 +78,7 @@ Result vnInit3D(Vn* vn) {
         vn,
         NvImm(3, 0xab, 3), // SetOperation?
         NvImm(3, 0xa4, 0), // SetClipEnable
-        NvImm(3, 0x221, 0x3f));
+        NvImm(3, 0x221, 0x3f)
         );
 
     // TODO: Call macro_14f(0x00418800, 1, 1).

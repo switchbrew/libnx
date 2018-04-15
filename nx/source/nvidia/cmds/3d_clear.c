@@ -9,7 +9,6 @@ void vnClearBuffer(
           NvIncr(0, NvReg3D_ScreenScissorHorizontal, 0 | (width << 16), 0 | (height << 16)),
           NvIncr(0, NvReg3D_RenderTargetControl, (076543210 << 4) | 1)); // bit0 probably enables RT #0
 
-    // TODO: this function does not seem to update buffer, but when i give it an invalid gpu_addr i get a gpfifo error so at least something is going on
     iova_t gpu_addr = nvBufferGetGpuAddr(buf);
     VnCmd(vn,
           NvIncr(0, NvReg3D_RenderTargetNAddr + 0x10*0,
