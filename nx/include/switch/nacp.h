@@ -1,5 +1,5 @@
 /**
- * @file nro.h
+ * @file nacp.h
  * @brief Control.nacp structure.
  * @copyright libnx Authors
  */
