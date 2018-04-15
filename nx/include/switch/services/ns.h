@@ -11,9 +11,9 @@
 typedef struct {
     NacpStruct nacp;
     u8 icon[0x20000];//JPEG
-} nsApplicationControlData;
+} NsApplicationControlData;
 
 Result nsInitialize(void);
 void nsExit(void);
 
-Result nsGetApplicationControlData(u8 flag, u64 titleID, nsApplicationControlData* buffer, size_t size, size_t* actual_size);
+Result nsGetApplicationControlData(u8 flag, u64 titleID, NsApplicationControlData* buffer, size_t size, size_t* actual_size);
