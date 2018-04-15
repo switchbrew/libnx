@@ -14,7 +14,7 @@ u64    nvCmdListGetListSize(NvCmdList* c);
 u32*   nvCmdListInsert(NvCmdList* c, size_t num_cmds);
 
 
-#define NvCmd(cmd_list, ...) do {  \
+#define nvCmdListAddCmd(cmd_list, ...) do {  \
         u32 _[] = { __VA_ARGS__ }; \
         memcpy(nvCmdListInsert(cmd_list, sizeof(_)/4), _, sizeof(_)); \
     } while (0)

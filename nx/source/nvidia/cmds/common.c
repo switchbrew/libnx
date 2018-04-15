@@ -12,7 +12,7 @@ Result vnInit(Vn* vn, NvGpu* parent)
     if (R_FAILED(rc))
         return rc;
 
-    VnCmd(vn,
+    vnAddCmd(vn,
         NvIncr(0, NvCmdCommon_BindObject, NvClassNumber_3D),
         NvIncr(1, NvCmdCommon_BindObject, NvClassNumber_Compute),
         NvIncr(2, NvCmdCommon_BindObject, NvClassNumber_Kepler),

@@ -2,7 +2,7 @@
 #include <string.h>
 
 void vnSetViewport(Vn* vn, size_t index, VnViewportConfig* c) {
-    VnCmd(
+    vnAddCmd(
         vn,
         NvIncr(
             0,

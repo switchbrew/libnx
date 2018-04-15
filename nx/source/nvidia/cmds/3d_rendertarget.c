@@ -4,12 +4,12 @@
 void vnSetRenderTargets(Vn* vn, VnRenderTargetConfig* targets, size_t num_targets) {
     size_t i;
 
-    VnCmd(vn, NvIncr(0, NvReg3D_RenderTargetControl, (076543210 << 4) | num_targets));
+    vnAddCmd(vn, NvIncr(0, NvReg3D_RenderTargetControl, (076543210 << 4) | num_targets));
 
     for (i=0; i<num_targets; i++) {
         iova_t gpu_addr = nvBufferGetGpuAddr(targets[i].color_buffer);
 
-        VnCmd(
+        vnAddCmd(
             vn,
             NvIncr(0,
                 NvReg3D_RenderTargetAddr(i),
