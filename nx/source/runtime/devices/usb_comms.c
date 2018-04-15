@@ -232,7 +232,7 @@ static Result _usbCommsRead(usbCommsInterface *interface, void* buffer, size_t s
     u32 chunksize=0;
     u32 tmp_transferredSize = 0;
     size_t total_transferredSize=0;
-    usbDsReportData reportdata;
+    UsbDsReportData reportdata;
 
     //Makes sure endpoints are ready for data-transfer / wait for init if needed.
     rc = usbDsWaitReady();
@@ -297,7 +297,7 @@ static Result _usbCommsWrite(usbCommsInterface *interface, const void* buffer, s
     u8 *transfer_buffer = NULL;
     u32 tmp_transferredSize = 0;
     size_t total_transferredSize=0;
-    usbDsReportData reportdata;
+    UsbDsReportData reportdata;
 
     //Makes sure endpoints are ready for data-transfer / wait for init if needed.
     rc = usbDsWaitReady();

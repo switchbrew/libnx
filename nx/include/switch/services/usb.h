@@ -49,19 +49,19 @@ typedef struct {
     char Manufacturer[0x20];
     char Product[0x20];
     char SerialNumber[0x20];
-} usbDsDeviceInfo;
+} UsbDsDeviceInfo;
 
 typedef struct {
     u32 id; /// urbId from post-buffer cmds
     u32 requestedSize;
     u32 transferredSize;
     u32 urb_status;
-} usbDsReportEntry;
+} UsbDsReportEntry;
 
 typedef struct {
-    usbDsReportEntry report[8];
+    UsbDsReportEntry report[8];
     u32 report_count;
-} usbDsReportData;
+} UsbDsReportData;
 
 typedef struct {
     bool initialized;
@@ -153,7 +153,7 @@ enum usb_iso_usage_type {
     USB_ISO_USAGE_TYPE_IMPLICIT = 2,
 };
 
-Result usbDsInitialize(UsbComplexId complexId, const usbDsDeviceInfo* deviceinfo);
+Result usbDsInitialize(UsbComplexId complexId, const UsbDsDeviceInfo* deviceinfo);
 
 /// Exit usbDs. Any interfaces/endpoints which are left open are automatically closed, since otherwise usb-sysmodule won't fully reset usbds to defaults.
 void usbDsExit(void);
@@ -168,7 +168,7 @@ Result usbDsGetDsInterface(UsbDsInterface** interface, struct usb_interface_desc
 Result usbDsWaitReady(void);
 
 /// Parse usbDsReportData from the Get*ReportData commands, where urbId is from the post-buffer commands. Will return the converted urb_status result-value.
-Result usbDsParseReportData(usbDsReportData *reportdata, u32 urbId, u32 *requestedSize, u32 *transferredSize);
+Result usbDsParseReportData(UsbDsReportData *reportdata, u32 urbId, u32 *requestedSize, u32 *transferredSize);
 
 /// IDsInterface
 void usbDsInterface_Close(UsbDsInterface* interface);
@@ -177,14 +177,14 @@ Result usbDsInterface_EnableInterface(UsbDsInterface* interface);
 Result usbDsInterface_DisableInterface(UsbDsInterface* interface);
 Result usbDsInterface_CtrlInPostBufferAsync(UsbDsInterface* interface, void* buffer, size_t size, u32 *urbId);
 Result usbDsInterface_CtrlOutPostBufferAsync(UsbDsInterface* interface, void* buffer, size_t size, u32 *urbId);
-Result usbDsInterface_GetCtrlInReportData(UsbDsInterface* interface, usbDsReportData *out);
-Result usbDsInterface_GetCtrlOutReportData(UsbDsInterface* interface, usbDsReportData *out);
+Result usbDsInterface_GetCtrlInReportData(UsbDsInterface* interface, UsbDsReportData *out);
+Result usbDsInterface_GetCtrlOutReportData(UsbDsInterface* interface, UsbDsReportData *out);
 Result usbDsInterface_StallCtrl(UsbDsInterface* interface);
 
 /// IDsEndpoint
 
 void usbDsEndpoint_Close(UsbDsEndpoint* endpoint);
 Result usbDsEndpoint_PostBufferAsync(UsbDsEndpoint* endpoint, void* buffer, size_t size, u32 *urbId);
-Result usbDsEndpoint_GetReportData(UsbDsEndpoint* endpoint, usbDsReportData *out);
+Result usbDsEndpoint_GetReportData(UsbDsEndpoint* endpoint, UsbDsReportData *out);
 Result usbDsEndpoint_StallCtrl(UsbDsEndpoint* endpoint);
 

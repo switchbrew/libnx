@@ -21,11 +21,11 @@ static void _usbDsFreeTables(void);
 static Result _usbDsBindDevice(UsbComplexId complexId);
 static Result _usbDsBindClientProcess(Handle prochandle);
 static Result _usbDsGetEvent(Service* srv, Handle* handle_out, u64 cmd_id);
-static Result _usbDsSetVidPidBcd(const usbDsDeviceInfo* deviceinfo);
+static Result _usbDsSetVidPidBcd(const UsbDsDeviceInfo* deviceinfo);
 
 static Result _usbDsGetSession(Service* srv, Service* srv_out, u64 cmd_id, const void* buf0, size_t buf0size, const void* buf1, size_t buf1size);
 
-Result usbDsInitialize(UsbComplexId complexId, const usbDsDeviceInfo* deviceinfo)
+Result usbDsInitialize(UsbComplexId complexId, const UsbDsDeviceInfo* deviceinfo)
 {
     if (serviceIsActive(&g_usbDsSrv))
         return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
@@ -322,11 +322,11 @@ Result usbDsWaitReady(void) {
     return rc;
 }
 
-Result usbDsParseReportData(usbDsReportData *reportdata, u32 urbId, u32 *requestedSize, u32 *transferredSize) {
+Result usbDsParseReportData(UsbDsReportData *reportdata, u32 urbId, u32 *requestedSize, u32 *transferredSize) {
     Result rc = 0;
     u32 pos;
     u32 count = reportdata->report_count;
-    usbDsReportEntry *entry = NULL;
+    UsbDsReportEntry *entry = NULL;
     if(count>8)count = 8;
 
     for(pos=0; pos<count; pos++) {
@@ -362,7 +362,7 @@ Result usbDsParseReportData(usbDsReportData *reportdata, u32 urbId, u32 *request
     return rc;
 }
 
-static Result _usbDsSetVidPidBcd(const usbDsDeviceInfo* deviceinfo) {
+static Result _usbDsSetVidPidBcd(const UsbDsDeviceInfo* deviceinfo) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -371,7 +371,7 @@ static Result _usbDsSetVidPidBcd(const usbDsDeviceInfo* deviceinfo) {
         u64 cmd_id;
     } *raw;
 
-    ipcAddSendBuffer(&c, deviceinfo, sizeof(usbDsDeviceInfo), 0);
+    ipcAddSendBuffer(&c, deviceinfo, sizeof(UsbDsDeviceInfo), 0);
 
     raw = ipcPrepareHeader(&c, sizeof(*raw));
 
@@ -507,7 +507,7 @@ static Result _usbDsPostBuffer(Service* srv, u64 cmd_id, void* buffer, size_t si
     return rc;
 }
 
-static Result _usbDsGetReport(Service* srv, u64 cmd_id, usbDsReportData *out) {
+static Result _usbDsGetReport(Service* srv, u64 cmd_id, UsbDsReportData *out) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -530,7 +530,7 @@ static Result _usbDsGetReport(Service* srv, u64 cmd_id, usbDsReportData *out) {
         struct {
             u64 magic;
             u64 result;
-            usbDsReportData out;
+            UsbDsReportData out;
         } *resp = r.Raw;
 
         rc = resp->result;
@@ -621,14 +621,14 @@ Result usbDsInterface_CtrlOutPostBufferAsync(UsbDsInterface* interface, void* bu
     return _usbDsPostBuffer(&interface->h, 6, buffer, size, urbId);
 }
 
-Result usbDsInterface_GetCtrlInReportData(UsbDsInterface* interface, usbDsReportData *out)
+Result usbDsInterface_GetCtrlInReportData(UsbDsInterface* interface, UsbDsReportData *out)
 {
     if(!interface->initialized)return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     return _usbDsGetReport(&interface->h, 8, out);
 }
 
-Result usbDsInterface_GetCtrlOutReportData(UsbDsInterface* interface, usbDsReportData *out)
+Result usbDsInterface_GetCtrlOutReportData(UsbDsInterface* interface, UsbDsReportData *out)
 {
     if(!interface->initialized)return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
@@ -656,7 +656,7 @@ Result usbDsEndpoint_PostBufferAsync(UsbDsEndpoint* endpoint, void* buffer, size
     return _usbDsPostBuffer(&endpoint->h, 0, buffer, size, urbId);
 }
 
-Result usbDsEndpoint_GetReportData(UsbDsEndpoint* endpoint, usbDsReportData *out)
+Result usbDsEndpoint_GetReportData(UsbDsEndpoint* endpoint, UsbDsReportData *out)
 {
     if(!endpoint->initialized)return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
