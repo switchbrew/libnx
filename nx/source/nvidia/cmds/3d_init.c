@@ -21,7 +21,7 @@ Result vnInit3D(Vn* vn) {
         NvImm(0, 0x43c, 4),
         NvImm(0, 0x1d3, 0x3f),
         //
-        NvIncr(0, NvReg3D_ClipRectNHorizontal, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+        NvIncr(0, NvReg3D_WindowNHorizontal, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
         NvImm(0, NvReg3D_ClearFlags, 0x101));
 
     size_t i;
