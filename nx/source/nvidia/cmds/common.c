@@ -17,7 +17,8 @@ Result vnInit(Vn* vn, NvGpu* parent)
         NvIncr(1, NvCmdCommon_BindObject, NvClassNumber_Compute),
         NvIncr(2, NvCmdCommon_BindObject, NvClassNumber_Kepler),
         NvIncr(3, NvCmdCommon_BindObject, NvClassNumber_2D),
-        NvIncr(4, NvCmdCommon_BindObject, NvClassNumber_DMA));
+        NvIncr(4, NvCmdCommon_BindObject, NvClassNumber_DMA)
+    );
 
     return rc;
 }

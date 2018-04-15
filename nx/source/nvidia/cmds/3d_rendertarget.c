@@ -22,6 +22,7 @@ void vnSetRenderTargets(Vn* vn, VnRenderTargetConfig* targets, size_t num_target
                 0,
                 targets[i].width, // TODO: Round up to power of 2?
                 0
-        ));
+            )
+        );
     }
 }
