@@ -63,19 +63,22 @@ extern "C" {
 #include "switch/nvidia/info.h"
 #include "switch/nvidia/fence.h"
 #include "switch/nvidia/rect.h"
+
 #include "switch/nvidia/gpu/cmd_list.h"
 #include "switch/nvidia/gpu/gpfifo.h"
 #include "switch/nvidia/gpu/zcull_ctx.h"
 #include "switch/nvidia/gpu/3d_ctx.h"
 #include "switch/nvidia/gpu/error_notifier.h"
 #include "switch/nvidia/gpu/gpu.h"
-#include "switch/nvidia/cmds/vn.h"
+
 #include "switch/nvidia/cmds/common.h"
 #include "switch/nvidia/cmds/3d.h"
 #include "switch/nvidia/cmds/3d_init.h"
 #include "switch/nvidia/cmds/3d_rendertarget.h"
 #include "switch/nvidia/cmds/3d_viewport.h"
 #include "switch/nvidia/cmds/3d_clear.h"
+#include "switch/nvidia/cmds/dma.h"
+#include "switch/nvidia/cmds/dma_copy.h"
 
 #include "switch/runtime/env.h"
 #include "switch/runtime/nxlink.h"
