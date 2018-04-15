@@ -71,9 +71,14 @@ Result vnInit3D(Vn* vn) {
         NvIncr(0, NvReg3D_Layer, 0x10000),
         NvImm(0, 0x488, 5),
         NvIncr(0, 0x514, 0x00800008),
-        //NvImm(0, 0xab, 3), // FAULTY
-        //NvImm(0, 0xa4, 0),
-        //NvImm(0, 0x221, 0x3f));
+    );
+
+    // Initializes some 2D things..
+    VnCmd(
+        vn,
+        NvImm(3, 0xab, 3), // SetOperation?
+        NvImm(3, 0xa4, 0), // SetClipEnable
+        NvImm(3, 0x221, 0x3f));
         );
 
     // TODO: Call macro_14f(0x00418800, 1, 1).
