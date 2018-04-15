@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include "types.h"
 #include "arm/atomics.h"
 #include "services/acc.h"
@@ -8,12 +10,17 @@ static u64 g_refCnt;
 
 Result accountInitialize(void)
 {
+    Result rc=0;
+
     atomicIncrement64(&g_refCnt);
 
     if (serviceIsActive(&g_accSrv))
         return 0;
 
-    return smGetService(&g_accSrv, "acc:u1");
+    rc = smGetService(&g_accSrv, "acc:u1");
+    if (R_FAILED(rc)) rc = smGetService(&g_accSrv, "acc:u0");
+
+    return rc;
 }
 
 void accountExit(void)
@@ -65,5 +72,155 @@ Result accountGetActiveUser(u128 *userID, bool *account_selected)
     }
 
     return rc;
+}
+
+Result accountGetProfile(AccountProfile* out, u128 userID) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u128 userID;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 5;
+    raw->userID = userID;
+
+    Result rc = serviceIpcDispatch(&g_accSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            serviceCreate(&out->s, r.Handles[0]);
+        }
+    }
+
+    return rc;
+}
+
+//IProfile implementation
+Result accountProfileGet(AccountProfile* profile, AccountUserData* userdata, AccountProfileBase* profilebase) {
+    IpcCommand c;
+    ipcInitialize(&c);
+    if (userdata) ipcAddRecvStatic(&c, userdata, sizeof(AccountUserData), 0);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = userdata==NULL ? 1 : 0;
+
+    Result rc = serviceIpcDispatch(&profile->s);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            AccountProfileBase profilebase;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && profilebase) memcpy(profilebase, &resp->profilebase, sizeof(AccountProfileBase));
+    }
+
+    return rc;
+}
+
+Result accountProfileGetImageSize(AccountProfile* profile, size_t* image_size) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 10;
+
+    Result rc = serviceIpcDispatch(&profile->s);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u32 image_size;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            *image_size = resp->image_size;
+        }
+    }
+
+    return rc;
+}
+
+Result accountProfileLoadImage(AccountProfile* profile, void* buf, size_t len, size_t* image_size) {
+    IpcCommand c;
+    ipcInitialize(&c);
+    ipcAddRecvBuffer(&c, buf, len, 0);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 11;
+
+    Result rc = serviceIpcDispatch(&profile->s);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u32 image_size;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            *image_size = resp->image_size;
+        }
+    }
+
+    return rc;
+}
+
+void accountProfileClose(AccountProfile* profile) {
+    serviceClose(&profile->s);
 }
 

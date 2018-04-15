@@ -375,6 +375,10 @@ void hidJoystickRead(JoystickPosition *pos, HidControllerID id, HidControllerJoy
     }
 }
 
+bool hidGetHandheldMode(void) {
+    return g_controllerP1AutoID == CONTROLLER_HANDHELD;
+}
+
 static Result _hidSetDualModeAll(void) {
     Result rc;
     int i;
@@ -731,26 +735,87 @@ Result hidIsVibrationPermitted(bool *flag) {
     return rc;
 }
 
-Result hidInitializeVibrationDevices(u32 *VibrationDeviceHandles, size_t total_handles, HidControllerID id, HidControllerLayoutType type) {
+Result hidSendVibrationValues(u32 *VibrationDeviceHandles, HidVibrationValue *VibrationValues, size_t count) {
+    Result rc;
+    u64 AppletResourceUserId;
+
+    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
+    if (R_FAILED(rc))
+        return rc;
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 AppletResourceUserId;
+    } *raw;
+
+    ipcAddSendStatic(&c, VibrationDeviceHandles, sizeof(u32)*count, 0);
+    ipcAddSendStatic(&c, VibrationValues, sizeof(HidVibrationValue)*count, 0);
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 206;
+    raw->AppletResourceUserId = AppletResourceUserId;
+
+    rc = serviceIpcDispatch(&g_hidSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result hidInitializeVibrationDevices(u32 *VibrationDeviceHandles, size_t total_handles, HidControllerID id, HidControllerType type) {
     Result rc=0;
     Service srv;
     u32 tmp_type = type & 0xff;
+    u32 tmp_id = id;
     size_t i;
 
     if (total_handles == 0 || total_handles > 2)
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
-    if (tmp_type < 5) {
-        if (tmp_type == 4) tmp_type |= 0x010000;
-        tmp_type+= 3;
+    if (tmp_id == CONTROLLER_HANDHELD)
+        tmp_id = 0x20;
+
+    if (tmp_type & LAYOUT_PROCONTROLLER) {
+        tmp_type = 3;
     }
-    else {
-        if (tmp_type == 5) tmp_type = 0x20;
-        if (tmp_type == 6) tmp_type = 0x21;
+    else if (tmp_type & TYPE_HANDHELD) {
+        tmp_type = 4;
+    }
+    else if (tmp_type & TYPE_JOYCON_PAIR) {
+        tmp_type = 5;
+    }
+    else if (tmp_type & TYPE_JOYCON_LEFT) {
+        tmp_type = 6;
+    }
+    else if (tmp_type & TYPE_JOYCON_RIGHT) {
+        tmp_type = 7;
+        tmp_type |= 0x010000;
+    }
+    //The HidControllerID enum doesn't have bit29/bit30 checked by official sw, for tmp_type 0x20/0x21.
+    else if (tmp_type & BIT(29)) {
+        tmp_type = 0x20;
+    }
+    else if (tmp_type & BIT(30)) {
+        tmp_type = 0x21;
     }
 
-    //TODO: Is type correct?
-    VibrationDeviceHandles[0] = tmp_type | (id & 0xff)<<8;
+    VibrationDeviceHandles[0] = tmp_type | (tmp_id & 0xff)<<8;
 
     if (total_handles > 1) {
         tmp_type &= 0xff;

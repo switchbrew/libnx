@@ -395,7 +395,7 @@ static inline Result ipcParse(IpcParsedCommand* r) {
 
         r->Buffers[i] = (void*) (desc->Addr | ((packed >> 28) << 32) | (((packed >> 2) & 15) << 36));
         r->BufferSizes[i] = desc->Size;
-        r->BufferTypes[i] = packed & 3;
+        r->BufferTypes[i] = (BufferType) (packed & 3);
 
         if (i < num_bufs_send)
             r->BufferDirections[i] = BufferDirection_Send;

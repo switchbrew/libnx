@@ -5,6 +5,7 @@ endif
 include $(DEVKITPRO)/devkitA64/base_rules
 
 PORTLIBS	:=	$(PORTLIBS_PATH)/switch
+PATH	:=	$(PORTLIBS)/bin:$(PATH)
 
 LIBNX	?=	$(DEVKITPRO)/libnx
 

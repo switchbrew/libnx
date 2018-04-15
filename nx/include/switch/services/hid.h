@@ -310,7 +310,7 @@ typedef enum
     CONTROLLER_PLAYER_8 = 7,
     CONTROLLER_HANDHELD = 8,
     CONTROLLER_UNKNOWN  = 9,
-    CONTROLLER_P1_AUTO = 10, /// Not an actual HID-sysmodule ID. Only for hidKeys*(). Automatically uses CONTROLLER_PLAYER_1 when connected, otherwise uses CONTROLLER_HANDHELD.
+    CONTROLLER_P1_AUTO = 10, /// Not an actual HID-sysmodule ID. Only for hidKeys*()/hidJoystickRead(). Automatically uses CONTROLLER_PLAYER_1 when connected, otherwise uses CONTROLLER_HANDHELD.
 } HidControllerID;
 
 typedef struct touchPosition
@@ -581,17 +581,23 @@ void hidTouchRead(touchPosition *pos, u32 point_id);
 
 void hidJoystickRead(JoystickPosition *pos, HidControllerID id, HidControllerJoystick stick);
 
+/// This can be used to check what CONTROLLER_P1_AUTO uses.
+/// Returns 0 when CONTROLLER_PLAYER_1 is connected, otherwise returns 1 for handheld-mode.
+bool hidGetHandheldMode(void);
+
 /// Use this if you want to use a single joy-con as a dedicated CONTROLLER_PLAYER_*.
 /// When used, both joy-cons in a pair should be used with this (CONTROLLER_PLAYER_1 and CONTROLLER_PLAYER_2 for example).
 /// id must be CONTROLLER_PLAYER_*.
 Result hidSetNpadJoyAssignmentModeSingleByDefault(HidControllerID id);
+/// Use this if you want to use a pair of joy-cons as a single CONTROLLER_PLAYER_*. Only necessary if you want to use this mode in your application after \ref hidSetNpadJoyAssignmentModeSingleByDefault was used with this pair of joy-cons.
 /// Used automatically during app startup/exit for all controllers.
 /// When used, both joy-cons in a pair should be used with this (CONTROLLER_PLAYER_1 and CONTROLLER_PLAYER_2 for example).
 /// id must be CONTROLLER_PLAYER_*.
 Result hidSetNpadJoyAssignmentModeDual(HidControllerID id);
 
-Result hidInitializeVibrationDevices(u32 *VibrationDeviceHandles, size_t total_handles, HidControllerID id, HidControllerLayoutType type);
+Result hidInitializeVibrationDevices(u32 *VibrationDeviceHandles, size_t total_handles, HidControllerID id, HidControllerType type);
 
+/// Send the VibrationValue to the specified VibrationDeviceHandle.
 Result hidSendVibrationValue(u32 *VibrationDeviceHandle, HidVibrationValue *VibrationValue);
 
 /// Sets whether vibration is allowed, this also affects the config displayed by System Settings.
@@ -599,3 +605,6 @@ Result hidPermitVibration(bool flag);
 
 /// Gets whether vibration is allowed.
 Result hidIsVibrationPermitted(bool *flag);
+
+/// Send VibrationValues[index] to VibrationDeviceHandles[index], where count is the number of entries in the VibrationDeviceHandles/VibrationValues arrays.
+Result hidSendVibrationValues(u32 *VibrationDeviceHandles, HidVibrationValue *VibrationValues, size_t count);

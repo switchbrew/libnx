@@ -78,6 +78,7 @@ extern "C" {
 #include "switch/nvidia/cmds/3d_clear.h"
 
 #include "switch/runtime/env.h"
+#include "switch/runtime/nxlink.h"
 
 #include "switch/runtime/util/utf.h"
 

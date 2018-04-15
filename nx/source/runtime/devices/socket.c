@@ -553,7 +553,7 @@ int ioctl(int fd, int request, ...) {
             if(flags == -1)
                 return -1;
             flags = *(int *)data != 0 ? (flags | O_NONBLOCK) : (flags & ~O_NONBLOCK);
-            return fcntl(fd, F_SETFL, 0);
+            return fcntl(fd, F_SETFL, flags);
         }
         case BIOCSETF:
         case BIOCSETWF:
@@ -584,9 +584,35 @@ int ioctl(int fd, int request, ...) {
     }
 }
 
+#define O_NONBLOCK_NX 0x800
+
+#define ALL_NX   (O_NONBLOCK_NX)
+#define ALL_FLAGS (O_NONBLOCK)
+
+static int from_nx(int flags) {
+    int newflags = 0;
+
+    if(flags & O_NONBLOCK_NX)
+        newflags |= O_NONBLOCK;
+        /* add other flag translations here */
+
+    return newflags;
+}
+
+static int to_nx(int flags) {
+    int newflags = 0;
+
+    if(flags & O_NONBLOCK)
+        newflags |= O_NONBLOCK_NX;
+    /* add other flag translations here */
+
+    return newflags;
+}
+
+
 int fcntl(int fd, int cmd, ...) {
     va_list args;
-    int flags;
+    int flags=0;
 
     /*
         bsd:u/s only supports F_GETFL and F_SETFL with the O_NONBLOCK flag (or 0).
@@ -595,14 +621,30 @@ int fcntl(int fd, int cmd, ...) {
     */
     if(cmd != F_GETFL && cmd != F_SETFL)
         return EOPNOTSUPP;
-    va_start(args, cmd);
-    flags = va_arg(args, int);
-    va_end(args);
+
+    if (cmd == F_SETFL) {
+
+        va_start(args, cmd);
+        flags = va_arg(args, int);
+        va_end(args);
+
+        if (flags & ~ALL_FLAGS) {
+            errno = EINVAL;
+            return -1;
+        }
+        flags = to_nx(flags);
+    }
 
     fd = _socketGetFd(fd);
     if(fd == -1)
         return -1;
-    return _socketParseBsdResult(NULL, bsdFcntl(fd, cmd, flags));
+
+    flags = _socketParseBsdResult(NULL, bsdFcntl(fd, cmd, flags));
+
+    if (flags & ~ALL_NX) {
+        /* report unknown flags here */
+    }
+    return from_nx(flags);
 }
 
 int shutdown(int sockfd, int how) {
@@ -664,7 +706,7 @@ int recvmmsg(int sockfd, struct mmsghdr *msgvec, unsigned int vlen, int flags, s
 
 /***********************************************************************************************************************/
 
-// Adapted from ctrulib
+// Adapted from libctru
 static int _socketInetAtonDetail(int *outBase, size_t *outNumBytes, const char *cp, struct in_addr *inp) {
     int      base;
     u32      val;
@@ -749,7 +791,7 @@ static int _socketInetAtonDetail(int *outBase, size_t *outNumBytes, const char *
     return 1;
 }
 
-// Adapted from ctrulib
+// Adapted from libctru
 static const char *inet_ntop4(const void *src, char *dst, socklen_t size) {
     const u8 *ip = src;
 
