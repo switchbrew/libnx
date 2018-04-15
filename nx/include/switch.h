@@ -13,6 +13,7 @@ extern "C" {
 #include "switch/result.h"
 
 #include "switch/nro.h"
+#include "switch/nacp.h"
 
 #include "switch/arm/tls.h"
 #include "switch/arm/cache.h"
@@ -45,6 +46,7 @@ extern "C" {
 #include "switch/services/irs.h"
 #include "switch/services/vi.h"
 #include "switch/services/nv.h"
+#include "switch/services/ns.h"
 #include "switch/services/pm.h"
 #include "switch/services/set.h"
 
