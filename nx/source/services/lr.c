@@ -97,7 +97,11 @@ Result lrGetRegisteredLocationResolver(LrRegisteredLocationResolver* out) {
     return rc;
 }
 
-static Result lrUtilGetPath(Service* s, u64 cmd_id, u64 tid, char *out) {
+/* 
+    All the LocationResolver/RegisteredLocationResolver "Get" commands have a common API.
+    This is a helper function to perform the work for those funcs, given a command ID.
+*/
+static Result _lrGetPath(Service* s, u64 cmd_id, u64 tid, char *out) {
     char out_path[FS_MAX_PATH] = {0};
     IpcCommand c;
     ipcInitialize(&c);
@@ -135,7 +139,11 @@ static Result lrUtilGetPath(Service* s, u64 cmd_id, u64 tid, char *out) {
     return rc;
 }
 
-static Result lrUtilSetPath(Service* s, u64 cmd_id, u64 tid, const char *path) {
+/* 
+    All the LocationResolver/RegisteredLocationResolver "Set" commands have a common API.
+    This is a helper function to perform the work for those funcs, given a command ID.
+*/
+static Result _lrSetPath(Service* s, u64 cmd_id, u64 tid, const char *path) {
     char send_path[FS_MAX_PATH] = {0};
     IpcCommand c;
     ipcInitialize(&c);
@@ -172,39 +180,39 @@ static Result lrUtilSetPath(Service* s, u64 cmd_id, u64 tid, const char *path) {
 
 
 Result lrLrGetProgramPath(LrLocationResolver* lr, u64 tid, char *out) {
-    return lrUtilGetPath(&lr->s, 0, tid, out);
+    return _lrGetPath(&lr->s, 0, tid, out);
 }
 
 Result lrLrSetProgramPath(LrLocationResolver* lr, u64 tid, const char *path) {
-    return lrUtilSetPath(&lr->s, 1, tid, path);
+    return _lrSetPath(&lr->s, 1, tid, path);
 }
 
 Result lrLrGetUserControlPath(LrLocationResolver* lr, u64 tid, char *out) {
-    return lrUtilGetPath(&lr->s, 2, tid, out);
+    return _lrGetPath(&lr->s, 2, tid, out);
 }
 
 Result lrLrGetControlPath(LrLocationResolver* lr, u64 tid, char *out) {
-    return lrUtilGetPath(&lr->s, 4, tid, out);
+    return _lrGetPath(&lr->s, 4, tid, out);
 }
 
 Result lrLrSetControlPath(LrLocationResolver* lr, u64 tid, const char *path) {
-    return lrUtilSetPath(&lr->s, 5, tid, path);
+    return _lrSetPath(&lr->s, 5, tid, path);
 }
 
 Result lrLrGetDocHtmlPath(LrLocationResolver* lr, u64 tid, char *out) {
-    return lrUtilGetPath(&lr->s, 3, tid, out);
+    return _lrGetPath(&lr->s, 3, tid, out);
 }
 
 Result lrLrSetDocHtmlPath(LrLocationResolver* lr, u64 tid, const char *path) {
-    return lrUtilSetPath(&lr->s, 6, tid, path);
+    return _lrSetPath(&lr->s, 6, tid, path);
 }
 
 Result lrLrGetInfoHtmlPath(LrLocationResolver* lr, u64 tid, char *out) {
-    return lrUtilGetPath(&lr->s, 7, tid, out);
+    return _lrGetPath(&lr->s, 7, tid, out);
 }
 
 Result lrLrSetInfoHtmlPath(LrLocationResolver* lr, u64 tid, const char *path) {
-    return lrUtilSetPath(&lr->s, 8, tid, path);
+    return _lrSetPath(&lr->s, 8, tid, path);
 }
 
 Result lrLrClearOverridePaths(LrLocationResolver* lr) {
@@ -239,5 +247,5 @@ Result lrLrClearOverridePaths(LrLocationResolver* lr) {
 
 
 Result lrRegLrGetProgramPath(LrRegisteredLocationResolver* reg, u64 tid, char *out) {
-    return lrUtilGetPath(&reg->s, 0, tid, out);
+    return _lrGetPath(&reg->s, 0, tid, out);
 }
