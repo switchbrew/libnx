@@ -30,6 +30,7 @@ typedef enum
     SetLanguage_ENGB =  12, ///< GB English ("BritishEnglish")
     SetLanguage_FRCA =  13, ///< CA French ("CanadianFrench")
     SetLanguage_ES419 = 14, ///< "LatinAmericanSpanish"
+    SetLanguage_Total,      ///< Total languages supported by this enum.
 } SetLanguage;
 
 Result setInitialize(void);

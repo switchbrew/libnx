@@ -1,6 +1,6 @@
 /**
  * @file nacp.h
- * @brief Control.nacp structure.
+ * @brief Control.nacp structure / related code for nacp.
  * @copyright libnx Authors
  */
 
@@ -45,4 +45,7 @@ typedef struct {
     char bcatPassphrase[0x40];
     u8 x3140_unk[0xEC0];//Normally all-zero?
 } NacpStruct;
+
+/// Get the NacpLanguageEntry from the input nacp corresponding to the current system language (this may fallback to other languages when needed). Output langentry is NULL if none found / content of entry is empty.
+Result nacpGetLanguageEntry(NacpStruct* nacp, NacpLanguageEntry** langentry);
 
