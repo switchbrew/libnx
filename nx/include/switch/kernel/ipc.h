@@ -37,6 +37,17 @@ typedef enum {
     BufferDirection_Exch=2,
 } BufferDirection;
 
+typedef enum {
+    IpcCommandType_Invalid = 0,
+    IpcCommandType_LegacyRequest = 1,
+    IpcCommandType_Close = 2,
+    IpcCommandType_LegacyControl = 3,
+    IpcCommandType_Request = 4,
+    IpcCommandType_Control = 5,
+    IpcCommandType_RequestWithContext = 6,
+    IpcCommandType_ControlWithContext = 7
+} IpcCommandType;
+
 typedef struct {
     size_t NumSend; // A
     size_t NumRecv; // B
@@ -292,6 +303,8 @@ static inline Result ipcDispatch(Handle session) {
 
 /// IPC parsed command (response) structure.
 typedef struct {
+    IpcCommandType CommandType;               ///< Type of the command  
+    
     bool HasPid;                              ///< true if the 'Pid' field is filled out.
     u64  Pid;                                 ///< PID included in the response (only if HasPid is true)
 
@@ -330,6 +343,7 @@ static inline Result ipcParse(IpcParsedCommand* r) {
     u32 ctrl1 = *buf++;
     size_t i;
 
+    r->CommandType = (IpcCommandType) (ctrl0 & 0xffff);
     r->HasPid = false;
     r->RawSize = (ctrl1 & 0x1ff) * 4;
     r->NumHandles = 0;
