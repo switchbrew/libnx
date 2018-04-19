@@ -310,6 +310,7 @@ typedef struct {
     BufferDirection BufferDirections[IPC_MAX_BUFFERS]; ///< Direction of each buffer.
 
     size_t NumStatics;                        ///< Number of statics in the response.
+    size_t NumStaticsOut;                     ///< Number of output statics available in the response.
     void*  Statics[IPC_MAX_BUFFERS];          ///< Pointers to the statics.
     size_t StaticSizes[IPC_MAX_BUFFERS];      ///< Sizes of the statics.
     u8     StaticIndices[IPC_MAX_BUFFERS];    ///< Indices of the statics.
@@ -332,6 +333,10 @@ static inline Result ipcParse(IpcParsedCommand* r) {
     r->HasPid = false;
     r->RawSize = (ctrl1 & 0x1ff) * 4;
     r->NumHandles = 0;
+    
+    r->NumStaticsOut = (ctrl1 >> 10) & 15;
+    if (r->NumStaticsOut >> 1) r->NumStaticsOut--; // Value 2  -> Single descriptor
+    if (r->NumStaticsOut >> 1) r->NumStaticsOut--; // Value 3+ -> (Value - 2) descriptors
 
     if (ctrl1 & 0x80000000) {
         u32 ctrl2 = *buf++;
