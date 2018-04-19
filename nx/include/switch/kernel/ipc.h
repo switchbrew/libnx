@@ -210,7 +210,7 @@ static inline void ipcSendHandleMove(IpcCommand* cmd, Handle h) {
 static inline void* ipcPrepareHeader(IpcCommand* cmd, size_t sizeof_raw) {
     u32* buf = (u32*)armGetTls();
     size_t i;
-    *buf++ = 4 | (cmd->NumStaticIn << 16) | (cmd->NumSend << 20) | (cmd->NumRecv << 24) | (cmd->NumExch << 28);
+    *buf++ = IpcCommandType_Request | (cmd->NumStaticIn << 16) | (cmd->NumSend << 20) | (cmd->NumRecv << 24) | (cmd->NumExch << 28);
 
     u32* fill_in_size_later = buf;
 
@@ -437,7 +437,7 @@ static inline Result ipcParse(IpcParsedCommand* r) {
 static inline Result ipcQueryPointerBufferSize(Handle session, size_t *size) {
     u32* buf = (u32*)armGetTls();
 
-    buf[0] = 5;
+    buf[0] = IpcCommandType_Control;
     buf[1] = 8;
     buf[2] = 0;
     buf[3] = 0;
@@ -475,7 +475,7 @@ static inline Result ipcQueryPointerBufferSize(Handle session, size_t *size) {
  */
 static inline Result ipcCloseSession(Handle session) {
     u32* buf = (u32*)armGetTls();
-    buf[0] = 2;
+    buf[0] = IpcCommandType_Close;
     return ipcDispatch(session);
 }
 ///@}
@@ -492,7 +492,7 @@ static inline Result ipcCloseSession(Handle session) {
 static inline Result ipcConvertSessionToDomain(Handle session, u32* object_id_out) {
     u32* buf = (u32*)armGetTls();
 
-    buf[0] = 5;
+    buf[0] = IpcCommandType_Control;
     buf[1] = 8;
     buf[4] = SFCI_MAGIC;
     buf[5] = 0;
