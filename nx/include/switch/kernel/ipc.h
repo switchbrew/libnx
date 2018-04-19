@@ -371,7 +371,7 @@ static inline Result ipcParse(IpcParsedCommand* r) {
         IpcStaticSendDescriptor* desc = (IpcStaticSendDescriptor*) buf;
         u64 packed = (u64) desc->Packed;
 
-        r->Statics[i] = (void*) (desc->Addr | ((packed & 15) << 32) | (((packed >> 6) & 15) << 36));
+        r->Statics[i] = (void*) (desc->Addr | (((packed >> 12) & 15) << 32) | (((packed >> 6) & 15) << 36));
         r->StaticSizes[i]   = packed >> 16;
         r->StaticIndices[i] = packed & 63;
     }
