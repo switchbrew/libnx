@@ -539,6 +539,13 @@ typedef struct HidSharedMemory
 } HidSharedMemory;
 static_assert(sizeof(HidSharedMemory) == 0x40000, "Hid Shared Memory structure has incorrect size");
 
+typedef struct HidVibrationDeviceInfo
+{
+    u32 unk_x0;
+    u32 unk_x4; ///< 0x1 for left-joycon, 0x2 for right-joycon.
+} HidVibrationDeviceInfo;
+static_assert(sizeof(HidVibrationDeviceInfo) == 0x8, "Hid VibrationDeviceInfo structure has incorrect size");
+
 typedef struct HidVibrationValue
 {
     float amp_low;   ///< Low Band amplitude. 1.0f: Max amplitude.
@@ -597,8 +604,14 @@ Result hidSetNpadJoyAssignmentModeDual(HidControllerID id);
 
 Result hidInitializeVibrationDevices(u32 *VibrationDeviceHandles, size_t total_handles, HidControllerID id, HidControllerType type);
 
+/// Gets HidVibrationDeviceInfo for the specified VibrationDeviceHandle.
+Result hidGetVibrationDeviceInfo(u32 *VibrationDeviceHandle, HidVibrationDeviceInfo *VibrationDeviceInfo);
+
 /// Send the VibrationValue to the specified VibrationDeviceHandle.
 Result hidSendVibrationValue(u32 *VibrationDeviceHandle, HidVibrationValue *VibrationValue);
+
+/// Gets the current HidVibrationValue for the specified VibrationDeviceHandle.
+Result hidGetActualVibrationValue(u32 *VibrationDeviceHandle, HidVibrationValue *VibrationValue);
 
 /// Sets whether vibration is allowed, this also affects the config displayed by System Settings.
 Result hidPermitVibration(bool flag);

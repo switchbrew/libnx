@@ -616,6 +616,44 @@ static Result _hidActivateVibrationDevice(Service* srv, u32 VibrationDeviceHandl
     return rc;
 }
 
+Result hidGetVibrationDeviceInfo(u32 *VibrationDeviceHandle, HidVibrationDeviceInfo *VibrationDeviceInfo) {
+    Result rc;
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 VibrationDeviceHandle;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 200;
+    raw->VibrationDeviceHandle = *VibrationDeviceHandle;
+
+    rc = serviceIpcDispatch(&g_hidSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            HidVibrationDeviceInfo VibrationDeviceInfo;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && VibrationDeviceInfo) memcpy(VibrationDeviceInfo, &resp->VibrationDeviceInfo, sizeof(HidVibrationDeviceInfo));
+    }
+
+    return rc;
+}
+
 Result hidSendVibrationValue(u32 *VibrationDeviceHandle, HidVibrationValue *VibrationValue) {
     Result rc;
     u64 AppletResourceUserId;
@@ -657,6 +695,53 @@ Result hidSendVibrationValue(u32 *VibrationDeviceHandle, HidVibrationValue *Vibr
         } *resp = r.Raw;
 
         rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result hidGetActualVibrationValue(u32 *VibrationDeviceHandle, HidVibrationValue *VibrationValue) {
+    Result rc;
+    u64 AppletResourceUserId;
+
+    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
+    if (R_FAILED(rc))
+        return rc;
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 VibrationDeviceHandle;
+        u64 AppletResourceUserId;
+    } *raw;
+
+    ipcSendPid(&c);
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 202;
+    raw->VibrationDeviceHandle = *VibrationDeviceHandle;
+    raw->AppletResourceUserId = AppletResourceUserId;
+
+    rc = serviceIpcDispatch(&g_hidSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            HidVibrationValue VibrationValue;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && VibrationValue) memcpy(VibrationValue, &resp->VibrationValue, sizeof(HidVibrationValue));
     }
 
     return rc;
