@@ -323,12 +323,14 @@ typedef struct {
     BufferDirection BufferDirections[IPC_MAX_BUFFERS]; ///< Direction of each buffer.
 
     size_t NumStatics;                        ///< Number of statics in the response.
-    size_t NumStaticsOut;                     ///< Number of output statics available in the response.
     void*  Statics[IPC_MAX_BUFFERS];          ///< Pointers to the statics.
     size_t StaticSizes[IPC_MAX_BUFFERS];      ///< Sizes of the statics.
     u8     StaticIndices[IPC_MAX_BUFFERS];    ///< Indices of the statics.
+    
+    size_t NumStaticsOut;                     ///< Number of output statics available in the response.
 
     void*  Raw;                               ///< Pointer to the raw embedded data structure in the response.
+    void*  RawWithoutPadding;                  ///< Pointer to the raw embedded data structure, without padding.
     size_t RawSize;                           ///< Size of the raw embedded data.
 } IpcParsedCommand;
 
@@ -404,6 +406,7 @@ static inline Result ipcParse(IpcParsedCommand* r) {
 
     size_t num_bufs = num_bufs_send + num_bufs_recv + num_bufs_exch;
     r->Raw = (void*)(((uintptr_t)(buf + num_bufs*3) + 15) &~ 15);
+    r->RawWithoutPadding = (void*)((uintptr_t)(buf + num_bufs*3));
 
     if (num_bufs > IPC_MAX_BUFFERS)
         num_bufs = IPC_MAX_BUFFERS;
