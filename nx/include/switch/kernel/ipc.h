@@ -37,6 +37,17 @@ typedef enum {
     BufferDirection_Exch=2,
 } BufferDirection;
 
+typedef enum {
+    IpcCommandType_Invalid = 0,
+    IpcCommandType_LegacyRequest = 1,
+    IpcCommandType_Close = 2,
+    IpcCommandType_LegacyControl = 3,
+    IpcCommandType_Request = 4,
+    IpcCommandType_Control = 5,
+    IpcCommandType_RequestWithContext = 6,
+    IpcCommandType_ControlWithContext = 7
+} IpcCommandType;
+
 typedef struct {
     size_t NumSend; // A
     size_t NumRecv; // B
@@ -199,7 +210,7 @@ static inline void ipcSendHandleMove(IpcCommand* cmd, Handle h) {
 static inline void* ipcPrepareHeader(IpcCommand* cmd, size_t sizeof_raw) {
     u32* buf = (u32*)armGetTls();
     size_t i;
-    *buf++ = 4 | (cmd->NumStaticIn << 16) | (cmd->NumSend << 20) | (cmd->NumRecv << 24) | (cmd->NumExch << 28);
+    *buf++ = IpcCommandType_Request | (cmd->NumStaticIn << 16) | (cmd->NumSend << 20) | (cmd->NumRecv << 24) | (cmd->NumExch << 28);
 
     u32* fill_in_size_later = buf;
 
@@ -292,6 +303,8 @@ static inline Result ipcDispatch(Handle session) {
 
 /// IPC parsed command (response) structure.
 typedef struct {
+    IpcCommandType CommandType;               ///< Type of the command  
+    
     bool HasPid;                              ///< true if the 'Pid' field is filled out.
     u64  Pid;                                 ///< PID included in the response (only if HasPid is true)
 
@@ -313,8 +326,11 @@ typedef struct {
     void*  Statics[IPC_MAX_BUFFERS];          ///< Pointers to the statics.
     size_t StaticSizes[IPC_MAX_BUFFERS];      ///< Sizes of the statics.
     u8     StaticIndices[IPC_MAX_BUFFERS];    ///< Indices of the statics.
+    
+    size_t NumStaticsOut;                     ///< Number of output statics available in the response.
 
     void*  Raw;                               ///< Pointer to the raw embedded data structure in the response.
+    void*  RawWithoutPadding;                  ///< Pointer to the raw embedded data structure, without padding.
     size_t RawSize;                           ///< Size of the raw embedded data.
 } IpcParsedCommand;
 
@@ -329,9 +345,14 @@ static inline Result ipcParse(IpcParsedCommand* r) {
     u32 ctrl1 = *buf++;
     size_t i;
 
+    r->CommandType = (IpcCommandType) (ctrl0 & 0xffff);
     r->HasPid = false;
     r->RawSize = (ctrl1 & 0x1ff) * 4;
     r->NumHandles = 0;
+    
+    r->NumStaticsOut = (ctrl1 >> 10) & 15;
+    if (r->NumStaticsOut >> 1) r->NumStaticsOut--; // Value 2  -> Single descriptor
+    if (r->NumStaticsOut >> 1) r->NumStaticsOut--; // Value 3+ -> (Value - 2) descriptors
 
     if (ctrl1 & 0x80000000) {
         u32 ctrl2 = *buf++;
@@ -385,6 +406,7 @@ static inline Result ipcParse(IpcParsedCommand* r) {
 
     size_t num_bufs = num_bufs_send + num_bufs_recv + num_bufs_exch;
     r->Raw = (void*)(((uintptr_t)(buf + num_bufs*3) + 15) &~ 15);
+    r->RawWithoutPadding = (void*)((uintptr_t)(buf + num_bufs*3));
 
     if (num_bufs > IPC_MAX_BUFFERS)
         num_bufs = IPC_MAX_BUFFERS;
@@ -418,7 +440,7 @@ static inline Result ipcParse(IpcParsedCommand* r) {
 static inline Result ipcQueryPointerBufferSize(Handle session, size_t *size) {
     u32* buf = (u32*)armGetTls();
 
-    buf[0] = 5;
+    buf[0] = IpcCommandType_Control;
     buf[1] = 8;
     buf[2] = 0;
     buf[3] = 0;
@@ -456,7 +478,7 @@ static inline Result ipcQueryPointerBufferSize(Handle session, size_t *size) {
  */
 static inline Result ipcCloseSession(Handle session) {
     u32* buf = (u32*)armGetTls();
-    buf[0] = 2;
+    buf[0] = IpcCommandType_Close;
     return ipcDispatch(session);
 }
 ///@}
@@ -473,7 +495,7 @@ static inline Result ipcCloseSession(Handle session) {
 static inline Result ipcConvertSessionToDomain(Handle session, u32* object_id_out) {
     u32* buf = (u32*)armGetTls();
 
-    buf[0] = 5;
+    buf[0] = IpcCommandType_Control;
     buf[1] = 8;
     buf[4] = SFCI_MAGIC;
     buf[5] = 0;
