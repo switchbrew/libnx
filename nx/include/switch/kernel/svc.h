@@ -673,6 +673,14 @@ Result svcWriteDebugProcessMemory(Handle debug, void* buffer, u64 addr, u64 size
 
 ///@name Inter-process communication (IPC)
 ///@{
+    
+/**
+ * @brief Creates a port.
+ * @return Result code.
+ * @note Syscall number 0x70.
+ * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
+ */
+Result svcCreatePort(Handle* portServer, Handle *portClient, s32 max_sessions, bool is_light, const char* name);
 
 /**
  * @brief Manages a named port.
