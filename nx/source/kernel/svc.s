@@ -364,6 +364,14 @@ SVC_BEGIN svcManageNamedPort
 	ret
 SVC_END
 
+SVC_BEGIN svcConnectToPort
+	str x0, [sp, #-16]!
+	svc 0x72
+	ldr x2, [sp], #16
+	str w1, [x2]
+	ret
+SVC_END
+
 SVC_BEGIN svcSetProcessMemoryPermission
 	svc 0x73
 	ret

@@ -690,6 +690,14 @@ Result svcCreatePort(Handle* portServer, Handle *portClient, s32 max_sessions, b
  */
 Result svcManageNamedPort(Handle* portServer, const char* name, s32 maxSessions);
 
+/**
+ * @brief Manages a named port.
+ * @return Result code.
+ * @note Syscall number 0x72.
+ * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
+ */
+Result svcConnectToPort(Handle* session, Handle port);
+
 ///@}
 
 ///@name Memory management
