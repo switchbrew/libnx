@@ -349,9 +349,9 @@ SVC_BEGIN svcCreatePort
 	stp x0, x1, [sp, #-16]!
 	svc 0x70
 	ldr x3, [sp]
-    str w1, [x3]
-    ldr x3, [sp, #8]
-    str w2, [x3]
+	str w1, [x3]
+	ldr x3, [sp, #8]
+	str w2, [x3]
 	add sp, sp, #16
 	ret
 SVC_END
