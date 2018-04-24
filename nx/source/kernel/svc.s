@@ -382,6 +382,11 @@ SVC_BEGIN svcMapProcessMemory
 	ret
 SVC_END
 
+SVC_BEGIN svcUnmapProcessMemory
+	svc 0x75
+	ret
+SVC_END
+
 SVC_BEGIN svcMapProcessCodeMemory
 	svc 0x77
 	ret

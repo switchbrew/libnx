@@ -720,7 +720,7 @@ Result svcSetProcessMemoryPermission(Handle proc, u64 addr, u64 size, u32 perm);
  * @brief Maps the src address from the supplied process handle into the current process.
  * @param[in] dst Address to which map the memory in the current process.
  * @param[in] proc Process handle.
- * @param[in] src Address of the memory in the process.
+ * @param[in] src Source mapping address.
  * @param[in] size Size of the memory.
  * @return Result code.
  * @remark This allows mapping code and rodata with RW- permission.
@@ -728,6 +728,19 @@ Result svcSetProcessMemoryPermission(Handle proc, u64 addr, u64 size, u32 perm);
  * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
  */
 Result svcMapProcessMemory(void* dst, Handle proc, u64 src, u64 size);
+
+/**
+ * @brief Undoes the effects of \ref svcMapProcessMemory.
+ * @param[in] dst Destination mapping address
+ * @param[in] proc Process handle.
+ * @param[in] src Address of the memory in the process.
+ * @param[in] size Size of the memory.
+ * @return Result code.
+ * @remark This allows mapping code and rodata with RW- permission.
+ * @note Syscall number 0x75.
+ * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
+ */
+Result svcUnmapProcessMemory(void* dst, Handle proc, u64 src, u64 size);
 
 /**
  * @brief Maps normal heap in a certain process as executable code (used when loading NROs).
