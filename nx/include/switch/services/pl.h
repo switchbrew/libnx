@@ -1,5 +1,5 @@
 /**
- * @file plu.h
+ * @file pl.h
  * @brief pl:u service IPC wrapper.
  * @author yellows8
  * @copyright libnx Authors
@@ -23,12 +23,12 @@ typedef struct {
     u32 offset;
     u32 size;
     void* address;
-} plFontData;
+} PlFontData;
 
 Result plInitialize(void);
 void plExit(void);
 void* plGetSharedmemAddr(void);
 
 ///< Gets shared font(s).
-Result plGetSharedFont(u64 LanguageCode, plFontData* fonts, size_t max_fonts, size_t* total_fonts);
+Result plGetSharedFont(u64 LanguageCode, PlFontData* fonts, size_t max_fonts, size_t* total_fonts);
 

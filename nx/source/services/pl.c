@@ -92,7 +92,7 @@ static Result _plGetSharedMemoryNativeHandle(Handle* handle_out) {
     return rc;
 }
 
-Result plGetSharedFont(u64 LanguageCode, plFontData* fonts, size_t max_fonts, size_t* total_fonts) {
+Result plGetSharedFont(u64 LanguageCode, PlFontData* fonts, size_t max_fonts, size_t* total_fonts) {
     u32 types[PlSharedFontType_Total];
     u32 offsets[PlSharedFontType_Total];
     u32 sizes[PlSharedFontType_Total];
@@ -109,7 +109,7 @@ Result plGetSharedFont(u64 LanguageCode, plFontData* fonts, size_t max_fonts, si
     memset(types, 0, sizeof(types));
     memset(offsets, 0, sizeof(offsets));
     memset(sizes, 0, sizeof(sizes));
-    memset(fonts, 0, sizeof(plFontData) * max_fonts);
+    memset(fonts, 0, sizeof(PlFontData) * max_fonts);
 
     if (total_fonts) *total_fonts = 0;
 
