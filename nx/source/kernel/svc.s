@@ -345,14 +345,20 @@ SVC_BEGIN svcWriteDebugProcessMemory
 	ret
 SVC_END
 
+SVC_BEGIN svcGetSystemInfo
+	str x0, [sp, #-16]!
+	svc 0x6F
+	ldr x2, [sp], #16
+	str x1, [x2]
+	ret
+SVC_END
+
 SVC_BEGIN svcCreatePort
 	stp x0, x1, [sp, #-16]!
 	svc 0x70
-	ldr x3, [sp]
+	ldp x3, x4, [sp], #16
 	str w1, [x3]
-	ldr x3, [sp, #8]
-	str w2, [x3]
-	add sp, sp, #16
+	str w2, [x4]
 	ret
 SVC_END
 

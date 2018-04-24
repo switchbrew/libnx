@@ -671,6 +671,24 @@ Result svcWriteDebugProcessMemory(Handle debug, void* buffer, u64 addr, u64 size
 
 ///@}
 
+///@name Miscellaneous
+///@{
+
+/**
+ * @brief Retrieves privileged information about the system, or a certain kernel object.
+ * @param[out] out Variable to which store the information.
+ * @param[in] id0 First ID of the property to retrieve.
+ * @param[in] handle Handle of the object to retrieve information from, or \ref INVALID_HANDLE to retrieve information about the system.
+ * @param[in] id1 Second ID of the property to retrieve.
+ * @return Result code.
+ * @remark The full list of property IDs can be found on the <a href="http://switchbrew.org/index.php?title=SVC#svcGetSystemInfo">switchbrew.org wiki</a>.
+ * @note Syscall number 0x6F.
+ * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
+ */
+Result svcGetSystemInfo(u64* out, u64 id0, Handle handle, u64 id1);
+
+///@}
+
 ///@name Inter-process communication (IPC)
 ///@{
     
