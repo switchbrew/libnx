@@ -671,8 +671,34 @@ Result svcWriteDebugProcessMemory(Handle debug, void* buffer, u64 addr, u64 size
 
 ///@}
 
+///@name Miscellaneous
+///@{
+
+/**
+ * @brief Retrieves privileged information about the system, or a certain kernel object.
+ * @param[out] out Variable to which store the information.
+ * @param[in] id0 First ID of the property to retrieve.
+ * @param[in] handle Handle of the object to retrieve information from, or \ref INVALID_HANDLE to retrieve information about the system.
+ * @param[in] id1 Second ID of the property to retrieve.
+ * @return Result code.
+ * @remark The full list of property IDs can be found on the <a href="http://switchbrew.org/index.php?title=SVC#svcGetSystemInfo">switchbrew.org wiki</a>.
+ * @note Syscall number 0x6F.
+ * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
+ */
+Result svcGetSystemInfo(u64* out, u64 id0, Handle handle, u64 id1);
+
+///@}
+
 ///@name Inter-process communication (IPC)
 ///@{
+    
+/**
+ * @brief Creates a port.
+ * @return Result code.
+ * @note Syscall number 0x70.
+ * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
+ */
+Result svcCreatePort(Handle* portServer, Handle *portClient, s32 max_sessions, bool is_light, const char* name);
 
 /**
  * @brief Manages a named port.
@@ -681,6 +707,14 @@ Result svcWriteDebugProcessMemory(Handle debug, void* buffer, u64 addr, u64 size
  * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
  */
 Result svcManageNamedPort(Handle* portServer, const char* name, s32 maxSessions);
+
+/**
+ * @brief Manages a named port.
+ * @return Result code.
+ * @note Syscall number 0x72.
+ * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
+ */
+Result svcConnectToPort(Handle* session, Handle port);
 
 ///@}
 
@@ -704,7 +738,7 @@ Result svcSetProcessMemoryPermission(Handle proc, u64 addr, u64 size, u32 perm);
  * @brief Maps the src address from the supplied process handle into the current process.
  * @param[in] dst Address to which map the memory in the current process.
  * @param[in] proc Process handle.
- * @param[in] src Address of the memory in the process.
+ * @param[in] src Source mapping address.
  * @param[in] size Size of the memory.
  * @return Result code.
  * @remark This allows mapping code and rodata with RW- permission.
@@ -712,6 +746,19 @@ Result svcSetProcessMemoryPermission(Handle proc, u64 addr, u64 size, u32 perm);
  * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
  */
 Result svcMapProcessMemory(void* dst, Handle proc, u64 src, u64 size);
+
+/**
+ * @brief Undoes the effects of \ref svcMapProcessMemory.
+ * @param[in] dst Destination mapping address
+ * @param[in] proc Process handle.
+ * @param[in] src Address of the memory in the process.
+ * @param[in] size Size of the memory.
+ * @return Result code.
+ * @remark This allows mapping code and rodata with RW- permission.
+ * @note Syscall number 0x75.
+ * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
+ */
+Result svcUnmapProcessMemory(void* dst, Handle proc, u64 src, u64 size);
 
 /**
  * @brief Maps normal heap in a certain process as executable code (used when loading NROs).
