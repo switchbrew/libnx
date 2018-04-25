@@ -345,9 +345,34 @@ SVC_BEGIN svcWriteDebugProcessMemory
 	ret
 SVC_END
 
+SVC_BEGIN svcGetSystemInfo
+	str x0, [sp, #-16]!
+	svc 0x6F
+	ldr x2, [sp], #16
+	str x1, [x2]
+	ret
+SVC_END
+
+SVC_BEGIN svcCreatePort
+	stp x0, x1, [sp, #-16]!
+	svc 0x70
+	ldp x3, x4, [sp], #16
+	str w1, [x3]
+	str w2, [x4]
+	ret
+SVC_END
+
 SVC_BEGIN svcManageNamedPort
 	str x0, [sp, #-16]!
 	svc 0x71
+	ldr x2, [sp], #16
+	str w1, [x2]
+	ret
+SVC_END
+
+SVC_BEGIN svcConnectToPort
+	str x0, [sp, #-16]!
+	svc 0x72
 	ldr x2, [sp], #16
 	str w1, [x2]
 	ret
@@ -360,6 +385,11 @@ SVC_END
 
 SVC_BEGIN svcMapProcessMemory
 	svc 0x74
+	ret
+SVC_END
+
+SVC_BEGIN svcUnmapProcessMemory
+	svc 0x75
 	ret
 SVC_END
 
