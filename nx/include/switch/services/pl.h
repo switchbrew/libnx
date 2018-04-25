@@ -29,6 +29,9 @@ Result plInitialize(void);
 void plExit(void);
 void* plGetSharedmemAddr(void);
 
+///< Gets a specific shared-font via SharedFontType, see \ref PlSharedFontType.
+Result plGetSharedFontByType(PlFontData* font, u32 SharedFontType);
+
 ///< Gets shared font(s).
 Result plGetSharedFont(u64 LanguageCode, PlFontData* fonts, size_t max_fonts, size_t* total_fonts);
 
