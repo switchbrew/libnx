@@ -48,7 +48,7 @@ SVC_BEGIN svcQueryMemory
 SVC_END
 
 SVC_BEGIN svcExitProcess
-	svc  0x7
+	svc 0x7
 	ret
 SVC_END
 
@@ -61,17 +61,40 @@ SVC_BEGIN svcCreateThread
 SVC_END
 
 SVC_BEGIN svcStartThread
-	svc  0x9
+	svc 0x9
 	ret
 SVC_END
 
 SVC_BEGIN svcExitThread
-	svc  0xA
+	svc 0xA
 	ret
 SVC_END
 
 SVC_BEGIN svcSleepThread
 	svc 0xB
+	ret
+SVC_END
+
+SVC_BEGIN svcGetThreadPriority
+	str x0, [sp, #-16]!
+	svc 0xC
+	ldr x2, [sp], #16
+	str w1, [x2]
+	ret
+SVC_END
+
+SVC_BEGIN svcSetThreadPriority
+	svc 0xD
+	ret
+SVC_END
+
+SVC_BEGIN svcGetCurrentProcessorNumber
+	svc 0x10
+	ret
+SVC_END
+
+SVC_BEGIN svcSignalEvent
+	svc 0x11
 	ret
 SVC_END
 
@@ -122,22 +145,27 @@ SVC_BEGIN svcCancelSynchronization
 SVC_END
 
 SVC_BEGIN svcArbitrateLock
-	svc 0x1a
+	svc 0x1A
 	ret
 SVC_END
 
 SVC_BEGIN svcArbitrateUnlock
-	svc 0x1b
+	svc 0x1B
 	ret
 SVC_END
 
 SVC_BEGIN svcWaitProcessWideKeyAtomic
-	svc 0x1c
+	svc 0x1C
 	ret
 SVC_END
 
 SVC_BEGIN svcSignalProcessWideKey
-	svc 0x1d
+	svc 0x1D
+	ret
+SVC_END
+
+SVC_BEGIN svcGetSystemTick
+	svc 0x1E
 	ret
 SVC_END
 
@@ -149,19 +177,35 @@ SVC_BEGIN svcConnectToNamedPort
 	ret
 SVC_END
 
-SVC_BEGIN svcGetSystemTick
-	svc 0x1E
+SVC_BEGIN svcSendSyncRequest
+	svc 0x21
 	ret
 SVC_END
 
-SVC_BEGIN svcSendSyncRequest
-	svc 0x21
+SVC_BEGIN svcSendSyncRequestWithUserBuffer
+	svc 0x22
+	ret
+SVC_END
+
+SVC_BEGIN svcSendAsyncRequestWithUserBuffer
+	str x0, [sp, #-16]!
+	svc 0x23
+	ldr x2, [sp], #16
+	str w1, [x2]
 	ret
 SVC_END
 
 SVC_BEGIN svcGetProcessId
 	str x0, [sp, #-16]!
 	svc 0x24
+	ldr x2, [sp], #16
+	str x1, [x2]
+	ret
+SVC_END
+
+SVC_BEGIN svcGetThreadId
+	str x0, [sp, #-16]!
+	svc 0x25
 	ldr x2, [sp], #16
 	str x1, [x2]
 	ret
@@ -215,6 +259,23 @@ SVC_BEGIN svcReplyAndReceive
 	ret
 SVC_END
 
+SVC_BEGIN svcReplyAndReceiveWithUserBuffer
+	str x0, [sp, #-16]!
+	svc 0x44
+	ldr x2, [sp], #16
+	str w1, [x2]
+	ret
+SVC_END
+
+SVC_BEGIN svcCreateEvent
+	stp x0, x1, [sp, #-16]!
+	svc 0x45
+	ldp x3, x4, [sp], #16
+	str w1, [x3]
+	str w2, [x4]
+	ret
+SVC_END
+
 SVC_BEGIN svcCreateJitMemory
 	str x0, [sp, #-16]!
 	svc 0x4B
@@ -225,6 +286,14 @@ SVC_END
 
 SVC_BEGIN svcMapJitMemory
 	svc 0x4C
+	ret
+SVC_END
+
+SVC_BEGIN svcReadWriteRegister
+	str x0, [sp, #-16]!
+	svc 0x4E
+	ldr x2, [sp], #16
+	str w1, [x2]
 	ret
 SVC_END
 
@@ -243,6 +312,14 @@ SVC_END
 
 SVC_BEGIN svcUnmapTransferMemory
 	svc 0x52
+	ret
+SVC_END
+
+SVC_BEGIN svcCreateInterruptEvent 
+	str x0, [sp, #-16]!
+	svc 0x53
+	ldr x2, [sp], #16
+	str w1, [x2]
 	ret
 SVC_END
 
@@ -278,6 +355,11 @@ SVC_END
 
 SVC_BEGIN svcDetachDeviceAddressSpace
 	svc 0x58
+	ret
+SVC_END
+
+SVC_BEGIN svcMapDeviceAddressSpaceByForce
+	svc 0x59
 	ret
 SVC_END
 
@@ -413,6 +495,11 @@ SVC_END
 
 SVC_BEGIN svcStartProcess
 	svc 0x7A
+	ret
+SVC_END
+
+SVC_BEGIN svcTerminateProcess
+	svc 0x7B
 	ret
 SVC_END
 
