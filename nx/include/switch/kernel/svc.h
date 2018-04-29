@@ -211,10 +211,38 @@ void NORETURN svcExitThread(void);
  */
 Result svcSleepThread(u64 nano);
 
+/**
+ * @brief Gets a thread's priority.
+ * @return Result code.
+ * @note Syscall number 0x0C.
+ */
+Result svcGetThreadPriority(u32* priority, Handle handle);
+
+/**
+ * @brief Sets a thread's priority.
+ * @return Result code.
+ * @note Syscall number 0x0D.
+ */
+Result svcSetThreadPriority(Handle handle, u32 priority);
+
+/**
+ * @brief Gets the current processor's number.
+ * @return The current processor's number.
+ * @note Syscall number 0x10.
+ */
+u32 svcGetCurrentProcessorNumber(void);
+
 ///@}
 
 ///@name Synchronization
 ///@{
+
+/**
+ * @brief Sets an event's signalled status.
+ * @return Result code.
+ * @note Syscall number 0x11.
+ */
+Result svcSignalEvent(Handle handle);
 
 /**
  * @brief Clears an event's signalled status.
@@ -279,7 +307,6 @@ Result svcResetSignal(Handle handle);
 
 ///@name Synchronization
 ///@{
-
 
 /**
  * @brief Waits on one or more synchronization objects, optionally with a timeout.
@@ -364,6 +391,22 @@ Result svcConnectToNamedPort(Handle* session, const char* name);
  */
 Result svcSendSyncRequest(Handle session);
 
+/**
+ * @brief Sends an IPC synchronization request to a session from an user allocated buffer.
+ * @return Result code.
+ * @remark size must be allocated to 0x1000 bytes.
+ * @note Syscall number 0x22.
+ */
+Result svcSendSyncRequestWithUserBuffer(void* usrBuffer, u64 size, Handle session);
+
+/**
+ * @brief Sends an IPC synchronization request to a session from an user allocated buffer (asynchronous version).
+ * @return Result code.
+ * @remark size must be allocated to 0x1000 bytes.
+ * @note Syscall number 0x23.
+ */
+Result svcSendAsyncRequestWithUserBuffer(Handle* handle, void* usrBuffer, u64 size, Handle session);
+
 ///@}
 
 ///@name Process and thread management
@@ -375,6 +418,13 @@ Result svcSendSyncRequest(Handle session);
  * @note Syscall number 0x24.
  */
 Result svcGetProcessId(u64 *processID, Handle handle);
+
+/**
+ * @brief Gets the TID associated with a process.
+ * @return Result code.
+ * @note Syscall number 0x25.
+ */
+Result svcGetThreadId(u64 *threadID, Handle handle);
 
 ///@}
 
@@ -464,6 +514,26 @@ Result svcAcceptSession(Handle *session_handle, Handle port_handle);
  */
 Result svcReplyAndReceive(s32* index, const Handle* handles, s32 handleCount, Handle replyTarget, u64 timeout);
 
+/**
+ * @brief Performs IPC input/output from an user allocated buffer.
+ * @return Result code.
+ * @note Syscall number 0x44.
+ * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
+ */
+Result svcReplyAndReceiveWithUserBuffer(s32* index, void* usrBuffer, u64 size, const Handle* handles, s32 handleCount, Handle replyTarget, u64 timeout);
+
+///@}
+
+///@name Synchronization
+///@{
+
+/**
+ * @brief Creates a system event.
+ * @return Result code.
+ * @note Syscall number 0x45.
+ */
+Result svcCreateEvent(Handle* client_handle, Handle* server_handle);
+
 ///@}
 
 ///@name Just-in-time (JIT) compilation support
@@ -487,9 +557,21 @@ Result svcMapJitMemory(Handle jit_handle, JitMapOperation op, void* dst_addr, u6
 
 ///@}
 
-///@name Inter-process memory sharing
+///@name Device memory-mapped I/O (MMIO)
 ///@{
 
+/**
+ * @brief Reads/writes a protected MMIO register.
+ * @return Result code.
+ * @note Syscall number 0x4E.
+ * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
+ */
+Result svcReadWriteRegister(u32* outVal, u64 regAddr, u32 rwMask, u32 inVal);
+
+///@}
+
+///@name Inter-process memory sharing
+///@{
 
 /**
  * @brief Creates a block of shared memory.
@@ -519,6 +601,14 @@ Result svcUnmapTransferMemory(Handle tmem_handle, void* addr, size_t size);
 
 ///@name Device memory-mapped I/O (MMIO)
 ///@{
+
+/**
+ * @brief Creates an event and binds it to a specific hardware interrupt.
+ * @return Result code.
+ * @note Syscall number 0x53.
+ * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
+ */
+Result svcCreateInterruptEvent(Handle* handle, u64 irqNum, u32 flag);
 
 /**
  * @brief Queries information about a certain virtual address, including its physical address.
@@ -568,11 +658,20 @@ Result svcDetachDeviceAddressSpace(u64 device, Handle handle);
 /**
  * @brief Maps an attached device address space to an userspace address.
  * @return Result code.
+ * @remark The userspace destination address must have the \ref MemState_MapDeviceAllowed bit set.
+ * @note Syscall number 0x59.
+ * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
+ */
+Result svcMapDeviceAddressSpaceByForce(Handle handle, Handle proc_handle, u64 map_addr, u64 dev_size, u64 dev_addr, u32 perm);
+
+/**
+ * @brief Maps an attached device address space to an userspace address.
+ * @return Result code.
  * @remark The userspace destination address must have the \ref MemState_MapDeviceAlignedAllowed bit set.
  * @note Syscall number 0x5A.
  * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
  */
-Result svcMapDeviceAddressSpaceAligned(Handle handle, Handle proc_handle, u64 dev_addr, u64 dev_size, u64 map_addr, u64 perm);
+Result svcMapDeviceAddressSpaceAligned(Handle handle, Handle proc_handle, u64 map_addr, u64 dev_size, u64 dev_addr, u32 perm);
 
 /**
  * @brief Unmaps an attached device address space from an userspace address.
@@ -580,7 +679,7 @@ Result svcMapDeviceAddressSpaceAligned(Handle handle, Handle proc_handle, u64 de
  * @note Syscall number 0x5C.
  * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
  */
-Result svcUnmapDeviceAddressSpace(Handle handle, Handle proc_handle, u64 map_addr, u64 map_size, u64 perm);
+Result svcUnmapDeviceAddressSpace(Handle handle, Handle proc_handle, u64 map_addr, u64 map_size, u64 dev_addr);
 
 ///@}
 
@@ -804,6 +903,14 @@ Result svcCreateProcess(Handle* out, void* proc_info, u32* caps, u64 cap_num);
  * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
  */
 Result svcStartProcess(Handle proc, s32 main_prio, s32 default_cpu, u32 stack_size);
+
+/**
+ * @brief Terminates a running process.
+ * @return Result code.
+ * @note Syscall number 0x7B.
+ * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
+ */
+Result svcTerminateProcess(Handle proc);
 
 ///@}
 
