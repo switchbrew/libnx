@@ -22,11 +22,8 @@ typedef struct
   FsDirectoryEntry entry_data[32]; ///< Temporary storage for reading entries
 } fsdev_dir_t;
 
-/// Initializes the FS driver. Automatically initializes the sdmc device if accessible. If called again, sdmc mounting will be attempted again if it's not mounted.
-Result fsdevInit(void);
-
-/// Exits the FS driver. Any devices still mounted are unmounted.
-Result fsdevExit(void);
+/// Initializes and mounts the sdmc device if accessible. Also initializes current working directory to point to the folder containing the path to the executable (argv[0]), if it is provided by the environment.
+Result fsdevMountSdmc(void);
 
 /// Mounts the input fs with the specified device name. fsdev will handle closing the fs when required, including when fsdevMountDevice() fails.
 /// Returns -1 when any errors occur.
@@ -41,3 +38,6 @@ Result fsdevCommitDevice(const char *name);
 
 /// Returns the FsFileSystem for the default device (SD card), if mounted. Used internally by romfs_dev.
 FsFileSystem* fsdevGetDefaultFileSystem(void);
+
+/// Unmounts all devices and cleans up any resources used by the FS driver.
+Result fsdevUnmountAll(void);

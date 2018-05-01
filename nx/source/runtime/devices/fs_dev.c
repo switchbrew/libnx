@@ -97,6 +97,7 @@ typedef struct
     char name[32];
 } fsdev_fsdevice;
 
+static bool fsdev_initialised = false;
 static s32 fsdev_fsdevice_default = -1;
 static s32 fsdev_fsdevice_cwd = -1;
 static fsdev_fsdevice fsdev_fsdevices[32];
@@ -112,6 +113,9 @@ static fsdev_fsdevice *fsdevFindDevice(const char *name)
   u32 i;
   u32 total = sizeof(fsdev_fsdevices) / sizeof(fsdev_fsdevice);
   fsdev_fsdevice *device = NULL;
+
+  if(!fsdev_initialised)
+    return NULL;
 
   if(name && name[0] == '/') //Return the default device.
   {
@@ -273,7 +277,26 @@ static ssize_t fsdev_convertfromfspath(uint8_t *out, uint8_t *in, size_t len)
 extern int __system_argc;
 extern char** __system_argv;
 
-static bool fsdevInitialised = false;
+static void _fsdevInit(void)
+{
+  u32 i;
+  u32 total = sizeof(fsdev_fsdevices) / sizeof(fsdev_fsdevice);
+
+  if(!fsdev_initialised)
+  {
+    memset(fsdev_fsdevices, 0, sizeof(fsdev_fsdevices));
+
+    for(i=0; i<total; i++)
+    {
+      memcpy(&fsdev_fsdevices[i].device, &fsdev_devoptab, sizeof(fsdev_devoptab));
+      fsdev_fsdevices[i].device.name = fsdev_fsdevices[i].name;
+      fsdev_fsdevices[i].id = i;
+    }
+
+    fsdev_fsdevice_default = -1;
+    fsdev_initialised = true;
+  }
+}
 
 static int _fsdevMountDevice(const char *name, FsFileSystem fs, fsdev_fsdevice **out_device)
 {
@@ -285,6 +308,7 @@ static int _fsdevMountDevice(const char *name, FsFileSystem fs, fsdev_fsdevice *
     return -1;
   }
 
+  _fsdevInit(); //Ensure fsdev is initialized
   device = fsdevFindDevice(NULL);
   if(device==NULL)
   {
@@ -365,7 +389,7 @@ Result fsdevCommitDevice(const char *name)
 }
 
 /*! Initialize SDMC device */
-Result fsdevInit(void)
+Result fsdevMountSdmc(void)
 {
   ssize_t  units;
   uint32_t code;
@@ -373,23 +397,6 @@ Result fsdevInit(void)
   Result   rc = 0;
   FsFileSystem fs;
   fsdev_fsdevice *device = NULL;
-  u32 i;
-  u32 total = sizeof(fsdev_fsdevices) / sizeof(fsdev_fsdevice);
-
-  if(!fsdevInitialised)
-  {
-    memset(fsdev_fsdevices, 0, sizeof(fsdev_fsdevices));
-
-    for(i=0; i<total; i++)
-    {
-      memcpy(&fsdev_fsdevices[i].device, &fsdev_devoptab, sizeof(fsdev_devoptab));
-      fsdev_fsdevices[i].device.name = fsdev_fsdevices[i].name;
-      fsdev_fsdevices[i].id = i;
-    }
-
-    fsdev_fsdevice_default = -1;
-    fsdevInitialised = true;
-  }
 
   if(fsdevFindDevice("sdmc"))
     return 0;
@@ -451,26 +458,27 @@ Result fsdevInit(void)
 }
 
 /*! Clean up fsdev devices */
-Result fsdevExit(void)
+Result fsdevUnmountAll(void)
 {
   u32 i;
   u32 total = sizeof(fsdev_fsdevices) / sizeof(fsdev_fsdevice);
   Result rc=0;
 
-  if(!fsdevInitialised) return rc;
+  if(!fsdev_initialised) return rc;
 
   for(i=0; i<total; i++)
   {
     _fsdevUnmountDeviceStruct(&fsdev_fsdevices[i]);
   }
 
-  fsdevInitialised = false;
+  fsdev_initialised = false;
 
   return 0;
 }
 
 FsFileSystem* fsdevGetDefaultFileSystem(void)
 {
+  if(!fsdev_initialised) return NULL;
   if(fsdev_fsdevice_default==-1) return NULL;
 
   return &fsdev_fsdevices[fsdev_fsdevice_default].fs;

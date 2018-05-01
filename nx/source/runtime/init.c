@@ -110,13 +110,13 @@ void __attribute__((weak)) __appInit(void)
     if (R_FAILED(rc))
         fatalSimple(MAKERESULT(Module_Libnx, LibnxError_InitFail_FS));
 
-    fsdevInit();
+    fsdevMountSdmc();
 }
 
 void __attribute__((weak)) __appExit(void)
 {
     // Cleanup default services.
-    fsdevExit();
+    fsdevUnmountAll();
     fsExit();
     timeExit();
     hidExit();
