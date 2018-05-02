@@ -106,7 +106,6 @@ static fsdev_fsdevice fsdev_fsdevices[32];
 
 static char     __cwd[PATH_MAX+1] = "/";
 static __thread char     __fixedpath[PATH_MAX+1];
-//static __thread uint16_t __utf16path[PATH_MAX+1];
 
 static fsdev_fsdevice *fsdevFindDevice(const char *name)
 {
@@ -201,7 +200,7 @@ fsdev_fixpath(struct _reent *r,
   else
   {
     strncpy(__fixedpath, __cwd, PATH_MAX);
-    strncat(__fixedpath, path, PATH_MAX);
+    strncat(__fixedpath, path, PATH_MAX - strlen(__cwd));
   }
 
   if(__fixedpath[PATH_MAX] != 0)
@@ -239,26 +238,8 @@ fsdev_getfspath(struct _reent *r,
                fsdev_fsdevice **device,
                char           *outpath)
 {
-  //ssize_t units;
-
   if(fsdev_fixpath(r, path, device) == NULL)
     return -1;
-
-  //TODO: What encoding does FS paths use?
-
-  /*units = utf8_to_utf16(__utf16path, (const uint8_t*)__fixedpath, PATH_MAX);
-  if(units < 0)
-  {
-    r->_errno = EILSEQ;
-    return fspath;
-  }
-  if(units >= PATH_MAX)
-  {
-    r->_errno = ENAMETOOLONG;
-    return fspath;
-  }
-
-  __utf16path[units] = 0;*/
 
   memset(outpath, 0, FS_MAX_PATH);
   strncpy(outpath, __fixedpath, FS_MAX_PATH);
@@ -268,8 +249,6 @@ fsdev_getfspath(struct _reent *r,
 
 static ssize_t fsdev_convertfromfspath(uint8_t *out, uint8_t *in, size_t len)
 {
-  //TODO: What encoding does FS paths use?
-
   strncpy((char*)out, (char*)in, len);
   return strnlen((char*)out, len);
 }
@@ -349,7 +328,7 @@ static int _fsdevUnmountDeviceStruct(fsdev_fsdevice *device)
 
   memset(name, 0, sizeof(name));
   strncpy(name, device->name, sizeof(name)-2);
-  strncat(name, ":", sizeof(name)-1);
+  strncat(name, ":", sizeof(name)-strlen(name)-1);
 
   RemoveDevice(name);
   fsFsClose(&device->fs);
