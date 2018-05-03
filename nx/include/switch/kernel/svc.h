@@ -105,6 +105,32 @@ typedef enum {
     JitMapOperation_UnmapSlave=3, ///< Unmap slave.
 } JitMapOperation;
 
+/// Limitable Resources.
+typedef enum {
+    LimitableResource_Memory=0,           ///<How much memory can a process map.
+    LimitableResource_Threads=1,          ///<How many threads can a process spawn.
+    LimitableResource_Events=2,           ///<How many events can a process have.
+    LimitableResource_TransferMemories=3, ///<How many transfer memories can a process make.
+    LimitableResource_Sessions=4,         ///<How many sessions can a process own.
+} LimitableResource;
+
+/// Process Information.
+typedef enum {
+    ProcessInfoType_ProcessState=0,       ///<What state is a process in.
+} ProcessInfoType;
+
+/// Process States.
+typedef enum {
+    ProcessState_Created=0,        ///<Newly-created process.
+    ProcessState_DebugAttached=1,  ///<Process attached to debugger.
+    ProcessState_DebugDetached=2,  ///<Process detached from debugger.
+    ProcessState_Crashed=3,        ///<Process that has just creashed.
+    ProcessState_Running=4,        ///<Process executing normally.
+    ProcessState_Exiting=5,        ///<Process has begun exiting.
+    ProcessState_Exited=6,         ///<Process has finished exiting.
+    ProcessState_DebugSuspended=7, ///<Process execution suspended by debugger.
+} ProcessState;
+
 ///@name Memory management
 ///@{
 
@@ -484,6 +510,25 @@ Result svcGetInfo(u64* out, u64 id0, Handle handle, u64 id1);
  * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
  */
 Result svcSetThreadActivity(Handle thread, bool paused);
+
+///@}
+
+///@name Resource Limit Management
+///@{
+
+/**
+ * @brief Gets the maximum value a LimitableResource can have, for a Resource Limit handle.
+ * @return Result code.
+ * @note Syscall number 0x30.
+ */
+Result svcGetResourceLimitLimitValue(u64 *out, Handle reslimit_h, LimitableResource which);
+
+/**
+ * @brief Gets the maximum value a LimitableResource can have, for a Resource Limit handle.
+ * @return Result code.
+ * @note Syscall number 0x31.
+ */
+Result svcGetResourceLimitCurrentValue(u64 *out, Handle reslimit_h, LimitableResource which);
 
 ///@}
 
@@ -911,6 +956,35 @@ Result svcStartProcess(Handle proc, s32 main_prio, s32 default_cpu, u32 stack_si
  * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
  */
 Result svcTerminateProcess(Handle proc);
+
+/**
+ * @brief Gets a \ref ProcessInfoType for a process.
+ * @return Result code.
+ * @note Syscall number 0x7C.
+ * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
+ */
+Result svcGetProcessInfo(u64 *out, Handle proc, ProcessInfoType which);
+
+///@}
+
+///@name Resource Limit Management
+///@{
+
+/**
+ * @brief Creates a new Resource Limit handle.
+ * @return Result code.
+ * @note Syscall number 0x7D.
+ * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
+ */
+Result svcCreateResourceLimit(Handle* out);
+
+/**
+ * @brief Sets the value for a \ref LimitableResource for a Resource Limit handle.
+ * @return Result code.
+ * @note Syscall number 0x7E.
+ * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
+ */
+Result svcSetResourceLimitLimitValue(Handle reslimit, LimitableResource which, u64 value);
 
 ///@}
 
