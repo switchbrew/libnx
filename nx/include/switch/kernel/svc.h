@@ -107,16 +107,16 @@ typedef enum {
 
 /// Limitable Resources.
 typedef enum {
-    LimitableResource_Memory=0,           ///<How much memory can a process map?
-    LimitableResource_Threads=1,          ///<How many threads can a process spawn?
-    LimitableResource_Events=2,           ///<How many events can a process have?
-    LimitableResource_TransferMemories=3, ///<How many transfer memories can a process make?
-    LimitableResource_Sessions=4,         ///<How many sessions can a process own?
+    LimitableResource_Memory=0,           ///<How much memory can a process map.
+    LimitableResource_Threads=1,          ///<How many threads can a process spawn.
+    LimitableResource_Events=2,           ///<How many events can a process have.
+    LimitableResource_TransferMemories=3, ///<How many transfer memories can a process make.
+    LimitableResource_Sessions=4,         ///<How many sessions can a process own.
 } LimitableResource;
 
 /// Process Information.
 typedef enum {
-    ProcessInfoType_ProcessState=0,       ///<What state is a process in?
+    ProcessInfoType_ProcessState=0,       ///<What state is a process in.
 } ProcessInfoType;
 
 /// Process States.
