@@ -20,22 +20,22 @@ typedef struct {
 Result lrInitialize(void);
 void lrExit(void);
 
-Result lrGetLocationResolver(FsStorageId storage, LrLocationResolver* out);
-Result lrGetRegisteredLocationResolver(LrRegisteredLocationResolver* out);
+Result lrOpenLocationResolver(FsStorageId storage, LrLocationResolver* out);
+Result lrOpenRegisteredLocationResolver(LrRegisteredLocationResolver* out);
 // TODO: Other ILocationResolverManager commands
 
 // ILocationResolver
-Result lrLrGetProgramPath(LrLocationResolver* lr, u64 tid, char *out);
-Result lrLrSetProgramPath(LrLocationResolver* lr, u64 tid, const char *path);
-Result lrLrGetControlPath(LrLocationResolver* lr, u64 tid, char *out);
-Result lrLrGetUserControlPath(LrLocationResolver* lr, u64 tid, char *out);
-Result lrLrSetControlPath(LrLocationResolver* lr, u64 tid, const char *path);
-Result lrLrGetDocHtmlPath(LrLocationResolver* lr, u64 tid, char *out);
-Result lrLrSetDocHtmlPath(LrLocationResolver* lr, u64 tid, const char *path);
-Result lrLrGetInfoHtmlPath(LrLocationResolver* lr, u64 tid, char *out);
-Result lrLrSetInfoHtmlPath(LrLocationResolver* lr, u64 tid, const char *path);
-Result lrLrClearOverridePaths(LrLocationResolver* lr);
+Result lrLrResolveProgramPath(LrLocationResolver* lr, u64 tid, char *out);
+Result lrLrRedirectProgramPath(LrLocationResolver* lr, u64 tid, const char *path);
+Result lrLrResolveApplicationControlPath(LrLocationResolver* lr, u64 tid, char *out);
+Result lrLrResolveApplicationHtmlDocumentPath(LrLocationResolver* lr, u64 tid, char *out);
+Result lrLrResolveDataPath(LrLocationResolver* lr, u64 tid, char *out);
+Result lrLrRedirectApplicationControlPath(LrLocationResolver* lr, u64 tid, const char *path);
+Result lrLrRedirectApplicationHtmlDocumentPath(LrLocationResolver* lr, u64 tid, const char *path);
+Result lrLrResolveLegalInformationPath(LrLocationResolver* lr, u64 tid, char *out);
+Result lrLrRedirectLegalInformationPath(LrLocationResolver* lr, u64 tid, const char *path);
+Result lrLrRefresh(LrLocationResolver* lr);
 
 // IRegisteredLocationResolver
-Result lrRegLrGetProgramPath(LrRegisteredLocationResolver* reg, u64 tid, char *out);
+Result lrRegLrResolveProgramPath(LrRegisteredLocationResolver* reg, u64 tid, char *out);
 // TODO: Other IRegisteredLocationResolver commands
