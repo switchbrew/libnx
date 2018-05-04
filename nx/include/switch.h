@@ -32,6 +32,7 @@ extern "C" {
 #include "switch/kernel/ipc.h"
 
 #include "switch/services/sm.h"
+#include "switch/services/smm.h"
 #include "switch/services/fs.h"
 #include "switch/services/fsldr.h"
 #include "switch/services/acc.h"
