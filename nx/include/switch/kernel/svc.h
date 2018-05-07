@@ -500,6 +500,25 @@ Result svcGetInfo(u64* out, u64 id0, Handle handle, u64 id1);
 
 ///@}
 
+///@name Memory management
+///@{
+
+/**
+ * @brief Maps new heap memory at the desired address. [3.0.0+]
+ * @return Result code.
+ * @note Syscall number 0x2A.
+ */
+Result svcMapPhysicalMemory(void *address, u64 size);
+
+/**
+ * @brief Undoes the effects of \ref svcMapPhysicalMemory. [3.0.0+]
+ * @return Result code.
+ * @note Syscall number 0x2B.
+ */
+Result svcUnmapPhysicalMemory(void *address, u64 size);
+
+///@}
+
 ///@name Process and thread management
 ///@{
 
@@ -580,6 +599,36 @@ Result svcReplyAndReceiveWithUserBuffer(s32* index, void* usrBuffer, u64 size, c
 Result svcCreateEvent(Handle* server_handle, Handle* client_handle);
 
 ///@}
+
+///@name Memory management
+///@{
+
+/**
+ * @brief Maps unsafe memory (usable for GPU DMA) for a system module at the desired address. [5.0.0+]
+ * @return Result code.
+ * @note Syscall number 0x48.
+ * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
+ */
+Result svcMapPhysicalMemoryUnsafe(void *address, u64 size);
+
+/**
+ * @brief Undoes the effects of \ref svcMapPhysicalMemoryUnsafe. [5.0.0+]
+ * @return Result code.
+ * @note Syscall number 0x49.
+ * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
+ */
+Result svcUnmapPhysicalMemoryUnsafe(void *address, u64 size);
+
+/**
+ * @brief Sets the system-wide limit for unsafe memory mappable using \ref svcMapPhysicalMemoryUnsafe. [5.0.0+]
+ * @return Result code.
+ * @note Syscall number 0x4A.
+ * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
+ */
+Result svcSetUnsafeLimit(u64 size);
+
+///@}
+
 
 ///@name Just-in-time (JIT) compilation support
 ///@{
