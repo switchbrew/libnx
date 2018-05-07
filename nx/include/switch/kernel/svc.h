@@ -577,7 +577,7 @@ Result svcReplyAndReceiveWithUserBuffer(s32* index, void* usrBuffer, u64 size, c
  * @return Result code.
  * @note Syscall number 0x45.
  */
-Result svcCreateEvent(Handle* client_handle, Handle* server_handle);
+Result svcCreateEvent(Handle* server_handle, Handle* client_handle);
 
 ///@}
 
