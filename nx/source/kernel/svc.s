@@ -229,6 +229,16 @@ SVC_BEGIN svcGetInfo
 	ret
 SVC_END
 
+SVC_BEGIN svcMapPhysicalMemory
+	svc 0x2A
+	ret
+SVC_END
+
+SVC_BEGIN svcUnmapPhysicalMemory
+	svc 0x2B
+	ret
+SVC_END
+
 SVC_BEGIN svcGetResourceLimitLimitValue
 	str x0, [sp, #-16]!
 	svc 0x30
@@ -289,6 +299,21 @@ SVC_BEGIN svcCreateEvent
 	ldp x3, x4, [sp], #16
 	str w1, [x3]
 	str w2, [x4]
+	ret
+SVC_END
+
+SVC_BEGIN svcMapPhysicalMemoryUnsafe
+	svc 0x48
+	ret
+SVC_END
+
+SVC_BEGIN svcUnmapPhysicalMemoryUnsafe
+	svc 0x49
+	ret
+SVC_END
+
+SVC_BEGIN svcSetUnsafeLimit
+	svc 0x4A
 	ret
 SVC_END
 
