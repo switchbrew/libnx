@@ -262,6 +262,76 @@ Result fsOpenDataStorageByCurrentProcess(FsStorage* out) {
     return rc;
 }
 
+Result fsOpenDeviceOperator(FsDeviceOperator* out) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 400;
+
+    Result rc = serviceIpcDispatch(&g_fsSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            serviceCreate(&out->s, r.Handles[0]);
+        }
+    }
+
+    return rc;
+}
+
+Result fsOpenSdCardDetectionEventNotifier(FsEventNotifier* out) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 500;
+
+    Result rc = serviceIpcDispatch(&g_fsSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            serviceCreate(&out->s, r.Handles[0]);
+        }
+    }
+
+    return rc;
+}
+
 // Wrapper(s) for fsMountSaveData.
 Result fsMount_SaveData(FsFileSystem* out, u64 titleID, u128 userID) {
     FsSave save;
@@ -1082,3 +1152,83 @@ void fsSaveDataIteratorClose(FsSaveDataIterator* s) {
     serviceClose(&s->s);
 }
 
+// IEventNotifier
+Result fsEventNotifierGetEventHandle(FsEventNotifier* e, Handle* out) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 0;
+
+    Result rc = serviceIpcDispatch(&e->s);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            *out = r.Handles[0];
+        }
+    }
+
+    return rc;
+}
+
+void fsEventNotifierClose(FsEventNotifier* e) {
+    serviceClose(&e->s);
+}
+
+// IDeviceOperator
+Result fsDeviceOperatorIsSdCardInserted(FsDeviceOperator* d, bool* out) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 0;
+
+    Result rc = serviceIpcDispatch(&d->s);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u8 is_inserted;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            *out = resp->is_inserted != 0;
+        }
+    }
+
+    return rc;
+}
+
+void fsDeviceOperatorClose(FsDeviceOperator* d) {
+    serviceClose(&d->s);
+}

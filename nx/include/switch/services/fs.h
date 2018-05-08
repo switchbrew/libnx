@@ -40,6 +40,14 @@ typedef struct {
     Service  s;
 } FsSaveDataIterator;
 
+typedef struct {
+    Service  s;
+} FsEventNotifier;
+
+typedef struct {
+    Service  s;
+} FsDeviceOperator;
+
 /// Directory entry.
 typedef struct
 {
@@ -143,6 +151,8 @@ Result fsMountSaveData(FsFileSystem* out, u8 inval, FsSave *save);
 Result fsMountSystemSaveData(FsFileSystem* out, u8 inval, FsSave *save);
 Result fsOpenSaveDataIterator(FsSaveDataIterator* out, s32 SaveDataSpaceId);
 Result fsOpenDataStorageByCurrentProcess(FsStorage* out);
+Result fsOpenDeviceOperator(FsDeviceOperator* out);
+Result fsOpenSdCardDetectionEventNotifier(FsEventNotifier* out);
 // todo: Rest of commands here
 
 /// FsFileSystem can be mounted with fs_dev for use with stdio, see fs_dev.h.
@@ -193,3 +203,11 @@ void fsStorageClose(FsStorage* s);
 /// Read FsSaveDataInfo data into the buf array.
 Result fsSaveDataIteratorRead(FsSaveDataIterator *s, FsSaveDataInfo* buf, size_t max_entries, size_t* total_entries);
 void fsSaveDataIteratorClose(FsSaveDataIterator *s);
+
+// IEventNotifier
+Result fsEventNotifierGetEventHandle(FsEventNotifier* e, Handle* out);
+void fsEventNotifierClose(FsEventNotifier* e);
+
+// IDeviceOperator
+Result fsDeviceOperatorIsSdCardInserted(FsDeviceOperator* d, bool* out);
+void fsDeviceOperatorClose(FsDeviceOperator* d);
