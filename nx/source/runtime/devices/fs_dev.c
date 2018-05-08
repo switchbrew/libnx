@@ -199,7 +199,7 @@ fsdev_fixpath(struct _reent *r,
     strncpy(__fixedpath, path, PATH_MAX);
   else
   {
-    strncpy(__fixedpath, __cwd, PATH_MAX);
+    strcpy(__fixedpath, __cwd);
     strncat(__fixedpath, path, PATH_MAX - strlen(__cwd));
   }
 
@@ -242,7 +242,8 @@ fsdev_getfspath(struct _reent *r,
     return -1;
 
   memset(outpath, 0, FS_MAX_PATH);
-  strncpy(outpath, __fixedpath, FS_MAX_PATH);
+  memcpy(outpath, __fixedpath,FS_MAX_PATH);
+  outpath[FS_MAX_PATH-1] = '\0';
 
   return 0;
 }
@@ -1038,7 +1039,7 @@ fsdev_chdir(struct _reent *r,
   if(R_SUCCEEDED(rc))
   {
     fsDirClose(&fd);
-    strncpy(__cwd, __fixedpath, PATH_MAX);
+    strcpy(__cwd, __fixedpath);
     fsdev_fsdevice_cwd = device->id;
     return 0;
   }

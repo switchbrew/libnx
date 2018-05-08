@@ -144,7 +144,7 @@ static Result _lrResolvePath(Service* s, u64 cmd_id, u64 tid, char *out) {
     This is a helper function to perform the work for those funcs, given a command ID.
 */
 static Result _lrRedirectPath(Service* s, u64 cmd_id, u64 tid, const char *path) {
-    char send_path[FS_MAX_PATH] = {0};
+    char send_path[FS_MAX_PATH+1] = {0};
     IpcCommand c;
     ipcInitialize(&c);
     ipcAddSendStatic(&c, send_path, FS_MAX_PATH, 0);
