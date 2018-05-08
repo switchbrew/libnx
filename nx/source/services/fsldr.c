@@ -36,7 +36,7 @@ void fsldrExit(void) {
 }
 
 Result fsldrOpenCodeFileSystem(u64 tid, const char *path, FsFileSystem* out) {
-    char send_path[FS_MAX_PATH] = {0};
+    char send_path[FS_MAX_PATH+1] = {0};
     IpcCommand c;
     ipcInitialize(&c);
     ipcAddSendStatic(&c, send_path, FS_MAX_PATH, 0);
