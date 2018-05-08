@@ -195,7 +195,7 @@ static int _bsdNameGetterCommand(u32 cmd_id, int sockfd, struct sockaddr *addr, 
         u64 magic;
         u64 cmd_id;
         int sockfd;
-    } *raw;
+    } PACKED *raw;
 
     raw = ipcPrepareHeader(&c, sizeof(*raw));
 
