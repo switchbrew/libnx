@@ -242,7 +242,7 @@ fsdev_getfspath(struct _reent *r,
     return -1;
 
   memset(outpath, 0, FS_MAX_PATH);
-  memcpy(outpath, __fixedpath,FS_MAX_PATH);
+  memcpy(outpath, __fixedpath,FS_MAX_PATH-1);
   outpath[FS_MAX_PATH-1] = '\0';
 
   return 0;
