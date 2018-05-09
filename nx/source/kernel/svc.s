@@ -243,7 +243,7 @@ SVC_BEGIN svcGetResourceLimitLimitValue
 	str x0, [sp, #-16]!
 	svc 0x30
 	ldr x2, [sp], #16
-	str w1, [x2]
+	str x1, [x2]
 	ret
 SVC_END
 
@@ -251,7 +251,7 @@ SVC_BEGIN svcGetResourceLimitCurrentValue
 	str x0, [sp, #-16]!
 	svc 0x31
 	ldr x2, [sp], #16
-	str w1, [x2]
+	str x1, [x2]
 	ret
 SVC_END
 
