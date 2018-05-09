@@ -657,7 +657,7 @@ int bsdIoctl(int fd, int request, void *data) {
         int fd;
         int request;
         int bufcount;
-    } *raw;
+    } PACKED *raw;
 
     raw = ipcPrepareHeader(&c, sizeof(*raw));
 
