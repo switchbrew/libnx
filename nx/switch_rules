@@ -31,12 +31,33 @@ endif
 	@echo built ... $(notdir $@)
 
 #---------------------------------------------------------------------------------
-%.pfs0: %.nso
+%.npdm: $(APP_JSON)
+	@npdmtool $< $@
+	@echo built ... $(notdir $@)
+
+#---------------------------------------------------------------------------------
+define make_pfs0
 	@mkdir -p exefs
 	@[ -d $(BUILD_EXEFS_SRC) ] && cp -R $(BUILD_EXEFS_SRC)/* exefs || echo > /dev/null
-	@cp $< exefs/main
+	@cp $*.nso exefs/main
+	@[ $(APP_JSON) ] && cp $*.npdm exefs/main.npdm || echo > /dev/null
 	@build_pfs0 exefs $@
 	@echo built ... $(notdir $@)
+endef
+
+ifeq ($(strip $(APP_JSON)),)
+%.pfs0: %.nso
+else
+%.pfs0: %.nso %.npdm
+endif
+	$(make_pfs0)
+
+ifeq ($(strip $(APP_JSON)),)
+%.nsp: %.nso
+else
+%.nsp: %.nso %.npdm
+endif
+	$(make_pfs0)
 
 #---------------------------------------------------------------------------------
 %.nso: %.elf
@@ -47,6 +68,12 @@ endif
 %.nro: %.elf
 	@elf2nro $< $@ $(NROFLAGS)
 	@echo built ... $(notdir $@)
+
+#---------------------------------------------------------------------------------
+%.kip: %.elf
+	@elf2kip $< $(APP_JSON) $@
+	@echo built ... $(notdir $@)
+
 #---------------------------------------------------------------------------------
 %.elf:
 	@echo linking $(notdir $@)
