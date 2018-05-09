@@ -29,7 +29,7 @@ static Result _sfdnsresDispatchDnsRequest(IpcCommand *c, SfdnsresRequestResults 
     IpcParsedCommand r;
     ipcSendPid(c);
 
-    rc = _sfdnsresDispatchCommand(&r, c, &raw, sizeof(raw));
+    rc = _sfdnsresDispatchCommand(&r, c, raw, raw_size);
     if(R_FAILED(rc)) return rc;
 
     struct {
