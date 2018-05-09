@@ -183,10 +183,10 @@ static inline void ipcAddRecvStatic(IpcCommand* cmd, void* buffer, size_t size, 
  */
 static inline void ipcAddSendSmart(IpcCommand* cmd, size_t ipc_buffer_size, const void* buffer, size_t size, u8 index) {
     if (ipc_buffer_size != 0 && size <= ipc_buffer_size) {
-        ipcAddSendBuffer(cmd, NULL, 0, 0);
+        ipcAddSendBuffer(cmd, NULL, 0, BufferType_Normal);
         ipcAddSendStatic(cmd, buffer, size, index);
     } else {
-        ipcAddSendBuffer(cmd, buffer, size, 0);
+        ipcAddSendBuffer(cmd, buffer, size, BufferType_Normal);
         ipcAddSendStatic(cmd, NULL, 0, index);
     }
 }
@@ -201,10 +201,10 @@ static inline void ipcAddSendSmart(IpcCommand* cmd, size_t ipc_buffer_size, cons
  */
 static inline void ipcAddRecvSmart(IpcCommand* cmd, size_t ipc_buffer_size, void* buffer, size_t size, u8 index) {
     if (ipc_buffer_size != 0 && size <= ipc_buffer_size) {
-        ipcAddRecvBuffer(cmd, NULL, 0, 0);
+        ipcAddRecvBuffer(cmd, NULL, 0, BufferType_Normal);
         ipcAddRecvStatic(cmd, buffer, size, index);
     } else {
-        ipcAddRecvBuffer(cmd, buffer, size, 0);
+        ipcAddRecvBuffer(cmd, buffer, size, BufferType_Normal);
         ipcAddRecvStatic(cmd, NULL, 0, index);
     }
 }
