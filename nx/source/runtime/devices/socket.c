@@ -202,6 +202,7 @@ static int _socketParseBsdResult(struct _reent *r, int ret) {
 
 static int _socketOpen(struct _reent *r, void *fdptr, const char *path, int flags, int mode) {
     (void)mode;
+    if(strncmp(path, "soc:", 4)==0) path+= 4;
     int ret = _socketParseBsdResult(r, bsdOpen(path, flags));
     if(ret == -1)
         return ret;
