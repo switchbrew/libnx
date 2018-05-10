@@ -557,7 +557,7 @@ int bsdGetSockOpt(int sockfd, int level, int optname, void *optval, socklen_t *o
         int sockfd;
         int level;
         int optname;
-    } *raw;
+    } PACKED *raw;
 
     raw = ipcPrepareHeader(&c, sizeof(*raw));
 
