@@ -515,6 +515,7 @@ static inline Result ipcQueryPointerBufferSize(Handle session, size_t *size) {
 static inline Result ipcCloseSession(Handle session) {
     u32* buf = (u32*)armGetTls();
     buf[0] = IpcCommandType_Close;
+    buf[1] = 0;
     return ipcDispatch(session);
 }
 ///@}
