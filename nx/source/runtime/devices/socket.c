@@ -297,21 +297,21 @@ int select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struc
         || (exceptfds && FD_ISSET(i, exceptfds))) {
 
             if(readfds && FD_ISSET(i, readfds)) {
-                if(pollinfo[j].events & (POLLIN|POLLHUP))
+                if(pollinfo[j].revents & (POLLIN|POLLHUP))
                     found = 1;
                 else
                     FD_CLR(i, readfds);
             }
 
             if(writefds && FD_ISSET(i, writefds)) {
-                if(pollinfo[j].events & (POLLOUT|POLLHUP))
+                if(pollinfo[j].revents & (POLLOUT|POLLHUP))
                     found = 1;
                 else
                     FD_CLR(i, writefds);
             }
 
             if(exceptfds && FD_ISSET(i, exceptfds)) {
-                if(pollinfo[j].events & POLLERR)
+                if(pollinfo[j].revents & POLLERR)
                     found = 1;
                 else
                     FD_CLR(i, exceptfds);
