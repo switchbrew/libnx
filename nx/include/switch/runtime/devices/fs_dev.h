@@ -32,7 +32,7 @@ int fsdevMountDevice(const char *name, FsFileSystem fs);
 /// Unmounts the specified device.
 int fsdevUnmountDevice(const char *name);
 
-/// Uses fsFsCommit() with the specified device. This must be used after any savedata-write operations(not just file-write).
+/// Uses fsFsCommit() with the specified device. This must be used after any savedata-write operations(not just file-write). This should be used after each file-close where file-writing was done.
 /// This is not used automatically at device unmount.
 Result fsdevCommitDevice(const char *name);
 
