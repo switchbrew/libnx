@@ -17,6 +17,7 @@ static SharedMemory g_hidSharedmem;
 static HidTouchScreenEntry g_touchEntry;
 static HidMouseEntry g_mouseEntry;
 static HidKeyboardEntry g_keyboardEntry;
+static HidControllerHeader g_controllerHeaders[10];
 static HidControllerInputEntry g_controllerEntries[10];
 
 static u64 g_mouseOld, g_mouseHeld, g_mouseDown, g_mouseUp;
@@ -97,6 +98,7 @@ void hidReset(void)
     memset(&g_touchEntry, 0, sizeof(HidTouchScreenEntry));
     memset(&g_mouseEntry, 0, sizeof(HidMouseEntry));
     memset(&g_keyboardEntry, 0, sizeof(HidKeyboardEntry));
+    memset(g_controllerHeaders, 0, sizeof(g_controllerHeaders));
     memset(g_controllerEntries, 0, sizeof(g_controllerEntries));
 
     g_mouseOld = g_mouseHeld = g_mouseDown = g_mouseUp = 0;
@@ -204,6 +206,7 @@ void hidScanInput(void) {
 
     for (int i = 0; i < 10; i++) {
         HidControllerLayout *currentLayout = &sharedMem->controllers[i].layouts[g_controllerLayout[i]];
+        memcpy(&g_controllerHeaders[i], &sharedMem->controllers[i].header, sizeof(HidControllerHeader));
         u64 latestControllerEntry = currentLayout->header.latestEntry;
         HidControllerInputEntry *newInputEntry = &currentLayout->entries[latestControllerEntry];
         if ((s64)(newInputEntry->timestamp - g_controllerTimestamps[i]) >= 0) {
@@ -223,6 +226,18 @@ void hidScanInput(void) {
 
     rwlockWriteUnlock(&g_hidLock);
 }
+
+//TODO: Why is this field in sharedmem zeros?
+/*u32 hidGetControllerType(HidControllerID id) {
+    if (id==CONTROLLER_P1_AUTO) return hidGetControllerType(g_controllerP1AutoID);
+    if (id < 0 || id > 9) return 0;
+
+    rwlockReadLock(&g_hidLock);
+    u32 tmp = g_controllerHeaders[id].type;
+    rwlockReadUnlock(&g_hidLock);
+
+    return tmp;
+}*/
 
 u64 hidKeysHeld(HidControllerID id) {
     if (id==CONTROLLER_P1_AUTO) return hidKeysHeld(g_controllerP1AutoID);
