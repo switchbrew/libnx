@@ -802,7 +802,7 @@ Result svcBreakDebugProcess(Handle debug);
  * @note Syscall number 0x63.
  * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
  */
-Result svcGetDebugEvent(u8* event_out, Handle* debug);
+Result svcGetDebugEvent(u8* event_out, Handle debug);
 
 /**
  * @brief Continues a debugging session.
@@ -810,7 +810,7 @@ Result svcGetDebugEvent(u8* event_out, Handle* debug);
  * @note Syscall number 0x64.
  * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
  */
-Result svcContinueDebugEvent(Handle debug, u32 flags, u64 unk);
+Result svcContinueDebugEvent(Handle debug, u32 flags, u64 threadID);
 
 /**
  * @brief Gets the context of a thread in a debugging session.
