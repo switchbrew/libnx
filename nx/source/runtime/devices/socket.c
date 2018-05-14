@@ -1568,16 +1568,16 @@ cleanup:
 }
 
 // Unimplementable functions, left for compliance:
-struct hostent *gethostent(void) { return NULL; }
-struct netent *getnetbyaddr(uint32_t a, int b) { (void)a; (void)b; return NULL; }
-struct netent *getnetbyname(const char *s) { (void)s; return NULL; }
-struct netent *getnetent(void) { return NULL; }
-struct protoent *getprotobyname(const char *s) { (void)s; return NULL; }
-struct protoent *getprotobynumber(int a) { (void)a; return NULL; }
-struct protoent *getprotoent(void) { return NULL; }
-struct servent *getservbyname(const char *s1, const char *s2) { (void)s1; (void)s2; return NULL; }
-struct servent *getservbyport(int a, const char *s) { (void)a; (void)s; return NULL; }
-struct servent *getservent(void) { return NULL; }
+struct hostent *gethostent(void) { h_errno = NO_RECOVERY; errno = ENOSYS; return NULL; }
+struct netent *getnetbyaddr(uint32_t a, int b) { (void)a; (void)b; h_errno = NO_RECOVERY; errno = ENOSYS; return NULL; }
+struct netent *getnetbyname(const char *s) { (void)s; h_errno = NO_RECOVERY; errno = ENOSYS; return NULL; }
+struct netent *getnetent(void) { h_errno = NO_RECOVERY; errno = ENOSYS; return NULL; }
+struct protoent *getprotobyname(const char *s) { (void)s; h_errno = NO_RECOVERY; errno = ENOSYS; return NULL; }
+struct protoent *getprotobynumber(int a) { (void)a; h_errno = NO_RECOVERY; errno = ENOSYS; return NULL; }
+struct protoent *getprotoent(void) { h_errno = NO_RECOVERY; errno = ENOSYS; return NULL; }
+struct servent *getservbyname(const char *s1, const char *s2) { (void)s1; (void)s2; h_errno = NO_RECOVERY; errno = ENOSYS; return NULL; }
+struct servent *getservbyport(int a, const char *s) { (void)a; (void)s; h_errno = NO_RECOVERY; errno = ENOSYS; return NULL; }
+struct servent *getservent(void) { h_errno = NO_RECOVERY; errno = ENOSYS; return NULL; }
 void sethostent(int a) { (void)a;}
 void setnetent(int a) { (void)a;}
 void setprotoent(int a) { (void)a; }
