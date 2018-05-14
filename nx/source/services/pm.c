@@ -169,7 +169,7 @@ Result pmdmntEnableDebugForTitleId(Handle* handle_out, u64 title_id) {
 }
 
 Result pminfoGetTitleId(u64* title_id_out, u64 pid) {
-	IpcCommand c;
+    IpcCommand c;
     ipcInitialize(&c);
 
     struct {
@@ -193,11 +193,11 @@ Result pminfoGetTitleId(u64* title_id_out, u64 pid) {
         struct {
             u64 magic;
             u64 result;
-			u64 title_id;
+            u64 title_id;
         } *resp = r.Raw;
 
         rc = resp->result;
-		if (R_SUCCEEDED(rc)) {
+        if (R_SUCCEEDED(rc)) {
             *title_id_out = resp->title_id;
         }
     }
