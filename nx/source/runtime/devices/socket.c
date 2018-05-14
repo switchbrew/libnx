@@ -1120,7 +1120,7 @@ static struct hostent *_socketDeserializeHostent(int *err, const void *out_he_se
     pos += name_size;
     pos_aliases = pos;
     for(pos = buf, len = 1; len != 0; pos += len + 1) {
-        len = strlen(buf);
+        len = strlen(pos);
         if(len != 0)
             nb_aliases++;
     }
