@@ -21,7 +21,6 @@
   * Added hidSetNpadJoyAssignmentModeDual().
 * Added support for Services: fsp-ldr, fsp-pr, lr, csrng, spl, pm:info, sm:m, pl, all Loader services.
 * Full hid vibration support for pre-4.0.0 hid commands.
-* Added the remaining (pre-4.0.0) hid-serv vibration cmds.
 * Added nacpGetLanguageEntry and SetLanguage_Total.
 * [irs] Name image transfer config variables
 * IPC: Improve information available in IpcParsedCommand
