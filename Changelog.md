@@ -31,7 +31,6 @@
 * add support for finding nxlink host
 * improve bsdSockets support
 * Added mounting for SystemSaveData.
-* Revise LR API to use actual LR function names
 * Further improvements to overall system stability and other minor adjustments to enhance the user experience.
 
 --- stuff to organise ---
@@ -46,7 +45,6 @@
     Added FsStorageId.
     Added pmshell init/exit and pmshellLaunchProcess.
     Fix IN6_IS_ADDR macros in netinet/in.h (#68)
-    Use Service for AccountProfile.
     Changed ContentStorageId in FsSave to SaveDataType.
     Added enums FsSaveDataSpaceId and FsSaveDataType.
     Removed FS_MOUNTSAVEDATA_INVAL_DEFAULT/FS_MOUNTSYSTEMSAVEDATA_INVAL_DEFAULT.
