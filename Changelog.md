@@ -6,6 +6,8 @@
   * Now automatically initializing fsdev state on first mount
   * Added fsdevMountSdmc (replaces fsdevInit)
   * Added fsdevUnmountAll (replaces fsdevExit)
+* Use Service for all fs sessions. This fixes an issue with savedata commit.
+* Implemented FsSaveDataIterator (aka ISaveDataInfoReader).
 * improve usbComms support
   * Allow using multiple interfaces.
   * Added usbComms Ex funcs.
@@ -17,9 +19,12 @@
   * Added disabled hidGetControllerType().
   * Added hidSetNpadJoyAssignmentModeSingleByDefault()
   * Added hidSetNpadJoyAssignmentModeDual().
-* Added support for Services: fsp-ldr, fsp-pr, lr, csrng, spl, pm:info, sm:m, pl all Loader services.
+* Added support for Services: fsp-ldr, fsp-pr, lr, csrng, spl, pm:info, sm:m, pl, all Loader services.
 * Full hid vibration support for pre-4.0.0 hid commands.
+* Added the remaining (pre-4.0.0) hid-serv vibration cmds.
+* Added nacpGetLanguageEntry and SetLanguage_Total.
 * [irs] Name image transfer config variables
+* IPC: Improve information available in IpcParsedCommand
 * Replace g_gfxPixelFormat/gfxSetPixelFormat with constant since changing this value has no effect.
 * Added system calls: svcCreatePort, svcConnectToPort, svcUnmapProcessMemory, svcGetSystemInfo, svcSetThreadPriority, svcGetCurrentProcessorNumber, svcSignalEvent, svcSendSyncRequestWithUserBuffer, svcSendAsyncRequestWithUserBuffer, svcGetThreadId, svcReplyAndReceiveWithUserBuffer, svcCreateEvent, svcReadWriteRegister, svcCreateInterruptEvent, svcMapDeviceAddressSpaceByForce, svcTerminateProcess, svcMap/UnmapPhysicalMemory(Unsafe), svcSetUnsafeLimit, svcGetProcessInfo
 * Added envGetLastLoadResult().
@@ -32,6 +37,7 @@
 * add support for finding nxlink host
 * improve bsdSockets support
 * Added mounting for SystemSaveData.
+* Added impl for accountProfile* . If the  inital smGetService fails, attempt to use 'acc:u0'.
 * Further improvements to overall system stability and other minor adjustments to enhance the user experience.
 
 --- stuff to organise ---
