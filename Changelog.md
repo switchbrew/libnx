@@ -18,12 +18,7 @@
   * Added hidSetNpadJoyAssignmentModeSingleByDefault()
   * Added hidSetNpadJoyAssignmentModeDual().
 * Added support for Services: fsp-ldr, fsp-pr, CSRNG, SPL, all Loader services. 
-* hid vibration support
-  * hidPermitVibration()
-  * and hidIsVibrationPermitted().
-  * Renamed hidInitializeVibrationDevice() to hidInitializeVibrationDevices()
-  * Added hidSendVibrationValues().
-  * Improved hidInitializeVibrationDevices()
+* Full hid vibration support for pre-4.0.0 hid commands.
 * Replace g_gfxPixelFormat/gfxSetPixelFormat with constant since changing this value has no effect.
 * Added system calls: svcCreatePort, svcConnectToPort, svcUnmapProcessMemory, svcGetSystemInfo, svcSetThreadPriority, svcGetCurrentProcessorNumber, svcSignalEvent, svcSendSyncRequestWithUserBuffer, svcSendAsyncRequestWithUserBuffer, svcGetThreadId, svcReplyAndReceiveWithUserBuffer, svcCreateEvent, svcReadWriteRegister, svcCreateInterruptEvent, svcMapDeviceAddressSpaceByForce, svcTerminateProcess, svcMap/UnmapPhysicalMemory(Unsafe), svcSetUnsafeLimit, svcGetProcessInfo
 * Added envGetLastLoadResult().
@@ -46,20 +41,12 @@
     Add ipcAddSendSmart, ipcAddRecvSmart, use where applicable
     Add FS commands for SD card state change detection.
     Added plGetSharedFontByType().
-    IPC: Improve information available in IpcParsedCommand
-    Added the remaining (pre-4.0.0) hid-serv vibration cmds.
-    Added nacpGetLanguageEntry and SetLanguage_Total.
-    Implemented 3.0.0+ support for ns.
     Changed nsApplicationControlData to NsApplicationControlData.
     Added ns impl, and added nsGetApplicationControlData. Imported nacp.h from nx-hbmenu with adjustments.
     Added FsStorageId.
     Added pmshell init/exit and pmshellLaunchProcess.
     Fix IN6_IS_ADDR macros in netinet/in.h (#68)
     Use Service for AccountProfile.
-    Added impl for accountProfile*. If the inital smGetService fails, attempt to use 'acc:u0'.
-    Use Service for all fs sessions. This fixes an issue with savedata commit.
-    Implemented FsSaveDataIterator (aka ISaveDataInfoReader).
-    In fs*Close(), set the handle to INVALID_HANDLE after closing the handle.
     Changed ContentStorageId in FsSave to SaveDataType.
     Added enums FsSaveDataSpaceId and FsSaveDataType.
     Removed FS_MOUNTSAVEDATA_INVAL_DEFAULT/FS_MOUNTSYSTEMSAVEDATA_INVAL_DEFAULT.
