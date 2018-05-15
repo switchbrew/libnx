@@ -17,8 +17,9 @@
   * Added disabled hidGetControllerType().
   * Added hidSetNpadJoyAssignmentModeSingleByDefault()
   * Added hidSetNpadJoyAssignmentModeDual().
-* Added support for Services: fsp-ldr, fsp-pr, lr, csrng, spl, all Loader services. 
+* Added support for Services: fsp-ldr, fsp-pr, lr, csrng, spl, pm:info, sm:m, pl all Loader services.
 * Full hid vibration support for pre-4.0.0 hid commands.
+* [irs] Name image transfer config variables
 * Replace g_gfxPixelFormat/gfxSetPixelFormat with constant since changing this value has no effect.
 * Added system calls: svcCreatePort, svcConnectToPort, svcUnmapProcessMemory, svcGetSystemInfo, svcSetThreadPriority, svcGetCurrentProcessorNumber, svcSignalEvent, svcSendSyncRequestWithUserBuffer, svcSendAsyncRequestWithUserBuffer, svcGetThreadId, svcReplyAndReceiveWithUserBuffer, svcCreateEvent, svcReadWriteRegister, svcCreateInterruptEvent, svcMapDeviceAddressSpaceByForce, svcTerminateProcess, svcMap/UnmapPhysicalMemory(Unsafe), svcSetUnsafeLimit, svcGetProcessInfo
 * Added envGetLastLoadResult().
@@ -35,12 +36,8 @@
 
 --- stuff to organise ---
 
-    Added pm:info and GetTitleId
-    Implement sm:m.
     Add ipcAddSendSmart, ipcAddRecvSmart, use where applicable
     Add FS commands for SD card state change detection.
-    Added plGetSharedFontByType().
-    Changed nsApplicationControlData to NsApplicationControlData.
     Added ns impl, and added nsGetApplicationControlData. Imported nacp.h from nx-hbmenu with adjustments.
     Added FsStorageId.
     Added pmshell init/exit and pmshellLaunchProcess.
