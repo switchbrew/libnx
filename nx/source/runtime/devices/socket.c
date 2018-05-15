@@ -1109,6 +1109,7 @@ static struct hostent *_socketDeserializeHostent(int *err, const void *out_he_se
     size_t name_size, total_aliases_size = 0;
     size_t nb_addresses;
     size_t nb_aliases = 0;
+    size_t nb_pos;
     size_t len;
 
     int addrtype, addrlen;
@@ -1118,19 +1119,24 @@ static struct hostent *_socketDeserializeHostent(int *err, const void *out_he_se
     pos = buf;
     name_size = strlen(pos) + 1;
     pos += name_size;
+
+    nb_aliases = ntohl(*(const u32 *)pos);
+    pos += 4;
+
     pos_aliases = pos;
-    for(pos = buf, len = 1; len != 0; pos += len + 1) {
-        len = strlen(pos);
-        if(len != 0)
-            nb_aliases++;
+
+    if(nb_aliases>0) {
+        for(nb_pos=0, len = 1; nb_pos<nb_aliases; nb_pos++, pos += len + 1) {
+            len = strlen(pos);
+        }
     }
 
-    total_aliases_size = pos - pos_aliases - 1;
+    total_aliases_size = pos - pos_aliases;
 
     // Nintendo uses unsigned short here...
-    addrtype = ntohl(*(const u16 *)pos);
+    addrtype = htons(*(const u16 *)pos);
     pos += 2;
-    addrlen = ntohl(*(const u16 *)pos);
+    addrlen = htons(*(const u16 *)pos);
     pos += 2;
 
     // sfdnsres will only return IPv4 addresses for the "host" commands
@@ -1140,8 +1146,11 @@ static struct hostent *_socketDeserializeHostent(int *err, const void *out_he_se
     }
 
     // The official hostent (de)serializer doesn't support IPv6, at least not currently.
+    nb_addresses = ntohl(*(const u32 *)pos);
+    pos += 4;
+
     pos_addresses = pos;
-    for(nb_addresses = 0; ((const struct in_addr *)pos)->s_addr != 0; nb_addresses++);
+    pos += addrlen * nb_addresses;
 
     he = (struct hostent *)malloc(
         sizeof(struct hostent)
@@ -1168,19 +1177,23 @@ static struct hostent *_socketDeserializeHostent(int *err, const void *out_he_se
         memcpy(he->h_name, buf, name_size);
     }
 
-    char *alias = (char *)(he->h_addr_list + nb_addresses + 1);
-    memcpy(alias, pos_aliases, total_aliases_size);
-    for(size_t i = 0; i < nb_aliases; i++) {
-        he->h_aliases[i] = alias;
-        alias += strlen(alias) + 1;
+    if(nb_aliases>0) {
+        char *alias = (char *)(he->h_addr_list + nb_addresses + 1);
+        memcpy(alias, pos_aliases, total_aliases_size);
+        for(size_t i = 0; i < nb_aliases; i++) {
+            he->h_aliases[i] = alias;
+            alias += strlen(alias) + 1;
+        }
     }
     he->h_aliases[nb_aliases] = NULL;
 
-    struct in_addr *addresses = (struct in_addr *)(he->h_addr_list + nb_addresses + 1 + total_aliases_size);
-    memcpy(addresses, pos_addresses, addrlen * nb_addresses);
-    for(size_t i = 0; i < nb_addresses; i++) {
-        he->h_addr_list[i] = (char *)&addresses[i];
-        addresses[i].s_addr = ntohl(addresses[i].s_addr); // lol Nintendo
+    if(nb_addresses>0) {
+        struct in_addr *addresses = (struct in_addr *)(he->h_addr_list + nb_addresses + 1 + total_aliases_size);
+        memcpy(addresses, pos_addresses, addrlen * nb_addresses);
+        for(size_t i = 0; i < nb_addresses; i++) {
+            he->h_addr_list[i] = (char *)&addresses[i];
+            addresses[i].s_addr = ntohl(addresses[i].s_addr); // lol Nintendo
+        }
     }
     he->h_addr_list[nb_addresses] = NULL;
 
