@@ -17,7 +17,7 @@
   * Added disabled hidGetControllerType().
   * Added hidSetNpadJoyAssignmentModeSingleByDefault()
   * Added hidSetNpadJoyAssignmentModeDual().
-* Added support for Services: fsp-ldr, fsp-pr, CSRNG, SPL, all Loader services. 
+* Added support for Services: fsp-ldr, fsp-pr, lr, csrng, spl, all Loader services. 
 * Full hid vibration support for pre-4.0.0 hid commands.
 * Replace g_gfxPixelFormat/gfxSetPixelFormat with constant since changing this value has no effect.
 * Added system calls: svcCreatePort, svcConnectToPort, svcUnmapProcessMemory, svcGetSystemInfo, svcSetThreadPriority, svcGetCurrentProcessorNumber, svcSignalEvent, svcSendSyncRequestWithUserBuffer, svcSendAsyncRequestWithUserBuffer, svcGetThreadId, svcReplyAndReceiveWithUserBuffer, svcCreateEvent, svcReadWriteRegister, svcCreateInterruptEvent, svcMapDeviceAddressSpaceByForce, svcTerminateProcess, svcMap/UnmapPhysicalMemory(Unsafe), svcSetUnsafeLimit, svcGetProcessInfo
