@@ -1,5 +1,111 @@
 # Changelog
 
+## Version 1.2.0
+* Revise fsdev initialization
+  * Removed fsdevInit/Exit
+  * Now automatically initializing fsdev state on first mount
+  * Added fsdevMountSdmc (replaces fsdevInit)
+  * Added fsdevUnmountAll (replaces fsdevExit)
+* improve usbComms support
+  * Allow using multiple interfaces.
+  * Added usbComms Ex funcs.
+  * Use RwLock.
+* hid updates
+  * Change the HidControllerLayoutType param to HidControllerType.
+  * Copy HidControllerHeader for each controller into hid state.
+  * Added hidGetHandheldMode().
+  * Added disabled hidGetControllerType().
+  * Added hidSetNpadJoyAssignmentModeSingleByDefault()
+  * Added hidSetNpadJoyAssignmentModeDual().
+* hid vibration support
+  * hidPermitVibration()
+  * and hidIsVibrationPermitted().
+  * Renamed hidInitializeVibrationDevice() to hidInitializeVibrationDevices()
+  * Added hidSendVibrationValues().
+  * Improved hidInitializeVibrationDevices()
+* Removed code for g_gfxPixelFormat/gfxSetPixelFormat and use hard-coded constant instead.
+* Implement more svc functions
+  * svcCreatePort
+  * svcConnectToPort
+  * svcUnmapProcessMemory
+  * svcGetSystemInfo
+  * svcSetThreadPriority.
+  * svcGetCurrentProcessorNumber.
+  * svcSignalEvent.
+  * svcSendSyncRequestWithUserBuffer.
+  * svcSendAsyncRequestWithUserBuffer.
+  * svcGetThreadId.
+  * svcReplyAndReceiveWithUserBuffer.
+  * svcCreateEvent.
+  * svcReadWriteRegister.
+  * svcCreateInterruptEvent.
+  * svcMapDeviceAddressSpaceByForce.
+  * svcTerminateProcess.
+  * svcMap/UnmapPhysicalMemory(Unsafe).
+  * svcSetUnsafeLimit
+  * svcGetProcessInfo
+* Audio input implementation and fixes
+* Add rules for building .npdm, .nsp and .kip.
+  - Now building .npdm from .json if specified
+  - .pfs0 now embeds previously built npdm if available
+  - .nsp accepted as an alternative file extension to .pfs0
+  - .kip can be built from elf and json descriptor (subset of .npdm)
+* add support for finding nxlink host
+* Further improvements to overall system stability and other minor adjustments to enhance the user experience.
+
+--- stuff to organise ---
+
+    Added pm:info and GetTitleId
+    Implement sm:m.
+    Services: Add fsp-ldr, fsp-pr.
+    Implement all Loader Services.
+
+    Implement CSRNG services
+
+    Implement SPL services
+
+    Revise LR API to use actual LR function names
+
+    Set h_errno and errno for the socket.c 'Unimplementable functions'.
+
+    improve bsdSockets support
+
+    Add ipcAddSendSmart, ipcAddRecvSmart, use where applicable
+
+    Add FS commands for SD card state change detection.
+
+    Added plGetSharedFontByType().
+
+    IPC: Improve information available in IpcParsedCommand
+
+    Added the remaining (pre-4.0.0) hid-serv vibration cmds.
+
+    Added nacpGetLanguageEntry and SetLanguage_Total.
+
+    Implemented 3.0.0+ support for ns.
+
+    Changed nsApplicationControlData to NsApplicationControlData.
+
+    Added ns impl, and added nsGetApplicationControlData. Imported nacp.h from nx-hbmenu with adjustments.
+
+    Added FsStorageId.
+    Added pmshell init/exit and pmshellLaunchProcess.
+
+  
+    Fix IN6_IS_ADDR macros in netinet/in.h (#68)
+
+    Use Service for AccountProfile.
+    Added impl for accountProfile*. If the inital smGetService fails, attempt to use 'acc:u0'.
+    Use Service for all fs sessions. This fixes an issue with savedata commit.
+    Implemented FsSaveDataIterator (aka ISaveDataInfoReader).
+    In fs*Close(), set the handle to INVALID_HANDLE after closing the handle.
+    Changed ContentStorageId in FsSave to SaveDataType.
+    Added enums FsSaveDataSpaceId and FsSaveDataType.
+    Removed FS_MOUNTSAVEDATA_INVAL_DEFAULT/FS_MOUNTSYSTEMSAVEDATA_INVAL_DEFAULT.
+    Added mounting for SystemSaveData.
+ 
+    Added envGetLastLoadResult().
+ 
 ## Version 1.1.0
 
 * Fixed a race condition in HID causing sporadic incorrect key-releases when using hidKeysHeld().
