@@ -24,26 +24,7 @@
   * Added hidSendVibrationValues().
   * Improved hidInitializeVibrationDevices()
 * Removed code for g_gfxPixelFormat/gfxSetPixelFormat and use hard-coded constant instead.
-* Implement more svc functions
-  * svcCreatePort
-  * svcConnectToPort
-  * svcUnmapProcessMemory
-  * svcGetSystemInfo
-  * svcSetThreadPriority.
-  * svcGetCurrentProcessorNumber.
-  * svcSignalEvent.
-  * svcSendSyncRequestWithUserBuffer.
-  * svcSendAsyncRequestWithUserBuffer.
-  * svcGetThreadId.
-  * svcReplyAndReceiveWithUserBuffer.
-  * svcCreateEvent.
-  * svcReadWriteRegister.
-  * svcCreateInterruptEvent.
-  * svcMapDeviceAddressSpaceByForce.
-  * svcTerminateProcess.
-  * svcMap/UnmapPhysicalMemory(Unsafe).
-  * svcSetUnsafeLimit
-  * svcGetProcessInfo
+* Added system calls: < svcCreatePort, svcConnectToPort, svcUnmapProcessMemory, svcGetSystemInfo, svcSetThreadPriority, svcGetCurrentProcessorNumber, svcSignalEvent, svcSendSyncRequestWithUserBuffer, svcSendAsyncRequestWithUserBuffer, svcGetThreadId, svcReplyAndReceiveWithUserBuffer, svcCreateEvent, svcReadWriteRegister, svcCreateInterruptEvent, svcMapDeviceAddressSpaceByForce, svcTerminateProcess, svcMap/UnmapPhysicalMemory(Unsafe), svcSetUnsafeLimit, svcGetProcessInfo >
 * Audio input implementation and fixes
 * Add rules for building .npdm, .nsp and .kip.
   - Now building .npdm from .json if specified
