@@ -45,7 +45,7 @@
 * Further improvements to overall system stability and other minor adjustments to enhance the user experience.
 * Add ipcAddSendSmart, ipcAddRecvSmart, use where applicable
 * Added pmshell init/exit and pmshellLaunchProcess.
-* Audio input implementation.
+* Audio input implementation and audio output fixes.
 * Detect 5.0.0 properly.
 * Introduce atomics
   * atomicIncrement32
