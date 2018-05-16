@@ -1,4 +1,5 @@
-#include <switch/runtime/nxlink.h>
+#include "runtime/nxlink.h"
+
 #include <string.h>
 #include <stdio.h>
 #include <sys/socket.h>
@@ -25,6 +26,7 @@ int nxlinkStdio()
 
     ret = connect(sock, (struct sockaddr *) &srv_addr, sizeof(srv_addr));
     if (ret != 0) {
+        close(sock);
         return -1;
     }
 
