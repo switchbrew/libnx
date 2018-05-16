@@ -13,10 +13,7 @@
   * Added usbComms Ex funcs.
   * Use RwLock.
 * hid updates
-  * Change the HidControllerLayoutType param to HidControllerType.
-  * Copy HidControllerHeader for each controller into hid state.
   * Added hidGetHandheldMode().
-  * Added disabled hidGetControllerType().
   * Added hidSetNpadJoyAssignmentModeSingleByDefault()
   * Added hidSetNpadJoyAssignmentModeDual().
 * Added support for Services: fsp-ldr, fsp-pr, lr, csrng, spl, pm:info, sm:m, pl, all Loader services.
