@@ -36,8 +36,6 @@
 * IPC: Improve information available in IpcParsedCommand
 * Added system calls: svcCreatePort, svcConnectToPort, svcUnmapProcessMemory, svcGetSystemInfo, svcSetThreadPriority, svcGetCurrentProcessorNumber, svcSignalEvent, svcSendSyncRequestWithUserBuffer, svcSendAsyncRequestWithUserBuffer, svcGetThreadId, svcReplyAndReceiveWithUserBuffer, svcCreateEvent, svcReadWriteRegister, svcCreateInterruptEvent, svcMapDeviceAddressSpaceByForce, svcTerminateProcess, svcMap/UnmapPhysicalMemory(Unsafe), svcSetUnsafeLimit, svcGetProcessInfo, svcGetResourceLimitLimitValue, svcGetResourceLimitCurrentValue, svcGetProcessInfo, svcCreateResourceLimit, svcSetResourceLimitLimitValue.
 * IPC improvements and fixes.
-* Added nacpGetLanguageEntry and SetLanguage_Total.
-* [irs] Name image transfer config variables
 * Added envGetLastLoadResult().
 
 #### improve usbComms support
@@ -65,6 +63,8 @@
   * atomicDecrement32
   * atomicIncrement64
   * atomicDecrement64
+* Added nacpGetLanguageEntry and SetLanguage_Total.
+* [irs] Name image transfer config variables
 * Further improvements to overall system stability and other minor adjustments to enhance the user experience.
  
 ## Version 1.1.0
