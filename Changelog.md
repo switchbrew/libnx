@@ -2,7 +2,7 @@
 
 ## Version 1.2.0
 
-### filesystem
+#### filesystem
 * Revise fsdev initialization
   * Removed fsdevInit/Exit
   * Now automatically initializing fsdev state on first mount
@@ -17,7 +17,7 @@
 * Added enums FsSaveDataSpaceId and FsSaveDataType.
 * Removed FS_MOUNTSAVEDATA_INVAL_DEFAULT/FS_MOUNTSYSTEMSAVEDATA_INVAL_DEFAULT.
 
-###  hid updates
+####  hid updates
 * Added hidGetHandheldMode().
 * Added hidSetNpadJoyAssignmentModeSingleByDefault()
 * hidSetNpadJoyAssignmentModeDual().
@@ -25,13 +25,13 @@
 * Use hidSetNpadJoyAssignmentModeDual() for all controllers during hidInitialize()/hidExit().
 * Full hid vibration support for pre-4.0.0 hid commands.
 
-### network
+#### network
 * add support for finding nxlink host
 * improve bsdSockets support
 * added nxlink stdio redirection
 * Fix IN6_IS_ADDR macros in netinet/in.h (#68)
 
-### system
+#### system
 * Added support for Services: fsp-ldr, fsp-pr, lr, csrng, spl, pm:info, sm:m, pl, ns, all Loader services.
 * IPC: Improve information available in IpcParsedCommand
 * Added system calls: svcCreatePort, svcConnectToPort, svcUnmapProcessMemory, svcGetSystemInfo, svcSetThreadPriority, svcGetCurrentProcessorNumber, svcSignalEvent, svcSendSyncRequestWithUserBuffer, svcSendAsyncRequestWithUserBuffer, svcGetThreadId, svcReplyAndReceiveWithUserBuffer, svcCreateEvent, svcReadWriteRegister, svcCreateInterruptEvent, svcMapDeviceAddressSpaceByForce, svcTerminateProcess, svcMap/UnmapPhysicalMemory(Unsafe), svcSetUnsafeLimit, svcGetProcessInfo, svcGetResourceLimitLimitValue, svcGetResourceLimitCurrentValue, svcGetProcessInfo, svcCreateResourceLimit, svcSetResourceLimitLimitValue.
@@ -40,12 +40,12 @@
 * [irs] Name image transfer config variables
 * Added envGetLastLoadResult().
 
-### improve usbComms support
+#### improve usbComms support
 * Allow using multiple interfaces.
 * Added usbComms Ex funcs.
 * Use RwLock.
 
-### buildsystem
+#### buildsystem
 * Add rules for building .npdm, .nsp and .kip.
   * Now building .npdm from .json if specified
   * .pfs0 now embeds previously built npdm if available
@@ -57,7 +57,7 @@
 * Audio input implementation and audio output fixes.
 * add portlibs bin folder to path 
 
-### miscellaneous
+#### miscellaneous
 * Detect 5.0.0 properly.
 * Added pmshell init/exit and pmshellLaunchProcess.
 * Introduce atomics
