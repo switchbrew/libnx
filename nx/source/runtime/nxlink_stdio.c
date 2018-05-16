@@ -9,7 +9,7 @@
 
 static int sock = -1;
 
-int nxlinkStdio()
+int nxlinkStdio(void)
 {
     int ret = -1;
     struct sockaddr_in srv_addr;
