@@ -596,11 +596,15 @@ bool hidGetHandheldMode(void);
 /// When used, both joy-cons in a pair should be used with this (CONTROLLER_PLAYER_1 and CONTROLLER_PLAYER_2 for example).
 /// id must be CONTROLLER_PLAYER_*.
 Result hidSetNpadJoyAssignmentModeSingleByDefault(HidControllerID id);
+
 /// Use this if you want to use a pair of joy-cons as a single CONTROLLER_PLAYER_*. Only necessary if you want to use this mode in your application after \ref hidSetNpadJoyAssignmentModeSingleByDefault was used with this pair of joy-cons.
 /// Used automatically during app startup/exit for all controllers.
 /// When used, both joy-cons in a pair should be used with this (CONTROLLER_PLAYER_1 and CONTROLLER_PLAYER_2 for example).
 /// id must be CONTROLLER_PLAYER_*.
 Result hidSetNpadJoyAssignmentModeDual(HidControllerID id);
+
+/// Merge two single joy-cons into a dual-mode controller. Use this after \ref hidSetNpadJoyAssignmentModeDual, when \ref hidSetNpadJoyAssignmentModeSingleByDefault was previously used (this includes using this manually at application exit).
+Result hidMergeSingleJoyAsDualJoy(HidControllerID id0, HidControllerID id1);
 
 Result hidInitializeVibrationDevices(u32 *VibrationDeviceHandles, size_t total_handles, HidControllerID id, HidControllerType type);
 

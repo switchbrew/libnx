@@ -563,6 +563,51 @@ Result hidSetNpadJoyAssignmentModeDual(HidControllerID id) {
     return rc;
 }
 
+Result hidMergeSingleJoyAsDualJoy(HidControllerID id0, HidControllerID id1) {
+    Result rc;
+    u64 AppletResourceUserId;
+
+    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
+    if (R_FAILED(rc))
+        return rc;
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 id0, id1;
+        u64 AppletResourceUserId;
+    } *raw;
+
+    ipcSendPid(&c);
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 125;
+    raw->id0 = id0;
+    raw->id1 = id1;
+    raw->AppletResourceUserId = AppletResourceUserId;
+
+    rc = serviceIpcDispatch(&g_hidSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
 static Result _hidCreateActiveVibrationDeviceList(Service* srv_out) {
     IpcCommand c;
     ipcInitialize(&c);
