@@ -66,3 +66,6 @@ void setsysExit(void);
 
 /// Gets the current system theme.
 Result setsysGetColorSetId(ColorSetId* out);
+
+/// Gets the serial number.
+Result setGetSerialNumber(char *serial);
