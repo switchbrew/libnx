@@ -346,3 +346,40 @@ Result setsysGetColorSetId(ColorSetId* out)
     return rc;
 
 }
+
+Result setsysGetSerialNumber(char *serial) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    if (serial) memset(serial, 0, 0x19);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 68;
+
+    Result rc = serviceIpcDispatch(&g_setsysSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            char serial[0x18];
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && serial)
+        	memcpy(serial, resp->serial, 0x18);
+    }
+
+    return rc;
+}
