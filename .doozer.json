@@ -7,10 +7,7 @@
         "DEVKITPRO": "/opt/devkitpro",
       },
 
-      "builddeps": ["sudo"],
-
       "buildcmd": [
-
         "sudo -E make -j${PARALLEL} install",
         "git clone --depth 1 https://github.com/switchbrew/switch-examples",
         "make -C switch-examples/"
