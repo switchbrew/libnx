@@ -5,6 +5,7 @@
  * @author yellows8
  * @copyright libnx Authors
  */
+
 #include <string.h>
 #include "types.h"
 #include "result.h"
