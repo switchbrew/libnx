@@ -6,7 +6,6 @@
  * @copyright libnx Authors
  */
 #include <string.h>
-
 #include "types.h"
 #include "result.h"
 #include "arm/atomics.h"
