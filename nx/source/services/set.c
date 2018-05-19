@@ -347,7 +347,7 @@ Result setsysGetColorSetId(ColorSetId* out)
 
 }
 
-Result setGetSerialNumber(char *serial) {
+Result setsysGetSerialNumber(char *serial) {
     IpcCommand c;
     ipcInitialize(&c);
 

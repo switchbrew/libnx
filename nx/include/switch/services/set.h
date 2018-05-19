@@ -67,5 +67,8 @@ void setsysExit(void);
 /// Gets the current system theme.
 Result setsysGetColorSetId(ColorSetId* out);
 
-/// Gets the serial number.
-Result setGetSerialNumber(char *serial);
+/**
+ * @brief Gets the system's serial number.
+ * @param serial Pointer to output the serial to. (The buffer size needs to be at least 0x18 bytes)
+ */
+Result setsysGetSerialNumber(char *serial);
