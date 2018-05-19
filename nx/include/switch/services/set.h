@@ -69,6 +69,6 @@ Result setsysGetColorSetId(ColorSetId* out);
 
 /**
  * @brief Gets the system's serial number.
- * @param serial Pointer to output the serial to. (The buffer size needs to be at least 0x18 bytes)
+ * @param serial Pointer to output the serial to. (The buffer size needs to be at least 0x19 bytes)
  */
 Result setsysGetSerialNumber(char *serial);

@@ -351,6 +351,8 @@ Result setsysGetSerialNumber(char *serial) {
     IpcCommand c;
     ipcInitialize(&c);
 
+    if (serial) memset(serial, 0, 0x19);
+
     struct {
         u64 magic;
         u64 cmd_id;
