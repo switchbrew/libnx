@@ -420,11 +420,12 @@ void nvgfxExit(void) {
 
 Result nvgfxEventWait(u32 syncpt_id, u32 threshold, s32 timeout) {
     Result rc=0;
+    Result timeout_rc = MAKERESULT(Module_LibnxNvidia, LibnxNvidiaError_Timeout);
 
     if (R_SUCCEEDED(rc)) {
         do {
             rc = nvioctlNvhostCtrl_EventWait(g_nvgfx_fd_nvhostctrl, syncpt_id, threshold, timeout, 0, &g_nvgfx_nvhostctrl_eventres);
-        } while(rc==5);//timeout error
+        } while(rc==timeout_rc);
     }
 
     //Official sw only uses the below block when event-waiting timeout occurs.
