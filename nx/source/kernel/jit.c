@@ -40,6 +40,7 @@ Result jitCreate(Jit* j, size_t size)
     j->src_addr = src_addr;
     j->rx_addr = virtmemReserve(j->size);
     j->handle = INVALID_HANDLE;
+    j->is_executable = 0;
 
     Result rc = 0;
 
@@ -94,13 +95,15 @@ Result jitTransitionToWritable(Jit* j)
 
     switch (j->type) {
     case JitType_CodeMemory:
-        rc = svcUnmapProcessCodeMemory(envGetOwnProcessHandle(), (u64) j->rx_addr, (u64) j->src_addr, j->size);
+        if (j->is_executable) rc = svcUnmapProcessCodeMemory(envGetOwnProcessHandle(), (u64) j->rx_addr, (u64) j->src_addr, j->size);
         break;
 
     case JitType_JitMemory:
         // No need to do anything.
         break;
     }
+
+    if (R_SUCCEEDED(rc)) j->is_executable = 0;
 
     return rc;
 }
@@ -111,13 +114,15 @@ Result jitTransitionToExecutable(Jit* j)
 
     switch (j->type) {
     case JitType_CodeMemory:
-        rc = svcMapProcessCodeMemory(envGetOwnProcessHandle(), (u64) j->rx_addr, (u64) j->src_addr, j->size);
+        if (!j->is_executable) {
+            rc = svcMapProcessCodeMemory(envGetOwnProcessHandle(), (u64) j->rx_addr, (u64) j->src_addr, j->size);
 
-        if (R_SUCCEEDED(rc)) {
-            rc = svcSetProcessMemoryPermission(envGetOwnProcessHandle(), (u64) j->rx_addr, j->size, Perm_Rx);
+            if (R_SUCCEEDED(rc)) {
+                rc = svcSetProcessMemoryPermission(envGetOwnProcessHandle(), (u64) j->rx_addr, j->size, Perm_Rx);
 
-            if (R_FAILED(rc)) {
-                jitTransitionToWritable(j);
+                if (R_FAILED(rc)) {
+                    jitTransitionToWritable(j);
+                }
             }
         }
         break;
@@ -127,6 +132,8 @@ Result jitTransitionToExecutable(Jit* j)
         armICacheInvalidate(j->rx_addr, j->size);
         break;
     }
+
+    if (R_SUCCEEDED(rc)) j->is_executable = 1;
 
     return rc;
 }
@@ -154,7 +161,7 @@ Result jitClose(Jit* j)
             rc = svcControlCodeMemory(j->handle, CodeMapOperation_UnmapSlave, j->rx_addr, j->size, 0);
 
             if (R_SUCCEEDED(rc)) {
-                virtmemFree(j->rw_addr, j->size);
+                virtmemFree(j->rx_addr, j->size);
                 svcCloseHandle(j->handle);
             }
         }

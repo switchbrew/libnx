@@ -20,6 +20,7 @@ typedef struct {
     void*   src_addr;
     void*   rx_addr;
     void*   rw_addr;
+    bool    is_executable;
     Handle  handle;
 } Jit;
 
