@@ -1,5 +1,14 @@
 # Changelog
 
+## Version 1.2.1
+
+* Added hidMergeSingleJoyAsDualJoy.
+* Added setGetSerialNumber.
+* Renamed the JIT syscalls to match their official names.
+* Fixed bug in nvgfxEventWait that prevented the graphics subsystem from working on certain conditions.
+* Fixed JIT support on 5.0.0+ by falling back on JitType_CodeMemory.
+* Further improvements to overall system stability and other minor adjustments to enhance the user experience.
+
 ## Version 1.2.0
 
 #### filesystem
