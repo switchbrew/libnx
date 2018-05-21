@@ -52,16 +52,16 @@ Result jitCreate(Jit* j, size_t size)
     case JitType_JitMemory:
         j->rw_addr = virtmemReserve(j->size);
 
-        rc = svcCreateJitMemory(&j->handle, j->src_addr, j->size);
+        rc = svcCreateCodeMemory(&j->handle, j->src_addr, j->size);
         if (R_SUCCEEDED(rc))
         {
-            rc = svcMapJitMemory(j->handle, JitMapOperation_MapOwner, j->rw_addr, j->size, Perm_Rw);
+            rc = svcControlCodeMemory(j->handle, CodeMapOperation_MapOwner, j->rw_addr, j->size, Perm_Rw);
             if (R_SUCCEEDED(rc))
             {
-                rc = svcMapJitMemory(j->handle, JitMapOperation_MapSlave, j->rx_addr, j->size, Perm_Rx);
+                rc = svcControlCodeMemory(j->handle, CodeMapOperation_MapSlave, j->rx_addr, j->size, Perm_Rx);
 
                 if (R_FAILED(rc)) {
-                    svcMapJitMemory(j->handle, JitMapOperation_UnmapOwner, j->rw_addr, j->size, 0);
+                    svcControlCodeMemory(j->handle, CodeMapOperation_UnmapOwner, j->rw_addr, j->size, 0);
                 }
             }
 
@@ -146,12 +146,12 @@ Result jitClose(Jit* j)
         break;
 
     case JitType_JitMemory:
-        rc = svcMapJitMemory(j->handle, JitMapOperation_UnmapOwner, j->rw_addr, j->size, 0);
+        rc = svcControlCodeMemory(j->handle, CodeMapOperation_UnmapOwner, j->rw_addr, j->size, 0);
 
         if (R_SUCCEEDED(rc)) {
             virtmemFree(j->rw_addr, j->size);
 
-            rc = svcMapJitMemory(j->handle, JitMapOperation_UnmapSlave, j->rx_addr, j->size, 0);
+            rc = svcControlCodeMemory(j->handle, CodeMapOperation_UnmapSlave, j->rx_addr, j->size, 0);
 
             if (R_SUCCEEDED(rc)) {
                 virtmemFree(j->rw_addr, j->size);

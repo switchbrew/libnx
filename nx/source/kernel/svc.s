@@ -317,7 +317,7 @@ SVC_BEGIN svcSetUnsafeLimit
 	ret
 SVC_END
 
-SVC_BEGIN svcCreateJitMemory
+SVC_BEGIN svcCreateCodeMemory
 	str x0, [sp, #-16]!
 	svc 0x4B
 	ldr x2, [sp], #16
@@ -325,7 +325,7 @@ SVC_BEGIN svcCreateJitMemory
 	ret
 SVC_END
 
-SVC_BEGIN svcMapJitMemory
+SVC_BEGIN svcControlCodeMemory
 	svc 0x4C
 	ret
 SVC_END

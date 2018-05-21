@@ -34,8 +34,8 @@ typedef enum {
     MemType_IpcBuffer1=0x11,          ///< IPC buffers with descriptor flags=1.
     MemType_IpcBuffer3=0x12,          ///< IPC buffers with descriptor flags=3.
     MemType_KernelStack=0x13,         ///< Mapped in kernel during \ref svcCreateThread.
-    MemType_JitReadOnly=0x14,         ///< Mapped in kernel during \ref svcMapJitMemory.
-    MemType_JitWritable=0x15,         ///< Mapped in kernel during \ref svcMapJitMemory.
+    MemType_CodeReadOnly=0x14,        ///< Mapped in kernel during \ref svcControlCodeMemory.
+    MemType_CodeWritable=0x15,        ///< Mapped in kernel during \ref svcControlCodeMemory.
 } MemoryType;
 
 /// Memory state bitmasks.
@@ -58,7 +58,7 @@ typedef enum {
     MemState_IsRefCounted=MemState_IsPoolAllocated, ///< Alias for \ref MemState_IsPoolAllocated.
     MemState_MapProcessAllowed=BIT(23),             ///< Map process allowed.
     MemState_AttrChangeAllowed=BIT(24),             ///< Attribute change allowed.
-    MemState_JitMemAllowed=BIT(25),                 ///< JIT memory allowed.
+    MemState_CodeMemAllowed=BIT(25),                ///< Code memory allowed.
 } MemoryState;
 
 /// Memory attribute bitmasks.
@@ -97,13 +97,13 @@ typedef struct {
     u64 X[8]; ///< Values of X0 through X7.
 } PACKED SecmonArgs;
 
-/// JIT mapping operations
+/// Code memory mapping operations
 typedef enum {
-    JitMapOperation_MapOwner=0,   ///< Map owner.
-    JitMapOperation_MapSlave=1,   ///< Map slave.
-    JitMapOperation_UnmapOwner=2, ///< Unmap owner.
-    JitMapOperation_UnmapSlave=3, ///< Unmap slave.
-} JitMapOperation;
+    CodeMapOperation_MapOwner=0,   ///< Map owner.
+    CodeMapOperation_MapSlave=1,   ///< Map slave.
+    CodeMapOperation_UnmapOwner=2, ///< Unmap owner.
+    CodeMapOperation_UnmapSlave=3, ///< Unmap slave.
+} CodeMapOperation;
 
 /// Limitable Resources.
 typedef enum {
@@ -630,24 +630,24 @@ Result svcSetUnsafeLimit(u64 size);
 ///@}
 
 
-///@name Just-in-time (JIT) compilation support
+///@name Code memory / Just-in-time (JIT) compilation support
 ///@{
 
 /**
- * @brief Creates JIT memory in the caller's address space [4.0.0+].
+ * @brief Creates code memory in the caller's address space [4.0.0+].
  * @return Result code.
  * @note Syscall number 0x4B.
  * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
  */
-Result svcCreateJitMemory(Handle* jit_handle, void* src_addr, u64 size);
+Result svcCreateCodeMemory(Handle* code_handle, void* src_addr, u64 size);
 
 /**
- * @brief Maps JIT memory in the caller's address space [4.0.0+].
+ * @brief Maps code memory in the caller's address space [4.0.0+].
  * @return Result code.
  * @note Syscall number 0x4C.
  * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
  */
-Result svcMapJitMemory(Handle jit_handle, JitMapOperation op, void* dst_addr, u64 size, u64 perm);
+Result svcControlCodeMemory(Handle code_handle, CodeMapOperation op, void* dst_addr, u64 size, u64 perm);
 
 ///@}
 
