@@ -385,7 +385,7 @@ Result setsysGetSerialNumber(char *serial) {
     return rc;
 }
 
-Result setsysGetLockScreenFlag(u8 *out) {
+Result setsysGetLockScreenFlag(bool *out) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -418,7 +418,7 @@ Result setsysGetLockScreenFlag(u8 *out) {
     return rc;
 }
 
-Result setsysGetConsoleInformationUploadFlag(u8 *out) {
+Result setsysGetConsoleInformationUploadFlag(bool *out) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -451,7 +451,7 @@ Result setsysGetConsoleInformationUploadFlag(u8 *out) {
     return rc;
 }
 
-Result setsysGetAutomaticApplicationDownloadFlag(u8 *out) {
+Result setsysGetAutomaticApplicationDownloadFlag(bool *out) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -484,7 +484,7 @@ Result setsysGetAutomaticApplicationDownloadFlag(u8 *out) {
     return rc;
 }
 
-Result setsysGetNfcEnableFlag(u8 *out) {
+Result setsysGetNfcEnableFlag(bool *out) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -517,7 +517,7 @@ Result setsysGetNfcEnableFlag(u8 *out) {
     return rc;
 }
 
-Result setsysGetWirelessLanEnableFlag(u8 *out) {
+Result setsysGetWirelessLanEnableFlag(bool *out) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -550,7 +550,7 @@ Result setsysGetWirelessLanEnableFlag(u8 *out) {
     return rc;
 }
 
-Result setsysGetBluetoothEnableFlag(u8 *out) {
+Result setsysGetBluetoothEnableFlag(bool *out) {
     IpcCommand c;
     ipcInitialize(&c);
 

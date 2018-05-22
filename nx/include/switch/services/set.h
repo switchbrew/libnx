@@ -75,36 +75,36 @@ Result setsysGetSerialNumber(char *serial);
 
 /**
  * @brief Gets the lockscreen status.
- * @param out Pointer to output the status to. (1 = enabled, 0 = disabled)
+ * @param out Pointer to output the status to. 
  */
-Result setsysGetLockScreenFlag(u8 *out);
+Result setsysGetLockScreenFlag(bool *out);
 
 /**
  * @brief Gets the console information upload status.
- * @param out Pointer to output the status to. (1 = enabled, 0 = disabled)
+ * @param out Pointer to output the status to. 
  */
-Result setsysGetConsoleInformationUploadFlag(u8 *out);
+Result setsysGetConsoleInformationUploadFlag(bool *out);
 
 /**
  * @brief Gets the automatic application download status.
- * @param out Pointer to output the status to. (1 = enabled, 0 = disabled)
+ * @param out Pointer to output the status to. 
  */
-Result setsysGetAutomaticApplicationDownloadFlag(u8 *out);
+Result setsysGetAutomaticApplicationDownloadFlag(bool *out);
 
 /**
  * @brief Gets the NFC status.
- * @param out Pointer to output the status to. (1 = enabled, 0 = disabled)
+ * @param out Pointer to output the status to. 
  */
-Result setsysGetNfcEnableFlag(u8 *out);
+Result setsysGetNfcEnableFlag(bool *out);
 
 /**
  * @brief Gets the wireless LAN status.
- * @param out Pointer to output the status to. (1 = enabled, 0 = disabled)
+ * @param out Pointer to output the status to. 
  */
-Result setsysGetWirelessLanEnableFlag(u8 *out);
+Result setsysGetWirelessLanEnableFlag(bool *out);
 
 /**
  * @brief Gets the bluetooth status.
- * @param out Pointer to output the status to. (1 = enabled, 0 = disabled)
+ * @param out Pointer to output the status to. 
  */
-Result setsysGetBluetoothEnableFlag(u8 *out);
+Result setsysGetBluetoothEnableFlag(bool *out);
