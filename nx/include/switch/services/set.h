@@ -72,3 +72,39 @@ Result setsysGetColorSetId(ColorSetId* out);
  * @param serial Pointer to output the serial to. (The buffer size needs to be at least 0x19 bytes)
  */
 Result setsysGetSerialNumber(char *serial);
+
+/**
+ * @brief Gets the lockscreen status.
+ * @param out Pointer to output the status to. 
+ */
+Result setsysGetLockScreenFlag(bool *out);
+
+/**
+ * @brief Gets the console information upload status.
+ * @param out Pointer to output the status to. 
+ */
+Result setsysGetConsoleInformationUploadFlag(bool *out);
+
+/**
+ * @brief Gets the automatic application download status.
+ * @param out Pointer to output the status to. 
+ */
+Result setsysGetAutomaticApplicationDownloadFlag(bool *out);
+
+/**
+ * @brief Gets the NFC status.
+ * @param out Pointer to output the status to. 
+ */
+Result setsysGetNfcEnableFlag(bool *out);
+
+/**
+ * @brief Gets the wireless LAN status.
+ * @param out Pointer to output the status to. 
+ */
+Result setsysGetWirelessLanEnableFlag(bool *out);
+
+/**
+ * @brief Gets the bluetooth status.
+ * @param out Pointer to output the status to. 
+ */
+Result setsysGetBluetoothEnableFlag(bool *out);
