@@ -52,7 +52,7 @@ static Result _nvBufferCreate(
     m->has_init = true;
     m->size = size;
     m->fd = -1;
-    m->cpu_addr = memalign(size, align);
+    m->cpu_addr = memalign(align, size);
     m->gpu_addr = 0;
     m->gpu_addr_texture = 0;
     m->addr_space = as;
