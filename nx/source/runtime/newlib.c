@@ -44,6 +44,49 @@ void __libnx_init_time(void) {
     }
 }
 
+static const u64 nsec_clockres =  1000000000ULL / 19200000ULL;
+
+int __libnx_clock_getres(clockid_t clock_id, struct timespec *tp) {
+    if(clock_id != CLOCK_MONOTONIC) {
+        errno = EINVAL;
+        return -1;
+    }
+    if(tp) {
+        tp->tv_sec = 0;
+        tp->tv_nsec = nsec_clockres;
+        return 0;
+    } else {
+        errno = EFAULT;
+        return -1;
+    }
+}
+
+
+int __libnx_clock_gettime(clockid_t clock_id, struct timespec *tp) {
+    if(clock_id != CLOCK_MONOTONIC) {
+        errno = EINVAL;
+        return -1;
+    }
+    if(tp) {
+        u64 now=svcGetSystemTick() - __bootticks;
+
+        u64 __bootsecs = now / 19200000ULL;
+
+        tp->tv_sec =  __bootsecs + __boottime;
+        u64 nsecs = (now -  tp->tv_sec * 19200000ULL) * 10000ULL / 192ULL;
+        tp->tv_nsec = nsecs - nsecs % nsec_clockres;
+        return 0;
+    } else {
+        errno = EFAULT;
+        return -1;
+    }
+}
+
+int __libnx_clock_settime(clockid_t clock_id,const struct timespec *tp) {
+    errno = EINVAL;
+    return -1;
+}
+
 int __libnx_gtod(struct _reent *ptr, struct timeval *tp, struct timezone *tz) {
     if (tp != NULL) {
 
@@ -79,6 +122,11 @@ void newlibSetup(void) {
     __syscalls.exit     = __libnx_exit;
     __syscalls.gettod_r = __libnx_gtod;
     __syscalls.getreent = __libnx_get_reent;
+
+    __syscalls.clock_gettime = __libnx_clock_gettime;
+    __syscalls.clock_getres = __libnx_clock_getres;
+    __syscalls.clock_settime = __libnx_clock_settime;
+
 
     // Register locking syscalls
     __syscalls.lock_init              = mutexInit;
