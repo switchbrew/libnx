@@ -1,5 +1,6 @@
 #include <string.h>
 #include <errno.h>
+#include <stdint.h>
 #include <sys/iosupport.h>
 #include <sys/time.h>
 #include <sys/lock.h>
@@ -8,6 +9,7 @@
 #include "types.h"
 #include "runtime/env.h"
 #include "kernel/mutex.h"
+#include "kernel/svc.h"
 #include "services/fatal.h"
 #include "services/time.h"
 #include "result.h"
@@ -29,20 +31,33 @@ static struct _reent* __libnx_get_reent(void) {
 }
 
 //TODO: timeGetCurrentTime() returns UTC time. How to handle timezones?
+static u64 __boottime;
+static u64 __bootticks;
+
+// setup boot time variables
+void __libnx_init_time(void) {
+    Result rc =  timeGetCurrentTime(__nx_time_type, &__boottime);
+    if (R_FAILED(rc)) {
+        __boottime = UINT64_MAX;
+    } else {
+        __bootticks = svcGetSystemTick();
+    }
+}
 
 int __libnx_gtod(struct _reent *ptr, struct timeval *tp, struct timezone *tz) {
     if (tp != NULL) {
-        u64 now=0;
-        Result rc=0;
 
-        rc = timeGetCurrentTime(__nx_time_type, &now);
-        if (R_FAILED(rc)) {
+        if(__boottime == UINT64_MAX) {
             ptr->_errno = EINVAL;
             return -1;
         }
 
-        tp->tv_sec =  now;
-        tp->tv_usec = now*1000000;//timeGetCurrentTime() only returns seconds.
+        u64 now=svcGetSystemTick() - __bootticks;
+
+        u64 __bootsecs = now / 19200000ULL;
+
+        tp->tv_sec =  __bootsecs + __boottime;
+        tp->tv_usec = (now -  tp->tv_sec * 19200000ULL) * 10ULL / 192ULL;
     }
 
     if (tz != NULL) {
