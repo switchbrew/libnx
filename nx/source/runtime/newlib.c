@@ -73,7 +73,7 @@ int __libnx_clock_gettime(clockid_t clock_id, struct timespec *tp) {
         u64 __bootsecs = now / 19200000ULL;
 
         tp->tv_sec =  __bootsecs + __boottime;
-        u64 nsecs = (now -  tp->tv_sec * 19200000ULL) * 10000ULL / 192ULL;
+        u64 nsecs = (now -  __bootsecs * 19200000ULL) * 10000ULL / 192ULL;
         tp->tv_nsec = nsecs - nsecs % nsec_clockres;
         return 0;
     } else {
@@ -100,7 +100,7 @@ int __libnx_gtod(struct _reent *ptr, struct timeval *tp, struct timezone *tz) {
         u64 __bootsecs = now / 19200000ULL;
 
         tp->tv_sec =  __bootsecs + __boottime;
-        tp->tv_usec = (now -  tp->tv_sec * 19200000ULL) * 10ULL / 192ULL;
+        tp->tv_usec = (now -  __bootsecs * 19200000ULL) * 10ULL / 192ULL;
     }
 
     if (tz != NULL) {
