@@ -40,7 +40,7 @@ Result accountGetUserCount(s32* user_count);
 
 /**
  * @brief Get a list of all user IDs
- * @param userIDs Pointer to array of user IDs, array must be exactly size 8
+ * @param userIDs Pointer to array of user IDs, array must be exactly ACC_USER_LIST_SIZE
  */
 Result accountListAllUsers(u128* userIDs);
 
