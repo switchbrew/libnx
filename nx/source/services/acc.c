@@ -33,6 +33,81 @@ Service* accountGetService(void) {
     return &g_accSrv;
 }
 
+Result accountGetUserCount(s32* user_count)
+{
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 0;
+
+    Result rc = serviceIpcDispatch(&g_accSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u32 user_count;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            *user_count = resp->user_count;
+        }
+    }
+
+    return rc;
+}
+
+Result accountListAllUsers(u128* userIDs)
+{
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    Result rc=0;
+
+    size_t bufsize = ACC_USER_LIST_SIZE * sizeof(u128);
+
+    ipcAddRecvStatic(&c, userIDs, bufsize, 0);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 2;
+
+    rc = serviceIpcDispatch(&g_accSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
 Result accountGetActiveUser(u128 *userID, bool *account_selected)
 {
     IpcCommand c;
