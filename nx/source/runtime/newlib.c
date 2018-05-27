@@ -47,7 +47,7 @@ void __libnx_init_time(void) {
 static const u64 nsec_clockres =  1000000000ULL / 19200000ULL;
 
 int __libnx_clock_getres(clockid_t clock_id, struct timespec *tp) {
-    if(clock_id != CLOCK_MONOTONIC) {
+    if(clock_id != CLOCK_MONOTONIC && clock_id != CLOCK_REALTIME) {
         errno = EINVAL;
         return -1;
     }
@@ -63,7 +63,7 @@ int __libnx_clock_getres(clockid_t clock_id, struct timespec *tp) {
 
 
 int __libnx_clock_gettime(clockid_t clock_id, struct timespec *tp) {
-    if(clock_id != CLOCK_MONOTONIC) {
+    if(clock_id != CLOCK_MONOTONIC && clock_id != CLOCK_REALTIME) {
         errno = EINVAL;
         return -1;
     }
