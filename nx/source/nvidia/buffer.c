@@ -47,7 +47,7 @@ static Result _nvBufferCreate(
 {
     Result rc;
 
-    size = (size + 0xFFF) &~ 0xFFF;
+    size = (size + align - 1) & ~(align - 1);
 
     m->has_init = true;
     m->size = size;
