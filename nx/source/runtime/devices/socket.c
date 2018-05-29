@@ -830,7 +830,7 @@ static int inet_pton4(const char *src, void *dst) {
     size_t numBytes;
 
     int ret = _socketInetAtonDetail(&base, &numBytes, src, (struct in_addr *)dst);
-    return (ret == 1 && base == 10 && numBytes == 4) ? 1 : 0;
+    return (ret == 1 && base == 10 && numBytes == 3) ? 1 : 0;
 }
 
 /* Copyright (c) 1996 by Internet Software Consortium.
