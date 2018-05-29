@@ -1313,13 +1313,13 @@ static struct addrinfo *_socketDeserializeAddrInfo(size_t *out_len, const struct
         // Nintendo just byteswaps everything recursively... even fields that are already byteswapped.
         switch(node->info.ai_family) {
             case AF_INET: {
-                struct sockaddr_in *sa = (struct sockaddr_in *)&node->info.ai_addr;
+                struct sockaddr_in *sa = (struct sockaddr_in *)node->info.ai_addr;
                 sa->sin_port = ntohs(sa->sin_port);
                 sa->sin_addr.s_addr = ntohl(sa->sin_addr.s_addr);
                 break;
             }
             case AF_INET6: {
-                struct sockaddr_in6 *sa6 = (struct sockaddr_in6 *)&node->info.ai_addr;
+                struct sockaddr_in6 *sa6 = (struct sockaddr_in6 *)node->info.ai_addr;
                 sa6->sin6_port = ntohs(sa6->sin6_port);
                 sa6->sin6_flowinfo = ntohl(sa6->sin6_flowinfo);
                 sa6->sin6_scope_id = ntohl(sa6->sin6_scope_id);
