@@ -79,7 +79,7 @@ Result setsysGetSettingsItemValueSize(const char *name, const char *item_key, u6
  * @brief Gets the value of a settings item value.
  * @param out Pointer to output the value to.
  */
-Result setsysGetSettingsItemValue(const char *name, const char *item_key, u64 *value_out);
+Result setsysGetSettingsItemValue(const char *name, const char *item_key, void *value_out, size_t value_out_size);
 
 /**
  * @brief Gets the system's serial number.
@@ -122,5 +122,3 @@ Result setsysGetWirelessLanEnableFlag(bool *out);
  * @param out Pointer to output the status to. 
  */
 Result setsysGetBluetoothEnableFlag(bool *out);
-
-

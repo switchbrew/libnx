@@ -348,12 +348,12 @@ Result setsysGetColorSetId(ColorSetId* out)
 
 }
 
-Result setsysGetSettingsItemValue(const char *name, const char *item_key, u64 *value_out) {
+Result setsysGetSettingsItemValue(const char *name, const char *item_key, void *value_out, size_t value_out_size) {
     IpcCommand c;
     ipcInitialize(&c);
     ipcAddSendStatic(&c, name, SET_MAX_NAME_SIZE, 0);
     ipcAddSendStatic(&c, item_key, SET_MAX_NAME_SIZE, 0);
-    ipcAddRecvBuffer(&c, value_out, sizeof(u64), 0);
+    ipcAddRecvBuffer(&c, value_out, value_out_size, 0);
 
     struct {
         u64 magic;
