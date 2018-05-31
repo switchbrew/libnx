@@ -348,6 +348,76 @@ Result setsysGetColorSetId(ColorSetId* out)
 
 }
 
+Result setsysGetSettingsItemValue(const char *name, const char *item_key, u64 *value_out) {
+    IpcCommand c;
+    ipcInitialize(&c);
+    ipcAddSendStatic(&c, name, SET_MAX_NAME_SIZE, 0);
+    ipcAddSendStatic(&c, item_key, SET_MAX_NAME_SIZE, 0);
+    ipcAddRecvBuffer(&c, value_out, sizeof(u64), 0);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 38;
+
+    Result rc = serviceIpcDispatch(&g_setsysSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result setsysGetSettingsItemValueSize(const char *name, const char *item_key, u64 *size_out) {
+    IpcCommand c;
+    ipcInitialize(&c);
+    ipcAddSendStatic(&c, name, SET_MAX_NAME_SIZE, 0);
+    ipcAddSendStatic(&c, item_key, SET_MAX_NAME_SIZE, 0);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 37;
+
+    Result rc = serviceIpcDispatch(&g_setsysSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u64 size;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && size_out) *size_out = resp->size;
+    }
+
+    return rc;
+}
+
 Result setsysGetSerialNumber(char *serial) {
     IpcCommand c;
     ipcInitialize(&c);

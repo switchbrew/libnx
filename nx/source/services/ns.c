@@ -6,8 +6,8 @@
 #include "services/sm.h"
 #include "services/ns.h"
 
-static Service g_nsAppManSrv, g_nsGetterSrv;
-static u64 g_nsRefCnt;
+static Service g_nsAppManSrv, g_nsGetterSrv, g_nsvmSrv;
+static u64 g_nsRefCnt, g_nsvmRefCnt;
 
 static Result _nsGetInterface(Service* srv_out, u64 cmd_id);
 
@@ -112,6 +112,92 @@ Result nsGetApplicationControlData(u8 flag, u64 titleID, NsApplicationControlDat
         rc = resp->result;
 
         if (R_SUCCEEDED(rc) && actual_size) *actual_size = resp->actual_size;
+    }
+
+    return rc;
+}
+
+Result nsvmInitialize(void)
+{
+    atomicIncrement64(&g_nsvmRefCnt);
+
+    if (serviceIsActive(&g_nsvmSrv))
+        return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
+
+    return smGetService(&g_nsvmSrv, "ns:vm");
+}
+
+void nsvmExit(void)
+{
+    if (atomicDecrement64(&g_nsvmRefCnt) == 0) {
+        serviceClose(&g_nsvmSrv);
+    }
+}
+
+Result nsvmNeedsUpdateVulnerability(u8 *out) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 1200;
+
+    Result rc = serviceIpcDispatch(&g_nsvmSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u8 out;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && out) *out = resp->out;
+    }
+
+    return rc;
+}
+
+Result nsvmGetSafeSystemVersion(u16 *out)
+{
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 1202;
+
+    Result rc = serviceIpcDispatch(&g_nsvmSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u16 out;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && out) *out = resp->out;
     }
 
     return rc;
