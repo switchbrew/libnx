@@ -148,7 +148,12 @@ Result nsvmNeedsUpdateVulnerability(u8 *out) {
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 1200;
 
-    Result rc = serviceIpcDispatch(&g_nsvmSrv);
+    Result rc;
+    
+    if (kernelAbove300())
+        rc = serviceIpcDispatch(&g_nsvmSrv);
+    else
+        rc = serviceIpcDispatch(&g_nsAppManSrv);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
