@@ -119,6 +119,9 @@ Result nsGetApplicationControlData(u8 flag, u64 titleID, NsApplicationControlDat
 
 Result nsvmInitialize(void)
 {
+    if (!kernelAbove300())
+        return 0;
+
     atomicIncrement64(&g_nsvmRefCnt);
 
     if (serviceIsActive(&g_nsvmSrv))
@@ -129,6 +132,9 @@ Result nsvmInitialize(void)
 
 void nsvmExit(void)
 {
+    if (!kernelAbove300())
+        return;
+
     if (atomicDecrement64(&g_nsvmRefCnt) == 0) {
         serviceClose(&g_nsvmSrv);
     }
@@ -175,6 +181,9 @@ Result nsvmNeedsUpdateVulnerability(u8 *out) {
 
 Result nsvmGetSafeSystemVersion(u16 *out)
 {
+    if (!kernelAbove300())
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     IpcCommand c;
     ipcInitialize(&c);
 
