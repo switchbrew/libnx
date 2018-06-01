@@ -453,7 +453,7 @@ static Result setsysSetFlag(u64 cmd_id, bool flag) {
 }
 
 Result setsysGetLockScreenFlag(bool *out) {
-    return setsysGetFlag(7, *out);
+    return setsysGetFlag(7, out);
 }
 
 Result setsysSetLockScreenFlag(bool flag) {
@@ -461,7 +461,7 @@ Result setsysSetLockScreenFlag(bool flag) {
 }
 
 Result setsysGetConsoleInformationUploadFlag(bool *out) {
-    return setsysGetFlag(25, *out);
+    return setsysGetFlag(25, out);
 }
 
 Result setsysSetConsoleInformationUploadFlag(bool flag) {
@@ -469,7 +469,7 @@ Result setsysSetConsoleInformationUploadFlag(bool flag) {
 }
 
 Result setsysGetAutomaticApplicationDownloadFlag(bool *out) {
-    return setsysGetFlag(27, *out);
+    return setsysGetFlag(27, out);
 }
 
 Result setsysSetAutomaticApplicationDownloadFlag(bool flag) {
@@ -477,7 +477,7 @@ Result setsysSetAutomaticApplicationDownloadFlag(bool flag) {
 }
 
 Result setsysGetQuestFlag(bool *out) {
-    return setsysGetFlag(47, *out);
+    return setsysGetFlag(47, out);
 }
 
 Result setsysSetQuestFlag(bool flag) {
@@ -485,7 +485,7 @@ Result setsysSetQuestFlag(bool flag) {
 }
 
 Result setsysGetUsb30EnableFlag(bool *out) {
-    return setsysGetFlag(65, *out);
+    return setsysGetFlag(65, out);
 }
 
 Result setsysSetUsb30EnableFlag(bool flag) {
@@ -493,7 +493,7 @@ Result setsysSetUsb30EnableFlag(bool flag) {
 }
 
 Result setsysGetNfcEnableFlag(bool *out) {
-    return setsysGetFlag(69, *out);
+    return setsysGetFlag(69, out);
 }
 
 Result setsysSetNfcEnableFlag(bool flag) {
@@ -501,7 +501,7 @@ Result setsysSetNfcEnableFlag(bool flag) {
 }
 
 Result setsysGetWirelessLanEnableFlag(bool *out) {
-    return setsysGetFlag(73, *out);
+    return setsysGetFlag(73, out);
 }
 
 Result setsysSetWirelessLanEnableFlag(bool flag) {
@@ -509,7 +509,7 @@ Result setsysSetWirelessLanEnableFlag(bool flag) {
 }
 
 Result setsysGetBluetoothEnableFlag(bool *out) {
-    return setsysGetFlag(88, *out);
+    return setsysGetFlag(88, out);
 }
 
 Result setsysSetBluetoothEnableFlag(bool flag) {
@@ -517,7 +517,7 @@ Result setsysSetBluetoothEnableFlag(bool flag) {
 }
 
 Result setsysGetAutoUpdateEnableFlag(bool *out) {
-    return setsysGetFlag(95, *out);
+    return setsysGetFlag(95, out);
 }
 
 Result setsysSetAutoUpdateEnableFlag(bool flag) {
@@ -525,7 +525,7 @@ Result setsysSetAutoUpdateEnableFlag(bool flag) {
 }
 
 Result setsysGetBatteryPercentageFlag(bool *out) {
-    return setsysGetFlag(99, *out);
+    return setsysGetFlag(99, out);
 }
 
 Result setsysSetBatteryPercentageFlag(bool flag) {
@@ -533,7 +533,7 @@ Result setsysSetBatteryPercentageFlag(bool flag) {
 }
 
 Result setsysGetExternalRtcResetFlag(bool *out) {
-    return setsysGetFlag(101, *out);
+    return setsysGetFlag(101, out);
 }
 
 Result setsysSetExternalRtcResetFlag(bool flag) {
@@ -541,7 +541,7 @@ Result setsysSetExternalRtcResetFlag(bool flag) {
 }
 
 Result setsysGetUsbFullKeyEnableFlag(bool *out) {
-    return setsysGetFlag(103, *out);
+    return setsysGetFlag(103, out);
 }
 
 Result setsysSetUsbFullKeyEnableFlag(bool flag) {
@@ -549,7 +549,7 @@ Result setsysSetUsbFullKeyEnableFlag(bool flag) {
 }
 
 Result setsysGetBluetoothAfhEnableFlag(bool *out) {
-    return setsysGetFlag(111, *out);
+    return setsysGetFlag(111, out);
 }
 
 Result setsysSetBluetoothAfhEnableFlag(bool flag) {
@@ -557,7 +557,7 @@ Result setsysSetBluetoothAfhEnableFlag(bool flag) {
 }
 
 Result setsysGetBluetoothBoostEnableFlag(bool *out) {
-    return setsysGetFlag(113, *out);
+    return setsysGetFlag(113, out);
 }
 
 Result setsysSetBluetoothBoostEnableFlag(bool flag) {
@@ -565,7 +565,7 @@ Result setsysSetBluetoothBoostEnableFlag(bool flag) {
 }
 
 Result setsysGetInRepairProcessEnableFlag(bool *out) {
-    return setsysGetFlag(115, *out);
+    return setsysGetFlag(115, out);
 }
 
 Result setsysSetInRepairProcessEnableFlag(bool flag) {
@@ -573,7 +573,7 @@ Result setsysSetInRepairProcessEnableFlag(bool flag) {
 }
 
 Result setsysGetHeadphoneVolumeUpdateFlag(bool *out) {
-    return setsysGetFlag(117, *out);
+    return setsysGetFlag(117, out);
 }
 
 Result setsysSetHeadphoneVolumeUpdateFlag(bool flag) {
