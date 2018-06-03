@@ -21,6 +21,11 @@ typedef struct  {
     int dns_timeout;                            ///< For DNS requests: timeout or 0.
 } SocketInitConfig;
 
+long gethostid(void);
+
+// Get host IP formatted
+int gethostname(char *name, size_t namelen);
+
 /// Fetch the default configuration for the socket driver.
 const SocketInitConfig *socketGetDefaultInitConfig(void);
 /// Initalize the socket driver.
