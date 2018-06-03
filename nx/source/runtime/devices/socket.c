@@ -1584,15 +1584,10 @@ cleanup:
 
 long gethostid(void) {
 	Result rc;
-	IGeneralService igs;
-	rc = CreateGeneralService(&igs);
-	if(R_SUCCEEDED(rc)){
-		u32 id;
-		rc = GetCurrentIpAddress(&igs, &id);
-		if(R_SUCCEEDED(rc)){
-			return id;
-		}
-	}
+	u32 id;
+	rc = GetCurrentIpAddress(&id);
+	if(R_SUCCEEDED(rc))
+		return id;
     return INADDR_LOOPBACK; 
 }
 
