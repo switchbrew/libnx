@@ -7,7 +7,7 @@
  */
 #include "../result.h"
 
-#define SET_MAX_NAME_SIZE 0x30
+#define SET_MAX_NAME_SIZE 0x48
 
 typedef enum {
     ColorSetId_Light=0,
