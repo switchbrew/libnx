@@ -33,6 +33,42 @@ typedef enum
     SetLanguage_Total,      ///< Total languages supported by this enum.
 } SetLanguage;
 
+/// Command IDS for setsysGetFlag/setsysSetFlag.
+typedef enum {
+    setsysGetLockScreenFlag = 7,
+    setsysSetLockScreenFlag = 8,
+    setsysGetConsoleInformationUploadFlag = 25,
+    setsysSetConsoleInformationUploadFlag = 26,
+    setsysGetAutomaticApplicationDownloadFlag = 27,
+    setsysSetAutomaticApplicationDownloadFlag = 28,
+    setsysGetQuestFlag = 47,
+    setsysSetQuestFlag = 48,
+    setsysGetUsb30EnableFlag = 65,
+    setsysSetUsb30EnableFlag = 66,
+    setsysGetNfcEnableFlag = 69,
+    setsysSetNfcEnableFlag = 70,
+    setsysGetWirelessLanEnableFlag = 73,
+    setsysSetWirelessLanEnableFlag = 74,
+    setsysGetBluetoothEnableFlag = 88,
+    setsysSetBluetoothEnableFlag = 89,
+    setsysGetAutoUpdateEnableFlag = 95,
+    setsysSetAutoUpdateEnableFlag = 96,
+    setsysGetBatteryPercentageFlag = 99,
+    setsysSetBatteryPercentageFlag = 100,
+    setsysGetExternalRtcResetFlag = 101,
+    setsysSetExternalRtcResetFlag = 102,
+    setsysGetUsbFullKeyEnableFlag = 103,
+    setsysSetUsbFullKeyEnableFlag = 104,
+    setsysGetBluetoothAfhEnableFlag = 111,
+    setsysSetBluetoothAfhEnableFlag = 112,
+    setsysGetBluetoothBoostEnableFlag = 113,
+    setsysSetBluetoothBoostEnableFlag = 114,
+    setsysGetInRepairProcessEnableFlag = 115,
+    setsysSetInRepairProcessEnableFlag = 116,
+    setsysGetHeadphoneVolumeUpdateFlag = 117,
+    setsysSetHeadphoneVolumeUpdateFlag = 118,
+} SetSysFlag;
+
 Result setInitialize(void);
 void setExit(void);
 
@@ -74,193 +110,15 @@ Result setsysGetColorSetId(ColorSetId* out);
 Result setsysGetSerialNumber(char *serial);
 
 /**
- * @brief Gets the lockscreen status.
- * @param out Pointer to output the status to. 
+ * @brief Gets the status of the specified settings flag
+ * @param flag The specified settings flag.
+ * @param out Pointer To get the status from.
  */
-Result setsysGetLockScreenFlag(bool *out);
+Result setsysGetFlag(SetSysFlag flag, bool *out);
 
 /**
- * @brief Sets the lockscreen status.
- * @param flag Whether to enable the lockscreen flag.
+ * @brief Enables/disables the specified settings flag.
+ * @param flag The specified settings flag.
+ * @param enable To enable/disable the flag.
  */
-Result setsysSetLockScreenFlag(bool flag);
-
-/**
- * @brief Gets the console information upload status.
- * @param out Pointer to output the status to. 
- */
-Result setsysGetConsoleInformationUploadFlag(bool *out);
-
-/**
- * @brief Sets the console information upload status.
- * @param flag Whether to enable the console information upload flag.
- */
-Result setsysSetConsoleInformationUploadFlag(bool flag);
-
-/**
- * @brief Gets the automatic application download status.
- * @param out Pointer to output the status to. 
- */
-Result setsysGetAutomaticApplicationDownloadFlag(bool *out);
-
-/**
- * @brief Sets the automatic application download status.
- * @param flag Whether to enable the automatic application download flag.
- */
-Result setsysSetAutomaticApplicationDownloadFlag(bool flag);
-
-/**
- * @brief Gets the quest flag status (Determines if the deivce is a kiosk unit).
- * @param out Pointer to output the status to. 
- */
-Result setsysGetQuestFlag(bool *out);
-
-/**
- * @brief Sets the quest flag status.
- * @param flag Whether to enable the kiosk device flag.
- */
-Result setsysSetQuestFlag(bool flag);
-
-/**
- * @brief Gets the USB 30 status.
- * @param out Pointer to output the status to. 
- */
-Result setsysGetUsb30EnableFlag(bool *out);
-
-/**
- * @brief Sets the USB 30 status.
- * @param flag Whether to enable the USB 30 flag.
- */
-Result setsysSetUsb30EnableFlag(bool flag);
-
-/**
- * @brief Gets the NFC status.
- * @param out Pointer to output the status to. 
- */
-Result setsysGetNfcEnableFlag(bool *out);
-
-/**
- * @brief Sets the NFC status.
- * @param flag Whether to enable the NFC flag.
- */
-Result setsysSetNfcEnableFlag(bool flag);
-
-/**
- * @brief Gets the wireless LAN status.
- * @param out Pointer to output the status to. 
- */
-Result setsysGetWirelessLanEnableFlag(bool *out);
-
-/**
- * @brief Sets the wireless LAN status.
- * @param flag Whether to enable the wireless LAN flag.
- */
-Result setsysSetWirelessLanEnableFlag(bool flag);
-
-/**
- * @brief Gets the bluetooth status.
- * @param out Pointer to output the status to. 
- */
-Result setsysGetBluetoothEnableFlag(bool *out);
-
-/**
- * @brief Sets the Bluetooth status.
- * @param flag Whether to enable the bluetooth flag.
- */
-Result setsysSetBluetoothEnableFlag(bool flag);
-
-/**
- * @brief Gets the auto update status.
- * @param out Pointer to output the status to. 
- */
-Result setsysGetAutoUpdateEnableFlag(bool *out);
-
-/**
- * @brief Sets the auto update status.
- * @param flag Whether to enable the auto update flag.
- */
-Result setsysSetAutoUpdateEnableFlag(bool flag);
-
-/**
- * @brief Gets the battery percentage status.
- * @param out Pointer to output the status to. 
- */
-Result setsysGetBatteryPercentageFlag(bool *out);
-
-/**
- * @brief Sets the battery percentage status.
- * @param flag Whether to enable the battery percentage flag.
- */
-Result setsysSetBatteryPercentageFlag(bool flag);
-
-/**
- * @brief Gets the external RTC status.
- * @param out Pointer to output the status to. 
- */
-Result setsysGetExternalRtcResetFlag(bool *out);
-
-/**
- * @brief Sets the external RTC status.
- * @param flag Whether to enable the external RTC flag.
- */
-Result setsysSetExternalRtcResetFlag(bool flag);
-
-/**
- * @brief Gets the USB full key status.
- * @param out Pointer to output the status to. 
- */
-Result setsysGetUsbFullKeyEnableFlag(bool *out);
-
-/**
- * @brief Sets the USB full key status.
- * @param flag Whether to enable the USB full key flag.
- */
-Result setsysSetUsbFullKeyEnableFlag(bool flag);
-
-/**
- * @brief Gets the bluetooth AFH status.
- * @param out Pointer to output the status to. 
- */
-Result setsysGetBluetoothAfhEnableFlag(bool *out);
-
-/**
- * @brief Sets the bluetooth AFH status.
- * @param flag Whether to enable the bluetooth AFH flag.
- */
-Result setsysSetBluetoothAfhEnableFlag(bool flag);
-
-/**
- * @brief Gets the bluetooth boost status.
- * @param out Pointer to output the status to. 
- */
-Result setsysGetBluetoothBoostEnableFlag(bool *out);
-
-/**
- * @brief Sets the bluetooth boost status.
- * @param flag Whether to enable the bluetooth boost flag.
- */
-Result setsysSetBluetoothBoostEnableFlag(bool flag);
-
-/**
- * @brief Gets the repair process status.
- * @param out Pointer to output the status to. 
- */
-Result setsysGetInRepairProcessEnableFlag(bool *out);
-
-/**
- * @brief Sets the repair process status.
- * @param flag Whether to enable the repair process flag.
- */
-Result setsysSetInRepairProcessEnableFlag(bool flag);
-
-/**
- * @brief Gets the headphone volume update status.
- * @param out Pointer to output the status to. 
- */
-Result setsysGetHeadphoneVolumeUpdateFlag(bool *out);
-
-/**
- * @brief Sets the headphone volume update status.
- * @param flag Whether to enable the headphone volume update flag.
- */
-Result setsysSetHeadphoneVolumeUpdateFlag(bool flag);
+Result setsysSetFlag(SetSysFlag flag, bool enable);

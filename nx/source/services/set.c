@@ -385,7 +385,7 @@ Result setsysGetSerialNumber(char *serial) {
     return rc;
 }
 
-static Result setsysGetFlag(u64 cmd_id, bool *out) {
+Result setsysGetFlag(SetSysFlag flag, bool *out) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -397,7 +397,7 @@ static Result setsysGetFlag(u64 cmd_id, bool *out) {
     raw = ipcPrepareHeader(&c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
-    raw->cmd_id = cmd_id;
+    raw->cmd_id = flag;
 
     Result rc = serviceIpcDispatch(&g_setsysSrv);
 
@@ -418,7 +418,7 @@ static Result setsysGetFlag(u64 cmd_id, bool *out) {
     return rc;
 }
 
-static Result setsysSetFlag(u64 cmd_id, bool flag) {
+Result setsysSetFlag(SetSysFlag flag, bool enable) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -431,8 +431,8 @@ static Result setsysSetFlag(u64 cmd_id, bool flag) {
     raw = ipcPrepareHeader(&c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
-    raw->cmd_id = cmd_id;
-    raw->flag = flag;
+    raw->cmd_id = flag;
+    raw->flag = enable;
 
     Result rc = serviceIpcDispatch(&g_setsysSrv);
 
@@ -450,132 +450,4 @@ static Result setsysSetFlag(u64 cmd_id, bool flag) {
     }
 
     return rc;
-}
-
-Result setsysGetLockScreenFlag(bool *out) {
-    return setsysGetFlag(7, out);
-}
-
-Result setsysSetLockScreenFlag(bool flag) {
-    return setsysSetFlag(8, flag);
-}
-
-Result setsysGetConsoleInformationUploadFlag(bool *out) {
-    return setsysGetFlag(25, out);
-}
-
-Result setsysSetConsoleInformationUploadFlag(bool flag) {
-    return setsysSetFlag(26, flag);
-}
-
-Result setsysGetAutomaticApplicationDownloadFlag(bool *out) {
-    return setsysGetFlag(27, out);
-}
-
-Result setsysSetAutomaticApplicationDownloadFlag(bool flag) {
-    return setsysSetFlag(28, flag);
-}
-
-Result setsysGetQuestFlag(bool *out) {
-    return setsysGetFlag(47, out);
-}
-
-Result setsysSetQuestFlag(bool flag) {
-    return setsysSetFlag(48, flag);
-}
-
-Result setsysGetUsb30EnableFlag(bool *out) {
-    return setsysGetFlag(65, out);
-}
-
-Result setsysSetUsb30EnableFlag(bool flag) {
-    return setsysSetFlag(66, flag);
-}
-
-Result setsysGetNfcEnableFlag(bool *out) {
-    return setsysGetFlag(69, out);
-}
-
-Result setsysSetNfcEnableFlag(bool flag) {
-    return setsysSetFlag(70, flag);
-}
-
-Result setsysGetWirelessLanEnableFlag(bool *out) {
-    return setsysGetFlag(73, out);
-}
-
-Result setsysSetWirelessLanEnableFlag(bool flag) {
-    return setsysSetFlag(74, flag);
-}
-
-Result setsysGetBluetoothEnableFlag(bool *out) {
-    return setsysGetFlag(88, out);
-}
-
-Result setsysSetBluetoothEnableFlag(bool flag) {
-    return setsysSetFlag(89, flag);
-}
-
-Result setsysGetAutoUpdateEnableFlag(bool *out) {
-    return setsysGetFlag(95, out);
-}
-
-Result setsysSetAutoUpdateEnableFlag(bool flag) {
-    return setsysSetFlag(96, flag);
-}
-
-Result setsysGetBatteryPercentageFlag(bool *out) {
-    return setsysGetFlag(99, out);
-}
-
-Result setsysSetBatteryPercentageFlag(bool flag) {
-    return setsysSetFlag(100, flag);
-}
-
-Result setsysGetExternalRtcResetFlag(bool *out) {
-    return setsysGetFlag(101, out);
-}
-
-Result setsysSetExternalRtcResetFlag(bool flag) {
-    return setsysSetFlag(102, flag);
-}
-
-Result setsysGetUsbFullKeyEnableFlag(bool *out) {
-    return setsysGetFlag(103, out);
-}
-
-Result setsysSetUsbFullKeyEnableFlag(bool flag) {
-    return setsysSetFlag(104, flag);
-}
-
-Result setsysGetBluetoothAfhEnableFlag(bool *out) {
-    return setsysGetFlag(111, out);
-}
-
-Result setsysSetBluetoothAfhEnableFlag(bool flag) {
-    return setsysSetFlag(112, flag);
-}
-
-Result setsysGetBluetoothBoostEnableFlag(bool *out) {
-    return setsysGetFlag(113, out);
-}
-
-Result setsysSetBluetoothBoostEnableFlag(bool flag) {
-    return setsysSetFlag(114, flag);
-}
-
-Result setsysGetInRepairProcessEnableFlag(bool *out) {
-    return setsysGetFlag(115, out);
-}
-
-Result setsysSetInRepairProcessEnableFlag(bool flag) {
-    return setsysSetFlag(116, flag);
-}
-
-Result setsysGetHeadphoneVolumeUpdateFlag(bool *out) {
-    return setsysGetFlag(117, out);
-}
-
-Result setsysSetHeadphoneVolumeUpdateFlag(bool flag) {
-    return setsysSetFlag(118, flag);
 }
