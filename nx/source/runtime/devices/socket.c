@@ -1583,11 +1583,11 @@ cleanup:
 
 
 long gethostid(void) {
-	Result rc;
-	u32 id;
-	rc = nifmGetCurrentIpAddress(&id);
-	if(R_SUCCEEDED(rc))
-		return id;
+    Result rc;
+    u32 id;
+    rc = nifmGetCurrentIpAddress(&id);
+    if(R_SUCCEEDED(rc))
+        return id;
     return INADDR_LOOPBACK; 
 }
 
