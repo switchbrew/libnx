@@ -20,6 +20,7 @@ Result nifmInitialize(void) {
 
     if (serviceIsActive(&g_nifmSrv))
         return 0;
+		
     Result rc;
 
     rc = smGetService(&g_nifmSrv, "nifm:u");
