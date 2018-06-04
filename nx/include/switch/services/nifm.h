@@ -16,10 +16,7 @@ typedef struct {
     Service  s;
 } IGeneralService;
 
-Result nifmInitialize();
+Result nifmInitialize(void);
 void nifmExit(void);
 
-Result _CreateGeneralService(IGeneralService* out, u64 in);
-Result _CreateGeneralServiceOld(IGeneralService* out);
-
-Result GetCurrentIpAddress(u32* out);
+Result nifmGetCurrentIpAddress(u32* out);

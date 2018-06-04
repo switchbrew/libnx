@@ -1585,7 +1585,7 @@ cleanup:
 long gethostid(void) {
 	Result rc;
 	u32 id;
-	rc = GetCurrentIpAddress(&id);
+	rc = nifmGetCurrentIpAddress(&id);
 	if(R_SUCCEEDED(rc))
 		return id;
     return INADDR_LOOPBACK; 
@@ -1613,5 +1613,3 @@ struct servent *getservent(void) { h_errno = NO_RECOVERY; errno = ENOSYS; return
 void sethostent(int a) { (void)a;}
 void setnetent(int a) { (void)a;}
 void setprotoent(int a) { (void)a; }
-
-/************************************************************************************************************************/
