@@ -1581,7 +1581,6 @@ cleanup:
     return gaie;
 }
 
-
 long gethostid(void) {
     Result rc;
     u32 id;
