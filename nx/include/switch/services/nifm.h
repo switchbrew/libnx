@@ -12,10 +12,6 @@
 
 #include "../services/sm.h"
 
-typedef struct {
-    Service  s;
-} IGeneralService;
-
 Result nifmInitialize(void);
 void nifmExit(void);
 

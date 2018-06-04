@@ -8,6 +8,10 @@
 #include "services/nifm.h"
 #include "arm/atomics.h"
 
+typedef struct {
+    Service  s;
+} IGeneralService;
+
 static Service g_nifmSrv;
 static IGeneralService g_nifmIGS;
 static u64 g_refCnt;
