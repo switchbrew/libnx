@@ -431,7 +431,7 @@ Result setsysSetFlag(SetSysFlag flag, bool enable) {
     raw = ipcPrepareHeader(&c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
-    raw->cmd_id = flag;
+    raw->cmd_id = flag + 1;
     raw->flag = enable;
 
     Result rc = serviceIpcDispatch(&g_setsysSrv);
