@@ -315,21 +315,21 @@ Result pmshellLaunchProcess(u32 launch_flags, u64 titleID, u64 storageID, u64 *p
     return rc;
 }
 
-Result pmshellTerminateProcessByTitleId(u64 title_id) {
+Result pmshellTerminateProcessByTitleId(u64 titleID) {
     IpcCommand c;
     ipcInitialize(&c);
 
     struct {
         u64 magic;
         u64 cmd_id;
-        u64 title_id;
+        u64 titleID;
     } *raw;
 
     raw = ipcPrepareHeader(&c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 2;
-    raw->title_id = title_id;
+    raw->titleID = titleID;
 
     Result rc = serviceIpcDispatch(&g_pmshellSrv);
 

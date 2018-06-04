@@ -21,5 +21,5 @@ Result nsGetApplicationControlData(u8 flag, u64 titleID, NsApplicationControlDat
 Result nsvmInitialize(void);
 void nsvmExit(void);
 
-Result nsvmNeedsUpdateVulnerability(u8 *out);
+Result nsvmNeedsUpdateVulnerability(bool *out);
 Result nsvmGetSafeSystemVersion(u16 *out);

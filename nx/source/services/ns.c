@@ -125,7 +125,7 @@ Result nsvmInitialize(void)
     atomicIncrement64(&g_nsvmRefCnt);
 
     if (serviceIsActive(&g_nsvmSrv))
-        return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
+        return 0;
 
     return smGetService(&g_nsvmSrv, "ns:vm");
 }
@@ -140,7 +140,7 @@ void nsvmExit(void)
     }
 }
 
-Result nsvmNeedsUpdateVulnerability(u8 *out) {
+Result nsvmNeedsUpdateVulnerability(bool *out) {
     IpcCommand c;
     ipcInitialize(&c);
 
