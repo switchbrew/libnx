@@ -76,7 +76,7 @@ Result setsysGetColorSetId(ColorSetId* out);
 Result setsysGetSettingsItemValueSize(const char *name, const char *item_key, u64 *size_out);
 
 /**
- * @brief Gets the value of a settings item value.
+ * @brief Gets the value of a settings item.
  * @param out Pointer to output the value to.
  */
 Result setsysGetSettingsItemValue(const char *name, const char *item_key, void *value_out, size_t value_out_size);
