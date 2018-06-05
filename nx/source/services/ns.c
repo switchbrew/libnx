@@ -118,7 +118,7 @@ Result nsGetApplicationControlData(u8 flag, u64 titleID, NsApplicationControlDat
     return rc;
 }
 
-Result nsGetTotalSpaceSize(FsStorageId media_id, u64 *size)
+Result nsGetTotalSpaceSize(FsStorageId storage_id, u64 *size)
 {
     IpcCommand c;
     ipcInitialize(&c);
@@ -133,7 +133,7 @@ Result nsGetTotalSpaceSize(FsStorageId media_id, u64 *size)
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 47;
-    raw->media_id = media_id;
+    raw->media_id = storage_id;
 
     Result rc = serviceIpcDispatch(&g_nsAppManSrv);
 
@@ -155,7 +155,7 @@ Result nsGetTotalSpaceSize(FsStorageId media_id, u64 *size)
     return rc;
 }
 
-Result nsGetFreeSpaceSize(FsStorageId media_id, u64 *size)
+Result nsGetFreeSpaceSize(FsStorageId storage_id, u64 *size)
 {
     IpcCommand c;
     ipcInitialize(&c);
@@ -170,7 +170,7 @@ Result nsGetFreeSpaceSize(FsStorageId media_id, u64 *size)
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 48;
-    raw->media_id = media_id;
+    raw->media_id = storage_id;
 
     Result rc = serviceIpcDispatch(&g_nsAppManSrv);
 
