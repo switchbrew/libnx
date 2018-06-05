@@ -19,16 +19,18 @@ void nsExit(void);
 Result nsGetApplicationControlData(u8 flag, u64 titleID, NsApplicationControlData* buffer, size_t size, size_t* actual_size);
 
 /**
- * @brief Returns the total storage from content manager services.
+ * @brief Returns the total storage size from content manager services.
+ * @param media_id Specified FsStorageId. (Must be FsStorageId_SdCard or 5)
  * @param size Pointer to output the total storage size to.
  */
-Result nsGetTotalSpaceSize(u64 *size);
+Result nsGetTotalSpaceSize(FsStorageId media_id, u64 *size);
 
 /**
- * @brief Returns the available storage from content manager services.
+ * @brief Returns the available storage size from content manager services.
+ * @param media_id Specified FsStorageId. (Must be FsStorageId_SdCard or 5)
  * @param size Pointer to output the free storage size to.
  */
-Result nsGetFreeSpaceSize(u64 *size);
+Result nsGetFreeSpaceSize(FsStorageId media_id, u64 *size);
 
 Result nsvmInitialize(void);
 void nsvmExit(void);

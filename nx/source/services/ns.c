@@ -3,6 +3,7 @@
 #include "arm/atomics.h"
 #include "kernel/ipc.h"
 #include "kernel/detect.h"
+#include "services/fs.h"
 #include "services/sm.h"
 #include "services/ns.h"
 
@@ -117,7 +118,7 @@ Result nsGetApplicationControlData(u8 flag, u64 titleID, NsApplicationControlDat
     return rc;
 }
 
-Result nsGetTotalSpaceSize(u64 *size)
+Result nsGetTotalSpaceSize(FsStorageId media_id, u64 *size)
 {
     IpcCommand c;
     ipcInitialize(&c);
@@ -132,7 +133,7 @@ Result nsGetTotalSpaceSize(u64 *size)
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 47;
-    raw->media_id = 5;
+    raw->media_id = media_id;
 
     Result rc = serviceIpcDispatch(&g_nsAppManSrv);
 
@@ -154,7 +155,7 @@ Result nsGetTotalSpaceSize(u64 *size)
     return rc;
 }
 
-Result nsGetFreeSpaceSize(u64 *size)
+Result nsGetFreeSpaceSize(FsStorageId media_id, u64 *size)
 {
     IpcCommand c;
     ipcInitialize(&c);
@@ -169,7 +170,7 @@ Result nsGetFreeSpaceSize(u64 *size)
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 48;
-    raw->media_id = 5;
+    raw->media_id = media_id;
 
     Result rc = serviceIpcDispatch(&g_nsAppManSrv);
 
