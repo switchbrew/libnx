@@ -18,6 +18,18 @@ void nsExit(void);
 
 Result nsGetApplicationControlData(u8 flag, u64 titleID, NsApplicationControlData* buffer, size_t size, size_t* actual_size);
 
+/**
+ * @brief Returns the total storage from content manager services.
+ * @param size Pointer to output the total storage size to.
+ */
+Result nsGetTotalSpaceSize(u64 *size);
+
+/**
+ * @brief Returns the available storage from content manager services.
+ * @param size Pointer to output the free storage size to.
+ */
+Result nsGetFreeSpaceSize(u64 *size);
+
 Result nsvmInitialize(void);
 void nsvmExit(void);
 

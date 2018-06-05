@@ -117,6 +117,80 @@ Result nsGetApplicationControlData(u8 flag, u64 titleID, NsApplicationControlDat
     return rc;
 }
 
+Result nsGetTotalSpaceSize(u64 *size)
+{
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 media_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 47;
+    raw->media_id = 5;
+
+    Result rc = serviceIpcDispatch(&g_nsAppManSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u64 size;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && size) *size = resp->size;
+    }
+
+    return rc;
+}
+
+Result nsGetFreeSpaceSize(u64 *size)
+{
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 media_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 48;
+    raw->media_id = 5;
+
+    Result rc = serviceIpcDispatch(&g_nsAppManSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u64 size;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && size) *size = resp->size;
+    }
+
+    return rc;
+}
+
 Result nsvmInitialize(void)
 {
     if (!kernelAbove300())
