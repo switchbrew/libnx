@@ -314,3 +314,36 @@ Result pmshellLaunchProcess(u32 launch_flags, u64 titleID, u64 storageID, u64 *p
 
     return rc;
 }
+
+Result pmshellTerminateProcessByTitleId(u64 titleID) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 titleID;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 2;
+    raw->titleID = titleID;
+
+    Result rc = serviceIpcDispatch(&g_pmshellSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}

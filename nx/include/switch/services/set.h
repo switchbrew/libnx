@@ -7,6 +7,8 @@
  */
 #include "../result.h"
 
+#define SET_MAX_NAME_SIZE 0x48
+
 typedef enum {
     ColorSetId_Light=0,
     ColorSetId_Dark=1
@@ -66,6 +68,18 @@ void setsysExit(void);
 
 /// Gets the current system theme.
 Result setsysGetColorSetId(ColorSetId* out);
+
+/**
+ * @brief Gets the size of a settings item value.
+ * @param out Pointer to output the size to.
+ */
+Result setsysGetSettingsItemValueSize(const char *name, const char *item_key, u64 *size_out);
+
+/**
+ * @brief Gets the value of a settings item.
+ * @param out Pointer to output the value to.
+ */
+Result setsysGetSettingsItemValue(const char *name, const char *item_key, void *value_out, size_t value_out_size);
 
 /**
  * @brief Gets the system's serial number.

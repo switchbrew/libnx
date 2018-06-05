@@ -27,3 +27,4 @@ Result pmdmntEnableDebugForApplication(Handle* handle_out);
 Result pminfoGetTitleId(u64* title_id_out, u64 pid);
 
 Result pmshellLaunchProcess(u32 launch_flags, u64 titleID, u64 storageID, u64 *pid);
+Result pmshellTerminateProcessByTitleId(u64 titleID);
