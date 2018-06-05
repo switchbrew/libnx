@@ -8,16 +8,12 @@
 #include "services/nifm.h"
 #include "arm/atomics.h"
 
-typedef struct {
-    Service  s;
-} IGeneralService;
-
 static Service g_nifmSrv;
-static IGeneralService g_nifmIGS;
+static Service g_nifmIGS;
 static u64 g_refCnt;
 
-static Result _nifmCreateGeneralService(IGeneralService* out, u64 in);
-static Result _nifmCreateGeneralServiceOld(IGeneralService* out);
+static Result _nifmCreateGeneralService(Service* out, u64 in);
+static Result _nifmCreateGeneralServiceOld(Service* out);
 
 Result nifmInitialize(void) {
     atomicIncrement64(&g_refCnt);
@@ -44,7 +40,7 @@ Result nifmInitialize(void) {
 
 void nifmExit(void) {
     if (atomicDecrement64(&g_refCnt) == 0) {
-        serviceClose(&g_nifmIGS.s);
+        serviceClose(&g_nifmIGS);
         serviceClose(&g_nifmSrv);
     }
 }
@@ -63,7 +59,7 @@ Result nifmGetCurrentIpAddress(u32* out) {
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 12;
 
-    Result rc = serviceIpcDispatch(&g_nifmIGS.s);
+    Result rc = serviceIpcDispatch(&g_nifmIGS);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -82,7 +78,7 @@ Result nifmGetCurrentIpAddress(u32* out) {
     return rc;
 }
 
-static Result _nifmCreateGeneralService(IGeneralService* out, u64 in) {
+static Result _nifmCreateGeneralService(Service* out, u64 in) {
     IpcCommand c;
     ipcInitialize(&c);
     ipcSendPid(&c);
@@ -113,13 +109,13 @@ static Result _nifmCreateGeneralService(IGeneralService* out, u64 in) {
         rc = resp->result;
 
         if (R_SUCCEEDED(rc))
-            serviceCreate(&out->s, r.Handles[0]);
+            serviceCreate(out, r.Handles[0]);
     }
 
     return rc;
 }
 
-static Result _nifmCreateGeneralServiceOld(IGeneralService* out) {
+static Result _nifmCreateGeneralServiceOld(Service* out) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -147,7 +143,7 @@ static Result _nifmCreateGeneralServiceOld(IGeneralService* out) {
         rc = resp->result;
 
         if (R_SUCCEEDED(rc))
-            serviceCreate(&out->s, r.Handles[0]);
+            serviceCreate(out, r.Handles[0]);
     }
 
     return rc;
