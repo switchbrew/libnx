@@ -125,14 +125,14 @@ Result nsGetTotalSpaceSize(FsStorageId storage_id, u64 *size)
     struct {
         u64 magic;
         u64 cmd_id;
-        u64 media_id;
+        u64 storage_id;
     } *raw;
 
     raw = ipcPrepareHeader(&c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 47;
-    raw->media_id = storage_id;
+    raw->storage_id = storage_id;
 
     Result rc = serviceIpcDispatch(&g_nsAppManSrv);
 
@@ -162,14 +162,14 @@ Result nsGetFreeSpaceSize(FsStorageId storage_id, u64 *size)
     struct {
         u64 magic;
         u64 cmd_id;
-        u64 media_id;
+        u64 storage_id;
     } *raw;
 
     raw = ipcPrepareHeader(&c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 48;
-    raw->media_id = storage_id;
+    raw->storage_id = storage_id;
 
     Result rc = serviceIpcDispatch(&g_nsAppManSrv);
 
