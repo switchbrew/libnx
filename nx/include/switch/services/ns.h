@@ -21,14 +21,14 @@ Result nsGetApplicationControlData(u8 flag, u64 titleID, NsApplicationControlDat
 
 /**
  * @brief Returns the total storage capacity (used + free) from content manager services.
- * @param storage_id Specified FsStorageId. (Must be FsStorageId_SdCard or 5)
+ * @param storage_id Specified FsStorageId. (Must be FsStorageId_SdCard)
  * @param size Pointer to output the total storage size to.
  */
 Result nsGetTotalSpaceSize(FsStorageId storage_id, u64 *size);
 
 /**
  * @brief Returns the available storage capacity from content manager services.
- * @param storage_id Specified FsStorageId. (Must be FsStorageId_SdCard or 5)
+ * @param storage_id Specified FsStorageId. (Must be FsStorageId_SdCard)
  * @param size Pointer to output the free storage size to.
  */
 Result nsGetFreeSpaceSize(FsStorageId storage_id, u64 *size);
