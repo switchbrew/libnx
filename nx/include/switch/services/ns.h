@@ -7,7 +7,7 @@
 #pragma once
 #include "../types.h"
 #include "../nacp.h"
-#include "services/fs.h"
+#include "../services/fs.h"
 
 typedef struct {
     NacpStruct nacp;
