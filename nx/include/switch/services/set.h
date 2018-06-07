@@ -33,7 +33,7 @@ typedef enum
     SetLanguage_Total,      ///< Total languages supported by this enum.
 } SetLanguage;
 
-/// Command IDS for setsysGetFlag/setsysSetFlag.
+/// Command IDs for setsysGetFlag/setsysSetFlag.
 typedef enum {
     SetSysFlag_LockScreen = 7,
     SetSysFlag_ConsoleInformationUpload = 25,
@@ -94,9 +94,9 @@ Result setsysGetColorSetId(ColorSetId* out);
 Result setsysGetSerialNumber(char *serial);
 
 /**
- * @brief Gets the status of the specified settings flag
+ * @brief Gets the status of the specified settings flag.
  * @param flag The specified settings flag.
- * @param out Pointer To get the status from.
+ * @param out Pointer to get the status from.
  */
 Result setsysGetFlag(SetSysFlag flag, bool *out);
 
