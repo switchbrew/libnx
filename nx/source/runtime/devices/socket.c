@@ -21,6 +21,7 @@
 #include "runtime/devices/socket.h"
 #include "services/bsd.h"
 #include "services/sfdnsres.h"
+#include "services/nifm.h"
 #include "result.h"
 
 __thread int h_errno;
@@ -1580,6 +1581,23 @@ cleanup:
     return gaie;
 }
 
+long gethostid(void) {
+    Result rc;
+    u32 id;
+    rc = nifmGetCurrentIpAddress(&id);
+    if(R_SUCCEEDED(rc))
+        return id;
+    return INADDR_LOOPBACK; 
+}
+
+int gethostname(char *name, size_t namelen) {
+    // The Switch doesn't have a proper name, so let's use its IP
+    struct in_addr in;
+    in.s_addr = gethostid();
+    const char *hostname = inet_ntop(AF_INET, &in, name, namelen);
+    return hostname == NULL ? -1 : 0;
+}
+
 // Unimplementable functions, left for compliance:
 struct hostent *gethostent(void) { h_errno = NO_RECOVERY; errno = ENOSYS; return NULL; }
 struct netent *getnetbyaddr(uint32_t a, int b) { (void)a; (void)b; h_errno = NO_RECOVERY; errno = ENOSYS; return NULL; }
@@ -1594,17 +1612,3 @@ struct servent *getservent(void) { h_errno = NO_RECOVERY; errno = ENOSYS; return
 void sethostent(int a) { (void)a;}
 void setnetent(int a) { (void)a;}
 void setprotoent(int a) { (void)a; }
-
-/************************************************************************************************************************/
-
-long gethostid(void) {
-    return INADDR_LOOPBACK; //FIXME
-}
-
-int gethostname(char *name, size_t namelen) {
-    // The Switch doesn't have a proper name, so let's use its IP
-    struct in_addr in;
-    in.s_addr = gethostid();
-    const char *hostname = inet_ntop(AF_INET, &in, name, namelen);
-    return hostname == NULL ? -1 : 0;
-}
