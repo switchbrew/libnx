@@ -96,7 +96,7 @@ Result setsysGetSerialNumber(char *serial);
 /**
  * @brief Gets the status of the specified settings flag.
  * @param flag The specified settings flag.
- * @param out Pointer to get the status from.
+ * @param out Output pointer for the status.
  */
 Result setsysGetFlag(SetSysFlag flag, bool *out);
 
