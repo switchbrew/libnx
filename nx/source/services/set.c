@@ -471,7 +471,7 @@ Result setsysGetSerialNumber(char *serial) {
     return rc;
 }
 
-Result setsysGetLockScreenFlag(bool *out) {
+Result setsysGetFlag(SetSysFlag flag, bool *out) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -483,7 +483,7 @@ Result setsysGetLockScreenFlag(bool *out) {
     raw = ipcPrepareHeader(&c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 7;
+    raw->cmd_id = flag;
 
     Result rc = serviceIpcDispatch(&g_setsysSrv);
 
@@ -504,19 +504,21 @@ Result setsysGetLockScreenFlag(bool *out) {
     return rc;
 }
 
-Result setsysGetConsoleInformationUploadFlag(bool *out) {
+Result setsysSetFlag(SetSysFlag flag, bool enable) {
     IpcCommand c;
     ipcInitialize(&c);
 
     struct {
         u64 magic;
         u64 cmd_id;
+        u8 flag;
     } *raw;
 
     raw = ipcPrepareHeader(&c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 25;
+    raw->cmd_id = flag + 1;
+    raw->flag = enable;
 
     Result rc = serviceIpcDispatch(&g_setsysSrv);
 
@@ -530,139 +532,6 @@ Result setsysGetConsoleInformationUploadFlag(bool *out) {
             u8 flag;
         } *resp = r.Raw;
 
-        *out = resp->flag;
-        rc = resp->result;
-    }
-
-    return rc;
-}
-
-Result setsysGetAutomaticApplicationDownloadFlag(bool *out) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 27;
-
-    Result rc = serviceIpcDispatch(&g_setsysSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-            u8 flag;
-        } *resp = r.Raw;
-
-        *out = resp->flag;
-        rc = resp->result;
-    }
-
-    return rc;
-}
-
-Result setsysGetNfcEnableFlag(bool *out) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 69;
-
-    Result rc = serviceIpcDispatch(&g_setsysSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-            u8 flag;
-        } *resp = r.Raw;
-
-        *out = resp->flag;
-        rc = resp->result;
-    }
-
-    return rc;
-}
-
-Result setsysGetWirelessLanEnableFlag(bool *out) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 73;
-
-    Result rc = serviceIpcDispatch(&g_setsysSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-            u8 flag;
-        } *resp = r.Raw;
-
-        *out = resp->flag;
-        rc = resp->result;
-    }
-
-    return rc;
-}
-
-Result setsysGetBluetoothEnableFlag(bool *out) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 88;
-
-    Result rc = serviceIpcDispatch(&g_setsysSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-            u8 flag;
-        } *resp = r.Raw;
-
-        *out = resp->flag;
         rc = resp->result;
     }
 

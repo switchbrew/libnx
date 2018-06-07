@@ -35,6 +35,26 @@ typedef enum
     SetLanguage_Total,      ///< Total languages supported by this enum.
 } SetLanguage;
 
+/// Command IDs for setsysGetFlag/setsysSetFlag.
+typedef enum {
+    SetSysFlag_LockScreen = 7,
+    SetSysFlag_ConsoleInformationUpload = 25,
+    SetSysFlag_AutomaticApplicationDownload = 27,
+    SetSysFlag_Quest = 47,
+    SetSysFlag_Usb30Enable = 65,
+    SetSysFlag_NfcEnable = 69,
+    SetSysFlag_WirelessLanEnable = 73,
+    SetSysFlag_BluetoothEnable = 88,
+    SetSysFlag_AutoUpdateEnable = 95,
+    SetSysFlag_BatteryPercentage = 99,
+    SetSysFlag_ExternalRtcReset = 101,
+    SetSysFlag_UsbFullKeyEnable = 103,
+    SetSysFlag_BluetoothAfhEnable = 111,
+    SetSysFlag_BluetoothBoostEnable = 113,
+    SetSysFlag_InRepairProcessEnable = 115,
+    SetSysFlag_HeadphoneVolumeUpdate = 117,
+} SetSysFlag;
+
 Result setInitialize(void);
 void setExit(void);
 
@@ -88,37 +108,15 @@ Result setsysGetSettingsItemValue(const char *name, const char *item_key, void *
 Result setsysGetSerialNumber(char *serial);
 
 /**
- * @brief Gets the lockscreen status.
- * @param out Pointer to output the status to. 
+ * @brief Gets the status of the specified settings flag.
+ * @param flag The specified settings flag.
+ * @param out Output pointer for the status.
  */
-Result setsysGetLockScreenFlag(bool *out);
+Result setsysGetFlag(SetSysFlag flag, bool *out);
 
 /**
- * @brief Gets the console information upload status.
- * @param out Pointer to output the status to. 
+ * @brief Enables/disables the specified settings flag.
+ * @param flag The specified settings flag.
+ * @param enable To enable/disable the flag.
  */
-Result setsysGetConsoleInformationUploadFlag(bool *out);
-
-/**
- * @brief Gets the automatic application download status.
- * @param out Pointer to output the status to. 
- */
-Result setsysGetAutomaticApplicationDownloadFlag(bool *out);
-
-/**
- * @brief Gets the NFC status.
- * @param out Pointer to output the status to. 
- */
-Result setsysGetNfcEnableFlag(bool *out);
-
-/**
- * @brief Gets the wireless LAN status.
- * @param out Pointer to output the status to. 
- */
-Result setsysGetWirelessLanEnableFlag(bool *out);
-
-/**
- * @brief Gets the bluetooth status.
- * @param out Pointer to output the status to. 
- */
-Result setsysGetBluetoothEnableFlag(bool *out);
+Result setsysSetFlag(SetSysFlag flag, bool enable);
