@@ -22,7 +22,6 @@ Result nifmInitialize(void) {
         return 0;
 		
     Result rc;
-
     rc = smGetService(&g_nifmSrv, "nifm:u");
 
     if (R_SUCCEEDED(rc)) {
