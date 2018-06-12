@@ -36,5 +36,7 @@ Result nvGpfifoSubmit(NvGpfifo* f, NvCmdList* cmd_list, NvFence* fence_out)
         nvfenceCreate(fence_out, &fence);
     }
 
+    cmd_list->num_cmds = 0;
+
     return rc;
 }
