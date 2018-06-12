@@ -28,7 +28,7 @@ iova_t nvCmdListGetGpuAddr(NvCmdList* c) {
 }
 
 u64 nvCmdListGetListSize(NvCmdList* c) {
-    return c->num_cmds * 4;
+    return c->num_cmds;
 }
 
 u32* nvCmdListInsert(NvCmdList* c, size_t num_cmds)
