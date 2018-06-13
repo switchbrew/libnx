@@ -35,6 +35,14 @@ typedef enum
     SetLanguage_Total,      ///< Total languages supported by this enum.
 } SetLanguage;
 
+/// Region codes.
+typedef enum {
+    SetRegion_JPN = 0, ///< Japan
+    SetRegion_USA = 1, ///< The Americas
+    SetRegion_EUR = 2, ///< Europe
+    SetRegion_AUS = 3, ///< Australia/New Zealand
+} SetRegion
+
 /// Command IDs for setsysGetFlag/setsysSetFlag.
 typedef enum {
     SetSysFlag_LockScreen = 7,
@@ -81,13 +89,16 @@ Result setGetAvailableLanguageCodes(s32 *total_entries, u64 *LanguageCodes, size
 Result setGetAvailableLanguageCodeCount(s32 *total);
 
 /// Gets the RegionCode.
-Result setGetRegionCode(s32 *RegionCode);
+Result setGetRegionCode(SetRegion *out);
 
 Result setsysInitialize(void);
 void setsysExit(void);
 
 /// Gets the current system theme.
-Result setsysGetColorSetId(ColorSetId* out);
+Result setsysGetColorSetId(ColorSetId *out);
+
+/// Sets the current system theme.
+Result setsysSetColorSetId(ColorSetId id)
 
 /**
  * @brief Gets the size of a settings item value.
