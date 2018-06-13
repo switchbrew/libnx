@@ -111,9 +111,9 @@ int __libnx_gtod(struct _reent *ptr, struct timeval *tp, struct timezone *tz) {
     return 0;
 }
 
-int usleep(useconds_t useconds)
-{
-    svcSleepThread(useconds * 1000ull);
+
+int __libnx_nanosleep(const struct timespec *req, struct timespec *rem) {
+    svcSleepThread(req->tv_sec * 1000000000ull + req->tv_nsec);
     return 0;
 }
 
@@ -126,6 +126,8 @@ void newlibSetup(void) {
     __syscalls.clock_gettime = __libnx_clock_gettime;
     __syscalls.clock_getres = __libnx_clock_getres;
     __syscalls.clock_settime = __libnx_clock_settime;
+
+    __syscalls.nanosleep = __libnx_nanosleep;
 
 
     // Register locking syscalls
