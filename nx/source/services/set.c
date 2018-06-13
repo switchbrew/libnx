@@ -279,7 +279,7 @@ Result setGetAvailableLanguageCodeCount(s32 *total) {
     return rc;
 }
 
-Result setGetRegionCode(s32 *RegionCode) {
+Result setGetRegionCode(SetRegion *out) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -307,13 +307,13 @@ Result setGetRegionCode(s32 *RegionCode) {
 
         rc = resp->result;
 
-        if (R_SUCCEEDED(rc) && RegionCode) *RegionCode = resp->RegionCode;
+        if (R_SUCCEEDED(rc) && out) *out = resp->RegionCode;
     }
 
     return rc;
 }
 
-Result setsysGetColorSetId(ColorSetId* out)
+Result setsysGetColorSetId(ColorSetId *out)
 {
     IpcCommand c;
     ipcInitialize(&c);
@@ -345,7 +345,40 @@ Result setsysGetColorSetId(ColorSetId* out)
     }
 
     return rc;
+}
 
+Result setsysSetColorSetId(ColorSetId id)
+{
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        s32 id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 24;
+    raw->id = id;
+
+    Result rc = serviceIpcDispatch(&g_setsysSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
 }
 
 Result setsysGetSettingsItemValue(const char *name, const char *item_key, void *value_out, size_t value_out_size) {
