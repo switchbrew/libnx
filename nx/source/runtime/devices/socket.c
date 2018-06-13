@@ -544,7 +544,7 @@ int ioctl(int fd, int request, ...) {
         return -1;
     }
 
-    fd = request != FIONBIO ? _socketGetFd(fd) : fd;
+    fd = request == FIONBIO ? _socketGetFd(fd) : fd;
     if(fd == -1)
         return -1;
 
