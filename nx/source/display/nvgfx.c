@@ -232,7 +232,7 @@ Result nvgfxEventWait(u32 syncpt_id, u32 threshold, s32 timeout)
     return rc;
 }
 
-Result nvgfxGetFramebuffer(u8 **buffer, size_t *size)
+Result nvgfxGetFramebuffer(u8 **buffer, size_t *size, u32 *handle)
 {
     if (!g_nvgfxInitialized)
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
@@ -241,7 +241,8 @@ Result nvgfxGetFramebuffer(u8 **buffer, size_t *size)
         *buffer = nvmap_objs[6].mem;
     if (size != NULL)
         *size = nvmap_objs[6].mem_size;
+    if (handle != NULL)
+        *handle = nvmap_objs[6].handle;
 
     return 0;
 }
-

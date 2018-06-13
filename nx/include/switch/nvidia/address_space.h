@@ -17,7 +17,7 @@ Result nvAddressSpaceReserveAlign(NvAddressSpace* a, NvPageSize align, u32 pages
 Result nvAddressSpaceReserveAtFixedAddr(NvAddressSpace* a, iova_t addr, u32 pages, NvPageSize page_sz);
 Result nvAddressSpaceReserveFull(NvAddressSpace* a);
 
-Result nvAddressSpaceMapBuffer(NvAddressSpace* a, NvBuffer* buffer, NvBufferKind kind, iova_t* iova_out);
+Result nvAddressSpaceMapBuffer(NvAddressSpace* a, u32 fd, NvBufferKind kind, iova_t* iova_out);
 
 struct NvChannel;
 Result nvAddressSpaceBindToChannel(NvAddressSpace* a, struct NvChannel* channel);

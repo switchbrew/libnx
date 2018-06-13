@@ -71,7 +71,7 @@ static Result _nvBufferCreate(
             g_nvmap_fd, m->fd, 0, flags | NvBufferFlags_Nintendo, align, kind, m->cpu_addr);
 
     if (R_SUCCEEDED(rc))
-        rc = nvAddressSpaceMapBuffer(as, m, 0, &m->gpu_addr);
+        rc = nvAddressSpaceMapBuffer(as, m->fd, 0, &m->gpu_addr);
 
     if (R_FAILED(rc))
         nvBufferFree(m);
@@ -124,7 +124,7 @@ iova_t nvBufferGetGpuAddr(NvBuffer* m) {
 }
 
 Result nvBufferMapAsTexture(NvBuffer* m, NvBufferKind kind) {
-    return nvAddressSpaceMapBuffer(m->addr_space, m, kind, &m->gpu_addr_texture);
+    return nvAddressSpaceMapBuffer(m->addr_space, m->fd, kind, &m->gpu_addr_texture);
 }
 
 iova_t nvBufferGetGpuAddrTexture(NvBuffer* m) {

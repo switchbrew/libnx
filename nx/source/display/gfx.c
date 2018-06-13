@@ -26,6 +26,7 @@ static bool g_gfx_ProducerConnected = 0;
 static bool g_gfx_ProducerSlotsRequested[2] = {0, 0};
 static u8 *g_gfxFramebuf;
 static size_t g_gfxFramebufSize;
+static u32 g_gfxFramebufHandle;
 static BqFence g_gfx_DequeueBuffer_fence;
 static BqQueueBufferOutput g_gfx_Connect_QueueBufferOutput;
 static BqQueueBufferOutput g_gfx_QueueBuffer_QueueBufferOutput;
@@ -178,6 +179,7 @@ static Result _gfxInit(ViServiceType servicetype, const char *DisplayName, u32 L
     g_gfx_ProducerConnected = 0;
     g_gfxFramebuf = NULL;
     g_gfxFramebufSize = 0;
+    g_gfxFramebufHandle = 0;
     g_gfxMode = GfxMode_LinearDouble;
 
     g_gfx_drawflip = true;
@@ -249,7 +251,7 @@ static Result _gfxInit(ViServiceType servicetype, const char *DisplayName, u32 L
 
     if (R_SUCCEEDED(rc)) rc = nvgfxInitialize();
 
-    if (R_SUCCEEDED(rc)) rc = nvgfxGetFramebuffer(&g_gfxFramebuf, &g_gfxFramebufSize);
+    if (R_SUCCEEDED(rc)) rc = nvgfxGetFramebuffer(&g_gfxFramebuf, &g_gfxFramebufSize, &g_gfxFramebufHandle);
 
     if (R_SUCCEEDED(rc)) { //Official sw would use bqRequestBuffer() when required during swap-buffers/or similar, but that's not really an option here due to gfxSetDoubleBuffering().
        for(i=0; i<2; i++) {
@@ -312,6 +314,7 @@ static Result _gfxInit(ViServiceType servicetype, const char *DisplayName, u32 L
         g_gfx_ProducerConnected = 0;
         g_gfxFramebuf = NULL;
         g_gfxFramebufSize = 0;
+        g_gfxFramebufHandle = 0;
 
         g_gfx_framebuf_width = 0;
         g_gfx_framebuf_height = 0;
@@ -500,6 +503,11 @@ void gfxSwapBuffers(void) {
     if (R_FAILED(rc)) fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadGfxDequeueBuffer));
 }
 
+u32 gfxGetFramebufferHandle(u32* offset) {
+    if (offset) *offset = g_gfxCurrentBuffer*g_gfx_singleframebuf_size;
+    return g_gfxFramebufHandle;
+}
+
 u8* gfxGetFramebuffer(u32* width, u32* height) {
     if(width) *width = g_gfx_framebuf_display_width;
     if(height) *height = g_gfx_framebuf_display_height;
@@ -556,4 +564,3 @@ void gfxFlushBuffers(void) {
 /*static Result _gfxGetDisplayResolution(u64 *width, u64 *height) {
     return viGetDisplayResolution(&g_gfxDisplay, width, height);
 }*/
-
