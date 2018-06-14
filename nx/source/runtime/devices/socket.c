@@ -24,6 +24,8 @@
 #include "services/nifm.h"
 #include "result.h"
 
+int _convert_errno(int bsdErrno);
+
 __thread int h_errno;
 
 static SfdnsresConfig g_sfdnsresConfig;
@@ -190,7 +192,8 @@ static int _socketParseBsdResult(struct _reent *r, int ret) {
             }
         }
         else
-            errno_ = g_bsdErrno; // Nintendo actually used the Linux errno definitions for their FreeBSD build :)
+            errno_ = _convert_errno(g_bsdErrno); /* Nintendo actually used the Linux errno definitions for their FreeBSD build :)
+                                                    but we still need to convert to newlib errno */
     }
 
     if(r == NULL)
