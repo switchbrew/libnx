@@ -55,7 +55,7 @@
 #define	IOC_INOUT	(IOC_IN|IOC_OUT)
 #define	IOC_DIRMASK	(IOC_VOID|IOC_OUT|IOC_IN)
 
-#define	_IOC(inout,group,num,len)	((unsigned long) \
+#define	_IOC(inout,group,num,len)	((int) \
 	((inout) | (((len) & IOCPARM_MASK) << 16) | ((group) << 8) | (num)))
 #define	_IO(g,n)	_IOC(IOC_VOID,	(g), (n), 0)
 #define	_IOWINT(g,n)	_IOC(IOC_VOID,	(g), (n), sizeof(int))
