@@ -636,12 +636,12 @@ static inline Result ipcParseForDomain(IpcParsedCommand* r) {
         case DomainMessageType_Close:
             break;
         default:
-            return 0xF601;
+            return 0x1A60A;
     }
     r->ThisObjectId = hdr->ThisObjectId;
     r->NumObjectIds = hdr->NumObjectIds > 8 ? 8 : hdr->NumObjectIds;
     if ((uintptr_t)object_ids + sizeof(u32) * r->NumObjectIds - (uintptr_t)armGetTls() >= 0x100) {
-        return 0xF601;
+        return 0x1D60A;
     }
     for(size_t i = 0; i < r->NumObjectIds; i++)
         r->ObjectIds[i] = object_ids[i];
