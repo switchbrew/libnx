@@ -35,7 +35,7 @@ void mutexLock(Mutex* m) {
 
             if (old == cur) {
                 // Flag was set successfully.
-                svcArbitrateLock(cur &~ HAS_LISTENERS, (u32*)m, self);
+                svcArbitrateLock(cur, (u32*)m, self);
             }
         }
     }
@@ -59,7 +59,7 @@ bool mutexTryLock(Mutex* m) {
 }
 
 void mutexUnlock(Mutex* m) {
-    u32 old = __sync_lock_test_and_set((u32*)m, 0);
+    u32 old = __sync_val_compare_and_swap((u32*)m, _GetTag(), 0);
 
     if (old & HAS_LISTENERS) {
         svcArbitrateUnlock((u32*)m);
