@@ -85,6 +85,9 @@ void gfxGetFramebufferResolution(u32* width, u32* height);
 /// Use this to get the actual byte-size of the framebuffer for use with memset/etc.
 size_t gfxGetFramebufferSize(void);
 
+/// Use this to get the actual byte-pitch of the framebuffer for use with memset/etc.
+u32 gfxGetFramebufferPitch(void);
+
 /// Sets the \ref GfxMode.
 void gfxSetMode(GfxMode mode);
 

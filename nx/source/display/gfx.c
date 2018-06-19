@@ -530,6 +530,10 @@ size_t gfxGetFramebufferSize(void) {
     return g_gfx_singleframebuf_size;
 }
 
+u32 gfxGetFramebufferPitch(void) {
+    return g_gfx_framebuf_aligned_width*4;
+}
+
 void gfxSetMode(GfxMode mode) {
     g_gfxMode = mode;
 }
