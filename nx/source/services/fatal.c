@@ -7,7 +7,12 @@
 #include "services/fatal.h"
 #include "services/sm.h"
 
-void fatalSimple(Result err) {
+void NORETURN fatalSimple(Result err) {
+    /* By default, do not generate an error report. */
+    fatalWithType(err, FatalType_ErrorScreen);
+}
+
+void NORETURN fatalWithType(Result err, FatalType type) {
     Result rc = 0;
 
     if (detectDebugger()) {
@@ -31,7 +36,7 @@ void fatalSimple(Result err) {
                 u64 magic;
                 u64 cmd_id;
                 u64 result;
-                u64 unknown;
+                u64 type;
             } *raw;
 
             raw = ipcPrepareHeader(&c, sizeof(*raw));
@@ -39,7 +44,7 @@ void fatalSimple(Result err) {
             raw->magic = SFCI_MAGIC;
             raw->cmd_id = 1;
             raw->result = err;
-            raw->unknown = 0;
+            raw->type = type;
 
             ipcDispatch(srv);
         }
