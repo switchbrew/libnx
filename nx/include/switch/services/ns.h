@@ -38,3 +38,10 @@ void nsvmExit(void);
 
 Result nsvmNeedsUpdateVulnerability(bool *out);
 Result nsvmGetSafeSystemVersion(u16 *out);
+
+/* ns:dev */
+Result nsdevInitialize();
+void nsdevExit();
+
+Result nsdevTerminateProcess(u64 pid);
+Result nsdevTerminateProgram(u64 tid);
