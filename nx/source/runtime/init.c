@@ -117,14 +117,14 @@ void __attribute__((weak)) __appInit(void)
 
     fsdevMountSdmc();
 
-    if(&userAppInit) userAppInit();
+    if (&userAppInit) userAppInit();
 }
 
 void __attribute__((weak)) userAppExit(void);
 
 void __attribute__((weak)) __appExit(void)
 {
-    if(&userAppExit) userAppExit();
+    if (&userAppExit) userAppExit();
     // Cleanup default services.
     fsdevUnmountAll();
     fsExit();
