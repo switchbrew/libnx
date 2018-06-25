@@ -842,6 +842,14 @@ Result svcGetDebugThreadContext(u8* out, Handle debug, u64 threadID, u32 flags);
  */
 Result svcGetProcessList(u32 *num_out, u64 *pids_out, u32 max_pids);
 
+/**
+ * @brief Retrieves a list of all threads for a debug handle (or zero).
+ * @return Result code.
+ * @note Syscall number 0x66.
+ * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
+ */
+Result svcGetThreadList(u32 *num_out, u64 *tids_out, u32 max_tids, Handle debug);
+
 ///@}
 
 ///@name Debugging
