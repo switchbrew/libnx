@@ -68,6 +68,11 @@
 #include <sys/_types.h>
 #include <stdint.h>
 
+#ifndef _SOCKLEN_T_DECLARED
+typedef	__socklen_t	socklen_t;
+#define	_SOCKLEN_T_DECLARED
+#endif
+
 extern __thread int h_errno;
 // Removed some FreeBSD definitions
 
