@@ -6,8 +6,8 @@
 #include "services/sm.h"
 #include "services/ns.h"
 
-static Service g_nsAppManSrv, g_nsGetterSrv, g_nsvmSrv;
-static u64 g_nsRefCnt, g_nsvmRefCnt;
+static Service g_nsAppManSrv, g_nsGetterSrv, g_nsvmSrv, g_nsdevSrv;
+static u64 g_nsRefCnt, g_nsvmRefCnt, g_nsdevRefCnt;
 
 static Result _nsGetInterface(Service* srv_out, u64 cmd_id);
 
@@ -41,6 +41,20 @@ void nsExit(void)
 
         serviceClose(&g_nsGetterSrv);
     }
+}
+
+Result nsdevInitialize() {
+    atomicIncrement64(&g_nsdevRefCnt);
+    
+    if (serviceIsActive(&g_nsdevSrv))
+        return 0;
+    
+    return smGetService(&g_nsdevSrv, "ns:dev");
+}
+
+void nsdevExit() {
+    if (atomicDecrement64(&g_nsdevRefCnt) == 0)
+        serviceClose(&g_nsdevSrv);
 }
 
 static Result _nsGetInterface(Service* srv_out, u64 cmd_id) {
@@ -286,6 +300,73 @@ Result nsvmGetSafeSystemVersion(u16 *out)
         rc = resp->result;
 
         if (R_SUCCEEDED(rc) && out) *out = resp->out;
+    }
+
+    return rc;
+}
+
+
+Result nsdevTerminateProcess(u64 pid) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 pid;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 1;
+    raw->pid = pid;
+
+    Result rc = serviceIpcDispatch(&g_nsdevSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result nsdevTerminateProgram(u64 tid) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 tid;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 2;
+    raw->tid = tid;
+
+    Result rc = serviceIpcDispatch(&g_nsdevSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
     }
 
     return rc;
