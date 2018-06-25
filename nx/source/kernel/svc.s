@@ -468,6 +468,15 @@ SVC_BEGIN svcWriteDebugProcessMemory
 	ret
 SVC_END
 
+SVC_BEGIN svcGetDebugThreadParam
+	stp x0, x1, [sp, #-16]!
+	svc 0x6D
+	ldp x3, x4, [sp], #16
+	str x1, [x3]
+	str w2, [x4]
+	ret
+SVC_END
+
 SVC_BEGIN svcGetSystemInfo
 	str x0, [sp, #-16]!
 	svc 0x6F
