@@ -2,52 +2,48 @@
 #include "kernel/semaphore.h"
 #include "kernel/svc.h"
 
-void _priv_sem_wait(sem_t *sem, bool flag);
+void _privSemaphoreWait(Semaphore *sem, bool is_up);
 
-void sem_down(sem_t *sem) {
+void semaphoreDown(Semaphore *sem) {
     mutexLock(&sem->mutex);
-    sem->flag = SEM_DOWN;
+    sem->is_up = false;
     mutexUnlock(&sem->mutex);
 }
 
-void sem_init(sem_t *sem) {
-    sem->flag = SEM_DOWN;
+void semaphoreInit(Semaphore *sem) {
+    sem->is_up = false;
     mutexInit(&sem->mutex);
 }
-
-void sem_uninit(sem_t *sem) {
-    sem->flag = SEM_DOWN;
-}
             
-void sem_up(sem_t *sem) {
+void semaphoreUp(Semaphore *sem) {
     mutexLock(&sem->mutex);
-    sem->flag = SEM_UP;
+    sem->is_up = true;
     mutexUnlock(&sem->mutex);
 }
 
-void sem_wait(sem_t *sem) {
-    _priv_sem_wait(sem, SEM_DOWN);
+void semaphoreWait(Semaphore *sem) {
+    _privSemaphoreWait(sem, false);
 }
 
-void sem_waitup(sem_t *sem) {
-    _priv_sem_wait(sem, SEM_UP);
+void semaphoreWaitUp(Semaphore *sem) {
+    _privSemaphoreWait(sem, true);
 }
 
-bool sem_isup(sem_t *sem) {
-    bool flag;
+bool semaphoreIsUp(Semaphore *sem) {
+    bool is_up;
 
     mutexLock(&sem->mutex);
-    flag = sem->flag;
+    is_up = sem->is_up;
     mutexUnlock(&sem->mutex);
 
-    return flag;
+    return is_up;
 }
 
-void _priv_sem_wait(sem_t *sem, bool flag) {
+void _SemaphoreWait(Semaphore *sem, bool is_up) {
     while (true) {
         mutexLock(&sem->mutex);
         
-        if (sem->flag == flag) {
+        if (sem->is_up == is_up) {
             mutexUnlock(&sem->mutex);
             break;
         }

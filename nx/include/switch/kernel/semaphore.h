@@ -1,29 +1,24 @@
-// Copyright 2018 Kevoot
-
-#ifndef __SEMAPHORE_H
-#define __SEMAPHORE_H
+/**
+ * @file semaphore.h
+ * @brief Thread synchronization based on Mutex.
+ * @author Kevoot
+ * @copyright libnx Authors
+ */
+#pragma once
 
 #include "mutex.h"
 
-#define SEM_DOWN false
-#define SEM_UP   true
-
-#define EBUSY 1
-
-typedef struct sem_t
+typedef struct Semaphore
 {
-    bool flag;
+    bool is_up;
     Mutex mutex;
-} sem_t;
+} Semaphore;
 
-void sem_init(sem_t *);
-void sem_uninit(sem_t *);
+void semaphoreInit(Semaphore *);
 /* TODO */
-void set_post(sem_t *);
-void sem_up(sem_t *);
-void sem_down(sem_t *);
-void sem_wait(sem_t *);
-void sem_waitup(sem_t *);
-bool sem_isup(sem_t *);
-
-#endif
+void semaphorePost(Semaphore *);
+void semaphoreUp(Semaphore *);
+void semaphoreDown(Semaphore *);
+void semaphoreWait(Semaphore *);
+void semaphoreWaitUp(Semaphore *);
+bool semaphoreIsUp(Semaphore *);
