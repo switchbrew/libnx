@@ -72,6 +72,8 @@ enum {
     LibnxError_IncompatSysVer,
     LibnxError_InitFail_Time,
     LibnxError_TooManyDevOpTabs,
+    LibnxError_DomainMessageUnknownType,
+    LibnxError_DomainMessageTooManyObjectIds,
 };
 
 /// libnx nvidia error codes

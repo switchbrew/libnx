@@ -45,8 +45,23 @@ typedef enum {
     IpcCommandType_Request = 4,
     IpcCommandType_Control = 5,
     IpcCommandType_RequestWithContext = 6,
-    IpcCommandType_ControlWithContext = 7
+    IpcCommandType_ControlWithContext = 7,
 } IpcCommandType;
+
+typedef enum {
+    DomainMessageType_Invalid = 0,
+    DomainMessageType_SendMessage = 1,
+    DomainMessageType_Close = 2,
+} DomainMessageType;
+
+/// IPC domain message header.
+typedef struct {
+    u8  Type;
+    u8  NumObjectIds;
+    u16 Length;
+    u32 ThisObjectId;
+    u32 Pad[2];
+} DomainMessageHeader;
 
 typedef struct {
     size_t NumSend; // A
@@ -348,6 +363,9 @@ typedef struct {
     Handle Handles[IPC_MAX_OBJECTS];          ///< Handles.
     bool   WasHandleCopied[IPC_MAX_OBJECTS];  ///< true if the handle was moved, false if it was copied.
 
+    bool   IsDomainMessage;                   ///< true if the the message is a Domain message.
+    DomainMessageType MessageType;            ///< Type of the domain message.
+    u32    MessageLength;                     ///< Size of rawdata (for domain messages).
     u32    ThisObjectId;                      ///< Object ID to call the command on (for domain messages).
     size_t NumObjectIds;                      ///< Number of object IDs (for domain messages).
     u32    ObjectIds[IPC_MAX_OBJECTS];        ///< Object IDs (for domain messages).
@@ -366,7 +384,7 @@ typedef struct {
     size_t NumStaticsOut;                     ///< Number of output statics available in the response.
 
     void*  Raw;                               ///< Pointer to the raw embedded data structure in the response.
-    void*  RawWithoutPadding;                  ///< Pointer to the raw embedded data structure, without padding.
+    void*  RawWithoutPadding;                 ///< Pointer to the raw embedded data structure, without padding.
     size_t RawSize;                           ///< Size of the raw embedded data.
 } IpcParsedCommand;
 
@@ -380,6 +398,8 @@ static inline Result ipcParse(IpcParsedCommand* r) {
     u32 ctrl0 = *buf++;
     u32 ctrl1 = *buf++;
     size_t i;
+    
+    r->IsDomainMessage = false;
 
     r->CommandType = (IpcCommandType) (ctrl0 & 0xffff);
     r->HasPid = false;
@@ -570,15 +590,6 @@ static inline void ipcSendObjectId(IpcCommand* cmd, u32 object_id) {
     cmd->ObjectIds[cmd->NumObjectIds++] = object_id;
 }
 
-/// IPC domain message header.
-typedef struct {
-    u8  Type;
-    u8  NumObjectIds;
-    u16 Length;
-    u32 ThisObjectId;
-    u32 Pad[2];
-} DomainMessageHeader;
-
 /**
  * @brief Prepares the header of an IPC command structure (domain version).
  * @param cmd IPC command structure.
@@ -591,7 +602,7 @@ static inline void* ipcPrepareHeaderForDomain(IpcCommand* cmd, size_t sizeof_raw
     DomainMessageHeader* hdr = (DomainMessageHeader*) raw;
     u32 *object_ids = (u32*)(((uintptr_t) raw) + sizeof(DomainMessageHeader) + sizeof_raw);
 
-    hdr->Type = 1;
+    hdr->Type = DomainMessageType_SendMessage;
     hdr->NumObjectIds = (u8)cmd->NumObjectIds;
     hdr->Length = sizeof_raw;
     hdr->ThisObjectId = object_id;
@@ -609,7 +620,7 @@ static inline void* ipcPrepareHeaderForDomain(IpcCommand* cmd, size_t sizeof_raw
  */
 static inline Result ipcParseForDomain(IpcParsedCommand* r) {
     Result rc = ipcParse(r);
-    DomainMessageHeader* hdr;
+    DomainMessageHeader *hdr;
     u32 *object_ids;
     if(R_FAILED(rc))
         return rc;
@@ -618,8 +629,20 @@ static inline Result ipcParseForDomain(IpcParsedCommand* r) {
     object_ids = (u32*)(((uintptr_t) hdr) + sizeof(DomainMessageHeader) + hdr->Length);
     r->Raw = (void*)(((uintptr_t) r->Raw) + sizeof(DomainMessageHeader));
 
+    r->IsDomainMessage = true;
+    r->MessageType = (DomainMessageType)(hdr->Type);
+    switch (r->MessageType) {
+        case DomainMessageType_SendMessage:
+        case DomainMessageType_Close:
+            break;
+        default:
+            return MAKERESULT(Module_Libnx, LibnxError_DomainMessageUnknownType);
+    }
     r->ThisObjectId = hdr->ThisObjectId;
     r->NumObjectIds = hdr->NumObjectIds > 8 ? 8 : hdr->NumObjectIds;
+    if ((uintptr_t)object_ids + sizeof(u32) * r->NumObjectIds - (uintptr_t)armGetTls() >= 0x100) {
+        return MAKERESULT(Module_Libnx, LibnxError_DomainMessageTooManyObjectIds);
+    }
     for(size_t i = 0; i < r->NumObjectIds; i++)
         r->ObjectIds[i] = object_ids[i];
 
