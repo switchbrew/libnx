@@ -305,7 +305,6 @@ Result nsvmGetSafeSystemVersion(u16 *out)
     return rc;
 }
 
-
 Result nsdevTerminateProcess(u64 pid) {
     IpcCommand c;
     ipcInitialize(&c);
