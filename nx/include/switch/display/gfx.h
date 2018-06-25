@@ -73,8 +73,8 @@ void gfxWaitForVsync(void);
 /// Swaps the framebuffers (for double-buffering).
 void gfxSwapBuffers(void);
 
-/// Get the current framebuffer nvmap handle, with optional output ptrs for the current offset in the buffer.
-u32 gfxGetFramebufferHandle(u32* offset);
+/// Get the specified framebuffer nvmap handle where index specifies the buffer number beginning with the back buffer, with optional output ptr for the offset in the buffer.
+u32 gfxGetFramebufferHandle(u32 index, u32* offset);
 
 /// Get the current framebuffer address, with optional output ptrs for the display framebuffer width/height. The display width/height is adjusted by \ref gfxConfigureCrop and \ref gfxConfigureResolution.
 u8* gfxGetFramebuffer(u32* width, u32* height);

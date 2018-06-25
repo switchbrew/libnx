@@ -503,8 +503,11 @@ void gfxSwapBuffers(void) {
     if (R_FAILED(rc)) fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadGfxDequeueBuffer));
 }
 
-u32 gfxGetFramebufferHandle(u32* offset) {
-    if (offset) *offset = g_gfxCurrentBuffer*g_gfx_singleframebuf_size;
+u32 gfxGetFramebufferHandle(u32 index, u32* offset) {
+    if (offset) {
+        index = (g_gfxCurrentBuffer + index) & (g_nvgfx_totalframebufs-1);
+        *offset = index*g_gfx_singleframebuf_size;
+    }
     return g_gfxFramebufHandle;
 }
 
