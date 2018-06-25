@@ -131,6 +131,15 @@ typedef enum {
     ProcessState_DebugSuspended=7, ///<Process execution suspended by debugger.
 } ProcessState;
 
+/// Debug Thread Parameters.
+typedef enum {
+    DebugThreadParam_ActualPriority=0,
+    DebugThreadParam_State=1,
+    DebugThreadParam_IdealCore=2,
+    DebugThreadParam_CurrentCore=3,
+    DebugThreadParam_CoreMask=4,
+} DebugThreadParam;
+
 ///@name Memory management
 ///@{
 
@@ -861,6 +870,14 @@ Result svcReadDebugProcessMemory(void* buffer, Handle debug, u64 addr, u64 size)
  * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
  */
 Result svcWriteDebugProcessMemory(Handle debug, void* buffer, u64 addr, u64 size);
+
+/**
+ * @brief Gets parameters from a thread in a debugging session.
+ * @return Result code.
+ * @note Syscall number 0x6D.
+ * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
+ */
+Result svcGetDebugThreadParam(u64* out_64, u32* out_32, Handle debug, u64 threadID, DebugThreadParam param);
 
 ///@}
 
