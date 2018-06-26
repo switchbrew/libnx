@@ -65,16 +65,16 @@ SECTIONS
 	.gnu_extab        : ONLY_IF_RO { *(.gnu_extab*) } : rodata
 
 	.dynamic           : { *(.dynamic) } :rodata :dyn
+	.dynsym            : { *(.dynsym) } :rodata
+	.dynstr            : { *(.dynstr) } :rodata
+	.rela.dyn          : { *(.rela.*) } :rodata
 	.interp            : { *(.interp) } :rodata
-	.note.gnu.build-id : { *(.note.gnu.build-id) } :rodata
 	.hash              : { *(.hash) } :rodata
 	.gnu.hash          : { *(.gnu.hash) } :rodata
 	.gnu.version       : { *(.gnu.version) } :rodata
 	.gnu.version_d     : { *(.gnu.version_d) } :rodata
 	.gnu.version_r     : { *(.gnu.version_r) } :rodata
-	.dynsym            : { *(.dynsym) } :rodata
-	.dynstr            : { *(.dynstr) } :rodata
-	.rela.dyn          : { *(.rela.*) } :rodata
+	.note.gnu.build-id : { *(.note.gnu.build-id) } :rodata
 
 	/* =========== DATA section =========== */
 	. = ALIGN(0x1000);
