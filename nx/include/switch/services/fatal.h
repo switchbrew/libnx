@@ -26,4 +26,4 @@ void NORETURN fatalSimple(Result err);
  * @param err[in] Type of fatal error to throw.
  * @note This function does not return.
  */
-void NORETURN fatalWithType(Result err, FatalType type);
+void fatalWithType(Result err, FatalType type);
