@@ -7,18 +7,16 @@
 #pragma once
 
 #include "mutex.h"
+#include "condvar.h"
 
 typedef struct Semaphore
 {
-    bool is_up;
+    CondVar condvar;
     Mutex mutex;
+    u64 count;
 } Semaphore;
 
-void semaphoreInit(Semaphore *);
-/* TODO */
-void semaphorePost(Semaphore *);
-void semaphoreUp(Semaphore *);
-void semaphoreDown(Semaphore *);
+void semaphoreInit(Semaphore *, u64);
+void semaphoreSignal(Semaphore *);
 void semaphoreWait(Semaphore *);
-void semaphoreWaitUp(Semaphore *);
-bool semaphoreIsUp(Semaphore *);
+bool semaphoreTryWait(Semaphore *);

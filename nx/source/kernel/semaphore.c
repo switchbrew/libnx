@@ -2,53 +2,34 @@
 #include "kernel/semaphore.h"
 #include "kernel/svc.h"
 
-void _privSemaphoreWait(Semaphore *sem, bool is_up);
-
-void semaphoreDown(Semaphore *sem) {
-    mutexLock(&sem->mutex);
-    sem->is_up = false;
-    mutexUnlock(&sem->mutex);
-}
-
-void semaphoreInit(Semaphore *sem) {
-    sem->is_up = false;
+void semaphoreInit(Semaphore *sem, u64 c) {
+    sem->count = c;
     mutexInit(&sem->mutex);
+    condvarInit(&sem->condvar, &sem->mutex);
 }
-            
-void semaphoreUp(Semaphore *sem) {
+
+void semaphoreSignal(Semaphore *sem) {
     mutexLock(&sem->mutex);
-    sem->is_up = true;
+    sem->count++;
+    condvarWakeOne(&sem->condvar);
     mutexUnlock(&sem->mutex);
 }
 
 void semaphoreWait(Semaphore *sem) {
-    _privSemaphoreWait(sem, false);
-}
-
-void semaphoreWaitUp(Semaphore *sem) {
-    _privSemaphoreWait(sem, true);
-}
-
-bool semaphoreIsUp(Semaphore *sem) {
-    bool is_up;
-
     mutexLock(&sem->mutex);
-    is_up = sem->is_up;
+    while(!(&sem->count)) {
+        condvarWait(&sem->condvar);
+    }
+    sem->count--;
     mutexUnlock(&sem->mutex);
-
-    return is_up;
 }
 
-void _SemaphoreWait(Semaphore *sem, bool is_up) {
-    while (true) {
-        mutexLock(&sem->mutex);
-        
-        if (sem->is_up == is_up) {
-            mutexUnlock(&sem->mutex);
-            break;
-        }
-
-        mutexUnlock(&sem->mutex);
-        svcSleepThread(1000000);
+bool semaphoreTryWait(Semaphore *sem) {
+    mutexLock(&sem->mutex);
+    bool success = false;
+    if(sem->count) {
+        (sem->count)--;
+        success = true;
     }
+    return success;
 }
