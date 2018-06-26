@@ -7,6 +7,7 @@
 #pragma once
 #include "../types.h"
 
+/// Type of thrown fatal error.
 typedef enum {
     FatalType_ErrorReportAndErrorScreen = 0,
     FatalType_ErrorReport = 1,
@@ -24,6 +25,6 @@ void NORETURN fatalSimple(Result err);
  * @brief Triggers a system fatal error with a custom FatalType.
  * @param err[in] Result code to throw.
  * @param err[in] Type of fatal error to throw.
- * @note This function does not return.
+ * @note This function may not return, depending on \ref FatalType.
  */
 void fatalWithType(Result err, FatalType type);
