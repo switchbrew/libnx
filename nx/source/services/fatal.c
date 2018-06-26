@@ -10,9 +10,11 @@
 void NORETURN fatalSimple(Result err) {
     /* By default, do not generate an error report. */
     fatalWithType(err, FatalType_ErrorScreen);
+    svcExitProcess();
+    __builtin_unreachable();
 }
 
-void NORETURN fatalWithType(Result err, FatalType type) {
+void fatalWithType(Result err, FatalType type) {
     Result rc = 0;
 
     if (detectDebugger()) {
@@ -49,7 +51,14 @@ void NORETURN fatalWithType(Result err, FatalType type) {
             ipcDispatch(srv);
         }
     }
-
-    ((void(*)())0xBADC0DE)();
-    __builtin_unreachable();
+    
+    switch (type) {
+        case FatalType_ErrorReport:
+            break;
+        case FatalType_ErrorReportAndErrorScreen:
+        case FatalType_ErrorScreen:
+        default:
+            svcExitProcess();
+            __builtin_unreachable();
+    }
 }
