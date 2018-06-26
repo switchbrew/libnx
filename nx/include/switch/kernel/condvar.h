@@ -4,6 +4,7 @@
  * @author plutoo
  * @copyright libnx Authors
  */
+#pragma once
 #include "../types.h"
 #include "../kernel/mutex.h"
 
