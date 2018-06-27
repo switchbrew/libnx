@@ -39,6 +39,6 @@ void semaphoreWait(Semaphore * s);
 /**
  * @brief Attempts to get lock without waiting.
  * @param s Semaphore object.
- * @return 1 if no wait is needed for lock, 0 otherwise.
+ * @return true if no wait and successful lock, false otherwise.
  */
 bool semaphoreTryWait(Semaphore * s);
