@@ -1,4 +1,5 @@
 #include <string.h>
+#include <malloc.h>
 
 #include "types.h"
 #include "arm/atomics.h"
@@ -70,7 +71,7 @@ Result accountGetUserCount(s32* user_count)
     return rc;
 }
 
-Result accountListAllUsers(u128* userIDs)
+static Result _accountListAllUsers(u128* userIDs)
 {
     IpcCommand c;
     ipcInitialize(&c);
@@ -103,6 +104,38 @@ Result accountListAllUsers(u128* userIDs)
         } *resp = r.Raw;
 
         rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result accountListAllUsers(u128* userIDs, size_t max_userIDs, size_t *actual_total)
+{
+    Result rc=0;
+
+    u128 *temp_userIDs;
+	temp_userIDs = malloc(sizeof(u128) * ACC_USER_LIST_SIZE);
+
+    rc = _accountListAllUsers(temp_userIDs);
+
+    if (R_SUCCEEDED(rc)) {
+        size_t total_userIDs = 0;
+
+        for (int i = 0; i < ACC_USER_LIST_SIZE; i++) {
+            if (temp_userIDs[i]) {
+                total_userIDs++;
+            }
+        }
+
+        if (max_userIDs > total_userIDs) {
+            max_userIDs = total_userIDs;
+        }
+
+        for (int i = 0; i < max_userIDs; i++) {
+            userIDs[i] = temp_userIDs[i];
+        }
+
+        *actual_total = total_userIDs;
     }
 
     return rc;
