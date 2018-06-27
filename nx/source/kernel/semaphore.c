@@ -2,33 +2,35 @@
 #include "kernel/semaphore.h"
 #include "kernel/svc.h"
 
-void semaphoreInit(Semaphore *sem, u64 c) {
-    sem->count = c;
-    mutexInit(&sem->mutex);
-    condvarInit(&sem->condvar, &sem->mutex);
+void semaphoreInit(Semaphore *s, u64 initial_count) {
+    s->count = initial_count;
+    mutexInit(&s->mutex);
+    condvarInit(&s->condvar, &s->mutex);
 }
 
-void semaphoreSignal(Semaphore *sem) {
-    mutexLock(&sem->mutex);
-    sem->count++;
-    condvarWakeOne(&sem->condvar);
-    mutexUnlock(&sem->mutex);
+void semaphoreSignal(Semaphore *s) {
+    mutexLock(&s->mutex);
+    s->count++;
+    condvarWakeOne(&s->condvar);
+    mutexUnlock(&s->mutex);
 }
 
-void semaphoreWait(Semaphore *sem) {
-    mutexLock(&sem->mutex);
-    while(!(&sem->count)) {
-        condvarWait(&sem->condvar);
+void semaphoreWait(Semaphore *s) {
+    mutexLock(&s->mutex);
+    // Wait until signalled.
+    while (!s->count) {
+        condvarWait(&s->condvar);
     }
-    sem->count--;
-    mutexUnlock(&sem->mutex);
+    s->count--;
+    mutexUnlock(&s->mutex);
 }
 
-bool semaphoreTryWait(Semaphore *sem) {
-    mutexLock(&sem->mutex);
+bool semaphoreTryWait(Semaphore *s) {
+    mutexLock(&s->mutex);
     bool success = false;
-    if(sem->count) {
-        (sem->count)--;
+    // Check and immediately return success.
+    if (s->count) {
+        s->count--;
         success = true;
     }
     return success;
