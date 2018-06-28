@@ -39,10 +39,10 @@ Service* accountGetService(void);
 Result accountGetUserCount(s32* user_count);
 
 /**
- * @brief Get a list of all user IDs. The returned list will never be larger than ACC_USER_LIST_SIZE
- * @param userIDs Pointer to array of user IDs
- * @param max_userIDs Maximum number of user IDs to return
- * @param actual_total The actual total number of user IDs found
+ * @brief Get a list of all user IDs. The returned list will never be larger than ACC_USER_LIST_SIZE.
+ * @param userIDs Pointer to array of user IDs.
+ * @param max_userIDs Maximum number of user IDs to return.
+ * @param actual_total The actual total number of user IDs found.
  */
 Result accountListAllUsers(u128* userIDs, size_t max_userIDs, size_t *actual_total);
 

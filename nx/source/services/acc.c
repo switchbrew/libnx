@@ -112,7 +112,6 @@ static Result _accountListAllUsers(u128* userIDs)
 Result accountListAllUsers(u128* userIDs, size_t max_userIDs, size_t *actual_total)
 {
     Result rc=0;
-
     u128 *temp_userIDs;
     temp_userIDs = malloc(sizeof(u128) * ACC_USER_LIST_SIZE);
 
@@ -126,13 +125,10 @@ Result accountListAllUsers(u128* userIDs, size_t max_userIDs, size_t *actual_tot
         }
 
         if (max_userIDs > total_userIDs) {
-            max_userIDs = total_userIDs;
+            memcpy(&max_userIDs, &total_userIDs, sizeof(size_t));
         }
 
-        for (int i = 0; i < max_userIDs; i++) {
-            userIDs[i] = temp_userIDs[i];
-        }
-
+        memcpy(userIDs, temp_userIDs, sizeof(u128) * max_userIDs);
         *actual_total = max_userIDs;
     }
 
