@@ -22,23 +22,23 @@ typedef struct Semaphore
  * @param s Semaphore object.
  * @param initial_count initial value for internal counter (typically the # of free resources).
  */
-void semaphoreInit(Semaphore * s, u64 initial_count);
+void semaphoreInit(Semaphore *s, u64 initial_count);
 
 /**
  * @brief Increments the Semaphore to allow other threads to continue.
  * @param s Semaphore object.
  */
-void semaphoreSignal(Semaphore * s);
+void semaphoreSignal(Semaphore *s);
 
 /**
  * @brief Decrements Semaphore and waits if 0.
  * @param s Semaphore object.
  */
-void semaphoreWait(Semaphore * s);
+void semaphoreWait(Semaphore *s);
 
 /**
  * @brief Attempts to get lock without waiting.
  * @param s Semaphore object.
  * @return true if no wait and successful lock, false otherwise.
  */
-bool semaphoreTryWait(Semaphore * s);
+bool semaphoreTryWait(Semaphore *s);
