@@ -112,7 +112,7 @@ static Result _accountListAllUsers(u128* userIDs)
 Result accountListAllUsers(u128* userIDs, size_t max_userIDs, size_t *actual_total)
 {
     Result rc=0;
-    u128 *temp_userIDs = malloc(sizeof(u128) * ACC_USER_LIST_SIZE);
+    u128 temp_userIDs[ACC_USER_LIST_SIZE];
 
     rc = _accountListAllUsers(temp_userIDs);
 
@@ -130,8 +130,6 @@ Result accountListAllUsers(u128* userIDs, size_t max_userIDs, size_t *actual_tot
         memcpy(userIDs, temp_userIDs, sizeof(u128) * max_userIDs);
         *actual_total = max_userIDs;
     }
-
-    free(temp_userIDs);
 
     return rc;
 }
