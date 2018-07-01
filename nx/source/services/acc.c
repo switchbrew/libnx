@@ -113,6 +113,7 @@ Result accountListAllUsers(u128* userIDs, size_t max_userIDs, size_t *actual_tot
 {
     Result rc=0;
     u128 temp_userIDs[ACC_USER_LIST_SIZE];
+    memset(temp_userIDs, 0, sizeof(temp_userIDs));
 
     rc = _accountListAllUsers(temp_userIDs);
 
