@@ -33,6 +33,107 @@ Service* accountGetService(void) {
     return &g_accSrv;
 }
 
+Result accountGetUserCount(s32* user_count)
+{
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 0;
+
+    Result rc = serviceIpcDispatch(&g_accSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u32 user_count;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            *user_count = resp->user_count;
+        }
+    }
+
+    return rc;
+}
+
+static Result _accountListAllUsers(u128* userIDs)
+{
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    Result rc=0;
+
+    size_t bufsize = ACC_USER_LIST_SIZE * sizeof(u128);
+
+    ipcAddRecvStatic(&c, userIDs, bufsize, 0);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 2;
+
+    rc = serviceIpcDispatch(&g_accSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result accountListAllUsers(u128* userIDs, size_t max_userIDs, size_t *actual_total)
+{
+    Result rc=0;
+    u128 temp_userIDs[ACC_USER_LIST_SIZE];
+    memset(temp_userIDs, 0, sizeof(temp_userIDs));
+
+    rc = _accountListAllUsers(temp_userIDs);
+
+    if (R_SUCCEEDED(rc)) {
+        size_t total_userIDs;
+        for (total_userIDs = 0; total_userIDs < ACC_USER_LIST_SIZE; total_userIDs++) {
+            if (!temp_userIDs[total_userIDs])
+                break;
+        }
+
+        if (max_userIDs > total_userIDs) {
+            max_userIDs = total_userIDs;
+        }
+
+        memcpy(userIDs, temp_userIDs, sizeof(u128) * max_userIDs);
+        *actual_total = max_userIDs;
+    }
+
+    return rc;
+}
+
 Result accountGetActiveUser(u128 *userID, bool *account_selected)
 {
     IpcCommand c;

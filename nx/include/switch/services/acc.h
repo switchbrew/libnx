@@ -8,6 +8,8 @@
 #include "../types.h"
 #include "sm.h"
 
+#define ACC_USER_LIST_SIZE 8
+
 typedef struct {
     Service  s;
 } AccountProfile;
@@ -32,6 +34,17 @@ typedef struct
 Result accountInitialize(void);
 void accountExit(void);
 Service* accountGetService(void);
+
+/// Get the total number of user profiles
+Result accountGetUserCount(s32* user_count);
+
+/**
+ * @brief Get a list of all user IDs. The returned list will never be larger than ACC_USER_LIST_SIZE.
+ * @param userIDs Pointer to array of user IDs.
+ * @param max_userIDs Maximum number of user IDs to return.
+ * @param actual_total The actual total number of user IDs found.
+ */
+Result accountListAllUsers(u128* userIDs, size_t max_userIDs, size_t *actual_total);
 
 /// Get the userID for the currently active user. The output userID is only valid when the output account_selected==1, otherwise no user is currently selected.
 /// An user is only selected when the user-account selection applet was used to select an user at least once before.
