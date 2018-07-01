@@ -1,5 +1,4 @@
 #include <string.h>
-#include <malloc.h>
 
 #include "types.h"
 #include "arm/atomics.h"
