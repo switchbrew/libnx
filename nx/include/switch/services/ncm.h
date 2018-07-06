@@ -1,6 +1,7 @@
 /**
  * @file ncm.h
  * @brief Content Manager (ncm) service IPC wrapper.
+ * @author zhuowei & Adubbz
  * @copyright libnx Authors
  */
 #pragma once
@@ -9,12 +10,12 @@
 #include "../services/sm.h"
 
 typedef enum  {
-    NCMContentType_CNMT = 0,
-    NCMContentType_Program = 1,
-    NCMContentType_Data = 2,
-    NCMContentType_Icon = 3,
-    NCMContentType_Doc = 4,
-    NCMContentType_Info = 5,
+    NcmContentType_CNMT = 0,
+    NcmContentType_Program = 1,
+    NcmContentType_Data = 2,
+    NcmContentType_Icon = 3,
+    NcmContentType_Doc = 4,
+    NcmContentType_Info = 5,
 } NcmContentType;
 
 typedef struct {
