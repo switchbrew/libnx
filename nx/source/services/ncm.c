@@ -130,10 +130,10 @@ Result ncmContentStorageHas(NcmContentStorage* cs, const NcmNcaId* ncaId, bool* 
 }
 
 Result ncmContentStorageGetPath(NcmContentStorage* cs, const NcmNcaId* ncaId, char* out, size_t outSize) {
-    char out_path[FS_MAX_PATH] = {0};
+    char out_path[FS_MAX_PATH-1] = {0};
     IpcCommand c;
     ipcInitialize(&c);
-    ipcAddRecvStatic(&c, out_path, FS_MAX_PATH - 1, 0);
+    ipcAddRecvStatic(&c, out_path, FS_MAX_PATH-1, 0);
     
     struct {
         u64 magic;
@@ -160,7 +160,7 @@ Result ncmContentStorageGetPath(NcmContentStorage* cs, const NcmNcaId* ncaId, ch
         rc = resp->result;
 
         if (R_SUCCEEDED(rc)) {
-            if (outSize > FS_MAX_PATH - 1) outSize = FS_MAX_PATH - 1;
+            if (outSize > FS_MAX_PATH-1) outSize = FS_MAX_PATH-1;
             strncpy(out, out_path, outSize);
         }
     }
