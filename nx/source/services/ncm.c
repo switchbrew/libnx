@@ -1,5 +1,5 @@
-#include "services/ncm.h"
 #include <string.h>
+#include "services/ncm.h"
 #include "arm/atomics.h"
 
 static Service g_ncmSrv;
@@ -129,11 +129,11 @@ Result ncmContentStorageHas(NcmContentStorage* cs, const NcmNcaId* ncaId, bool* 
     return rc;
 }
 
-Result ncmContentStorageGetPath(NcmContentStorage* cs, const NcmNcaId* ncaId, char* out) {
+Result ncmContentStorageGetPath(NcmContentStorage* cs, const NcmNcaId* ncaId, char* out, size_t outSize) {
     char out_path[FS_MAX_PATH] = {0};
     IpcCommand c;
     ipcInitialize(&c);
-    ipcAddRecvStatic(&c, out_path, FS_MAX_PATH, 0);
+    ipcAddRecvStatic(&c, out_path, FS_MAX_PATH - 1, 0);
     
     struct {
         u64 magic;
@@ -160,7 +160,8 @@ Result ncmContentStorageGetPath(NcmContentStorage* cs, const NcmNcaId* ncaId, ch
         rc = resp->result;
 
         if (R_SUCCEEDED(rc)) {
-            strncpy(out, out_path, FS_MAX_PATH);
+            if (outSize > FS_MAX_PATH - 1) outSize = FS_MAX_PATH - 1;
+            strncpy(out, out_path, outSize);
         }
     }
     
@@ -270,7 +271,7 @@ Result ncmContentStorageGetRightsIdFromContentId(NcmContentStorage* cs, const Nc
         rc = resp->result;
 
         if (R_SUCCEEDED(rc)) {
-            memcpy(rightsIdOut, &resp->rights_id, sizeof(NcmRightsId));
+            if (rightsIdOut) memcpy(rightsIdOut, &resp->rights_id, sizeof(NcmRightsId));
             if (keyGenerationOut) *keyGenerationOut = resp->key_generation;
         }
     }

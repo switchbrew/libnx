@@ -54,14 +54,14 @@ typedef struct {
     u8 c[0x10];
 } NcmRightsId;
 
-Result ncmInitialize();
-void ncmExit();
+Result ncmInitialize(void);
+void ncmExit(void);
 
 Result ncmOpenContentStorage(FsStorageId storage, NcmContentStorage* out);
 Result ncmOpenContentMetaDatabase(FsStorageId storage, NcmContentMetaDatabase* out);
 
 Result ncmContentStorageHas(NcmContentStorage* cs, const NcmNcaId* ncaId, bool* out);
-Result ncmContentStorageGetPath(NcmContentStorage* cs, const NcmNcaId* ncaId, char* out);
+Result ncmContentStorageGetPath(NcmContentStorage* cs, const NcmNcaId* ncaId, char* out, size_t outSize);
 Result ncmContentStorageGetSize(NcmContentStorage* cs, const NcmNcaId* ncaId, u64* out);
 Result ncmContentStorageReadContentIdFile(NcmContentStorage* cs, const NcmNcaId* ncaId, u64 offset, void* outBuf, size_t bufSize);
 Result ncmContentStorageGetRightsIdFromContentId(NcmContentStorage* cs, const NcmNcaId* ncaId, NcmRightsId* rightsIdOut, u32* keyGenerationOut);
