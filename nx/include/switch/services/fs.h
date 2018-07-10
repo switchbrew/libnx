@@ -197,7 +197,7 @@ void fsDirClose(FsDir* d);
 
 // IStorage
 Result fsStorageRead(FsStorage* s, u64 off, void* buf, size_t len);
-Result fsStorageGetSize(FsStorage* f, u64* out);
+Result fsStorageGetSize(FsStorage* s, u64* out);
 void fsStorageClose(FsStorage* s);
 
 // ISaveDataInfoReader

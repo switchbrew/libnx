@@ -1143,7 +1143,7 @@ Result fsStorageRead(FsStorage* s, u64 off, void* buf, size_t len) {
     return rc;
 }
 
-Result fsStorageGetSize(FsStorage* f, u64* out) {
+Result fsStorageGetSize(FsStorage* s, u64* out) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -1157,7 +1157,7 @@ Result fsStorageGetSize(FsStorage* f, u64* out) {
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 4;
 
-    Result rc = serviceIpcDispatch(&f->s);
+    Result rc = serviceIpcDispatch(&s->s);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
