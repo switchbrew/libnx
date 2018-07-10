@@ -144,8 +144,8 @@ void fsExit(void);
 
 Service* fsGetServiceSession(void);
 
-
 Result fsOpenBisStorage(FsStorage* out, u32 PartitionId);
+
 /// Do not call this directly, see fs_dev.h.
 Result fsMountSdcard(FsFileSystem* out);
 
