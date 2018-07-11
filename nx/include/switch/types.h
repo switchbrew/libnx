@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdalign.h>
 
 /// The maximum value of a u64.
 #define U64_MAX	UINT64_MAX
@@ -48,22 +49,33 @@ typedef void (*ThreadFunc)(void *); ///< Thread entrypoint function.
 typedef void (*VoidFn)(void);       ///< Function without arguments nor return value.
 
 /// Creates a bitmask from a bit number.
+#ifndef BIT
 #define BIT(n) (1U<<(n))
-
-/// Aligns a struct (and other types?) to m, making sure that the size of the struct is a multiple of m.
-#define ALIGN(m)   __attribute__((aligned(m)))
-/// Packs a struct (and other types?) so it won't include padding bytes.
-#define PACKED     __attribute__((packed))
-
-#define NORETURN   __attribute__((noreturn))
-#define IGNORE_ARG(x) (void)(x)
-
-#ifndef LIBNX_NO_DEPRECATION
-/// Flags a function as deprecated.
-#define DEPRECATED __attribute__ ((deprecated))
-#else
-/// Flags a function as deprecated.
-#define DEPRECATED
 #endif
 
+/// Packs a struct so that it won't include padding bytes.
+#ifndef PACKED
+#define PACKED     __attribute__((packed))
+#endif
+
+/// Marks a function as not returning, for the purposes of compiler optimization.
+#ifndef NORETURN
+#define NORETURN   __attribute__((noreturn))
+#endif
+
+/// Performs a dummy operation on the specified argument in order to silence compiler warnings about unused arguments.
+#ifndef IGNORE_ARG
+#define IGNORE_ARG(x) (void)(x)
+#endif
+
+/// Flags a function as deprecated.
+#ifndef DEPRECATED
+#ifndef LIBNX_NO_DEPRECATION
+#define DEPRECATED __attribute__ ((deprecated))
+#else
+#define DEPRECATED
+#endif
+#endif
+
+/// Invalid handle.
 #define INVALID_HANDLE ((Handle) 0)
