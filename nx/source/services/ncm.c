@@ -525,15 +525,15 @@ Result ncmContentMetaDatabaseListApplication(NcmContentMetaDatabase* db, u8 filt
         struct {
             u64 magic;
             u64 result;
-            u32 entries_written;
             u32 total_entries;
+            u32 entries_written;
         } *resp = r.Raw;
 
         rc = resp->result;
 
         if (R_SUCCEEDED(rc)) {
-            if (numEntriesWritten) *numEntriesWritten = resp->entries_written;
             if (numEntriesTotal) *numEntriesTotal = resp->total_entries;
+            if (numEntriesWritten) *numEntriesWritten = resp->entries_written;
         }
     }
     
