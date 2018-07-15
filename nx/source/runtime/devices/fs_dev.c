@@ -1047,6 +1047,7 @@ fsdev_chdir(struct _reent *r,
     if (__cwd[__cwd_len-1] != '/' && __cwd_len < PATH_MAX)
     {
       __cwd[__cwd_len] = '/';
+      __cwd[__cwd_len+1] = '\0';
     }
 
     fsdev_fsdevice_cwd = device->id;
