@@ -199,6 +199,13 @@ fsdev_fixpath(struct _reent *r,
     strncpy(__fixedpath, path, PATH_MAX);
   else
   {
+    size_t __cwd_len = strlen(__cwd);
+
+    if (__cwd[__cwd_len-1] != '/' && __cwd_len < PATH_MAX)
+    {
+      __cwd[__cwd_len] = '/';
+    }
+
     strncpy(__fixedpath, __cwd, PATH_MAX);
     __fixedpath[PATH_MAX] = '\0';
     strncat(__fixedpath, path, PATH_MAX - strlen(__cwd));
