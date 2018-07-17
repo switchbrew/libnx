@@ -842,6 +842,38 @@ Result fsFsGetTotalSpace(FsFileSystem* fs, const char* path, u64* out) {
     return rc;
 }
 
+Result fsFsCleanDirectoryRecursively(FsFileSystem* fs, const char* path) {
+    IpcCommand c;
+    ipcInitialize(&c);
+    ipcAddSendStatic(&c, path, FS_MAX_PATH, 0);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 13;
+
+    Result rc = serviceIpcDispatch(&fs->s);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
 void fsFsClose(FsFileSystem* fs) {
     serviceClose(&fs->s);
 }

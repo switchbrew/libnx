@@ -181,6 +181,7 @@ Result fsFsOpenDirectory(FsFileSystem* fs, const char* path, int flags, FsDir* o
 Result fsFsCommit(FsFileSystem* fs);
 Result fsFsGetFreeSpace(FsFileSystem* fs, const char* path, u64* out);
 Result fsFsGetTotalSpace(FsFileSystem* fs, const char* path, u64* out);
+Result fsFsCleanDirectoryRecursively(FsFileSystem* fs, const char* path);
 void fsFsClose(FsFileSystem* fs);
 
 // IFile
