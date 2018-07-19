@@ -144,6 +144,8 @@ void fsExit(void);
 
 Service* fsGetServiceSession(void);
 
+Result fsOpenBisStorage(FsStorage* out, u32 PartitionId);
+
 /// Do not call this directly, see fs_dev.h.
 Result fsMountSdcard(FsFileSystem* out);
 
@@ -196,6 +198,7 @@ void fsDirClose(FsDir* d);
 
 // IStorage
 Result fsStorageRead(FsStorage* s, u64 off, void* buf, size_t len);
+Result fsStorageGetSize(FsStorage* s, u64* out);
 void fsStorageClose(FsStorage* s);
 
 // ISaveDataInfoReader

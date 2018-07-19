@@ -64,6 +64,43 @@ Service* fsGetServiceSession(void) {
     return &g_fsSrv;
 }
 
+Result fsOpenBisStorage(FsStorage* out, u32 PartitionId) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 PartitionId;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 12;
+    raw->PartitionId = PartitionId;
+
+    Result rc = serviceIpcDispatch(&g_fsSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            serviceCreate(&out->s, r.Handles[0]);
+        }
+    }
+
+    return rc;
+}
+
 Result fsMountSdcard(FsFileSystem* out) {
     IpcCommand c;
     ipcInitialize(&c);
@@ -1101,6 +1138,39 @@ Result fsStorageRead(FsStorage* s, u64 off, void* buf, size_t len) {
         } *resp = r.Raw;
 
         rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result fsStorageGetSize(FsStorage* s, u64* out) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 4;
+
+    Result rc = serviceIpcDispatch(&s->s);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u64 size;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+        if (R_SUCCEEDED(rc) && out) *out = resp->size;
     }
 
     return rc;
