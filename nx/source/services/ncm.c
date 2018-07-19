@@ -279,10 +279,10 @@ Result ncmContentStorageGetRightsIdFromContentId(NcmContentStorage* cs, const Nc
     return rc;
 }
 
-Result ncmContentMetaDatabaseSet(NcmContentMetaDatabase* db, const NcmMetaRecord* record, u64 contentRecordSize, NcmContentRecord* contentRecords) {
+Result ncmContentMetaDatabaseSet(NcmContentMetaDatabase* db, const NcmMetaRecord* record, u64 inDataSize, const NcmContentMetaRecordsHeader* srcRecordsData) {
     IpcCommand c;
     ipcInitialize(&c);
-    ipcAddSendBuffer(&c, contentRecords, contentRecordSize, BufferType_Normal);
+    ipcAddSendBuffer(&c, srcRecordsData, inDataSize, BufferType_Normal);
 
     struct {
         u64 magic;
@@ -312,10 +312,10 @@ Result ncmContentMetaDatabaseSet(NcmContentMetaDatabase* db, const NcmMetaRecord
     return rc;
 }
 
-Result ncmContentMetaDatabaseGet(NcmContentMetaDatabase* db, const NcmMetaRecord* record, u64 contentRecordSize, NcmContentRecord* contentRecordsOut, u64* sizeRead) {
+Result ncmContentMetaDatabaseGet(NcmContentMetaDatabase* db, const NcmMetaRecord* record, u64 outDataSize, NcmContentMetaRecordsHeader* outRecordsData, u64* sizeRead) {
     IpcCommand c;
     ipcInitialize(&c);
-    ipcAddRecvBuffer(&c, contentRecordsOut, contentRecordSize, BufferType_Normal);
+    ipcAddRecvBuffer(&c, outRecordsData, outDataSize, BufferType_Normal);
 
     struct {
         u64 magic;
@@ -457,6 +457,56 @@ Result ncmContentMetaDatabaseListContentInfo(NcmContentMetaDatabase* db, const N
 
         if (R_SUCCEEDED(rc)) {
             if (numEntriesRead) *numEntriesRead = resp->entries_read;
+        }
+    }
+    
+    return rc;
+}
+
+Result ncmContentMetaDatabaseList(NcmContentMetaDatabase* db, u32 titleType, u64 titleIdExact, u64 titleIdLow, u64 titleIdHigh, NcmMetaRecord* metaRecordsOut, size_t metaRecordsBufSize, u32* numEntriesWritten, u32* numEntriesTotal) {
+    IpcCommand c;
+    ipcInitialize(&c);    
+    ipcAddRecvBuffer(&c, metaRecordsOut, metaRecordsBufSize, BufferType_Normal);
+    
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 titleType;
+        u64 TID;
+        u64 TID_LOW;
+        u64 TID_HIGH;
+    } *raw;
+    
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+    
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 5;
+    raw->titleType = titleType;
+    raw->TID = titleIdExact;
+    raw->TID_LOW = titleIdLow;
+    raw->TID_HIGH = titleIdHigh;
+    
+    Result rc = serviceIpcDispatch(&db->s);
+    if (R_SUCCEEDED(rc)) 
+    {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u32 numEntriesTotal;
+            u32 numEntriesWritten;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc))
+        {
+            if (numEntriesTotal)
+                *numEntriesTotal = resp->numEntriesTotal;
+            if (numEntriesWritten)
+                *numEntriesWritten = resp->numEntriesWritten;
         }
     }
     
