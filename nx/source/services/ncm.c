@@ -472,9 +472,9 @@ Result ncmContentMetaDatabaseList(NcmContentMetaDatabase* db, u32 titleType, u64
         u64 magic;
         u64 cmd_id;
         u32 titleType;
-        u64 TID;
-        u64 TID_LOW;
-        u64 TID_HIGH;
+        u64 titleIdExact;
+        u64 titleIdLow;
+        u64 titleIdHigh;
     } *raw;
     
     raw = ipcPrepareHeader(&c, sizeof(*raw));
@@ -482,13 +482,12 @@ Result ncmContentMetaDatabaseList(NcmContentMetaDatabase* db, u32 titleType, u64
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 5;
     raw->titleType = titleType;
-    raw->TID = titleIdExact;
-    raw->TID_LOW = titleIdLow;
-    raw->TID_HIGH = titleIdHigh;
+    raw->titleIdExact = titleIdExact;
+    raw->titleIdLow = titleIdLow;
+    raw->titleIdHigh = titleIdHigh;
     
     Result rc = serviceIpcDispatch(&db->s);
-    if (R_SUCCEEDED(rc)) 
-    {
+    if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
         ipcParse(&r);
 
@@ -501,8 +500,7 @@ Result ncmContentMetaDatabaseList(NcmContentMetaDatabase* db, u32 titleType, u64
 
         rc = resp->result;
 
-        if (R_SUCCEEDED(rc))
-        {
+        if (R_SUCCEEDED(rc)) {
             if (numEntriesTotal)
                 *numEntriesTotal = resp->numEntriesTotal;
             if (numEntriesWritten)

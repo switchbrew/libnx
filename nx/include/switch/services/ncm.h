@@ -46,10 +46,10 @@ typedef struct {
 } NcmContentRecord;
 
 typedef struct {
-    u16 numExtraBytes; //of struct that comes after this one
-    u16 numContentRecords; //number of NcmContentRecord entries after the extra bytes
-    u16 numMetaRecords; //number of NcmMetaRecord entries that come after after the NcmContentRecords
-    u16 padding; //always zero
+    u16 numExtraBytes; //Size of optional struct that comes after this one.
+    u16 numContentRecords; //Number of NcmContentRecord entries after the extra bytes.
+    u16 numMetaRecords; //Number of NcmMetaRecord entries that come after the NcmContentRecords.
+    u16 padding; //Always zero.
 } NcmContentMetaRecordsHeader;
 
 typedef struct {
