@@ -13,7 +13,7 @@ static Mutex g_Mutex;
 
 static void _CacheValues(void)
 {
-    if (g_HasCached)
+    if (__atomic_load_n(&g_HasCached, __ATOMIC_SEQ_CST))
         return;
 
     mutexLock(&g_Mutex);
@@ -33,7 +33,7 @@ static void _CacheValues(void)
     g_IsAbove300 |= g_IsAbove400;
     g_IsAbove200 |= g_IsAbove300;
 
-    g_HasCached = true;
+    __atomic_store_n(&g_HasCached, true, __ATOMIC_SEQ_CST);
 
     mutexUnlock(&g_Mutex);
 }
