@@ -1,3 +1,4 @@
+#pragma once
 #include "../types.h"
 
 static inline u32 atomicIncrement32(u32* p) {
