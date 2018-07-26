@@ -371,6 +371,75 @@ Result ncmContentStorageGetPath(NcmContentStorage* cs, const NcmNcaId* ncaId, ch
     return rc;
 }
 
+Result ncmContentStorageGetPlaceHolderPath(NcmContentStorage* cs, const NcmNcaId* ncaId, char* out, size_t outSize) {
+    char out_path[FS_MAX_PATH-1] = {0};
+    IpcCommand c;
+    ipcInitialize(&c);
+    ipcAddRecvStatic(&c, out_path, FS_MAX_PATH-1, 0);
+    
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        NcmNcaId nca_id;
+    } *raw;
+    
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 9;
+    memcpy(&raw->nca_id, ncaId, sizeof(NcmNcaId));
+    
+    Result rc = serviceIpcDispatch(&cs->s);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            if (outSize > FS_MAX_PATH-1) outSize = FS_MAX_PATH-1;
+            strncpy(out, out_path, outSize);
+        }
+    }
+    
+    return rc;
+}
+
+Result ncmContentStorageCleanupAllPlaceHolder(NcmContentStorage* cs) {
+    IpcCommand c;
+    ipcInitialize(&c);
+    
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+    
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 10;
+    
+    Result rc = serviceIpcDispatch(&cs->s);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+    
+    return rc;
+}
+
 Result ncmContentStorageGetSize(NcmContentStorage* cs, const NcmNcaId* ncaId, u64* out) {
     IpcCommand c;
     ipcInitialize(&c);

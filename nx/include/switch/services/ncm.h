@@ -75,6 +75,8 @@ Result ncmContentStorageRegister(NcmContentStorage* cs, const NcmNcaId* register
 Result ncmContentStorageDelete(NcmContentStorage* cs, const NcmNcaId* registeredId);
 Result ncmContentStorageHas(NcmContentStorage* cs, const NcmNcaId* ncaId, bool* out);
 Result ncmContentStorageGetPath(NcmContentStorage* cs, const NcmNcaId* ncaId, char* out, size_t outSize);
+Result ncmContentStorageGetPlaceHolderPath(NcmContentStorage* cs, const NcmNcaId* ncaId, char* out, size_t outSize);
+Result ncmContentStorageCleanupAllPlaceHolder(NcmContentStorage* cs);
 Result ncmContentStorageGetSize(NcmContentStorage* cs, const NcmNcaId* ncaId, u64* out);
 Result ncmContentStorageDisableForcibly(NcmContentStorage* cs);
 Result ncmContentStorageReadContentIdFile(NcmContentStorage* cs, const NcmNcaId* ncaId, u64 offset, void* outBuf, size_t bufSize);
