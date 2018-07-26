@@ -76,6 +76,7 @@ Result ncmContentStorageDelete(NcmContentStorage* cs, const NcmNcaId* registered
 Result ncmContentStorageHas(NcmContentStorage* cs, const NcmNcaId* ncaId, bool* out);
 Result ncmContentStorageGetPath(NcmContentStorage* cs, const NcmNcaId* ncaId, char* out, size_t outSize);
 Result ncmContentStorageGetSize(NcmContentStorage* cs, const NcmNcaId* ncaId, u64* out);
+Result ncmContentStorageDisableForcibly(NcmContentStorage* cs);
 Result ncmContentStorageReadContentIdFile(NcmContentStorage* cs, const NcmNcaId* ncaId, u64 offset, void* outBuf, size_t bufSize);
 Result ncmContentStorageGetRightsIdFromContentId(NcmContentStorage* cs, const NcmNcaId* ncaId, NcmRightsId* rightsIdOut, u32* keyGenerationOut);
 
@@ -88,4 +89,5 @@ Result ncmContentMetaDatabaseList(NcmContentMetaDatabase* db, u32 titleType, u64
 Result ncmContentMetaDatabaseGetLatestContentMetaKey(NcmContentMetaDatabase* db, u64 titleId, NcmMetaRecord* out);
 Result ncmContentMetaDatabaseListApplication(NcmContentMetaDatabase* db, u8 filter, NcmApplicationContentMetaKey* outBuf, size_t outBufSize, u32* numEntriesWritten, u32* numEntriesTotal);
 Result ncmContentMetaDatabaseHas(NcmContentMetaDatabase* db, const NcmMetaRecord* record, bool* out);
+Result ncmContentMetaDatabaseDisableForcibly(NcmContentMetaDatabase* db);
 Result ncmContentMetaDatabaseCommit(NcmContentMetaDatabase* db);
