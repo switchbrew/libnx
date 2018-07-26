@@ -55,8 +55,8 @@ bss_loop:
     ldr  w0, [x0, #:lo12:__system_argc]
     adrp x1, __system_argv // argv
     ldr  x1, [x1, #:lo12:__system_argv]
-    adrp x30, __libnx_exit
-    add  x30, x30, #:lo12:__libnx_exit
+    adrp x30, exit
+    add  x30, x30, #:lo12:exit
     b    main
 
 .global __nx_exit
