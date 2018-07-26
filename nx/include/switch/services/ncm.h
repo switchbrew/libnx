@@ -46,6 +46,13 @@ typedef struct {
 } NcmContentRecord;
 
 typedef struct {
+    u16 numExtraBytes;     ///< Size of optional struct that comes after this one.
+    u16 numContentRecords; ///< Number of NcmContentRecord entries after the extra bytes.
+    u16 numMetaRecords;    ///< Number of NcmMetaRecord entries that come after the NcmContentRecords.
+    u16 padding;           ///< Always zero.
+} NcmContentMetaRecordsHeader;
+
+typedef struct {
     NcmMetaRecord metaRecord;
     u64           baseTitleId;
 } NcmApplicationContentMetaKey;
@@ -66,11 +73,12 @@ Result ncmContentStorageGetSize(NcmContentStorage* cs, const NcmNcaId* ncaId, u6
 Result ncmContentStorageReadContentIdFile(NcmContentStorage* cs, const NcmNcaId* ncaId, u64 offset, void* outBuf, size_t bufSize);
 Result ncmContentStorageGetRightsIdFromContentId(NcmContentStorage* cs, const NcmNcaId* ncaId, NcmRightsId* rightsIdOut, u32* keyGenerationOut);
 
-Result ncmContentMetaDatabaseSet(NcmContentMetaDatabase* db, const NcmMetaRecord* record, u64 contentRecordSize, NcmContentRecord* contentRecords);
-Result ncmContentMetaDatabaseGet(NcmContentMetaDatabase* db, const NcmMetaRecord* record, u64 contentRecordSize, NcmContentRecord* contentRecordsOut, u64* sizeRead);
+Result ncmContentMetaDatabaseSet(NcmContentMetaDatabase* db, const NcmMetaRecord* record, u64 inDataSize, const NcmContentMetaRecordsHeader* srcRecordsData);
+Result ncmContentMetaDatabaseGet(NcmContentMetaDatabase* db, const NcmMetaRecord* record, u64 outDataSize, NcmContentMetaRecordsHeader* outRecordsData, u64* sizeRead);
 Result ncmContentMetaDatabaseRemove(NcmContentMetaDatabase* db, const NcmMetaRecord *record);
 Result ncmContentMetaDatabaseGetContentIdByType(NcmContentMetaDatabase* db, NcmContentType contentType, const NcmMetaRecord* record, NcmNcaId* out);
 Result ncmContentMetaDatabaseListContentInfo(NcmContentMetaDatabase* db, const NcmMetaRecord* record, u32 index, NcmContentRecord* contentRecordsOut, size_t contentRecordsBufSize, u32* numEntriesRead);
+Result ncmContentMetaDatabaseList(NcmContentMetaDatabase* db, u32 titleType, u64 titleIdExact, u64 titleIdLow, u64 titleIdHigh, NcmMetaRecord* metaRecordsOut, size_t metaRecordsBufSize, u32* numEntriesWritten, u32* numEntriesTotal);
 Result ncmContentMetaDatabaseGetLatestContentMetaKey(NcmContentMetaDatabase* db, u64 titleId, NcmMetaRecord* out);
 Result ncmContentMetaDatabaseListApplication(NcmContentMetaDatabase* db, u8 filter, NcmApplicationContentMetaKey* outBuf, size_t outBufSize, u32* numEntriesWritten, u32* numEntriesTotal);
 Result ncmContentMetaDatabaseHas(NcmContentMetaDatabase* db, const NcmMetaRecord* record, bool* out);
