@@ -199,6 +199,9 @@ void fsDirClose(FsDir* d);
 
 // IStorage
 Result fsStorageRead(FsStorage* s, u64 off, void* buf, size_t len);
+Result fsStorageWrite(FsStorage* s, u64 off, const void* buf, size_t len);
+Result fsStorageFlush(FsStorage* s);
+Result fsStorageSetSize(FsStorage* s, u64 sz);
 Result fsStorageGetSize(FsStorage* s, u64* out);
 void fsStorageClose(FsStorage* s);
 
