@@ -105,6 +105,7 @@ Result fsOpenBisFileSystem(FsFileSystem* out, u32 PartitionId, const char* strin
     IpcCommand c;
     ipcInitialize(&c);
     ipcAddSendStatic(&c, string, strlen(string) + 1, 0);
+    
     struct {
         u64 magic;
         u64 cmd_id;
