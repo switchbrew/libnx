@@ -104,7 +104,7 @@ Result fsOpenBisStorage(FsStorage* out, u32 PartitionId) {
 Result fsOpenBisFileSystem(FsFileSystem* out, u32 PartitionId, const char* string) {
     IpcCommand c;
     ipcInitialize(&c);
-    ipcAddSendStatic(&c, string, FS_MAX_PATH, 0);
+    ipcAddSendStatic(&c, string, strlen(string) + 1, 0);
     struct {
         u64 magic;
         u64 cmd_id;
