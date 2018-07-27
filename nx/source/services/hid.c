@@ -49,8 +49,9 @@ Result hidInitialize(void)
     u64 AppletResourceUserId;
 
     rc = appletGetAppletResourceUserId(&AppletResourceUserId);
+    // If this failed (for example because we're a sysmodule) AppletResourceUserId stays zero
     if (R_FAILED(rc))
-        return rc;
+        AppletResourceUserId = 0;
 
     rc = smGetService(&g_hidSrv, "hid");
     if (R_FAILED(rc))
@@ -481,7 +482,7 @@ Result hidSetNpadJoyAssignmentModeSingleByDefault(HidControllerID id) {
 
     rc = appletGetAppletResourceUserId(&AppletResourceUserId);
     if (R_FAILED(rc))
-        return rc;
+        AppletResourceUserId = 0;
 
     IpcCommand c;
     ipcInitialize(&c);
@@ -525,7 +526,7 @@ Result hidSetNpadJoyAssignmentModeDual(HidControllerID id) {
 
     rc = appletGetAppletResourceUserId(&AppletResourceUserId);
     if (R_FAILED(rc))
-        return rc;
+        AppletResourceUserId = 0;
 
     IpcCommand c;
     ipcInitialize(&c);
@@ -569,7 +570,7 @@ Result hidMergeSingleJoyAsDualJoy(HidControllerID id0, HidControllerID id1) {
 
     rc = appletGetAppletResourceUserId(&AppletResourceUserId);
     if (R_FAILED(rc))
-        return rc;
+        AppletResourceUserId = 0;
 
     IpcCommand c;
     ipcInitialize(&c);
@@ -720,7 +721,7 @@ Result hidSendVibrationValue(u32 *VibrationDeviceHandle, HidVibrationValue *Vibr
 
     rc = appletGetAppletResourceUserId(&AppletResourceUserId);
     if (R_FAILED(rc))
-        return rc;
+        AppletResourceUserId = 0;
 
     IpcCommand c;
     ipcInitialize(&c);
@@ -766,7 +767,7 @@ Result hidGetActualVibrationValue(u32 *VibrationDeviceHandle, HidVibrationValue 
 
     rc = appletGetAppletResourceUserId(&AppletResourceUserId);
     if (R_FAILED(rc))
-        return rc;
+        AppletResourceUserId = 0;
 
     IpcCommand c;
     ipcInitialize(&c);
@@ -881,7 +882,7 @@ Result hidSendVibrationValues(u32 *VibrationDeviceHandles, HidVibrationValue *Vi
 
     rc = appletGetAppletResourceUserId(&AppletResourceUserId);
     if (R_FAILED(rc))
-        return rc;
+        AppletResourceUserId = 0;
 
     IpcCommand c;
     ipcInitialize(&c);
