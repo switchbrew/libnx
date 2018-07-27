@@ -391,6 +391,85 @@ Result fsMount_SystemSaveData(FsFileSystem* out, u64 saveID) {
     return fsMountSystemSaveData(out, FsSaveDataSpaceId_NandSystem, &save);
 }
 
+Result fsOpenFileSystem(FsFileSystem* out, u64 titleId, FsFileSystemType fsType) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 fsType;
+        u64 titleId;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 0;
+    raw->fsType = fsType;
+    raw->titleId = titleId;
+
+    Result rc = serviceIpcDispatch(&g_fsSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            serviceCreate(&out->s, r.Handles[0]);
+        }
+    }
+
+    return rc;
+}
+
+Result fsOpenFileSystemWithId(FsFileSystem* out, u64 titleId, FsFileSystemType fsType, const char* contentPath) {
+    IpcCommand c;
+    ipcInitialize(&c);
+    ipcAddSendStatic(&c, contentPath, strlen(contentPath)+1, 0);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 fsType;
+        u64 titleId;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 8;
+    raw->fsType = fsType;
+    raw->titleId = titleId;
+
+    Result rc = serviceIpcDispatch(&g_fsSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            serviceCreate(&out->s, r.Handles[0]);
+        }
+    }
+
+    return rc;
+}
+
 // IFileSystem impl
 Result fsFsCreateFile(FsFileSystem* fs, const char* path, size_t size, int flags) {
     IpcCommand c;

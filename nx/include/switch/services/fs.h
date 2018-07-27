@@ -167,6 +167,20 @@ Result fsMount_SaveData(FsFileSystem* out, u64 titleID, u128 userID);
 /// WARNING: You can brick when writing to SystemSaveData, if the data is corrupted etc.
 Result fsMount_SystemSaveData(FsFileSystem* out, u64 saveID);
 
+typedef enum
+{
+    FsFileSystemType_Logo = 2,
+    FsFileSystemType_ContentControl = 3,
+    FsFileSystemType_ContentManual = 4,
+    FsFileSystemType_ContentMeta = 5,
+    FsFileSystemType_ContentData = 6,
+    FsFileSystemType_ApplicationPackage = 7
+} FsFileSystemType;
+
+/// Mount requested filesystem type from content file
+Result fsOpenFileSystem(FsFileSystem* out, u64 titleId, FsFileSystemType fsType); /// only on 1.0.0, only works with registered content
+Result fsOpenFileSystemWithId(FsFileSystem* out, u64 titleId, FsFileSystemType fsType, const char* contentPath); /// 2.0.0+, contentPath must be resolved manually
+
 // IFileSystem
 Result fsFsCreateFile(FsFileSystem* fs, const char* path, size_t size, int flags);
 Result fsFsDeleteFile(FsFileSystem* fs, const char* path);
