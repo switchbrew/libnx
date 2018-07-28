@@ -104,41 +104,41 @@ Result fsOpenBisStorage(FsStorage* out, u32 PartitionId) {
 Result fsOpenBisFileSystem(FsFileSystem* out, u32 PartitionId, const char* string) {
     IpcCommand c;
     ipcInitialize(&c);
-    
+
     char tmpstr[FS_MAX_PATH] = {0};
     strncpy(tmpstr, string, sizeof(tmpstr)-1);
     ipcAddSendStatic(&c, tmpstr, sizeof(tmpstr), 0);
-   
+
     struct {
         u64 magic;
         u64 cmd_id;
         u32 PartitionId;
     } *raw;
- 
+
     raw = ipcPrepareHeader(&c, sizeof(*raw));
- 
+
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 11;
     raw->PartitionId = PartitionId;
- 
+
     Result rc = serviceIpcDispatch(&g_fsSrv);
- 
+
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
         ipcParse(&r);
- 
+
         struct {
             u64 magic;
             u64 result;
         } *resp = r.Raw;
- 
+
         rc = resp->result;
- 
+
         if (R_SUCCEEDED(rc)) {
             serviceCreate(&out->s, r.Handles[0]);
         }
     }
- 
+
     return rc;
 }
 
