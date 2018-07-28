@@ -1,5 +1,16 @@
 # Changelog
 
+## Version 1.3.1
+
+* **Fixed regression in cwd handling**.
+* Added fs commands: fsOpenBisStorage, fsOpenBisFilesystem, fsOpenFileSystem(WithId), fsStorageWrite/Flush/GetSize/SetSize, fsFsCleanDirectoryRecursively.
+* Added ncm commands: ncmContentMetaDatabaseList/DisableForcibly, ncmContentStorageXYZ family of functions.
+* HID service now works in sysmodules.
+* Fixed errors in ncmContentMetaDatabaseListApplication and ncmContentMetaDatabaseSet/Get.
+* Fixed data races in kernel version detection functions.
+* Fixed return-from-main to honor atexit handlers.
+* Further improvements to overall system stability and other minor adjustments to enhance the user experience.
+
 ## Version 1.3.0
 
 #### system
