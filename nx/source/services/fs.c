@@ -431,9 +431,8 @@ Result fsOpenFileSystem(FsFileSystem* out, u64 titleId, FsFileSystemType fsType)
 }
 
 Result fsOpenFileSystemWithId(FsFileSystem* out, u64 titleId, FsFileSystemType fsType, const char* contentPath) {
-    char sendStr[FS_MAX_PATH];
+    char sendStr[FS_MAX_PATH] = {0};
     strncpy(sendStr, contentPath, sizeof(sendStr)-1);
-    sendStr[sizeof(sendStr)-1] = 0;
 
     IpcCommand c;
     ipcInitialize(&c);
