@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 1.3.2
+
+* **Fixed critical IPC bug in fatalWithType that rendered the type parameter ignored (necessary for error report creation prevention)**.
+
 ## Version 1.3.1
 
 * **Fixed regression in cwd handling**.
