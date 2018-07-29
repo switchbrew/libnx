@@ -37,8 +37,9 @@ void fatalWithType(Result err, FatalType type) {
             struct {
                 u64 magic;
                 u64 cmd_id;
-                u64 result;
-                u64 type;
+                u32 result;
+                u32 type;
+                u64 pid_placeholder;
             } *raw;
 
             raw = ipcPrepareHeader(&c, sizeof(*raw));
@@ -47,6 +48,7 @@ void fatalWithType(Result err, FatalType type) {
             raw->cmd_id = 1;
             raw->result = err;
             raw->type = type;
+            raw->pid_placeholder = 0; // Overwritten by fatal with PID descriptor.
 
             ipcDispatch(srv);
         }
