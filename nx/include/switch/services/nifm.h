@@ -12,7 +12,18 @@
 
 #include "../services/sm.h"
 
+/// nifm internet connection status.
+typedef struct NifmInternetConnectionStatus NifmInternetConnectionStatus;
+
+struct NifmInternetConnectionStatus
+{
+    bool wirelessCommunicationEnabled;
+    bool ethernetCommunicationEnabled;
+};
+
+
 Result nifmInitialize(void);
 void nifmExit(void);
 
 Result nifmGetCurrentIpAddress(u32* out);
+Result nifmGetInternetConnectionStatus(NifmInternetConnectionStatus* out);
