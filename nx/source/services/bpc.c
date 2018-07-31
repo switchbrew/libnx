@@ -15,8 +15,8 @@ Result bpcInitialize(void)
     if (serviceIsActive(&g_bpcSrv)) return 0;
 
     Result rc = 0;
-
-    rc = smGetService(&g_bpcSrv, "bpc");
+    if(!kernelAbove100()) rc = smGetService(&g_bpcSrv, "bpc:c");
+    else rc = smGetService(&g_bpcSrv, "bpc");
 
     return rc;
 }
