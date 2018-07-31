@@ -21,7 +21,7 @@ Result bpcInitialize(void)
     return rc;
 }
 
-void apmExit(void)
+void bpcExit(void)
 {
     if (atomicDecrement64(&g_refCnt) == 0)
     {
