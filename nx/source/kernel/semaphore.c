@@ -33,5 +33,6 @@ bool semaphoreTryWait(Semaphore *s) {
         s->count--;
         success = true;
     }
+    mutexUnlock(&s->mutex);
     return success;
 }
