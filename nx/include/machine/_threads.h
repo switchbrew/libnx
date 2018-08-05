@@ -2,6 +2,7 @@
 #include "../switch/types.h"
 #include "../switch/result.h"
 #include "../switch/kernel/mutex.h"
+#include "../switch/kernel/condvar.h"
 #include "../switch/kernel/thread.h"
 
 #define TSS_DTOR_ITERATIONS 1
@@ -11,7 +12,7 @@ typedef struct {
     int rc;
 } __thrd_t;
 
-typedef u32       cnd_t;
+typedef CondVar   cnd_t;
 typedef __thrd_t* thrd_t;
 typedef u32       tss_t;
 

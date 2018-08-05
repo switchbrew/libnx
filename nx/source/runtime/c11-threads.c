@@ -32,7 +32,7 @@ int cnd_broadcast(cnd_t *cond)
     if (!cond)
         return thrd_error;
 
-    Result rc = svcSignalProcessWideKey(cond, -1);
+    Result rc = condvarWakeAll(cond);
     return R_SUCCEEDED(rc) ? thrd_success : thrd_error;
 }
 
@@ -46,7 +46,7 @@ int cnd_init(cnd_t *cond)
     if (!cond)
         return thrd_error;
 
-    *cond = 0;
+    condvarInit(cond);
     return thrd_success;
 }
 
@@ -55,7 +55,7 @@ int cnd_signal(cnd_t *cond)
     if (!cond)
         return thrd_error;
 
-    Result rc = svcSignalProcessWideKey(cond, 1);
+    Result rc = condvarWakeOne(cond);
     return R_SUCCEEDED(rc) ? thrd_success : thrd_error;
 }
 
@@ -64,13 +64,7 @@ static int __cnd_timedwait(cnd_t *__restrict cond, mtx_t *__restrict mtx, u64 ti
     if (!cond || !mtx || mtx->type != mtx_plain)
         return thrd_error;
 
-    Result rc = svcWaitProcessWideKeyAtomic((u32*)&mtx->mutex, cond, getThreadVars()->handle, timeout);
-
-    // On timeout, we need to acquire it manually.
-    if (rc == 0xEA01) {
-        mutexLock(&mtx->mutex);
-        return thrd_busy;
-    }
+    Result rc = condvarWaitTimeout(cond, &mtx->mutex, timeout);
 
     return R_SUCCEEDED(rc) ? thrd_success : thrd_error;
 }
@@ -285,8 +279,7 @@ int thrd_sleep(const struct timespec *duration, struct timespec *remaining)
 
 void thrd_yield(void)
 {
-    // This is trash.
-    svcSleepThread(10000);
+    svcSleepThread(-1);
 }
 
 /*
