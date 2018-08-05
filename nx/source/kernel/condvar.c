@@ -5,23 +5,14 @@
 #include "kernel/condvar.h"
 #include "../internal.h"
 
-void condvarInit(CondVar* c, Mutex* m) {
-    c->tag = 0;
-    c->mutex = m;
-}
-
-Result condvarWaitTimeout(CondVar* c, u64 timeout) {
+Result condvarWaitTimeout(CondVar* c, Mutex* m, u64 timeout) {
     Result rc;
 
-    rc = svcWaitProcessWideKeyAtomic((u32*) c->mutex, &c->tag, getThreadVars()->handle, timeout);
+    rc = svcWaitProcessWideKeyAtomic((u32*)m, c, getThreadVars()->handle, timeout);
 
     // On timeout, we need to acquire it manually.
     if (rc == 0xEA01)
-        mutexLock(c->mutex);
+        mutexLock(m);
 
     return rc;
-}
-
-Result condvarWake(CondVar* c, int num) {
-    return svcSignalProcessWideKey((u32*) &c->tag, num);
 }

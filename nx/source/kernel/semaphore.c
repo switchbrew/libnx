@@ -5,7 +5,7 @@
 void semaphoreInit(Semaphore *s, u64 initial_count) {
     s->count = initial_count;
     mutexInit(&s->mutex);
-    condvarInit(&s->condvar, &s->mutex);
+    condvarInit(&s->condvar);
 }
 
 void semaphoreSignal(Semaphore *s) {
@@ -19,7 +19,7 @@ void semaphoreWait(Semaphore *s) {
     mutexLock(&s->mutex);
     // Wait until signalled.
     while (!s->count) {
-        condvarWait(&s->condvar);
+        condvarWait(&s->condvar, &s->mutex);
     }
     s->count--;
     mutexUnlock(&s->mutex);

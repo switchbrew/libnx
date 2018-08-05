@@ -12,9 +12,9 @@
 /// Semaphore structure.
 typedef struct Semaphore
 {
-    CondVar condvar; ///< Conditional Variable Object.
-    Mutex   mutex;   ///< Mutex Object.
-    u64     count;   ///< Internal Counter.
+    CondVar condvar; ///< Condition variable object.
+    Mutex   mutex;   ///< Mutex object.
+    u64     count;   ///< Internal counter.
 } Semaphore;
 
 /**
