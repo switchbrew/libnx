@@ -88,6 +88,20 @@ SVC_BEGIN svcSetThreadPriority
 	ret
 SVC_END
 
+SVC_BEGIN svcGetThreadCoreMask
+	stp x0, x1, [sp, #-16]!
+	svc 0xE
+	ldp x3, x4, [sp], #16
+	str w1, [x3]
+	str w2, [x4]
+	ret
+SVC_END
+
+SVC_BEGIN svcSetThreadCoreMask
+	svc 0xF
+	ret
+SVC_END
+
 SVC_BEGIN svcGetCurrentProcessorNumber
 	svc 0x10
 	ret

@@ -261,6 +261,20 @@ Result svcGetThreadPriority(u32* priority, Handle handle);
 Result svcSetThreadPriority(Handle handle, u32 priority);
 
 /**
+ * @brief Gets a thread's core mask.
+ * @return Result code.
+ * @note Syscall number 0x0E.
+ */
+Result svcGetThreadCoreMask(s32* preferred_core, u32* affinity_mask, Handle handle);
+
+/**
+ * @brief Sets a thread's core mask.
+ * @return Result code.
+ * @note Syscall number 0x0F.
+ */
+Result svcSetThreadCoreMask(Handle handle, s32 preferred_core, u32 affinity_mask);
+
+/**
  * @brief Gets the current processor's number.
  * @return The current processor's number.
  * @note Syscall number 0x10.
@@ -516,6 +530,7 @@ Result svcGetInfo(u64* out, u64 id0, Handle handle, u64 id1);
  * @brief Maps new heap memory at the desired address. [3.0.0+]
  * @return Result code.
  * @note Syscall number 0x2A.
+ * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
  */
 Result svcMapPhysicalMemory(void *address, u64 size);
 
@@ -523,6 +538,7 @@ Result svcMapPhysicalMemory(void *address, u64 size);
  * @brief Undoes the effects of \ref svcMapPhysicalMemory. [3.0.0+]
  * @return Result code.
  * @note Syscall number 0x2B.
+ * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
  */
 Result svcUnmapPhysicalMemory(void *address, u64 size);
 
@@ -548,6 +564,7 @@ Result svcSetThreadActivity(Handle thread, bool paused);
  * @brief Gets the maximum value a LimitableResource can have, for a Resource Limit handle.
  * @return Result code.
  * @note Syscall number 0x30.
+ * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
  */
 Result svcGetResourceLimitLimitValue(u64 *out, Handle reslimit_h, LimitableResource which);
 
@@ -555,6 +572,7 @@ Result svcGetResourceLimitLimitValue(u64 *out, Handle reslimit_h, LimitableResou
  * @brief Gets the maximum value a LimitableResource can have, for a Resource Limit handle.
  * @return Result code.
  * @note Syscall number 0x31.
+ * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
  */
 Result svcGetResourceLimitCurrentValue(u64 *out, Handle reslimit_h, LimitableResource which);
 
@@ -604,6 +622,7 @@ Result svcReplyAndReceiveWithUserBuffer(s32* index, void* usrBuffer, u64 size, c
  * @brief Creates a system event.
  * @return Result code.
  * @note Syscall number 0x45.
+ * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
  */
 Result svcCreateEvent(Handle* server_handle, Handle* client_handle);
 
