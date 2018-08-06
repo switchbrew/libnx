@@ -192,6 +192,11 @@ int thrd_create(thrd_t *thr, thrd_start_t func, void *arg)
     Result rc;
     *thr = NULL;
 
+    u64 core_mask = 0;
+    rc = svcGetInfo(&core_mask, 0, CUR_PROCESS_HANDLE, 0);
+    if (R_FAILED(rc))
+        return thrd_error;
+
     __thrd_t* t = (__thrd_t*)malloc(sizeof(__thrd_t));
     if (!t)
         return thrd_nomem;
@@ -203,18 +208,17 @@ int thrd_create(thrd_t *thr, thrd_start_t func, void *arg)
     mtx_init(&info.mutex, mtx_plain);
     cnd_init(&info.cond);
 
-    rc = threadCreate(&t->thr, __thrd_entry, &info, 128*1024, 0x2C, -2);
-    if (R_FAILED(rc)) {
-        free(t);
-        return thrd_error;
-    }
+    rc = threadCreate(&t->thr, __thrd_entry, &info, 128*1024, 0x3B, -2);
+    if (R_FAILED(rc))
+        goto _error1;
+
+    rc = svcSetThreadCoreMask(t->thr.handle, -1, core_mask);
+    if (R_FAILED(rc))
+        goto _error2;
 
     rc = threadStart(&t->thr);
-    if (R_FAILED(rc)) {
-        threadClose(&t->thr);
-        free(t);
-        return thrd_error;
-    }
+    if (R_FAILED(rc))
+        goto _error2;
 
     mtx_lock(&info.mutex);
     while (!info.thread_started)
@@ -223,6 +227,12 @@ int thrd_create(thrd_t *thr, thrd_start_t func, void *arg)
 
     *thr = t;
     return thrd_success;
+
+_error2:
+    threadClose(&t->thr);
+_error1:
+    free(t);
+    return thrd_error;
 }
 
 thrd_t thrd_current(void)
@@ -256,7 +266,9 @@ int thrd_join(thrd_t thr, int *res)
     if (R_FAILED(rc))
         return thrd_error;
 
-    *res = thr->rc;
+    if (res)
+        *res = thr->rc;
+
     rc = threadClose(&thr->thr);
     free(thr);
 
