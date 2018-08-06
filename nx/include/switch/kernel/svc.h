@@ -544,19 +544,6 @@ Result svcUnmapPhysicalMemory(void *address, u64 size);
 
 ///@}
 
-///@name Process and thread management
-///@{
-
-/**
- * @brief Configures the pause/unpause status of a thread.
- * @return Result code.
- * @note Syscall number 0x32.
- * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
- */
-Result svcSetThreadActivity(Handle thread, bool paused);
-
-///@}
-
 ///@name Resource Limit Management
 ///@{
 
@@ -575,6 +562,18 @@ Result svcGetResourceLimitLimitValue(u64 *out, Handle reslimit_h, LimitableResou
  * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
  */
 Result svcGetResourceLimitCurrentValue(u64 *out, Handle reslimit_h, LimitableResource which);
+
+///@}
+
+///@name Process and thread management
+///@{
+
+/**
+ * @brief Configures the pause/unpause status of a thread.
+ * @return Result code.
+ * @note Syscall number 0x32.
+ */
+Result svcSetThreadActivity(Handle thread, bool paused);
 
 ///@}
 
