@@ -180,6 +180,7 @@ static int _socketParseBsdResult(struct _reent *r, int ret) {
             switch(g_bsdResult) {
                 case 0xD201:
                     errno_ = ENFILE;
+                    break;
                 case 0xD401:
                     errno_ = EFAULT;
                     break;
