@@ -932,7 +932,7 @@ Result hidInitializeVibrationDevices(u32 *VibrationDeviceHandles, size_t total_h
     if (tmp_id == CONTROLLER_HANDHELD)
         tmp_id = 0x20;
 
-    if (tmp_type & LAYOUT_PROCONTROLLER) {
+    if (tmp_type & TYPE_PROCONTROLLER) {
         tmp_type = 3;
     }
     else if (tmp_type & TYPE_HANDHELD) {
