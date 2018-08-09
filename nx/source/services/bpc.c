@@ -11,11 +11,13 @@ static u64 g_refCnt;
 
 Result bpcInitialize(void)
 {
+    Result rc = 0;
     atomicIncrement64(&g_refCnt);
 
-    if (serviceIsActive(&g_bpcSrv)) return 0;
+    if (serviceIsActive(&g_bpcSrv))
+        return 0;
 
-    Result rc = 0;
+
     rc = smGetService(&g_bpcSrv, kernelAbove200() ? "bpc" : "bpc:c");
 
     return rc;
@@ -24,9 +26,7 @@ Result bpcInitialize(void)
 void bpcExit(void)
 {
     if (atomicDecrement64(&g_refCnt) == 0)
-    {
         serviceClose(&g_bpcSrv);
-    }
 }
 
 Result bpcShutdownSystem(void)
@@ -37,7 +37,7 @@ Result bpcShutdownSystem(void)
     {
         u64 magic;
         u64 cmd_id;
-    } * raw;
+    } *raw;
     raw = ipcPrepareHeader(&c, sizeof(*raw));
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 0;
@@ -65,7 +65,7 @@ Result bpcRebootSystem(void)
     {
         u64 magic;
         u64 cmd_id;
-    } * raw;
+    } *raw;
     raw = ipcPrepareHeader(&c, sizeof(*raw));
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 1;
