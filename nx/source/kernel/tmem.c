@@ -29,6 +29,11 @@ Result tmemCreate(TransferMemory* t, size_t size, Permission perm)
         rc = svcCreateTransferMemory(&t->handle, t->src_addr, size, perm);
     }
 
+    if (R_FAILED(rc)) {
+        free(t->src_addr);
+        t->src_addr = NULL;
+    }
+
     return rc;
 }
 
