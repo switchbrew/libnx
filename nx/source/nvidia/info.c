@@ -1,4 +1,12 @@
-#include <switch.h>
+#include <malloc.h>
+#include "types.h"
+#include "result.h"
+#include "arm/atomics.h"
+#include "kernel/svc.h"
+#include "services/nv.h"
+#include "nvidia/ioctl.h"
+#include "nvidia/buffer.h"
+#include "nvidia/info.h"
 
 static u32 g_ctrlgpu_fd = -1;
 static u64 g_refCnt;
