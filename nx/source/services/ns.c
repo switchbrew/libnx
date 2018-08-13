@@ -92,6 +92,45 @@ static Result _nsGetInterface(Service* srv_out, u64 cmd_id) {
     return rc;
 }
 
+Result nsListApplicationRecord(NsApplicationRecord* buffer, size_t size, int* out_entrycount)
+{
+    IpcCommand c;
+    ipcInitialize(&c);
+    
+    ipcAddRecvBuffer(&c, buffer, size, 0);
+    
+    struct
+    {
+        u64 magic;
+        u64 cmd_id;
+        u64 unk;
+    } *raw;
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+    
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 0;
+    raw->unk = 0;
+    
+    Result rc = serviceIpcDispatch(&g_nsAppManSrv);
+    
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u32 entry_count;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+        
+        if (R_SUCCEEDED(rc) && out_entrycount) *out_entrycount = resp->entry_count;
+    }
+
+    return rc;
+}
+
 Result nsGetApplicationControlData(u8 flag, u64 titleID, NsApplicationControlData* buffer, size_t size, size_t* actual_size) {
     IpcCommand c;
     ipcInitialize(&c);
