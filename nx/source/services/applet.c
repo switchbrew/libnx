@@ -169,6 +169,7 @@ Result appletInitialize(void)
     {
         do {
             svcWaitSynchronizationSingle(g_appletMessageEventHandle, U64_MAX);
+            //When applet was previously initialized in the context of the current process for AppletType_Application, there's exactly 1 issue with initializing again: this loop hangs since there's no message available. If a timeout is added to the above waitsync where the loop is exited on timeout when _appletGetCurrentFocusState output is 1, initialization works fine.
 
             u32 msg;
             rc = _appletReceiveMessage(&msg);
