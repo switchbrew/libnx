@@ -179,8 +179,8 @@ typedef enum
 } FsFileSystemType;
 
 /// Mount requested filesystem type from content file
-Result fsOpenFileSystem(FsFileSystem* out, FsFileSystemType fsType, const char* contentPath); /// only on 1.0.0
-Result fsOpenFileSystemWithId(FsFileSystem* out, u64 titleId, FsFileSystemType fsType, const char* contentPath); /// 2.0.0+
+Result fsOpenFileSystem(FsFileSystem* out, FsFileSystemType fsType, const char* contentPath);
+Result fsOpenFileSystemWithId(FsFileSystem* out, u64 titleId, FsFileSystemType fsType, const char* contentPath);
 
 // IFileSystem
 Result fsFsCreateFile(FsFileSystem* fs, const char* path, size_t size, int flags);
