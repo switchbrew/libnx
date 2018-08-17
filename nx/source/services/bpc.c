@@ -33,8 +33,7 @@ Result bpcShutdownSystem(void)
 {
     IpcCommand c;
     ipcInitialize(&c);
-    struct
-    {
+    struct {
         u64 magic;
         u64 cmd_id;
     } *raw;
@@ -43,15 +42,16 @@ Result bpcShutdownSystem(void)
     raw->cmd_id = 0;
     Result rc = 0;
     rc = serviceIpcDispatch(&g_bpcSrv);
-    if(R_SUCCEEDED(rc))
-    {
+    
+    if(R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
         ipcParse(&r);
-        struct
-        {
+        
+        struct {
             u64 magic;
             u64 result;
         } *resp = r.Raw;
+        
         rc = resp->result;
     }
     return rc;
@@ -61,25 +61,26 @@ Result bpcRebootSystem(void)
 {
     IpcCommand c;
     ipcInitialize(&c);
-    struct
-    {
+    struct {
         u64 magic;
         u64 cmd_id;
     } *raw;
+    
     raw = ipcPrepareHeader(&c, sizeof(*raw));
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 1;
     Result rc = 0;
+    
     rc = serviceIpcDispatch(&g_bpcSrv);
-    if(R_SUCCEEDED(rc))
-    {
+    if(R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
         ipcParse(&r);
-        struct
-        {
+        
+        struct {
             u64 magic;
             u64 result;
         } *resp = r.Raw;
+        
         rc = resp->result;
     }
     return rc;
