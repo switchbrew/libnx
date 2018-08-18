@@ -12,6 +12,7 @@ static u64 g_refCnt;
 Result bpcInitialize(void)
 {
     Result rc = 0;
+    
     atomicIncrement64(&g_refCnt);
 
     if (serviceIsActive(&g_bpcSrv))
@@ -40,6 +41,7 @@ Result bpcShutdownSystem(void)
     } *raw;
     
     raw = ipcPrepareHeader(&c, sizeof(*raw));
+    
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 0;
     
