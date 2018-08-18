@@ -21,6 +21,9 @@ static u64 g_refCnt;
 // From Get*Functions.
 static Service g_appletIFunctions;
 
+static Service g_appletIGlobalStateController;
+static Service g_appletIApplicationCreator;
+
 static Service g_appletILibraryAppletSelfAccessor;
 static Service g_appletIProcessWindingController;
 
@@ -125,7 +128,14 @@ Result appletInitialize(void)
     if (R_SUCCEEDED(rc) && __nx_applet_type != AppletType_LibraryApplet)
         rc = _appletGetSession(&g_appletProxySession, &g_appletIFunctions, 20);
 
-    // TODO: Add non-{Application/LibraryApplet} type-specific session init here.
+    if (R_SUCCEEDED(rc) && __nx_applet_type == AppletType_SystemApplet) {
+        //GetGlobalStateController
+        rc = _appletGetSession(&g_appletProxySession, &g_appletIGlobalStateController, 21);
+
+        //GetApplicationCreator
+        if (R_SUCCEEDED(rc))
+            rc = _appletGetSession(&g_appletProxySession, &g_appletIApplicationCreator, 22);
+    }
 
     if (R_SUCCEEDED(rc) && __nx_applet_type == AppletType_LibraryApplet) {
         //GetLibraryAppletSelfAccessor
@@ -259,6 +269,11 @@ void appletExit(void)
         serviceClose(&g_appletISelfController);
         serviceClose(&g_appletICommonStateGetter);
         serviceClose(&g_appletILibraryAppletCreator);
+
+        if (__nx_applet_type == AppletType_SystemApplet) {
+            serviceClose(&g_appletIApplicationCreator);
+            serviceClose(&g_appletIGlobalStateController);
+        }
 
         if (__nx_applet_type != AppletType_LibraryApplet)
             serviceClose(&g_appletIFunctions);
