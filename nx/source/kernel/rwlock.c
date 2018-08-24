@@ -2,6 +2,12 @@
 #include "kernel/mutex.h"
 #include "kernel/rwlock.h"
 
+void rwlockInit(RwLock* r) {
+    rmutexInit(&r->r);
+    rmutexInit(&r->g);
+    r->b = 0;
+}
+
 void rwlockReadLock(RwLock* r) {
     rmutexLock(&r->r);
 

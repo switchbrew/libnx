@@ -15,6 +15,12 @@ typedef struct {
 } RwLock;
 
 /**
+ * @brief Initializes the read/write lock.
+ * @param r Read/write lock object.
+ */
+void rwlockInit(RwLock* r);
+
+/**
  * @brief Locks the read/write lock for reading.
  * @param r Read/write lock object.
  */
