@@ -43,7 +43,7 @@ void barrierRegister(Barrier* b, Thread* thread);
 void barrierUnregister(Barrier* b, Thread* thread);
 
 /**
- * @brief Waits until all processes registered in the barrier call this function
+ * @brief Waits until all processes registered in the barrier call this function, if a not registered thread calls this function, it returns without waiting
  * @param b Barrier object
  */
 void barrierWait(Barrier* b);
