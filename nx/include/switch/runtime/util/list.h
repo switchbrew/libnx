@@ -5,13 +5,14 @@
  * @copyright libnx Authors
  */
 #pragma once
-#include "../types.h"
-#include "../kernel/condvar.h"
-#include "../kernel/mutex.h"
+#include "../../types.h"
+#include "../../kernel/condvar.h"
+#include "../../kernel/rwlock.h"
+#include "../../kernel/thread.h"
 
 typedef struct node {
     void* item;
-    Node* next;
+    struct node* next;
 } Node;
 
 typedef struct list {

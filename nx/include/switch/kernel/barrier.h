@@ -5,9 +5,9 @@
  * @copyright libnx Authors
  */
 #pragma once
-#include "../types.h"
 #include "condvar.h"
 #include "mutex.h"
+#include "thread.h"
 #include "../runtime/util/list.h"
 
 typedef struct barrier {
