@@ -1,4 +1,5 @@
 #include "kernel/barrier.h"
+#include "../internal.h"
 
 void barrierInit(Barrier* b) {
     mutexInit(&b->mutex);
@@ -26,7 +27,7 @@ void barrierUnregister(Barrier* b, Thread* thread) {
     listDelete(&b->threads_registered, (void*)thread);
 }
 
-void barrierWait(Barrier* b, Thread* thread) {
+void barrierWait(Barrier* b) {
     Thread* thread = getThreadVars()->thread_ptr;
     if(!listIsInserted(&b->threads_registered, (void*)thread)) {
         return;

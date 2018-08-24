@@ -117,7 +117,7 @@ void* listPeekFront(List* l);
  * @param item A pointer to something you want to insert
  */
 static inline void listPushBack(List* l, void* item) {
-    listInsertLast(List* l, void* item);
+    listInsertLast(l, item);
 }
 
 /**
