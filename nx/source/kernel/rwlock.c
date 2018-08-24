@@ -3,7 +3,7 @@
 #include "kernel/rwlock.h"
 
 void rwlockInit(RwLock* r) {
-    rmutexInit(r->b);
+    rmutexInit(r->r);
     rmutexInit(r->g);
     r->b = 0;
 }
