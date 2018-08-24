@@ -81,6 +81,22 @@ void listDelete(List* l, void* item) {
     rwlockWriteUnlock(&l->mutex);
 }
 
+void listDeleteAtPos(List* l, u32 pos) {
+    rwlockReadLock(&l->mutex);
+    if(pos >= l->num_nodes || pos < 0) {
+        return;
+    }
+    Node* aux = l->header;
+    for(int i = pos; i > 0; i++) {
+        aux = aux->next;
+    }
+    Node* delete = aux->next;
+    aux->next = delete->next;
+    free(delete);
+    l->num_nodes--;
+    rwlockReadUnlock(&l->mutex);
+}
+
 bool listIsInserted(List* l, void* item) {
     rwlockReadLock(&l->mutex);
     Node* aux = l->header;
@@ -109,6 +125,48 @@ void* listGetItem(List* l, u32 pos) {
         aux = aux->next;
     }
     void* result = aux->item;
+    rwlockReadUnlock(&l->mutex);
+    return result;
+}
+
+void* listPopFront(List* l) {
+    rwlockReadLock(&l->mutex);
+    if(l->num_nodes == 0) {
+        return NULL;
+    }
+    void* result = listGetItem(l, 0);
+    listDeleteAtPos(l, 0);
+    rwlockReadUnlock(&l->mutex);
+    return result;
+}
+
+void* listPeekFront(List* l) {
+    rwlockReadLock(&l->mutex);
+    if(l->num_nodes == 0) {
+        return NULL;
+    }
+    void* result = listGetItem(l, 0);
+    rwlockReadUnlock(&l->mutex);
+    return result;
+}
+
+void* listPopBack(List* l) {
+    rwlockReadLock(&l->mutex);
+    if(l->num_nodes == 0) {
+        return NULL;
+    }
+    void* result = listGetItem(l, l->num_nodes-1);
+    listDeleteAtPos(l, l->num_nodes-1);
+    rwlockReadUnlock(&l->mutex);
+    return result;
+}
+
+void* listPeekBack(List* l) {
+    rwlockReadLock(&l->mutex);
+    if(l->num_nodes == 0) {
+        return NULL;
+    }
+    void* result = listGetItem(l, l->num_nodes-1);
     rwlockReadUnlock(&l->mutex);
     return result;
 }
