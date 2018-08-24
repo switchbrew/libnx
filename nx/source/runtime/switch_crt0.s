@@ -3,7 +3,7 @@
 
 _start:
     b startup
-    .word 0
+    .word __nx_mod0 - _start
     .ascii "HOMEBREW"
 
 .org _start+0x80
@@ -69,3 +69,13 @@ __nx_exit:
 
     // jump back to loader
     br   x1
+
+.global __nx_mod0
+__nx_mod0:
+    .ascii "MOD0"
+    .word  _DYNAMIC             - __nx_mod0
+    .word  __bss_start__        - __nx_mod0
+    .word  __bss_end__          - __nx_mod0
+    .word  __eh_frame_hdr_start - __nx_mod0
+    .word  __eh_frame_hdr_end   - __nx_mod0
+    .word  0 // "offset to runtime-generated module object" (??)
