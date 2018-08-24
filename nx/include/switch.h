@@ -45,6 +45,7 @@ extern "C" {
 #include "switch/services/audin.h"
 #include "switch/services/audout.h"
 #include "switch/services/csrng.h"
+#include "switch/services/bpc.h"
 //#include "switch/services/bsd.h" Use switch/runtime/devices/socket.h instead
 #include "switch/services/fatal.h"
 #include "switch/services/time.h"
