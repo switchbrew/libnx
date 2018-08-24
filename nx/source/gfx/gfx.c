@@ -141,7 +141,7 @@ static Result _gfxDequeueBuffer(void) {
     //Only run nvgfxEventWait when the fence is valid and the id is not NO_FENCE.
     if (R_SUCCEEDED(rc) && tmp_fence.is_valid && tmp_fence.nv_fences[0].id!=0xffffffff) rc = nvgfxEventWait(tmp_fence.nv_fences[0].id, tmp_fence.nv_fences[0].value, -1);
 
-    if (R_SUCCEEDED(rc)) g_gfxCurrentBuffer = (g_gfxCurrentBuffer + 1) & (g_nvgfx_totalframebufs-1);
+    g_gfxCurrentBuffer = (g_gfxCurrentBuffer + 1) & (g_nvgfx_totalframebufs-1);
 
     //if (R_SUCCEEDED(rc)) rc = nvgfxSubmitGpfifo();
 
@@ -514,7 +514,7 @@ void gfxSwapBuffers(void) {
 
     rc = _gfxDequeueBuffer();
 
-    if (R_FAILED(rc)) fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadGfxDequeueBuffer));
+    //if (R_FAILED(rc)) fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadGfxDequeueBuffer));
 }
 
 u8* gfxGetFramebuffer(u32* width, u32* height) {
