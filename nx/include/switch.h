@@ -28,6 +28,7 @@ extern "C" {
 #include "switch/kernel/condvar.h"
 #include "switch/kernel/thread.h"
 #include "switch/kernel/semaphore.h"
+#include "switch/kernel/barrier.h"
 #include "switch/kernel/virtmem.h"
 #include "switch/kernel/detect.h"
 #include "switch/kernel/random.h"
@@ -75,6 +76,7 @@ extern "C" {
 #include "switch/runtime/nxlink.h"
 
 #include "switch/runtime/util/utf.h"
+#include "switch/runtime/util/list.h"
 
 #include "switch/runtime/devices/console.h"
 #include "switch/runtime/devices/usb_comms.h"

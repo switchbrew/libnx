@@ -2,7 +2,7 @@
 #include <stdlib.h>
 
 void listInit(List* l) {
-    rwlockWriteLock(l->mutex);
+    rwlockWriteLock(&l->mutex);
     if(l->isInited) {
         return;
     }
@@ -14,11 +14,11 @@ void listInit(List* l) {
     l->last = header;
     l->num_nodes = 0;
     l->isInited = true;
-    rwlockWriteUnlock(l->mutex);
+    rwlockWriteUnlock(&l->mutex);
 }
 
 void listFree(List* l) {
-    rwlockWriteLock(l->mutex);
+    rwlockWriteLock(&l->mutex);
     if(!l->isInited) {
         return;
     }
@@ -31,20 +31,20 @@ void listFree(List* l) {
     l->last = NULL;
     l->num_nodes = 0;
     l->isInited = false;
-    rwlockWriteUnlock(l->mutex);
+    rwlockWriteUnlock(&l->mutex);
 }
 
 void listInsert(List* l, void* item, u32 pos) {
-    rwlockReadLock(l->mutex);
+    rwlockReadLock(&l->mutex);
     if(!l->isInited) {
         return;
     }
     if(pos > l->num_nodes || pos < 0) {
         return;
     }
-    rwlockReadUnlock(l->mutex);
+    rwlockReadUnlock(&l->mutex);
 
-    rwlockWriteLock(l->mutex);
+    rwlockWriteLock(&l->mutex);
     Node* aux = l->header;
     for(u32 i = pos; i > 0; i--) {
         aux = aux->next;
@@ -56,11 +56,11 @@ void listInsert(List* l, void* item, u32 pos) {
     aux->next = new;
 
     l->num_nodes++;
-    rwlockWriteUnlock(l->mutex);
+    rwlockWriteUnlock(&l->mutex);
 }
 
 void listInsertLast(List* l, void* item) {
-    rwlockWriteLock(l->mutex);
+    rwlockWriteLock(&l->mutex);
     if(!l->isInited) {
         return;
     }
@@ -70,11 +70,11 @@ void listInsertLast(List* l, void* item) {
     
     l->last->next = new;
     l->last = new;
-    rwlockWriteUnlock(l->mutex);
+    rwlockWriteUnlock(&l->mutex);
 }
 
 void listDelete(List* l, void* item) {
-    rwlockWriteLock(l->mutex);
+    rwlockWriteLock(&l->mutex);
     if(!l->isInited) {
         return;
     }
@@ -91,11 +91,11 @@ void listDelete(List* l, void* item) {
         l->num_nodes--;
     } 
 
-    rwlockWriteUnlock(l->mutex);
+    rwlockWriteUnlock(&l->mutex);
 }
 
 bool listIsInserted(List* l, void* item) {
-    rwlockReadLock(l->mutex);
+    rwlockReadLock(&l->mutex);
     if(!l->isInited) {
         return;
     }
@@ -104,22 +104,22 @@ bool listIsInserted(List* l, void* item) {
         aux = aux->next;
     }
     bool result = aux == NULL ? false : true;
-    rwlockReadUnlock(l->mutex);
+    rwlockReadUnlock(&l->mutex);
     return result;
 }
 
 u32 listGetNumNodes(List* l) {
-    rwlockReadLock(l->mutex);
+    rwlockReadLock(&l->mutex);
     if(!l->isInited) {
         return;
     }
     u32 result = l->num_nodes;
-    rwlockReadUnlock(l->mutex);
+    rwlockReadUnlock(&l->mutex);
     return result;
 }
 
 void* listGetItem(List* l, u32 pos) {
-    rwlockReadLock(l->mutex);
+    rwlockReadLock(&l->mutex);
     if(!l->isInited) {
         return;
     }
@@ -131,6 +131,6 @@ void* listGetItem(List* l, u32 pos) {
         aux = aux->next;
     }
     void* result = aux->item;
-    rwlockReadUnlock(l->mutex);
+    rwlockReadUnlock(&l->mutex);
     return result;
 }

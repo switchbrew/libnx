@@ -13,7 +13,7 @@
 typedef struct barrier {
     List threads_registered;
     List threads_waiting;
-    RwLock mutex;
+    Mutex mutex;
     bool isInited;
 } Barrier;
 
