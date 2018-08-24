@@ -5,6 +5,7 @@
  * @author yellows8
  * @copyright libnx Authors
  */
+#pragma once
 #include "../result.h"
 
 #define SET_MAX_NAME_SIZE 0x48
