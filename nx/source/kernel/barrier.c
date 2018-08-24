@@ -3,23 +3,15 @@
 void barrierInit(Barrier* b) {
     mutexInit(&b->mutex);
     mutexLock(&b->mutex);
-    if(b->isInited) {
-        return;
-    }
     listInit(&b->threads_registered);
     listInit(&b->threads_waiting);
-    b->isInited = true;
     mutexUnlock(&b->mutex);
 }
 
 void barrierFree(Barrier* b) {
     mutexLock(&b->mutex);
-    if(!b->isInited) {
-        return;
-    }
     listFree(&b->threads_registered);
     listFree(&b->threads_waiting);
-    b->isInited = false;
     mutexUnlock(&b->mutex);
 }
 
@@ -35,7 +27,8 @@ void barrierUnregister(Barrier* b, Thread* thread) {
 }
 
 void barrierWait(Barrier* b, Thread* thread) {
-    if(!listIsInserted(&b->threads_registered, thread)) {
+    Thread* thread = getThreadVars()->thread_ptr;
+    if(!listIsInserted(&b->threads_registered, (void*)thread)) {
         return;
     }
 
@@ -43,14 +36,14 @@ void barrierWait(Barrier* b, Thread* thread) {
     if(listGetNumNodes(&b->threads_registered) == listGetNumNodes(&b->threads_waiting)+1) {
         while(listGetNumNodes(&b->threads_waiting) > 0) {
             Thread* current_thread = listGetItem(&b->threads_waiting, 0);
-            threadResume(current_thread);
-            listDelete(&b->threads_waiting, current_thread);
+            svcSetThreadActivity(current_thread->handle, 0);
+            listDelete(&b->threads_waiting, (void*)current_thread);
         }
         mutexUnlock(&b->mutex);
     }
     else {
-        listInsertLast(&b->threads_waiting, thread);
+        listInsertLast(&b->threads_waiting, (void*)thread);
         mutexUnlock(&b->mutex);
-        threadPause((void*)thread);
+        svcSleepThread(0);
     }
 }
