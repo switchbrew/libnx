@@ -16,8 +16,9 @@ typedef struct {
 
 typedef struct {
     u64  layer_id;
-    bool stray_layer;
-    bool initialized;
+    u32  igbp_binder_obj_id;
+    bool initialized : 1;
+    bool stray_layer : 1;
 } ViLayer;
 
 typedef enum {
@@ -27,7 +28,7 @@ typedef enum {
     ViServiceType_Manager = 2,
 } ViServiceType;
 
-/// Used by viOpenLayer when CreateStrayLayer is used internally.
+/// Used by viCreateLayer when CreateStrayLayer is used internally.
 typedef enum {
     ViLayerFlags_Default = 0x1,
 } ViLayerFlags;
@@ -37,24 +38,32 @@ typedef enum {
     ViScalingMode_Default = 0x2,
 } ViScalingMode;
 
-Result viInitialize(ViServiceType servicetype);
+Result viInitialize(ViServiceType service_type);
 void viExit(void);
 
-Service* viGetSessionService(void);
 Service* viGetSession_IApplicationDisplayService(void);
 Service* viGetSession_IHOSBinderDriverRelay(void);
 Service* viGetSession_ISystemDisplayService(void);
 Service* viGetSession_IManagerDisplayService(void);
 Service* viGetSession_IHOSBinderDriverIndirect(void);
 
-Result viOpenDisplay(const char *DisplayName, ViDisplay *display);
-Result viCloseDisplay(ViDisplay *display);
-Result viCreateManagedLayer(const ViDisplay *display, u32 LayerFlags, u64 AppletResourceUserId, u64 *layer_id);
-Result viOpenLayer(u8 NativeWindow[0x100], u64 *NativeWindow_Size, const ViDisplay *display, ViLayer *layer, u32 LayerFlags, u64 LayerId);
-Result viCloseLayer(ViLayer *layer);
+// Display functions
 
-/// See ViScalingMode.
-Result viSetLayerScalingMode(ViLayer *layer, u32 ScalingMode);
+Result viOpenDisplay(const char *display_name, ViDisplay *display);
+Result viCloseDisplay(ViDisplay *display);
+
+static inline Result viOpenDefaultDisplay(ViDisplay *display)
+{
+    return viOpenDisplay("Default", display);
+}
 
 Result viGetDisplayResolution(ViDisplay *display, u64 *width, u64 *height);
 Result viGetDisplayVsyncEvent(ViDisplay *display, Handle *handle_out);
+
+// Layer functions
+
+Result viCreateLayer(const ViDisplay *display, ViLayer *layer);
+Result viCreateManagedLayer(const ViDisplay *display, ViLayerFlags layer_flags, u64 aruid, u64 *layer_id);
+Result viCloseLayer(ViLayer *layer);
+
+Result viSetLayerScalingMode(ViLayer *layer, ViScalingMode scaling_mode);

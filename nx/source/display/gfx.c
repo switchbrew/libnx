@@ -16,9 +16,6 @@ static bool g_gfxInitialized = 0;
 static ViDisplay g_gfxDisplay;
 static Handle g_gfxDisplayVsyncEvent = INVALID_HANDLE;
 static ViLayer g_gfxLayer;
-static u8 g_gfxNativeWindow[0x100];
-static u64 g_gfxNativeWindow_Size;
-static s32 g_gfxNativeWindow_ID;
 static Binder g_gfxBinderSession;
 static s32 g_gfxCurrentBuffer = 0;
 static s32 g_gfxCurrentProducerBuffer = 0;
@@ -111,20 +108,6 @@ static BqGraphicBuffer g_gfx_BufferInitData = {
     }
 };
 
-static Result _gfxGetNativeWindowID(u8 *buf, u64 size, s32 *out_ID) {
-    u32 *bufptr = (u32*)buf;
-
-    //Validate ParcelData{Size|Offset}.
-    if((u64)bufptr[1] > size || (u64)bufptr[0] > size || ((u64)bufptr[1])+((u64)bufptr[0]) > size) return MAKERESULT(Module_Libnx, LibnxError_BadInput);
-    if(bufptr[0] < 0xc) return MAKERESULT(Module_Libnx, LibnxError_BadInput);
-    //bufptr = start of ParcelData
-    bufptr = (u32*)&buf[bufptr[1]];
-
-    *out_ID = (s32)bufptr[2];
-
-    return 0;
-}
-
 static Result _gfxDequeueBuffer(void) {
     Result rc=0;
     BqFence *fence = &g_gfx_DequeueBuffer_fence;
@@ -166,13 +149,12 @@ static Result _gfxQueueBuffer(s32 buf) {
     return rc;
 }
 
-static Result _gfxInit(ViServiceType servicetype, const char *DisplayName, u32 LayerFlags, u64 LayerId) {
+Result gfxInitDefault(void) {
     Result rc=0;
     u32 i=0;
 
     if(g_gfxInitialized)return 0;
 
-    g_gfxNativeWindow_ID = 0;
     g_gfxDisplayVsyncEvent = INVALID_HANDLE;
     g_gfxCurrentBuffer = -1;
     g_gfxCurrentProducerBuffer = -1;
@@ -224,20 +206,18 @@ static Result _gfxInit(ViServiceType servicetype, const char *DisplayName, u32 L
         return rc;
     }
 
-    rc = viInitialize(servicetype);
+    rc = viInitialize(ViServiceType_Default);
 
-    if (R_SUCCEEDED(rc)) rc = viOpenDisplay(DisplayName, &g_gfxDisplay);
+    if (R_SUCCEEDED(rc)) rc = viOpenDefaultDisplay(&g_gfxDisplay);
 
     if (R_SUCCEEDED(rc)) rc = viGetDisplayVsyncEvent(&g_gfxDisplay, &g_gfxDisplayVsyncEvent);
 
-    if (R_SUCCEEDED(rc)) rc = viOpenLayer(g_gfxNativeWindow, &g_gfxNativeWindow_Size, &g_gfxDisplay, &g_gfxLayer, LayerFlags, LayerId);
+    if (R_SUCCEEDED(rc)) rc = viCreateLayer(&g_gfxDisplay, &g_gfxLayer);
 
     if (R_SUCCEEDED(rc)) rc = viSetLayerScalingMode(&g_gfxLayer, ViScalingMode_Default);
 
-    if (R_SUCCEEDED(rc)) rc = _gfxGetNativeWindowID(g_gfxNativeWindow, g_gfxNativeWindow_Size, &g_gfxNativeWindow_ID);
-
     if (R_SUCCEEDED(rc)) {
-        binderCreate(&g_gfxBinderSession, viGetSession_IHOSBinderDriverRelay()->handle, g_gfxNativeWindow_ID);
+        binderCreate(&g_gfxBinderSession, viGetSession_IHOSBinderDriverRelay()->handle, g_gfxLayer.igbp_binder_obj_id);
         rc = binderInitSession(&g_gfxBinderSession, 0x0f);
     }
 
@@ -308,7 +288,6 @@ static Result _gfxInit(ViServiceType servicetype, const char *DisplayName, u32 L
         free(g_gfxFramebufLinear);
         g_gfxFramebufLinear = NULL;
 
-        g_gfxNativeWindow_ID = 0;
         g_gfxCurrentBuffer = 0;
         g_gfxCurrentProducerBuffer = -1;
         g_gfx_ProducerConnected = 0;
@@ -325,10 +304,6 @@ static Result _gfxInit(ViServiceType servicetype, const char *DisplayName, u32 L
     if (R_SUCCEEDED(rc)) g_gfxInitialized = 1;
 
     return rc;
-}
-
-Result gfxInitDefault(void) {
-    return _gfxInit(ViServiceType_Default, "Default", ViLayerFlags_Default, 0);
 }
 
 void gfxExit(void)
@@ -365,7 +340,6 @@ void gfxExit(void)
     g_gfxFramebufLinear = NULL;
 
     g_gfxInitialized = 0;
-    g_gfxNativeWindow_ID = 0;
 
     g_gfxCurrentBuffer = 0;
     g_gfxCurrentProducerBuffer = -1;
