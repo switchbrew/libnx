@@ -2,6 +2,13 @@
 #include "../result.h"
 #include "../display/binder.h"
 
+typedef struct {
+    u32 payload_size;
+    u32 payload_off;
+    u32 objects_size;
+    u32 objects_off;
+} ParcelHeader;
+
 #define PARCEL_MAX_PAYLOAD 0x400
 
 typedef struct {

@@ -4,13 +4,6 @@
 
 // This implements Android Parcel, hence names etc here are based on Android Parcel.cpp.
 
-typedef struct {
-    u32 payload_size;
-    u32 payload_off;
-    u32 objects_size;
-    u32 objects_off;
-} ParcelHeader;
-
 void parcelCreate(Parcel *ctx)
 {
     memset(ctx, 0, sizeof(Parcel));
