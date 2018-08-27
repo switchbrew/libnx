@@ -25,7 +25,7 @@ Result nifmInitialize(void) {
     rc = smGetService(&g_nifmSrv, "nifm:u");
 
     if (R_SUCCEEDED(rc)) {
-        if (kernelAbove200())
+        if (kernelAbove300())
             rc = _nifmCreateGeneralService(&g_nifmIGS, 0); // What does this parameter do?
         else
             rc = _nifmCreateGeneralServiceOld(&g_nifmIGS);
