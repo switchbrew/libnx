@@ -99,7 +99,9 @@ Result smInitialize(void)
 
 void smExit(void)
 {
-    if (atomicDecrement64(&g_refCnt) == 0) {
+    if (atomicDecrement64(&g_refCnt) == 0)
+    {
+        ipcCloseSession(g_smHandle);
         svcCloseHandle(g_smHandle);
         g_smHandle = INVALID_HANDLE;
     }
