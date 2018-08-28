@@ -1,4 +1,5 @@
 #pragma once
+#include "types.h"
 #include "../nvidia/ioctl.h"
 
 typedef struct {
@@ -78,65 +79,6 @@ typedef struct {
         u64 timestamp;
     } PACKED data;
 } PACKED BqGraphicBuffer;
-
-// From Android window.h.
-/* attributes queriable with query() */
-enum {
-    NATIVE_WINDOW_WIDTH     = 0,
-    NATIVE_WINDOW_HEIGHT    = 1,
-    NATIVE_WINDOW_FORMAT    = 2,
-//...
-//    NATIVE_WINDOW_DEFAULT_WIDTH = 6, //These two return invalid data.
-//    NATIVE_WINDOW_DEFAULT_HEIGHT = 7,
-};
-
-// From Android window.h.
-/* parameter for NATIVE_WINDOW_[API_][DIS]CONNECT */
-enum {
-    //...
-    /* Buffers will be queued after being filled using the CPU
-     */
-    NATIVE_WINDOW_API_CPU = 2,
-    //...
-};
-
-// From Android hardware.h.
-
-/**
- * Transformation definitions
- *
- * IMPORTANT NOTE:
- * HAL_TRANSFORM_ROT_90 is applied CLOCKWISE and AFTER HAL_TRANSFORM_FLIP_{H|V}.
- *
- */
-
-enum {
-    /* flip source image horizontally (around the vertical axis) */
-    HAL_TRANSFORM_FLIP_H    = 0x01,
-    /* flip source image vertically (around the horizontal axis)*/
-    HAL_TRANSFORM_FLIP_V    = 0x02,
-    /* rotate source image 90 degrees clockwise */
-    HAL_TRANSFORM_ROT_90    = 0x04,
-    /* rotate source image 180 degrees */
-    HAL_TRANSFORM_ROT_180   = 0x03,
-    /* rotate source image 270 degrees clockwise */
-    HAL_TRANSFORM_ROT_270   = 0x07,
-};
-
-// From Android window.h.
-/* parameter for NATIVE_WINDOW_SET_BUFFERS_TRANSFORM */
-enum {
-    /* flip source image horizontally */
-    NATIVE_WINDOW_TRANSFORM_FLIP_H = HAL_TRANSFORM_FLIP_H,
-    /* flip source image vertically */
-    NATIVE_WINDOW_TRANSFORM_FLIP_V = HAL_TRANSFORM_FLIP_V,
-    /* rotate source image 90 degrees clock-wise */
-    NATIVE_WINDOW_TRANSFORM_ROT_90 = HAL_TRANSFORM_ROT_90,
-    /* rotate source image 180 degrees */
-    NATIVE_WINDOW_TRANSFORM_ROT_180 = HAL_TRANSFORM_ROT_180,
-    /* rotate source image 270 degrees clock-wise */
-    NATIVE_WINDOW_TRANSFORM_ROT_270 = HAL_TRANSFORM_ROT_270,
-};
 
 Result bqInitialize(Binder *session);
 void bqExit(void);
