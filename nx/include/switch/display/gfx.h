@@ -17,7 +17,6 @@
 /// GfxMode set by \ref gfxSetMode. The default is GfxMode_LinearDouble. Note that the text-console (see console.h) sets this to GfxMode_TiledDouble.
 typedef enum
 {
-    GfxMode_TiledSingle, ///< Single-buffering with raw tiled (block-linear) framebuffer.
     GfxMode_TiledDouble, ///< Double-buffering with raw tiled (block-linear) framebuffer.
     GfxMode_LinearDouble ///< Double-buffering with linear framebuffer, which is transferred to the actual framebuffer by \ref gfxFlushBuffers().
 } GfxMode;

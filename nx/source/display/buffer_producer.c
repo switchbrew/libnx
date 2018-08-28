@@ -9,7 +9,8 @@
 // Hence names/params etc here are based on Android IGraphicBufferProducer.cpp.
 
 // Based on an old version of the enum from the above .cpp.
-// Unknown whether all of these are correct for Switch.
+// https://android.googlesource.com/platform/frameworks/native/+/29a3e90879fd96404c971e7187cd0e05927bbce0/libs/gui/IGraphicBufferProducer.cpp#35
+
 enum {
     /* 0x1 */ REQUEST_BUFFER = BINDER_FIRST_CALL_TRANSACTION,
     /* 0x2 */ SET_BUFFER_COUNT,
@@ -24,31 +25,15 @@ enum {
     /* 0xB */ DISCONNECT,
     /* 0xC */ SET_SIDEBAND_STREAM,
     /* 0xD */ ALLOCATE_BUFFERS,
-    /* 0xE */ GRAPHIC_BUFFER_INIT, // Custom Switch-specific command - unofficial name.
+    /* 0xE */ SET_PREALLOCATED_BUFFER, // Custom Switch-specific command
 };
 
-static char g_bq_InterfaceDescriptor[] = "android.gui.IGraphicBufferProducer";
+static const char g_bq_InterfaceDescriptor[] = "android.gui.IGraphicBufferProducer";
 
-static Binder *g_bqBinderSession;
-
-Result bqInitialize(Binder *session)
-{
-    g_bqBinderSession = session;
-    return 0;
-}
-
-void bqExit(void)
-{
-    g_bqBinderSession = NULL;
-}
-
-Result bqRequestBuffer(s32 bufferIdx, BqGraphicBuffer *buf)
+Result bqRequestBuffer(Binder *b, s32 bufferIdx, BqGraphicBuffer *buf)
 {
     Result rc;
     Parcel parcel, parcel_reply;
-
-    if (g_bqBinderSession == NULL)
-        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     parcelCreate(&parcel);
     parcelCreate(&parcel_reply);
@@ -56,7 +41,7 @@ Result bqRequestBuffer(s32 bufferIdx, BqGraphicBuffer *buf)
     parcelWriteInterfaceToken(&parcel, g_bq_InterfaceDescriptor);
     parcelWriteInt32(&parcel, bufferIdx);
 
-    rc = parcelTransact(g_bqBinderSession, REQUEST_BUFFER, &parcel, &parcel_reply);
+    rc = parcelTransact(b, REQUEST_BUFFER, &parcel, &parcel_reply);
 
     if (R_SUCCEEDED(rc)) {
         int nonNull = parcelReadInt32(&parcel_reply);
@@ -83,13 +68,10 @@ Result bqRequestBuffer(s32 bufferIdx, BqGraphicBuffer *buf)
     return rc;
 }
 
-Result bqDequeueBuffer(bool async, u32 width, u32 height, s32 format, u32 usage, s32 *buf, BqFence *fence)
+Result bqDequeueBuffer(Binder *b, bool async, u32 width, u32 height, s32 format, u32 usage, s32 *buf, NvMultiFence *fence)
 {
     Result rc;
     Parcel parcel, parcel_reply;
-
-    if (g_bqBinderSession == NULL)
-        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     parcelCreate(&parcel);
     parcelCreate(&parcel_reply);
@@ -102,7 +84,7 @@ Result bqDequeueBuffer(bool async, u32 width, u32 height, s32 format, u32 usage,
     parcelWriteInt32(&parcel, format);
     parcelWriteUInt32(&parcel, usage);
 
-    rc = parcelTransact(g_bqBinderSession, DEQUEUE_BUFFER, &parcel, &parcel_reply);
+    rc = parcelTransact(b, DEQUEUE_BUFFER, &parcel, &parcel_reply);
 
     if (R_SUCCEEDED(rc)) {
         *buf = parcelReadInt32(&parcel_reply);
@@ -112,11 +94,11 @@ Result bqDequeueBuffer(bool async, u32 width, u32 height, s32 format, u32 usage,
             void* tmp_ptr;
 
             tmp_ptr = parcelReadFlattenedObject(&parcel_reply, &tmp_size);
-            if (tmp_ptr == NULL || tmp_size != sizeof(BqFence))
+            if (tmp_ptr == NULL || tmp_size != sizeof(NvMultiFence))
                 return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
             if (fence)
-                memcpy(fence, tmp_ptr, sizeof(BqFence));
+                memcpy(fence, tmp_ptr, sizeof(NvMultiFence));
         }
 
         int result = parcelReadInt32(&parcel_reply);
@@ -127,13 +109,10 @@ Result bqDequeueBuffer(bool async, u32 width, u32 height, s32 format, u32 usage,
     return rc;
 }
 
-Result bqDetachBuffer(s32 slot)
+Result bqDetachBuffer(Binder *b, s32 slot)
 {
     Result rc;
     Parcel parcel, parcel_reply;
-
-    if (g_bqBinderSession == NULL)
-        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     parcelCreate(&parcel);
     parcelCreate(&parcel_reply);
@@ -141,7 +120,7 @@ Result bqDetachBuffer(s32 slot)
     parcelWriteInterfaceToken(&parcel, g_bq_InterfaceDescriptor);
     parcelWriteInt32(&parcel, slot);
 
-    rc = parcelTransact(g_bqBinderSession, DETACH_BUFFER, &parcel, &parcel_reply);
+    rc = parcelTransact(b, DETACH_BUFFER, &parcel, &parcel_reply);
 
     if (R_SUCCEEDED(rc)) {
         //TODO: parse reply
@@ -150,13 +129,10 @@ Result bqDetachBuffer(s32 slot)
     return rc;
 }
 
-Result bqQueueBuffer(s32 buf, BqQueueBufferInput *input, BqQueueBufferOutput *output)
+Result bqQueueBuffer(Binder *b, s32 buf, BqQueueBufferInput *input, BqQueueBufferOutput *output)
 {
     Result rc;
     Parcel parcel, parcel_reply;
-
-    if (g_bqBinderSession == NULL)
-        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     parcelCreate(&parcel);
     parcelCreate(&parcel_reply);
@@ -165,7 +141,7 @@ Result bqQueueBuffer(s32 buf, BqQueueBufferInput *input, BqQueueBufferOutput *ou
     parcelWriteInt32(&parcel, buf);
     parcelWriteFlattenedObject(&parcel, input, sizeof(*input));
 
-    rc = parcelTransact(g_bqBinderSession, QUEUE_BUFFER, &parcel, &parcel_reply);
+    rc = parcelTransact(b, QUEUE_BUFFER, &parcel, &parcel_reply);
 
     if (R_SUCCEEDED(rc)) {
         if (parcelReadData(&parcel_reply, output, sizeof(*output)) == NULL)
@@ -179,13 +155,10 @@ Result bqQueueBuffer(s32 buf, BqQueueBufferInput *input, BqQueueBufferOutput *ou
     return rc;
 }
 
-Result bqQuery(s32 what, s32* value)
+Result bqQuery(Binder *b, s32 what, s32* value)
 {
     Result rc;
     Parcel parcel, parcel_reply;
-
-    if (g_bqBinderSession == NULL)
-        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     parcelCreate(&parcel);
     parcelCreate(&parcel_reply);
@@ -193,7 +166,7 @@ Result bqQuery(s32 what, s32* value)
     parcelWriteInterfaceToken(&parcel, g_bq_InterfaceDescriptor);
     parcelWriteInt32(&parcel, what);
 
-    rc = parcelTransact(g_bqBinderSession, QUERY, &parcel, &parcel_reply);
+    rc = parcelTransact(b, QUERY, &parcel, &parcel_reply);
 
     if (R_SUCCEEDED(rc)) {
         *value = parcelReadInt32(&parcel_reply);
@@ -206,13 +179,10 @@ Result bqQuery(s32 what, s32* value)
     return rc;
 }
 
-Result bqConnect(s32 api, bool producerControlledByApp, BqQueueBufferOutput *output)
+Result bqConnect(Binder *b, s32 api, bool producerControlledByApp, BqQueueBufferOutput *output)
 {
     Result rc;
     Parcel parcel, parcel_reply;
-
-    if (g_bqBinderSession == NULL)
-        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     parcelCreate(&parcel);
     parcelCreate(&parcel_reply);
@@ -224,7 +194,7 @@ Result bqConnect(s32 api, bool producerControlledByApp, BqQueueBufferOutput *out
     parcelWriteInt32(&parcel, api);
     parcelWriteInt32(&parcel, producerControlledByApp);
 
-    rc = parcelTransact(g_bqBinderSession, CONNECT, &parcel, &parcel_reply);
+    rc = parcelTransact(b, CONNECT, &parcel, &parcel_reply);
 
     if (R_SUCCEEDED(rc)) {
         if (parcelReadData(&parcel_reply, output, sizeof(*output)) == NULL)
@@ -238,13 +208,10 @@ Result bqConnect(s32 api, bool producerControlledByApp, BqQueueBufferOutput *out
     return rc;
 }
 
-Result bqDisconnect(s32 api)
+Result bqDisconnect(Binder *b, s32 api)
 {
     Result rc;
     Parcel parcel, parcel_reply;
-
-    if (g_bqBinderSession == NULL)
-        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     parcelCreate(&parcel);
     parcelCreate(&parcel_reply);
@@ -252,7 +219,7 @@ Result bqDisconnect(s32 api)
     parcelWriteInterfaceToken(&parcel, g_bq_InterfaceDescriptor);
     parcelWriteInt32(&parcel, api);
 
-    rc = parcelTransact(g_bqBinderSession, DISCONNECT, &parcel, &parcel_reply);
+    rc = parcelTransact(b, DISCONNECT, &parcel, &parcel_reply);
 
     if (R_SUCCEEDED(rc)) {
         // TODO: parse reply
@@ -261,14 +228,11 @@ Result bqDisconnect(s32 api)
     return rc;
 }
 
-Result bqGraphicBufferInit(s32 buf, BqGraphicBuffer *input)
+Result bqSetPreallocatedBuffer(Binder *b, s32 buf, BqGraphicBuffer *input)
 {
     Result rc;
     Parcel parcel, parcel_reply;
     bool flag = 0;
-
-    if (g_bqBinderSession == NULL)
-        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     parcelCreate(&parcel);
     parcelCreate(&parcel_reply);
@@ -283,7 +247,7 @@ Result bqGraphicBufferInit(s32 buf, BqGraphicBuffer *input)
     if (flag)
         parcelWriteFlattenedObject(&parcel, input, sizeof(BqGraphicBuffer));
 
-    rc = parcelTransact(g_bqBinderSession, GRAPHIC_BUFFER_INIT, &parcel, &parcel_reply);
+    rc = parcelTransact(b, SET_PREALLOCATED_BUFFER, &parcel, &parcel_reply);
 
     if (R_SUCCEEDED(rc)) {
         int result = parcelReadInt32(&parcel_reply);

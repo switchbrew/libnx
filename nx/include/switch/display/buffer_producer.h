@@ -1,36 +1,31 @@
 #pragma once
 #include "types.h"
-#include "../nvidia/ioctl.h"
-
-typedef struct {
-    u32 is_valid;
-    nvioctl_fence nv_fences[4];
-} PACKED BqFence;
+#include "../nvidia/fence.h"
 
 typedef struct {
     s32 left;
     s32 top;
     s32 right;
     s32 bottom;
-} PACKED BqRect;
+} BqRect;
 
 typedef struct {
-    s64 timestamp;
+    struct { s64 timestamp; } PACKED;
     s32 isAutoTimestamp;
     BqRect crop;
     s32 scalingMode;
     u32 transform; // See the NATIVE_WINDOW_TRANSFORM_* enums.
     u32 stickyTransform;
     u32 unk[2];
-    BqFence fence;
-} PACKED BqQueueBufferInput;
+    NvMultiFence fence;
+} BqQueueBufferInput;
 
 typedef struct {
     u32 width;
     u32 height;
     u32 transformHint;
     u32 numPendingBuffers;
-} PACKED BqQueueBufferOutput;
+} BqQueueBufferOutput;
 
 typedef struct {
     u32 magic;
@@ -76,18 +71,15 @@ typedef struct {
         u32 unk_x68;
         u32 buffer_size1;
         u32 unk_x70[0x33]; // Normally all-zero.
-        u64 timestamp;
-    } PACKED data;
-} PACKED BqGraphicBuffer;
+        struct { u64 timestamp; } PACKED; // unused
+    } data;
+} BqGraphicBuffer;
 
-Result bqInitialize(Binder *session);
-void bqExit(void);
-
-Result bqRequestBuffer(s32 bufferIdx, BqGraphicBuffer *buf);
-Result bqDequeueBuffer(bool async, u32 width, u32 height, s32 format, u32 usage, s32 *buf, BqFence *fence);
-Result bqDetachBuffer(s32 slot);
-Result bqQueueBuffer(s32 buf, BqQueueBufferInput *input, BqQueueBufferOutput *output);
-Result bqQuery(s32 what, s32* value);
-Result bqConnect(s32 api, bool producerControlledByApp, BqQueueBufferOutput *output);
-Result bqDisconnect(s32 api);
-Result bqGraphicBufferInit(s32 buf, BqGraphicBuffer *input);
+Result bqRequestBuffer(Binder *b, s32 bufferIdx, BqGraphicBuffer *buf);
+Result bqDequeueBuffer(Binder *b, bool async, u32 width, u32 height, s32 format, u32 usage, s32 *buf, NvMultiFence *fence);
+Result bqDetachBuffer(Binder *b, s32 slot);
+Result bqQueueBuffer(Binder *b, s32 buf, BqQueueBufferInput *input, BqQueueBufferOutput *output);
+Result bqQuery(Binder *b, s32 what, s32* value);
+Result bqConnect(Binder *b, s32 api, bool producerControlledByApp, BqQueueBufferOutput *output);
+Result bqDisconnect(Binder *b, s32 api);
+Result bqSetPreallocatedBuffer(Binder *b, s32 buf, BqGraphicBuffer *input);
