@@ -25,11 +25,11 @@ Result nvZcullContextCreate(NvZcullContext* z, NvGpu* parent)
     z->parent = parent;
 
     rc = nvBufferCreateRw(
-        &z->ctx_buf, nvInfoGetZcullCtxSize(), 0x20000, NvBufferKind_Pitch,
+        &z->ctx_buf, nvInfoGetZcullCtxSize(), 0x20000, NvKind_Pitch,
         &parent->addr_space);
 
     if (R_SUCCEEDED(rc))
-        rc = nvBufferMapAsTexture(&z->ctx_buf, NvBufferKind_Generic_16BX2);
+        rc = nvBufferMapAsTexture(&z->ctx_buf, NvKind_Generic_16BX2);
 
     if (R_SUCCEEDED(rc))
         rc = nvioctlChannel_ZCullBind(

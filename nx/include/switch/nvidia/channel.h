@@ -1,5 +1,5 @@
 #pragma once
-#include "ioctl.h"
+#include "types.h"
 
 typedef struct NvChannel {
     u32  fd;

@@ -42,7 +42,7 @@ u32 nvBufferGetNvmapFd(void) {
 }
 
 static Result _nvBufferCreate(
-    NvBuffer* m, size_t size, u32 flags, u32 align, NvBufferKind kind,
+    NvBuffer* m, size_t size, u32 flags, u32 align, NvKind kind,
     NvAddressSpace* as)
 {
     Result rc;
@@ -80,12 +80,12 @@ static Result _nvBufferCreate(
 }
 
 Result nvBufferCreate(
-        NvBuffer* m, size_t size, u32 align, NvBufferKind kind, NvAddressSpace* as) {
+        NvBuffer* m, size_t size, u32 align, NvKind kind, NvAddressSpace* as) {
     return _nvBufferCreate(m, size, 0, align, kind, as);
 }
 
 Result nvBufferCreateRw(
-        NvBuffer* m, size_t size, u32 align, NvBufferKind kind, NvAddressSpace* as) {
+        NvBuffer* m, size_t size, u32 align, NvKind kind, NvAddressSpace* as) {
     return _nvBufferCreate(m, size, NvBufferFlags_Writable, align, kind, as);
 }
 
@@ -123,7 +123,7 @@ iova_t nvBufferGetGpuAddr(NvBuffer* m) {
     return m->gpu_addr;
 }
 
-Result nvBufferMapAsTexture(NvBuffer* m, NvBufferKind kind) {
+Result nvBufferMapAsTexture(NvBuffer* m, NvKind kind) {
     return nvAddressSpaceMapBuffer(m->addr_space, m->fd, kind, &m->gpu_addr_texture);
 }
 
