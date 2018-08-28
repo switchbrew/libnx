@@ -435,9 +435,9 @@ void gfxConfigureAutoResolutionDefault(bool enable) {
     gfxConfigureAutoResolution(enable, 1280, 720, 0, 0);
 }
 
-Result _gfxGraphicBufferInit(s32 buf, u32 nvmap_handle) {
+Result _gfxGraphicBufferInit(s32 buf, u32 nvmap_id, u32 nvmap_handle) {
     g_gfx_BufferInitData.refcount = buf;
-    g_gfx_BufferInitData.data.nvmap_handle0 = nvmap_handle;
+    g_gfx_BufferInitData.data.nvmap_handle0 = nvmap_id;
     g_gfx_BufferInitData.data.nvmap_handle1 = nvmap_handle;
     g_gfx_BufferInitData.data.buffer_offset = g_gfx_singleframebuf_size*buf;
     g_gfx_BufferInitData.data.timestamp = svcGetSystemTick();
