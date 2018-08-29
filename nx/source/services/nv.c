@@ -288,7 +288,7 @@ Result nvClose(u32 fd) {
     return rc;
 }
 
-Result nvQueryEvent(u32 fd, u32 event_id, Handle *handle_out) {
+Result nvQueryEvent(u32 fd, u32 event_id, Event *event_out) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -323,7 +323,7 @@ Result nvQueryEvent(u32 fd, u32 event_id, Handle *handle_out) {
             rc = nvConvertError(resp->error);
 
         if (R_SUCCEEDED(rc))
-            *handle_out = r.Handles[0];
+            eventLoadRemote(event_out, r.Handles[0], true);
     }
 
     return rc;
