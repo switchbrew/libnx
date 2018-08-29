@@ -19,7 +19,6 @@ typedef struct {
 
 static bool g_nvgfxInitialized;
 static u32 g_nvgfx_fd_nvmap;
-static u32 g_nvgfx_fd_nvhostctrl;
 
 u32 g_nvgfx_totalframebufs = 2;
 
@@ -76,7 +75,6 @@ Result nvgfxInitialize(void) {
         return 0;
 
     if (R_SUCCEEDED(rc)) rc = nvOpen(&g_nvgfx_fd_nvmap, "/dev/nvmap");
-    if (R_SUCCEEDED(rc)) rc = nvOpen(&g_nvgfx_fd_nvhostctrl, "/dev/nvhost-ctrl");
     if (R_SUCCEEDED(rc)) rc = nvmapobjInitialize(&nvmap_fb_obj, g_nvgfx_totalframebufs*g_gfx_singleframebuf_size);
     if (R_SUCCEEDED(rc)) rc = nvmapobjSetup(&nvmap_fb_obj, 0, 0x1, 0x20000, 0);
 
@@ -97,10 +95,6 @@ Result nvgfxInitialize(void) {
 
     if (R_FAILED(rc)) {
         nvmapobjClose(&nvmap_fb_obj);
-        if (g_nvgfx_fd_nvhostctrl != -1) {
-            nvClose(g_nvgfx_fd_nvhostctrl);
-            g_nvgfx_fd_nvhostctrl = -1;
-        }
         if (g_nvgfx_fd_nvmap != -1) {
             nvClose(g_nvgfx_fd_nvmap);
             g_nvgfx_fd_nvmap = -1;
@@ -118,28 +112,12 @@ void nvgfxExit(void) {
         return;
 
     nvmapobjClose(&nvmap_fb_obj);
-    if (g_nvgfx_fd_nvhostctrl != -1) {
-        nvClose(g_nvgfx_fd_nvhostctrl);
-        g_nvgfx_fd_nvhostctrl = -1;
-    }
     if (g_nvgfx_fd_nvmap != -1) {
         nvClose(g_nvgfx_fd_nvmap);
         g_nvgfx_fd_nvmap = -1;
     }
 
     g_nvgfxInitialized = false;
-}
-
-Result nvgfxEventWait(u32 syncpt_id, u32 threshold, s32 timeout)
-{
-    Result rc;
-
-    do {
-        u32 event_res;
-        rc = nvioctlNvhostCtrl_EventWait(g_nvgfx_fd_nvhostctrl, syncpt_id, threshold, timeout, 0, &event_res);
-    } while (rc == MAKERESULT(Module_LibnxNvidia, LibnxNvidiaError_Timeout)); // todo: Fix timeout error
-
-    return rc;
 }
 
 Result nvgfxGetFramebuffer(u8 **buffer, size_t *size, u32 *handle)

@@ -96,9 +96,6 @@ static BqGraphicBuffer g_gfx_BufferInitData = {
     }
 };
 
-NvMultiFence debugfence;
-Result debugfenceresult;
-
 static Result _gfxDequeueBuffer(void) {
     if (g_gfxCurrentProducerBuffer >= 0)
         return 0;
@@ -115,15 +112,9 @@ static Result _gfxDequeueBuffer(void) {
         g_gfx_ProducerSlotsRequested |= BIT(slot);
     }
 
-    debugfence = fence;
-    for (u32 i = 0; i < fence.num_fences; i ++) {
-        if ((s32)fence.fences[i].id >= 0) {
-            // todo: figure out why fencewait sucks
-            /*rc =*/ debugfenceresult = nvgfxEventWait(fence.fences[i].id, fence.fences[i].value, 0);
-            //if (R_FAILED(rc))
-            //    break;
-        }
-    }
+    rc = nvMultiFenceWait(&fence, -1);
+    if (R_FAILED(rc))
+        return rc;
 
     if (R_SUCCEEDED(rc)) {
         g_gfxCurrentProducerBuffer = slot;
@@ -220,6 +211,8 @@ Result gfxInitDefault(void) {
 
     if (R_SUCCEEDED(rc)) rc = nvInitialize();
 
+    if (R_SUCCEEDED(rc)) rc = nvFenceInit();
+
     if (R_SUCCEEDED(rc)) rc = nvgfxInitialize();
 
     if (R_SUCCEEDED(rc)) rc = nvgfxGetFramebuffer(&g_gfxFramebuf, &g_gfxFramebufSize, &g_gfxFramebufHandle);
@@ -236,6 +229,7 @@ Result gfxInitDefault(void) {
             }
             bqDisconnect(&g_gfxBinderSession, NATIVE_WINDOW_API_CPU);
             nvgfxExit();
+            nvFenceExit();
             nvExit();
         }
 
@@ -278,6 +272,7 @@ void gfxExit(void)
         }
         bqDisconnect(&g_gfxBinderSession, NATIVE_WINDOW_API_CPU);
         nvgfxExit();
+        nvFenceExit();
         nvExit();
     }
 
