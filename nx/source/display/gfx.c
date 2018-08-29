@@ -14,7 +14,7 @@
 
 static bool g_gfxInitialized = 0;
 static ViDisplay g_gfxDisplay;
-static Handle g_gfxDisplayVsyncEvent = INVALID_HANDLE;
+static Event g_gfxDisplayVsyncEvent;
 static ViLayer g_gfxLayer;
 static Binder g_gfxBinderSession;
 static s32 g_gfxCurrentBuffer = 0;
@@ -149,7 +149,6 @@ Result gfxInitDefault(void) {
 
     if(g_gfxInitialized)return 0;
 
-    g_gfxDisplayVsyncEvent = INVALID_HANDLE;
     g_gfxCurrentBuffer = -1;
     g_gfxCurrentProducerBuffer = -1;
     g_gfx_ProducerConnected = 0;
@@ -242,13 +241,9 @@ Result gfxInitDefault(void) {
 
         binderClose(&g_gfxBinderSession);
         viCloseLayer(&g_gfxLayer);
+        eventClose(&g_gfxDisplayVsyncEvent);
         viCloseDisplay(&g_gfxDisplay);
         viExit();
-
-        if(g_gfxDisplayVsyncEvent != INVALID_HANDLE) {
-            svcCloseHandle(g_gfxDisplayVsyncEvent);
-            g_gfxDisplayVsyncEvent = INVALID_HANDLE;
-        }
 
         free(g_gfxFramebufLinear);
         g_gfxFramebufLinear = NULL;
@@ -288,13 +283,9 @@ void gfxExit(void)
 
     binderClose(&g_gfxBinderSession);
     viCloseLayer(&g_gfxLayer);
+    eventClose(&g_gfxDisplayVsyncEvent);
     viCloseDisplay(&g_gfxDisplay);
     viExit();
-
-    if(g_gfxDisplayVsyncEvent != INVALID_HANDLE) {
-        svcCloseHandle(g_gfxDisplayVsyncEvent);
-        g_gfxDisplayVsyncEvent = INVALID_HANDLE;
-    }
 
     free(g_gfxFramebufLinear);
     g_gfxFramebufLinear = NULL;
@@ -399,25 +390,15 @@ Result _gfxGraphicBufferInit(s32 buf, u32 nvmap_id, u32 nvmap_handle) {
     g_gfx_BufferInitData.data.nvmap_handle0 = nvmap_id;
     g_gfx_BufferInitData.data.nvmap_handle1 = nvmap_handle;
     g_gfx_BufferInitData.data.buffer_offset = g_gfx_singleframebuf_size*buf;
-    g_gfx_BufferInitData.data.timestamp = svcGetSystemTick();
+    //g_gfx_BufferInitData.data.timestamp = svcGetSystemTick();
 
     return bqSetPreallocatedBuffer(&g_gfxBinderSession, buf, &g_gfx_BufferInitData);
 }
 
-static void _waitevent(Handle handle) {
-    Result rc;
-
-    do {
-        rc = svcWaitSynchronizationSingle(handle, U64_MAX);
-        svcResetSignal(handle);
-    } while ((rc & 0x3FFFFF) == 0xFA01);
-
+void gfxWaitForVsync(void) {
+    Result rc = eventWait(&g_gfxDisplayVsyncEvent, U64_MAX);
     if (R_FAILED(rc))
         fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadGfxEventWait));
-}
-
-void gfxWaitForVsync(void) {
-    _waitevent(g_gfxDisplayVsyncEvent);
 }
 
 void gfxSwapBuffers(void) {

@@ -281,7 +281,7 @@ Result viGetDisplayResolution(ViDisplay *display, u64 *width, u64 *height)
     return rc;
 }
 
-Result viGetDisplayVsyncEvent(ViDisplay *display, Handle *handle_out)
+Result viGetDisplayVsyncEvent(ViDisplay *display, Event *event_out)
 {
     IpcCommand c;
     ipcInitialize(&c);
@@ -315,7 +315,7 @@ Result viGetDisplayVsyncEvent(ViDisplay *display, Handle *handle_out)
         rc = resp->result;
 
         if (R_SUCCEEDED(rc)) {
-            *handle_out = r.Handles[0];
+            eventLoadRemote(event_out, r.Handles[0], true);
         }
     }
 

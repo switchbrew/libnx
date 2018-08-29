@@ -6,6 +6,7 @@
  */
 #pragma once
 #include "../types.h"
+#include "../kernel/event.h"
 #include "../services/sm.h"
 
 typedef struct {
@@ -58,7 +59,7 @@ static inline Result viOpenDefaultDisplay(ViDisplay *display)
 }
 
 Result viGetDisplayResolution(ViDisplay *display, u64 *width, u64 *height);
-Result viGetDisplayVsyncEvent(ViDisplay *display, Handle *handle_out);
+Result viGetDisplayVsyncEvent(ViDisplay *display, Event *event_out);
 
 // Layer functions
 
