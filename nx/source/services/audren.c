@@ -120,7 +120,6 @@ void audrenExit(void)
 void audrenWaitFrame(void)
 {
     eventWait(&g_audrenEvent, U64_MAX);
-    eventClear(&g_audrenEvent);
 }
 
 Result _audrenOpenAudioRenderer(Service* audren_mgr, const AudioRendererParameter* param, u64 aruid)
@@ -373,7 +372,7 @@ Result _audrenQuerySystemEvent(void)
         rc = resp->result;
 
         if (R_SUCCEEDED(rc))
-            eventLoadRemote(&g_audrenEvent, r.Handles[0]);
+            eventLoadRemote(&g_audrenEvent, r.Handles[0], true);
     }
 
     return rc;

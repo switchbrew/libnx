@@ -26,7 +26,7 @@ Result nvErrorNotifierCreate(NvErrorNotifier* t, NvGpu* parent)
         parent->gpu_channel.fd, NvEventId_Gpu_ErrorNotifier, &handle);
 
     if (R_SUCCEEDED(rc)) {
-        eventLoadRemote(&t->event, handle);
+        eventLoadRemote(&t->event, handle, true);
         rc = nvioctlChannel_SetErrorNotifier(parent->gpu_channel.fd, 1);
     }
 
