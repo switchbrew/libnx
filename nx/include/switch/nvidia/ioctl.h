@@ -157,7 +157,9 @@ typedef struct {
 
 Result nvioctlNvhostCtrl_EventSignal(u32 fd, u32 event_id);
 Result nvioctlNvhostCtrl_EventWait(u32 fd, u32 syncpt_id, u32 threshold, s32 timeout, u32 event_id, u32 *out);
+Result nvioctlNvhostCtrl_EventWaitAsync(u32 fd, u32 syncpt_id, u32 threshold, s32 timeout, u32 event_id);
 Result nvioctlNvhostCtrl_EventRegister(u32 fd, u32 event_id);
+Result nvioctlNvhostCtrl_EventUnregister(u32 fd, u32 event_id);
 
 Result nvioctlNvhostCtrlGpu_ZCullGetCtxSize(u32 fd, u32 *out);
 Result nvioctlNvhostCtrlGpu_ZCullGetInfo(u32 fd, u32 out[40>>2]);
