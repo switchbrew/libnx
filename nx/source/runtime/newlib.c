@@ -8,6 +8,7 @@
 #include "../internal.h"
 #include "types.h"
 #include "runtime/env.h"
+#include "arm/counter.h"
 #include "kernel/mutex.h"
 #include "kernel/svc.h"
 #include "services/fatal.h"
@@ -40,7 +41,7 @@ void __libnx_init_time(void) {
     if (R_FAILED(rc)) {
         __boottime = UINT64_MAX;
     } else {
-        __bootticks = svcGetSystemTick();
+        __bootticks = armGetSystemTick();
     }
 }
 
@@ -68,7 +69,7 @@ int __libnx_clock_gettime(clockid_t clock_id, struct timespec *tp) {
         return -1;
     }
     if(tp) {
-        u64 now=svcGetSystemTick() - __bootticks;
+        u64 now=armGetSystemTick() - __bootticks;
 
         u64 __bootsecs = now / 19200000ULL;
 
@@ -95,7 +96,7 @@ int __libnx_gtod(struct _reent *ptr, struct timeval *tp, struct timezone *tz) {
             return -1;
         }
 
-        u64 now=svcGetSystemTick() - __bootticks;
+        u64 now=armGetSystemTick() - __bootticks;
 
         u64 __bootsecs = now / 19200000ULL;
 
