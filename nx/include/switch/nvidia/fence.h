@@ -8,11 +8,14 @@ typedef struct {
     NvFence fences[4];
 } NvMultiFence;
 
-Result nvFenceWait(NvFence* f, s32 timeout_ms);
+Result nvFenceInit(void);
+void nvFenceExit(void);
+
+Result nvFenceWait(NvFence* f, s32 timeout_us);
 
 static inline void nvMultiFenceCreate(NvMultiFence* mf, const NvFence* fence) {
     mf->num_fences = 1;
     mf->fences[0] = *fence;
 }
 
-Result nvMultiFenceWait(NvMultiFence* mf, s32 timeout_ms);
+Result nvMultiFenceWait(NvMultiFence* mf, s32 timeout_us);
