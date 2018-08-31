@@ -147,6 +147,24 @@ Result bqQueueBuffer(Binder *b, s32 buf, BqQueueBufferInput *input, BqQueueBuffe
     return rc;
 }
 
+Result bqCancelBuffer(Binder *b, s32 buf, NvMultiFence *fence)
+{
+    Result rc;
+    Parcel parcel, parcel_reply;
+
+    parcelCreate(&parcel);
+    parcelCreate(&parcel_reply);
+
+    parcelWriteInterfaceToken(&parcel, g_bq_InterfaceDescriptor);
+    parcelWriteInt32(&parcel, buf);
+    parcelWriteFlattenedObject(&parcel, fence, sizeof(*fence));
+
+    rc = parcelTransact(b, CANCEL_BUFFER, &parcel, &parcel_reply);
+    // Reply parcel has no content
+
+    return rc;
+}
+
 Result bqQuery(Binder *b, s32 what, s32* value)
 {
     Result rc;

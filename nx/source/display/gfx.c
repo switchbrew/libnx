@@ -119,8 +119,10 @@ static Result _gfxDequeueBuffer(void) {
 
     if (!(g_gfx_ProducerSlotsRequested & BIT(slot))) {
         rc = bqRequestBuffer(&g_gfxBinderSession, slot, NULL);
-        if (R_FAILED(rc))
-            return rc; // todo: cancelbuffer or something
+        if (R_FAILED(rc)) {
+            bqCancelBuffer(&g_gfxBinderSession, slot, &fence);
+            return rc;
+        }
         g_gfx_ProducerSlotsRequested |= BIT(slot);
     }
 
@@ -141,6 +143,17 @@ static Result _gfxQueueBuffer(void) {
 
     if (g_gfxCurrentProducerBuffer >= 0) {
         rc = bqQueueBuffer(&g_gfxBinderSession, g_gfxCurrentProducerBuffer, &g_gfxQueueBufferData, &g_gfx_QueueBuffer_QueueBufferOutput);
+        g_gfxCurrentProducerBuffer = -1;
+    }
+
+    return rc;
+}
+
+static Result _gfxCancelBuffer(void) {
+    Result rc=0;
+
+    if (g_gfxCurrentProducerBuffer >= 0) {
+        rc = bqCancelBuffer(&g_gfxBinderSession, g_gfxCurrentProducerBuffer, &g_gfxQueueBufferData.fence);
         g_gfxCurrentProducerBuffer = -1;
     }
 
@@ -237,7 +250,7 @@ Result gfxInitDefault(void) {
 
     if (R_FAILED(rc)) {
         if (g_gfx_ProducerConnected) {
-            _gfxQueueBuffer();
+            _gfxCancelBuffer();
             for(u32 i=0; i<32; i++) {
                 if (g_gfx_ProducerSlotsRequested & BIT(i)) bqDetachBuffer(&g_gfxBinderSession, i);
             }
@@ -281,7 +294,7 @@ void gfxExit(void)
         return;
 
     if (g_gfx_ProducerConnected) {
-        _gfxQueueBuffer();
+        _gfxCancelBuffer();
         for(u32 i=0; i<32; i++) {
             if (g_gfx_ProducerSlotsRequested & BIT(i)) bqDetachBuffer(&g_gfxBinderSession, i);
         }
