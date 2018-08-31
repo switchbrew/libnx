@@ -24,6 +24,8 @@ Result binderTransactParcel(
     void* parcel_reply, size_t parcel_reply_size,
     u32 flags);
 
+Result binderConvertErrorCode(s32 code);
+
 Result binderAdjustRefcount(Binder* b, s32 addval, s32 type);
 Result binderGetNativeHandle(Binder* b, u32 unk0, Event *event_out);
 

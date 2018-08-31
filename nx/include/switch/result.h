@@ -23,6 +23,7 @@
 enum {
     Module_Kernel=1,
     Module_Libnx=345,
+    Module_LibnxBinder=347,
     Module_LibnxNvidia=348,
 };
 
@@ -78,6 +79,27 @@ enum {
     LibnxError_ApmFailedToInitialize,
     LibnxError_NvinfoFailedToInitialize,
     LibnxError_NvbufFailedToInitialize,
+};
+
+/// libnx binder error codes
+enum {
+    LibnxBinderError_Unknown=1,
+    LibnxBinderError_NoMemory,
+    LibnxBinderError_InvalidOperation,
+    LibnxBinderError_BadValue,
+    LibnxBinderError_BadType,
+    LibnxBinderError_NameNotFound,
+    LibnxBinderError_PermissionDenied,
+    LibnxBinderError_NoInit,
+    LibnxBinderError_AlreadyExists,
+    LibnxBinderError_DeadObject,
+    LibnxBinderError_FailedTransaction,
+    LibnxBinderError_BadIndex,
+    LibnxBinderError_NotEnoughData,
+    LibnxBinderError_WouldBlock,
+    LibnxBinderError_TimedOut,
+    LibnxBinderError_UnknownTransaction,
+    LibnxBinderError_FdsNotAllowed,
 };
 
 /// libnx nvidia error codes

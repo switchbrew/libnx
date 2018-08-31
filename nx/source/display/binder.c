@@ -179,6 +179,32 @@ Result binderTransactParcel(
     return rc;
 }
 
+Result binderConvertErrorCode(s32 code)
+{
+    if (code >= 0)
+        return 0;
+
+    switch (-code) {
+        case 1: return MAKERESULT(Module_LibnxBinder, LibnxBinderError_PermissionDenied);
+        case 2: return MAKERESULT(Module_LibnxBinder, LibnxBinderError_NameNotFound);
+        case 11: return MAKERESULT(Module_LibnxBinder, LibnxBinderError_WouldBlock);
+        case 12: return MAKERESULT(Module_LibnxBinder, LibnxBinderError_NoMemory);
+        case 17: return MAKERESULT(Module_LibnxBinder, LibnxBinderError_AlreadyExists);
+        case 19: return MAKERESULT(Module_LibnxBinder, LibnxBinderError_NoInit);
+        case 22: return MAKERESULT(Module_LibnxBinder, LibnxBinderError_BadValue);
+        case 32: return MAKERESULT(Module_LibnxBinder, LibnxBinderError_DeadObject);
+        case 38: return MAKERESULT(Module_LibnxBinder, LibnxBinderError_InvalidOperation);
+        case 61: return MAKERESULT(Module_LibnxBinder, LibnxBinderError_NotEnoughData);
+        case 74: return MAKERESULT(Module_LibnxBinder, LibnxBinderError_UnknownTransaction);
+        case 75: return MAKERESULT(Module_LibnxBinder, LibnxBinderError_BadIndex);
+        case 110: return MAKERESULT(Module_LibnxBinder, LibnxBinderError_TimedOut);
+        case -(INT32_MIN+7): return MAKERESULT(Module_LibnxBinder, LibnxBinderError_FdsNotAllowed);
+        case -(INT32_MIN+2): return MAKERESULT(Module_LibnxBinder, LibnxBinderError_FailedTransaction);
+        case -(INT32_MIN+1): return MAKERESULT(Module_LibnxBinder, LibnxBinderError_BadType);
+        default: return MAKERESULT(Module_LibnxBinder, LibnxBinderError_Unknown);
+    }
+}
+
 Result binderAdjustRefcount(Binder* b, s32 addval, s32 type)
 {
     if (!b->created)
