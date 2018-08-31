@@ -17,6 +17,7 @@ static ViDisplay g_gfxDisplay;
 static Event g_gfxDisplayVsyncEvent;
 static ViLayer g_gfxLayer;
 static Binder g_gfxBinderSession;
+static Event g_gfxBinderEvent;
 static s32 g_gfxCurrentBuffer = 0;
 static s32 g_gfxCurrentProducerBuffer = 0;
 static bool g_gfx_ProducerConnected = 0;
@@ -102,8 +103,19 @@ static Result _gfxDequeueBuffer(void) {
 
     NvMultiFence fence;
     s32 slot;
-    Result rc = bqDequeueBuffer(&g_gfxBinderSession, false, g_gfx_framebuf_width, g_gfx_framebuf_height, 0, 0x300, &slot, &fence);
-    if (R_FAILED(rc)) return rc;
+    Result rc;
+
+    if (g_gfxBinderEvent.revent != INVALID_HANDLE) {
+        do {
+            eventWait(&g_gfxBinderEvent, U64_MAX);
+            rc = bqDequeueBuffer(&g_gfxBinderSession, true, g_gfx_framebuf_width, g_gfx_framebuf_height, 0, 0x300, &slot, &fence);
+        } while (rc == MAKERESULT(Module_Libnx, LibnxError_BufferProducerError)); // todo: check for error -11
+    }
+    else
+        rc = bqDequeueBuffer(&g_gfxBinderSession, false, g_gfx_framebuf_width, g_gfx_framebuf_height, 0, 0x300, &slot, &fence);
+
+    if (R_FAILED(rc))
+        return rc;
 
     if (!(g_gfx_ProducerSlotsRequested & BIT(slot))) {
         rc = bqRequestBuffer(&g_gfxBinderSession, slot, NULL);
@@ -199,9 +211,11 @@ Result gfxInitDefault(void) {
     if (R_SUCCEEDED(rc)) rc = viCreateLayer(&g_gfxDisplay, &g_gfxLayer);
 
     if (R_SUCCEEDED(rc)) {
-        binderCreate(&g_gfxBinderSession, viGetSession_IHOSBinderDriverRelay()->handle, g_gfxLayer.igbp_binder_obj_id);
-        rc = binderInitSession(&g_gfxBinderSession, 0x0f);
+        binderCreate(&g_gfxBinderSession, g_gfxLayer.igbp_binder_obj_id);
+        rc = binderInitSession(&g_gfxBinderSession);
     }
+
+    if (R_SUCCEEDED(rc)) binderGetNativeHandle(&g_gfxBinderSession, 0x0f, &g_gfxBinderEvent); // a failure here is not fatal
 
     if (R_SUCCEEDED(rc)) rc = viSetLayerScalingMode(&g_gfxLayer, ViScalingMode_Default);
 
@@ -233,6 +247,7 @@ Result gfxInitDefault(void) {
             nvExit();
         }
 
+        eventClose(&g_gfxBinderEvent);
         binderClose(&g_gfxBinderSession);
         viCloseLayer(&g_gfxLayer);
         eventClose(&g_gfxDisplayVsyncEvent);
@@ -276,6 +291,7 @@ void gfxExit(void)
         nvExit();
     }
 
+    eventClose(&g_gfxBinderEvent);
     binderClose(&g_gfxBinderSession);
     viCloseLayer(&g_gfxLayer);
     eventClose(&g_gfxDisplayVsyncEvent);

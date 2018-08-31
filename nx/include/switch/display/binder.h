@@ -1,23 +1,22 @@
 #pragma once
 #include "../types.h"
+#include "../kernel/event.h"
 
 #define BINDER_FIRST_CALL_TRANSACTION 0x1
 
 typedef struct {
-    bool   created;
-    bool   initialized;
-    Handle session_handle;
+    bool   created           : 1;
+    bool   initialized       : 1;
+    bool   has_transact_auto : 1;
     s32    id;
-    Handle native_handle;
     size_t ipc_buffer_size;
-    bool   has_transact_auto;
 } Binder;
 
 // Note: binderClose will not close the session_handle provided to binderCreate.
-void binderCreate(Binder* b, Handle session_handle, s32 id);
+void binderCreate(Binder* b, s32 id);
 void binderClose(Binder* b);
 
-Result binderInitSession(Binder* b, u32 unk0);
+Result binderInitSession(Binder* b);
 
 Result binderTransactParcel(
     Binder* b, u32 code,
@@ -26,5 +25,24 @@ Result binderTransactParcel(
     u32 flags);
 
 Result binderAdjustRefcount(Binder* b, s32 addval, s32 type);
-Result binderGetNativeHandle(Binder* b, u32 unk0, Handle *handle_out);
+Result binderGetNativeHandle(Binder* b, u32 unk0, Event *event_out);
 
+static inline Result binderIncreaseWeakRef(Binder* b)
+{
+    return binderAdjustRefcount(b, 1, 0);
+}
+
+static inline Result binderDecreaseWeakRef(Binder* b)
+{
+    return binderAdjustRefcount(b, -1, 0);
+}
+
+static inline Result binderIncreaseStrongRef(Binder* b)
+{
+    return binderAdjustRefcount(b, 1, 1);
+}
+
+static inline Result binderDecreaseStrongRef(Binder* b)
+{
+    return binderAdjustRefcount(b, -1, 1);
+}

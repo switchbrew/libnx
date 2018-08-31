@@ -3,19 +3,22 @@
 #include "result.h"
 #include "kernel/ipc.h"
 #include "kernel/detect.h"
+#include "services/vi.h"
 #include "display/binder.h"
 
-void binderCreate(Binder* b, Handle session_handle, s32 id)
+static Result _binderIpcDispatch(void)
+{
+    return serviceIpcDispatch(viGetSession_IHOSBinderDriverRelay());
+}
+
+void binderCreate(Binder* b, s32 id)
 {
     memset(b, 0, sizeof(Binder));
     b->created = true;
-    b->session_handle = session_handle;
     b->id = id;
-    b->native_handle = INVALID_HANDLE;
-    b->has_transact_auto = false;
 }
 
-Result binderInitSession(Binder* b, u32 unk0)
+Result binderInitSession(Binder* b)
 {
     Result rc = 0;
 
@@ -25,37 +28,19 @@ Result binderInitSession(Binder* b, u32 unk0)
     if (b->initialized)
         return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
 
-    rc = binderAdjustRefcount(b, 1, 0);
-
+    rc = binderIncreaseWeakRef(b);
     if (R_FAILED(rc))
         return rc;
 
-    rc = binderAdjustRefcount(b, 1, 1);
-
+    rc = binderIncreaseStrongRef(b);
     if (R_FAILED(rc)) {
-        binderAdjustRefcount(b, -1, 0);
+        binderDecreaseStrongRef(b);
         return rc;
-    }
-
-    rc = binderGetNativeHandle(b, unk0, &b->native_handle);
-
-    if (R_FAILED(rc)) {
-        binderAdjustRefcount(b, -1, 1);
-        binderAdjustRefcount(b, -1, 0);
-        return rc;
-    }
-
-    // When the output native_handle is 0 the Binder ID is probably invalid.
-    if (b->native_handle == 0) {
-        binderAdjustRefcount(b, -1, 1);
-        binderAdjustRefcount(b, -1, 0);
-        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
     }
 
     b->initialized = true;
 
-    rc = ipcQueryPointerBufferSize(b->session_handle, &b->ipc_buffer_size);
-
+    rc = ipcQueryPointerBufferSize(viGetSession_IHOSBinderDriverRelay()->handle, &b->ipc_buffer_size);
     if (R_FAILED(rc)) {
         binderClose(b);
         return rc;
@@ -74,16 +59,10 @@ void binderClose(Binder* b)
         return;
 
     if (b->initialized) {
-        binderAdjustRefcount(b, -1, 1);
-        binderAdjustRefcount(b, -1, 0);
-
-        if (b->native_handle != INVALID_HANDLE) {
-            svcCloseHandle(b->native_handle);
-            b->native_handle = INVALID_HANDLE;
-        }
+        binderDecreaseStrongRef(b);
+        binderDecreaseWeakRef(b);
     }
 
-    b->session_handle = INVALID_HANDLE;
     b->id = 0;
 
     b->created = false;
@@ -120,7 +99,7 @@ static Result _binderTransactParcel(
     raw->code = code;
     raw->flags = flags;
 
-    Result rc = ipcDispatch(b->session_handle);
+    Result rc = _binderIpcDispatch();
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -167,7 +146,7 @@ static Result _binderTransactParcelAuto(
     raw->code = code;
     raw->flags = flags;
 
-    Result rc = ipcDispatch(b->session_handle);
+    Result rc = _binderIpcDispatch();
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -223,7 +202,7 @@ Result binderAdjustRefcount(Binder* b, s32 addval, s32 type)
     raw->addval = addval;
     raw->type = type;
 
-    Result rc = ipcDispatch(b->session_handle);
+    Result rc = _binderIpcDispatch();
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -240,7 +219,7 @@ Result binderAdjustRefcount(Binder* b, s32 addval, s32 type)
     return rc;
 }
 
-Result binderGetNativeHandle(Binder* b, u32 inval, Handle *handle_out)
+Result binderGetNativeHandle(Binder* b, u32 inval, Event *event_out)
 {
     if (!b->created)
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
@@ -262,7 +241,7 @@ Result binderGetNativeHandle(Binder* b, u32 inval, Handle *handle_out)
     raw->session_id = b->id;
     raw->inval = inval;
 
-    Result rc = ipcDispatch(b->session_handle);
+    Result rc = _binderIpcDispatch();
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -276,7 +255,7 @@ Result binderGetNativeHandle(Binder* b, u32 inval, Handle *handle_out)
         rc = resp->result;
 
         if (R_SUCCEEDED(rc)) {
-            *handle_out = r.Handles[0];
+            eventLoadRemote(event_out, r.Handles[0], false);
         }
     }
 
