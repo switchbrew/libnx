@@ -109,7 +109,7 @@ static Result _gfxDequeueBuffer(void) {
         do {
             eventWait(&g_gfxBinderEvent, U64_MAX);
             rc = bqDequeueBuffer(&g_gfxBinderSession, true, g_gfx_framebuf_width, g_gfx_framebuf_height, 0, 0x300, &slot, &fence);
-        } while (rc == MAKERESULT(Module_Libnx, LibnxError_BufferProducerError)); // todo: check for error -11
+        } while (rc == MAKERESULT(Module_LibnxBinder, LibnxBinderError_WouldBlock));
     }
     else
         rc = bqDequeueBuffer(&g_gfxBinderSession, false, g_gfx_framebuf_width, g_gfx_framebuf_height, 0, 0x300, &slot, &fence);

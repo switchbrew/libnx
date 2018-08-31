@@ -58,11 +58,7 @@ Result bqRequestBuffer(Binder *b, s32 bufferIdx, BqGraphicBuffer *buf)
                 memcpy(buf, tmp_ptr, sizeof(BqGraphicBuffer));
         }
 
-        int status = parcelReadInt32(&parcel_reply);
-
-        if (status != 0) {
-            rc = MAKERESULT(Module_Libnx, LibnxError_BufferProducerError);
-        }
+        rc = binderConvertErrorCode(parcelReadInt32(&parcel_reply));
     }
 
     return rc;
@@ -101,9 +97,7 @@ Result bqDequeueBuffer(Binder *b, bool async, u32 width, u32 height, s32 format,
                 memcpy(fence, tmp_ptr, sizeof(NvMultiFence));
         }
 
-        int result = parcelReadInt32(&parcel_reply);
-        if (result != 0)
-            rc = MAKERESULT(Module_Libnx, LibnxError_BufferProducerError);
+        rc = binderConvertErrorCode(parcelReadInt32(&parcel_reply));
     }
 
     return rc;
@@ -123,7 +117,7 @@ Result bqDetachBuffer(Binder *b, s32 slot)
     rc = parcelTransact(b, DETACH_BUFFER, &parcel, &parcel_reply);
 
     if (R_SUCCEEDED(rc)) {
-        //TODO: parse reply
+        rc = binderConvertErrorCode(parcelReadInt32(&parcel_reply));
     }
 
     return rc;
@@ -147,9 +141,7 @@ Result bqQueueBuffer(Binder *b, s32 buf, BqQueueBufferInput *input, BqQueueBuffe
         if (parcelReadData(&parcel_reply, output, sizeof(*output)) == NULL)
             return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
-        int result = parcelReadInt32(&parcel_reply);
-        if (result != 0)
-            rc = MAKERESULT(Module_Libnx, LibnxError_BufferProducerError);
+        rc = binderConvertErrorCode(parcelReadInt32(&parcel_reply));
     }
 
     return rc;
@@ -171,9 +163,7 @@ Result bqQuery(Binder *b, s32 what, s32* value)
     if (R_SUCCEEDED(rc)) {
         *value = parcelReadInt32(&parcel_reply);
 
-        int result = parcelReadInt32(&parcel_reply);
-        if (result != 0)
-            rc = MAKERESULT(Module_Libnx, LibnxError_BufferProducerError);
+        rc = binderConvertErrorCode(parcelReadInt32(&parcel_reply));
     }
 
     return rc;
@@ -200,9 +190,7 @@ Result bqConnect(Binder *b, s32 api, bool producerControlledByApp, BqQueueBuffer
         if (parcelReadData(&parcel_reply, output, sizeof(*output)) == NULL)
             return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
-        int result = parcelReadInt32(&parcel_reply);
-        if (result != 0)
-            rc = MAKERESULT(Module_Libnx, LibnxError_BufferProducerError);
+        rc = binderConvertErrorCode(parcelReadInt32(&parcel_reply));
     }
 
     return rc;
@@ -222,7 +210,7 @@ Result bqDisconnect(Binder *b, s32 api)
     rc = parcelTransact(b, DISCONNECT, &parcel, &parcel_reply);
 
     if (R_SUCCEEDED(rc)) {
-        // TODO: parse reply
+        rc = binderConvertErrorCode(parcelReadInt32(&parcel_reply));
     }
 
     return rc;
@@ -248,13 +236,7 @@ Result bqSetPreallocatedBuffer(Binder *b, s32 buf, BqGraphicBuffer *input)
         parcelWriteFlattenedObject(&parcel, input, sizeof(BqGraphicBuffer));
 
     rc = parcelTransact(b, SET_PREALLOCATED_BUFFER, &parcel, &parcel_reply);
-
-    if (R_SUCCEEDED(rc)) {
-        int result = parcelReadInt32(&parcel_reply);
-        if (result != 0)
-            rc = MAKERESULT(Module_Libnx, LibnxError_BufferProducerError);
-    }
+    // Reply parcel has no content
 
     return rc;
 }
-
