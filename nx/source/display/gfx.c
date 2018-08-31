@@ -38,8 +38,6 @@ size_t g_gfx_framebuf_display_width=0, g_gfx_framebuf_display_height=0;
 size_t g_gfx_singleframebuf_size=0;
 size_t g_gfx_singleframebuf_linear_size=0;
 
-bool g_gfx_drawflip = true;
-
 static AppletHookCookie g_gfx_autoresolution_applethookcookie;
 static bool g_gfx_autoresolution_enabled;
 
@@ -60,7 +58,7 @@ static BqQueueBufferInput g_gfxQueueBufferData = {
     .isAutoTimestamp = 0x1,
     .crop = {0x0, 0x0, 0x0, 0x0}, //Official apps which use multiple resolutions configure this for the currently used resolution, depending on the current appletOperationMode.
     .scalingMode = 0x0,
-    .transform = NATIVE_WINDOW_TRANSFORM_FLIP_V,
+    .transform = 0,
     .stickyTransform = 0x0,
     .unk = 0x0,
     .swapInterval = 0x1,
@@ -174,8 +172,7 @@ Result gfxInitDefault(void) {
     g_gfxFramebufHandle = 0;
     g_gfxMode = GfxMode_LinearDouble;
 
-    g_gfx_drawflip = true;
-    g_gfxQueueBufferData.transform = NATIVE_WINDOW_TRANSFORM_FLIP_V;
+    g_gfxQueueBufferData.transform = 0;
 
     //memset(g_gfx_ProducerSlotsRequested, 0, sizeof(g_gfx_ProducerSlotsRequested));
     g_gfx_ProducerSlotsRequested = 0;
@@ -474,10 +471,6 @@ u32 gfxGetFramebufferPitch(void) {
 
 void gfxSetMode(GfxMode mode) {
     g_gfxMode = mode;
-}
-
-void gfxSetDrawFlip(bool flip) {
-    g_gfx_drawflip = flip;
 }
 
 void gfxConfigureTransform(u32 transform) {
