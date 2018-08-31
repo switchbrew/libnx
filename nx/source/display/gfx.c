@@ -62,7 +62,8 @@ static BqQueueBufferInput g_gfxQueueBufferData = {
     .scalingMode = 0x0,
     .transform = NATIVE_WINDOW_TRANSFORM_FLIP_V,
     .stickyTransform = 0x0,
-    .unk = {0x0, 0x1},
+    .unk = 0x0,
+    .swapInterval = 0x1,
     .fence = {0},
 };
 

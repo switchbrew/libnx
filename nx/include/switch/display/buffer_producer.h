@@ -16,7 +16,8 @@ typedef struct {
     s32 scalingMode;
     u32 transform; // See the NATIVE_WINDOW_TRANSFORM_* enums.
     u32 stickyTransform;
-    u32 unk[2];
+    u32 unk;
+    u32 swapInterval;
     NvMultiFence fence;
 } BqQueueBufferInput;
 
