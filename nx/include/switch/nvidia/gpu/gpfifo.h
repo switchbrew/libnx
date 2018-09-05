@@ -2,7 +2,6 @@
 
 typedef struct {
     NvChannel* parent;
-    nvioctl_fence fifo_fence;
 } NvGpfifo;
 
 Result nvGpfifoCreate(NvGpfifo* f, NvChannel* parent);

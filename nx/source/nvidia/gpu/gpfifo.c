@@ -24,8 +24,11 @@ Result nvGpfifoCreate(NvGpfifo* f, NvChannel* parent)
 {
     f->parent = parent;
 
-    return nvioctlChannel_AllocGpfifoEx2(
-        parent->fd, DEFAULT_FIFO_ENTRIES, 1, 0, 0, 0, 0, &f->fifo_fence);
+    NvFence fence;
+    Result res = nvioctlChannel_AllocGpfifoEx2(parent->fd, DEFAULT_FIFO_ENTRIES, 1, 0, 0, 0, 0, &fence);
+    if (R_SUCCEEDED(res) && (s32)fence.id >= 0)
+        nvFenceWait(&fence, -1);
+    return res;
 }
 
 void nvGpfifoClose(NvGpfifo* f) {
