@@ -68,7 +68,7 @@ static Result _nvBufferCreate(
 
     if (R_SUCCEEDED(rc))
         rc = nvioctlNvmap_Alloc(
-            g_nvmap_fd, m->fd, 0, flags | NvBufferFlags_Nintendo, align, kind, m->cpu_addr);
+            g_nvmap_fd, m->fd, 0, flags, align, kind, m->cpu_addr);
 
     if (R_SUCCEEDED(rc))
         rc = nvAddressSpaceMapBuffer(as, m->fd, 0, &m->gpu_addr);

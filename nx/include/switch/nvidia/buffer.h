@@ -4,7 +4,6 @@
 
 typedef enum {
     NvBufferFlags_Writable=1,
-    NvBufferFlags_Nintendo=0x20000,
 } NvBufferFlags;
 
 typedef struct NvAddressSpace NvAddressSpace;
