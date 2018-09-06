@@ -565,7 +565,7 @@ Result appletGetDesiredLanguage(u64 *LanguageCode) {
     return rc;
 }
 
-Result appletBeginBlockingHomeButton(s64 val) {
+Result appletBeginBlockingHomeButton(void) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -583,7 +583,7 @@ Result appletBeginBlockingHomeButton(s64 val) {
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 32;
-    raw->val = val;
+    raw->val = 0;
 
     Result rc = serviceIpcDispatch(&g_appletIFunctions);
 

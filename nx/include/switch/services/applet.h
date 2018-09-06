@@ -53,7 +53,8 @@ Result appletCreateManagedDisplayLayer(u64 *out);
 
 Result appletGetDesiredLanguage(u64 *LanguageCode);
 
-Result appletBeginBlockingHomeButton(s64 val);
+/// Can only be used with regularapps.
+Result appletBeginBlockingHomeButton(void);
 
 Result appletEndBlockingHomeButton(void);
 
