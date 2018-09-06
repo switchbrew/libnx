@@ -569,7 +569,8 @@ Result appletBeginBlockingHomeButton(s64 val) {
     IpcCommand c;
     ipcInitialize(&c);
 
-    if (!serviceIsActive(&g_appletSrv) || __nx_applet_type!=AppletType_Application)
+    if (!serviceIsActive(&g_appletSrv) || (__nx_applet_type!=AppletType_Application
+      && __nx_applet_type!=AppletType_SystemApplication))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     struct {
@@ -605,7 +606,8 @@ Result appletEndBlockingHomeButton(void) {
     IpcCommand c;
     ipcInitialize(&c);
 
-    if (!serviceIsActive(&g_appletSrv) || __nx_applet_type!=AppletType_Application)
+    if (!serviceIsActive(&g_appletSrv) || (__nx_applet_type!=AppletType_Application
+      && __nx_applet_type!=AppletType_SystemApplication))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     struct {
