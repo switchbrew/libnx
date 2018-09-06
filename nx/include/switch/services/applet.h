@@ -53,6 +53,10 @@ Result appletCreateManagedDisplayLayer(u64 *out);
 
 Result appletGetDesiredLanguage(u64 *LanguageCode);
 
+Result appletBeginBlockingHomeButton(s64 val);
+
+Result appletEndBlockingHomeButton(void);
+
 /**
  * @brief Controls whether screenshot-capture is allowed.
  * @param val 0 = disable, 1 = enable.
