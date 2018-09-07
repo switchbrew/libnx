@@ -26,8 +26,9 @@ Result nvGpfifoCreate(NvGpfifo* f, NvChannel* parent)
 
     NvFence fence;
     Result res = nvioctlChannel_AllocGpfifoEx2(parent->fd, DEFAULT_FIFO_ENTRIES, 1, 0, 0, 0, 0, &fence);
-    if (R_SUCCEEDED(res) && (s32)fence.id >= 0)
-        nvFenceWait(&fence, -1);
+    //__builtin_printf("nvGpfifoCreate initial fence: %d %u\n", (int)fence.id, fence.value);
+    //if (R_SUCCEEDED(res) && (s32)fence.id >= 0)
+    //    nvFenceWait(&fence, -1);
     return res;
 }
 
@@ -35,23 +36,29 @@ void nvGpfifoClose(NvGpfifo* f) {
     /**/
 }
 
-Result nvGpfifoSubmit(NvGpfifo* f, NvCmdList* cmd_list, NvFence* fence_out)
+Result nvGpfifoSubmitCmdList(NvGpfifo* f, NvCmdList* cmd_list, u32 fence_incr, NvFence* fence_out)
 {
     Result rc;
     nvioctl_gpfifo_entry ent;
+    NvFence fence;
 
-    u64 a =
-        nvCmdListGetGpuAddr(cmd_list) | (nvCmdListGetListSize(cmd_list) << 42);
+    ent.desc = nvCmdListGetGpuAddr(cmd_list) + 4*cmd_list->offset;
+    ent.desc32[1] |= (2 << 8) | (nvCmdListGetListSize(cmd_list) << 10);
 
-    ent.desc32[0] = a;
-    ent.desc32[1] = a >> 32;
+    fence.id = 0;
+    fence.value = fence_incr;
 
-    fence_out->id = -1;
-    fence_out->value = 0;
+    u32 flags = BIT(2);
+    if (fence_incr)
+        flags |= BIT(8);
 
     rc = nvioctlChannel_SubmitGpfifo(
-        f->parent->fd, &ent, 1, /*0x104*/0x104/*flags*/, fence_out);
+        f->parent->fd, &ent, 1, flags, &fence);
 
+    if (R_SUCCEEDED(rc) && fence_out)
+        *fence_out = fence;
+
+    cmd_list->offset += cmd_list->num_cmds;
     cmd_list->num_cmds = 0;
 
     return rc;

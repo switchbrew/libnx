@@ -28,6 +28,7 @@ Result nvCmdListCreate(NvCmdList* c, NvGpu* parent, size_t max_cmds)
     if (R_SUCCEEDED(rc)) {
         nvBufferMakeCpuUncached(&c->buffer);
 
+        c->offset = 0;
         c->num_cmds = 0;
         c->max_cmds = max_cmds;
         c->parent = parent;
@@ -48,14 +49,19 @@ u64 nvCmdListGetListSize(NvCmdList* c) {
     return c->num_cmds;
 }
 
+void nvCmdListReset(NvCmdList* c) {
+    c->offset = 0;
+    c->num_cmds = 0;
+}
+
 u32* nvCmdListInsert(NvCmdList* c, size_t num_cmds)
 {
     // Has enough space?
-    if ((c->num_cmds + num_cmds) > c->max_cmds)
+    if ((c->offset + c->num_cmds + num_cmds) > c->max_cmds)
         return NULL;
 
     c->num_cmds += num_cmds;
 
     u32* list = (u32*) nvBufferGetCpuAddr(&c->buffer);
-    return &list[c->num_cmds - num_cmds];
+    return &list[c->offset + c->num_cmds - num_cmds];
 }
