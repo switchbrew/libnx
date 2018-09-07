@@ -55,7 +55,7 @@ Result appletGetDesiredLanguage(u64 *LanguageCode);
 
 /**
  * @brief Blocks the usage of the home button.
- * @param val Unknown nanoseconds. Officially, only 0 is used.
+ * @param val Unknown nanoseconds. Value 0 can be used.
  * @note Can only be used in regularapps.
  */
 Result appletBeginBlockingHomeButton(s64 val);
