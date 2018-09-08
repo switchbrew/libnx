@@ -17,28 +17,28 @@ typedef struct {
 typedef struct
 {
     u8 title_type;
-    u8 storage_id;
-    u8 unk_02;
+    u8 storageID;
+    u8 unk_x02;
     u8 padding;
     u32 title_version;
-    u64 title_id;
+    u64 titleID;
 } NsApplicationContentMetaStatus;
 
 typedef struct
 {
-    u64 title_id;
+    u64 titleID;
     u8 type;
-    u8 unk_09;
-    u8 unk_0A[6];
-    u8 unk_10;
-    u8 unk_11[7];
+    u8 unk_x09;
+    u8 unk_x0A[6];
+    u8 unk_x10;
+    u8 unk_x11[7];
 } NsApplicationRecord;
 
 Result nsInitialize(void);
 void nsExit(void);
 
-Result nsListApplicationRecord(NsApplicationRecord* buffer, size_t size, int* out_entrycount);
-Result nsListApplicationContentMetaStatus(u64 title_id, u32 index, NsApplicationContentMetaStatus* buffer, size_t size, int* out_entrycount);
+Result nsListApplicationRecord(NsApplicationRecord* buffer, size_t size, size_t* out_entrycount);
+Result nsListApplicationContentMetaStatus(u64 titleID, u32 index, NsApplicationContentMetaStatus* buffer, size_t size, size_t* out_entrycount);
 Result nsGetApplicationControlData(u8 flag, u64 titleID, NsApplicationControlData* buffer, size_t size, size_t* actual_size);
 
 /**
