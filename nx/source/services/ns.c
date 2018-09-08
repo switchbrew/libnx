@@ -98,8 +98,7 @@ Result nsListApplicationRecord(NsApplicationRecord* buffer, size_t size, size_t 
     ipcInitialize(&c);
     ipcAddRecvBuffer(&c, buffer, size, 0);
     
-    struct
-    {
+    struct {
         u64 magic;
         u64 cmd_id;
         u32 entry_offset;
@@ -137,8 +136,7 @@ Result nsListApplicationContentMetaStatus(u64 titleID, u32 index, NsApplicationC
     ipcInitialize(&c);
     ipcAddRecvBuffer(&c, buffer, size, 0);
     
-    struct
-    {
+    struct {
         u64 magic;
         u64 cmd_id;
         u32 index;
