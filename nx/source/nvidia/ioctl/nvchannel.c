@@ -116,6 +116,17 @@ Result nvioctlChannel_SetPriority(u32 fd, u32 priority) {
     return nvIoctl(fd, _NV_IOW(0x48, 0x0D, data), &data);
 }
 
+Result nvioctlChannel_SetTimeout(u32 fd, u32 timeout) {
+    struct {
+        __nv_in u32 timeout;
+    } data;
+
+    memset(&data, 0, sizeof(data));
+    data.timeout = timeout;
+
+    return nvIoctl(fd, _NV_IOW(0x48, 0x03, data), &data);
+}
+
 Result nvioctlChannel_AllocGpfifoEx2(u32 fd, u32 num_entries, u32 flags, u32 unk0, u32 unk1, u32 unk2, u32 unk3, nvioctl_fence *fence_out) {
     Result rc=0;
 

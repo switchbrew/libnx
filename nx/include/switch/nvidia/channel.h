@@ -10,4 +10,5 @@ Result nvChannelCreate(NvChannel* c, const char* dev);
 void   nvChannelClose(NvChannel* c);
 
 Result nvChannelSetPriority(NvChannel* c, NvChannelPriority prio);
+Result nvChannelSetTimeout(NvChannel* c, u32 timeout);
 Result nvChannelSetNvmapFd(NvChannel* c);

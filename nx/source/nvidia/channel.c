@@ -40,6 +40,10 @@ Result nvChannelSetPriority(NvChannel* c, NvChannelPriority prio) {
     return nvioctlChannel_SetPriority(c->fd, prio);
 }
 
+Result nvChannelSetTimeout(NvChannel* c, u32 timeout) {
+    return nvioctlChannel_SetTimeout(c->fd, timeout);
+}
+
 Result nvChannelSetNvmapFd(NvChannel* c) {
     return nvioctlChannel_SetNvmapFd(c->fd, nvBufferGetNvmapFd());
 }

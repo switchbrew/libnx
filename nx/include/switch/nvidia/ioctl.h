@@ -185,5 +185,6 @@ Result nvioctlChannel_ZCullBind(u32 fd, u64 gpu_va, u32 mode);
 Result nvioctlChannel_SetErrorNotifier(u32 fd, u32 enable);
 Result nvioctlChannel_GetErrorNotification(u32 fd, NvError* out);
 Result nvioctlChannel_SetPriority(u32 fd, u32 priority);
+Result nvioctlChannel_SetTimeout(u32 fd, u32 timeout);
 Result nvioctlChannel_AllocGpfifoEx2(u32 fd, u32 num_entries, u32 flags, u32 unk0, u32 unk1, u32 unk2, u32 unk3, nvioctl_fence *fence_out);
 Result nvioctlChannel_SetUserData(u32 fd, void* addr);
