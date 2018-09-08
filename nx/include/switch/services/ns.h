@@ -37,7 +37,7 @@ typedef struct
 Result nsInitialize(void);
 void nsExit(void);
 
-Result nsListApplicationRecord(NsApplicationRecord* buffer, size_t size, size_t* out_entrycount);
+Result nsListApplicationRecord(NsApplicationRecord* buffer, size_t size, size_t entry_offset, size_t* out_entrycount);
 Result nsListApplicationContentMetaStatus(u64 titleID, u32 index, NsApplicationContentMetaStatus* buffer, size_t size, size_t* out_entrycount);
 Result nsGetApplicationControlData(u8 flag, u64 titleID, NsApplicationControlData* buffer, size_t size, size_t* actual_size);
 
