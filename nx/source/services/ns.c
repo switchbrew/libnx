@@ -92,7 +92,7 @@ static Result _nsGetInterface(Service* srv_out, u64 cmd_id) {
     return rc;
 }
 
-Result nsListApplicationRecord(NsApplicationRecord* buffer, size_t size, size_t* out_entrycount)
+Result nsListApplicationRecord(NsApplicationRecord* buffer, size_t size, size_t entry_offset, size_t* out_entrycount)
 {
     IpcCommand c;
     ipcInitialize(&c);
@@ -102,14 +102,14 @@ Result nsListApplicationRecord(NsApplicationRecord* buffer, size_t size, size_t*
     {
         u64 magic;
         u64 cmd_id;
-        size_t entry_offset;
+        u32 entry_offset;
     } *raw;
     
     raw = ipcPrepareHeader(&c, sizeof(*raw));
     
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 0;
-    raw->entry_offset = 0;
+    raw->entry_offset = entry_offset;
     
     Result rc = serviceIpcDispatch(&g_nsAppManSrv);
     
