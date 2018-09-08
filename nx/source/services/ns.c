@@ -102,7 +102,7 @@ Result nsListApplicationRecord(NsApplicationRecord* buffer, size_t size, size_t*
     {
         u64 magic;
         u64 cmd_id;
-        u32 entry_offset;
+        size_t entry_offset;
     } *raw;
     
     raw = ipcPrepareHeader(&c, sizeof(*raw));
