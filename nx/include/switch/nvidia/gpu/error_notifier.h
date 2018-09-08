@@ -10,3 +10,5 @@ typedef struct {
 
 Result nvErrorNotifierCreate(NvErrorNotifier* t, NvGpu* parent);
 void   nvErrorNotifierClose(NvErrorNotifier* t);
+Result nvErrorNotifierWait(NvErrorNotifier* t, u64 timeout);
+Result nvErrorNotifierGetError(NvErrorNotifier* t, NvError* out);
