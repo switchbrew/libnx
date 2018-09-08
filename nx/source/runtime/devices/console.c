@@ -123,9 +123,9 @@ static void consoleCls(char mode) {
 			break;
 		}
 	}
-	gfxFlushBuffers();
-	gfxSwapBuffers();
-	gfxWaitForVsync();
+	//gfxFlushBuffers();
+	//gfxSwapBuffers();
+	//gfxWaitForVsync();
 }
 //---------------------------------------------------------------------------------
 static void consoleClearLine(char mode) {
@@ -178,9 +178,9 @@ static void consoleClearLine(char mode) {
 			break;
 		}
 	}
-	gfxFlushBuffers();
-	gfxSwapBuffers();
-	gfxWaitForVsync();
+	//gfxFlushBuffers();
+	//gfxSwapBuffers();
+	//gfxWaitForVsync();
 }
 
 
@@ -558,9 +558,9 @@ PrintConsole* consoleInit(PrintConsole* console) {
 	gfxSwapBuffers();
 	console->frameBuffer2 = (u32*)gfxGetFramebuffer(NULL, NULL);
 
-	gfxFlushBuffers();
-	gfxSwapBuffers();
-	gfxWaitForVsync();
+	//gfxFlushBuffers();
+	//gfxSwapBuffers();
+	//gfxWaitForVsync();
 
 	consoleCls('2');
 
@@ -752,9 +752,9 @@ void consolePrintChar(int c) {
 			newRow();
 		case 13:
 			currentConsole->cursorX  = 0;
-			gfxFlushBuffers();
-			gfxSwapBuffers();
-			gfxWaitForVsync();
+			//gfxFlushBuffers();
+			//gfxSwapBuffers();
+			//gfxWaitForVsync();
 			break;
 		default:
 			consoleDrawChar(c);
