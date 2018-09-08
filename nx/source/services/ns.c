@@ -92,24 +92,24 @@ static Result _nsGetInterface(Service* srv_out, u64 cmd_id) {
     return rc;
 }
 
-Result nsListApplicationRecord(NsApplicationRecord* buffer, size_t size, int* out_entrycount)
+Result nsListApplicationRecord(NsApplicationRecord* buffer, size_t size, size_t* out_entrycount)
 {
     IpcCommand c;
     ipcInitialize(&c);
-    
     ipcAddRecvBuffer(&c, buffer, size, 0);
     
     struct
     {
         u64 magic;
         u64 cmd_id;
-        u64 unk;
+        u32 entry_offset;
     } *raw;
+    
     raw = ipcPrepareHeader(&c, sizeof(*raw));
     
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 0;
-    raw->unk = 0;
+    raw->entry_offset = 0;
     
     Result rc = serviceIpcDispatch(&g_nsAppManSrv);
     
@@ -131,11 +131,10 @@ Result nsListApplicationRecord(NsApplicationRecord* buffer, size_t size, int* ou
     return rc;
 }
 
-Result nsListApplicationContentMetaStatus(u64 title_id, u32 index, NsApplicationContentMetaStatus* buffer, size_t size, int* out_entrycount)
+Result nsListApplicationContentMetaStatus(u64 titleID, u32 index, NsApplicationContentMetaStatus* buffer, size_t size, size_t* out_entrycount)
 {
     IpcCommand c;
     ipcInitialize(&c);
-    
     ipcAddRecvBuffer(&c, buffer, size, 0);
     
     struct
@@ -151,7 +150,7 @@ Result nsListApplicationContentMetaStatus(u64 title_id, u32 index, NsApplication
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 601;
     raw->index = index;
-    raw->titleID = title_id;
+    raw->titleID = titleID;
     
     Result rc = serviceIpcDispatch(&g_nsAppManSrv);
     
