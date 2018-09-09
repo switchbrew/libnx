@@ -569,6 +569,78 @@ Result appletGetDesiredLanguage(u64 *LanguageCode) {
     return rc;
 }
 
+Result appletBeginBlockingHomeButton(s64 val) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    if (!serviceIsActive(&g_appletSrv) || (__nx_applet_type!=AppletType_Application
+      && __nx_applet_type!=AppletType_SystemApplication))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        s64 val;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 32;
+    raw->val = val;
+
+    Result rc = serviceIpcDispatch(&g_appletIFunctions);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result appletEndBlockingHomeButton(void) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    if (!serviceIsActive(&g_appletSrv) || (__nx_applet_type!=AppletType_Application
+      && __nx_applet_type!=AppletType_SystemApplication))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 33;
+
+    Result rc = serviceIpcDispatch(&g_appletIFunctions);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
 void appletNotifyRunning(u8 *out) {
     IpcCommand c;
     ipcInitialize(&c);
