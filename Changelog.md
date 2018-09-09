@@ -1,5 +1,65 @@
 # Changelog
 
+## Version 1.4.0
+
+#### system
+* **Added support for C11 threads**, which are preemptively multitasked and load balanced across cores.
+* **Added Event object**, which wraps kernel revent/wevent handles with optional autoclear.
+* **Changed CondVar interface** to have the mutex be passed to condvarWait* instead of condvarInit, which is consistent with both the concept of a condition variable and with other common threading APIs.
+* Added armGetSystemTick (which supersedes svcGetSystemTick), and armGetSystemTickFreq.
+* Added rwlockInit.
+* Added kernelAbove600.
+* Added system calls: svcGetThreadCoreMask, svcSetThreadCoreMask.
+* Added MOD0 header to binaries compiled with libnx.
+* Fixed semaphoreTryWait.
+* Fixed a memory leak in tmemCreate.
+
+#### services
+* Added bpc service (used for rebooting and shutting down the console).
+* Added psm service (needed to get the battery status).
+* Added ns commands: nsListApplicationRecord, nsListApplicationContentMetaStatus.
+* Minor enhancements to applet service:
+  * Added missing AppletType_SystemApplet initialization in applet code.
+  * Added appletBeginBlockingHomeButton and appletEndBlockingHomeButton.
+* The Event object is now used to return system events from service wrappers when possible, also providing the correct autoclear mode.
+* Corrected fsOpenFileSystem and fsOpenFileSystemWithId.
+* Corrected a bug in hidInitializeVibrationDevices.
+* Corrected a bug in socket error conversion.
+* Fixed nifm not initializing properly for < 3.0.0.
+* Service manager (sm) session now closes properly.
+* hid, irs, vi and nv services now acquire a reference to applet services.
+
+#### audio
+* **Added audren:u** service wrapper (presently requiring 3.0.0+, will be addressed in a future update).
+* **Added AudioDriver** wrapper around audren, providing a higher level interface that can be used to mix and play sounds.
+
+#### graphics
+* **Major rewrite and refactoring work in the gfx wrapper** which brings reliability and usability improvements:
+  * **Removed GfxMode_TiledSingle** mode due to it causing problems and potential (temporary) hardware damage.
+  * **The default transform behavior no longer vertically flips the framebuffer**.
+  * **Removed gfxSetDrawFlip** since it's no longer needed thanks to the change in the default transform behavior.
+  * **It is not necessary to call gfxWaitForVsync in most situations** because gfxSwapBuffers already implicitly synchronizes with the display (this is mandated by the Android surface compositor and buffer producer system).
+  * **Dequeue fatal errors should be solved**.
+  * Simplified and streamlined logic.
+  * nvgfx stripped down to the minimum that is actually necessary to allocate framebuffers.
+  * Binder logic now more closely matches both Android code and official software.
+  * Proper fence and event wait code is now used.
+* **Console code no longer performs a forced flush/swap/vblank wait when printing a newline** due to performance reasons. Users of the console device must make sure that gfxFlushBuffers and gfxSwapBuffers are periodically called, preferably in the main loop of the application.
+* **Added experimental wrapper objects for the Nvidia driver**, needed in order to use the GPU. These wrappers are still in RE phase and will be subject to change in a future release.
+* **Major redesign of the VI service wrapper** that allows future users to use VI directly to create a display layer.
+* Binder services & buffer producer wrappers were enhanced and redesigned.
+  * Binder now holds less state and always uses the VI binder relay service session.
+  * Added Module_LibnxBinder error codes.
+  * IGraphicBufferProducer binder service wrappers now have the `bq` prefix and explicitly accept a Binder object.
+  * Added bqCancelBuffer.
+  * bqGraphicBufferInit was renamed to bqSetPreallocatedBuffer.
+* Enhancements and additions to nvidia ioctl wrappers.
+* Added definitions for some more Android enumerations.
+
+#### miscellaneous
+* The `ALIGN` macro was removed in favor of the C11/C++11 alignas attribute.
+* Further improvements to overall system stability and other minor adjustments to enhance the user experience.
+
 ## Version 1.3.2
 
 * **Fixed critical IPC bug in fatalWithType that rendered the type parameter ignored (necessary for error report creation prevention)**.
