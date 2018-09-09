@@ -179,8 +179,8 @@ typedef enum
 } FsFileSystemType;
 
 /// Mount requested filesystem type from content file
-Result fsOpenFileSystem(FsFileSystem* out, u64 titleId, FsFileSystemType fsType); /// only on 1.0.0, only works with registered content
-Result fsOpenFileSystemWithId(FsFileSystem* out, u64 titleId, FsFileSystemType fsType, const char* contentPath); /// 2.0.0+, contentPath must be resolved manually
+Result fsOpenFileSystem(FsFileSystem* out, FsFileSystemType fsType, const char* contentPath); /// same as calling fsOpenFileSystemWithId with 0 as titleId
+Result fsOpenFileSystemWithId(FsFileSystem* out, u64 titleId, FsFileSystemType fsType, const char* contentPath); /// works on all firmwares, titleId is ignored on 1.0.0
 
 // IFileSystem
 Result fsFsCreateFile(FsFileSystem* fs, const char* path, size_t size, int flags);

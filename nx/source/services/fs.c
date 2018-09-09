@@ -4,6 +4,7 @@
 #include "result.h"
 #include "arm/atomics.h"
 #include "kernel/ipc.h"
+#include "kernel/detect.h"
 #include "services/fs.h"
 #include "services/sm.h"
 
@@ -432,43 +433,8 @@ Result fsMount_SystemSaveData(FsFileSystem* out, u64 saveID) {
     return fsMountSystemSaveData(out, FsSaveDataSpaceId_NandSystem, &save);
 }
 
-Result fsOpenFileSystem(FsFileSystem* out, u64 titleId, FsFileSystemType fsType) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u32 fsType;
-        u64 titleId;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 0;
-    raw->fsType = fsType;
-    raw->titleId = titleId;
-
-    Result rc = serviceIpcDispatch(&g_fsSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            serviceCreate(&out->s, r.Handles[0]);
-        }
-    }
-
-    return rc;
+Result fsOpenFileSystem(FsFileSystem* out, FsFileSystemType fsType, const char* contentPath) {
+    return fsOpenFileSystemWithId(out, 0, fsType, contentPath);
 }
 
 Result fsOpenFileSystemWithId(FsFileSystem* out, u64 titleId, FsFileSystemType fsType, const char* contentPath) {
@@ -479,19 +445,34 @@ Result fsOpenFileSystemWithId(FsFileSystem* out, u64 titleId, FsFileSystemType f
     ipcInitialize(&c);
     ipcAddSendStatic(&c, sendStr, sizeof(sendStr), 0);
 
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u32 fsType;
-        u64 titleId;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 8;
-    raw->fsType = fsType;
-    raw->titleId = titleId;
+    if (kernelAbove200()) {
+        struct {
+            u64 magic;
+            u64 cmd_id;
+            u32 fsType;
+            u64 titleId;
+        } *raw;
+    
+        raw = ipcPrepareHeader(&c, sizeof(*raw));
+    
+        raw->magic = SFCI_MAGIC;
+        raw->cmd_id = 8;
+        raw->fsType = fsType;
+        raw->titleId = titleId;
+    }
+    else {
+        struct {
+            u64 magic;
+            u64 cmd_id;
+            u32 fsType;
+        } *raw;
+    
+        raw = ipcPrepareHeader(&c, sizeof(*raw));
+    
+        raw->magic = SFCI_MAGIC;
+        raw->cmd_id = 0;
+        raw->fsType = fsType;
+    }
 
     Result rc = serviceIpcDispatch(&g_fsSrv);
 
