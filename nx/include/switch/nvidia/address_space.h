@@ -19,6 +19,7 @@ Result nvAddressSpaceReserveAtFixedAddr(NvAddressSpace* a, iova_t addr, u32 page
 Result nvAddressSpaceReserveFull(NvAddressSpace* a);
 
 Result nvAddressSpaceMapBuffer(NvAddressSpace* a, u32 fd, NvKind kind, iova_t* iova_out);
+Result nvAddressSpaceUnmapBuffer(NvAddressSpace* a, iova_t iova);
 
 struct NvChannel;
 Result nvAddressSpaceBindToChannel(NvAddressSpace* a, struct NvChannel* channel);

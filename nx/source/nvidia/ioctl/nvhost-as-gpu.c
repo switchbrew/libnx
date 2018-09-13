@@ -78,6 +78,17 @@ Result nvioctlNvhostAsGpu_MapBufferEx(
     return rc;
 }
 
+Result nvioctlNvhostAsGpu_UnmapBuffer(u32 fd, u64 offset) {
+    struct {
+        __nv_in u64 offset;
+    } data;
+
+    memset(&data, 0, sizeof(data));
+    data.offset = offset;
+
+    return nvIoctl(fd, _NV_IOWR(0x41, 0x05, data), &data);
+}
+
 Result nvioctlNvhostAsGpu_GetVARegions(u32 fd, nvioctl_va_region regions[2]) {
     Result rc=0;
 

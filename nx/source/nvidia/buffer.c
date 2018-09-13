@@ -63,9 +63,6 @@ static Result _nvBufferCreate(
 
     rc = nvioctlNvmap_Create(g_nvmap_fd, size, &m->fd);
 
-    if (R_FAILED(rc))
-        m->fd = -1;
-
     if (R_SUCCEEDED(rc))
         rc = nvioctlNvmap_Alloc(
             g_nvmap_fd, m->fd, 0, flags, align, kind, m->cpu_addr);
@@ -102,17 +99,28 @@ void nvBufferFree(NvBuffer* m)
     if (!m->has_init)
         return;
 
-    // todo: nvAddressSpaceUnmapBuffer(m->gpu_addr)
-    // todo: nvAddressSpaceUnmapBuffer(m->gpu_addr_texture)
-    nvBufferMakeCpuCached(m);
+    if (m->gpu_addr_texture) {
+        nvAddressSpaceUnmapBuffer(m->addr_space, m->gpu_addr_texture);
+        m->gpu_addr_texture = 0;
+    }
 
-    free(m->cpu_addr);
-    m->cpu_addr = NULL;
+    if (m->gpu_addr) {
+        nvAddressSpaceUnmapBuffer(m->addr_space, m->gpu_addr);
+        m->gpu_addr = 0;
+    }
 
-    if (m->fd != -1)
-        nvClose(m->fd);
+    if (m->fd != -1) {
+        nvioctlNvmap_Free(g_nvmap_fd, m->fd);
+        m->fd = -1;
+    }
 
-    m->fd = -1;
+    if (m->cpu_addr) {
+        nvBufferMakeCpuCached(m);
+        free(m->cpu_addr);
+        m->cpu_addr = NULL;
+    }
+
+    m->has_init = false;
 }
 
 void* nvBufferGetCpuAddr(NvBuffer* m) {

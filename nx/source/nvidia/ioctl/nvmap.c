@@ -66,6 +66,21 @@ Result nvioctlNvmap_Alloc(u32 fd, u32 nvmap_handle, u32 heapmask, u32 flags, u32
     return nvIoctl(fd, _NV_IOWR(0x01, 0x04, data), &data);
 }
 
+Result nvioctlNvmap_Free(u32 fd, u32 nvmap_handle) {
+    struct {
+        __nv_in u32 handle;
+        u32 pad;
+        __nv_out u64 refcount;
+        __nv_out u32 size;
+        __nv_out u32 flags; // 1=NOT_FREED_YET
+    } data;
+
+    memset(&data, 0, sizeof(data));
+    data.handle = nvmap_handle;
+
+    return nvIoctl(fd, _NV_IOWR(0x01, 0x05, data), &data);
+}
+
 Result nvioctlNvmap_GetId(u32 fd, u32 nvmap_handle, u32 *id) {
     Result rc=0;
 

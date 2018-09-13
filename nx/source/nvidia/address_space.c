@@ -62,6 +62,10 @@ Result nvAddressSpaceMapBuffer(
         a->fd, NvMapBufferFlags_IsCachable, kind, fd, 0x10000, 0, 0, 0, iova_out);
 }
 
+Result nvAddressSpaceUnmapBuffer(NvAddressSpace* a, iova_t iova) {
+    return nvioctlNvhostAsGpu_UnmapBuffer(a->fd, iova);
+}
+
 Result nvAddressSpaceBindToChannel(NvAddressSpace* a, NvChannel* channel) {
     return nvioctlNvhostAsGpu_BindChannel(a->fd, channel->fd);
 }
