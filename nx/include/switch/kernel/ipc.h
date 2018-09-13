@@ -538,6 +538,48 @@ static inline Result ipcCloseSession(Handle session) {
     buf[1] = 0;
     return ipcDispatch(session);
 }
+
+/**
+ * @brief Clones an IPC session.
+ * @param session IPC session handle.
+ * @param unk Unknown.
+ * @param new_session_out Output cloned IPC session handle.
+ * @return Result code.
+ */
+static inline Result ipcCloneSession(Handle session, u32 unk, Handle* new_session_out) {
+    u32* buf = (u32*)armGetTls();
+
+    buf[0] = IpcCommandType_Control;
+    buf[1] = 9;
+    buf[2] = 0;
+    buf[3] = 0;
+    buf[4] = SFCI_MAGIC;
+    buf[5] = 0;
+    buf[6] = 4;
+    buf[7] = 0;
+    buf[8] = unk;
+
+    Result rc = ipcDispatch(session);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct ipcCloneSessionResponse {
+            u64 magic;
+            u64 result;
+        } *raw = (struct ipcCloneSessionResponse*)r.Raw;
+
+        rc = raw->result;
+
+        if (R_SUCCEEDED(rc) && new_session_out) {
+            *new_session_out = r.Handles[0];
+        }
+    }
+
+    return rc;
+}
+
 ///@}
 
 ///@name IPC domain handling
