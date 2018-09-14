@@ -30,15 +30,39 @@ Result nvioctlChannel_SubmitGpfifo(u32 fd, nvioctl_gpfifo_entry *entries, u32 nu
         __nv_in    nvioctl_gpfifo_entry entries[num_entries]; // depends on num_entries
     } data;
 
-
     memset(&data, 0, sizeof(data));
-    data.gpfifo = 1;
+    data.gpfifo = (u64)data.entries; // ignored
     data.num_entries = num_entries;
     data.flags = flags;
     data.fence = *fence_inout;
     memcpy(data.entries, entries, sizeof(data.entries));
 
     rc = nvIoctl(fd, _NV_IOWR(0x48, 0x08, data), &data);
+
+    if (R_SUCCEEDED(rc)) {
+        *fence_inout = data.fence;
+    }
+
+    return rc;
+}
+
+Result nvioctlChannel_KickoffPb(u32 fd, nvioctl_gpfifo_entry *entries, u32 num_entries, u32 flags, nvioctl_fence *fence_inout) {
+    Result rc=0;
+
+    struct {
+        __nv_in    u64 gpfifo;           // (ignored) pointer to gpfifo entry structs
+        __nv_in    u32 num_entries;      // number of entries being submitted
+        __nv_in    u32 flags;
+        __nv_inout nvioctl_fence fence;  // returned new fence object for others to wait on
+    } data;
+
+    memset(&data, 0, sizeof(data));
+    data.gpfifo = (u64)entries; // ignored?
+    data.num_entries = num_entries;
+    data.flags = flags;
+    data.fence = *fence_inout;
+
+    rc = nvIoctl2(fd, _NV_IOWR(0x48, 0x1B, data), &data, entries, num_entries*sizeof(nvioctl_gpfifo_entry));
 
     if (R_SUCCEEDED(rc)) {
         *fence_inout = data.fence;
