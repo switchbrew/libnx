@@ -2,6 +2,7 @@
 #include "types.h"
 #include "result.h"
 #include "arm/atomics.h"
+#include "arm/cache.h"
 #include "kernel/svc.h"
 #include "services/nv.h"
 #include "nvidia/ioctl.h"
@@ -18,12 +19,12 @@ Result nvBufferInit(void)
     if (atomicIncrement64(&g_refCnt) > 0)
         return 0;
 
-     rc = nvOpen(&g_nvmap_fd, "/dev/nvmap");
+    rc = nvOpen(&g_nvmap_fd, "/dev/nvmap");
 
-     if (R_FAILED(rc))
-         atomicDecrement64(&g_refCnt);
+    if (R_FAILED(rc))
+        atomicDecrement64(&g_refCnt);
 
-     return rc;
+    return rc;
 }
 
 void nvBufferExit(void)
@@ -41,8 +42,8 @@ u32 nvBufferGetNvmapFd(void) {
     return g_nvmap_fd;
 }
 
-static Result _nvBufferCreate(
-    NvBuffer* m, size_t size, u32 flags, u32 align, NvKind kind,
+Result nvBufferCreate(
+    NvBuffer* m, size_t size, u32 align, bool is_cacheable, NvKind kind,
     NvAddressSpace* as)
 {
     Result rc;
@@ -50,6 +51,7 @@ static Result _nvBufferCreate(
     size = (size + align - 1) & ~(align - 1);
 
     m->has_init = true;
+    m->is_cacheable = is_cacheable;
     m->size = size;
     m->fd = -1;
     m->cpu_addr = memalign(align, size);
@@ -64,34 +66,22 @@ static Result _nvBufferCreate(
     rc = nvioctlNvmap_Create(g_nvmap_fd, size, &m->fd);
 
     if (R_SUCCEEDED(rc))
-        rc = nvioctlNvmap_Alloc(
-            g_nvmap_fd, m->fd, 0, flags, align, kind, m->cpu_addr);
+        rc = nvioctlNvmap_Alloc(g_nvmap_fd, m->fd,
+            0, is_cacheable ? 1 : 0, align, kind, m->cpu_addr);
+
+    if (R_SUCCEEDED(rc) && !is_cacheable) {
+        armDCacheFlush(m->cpu_addr, m->size);
+        svcSetMemoryAttribute(m->cpu_addr, m->size, 8, 8);
+    }
 
     if (R_SUCCEEDED(rc))
-        rc = nvAddressSpaceMapBuffer(as, m->fd, 0, &m->gpu_addr);
+        rc = nvAddressSpaceMapBuffer(as, m->fd,
+            is_cacheable ? NvMapBufferFlags_IsCacheable : 0, NvKind_Pitch, &m->gpu_addr);
 
     if (R_FAILED(rc))
         nvBufferFree(m);
 
     return rc;
-}
-
-Result nvBufferCreate(
-        NvBuffer* m, size_t size, u32 align, NvKind kind, NvAddressSpace* as) {
-    return _nvBufferCreate(m, size, 0, align, kind, as);
-}
-
-Result nvBufferCreateRw(
-        NvBuffer* m, size_t size, u32 align, NvKind kind, NvAddressSpace* as) {
-    return _nvBufferCreate(m, size, NvBufferFlags_Writable, align, kind, as);
-}
-
-Result nvBufferMakeCpuUncached(NvBuffer* m) {
-    return svcSetMemoryAttribute(m->cpu_addr, m->size, 8, 8);
-}
-
-Result nvBufferMakeCpuCached(NvBuffer* m) {
-    return svcSetMemoryAttribute(m->cpu_addr, m->size, 8, 0);
 }
 
 void nvBufferFree(NvBuffer* m)
@@ -115,7 +105,9 @@ void nvBufferFree(NvBuffer* m)
     }
 
     if (m->cpu_addr) {
-        nvBufferMakeCpuCached(m);
+        if (!m->is_cacheable)
+            svcSetMemoryAttribute(m->cpu_addr, m->size, 8, 0);
+
         free(m->cpu_addr);
         m->cpu_addr = NULL;
     }
@@ -132,7 +124,8 @@ iova_t nvBufferGetGpuAddr(NvBuffer* m) {
 }
 
 Result nvBufferMapAsTexture(NvBuffer* m, NvKind kind) {
-    return nvAddressSpaceMapBuffer(m->addr_space, m->fd, kind, &m->gpu_addr_texture);
+    return nvAddressSpaceMapBuffer(m->addr_space, m->fd,
+        m->is_cacheable ? NvMapBufferFlags_IsCacheable : 0, kind, &m->gpu_addr_texture);
 }
 
 iova_t nvBufferGetGpuAddrTexture(NvBuffer* m) {

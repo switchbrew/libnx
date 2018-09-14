@@ -24,12 +24,9 @@ Result nvZcullContextCreate(NvZcullContext* z, NvGpu* parent)
 
     z->parent = parent;
 
-    rc = nvBufferCreateRw(
-        &z->ctx_buf, nvInfoGetZcullCtxSize(), 0x20000, NvKind_Pitch,
+    rc = nvBufferCreate(
+        &z->ctx_buf, nvInfoGetZcullCtxSize(), 0x20000, NvKind_Pitch, true,
         &parent->addr_space);
-
-    if (R_SUCCEEDED(rc))
-        rc = nvBufferMapAsTexture(&z->ctx_buf, NvKind_Generic_16BX2);
 
     if (R_SUCCEEDED(rc))
         rc = nvioctlChannel_ZCullBind(
@@ -40,6 +37,5 @@ Result nvZcullContextCreate(NvZcullContext* z, NvGpu* parent)
 }
 
 void nvZcullContextClose(NvZcullContext* z) {
-    // TODO: Unmap z->ctx_buf from parent->addr_space?
     nvBufferFree(&z->ctx_buf);
 }

@@ -56,10 +56,10 @@ Result nvAddressSpaceReserveFull(NvAddressSpace* a) {
 }
 
 Result nvAddressSpaceMapBuffer(
-        NvAddressSpace* a, u32 fd, NvKind kind,
+        NvAddressSpace* a, u32 fd, u32 flags, NvKind kind,
         iova_t* iova_out) {
     return nvioctlNvhostAsGpu_MapBufferEx(
-        a->fd, NvMapBufferFlags_IsCachable, kind, fd, 0x10000, 0, 0, 0, iova_out);
+        a->fd, flags, kind, fd, 0x10000, 0, 0, 0, iova_out);
 }
 
 Result nvAddressSpaceUnmapBuffer(NvAddressSpace* a, iova_t iova) {

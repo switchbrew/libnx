@@ -134,7 +134,7 @@ typedef enum {
 // Used with nvioctlNvhostAsGpu_MapBufferEx().
 typedef enum {
     NvMapBufferFlags_FixedOffset = 1,
-    NvMapBufferFlags_IsCachable = 4,
+    NvMapBufferFlags_IsCacheable = 4,
 } NvMapBufferFlags;
 
 typedef enum {

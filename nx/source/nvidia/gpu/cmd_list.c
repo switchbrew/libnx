@@ -22,12 +22,10 @@ Result nvCmdListCreate(NvCmdList* c, NvGpu* parent, size_t max_cmds)
     Result rc;
 
     rc = nvBufferCreate(
-        &c->buffer, max_cmds * 4, 0x1000, NvKind_Pitch,
+        &c->buffer, max_cmds * 4, 0x1000, NvKind_Pitch, false,
         &parent->addr_space);
 
     if (R_SUCCEEDED(rc)) {
-        nvBufferMakeCpuUncached(&c->buffer);
-
         c->offset = 0;
         c->num_cmds = 0;
         c->max_cmds = max_cmds;
