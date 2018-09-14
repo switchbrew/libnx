@@ -12,6 +12,7 @@
 __attribute__((weak)) u32 __nx_nv_transfermem_size = 0x300000;
 
 static Service g_nvSrv;
+static Service g_nvSrvClone;
 static u64 g_refCnt;
 
 static size_t g_nvIpcBufferSize = 0;
@@ -60,14 +61,21 @@ Result nvInitialize(void)
         if (R_SUCCEEDED(rc))
             rc = _nvInitialize(CUR_PROCESS_HANDLE, g_nvTransfermem.handle, __nx_nv_transfermem_size);
 
-        // Officially ipc control DuplicateSessionEx would be used here.
-
-        // TODO: How do sysmodules handle this?
+        // Clone the session handle - the cloned session is used to execute certain commands in parallel
+        Handle nv_clone = INVALID_HANDLE;
         if (R_SUCCEEDED(rc))
-            rc = appletGetAppletResourceUserId(&AppletResourceUserId);
+            rc = ipcCloneSession(g_nvSrv.handle, 1, &nv_clone);
 
         if (R_SUCCEEDED(rc))
-            rc = _nvSetClientPID(AppletResourceUserId);
+            serviceCreate(&g_nvSrvClone, nv_clone);
+
+        if (R_SUCCEEDED(rc))
+        {
+            // Send aruid if available (non-fatal condition if get-aruid fails)
+            Result aruid_rc = appletGetAppletResourceUserId(&AppletResourceUserId);
+            if (R_SUCCEEDED(aruid_rc))
+                rc = _nvSetClientPID(AppletResourceUserId);
+        }
     }
 
     if (R_FAILED(rc)) {
@@ -80,6 +88,7 @@ Result nvInitialize(void)
 void nvExit(void)
 {
     if (atomicDecrement64(&g_refCnt) == 0) {
+        serviceClose(&g_nvSrvClone);
         serviceClose(&g_nvSrv);
         tmemClose(&g_nvTransfermem);
         appletExit();
@@ -195,6 +204,19 @@ Result nvOpen(u32 *fd, const char *devicepath) {
     return rc;
 }
 
+// Get the appropriate session for the specified request (same logic as official sw)
+static inline Service* _nvGetSessionForRequest(u32 request)
+{
+    if (
+        (request & 0xC000FFFF) == 0xC0004808 || // NVGPU_IOCTL_CHANNEL_SUBMIT_GPFIFO
+        request == 0xC018481B ||                // NVGPU_IOCTL_CHANNEL_KICKOFF_PB
+        request == 0xC004001C ||                // NVHOST_IOCTL_CTRL_EVENT_SIGNAL
+        request == 0xC010001E                   // NVHOST_IOCTL_CTRL_EVENT_WAIT_ASYNC
+        )
+        return &g_nvSrvClone;
+    return &g_nvSrv;
+}
+
 Result nvIoctl(u32 fd, u32 request, void* argp) {
     IpcCommand c;
     ipcInitialize(&c);
@@ -231,7 +253,65 @@ Result nvIoctl(u32 fd, u32 request, void* argp) {
     raw->fd = fd;
     raw->request = request;
 
-    Result rc = serviceIpcDispatch(&g_nvSrv);
+    Result rc = serviceIpcDispatch(_nvGetSessionForRequest(request));
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u32 error;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc))
+            rc = nvConvertError(resp->error);
+    }
+
+    return rc;
+}
+
+Result nvIoctl2(u32 fd, u32 request, void* argp, const void* inbuf, size_t inbuf_size) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 fd;
+        u32 request;
+    } *raw;
+
+    size_t bufsize = _NV_IOC_SIZE(request);
+    u32 dir = _NV_IOC_DIR(request);
+
+    void* buf_send = NULL, *buf_recv = NULL;
+    size_t buf_send_size = 0, buf_recv_size = 0;
+
+    if(dir & _NV_IOC_WRITE) {
+        buf_send = argp;
+        buf_send_size = bufsize;
+    }
+
+    if(dir & _NV_IOC_READ) {
+        buf_recv = argp;
+        buf_recv_size = bufsize;
+    }
+
+    ipcAddSendSmart(&c, g_nvIpcBufferSize, buf_send, buf_send_size, 0);
+    ipcAddSendSmart(&c, g_nvIpcBufferSize, inbuf, inbuf_size, 1);
+    ipcAddRecvSmart(&c, g_nvIpcBufferSize, buf_recv, buf_recv_size, 0);
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 11;
+    raw->fd = fd;
+    raw->request = request;
+
+    Result rc = serviceIpcDispatch(_nvGetSessionForRequest(request));
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
