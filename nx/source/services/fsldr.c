@@ -12,7 +12,7 @@
 static Service g_fsldrSrv;
 static u64 g_fsldrRefCnt;
 
-Result fsldrSetCurrentProcess();
+Result fsldrSetCurrentProcess(void);
 
 Result fsldrInitialize(void) {
     atomicIncrement64(&g_fsldrRefCnt);
@@ -111,7 +111,7 @@ Result fsldrIsArchivedProgram(u64 pid, bool *out) {
     return rc;
 }
 
-Result fsldrSetCurrentProcess() {
+Result fsldrSetCurrentProcess(void) {
     IpcCommand c;
     ipcInitialize(&c);
     ipcSendPid(&c);

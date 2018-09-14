@@ -155,6 +155,9 @@ typedef struct {
     u16 status; // always -1
 } NvError;
 
+Result nvioctlNvhostCtrl_SyncptRead(u32 fd, u32 id, u32* out);
+Result nvioctlNvhostCtrl_SyncptIncr(u32 fd, u32 id);
+Result nvioctlNvhostCtrl_SyncptWait(u32 fd, u32 id, u32 threshold, u32 timeout);
 Result nvioctlNvhostCtrl_EventSignal(u32 fd, u32 event_id);
 Result nvioctlNvhostCtrl_EventWait(u32 fd, u32 syncpt_id, u32 threshold, s32 timeout, u32 event_id, u32 *out);
 Result nvioctlNvhostCtrl_EventWaitAsync(u32 fd, u32 syncpt_id, u32 threshold, s32 timeout, u32 event_id);
