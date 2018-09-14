@@ -43,7 +43,7 @@ void nsExit(void)
     }
 }
 
-Result nsdevInitialize() {
+Result nsdevInitialize(void) {
     atomicIncrement64(&g_nsdevRefCnt);
     
     if (serviceIsActive(&g_nsdevSrv))
@@ -52,7 +52,7 @@ Result nsdevInitialize() {
     return smGetService(&g_nsdevSrv, "ns:dev");
 }
 
-void nsdevExit() {
+void nsdevExit(void) {
     if (atomicDecrement64(&g_nsdevRefCnt) == 0)
         serviceClose(&g_nsdevSrv);
 }
