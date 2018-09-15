@@ -446,6 +446,11 @@ SVC_BEGIN svcGetDebugEvent
 	ret
 SVC_END
 
+SVC_BEGIN svcLegacyContinueDebugEvent
+	svc 0x64
+	ret
+SVC_END
+
 SVC_BEGIN svcContinueDebugEvent
 	svc 0x64
 	ret
