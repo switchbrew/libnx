@@ -8,7 +8,7 @@
 
 #include "../audio/audio.h"
 
-#ifdef __cplusplus
+#if __cplusplus >= 201402L
 #define AUDREN_CONSTEXPR constexpr
 #else
 #define AUDREN_CONSTEXPR static inline
