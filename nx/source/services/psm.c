@@ -65,3 +65,40 @@ Result psmGetBatteryChargePercentage(u32 *out)
     
     return rc;
 }
+
+Result psmGetChargerType(ChargerType *out)
+{
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 1;
+
+    Result rc = serviceIpcDispatch(&g_psmSrv);
+
+    if(R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u32 charger;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            *out = resp->charger;
+        }
+    }
+
+    return rc;
+}
