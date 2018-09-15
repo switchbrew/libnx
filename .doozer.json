@@ -5,9 +5,7 @@
       "buildenv": "docker:devkitpro/devkita64",
 
       "buildcmd": [
-        "sudo -E make -j${PARALLEL} -C nx install",
-        "git clone --depth 1 https://github.com/switchbrew/switch-examples",
-        "make -C switch-examples/"
+        "sudo -E make -j${PARALLEL} -C nx install"
       ]
     },
 
