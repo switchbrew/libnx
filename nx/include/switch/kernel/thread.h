@@ -6,6 +6,7 @@
  */
 #pragma once
 #include "../types.h"
+#include "../arm/thread_context.h"
 
 /// Thread information structure.
 typedef struct {
@@ -63,3 +64,12 @@ Result threadPause(Thread* t);
  * @return Result code.
  */
 Result threadResume(Thread* t);
+
+/**
+ * @brief Dumps the registers of a thread paused by @ref threadPause (register groups: all).
+ * @param[out] ctx Output thread context (register dump).
+ * @param t Thread information structure.
+ * @return Result code.
+ * @warning Official kernel will not dump x0..x18 if the thread is currently executing a system call, and prior to 6.0.0 doesn't dump TPIDR_EL0.
+ */
+Result threadDumpContext(ThreadContext* ctx, Thread* t);
