@@ -836,8 +836,19 @@ Result svcGetDebugEvent(u8* event_out, Handle debug);
  * @return Result code.
  * @note Syscall number 0x64.
  * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
+ * @warning Only exists on 3.0.0+. For older versions use \ref svcContinueDebugEventPre300.
  */
-Result svcContinueDebugEvent(Handle debug, u32 flags, u64 threadID);
+Result svcContinueDebugEvent(Handle debug, u32 flags, u64* tid_list, u32 num_tids);
+
+/**
+ * @brief Continues a debugging session.
+ * @return Result code.
+ * @note Syscall number 0x64.
+ * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
+ * @warning Only exists on 1.0.0-2.3.0. For older versions use \ref svcContinueDebugEvent.
+ */
+static Result (*const svcContinueDebugEventPre300)(Handle debug, u32 flags, u64 threadID)
+    = (Result (*)(Handle, u32, u64)) &svcContinueDebugEvent;
 
 /**
  * @brief Gets the context of a thread in a debugging session.
