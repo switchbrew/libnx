@@ -482,6 +482,11 @@ SVC_BEGIN svcGetDebugThreadContext
 	ret
 SVC_END
 
+SVC_BEGIN svcSetDebugThreadContext
+	svc 0x68
+	ret
+SVC_END
+
 SVC_BEGIN svcQueryDebugProcessMemory
 	str x1, [sp, #-16]!
 	svc 0x69
