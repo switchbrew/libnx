@@ -134,3 +134,7 @@ Result threadPause(Thread* t) {
 Result threadResume(Thread* t) {
     return svcSetThreadActivity(t->handle, 0);
 }
+
+Result threadDumpContext(ThreadContext* ctx, Thread* t) {
+    return svcGetThreadContext3(ctx, t->handle);
+}
