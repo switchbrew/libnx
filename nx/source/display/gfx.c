@@ -69,7 +69,7 @@ static BqQueueBufferInput g_gfxQueueBufferData = {
 static BqGraphicBuffer g_gfx_BufferInitData = {
     .magic = 0x47424652,//"RFBG"/'GBFR'
     .format = 0x1,
-    .usage = 0xb00,
+    .usage = GRALLOC_USAGE_HW_COMPOSER | GRALLOC_USAGE_HW_RENDER | GRALLOC_USAGE_HW_TEXTURE,
 
     .pid = 0x2a, //Official sw sets this to the output of "getpid()", which calls a func which is hard-coded for returning 0x2a.
     .refcount = 0x0,  //Official sw sets this to the output of "android_atomic_inc()".
@@ -137,11 +137,20 @@ static Result _gfxDequeueBuffer(void) {
     return rc;
 }
 
+void gfxAppendFence(NvMultiFence* mf) {
+    u32 max_fences = 4 - g_gfxQueueBufferData.fence.num_fences;
+    u32 num_fences = max_fences < mf->num_fences ? max_fences : mf->num_fences;
+
+    for (u32 i = 0; i < num_fences; i ++)
+        g_gfxQueueBufferData.fence.fences[g_gfxQueueBufferData.fence.num_fences++] = mf->fences[i];
+}
+
 static Result _gfxQueueBuffer(void) {
     Result rc=0;
 
     if (g_gfxCurrentProducerBuffer >= 0) {
         rc = bqQueueBuffer(&g_gfxBinderSession, g_gfxCurrentProducerBuffer, &g_gfxQueueBufferData, &g_gfx_QueueBuffer_QueueBufferOutput);
+        g_gfxQueueBufferData.fence.num_fences = 0;
         g_gfxCurrentProducerBuffer = -1;
     }
 
@@ -153,6 +162,7 @@ static Result _gfxCancelBuffer(void) {
 
     if (g_gfxCurrentProducerBuffer >= 0) {
         rc = bqCancelBuffer(&g_gfxBinderSession, g_gfxCurrentProducerBuffer, &g_gfxQueueBufferData.fence);
+        g_gfxQueueBufferData.fence.num_fences = 0;
         g_gfxCurrentProducerBuffer = -1;
     }
 

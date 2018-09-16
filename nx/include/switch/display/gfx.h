@@ -7,6 +7,7 @@
  */
 #pragma once
 #include "../types.h"
+#include "../nvidia/fence.h"
 
 /// Converts red, green, blue, and alpha components to packed RGBA8.
 #define RGBA8(r,g,b,a)  (((r)&0xff)|(((g)&0xff)<<8)|(((b)&0xff)<<16)|(((a)&0xff)<<24))
@@ -53,7 +54,7 @@ void gfxInitResolutionDefault(void);
 /// When the input is invalid this returns without changing the crop data, this includes the input values being larger than the framebuf width/height.
 /// This will update the display width/height returned by \ref gfxGetFramebuffer, with that width/height being reset to the default when required.
 /// \ref gfxGetFramebufferDisplayOffset uses absolute x/y, it will not adjust for non-zero crop left/top.
-/// The new crop config will not take affect with double-buffering disabled. When used during frame-drawing, this should be called before \ref gfxGetFramebuffer.
+/// When used during frame-drawing, this should be called before \ref gfxGetFramebuffer.
 /// The right and bottom params are aligned to 4.
 void gfxConfigureCrop(s32 left, s32 top, s32 right, s32 bottom);
 
@@ -69,7 +70,10 @@ void gfxConfigureAutoResolutionDefault(bool enable);
 /// Waits for vertical sync.
 void gfxWaitForVsync(void);
 
-/// Swaps the framebuffers (for double-buffering).
+/// Appends one or more fences that the display service will wait on before rendering the current framebuffer. Note that only up to 4 fences can be submitted.
+void gfxAppendFence(NvMultiFence* mf);
+
+/// Swaps the framebuffers.
 void gfxSwapBuffers(void);
 
 /// Get the specified framebuffer nvmap handle where index specifies the buffer number beginning with the back buffer, with optional output ptr for the offset in the buffer.
