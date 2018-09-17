@@ -20,7 +20,7 @@
     (*(u32*)(p) = (v))
 
 #define U8TO32_LITTLE(p) \
-    (*(u32*)(p))
+    (*(const u32*)(p))
 
 #define ROTATE(v,c) (ROTL32(v,c))
 #define XOR(v,w) ((v) ^ (w))
