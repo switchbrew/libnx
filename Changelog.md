@@ -1,5 +1,21 @@
 # Changelog
 
+## Version 1.4.1
+
+* Restored compatibility with C++11.
+* Added arm/thread_context.h, containing definitions for the ThreadContext structure.
+* Added new syscalls: svcGetDebugThreadContext, svcSetDebugThreadContext, svcGetThreadContext3.
+* Fixed signature of svcContinueDebugEvent, which changed in 3.0. The old signature is available as svcLegacyContinueDebugEvent.
+* Added threadDumpContext.
+* Added ipcCloneSession.
+* Added gfxAppendFence.
+* psm services: added psmGetChargerType.
+* pm:dmnt services: fixed for 5.0+.
+* nv services: added nvIoctl2 & handling for a separate cloned session, matching official software.
+* Nvidia ioctl wrappers: added nvioctlNvhostAsGpu_UnmapBuffer, nvioctlNvmap_Free, nvioctlChannel_KickoffPb
+* Further changes, fixes and improvements to the experimental Nvidia wrapper objects, which are used by the ported mesa/nouveau-based OpenGL stack.
+* Further improvements to overall system stability and other minor adjustments to enhance the user experience.
+
 ## Version 1.4.0
 
 #### system
