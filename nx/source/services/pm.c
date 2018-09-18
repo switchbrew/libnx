@@ -3,6 +3,7 @@
 #include "result.h"
 #include "arm/atomics.h"
 #include "kernel/ipc.h"
+#include "kernel/detect.h"
 #include "services/pm.h"
 #include "services/sm.h"
 
@@ -73,7 +74,7 @@ Result pmdmntStartProcess(u64 pid) {
     raw = ipcPrepareHeader(&c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 2;
+    raw->cmd_id = kernelAbove500() ? 1 : 2;
     raw->pid = pid;
 
     Result rc = serviceIpcDispatch(&g_pmdmntSrv);
@@ -106,7 +107,7 @@ Result pmdmntGetTitlePid(u64* pid_out, u64 title_id) {
     raw = ipcPrepareHeader(&c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 3;
+    raw->cmd_id = kernelAbove500() ? 2 : 3;
     raw->title_id = title_id;
 
     Result rc = serviceIpcDispatch(&g_pmdmntSrv);
@@ -144,7 +145,7 @@ Result pmdmntEnableDebugForTitleId(Handle* handle_out, u64 title_id) {
     raw = ipcPrepareHeader(&c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 4;
+    raw->cmd_id = kernelAbove500() ? 3 : 4;
     raw->title_id = title_id;
 
     Result rc = serviceIpcDispatch(&g_pmdmntSrv);
@@ -216,7 +217,7 @@ Result pmdmntGetApplicationPid(u64* pid_out) {
     raw = ipcPrepareHeader(&c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 5;
+    raw->cmd_id = kernelAbove500() ? 4 : 5;
 
     Result rc = serviceIpcDispatch(&g_pmdmntSrv);
 
@@ -252,7 +253,7 @@ Result pmdmntEnableDebugForApplication(Handle* handle_out) {
     raw = ipcPrepareHeader(&c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 6;
+    raw->cmd_id = kernelAbove500() ? 5 : 6;
 
     Result rc = serviceIpcDispatch(&g_pmdmntSrv);
 
