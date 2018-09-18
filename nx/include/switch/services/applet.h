@@ -72,6 +72,12 @@ Result appletSetScreenShotPermission(s32 val);
 Result appletSetScreenShotImageOrientation(s32 val);
 
 /**
+ * @brief Exits the application.
+ * @note Can only be used with AppletType_Application.
+ */
+Result appletSelfExit(void);
+
+/**
  * @brief Processes the current applet status. Generally used within a main loop.
  * @return Whether the application should continue running.
  */

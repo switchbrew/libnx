@@ -1071,6 +1071,37 @@ Result appletSetScreenShotImageOrientation(s32 val) {
     return rc;
 }
 
+Result appletSelfExit(void) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 0;
+
+    Result rc = serviceIpcDispatch(&g_appletISelfController);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
 Result appletCreateManagedDisplayLayer(u64 *out) {
     IpcCommand c;
     ipcInitialize(&c);
