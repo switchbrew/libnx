@@ -122,14 +122,14 @@ typedef enum {
 
 /// Process States.
 typedef enum {
-    ProcessState_Created=0,        ///<Newly-created process.
-    ProcessState_DebugAttached=1,  ///<Process attached to debugger.
-    ProcessState_DebugDetached=2,  ///<Process detached from debugger.
-    ProcessState_Crashed=3,        ///<Process that has just creashed.
-    ProcessState_Running=4,        ///<Process executing normally.
-    ProcessState_Exiting=5,        ///<Process has begun exiting.
-    ProcessState_Exited=6,         ///<Process has finished exiting.
-    ProcessState_DebugSuspended=7, ///<Process execution suspended by debugger.
+    ProcessState_Created=0,             ///<Newly-created process, not yet started.
+    ProcessState_CreatedAttached=1,     ///<Newly-created process, not yet started but attached to debugger.
+    ProcessState_Running=2,             ///<Process that is running normally (and detached from any debugger).
+    ProcessState_Crashed=3,             ///<Process that has just crashed.
+    ProcessState_RunningAttached=4,     ///<Process that is running normally, attached to a debugger.
+    ProcessState_Exiting=5,             ///<Process has begun exiting.
+    ProcessState_Exited=6,              ///<Process has finished exiting.
+    ProcessState_DebugSuspended=7,      ///<Process execution suspended by debugger.
 } ProcessState;
 
 /// Debug Thread Parameters.
