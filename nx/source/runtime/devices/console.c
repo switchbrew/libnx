@@ -3,51 +3,21 @@
 #include <sys/iosupport.h>
 #include "runtime/devices/console.h"
 #include "kernel/svc.h"
-#include "display/gfx.h"
 
 #include "default_font_bin.h"
 
-//set up the palette for color printing
-static u32 colorTable[] = {
-	RGBA8_MAXALPHA(  0,  0,  0),	// black
-	RGBA8_MAXALPHA(128,  0,  0),	// red
-	RGBA8_MAXALPHA(  0,128,  0),	// green
-	RGBA8_MAXALPHA(128,128,  0),	// yellow
-	RGBA8_MAXALPHA(  0,  0,128),	// blue
-	RGBA8_MAXALPHA(128,  0,128),	// magenta
-	RGBA8_MAXALPHA(  0,128,128),	// cyan
-	RGBA8_MAXALPHA(192,192,192),	// white
-
-	RGBA8_MAXALPHA(128,128,128),	// bright black
-	RGBA8_MAXALPHA(255,  0,  0),	// bright red
-	RGBA8_MAXALPHA(  0,255,  0),	// bright green
-	RGBA8_MAXALPHA(255,255,  0),	// bright yellow
-	RGBA8_MAXALPHA(  0,  0,255),	// bright blue
-	RGBA8_MAXALPHA(255,  0,255),	// bright magenta
-	RGBA8_MAXALPHA(  0,255,255),	// bright cyan
-	RGBA8_MAXALPHA(255,255,255),	// bright white
-
-	RGBA8_MAXALPHA(  0,  0,  0),	// faint black
-	RGBA8_MAXALPHA( 64,  0,  0),	// faint red
-	RGBA8_MAXALPHA(  0, 64,  0),	// faint green
-	RGBA8_MAXALPHA( 64, 64,  0),	// faint yellow
-	RGBA8_MAXALPHA(  0,  0, 64),	// faint blue
-	RGBA8_MAXALPHA( 64,  0, 64),	// faint magenta
-	RGBA8_MAXALPHA(  0, 64, 64),	// faint cyan
-	RGBA8_MAXALPHA( 96, 96, 96),	// faint white
-};
-
 //The below width/height is for 720p.
-PrintConsole defaultConsole =
+static PrintConsole defaultConsole =
 {
 	//Font:
 	{
-		(u16*)default_font_bin, //font gfx
+		default_font_bin, //font gfx
 		0, //first ascii character in the set
-		256 //number of characters in the font set
+		256, //number of characters in the font set
+		16, //tile width
+		16, //tile height
 	},
-	(u32*)NULL,
-	(u32*)NULL,
+	NULL,   //renderer
 	0,0,	//cursorX cursorY
 	0,0,	//prevcursorX prevcursorY
 	80,		//console width
@@ -60,18 +30,18 @@ PrintConsole defaultConsole =
 	7,		// foreground color
 	0,		// background color
 	0,		// flags
-	0,		//print callback
 	false	//console initialized
 };
 
-PrintConsole currentCopy;
+static PrintConsole currentCopy;
 
-PrintConsole* currentConsole = &currentCopy;
+static PrintConsole* currentConsole = &currentCopy;
 
 PrintConsole* consoleGetDefault(void){return &defaultConsole;}
 
-void consolePrintChar(int c);
-void consoleDrawChar(int c);
+static void consoleNewRow(void);
+static void consolePrintChar(int c);
+static void consoleDrawChar(int c);
 
 //---------------------------------------------------------------------------------
 static void consoleCls(char mode) {
@@ -123,9 +93,6 @@ static void consoleCls(char mode) {
 			break;
 		}
 	}
-	//gfxFlushBuffers();
-	//gfxSwapBuffers();
-	//gfxWaitForVsync();
 }
 //---------------------------------------------------------------------------------
 static void consoleClearLine(char mode) {
@@ -178,9 +145,6 @@ static void consoleClearLine(char mode) {
 			break;
 		}
 	}
-	//gfxFlushBuffers();
-	//gfxSwapBuffers();
-	//gfxWaitForVsync();
 }
 
 
@@ -526,6 +490,8 @@ static const devoptab_t dotab_null = {
 	NULL
 };
 
+ConsoleRenderer* getDefaultConsoleRenderer(void);
+
 //---------------------------------------------------------------------------------
 PrintConsole* consoleInit(PrintConsole* console) {
 //---------------------------------------------------------------------------------
@@ -549,27 +515,44 @@ PrintConsole* consoleInit(PrintConsole* console) {
 	}
 
 	*currentConsole = defaultConsole;
+	if (!console->renderer) {
+		console->renderer = getDefaultConsoleRenderer();
+	}
 
-	console->consoleInitialised = 1;
-
-	gfxSetMode(GfxMode_TiledDouble);
-
-	console->frameBuffer  = (u32*)gfxGetFramebuffer(NULL, NULL);
-	gfxSwapBuffers();
-	console->frameBuffer2 = (u32*)gfxGetFramebuffer(NULL, NULL);
-
-	//gfxFlushBuffers();
-	//gfxSwapBuffers();
-	//gfxWaitForVsync();
-
-	consoleCls('2');
+	if (console->renderer->init(console)) {
+		console->consoleInitialised = true;
+		consoleCls('2');
+		return console;
+	}
 
 	return currentConsole;
-
 }
 
 //---------------------------------------------------------------------------------
-void consoleDebugInit(debugDevice device){
+void consoleExit(PrintConsole* console) {
+//---------------------------------------------------------------------------------
+
+	if (!console) console = currentConsole;
+
+	if (console->consoleInitialised) {
+		console->renderer->deinit(console);
+		console->consoleInitialised = false;
+	}
+}
+
+//---------------------------------------------------------------------------------
+void consoleUpdate(PrintConsole* console) {
+//---------------------------------------------------------------------------------
+
+	if (!console) console = currentConsole;
+
+	if (console->consoleInitialised) {
+		console->renderer->flushAndSwap(console);
+	}
+}
+
+//---------------------------------------------------------------------------------
+void consoleDebugInit(debugDevice device) {
 //---------------------------------------------------------------------------------
 
 	int buffertype = _IONBF;
@@ -592,7 +575,7 @@ void consoleDebugInit(debugDevice device){
 }
 
 //---------------------------------------------------------------------------------
-PrintConsole *consoleSelect(PrintConsole* console){
+PrintConsole *consoleSelect(PrintConsole* console) {
 //---------------------------------------------------------------------------------
 	PrintConsole *tmp = currentConsole;
 	currentConsole = console;
@@ -600,7 +583,7 @@ PrintConsole *consoleSelect(PrintConsole* console){
 }
 
 //---------------------------------------------------------------------------------
-void consoleSetFont(PrintConsole* console, ConsoleFont* font){
+void consoleSetFont(PrintConsole* console, ConsoleFont* font) {
 //---------------------------------------------------------------------------------
 
 	if(!console) console = currentConsole;
@@ -610,99 +593,28 @@ void consoleSetFont(PrintConsole* console, ConsoleFont* font){
 }
 
 //---------------------------------------------------------------------------------
-static void newRow(void) {
+void consoleNewRow(void) {
 //---------------------------------------------------------------------------------
-
-
 	currentConsole->cursorY ++;
-
 
 	if(currentConsole->cursorY  >= currentConsole->windowHeight)  {
 		currentConsole->cursorY --;
-
-		int i,j;
-		u32 x, y;
-
-		x = currentConsole->windowX * 16;
-		y = currentConsole->windowY * 16;
-
-		for (i=0; i<currentConsole->windowWidth*16; i++) {
-			u32 *from;
-			u32 *to;
-			for (j=0;j<(currentConsole->windowHeight-1)*16;j++) {
-				to = &currentConsole->frameBuffer[gfxGetFramebufferDisplayOffset(x + i, y + j)];
-				from = &currentConsole->frameBuffer[gfxGetFramebufferDisplayOffset(x + i, y + 16 + j)];
-				*to = *from;
-				to = &currentConsole->frameBuffer2[gfxGetFramebufferDisplayOffset(x + i, y + j)];
-				from = &currentConsole->frameBuffer2[gfxGetFramebufferDisplayOffset(x + i, y + 16 + j)];
-				*to = *from;
-			}
-		}
-
+		currentConsole->renderer->scrollWindow(currentConsole);
 		consoleClearLine('2');
 	}
 }
+
 //---------------------------------------------------------------------------------
 void consoleDrawChar(int c) {
 //---------------------------------------------------------------------------------
 	c -= currentConsole->font.asciiOffset;
 	if ( c < 0 || c > currentConsole->font.numChars ) return;
 
-	u16 *fontdata = currentConsole->font.gfx + (16 * c);
-
-	int writingColor = currentConsole->fg;
-	int screenColor = currentConsole->bg;
-
-	if (currentConsole->flags & CONSOLE_COLOR_BOLD) {
-		writingColor += 8;
-	} else if (currentConsole->flags & CONSOLE_COLOR_FAINT) {
-		writingColor += 16;
-	}
-
-	if (currentConsole->flags & CONSOLE_COLOR_REVERSE) {
-		int tmp = writingColor;
-		writingColor = screenColor;
-		screenColor = tmp;
-	}
-
-	u32 bg = colorTable[screenColor];
-	u32 fg = colorTable[writingColor];
-
-	u128 *tmp = (u128*)fontdata;
-
-	u128 bvaltop = tmp[0];
-	u128 bvalbtm = tmp[1];
-
-	if (currentConsole->flags & CONSOLE_UNDERLINE)  bvalbtm |= (u128)0xffffULL << 7*16;
-
-	if (currentConsole->flags & CONSOLE_CROSSED_OUT) bvaltop |= (u128)0xffffULL << 7*16;
-
-	u16 mask = 0x8000;
-
-	int i, j;
-
-	int x = (currentConsole->cursorX + currentConsole->windowX) * 16;
-	int y = ((currentConsole->cursorY + currentConsole->windowY) *16 );
-
-	u32 *screen;
-
-	for (i=0;i<16;i++) {
-		for (j=0;j<8;j++) {
-			uint32_t screenOffset = gfxGetFramebufferDisplayOffset(x + i, y + j);
-			screen = &currentConsole->frameBuffer[screenOffset];
-			if (bvaltop >> (16*j) & mask) { *screen = fg; }else{ *screen = bg; }
-			screen = &currentConsole->frameBuffer2[screenOffset];
-			if (bvaltop >> (16*j) & mask) { *screen = fg; }else{ *screen = bg; }
-
-			screenOffset = gfxGetFramebufferDisplayOffset(x + i, y + j + 8);
-			screen = &currentConsole->frameBuffer[screenOffset];
-			if (bvalbtm >> (16*j) & mask) { *screen = fg; }else{ *screen = bg; }
-			screen = &currentConsole->frameBuffer2[screenOffset];
-			if (bvalbtm >> (16*j) & mask) { *screen = fg; }else{ *screen = bg; }
-		}
-		mask >>= 1;
-	}
-
+	currentConsole->renderer->drawChar(
+		currentConsole,
+		currentConsole->cursorX + currentConsole->windowX,
+		currentConsole->cursorY + currentConsole->windowY,
+		c);
 }
 
 //---------------------------------------------------------------------------------
@@ -710,14 +622,10 @@ void consolePrintChar(int c) {
 //---------------------------------------------------------------------------------
 	if (c==0) return;
 
-	if(currentConsole->PrintChar)
-		if(currentConsole->PrintChar(currentConsole, c))
-			return;
-
 	if(currentConsole->cursorX  >= currentConsole->windowWidth) {
 		currentConsole->cursorX  = 0;
 
-		newRow();
+		consoleNewRow();
 	}
 
 	switch(c) {
@@ -730,7 +638,7 @@ void consolePrintChar(int c) {
 		Reason: VT sequences are more specific to the task of cursor placement.
 		The special escape sequences \b \f & \v are archaic and non-portable.
 		*/
-		case 8:
+		case '\b':
 			currentConsole->cursorX--;
 
 			if(currentConsole->cursorX < 0) {
@@ -745,16 +653,13 @@ void consolePrintChar(int c) {
 			consoleDrawChar(' ');
 			break;
 
-		case 9:
+		case '\t':
 			currentConsole->cursorX  += currentConsole->tabSize - ((currentConsole->cursorX)%(currentConsole->tabSize));
 			break;
-		case 10:
-			newRow();
-		case 13:
+		case '\n':
+			consoleNewRow();
+		case '\r':
 			currentConsole->cursorX  = 0;
-			//gfxFlushBuffers();
-			//gfxSwapBuffers();
-			//gfxWaitForVsync();
 			break;
 		default:
 			consoleDrawChar(c);
@@ -766,11 +671,11 @@ void consolePrintChar(int c) {
 //---------------------------------------------------------------------------------
 void consoleClear(void) {
 //---------------------------------------------------------------------------------
-	iprintf("\x1b[2J");
+	printf("\x1b[2J");
 }
 
 //---------------------------------------------------------------------------------
-void consoleSetWindow(PrintConsole* console, int x, int y, int width, int height){
+void consoleSetWindow(PrintConsole* console, int x, int y, int width, int height) {
 //---------------------------------------------------------------------------------
 
 	if(!console) console = currentConsole;
@@ -784,6 +689,3 @@ void consoleSetWindow(PrintConsole* console, int x, int y, int width, int height
 	console->cursorY = 0;
 
 }
-
-
-
