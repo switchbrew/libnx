@@ -67,13 +67,13 @@ Result nvGpuCreate(NvGpu* g)
 
 void nvGpuClose(NvGpu* g)
 {
-    nvBufferExit();
-    nvInfoExit();
-
     nvErrorNotifierClose(&g->error_notifier);
+    nvChannelClose(&g->gpu_channel);
     nvZcullContextClose(&g->zcull_ctx);
     nv3DContextClose(&g->_3d_ctx);
     nvGpfifoClose(&g->gpfifo);
     nvAddressSpaceClose(&g->addr_space);
-    nvChannelClose(&g->gpu_channel);
+
+    nvBufferExit();
+    nvInfoExit();
 }
