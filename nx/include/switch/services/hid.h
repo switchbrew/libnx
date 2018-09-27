@@ -625,3 +625,12 @@ Result hidIsVibrationPermitted(bool *flag);
 
 /// Send VibrationValues[index] to VibrationDeviceHandles[index], where count is the number of entries in the VibrationDeviceHandles/VibrationValues arrays.
 Result hidSendVibrationValues(u32 *VibrationDeviceHandles, HidVibrationValue *VibrationValues, size_t count);
+
+/// Gets SixAxisSensorHandles. total_handles==2 can only be used with TYPE_JOYCON_PAIR.
+Result hidGetSixAxisSensorHandles(u32 *SixAxisSensorHandles, size_t total_handles, HidControllerID id, HidControllerType type);
+
+/// Starts the SixAxisSensor for the specified handle.
+Result hidStartSixAxisSensor(u32 SixAxisSensorHandle);
+
+/// Stops the SixAxisSensor for the specified handle.
+Result hidStopSixAxisSensor(u32 SixAxisSensorHandle);

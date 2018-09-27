@@ -481,7 +481,7 @@ static Result _hidGetSharedMemoryHandle(Service* srv, Handle* handle_out) {
     return rc;
 }
 
-Result hidSetNpadJoyAssignmentModeSingleByDefault(HidControllerID id) {
+static Result _hidCmdWithInputU32(u64 cmd_id, u32 inputval) {
     Result rc;
     u64 AppletResourceUserId;
 
@@ -495,7 +495,7 @@ Result hidSetNpadJoyAssignmentModeSingleByDefault(HidControllerID id) {
     struct {
         u64 magic;
         u64 cmd_id;
-        u32 id;
+        u32 val;
         u64 AppletResourceUserId;
     } *raw;
 
@@ -504,8 +504,8 @@ Result hidSetNpadJoyAssignmentModeSingleByDefault(HidControllerID id) {
     raw = ipcPrepareHeader(&c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 122;
-    raw->id = id;
+    raw->cmd_id = cmd_id;
+    raw->val = inputval;
     raw->AppletResourceUserId = AppletResourceUserId;
 
     rc = serviceIpcDispatch(&g_hidSrv);
@@ -525,48 +525,12 @@ Result hidSetNpadJoyAssignmentModeSingleByDefault(HidControllerID id) {
     return rc;
 }
 
+Result hidSetNpadJoyAssignmentModeSingleByDefault(HidControllerID id) {
+    return _hidCmdWithInputU32(122, id);
+}
+
 Result hidSetNpadJoyAssignmentModeDual(HidControllerID id) {
-    Result rc;
-    u64 AppletResourceUserId;
-
-    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
-    if (R_FAILED(rc))
-        AppletResourceUserId = 0;
-
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u32 id;
-        u64 AppletResourceUserId;
-    } *raw;
-
-    ipcSendPid(&c);
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 124;
-    raw->id = id;
-    raw->AppletResourceUserId = AppletResourceUserId;
-
-    rc = serviceIpcDispatch(&g_hidSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    return _hidCmdWithInputU32(124, id);
 }
 
 Result hidMergeSingleJoyAsDualJoy(HidControllerID id0, HidControllerID id1) {
@@ -924,14 +888,12 @@ Result hidSendVibrationValues(u32 *VibrationDeviceHandles, HidVibrationValue *Vi
     return rc;
 }
 
-Result hidInitializeVibrationDevices(u32 *VibrationDeviceHandles, size_t total_handles, HidControllerID id, HidControllerType type) {
+static Result _hidGetDeviceHandles(u32 devicetype, u32 *DeviceHandles, size_t total_handles, HidControllerID id, HidControllerType type) {
     Result rc=0;
-    Service srv;
     u32 tmp_type = type & 0xff;
     u32 tmp_id = id;
-    size_t i;
 
-    if (total_handles == 0 || total_handles > 2)
+    if (total_handles == 0 || total_handles > 2 || devicetype > 1)
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
     if (tmp_id == CONTROLLER_HANDHELD)
@@ -951,27 +913,47 @@ Result hidInitializeVibrationDevices(u32 *VibrationDeviceHandles, size_t total_h
     }
     else if (tmp_type & TYPE_JOYCON_RIGHT) {
         tmp_type = 7;
-        tmp_type |= 0x010000;
+        tmp_type |= 0x010000;//TODO: Does SixAxis need this?
     }
-    //The HidControllerID enum doesn't have bit29/bit30 checked by official sw, for tmp_type 0x20/0x21.
+    //Official sw checks for these bits but libnx hid.h doesn't have these currently.
     else if (tmp_type & BIT(29)) {
         tmp_type = 0x20;
     }
     else if (tmp_type & BIT(30)) {
         tmp_type = 0x21;
     }
+    else {
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+    }
 
-    VibrationDeviceHandles[0] = tmp_type | (tmp_id & 0xff)<<8;
+    DeviceHandles[0] = tmp_type | (tmp_id & 0xff)<<8;
+
+    if (devicetype==1 && (tmp_type==3 || tmp_type==4))
+        DeviceHandles[0] |= 0x020000;
 
     if (total_handles > 1) {
         tmp_type &= 0xff;
-        if (tmp_type!=6 && tmp_type!=7) {
-            VibrationDeviceHandles[1] = VibrationDeviceHandles[0] | 0x010000;
+        if (devicetype==0 && (tmp_type!=6 && tmp_type!=7)) {
+            DeviceHandles[1] = DeviceHandles[0] | 0x010000;
+        }
+        else if (devicetype==1 && tmp_type==5) {
+            DeviceHandles[1] = DeviceHandles[0] | 0x010000;
         }
         else {
             return MAKERESULT(Module_Libnx, LibnxError_BadInput);
         }
     }
+
+    return rc;
+}
+
+Result hidInitializeVibrationDevices(u32 *VibrationDeviceHandles, size_t total_handles, HidControllerID id, HidControllerType type) {
+    Result rc=0;
+    Service srv;
+    size_t i;
+
+    rc = _hidGetDeviceHandles(0, VibrationDeviceHandles, total_handles, id, type);
+    if (R_FAILED(rc)) return rc;
 
     for (i=0; i<total_handles; i++) {
         rc = _hidCreateActiveVibrationDeviceList(&srv);
@@ -986,5 +968,17 @@ Result hidInitializeVibrationDevices(u32 *VibrationDeviceHandles, size_t total_h
     }
 
     return rc;
+}
+
+Result hidGetSixAxisSensorHandles(u32 *SixAxisSensorHandles, size_t total_handles, HidControllerID id, HidControllerType type) {
+    return _hidGetDeviceHandles(1, SixAxisSensorHandles, total_handles, id, type);
+}
+
+Result hidStartSixAxisSensor(u32 SixAxisSensorHandle) {
+    return _hidCmdWithInputU32(66, SixAxisSensorHandle);
+}
+
+Result hidStopSixAxisSensor(u32 SixAxisSensorHandle) {
+    return _hidCmdWithInputU32(67, SixAxisSensorHandle);
 }
 
