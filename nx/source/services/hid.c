@@ -913,7 +913,7 @@ static Result _hidGetDeviceHandles(u32 devicetype, u32 *DeviceHandles, size_t to
     }
     else if (tmp_type & TYPE_JOYCON_RIGHT) {
         tmp_type = 7;
-        tmp_type |= 0x010000;//TODO: Does SixAxis need this?
+        tmp_type |= 0x010000;
     }
     //Official sw checks for these bits but libnx hid.h doesn't have these currently.
     else if (tmp_type & BIT(29)) {
