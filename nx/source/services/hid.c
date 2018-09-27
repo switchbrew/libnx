@@ -73,6 +73,9 @@ Result hidInitialize(void)
     }
 
     if (R_SUCCEEDED(rc))
+        rc = hidSetSupportedNpadStyleSet(TYPE_PROCONTROLLER | TYPE_HANDHELD | TYPE_JOYCON_PAIR | TYPE_JOYCON_LEFT | TYPE_JOYCON_RIGHT);
+
+    if (R_SUCCEEDED(rc))
         rc = _hidSetDualModeAll();
 
     if (R_FAILED(rc))
@@ -523,6 +526,10 @@ static Result _hidCmdWithInputU32(u64 cmd_id, u32 inputval) {
     }
 
     return rc;
+}
+
+Result hidSetSupportedNpadStyleSet(HidControllerType type) {
+    return _hidCmdWithInputU32(100, type);
 }
 
 Result hidSetNpadJoyAssignmentModeSingleByDefault(HidControllerID id) {
