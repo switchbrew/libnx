@@ -23,8 +23,10 @@
 enum {
     Module_Kernel=1,
     Module_Libnx=345,
-    Module_LibnxBinder=347,
+    Module_HomebrewAbi=346,
+    Module_HomebrewLoader=347,
     Module_LibnxNvidia=348,
+    Module_LibnxBinder=349,
 };
 
 /// Kernel error codes

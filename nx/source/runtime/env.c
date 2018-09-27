@@ -93,7 +93,7 @@ void envSetup(void* ctx, Handle main_thread, LoaderReturnFn saved_lr)
             if (ent->Flags & EntryFlag_IsMandatory)
             {
                 // Encountered unknown but mandatory key, bail back to loader.
-                __nx_exit(MAKERESULT(346, 100 + ent->Key), g_loaderRetAddr);
+                __nx_exit(MAKERESULT(Module_HomebrewAbi, 100 + ent->Key), g_loaderRetAddr);
             }
 
             break;
