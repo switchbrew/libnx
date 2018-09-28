@@ -338,6 +338,21 @@ typedef struct MousePosition
     u32 scrollVelocityY;
 } MousePosition;
 
+typedef struct HidVector
+{
+    float x;
+    float y;
+    float z;
+} HidVector;
+
+typedef struct SixAxisSensorValues
+{
+    HidVector accelerometer;
+    HidVector gyroscope;
+    HidVector unk;
+    HidVector orientation[3];
+} SixAxisSensorValues;
+
 #define JOYSTICK_MAX (0x8000)
 #define JOYSTICK_MIN (-0x8000)
 
@@ -506,11 +521,38 @@ typedef struct HidControllerLayout
 } HidControllerLayout;
 static_assert(sizeof(HidControllerLayout) == 0x350, "Hid controller layout structure has incorrect size");
 
+typedef struct HidControllerSixAxisHeader
+{
+    u64 timestamp;
+    u64 numEntries;
+    u64 latestEntry;
+    u64 maxEntryIndex;
+} HidControllerSixAxisHeader;
+static_assert(sizeof(HidControllerSixAxisHeader) == 0x20, "Hid controller sixaxis header structure has incorrect size");
+
+typedef struct HidControllerSixAxisEntry
+{
+    u64 timestamp;
+    u64 unk_1;
+    u64 timestamp_2;
+    SixAxisSensorValues values;
+    u64 unk_3;
+} HidControllerSixAxisEntry;
+static_assert(sizeof(HidControllerSixAxisEntry) == 0x68, "Hid controller sixaxis entry structure has incorrect size");
+
+typedef struct HidControllerSixAxisLayout
+{
+    HidControllerSixAxisHeader header;
+    HidControllerSixAxisEntry entries[17];
+} HidControllerSixAxisLayout;
+static_assert(sizeof(HidControllerSixAxisLayout) == 0x708, "Hid controller sixaxis layout structure has incorrect size");
+
 typedef struct HidController
 {
     HidControllerHeader header;
     HidControllerLayout layouts[7];
-    u8 unk_1[0x2A70];
+    HidControllerSixAxisLayout sixaxis[6];
+    u8 unk_1[0x40];
     HidControllerMAC macLeft;
     HidControllerMAC macRight;
     u8 unk_2[0xDF8];
@@ -587,6 +629,7 @@ u32 hidTouchCount(void);
 void hidTouchRead(touchPosition *pos, u32 point_id);
 
 void hidJoystickRead(JoystickPosition *pos, HidControllerID id, HidControllerJoystick stick);
+u32 hidSixAxisSensorValuesRead(SixAxisSensorValues *values, HidControllerID id, u32 num_entries);
 
 /// This can be used to check what CONTROLLER_P1_AUTO uses.
 /// Returns 0 when CONTROLLER_PLAYER_1 is connected, otherwise returns 1 for handheld-mode.
