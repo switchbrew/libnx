@@ -19,11 +19,13 @@ static HidMouseEntry g_mouseEntry;
 static HidKeyboardEntry g_keyboardEntry;
 static HidControllerHeader g_controllerHeaders[10];
 static HidControllerInputEntry g_controllerEntries[10];
+static HidControllerSixAxisLayout g_sixaxisLayouts[10];
 
 static u64 g_mouseOld, g_mouseHeld, g_mouseDown, g_mouseUp;
 static u64 g_keyboardModOld, g_keyboardModHeld, g_keyboardModDown, g_keyboardModUp;
 static u32 g_keyboardOld[8], g_keyboardHeld[8], g_keyboardDown[8], g_keyboardUp[8];
 static u64 g_controllerOld[10], g_controllerHeld[10], g_controllerDown[10], g_controllerUp[10];
+static bool g_sixaxisEnabled[10];
 
 static HidControllerLayoutType g_controllerLayout[10];
 static u64 g_touchTimestamp, g_mouseTimestamp, g_keyboardTimestamp, g_controllerTimestamps[10];
@@ -109,6 +111,8 @@ void hidReset(void)
     memset(&g_keyboardEntry, 0, sizeof(HidKeyboardEntry));
     memset(g_controllerHeaders, 0, sizeof(g_controllerHeaders));
     memset(g_controllerEntries, 0, sizeof(g_controllerEntries));
+    memset(g_sixaxisLayouts, 0, sizeof(g_sixaxisLayouts));
+    memset(g_sixaxisEnabled, 0, sizeof(g_sixaxisEnabled));
 
     g_mouseOld = g_mouseHeld = g_mouseDown = g_mouseUp = 0;
     g_keyboardModOld = g_keyboardModHeld = g_keyboardModDown = g_keyboardModUp = 0;
@@ -173,6 +177,7 @@ void hidScanInput(void) {
     memset(&g_mouseEntry, 0, sizeof(HidMouseEntry));
     memset(&g_keyboardEntry, 0, sizeof(HidKeyboardEntry));
     memset(g_controllerEntries, 0, sizeof(g_controllerEntries));
+    memset(g_sixaxisLayouts, 0, sizeof(g_sixaxisLayouts));
 
     u64 latestTouchEntry = sharedMem->touchscreen.header.latestEntry;
     HidTouchScreenEntry *newTouchEntry = &sharedMem->touchscreen.entries[latestTouchEntry];
@@ -227,6 +232,34 @@ void hidScanInput(void) {
 
         g_controllerDown[i] = (~g_controllerOld[i]) & g_controllerHeld[i];
         g_controllerUp[i] = g_controllerOld[i] & (~g_controllerHeld[i]);
+
+        if (g_sixaxisEnabled[i]) {
+            u32 type = g_controllerHeaders[i].type;
+            HidControllerSixAxisLayout *sixaxis = NULL;
+            if (type & TYPE_PROCONTROLLER) {
+                sixaxis = &sharedMem->controllers[i].sixaxis[0];
+            }
+            else if (type & TYPE_HANDHELD) {
+                sixaxis = &sharedMem->controllers[i].sixaxis[1];
+            }
+            else if (type & TYPE_JOYCON_PAIR) {
+                if (type & TYPE_JOYCON_LEFT) {
+                    sixaxis = &sharedMem->controllers[i].sixaxis[2];
+                }
+                else {
+                    sixaxis = &sharedMem->controllers[i].sixaxis[3];
+                }
+            }
+            else if (type & TYPE_JOYCON_LEFT) {
+                sixaxis = &sharedMem->controllers[i].sixaxis[4];
+            }
+            else if (type & TYPE_JOYCON_RIGHT) {
+                sixaxis = &sharedMem->controllers[i].sixaxis[5];
+            }
+            if (sixaxis) {
+                memcpy(&g_sixaxisLayouts[i], sixaxis, sizeof(*sixaxis));
+            }
+        }
     }
 
     g_controllerP1AutoID = CONTROLLER_HANDHELD;
@@ -392,6 +425,46 @@ void hidJoystickRead(JoystickPosition *pos, HidControllerID id, HidControllerJoy
         pos->dy = g_controllerEntries[id].joysticks[stick].dy;
         rwlockReadUnlock(&g_hidLock);
     }
+}
+
+u32 hidSixAxisSensorValuesRead(SixAxisSensorValues *values, HidControllerID id, u32 num_entries) {
+    int entry;
+    int i;
+
+    if (!values || !num_entries) return 0;
+
+    if (id == CONTROLLER_P1_AUTO) return hidSixAxisSensorValuesRead(values, g_controllerP1AutoID, num_entries);
+
+    memset(values, 0, sizeof(SixAxisSensorValues) * num_entries);
+    if (id < 0 || id > 9) return 0;
+
+    rwlockReadLock(&g_hidLock);
+    if (!g_sixaxisEnabled[id]) {
+        rwlockReadUnlock(&g_hidLock);
+        return 0;
+    }
+
+    if (num_entries > g_sixaxisLayouts[id].header.maxEntryIndex + 1)
+        num_entries = g_sixaxisLayouts[id].header.maxEntryIndex + 1;
+
+    entry = g_sixaxisLayouts[id].header.latestEntry + 1 - num_entries;
+    if (entry < 0)
+        entry += g_sixaxisLayouts[id].header.maxEntryIndex + 1;
+
+    u64 timestamp = 0;
+    for (i = 0; i < num_entries; i++) {
+        if (timestamp && g_sixaxisLayouts[id].entries[entry].timestamp - timestamp != 1)
+            break;
+        memcpy(&values[i], &g_sixaxisLayouts[id].entries[entry].values, sizeof(SixAxisSensorValues));
+        timestamp = g_sixaxisLayouts[id].entries[entry].timestamp;
+
+        entry++;
+        if (entry > g_sixaxisLayouts[id].header.maxEntryIndex)
+            entry = 0;
+    }
+    rwlockReadUnlock(&g_hidLock);
+
+    return i;
 }
 
 bool hidGetHandheldMode(void) {
@@ -982,10 +1055,32 @@ Result hidGetSixAxisSensorHandles(u32 *SixAxisSensorHandles, size_t total_handle
 }
 
 Result hidStartSixAxisSensor(u32 SixAxisSensorHandle) {
-    return _hidCmdWithInputU32(66, SixAxisSensorHandle);
+    u32 rc = _hidCmdWithInputU32(66, SixAxisSensorHandle);
+    if (R_SUCCEEDED(rc)) {
+        int controller = (SixAxisSensorHandle >> 8) & 0xff;
+        if (controller == 0x20)
+            controller = CONTROLLER_HANDHELD;
+        if (controller < 10) {
+            rwlockWriteLock(&g_hidLock);
+            g_sixaxisEnabled[controller] = true;
+            rwlockWriteUnlock(&g_hidLock);
+        }
+    }
+    return rc;
 }
 
 Result hidStopSixAxisSensor(u32 SixAxisSensorHandle) {
-    return _hidCmdWithInputU32(67, SixAxisSensorHandle);
+    u32 rc = _hidCmdWithInputU32(67, SixAxisSensorHandle);
+    if (R_SUCCEEDED(rc)) {
+        int controller = (SixAxisSensorHandle >> 8) & 0xff;
+        if (controller == 0x20)
+            controller = CONTROLLER_HANDHELD;
+        if (controller < 10) {
+            rwlockWriteLock(&g_hidLock);
+            g_sixaxisEnabled[controller] = false;
+            rwlockWriteUnlock(&g_hidLock);
+        }
+    }
+    return rc;
 }
 
