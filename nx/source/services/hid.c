@@ -269,8 +269,7 @@ void hidScanInput(void) {
     rwlockWriteUnlock(&g_hidLock);
 }
 
-//TODO: Why is this field in sharedmem zeros?
-/*u32 hidGetControllerType(HidControllerID id) {
+HidControllerType hidGetControllerType(HidControllerID id) {
     if (id==CONTROLLER_P1_AUTO) return hidGetControllerType(g_controllerP1AutoID);
     if (id < 0 || id > 9) return 0;
 
@@ -279,7 +278,7 @@ void hidScanInput(void) {
     rwlockReadUnlock(&g_hidLock);
 
     return tmp;
-}*/
+}
 
 u64 hidKeysHeld(HidControllerID id) {
     if (id==CONTROLLER_P1_AUTO) return hidKeysHeld(g_controllerP1AutoID);
