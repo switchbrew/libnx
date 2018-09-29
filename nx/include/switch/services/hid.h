@@ -606,6 +606,8 @@ void* hidGetSharedmemAddr(void);
 
 void hidSetControllerLayout(HidControllerID id, HidControllerLayoutType layoutType);
 HidControllerLayoutType hidGetControllerLayout(HidControllerID id);
+HidControllerType hidGetControllerType(HidControllerID id);
+
 void hidScanInput(void);
 
 u64 hidKeysHeld(HidControllerID id);
