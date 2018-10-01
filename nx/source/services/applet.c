@@ -66,7 +66,6 @@ static Result _appletGetPerformanceMode(u32 *out);
 static Result _appletSetOperationModeChangedNotification(u8 flag);
 static Result _appletSetPerformanceModeChangedNotification(u8 flag);
 
-//static Result _appletSelfExit(void);
 //static Result _appletLockExit(void);
 //static Result _appletUnlockExit(void);
 
@@ -823,7 +822,7 @@ static Result _appletGetCurrentFocusState(u8 *out) {
     return rc;
 }
 
-/*static Result _appletCmdNoIO(Service* session, u64 cmd_id) {
+static Result _appletCmdNoIO(Service* session, u64 cmd_id) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -852,11 +851,11 @@ static Result _appletGetCurrentFocusState(u8 *out) {
     }
 
     return rc;
-}*/
+}
 
-/*static Result _appletSelfExit(void) {
+Result appletSelfExit(void) {
     return _appletCmdNoIO(&g_appletISelfController, 0);
-}*/
+}
 
 /*static Result _appletLockExit(void) {
     return _appletCmdNoIO(&g_appletISelfController, 1);
@@ -1053,37 +1052,6 @@ Result appletSetScreenShotImageOrientation(s32 val) {
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 19;
     raw->val = val;
-
-    Result rc = serviceIpcDispatch(&g_appletISelfController);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
-}
-
-Result appletSelfExit(void) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 0;
 
     Result rc = serviceIpcDispatch(&g_appletISelfController);
 
