@@ -8,15 +8,19 @@
 #include "services/applet.h"
 #include "services/apm.h"
 #include "services/sm.h"
+#include "runtime/env.h"
 
 __attribute__((weak)) u32 __nx_applet_type = AppletType_Default;
 __attribute__((weak)) bool __nx_applet_auto_notifyrunning = true;
 __attribute__((weak)) u8 __nx_applet_AppletAttribute[0x80];
 __attribute__((weak)) u32 __nx_applet_PerformanceConfiguration[2] = {/*0x92220008*//*0x20004*//*0x92220007*/0, 0};
+//// Controls whether to use applet exit cmds during \ref appletExit.  0 (default): Only run exit cmds when running under a NSO. 1: Use exit cmds regardless. >1: Skip exit cmds.
+__attribute__((weak)) u32 __nx_applet_exit_mode = 0;
 
 static Service g_appletSrv;
 static Service g_appletProxySession;
 static u64 g_refCnt;
+static bool g_appletExitProcessFlag;
 
 // From Get*Functions.
 static Service g_appletIFunctions;
@@ -66,10 +70,12 @@ static Result _appletGetPerformanceMode(u32 *out);
 static Result _appletSetOperationModeChangedNotification(u8 flag);
 static Result _appletSetPerformanceModeChangedNotification(u8 flag);
 
+static Result _appletSelfExit(void);
 //static Result _appletLockExit(void);
 //static Result _appletUnlockExit(void);
+//static Result _appletSetTerminateResult(Result res);
 
-//static Result _appletExitProcessAndReturn(void);
+static Result _appletExitProcessAndReturn(void);
 
 Result appletInitialize(void)
 {
@@ -88,6 +94,7 @@ Result appletInitialize(void)
 
     g_appletResourceUserId = 0;
     g_appletNotifiedRunning = 0;
+    g_appletExitProcessFlag = 0;
 
     switch (__nx_applet_type) {
     case AppletType_Default:
@@ -246,13 +253,37 @@ Result appletInitialize(void)
     return rc;
 }
 
+static void NORETURN _appletExitProcess(int result_code) {
+    appletExit();
+
+    svcExitProcess();
+    __builtin_unreachable();
+}
+
 void appletExit(void)
 {
     if (atomicDecrement64(&g_refCnt) == 0)
     {
-        //TODO: Enable this somehow later with more condition(s)?
-        /*if (__nx_applet_type == AppletType_LibraryApplet)
-            _appletExitProcessAndReturn();*/
+        if ((envIsNso() && __nx_applet_exit_mode==0) || __nx_applet_exit_mode==1) {
+            if (__nx_applet_type == AppletType_Application ||
+                __nx_applet_type == AppletType_SystemApplication ||
+                __nx_applet_type == AppletType_LibraryApplet) {
+                if (!g_appletExitProcessFlag) {
+                    g_appletExitProcessFlag = 1;
+                    atomicIncrement64(&g_refCnt);
+                    envSetExitFuncPtr(_appletExitProcess);
+                    return;
+                }
+                else {
+                    if (__nx_applet_type == AppletType_Application || __nx_applet_type == AppletType_SystemApplication) {
+                        //_appletSetTerminateResult(0);
+                        _appletSelfExit();
+                    }
+                    if (__nx_applet_type == AppletType_LibraryApplet)
+                        _appletExitProcessAndReturn();
+                }
+            }
+        }
 
         if (g_appletMessageEventHandle != INVALID_HANDLE) {
             svcCloseHandle(g_appletMessageEventHandle);
@@ -853,7 +884,7 @@ static Result _appletCmdNoIO(Service* session, u64 cmd_id) {
     return rc;
 }
 
-Result appletSelfExit(void) {
+static Result _appletSelfExit(void) {
     return _appletCmdNoIO(&g_appletISelfController, 0);
 }
 
@@ -1070,6 +1101,39 @@ Result appletSetScreenShotImageOrientation(s32 val) {
     return rc;
 }
 
+/*static Result _appletSetTerminateResult(Result res) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        Result res;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 22;
+    raw->res = res;
+
+    Result rc = serviceIpcDispatch(&g_appletISelfController);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}*/
+
 Result appletCreateManagedDisplayLayer(u64 *out) {
     IpcCommand c;
     ipcInitialize(&c);
@@ -1106,9 +1170,9 @@ Result appletCreateManagedDisplayLayer(u64 *out) {
     return rc;
 }
 
-/*static Result _appletExitProcessAndReturn(void) {
+static Result _appletExitProcessAndReturn(void) {
     return _appletCmdNoIO(&g_appletILibraryAppletSelfAccessor, 10);
-}*/
+}
 
 u8 appletGetOperationMode(void) {
     return g_appletOperationMode;

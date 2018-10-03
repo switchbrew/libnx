@@ -148,6 +148,10 @@ LoaderReturnFn envGetExitFuncPtr(void) {
     return g_loaderRetAddr;
 }
 
+void envSetExitFuncPtr(LoaderReturnFn addr) {
+    g_loaderRetAddr = addr;
+}
+
 Result envSetNextLoad(const char* path, const char* argv)
 {
     if (g_nextLoadPath == NULL)

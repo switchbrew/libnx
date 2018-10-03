@@ -76,6 +76,9 @@ Handle envGetOwnProcessHandle(void);
 /// Returns the loader's return function, to be called on program exit.
 LoaderReturnFn envGetExitFuncPtr(void);
 
+/// Sets the return function to be called on program exit.
+void envSetExitFuncPtr(LoaderReturnFn addr);
+
 /**
  * @brief Configures the next homebrew application to load.
  * @param path Path to the next homebrew application to load (.nro).
