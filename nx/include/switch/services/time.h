@@ -14,7 +14,7 @@ typedef enum {
     TimeType_UserSystemClock,
     TimeType_NetworkSystemClock,
     TimeType_LocalSystemClock,
-    TimeType_Default = TimeType_NetworkSystemClock,
+    TimeType_Default = TimeType_UserSystemClock,
 } TimeType;
 
 Result timeInitialize(void);

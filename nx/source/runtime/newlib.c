@@ -21,7 +21,7 @@ extern const u8 __tdata_lma[];
 extern const u8 __tdata_lma_end[];
 extern u8 __tls_start[];
 
-/// TimeType passed to timeGetCurrentTime() by __libnx_gtod().
+/// TimeType passed to timeGetCurrentTime() during time initialization. If that fails and __nx_time_type isn't TimeType_Default, timeGetCurrentTime() will be called again with TimeType_Default.
 __attribute__((weak)) TimeType __nx_time_type = TimeType_Default;
 
 static struct _reent* __libnx_get_reent(void) {
@@ -38,6 +38,7 @@ static u64 __bootticks;
 // setup boot time variables
 void __libnx_init_time(void) {
     Result rc =  timeGetCurrentTime(__nx_time_type, &__boottime);
+    if (R_FAILED(rc) && __nx_time_type != TimeType_Default) rc =  timeGetCurrentTime(TimeType_Default, &__boottime);
     if (R_FAILED(rc)) {
         __boottime = UINT64_MAX;
     } else {
