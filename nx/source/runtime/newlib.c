@@ -70,6 +70,12 @@ int __libnx_clock_gettime(clockid_t clock_id, struct timespec *tp) {
         return -1;
     }
     if(tp) {
+
+        if(__boottime == UINT64_MAX) {
+            errno = EIO;
+            return -1;
+        }
+
         u64 now=armGetSystemTick() - __bootticks;
 
         u64 __bootsecs = now / 19200000ULL;
@@ -85,7 +91,7 @@ int __libnx_clock_gettime(clockid_t clock_id, struct timespec *tp) {
 }
 
 int __libnx_clock_settime(clockid_t clock_id,const struct timespec *tp) {
-    errno = EINVAL;
+    errno = ENOSYS;
     return -1;
 }
 
@@ -93,7 +99,7 @@ int __libnx_gtod(struct _reent *ptr, struct timeval *tp, struct timezone *tz) {
     if (tp != NULL) {
 
         if(__boottime == UINT64_MAX) {
-            ptr->_errno = EINVAL;
+            ptr->_errno = EIO;
             return -1;
         }
 
