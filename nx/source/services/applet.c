@@ -186,30 +186,34 @@ Result appletInitialize(void)
 
     if (R_SUCCEEDED(rc) && (__nx_applet_type == AppletType_Application))
     {
-        do {
-            svcWaitSynchronizationSingle(g_appletMessageEventHandle, U64_MAX);
-            //When applet was previously initialized in the context of the current process for AppletType_Application, there's exactly 1 issue with initializing again: this loop hangs since there's no message available. If a timeout is added to the above waitsync where the loop is exited on timeout when _appletGetCurrentFocusState output is 1, initialization works fine.
+        rc = _appletGetCurrentFocusState(&g_appletFocusState);
 
-            u32 msg;
-            rc = _appletReceiveMessage(&msg);
+        //Don't enter this msg-loop when g_appletFocusState is already 1, it will hang when applet was previously initialized in the context of the current process for AppletType_Application.
+        if (R_SUCCEEDED(rc) && g_appletFocusState!=1) {
+            do {
+                svcWaitSynchronizationSingle(g_appletMessageEventHandle, U64_MAX);
 
-            if (R_FAILED(rc))
-            {
-                if ((rc & 0x3fffff) == 0x680)
+                u32 msg;
+                rc = _appletReceiveMessage(&msg);
+
+                if (R_FAILED(rc))
+                {
+                    if ((rc & 0x3fffff) == 0x680)
+                        continue;
+
+                    break;
+                }
+
+                if (msg != 0xF)
                     continue;
 
-                break;
-            }
+                rc = _appletGetCurrentFocusState(&g_appletFocusState);
 
-            if (msg != 0xF)
-                continue;
+                if (R_FAILED(rc))
+                    break;
 
-            rc = _appletGetCurrentFocusState(&g_appletFocusState);
-
-            if (R_FAILED(rc))
-                break;
-
-        } while(g_appletFocusState!=1);
+            } while(g_appletFocusState!=1);
+        }
 
         if (R_SUCCEEDED(rc))
             rc = _appletAcquireForegroundRights();
@@ -260,13 +264,16 @@ static void NORETURN _appletExitProcess(int result_code) {
     __builtin_unreachable();
 }
 
+static bool _appletIsApplication(void) {
+    return __nx_applet_type == AppletType_Application || __nx_applet_type == AppletType_SystemApplication;
+}
+
 void appletExit(void)
 {
     if (atomicDecrement64(&g_refCnt) == 0)
     {
         if ((envIsNso() && __nx_applet_exit_mode==0) || __nx_applet_exit_mode==1) {
-            if (__nx_applet_type == AppletType_Application ||
-                __nx_applet_type == AppletType_SystemApplication ||
+            if (_appletIsApplication() ||
                 __nx_applet_type == AppletType_LibraryApplet) {
                 if (!g_appletExitProcessFlag) {
                     g_appletExitProcessFlag = 1;
@@ -275,7 +282,7 @@ void appletExit(void)
                     return;
                 }
                 else {
-                    if (__nx_applet_type == AppletType_Application || __nx_applet_type == AppletType_SystemApplication) {
+                    if (_appletIsApplication()) {
                         //_appletSetTerminateResult(0);
                         _appletSelfExit();
                     }
@@ -564,7 +571,7 @@ Result appletGetDesiredLanguage(u64 *LanguageCode) {
     IpcCommand c;
     ipcInitialize(&c);
 
-    if (!serviceIsActive(&g_appletSrv) || __nx_applet_type != AppletType_Application)
+    if (!serviceIsActive(&g_appletSrv) || !_appletIsApplication())
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     struct {
@@ -603,8 +610,7 @@ Result appletBeginBlockingHomeButton(s64 val) {
     IpcCommand c;
     ipcInitialize(&c);
 
-    if (!serviceIsActive(&g_appletSrv) || (__nx_applet_type!=AppletType_Application
-      && __nx_applet_type!=AppletType_SystemApplication))
+    if (!serviceIsActive(&g_appletSrv) || !_appletIsApplication())
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     struct {
@@ -640,8 +646,7 @@ Result appletEndBlockingHomeButton(void) {
     IpcCommand c;
     ipcInitialize(&c);
 
-    if (!serviceIsActive(&g_appletSrv) || (__nx_applet_type!=AppletType_Application
-      && __nx_applet_type!=AppletType_SystemApplication))
+    if (!serviceIsActive(&g_appletSrv) || !_appletIsApplication())
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     struct {

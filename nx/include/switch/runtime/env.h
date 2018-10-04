@@ -35,6 +35,10 @@ enum {
     EntryType_LastLoadResult=11       ///< Provides the last load result.
 };
 
+enum {
+    EnvAppletFlags_ApplicationOverride = BIT(0) ///< Use AppletType_Application instead of AppletType_SystemApplication.
+};
+
 /// Loader return function.
 typedef void NORETURN (*LoaderReturnFn)(int result_code);
 

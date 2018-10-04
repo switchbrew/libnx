@@ -3,6 +3,7 @@
 #include "runtime/env.h"
 #include "services/sm.h"
 #include "services/fatal.h"
+#include "services/applet.h"
 
 void NORETURN __nx_exit(Result rc, LoaderReturnFn retaddr);
 
@@ -79,6 +80,7 @@ void envSetup(void* ctx, Handle main_thread, LoaderReturnFn saved_lr)
 
         case EntryType_AppletType:
             __nx_applet_type = ent->Value[0];
+            if ((ent->Value[1] & EnvAppletFlags_ApplicationOverride) && __nx_applet_type == AppletType_SystemApplication) __nx_applet_type = AppletType_Application;
             break;
 
         case EntryType_ProcessHandle:
