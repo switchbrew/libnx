@@ -17,6 +17,24 @@ typedef enum {
     TimeType_Default = TimeType_UserSystemClock,
 } TimeType;
 
+typedef struct {
+    u16 year;
+    u8 month;
+    u8 day;
+    u8 hour;
+    u8 minute;
+    u8 second;
+    u8 pad;
+} TimeCalendarTime;
+
+typedef struct {
+    u32 wday; ///< 0-based day-of-week.
+    u32 yday; ///< 0-based day-of-year.
+    char timezoneName[8]; ///< Timezone name string.
+    u32 DST; ///< 0 = no DST, 1 = DST.
+    s32 offset; ///< Seconds relative to UTC for this timezone.
+} TimeCalendarAdditionalInfo;
+
 Result timeInitialize(void);
 void timeExit(void);
 
@@ -31,3 +49,6 @@ Result timeGetCurrentTime(TimeType type, u64 *timestamp);
  * @return Result code.
  */
 Result timeSetCurrentTime(TimeType type, u64 timestamp);
+
+Result timeToCalendarTimeWithMyRule(u64 timestamp, TimeCalendarTime *caltime, TimeCalendarAdditionalInfo *info);
+

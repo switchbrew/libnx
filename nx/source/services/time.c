@@ -191,3 +191,41 @@ Result timeSetCurrentTime(TimeType type, u64 timestamp) {
     return rc;
 }
 
+Result timeToCalendarTimeWithMyRule(u64 timestamp, TimeCalendarTime *caltime, TimeCalendarAdditionalInfo *info) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 timestamp;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 101;
+    raw->timestamp = timestamp;
+
+    Result rc = serviceIpcDispatch(&g_timeTimeZoneService);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            TimeCalendarTime caltime;
+            TimeCalendarAdditionalInfo info;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && caltime) memcpy(caltime, &resp->caltime, sizeof(TimeCalendarTime));
+        if (R_SUCCEEDED(rc) && info) memcpy(info, &resp->info, sizeof(TimeCalendarAdditionalInfo));
+    }
+
+    return rc;
+}
+

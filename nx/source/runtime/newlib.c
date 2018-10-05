@@ -1,6 +1,8 @@
 #include <string.h>
 #include <errno.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include <sys/iosupport.h>
 #include <sys/time.h>
 #include <sys/lock.h>
@@ -31,18 +33,60 @@ static struct _reent* __libnx_get_reent(void) {
     return tv->reent;
 }
 
-//TODO: timeGetCurrentTime() returns UTC time. How to handle timezones?
 static u64 __boottime;
 static u64 __bootticks;
 
 // setup boot time variables
 void __libnx_init_time(void) {
+    TimeCalendarAdditionalInfo info;
+    char envstr[64];
+    char *strptr;
+    bool is_west=0;
+    s32 tmp_offset, hour, minute, second;
+
     Result rc =  timeGetCurrentTime(__nx_time_type, &__boottime);
     if (R_FAILED(rc) && __nx_time_type != TimeType_Default) rc =  timeGetCurrentTime(TimeType_Default, &__boottime);
     if (R_FAILED(rc)) {
         __boottime = UINT64_MAX;
     } else {
         __bootticks = armGetSystemTick();
+    }
+
+    if (R_SUCCEEDED(rc)) rc = timeToCalendarTimeWithMyRule(__boottime, NULL, &info);
+
+    if (R_SUCCEEDED(rc)) {
+        info.timezoneName[7] = 0;
+        tmp_offset = info.offset;
+        if (tmp_offset < 0) {
+            is_west = 1;
+            tmp_offset = -tmp_offset;
+        }
+
+        second = tmp_offset % 60;
+        tmp_offset /= 60;
+        minute = tmp_offset % 60;
+        tmp_offset /= 60;
+        hour = tmp_offset % 24;
+
+        memset(envstr, 0, sizeof(envstr));
+
+        //Avoid using *printf.
+        strncpy(envstr, info.timezoneName, sizeof(envstr)-1);
+        strptr = &envstr[strlen(envstr)];
+        *strptr++ = is_west ? '+' : '-';
+
+        *strptr++ = '0' + (hour / 10);
+        *strptr++ = '0' + (hour % 10);
+        *strptr++ = ':';
+
+        *strptr++ = '0' + (minute / 10);
+        *strptr++ = '0' + (minute % 10);
+        *strptr++ = ':';
+
+        *strptr++ = '0' + (second / 10);
+        *strptr++ = '0' + (second % 10);
+
+        setenv("TZ", envstr, 0);
     }
 }
 
