@@ -272,6 +272,8 @@ void appletExit(void)
 {
     if (atomicDecrement64(&g_refCnt) == 0)
     {
+        if (__nx_applet_type == AppletType_Application) appletSetFocusHandlingMode(1);
+
         if ((envIsNso() && __nx_applet_exit_mode==0) || __nx_applet_exit_mode==1) {
             if (_appletIsApplication() ||
                 __nx_applet_type == AppletType_LibraryApplet) {
