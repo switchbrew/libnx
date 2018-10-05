@@ -1055,7 +1055,7 @@ Result usbDsEndpoint_SetZlt(UsbDsEndpoint* endpoint, bool zlt)
     raw = ipcPrepareHeader(&c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 12;
+    raw->cmd_id = 5;
     raw->zlt = zlt ? 1 : 0;
 
     Result rc = serviceIpcDispatch(&endpoint->h);
