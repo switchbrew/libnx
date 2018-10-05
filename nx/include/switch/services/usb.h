@@ -121,9 +121,9 @@ typedef enum {
 } UsbComplexId;
 
 typedef enum {
-    UsbDeviceSpeed_Full = 0x2,
-    UsbDeviceSpeed_High = 0x3,
-    UsbDeviceSpeed_Super = 0x4,
+    UsbDeviceSpeed_Full = 0x2,  // USB 1.1 Full Speed
+    UsbDeviceSpeed_High = 0x3,  // USB 2.0 High Speed
+    UsbDeviceSpeed_Super = 0x4, // USB 3.0 Super Speed
 } UsbDeviceSpeed;
 
 /// Imported from libusb, with changed names.
@@ -206,9 +206,6 @@ Result usbDsWaitReady(u64 timeout);
 Result usbDsParseReportData(UsbDsReportData *reportdata, u32 urbId, u32 *requestedSize, u32 *transferredSize);
 
 /// IDsService
-// Do not provide API access to these functions, as they're handled by usbDsInitialize().
-// Result usbDsBindDevice(UsbComplexId complexId);
-// Result usbDsBindClientProcess(Handle prochandle);
 Event* usbDsGetStateChangeEvent(void);
 Result usbDsGetState(u32* out);
 

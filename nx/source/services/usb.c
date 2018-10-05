@@ -42,7 +42,7 @@ Result usbDsInitialize(void)
     // GetStateChangeEvent
     if (R_SUCCEEDED(rc))
         rc = _usbDsGetEvent(&g_usbDsSrv, &g_usbDsStateChangeEvent, 3);
-    
+
     // Result code doesn't matter here, users can call themselves later, too. This prevents foot shooting.
     if (R_SUCCEEDED(rc))
         usbDsClearDeviceData();

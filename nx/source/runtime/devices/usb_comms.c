@@ -45,7 +45,6 @@ Result usbCommsInitializeEx(u32 num_interfaces)
         rc = usbDsInitialize();
         
         if (R_SUCCEEDED(rc)) {
-            
             if (kernelAbove500()) {
                 u8 iManufacturer, iProduct, iSerialNumber;
                 static const u16 supported_langs[1] = {0x0409};
@@ -75,6 +74,7 @@ Result usbCommsInitializeEx(u32 num_interfaces)
                     .iSerialNumber = iSerialNumber,
                     .bNumConfigurations = 0x01
                 };
+                // Full Speed is USB 1.1
                 if (R_SUCCEEDED(rc)) rc = usbDsSetUsbDeviceDescriptor(UsbDeviceSpeed_Full, &device_descriptor);
                 
                 // High Speed is USB 2.0
