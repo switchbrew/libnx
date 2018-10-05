@@ -121,9 +121,9 @@ typedef enum {
 } UsbComplexId;
 
 typedef enum {
-    UsbDeviceSpeed_Full = 0x2,  // USB 1.1 Full Speed
-    UsbDeviceSpeed_High = 0x3,  // USB 2.0 High Speed
-    UsbDeviceSpeed_Super = 0x4, // USB 3.0 Super Speed
+    UsbDeviceSpeed_Full = 0x2,  ///< USB 1.1 Full Speed
+    UsbDeviceSpeed_High = 0x3,  ///< USB 2.0 High Speed
+    UsbDeviceSpeed_Super = 0x4, ///< USB 3.0 Super Speed
 } UsbDeviceSpeed;
 
 /// Imported from libusb, with changed names.
