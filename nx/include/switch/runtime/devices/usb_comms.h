@@ -8,15 +8,13 @@
 #pragma once
 #include "../../types.h"
 
+/// Initializes usbComms with the default number of interfaces (1)
 Result usbCommsInitialize(void);
+/// Initializes usbComms with a specific number of interfaces.
+Result usbCommsInitializeEx(u32 num_interfaces);
+
+/// Exits usbComms.
 void usbCommsExit(void);
-
-/// Same as usbCommsInitialize, except this can be used after usbCommsInitialize (or instead of usbCommsInitialize), for creating new interface(s).
-/// bInterface* are the values for the same fields in usb.h \ref usb_interface_descriptor. \ref usbCommsInitialize uses USB_CLASS_VENDOR_SPEC for all of these internally.
-Result usbCommsInitializeEx(u32 *interface, u8 bInterfaceClass, u8 bInterfaceSubClass, u8 bInterfaceProtocol);
-
-/// Shutdown the specified interface. If no interfaces are remaining, this then uses \ref usbCommsExit internally.
-void usbCommsExitEx(u32 interface);
 
 /// Read data with the default interface.
 size_t usbCommsRead(void* buffer, size_t size);
