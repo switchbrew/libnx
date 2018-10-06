@@ -9,7 +9,7 @@
 #include "services/nv.h"
 #include "services/sm.h"
 
-__attribute__((weak)) u32 __nx_nv_transfermem_size = 0x300000;
+__attribute__((weak)) u32 __nx_nv_transfermem_size = 0x800000;
 
 static Service g_nvSrv;
 static Service g_nvSrvClone;
