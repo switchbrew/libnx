@@ -3,6 +3,7 @@
 #include "arm/atomics.h"
 #include "kernel/svc.h"
 #include "kernel/event.h"
+#include "kernel/detect.h"
 #include "services/nv.h"
 #include "nvidia/fence.h"
 
@@ -91,7 +92,20 @@ void nvFenceExit(void)
     }
 }
 
-Result nvFenceWait(NvFence* f, s32 timeout_us)
+static Result _nvFenceEventWaitCommon(Event* event, u32 event_id, s32 timeout_us)
+{
+    u64 timeout_ns = U64_MAX;
+    if (timeout_us >= 0)
+        timeout_ns = (u64)1000*timeout_us;
+    Result rc = eventWait(event, timeout_ns);
+    if ((rc & 0x3FFFFF) == 0xEA01) { // timeout
+        nvioctlNvhostCtrl_EventSignal(g_ctrl_fd, event_id);
+        rc = MAKERESULT(Module_LibnxNvidia, LibnxNvidiaError_Timeout);
+    }
+    return rc;
+}
+
+static Result _nvFenceWait_200(NvFence* f, s32 timeout_us)
 {
     Result rc = MAKERESULT(Module_LibnxNvidia, LibnxNvidiaError_InsufficientMemory);
     int event_id = _nvGetEventSlot();
@@ -99,20 +113,35 @@ Result nvFenceWait(NvFence* f, s32 timeout_us)
         Event* event = _nvGetEvent(event_id);
         if (event) {
             rc = nvioctlNvhostCtrl_EventWaitAsync(g_ctrl_fd, f->id, f->value, timeout_us, event_id);
-            if (rc == MAKERESULT(Module_LibnxNvidia, LibnxNvidiaError_Timeout)) {
-                u64 timeout_ns = U64_MAX;
-                if (timeout_us >= 0)
-                    timeout_ns = (u64)1000*timeout_us;
-                rc = eventWait(event, timeout_ns);
-                if ((rc & 0x3FFFFF) == 0xEA01) { // timeout
-                    nvioctlNvhostCtrl_EventSignal(g_ctrl_fd, 0x10000000 | event_id);
-                    rc = MAKERESULT(Module_LibnxNvidia, LibnxNvidiaError_Timeout);
-                }
-            }
+            if (rc == MAKERESULT(Module_LibnxNvidia, LibnxNvidiaError_Timeout))
+                rc = _nvFenceEventWaitCommon(event, 0x10000000 | event_id, timeout_us);
         }
         _nvFreeEventSlot(event_id);
     }
     return rc;
+}
+
+static Result _nvFenceWait_100(NvFence* f, s32 timeout_us)
+{
+    u32 event_id;
+    Result rc = nvioctlNvhostCtrl_EventWait(g_ctrl_fd, f->id, f->value, timeout_us, 0, &event_id);
+    if (rc == MAKERESULT(Module_LibnxNvidia, LibnxNvidiaError_Timeout) && timeout_us) {
+        Event event;
+        rc = nvQueryEvent(g_ctrl_fd, event_id, &event);
+        if (R_SUCCEEDED(rc)) {
+            rc = _nvFenceEventWaitCommon(&event, event_id, timeout_us);
+            eventClose(&event);
+        }
+    }
+    return rc;
+}
+
+Result nvFenceWait(NvFence* f, s32 timeout_us)
+{
+    if (kernelAbove200())
+        return _nvFenceWait_200(f, timeout_us);
+    else
+        return _nvFenceWait_100(f, timeout_us);
 }
 
 Result nvMultiFenceWait(NvMultiFence* mf, s32 timeout_us)

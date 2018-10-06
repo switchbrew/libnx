@@ -84,9 +84,7 @@ Result nvioctlNvhostCtrl_EventWait(u32 fd, u32 syncpt_id, u32 threshold, s32 tim
     data.value = event_id;
 
     rc = nvIoctl(fd, _NV_IOWR(0x00, 0x1D, data), &data);
-
-    if (R_SUCCEEDED(rc))
-        *out = data.value;
+    *out = data.value;
 
     return rc;
 }
