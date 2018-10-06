@@ -8,10 +8,17 @@
 #pragma once
 #include "../../types.h"
 
+typedef struct {
+    u8 bInterfaceClass;
+    u8 bInterfaceSubClass;
+    u8 bInterfaceProtocol;
+} UsbCommsInterfaceInfo;
+
 /// Initializes usbComms with the default number of interfaces (1)
-Result usbCommsInitialize(void);
+Result usbCommsInitialize(const UsbCommsInterfaceInfo *info);
+
 /// Initializes usbComms with a specific number of interfaces.
-Result usbCommsInitializeEx(u32 num_interfaces);
+Result usbCommsInitializeEx(u32 num_interfaces, const UsbCommsInterfaceInfo *infos);
 
 /// Exits usbComms.
 void usbCommsExit(void);

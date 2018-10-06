@@ -26,13 +26,21 @@ static usbCommsInterface g_usbCommsInterfaces[TOTAL_INTERFACES];
 
 static RwLock g_usbCommsLock;
 
-static Result _usbCommsInterfaceInit1x(u32 intf_ind);
-static Result _usbCommsInterfaceInit5x(u32 intf_ind);
-static Result _usbCommsInterfaceInit(u32 intf_ind);
+static Result _usbCommsInterfaceInit1x(u32 intf_ind, const UsbCommsInterfaceInfo *info);
+static Result _usbCommsInterfaceInit5x(u32 intf_ind, const UsbCommsInterfaceInfo *info);
+static Result _usbCommsInterfaceInit(u32 intf_ind, const UsbCommsInterfaceInfo *info);
 
 static Result _usbCommsWrite(usbCommsInterface *interface, const void* buffer, size_t size, size_t *transferredSize);
 
-Result usbCommsInitializeEx(u32 num_interfaces)
+static void _usbCommsUpdateInterfaceDescriptor(struct usb_interface_descriptor *desc, const UsbCommsInterfaceInfo *info) {
+    if (info != NULL) {
+        desc->bInterfaceClass = info->bInterfaceClass;
+        desc->bInterfaceSubClass = info->bInterfaceSubClass;
+        desc->bInterfaceProtocol = info->bInterfaceProtocol;
+    }
+}
+
+Result usbCommsInitializeEx(u32 num_interfaces, const UsbCommsInterfaceInfo *infos)
 {
     Result rc = 0;
     rwlockWriteLock(&g_usbCommsLock);
@@ -115,7 +123,7 @@ Result usbCommsInitializeEx(u32 num_interfaces)
                     rwlockWriteLock(&intf->lock);
                     rwlockWriteLock(&intf->lock_in);
                     rwlockWriteLock(&intf->lock_out);
-                    rc = _usbCommsInterfaceInit(i);
+                    rc = _usbCommsInterfaceInit(i, infos + i);
                     rwlockWriteUnlock(&intf->lock_out);
                     rwlockWriteUnlock(&intf->lock_in);
                     rwlockWriteUnlock(&intf->lock);
@@ -141,9 +149,9 @@ Result usbCommsInitializeEx(u32 num_interfaces)
     return rc;
 }
 
-Result usbCommsInitialize(void)
+Result usbCommsInitialize(const UsbCommsInterfaceInfo *info)
 {
-    return usbCommsInitializeEx(1);
+    return usbCommsInitializeEx(1, info);
 }
 
 static void _usbCommsInterfaceFree(usbCommsInterface *interface)
@@ -192,16 +200,16 @@ void usbCommsExit(void)
     }
 }
 
-static Result _usbCommsInterfaceInit(u32 intf_ind)
+static Result _usbCommsInterfaceInit(u32 intf_ind, const UsbCommsInterfaceInfo *info)
 {
     if (kernelAbove500()) {
-        return _usbCommsInterfaceInit5x(intf_ind);
+        return _usbCommsInterfaceInit5x(intf_ind, info);
     } else {
-        return _usbCommsInterfaceInit1x(intf_ind);
+        return _usbCommsInterfaceInit1x(intf_ind, info);
     }
 }
 
-static Result _usbCommsInterfaceInit5x(u32 intf_ind)
+static Result _usbCommsInterfaceInit5x(u32 intf_ind, const UsbCommsInterfaceInfo *info)
 {
     Result rc = 0;
     u32 ep_num = intf_ind + 1;
@@ -212,10 +220,11 @@ static Result _usbCommsInterfaceInit5x(u32 intf_ind)
         .bDescriptorType = USB_DT_INTERFACE,
         .bInterfaceNumber = intf_ind,
         .bNumEndpoints = 2,
-        .bInterfaceClass = 0xFF,
-        .bInterfaceSubClass = 0xFF,
-        .bInterfaceProtocol = 0xFF,
+        .bInterfaceClass = USB_CLASS_VENDOR_SPEC,
+        .bInterfaceSubClass = USB_CLASS_VENDOR_SPEC,
+        .bInterfaceProtocol = USB_CLASS_VENDOR_SPEC,
     };
+    _usbCommsUpdateInterfaceDescriptor(&interface_descriptor, info);
 
     struct usb_endpoint_descriptor endpoint_descriptor_in = {
         .bLength = USB_DT_ENDPOINT_SIZE,
@@ -308,7 +317,7 @@ static Result _usbCommsInterfaceInit5x(u32 intf_ind)
 }
 
 
-static Result _usbCommsInterfaceInit1x(u32 intf_ind)
+static Result _usbCommsInterfaceInit1x(u32 intf_ind, const UsbCommsInterfaceInfo *info)
 {
     Result rc = 0;
     u32 ep_num = intf_ind + 1;
@@ -318,10 +327,11 @@ static Result _usbCommsInterfaceInit1x(u32 intf_ind)
         .bLength = USB_DT_INTERFACE_SIZE,
         .bDescriptorType = USB_DT_INTERFACE,
         .bInterfaceNumber = intf_ind,
-        .bInterfaceClass = 0xFF,
-        .bInterfaceSubClass = 0xFF,
-        .bInterfaceProtocol = 0xFF,
+        .bInterfaceClass = USB_CLASS_VENDOR_SPEC,
+        .bInterfaceSubClass = USB_CLASS_VENDOR_SPEC,
+        .bInterfaceProtocol = USB_CLASS_VENDOR_SPEC,
     };
+    _usbCommsUpdateInterfaceDescriptor(&interface_descriptor, info);
 
     struct usb_endpoint_descriptor endpoint_descriptor_in = {
         .bLength = USB_DT_ENDPOINT_SIZE,

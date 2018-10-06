@@ -25,8 +25,8 @@
 /// Imported from libusb, with some adjustments.
 struct usb_endpoint_descriptor {
     uint8_t  bLength;
-    uint8_t  bDescriptorType; /// Must match USB_DT_ENDPOINT.
-    uint8_t  bEndpointAddress; /// Should be one of the usb_endpoint_direction values, the endpoint-number is automatically allocated.
+    uint8_t  bDescriptorType; ///< Must match USB_DT_ENDPOINT.
+    uint8_t  bEndpointAddress; ///< Should be one of the usb_endpoint_direction values, the endpoint-number is automatically allocated.
     uint8_t  bmAttributes;
     uint16_t wMaxPacketSize;
     uint8_t  bInterval;
@@ -35,20 +35,20 @@ struct usb_endpoint_descriptor {
 /// Imported from libusb, with some adjustments.
 struct usb_interface_descriptor {
     uint8_t  bLength;
-    uint8_t  bDescriptorType; /// Must match USB_DT_INTERFACE.
-    uint8_t  bInterfaceNumber; /// See also USBDS_DEFAULT_InterfaceNumber.
-    uint8_t  bAlternateSetting; /// Must match 0.
+    uint8_t  bDescriptorType; ///< Must match USB_DT_INTERFACE.
+    uint8_t  bInterfaceNumber; ///< See also USBDS_DEFAULT_InterfaceNumber.
+    uint8_t  bAlternateSetting; ///< Must match 0.
     uint8_t  bNumEndpoints;
     uint8_t  bInterfaceClass;
     uint8_t  bInterfaceSubClass;
     uint8_t  bInterfaceProtocol;
-    uint8_t  iInterface; /// Ignored.
+    uint8_t  iInterface; ///< Ignored.
 };
 
 /// Imported from libusb, with some adjustments.
 struct usb_device_descriptor {
     uint8_t  bLength;
-    uint8_t  bDescriptorType; /// Must match USB_DT_Device.
+    uint8_t  bDescriptorType; ///< Must match USB_DT_Device.
     uint16_t bcdUSB;
     uint8_t  bDeviceClass;
     uint8_t  bDeviceSubClass;
@@ -66,7 +66,7 @@ struct usb_device_descriptor {
 /// Imported from libusb, with some adjustments.
 struct usb_ss_endpoint_companion_descriptor {
     uint8_t  bLength;
-    uint8_t  bDescriptorType; /// Must match USB_DT_SS_ENDPOINT_COMPANION.
+    uint8_t  bDescriptorType; ///< Must match USB_DT_SS_ENDPOINT_COMPANION.
     uint8_t  bMaxBurst;
     uint8_t  bmAttributes;
     uint16_t wBytesPerInterval;
@@ -75,13 +75,13 @@ struct usb_ss_endpoint_companion_descriptor {
 /// Imported from libusb, with some adjustments.
 struct usb_string_descriptor {
     uint8_t bLength;
-    uint8_t bDescriptorType; /// Must match USB_DT_STRING.
+    uint8_t bDescriptorType; ///< Must match USB_DT_STRING.
     uint16_t wData[0x40];
 };
 
 typedef struct {
-    u16 idVendor; /// VID
-    u16 idProduct; /// PID
+    u16 idVendor; ///< VID
+    u16 idProduct; ///< PID
     u16 bcdDevice;
     char Manufacturer[0x20];
     char Product[0x20];
@@ -89,7 +89,7 @@ typedef struct {
 } UsbDsDeviceInfo;
 
 typedef struct {
-    u32 id; /// urbId from post-buffer cmds
+    u32 id; ///< urbId from post-buffer cmds
     u32 requestedSize;
     u32 transferredSize;
     u32 urb_status;
