@@ -1170,17 +1170,19 @@ static struct hostent *_socketDeserializeHostent(int *err, const void *out_he_se
         return NULL;
     }
 
-    he->h_aliases = (char **)(he->h_name + name_size);
-    he->h_addrtype = addrtype;
-    he->h_length = addrlen;
-    he->h_addr_list = he->h_aliases + nb_aliases + 1;
-
-    if(name_size == 1)
+    if (name_size == 1) {
         he->h_name = NULL;
+        he->h_aliases = (char**)((char*)he + sizeof(struct hostent));
+    }
     else {
         he->h_name = (char*)he + sizeof(struct hostent);
         memcpy(he->h_name, buf, name_size);
+        he->h_aliases = (char **)(he->h_name + name_size);
     }
+
+    he->h_addrtype = addrtype;
+    he->h_length = addrlen;
+    he->h_addr_list = he->h_aliases + nb_aliases + 1;
 
     if(nb_aliases>0) {
         char *alias = (char *)(he->h_addr_list + nb_addresses + 1);
