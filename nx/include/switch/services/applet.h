@@ -27,6 +27,7 @@ typedef enum {
     AppletHookType_OnFocusState = 0,  ///< FocusState changed.
     AppletHookType_OnOperationMode,   ///< OperationMode changed.
     AppletHookType_OnPerformanceMode, ///< PerformanceMode changed.
+    AppletHookType_OnExitRequest,     ///< Exit requested.
 
     AppletHookType_Max,               ///< Number of applet hook types.
 } AppletHookType;
@@ -62,6 +63,12 @@ Result appletGetDesiredLanguage(u64 *LanguageCode);
 Result appletBeginBlockingHomeButton(s64 val);
 
 Result appletEndBlockingHomeButton(void);
+
+/**
+ * @brief Delay exiting until appletUnlockExit is called
+ */
+Result appletLockExit(void);
+Result appletUnlockExit(void);
 
 /**
  * @brief Controls whether screenshot-capture is allowed.

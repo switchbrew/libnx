@@ -71,8 +71,6 @@ static Result _appletSetOperationModeChangedNotification(u8 flag);
 static Result _appletSetPerformanceModeChangedNotification(u8 flag);
 
 static Result _appletSelfExit(void);
-//static Result _appletLockExit(void);
-//static Result _appletUnlockExit(void);
 //static Result _appletSetTerminateResult(Result res);
 
 static Result _appletExitProcessAndReturn(void);
@@ -895,13 +893,13 @@ static Result _appletSelfExit(void) {
     return _appletCmdNoIO(&g_appletISelfController, 0);
 }
 
-/*static Result _appletLockExit(void) {
+Result appletLockExit(void) {
     return _appletCmdNoIO(&g_appletISelfController, 1);
 }
 
-static Result _appletUnlockExit(void) {
+Result appletUnlockExit(void) {
     return _appletCmdNoIO(&g_appletISelfController, 2);
-}*/
+}
 
 Result appletSetScreenShotPermission(s32 val) {
     IpcCommand c;
@@ -1211,6 +1209,11 @@ bool appletMainLoop(void) {
     }
 
     switch(msg) {
+        case 0x4:
+            appletCallHook(AppletHookType_OnExitRequest);
+            return false;
+        break;
+
         case 0xF:
             rc = _appletGetCurrentFocusState(&g_appletFocusState);
             if (R_FAILED(rc))
