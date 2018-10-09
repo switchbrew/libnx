@@ -1211,6 +1211,7 @@ bool appletMainLoop(void) {
     switch(msg) {
         case 0x4:
             appletCallHook(AppletHookType_OnExitRequest);
+            return false;
         break;
 
         case 0xF:
