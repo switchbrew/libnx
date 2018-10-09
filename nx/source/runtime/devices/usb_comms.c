@@ -123,7 +123,7 @@ Result usbCommsInitializeEx(u32 num_interfaces, const UsbCommsInterfaceInfo *inf
                     rwlockWriteLock(&intf->lock);
                     rwlockWriteLock(&intf->lock_in);
                     rwlockWriteLock(&intf->lock_out);
-                    rc = _usbCommsInterfaceInit(i, infos + i);
+                    rc = _usbCommsInterfaceInit(i, infos == NULL ? NULL : infos + i);
                     rwlockWriteUnlock(&intf->lock_out);
                     rwlockWriteUnlock(&intf->lock_in);
                     rwlockWriteUnlock(&intf->lock);
@@ -149,9 +149,9 @@ Result usbCommsInitializeEx(u32 num_interfaces, const UsbCommsInterfaceInfo *inf
     return rc;
 }
 
-Result usbCommsInitialize(const UsbCommsInterfaceInfo *info)
+Result usbCommsInitialize(void)
 {
-    return usbCommsInitializeEx(1, info);
+    return usbCommsInitializeEx(1, NULL);
 }
 
 static void _usbCommsInterfaceFree(usbCommsInterface *interface)
