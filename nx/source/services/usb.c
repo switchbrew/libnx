@@ -542,7 +542,6 @@ Result usbDsGetDsInterface(UsbDsInterface** interface, struct usb_interface_desc
     UsbDsInterface* ptr = _usbDsTryAllocateInterface(send_desc.bInterfaceNumber);
     if(ptr == NULL) {
         serviceClose(&srv);
-        _usbDsFreeInterface(ptr);
         return MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
     }
     
@@ -615,7 +614,6 @@ Result usbDsRegisterInterface(UsbDsInterface** interface)
     UsbDsInterface* ptr = _usbDsTryAllocateInterface(intf_num);
     if(ptr == NULL) {
         serviceClose(&srv);
-        _usbDsFreeInterface(ptr);
         return MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
     }
     
@@ -697,7 +695,6 @@ Result usbDsRegisterInterfaceEx(UsbDsInterface** interface, u32 intf_num)
 
     return rc;
 }
-
 
 Result usbDsClearDeviceData(void) {
     return _usbDsCmdNoParams(&g_usbDsSrv, 5);
