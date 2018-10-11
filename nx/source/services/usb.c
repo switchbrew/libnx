@@ -6,26 +6,26 @@
 #include "kernel/detect.h"
 #include "services/usb.h"
 #include "services/sm.h"
+#include "runtime/util/utf.h"
 
 #define TOTAL_INTERFACES 4
-#define TOTAL_ENDPOINTS 15*2
+#define TOTAL_ENDPOINTS_IN 16
+#define TOTAL_ENDPOINTS_OUT 16
+#define TOTAL_ENDPOINTS (TOTAL_ENDPOINTS_IN+TOTAL_ENDPOINTS_OUT)
 
 static Service g_usbDsSrv;
-static Handle g_usbDsStateChangeEvent = INVALID_HANDLE;
+static Event g_usbDsStateChangeEvent = {0};
 
 static UsbDsInterface g_usbDsInterfaceTable[TOTAL_INTERFACES];
-static UsbDsEndpoint g_usbDsEndpointTable[TOTAL_INTERFACES*TOTAL_ENDPOINTS];
+static UsbDsEndpoint g_usbDsEndpointTable[TOTAL_INTERFACES][TOTAL_ENDPOINTS];
 
 static void _usbDsFreeTables(void);
 
 static Result _usbDsBindDevice(UsbComplexId complexId);
 static Result _usbDsBindClientProcess(Handle prochandle);
-static Result _usbDsGetEvent(Service* srv, Handle* handle_out, u64 cmd_id);
-static Result _usbDsSetVidPidBcd(const UsbDsDeviceInfo* deviceinfo);
+static Result _usbDsGetEvent(Service* srv, Event* event_out, u64 cmd_id);
 
-static Result _usbDsGetSession(Service* srv, Service* srv_out, u64 cmd_id, const void* buf0, size_t buf0size, const void* buf1, size_t buf1size);
-
-Result usbDsInitialize(UsbComplexId complexId, const UsbDsDeviceInfo* deviceinfo)
+Result usbDsInitialize(void)
 {
     if (serviceIsActive(&g_usbDsSrv))
         return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
@@ -35,7 +35,7 @@ Result usbDsInitialize(UsbComplexId complexId, const UsbDsDeviceInfo* deviceinfo
     rc = smGetService(&g_usbDsSrv, "usb:ds");
 
     if (R_SUCCEEDED(rc))
-        rc = _usbDsBindDevice(complexId);
+        rc = _usbDsBindDevice(UsbComplexId_Default);
     if (R_SUCCEEDED(rc))
         rc = _usbDsBindClientProcess(CUR_PROCESS_HANDLE);
 
@@ -43,16 +43,13 @@ Result usbDsInitialize(UsbComplexId complexId, const UsbDsDeviceInfo* deviceinfo
     if (R_SUCCEEDED(rc))
         rc = _usbDsGetEvent(&g_usbDsSrv, &g_usbDsStateChangeEvent, 3);
 
-    if (R_SUCCEEDED(rc) && deviceinfo && kernelAbove200()) {
-        rc = _usbDsSetVidPidBcd(deviceinfo);
-    }
+    // Result code doesn't matter here, users can call themselves later, too. This prevents foot shooting.
+    if (R_SUCCEEDED(rc) && kernelAbove500())
+        usbDsClearDeviceData();
 
     if (R_FAILED(rc))
     {
-        if(g_usbDsStateChangeEvent) {
-            svcCloseHandle(g_usbDsStateChangeEvent);
-            g_usbDsStateChangeEvent = INVALID_HANDLE;
-        }
+        eventClose(&g_usbDsStateChangeEvent);
 
         serviceClose(&g_usbDsSrv);
     }
@@ -64,42 +61,31 @@ void usbDsExit(void)
 {
     if (!serviceIsActive(&g_usbDsSrv))
         return;
+    
+    if (kernelAbove500()) {
+        usbDsDisable();
+    }
 
     _usbDsFreeTables();
 
-    if (g_usbDsStateChangeEvent) {
-        svcCloseHandle(g_usbDsStateChangeEvent);
-        g_usbDsStateChangeEvent = 0;
-    }
+    eventClose(&g_usbDsStateChangeEvent);
 
     serviceClose(&g_usbDsSrv);
 }
 
-Service* usbDsGetServiceSession(void) {
-    return &g_usbDsSrv;
+Event* usbDsGetStateChangeEvent(void)
+{
+    return &g_usbDsStateChangeEvent;
 }
 
-Handle usbDsGetStateChangeEvent(void)
-{
-    return g_usbDsStateChangeEvent;
-}
-
-static UsbDsInterface* _usbDsAllocateInterface(void)
-{
-    u32 pos;
-    UsbDsInterface* ptr = NULL;
-
-    for(pos=0; pos<TOTAL_INTERFACES; pos++)
-    {
-        ptr = &g_usbDsInterfaceTable[pos];
-        if(ptr->initialized)continue;
-        memset(ptr, 0, sizeof(UsbDsInterface));
-        ptr->initialized = true;
-        ptr->interface_index = pos;
-        return ptr;
-    }
-
-    return NULL;
+static UsbDsInterface* _usbDsTryAllocateInterface(u32 num) {
+    if (num >= TOTAL_INTERFACES) return NULL;
+    UsbDsInterface* ptr = &g_usbDsInterfaceTable[num];
+    if (ptr->initialized) return NULL;
+    memset(ptr, 0, sizeof(UsbDsInterface));
+    ptr->initialized = true;
+    ptr->interface_index = num;
+    return ptr;
 }
 
 static UsbDsEndpoint* _usbDsAllocateEndpoint(UsbDsInterface* interface)
@@ -111,7 +97,7 @@ static UsbDsEndpoint* _usbDsAllocateEndpoint(UsbDsInterface* interface)
 
     for(pos=0; pos<TOTAL_ENDPOINTS; pos++)
     {
-        ptr = &g_usbDsEndpointTable[(interface->interface_index*TOTAL_ENDPOINTS) + pos];
+        ptr = &g_usbDsEndpointTable[interface->interface_index][pos];
         if(ptr->initialized)continue;
         memset(ptr, 0, sizeof(UsbDsEndpoint));
         ptr->initialized = true;
@@ -121,53 +107,47 @@ static UsbDsEndpoint* _usbDsAllocateEndpoint(UsbDsInterface* interface)
     return NULL;
 }
 
-static void _usbDsFreeInterface(UsbDsInterface* interface)
-{
-    if (!interface->initialized)
-        return;
-
-    if (interface->CtrlOutCompletionEvent) {
-        svcCloseHandle(interface->CtrlOutCompletionEvent);
-        interface->CtrlOutCompletionEvent = 0;
-    }
-
-    if (interface->CtrlInCompletionEvent) {
-        svcCloseHandle(interface->CtrlInCompletionEvent);
-        interface->CtrlInCompletionEvent = 0;
-    }
-
-    if (interface->SetupEvent) {
-        svcCloseHandle(interface->SetupEvent);
-        interface->SetupEvent = 0;
-    }
-
-    serviceClose(&interface->h);
-
-    interface->initialized = false;
-}
-
 static void _usbDsFreeEndpoint(UsbDsEndpoint* endpoint)
 {
     if (!endpoint->initialized)
         return;
+    
+    /* Cancel any ongoing transactions. */
+    usbDsEndpoint_Cancel(endpoint);
 
-    if (endpoint->CompletionEvent) {
-        svcCloseHandle(endpoint->CompletionEvent);
-        endpoint->CompletionEvent = 0;
-    }
+    eventClose(&endpoint->CompletionEvent);
 
     serviceClose(&endpoint->h);
 
     endpoint->initialized = false;
 }
 
+static void _usbDsFreeInterface(UsbDsInterface* interface)
+{
+    if (!interface->initialized)
+        return;
+    
+    /* Disable interface. */
+    usbDsInterface_DisableInterface(interface);
+    
+    /* Close endpoints. */
+    for (u32 ep = 0; ep < TOTAL_ENDPOINTS; ep++) {
+        _usbDsFreeEndpoint(&g_usbDsEndpointTable[interface->interface_index][ep]);
+    }
+
+    eventClose(&interface->CtrlOutCompletionEvent);
+    eventClose(&interface->CtrlInCompletionEvent);
+    eventClose(&interface->SetupEvent);
+
+    serviceClose(&interface->h);
+
+    interface->initialized = false;
+}
+
 static void _usbDsFreeTables(void)
 {
-    u32 pos, pos2;
-    for(pos=0; pos<TOTAL_INTERFACES; pos++)
-    {
-        for(pos2=0; pos2<TOTAL_ENDPOINTS; pos2++)_usbDsFreeEndpoint(&g_usbDsEndpointTable[(pos*TOTAL_ENDPOINTS) + pos2]);
-        _usbDsFreeInterface(&g_usbDsInterfaceTable[pos]);
+    for (u32 intf = 0; intf < TOTAL_INTERFACES; intf++) {
+        _usbDsFreeInterface(&g_usbDsInterfaceTable[intf]);
     }
 }
 
@@ -237,7 +217,7 @@ static Result _usbDsBindClientProcess(Handle prochandle) {
     return rc;
 }
 
-static Result _usbDsGetEvent(Service* srv, Handle* handle_out, u64 cmd_id) {
+static Result _usbDsGetEvent(Service* srv, Event* event_out, u64 cmd_id) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -265,7 +245,7 @@ static Result _usbDsGetEvent(Service* srv, Handle* handle_out, u64 cmd_id) {
         rc = resp->result;
 
         if (R_SUCCEEDED(rc)) {
-            *handle_out = r.Handles[0];
+            eventLoadRemote(event_out, r.Handles[0], false);
         }
     }
 
@@ -305,7 +285,7 @@ Result usbDsGetState(u32 *out) {
     return rc;
 }
 
-Result usbDsWaitReady(void) {
+Result usbDsWaitReady(u64 timeout) {
     Result rc;
     u32 state = 0;
 
@@ -314,8 +294,8 @@ Result usbDsWaitReady(void) {
 
     while (R_SUCCEEDED(rc) && state != 5)
     {
-        svcWaitSynchronizationSingle(g_usbDsStateChangeEvent, U64_MAX);
-        svcClearEvent(g_usbDsStateChangeEvent);
+        eventWait(&g_usbDsStateChangeEvent, timeout);
+        eventClear(&g_usbDsStateChangeEvent);
         rc = usbDsGetState(&state);
     }
 
@@ -362,7 +342,7 @@ Result usbDsParseReportData(UsbDsReportData *reportdata, u32 urbId, u32 *request
     return rc;
 }
 
-static Result _usbDsSetVidPidBcd(const UsbDsDeviceInfo* deviceinfo) {
+Result usbDsSetVidPidBcd(const UsbDsDeviceInfo* deviceinfo) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -542,13 +522,30 @@ static Result _usbDsGetReport(Service* srv, u64 cmd_id, UsbDsReportData *out) {
     return rc;
 }
 
-Result usbDsGetDsInterface(UsbDsInterface** interface, struct usb_interface_descriptor* descriptor, const char *interface_name)
-{
-    UsbDsInterface* ptr = _usbDsAllocateInterface();
-    if(ptr == NULL)
+Result usbDsGetDsInterface(UsbDsInterface** interface, struct usb_interface_descriptor* _descriptor, const char *interface_name)
+{    
+    struct usb_interface_descriptor send_desc = *_descriptor;
+    Service srv;
+    Result rc;
+    for (unsigned int i = 0; i < TOTAL_INTERFACES; i++) {
+        send_desc.bInterfaceNumber = i;
+        rc = _usbDsGetSession(&g_usbDsSrv, &srv, 2, &send_desc, USB_DT_INTERFACE_SIZE, interface_name, strlen(interface_name)+1);
+        if (R_SUCCEEDED(rc)) {
+            break;
+        }
+    }
+    
+    if (R_FAILED(rc)) {
+        return rc;
+    }
+    
+    UsbDsInterface* ptr = _usbDsTryAllocateInterface(send_desc.bInterfaceNumber);
+    if(ptr == NULL) {
+        serviceClose(&srv);
         return MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
-
-    Result rc = _usbDsGetSession(&g_usbDsSrv, &ptr->h, 2, descriptor, sizeof(struct usb_interface_descriptor), interface_name, strlen(interface_name)+1);
+    }
+    
+    ptr->h = srv;
 
     // GetSetupEvent
     if (R_SUCCEEDED(rc))
@@ -569,11 +566,360 @@ Result usbDsGetDsInterface(UsbDsInterface** interface, struct usb_interface_desc
     return rc;
 }
 
+Result usbDsRegisterInterface(UsbDsInterface** interface)
+{
+    Service srv;
+    Result rc;
+    u32 intf_num;
+    for (intf_num = 0; intf_num < TOTAL_INTERFACES; intf_num++) {
+        IpcCommand c;
+        ipcInitialize(&c);
+
+        struct {
+            u64 magic;
+            u64 cmd_id;
+            u32 intf_num;
+        } *raw;
+
+        raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+        raw->magic = SFCI_MAGIC;
+        raw->cmd_id = 2;
+        raw->intf_num = intf_num;
+
+        rc = serviceIpcDispatch(&g_usbDsSrv);
+
+        if (R_SUCCEEDED(rc)) {
+            IpcParsedCommand r;
+            ipcParse(&r);
+
+            struct {
+                u64 magic;
+                u64 result;
+            } *resp = r.Raw;
+
+            rc = resp->result;
+
+            if (R_SUCCEEDED(rc)) {
+                serviceCreate(&srv, r.Handles[0]);
+                break;
+            }
+        }
+    }
+    
+    if (R_FAILED(rc)) {
+        return rc;
+    }
+    
+    UsbDsInterface* ptr = _usbDsTryAllocateInterface(intf_num);
+    if(ptr == NULL) {
+        serviceClose(&srv);
+        return MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
+    }
+    
+    ptr->h = srv;
+
+    // GetSetupEvent
+    if (R_SUCCEEDED(rc))
+        rc = _usbDsGetEvent(&ptr->h, &ptr->SetupEvent, 1);
+    // GetCtrlInCompletionEvent
+    if (R_SUCCEEDED(rc))
+        rc = _usbDsGetEvent(&ptr->h, &ptr->CtrlInCompletionEvent, 7);
+    // GetCtrlOutCompletionEvent
+    if (R_SUCCEEDED(rc))
+        rc = _usbDsGetEvent(&ptr->h, &ptr->CtrlOutCompletionEvent, 9);
+
+    if (R_FAILED(rc))
+        _usbDsFreeInterface(ptr);
+
+    if (R_SUCCEEDED(rc))
+        *interface = ptr;
+
+    return rc;
+}
+
+Result usbDsRegisterInterfaceEx(UsbDsInterface** interface, u32 intf_num)
+{
+    UsbDsInterface* ptr = _usbDsTryAllocateInterface(intf_num);
+    if(ptr == NULL)
+        return MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 intf_num;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 2;
+    raw->intf_num = intf_num;
+
+    Result rc = serviceIpcDispatch(&g_usbDsSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            serviceCreate(&ptr->h, r.Handles[0]);
+        }
+    }
+
+    // GetSetupEvent
+    if (R_SUCCEEDED(rc))
+        rc = _usbDsGetEvent(&ptr->h, &ptr->SetupEvent, 1);
+    // GetCtrlInCompletionEvent
+    if (R_SUCCEEDED(rc))
+        rc = _usbDsGetEvent(&ptr->h, &ptr->CtrlInCompletionEvent, 7);
+    // GetCtrlOutCompletionEvent
+    if (R_SUCCEEDED(rc))
+        rc = _usbDsGetEvent(&ptr->h, &ptr->CtrlOutCompletionEvent, 9);
+
+    if (R_FAILED(rc))
+        _usbDsFreeInterface(ptr);
+
+    if (R_SUCCEEDED(rc))
+        *interface = ptr;
+
+    return rc;
+}
+
+Result usbDsClearDeviceData(void) {
+    return _usbDsCmdNoParams(&g_usbDsSrv, 5);
+}
+
+static Result _usbDsAddUsbStringDescriptorRaw(u8 *out_index, struct usb_string_descriptor *descriptor) {
+    IpcCommand c;
+    ipcInitialize(&c);
+    
+    ipcAddSendBuffer(&c, descriptor, sizeof(*descriptor), 0);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 6;
+
+    Result rc = serviceIpcDispatch(&g_usbDsSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u8 index;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+        if (R_SUCCEEDED(rc) && out_index) {
+            *out_index = resp->index;
+        }
+    }
+    
+    return rc;
+}
+
+Result usbDsAddUsbStringDescriptor(u8* out_index, const char* string) {
+    struct usb_string_descriptor descriptor = {
+        .bDescriptorType = USB_DT_STRING,
+        .wData = {0},
+    };
+    
+    // Convert
+    u32 len = (u32)utf8_to_utf16(descriptor.wData, (const uint8_t *)string, sizeof(descriptor.wData)/sizeof(u16) - 1);
+    if (len > sizeof(descriptor.wData)/sizeof(u16)) len = sizeof(descriptor.wData)/sizeof(u16);
+    
+    // Set length
+    descriptor.bLength = 2 + 2 * len;
+    
+    return _usbDsAddUsbStringDescriptorRaw(out_index, &descriptor);
+}
+
+Result usbDsAddUsbLanguageStringDescriptor(u8* out_index, const u16* lang_ids, u16 num_langs) {
+    if (num_langs > 0x40) num_langs = 0x40;
+    
+    struct usb_string_descriptor descriptor = {
+        .bLength = 2 + 2 * num_langs,
+        .bDescriptorType = USB_DT_STRING,
+        .wData = {0},
+    };
+    
+    for (u32 i = 0; i < num_langs; i++) {
+        descriptor.wData[i] = lang_ids[i];
+    }
+    
+    return _usbDsAddUsbStringDescriptorRaw(out_index, &descriptor);
+}
+
+Result usbDsDeleteUsbStringDescriptor(u8 index) {
+    IpcCommand c;
+    ipcInitialize(&c);
+    
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 index;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 7;
+    raw->index = index;
+
+    Result rc = serviceIpcDispatch(&g_usbDsSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+    
+    return rc;
+}
+
+
+Result usbDsSetUsbDeviceDescriptor(UsbDeviceSpeed speed, struct usb_device_descriptor* descriptor) {
+    IpcCommand c;
+    ipcInitialize(&c);
+    
+    ipcAddSendBuffer(&c, descriptor, USB_DT_DEVICE_SIZE, 0);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 speed;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 8;
+    raw->speed = speed;
+
+    Result rc = serviceIpcDispatch(&g_usbDsSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+    
+    return rc;
+}
+
+Result usbDsSetBinaryObjectStore(void* bos, size_t bos_size) {
+    IpcCommand c;
+    ipcInitialize(&c);
+    
+    ipcAddSendBuffer(&c, bos, bos_size, 0);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 9;
+
+    Result rc = serviceIpcDispatch(&g_usbDsSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+    
+    return rc;
+}
+
+Result usbDsEnable(void) {
+    return _usbDsCmdNoParams(&g_usbDsSrv, 10);
+}
+
+Result usbDsDisable(void) {
+    return _usbDsCmdNoParams(&g_usbDsSrv, 11);
+}
+
+
 //IDsInterface
 
 void usbDsInterface_Close(UsbDsInterface* interface)
 {
     _usbDsFreeInterface(interface);
+}
+
+Result usbDsInterface_GetSetupPacket(UsbDsInterface* interface, void* buffer, size_t size) {
+    if(!interface->initialized)return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    
+    IpcCommand c;
+    ipcInitialize(&c);
+    
+    ipcAddRecvBuffer(&c, buffer, size, 0);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 2;
+
+    Result rc = serviceIpcDispatch(&interface->h);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+    
+    return rc;
 }
 
 Result usbDsInterface_GetDsEndpoint(UsbDsInterface* interface, UsbDsEndpoint** endpoint, struct usb_endpoint_descriptor* descriptor)
@@ -583,7 +929,7 @@ Result usbDsInterface_GetDsEndpoint(UsbDsInterface* interface, UsbDsEndpoint** e
     UsbDsEndpoint* ptr = _usbDsAllocateEndpoint(interface);
     if(ptr==NULL)return MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
 
-    Result rc = _usbDsGetSession(&interface->h, &ptr->h, 0, descriptor, sizeof(struct usb_endpoint_descriptor), NULL, 0);
+    Result rc = _usbDsGetSession(&interface->h, &ptr->h, 0, descriptor, USB_DT_ENDPOINT_SIZE, NULL, 0);
 
     if (R_SUCCEEDED(rc)) rc = _usbDsGetEvent(&ptr->h, &ptr->CompletionEvent, 2);//GetCompletionEvent
 
@@ -642,6 +988,93 @@ Result usbDsInterface_StallCtrl(UsbDsInterface* interface)
     return _usbDsCmdNoParams(&interface->h, 11);
 }
 
+Result usbDsInterface_RegisterEndpoint(UsbDsInterface* interface, UsbDsEndpoint** endpoint, u8 endpoint_address)
+{
+    if(!interface->initialized)return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    UsbDsEndpoint* ptr = _usbDsAllocateEndpoint(interface);
+    if(ptr==NULL)return MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 ep_addr;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 0;
+    raw->ep_addr = endpoint_address;
+
+    Result rc = serviceIpcDispatch(&interface->h);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            serviceCreate(&ptr->h, r.Handles[0]);
+        }
+    }
+    
+    if (R_SUCCEEDED(rc)) rc = _usbDsGetEvent(&ptr->h, &ptr->CompletionEvent, 2);//GetCompletionEvent
+
+    if (R_FAILED(rc)) _usbDsFreeEndpoint(ptr);
+
+    if (R_SUCCEEDED(rc)) *endpoint = ptr;
+    return rc;
+}
+
+Result usbDsInterface_AppendConfigurationData(UsbDsInterface* interface, UsbDeviceSpeed speed, void* buffer, size_t size) {
+    if(!interface->initialized)return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    
+    IpcCommand c;
+    ipcInitialize(&c);
+    
+    ipcAddSendBuffer(&c, buffer, size, 0);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 intf_num;
+        u32 speed;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 12;
+    raw->intf_num = interface->interface_index;
+    raw->speed = speed;
+
+    Result rc = serviceIpcDispatch(&interface->h);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+    
+    return rc;
+}
+
 //IDsEndpoint
 
 void usbDsEndpoint_Close(UsbDsEndpoint* endpoint)
@@ -656,6 +1089,13 @@ Result usbDsEndpoint_PostBufferAsync(UsbDsEndpoint* endpoint, void* buffer, size
     return _usbDsPostBuffer(&endpoint->h, 0, buffer, size, urbId);
 }
 
+Result usbDsEndpoint_Cancel(UsbDsEndpoint* endpoint)
+{
+    if(!endpoint->initialized)return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _usbDsCmdNoParams(&endpoint->h, 1);
+}
+
 Result usbDsEndpoint_GetReportData(UsbDsEndpoint* endpoint, UsbDsReportData *out)
 {
     if(!endpoint->initialized)return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
@@ -668,5 +1108,41 @@ Result usbDsEndpoint_StallCtrl(UsbDsEndpoint* endpoint)
     if(!endpoint->initialized)return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     return _usbDsCmdNoParams(&endpoint->h, 4);
+}
+
+Result usbDsEndpoint_SetZlt(UsbDsEndpoint* endpoint, bool zlt)
+{
+    if(!endpoint->initialized)return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    
+    IpcCommand c;
+    ipcInitialize(&c);
+    
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 zlt;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 5;
+    raw->zlt = zlt ? 1 : 0;
+
+    Result rc = serviceIpcDispatch(&endpoint->h);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+    
+    return rc;
 }
 
