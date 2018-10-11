@@ -17,6 +17,9 @@ void NORETURN fatalSimple(Result err) {
 void fatalWithType(Result err, FatalType type) {
     Result rc = 0;
 
+    //Only 3.0.0+ supports FatalType_ErrorScreen, when specified on pre-3.0.0 use FatalType_ErrorReportAndErrorScreen instead.
+    if (type == FatalType_ErrorScreen && !kernelAbove300()) type = FatalType_ErrorReportAndErrorScreen;
+
     if (detectDebugger()) {
         svcBreak(0x80000000, err, 0);
     }
