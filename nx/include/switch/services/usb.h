@@ -214,7 +214,8 @@ Result usbDsGetDsInterface(UsbDsInterface** out, struct usb_interface_descriptor
 Result usbDsSetVidPidBcd(const UsbDsDeviceInfo* deviceinfo);
 
 /// Added in 5.0.0
-Result usbDsRegisterInterface(UsbDsInterface** out, u32 intf_num);
+Result usbDsRegisterInterface(UsbDsInterface** out);
+Result usbDsRegisterInterfaceEx(UsbDsInterface** out, u32 intf_num);
 Result usbDsClearDeviceData(void);
 Result usbDsAddUsbStringDescriptor(u8* out_index, const char* string);
 Result usbDsAddUsbLanguageStringDescriptor(u8* out_index, const u16* lang_ids, u16 num_langs);
