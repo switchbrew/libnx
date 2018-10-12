@@ -172,7 +172,7 @@ Result svcSetMemoryPermission(void* addr, u64 size, u32 perm);
  * @param[in] val0 State0
  * @param[in] val1 State1
  * @return Result code.
- * @remark See <a href="http://switchbrew.org/index.php?title=SVC#svcSetMemoryAttribute">switchbrew.org Wiki</a> for more details.
+ * @remark See <a href="https://switchbrew.org/wiki/SVC#svcSetMemoryAttribute">switchbrew.org Wiki</a> for more details.
  * @note Syscall number 0x02.
  */
 Result svcSetMemoryAttribute(void* addr, u64 size, u32 val0, u32 val1);
@@ -517,7 +517,7 @@ Result svcOutputDebugString(const char *str, u64 size);
  * @param[in] handle Handle of the object to retrieve information from, or \ref INVALID_HANDLE to retrieve information about the system.
  * @param[in] id1 Second ID of the property to retrieve.
  * @return Result code.
- * @remark The full list of property IDs can be found on the <a href="http://switchbrew.org/index.php?title=SVC#svcGetInfo">switchbrew.org wiki</a>.
+ * @remark The full list of property IDs can be found on the <a href="https://switchbrew.org/wiki/SVC#svcGetInfo">switchbrew.org wiki</a>.
  * @note Syscall number 0x29.
  */
 Result svcGetInfo(u64* out, u64 id0, Handle handle, u64 id1);
@@ -956,7 +956,7 @@ Result svcGetDebugThreadParam(u64* out_64, u32* out_32, Handle debug, u64 thread
  * @param[in] handle Handle of the object to retrieve information from, or \ref INVALID_HANDLE to retrieve information about the system.
  * @param[in] id1 Second ID of the property to retrieve.
  * @return Result code.
- * @remark The full list of property IDs can be found on the <a href="http://switchbrew.org/index.php?title=SVC#svcGetSystemInfo">switchbrew.org wiki</a>.
+ * @remark The full list of property IDs can be found on the <a href="https://switchbrew.org/wiki/SVC#svcGetSystemInfo">switchbrew.org wiki</a>.
  * @note Syscall number 0x6F.
  * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
  */

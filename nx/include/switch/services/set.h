@@ -75,7 +75,7 @@ Result setMakeLanguageCode(s32 Language, u64 *LanguageCode);
 
 /// Gets the current system LanguageCode.
 /// Normally this should be used instead of \ref setGetLanguageCode.
-/// LanguageCode is a string, see here: http://switchbrew.org/index.php?title=Settings_services#LanguageCode
+/// LanguageCode is a string, see here: https://switchbrew.org/wiki/Settings_services#LanguageCode
 Result setGetSystemLanguage(u64 *LanguageCode);
 
 /// Gets the current LanguageCode, \ref setGetSystemLanguage should be used instead normally.

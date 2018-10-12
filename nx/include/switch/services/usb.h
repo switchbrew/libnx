@@ -9,7 +9,7 @@
 #include "../services/sm.h"
 #include "../kernel/event.h"
 
-/// usb:ds Switch-as-device<>host USB comms, see also here: http://switchbrew.org/index.php?title=USB_services
+/// usb:ds Switch-as-device<>host USB comms, see also here: https://switchbrew.org/wiki/USB_services
 
 /// Names starting with "libusb" were changed to "usb" to avoid collision with actual libusb if it's ever used.
 
