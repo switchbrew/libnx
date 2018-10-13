@@ -36,6 +36,9 @@ int fsdevUnmountDevice(const char *name);
 /// This is not used automatically at device unmount.
 Result fsdevCommitDevice(const char *name);
 
+/// Returns the FsFileSystem for the specified device. Returns NULL when the specified device isn't found.
+FsFileSystem* fsdevGetDeviceFileSystem(const char *name);
+
 /// Returns the FsFileSystem for the default device (SD card), if mounted. Used internally by romfs_dev.
 FsFileSystem* fsdevGetDefaultFileSystem(void);
 

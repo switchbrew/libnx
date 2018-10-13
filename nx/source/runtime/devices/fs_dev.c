@@ -456,6 +456,17 @@ Result fsdevUnmountAll(void)
   return 0;
 }
 
+FsFileSystem* fsdevGetDeviceFileSystem(const char *name)
+{
+  fsdev_fsdevice *device;
+
+  device = fsdevFindDevice(name);
+  if(device==NULL)
+    return NULL;
+
+  return &device->fs;
+}
+
 FsFileSystem* fsdevGetDefaultFileSystem(void)
 {
   if(!fsdev_initialised) return NULL;
