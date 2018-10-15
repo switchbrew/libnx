@@ -644,6 +644,8 @@ Result hidSetSupportedNpadIdType(HidControllerID *buf, size_t count);
 /// Sets which controller types are supported. This is automatically called with all types in \ref hidInitialize.
 Result hidSetSupportedNpadStyleSet(HidControllerType type);
 
+Result hidSetNpadJoyHoldType(u64 type);
+
 /// Use this if you want to use a single joy-con as a dedicated CONTROLLER_PLAYER_*.
 /// When used, both joy-cons in a pair should be used with this (CONTROLLER_PLAYER_1 and CONTROLLER_PLAYER_2 for example).
 /// id must be CONTROLLER_PLAYER_*.

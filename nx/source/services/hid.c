@@ -37,6 +37,9 @@ static RwLock g_hidLock;
 static Result _hidCreateAppletResource(Service* srv, Service* srv_out, u64 AppletResourceUserId);
 static Result _hidGetSharedMemoryHandle(Service* srv, Handle* handle_out);
 
+static Result _hidActivateNpad(void);
+static Result _hidDeactivateNpad(void);
+
 static Result _hidSetDualModeAll(void);
 
 Result hidInitialize(void)
@@ -86,6 +89,9 @@ Result hidInitialize(void)
     }
 
     if (R_SUCCEEDED(rc))
+        rc = _hidActivateNpad();
+
+    if (R_SUCCEEDED(rc))
         rc = hidSetSupportedNpadStyleSet(TYPE_PROCONTROLLER | TYPE_HANDHELD | TYPE_JOYCON_PAIR | TYPE_JOYCON_LEFT | TYPE_JOYCON_RIGHT);
 
     if (R_SUCCEEDED(rc))
@@ -106,6 +112,8 @@ void hidExit(void)
     if (atomicDecrement64(&g_refCnt) == 0)
     {
         _hidSetDualModeAll();
+
+        _hidDeactivateNpad();
 
         serviceClose(&g_hidIAppletResource);
         serviceClose(&g_hidSrv);
@@ -677,8 +685,106 @@ static Result _hidCmdWithInputU32(u64 cmd_id, u32 inputval) {
     return rc;
 }
 
+static Result _hidCmdWithInputU64(u64 cmd_id, u64 inputval) {
+    Result rc;
+    u64 AppletResourceUserId;
+
+    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
+    if (R_FAILED(rc))
+        AppletResourceUserId = 0;
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 AppletResourceUserId;
+        u64 val;
+    } *raw;
+
+    ipcSendPid(&c);
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = cmd_id;
+    raw->val = inputval;
+    raw->AppletResourceUserId = AppletResourceUserId;
+
+    rc = serviceIpcDispatch(&g_hidSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+static Result _hidCmdWithNoInput(u64 cmd_id) {
+    Result rc;
+    u64 AppletResourceUserId;
+
+    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
+    if (R_FAILED(rc))
+        AppletResourceUserId = 0;
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 AppletResourceUserId;
+    } *raw;
+
+    ipcSendPid(&c);
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = cmd_id;
+    raw->AppletResourceUserId = AppletResourceUserId;
+
+    rc = serviceIpcDispatch(&g_hidSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
 Result hidSetSupportedNpadStyleSet(HidControllerType type) {
     return _hidCmdWithInputU32(100, type);
+}
+
+static Result _hidActivateNpad(void) {
+    return _hidCmdWithNoInput(103);
+}
+
+static Result _hidDeactivateNpad(void) {
+    return _hidCmdWithNoInput(104);
+}
+
+Result hidSetNpadJoyHoldType(u64 type) {
+    return _hidCmdWithInputU64(120, type);
 }
 
 Result hidSetNpadJoyAssignmentModeSingleByDefault(HidControllerID id) {
