@@ -41,6 +41,17 @@ static Result _hidSetDualModeAll(void);
 
 Result hidInitialize(void)
 {
+    HidControllerID idbuf[9] = {
+        CONTROLLER_PLAYER_1,
+        CONTROLLER_PLAYER_2,
+        CONTROLLER_PLAYER_3,
+        CONTROLLER_PLAYER_4,
+        CONTROLLER_PLAYER_5,
+        CONTROLLER_PLAYER_6,
+        CONTROLLER_PLAYER_7,
+        CONTROLLER_PLAYER_8,
+        CONTROLLER_HANDHELD};
+
     atomicIncrement64(&g_refCnt);
 
     if (serviceIsActive(&g_hidSrv))
@@ -76,6 +87,9 @@ Result hidInitialize(void)
 
     if (R_SUCCEEDED(rc))
         rc = hidSetSupportedNpadStyleSet(TYPE_PROCONTROLLER | TYPE_HANDHELD | TYPE_JOYCON_PAIR | TYPE_JOYCON_LEFT | TYPE_JOYCON_RIGHT);
+
+    if (R_SUCCEEDED(rc))
+        rc = hidSetSupportedNpadIdType(idbuf, 9);
 
     if (R_SUCCEEDED(rc))
         rc = _hidSetDualModeAll();
@@ -551,6 +565,69 @@ static Result _hidGetSharedMemoryHandle(Service* srv, Handle* handle_out) {
         if (R_SUCCEEDED(rc)) {
             *handle_out = r.Handles[0];
         }
+    }
+
+    return rc;
+}
+
+Result hidSetSupportedNpadIdType(HidControllerID *buf, size_t count) {
+    Result rc;
+    u64 AppletResourceUserId;
+    size_t i;
+    u32 tmpval=0;
+    u32 tmpbuf[10];
+
+    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
+    if (R_FAILED(rc))
+        AppletResourceUserId = 0;
+
+    if (count > 10)
+        return MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
+
+    memset(tmpbuf, 0, sizeof(tmpbuf));
+    for (i=0; i<count; i++) {
+        tmpval = buf[i];
+        if (tmpval == CONTROLLER_HANDHELD) {
+            tmpval = 0x20;
+        }
+        else if (tmpval >= CONTROLLER_UNKNOWN) {
+            return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+        }
+
+        tmpbuf[i] = tmpval;
+    }
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 AppletResourceUserId;
+    } *raw;
+
+    ipcSendPid(&c);
+
+    ipcAddSendStatic(&c, tmpbuf, sizeof(u32)*count, 0);
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 102;
+    raw->AppletResourceUserId = AppletResourceUserId;
+
+    rc = serviceIpcDispatch(&g_hidSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
     }
 
     return rc;
