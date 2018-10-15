@@ -63,6 +63,13 @@ typedef struct {
     u32 Pad[2];
 } DomainMessageHeader;
 
+/// IPC domain response header.
+typedef struct {
+    u32 NumObjectIds;
+    u32 Pad[3];
+} DomainResponseHeader;
+
+
 typedef struct {
     size_t NumSend; // A
     size_t NumRecv; // B
@@ -363,12 +370,16 @@ typedef struct {
     Handle Handles[IPC_MAX_OBJECTS];          ///< Handles.
     bool   WasHandleCopied[IPC_MAX_OBJECTS];  ///< true if the handle was moved, false if it was copied.
 
-    bool   IsDomainMessage;                   ///< true if the the message is a Domain message.
-    DomainMessageType MessageType;            ///< Type of the domain message.
-    u32    MessageLength;                     ///< Size of rawdata (for domain messages).
-    u32    ThisObjectId;                      ///< Object ID to call the command on (for domain messages).
-    size_t NumObjectIds;                      ///< Number of object IDs (for domain messages).
-    u32    ObjectIds[IPC_MAX_OBJECTS];        ///< Object IDs (for domain messages).
+    bool   IsDomainRequest;                   ///< true if the the message is a Domain message.
+    DomainMessageType InMessageType;          ///< Type of the domain message.
+    u32    InMessageLength;                   ///< Size of rawdata (for domain messages).
+    u32    InThisObjectId;                    ///< Object ID to call the command on (for domain messages).
+    size_t InNumObjectIds;                    ///< Number of object IDs (for domain messages).
+    u32    InObjectIds[IPC_MAX_OBJECTS];      ///< Object IDs (for domain messages).
+    
+    bool   IsDomainResponse;                  ///< true if the the message is a Domain response.
+    size_t OutNumObjectIds;                   ///< Number of object IDs (for domain responses).
+    u32    OutObjectIds[IPC_MAX_OBJECTS];     ///< Object IDs (for domain responses).
 
     size_t NumBuffers;                        ///< Number of buffers in the response.
     void*  Buffers[IPC_MAX_BUFFERS];          ///< Pointers to the buffers.
@@ -399,7 +410,8 @@ static inline Result ipcParse(IpcParsedCommand* r) {
     u32 ctrl1 = *buf++;
     size_t i;
     
-    r->IsDomainMessage = false;
+    r->IsDomainRequest = false;
+    r->IsDomainResponse = false;
 
     r->CommandType = (IpcCommandType) (ctrl0 & 0xffff);
     r->HasPid = false;
@@ -656,11 +668,11 @@ static inline void* ipcPrepareHeaderForDomain(IpcCommand* cmd, size_t sizeof_raw
 }
 
 /**
- * @brief Parse an IPC command response into an IPC parsed command structure (domain version).
+ * @brief Parse an IPC command request into an IPC parsed command structure (domain version).
  * @param IPC parsed command structure to fill in.
  * @return Result code.
  */
-static inline Result ipcParseForDomain(IpcParsedCommand* r) {
+static inline Result ipcParseDomainRequest(IpcParsedCommand* r) {
     Result rc = ipcParse(r);
     DomainMessageHeader *hdr;
     u32 *object_ids;
@@ -671,22 +683,51 @@ static inline Result ipcParseForDomain(IpcParsedCommand* r) {
     object_ids = (u32*)(((uintptr_t) hdr) + sizeof(DomainMessageHeader) + hdr->Length);
     r->Raw = (void*)(((uintptr_t) r->Raw) + sizeof(DomainMessageHeader));
 
-    r->IsDomainMessage = true;
-    r->MessageType = (DomainMessageType)(hdr->Type);
-    switch (r->MessageType) {
+    r->IsDomainRequest = true;
+    r->InMessageType = (DomainMessageType)(hdr->Type);
+    switch (r->InMessageType) {
         case DomainMessageType_SendMessage:
         case DomainMessageType_Close:
             break;
         default:
             return MAKERESULT(Module_Libnx, LibnxError_DomainMessageUnknownType);
     }
-    r->ThisObjectId = hdr->ThisObjectId;
-    r->NumObjectIds = hdr->NumObjectIds > 8 ? 8 : hdr->NumObjectIds;
-    if ((uintptr_t)object_ids + sizeof(u32) * r->NumObjectIds - (uintptr_t)armGetTls() >= 0x100) {
+
+    r->InThisObjectId = hdr->ThisObjectId;
+    r->InNumObjectIds = hdr->NumObjectIds > 8 ? 8 : hdr->NumObjectIds;
+    if ((uintptr_t)object_ids + sizeof(u32) * r->InNumObjectIds - (uintptr_t)armGetTls() >= 0x100) {
         return MAKERESULT(Module_Libnx, LibnxError_DomainMessageTooManyObjectIds);
     }
-    for(size_t i = 0; i < r->NumObjectIds; i++)
-        r->ObjectIds[i] = object_ids[i];
+    for(size_t i = 0; i < r->InNumObjectIds; i++)
+        r->InObjectIds[i] = object_ids[i];
+
+    return rc;
+}
+
+/**
+ * @brief Parse an IPC command response into an IPC parsed command structure (domain version).
+ * @param IPC parsed command structure to fill in.
+ * @return Result code.
+ */
+static inline Result ipcParseDomainResponse(IpcParsedCommand* r, size_t sizeof_raw) {
+    Result rc = ipcParse(r);
+    DomainResponseHeader *hdr;
+    u32 *object_ids;
+    if(R_FAILED(rc))
+        return rc;
+
+    hdr = (DomainResponseHeader*) r->Raw;
+    r->Raw = (void*)(((uintptr_t) r->Raw) + sizeof(DomainResponseHeader));
+    object_ids = (u32*)((((uintptr_t) r->Raw) + sizeof_raw + 3) & ~3);
+
+    r->IsDomainResponse = true;
+    
+    r->OutNumObjectIds = hdr->NumObjectIds > 8 ? 8 : hdr->NumObjectIds;
+    if ((uintptr_t)object_ids + sizeof(u32) * r->OutNumObjectIds - (uintptr_t)armGetTls() >= 0x100) {
+        return MAKERESULT(Module_Libnx, LibnxError_DomainMessageTooManyObjectIds);
+    }
+    for(size_t i = 0; i < r->OutNumObjectIds; i++)
+        r->OutObjectIds[i] = object_ids[i];
 
     return rc;
 }
@@ -704,7 +745,7 @@ static inline Result ipcCloseObjectById(Handle session, u32 object_id) {
     ipcInitialize(&c);
     hdr = (DomainMessageHeader*)ipcPrepareHeader(&c, sizeof(DomainMessageHeader));
 
-    hdr->Type = 2;
+    hdr->Type = DomainMessageType_Close;
     hdr->NumObjectIds = 0;
     hdr->Length = 0;
     hdr->ThisObjectId = object_id;
