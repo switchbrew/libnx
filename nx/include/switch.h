@@ -34,6 +34,7 @@ extern "C" {
 #include "switch/kernel/random.h"
 #include "switch/kernel/jit.h"
 #include "switch/kernel/ipc.h"
+#include "switch/kernel/barrier.h"
 
 #include "switch/services/sm.h"
 #include "switch/services/smm.h"
