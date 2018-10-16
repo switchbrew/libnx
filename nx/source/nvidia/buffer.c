@@ -43,7 +43,7 @@ u32 nvBufferGetNvmapFd(void) {
 }
 
 Result nvBufferCreate(
-    NvBuffer* m, size_t size, u32 align, bool is_cacheable, NvKind kind,
+    NvBuffer* m, size_t size, u32 align, bool is_cpu_cacheable, bool is_gpu_cacheable, NvKind kind,
     NvAddressSpace* as)
 {
     Result rc;
@@ -51,7 +51,8 @@ Result nvBufferCreate(
     size = (size + align - 1) & ~(align - 1);
 
     m->has_init = true;
-    m->is_cacheable = is_cacheable;
+    m->is_cpu_cacheable = is_cpu_cacheable;
+    m->is_gpu_cacheable = is_gpu_cacheable;
     m->size = size;
     m->fd = -1;
     m->cpu_addr = memalign(align, size);
@@ -67,16 +68,16 @@ Result nvBufferCreate(
 
     if (R_SUCCEEDED(rc))
         rc = nvioctlNvmap_Alloc(g_nvmap_fd, m->fd,
-            0, is_cacheable ? 1 : 0, align, kind, m->cpu_addr);
+            0, is_cpu_cacheable ? 1 : 0, align, kind, m->cpu_addr);
 
-    if (R_SUCCEEDED(rc) && !is_cacheable) {
+    if (R_SUCCEEDED(rc) && !is_cpu_cacheable) {
         armDCacheFlush(m->cpu_addr, m->size);
         svcSetMemoryAttribute(m->cpu_addr, m->size, 8, 8);
     }
 
     if (R_SUCCEEDED(rc))
         rc = nvAddressSpaceMapBuffer(as, m->fd,
-            is_cacheable ? NvMapBufferFlags_IsCacheable : 0, NvKind_Pitch, &m->gpu_addr);
+            is_gpu_cacheable ? NvMapBufferFlags_IsCacheable : 0, NvKind_Pitch, &m->gpu_addr);
 
     if (R_FAILED(rc))
         nvBufferFree(m);
@@ -105,7 +106,7 @@ void nvBufferFree(NvBuffer* m)
     }
 
     if (m->cpu_addr) {
-        if (!m->is_cacheable)
+        if (!m->is_cpu_cacheable)
             svcSetMemoryAttribute(m->cpu_addr, m->size, 8, 0);
 
         free(m->cpu_addr);
@@ -125,7 +126,7 @@ iova_t nvBufferGetGpuAddr(NvBuffer* m) {
 
 Result nvBufferMapAsTexture(NvBuffer* m, NvKind kind) {
     return nvAddressSpaceMapBuffer(m->addr_space, m->fd,
-        m->is_cacheable ? NvMapBufferFlags_IsCacheable : 0, kind, &m->gpu_addr_texture);
+        m->is_gpu_cacheable ? NvMapBufferFlags_IsCacheable : 0, kind, &m->gpu_addr_texture);
 }
 
 iova_t nvBufferGetGpuAddrTexture(NvBuffer* m) {

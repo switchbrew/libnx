@@ -13,14 +13,15 @@ typedef struct NvBuffer {
     NvAddressSpace* addr_space;
     NvKind kind;
     bool   has_init;
-    bool   is_cacheable;
+    bool   is_cpu_cacheable;
+    bool   is_gpu_cacheable;
 } NvBuffer;
 
 Result nvBufferInit(void);
 u32    nvBufferGetNvmapFd(void);
 void   nvBufferExit(void);
 
-Result nvBufferCreate(NvBuffer* m, size_t size, u32 align, bool is_cacheable, NvKind kind, NvAddressSpace* as);
+Result nvBufferCreate(NvBuffer* m, size_t size, u32 align, bool is_cpu_cacheable, bool is_gpu_cacheable, NvKind kind, NvAddressSpace* as);
 void   nvBufferFree(NvBuffer* m);
 
 void*  nvBufferGetCpuAddr(NvBuffer* m);

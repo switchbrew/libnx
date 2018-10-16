@@ -25,7 +25,7 @@ Result nvZcullContextCreate(NvZcullContext* z, NvGpu* parent)
     z->parent = parent;
 
     rc = nvBufferCreate(
-        &z->ctx_buf, nvInfoGetZcullCtxSize(), 0x20000, NvKind_Pitch, true,
+        &z->ctx_buf, nvInfoGetZcullCtxSize(), 0x20000, NvKind_Pitch, false, true,
         &parent->addr_space);
 
     if (R_SUCCEEDED(rc))
