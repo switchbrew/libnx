@@ -22,7 +22,7 @@ Result nvCmdListCreate(NvCmdList* c, NvGpu* parent, size_t max_cmds)
     Result rc;
 
     rc = nvBufferCreate(
-        &c->buffer, max_cmds * 4, 0x1000, NvKind_Pitch, false,
+        &c->buffer, max_cmds * 4, 0x1000, NvKind_Pitch, false, false,
         &parent->addr_space);
 
     if (R_SUCCEEDED(rc)) {
