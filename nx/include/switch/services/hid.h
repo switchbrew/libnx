@@ -310,7 +310,7 @@ typedef enum
     CONTROLLER_PLAYER_8 = 7,
     CONTROLLER_HANDHELD = 8,
     CONTROLLER_UNKNOWN  = 9,
-    CONTROLLER_P1_AUTO = 10, /// Not an actual HID-sysmodule ID. Only for hidKeys*()/hidJoystickRead(). Automatically uses CONTROLLER_PLAYER_1 when connected, otherwise uses CONTROLLER_HANDHELD.
+    CONTROLLER_P1_AUTO = 10, /// Not an actual HID-sysmodule ID. Only for hidKeys*()/hidJoystickRead()/hidSixAxisSensorValuesRead()/hidGetControllerType()/hidGetControllerColors(). Automatically uses CONTROLLER_PLAYER_1 when connected, otherwise uses CONTROLLER_HANDHELD.
 } HidControllerID;
 
 typedef struct touchPosition
@@ -491,9 +491,24 @@ typedef struct HidControllerHeader
     u32 leftColorBody;
     u32 leftColorButtons;
     u32 rightColorBody;
-    u32 rightColorbuttons;
+    u32 rightColorButtons;
 } HidControllerHeader;
 static_assert(sizeof(HidControllerHeader) == 0x28, "Hid controller header structure has incorrect size");
+
+/// Info struct extracted from HidControllerHeader.
+/// Color fields are zero when not set. This can happen even when the *Set fields are set to true.
+typedef struct HidControllerColors
+{
+    bool singleSet;         ///< Set to true when the below fields are valid.
+    u32 singleColorBody;    ///< RGBA Single Body Color
+    u32 singleColorButtons; ///< RGBA Single Buttons Color
+
+    bool splitSet;          ///< Set to true when the below fields are valid.
+    u32 leftColorBody;      ///< RGBA Left Body Color
+    u32 leftColorButtons;   ///< RGBA Left Buttons Color
+    u32 rightColorBody;     ///< RGBA Right Body Color
+    u32 rightColorButtons;  ///< RGBA Right Buttons Color
+} HidControllerColors;
 
 typedef struct HidControllerLayoutHeader
 {
@@ -607,6 +622,7 @@ void* hidGetSharedmemAddr(void);
 void hidSetControllerLayout(HidControllerID id, HidControllerLayoutType layoutType);
 HidControllerLayoutType hidGetControllerLayout(HidControllerID id);
 HidControllerType hidGetControllerType(HidControllerID id);
+void hidGetControllerColors(HidControllerID id, HidControllerColors *colors);
 
 void hidScanInput(void);
 

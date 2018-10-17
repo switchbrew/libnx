@@ -302,6 +302,38 @@ HidControllerType hidGetControllerType(HidControllerID id) {
     return tmp;
 }
 
+void hidGetControllerColors(HidControllerID id, HidControllerColors *colors) {
+    if (id==CONTROLLER_P1_AUTO) {
+        hidGetControllerColors(g_controllerP1AutoID, colors);
+        return;
+    }
+    if (id < 0 || id > 9) return;
+    if (colors == NULL) return;
+
+    HidControllerHeader *hdr = &g_controllerHeaders[id];
+
+    memset(colors, 0, sizeof(HidControllerColors));
+
+    rwlockReadLock(&g_hidLock);
+
+    colors->singleSet = (hdr->singleColorsDescriptor & BIT(1)) == 0;
+    colors->splitSet = (hdr->splitColorsDescriptor & BIT(1)) == 0;
+
+    if (colors->singleSet) {
+        colors->singleColorBody = hdr->singleColorBody;
+        colors->singleColorButtons = hdr->singleColorButtons;
+    }
+
+    if (colors->splitSet) {
+        colors->leftColorBody = hdr->leftColorBody;
+        colors->leftColorButtons = hdr->leftColorButtons;
+        colors->rightColorBody = hdr->rightColorBody;
+        colors->rightColorButtons = hdr->rightColorButtons;
+    }
+
+    rwlockReadUnlock(&g_hidLock);
+}
+
 u64 hidKeysHeld(HidControllerID id) {
     if (id==CONTROLLER_P1_AUTO) return hidKeysHeld(g_controllerP1AutoID);
     if (id < 0 || id > 9) return 0;
