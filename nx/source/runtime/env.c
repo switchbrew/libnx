@@ -18,6 +18,8 @@ static Handle g_processHandle = INVALID_HANDLE;
 static char*  g_nextLoadPath = NULL;
 static char*  g_nextLoadArgv = NULL;
 static Result g_lastLoadResult = 0;
+static bool   g_hasRandomSeed = false;
+static u64    g_randomSeed[2] = { 0, 0 };
 
 extern __attribute__((weak)) u32 __nx_applet_type;
 
@@ -89,6 +91,12 @@ void envSetup(void* ctx, Handle main_thread, LoaderReturnFn saved_lr)
 
         case EntryType_LastLoadResult:
             g_lastLoadResult = ent->Value[0];
+            break;
+
+        case EntryType_RandomSeed:
+            g_hasRandomSeed = true;
+            g_randomSeed[0] = ent->Value[0];
+            g_randomSeed[1] = ent->Value[1];
             break;
 
         default:
@@ -178,4 +186,13 @@ bool envHasNextLoad(void) {
 
 Result envGetLastLoadResult(void) {
     return g_lastLoadResult;
+}
+
+bool envHasRandomSeed(void) {
+    return g_hasRandomSeed;
+}
+
+void envGetRandomSeed(u64 out[2]) {
+    out[0] = g_randomSeed[0];
+    out[1] = g_randomSeed[1];
 }

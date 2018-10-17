@@ -13,6 +13,7 @@
 #include "kernel/mutex.h"
 #include "kernel/svc.h"
 #include "kernel/random.h"
+#include "runtime/env.h"
 
 #define ROTL32(x, n) (((x) << (n)) | ((x) >> (32-(n))))
 
@@ -137,6 +138,16 @@ static void _randomInit(void)
         // Get process TRNG seeds from kernel.
         if (R_FAILED(svcGetInfo(&seed[i], 11, 0, i)))
             fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadGetInfo_Rng));
+    }
+
+    if (envHasRandomSeed())
+    {
+        u64 other_seed[2];
+        envGetRandomSeed(other_seed);
+        seed[0] ^= other_seed[1];
+        seed[1] ^= seed[0];
+        seed[2] ^= other_seed[0];
+        seed[3] ^= seed[2];
     }
 
     u8 iv[8];
