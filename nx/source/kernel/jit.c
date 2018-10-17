@@ -30,7 +30,7 @@ Result jitCreate(Jit* j, size_t size)
 
     size = (size + 0xFFF) &~ 0xFFF;
 
-    void* src_addr = memalign(size, 0x1000);
+    void* src_addr = memalign(0x1000, size);
 
     if (src_addr == NULL)
         return MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
