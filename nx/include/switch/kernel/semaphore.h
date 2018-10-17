@@ -42,5 +42,3 @@ void semaphoreWait(Semaphore *s);
  * @return true if no wait and successful lock, false otherwise.
  */
 bool semaphoreTryWait(Semaphore *s);
-
-
