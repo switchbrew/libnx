@@ -23,6 +23,9 @@ Result usbCommsInitializeEx(u32 num_interfaces, const UsbCommsInterfaceInfo *inf
 /// Exits usbComms.
 void usbCommsExit(void);
 
+/// Sets whether to throw a fatal error in usbComms{Read/Write}* on failure, or just return the transferred size. By default (false) the latter is used.
+void usbCommsSetErrorHandling(bool flag);
+
 /// Read data with the default interface.
 size_t usbCommsRead(void* buffer, size_t size);
 

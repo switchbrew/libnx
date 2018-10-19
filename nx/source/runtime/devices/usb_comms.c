@@ -24,6 +24,8 @@ static bool g_usbCommsInitialized = false;
 
 static usbCommsInterface g_usbCommsInterfaces[TOTAL_INTERFACES];
 
+static bool g_usbCommsErrorHandling = 0;
+
 static RwLock g_usbCommsLock;
 
 static Result _usbCommsInterfaceInit1x(u32 intf_ind, const UsbCommsInterfaceInfo *info);
@@ -143,7 +145,10 @@ Result usbCommsInitializeEx(u32 num_interfaces, const UsbCommsInterfaceInfo *inf
         }
     }
     
-    if (R_SUCCEEDED(rc)) g_usbCommsInitialized = true;
+    if (R_SUCCEEDED(rc)) {
+        g_usbCommsInitialized = true;
+        g_usbCommsErrorHandling = false;
+    }
 
     rwlockWriteUnlock(&g_usbCommsLock);
     return rc;
@@ -386,6 +391,10 @@ static Result _usbCommsInterfaceInit1x(u32 intf_ind, const UsbCommsInterfaceInfo
     return rc;
 }
 
+void usbCommsSetErrorHandling(bool flag) {
+    g_usbCommsErrorHandling = flag;
+}
+
 static Result _usbCommsRead(usbCommsInterface *interface, void* buffer, size_t size, size_t *transferredSize)
 {
     Result rc=0;
@@ -542,7 +551,7 @@ size_t usbCommsReadEx(void* buffer, size_t size, u32 interface)
                 rwlockWriteUnlock(&inter->lock_out);
             }
         }
-        if (R_FAILED(rc)) fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadUsbCommsRead));
+        if (R_FAILED(rc) && g_usbCommsErrorHandling) fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadUsbCommsRead));
     }
     return transferredSize;
 }
@@ -579,7 +588,7 @@ size_t usbCommsWriteEx(const void* buffer, size_t size, u32 interface)
                 rwlockWriteUnlock(&inter->lock_in);
             }
         }
-        if (R_FAILED(rc)) fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadUsbCommsWrite));
+        if (R_FAILED(rc) && g_usbCommsErrorHandling) fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadUsbCommsWrite));
     }
     return transferredSize;
 }
