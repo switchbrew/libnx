@@ -310,7 +310,7 @@ typedef enum
     CONTROLLER_PLAYER_8 = 7,
     CONTROLLER_HANDHELD = 8,
     CONTROLLER_UNKNOWN  = 9,
-    CONTROLLER_P1_AUTO = 10, ///< Not an actual HID-sysmodule ID. Only for hidKeys*()/hidJoystickRead()/hidSixAxisSensorValuesRead()/hidGetControllerType()/hidGetControllerColors()/hidGetControllerConnected(). Automatically uses CONTROLLER_PLAYER_1 when connected, otherwise uses CONTROLLER_HANDHELD.
+    CONTROLLER_P1_AUTO = 10, ///< Not an actual HID-sysmodule ID. Only for hidKeys*()/hidJoystickRead()/hidSixAxisSensorValuesRead()/hidGetControllerType()/hidGetControllerColors()/hidIsControllerConnected(). Automatically uses CONTROLLER_PLAYER_1 when connected, otherwise uses CONTROLLER_HANDHELD.
 } HidControllerID;
 
 typedef struct touchPosition
@@ -623,7 +623,7 @@ void hidSetControllerLayout(HidControllerID id, HidControllerLayoutType layoutTy
 HidControllerLayoutType hidGetControllerLayout(HidControllerID id);
 HidControllerType hidGetControllerType(HidControllerID id);
 void hidGetControllerColors(HidControllerID id, HidControllerColors *colors);
-bool hidGetControllerConnected(HidControllerID id);
+bool hidIsControllerConnected(HidControllerID id);
 
 void hidScanInput(void);
 
