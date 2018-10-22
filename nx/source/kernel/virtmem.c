@@ -14,7 +14,6 @@ typedef struct {
 enum {
     REGION_STACK=0,
     REGION_HEAP=1,
-    REGION_NEW_STACK=2,
     REGION_MAX
 };
 
@@ -57,30 +56,32 @@ void virtmemSetup(void) {
             // Thus we are 32-bit.
             g_AddressSpace.start = 0x200000ull;
             g_AddressSpace.end   = 0x100000000ull;
+
+            g_Region[REGION_STACK].start = 0x200000ull;
+            g_Region[REGION_STACK].end = 0x40000000ull;
         }
         else if (rc == 0xDC01) {
             // Invalid dst-address error means our 36-bit src-address was valid.
             // Thus we are 36-bit.
             g_AddressSpace.start = 0x8000000ull;
             g_AddressSpace.end   = 0x1000000000ull;
+
+            g_Region[REGION_STACK].start = 0x8000000ull;
+            g_Region[REGION_STACK].end = 0x80000000ull;
         }
         else {
             // Wat.
             fatalSimple(MAKERESULT(Module_Libnx, LibnxError_WeirdKernel));
         }
-    }
-
-    if (R_FAILED(_GetRegionFromInfo(&g_Region[REGION_STACK], 2, 3))) {
-        fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadGetInfo_Stack));
+    } else {
+        if (R_FAILED(_GetRegionFromInfo(&g_Region[REGION_STACK], 14, 15))) {
+            fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadGetInfo_Stack));
+        }
     }
 
     if (R_FAILED(_GetRegionFromInfo(&g_Region[REGION_HEAP], 4, 5))) {
         fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadGetInfo_Heap));
-    }
-
-    // Failure is OK, happens on 1.0.0
-    // In that case, g_UnkRegion will default to (0, 0).
-    _GetRegionFromInfo(&g_Region[REGION_NEW_STACK], 14, 15);
+    }    
 }
 
 void* virtmemReserve(size_t size) {
@@ -157,13 +158,12 @@ void  virtmemFree(void* addr, size_t size) {
     IGNORE_ARG(size);
 }
 
-void* virtmemReserveMap(size_t size)
+void* virtmemReserveStack(size_t size)
 {
     Result rc;
     MemoryInfo meminfo;
     u32 pageinfo;
 
-    int region_idx = kernelAbove200() ? REGION_NEW_STACK : REGION_STACK;
     size = (size + 0xFFF) &~ 0xFFF;
 
     mutexLock(&g_VirtMemMutex);
@@ -175,8 +175,8 @@ void* virtmemReserveMap(size_t size)
         addr += 0x1000;
 
         // Make sure we stay inside the reserved map region.
-        if (!_InRegion(&g_Region[region_idx], addr)) {
-            addr = g_Region[region_idx].start;
+        if (!_InRegion(&g_Region[REGION_STACK], addr)) {
+            addr = g_Region[REGION_STACK].start;
         }
 
         // Query information about address.
@@ -207,7 +207,7 @@ void* virtmemReserveMap(size_t size)
     return (void*) addr;
 }
 
-void virtmemFreeMap(void* addr, size_t size) {
+void virtmemFreeStack(void* addr, size_t size) {
     IGNORE_ARG(addr);
     IGNORE_ARG(size);
 }
