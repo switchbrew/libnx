@@ -55,6 +55,20 @@ Result appletCreateManagedDisplayLayer(u64 *out);
 
 Result appletGetDesiredLanguage(u64 *LanguageCode);
 
+/// Gets whether video recording is supported.
+/// See also \ref appletInitializeGamePlayRecording.
+Result appletIsGamePlayRecordingSupported(bool *flag);
+
+/// Disable/enable video recording. Only available after \ref appletInitializeGamePlayRecording was used.
+/// See also \ref appletInitializeGamePlayRecording.
+Result appletSetGamePlayRecordingState(bool state);
+
+/// This is currently not usable.
+/// Initializes video recording. When size is 0, the default size of 0x6000000 is used.
+/// Only available with AppletType_*Application on 3.0.0+, hence errors from this can be ignored.
+/// Video recording is only fully available system-side with 4.0.0+.
+Result appletInitializeGamePlayRecording(size_t size);
+
 /**
  * @brief Blocks the usage of the home button.
  * @param val Unknown nanoseconds. Value 0 can be used.

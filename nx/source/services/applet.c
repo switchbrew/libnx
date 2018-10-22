@@ -4,6 +4,7 @@
 #include "arm/atomics.h"
 #include "kernel/ipc.h"
 #include "kernel/detect.h"
+#include "kernel/tmem.h"
 #include "services/fatal.h"
 #include "services/applet.h"
 #include "services/apm.h"
@@ -50,6 +51,9 @@ static bool g_appletNotifiedRunning = 0;
 
 static AppletHookCookie g_appletFirstHook;
 
+static TransferMemory g_appletRecordingTmem;
+static u32 g_appletRecordingInitialized;
+
 static Result _appletGetHandle(Service* srv, Handle* handle_out, u64 cmd_id);
 static Result _appletGetSession(Service* srv, Service* srv_out, u64 cmd_id);
 static Result _appletGetSessionProxy(Service* srv_out, u64 cmd_id, Handle prochandle, u8 *AppletAttribute);
@@ -93,6 +97,7 @@ Result appletInitialize(void)
     g_appletResourceUserId = 0;
     g_appletNotifiedRunning = 0;
     g_appletExitProcessFlag = 0;
+    g_appletRecordingInitialized = 0;
 
     switch (__nx_applet_type) {
     case AppletType_Default:
@@ -270,7 +275,13 @@ void appletExit(void)
 {
     if (atomicDecrement64(&g_refCnt) == 0)
     {
-        if (__nx_applet_type == AppletType_Application) appletSetFocusHandlingMode(1);
+        if (!g_appletExitProcessFlag) {
+            if (g_appletRecordingInitialized > 0) {
+                if (g_appletRecordingInitialized == 2) appletSetGamePlayRecordingState(0);
+            }
+
+            if (__nx_applet_type == AppletType_Application) appletSetFocusHandlingMode(1);
+        }
 
         if ((envIsNso() && __nx_applet_exit_mode==0) || __nx_applet_exit_mode==1) {
             if (_appletIsApplication() ||
@@ -323,6 +334,11 @@ void appletExit(void)
         g_appletResourceUserId = 0;
 
         apmExit();
+
+        if (g_appletRecordingInitialized > 0) {
+            tmemClose(&g_appletRecordingTmem);
+            g_appletRecordingInitialized = 0;
+        }
     }
 }
 
@@ -713,6 +729,156 @@ void appletNotifyRunning(u8 *out) {
     }
 
     if (R_FAILED(rc)) fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadAppletNotifyRunning));
+}
+
+Result appletIsGamePlayRecordingSupported(bool *flag) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    if (flag) *flag = 0;
+
+    if (!serviceIsActive(&g_appletSrv) || !_appletIsApplication())
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    if (!kernelAbove300())
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 65;
+
+    Result rc = serviceIpcDispatch(&g_appletIFunctions);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u8 flag;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+        if (R_SUCCEEDED(rc) && flag) *flag = resp->flag & 1;
+    }
+
+    return rc;
+}
+
+static Result _appletInitializeGamePlayRecording(TransferMemory *tmem) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    if (!serviceIsActive(&g_appletSrv) || !_appletIsApplication())
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    if (!kernelAbove300())
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    ipcSendHandleCopy(&c, tmem->handle);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 size;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 66;
+    raw->size = tmem->size;
+
+    Result rc = serviceIpcDispatch(&g_appletIFunctions);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result appletSetGamePlayRecordingState(bool state) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    if (!serviceIsActive(&g_appletSrv) || !_appletIsApplication() || g_appletRecordingInitialized==0)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    if (!kernelAbove300())
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 state;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 67;
+    raw->state = state==0 ? 0 : 1;
+
+    Result rc = serviceIpcDispatch(&g_appletIFunctions);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result appletInitializeGamePlayRecording(size_t size) {
+    Result rc=0;
+
+    g_appletRecordingInitialized = 0;
+
+    //These checks are done in the called applet funcs, but do it here too so that tmemCreate() doesn't run when it's not needed.
+    if (!serviceIsActive(&g_appletSrv) || !_appletIsApplication())
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (!kernelAbove300())
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    if (size==0) size = 0x6000000;
+    rc = tmemCreate(&g_appletRecordingTmem, size, Perm_None);
+    if (R_FAILED(rc)) return rc;
+
+    rc = _appletInitializeGamePlayRecording(&g_appletRecordingTmem);
+    if (R_FAILED(rc)) {
+        tmemClose(&g_appletRecordingTmem);
+        return rc;
+    }
+
+    g_appletRecordingInitialized = 1;
+
+    rc = appletSetGamePlayRecordingState(1);
+    if (R_SUCCEEDED(rc)) g_appletRecordingInitialized = 2;
+
+    return rc;
 }
 
 static Result _appletReceiveMessage(u32 *out) {
