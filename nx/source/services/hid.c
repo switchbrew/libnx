@@ -334,6 +334,17 @@ void hidGetControllerColors(HidControllerID id, HidControllerColors *colors) {
     rwlockReadUnlock(&g_hidLock);
 }
 
+bool hidGetControllerConnected(HidControllerID id) {
+    if (id==CONTROLLER_P1_AUTO)
+        return hidGetControllerConnected(g_controllerP1AutoID);
+    if (id < 0 || id > 9) return 0;
+
+    rwlockReadLock(&g_hidLock);
+    bool flag = (g_controllerEntries[id].connectionState & CONTROLLER_STATE_CONNECTED) != 0;
+    rwlockReadUnlock(&g_hidLock);
+    return flag;
+}
+
 u64 hidKeysHeld(HidControllerID id) {
     if (id==CONTROLLER_P1_AUTO) return hidKeysHeld(g_controllerP1AutoID);
     if (id < 0 || id > 9) return 0;
