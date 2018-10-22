@@ -52,7 +52,7 @@ Result threadCreate(
         rc = MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
     }
     else {
-        void* stack_mirror = virtmemReserveMap(stack_sz);
+        void* stack_mirror = virtmemReserveStack(stack_sz);
         rc = svcMapMemory(stack_mirror, stack, stack_sz);
 
         if (R_SUCCEEDED(rc))
@@ -100,7 +100,7 @@ Result threadCreate(
         }
 
         if (R_FAILED(rc)) {
-            virtmemFreeMap(stack_mirror, stack_sz);
+            virtmemFreeStack(stack_mirror, stack_sz);
             free(stack);
         }
     }
@@ -120,7 +120,7 @@ Result threadClose(Thread* t) {
     Result rc;
 
     rc = svcUnmapMemory(t->stack_mirror, t->stack_mem, t->stack_sz);
-    virtmemFreeMap(t->stack_mirror, t->stack_sz);
+    virtmemFreeStack(t->stack_mirror, t->stack_sz);
     free(t->stack_mem);
     svcCloseHandle(t->handle);
 

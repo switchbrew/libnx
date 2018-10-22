@@ -22,15 +22,15 @@ void* virtmemReserve(size_t size);
 void  virtmemFree(void* addr, size_t size);
 
 /**
- * @brief Reserves a slice of address space inside the alias memory mapping region(s) (for use with svcMapMemory).
+ * @brief Reserves a slice of address space inside the stack memory mapping region (for use with svcMapMemory).
  * @param size The size of the slice of address space that will be reserved (rounded up to page alignment).
  * @return Pointer to the slice of address space, or NULL on failure.
  */
-void* virtmemReserveMap(size_t size);
+void* virtmemReserveStack(size_t size);
 
 /**
- * @brief Relinquishes a slice of address space reserved with virtmemReserveMap (currently no-op).
+ * @brief Relinquishes a slice of address space reserved with virtmemReserveStack (currently no-op).
  * @param addr Pointer to the slice.
  * @param size Size of the slice.
  */
-void  virtmemFreeMap(void* addr, size_t size);
+void  virtmemFreeStack(void* addr, size_t size);
