@@ -63,11 +63,11 @@ Result appletIsGamePlayRecordingSupported(bool *flag);
 /// See also \ref appletInitializeGamePlayRecording.
 Result appletSetGamePlayRecordingState(bool state);
 
-/// This is currently not usable.
-/// Initializes video recording. When size is 0, the default size of 0x6000000 is used.
+/// Initializes video recording. This allocates a 0x6000000-byte buffer for the TransferMemory, cleanup is handled automatically during app exit in \ref appletExit.
 /// Only available with AppletType_*Application on 3.0.0+, hence errors from this can be ignored.
 /// Video recording is only fully available system-side with 4.0.0+.
-Result appletInitializeGamePlayRecording(size_t size);
+/// Only usable when running under a title which supports video recording.
+Result appletInitializeGamePlayRecording(void);
 
 /**
  * @brief Blocks the usage of the home button.

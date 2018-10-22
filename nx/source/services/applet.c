@@ -852,8 +852,9 @@ Result appletSetGamePlayRecordingState(bool state) {
     return rc;
 }
 
-Result appletInitializeGamePlayRecording(size_t size) {
+Result appletInitializeGamePlayRecording(void) {
     Result rc=0;
+    size_t size = 0x6000000;
 
     g_appletRecordingInitialized = 0;
 
@@ -863,7 +864,6 @@ Result appletInitializeGamePlayRecording(size_t size) {
     if (!kernelAbove300())
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    if (size==0) size = 0x6000000;
     rc = tmemCreate(&g_appletRecordingTmem, size, Perm_None);
     if (R_FAILED(rc)) return rc;
 
