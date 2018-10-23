@@ -5,15 +5,15 @@
  * @copyright libnx Authors
  */
 #pragma once
-#include "semaphore.h"
+#include "mutex.h"
+#include "condvar.h"
 
 /// Barrier structure.
 typedef struct Barrier {
-    u64 count;             ///< Number of threads to reach the barrier.
-    u64 thread_total;      ///< Number of threads to wait on.
-    Semaphore throttle;    ///< Semaphore to make sure threads release to scheduler one at a time.
-    Semaphore lock;        ///< Semaphore to lock barrier to prevent multiple operations by threads at once.
-    Semaphore thread_wait; ///< Semaphore to force a thread to wait if count < thread_total.
+    u64 count;  ///< Number of threads to reach the barrier.
+    u64 total;  ///< Number of threads to wait on.
+    Mutex mutex;
+    CondVar condvar;
 } Barrier;
 
 /**
