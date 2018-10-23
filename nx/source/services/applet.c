@@ -271,6 +271,10 @@ static bool _appletIsApplication(void) {
     return __nx_applet_type == AppletType_Application || __nx_applet_type == AppletType_SystemApplication;
 }
 
+static bool _appletIsRegularApplication(void) {
+    return __nx_applet_type == AppletType_Application;
+}
+
 void appletExit(void)
 {
     if (atomicDecrement64(&g_refCnt) == 0)
@@ -737,7 +741,7 @@ Result appletIsGamePlayRecordingSupported(bool *flag) {
 
     if (flag) *flag = 0;
 
-    if (!serviceIsActive(&g_appletSrv) || !_appletIsApplication())
+    if (!serviceIsActive(&g_appletSrv) || !_appletIsRegularApplication())
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     if (!kernelAbove300())
@@ -776,7 +780,7 @@ static Result _appletInitializeGamePlayRecording(TransferMemory *tmem) {
     IpcCommand c;
     ipcInitialize(&c);
 
-    if (!serviceIsActive(&g_appletSrv) || !_appletIsApplication())
+    if (!serviceIsActive(&g_appletSrv) || !_appletIsRegularApplication())
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     if (!kernelAbove300())
@@ -817,7 +821,7 @@ Result appletSetGamePlayRecordingState(bool state) {
     IpcCommand c;
     ipcInitialize(&c);
 
-    if (!serviceIsActive(&g_appletSrv) || !_appletIsApplication() || g_appletRecordingInitialized==0)
+    if (!serviceIsActive(&g_appletSrv) || !_appletIsRegularApplication() || g_appletRecordingInitialized==0)
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     if (!kernelAbove300())
@@ -859,7 +863,7 @@ Result appletInitializeGamePlayRecording(void) {
     g_appletRecordingInitialized = 0;
 
     //These checks are done in the called applet funcs, but do it here too so that tmemCreate() doesn't run when it's not needed.
-    if (!serviceIsActive(&g_appletSrv) || !_appletIsApplication())
+    if (!serviceIsActive(&g_appletSrv) || !_appletIsRegularApplication())
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     if (!kernelAbove300())
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);

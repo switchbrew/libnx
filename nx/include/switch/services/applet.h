@@ -64,7 +64,7 @@ Result appletIsGamePlayRecordingSupported(bool *flag);
 Result appletSetGamePlayRecordingState(bool state);
 
 /// Initializes video recording. This allocates a 0x6000000-byte buffer for the TransferMemory, cleanup is handled automatically during app exit in \ref appletExit.
-/// Only available with AppletType_*Application on 3.0.0+, hence errors from this can be ignored.
+/// Only available with AppletType_Application on 3.0.0+, hence errors from this can be ignored.
 /// Video recording is only fully available system-side with 4.0.0+.
 /// Only usable when running under a title which supports video recording.
 Result appletInitializeGamePlayRecording(void);
