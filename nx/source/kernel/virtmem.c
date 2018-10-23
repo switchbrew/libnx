@@ -14,6 +14,7 @@ typedef struct {
 enum {
     REGION_STACK=0,
     REGION_HEAP=1,
+    REGION_LEGACY_ALIAS=2,
     REGION_MAX
 };
 
@@ -82,6 +83,8 @@ void virtmemSetup(void) {
     if (R_FAILED(_GetRegionFromInfo(&g_Region[REGION_HEAP], 4, 5))) {
         fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadGetInfo_Heap));
     }    
+
+    _GetRegionFromInfo(&g_Region[REGION_LEGACY_ALIAS], 2, 3);
 }
 
 void* virtmemReserve(size_t size) {
@@ -128,11 +131,7 @@ void* virtmemReserve(size_t size) {
         {
             u64 end = addr + size - 1;
 
-            if (_InRegion(&g_Region[i], addr)) {
-                break;
-            }
-
-            if (_InRegion(&g_Region[i], end)) {
+            if (_InRegion(&g_Region[i], addr) || _InRegion(&g_Region[i], end)) {
                 break;
             }
         }
