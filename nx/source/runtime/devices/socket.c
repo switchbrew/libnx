@@ -121,6 +121,9 @@ Result socketInitialize(const SocketInitConfig *config) {
     if(dev != -1)
         return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
 
+    ret = nifmInitialize();
+    if(R_FAILED(ret)) return ret;
+
     ret = bsdInitialize(&bcfg);
     if(R_SUCCEEDED(ret))
         dev = AddDevice(&g_socketDevoptab);
@@ -147,6 +150,7 @@ Result socketInitialize(const SocketInitConfig *config) {
 void socketExit(void) {
     RemoveDevice("soc:");
     bsdExit();
+    nifmExit();
 }
 
 Result socketGetLastBsdResult(void) {

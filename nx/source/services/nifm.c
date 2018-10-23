@@ -24,6 +24,8 @@ Result nifmInitialize(void) {
     Result rc;
     rc = smGetService(&g_nifmSrv, "nifm:u");
 
+    if (R_SUCCEEDED(rc)) rc = serviceConvertToDomain(&g_nifmSrv);
+
     if (R_SUCCEEDED(rc)) {
         if (kernelAbove300())
             rc = _nifmCreateGeneralService(&g_nifmIGS, 0); // What does this parameter do?
@@ -51,9 +53,9 @@ Result nifmGetCurrentIpAddress(u32* out) {
     struct {
         u64 magic;
         u64 cmd_id;
-    } * raw;
+    } *raw;
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
+    raw = serviceIpcPrepareHeader(&g_nifmIGS, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 12;
@@ -62,13 +64,15 @@ Result nifmGetCurrentIpAddress(u32* out) {
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
-        ipcParse(&r);
 
         struct {
             u64 magic;
             u64 result;
             u32 out;
-        }* resp = r.Raw;
+        } *resp;
+
+        serviceIpcParse(&g_nifmIGS, &r, sizeof(*resp));
+        resp = r.Raw;
 
         rc = resp->result;
         *out = resp->out;
@@ -86,9 +90,9 @@ static Result _nifmCreateGeneralService(Service* out, u64 in) {
         u64 magic;
         u64 cmd_id;
         u64 param;
-    } PACKED* raw;
+    } PACKED *raw;
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
+    raw = serviceIpcPrepareHeader(&g_nifmSrv, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 5;
@@ -98,17 +102,19 @@ static Result _nifmCreateGeneralService(Service* out, u64 in) {
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
-        ipcParse(&r);
 
         struct {
             u64 magic;
             u64 result;
-        }* resp = r.Raw;
+        } *resp;
+
+        serviceIpcParse(&g_nifmSrv, &r, sizeof(*resp));
+        resp = r.Raw;
 
         rc = resp->result;
 
         if (R_SUCCEEDED(rc))
-            serviceCreate(out, r.Handles[0]);
+            serviceCreateSubservice(out, &g_nifmSrv, &r, 0);
     }
 
     return rc;
@@ -121,9 +127,9 @@ static Result _nifmCreateGeneralServiceOld(Service* out) {
     struct {
         u64 magic;
         u64 cmd_id;
-    } PACKED* raw;
+    } PACKED *raw;
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
+    raw = serviceIpcPrepareHeader(&g_nifmSrv, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 4;
@@ -132,17 +138,19 @@ static Result _nifmCreateGeneralServiceOld(Service* out) {
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
-        ipcParse(&r);
 
         struct {
             u64 magic;
             u64 result;
-        }* resp = r.Raw;
+        } *resp;
+
+        serviceIpcParse(&g_nifmSrv, &r, sizeof(*resp));
+        resp = r.Raw;
 
         rc = resp->result;
 
         if (R_SUCCEEDED(rc))
-            serviceCreate(out, r.Handles[0]);
+            serviceCreateSubservice(out, &g_nifmSrv, &r, 0);
     }
 
     return rc;
