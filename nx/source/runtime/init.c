@@ -11,6 +11,7 @@
 void* __stack_top;
 void NORETURN __nx_exit(Result rc, LoaderReturnFn retaddr);
 
+void detectSetup(void);
 void virtmemSetup(void);
 void newlibSetup(void);
 void argvSetup(void);
@@ -139,6 +140,7 @@ void __attribute__((weak)) __libnx_init(void* ctx, Handle main_thread, void* sav
     // Called by crt0.
 
     // Libnx initialization goes here.
+    detectSetup();
     envSetup(ctx, main_thread, saved_lr);
     newlibSetup();
     virtmemSetup();
