@@ -64,7 +64,7 @@ typedef enum {
     SetSysFlag_HeadphoneVolumeUpdate = 117,
 } SetSysFlag;
 
-/// Structure returned by GetFirmwareVersion(2)
+/// Structure returned by \ref setsysGetFirmwareVersion
 typedef struct {
     u8 major;
     u8 minor;
