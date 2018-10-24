@@ -570,3 +570,46 @@ Result setsysSetFlag(SetSysFlag flag, bool enable) {
 
     return rc;
 }
+
+static Result _setsysGetFirmwareVersionImpl(SetSysFirmwareVersion *out, u32 cmd_id) {
+    IpcCommand c;
+    ipcInitialize(&c);
+    ipcAddRecvStatic(&c, out, sizeof(*out), 0);
+    
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_setsysSrv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = cmd_id;
+
+    Result rc = serviceIpcDispatch(&g_setsysSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+        
+        serviceIpcParse(&g_setsysSrv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+
+}
+
+Result setsysGetFirmwareVersion(SetSysFirmwareVersion *out) {
+    /* GetFirmwareVersion2 does exactly what GetFirmwareVersion does, except it doesn't zero the revision field. */
+    if (kernelAbove300()) {
+        return _setsysGetFirmwareVersionImpl(out, 4);
+    } else {
+        return _setsysGetFirmwareVersionImpl(out, 3);
+    }
+}
