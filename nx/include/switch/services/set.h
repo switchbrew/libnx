@@ -64,6 +64,22 @@ typedef enum {
     SetSysFlag_HeadphoneVolumeUpdate = 117,
 } SetSysFlag;
 
+/// Structure returned by \ref setsysGetFirmwareVersion
+typedef struct {
+    u8 major;
+    u8 minor;
+    u8 micro;
+    u8 padding1;
+    u8 revision_major;
+    u8 revision_minor;
+    u8 padding2;
+    u8 padding3;
+    char platform[0x20];
+    char version_hash[0x40];
+    char display_version[0x18];
+    char display_title[0x80];
+} SetSysFirmwareVersion;
+
 Result setInitialize(void);
 void setExit(void);
 
@@ -132,3 +148,9 @@ Result setsysGetFlag(SetSysFlag flag, bool *out);
  * @param enable To enable/disable the flag.
  */
 Result setsysSetFlag(SetSysFlag flag, bool enable);
+
+/**
+ * @brief Gets the system firmware version.
+ * @param out Firmware version to populate.
+ */
+Result setsysGetFirmwareVersion(SetSysFirmwareVersion *out);
