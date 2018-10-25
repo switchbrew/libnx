@@ -79,8 +79,9 @@ Result appletBeginBlockingHomeButton(s64 val);
 Result appletEndBlockingHomeButton(void);
 
 /**
- * @brief Delay exiting until \ref appletUnlockExit is called.
+ * @brief Delay exiting until \ref appletUnlockExit is called, with a 15 second timeout once exit is requested.
  * @note When exit is requested \ref appletMainLoop will return false, hence any main-loop using appletMainLoop will exit. This allows the app to handle cleanup post-main-loop instead of being force-terminated.
+ * @note If the above timeout occurs after exit was requested where \ref appletUnlockExit was not called, the process will be forced-terminated.
  * @note \ref appletUnlockExit must be used before main() returns.
  */
 Result appletLockExit(void);
