@@ -625,7 +625,8 @@ void consolePrintChar(int c) {
 	if(currentConsole->cursorX  >= currentConsole->windowWidth) {
 		currentConsole->cursorX  = 0;
 
-		consoleNewRow();
+		if (c != '\n')
+			consoleNewRow();
 	}
 
 	switch(c) {
