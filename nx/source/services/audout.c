@@ -3,6 +3,7 @@
 #include "result.h"
 #include "arm/atomics.h"
 #include "kernel/ipc.h"
+#include "kernel/event.h"
 #include "services/audout.h"
 #include "services/sm.h"
 
@@ -14,14 +15,14 @@ static Service g_audoutSrv;
 static Service g_audoutIAudioOut;
 static u64 g_refCnt;
 
-static Handle g_audoutBufferEventHandle = INVALID_HANDLE;
+static Event g_audoutBufferEvent;
 
 static u32 g_sampleRate = 0;
 static u32 g_channelCount = 0;
 static PcmFormat g_pcmFormat = PcmFormat_Invalid;
 static AudioOutState g_deviceState = AudioOutState_Stopped;
 
-static Result _audoutRegisterBufferEvent(Handle *BufferEvent);
+static Result _audoutRegisterBufferEvent(Event *BufferEvent);
 
 Result audoutInitialize(void)
 {
@@ -46,7 +47,7 @@ Result audoutInitialize(void)
     
     // Register global handle for buffer events
     if (R_SUCCEEDED(rc))
-        rc = _audoutRegisterBufferEvent(&g_audoutBufferEventHandle);
+        rc = _audoutRegisterBufferEvent(&g_audoutBufferEvent);
     
     if (R_FAILED(rc))
         audoutExit();
@@ -58,10 +59,7 @@ void audoutExit(void)
 {
     if (atomicDecrement64(&g_refCnt) == 0)
     {
-        if (g_audoutBufferEventHandle != INVALID_HANDLE) {
-            svcCloseHandle(g_audoutBufferEventHandle);
-            g_audoutBufferEventHandle = INVALID_HANDLE;
-        }
+        eventClose(&g_audoutBufferEvent);
 
         g_sampleRate = 0;
         g_channelCount = 0;
@@ -91,13 +89,10 @@ AudioOutState audoutGetDeviceState(void) {
 
 Result audoutWaitPlayFinish(AudioOutBuffer **released, u32* released_count, u64 timeout) {
     // Wait on the buffer event handle
-    Result rc = svcWaitSynchronizationSingle(g_audoutBufferEventHandle, timeout);
-        
+    Result rc = eventWait(&g_audoutBufferEvent, timeout);
+    
     if (R_SUCCEEDED(rc))
     {
-        // Signal the buffer event handle right away
-        svcResetSignal(g_audoutBufferEventHandle);
-        
         // Grab the released buffer
         rc = audoutGetReleasedAudioOutBuffer(released, released_count);
     }
@@ -349,7 +344,7 @@ Result audoutAppendAudioOutBuffer(AudioOutBuffer *Buffer) {
     return rc;
 }
 
-static Result _audoutRegisterBufferEvent(Handle *BufferEvent) {
+static Result _audoutRegisterBufferEvent(Event *BufferEvent) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -377,7 +372,7 @@ static Result _audoutRegisterBufferEvent(Handle *BufferEvent) {
         rc = resp->result;
         
         if (R_SUCCEEDED(rc) && BufferEvent)
-            *BufferEvent = r.Handles[0];
+            eventLoadRemote(BufferEvent, r.Handles[0], true);
     }
 
     return rc;

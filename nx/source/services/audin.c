@@ -3,6 +3,7 @@
 #include "result.h"
 #include "arm/atomics.h"
 #include "kernel/ipc.h"
+#include "kernel/event.h"
 #include "services/audin.h"
 #include "services/sm.h"
 
@@ -14,14 +15,14 @@ static Service g_audinSrv;
 static Service g_audinIAudioIn;
 static u64 g_refCnt;
 
-static Handle g_audinBufferEventHandle = INVALID_HANDLE;
+static Event g_audinBufferEvent;
 
 static u32 g_sampleRate = 0;
 static u32 g_channelCount = 0;
 static PcmFormat g_pcmFormat = PcmFormat_Invalid;
 static AudioInState g_deviceState = AudioInState_Stopped;
 
-static Result _audinRegisterBufferEvent(Handle *BufferEvent);
+static Result _audinRegisterBufferEvent(Event *BufferEvent);
 
 Result audinInitialize(void)
 {
@@ -46,7 +47,7 @@ Result audinInitialize(void)
     
     // Register global handle for buffer events
     if (R_SUCCEEDED(rc))
-        rc = _audinRegisterBufferEvent(&g_audinBufferEventHandle);
+        rc = _audinRegisterBufferEvent(&g_audinBufferEvent);
     
     if (R_FAILED(rc))
         audinExit();
@@ -58,10 +59,7 @@ void audinExit(void)
 {
     if (atomicDecrement64(&g_refCnt) == 0)
     {
-        if (g_audinBufferEventHandle != INVALID_HANDLE) {
-            svcCloseHandle(g_audinBufferEventHandle);
-            g_audinBufferEventHandle = INVALID_HANDLE;
-        }
+        eventClose(&g_audinBufferEvent);
 
         g_sampleRate = 0;
         g_channelCount = 0;
@@ -91,13 +89,10 @@ AudioInState audinGetDeviceState(void) {
 
 Result audinWaitCaptureFinish(AudioInBuffer **released, u32* released_count, u64 timeout) {
     // Wait on the buffer event handle
-    Result rc = svcWaitSynchronizationSingle(g_audinBufferEventHandle, timeout);
+    Result rc = eventWait(&g_audinBufferEvent, timeout);
         
     if (R_SUCCEEDED(rc))
     {
-        // Signal the buffer event handle right away
-        svcResetSignal(g_audinBufferEventHandle);
-        
         // Grab the released buffer
         rc = audinGetReleasedAudioInBuffer(released, released_count);
     }
@@ -349,7 +344,7 @@ Result audinAppendAudioInBuffer(AudioInBuffer *Buffer) {
     return rc;
 }
 
-static Result _audinRegisterBufferEvent(Handle *BufferEvent) {
+static Result _audinRegisterBufferEvent(Event *BufferEvent) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -377,7 +372,7 @@ static Result _audinRegisterBufferEvent(Handle *BufferEvent) {
         rc = resp->result;
         
         if (R_SUCCEEDED(rc) && BufferEvent)
-            *BufferEvent = r.Handles[0];
+            eventLoadRemote(BufferEvent, r.Handles[0], true);
     }
 
     return rc;
