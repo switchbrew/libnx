@@ -5,6 +5,7 @@
 #include "kernel/ipc.h"
 #include "kernel/detect.h"
 #include "kernel/tmem.h"
+#include "kernel/event.h"
 #include "services/fatal.h"
 #include "services/applet.h"
 #include "services/apm.h"
@@ -40,7 +41,7 @@ static Service g_appletIAudioController;
 static Service g_appletIDisplayController;
 static Service g_appletIDebugFunctions;
 
-static Handle g_appletMessageEventHandle = INVALID_HANDLE;
+static Event g_appletMessageEvent;
 
 static u64 g_appletResourceUserId = 0;
 static u8  g_appletOperationMode;
@@ -55,6 +56,7 @@ static TransferMemory g_appletRecordingTmem;
 static u32 g_appletRecordingInitialized;
 
 static Result _appletGetHandle(Service* srv, Handle* handle_out, u64 cmd_id);
+static Result _appletGetEvent(Service* srv, Event* event_out, u64 cmd_id, bool autoclear);
 static Result _appletGetSession(Service* srv, Service* srv_out, u64 cmd_id);
 static Result _appletGetSessionProxy(Service* srv_out, u64 cmd_id, Handle prochandle, u8 *AppletAttribute);
 
@@ -185,7 +187,7 @@ Result appletInitialize(void)
 
     // ICommonStateGetter::GetEventHandle
     if (R_SUCCEEDED(rc))
-        rc = _appletGetHandle(&g_appletICommonStateGetter, &g_appletMessageEventHandle, 0);
+        rc = _appletGetEvent(&g_appletICommonStateGetter, &g_appletMessageEvent, 0, false);
 
     if (R_SUCCEEDED(rc) && (__nx_applet_type == AppletType_Application))
     {
@@ -194,7 +196,7 @@ Result appletInitialize(void)
         //Don't enter this msg-loop when g_appletFocusState is already 1, it will hang when applet was previously initialized in the context of the current process for AppletType_Application.
         if (R_SUCCEEDED(rc) && g_appletFocusState!=1) {
             do {
-                svcWaitSynchronizationSingle(g_appletMessageEventHandle, U64_MAX);
+                eventWait(&g_appletMessageEvent, U64_MAX);
 
                 u32 msg;
                 rc = _appletReceiveMessage(&msg);
@@ -307,10 +309,7 @@ void appletExit(void)
             }
         }
 
-        if (g_appletMessageEventHandle != INVALID_HANDLE) {
-            svcCloseHandle(g_appletMessageEventHandle);
-            g_appletMessageEventHandle = INVALID_HANDLE;
-        }
+        eventClose(&g_appletMessageEvent);
 
         serviceClose(&g_appletIDebugFunctions);
         serviceClose(&g_appletIDisplayController);
@@ -455,6 +454,15 @@ static Result _appletGetHandle(Service* srv, Handle* handle_out, u64 cmd_id) {
         }
     }
 
+    return rc;
+}
+
+static Result _appletGetEvent(Service* srv, Event* event_out, u64 cmd_id, bool autoclear) {
+    Handle tmp_handle=0;
+    Result rc = 0;
+
+    rc = _appletGetHandle(srv, &tmp_handle, cmd_id);
+    if (R_SUCCEEDED(rc)) eventLoadRemote(event_out, tmp_handle, autoclear);
     return rc;
 }
 
@@ -1365,7 +1373,7 @@ bool appletMainLoop(void) {
     Result rc;
     u32    msg = 0;
 
-    if (R_FAILED(svcWaitSynchronizationSingle(g_appletMessageEventHandle, 0)))
+    if (R_FAILED(eventWait(&g_appletMessageEvent, 0)))
         return true;
 
     rc = _appletReceiveMessage(&msg);
