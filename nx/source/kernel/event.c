@@ -9,7 +9,7 @@ Result eventCreate(Event* t, bool autoclear)
 {
     Result rc;
 
-    rc = svcCreateEvent(&t->revent, &t->wevent);
+    rc = svcCreateEvent(&t->wevent, &t->revent);
     t->autoclear = autoclear;
 
     if (R_FAILED(rc)) {
