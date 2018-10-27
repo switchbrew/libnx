@@ -73,3 +73,9 @@ Result threadResume(Thread* t);
  * @warning Official kernel will not dump x0..x18 if the thread is currently executing a system call, and prior to 6.0.0 doesn't dump TPIDR_EL0.
  */
 Result threadDumpContext(ThreadContext* ctx, Thread* t);
+
+/**
+ * @brief Gets the raw handle to the current thread.
+ * @return The current thread's handle.
+ */
+Handle threadGetCurHandle(void);

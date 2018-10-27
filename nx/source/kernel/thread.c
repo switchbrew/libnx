@@ -138,3 +138,7 @@ Result threadResume(Thread* t) {
 Result threadDumpContext(ThreadContext* ctx, Thread* t) {
     return svcGetThreadContext3(ctx, t->handle);
 }
+
+Handle threadGetCurHandle(void) {
+    return getThreadVars()->handle;
+}
