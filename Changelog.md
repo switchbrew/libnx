@@ -1,5 +1,67 @@
 # Changelog
 
+## Version 1.5.0
+
+#### system
+* **Improved service IPC support for domains**.
+* Added RandomSeed HBABI key handling, which fixes broken/identical random number generation output when launching homebrew NROs multiple times with nx-hbloader.
+* Added Barrier synchronization primitive.
+* Added threadGetCurHandle.
+* Fixed several C11 thread support standard compliance issues.
+* Fixed virtmem handling on 1.x.
+* Fixed ProcessState enumeration names and descriptions.
+* Fixed bug in eventCreate.
+* Fixed bug in jitCreate.
+
+#### services
+* fsp-srv and fsp-ldr services:
+  * **Now using domains for IPC**, which solves problems related to having a large number of filesystem resources open.
+  * Added fsdevGetDeviceFileSystem.
+* time services:
+  * Added timezone support.
+  * The user system clock is now used by default instead of the network clock.
+  * The user system clock is now also used as fallback if the specified system clock override (__nx_time_type) is not available.
+* applet services:
+  * **Added support for running with nx-hbloader as an Application**.
+  * **Added support for enabling video recording** when running as an Application, although it needs a specific flag set in the host title's nacp to be accessible.
+  * Added appletLockExit/appletUnlockExit, which can be used to ensure that user processes get a chance to finish before the application is closed by the system.
+  * Added __nx_applet_exit_mode, used to control the application's behavior on close (including self-exit support).
+  * Added AppletHookType_OnExitRequest.
+  * Fixed issues related to running as an Application.
+  * Minor internal refactor to use Event objects instead of raw handles.
+* hid (input) services:
+  * **Added SixAxisSensor support**.
+  * Vibration partially fixed, although it needs disable/enable in system settings for it to be effective.
+  * Added hidSetSupportedNpadStyleSet, hidSetSupportedNpadIdType, hidSetNpadJoyHoldType, hidGetControllerType, hidGetControllerColors, hidIsControllerConnected.
+* USB services:
+  * **Major refactor which adds support for 5.x+ systems**.
+  * Added usbCommsSetErrorHandling, which now disables USB fatal errors by default.
+* audin/audout services: minor internal refactor to use Event objects instead of raw handles.
+* Added pm:shell command: pmshellGetApplicationPid.
+* Added set:sys command: setsysGetFirmwareVersion.
+* Added psm commands: psmGetBatteryVoltageState, psmBindStateChangeEvent, psmWaitStateChangeEvent, psmUnbindStateChangeEvent.
+* fatal services: on systems prior to 3.x, FatalType_ErrorReportAndErrorScreen is used again due to FatalType_ErrorScreen not existing. **Beware of fatal errors on 1.x and 2.x** since they now create reports again (instead of silently hanging the system).
+
+#### graphics
+* **Refactored console device**:
+  * The console now has an interface that can be used to override the default software rendering backend with a custom implementation (including GPU rendering).
+  * The software renderer now takes care of calling gfxInitDefault, gfxSwapBuffers, gfxExit. gfx functions should not be called explicitly by console users.
+  * Added consoleUpdate and consoleExit.
+  * Old code is still compatible, although it is **strongly advised** to update it to use the new functions instead of calling gfx functions directly.
+* Fixed NvFence regression on 1.x.
+* Increased default nvservices transfermem heap size to 8 MB, which allows for more complex GPU homebrew to run.
+* Changed nvBufferCreate to support different settings for cpu/gpu cacheability.
+
+#### network
+* Added nifm handling to socketInitialize/Exit, which makes gethostid/gethostname work by default.
+* Added missing declarations to netinet/in.h.
+* Changed nifm to use IPC domains.
+* Optimized select/poll to avoid using malloc when possible.
+* Fixed poll to accept -1 fds.
+
+#### miscellaneous
+* Further improvements to overall system stability and other minor adjustments to enhance the user experience.
+
 ## Version 1.4.1
 
 * Restored compatibility with C++11.
