@@ -36,14 +36,14 @@ Result eventWait(Event* t, u64 timeout)
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     if (timeout != U64_MAX)
-        deadline = armGetSystemTick() + timeout * 12 / 625; // timeout: ns->ticks
+        deadline = armGetSystemTick() + armNsToTick(timeout); // timeout: ns->ticks
 
     do {
         do {
             s64 this_timeout = -1;
             if (deadline) {
                 this_timeout = deadline - armGetSystemTick();
-                this_timeout = (this_timeout >= 0 ? this_timeout : 0) * 625 / 12; // ticks->ns
+                this_timeout = armTickToNs(this_timeout >= 0 ? this_timeout : 0); // ticks->ns
             }
 
             rc = svcWaitSynchronizationSingle(t->revent, this_timeout);
