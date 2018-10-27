@@ -26,3 +26,11 @@ static inline u64 armGetSystemTickFreq(void) {
     __asm__ ("mrs %x[data], cntfrq_el0" : [data] "=r" (ret));
     return ret;
 }
+
+static inline u64 armNsToTick(u64 ns) {
+    return (ns * 12) / 625;
+}
+
+static inline u64 armTickToNs(u64 tick) {
+    return (tick * 625) / 12;
+}

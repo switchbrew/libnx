@@ -122,6 +122,7 @@ enum {
     LibnxError_ApmFailedToInitialize,
     LibnxError_NvinfoFailedToInitialize,
     LibnxError_NvbufFailedToInitialize,
+    LibnxError_TooManyWaitables,
 };
 
 /// libnx binder error codes
