@@ -26,10 +26,3 @@ struct Waiter
     WaiterNode nodes[MAX_WAIT];
     size_t num_nodes;
 };
-
-// Internal methods (do not use!):
-void _waiterCreate(Waiter* w);
-void _waiterFree(Waiter* w, WaitObject* objects);
-void _waiterSubscribe(Waiter* w, UsermodeEvent* e);
-bool _waiterSignal(Waiter* w, s32 idx);
-s32  _waiterGetSignalledIndex(Waiter* w);

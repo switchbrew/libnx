@@ -6,6 +6,9 @@
 #include "kernel/utimer.h"
 #include "kernel/uevent.h"
 #include "arm/counter.h"
+#include "waiter.h"
+#include "utimer.h"
+#include "uevent.h"
 #include "../internal.h"
 
 Result waitN(s32* idx_out, WaitObject* objects, size_t num_objects, u64 timeout)
