@@ -3,10 +3,23 @@
 #include "kernel/utimer.h"
 #include "arm/counter.h"
 
-void utimerCreate(UsermodeTimer* t, u64 interval)
+void utimerCreate(UsermodeTimer* t, u64 interval, bool start)
 {
-    t->next_time = armGetSystemTick() + armNsToTick(interval);
+    t->next_time = 0;
     t->interval = armNsToTick(interval);
+
+    if (start)
+        utimerStart(t);
+}
+
+void utimerStart(UsermodeTimer* t)
+{
+    __sync_bool_compare_and_swap(&t->next_time, 0, armGetSystemTick() + armNsToTick(t->interval));
+}
+
+void utimerStop(UsermodeTimer* t)
+{
+    while (__sync_bool_compare_and_swap(&t->next_time, t->next_time, 0));
 }
 
 void _utimerRecalculate(UsermodeTimer* t, u64 old_time)

@@ -21,7 +21,7 @@ Result waitN(s32* idx_out, WaitObject* objects, size_t num_objects, u64 timeout)
     Handle handles[MAX_WAIT];
     u64 cur_tick = armGetSystemTick();
 
-    u64 end_time = (timeout == UINT64_MAX) ? UINT64_MAX : cur_tick + timeout;
+    u64 end_time = timeout;
     s32 end_time_idx = -1;
     size_t i;
 
@@ -33,12 +33,21 @@ Result waitN(s32* idx_out, WaitObject* objects, size_t num_objects, u64 timeout)
         switch (obj->type)
         {
         case WaitObjectType_UsermodeTimer:
-            // Override the user-supplied timeout if timer would fire before that.
             timer_tick = _utimerGetNextTime(obj->timer);
 
-            if (timer_tick < end_time)
+            // If the timer already signalled, we're done.
+            if (timer_tick < cur_tick)
             {
-                end_time = timer_tick;
+                *idx_out = i;
+                _utimerRecalculate(obj->timer, timer_tick);
+                _waiterFree(&waiter, objects);
+                return 0;
+            }
+
+            // Override the user-supplied timeout if timer would fire before that.
+            if ((timer_tick - cur_tick) < end_time)
+            {
+                end_time = timer_tick - cur_tick;
                 end_time_idx = i;
             }
             break;
@@ -63,29 +72,24 @@ Result waitN(s32* idx_out, WaitObject* objects, size_t num_objects, u64 timeout)
         handles[i] = (obj->type == WaitObjectType_Handle) ? obj->handle : dummy_handle;
     }
 
-    // If the timer already signalled, we're done.
-    if (end_time < cur_tick)
-    {
-        *idx_out = end_time_idx;
-        _utimerRecalculate(objects[end_time_idx].timer, end_time);
-        _waiterFree(&waiter, objects);
-        return 0;
-    }
 
     // Do the actual syscall.
     Result rc;
-    rc = svcWaitSynchronization(idx_out, handles, num_objects, end_time - cur_tick);
+    rc = svcWaitSynchronization(idx_out, handles, num_objects, end_time);
 
     // Timeout-error?
     if (rc == 0xEA01)
     {
         // If the user-supplied timeout, we return the error back to them.
         if (end_time_idx == -1)
+        {
+            _waiterFree(&waiter, objects);
             return rc;
+        }
 
         // If not, it means a timer was triggered.
         *idx_out = end_time_idx;
-        _utimerRecalculate(objects[end_time_idx].timer, end_time);
+        _utimerRecalculate(objects[end_time_idx].timer, end_time + cur_tick);
         _waiterFree(&waiter, objects);
         return 0;
     }
