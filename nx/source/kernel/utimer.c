@@ -6,7 +6,7 @@
 void utimerCreate(UsermodeTimer* t, u64 interval, bool start)
 {
     t->next_time = 0;
-    t->interval = armNsToTick(interval);
+    t->interval = armNsToTicks(interval);
 
     if (start)
         utimerStart(t);
@@ -15,7 +15,7 @@ void utimerCreate(UsermodeTimer* t, u64 interval, bool start)
 void utimerStart(UsermodeTimer* t)
 {
     u64 zero = 0;
-    __atomic_compare_exchange_n(&t->next_time, &zero, armGetSystemTick() + armNsToTick(t->interval), false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
+    __atomic_compare_exchange_n(&t->next_time, &zero, armGetSystemTick() + armNsToTicks(t->interval), false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
 }
 
 void utimerStop(UsermodeTimer* t)
