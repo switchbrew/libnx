@@ -13,7 +13,3 @@ struct UsermodeTimer
 void utimerCreate(UsermodeTimer* t, u64 interval, bool start);
 void utimerStart(UsermodeTimer* t);
 void utimerStop(UsermodeTimer* t);
-
-// Internal methods (do not use!):
-void _utimerRecalculate(UsermodeTimer* t, u64 old_time);
-u64  _utimerGetNextTime(UsermodeTimer* t);

@@ -3,6 +3,7 @@
 #include "kernel/mutex.h"
 #include "kernel/waiter.h"
 #include "kernel/uevent.h"
+#include "waiter.h"
 
 void ueventCreate(UsermodeEvent* e, bool auto_clear)
 {
