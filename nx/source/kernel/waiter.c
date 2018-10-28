@@ -1,6 +1,8 @@
 // Copyright 2018 plutoo
 #include "kernel/waiter.h"
 #include "kernel/uevent.h"
+#include "waiter.h"
+#include "uevent.h"
 #include "../internal.h"
 
 #define NOT_YET_SIGNALLED (-1)

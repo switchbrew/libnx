@@ -16,8 +16,3 @@ struct UsermodeEvent
 void ueventCreate(UsermodeEvent* e, bool auto_clear);
 void ueventClear(UsermodeEvent* e);
 void ueventSignal(UsermodeEvent* e);
-
-// Internal methods (do not use!):
-bool _ueventConsumeIfSignalled(UsermodeEvent* e);
-void _ueventAddListener(UsermodeEvent* e, WaiterNode* w);
-void _ueventRemoveListener(UsermodeEvent* e, WaiterNode* w);
