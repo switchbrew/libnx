@@ -27,10 +27,20 @@ static inline u64 armGetSystemTickFreq(void) {
     return ret;
 }
 
-static inline u64 armNsToTick(u64 ns) {
+/**
+ * @brief Converts from nanoseconds to CPU ticks unit.
+ * @param ns Time in nanoseconds.
+ * @return Time in CPU ticks.
+ */
+static inline u64 armNsToTicks(u64 ns) {
     return (ns * 12) / 625;
 }
 
-static inline u64 armTickToNs(u64 tick) {
+/**
+ * @brief Converts from CPU ticks unit to nanoseconds.
+ * @param tick Time in ticks.
+ * @return Time in nanoseconds.
+ */
+static inline u64 armTicksToNs(u64 tick) {
     return (tick * 625) / 12;
 }
