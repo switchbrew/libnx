@@ -35,6 +35,10 @@ Result waitN(s32* idx_out, WaitObject* objects, size_t num_objects, u64 timeout)
         case WaitObjectType_UsermodeTimer:
             timer_tick = _utimerGetNextTime(obj->timer);
 
+            // Skip timer if disabled.
+            if (timer_tick == 0)
+                break;
+
             // If the timer already signalled, we're done.
             if (timer_tick < cur_tick)
             {
