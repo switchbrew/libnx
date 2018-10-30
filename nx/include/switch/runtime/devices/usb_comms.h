@@ -18,7 +18,7 @@ typedef struct {
 Result usbCommsInitialize(void);
 
 /// Initializes usbComms with a specific number of interfaces.
-Result usbCommsInitializeEx(u32 num_interfaces, const UsbCommsInterfaceInfo *infos);
+Result usbCommsInitializeEx(u32 num_interfaces, const UsbCommsInterfaceInfo *infos, struct usb_device_descriptor *device_descriptor);
 
 /// Exits usbComms.
 void usbCommsExit(void);

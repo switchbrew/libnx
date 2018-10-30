@@ -42,11 +42,11 @@ static void _usbCommsUpdateInterfaceDescriptor(struct usb_interface_descriptor *
     }
 }
 
-Result usbCommsInitializeEx(u32 num_interfaces, const UsbCommsInterfaceInfo *infos)
+Result usbCommsInitializeEx(u32 num_interfaces, const UsbCommsInterfaceInfo *infos, struct usb_device_descriptor *device_descriptor)
 {
     Result rc = 0;
     rwlockWriteLock(&g_usbCommsLock);
-    
+
     if (g_usbCommsInitialized) {
         rc = MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized); 
     } else if (num_interfaces > TOTAL_INTERFACES) {
@@ -56,46 +56,23 @@ Result usbCommsInitializeEx(u32 num_interfaces, const UsbCommsInterfaceInfo *inf
         
         if (R_SUCCEEDED(rc)) {
             if (kernelAbove500()) {
-                u8 iManufacturer, iProduct, iSerialNumber;
                 static const u16 supported_langs[1] = {0x0409};
                 // Send language descriptor
                 rc = usbDsAddUsbLanguageStringDescriptor(NULL, supported_langs, sizeof(supported_langs)/sizeof(u16));
                 // Send manufacturer
-                if (R_SUCCEEDED(rc)) rc = usbDsAddUsbStringDescriptor(&iManufacturer, "Nintendo");
-                // Send product
-                if (R_SUCCEEDED(rc)) rc = usbDsAddUsbStringDescriptor(&iProduct, "Nintendo Switch");
-                // Send serial number
-                if (R_SUCCEEDED(rc)) rc = usbDsAddUsbStringDescriptor(&iSerialNumber, "SerialNumber");
                 
-                // Send device descriptors
-                struct usb_device_descriptor device_descriptor = {
-                    .bLength = USB_DT_DEVICE_SIZE,
-                    .bDescriptorType = USB_DT_DEVICE,
-                    .bcdUSB = 0x0110,
-                    .bDeviceClass = 0x00,
-                    .bDeviceSubClass = 0x00,
-                    .bDeviceProtocol = 0x00,
-                    .bMaxPacketSize0 = 0x40,
-                    .idVendor = 0x057e,
-                    .idProduct = 0x3000,
-                    .bcdDevice = 0x0100,
-                    .iManufacturer = iManufacturer,
-                    .iProduct = iProduct,
-                    .iSerialNumber = iSerialNumber,
-                    .bNumConfigurations = 0x01
-                };
                 // Full Speed is USB 1.1
-                if (R_SUCCEEDED(rc)) rc = usbDsSetUsbDeviceDescriptor(UsbDeviceSpeed_Full, &device_descriptor);
+                if (R_SUCCEEDED(rc)) rc = usbDsSetUsbDeviceDescriptor(UsbDeviceSpeed_Full, device_descriptor);
                 
                 // High Speed is USB 2.0
-                device_descriptor.bcdUSB = 0x0200;
-                if (R_SUCCEEDED(rc)) rc = usbDsSetUsbDeviceDescriptor(UsbDeviceSpeed_High, &device_descriptor);
+                device_descriptor->bcdUSB = 0x0200;
+                if (R_SUCCEEDED(rc)) rc = usbDsSetUsbDeviceDescriptor(UsbDeviceSpeed_High, device_descriptor);
                 
                 // Super Speed is USB 3.0
-                device_descriptor.bcdUSB = 0x0300;
+                device_descriptor->bcdUSB = 0x0300;
                 // Upgrade packet size to 512
-                device_descriptor.bMaxPacketSize0 = 0x09;
-                if (R_SUCCEEDED(rc)) rc = usbDsSetUsbDeviceDescriptor(UsbDeviceSpeed_Super, &device_descriptor);
+                device_descriptor->bMaxPacketSize0 = 0x09;
+                if (R_SUCCEEDED(rc)) rc = usbDsSetUsbDeviceDescriptor(UsbDeviceSpeed_Super, device_descriptor);
                 
                 // Define Binary Object Store
                 u8 bos[0x16] = {
@@ -155,8 +132,32 @@ Result usbCommsInitializeEx(u32 num_interfaces, const UsbCommsInterfaceInfo *inf
 }
 
 Result usbCommsInitialize(void)
-{
-    return usbCommsInitializeEx(1, NULL);
+{   
+    Result rc = 0;
+    u8 iManufacturer, iProduct, iSerialNumber;
+    if (R_SUCCEEDED(rc)) rc = usbDsAddUsbStringDescriptor(&iManufacturer, "Nintendo");
+    // Send product
+    if (R_SUCCEEDED(rc)) rc = usbDsAddUsbStringDescriptor(&iProduct, "Nintendo Switch");
+    // Send serial number
+    if (R_SUCCEEDED(rc)) rc = usbDsAddUsbStringDescriptor(&iSerialNumber, "SerialNumber");
+    struct usb_device_descriptor device_descriptor = {
+        .bLength = USB_DT_DEVICE_SIZE,
+        .bDescriptorType = USB_DT_DEVICE,
+        .bcdUSB = 0x0110,
+        .bDeviceClass = 0x00,
+        .bDeviceSubClass = 0x00,
+        .bDeviceProtocol = 0x00,
+        .bMaxPacketSize0 = 0x40,
+        .idVendor = 0x057e,
+        .idProduct = 0x3000,
+        .bcdDevice = 0x0100,
+        .iManufacturer = iManufacturer,
+        .iProduct = iProduct,
+        .iSerialNumber = iSerialNumber,
+        .bNumConfigurations = 0x01
+    };
+    rc = usbCommsInitializeEx(1, NULL, &device_descriptor);
+    return rc;
 }
 
 static void _usbCommsInterfaceFree(usbCommsInterface *interface)
