@@ -14,7 +14,7 @@ static u64 g_refCnt;
 static nvioctl_gpu_characteristics g_gpu_characteristics;
 static u32 g_zcull_ctx_size;
 
-Result nvInfoInit()
+Result nvInfoInit(void)
 {
     Result rc;
 
@@ -38,7 +38,7 @@ Result nvInfoInit()
     return rc;
 }
 
-void nvInfoExit()
+void nvInfoExit(void)
 {
     if (atomicDecrement64(&g_refCnt) == 0)
     {
@@ -49,6 +49,10 @@ void nvInfoExit()
     }
 }
 
-u32 nvInfoGetZcullCtxSize() {
+const nvioctl_gpu_characteristics* nvInfoGetGpuCharacteristics(void) {
+    return &g_gpu_characteristics;
+}
+
+u32 nvInfoGetZcullCtxSize(void) {
     return g_zcull_ctx_size;
 }
