@@ -21,7 +21,7 @@ Result nvioctlNvhostAsGpu_AllocSpace(u32 fd, u32 pages, u32 page_size, u32 flags
     struct {
         __nv_in u32 pages;
         __nv_in u32 page_size;
-        __nv_in u32 flags;
+        __nv_in u32 flags; // bit0=fixed bit1=sparse
         u32      pad;
         union {
             __nv_out u64 offset;
@@ -42,6 +42,21 @@ Result nvioctlNvhostAsGpu_AllocSpace(u32 fd, u32 pages, u32 page_size, u32 flags
         *offset = data.offset;
 
     return rc;
+}
+
+Result nvioctlNvhostAsGpu_FreeSpace(u32 fd, u64 offset, u32 pages, u32 page_size) {
+    struct {
+        __nv_in u64 offset;
+        __nv_in u32 pages;
+        __nv_in u32 page_size;
+    } data;
+
+    memset(&data, 0, sizeof(data));
+    data.offset = offset;
+    data.pages = pages;
+    data.page_size = page_size;
+
+    return nvIoctl(fd, _NV_IOWR(0x41, 0x03, data), &data);
 }
 
 Result nvioctlNvhostAsGpu_MapBufferEx(
@@ -111,11 +126,11 @@ Result nvioctlNvhostAsGpu_GetVARegions(u32 fd, nvioctl_va_region regions[2]) {
     return rc;
 }
 
-Result nvioctlNvhostAsGpu_InitializeEx(u32 fd, u32 big_page_size, u32 flags) {
+Result nvioctlNvhostAsGpu_InitializeEx(u32 fd, u32 flags, u32 big_page_size) {
     struct {
-        __nv_in u32 big_page_size;   // depends on GPU's available_big_page_sizes; 0=default
+        __nv_in u32 flags;           // flags? passes 1
         __nv_in s32 as_fd;           // ignored; passes 0
-        __nv_in u32 flags;           // ignored; passes 0
+        __nv_in u32 big_page_size;   // depends on GPU's available_big_page_sizes; 0=default
         __nv_in u32 reserved;        // ignored; passes 0
         __nv_in u64 unk0;
         __nv_in u64 unk1;
@@ -123,8 +138,8 @@ Result nvioctlNvhostAsGpu_InitializeEx(u32 fd, u32 big_page_size, u32 flags) {
     } data;
 
     memset(&data, 0, sizeof(data));
-    data.big_page_size = big_page_size;
     data.flags = flags;
+    data.big_page_size = big_page_size;
 
     return nvIoctl(fd, _NV_IOW(0x41, 0x09, data), &data);
 }

@@ -131,10 +131,17 @@ typedef enum {
     NvZcullConfig_PartOfRegularBuffer = 3
 } NvZcullConfig;
 
+// Used with nvioctlNvhostAsGpu_AllocSpace().
+typedef enum {
+    NvAllocSpaceFlags_FixedOffset = 1,
+    NvAllocSpaceFlags_Sparse = 2,
+} NvAllocSpaceFlags;
+
 // Used with nvioctlNvhostAsGpu_MapBufferEx().
 typedef enum {
     NvMapBufferFlags_FixedOffset = 1,
     NvMapBufferFlags_IsCacheable = 4,
+    NvMapBufferFlags_Modify = 0x100,
 } NvMapBufferFlags;
 
 typedef enum {
@@ -171,11 +178,12 @@ Result nvioctlNvhostCtrlGpu_GetTpcMasks(u32 fd, u32 inval, u32 out[24>>2]);
 Result nvioctlNvhostCtrlGpu_GetL2State(u32 fd, nvioctl_l2_state *out);
 
 Result nvioctlNvhostAsGpu_BindChannel(u32 fd, u32 channel_fd);
-Result nvioctlNvhostAsGpu_AllocSpace(u32 fd, u32 pages, u32 page_size, u32 flags, u64 align, u64 *offset);
+Result nvioctlNvhostAsGpu_AllocSpace(u32 fd, u32 pages, u32 page_size, u32 flags, u64 align_or_offset, u64 *offset);
+Result nvioctlNvhostAsGpu_FreeSpace(u32 fd, u64 offset, u32 pages, u32 page_size);
 Result nvioctlNvhostAsGpu_MapBufferEx(u32 fd, u32 flags, u32 kind, u32 nvmap_handle, u32 page_size, u64 buffer_offset, u64 mapping_size, u64 input_offset, u64 *offset);
 Result nvioctlNvhostAsGpu_UnmapBuffer(u32 fd, u64 offset);
 Result nvioctlNvhostAsGpu_GetVARegions(u32 fd, nvioctl_va_region regions[2]);
-Result nvioctlNvhostAsGpu_InitializeEx(u32 fd, u32 big_page_size, u32 flags);
+Result nvioctlNvhostAsGpu_InitializeEx(u32 fd, u32 flags, u32 big_page_size);
 
 Result nvioctlNvmap_Create(u32 fd, u32 size, u32 *nvmap_handle);
 Result nvioctlNvmap_FromId(u32 fd, u32 id, u32 *nvmap_handle);
