@@ -76,8 +76,7 @@ Result nvBufferCreate(
     }
 
     if (R_SUCCEEDED(rc))
-        rc = nvAddressSpaceMapBuffer(as, m->fd,
-            is_gpu_cacheable ? NvMapBufferFlags_IsCacheable : 0, NvKind_Pitch, &m->gpu_addr);
+        rc = nvAddressSpaceMap(as, m->fd, is_gpu_cacheable, NvKind_Pitch, &m->gpu_addr);
 
     if (R_FAILED(rc))
         nvBufferFree(m);
@@ -91,12 +90,12 @@ void nvBufferFree(NvBuffer* m)
         return;
 
     if (m->gpu_addr_texture) {
-        nvAddressSpaceUnmapBuffer(m->addr_space, m->gpu_addr_texture);
+        nvAddressSpaceUnmap(m->addr_space, m->gpu_addr_texture);
         m->gpu_addr_texture = 0;
     }
 
     if (m->gpu_addr) {
-        nvAddressSpaceUnmapBuffer(m->addr_space, m->gpu_addr);
+        nvAddressSpaceUnmap(m->addr_space, m->gpu_addr);
         m->gpu_addr = 0;
     }
 
@@ -125,8 +124,7 @@ iova_t nvBufferGetGpuAddr(NvBuffer* m) {
 }
 
 Result nvBufferMapAsTexture(NvBuffer* m, NvKind kind) {
-    return nvAddressSpaceMapBuffer(m->addr_space, m->fd,
-        m->is_gpu_cacheable ? NvMapBufferFlags_IsCacheable : 0, kind, &m->gpu_addr_texture);
+    return nvAddressSpaceMap(m->addr_space, m->fd, m->is_gpu_cacheable, kind, &m->gpu_addr_texture);
 }
 
 iova_t nvBufferGetGpuAddrTexture(NvBuffer* m) {
