@@ -33,10 +33,7 @@ Result nvGpuCreate(NvGpu* g)
     rc = nvChannelCreate(&g->gpu_channel, "/dev/nvhost-gpu");
 
     if (R_SUCCEEDED(rc))
-        rc = nvAddressSpaceCreate(&g->addr_space);
-
-    if (R_SUCCEEDED(rc))
-        rc = nvAddressSpaceReserveFull(&g->addr_space);
+        rc = nvAddressSpaceCreate(&g->addr_space, nvInfoGetGpuCharacteristics()->big_page_size);
 
     if (R_SUCCEEDED(rc))
         rc = nvAddressSpaceBindToChannel(&g->addr_space, &g->gpu_channel);
