@@ -17,3 +17,7 @@ typedef enum {
     PcmFormat_Float = 5,
     PcmFormat_Adpcm = 6,
 } PcmFormat;
+
+typedef struct {
+    char name[0x100];
+} AudioDeviceName;
