@@ -86,7 +86,6 @@ Result pscGetPmModule(PscPmModule *out, u16 module_id, const u16 *dependencies, 
     return rc;
 }
 
-
 Result _pscPmModuleInitialize(PscPmModule *module, u16 module_id, const u16 *dependencies, size_t dependency_count, bool autoclear) {
     IpcCommand c;
     ipcInitialize(&c);
