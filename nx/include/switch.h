@@ -68,6 +68,7 @@ extern "C" {
 #include "switch/services/lr.h"
 #include "switch/services/spl.h"
 #include "switch/services/ncm.h"
+#include "switch/services/psc.h"
 
 #include "switch/display/gfx.h"
 #include "switch/display/binder.h"
