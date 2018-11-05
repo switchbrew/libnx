@@ -17,5 +17,5 @@ typedef struct {
 Result hwopusDecoderInitialize(HwopusDecoder* decoder, s32 SampleRate, s32 ChannelCount);
 void hwopusDecoderExit(HwopusDecoder* decoder);
 
-Result hwopusDecodeInterleaved(HwopusDecoder* decoder, s32 *DecodedSampleCount, u32 *DecodedDataSize, const void* opusin, size_t opusin_size, s16 *pcmbuf, size_t pcmbuf_size);
+Result hwopusDecodeInterleaved(HwopusDecoder* decoder, s32 *DecodedDataSize, s32 *DecodedSampleCount, const void* opusin, size_t opusin_size, s16 *pcmbuf, size_t pcmbuf_size);
 

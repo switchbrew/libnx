@@ -120,7 +120,7 @@ static Result _hwopusGetWorkBufferSize(Service* srv, u32 *size, s32 SampleRate, 
     return rc;
 }
 
-Result hwopusDecodeInterleaved(HwopusDecoder* decoder, s32 *DecodedSampleCount, u32 *DecodedDataSize, const void* opusin, size_t opusin_size, s16 *pcmbuf, size_t pcmbuf_size) {
+Result hwopusDecodeInterleaved(HwopusDecoder* decoder, s32 *DecodedDataSize, s32 *DecodedSampleCount, const void* opusin, size_t opusin_size, s16 *pcmbuf, size_t pcmbuf_size) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -144,8 +144,8 @@ Result hwopusDecodeInterleaved(HwopusDecoder* decoder, s32 *DecodedSampleCount, 
         struct {
             u64 magic;
             u64 result;
+            s32 DecodedDataSize;
             s32 DecodedSampleCount;
-            u32 DecodedDataSize;
         } *resp;
 
         serviceIpcParse(&decoder->s, &r, sizeof(*resp));
