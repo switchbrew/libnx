@@ -97,7 +97,7 @@ Result auddevListAudioDeviceName(AudioDeviceName *DeviceNames, s32 max_names, s3
         u64 cmd_id;
     } *raw;
 
-    if (!new_cmd) ipcAddRecvBuffer(&c, DeviceNames, sizeof(AudioDeviceName) * max_names, 0);
+    if (!new_cmd) ipcAddRecvBuffer(&c, DeviceNames, sizeof(AudioDeviceName) * max_names, BufferType_Normal);
     if (new_cmd) ipcAddRecvSmart(&c, g_auddevIpcBufferSize, DeviceNames, sizeof(AudioDeviceName)  * max_names, 0);
 
     raw = serviceIpcPrepareHeader(&g_auddevIAudioDevice, &c, sizeof(*raw));
@@ -139,7 +139,7 @@ Result auddevSetAudioDeviceOutputVolume(const AudioDeviceName *DeviceName, float
         float volume;
     } *raw;
 
-    if (!new_cmd) ipcAddSendBuffer(&c, DeviceName, sizeof(AudioDeviceName), 0);
+    if (!new_cmd) ipcAddSendBuffer(&c, DeviceName, sizeof(AudioDeviceName), BufferType_Normal);
     if (new_cmd) ipcAddSendSmart(&c, g_auddevIpcBufferSize, DeviceName, sizeof(AudioDeviceName), 0);
 
     raw = serviceIpcPrepareHeader(&g_auddevIAudioDevice, &c, sizeof(*raw));
@@ -178,7 +178,7 @@ Result auddevGetAudioDeviceOutputVolume(const AudioDeviceName *DeviceName, float
         u64 cmd_id;
     } *raw;
 
-    if (!new_cmd) ipcAddSendBuffer(&c, DeviceName, sizeof(AudioDeviceName), 0);
+    if (!new_cmd) ipcAddSendBuffer(&c, DeviceName, sizeof(AudioDeviceName), BufferType_Normal);
     if (new_cmd) ipcAddSendSmart(&c, g_auddevIpcBufferSize, DeviceName, sizeof(AudioDeviceName), 0);
 
     raw = serviceIpcPrepareHeader(&g_auddevIAudioDevice, &c, sizeof(*raw));
