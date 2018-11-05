@@ -14,6 +14,13 @@ typedef struct {
     TransferMemory tmem;
 } HwopusDecoder;
 
+///< This structure is the start of opusin for \ref hwopusDecodeInterleaved, with the actual opus packet following this.
+///< These fields are big-endian.
+typedef struct {
+    u32 size; ///< Size of the packet following this header.
+    u32 unk;  ///< Unknown, can be left at zero.
+} HwopusHeader;
+
 Result hwopusDecoderInitialize(HwopusDecoder* decoder, s32 SampleRate, s32 ChannelCount);
 void hwopusDecoderExit(HwopusDecoder* decoder);
 
