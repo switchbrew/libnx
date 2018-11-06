@@ -12,6 +12,7 @@
 typedef struct {
     Service s;
     TransferMemory tmem;
+    bool multistream;
 } HwopusDecoder;
 
 ///< This structure is the start of opusin for \ref hwopusDecodeInterleaved, with the actual opus packet following this.
