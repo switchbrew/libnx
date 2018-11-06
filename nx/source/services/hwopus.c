@@ -1,3 +1,4 @@
+#include <string.h>
 #include "types.h"
 #include "result.h"
 #include "arm/atomics.h"
@@ -9,6 +10,8 @@
 
 static Result _hwopusInitialize(Service* srv, Service* out_srv, TransferMemory *tmem, s32 SampleRate, s32 ChannelCount);
 static Result _hwopusGetWorkBufferSize(Service* srv, u32 *size, s32 SampleRate, s32 ChannelCount);
+static Result _hwopusOpenHardwareOpusDecoderForMultiStream(Service* srv, Service* out_srv, TransferMemory *tmem, HwopusMultistreamState *state);
+static Result _hwopusGetWorkBufferSizeForMultiStream(Service* srv, u32 *size, HwopusMultistreamState *state);
 
 static Result _hwopusDecodeInterleavedWithPerfOld(HwopusDecoder* decoder, s32 *DecodedDataSize, s32 *DecodedSampleCount, u64 *perf, const void* opusin, size_t opusin_size, s16 *pcmbuf, size_t pcmbuf_size);
 
@@ -31,6 +34,49 @@ Result hwopusDecoderInitialize(HwopusDecoder* decoder, s32 SampleRate, s32 Chann
 
         if (R_SUCCEEDED(rc)) {
             rc = _hwopusInitialize(&hwopusMgrSrv, &decoder->s, &decoder->tmem, SampleRate, ChannelCount);
+            if (R_FAILED(rc)) tmemClose(&decoder->tmem);
+        }
+
+        serviceClose(&hwopusMgrSrv);
+    }
+
+    return rc;
+}
+
+Result hwopusDecoderMultistreamInitialize(HwopusDecoder* decoder, s32 SampleRate, s32 ChannelCount, s32 TotalStreamCount, s32 StereoStreamCount, u8 *channel_mapping) {
+    Result rc=0;
+    u32 size=0;
+    HwopusMultistreamState state;
+
+    if (serviceIsActive(&decoder->s))
+        return 0;
+
+    if (!kernelAbove300())
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    if (ChannelCount < 0 || ChannelCount > sizeof(state.channel_mapping))
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+
+    decoder->multistream = true;
+
+    memset(&state, 0, sizeof(HwopusMultistreamState));
+    state.SampleRate = SampleRate;
+    state.ChannelCount = ChannelCount;
+    state.TotalStreamCount = TotalStreamCount;
+    state.StereoStreamCount = StereoStreamCount;
+
+    Service hwopusMgrSrv;
+    rc = smGetService(&hwopusMgrSrv, "hwopus");
+    if (R_SUCCEEDED(rc)) {
+        rc = _hwopusGetWorkBufferSizeForMultiStream(&hwopusMgrSrv, &size, &state);
+        if (R_SUCCEEDED(rc)) size = (size + 0xfff) & ~0xfff;
+
+        if (R_SUCCEEDED(rc)) rc = tmemCreate(&decoder->tmem, size, Perm_None);
+
+        if (R_SUCCEEDED(rc)) {
+            memcpy(state.channel_mapping, channel_mapping, ChannelCount);
+
+            rc = _hwopusOpenHardwareOpusDecoderForMultiStream(&hwopusMgrSrv, &decoder->s, &decoder->tmem, &state);
             if (R_FAILED(rc)) tmemClose(&decoder->tmem);
         }
 
@@ -102,6 +148,84 @@ static Result _hwopusGetWorkBufferSize(Service* srv, u32 *size, s32 SampleRate, 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 1;
     raw->val = (u64)SampleRate | ((u64)ChannelCount<<32);
+
+    Result rc = serviceIpcDispatch(srv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            u32 size;
+        } *resp;
+
+        serviceIpcParse(srv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && size) *size = resp->size;
+    }
+
+    return rc;
+}
+
+static Result _hwopusOpenHardwareOpusDecoderForMultiStream(Service* srv, Service* out_srv, TransferMemory *tmem, HwopusMultistreamState *state) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    ipcSendHandleCopy(&c, tmem->handle);
+    ipcAddSendStatic(&c, state, sizeof(HwopusMultistreamState), 0);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 size;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(srv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 2;
+    raw->size = tmem->size;
+
+    Result rc = serviceIpcDispatch(srv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(srv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            serviceCreateSubservice(out_srv, srv, &r, 0);
+        }
+    }
+
+    return rc;
+}
+
+static Result _hwopusGetWorkBufferSizeForMultiStream(Service* srv, u32 *size, HwopusMultistreamState *state) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    ipcAddSendStatic(&c, state, sizeof(HwopusMultistreamState), 0);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(srv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 3;
 
     Result rc = serviceIpcDispatch(srv);
 
