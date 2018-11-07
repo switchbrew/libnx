@@ -62,7 +62,6 @@ static Result _appletGetSessionProxy(Service* srv_out, u64 cmd_id, Handle procha
 
 static Result _appletGetAppletResourceUserId(u64 *out);
 
-static Result appletSetFocusHandlingMode(u32 mode);
 static Result _appletGetCurrentFocusState(u8 *out);
 static Result _appletSetFocusHandlingMode(u8 inval0, u8 inval1, u8 inval2);
 static Result _appletSetOutOfFocusSuspendingEnabled(u8 inval);
@@ -194,7 +193,7 @@ Result appletInitialize(void)
         rc = _appletGetCurrentFocusState(&g_appletFocusState);
 
         //Don't enter this msg-loop when g_appletFocusState is already 1, it will hang when applet was previously initialized in the context of the current process for AppletType_Application.
-        if (R_SUCCEEDED(rc) && g_appletFocusState!=1) {
+        if (R_SUCCEEDED(rc) && g_appletFocusState != AppletFocusState_Focused) {
             do {
                 eventWait(&g_appletMessageEvent, U64_MAX);
 
@@ -217,14 +216,14 @@ Result appletInitialize(void)
                 if (R_FAILED(rc))
                     break;
 
-            } while(g_appletFocusState!=1);
+            } while(g_appletFocusState != AppletFocusState_Focused);
         }
 
         if (R_SUCCEEDED(rc))
             rc = _appletAcquireForegroundRights();
 
         if (R_SUCCEEDED(rc))
-            rc = appletSetFocusHandlingMode(0);
+            rc = appletSetFocusHandlingMode(AppletFocusHandlingMode_Suspend1);
     }
 
     if (R_SUCCEEDED(rc) && __nx_applet_auto_notifyrunning)
@@ -286,7 +285,7 @@ void appletExit(void)
                 if (g_appletRecordingInitialized == 2) appletSetGamePlayRecordingState(0);
             }
 
-            if (__nx_applet_type == AppletType_Application) appletSetFocusHandlingMode(1);
+            if (__nx_applet_type == AppletType_Application) appletSetFocusHandlingMode(AppletFocusHandlingMode_NoSuspend);
         }
 
         if ((envIsNso() && __nx_applet_exit_mode==0) || __nx_applet_exit_mode==1) {
@@ -381,30 +380,30 @@ void appletUnhook(AppletHookCookie* cookie)
     }
 }
 
-static Result appletSetFocusHandlingMode(u32 mode) {
+Result appletSetFocusHandlingMode(AppletFocusHandlingMode mode) {
     Result rc;
     u8 invals[4];
 
-    if (mode > 3)
+    if (mode >= AppletFocusHandlingMode_Max)
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
     memset(invals, 0, sizeof(invals));
 
-    if ((mode == 0) || (mode == 3)) {
+    if ((mode == AppletFocusHandlingMode_Suspend1) || (mode == AppletFocusHandlingMode_Suspend3)) {
         invals[0] = 0;
         invals[1] = 0;
         invals[2] = 1;
     }
 
-    if (mode != 3) {
+    if (mode != AppletFocusHandlingMode_Suspend3) {
         invals[3] = 0;
 
-        if (mode == 1) {
+        if (mode == AppletFocusHandlingMode_NoSuspend) {
             invals[0] = 1;
             invals[1] = 1;
             invals[2] = 0;
         }
-        else if (mode == 2) {
+        else if (mode == AppletFocusHandlingMode_Suspend2) {
             invals[0] = 1;
             invals[1] = 0;
             invals[2] = 1;
@@ -1365,8 +1364,8 @@ u32 appletGetPerformanceMode(void) {
     return g_appletPerformanceMode;
 }
 
-u8 appletGetFocusState(void) {
-    return g_appletFocusState;
+AppletFocusState appletGetFocusState(void) {
+    return (AppletFocusState)g_appletFocusState;
 }
 
 bool appletMainLoop(void) {
