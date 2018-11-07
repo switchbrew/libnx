@@ -32,6 +32,21 @@ typedef enum {
     AppletHookType_Max,               ///< Number of applet hook types.
 } AppletHookType;
 
+typedef enum {
+    AppletFocusState_Focused = 1,               ///< Applet is focused.
+    AppletFocusState_NotFocusedUnknown = 2,     ///< Out of focus - unknown reason (LibraryApplet open?).
+    AppletFocusState_NotFocusedHomeSleep = 3    ///< Out of focus - HOME menu is open / console is sleeping.
+} AppletFocusState;
+
+typedef enum {
+  AppletFocusHandlingMode_Suspend1 = 0, ///< Suspend when out of focus.
+  AppletFocusHandlingMode_NoSuspend,    ///< Don't suspend when out of focus.
+  AppletFocusHandlingMode_Suspend2,     ///< Suspend when out of focus (unknown variant 1).
+  AppletFocusHandlingMode_Suspend3,     ///< Suspend when out of focus (unknown variant 2).
+
+  AppletFocusHandlingMode_Max,          //< Number of focus handling modes
+} AppletFocusHandlingMode;
+
 /// applet hook function.
 typedef void (*AppletHookFn)(AppletHookType hook, void* param);
 
@@ -119,4 +134,6 @@ void appletUnhook(AppletHookCookie* cookie);
 /// These return state which is updated by appletMainLoop() when notifications are received.
 u8  appletGetOperationMode(void);
 u32 appletGetPerformanceMode(void);
-u8  appletGetFocusState(void);
+AppletFocusState appletGetFocusState(void);
+
+Result appletSetFocusHandlingMode(AppletFocusHandlingMode mode);
