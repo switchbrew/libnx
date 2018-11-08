@@ -9,8 +9,8 @@
 #include "services/nv.h"
 #include "display/binder.h"
 #include "display/buffer_producer.h"
-#include "display/nvgfx.h"
 #include "display/gfx.h"
+#include "nvidia/map.h"
 
 static bool g_gfxInitialized = 0;
 static ViDisplay g_gfxDisplay;
@@ -24,7 +24,6 @@ static bool g_gfx_ProducerConnected = 0;
 static u32 g_gfx_ProducerSlotsRequested = 0;
 static u8 *g_gfxFramebuf;
 static size_t g_gfxFramebufSize;
-static u32 g_gfxFramebufHandle;
 static BqQueueBufferOutput g_gfx_Connect_QueueBufferOutput;
 static BqQueueBufferOutput g_gfx_QueueBuffer_QueueBufferOutput;
 
@@ -48,7 +47,8 @@ static s32 g_gfx_autoresolution_docked_height;
 
 extern u32 __nx_applet_type;
 
-extern u32 g_nvgfx_totalframebufs;
+static const u32 g_nvgfx_totalframebufs = 2;
+static NvMap g_nvmap_obj;
 
 //static Result _gfxGetDisplayResolution(u64 *width, u64 *height);
 
@@ -179,7 +179,6 @@ Result gfxInitDefault(void) {
     g_gfx_ProducerConnected = 0;
     g_gfxFramebuf = NULL;
     g_gfxFramebufSize = 0;
-    g_gfxFramebufHandle = 0;
     g_gfxMode = GfxMode_LinearDouble;
 
     g_gfxQueueBufferData.transform = 0;
@@ -223,6 +222,15 @@ Result gfxInitDefault(void) {
         return rc;
     }
 
+    g_gfxFramebufSize = g_nvgfx_totalframebufs*g_gfx_singleframebuf_size;
+    g_gfxFramebuf = memalign(0x1000, g_gfxFramebufSize);
+    if (!g_gfxFramebuf) {
+        free(g_gfxFramebufLinear);
+        g_gfxFramebufLinear = NULL;
+        rc = MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
+        return rc;
+    }
+
     rc = viInitialize(ViServiceType_Default);
 
     if (R_SUCCEEDED(rc)) rc = viOpenDefaultDisplay(&g_gfxDisplay);
@@ -248,9 +256,22 @@ Result gfxInitDefault(void) {
 
     if (R_SUCCEEDED(rc)) rc = nvFenceInit();
 
-    if (R_SUCCEEDED(rc)) rc = nvgfxInitialize();
+    if (R_SUCCEEDED(rc)) rc = nvMapInit();
 
-    if (R_SUCCEEDED(rc)) rc = nvgfxGetFramebuffer(&g_gfxFramebuf, &g_gfxFramebufSize, &g_gfxFramebufHandle);
+    if (R_SUCCEEDED(rc)) rc = nvMapCreate(&g_nvmap_obj, g_gfxFramebuf, g_gfxFramebufSize, 0x20000, NvKind_Pitch, true);
+
+    if (R_SUCCEEDED(rc)) {
+        for (s32 i = 0; i < g_nvgfx_totalframebufs; i ++) {
+            g_gfx_BufferInitData.refcount = i;
+            g_gfx_BufferInitData.data.nvmap_handle0 = nvMapGetId(&g_nvmap_obj);
+            g_gfx_BufferInitData.data.nvmap_handle1 = nvMapGetHandle(&g_nvmap_obj);
+            g_gfx_BufferInitData.data.buffer_offset = g_gfx_singleframebuf_size*i;
+            //g_gfx_BufferInitData.data.timestamp = svcGetSystemTick();
+            rc = bqSetPreallocatedBuffer(&g_gfxBinderSession, i, &g_gfx_BufferInitData);
+            if (R_FAILED(rc))
+                break;
+        }
+    }
 
     if (R_SUCCEEDED(rc)) rc = _gfxDequeueBuffer();
 
@@ -263,7 +284,8 @@ Result gfxInitDefault(void) {
                 if (g_gfx_ProducerSlotsRequested & BIT(i)) bqDetachBuffer(&g_gfxBinderSession, i);
             }
             bqDisconnect(&g_gfxBinderSession, NATIVE_WINDOW_API_CPU);
-            nvgfxExit();
+            nvMapFree(&g_nvmap_obj);
+            nvMapExit();
             nvFenceExit();
             nvExit();
         }
@@ -275,6 +297,7 @@ Result gfxInitDefault(void) {
         viCloseDisplay(&g_gfxDisplay);
         viExit();
 
+        free(g_gfxFramebuf);
         free(g_gfxFramebufLinear);
         g_gfxFramebufLinear = NULL;
 
@@ -283,7 +306,6 @@ Result gfxInitDefault(void) {
         g_gfx_ProducerConnected = 0;
         g_gfxFramebuf = NULL;
         g_gfxFramebufSize = 0;
-        g_gfxFramebufHandle = 0;
 
         g_gfx_framebuf_width = 0;
         g_gfx_framebuf_height = 0;
@@ -307,7 +329,8 @@ void gfxExit(void)
             if (g_gfx_ProducerSlotsRequested & BIT(i)) bqDetachBuffer(&g_gfxBinderSession, i);
         }
         bqDisconnect(&g_gfxBinderSession, NATIVE_WINDOW_API_CPU);
-        nvgfxExit();
+        nvMapFree(&g_nvmap_obj);
+        nvMapExit();
         nvFenceExit();
         nvExit();
     }
@@ -319,6 +342,7 @@ void gfxExit(void)
     viCloseDisplay(&g_gfxDisplay);
     viExit();
 
+    free(g_gfxFramebuf);
     free(g_gfxFramebufLinear);
     g_gfxFramebufLinear = NULL;
 
@@ -417,16 +441,6 @@ void gfxConfigureAutoResolutionDefault(bool enable) {
     gfxConfigureAutoResolution(enable, 1280, 720, 0, 0);
 }
 
-Result _gfxGraphicBufferInit(s32 buf, u32 nvmap_id, u32 nvmap_handle) {
-    g_gfx_BufferInitData.refcount = buf;
-    g_gfx_BufferInitData.data.nvmap_handle0 = nvmap_id;
-    g_gfx_BufferInitData.data.nvmap_handle1 = nvmap_handle;
-    g_gfx_BufferInitData.data.buffer_offset = g_gfx_singleframebuf_size*buf;
-    //g_gfx_BufferInitData.data.timestamp = svcGetSystemTick();
-
-    return bqSetPreallocatedBuffer(&g_gfxBinderSession, buf, &g_gfx_BufferInitData);
-}
-
 void gfxWaitForVsync(void) {
     Result rc = eventWait(&g_gfxDisplayVsyncEvent, U64_MAX);
     if (R_FAILED(rc))
@@ -450,7 +464,7 @@ u32 gfxGetFramebufferHandle(u32 index, u32* offset) {
         index = (g_gfxCurrentBuffer + index) & (g_nvgfx_totalframebufs-1);
         *offset = index*g_gfx_singleframebuf_size;
     }
-    return g_gfxFramebufHandle;
+    return nvMapGetHandle(&g_nvmap_obj);
 }
 
 u8* gfxGetFramebuffer(u32* width, u32* height) {
