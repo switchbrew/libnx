@@ -1,5 +1,6 @@
 #pragma once
 #include "types.h"
+#include "ioctl.h"
 
 typedef struct NvAddressSpace {
     u32  fd;
@@ -18,6 +19,3 @@ Result nvAddressSpaceMap(NvAddressSpace* a, u32 nvmap_handle, bool is_gpu_cachea
 Result nvAddressSpaceMapFixed(NvAddressSpace* a, u32 nvmap_handle, bool is_gpu_cacheable, NvKind kind, iova_t iova);
 Result nvAddressSpaceModify(NvAddressSpace* a, iova_t iova, u64 offset, u64 size, NvKind kind);
 Result nvAddressSpaceUnmap(NvAddressSpace* a, iova_t iova);
-
-struct NvChannel;
-Result nvAddressSpaceBindToChannel(NvAddressSpace* a, struct NvChannel* channel);
