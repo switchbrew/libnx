@@ -5,7 +5,7 @@
 #include "kernel/svc.h"
 #include "services/nv.h"
 #include "nvidia/ioctl.h"
-#include "nvidia/buffer.h"
+#include "nvidia/map.h"
 #include "nvidia/channel.h"
 
 Result nvChannelCreate(NvChannel* c, const char* dev)
@@ -18,6 +18,9 @@ Result nvChannelCreate(NvChannel* c, const char* dev)
 
     if (R_FAILED(rc))
         c->fd = -1;
+
+    if (R_SUCCEEDED(rc))
+        rc = nvioctlChannel_SetNvmapFd(c->fd, nvMapGetFd());
 
     if (R_FAILED(rc))
         nvChannelClose(c);
@@ -42,8 +45,4 @@ Result nvChannelSetPriority(NvChannel* c, NvChannelPriority prio) {
 
 Result nvChannelSetTimeout(NvChannel* c, u32 timeout) {
     return nvioctlChannel_SetTimeout(c->fd, timeout);
-}
-
-Result nvChannelSetNvmapFd(NvChannel* c) {
-    return nvioctlChannel_SetNvmapFd(c->fd, nvBufferGetNvmapFd());
 }

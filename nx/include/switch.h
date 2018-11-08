@@ -89,17 +89,12 @@ extern "C" {
 #include "switch/display/nvgfx.h"
 
 #include "switch/nvidia/ioctl.h"
-#include "switch/nvidia/buffer.h"
+#include "switch/nvidia/map.h"
 #include "switch/nvidia/address_space.h"
 #include "switch/nvidia/channel.h"
 #include "switch/nvidia/info.h"
 #include "switch/nvidia/fence.h"
-#include "switch/nvidia/gpu/cmd_list.h"
-#include "switch/nvidia/gpu/gpfifo.h"
-#include "switch/nvidia/gpu/zcull_ctx.h"
-#include "switch/nvidia/gpu/3d_ctx.h"
-#include "switch/nvidia/gpu/error_notifier.h"
-#include "switch/nvidia/gpu/gpu.h"
+#include "switch/nvidia/gpu_channel.h"
 
 #include "switch/audio/driver.h"
 

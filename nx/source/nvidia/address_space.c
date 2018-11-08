@@ -5,8 +5,6 @@
 #include "kernel/svc.h"
 #include "services/nv.h"
 #include "nvidia/ioctl.h"
-#include "nvidia/buffer.h"
-#include "nvidia/channel.h"
 #include "nvidia/address_space.h"
 
 Result nvAddressSpaceCreate(NvAddressSpace* a, u32 page_size)
@@ -95,9 +93,4 @@ Result nvAddressSpaceModify(NvAddressSpace* a, iova_t iova, u64 offset, u64 size
 Result nvAddressSpaceUnmap(NvAddressSpace* a, iova_t iova)
 {
     return nvioctlNvhostAsGpu_UnmapBuffer(a->fd, iova);
-}
-
-Result nvAddressSpaceBindToChannel(NvAddressSpace* a, NvChannel* channel)
-{
-    return nvioctlNvhostAsGpu_BindChannel(a->fd, channel->fd);
 }
