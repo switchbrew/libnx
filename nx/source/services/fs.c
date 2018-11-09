@@ -1007,6 +1007,50 @@ Result fsFsCleanDirectoryRecursively(FsFileSystem* fs, const char* path) {
     return rc;
 }
 
+Result fsFsQueryEntry(FsFileSystem* fs, void *out, size_t out_size, const void *in, size_t in_size, const char* path, FsFileSystemQueryType query_type) {
+    char send_path[FS_MAX_PATH] = {0};
+    strncpy(send_path, path, sizeof(send_path)-1);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+    ipcAddSendStatic(&c, send_path, sizeof(send_path), 0);
+    ipcAddSendBuffer(&c, in, in_size, BufferType_Type1);
+    ipcAddRecvBuffer(&c, out, out_size, BufferType_Type1);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 query_type;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&fs->s, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 15;
+    raw->query_type = query_type;
+
+    Result rc = serviceIpcDispatch(&fs->s);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&fs->s, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result fsFsSetArchiveBit(FsFileSystem* fs, const char *path) {
+    return fsFsQueryEntry(fs, NULL, 0, NULL, 0, path, FsFileSystemQueryType_SetArchiveBit);
+}
+
 void fsFsClose(FsFileSystem* fs) {
     serviceClose(&fs->s);
 }
