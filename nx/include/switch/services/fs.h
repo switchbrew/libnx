@@ -204,7 +204,6 @@ Result fsFsGetTotalSpace(FsFileSystem* fs, const char* path, u64* out);
 Result fsFsCleanDirectoryRecursively(FsFileSystem* fs, const char* path);
 Result fsFsQueryEntry(FsFileSystem* fs, void *out, size_t out_size, const void *in, size_t in_size, const char* path, FsFileSystemQueryType query_type);
 Result fsFsSetArchiveBit(FsFileSystem* fs, const char *path);
-
 void fsFsClose(FsFileSystem* fs);
 
 // IFile
