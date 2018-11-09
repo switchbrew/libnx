@@ -206,7 +206,7 @@ Result fsFsQueryEntry(FsFileSystem* fs, void *out, size_t out_size, const void *
 void fsFsClose(FsFileSystem* fs);
 
 /// Uses fsFsQueryEntry to set the archive bit on the specified absolute directory path.
-/// This will cause HOS to treat the directory as though it is a file containing the directory's concatenated contents.
+/// This will cause HOS to treat the directory as if it were a file containing the directory's concatenated contents.
 Result fsFsSetArchiveBit(FsFileSystem* fs, const char *path);
 
 // IFile
