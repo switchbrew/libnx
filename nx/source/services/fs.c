@@ -1008,6 +1008,9 @@ Result fsFsCleanDirectoryRecursively(FsFileSystem* fs, const char* path) {
 }
 
 Result fsFsQueryEntry(FsFileSystem* fs, void *out, size_t out_size, const void *in, size_t in_size, const char* path, FsFileSystemQueryType query_type) {
+    if (!kernelAbove400())
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     char send_path[FS_MAX_PATH] = {0};
     strncpy(send_path, path, sizeof(send_path)-1);
 
