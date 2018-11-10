@@ -139,6 +139,16 @@ typedef enum
     FsSaveDataType_CacheStorage             = 5, ///< [3.0.0+]
 } FsSaveDataType;
 
+typedef enum {
+    FsGameCardAttribute_AutoBoot   = (1 << 0), ///< Causes the cartridge to automatically start on bootup
+    FsGameCardAttribute_ForceError = (1 << 1), ///< Causes NS to throw an error on attempt to load the cartridge
+    FsGameCardAttribute_Repair     = (1 << 2), ///< Indicates that this gamecard is a repair tool.
+} FsGameCardAttribute;
+
+typedef struct {
+    u32 value;
+} FsGameCardHandle;
+
 Result fsInitialize(void);
 void fsExit(void);
 
@@ -242,4 +252,7 @@ void fsEventNotifierClose(FsEventNotifier* e);
 
 // IDeviceOperator
 Result fsDeviceOperatorIsSdCardInserted(FsDeviceOperator* d, bool* out);
+Result fsDeviceOperatorIsGameCardInserted(FsDeviceOperator* d, bool* out);
+Result fsDeviceOperatorGetGameCardHandle(FsDeviceOperator* d, FsGameCardHandle* out);
+Result fsDeviceOperatorGetGameCardAttribute(FsDeviceOperator* d, const FsGameCardHandle* handle, u8 *out);
 void fsDeviceOperatorClose(FsDeviceOperator* d);
