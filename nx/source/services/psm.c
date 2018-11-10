@@ -95,8 +95,13 @@ Result psmGetChargerType(ChargerType *out) {
     return _psmGetOutU32(1, out);
 }
 
-Result psmGetBatteryVoltageState(u32 *out) {
-    return _psmGetOutU32(12, out);
+Result psmGetBatteryVoltageState(PsmBatteryVoltageState *out) {
+    u32 state;
+    Result rc = _psmGetOutU32(12, &state);
+    if (R_SUCCEEDED(rc)) {
+        *out = (PsmBatteryVoltageState)state;
+    }
+    return rc;
 }
 
 static Result _psmOpenSession(Service* out) {

@@ -13,12 +13,19 @@ typedef enum {
     ChargerType_Usb = 2      ///< Other USB-C chargers
 } ChargerType;
 
+typedef enum {
+    PsmBatteryVoltageState_NeedsShutdown = 0,      ///< Power state should transition to shutdown
+    PsmBatteryVoltageState_NeedsSleep = 1,         ///< Power state should transition to sleep
+    PsmBatteryVoltageState_NoPerformanceBoost = 2, ///< Performance boost modes cannot be entered
+    PsmBatteryVoltageState_Normal = 3,             ///< Everything is normal
+} PsmBatteryVoltageState;
+
 Result psmInitialize(void);
 void psmExit(void);
 
 Result psmGetBatteryChargePercentage(u32 *out);
 Result psmGetChargerType(ChargerType *out);
-Result psmGetBatteryVoltageState(u32 *out);
+Result psmGetBatteryVoltageState(PsmBatteryVoltageState *out);
 
 /**
  * @brief Wrapper func which handles event setup.
