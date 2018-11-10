@@ -1589,7 +1589,7 @@ void fsEventNotifierClose(FsEventNotifier* e) {
 }
 
 // IDeviceOperator
-Result fsDeviceOperatorIsSdCardInserted(FsDeviceOperator* d, bool* out) {
+static Result _fsDeviceOperatorCheckInserted(FsDeviceOperator* d, u32 cmd_id, bool* out) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -1601,7 +1601,7 @@ Result fsDeviceOperatorIsSdCardInserted(FsDeviceOperator* d, bool* out) {
     raw = serviceIpcPrepareHeader(&d->s, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 0;
+    raw->cmd_id = cmd_id;
 
     Result rc = serviceIpcDispatch(&d->s);
 
@@ -1620,6 +1620,90 @@ Result fsDeviceOperatorIsSdCardInserted(FsDeviceOperator* d, bool* out) {
 
         if (R_SUCCEEDED(rc)) {
             *out = resp->is_inserted != 0;
+        }
+    }
+
+    return rc;
+}
+
+Result fsDeviceOperatorIsSdCardInserted(FsDeviceOperator* d, bool* out) {
+    return _fsDeviceOperatorCheckInserted(d, 0, out);
+}
+
+Result fsDeviceOperatorIsGameCardInserted(FsDeviceOperator* d, bool* out) {
+    return _fsDeviceOperatorCheckInserted(d, 200, out);
+}
+
+Result fsDeviceOperatorGetGameCardHandle(FsDeviceOperator* d, FsGameCardHandle* out) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&d->s, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 202;
+
+    Result rc = serviceIpcDispatch(&d->s);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            u32 handle;
+        } *resp;
+
+        serviceIpcParse(&d->s, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            out->value = resp->handle;
+        }
+    }
+
+    return rc;
+}
+
+Result fsDeviceOperatorGetGameCardAttribute(FsDeviceOperator* d, const FsGameCardHandle* handle, u8 *out) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 handle;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&d->s, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 205;
+    raw->handle = handle->value;
+
+    Result rc = serviceIpcDispatch(&d->s);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            u8 attr;
+        } *resp;
+
+        serviceIpcParse(&d->s, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            *out = resp->attr;
         }
     }
 
