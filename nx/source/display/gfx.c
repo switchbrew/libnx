@@ -11,6 +11,7 @@
 #include "display/buffer_producer.h"
 #include "display/gfx.h"
 #include "nvidia/map.h"
+#include "nvidia/graphic_buffer.h"
 
 __attribute__((weak)) ViServiceType __nx_gfx_vi_service_type = ViServiceType_Default;
 
@@ -26,8 +27,8 @@ static bool g_gfx_ProducerConnected = 0;
 static u32 g_gfx_ProducerSlotsRequested = 0;
 static u8 *g_gfxFramebuf;
 static size_t g_gfxFramebufSize;
-static BqQueueBufferOutput g_gfx_Connect_QueueBufferOutput;
-static BqQueueBufferOutput g_gfx_QueueBuffer_QueueBufferOutput;
+static BqBufferOutput g_gfx_Connect_QueueBufferOutput;
+static BqBufferOutput g_gfx_QueueBuffer_QueueBufferOutput;
 
 static GfxMode g_gfxMode = GfxMode_LinearDouble;
 
@@ -55,7 +56,7 @@ static NvMap g_nvmap_obj;
 //static Result _gfxGetDisplayResolution(u64 *width, u64 *height);
 
 // TODO: Let the user configure some of this?
-static BqQueueBufferInput g_gfxQueueBufferData = {
+static BqBufferInput g_gfxQueueBufferData = {
     .timestamp = 0x0,
     .isAutoTimestamp = 0x1,
     .crop = {0x0, 0x0, 0x0, 0x0}, //Official apps which use multiple resolutions configure this for the currently used resolution, depending on the current appletOperationMode.
@@ -67,35 +68,31 @@ static BqQueueBufferInput g_gfxQueueBufferData = {
     .fence = {0},
 };
 
-// Some of this struct is based on tegra_dc_ext_flip_windowattr.
-static BqGraphicBuffer g_gfx_BufferInitData = {
-    .magic = 0x47424652,//"RFBG"/'GBFR'
-    .format = 0x1,
+static NvGraphicBuffer g_gfx_GraphicBuffer = {
+    .header = {
+        .num_ints = (sizeof(NvGraphicBuffer) - sizeof(NativeHandle)) / 4,
+    },
+    .unk0 = -1,
+    .magic = 0xDAFFCAFF,
+    .pid = 42,
     .usage = GRALLOC_USAGE_HW_COMPOSER | GRALLOC_USAGE_HW_RENDER | GRALLOC_USAGE_HW_TEXTURE,
-
-    .pid = 0x2a, //Official sw sets this to the output of "getpid()", which calls a func which is hard-coded for returning 0x2a.
-    .refcount = 0x0,  //Official sw sets this to the output of "android_atomic_inc()".
-
-    .numFds = 0x0,
-    .numInts = sizeof(g_gfx_BufferInitData.data)>>2,//0x51
-
-    .data = {
-        .unk_x0 = 0xffffffff,
-        .unk_x8 = 0x0,
-        .unk_xc = 0xdaffcaff,
-        .unk_x10 = 0x2a,
-        .unk_x14 = 0,
-        .unk_x18 = 0xb00,
-        .unk_x1c = 0x1,
-        .unk_x20 = 0x1,
-        .unk_x2c = 0x1,
-        .unk_x30 = 0,
-        .flags = 0x532120,
-        .unk_x40 = 0x1,
-        .unk_x44 = 0x3,
-        .unk_x54 = 0xfe,
-        .unk_x58 = 0x4,
+    .format = PIXEL_FORMAT_RGBA_8888,
+    .ext_format = PIXEL_FORMAT_RGBA_8888,
+    .num_planes = 1,
+    .layers = {
+        {
+            .color_format = 0x100532120UL, // this is 'A8B8G8R8' according to symbols in official sw
+            .layout = NvLayout_BlockLinear,
+            .kind = NvKind_Generic_16BX2,
+            .block_height_log2 = 4, // i.e. block height is 16 which is the preferred value according to TRM
+        }
     }
+};
+
+static BqGraphicBuffer g_gfx_BufferInitData = {
+    .format = PIXEL_FORMAT_RGBA_8888,
+    .usage = GRALLOC_USAGE_HW_COMPOSER | GRALLOC_USAGE_HW_RENDER | GRALLOC_USAGE_HW_TEXTURE,
+    .native_handle = &g_gfx_GraphicBuffer.header,
 };
 
 static Result _gfxDequeueBuffer(void) {
@@ -206,14 +203,13 @@ Result gfxInitDefault(void) {
     g_gfx_BufferInitData.height = g_gfx_framebuf_height;
     g_gfx_BufferInitData.stride = g_gfx_framebuf_aligned_width;
 
-    g_gfx_BufferInitData.data.width_unk0 = g_gfx_framebuf_width;
-    g_gfx_BufferInitData.data.width_unk1 = g_gfx_framebuf_width;
-    g_gfx_BufferInitData.data.height_unk = g_gfx_framebuf_height;
+    g_gfx_GraphicBuffer.stride = g_gfx_framebuf_width;
+    g_gfx_GraphicBuffer.total_size = g_gfx_singleframebuf_size;
 
-    g_gfx_BufferInitData.data.byte_stride = g_gfx_framebuf_aligned_width*4;
-
-    g_gfx_BufferInitData.data.buffer_size0 = g_gfx_singleframebuf_size;
-    g_gfx_BufferInitData.data.buffer_size1 = g_gfx_singleframebuf_size;
+    g_gfx_GraphicBuffer.layers[0].width = g_gfx_framebuf_width;
+    g_gfx_GraphicBuffer.layers[0].height = g_gfx_framebuf_height;
+    g_gfx_GraphicBuffer.layers[0].pitch = g_gfx_framebuf_aligned_width*4;
+    g_gfx_GraphicBuffer.layers[0].size = g_gfx_singleframebuf_size;
 
     g_gfxFramebufLinear = memalign(0x1000, g_gfx_singleframebuf_linear_size);
     if (g_gfxFramebufLinear) {
@@ -263,12 +259,9 @@ Result gfxInitDefault(void) {
     if (R_SUCCEEDED(rc)) rc = nvMapCreate(&g_nvmap_obj, g_gfxFramebuf, g_gfxFramebufSize, 0x20000, NvKind_Pitch, true);
 
     if (R_SUCCEEDED(rc)) {
+        g_gfx_GraphicBuffer.nvmap_id = nvMapGetId(&g_nvmap_obj);
         for (s32 i = 0; i < g_nvgfx_totalframebufs; i ++) {
-            g_gfx_BufferInitData.refcount = i;
-            g_gfx_BufferInitData.data.nvmap_handle0 = nvMapGetId(&g_nvmap_obj);
-            g_gfx_BufferInitData.data.nvmap_handle1 = nvMapGetHandle(&g_nvmap_obj);
-            g_gfx_BufferInitData.data.buffer_offset = g_gfx_singleframebuf_size*i;
-            //g_gfx_BufferInitData.data.timestamp = svcGetSystemTick();
+            g_gfx_GraphicBuffer.layers[0].offset = g_gfx_singleframebuf_size*i;
             rc = bqSetPreallocatedBuffer(&g_gfxBinderSession, i, &g_gfx_BufferInitData);
             if (R_FAILED(rc))
                 break;
