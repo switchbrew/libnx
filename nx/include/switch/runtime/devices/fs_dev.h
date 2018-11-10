@@ -42,5 +42,8 @@ FsFileSystem* fsdevGetDeviceFileSystem(const char *name);
 /// Returns the FsFileSystem for the default device (SD card), if mounted. Used internally by romfs_dev.
 FsFileSystem* fsdevGetDefaultFileSystem(void);
 
+/// This calls fsFsSetArchiveBit on the filesystem specified by the input absolute path. 
+Result fsdevSetArchiveBit(const char *path);
+
 /// Unmounts all devices and cleans up any resources used by the FS driver.
 Result fsdevUnmountAll(void);

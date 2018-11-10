@@ -178,6 +178,11 @@ typedef enum
     FsFileSystemType_ApplicationPackage = 7
 } FsFileSystemType;
 
+typedef enum
+{
+    FsFileSystemQueryType_SetArchiveBit = 0,
+} FsFileSystemQueryType;
+
 /// Mount requested filesystem type from content file
 Result fsOpenFileSystem(FsFileSystem* out, FsFileSystemType fsType, const char* contentPath); /// same as calling fsOpenFileSystemWithId with 0 as titleId
 Result fsOpenFileSystemWithId(FsFileSystem* out, u64 titleId, FsFileSystemType fsType, const char* contentPath); /// works on all firmwares, titleId is ignored on 1.0.0
@@ -197,7 +202,12 @@ Result fsFsCommit(FsFileSystem* fs);
 Result fsFsGetFreeSpace(FsFileSystem* fs, const char* path, u64* out);
 Result fsFsGetTotalSpace(FsFileSystem* fs, const char* path, u64* out);
 Result fsFsCleanDirectoryRecursively(FsFileSystem* fs, const char* path);
+Result fsFsQueryEntry(FsFileSystem* fs, void *out, size_t out_size, const void *in, size_t in_size, const char* path, FsFileSystemQueryType query_type);
 void fsFsClose(FsFileSystem* fs);
+
+/// Uses fsFsQueryEntry to set the archive bit on the specified absolute directory path.
+/// This will cause HOS to treat the directory as if it were a file containing the directory's concatenated contents.
+Result fsFsSetArchiveBit(FsFileSystem* fs, const char *path);
 
 // IFile
 Result fsFileRead(FsFile* f, u64 off, void* buf, size_t len, size_t* out);
