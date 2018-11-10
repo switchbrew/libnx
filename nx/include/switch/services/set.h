@@ -3,10 +3,12 @@
  * @brief Settings services IPC wrapper.
  * @author plutoo
  * @author yellows8
+ * @author SciresM
  * @copyright libnx Authors
  */
 #pragma once
 #include "../result.h"
+#include "../kernel/event.h"
 
 #define SET_MAX_NAME_SIZE 0x48
 
@@ -154,3 +156,16 @@ Result setsysSetFlag(SetSysFlag flag, bool enable);
  * @param out Firmware version to populate.
  */
 Result setsysGetFirmwareVersion(SetSysFirmwareVersion *out);
+
+/**
+ * @brief Gets an event that settings will signal on flag change.
+ * @param out Event to bind. Output event will have autoclear=false.
+ */
+Result setsysBindFatalDirtyFlagEvent(Event *out);
+
+/**
+ * @brief Gets the settings flags that have changed.
+ * @param flags_0 Pointer to populate with first 64 flags.
+ * @param flags_0 Pointer to populate with second 64 flags.
+ */
+Result setsysGetFatalDirtyFlags(u64 *flags_0, u64 *flags_1);
