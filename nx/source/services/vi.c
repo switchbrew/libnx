@@ -26,9 +26,6 @@ Result viInitialize(ViServiceType service_type)
     if (serviceIsActive(&g_viIApplicationDisplayService))
         return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
 
-    if (R_FAILED(appletInitialize()))
-        return MAKERESULT(Module_Libnx, LibnxError_AppletFailedToInitialize);
-
     Service root_srv;
     Result rc = 0;
 
@@ -88,8 +85,6 @@ void viExit(void)
     serviceClose(&g_viIHOSBinderDriverRelay);
     serviceClose(&g_viIApplicationDisplayService);
     g_viServiceType = ViServiceType_Default;
-
-    appletExit();
 }
 
 Service* viGetSession_IApplicationDisplayService(void)
