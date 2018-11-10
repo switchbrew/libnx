@@ -51,6 +51,7 @@ extern "C" {
 #include "switch/services/hwopus.h"
 #include "switch/services/csrng.h"
 #include "switch/services/lbl.h"
+#include "switch/services/i2c.h"
 #include "switch/services/bpc.h"
 #include "switch/services/pcv.h"
 #include "switch/services/psm.h"
