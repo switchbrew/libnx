@@ -10,6 +10,8 @@
 
 typedef enum {
     GpioPadName_AudioCodec = 1,
+    GpioPadName_ButtonVolUp = 25,
+    GpioPadName_ButtonVolDown = 26,
 } GpioPadName;
 
 typedef struct {
