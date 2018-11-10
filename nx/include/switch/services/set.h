@@ -64,6 +64,7 @@ typedef enum {
     SetSysFlag_BluetoothBoostEnable = 113,
     SetSysFlag_InRepairProcessEnable = 115,
     SetSysFlag_HeadphoneVolumeUpdate = 117,
+    SetSysFlag_RequiresRunRepairTimeReviser = 141,
 } SetSysFlag;
 
 /// Structure returned by \ref setsysGetFirmwareVersion
