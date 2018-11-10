@@ -368,6 +368,16 @@ Result fsdevCommitDevice(const char *name)
   return fsFsCommit(&device->fs);
 }
 
+Result fsdevSetArchiveBit(const char *path) {
+  fsdev_fsdevice *device;
+
+  device = fsdevFindDevice(path);
+  if(device==NULL)
+    return MAKERESULT(Module_Libnx, LibnxError_NotFound);
+
+  return fsFsSetArchiveBit(&device->fs, path);
+}
+
 /*! Initialize SDMC device */
 Result fsdevMountSdmc(void)
 {
