@@ -74,7 +74,7 @@ Result parcelTransact(Binder *session, u32 code, Parcel *in_parcel, Parcel *out_
     return rc;
 }
 
-void* parcelWriteData(Parcel *ctx, void* data, size_t data_size)
+void* parcelWriteData(Parcel *ctx, const void* data, size_t data_size)
 {
     void* ptr = &ctx->payload[ctx->payload_size];
 
@@ -168,7 +168,7 @@ void* parcelReadFlattenedObject(Parcel *ctx, size_t *size) {
     return parcelReadData(ctx, NULL, len);
 }
 
-void* parcelWriteFlattenedObject(Parcel *ctx, void* data, size_t size) {
+void* parcelWriteFlattenedObject(Parcel *ctx, const void* data, size_t size) {
     parcelWriteInt32(ctx, size); // len
     parcelWriteInt32(ctx, 0); // fd_count
 
