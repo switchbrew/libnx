@@ -28,15 +28,14 @@ Result nvInitialize(void)
     if (serviceIsActive(&g_nvSrv))
         return 0;
 
-    if (R_FAILED(appletInitialize())) {
-        atomicDecrement64(&g_refCnt);
-        return MAKERESULT(Module_Libnx, LibnxError_AppletFailedToInitialize);
-    }
-
     Result rc = 0;
     u64 AppletResourceUserId = 0;
 
     switch (appletGetAppletType()) {
+    case AppletType_None:
+        rc = smGetService(&g_nvSrv, "nvdrv:s");
+        break;
+
     case AppletType_Default:
     case AppletType_Application:
     case AppletType_SystemApplication:
@@ -91,7 +90,6 @@ void nvExit(void)
         serviceClose(&g_nvSrvClone);
         serviceClose(&g_nvSrv);
         tmemClose(&g_nvTransfermem);
-        appletExit();
     }
 }
 

@@ -32,19 +32,15 @@ Result irsInitialize(void)
     if (serviceIsActive(&g_irsSrv))
         return 0;
 
-    if (R_FAILED(appletInitialize()))
-        return MAKERESULT(Module_Libnx, LibnxError_AppletFailedToInitialize);
-
     Result rc;
     Handle sharedmem_handle;
-    u64 AppletResourceUserId=0;
 
     g_irsSensorActivated = 0;
     memset(g_irsCameras, 0, sizeof(g_irsCameras));
 
-    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
-    if (R_FAILED(rc))
-        return rc;
+    // If this failed (for example because we're a sysmodule) AppletResourceUserId stays zero
+    u64 AppletResourceUserId=0;
+    appletGetAppletResourceUserId(&AppletResourceUserId);
 
     rc = smGetService(&g_irsSrv, "irs");
     if (R_FAILED(rc))
@@ -83,7 +79,6 @@ void irsExit(void)
 
         serviceClose(&g_irsSrv);
         shmemClose(&g_irsSharedmem);
-        appletExit();
     }
 }
 

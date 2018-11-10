@@ -12,6 +12,8 @@
 #include "display/gfx.h"
 #include "nvidia/map.h"
 
+__attribute__((weak)) ViServiceType __nx_gfx_vi_service_type = ViServiceType_Default;
+
 static bool g_gfxInitialized = 0;
 static ViDisplay g_gfxDisplay;
 static Event g_gfxDisplayVsyncEvent;
@@ -231,7 +233,7 @@ Result gfxInitDefault(void) {
         return rc;
     }
 
-    rc = viInitialize(ViServiceType_Default);
+    rc = viInitialize(__nx_gfx_vi_service_type);
 
     if (R_SUCCEEDED(rc)) rc = viOpenDefaultDisplay(&g_gfxDisplay);
 
