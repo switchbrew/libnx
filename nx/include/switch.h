@@ -89,6 +89,7 @@ extern "C" {
 
 #include "switch/nvidia/ioctl.h"
 #include "switch/nvidia/map.h"
+#include "switch/nvidia/graphic_buffer.h"
 #include "switch/nvidia/address_space.h"
 #include "switch/nvidia/channel.h"
 #include "switch/nvidia/info.h"
