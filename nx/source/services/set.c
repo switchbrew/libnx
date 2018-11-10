@@ -613,3 +613,76 @@ Result setsysGetFirmwareVersion(SetSysFirmwareVersion *out) {
         return _setsysGetFirmwareVersionImpl(out, 3);
     }
 }
+
+Result setsysBindFatalDirtyFlagEvent(Event *out) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 93;
+
+    Result rc = serviceIpcDispatch(&g_setsysSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            eventLoadRemote(out, r.Handles[0], false);
+        }
+    }
+
+    return rc;
+}
+
+Result setsysGetFatalDirtyFlags(u64 *flags_0, u64 *flags_1) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 94;
+
+    Result rc = serviceIpcDispatch(&g_setsysSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u64 flags_0;
+            u64 flags_1;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            *flags_0 = resp->flags_0;
+            *flags_1 = resp->flags_1;
+        }
+    }
+
+    return rc;
+}
