@@ -42,7 +42,7 @@ Result bqRequestBuffer(Binder *b, s32 bufferIdx, BqGraphicBuffer *buf);
 Result bqDequeueBuffer(Binder *b, bool async, u32 width, u32 height, s32 format, u32 usage, s32 *buf, NvMultiFence *fence);
 Result bqDetachBuffer(Binder *b, s32 slot);
 Result bqQueueBuffer(Binder *b, s32 buf, const BqBufferInput *input, BqBufferOutput *output);
-Result bqCancelBuffer(Binder *b, s32 buf, NvMultiFence *fence);
+Result bqCancelBuffer(Binder *b, s32 buf, const NvMultiFence *fence);
 Result bqQuery(Binder *b, s32 what, s32* value);
 Result bqConnect(Binder *b, s32 api, bool producerControlledByApp, BqBufferOutput *output);
 Result bqDisconnect(Binder *b, s32 api);
