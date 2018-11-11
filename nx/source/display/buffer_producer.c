@@ -147,7 +147,7 @@ Result bqQueueBuffer(Binder *b, s32 buf, const BqBufferInput *input, BqBufferOut
     return rc;
 }
 
-Result bqCancelBuffer(Binder *b, s32 buf, NvMultiFence *fence)
+Result bqCancelBuffer(Binder *b, s32 buf, const NvMultiFence *fence)
 {
     Result rc;
     Parcel parcel, parcel_reply;
