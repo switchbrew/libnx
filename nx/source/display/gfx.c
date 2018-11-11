@@ -203,7 +203,7 @@ Result gfxInitDefault(void) {
     g_gfx_BufferInitData.height = g_gfx_framebuf_height;
     g_gfx_BufferInitData.stride = g_gfx_framebuf_aligned_width;
 
-    g_gfx_GraphicBuffer.stride = g_gfx_framebuf_width;
+    g_gfx_GraphicBuffer.stride = g_gfx_framebuf_aligned_width;
     g_gfx_GraphicBuffer.total_size = g_gfx_singleframebuf_size;
 
     g_gfx_GraphicBuffer.layers[0].width = g_gfx_framebuf_width;
@@ -221,6 +221,7 @@ Result gfxInitDefault(void) {
     }
 
     g_gfxFramebufSize = g_nvgfx_totalframebufs*g_gfx_singleframebuf_size;
+    g_gfxFramebufSize = (g_gfxFramebufSize + 0xFFF) &~ 0xFFF; // page align
     g_gfxFramebuf = memalign(0x1000, g_gfxFramebufSize);
     if (!g_gfxFramebuf) {
         free(g_gfxFramebufLinear);
