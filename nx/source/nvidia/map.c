@@ -77,12 +77,12 @@ Result nvMapCreate(NvMap* m, void* cpu_addr, u32 size, u32 align, NvKind kind, b
         rc = nvioctlNvmap_GetId(g_nvmap_fd, m->handle, &m->id);
 
     if (R_FAILED(rc))
-        nvMapFree(m);
+        nvMapClose(m);
 
     return rc;
 }
 
-void nvMapFree(NvMap* m)
+void nvMapClose(NvMap* m)
 {
     if (!m->has_init)
         return;

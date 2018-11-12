@@ -280,7 +280,7 @@ Result gfxInitDefault(void) {
                 if (g_gfx_ProducerSlotsRequested & BIT(i)) bqDetachBuffer(&g_gfxBinderSession, i);
             }
             bqDisconnect(&g_gfxBinderSession, NATIVE_WINDOW_API_CPU);
-            nvMapFree(&g_nvmap_obj);
+            nvMapClose(&g_nvmap_obj);
             nvMapExit();
             nvFenceExit();
             nvExit();
@@ -325,7 +325,7 @@ void gfxExit(void)
             if (g_gfx_ProducerSlotsRequested & BIT(i)) bqDetachBuffer(&g_gfxBinderSession, i);
         }
         bqDisconnect(&g_gfxBinderSession, NATIVE_WINDOW_API_CPU);
-        nvMapFree(&g_nvmap_obj);
+        nvMapClose(&g_nvmap_obj);
         nvMapExit();
         nvFenceExit();
         nvExit();
