@@ -16,7 +16,7 @@ u32    nvMapGetFd(void);
 void   nvMapExit(void);
 
 Result nvMapCreate(NvMap* m, void* cpu_addr, u32 size, u32 align, NvKind kind, bool is_cpu_cacheable);
-void   nvMapFree(NvMap* m);
+void   nvMapClose(NvMap* m);
 
 static inline u32 nvMapGetHandle(NvMap* m)
 {
