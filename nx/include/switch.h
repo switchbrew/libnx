@@ -87,6 +87,7 @@ extern "C" {
 #include "switch/display/parcel.h"
 #include "switch/display/buffer_producer.h"
 #include "switch/display/native_window.h"
+#include "switch/display/framebuffer.h"
 
 #include "switch/nvidia/ioctl.h"
 #include "switch/nvidia/graphic_buffer.h"
