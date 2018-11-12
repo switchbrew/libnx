@@ -55,8 +55,10 @@ void nwindowClose(NWindow* nw)
     if (!nw || !nw->has_init)
         return;
 
-    if (nw->is_connected)
+    if (nw->is_connected) {
+        nwindowReleaseBuffers(nw);
         bqDisconnect(&nw->bq, NATIVE_WINDOW_API_CPU);
+    }
 
     eventClose(&nw->event);
     binderClose(&nw->bq);
@@ -72,6 +74,11 @@ Result nwindowConfigureBuffer(NWindow* nw, s32 slot, NvGraphicBuffer* buf)
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     mutexLock(&nw->mutex);
+
+    if (nw->slots_configured & (1UL << slot)) {
+        mutexUnlock(&nw->mutex);
+        return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
+    }
 
     if (!nw->width)
         nw->width = buf->layers[0].width;
@@ -92,6 +99,8 @@ Result nwindowConfigureBuffer(NWindow* nw, s32 slot, NvGraphicBuffer* buf)
     bqbuf.native_handle = &buf->header;
 
     Result rc = bqSetPreallocatedBuffer(&nw->bq, slot, &bqbuf);
+    if (R_SUCCEEDED(rc))
+        nw->slots_configured |= 1UL << slot;
 
     mutexUnlock(&nw->mutex);
     return rc;
@@ -99,7 +108,7 @@ Result nwindowConfigureBuffer(NWindow* nw, s32 slot, NvGraphicBuffer* buf)
 
 Result nwindowDequeueBuffer(NWindow* nw, s32* out_slot, NvMultiFence* out_fence)
 {
-    if (!nw || !out_slot)
+    if (!nw)
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
     if (!nw->has_init)
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
@@ -135,8 +144,9 @@ Result nwindowDequeueBuffer(NWindow* nw, s32* out_slot, NvMultiFence* out_fence)
     }
 
     if (R_SUCCEEDED(rc)) {
-        *out_slot = slot;
         nw->cur_slot = slot;
+        if (out_slot)
+            *out_slot = slot;
         if (out_fence)
             *out_fence = fence;
         else
@@ -206,4 +216,17 @@ Result nwindowQueueBuffer(NWindow* nw, s32 slot, const NvMultiFence* fence)
 
     mutexUnlock(&nw->mutex);
     return rc;
+}
+
+void nwindowReleaseBuffers(NWindow* nw)
+{
+    if (!nw->has_init)
+        return;
+
+    for (u32 i = 0; i < 64; i ++)
+        if (nw->slots_configured & (1UL << i))
+            bqDetachBuffer(&nw->bq, i);
+
+    nw->slots_configured = 0;
+    nw->slots_requested = 0;
 }
