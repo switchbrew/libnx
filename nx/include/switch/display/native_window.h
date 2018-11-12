@@ -11,6 +11,7 @@ typedef struct NWindow {
     Binder bq;
     Event event;
     Mutex mutex;
+    u64 slots_configured;
     u64 slots_requested;
     s32 cur_slot;
     u32 width;
@@ -38,3 +39,4 @@ Result nwindowConfigureBuffer(NWindow* nw, s32 slot, NvGraphicBuffer* buf);
 Result nwindowDequeueBuffer(NWindow* nw, s32* out_slot, NvMultiFence* out_fence);
 Result nwindowCancelBuffer(NWindow* nw, s32 slot, const NvMultiFence* fence);
 Result nwindowQueueBuffer(NWindow* nw, s32 slot, const NvMultiFence* fence);
+void nwindowReleaseBuffers(NWindow* nw);
