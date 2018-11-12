@@ -89,12 +89,12 @@ extern "C" {
 #include "switch/display/native_window.h"
 
 #include "switch/nvidia/ioctl.h"
-#include "switch/nvidia/map.h"
 #include "switch/nvidia/graphic_buffer.h"
+#include "switch/nvidia/fence.h"
+#include "switch/nvidia/map.h"
 #include "switch/nvidia/address_space.h"
 #include "switch/nvidia/channel.h"
-#include "switch/nvidia/info.h"
-#include "switch/nvidia/fence.h"
+#include "switch/nvidia/gpu.h"
 #include "switch/nvidia/gpu_channel.h"
 
 #include "switch/audio/driver.h"
