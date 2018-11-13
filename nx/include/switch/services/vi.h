@@ -39,6 +39,13 @@ typedef enum {
     ViScalingMode_Default = 0x2,
 } ViScalingMode;
 
+/// Used with viSetDisplayPowerState.
+typedef enum {
+    ViPowerState_Off = 0,
+    ViPowerState_NotScanning = 1,
+    ViPowerState_On = 2,
+} ViPowerState;
+
 Result viInitialize(ViServiceType service_type);
 void viExit(void);
 
@@ -47,6 +54,9 @@ Service* viGetSession_IHOSBinderDriverRelay(void);
 Service* viGetSession_ISystemDisplayService(void);
 Service* viGetSession_IManagerDisplayService(void);
 Service* viGetSession_IHOSBinderDriverIndirect(void);
+
+// Misc functions
+Result viSetContentVisibility(bool v);
 
 // Display functions
 
@@ -59,12 +69,21 @@ static inline Result viOpenDefaultDisplay(ViDisplay *display)
 }
 
 Result viGetDisplayResolution(ViDisplay *display, u64 *width, u64 *height);
+Result viGetDisplayLogicalResolution(ViDisplay *display, u32 *width, u32 *height);
+Result viSetDisplayMagnification(ViDisplay *display, u32 x, u32 y, u32 width, u32 height);
 Result viGetDisplayVsyncEvent(ViDisplay *display, Event *event_out);
+Result viSetDisplayPowerState(ViDisplay *display, ViPowerState state);
+Result viSetDisplayAlpha(ViDisplay *display, float alpha);
+Result viGetDisplayMinimumZ(ViDisplay *display, u64 *z);
+Result viGetDisplayMaximumZ(ViDisplay *display, u64 *z);
 
 // Layer functions
 
 Result viCreateLayer(const ViDisplay *display, ViLayer *layer);
 Result viCreateManagedLayer(const ViDisplay *display, ViLayerFlags layer_flags, u64 aruid, u64 *layer_id);
+Result viSetLayerSize(ViLayer *layer, u64 width, u64 height);
+Result viSetLayerZ(ViLayer *layer, u64 z);
+Result viSetLayerPosition(ViLayer *layer, float x, float y);
 Result viCloseLayer(ViLayer *layer);
 
 Result viSetLayerScalingMode(ViLayer *layer, ViScalingMode scaling_mode);
