@@ -7,14 +7,7 @@
 #include "services/fatal.h"
 #include "services/sm.h"
 
-void NORETURN fatalSimple(Result err) {
-    /* By default, do not generate an error report. */
-    fatalWithType(err, FatalType_ErrorScreen);
-    svcExitProcess();
-    __builtin_unreachable();
-}
-
-void fatalWithType(Result err, FatalType type) {
+static void _fatalImpl(u32 cmd_id, Result err, FatalType type, FatalContext *ctx) {
     Result rc = 0;
 
     //Only 3.0.0+ supports FatalType_ErrorScreen, when specified on pre-3.0.0 use FatalType_ErrorReportAndErrorScreen instead.
@@ -36,6 +29,9 @@ void fatalWithType(Result err, FatalType type) {
             IpcCommand c;
             ipcInitialize(&c);
             ipcSendPid(&c);
+            if (ctx != NULL) {
+                ipcAddSendBuffer(&c, ctx, sizeof(*ctx), BufferType_Normal);
+            }
 
             struct {
                 u64 magic;
@@ -48,7 +44,7 @@ void fatalWithType(Result err, FatalType type) {
             raw = ipcPrepareHeader(&c, sizeof(*raw));
 
             raw->magic = SFCI_MAGIC;
-            raw->cmd_id = 1;
+            raw->cmd_id = cmd_id;
             raw->result = err;
             raw->type = type;
             raw->pid_placeholder = 0; // Overwritten by fatal with PID descriptor.
@@ -66,4 +62,19 @@ void fatalWithType(Result err, FatalType type) {
             svcExitProcess();
             __builtin_unreachable();
     }
+}
+
+void NORETURN fatalSimple(Result err) {
+    /* By default, do not generate an error report. */
+    fatalWithType(err, FatalType_ErrorScreen);
+    svcExitProcess();
+    __builtin_unreachable();
+}
+
+void fatalWithType(Result err, FatalType type) {
+    _fatalImpl(1, err, type, NULL); 
+}
+
+void fatalWithContext(Result err, FatalType type, FatalContext *ctx) {
+    _fatalImpl(2, err, type, ctx);
 }
