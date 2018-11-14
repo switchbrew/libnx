@@ -235,6 +235,11 @@ SVC_BEGIN svcOutputDebugString
 	ret
 SVC_END
 
+SVC_BEGIN svcReturnFromException
+	svc 0x28
+	ret
+SVC_END
+
 SVC_BEGIN svcGetInfo
 	str x0, [sp, #-16]!
 	svc 0x29

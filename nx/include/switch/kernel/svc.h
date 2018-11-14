@@ -511,6 +511,13 @@ Result svcOutputDebugString(const char *str, u64 size);
 ///@{
 
 /**
+ * @brief Returns from an exception.
+ * @param[in] res Result code.
+ * @note Syscall number 0x28.
+ */
+void NORETURN svcReturnFromException(Result res);
+
+/**
  * @brief Retrieves information about the system, or a certain kernel object.
  * @param[out] out Variable to which store the information.
  * @param[in] id0 First ID of the property to retrieve.

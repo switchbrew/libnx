@@ -21,6 +21,14 @@ extern u32 __nx_applet_type;
 // Must be a multiple of 0x200000.
 __attribute__((weak)) size_t __nx_heap_size = 0;
 
+/// Override these with your own if you're using __libnx_exception_handler. __nx_exception_stack is the stack-bottom.
+__attribute__((weak)) alignas(16) u8 __nx_exception_stack[0x400];
+__attribute__((weak)) u64 __nx_exception_stack_size = sizeof(__nx_exception_stack);
+/// By default exception handling will be aborted when the current process is being debugged. Set this to non-zero to disable that.
+__attribute__((weak)) u32 __nx_exception_ignoredebug = 0;
+
+ThreadExceptionDump __nx_exceptiondump;
+
 /*
   There are three ways of allocating heap:
 
@@ -165,4 +173,9 @@ void __attribute__((weak)) NORETURN __libnx_exit(int rc)
     __appExit();
 
     __nx_exit(0, envGetExitFuncPtr());
+}
+
+/// You can override this with your own func to handle exceptions. See here: https://switchbrew.org/wiki/SVC#Exception_handling
+void __attribute__((weak)) __libnx_exception_handler(ThreadExceptionDump *ctx)
+{
 }

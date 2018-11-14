@@ -9,16 +9,24 @@ _start:
 .org _start+0x80
 startup:
     // save lr
-    mov  x27, x30
+    mov  x7, x30
 
     // get aslr base
     bl   +4
-    sub  x28, x30, #0x88
+    sub  x6, x30, #0x88
 
     // context ptr and main thread handle
-    mov  x25, x0
-    mov  x26, x1
+    mov  x5, x0
+    mov  x4, x1
 
+    // Handle the exception if needed.
+    // if (ctx != NULL && main_thread != -1)__libnx_exception_entry(<inargs>);
+    cmp x5, #0
+    ccmn x4, #1, #4, ne // 4 = Z
+    beq bssclr_start
+    b __libnx_exception_entry
+
+bssclr_start:
     // clear .bss
     adrp x0, __bss_start__
     adrp x1, __bss_end__
@@ -39,15 +47,15 @@ bss_loop:
     str  x1, [x0, #:lo12:__stack_top]
 
     // process .dynamic section
-    mov  x0, x28
+    mov  x0, x6
     adrp x1, _DYNAMIC
     add  x1, x1, #:lo12:_DYNAMIC
     bl   __nx_dynamic
 
     // initialize system
-    mov  x0, x25
-    mov  x1, x26
-    mov  x2, x27
+    mov  x0, x5
+    mov  x1, x4
+    mov  x2, x7
     bl   __libnx_init
 
     // call entrypoint
