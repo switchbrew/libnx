@@ -13,9 +13,17 @@
 
 // Called by crt0 when the args at the time of entry indicate an exception occured.
 
+.weak __libnx_exception_handler
+
 .weak __libnx_exception_entry
 CODE_BEGIN __libnx_exception_entry
     cmp x1, #0
+    beq __libnx_exception_entry_abort
+
+    // Abort exception handling when __libnx_exception_handler is not defined.
+    adrp x5, :got:__libnx_exception_handler
+    ldr x5, [x5, #:got_lo12:__libnx_exception_handler]
+    cmp x5, #0
     beq __libnx_exception_entry_abort
 
     // Load IsCurrentProcessBeingDebugged.

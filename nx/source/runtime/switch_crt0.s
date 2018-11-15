@@ -27,6 +27,10 @@ startup:
     b __libnx_exception_entry
 
 bssclr_start:
+    mov x27, x7
+    mov x25, x5
+    mov x26, x4
+
     // clear .bss
     adrp x0, __bss_start__
     adrp x1, __bss_end__
@@ -53,9 +57,9 @@ bss_loop:
     bl   __nx_dynamic
 
     // initialize system
-    mov  x0, x5
-    mov  x1, x4
-    mov  x2, x7
+    mov  x0, x25
+    mov  x1, x26
+    mov  x2, x27
     bl   __libnx_init
 
     // call entrypoint
