@@ -265,11 +265,13 @@ typedef enum
     KEY_RSTICK_UP    = BIT(21),      ///< Right Stick Up
     KEY_RSTICK_RIGHT = BIT(22),      ///< Right Stick Right
     KEY_RSTICK_DOWN  = BIT(23),      ///< Right Stick Down
-    KEY_SL           = BIT(24),      ///< SL
-    KEY_SR           = BIT(25),      ///< SR
+    KEY_SL_LEFT      = BIT(24),      ///< SL on Left Joy-Con
+    KEY_SR_LEFT      = BIT(25),      ///< SR on Left Joy-Con
+    KEY_SL_RIGHT     = BIT(26),      ///< SL on Right Joy-Con
+    KEY_SR_RIGHT     = BIT(27),      ///< SR on Right Joy-Con
 
     // Pseudo-key for at least one finger on the touch screen
-    KEY_TOUCH       = BIT(26),
+    KEY_TOUCH       = BIT(28),
 
     // Buttons by orientation (for single Joy-Con), also works with Joy-Con pairs, Pro Controller
     KEY_JOYCON_RIGHT = BIT(0),
@@ -278,10 +280,12 @@ typedef enum
     KEY_JOYCON_LEFT  = BIT(3),
 
     // Generic catch-all directions, also works for single Joy-Con
-    KEY_UP    = KEY_DUP    | KEY_LSTICK_UP    | KEY_RSTICK_UP,    ///< D-Pad Up or Sticks Up
-    KEY_DOWN  = KEY_DDOWN  | KEY_LSTICK_DOWN  | KEY_RSTICK_DOWN,  ///< D-Pad Down or Sticks Down
-    KEY_LEFT  = KEY_DLEFT  | KEY_LSTICK_LEFT  | KEY_RSTICK_LEFT,  ///< D-Pad Left or Sticks Left
-    KEY_RIGHT = KEY_DRIGHT | KEY_LSTICK_RIGHT | KEY_RSTICK_RIGHT, ///< D-Pad Right or Sticks Right
+    KEY_UP    = KEY_DUP     | KEY_LSTICK_UP    | KEY_RSTICK_UP,    ///< D-Pad Up or Sticks Up
+    KEY_DOWN  = KEY_DDOWN   | KEY_LSTICK_DOWN  | KEY_RSTICK_DOWN,  ///< D-Pad Down or Sticks Down
+    KEY_LEFT  = KEY_DLEFT   | KEY_LSTICK_LEFT  | KEY_RSTICK_LEFT,  ///< D-Pad Left or Sticks Left
+    KEY_RIGHT = KEY_DRIGHT  | KEY_LSTICK_RIGHT | KEY_RSTICK_RIGHT, ///< D-Pad Right or Sticks Right
+    KEY_SL    = KEY_SL_LEFT | KEY_SL_RIGHT,                        ///< SL on Left or Right Joy-Con
+    KEY_SR    = KEY_SR_LEFT | KEY_SR_RIGHT,                        ///< SR on Left or Right Joy-Con
 } HidControllerKeys;
 
 typedef enum
