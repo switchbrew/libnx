@@ -100,6 +100,9 @@ Result hidInitialize(void)
     if (R_SUCCEEDED(rc))
         rc = _hidSetDualModeAll();
 
+    if (R_SUCCEEDED(rc))
+        rc = hidSetNpadJoyHoldType(HidJoyHoldType_Default);
+
     if (R_FAILED(rc))
         hidExit();
 
@@ -111,6 +114,8 @@ void hidExit(void)
 {
     if (atomicDecrement64(&g_refCnt) == 0)
     {
+        hidSetNpadJoyHoldType(HidJoyHoldType_Default);
+
         _hidSetDualModeAll();
 
         _hidDeactivateNpad();
@@ -826,7 +831,7 @@ static Result _hidDeactivateNpad(void) {
     return _hidCmdWithNoInput(104);
 }
 
-Result hidSetNpadJoyHoldType(u64 type) {
+Result hidSetNpadJoyHoldType(HidJoyHoldType type) {
     return _hidCmdWithInputU64(120, type);
 }
 
