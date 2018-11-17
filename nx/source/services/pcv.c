@@ -126,16 +126,16 @@ Result pcvSetVoltageEnabled(bool state, u32 voltage) {
     Result rc = serviceIpcDispatch(&g_pcvSrv);
 
     if (R_SUCCEEDED(rc)) {
-      IpcParsedCommand r;
-      struct {
-          u64 magic;
-          u64 result;
-      } *resp;
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
 
-      serviceIpcParse(&g_pcvSrv, &r, sizeof(*resp));
-      resp = r.Raw;
+        serviceIpcParse(&g_pcvSrv, &r, sizeof(*resp));
+        resp = r.Raw;
 
-      rc = resp->result;
+        rc = resp->result;
     }
 
     return rc;
@@ -160,18 +160,18 @@ Result pcvGetVoltageEnabled(bool *isEnabled, u32 voltage) {
     Result rc = serviceIpcDispatch(&g_pcvSrv);
 
     if (R_SUCCEEDED(rc)) {
-      IpcParsedCommand r;
-      struct {
-          u64 magic;
-          u64 result;
-          bool isEnabled;
-      } *resp;
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            bool isEnabled;
+        } *resp;
 
-      serviceIpcParse(&g_pcvSrv, &r, sizeof(*resp));
-      resp = r.Raw;
+        serviceIpcParse(&g_pcvSrv, &r, sizeof(*resp));
+        resp = r.Raw;
 
-      rc = resp->result;
-      *isEnabled = resp->isEnabled;
+        rc = resp->result;
+        *isEnabled = resp->isEnabled;
     }
 
     return rc;
