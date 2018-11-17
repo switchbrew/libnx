@@ -5,6 +5,7 @@
 #include "kernel/ipc.h"
 #include "kernel/tmem.h"
 #include "kernel/event.h"
+#include "kernel/detect.h"
 #include "services/sm.h"
 #include "services/applet.h"
 #include "services/audren.h"
@@ -55,8 +56,14 @@ Result audrenInitialize(const AudioRendererConfig* config)
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
     // Choose revision (i.e. if splitters are used then at least revision 2 must be used)
-    // (TODO: abstract away differences between revisions according to provided parameters)
-    g_audrenRevision = AUDREN_REVISION_3; // todo: ?!?
+    if (kernelAbove400())
+        g_audrenRevision = AUDREN_REVISION_4;
+    else if (kernelAbove300())
+        g_audrenRevision = AUDREN_REVISION_3;
+    else if (kernelAbove200())
+        g_audrenRevision = AUDREN_REVISION_2;
+    else
+        g_audrenRevision = AUDREN_REVISION_1;
 
     // Prepare parameter structure
     AudioRendererParameter param = {0};

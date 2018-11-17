@@ -24,10 +24,12 @@
 #define AUDREN_MEMPOOL_ALIGNMENT      0x1000
 #define AUDREN_BUFFER_ALIGNMENT       0x40
 
-#define AUDREN_REVISION_1 0x31564552 // REV1 [1.0.0+?]
-#define AUDREN_REVISION_2 0x32564552 // REV2 [2.0.0+?]
-#define AUDREN_REVISION_3 0x33564552 // REV3 [3.0.0+?]
-#define AUDREN_REVISION_4 0x34564552 // REV4 [somewhere after 3.0.0, possibly 4.0.0+?]
+#define AUDREN_REVISION_1 0x31564552 // REV1 [1.0.0+]
+#define AUDREN_REVISION_2 0x32564552 // REV2 [2.0.0+]
+#define AUDREN_REVISION_3 0x33564552 // REV3 [3.0.0+]
+#define AUDREN_REVISION_4 0x34564552 // REV4 [4.0.0+]
+#define AUDREN_REVISION_5 0x35564552 // REV5 [6.0.0+]
+#define AUDREN_REVISION_6 0x36564552 // REV6 [6.1.0+]
 
 #define AUDREN_NODEID(_a,_b,_c)   ((((u32)(_a) & 0xF) << 28) | (((u32)(_b) & 0xFFF) << 16) | ((u32)(_c) & 0xFFFF))
 #define AUDREN_FINAL_MIX_ID       0
