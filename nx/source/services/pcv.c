@@ -105,81 +105,74 @@ Result pcvGetClockRate(PcvModule module, u32 *out_hz) {
     return rc;
 }
 
-Result pcvSetVoltageEnabled(bool state, u32 voltage)
-{
-  IpcCommand c;
-  ipcInitialize(&c);
+Result pcvSetVoltageEnabled(bool state, u32 voltage) {
+    IpcCommand c;
+    ipcInitialize(&c);
 
-  struct
-  {
-    u64 magic;
-    u64 cmd_id;
-    bool state;
-    u32 voltage;
-  } *raw;
-
-  raw = serviceIpcPrepareHeader(&g_pcvSrv, &c, sizeof(*raw));
-
-  raw->magic = SFCI_MAGIC;
-  raw->cmd_id = 8;
-  raw->state = state;
-  raw->voltage = voltage;
-
-  Result rc = serviceIpcDispatch(&g_pcvSrv);
-
-  if (R_SUCCEEDED(rc))
-  {
-    IpcParsedCommand r;
     struct {
-        u64 magic;
-        u64 result;
-    } *resp;
+      u64 magic;
+      u64 cmd_id;
+      bool state;
+      u32 voltage;
+    } *raw;
 
-    serviceIpcParse(&g_pcvSrv, &r, sizeof(*resp));
-    resp = r.Raw;
+    raw = serviceIpcPrepareHeader(&g_pcvSrv, &c, sizeof(*raw));
 
-    rc = resp->result;
-  }
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 8;
+    raw->state = state;
+    raw->voltage = voltage;
 
-  return rc;
+    Result rc = serviceIpcDispatch(&g_pcvSrv);
+
+    if (R_SUCCEEDED(rc)) {
+      IpcParsedCommand r;
+      struct {
+          u64 magic;
+          u64 result;
+      } *resp;
+
+      serviceIpcParse(&g_pcvSrv, &r, sizeof(*resp));
+      resp = r.Raw;
+
+      rc = resp->result;
+    }
+
+    return rc;
 }
 
-Result pcvGetVoltageEnabled(bool *isEnabled, u32 voltage)
-{
-  IpcCommand c;
-  ipcInitialize(&c);
+Result pcvGetVoltageEnabled(bool *isEnabled, u32 voltage) {
+    IpcCommand c;
+    ipcInitialize(&c);
 
-  struct
-  {
-    u64 magic;
-    u64 cmd_id;
-    u32 voltage;
-  } *raw;
-
-  raw = serviceIpcPrepareHeader(&g_pcvSrv, &c, sizeof(*raw));
-
-  raw->magic = SFCI_MAGIC;
-  raw->cmd_id = 9;
-  raw->voltage = voltage;
-
-  Result rc = serviceIpcDispatch(&g_pcvSrv);
-
-  if (R_SUCCEEDED(rc))
-  {
-    IpcParsedCommand r;
     struct {
+      u64 magic;
+      u64 cmd_id;
+      u32 voltage;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_pcvSrv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 9;
+    raw->voltage = voltage;
+
+    Result rc = serviceIpcDispatch(&g_pcvSrv);
+
+    if (R_SUCCEEDED(rc)) {
+      IpcParsedCommand r;
+      struct {
         u64 magic;
         u64 result;
         bool isEnabled;
-    } *resp;
+      } *resp;
 
-    serviceIpcParse(&g_pcvSrv, &r, sizeof(*resp));
-    resp = r.Raw;
+      serviceIpcParse(&g_pcvSrv, &r, sizeof(*resp));
+      resp = r.Raw;
 
-    rc = resp->result;
-    *isEnabled = resp->isEnabled;
-  }
+      rc = resp->result;
+      *isEnabled = resp->isEnabled;
+    }
 
-
-  return rc;
+    return rc;
 }
