@@ -159,7 +159,7 @@ Result pcvGetVoltageEnabled(bool *isEnabled, u32 voltage) {
 
     Result rc = serviceIpcDispatch(&g_pcvSrv);
 
-    if (R_SUCCEEDED(rc) && isEnabled) {
+    if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
         struct {
             u64 magic;
@@ -171,7 +171,9 @@ Result pcvGetVoltageEnabled(bool *isEnabled, u32 voltage) {
         resp = r.Raw;
 
         rc = resp->result;
-        *isEnabled = (bool)resp->isEnabled;
+        if(R_SUCCEEDED(rc) && isEnabled) {
+            *isEnabled = (bool)resp->isEnabled;
+        }
     }
 
     return rc;
