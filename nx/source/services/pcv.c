@@ -105,7 +105,7 @@ Result pcvGetClockRate(PcvModule module, u32 *out_hz) {
     return rc;
 }
 
-Result pcvSetVoltageEnabled(u8 state, u32 voltage) {
+Result pcvSetVoltageEnabled(bool state, u32 voltage) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -120,7 +120,7 @@ Result pcvSetVoltageEnabled(u8 state, u32 voltage) {
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 8;
-    raw->state = state;
+    raw->state = (u8)state;
     raw->voltage = voltage;
 
     Result rc = serviceIpcDispatch(&g_pcvSrv);
@@ -141,7 +141,7 @@ Result pcvSetVoltageEnabled(u8 state, u32 voltage) {
     return rc;
 }
 
-Result pcvGetVoltageEnabled(u8 *isEnabled, u32 voltage) {
+Result pcvGetVoltageEnabled(bool *isEnabled, u32 voltage) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -171,7 +171,7 @@ Result pcvGetVoltageEnabled(u8 *isEnabled, u32 voltage) {
         resp = r.Raw;
 
         rc = resp->result;
-        *isEnabled = resp->isEnabled;
+        *isEnabled = (bool)resp->isEnabled;
     }
 
     return rc;
