@@ -105,14 +105,14 @@ Result pcvGetClockRate(PcvModule module, u32 *out_hz) {
     return rc;
 }
 
-Result pcvSetVoltageEnabled(bool state, u32 voltage) {
+Result pcvSetVoltageEnabled(u8 state, u32 voltage) {
     IpcCommand c;
     ipcInitialize(&c);
 
     struct {
         u64 magic;
         u64 cmd_id;
-        bool state;
+        u8 state;
         u32 voltage;
     } *raw;
 
@@ -141,7 +141,7 @@ Result pcvSetVoltageEnabled(bool state, u32 voltage) {
     return rc;
 }
 
-Result pcvGetVoltageEnabled(bool *isEnabled, u32 voltage) {
+Result pcvGetVoltageEnabled(u8 *isEnabled, u32 voltage) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -164,7 +164,7 @@ Result pcvGetVoltageEnabled(bool *isEnabled, u32 voltage) {
         struct {
             u64 magic;
             u64 result;
-            bool isEnabled;
+            u8 isEnabled;
         } *resp;
 
         serviceIpcParse(&g_pcvSrv, &r, sizeof(*resp));
