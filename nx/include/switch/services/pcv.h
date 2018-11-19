@@ -18,3 +18,6 @@ void pcvExit(void);
 
 Result pcvGetClockRate(PcvModule module, u32 *out_hz);
 Result pcvSetClockRate(PcvModule module, u32 hz);
+Result pcvSetVoltageEnabled(bool state, u32 voltage);
+Result pcvGetVoltageEnabled(bool *isEnabled, u32 voltage);
+
