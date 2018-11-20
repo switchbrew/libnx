@@ -83,6 +83,15 @@ typedef struct
     u8 unk_x38[0x28];   ///< Unknown. Usually zeros?
 } PACKED FsSaveDataInfo;
 
+typedef struct
+{
+    u64 created;  ///< POSIX timestamp.
+    u64 modified; ///< POSIX timestamp.
+    u64 accessed; ///< POSIX timestamp.
+    u8 is_valid;  ///< 0x1 when the timestamps are set.
+    u8 padding[7];
+} PACKED FsTimeStampRaw;
+
 typedef enum {
     ENTRYTYPE_DIR = 0,
     ENTRYTYPE_FILE = 1
@@ -211,11 +220,12 @@ Result fsFsOpenDirectory(FsFileSystem* fs, const char* path, int flags, FsDir* o
 Result fsFsCommit(FsFileSystem* fs);
 Result fsFsGetFreeSpace(FsFileSystem* fs, const char* path, u64* out);
 Result fsFsGetTotalSpace(FsFileSystem* fs, const char* path, u64* out);
-Result fsFsCleanDirectoryRecursively(FsFileSystem* fs, const char* path);
-Result fsFsQueryEntry(FsFileSystem* fs, void *out, size_t out_size, const void *in, size_t in_size, const char* path, FsFileSystemQueryType query_type);
+Result fsFsGetFileTimeStampRaw(FsFileSystem* fs, const char* path, FsTimeStampRaw *out);/// 3.0.0+
+Result fsFsCleanDirectoryRecursively(FsFileSystem* fs, const char* path);/// 3.0.0+
+Result fsFsQueryEntry(FsFileSystem* fs, void *out, size_t out_size, const void *in, size_t in_size, const char* path, FsFileSystemQueryType query_type);/// 4.0.0+
 void fsFsClose(FsFileSystem* fs);
 
-/// Uses fsFsQueryEntry to set the archive bit on the specified absolute directory path.
+/// Uses \ref fsFsQueryEntry to set the archive bit on the specified absolute directory path.
 /// This will cause HOS to treat the directory as if it were a file containing the directory's concatenated contents.
 Result fsFsSetArchiveBit(FsFileSystem* fs, const char *path);
 

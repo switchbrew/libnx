@@ -975,6 +975,9 @@ Result fsFsGetTotalSpace(FsFileSystem* fs, const char* path, u64* out) {
 }
 
 Result fsFsCleanDirectoryRecursively(FsFileSystem* fs, const char* path) {
+    if (!kernelAbove300())
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     IpcCommand c;
     ipcInitialize(&c);
     ipcAddSendStatic(&c, path, FS_MAX_PATH, 0);
@@ -1002,6 +1005,48 @@ Result fsFsCleanDirectoryRecursively(FsFileSystem* fs, const char* path) {
         resp = r.Raw;
 
         rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result fsFsGetFileTimeStampRaw(FsFileSystem* fs, const char* path, FsTimeStampRaw *out) {
+    if (!kernelAbove300())
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    char send_path[FS_MAX_PATH] = {0};
+    strncpy(send_path, path, sizeof(send_path)-1);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+    ipcAddSendStatic(&c, send_path, sizeof(send_path), 0);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&fs->s, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 14;
+
+    Result rc = serviceIpcDispatch(&fs->s);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            FsTimeStampRaw out;
+        } *resp;
+
+        serviceIpcParse(&fs->s, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && out) *out = resp->out;
     }
 
     return rc;

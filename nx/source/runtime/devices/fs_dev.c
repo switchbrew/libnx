@@ -55,6 +55,7 @@ typedef struct
   FsFile fd;
   int    flags;  /*! Flags used in open(2) */
   u64    offset; /*! Current file offset */
+  FsTimeStampRaw timestamps;
 } fsdev_file_t;
 
 /*! fsdev devoptab */
@@ -581,6 +582,10 @@ fsdev_open(struct _reent *r,
     file->fd     = fd;
     file->flags  = (flags & (O_ACCMODE|O_APPEND|O_SYNC));
     file->offset = 0;
+
+    memset(&file->timestamps, 0, sizeof(file->timestamps));
+    rc = fsFsGetFileTimeStampRaw(&device->fs, fs_path, &file->timestamps);//Result can be ignored since output is only set on success, etc.
+
     return 0;
   }
 
@@ -924,6 +929,14 @@ fsdev_fstat(struct _reent *r,
     st->st_size = (off_t)size;
     st->st_nlink = 1;
     st->st_mode = S_IFREG | S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
+
+    if(file->timestamps.is_valid)
+    {
+      st->st_ctime = file->timestamps.created;
+      st->st_mtime = file->timestamps.modified;
+      st->st_atime = file->timestamps.accessed;
+    }
+
     return 0;
   }
 
@@ -948,8 +961,10 @@ fsdev_stat(struct _reent *r,
   FsFile  fd;
   FsDir   fdir;
   Result  rc;
+  int     ret=0;
   char    fs_path[FS_MAX_PATH];
   fsdev_fsdevice *device = NULL;
+  FsTimeStampRaw timestamps = {0};
   FsEntryType type;
 
   if(fsdev_getfspath(r, file, &device, fs_path)==-1)
@@ -974,10 +989,21 @@ fsdev_stat(struct _reent *r,
       if(R_SUCCEEDED(rc = fsFsOpenFile(&device->fs, fs_path, FS_OPEN_READ, &fd)))
       {
         fsdev_file_t tmpfd = { .fd = fd };
-        rc = fsdev_fstat(r, &tmpfd, st);
+        ret = fsdev_fstat(r, &tmpfd, st);
         fsFileClose(&fd);
 
-        return rc;
+        if(ret==0)
+        {
+          rc = fsFsGetFileTimeStampRaw(&device->fs, fs_path, &timestamps);
+          if(R_SUCCEEDED(rc) && timestamps.is_valid)
+          {
+            st->st_ctime = timestamps.created;
+            st->st_mtime = timestamps.modified;
+            st->st_atime = timestamps.accessed;
+          }
+        }
+
+        return ret;
       }
     }
     else
