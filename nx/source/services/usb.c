@@ -375,7 +375,7 @@ Result usbDsSetVidPidBcd(const UsbDsDeviceInfo* deviceinfo) {
     return rc;
 }
 
-static Result _usbDsGetSession(Service* srv, Service* srv_out, u64 cmd_id, const void* buf0, size_t buf0size, const void* buf1, size_t buf1size) {
+static Result _usbDsGetSession(Service* srv, Service* srv_out, u64 cmd_id, const void* buf0, size_t buf0size, const void* buf1, size_t buf1size, u8 *out) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -403,9 +403,12 @@ static Result _usbDsGetSession(Service* srv, Service* srv_out, u64 cmd_id, const
         struct {
             u64 magic;
             u64 result;
+            u8  out;
         } *resp = r.Raw;
 
         rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && out) *out = resp->out;
 
         if (R_SUCCEEDED(rc)) {
             serviceCreate(srv_out, r.Handles[0]);
@@ -529,7 +532,7 @@ Result usbDsGetDsInterface(UsbDsInterface** interface, struct usb_interface_desc
     Result rc;
     for (unsigned int i = 0; i < TOTAL_INTERFACES; i++) {
         send_desc.bInterfaceNumber = i;
-        rc = _usbDsGetSession(&g_usbDsSrv, &srv, 2, &send_desc, USB_DT_INTERFACE_SIZE, interface_name, strlen(interface_name)+1);
+        rc = _usbDsGetSession(&g_usbDsSrv, &srv, 2, &send_desc, USB_DT_INTERFACE_SIZE, interface_name, strlen(interface_name)+1, NULL);
         if (R_SUCCEEDED(rc)) {
             break;
         }
@@ -929,7 +932,7 @@ Result usbDsInterface_GetDsEndpoint(UsbDsInterface* interface, UsbDsEndpoint** e
     UsbDsEndpoint* ptr = _usbDsAllocateEndpoint(interface);
     if(ptr==NULL)return MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
 
-    Result rc = _usbDsGetSession(&interface->h, &ptr->h, 0, descriptor, USB_DT_ENDPOINT_SIZE, NULL, 0);
+    Result rc = _usbDsGetSession(&interface->h, &ptr->h, 0, descriptor, USB_DT_ENDPOINT_SIZE, NULL, 0, NULL);
 
     if (R_SUCCEEDED(rc)) rc = _usbDsGetEvent(&ptr->h, &ptr->CompletionEvent, 2);//GetCompletionEvent
 
