@@ -1,5 +1,42 @@
 # Changelog
 
+## Version 1.6.0
+
+#### system
+* **Added support for userland exception handling**.
+
+#### filesystem
+* **Added support for retrieving file timestamps on 3.0.0+**.
+* Added fsdevSetArchiveBit, for setting the archive bit on a directory.
+* Added fs commands: fsFsQueryEntry, fsFsSetArchiveBit, fsDeviceOperatorIsGameCardInserted, fsDeviceOperatorGetGameCardHandle, fsDeviceOperatorGetGameCardAttribute.
+
+#### audio
+* **Added hwopus service wrapper**.
+* **Added audren support for system versions prior to 3.0** by automatically using the latest available revision number for a given version (1.0.0-4.0.0+).
+* Added auddev (IAudioDevice) service wrapper.
+
+#### hid
+* **Added support for SL/SR buttons on right JoyCons**.
+* Added HidJoyHoldType enum.
+* Changed hid to use hidSetNpadJoyHoldType during init/exit.
+
+#### other services
+* Added psc (psc:m) service wrapper.
+* Added spsm service wrapper.
+* Added pcv service wrapper.
+* Added lbl service wrapper.
+* Added i2c service wrapper.
+* Added gpio service wrapper.
+* Added bpc commands: bpcGetSleepButtonState.
+* Added setsys commands: setsysBindFatalDirtyFlagEvent, setsysGetFatalDirtyFlags.
+* Added fatal commands: fatalWithContext.
+* Added PsmBatteryVoltageState enum.
+* Added SetSysFlag_RequiresRunRepairTimeReviser.
+* Added appletSetFocusHandlingMode (previously it existed but it was not exposed).
+
+#### miscellaneous
+* Further improvements to overall system stability and other minor adjustments to enhance the user experience.
+
 ## Version 1.5.0
 
 #### system
