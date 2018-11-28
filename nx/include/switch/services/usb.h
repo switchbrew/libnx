@@ -64,6 +64,18 @@ struct usb_device_descriptor {
 };
 
 /// Imported from libusb, with some adjustments.
+struct usb_config_descriptor {
+    uint8_t  bLength;
+    uint8_t  bDescriptorType;
+    uint16_t wTotalLength;
+    uint8_t  bNumInterfaces;
+    uint8_t  bConfigurationValue;
+    uint8_t  iConfiguration;
+    uint8_t  bmAttributes;
+    uint8_t  MaxPower;
+};
+
+/// Imported from libusb, with some adjustments.
 struct usb_ss_endpoint_companion_descriptor {
     uint8_t  bLength;
     uint8_t  bDescriptorType; ///< Must match USB_DT_SS_ENDPOINT_COMPANION.
