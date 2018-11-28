@@ -718,7 +718,7 @@ static inline Result ipcParseDomainResponse(IpcParsedCommand* r, size_t sizeof_r
 
     hdr = (DomainResponseHeader*) r->Raw;
     r->Raw = (void*)(((uintptr_t) r->Raw) + sizeof(DomainResponseHeader));
-    object_ids = (u32*)((((uintptr_t) r->Raw) + sizeof_raw + 3) & ~3);
+    object_ids = (u32*)(((uintptr_t) r->Raw) + sizeof_raw);//Official sw doesn't align this.
 
     r->IsDomainResponse = true;
     
