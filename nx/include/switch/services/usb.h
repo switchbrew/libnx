@@ -26,7 +26,7 @@ struct usb_endpoint_descriptor {
     uint8_t  bmAttributes;
     uint16_t wMaxPacketSize;
     uint8_t  bInterval;
-};
+} PACKED;
 
 /// Imported from libusb, with some adjustments.
 struct usb_interface_descriptor {
@@ -69,7 +69,7 @@ struct usb_config_descriptor {
     uint8_t  iConfiguration;
     uint8_t  bmAttributes;
     uint8_t  MaxPower;
-};
+} PACKED;
 
 /// Imported from libusb, with some adjustments.
 struct usb_ss_endpoint_companion_descriptor {
