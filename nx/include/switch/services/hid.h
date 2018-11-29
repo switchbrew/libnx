@@ -686,6 +686,8 @@ Result hidSetNpadJoyAssignmentModeSingleByDefault(HidControllerID id);
 Result hidSetNpadJoyAssignmentModeDual(HidControllerID id);
 
 /// Merge two single joy-cons into a dual-mode controller. Use this after \ref hidSetNpadJoyAssignmentModeDual, when \ref hidSetNpadJoyAssignmentModeSingleByDefault was previously used (this includes using this manually at application exit).
+/// To be successful, id0/id1 must correspond to controller types TYPE_JOYCON_LEFT/TYPE_JOYCON_RIGHT, or TYPE_JOYCON_RIGHT/TYPE_JOYCON_LEFT.
+/// If successful, the id of the resulting dual controller is set to id0.
 Result hidMergeSingleJoyAsDualJoy(HidControllerID id0, HidControllerID id1);
 
 Result hidInitializeVibrationDevices(u32 *VibrationDeviceHandles, size_t total_handles, HidControllerID id, HidControllerType type);
