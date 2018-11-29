@@ -62,6 +62,7 @@ extern "C" {
 #include "switch/services/time.h"
 #include "switch/services/usb.h"
 #include "switch/services/usbds.h"
+#include "switch/services/usbhs.h"
 #include "switch/services/hid.h"
 #include "switch/services/irs.h"
 #include "switch/services/pl.h"
