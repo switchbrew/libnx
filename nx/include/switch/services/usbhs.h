@@ -75,7 +75,7 @@ typedef struct {
 } PACKED UsbHsInterface;
 
 typedef struct {
-    u32 unk_x0;
+    u32 xferId;
     Result res;
     u32 requestedSize;
     u32 transferredSize;
@@ -94,6 +94,7 @@ typedef struct {
 
 typedef struct {
     Service s;
+    Event eventXfer;                      ///< [2.0.0+] Signaled when PostBufferAsync finishes.
 
     struct usb_endpoint_descriptor desc;
 } UsbHsClientEpSession;
@@ -188,6 +189,24 @@ Result usbHsIfGetCurrentFrame(UsbHsClientIfSession* s, u32* out);
 /// Uses a control transfer, this will block until the transfer finishes. The buffer address and size should be aligned to 0x1000-bytes, where wLength is the original size.
 Result usbHsIfCtrlXfer(UsbHsClientIfSession* s, u8 bmRequestType, u8 bRequest, u16 wValue, u16 wIndex, u16 wLength, void* buffer, u32* transferredSize);
 
+/**
+ * @brief Opens an endpoint. maxUrbCount*maxXferSize must be non-zero.
+ * @param[in] s The interface object.
+ * @param[out] ep The endpoint object.
+ * @param[in] maxUrbCount maxUrbCount, must be <0x11.
+ * @param[in] maxXferSize Max transfer size for a packet. This can be desc->wMaxPacketSize. Must be <=0xFF0000.
+ * @param[in] desc Endpoint descriptor.
+ */
+Result usbHsIfOpenUsbEp(UsbHsClientIfSession* s, UsbHsClientEpSession* ep, u16 maxUrbCount, u32 maxXferSize, struct usb_endpoint_descriptor *desc);
+
 /// Resets the device: has the same affect as unplugging the device and plugging it back in.
 Result usbHsIfResetDevice(UsbHsClientIfSession* s);
+
+/// UsbHsClientEpSession
+
+/// Closes the specified endpoint session.
+void usbHsEpClose(UsbHsClientEpSession* s);
+
+/// Uses a data transfer with the specified endpoint, this will block until the transfer finishes. The buffer address and size should be aligned to 0x1000-bytes, where the input size is the original size.
+Result usbHsEpPostBuffer(UsbHsClientEpSession* s, void* buffer, u32 size, u32* transferredSize);
 

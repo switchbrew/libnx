@@ -56,6 +56,38 @@ Event* usbHsGetInterfaceStateChangeEvent(void) {
     return &g_usbHsInterfaceStateChangeEvent;
 }
 
+static Result _usbHsCmdNoIO(Service* s, u64 cmd_id) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(s, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = cmd_id;
+
+    Result rc = serviceIpcDispatch(s);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(s, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
 static Result _usbHsBindClientProcess(Handle prochandle) {
     IpcCommand c;
     ipcInitialize(&c);
@@ -628,19 +660,31 @@ Result usbHsIfCtrlXfer(UsbHsClientIfSession* s, u8 bmRequestType, u8 bRequest, u
     return rc;
 }
 
-Result usbHsIfResetDevice(UsbHsClientIfSession* s) {
+Result usbHsIfOpenUsbEp(UsbHsClientIfSession* s, UsbHsClientEpSession* ep, u16 maxUrbCount, u32 maxXferSize, struct usb_endpoint_descriptor *desc) {
     IpcCommand c;
     ipcInitialize(&c);
+
+    memset(ep, 0, sizeof(UsbHsClientEpSession));
 
     struct {
         u64 magic;
         u64 cmd_id;
+        u16 maxUrbCount;
+        u32 epType;
+        u32 epNumber;
+        u32 epDirection;
+        u32 maxXferSize;
     } *raw;
 
     raw = serviceIpcPrepareHeader(&s->s, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 8;
+    raw->cmd_id = kernelAbove200() ? 9 : 4;
+    raw->maxUrbCount = maxUrbCount;
+    raw->epType = (desc->bmAttributes & USB_TRANSFER_TYPE_MASK) + 1;
+    raw->epNumber = desc->bEndpointAddress & USB_ENDPOINT_ADDRESS_MASK;
+    raw->epDirection = (desc->bEndpointAddress & USB_ENDPOINT_IN) == 0 ? 0x1 : 0x2;
+    raw->maxXferSize = maxXferSize;
 
     Result rc = serviceIpcDispatch(&s->s);
 
@@ -649,13 +693,202 @@ Result usbHsIfResetDevice(UsbHsClientIfSession* s) {
         struct {
             u64 magic;
             u64 result;
+            struct usb_endpoint_descriptor desc;
+        } PACKED *resp;
+
+        serviceIpcParse(&s->s, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) memcpy(&ep->desc, &resp->desc, sizeof(struct usb_endpoint_descriptor));
+
+        if (R_SUCCEEDED(rc)) {
+            serviceCreateSubservice(&ep->s, &s->s, &r, 0);
+        }
+    }
+
+    if (R_SUCCEEDED(rc)) {
+        if (kernelAbove200()) {
+            rc = _usbHsCmdNoIO(&ep->s, 3);//Populate
+            if (R_SUCCEEDED(rc)) rc = _usbHsGetEvent(&ep->s, &ep->eventXfer, 2);
+        }
+
+        if (R_FAILED(rc)) {
+            serviceClose(&ep->s);
+            eventClose(&ep->eventXfer);
+        }
+    }
+
+    return rc;
+}
+
+Result usbHsIfResetDevice(UsbHsClientIfSession* s) {
+    return _usbHsCmdNoIO(&s->s, 8);
+}
+
+void usbHsEpClose(UsbHsClientEpSession* s) {
+    if (!serviceIsActive(&s->s)) return;
+
+    _usbHsCmdNoIO(&s->s, kernelAbove200() ? 1 : 3);//Close
+
+    serviceClose(&s->s);
+    eventClose(&s->eventXfer);
+    memset(s, 0, sizeof(UsbHsClientIfSession));
+}
+
+static Result _usbHsEpSubmitRequest(UsbHsClientEpSession* s, void* buffer, u32 size, u32 timeoutInMs, u32* transferredSize) {
+    bool dir = (s->desc.bEndpointAddress & USB_ENDPOINT_IN) != 0;
+    size_t bufsize = (size + 0xFFF) & ~0xFFF;
+
+    armDCacheFlush(buffer, size);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 size;
+        u32 timeoutInMs;//?
+    } *raw;
+
+    if (dir) ipcAddRecvBuffer(&c, buffer, bufsize, BufferType_Normal);
+    if (!dir) ipcAddSendBuffer(&c, buffer, bufsize, BufferType_Normal);
+
+    raw = serviceIpcPrepareHeader(&s->s, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = dir ? 1 : 0;
+    raw->size = size;
+    raw->timeoutInMs = timeoutInMs;
+
+    Result rc = serviceIpcDispatch(&s->s);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            u32 transferredSize;
         } *resp;
 
         serviceIpcParse(&s->s, &r, sizeof(*resp));
         resp = r.Raw;
 
         rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && transferredSize) *transferredSize = resp->transferredSize;
     }
+
+    if (dir) armDCacheFlush(buffer, size);
+
+    return rc;
+}
+
+static Result _usbHsEpPostBufferAsync(UsbHsClientEpSession* s, void* buffer, u32 size, u64 unk, u32* xferId) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 size;
+        u64 buffer;
+        u64 unk;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&s->s, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 4;
+    raw->size = size;
+    raw->buffer = (u64)buffer;
+    raw->unk = unk;
+
+    Result rc = serviceIpcDispatch(&s->s);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            u32 xferId;
+        } *resp;
+
+        serviceIpcParse(&s->s, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && xferId) *xferId = resp->xferId;
+    }
+
+    return rc;
+}
+
+static Result _usbHsEpGetXferReport(UsbHsClientEpSession* s, UsbHsXferReport* reports, u32 max_reports, u32* count) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 max_reports;
+    } *raw;
+
+    ipcAddRecvBuffer(&c, reports, sizeof(UsbHsXferReport) * max_reports, BufferType_Normal);
+
+    raw = serviceIpcPrepareHeader(&s->s, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 5;
+    raw->max_reports = max_reports;
+
+    Result rc = serviceIpcDispatch(&s->s);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            u32 count;
+        } *resp;
+
+        serviceIpcParse(&s->s, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && count) *count = resp->count;
+    }
+
+    return rc;
+}
+
+Result usbHsEpPostBuffer(UsbHsClientEpSession* s, void* buffer, u32 size, u32* transferredSize) {
+    Result rc=0;
+    u32 xferId=0;
+    u32 count=0;
+    UsbHsXferReport report;
+
+    if (!kernelAbove200()) return _usbHsEpSubmitRequest(s, buffer, size, 0, transferredSize);
+
+    rc = _usbHsEpPostBufferAsync(s, buffer, size, 0, &xferId);
+    if (R_FAILED(rc)) return rc;
+
+    rc = eventWait(&s->eventXfer, U64_MAX);
+    if (R_FAILED(rc)) return rc;
+    eventClear(&s->eventXfer);
+
+    memset(&report, 0, sizeof(report));
+    rc = _usbHsEpGetXferReport(s, &report, 1, &count);
+    if (R_FAILED(rc)) return rc;
+
+    if (count<1) return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+
+    *transferredSize = report.transferredSize;
+    rc = report.res;
 
     return rc;
 }

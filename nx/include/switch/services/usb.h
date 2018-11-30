@@ -18,6 +18,11 @@
 #define USB_DT_DEVICE_SIZE         0x12
 #define USB_DT_SS_ENDPOINT_COMPANION_SIZE 6
 
+#define USB_ENDPOINT_ADDRESS_MASK 0x0f    /* in bEndpointAddress */
+#define USB_ENDPOINT_DIR_MASK 0x80
+
+#define USB_TRANSFER_TYPE_MASK 0x03 /* in bmAttributes */
+
 /// Imported from libusb, with some adjustments.
 struct usb_endpoint_descriptor {
     uint8_t  bLength;
