@@ -104,6 +104,8 @@ Result usbHsInitialize(void);
 void usbHsExit(void);
 
 /// Returns the Event loaded during init with autoclear=false.
+/// Signaled when a device was removed.
+/// When signaled, the user should use \ref usbHsQueryAcquiredInterfaces and cleanup state for all interfaces which are not listed in the output interfaces (none of the IDs match \ref usbHsIfGetID output).
 Event* usbHsGetInterfaceStateChangeEvent(void);
 
 /**
@@ -159,6 +161,16 @@ Result usbHsAcquireUsbIf(UsbHsClientIfSession* s, UsbHsInterface *interface);
 
 /// Closes the specified interface session.
 void usbHsIfClose(UsbHsClientIfSession* s);
+
+/// Returns whether the specified interface session was initialized.
+static inline bool usbHsIfIsActive(UsbHsClientIfSession* s) {
+    return serviceIsActive(&s->s);
+}
+
+/// Returns the ID which can be used for comparing with the ID in the output interfaces from \ref usbHsQueryAcquiredInterfaces.
+static inline s32 usbHsIfGetID(UsbHsClientIfSession* s) {
+    return s->ID;
+}
 
 /**
  * @brief Selects an interface.
