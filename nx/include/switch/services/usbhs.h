@@ -87,6 +87,7 @@ typedef struct {
     Service s;
     Event event0;         ///< Unknown.
     Event eventCtrlXfer;  ///< [2.0.0+] Signaled when CtrlXferAsync finishes.
+    s32 ID;
 
     UsbHsInterface inf;   ///< Initialized with the input interface from \ref usbHsAcquireUsbIf, then the first 0x1B8-bytes are overwritten with the cmd output (data before pathstr).
 } UsbHsClientIfSession;
@@ -105,7 +106,7 @@ void usbHsExit(void);
 Event* usbHsGetInterfaceStateChangeEvent(void);
 
 /**
- * @brief Returns an array of all \ref UsbHsInterface. Internally this loads the same interfaces as \ref usbHsQueryAvailableInterfaces, followed by \ref usbHsQueryAcquiredInterfaces.
+ * @brief Returns an array of all \ref UsbHsInterface. Internally this loads the same interfaces as \ref usbHsQueryAvailableInterfaces, followed by \ref usbHsQueryAcquiredInterfaces. However, ID in \ref UsbHsInterface is set to -1, hence the output from this should not be used with \ref usbHsAcquireUsbIf.
  * @param[in] filter \ref UsbHsInterfaceFilter.
  * @param[out] interfaces Array of output interfaces.
  * @param[in] interfaces_maxsize Max byte-size of the interfaces buffer.
@@ -147,7 +148,7 @@ Result usbHsCreateInterfaceAvailableEvent(Event* event, bool autoclear, u8 index
 Result usbHsDestroyInterfaceAvailableEvent(Event* event, u8 index);
 
 /**
- * @brief Acquires/opens the specified interface.
+ * @brief Acquires/opens the specified interface. This returns an error if the interface was already acquired by another process.
  * @param[in] s The service object.
  * @param[in] interface Interface to use.
  */
@@ -157,4 +158,33 @@ Result usbHsAcquireUsbIf(UsbHsClientIfSession* s, UsbHsInterface *interface);
 
 /// Closes the specified interface session.
 void usbHsIfClose(UsbHsClientIfSession* s);
+
+/**
+ * @brief Selects an interface.
+ * @param[in] s The service object.
+ * @param[out] inf The output interface info. If NULL, the output is stored within s instead.
+ * @param[in] id ID
+ */
+Result usbHsIfSetInterface(UsbHsClientIfSession* s, UsbHsInterfaceInfo* inf, u8 id);
+
+/**
+ * @brief Gets an interface.
+ * @param[in] s The service object.
+ * @param[out] inf The output interface info. If NULL, the output is stored within s instead.
+ */
+Result usbHsIfGetInterface(UsbHsClientIfSession* s, UsbHsInterfaceInfo* inf);
+
+/**
+ * @brief Gets an alternate interface.
+ * @param[in] s The service object.
+ * @param[out] inf The output interface info. If NULL, the output is stored within s instead.
+ * @param[in] id ID
+ */
+Result usbHsIfGetAlternateInterface(UsbHsClientIfSession* s, UsbHsInterfaceInfo* inf, u8 id);
+
+/// On 1.0.0 this is stubbed, just returns 0 with out=0.
+Result usbHsIfGetCurrentFrame(UsbHsClientIfSession* s, u32* out);
+
+/// Resets the device: has the same affect as unplugging the device and plugging it back in.
+Result usbHsIfResetDevice(UsbHsClientIfSession* s);
 
