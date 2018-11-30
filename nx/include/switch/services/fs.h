@@ -227,6 +227,7 @@ void fsFsClose(FsFileSystem* fs);
 
 /// Uses \ref fsFsQueryEntry to set the archive bit on the specified absolute directory path.
 /// This will cause HOS to treat the directory as if it were a file containing the directory's concatenated contents.
+/// This allows HOS to support files larger than 4GB on media formatted as FAT32, for example. 
 Result fsFsSetArchiveBit(FsFileSystem* fs, const char *path);
 
 // IFile
