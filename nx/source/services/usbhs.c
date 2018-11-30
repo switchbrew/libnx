@@ -297,6 +297,7 @@ Result usbHsAcquireUsbIf(UsbHsClientIfSession* s, UsbHsInterface *interface) {
 
     memset(s, 0, sizeof(UsbHsClientIfSession));
     memcpy(&s->inf, interface, sizeof(UsbHsInterface));
+    s->ID = interface->inf.ID;
 
     struct {
         u64 magic;
@@ -310,7 +311,7 @@ Result usbHsAcquireUsbIf(UsbHsClientIfSession* s, UsbHsInterface *interface) {
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = kernelAbove200() ? 7 : 6;
-    raw->ID = interface->inf.ID;
+    raw->ID = s->ID;
 
     Result rc = serviceIpcDispatch(&g_usbHsSrv);
 
@@ -350,5 +351,154 @@ void usbHsIfClose(UsbHsClientIfSession* s) {
     eventClose(&s->event0);
     eventClose(&s->eventCtrlXfer);
     memset(s, 0, sizeof(UsbHsClientIfSession));
+}
+
+static Result _usbHsIfGetInf(UsbHsClientIfSession* s, UsbHsInterfaceInfo* inf, u8 id, u64 cmd_id) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    if (inf==NULL) inf = &s->inf.inf;
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u8  id;
+    } *raw;
+
+    ipcAddRecvBuffer(&c, inf, sizeof(UsbHsInterfaceInfo), BufferType_Normal);
+
+    raw = serviceIpcPrepareHeader(&s->s, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = cmd_id;
+    raw->id = id;
+
+    Result rc = serviceIpcDispatch(&s->s);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&s->s, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result usbHsIfSetInterface(UsbHsClientIfSession* s, UsbHsInterfaceInfo* inf, u8 id) {
+    return _usbHsIfGetInf(s, inf, id, 1);
+}
+
+Result usbHsIfGetAlternateInterface(UsbHsClientIfSession* s, UsbHsInterfaceInfo* inf, u8 id) {
+    return _usbHsIfGetInf(s, inf, id, 3);
+}
+
+Result usbHsIfGetInterface(UsbHsClientIfSession* s, UsbHsInterfaceInfo* inf) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    if (inf==NULL) inf = &s->inf.inf;
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    ipcAddRecvBuffer(&c, inf, sizeof(UsbHsInterfaceInfo), BufferType_Normal);
+
+    raw = serviceIpcPrepareHeader(&s->s, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 2;
+
+    Result rc = serviceIpcDispatch(&s->s);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&s->s, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result usbHsIfGetCurrentFrame(UsbHsClientIfSession* s, u32* out) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&s->s, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = kernelAbove200() ? 4 : 5;
+
+    Result rc = serviceIpcDispatch(&s->s);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            u32 out;
+        } *resp;
+
+        serviceIpcParse(&s->s, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && out) *out = resp->out;
+    }
+
+    return rc;
+}
+
+Result usbHsIfResetDevice(UsbHsClientIfSession* s) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&s->s, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 8;
+
+    Result rc = serviceIpcDispatch(&s->s);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&s->s, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
 }
 
