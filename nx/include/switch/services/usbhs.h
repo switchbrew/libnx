@@ -77,7 +77,7 @@ typedef struct {
 typedef struct {
     u32 unk_x0;
     Result res;
-    u32 unk_x8;
+    u32 requestedSize;
     u32 transferredSize;
     u64 unk_x10;
 } UsbHsXferReport;
@@ -184,6 +184,9 @@ Result usbHsIfGetAlternateInterface(UsbHsClientIfSession* s, UsbHsInterfaceInfo*
 
 /// On 1.0.0 this is stubbed, just returns 0 with out=0.
 Result usbHsIfGetCurrentFrame(UsbHsClientIfSession* s, u32* out);
+
+/// Uses a control transfer, this will block until the transfer finishes. The buffer address and size should be aligned to 0x1000-bytes, where wLength is the original size.
+Result usbHsIfCtrlXfer(UsbHsClientIfSession* s, u8 bmRequestType, u8 bRequest, u16 wValue, u16 wIndex, u16 wLength, void* buffer, u32* transferredSize);
 
 /// Resets the device: has the same affect as unplugging the device and plugging it back in.
 Result usbHsIfResetDevice(UsbHsClientIfSession* s);
