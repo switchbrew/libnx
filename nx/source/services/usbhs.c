@@ -291,3 +291,64 @@ Result usbHsDestroyInterfaceAvailableEvent(Event* event, u8 index) {
     return rc;
 }
 
+Result usbHsAcquireUsbIf(UsbHsClientIfSession* s, UsbHsInterface *interface) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    memset(s, 0, sizeof(UsbHsClientIfSession));
+    memcpy(&s->inf, interface, sizeof(UsbHsInterface));
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        s32 ID;
+    } *raw;
+
+    ipcAddRecvBuffer(&c, &s->inf.inf, sizeof(UsbHsInterfaceInfo), BufferType_Normal);
+
+    raw = serviceIpcPrepareHeader(&g_usbHsSrv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = kernelAbove200() ? 7 : 6;
+    raw->ID = interface->inf.ID;
+
+    Result rc = serviceIpcDispatch(&g_usbHsSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_usbHsSrv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            serviceCreateSubservice(&s->s, &g_usbHsSrv, &r, 0);
+        }
+    }
+
+    if (R_SUCCEEDED(rc)) {
+        rc = _usbHsGetEvent(&s->s, &s->event0, 0);
+        if (kernelAbove200()) rc = _usbHsGetEvent(&s->s, &s->event0, 6);
+
+        if (R_FAILED(rc)) {
+            serviceClose(&s->s);
+            eventClose(&s->event0);
+            eventClose(&s->eventCtrlXfer);
+        }
+    }
+
+    return rc;
+}
+
+void usbHsIfClose(UsbHsClientIfSession* s) {
+    serviceClose(&s->s);
+    eventClose(&s->event0);
+    eventClose(&s->eventCtrlXfer);
+    memset(s, 0, sizeof(UsbHsClientIfSession));
+}
+
