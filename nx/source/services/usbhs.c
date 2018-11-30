@@ -334,7 +334,7 @@ Result usbHsAcquireUsbIf(UsbHsClientIfSession* s, UsbHsInterface *interface) {
 
     if (R_SUCCEEDED(rc)) {
         rc = _usbHsGetEvent(&s->s, &s->event0, 0);
-        if (kernelAbove200()) rc = _usbHsGetEvent(&s->s, &s->event0, 6);
+        if (kernelAbove200()) rc = _usbHsGetEvent(&s->s, &s->eventCtrlXfer, 6);
 
         if (R_FAILED(rc)) {
             serviceClose(&s->s);
@@ -466,6 +466,164 @@ Result usbHsIfGetCurrentFrame(UsbHsClientIfSession* s, u32* out) {
 
         if (R_SUCCEEDED(rc) && out) *out = resp->out;
     }
+
+    return rc;
+}
+
+static Result _usbHsIfSubmitControlRequest(UsbHsClientIfSession* s, u8 bRequest, u8 bmRequestType, u16 wValue, u16 wIndex, u16 wLength, void* buffer, u32 timeoutInMs, u32* transferredSize) {
+    bool dir = (bmRequestType & USB_ENDPOINT_IN) != 0;
+    size_t bufsize = (wLength + 0xFFF) & ~0xFFF;
+
+    armDCacheFlush(buffer, wLength);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u8 bRequest;
+        u8 bmRequestType;
+        u16 wValue;
+        u16 wIndex;
+        u16 wLength;
+        u32 timeoutInMs;
+    } PACKED *raw;
+
+    if (dir) ipcAddRecvBuffer(&c, buffer, bufsize, BufferType_Normal);
+    if (!dir) ipcAddSendBuffer(&c, buffer, bufsize, BufferType_Normal);
+
+    raw = serviceIpcPrepareHeader(&s->s, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = dir ? 6 : 7;
+    raw->bRequest = bRequest;
+    raw->bmRequestType = bmRequestType;
+    raw->wValue = wValue;
+    raw->wIndex = wIndex;
+    raw->wLength = wLength;
+    raw->timeoutInMs = timeoutInMs;
+
+    Result rc = serviceIpcDispatch(&s->s);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            u32 transferredSize;
+        } *resp;
+
+        serviceIpcParse(&s->s, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && transferredSize) *transferredSize = resp->transferredSize;
+    }
+
+    if (dir) armDCacheFlush(buffer, wLength);
+
+    return rc;
+}
+
+static Result _usbHsIfCtrlXferAsync(UsbHsClientIfSession* s, u8 bmRequestType, u8 bRequest, u16 wValue, u16 wIndex, u16 wLength, void* buffer) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u8 bmRequestType;
+        u8 bRequest;
+        u16 wValue;
+        u16 wIndex;
+        u16 wLength;
+        u64 buffer;
+    } PACKED *raw;
+
+    raw = serviceIpcPrepareHeader(&s->s, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 5;
+    raw->bmRequestType = bmRequestType;
+    raw->bRequest = bRequest;
+    raw->wValue = wValue;
+    raw->wIndex = wIndex;
+    raw->wLength = wLength;
+    raw->buffer = (u64)buffer;
+
+    Result rc = serviceIpcDispatch(&s->s);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&s->s, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+static Result _usbHsIfGetCtrlXferReport(UsbHsClientIfSession* s, UsbHsXferReport* report) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    ipcAddRecvBuffer(&c, report, sizeof(UsbHsXferReport), BufferType_Normal);
+
+    raw = serviceIpcPrepareHeader(&s->s, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 7;
+
+    Result rc = serviceIpcDispatch(&s->s);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&s->s, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result usbHsIfCtrlXfer(UsbHsClientIfSession* s, u8 bmRequestType, u8 bRequest, u16 wValue, u16 wIndex, u16 wLength, void* buffer, u32* transferredSize) {
+    Result rc=0;
+    UsbHsXferReport report;
+
+    if (!kernelAbove200()) return _usbHsIfSubmitControlRequest(s, bRequest, bmRequestType, wValue, wIndex, wLength, buffer, 0, transferredSize);
+
+    rc = _usbHsIfCtrlXferAsync(s, bmRequestType, bRequest, wValue, wIndex, wLength, buffer);
+    if (R_FAILED(rc)) return rc;
+
+    rc = eventWait(&s->eventCtrlXfer, U64_MAX);
+    if (R_FAILED(rc)) return rc;
+    eventClear(&s->eventCtrlXfer);
+
+    memset(&report, 0, sizeof(report));
+    rc = _usbHsIfGetCtrlXferReport(s, &report);
+    if (R_FAILED(rc)) return rc;
+
+    *transferredSize = report.transferredSize;
+    rc = report.res;
 
     return rc;
 }
