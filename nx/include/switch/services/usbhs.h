@@ -41,7 +41,7 @@ typedef struct {
     u8 bInterfaceProtocol;
 } UsbHsInterfaceFilter;
 
-/// Interface struct. Note that devices have a seperate \ref UsbHsInterface for each interface. Descriptors which are not available are set to all-zero.
+/// Descriptors which are not available are set to all-zero.
 typedef struct {
     s32 ID;
     u32 deviceID_2;
@@ -57,6 +57,11 @@ typedef struct {
     u8 pad_x155[0x6];
     struct usb_ss_endpoint_companion_descriptor input_ss_endpoint_companion_descs[15];   ///< ?
     u8 pad_x1b5[0x3];
+} PACKED UsbHsInterfaceInfo;
+
+/// Interface struct. Note that devices have a seperate \ref UsbHsInterface for each interface.
+typedef struct {
+    UsbHsInterfaceInfo inf;
 
     char pathstr[0x40];
     u32 busID;
@@ -76,6 +81,21 @@ typedef struct {
     u32 transferredSize;
     u64 unk_x10;
 } UsbHsXferReport;
+
+/// The interface service object. These Events have autoclear=false.
+typedef struct {
+    Service s;
+    Event event0;         ///< Unknown.
+    Event eventCtrlXfer;  ///< [2.0.0+] Signaled when CtrlXferAsync finishes.
+
+    UsbHsInterface inf;   ///< Initialized with the input interface from \ref usbHsAcquireUsbIf, then the first 0x1B8-bytes are overwritten with the cmd output (data before pathstr).
+} UsbHsClientIfSession;
+
+typedef struct {
+    Service s;
+
+    struct usb_endpoint_descriptor desc;
+} UsbHsClientEpSession;
 
 /// Initialize/exit usb:hs.
 Result usbHsInitialize(void);
@@ -125,4 +145,16 @@ Result usbHsCreateInterfaceAvailableEvent(Event* event, bool autoclear, u8 index
  * @param[in] index Event index, must be 0..2.
  */
 Result usbHsDestroyInterfaceAvailableEvent(Event* event, u8 index);
+
+/**
+ * @brief Acquires/opens the specified interface.
+ * @param[in] s The service object.
+ * @param[in] interface Interface to use.
+ */
+Result usbHsAcquireUsbIf(UsbHsClientIfSession* s, UsbHsInterface *interface);
+
+/// UsbHsClientIfSession
+
+/// Closes the specified interface session.
+void usbHsIfClose(UsbHsClientIfSession* s);
 
