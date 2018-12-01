@@ -36,7 +36,11 @@ typedef enum {
 
 /// Used with viSetLayerScalingMode.
 typedef enum {
-    ViScalingMode_Default = 0x2,
+    ViScalingMode_None = 0x0,
+    ViScalingMode_FitToLayer = 0x2,
+    ViScalingMode_PreserveAspectRatio = 0x4,
+
+    ViScalingMode_Default = ViScalingMode_FitToLayer,
 } ViScalingMode;
 
 /// Used with viSetDisplayPowerState.
