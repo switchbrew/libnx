@@ -245,7 +245,7 @@ Result splSetConfig(SplConfigItem config_item, u64 value) {
     IpcCommand c;
     ipcInitialize(&c);
 
-    struct PACKED {
+    struct {
         u64 magic;
         u64 cmd_id;
         u32 config_item;
