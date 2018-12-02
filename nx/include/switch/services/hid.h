@@ -8,6 +8,7 @@
 #pragma once
 #include <assert.h>
 #include "../types.h"
+#include "../kernel/event.h"
 #include "../services/sm.h"
 
 // Begin enums and output structs
@@ -670,6 +671,11 @@ Result hidSetSupportedNpadIdType(HidControllerID *buf, size_t count);
 
 /// Sets which controller types are supported. This is automatically called with all types in \ref hidInitialize.
 Result hidSetSupportedNpadStyleSet(HidControllerType type);
+
+/// Gets an event with the specified autoclear for the input controller.
+/// The user *must* close the event when finished with it / before the app exits.
+/// This is signaled when the \ref hidGetControllerType output is updated for the controller.
+Result hidAcquireNpadStyleSetUpdateEventHandle(HidControllerID id, Event* event, bool autoclear);
 
 /// Sets the hold-type, see \ref HidJoyHoldType.
 Result hidSetNpadJoyHoldType(HidJoyHoldType type);

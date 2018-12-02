@@ -5,6 +5,7 @@
 #include "kernel/ipc.h"
 #include "kernel/shmem.h"
 #include "kernel/rwlock.h"
+#include "kernel/event.h"
 #include "services/applet.h"
 #include "services/hid.h"
 #include "services/sm.h"
@@ -158,6 +159,12 @@ void hidReset(void)
     g_controllerP1AutoID = CONTROLLER_HANDHELD;
 
     rwlockWriteUnlock(&g_hidLock);
+}
+
+static u32 _hidControllerIDToOfficial(HidControllerID id) {
+    if (id < CONTROLLER_HANDHELD) return id;
+    if (id == CONTROLLER_HANDHELD) return 0x20;
+    return 0x10;//For CONTROLLER_UNKNOWN and invalid values return this.
 }
 
 Service* hidGetSessionService(void) {
@@ -829,6 +836,56 @@ static Result _hidActivateNpad(void) {
 
 static Result _hidDeactivateNpad(void) {
     return _hidCmdWithNoInput(104);
+}
+
+Result hidAcquireNpadStyleSetUpdateEventHandle(HidControllerID id, Event* event, bool autoclear) {
+    Result rc;
+    u64 AppletResourceUserId;
+
+    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
+    if (R_FAILED(rc))
+        AppletResourceUserId = 0;
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 id;
+        u64 AppletResourceUserId;
+        u64 event_ptr;
+    } *raw;
+
+    ipcSendPid(&c);
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 106;
+    raw->id = _hidControllerIDToOfficial(id);
+    raw->AppletResourceUserId = AppletResourceUserId;
+    raw->event_ptr = 0;//Official sw sets this to a ptr, which the sysmodule doesn't seem to use.
+
+    rc = serviceIpcDispatch(&g_hidSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            eventLoadRemote(event, r.Handles[0], autoclear);
+        }
+    }
+
+    return rc;
 }
 
 Result hidSetNpadJoyHoldType(HidJoyHoldType type) {
