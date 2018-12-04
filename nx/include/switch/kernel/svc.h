@@ -242,10 +242,10 @@ void NORETURN svcExitThread(void);
 
 /**
  * @brief Sleeps the current thread for the specified amount of time.
- * @return Result code.
+ * @param[in] nano Number of nanoseconds to sleep, or 0, -1, -2 for yield.
  * @note Syscall number 0x0B.
  */
-Result svcSleepThread(u64 nano);
+void svcSleepThread(s64 nano);
 
 /**
  * @brief Gets a thread's priority.
