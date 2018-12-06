@@ -842,6 +842,14 @@ Result svcDebugActiveProcess(Handle* debug, u64 processID);
 Result svcBreakDebugProcess(Handle debug);
 
 /**
+ * @brief Terminates the process of an active debugging session.
+ * @return Result code.
+ * @note Syscall number 0x62.
+ * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
+ */
+Result svcTerminateDebugProcess(Handle debug);
+
+/**
  * @brief Gets an incoming debug event from a debugging session.
  * @return Result code.
  * @note Syscall number 0x63.

@@ -451,6 +451,11 @@ SVC_BEGIN svcBreakDebugProcess
 	ret
 SVC_END
 
+SVC_BEGIN svcTerminateDebugProcess
+	svc 0x62
+	ret
+SVC_END
+
 SVC_BEGIN svcGetDebugEvent
 	svc 0x63
 	ret
