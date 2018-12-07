@@ -25,7 +25,7 @@ static const u64 g_nvColorFmtTable[] = {
 Result framebufferCreate(Framebuffer* fb, NWindow *win, u32 width, u32 height, u32 format, u32 num_fbs)
 {
     Result rc = 0;
-    if (!fb || !win || !width || !height || format < PIXEL_FORMAT_RGBA_8888 || format > PIXEL_FORMAT_RGBA_4444 || num_fbs < 1 || num_fbs > 3)
+    if (!fb || !nwindowIsValid(win) || !width || !height || format < PIXEL_FORMAT_RGBA_8888 || format > PIXEL_FORMAT_RGBA_4444 || num_fbs < 1 || num_fbs > 3)
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
     rc = nvInitialize();
