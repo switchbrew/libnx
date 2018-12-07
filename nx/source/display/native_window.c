@@ -81,9 +81,9 @@ Result nwindowConfigureBuffer(NWindow* nw, s32 slot, NvGraphicBuffer* buf)
     }
 
     if (!nw->width)
-        nw->width = buf->layers[0].width;
+        nw->width = buf->planes[0].width;
     if (!nw->height)
-        nw->height = buf->layers[0].height;
+        nw->height = buf->planes[0].height;
     if (nw->format == ~0U)
         nw->format = buf->format;
     if (!nw->usage)
@@ -93,7 +93,7 @@ Result nwindowConfigureBuffer(NWindow* nw, s32 slot, NvGraphicBuffer* buf)
     bqbuf.width = nw->width;
     bqbuf.height = nw->height;
     bqbuf.stride = buf->stride;
-    //bqbuf.stride = buf->layers[0].pitch / (u8)(buf->layers[0].color_format >> 3); // this also works
+    //bqbuf.stride = buf->planes[0].pitch / (u8)(buf->planes[0].color_format >> 3); // this also works
     bqbuf.format = nw->format;
     bqbuf.usage = nw->usage;
     bqbuf.native_handle = &buf->header;

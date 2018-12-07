@@ -79,7 +79,7 @@ static NvGraphicBuffer g_gfx_GraphicBuffer = {
     .format = PIXEL_FORMAT_RGBA_8888,
     .ext_format = PIXEL_FORMAT_RGBA_8888,
     .num_planes = 1,
-    .layers = {
+    .planes = {
         {
             .color_format = 0x100532120UL, // this is 'A8B8G8R8' according to symbols in official sw
             .layout = NvLayout_BlockLinear,
@@ -206,10 +206,10 @@ Result gfxInitDefault(void) {
     g_gfx_GraphicBuffer.stride = g_gfx_framebuf_aligned_width;
     g_gfx_GraphicBuffer.total_size = g_gfx_singleframebuf_size;
 
-    g_gfx_GraphicBuffer.layers[0].width = g_gfx_framebuf_width;
-    g_gfx_GraphicBuffer.layers[0].height = g_gfx_framebuf_height;
-    g_gfx_GraphicBuffer.layers[0].pitch = g_gfx_framebuf_aligned_width*4;
-    g_gfx_GraphicBuffer.layers[0].size = g_gfx_singleframebuf_size;
+    g_gfx_GraphicBuffer.planes[0].width = g_gfx_framebuf_width;
+    g_gfx_GraphicBuffer.planes[0].height = g_gfx_framebuf_height;
+    g_gfx_GraphicBuffer.planes[0].pitch = g_gfx_framebuf_aligned_width*4;
+    g_gfx_GraphicBuffer.planes[0].size = g_gfx_singleframebuf_size;
 
     g_gfxFramebufLinear = memalign(0x1000, g_gfx_singleframebuf_linear_size);
     if (g_gfxFramebufLinear) {
@@ -262,7 +262,7 @@ Result gfxInitDefault(void) {
     if (R_SUCCEEDED(rc)) {
         g_gfx_GraphicBuffer.nvmap_id = nvMapGetId(&g_nvmap_obj);
         for (s32 i = 0; i < g_nvgfx_totalframebufs; i ++) {
-            g_gfx_GraphicBuffer.layers[0].offset = g_gfx_singleframebuf_size*i;
+            g_gfx_GraphicBuffer.planes[0].offset = g_gfx_singleframebuf_size*i;
             rc = bqSetPreallocatedBuffer(&g_gfxBinderSession, i, &g_gfx_BufferInitData);
             if (R_FAILED(rc))
                 break;

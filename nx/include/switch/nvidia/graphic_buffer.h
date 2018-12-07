@@ -34,6 +34,6 @@ typedef struct {
     u32 total_size; // in bytes
     u32 num_planes; // usually 1
     u32 unk12;      // 0
-    NvSurface layers[3];
+    NvSurface planes[3];
     u64 unused;     // official sw writes a pointer to bookkeeping data here, but it's otherwise completely unused/overwritten during marshalling
 } NvGraphicBuffer;
