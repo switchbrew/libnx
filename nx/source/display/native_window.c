@@ -7,6 +7,8 @@
 #include "display/native_window.h"
 #include "nvidia/graphic_buffer.h"
 
+#define NWINDOW_MAGIC 0x6E69574E // NWin
+
 static void _nwindowUpdate(NWindow* nw, const BqBufferOutput* out)
 {
     nw->default_width = out->width;
@@ -14,12 +16,17 @@ static void _nwindowUpdate(NWindow* nw, const BqBufferOutput* out)
     nw->consumer_running_behind = out->numPendingBuffers > 1;
 }
 
+bool nwindowIsValid(NWindow* nw)
+{
+    return nw && nw->magic == NWINDOW_MAGIC;
+}
+
 Result nwindowCreate(NWindow* nw, s32 binder_id, bool producer_controlled_by_app)
 {
     Result rc;
 
     memset(nw, 0, sizeof(*nw));
-    nw->has_init = true;
+    nw->magic = NWINDOW_MAGIC;
     nw->swap_interval = 1;
     nw->cur_slot = -1;
     nw->format = ~0U;
@@ -52,7 +59,7 @@ Result nwindowCreateFromLayer(NWindow* nw, const ViLayer* layer)
 
 void nwindowClose(NWindow* nw)
 {
-    if (!nw || !nw->has_init)
+    if (!nwindowIsValid(nw))
         return;
 
     if (nw->is_connected) {
@@ -66,11 +73,72 @@ void nwindowClose(NWindow* nw)
     memset(nw, 0, sizeof(*nw));
 }
 
+Result nwindowGetDimensions(NWindow* nw, u32* out_width, u32* out_height)
+{
+    if (!nwindowIsValid(nw))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (!out_width || !out_height)
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+
+    *out_width = nw->width ? nw->width : nw->default_width;
+    *out_height = nw->height ? nw->height : nw->default_height;
+    return 0;
+}
+
+Result nwindowSetDimensions(NWindow* nw, u32 width, u32 height)
+{
+    if (!nwindowIsValid(nw))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if ((nw->width || nw->height) && nw->slots_configured)
+        return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
+
+    nw->width = width;
+    nw->height = height;
+    memset(&nw->crop, 0, sizeof(nw->crop));
+    return 0;
+}
+
+Result nwindowSetCrop(NWindow* nw, s32 left, s32 top, s32 right, s32 bottom)
+{
+    if (right < left || bottom < top)
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+
+    u32 width, height;
+    Result rc = nwindowGetDimensions(nw, &width, &height);
+    if (R_SUCCEEDED(rc)) {
+        nw->crop.left   = left < 0 ? 0 : left;
+        nw->crop.top    = top < 0 ? 0 : top;
+        nw->crop.right  = right > width ? width : right;
+        nw->crop.bottom = bottom > height ? height : bottom;
+    }
+    return rc;
+}
+
+Result nwindowSetTransform(NWindow* nw, u32 transform)
+{
+    if (!nwindowIsValid(nw))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (transform & ~(HAL_TRANSFORM_FLIP_H|HAL_TRANSFORM_FLIP_V|HAL_TRANSFORM_ROT_90))
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+
+    nw->transform = transform;
+    return 0;
+}
+
+Result nwindowSetSwapInterval(NWindow* nw, u32 swap_interval)
+{
+    if (!nwindowIsValid(nw))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    nw->swap_interval = swap_interval;
+    return 0;
+}
+
 Result nwindowConfigureBuffer(NWindow* nw, s32 slot, NvGraphicBuffer* buf)
 {
     if (!nw || !buf || slot < 0 || slot >= 64)
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
-    if (!nw->has_init)
+    if (!nwindowIsValid(nw))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     mutexLock(&nw->mutex);
@@ -110,7 +178,7 @@ Result nwindowDequeueBuffer(NWindow* nw, s32* out_slot, NvMultiFence* out_fence)
 {
     if (!nw)
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
-    if (!nw->has_init)
+    if (!nwindowIsValid(nw))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     mutexLock(&nw->mutex);
@@ -161,7 +229,7 @@ Result nwindowCancelBuffer(NWindow* nw, s32 slot, const NvMultiFence* fence)
 {
     if (!nw || slot < 0 || slot >= 64)
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
-    if (!nw->has_init)
+    if (!nwindowIsValid(nw))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     mutexLock(&nw->mutex);
@@ -187,7 +255,7 @@ Result nwindowQueueBuffer(NWindow* nw, s32 slot, const NvMultiFence* fence)
 {
     if (!nw || slot < 0 || slot >= 64)
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
-    if (!nw->has_init)
+    if (!nwindowIsValid(nw))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     mutexLock(&nw->mutex);
@@ -220,7 +288,7 @@ Result nwindowQueueBuffer(NWindow* nw, s32 slot, const NvMultiFence* fence)
 
 void nwindowReleaseBuffers(NWindow* nw)
 {
-    if (!nw->has_init)
+    if (!nwindowIsValid(nw))
         return;
 
     for (u32 i = 0; i < 64; i ++)
