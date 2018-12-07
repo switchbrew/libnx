@@ -12,8 +12,7 @@
 #include "display/framebuffer.h"
 #include "nvidia/graphic_buffer.h"
 
-static const u64 g_nvColorFmtTable[] =
-{
+static const u64 g_nvColorFmtTable[] = {
     0x100532120, // PIXEL_FORMAT_RGBA_8888
     0x10A532120, // PIXEL_FORMAT_RGBX_8888
     0x10A881918, // PIXEL_FORMAT_RGB_888 <-- doesn't work
@@ -63,12 +62,12 @@ Result framebufferCreate(Framebuffer* fb, NWindow *win, u32 width, u32 height, u
     grbuf.format = format;
     grbuf.ext_format = format;
     grbuf.num_planes = 1;
-    grbuf.layers[0].width = width;
-    grbuf.layers[0].height = height;
-    grbuf.layers[0].color_format = colorfmt;
-    grbuf.layers[0].layout = NvLayout_BlockLinear;
-    grbuf.layers[0].kind = NvKind_Generic_16BX2;
-    grbuf.layers[0].block_height_log2 = block_height_log2;
+    grbuf.planes[0].width = width;
+    grbuf.planes[0].height = height;
+    grbuf.planes[0].color_format = colorfmt;
+    grbuf.planes[0].layout = NvLayout_BlockLinear;
+    grbuf.planes[0].kind = NvKind_Generic_16BX2;
+    grbuf.planes[0].block_height_log2 = block_height_log2;
 
     // Calculate buffer dimensions and sizes
     const u32 width_aligned_bytes = (width*bytes_per_pixel + 63) &~ 63; // GOBs are 64 bytes wide
@@ -88,11 +87,11 @@ Result framebufferCreate(Framebuffer* fb, NWindow *win, u32 width, u32 height, u
         grbuf.nvmap_id = nvMapGetId(&fb->map);
         grbuf.stride = width_aligned;
         grbuf.total_size = fb_size;
-        grbuf.layers[0].pitch = width_aligned_bytes;
-        grbuf.layers[0].size = fb_size;
+        grbuf.planes[0].pitch = width_aligned_bytes;
+        grbuf.planes[0].size = fb_size;
 
         for (u32 i = 0; i < num_fbs; i ++) {
-            grbuf.layers[0].offset = i*fb_size;
+            grbuf.planes[0].offset = i*fb_size;
             rc = nwindowConfigureBuffer(win, i, &grbuf);
             if (R_FAILED(rc))
                 break;

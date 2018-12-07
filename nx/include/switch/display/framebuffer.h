@@ -2,8 +2,7 @@
 #include "../nvidia/map.h"
 #include "native_window.h"
 
-typedef struct Framebuffer
-{
+typedef struct Framebuffer {
     NWindow *win;
     NvMap map;
     void* buf;
