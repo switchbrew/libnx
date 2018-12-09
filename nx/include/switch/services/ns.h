@@ -41,17 +41,7 @@ typedef struct {
     u8 storageID;
     u8 index;
     u8 is_application;
-    u8 padding[1];
 } NsLaunchProperties;
-
-typedef enum {
-    NsLaunchFlag_SignalOnExit   = (1 << 0),
-    NsLaunchFlag_SignalOnStart  = (1 << 1),
-    NsLaunchFlag_SignalOnCrash  = (1 << 2),
-    NsLaunchFlag_SignalOnDebug  = (1 << 3),
-    NsLaunchFlag_StartSuspended = (1 << 4),
-    NsLaunchFlag_DisableAslr    = (1 << 5),
-} NsLaunchFlag;
 
 typedef enum {
     NsShellEvent_None = 0,
@@ -62,7 +52,7 @@ typedef enum {
 } NsShellEvent;
 
 typedef struct {
-    NsShellEvent event : 32;
+    NsShellEvent event;
     u64 process_id;
 } NsShellEventInfo;
 
@@ -97,10 +87,10 @@ Result nsvmGetSafeSystemVersion(u16 *out);
 Result nsdevInitialize(void);
 void nsdevExit(void);
 
-Result nsdevLaunchProgram(u64* out_pid, NsLaunchProperties* properties, u32 flags);
+Result nsdevLaunchProgram(u64* out_pid, const NsLaunchProperties* properties, u32 flags);
 Result nsdevTerminateProcess(u64 pid);
 Result nsdevTerminateProgram(u64 tid);
-Result nsdevGetShellEvent(Event* out);
+Result nsdevGetShellEvent(Event* out); // Autoclear for nsdevShellEvent is always true.
 Result nsdevGetShellEventInfo(NsShellEventInfo* out);
 Result nsdevTerminateApplication(void);
 Result nsdevPrepareLaunchProgramFromHost(NsLaunchProperties* out, const char* path, size_t path_len);
