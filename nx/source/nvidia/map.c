@@ -1,4 +1,4 @@
-#include <malloc.h>
+#include <string.h>
 #include "types.h"
 #include "result.h"
 #include "arm/atomics.h"
@@ -75,6 +75,28 @@ Result nvMapCreate(NvMap* m, void* cpu_addr, u32 size, u32 align, NvKind kind, b
 
     if (R_SUCCEEDED(rc))
         rc = nvioctlNvmap_GetId(g_nvmap_fd, m->handle, &m->id);
+
+    if (R_FAILED(rc))
+        nvMapClose(m);
+
+    return rc;
+}
+
+Result nvMapLoadRemote(NvMap* m, u32 id)
+{
+    Result rc;
+
+    memset(m, 0, sizeof(*m));
+    rc = nvioctlNvmap_FromId(g_nvmap_fd, id, &m->handle);
+
+    if (R_SUCCEEDED(rc)) {
+        m->has_init = true;
+        m->id = id;
+        rc = nvioctlMap_Param(g_nvmap_fd, m->handle, NvMapParam_Size, &m->size);
+    }
+
+    if (R_SUCCEEDED(rc))
+        rc = nvioctlMap_Param(g_nvmap_fd, m->handle, NvMapParam_Kind, (u32*)&m->kind);
 
     if (R_FAILED(rc))
         nvMapClose(m);
