@@ -132,11 +132,11 @@ Result ldrDmntClearLaunchQueue(void) {
     return _ldrClearLaunchQueue(&g_dmntSrv);
 }
 
-Result ldrDmntGetNsoInfos(u64 pid, LoaderNsoInfo *out_nso_infos, size_t out_size, u32 *num_out) {
+Result ldrDmntGetModuleInfos(u64 pid, LoaderModuleInfo *out_module_infos, size_t out_size, u32 *num_out) {
     IpcCommand c;
     ipcInitialize(&c);
     
-    ipcAddRecvStatic(&c, out_nso_infos, out_size, 0);
+    ipcAddRecvStatic(&c, out_module_infos, out_size, 0);
 
     struct {
         u64 magic;

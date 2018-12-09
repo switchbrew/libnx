@@ -26,7 +26,7 @@ typedef struct {
     u64 base_address;
     u64 size;
     u8 build_id[0x20];
-} LoaderNsoInfo;
+} LoaderModuleInfo;
 
 Result ldrShellInitialize(void);
 void ldrShellExit(void);
@@ -42,7 +42,7 @@ Result ldrShellClearLaunchQueue(void);
 
 Result ldrDmntAddTitleToLaunchQueue(u64 tid, const void *args, size_t args_size);
 Result ldrDmntClearLaunchQueue(void);
-Result ldrDmntGetNsoInfos(u64 pid, LoaderNsoInfo *out_nso_infos, size_t out_size, u32 *num_out);
+Result ldrDmntGetModuleInfos(u64 pid, LoaderModuleInfo *out_module_infos, size_t out_size, u32 *num_out);
 
 Result ldrPmCreateProcess(u64 flags, u64 launch_index, Handle reslimit_h, Handle *out_process_h);
 Result ldrPmGetProgramInfo(u64 title_id, FsStorageId storage_id, LoaderProgramInfo *out_program_info);
