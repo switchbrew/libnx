@@ -81,6 +81,28 @@ Result nvioctlNvmap_Free(u32 fd, u32 nvmap_handle) {
     return nvIoctl(fd, _NV_IOWR(0x01, 0x05, data), &data);
 }
 
+Result nvioctlMap_Param(u32 fd, u32 nvmap_handle, NvMapParam param, u32 *result) {
+    Result rc=0;
+
+    struct {
+        __nv_in  u32 handle;
+        __nv_in  u32 param;
+        __nv_out u32 result;
+    } data;
+
+    memset(&data, 0, sizeof(data));
+    data.handle = nvmap_handle;
+    data.param = param;
+
+    rc = nvIoctl(fd, _NV_IOWR(0x01, 0x09, data), &data);
+
+    if (R_SUCCEEDED(rc)) {
+        *result = data.result;
+    }
+
+    return rc;
+}
+
 Result nvioctlNvmap_GetId(u32 fd, u32 nvmap_handle, u32 *id) {
     Result rc=0;
 
