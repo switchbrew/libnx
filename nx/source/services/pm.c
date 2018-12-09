@@ -386,6 +386,39 @@ Result pmshellLaunchProcess(u32 launch_flags, u64 titleID, u64 storageID, u64 *p
     return rc;
 }
 
+Result pmshellTerminateProcessByProcessId(u64 processID) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 processID;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 1;
+    raw->processID = processID;
+
+    Result rc = serviceIpcDispatch(&g_pmshellSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
 Result pmshellTerminateProcessByTitleId(u64 titleID) {
     IpcCommand c;
     ipcInitialize(&c);
@@ -401,6 +434,183 @@ Result pmshellTerminateProcessByTitleId(u64 titleID) {
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 2;
     raw->titleID = titleID;
+
+    Result rc = serviceIpcDispatch(&g_pmshellSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result pmshellGetProcessEvent(Event* out) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 3;
+
+    Result rc = serviceIpcDispatch(&g_pmshellSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+        
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            eventLoadRemote(out, r.Handles[0], true);
+        }
+    }
+
+    return rc;
+}
+
+Result pmshellGetProcessEventInfo(PmProcessEventInfo* out) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 4;
+
+    Result rc = serviceIpcDispatch(&g_pmshellSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+        
+        struct {
+            u64 magic;
+            u64 result;
+            u32 event;
+            u32 pad;
+            u64 process_id;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            if (out) {
+                out->event = (PmProcessEvent)resp->event;
+                out->process_id = resp->process_id;
+            }
+        }
+    }
+
+    return rc;
+}
+
+Result pmshellFinalizeDeadProcess(u64 pid) {
+    if (kernelAbove500()) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 pid;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 5;
+    raw->pid = pid;
+
+    Result rc = serviceIpcDispatch(&g_pmshellSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result pmshellClearProcessExceptionOccurred(u64 pid) {
+    if (kernelAbove500()) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 pid;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 6;
+    raw->pid = pid;
+
+    Result rc = serviceIpcDispatch(&g_pmshellSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result pmshellNotifyBootFinished(void) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = kernelAbove500() ? 5 : 7;
 
     Result rc = serviceIpcDispatch(&g_pmshellSrv);
 
@@ -450,6 +660,41 @@ Result pmshellGetApplicationPid(u64* pid_out) {
         if (R_SUCCEEDED(rc)) {
             *pid_out = resp->pid;
         }
+    }
+
+    return rc;
+}
+
+Result pmshellBoostSystemMemoryResourceLimit(u64 boost_size) {
+    if (!kernelAbove400()) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 boost_size;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = kernelAbove500() ? 7 : 9;
+    raw->boost_size = boost_size;
+
+    Result rc = serviceIpcDispatch(&g_pmshellSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
     }
 
     return rc;

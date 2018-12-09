@@ -383,7 +383,7 @@ Result nsvmGetSafeSystemVersion(u16 *out)
     return rc;
 }
 
-Result nsdevLaunchProgram(u64* out_pid, NsLaunchProperties* properties, u32 flags) {
+Result nsdevLaunchProgram(u64* out_pid, const NsLaunchProperties* properties, u32 flags) {
     IpcCommand c;
     ipcInitialize(&c);
 
