@@ -61,6 +61,43 @@ void pmshellExit(void)
     }
 }
 
+Result pmdmntGetDebugProcesses(u32* out_count, u64* out_pids, size_t max_pids) {
+    IpcCommand c;
+    ipcInitialize(&c);
+    ipcAddRecvBuffer(&c, out_pids, sizeof(*out_pids) * max_pids, BufferType_Normal);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = kernelAbove500() ? 0 : 1;
+
+    Result rc = serviceIpcDispatch(&g_pmdmntSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u32 out_count;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            if (out_count) *out_count = resp->out_count;
+        }
+    }
+
+    return rc;
+}
+
 Result pmdmntStartProcess(u64 pid) {
     IpcCommand c;
     ipcInitialize(&c);
@@ -271,6 +308,39 @@ Result pmdmntEnableDebugForApplication(Handle* handle_out) {
         if (R_SUCCEEDED(rc)) {
             *handle_out = r.Handles[0];
         }
+    }
+
+    return rc;
+}
+
+Result pmdmntDisableDebug(void) {
+    if (!kernelAbove600()) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 6;
+
+    Result rc = serviceIpcDispatch(&g_pmdmntSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
     }
 
     return rc;
