@@ -460,7 +460,7 @@ u32 gfxGetFramebufferHandle(u32 index, u32* offset) {
         index = (g_gfxCurrentBuffer + index) & (g_nvgfx_totalframebufs-1);
         *offset = index*g_gfx_singleframebuf_size;
     }
-    return nvMapGetHandle(&g_nvmap_obj);
+    return nvMapGetId(&g_nvmap_obj);
 }
 
 u8* gfxGetFramebuffer(u32* width, u32* height) {
