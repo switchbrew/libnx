@@ -425,6 +425,49 @@ Result fsOpenSdCardDetectionEventNotifier(FsEventNotifier* out) {
     return rc;
 }
 
+Result fsIsExFatSupported(bool* out)
+{
+    if (!kernelAbove200()) {
+      *out = false;
+      return 0;
+    }
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_fsSrv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 27;
+
+    Result rc = serviceIpcDispatch(&g_fsSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            u8  exfat;
+        } *resp;
+
+        serviceIpcParse(&g_fsSrv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            *out = resp->exfat;
+        }
+    }
+
+    return rc;
+}
+
 // Wrapper(s) for fsMountSaveData.
 Result fsMount_SaveData(FsFileSystem* out, u64 titleID, u128 userID) {
     FsSave save;

@@ -166,6 +166,8 @@ Service* fsGetServiceSession(void);
 Result fsOpenBisStorage(FsStorage* out, u32 PartitionId);
 Result fsOpenBisFileSystem(FsFileSystem* out, u32 PartitionId, const char* string);
 
+Result fsIsExFatSupported(bool* out);
+
 /// Do not call this directly, see fs_dev.h.
 Result fsMountSdcard(FsFileSystem* out);
 
