@@ -45,10 +45,10 @@ void nsExit(void)
 
 Result nsdevInitialize(void) {
     atomicIncrement64(&g_nsdevRefCnt);
-    
+
     if (serviceIsActive(&g_nsdevSrv))
         return 0;
-    
+
     return smGetService(&g_nsdevSrv, "ns:dev");
 }
 
@@ -97,21 +97,21 @@ Result nsListApplicationRecord(NsApplicationRecord* buffer, size_t size, size_t 
     IpcCommand c;
     ipcInitialize(&c);
     ipcAddRecvBuffer(&c, buffer, size, 0);
-    
+
     struct {
         u64 magic;
         u64 cmd_id;
         u32 entry_offset;
     } *raw;
-    
+
     raw = ipcPrepareHeader(&c, sizeof(*raw));
-    
+
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 0;
     raw->entry_offset = entry_offset;
-    
+
     Result rc = serviceIpcDispatch(&g_nsAppManSrv);
-    
+
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
         ipcParse(&r);
@@ -123,7 +123,7 @@ Result nsListApplicationRecord(NsApplicationRecord* buffer, size_t size, size_t 
         } *resp = r.Raw;
 
         rc = resp->result;
-        
+
         if (R_SUCCEEDED(rc) && out_entrycount) *out_entrycount = resp->entry_count;
     }
 
@@ -135,23 +135,23 @@ Result nsListApplicationContentMetaStatus(u64 titleID, u32 index, NsApplicationC
     IpcCommand c;
     ipcInitialize(&c);
     ipcAddRecvBuffer(&c, buffer, size, 0);
-    
+
     struct {
         u64 magic;
         u64 cmd_id;
         u32 index;
         u64 titleID;
     } *raw;
-    
+
     raw = ipcPrepareHeader(&c, sizeof(*raw));
-    
+
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 601;
     raw->index = index;
     raw->titleID = titleID;
-    
+
     Result rc = serviceIpcDispatch(&g_nsAppManSrv);
-    
+
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
         ipcParse(&r);
@@ -321,7 +321,7 @@ Result nsvmNeedsUpdateVulnerability(bool *out) {
     raw->cmd_id = 1200;
 
     Result rc;
-    
+
     if (kernelAbove300())
         rc = serviceIpcDispatch(&g_nsvmSrv);
     else
@@ -383,6 +383,49 @@ Result nsvmGetSafeSystemVersion(u16 *out)
     return rc;
 }
 
+Result nsdevLaunchProgram(u64* out_pid, NsLaunchProperties* properties, u32 flags) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 flags;
+        u32 pad;
+        NsLaunchProperties properties;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_nsdevSrv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 0;
+    raw->flags = flags;
+    raw->pad = 0;
+    raw->properties = *properties;
+
+    Result rc = serviceIpcDispatch(&g_nsdevSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            u64 pid;
+        } *resp;
+
+        serviceIpcParse(&g_nsdevSrv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            if (out_pid) *out_pid = resp->pid;
+        }
+    }
+
+    return rc;
+}
+
 Result nsdevTerminateProcess(u64 pid) {
     IpcCommand c;
     ipcInitialize(&c);
@@ -393,7 +436,7 @@ Result nsdevTerminateProcess(u64 pid) {
         u64 pid;
     } *raw;
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
+    raw = serviceIpcPrepareHeader(&g_nsdevSrv, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 1;
@@ -403,12 +446,13 @@ Result nsdevTerminateProcess(u64 pid) {
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
-        ipcParse(&r);
-
         struct {
             u64 magic;
             u64 result;
-        } *resp = r.Raw;
+        } *resp;
+
+        serviceIpcParse(&g_nsdevSrv, &r, sizeof(*resp));
+        resp = r.Raw;
 
         rc = resp->result;
     }
@@ -426,7 +470,7 @@ Result nsdevTerminateProgram(u64 tid) {
         u64 tid;
     } *raw;
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
+    raw = serviceIpcPrepareHeader(&g_nsdevSrv, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 2;
@@ -436,12 +480,365 @@ Result nsdevTerminateProgram(u64 tid) {
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
-        ipcParse(&r);
-
         struct {
             u64 magic;
             u64 result;
-        } *resp = r.Raw;
+        } *resp;
+
+        serviceIpcParse(&g_nsdevSrv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result nsdevGetShellEvent(Event* out) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_nsdevSrv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 4;
+
+    Result rc = serviceIpcDispatch(&g_nsdevSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_nsdevSrv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            eventLoadRemote(out, r.Handles[0], true);
+        }
+    }
+
+    return rc;
+}
+
+Result nsdevGetShellEventInfo(NsShellEventInfo* out) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_nsdevSrv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 5;
+
+    Result rc = serviceIpcDispatch(&g_nsdevSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            u32 event;
+            u32 pad;
+            u64 process_id;
+        } *resp;
+
+        serviceIpcParse(&g_nsdevSrv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            if (out) {
+                out->event = (NsShellEvent)resp->event;
+                out->process_id = resp->process_id;
+            }
+        }
+    }
+
+    return rc;
+}
+
+Result nsdevTerminateApplication(void) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_nsdevSrv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 6;
+
+    Result rc = serviceIpcDispatch(&g_nsdevSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_nsdevSrv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result nsdevPrepareLaunchProgramFromHost(NsLaunchProperties* out, const char* path, size_t path_len) {
+    IpcCommand c;
+    ipcInitialize(&c);
+    ipcAddSendBuffer(&c, path, path_len, BufferType_Normal);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_nsdevSrv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 7;
+
+    Result rc = serviceIpcDispatch(&g_nsdevSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            NsLaunchProperties properties;
+        } *resp;
+
+        serviceIpcParse(&g_nsdevSrv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            if (out) *out = resp->properties;
+        }
+    }
+
+    return rc;
+}
+
+Result nsdevLaunchApplication(u64* out_pid, u64 app_title_id, u32 flags) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 flags;
+        u32 pad;
+        u64 app_title_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_nsdevSrv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 8;
+    raw->flags = flags;
+    raw->pad = 0;
+    raw->app_title_id = app_title_id;
+
+    Result rc = serviceIpcDispatch(&g_nsdevSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            u64 pid;
+        } *resp;
+
+        serviceIpcParse(&g_nsdevSrv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            if (out_pid) *out_pid = resp->pid;
+        }
+    }
+
+    return rc;
+}
+
+Result nsdevLaunchApplicationWithStorageId(u64* out_pid, u64 app_title_id, u32 flags, u8 app_storage_id, u8 patch_storage_id) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u8 app_storage_id;
+        u8 patch_storage_id;
+        u16 pad;
+        u32 flags;
+        u64 app_title_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_nsdevSrv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 9;
+    raw->app_storage_id = app_storage_id;
+    raw->patch_storage_id = patch_storage_id;
+    raw->pad = 0;
+    raw->flags = flags;
+    raw->app_title_id = app_title_id;
+
+    Result rc = serviceIpcDispatch(&g_nsdevSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            u64 pid;
+        } *resp;
+
+        serviceIpcParse(&g_nsdevSrv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            if (out_pid) *out_pid = resp->pid;
+        }
+    }
+
+    return rc;
+}
+
+Result nsdevIsSystemMemoryResourceLimitBoosted(bool* out) {
+    if (!kernelAbove600()) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_nsdevSrv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 10;
+
+    Result rc = serviceIpcDispatch(&g_nsdevSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            u8 boosted;
+        } *resp;
+
+        serviceIpcParse(&g_nsdevSrv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            if (out) *out = resp->boosted != 0;
+        }
+    }
+
+    return rc;
+}
+
+Result nsdevGetRunningApplicationProcessId(u64* out_pid) {
+    if (!kernelAbove600()) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_nsdevSrv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 11;
+
+    Result rc = serviceIpcDispatch(&g_nsdevSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            u64 pid;
+        } *resp;
+
+        serviceIpcParse(&g_nsdevSrv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            if (out_pid) *out_pid = resp->pid;
+        }
+    }
+
+    return rc;
+}
+
+Result nsdevSetCurrentApplicationRightsEnvironmentCanBeActive(bool can_be_active) {
+    if (!kernelAbove600()) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u8 can_be_active;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_nsdevSrv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 12;
+    raw->can_be_active = can_be_active ? 1 : 0;
+
+    Result rc = serviceIpcDispatch(&g_nsdevSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_nsdevSrv, &r, sizeof(*resp));
+        resp = r.Raw;
 
         rc = resp->result;
     }

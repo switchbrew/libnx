@@ -8,6 +8,7 @@
 #include "../types.h"
 #include "../nacp.h"
 #include "../services/fs.h"
+#include "../kernel/event.h"
 
 typedef struct {
     NacpStruct nacp;
@@ -33,6 +34,37 @@ typedef struct
     u8 unk_x10;
     u8 unk_x11[7];
 } NsApplicationRecord;
+
+typedef struct {
+    u64 titleID;
+    u32 version;
+    u8 storageID;
+    u8 index;
+    u8 is_application;
+    u8 padding[1];
+} NsLaunchProperties;
+
+typedef enum {
+    NsLaunchFlag_SignalOnExit   = (1 << 0),
+    NsLaunchFlag_SignalOnStart  = (1 << 1),
+    NsLaunchFlag_SignalOnCrash  = (1 << 2),
+    NsLaunchFlag_SignalOnDebug  = (1 << 3),
+    NsLaunchFlag_StartSuspended = (1 << 4),
+    NsLaunchFlag_DisableAslr    = (1 << 5),
+} NsLaunchFlag;
+
+typedef enum {
+    NsShellEvent_None = 0,
+    NsShellEvent_Exit = 1,
+    NsShellEvent_Start = 2,
+    NsShellEvent_Crash = 3,
+    NsShellEvent_Debug = 4,
+} NsShellEvent;
+
+typedef struct {
+    NsShellEvent event : 32;
+    u64 process_id;
+} NsShellEventInfo;
 
 Result nsInitialize(void);
 void nsExit(void);
@@ -65,5 +97,15 @@ Result nsvmGetSafeSystemVersion(u16 *out);
 Result nsdevInitialize(void);
 void nsdevExit(void);
 
+Result nsdevLaunchProgram(u64* out_pid, NsLaunchProperties* properties, u32 flags);
 Result nsdevTerminateProcess(u64 pid);
 Result nsdevTerminateProgram(u64 tid);
+Result nsdevGetShellEvent(Event* out);
+Result nsdevGetShellEventInfo(NsShellEventInfo* out);
+Result nsdevTerminateApplication(void);
+Result nsdevPrepareLaunchProgramFromHost(NsLaunchProperties* out, const char* path, size_t path_len);
+Result nsdevLaunchApplication(u64* out_pid, u64 app_title_id, u32 flags);
+Result nsdevLaunchApplicationWithStorageId(u64* out_pid, u64 app_title_id, u32 flags, u8 app_storage_id, u8 patch_storage_id);
+Result nsdevIsSystemMemoryResourceLimitBoosted(bool* out);
+Result nsdevGetRunningApplicationProcessId(u64* out_pid);
+Result nsdevSetCurrentApplicationRightsEnvironmentCanBeActive(bool can_be_active);
