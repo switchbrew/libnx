@@ -949,7 +949,7 @@ Result svcReadDebugProcessMemory(void* buffer, Handle debug, u64 addr, u64 size)
  * @note Syscall number 0x6B.
  * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
  */
-Result svcWriteDebugProcessMemory(Handle debug, void* buffer, u64 addr, u64 size);
+Result svcWriteDebugProcessMemory(Handle debug, const void* buffer, u64 addr, u64 size);
 
 /**
  * @brief Gets parameters from a thread in a debugging session.
