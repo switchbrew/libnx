@@ -428,8 +428,8 @@ Result fsOpenSdCardDetectionEventNotifier(FsEventNotifier* out) {
 Result fsIsExFatSupported(bool* out)
 {
     if (!kernelAbove200()) {
-      *out = false;
-      return 0;
+        *out = false;
+        return 0;
     }
 
     IpcCommand c;
