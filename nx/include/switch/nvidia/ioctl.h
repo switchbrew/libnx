@@ -106,6 +106,15 @@ typedef struct {
     };
 } nvioctl_gpfifo_entry;
 
+// Used with nvioctlMap_Param().
+typedef enum nvioctl_map_param {
+    NvMapParam_Size = 1,
+    NvMapParam_Alignment = 2,
+    NvMapParam_Base = 3,
+    NvMapParam_Heap = 4,
+    NvMapParam_Kind = 5
+} NvMapParam;
+
 // Used with nvioctlChannel_AllocObjCtx().
 typedef enum nvioctl_channel_obj_classnum {
     NvClassNumber_2D = 0x902D,
@@ -189,6 +198,7 @@ Result nvioctlNvmap_Create(u32 fd, u32 size, u32 *nvmap_handle);
 Result nvioctlNvmap_FromId(u32 fd, u32 id, u32 *nvmap_handle);
 Result nvioctlNvmap_Alloc(u32 fd, u32 nvmap_handle, u32 heapmask, u32 flags, u32 align, u8 kind, void* addr);
 Result nvioctlNvmap_Free(u32 fd, u32 nvmap_handle);
+Result nvioctlMap_Param(u32 fd, u32 nvmap_handle, NvMapParam param, u32 *result);
 Result nvioctlNvmap_GetId(u32 fd, u32 nvmap_handle, u32 *id);
 
 Result nvioctlChannel_SetNvmapFd(u32 fd, u32 nvmap_fd);
