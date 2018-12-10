@@ -5,7 +5,7 @@
 typedef struct {
     u32 width;
     u32 height;
-    u64 color_format;
+    NvColorFormat color_format;
     NvLayout layout;
     u32 pitch;
     u32 unused; // usually this field contains the nvmap handle, but it's completely unused/overwritten during marshalling

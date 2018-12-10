@@ -81,7 +81,7 @@ static NvGraphicBuffer g_gfx_GraphicBuffer = {
     .num_planes = 1,
     .planes = {
         {
-            .color_format = 0x100532120UL, // this is 'A8B8G8R8' according to symbols in official sw
+            .color_format = NvColorFormat_A8B8G8R8,
             .layout = NvLayout_BlockLinear,
             .kind = NvKind_Generic_16BX2,
             .block_height_log2 = 4, // i.e. block height is 16 which is the preferred value according to TRM
