@@ -12,14 +12,14 @@
 #include "display/framebuffer.h"
 #include "nvidia/graphic_buffer.h"
 
-static const u64 g_nvColorFmtTable[] = {
-    0x100532120, // PIXEL_FORMAT_RGBA_8888
-    0x10A532120, // PIXEL_FORMAT_RGBX_8888
-    0x10A881918, // PIXEL_FORMAT_RGB_888 <-- doesn't work
-    0x10A881210, // PIXEL_FORMAT_RGB_565
-    0x100D12120, // PIXEL_FORMAT_BGRA_8888
-    0x106881810, // PIXEL_FORMAT_RGBA_5551 <-- doesn't work
-    0x100531510, // PIXEL_FORMAT_RGBA_4444
+static const NvColorFormat g_nvColorFmtTable[] = {
+    NvColorFormat_A8B8G8R8, // PIXEL_FORMAT_RGBA_8888
+    NvColorFormat_X8B8G8R8, // PIXEL_FORMAT_RGBX_8888
+    NvColorFormat_R8_G8_B8, // PIXEL_FORMAT_RGB_888   <-- doesn't work
+    NvColorFormat_R5G6B5,   // PIXEL_FORMAT_RGB_565
+    NvColorFormat_A8R8G8B8, // PIXEL_FORMAT_BGRA_8888
+    NvColorFormat_R5G5B5A1, // PIXEL_FORMAT_RGBA_5551 <-- doesn't work
+    NvColorFormat_A4B4G4R4, // PIXEL_FORMAT_RGBA_4444
 };
 
 Result framebufferCreate(Framebuffer* fb, NWindow *win, u32 width, u32 height, u32 format, u32 num_fbs)
@@ -48,8 +48,8 @@ Result framebufferCreate(Framebuffer* fb, NWindow *win, u32 width, u32 height, u
     fb->win = win;
     fb->num_fbs = num_fbs;
 
-    const u64 colorfmt = g_nvColorFmtTable[format-1];
-    const u32 bytes_per_pixel = (colorfmt >> 3) & 0x1F;
+    const NvColorFormat colorfmt = g_nvColorFmtTable[format-PIXEL_FORMAT_RGBA_8888];
+    const u32 bytes_per_pixel = ((u64)colorfmt >> 3) & 0x1F;
     const u32 block_height_log2 = 4; // According to TRM this is the optimal value (SIXTEEN_GOBS)
     const u32 block_height = 8 * (1U << block_height_log2);
 
