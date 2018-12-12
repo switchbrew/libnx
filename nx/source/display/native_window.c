@@ -16,6 +16,33 @@ static void _nwindowUpdate(NWindow* nw, const BqBufferOutput* out)
     nw->consumer_running_behind = out->numPendingBuffers > 1;
 }
 
+static Result _nwindowConnect(NWindow* nw)
+{
+    BqBufferOutput bqoutput;
+    Result rc = bqConnect(&nw->bq, NATIVE_WINDOW_API_CPU, nw->producer_controlled_by_app, &bqoutput);
+    if (R_SUCCEEDED(rc)) {
+        nw->is_connected = true;
+        _nwindowUpdate(nw, &bqoutput);
+    }
+    return rc;
+}
+
+static Result _nwindowDisconnect(NWindow* nw)
+{
+    Result rc = bqDisconnect(&nw->bq, NATIVE_WINDOW_API_CPU);
+    if (R_SUCCEEDED(rc)) {
+        nw->is_connected = false;
+        nw->slots_configured = 0;
+        nw->slots_requested = 0;
+        nw->cur_slot = -1;
+        nw->width = 0;
+        nw->height = 0;
+        nw->format = 0;
+        nw->usage = 0;
+    }
+    return rc;
+}
+
 bool nwindowIsValid(NWindow* nw)
 {
     return nw && nw->magic == NWINDOW_MAGIC;
@@ -30,6 +57,7 @@ Result nwindowCreate(NWindow* nw, s32 binder_id, bool producer_controlled_by_app
     nw->swap_interval = 1;
     nw->cur_slot = -1;
     nw->format = ~0U;
+    nw->producer_controlled_by_app = producer_controlled_by_app;
 
     binderCreate(&nw->bq, binder_id);
     rc = binderInitSession(&nw->bq);
@@ -37,14 +65,8 @@ Result nwindowCreate(NWindow* nw, s32 binder_id, bool producer_controlled_by_app
     if (R_SUCCEEDED(rc))
         binderGetNativeHandle(&nw->bq, 0x0f, &nw->event);
 
-    if (R_SUCCEEDED(rc)) {
-        BqBufferOutput bqoutput;
-        rc = bqConnect(&nw->bq, NATIVE_WINDOW_API_CPU, producer_controlled_by_app, &bqoutput);
-        if (R_SUCCEEDED(rc)) {
-            nw->is_connected = true;
-            _nwindowUpdate(nw, &bqoutput);
-        }
-    }
+    if (R_SUCCEEDED(rc))
+        rc = _nwindowConnect(nw);
 
     if (R_FAILED(rc))
         nwindowClose(nw);
@@ -62,10 +84,8 @@ void nwindowClose(NWindow* nw)
     if (!nwindowIsValid(nw))
         return;
 
-    if (nw->is_connected) {
-        nwindowReleaseBuffers(nw);
-        bqDisconnect(&nw->bq, NATIVE_WINDOW_API_CPU);
-    }
+    if (nw->is_connected)
+        _nwindowDisconnect(nw);
 
     eventClose(&nw->event);
     binderClose(&nw->bq);
@@ -148,6 +168,14 @@ Result nwindowConfigureBuffer(NWindow* nw, s32 slot, NvGraphicBuffer* buf)
         return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
     }
 
+    if (!nw->is_connected) {
+        Result rc = _nwindowConnect(nw);
+        if (R_FAILED(rc)) {
+            mutexUnlock(&nw->mutex);
+            return rc;
+        }
+    }
+
     if (!nw->width)
         nw->width = buf->planes[0].width;
     if (!nw->height)
@@ -183,7 +211,7 @@ Result nwindowDequeueBuffer(NWindow* nw, s32* out_slot, NvMultiFence* out_fence)
 
     mutexLock(&nw->mutex);
 
-    if (nw->cur_slot >= 0) {
+    if (!nw->slots_configured || nw->cur_slot >= 0) {
         mutexUnlock(&nw->mutex);
         return MAKERESULT(Module_Libnx, LibnxError_BadGfxDequeueBuffer);
     }
@@ -286,15 +314,24 @@ Result nwindowQueueBuffer(NWindow* nw, s32 slot, const NvMultiFence* fence)
     return rc;
 }
 
-void nwindowReleaseBuffers(NWindow* nw)
+Result nwindowReleaseBuffers(NWindow* nw)
 {
     if (!nwindowIsValid(nw))
-        return;
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    for (u32 i = 0; i < 64; i ++)
-        if (nw->slots_configured & (1UL << i))
-            bqDetachBuffer(&nw->bq, i);
+    Result rc = 0;
+    mutexLock(&nw->mutex);
 
-    nw->slots_configured = 0;
-    nw->slots_requested = 0;
+    if (nw->cur_slot >= 0)
+        rc = MAKERESULT(Module_Libnx, LibnxError_BadInput);
+    else if (nw->is_connected && nw->slots_configured) {
+        for (u32 i = 0; i < 64; i ++)
+            if (nw->slots_configured & (1UL << i))
+                bqDetachBuffer(&nw->bq, i);
+
+        rc = _nwindowDisconnect(nw);
+    }
+
+    mutexUnlock(&nw->mutex);
+    return rc;
 }

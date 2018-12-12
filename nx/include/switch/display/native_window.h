@@ -34,6 +34,7 @@ typedef struct NWindow {
     u32 default_height;
     u32 swap_interval;
     bool is_connected;
+    bool producer_controlled_by_app;
     bool consumer_running_behind;
 } NWindow;
 
@@ -183,6 +184,6 @@ Result nwindowCancelBuffer(NWindow* nw, s32 slot, const NvMultiFence* fence);
 Result nwindowQueueBuffer(NWindow* nw, s32 slot, const NvMultiFence* fence);
 
 /// Releases all buffers registered with a \ref NWindow.
-void nwindowReleaseBuffers(NWindow* nw);
+Result nwindowReleaseBuffers(NWindow* nw);
 
 ///@}
