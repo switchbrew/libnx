@@ -1,3 +1,8 @@
+/**
+ * @file types.h
+ * @brief Definitions for Android-related types and enumerations.
+ * @copyright libnx Authors
+ */
 #pragma once
 #include "../types.h"
 
