@@ -35,6 +35,9 @@ extern "C" {
 #include "switch/kernel/jit.h"
 #include "switch/kernel/ipc.h"
 #include "switch/kernel/barrier.h"
+#include "switch/kernel/uevent.h"
+#include "switch/kernel/utimer.h"
+#include "switch/kernel/wait.h"
 
 #include "switch/services/sm.h"
 #include "switch/services/smm.h"

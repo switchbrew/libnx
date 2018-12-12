@@ -2,6 +2,5 @@
 #pragma once
 #include "kernel/uevent.h"
 
-bool _ueventConsumeIfSignalled(UsermodeEvent* e);
-void _ueventAddListener(UsermodeEvent* e, WaiterNode* w);
-void _ueventRemoveListener(UsermodeEvent* e, WaiterNode* w);
+void _ueventTryAutoClear(UsermodeEvent* e);
+bool _ueventAddListener(UsermodeEvent* e, WaiterNode* w, size_t idx, size_t* idx_out, Handle thread);
