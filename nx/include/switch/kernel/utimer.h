@@ -1,12 +1,14 @@
 // Copyright 2018 plutoo
 #pragma once
-#include "kernel/svc.h"
+#include "../kernel/mutex.h"
+#include "../kernel/wait.h"
 
 typedef struct UsermodeTimer UsermodeTimer;
 
 struct UsermodeTimer
 {
-    u64 next_time;
+    Waitable waitable;
+    u64 next_tick;
     u64 interval;
 };
 

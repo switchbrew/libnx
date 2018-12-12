@@ -2,114 +2,183 @@
 #include "result.h"
 #include "kernel/svc.h"
 #include "kernel/wait.h"
-#include "kernel/waiter.h"
 #include "kernel/utimer.h"
 #include "kernel/uevent.h"
 #include "arm/counter.h"
-#include "waiter.h"
 #include "utimer.h"
 #include "uevent.h"
+#include "wait.h"
 #include "../internal.h"
 
-Result waitN(s32* idx_out, WaitObject* objects, size_t num_objects, u64 timeout)
+#define MAX_WAIT 0x40
+
+#define KernelError_Timeout 0xEA01
+#define KernelError_Interrupt 0xEC01
+
+static Result waitImpl(s32* idx_out, u64 timeout, Waiter* objects, size_t num_objects)
 {
     if (num_objects > MAX_WAIT)
         return MAKERESULT(Module_Libnx, LibnxError_TooManyWaitables);
 
-    Handle dummy_handle = getThreadVars()->handle;
+    Handle own_thread_handle = getThreadVars()->handle;
+    Handle dummy_handle = own_thread_handle;
+    Result rc;
 
-    Waiter waiter;
-    _waiterCreate(&waiter);
-
-    Handle handles[MAX_WAIT];
+    Handle handles[num_objects];
     u64 cur_tick = armGetSystemTick();
 
-    u64 end_time = timeout;
-    s32 end_time_idx = -1;
+    size_t triggered_idx = -1;
+    size_t num_waiters = 0;
+    WaiterNode waiters[num_objects];
+
+    u64 end_tick = armNsToTicks(timeout);
+    s32 end_tick_idx = -1;
     size_t i;
 
     for (i=0; i<num_objects; i++)
     {
-        WaitObject* obj = &objects[i];
+        Waiter* obj = &objects[i];
         u64 timer_tick;
+        bool added;
 
         switch (obj->type)
         {
-        case WaitObjectType_UsermodeTimer:
-            timer_tick = _utimerGetNextTime(obj->timer);
+        case WaiterType_UsermodeTimer:
 
-            // Skip timer if disabled.
-            if (timer_tick == 0)
-                break;
+            timer_tick = _utimerGetNextTick(obj->timer);
 
-            // If the timer already signalled, we're done.
-            if (timer_tick < cur_tick)
+            // Skip timer if stopped.
+            if (timer_tick != 0)
             {
-                *idx_out = i;
-                _utimerRecalculate(obj->timer, timer_tick);
-                _waiterFree(&waiter, objects);
-                return 0;
+                // If the timer already signalled, we're done.
+                if (timer_tick < cur_tick)
+                {
+                    _utimerRecalculate(obj->timer, timer_tick);
+
+                    *idx_out = i;
+                    rc = 0;
+                    goto clean_up;
+                }
+
+                // Override the user-supplied timeout if timer would fire before that.
+                if ((timer_tick - cur_tick) < end_tick)
+                {
+                    end_tick = timer_tick - cur_tick;
+                    end_tick_idx = i;
+                }
             }
 
-            // Override the user-supplied timeout if timer would fire before that.
-            if ((timer_tick - cur_tick) < end_time)
-            {
-                end_time = timer_tick - cur_tick;
-                end_time_idx = i;
-            }
+            // Always add a listener on the timer,
+            // So that we can detect another thread were to stopping/starting it during our waiting.
+            _utimerAddListener(
+                obj->timer, &waiters[num_waiters], num_waiters, &triggered_idx,
+                own_thread_handle);
+
+            num_waiters++;
             break;
 
-        case WaitObjectType_UsermodeEvent:
+        case WaiterType_UsermodeEvent:
+
+            // Try to add a listener to the event, if it hasn't already signalled.
+            added = _ueventAddListener(
+                obj->event, &waiters[num_waiters], num_waiters, &triggered_idx,
+                own_thread_handle);
+
             // If the event already happened, we're done.
-            if (_ueventConsumeIfSignalled(obj->event))
+            if (!added)
             {
                 *idx_out = i;
-                _waiterFree(&waiter, objects);
-                return 0;
+                rc = 0;
+                goto clean_up;
             }
 
-            // If not, add a listener.
-            _waiterSubscribe(&waiter, obj->event);
+            // If the event hasn't signalled, we added a listener.
+            num_waiters++;
             break;
 
-        case WaitObjectType_Handle:
+        case WaiterType_Handle:
             break;
         }
 
-        handles[i] = (obj->type == WaitObjectType_Handle) ? obj->handle : dummy_handle;
+        // Add handle for i:th object.
+        // If that object has no handle, add a dummy handle.
+        handles[i] = (obj->type == WaiterType_Handle) ? obj->handle : dummy_handle;
     }
-
 
     // Do the actual syscall.
-    Result rc;
-    rc = svcWaitSynchronization(idx_out, handles, num_objects, end_time);
+    rc = svcWaitSynchronization(idx_out, handles, num_objects, armTicksToNs(end_tick));
 
-    // Timeout-error?
-    if (rc == 0xEA01)
+    if (rc == KernelError_Timeout)
     {
-        // If the user-supplied timeout, we return the error back to them.
-        if (end_time_idx == -1)
+        // If we hit the user-supplied timeout, we return the timeout error back to caller.
+        if (end_tick_idx == -1)
+            goto clean_up;
+
+        // If not, it means a timer triggered the timeout.
+        _utimerRecalculate(objects[end_tick_idx].timer, end_tick + cur_tick);
+
+        *idx_out = end_tick_idx;
+        rc = 0;
+    }
+    else if (rc == KernelError_Interrupt)
+    {
+        // If no listener filled in its own index, we return the interrupt error back to caller.
+        // This only happens if user for some reason manually does a svcCancelSynchronization.
+        // Check just in case.
+        if (triggered_idx == -1)
+            goto clean_up;
+
+        // An event was signalled, or a timer was updated.
+        // So.. which is it?
+        switch (waiters[triggered_idx].type)
         {
-            _waiterFree(&waiter, objects);
+        case WaiterNodeType_Event:
+            _ueventTryAutoClear(waiters[triggered_idx].parent_event);
+            *idx_out = triggered_idx;
+            rc = 0;
+            break;
+
+        case WaiterNodeType_Timer:
+            rc = KernelError_Interrupt;
+            break;
+        }
+    }
+
+clean_up:
+
+    // Remove listeners.
+    for (i=0; i<num_waiters; i++) {
+        _waiterNodeFree(&waiters[i]);
+    }
+
+    return rc;
+}
+
+Result waitN(s32* idx_out, u64 timeout, Waiter* objects, size_t num_objects)
+{
+    while (1)
+    {
+        u64 cur_tick = armGetSystemTick();
+        Result rc = waitImpl(idx_out, timeout, objects, num_objects);
+
+        if (rc == KernelError_Interrupt)
+        {
+            // On timer stop/start an interrupt is sent to listeners.
+            // It means the timer state has changed, and we should restart the wait.
+
+            // Adjust timeout..
+            if (timeout != -1)
+            {
+                u64 time_spent = armTicksToNs(armGetSystemTick() - cur_tick);
+
+                if (time_spent >= timeout)
+                    return KernelError_Timeout;
+
+                timeout -= time_spent;
+            }
+        }
+        else {
             return rc;
         }
-
-        // If not, it means a timer was triggered.
-        *idx_out = end_time_idx;
-        _utimerRecalculate(objects[end_time_idx].timer, end_time + cur_tick);
-        _waiterFree(&waiter, objects);
-        return 0;
     }
-
-    // Interrupted-error?
-    if (rc == 0xEC01)
-    {
-        // An event was signalled.
-        *idx_out = _waiterGetSignalledIndex(&waiter);
-        _waiterFree(&waiter, objects);
-        return 0;
-    }
-
-    _waiterFree(&waiter, objects);
-    return rc;
 }
