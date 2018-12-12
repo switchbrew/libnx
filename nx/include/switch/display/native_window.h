@@ -44,6 +44,17 @@ typedef struct NWindow {
 bool nwindowIsValid(NWindow* nw);
 
 /**
+ * @brief Retrieves the default \ref NWindow object.
+ * @return Pointer to the default \ref NWindow object.
+ * @note When this function is used/referenced, libnx will initialize VI services
+ *       and create a \ref NWindow object from a \ref ViLayer created on the default \ref ViDisplay;
+ *       all of this happening automatically during application startup (i.e. before main is called).
+ *       If creating the default \ref NWindow fails, libnx will throw a LibnxError_BadGfxInit fatal error.
+ *       Likewise, after main returns (or exit is called) libnx will clean up all resources used by it.
+ */
+NWindow* nwindowGetDefault(void);
+
+/**
  * @brief Creates a \ref NWindow.
  * @param[out] nw Output \ref NWindow structure.
  * @param[in] binder_id Android IGraphicBufferProducer binder session ID.

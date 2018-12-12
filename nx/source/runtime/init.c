@@ -95,6 +95,7 @@ void __attribute__((weak)) __libnx_initheap(void)
     fake_heap_end   = (char*)addr + size;
 }
 
+void __attribute__((weak)) __nx_win_init(void);
 void __attribute__((weak)) userAppInit(void);
 
 void __attribute__((weak)) __appInit(void)
@@ -128,14 +129,18 @@ void __attribute__((weak)) __appInit(void)
 
     fsdevMountSdmc();
 
+    if (&__nx_win_init) __nx_win_init();
     if (&userAppInit) userAppInit();
 }
 
 void __attribute__((weak)) userAppExit(void);
+void __attribute__((weak)) __nx_win_exit(void);
 
 void __attribute__((weak)) __appExit(void)
 {
     if (&userAppExit) userAppExit();
+    if (&__nx_win_exit) __nx_win_exit();
+
     // Cleanup default services.
     fsdevUnmountAll();
     fsExit();
