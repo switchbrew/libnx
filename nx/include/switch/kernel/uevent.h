@@ -1,14 +1,13 @@
 // Copyright 2018 plutoo
 #pragma once
-#include "kernel/mutex.h"
-#include "kernel/waiter.h"
+#include "../kernel/mutex.h"
+#include "../kernel/wait.h"
 
 typedef struct UsermodeEvent UsermodeEvent;
 
 struct UsermodeEvent
 {
-    Mutex mutex;
-    WaiterNode waiter_list;
+    Waitable waitable;
     bool signal;
     bool auto_clear;
 };
