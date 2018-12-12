@@ -58,6 +58,7 @@ typedef struct {
     };
 } Waiter;
 
+/// Creates a waiter for a kernelmode handle.
 static inline Waiter waiterForHandle(Handle h)
 {
     Waiter wait_obj;
@@ -66,6 +67,7 @@ static inline Waiter waiterForHandle(Handle h)
     return wait_obj;
 }
 
+/// Creates a waiter for a usermode timer.
 static inline Waiter waiterForUtimer(UsermodeTimer* t)
 {
     Waiter wait_obj;
@@ -74,6 +76,7 @@ static inline Waiter waiterForUtimer(UsermodeTimer* t)
     return wait_obj;
 }
 
+/// Creates a waiter for a usermode event.
 static inline Waiter waiterForUevent(UsermodeEvent* e)
 {
     Waiter wait_obj;
@@ -82,16 +85,23 @@ static inline Waiter waiterForUevent(UsermodeEvent* e)
     return wait_obj;
 }
 
+/// Creates a waiter for a kernelmode event.
 static inline Waiter waiterForEvent(Event* e) {
     return waiterForHandle(e->revent);
 }
 
+/// Creates a waiter for a thread exit.
 static inline Waiter waiterForThreadExit(Thread* t) {
     return waiterForHandle(t->handle);
 }
 
+/**
+ * @brief Waits for an arbitrary number of waiters. This is a macro that uses var-args.
+ * @param[out] idx_out The index of the signalled waiter.
+ * @param[in] timeout Timeout (in nanoseconds).
+ * @note The number of waiters must be less than 64. This is a Horizon kernel limitation.
+ */
 #define waitMulti(idx_out, timeout, ...) \
     waitN((idx_out), (timeout), (Waiter[]) { __VA_ARGS__ }, sizeof((Waiter[]) { __VA_ARGS__ }) / sizeof(Waiter))
-
 
 Result waitN(s32* idx_out, u64 timeout, Waiter* objects, size_t num_objects);

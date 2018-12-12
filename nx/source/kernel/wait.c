@@ -69,7 +69,7 @@ static Result waitImpl(s32* idx_out, u64 timeout, Waiter* objects, size_t num_ob
             }
 
             // Always add a listener on the timer,
-            // So that we can detect another thread were to stopping/starting it during our waiting.
+            // If the timer is started/stopped we want to detect that.
             _utimerAddListener(
                 obj->timer, &waiters[num_waiters], num_waiters, &triggered_idx,
                 own_thread_handle);
@@ -111,8 +111,9 @@ static Result waitImpl(s32* idx_out, u64 timeout, Waiter* objects, size_t num_ob
     if (rc == KernelError_Timeout)
     {
         // If we hit the user-supplied timeout, we return the timeout error back to caller.
-        if (end_tick_idx == -1)
+        if (end_tick_idx == -1) {
             goto clean_up;
+        }
 
         // If not, it means a timer triggered the timeout.
         _utimerRecalculate(objects[end_tick_idx].timer, end_tick + cur_tick);
@@ -134,6 +135,7 @@ static Result waitImpl(s32* idx_out, u64 timeout, Waiter* objects, size_t num_ob
         {
         case WaiterNodeType_Event:
             _ueventTryAutoClear(waiters[triggered_idx].parent_event);
+
             *idx_out = triggered_idx;
             rc = 0;
             break;
@@ -171,8 +173,9 @@ Result waitN(s32* idx_out, u64 timeout, Waiter* objects, size_t num_objects)
             {
                 u64 time_spent = armTicksToNs(armGetSystemTick() - cur_tick);
 
-                if (time_spent >= timeout)
+                if (time_spent >= timeout) {
                     return KernelError_Timeout;
+                }
 
                 timeout -= time_spent;
             }
