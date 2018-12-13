@@ -32,7 +32,7 @@ void _ueventTryAutoClear(UsermodeEvent* e)
 {
     mutexLock(&e->waitable.mutex);
     if (e->auto_clear) {
-        e->signal = true;
+        e->signal = false;
     }
     mutexUnlock(&e->waitable.mutex);
 }
