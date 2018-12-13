@@ -6,6 +6,7 @@
 #include "kernel/svc.h"
 #include "kernel/virtmem.h"
 #include "kernel/thread.h"
+#include "kernel/wait.h"
 #include "../internal.h"
 
 extern const u8 __tdata_lma[];
@@ -113,7 +114,7 @@ Result threadStart(Thread* t) {
 }
 
 Result threadWaitForExit(Thread* t) {
-    return svcWaitSynchronizationSingle(t->handle, -1);
+    return waitSingleHandle(t->handle, -1);
 }
 
 Result threadClose(Thread* t) {

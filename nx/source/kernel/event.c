@@ -4,6 +4,7 @@
 #include "arm/counter.h"
 #include "kernel/svc.h"
 #include "kernel/event.h"
+#include "kernel/wait.h"
 
 Result eventCreate(Event* t, bool autoclear)
 {
@@ -30,29 +31,16 @@ void eventLoadRemote(Event* t, Handle handle, bool autoclear)
 Result eventWait(Event* t, u64 timeout)
 {
     Result rc;
-    u64 deadline = 0;
 
     if (t->revent == INVALID_HANDLE)
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    if (timeout != U64_MAX)
-        deadline = armGetSystemTick() + armNsToTicks(timeout); // timeout: ns->ticks
-
     do {
-        do {
-            s64 this_timeout = -1;
-            if (deadline) {
-                this_timeout = deadline - armGetSystemTick();
-                this_timeout = armTicksToNs(this_timeout >= 0 ? this_timeout : 0); // ticks->ns
-            }
-
-            rc = svcWaitSynchronizationSingle(t->revent, this_timeout);
-            if (deadline && (rc & 0x3FFFFF) == 0xEA01)
-                return rc; // timeout.
-        } while (R_FAILED(rc));
+        rc = waitSingleHandle(t->revent, timeout);
 
         if (t->autoclear)
             rc = svcResetSignal(t->revent);
+
     } while ((rc & 0x3FFFFF) == 0xFA01);
 
     return rc;
