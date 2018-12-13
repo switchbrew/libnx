@@ -73,7 +73,7 @@ u64 _utimerGetNextTick(UsermodeTimer* t)
 
 void _utimerAddListener(UsermodeTimer* t, WaiterNode* w, size_t idx, size_t* idx_out, Handle thread)
 {
-    _waiterNodeInitialize(w, WaiterNodeType_Timer, &t->waitable, thread, idx, idx_out);
+    _waiterNodeCreate(w, WaiterNodeType_Timer, &t->waitable, thread, idx, idx_out);
 
     mutexLock(&t->waitable.mutex);
     _waiterNodeAddToWaitable(w, &t->waitable);
