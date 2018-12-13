@@ -5,7 +5,7 @@
 #include "wait.h"
 #include "uevent.h"
 
-void ueventCreate(UsermodeEvent* e, bool auto_clear)
+void ueventCreate(Uevent* e, bool auto_clear)
 {
     _waitableInitialize(&e->waitable);
 
@@ -13,14 +13,14 @@ void ueventCreate(UsermodeEvent* e, bool auto_clear)
     e->auto_clear = auto_clear;
 }
 
-void ueventClear(UsermodeEvent* e)
+void ueventClear(Uevent* e)
 {
     mutexLock(&e->waitable.mutex);
     e->signal = false;
     mutexUnlock(&e->waitable.mutex);
 }
 
-void ueventSignal(UsermodeEvent* e)
+void ueventSignal(Uevent* e)
 {
     mutexLock(&e->waitable.mutex);
     e->signal = true;
@@ -28,7 +28,7 @@ void ueventSignal(UsermodeEvent* e)
     mutexUnlock(&e->waitable.mutex);
 }
 
-void _ueventTryAutoClear(UsermodeEvent* e)
+void _ueventTryAutoClear(Uevent* e)
 {
     mutexLock(&e->waitable.mutex);
     if (e->auto_clear) {
@@ -37,7 +37,7 @@ void _ueventTryAutoClear(UsermodeEvent* e)
     mutexUnlock(&e->waitable.mutex);
 }
 
-bool _ueventAddListener(UsermodeEvent* e, WaiterNode* w, size_t idx, size_t* idx_out, Handle thread)
+bool _ueventAddListener(Uevent* e, WaiterNode* w, size_t idx, size_t* idx_out, Handle thread)
 {
     _waiterNodeCreate(w, WaiterNodeType_Event, &e->waitable, thread, idx, idx_out);
 

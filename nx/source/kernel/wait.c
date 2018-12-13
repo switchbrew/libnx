@@ -45,7 +45,7 @@ static Result waitImpl(s32* idx_out, Waiter* objects, size_t num_objects, u64 ti
 
         switch (obj->type)
         {
-        case WaiterType_UsermodeTimer:
+        case WaiterType_Utimer:
 
             timer_tick = _utimerGetNextTick(obj->timer);
 
@@ -79,7 +79,7 @@ static Result waitImpl(s32* idx_out, Waiter* objects, size_t num_objects, u64 ti
             num_waiters++;
             break;
 
-        case WaiterType_UsermodeEvent:
+        case WaiterType_Uevent:
 
             // Try to add a listener to the event, if it hasn't already signalled.
             added = _ueventAddListener(
