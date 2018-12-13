@@ -111,10 +111,28 @@ Result framebufferCreate(Framebuffer* fb, NWindow *win, u32 width, u32 height, u
     return rc;
 }
 
+Result framebufferMakeLinear(Framebuffer* fb)
+{
+    if (!fb || !fb->has_init)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (fb->buf_linear)
+        return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
+
+    u32 height = (fb->win->height + 7) &~ 7; // GOBs are 8 rows tall
+    fb->buf_linear = calloc(1, fb->stride*height);
+    if (!fb->buf_linear)
+        return MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
+
+    return 0;
+}
+
 void framebufferClose(Framebuffer* fb)
 {
     if (!fb || !fb->has_init)
         return;
+
+    if (fb->buf_linear)
+        free(fb->buf_linear);
 
     if (fb->buf) {
         nwindowReleaseBuffers(fb->win);
@@ -141,7 +159,55 @@ void* framebufferBegin(Framebuffer* fb, u32* out_stride)
     if (out_stride)
         *out_stride = fb->stride;
 
+    if (fb->buf_linear)
+        return fb->buf_linear;
+
     return (u8*)fb->buf + slot*fb->fb_size;
+}
+
+static void _convertGobTo16Bx2(u8* outgob, const u8* ingob, u32 stride)
+{
+    // GOB byte offsets can be expressed with 9 bits:
+    //   yyyxxxxxx  where 'x' is the horizontal position and 'y' is the vertical position
+    // 16Bx2 sector ordering basically applies swizzling to the upper 5 bits:
+    //   iiiiioooo  where 'o' doesn't change and 'i' gets swizzled
+    // This swizzling of the 'i' field can be expressed the following way:
+    //   43210 -> 14302  to go from unswizzled to swizzled offset
+    //   32041 <- 43210  to go from swizzled to unswizzled offset
+    // Here, we iterate through each of the 32 sequential swizzled positions and
+    // calculate the actual X and Y positions in the unswizzled source image.
+    // Since the 'o' bits aren't swizzled, we can copy the whole thing as a single 128-bit unit.
+
+    for (u32 i = 0; i < 32; i ++) {
+        const u32 y = ((i>>1)&0x06) | ( i    &0x01);
+        const u32 x = ((i<<3)&0x10) | ((i<<1)&0x20);
+        *(u128*)outgob = *(u128*)(ingob + y*stride + x);
+        outgob += sizeof(u128);
+    }
+}
+
+static void _convertToBlocklinear(void* outbuf, const void* inbuf, u32 stride, u32 height, u32 block_height_log2)
+{
+    const u32 block_height_gobs = 1U << block_height_log2;
+    const u32 block_height_px = 8U << block_height_log2;
+
+    const u32 width_blocks = stride >> 6;
+    const u32 height_blocks = (height + block_height_px - 1) >> (3 + block_height_log2);
+    u8* outgob = (u8*)outbuf;
+
+    for (u32 block_y = 0; block_y < height_blocks; block_y ++) {
+        for (u32 block_x = 0; block_x < width_blocks; block_x ++) {
+            for (u32 gob_y = 0; gob_y < block_height_gobs; gob_y ++) {
+                const u32 x = block_x*64;
+                const u32 y = block_y*block_height_px + gob_y*8;
+                if (y < height) {
+                    const u8* ingob = (u8*)inbuf + y*stride + x;
+                    _convertGobTo16Bx2(outgob, ingob, stride);
+                }
+                outgob += 512;
+            }
+        }
+    }
 }
 
 void framebufferEnd(Framebuffer* fb)
@@ -150,6 +216,9 @@ void framebufferEnd(Framebuffer* fb)
         return;
 
     void* buf = (u8*)fb->buf + fb->win->cur_slot*fb->fb_size;
+    if (fb->buf_linear)
+        _convertToBlocklinear(buf, fb->buf_linear, fb->stride, fb->win->height, 4);
+
     armDCacheFlush(buf, fb->fb_size);
 
     Result rc = nwindowQueueBuffer(fb->win, fb->win->cur_slot, NULL);
