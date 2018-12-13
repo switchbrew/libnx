@@ -39,7 +39,7 @@ void _ueventTryAutoClear(UsermodeEvent* e)
 
 bool _ueventAddListener(UsermodeEvent* e, WaiterNode* w, size_t idx, size_t* idx_out, Handle thread)
 {
-    _waiterNodeInitialize(w, WaiterNodeType_Event, &e->waitable, thread, idx, idx_out);
+    _waiterNodeCreate(w, WaiterNodeType_Event, &e->waitable, thread, idx, idx_out);
 
     mutexLock(&e->waitable.mutex);
 

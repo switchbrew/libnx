@@ -20,12 +20,19 @@ static inline void _waitableSignalAllListeners(Waitable* ww)
         node = node->next;
         WaiterNode* w = (WaiterNode*) node;
 
-        *w->idx_out = w->idx;
-        svcCancelSynchronization(w->thread);
+        // Try to swap -1 => idx on the waiter thread.
+        // If another waitable signals simultaneously only one will win the race and insert its own idx.
+        size_t minus_one = -1;
+        bool sent_idx = __atomic_compare_exchange_n(
+            w->idx_out, &minus_one, w->idx, true, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
+
+        if (sent_idx) {
+            svcCancelSynchronization(w->thread);
+        }
     }
 }
 
-static inline void _waiterNodeInitialize(
+static inline void _waiterNodeCreate(
     WaiterNode* w, WaiterNodeType type, Waitable* parent, Handle thread,
     size_t idx, size_t* idx_out)
 {
