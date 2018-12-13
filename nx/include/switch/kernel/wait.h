@@ -5,8 +5,8 @@
 #include "../kernel/thread.h"
 
 // Implementation details.
-typedef struct UsermodeEvent UsermodeEvent;
-typedef struct UsermodeTimer UsermodeTimer;
+typedef struct UEvent UEvent;
+typedef struct UTimer UTimer;
 
 typedef enum {
     WaiterNodeType_Event,
@@ -28,8 +28,8 @@ typedef struct {
     Handle thread;
     union {
         Waitable* parent;
-        UsermodeEvent* parent_event;
-        UsermodeTimer* parent_timer;
+        UEvent* parent_event;
+        UTimer* parent_timer;
     };
     size_t idx;
     size_t* idx_out;
@@ -44,8 +44,8 @@ struct Waitable
 // User-facing API starts here.
 typedef enum {
     WaiterType_Handle,
-    WaiterType_UsermodeTimer,
-    WaiterType_UsermodeEvent,
+    WaiterType_UTimer,
+    WaiterType_UEvent,
 } WaiterType;
 
 typedef struct {
@@ -53,8 +53,8 @@ typedef struct {
 
     union {
         Handle handle;
-        UsermodeTimer* timer;
-        UsermodeEvent* event;
+        UTimer* timer;
+        UEvent* event;
     };
 } Waiter;
 
@@ -68,19 +68,19 @@ static inline Waiter waiterForHandle(Handle h)
 }
 
 /// Creates a waiter for a usermode timer.
-static inline Waiter waiterForUtimer(UsermodeTimer* t)
+static inline Waiter waiterForUTimer(UTimer* t)
 {
     Waiter wait_obj;
-    wait_obj.type = WaiterType_UsermodeTimer;
+    wait_obj.type = WaiterType_UTimer;
     wait_obj.timer = t;
     return wait_obj;
 }
 
 /// Creates a waiter for a usermode event.
-static inline Waiter waiterForUevent(UsermodeEvent* e)
+static inline Waiter waiterForUEvent(UEvent* e)
 {
     Waiter wait_obj;
-    wait_obj.type = WaiterType_UsermodeEvent;
+    wait_obj.type = WaiterType_UEvent;
     wait_obj.event = e;
     return wait_obj;
 }
