@@ -13,9 +13,11 @@
 #define MAX_WAIT 0x40
 
 #define KernelError_Timeout 0xEA01
-#define KernelError_Interrupt 0xEC01
+#define KernelError_Canceled 0xEC01
 
-static Result waitImpl(s32* idx_out, u64 timeout, Waiter* objects, size_t num_objects)
+typedef Result (*WaitImplFunc)(s32* idx_out, void* objects, size_t num_objects, u64 timeout);
+
+static Result waitImpl(s32* idx_out, Waiter* objects, size_t num_objects, u64 timeout)
 {
     if (num_objects > MAX_WAIT)
         return MAKERESULT(Module_Libnx, LibnxError_TooManyWaitables);
@@ -121,7 +123,7 @@ static Result waitImpl(s32* idx_out, u64 timeout, Waiter* objects, size_t num_ob
         *idx_out = end_tick_idx;
         rc = 0;
     }
-    else if (rc == KernelError_Interrupt)
+    else if (rc == KernelError_Canceled)
     {
         // If no listener filled in its own index, we return the interrupt error back to caller.
         // This only happens if user for some reason manually does a svcCancelSynchronization.
@@ -141,7 +143,7 @@ static Result waitImpl(s32* idx_out, u64 timeout, Waiter* objects, size_t num_ob
             break;
 
         case WaiterNodeType_Timer:
-            rc = KernelError_Interrupt;
+            rc = KernelError_Canceled;
             break;
         }
     }
@@ -156,14 +158,14 @@ clean_up:
     return rc;
 }
 
-Result waitN(s32* idx_out, u64 timeout, Waiter* objects, size_t num_objects)
+static Result _waitLoop(WaitImplFunc wait, s32* idx_out, void* objects, size_t num_objects, u64 timeout)
 {
     while (1)
     {
         u64 cur_tick = armGetSystemTick();
-        Result rc = waitImpl(idx_out, timeout, objects, num_objects);
+        Result rc = wait(idx_out, objects, num_objects, timeout);
 
-        if (rc == KernelError_Interrupt)
+        if (rc == KernelError_Canceled)
         {
             // On timer stop/start an interrupt is sent to listeners.
             // It means the timer state has changed, and we should restart the wait.
@@ -184,4 +186,12 @@ Result waitN(s32* idx_out, u64 timeout, Waiter* objects, size_t num_objects)
             return rc;
         }
     }
+}
+
+Result waitN(s32* idx_out, Waiter* objects, size_t num_objects, u64 timeout) {
+    return _waitLoop((WaitImplFunc) &waitImpl, idx_out, (void*) objects, num_objects, timeout);
+}
+
+Result waitNHandle(s32* idx_out, Handle* handles, size_t num_handles, u64 timeout) {
+    return _waitLoop((WaitImplFunc) &svcWaitSynchronization, idx_out, (void*) handles, num_handles, timeout);
 }
