@@ -52,7 +52,7 @@ void _utimerRecalculate(UsermodeTimer* t, u64 old_tick)
     if (t->next_tick == old_tick)
     {
         u64 interval = t->interval;
-        u64 new_tick = ((armGetSystemTick() + interval - 1) / interval) * interval;
+        u64 new_tick = old_tick + ((svcGetSystemTick() - old_tick + interval - 1)/interval)*interval;
 
         t->next_tick = new_tick;
     }
