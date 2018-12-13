@@ -7,7 +7,7 @@
 
 #define STOPPED 0
 
-void utimerCreate(UsermodeTimer* t, u64 interval, TimerType type)
+void utimerCreate(UTimer* t, u64 interval, TimerType type)
 {
     _waitableInitialize(&t->waitable);
 
@@ -16,7 +16,7 @@ void utimerCreate(UsermodeTimer* t, u64 interval, TimerType type)
     t->type = type;
 }
 
-void utimerStart(UsermodeTimer* t)
+void utimerStart(UTimer* t)
 {
     mutexLock(&t->waitable.mutex);
 
@@ -30,7 +30,7 @@ void utimerStart(UsermodeTimer* t)
     mutexUnlock(&t->waitable.mutex);
 }
 
-void utimerStop(UsermodeTimer* t)
+void utimerStop(UTimer* t)
 {
     mutexLock(&t->waitable.mutex);
 
@@ -43,7 +43,7 @@ void utimerStop(UsermodeTimer* t)
     mutexUnlock(&t->waitable.mutex);
 }
 
-void _utimerRecalculate(UsermodeTimer* t, u64 old_tick)
+void _utimerRecalculate(UTimer* t, u64 old_tick)
 {
     mutexLock(&t->waitable.mutex);
 
@@ -68,7 +68,7 @@ void _utimerRecalculate(UsermodeTimer* t, u64 old_tick)
     mutexUnlock(&t->waitable.mutex);
 }
 
-u64 _utimerGetNextTick(UsermodeTimer* t)
+u64 _utimerGetNextTick(UTimer* t)
 {
     u64 ret;
 
@@ -79,7 +79,7 @@ u64 _utimerGetNextTick(UsermodeTimer* t)
     return ret;
 }
 
-void _utimerAddListener(UsermodeTimer* t, WaiterNode* w, size_t idx, size_t* idx_out, Handle thread)
+void _utimerAddListener(UTimer* t, WaiterNode* w, size_t idx, size_t* idx_out, Handle thread)
 {
     _waiterNodeCreate(w, WaiterNodeType_Timer, &t->waitable, thread, idx, idx_out);
 
