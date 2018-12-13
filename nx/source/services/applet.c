@@ -113,6 +113,10 @@ Result appletInitialize(void)
     }
 
     if (R_SUCCEEDED(rc)) {
+        rc = serviceConvertToDomain(&g_appletSrv);
+    }
+
+    if (R_SUCCEEDED(rc)) {
         #define AM_BUSY_ERROR 0x19280
 
         do {
@@ -430,7 +434,7 @@ static Result _appletGetHandle(Service* srv, Handle* handle_out, u64 cmd_id) {
         u64 cmd_id;
     } *raw;
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
+    raw = serviceIpcPrepareHeader(srv, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = cmd_id;
@@ -439,12 +443,13 @@ static Result _appletGetHandle(Service* srv, Handle* handle_out, u64 cmd_id) {
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
-        ipcParse(&r);
-
         struct {
             u64 magic;
             u64 result;
-        } *resp = r.Raw;
+        } *resp;
+
+        serviceIpcParse(srv, &r, sizeof(*resp));
+        resp = r.Raw;
 
         rc = resp->result;
 
@@ -466,13 +471,36 @@ static Result _appletGetEvent(Service* srv, Event* event_out, u64 cmd_id, bool a
 }
 
 static Result _appletGetSession(Service* srv, Service* srv_out, u64 cmd_id) {
-    Result rc;
-    Handle handle;
+    IpcCommand c;
+    ipcInitialize(&c);
 
-    rc = _appletGetHandle(srv, &handle, cmd_id);
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(srv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = cmd_id;
+
+    Result rc = serviceIpcDispatch(srv);
 
     if (R_SUCCEEDED(rc)) {
-        serviceCreate(srv_out, handle);
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(srv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            serviceCreateSubservice(srv_out, srv, &r, 0);
+        }
     }
 
     return rc;
@@ -492,7 +520,7 @@ static Result _appletGetSessionProxy(Service* srv_out, u64 cmd_id, Handle procha
     ipcSendHandleCopy(&c, prochandle);
     if (AppletAttribute) ipcAddSendBuffer(&c, AppletAttribute, 0x80, 0);
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
+    raw = serviceIpcPrepareHeader(&g_appletSrv, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = cmd_id;
@@ -502,17 +530,18 @@ static Result _appletGetSessionProxy(Service* srv_out, u64 cmd_id, Handle procha
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
-        ipcParse(&r);
-
         struct {
             u64 magic;
             u64 result;
-        } *resp = r.Raw;
+        } *resp;
+
+        serviceIpcParse(&g_appletSrv, &r, sizeof(*resp));
+        resp = r.Raw;
 
         rc = resp->result;
 
         if (R_SUCCEEDED(rc)) {
-            serviceCreate(srv_out, r.Handles[0]);
+            serviceCreateSubservice(srv_out, &g_appletSrv, &r, 0);
         }
     }
 
@@ -528,7 +557,7 @@ static Result _appletGetAppletResourceUserId(u64 *out) {
         u64 cmd_id;
     } *raw;
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
+    raw = serviceIpcPrepareHeader(&g_appletIWindowController, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 1;
@@ -537,13 +566,14 @@ static Result _appletGetAppletResourceUserId(u64 *out) {
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
-        ipcParse(&r);
-
         struct {
             u64 magic;
             u64 result;
             u64 out;
-        } *resp = r.Raw;
+        } *resp;
+
+        serviceIpcParse(&g_appletIWindowController, &r, sizeof(*resp));
+        resp = r.Raw;
 
         rc = resp->result;
 
@@ -564,7 +594,7 @@ static Result _appletAcquireForegroundRights(void) {
         u64 cmd_id;
     } *raw;
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
+    raw = serviceIpcPrepareHeader(&g_appletIWindowController, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 10;
@@ -573,12 +603,13 @@ static Result _appletAcquireForegroundRights(void) {
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
-        ipcParse(&r);
-
         struct {
             u64 magic;
             u64 result;
-        } *resp = r.Raw;
+        } *resp;
+
+        serviceIpcParse(&g_appletIWindowController, &r, sizeof(*resp));
+        resp = r.Raw;
 
         rc = resp->result;
     }
@@ -606,7 +637,7 @@ Result appletGetDesiredLanguage(u64 *LanguageCode) {
         u64 cmd_id;
     } *raw;
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
+    raw = serviceIpcPrepareHeader(&g_appletIFunctions, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 21;
@@ -615,13 +646,14 @@ Result appletGetDesiredLanguage(u64 *LanguageCode) {
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
-        ipcParse(&r);
-
         struct {
             u64 magic;
             u64 result;
             u64 LanguageCode;
-        } *resp = r.Raw;
+        } *resp;
+
+        serviceIpcParse(&g_appletIFunctions, &r, sizeof(*resp));
+        resp = r.Raw;
 
         rc = resp->result;
 
@@ -646,7 +678,7 @@ Result appletBeginBlockingHomeButton(s64 val) {
         s64 val;
     } *raw;
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
+    raw = serviceIpcPrepareHeader(&g_appletIFunctions, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 32;
@@ -656,12 +688,13 @@ Result appletBeginBlockingHomeButton(s64 val) {
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
-        ipcParse(&r);
-
         struct {
             u64 magic;
             u64 result;
-        } *resp = r.Raw;
+        } *resp;
+
+        serviceIpcParse(&g_appletIFunctions, &r, sizeof(*resp));
+        resp = r.Raw;
 
         rc = resp->result;
     }
@@ -681,7 +714,7 @@ Result appletEndBlockingHomeButton(void) {
         u64 cmd_id;
     } *raw;
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
+    raw = serviceIpcPrepareHeader(&g_appletIFunctions, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 33;
@@ -690,12 +723,13 @@ Result appletEndBlockingHomeButton(void) {
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
-        ipcParse(&r);
-
         struct {
             u64 magic;
             u64 result;
-        } *resp = r.Raw;
+        } *resp;
+
+        serviceIpcParse(&g_appletIFunctions, &r, sizeof(*resp));
+        resp = r.Raw;
 
         rc = resp->result;
     }
@@ -715,7 +749,7 @@ void appletNotifyRunning(u8 *out) {
         u64 cmd_id;
     } *raw;
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
+    raw = serviceIpcPrepareHeader(&g_appletIFunctions, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 40;
@@ -724,13 +758,14 @@ void appletNotifyRunning(u8 *out) {
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
-        ipcParse(&r);
-
         struct {
             u64 magic;
             u64 result;
             u8 out;
-        } *resp = r.Raw;
+        } *resp;
+
+        serviceIpcParse(&g_appletIFunctions, &r, sizeof(*resp));
+        resp = r.Raw;
 
         rc = resp->result;
 
@@ -759,7 +794,7 @@ Result appletIsGamePlayRecordingSupported(bool *flag) {
         u64 cmd_id;
     } *raw;
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
+    raw = serviceIpcPrepareHeader(&g_appletIFunctions, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 65;
@@ -768,13 +803,14 @@ Result appletIsGamePlayRecordingSupported(bool *flag) {
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
-        ipcParse(&r);
-
         struct {
             u64 magic;
             u64 result;
             u8 flag;
-        } *resp = r.Raw;
+        } *resp;
+
+        serviceIpcParse(&g_appletIFunctions, &r, sizeof(*resp));
+        resp = r.Raw;
 
         rc = resp->result;
         if (R_SUCCEEDED(rc) && flag) *flag = resp->flag & 1;
@@ -801,7 +837,7 @@ static Result _appletInitializeGamePlayRecording(TransferMemory *tmem) {
         u64 size;
     } *raw;
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
+    raw = serviceIpcPrepareHeader(&g_appletIFunctions, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 66;
@@ -811,12 +847,13 @@ static Result _appletInitializeGamePlayRecording(TransferMemory *tmem) {
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
-        ipcParse(&r);
-
         struct {
             u64 magic;
             u64 result;
-        } *resp = r.Raw;
+        } *resp;
+
+        serviceIpcParse(&g_appletIFunctions, &r, sizeof(*resp));
+        resp = r.Raw;
 
         rc = resp->result;
     }
@@ -840,7 +877,7 @@ Result appletSetGamePlayRecordingState(bool state) {
         u32 state;
     } *raw;
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
+    raw = serviceIpcPrepareHeader(&g_appletIFunctions, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 67;
@@ -850,12 +887,13 @@ Result appletSetGamePlayRecordingState(bool state) {
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
-        ipcParse(&r);
-
         struct {
             u64 magic;
             u64 result;
-        } *resp = r.Raw;
+        } *resp;
+
+        serviceIpcParse(&g_appletIFunctions, &r, sizeof(*resp));
+        resp = r.Raw;
 
         rc = resp->result;
     }
@@ -901,7 +939,7 @@ static Result _appletReceiveMessage(u32 *out) {
         u64 cmd_id;
     } *raw;
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
+    raw = serviceIpcPrepareHeader(&g_appletICommonStateGetter, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 1;
@@ -910,13 +948,14 @@ static Result _appletReceiveMessage(u32 *out) {
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
-        ipcParse(&r);
-
         struct {
             u64 magic;
             u64 result;
             u32 out;
-        } *resp = r.Raw;
+        } *resp;
+
+        serviceIpcParse(&g_appletICommonStateGetter, &r, sizeof(*resp));
+        resp = r.Raw;
 
         rc = resp->result;
 
@@ -937,7 +976,7 @@ static Result _appletGetOperationMode(u8 *out) {
         u64 cmd_id;
     } *raw;
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
+    raw = serviceIpcPrepareHeader(&g_appletICommonStateGetter, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 5;
@@ -946,13 +985,14 @@ static Result _appletGetOperationMode(u8 *out) {
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
-        ipcParse(&r);
-
         struct {
             u64 magic;
             u64 result;
             u8 out;
-        } *resp = r.Raw;
+        } *resp;
+
+        serviceIpcParse(&g_appletICommonStateGetter, &r, sizeof(*resp));
+        resp = r.Raw;
 
         rc = resp->result;
 
@@ -972,7 +1012,7 @@ static Result _appletGetPerformanceMode(u32 *out) {
         u64 cmd_id;
     } *raw;
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
+    raw = serviceIpcPrepareHeader(&g_appletICommonStateGetter, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 6;
@@ -981,13 +1021,14 @@ static Result _appletGetPerformanceMode(u32 *out) {
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
-        ipcParse(&r);
-
         struct {
             u64 magic;
             u64 result;
             u32 out;
-        } *resp = r.Raw;
+        } *resp;
+
+        serviceIpcParse(&g_appletICommonStateGetter, &r, sizeof(*resp));
+        resp = r.Raw;
 
         rc = resp->result;
 
@@ -1008,7 +1049,7 @@ static Result _appletGetCurrentFocusState(u8 *out) {
         u64 cmd_id;
     } *raw;
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
+    raw = serviceIpcPrepareHeader(&g_appletICommonStateGetter, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 9;
@@ -1017,13 +1058,14 @@ static Result _appletGetCurrentFocusState(u8 *out) {
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
-        ipcParse(&r);
-
         struct {
             u64 magic;
             u64 result;
             u8 out;
-        } *resp = r.Raw;
+        } *resp;
+
+        serviceIpcParse(&g_appletICommonStateGetter, &r, sizeof(*resp));
+        resp = r.Raw;
 
         rc = resp->result;
 
@@ -1044,7 +1086,7 @@ static Result _appletCmdNoIO(Service* session, u64 cmd_id) {
         u64 cmd_id;
     } *raw;
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
+    raw = serviceIpcPrepareHeader(session, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = cmd_id;
@@ -1053,12 +1095,13 @@ static Result _appletCmdNoIO(Service* session, u64 cmd_id) {
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
-        ipcParse(&r);
-
         struct {
             u64 magic;
             u64 result;
-        } *resp = r.Raw;
+        } *resp;
+
+        serviceIpcParse(session, &r, sizeof(*resp));
+        resp = r.Raw;
 
         rc = resp->result;
     }
@@ -1088,7 +1131,7 @@ Result appletSetScreenShotPermission(s32 val) {
         s32 val;
     } *raw;
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
+    raw = serviceIpcPrepareHeader(&g_appletISelfController, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 10;
@@ -1098,12 +1141,13 @@ Result appletSetScreenShotPermission(s32 val) {
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
-        ipcParse(&r);
-
         struct {
             u64 magic;
             u64 result;
-        } *resp = r.Raw;
+        } *resp;
+
+        serviceIpcParse(&g_appletISelfController, &r, sizeof(*resp));
+        resp = r.Raw;
 
         rc = resp->result;
     }
@@ -1121,7 +1165,7 @@ static Result _appletSetOperationModeChangedNotification(u8 flag) {
         u8 flag;
     } *raw;
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
+    raw = serviceIpcPrepareHeader(&g_appletISelfController, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 11;
@@ -1131,12 +1175,13 @@ static Result _appletSetOperationModeChangedNotification(u8 flag) {
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
-        ipcParse(&r);
-
         struct {
             u64 magic;
             u64 result;
-        } *resp = r.Raw;
+        } *resp;
+
+        serviceIpcParse(&g_appletISelfController, &r, sizeof(*resp));
+        resp = r.Raw;
 
         rc = resp->result;
     }
@@ -1154,7 +1199,7 @@ static Result _appletSetPerformanceModeChangedNotification(u8 flag) {
         u8 flag;
     } *raw;
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
+    raw = serviceIpcPrepareHeader(&g_appletISelfController, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 12;
@@ -1164,12 +1209,13 @@ static Result _appletSetPerformanceModeChangedNotification(u8 flag) {
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
-        ipcParse(&r);
-
         struct {
             u64 magic;
             u64 result;
-        } *resp = r.Raw;
+        } *resp;
+
+        serviceIpcParse(&g_appletISelfController, &r, sizeof(*resp));
+        resp = r.Raw;
 
         rc = resp->result;
     }
@@ -1189,7 +1235,7 @@ static Result _appletSetFocusHandlingMode(u8 inval0, u8 inval1, u8 inval2) {
         u8 inval2;
     } *raw;
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
+    raw = serviceIpcPrepareHeader(&g_appletISelfController, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 13;
@@ -1201,12 +1247,13 @@ static Result _appletSetFocusHandlingMode(u8 inval0, u8 inval1, u8 inval2) {
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
-        ipcParse(&r);
-
         struct {
             u64 magic;
             u64 result;
-        } *resp = r.Raw;
+        } *resp;
+
+        serviceIpcParse(&g_appletISelfController, &r, sizeof(*resp));
+        resp = r.Raw;
 
         rc = resp->result;
     }
@@ -1224,7 +1271,7 @@ static Result _appletSetOutOfFocusSuspendingEnabled(u8 inval) {
         u8 inval;
     } *raw;
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
+    raw = serviceIpcPrepareHeader(&g_appletISelfController, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 16;
@@ -1234,12 +1281,13 @@ static Result _appletSetOutOfFocusSuspendingEnabled(u8 inval) {
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
-        ipcParse(&r);
-
         struct {
             u64 magic;
             u64 result;
-        } *resp = r.Raw;
+        } *resp;
+
+        serviceIpcParse(&g_appletISelfController, &r, sizeof(*resp));
+        resp = r.Raw;
 
         rc = resp->result;
     }
@@ -1260,7 +1308,7 @@ Result appletSetScreenShotImageOrientation(s32 val) {
         s32 val;
     } *raw;
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
+    raw = serviceIpcPrepareHeader(&g_appletISelfController, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 19;
@@ -1270,12 +1318,13 @@ Result appletSetScreenShotImageOrientation(s32 val) {
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
-        ipcParse(&r);
-
         struct {
             u64 magic;
             u64 result;
-        } *resp = r.Raw;
+        } *resp;
+
+        serviceIpcParse(&g_appletISelfController, &r, sizeof(*resp));
+        resp = r.Raw;
 
         rc = resp->result;
     }
@@ -1293,7 +1342,7 @@ Result appletSetScreenShotImageOrientation(s32 val) {
         Result res;
     } *raw;
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
+    raw = serviceIpcPrepareHeader(&g_appletISelfController, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 22;
@@ -1303,12 +1352,13 @@ Result appletSetScreenShotImageOrientation(s32 val) {
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
-        ipcParse(&r);
-
         struct {
             u64 magic;
             u64 result;
-        } *resp = r.Raw;
+        } *resp;
+
+        serviceIpcParse(&g_appletISelfController, &r, sizeof(*resp));
+        resp = r.Raw;
 
         rc = resp->result;
     }
@@ -1325,7 +1375,7 @@ Result appletCreateManagedDisplayLayer(u64 *out) {
         u64 cmd_id;
     } *raw;
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
+    raw = serviceIpcPrepareHeader(&g_appletISelfController, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 40;
@@ -1334,13 +1384,14 @@ Result appletCreateManagedDisplayLayer(u64 *out) {
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
-        ipcParse(&r);
-
         struct {
             u64 magic;
             u64 result;
             u64 out;
-        } *resp = r.Raw;
+        } *resp;
+
+        serviceIpcParse(&g_appletISelfController, &r, sizeof(*resp));
+        resp = r.Raw;
 
         rc = resp->result;
 
