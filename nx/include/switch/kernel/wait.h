@@ -95,6 +95,9 @@ static inline Waiter waiterForThreadExit(Thread* t) {
     return waiterForHandle(t->handle);
 }
 
+Result waitN(s32* idx_out, Waiter* objects, size_t num_objects, u64 timeout);
+Result waitNHandle(s32* idx_out, Handle* handles, size_t num_handles, u64 timeout);
+
 /**
  * @brief Waits for an arbitrary number of waiters. This is a macro that uses var-args.
  * @param[out] idx_out The index of the signalled waiter.
@@ -102,6 +105,33 @@ static inline Waiter waiterForThreadExit(Thread* t) {
  * @note The number of waiters must be less than 64. This is a Horizon kernel limitation.
  */
 #define waitMulti(idx_out, timeout, ...) \
-    waitN((idx_out), (timeout), (Waiter[]) { __VA_ARGS__ }, sizeof((Waiter[]) { __VA_ARGS__ }) / sizeof(Waiter))
+    waitN((idx_out), (Waiter[]) { __VA_ARGS__ }, sizeof((Waiter[]) { __VA_ARGS__ }) / sizeof(Waiter), (timeout))
 
-Result waitN(s32* idx_out, u64 timeout, Waiter* objects, size_t num_objects);
+/**
+ * @brief Waits for an arbitrary number of handles. This is a macro that uses var-args.
+ * @param[out] idx_out The index of the signalled handle.
+ * @param[in] timeout Timeout (in nanoseconds).
+ * @note The number of handles must be less than 64. This is a Horizon kernel limitation.
+ */
+#define waitMultiHandle(idx_out, timeout, ...) \
+    waitNHandle((idx_out), (Handle[]) { __VA_ARGS__ }, sizeof((Handle[]) { __VA_ARGS__ }) / sizeof(Handle), (timeout))
+
+/**
+ * @brief Waits for a single waiter.
+ * @param[in] w The waiter to wait for.
+ * @param[in] timeout Timeout (in nanoseconds).
+ */
+static inline Result waitSingle(Waiter w, u64 timeout) {
+    s32 idx;
+    return waitMulti(&idx, timeout, w);
+}
+
+/**
+ * @brief Waits for a single handle.
+ * @param[in] h The handle to wait for.
+ * @param[in] timeout Timeout (in nanoseconds).
+ */
+static inline Result waitSingleHandle(Handle h, u64 timeout) {
+    s32 idx;
+    return waitMultiHandle(&idx, timeout, h);
+}

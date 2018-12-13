@@ -362,6 +362,7 @@ Result svcResetSignal(Handle handle);
  * @brief Waits on one or more synchronization objects, optionally with a timeout.
  * @return Result code.
  * @note Syscall number 0x18.
+ * @note Please use \ref waitMultiHandle instead. That function handles sporadical interrupts caused by usermode synchronization primitives.
  */
 Result svcWaitSynchronization(s32* index, const Handle* handles, s32 handleCount, u64 timeout);
 
@@ -369,6 +370,7 @@ Result svcWaitSynchronization(s32* index, const Handle* handles, s32 handleCount
  * @brief Waits on a single synchronization object, optionally with a timeout.
  * @return Result code.
  * @note Wrapper for \ref svcWaitSynchronization.
+ * @note Please use \ref waitSingleHandle instead. That function handles sporadical interrupts caused by usermode synchronization primitives.
  */
 static inline Result svcWaitSynchronizationSingle(Handle handle, u64 timeout) {
     s32 tmp;
