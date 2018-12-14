@@ -35,8 +35,8 @@ typedef struct {
         UEvent* parent_event;
         UTimer* parent_timer;
     };
-    size_t idx;
-    size_t* idx_out;
+    s32 idx;
+    s32* idx_out;
 } WaiterNode;
 
 struct Waitable {

@@ -4,4 +4,4 @@
 
 void _utimerRecalculate(UTimer* t, u64 old_tick);
 u64  _utimerGetNextTick(UTimer* t);
-void _utimerAddListener(UTimer* t, WaiterNode* w, size_t idx, size_t* idx_out, Handle thread);
+void _utimerAddListener(UTimer* t, WaiterNode* w, s32 idx, s32* idx_out, Handle thread);

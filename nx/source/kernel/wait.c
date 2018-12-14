@@ -26,8 +26,8 @@ static Result waitImpl(s32* idx_out, Waiter* objects, size_t num_objects, u64 ti
     Handle handles[num_objects];
     u64 cur_tick = armGetSystemTick();
 
-    size_t triggered_idx = -1;
-    size_t num_waiters = 0;
+    s32 triggered_idx = -1;
+    u64 waiters_added = 0;
     WaiterNode waiters[num_objects];
 
     u64 end_tick = UINT64_MAX;
@@ -67,16 +67,16 @@ static Result waitImpl(s32* idx_out, Waiter* objects, size_t num_objects, u64 ti
                 // Always add a listener on the timer,
                 // If the timer is started/stopped we want to detect that.
                 _utimerAddListener(
-                    obj->timer, &waiters[num_waiters], num_waiters, &triggered_idx,
+                    obj->timer, &waiters[i], i, &triggered_idx,
                     own_thread_handle);
 
-                num_waiters++;
+                waiters_added |= 1ULL << i;
                 break;
 
             case WaiterType_UEvent:
                 // Try to add a listener to the event, if it hasn't already signalled.
                 added = _ueventAddListener(
-                    obj->event, &waiters[num_waiters], num_waiters, &triggered_idx,
+                    obj->event, &waiters[i], i, &triggered_idx,
                     own_thread_handle);
 
                 // If the event already happened, we're done.
@@ -87,7 +87,7 @@ static Result waitImpl(s32* idx_out, Waiter* objects, size_t num_objects, u64 ti
                 }
 
                 // If the event hasn't signalled, we added a listener.
-                num_waiters++;
+                waiters_added |= 1ULL << i;
                 break;
 
             case WaiterType_Handle:
@@ -138,8 +138,9 @@ static Result waitImpl(s32* idx_out, Waiter* objects, size_t num_objects, u64 ti
 
 clean_up:
     // Remove listeners.
-    for (i = 0; i < num_waiters; i ++)
-        _waiterNodeFree(&waiters[i]);
+    for (i = 0; i < num_objects; i ++)
+        if (waiters_added & (1ULL << i))
+            _waiterNodeFree(&waiters[i]);
 
     return rc;
 }

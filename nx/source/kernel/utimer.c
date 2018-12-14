@@ -75,7 +75,7 @@ u64 _utimerGetNextTick(UTimer* t)
     return ret;
 }
 
-void _utimerAddListener(UTimer* t, WaiterNode* w, size_t idx, size_t* idx_out, Handle thread)
+void _utimerAddListener(UTimer* t, WaiterNode* w, s32 idx, s32* idx_out, Handle thread)
 {
     _waiterNodeCreate(w, WaiterNodeType_Timer, &t->waitable, thread, idx, idx_out);
 

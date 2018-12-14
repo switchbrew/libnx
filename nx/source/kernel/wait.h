@@ -21,7 +21,7 @@ static inline void _waitableSignalAllListeners(Waitable* ww)
 
         // Try to swap -1 => idx on the waiter thread.
         // If another waitable signals simultaneously only one will win the race and insert its own idx.
-        size_t minus_one = -1;
+        s32 minus_one = -1;
         bool sent_idx = __atomic_compare_exchange_n(
             w->idx_out, &minus_one, w->idx, true, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
 
@@ -32,7 +32,7 @@ static inline void _waitableSignalAllListeners(Waitable* ww)
 
 static inline void _waiterNodeCreate(
     WaiterNode* w, WaiterNodeType type, Waitable* parent, Handle thread,
-    size_t idx, size_t* idx_out)
+    s32 idx, s32* idx_out)
 {
     w->type = type;
     w->parent = parent;
