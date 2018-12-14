@@ -13,11 +13,6 @@
 typedef struct UEvent UEvent;
 typedef struct UTimer UTimer;
 
-typedef enum {
-    WaiterNodeType_Event,
-    WaiterNodeType_Timer,
-} WaiterNodeType;
-
 typedef struct Waitable Waitable;
 typedef struct WaitableNode WaitableNode;
 
@@ -25,19 +20,6 @@ struct WaitableNode {
     WaitableNode* prev;
     WaitableNode* next;
 };
-
-typedef struct {
-    WaitableNode node;
-    WaiterNodeType type;
-    Handle thread;
-    union {
-        Waitable* parent;
-        UEvent* parent_event;
-        UTimer* parent_timer;
-    };
-    s32 idx;
-    s32* idx_out;
-} WaiterNode;
 
 struct Waitable {
     WaitableNode list;

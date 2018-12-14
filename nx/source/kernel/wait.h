@@ -3,6 +3,16 @@
 #include "kernel/mutex.h"
 #include "kernel/wait.h"
 
+typedef struct WaiterNode WaiterNode;
+
+struct WaiterNode {
+    WaitableNode node;
+    Waitable* parent;
+    Handle thread;
+    s32* idx_out;
+    s32 idx;
+};
+
 static inline void _waitableInitialize(Waitable* ww)
 {
     mutexInit(&ww->mutex);
@@ -30,25 +40,23 @@ static inline void _waitableSignalAllListeners(Waitable* ww)
     }
 }
 
-static inline void _waiterNodeCreate(
-    WaiterNode* w, WaiterNodeType type, Waitable* parent, Handle thread,
+static inline void _waiterNodeAdd(
+    WaiterNode* w, Waitable* parent, Handle thread,
     s32 idx, s32* idx_out)
 {
-    w->type = type;
+    // Initialize WaiterNode fields
     w->parent = parent;
     w->thread = thread;
     w->idx = idx;
     w->idx_out = idx_out;
+
+    // Add WaiterNode to the parent's linked list
+    w->node.next = parent->list.next;
+    parent->list.next = &w->node;
+    w->node.prev = &parent->list;
 }
 
-static inline void _waiterNodeAddToWaitable(WaiterNode* w, Waitable* ww)
-{
-    w->node.next = ww->list.next;
-    ww->list.next = &w->node;
-    w->node.prev = &ww->list;
-}
-
-static inline void _waiterNodeFree(WaiterNode* w)
+static inline void _waiterNodeRemove(WaiterNode* w)
 {
     mutexLock(&w->parent->mutex);
     w->node.prev->next = w->node.next;

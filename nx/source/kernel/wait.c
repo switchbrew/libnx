@@ -114,7 +114,7 @@ static Result waitImpl(s32* idx_out, Waiter* objects, size_t num_objects, u64 ti
         *idx_out = end_tick_idx;
         rc = 0;
     } else if (rc == KERNELRESULT(Cancelled)) {
-        // If no listener filled in its own index, we return the interrupt error back to caller.
+        // If no listener filled in its own index, we return the cancelled error back to caller.
         // This only happens if user for some reason manually does a svcCancelSynchronization.
         // Check just in case.
         if (triggered_idx == -1)
@@ -122,15 +122,21 @@ static Result waitImpl(s32* idx_out, Waiter* objects, size_t num_objects, u64 ti
 
         // An event was signalled, or a timer was updated.
         // So.. which is it?
-        switch (waiters[triggered_idx].type) {
-            case WaiterNodeType_Event:
-                _ueventTryAutoClear(waiters[triggered_idx].parent_event);
-
-                *idx_out = triggered_idx;
-                rc = 0;
+        switch (objects[triggered_idx].type) {
+            default:
                 break;
 
-            case WaiterNodeType_Timer:
+            case WaiterType_UEvent:
+                // Try to auto-clear the event. If auto-clear is enabled but
+                // the event is not signalled, that means the state of the
+                // event has changed and thus we need to retry the wait.
+                rc = _ueventTryAutoClear(objects[triggered_idx].event);
+                if (R_SUCCEEDED(rc))
+                    *idx_out = triggered_idx;
+                break;
+
+            case WaiterType_UTimer:
+                // Timer state changed, so we need to retry the wait.
                 rc = KERNELRESULT(Cancelled);
                 break;
         }
@@ -140,7 +146,7 @@ clean_up:
     // Remove listeners.
     for (i = 0; i < num_objects; i ++)
         if (waiters_added & (1ULL << i))
-            _waiterNodeFree(&waiters[i]);
+            _waiterNodeRemove(&waiters[i]);
 
     return rc;
 }
