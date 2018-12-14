@@ -1,8 +1,13 @@
-// Copyright 2018 plutoo
+/**
+ * @file wait.h
+ * @brief User mode synchronization primitive waiting operations.
+ * @author plutoo
+ * @copyright libnx Authors
+ */
 #pragma once
-#include "../kernel/mutex.h"
-#include "../kernel/event.h"
-#include "../kernel/thread.h"
+#include "mutex.h"
+#include "event.h"
+#include "thread.h"
 
 // Implementation details.
 typedef struct UEvent UEvent;
@@ -10,14 +15,13 @@ typedef struct UTimer UTimer;
 
 typedef enum {
     WaiterNodeType_Event,
-    WaiterNodeType_Timer
+    WaiterNodeType_Timer,
 } WaiterNodeType;
 
 typedef struct Waitable Waitable;
 typedef struct WaitableNode WaitableNode;
 
-struct WaitableNode
-{
+struct WaitableNode {
     WaitableNode* prev;
     WaitableNode* next;
 };
@@ -35,8 +39,7 @@ typedef struct {
     size_t* idx_out;
 } WaiterNode;
 
-struct Waitable
-{
+struct Waitable {
     WaitableNode list;
     Mutex mutex;
 };
@@ -58,7 +61,7 @@ typedef struct {
     };
 } Waiter;
 
-/// Creates a waiter for a kernelmode handle.
+/// Creates a waiter for a kernel-mode handle.
 static inline Waiter waiterForHandle(Handle h)
 {
     Waiter wait_obj;
@@ -67,7 +70,7 @@ static inline Waiter waiterForHandle(Handle h)
     return wait_obj;
 }
 
-/// Creates a waiter for a usermode timer.
+/// Creates a waiter for a user-mode timer.
 static inline Waiter waiterForUTimer(UTimer* t)
 {
     Waiter wait_obj;
@@ -76,7 +79,7 @@ static inline Waiter waiterForUTimer(UTimer* t)
     return wait_obj;
 }
 
-/// Creates a waiter for a usermode event.
+/// Creates a waiter for a user-mode event.
 static inline Waiter waiterForUEvent(UEvent* e)
 {
     Waiter wait_obj;
@@ -85,13 +88,15 @@ static inline Waiter waiterForUEvent(UEvent* e)
     return wait_obj;
 }
 
-/// Creates a waiter for a kernelmode event.
-static inline Waiter waiterForEvent(Event* e) {
+/// Creates a waiter for a kernel-mode event.
+static inline Waiter waiterForEvent(Event* e)
+{
     return waiterForHandle(e->revent);
 }
 
 /// Creates a waiter for a thread exit.
-static inline Waiter waiterForThreadExit(Thread* t) {
+static inline Waiter waiterForThreadExit(Thread* t)
+{
     return waiterForHandle(t->handle);
 }
 
@@ -121,7 +126,8 @@ Result waitNHandle(s32* idx_out, Handle* handles, size_t num_handles, u64 timeou
  * @param[in] w The waiter to wait for.
  * @param[in] timeout Timeout (in nanoseconds).
  */
-static inline Result waitSingle(Waiter w, u64 timeout) {
+static inline Result waitSingle(Waiter w, u64 timeout)
+{
     s32 idx;
     return waitMulti(&idx, timeout, w);
 }
@@ -131,7 +137,8 @@ static inline Result waitSingle(Waiter w, u64 timeout) {
  * @param[in] h The handle to wait for.
  * @param[in] timeout Timeout (in nanoseconds).
  */
-static inline Result waitSingleHandle(Handle h, u64 timeout) {
+static inline Result waitSingleHandle(Handle h, u64 timeout)
+{
     s32 idx;
     return waitMultiHandle(&idx, timeout, h);
 }

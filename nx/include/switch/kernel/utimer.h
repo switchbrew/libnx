@@ -1,16 +1,20 @@
-// Copyright 2018 plutoo
+/**
+ * @file uevent.h
+ * @brief User-mode timer synchronization primitive.
+ * @author plutoo
+ * @copyright libnx Authors
+ */
 #pragma once
-#include "../kernel/wait.h"
+#include "wait.h"
 
 typedef struct UTimer UTimer;
 
 typedef enum {
     TimerType_OneShot,
-    TimerType_Repeating
+    TimerType_Repeating,
 } TimerType;
 
-struct UTimer
-{
+struct UTimer {
     Waitable waitable;
     TimerType type;
     u64 next_tick;
@@ -18,7 +22,7 @@ struct UTimer
 };
 
 /**
- * @brief Creates a usermode timer.
+ * @brief Creates a user-mode timer.
  * @param[out] t UTimer object.
  * @param[in] interval Interval (in nanoseconds).
  * @param[in] type Timer type (repeating or one-shot)
@@ -27,11 +31,13 @@ struct UTimer
  * @note For a repeating timer: If the timer triggers twice before you wait on it, you will only get one signal.
  */
 void utimerCreate(UTimer* t, u64 interval, TimerType type);
+
 /**
  * @brief Starts the timer.
  * @param[in] t UTimer object.
  */
 void utimerStart(UTimer* t);
+
 /**
  * @brief Stops the timer.
  * @param[in] t UTimer object.

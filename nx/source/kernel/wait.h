@@ -15,8 +15,7 @@ static inline void _waitableSignalAllListeners(Waitable* ww)
     WaitableNode* node = &ww->list;
     WaitableNode* end = node;
 
-    while (node->next != end)
-    {
+    while (node->next != end) {
         node = node->next;
         WaiterNode* w = (WaiterNode*) node;
 
@@ -26,9 +25,8 @@ static inline void _waitableSignalAllListeners(Waitable* ww)
         bool sent_idx = __atomic_compare_exchange_n(
             w->idx_out, &minus_one, w->idx, true, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
 
-        if (sent_idx) {
+        if (sent_idx)
             svcCancelSynchronization(w->thread);
-        }
     }
 }
 
