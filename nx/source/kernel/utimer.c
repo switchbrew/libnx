@@ -2,7 +2,6 @@
 #include "kernel/svc.h"
 #include "kernel/utimer.h"
 #include "arm/counter.h"
-#include "utimer.h"
 #include "wait.h"
 
 #define STOPPED 0
@@ -77,9 +76,7 @@ u64 _utimerGetNextTick(UTimer* t)
 
 void _utimerAddListener(UTimer* t, WaiterNode* w, s32 idx, s32* idx_out, Handle thread)
 {
-    _waiterNodeCreate(w, WaiterNodeType_Timer, &t->waitable, thread, idx, idx_out);
-
     mutexLock(&t->waitable.mutex);
-    _waiterNodeAddToWaitable(w, &t->waitable);
+    _waiterNodeAdd(w, &t->waitable, thread, idx, idx_out);
     mutexUnlock(&t->waitable.mutex);
 }
