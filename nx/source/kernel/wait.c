@@ -12,15 +12,12 @@
 
 #define MAX_WAIT 0x40
 
-#define KernelError_Timeout 0xEA01
-#define KernelError_Canceled 0xEC01
-
 typedef Result (*WaitImplFunc)(s32* idx_out, void* objects, size_t num_objects, u64 timeout);
 
 static Result waitImpl(s32* idx_out, Waiter* objects, size_t num_objects, u64 timeout)
 {
     if (num_objects > MAX_WAIT)
-        return MAKERESULT(Module_Libnx, LibnxError_TooManyWaitables);
+        return KERNELRESULT(OutOfRange); // same error returned by kernel
 
     Handle own_thread_handle = getThreadVars()->handle;
     Handle dummy_handle = own_thread_handle;
@@ -33,9 +30,12 @@ static Result waitImpl(s32* idx_out, Waiter* objects, size_t num_objects, u64 ti
     size_t num_waiters = 0;
     WaiterNode waiters[num_objects];
 
-    u64 end_tick = armNsToTicks(timeout);
+    u64 end_tick = UINT64_MAX;
     s32 end_tick_idx = -1;
     size_t i;
+
+    if (timeout != UINT64_MAX)
+        end_tick = armNsToTicks(timeout);
 
     for (i = 0; i < num_objects; i ++) {
         Waiter* obj = &objects[i];
@@ -100,9 +100,10 @@ static Result waitImpl(s32* idx_out, Waiter* objects, size_t num_objects, u64 ti
     }
 
     // Do the actual syscall.
-    rc = svcWaitSynchronization(idx_out, handles, num_objects, armTicksToNs(end_tick));
+    rc = svcWaitSynchronization(idx_out, handles, num_objects, end_tick==UINT64_MAX ? UINT64_MAX : armTicksToNs(end_tick));
+    rc = R_VALUE(rc);
 
-    if (rc == KernelError_Timeout) {
+    if (rc == KERNELRESULT(TimedOut)) {
         // If we hit the user-supplied timeout, we return the timeout error back to caller.
         if (end_tick_idx == -1)
             goto clean_up;
@@ -112,7 +113,7 @@ static Result waitImpl(s32* idx_out, Waiter* objects, size_t num_objects, u64 ti
 
         *idx_out = end_tick_idx;
         rc = 0;
-    } else if (rc == KernelError_Canceled) {
+    } else if (rc == KERNELRESULT(Cancelled)) {
         // If no listener filled in its own index, we return the interrupt error back to caller.
         // This only happens if user for some reason manually does a svcCancelSynchronization.
         // Check just in case.
@@ -130,7 +131,7 @@ static Result waitImpl(s32* idx_out, Waiter* objects, size_t num_objects, u64 ti
                 break;
 
             case WaiterNodeType_Timer:
-                rc = KernelError_Canceled;
+                rc = KERNELRESULT(Cancelled);
                 break;
         }
     }
@@ -149,8 +150,9 @@ static Result _waitLoop(WaitImplFunc wait, s32* idx_out, void* objects, size_t n
     do {
         u64 cur_tick = armGetSystemTick();
         rc = wait(idx_out, objects, num_objects, timeout);
+        rc = R_VALUE(rc);
 
-        if (rc == KernelError_Canceled) {
+        if (rc == KERNELRESULT(Cancelled)) {
             // On timer stop/start an interrupt is sent to listeners.
             // It means the timer state has changed, and we should restart the wait.
 
@@ -161,10 +163,10 @@ static Result _waitLoop(WaitImplFunc wait, s32* idx_out, void* objects, size_t n
                 if (time_spent < timeout)
                     timeout -= time_spent;
                 else
-                    rc = KernelError_Timeout;
+                    rc = KERNELRESULT(TimedOut);
             }
         }
-    } while (rc == KernelError_Canceled);
+    } while (rc == KERNELRESULT(Cancelled));
 
     return rc;
 }
