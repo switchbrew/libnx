@@ -15,6 +15,15 @@ struct UEvent {
     bool auto_clear;
 };
 
+/// Creates a waiter for a user-mode event.
+static inline Waiter waiterForUEvent(UEvent* e)
+{
+    Waiter wait_obj;
+    wait_obj.type = WaiterType_UEvent;
+    wait_obj.event = e;
+    return wait_obj;
+}
+
 /**
  * @brief Creates a user-mode event.
  * @param[out] e UEvent object.

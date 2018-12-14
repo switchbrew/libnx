@@ -5,9 +5,9 @@
 #include "kernel/utimer.h"
 #include "kernel/uevent.h"
 #include "arm/counter.h"
+#include "wait.h"
 #include "utimer.h"
 #include "uevent.h"
-#include "wait.h"
 #include "../internal.h"
 
 #define MAX_WAIT 0x40
@@ -43,6 +43,12 @@ static Result waitImpl(s32* idx_out, Waiter* objects, size_t num_objects, u64 ti
         bool added;
 
         switch (obj->type) {
+            case WaiterType_Handle:
+            case WaiterType_HandleWithClear:
+                // Add (real) handle to the array.
+                handles[i] = obj->handle;
+                break;
+
             case WaiterType_UTimer:
                 timer_tick = _utimerGetNextTick(obj->timer);
 
@@ -70,7 +76,8 @@ static Result waitImpl(s32* idx_out, Waiter* objects, size_t num_objects, u64 ti
                     obj->timer, &waiters[i], i, &triggered_idx,
                     own_thread_handle);
 
-                waiters_added |= 1ULL << i;
+                waiters_added |= 1UL << i;
+                handles[i] = dummy_handle;
                 break;
 
             case WaiterType_UEvent:
@@ -87,23 +94,26 @@ static Result waitImpl(s32* idx_out, Waiter* objects, size_t num_objects, u64 ti
                 }
 
                 // If the event hasn't signalled, we added a listener.
-                waiters_added |= 1ULL << i;
-                break;
-
-            case WaiterType_Handle:
+                waiters_added |= 1UL << i;
+                handles[i] = dummy_handle;
                 break;
         }
-
-        // Add handle for i:th object.
-        // If that object has no handle, add a dummy handle.
-        handles[i] = (obj->type == WaiterType_Handle) ? obj->handle : dummy_handle;
     }
 
     // Do the actual syscall.
     rc = svcWaitSynchronization(idx_out, handles, num_objects, end_tick==UINT64_MAX ? UINT64_MAX : armTicksToNs(end_tick));
-    rc = R_VALUE(rc);
 
-    if (rc == KERNELRESULT(TimedOut)) {
+    if (R_SUCCEEDED(rc)) {
+        // Wait succeded, so that means an object having a real handle was signalled.
+        // Perform autoclear if needed.
+        if (objects[*idx_out].type == WaiterType_HandleWithClear) {
+            // Try to auto-clear the event. If it is not signalled, the kernel
+            // will return an error and thus we need to retry the wait.
+            rc = svcResetSignal(handles[*idx_out]);
+            if (R_VALUE(rc) == KERNELRESULT(InvalidState))
+                rc = KERNELRESULT(Cancelled);
+        }
+    } else if (R_VALUE(rc) == KERNELRESULT(TimedOut)) {
         // If we hit the user-supplied timeout, we return the timeout error back to caller.
         if (end_tick_idx == -1)
             goto clean_up;
@@ -113,7 +123,7 @@ static Result waitImpl(s32* idx_out, Waiter* objects, size_t num_objects, u64 ti
 
         *idx_out = end_tick_idx;
         rc = 0;
-    } else if (rc == KERNELRESULT(Cancelled)) {
+    } else if (R_VALUE(rc) == KERNELRESULT(Cancelled)) {
         // If no listener filled in its own index, we return the cancelled error back to caller.
         // This only happens if user for some reason manually does a svcCancelSynchronization.
         // Check just in case.
@@ -145,7 +155,7 @@ static Result waitImpl(s32* idx_out, Waiter* objects, size_t num_objects, u64 ti
 clean_up:
     // Remove listeners.
     for (i = 0; i < num_objects; i ++)
-        if (waiters_added & (1ULL << i))
+        if (waiters_added & (1UL << i))
             _waiterNodeRemove(&waiters[i]);
 
     return rc;

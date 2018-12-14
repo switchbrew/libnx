@@ -1,4 +1,5 @@
 // Copyright 2018 plutoo
+#include "result.h"
 #include "kernel/svc.h"
 #include "kernel/mutex.h"
 #include "kernel/uevent.h"
@@ -33,7 +34,7 @@ Result _ueventTryAutoClear(UEvent* e)
     mutexLock(&e->waitable.mutex);
     if (e->auto_clear) {
         if (e->signal)
-            e->signal = 0;
+            e->signal = false;
         else
             rc = KERNELRESULT(Cancelled);
     }
