@@ -14,10 +14,16 @@
 #define R_MODULE(res)      ((res)&0x1FF)
 /// Returns the description of a result code.
 #define R_DESCRIPTION(res) (((res)>>9)&0x1FFF)
+/// Masks out unused bits in a result code, retrieving the actual value for use in comparisons.
+#define R_VALUE(res)       ((res)&0x3FFFFF)
 
 /// Builds a result code from its constituent components.
 #define MAKERESULT(module,description) \
     ((((module)&0x1FF)) | ((description)&0x1FFF)<<9)
+
+/// Builds a kernel error result code.
+#define KERNELRESULT(description) \
+    MAKERESULT(Module_Kernel, KernelError_##description)
 
 /// Module values
 enum {
@@ -31,7 +37,42 @@ enum {
 
 /// Kernel error codes
 enum {
-    KernelError_Timeout=117,
+    KernelError_OutOfSessions=7,
+    KernelError_InvalidCapabilityDescriptor=14,
+    KernelError_NotImplemented=33,
+    KernelError_ThreadTerminating=59,
+    KernelError_OutOfDebugEvents=70,
+    KernelError_InvalidSize=101,
+    KernelError_InvalidAddress=102,
+    KernelError_ResourceExhausted=103,
+    KernelError_OutOfMemory=104,
+    KernelError_OutOfHandles=105,
+    KernelError_InvalidMemoryState=106,
+    KernelError_InvalidMemoryPermissions=108,
+    KernelError_InvalidMemoryRange=110,
+    KernelError_InvalidPriority=112,
+    KernelError_InvalidCoreId=113,
+    KernelError_InvalidHandle=114,
+    KernelError_InvalidUserBuffer=115,
+    KernelError_InvalidCombination=116,
+    KernelError_TimedOut=117,
+    KernelError_Cancelled=118,
+    KernelError_OutOfRange=119,
+    KernelError_InvalidEnumValue=120,
+    KernelError_NotFound=121,
+    KernelError_AlreadyExists=122,
+    KernelError_ConnectionClosed=123,
+    KernelError_UnhandledUserInterrupt=124,
+    KernelError_InvalidState=125,
+    KernelError_ReservedValue=126,
+    KernelError_InvalidHwBreakpoint=127,
+    KernelError_FatalUserException=128,
+    KernelError_OwnedByAnotherProcess=129,
+    KernelError_ConnectionRefused=131,
+    KernelError_OutOfResource=132,
+    KernelError_IpcMapFailed=259,
+    KernelError_IpcCmdbufTooSmall=260,
+    KernelError_NotDebugged=520,
 };
 
 /// libnx error codes
