@@ -6,6 +6,7 @@
  */
 #pragma once
 #include "../types.h"
+#include "../services/sm.h"
 
 typedef enum {
     AppletType_None = -2,
@@ -60,6 +61,11 @@ struct AppletHookCookie
     void* param;             ///< Callback parameter.
 };
 
+/// applet IStorage
+typedef struct {
+    Service s;
+} AppletStorage;
+
 Result appletInitialize(void);
 void appletExit(void);
 Result appletGetAppletResourceUserId(u64 *out);
@@ -109,6 +115,37 @@ Result appletUnlockExit(void);
 Result appletSetScreenShotPermission(s32 val);
 
 Result appletSetScreenShotImageOrientation(s32 val);
+
+/**
+ * @brief Creates a storage.
+ * @param s Storage object.
+ * @param size Size of storage.
+ */
+Result appletCreateStorage(AppletStorage *s, s64 size);
+
+/// Closes the storage object.
+void appletStorageClose(AppletStorage *s);
+
+/// Gets the size of the storage.
+Result appletStorageGetSize(AppletStorage *s, s64 *size);
+
+/**
+ * @brief Writes to a storage. offset(+size) must be within the actual storage size.
+ * @param s Storage object.
+ * @param offset Offset in storage.
+ * @param buffer Input data.
+ * @param size Data size.
+ */
+Result appletStorageWrite(AppletStorage *s, s64 offset, const void* buffer, size_t size);
+
+/**
+ * @brief Reads from a storage. offset(+size) must be within the actual storage size.
+ * @param s Storage object.
+ * @param offset Offset in storage.
+ * @param buffer Input data.
+ * @param size Data size.
+ */
+Result appletStorageRead(AppletStorage *s, s64 offset, void* buffer, size_t size);
 
 /**
  * @brief Processes the current applet status. Generally used within a main loop.
