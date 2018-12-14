@@ -145,39 +145,36 @@ clean_up:
     return rc;
 }
 
-static Result _waitLoop(WaitImplFunc wait, s32* idx_out, void* objects, size_t num_objects, u64 timeout)
+static Result _waitLoop(s32* idx_out, void* objects, size_t num_objects, u64 timeout, WaitImplFunc waitfunc)
 {
     Result rc;
+    bool has_timeout = timeout != UINT64_MAX;
+    u64 deadline = 0;
+
+    if (has_timeout)
+        deadline = armGetSystemTick() + armNsToTicks(timeout); // timeout: ns->ticks
+
     do {
-        u64 cur_tick = armGetSystemTick();
-        rc = wait(idx_out, objects, num_objects, timeout);
-        rc = R_VALUE(rc);
-
-        if (rc == KERNELRESULT(Cancelled)) {
-            // On timer stop/start an interrupt is sent to listeners.
-            // It means the timer state has changed, and we should restart the wait.
-
-            // Adjust timeout..
-            if (timeout != -1) {
-                u64 time_spent = armTicksToNs(armGetSystemTick() - cur_tick);
-
-                if (time_spent < timeout)
-                    timeout -= time_spent;
-                else
-                    rc = KERNELRESULT(TimedOut);
-            }
+        u64 this_timeout = UINT64_MAX;
+        if (has_timeout) {
+            s64 remaining = deadline - armGetSystemTick();
+            this_timeout = remaining > 0 ? armTicksToNs(remaining) : 0; // ticks->ns
         }
-    } while (rc == KERNELRESULT(Cancelled));
+
+        rc = waitfunc(idx_out, objects, num_objects, this_timeout);
+        if (has_timeout && R_VALUE(rc) == KERNELRESULT(TimedOut))
+            break;
+    } while (R_VALUE(rc) == KERNELRESULT(Cancelled));
 
     return rc;
 }
 
 Result waitN(s32* idx_out, Waiter* objects, size_t num_objects, u64 timeout)
 {
-    return _waitLoop((WaitImplFunc)waitImpl, idx_out, objects, num_objects, timeout);
+    return _waitLoop(idx_out, objects, num_objects, timeout, (WaitImplFunc)waitImpl);
 }
 
 Result waitNHandle(s32* idx_out, Handle* handles, size_t num_handles, u64 timeout)
 {
-    return _waitLoop((WaitImplFunc)svcWaitSynchronization, idx_out, handles, num_handles, timeout);
+    return _waitLoop(idx_out, handles, num_handles, timeout, (WaitImplFunc)svcWaitSynchronization);
 }

@@ -30,30 +30,34 @@ void eventLoadRemote(Event* t, Handle handle, bool autoclear)
 Result eventWait(Event* t, u64 timeout)
 {
     Result rc;
+    bool has_timeout = timeout != UINT64_MAX;
     u64 deadline = 0;
 
     if (t->revent == INVALID_HANDLE)
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    if (timeout != U64_MAX)
+    if (has_timeout)
         deadline = armGetSystemTick() + armNsToTicks(timeout); // timeout: ns->ticks
 
     do {
         do {
-            s64 this_timeout = -1;
-            if (deadline) {
-                this_timeout = deadline - armGetSystemTick();
-                this_timeout = armTicksToNs(this_timeout >= 0 ? this_timeout : 0); // ticks->ns
+            u64 this_timeout = UINT64_MAX;
+            if (has_timeout) {
+                s64 remaining = deadline - armGetSystemTick();
+                this_timeout = remaining > 0 ? armTicksToNs(remaining) : 0; // ticks->ns
             }
 
             rc = svcWaitSynchronizationSingle(t->revent, this_timeout);
-            if (deadline && (rc & 0x3FFFFF) == 0xEA01)
-                return rc; // timeout.
-        } while (R_FAILED(rc));
+            if (has_timeout && R_VALUE(rc) == KERNELRESULT(TimedOut))
+                return rc;
+        } while (R_VALUE(rc) == KERNELRESULT(Cancelled));
+
+        if (R_FAILED(rc))
+            break;
 
         if (t->autoclear)
             rc = svcResetSignal(t->revent);
-    } while ((rc & 0x3FFFFF) == 0xFA01);
+    } while (R_VALUE(rc) == KERNELRESULT(InvalidState));
 
     return rc;
 }
