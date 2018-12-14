@@ -36,10 +36,8 @@ void _ueventTryAutoClear(UEvent* e)
     mutexUnlock(&e->waitable.mutex);
 }
 
-bool _ueventAddListener(UEvent* e, WaiterNode* w, size_t idx, size_t* idx_out, Handle thread)
+bool _ueventAddListener(UEvent* e, WaiterNode* w, s32 idx, s32* idx_out, Handle thread)
 {
-    _waiterNodeCreate(w, WaiterNodeType_Event, &e->waitable, thread, idx, idx_out);
-
     mutexLock(&e->waitable.mutex);
 
     bool signalled = e->signal;
@@ -47,8 +45,10 @@ bool _ueventAddListener(UEvent* e, WaiterNode* w, size_t idx, size_t* idx_out, H
     if (signalled) {
         if (e->auto_clear)
             e->signal = false;
-    } else
+    } else {
+        _waiterNodeCreate(w, WaiterNodeType_Event, &e->waitable, thread, idx, idx_out);
         _waiterNodeAddToWaitable(w, &e->waitable);
+    }
 
     mutexUnlock(&e->waitable.mutex);
     return !signalled;

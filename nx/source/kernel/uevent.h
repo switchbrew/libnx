@@ -3,4 +3,4 @@
 #include "kernel/uevent.h"
 
 void _ueventTryAutoClear(UEvent* e);
-bool _ueventAddListener(UEvent* e, WaiterNode* w, size_t idx, size_t* idx_out, Handle thread);
+bool _ueventAddListener(UEvent* e, WaiterNode* w, s32 idx, s32* idx_out, Handle thread);
