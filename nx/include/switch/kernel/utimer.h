@@ -21,6 +21,15 @@ struct UTimer {
     u64 interval;
 };
 
+/// Creates a waiter for a user-mode timer.
+static inline Waiter waiterForUTimer(UTimer* t)
+{
+    Waiter wait_obj;
+    wait_obj.type = WaiterType_UTimer;
+    wait_obj.timer = t;
+    return wait_obj;
+}
+
 /**
  * @brief Creates a user-mode timer.
  * @param[out] t UTimer object.

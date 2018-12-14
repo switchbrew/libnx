@@ -6,12 +6,8 @@
  */
 #pragma once
 #include "mutex.h"
-#include "event.h"
-#include "thread.h"
 
 // Implementation details.
-typedef struct UEvent UEvent;
-typedef struct UTimer UTimer;
 
 typedef struct Waitable Waitable;
 typedef struct WaitableNode WaitableNode;
@@ -26,60 +22,33 @@ struct Waitable {
     Mutex mutex;
 };
 
-// User-facing API starts here.
 typedef enum {
     WaiterType_Handle,
+    WaiterType_HandleWithClear,
     WaiterType_UTimer,
     WaiterType_UEvent,
 } WaiterType;
 
+// User-facing API starts here.
+
+/// Waiter structure.
 typedef struct {
     WaiterType type;
 
     union {
         Handle handle;
-        UTimer* timer;
-        UEvent* event;
+        struct UTimer* timer;
+        struct UEvent* event;
     };
 } Waiter;
 
-/// Creates a waiter for a kernel-mode handle.
+/// Creates a \ref Waiter for a kernel-mode \ref Handle.
 static inline Waiter waiterForHandle(Handle h)
 {
     Waiter wait_obj;
     wait_obj.type = WaiterType_Handle;
     wait_obj.handle = h;
     return wait_obj;
-}
-
-/// Creates a waiter for a user-mode timer.
-static inline Waiter waiterForUTimer(UTimer* t)
-{
-    Waiter wait_obj;
-    wait_obj.type = WaiterType_UTimer;
-    wait_obj.timer = t;
-    return wait_obj;
-}
-
-/// Creates a waiter for a user-mode event.
-static inline Waiter waiterForUEvent(UEvent* e)
-{
-    Waiter wait_obj;
-    wait_obj.type = WaiterType_UEvent;
-    wait_obj.event = e;
-    return wait_obj;
-}
-
-/// Creates a waiter for a kernel-mode event.
-static inline Waiter waiterForEvent(Event* e)
-{
-    return waiterForHandle(e->revent);
-}
-
-/// Creates a waiter for a thread exit.
-static inline Waiter waiterForThreadExit(Thread* t)
-{
-    return waiterForHandle(t->handle);
 }
 
 Result waitN(s32* idx_out, Waiter* objects, size_t num_objects, u64 timeout);

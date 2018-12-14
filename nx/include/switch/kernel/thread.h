@@ -7,6 +7,7 @@
 #pragma once
 #include "../types.h"
 #include "../arm/thread_context.h"
+#include "wait.h"
 
 /// Thread information structure.
 typedef struct {
@@ -15,6 +16,12 @@ typedef struct {
     void*  stack_mirror; ///< Pointer to stack memory mirror.
     size_t stack_sz;     ///< Stack size.
 } Thread;
+
+/// Creates a \ref Waiter for a \ref Thread.
+static inline Waiter waiterForThread(Thread* t)
+{
+    return waiterForHandle(t->handle);
+}
 
 /**
  * @brief Creates a thread.
