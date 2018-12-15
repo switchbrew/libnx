@@ -1395,7 +1395,6 @@ static Result _appletExitProcessAndReturn(void) {
 
 Result appletCreateStorage(AppletStorage *s, s64 size) {
     memset(s, 0, sizeof(AppletStorage));
-    s->isHandleStorage = false;
 
     return _appletGetSessionIn64(&g_appletILibraryAppletCreator, &s->s, 10, size);
 }
@@ -1446,7 +1445,6 @@ Result appletCreateTransferMemoryStorage(AppletStorage *s, s64 size, bool writab
     Result rc=0;
 
     memset(s, 0, sizeof(AppletStorage));
-    s->isHandleStorage = false;
 
     rc = tmemCreate(&s->tmem, size, Perm_None);
     if (R_FAILED(rc)) return rc;
@@ -1461,8 +1459,6 @@ Result appletCreateHandleStorage(AppletStorage *s, s64 inval, Handle handle) {
     if (!kernelAbove200())
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    s->isHandleStorage = true;
-
     return _appletCmdInHandle64(&g_appletILibraryAppletCreator, &s->s, 12, handle, inval);
 }
 
@@ -1470,7 +1466,6 @@ Result appletCreateHandleStorageTmem(AppletStorage *s, s64 size) {
     Result rc=0;
 
     memset(s, 0, sizeof(AppletStorage));
-    s->isHandleStorage = true;
 
     rc = tmemCreate(&s->tmem, size, Perm_None);
     if (R_FAILED(rc)) return rc;
@@ -1528,19 +1523,12 @@ static Result _appletStorageAccessorRW(Service* srv, size_t ipcbufsize, s64 offs
 
 Result appletStorageGetSize(AppletStorage *s, s64 *size) {
     Result rc=0;
-    Service tmp_srv;//IStorageAccessor / ITransferStorageAccessor
+    Service tmp_srv;//IStorageAccessor
 
     if (!serviceIsActive(&s->s))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    if (!s->isHandleStorage) rc = _appletGetSession(&s->s, &tmp_srv, 0);//Open
-    if (s->isHandleStorage) {
-        if (!kernelAbove200())
-            return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-
-        rc = _appletGetSession(&s->s, &tmp_srv, 1);//OpenTransferStorage
-    }
-
+    rc = _appletGetSession(&s->s, &tmp_srv, 0);//Open
     if (R_FAILED(rc)) return rc;
 
     rc = _appletCmdNoInOut64(&tmp_srv, (u64*)size, 0);
@@ -1554,7 +1542,7 @@ static Result _appletStorageRW(AppletStorage *s, s64 offset, void* buffer, size_
     size_t ipcbufsize=0;
     Service tmp_srv;//IStorageAccessor
 
-    if (!serviceIsActive(&s->s) || s->isHandleStorage)
+    if (!serviceIsActive(&s->s))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     rc = _appletGetSession(&s->s, &tmp_srv, 0);//Open
@@ -1618,7 +1606,7 @@ Result appletStorageGetHandle(AppletStorage *s, s64 *out, Handle *handle) {
     Result rc=0;
     Service tmp_srv;//ITransferStorageAccessor
 
-    if (!serviceIsActive(&s->s) || !s->isHandleStorage)
+    if (!serviceIsActive(&s->s))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     if (!kernelAbove200())

@@ -72,7 +72,6 @@ struct AppletHookCookie
 typedef struct {
     Service s;
     TransferMemory tmem;
-    bool isHandleStorage;
 } AppletStorage;
 
 Result appletInitialize(void);
@@ -169,7 +168,7 @@ void appletStorageClose(AppletStorage *s);
 /// Closes the TransferMemory in the storage object. For TransferMemory storage created by the current process, this must be called after the LibraryApplet finishes using it (if sent to one).
 void appletStorageCloseTmem(AppletStorage *s);
 
-/// Gets the size of the storage. For HandleStorage, this returns the input s64 originally from /ref appletCreateHandleStorage / \ref appletCreateHandleStorageTmem.
+/// Gets the size of the storage. This is not usable with HandleStorage, use \ref appletStorageGetHandle or \ref appletStorageMap instead for that.
 Result appletStorageGetSize(AppletStorage *s, s64 *size);
 
 /**
@@ -195,7 +194,7 @@ Result appletStorageRead(AppletStorage *s, s64 offset, void* buffer, size_t size
 /**
  * @brief Gets data for a HandleStorage originally from \ref appletCreateHandleStorage input.
  * @note  Only available on 2.0.0+.
- * @param out Same as \ref appletStorageGetSize.
+ * @param out Output value.
  * @param handle Output handle.
  */
 Result appletStorageGetHandle(AppletStorage *s, s64 *out, Handle *handle);
