@@ -49,6 +49,12 @@ typedef enum {
   AppletFocusHandlingMode_Max,          //< Number of focus handling modes
 } AppletFocusHandlingMode;
 
+typedef enum {
+    AppletLaunchParameterKind_Application     = 1, ///< Application-specific LaunchParameter
+    AppletLaunchParameterKind_PreselectedUser = 2, ///< account PreselectedUser
+    AppletLaunchParameterKind_Unknown         = 3, ///< Unknown if used by anything?
+} AppletLaunchParameterKind;
+
 /// applet hook function.
 typedef void (*AppletHookFn)(AppletHookType hook, void* param);
 
@@ -76,6 +82,14 @@ AppletType appletGetAppletType(void);
 
 void appletNotifyRunning(u8 *out);
 Result appletCreateManagedDisplayLayer(u64 *out);
+
+/**
+ * @brief Pops a LaunchParameter AppletStorage, the storage will be removed from sysmodule state during this.
+ * @param s Output storage.
+ * @param kind See \ref AppletLaunchParameterKind.
+ * @note Can only be used in Applications.
+ */
+Result appletPopLaunchParameter(AppletStorage *s, AppletLaunchParameterKind kind);
 
 Result appletGetDesiredLanguage(u64 *LanguageCode);
 
