@@ -42,14 +42,14 @@ Result _ueventTryAutoClear(UEvent* e)
     return rc;
 }
 
-bool _ueventAddListener(UEvent* e, WaiterNode* w, s32 idx, s32* idx_out, Handle thread)
+bool _ueventAddListener(UEvent* e, WaiterNode* w)
 {
     mutexLock(&e->waitable.mutex);
 
     bool can_add = !e->signal;
 
     if (can_add)
-        _waiterNodeAdd(w, &e->waitable, thread, idx, idx_out);
+        _waiterNodeAdd(w);
     else if (e->auto_clear)
         e->signal = false;
 

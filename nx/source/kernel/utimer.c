@@ -74,9 +74,9 @@ u64 _utimerGetNextTick(UTimer* t)
     return ret;
 }
 
-void _utimerAddListener(UTimer* t, WaiterNode* w, s32 idx, s32* idx_out, Handle thread)
+void _utimerAddListener(UTimer* t, WaiterNode* w)
 {
     mutexLock(&t->waitable.mutex);
-    _waiterNodeAdd(w, &t->waitable, thread, idx, idx_out);
+    _waiterNodeAdd(w);
     mutexUnlock(&t->waitable.mutex);
 }
