@@ -5,8 +5,6 @@
 #include "kernel/utimer.h"
 #include "wait.h"
 
-#define STOPPED 0
-
 static bool _utimerBeginWait(Waitable* ww, WaiterNode* w, u64 cur_tick, u64* next_tick);
 static Result _utimerOnTimeout(Waitable* ww, u64 old_tick);
 static Result _utimerOnSignal(Waitable* ww);
@@ -21,7 +19,8 @@ void utimerCreate(UTimer* t, u64 interval, TimerType type)
 {
     _waitableInitialize(&t->waitable, &g_utimerVt);
 
-    t->next_tick = STOPPED;
+    t->started = false;
+    t->next_tick = 0;
     t->interval = armNsToTicks(interval);
     t->type = type;
 }
@@ -30,9 +29,9 @@ void utimerStart(UTimer* t)
 {
     mutexLock(&t->waitable.mutex);
 
-    if (t->next_tick == STOPPED) {
-        u64 new_tick = armGetSystemTick() + t->interval;
-        t->next_tick = new_tick;
+    if (!t->started) {
+        t->started = true;
+        t->next_tick = armGetSystemTick() + t->interval;
         _waitableSignalAllListeners(&t->waitable);
     }
 
@@ -43,8 +42,9 @@ void utimerStop(UTimer* t)
 {
     mutexLock(&t->waitable.mutex);
 
-    if (t->next_tick != STOPPED) {
-        t->next_tick = STOPPED;
+    if (!t->started) {
+        t->started = false;
+        t->next_tick = 0;
         _waitableSignalAllListeners(&t->waitable);
     }
 
@@ -53,20 +53,18 @@ void utimerStop(UTimer* t)
 
 static void _utimerRecalculate(UTimer* t, u64 old_tick)
 {
-    if (t->next_tick == old_tick) {
+    if (t->started && t->next_tick == old_tick) {
         u64 interval = t->interval;
-        u64 new_tick = 0;
 
         switch (t->type) {
             case TimerType_OneShot:
-                new_tick = STOPPED;
+                t->started = false;
+                t->next_tick = 0;
                 break;
             case TimerType_Repeating:
-                new_tick = old_tick + ((armGetSystemTick() - old_tick + interval - 1)/interval)*interval;
+                t->next_tick = old_tick + ((armGetSystemTick() - old_tick + interval - 1)/interval)*interval;
                 break;
         }
-
-        t->next_tick = new_tick;
     }
 }
 
@@ -81,7 +79,7 @@ static bool _utimerBeginWait(Waitable* ww, WaiterNode* w, u64 cur_tick, u64* nex
     bool do_wait = true;
 
     // Skip timer if stopped.
-    if (timer_tick != STOPPED) {
+    if (t->started) {
         s64 diff = timer_tick - cur_tick;
 
         // If the timer is already signalled, we're done.
