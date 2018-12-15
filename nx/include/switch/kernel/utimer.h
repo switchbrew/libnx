@@ -16,7 +16,8 @@ typedef enum {
 
 struct UTimer {
     Waitable waitable;
-    TimerType type;
+    TimerType type : 8;
+    bool started : 1;
     u64 next_tick;
     u64 interval;
 };
