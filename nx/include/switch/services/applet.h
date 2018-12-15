@@ -189,6 +189,7 @@ Result appletStorageGetHandle(AppletStorage *s, s64 *out, Handle *handle);
 /**
  * @brief Maps TransferMemory for a HandleStorage. Wrapper for \ref appletCreateHandleStorage.
  * @note  The TransferMemory can be unmapped with \ref appletStorageCloseTmem.
+ * @note  Do not use this if the AppletStorage already contains initialized TransferMemory state.
  * @param s Storage object.
  * @param addr Output mapped address (optional).
  * @param size Output size (optional).
