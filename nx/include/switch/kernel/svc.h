@@ -366,7 +366,7 @@ Result svcResetSignal(Handle handle);
  * @return Result code.
  * @note Syscall number 0x18.
  * @note \p handleCount must not be greater than \ref MAX_WAIT_OBJECTS. This is a Horizon kernel limitation.
- * @note Please use \ref waitMultiHandle instead. That function handles sporadical interrupts caused by usermode synchronization primitives.
+ * @note This is the raw syscall, which can be cancelled by \ref svcCancelSynchronization or other means. \ref waitHandles or \ref waitMultiHandle should normally be used instead.
  */
 Result svcWaitSynchronization(s32* index, const Handle* handles, s32 handleCount, u64 timeout);
 
@@ -374,7 +374,7 @@ Result svcWaitSynchronization(s32* index, const Handle* handles, s32 handleCount
  * @brief Waits on a single synchronization object, optionally with a timeout.
  * @return Result code.
  * @note Wrapper for \ref svcWaitSynchronization.
- * @note Please use \ref waitSingleHandle instead. That function handles sporadical interrupts caused by usermode synchronization primitives.
+ * @note This is the raw syscall, which can be cancelled by \ref svcCancelSynchronization or other means. \ref waitSingleHandle should normally be used instead.
  */
 static inline Result svcWaitSynchronizationSingle(Handle handle, u64 timeout) {
     s32 tmp;

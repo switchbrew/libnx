@@ -9,6 +9,7 @@
 
 typedef struct UEvent UEvent;
 
+/// User-mode event object.
 struct UEvent {
     Waitable waitable;
     bool signal;
