@@ -8,13 +8,11 @@
 #include "wait.h"
 #include "../internal.h"
 
-#define MAX_WAIT 0x40
-
 typedef Result (*WaitImplFunc)(s32* idx_out, void* objects, size_t num_objects, u64 timeout);
 
 static Result waitImpl(s32* idx_out, Waiter* objects, size_t num_objects, u64 timeout)
 {
-    if (num_objects > MAX_WAIT)
+    if (num_objects > MAX_WAIT_OBJECTS)
         return KERNELRESULT(OutOfRange); // same error returned by kernel
 
     Handle own_thread_handle = getThreadVars()->handle;

@@ -13,6 +13,9 @@
 /// Pseudo handle for the current thread.
 #define CUR_THREAD_HANDLE 0xFFFF8000
 
+/// Maximum number of objects that can be waited on by \ref svcWaitSynchronization (Horizon kernel limitation).
+#define MAX_WAIT_OBJECTS 0x40
+
 /// Memory type enumeration (lower 8 bits of \ref MemoryState)
 typedef enum {
     MemType_Unmapped=0x00,            ///< Unmapped memory.
@@ -362,6 +365,7 @@ Result svcResetSignal(Handle handle);
  * @brief Waits on one or more synchronization objects, optionally with a timeout.
  * @return Result code.
  * @note Syscall number 0x18.
+ * @note \p handleCount must not be greater than \ref MAX_WAIT_OBJECTS. This is a Horizon kernel limitation.
  * @note Please use \ref waitMultiHandle instead. That function handles sporadical interrupts caused by usermode synchronization primitives.
  */
 Result svcWaitSynchronization(s32* index, const Handle* handles, s32 handleCount, u64 timeout);
