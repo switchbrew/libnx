@@ -25,8 +25,8 @@ struct UTimer {
 static inline Waiter waiterForUTimer(UTimer* t)
 {
     Waiter wait_obj;
-    wait_obj.type = WaiterType_UTimer;
-    wait_obj.timer = t;
+    wait_obj.type = WaiterType_Waitable;
+    wait_obj.waitable = &t->waitable;
     return wait_obj;
 }
 

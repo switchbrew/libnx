@@ -14,9 +14,16 @@ struct WaiterNode {
     s32 idx;
 };
 
-static inline void _waitableInitialize(Waitable* ww)
+struct WaitableMethods {
+    bool (* beginWait)(Waitable* ww, WaiterNode* w, u64 cur_tick, u64* next_tick);
+    Result (* onTimeout)(Waitable* ww, u64 old_tick);
+    Result (* onSignal)(Waitable* ww);
+};
+
+static inline void _waitableInitialize(Waitable* ww, const WaitableMethods* vt)
 {
     mutexInit(&ww->mutex);
+    ww->vt = vt;
     ww->list.next = &ww->list;
     ww->list.prev = &ww->list;
 }
