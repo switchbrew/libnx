@@ -4,4 +4,4 @@
 #include "wait.h"
 
 Result _ueventTryAutoClear(UEvent* e);
-bool _ueventAddListener(UEvent* e, WaiterNode* w, s32 idx, s32* idx_out, Handle thread);
+bool _ueventAddListener(UEvent* e, WaiterNode* w);

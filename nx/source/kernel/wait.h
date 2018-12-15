@@ -1,5 +1,6 @@
 // Copyright 2018 plutoo
 #pragma once
+#include "kernel/svc.h"
 #include "kernel/mutex.h"
 #include "kernel/wait.h"
 
@@ -40,7 +41,7 @@ static inline void _waitableSignalAllListeners(Waitable* ww)
     }
 }
 
-static inline void _waiterNodeAdd(
+static inline void _waiterNodeInitialize(
     WaiterNode* w, Waitable* parent, Handle thread,
     s32 idx, s32* idx_out)
 {
@@ -49,11 +50,14 @@ static inline void _waiterNodeAdd(
     w->thread = thread;
     w->idx = idx;
     w->idx_out = idx_out;
+}
 
+static inline void _waiterNodeAdd(WaiterNode* w)
+{
     // Add WaiterNode to the parent's linked list
-    w->node.next = parent->list.next;
-    parent->list.next = &w->node;
-    w->node.prev = &parent->list;
+    w->node.next = w->parent->list.next;
+    w->parent->list.next = &w->node;
+    w->node.prev = &w->parent->list;
 }
 
 static inline void _waiterNodeRemove(WaiterNode* w)

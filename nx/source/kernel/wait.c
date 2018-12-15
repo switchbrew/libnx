@@ -72,9 +72,8 @@ static Result waitImpl(s32* idx_out, Waiter* objects, size_t num_objects, u64 ti
 
                 // Always add a listener on the timer,
                 // If the timer is started/stopped we want to detect that.
-                _utimerAddListener(
-                    obj->timer, &waiters[i], i, &triggered_idx,
-                    own_thread_handle);
+                _waiterNodeInitialize(&waiters[i], &obj->timer->waitable, own_thread_handle, i, &triggered_idx);
+                _utimerAddListener(obj->timer, &waiters[i]);
 
                 waiters_added |= 1UL << i;
                 handles[i] = dummy_handle;
@@ -82,9 +81,8 @@ static Result waitImpl(s32* idx_out, Waiter* objects, size_t num_objects, u64 ti
 
             case WaiterType_UEvent:
                 // Try to add a listener to the event, if it hasn't already signalled.
-                added = _ueventAddListener(
-                    obj->event, &waiters[i], i, &triggered_idx,
-                    own_thread_handle);
+                _waiterNodeInitialize(&waiters[i], &obj->event->waitable, own_thread_handle, i, &triggered_idx);
+                added = _ueventAddListener(obj->event, &waiters[i]);
 
                 // If the event already happened, we're done.
                 if (!added) {
