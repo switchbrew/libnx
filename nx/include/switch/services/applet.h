@@ -7,6 +7,7 @@
 #pragma once
 #include "../types.h"
 #include "../services/sm.h"
+#include "../kernel/tmem.h"
 
 typedef enum {
     AppletType_None = -2,
@@ -64,6 +65,8 @@ struct AppletHookCookie
 /// applet IStorage
 typedef struct {
     Service s;
+    TransferMemory tmem;
+    bool isHandleStorage;
 } AppletStorage;
 
 Result appletInitialize(void);
@@ -123,14 +126,41 @@ Result appletSetScreenShotImageOrientation(s32 val);
  */
 Result appletCreateStorage(AppletStorage *s, s64 size);
 
-/// Closes the storage object.
+/**
+ * @brief Creates a TransferMemory storage.
+ * @param s Storage object.
+ * @param size Size of storage.
+ * @param writable Controls whether writing to the storage is allowed with \ref appletStorageWrite.
+ */
+Result appletCreateTransferMemoryStorage(AppletStorage *s, s64 size, bool writable);
+
+/**
+ * @brief Creates a HandleStorage. Only available on 2.0.0+.
+ * @param s Storage object.
+ * @param inval Arbitrary input value.
+ * @param handle Arbitrary input handle.
+ */
+Result appletCreateHandleStorage(AppletStorage *s, s64 inval, Handle handle);
+
+/**
+ * @brief Creates a HandleStorage using TransferMemory. Wrapper for \ref appletCreateHandleStorage.
+ * @param s Storage object.
+ * @param size Size of storage.
+ */
+Result appletCreateHandleStorageTmem(AppletStorage *s, s64 size);
+
+/// Closes the storage object. TransferMemory closing is seperate, see \ref appletStorageCloseTmem.
 void appletStorageClose(AppletStorage *s);
 
-/// Gets the size of the storage.
+/// Closes the TransferMemory in the storage object. For TransferMemory storage created by the current process, this must be called after the LibraryApplet finishes using it (if sent to one).
+void appletStorageCloseTmem(AppletStorage *s);
+
+/// Gets the size of the storage. For HandleStorage, this returns the input s64 originally from /ref appletCreateHandleStorage / \ref appletCreateHandleStorageTmem.
 Result appletStorageGetSize(AppletStorage *s, s64 *size);
 
 /**
  * @brief Writes to a storage. offset(+size) must be within the actual storage size.
+ * @note  This is not usable with HandleStorage.
  * @param s Storage object.
  * @param offset Offset in storage.
  * @param buffer Input data.
@@ -140,12 +170,30 @@ Result appletStorageWrite(AppletStorage *s, s64 offset, const void* buffer, size
 
 /**
  * @brief Reads from a storage. offset(+size) must be within the actual storage size.
+ * @note  This is not usable with HandleStorage.
  * @param s Storage object.
  * @param offset Offset in storage.
  * @param buffer Input data.
  * @param size Data size.
  */
 Result appletStorageRead(AppletStorage *s, s64 offset, void* buffer, size_t size);
+
+/**
+ * @brief Gets data for a HandleStorage originally from \ref appletCreateHandleStorage input.
+ * @note  Only available on 2.0.0+.
+ * @param out Same as \ref appletStorageGetSize.
+ * @param handle Output handle.
+ */
+Result appletStorageGetHandle(AppletStorage *s, s64 *out, Handle *handle);
+
+/**
+ * @brief Maps TransferMemory for a HandleStorage. Wrapper for \ref appletCreateHandleStorage.
+ * @note  The TransferMemory can be unmapped with \ref appletStorageCloseTmem.
+ * @param s Storage object.
+ * @param addr Output mapped address (optional).
+ * @param size Output size (optional).
+ */
+Result appletStorageMap(AppletStorage *s, void** addr, size_t *size);
 
 /**
  * @brief Processes the current applet status. Generally used within a main loop.
