@@ -19,8 +19,8 @@ struct UEvent {
 static inline Waiter waiterForUEvent(UEvent* e)
 {
     Waiter wait_obj;
-    wait_obj.type = WaiterType_UEvent;
-    wait_obj.event = e;
+    wait_obj.type = WaiterType_Waitable;
+    wait_obj.waitable = &e->waitable;
     return wait_obj;
 }
 

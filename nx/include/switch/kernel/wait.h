@@ -10,6 +10,7 @@
 // Implementation details.
 
 typedef struct Waitable Waitable;
+typedef struct WaitableMethods WaitableMethods;
 typedef struct WaitableNode WaitableNode;
 
 struct WaitableNode {
@@ -18,6 +19,7 @@ struct WaitableNode {
 };
 
 struct Waitable {
+    const WaitableMethods* vt;
     WaitableNode list;
     Mutex mutex;
 };
@@ -25,8 +27,7 @@ struct Waitable {
 typedef enum {
     WaiterType_Handle,
     WaiterType_HandleWithClear,
-    WaiterType_UTimer,
-    WaiterType_UEvent,
+    WaiterType_Waitable,
 } WaiterType;
 
 // User-facing API starts here.
@@ -37,8 +38,7 @@ typedef struct {
 
     union {
         Handle handle;
-        struct UTimer* timer;
-        struct UEvent* event;
+        Waitable* waitable;
     };
 } Waiter;
 
