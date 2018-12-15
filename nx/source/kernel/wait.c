@@ -8,9 +8,9 @@
 #include "wait.h"
 #include "../internal.h"
 
-typedef Result (*WaitImplFunc)(s32* idx_out, void* objects, size_t num_objects, u64 timeout);
+typedef Result (*WaitImplFunc)(s32* idx_out, const void* objects, s32 num_objects, u64 timeout);
 
-static Result waitImpl(s32* idx_out, Waiter* objects, size_t num_objects, u64 timeout)
+static Result _waitObjectsImpl(s32* idx_out, const Waiter* objects, u32 num_objects, u64 timeout)
 {
     if (num_objects > MAX_WAIT_OBJECTS)
         return KERNELRESULT(OutOfRange); // same error returned by kernel
@@ -34,7 +34,7 @@ static Result waitImpl(s32* idx_out, Waiter* objects, size_t num_objects, u64 ti
         end_tick = armNsToTicks(timeout);
 
     for (i = 0; i < num_objects; i ++) {
-        Waiter* obj = &objects[i];
+        const Waiter* obj = &objects[i];
         u64 next_tick;
         bool added;
 
@@ -116,7 +116,7 @@ clean_up:
     return rc;
 }
 
-static Result _waitLoop(s32* idx_out, void* objects, size_t num_objects, u64 timeout, WaitImplFunc waitfunc)
+static Result _waitLoop(s32* idx_out, const void* objects, s32 num_objects, u64 timeout, WaitImplFunc waitfunc)
 {
     Result rc;
     bool has_timeout = timeout != UINT64_MAX;
@@ -140,12 +140,12 @@ static Result _waitLoop(s32* idx_out, void* objects, size_t num_objects, u64 tim
     return rc;
 }
 
-Result waitN(s32* idx_out, Waiter* objects, size_t num_objects, u64 timeout)
+Result waitObjects(s32* idx_out, const Waiter* objects, s32 num_objects, u64 timeout)
 {
-    return _waitLoop(idx_out, objects, num_objects, timeout, (WaitImplFunc)waitImpl);
+    return _waitLoop(idx_out, objects, num_objects, timeout, (WaitImplFunc)_waitObjectsImpl);
 }
 
-Result waitNHandle(s32* idx_out, Handle* handles, size_t num_handles, u64 timeout)
+Result waitHandles(s32* idx_out, const Handle* handles, s32 num_handles, u64 timeout)
 {
     return _waitLoop(idx_out, handles, num_handles, timeout, (WaitImplFunc)svcWaitSynchronization);
 }

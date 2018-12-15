@@ -42,7 +42,7 @@ void utimerStop(UTimer* t)
 {
     mutexLock(&t->waitable.mutex);
 
-    if (!t->started) {
+    if (t->started) {
         t->started = false;
         t->next_tick = 0;
         _waitableSignalAllListeners(&t->waitable);

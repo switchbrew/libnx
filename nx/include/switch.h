@@ -21,10 +21,13 @@ extern "C" {
 #include "switch/arm/counter.h"
 
 #include "switch/kernel/svc.h"
+#include "switch/kernel/wait.h"
 #include "switch/kernel/tmem.h"
 #include "switch/kernel/shmem.h"
 #include "switch/kernel/mutex.h"
 #include "switch/kernel/event.h"
+#include "switch/kernel/uevent.h"
+#include "switch/kernel/utimer.h"
 #include "switch/kernel/rwlock.h"
 #include "switch/kernel/condvar.h"
 #include "switch/kernel/thread.h"
@@ -35,9 +38,6 @@ extern "C" {
 #include "switch/kernel/jit.h"
 #include "switch/kernel/ipc.h"
 #include "switch/kernel/barrier.h"
-#include "switch/kernel/uevent.h"
-#include "switch/kernel/utimer.h"
-#include "switch/kernel/wait.h"
 
 #include "switch/services/sm.h"
 #include "switch/services/smm.h"
