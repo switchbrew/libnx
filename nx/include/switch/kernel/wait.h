@@ -58,7 +58,7 @@ Result waitNHandle(s32* idx_out, Handle* handles, size_t num_handles, u64 timeou
  * @brief Waits for an arbitrary number of waiters. This is a macro that uses var-args.
  * @param[out] idx_out The index of the signalled waiter.
  * @param[in] timeout Timeout (in nanoseconds).
- * @note The number of waiters must be less than 64. This is a Horizon kernel limitation.
+ * @note The number of objects must not be greater than \ref MAX_WAIT_OBJECTS. This is a Horizon kernel limitation.
  */
 #define waitMulti(idx_out, timeout, ...) \
     waitN((idx_out), (Waiter[]) { __VA_ARGS__ }, sizeof((Waiter[]) { __VA_ARGS__ }) / sizeof(Waiter), (timeout))
@@ -67,7 +67,7 @@ Result waitNHandle(s32* idx_out, Handle* handles, size_t num_handles, u64 timeou
  * @brief Waits for an arbitrary number of handles. This is a macro that uses var-args.
  * @param[out] idx_out The index of the signalled handle.
  * @param[in] timeout Timeout (in nanoseconds).
- * @note The number of handles must be less than 64. This is a Horizon kernel limitation.
+ * @note The number of objects must not be greater than \ref MAX_WAIT_OBJECTS. This is a Horizon kernel limitation.
  */
 #define waitMultiHandle(idx_out, timeout, ...) \
     waitNHandle((idx_out), (Handle[]) { __VA_ARGS__ }, sizeof((Handle[]) { __VA_ARGS__ }) / sizeof(Handle), (timeout))
