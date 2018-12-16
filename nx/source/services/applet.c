@@ -699,6 +699,46 @@ static Result _appletCmdInTmem(Service* srv, Service* srv_out, u64 cmd_id, Trans
     return _appletCmdInHandle64(srv, srv_out, cmd_id, tmem->handle, tmem->size);
 }
 
+static Result _appletCmdInSession(Service* srv, Service* srv_in, u64 cmd_id) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    serviceSendObject(srv_in, &c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(srv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = cmd_id;
+
+    Result rc = serviceIpcDispatch(srv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(srv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+static Result _appletCmdInStorage(Service* srv, AppletStorage* s, u64 cmd_id) {
+    Result rc = _appletCmdInSession(srv, &s->s, cmd_id);
+    appletStorageClose(s);
+    return rc;
+}
+
 // IWindowController
 
 static Result _appletGetAppletResourceUserId(u64 *out) {
@@ -1120,6 +1160,10 @@ static Result _appletGetCurrentFocusState(u8 *out) {
     }
 
     return rc;
+}
+
+Result appletPushToGeneralChannel(AppletStorage *s) {
+    return _appletCmdInStorage(&g_appletICommonStateGetter, s, 20);
 }
 
 // ISelfController

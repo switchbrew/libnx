@@ -134,6 +134,14 @@ Result appletSetScreenShotPermission(s32 val);
 Result appletSetScreenShotImageOrientation(s32 val);
 
 /**
+ * @brief Pushes a storage to the general channel. Used for sending requests to qlaunch.
+ * @note  This is not usable under an Application, however it is usable under a LibraryApplet.
+ * @note  This uses \ref appletStorageClose automatically.
+ * @param s Storage object.
+ */
+Result appletPushToGeneralChannel(AppletStorage *s);
+
+/**
  * @brief Creates a storage.
  * @param s Storage object.
  * @param size Size of storage.
@@ -164,6 +172,7 @@ Result appletCreateHandleStorage(AppletStorage *s, s64 inval, Handle handle);
 Result appletCreateHandleStorageTmem(AppletStorage *s, s64 size);
 
 /// Closes the storage object. TransferMemory closing is seperate, see \ref appletStorageCloseTmem.
+/// Other applet functions which push an input storage will automatically call this.
 void appletStorageClose(AppletStorage *s);
 
 /// Closes the TransferMemory in the storage object. For TransferMemory storage created by the current process, this must be called after the LibraryApplet finishes using it (if sent to one).
