@@ -87,6 +87,7 @@ Result appletCreateManagedDisplayLayer(u64 *out);
  * @param s Output storage.
  * @param kind See \ref AppletLaunchParameterKind.
  * @note Can only be used in Applications.
+ * @note See also acc.h \ref accountGetPreselectedUser (wrapper for appletPopLaunchParameter etc).
  */
 Result appletPopLaunchParameter(AppletStorage *s, AppletLaunchParameterKind kind);
 

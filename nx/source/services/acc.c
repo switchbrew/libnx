@@ -4,6 +4,7 @@
 #include "arm/atomics.h"
 #include "services/acc.h"
 #include "services/sm.h"
+#include "services/applet.h"
 
 static Service g_accSrv;
 static u64 g_refCnt;
@@ -323,5 +324,40 @@ Result accountProfileLoadImage(AccountProfile* profile, void* buf, size_t len, s
 
 void accountProfileClose(AccountProfile* profile) {
     serviceClose(&profile->s);
+}
+
+Result accountGetPreselectedUser(u128 *userID) {
+    Result rc=0;
+    AppletStorage storage;
+    s64 tmpsize=0;
+
+    struct {
+        u32  magicnum;//These two fields must match fixed values.
+        u8   unk_x4;
+        u8   pad[3];
+        u128 userID;
+        u8   unk_x18[0x70];//unused
+    } PACKED storagedata;
+
+    memset(&storagedata, 0, sizeof(storagedata));
+
+    rc = appletPopLaunchParameter(&storage, AppletLaunchParameterKind_PreselectedUser);
+
+    if (R_SUCCEEDED(rc)) {
+        rc = appletStorageGetSize(&storage, &tmpsize);
+        if (R_SUCCEEDED(rc) && tmpsize < sizeof(storagedata))
+            rc = MAKERESULT(Module_Libnx, LibnxError_BadInput);
+
+        if (R_SUCCEEDED(rc)) rc = appletStorageRead(&storage, 0, &storagedata, sizeof(storagedata));
+
+        appletStorageClose(&storage);
+
+        if (R_SUCCEEDED(rc) && (storagedata.magicnum!=0xc79497ca || storagedata.unk_x4!=1))
+            rc = MAKERESULT(Module_Libnx, LibnxError_BadInput);
+
+        if (R_SUCCEEDED(rc) && userID) *userID = storagedata.userID;
+    }
+
+    return rc;
 }
 

@@ -63,3 +63,7 @@ Result accountProfileGetImageSize(AccountProfile* profile, size_t* image_size);
 Result accountProfileLoadImage(AccountProfile* profile, void* buf, size_t len, size_t* image_size);
 
 void accountProfileClose(AccountProfile* profile);
+
+/// Gets the userID which was selected by the profile-selector applet (if any), prior to launching the currently running Application title. This can only be used once under the current process, under an Application title.
+Result accountGetPreselectedUser(u128 *userID);
+
