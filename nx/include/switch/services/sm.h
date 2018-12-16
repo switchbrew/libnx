@@ -129,6 +129,17 @@ static inline void serviceCreateSubservice(Service* s, Service* parent, IpcParse
 }
 
 /**
+ * @brief Sends a service object with the specified cmd. This only supports domains.
+ * @param[in] s Service object to send.
+ * @param[in] cmd IPC command structure.
+ */
+static inline void serviceSendObject(Service* s, IpcCommand* cmd) {
+    if (serviceIsDomain(s) || serviceIsDomainSubservice(s)) {
+        ipcSendObjectId(cmd, s->object_id);
+    }
+}
+
+/**
  * @brief Converts a regular service to a domain.
  * @param[in] s Service object.
  * @return Result code.

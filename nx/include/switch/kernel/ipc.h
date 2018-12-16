@@ -652,7 +652,7 @@ static inline void ipcSendObjectId(IpcCommand* cmd, u32 object_id) {
  * @return Pointer to the raw embedded data structure in the request, ready to be filled out.
  */
 static inline void* ipcPrepareHeaderForDomain(IpcCommand* cmd, size_t sizeof_raw, u32 object_id) {
-    void* raw = ipcPrepareHeader(cmd, sizeof_raw + sizeof(DomainMessageHeader));
+    void* raw = ipcPrepareHeader(cmd, sizeof_raw + sizeof(DomainMessageHeader) + cmd->NumObjectIds*sizeof(u32));
     DomainMessageHeader* hdr = (DomainMessageHeader*) raw;
     u32 *object_ids = (u32*)(((uintptr_t) raw) + sizeof(DomainMessageHeader) + sizeof_raw);
 
