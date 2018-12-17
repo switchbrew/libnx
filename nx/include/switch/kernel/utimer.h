@@ -1,5 +1,5 @@
 /**
- * @file uevent.h
+ * @file utimer.h
  * @brief User-mode timer synchronization primitive.
  * @author plutoo
  * @copyright libnx Authors
