@@ -8,6 +8,7 @@
 #include "../types.h"
 #include "../services/sm.h"
 #include "../kernel/tmem.h"
+#include "../kernel/event.h"
 
 typedef enum {
     AppletType_None = -2,
@@ -55,6 +56,37 @@ typedef enum {
     AppletLaunchParameterKind_Unknown         = 3, ///< Unknown if used by anything?
 } AppletLaunchParameterKind;
 
+typedef enum {
+    AppletId_overlayDisp = 0x02,    ///< 010000000000100C "overlayDisp"
+    AppletId_qlaunch = 0x03,        ///< 0100000000001000 "qlaunch" (SystemAppletMenu)
+    AppletId_starter = 0x04,        ///< 0100000000001012 "starter"
+    AppletId_auth = 0x0A,           ///< 0100000000001001 "auth"
+    AppletId_cabinet = 0x0B,        ///< 0100000000001002 "cabinet"
+    AppletId_controller = 0x0C,     ///< 0100000000001003 "controller"
+    AppletId_dataErase = 0x0D,      ///< 0100000000001004 "dataErase"
+    AppletId_error = 0x0E,          ///< 0100000000001005 "error"
+    AppletId_netConnect = 0x0F,     ///< 0100000000001006 "netConnect"
+    AppletId_playerSelect = 0x10,   ///< 0100000000001007 "playerSelect"
+    AppletId_swkbd = 0x11,          ///< 0100000000001008 "swkbd"
+    AppletId_miiEdit = 0x12,        ///< 0100000000001009 "miiEdit"
+    AppletId_web = 0x13,            ///< 010000000000100A "LibAppletWeb" WebApplet applet
+    AppletId_shop = 0x14,           ///< 010000000000100B "LibAppletShop" ShopN applet
+    AppletId_photoViewer = 0x15,    ///< 010000000000100D "photoViewer"
+    AppletId_set = 0x16,            ///< 010000000000100E "set" (This title is currently not present on retail devices.)
+    AppletId_offlineWeb = 0x17,     ///< 010000000000100F "LibAppletOff" Offline web-applet
+    AppletId_loginShare = 0x18,     ///< 0100000000001010 "LibAppletLns" Whitelisted web-applet
+    AppletId_wifiWebAuth = 0x19,    ///< 0100000000001011 "LibAppletAuth" WifiWebAuth applet
+    AppletId_myPage = 0x1A,         ///< 0100000000001013 "myPage"
+} AppletId;
+
+/// LibraryAppletMode
+typedef enum {
+    LibAppletMode_AllForeground = 0,
+    LibAppletMode_Background = 1,
+    LibAppletMode_Unknown2 = 2,
+    LibAppletMode_Unknown3 = 3,
+} LibAppletMode;
+
 /// applet hook function.
 typedef void (*AppletHookFn)(AppletHookType hook, void* param);
 
@@ -73,6 +105,14 @@ typedef struct {
     Service s;
     TransferMemory tmem;
 } AppletStorage;
+
+/// LibraryApplet state.
+typedef struct {
+    Service s;               ///< ILibraryAppletAccessor
+    Event StateChangedEvent; ///< Output from GetAppletStateChangedEvent, autoclear=false.
+    LibAppletMode mode;      ///< See ref \ref LibAppletMode.
+    u64 layer_handle;        ///< Output from GetIndirectLayerConsumerHandle on 2.0.0+.
+} AppletHolder;
 
 Result appletInitialize(void);
 void appletExit(void);
@@ -140,6 +180,25 @@ Result appletSetScreenShotImageOrientation(s32 val);
  * @param s Storage object.
  */
 Result appletPushToGeneralChannel(AppletStorage *s);
+
+/**
+ * @brief Creates a LibraryApplet.
+ * @param h AppletHolder object.
+ * @param id See \ref AppletId.
+ * @param mode See \ref LibAppletMode.
+ */
+Result appletCreateLibraryApplet(AppletHolder *h, AppletId id, LibAppletMode mode);
+
+/// Closes an AppletHolder object.
+void appletHolderClose(AppletHolder *h);
+
+/**
+ * @brief Gets the IndirectLayerConsumerHandle loaded during \ref appletCreateLibraryApplet, on 2.0.0+.
+ * @note  Only available when \ref LibAppletMode is \ref LibAppletMode_Unknown3.
+ * @param h AppletHolder object.
+ * @param out Output IndirectLayerConsumerHandle.
+ */
+Result appletHolderGetIndirectLayerConsumerHandle(AppletHolder *h, u64 *out);
 
 /**
  * @brief Creates a storage.

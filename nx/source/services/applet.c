@@ -1437,6 +1437,125 @@ static Result _appletExitProcessAndReturn(void) {
 
 // ILibraryAppletCreator
 
+static Result _appletCreateLibraryApplet(Service* srv_out, AppletId id, LibAppletMode mode) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 id;
+        u32 mode;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletILibraryAppletCreator, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 0;
+    raw->id = id;
+    raw->mode = mode;
+
+    Result rc = serviceIpcDispatch(&g_appletILibraryAppletCreator);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_appletILibraryAppletCreator, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && srv_out) {
+            serviceCreateSubservice(srv_out, &g_appletILibraryAppletCreator, &r, 0);
+        }
+    }
+
+    return rc;
+}
+
+static Result _appletGetIndirectLayerConsumerHandle(Service* srv, u64 *out) {
+    Result rc;
+    u64 AppletResourceUserId;
+
+    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
+    if (R_FAILED(rc)) return rc;
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 AppletResourceUserId;
+    } *raw;
+
+    ipcSendPid(&c);
+
+    raw = serviceIpcPrepareHeader(srv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 160;
+    raw->AppletResourceUserId = AppletResourceUserId;
+
+    rc = serviceIpcDispatch(srv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            u64 out;
+        } *resp;
+
+        serviceIpcParse(srv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && out) *out = resp->out;
+    }
+
+    return rc;
+}
+
+Result appletCreateLibraryApplet(AppletHolder *h, AppletId id, LibAppletMode mode) {
+    Result rc=0;
+
+    memset(h, 0, sizeof(AppletHolder));
+    h->mode = mode;
+
+    rc = _appletCreateLibraryApplet(&h->s, id, mode);
+
+    if (R_SUCCEEDED(rc)) rc = _appletGetEvent(&h->s, &h->StateChangedEvent, 0, false);//GetAppletStateChangedEvent
+
+    if (R_SUCCEEDED(rc) && kernelAbove200() && h->mode == LibAppletMode_Unknown3) rc = _appletGetIndirectLayerConsumerHandle(&h->s, &h->layer_handle);
+
+    return rc;
+}
+
+void appletHolderClose(AppletHolder *h) {
+    eventClose(&h->StateChangedEvent);
+    serviceClose(&h->s);
+    memset(h, 0, sizeof(AppletHolder));
+}
+
+Result appletHolderGetIndirectLayerConsumerHandle(AppletHolder *h, u64 *out) {
+    if (!serviceIsActive(&h->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (h->mode!=LibAppletMode_Unknown3)
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+    if (!kernelAbove200())
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    if (out) *out = h->layer_handle;
+
+    return 0;
+}
+
 Result appletCreateStorage(AppletStorage *s, s64 size) {
     memset(s, 0, sizeof(AppletStorage));
 
