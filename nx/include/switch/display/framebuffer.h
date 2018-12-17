@@ -8,6 +8,12 @@
 #include "../nvidia/map.h"
 #include "native_window.h"
 
+/// Converts red, green, blue, and alpha components to packed RGBA8 (i.e. \ref PIXEL_FORMAT_RGBA_8888).
+#define RGBA8(r,g,b,a)  (((r)&0xff)|(((g)&0xff)<<8)|(((b)&0xff)<<16)|(((a)&0xff)<<24))
+
+/// Same as \ref RGBA8 except with alpha=0xff.
+#define RGBA8_MAXALPHA(r,g,b) RGBA8(r,g,b,0xff)
+
 /// Framebuffer structure.
 typedef struct Framebuffer {
     NWindow *win;
