@@ -1,3 +1,4 @@
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #include <string.h>
 #include <malloc.h>
 #include "types.h"
