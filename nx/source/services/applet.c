@@ -227,7 +227,7 @@ Result appletInitialize(void)
             rc = _appletAcquireForegroundRights();
 
         if (R_SUCCEEDED(rc))
-            rc = appletSetFocusHandlingMode(AppletFocusHandlingMode_Suspend1);
+            rc = appletSetFocusHandlingMode(AppletFocusHandlingMode_SuspendHomeSleep);
     }
 
     if (R_SUCCEEDED(rc) && __nx_applet_auto_notifyrunning)
@@ -393,13 +393,13 @@ Result appletSetFocusHandlingMode(AppletFocusHandlingMode mode) {
 
     memset(invals, 0, sizeof(invals));
 
-    if ((mode == AppletFocusHandlingMode_Suspend1) || (mode == AppletFocusHandlingMode_Suspend3)) {
+    if ((mode == AppletFocusHandlingMode_SuspendHomeSleep) || (mode == AppletFocusHandlingMode_AlwaysSuspend)) {
         invals[0] = 0;
         invals[1] = 0;
         invals[2] = 1;
     }
 
-    if (mode != AppletFocusHandlingMode_Suspend3) {
+    if (mode != AppletFocusHandlingMode_AlwaysSuspend) {
         invals[3] = 0;
 
         if (mode == AppletFocusHandlingMode_NoSuspend) {
@@ -407,7 +407,7 @@ Result appletSetFocusHandlingMode(AppletFocusHandlingMode mode) {
             invals[1] = 1;
             invals[2] = 0;
         }
-        else if (mode == AppletFocusHandlingMode_Suspend2) {
+        else if (mode == AppletFocusHandlingMode_SuspendHomeSleepNotify) {
             invals[0] = 1;
             invals[1] = 0;
             invals[2] = 1;
