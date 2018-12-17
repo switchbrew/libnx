@@ -519,7 +519,7 @@ PrintConsole* consoleInit(PrintConsole* console) {
 		console->renderer = getDefaultConsoleRenderer();
 	}
 
-	if (console->renderer->init(console)) {
+	if (!console->consoleInitialised && console->renderer->init(console)) {
 		console->consoleInitialised = true;
 		consoleCls('2');
 		return console;

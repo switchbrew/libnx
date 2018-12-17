@@ -3,7 +3,8 @@
 #include <sys/iosupport.h>
 #include "result.h"
 #include "runtime/devices/console.h"
-#include "display/gfx.h"
+#include "display/native_window.h"
+#include "display/framebuffer.h"
 
 //set up the palette for color printing
 static const u32 colorTable[] = {
@@ -38,8 +39,10 @@ static const u32 colorTable[] = {
 struct ConsoleSwRenderer
 {
     ConsoleRenderer base;
+    Framebuffer fb;          ///< Framebuffer object
     u32 *frameBuffer;        ///< Framebuffer address
-    u32 *frameBuffer2;       ///< Framebuffer address
+    u32 frameBufferStride;   ///< Framebuffer stride (in pixels)
+    bool initialized;
 };
 
 static struct ConsoleSwRenderer* ConsoleSwRenderer(PrintConsole* con)
@@ -56,34 +59,54 @@ static bool ConsoleSwRenderer_init(PrintConsole* con)
         return false;
     }
 
-    if (R_FAILED(gfxInitDefault())) {
-        // Graphics failed to initialize
+    if (sw->initialized) {
+        // We're already initialized
+        return true;
+    }
+
+    NWindow* win = nwindowGetDefault();
+    u32 width = con->font.tileWidth * con->consoleWidth;
+    u32 height = con->font.tileHeight * con->consoleHeight;
+
+    if (R_FAILED(nwindowSetDimensions(win, width, height))) {
+        // Failed to set dimensions
         return false;
     }
 
-    u32 width, height;
-    gfxGetFramebufferResolution(&width, &height);
-    if (con->consoleWidth > (width/16) || con->consoleHeight > (height/16)) {
-        // Unsupported console size
+    if (R_FAILED(framebufferCreate(&sw->fb, win, width, height, PIXEL_FORMAT_RGBA_8888, 2))) {
+        // Failed to create framebuffer
         return false;
     }
 
-    gfxSetMode(GfxMode_TiledDouble);
-    sw->frameBuffer  = (u32*)gfxGetFramebuffer(NULL, NULL);
-    gfxSwapBuffers();
-    sw->frameBuffer2 = (u32*)gfxGetFramebuffer(NULL, NULL);
+    if (R_FAILED(framebufferMakeLinear(&sw->fb))) {
+        // Failed to make framebuffer linear
+        framebufferClose(&sw->fb);
+        return false;
+    }
+
+    sw->frameBuffer = NULL;
+    sw->frameBufferStride = 0;
+    sw->initialized = true;
 
     return true;
 }
 
-static void ConsoleSwRenderer_deinit(PrintConsole* con)
+static u32* _getFrameBuffer(struct ConsoleSwRenderer* sw, u32* out_stride)
 {
-    gfxExit();
+    if (!sw->frameBuffer) {
+        sw->frameBuffer = (u32*)framebufferBegin(&sw->fb, &sw->frameBufferStride);
+        sw->frameBufferStride /= sizeof(u32);
+    }
+    if (out_stride)
+        *out_stride = sw->frameBufferStride;
+    return sw->frameBuffer;
 }
 
 static void ConsoleSwRenderer_drawChar(PrintConsole* con, int x, int y, int c)
 {
     struct ConsoleSwRenderer* sw = ConsoleSwRenderer(con);
+    u32 stride;
+    u32* frameBuffer = _getFrameBuffer(sw, &stride);
     const u16 *fontdata = (const u16*)con->font.gfx + (16 * c);
 
     int writingColor = con->fg;
@@ -124,16 +147,12 @@ static void ConsoleSwRenderer_drawChar(PrintConsole* con, int x, int y, int c)
 
     for (i=0;i<16;i++) {
         for (j=0;j<8;j++) {
-            uint32_t screenOffset = gfxGetFramebufferDisplayOffset(x + i, y + j);
-            screen = &sw->frameBuffer[screenOffset];
-            if (bvaltop >> (16*j) & mask) { *screen = fg; }else{ *screen = bg; }
-            screen = &sw->frameBuffer2[screenOffset];
+            uint32_t screenOffset = (x + i) + stride*(y + j);
+            screen = &frameBuffer[screenOffset];
             if (bvaltop >> (16*j) & mask) { *screen = fg; }else{ *screen = bg; }
 
-            screenOffset = gfxGetFramebufferDisplayOffset(x + i, y + j + 8);
-            screen = &sw->frameBuffer[screenOffset];
-            if (bvalbtm >> (16*j) & mask) { *screen = fg; }else{ *screen = bg; }
-            screen = &sw->frameBuffer2[screenOffset];
+            screenOffset = (x + i) + stride*(y + j + 8);
+            screen = &frameBuffer[screenOffset];
             if (bvalbtm >> (16*j) & mask) { *screen = fg; }else{ *screen = bg; }
         }
         mask >>= 1;
@@ -143,6 +162,8 @@ static void ConsoleSwRenderer_drawChar(PrintConsole* con, int x, int y, int c)
 static void ConsoleSwRenderer_scrollWindow(PrintConsole* con)
 {
     struct ConsoleSwRenderer* sw = ConsoleSwRenderer(con);
+    u32 stride;
+    u32* frameBuffer = _getFrameBuffer(sw, &stride);
     int i,j;
     u32 x, y;
 
@@ -153,11 +174,8 @@ static void ConsoleSwRenderer_scrollWindow(PrintConsole* con)
         u32 *from;
         u32 *to;
         for (j=0;j<(con->windowHeight-1)*16;j++) {
-            to = &sw->frameBuffer[gfxGetFramebufferDisplayOffset(x + i, y + j)];
-            from = &sw->frameBuffer[gfxGetFramebufferDisplayOffset(x + i, y + 16 + j)];
-            *to = *from;
-            to = &sw->frameBuffer2[gfxGetFramebufferDisplayOffset(x + i, y + j)];
-            from = &sw->frameBuffer2[gfxGetFramebufferDisplayOffset(x + i, y + 16 + j)];
+            to = &frameBuffer[(x + i) + stride*(y + j)];
+            from = &frameBuffer[(x + i) + stride*(y + 16 + j)];
             *to = *from;
         }
     }
@@ -165,8 +183,26 @@ static void ConsoleSwRenderer_scrollWindow(PrintConsole* con)
 
 static void ConsoleSwRenderer_flushAndSwap(PrintConsole* con)
 {
-    gfxFlushBuffers();
-    gfxSwapBuffers();
+    struct ConsoleSwRenderer* sw = ConsoleSwRenderer(con);
+    _getFrameBuffer(sw, NULL); // Make sure we dequeued
+
+    framebufferEnd(&sw->fb);
+    sw->frameBuffer = NULL;
+    sw->frameBufferStride = 0;
+}
+
+
+static void ConsoleSwRenderer_deinit(PrintConsole* con)
+{
+    struct ConsoleSwRenderer* sw = ConsoleSwRenderer(con);
+
+    if (sw->initialized) {
+        if (sw->frameBuffer)
+            ConsoleSwRenderer_flushAndSwap(con);
+
+        framebufferClose(&sw->fb);
+        sw->initialized = false;
+    }
 }
 
 static struct ConsoleSwRenderer s_consoleSwRenderer =
@@ -177,9 +213,7 @@ static struct ConsoleSwRenderer s_consoleSwRenderer =
         ConsoleSwRenderer_drawChar,
         ConsoleSwRenderer_scrollWindow,
         ConsoleSwRenderer_flushAndSwap,
-    }, //base
-    NULL, //frameBuffer
-    NULL, //frameBuffer2
+    }
 };
 
 __attribute__((weak)) ConsoleRenderer* getDefaultConsoleRenderer(void)
