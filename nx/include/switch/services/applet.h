@@ -35,18 +35,18 @@ typedef enum {
 } AppletHookType;
 
 typedef enum {
-    AppletFocusState_Focused = 1,               ///< Applet is focused.
-    AppletFocusState_NotFocusedUnknown = 2,     ///< Out of focus - unknown reason (LibraryApplet open?).
-    AppletFocusState_NotFocusedHomeSleep = 3    ///< Out of focus - HOME menu is open / console is sleeping.
+    AppletFocusState_Focused = 1,                   ///< Applet is focused.
+    AppletFocusState_NotFocusedLibraryApplet = 2,   ///< Out of focus - LibraryApplet open.
+    AppletFocusState_NotFocusedHomeSleep = 3        ///< Out of focus - HOME menu open / console is sleeping.
 } AppletFocusState;
 
 typedef enum {
-  AppletFocusHandlingMode_Suspend1 = 0, ///< Suspend when out of focus.
-  AppletFocusHandlingMode_NoSuspend,    ///< Don't suspend when out of focus.
-  AppletFocusHandlingMode_Suspend2,     ///< Suspend when out of focus (unknown variant 1).
-  AppletFocusHandlingMode_Suspend3,     ///< Suspend when out of focus (unknown variant 2).
+  AppletFocusHandlingMode_SuspendHomeSleep = 0,       ///< Suspend only when HOME menu is open / console is sleeping (default).
+  AppletFocusHandlingMode_NoSuspend,                  ///< Don't suspend when out of focus.
+  AppletFocusHandlingMode_SuspendHomeSleepNotify,     ///< Suspend only when HOME menu is open / console is sleeping but still receive OnFocusState hook.
+  AppletFocusHandlingMode_AlwaysSuspend,              ///< Always suspend when out of focus, regardless of the reason.
 
-  AppletFocusHandlingMode_Max,          //< Number of focus handling modes
+  AppletFocusHandlingMode_Max,                        ///< Number of focus handling modes.
 } AppletFocusHandlingMode;
 
 typedef enum {
