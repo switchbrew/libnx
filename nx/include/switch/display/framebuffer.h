@@ -8,11 +8,38 @@
 #include "../nvidia/map.h"
 #include "native_window.h"
 
-/// Converts red, green, blue, and alpha components to packed RGBA8 (i.e. \ref PIXEL_FORMAT_RGBA_8888).
-#define RGBA8(r,g,b,a)  (((r)&0xff)|(((g)&0xff)<<8)|(((b)&0xff)<<16)|(((a)&0xff)<<24))
+/// Converts red/green/blue/alpha components to packed RGBA8 (i.e. \ref PIXEL_FORMAT_RGBA_8888).
+#define RGBA8(r,g,b,a) (((r)&0xff)|(((g)&0xff)<<8)|(((b)&0xff)<<16)|(((a)&0xff)<<24))
 
 /// Same as \ref RGBA8 except with alpha=0xff.
-#define RGBA8_MAXALPHA(r,g,b) RGBA8(r,g,b,0xff)
+#define RGBA8_MAXALPHA(r,g,b) RGBA8((r),(g),(b),0xff)
+
+/// Converts red/green/blue to packed RGBX8 (i.e. \ref PIXEL_FORMAT_RGBX_8888).
+#define RGBX8(r,g,b) RGBA8((r),(g),(b),0)
+
+/// Converts red/green/blue components to packed RGB565 (i.e. \ref PIXEL_FORMAT_RGB_565)
+#define RGB565(r,g,b) (((b)&0x1f)|(((g)&0x3f)<<5)|(((r)&0x1f)<<11))
+
+/// Same as \ref RGB565 but accepting 8-bit components as input instead.
+#define RGB565_FROM_RGB8(r,g,b) RGB565((r)>>3,(g)>>2,(b)>>3)
+
+/// Converts red/green/blue/alpha components to packed BGR8 (i.e. \ref PIXEL_FORMAT_BGRA_8888).
+#define BGRA8(r,g,b,a) RGBA8((b),(g),(r),(a))
+
+/// Same as \ref BGRA8 except with alpha=0xff.
+#define BGRA8_MAXALPHA(r,g,b) RGBA8((b),(g),(r),0xff)
+
+/// Converts red/green/blue/alpha components to packed RGBA4 (i.e. \ref PIXEL_FORMAT_RGBA_4444).
+#define RGBA4(r,g,b,a) (((r)&0xf)|(((g)&0xf)<<4)|(((b)&0xf)<<8)|(((a)&0xf)<<12))
+
+/// Same as \ref RGBA4 except with alpha=0xf.
+#define RGBA4_MAXALPHA(r,g,b) RGBA4((r),(g),(b),0xf)
+
+/// Same as \ref RGBA4 but accepting 8-bit components as input instead.
+#define RGBA4_FROM_RGBA8(r,g,b,a) RGBA4((r)>>4,(g)>>4,(b)>>4,(a)>>4)
+
+/// Same as \ref RGBA4_MAXALPHA except with alpha=0xff.
+#define RGBA4_FROM_RGBA8_MAXALPHA(r,g,b) RGBA4_MAXALPHA((r)>>4,(g)>>4,(b)>>4)
 
 /// Framebuffer structure.
 typedef struct Framebuffer {

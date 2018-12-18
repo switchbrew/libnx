@@ -127,14 +127,14 @@ __attribute__((deprecated))
 void gfxConfigureTransform(u32 transform);
 
 /// Flushes the framebuffer in the data cache. When \ref GfxMode is GfxMode_LinearDouble, this also transfers the linear-framebuffer to the actual framebuffer.
-/// \deprecated No replacement and no need to flush data cache manually when used \ref Framebuffer.
+/// \deprecated No replacement and no need to flush data cache manually when using \ref Framebuffer.
 __attribute__((deprecated))
 void gfxFlushBuffers(void);
 
 /// Use this to get the pixel-offset in the framebuffer. Returned value is in pixels, not bytes.
 /// This implements tegra blocklinear, with hard-coded constants etc.
 /// Do not use this when \ref GfxMode is GfxMode_LinearDouble.
-/// \deprecated No replacement. Use linear mode (\ref framebufferMakeLinear), or manually implement Tegra block linear format with 16Bx2 sector ordering.
+/// \deprecated No replacement. Use linear mode (\ref framebufferMakeLinear), or manually implement Tegra block linear layout with 16Bx2 sector ordering.
 __attribute__((deprecated))
 static inline u32 gfxGetFramebufferDisplayOffset(u32 x, u32 y) {
     u32 tmp_pos;
