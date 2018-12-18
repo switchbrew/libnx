@@ -55,6 +55,9 @@ static AppletHookCookie g_appletFirstHook;
 static TransferMemory g_appletRecordingTmem;
 static u32 g_appletRecordingInitialized;
 
+static Event g_appletLibraryAppletLaunchableEvent;
+static bool g_appletLibraryAppletLaunchableEventInitialized;
+
 static Result _appletGetHandle(Service* srv, Handle* handle_out, u64 cmd_id);
 static Result _appletGetEvent(Service* srv, Event* event_out, u64 cmd_id, bool autoclear);
 static Result _appletGetSession(Service* srv, Service* srv_out, u64 cmd_id);
@@ -99,6 +102,7 @@ Result appletInitialize(void)
     g_appletNotifiedRunning = 0;
     g_appletExitProcessFlag = 0;
     g_appletRecordingInitialized = 0;
+    g_appletLibraryAppletLaunchableEventInitialized = false;
 
     switch (__nx_applet_type) {
     case AppletType_Default:
@@ -310,6 +314,11 @@ void appletExit(void)
                         _appletExitProcessAndReturn();
                 }
             }
+        }
+
+        if (g_appletLibraryAppletLaunchableEventInitialized) {
+            g_appletLibraryAppletLaunchableEventInitialized = false;
+            eventClose(&g_appletLibraryAppletLaunchableEvent);
         }
 
         eventClose(&g_appletMessageEvent);
@@ -1180,6 +1189,19 @@ Result appletUnlockExit(void) {
     return _appletCmdNoIO(&g_appletISelfController, 2);
 }
 
+static Result _appletWaitLibraryAppletLaunchableEvent(void) {
+    Result rc=0;
+
+    if (!g_appletLibraryAppletLaunchableEventInitialized) {
+        rc = _appletGetEvent(&g_appletICommonStateGetter, &g_appletLibraryAppletLaunchableEvent, 9, false);
+        if (R_SUCCEEDED(rc)) g_appletLibraryAppletLaunchableEventInitialized = true;
+    }
+
+    if (R_SUCCEEDED(rc)) eventWait(&g_appletLibraryAppletLaunchableEvent, U64_MAX);
+
+    return rc;
+}
+
 Result appletSetScreenShotPermission(s32 val) {
     IpcCommand c;
     ipcInitialize(&c);
@@ -1522,19 +1544,30 @@ static Result _appletGetIndirectLayerConsumerHandle(Service* srv, u64 *out) {
     return rc;
 }
 
-Result appletCreateLibraryApplet(AppletHolder *h, AppletId id, LibAppletMode mode) {
+static Result _appletHolderCreate(AppletHolder *h, AppletId id, LibAppletMode mode, bool creating_self) {
     Result rc=0;
 
     memset(h, 0, sizeof(AppletHolder));
     h->mode = mode;
+    h->creating_self = creating_self;
 
-    rc = _appletCreateLibraryApplet(&h->s, id, mode);
+    if (!h->creating_self) rc = _appletWaitLibraryAppletLaunchableEvent();
+
+    if (R_SUCCEEDED(rc)) rc = _appletCreateLibraryApplet(&h->s, id, mode);
 
     if (R_SUCCEEDED(rc)) rc = _appletGetEvent(&h->s, &h->StateChangedEvent, 0, false);//GetAppletStateChangedEvent
 
     if (R_SUCCEEDED(rc) && kernelAbove200() && h->mode == LibAppletMode_Unknown3) rc = _appletGetIndirectLayerConsumerHandle(&h->s, &h->layer_handle);
 
     return rc;
+}
+
+Result appletCreateLibraryApplet(AppletHolder *h, AppletId id, LibAppletMode mode) {
+    return _appletHolderCreate(h, id, mode, false);
+}
+
+Result appletCreateLibraryAppletSelf(AppletHolder *h, AppletId id, LibAppletMode mode) {
+    return _appletHolderCreate(h, id, mode, true);
 }
 
 void appletHolderClose(AppletHolder *h) {
@@ -1554,6 +1587,19 @@ Result appletHolderGetIndirectLayerConsumerHandle(AppletHolder *h, u64 *out) {
     if (out) *out = h->layer_handle;
 
     return 0;
+}
+
+Result appletHolderStart(AppletHolder *h) {
+    Result rc=0;
+
+    if (!serviceIsActive(&h->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    if (!h->creating_self) rc = _appletWaitLibraryAppletLaunchableEvent();
+
+    if (R_SUCCEEDED(rc)) rc = _appletCmdNoIO(&h->s, 10);//Start
+
+    return rc;
 }
 
 Result appletCreateStorage(AppletStorage *s, s64 size) {

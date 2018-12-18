@@ -112,6 +112,7 @@ typedef struct {
     Event StateChangedEvent; ///< Output from GetAppletStateChangedEvent, autoclear=false.
     LibAppletMode mode;      ///< See ref \ref LibAppletMode.
     u64 layer_handle;        ///< Output from GetIndirectLayerConsumerHandle on 2.0.0+.
+    bool creating_self;      ///< When set, indicates that the LibraryApplet title is creating itself.
 } AppletHolder;
 
 Result appletInitialize(void);
@@ -189,6 +190,15 @@ Result appletPushToGeneralChannel(AppletStorage *s);
  */
 Result appletCreateLibraryApplet(AppletHolder *h, AppletId id, LibAppletMode mode);
 
+/**
+ * @brief Creates a LibraryApplet. This is for when a LibraryApplet title creates itself.
+ * @note  Identical to \ref appletCreateLibraryApplet except this sets the creating_self flag to true.
+ * @param h AppletHolder object.
+ * @param id See \ref AppletId.
+ * @param mode See \ref LibAppletMode.
+ */
+Result appletCreateLibraryAppletSelf(AppletHolder *h, AppletId id, LibAppletMode mode);
+
 /// Closes an AppletHolder object.
 void appletHolderClose(AppletHolder *h);
 
@@ -199,6 +209,12 @@ void appletHolderClose(AppletHolder *h);
  * @param out Output IndirectLayerConsumerHandle.
  */
 Result appletHolderGetIndirectLayerConsumerHandle(AppletHolder *h, u64 *out);
+
+/**
+ * @brief Starts the LibraryApplet.
+ * @param h AppletHolder object.
+ */
+Result appletHolderStart(AppletHolder *h);
 
 /**
  * @brief Creates a storage.
