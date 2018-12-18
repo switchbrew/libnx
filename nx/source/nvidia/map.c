@@ -92,11 +92,11 @@ Result nvMapLoadRemote(NvMap* m, u32 id)
     if (R_SUCCEEDED(rc)) {
         m->has_init = true;
         m->id = id;
-        rc = nvioctlMap_Param(g_nvmap_fd, m->handle, NvMapParam_Size, &m->size);
+        rc = nvioctlNvmap_Param(g_nvmap_fd, m->handle, NvMapParam_Size, &m->size);
     }
 
     if (R_SUCCEEDED(rc))
-        rc = nvioctlMap_Param(g_nvmap_fd, m->handle, NvMapParam_Kind, (u32*)&m->kind);
+        rc = nvioctlNvmap_Param(g_nvmap_fd, m->handle, NvMapParam_Kind, (u32*)&m->kind);
 
     if (R_FAILED(rc))
         nvMapClose(m);

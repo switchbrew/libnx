@@ -81,7 +81,7 @@ Result nvioctlNvmap_Free(u32 fd, u32 nvmap_handle) {
     return nvIoctl(fd, _NV_IOWR(0x01, 0x05, data), &data);
 }
 
-Result nvioctlMap_Param(u32 fd, u32 nvmap_handle, NvMapParam param, u32 *result) {
+Result nvioctlNvmap_Param(u32 fd, u32 nvmap_handle, NvMapParam param, u32 *result) {
     Result rc=0;
 
     struct {
