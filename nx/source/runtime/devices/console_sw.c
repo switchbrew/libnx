@@ -7,40 +7,40 @@
 #include "display/framebuffer.h"
 
 //set up the palette for color printing
-static const u32 colorTable[] = {
-    RGBA8_MAXALPHA(  0,  0,  0),	// black
-    RGBA8_MAXALPHA(128,  0,  0),	// red
-    RGBA8_MAXALPHA(  0,128,  0),	// green
-    RGBA8_MAXALPHA(128,128,  0),	// yellow
-    RGBA8_MAXALPHA(  0,  0,128),	// blue
-    RGBA8_MAXALPHA(128,  0,128),	// magenta
-    RGBA8_MAXALPHA(  0,128,128),	// cyan
-    RGBA8_MAXALPHA(192,192,192),	// white
+static const u16 colorTable[] = {
+    RGB565_FROM_RGB8(  0,  0,  0),	// black
+    RGB565_FROM_RGB8(128,  0,  0),	// red
+    RGB565_FROM_RGB8(  0,128,  0),	// green
+    RGB565_FROM_RGB8(128,128,  0),	// yellow
+    RGB565_FROM_RGB8(  0,  0,128),	// blue
+    RGB565_FROM_RGB8(128,  0,128),	// magenta
+    RGB565_FROM_RGB8(  0,128,128),	// cyan
+    RGB565_FROM_RGB8(192,192,192),	// white
 
-    RGBA8_MAXALPHA(128,128,128),	// bright black
-    RGBA8_MAXALPHA(255,  0,  0),	// bright red
-    RGBA8_MAXALPHA(  0,255,  0),	// bright green
-    RGBA8_MAXALPHA(255,255,  0),	// bright yellow
-    RGBA8_MAXALPHA(  0,  0,255),	// bright blue
-    RGBA8_MAXALPHA(255,  0,255),	// bright magenta
-    RGBA8_MAXALPHA(  0,255,255),	// bright cyan
-    RGBA8_MAXALPHA(255,255,255),	// bright white
+    RGB565_FROM_RGB8(128,128,128),	// bright black
+    RGB565_FROM_RGB8(255,  0,  0),	// bright red
+    RGB565_FROM_RGB8(  0,255,  0),	// bright green
+    RGB565_FROM_RGB8(255,255,  0),	// bright yellow
+    RGB565_FROM_RGB8(  0,  0,255),	// bright blue
+    RGB565_FROM_RGB8(255,  0,255),	// bright magenta
+    RGB565_FROM_RGB8(  0,255,255),	// bright cyan
+    RGB565_FROM_RGB8(255,255,255),	// bright white
 
-    RGBA8_MAXALPHA(  0,  0,  0),	// faint black
-    RGBA8_MAXALPHA( 64,  0,  0),	// faint red
-    RGBA8_MAXALPHA(  0, 64,  0),	// faint green
-    RGBA8_MAXALPHA( 64, 64,  0),	// faint yellow
-    RGBA8_MAXALPHA(  0,  0, 64),	// faint blue
-    RGBA8_MAXALPHA( 64,  0, 64),	// faint magenta
-    RGBA8_MAXALPHA(  0, 64, 64),	// faint cyan
-    RGBA8_MAXALPHA( 96, 96, 96),	// faint white
+    RGB565_FROM_RGB8(  0,  0,  0),	// faint black
+    RGB565_FROM_RGB8( 64,  0,  0),	// faint red
+    RGB565_FROM_RGB8(  0, 64,  0),	// faint green
+    RGB565_FROM_RGB8( 64, 64,  0),	// faint yellow
+    RGB565_FROM_RGB8(  0,  0, 64),	// faint blue
+    RGB565_FROM_RGB8( 64,  0, 64),	// faint magenta
+    RGB565_FROM_RGB8(  0, 64, 64),	// faint cyan
+    RGB565_FROM_RGB8( 96, 96, 96),	// faint white
 };
 
 struct ConsoleSwRenderer
 {
     ConsoleRenderer base;
     Framebuffer fb;          ///< Framebuffer object
-    u32 *frameBuffer;        ///< Framebuffer address
+    u16 *frameBuffer;        ///< Framebuffer address
     u32 frameBufferStride;   ///< Framebuffer stride (in pixels)
     bool initialized;
 };
@@ -73,7 +73,7 @@ static bool ConsoleSwRenderer_init(PrintConsole* con)
         return false;
     }
 
-    if (R_FAILED(framebufferCreate(&sw->fb, win, width, height, PIXEL_FORMAT_RGBA_8888, 2))) {
+    if (R_FAILED(framebufferCreate(&sw->fb, win, width, height, PIXEL_FORMAT_RGB_565, 2))) {
         // Failed to create framebuffer
         return false;
     }
@@ -91,11 +91,11 @@ static bool ConsoleSwRenderer_init(PrintConsole* con)
     return true;
 }
 
-static u32* _getFrameBuffer(struct ConsoleSwRenderer* sw, u32* out_stride)
+static u16* _getFrameBuffer(struct ConsoleSwRenderer* sw, u32* out_stride)
 {
     if (!sw->frameBuffer) {
-        sw->frameBuffer = (u32*)framebufferBegin(&sw->fb, &sw->frameBufferStride);
-        sw->frameBufferStride /= sizeof(u32);
+        sw->frameBuffer = (u16*)framebufferBegin(&sw->fb, &sw->frameBufferStride);
+        sw->frameBufferStride /= sizeof(u16);
     }
     if (out_stride)
         *out_stride = sw->frameBufferStride;
@@ -106,7 +106,7 @@ static void ConsoleSwRenderer_drawChar(PrintConsole* con, int x, int y, int c)
 {
     struct ConsoleSwRenderer* sw = ConsoleSwRenderer(con);
     u32 stride;
-    u32* frameBuffer = _getFrameBuffer(sw, &stride);
+    u16* frameBuffer = _getFrameBuffer(sw, &stride);
     const u16 *fontdata = (const u16*)con->font.gfx + (16 * c);
 
     int writingColor = con->fg;
@@ -124,8 +124,8 @@ static void ConsoleSwRenderer_drawChar(PrintConsole* con, int x, int y, int c)
         screenColor = tmp;
     }
 
-    u32 bg = colorTable[screenColor];
-    u32 fg = colorTable[writingColor];
+    u16 bg = colorTable[screenColor];
+    u16 fg = colorTable[writingColor];
 
     u128 *tmp = (u128*)fontdata;
 
@@ -143,7 +143,7 @@ static void ConsoleSwRenderer_drawChar(PrintConsole* con, int x, int y, int c)
     x *= 16;
     y *= 16;
 
-    u32 *screen;
+    u16 *screen;
 
     for (i=0;i<16;i++) {
         for (j=0;j<8;j++) {
@@ -163,19 +163,19 @@ static void ConsoleSwRenderer_scrollWindow(PrintConsole* con)
 {
     struct ConsoleSwRenderer* sw = ConsoleSwRenderer(con);
     u32 stride;
-    u32* frameBuffer = _getFrameBuffer(sw, &stride);
+    u16* frameBuffer = _getFrameBuffer(sw, &stride);
     int i,j;
     u32 x, y;
 
     x = con->windowX * 16;
     y = con->windowY * 16;
 
-    for (i=0; i<con->windowWidth*16; i++) {
-        u32 *from;
-        u32 *to;
+    for (i=0; i<con->windowWidth*16; i+=sizeof(u128)/sizeof(u16)) {
+        u128 *from;
+        u128 *to;
         for (j=0;j<(con->windowHeight-1)*16;j++) {
-            to = &frameBuffer[(x + i) + stride*(y + j)];
-            from = &frameBuffer[(x + i) + stride*(y + 16 + j)];
+            to = (u128*)&frameBuffer[(x + i) + stride*(y + j)];
+            from = (u128*)&frameBuffer[(x + i) + stride*(y + 16 + j)];
             *to = *from;
         }
     }
