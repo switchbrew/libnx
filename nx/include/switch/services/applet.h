@@ -246,6 +246,13 @@ LibAppletExitReason appletHolderGetExitReason(AppletHolder *h);
 Result appletHolderPushInData(AppletHolder *h, AppletStorage *s);
 
 /**
+ * @brief Pops a storage from LibraryApplet output.
+ * @param h AppletHolder object.
+ * @param s Storage object.
+ */
+Result appletHolderPopOutData(AppletHolder *h, AppletStorage *s);
+
+/**
  * @brief Pushes a storage for LibraryApplet Extra storage input.
  * @note  This uses \ref appletStorageClose automatically.
  * @param h AppletHolder object.
@@ -260,6 +267,13 @@ Result appletHolderPushExtraStorage(AppletHolder *h, AppletStorage *s);
  * @param s Storage object.
  */
 Result appletHolderPushInteractiveInData(AppletHolder *h, AppletStorage *s);
+
+/**
+ * @brief Pops a storage from LibraryApplet Interactive output.
+ * @param h AppletHolder object.
+ * @param s Storage object.
+ */
+Result appletHolderPopInteractiveOutData(AppletHolder *h, AppletStorage *s);
 
 /**
  * @brief Creates a storage.

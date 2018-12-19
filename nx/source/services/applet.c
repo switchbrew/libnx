@@ -754,6 +754,11 @@ static Result _appletCmdInStorage(Service* srv, AppletStorage* s, u64 cmd_id) {
     return rc;
 }
 
+static Result _appletCmdNoInOutStorage(Service* srv, AppletStorage* s, u64 cmd_id) {
+    memset(s, 0, sizeof(AppletStorage));
+    return _appletGetSession(srv, &s->s, cmd_id);
+}
+
 // IWindowController
 
 static Result _appletGetAppletResourceUserId(u64 *out) {
@@ -1637,12 +1642,20 @@ Result appletHolderPushInData(AppletHolder *h, AppletStorage *s) {
     return _appletCmdInStorage(&h->s, s, 100);
 }
 
+Result appletHolderPopOutData(AppletHolder *h, AppletStorage *s) {
+    return _appletCmdNoInOutStorage(&h->s, s, 101);
+}
+
 Result appletHolderPushExtraStorage(AppletHolder *h, AppletStorage *s) {
     return _appletCmdInStorage(&h->s, s, 102);
 }
 
 Result appletHolderPushInteractiveInData(AppletHolder *h, AppletStorage *s) {
     return _appletCmdInStorage(&h->s, s, 103);
+}
+
+Result appletHolderPopInteractiveOutData(AppletHolder *h, AppletStorage *s) {
+    return _appletCmdNoInOutStorage(&h->s, s, 104);
 }
 
 Result appletCreateStorage(AppletStorage *s, s64 size) {
