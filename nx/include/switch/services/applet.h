@@ -87,6 +87,14 @@ typedef enum {
     LibAppletMode_Unknown3 = 3,
 } LibAppletMode;
 
+/// LibraryAppletExitReason
+typedef enum {
+    LibAppletExitReason_Normal = 0,
+    LibAppletExitReason_Canceled = 1,
+    LibAppletExitReason_Abnormal = 2,
+    LibAppletExitReason_Unexpected = 10,
+} LibAppletExitReason;
+
 /// applet hook function.
 typedef void (*AppletHookFn)(AppletHookType hook, void* param);
 
@@ -108,11 +116,12 @@ typedef struct {
 
 /// LibraryApplet state.
 typedef struct {
-    Service s;               ///< ILibraryAppletAccessor
-    Event StateChangedEvent; ///< Output from GetAppletStateChangedEvent, autoclear=false.
-    LibAppletMode mode;      ///< See ref \ref LibAppletMode.
-    u64 layer_handle;        ///< Output from GetIndirectLayerConsumerHandle on 2.0.0+.
-    bool creating_self;      ///< When set, indicates that the LibraryApplet title is creating itself.
+    Service s;                       ///< ILibraryAppletAccessor
+    Event StateChangedEvent;         ///< Output from GetAppletStateChangedEvent, autoclear=false.
+    LibAppletMode mode;              ///< See ref \ref LibAppletMode.
+    u64 layer_handle;                ///< Output from GetIndirectLayerConsumerHandle on 2.0.0+.
+    bool creating_self;              ///< When set, indicates that the LibraryApplet title is creating itself.
+    LibAppletExitReason exitreason;  ///< Set by \ref appletHolderJoin using the output from cmd GetResult, see \ref LibAppletExitReason.
 } AppletHolder;
 
 Result appletInitialize(void);
@@ -215,6 +224,18 @@ Result appletHolderGetIndirectLayerConsumerHandle(AppletHolder *h, u64 *out);
  * @param h AppletHolder object.
  */
 Result appletHolderStart(AppletHolder *h);
+
+/**
+ * @brief Waits for the LibraryApplet to exit.
+ * @param h AppletHolder object.
+ */
+void appletHolderJoin(AppletHolder *h);
+
+/**
+ * @brief Gets the \ref LibAppletExitReason set by \ref appletHolderJoin.
+ * @param h AppletHolder object.
+ */
+LibAppletExitReason appletHolderGetExitReason(AppletHolder *h);
 
 /**
  * @brief Creates a storage.

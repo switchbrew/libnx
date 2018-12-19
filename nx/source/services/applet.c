@@ -1602,6 +1602,31 @@ Result appletHolderStart(AppletHolder *h) {
     return rc;
 }
 
+void appletHolderJoin(AppletHolder *h) {
+    Result rc=0;
+    LibAppletExitReason res = LibAppletExitReason_Normal;
+    u32 desc=0;
+    eventWait(&h->StateChangedEvent, U64_MAX);
+    rc = _appletCmdNoIO(&h->s, 30);//GetResult
+
+    if (R_FAILED(rc)) {
+        res = LibAppletExitReason_Unexpected;
+        if (R_MODULE(rc) == 128) {
+            desc = R_DESCRIPTION(rc);
+            if (desc == 22) res = LibAppletExitReason_Canceled;
+            else {
+                if (desc >= 0x14 && desc < 0x32)res = LibAppletExitReason_Abnormal;
+            }
+        }
+    }
+
+    h->exitreason = res;
+}
+
+u32 appletHolderGetExitReason(AppletHolder *h) {
+    return h->exitreason;
+}
+
 Result appletCreateStorage(AppletStorage *s, s64 size) {
     memset(s, 0, sizeof(AppletStorage));
 
