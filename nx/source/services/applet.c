@@ -743,7 +743,13 @@ static Result _appletCmdInSession(Service* srv, Service* srv_in, u64 cmd_id) {
 }
 
 static Result _appletCmdInStorage(Service* srv, AppletStorage* s, u64 cmd_id) {
-    Result rc = _appletCmdInSession(srv, &s->s, cmd_id);
+    Result rc=0;
+
+    if (!serviceIsActive(&s->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    rc =_appletCmdInSession(srv, &s->s, cmd_id);
+
     appletStorageClose(s);
     return rc;
 }
@@ -1625,6 +1631,18 @@ void appletHolderJoin(AppletHolder *h) {
 
 u32 appletHolderGetExitReason(AppletHolder *h) {
     return h->exitreason;
+}
+
+Result appletHolderPushInData(AppletHolder *h, AppletStorage *s) {
+    return _appletCmdInStorage(&h->s, s, 100);
+}
+
+Result appletHolderPushExtraStorage(AppletHolder *h, AppletStorage *s) {
+    return _appletCmdInStorage(&h->s, s, 102);
+}
+
+Result appletHolderPushInteractiveInData(AppletHolder *h, AppletStorage *s) {
+    return _appletCmdInStorage(&h->s, s, 103);
 }
 
 Result appletCreateStorage(AppletStorage *s, s64 size) {

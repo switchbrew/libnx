@@ -238,6 +238,30 @@ void appletHolderJoin(AppletHolder *h);
 LibAppletExitReason appletHolderGetExitReason(AppletHolder *h);
 
 /**
+ * @brief Pushes a storage for LibraryApplet input.
+ * @note  This uses \ref appletStorageClose automatically.
+ * @param h AppletHolder object.
+ * @param s Storage object.
+ */
+Result appletHolderPushInData(AppletHolder *h, AppletStorage *s);
+
+/**
+ * @brief Pushes a storage for LibraryApplet Extra storage input.
+ * @note  This uses \ref appletStorageClose automatically.
+ * @param h AppletHolder object.
+ * @param s Storage object.
+ */
+Result appletHolderPushExtraStorage(AppletHolder *h, AppletStorage *s);
+
+/**
+ * @brief Pushes a storage for LibraryApplet Interactive input.
+ * @note  This uses \ref appletStorageClose automatically.
+ * @param h AppletHolder object.
+ * @param s Storage object.
+ */
+Result appletHolderPushInteractiveInData(AppletHolder *h, AppletStorage *s);
+
+/**
  * @brief Creates a storage.
  * @param s Storage object.
  * @param size Size of storage.
