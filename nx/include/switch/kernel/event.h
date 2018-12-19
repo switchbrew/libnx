@@ -23,6 +23,12 @@ Result eventCreate(Event* t, bool autoclear);
 void   eventLoadRemote(Event* t, Handle handle, bool autoclear);
 void   eventClose(Event* t);
 
+/// Returns whether the Event is initialized.
+static inline bool eventActive(Event* t)
+{
+    return t->revent != INVALID_HANDLE;
+}
+
 Result eventWait(Event* t, u64 timeout);
 Result eventFire(Event* t);
 Result eventClear(Event* t);
