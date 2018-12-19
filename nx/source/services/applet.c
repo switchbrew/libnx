@@ -79,7 +79,6 @@ static Result _appletSetOperationModeChangedNotification(u8 flag);
 static Result _appletSetPerformanceModeChangedNotification(u8 flag);
 
 static Result _appletSelfExit(void);
-//static Result _appletSetTerminateResult(Result res);
 
 static Result _appletExitProcessAndReturn(void);
 
@@ -307,7 +306,7 @@ void appletExit(void)
                 }
                 else {
                     if (_appletIsApplication()) {
-                        //_appletSetTerminateResult(0);
+                        //appletSetTerminateResult(0);
                         _appletSelfExit();
                     }
                     if (__nx_applet_type == AppletType_LibraryApplet)
@@ -826,6 +825,43 @@ Result appletGetDesiredLanguage(u64 *LanguageCode) {
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     return _appletCmdNoInOut64(&g_appletIFunctions, LanguageCode, 21);
+}
+
+Result appletSetTerminateResult(Result res) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    if (!serviceIsActive(&g_appletSrv) || !_appletIsApplication())
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        Result res;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletIFunctions, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 22;
+    raw->res = res;
+
+    Result rc = serviceIpcDispatch(&g_appletIFunctions);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_appletIFunctions, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
 }
 
 Result appletBeginBlockingHomeButton(s64 val) {
@@ -1423,40 +1459,6 @@ Result appletSetScreenShotImageOrientation(s32 val) {
 
     return rc;
 }
-
-/*static Result _appletSetTerminateResult(Result res) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        Result res;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_appletISelfController, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 22;
-    raw->res = res;
-
-    Result rc = serviceIpcDispatch(&g_appletISelfController);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_appletISelfController, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
-}*/
 
 Result appletCreateManagedDisplayLayer(u64 *out) {
     return _appletCmdNoInOut64(&g_appletISelfController, out, 40);

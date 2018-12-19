@@ -143,6 +143,9 @@ Result appletPopLaunchParameter(AppletStorage *s, AppletLaunchParameterKind kind
 
 Result appletGetDesiredLanguage(u64 *LanguageCode);
 
+/// Only available with AppletType_*Application.
+Result appletSetTerminateResult(Result res);
+
 /// Gets whether video recording is supported.
 /// See also \ref appletInitializeGamePlayRecording.
 Result appletIsGamePlayRecordingSupported(bool *flag);
