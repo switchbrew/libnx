@@ -116,12 +116,13 @@ typedef struct {
 
 /// LibraryApplet state.
 typedef struct {
-    Service s;                       ///< ILibraryAppletAccessor
-    Event StateChangedEvent;         ///< Output from GetAppletStateChangedEvent, autoclear=false.
-    LibAppletMode mode;              ///< See ref \ref LibAppletMode.
-    u64 layer_handle;                ///< Output from GetIndirectLayerConsumerHandle on 2.0.0+.
-    bool creating_self;              ///< When set, indicates that the LibraryApplet title is creating itself.
-    LibAppletExitReason exitreason;  ///< Set by \ref appletHolderJoin using the output from cmd GetResult, see \ref LibAppletExitReason.
+    Service s;                         ///< ILibraryAppletAccessor
+    Event StateChangedEvent;           ///< Output from GetAppletStateChangedEvent, autoclear=false.
+    Event PopInteractiveOutDataEvent;  ///< Output from GetPopInteractiveOutDataEvent, autoclear=false.
+    LibAppletMode mode;                ///< See ref \ref LibAppletMode.
+    u64 layer_handle;                  ///< Output from GetIndirectLayerConsumerHandle on 2.0.0+.
+    bool creating_self;                ///< When set, indicates that the LibraryApplet title is creating itself.
+    LibAppletExitReason exitreason;    ///< Set by \ref appletHolderJoin using the output from cmd GetResult, see \ref LibAppletExitReason.
 } AppletHolder;
 
 Result appletInitialize(void);
@@ -239,6 +240,13 @@ void appletHolderJoin(AppletHolder *h);
  * @param h AppletHolder object.
  */
 LibAppletExitReason appletHolderGetExitReason(AppletHolder *h);
+
+/**
+ * @brief Waits for the PopInteractiveOutDataEvent and StateChangedEvent.
+ * @return false for error / when StateChangedEvent was signaled, and true when PopInteractiveOutDataEvent was signaled.
+ * @param h AppletHolder object.
+ */
+bool appletHolderWaitInteractiveOut(AppletHolder *h);
 
 /**
  * @brief Pushes a storage for LibraryApplet input.

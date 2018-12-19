@@ -56,7 +56,6 @@ static TransferMemory g_appletRecordingTmem;
 static u32 g_appletRecordingInitialized;
 
 static Event g_appletLibraryAppletLaunchableEvent;
-static bool g_appletLibraryAppletLaunchableEventInitialized;
 
 static Result _appletGetHandle(Service* srv, Handle* handle_out, u64 cmd_id);
 static Result _appletGetEvent(Service* srv, Event* event_out, u64 cmd_id, bool autoclear);
@@ -101,7 +100,6 @@ Result appletInitialize(void)
     g_appletNotifiedRunning = 0;
     g_appletExitProcessFlag = 0;
     g_appletRecordingInitialized = 0;
-    g_appletLibraryAppletLaunchableEventInitialized = false;
 
     switch (__nx_applet_type) {
     case AppletType_Default:
@@ -315,10 +313,7 @@ void appletExit(void)
             }
         }
 
-        if (g_appletLibraryAppletLaunchableEventInitialized) {
-            g_appletLibraryAppletLaunchableEventInitialized = false;
-            eventClose(&g_appletLibraryAppletLaunchableEvent);
-        }
+        eventClose(&g_appletLibraryAppletLaunchableEvent);
 
         eventClose(&g_appletMessageEvent);
 
@@ -1239,12 +1234,10 @@ Result appletUnlockExit(void) {
 static Result _appletWaitLibraryAppletLaunchableEvent(void) {
     Result rc=0;
 
-    if (!g_appletLibraryAppletLaunchableEventInitialized) {
-        rc = _appletGetEvent(&g_appletICommonStateGetter, &g_appletLibraryAppletLaunchableEvent, 9, false);
-        if (R_SUCCEEDED(rc)) g_appletLibraryAppletLaunchableEventInitialized = true;
-    }
+    if (!eventActive(&g_appletLibraryAppletLaunchableEvent))
+        rc = _appletGetEvent(&g_appletISelfController, &g_appletLibraryAppletLaunchableEvent, 9, false);
 
-    if (R_SUCCEEDED(rc)) eventWait(&g_appletLibraryAppletLaunchableEvent, U64_MAX);
+    if (R_SUCCEEDED(rc)) rc = eventWait(&g_appletLibraryAppletLaunchableEvent, U64_MAX);
 
     return rc;
 }
@@ -1584,6 +1577,8 @@ Result appletCreateLibraryAppletSelf(AppletHolder *h, AppletId id, LibAppletMode
 }
 
 void appletHolderClose(AppletHolder *h) {
+    eventClose(&h->PopInteractiveOutDataEvent);
+
     eventClose(&h->StateChangedEvent);
     serviceClose(&h->s);
     memset(h, 0, sizeof(AppletHolder));
@@ -1619,6 +1614,7 @@ void appletHolderJoin(AppletHolder *h) {
     Result rc=0;
     LibAppletExitReason res = LibAppletExitReason_Normal;
     u32 desc=0;
+
     eventWait(&h->StateChangedEvent, U64_MAX);
     rc = _appletCmdNoIO(&h->s, 30);//GetResult
 
@@ -1638,6 +1634,29 @@ void appletHolderJoin(AppletHolder *h) {
 
 u32 appletHolderGetExitReason(AppletHolder *h) {
     return h->exitreason;
+}
+
+static Result _appletHolderGetPopInteractiveOutDataEvent(AppletHolder *h) {
+    Result rc=0;
+
+    if (eventActive(&h->PopInteractiveOutDataEvent)) return 0;
+
+    rc = _appletGetEvent(&h->s, &h->PopInteractiveOutDataEvent, 106, false);
+
+    return rc;
+}
+
+bool appletHolderWaitInteractiveOut(AppletHolder *h) {
+    Result rc=0;
+    s32 idx = 0;
+
+    rc = _appletHolderGetPopInteractiveOutDataEvent(h);
+    if (R_FAILED(rc)) return false;
+
+    rc = waitMulti(&idx, U64_MAX, waiterForEvent(&h->PopInteractiveOutDataEvent), waiterForEvent(&h->StateChangedEvent));
+    if (R_FAILED(rc)) return false;
+
+    return idx==0;
 }
 
 Result appletHolderPushInData(AppletHolder *h, AppletStorage *s) {
