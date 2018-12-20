@@ -37,6 +37,26 @@ Result tmemCreate(TransferMemory* t, size_t size, Permission perm)
     return rc;
 }
 
+Result tmemCreateFromMemory(TransferMemory* t, void* buf, size_t size, Permission perm)
+{
+    Result rc = 0;
+
+    if (buf == NULL || ((uintptr_t)buf & 0xFFF)) {
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+    }
+
+    t->handle = INVALID_HANDLE;
+    t->size = size;
+    t->perm = perm;
+    t->map_addr = NULL;
+    t->src_addr = NULL;
+
+    memset(buf, 0, size);
+    rc = svcCreateTransferMemory(&t->handle, buf, size, perm);
+
+    return rc;
+}
+
 void tmemLoadRemote(TransferMemory* t, Handle handle, size_t size, Permission perm)
 {
     t->handle = handle;
@@ -64,7 +84,7 @@ Result tmemMap(TransferMemory* t)
         }
     }
     else {
-        rc = LibnxError_AlreadyMapped;
+        rc = MAKERESULT(Module_Libnx, LibnxError_AlreadyMapped);
     }
 
     return rc;
