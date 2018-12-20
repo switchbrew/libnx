@@ -1737,12 +1737,13 @@ static Result _appletCreateTransferMemoryStorage(Service* srv_out, TransferMemor
     return rc;
 }
 
-Result appletCreateTransferMemoryStorage(AppletStorage *s, s64 size, bool writable) {
+Result appletCreateTransferMemoryStorage(AppletStorage *s, void* buffer, s64 size, bool writable) {
     Result rc=0;
 
     memset(s, 0, sizeof(AppletStorage));
 
-    rc = tmemCreate(&s->tmem, size, Perm_None);
+    if (buffer==NULL) rc = tmemCreate(&s->tmem, size, Perm_None);
+    else rc = tmemCreateFromMemory(&s->tmem, buffer, size, Perm_None);
     if (R_FAILED(rc)) return rc;
 
     rc = _appletCreateTransferMemoryStorage(&s->s, &s->tmem, writable);
@@ -1758,12 +1759,13 @@ Result appletCreateHandleStorage(AppletStorage *s, s64 inval, Handle handle) {
     return _appletCmdInHandle64(&g_appletILibraryAppletCreator, &s->s, 12, handle, inval);
 }
 
-Result appletCreateHandleStorageTmem(AppletStorage *s, s64 size) {
+Result appletCreateHandleStorageTmem(AppletStorage *s, void* buffer, s64 size) {
     Result rc=0;
 
     memset(s, 0, sizeof(AppletStorage));
 
-    rc = tmemCreate(&s->tmem, size, Perm_None);
+    if (buffer==NULL) rc = tmemCreate(&s->tmem, size, Perm_None);
+    else rc = tmemCreateFromMemory(&s->tmem, buffer, size, Perm_None);
     if (R_FAILED(rc)) return rc;
 
     rc = appletCreateHandleStorage(s, s->tmem.size, s->tmem.handle);

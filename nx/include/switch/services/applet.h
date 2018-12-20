@@ -309,10 +309,11 @@ Result appletCreateStorage(AppletStorage *s, s64 size);
 /**
  * @brief Creates a TransferMemory storage.
  * @param s Storage object.
+ * @param buffer TransferMemory buffer, will be automatically allocated if NULL.
  * @param size Size of storage.
  * @param writable Controls whether writing to the storage is allowed with \ref appletStorageWrite.
  */
-Result appletCreateTransferMemoryStorage(AppletStorage *s, s64 size, bool writable);
+Result appletCreateTransferMemoryStorage(AppletStorage *s, void* buffer, s64 size, bool writable);
 
 /**
  * @brief Creates a HandleStorage. Only available on 2.0.0+.
@@ -325,9 +326,10 @@ Result appletCreateHandleStorage(AppletStorage *s, s64 inval, Handle handle);
 /**
  * @brief Creates a HandleStorage using TransferMemory. Wrapper for \ref appletCreateHandleStorage.
  * @param s Storage object.
+ * @param buffer TransferMemory buffer, will be automatically allocated if NULL.
  * @param size Size of storage.
  */
-Result appletCreateHandleStorageTmem(AppletStorage *s, s64 size);
+Result appletCreateHandleStorageTmem(AppletStorage *s, void* buffer, s64 size);
 
 /// Closes the storage object. TransferMemory closing is seperate, see \ref appletStorageCloseTmem.
 /// Other applet functions which push an input storage will automatically call this.
