@@ -40,3 +40,29 @@ Result libappletArgsPush(LibAppletArgs* a, AppletHolder *h) {
     return appletHolderPushInData(h, &storage);
 }
 
+static Result _libappletQlaunchRequest(u8* buf, size_t size) {
+    Result rc=0;
+    AppletStorage storage;
+
+    rc = appletCreateStorage(&storage, size);
+    if (R_FAILED(rc)) return rc;
+
+    rc = appletStorageWrite(&storage, 0, buf, size);
+    if (R_FAILED(rc)) {
+        appletStorageClose(&storage);
+        return rc;
+    }
+
+    return appletPushToGeneralChannel(&storage);
+}
+
+Result libappletRequestHomeMenu(void) {
+    u8 storagedata[0x10] = {0x53, 0x41, 0x4d, 0x53, 0x01, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00};//RequestHomeMenu
+    return _libappletQlaunchRequest(storagedata, sizeof(storagedata));
+}
+
+Result libappletRequestJumpToSystemUpdate(void) {
+    u8 storagedata[0x10] = {0x53, 0x41, 0x4d, 0x53, 0x01, 0x00, 0x00, 0x00, 0x0b, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00};//RequestJumpToSystemUpdate
+    return _libappletQlaunchRequest(storagedata, sizeof(storagedata));
+}
+

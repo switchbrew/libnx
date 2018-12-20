@@ -41,3 +41,11 @@ void libappletArgsSetPlayStartupSound(LibAppletArgs* a, bool flag);
  */
 Result libappletArgsPush(LibAppletArgs* a, AppletHolder *h);
 
+/// Wrapper for \ref appletPushToGeneralChannel, see appletPushToGeneralChannel regarding the requirements for using this.
+/// Returns to the main Home Menu, equivalent to pressing the HOME button.
+Result libappletRequestHomeMenu(void);
+
+/// Wrapper for \ref appletPushToGeneralChannel, see appletPushToGeneralChannel regarding the requirements for using this.
+/// Equivalent to entering "System Update" under System Settings. When leaving this, it returns to the main Home Menu.
+Result libappletRequestJumpToSystemUpdate(void);
+
