@@ -19,41 +19,52 @@ void libappletArgsSetPlayStartupSound(LibAppletArgs* a, bool flag) {
     a->PlayStartupSound = flag!=0;
 }
 
-Result libappletArgsPush(LibAppletArgs* a, AppletHolder *h) {
+static Result _libappletCreateWriteStorage(AppletStorage* s, const void* buffer, size_t size) {
+    Result rc=0;
+
+    rc = appletCreateStorage(s, size);
+    if (R_FAILED(rc)) return rc;
+
+    rc = appletStorageWrite(s, 0, buffer, size);
+    if (R_FAILED(rc)) {
+        appletStorageClose(s);
+        return rc;
+    }
+
+    return rc;
+}
+
+static Result _libappletPushInData(AppletHolder *h, const void* buffer, size_t size) {
     Result rc=0;
     AppletStorage storage;
 
+    rc = _libappletCreateWriteStorage(&storage, buffer, size);
+    if (R_FAILED(rc)) return rc;
+
+    return appletHolderPushInData(h, &storage);
+}
+
+Result libappletArgsPush(LibAppletArgs* a, AppletHolder *h) {
     //Official sw stores the header in LibAppletArgs seperately (first 8-bytes), but here we're including it with the LibAppletCommonArguments struct.
     //Official sw uses appletStorageWrite twice, for writing the header then the rest of the struct.
 
     a->tick = armGetSystemTick();
 
-    rc = appletCreateStorage(&storage, sizeof(LibAppletArgs));
-    if (R_FAILED(rc)) return rc;
-
-    rc = appletStorageWrite(&storage, 0, a, sizeof(LibAppletArgs));
-    if (R_FAILED(rc)) {
-        appletStorageClose(&storage);
-        return rc;
-    }
-
-    return appletHolderPushInData(h, &storage);
+    return _libappletPushInData(h, a, sizeof(LibAppletArgs));
 }
 
 static Result _libappletQlaunchRequest(u8* buf, size_t size) {
     Result rc=0;
     AppletStorage storage;
 
-    rc = appletCreateStorage(&storage, size);
+    rc = _libappletCreateWriteStorage(&storage, buf, size);
     if (R_FAILED(rc)) return rc;
 
-    rc = appletStorageWrite(&storage, 0, buf, size);
-    if (R_FAILED(rc)) {
-        appletStorageClose(&storage);
-        return rc;
-    }
-
     return appletPushToGeneralChannel(&storage);
+}
+
+Result libappletPushInData(AppletHolder *h, const void* buffer, size_t size) {
+    return _libappletPushInData(h, buffer, size);
 }
 
 Result libappletRequestHomeMenu(void) {

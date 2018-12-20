@@ -41,6 +41,14 @@ void libappletArgsSetPlayStartupSound(LibAppletArgs* a, bool flag);
  */
 Result libappletArgsPush(LibAppletArgs* a, AppletHolder *h);
 
+/**
+ * @brief Creates a storage using the input buffer which is pushed to the AppletHolder via \ref appletHolderPushInData.
+ * @param h AppletHolder object.
+ * @param buffer Input data buffer.
+ * @param size Input data size.
+ */
+Result libappletPushInData(AppletHolder *h, const void* buffer, size_t size);
+
 /// Wrapper for \ref appletPushToGeneralChannel, see appletPushToGeneralChannel regarding the requirements for using this.
 /// Returns to the main Home Menu, equivalent to pressing the HOME button.
 Result libappletRequestHomeMenu(void);
