@@ -95,6 +95,13 @@ typedef enum {
     LibAppletExitReason_Unexpected = 10,
 } LibAppletExitReason;
 
+typedef enum {
+    AppletThemeColorType_Default = 0,
+    AppletThemeColorType_Unknown1 = 1,
+    AppletThemeColorType_Unknown2 = 2,
+    AppletThemeColorType_Unknown3 = 3,
+} AppletThemeColorType;
+
 /// applet hook function.
 typedef void (*AppletHookFn)(AppletHookType hook, void* param);
 
@@ -132,6 +139,12 @@ AppletType appletGetAppletType(void);
 
 void appletNotifyRunning(u8 *out);
 Result appletCreateManagedDisplayLayer(u64 *out);
+
+/// Sets the state field for \ref AppletThemeColorType.
+void appletSetThemeColorType(AppletThemeColorType theme);
+
+/// Gets the state field for \ref AppletThemeColorType. Used internally by \ref libappletArgsCreate.
+AppletThemeColorType appletGetThemeColorType(void);
 
 /**
  * @brief Pops a LaunchParameter AppletStorage, the storage will be removed from sysmodule state during this.

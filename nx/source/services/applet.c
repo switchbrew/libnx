@@ -57,6 +57,8 @@ static u32 g_appletRecordingInitialized;
 
 static Event g_appletLibraryAppletLaunchableEvent;
 
+static AppletThemeColorType g_appletThemeColorType = AppletThemeColorType_Default;
+
 static Result _appletGetHandle(Service* srv, Handle* handle_out, u64 cmd_id);
 static Result _appletGetEvent(Service* srv, Event* event_out, u64 cmd_id, bool autoclear);
 static Result _appletGetSession(Service* srv, Service* srv_out, u64 cmd_id);
@@ -385,6 +387,14 @@ void appletUnhook(AppletHookCookie* cookie)
             break;
         }
     }
+}
+
+void appletSetThemeColorType(AppletThemeColorType theme) {
+    g_appletThemeColorType = theme;
+}
+
+AppletThemeColorType appletGetThemeColorType(void) {
+    return g_appletThemeColorType;
 }
 
 Result appletSetFocusHandlingMode(AppletFocusHandlingMode mode) {

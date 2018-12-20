@@ -100,6 +100,8 @@ extern "C" {
 
 #include "switch/audio/driver.h"
 
+#include "switch/applets/libapplet.h"
+
 #include "switch/runtime/env.h"
 #include "switch/runtime/nxlink.h"
 
