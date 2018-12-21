@@ -869,6 +869,43 @@ Result appletSetTerminateResult(Result res) {
     return rc;
 }
 
+Result appletSetMediaPlaybackStateForApplication(bool state) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    if (!serviceIsActive(&g_appletSrv) || !_appletIsApplication())
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u8 state;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletIFunctions, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 60;
+    raw->state = state;
+
+    Result rc = serviceIpcDispatch(&g_appletIFunctions);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_appletIFunctions, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
 Result appletBeginBlockingHomeButton(s64 val) {
     IpcCommand c;
     ipcInitialize(&c);

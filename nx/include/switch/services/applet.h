@@ -160,6 +160,10 @@ Result appletGetDesiredLanguage(u64 *LanguageCode);
 /// Only available with AppletType_*Application.
 Result appletSetTerminateResult(Result res);
 
+/// Set media playback state.
+/// If state is set to true, screen dimming and auto sleep is disabled.
+Result appletSetMediaPlaybackStateForApplication(bool state);
+
 /// Gets whether video recording is supported.
 /// See also \ref appletInitializeGamePlayRecording.
 Result appletIsGamePlayRecordingSupported(bool *flag);
