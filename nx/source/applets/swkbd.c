@@ -37,7 +37,7 @@ static Result _swkbdProcessOutput(AppletHolder* h, char* out_string, size_t out_
     if (strbuf) memset(strbuf, 0, strbuf_size+2);
 
     if (R_SUCCEEDED(rc)) rc = appletStorageRead(&outstorage, 0, &CloseResult, sizeof(CloseResult));
-    if (R_SUCCEEDED(rc) && CloseResult!=0) rc = 0x29f;//TODO: See below.
+    if (R_SUCCEEDED(rc) && CloseResult!=0) rc = MAKERESULT(Module_Libnx, LibnxError_LibAppletBadExit);
     if (R_SUCCEEDED(rc)) rc = appletStorageRead(&outstorage, sizeof(CloseResult), strbuf, strbuf_size);
 
     if (R_SUCCEEDED(rc)) _swkbdConvertToUTF8(out_string, strbuf, out_string_size-1);
@@ -85,11 +85,10 @@ Result swkbdShow(SwkbdConfig* c, char* out_string, size_t out_string_size) {
         LibAppletExitReason reason = appletHolderGetExitReason(&holder);
 
         if (reason == LibAppletExitReason_Canceled) {
-            rc = 0x29f;//TODO: Official sw returns this, replace it with something else.
+            rc = MAKERESULT(Module_Libnx, LibnxError_LibAppletBadExit);
         }
         else if (reason == LibAppletExitReason_Abnormal || reason == LibAppletExitReason_Unexpected) {
-            //TODO: Official sw asserts here - return a proper error here.
-            return -1;
+            rc = MAKERESULT(Module_Libnx, LibnxError_LibAppletBadExit);
         }
         else { //success
             rc = _swkbdProcessOutput(&holder, out_string, out_string_size);
