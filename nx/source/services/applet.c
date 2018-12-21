@@ -668,6 +668,44 @@ static Result _appletCmdNoInOut64(Service* srv, u64 *out, u64 cmd_id) {
     return rc;
 }
 
+static Result _appletCmdInU8(Service* srv, u8 inval, u64 cmd_id) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u8 inval;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(srv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = cmd_id;
+    raw->inval = inval;
+
+    Result rc = serviceIpcDispatch(srv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(srv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+static Result _appletCmdInBool(Service* srv, bool inval, u64 cmd_id) {
+    return _appletCmdInU8(srv, inval!=0, cmd_id);
+}
+
 static Result _appletCmdInHandle64(Service* srv, Service* srv_out, u64 cmd_id, Handle handle, u64 inval) {
     IpcCommand c;
     ipcInitialize(&c);
@@ -869,41 +907,14 @@ Result appletSetTerminateResult(Result res) {
     return rc;
 }
 
-Result appletSetMediaPlaybackStateForApplication(bool state) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    if (!serviceIsActive(&g_appletSrv) || !_appletIsApplication())
+Result appletSetMediaPlaybackState(bool state) {
+    if (!serviceIsActive(&g_appletSrv))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u8 state;
-    } *raw;
+    if (!_appletIsApplication())
+        return _appletCmdInBool(&g_appletISelfController, state, 61);//SetMediaPlaybackState
 
-    raw = serviceIpcPrepareHeader(&g_appletIFunctions, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 60;
-    raw->state = state;
-
-    Result rc = serviceIpcDispatch(&g_appletIFunctions);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_appletIFunctions, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    return _appletCmdInBool(&g_appletIFunctions, state, 60);//SetMediaPlaybackStateForApplication
 }
 
 Result appletBeginBlockingHomeButton(s64 val) {
