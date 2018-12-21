@@ -25,6 +25,8 @@ void swkbdCreate(SwkbdConfig* c);
 /**
  * @brief Launch swkbd with the specified config. This will return once swkbd is finished running.
  * @param c SwkbdConfig struct.
+ * @param out_string UTF-8 Output string buffer.
+ * @param out_string_size UTF-8 Output string buffer size, including NUL-terminator.
  */
-Result swkbdShow(SwkbdConfig* c);
+Result swkbdShow(SwkbdConfig* c, char* out_string, size_t out_string_size);
 

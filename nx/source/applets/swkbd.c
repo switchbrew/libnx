@@ -1,15 +1,54 @@
 #include <string.h>
+#include <malloc.h>
 #include "types.h"
 #include "result.h"
 #include "services/applet.h"
 #include "applets/libapplet.h"
 #include "applets/swkbd.h"
+#include "runtime/util/utf.h"
+
+//TODO: InlineKeyboard currently isn't supported.
 
 void swkbdCreate(SwkbdConfig* c) {
     memset(c, 0, sizeof(SwkbdConfig));
 }
 
-Result swkbdShow(SwkbdConfig* c) {
+static void _swkbdConvertToUTF8(char* out, const u16* in, size_t max) {
+    out[0] = 0;
+    if (out==NULL || in==NULL) return;
+
+    ssize_t units = utf16_to_utf8((uint8_t*)out, in, max);
+    if (units < 0) return;
+    out[units] = 0;
+}
+
+static Result _swkbdProcessOutput(AppletHolder* h, char* out_string, size_t out_string_size) {
+    Result rc=0;
+    AppletStorage outstorage;
+    u32 CloseResult=0;
+    uint16_t* strbuf = NULL;
+    size_t strbuf_size = 0x7D4;
+
+    rc = appletHolderPopOutData(h, &outstorage);
+    if (R_FAILED(rc)) return rc;
+
+    strbuf = (u16*)malloc(strbuf_size+2);
+    if (strbuf==NULL) rc = MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
+    if (strbuf) memset(strbuf, 0, strbuf_size+2);
+
+    if (R_SUCCEEDED(rc)) rc = appletStorageRead(&outstorage, 0, &CloseResult, sizeof(CloseResult));
+    if (R_SUCCEEDED(rc) && CloseResult!=0) rc = 0x29f;//TODO: See below.
+    if (R_SUCCEEDED(rc)) rc = appletStorageRead(&outstorage, sizeof(CloseResult), strbuf, strbuf_size);
+
+    if (R_SUCCEEDED(rc)) _swkbdConvertToUTF8(out_string, strbuf, out_string_size-1);
+
+    free(strbuf);
+    appletStorageClose(&outstorage);
+
+    return rc;
+}
+
+Result swkbdShow(SwkbdConfig* c, char* out_string, size_t out_string_size) {
     Result rc=0;
     AppletHolder holder;
     AppletStorage storage;
@@ -53,7 +92,7 @@ Result swkbdShow(SwkbdConfig* c) {
             return -1;
         }
         else { //success
-            //TODO: Process the output storage here. When the output CloseResult indicates failure, official sw returns same error as above.
+            rc = _swkbdProcessOutput(&holder, out_string, out_string_size);
         }
     }
 
