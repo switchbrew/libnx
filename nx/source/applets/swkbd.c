@@ -34,11 +34,31 @@ static ssize_t _swkbdConvertToUTF16ByteSize(u16* out, const char* in, size_t max
     return _swkbdConvertToUTF16(out, in, (max/sizeof(u16)) - 1);
 }
 
+static void _swkbdConfigClear(SwkbdConfig* c) {
+    memset(&c->arg.arg, 0, sizeof(c->arg.arg));
+    memset(c->arg.unk_x3e0, 0xff, sizeof(c->arg.unk_x3e0));
+}
+
 Result swkbdCreate(SwkbdConfig* c, s32 max_dictwords) {
     Result rc=0;
 
     memset(c, 0, sizeof(SwkbdConfig));
-    memset(c->arg.unk_x3e0, 0xff, sizeof(c->arg.unk_x3e0));
+    _swkbdConfigClear(c);
+
+    c->version=0x5;//1.0.0+ version
+    if (kernelAbove500()) {
+        c->version = 0x50009;
+    }
+    else if (kernelAbove400()) {
+        c->version = 0x40008;
+    }
+    else if (kernelAbove300()) {
+        c->version = 0x30007;
+    }
+    else if (kernelAbove200()) {
+        c->version = 0x10006;
+    }
+
     c->workbuf_size = 0x1000;
     if (max_dictwords > 0 && max_dictwords <= 0x3e8) c->max_dictwords = max_dictwords;
 
@@ -57,6 +77,54 @@ Result swkbdCreate(SwkbdConfig* c, s32 max_dictwords) {
 void swkbdClose(SwkbdConfig* c) {
     free(c->workbuf);
     memset(c, 0, sizeof(SwkbdConfig));
+}
+
+void swkbdConfigMakePresetDefault(SwkbdConfig* c) {
+    _swkbdConfigClear(c);
+
+    c->arg.arg.unk_x0 = 2;
+    c->arg.arg.initialCursorPos = 1;
+    if (c->version < 0x50009) c->arg.arg.unk_x3b8 = 1;//removed with 5.x
+    c->arg.arg.returnButtonFlag = 1;
+    c->arg.arg.blurBackground = 1;
+}
+
+void swkbdConfigMakePresetPassword(SwkbdConfig* c) {
+    _swkbdConfigClear(c);
+
+    c->arg.arg.unk_x0 = 2;
+    c->arg.arg.initialCursorPos = 1;
+    c->arg.arg.passwordFlag = 1;
+    c->arg.arg.blurBackground = 1;
+}
+
+void swkbdConfigMakePresetUserName(SwkbdConfig* c) {
+    _swkbdConfigClear(c);
+
+    c->arg.arg.keySetDisableBitmask = 0x100;
+    c->arg.arg.initialCursorPos = 1;
+    c->arg.arg.blurBackground = 1;
+}
+
+void swkbdConfigMakePresetDownloadCode(SwkbdConfig* c) {
+    _swkbdConfigClear(c);
+
+    c->arg.arg.keySetDisableBitmask = 0x80;
+    c->arg.arg.initialCursorPos = 1;
+
+    if (c->version >= 0x50009) {//5.x
+        c->arg.arg.stringLenMax = 16;
+        c->arg.arg.unk_x3b0 = 1;
+        c->arg.arg.unk_x3b8 = 2;
+    }
+
+    c->arg.arg.blurBackground = 1;
+
+    if (c->version >= 0x50009) {//5.x
+        c->arg.unk_x3e0[0] = 0x3;
+        c->arg.unk_x3e0[1] = 0x7;
+        c->arg.unk_x3e0[2] = 0xb;
+    }
 }
 
 void swkbdConfigSetOkButtonText(SwkbdConfig* c, const char* str) {
@@ -145,28 +213,20 @@ Result swkbdShow(SwkbdConfig* c, char* out_string, size_t out_string_size) {
     Result rc=0;
     AppletHolder holder;
     AppletStorage storage;
-    u32 version=0x5;//1.0.0+ version
 
     memset(&storage, 0, sizeof(AppletStorage));
-
-    //TODO: >3.0.0 versions.
-    if (kernelAbove300()) {
-        version = 0x30007;
-    }
-    else if (kernelAbove200()) {
-        version = 0x10006;
-    }
 
     rc = appletCreateLibraryApplet(&holder, AppletId_swkbd, LibAppletMode_AllForeground);
     if (R_FAILED(rc)) return rc;
 
     LibAppletArgs commonargs;
-    libappletArgsCreate(&commonargs, version);
+    libappletArgsCreate(&commonargs, c->version);
     rc = libappletArgsPush(&commonargs, &holder);
 
     if (R_SUCCEEDED(rc)) {
-        if (version < 0x30007) rc = libappletPushInData(&holder, &c->arg.arg, sizeof(c->arg.arg));
-        if (version >= 0x30007) rc = libappletPushInData(&holder, &c->arg, sizeof(c->arg));
+        //3.0.0+ has a larger struct.
+        if (c->version < 0x30007) rc = libappletPushInData(&holder, &c->arg.arg, sizeof(c->arg.arg));
+        if (c->version >= 0x30007) rc = libappletPushInData(&holder, &c->arg, sizeof(c->arg));
     }
 
     if (R_SUCCEEDED(rc)) {

@@ -18,14 +18,14 @@ typedef struct {
     u16 rightButtonText;
     u16 unk_x1a;
     u32 keySetDisableBitmask;
-    u32 initialCursorPos;
+    u32 initialCursorPos;          ///< Initial cursor position in the string: 0 = start, 1 = end.
     u16 headerText[130/2];
     u16 subText[258/2];
     u16 guideText[514/2];
     u16 pad_x3aa;
     u32 stringLenMax;
     u32 unk_x3b0;
-    u32 passwordFlag;
+    u32 passwordFlag;              ///< Use password: 0 = disable, 1 = enable.
     u32 unk_x3b8;
     u16 returnButtonFlag;          ///< Controls whether the Return button is enabled, for newlines input. 0 = disabled, non-zero = enabled.
     u8  blurBackground;            ///< When enabled with value 1, the background is blurred.
@@ -42,7 +42,7 @@ typedef struct {
 /// Arg struct for version 0x30007+.
 typedef struct {
     SwkbdArgV0 arg;
-    u64 unk_x3e0[4];
+    u32 unk_x3e0[8];
 } SwkbdArgV7;
 
 typedef struct {
@@ -51,6 +51,8 @@ typedef struct {
     u8* workbuf;
     size_t workbuf_size;
     s32 max_dictwords;
+
+    u32 version;
 } SwkbdConfig;
 
 /// User dictionary word.
@@ -70,6 +72,34 @@ Result swkbdCreate(SwkbdConfig* c, s32 max_dictwords);
  * @param c SwkbdConfig struct.
  */
 void swkbdClose(SwkbdConfig* c);
+
+/**
+ * @brief Clears the args in the SwkbdConfig struct and initializes it with the Default Preset.
+ * @note Do not use this before \ref swkbdCreate.
+ * @param c SwkbdConfig struct.
+ */
+void swkbdConfigMakePresetDefault(SwkbdConfig* c);
+
+/**
+ * @brief Clears the args in the SwkbdConfig struct and initializes it with the Password Preset.
+ * @note Do not use this before \ref swkbdCreate.
+ * @param c SwkbdConfig struct.
+ */
+void swkbdConfigMakePresetPassword(SwkbdConfig* c);
+
+/**
+ * @brief Clears the args in the SwkbdConfig struct and initializes it with the UserName Preset.
+ * @note Do not use this before \ref swkbdCreate.
+ * @param c SwkbdConfig struct.
+ */
+void swkbdConfigMakePresetUserName(SwkbdConfig* c);
+
+/**
+ * @brief Clears the args in the SwkbdConfig struct and initializes it with the DownloadCode Preset.
+ * @note Do not use this before \ref swkbdCreate.
+ * @param c SwkbdConfig struct.
+ */
+void swkbdConfigMakePresetDownloadCode(SwkbdConfig* c);
 
 /**
  * @brief Sets the Ok button text. The default is "".
