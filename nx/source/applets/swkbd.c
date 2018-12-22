@@ -2,6 +2,7 @@
 #include <malloc.h>
 #include "types.h"
 #include "result.h"
+#include "kernel/detect.h"
 #include "services/applet.h"
 #include "applets/libapplet.h"
 #include "applets/swkbd.h"
@@ -9,17 +10,109 @@
 
 //TODO: InlineKeyboard currently isn't supported.
 
-void swkbdCreate(SwkbdConfig* c) {
-    memset(c, 0, sizeof(SwkbdConfig));
-}
-
 static void _swkbdConvertToUTF8(char* out, const u16* in, size_t max) {
-    out[0] = 0;
     if (out==NULL || in==NULL) return;
+    out[0] = 0;
 
     ssize_t units = utf16_to_utf8((uint8_t*)out, in, max);
     if (units < 0) return;
     out[units] = 0;
+}
+
+static ssize_t _swkbdConvertToUTF16(u16* out, const char* in, size_t max) {
+    if (out==NULL || in==NULL) return 0;
+    out[0] = 0;
+
+    ssize_t units = utf8_to_utf16(out, (uint8_t*)in, max);
+    if (units < 0 || max<=1) return 0;
+    out[units] = 0;
+
+    return units;
+}
+
+static ssize_t _swkbdConvertToUTF16ByteSize(u16* out, const char* in, size_t max) {
+    return _swkbdConvertToUTF16(out, in, (max/sizeof(u16)) - 1);
+}
+
+Result swkbdCreate(SwkbdConfig* c, s32 max_dictwords) {
+    Result rc=0;
+
+    memset(c, 0, sizeof(SwkbdConfig));
+    memset(c->arg.unk_x3e0, 0xff, sizeof(c->arg.unk_x3e0));
+    c->workbuf_size = 0x1000;
+    if (max_dictwords > 0 && max_dictwords <= 0x3e8) c->max_dictwords = max_dictwords;
+
+    if (c->max_dictwords) {
+        c->workbuf_size = c->max_dictwords*0x64 + 0x7e8;
+        c->workbuf_size = (c->workbuf_size + 0xfff) & ~0xfff;
+    }
+
+    c->workbuf = (u8*)memalign(0x1000, c->workbuf_size);
+    if (c->workbuf==NULL) rc = MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
+    if (R_SUCCEEDED(rc)) memset(c->workbuf, 0, c->workbuf_size);
+
+    return rc;
+}
+
+void swkbdClose(SwkbdConfig* c) {
+    free(c->workbuf);
+    memset(c, 0, sizeof(SwkbdConfig));
+}
+
+void swkbdConfigSetOkButtonText(SwkbdConfig* c, const char* str) {
+    _swkbdConvertToUTF16ByteSize(c->arg.arg.okButtonText, str, sizeof(c->arg.arg.okButtonText));
+}
+
+void swkbdConfigSetLeftOptionalSymbolKey(SwkbdConfig* c, const char* str) {
+    _swkbdConvertToUTF16(&c->arg.arg.leftButtonText, str, 1);
+}
+
+void swkbdConfigSetRightOptionalSymbolKey(SwkbdConfig* c, const char* str) {
+    _swkbdConvertToUTF16(&c->arg.arg.rightButtonText, str, 1);
+}
+
+void swkbdConfigSetHeaderText(SwkbdConfig* c, const char* str) {
+    _swkbdConvertToUTF16ByteSize(c->arg.arg.headerText, str, sizeof(c->arg.arg.headerText));
+}
+
+void swkbdConfigSetSubText(SwkbdConfig* c, const char* str) {
+    _swkbdConvertToUTF16ByteSize(c->arg.arg.subText, str, sizeof(c->arg.arg.subText));
+}
+
+void swkbdConfigSetGuideText(SwkbdConfig* c, const char* str) {
+    _swkbdConvertToUTF16ByteSize(c->arg.arg.guideText, str, sizeof(c->arg.arg.guideText));
+}
+
+void swkbdConfigSetInitialText(SwkbdConfig* c, const char* str) {
+    c->arg.arg.initialStringOffset = 0;
+    c->arg.arg.initialStringSize = 0;
+
+    if (c->workbuf==NULL) return;
+    u32 offset=0x14;
+
+    ssize_t units = _swkbdConvertToUTF16ByteSize((u16*)&c->workbuf[offset], str, 0x1f4);
+    if (units<=0) return;
+
+    c->arg.arg.initialStringOffset = offset;
+    c->arg.arg.initialStringSize = units;
+}
+
+void swkbdConfigSetDictionary(SwkbdConfig* c, const SwkbdDictWord *buffer, s32 entries) {
+    c->arg.arg.userDicOffset = 0;
+    c->arg.arg.userDicEntries = 0;
+
+    if (c->workbuf==NULL) return;
+    if (entries < 1 || entries > c->max_dictwords) return;
+    u32 offset=0x7e8;
+
+    c->arg.arg.userDicOffset = offset;
+    c->arg.arg.userDicEntries = entries;
+    memcpy(&c->workbuf[offset], buffer, entries*0x64);
+}
+
+void swkbdConfigSetTextCheckCallback(SwkbdConfig* c, SwkbdTextCheckCb cb) {
+    c->arg.arg.textCheckFlag = cb!=0;
+    c->arg.arg.textCheckCb = cb;
 }
 
 static Result _swkbdProcessOutput(AppletHolder* h, char* out_string, size_t out_string_size) {
@@ -52,22 +145,32 @@ Result swkbdShow(SwkbdConfig* c, char* out_string, size_t out_string_size) {
     Result rc=0;
     AppletHolder holder;
     AppletStorage storage;
-    u8 *workbuf = NULL;//TODO
-    size_t workbuf_size = 0x1000;//TODO
+    u32 version=0x5;//1.0.0+ version
 
     memset(&storage, 0, sizeof(AppletStorage));
+
+    //TODO: >3.0.0 versions.
+    if (kernelAbove300()) {
+        version = 0x30007;
+    }
+    else if (kernelAbove200()) {
+        version = 0x10006;
+    }
 
     rc = appletCreateLibraryApplet(&holder, AppletId_swkbd, LibAppletMode_AllForeground);
     if (R_FAILED(rc)) return rc;
 
     LibAppletArgs commonargs;
-    libappletArgsCreate(&commonargs, 0x5);//1.0.0+ version
+    libappletArgsCreate(&commonargs, version);
     rc = libappletArgsPush(&commonargs, &holder);
 
-    if (R_SUCCEEDED(rc)) rc = libappletPushInData(&holder, &c->arg, sizeof(c->arg));
+    if (R_SUCCEEDED(rc)) {
+        if (version < 0x30007) rc = libappletPushInData(&holder, &c->arg.arg, sizeof(c->arg.arg));
+        if (version >= 0x30007) rc = libappletPushInData(&holder, &c->arg, sizeof(c->arg));
+    }
 
     if (R_SUCCEEDED(rc)) {
-        if (R_SUCCEEDED(rc)) rc = appletCreateTransferMemoryStorage(&storage, workbuf, workbuf_size, true);
+        if (R_SUCCEEDED(rc)) rc = appletCreateTransferMemoryStorage(&storage, c->workbuf, c->workbuf_size, true);
         appletHolderPushInData(&holder, &storage);
     }
 
