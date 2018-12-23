@@ -16,15 +16,15 @@ typedef struct {
     u16 okButtonText[18/2];
     u16 leftButtonText;
     u16 rightButtonText;
-    u16 unk_x1a;
+    u16 dicFlag;                   ///< Enables dictionary usage when non-zero (including the system dictionary).
     u32 keySetDisableBitmask;
     u32 initialCursorPos;          ///< Initial cursor position in the string: 0 = start, 1 = end.
     u16 headerText[130/2];
     u16 subText[258/2];
     u16 guideText[514/2];
     u16 pad_x3aa;
-    u32 stringLenMax;
-    u32 unk_x3b0;
+    u32 stringLenMax;              ///< When non-zero, specifies the max string length. When the input is too long, swkbd will stop accepting more input until text is deleted via the B button (Backspace). When this is <=32, this will also display the string on a line instead of in a text-box, and enables displaying the Header and Sub text.
+    u32 stringLenMaxExt;           ///< When non-zero, specifies the max string length. When the input is too long, swkbd will display an icon and disable the ok-button.
     u32 passwordFlag;              ///< Use password: 0 = disable, 1 = enable.
     u32 unk_x3b8;
     u16 returnButtonFlag;          ///< Controls whether the Return button is enabled, for newlines input. 0 = disabled, non-zero = enabled.
@@ -110,6 +110,7 @@ void swkbdConfigSetOkButtonText(SwkbdConfig* c, const char* str);
 
 /**
  * @brief Sets the LeftOptionalSymbolKey. The default is "".
+ * @note The swkbd applet currently doesn't display this, unknown why.
  * @param c SwkbdConfig struct.
  * @param str UTF-8 input string.
  */
@@ -117,6 +118,7 @@ void swkbdConfigSetLeftOptionalSymbolKey(SwkbdConfig* c, const char* str);
 
 /**
  * @brief Sets the RightOptionalSymbolKey. The default is "".
+ * @note The swkbd applet currently doesn't display this, unknown why.
  * @param c SwkbdConfig struct.
  * @param str UTF-8 input string.
  */
@@ -124,6 +126,7 @@ void swkbdConfigSetRightOptionalSymbolKey(SwkbdConfig* c, const char* str);
 
 /**
  * @brief Sets the Header text. The default is "".
+ * @note See \ref SwkbdArgV0 stringLenMax.
  * @param c SwkbdConfig struct.
  * @param str UTF-8 input string.
  */
@@ -131,6 +134,7 @@ void swkbdConfigSetHeaderText(SwkbdConfig* c, const char* str);
 
 /**
  * @brief Sets the Sub text. The default is "".
+ * @note See \ref SwkbdArgV0 stringLenMax.
  * @param c SwkbdConfig struct.
  * @param str UTF-8 input string.
  */
@@ -138,6 +142,7 @@ void swkbdConfigSetSubText(SwkbdConfig* c, const char* str);
 
 /**
  * @brief Sets the Guide text. The default is "".
+ * @note The swkbd applet only displays this when the current displayed cursor position is 0.
  * @param c SwkbdConfig struct.
  * @param str UTF-8 input string.
  */
@@ -145,6 +150,7 @@ void swkbdConfigSetGuideText(SwkbdConfig* c, const char* str);
 
 /**
  * @brief Sets the Initial text. The default is "".
+ * @note The swkbd applet currently doesn't display this, unknown why.
  * @param c SwkbdConfig struct.
  * @param str UTF-8 input string.
  */

@@ -114,7 +114,7 @@ void swkbdConfigMakePresetDownloadCode(SwkbdConfig* c) {
 
     if (c->version >= 0x50009) {//5.x
         c->arg.arg.stringLenMax = 16;
-        c->arg.arg.unk_x3b0 = 1;
+        c->arg.arg.stringLenMaxExt = 1;
         c->arg.arg.unk_x3b8 = 2;
     }
 
