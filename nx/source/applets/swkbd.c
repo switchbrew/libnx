@@ -183,19 +183,47 @@ void swkbdConfigSetTextCheckCallback(SwkbdConfig* c, SwkbdTextCheckCb cb) {
     c->arg.arg.textCheckCb = cb;
 }
 
-static Result _swkbdProcessOutput(AppletHolder* h, char* out_string, size_t out_string_size) {
+static Result _swkbdProcessInteractive(SwkbdConfig* c, AppletHolder* h, uint16_t* strbuf, size_t strbuf_size, char* tmp_string, size_t tmp_string_size) {
+    Result rc=0;
+    AppletStorage storage;
+    u64 strsize=0;
+    u32 res=0;
+
+    rc = appletHolderPopInteractiveOutData(h, &storage);
+    if (R_FAILED(rc)) return rc;
+
+    if (R_SUCCEEDED(rc)) rc = appletStorageRead(&storage, 0, &strsize, sizeof(strsize));
+    if (R_SUCCEEDED(rc) && strsize > strbuf_size) strsize = strbuf_size;
+    if (R_SUCCEEDED(rc)) rc = appletStorageRead(&storage, sizeof(strsize), strbuf, strsize);
+    appletStorageClose(&storage);
+
+    if (R_SUCCEEDED(rc) && (c->arg.arg.textCheckFlag && c->arg.arg.textCheckCb)) {
+        _swkbdConvertToUTF8(tmp_string, strbuf, tmp_string_size-1);
+
+        res = c->arg.arg.textCheckCb(tmp_string, tmp_string_size-1);
+
+        _swkbdConvertToUTF16ByteSize(strbuf, tmp_string, strbuf_size-2);
+    }
+
+    if (R_SUCCEEDED(rc)) rc = appletCreateStorage(&storage, sizeof(res)+strbuf_size);
+    if (R_SUCCEEDED(rc)) {
+        rc = appletStorageWrite(&storage, 0, &res, sizeof(res));
+        if (R_SUCCEEDED(rc)) rc = appletStorageWrite(&storage, sizeof(res), strbuf, strbuf_size);
+
+        if (R_FAILED(rc)) appletStorageClose(&storage);
+        if (R_SUCCEEDED(rc)) rc = appletHolderPushInteractiveInData(h, &storage);
+    }
+
+    return rc;
+}
+
+static Result _swkbdProcessOutput(AppletHolder* h, uint16_t* strbuf, size_t strbuf_size, char* out_string, size_t out_string_size) {
     Result rc=0;
     AppletStorage outstorage;
     u32 CloseResult=0;
-    uint16_t* strbuf = NULL;
-    size_t strbuf_size = 0x7D4;
 
     rc = appletHolderPopOutData(h, &outstorage);
     if (R_FAILED(rc)) return rc;
-
-    strbuf = (u16*)malloc(strbuf_size+2);
-    if (strbuf==NULL) rc = MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
-    if (strbuf) memset(strbuf, 0, strbuf_size+2);
 
     if (R_SUCCEEDED(rc)) rc = appletStorageRead(&outstorage, 0, &CloseResult, sizeof(CloseResult));
     if (R_SUCCEEDED(rc) && CloseResult!=0) rc = MAKERESULT(Module_Libnx, LibnxError_LibAppletBadExit);
@@ -203,7 +231,6 @@ static Result _swkbdProcessOutput(AppletHolder* h, char* out_string, size_t out_
 
     if (R_SUCCEEDED(rc)) _swkbdConvertToUTF8(out_string, strbuf, out_string_size-1);
 
-    free(strbuf);
     appletStorageClose(&outstorage);
 
     return rc;
@@ -213,11 +240,23 @@ Result swkbdShow(SwkbdConfig* c, char* out_string, size_t out_string_size) {
     Result rc=0;
     AppletHolder holder;
     AppletStorage storage;
+    uint16_t* strbuf = NULL;
+    size_t strbuf_size = 0x7D4;
+
+    if (out_string==NULL || out_string_size==0) return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
     memset(&storage, 0, sizeof(AppletStorage));
 
-    rc = appletCreateLibraryApplet(&holder, AppletId_swkbd, LibAppletMode_AllForeground);
+    strbuf = (u16*)malloc(strbuf_size+2);
+    if (strbuf==NULL) rc = MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
+    if (strbuf) memset(strbuf, 0, strbuf_size+2);
     if (R_FAILED(rc)) return rc;
+
+    rc = appletCreateLibraryApplet(&holder, AppletId_swkbd, LibAppletMode_AllForeground);
+    if (R_FAILED(rc)) {
+        free(strbuf);
+        return rc;
+    }
 
     LibAppletArgs commonargs;
     libappletArgsCreate(&commonargs, c->version);
@@ -238,7 +277,7 @@ Result swkbdShow(SwkbdConfig* c, char* out_string, size_t out_string_size) {
 
     if (R_SUCCEEDED(rc)) {
         while(appletHolderWaitInteractiveOut(&holder)) {
-            //TODO: Handle Interactive data here.
+            _swkbdProcessInteractive(c, &holder, strbuf, strbuf_size, out_string, out_string_size);
         }
     }
 
@@ -254,12 +293,15 @@ Result swkbdShow(SwkbdConfig* c, char* out_string, size_t out_string_size) {
             rc = MAKERESULT(Module_Libnx, LibnxError_LibAppletBadExit);
         }
         else { //success
-            rc = _swkbdProcessOutput(&holder, out_string, out_string_size);
+            memset(out_string, 0, out_string_size);
+            rc = _swkbdProcessOutput(&holder, strbuf, strbuf_size, out_string, out_string_size);
         }
     }
 
     appletHolderClose(&holder);
     appletStorageCloseTmem(&storage);
+
+    free(strbuf);
 
     return rc;
 }

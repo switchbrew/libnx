@@ -8,7 +8,14 @@
 #include "../types.h"
 #include "../services/applet.h"
 
-typedef bool (*SwkbdTextCheckCb)(void *); ///< TextCheck callback. TODO
+typedef enum {
+    SwkbdTextCheckResult_OK      = 0,  ///< Success, valid string.
+    SwkbdTextCheckResult_Bad     = 1,  ///< Failure, invalid string. Error message is displayed in a message-box, pressing OK will return to swkbd again.
+    SwkbdTextCheckResult_Prompt  = 2,  ///< Failure, invalid string. Error message is displayed in a message-box, pressing Cancel will return to swkbd again, while pressing OK will continue as if the text was valid.
+    SwkbdTextCheckResult_Silent  = 3,  ///< Failure, invalid string. With value 3 and above, swkbd will silently not accept the string, without displaying any error.
+} SwkbdTextCheckResult;
+
+typedef SwkbdTextCheckResult (*SwkbdTextCheckCb)(char* tmp_string, size_t tmp_string_size); /// TextCheck callback set by \ref swkbdConfigSetTextCheckCallback, for validating the input string when the swkbd ok-button is pressed. This buffer contains an UTF-8 string. This callback should validate the input string, then return a \ref SwkbdTextCheckResult indicating success/failure. On failure, this function must write an error message to the tmp_string buffer, which will then be displayed by swkbd.
 
 /// Base swkbd arg struct.
 typedef struct {
@@ -165,14 +172,15 @@ void swkbdConfigSetInitialText(SwkbdConfig* c, const char* str);
 void swkbdConfigSetDictionary(SwkbdConfig* c, const SwkbdDictWord *input, s32 entries);
 
 /**
- * @brief Sets the TextCheck callback. TODO: this is not yet used.
+ * @brief Sets the TextCheck callback.
  * @param c SwkbdConfig struct.
- * @param cb callback
+ * @param cb \ref SwkbdTextCheckCb callback.
  */
 void swkbdConfigSetTextCheckCallback(SwkbdConfig* c, SwkbdTextCheckCb cb);
 
 /**
  * @brief Launch swkbd with the specified config. This will return once swkbd is finished running.
+ * @note The string buffer is also used for the buffer passed to the \ref SwkbdTextCheckCb, when it's set. Hence, in that case this buffer should be large enough to handle TextCheck string input/output. The size passed to the callback is the same size passed here, -1.
  * @param c SwkbdConfig struct.
  * @param out_string UTF-8 Output string buffer.
  * @param out_string_size UTF-8 Output string buffer size, including NUL-terminator.
