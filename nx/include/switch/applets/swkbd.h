@@ -19,7 +19,7 @@ typedef SwkbdTextCheckResult (*SwkbdTextCheckCb)(char* tmp_string, size_t tmp_st
 
 /// Base swkbd arg struct.
 typedef struct {
-    u32 unk_x0;
+    u32 type;                      ///< See \ref SwkbdType.
     u16 okButtonText[18/2];
     u16 leftButtonText;
     u16 rightButtonText;
@@ -67,6 +67,12 @@ typedef struct {
     u8 unk_x0[0x64];
 } SwkbdDictWord;
 
+typedef enum {
+    SwkbdType_Normal = 0,  ///< Normal keyboard.
+    SwkbdType_NumPad = 1,  ///< Number pad. The buttons at the bottom left/right are only available when they're set by \ref swkbdConfigSetLeftOptionalSymbolKey / \ref swkbdConfigSetRightOptionalSymbolKey.
+    SwkbdType_QWERTY = 2,  ///< QWERTY (and variants) keyboard only.
+} SwkbdType;
+
 /**
  * @brief Creates a SwkbdConfig struct.
  * @param c SwkbdConfig struct.
@@ -83,6 +89,7 @@ void swkbdClose(SwkbdConfig* c);
 /**
  * @brief Clears the args in the SwkbdConfig struct and initializes it with the Default Preset.
  * @note Do not use this before \ref swkbdCreate.
+ * @note Sets the following fields: type = \ref SwkbdType_QWERTY, initialCursorPos = 1, returnButtonFlag = 1, blurBackground = 1. Pre-5.0.0: unk_x3b8 = 1.
  * @param c SwkbdConfig struct.
  */
 void swkbdConfigMakePresetDefault(SwkbdConfig* c);
@@ -90,6 +97,7 @@ void swkbdConfigMakePresetDefault(SwkbdConfig* c);
 /**
  * @brief Clears the args in the SwkbdConfig struct and initializes it with the Password Preset.
  * @note Do not use this before \ref swkbdCreate.
+ * @note Sets the following fields: type = \ref SwkbdType_QWERTY, initialCursorPos = 1, passwordFlag = 1, blurBackground = 1.
  * @param c SwkbdConfig struct.
  */
 void swkbdConfigMakePresetPassword(SwkbdConfig* c);
@@ -97,6 +105,7 @@ void swkbdConfigMakePresetPassword(SwkbdConfig* c);
 /**
  * @brief Clears the args in the SwkbdConfig struct and initializes it with the UserName Preset.
  * @note Do not use this before \ref swkbdCreate.
+ * @note Sets the following fields: type = \ref SwkbdType_Normal, keySetDisableBitmask = 0x100, initialCursorPos = 1, blurBackground = 1.
  * @param c SwkbdConfig struct.
  */
 void swkbdConfigMakePresetUserName(SwkbdConfig* c);
@@ -104,6 +113,7 @@ void swkbdConfigMakePresetUserName(SwkbdConfig* c);
 /**
  * @brief Clears the args in the SwkbdConfig struct and initializes it with the DownloadCode Preset.
  * @note Do not use this before \ref swkbdCreate.
+ * @note Sets the following fields: type = \ref SwkbdType_Normal (\ref SwkbdType_QWERTY on 5.0.0+), keySetDisableBitmask = 0x80, initialCursorPos = 1, blurBackground = 1. 5.0.0+: stringLenMax = 16, stringLenMaxExt = 1, unk_x3b8 = 2. unk_x3e0[0-2] = 0x3, 0x7, and 0xb.
  * @param c SwkbdConfig struct.
  */
 void swkbdConfigMakePresetDownloadCode(SwkbdConfig* c);
@@ -116,16 +126,14 @@ void swkbdConfigMakePresetDownloadCode(SwkbdConfig* c);
 void swkbdConfigSetOkButtonText(SwkbdConfig* c, const char* str);
 
 /**
- * @brief Sets the LeftOptionalSymbolKey. The default is "".
- * @note The swkbd applet currently doesn't display this, unknown why.
+ * @brief Sets the LeftOptionalSymbolKey, for \ref SwkbdType_NumPad. The default is "".
  * @param c SwkbdConfig struct.
  * @param str UTF-8 input string.
  */
 void swkbdConfigSetLeftOptionalSymbolKey(SwkbdConfig* c, const char* str);
 
 /**
- * @brief Sets the RightOptionalSymbolKey. The default is "".
- * @note The swkbd applet currently doesn't display this, unknown why.
+ * @brief Sets the RightOptionalSymbolKey, for \ref SwkbdType_NumPad. The default is "".
  * @param c SwkbdConfig struct.
  * @param str UTF-8 input string.
  */

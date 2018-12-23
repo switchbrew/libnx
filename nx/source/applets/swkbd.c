@@ -82,7 +82,7 @@ void swkbdClose(SwkbdConfig* c) {
 void swkbdConfigMakePresetDefault(SwkbdConfig* c) {
     _swkbdConfigClear(c);
 
-    c->arg.arg.unk_x0 = 2;
+    c->arg.arg.type = SwkbdType_QWERTY;
     c->arg.arg.initialCursorPos = 1;
     if (c->version < 0x50009) c->arg.arg.unk_x3b8 = 1;//removed with 5.x
     c->arg.arg.returnButtonFlag = 1;
@@ -92,7 +92,7 @@ void swkbdConfigMakePresetDefault(SwkbdConfig* c) {
 void swkbdConfigMakePresetPassword(SwkbdConfig* c) {
     _swkbdConfigClear(c);
 
-    c->arg.arg.unk_x0 = 2;
+    c->arg.arg.type = SwkbdType_QWERTY;
     c->arg.arg.initialCursorPos = 1;
     c->arg.arg.passwordFlag = 1;
     c->arg.arg.blurBackground = 1;
@@ -101,6 +101,7 @@ void swkbdConfigMakePresetPassword(SwkbdConfig* c) {
 void swkbdConfigMakePresetUserName(SwkbdConfig* c) {
     _swkbdConfigClear(c);
 
+    c->arg.arg.type = SwkbdType_Normal;
     c->arg.arg.keySetDisableBitmask = 0x100;
     c->arg.arg.initialCursorPos = 1;
     c->arg.arg.blurBackground = 1;
@@ -109,10 +110,13 @@ void swkbdConfigMakePresetUserName(SwkbdConfig* c) {
 void swkbdConfigMakePresetDownloadCode(SwkbdConfig* c) {
     _swkbdConfigClear(c);
 
+    c->arg.arg.type = SwkbdType_Normal;
     c->arg.arg.keySetDisableBitmask = 0x80;
     c->arg.arg.initialCursorPos = 1;
 
     if (c->version >= 0x50009) {//5.x
+        c->arg.arg.type = SwkbdType_QWERTY;
+
         c->arg.arg.stringLenMax = 16;
         c->arg.arg.stringLenMaxExt = 1;
         c->arg.arg.unk_x3b8 = 2;
