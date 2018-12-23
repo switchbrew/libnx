@@ -23,7 +23,8 @@ typedef struct {
     u16 okButtonText[18/2];
     u16 leftButtonText;
     u16 rightButtonText;
-    u16 dicFlag;                   ///< Enables dictionary usage when non-zero (including the system dictionary).
+    u8  dicFlag;                   ///< Enables dictionary usage when non-zero (including the system dictionary).
+    u8  pad_x1b;
     u32 keySetDisableBitmask;
     u32 initialCursorPos;          ///< Initial cursor position in the string: 0 = start, 1 = end.
     u16 headerText[130/2];
