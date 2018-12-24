@@ -102,7 +102,7 @@ void swkbdConfigMakePresetUserName(SwkbdConfig* c) {
     _swkbdConfigClear(c);
 
     c->arg.arg.type = SwkbdType_Normal;
-    c->arg.arg.keySetDisableBitmask = 0x100;
+    c->arg.arg.keySetDisableBitmask = SwkbdKeyDisableBitmask_UserName;
     c->arg.arg.initialCursorPos = 1;
     c->arg.arg.blurBackground = 1;
 }
@@ -111,7 +111,7 @@ void swkbdConfigMakePresetDownloadCode(SwkbdConfig* c) {
     _swkbdConfigClear(c);
 
     c->arg.arg.type = SwkbdType_Normal;
-    c->arg.arg.keySetDisableBitmask = 0x80;
+    c->arg.arg.keySetDisableBitmask = SwkbdKeyDisableBitmask_DownloadCode;
     c->arg.arg.initialCursorPos = 1;
 
     if (c->version >= 0x50009) {//5.x

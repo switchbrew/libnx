@@ -25,7 +25,7 @@ typedef struct {
     u16 rightButtonText;
     u8  dicFlag;                   ///< Enables dictionary usage when non-zero (including the system dictionary).
     u8  pad_x1b;
-    u32 keySetDisableBitmask;
+    u32 keySetDisableBitmask;      ///< See \ref SwkbdKeyDisableBitmask.
     u32 initialCursorPos;          ///< Initial cursor position in the string: 0 = start, 1 = end.
     u16 headerText[130/2];
     u16 subText[258/2];
@@ -74,6 +74,18 @@ typedef enum {
     SwkbdType_QWERTY = 2,  ///< QWERTY (and variants) keyboard only.
 } SwkbdType;
 
+/// Bitmask for \ref SwkbdArgV0 keySetDisableBitmask. This disables keys on the keyboard when the corresponding bit(s) are set.
+typedef enum {
+    SwkbdKeyDisableBitmask_Space        = BIT(1),  ///< Disable space-bar.
+    SwkbdKeyDisableBitmask_At           = BIT(2),  ///< Disable '@'.
+    SwkbdKeyDisableBitmask_Percent      = BIT(3),  ///< Disable '%'.
+    SwkbdKeyDisableBitmask_ForwardSlash = BIT(4),  ///< Disable '/'.
+    SwkbdKeyDisableBitmask_Backslash    = BIT(5),  ///< Disable '\'.
+    SwkbdKeyDisableBitmask_Numbers      = BIT(6),  ///< Disable numbers.
+    SwkbdKeyDisableBitmask_DownloadCode = BIT(7),  ///< Used for \ref swkbdConfigMakePresetDownloadCode.
+    SwkbdKeyDisableBitmask_UserName     = BIT(8),  ///< Used for \ref swkbdConfigMakePresetUserName. Disables '@', '%', and '\'.
+} SwkbdKeyDisableBitmask;
+
 /**
  * @brief Creates a SwkbdConfig struct.
  * @param c SwkbdConfig struct.
@@ -106,7 +118,7 @@ void swkbdConfigMakePresetPassword(SwkbdConfig* c);
 /**
  * @brief Clears the args in the SwkbdConfig struct and initializes it with the UserName Preset.
  * @note Do not use this before \ref swkbdCreate.
- * @note Sets the following fields: type = \ref SwkbdType_Normal, keySetDisableBitmask = 0x100, initialCursorPos = 1, blurBackground = 1.
+ * @note Sets the following fields: type = \ref SwkbdType_Normal, keySetDisableBitmask = SwkbdKeyDisableBitmask_UserName, initialCursorPos = 1, blurBackground = 1.
  * @param c SwkbdConfig struct.
  */
 void swkbdConfigMakePresetUserName(SwkbdConfig* c);
@@ -114,7 +126,7 @@ void swkbdConfigMakePresetUserName(SwkbdConfig* c);
 /**
  * @brief Clears the args in the SwkbdConfig struct and initializes it with the DownloadCode Preset.
  * @note Do not use this before \ref swkbdCreate.
- * @note Sets the following fields: type = \ref SwkbdType_Normal (\ref SwkbdType_QWERTY on 5.0.0+), keySetDisableBitmask = 0x80, initialCursorPos = 1, blurBackground = 1. 5.0.0+: stringLenMax = 16, stringLenMaxExt = 1, unk_x3b8 = 2. unk_x3e0[0-2] = 0x3, 0x7, and 0xb.
+ * @note Sets the following fields: type = \ref SwkbdType_Normal (\ref SwkbdType_QWERTY on 5.0.0+), keySetDisableBitmask = SwkbdKeyDisableBitmask_DownloadCode, initialCursorPos = 1, blurBackground = 1. 5.0.0+: stringLenMax = 16, stringLenMaxExt = 1, unk_x3b8 = 2. unk_x3e0[0-2] = 0x3, 0x7, and 0xb.
  * @param c SwkbdConfig struct.
  */
 void swkbdConfigMakePresetDownloadCode(SwkbdConfig* c);
