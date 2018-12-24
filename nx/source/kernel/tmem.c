@@ -51,7 +51,6 @@ Result tmemCreateFromMemory(TransferMemory* t, void* buf, size_t size, Permissio
     t->map_addr = NULL;
     t->src_addr = NULL;
 
-    memset(buf, 0, size);
     rc = svcCreateTransferMemory(&t->handle, buf, size, perm);
 
     return rc;
