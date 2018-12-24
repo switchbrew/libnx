@@ -15,28 +15,53 @@ typedef enum {
     SwkbdTextCheckResult_Silent  = 3,  ///< Failure, invalid string. With value 3 and above, swkbd will silently not accept the string, without displaying any error.
 } SwkbdTextCheckResult;
 
+typedef enum {
+    SwkbdType_Normal = 0,  ///< Normal keyboard.
+    SwkbdType_NumPad = 1,  ///< Number pad. The buttons at the bottom left/right are only available when they're set by \ref swkbdConfigSetLeftOptionalSymbolKey / \ref swkbdConfigSetRightOptionalSymbolKey.
+    SwkbdType_QWERTY = 2,  ///< QWERTY (and variants) keyboard only.
+} SwkbdType;
+
+/// Bitmask for \ref SwkbdArgV0 keySetDisableBitmask. This disables keys on the keyboard when the corresponding bit(s) are set.
+enum {
+    SwkbdKeyDisableBitmask_Space        = BIT(1),  ///< Disable space-bar.
+    SwkbdKeyDisableBitmask_At           = BIT(2),  ///< Disable '@'.
+    SwkbdKeyDisableBitmask_Percent      = BIT(3),  ///< Disable '%'.
+    SwkbdKeyDisableBitmask_ForwardSlash = BIT(4),  ///< Disable '/'.
+    SwkbdKeyDisableBitmask_Backslash    = BIT(5),  ///< Disable '\'.
+    SwkbdKeyDisableBitmask_Numbers      = BIT(6),  ///< Disable numbers.
+    SwkbdKeyDisableBitmask_DownloadCode = BIT(7),  ///< Used for \ref swkbdConfigMakePresetDownloadCode.
+    SwkbdKeyDisableBitmask_UserName     = BIT(8),  ///< Used for \ref swkbdConfigMakePresetUserName. Disables '@', '%', and '\'.
+};
+
+/// Value for \ref SwkbdArgV0 textDrawType. Only applies when stringLenMax is 1..32, otherwise swkbd will only use SwkbdTextDrawType_Box.
+typedef enum {
+    SwkbdTextDrawType_Line          = 0,  ///< The text will be displayed on a line. Also enables displaying the Header and Sub text.
+    SwkbdTextDrawType_Box           = 1,  ///< The text will be displayed in a box.
+    SwkbdTextDrawType_DownloadCode  = 2,  ///< Used by \ref swkbdConfigMakePresetDownloadCode on 5.0.0+.
+} SwkbdTextDrawType;
+
 typedef SwkbdTextCheckResult (*SwkbdTextCheckCb)(char* tmp_string, size_t tmp_string_size); /// TextCheck callback set by \ref swkbdConfigSetTextCheckCallback, for validating the input string when the swkbd ok-button is pressed. This buffer contains an UTF-8 string. This callback should validate the input string, then return a \ref SwkbdTextCheckResult indicating success/failure. On failure, this function must write an error message to the tmp_string buffer, which will then be displayed by swkbd.
 
 /// Base swkbd arg struct.
 typedef struct {
-    u32 type;                      ///< See \ref SwkbdType.
+    SwkbdType type;                  ///< See \ref SwkbdType.
     u16 okButtonText[18/2];
     u16 leftButtonText;
     u16 rightButtonText;
-    u8  dicFlag;                   ///< Enables dictionary usage when non-zero (including the system dictionary).
+    u8  dicFlag;                     ///< Enables dictionary usage when non-zero (including the system dictionary).
     u8  pad_x1b;
-    u32 keySetDisableBitmask;      ///< See \ref SwkbdKeyDisableBitmask.
-    u32 initialCursorPos;          ///< Initial cursor position in the string: 0 = start, 1 = end.
+    u32 keySetDisableBitmask;        ///< See SwkbdKeyDisableBitmask_*.
+    u32 initialCursorPos;            ///< Initial cursor position in the string: 0 = start, 1 = end.
     u16 headerText[130/2];
     u16 subText[258/2];
     u16 guideText[514/2];
     u16 pad_x3aa;
-    u32 stringLenMax;              ///< When non-zero, specifies the max string length. When the input is too long, swkbd will stop accepting more input until text is deleted via the B button (Backspace). See also \ref SwkbdTextDrawType.
-    u32 stringLenMaxExt;           ///< When non-zero, specifies the max string length. When the input is too long, swkbd will display an icon and disable the ok-button.
-    u32 passwordFlag;              ///< Use password: 0 = disable, 1 = enable.
-    u32 textDrawType;              ///< See \ref SwkbdTextDrawType.
-    u16 returnButtonFlag;          ///< Controls whether the Return button is enabled, for newlines input. 0 = disabled, non-zero = enabled.
-    u8  blurBackground;            ///< When enabled with value 1, the background is blurred.
+    u32 stringLenMax;                ///< When non-zero, specifies the max string length. When the input is too long, swkbd will stop accepting more input until text is deleted via the B button (Backspace). See also \ref SwkbdTextDrawType.
+    u32 stringLenMaxExt;             ///< When non-zero, specifies the max string length. When the input is too long, swkbd will display an icon and disable the ok-button.
+    u32 passwordFlag;                ///< Use password: 0 = disable, 1 = enable.
+    SwkbdTextDrawType textDrawType;  ///< See \ref SwkbdTextDrawType.
+    u16 returnButtonFlag;            ///< Controls whether the Return button is enabled, for newlines input. 0 = disabled, non-zero = enabled.
+    u8  blurBackground;              ///< When enabled with value 1, the background is blurred.
     u8  pad_x3bf;
     u32 initialStringOffset;
     u32 initialStringSize;
@@ -67,31 +92,6 @@ typedef struct {
 typedef struct {
     u8 unk_x0[0x64];
 } SwkbdDictWord;
-
-typedef enum {
-    SwkbdType_Normal = 0,  ///< Normal keyboard.
-    SwkbdType_NumPad = 1,  ///< Number pad. The buttons at the bottom left/right are only available when they're set by \ref swkbdConfigSetLeftOptionalSymbolKey / \ref swkbdConfigSetRightOptionalSymbolKey.
-    SwkbdType_QWERTY = 2,  ///< QWERTY (and variants) keyboard only.
-} SwkbdType;
-
-/// Bitmask for \ref SwkbdArgV0 keySetDisableBitmask. This disables keys on the keyboard when the corresponding bit(s) are set.
-typedef enum {
-    SwkbdKeyDisableBitmask_Space        = BIT(1),  ///< Disable space-bar.
-    SwkbdKeyDisableBitmask_At           = BIT(2),  ///< Disable '@'.
-    SwkbdKeyDisableBitmask_Percent      = BIT(3),  ///< Disable '%'.
-    SwkbdKeyDisableBitmask_ForwardSlash = BIT(4),  ///< Disable '/'.
-    SwkbdKeyDisableBitmask_Backslash    = BIT(5),  ///< Disable '\'.
-    SwkbdKeyDisableBitmask_Numbers      = BIT(6),  ///< Disable numbers.
-    SwkbdKeyDisableBitmask_DownloadCode = BIT(7),  ///< Used for \ref swkbdConfigMakePresetDownloadCode.
-    SwkbdKeyDisableBitmask_UserName     = BIT(8),  ///< Used for \ref swkbdConfigMakePresetUserName. Disables '@', '%', and '\'.
-} SwkbdKeyDisableBitmask;
-
-/// Value for \ref SwkbdArgV0 textDrawType. Only applies when stringLenMax is 1..32, otherwise swkbd will only use SwkbdTextDrawType_Box.
-typedef enum {
-    SwkbdTextDrawType_Line          = 0,  ///< The text will be displayed on a line. Also enables displaying the Header and Sub text.
-    SwkbdTextDrawType_Box           = 1,  ///< The text will be displayed in a box.
-    SwkbdTextDrawType_DownloadCode  = 2,  ///< Used by \ref swkbdConfigMakePresetDownloadCode on 5.0.0+.
-} SwkbdTextDrawType;
 
 /**
  * @brief Creates a SwkbdConfig struct.
