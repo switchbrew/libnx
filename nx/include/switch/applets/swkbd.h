@@ -31,10 +31,10 @@ typedef struct {
     u16 subText[258/2];
     u16 guideText[514/2];
     u16 pad_x3aa;
-    u32 stringLenMax;              ///< When non-zero, specifies the max string length. When the input is too long, swkbd will stop accepting more input until text is deleted via the B button (Backspace). When this is <=32, this will also display the string on a line instead of in a text-box, and enables displaying the Header and Sub text.
+    u32 stringLenMax;              ///< When non-zero, specifies the max string length. When the input is too long, swkbd will stop accepting more input until text is deleted via the B button (Backspace). See also \ref SwkbdTextDrawType.
     u32 stringLenMaxExt;           ///< When non-zero, specifies the max string length. When the input is too long, swkbd will display an icon and disable the ok-button.
     u32 passwordFlag;              ///< Use password: 0 = disable, 1 = enable.
-    u32 unk_x3b8;
+    u32 textDrawType;              ///< See \ref SwkbdTextDrawType.
     u16 returnButtonFlag;          ///< Controls whether the Return button is enabled, for newlines input. 0 = disabled, non-zero = enabled.
     u8  blurBackground;            ///< When enabled with value 1, the background is blurred.
     u8  pad_x3bf;
@@ -86,6 +86,13 @@ typedef enum {
     SwkbdKeyDisableBitmask_UserName     = BIT(8),  ///< Used for \ref swkbdConfigMakePresetUserName. Disables '@', '%', and '\'.
 } SwkbdKeyDisableBitmask;
 
+/// Value for \ref SwkbdArgV0 textDrawType. Only applies when stringLenMax is 1..32, otherwise swkbd will only use SwkbdTextDrawType_Box.
+typedef enum {
+    SwkbdTextDrawType_Line          = 0,  ///< The text will be displayed on a line. Also enables displaying the Header and Sub text.
+    SwkbdTextDrawType_Box           = 1,  ///< The text will be displayed in a box.
+    SwkbdTextDrawType_DownloadCode  = 2,  ///< Used by \ref swkbdConfigMakePresetDownloadCode on 5.0.0+.
+} SwkbdTextDrawType;
+
 /**
  * @brief Creates a SwkbdConfig struct.
  * @param c SwkbdConfig struct.
@@ -102,7 +109,7 @@ void swkbdClose(SwkbdConfig* c);
 /**
  * @brief Clears the args in the SwkbdConfig struct and initializes it with the Default Preset.
  * @note Do not use this before \ref swkbdCreate.
- * @note Sets the following fields: type = \ref SwkbdType_QWERTY, initialCursorPos = 1, returnButtonFlag = 1, blurBackground = 1. Pre-5.0.0: unk_x3b8 = 1.
+ * @note Sets the following fields: type = \ref SwkbdType_QWERTY, initialCursorPos = 1, returnButtonFlag = 1, blurBackground = 1. Pre-5.0.0: textDrawType = SwkbdTextDrawType_Box.
  * @param c SwkbdConfig struct.
  */
 void swkbdConfigMakePresetDefault(SwkbdConfig* c);
@@ -126,7 +133,7 @@ void swkbdConfigMakePresetUserName(SwkbdConfig* c);
 /**
  * @brief Clears the args in the SwkbdConfig struct and initializes it with the DownloadCode Preset.
  * @note Do not use this before \ref swkbdCreate.
- * @note Sets the following fields: type = \ref SwkbdType_Normal (\ref SwkbdType_QWERTY on 5.0.0+), keySetDisableBitmask = SwkbdKeyDisableBitmask_DownloadCode, initialCursorPos = 1, blurBackground = 1. 5.0.0+: stringLenMax = 16, stringLenMaxExt = 1, unk_x3b8 = 2. unk_x3e0[0-2] = 0x3, 0x7, and 0xb.
+ * @note Sets the following fields: type = \ref SwkbdType_Normal (\ref SwkbdType_QWERTY on 5.0.0+), keySetDisableBitmask = SwkbdKeyDisableBitmask_DownloadCode, initialCursorPos = 1, blurBackground = 1. 5.0.0+: stringLenMax = 16, stringLenMaxExt = 1, textDrawType = SwkbdTextDrawType_DownloadCode. unk_x3e0[0-2] = 0x3, 0x7, and 0xb.
  * @param c SwkbdConfig struct.
  */
 void swkbdConfigMakePresetDownloadCode(SwkbdConfig* c);

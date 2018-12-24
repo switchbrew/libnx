@@ -84,7 +84,7 @@ void swkbdConfigMakePresetDefault(SwkbdConfig* c) {
 
     c->arg.arg.type = SwkbdType_QWERTY;
     c->arg.arg.initialCursorPos = 1;
-    if (c->version < 0x50009) c->arg.arg.unk_x3b8 = 1;//removed with 5.x
+    if (c->version < 0x50009) c->arg.arg.textDrawType = SwkbdTextDrawType_Box;//removed with 5.x
     c->arg.arg.returnButtonFlag = 1;
     c->arg.arg.blurBackground = 1;
 }
@@ -119,7 +119,7 @@ void swkbdConfigMakePresetDownloadCode(SwkbdConfig* c) {
 
         c->arg.arg.stringLenMax = 16;
         c->arg.arg.stringLenMaxExt = 1;
-        c->arg.arg.unk_x3b8 = 2;
+        c->arg.arg.textDrawType = SwkbdTextDrawType_DownloadCode;
     }
 
     c->arg.arg.blurBackground = 1;
