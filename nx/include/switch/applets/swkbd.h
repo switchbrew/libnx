@@ -166,7 +166,6 @@ void swkbdConfigSetGuideText(SwkbdConfig* c, const char* str);
 
 /**
  * @brief Sets the Initial text. The default is "".
- * @note The swkbd applet currently doesn't display this, unknown why.
  * @param c SwkbdConfig struct.
  * @param str UTF-8 input string.
  */
