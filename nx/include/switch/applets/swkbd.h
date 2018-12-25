@@ -1,6 +1,6 @@
 /**
  * @file swkbd.h
- * @brief Wrapper for using the swkbd LibraryApplet.
+ * @brief Wrapper for using the swkbd (software keyboard) LibraryApplet.
  * @author yellows8
  * @copyright libnx Authors
  */

@@ -1,6 +1,7 @@
 /**
  * @file applet.h
  * @brief Applet (applet) service IPC wrapper.
+ * @note For wrappers which launch LibraryApplets etc, see switch/applets/.
  * @author yellows8
  * @copyright libnx Authors
  */
