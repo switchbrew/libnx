@@ -337,7 +337,14 @@ Result usbHsAcquireUsbIf(UsbHsClientIfSession* s, UsbHsInterface *interface) {
         s32 ID;
     } *raw;
 
-    ipcAddRecvBuffer(&c, &s->inf.inf, sizeof(UsbHsInterfaceInfo), BufferType_Normal);
+    if (!kernelAbove300()) {
+        ipcAddRecvBuffer(&c, &s->inf.inf, sizeof(UsbHsInterfaceInfo), BufferType_Normal);
+    }
+    else {
+        size_t tmpoff = offsetof(UsbHsInterfaceInfo, output_endpoint_descs[12]);
+        ipcAddRecvBuffer(&c, &s->inf.inf, tmpoff, BufferType_Normal);
+        ipcAddRecvBuffer(&c, &s->inf.inf.output_endpoint_descs[12], sizeof(UsbHsInterface) - tmpoff, BufferType_Normal);
+    }
 
     raw = serviceIpcPrepareHeader(&g_usbHsSrv, &c, sizeof(*raw));
 

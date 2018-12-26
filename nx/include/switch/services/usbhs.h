@@ -89,7 +89,7 @@ typedef struct {
     Event eventCtrlXfer;  ///< [2.0.0+] Signaled when CtrlXferAsync finishes.
     s32 ID;
 
-    UsbHsInterface inf;   ///< Initialized with the input interface from \ref usbHsAcquireUsbIf, then the first 0x1B8-bytes are overwritten with the cmd output (data before pathstr).
+    UsbHsInterface inf;   ///< Initialized with the input interface from \ref usbHsAcquireUsbIf, then overwritten with the cmd output. Pre-3.0.0 this only overwrites the first 0x1B8-bytes (data before pathstr).
 } UsbHsClientIfSession;
 
 typedef struct {
