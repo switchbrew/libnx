@@ -26,8 +26,9 @@ static inline void mutexInit(Mutex* m)
 /**
  * @brief Locks a mutex.
  * @param m Mutex object.
+ * @return 0 if the mutex is already owned by this thread, and 1 if it was sucessfully acquired.
  */
-void mutexLock(Mutex* m);
+bool mutexLock(Mutex* m);
 
 /**
  * @brief Attempts to lock a mutex without waiting.
@@ -39,8 +40,9 @@ bool mutexTryLock(Mutex* m);
 /**
  * @brief Unlocks a mutex.
  * @param m Mutex object.
+ * @return 1 if the mutex was released, and 0 if the mutex does not belong to this thread.
  */
-void mutexUnlock(Mutex* m);
+bool mutexUnlock(Mutex* m);
 
 /**
  * @brief Initializes a recursive mutex.

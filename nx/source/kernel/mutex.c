@@ -9,20 +9,21 @@ static u32 _GetTag(void) {
     return getThreadVars()->handle;
 }
 
-void mutexLock(Mutex* m) {
+bool mutexLock(Mutex* m) {
     u32 self = _GetTag();
 
+    bool first = false;
     while (1) {
         u32 cur = __sync_val_compare_and_swap((u32*)m, 0, self);
 
         if (cur == 0) {
             // We won the race!
-            return;
+            return true;
         }
 
         if ((cur &~ HAS_LISTENERS) == self) {
             // Kernel assigned it to us!
-            return;
+            return !first;
         }
 
         if (cur & HAS_LISTENERS) {
@@ -38,6 +39,8 @@ void mutexLock(Mutex* m) {
                 svcArbitrateLock(cur, (u32*)m, self);
             }
         }
+
+        first = true;
     }
 }
 
@@ -58,11 +61,20 @@ bool mutexTryLock(Mutex* m) {
     return 0;
 }
 
-void mutexUnlock(Mutex* m) {
-    u32 old = __sync_val_compare_and_swap((u32*)m, _GetTag(), 0);
+bool mutexUnlock(Mutex* m) {
+    u32 self = _GetTag();
+    u32 old = __sync_val_compare_and_swap((u32*)m, self, 0);
 
-    if (old & HAS_LISTENERS) {
-        svcArbitrateUnlock((u32*)m);
+    if ((old &~ HAS_LISTENERS) == self) {
+        if (old & HAS_LISTENERS) {
+            svcArbitrateUnlock((u32*)m);
+        }
+
+        return true;
+    }
+    else {
+        // The mutex doesn't belong to us
+        return false;    
     }
 }
 
