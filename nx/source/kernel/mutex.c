@@ -12,7 +12,7 @@ static u32 _GetTag(void) {
 bool mutexLock(Mutex* m) {
     u32 self = _GetTag();
 
-    bool first = false;
+    bool first = true;
     while (1) {
         u32 cur = __sync_val_compare_and_swap((u32*)m, 0, self);
 
@@ -40,7 +40,7 @@ bool mutexLock(Mutex* m) {
             }
         }
 
-        first = true;
+        first = false;
     }
 }
 
