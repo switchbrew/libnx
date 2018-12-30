@@ -341,9 +341,9 @@ Result usbHsAcquireUsbIf(UsbHsClientIfSession* s, UsbHsInterface *interface) {
         ipcAddRecvBuffer(&c, &s->inf.inf, sizeof(UsbHsInterfaceInfo), BufferType_Normal);
     }
     else {
-        size_t tmpoff = offsetof(UsbHsInterfaceInfo, output_endpoint_descs[12]);
-        ipcAddRecvBuffer(&c, &s->inf.inf, tmpoff, BufferType_Normal);
-        ipcAddRecvBuffer(&c, &s->inf.inf.output_endpoint_descs[12], sizeof(UsbHsInterface) - tmpoff, BufferType_Normal);
+        //These buffer addresses are the inverse of what official sw does - needed to get the correct UsbHsInterface output for some reason.
+        ipcAddRecvBuffer(&c, &s->inf.pathstr, sizeof(UsbHsInterface) - sizeof(UsbHsInterfaceInfo), BufferType_Normal);
+        ipcAddRecvBuffer(&c, &s->inf.inf, sizeof(UsbHsInterfaceInfo), BufferType_Normal);
     }
 
     raw = serviceIpcPrepareHeader(&g_usbHsSrv, &c, sizeof(*raw));
