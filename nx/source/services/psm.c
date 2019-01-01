@@ -8,17 +8,14 @@
 #include "services/sm.h"
 
 static Service g_psmSrv;
-static Service g_psmSession;
-static Event g_psmStateChangeEvent;
-static bool g_psmStateChangeEventInitialized;
 static u64 g_refCnt;
 
 static Result _psmOpenSession(Service* out);
-static Result _psmBindStateChangeEvent(Event* event_out);
+static Result _psmBindStateChangeEvent(PsmSession* s, Event* event_out);
 
-static Result _psmSetChargerTypeChangeEventEnabled(bool flag);
-static Result _psmSetPowerSupplyChangeEventEnabled(bool flag);
-static Result _psmSetBatteryVoltageStateChangeEventEnabled(bool flag);
+static Result _psmSetChargerTypeChangeEventEnabled(PsmSession* s, bool flag);
+static Result _psmSetPowerSupplyChangeEventEnabled(PsmSession* s, bool flag);
+static Result _psmSetBatteryVoltageStateChangeEventEnabled(PsmSession* s, bool flag);
 
 Result psmInitialize(void) {
     Result rc = 0;
@@ -28,13 +25,7 @@ Result psmInitialize(void) {
     if (serviceIsActive(&g_psmSrv))
         return 0;
 
-    g_psmStateChangeEventInitialized = 0;
-
     rc = smGetService(&g_psmSrv, "psm");
-
-    if (R_SUCCEEDED(rc)) {
-        rc = _psmOpenSession(&g_psmSession);
-    }
 
     if (R_FAILED(rc)) psmExit();
 
@@ -43,8 +34,6 @@ Result psmInitialize(void) {
 
 void psmExit(void) {
     if (atomicDecrement64(&g_refCnt) == 0) {
-        if (g_psmStateChangeEventInitialized) psmUnbindStateChangeEvent();
-        serviceClose(&g_psmSession);
         serviceClose(&g_psmSrv);
     }
 }
@@ -140,39 +129,36 @@ static Result _psmOpenSession(Service* out) {
     return rc;
 }
 
-Result psmBindStateChangeEvent(bool ChargerType, bool PowerSupply, bool BatteryVoltage) {
+Result psmBindStateChangeEvent(PsmSession* s, bool ChargerType, bool PowerSupply, bool BatteryVoltage) {
     Result rc=0;
 
-    if (g_psmStateChangeEventInitialized) {
-        rc = psmUnbindStateChangeEvent();
-        if (R_FAILED(rc)) return rc;
-    }
-
-    rc = _psmSetChargerTypeChangeEventEnabled(ChargerType);
+    rc = _psmOpenSession(&s->s);
     if (R_FAILED(rc)) return rc;
 
-    rc = _psmSetPowerSupplyChangeEventEnabled(PowerSupply);
+    rc = _psmSetChargerTypeChangeEventEnabled(s, ChargerType);
     if (R_FAILED(rc)) return rc;
 
-    rc = _psmSetBatteryVoltageStateChangeEventEnabled(BatteryVoltage);
+    rc = _psmSetPowerSupplyChangeEventEnabled(s, PowerSupply);
     if (R_FAILED(rc)) return rc;
 
-    rc = _psmBindStateChangeEvent(&g_psmStateChangeEvent);
+    rc = _psmSetBatteryVoltageStateChangeEventEnabled(s, BatteryVoltage);
+    if (R_FAILED(rc)) return rc;
 
-    if (R_SUCCEEDED(rc)) g_psmStateChangeEventInitialized = 1;
+    rc = _psmBindStateChangeEvent(s, &s->StateChangeEvent);
+    if (R_FAILED(rc)) serviceClose(&s->s);
 
     return rc;
 }
 
-Result psmWaitStateChangeEvent(u64 timeout) {
+Result psmWaitStateChangeEvent(PsmSession* s, u64 timeout) {
     Result rc = 0;
 
-    rc = eventWait(&g_psmStateChangeEvent, timeout);
-    if (R_SUCCEEDED(rc)) rc = eventClear(&g_psmStateChangeEvent);
+    rc = eventWait(&s->StateChangeEvent, timeout);
+    if (R_SUCCEEDED(rc)) rc = eventClear(&s->StateChangeEvent);
     return rc;
 }
 
-static Result _psmBindStateChangeEvent(Event *event_out) {
+static Result _psmBindStateChangeEvent(PsmSession* s, Event *event_out) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -181,12 +167,12 @@ static Result _psmBindStateChangeEvent(Event *event_out) {
         u64 cmd_id;
     } *raw;
 
-    raw = serviceIpcPrepareHeader(&g_psmSession, &c, sizeof(*raw));
+    raw = serviceIpcPrepareHeader(&s->s, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 0;
 
-    Result rc = serviceIpcDispatch(&g_psmSession);
+    Result rc = serviceIpcDispatch(&s->s);
 
     if(R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -196,7 +182,7 @@ static Result _psmBindStateChangeEvent(Event *event_out) {
             u64 result;
         } *resp;
 
-        serviceIpcParse(&g_psmSession, &r, sizeof(*resp));
+        serviceIpcParse(&s->s, &r, sizeof(*resp));
         resp = r.Raw;
 
         rc = resp->result;
@@ -209,26 +195,21 @@ static Result _psmBindStateChangeEvent(Event *event_out) {
     return rc;
 }
 
-Result psmUnbindStateChangeEvent(void) {
+Result psmUnbindStateChangeEvent(PsmSession* s) {
     IpcCommand c;
     ipcInitialize(&c);
-
-    if (g_psmStateChangeEventInitialized) {
-        g_psmStateChangeEventInitialized = 0;
-        eventClose(&g_psmStateChangeEvent);
-    }
 
     struct {
         u64 magic;
         u64 cmd_id;
     } *raw;
 
-    raw = serviceIpcPrepareHeader(&g_psmSession, &c, sizeof(*raw));
+    raw = serviceIpcPrepareHeader(&s->s, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 1;
 
-    Result rc = serviceIpcDispatch(&g_psmSession);
+    Result rc = serviceIpcDispatch(&s->s);
 
     if(R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -238,16 +219,19 @@ Result psmUnbindStateChangeEvent(void) {
             u64 result;
         } *resp;
 
-        serviceIpcParse(&g_psmSession, &r, sizeof(*resp));
+        serviceIpcParse(&s->s, &r, sizeof(*resp));
         resp = r.Raw;
 
         rc = resp->result;
     }
 
+    eventClose(&s->StateChangeEvent);
+    serviceClose(&s->s);
+
     return rc;
 }
 
-static Result _psmSetEventEnabled(u64 cmd_id, bool flag) {
+static Result _psmSetEventEnabled(PsmSession* s, u64 cmd_id, bool flag) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -257,13 +241,13 @@ static Result _psmSetEventEnabled(u64 cmd_id, bool flag) {
         u8 flag;
     } *raw;
 
-    raw = serviceIpcPrepareHeader(&g_psmSession, &c, sizeof(*raw));
+    raw = serviceIpcPrepareHeader(&s->s, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = cmd_id;
     raw->flag = (flag != 0);
 
-    Result rc = serviceIpcDispatch(&g_psmSession);
+    Result rc = serviceIpcDispatch(&s->s);
 
     if(R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -273,7 +257,7 @@ static Result _psmSetEventEnabled(u64 cmd_id, bool flag) {
             u64 result;
         } *resp;
 
-        serviceIpcParse(&g_psmSession, &r, sizeof(*resp));
+        serviceIpcParse(&s->s, &r, sizeof(*resp));
         resp = r.Raw;
 
         rc = resp->result;
@@ -282,14 +266,14 @@ static Result _psmSetEventEnabled(u64 cmd_id, bool flag) {
     return rc;
 }
 
-static Result _psmSetChargerTypeChangeEventEnabled(bool flag) {
-    return _psmSetEventEnabled(2, flag);
+static Result _psmSetChargerTypeChangeEventEnabled(PsmSession* s, bool flag) {
+    return _psmSetEventEnabled(s, 2, flag);
 }
 
-static Result _psmSetPowerSupplyChangeEventEnabled(bool flag) {
-    return _psmSetEventEnabled(3, flag);
+static Result _psmSetPowerSupplyChangeEventEnabled(PsmSession* s, bool flag) {
+    return _psmSetEventEnabled(s, 3, flag);
 }
 
-static Result _psmSetBatteryVoltageStateChangeEventEnabled(bool flag) {
-    return _psmSetEventEnabled(4, flag);
+static Result _psmSetBatteryVoltageStateChangeEventEnabled(PsmSession* s, bool flag) {
+    return _psmSetEventEnabled(s, 4, flag);
 }

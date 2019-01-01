@@ -6,6 +6,8 @@
  */
 #pragma once
 #include "../types.h"
+#include "../services/sm.h"
+#include "../kernel/event.h"
 
 typedef enum {
     ChargerType_None = 0,    ///< No charger
@@ -20,6 +22,12 @@ typedef enum {
     PsmBatteryVoltageState_Normal = 3,             ///< Everything is normal
 } PsmBatteryVoltageState;
 
+/// IPsmSession
+typedef struct {
+    Service s;
+    Event StateChangeEvent;  ///< autoclear=false
+} PsmSession;
+
 Result psmInitialize(void);
 void psmExit(void);
 
@@ -28,17 +36,17 @@ Result psmGetChargerType(ChargerType *out);
 Result psmGetBatteryVoltageState(PsmBatteryVoltageState *out);
 
 /**
- * @brief Wrapper func which handles event setup.
+ * @brief Wrapper func which opens a PsmSession and handles event setup.
  * @note Uses the actual BindStateChangeEvent cmd internally.
  * @note The event is not signalled on BatteryChargePercentage changes.
  * @param[in] ChargerType Passed to SetChargerTypeChangeEventEnabled.
  * @param[in] PowerSupply Passed to SetPowerSupplyChangeEventEnabled.
  * @param[in] BatteryVoltage Passed to SetBatteryVoltageStateChangeEventEnabled.
  */
-Result psmBindStateChangeEvent(bool ChargerType, bool PowerSupply, bool BatteryVoltage);
+Result psmBindStateChangeEvent(PsmSession* s, bool ChargerType, bool PowerSupply, bool BatteryVoltage);
 
-/// Wait on the Event setup by psmBindStateChangeEvent.
-Result psmWaitStateChangeEvent(u64 timeout);
+/// Wait on the Event setup by \ref psmBindStateChangeEvent.
+Result psmWaitStateChangeEvent(PsmSession* s, u64 timeout);
 
-/// Cleanup version of psmBindStateChangeEvent. Called automatically by \ref psmExit and \ref psmBindStateChangeEvent, if already initialized.
-Result psmUnbindStateChangeEvent(void);
+/// Cleanup version of \ref psmBindStateChangeEvent. Must be called by the user once the PsmSession is done being used.
+Result psmUnbindStateChangeEvent(PsmSession* s);
