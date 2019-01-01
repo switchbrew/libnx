@@ -1,5 +1,64 @@
 # Changelog
 
+## Version 2.0.0
+
+#### system
+* **Introduced multi-wait infrastructure, allowing for user mode synchronization primitives. Users are advised to stop using svcWaitSynchronization(Single) manually and move to the new wait API.**
+* **Added UEvent and UTimer user mode synchronization primitives.**
+* **Added full list of KernelError result codes, as well as a KERNELRESULT macro.**
+* Added eventActive.
+* Added tmemCreateFromMemory.
+* Added syscall: svcTerminateDebugProcess.
+* Corrected syscalls: svcMapPhysicalMemory, svcUnmapPhysicalMemory.
+* Fixed bug in ipcParseDomainResponse.
+* Fixed bug in ipcPrepareHeaderForDomain.
+* Added serviceSendObject.
+
+#### graphics
+* **Major refactor and redesign of the entire libnx graphics stack.**
+  * **Introduced NWindow (Native Window) API**, allowing for direct management of a renderable surface. It is possible to create a NWindow out of a ViLayer (or other sources of an IGBP binder object); or use nwindowGetDefault to retrieve the default native window.
+  * **Introduced Framebuffer API** (used for creating and managing a software rendered framebuffer on a NWindow).
+  * **Deprecated the old gfx API, scheduled for removal in the next libnx release**. Users are advised to move to the new NWindow API (and Framebuffer if applicable). Please see switch-examples for more information on how to use this new API.
+  * **The default software rendered console backend now uses NWindow and Framebuffer** instead of the old gfx API. Therefore, it is now **mandatory** to use consoleUpdate/consoleExit.
+  * Optimized software console scrolling; now using 128-bit copies and RGB565 framebuffer format (which requires 50% less memory bandwidth).
+  * Completely redesigned Nvidia ioctl wrapper objects, now more closely matching official logic.
+  * Miscellaneous fixes in vi, parcel, IGBP, etc code.
+* Added vi commands: viSetContentVisibility, viGetDisplayLogicalResolution, viSetDisplayMagnification, viSetDisplayPowerState, viSetDisplayAlpha, viGetDisplayMinimumZ, viGetDisplayMaximumZ, viSetLayerSize, viSetLayerZ, viSetLayerPosition.
+* Improved ViScalingMode enum.
+
+#### applet
+* **Introduced libapplet (library applet) launching support**.
+* **Added swkbd (software keyboard) libapplet wrapper**.
+* Added applet commands: appletPopLaunchParameter, appletPushToGeneralChannel, appletSetTerminateResult, appletSetMediaPlaybackState.
+* Added account applet wrapper: accountGetPreselectedUser.
+* Added libappletRequestHomeMenu, libappletRequestJumpToSystemUpdate.
+* Added AppletStorage object.
+* Added AppletHolder object.
+* Added LibAppletArgs object.
+* Corrected and added missing AppletFocusState and AppletFocusHandlingMode enum values.
+* Now using domains for am services.
+
+#### usb
+* Added usb:hs service wrapper.
+* Now using domains for usb:ds.
+* Miscellaneous fixes and refactoring.
+
+#### other services
+* Added fs command: fsIsExFatSupported.
+* Added hid command: hidAcquireNpadStyleSetUpdateEventHandle.
+* Added ldr:ro and ro:dmnt service wrappers.
+* Added ns:dev commands: nsdevLaunchProgram, nsdevGetShellEvent, nsdevGetShellEventInfo, nsdevTerminateApplication, nsdevPrepareLaunchProgramFromHost, nsdevLaunchApplication, nsdevLaunchApplicationWithStorageId, nsdevIsSystemMemoryResourceLimitBoosted, nsdevGetRunningApplicationProcessId, nsdevSetCurrentApplicationRightsEnvironmentCanBeActive.
+* Added pm:dmnt commands: pmdmntGetDebugProcesses, pmdmntDisableDebug.
+* Added pm:shell commands: pmshellTerminateProcessByProcessId, pmshellGetProcessEvent, pmshellGetProcessEventInfo, pmshellFinalizeDeadProcess, pmshellClearProcessExceptionOccurred, pmshellNotifyBootFinished, pmshellBoostSystemMemoryResourceLimit.
+* Renamed ldrDmntGetNsoInfos to ldrDmntGetModuleInfos.
+* Changed psm wrapper to dynamically open and close IPC sessions instead of leaving one open at all times. Introduced PsmSession object, used to manage this session.
+* Fixed IPC bug in splSetConfig.
+
+#### miscellaneous
+* Added sys/poll.h as an alias for poll.h.
+* Fixed compatibility with C99.
+* Further improvements to overall system stability and other minor adjustments to enhance the user experience.
+
 ## Version 1.6.0
 
 #### system
