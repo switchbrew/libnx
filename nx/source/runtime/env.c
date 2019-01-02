@@ -17,6 +17,7 @@ static u64    g_syscallHints[2];
 static Handle g_processHandle = INVALID_HANDLE;
 static char*  g_nextLoadPath = NULL;
 static char*  g_nextLoadArgv = NULL;
+static char*  g_nroReturnPath=NULL;
 static Result g_lastLoadResult = 0;
 static bool   g_hasRandomSeed = false;
 static u64    g_randomSeed[2] = { 0, 0 };
@@ -97,6 +98,10 @@ void envSetup(void* ctx, Handle main_thread, LoaderReturnFn saved_lr)
             g_hasRandomSeed = true;
             g_randomSeed[0] = ent->Value[0];
             g_randomSeed[1] = ent->Value[1];
+            break;
+
+        case EntryType_NroReturnPath:
+            g_nroReturnPath = (char*) ent->Value[0];
             break;
 
         default:
@@ -182,6 +187,19 @@ Result envSetNextLoad(const char* path, const char* argv)
 
 bool envHasNextLoad(void) {
     return g_nextLoadPath != NULL;
+}
+
+Result envSetNroReturnPath(const char* path) {
+    if (g_nroReturnPath == NULL)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    strcpy(g_nroReturnPath, path);
+
+    return 0;
+}
+
+bool envHasNroReturnPath(void) {
+    return g_nroReturnPath!=NULL;
 }
 
 Result envGetLastLoadResult(void) {

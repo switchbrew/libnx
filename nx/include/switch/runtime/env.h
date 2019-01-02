@@ -34,6 +34,7 @@ enum {
     EntryType_ProcessHandle=10,       ///< Provides the process handle.
     EntryType_LastLoadResult=11,      ///< Provides the last load result.
     EntryType_RandomSeed=14,          ///< Provides random data used to seed the pseudo-random number generator.
+    EntryType_NroReturnPath=15
 };
 
 enum {
@@ -93,6 +94,12 @@ Result envSetNextLoad(const char* path, const char* argv);
 
 /// Returns true if the environment supports envSetNextLoad.
 bool envHasNextLoad(void);
+
+/// Sets the path of the NRO that will be loaded after the next one
+Result envSetNroReturnPath(const char* path);
+
+///Returns true if the environment supports envSetNroReturnPath
+bool envHasNroReturnPath(void);
 
 /// Returns the Result from the last NRO.
 Result envGetLastLoadResult(void);
