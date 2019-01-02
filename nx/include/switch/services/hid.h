@@ -325,6 +325,7 @@ typedef enum
 
 typedef struct touchPosition
 {
+    u32 id;
     u32 px;
     u32 py;
     u32 dx;

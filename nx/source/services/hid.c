@@ -472,6 +472,7 @@ void hidTouchRead(touchPosition *pos, u32 point_id) {
             return;
         }
 
+        pos->id = g_touchEntry.touches[point_id].touchIndex;
         pos->px = g_touchEntry.touches[point_id].x;
         pos->py = g_touchEntry.touches[point_id].y;
         pos->dx = g_touchEntry.touches[point_id].diameterX;
