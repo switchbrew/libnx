@@ -10,8 +10,8 @@
     },
 
     "docs": {
-       // Only invoke docs target when building from master branch
-      "branch": "master",
+       // This target build and upload docs and will be trigged from doozer's CD script
+      "auto": false,
 
       "buildenv": "xenial-amd64",
       "builddeps": [
