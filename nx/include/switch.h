@@ -82,7 +82,6 @@ extern "C" {
 #include "switch/services/ncm.h"
 #include "switch/services/psc.h"
 
-#include "switch/display/gfx.h"
 #include "switch/display/binder.h"
 #include "switch/display/parcel.h"
 #include "switch/display/buffer_producer.h"
