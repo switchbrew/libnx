@@ -234,6 +234,9 @@ Result appletCreateLibraryAppletSelf(AppletHolder *h, AppletId id, LibAppletMode
 /// Closes an AppletHolder object.
 void appletHolderClose(AppletHolder *h);
 
+/// Returns whether the AppletHolder object was initialized.
+bool appletHolderActive(AppletHolder *h);
+
 /**
  * @brief Gets the IndirectLayerConsumerHandle loaded during \ref appletCreateLibraryApplet, on 2.0.0+.
  * @note  Only available when \ref LibAppletMode is \ref LibAppletMode_Unknown3.
@@ -253,6 +256,12 @@ Result appletHolderStart(AppletHolder *h);
  * @param h AppletHolder object.
  */
 void appletHolderJoin(AppletHolder *h);
+
+/**
+ * @brief Waits on the LibraryApplet StateChangedEvent with timeout=0, and returns whether it was successful.
+ * @param h AppletHolder object.
+ */
+bool appletHolderCheckFinished(AppletHolder *h);
 
 /**
  * @brief Gets the \ref LibAppletExitReason set by \ref appletHolderJoin.

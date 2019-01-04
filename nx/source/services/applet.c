@@ -1642,6 +1642,10 @@ void appletHolderClose(AppletHolder *h) {
     memset(h, 0, sizeof(AppletHolder));
 }
 
+bool appletHolderActive(AppletHolder *h) {
+    return serviceIsActive(&h->s);
+}
+
 Result appletHolderGetIndirectLayerConsumerHandle(AppletHolder *h, u64 *out) {
     if (!serviceIsActive(&h->s))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
@@ -1688,6 +1692,10 @@ void appletHolderJoin(AppletHolder *h) {
     }
 
     h->exitreason = res;
+}
+
+bool appletHolderCheckFinished(AppletHolder *h) {
+    return R_SUCCEEDED(eventWait(&h->StateChangedEvent, 0));
 }
 
 u32 appletHolderGetExitReason(AppletHolder *h) {
