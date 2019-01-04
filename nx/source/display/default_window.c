@@ -27,8 +27,11 @@ void __nx_win_init(void)
             rc = viCreateLayer(&g_viDisplay, &g_viLayer);
             if (R_SUCCEEDED(rc)) {
                 rc = viSetLayerScalingMode(&g_viLayer, ViScalingMode_FitToLayer);
-                if (R_SUCCEEDED(rc))
+                if (R_SUCCEEDED(rc)) {
                     rc = nwindowCreateFromLayer(&g_defaultWin, &g_viLayer);
+                    if (R_SUCCEEDED(rc))
+                        nwindowSetDimensions(&g_defaultWin, 1280, 720);
+                }
                 if (R_FAILED(rc))
                     viCloseLayer(&g_viLayer);
             }
