@@ -253,8 +253,11 @@ typedef enum {
 typedef enum {
     NvColorFormat_Unspecified = 0x0000000000UL,
     NvColorFormat_NonColor8 = 0x0009200408UL,
-    NvColorFormat_X4C4 = 0x0009200A10UL,
-    NvColorFormat_NonColor32 = 0x0100490508UL,
+    NvColorFormat_NonColor16 = 0x0009200A10UL,
+    NvColorFormat_NonColor24 = 0x0009201A18UL,
+    NvColorFormat_NonColor32 = 0x0009201C20UL,
+    NvColorFormat_X4C4 = 0x0009210508UL,
+    NvColorFormat_A4L4 = 0x0100490508UL,
     NvColorFormat_A8L8 = 0x0100490E10UL,
     NvColorFormat_Float_A16L16 = 0x0100495D20UL,
     NvColorFormat_A1B5G5R5 = 0x0100531410UL,
