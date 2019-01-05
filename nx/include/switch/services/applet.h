@@ -203,7 +203,7 @@ Result appletEndBlockingHomeButton(void);
  * @param count Total entries in the input/output arrays.
  * @param out Output s32.
  */
-Result appletQueryApplicationPlayStatistics(AppletApplicationPlayStatistics *stats, u64 *titleIDs, s32 count, s32 *out);
+Result appletQueryApplicationPlayStatistics(AppletApplicationPlayStatistics *stats, const u64 *titleIDs, s32 count, s32 *out);
 
 /**
  * @brief Delay exiting until \ref appletUnlockExit is called, with a 15 second timeout once exit is requested.

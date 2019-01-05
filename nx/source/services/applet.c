@@ -1123,7 +1123,7 @@ Result appletInitializeGamePlayRecording(void) {
 }
 
 //Official sw has this under 'pdm'.
-Result appletQueryApplicationPlayStatistics(AppletApplicationPlayStatistics *stats, u64 *titleIDs, s32 count, s32 *out) {
+Result appletQueryApplicationPlayStatistics(AppletApplicationPlayStatistics *stats, const u64 *titleIDs, s32 count, s32 *out) {
     IpcCommand c;
     ipcInitialize(&c);
 
