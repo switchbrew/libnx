@@ -40,6 +40,13 @@ typedef enum {
     SwkbdTextDrawType_DownloadCode  = 2,  ///< Used by \ref swkbdConfigMakePresetDownloadCode on 5.0.0+. Enables using \ref SwkbdArgV7 unk_x3e0.
 } SwkbdTextDrawType;
 
+/// SwkbdInline Interactive input storage request ID.
+typedef enum {
+    SwkbdRequestCommand_Finalize = 0x4,
+    SwkbdRequestCommand_SetCustomizeDic = 0x7,
+    SwkbdRequestCommand_Calc = 0xA,
+} SwkbdRequestCommand;
+
 typedef SwkbdTextCheckResult (*SwkbdTextCheckCb)(char* tmp_string, size_t tmp_string_size); /// TextCheck callback set by \ref swkbdConfigSetTextCheckCallback, for validating the input string when the swkbd ok-button is pressed. This buffer contains an UTF-8 string. This callback should validate the input string, then return a \ref SwkbdTextCheckResult indicating success/failure. On failure, this function must write an error message to the tmp_string buffer, which will then be displayed by swkbd.
 
 /// Base swkbd arg struct.
@@ -92,6 +99,71 @@ typedef struct {
 typedef struct {
     u8 unk_x0[0x64];
 } SwkbdDictWord;
+
+typedef struct {
+    u32 unk_x0;
+    u8 mode;            ///< Controls the LibAppletMode when launching the applet. Non-zero indicates LibAppletMode_Background, otherwise LibAppletMode_Unknown3
+    u8 unk_x5;          ///< Only set on 5.0.0+.
+    u8 pad[2];
+} SwkbdInitializeArg;
+
+typedef struct {
+    u32 unk_x0;
+    u64 unk_x4;
+    u64 unk_xc;
+    u8 unk_x14[0x6];
+    u8 unk_x1a;
+    u8 unk_x1b;
+    u32 unk_x1c;
+    s32 unk_x20;
+    s32 unk_x24;
+    u64 unk_x28;
+    u8 unk_x30;
+    u8 unk_x31[0x17];
+} SwkbdAppearArg;
+
+typedef struct {
+    u32 unk_x0;
+    u16 size;                    ///< Size of this struct.
+    u8 unk_x6;
+    u8 unk_x7;
+    u64 flags;
+    SwkbdInitializeArg initArg;  ///< Flags bitmask 0x1.
+    float volume;                ///< Flags bitmask 0x2.
+    s32 cursorPos;               ///< Flags bitmask 0x10.
+    SwkbdAppearArg appearArg;
+    u8 unk_x68[0x3d4];
+    u8 utf8Mode;                 ///< Flags bitmask 0x20.
+    u8 unk_x43d;
+    u8 enableBackspace;          ///< Flags bitmask 0x8000. Added with 5.x.
+    u8 unk_x43f[3];
+    u8 keytopAsFloating;         ///< Flags bitmask 0x200.
+    u8 footerScalable;           ///< Flags bitmask 0x100.
+    u8 alphaEnabledInInputMode;  ///< Flags bitmask 0x200.
+    u8 inputModeFadeType;        ///< Flags bitmask 0x100.
+    u8 disableTouch;             ///< Flags bitmask 0x200.
+    u8 disableUSBKeyboard;       ///< Flags bitmask 0x800.
+    u8 unk_x448[5];
+    u16 unk_x44d;
+    u8 unk_x44f;
+    float keytopScale0;          ///< Flags bitmask 0x200.
+    float keytopScale1;          ///< Flags bitmask 0x200.
+    float keytopTranslate0;      ///< Flags bitmask 0x200.
+    float keytopTranslate1;      ///< Flags bitmask 0x200.
+    float keytopBgAlpha;         ///< Flags bitmask 0x100.
+    float unk_x464;
+    float balloonScale;          ///< Flags bitmask 0x200.
+    float unk_x46c;
+    u64 unk_x470[4];
+    u8 unk_x490[0x10];
+} PACKED SwkbdInlineCalcArg;
+
+/// InlineKeyboard
+typedef struct {
+    u32 version;
+    AppletHolder holder;
+    SwkbdInlineCalcArg calcArg;
+} SwkbdInline;
 
 /**
  * @brief Creates a SwkbdConfig struct.
@@ -213,4 +285,31 @@ void swkbdConfigSetTextCheckCallback(SwkbdConfig* c, SwkbdTextCheckCb cb);
  * @param out_string_size UTF-8 Output string buffer size, including NUL-terminator.
  */
 Result swkbdShow(SwkbdConfig* c, char* out_string, size_t out_string_size);
+
+/**
+ * @brief Creates a SwkbdInline object.
+ * @note This is essentially an asynchronous version of the regular swkbd.
+ * @param s SwkbdInline object.
+ */
+Result swkbdInlineCreate(SwkbdInline* s);
+
+/**
+ * @brief Closes a SwkbdInline object. If the applet is running, this will tell the applet to exit, then wait for the applet to exit + applet exit handling.
+ * @param s SwkbdInline object.
+ */
+Result swkbdInlineClose(SwkbdInline* s);
+
+/**
+ * @brief Launches the applet with the SwkbdInline object.
+ * @param s SwkbdInline object.
+ */
+Result swkbdInlineLaunch(SwkbdInline* s);
+
+/**
+ * @brief Handles updating SwkbdInline state, this should be called periodically.
+ * @note Handles applet exit if needed, and also sends the \ref SwkbdInlineCalcArg to the applet if needed. Hence, this should be called at some point after writing to \ref SwkbdInlineCalcArg.
+ * @note Handles applet Interactive storage output when needed.
+ * @param s SwkbdInline object.
+ */
+Result swkbdInlineUpdate(SwkbdInline* s);
 

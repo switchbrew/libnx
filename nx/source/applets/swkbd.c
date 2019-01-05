@@ -39,25 +39,29 @@ static void _swkbdConfigClear(SwkbdConfig* c) {
     memset(c->arg.unk_x3e0, 0xff, sizeof(c->arg.unk_x3e0));
 }
 
+static void _swkbdInitVersion(u32* version) {
+    *version=0x5;//1.0.0+ version
+    if (kernelAbove500()) {
+        *version = 0x50009;
+    }
+    else if (kernelAbove400()) {
+        *version = 0x40008;
+    }
+    else if (kernelAbove300()) {
+        *version = 0x30007;
+    }
+    else if (kernelAbove200()) {
+        *version = 0x10006;
+    }
+}
+
 Result swkbdCreate(SwkbdConfig* c, s32 max_dictwords) {
     Result rc=0;
 
     memset(c, 0, sizeof(SwkbdConfig));
     _swkbdConfigClear(c);
 
-    c->version=0x5;//1.0.0+ version
-    if (kernelAbove500()) {
-        c->version = 0x50009;
-    }
-    else if (kernelAbove400()) {
-        c->version = 0x40008;
-    }
-    else if (kernelAbove300()) {
-        c->version = 0x30007;
-    }
-    else if (kernelAbove200()) {
-        c->version = 0x10006;
-    }
+    _swkbdInitVersion(&c->version);
 
     c->workbuf_size = 0x1000;
     if (max_dictwords > 0 && max_dictwords <= 0x3e8) c->max_dictwords = max_dictwords;
@@ -306,6 +310,123 @@ Result swkbdShow(SwkbdConfig* c, char* out_string, size_t out_string_size) {
     appletStorageCloseTmem(&storage);
 
     free(strbuf);
+
+    return rc;
+}
+
+static Result _swkbdSendRequest(SwkbdInline* s, u32 RequestCommand, const void* buffer, size_t size) {
+    Result rc=0;
+    AppletStorage storage;
+
+    rc = appletCreateStorage(&storage, size+sizeof(u32));
+    if (R_FAILED(rc)) return rc;
+
+    rc = appletStorageWrite(&storage, 0, &RequestCommand, sizeof(RequestCommand));
+    if (R_SUCCEEDED(rc) && buffer!=NULL) rc = appletStorageWrite(&storage, sizeof(RequestCommand), buffer, size);
+    if (R_FAILED(rc)) {
+        appletStorageClose(&storage);
+        return rc;
+    }
+
+    return appletHolderPushInteractiveInData(&s->holder, &storage);
+}
+
+Result swkbdInlineCreate(SwkbdInline* s) {
+    memset(s, 0, sizeof(SwkbdInline));
+
+    _swkbdInitVersion(&s->version);
+
+    s->calcArg.unk_x0 = 0x30000;
+    s->calcArg.size = sizeof(s->calcArg);
+
+    //if (s->version >= 0x50009) s->calcArg.initArg.unk_x5 = 0x1;//Set in a separate init func by official sw on 5.0.0+.
+
+    s->calcArg.volume = 1.0f;
+    s->calcArg.appearArg.unk_x0 = 0x2;
+    s->calcArg.unk_x6 = 1;
+    s->calcArg.unk_x7 = 1;
+    s->calcArg.appearArg.unk_x20 = -1;
+    s->calcArg.appearArg.unk_x24 = -1;
+    s->calcArg.appearArg.unk_x30 = 1;
+
+    s->calcArg.enableBackspace = 1;
+    s->calcArg.unk_x43f[0] = 1;
+    s->calcArg.footerScalable = 1;
+    s->calcArg.inputModeFadeType = 1;
+
+    s->calcArg.keytopScale0 = 1.0f;
+    s->calcArg.keytopScale1 = 1.0f;
+    s->calcArg.keytopBgAlpha = 1.0f;
+    s->calcArg.unk_x464 = 1.0f;
+    s->calcArg.balloonScale = 1.0f;
+    s->calcArg.unk_x46c = 1.0f;
+
+    return 0;
+}
+
+Result swkbdInlineClose(SwkbdInline* s) {
+    Result rc=0;
+
+    if (appletHolderActive(&s->holder))
+    {
+        _swkbdSendRequest(s, SwkbdRequestCommand_Finalize, NULL, 0);//Finalize cmd
+
+        appletHolderJoin(&s->holder);
+
+        LibAppletExitReason reason = appletHolderGetExitReason(&s->holder);
+
+        if (reason == LibAppletExitReason_Canceled) {
+            rc = MAKERESULT(Module_Libnx, LibnxError_LibAppletBadExit);
+        }
+        else if (reason == LibAppletExitReason_Abnormal || reason == LibAppletExitReason_Unexpected) {
+            rc = MAKERESULT(Module_Libnx, LibnxError_LibAppletBadExit);
+        }
+
+        appletHolderClose(&s->holder);
+    }
+
+    return rc;
+}
+
+Result swkbdInlineLaunch(SwkbdInline* s) {
+    Result rc=0;
+
+    rc = appletCreateLibraryApplet(&s->holder, AppletId_swkbd, s->calcArg.initArg.mode!=0 ? LibAppletMode_Background : LibAppletMode_Unknown3);
+    if (R_FAILED(rc)) return rc;
+
+    LibAppletArgs commonargs;
+    libappletArgsCreate(&commonargs, s->version);
+    rc = libappletArgsPush(&commonargs, &s->holder);
+
+    if (R_SUCCEEDED(rc)) rc = libappletPushInData(&s->holder, &s->calcArg.initArg, sizeof(s->calcArg.initArg));
+
+    if (R_SUCCEEDED(rc)) rc = appletHolderStart(&s->holder);
+
+    return rc;
+}
+
+Result swkbdInlineUpdate(SwkbdInline* s) {
+    Result rc=0;
+    AppletStorage storage;
+
+    //TODO: 'Normalize' floats.
+
+    if (appletHolderCheckFinished(&s->holder)) {
+        appletHolderJoin(&s->holder);
+        appletHolderClose(&s->holder);
+        return 0;
+    }
+
+    if (s->calcArg.flags) {
+        rc = _swkbdSendRequest(s, SwkbdRequestCommand_Calc, &s->calcArg, sizeof(s->calcArg));
+        s->calcArg.flags = 0;
+        if (R_FAILED(rc)) return rc;
+    }
+
+    while(R_SUCCEEDED(appletHolderPopInteractiveOutData(&s->holder, &storage))) {
+        //TODO: Process storage content.
+        appletStorageClose(&storage);
+    }
 
     return rc;
 }
