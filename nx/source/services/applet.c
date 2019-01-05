@@ -531,7 +531,7 @@ static Result _appletGetSessionProxy(Service* srv_out, u64 cmd_id, Handle procha
 
     ipcSendPid(&c);
     ipcSendHandleCopy(&c, prochandle);
-    if (AppletAttribute) ipcAddSendBuffer(&c, AppletAttribute, 0x80, 0);
+    if (AppletAttribute) ipcAddSendBuffer(&c, AppletAttribute, 0x80, BufferType_Normal);
 
     raw = serviceIpcPrepareHeader(&g_appletSrv, &c, sizeof(*raw));
 
@@ -1118,6 +1118,51 @@ Result appletInitializeGamePlayRecording(void) {
 
     rc = appletSetGamePlayRecordingState(1);
     if (R_SUCCEEDED(rc)) g_appletRecordingInitialized = 2;
+
+    return rc;
+}
+
+//Official sw has this under 'pdm'.
+Result appletQueryApplicationPlayStatistics(AppletApplicationPlayStatistics *stats, u64 *titleIDs, s32 count, s32 *out) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    if (!serviceIsActive(&g_appletSrv) || !_appletIsRegularApplication())
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    if (!kernelAbove500())
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    ipcAddRecvBuffer(&c, stats, count*sizeof(AppletApplicationPlayStatistics), BufferType_Normal);
+    ipcAddSendBuffer(&c, titleIDs, count*sizeof(u64), BufferType_Normal);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletIFunctions, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 110;
+
+    Result rc = serviceIpcDispatch(&g_appletIFunctions);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            s32 out;
+        } *resp;
+
+        serviceIpcParse(&g_appletIFunctions, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && out) *out = resp->out;
+    }
 
     return rc;
 }

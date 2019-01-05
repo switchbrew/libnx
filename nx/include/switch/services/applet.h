@@ -133,6 +133,11 @@ typedef struct {
     LibAppletExitReason exitreason;    ///< Set by \ref appletHolderJoin using the output from cmd GetResult, see \ref LibAppletExitReason.
 } AppletHolder;
 
+/// 'pdm' ApplicationPlayStatistics
+typedef struct {
+    u8 unk_x0[0x8];
+} AppletApplicationPlayStatistics;
+
 Result appletInitialize(void);
 void appletExit(void);
 Result appletGetAppletResourceUserId(u64 *out);
@@ -188,6 +193,17 @@ Result appletInitializeGamePlayRecording(void);
 Result appletBeginBlockingHomeButton(s64 val);
 
 Result appletEndBlockingHomeButton(void);
+
+/**
+ * @brief Gets ApplicationPlayStatistics.
+ * @note Only available with AppletType_*Application on 5.0.0+.
+ * @note This may return no output in some cases.
+ * @param stats Output \ref AppletApplicationPlayStatistics array.
+ * @param titleIDs Input titleIDs array.
+ * @param count Total entries in the input/output arrays.
+ * @param out Output s32.
+ */
+Result appletQueryApplicationPlayStatistics(AppletApplicationPlayStatistics *stats, u64 *titleIDs, s32 count, s32 *out);
 
 /**
  * @brief Delay exiting until \ref appletUnlockExit is called, with a 15 second timeout once exit is requested.
