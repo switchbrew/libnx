@@ -114,6 +114,10 @@ static int __cnd_timedwait(cnd_t *__restrict cond, mtx_t *__restrict mtx, u64 ti
         mtx->rmutex.counter = 1;
     }
 
+    if (rc == 0xEA01) {
+        return thrd_timedout;
+    }
+
     return R_SUCCEEDED(rc) ? thrd_success : thrd_error;
 }
 
