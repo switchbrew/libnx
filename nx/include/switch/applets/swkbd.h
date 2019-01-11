@@ -110,15 +110,17 @@ typedef struct {
 
 typedef struct {
     u32 unk_x0;
-    u64 unk_x4;
-    u64 unk_xc;
-    u8 unk_x14[0x6];
+    u16 str[9];
+    u8 unk_x16[0x4];
     u8 unk_x1a;
     u8 unk_x1b;
     u32 unk_x1c;
     s32 unk_x20;
     s32 unk_x24;
-    u64 unk_x28;
+    u8 unk_x28;
+    u16 unk_x29;
+    u8 unk_x2b;
+    u32 unk_x2c;
     u8 unk_x30;
     u8 unk_x31[0x17];
 } SwkbdAppearArg;
@@ -313,4 +315,28 @@ Result swkbdInlineLaunch(SwkbdInline* s);
  * @param s SwkbdInline object.
  */
 Result swkbdInlineUpdate(SwkbdInline* s);
+
+/**
+ * @brief Appear the kbd and set \ref SwkbdAppearArg. The applet will not start displaying on the screen with this.
+ * @note \ref swkbdInlineUpdate must be called at some point afterwards for this to take affect.
+ * @param s SwkbdInline object.
+ * @param arg Input SwkbdAppearArg.
+ */
+void swkbdInlineAppear(SwkbdInline* s, SwkbdAppearArg* arg);
+
+/**
+ * @brief Disappear the kbd.
+ * @note \ref swkbdInlineUpdate must be called at some point afterwards for this to take affect.
+ * @param s SwkbdInline object.
+ */
+void swkbdInlineDisappear(SwkbdInline* s);
+
+/**
+ * @brief Creates a \ref SwkbdAppearArg which can then be passed to \ref swkbdInlineAppear.
+ * @param arg Output \ref SwkbdAppearArg.
+ * @param type Type. Must be 0..5, otherwise this will return.
+ * @param flag Unknown flag
+ * @param str Input UTF-8 string.
+ */
+void swkbdInlineMakeAppearArg(SwkbdAppearArg* arg, u32 type, bool flag, const char* str);
 

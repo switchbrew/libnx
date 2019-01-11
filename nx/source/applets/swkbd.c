@@ -431,3 +431,65 @@ Result swkbdInlineUpdate(SwkbdInline* s) {
     return rc;
 }
 
+void swkbdInlineAppear(SwkbdInline* s, SwkbdAppearArg* arg) {
+    memcpy(&s->calcArg.appearArg, arg, sizeof(SwkbdAppearArg));
+    s->calcArg.flags = (s->calcArg.flags & ~0x80) | 0x4;
+}
+
+void swkbdInlineDisappear(SwkbdInline* s) {
+    s->calcArg.flags = (s->calcArg.flags & ~0x4) | 0x80;
+}
+
+void swkbdInlineMakeAppearArg(SwkbdAppearArg* arg, u32 type, bool flag, const char* str) {
+    memset(arg, 0, sizeof(SwkbdAppearArg));
+
+    u32 tmpval=0;
+    u8 tmpval2[2]={0};
+    u32 tmpval3=0;
+
+    switch(type) {
+        case 0:
+            tmpval = 1;
+            tmpval2[0] = tmpval;
+        break;
+
+        case 1:
+            tmpval = 0x101;
+            tmpval2[0] = 1;
+            tmpval2[1] = 1;
+        break;
+
+        case 2:
+            tmpval = 3;
+            tmpval2[0] = 1;
+        break;
+
+        case 3:
+            tmpval = 2;
+        break;
+
+        case 4:
+            tmpval = 1;
+        break;
+
+        case 5:
+            tmpval = 0;
+            tmpval3 = 0x80;
+        break;
+
+        default:
+        return;
+    }
+
+    arg->unk_x20 = -1;
+    arg->unk_x24 = -1;
+    arg->unk_x30 = 1;
+    arg->unk_x0 = tmpval;
+    arg->unk_x1a = tmpval2[0];
+    arg->unk_x28 = tmpval2[1];
+    arg->unk_x1c = tmpval3;
+    if (flag) arg->unk_x2c = 0x4;
+
+    _swkbdConvertToUTF16ByteSize(arg->str, str, sizeof(arg->str));
+}
+
