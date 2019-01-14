@@ -91,3 +91,8 @@ Result viSetLayerPosition(ViLayer *layer, float x, float y);
 Result viCloseLayer(ViLayer *layer);
 
 Result viSetLayerScalingMode(ViLayer *layer, ViScalingMode scaling_mode);
+
+// IndirectLayer functions
+
+Result viGetIndirectLayerImageMap(void* buffer, size_t size, s32 width, s32 height, u64 IndirectLayerConsumerHandle, u64 *out0, u64 *out1);
+Result viGetIndirectLayerImageRequiredMemoryInfo(s32 width, s32 height, u64 *out_size, u64 *out_alignment);

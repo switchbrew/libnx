@@ -988,3 +988,99 @@ Result viSetLayerScalingMode(ViLayer *layer, ViScalingMode scaling_mode)
 
     return rc;
 }
+
+Result viGetIndirectLayerImageMap(void* buffer, size_t size, s32 width, s32 height, u64 IndirectLayerConsumerHandle, u64 *out0, u64 *out1)
+{
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    u64 aruid = 0;
+    Result rc = appletGetAppletResourceUserId(&aruid);
+    if (R_FAILED(rc)) return rc;
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 width;
+        u64 height;
+        u64 IndirectLayerConsumerHandle;
+        u64 aruid;
+    } *raw;
+
+    ipcSendPid(&c);
+    ipcAddRecvBuffer(&c, buffer, size, BufferType_Type1);
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 2450;
+    raw->width = width;
+    raw->height = height;
+    raw->IndirectLayerConsumerHandle = IndirectLayerConsumerHandle;
+    raw->aruid = aruid;
+
+    rc = serviceIpcDispatch(&g_viIApplicationDisplayService);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u64 out0;
+            u64 out1;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            if (out0) *out0 = resp->out0;
+            if (out1) *out1 = resp->out1;
+        }
+    }
+
+    return rc;
+}
+
+Result viGetIndirectLayerImageRequiredMemoryInfo(s32 width, s32 height, u64 *out_size, u64 *out_alignment)
+{
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 width;
+        u64 height;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 2460;
+    raw->width = width;
+    raw->height = height;
+
+    Result rc = serviceIpcDispatch(&g_viIApplicationDisplayService);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u64 out_size;
+            u64 out_alignment;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            if (out_size) *out_size = resp->out_size;
+            if (out_alignment) *out_alignment = resp->out_alignment;
+        }
+    }
+
+    return rc;
+}
+
