@@ -391,7 +391,7 @@ Result swkbdInlineClose(SwkbdInline* s) {
 Result swkbdInlineLaunch(SwkbdInline* s) {
     Result rc=0;
 
-    rc = appletCreateLibraryApplet(&s->holder, AppletId_swkbd, s->calcArg.initArg.mode!=0 ? LibAppletMode_Background : LibAppletMode_Unknown3);
+    rc = appletCreateLibraryApplet(&s->holder, AppletId_swkbd, s->calcArg.initArg.mode!=SwkbdInlineMode_UserDisplay ? LibAppletMode_Background : LibAppletMode_Unknown3);
     if (R_FAILED(rc)) return rc;
 
     LibAppletArgs commonargs;

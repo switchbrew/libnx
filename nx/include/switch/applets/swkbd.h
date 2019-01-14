@@ -47,6 +47,12 @@ typedef enum {
     SwkbdRequestCommand_Calc = 0xA,
 } SwkbdRequestCommand;
 
+/// Value for \ref SwkbdInitializeArg mode. Controls the LibAppletMode when launching the applet.
+typedef enum {
+    SwkbdInlineMode_UserDisplay   = 0,  ///< LibAppletMode_Unknown3. This is the default. The user-process must handle displaying the swkbd gfx on the screen. Attempting to get the swkbd gfx data for this currently throws an error (unknown why), SwkbdInlineMode_AppletDisplay should be used instead.
+    SwkbdInlineMode_AppletDisplay = 1,  ///< LibAppletMode_Background. The applet will handle displaying gfx on the screen.
+} SwkbdInlineMode;
+
 /// TextCheck callback set by \ref swkbdConfigSetTextCheckCallback, for validating the input string when the swkbd ok-button is pressed. This buffer contains an UTF-8 string. This callback should validate the input string, then return a \ref SwkbdTextCheckResult indicating success/failure. On failure, this function must write an error message to the tmp_string buffer, which will then be displayed by swkbd.
 typedef SwkbdTextCheckResult (*SwkbdTextCheckCb)(char* tmp_string, size_t tmp_string_size);
 
@@ -103,7 +109,7 @@ typedef struct {
 
 typedef struct {
     u32 unk_x0;
-    u8 mode;            ///< Controls the LibAppletMode when launching the applet. Non-zero indicates LibAppletMode_Background, otherwise LibAppletMode_Unknown3
+    u8 mode;            ///< See \ref SwkbdInlineMode.
     u8 unk_x5;          ///< Only set on 5.0.0+.
     u8 pad[2];
 } SwkbdInitializeArg;
