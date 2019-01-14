@@ -445,7 +445,6 @@ void swkbdInlineMakeAppearArg(SwkbdAppearArg* arg, u32 type, bool flag, const ch
 
     u32 tmpval=0;
     u8 tmpval2[2]={0};
-    u32 tmpval3=0;
 
     switch(type) {
         case 0:
@@ -474,7 +473,7 @@ void swkbdInlineMakeAppearArg(SwkbdAppearArg* arg, u32 type, bool flag, const ch
 
         case 5:
             tmpval = SwkbdType_Normal;
-            tmpval3 = SwkbdKeyDisableBitmask_DownloadCode;
+            arg->keySetDisableBitmask = SwkbdKeyDisableBitmask_DownloadCode;
         break;
 
         default:
@@ -487,7 +486,6 @@ void swkbdInlineMakeAppearArg(SwkbdAppearArg* arg, u32 type, bool flag, const ch
     arg->type = tmpval;
     arg->dicFlag = tmpval2[0];
     arg->returnButtonFlag = tmpval2[1];
-    arg->keySetDisableBitmask = tmpval3;
     if (flag) arg->unk_x2c = 0x4;
 
     _swkbdConvertToUTF16ByteSize(arg->okButtonText, str, sizeof(arg->okButtonText));
