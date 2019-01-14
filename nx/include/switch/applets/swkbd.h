@@ -109,15 +109,16 @@ typedef struct {
 } SwkbdInitializeArg;
 
 typedef struct {
-    u32 unk_x0;
-    u16 str[9];
-    u8 unk_x16[0x4];
-    u8 unk_x1a;
+    SwkbdType type;                  ///< See \ref SwkbdType.
+    u16 okButtonText[9];
+    u16 leftButtonText;
+    u16 rightButtonText;
+    u8 dicFlag;                      ///< Enables dictionary usage when non-zero (including the system dictionary).
     u8 unk_x1b;
-    u32 unk_x1c;
+    u32 keySetDisableBitmask;        ///< See SwkbdKeyDisableBitmask_*.
     s32 unk_x20;
     s32 unk_x24;
-    u8 unk_x28;
+    u8 returnButtonFlag;             ///< Controls whether the Return button is enabled, for newlines input. 0 = disabled, non-zero = enabled.
     u16 unk_x29;
     u8 unk_x2b;
     u32 unk_x2c;
@@ -317,7 +318,7 @@ Result swkbdInlineLaunch(SwkbdInline* s);
 Result swkbdInlineUpdate(SwkbdInline* s);
 
 /**
- * @brief Appear the kbd and set \ref SwkbdAppearArg. The applet will not start displaying on the screen with this.
+ * @brief Appear the kbd and set \ref SwkbdAppearArg.
  * @note \ref swkbdInlineUpdate must be called at some point afterwards for this to take affect.
  * @param s SwkbdInline object.
  * @param arg Input SwkbdAppearArg.
@@ -336,7 +337,7 @@ void swkbdInlineDisappear(SwkbdInline* s);
  * @param arg Output \ref SwkbdAppearArg.
  * @param type Type. Must be 0..5, otherwise this will return.
  * @param flag Unknown flag
- * @param str Input UTF-8 string.
+ * @param str Input UTF-8 string for the Ok button text, this can be empty/NULL to use the default.
  */
 void swkbdInlineMakeAppearArg(SwkbdAppearArg* arg, u32 type, bool flag, const char* str);
 

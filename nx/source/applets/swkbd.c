@@ -342,7 +342,7 @@ Result swkbdInlineCreate(SwkbdInline* s) {
     //if (s->version >= 0x50009) s->calcArg.initArg.unk_x5 = 0x1;//Set in a separate init func by official sw on 5.0.0+.
 
     s->calcArg.volume = 1.0f;
-    s->calcArg.appearArg.unk_x0 = 0x2;
+    s->calcArg.appearArg.type = SwkbdType_QWERTY;
     s->calcArg.unk_x6 = 1;
     s->calcArg.unk_x7 = 1;
     s->calcArg.appearArg.unk_x20 = -1;
@@ -449,7 +449,7 @@ void swkbdInlineMakeAppearArg(SwkbdAppearArg* arg, u32 type, bool flag, const ch
 
     switch(type) {
         case 0:
-            tmpval = 1;
+            tmpval = SwkbdType_NumPad;
             tmpval2[0] = tmpval;
         break;
 
@@ -465,16 +465,16 @@ void swkbdInlineMakeAppearArg(SwkbdAppearArg* arg, u32 type, bool flag, const ch
         break;
 
         case 3:
-            tmpval = 2;
+            tmpval = SwkbdType_QWERTY;
         break;
 
         case 4:
-            tmpval = 1;
+            tmpval = SwkbdType_NumPad;
         break;
 
         case 5:
-            tmpval = 0;
-            tmpval3 = 0x80;
+            tmpval = SwkbdType_Normal;
+            tmpval3 = SwkbdKeyDisableBitmask_DownloadCode;
         break;
 
         default:
@@ -484,12 +484,12 @@ void swkbdInlineMakeAppearArg(SwkbdAppearArg* arg, u32 type, bool flag, const ch
     arg->unk_x20 = -1;
     arg->unk_x24 = -1;
     arg->unk_x30 = 1;
-    arg->unk_x0 = tmpval;
-    arg->unk_x1a = tmpval2[0];
-    arg->unk_x28 = tmpval2[1];
-    arg->unk_x1c = tmpval3;
+    arg->type = tmpval;
+    arg->dicFlag = tmpval2[0];
+    arg->returnButtonFlag = tmpval2[1];
+    arg->keySetDisableBitmask = tmpval3;
     if (flag) arg->unk_x2c = 0x4;
 
-    _swkbdConvertToUTF16ByteSize(arg->str, str, sizeof(arg->str));
+    _swkbdConvertToUTF16ByteSize(arg->okButtonText, str, sizeof(arg->okButtonText));
 }
 
