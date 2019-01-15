@@ -350,16 +350,16 @@ Result swkbdInlineCreate(SwkbdInline* s) {
     s->calcArg.appearArg.unk_x30 = 1;
 
     s->calcArg.enableBackspace = 1;
-    s->calcArg.unk_x43f[0] = 1;
+    s->calcArg.unk_x45f[0] = 1;
     s->calcArg.footerScalable = 1;
     s->calcArg.inputModeFadeType = 1;
 
     s->calcArg.keytopScale0 = 1.0f;
     s->calcArg.keytopScale1 = 1.0f;
     s->calcArg.keytopBgAlpha = 1.0f;
-    s->calcArg.unk_x464 = 1.0f;
+    s->calcArg.unk_x484 = 1.0f;
     s->calcArg.balloonScale = 1.0f;
-    s->calcArg.unk_x46c = 1.0f;
+    s->calcArg.unk_x48c = 1.0f;
 
     return 0;
 }
@@ -408,6 +408,8 @@ Result swkbdInlineLaunch(SwkbdInline* s) {
 Result swkbdInlineUpdate(SwkbdInline* s) {
     Result rc=0;
     AppletStorage storage;
+    u32 tmp0=0, tmp1=0;
+    u8 tmp2[0x10] = {0};
 
     //TODO: 'Normalize' floats.
 
@@ -425,14 +427,33 @@ Result swkbdInlineUpdate(SwkbdInline* s) {
 
     while(R_SUCCEEDED(appletHolderPopInteractiveOutData(&s->holder, &storage))) {
         //TODO: Process storage content.
+
+        s64 tmpsize=0;
+        rc = appletStorageGetSize(&storage, &tmpsize);
+
+        if (R_SUCCEEDED(rc)) rc = appletStorageRead(&storage, 0x0, &tmp0, sizeof(u32));
+        if (R_SUCCEEDED(rc)) rc = appletStorageRead(&storage, 0x4, &tmp1, sizeof(u32));
+        if (R_SUCCEEDED(rc)) rc = appletStorageRead(&storage, 0x8, tmp2, tmpsize-8 > sizeof(tmp2) ? sizeof(tmp2) : tmpsize-8);//TODO
+
         appletStorageClose(&storage);
+
+        if (R_FAILED(rc)) break;
     }
 
     return rc;
 }
 
+static void _swkbdInlineUpdateAppearFlags(SwkbdInline* s) {
+    u32 mask = 0x10000000;
+    u32 tmp = s->calcArg.appearArg.flags;
+    if (!s->directionalButtonAssignFlag) tmp &= ~mask;
+    if (s->directionalButtonAssignFlag) tmp |= mask;
+    s->calcArg.appearArg.flags = tmp;
+}
+
 void swkbdInlineAppear(SwkbdInline* s, SwkbdAppearArg* arg) {
     memcpy(&s->calcArg.appearArg, arg, sizeof(SwkbdAppearArg));
+    _swkbdInlineUpdateAppearFlags(s);
     s->calcArg.flags = (s->calcArg.flags & ~0x80) | 0x4;
 }
 
@@ -486,8 +507,61 @@ void swkbdInlineMakeAppearArg(SwkbdAppearArg* arg, u32 type, bool flag, const ch
     arg->type = tmpval;
     arg->dicFlag = tmpval2[0];
     arg->returnButtonFlag = tmpval2[1];
-    if (flag) arg->unk_x2c = 0x4;
+    if (flag) arg->flags = 0x4;
 
     _swkbdConvertToUTF16ByteSize(arg->okButtonText, str, sizeof(arg->okButtonText));
+}
+
+void swkbdInlineSetVolume(SwkbdInline* s, float volume) {
+    if (s->calcArg.volume == volume) return;
+    s->calcArg.volume = volume;
+    s->calcArg.flags |= 0x2;
+}
+
+void swkbdInlineSetInputText(SwkbdInline* s, const char* str) {
+    _swkbdConvertToUTF16ByteSize(s->calcArg.inputText, str, sizeof(s->calcArg.inputText));
+    s->calcArg.flags |= 0x8;
+}
+
+void swkbdInlineSetCursorPos(SwkbdInline* s, s32 pos) {
+    s->calcArg.cursorPos = pos;
+    s->calcArg.flags |= 0x10;
+}
+
+void swkbdInlineSetUtf8Mode(SwkbdInline* s, bool flag) {
+    u8 tmp = flag!=0;
+    if (s->calcArg.utf8Mode == tmp) return;
+    s->calcArg.utf8Mode = tmp;
+    s->calcArg.flags |= 0x20;
+}
+
+void swkbdInlineSetTouchFlag(SwkbdInline* s, bool flag) {
+    u8 tmp = flag==0;
+    if (s->calcArg.disableTouch == tmp) return;
+    s->calcArg.disableTouch = tmp;
+    s->calcArg.flags |= 0x200;
+}
+
+void swkbdInlineSetUSBKeyboardFlag(SwkbdInline* s, bool flag) {
+    u8 tmp = flag==0;
+    if (s->calcArg.disableUSBKeyboard == tmp) return;
+    s->calcArg.disableUSBKeyboard = tmp;
+    s->calcArg.flags |= 0x800;
+}
+
+void swkbdInlineSetDirectionalButtonAssignFlag(SwkbdInline* s, bool flag) {
+    s->directionalButtonAssignFlag = flag;
+    _swkbdInlineUpdateAppearFlags(s);
+    s->calcArg.flags |= 0x1000;
+}
+
+void swkbdInlineSetSeGroup(SwkbdInline* s, u8 seGroup, bool flag) {
+    s->calcArg.seGroup = seGroup;
+    s->calcArg.flags |= flag ? 0x2000 : 0x4000;
+}
+
+void swkbdInlineSetBackspaceFlag(SwkbdInline* s, bool flag) {
+    s->calcArg.enableBackspace = flag!=0;
+    s->calcArg.flags |= 0x8000;
 }
 

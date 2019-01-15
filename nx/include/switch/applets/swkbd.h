@@ -127,10 +127,10 @@ typedef struct {
     u8 returnButtonFlag;             ///< Controls whether the Return button is enabled, for newlines input. 0 = disabled, non-zero = enabled.
     u16 unk_x29;
     u8 unk_x2b;
-    u32 unk_x2c;
+    u32 flags;
     u8 unk_x30;
     u8 unk_x31[0x17];
-} SwkbdAppearArg;
+} PACKED SwkbdAppearArg;
 
 typedef struct {
     u32 unk_x0;
@@ -142,30 +142,31 @@ typedef struct {
     float volume;                ///< Flags bitmask 0x2.
     s32 cursorPos;               ///< Flags bitmask 0x10.
     SwkbdAppearArg appearArg;
-    u8 unk_x68[0x3d4];
+    u16 inputText[0x3f4/2];      ///< Flags bitmask 0x8.
     u8 utf8Mode;                 ///< Flags bitmask 0x20.
-    u8 unk_x43d;
-    u8 enableBackspace;          ///< Flags bitmask 0x8000. Added with 5.x.
-    u8 unk_x43f[3];
+    u8 unk_x45d;
+    u8 enableBackspace;          ///< Flags bitmask 0x8000. Only available with 5.0.0+.
+    u8 unk_x45f[3];
     u8 keytopAsFloating;         ///< Flags bitmask 0x200.
     u8 footerScalable;           ///< Flags bitmask 0x100.
     u8 alphaEnabledInInputMode;  ///< Flags bitmask 0x200.
     u8 inputModeFadeType;        ///< Flags bitmask 0x100.
     u8 disableTouch;             ///< Flags bitmask 0x200.
     u8 disableUSBKeyboard;       ///< Flags bitmask 0x800.
-    u8 unk_x448[5];
-    u16 unk_x44d;
-    u8 unk_x44f;
+    u8 unk_x468[5];
+    u16 unk_x46d;
+    u8 unk_x46f;
     float keytopScale0;          ///< Flags bitmask 0x200.
     float keytopScale1;          ///< Flags bitmask 0x200.
     float keytopTranslate0;      ///< Flags bitmask 0x200.
     float keytopTranslate1;      ///< Flags bitmask 0x200.
     float keytopBgAlpha;         ///< Flags bitmask 0x100.
-    float unk_x464;
+    float unk_x484;
     float balloonScale;          ///< Flags bitmask 0x200.
-    float unk_x46c;
-    u64 unk_x470[4];
-    u8 unk_x490[0x10];
+    float unk_x48c;
+    u8 unk_x490[0xc];
+    u8 seGroup;                  ////< Flags bitmask: enable=0x2000, disable=0x4000. Only available with 5.0.0+.
+    u8 pad_x49d[3];
 } PACKED SwkbdInlineCalcArg;
 
 /// InlineKeyboard
@@ -173,6 +174,7 @@ typedef struct {
     u32 version;
     AppletHolder holder;
     SwkbdInlineCalcArg calcArg;
+    bool directionalButtonAssignFlag;
 } SwkbdInline;
 
 /**
@@ -346,4 +348,78 @@ void swkbdInlineDisappear(SwkbdInline* s);
  * @param str Input UTF-8 string for the Ok button text, this can be empty/NULL to use the default.
  */
 void swkbdInlineMakeAppearArg(SwkbdAppearArg* arg, u32 type, bool flag, const char* str);
+
+/**
+ * @brief Sets the audio volume.
+ * @note \ref swkbdInlineUpdate must be called at some point afterwards for this to take affect.
+ * @param s SwkbdInline object.
+ * @param volume Volume
+ */
+void swkbdInlineSetVolume(SwkbdInline* s, float volume);
+
+/**
+ * @brief Sets the current input text string. Overrides the entire user input string if the user previously entered any text.
+ * @note \ref swkbdInlineUpdate must be called at some point afterwards for this to take affect.
+ * @note This will not affect the cursor position, see \ref swkbdInlineSetCursorPos for that.
+ * @param s SwkbdInline object.
+ * @param str UTF-8 input string.
+ */
+void swkbdInlineSetInputText(SwkbdInline* s, const char* str);
+
+/**
+ * @brief Sets the cursor character position in the string.
+ * @note \ref swkbdInlineUpdate must be called at some point afterwards for this to take affect.
+ * @param s SwkbdInline object.
+ * @param pos Position
+ */
+void swkbdInlineSetCursorPos(SwkbdInline* s, s32 pos);
+
+/**
+ * @brief Sets the utf8Mode.
+ * @note \ref swkbdInlineUpdate must be called at some point afterwards for this to take affect.
+ * @param s SwkbdInline object.
+ * @param flag Flag
+ */
+void swkbdInlineSetUtf8Mode(SwkbdInline* s, bool flag);
+
+/**
+ * @brief Sets whether touch is enabled. The default is enabled.
+ * @note \ref swkbdInlineUpdate must be called at some point afterwards for this to take affect.
+ * @param s SwkbdInline object.
+ * @param flag Flag
+ */
+void swkbdInlineSetTouchFlag(SwkbdInline* s, bool flag);
+
+/**
+ * @brief Sets whether USB-keyboard is enabled. The default is enabled.
+ * @note \ref swkbdInlineUpdate must be called at some point afterwards for this to take affect.
+ * @param s SwkbdInline object.
+ * @param flag Flag
+ */
+void swkbdInlineSetUSBKeyboardFlag(SwkbdInline* s, bool flag);
+
+/**
+ * @brief Sets whether DirectionalButtonAssign is enabled. The default is disabled. Only available on 4.0.0+.
+ * @note \ref swkbdInlineUpdate must be called at some point afterwards for this to take affect.
+ * @param s SwkbdInline object.
+ * @param flag Flag
+ */
+void swkbdInlineSetDirectionalButtonAssignFlag(SwkbdInline* s, bool flag);
+
+/**
+ * @brief Sets whether the specified SeGroup (sound effect) is enabled. The default is enabled. Only available on 5.0.0+.
+ * @note \ref swkbdInlineUpdate must be called at some point afterwards for this to take affect. If called again with a different seGroup, \ref swkbdInlineUpdate must be called prior to calling this again.
+ * @param s SwkbdInline object.
+ * @param seGroup SeGroup
+ * @param flag Flag
+ */
+void swkbdInlineSetSeGroup(SwkbdInline* s, u8 seGroup, bool flag);
+
+/**
+ * @brief Sets whether the backspace button is enabled. The default is enabled. Only available on 5.0.0+.
+ * @note \ref swkbdInlineUpdate must be called at some point afterwards for this to take affect.
+ * @param s SwkbdInline object.
+ * @param flag Flag
+ */
+void swkbdInlineSetBackspaceFlag(SwkbdInline* s, bool flag);
 
