@@ -8,8 +8,6 @@
 #include "applets/swkbd.h"
 #include "runtime/util/utf.h"
 
-//TODO: InlineKeyboard currently isn't supported.
-
 static void _swkbdConvertToUTF8(char* out, const u16* in, size_t max) {
     if (out==NULL || in==NULL) return;
     out[0] = 0;
@@ -332,6 +330,8 @@ static Result _swkbdSendRequest(SwkbdInline* s, u32 RequestCommand, const void* 
 }
 
 Result swkbdInlineCreate(SwkbdInline* s) {
+    Result rc=0;
+
     memset(s, 0, sizeof(SwkbdInline));
 
     _swkbdInitVersion(&s->version);
@@ -361,7 +361,29 @@ Result swkbdInlineCreate(SwkbdInline* s) {
     s->calcArg.balloonScale = 1.0f;
     s->calcArg.unk_x48c = 1.0f;
 
-    return 0;
+    s->interactive_tmpbuf_size = 0x1000;
+    s->interactive_tmpbuf = (u8*)malloc(s->interactive_tmpbuf_size);
+    if (s->interactive_tmpbuf==NULL) rc = MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
+    if (R_SUCCEEDED(rc)) memset(s->interactive_tmpbuf, 0, s->interactive_tmpbuf_size);
+
+    if (R_SUCCEEDED(rc)) {
+        s->interactive_strbuf_size = 0x1001;
+        s->interactive_strbuf = (char*)malloc(s->interactive_strbuf_size);
+        if (s->interactive_strbuf==NULL) rc = MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
+        if (R_SUCCEEDED(rc)) memset(s->interactive_strbuf, 0, s->interactive_strbuf_size);
+
+        if (R_FAILED(rc)) {
+            free(s->interactive_tmpbuf);
+            s->interactive_tmpbuf = NULL;
+        }
+    }
+
+    if (R_FAILED(rc)) {
+        s->interactive_tmpbuf_size = 0;
+        s->interactive_strbuf_size = 0;
+    }
+
+    return rc;
 }
 
 Result swkbdInlineClose(SwkbdInline* s) {
@@ -384,6 +406,13 @@ Result swkbdInlineClose(SwkbdInline* s) {
 
         appletHolderClose(&s->holder);
     }
+
+    free(s->interactive_tmpbuf);
+    s->interactive_tmpbuf = NULL;
+    s->interactive_tmpbuf_size = 0;
+    free(s->interactive_strbuf);
+    s->interactive_strbuf = NULL;
+    s->interactive_strbuf_size = 0;
 
     return rc;
 }
@@ -409,7 +438,6 @@ Result swkbdInlineUpdate(SwkbdInline* s) {
     Result rc=0;
     AppletStorage storage;
     u32 tmp0=0, tmp1=0;
-    u8 tmp2[0x10] = {0};
 
     //TODO: 'Normalize' floats.
 
@@ -430,10 +458,12 @@ Result swkbdInlineUpdate(SwkbdInline* s) {
 
         s64 tmpsize=0;
         rc = appletStorageGetSize(&storage, &tmpsize);
+        memset(s->interactive_tmpbuf, 0, s->interactive_tmpbuf_size);
 
+        if (R_SUCCEEDED(rc) && (tmpsize < 8 || tmpsize-8 > s->interactive_tmpbuf_size)) rc = MAKERESULT(Module_Libnx, LibnxError_BadInput);
         if (R_SUCCEEDED(rc)) rc = appletStorageRead(&storage, 0x0, &tmp0, sizeof(u32));
         if (R_SUCCEEDED(rc)) rc = appletStorageRead(&storage, 0x4, &tmp1, sizeof(u32));
-        if (R_SUCCEEDED(rc)) rc = appletStorageRead(&storage, 0x8, tmp2, tmpsize-8 > sizeof(tmp2) ? sizeof(tmp2) : tmpsize-8);//TODO
+        if (R_SUCCEEDED(rc) && tmpsize >= 8) rc = appletStorageRead(&storage, 0x8, s->interactive_tmpbuf, tmpsize-8);
 
         appletStorageClose(&storage);
 
@@ -528,25 +558,45 @@ void swkbdInlineSetCursorPos(SwkbdInline* s, s32 pos) {
     s->calcArg.flags |= 0x10;
 }
 
-void swkbdInlineSetUtf8Mode(SwkbdInline* s, bool flag) {
+static void _swkbdInlineSetBoolFlag(SwkbdInline* s, u8* arg, bool flag, u64 bitmask) {
     u8 tmp = flag!=0;
-    if (s->calcArg.utf8Mode == tmp) return;
-    s->calcArg.utf8Mode = tmp;
-    s->calcArg.flags |= 0x20;
+    if (*arg == tmp) return;
+    *arg = tmp;
+    s->calcArg.flags |= bitmask;
+}
+
+static void _swkbdInlineSetBoolDisableFlag(SwkbdInline* s, u8* arg, bool flag, u64 bitmask) {
+    _swkbdInlineSetBoolFlag(s, arg, !flag, bitmask);
+}
+
+void swkbdInlineSetUtf8Mode(SwkbdInline* s, bool flag) {
+    _swkbdInlineSetBoolFlag(s, &s->calcArg.utf8Mode, flag, 0x20);
+}
+
+void swkbdInlineSetInputModeFadeType(SwkbdInline* s, u8 type) {
+    if (s->calcArg.inputModeFadeType == type) return;
+    s->calcArg.inputModeFadeType = type;
+    s->calcArg.flags |= 0x100;
+}
+
+void swkbdInlineSetAlphaEnabledInInputMode(SwkbdInline* s, bool flag) {
+    _swkbdInlineSetBoolFlag(s, &s->calcArg.alphaEnabledInInputMode, flag, 0x100);
+}
+
+void swkbdInlineSetKeytopAsFloating(SwkbdInline* s, bool flag) {
+    _swkbdInlineSetBoolFlag(s, &s->calcArg.keytopAsFloating, flag, 0x200);
+}
+
+void swkbdInlineSetFooterScalable(SwkbdInline* s, bool flag) {
+    _swkbdInlineSetBoolFlag(s, &s->calcArg.footerScalable, flag, 0x200);
 }
 
 void swkbdInlineSetTouchFlag(SwkbdInline* s, bool flag) {
-    u8 tmp = flag==0;
-    if (s->calcArg.disableTouch == tmp) return;
-    s->calcArg.disableTouch = tmp;
-    s->calcArg.flags |= 0x200;
+    _swkbdInlineSetBoolDisableFlag(s, &s->calcArg.disableTouch, flag, 0x200);
 }
 
 void swkbdInlineSetUSBKeyboardFlag(SwkbdInline* s, bool flag) {
-    u8 tmp = flag==0;
-    if (s->calcArg.disableUSBKeyboard == tmp) return;
-    s->calcArg.disableUSBKeyboard = tmp;
-    s->calcArg.flags |= 0x800;
+    _swkbdInlineSetBoolDisableFlag(s, &s->calcArg.disableUSBKeyboard, flag, 0x800);
 }
 
 void swkbdInlineSetDirectionalButtonAssignFlag(SwkbdInline* s, bool flag) {

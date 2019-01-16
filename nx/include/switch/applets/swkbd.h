@@ -149,7 +149,7 @@ typedef struct {
     u8 unk_x45f[3];
     u8 keytopAsFloating;         ///< Flags bitmask 0x200.
     u8 footerScalable;           ///< Flags bitmask 0x100.
-    u8 alphaEnabledInInputMode;  ///< Flags bitmask 0x200.
+    u8 alphaEnabledInInputMode;  ///< Flags bitmask 0x100.
     u8 inputModeFadeType;        ///< Flags bitmask 0x100.
     u8 disableTouch;             ///< Flags bitmask 0x200.
     u8 disableUSBKeyboard;       ///< Flags bitmask 0x800.
@@ -175,6 +175,11 @@ typedef struct {
     AppletHolder holder;
     SwkbdInlineCalcArg calcArg;
     bool directionalButtonAssignFlag;
+
+    u8* interactive_tmpbuf;
+    size_t interactive_tmpbuf_size;
+    char* interactive_strbuf;
+    size_t interactive_strbuf_size;
 } SwkbdInline;
 
 /**
@@ -381,6 +386,38 @@ void swkbdInlineSetCursorPos(SwkbdInline* s, s32 pos);
  * @param flag Flag
  */
 void swkbdInlineSetUtf8Mode(SwkbdInline* s, bool flag);
+
+/**
+ * @brief Sets InputModeFadeType.
+ * @note \ref swkbdInlineUpdate must be called at some point afterwards for this to take affect.
+ * @param s SwkbdInline object.
+ * @param type Type
+ */
+void swkbdInlineSetInputModeFadeType(SwkbdInline* s, u8 type);
+
+/**
+ * @brief Sets AlphaEnabledInInputMode.
+ * @note \ref swkbdInlineUpdate must be called at some point afterwards for this to take affect.
+ * @param s SwkbdInline object.
+ * @param flag Flag
+ */
+void swkbdInlineSetAlphaEnabledInInputMode(SwkbdInline* s, bool flag);
+
+/**
+ * @brief Sets KeytopAsFloating.
+ * @note \ref swkbdInlineUpdate must be called at some point afterwards for this to take affect.
+ * @param s SwkbdInline object.
+ * @param flag Flag
+ */
+void swkbdInlineSetKeytopAsFloating(SwkbdInline* s, bool flag);
+
+/**
+ * @brief Sets FooterScalable.
+ * @note \ref swkbdInlineUpdate must be called at some point afterwards for this to take affect.
+ * @param s SwkbdInline object.
+ * @param flag Flag
+ */
+void swkbdInlineSetFooterScalable(SwkbdInline* s, bool flag);
 
 /**
  * @brief Sets whether touch is enabled. The default is enabled.
