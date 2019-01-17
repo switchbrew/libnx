@@ -1,5 +1,6 @@
 #include <string.h>
 #include <malloc.h>
+#include <math.h>
 #include "types.h"
 #include "result.h"
 #include "kernel/detect.h"
@@ -30,6 +31,16 @@ static ssize_t _swkbdConvertToUTF16(u16* out, const char* in, size_t max) {
 
 static ssize_t _swkbdConvertToUTF16ByteSize(u16* out, const char* in, size_t max) {
     return _swkbdConvertToUTF16(out, in, (max/sizeof(u16)) - 1);
+}
+
+/// Clamp a float to the range 0.0f..1.0.f.
+static void _swkbdClampFloat(float *val) {
+    float tmpval = *val;
+
+    tmpval = fminf(tmpval, 1.0f);
+    tmpval = fmaxf(tmpval, 0.0f);
+
+    *val = tmpval;
 }
 
 static void _swkbdConfigClear(SwkbdConfig* c) {
@@ -354,10 +365,10 @@ Result swkbdInlineCreate(SwkbdInline* s) {
     s->calcArg.footerScalable = 1;
     s->calcArg.inputModeFadeType = 1;
 
-    s->calcArg.keytopScale0 = 1.0f;
-    s->calcArg.keytopScale1 = 1.0f;
+    s->calcArg.keytopScaleX = 1.0f;
+    s->calcArg.keytopScaleY = 1.0f;
     s->calcArg.keytopBgAlpha = 1.0f;
-    s->calcArg.unk_x484 = 1.0f;
+    s->calcArg.footerBgAlpha = 1.0f;
     s->calcArg.balloonScale = 1.0f;
     s->calcArg.unk_x48c = 1.0f;
 
@@ -439,7 +450,16 @@ Result swkbdInlineUpdate(SwkbdInline* s) {
     AppletStorage storage;
     u32 tmp0=0, tmp1=0;
 
-    //TODO: 'Normalize' floats.
+    u8 fadetype=0;
+    if (s->calcArg.footerScalable) {
+        swkbdInlineSetFooterBgAlpha(s, s->calcArg.keytopBgAlpha);
+
+        fadetype = s->calcArg.keytopBgAlpha != 1.0f;
+    }
+    else {
+        fadetype = 2;
+    }
+    swkbdInlineSetInputModeFadeType(s, fadetype);
 
     if (appletHolderCheckFinished(&s->holder)) {
         appletHolderJoin(&s->holder);
@@ -583,6 +603,20 @@ void swkbdInlineSetAlphaEnabledInInputMode(SwkbdInline* s, bool flag) {
     _swkbdInlineSetBoolFlag(s, &s->calcArg.alphaEnabledInInputMode, flag, 0x100);
 }
 
+void swkbdInlineSetKeytopBgAlpha(SwkbdInline* s, float alpha) {
+    _swkbdClampFloat(&alpha);
+    if (s->calcArg.keytopBgAlpha == alpha) return;
+    s->calcArg.keytopBgAlpha = alpha;
+    s->calcArg.flags |= 0x100;
+}
+
+void swkbdInlineSetFooterBgAlpha(SwkbdInline* s, float alpha) {
+    _swkbdClampFloat(&alpha);
+    if (s->calcArg.footerBgAlpha == alpha) return;
+    s->calcArg.footerBgAlpha = alpha;
+    s->calcArg.flags |= 0x100;
+}
+
 void swkbdInlineSetKeytopAsFloating(SwkbdInline* s, bool flag) {
     _swkbdInlineSetBoolFlag(s, &s->calcArg.keytopAsFloating, flag, 0x200);
 }
@@ -593,6 +627,33 @@ void swkbdInlineSetFooterScalable(SwkbdInline* s, bool flag) {
 
 void swkbdInlineSetTouchFlag(SwkbdInline* s, bool flag) {
     _swkbdInlineSetBoolDisableFlag(s, &s->calcArg.disableTouch, flag, 0x200);
+}
+
+static void _swkbdInlineSetKeytopScale(SwkbdInline* s, float x, float y) {
+    if (s->calcArg.keytopScaleX == x && s->calcArg.keytopScaleY == y) return;
+    s->calcArg.keytopScaleX = x;
+    s->calcArg.keytopScaleY = y;
+    s->calcArg.flags |= 0x200;
+}
+
+static void _swkbdInlineSetBalloonScale(SwkbdInline* s, float scale) {
+    if (s->calcArg.balloonScale == scale) return;
+    s->calcArg.balloonScale = scale;
+    s->calcArg.flags |= 0x200;
+}
+
+void swkbdInlineSetKeytopScale(SwkbdInline* s, float scale) {
+    _swkbdInlineSetKeytopScale(s, scale, scale);
+
+    scale = fminf(scale + 0.15f, 1.0f);
+    _swkbdInlineSetBalloonScale(s, scale);
+}
+
+void swkbdInlineSetKeytopTranslate(SwkbdInline* s, float x, float y) {
+    if (s->calcArg.keytopTranslateX == x && s->calcArg.keytopTranslateY == y) return;
+    s->calcArg.keytopTranslateX = x;
+    s->calcArg.keytopTranslateY = y;
+    s->calcArg.flags |= 0x200;
 }
 
 void swkbdInlineSetUSBKeyboardFlag(SwkbdInline* s, bool flag) {

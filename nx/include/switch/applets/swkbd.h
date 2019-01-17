@@ -156,12 +156,12 @@ typedef struct {
     u8 unk_x468[5];
     u16 unk_x46d;
     u8 unk_x46f;
-    float keytopScale0;          ///< Flags bitmask 0x200.
-    float keytopScale1;          ///< Flags bitmask 0x200.
-    float keytopTranslate0;      ///< Flags bitmask 0x200.
-    float keytopTranslate1;      ///< Flags bitmask 0x200.
+    float keytopScaleX;          ///< Flags bitmask 0x200.
+    float keytopScaleY;          ///< Flags bitmask 0x200.
+    float keytopTranslateX;      ///< Flags bitmask 0x200.
+    float keytopTranslateY;      ///< Flags bitmask 0x200.
     float keytopBgAlpha;         ///< Flags bitmask 0x100.
-    float unk_x484;
+    float footerBgAlpha;         ///< Flags bitmask 0x100.
     float balloonScale;          ///< Flags bitmask 0x200.
     float unk_x48c;
     u8 unk_x490[0xc];
@@ -402,6 +402,39 @@ void swkbdInlineSetInputModeFadeType(SwkbdInline* s, u8 type);
  * @param flag Flag
  */
 void swkbdInlineSetAlphaEnabledInInputMode(SwkbdInline* s, bool flag);
+
+/**
+ * @brief Sets KeytopBgAlpha.
+ * @note \ref swkbdInlineUpdate must be called at some point afterwards for this to take affect.
+ * @param s SwkbdInline object.
+ * @param alpha Alpha, clamped to range 0.0f..1.0f.
+ */
+void swkbdInlineSetKeytopBgAlpha(SwkbdInline* s, float alpha);
+
+/**
+ * @brief Sets FooterBgAlpha.
+ * @note \ref swkbdInlineUpdate must be called at some point afterwards for this to take affect.
+ * @param s SwkbdInline object.
+ * @param alpha Alpha, clamped to range 0.0f..1.0f.
+ */
+void swkbdInlineSetFooterBgAlpha(SwkbdInline* s, float alpha);
+
+/**
+ * @brief Sets gfx scaling. Configures KeytopScale* and BalloonScale based on the input value.
+ * @note \ref swkbdInlineUpdate must be called at some point afterwards for this to take affect.
+ * @param s SwkbdInline object.
+ * @param scale Scale
+ */
+void swkbdInlineSetKeytopScale(SwkbdInline* s, float scale);
+
+/**
+ * @brief Sets gfx translation for the displayed swkbd image position.
+ * @note \ref swkbdInlineUpdate must be called at some point afterwards for this to take affect.
+ * @param s SwkbdInline object.
+ * @param x X
+ * @param y Y
+ */
+void swkbdInlineSetKeytopTranslate(SwkbdInline* s, float x, float y);
 
 /**
  * @brief Sets KeytopAsFloating.
