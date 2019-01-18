@@ -47,6 +47,21 @@ typedef enum {
     SwkbdRequestCommand_Calc = 0xA,
 } SwkbdRequestCommand;
 
+/// SwkbdInline Interactive output storage reply ID.
+typedef enum {
+    SwkbdReplyType_FinishedInitialize    = 0x0,
+    SwkbdReplyType_ChangedString         = 0x2,
+    SwkbdReplyType_MovedCursor           = 0x3,
+    SwkbdReplyType_MovedTab              = 0x4,
+    SwkbdReplyType_DecidedEnter          = 0x5,
+    SwkbdReplyType_DecidedCancel         = 0x6,
+    SwkbdReplyType_ChangedStringUtf8     = 0x7,
+    SwkbdReplyType_MovedCursorUtf8       = 0x8,
+    SwkbdReplyType_DecidedEnterUtf8      = 0x9,
+    SwkbdReplyType_UnsetCustomizeDic     = 0xA,
+    SwkbdReplyType_ReleasedUserWordInfo  = 0xB,
+} SwkbdReplyType;
+
 /// Value for \ref SwkbdInitializeArg mode. Controls the LibAppletMode when launching the applet.
 typedef enum {
     SwkbdInlineMode_UserDisplay   = 0,  ///< LibAppletMode_Unknown3. This is the default. The user-process must handle displaying the swkbd gfx on the screen. Attempting to get the swkbd gfx data for this currently throws an error (unknown why), SwkbdInlineMode_AppletDisplay should be used instead.

@@ -445,10 +445,20 @@ Result swkbdInlineLaunch(SwkbdInline* s) {
     return rc;
 }
 
+static void _swkbdProcessReply(SwkbdInline* s, u32 State, SwkbdReplyType ReplyType, size_t size) {
+    switch(ReplyType) {
+        default:
+        break;
+
+        //TODO: Process storage content.
+    }
+}
+
 Result swkbdInlineUpdate(SwkbdInline* s) {
     Result rc=0;
     AppletStorage storage;
-    u32 tmp0=0, tmp1=0;
+    u32 State=0;
+    SwkbdReplyType ReplyType=0;
 
     u8 fadetype=0;
     if (s->calcArg.footerScalable) {
@@ -474,20 +484,20 @@ Result swkbdInlineUpdate(SwkbdInline* s) {
     }
 
     while(R_SUCCEEDED(appletHolderPopInteractiveOutData(&s->holder, &storage))) {
-        //TODO: Process storage content.
-
         s64 tmpsize=0;
         rc = appletStorageGetSize(&storage, &tmpsize);
         memset(s->interactive_tmpbuf, 0, s->interactive_tmpbuf_size);
 
         if (R_SUCCEEDED(rc) && (tmpsize < 8 || tmpsize-8 > s->interactive_tmpbuf_size)) rc = MAKERESULT(Module_Libnx, LibnxError_BadInput);
-        if (R_SUCCEEDED(rc)) rc = appletStorageRead(&storage, 0x0, &tmp0, sizeof(u32));
-        if (R_SUCCEEDED(rc)) rc = appletStorageRead(&storage, 0x4, &tmp1, sizeof(u32));
+        if (R_SUCCEEDED(rc)) rc = appletStorageRead(&storage, 0x0, &State, sizeof(u32));
+        if (R_SUCCEEDED(rc)) rc = appletStorageRead(&storage, 0x4, &ReplyType, sizeof(u32));
         if (R_SUCCEEDED(rc) && tmpsize >= 8) rc = appletStorageRead(&storage, 0x8, s->interactive_tmpbuf, tmpsize-8);
 
         appletStorageClose(&storage);
 
         if (R_FAILED(rc)) break;
+
+        _swkbdProcessReply(s, State, ReplyType, tmpsize-8);
     }
 
     return rc;
