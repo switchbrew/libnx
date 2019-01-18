@@ -4,7 +4,7 @@
 #include "result.h"
 #include "services/applet.h"
 #include "applets/libapplet.h"
-#include "applets/web_wifi.h"
+#include "applets/web.h"
 
 static void _webWifiUrlCreate(WebWifiPageArgUrl* argUrl, const char* url) {
     strncpy(argUrl->url, url, sizeof(argUrl->url)-1);
