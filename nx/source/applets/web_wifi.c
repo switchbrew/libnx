@@ -34,12 +34,6 @@ Result webWifiShow(WebWifiConfig* config) {
     if (R_SUCCEEDED(rc)) rc = libappletPushInData(&holder, &config->arg, sizeof(config->arg));
 
     if (R_SUCCEEDED(rc)) rc = appletHolderStart(&holder);
-    
-    if (R_SUCCEEDED(rc)) {
-        while(appletHolderWaitInteractiveOut(&holder)) {
-            //TODO: Handle Interactive data here. (nothing to handle at this moment)
-        }
-    }
 
     if (R_SUCCEEDED(rc)) {
         appletHolderJoin(&holder);
