@@ -9,15 +9,15 @@
 #include "../services/applet.h"
 
 typedef struct {
-    u8 unk1[0x4];
+    u8 unk_x0[0x4];
     char url[0xFC];
 } WebWifiPageArgUrl;
 
 typedef struct {
     WebWifiPageArgUrl url1;
     WebWifiPageArgUrl url2;
-    u8 gap1[0x300];
-    u8 unk2[0x18];
+    u8 unk_x200[0x300];
+    u8 unk_x500[0x18];
 } WebWifiPageArg;
 
 typedef struct {
