@@ -16,7 +16,6 @@ void webWifiCreate(WebWifiConfig* config, const char* url) {
     _webWifiUrlCreate(&config->arg.url2, url);
 }
 
-
 Result webWifiShow(WebWifiConfig* config) {
     Result rc = 0;
     AppletHolder holder;
