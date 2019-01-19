@@ -62,6 +62,16 @@ typedef enum {
     SwkbdReplyType_ReleasedUserWordInfo  = 0xB,
 } SwkbdReplyType;
 
+/// SwkbdInline State
+typedef enum {
+    SwkbdState_Inactive       = 0x0,  ///< Default state from \ref swkbdInlineCreate, before a state is set by \ref swkbdInlineUpdate when a reply is received. Also indicates that the applet is no longer running.
+    SwkbdState_Initialized    = 0x1,
+    SwkbdState_Unknown2       = 0x2,
+    SwkbdState_TextAvailable  = 0x3,  ///< Text is available since a ChangedString* reply was received.
+    SwkbdState_Submitted      = 0x4,  ///< The user pressed the ok-button, submitting the text and closing the applet.
+    SwkbdState_Unknown5       = 0x5,
+} SwkbdState;
+
 /// Value for \ref SwkbdInitializeArg mode. Controls the LibAppletMode when launching the applet.
 typedef enum {
     SwkbdInlineMode_UserDisplay   = 0,  ///< LibAppletMode_Unknown3. This is the default. The user-process must handle displaying the swkbd gfx on the screen. Attempting to get the swkbd gfx data for this currently throws an error (unknown why), SwkbdInlineMode_AppletDisplay should be used instead.
@@ -231,6 +241,7 @@ typedef struct {
     AppletHolder holder;
     SwkbdInlineCalcArg calcArg;
     bool directionalButtonAssignFlag;
+    SwkbdState state;
 
     u8* interactive_tmpbuf;
     size_t interactive_tmpbuf_size;
@@ -391,8 +402,9 @@ Result swkbdInlineLaunch(SwkbdInline* s);
  * @note Handles applet exit if needed, and also sends the \ref SwkbdInlineCalcArg to the applet if needed. Hence, this should be called at some point after writing to \ref SwkbdInlineCalcArg.
  * @note Handles applet Interactive storage output when needed.
  * @param s SwkbdInline object.
+ * @param out_state Optional output \ref SwkbdState.
  */
-Result swkbdInlineUpdate(SwkbdInline* s);
+Result swkbdInlineUpdate(SwkbdInline* s, SwkbdState* out_state);
 
 /**
  * @brief Sets the FinishedInitialize callback, used by \ref swkbdInlineUpdate. The default is NULL for none.

@@ -447,7 +447,7 @@ Result swkbdInlineLaunch(SwkbdInline* s) {
     return rc;
 }
 
-static void _swkbdProcessReply(SwkbdInline* s, u32 State, SwkbdReplyType ReplyType, size_t size) {
+static void _swkbdProcessReply(SwkbdInline* s, SwkbdReplyType ReplyType, size_t size) {
     size_t stringendoff_utf8 = 0x7D4;
     size_t stringendoff_utf16 = 0x3EC;
     void* argdataend_utf8 = &s->interactive_tmpbuf[stringendoff_utf8];
@@ -508,10 +508,9 @@ static void _swkbdProcessReply(SwkbdInline* s, u32 State, SwkbdReplyType ReplyTy
     }
 }
 
-Result swkbdInlineUpdate(SwkbdInline* s) {
+Result swkbdInlineUpdate(SwkbdInline* s, SwkbdState* out_state) {
     Result rc=0;
     AppletStorage storage;
-    u32 State=0;
     SwkbdReplyType ReplyType=0;
 
     u8 fadetype=0;
@@ -528,6 +527,9 @@ Result swkbdInlineUpdate(SwkbdInline* s) {
     if (appletHolderCheckFinished(&s->holder)) {
         appletHolderJoin(&s->holder);
         appletHolderClose(&s->holder);
+
+        s->state = SwkbdState_Inactive;
+        if (out_state) *out_state = s->state;
         return 0;
     }
 
@@ -543,7 +545,7 @@ Result swkbdInlineUpdate(SwkbdInline* s) {
         memset(s->interactive_tmpbuf, 0, s->interactive_tmpbuf_size);
 
         if (R_SUCCEEDED(rc) && (tmpsize < 8 || tmpsize-8 > s->interactive_tmpbuf_size)) rc = MAKERESULT(Module_Libnx, LibnxError_BadInput);
-        if (R_SUCCEEDED(rc)) rc = appletStorageRead(&storage, 0x0, &State, sizeof(u32));
+        if (R_SUCCEEDED(rc)) rc = appletStorageRead(&storage, 0x0, &s->state, sizeof(s->state));
         if (R_SUCCEEDED(rc)) rc = appletStorageRead(&storage, 0x4, &ReplyType, sizeof(u32));
         if (R_SUCCEEDED(rc) && tmpsize >= 8) rc = appletStorageRead(&storage, 0x8, s->interactive_tmpbuf, tmpsize-8);
 
@@ -551,8 +553,10 @@ Result swkbdInlineUpdate(SwkbdInline* s) {
 
         if (R_FAILED(rc)) break;
 
-        _swkbdProcessReply(s, State, ReplyType, tmpsize-8);
+        _swkbdProcessReply(s, ReplyType, tmpsize-8);
     }
+
+    if (out_state) *out_state = s->state;
 
     return rc;
 }
