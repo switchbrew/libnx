@@ -20,9 +20,6 @@ void webWifiCreate(WebWifiConfig* config, const char* url) {
 Result webWifiShow(WebWifiConfig* config) {
     Result rc = 0;
     AppletHolder holder;
-    AppletStorage storage;
-
-    memset(&storage, 0, sizeof(AppletStorage));
 
     rc = appletCreateLibraryApplet(&holder, AppletId_wifiWebAuth, LibAppletMode_AllForeground);
     if (R_FAILED(rc)) return rc;
