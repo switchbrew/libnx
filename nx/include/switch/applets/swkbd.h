@@ -184,6 +184,47 @@ typedef struct {
     u8 pad_x49d[3];
 } PACKED SwkbdInlineCalcArg;
 
+/// Struct data for SwkbdInline Interactive reply storage ChangedString*, at the end following the string.
+typedef struct {
+    u32 stringLen;  ///< String length in characters, without NUL-terminator.
+    s32 unk_x4;
+    s32 unk_x8;
+    s32 cursorPos;  ///< Cursor position.
+} SwkbdChangedStringArg;
+
+/// Struct data for SwkbdInline Interactive reply storage MovedCursor*, at the end following the string.
+typedef struct {
+    u32 stringLen;  ///< String length in characters, without NUL-terminator.
+    s32 cursorPos;  ///< Cursor position.
+} SwkbdMovedCursorArg;
+
+/// Struct data for SwkbdInline Interactive reply storage MovedTab*, at the end following the string.
+typedef struct {
+    u32 unk_x0;
+    u32 unk_x4;
+} SwkbdMovedTabArg;
+
+/// Struct data for SwkbdInline Interactive reply storage DecidedEnter*, at the end following the string.
+typedef struct {
+    u32 stringLen;  ///< String length in characters, without NUL-terminator.
+} SwkbdDecidedEnterArg;
+
+/// This callback is used by \ref swkbdInlineUpdate when handling ChangedString* replies (text changed by the user or by \ref swkbdInlineSetInputText).
+/// str is the UTF-8 string for the current text.
+typedef void (*SwkbdChangedStringCb)(const char* str, SwkbdChangedStringArg* arg);
+
+/// This callback is used by \ref swkbdInlineUpdate when handling MovedCursor* replies.
+/// str is the UTF-8 string for the current text.
+typedef void (*SwkbdMovedCursorCb)(const char* str, SwkbdMovedCursorArg* arg);
+
+/// This callback is used by \ref swkbdInlineUpdate when handling MovedTab* replies.
+/// str is the UTF-8 string for the current text.
+typedef void (*SwkbdMovedTabCb)(const char* str, SwkbdMovedTabArg* arg);
+
+/// This callback is used by \ref swkbdInlineUpdate when handling DecidedEnter* replies (when the final text was submitted via the button).
+/// str is the UTF-8 string for the current text.
+typedef void (*SwkbdDecidedEnterCb)(const char* str, SwkbdDecidedEnterArg* arg);
+
 /// InlineKeyboard
 typedef struct {
     u32 version;
@@ -195,6 +236,13 @@ typedef struct {
     size_t interactive_tmpbuf_size;
     char* interactive_strbuf;
     size_t interactive_strbuf_size;
+
+    VoidFn finishedInitializeCb;
+    SwkbdChangedStringCb changedStringCb;
+    SwkbdMovedCursorCb movedCursorCb;
+    SwkbdMovedTabCb movedTabCb;
+    SwkbdDecidedEnterCb decidedEnterCb;
+    VoidFn releasedUserWordInfoCb;
 } SwkbdInline;
 
 /**
@@ -321,6 +369,7 @@ Result swkbdShow(SwkbdConfig* c, char* out_string, size_t out_string_size);
 /**
  * @brief Creates a SwkbdInline object.
  * @note This is essentially an asynchronous version of the regular swkbd.
+ * @note This calls \ref swkbdInlineSetUtf8Mode internally with flag=true.
  * @param s SwkbdInline object.
  */
 Result swkbdInlineCreate(SwkbdInline* s);
@@ -344,6 +393,48 @@ Result swkbdInlineLaunch(SwkbdInline* s);
  * @param s SwkbdInline object.
  */
 Result swkbdInlineUpdate(SwkbdInline* s);
+
+/**
+ * @brief Sets the FinishedInitialize callback, used by \ref swkbdInlineUpdate. The default is NULL for none.
+ * @param s SwkbdInline object.
+ * @param cb Callback
+ */
+void swkbdInlineSetFinishedInitializeCallback(SwkbdInline* s, VoidFn cb);
+
+/**
+ * @brief Sets the ChangedString callback, used by \ref swkbdInlineUpdate. The default is NULL for none.
+ * @param s SwkbdInline object.
+ * @param cb \ref SwkbdChangedStringCb Callback
+ */
+void swkbdInlineSetChangedStringCallback(SwkbdInline* s, SwkbdChangedStringCb cb);
+
+/**
+ * @brief Sets the MovedCursor callback, used by \ref swkbdInlineUpdate. The default is NULL for none.
+ * @param s SwkbdInline object.
+ * @param cb \ref SwkbdMovedCursorCb Callback
+ */
+void swkbdInlineSetMovedCursorCallback(SwkbdInline* s, SwkbdMovedCursorCb cb);
+
+/**
+ * @brief Sets the MovedTab callback, used by \ref swkbdInlineUpdate. The default is NULL for none.
+ * @param s SwkbdInline object.
+ * @param cb \ref SwkbdMovedTabCb Callback
+ */
+void swkbdInlineSetMovedTabCallback(SwkbdInline* s, SwkbdMovedTabCb cb);
+
+/**
+ * @brief Sets the DecidedEnter callback, used by \ref swkbdInlineUpdate. The default is NULL for none.
+ * @param s SwkbdInline object.
+ * @param cb \ref SwkbdDecidedEnterCb Callback
+ */
+void swkbdInlineSetDecidedEnterCallback(SwkbdInline* s, SwkbdDecidedEnterCb cb);
+
+/**
+ * @brief Sets the ReleasedUserWordInfo callback, used by \ref swkbdInlineUpdate. The default is NULL for none.
+ * @param s SwkbdInline object.
+ * @param cb Callback
+ */
+void swkbdInlineSetReleasedUserWordInfoCallback(SwkbdInline* s, VoidFn cb);
 
 /**
  * @brief Appear the kbd and set \ref SwkbdAppearArg.
@@ -397,6 +488,7 @@ void swkbdInlineSetCursorPos(SwkbdInline* s, s32 pos);
 /**
  * @brief Sets the utf8Mode.
  * @note \ref swkbdInlineUpdate must be called at some point afterwards for this to take affect.
+ * @note Automatically used internally by \ref swkbdInlineCreate.
  * @param s SwkbdInline object.
  * @param flag Flag
  */

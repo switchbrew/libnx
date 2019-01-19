@@ -372,6 +372,8 @@ Result swkbdInlineCreate(SwkbdInline* s) {
     s->calcArg.balloonScale = 1.0f;
     s->calcArg.unk_x48c = 1.0f;
 
+    swkbdInlineSetUtf8Mode(s, true);
+
     s->interactive_tmpbuf_size = 0x1000;
     s->interactive_tmpbuf = (u8*)malloc(s->interactive_tmpbuf_size);
     if (s->interactive_tmpbuf==NULL) rc = MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
@@ -446,11 +448,63 @@ Result swkbdInlineLaunch(SwkbdInline* s) {
 }
 
 static void _swkbdProcessReply(SwkbdInline* s, u32 State, SwkbdReplyType ReplyType, size_t size) {
+    size_t stringendoff_utf8 = 0x7D4;
+    size_t stringendoff_utf16 = 0x3EC;
+    void* argdataend_utf8 = &s->interactive_tmpbuf[stringendoff_utf8];
+    void* argdataend_utf16 = &s->interactive_tmpbuf[stringendoff_utf16];
+    char* strdata = (char*)s->interactive_tmpbuf;
+
+    memset(s->interactive_strbuf, 0, s->interactive_strbuf_size);
+
+    if ((ReplyType==SwkbdReplyType_ChangedString && size != 0x3FC) || (ReplyType==SwkbdReplyType_ChangedStringUtf8 && size != 0x7E4)) return;
+    if ((ReplyType==SwkbdReplyType_MovedCursor && size != 0x3F4) || (ReplyType==SwkbdReplyType_MovedCursorUtf8 && size != 0x7DC)) return;
+    if ((ReplyType==SwkbdReplyType_DecidedEnter && size != 0x3F0) || (ReplyType==SwkbdReplyType_DecidedEnterUtf8 && size != 0x7D8)) return;
+    if (ReplyType==SwkbdReplyType_MovedTab && size != 0x3F4) return;
+
+    if (ReplyType==SwkbdReplyType_ChangedString || ReplyType==SwkbdReplyType_MovedCursor || ReplyType==SwkbdReplyType_MovedTab || ReplyType==SwkbdReplyType_DecidedEnter) {
+        _swkbdConvertToUTF8(s->interactive_strbuf, (u16*)strdata, s->interactive_strbuf_size-1);
+        strdata = s->interactive_strbuf;
+    }
+
     switch(ReplyType) {
-        default:
+        case SwkbdReplyType_FinishedInitialize:
+            if (s->finishedInitializeCb) s->finishedInitializeCb();
         break;
 
-        //TODO: Process storage content.
+        case SwkbdReplyType_ChangedString:
+        case SwkbdReplyType_ChangedStringUtf8:
+            if (s->changedStringCb) {
+                if (ReplyType==SwkbdReplyType_ChangedString) s->changedStringCb(strdata, (SwkbdChangedStringArg*)argdataend_utf16);
+                if (ReplyType==SwkbdReplyType_ChangedStringUtf8) s->changedStringCb(strdata, (SwkbdChangedStringArg*)argdataend_utf8);
+            }
+        break;
+
+        case SwkbdReplyType_MovedCursor:
+        case SwkbdReplyType_MovedCursorUtf8:
+            if (s->movedCursorCb) {
+                if (ReplyType==SwkbdReplyType_MovedCursor) s->movedCursorCb(strdata, (SwkbdMovedCursorArg*)argdataend_utf16);
+                if (ReplyType==SwkbdReplyType_MovedCursorUtf8) s->movedCursorCb(strdata, (SwkbdMovedCursorArg*)argdataend_utf8);
+            }
+        break;
+
+        case SwkbdReplyType_MovedTab:
+            if (s->movedTabCb) s->movedTabCb(strdata, (SwkbdMovedTabArg*)argdataend_utf16);
+        break;
+
+        case SwkbdReplyType_DecidedEnter:
+        case SwkbdReplyType_DecidedEnterUtf8:
+            if (s->decidedEnterCb) {
+                if (ReplyType==SwkbdReplyType_DecidedEnter) s->decidedEnterCb(strdata, (SwkbdDecidedEnterArg*)argdataend_utf16);
+                if (ReplyType==SwkbdReplyType_DecidedEnterUtf8) s->decidedEnterCb(strdata, (SwkbdDecidedEnterArg*)argdataend_utf8);
+            }
+        break;
+
+        case SwkbdReplyType_ReleasedUserWordInfo:
+            if (s->releasedUserWordInfoCb) s->releasedUserWordInfoCb();
+        break;
+
+        default:
+        break;
     }
 }
 
@@ -501,6 +555,30 @@ Result swkbdInlineUpdate(SwkbdInline* s) {
     }
 
     return rc;
+}
+
+void swkbdInlineSetFinishedInitializeCallback(SwkbdInline* s, VoidFn cb) {
+    s->finishedInitializeCb = cb;
+}
+
+void swkbdInlineSetChangedStringCallback(SwkbdInline* s, SwkbdChangedStringCb cb) {
+    s->changedStringCb = cb;
+}
+
+void swkbdInlineSetMovedCursorCallback(SwkbdInline* s, SwkbdMovedCursorCb cb) {
+    s->movedCursorCb = cb;
+}
+
+void swkbdInlineSetMovedTabCallback(SwkbdInline* s, SwkbdMovedTabCb cb) {
+    s->movedTabCb = cb;
+}
+
+void swkbdInlineSetDecidedEnterCallback(SwkbdInline* s, SwkbdDecidedEnterCb cb) {
+    s->decidedEnterCb = cb;
+}
+
+void swkbdInlineSetReleasedUserWordInfoCallback(SwkbdInline* s, VoidFn cb) {
+    s->releasedUserWordInfoCb = cb;
 }
 
 static void _swkbdInlineUpdateAppearFlags(SwkbdInline* s) {
