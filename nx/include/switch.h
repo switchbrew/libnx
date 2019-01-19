@@ -101,6 +101,7 @@ extern "C" {
 
 #include "switch/applets/libapplet.h"
 #include "switch/applets/swkbd.h"
+#include "switch/applets/web.h"
 
 #include "switch/runtime/env.h"
 #include "switch/runtime/nxlink.h"
