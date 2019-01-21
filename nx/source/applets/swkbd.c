@@ -427,6 +427,10 @@ Result swkbdInlineClose(SwkbdInline* s) {
     s->interactive_strbuf = NULL;
     s->interactive_strbuf_size = 0;
 
+    appletStorageCloseTmem(&s->dicStorage);
+
+    memset(s, 0, sizeof(SwkbdInline));
+
     return rc;
 }
 
@@ -683,6 +687,27 @@ static void _swkbdInlineSetBoolDisableFlag(SwkbdInline* s, u8* arg, bool flag, u
 
 void swkbdInlineSetUtf8Mode(SwkbdInline* s, bool flag) {
     _swkbdInlineSetBoolFlag(s, &s->calcArg.utf8Mode, flag, 0x20);
+}
+
+Result swkbdInlineSetCustomizeDic(SwkbdInline* s, void* buffer, size_t size, SwkbdCustomizeDicInfo *info) {
+    Result rc=0;
+
+    if (s->state > SwkbdState_Initialized || s->dicCustomInitialized) return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
+
+    rc = appletCreateHandleStorageTmem(&s->dicStorage, buffer, size);
+    if (R_FAILED(rc)) return rc;
+    s->dicCustomInitialized = true;
+    rc = appletHolderPushInteractiveInData(&s->holder, &s->dicStorage);
+    if (R_FAILED(rc)) return rc;
+
+    rc = _swkbdSendRequest(s, SwkbdRequestCommand_SetCustomizeDic, info, sizeof(SwkbdCustomizeDicInfo));
+
+    return rc;
+}
+
+void swkbdInlineUnsetCustomizeDic(SwkbdInline* s) {
+    if (s->state > SwkbdState_Initialized || !s->dicCustomInitialized) return;
+    s->calcArg.flags |= 0x40;
 }
 
 void swkbdInlineSetInputModeFadeType(SwkbdInline* s, u8 type) {

@@ -132,6 +132,11 @@ typedef struct {
     u8 unk_x0[0x64];
 } SwkbdDictWord;
 
+/// Input data for SwkbdInline request SetCustomizeDic.
+typedef struct {
+    u8 unk_x0[0x70];
+} SwkbdCustomizeDicInfo;
+
 typedef struct {
     u32 unk_x0;
     u8 mode;            ///< See \ref SwkbdInlineMode.
@@ -196,10 +201,10 @@ typedef struct {
 
 /// Struct data for SwkbdInline Interactive reply storage ChangedString*, at the end following the string.
 typedef struct {
-    u32 stringLen;  ///< String length in characters, without NUL-terminator.
-    s32 unk_x4;
-    s32 unk_x8;
-    s32 cursorPos;  ///< Cursor position.
+    u32 stringLen;          ///< String length in characters, without NUL-terminator.
+    s32 dicStartCursorPos;  ///< Starting cursorPos for the current dictionary word in the current text string. -1 for none.
+    s32 dicEndCursorPos;    ///< Ending cursorPos for the current dictionary word in the current text string. -1 for none.
+    s32 cursorPos;          ///< Cursor position.
 } SwkbdChangedStringArg;
 
 /// Struct data for SwkbdInline Interactive reply storage MovedCursor*, at the end following the string.
@@ -242,6 +247,9 @@ typedef struct {
     SwkbdInlineCalcArg calcArg;
     bool directionalButtonAssignFlag;
     SwkbdState state;
+
+    bool dicCustomInitialized;
+    AppletStorage dicStorage;
 
     u8* interactive_tmpbuf;
     size_t interactive_tmpbuf_size;
@@ -505,6 +513,25 @@ void swkbdInlineSetCursorPos(SwkbdInline* s, s32 pos);
  * @param flag Flag
  */
 void swkbdInlineSetUtf8Mode(SwkbdInline* s, bool flag);
+
+/**
+ * @brief Sets the CustomizeDic.
+ * @note Not avilable when \ref SwkbdState is above \ref SwkbdState_Initialized. Can't be used if this was already used previously.
+ * @note The specified buffer must not be used after this, until \ref swkbdInlineClose is used.
+ * @param s SwkbdInline object.
+ * @param buffer 0x1000-byte aligned buffer.
+ * @param size 0x1000-byte aligned buffer size.
+ * @param info Input \ref SwkbdCustomizeDicInfo
+ */
+Result swkbdInlineSetCustomizeDic(SwkbdInline* s, void* buffer, size_t size, SwkbdCustomizeDicInfo *info);
+
+/**
+ * @brief Request UnsetCustomizeDic.
+ * @note \ref swkbdInlineUpdate must be called at some point afterwards for this to take affect.
+ * @note Not avilable when \ref SwkbdState is above \ref SwkbdState_Initialized.
+ * @param s SwkbdInline object.
+ */
+void swkbdInlineUnsetCustomizeDic(SwkbdInline* s);
 
 /**
  * @brief Sets InputModeFadeType.
