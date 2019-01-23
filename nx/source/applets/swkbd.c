@@ -9,6 +9,8 @@
 #include "applets/swkbd.h"
 #include "runtime/util/utf.h"
 
+static Result _swkbdGetReplies(SwkbdInline* s);
+
 static void _swkbdConvertToUTF8(char* out, const u16* in, size_t max) {
     if (out==NULL || in==NULL) return;
     out[0] = 0;
@@ -76,7 +78,7 @@ Result swkbdCreate(SwkbdConfig* c, s32 max_dictwords) {
     if (max_dictwords > 0 && max_dictwords <= 0x3e8) c->max_dictwords = max_dictwords;
 
     if (c->max_dictwords) {
-        c->workbuf_size = c->max_dictwords*0x64 + 0x7e8;
+        c->workbuf_size = c->max_dictwords*sizeof(SwkbdDictWord) + 0x7e8;
         c->workbuf_size = (c->workbuf_size + 0xfff) & ~0xfff;
     }
 
@@ -192,7 +194,7 @@ void swkbdConfigSetDictionary(SwkbdConfig* c, const SwkbdDictWord *buffer, s32 e
 
     c->arg.arg.userDicOffset = offset;
     c->arg.arg.userDicEntries = entries;
-    memcpy(&c->workbuf[offset], buffer, entries*0x64);
+    memcpy(&c->workbuf[offset], buffer, entries*sizeof(SwkbdDictWord));
 }
 
 void swkbdConfigSetTextCheckCallback(SwkbdConfig* c, SwkbdTextCheckCb cb) {
@@ -406,15 +408,28 @@ Result swkbdInlineClose(SwkbdInline* s) {
     {
         _swkbdSendRequest(s, SwkbdRequestCommand_Finalize, NULL, 0);//Finalize cmd
 
+        int cnt=0;
+        while (s->dicCustomInitialized && cnt<9) {
+            rc = _swkbdGetReplies(s);
+            if (R_FAILED(rc)) break;
+
+            if (s->dicCustomInitialized) {
+                cnt++;
+                svcSleepThread(100000000ULL);
+            }
+        }
+
         appletHolderJoin(&s->holder);
 
-        LibAppletExitReason reason = appletHolderGetExitReason(&s->holder);
+        if (R_SUCCEEDED(rc)) {
+            LibAppletExitReason reason = appletHolderGetExitReason(&s->holder);
 
-        if (reason == LibAppletExitReason_Canceled) {
-            rc = MAKERESULT(Module_Libnx, LibnxError_LibAppletBadExit);
-        }
-        else if (reason == LibAppletExitReason_Abnormal || reason == LibAppletExitReason_Unexpected) {
-            rc = MAKERESULT(Module_Libnx, LibnxError_LibAppletBadExit);
+            if (reason == LibAppletExitReason_Canceled) {
+                rc = MAKERESULT(Module_Libnx, LibnxError_LibAppletBadExit);
+            }
+            else if (reason == LibAppletExitReason_Abnormal || reason == LibAppletExitReason_Unexpected) {
+                rc = MAKERESULT(Module_Libnx, LibnxError_LibAppletBadExit);
+            }
         }
 
         appletHolderClose(&s->holder);
@@ -427,7 +442,8 @@ Result swkbdInlineClose(SwkbdInline* s) {
     s->interactive_strbuf = NULL;
     s->interactive_strbuf_size = 0;
 
-    appletStorageCloseTmem(&s->dicStorage);
+    if (s->dicCustomInitialized) appletStorageCloseTmem(&s->dicStorage);
+    if (s->wordInfoInitialized) appletStorageCloseTmem(&s->wordInfoStorage);
 
     memset(s, 0, sizeof(SwkbdInline));
 
@@ -503,8 +519,20 @@ static void _swkbdProcessReply(SwkbdInline* s, SwkbdReplyType ReplyType, size_t 
             }
         break;
 
+        case SwkbdReplyType_UnsetCustomizeDic:
+            if (s->dicCustomInitialized) {
+                appletStorageCloseTmem(&s->dicStorage);
+                s->dicCustomInitialized = false;
+            }
+        break;
+
         case SwkbdReplyType_ReleasedUserWordInfo:
             if (s->releasedUserWordInfoCb) s->releasedUserWordInfoCb();
+
+            if (s->wordInfoInitialized) {
+                appletStorageCloseTmem(&s->wordInfoStorage);
+                s->wordInfoInitialized = false;
+            }
         break;
 
         default:
@@ -512,10 +540,33 @@ static void _swkbdProcessReply(SwkbdInline* s, SwkbdReplyType ReplyType, size_t 
     }
 }
 
-Result swkbdInlineUpdate(SwkbdInline* s, SwkbdState* out_state) {
+static Result _swkbdGetReplies(SwkbdInline* s) {
     Result rc=0;
     AppletStorage storage;
     SwkbdReplyType ReplyType=0;
+
+    while(R_SUCCEEDED(appletHolderPopInteractiveOutData(&s->holder, &storage))) {
+        s64 tmpsize=0;
+        rc = appletStorageGetSize(&storage, &tmpsize);
+        memset(s->interactive_tmpbuf, 0, s->interactive_tmpbuf_size);
+
+        if (R_SUCCEEDED(rc) && (tmpsize < 8 || tmpsize-8 > s->interactive_tmpbuf_size)) rc = MAKERESULT(Module_Libnx, LibnxError_BadInput);
+        if (R_SUCCEEDED(rc)) rc = appletStorageRead(&storage, 0x0, &s->state, sizeof(s->state));
+        if (R_SUCCEEDED(rc)) rc = appletStorageRead(&storage, 0x4, &ReplyType, sizeof(u32));
+        if (R_SUCCEEDED(rc) && tmpsize >= 8) rc = appletStorageRead(&storage, 0x8, s->interactive_tmpbuf, tmpsize-8);
+
+        appletStorageClose(&storage);
+
+        if (R_FAILED(rc)) break;
+
+        _swkbdProcessReply(s, ReplyType, tmpsize-8);
+    }
+
+    return rc;
+}
+
+Result swkbdInlineUpdate(SwkbdInline* s, SwkbdState* out_state) {
+    Result rc=0;
 
     u8 fadetype=0;
     if (s->calcArg.footerScalable) {
@@ -543,22 +594,7 @@ Result swkbdInlineUpdate(SwkbdInline* s, SwkbdState* out_state) {
         if (R_FAILED(rc)) return rc;
     }
 
-    while(R_SUCCEEDED(appletHolderPopInteractiveOutData(&s->holder, &storage))) {
-        s64 tmpsize=0;
-        rc = appletStorageGetSize(&storage, &tmpsize);
-        memset(s->interactive_tmpbuf, 0, s->interactive_tmpbuf_size);
-
-        if (R_SUCCEEDED(rc) && (tmpsize < 8 || tmpsize-8 > s->interactive_tmpbuf_size)) rc = MAKERESULT(Module_Libnx, LibnxError_BadInput);
-        if (R_SUCCEEDED(rc)) rc = appletStorageRead(&storage, 0x0, &s->state, sizeof(s->state));
-        if (R_SUCCEEDED(rc)) rc = appletStorageRead(&storage, 0x4, &ReplyType, sizeof(u32));
-        if (R_SUCCEEDED(rc) && tmpsize >= 8) rc = appletStorageRead(&storage, 0x8, s->interactive_tmpbuf, tmpsize-8);
-
-        appletStorageClose(&storage);
-
-        if (R_FAILED(rc)) break;
-
-        _swkbdProcessReply(s, ReplyType, tmpsize-8);
-    }
+    rc = _swkbdGetReplies(s);
 
     if (out_state) *out_state = s->state;
 
@@ -674,6 +710,45 @@ void swkbdInlineSetCursorPos(SwkbdInline* s, s32 pos) {
     s->calcArg.flags |= 0x10;
 }
 
+Result swkbdInlineSetUserWordInfo(SwkbdInline* s, const SwkbdDictWord *input, s32 entries) {
+    Result rc=0;
+    size_t size=0;
+
+    if (s->state > SwkbdState_Initialized || s->wordInfoInitialized) return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
+    if (entries < 0 || entries > 0x3e8) return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+    if (input==NULL || entries==0) return swkbdInlineUnsetUserWordInfo(s);
+
+    size = size*sizeof(SwkbdDictWord) + 0x8;
+    size = (size + 0xfff) & ~0xfff;
+
+    rc = appletCreateTransferMemoryStorage(&s->wordInfoStorage, NULL, size, true);
+    if (R_FAILED(rc)) return rc;
+
+    u32 req = SwkbdRequestCommand_SetUserWordInfo;
+    rc = appletStorageWrite(&s->wordInfoStorage, 0x0, &req, sizeof(req));
+    if (R_SUCCEEDED(rc)) rc = appletStorageWrite(&s->wordInfoStorage, 0x4, &entries, sizeof(entries));
+    if (R_SUCCEEDED(rc) && entries>0) rc = appletStorageWrite(&s->wordInfoStorage, 0x8, input, sizeof(SwkbdDictWord) * entries);
+
+    if (R_SUCCEEDED(rc)) rc = appletHolderPushInteractiveInData(&s->holder, &s->wordInfoStorage);
+    if (R_FAILED(rc)) appletStorageCloseTmem(&s->wordInfoStorage);
+
+    if (R_SUCCEEDED(rc)) {
+        s->wordInfoInitialized = true;
+        s->calcArg.flags &= ~0x400;
+    }
+
+    return rc;
+}
+
+Result swkbdInlineUnsetUserWordInfo(SwkbdInline* s) {
+    if (s->state > SwkbdState_Initialized) return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
+    if (!s->wordInfoInitialized) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    s->calcArg.flags |= 0x400;
+
+    return 0;
+}
+
 static void _swkbdInlineSetBoolFlag(SwkbdInline* s, u8* arg, bool flag, u64 bitmask) {
     u8 tmp = flag!=0;
     if (*arg == tmp) return;
@@ -696,9 +771,13 @@ Result swkbdInlineSetCustomizeDic(SwkbdInline* s, void* buffer, size_t size, Swk
 
     rc = appletCreateHandleStorageTmem(&s->dicStorage, buffer, size);
     if (R_FAILED(rc)) return rc;
-    s->dicCustomInitialized = true;
     rc = appletHolderPushInteractiveInData(&s->holder, &s->dicStorage);
-    if (R_FAILED(rc)) return rc;
+    if (R_FAILED(rc)) {
+        appletStorageCloseTmem(&s->dicStorage);
+        return rc;
+    }
+
+    s->dicCustomInitialized = true;
 
     rc = _swkbdSendRequest(s, SwkbdRequestCommand_SetCustomizeDic, info, sizeof(SwkbdCustomizeDicInfo));
 

@@ -43,6 +43,7 @@ typedef enum {
 /// SwkbdInline Interactive input storage request ID.
 typedef enum {
     SwkbdRequestCommand_Finalize = 0x4,
+    SwkbdRequestCommand_SetUserWordInfo = 0x6,
     SwkbdRequestCommand_SetCustomizeDic = 0x7,
     SwkbdRequestCommand_Calc = 0xA,
 } SwkbdRequestCommand;
@@ -250,6 +251,9 @@ typedef struct {
 
     bool dicCustomInitialized;
     AppletStorage dicStorage;
+
+    bool wordInfoInitialized;
+    AppletStorage wordInfoStorage;
 
     u8* interactive_tmpbuf;
     size_t interactive_tmpbuf_size;
@@ -506,6 +510,26 @@ void swkbdInlineSetInputText(SwkbdInline* s, const char* str);
 void swkbdInlineSetCursorPos(SwkbdInline* s, s32 pos);
 
 /**
+ * @brief Sets the UserWordInfo.
+ * @note Not avilable when \ref SwkbdState is above \ref SwkbdState_Initialized. Can't be used if this was already used previously.
+ * @note The specified buffer must not be used after this, until \ref swkbdInlineClose is used.
+ * @note \ref swkbdInlineUpdate must be called at some point afterwards.
+ * @note If input==NULL or total_entries==0, this will just call \ref swkbdInlineUnsetUserWordInfo internally.
+ * @param s SwkbdInline object.
+ * @param input Input data.
+ * @param entries Total entries in the buffer.
+ */
+Result swkbdInlineSetUserWordInfo(SwkbdInline* s, const SwkbdDictWord *input, s32 entries);
+
+/**
+ * @brief Request UnsetUserWordInfo.
+ * @note \ref swkbdInlineUpdate must be called at some point afterwards for this to take affect.
+ * @note Not avilable when \ref SwkbdState is above \ref SwkbdState_Initialized.
+ * @param s SwkbdInline object.
+ */
+Result swkbdInlineUnsetUserWordInfo(SwkbdInline* s);
+
+/**
  * @brief Sets the utf8Mode.
  * @note \ref swkbdInlineUpdate must be called at some point afterwards for this to take affect.
  * @note Automatically used internally by \ref swkbdInlineCreate.
@@ -517,7 +541,7 @@ void swkbdInlineSetUtf8Mode(SwkbdInline* s, bool flag);
 /**
  * @brief Sets the CustomizeDic.
  * @note Not avilable when \ref SwkbdState is above \ref SwkbdState_Initialized. Can't be used if this was already used previously.
- * @note The specified buffer must not be used after this, until \ref swkbdInlineClose is used.
+ * @note The specified buffer must not be used after this, until \ref swkbdInlineClose is used. However, it will also become available once \ref swkbdInlineUpdate handles SwkbdReplyType_UnsetCustomizeDic internally.
  * @param s SwkbdInline object.
  * @param buffer 0x1000-byte aligned buffer.
  * @param size 0x1000-byte aligned buffer size.
