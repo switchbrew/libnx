@@ -1,5 +1,5 @@
 /**
- * @file nifm.h
+ * @file nifm.c
  * @brief Network interface service IPC wrapper.
  * @author shadowninja10, shibboleet 
  * @copyright libnx Authors
@@ -145,7 +145,7 @@ Result nifmIsEthernetCommunicationEnabled(bool* out) {
         resp = r.Raw;
 
         rc = resp->result;
-        
+
         if (R_SUCCEEDED(rc) && out) 
             *out = resp->out != 0;
     }
@@ -182,7 +182,7 @@ Result nifmIsAnyForegroundRequestAccepted(bool* out) {
         resp = r.Raw;
 
         rc = resp->result;
-        
+
         if (R_SUCCEEDED(rc) && out) 
             *out = resp->out != 0;
     }
