@@ -1,6 +1,6 @@
 /**
  * @file nfpu.h
- * @brief Near Field Proximity (nfp:user) service IPC wrapper.
+ * @brief nfp:user service IPC wrapper.
  * @author averne
  * @copyright libnx Authors
  */
@@ -44,8 +44,8 @@ typedef struct {
     u8 unk_x1b[2];
     u8 mii_face_shape;
     u8 mii_face_color;
-    u8 mii_wrinkles;
-    u8 mii_makeup;
+    u8 mii_wrinkles_style;
+    u8 mii_makeup_style;
     u8 mii_hair_style;
     u8 mii_hair_color;
     u8 mii_has_hair_flipped;
