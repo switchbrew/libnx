@@ -21,7 +21,7 @@ Result nifmInitialize(void) {
 
     if (serviceIsActive(&g_nifmSrv))
         return 0;
-		
+        
     Result rc;
     rc = smGetService(&g_nifmSrv, "nifm:u");
 
@@ -146,9 +146,9 @@ Result nifmIsEthernetCommunicationEnabled(bool* out) {
         resp = r.Raw;
 
         rc = resp->result;
-		
+        
         if (R_SUCCEEDED(rc) && out) 
-			*out = resp->out != 0;
+            *out = resp->out != 0;
     }
 
     return rc;
@@ -183,9 +183,9 @@ Result nifmIsAnyForegroundRequestAccepted(bool* out) {
         resp = r.Raw;
 
         rc = resp->result;
-		
+        
         if (R_SUCCEEDED(rc) && out) 
-			*out = resp->out != 0;
+            *out = resp->out != 0;
     }
 
     return rc;
