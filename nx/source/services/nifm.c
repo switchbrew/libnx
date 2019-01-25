@@ -1,8 +1,7 @@
 /**
  * @file nifm.h
  * @brief Network interface service IPC wrapper.
- * @author shibboleet
- * @author shadowninja108
+ * @author shadowninja10, shibboleet 
  * @copyright libnx Authors
  */
 
