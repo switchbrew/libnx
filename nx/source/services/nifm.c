@@ -110,6 +110,7 @@ Result nifmIsWirelessCommunicationEnabled(bool* out) {
         resp = r.Raw;
 
         rc = resp->result;
+
         if (R_SUCCEEDED(rc) && out) 
             *out = resp->out != 0;
     }
