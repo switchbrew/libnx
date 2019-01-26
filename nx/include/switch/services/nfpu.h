@@ -1,6 +1,6 @@
 /**
  * @file nfpu.h
- * @brief nfp:user service IPC wrapper.
+ * @brief Nintendo Figurine Platform (nfp:user) service IPC wrapper.
  * @author averne
  * @copyright libnx Authors
  */
@@ -33,7 +33,7 @@ typedef struct {
     u8 reserved[0x38];
 } PACKED NfpuModelInfo;
 
-typedef struct {
+struct NfpuMiiCharInfo {
     u8 unk_x0[0x10]; // Hash?
     u8 mii_name[2*(10+1)]; ///< utf-16be, null-terminated
     u8 unk_x26;
@@ -41,7 +41,7 @@ typedef struct {
     u8 mii_sex;
     u8 mii_height;
     u8 mii_width;
-    u8 unk_x1b[2];
+    u8 unk_x2b[2];
     u8 mii_face_shape;
     u8 mii_face_color;
     u8 mii_wrinkles_style;
@@ -84,7 +84,12 @@ typedef struct {
     u8 mii_mole_size;
     u8 mii_mole_pos_x;
     u8 mii_mole_pos_y;
-    u8 unk_x46[5];  // Zero + Mii ID?
+    u8 unk_x57;
+} PACKED;
+
+typedef struct {
+    struct NfpuMiiCharInfo mii_char_info;
+    u8 unk_x58[4]; // Mii ID?
     char amiibo_name[10+1]; ///< utf-8, null-terminated
     u8 reserved[0x99];
 } PACKED NfpuRegisterInfo;
