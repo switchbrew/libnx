@@ -154,12 +154,6 @@ void hidReset(void)
     rwlockWriteUnlock(&g_hidLock);
 }
 
-static u32 _hidControllerIDToOfficial(HidControllerID id) {
-    if (id < CONTROLLER_HANDHELD) return id;
-    if (id == CONTROLLER_HANDHELD) return 0x20;
-    return 0x10;//For CONTROLLER_UNKNOWN and invalid values return this.
-}
-
 Service* hidGetSessionService(void) {
     return &g_hidSrv;
 }
