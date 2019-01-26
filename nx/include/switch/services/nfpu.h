@@ -33,7 +33,7 @@ typedef struct {
     u8 reserved[0x38];
 } PACKED NfpuModelInfo;
 
-struct NfpuMiiCharInfo {
+typedef struct NfpuMiiCharInfo {
     u8 unk_x0[0x10]; // Hash?
     u8 mii_name[2*(10+1)]; ///< utf-16be, null-terminated
     u8 unk_x26;
@@ -88,7 +88,7 @@ struct NfpuMiiCharInfo {
 } PACKED;
 
 typedef struct {
-    struct NfpuMiiCharInfo mii_char_info;
+    NfpuMiiCharInfo mii_char_info;
     u8 unk_x58[4]; // Mii ID?
     char amiibo_name[10+1]; ///< utf-8, null-terminated
     u8 reserved[0x99];
