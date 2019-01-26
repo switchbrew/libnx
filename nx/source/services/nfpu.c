@@ -1,5 +1,3 @@
-#include <stdlib.h>
-
 #include "types.h"
 #include "arm/atomics.h"
 #include "services/hid.h"
@@ -15,13 +13,12 @@ static Result _nfpuInterfaceInitialize(u64 aruid, const NfpuInitConfig *config);
 static Result _nfpuInterfaceFinalize(void);
 
 static Result _nfpuInterfaceCmdNoInOut(u64 cmd_id);
-static Result _nfpuInterfaceCmdInIdNoOut(HidControllerID id, u64 cmd_id);
-static Result _nfpuInterfaceCmdInIdOutEvent(HidControllerID id, Event *out, u64 cmd_id);
-static Result _nfpuInterfaceCmdInIdOutBuffer(HidControllerID id, void *buf, size_t buf_size, u64 cmd_id);
+static Result _nfpuInterfaceCmdInIdNoOut(u64 cmd_id, HidControllerID id);
+static Result _nfpuInterfaceCmdInIdOutEvent(u64 cmd_id, HidControllerID id, Event *out);
+static Result _nfpuInterfaceCmdInIdOutBuffer(u64 cmd_id, HidControllerID id, void *buf, size_t buf_size);
 
 static Result _nfpuInterfaceInitialize(u64 aruid, const NfpuInitConfig *config);
 static Result _nfpuInterfaceFinalize(void);
-
 
 // This is the data passed by every application this was tested with
 static const NfpuInitConfig g_nfpuDefaultInitConfig = {
@@ -153,7 +150,7 @@ static Result _nfpuInterfaceCmdNoInOut(u64 cmd_id) {
     return rc;
 }
 
-static Result _nfpuInterfaceCmdInIdNoOut(HidControllerID id, u64 cmd_id) {
+static Result _nfpuInterfaceCmdInIdNoOut(u64 cmd_id, HidControllerID id) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -187,7 +184,7 @@ static Result _nfpuInterfaceCmdInIdNoOut(HidControllerID id, u64 cmd_id) {
     return rc;
 }
 
-static Result _nfpuInterfaceCmdInIdOutEvent(HidControllerID id, Event *out, u64 cmd_id) {
+static Result _nfpuInterfaceCmdInIdOutEvent(u64 cmd_id, HidControllerID id, Event *out) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -224,7 +221,7 @@ static Result _nfpuInterfaceCmdInIdOutEvent(HidControllerID id, Event *out, u64 
     return rc;
 }
 
-static Result _nfpuInterfaceCmdInIdOutBuffer(HidControllerID id, void *buf, size_t buf_size, u64 cmd_id) {
+static Result _nfpuInterfaceCmdInIdOutBuffer(u64 cmd_id, HidControllerID id, void *buf, size_t buf_size) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -304,19 +301,19 @@ static inline Result _nfpuInterfaceFinalize(void) {
 }
 
 inline Result nfpuStartDetection(HidControllerID id) {
-    return _nfpuInterfaceCmdInIdNoOut(id, 3);
+    return _nfpuInterfaceCmdInIdNoOut(3, id);
 }
 
 inline Result nfpuStopDetection(HidControllerID id) {
-    return _nfpuInterfaceCmdInIdNoOut(id, 4);
+    return _nfpuInterfaceCmdInIdNoOut(4, id);
 }
 
 inline Result nfpuAttachActivateEvent(HidControllerID id, Event *out) {
-    return _nfpuInterfaceCmdInIdOutEvent(id, out, 17);
+    return _nfpuInterfaceCmdInIdOutEvent(17, id, out);
 }
 
 inline Result nfpuAttachDeactivateEvent(HidControllerID id, Event *out) {
-    return _nfpuInterfaceCmdInIdOutEvent(id, out, 18);
+    return _nfpuInterfaceCmdInIdOutEvent(18, id, out);
 }
 
 Result nfpuAttachAvailabilityChangeEvent(Event *out) {
@@ -429,12 +426,15 @@ Result nfpuGetDeviceState(HidControllerID id, NfpuDeviceState *out) {
 }
 
 Result nfpuListDevices(u32 *count, HidControllerID *out, size_t num_elements) {
+    // This is the maximum number of controllers that can be connected to a console at a time
+    // Incidentally, this is the biggest value official software (SSBU) was observed using
+    #define MAX_CONTROLLERS 9
+
     IpcCommand c;
     ipcInitialize(&c);
 
-    size_t buf_size = num_elements * sizeof(u64);
-    u64 *buf = malloc(buf_size);
-    ipcAddRecvStatic(&c, buf, buf_size, 0);
+    u64 buf[MAX_CONTROLLERS] = {0};
+    ipcAddRecvStatic(&c, buf, MAX_CONTROLLERS * sizeof(u64), 0);
 
     struct {
         u64 magic;
@@ -462,12 +462,11 @@ Result nfpuListDevices(u32 *count, HidControllerID *out, size_t num_elements) {
         rc = resp->result;
         if (R_SUCCEEDED(rc) && count && out) {
             *count = resp->count;
-            for (u32 i=0; i<resp->count; i++)
+            for (u32 i=0; i<((num_elements>MAX_CONTROLLERS) ? MAX_CONTROLLERS:num_elements); i++)
                 out[i] = _hidOfficialToControllerID(buf[i]);
         }
     }
 
-    free(buf);
     return rc;
 }
 
@@ -548,21 +547,21 @@ Result nfpuMount(HidControllerID id, NfpuDeviceType device_type, NfpuMountTarget
 }
 
 inline Result nfpuUnmount(HidControllerID id) {
-    return _nfpuInterfaceCmdInIdNoOut(id, 6);
+    return _nfpuInterfaceCmdInIdNoOut(6, id);
 }
 
 inline Result nfpuGetTagInfo(HidControllerID id, NfpuTagInfo *out) {
-    return _nfpuInterfaceCmdInIdOutBuffer(id, out, sizeof(NfpuTagInfo), 13);
+    return _nfpuInterfaceCmdInIdOutBuffer(13, id, out, sizeof(NfpuTagInfo));
 }
 
 inline Result nfpuGetRegisterInfo(HidControllerID id, NfpuRegisterInfo *out) {
-    return _nfpuInterfaceCmdInIdOutBuffer(id, out, sizeof(NfpuRegisterInfo), 14);
+    return _nfpuInterfaceCmdInIdOutBuffer(14, id, out, sizeof(NfpuRegisterInfo));
 }
 
 inline Result nfpuGetCommonInfo(HidControllerID id, NfpuCommonInfo *out) {
-    return _nfpuInterfaceCmdInIdOutBuffer(id, out, sizeof(NfpuCommonInfo), 15);
+    return _nfpuInterfaceCmdInIdOutBuffer(15, id, out, sizeof(NfpuCommonInfo));
 }
 
 inline Result nfpuGetModelInfo(HidControllerID id, NfpuModelInfo *out) {
-    return _nfpuInterfaceCmdInIdOutBuffer(id, out, sizeof(NfpuModelInfo), 16);
+    return _nfpuInterfaceCmdInIdOutBuffer(16, id, out, sizeof(NfpuModelInfo));
 }
