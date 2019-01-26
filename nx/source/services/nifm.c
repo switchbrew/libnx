@@ -1,7 +1,7 @@
 /**
- * @file nifm.h
+ * @file nifm.c
  * @brief Network interface service IPC wrapper.
- * @author shadowninja108
+ * @author shadowninja108, shibboleet
  * @copyright libnx Authors
  */
 
@@ -20,7 +20,7 @@ Result nifmInitialize(void) {
 
     if (serviceIsActive(&g_nifmSrv))
         return 0;
-		
+
     Result rc;
     rc = smGetService(&g_nifmSrv, "nifm:u");
 
@@ -76,6 +76,183 @@ Result nifmGetCurrentIpAddress(u32* out) {
 
         rc = resp->result;
         *out = resp->out;
+    }
+
+    return rc;
+}
+
+Result nifmIsWirelessCommunicationEnabled(bool* out) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_nifmIGS, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 17;
+
+    Result rc = serviceIpcDispatch(&g_nifmIGS);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+
+        struct {
+            u64 magic;
+            u64 result;
+            u8 out;
+        } *resp;
+
+        serviceIpcParse(&g_nifmIGS, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && out) 
+            *out = resp->out != 0;
+    }
+
+    return rc;
+}
+
+Result nifmIsEthernetCommunicationEnabled(bool* out) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_nifmIGS, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 20;
+
+    Result rc = serviceIpcDispatch(&g_nifmIGS);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+
+        struct {
+            u64 magic;
+            u64 result;
+            u8 out;
+        } *resp;
+
+        serviceIpcParse(&g_nifmIGS, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && out) 
+            *out = resp->out != 0;
+    }
+
+    return rc;
+}
+
+Result nifmIsAnyForegroundRequestAccepted(bool* out) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_nifmIGS, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 22;
+
+    Result rc = serviceIpcDispatch(&g_nifmIGS);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+
+        struct {
+            u64 magic;
+            u64 result;
+            u8 out;
+        } *resp;
+
+        serviceIpcParse(&g_nifmIGS, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && out) 
+            *out = resp->out != 0;
+    }
+
+    return rc;
+}
+
+Result nifmPutToSleep(void) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_nifmIGS, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 23;
+
+    Result rc = serviceIpcDispatch(&g_nifmIGS);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_nifmIGS, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result nifmWakeUp(void) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_nifmIGS, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 24;
+
+    Result rc = serviceIpcDispatch(&g_nifmIGS);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_nifmIGS, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
     }
 
     return rc;
