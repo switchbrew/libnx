@@ -83,7 +83,7 @@ extern "C" {
 #include "switch/services/psc.h"
 #include "switch/services/caps.h"
 #include "switch/services/capssu.h"
-#include "switch/services/nfpu.h"
+#include "switch/services/nfc.h"
 
 #include "switch/display/binder.h"
 #include "switch/display/parcel.h"

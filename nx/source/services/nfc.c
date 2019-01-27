@@ -2,7 +2,7 @@
 #include "arm/atomics.h"
 #include "services/hid.h"
 #include "services/applet.h"
-#include "services/nfpu.h"
+#include "services/nfc.h"
 
 static u64 g_refCnt;
 static Service g_nfpuSrv;
