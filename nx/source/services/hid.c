@@ -851,7 +851,7 @@ Result hidAcquireNpadStyleSetUpdateEventHandle(HidControllerID id, Event* event,
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 106;
-    raw->id = _hidControllerIDToOfficial(id);
+    raw->id = hidControllerIDToOfficial(id);
     raw->AppletResourceUserId = AppletResourceUserId;
     raw->event_ptr = 0;//Official sw sets this to a ptr, which the sysmodule doesn't seem to use.
 

@@ -175,7 +175,7 @@ static Result _nfpuInterfaceCmdInIdNoOut(Service* srv, u64 cmd_id, HidController
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = cmd_id;
-    raw->id = _hidControllerIDToOfficial(id);
+    raw->id = hidControllerIDToOfficial(id);
 
     Result rc = serviceIpcDispatch(srv);
 
@@ -209,7 +209,7 @@ static Result _nfpuInterfaceCmdInIdOutEvent(Service* srv, u64 cmd_id, HidControl
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = cmd_id;
-    raw->id = _hidControllerIDToOfficial(id);
+    raw->id = hidControllerIDToOfficial(id);
 
     Result rc = serviceIpcDispatch(srv);
 
@@ -248,7 +248,7 @@ static Result _nfpuInterfaceCmdInIdOutBuffer(Service* srv, u64 cmd_id, HidContro
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = cmd_id;
-    raw->id = _hidControllerIDToOfficial(id);
+    raw->id = hidControllerIDToOfficial(id);
 
     Result rc = serviceIpcDispatch(srv);
 
@@ -423,7 +423,7 @@ Result nfpuGetDeviceState(HidControllerID id, NfpuDeviceState *out) {
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 20;
-    raw->id = _hidControllerIDToOfficial(id);
+    raw->id = hidControllerIDToOfficial(id);
 
     Result rc = serviceIpcDispatch(&g_nfpuInterface);
 
@@ -485,7 +485,7 @@ Result nfpuListDevices(u32 *count, HidControllerID *out, size_t num_elements) {
         if (R_SUCCEEDED(rc) && count && out) {
             *count = resp->count;
             for (u32 i=0; i<((num_elements>MAX_CONTROLLERS) ? MAX_CONTROLLERS:num_elements); i++)
-                out[i] = _hidOfficialToControllerID(buf[i]);
+                out[i] = hidOfficialToControllerID(buf[i]);
         }
     }
 
@@ -514,7 +514,7 @@ Result nfpuGetNpadId(HidControllerID id, u32 *out) {
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 21;
-    raw->id = _hidControllerIDToOfficial(id);
+    raw->id = hidControllerIDToOfficial(id);
 
     Result rc = serviceIpcDispatch(&g_nfpuInterface);
 
@@ -557,7 +557,7 @@ Result nfpuMount(HidControllerID id, NfpuDeviceType device_type, NfpuMountTarget
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 5;
-    raw->id = _hidControllerIDToOfficial(id);
+    raw->id = hidControllerIDToOfficial(id);
     raw->device_type = device_type;
     raw->mount_target = mount_target;
 
