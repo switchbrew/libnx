@@ -144,6 +144,9 @@ Result nfpuGetDeviceState(HidControllerID id, NfpuDeviceState *out);
 Result nfpuListDevices(u32 *count, HidControllerID *out, size_t num_elements);
 Result nfpuGetNpadId(HidControllerID id, u32 *out);
 
+/// Wrapper for \ref nfpuListDevices.
+Result nfpuUpdateP1Auto(void);
+
 Result nfpuMount(HidControllerID id, NfpuDeviceType device_type, NfpuMountTarget mount_target);
 Result nfpuUnmount(HidControllerID id);
 

@@ -8,6 +8,8 @@ static u64 g_refCnt;
 static Service g_nfpuSrv;
 static Service g_nfpuInterface;
 
+static HidControllerID g_controllerP1AutoID;
+
 static Result _nfpuCreateInterface(void);
 static Result _nfpuInterfaceInitialize(u64 aruid, const NfpuInitConfig *config);
 static Result _nfpuInterfaceFinalize(void);
@@ -52,6 +54,9 @@ Result nfpuInitialize(void) {
 
     if (R_SUCCEEDED(rc))
         rc = _nfpuInterfaceInitialize(aruid, &g_nfpuDefaultInitConfig);
+
+    if (R_SUCCEEDED(rc))
+        rc = nfpuUpdateP1Auto();
 
     if (R_FAILED(rc))
         nfpuExit();
@@ -289,18 +294,22 @@ static inline Result _nfpuInterfaceFinalize(void) {
 }
 
 inline Result nfpuStartDetection(HidControllerID id) {
+    if (id == CONTROLLER_P1_AUTO) return _nfpuInterfaceCmdInIdNoOut(3, g_controllerP1AutoID);
     return _nfpuInterfaceCmdInIdNoOut(3, id);
 }
 
 inline Result nfpuStopDetection(HidControllerID id) {
+    if (id == CONTROLLER_P1_AUTO) return _nfpuInterfaceCmdInIdNoOut(4, g_controllerP1AutoID);
     return _nfpuInterfaceCmdInIdNoOut(4, id);
 }
 
 inline Result nfpuAttachActivateEvent(HidControllerID id, Event *out) {
+    if (id == CONTROLLER_P1_AUTO) return _nfpuInterfaceCmdInIdOutEvent(17, g_controllerP1AutoID, out);
     return _nfpuInterfaceCmdInIdOutEvent(17, id, out);
 }
 
 inline Result nfpuAttachDeactivateEvent(HidControllerID id, Event *out) {
+    if (id == CONTROLLER_P1_AUTO) return _nfpuInterfaceCmdInIdOutEvent(18, g_controllerP1AutoID, out);
     return _nfpuInterfaceCmdInIdOutEvent(18, id, out);
 }
 
@@ -376,6 +385,8 @@ Result nfpuGetState(NfpuState *out) {
 }
 
 Result nfpuGetDeviceState(HidControllerID id, NfpuDeviceState *out) {
+    if (id == CONTROLLER_P1_AUTO) return nfpuGetDeviceState(g_controllerP1AutoID, out);
+
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -458,7 +469,14 @@ Result nfpuListDevices(u32 *count, HidControllerID *out, size_t num_elements) {
     return rc;
 }
 
+Result nfpuUpdateP1Auto(void) {
+    u32 dummy;
+    return nfpuListDevices(&dummy, &g_controllerP1AutoID, 1);
+}
+
 Result nfpuGetNpadId(HidControllerID id, u32 *out) {
+    if (id == CONTROLLER_P1_AUTO) return nfpuGetNpadId(g_controllerP1AutoID, out);
+
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -497,6 +515,7 @@ Result nfpuGetNpadId(HidControllerID id, u32 *out) {
 }
 
 Result nfpuMount(HidControllerID id, NfpuDeviceType device_type, NfpuMountTarget mount_target) {
+    if (id == CONTROLLER_P1_AUTO) return nfpuMount(g_controllerP1AutoID, device_type, mount_target);
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -535,21 +554,26 @@ Result nfpuMount(HidControllerID id, NfpuDeviceType device_type, NfpuMountTarget
 }
 
 inline Result nfpuUnmount(HidControllerID id) {
+    if (id == CONTROLLER_P1_AUTO) return _nfpuInterfaceCmdInIdNoOut(6, g_controllerP1AutoID);
     return _nfpuInterfaceCmdInIdNoOut(6, id);
 }
 
 inline Result nfpuGetTagInfo(HidControllerID id, NfpuTagInfo *out) {
+    if (id == CONTROLLER_P1_AUTO) return _nfpuInterfaceCmdInIdOutBuffer(13, g_controllerP1AutoID, out, sizeof(NfpuTagInfo));
     return _nfpuInterfaceCmdInIdOutBuffer(13, id, out, sizeof(NfpuTagInfo));
 }
 
 inline Result nfpuGetRegisterInfo(HidControllerID id, NfpuRegisterInfo *out) {
+    if (id == CONTROLLER_P1_AUTO) return _nfpuInterfaceCmdInIdOutBuffer(14, g_controllerP1AutoID, out, sizeof(NfpuRegisterInfo));
     return _nfpuInterfaceCmdInIdOutBuffer(14, id, out, sizeof(NfpuRegisterInfo));
 }
 
 inline Result nfpuGetCommonInfo(HidControllerID id, NfpuCommonInfo *out) {
+    if (id == CONTROLLER_P1_AUTO) return _nfpuInterfaceCmdInIdOutBuffer(15, g_controllerP1AutoID, out, sizeof(NfpuCommonInfo));
     return _nfpuInterfaceCmdInIdOutBuffer(15, id, out, sizeof(NfpuCommonInfo));
 }
 
 inline Result nfpuGetModelInfo(HidControllerID id, NfpuModelInfo *out) {
+    if (id == CONTROLLER_P1_AUTO) return _nfpuInterfaceCmdInIdOutBuffer(16, g_controllerP1AutoID, out, sizeof(NfpuModelInfo));
     return _nfpuInterfaceCmdInIdOutBuffer(16, id, out, sizeof(NfpuModelInfo));
 }
