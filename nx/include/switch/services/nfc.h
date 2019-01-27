@@ -154,3 +154,6 @@ Result nfpuGetTagInfo(HidControllerID id, NfpuTagInfo *out);
 Result nfpuGetRegisterInfo(HidControllerID id, NfpuRegisterInfo *out);
 Result nfpuGetCommonInfo(HidControllerID id, NfpuCommonInfo *out);
 Result nfpuGetModelInfo(HidControllerID id, NfpuModelInfo *out);
+
+/// Calls nfc:user.
+Result nfpuIsNfcEnabled(bool *out);
