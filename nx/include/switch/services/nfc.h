@@ -35,7 +35,7 @@ typedef struct {
 
 typedef struct {
     u8 unk_x0[0x10]; // Hash?
-    u8 mii_name[2*(10+1)]; ///< utf-16be, null-terminated
+    u16 mii_name[10+1]; ///< utf-16be, null-terminated
     u8 unk_x26;
     u8 mii_color;
     u8 mii_sex;
