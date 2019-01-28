@@ -158,7 +158,7 @@ typedef struct {
     u8 returnButtonFlag;             ///< Controls whether the Return button is enabled, for newlines input. 0 = disabled, non-zero = enabled.
     u16 unk_x29;
     u8 unk_x2b;
-    u32 flags;
+    u32 flags;                       ///< Bitmask 0x4: unknown.
     u8 unk_x30;
     u8 unk_x31[0x17];
 } PACKED SwkbdAppearArg;
@@ -476,13 +476,19 @@ void swkbdInlineAppear(SwkbdInline* s, SwkbdAppearArg* arg);
 void swkbdInlineDisappear(SwkbdInline* s);
 
 /**
- * @brief Creates a \ref SwkbdAppearArg which can then be passed to \ref swkbdInlineAppear.
+ * @brief Creates a \ref SwkbdAppearArg which can then be passed to \ref swkbdInlineAppear. arg is initialized with the defaults, with type being set to the input type.
  * @param arg Output \ref SwkbdAppearArg.
- * @param type Type. Must be 0..5, otherwise this will return.
- * @param flag Unknown flag
+ * @param type \ref SwkbdType type
  * @param str Input UTF-8 string for the Ok button text, this can be empty/NULL to use the default.
  */
-void swkbdInlineMakeAppearArg(SwkbdAppearArg* arg, u32 type, bool flag, const char* str);
+void swkbdInlineMakeAppearArg(SwkbdAppearArg* arg, SwkbdType type);
+
+/**
+ * @brief Sets okButtonText for the specified SwkbdAppearArg, which was previously initialized with \ref swkbdInlineMakeAppearArg.
+ * @param arg \ref SwkbdAppearArg
+ * @param str Input UTF-8 string for the Ok button text, this can be empty/NULL to use the default.
+ */
+void swkbdInlineAppearArgSetOkButtonText(SwkbdAppearArg* arg,  const char* str);
 
 /**
  * @brief Sets the audio volume.

@@ -643,54 +643,16 @@ void swkbdInlineDisappear(SwkbdInline* s) {
     s->calcArg.flags = (s->calcArg.flags & ~0x4) | 0x80;
 }
 
-void swkbdInlineMakeAppearArg(SwkbdAppearArg* arg, u32 type, bool flag, const char* str) {
+void swkbdInlineMakeAppearArg(SwkbdAppearArg* arg, SwkbdType type) {
     memset(arg, 0, sizeof(SwkbdAppearArg));
-
-    u32 tmpval=0;
-    u8 tmpval2[2]={0};
-
-    switch(type) {
-        case 0:
-            tmpval = SwkbdType_NumPad;
-            tmpval2[0] = tmpval;
-        break;
-
-        case 1:
-            tmpval = 0x101;
-            tmpval2[0] = 1;
-            tmpval2[1] = 1;
-        break;
-
-        case 2:
-            tmpval = 3;
-            tmpval2[0] = 1;
-        break;
-
-        case 3:
-            tmpval = SwkbdType_QWERTY;
-        break;
-
-        case 4:
-            tmpval = SwkbdType_NumPad;
-        break;
-
-        case 5:
-            tmpval = SwkbdType_Normal;
-            arg->keySetDisableBitmask = SwkbdKeyDisableBitmask_DownloadCode;
-        break;
-
-        default:
-        return;
-    }
 
     arg->unk_x20 = -1;
     arg->unk_x24 = -1;
     arg->unk_x30 = 1;
-    arg->type = tmpval;
-    arg->dicFlag = tmpval2[0];
-    arg->returnButtonFlag = tmpval2[1];
-    if (flag) arg->flags = 0x4;
+    arg->type = type;
+}
 
+void swkbdInlineAppearArgSetOkButtonText(SwkbdAppearArg* arg,  const char* str) {
     _swkbdConvertToUTF16ByteSize(arg->okButtonText, str, sizeof(arg->okButtonText));
 }
 
