@@ -1,5 +1,5 @@
 /**
- * @file nfpu.h
+ * @file nfc.h
  * @brief Nintendo Figurine Platform (nfp:user) service IPC wrapper.
  * @author averne
  * @copyright libnx Authors
@@ -89,7 +89,9 @@ typedef struct {
 
 typedef struct {
     NfpuMiiCharInfo mii_char_info;
-    u8 unk_x58[4]; // Mii ID?
+    u16 first_write_year;
+    u8 first_write_month;
+    u8 first_write_day;
     char amiibo_name[10+1]; ///< utf-8, null-terminated
     u8 reserved[0x99];
 } PACKED NfpuRegisterInfo;
