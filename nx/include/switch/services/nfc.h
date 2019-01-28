@@ -161,7 +161,7 @@ Result nfpuGetRegisterInfo(HidControllerID id, NfpuRegisterInfo *out);
 Result nfpuGetCommonInfo(HidControllerID id, NfpuCommonInfo *out);
 Result nfpuGetModelInfo(HidControllerID id, NfpuModelInfo *out);
 
-Result nfpuOpenApplicationArea(HidControllerID id, NfpuAppId app_id);
+Result nfpuOpenApplicationArea(HidControllerID id, NfpuAppId app_id, u32* area_size);
 Result nfpuGetApplicationArea(HidControllerID id, void* buf, size_t buf_size);
 
 /// Calls nfc:user.

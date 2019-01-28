@@ -609,9 +609,9 @@ inline Result nfpuGetModelInfo(HidControllerID id, NfpuModelInfo *out) {
     return _nfpuInterfaceCmdInIdOutBuffer(&g_nfpuInterface, 16, id, out, sizeof(NfpuModelInfo));
 }
 
-Result nfpuOpenApplicationArea(HidControllerID id, NfpuAppId app_id) {
+Result nfpuOpenApplicationArea(HidControllerID id, NfpuAppId app_id, u32* area_size) {
     if (id == CONTROLLER_P1_AUTO)
-        return nfpuOpenApplicationArea(g_controllerP1AutoID, app_id);
+        return nfpuOpenApplicationArea(g_controllerP1AutoID, app_id, area_size);
 
     IpcCommand c;
     ipcInitialize(&c);
@@ -637,12 +637,16 @@ Result nfpuOpenApplicationArea(HidControllerID id, NfpuAppId app_id) {
         struct {
             u64 magic;
             u64 result;
+            u32 area_size;
         } *resp;
 
         serviceIpcParse(&g_nfpuInterface, &r, sizeof(*resp));
         resp = r.Raw;
 
-        rc = resp->result;          
+        rc = resp->result; 
+
+        if (R_SUCCEEDED(rc) && area_size)
+            *area_size = resp->area_size;         
     }
 
     return rc;
