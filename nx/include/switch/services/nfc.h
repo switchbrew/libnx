@@ -96,6 +96,13 @@ typedef struct {
     u8 reserved[0x99];
 } PACKED NfpuRegisterInfo;
 
+typedef struct {
+    u64 unk1;
+    u64 reserved1[3];
+    u64 unk2;
+    u64 reserved2[3];
+} NfpuInitConfig;
+
 typedef enum {
     NfpuState_NonInitialized = 0,
     NfpuState_Initialized    = 1,
@@ -121,12 +128,9 @@ typedef enum {
     NfpuMountTarget_All = 3,
 } NfpuMountTarget;
 
-typedef struct {
-    u64 unk1;
-    u64 reserved1[3];
-    u64 unk2;
-    u64 reserved2[3];
-} NfpuInitConfig;
+typedef enum {
+    NfpuAppId_SSBU = 0x34f80200,
+} NfpuAppId;
 
 const NfpuInitConfig *nfpuGetDefaultInitConfig(void);
 
@@ -156,6 +160,9 @@ Result nfpuGetTagInfo(HidControllerID id, NfpuTagInfo *out);
 Result nfpuGetRegisterInfo(HidControllerID id, NfpuRegisterInfo *out);
 Result nfpuGetCommonInfo(HidControllerID id, NfpuCommonInfo *out);
 Result nfpuGetModelInfo(HidControllerID id, NfpuModelInfo *out);
+
+Result nfpuOpenApplicationArea(HidControllerID id, NfpuAppId app_id);
+Result nfpuGetApplicationArea(HidControllerID id, void* buf, size_t buf_size);
 
 /// Calls nfc:user.
 Result nfpuIsNfcEnabled(bool *out);

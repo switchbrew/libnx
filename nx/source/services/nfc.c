@@ -609,6 +609,84 @@ inline Result nfpuGetModelInfo(HidControllerID id, NfpuModelInfo *out) {
     return _nfpuInterfaceCmdInIdOutBuffer(&g_nfpuInterface, 16, id, out, sizeof(NfpuModelInfo));
 }
 
+Result nfpuOpenApplicationArea(HidControllerID id, NfpuAppId app_id) {
+    if (id == CONTROLLER_P1_AUTO)
+        return nfpuOpenApplicationArea(g_controllerP1AutoID, app_id);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 id;
+        u32 app_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_nfpuInterface, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 7;
+    raw->id = hidControllerIDToOfficial(id);
+    raw->app_id = app_id;
+
+    Result rc = serviceIpcDispatch(&g_nfpuInterface);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_nfpuInterface, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;          
+    }
+
+    return rc;
+}
+
+Result nfpuGetApplicationArea(HidControllerID id, void* buf, size_t buf_size) {
+    if (id == CONTROLLER_P1_AUTO)
+        return nfpuGetApplicationArea(g_controllerP1AutoID, buf, buf_size);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    ipcAddRecvBuffer(&c, buf, buf_size, BufferType_Normal);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_nfpuInterface, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 8;
+    raw->id = hidControllerIDToOfficial(id);
+
+    Result rc = serviceIpcDispatch(&g_nfpuInterface);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_nfpuInterface, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;          
+    }
+
+    return rc;
+}
+
 Result nfpuIsNfcEnabled(bool *out) {
     IpcCommand c;
     ipcInitialize(&c);
