@@ -491,6 +491,20 @@ void swkbdInlineMakeAppearArg(SwkbdAppearArg* arg, SwkbdType type);
 void swkbdInlineAppearArgSetOkButtonText(SwkbdAppearArg* arg,  const char* str);
 
 /**
+ * @brief Sets the LeftButtonText, for \ref SwkbdType_NumPad. The default is "". Equivalent to \ref swkbdConfigSetLeftOptionalSymbolKey.
+ * @param arg \ref SwkbdAppearArg, previously initialized by \ref swkbdInlineMakeAppearArg.
+ * @param str UTF-8 input string.
+ */
+void swkbdInlineAppearArgSetLeftButtonText(SwkbdAppearArg* arg, const char* str);
+
+/**
+ * @brief Sets the RightButtonText, for \ref SwkbdType_NumPad. The default is "". Equivalent to \ref sswkbdConfigSetRightOptionalSymbolKey.
+ * @param arg \ref SwkbdAppearArg, previously initialized by \ref swkbdInlineMakeAppearArg.
+ * @param str UTF-8 input string.
+ */
+void swkbdInlineAppearArgSetRightButtonText(SwkbdAppearArg* arg, const char* str);
+
+/**
  * @brief Sets the audio volume.
  * @note \ref swkbdInlineUpdate must be called at some point afterwards for this to take affect.
  * @param s SwkbdInline object.

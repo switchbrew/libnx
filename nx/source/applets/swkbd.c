@@ -656,6 +656,14 @@ void swkbdInlineAppearArgSetOkButtonText(SwkbdAppearArg* arg,  const char* str) 
     _swkbdConvertToUTF16ByteSize(arg->okButtonText, str, sizeof(arg->okButtonText));
 }
 
+void swkbdInlineAppearArgSetLeftButtonText(SwkbdAppearArg* arg, const char* str) {
+    _swkbdConvertToUTF16(&arg->leftButtonText, str, 1);
+}
+
+void swkbdInlineAppearArgSetRightButtonText(SwkbdAppearArg* arg, const char* str) {
+    _swkbdConvertToUTF16(&arg->rightButtonText, str, 1);
+}
+
 void swkbdInlineSetVolume(SwkbdInline* s, float volume) {
     if (s->calcArg.volume == volume) return;
     s->calcArg.volume = volume;
