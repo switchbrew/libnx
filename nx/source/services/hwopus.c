@@ -14,7 +14,7 @@ static Result _hwopusOpenHardwareOpusDecoderForMultiStream(Service* srv, Service
 static Result _hwopusGetWorkBufferSizeForMultiStream(Service* srv, u32 *size, HwopusMultistreamState *state);
 
 static Result _hwopusDecodeInterleavedWithPerfOld(HwopusDecoder* decoder, s32 *DecodedDataSize, s32 *DecodedSampleCount, u64 *perf, const void* opusin, size_t opusin_size, s16 *pcmbuf, size_t pcmbuf_size);
-static Result _hwopusDecodeInterleaved(HwopusDecoder* decoder, s32 *DecodedDataSize, s32 *DecodedSampleCount, u64 *perf, bool flag, const void* opusin, size_t opusin_size, s16 *pcmbuf, size_t pcmbuf_size);
+static Result _hwopusDecodeInterleaved(HwopusDecoder* decoder, s32 *DecodedDataSize, s32 *DecodedSampleCount, u64 *perf, bool reset_context, const void* opusin, size_t opusin_size, s16 *pcmbuf, size_t pcmbuf_size);
 
 Result hwopusDecoderInitialize(HwopusDecoder* decoder, s32 SampleRate, s32 ChannelCount) {
     Result rc=0;
@@ -334,7 +334,7 @@ static Result _hwopusDecodeInterleavedWithPerfOld(HwopusDecoder* decoder, s32 *D
     return rc;
 }
 
-static Result _hwopusDecodeInterleaved(HwopusDecoder* decoder, s32 *DecodedDataSize, s32 *DecodedSampleCount, u64 *perf, bool flag, const void* opusin, size_t opusin_size, s16 *pcmbuf, size_t pcmbuf_size) {
+static Result _hwopusDecodeInterleaved(HwopusDecoder* decoder, s32 *DecodedDataSize, s32 *DecodedSampleCount, u64 *perf, bool reset_context, const void* opusin, size_t opusin_size, s16 *pcmbuf, size_t pcmbuf_size) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -351,7 +351,7 @@ static Result _hwopusDecodeInterleaved(HwopusDecoder* decoder, s32 *DecodedDataS
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = decoder->multistream==0 ? 6 : 7;
-    raw->flag = flag!=0;
+    raw->flag = reset_context!=0;
 
     Result rc = serviceIpcDispatch(&decoder->s);
 
