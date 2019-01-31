@@ -13,14 +13,14 @@ static Service g_nfcuInterface;
 
 static HidControllerID g_controllerP1AutoID;
 
-static Result _nfpuCreateInterface(Service* srv, Service* out);
-static Result _nfpuInterfaceInitialize(Service* srv, u64 cmd_id, u64 aruid, const NfpuInitConfig *config);
-static Result _nfpuInterfaceFinalize(Service* srv, u64 cmd_id);
+static Result _nfpuCreateInterface(Service *srv, Service *out);
+static Result _nfpuInterfaceInitialize(Service *srv, u64 cmd_id, u64 aruid, const NfpuInitConfig *config);
+static Result _nfpuInterfaceFinalize(Service *srv, u64 cmd_id);
 
-static Result _nfpuInterfaceCmdNoInOut(Service* srv, u64 cmd_id);
-static Result _nfpuInterfaceCmdInIdNoOut(Service* srv, u64 cmd_id, HidControllerID id);
-static Result _nfpuInterfaceCmdInIdOutEvent(Service* srv, u64 cmd_id, HidControllerID id, Event *out);
-static Result _nfpuInterfaceCmdInIdOutBuffer(Service* srv, u64 cmd_id, HidControllerID id, void *buf, size_t buf_size);
+static Result _nfpuInterfaceCmdNoInOut(Service *srv, u64 cmd_id);
+static Result _nfpuInterfaceCmdInIdNoOut(Service *srv, u64 cmd_id, HidControllerID id);
+static Result _nfpuInterfaceCmdInIdOutEvent(Service *srv, u64 cmd_id, HidControllerID id, Event *out);
+static Result _nfpuInterfaceCmdInIdOutBuffer(Service *srv, u64 cmd_id, HidControllerID id, void *buf, size_t buf_size);
 
 // This is the data passed by every application this was tested with
 static const NfpuInitConfig g_nfpuDefaultInitConfig = {
@@ -129,7 +129,7 @@ static Result _nfpuCreateInterface(Service *srv, Service *out) {
     return rc;
 }
 
-static Result _nfpuInterfaceCmdNoInOut(Service* srv, u64 cmd_id) {
+static Result _nfpuInterfaceCmdNoInOut(Service *srv, u64 cmd_id) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -161,7 +161,7 @@ static Result _nfpuInterfaceCmdNoInOut(Service* srv, u64 cmd_id) {
     return rc;
 }
 
-static Result _nfpuInterfaceCmdInIdNoOut(Service* srv, u64 cmd_id, HidControllerID id) {
+static Result _nfpuInterfaceCmdInIdNoOut(Service *srv, u64 cmd_id, HidControllerID id) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -195,7 +195,7 @@ static Result _nfpuInterfaceCmdInIdNoOut(Service* srv, u64 cmd_id, HidController
     return rc;
 }
 
-static Result _nfpuInterfaceCmdInIdOutEvent(Service* srv, u64 cmd_id, HidControllerID id, Event *out) {
+static Result _nfpuInterfaceCmdInIdOutEvent(Service *srv, u64 cmd_id, HidControllerID id, Event *out) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -232,7 +232,7 @@ static Result _nfpuInterfaceCmdInIdOutEvent(Service* srv, u64 cmd_id, HidControl
     return rc;
 }
 
-static Result _nfpuInterfaceCmdInIdOutBuffer(Service* srv, u64 cmd_id, HidControllerID id, void *buf, size_t buf_size) {
+static Result _nfpuInterfaceCmdInIdOutBuffer(Service *srv, u64 cmd_id, HidControllerID id, void *buf, size_t buf_size) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -268,7 +268,7 @@ static Result _nfpuInterfaceCmdInIdOutBuffer(Service* srv, u64 cmd_id, HidContro
     return rc;
 }
 
-static Result _nfpuInterfaceInitialize(Service* srv, u64 cmd_id, u64 aruid, const NfpuInitConfig *config) {
+static Result _nfpuInterfaceInitialize(Service *srv, u64 cmd_id, u64 aruid, const NfpuInitConfig *config) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -307,7 +307,7 @@ static Result _nfpuInterfaceInitialize(Service* srv, u64 cmd_id, u64 aruid, cons
     return rc;
 }
 
-static inline Result _nfpuInterfaceFinalize(Service* srv, u64 cmd_id) {
+static inline Result _nfpuInterfaceFinalize(Service *srv, u64 cmd_id) {
     return _nfpuInterfaceCmdNoInOut(srv, cmd_id);
 }
 
@@ -609,7 +609,7 @@ inline Result nfpuGetModelInfo(HidControllerID id, NfpuModelInfo *out) {
     return _nfpuInterfaceCmdInIdOutBuffer(&g_nfpuInterface, 16, id, out, sizeof(NfpuModelInfo));
 }
 
-Result nfpuOpenApplicationArea(HidControllerID id, NfpuAppId app_id, u32* npad_id) {
+Result nfpuOpenApplicationArea(HidControllerID id, u32 app_id, u32 *npad_id) {
     if (id == CONTROLLER_P1_AUTO)
         return nfpuOpenApplicationArea(g_controllerP1AutoID, app_id, npad_id);
 
@@ -652,7 +652,7 @@ Result nfpuOpenApplicationArea(HidControllerID id, NfpuAppId app_id, u32* npad_i
     return rc;
 }
 
-Result nfpuGetApplicationArea(HidControllerID id, void* buf, size_t buf_size) {
+Result nfpuGetApplicationArea(HidControllerID id, void *buf, size_t buf_size) {
     if (id == CONTROLLER_P1_AUTO)
         return nfpuGetApplicationArea(g_controllerP1AutoID, buf, buf_size);
 
@@ -689,6 +689,98 @@ Result nfpuGetApplicationArea(HidControllerID id, void* buf, size_t buf_size) {
     }
 
     return rc;
+}
+
+Result nfpuSetApplicationArea(HidControllerID id, void *buf, size_t buf_size) {
+    if (id == CONTROLLER_P1_AUTO)
+        return nfpuSetApplicationArea(g_controllerP1AutoID, buf, buf_size);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    ipcAddSendBuffer(&c, buf, buf_size, BufferType_Normal);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_nfpuInterface, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 9;
+    raw->id = hidControllerIDToOfficial(id);
+
+    Result rc = serviceIpcDispatch(&g_nfpuInterface);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_nfpuInterface, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;          
+    }
+
+    return rc;
+}
+
+Result nfpuCreateApplicationArea(HidControllerID id, u32 app_id, void *buf, size_t buf_size) {
+        if (id == CONTROLLER_P1_AUTO)
+        return nfpuGetApplicationArea(g_controllerP1AutoID, buf, buf_size);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    ipcAddSendBuffer(&c, buf, buf_size, BufferType_Normal);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 id;
+        u32 app_id;
+    } PACKED *raw;
+
+    raw = serviceIpcPrepareHeader(&g_nfpuInterface, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 9;
+    raw->id = hidControllerIDToOfficial(id);
+    raw->app_id = app_id;
+
+    Result rc = serviceIpcDispatch(&g_nfpuInterface);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_nfpuInterface, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;          
+    }
+
+    return rc;
+}
+
+Result nfpuFlush(HidControllerID id) {
+    if (id == CONTROLLER_P1_AUTO)
+        return _nfpuInterfaceCmdInIdNoOut(&g_nfpuInterface, 10, g_controllerP1AutoID);
+    return _nfpuInterfaceCmdInIdNoOut(&g_nfpuInterface, 10, id);
+}
+
+Result nfpuRestore(HidControllerID id) {
+    if (id == CONTROLLER_P1_AUTO)
+        return _nfpuInterfaceCmdInIdNoOut(&g_nfpuInterface, 11, g_controllerP1AutoID);
+    return _nfpuInterfaceCmdInIdNoOut(&g_nfpuInterface, 11, id);
 }
 
 Result nfpuIsNfcEnabled(bool *out) {

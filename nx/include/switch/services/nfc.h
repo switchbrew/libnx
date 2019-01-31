@@ -128,10 +128,6 @@ typedef enum {
     NfpuMountTarget_All = 3,
 } NfpuMountTarget;
 
-typedef enum {
-    NfpuAppId_SSBU = 0x34f80200,
-} NfpuAppId;
-
 const NfpuInitConfig *nfpuGetDefaultInitConfig(void);
 
 Result nfpuInitialize(void);
@@ -161,8 +157,13 @@ Result nfpuGetRegisterInfo(HidControllerID id, NfpuRegisterInfo *out);
 Result nfpuGetCommonInfo(HidControllerID id, NfpuCommonInfo *out);
 Result nfpuGetModelInfo(HidControllerID id, NfpuModelInfo *out);
 
-Result nfpuOpenApplicationArea(HidControllerID id, NfpuAppId app_id, u32* npad_id);
-Result nfpuGetApplicationArea(HidControllerID id, void* buf, size_t buf_size);
+Result nfpuOpenApplicationArea(HidControllerID id, u32 app_id, u32 *npad_id);
+Result nfpuGetApplicationArea(HidControllerID id, void *buf, size_t buf_size);
+Result nfpuSetApplicationArea(HidControllerID id, void *buf, size_t buf_size);
+Result nfpuCreateApplicationArea(HidControllerID id, u32 app_id, void *buf, size_t buf_size);
+
+Result nfpuFlush(HidControllerID id);
+Result nfpuRestore(HidControllerID id);
 
 /// Calls nfc:user.
 Result nfpuIsNfcEnabled(bool *out);
