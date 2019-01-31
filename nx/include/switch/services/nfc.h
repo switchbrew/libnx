@@ -113,7 +113,7 @@ typedef enum {
     NfpuDeviceState_SearchingForTag = 1,
     NfpuDeviceState_TagFound        = 2,
     NfpuDeviceState_TagRemoved      = 3,
-    NfpuDeviceState_TagNearby       = 4,
+    NfpuDeviceState_TagMounted      = 4,
     NfpuDeviceState_Unavailable     = 5,
     NfpuDeviceState_Finalized       = 6,
 } NfpuDeviceState;
