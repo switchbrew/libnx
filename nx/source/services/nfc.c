@@ -749,7 +749,7 @@ Result nfpuCreateApplicationArea(HidControllerID id, u32 app_id, void *buf, size
     raw = serviceIpcPrepareHeader(&g_nfpuInterface, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 9;
+    raw->cmd_id = 12;
     raw->id = hidControllerIDToOfficial(id);
     raw->app_id = app_id;
 
