@@ -691,7 +691,7 @@ Result nfpuGetApplicationArea(HidControllerID id, void *buf, size_t buf_size) {
     return rc;
 }
 
-Result nfpuSetApplicationArea(HidControllerID id, void *buf, size_t buf_size) {
+Result nfpuSetApplicationArea(HidControllerID id, const void *buf, size_t buf_size) {
     if (id == CONTROLLER_P1_AUTO)
         return nfpuSetApplicationArea(g_controllerP1AutoID, buf, buf_size);
 
@@ -730,9 +730,9 @@ Result nfpuSetApplicationArea(HidControllerID id, void *buf, size_t buf_size) {
     return rc;
 }
 
-Result nfpuCreateApplicationArea(HidControllerID id, u32 app_id, void *buf, size_t buf_size) {
+Result nfpuCreateApplicationArea(HidControllerID id, u32 app_id, const void *buf, size_t buf_size) {
         if (id == CONTROLLER_P1_AUTO)
-        return nfpuGetApplicationArea(g_controllerP1AutoID, buf, buf_size);
+        return nfpuCreateApplicationArea(g_controllerP1AutoID, app_id, buf, buf_size);
 
     IpcCommand c;
     ipcInitialize(&c);

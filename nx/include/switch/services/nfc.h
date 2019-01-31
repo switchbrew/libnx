@@ -159,8 +159,8 @@ Result nfpuGetModelInfo(HidControllerID id, NfpuModelInfo *out);
 
 Result nfpuOpenApplicationArea(HidControllerID id, u32 app_id, u32 *npad_id);
 Result nfpuGetApplicationArea(HidControllerID id, void *buf, size_t buf_size);
-Result nfpuSetApplicationArea(HidControllerID id, void *buf, size_t buf_size);
-Result nfpuCreateApplicationArea(HidControllerID id, u32 app_id, void *buf, size_t buf_size);
+Result nfpuSetApplicationArea(HidControllerID id, const void *buf, size_t buf_size);
+Result nfpuCreateApplicationArea(HidControllerID id, u32 app_id, const void *buf, size_t buf_size);
 
 Result nfpuFlush(HidControllerID id);
 Result nfpuRestore(HidControllerID id);
