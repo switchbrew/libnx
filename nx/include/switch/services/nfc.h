@@ -132,7 +132,7 @@ const NfpuInitConfig *nfpuGetDefaultInitConfig(void);
 
 Result nfpuInitialize(void);
 void nfpuExit(void);
-Service *nfpuGetInterface(void);
+Service* nfpuGetInterface(void);
 
 Result nfpuStartDetection(HidControllerID id);
 Result nfpuStopDetection(HidControllerID id);
