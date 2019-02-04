@@ -12,8 +12,6 @@ static Service g_nfcuSrv;
 static Service g_nfpuInterface;
 static Service g_nfcuInterface;
 
-static HidControllerID g_controllerP1AutoID;
-
 static Result _nfpuCreateInterface(Service* srv, Service* out);
 static Result _nfpuInterfaceInitialize(Service* srv, u64 cmd_id, u64 aruid, const NfpuInitConfig *config);
 static Result _nfpuInterfaceFinalize(Service* srv, u64 cmd_id);
@@ -69,10 +67,6 @@ Result nfpuInitialize(void) {
 
     if (R_SUCCEEDED(rc))
         rc = _nfpuInterfaceInitialize(&g_nfcuInterface, kernelAbove400() ? 0 : 400, aruid, &g_nfpuDefaultInitConfig);
-
-    // Update the default controller (or initialize it if this is run for the first time)
-    if (R_SUCCEEDED(rc))
-        rc = nfpuUpdateP1Auto();
 
     if (R_FAILED(rc))
         nfpuExit();
@@ -227,7 +221,7 @@ static Result _nfpuInterfaceCmdInIdOutEvent(Service* srv, u64 cmd_id, HidControl
         rc = resp->result;
 
         if (R_SUCCEEDED(rc))
-            eventLoadRemote(out, r.Handles[0], true);
+            eventLoadRemote(out, r.Handles[0], false);
     }
 
     return rc;
@@ -313,26 +307,18 @@ static Result _nfpuInterfaceFinalize(Service* srv, u64 cmd_id) {
 }
 
 Result nfpuStartDetection(HidControllerID id) {
-    if (id == CONTROLLER_P1_AUTO)
-        return _nfpuInterfaceCmdInIdNoOut(&g_nfpuInterface, 3, g_controllerP1AutoID);
     return _nfpuInterfaceCmdInIdNoOut(&g_nfpuInterface, 3, id);
 }
 
 Result nfpuStopDetection(HidControllerID id) {
-    if (id == CONTROLLER_P1_AUTO)
-        return _nfpuInterfaceCmdInIdNoOut(&g_nfpuInterface, 4, g_controllerP1AutoID);
     return _nfpuInterfaceCmdInIdNoOut(&g_nfpuInterface, 4, id);
 }
 
 Result nfpuAttachActivateEvent(HidControllerID id, Event *out) {
-    if (id == CONTROLLER_P1_AUTO)
-        return _nfpuInterfaceCmdInIdOutEvent(&g_nfpuInterface, 17, g_controllerP1AutoID, out);
     return _nfpuInterfaceCmdInIdOutEvent(&g_nfpuInterface, 17, id, out);
 }
 
 Result nfpuAttachDeactivateEvent(HidControllerID id, Event *out) {
-    if (id == CONTROLLER_P1_AUTO)
-        return _nfpuInterfaceCmdInIdOutEvent(&g_nfpuInterface, 18, g_controllerP1AutoID, out);
     return _nfpuInterfaceCmdInIdOutEvent(&g_nfpuInterface, 18, id, out);
 }
 
@@ -365,7 +351,7 @@ Result nfpuAttachAvailabilityChangeEvent(Event *out) {
         rc = resp->result;
 
         if (R_SUCCEEDED(rc))
-            eventLoadRemote(out, r.Handles[0], false);
+            eventLoadRemote(out, r.Handles[0], true);
     }
 
     return rc;
@@ -408,9 +394,6 @@ Result nfpuGetState(NfpuState *out) {
 }
 
 Result nfpuGetDeviceState(HidControllerID id, NfpuDeviceState *out) {
-    if (id == CONTROLLER_P1_AUTO)
-        return nfpuGetDeviceState(g_controllerP1AutoID, out);
-
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -499,15 +482,7 @@ Result nfpuListDevices(u32 *count, HidControllerID *out, size_t num_elements) {
     return rc;
 }
 
-Result nfpuUpdateP1Auto(void) {
-    u32 dummy;
-    return nfpuListDevices(&dummy, &g_controllerP1AutoID, 1);
-}
-
 Result nfpuGetNpadId(HidControllerID id, u32 *out) {
-    if (id == CONTROLLER_P1_AUTO)
-        return nfpuGetNpadId(g_controllerP1AutoID, out);
-
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -546,9 +521,6 @@ Result nfpuGetNpadId(HidControllerID id, u32 *out) {
 }
 
 Result nfpuMount(HidControllerID id, NfpuDeviceType device_type, NfpuMountTarget mount_target) {
-    if (id == CONTROLLER_P1_AUTO)
-        return nfpuMount(g_controllerP1AutoID, device_type, mount_target);
-
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -587,39 +559,26 @@ Result nfpuMount(HidControllerID id, NfpuDeviceType device_type, NfpuMountTarget
 }
 
 Result nfpuUnmount(HidControllerID id) {
-    if (id == CONTROLLER_P1_AUTO)
-        return _nfpuInterfaceCmdInIdNoOut(&g_nfpuInterface, 6, g_controllerP1AutoID);
     return _nfpuInterfaceCmdInIdNoOut(&g_nfpuInterface, 6, id);
 }
 
 Result nfpuGetTagInfo(HidControllerID id, NfpuTagInfo *out) {
-    if (id == CONTROLLER_P1_AUTO)
-        return _nfpuInterfaceCmdInIdOutBuffer(&g_nfpuInterface, 13, g_controllerP1AutoID, out, sizeof(NfpuTagInfo));
     return _nfpuInterfaceCmdInIdOutBuffer(&g_nfpuInterface, 13, id, out, sizeof(NfpuTagInfo));
 }
 
 Result nfpuGetRegisterInfo(HidControllerID id, NfpuRegisterInfo *out) {
-    if (id == CONTROLLER_P1_AUTO)
-        return _nfpuInterfaceCmdInIdOutBuffer(&g_nfpuInterface, 14, g_controllerP1AutoID, out, sizeof(NfpuRegisterInfo));
     return _nfpuInterfaceCmdInIdOutBuffer(&g_nfpuInterface, 14, id, out, sizeof(NfpuRegisterInfo));
 }
 
 Result nfpuGetCommonInfo(HidControllerID id, NfpuCommonInfo *out) {
-    if (id == CONTROLLER_P1_AUTO)
-        return _nfpuInterfaceCmdInIdOutBuffer(&g_nfpuInterface, 15, g_controllerP1AutoID, out, sizeof(NfpuCommonInfo));
     return _nfpuInterfaceCmdInIdOutBuffer(&g_nfpuInterface, 15, id, out, sizeof(NfpuCommonInfo));
 }
 
 Result nfpuGetModelInfo(HidControllerID id, NfpuModelInfo *out) {
-    if (id == CONTROLLER_P1_AUTO)
-        return _nfpuInterfaceCmdInIdOutBuffer(&g_nfpuInterface, 16, g_controllerP1AutoID, out, sizeof(NfpuModelInfo));
     return _nfpuInterfaceCmdInIdOutBuffer(&g_nfpuInterface, 16, id, out, sizeof(NfpuModelInfo));
 }
 
 Result nfpuOpenApplicationArea(HidControllerID id, u32 app_id, u32 *npad_id) {
-    if (id == CONTROLLER_P1_AUTO)
-        return nfpuOpenApplicationArea(g_controllerP1AutoID, app_id, npad_id);
-
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -660,9 +619,6 @@ Result nfpuOpenApplicationArea(HidControllerID id, u32 app_id, u32 *npad_id) {
 }
 
 Result nfpuGetApplicationArea(HidControllerID id, void* buf, size_t buf_size) {
-    if (id == CONTROLLER_P1_AUTO)
-        return nfpuGetApplicationArea(g_controllerP1AutoID, buf, buf_size);
-
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -699,9 +655,6 @@ Result nfpuGetApplicationArea(HidControllerID id, void* buf, size_t buf_size) {
 }
 
 Result nfpuSetApplicationArea(HidControllerID id, const void* buf, size_t buf_size) {
-    if (id == CONTROLLER_P1_AUTO)
-        return nfpuSetApplicationArea(g_controllerP1AutoID, buf, buf_size);
-
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -738,9 +691,6 @@ Result nfpuSetApplicationArea(HidControllerID id, const void* buf, size_t buf_si
 }
 
 Result nfpuCreateApplicationArea(HidControllerID id, u32 app_id, const void* buf, size_t buf_size) {
-        if (id == CONTROLLER_P1_AUTO)
-        return nfpuCreateApplicationArea(g_controllerP1AutoID, app_id, buf, buf_size);
-
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -779,14 +729,10 @@ Result nfpuCreateApplicationArea(HidControllerID id, u32 app_id, const void* buf
 }
 
 Result nfpuFlush(HidControllerID id) {
-    if (id == CONTROLLER_P1_AUTO)
-        return _nfpuInterfaceCmdInIdNoOut(&g_nfpuInterface, 10, g_controllerP1AutoID);
     return _nfpuInterfaceCmdInIdNoOut(&g_nfpuInterface, 10, id);
 }
 
 Result nfpuRestore(HidControllerID id) {
-    if (id == CONTROLLER_P1_AUTO)
-        return _nfpuInterfaceCmdInIdNoOut(&g_nfpuInterface, 11, g_controllerP1AutoID);
     return _nfpuInterfaceCmdInIdNoOut(&g_nfpuInterface, 11, id);
 }
 
