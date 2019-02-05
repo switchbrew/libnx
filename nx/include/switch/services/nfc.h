@@ -137,8 +137,11 @@ Service* nfpuGetInterface(void);
 Result nfpuStartDetection(HidControllerID id);
 Result nfpuStopDetection(HidControllerID id);
 
+/// Returned event will have autoclear off.
 Result nfpuAttachActivateEvent(HidControllerID id, Event *out);
+/// Returned event will have autoclear off.
 Result nfpuAttachDeactivateEvent(HidControllerID id, Event *out);
+/// Returned event will have autoclear on.
 Result nfpuAttachAvailabilityChangeEvent(Event *out);
 
 Result nfpuGetState(NfpuState *out);
