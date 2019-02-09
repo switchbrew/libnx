@@ -606,8 +606,8 @@ static inline u32 hidControllerIDToOfficial(HidControllerID id) {
     return 0x10;//For CONTROLLER_UNKNOWN and invalid values return this.
 }
 
-static inline HidControllerID hidOfficialToControllerID(u64 id) {
-    if (id < 8) return id;
+static inline HidControllerID hidControllerIDFromOfficial(u32 id) {
+    if (id < 8) return (HidControllerID)id;
     if (id == 0x20) return CONTROLLER_HANDHELD;
     return CONTROLLER_UNKNOWN;
 }

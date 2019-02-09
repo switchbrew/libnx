@@ -475,7 +475,7 @@ Result nfpuListDevices(u32 *count, HidControllerID *out, size_t num_elements) {
 
         if (R_SUCCEEDED(rc) && out) {
             for (size_t i=0; i<num_elements; i++)
-                out[i] = hidOfficialToControllerID(buf[i]);
+                out[i] = hidControllerIDFromOfficial(buf[i]);
         }
     }
 
