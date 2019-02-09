@@ -1,6 +1,6 @@
 /**
  * @file nfc.h
- * @brief Nintendo Figurine Platform (nfp:user) service IPC wrapper.
+ * @brief Nintendo Figurine (amiibo) Platform (nfp:user) service IPC wrapper.
  * @author averne
  * @copyright libnx Authors
  */
@@ -96,13 +96,6 @@ typedef struct {
     u8 reserved[0x99];
 } PACKED NfpuRegisterInfo;
 
-typedef struct {
-    u64 unk1;
-    u64 reserved1[3];
-    u64 unk2;
-    u64 reserved2[3];
-} NfpuInitConfig;
-
 typedef enum {
     NfpuState_NonInitialized = 0,
     NfpuState_Initialized    = 1,
@@ -128,9 +121,7 @@ typedef enum {
     NfpuMountTarget_All = 3,
 } NfpuMountTarget;
 
-const NfpuInitConfig *nfpuGetDefaultInitConfig(void);
-
-Result nfpuInitialize(void);
+Result nfpuInitialize(const void *config, size_t config_size);
 void nfpuExit(void);
 Service* nfpuGetInterface(void);
 
