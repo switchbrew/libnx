@@ -20,7 +20,7 @@ Result capssuInitialize(void) {
     if (serviceIsActive(&g_capssuSrv))
         return 0;
 
-    if (!kernelAbove600())
+    if (!kernelAbove400())
         rc = MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     if (R_SUCCEEDED(rc)) rc = smGetService(&g_capssuSrv, "caps:su");
