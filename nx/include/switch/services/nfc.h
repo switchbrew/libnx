@@ -96,6 +96,13 @@ typedef struct {
     u8 reserved[0x99];
 } PACKED NfpuRegisterInfo;
 
+typedef struct {
+    u64 unk1;
+    u64 reserved1[3];
+    u64 unk2;
+    u64 reserved2[3];
+} NfpuInitConfig;
+
 typedef enum {
     NfpuState_NonInitialized = 0,
     NfpuState_Initialized    = 1,

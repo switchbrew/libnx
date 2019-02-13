@@ -12,6 +12,14 @@ static Service g_nfcuSrv;
 static Service g_nfpuInterface;
 static Service g_nfcuInterface;
 
+// This is the data passed by every application this was tested with
+static const NfpuInitConfig g_nfpuDefaultInitConfig = {
+    .unk1 = 0x00000001000a0003,
+    .reserved1 = {0},
+    .unk2 = 0x0000000300040003,
+    .reserved2 = {0},
+};
+
 static Result _nfpuCreateInterface(Service* srv, Service* out);
 static Result _nfpuInterfaceInitialize(Service* srv, u64 cmd_id, u64 aruid, const void *config, size_t config_size);
 static Result _nfpuInterfaceFinalize(Service* srv, u64 cmd_id);
@@ -26,6 +34,11 @@ Result nfpuInitialize(const void *config, size_t config_size) {
 
     if (serviceIsActive(&g_nfpuInterface) && serviceIsActive(&g_nfcuInterface))
         return 0;
+
+    if (config == NULL) {
+        config = &g_nfpuDefaultInitConfig;
+        config_size = sizeof(g_nfpuDefaultInitConfig);
+    }
 
     // If this fails (for example because we're a sysmodule) aruid stays zero
     u64 aruid = 0;
