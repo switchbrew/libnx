@@ -71,6 +71,7 @@ static void _CacheCfwJit(void)
 	{
 	    // On an unpatched kernel on 5.0.0 and above, this would return 0xD401.
 	    // It is not allowed for the creator-process of a CodeMemory object to use svcControlCodeMemory on it.
+	    // If the patch is present, the function should return 0xF001, because -1 is not a valid enum CodeOperation.
 	    rc = svcControlCodeMemory(code, -1, 0, 0x1000, 0);
 
 	    g_CfwJitPatchDetected = (rc == 0xF001);
@@ -119,4 +120,11 @@ bool detectDebugger(void) {
 bool detectCfwJitPatch(void) {
     _CacheCfwJit();
     return g_CfwJitPatchDetected;
+}
+
+void detectPretendNotCfwForTesting(void) {
+    mutexLock(&g_CfwJitMutex);
+    g_CfwJitPatchDetected = false;
+    __atomic_store_n(&g_CfwJitCached, true, __ATOMIC_SEQ_CST);
+    mutexUnlock(&g_CfwJitMutex);
 }
