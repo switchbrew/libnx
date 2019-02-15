@@ -154,12 +154,6 @@ void hidReset(void)
     rwlockWriteUnlock(&g_hidLock);
 }
 
-static u32 _hidControllerIDToOfficial(HidControllerID id) {
-    if (id < CONTROLLER_HANDHELD) return id;
-    if (id == CONTROLLER_HANDHELD) return 0x20;
-    return 0x10;//For CONTROLLER_UNKNOWN and invalid values return this.
-}
-
 Service* hidGetSessionService(void) {
     return &g_hidSrv;
 }
@@ -857,7 +851,7 @@ Result hidAcquireNpadStyleSetUpdateEventHandle(HidControllerID id, Event* event,
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 106;
-    raw->id = _hidControllerIDToOfficial(id);
+    raw->id = hidControllerIDToOfficial(id);
     raw->AppletResourceUserId = AppletResourceUserId;
     raw->event_ptr = 0;//Official sw sets this to a ptr, which the sysmodule doesn't seem to use.
 

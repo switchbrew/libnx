@@ -600,6 +600,18 @@ typedef struct HidVibrationValue
     float freq_high; ///< High Band frequency in Hz.
 } HidVibrationValue;
 
+static inline u32 hidControllerIDToOfficial(HidControllerID id) {
+    if (id < CONTROLLER_HANDHELD) return id;
+    if (id == CONTROLLER_HANDHELD) return 0x20;
+    return 0x10;//For CONTROLLER_UNKNOWN and invalid values return this.
+}
+
+static inline HidControllerID hidControllerIDFromOfficial(u32 id) {
+    if (id < 8) return (HidControllerID)id;
+    if (id == 0x20) return CONTROLLER_HANDHELD;
+    return CONTROLLER_UNKNOWN;
+}
+
 Result hidInitialize(void);
 void hidExit(void);
 void hidReset(void);
