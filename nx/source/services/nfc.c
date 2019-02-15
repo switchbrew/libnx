@@ -21,7 +21,7 @@ static const NfpuInitConfig g_nfpuDefaultInitConfig = {
 };
 
 static Result _nfpuCreateInterface(Service* srv, Service* out);
-static Result _nfpuInterfaceInitialize(Service* srv, u64 cmd_id, u64 aruid, const void *config, size_t config_size);
+static Result _nfpuInterfaceInitialize(Service* srv, u64 cmd_id, u64 aruid, const NfpuInitConfig *config);
 static Result _nfpuInterfaceFinalize(Service* srv, u64 cmd_id);
 
 static Result _nfpuInterfaceCmdNoInOut(Service* srv, u64 cmd_id);
@@ -29,16 +29,14 @@ static Result _nfpuInterfaceCmdInIdNoOut(Service* srv, u64 cmd_id, HidController
 static Result _nfpuInterfaceCmdInIdOutEvent(Service* srv, u64 cmd_id, HidControllerID id, Event *out);
 static Result _nfpuInterfaceCmdInIdOutBuffer(Service* srv, u64 cmd_id, HidControllerID id, void* buf, size_t buf_size);
 
-Result nfpuInitialize(const void *config, size_t config_size) {
+Result nfpuInitialize(const NfpuInitConfig *config) {
     atomicIncrement64(&g_refCnt);
 
     if (serviceIsActive(&g_nfpuInterface) && serviceIsActive(&g_nfcuInterface))
         return 0;
 
-    if (config == NULL) {
+    if (config == NULL)
         config = &g_nfpuDefaultInitConfig;
-        config_size = sizeof(g_nfpuDefaultInitConfig);
-    }
 
     // If this fails (for example because we're a sysmodule) aruid stays zero
     u64 aruid = 0;
@@ -54,7 +52,7 @@ Result nfpuInitialize(const void *config, size_t config_size) {
         rc = _nfpuCreateInterface(&g_nfpuSrv, &g_nfpuInterface);
 
     if (R_SUCCEEDED(rc))
-        rc = _nfpuInterfaceInitialize(&g_nfpuInterface, 0, aruid, config, config_size);
+        rc = _nfpuInterfaceInitialize(&g_nfpuInterface, 0, aruid, config);
 
     // nfc:user
     if (R_SUCCEEDED(rc))
@@ -67,7 +65,7 @@ Result nfpuInitialize(const void *config, size_t config_size) {
         rc = _nfpuCreateInterface(&g_nfcuSrv, &g_nfcuInterface);
 
     if (R_SUCCEEDED(rc))
-        rc = _nfpuInterfaceInitialize(&g_nfcuInterface, kernelAbove400() ? 0 : 400, aruid, config, config_size);
+        rc = _nfpuInterfaceInitialize(&g_nfcuInterface, kernelAbove400() ? 0 : 400, aruid, config);
 
     if (R_FAILED(rc))
         nfpuExit();
@@ -264,11 +262,11 @@ static Result _nfpuInterfaceCmdInIdOutBuffer(Service* srv, u64 cmd_id, HidContro
     return rc;
 }
 
-static Result _nfpuInterfaceInitialize(Service* srv, u64 cmd_id, u64 aruid, const void *config, size_t config_size) {
+static Result _nfpuInterfaceInitialize(Service* srv, u64 cmd_id, u64 aruid, const NfpuInitConfig *config) {
     IpcCommand c;
     ipcInitialize(&c);
 
-    ipcAddSendBuffer(&c, config, config_size, BufferType_Normal);
+    ipcAddSendBuffer(&c, config, sizeof(NfpuInitConfig), BufferType_Normal);
     ipcSendPid(&c);
 
     struct {

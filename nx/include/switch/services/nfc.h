@@ -128,7 +128,7 @@ typedef enum {
     NfpuMountTarget_All = 3,
 } NfpuMountTarget;
 
-Result nfpuInitialize(const void *config, size_t config_size);
+Result nfpuInitialize(const NfpuInitConfig *config);
 void nfpuExit(void);
 Service* nfpuGetInterface(void);
 
