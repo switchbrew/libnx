@@ -16,7 +16,7 @@ Result jitCreate(Jit* j, size_t size)
     // Use new jit primitive introduced in 4.0.0, if available.
     // Not usable with 5.0.0+ since svcMapJitMemory doesn't allow using that SVC under the same process which owns that object.
     if (kernelAbove400() && envIsSyscallHinted(0x4B) && envIsSyscallHinted(0x4C)
-	    && (!kernelAbove500() || detectCfwJitPatch())) {
+        && (!kernelAbove500() || detectJitKernelPatch())) {
 	type = JitType_JitMemory;
     }
     // Fall back to MapProcessCodeMemory if available.

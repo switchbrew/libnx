@@ -14,9 +14,9 @@ static bool g_IsAbove400;
 static bool g_IsAbove500;
 static bool g_IsAbove600;
 
-static bool g_CfwJitCached = 0;
-static Mutex g_CfwJitMutex;
-static bool g_CfwJitPatchDetected;
+static bool g_JitKernelPatchCached = 0;
+static Mutex g_JitKernelPatchMutex;
+static bool g_JitKernelPatchDetected;
 
 static void _CacheVersion(void)
 {
@@ -47,43 +47,41 @@ static void _CacheVersion(void)
     mutexUnlock(&g_VersionMutex);
 }
 
-static void _CacheCfwJit(void)
+static void _CacheJitKernelPatch(void)
 {
-    if (__atomic_load_n(&g_CfwJitCached, __ATOMIC_SEQ_CST))
+    if (__atomic_load_n(&g_JitKernelPatchCached, __ATOMIC_SEQ_CST))
         return;
 
-    mutexLock(&g_CfwJitMutex);
+    mutexLock(&g_JitKernelPatchMutex);
 
-    if (g_CfwJitCached) {
-        mutexUnlock(&g_CfwJitMutex);
+    if (g_JitKernelPatchCached) {
+        mutexUnlock(&g_JitKernelPatchMutex);
         return;
     }
 
     void* heap = memalign(0x1000, 0x1000);
 
-    if (heap != NULL)
-    {
-	Handle code;
-	Result rc;
-	rc = svcCreateCodeMemory(&code, heap, 0x1000);
+    if (heap != NULL) {
+        Handle code;
+        Result rc;
+        rc = svcCreateCodeMemory(&code, heap, 0x1000);
 
-	if (R_SUCCEEDED(rc))
-	{
-	    // On an unpatched kernel on 5.0.0 and above, this would return 0xD401.
-	    // It is not allowed for the creator-process of a CodeMemory object to use svcControlCodeMemory on it.
-	    // If the patch is present, the function should return 0xF001, because -1 is not a valid enum CodeOperation.
-	    rc = svcControlCodeMemory(code, -1, 0, 0x1000, 0);
+        if (R_SUCCEEDED(rc)) {
+            // On an unpatched kernel on 5.0.0 and above, this would return InvalidMemoryState (0xD401).
+            // It is not allowed for the creator-process of a CodeMemory object to use svcControlCodeMemory on it.
+            // If the patch is present, the function should return InvalidEnumValue (0xF001), because -1 is not a valid enum CodeOperation.
+            rc = svcControlCodeMemory(code, -1, 0, 0x1000, 0);
 
-	    g_CfwJitPatchDetected = (rc == 0xF001);
-	    __atomic_store_n(&g_CfwJitCached, true, __ATOMIC_SEQ_CST);
+            g_JitKernelPatchDetected = R_VALUE(rc) == KERNELRESULT(InvalidEnumValue);
+            __atomic_store_n(&g_JitKernelPatchCached, true, __ATOMIC_SEQ_CST);
 
-	    svcCloseHandle(code);
-	}
+            svcCloseHandle(code);
+        }
 
-	free(heap);
+        free(heap);
     }
 
-    mutexUnlock(&g_CfwJitMutex);
+    mutexUnlock(&g_JitKernelPatchMutex);
 }
 
 bool kernelAbove200(void) {
@@ -117,14 +115,14 @@ bool detectDebugger(void) {
     return !!tmp;
 }
 
-bool detectCfwJitPatch(void) {
-    _CacheCfwJit();
-    return g_CfwJitPatchDetected;
+bool detectJitKernelPatch(void) {
+    _CacheJitKernelPatch();
+    return g_JitKernelPatchDetected;
 }
 
-void detectPretendNotCfwForTesting(void) {
-    mutexLock(&g_CfwJitMutex);
-    g_CfwJitPatchDetected = false;
-    __atomic_store_n(&g_CfwJitCached, true, __ATOMIC_SEQ_CST);
-    mutexUnlock(&g_CfwJitMutex);
+void detectIgnoreJitKernelPatch(void) {
+    mutexLock(&g_JitKernelPatchMutex);
+    g_JitKernelPatchDetected = false;
+    __atomic_store_n(&g_JitKernelPatchCached, true, __ATOMIC_SEQ_CST);
+    mutexUnlock(&g_JitKernelPatchMutex);
 }

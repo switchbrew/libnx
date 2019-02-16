@@ -21,6 +21,6 @@ bool kernelAbove600(void);
 bool detectDebugger(void);
 
 /// Returns true if the kernel is patched to allow self-process-jit.
-bool detectCfwJitPatch(void);
-/// After this has been called, libnx will pretend that CFW is not present. For testing purposes only.
-void detectPretendNotCfwForTesting(void);
+bool detectJitKernelPatch(void);
+/// After this has been called, libnx will ignore the self-process-jit kernel patch. For testing purposes only.
+void detectIgnoreJitKernelPatch(void);
