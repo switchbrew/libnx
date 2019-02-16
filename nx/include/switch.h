@@ -82,6 +82,7 @@ extern "C" {
 #include "switch/services/ncm.h"
 #include "switch/services/psc.h"
 #include "switch/services/caps.h"
+#include "switch/services/capssc.h"
 #include "switch/services/capssu.h"
 #include "switch/services/nfc.h"
 
