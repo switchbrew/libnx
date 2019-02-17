@@ -30,6 +30,9 @@ bool hosversionAtLeast(u8 major, u8 minor, u8 micro)
     if (g_kernelLowerBound >= ver)
 	return true;
 
+    if (g_kernelUpperBound < ver)
+	return false;
+
     fatalSimple(-1);
 }
 
@@ -39,6 +42,9 @@ bool hosversionBefore(u8 major, u8 minor, u8 micro)
 
     if (g_hasHosVersion)
 	return g_hosVersion < ver;
+
+    if (g_kernelLowerBound >= ver)
+	return false;
 
     if (g_kernelUpperBound < ver)
 	return true;
