@@ -108,6 +108,7 @@ extern "C" {
 #include "switch/applets/web.h"
 
 #include "switch/runtime/env.h"
+#include "switch/runtime/hosversion.h"
 #include "switch/runtime/nxlink.h"
 
 #include "switch/runtime/util/utf.h"

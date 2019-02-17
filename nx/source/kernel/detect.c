@@ -6,15 +6,11 @@
 #include "kernel/svc.h"
 #include <malloc.h>
 
-static bool g_VersionCached = 0;
+static bool g_VersionCached;
 static Mutex g_VersionMutex;
-static bool g_IsAbove200;
-static bool g_IsAbove300;
-static bool g_IsAbove400;
-static bool g_IsAbove500;
-static bool g_IsAbove600;
+static int g_Version;
 
-static bool g_JitKernelPatchCached = 0;
+static bool g_JitKernelPatchCached;
 static Mutex g_JitKernelPatchMutex;
 static bool g_JitKernelPatchDetected;
 
@@ -31,16 +27,17 @@ static void _CacheVersion(void)
     }
 
     u64 tmp;
-    g_IsAbove200 = (svcGetInfo(&tmp, 12, INVALID_HANDLE, 0) != 0xF001);
-    g_IsAbove300 = (svcGetInfo(&tmp, 18, INVALID_HANDLE, 0) != 0xF001);
-    g_IsAbove400 = (svcGetInfo(&tmp, 19, INVALID_HANDLE, 0) != 0xF001);
-    g_IsAbove500 = (svcGetInfo(&tmp, 20, INVALID_HANDLE, 0) != 0xF001);
-    g_IsAbove600 = (svcGetInfo(&tmp, 21, INVALID_HANDLE, 0) != 0xF001);
-
-    g_IsAbove500 |= g_IsAbove600;
-    g_IsAbove400 |= g_IsAbove500;
-    g_IsAbove300 |= g_IsAbove400;
-    g_IsAbove200 |= g_IsAbove300;
+    g_Version = 1;
+    if (R_VALUE(svcGetInfo(&tmp, 12, INVALID_HANDLE, 0)) != KERNELRESULT(InvalidEnumValue))
+        g_Version = 2;
+    if (R_VALUE(svcGetInfo(&tmp, 18, INVALID_HANDLE, 0)) != KERNELRESULT(InvalidEnumValue))
+        g_Version = 3;
+    if (R_VALUE(svcGetInfo(&tmp, 19, INVALID_HANDLE, 0)) != KERNELRESULT(InvalidEnumValue))
+        g_Version = 4;
+    if (R_VALUE(svcGetInfo(&tmp, 20, INVALID_HANDLE, 0)) != KERNELRESULT(InvalidEnumValue))
+        g_Version = 5;
+    if (R_VALUE(svcGetInfo(&tmp, 21, INVALID_HANDLE, 0)) != KERNELRESULT(InvalidEnumValue))
+        g_Version = 6;
 
     __atomic_store_n(&g_VersionCached, true, __ATOMIC_SEQ_CST);
 
@@ -84,29 +81,9 @@ static void _CacheJitKernelPatch(void)
     mutexUnlock(&g_JitKernelPatchMutex);
 }
 
-bool kernelAbove200(void) {
+int detectKernelVersion(void) {
     _CacheVersion();
-    return g_IsAbove200;
-}
-
-bool kernelAbove300(void) {
-    _CacheVersion();
-    return g_IsAbove300;
-}
-
-bool kernelAbove400(void) {
-    _CacheVersion();
-    return g_IsAbove400;
-}
-
-bool kernelAbove500(void) {
-    _CacheVersion();
-    return g_IsAbove500;
-}
-
-bool kernelAbove600(void) {
-    _CacheVersion();
-    return g_IsAbove600;
+    return g_Version;
 }
 
 bool detectDebugger(void) {
