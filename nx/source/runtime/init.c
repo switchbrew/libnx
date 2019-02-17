@@ -1,11 +1,13 @@
 #include "types.h"
 #include "runtime/env.h"
+#include "runtime/hosversion.h"
 #include "services/sm.h"
 #include "services/fatal.h"
 #include "services/fs.h"
 #include "services/hid.h"
 #include "services/time.h"
 #include "services/applet.h"
+#include "services/set.h"
 #include "runtime/devices/fs_dev.h"
 
 void* __stack_top;
@@ -106,6 +108,15 @@ void __attribute__((weak)) __appInit(void)
     rc = smInitialize();
     if (R_FAILED(rc))
         fatalSimple(MAKERESULT(Module_Libnx, LibnxError_InitFail_SM));
+
+    rc = setsysInitialize();
+    if (R_SUCCEEDED(rc)) {
+        SetSysFirmwareVersion fw;
+        rc = setsysGetFirmwareVersion(&fw);
+        if (R_SUCCEEDED(rc))
+            hosversionSet(MAKEHOSVERSION(fw.major, fw.minor, fw.micro));
+        setsysExit();
+    }
 
     rc = appletInitialize();
     if (R_FAILED(rc))
