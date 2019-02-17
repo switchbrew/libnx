@@ -2,7 +2,7 @@
 #include "result.h"
 #include "arm/atomics.h"
 #include "kernel/ipc.h"
-#include "kernel/detect.h"
+#include "runtime/hosversion.h"
 #include "services/caps.h"
 #include "services/capssc.h"
 #include "services/sm.h"
@@ -18,7 +18,7 @@ Result capsscInitialize(void) {
     if (serviceIsActive(&g_capsscSrv))
         return 0;
 
-    if (!kernelAbove200())
+    if (hosversionBefore(2,0,0))
         rc = MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     if (R_SUCCEEDED(rc)) rc = smGetService(&g_capsscSrv, "caps:sc");

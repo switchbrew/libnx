@@ -1,7 +1,6 @@
 #include "types.h"
 #include "result.h"
 #include "services/fatal.h"
-#include "kernel/detect.h"
 #include "kernel/mutex.h"
 #include "kernel/svc.h"
 #include "kernel/virtmem.h"

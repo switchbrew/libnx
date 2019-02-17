@@ -10,7 +10,7 @@
 #include "result.h"
 #include "arm/atomics.h"
 #include "kernel/ipc.h"
-#include "kernel/detect.h"
+#include "runtime/hosversion.h"
 #include "services/set.h"
 #include "services/sm.h"
 #include "services/applet.h"
@@ -100,7 +100,7 @@ Result setMakeLanguageCode(s32 Language, u64 *LanguageCode) {
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
     if (Language >= g_setLanguageCodesTotal) {
-        if (!kernelAbove400()) return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+        if (hosversionBefore(4,0,0)) return MAKERESULT(Module_Libnx, LibnxError_BadInput);
         return _setMakeLanguageCode(Language, LanguageCode);
     }
 
@@ -156,7 +156,7 @@ Result setGetAvailableLanguageCodes(s32 *total_entries, u64 *LanguageCodes, size
     ipcInitialize(&c);
 
     Result rc=0;
-    bool new_cmd = kernelAbove400();
+    bool new_cmd = hosversionAtLeast(4,0,0);
 
     if (!new_cmd) {//On system-version <4.0.0 the sysmodule will close the session if max_entries is too large.
         s32 tmptotal = 0;
@@ -254,7 +254,7 @@ Result setGetAvailableLanguageCodeCount(s32 *total) {
     raw = ipcPrepareHeader(&c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
-    raw->cmd_id = kernelAbove400() ? 6 : 3;
+    raw->cmd_id = hosversionAtLeast(4,0,0) ? 6 : 3;
 
     Result rc = serviceIpcDispatch(&g_setSrv);
 
@@ -607,7 +607,7 @@ static Result _setsysGetFirmwareVersionImpl(SetSysFirmwareVersion *out, u32 cmd_
 
 Result setsysGetFirmwareVersion(SetSysFirmwareVersion *out) {
     /* GetFirmwareVersion2 does exactly what GetFirmwareVersion does, except it doesn't zero the revision field. */
-    if (kernelAbove300()) {
+    if (hosversionAtLeast(3,0,0)) {
         return _setsysGetFirmwareVersionImpl(out, 4);
     } else {
         return _setsysGetFirmwareVersionImpl(out, 3);

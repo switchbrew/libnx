@@ -7,6 +7,7 @@
 
 #include "services/nifm.h"
 #include "arm/atomics.h"
+#include "runtime/hosversion.h"
 
 static Service g_nifmSrv;
 static Service g_nifmIGS;
@@ -27,7 +28,7 @@ Result nifmInitialize(void) {
     if (R_SUCCEEDED(rc)) rc = serviceConvertToDomain(&g_nifmSrv);
 
     if (R_SUCCEEDED(rc)) {
-        if (kernelAbove300())
+        if (hosversionAtLeast(3,0,0))
             rc = _nifmCreateGeneralService(&g_nifmIGS, 0); // What does this parameter do?
         else
             rc = _nifmCreateGeneralServiceOld(&g_nifmIGS);

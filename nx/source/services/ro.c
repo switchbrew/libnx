@@ -4,7 +4,7 @@
 #include "result.h"
 #include "arm/atomics.h"
 #include "kernel/ipc.h"
-#include "kernel/detect.h"
+#include "runtime/hosversion.h"
 #include "services/ro.h"
 #include "services/sm.h"
 
@@ -34,7 +34,7 @@ void ldrRoExit(void) {
 }
 
 Result roDmntInitialize(void) {
-    if (!kernelAbove300()) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    if (hosversionBefore(3,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     atomicIncrement64(&g_dmntRefCnt);
 

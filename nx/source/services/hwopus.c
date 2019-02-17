@@ -3,10 +3,10 @@
 #include "result.h"
 #include "arm/atomics.h"
 #include "kernel/ipc.h"
-#include "kernel/detect.h"
 #include "kernel/tmem.h"
 #include "services/hwopus.h"
 #include "services/sm.h"
+#include "runtime/hosversion.h"
 
 static Result _hwopusInitialize(Service* srv, Service* out_srv, TransferMemory *tmem, s32 SampleRate, s32 ChannelCount);
 static Result _hwopusGetWorkBufferSize(Service* srv, u32 *size, s32 SampleRate, s32 ChannelCount);
@@ -52,7 +52,7 @@ Result hwopusDecoderMultistreamInitialize(HwopusDecoder* decoder, s32 SampleRate
     if (serviceIsActive(&decoder->s))
         return 0;
 
-    if (!kernelAbove300())
+    if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     if (ChannelCount < 0 || ChannelCount > sizeof(state.channel_mapping))
@@ -250,8 +250,8 @@ static Result _hwopusGetWorkBufferSizeForMultiStream(Service* srv, u32 *size, Hw
 }
 
 Result hwopusDecodeInterleaved(HwopusDecoder* decoder, s32 *DecodedDataSize, s32 *DecodedSampleCount, const void* opusin, size_t opusin_size, s16 *pcmbuf, size_t pcmbuf_size) {
-    if (kernelAbove600()) return _hwopusDecodeInterleaved(decoder, DecodedDataSize, DecodedSampleCount, NULL, 0, opusin, opusin_size, pcmbuf, pcmbuf_size);
-    if (kernelAbove400()) return _hwopusDecodeInterleavedWithPerfOld(decoder, DecodedDataSize, DecodedSampleCount, NULL, opusin, opusin_size, pcmbuf, pcmbuf_size);
+    if (hosversionAtLeast(6,0,0)) return _hwopusDecodeInterleaved(decoder, DecodedDataSize, DecodedSampleCount, NULL, 0, opusin, opusin_size, pcmbuf, pcmbuf_size);
+    if (hosversionAtLeast(4,0,0)) return _hwopusDecodeInterleavedWithPerfOld(decoder, DecodedDataSize, DecodedSampleCount, NULL, opusin, opusin_size, pcmbuf, pcmbuf_size);
 
     IpcCommand c;
     ipcInitialize(&c);

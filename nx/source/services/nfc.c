@@ -1,7 +1,7 @@
 #include <string.h>
 #include "types.h"
 #include "arm/atomics.h"
-#include "kernel/detect.h"
+#include "runtime/hosversion.h"
 #include "services/hid.h"
 #include "services/applet.h"
 #include "services/nfc.h"
@@ -65,7 +65,7 @@ Result nfpuInitialize(const NfpuInitConfig *config) {
         rc = _nfpuCreateInterface(&g_nfcuSrv, &g_nfcuInterface);
 
     if (R_SUCCEEDED(rc))
-        rc = _nfpuInterfaceInitialize(&g_nfcuInterface, kernelAbove400() ? 0 : 400, aruid, config);
+        rc = _nfpuInterfaceInitialize(&g_nfcuInterface, hosversionAtLeast(4,0,0) ? 0 : 400, aruid, config);
 
     if (R_FAILED(rc))
         nfpuExit();
@@ -76,7 +76,7 @@ Result nfpuInitialize(const NfpuInitConfig *config) {
 void nfpuExit(void) {
     if (atomicDecrement64(&g_refCnt) == 0) {
         _nfpuInterfaceFinalize(&g_nfpuInterface, 1);
-        _nfpuInterfaceFinalize(&g_nfcuInterface, kernelAbove400() ? 1 : 401);
+        _nfpuInterfaceFinalize(&g_nfcuInterface, hosversionAtLeast(4,0,0) ? 1 : 401);
         serviceClose(&g_nfpuInterface);
         serviceClose(&g_nfcuInterface);
         serviceClose(&g_nfpuSrv);
@@ -747,7 +747,7 @@ Result nfpuIsNfcEnabled(bool *out) {
     raw = serviceIpcPrepareHeader(&g_nfcuInterface, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
-    raw->cmd_id = kernelAbove200() ? 3 : 403;
+    raw->cmd_id = hosversionAtLeast(2,0,0) ? 3 : 403;
 
     Result rc = serviceIpcDispatch(&g_nfcuInterface);
 

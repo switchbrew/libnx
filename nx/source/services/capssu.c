@@ -3,7 +3,7 @@
 #include "result.h"
 #include "arm/atomics.h"
 #include "kernel/ipc.h"
-#include "kernel/detect.h"
+#include "runtime/hosversion.h"
 #include "services/applet.h"
 #include "services/caps.h"
 #include "services/capssu.h"
@@ -20,7 +20,7 @@ Result capssuInitialize(void) {
     if (serviceIsActive(&g_capssuSrv))
         return 0;
 
-    if (!kernelAbove400())
+    if (hosversionBefore(4,0,0))
         rc = MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     if (R_SUCCEEDED(rc)) rc = smGetService(&g_capssuSrv, "caps:su");

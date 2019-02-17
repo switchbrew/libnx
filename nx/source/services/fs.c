@@ -4,7 +4,7 @@
 #include "result.h"
 #include "arm/atomics.h"
 #include "kernel/ipc.h"
-#include "kernel/detect.h"
+#include "runtime/hosversion.h"
 #include "services/fs.h"
 #include "services/sm.h"
 
@@ -427,7 +427,7 @@ Result fsOpenSdCardDetectionEventNotifier(FsEventNotifier* out) {
 
 Result fsIsExFatSupported(bool* out)
 {
-    if (!kernelAbove200()) {
+    if (hosversionBefore(2,0,0)) {
         *out = false;
         return 0;
     }
@@ -502,7 +502,7 @@ Result fsOpenFileSystemWithId(FsFileSystem* out, u64 titleId, FsFileSystemType f
     ipcInitialize(&c);
     ipcAddSendStatic(&c, sendStr, sizeof(sendStr), 0);
 
-    if (kernelAbove200()) {
+    if (hosversionAtLeast(2,0,0)) {
         struct {
             u64 magic;
             u64 cmd_id;
@@ -1018,7 +1018,7 @@ Result fsFsGetTotalSpace(FsFileSystem* fs, const char* path, u64* out) {
 }
 
 Result fsFsCleanDirectoryRecursively(FsFileSystem* fs, const char* path) {
-    if (!kernelAbove300())
+    if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     IpcCommand c;
@@ -1054,7 +1054,7 @@ Result fsFsCleanDirectoryRecursively(FsFileSystem* fs, const char* path) {
 }
 
 Result fsFsGetFileTimeStampRaw(FsFileSystem* fs, const char* path, FsTimeStampRaw *out) {
-    if (!kernelAbove300())
+    if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     char send_path[FS_MAX_PATH] = {0};
@@ -1096,7 +1096,7 @@ Result fsFsGetFileTimeStampRaw(FsFileSystem* fs, const char* path, FsTimeStampRa
 }
 
 Result fsFsQueryEntry(FsFileSystem* fs, void *out, size_t out_size, const void *in, size_t in_size, const char* path, FsFileSystemQueryType query_type) {
-    if (!kernelAbove400())
+    if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     char send_path[FS_MAX_PATH] = {0};

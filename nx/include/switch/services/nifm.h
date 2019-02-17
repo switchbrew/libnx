@@ -6,10 +6,7 @@
  */
 
 #pragma once
-
 #include "../kernel/ipc.h"
-#include "../kernel/detect.h"
-
 #include "../services/sm.h"
 
 Result nifmInitialize(void);
