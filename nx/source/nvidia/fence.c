@@ -3,7 +3,7 @@
 #include "arm/atomics.h"
 #include "kernel/svc.h"
 #include "kernel/event.h"
-#include "kernel/detect.h"
+#include "runtime/hosversion.h"
 #include "services/nv.h"
 #include "nvidia/fence.h"
 
@@ -138,7 +138,7 @@ static Result _nvFenceWait_100(NvFence* f, s32 timeout_us)
 
 Result nvFenceWait(NvFence* f, s32 timeout_us)
 {
-    if (kernelAbove200())
+    if (hosversionAtLeast(2,0,0))
         return _nvFenceWait_200(f, timeout_us);
     else
         return _nvFenceWait_100(f, timeout_us);

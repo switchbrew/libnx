@@ -4,7 +4,7 @@
 #include "result.h"
 #include "arm/atomics.h"
 #include "kernel/ipc.h"
-#include "kernel/detect.h"
+#include "runtime/hosversion.h"
 #include "services/sm.h"
 #include "services/spl.h"
 
@@ -20,7 +20,7 @@ static Service* _splGetEsSrv(void);
 static Service* _splGetFsSrv(void);
 
 Service* _splGetGeneralSrv(void) {
-    if (!kernelAbove400()) {
+    if (hosversionBefore(4,0,0)) {
         return &g_splSrv;
     }
     
@@ -32,7 +32,7 @@ Service* _splGetGeneralSrv(void) {
 }
 
 Service* _splGetCryptoSrv(void) {
-    if (!kernelAbove400()) {
+    if (hosversionBefore(4,0,0)) {
         return &g_splSrv;
     }
     
@@ -50,7 +50,7 @@ Service* _splGetCryptoSrv(void) {
 }
 
 Service* _splGetRsaSrv(void) {
-    if (!kernelAbove400()) {
+    if (hosversionBefore(4,0,0)) {
         return &g_splSrv;
     }
     
@@ -64,11 +64,11 @@ Service* _splGetRsaSrv(void) {
 }
 
 Service* _splGetEsSrv(void) {
-    return kernelAbove400() ? &g_splEsSrv : &g_splSrv;
+    return hosversionAtLeast(4,0,0) ? &g_splEsSrv : &g_splSrv;
 }
 
 Service* _splGetFsSrv(void) {
-    return kernelAbove400() ? &g_splFsSrv : &g_splSrv;
+    return hosversionAtLeast(4,0,0) ? &g_splFsSrv : &g_splSrv;
 }
 
 /* There are like six services, so these helpers will initialize/exit the relevant services. */
@@ -95,7 +95,7 @@ void splExit(void) {
 }
 
 Result splCryptoInitialize(void) {
-    if (kernelAbove400()) {
+    if (hosversionAtLeast(4,0,0)) {
         return _splSrvInitialize(&g_splCryptoSrv, &g_splCryptoRefCnt, "spl:mig");
     } else {
         return splInitialize();
@@ -103,7 +103,7 @@ Result splCryptoInitialize(void) {
 }
 
 void splCryptoExit(void) {
-    if (kernelAbove400()) {
+    if (hosversionAtLeast(4,0,0)) {
         return _splSrvExit(&g_splCryptoSrv, &g_splCryptoRefCnt);
     } else {
         return splExit();
@@ -111,7 +111,7 @@ void splCryptoExit(void) {
 }
 
 Result splSslInitialize(void) {
-    if (kernelAbove400()) {
+    if (hosversionAtLeast(4,0,0)) {
         return _splSrvInitialize(&g_splSslSrv, &g_splSslRefCnt, "spl:ssl");
     } else {
         return splInitialize();
@@ -119,7 +119,7 @@ Result splSslInitialize(void) {
 }
 
 void splSslExit(void) {
-    if (kernelAbove400()) {
+    if (hosversionAtLeast(4,0,0)) {
         return _splSrvExit(&g_splSslSrv, &g_splSslRefCnt);
     } else {
         return splExit();
@@ -127,7 +127,7 @@ void splSslExit(void) {
 }
 
 Result splEsInitialize(void) {
-    if (kernelAbove400()) {
+    if (hosversionAtLeast(4,0,0)) {
         return _splSrvInitialize(&g_splEsSrv, &g_splEsRefCnt, "spl:es");
     } else {
         return splInitialize();
@@ -135,7 +135,7 @@ Result splEsInitialize(void) {
 }
 
 void splEsExit(void) {
-    if (kernelAbove400()) {
+    if (hosversionAtLeast(4,0,0)) {
         return _splSrvExit(&g_splEsSrv, &g_splEsRefCnt);
     } else {
         return splExit();
@@ -143,7 +143,7 @@ void splEsExit(void) {
 }
 
 Result splFsInitialize(void) {
-    if (kernelAbove400()) {
+    if (hosversionAtLeast(4,0,0)) {
         return _splSrvInitialize(&g_splFsSrv, &g_splFsRefCnt, "spl:fs");
     } else {
         return splInitialize();
@@ -151,7 +151,7 @@ Result splFsInitialize(void) {
 }
 
 void splFsExit(void) {
-    if (kernelAbove400()) {
+    if (hosversionAtLeast(4,0,0)) {
         return _splSrvExit(&g_splFsSrv, &g_splFsRefCnt);
     } else {
         return splExit();

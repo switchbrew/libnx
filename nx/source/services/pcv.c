@@ -2,7 +2,6 @@
 #include "result.h"
 #include "arm/atomics.h"
 #include "kernel/ipc.h"
-#include "kernel/detect.h"
 #include "services/pcv.h"
 #include "services/sm.h"
 

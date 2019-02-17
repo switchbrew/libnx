@@ -2,7 +2,7 @@
 #include "types.h"
 #include "result.h"
 #include "kernel/ipc.h"
-#include "kernel/detect.h"
+#include "runtime/hosversion.h"
 #include "services/applet.h"
 #include "services/vi.h"
 #include "display/parcel.h"
@@ -68,7 +68,7 @@ Result viInitialize(ViServiceType service_type)
     if (g_viServiceType >= ViServiceType_Manager && R_SUCCEEDED(rc))
         rc = _viGetSessionNoParams(&g_viIApplicationDisplayService, &g_viIManagerDisplayService, 102);
 
-    if (g_viServiceType >= ViServiceType_System && R_SUCCEEDED(rc) && kernelAbove200())
+    if (g_viServiceType >= ViServiceType_System && R_SUCCEEDED(rc) && hosversionAtLeast(2,0,0))
         rc = _viGetSessionNoParams(&g_viIApplicationDisplayService, &g_viIHOSBinderDriverIndirect, 103);
 
     if (R_FAILED(rc))

@@ -2,7 +2,7 @@
 #include "types.h"
 #include "result.h"
 #include "kernel/ipc.h"
-#include "kernel/detect.h"
+#include "runtime/hosversion.h"
 #include "services/vi.h"
 #include "display/binder.h"
 
@@ -47,7 +47,7 @@ Result binderInitSession(Binder* b)
     }
 
     // Use TransactParcelAuto when available.
-    if (kernelAbove300())
+    if (hosversionAtLeast(3,0,0))
         b->has_transact_auto = true;
 
     return rc;

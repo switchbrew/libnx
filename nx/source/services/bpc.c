@@ -2,7 +2,7 @@
 #include "result.h"
 #include "arm/atomics.h"
 #include "kernel/ipc.h"
-#include "kernel/detect.h"
+#include "runtime/hosversion.h"
 #include "services/bpc.h"
 #include "services/sm.h"
 
@@ -18,7 +18,7 @@ Result bpcInitialize(void)
     if (serviceIsActive(&g_bpcSrv))
         return 0;
 
-    rc = smGetService(&g_bpcSrv, kernelAbove200() ? "bpc" : "bpc:c");
+    rc = smGetService(&g_bpcSrv, hosversionAtLeast(2,0,0) ? "bpc" : "bpc:c");
 
     return rc;
 }

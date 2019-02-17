@@ -2,11 +2,11 @@
 #include <malloc.h>
 #include "types.h"
 #include "result.h"
-#include "kernel/detect.h"
 #include "kernel/rwlock.h"
 #include "services/fatal.h"
 #include "services/usb.h"
 #include "services/usbds.h"
+#include "runtime/hosversion.h"
 #include "runtime/devices/usb_comms.h"
 
 #define TOTAL_INTERFACES 4
@@ -56,7 +56,7 @@ Result usbCommsInitializeEx(u32 num_interfaces, const UsbCommsInterfaceInfo *inf
         rc = usbDsInitialize();
         
         if (R_SUCCEEDED(rc)) {
-            if (kernelAbove500()) {
+            if (hosversionAtLeast(5,0,0)) {
                 u8 iManufacturer, iProduct, iSerialNumber;
                 static const u16 supported_langs[1] = {0x0409};
                 // Send language descriptor
@@ -137,7 +137,7 @@ Result usbCommsInitializeEx(u32 num_interfaces, const UsbCommsInterfaceInfo *inf
             }
         }
         
-        if (R_SUCCEEDED(rc) && kernelAbove500()) {
+        if (R_SUCCEEDED(rc) && hosversionAtLeast(5,0,0)) {
             rc = usbDsEnable();
         }
         
@@ -208,7 +208,7 @@ void usbCommsExit(void)
 
 static Result _usbCommsInterfaceInit(u32 intf_ind, const UsbCommsInterfaceInfo *info)
 {
-    if (kernelAbove500()) {
+    if (hosversionAtLeast(5,0,0)) {
         return _usbCommsInterfaceInit5x(intf_ind, info);
     } else {
         return _usbCommsInterfaceInit1x(intf_ind, info);

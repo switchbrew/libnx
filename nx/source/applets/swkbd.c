@@ -3,10 +3,10 @@
 #include <math.h>
 #include "types.h"
 #include "result.h"
-#include "kernel/detect.h"
 #include "services/applet.h"
 #include "applets/libapplet.h"
 #include "applets/swkbd.h"
+#include "runtime/hosversion.h"
 #include "runtime/util/utf.h"
 
 static Result _swkbdGetReplies(SwkbdInline* s);
@@ -51,19 +51,17 @@ static void _swkbdConfigClear(SwkbdConfig* c) {
 }
 
 static void _swkbdInitVersion(u32* version) {
-    *version=0x5;//1.0.0+ version
-    if (kernelAbove500()) {
+    u32 hosver = hosversionGet();
+    if (hosver >= MAKEHOSVERSION(5,0,0))
         *version = 0x50009;
-    }
-    else if (kernelAbove400()) {
+    else if (hosver >= MAKEHOSVERSION(4,0,0))
         *version = 0x40008;
-    }
-    else if (kernelAbove300()) {
+    else if (hosver >= MAKEHOSVERSION(3,0,0))
         *version = 0x30007;
-    }
-    else if (kernelAbove200()) {
+    else if (hosver >= MAKEHOSVERSION(2,0,0))
         *version = 0x10006;
-    }
+    else
+        *version=0x5;//1.0.0+ version
 }
 
 Result swkbdCreate(SwkbdConfig* c, s32 max_dictwords) {

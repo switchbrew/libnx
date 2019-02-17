@@ -3,7 +3,7 @@
 #include "result.h"
 #include "arm/atomics.h"
 #include "kernel/svc.h"
-#include "kernel/detect.h"
+#include "runtime/hosversion.h"
 #include "services/nv.h"
 #include "nvidia/ioctl.h"
 #include "nvidia/map.h"
@@ -88,7 +88,7 @@ static Result _nvGpuChannelKickoffRaw(NvGpuChannel* c, u32 flags)
     fence.id = 0;
     fence.value = c->fence_incr;
 
-    if (kernelAbove400())
+    if (hosversionAtLeast(4,0,0))
         return nvioctlChannel_KickoffPb(c->base.fd, c->entries, c->num_entries, flags, &fence);
     else
         return nvioctlChannel_SubmitGpfifo(c->base.fd, c->entries, c->num_entries, flags, &fence);

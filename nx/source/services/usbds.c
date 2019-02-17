@@ -3,10 +3,10 @@
 #include "result.h"
 #include "arm/cache.h"
 #include "kernel/ipc.h"
-#include "kernel/detect.h"
 #include "services/usb.h"
 #include "services/usbds.h"
 #include "services/sm.h"
+#include "runtime/hosversion.h"
 #include "runtime/util/utf.h"
 
 #define TOTAL_INTERFACES 4
@@ -49,7 +49,7 @@ Result usbDsInitialize(void)
         rc = _usbDsGetEvent(&g_usbDsSrv, &g_usbDsStateChangeEvent, 3);
 
     // Result code doesn't matter here, users can call themselves later, too. This prevents foot shooting.
-    if (R_SUCCEEDED(rc) && kernelAbove500())
+    if (R_SUCCEEDED(rc) && hosversionAtLeast(5,0,0))
         usbDsClearDeviceData();
 
     if (R_FAILED(rc))
@@ -67,7 +67,7 @@ void usbDsExit(void)
     if (!serviceIsActive(&g_usbDsSrv))
         return;
     
-    if (kernelAbove500()) {
+    if (hosversionAtLeast(5,0,0)) {
         usbDsDisable();
     }
 

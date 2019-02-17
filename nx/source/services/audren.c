@@ -5,7 +5,7 @@
 #include "kernel/ipc.h"
 #include "kernel/tmem.h"
 #include "kernel/event.h"
-#include "kernel/detect.h"
+#include "runtime/hosversion.h"
 #include "services/sm.h"
 #include "services/applet.h"
 #include "services/audren.h"
@@ -56,11 +56,16 @@ Result audrenInitialize(const AudioRendererConfig* config)
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
     // Choose revision (i.e. if splitters are used then at least revision 2 must be used)
-    if (kernelAbove400())
+    u32 hosver = hosversionGet();
+    /*if (hosver >= MAKEHOSVERSION(6,1,0))
+        g_audrenRevision = AUDREN_REVISION_6;
+    else if (hosver >= MAKEHOSVERSION(6,0,0))
+        g_audrenRevision = AUDREN_REVISION_5;
+    else*/ if (hosver >= MAKEHOSVERSION(4,0,0))
         g_audrenRevision = AUDREN_REVISION_4;
-    else if (kernelAbove300())
+    else if (hosver >= MAKEHOSVERSION(3,0,0))
         g_audrenRevision = AUDREN_REVISION_3;
-    else if (kernelAbove200())
+    else if (hosver >= MAKEHOSVERSION(2,0,0))
         g_audrenRevision = AUDREN_REVISION_2;
     else
         g_audrenRevision = AUDREN_REVISION_1;

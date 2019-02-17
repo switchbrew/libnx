@@ -3,7 +3,6 @@
 #include "result.h"
 #include "arm/atomics.h"
 #include "kernel/ipc.h"
-#include "kernel/detect.h"
 #include "kernel/tmem.h"
 #include "kernel/event.h"
 #include "services/fatal.h"
@@ -11,6 +10,7 @@
 #include "services/apm.h"
 #include "services/sm.h"
 #include "runtime/env.h"
+#include "runtime/hosversion.h"
 
 __attribute__((weak)) u32 __nx_applet_type = AppletType_Default;
 __attribute__((weak)) bool __nx_applet_auto_notifyrunning = true;
@@ -432,7 +432,7 @@ Result appletSetFocusHandlingMode(AppletFocusHandlingMode mode) {
 
     rc = _appletSetFocusHandlingMode(invals[0], invals[1], invals[2]);
 
-    if (R_SUCCEEDED(rc) && kernelAbove200())
+    if (R_SUCCEEDED(rc) && hosversionAtLeast(2,0,0))
         rc = _appletSetOutOfFocusSuspendingEnabled(invals[3]);
 
     return rc;
@@ -1010,7 +1010,7 @@ Result appletIsGamePlayRecordingSupported(bool *flag) {
     if (!serviceIsActive(&g_appletSrv) || !_appletIsRegularApplication())
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    if (!kernelAbove300())
+    if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     struct {
@@ -1047,7 +1047,7 @@ static Result _appletInitializeGamePlayRecording(TransferMemory *tmem) {
     if (!serviceIsActive(&g_appletSrv) || !_appletIsRegularApplication())
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    if (!kernelAbove300())
+    if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return _appletCmdInTmem(&g_appletIFunctions, NULL, 66, tmem);
@@ -1060,7 +1060,7 @@ Result appletSetGamePlayRecordingState(bool state) {
     if (!serviceIsActive(&g_appletSrv) || !_appletIsRegularApplication() || g_appletRecordingInitialized==0)
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    if (!kernelAbove300())
+    if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     struct {
@@ -1102,7 +1102,7 @@ Result appletInitializeGamePlayRecording(void) {
     //These checks are done in the called applet funcs, but do it here too so that tmemCreate() doesn't run when it's not needed.
     if (!serviceIsActive(&g_appletSrv) || !_appletIsRegularApplication())
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-    if (!kernelAbove300())
+    if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     rc = tmemCreate(&g_appletRecordingTmem, size, Perm_None);
@@ -1130,7 +1130,7 @@ Result appletQueryApplicationPlayStatistics(AppletApplicationPlayStatistics *sta
     if (!serviceIsActive(&g_appletSrv) || !_appletIsRegularApplication())
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    if (!kernelAbove500())
+    if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     ipcAddRecvBuffer(&c, stats, count*sizeof(AppletApplicationPlayStatistics), BufferType_Normal);
@@ -1520,7 +1520,7 @@ static Result _appletSetOutOfFocusSuspendingEnabled(u8 inval) {
 }
 
 Result appletSetScreenShotImageOrientation(s32 val) {
-    if (!kernelAbove300())
+    if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     IpcCommand c;
@@ -1666,7 +1666,7 @@ static Result _appletHolderCreate(AppletHolder *h, AppletId id, LibAppletMode mo
 
     if (R_SUCCEEDED(rc)) rc = _appletGetEvent(&h->s, &h->StateChangedEvent, 0, false);//GetAppletStateChangedEvent
 
-    if (R_SUCCEEDED(rc) && kernelAbove200() && h->mode == LibAppletMode_Unknown3) rc = _appletGetIndirectLayerConsumerHandle(&h->s, &h->layer_handle);
+    if (R_SUCCEEDED(rc) && hosversionAtLeast(2,0,0) && h->mode == LibAppletMode_Unknown3) rc = _appletGetIndirectLayerConsumerHandle(&h->s, &h->layer_handle);
 
     return rc;
 }
@@ -1696,7 +1696,7 @@ Result appletHolderGetIndirectLayerConsumerHandle(AppletHolder *h, u64 *out) {
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     if (h->mode!=LibAppletMode_Unknown3)
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
-    if (!kernelAbove200())
+    if (hosversionBefore(2,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     if (out) *out = h->layer_handle;
@@ -1854,7 +1854,7 @@ Result appletCreateTransferMemoryStorage(AppletStorage *s, void* buffer, s64 siz
 }
 
 Result appletCreateHandleStorage(AppletStorage *s, s64 inval, Handle handle) {
-    if (!kernelAbove200())
+    if (hosversionBefore(2,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return _appletCmdInHandle64(&g_appletILibraryAppletCreator, &s->s, 12, handle, inval);
@@ -2008,7 +2008,7 @@ Result appletStorageGetHandle(AppletStorage *s, s64 *out, Handle *handle) {
     if (!serviceIsActive(&s->s))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    if (!kernelAbove200())
+    if (hosversionBefore(2,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     rc = _appletGetSession(&s->s, &tmp_srv, 1);//OpenTransferStorage

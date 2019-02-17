@@ -3,7 +3,7 @@
 #include "result.h"
 #include "arm/cache.h"
 #include "kernel/ipc.h"
-#include "kernel/detect.h"
+#include "runtime/hosversion.h"
 #include "services/usb.h"
 #include "services/usbhs.h"
 #include "services/sm.h"
@@ -26,12 +26,12 @@ Result usbHsInitialize(void) {
         rc = serviceConvertToDomain(&g_usbHsSrv);
     }
 
-    if (R_SUCCEEDED(rc) && kernelAbove200())
+    if (R_SUCCEEDED(rc) && hosversionAtLeast(2,0,0))
         rc = _usbHsBindClientProcess(CUR_PROCESS_HANDLE);
 
     // GetInterfaceStateChangeEvent
     if (R_SUCCEEDED(rc))
-        rc = _usbHsGetEvent(&g_usbHsSrv, &g_usbHsInterfaceStateChangeEvent, kernelAbove200() ? 6 : 5);
+        rc = _usbHsGetEvent(&g_usbHsSrv, &g_usbHsInterfaceStateChangeEvent, hosversionAtLeast(2,0,0) ? 6 : 5);
 
     if (R_FAILED(rc))
     {
@@ -175,7 +175,7 @@ static Result _usbHsQueryInterfaces(u64 base_cmdid, const UsbHsInterfaceFilter* 
     raw = serviceIpcPrepareHeader(&g_usbHsSrv, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
-    raw->cmd_id = kernelAbove200() ? base_cmdid+1 : base_cmdid;
+    raw->cmd_id = hosversionAtLeast(2,0,0) ? base_cmdid+1 : base_cmdid;
     raw->filter = *filter;
 
     Result rc = serviceIpcDispatch(&g_usbHsSrv);
@@ -221,7 +221,7 @@ Result usbHsQueryAcquiredInterfaces(UsbHsInterface* interfaces, size_t interface
     raw = serviceIpcPrepareHeader(&g_usbHsSrv, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
-    raw->cmd_id = kernelAbove200() ? 3 : 2;
+    raw->cmd_id = hosversionAtLeast(2,0,0) ? 3 : 2;
 
     Result rc = serviceIpcDispatch(&g_usbHsSrv);
 
@@ -259,7 +259,7 @@ Result usbHsCreateInterfaceAvailableEvent(Event* event, bool autoclear, u8 index
     raw = serviceIpcPrepareHeader(&g_usbHsSrv, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
-    raw->cmd_id = kernelAbove200() ? 4 : 3;
+    raw->cmd_id = hosversionAtLeast(2,0,0) ? 4 : 3;
     raw->index = index;
     raw->filter = *filter;
 
@@ -299,7 +299,7 @@ Result usbHsDestroyInterfaceAvailableEvent(Event* event, u8 index) {
     raw = serviceIpcPrepareHeader(&g_usbHsSrv, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
-    raw->cmd_id = kernelAbove200() ? 5 : 4;
+    raw->cmd_id = hosversionAtLeast(2,0,0) ? 5 : 4;
     raw->index = index;
 
     Result rc = serviceIpcDispatch(&g_usbHsSrv);
@@ -337,7 +337,7 @@ Result usbHsAcquireUsbIf(UsbHsClientIfSession* s, UsbHsInterface *interface) {
         s32 ID;
     } *raw;
 
-    if (!kernelAbove300()) {
+    if (hosversionBefore(3,0,0)) {
         ipcAddRecvBuffer(&c, &s->inf.inf, sizeof(UsbHsInterfaceInfo), BufferType_Normal);
     }
     else {
@@ -349,7 +349,7 @@ Result usbHsAcquireUsbIf(UsbHsClientIfSession* s, UsbHsInterface *interface) {
     raw = serviceIpcPrepareHeader(&g_usbHsSrv, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
-    raw->cmd_id = kernelAbove200() ? 7 : 6;
+    raw->cmd_id = hosversionAtLeast(2,0,0) ? 7 : 6;
     raw->ID = s->ID;
 
     Result rc = serviceIpcDispatch(&g_usbHsSrv);
@@ -373,7 +373,7 @@ Result usbHsAcquireUsbIf(UsbHsClientIfSession* s, UsbHsInterface *interface) {
 
     if (R_SUCCEEDED(rc)) {
         rc = _usbHsGetEvent(&s->s, &s->event0, 0);
-        if (kernelAbove200()) rc = _usbHsGetEvent(&s->s, &s->eventCtrlXfer, 6);
+        if (hosversionAtLeast(2,0,0)) rc = _usbHsGetEvent(&s->s, &s->eventCtrlXfer, 6);
 
         if (R_FAILED(rc)) {
             serviceClose(&s->s);
@@ -486,7 +486,7 @@ Result usbHsIfGetCurrentFrame(UsbHsClientIfSession* s, u32* out) {
     raw = serviceIpcPrepareHeader(&s->s, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
-    raw->cmd_id = kernelAbove200() ? 4 : 5;
+    raw->cmd_id = hosversionAtLeast(2,0,0) ? 4 : 5;
 
     Result rc = serviceIpcDispatch(&s->s);
 
@@ -648,7 +648,7 @@ Result usbHsIfCtrlXfer(UsbHsClientIfSession* s, u8 bmRequestType, u8 bRequest, u
     Result rc=0;
     UsbHsXferReport report;
 
-    if (!kernelAbove200()) return _usbHsIfSubmitControlRequest(s, bRequest, bmRequestType, wValue, wIndex, wLength, buffer, 0, transferredSize);
+    if (hosversionBefore(2,0,0)) return _usbHsIfSubmitControlRequest(s, bRequest, bmRequestType, wValue, wIndex, wLength, buffer, 0, transferredSize);
 
     rc = _usbHsIfCtrlXferAsync(s, bmRequestType, bRequest, wValue, wIndex, wLength, buffer);
     if (R_FAILED(rc)) return rc;
@@ -686,7 +686,7 @@ Result usbHsIfOpenUsbEp(UsbHsClientIfSession* s, UsbHsClientEpSession* ep, u16 m
     raw = serviceIpcPrepareHeader(&s->s, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
-    raw->cmd_id = kernelAbove200() ? 9 : 4;
+    raw->cmd_id = hosversionAtLeast(2,0,0) ? 9 : 4;
     raw->maxUrbCount = maxUrbCount;
     raw->epType = (desc->bmAttributes & USB_TRANSFER_TYPE_MASK) + 1;
     raw->epNumber = desc->bEndpointAddress & USB_ENDPOINT_ADDRESS_MASK;
@@ -716,7 +716,7 @@ Result usbHsIfOpenUsbEp(UsbHsClientIfSession* s, UsbHsClientEpSession* ep, u16 m
     }
 
     if (R_SUCCEEDED(rc)) {
-        if (kernelAbove200()) {
+        if (hosversionAtLeast(2,0,0)) {
             rc = _usbHsCmdNoIO(&ep->s, 3);//Populate
             if (R_SUCCEEDED(rc)) rc = _usbHsGetEvent(&ep->s, &ep->eventXfer, 2);
         }
@@ -737,7 +737,7 @@ Result usbHsIfResetDevice(UsbHsClientIfSession* s) {
 void usbHsEpClose(UsbHsClientEpSession* s) {
     if (!serviceIsActive(&s->s)) return;
 
-    _usbHsCmdNoIO(&s->s, kernelAbove200() ? 1 : 3);//Close
+    _usbHsCmdNoIO(&s->s, hosversionAtLeast(2,0,0) ? 1 : 3);//Close
 
     serviceClose(&s->s);
     eventClose(&s->eventXfer);
@@ -879,7 +879,7 @@ Result usbHsEpPostBuffer(UsbHsClientEpSession* s, void* buffer, u32 size, u32* t
     u32 count=0;
     UsbHsXferReport report;
 
-    if (!kernelAbove200()) return _usbHsEpSubmitRequest(s, buffer, size, 0, transferredSize);
+    if (hosversionBefore(2,0,0)) return _usbHsEpSubmitRequest(s, buffer, size, 0, transferredSize);
 
     rc = _usbHsEpPostBufferAsync(s, buffer, size, 0, &xferId);
     if (R_FAILED(rc)) return rc;

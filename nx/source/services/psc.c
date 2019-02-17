@@ -8,10 +8,10 @@
 #include "result.h"
 #include "arm/atomics.h"
 #include "kernel/ipc.h"
-#include "kernel/detect.h"
 #include "kernel/event.h"
 #include "services/psc.h"
 #include "services/sm.h"
+#include "runtime/hosversion.h"
 
 static Service g_pscSrv;
 static u64 g_refCnt;
@@ -166,7 +166,7 @@ Result pscPmModuleGetRequest(PscPmModule *module, PscPmState *out_state, u32 *ou
 }
 
 Result pscPmModuleAcknowledge(PscPmModule *module, PscPmState state) {
-    if (kernelAbove600()) {
+    if (hosversionAtLeast(6,0,0)) {
         return _pscPmModuleAcknowledgeEx(module, state);
     } else {
         return _pscPmModuleAcknowledge(module);

@@ -4,7 +4,6 @@
 #include "result.h"
 #include "arm/atomics.h"
 #include "kernel/ipc.h"
-#include "kernel/detect.h"
 #include "services/fs.h"
 #include "services/sm.h"
 #include "services/smm.h"

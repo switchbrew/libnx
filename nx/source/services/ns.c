@@ -2,7 +2,7 @@
 #include "result.h"
 #include "arm/atomics.h"
 #include "kernel/ipc.h"
-#include "kernel/detect.h"
+#include "runtime/hosversion.h"
 #include "services/sm.h"
 #include "services/ns.h"
 
@@ -20,7 +20,7 @@ Result nsInitialize(void)
     if (serviceIsActive(&g_nsGetterSrv) || serviceIsActive(&g_nsAppManSrv))
         return 0;
 
-    if(!kernelAbove300())
+    if(hosversionBefore(3,0,0))
         return smGetService(&g_nsAppManSrv, "ns:am");
 
     rc = smGetService(&g_nsGetterSrv, "ns:am2");//TODO: Support the other services?(Only useful when ns:am2 isn't accessible)
@@ -37,7 +37,7 @@ void nsExit(void)
 {
     if (atomicDecrement64(&g_nsRefCnt) == 0) {
         serviceClose(&g_nsAppManSrv);
-        if(!kernelAbove300()) return;
+        if(hosversionBefore(3,0,0)) return;
 
         serviceClose(&g_nsGetterSrv);
     }
@@ -285,7 +285,7 @@ Result nsGetFreeSpaceSize(FsStorageId storage_id, u64 *size)
 
 Result nsvmInitialize(void)
 {
-    if (!kernelAbove300())
+    if (hosversionBefore(3,0,0))
         return 0;
 
     atomicIncrement64(&g_nsvmRefCnt);
@@ -298,7 +298,7 @@ Result nsvmInitialize(void)
 
 void nsvmExit(void)
 {
-    if (!kernelAbove300())
+    if (hosversionBefore(3,0,0))
         return;
 
     if (atomicDecrement64(&g_nsvmRefCnt) == 0) {
@@ -322,7 +322,7 @@ Result nsvmNeedsUpdateVulnerability(bool *out) {
 
     Result rc;
 
-    if (kernelAbove300())
+    if (hosversionAtLeast(3,0,0))
         rc = serviceIpcDispatch(&g_nsvmSrv);
     else
         rc = serviceIpcDispatch(&g_nsAppManSrv);
@@ -347,7 +347,7 @@ Result nsvmNeedsUpdateVulnerability(bool *out) {
 
 Result nsvmGetSafeSystemVersion(u16 *out)
 {
-    if (!kernelAbove300())
+    if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     IpcCommand c;
@@ -733,7 +733,7 @@ Result nsdevLaunchApplicationWithStorageId(u64* out_pid, u64 app_title_id, u32 f
 }
 
 Result nsdevIsSystemMemoryResourceLimitBoosted(bool* out) {
-    if (!kernelAbove600()) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    if (hosversionBefore(6,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     IpcCommand c;
     ipcInitialize(&c);
@@ -772,7 +772,7 @@ Result nsdevIsSystemMemoryResourceLimitBoosted(bool* out) {
 }
 
 Result nsdevGetRunningApplicationProcessId(u64* out_pid) {
-    if (!kernelAbove600()) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    if (hosversionBefore(6,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     IpcCommand c;
     ipcInitialize(&c);
@@ -811,7 +811,7 @@ Result nsdevGetRunningApplicationProcessId(u64* out_pid) {
 }
 
 Result nsdevSetCurrentApplicationRightsEnvironmentCanBeActive(bool can_be_active) {
-    if (!kernelAbove600()) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    if (hosversionBefore(6,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     IpcCommand c;
     ipcInitialize(&c);

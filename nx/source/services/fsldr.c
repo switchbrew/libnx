@@ -4,7 +4,7 @@
 #include "result.h"
 #include "arm/atomics.h"
 #include "kernel/ipc.h"
-#include "kernel/detect.h"
+#include "runtime/hosversion.h"
 #include "services/fs.h"
 #include "services/sm.h"
 #include "services/fsldr.h"
@@ -26,7 +26,7 @@ Result fsldrInitialize(void) {
         rc = serviceConvertToDomain(&g_fsldrSrv);
     }
 
-    if (R_SUCCEEDED(rc) && kernelAbove400()) {
+    if (R_SUCCEEDED(rc) && hosversionAtLeast(4,0,0)) {
         rc = fsldrSetCurrentProcess();
     }
 

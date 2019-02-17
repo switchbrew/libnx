@@ -4,7 +4,7 @@
 #include "arm/atomics.h"
 #include "kernel/ipc.h"
 #include "kernel/event.h"
-#include "kernel/detect.h"
+#include "runtime/hosversion.h"
 #include "services/auddev.h"
 #include "services/applet.h"
 #include "services/sm.h"
@@ -87,7 +87,7 @@ static Result _auddevGetAudioDeviceService(Service* srv, Service* out_srv, u64 a
 }
 
 Result auddevListAudioDeviceName(AudioDeviceName *DeviceNames, s32 max_names, s32 *total_names) {
-    bool new_cmd = kernelAbove300();
+    bool new_cmd = hosversionAtLeast(3,0,0);
 
     IpcCommand c;
     ipcInitialize(&c);
@@ -128,7 +128,7 @@ Result auddevListAudioDeviceName(AudioDeviceName *DeviceNames, s32 max_names, s3
 }
 
 Result auddevSetAudioDeviceOutputVolume(const AudioDeviceName *DeviceName, float volume) {
-    bool new_cmd = kernelAbove300();
+    bool new_cmd = hosversionAtLeast(3,0,0);
 
     IpcCommand c;
     ipcInitialize(&c);
@@ -168,7 +168,7 @@ Result auddevSetAudioDeviceOutputVolume(const AudioDeviceName *DeviceName, float
 }
 
 Result auddevGetAudioDeviceOutputVolume(const AudioDeviceName *DeviceName, float *volume) {
-    bool new_cmd = kernelAbove300();
+    bool new_cmd = hosversionAtLeast(3,0,0);
 
     IpcCommand c;
     ipcInitialize(&c);
