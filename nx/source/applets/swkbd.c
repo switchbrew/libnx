@@ -51,14 +51,13 @@ static void _swkbdConfigClear(SwkbdConfig* c) {
 }
 
 static void _swkbdInitVersion(u32* version) {
-    u32 hosver = hosversionGet();
-    if (hosver >= MAKEHOSVERSION(5,0,0))
+    if (hosversionAtLeast(5,0,0))
         *version = 0x50009;
-    else if (hosver >= MAKEHOSVERSION(4,0,0))
+    else if (hosversionAtLeast(4,0,0))
         *version = 0x40008;
-    else if (hosver >= MAKEHOSVERSION(3,0,0))
+    else if (hosversionAtLeast(3,0,0))
         *version = 0x30007;
-    else if (hosver >= MAKEHOSVERSION(2,0,0))
+    else if (hosversionAtLeast(2,0,0))
         *version = 0x10006;
     else
         *version=0x5;//1.0.0+ version

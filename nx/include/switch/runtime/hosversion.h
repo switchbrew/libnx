@@ -19,24 +19,18 @@
 /// Extracts the micro number from a HOS version value.
 #define HOSVER_MICRO(_version) ( (_version)        & 0xFF)
 
-/// Returns the current HOS version. Normally, this matches the version returned by \ref setsysGetFirmwareVersion or, if set:sys is not available, the version detected by \ref detectKernelVersion.
-u32 hosversionGet(void);
+void hosversionSetup(void);
 
 /// Sets or overrides the current HOS version. This function is normally called automatically by libnx on startup.
 void hosversionSet(u32 version);
 
 /// Returns true if the current HOS version is equal to or above the specified major/minor/micro version.
-static inline bool hosversionAtLeast(u8 major, u8 minor, u8 micro) {
-    return hosversionGet() >= MAKEHOSVERSION(major,minor,micro);
-}
+bool hosversionAtLeast(u8 major, u8 minor, u8 micro);
 
 /// Returns true if the current HOS version is earlier than the specified major/minor/micro version.
-static inline bool hosversionBefore(u8 major, u8 minor, u8 micro) {
-    return !hosversionAtLeast(major, minor, micro);
-}
+bool hosversionBefore(u8 major, u8 minor, u8 micro);
 
 /// Returns true if the current HOS version is between the two specified major versions, i.e. [major1, major2).
 static inline bool hosversionBetween(u8 major1, u8 major2) {
-    u32 ver = hosversionGet();
-    return ver >= MAKEHOSVERSION(major1,0,0) && ver < MAKEHOSVERSION(major2,0,0);
+    return hosversionAtLeast(major1, 0, 0) && hosversionBefore(major2, 0, 0);
 }

@@ -168,7 +168,7 @@ void __attribute__((weak)) __libnx_init(void* ctx, Handle main_thread, void* sav
 
     // Libnx initialization goes here.
     envSetup(ctx, main_thread, saved_lr);
-    hosversionSet(MAKEHOSVERSION(detectKernelVersion(), 0, 0));
+    hosversionSetup();
     newlibSetup();
     virtmemSetup();
     __libnx_initheap();

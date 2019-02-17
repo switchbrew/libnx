@@ -4,11 +4,22 @@
 #include "kernel/detect.h"
 #include "kernel/mutex.h"
 #include "kernel/svc.h"
+#include "runtime/hosversion.h"
 #include <malloc.h>
 
 static bool g_VersionCached;
 static Mutex g_VersionMutex;
 static int g_Version;
+
+static u32 g_VersionBounds[] = {
+    MAKEHOSVERSION(1,0,0),
+    MAKEHOSVERSION(2,0,0),
+    MAKEHOSVERSION(3,0,0),
+    MAKEHOSVERSION(4,0,0),
+    MAKEHOSVERSION(5,0,0),
+    MAKEHOSVERSION(6,0,0),
+    UINT32_MAX
+};
 
 static bool g_JitKernelPatchCached;
 static Mutex g_JitKernelPatchMutex;
@@ -27,17 +38,17 @@ static void _CacheVersion(void)
     }
 
     u64 tmp;
-    g_Version = 1;
+    g_Version = 0;
     if (R_VALUE(svcGetInfo(&tmp, 12, INVALID_HANDLE, 0)) != KERNELRESULT(InvalidEnumValue))
-        g_Version = 2;
+        g_Version = 1;
     if (R_VALUE(svcGetInfo(&tmp, 18, INVALID_HANDLE, 0)) != KERNELRESULT(InvalidEnumValue))
-        g_Version = 3;
+        g_Version = 2;
     if (R_VALUE(svcGetInfo(&tmp, 19, INVALID_HANDLE, 0)) != KERNELRESULT(InvalidEnumValue))
-        g_Version = 4;
+        g_Version = 3;
     if (R_VALUE(svcGetInfo(&tmp, 20, INVALID_HANDLE, 0)) != KERNELRESULT(InvalidEnumValue))
-        g_Version = 5;
+        g_Version = 4;
     if (R_VALUE(svcGetInfo(&tmp, 21, INVALID_HANDLE, 0)) != KERNELRESULT(InvalidEnumValue))
-        g_Version = 6;
+        g_Version = 5;
 
     __atomic_store_n(&g_VersionCached, true, __ATOMIC_SEQ_CST);
 
@@ -81,9 +92,14 @@ static void _CacheJitKernelPatch(void)
     mutexUnlock(&g_JitKernelPatchMutex);
 }
 
-int detectKernelVersion(void) {
+u32 detectKernelVersion(void) {
     _CacheVersion();
-    return g_Version;
+    return g_VersionBounds[g_Version];
+}
+
+u32 detectKernelVersionUpperBound(void) {
+    _CacheVersion();
+    return g_VersionBounds[g_Version + 1];
 }
 
 bool detectDebugger(void) {
