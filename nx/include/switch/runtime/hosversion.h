@@ -19,24 +19,31 @@
 /// Extracts the micro number from a HOS version value.
 #define HOSVER_MICRO(_version) ( (_version)        & 0xFF)
 
-/// Returns the current HOS version. Normally, this matches the version returned by \ref setsysGetFirmwareVersion or, if set:sys is not available, the version detected by \ref detectKernelVersion.
-u32 hosversionGet(void);
-
-/// Sets or overrides the current HOS version. This function is normally called automatically by libnx on startup.
+void hosversionSetup(void);
 void hosversionSet(u32 version);
 
-/// Returns true if the current HOS version is equal to or above the specified major/minor/micro version.
-static inline bool hosversionAtLeast(u8 major, u8 minor, u8 micro) {
-    return hosversionGet() >= MAKEHOSVERSION(major,minor,micro);
+typedef enum {
+    CompareResult_False,
+    CompareResult_True,
+    CompareResult_Unknown
+} CompareResult;
+
+CompareResult cmpresNot(CompareResult in) {
+    // Does a not-operation. True maps to False, False maps to True. Unknown maps to Unknown.
+    switch (in) {
+    case CompareResult_False:
+	return CompareResult_True;
+    case CompareResult_True:
+	return CompareResult_False;
+    default:
+	return CompareResult_Unknown;
+    }
 }
+
+/// Returns true if the current HOS version is equal to or above the specified major/minor/micro version.
+CompareResult hosversionAtLeast(u8 major, u8 minor, u8 micro);
 
 /// Returns true if the current HOS version is earlier than the specified major/minor/micro version.
-static inline bool hosversionBefore(u8 major, u8 minor, u8 micro) {
-    return !hosversionAtLeast(major, minor, micro);
-}
-
-/// Returns true if the current HOS version is between the two specified major versions, i.e. [major1, major2).
-static inline bool hosversionBetween(u8 major1, u8 major2) {
-    u32 ver = hosversionGet();
-    return ver >= MAKEHOSVERSION(major1,0,0) && ver < MAKEHOSVERSION(major2,0,0);
+static inline CompareResult hosversionBefore(u8 major, u8 minor, u8 micro) {
+    return cmpresNot(hosversionAtLeast(major, minor, micro));
 }

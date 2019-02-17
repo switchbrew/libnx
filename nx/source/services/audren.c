@@ -56,12 +56,13 @@ Result audrenInitialize(const AudioRendererConfig* config)
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
     // Choose revision (i.e. if splitters are used then at least revision 2 must be used)
+    /*
     u32 hosver = hosversionGet();
-    /*if (hosver >= MAKEHOSVERSION(6,1,0))
+    if (hosver >= MAKEHOSVERSION(6,1,0))
         g_audrenRevision = AUDREN_REVISION_6;
     else if (hosver >= MAKEHOSVERSION(6,0,0))
         g_audrenRevision = AUDREN_REVISION_5;
-    else*/ if (hosver >= MAKEHOSVERSION(4,0,0))
+    else if (hosver >= MAKEHOSVERSION(4,0,0))
         g_audrenRevision = AUDREN_REVISION_4;
     else if (hosver >= MAKEHOSVERSION(3,0,0))
         g_audrenRevision = AUDREN_REVISION_3;
@@ -69,7 +70,7 @@ Result audrenInitialize(const AudioRendererConfig* config)
         g_audrenRevision = AUDREN_REVISION_2;
     else
         g_audrenRevision = AUDREN_REVISION_1;
-
+*/
     // Prepare parameter structure
     AudioRendererParameter param = {0};
     param.sample_rate      = config->output_rate == AudioRendererOutputRate_32kHz ? 32000 : 48000;
