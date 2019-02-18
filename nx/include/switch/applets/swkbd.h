@@ -390,7 +390,7 @@ void swkbdConfigSetTextCheckCallback(SwkbdConfig* c, SwkbdTextCheckCb cb);
 Result swkbdShow(SwkbdConfig* c, char* out_string, size_t out_string_size);
 
 /**
- * @brief Creates a SwkbdInline object.
+ * @brief Creates a SwkbdInline object. Only available on 2.0.0+.
  * @note This is essentially an asynchronous version of the regular swkbd.
  * @note This calls \ref swkbdInlineSetUtf8Mode internally with flag=true.
  * @param s SwkbdInline object.
