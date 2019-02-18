@@ -1,7 +1,7 @@
 /**
  * @file web.h
  * @brief Wrapper for using the WifiWebAuthApplet LibraryApplet.
- * @author p-sam
+ * @author p-sam, yellows8
  * @copyright libnx Authors
  */
 #pragma once
@@ -9,20 +9,30 @@
 #include "../services/applet.h"
 
 typedef struct {
-    u8 unk_x0[0x4];
-    char url[0xFC];
-} WebWifiPageArgUrl;
-
-typedef struct {
-    WebWifiPageArgUrl url1;
-    WebWifiPageArgUrl url2;
-    u8 unk_x200[0x300];
-    u8 unk_x500[0x18];
-} WebWifiPageArg;
+    u32 unk_x0;                 ///< Official sw sets this to 0 with appletStorageWrite, seperately from the rest of the config struct.
+    char conntest_url[0x100];
+    char initial_url[0x400];
+    u128 userID;
+    u32 unk_x514;
+} PACKED WebWifiPageArg;
 
 typedef struct {
     WebWifiPageArg arg;
 } WebWifiConfig;
 
-void webWifiCreate(WebWifiConfig* config, const char* url);
+/**
+ * @brief Creates the config for WifiWebAuthApplet.
+ * @param config WebWifiConfig object.
+ * @param conntest_url URL used for the connection-test requests, if NULL initial_url is used for this.
+ * @param initial_url Initial URL navigated to by the applet.
+ * @param userID Account userID, 0 for common.
+ * @param unk Value written to \ref WebWifiPageArg unk_x514, this can be 0.
+ */
+void webWifiCreate(WebWifiConfig* config, const char* conntest_url, const char* initial_url, u128 userID, u32 unk);
+
+/**
+ * @brief Launches WifiWebAuthApplet with the specified config and waits for it to exit.
+ * @param config WebWifiConfig object.
+ */
 Result webWifiShow(WebWifiConfig* config);
+

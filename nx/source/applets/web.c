@@ -6,14 +6,16 @@
 #include "applets/libapplet.h"
 #include "applets/web.h"
 
-static void _webWifiUrlCreate(WebWifiPageArgUrl* argUrl, const char* url) {
-    strncpy(argUrl->url, url, sizeof(argUrl->url)-1);
-}
-
-void webWifiCreate(WebWifiConfig* config, const char* url) {
+void webWifiCreate(WebWifiConfig* config, const char* conntest_url, const char* initial_url, u128 userID, u32 unk) {
     memset(config, 0, sizeof(WebWifiConfig));
-    _webWifiUrlCreate(&config->arg.url1, url);
-    _webWifiUrlCreate(&config->arg.url2, url);
+
+    if (conntest_url==NULL) conntest_url = initial_url;
+
+    strncpy(config->arg.conntest_url, conntest_url, sizeof(config->arg.conntest_url)-1);
+    strncpy(config->arg.initial_url, initial_url, sizeof(config->arg.initial_url)-1);
+
+    config->arg.userID = userID;
+    config->arg.unk_x514 = unk;
 }
 
 Result webWifiShow(WebWifiConfig* config) {
