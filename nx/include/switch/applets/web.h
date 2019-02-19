@@ -17,6 +17,11 @@ typedef struct {
 } PACKED WebWifiPageArg;
 
 typedef struct {
+    u32 unk_x0;
+    Result res;
+} PACKED WebWifiReturnValue;
+
+typedef struct {
     WebWifiPageArg arg;
 } WebWifiConfig;
 
@@ -33,6 +38,7 @@ void webWifiCreate(WebWifiConfig* config, const char* conntest_url, const char* 
 /**
  * @brief Launches WifiWebAuthApplet with the specified config and waits for it to exit.
  * @param config WebWifiConfig object.
+ * @param out Optional output applet reply data, can be NULL.
  */
-Result webWifiShow(WebWifiConfig* config);
+Result webWifiShow(WebWifiConfig* config, WebWifiReturnValue *out);
 
