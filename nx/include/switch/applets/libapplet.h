@@ -35,6 +35,15 @@ void libappletArgsCreate(LibAppletArgs* a, u32 version);
 void libappletArgsSetPlayStartupSound(LibAppletArgs* a, bool flag);
 
 /**
+ * @brief Reads data from offset 0 from the specified storage into the buffer. If the storage-size is smaller than the size param, the storage-size is used instead.
+ * @param s Storage object.
+ * @param buffer Output buffer.
+ * @param size Size to read.
+ * @param transfer_size Optional output size field for the actual size used for the read.
+ */
+Result libappletReadStorage(AppletStorage* s, void* buffer, size_t size, size_t *transfer_size);
+
+/**
  * @brief Sets the tick field in LibAppletArgs, then creates a storage with it which is pushed to the AppletHolder via \ref appletHolderPushInData.
  * @param a LibAppletArgs struct.
  * @param h AppletHolder object.
@@ -48,6 +57,15 @@ Result libappletArgsPush(LibAppletArgs* a, AppletHolder *h);
  * @param size Input data size.
  */
 Result libappletPushInData(AppletHolder *h, const void* buffer, size_t size);
+
+/**
+ * @brief Pops a storage via \ref appletHolderPopOutData, uses \ref libappletReadStorage, then closes the storage. 
+ * @param h AppletHolder object.
+ * @param buffer Output buffer.
+ * @param size Size to read.
+ * @param transfer_size Optional output size field for the actual size used for the read.
+ */
+Result libappletPopOutData(AppletHolder *h, void* buffer, size_t size, size_t *transfer_size);
 
 /// Wrapper for \ref appletPushToGeneralChannel, see appletPushToGeneralChannel regarding the requirements for using this.
 /// Returns to the main Home Menu, equivalent to pressing the HOME button.

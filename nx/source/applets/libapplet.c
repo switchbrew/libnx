@@ -34,6 +34,22 @@ static Result _libappletCreateWriteStorage(AppletStorage* s, const void* buffer,
     return rc;
 }
 
+Result libappletReadStorage(AppletStorage* s, void* buffer, size_t size, size_t *transfer_size) {
+    Result rc=0;
+    s64 tmpsize=0;
+
+    rc = appletStorageGetSize(s, &tmpsize);
+
+    if (R_SUCCEEDED(rc)) {
+        if (tmpsize < size) size = tmpsize;
+        rc = appletStorageRead(s, 0, buffer, size);
+    }
+
+    if (R_SUCCEEDED(rc) && transfer_size) *transfer_size = size;
+
+    return rc;
+}
+
 static Result _libappletPushInData(AppletHolder *h, const void* buffer, size_t size) {
     Result rc=0;
     AppletStorage storage;
@@ -65,6 +81,18 @@ static Result _libappletQlaunchRequest(u8* buf, size_t size) {
 
 Result libappletPushInData(AppletHolder *h, const void* buffer, size_t size) {
     return _libappletPushInData(h, buffer, size);
+}
+
+Result libappletPopOutData(AppletHolder *h, void* buffer, size_t size, size_t *transfer_size) {
+    Result rc=0;
+    AppletStorage storage;
+
+    rc = appletHolderPopOutData(h, &storage);
+    if (R_FAILED(rc)) return rc;
+
+    rc = libappletReadStorage(&storage, buffer, size, transfer_size);
+    appletStorageClose(&storage);
+    return rc;
 }
 
 Result libappletRequestHomeMenu(void) {
