@@ -694,6 +694,9 @@ static Result _viOpenLayer(const ViDisplay *display, u64 layer_id, u64 aruid, u8
 
 static Result _viCreateStrayLayer(const ViDisplay *display, u32 layer_flags, u64 *layer_id, u8 native_window[0x100], u64 *native_window_size)
 {
+    Service* target_srv = &g_viIApplicationDisplayService;
+    bool sysver_flag = hosversionBefore(7,0,0);
+
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -709,17 +712,29 @@ static Result _viCreateStrayLayer(const ViDisplay *display, u32 layer_flags, u64
 
     raw = ipcPrepareHeader(&c, sizeof(*raw));
     raw->magic = SFCI_MAGIC;
-    raw->cmd_id = g_viServiceType < ViServiceType_System ? 2030 : 2312;
+
+    if (g_viServiceType < ViServiceType_System) {
+        raw->cmd_id = 2030;
+        target_srv = &g_viIApplicationDisplayService;
+    }
+    else {
+        if (sysver_flag) {
+            raw->cmd_id = 2312;
+            target_srv = &g_viISystemDisplayService;
+        }
+        else {
+            raw->cmd_id = 2012;
+            target_srv = &g_viIManagerDisplayService;
+        }
+    }
+
     raw->layer_flags = layer_flags;
     raw->pad = 0;
     raw->display_id = display->display_id;
     
-    Result rc;
-    if (g_viServiceType < ViServiceType_System) {
-        rc = serviceIpcDispatch(&g_viIApplicationDisplayService);
-    } else {
-        rc = serviceIpcDispatch(&g_viISystemDisplayService);
-    }
+    Result rc=0;
+    if (!serviceIsActive(target_srv)) rc = MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (R_SUCCEEDED(rc)) rc = serviceIpcDispatch(target_srv);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
