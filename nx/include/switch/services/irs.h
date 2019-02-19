@@ -49,13 +49,16 @@ typedef struct {
     u8 unk_x0[0x10];
 } PACKED IrsImageTransferProcessorState;
 
+/// Initialize irs.
 Result irsInitialize(void);
+
+/// Exit irs.
 void irsExit(void);
 
 Service* irsGetSessionService(void);
 void* irsGetSharedmemAddr(void);
 
-/// (De)activate the IR sensor, this is automatically used by irsExit(). Must be called after irsInitialize() to activate the IR sensor.
+/// (De)activate the IR sensor, this is automatically used by \ref irsExit. Must be called after irsInitialize() to activate the IR sensor.
 Result irsActivateIrsensor(bool activate);
 
 Result irsGetIrCameraHandle(u32 *IrCameraHandle, HidControllerID id);

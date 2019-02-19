@@ -8,6 +8,7 @@
 #include "../types.h"
 #include "../services/applet.h"
 
+/// Output result returned by \ref SwkbdTextCheckCb.
 typedef enum {
     SwkbdTextCheckResult_OK      = 0,  ///< Success, valid string.
     SwkbdTextCheckResult_Bad     = 1,  ///< Failure, invalid string. Error message is displayed in a message-box, pressing OK will return to swkbd again.
@@ -15,6 +16,7 @@ typedef enum {
     SwkbdTextCheckResult_Silent  = 3,  ///< Failure, invalid string. With value 3 and above, swkbd will silently not accept the string, without displaying any error.
 } SwkbdTextCheckResult;
 
+/// Type of keyboard.
 typedef enum {
     SwkbdType_Normal = 0,  ///< Normal keyboard.
     SwkbdType_NumPad = 1,  ///< Number pad. The buttons at the bottom left/right are only available when they're set by \ref swkbdConfigSetLeftOptionalSymbolKey / \ref swkbdConfigSetRightOptionalSymbolKey.
@@ -66,7 +68,7 @@ typedef enum {
 /// SwkbdInline State
 typedef enum {
     SwkbdState_Inactive       = 0x0,  ///< Default state from \ref swkbdInlineCreate, before a state is set by \ref swkbdInlineUpdate when a reply is received. Also indicates that the applet is no longer running.
-    SwkbdState_Initialized    = 0x1,
+    SwkbdState_Initialized    = 0x1,  ///< Applet is initialized.
     SwkbdState_Unknown2       = 0x2,
     SwkbdState_TextAvailable  = 0x3,  ///< Text is available since a ChangedString* reply was received.
     SwkbdState_Submitted      = 0x4,  ///< The user pressed the ok-button, submitting the text and closing the applet.
@@ -479,7 +481,6 @@ void swkbdInlineDisappear(SwkbdInline* s);
  * @brief Creates a \ref SwkbdAppearArg which can then be passed to \ref swkbdInlineAppear. arg is initialized with the defaults, with type being set to the input type.
  * @param arg Output \ref SwkbdAppearArg.
  * @param type \ref SwkbdType type
- * @param str Input UTF-8 string for the Ok button text, this can be empty/NULL to use the default.
  */
 void swkbdInlineMakeAppearArg(SwkbdAppearArg* arg, SwkbdType type);
 
@@ -498,7 +499,7 @@ void swkbdInlineAppearArgSetOkButtonText(SwkbdAppearArg* arg,  const char* str);
 void swkbdInlineAppearArgSetLeftButtonText(SwkbdAppearArg* arg, const char* str);
 
 /**
- * @brief Sets the RightButtonText, for \ref SwkbdType_NumPad. The default is "". Equivalent to \ref sswkbdConfigSetRightOptionalSymbolKey.
+ * @brief Sets the RightButtonText, for \ref SwkbdType_NumPad. The default is "". Equivalent to \ref swkbdConfigSetRightOptionalSymbolKey.
  * @param arg \ref SwkbdAppearArg, previously initialized by \ref swkbdInlineMakeAppearArg.
  * @param str UTF-8 input string.
  */
@@ -531,7 +532,7 @@ void swkbdInlineSetCursorPos(SwkbdInline* s, s32 pos);
 
 /**
  * @brief Sets the UserWordInfo.
- * @note Not avilable when \ref SwkbdState is above \ref SwkbdState_Initialized. Can't be used if this was already used previously.
+ * @note Not avilable when \ref SwkbdState is above ::SwkbdState_Initialized. Can't be used if this was already used previously.
  * @note The specified buffer must not be used after this, until \ref swkbdInlineClose is used.
  * @note \ref swkbdInlineUpdate must be called at some point afterwards.
  * @note If input==NULL or total_entries==0, this will just call \ref swkbdInlineUnsetUserWordInfo internally.
@@ -544,7 +545,7 @@ Result swkbdInlineSetUserWordInfo(SwkbdInline* s, const SwkbdDictWord *input, s3
 /**
  * @brief Request UnsetUserWordInfo.
  * @note \ref swkbdInlineUpdate must be called at some point afterwards for this to take affect.
- * @note Not avilable when \ref SwkbdState is above \ref SwkbdState_Initialized.
+ * @note Not avilable when \ref SwkbdState is above ::SwkbdState_Initialized.
  * @param s SwkbdInline object.
  */
 Result swkbdInlineUnsetUserWordInfo(SwkbdInline* s);
@@ -560,7 +561,7 @@ void swkbdInlineSetUtf8Mode(SwkbdInline* s, bool flag);
 
 /**
  * @brief Sets the CustomizeDic.
- * @note Not avilable when \ref SwkbdState is above \ref SwkbdState_Initialized. Can't be used if this was already used previously.
+ * @note Not avilable when \ref SwkbdState is above ::SwkbdState_Initialized. Can't be used if this was already used previously.
  * @note The specified buffer must not be used after this, until \ref swkbdInlineClose is used. However, it will also become available once \ref swkbdInlineUpdate handles SwkbdReplyType_UnsetCustomizeDic internally.
  * @param s SwkbdInline object.
  * @param buffer 0x1000-byte aligned buffer.
@@ -572,7 +573,7 @@ Result swkbdInlineSetCustomizeDic(SwkbdInline* s, void* buffer, size_t size, Swk
 /**
  * @brief Request UnsetCustomizeDic.
  * @note \ref swkbdInlineUpdate must be called at some point afterwards for this to take affect.
- * @note Not avilable when \ref SwkbdState is above \ref SwkbdState_Initialized.
+ * @note Not avilable when \ref SwkbdState is above ::SwkbdState_Initialized.
  * @param s SwkbdInline object.
  */
 void swkbdInlineUnsetCustomizeDic(SwkbdInline* s);

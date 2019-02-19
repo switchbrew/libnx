@@ -33,7 +33,10 @@ Result audinOpenAudioIn(const char *DeviceNameIn, char *DeviceNameOut, u32 Sampl
 Result audinGetAudioInState(AudioInState *State);
 Result audinStartAudioIn(void);
 Result audinStopAudioIn(void);
+
+/// Submits an \ref AudioInBuffer for capturing.
 Result audinAppendAudioInBuffer(AudioInBuffer *Buffer);
+
 Result audinGetReleasedAudioInBuffer(AudioInBuffer **Buffer, u32 *ReleasedBuffersCount);
 Result audinContainsAudioInBuffer(AudioInBuffer *Buffer, bool *ContainsBuffer);
 

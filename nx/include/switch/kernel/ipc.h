@@ -401,7 +401,7 @@ typedef struct {
 
 /**
  * @brief Parse an IPC command response into an IPC parsed command structure.
- * @param IPC parsed command structure to fill in.
+ * @param r IPC parsed command structure to fill in.
  * @return Result code.
  */
 static inline Result ipcParse(IpcParsedCommand* r) {
@@ -648,7 +648,7 @@ static inline void ipcSendObjectId(IpcCommand* cmd, u32 object_id) {
  * @brief Prepares the header of an IPC command structure (domain version).
  * @param cmd IPC command structure.
  * @param sizeof_raw Size in bytes of the raw data structure to embed inside the IPC request
- * @oaram object_id Domain object ID.
+ * @param object_id Domain object ID.
  * @return Pointer to the raw embedded data structure in the request, ready to be filled out.
  */
 static inline void* ipcPrepareHeaderForDomain(IpcCommand* cmd, size_t sizeof_raw, u32 object_id) {
@@ -669,7 +669,7 @@ static inline void* ipcPrepareHeaderForDomain(IpcCommand* cmd, size_t sizeof_raw
 
 /**
  * @brief Parse an IPC command request into an IPC parsed command structure (domain version).
- * @param IPC parsed command structure to fill in.
+ * @param r IPC parsed command structure to fill in.
  * @return Result code.
  */
 static inline Result ipcParseDomainRequest(IpcParsedCommand* r) {
@@ -706,7 +706,8 @@ static inline Result ipcParseDomainRequest(IpcParsedCommand* r) {
 
 /**
  * @brief Parse an IPC command response into an IPC parsed command structure (domain version).
- * @param IPC parsed command structure to fill in.
+ * @param r IPC parsed command structure to fill in.
+ * @param sizeof_raw Size in bytes of the raw data structure.
  * @return Result code.
  */
 static inline Result ipcParseDomainResponse(IpcParsedCommand* r, size_t sizeof_raw) {

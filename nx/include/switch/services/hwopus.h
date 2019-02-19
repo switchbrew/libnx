@@ -38,5 +38,6 @@ void hwopusDecoderExit(HwopusDecoder* decoder);
 /// See libopus multistream docs.
 Result hwopusDecoderMultistreamInitialize(HwopusDecoder* decoder, s32 SampleRate, s32 ChannelCount, s32 TotalStreamCount, s32 StereoStreamCount, u8 *channel_mapping);
 
+/// Decodes opus data.
 Result hwopusDecodeInterleaved(HwopusDecoder* decoder, s32 *DecodedDataSize, s32 *DecodedSampleCount, const void* opusin, size_t opusin_size, s16 *pcmbuf, size_t pcmbuf_size);
 

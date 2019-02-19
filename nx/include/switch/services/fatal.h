@@ -75,7 +75,7 @@ typedef struct {
 
 /**
  * @brief Triggers a system fatal error.
- * @param err[in] Result code to throw.
+ * @param[in] err Result code to throw.
  * @note This function does not return.
  * @note This uses \ref fatalWithType with \ref FatalType_ErrorScreen internally.
  */
@@ -83,17 +83,17 @@ void NORETURN fatalSimple(Result err);
 
 /**
  * @brief Triggers a system fatal error with a custom \ref FatalType.
- * @param err[in] Result code to throw.
- * @param type[in] Type of fatal error to throw.
+ * @param[in] err Result code to throw.
+ * @param[in] type Type of fatal error to throw.
  * @note This function may not return, depending on \ref FatalType.
  */
 void fatalWithType(Result err, FatalType type);
 
 /**
  * @brief Triggers a system fatal error with a custom \ref FatalType and \ref FatalContext.
- * @param err[in]  Result code to throw.
- * @param type[in] Type of fatal error to throw.
- * @param ctx[in]  Cpu context for fatal error to throw.
+ * @param[in] err  Result code to throw.
+ * @param[in] type Type of fatal error to throw.
+ * @param[in] ctx  Cpu context for fatal error to throw.
  * @note This function may not return, depending on \ref FatalType.
  */
 void fatalWithContext(Result err, FatalType type, FatalContext *ctx);

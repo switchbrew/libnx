@@ -39,6 +39,7 @@ Result psmGetBatteryVoltageState(PsmBatteryVoltageState *out);
  * @brief Wrapper func which opens a PsmSession and handles event setup.
  * @note Uses the actual BindStateChangeEvent cmd internally.
  * @note The event is not signalled on BatteryChargePercentage changes.
+ * @param[out] s PsmSession object.
  * @param[in] ChargerType Passed to SetChargerTypeChangeEventEnabled.
  * @param[in] PowerSupply Passed to SetPowerSupplyChangeEventEnabled.
  * @param[in] BatteryVoltage Passed to SetBatteryVoltageStateChangeEventEnabled.

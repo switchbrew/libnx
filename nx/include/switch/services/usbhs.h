@@ -1,5 +1,5 @@
 /**
- * @file usb.h
+ * @file usbhs.h
  * @brief USB (usb:hs) devices service IPC wrapper.
  * @author yellows8
  * @copyright libnx Authors

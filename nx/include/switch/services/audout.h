@@ -33,7 +33,10 @@ Result audoutOpenAudioOut(const char *DeviceNameIn, char *DeviceNameOut, u32 Sam
 Result audoutGetAudioOutState(AudioOutState *State);
 Result audoutStartAudioOut(void);
 Result audoutStopAudioOut(void);
+
+/// Submits an \ref AudioOutBuffer for playing.
 Result audoutAppendAudioOutBuffer(AudioOutBuffer *Buffer);
+
 Result audoutGetReleasedAudioOutBuffer(AudioOutBuffer **Buffer, u32 *ReleasedBuffersCount);
 Result audoutContainsAudioOutBuffer(AudioOutBuffer *Buffer, bool *ContainsBuffer);
 

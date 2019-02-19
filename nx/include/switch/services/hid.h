@@ -214,6 +214,7 @@ typedef enum
     KBD_MEDIA_CALC = 0xfb
 } HidKeyboardScancode;
 
+/// HID controller type
 typedef enum
 {
     TYPE_PROCONTROLLER = BIT(0),
@@ -231,7 +232,7 @@ typedef enum
     LAYOUT_LEFT            = 3, ///< Only single-mode raw left Joy-Con state, no orientation adjustment.
     LAYOUT_RIGHT           = 4, ///< Only single-mode raw right Joy-Con state, no orientation adjustment.
     LAYOUT_DEFAULT_DIGITAL = 5, ///< Same as next, but sticks have 8-direction values only.
-    LAYOUT_DEFAULT         = 6, ///< Safe default. Single-mode and \ref HidJoyHoldType_Horizontal: Joy-Con have buttons/sticks rotated for orientation, where physical Z(L/R) are unavailable and S(L/R) are mapped to L/R (with physical L/R unavailable).
+    LAYOUT_DEFAULT         = 6, ///< Safe default. Single-mode and ::HidJoyHoldType_Horizontal: Joy-Con have buttons/sticks rotated for orientation, where physical Z(L/R) are unavailable and S(L/R) are mapped to L/R (with physical L/R unavailable).
 } HidControllerLayoutType;
 
 typedef enum
@@ -612,6 +613,7 @@ static inline HidControllerID hidControllerIDFromOfficial(u32 id) {
     return CONTROLLER_UNKNOWN;
 }
 
+/// Initializes hid, called automatically during app startup.
 Result hidInitialize(void);
 void hidExit(void);
 void hidReset(void);
@@ -621,6 +623,7 @@ void* hidGetSharedmemAddr(void);
 
 void hidSetControllerLayout(HidControllerID id, HidControllerLayoutType layoutType);
 HidControllerLayoutType hidGetControllerLayout(HidControllerID id);
+/// Gets the \ref HidControllerType for the specified controller.
 HidControllerType hidGetControllerType(HidControllerID id);
 void hidGetControllerColors(HidControllerID id, HidControllerColors *colors);
 bool hidIsControllerConnected(HidControllerID id);

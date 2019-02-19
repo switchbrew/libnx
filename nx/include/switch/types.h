@@ -1,5 +1,5 @@
 /**
- * @file types.h
+ * @file switch/types.h
  * @brief Various system types.
  * @copyright libnx Authors
  */

@@ -38,6 +38,7 @@ Result bsdInitialize(const BsdInitConfig *config);
 /// Deinitialize the BSD service.
 void bsdExit(void);
 
+/// Creates a socket.
 int bsdSocket(int domain, int type, int protocol);
 /// Like @ref bsdSocket but the newly created socket is immediately shut down.
 int bsdSocketExempt(int domain, int type, int protocol);

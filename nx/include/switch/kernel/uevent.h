@@ -28,7 +28,7 @@ static inline Waiter waiterForUEvent(UEvent* e)
 /**
  * @brief Creates a user-mode event.
  * @param[out] e UEvent object.
- * @param[in] bool auto_clear Whether to automatically clear the event.
+ * @param[in] auto_clear Whether to automatically clear the event.
  * @note It is safe to wait on this event with several threads simultaneously.
  * @note If more than one thread is listening on it, at least one thread will get the signal. No other guarantees.
  */

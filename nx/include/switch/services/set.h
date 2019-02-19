@@ -122,13 +122,18 @@ Result setsysSetColorSetId(ColorSetId id);
 
 /**
  * @brief Gets the size of a settings item value.
- * @param out Pointer to output the size to.
+ * @param name Name string.
+ * @param item_key Item key string.
+ * @param size_out Pointer to output the size to.
  */
 Result setsysGetSettingsItemValueSize(const char *name, const char *item_key, u64 *size_out);
 
 /**
  * @brief Gets the value of a settings item.
- * @param out Pointer to output the value to.
+ * @param name Name string.
+ * @param item_key Item key string.
+ * @param value_out Pointer to output the value to.
+ * @param value_out_size Size of the value_out buffer.
  */
 Result setsysGetSettingsItemValue(const char *name, const char *item_key, void *value_out, size_t value_out_size);
 
@@ -167,6 +172,6 @@ Result setsysBindFatalDirtyFlagEvent(Event *out);
 /**
  * @brief Gets the settings flags that have changed.
  * @param flags_0 Pointer to populate with first 64 flags.
- * @param flags_0 Pointer to populate with second 64 flags.
+ * @param flags_1 Pointer to populate with second 64 flags.
  */
 Result setsysGetFatalDirtyFlags(u64 *flags_0, u64 *flags_1);

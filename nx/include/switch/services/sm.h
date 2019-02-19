@@ -209,6 +209,7 @@ static inline void* serviceIpcPrepareHeader(Service* s, IpcCommand* cmd, size_t 
  * @brief Parse an IPC command response into an IPC parsed command structure for a service.
  * @param s Service to prepare message header for
  * @param r IPC parsed command structure to fill in.
+ * @param sizeof_raw Size in bytes of the raw data structure.
  * @return Result code.
  */
 static inline Result serviceIpcParse(Service* s, IpcParsedCommand* r, size_t sizeof_raw) {

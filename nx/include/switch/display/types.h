@@ -1,5 +1,5 @@
 /**
- * @file types.h
+ * @file display/types.h
  * @brief Definitions for Android-related types and enumerations.
  * @copyright libnx Authors
  */

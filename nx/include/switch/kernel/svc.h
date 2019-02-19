@@ -204,7 +204,7 @@ Result svcUnmapMemory(void* dst_addr, void* src_addr, u64 size);
 /**
  * @brief Query information about an address. Will always fetch the lowest page-aligned mapping that contains the provided address.
  * @param[out] meminfo_ptr \ref MemoryInfo structure which will be filled in.
- * @param[out] page_info Page information which will be filled in.
+ * @param[out] pageinfo Page information which will be filled in.
  * @param[in] addr Address to query.
  * @return Result code.
  * @note Syscall number 0x06.
@@ -868,7 +868,7 @@ Result svcGetDebugEvent(u8* event_out, Handle debug);
  * @return Result code.
  * @note Syscall number 0x64.
  * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
- * @warning Only exists on 3.0.0+. For older versions use \ref svcContinueDebugEventPre300.
+ * @warning Only exists on 3.0.0+. For older versions use \ref svcLegacyContinueDebugEvent.
  */
 Result svcContinueDebugEvent(Handle debug, u32 flags, u64* tid_list, u32 num_tids);
 
@@ -886,7 +886,7 @@ Result svcLegacyContinueDebugEvent(Handle debug, u32 flags, u64 threadID);
  * @return Result code.
  * @param[out] ctx Output thread context (register dump).
  * @param[in] debug Debug handle.
- * @param[in] threadId ID of the thread to dump the context of.
+ * @param[in] threadID ID of the thread to dump the context of.
  * @param[in] flags Register groups to select, combination of @ref RegisterGroup flags.
  * @note Syscall number 0x67.
  * @warning Official kernel will not dump any CPU GPR if the thread is currently executing a system call (except @ref svcBreak and @ref svcReturnFromException).
@@ -898,7 +898,7 @@ Result svcGetDebugThreadContext(ThreadContext* ctx, Handle debug, u64 threadID, 
  * @brief Gets the context (dump the registers) of a thread in a debugging session.
  * @return Result code.
  * @param[in] debug Debug handle.
- * @param[in] threadId ID of the thread to set the context of.
+ * @param[in] threadID ID of the thread to set the context of.
  * @param[in] ctx Input thread context (register dump).
  * @param[in] flags Register groups to select, combination of @ref RegisterGroup flags.
  * @note Syscall number 0x68.
