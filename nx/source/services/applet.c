@@ -702,6 +702,40 @@ static Result _appletCmdInU8(Service* srv, u8 inval, u64 cmd_id) {
     return rc;
 }
 
+static Result _appletCmdInU64(Service* srv, u64 inval, u64 cmd_id) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 inval;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(srv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = cmd_id;
+    raw->inval = inval;
+
+    Result rc = serviceIpcDispatch(srv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(srv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
 static Result _appletCmdInBool(Service* srv, bool inval, u64 cmd_id) {
     return _appletCmdInU8(srv, inval!=0, cmd_id);
 }
@@ -859,6 +893,183 @@ Result appletPopLaunchParameter(AppletStorage *s, AppletLaunchParameterKind kind
             serviceCreateSubservice(&s->s, &g_appletIFunctions, &r, 0);
         }
     }
+
+    return rc;
+}
+
+static Result _appletCreateApplicationAndPushAndRequestToStart(Service* srv, u64 cmd_id, u64 titleID, AppletStorage* s) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    serviceSendObject(&s->s, &c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 titleID;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(srv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = cmd_id;
+    raw->titleID = titleID;
+
+    Result rc = serviceIpcDispatch(srv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(srv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+static Result _appletCreateApplicationAndPushAndRequestToStartForQuest(u64 titleID, AppletStorage* s, const AppletApplicationAttributeForQuest *attr) { //2.0.0+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    serviceSendObject(&s->s, &c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 val0, val1;
+        u64 titleID;
+    } PACKED *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletIFunctions, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 11;
+    raw->val0 = attr->unk_x0;
+    raw->val1 = attr->unk_x4;
+    raw->titleID = titleID;
+
+    Result rc = serviceIpcDispatch(&g_appletIFunctions);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_appletIFunctions, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+static Result _appletCreateApplicationAndRequestToStart(u64 titleID) { //4.0.0+
+    return _appletCmdInU64(&g_appletIFunctions, titleID, 12);
+}
+
+static Result _appletCreateApplicationAndRequestToStartForQuest(u64 titleID, const AppletApplicationAttributeForQuest *attr) { //4.0.0+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 val0, val1;
+        u64 titleID;
+    } PACKED *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletIFunctions, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 13;
+    raw->val0 = attr->unk_x0;
+    raw->val1 = attr->unk_x4;
+    raw->titleID = titleID;
+
+    Result rc = serviceIpcDispatch(&g_appletIFunctions);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_appletIFunctions, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result appletRequestLaunchApplication(u64 titleID, AppletStorage* s) {
+    AppletStorage tmpstorage={0};
+    Result rc=0;
+    bool is_libraryapplet = hosversionAtLeast(5,0,0) && __nx_applet_type == AppletType_LibraryApplet;
+
+    if (!serviceIsActive(&g_appletSrv) || (!_appletIsApplication() && !is_libraryapplet))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (s && !serviceIsActive(&s->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    if ((hosversionBefore(4,0,0) || is_libraryapplet) && s==NULL) {
+        s = &tmpstorage;
+        rc = appletCreateStorage(&tmpstorage, 0);
+        if (R_FAILED(rc)) return rc;
+    }
+
+    if (is_libraryapplet) {
+        rc = _appletCreateApplicationAndPushAndRequestToStart(&g_appletILibraryAppletSelfAccessor, 90, titleID, s);
+    }
+    else {
+        if (hosversionAtLeast(4,0,0) && s==NULL) {
+            rc = _appletCreateApplicationAndRequestToStart(titleID);
+        }
+        else {
+            rc = _appletCreateApplicationAndPushAndRequestToStart(&g_appletIFunctions, 10, titleID, s);
+        }
+    }
+
+    if (s) appletStorageClose(s);
+
+    return rc;
+}
+
+Result appletRequestLaunchApplicationForQuest(u64 titleID, AppletStorage* s, const AppletApplicationAttributeForQuest *attr) {
+    AppletStorage tmpstorage={0};
+    Result rc=0;
+
+    if (!serviceIsActive(&g_appletSrv) || !_appletIsApplication())
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (s && !serviceIsActive(&s->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    if (hosversionBefore(4,0,0) && s==NULL) {
+        s = &tmpstorage;
+        rc = appletCreateStorage(&tmpstorage, 0);
+        if (R_FAILED(rc)) return rc;
+    }
+
+    if (hosversionAtLeast(4,0,0) && s==NULL) {
+        rc = _appletCreateApplicationAndRequestToStartForQuest(titleID, attr);
+    }
+    else {
+        if (hosversionBefore(3,0,0)) rc = MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+        if (R_SUCCEEDED(rc)) rc = _appletCreateApplicationAndPushAndRequestToStartForQuest(titleID, s, attr);
+    }
+
+    if (s) appletStorageClose(s);
 
     return rc;
 }
