@@ -35,6 +35,14 @@ void libappletArgsCreate(LibAppletArgs* a, u32 version);
 void libappletArgsSetPlayStartupSound(LibAppletArgs* a, bool flag);
 
 /**
+ * @brief Creates an AppletStorage with the specified size and writes the buffer contents to that storage at offset 0.
+ * @param[out] s Storage object.
+ * @param buffer Input buffer.
+ * @param size Size to write.
+ */
+Result libappletCreateWriteStorage(AppletStorage* s, const void* buffer, size_t size);
+
+/**
  * @brief Reads data from offset 0 from the specified storage into the buffer. If the storage-size is smaller than the size param, the storage-size is used instead.
  * @param s Storage object.
  * @param buffer Output buffer.

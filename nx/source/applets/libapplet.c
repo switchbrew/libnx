@@ -19,7 +19,7 @@ void libappletArgsSetPlayStartupSound(LibAppletArgs* a, bool flag) {
     a->PlayStartupSound = flag!=0;
 }
 
-static Result _libappletCreateWriteStorage(AppletStorage* s, const void* buffer, size_t size) {
+Result libappletCreateWriteStorage(AppletStorage* s, const void* buffer, size_t size) {
     Result rc=0;
 
     rc = appletCreateStorage(s, size);
@@ -54,7 +54,7 @@ static Result _libappletPushInData(AppletHolder *h, const void* buffer, size_t s
     Result rc=0;
     AppletStorage storage;
 
-    rc = _libappletCreateWriteStorage(&storage, buffer, size);
+    rc = libappletCreateWriteStorage(&storage, buffer, size);
     if (R_FAILED(rc)) return rc;
 
     return appletHolderPushInData(h, &storage);
@@ -73,7 +73,7 @@ static Result _libappletQlaunchRequest(u8* buf, size_t size) {
     Result rc=0;
     AppletStorage storage;
 
-    rc = _libappletCreateWriteStorage(&storage, buf, size);
+    rc = libappletCreateWriteStorage(&storage, buf, size);
     if (R_FAILED(rc)) return rc;
 
     return appletPushToGeneralChannel(&storage);
