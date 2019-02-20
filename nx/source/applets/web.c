@@ -6,6 +6,23 @@
 #include "applets/libapplet.h"
 #include "applets/web.h"
 
+static Result _webLaunch(AppletHolder* holder, AppletId id, u32 version, void* arg, size_t arg_size) {
+    Result rc=0;
+
+    rc = appletCreateLibraryApplet(holder, id, LibAppletMode_AllForeground);
+    if (R_FAILED(rc)) return rc;
+
+    LibAppletArgs commonargs;
+    libappletArgsCreate(&commonargs, version);
+    rc = libappletArgsPush(&commonargs, holder);
+
+    if (R_SUCCEEDED(rc)) rc = libappletPushInData(holder, arg, arg_size);
+
+    if (R_SUCCEEDED(rc)) rc = appletHolderStart(holder);
+
+    return rc;
+}
+
 static Result _webHandleExit(AppletHolder* holder, void* reply_buffer, size_t reply_size) {
     Result rc=0;
     size_t transfer_size=0;
@@ -25,6 +42,19 @@ static Result _webHandleExit(AppletHolder* holder, void* reply_buffer, size_t re
     return rc;
 }
 
+static Result _webShow(AppletId id, u32 version, void* arg, size_t arg_size, void* reply_buffer, size_t reply_size) {
+    Result rc = 0;
+    AppletHolder holder;
+
+    rc = _webLaunch(&holder, id, version, arg, arg_size);
+
+    if (R_SUCCEEDED(rc)) rc = _webHandleExit(&holder, reply_buffer, reply_size);
+
+    appletHolderClose(&holder);
+
+    return rc;
+}
+
 void webWifiCreate(WebWifiConfig* config, const char* conntest_url, const char* initial_url, u128 userID, u32 unk) {
     memset(config, 0, sizeof(WebWifiConfig));
 
@@ -38,23 +68,6 @@ void webWifiCreate(WebWifiConfig* config, const char* conntest_url, const char* 
 }
 
 Result webWifiShow(WebWifiConfig* config, WebWifiReturnValue *out) {
-    Result rc = 0;
-    AppletHolder holder;
-
-    rc = appletCreateLibraryApplet(&holder, AppletId_wifiWebAuth, LibAppletMode_AllForeground);
-    if (R_FAILED(rc)) return rc;
-
-    LibAppletArgs commonargs;
-    libappletArgsCreate(&commonargs, 0);
-    rc = libappletArgsPush(&commonargs, &holder);
-
-    if (R_SUCCEEDED(rc)) rc = libappletPushInData(&holder, &config->arg, sizeof(config->arg));
-
-    if (R_SUCCEEDED(rc)) rc = appletHolderStart(&holder);
-
-    if (R_SUCCEEDED(rc)) rc = _webHandleExit(&holder, out, sizeof(*out));
-
-    appletHolderClose(&holder);
-
-    return rc;
+    return _webShow(AppletId_wifiWebAuth, 0, &config->arg, sizeof(config->arg), out, sizeof(*out));
 }
+
