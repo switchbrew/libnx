@@ -55,8 +55,53 @@ static Result _webShow(AppletId id, u32 version, void* arg, size_t arg_size, voi
     return rc;
 }
 
+static void _webArgInitialize(void* buffer, size_t size, WebShimKind shimKind) {
+    WebArgHeader *hdr = (WebArgHeader*)buffer;
+
+    memset(buffer, 0, size);
+    hdr->shimKind = shimKind;
+}
+
+static void _webTLVWrite(void* buffer, size_t size, u16 type, const void* argdata, u16 argdata_size) {
+    size_t i, count, offset;
+    WebArgHeader *hdr = (WebArgHeader*)buffer;
+    WebArgTLV *tlv;
+    u8 *dataptr = (u8*)buffer;
+
+    offset = sizeof(WebArgHeader);
+    if (size < offset) return;
+
+    count = hdr->total_entries;
+    tlv = (WebArgTLV*)&dataptr[offset];
+
+    for (i=0; i<count; i++) {
+        if (size < offset + sizeof(WebArgTLV)) return;
+
+        tlv = (WebArgTLV*)&dataptr[offset];
+
+        if (tlv->type == type) {
+            if (tlv->size != argdata_size) return;
+            break;
+        }
+
+        offset+= sizeof(WebArgTLV) + tlv->size;
+        if (size < offset) return;
+    }
+
+    if (size < offset + sizeof(WebArgTLV) + argdata_size) return;
+
+    if (tlv->type != type) {
+        tlv->type = type;
+        tlv->size = argdata_size;
+        hdr->total_entries++;
+    }
+
+    offset+= sizeof(WebArgTLV);
+    memcpy(&dataptr[offset], argdata, argdata_size);
+}
+
 void webWifiCreate(WebWifiConfig* config, const char* conntest_url, const char* initial_url, u128 userID, u32 unk) {
-    memset(config, 0, sizeof(WebWifiConfig));
+    memset(config, 0, sizeof(*config));
 
     if (conntest_url==NULL) conntest_url = initial_url;
 
@@ -69,5 +114,24 @@ void webWifiCreate(WebWifiConfig* config, const char* conntest_url, const char* 
 
 Result webWifiShow(WebWifiConfig* config, WebWifiReturnValue *out) {
     return _webShow(AppletId_wifiWebAuth, 0, &config->arg, sizeof(config->arg), out, sizeof(*out));
+}
+
+void webPageCreate(WebPageConfig* config, const char* url) {
+    char tmpurl[0xc00];
+
+    _webArgInitialize(config->arg, sizeof(config->arg), WebShimKind_Web);
+
+    u8 tmpval=1;
+    _webTLVWrite(config->arg, sizeof(config->arg), 0x12, &tmpval, sizeof(tmpval)); /// Type was changed to 0xD with a newer version.
+
+    if (url) {
+        memset(tmpurl, 0, sizeof(tmpurl));
+        strncpy(tmpurl, url, sizeof(tmpurl)-1);
+        _webTLVWrite(config->arg, sizeof(config->arg), 0x1, tmpurl, sizeof(tmpurl));
+    }
+}
+
+Result webPageShow(WebPageConfig* config, WebPageReturnValue *out) {
+    return _webShow(AppletId_web, 0x20000, config->arg, sizeof(config->arg), out, sizeof(*out));
 }
 
