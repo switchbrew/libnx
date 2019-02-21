@@ -90,6 +90,8 @@ static void _webTLVWrite(void* buffer, size_t size, u16 type, const void* argdat
 
     if (size < offset + sizeof(WebArgTLV) + argdata_size) return;
 
+    tlv = (WebArgTLV*)&dataptr[offset];
+
     if (tlv->type != type) {
         tlv->type = type;
         tlv->size = argdata_size;
@@ -124,11 +126,9 @@ void webPageCreate(WebPageConfig* config, const char* url) {
     u8 tmpval=1;
     _webTLVWrite(config->arg, sizeof(config->arg), 0x12, &tmpval, sizeof(tmpval)); /// Type was changed to 0xD with a newer version.
 
-    if (url) {
-        memset(tmpurl, 0, sizeof(tmpurl));
-        strncpy(tmpurl, url, sizeof(tmpurl)-1);
-        _webTLVWrite(config->arg, sizeof(config->arg), 0x1, tmpurl, sizeof(tmpurl));
-    }
+    memset(tmpurl, 0, sizeof(tmpurl));
+    strncpy(tmpurl, url, sizeof(tmpurl)-1);
+    _webTLVWrite(config->arg, sizeof(config->arg), 0x1, tmpurl, sizeof(tmpurl));
 }
 
 Result webPageShow(WebPageConfig* config, WebPageReturnValue *out) {

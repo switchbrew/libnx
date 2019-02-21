@@ -77,9 +77,9 @@ void webWifiCreate(WebWifiConfig* config, const char* conntest_url, const char* 
 Result webWifiShow(WebWifiConfig* config, WebWifiReturnValue *out);
 
 /**
- * @brief Creates the config for WebApplet.
+ * @brief Creates the config for WebApplet. This applet uses an URL whitelist loaded from the user-process host title.
  * @param config WebPageConfig object.
- * @param url Optional initial URL navigated to by the applet, can be NULL.
+ * @param url Initial URL navigated to by the applet.
  */
 void webPageCreate(WebPageConfig* config, const char* url);
 
