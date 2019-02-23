@@ -83,6 +83,8 @@ static Result _appletSelfExit(void);
 
 static Result _appletExitProcessAndReturn(void);
 
+static Event HomeButtonReaderLockAccessorEvent = {0};
+
 Result appletInitialize(void)
 {
     atomicIncrement64(&g_refCnt);
@@ -314,6 +316,8 @@ void appletExit(void)
                 }
             }
         }
+		
+		eventClose(&HomeButtonReaderLockAccessorEvent);
 
         eventClose(&g_appletLibraryAppletLaunchableEvent);
 
@@ -2314,4 +2318,39 @@ bool appletMainLoop(void) {
     }
 
     return true;
+}
+
+Result appletBeginToWatchShortHomeButtonMessage(void) {
+	if (__nx_applet_type != AppletType_OverlayApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+	
+	return _appletCmdNoIO(&g_appletIFunctions, 0);
+}
+
+Result appletEndToWatchShortHomeButtonMessage(void) {
+	if (__nx_applet_type != AppletType_OverlayApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+	
+	return _appletCmdNoIO(&g_appletIFunctions, 1);
+}
+
+Result appletHomeButtonReaderLockAccessorGetEvent(Event *out_event)
+{
+	if (eventActive(&HomeButtonReaderLockAccessorEvent))
+	{
+		*out_event = HomeButtonReaderLockAccessorEvent;
+		return 0;
+	}
+	
+	Service ILockAccessor = {0};
+	Result rc = _appletGetSession(&g_appletICommonStateGetter, &ILockAccessor, 30);
+	if (!R_SUCCEEDED(rc))
+		return rc;
+	
+	rc = _appletGetEvent(&ILockAccessor, &HomeButtonReaderLockAccessorEvent, 3,true);
+	if (R_SUCCEEDED(rc))
+		*out_event = HomeButtonReaderLockAccessorEvent;
+
+	serviceClose(&ILockAccessor);
+	return rc;
 }

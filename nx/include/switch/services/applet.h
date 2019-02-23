@@ -468,3 +468,18 @@ u32 appletGetPerformanceMode(void);
 AppletFocusState appletGetFocusState(void);
 
 Result appletSetFocusHandlingMode(AppletFocusHandlingMode mode);
+
+/**
+ * @brief Stops forwaring the input to the foreground app. Works only in the Overlay applet context
+ */
+Result appletBeginToWatchShortHomeButtonMessage(void);
+
+/**
+ * @brief Forwards input to the foreground app. Works only in the Overlay applet context
+ */
+Result appletEndToWatchShortHomeButtonMessage(void);
+
+/**
+ * @brief Get an event that fires when the home button is pressed, doesn't interfere with home menu
+ */
+Result appletHomeButtonReaderLockAccessorGetEvent(Event *out_event);
