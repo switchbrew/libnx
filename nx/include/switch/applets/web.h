@@ -34,16 +34,17 @@ typedef struct {
     WebWifiPageArg arg;
 } WebWifiConfig;
 
+/// TLV storage, starts with \ref WebArgHeader followed by \ref WebArgTLV entries.
 typedef struct {
-    u8 arg[0x2000];
-} WebPageConfig;
+    u8 data[0x2000];
+} WebCommonTLVStorage;
 
 typedef struct {
-    u32 webExitReason;
+    u32 exitReason;
     u32 pad;
     char lastUrl[0x1000];
     u64 lastUrlSize;
-} WebPageReturnValue;
+} PACKED WebCommonReturnValue;
 
 /// Header struct at offset 0 in the web Arg storage (non-webWifi).
 typedef struct {
@@ -58,6 +59,10 @@ typedef struct {
     u16 size;       ///< Size of the arg data following this struct.
     u8 pad[4];
 } PACKED WebArgTLV;
+
+typedef struct {
+    WebCommonTLVStorage arg;
+} WebPageConfig;
 
 /**
  * @brief Creates the config for WifiWebAuthApplet.
@@ -88,5 +93,5 @@ void webPageCreate(WebPageConfig* config, const char* url);
  * @param config WebPageConfig object.
  * @param out Optional output applet reply data, can be NULL.
  */
-Result webPageShow(WebPageConfig* config, WebPageReturnValue *out);
+Result webPageShow(WebPageConfig* config, WebCommonReturnValue *out);
 
