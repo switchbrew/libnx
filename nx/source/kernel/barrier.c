@@ -11,11 +11,11 @@ void barrierWait(Barrier *b) {
     mutexLock(&b->mutex);
 
     if (b->count++ == b->total) {
-      b->count = 0;
-      condvarWake(&b->condvar, b->total);
+        b->count = 0;
+        condvarWake(&b->condvar, b->total);
     }
     else {
-       condvarWait(&b->condvar, &b->mutex);
+        condvarWait(&b->condvar, &b->mutex);
     }
 
     mutexUnlock(&b->mutex);
