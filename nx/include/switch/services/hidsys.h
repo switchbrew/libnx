@@ -8,13 +8,12 @@
 #include "../kernel/event.h"
 #include "../services/sm.h"
 
-Result hidSysInitialize(void);
+Result hidsysInitialize(void);
+void hidsysExit(void);
 
-void hidSysExit(void);
-
-Result hidSysEnableAppletToGetInput(bool enable);
+Result hidsysEnableAppletToGetInput(bool enable);
 
 /**
-* @brief Returns an event that fires when the home button is pressed, this will prevent the home menu from opening when the button is pressed.
+* @brief Returns an event that fires when the home button is pressed, this will prevent the home menu from opening when the button is pressed. This event does not auto clear
 **/ 
-Result hidSysAcquireHomeButtonEventHandle(Event* event_out);
+Result hidsysAcquireHomeButtonEventHandle(Event* event_out);
