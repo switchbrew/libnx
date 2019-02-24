@@ -2317,11 +2317,11 @@ bool appletMainLoop(void) {
 
             appletCallHook(AppletHookType_OnPerformanceMode);
         break;
-		
-		default:
-			if (__nx_applet_UnknownMessageHandler)
-				__nx_applet_UnknownMessageHandler(msg);
-		break;
+        
+        default:
+            if (__nx_applet_UnknownMessageHandler)
+                __nx_applet_UnknownMessageHandler(msg);
+        break;
     }
 
     return true;
