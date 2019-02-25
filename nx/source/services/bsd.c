@@ -797,7 +797,7 @@ ssize_t bsdRead(int fd, void *buf, size_t count) {
         u64 magic;
         u64 cmd_id;
         int fd;
-    } *raw;
+    } PACKED *raw;
 
     raw = ipcPrepareHeader(&c, sizeof(*raw));
 
