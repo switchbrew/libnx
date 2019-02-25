@@ -470,13 +470,13 @@ AppletFocusState appletGetFocusState(void);
 Result appletSetFocusHandlingMode(AppletFocusHandlingMode mode);
 
 /**
- * @brief Stops forwarding the input to the foreground app, works only in the Overlay applet context
+ * @brief Stops forwarding the input to the foreground app, works only in the Overlay applet context.
  * @note You have to call this to receive inputs through the hid service when running as the overlay applet.
  */
 Result appletBeginToWatchShortHomeButtonMessage(void);
 
 /**
- * @brief Forwards input to the foreground app, works only in the Overlay applet context
+ * @brief Forwards input to the foreground app, works only in the Overlay applet context.
  * @note After calling this the overlay applet won't receive any input until \ref appletBeginToWatchShortHomeButtonMessage is called again.
  */
 Result appletEndToWatchShortHomeButtonMessage(void);

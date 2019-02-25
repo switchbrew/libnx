@@ -14,6 +14,6 @@ void hidsysExit(void);
 Result hidsysEnableAppletToGetInput(bool enable);
 
 /**
-* @brief Returns an event that fires when the home button is pressed, this will prevent the home menu from opening when the button is pressed. This event does not auto clear
+* @brief Returns an event that fires when the home button is pressed, this will prevent the home menu from opening when the button is pressed. This event does not auto clear.
 **/ 
 Result hidsysAcquireHomeButtonEventHandle(Event* event_out);

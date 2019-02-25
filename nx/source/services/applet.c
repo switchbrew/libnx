@@ -19,8 +19,6 @@ __attribute__((weak)) u32 __nx_applet_PerformanceConfiguration[2] = {/*0x9222000
 //// Controls whether to use applet exit cmds during \ref appletExit.  0 (default): Only run exit cmds when running under a NSO. 1: Use exit cmds regardless. >1: Skip exit cmds.
 __attribute__((weak)) u32 __nx_applet_exit_mode = 0;
 
-void __attribute__((weak)) __nx_applet_UnknownMessageHandler(u32);
-
 static Service g_appletSrv;
 static Service g_appletProxySession;
 static u64 g_refCnt;
@@ -1384,7 +1382,43 @@ Result appletQueryApplicationPlayStatistics(AppletApplicationPlayStatistics *sta
     return rc;
 }
 
+// IOverlayFunctions
+
+Result appletBeginToWatchShortHomeButtonMessage(void) {
+    if (__nx_applet_type != AppletType_OverlayApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    
+    return _appletCmdNoIO(&g_appletIFunctions, 0);
+}
+
+Result appletEndToWatchShortHomeButtonMessage(void) {
+    if (__nx_applet_type != AppletType_OverlayApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    
+    return _appletCmdNoIO(&g_appletIFunctions, 1);
+}
+
 // ICommonStateGetter
+
+Result appletHomeButtonReaderLockAccessorGetEvent(Event *out_event) {
+    if (eventActive(&HomeButtonReaderLockAccessorEvent))
+    {
+        *out_event = HomeButtonReaderLockAccessorEvent;
+        return 0;
+    }
+    
+    Service ILockAccessor = {0};
+    Result rc = _appletGetSession(&g_appletICommonStateGetter, &ILockAccessor, 30);
+    if (R_FAILED(rc))
+        return rc;
+    
+    rc = _appletGetEvent(&ILockAccessor, &HomeButtonReaderLockAccessorEvent, 3, false);
+    if (R_SUCCEEDED(rc))
+        *out_event = HomeButtonReaderLockAccessorEvent;
+
+    serviceClose(&ILockAccessor);
+    return rc;
+}
 
 static Result _appletReceiveMessage(u32 *out) {
     IpcCommand c;
@@ -2317,47 +2351,8 @@ bool appletMainLoop(void) {
 
             appletCallHook(AppletHookType_OnPerformanceMode);
         break;
-        
-        default:
-            if (__nx_applet_UnknownMessageHandler)
-                __nx_applet_UnknownMessageHandler(msg);
-        break;
+     
     }
 
     return true;
-}
-
-Result appletBeginToWatchShortHomeButtonMessage(void) {
-    if (__nx_applet_type != AppletType_OverlayApplet)
-        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-    
-    return _appletCmdNoIO(&g_appletIFunctions, 0);
-}
-
-Result appletEndToWatchShortHomeButtonMessage(void) {
-    if (__nx_applet_type != AppletType_OverlayApplet)
-        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-    
-    return _appletCmdNoIO(&g_appletIFunctions, 1);
-}
-
-Result appletHomeButtonReaderLockAccessorGetEvent(Event *out_event)
-{
-    if (eventActive(&HomeButtonReaderLockAccessorEvent))
-    {
-        *out_event = HomeButtonReaderLockAccessorEvent;
-        return 0;
-    }
-    
-    Service ILockAccessor = {0};
-    Result rc = _appletGetSession(&g_appletICommonStateGetter, &ILockAccessor, 30);
-    if (R_FAILED(rc))
-        return rc;
-    
-    rc = _appletGetEvent(&ILockAccessor, &HomeButtonReaderLockAccessorEvent, 3, false);
-    if (R_SUCCEEDED(rc))
-        *out_event = HomeButtonReaderLockAccessorEvent;
-
-    serviceClose(&ILockAccessor);
-    return rc;
 }

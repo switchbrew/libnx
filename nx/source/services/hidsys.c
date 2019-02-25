@@ -53,7 +53,7 @@ Result hidsysEnableAppletToGetInput(bool enable) {
     struct {
         u64 magic;
         u64 cmdid;
-        bool permitInput;
+        u8 permitInput;
         u64 appletResourceUserId;
     } *raw;
 
@@ -61,7 +61,7 @@ Result hidsysEnableAppletToGetInput(bool enable) {
 
     raw->magic = SFCI_MAGIC;
     raw->cmdid = 503;
-    raw->permitInput = enable;
+    raw->permitInput = enable != 0;
     raw->appletResourceUserId = g_hidsysAppletResourceUserId;
 
     Result rc = serviceIpcDispatch(&g_hidsysSrv);
@@ -93,7 +93,7 @@ static Result _hidsysCmdWithResIdAndPid(u64 cmd_id) {
     } *raw;
 
     ipcSendPid(&c);
-    raw = serviceIpcPrepareHeader(&g_hidsysSrv,&c, sizeof(*raw));
+    raw = serviceIpcPrepareHeader(&g_hidsysSrv, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = cmd_id;
@@ -128,7 +128,7 @@ static Result _hidsysGetHandle(Handle* handle_out, u64 cmd_id) {
     } *raw;
 
     ipcSendPid(&c);
-    raw = serviceIpcPrepareHeader(&g_hidsysSrv,&c, sizeof(*raw));
+    raw = serviceIpcPrepareHeader(&g_hidsysSrv, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = cmd_id;
