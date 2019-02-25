@@ -2351,7 +2351,6 @@ bool appletMainLoop(void) {
 
             appletCallHook(AppletHookType_OnPerformanceMode);
         break;
-     
     }
 
     return true;

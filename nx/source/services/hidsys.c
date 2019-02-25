@@ -13,10 +13,6 @@
 static Service g_hidsysSrv;
 static u64 g_hidsysRefCnt;
 
-static Event g_hidsysHomeEvent = {0};
-static Event g_hidsysCaptureEvent = {0};
-static Event g_hidSysSleepEvent = {0};
-
 static u64 g_hidsysAppletResourceUserId = 0;
 
 Result hidsysInitialize(void) {
@@ -37,11 +33,7 @@ Result hidsysInitialize(void) {
 }
 
 void hidsysExit(void) {
-    if (atomicDecrement64(&g_hidsysRefCnt) == 0) {
-        eventClose(&g_hidsysHomeEvent);
-        eventClose(&g_hidsysCaptureEvent);
-        eventClose(&g_hidSysSleepEvent);
-        
+    if (atomicDecrement64(&g_hidsysRefCnt) == 0) {        
         serviceClose(&g_hidsysSrv);
     }
 }
@@ -166,40 +158,16 @@ static Result _hidsysGetEvent(Event* event_out, u64 cmd_id, bool autoclear) {
 }
 
 Result hidsysAcquireHomeButtonEventHandle(Event* event_out) {
-    if (eventActive(&g_hidsysHomeEvent))
-    {
-        *event_out = g_hidsysHomeEvent;
-        return 0;
-    }
-    Result rc = _hidsysGetEvent(&g_hidsysHomeEvent, 101, false);
-    if (R_SUCCEEDED(rc))
-        *event_out = g_hidsysHomeEvent;
-    return rc;
+    return _hidsysGetEvent(event_out, 101, false);
 }
 
 //These functions don't seem to work in the overlaydisp applet context
 Result hidsysAcquireCaptureButtonEventHandle(Event* event_out) {
-    if (eventActive(&g_hidsysCaptureEvent))
-    {
-        *event_out = g_hidsysCaptureEvent;
-        return 0;
-    }
-    Result rc = _hidsysGetEvent(&g_hidsysCaptureEvent, 141, false);
-    if (R_SUCCEEDED(rc))
-        *event_out = g_hidsysCaptureEvent;
-    return rc;
+    return _hidsysGetEvent(event_out, 141, false);
 }
 
 Result hidsysAcquireSleepButtonEventHandle(Event* event_out) {
-    if (eventActive(&g_hidSysSleepEvent))
-    {
-        *event_out = g_hidSysSleepEvent;
-        return 0;
-    }
-    Result rc = _hidsysGetEvent(&g_hidSysSleepEvent, 121, false);
-    if (R_SUCCEEDED(rc))
-        *event_out = g_hidSysSleepEvent;
-    return rc;
+    return _hidsysGetEvent(event_out, 121, false);
 }
 
 Result hidsysActivateHomeButton(void) {
