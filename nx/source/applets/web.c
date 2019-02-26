@@ -56,6 +56,22 @@ static Result _webShow(AppletId id, u32 version, void* arg, size_t arg_size, voi
     return rc;
 }
 
+void webWifiCreate(WebWifiConfig* config, const char* conntest_url, const char* initial_url, u128 userID, u32 unk) {
+    memset(config, 0, sizeof(*config));
+
+    if (conntest_url==NULL) conntest_url = initial_url;
+
+    strncpy(config->arg.conntest_url, conntest_url, sizeof(config->arg.conntest_url)-1);
+    strncpy(config->arg.initial_url, initial_url, sizeof(config->arg.initial_url)-1);
+
+    config->arg.userID = userID;
+    config->arg.unk_x514 = unk;
+}
+
+Result webWifiShow(WebWifiConfig* config, WebWifiReturnValue *out) {
+    return _webShow(AppletId_wifiWebAuth, 0, &config->arg, sizeof(config->arg), out, sizeof(*out));
+}
+
 static void _webArgInitialize(WebCommonConfig* config, AppletId appletid, WebShimKind shimKind) {
     memset(config, 0, sizeof(*config));
 
@@ -77,7 +93,8 @@ WebShimKind _webGetShimKind(WebCommonConfig* config) {
     return hdr->shimKind;
 }
 
-static void _webTLVWrite(WebCommonTLVStorage *storage, u16 type, const void* argdata, u16 argdata_size, u16 argdata_size_total) {
+static Result _webTLVWrite(WebCommonTLVStorage *storage, u16 type, const void* argdata, u16 argdata_size, u16 argdata_size_total) {
+    Result rc = MAKERESULT(Module_Libnx, LibnxError_BadInput);
     size_t i, count, offset;
     u8 *dataptr = storage->data;
     WebArgHeader *hdr = (WebArgHeader*)dataptr;
@@ -85,32 +102,32 @@ static void _webTLVWrite(WebCommonTLVStorage *storage, u16 type, const void* arg
     size_t size = sizeof(storage->data);
 
     offset = sizeof(WebArgHeader);
-    if (size < offset) return;
+    if (size < offset) return rc;
     if (argdata_size > argdata_size_total) argdata_size = argdata_size_total;
 
     count = hdr->total_entries;
     tlv = (WebArgTLV*)&dataptr[offset];
 
     for (i=0; i<count; i++) {
-        if (size < offset + sizeof(WebArgTLV)) return;
+        if (size < offset + sizeof(WebArgTLV)) return rc;
 
         tlv = (WebArgTLV*)&dataptr[offset];
 
         if (tlv->type == type) {
-            if (tlv->size != argdata_size_total) return;
+            if (tlv->size != argdata_size_total) return rc;
             break;
         }
 
         offset+= sizeof(WebArgTLV) + tlv->size;
-        if (size < offset) return;
+        if (size < offset) return rc;
     }
 
-    if (size < offset + sizeof(WebArgTLV) + argdata_size_total) return;
+    if (size < offset + sizeof(WebArgTLV) + argdata_size_total) return rc;
 
     tlv = (WebArgTLV*)&dataptr[offset];
 
     if (tlv->type != type) {
-        if (hdr->total_entries == 0xFFFF) return;
+        if (hdr->total_entries == 0xFFFF) return rc;
 
         tlv->type = type;
         tlv->size = argdata_size_total;
@@ -120,84 +137,73 @@ static void _webTLVWrite(WebCommonTLVStorage *storage, u16 type, const void* arg
     offset+= sizeof(WebArgTLV);
     memcpy(&dataptr[offset], argdata, argdata_size);
     if (argdata_size_total != argdata_size) memset(&dataptr[offset+argdata_size], 0, argdata_size_total-argdata_size);
+
+    return 0;
 }
 
-static void _webTLVSet(WebCommonTLVStorage *storage, u16 type, const void* argdata, u16 argdata_size) {
-    _webTLVWrite(storage, type, argdata, argdata_size, argdata_size);
+static Result _webTLVSet(WebCommonTLVStorage *storage, u16 type, const void* argdata, u16 argdata_size) {
+    return _webTLVWrite(storage, type, argdata, argdata_size, argdata_size);
 }
 
-static void _webConfigSetU8(WebCommonConfig* config, u16 type, u8 arg) {
-    _webTLVSet(&config->arg, type, &arg, sizeof(arg));
+static Result _webConfigSetU8(WebCommonConfig* config, u16 type, u8 arg) {
+    return _webTLVSet(&config->arg, type, &arg, sizeof(arg));
 }
 
-static void _webConfigSetFlag(WebCommonConfig* config, u16 type, bool arg) {
-    _webConfigSetU8(config, type, arg!=0);
+static Result _webConfigSetFlag(WebCommonConfig* config, u16 type, bool arg) {
+    return _webConfigSetU8(config, type, arg!=0);
 }
 
-/*static void _webConfigSetU32(WebCommonConfig* config, u16 type, u32 arg) {
-    _webTLVSet(&config->arg, type, &arg, sizeof(arg));
+/*static Result _webConfigSetU32(WebCommonConfig* config, u16 type, u32 arg) {
+    return _webTLVSet(&config->arg, type, &arg, sizeof(arg));
 }*/
 
-static void _webConfigSetString(WebCommonConfig* config, u16 type, const char* str, u16 argdata_size_total) {
+static Result _webConfigSetString(WebCommonConfig* config, u16 type, const char* str, u16 argdata_size_total) {
     u16 arglen = strlen(str);
     if (arglen >= argdata_size_total) arglen = argdata_size_total-1; //The string must be NUL-terminated.
 
-    _webTLVWrite(&config->arg, type, str, arglen, argdata_size_total);
+    return _webTLVWrite(&config->arg, type, str, arglen, argdata_size_total);
 }
 
-static void _webConfigSetUrl(WebCommonConfig* config, const char* url) {
-    _webConfigSetString(config, WebArgType_Url, url, 0xc00);
+static Result _webConfigSetUrl(WebCommonConfig* config, const char* url) {
+    return _webConfigSetString(config, WebArgType_Url, url, 0xc00);
 }
 
-void webWifiCreate(WebWifiConfig* config, const char* conntest_url, const char* initial_url, u128 userID, u32 unk) {
-    memset(config, 0, sizeof(*config));
-
-    if (conntest_url==NULL) conntest_url = initial_url;
-
-    strncpy(config->arg.conntest_url, conntest_url, sizeof(config->arg.conntest_url)-1);
-    strncpy(config->arg.initial_url, initial_url, sizeof(config->arg.initial_url)-1);
-
-    config->arg.userID = userID;
-    config->arg.unk_x514 = unk;
-}
-
-Result webWifiShow(WebWifiConfig* config, WebWifiReturnValue *out) {
-    return _webShow(AppletId_wifiWebAuth, 0, &config->arg, sizeof(config->arg), out, sizeof(*out));
-}
-
-void webPageCreate(WebCommonConfig* config, const char* url) {
+Result webPageCreate(WebCommonConfig* config, const char* url) {
+    Result rc=0;
     _webArgInitialize(config, AppletId_web, WebShimKind_Web);
 
-    _webConfigSetU8(config, WebArgType_UnknownD, 1);
-    if (config->version < 0x30000) _webConfigSetU8(config, WebArgType_Unknown12, 1); // Removed from user-process init with [3.0.0+].
+    rc = _webConfigSetU8(config, WebArgType_UnknownD, 1);
+    if (R_SUCCEEDED(rc) && config->version < 0x30000) rc = _webConfigSetU8(config, WebArgType_Unknown12, 1); // Removed from user-process init with [3.0.0+].
 
-    _webConfigSetUrl(config, url);
+    if (R_SUCCEEDED(rc)) rc = _webConfigSetUrl(config, url);
+
+    return rc;
 }
 
-void webConfigSetCallbackUrl(WebCommonConfig* config, const char* url) {
+Result webConfigSetCallbackUrl(WebCommonConfig* config, const char* url) {
     WebShimKind shim = _webGetShimKind(config);
-    if (shim != WebShimKind_Web && shim != WebShimKind_Share) return;
-    _webConfigSetString(config, WebArgType_CallbackUrl, url, 0x400);
+    if (shim != WebShimKind_Web && shim != WebShimKind_Share) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    return _webConfigSetString(config, WebArgType_CallbackUrl, url, 0x400);
 }
 
-void webConfigSetCallbackableUrl(WebCommonConfig* config, const char* url) {
-    if (_webGetShimKind(config) != WebShimKind_Web) return;
-    _webConfigSetString(config, WebArgType_CallbackableUrl, url, 0x400);
+Result webConfigSetCallbackableUrl(WebCommonConfig* config, const char* url) {
+    if (_webGetShimKind(config) != WebShimKind_Web) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    return _webConfigSetString(config, WebArgType_CallbackableUrl, url, 0x400);
 }
 
-void webConfigSetWhitelist(WebCommonConfig* config, const char* whitelist) {
-    if (_webGetShimKind(config) != WebShimKind_Web) return;
-    _webConfigSetString(config, WebArgType_Whitelist, whitelist, 0x1000);
+Result webConfigSetWhitelist(WebCommonConfig* config, const char* whitelist) {
+    if (_webGetShimKind(config) != WebShimKind_Web) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    return _webConfigSetString(config, WebArgType_Whitelist, whitelist, 0x1000);
 }
 
-void webConfigSetDisplayUrlKind(WebCommonConfig* config, bool kind) {
-    _webConfigSetFlag(config, WebArgType_DisplayUrlKind, kind);
+Result webConfigSetDisplayUrlKind(WebCommonConfig* config, bool kind) {
+    return _webConfigSetFlag(config, WebArgType_DisplayUrlKind, kind);
 }
 
-void webConfigSetUserAgentAdditionalString(WebCommonConfig* config, const char* str) {
-    if (_webGetShimKind(config) != WebShimKind_Web) return;
-    if (hosversionBefore(4,0,0)) return;
-    _webConfigSetString(config, WebArgType_UserAgentAdditionalString, str, 0x80);
+Result webConfigSetUserAgentAdditionalString(WebCommonConfig* config, const char* str) {
+    if (_webGetShimKind(config) != WebShimKind_Web) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(4,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    return _webConfigSetString(config, WebArgType_UserAgentAdditionalString, str, 0x80);
 }
 
 Result webConfigShow(WebCommonConfig* config, WebCommonReturnValue *out) {

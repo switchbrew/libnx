@@ -135,7 +135,7 @@ Result webWifiShow(WebWifiConfig* config, WebWifiReturnValue *out);
  * @param config WebCommonConfig object.
  * @param url Initial URL navigated to by the applet.
  */
-void webPageCreate(WebCommonConfig* config, const char* url);
+Result webPageCreate(WebCommonConfig* config, const char* url);
 
 /**
  * @brief Sets the CallbackUrl.
@@ -143,7 +143,7 @@ void webPageCreate(WebCommonConfig* config, const char* url);
  * @param config WebCommonConfig object.
  * @param url URL
  */
-void webConfigSetCallbackUrl(WebCommonConfig* config, const char* url);
+Result webConfigSetCallbackUrl(WebCommonConfig* config, const char* url);
 
 /**
  * @brief Sets the CallbackableUrl.
@@ -151,7 +151,7 @@ void webConfigSetCallbackUrl(WebCommonConfig* config, const char* url);
  * @param config WebCommonConfig object.
  * @param url URL
  */
-void webConfigSetCallbackableUrl(WebCommonConfig* config, const char* url);
+Result webConfigSetCallbackableUrl(WebCommonConfig* config, const char* url);
 
 /**
  * @brief Sets the whitelist.
@@ -160,14 +160,14 @@ void webConfigSetCallbackableUrl(WebCommonConfig* config, const char* url);
  * @param config WebCommonConfig object.
  * @param whitelist Whitelist string, each line is a regex for each whitelisted URL.
  */
-void webConfigSetWhitelist(WebCommonConfig* config, const char* whitelist);
+Result webConfigSetWhitelist(WebCommonConfig* config, const char* whitelist);
 
 /**
  * @brief Sets the DisplayUrlKind.
  * @param config WebCommonConfig object.
  * @param kind Kind
  */
-void webConfigSetDisplayUrlKind(WebCommonConfig* config, bool kind);
+Result webConfigSetDisplayUrlKind(WebCommonConfig* config, bool kind);
 
 /**
  * @brief Sets the UserAgentAdditionalString.
@@ -175,7 +175,7 @@ void webConfigSetDisplayUrlKind(WebCommonConfig* config, bool kind);
  * @param config WebCommonConfig object.
  * @param str String
  */
-void webConfigSetUserAgentAdditionalString(WebCommonConfig* config, const char* str);
+Result webConfigSetUserAgentAdditionalString(WebCommonConfig* config, const char* str);
 
 /**
  * @brief Launches the {web applet} with the specified config and waits for it to exit.
