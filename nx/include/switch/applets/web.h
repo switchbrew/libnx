@@ -1,6 +1,6 @@
 /**
  * @file web.h
- * @brief Wrapper for using the WifiWebAuthApplet LibraryApplet.
+ * @brief Wrapper for using the web LibraryApplets.
  * @author p-sam, yellows8
  * @copyright libnx Authors
  */
