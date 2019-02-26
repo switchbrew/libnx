@@ -3,8 +3,6 @@
 #include "result.h"
 #include "arm/atomics.h"
 #include "kernel/ipc.h"
-#include "kernel/shmem.h"
-#include "kernel/rwlock.h"
 #include "kernel/event.h"
 #include "services/applet.h"
 #include "services/hidsys.h"
