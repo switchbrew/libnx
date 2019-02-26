@@ -83,8 +83,6 @@ static Result _appletSelfExit(void);
 
 static Result _appletExitProcessAndReturn(void);
 
-static Event HomeButtonReaderLockAccessorEvent = {0};
-
 Result appletInitialize(void)
 {
     atomicIncrement64(&g_refCnt);
@@ -316,8 +314,6 @@ void appletExit(void)
                 }
             }
         }
-        
-        eventClose(&HomeButtonReaderLockAccessorEvent);
 
         eventClose(&g_appletLibraryAppletLaunchableEvent);
 
@@ -1401,21 +1397,12 @@ Result appletEndToWatchShortHomeButtonMessage(void) {
 // ICommonStateGetter
 
 Result appletHomeButtonReaderLockAccessorGetEvent(Event *out_event) {
-    if (eventActive(&HomeButtonReaderLockAccessorEvent))
-    {
-        *out_event = HomeButtonReaderLockAccessorEvent;
-        return 0;
-    }
-    
     Service ILockAccessor = {0};
     Result rc = _appletGetSession(&g_appletICommonStateGetter, &ILockAccessor, 30);
     if (R_FAILED(rc))
         return rc;
     
-    rc = _appletGetEvent(&ILockAccessor, &HomeButtonReaderLockAccessorEvent, 3, false);
-    if (R_SUCCEEDED(rc))
-        *out_event = HomeButtonReaderLockAccessorEvent;
-
+    rc = _appletGetEvent(&ILockAccessor, out_event, 3, false);
     serviceClose(&ILockAccessor);
     return rc;
 }
