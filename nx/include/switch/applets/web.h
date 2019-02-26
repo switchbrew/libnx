@@ -74,7 +74,7 @@ typedef enum {
     WebArgType_ShareStartPage                           = 0x9,    ///< [1.0.0+] u32 enum WebShareStartPage
     WebArgType_Whitelist                                = 0xA,    ///< [1.0.0+] String, size 0x1000.
     WebArgType_NewsFlag                                 = 0xB,    ///< [1.0.0+] u8 bool
-    WebArgType_UnknownD                                 = 0xD,     ///< [1.0.0+] u8
+    WebArgType_UnknownD                                 = 0xD,    ///< [1.0.0+] u8
     WebArgType_UserID                                   = 0xE,    ///< [1.0.0+] u128 userID, controls which user-specific savedata to mount.
     WebArgType_AlbumEntry                               = 0xF,    ///< [1.0.0+] Share-applet caps AlbumEntry
     WebArgType_EcClientCertEnabled                      = 0x11,   ///< [1.0.0+] u8 bool
