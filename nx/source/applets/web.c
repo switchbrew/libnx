@@ -146,7 +146,7 @@ static void _webConfigSetString(WebCommonConfig* config, u16 type, const char* s
 }
 
 static void _webConfigSetUrl(WebCommonConfig* config, const char* url) {
-    _webConfigSetString(config, 0x1, url, 0xc00);
+    _webConfigSetString(config, WebArgType_Url, url, 0xc00);
 }
 
 void webWifiCreate(WebWifiConfig* config, const char* conntest_url, const char* initial_url, u128 userID, u32 unk) {
@@ -168,19 +168,19 @@ Result webWifiShow(WebWifiConfig* config, WebWifiReturnValue *out) {
 void webPageCreate(WebCommonConfig* config, const char* url) {
     _webArgInitialize(config, AppletId_web, WebShimKind_Web);
 
-    _webConfigSetU8(config, 0xD, 1);
-    if (config->version < 0x30000) _webConfigSetU8(config, 0x12, 1); // Removed from user-process init with [3.0.0+].
+    _webConfigSetU8(config, WebArgType_UnknownD, 1);
+    if (config->version < 0x30000) _webConfigSetU8(config, WebArgType_Unknown12, 1); // Removed from user-process init with [3.0.0+].
 
     _webConfigSetUrl(config, url);
 }
 
 void webConfigSetWhitelist(WebCommonConfig* config, const char* whitelist) {
     if (_webGetShimKind(config) != WebShimKind_Web) return;
-    _webConfigSetString(config, 0xA, whitelist, 0x1000);
+    _webConfigSetString(config, WebArgType_Whitelist, whitelist, 0x1000);
 }
 
 void webConfigSetDisplayUrlKind(WebCommonConfig* config, bool kind) {
-    _webConfigSetFlag(config, 0x1F, kind);
+    _webConfigSetFlag(config, WebArgType_DisplayUrlKind, kind);
 }
 
 Result webConfigShow(WebCommonConfig* config, WebCommonReturnValue *out) {

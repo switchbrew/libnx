@@ -66,6 +66,53 @@ typedef struct {
     u32 version;
 } WebCommonConfig;
 
+/// Types for \ref WebArgTLV.
+typedef enum {
+    WebArgType_Url                                      = 0x1,    ///< [1.0.0+] String, size 0xC00. Initial URL.
+    WebArgType_CallbackUrl                              = 0x3,    ///< [1.0.0+] String, size 0x400.
+    WebArgType_CallbackableUrl                          = 0x4,    ///< [1.0.0+] String, size 0x400.
+    WebArgType_ShareStartPage                           = 0x9,    ///< [1.0.0+] u32 enum WebShareStartPage
+    WebArgType_Whitelist                                = 0xA,    ///< [1.0.0+] String, size 0x1000.
+    WebArgType_NewsFlag                                 = 0xB,    ///< [1.0.0+] u8 bool
+    WebArgType_UnknownD                                 = 0xD,     ///< [1.0.0+] u8
+    WebArgType_UserID                                   = 0xE,    ///< [1.0.0+] u128 userID, controls which user-specific savedata to mount.
+    WebArgType_AlbumEntry                               = 0xF,    ///< [1.0.0+] Share-applet caps AlbumEntry
+    WebArgType_EcClientCertEnabled                      = 0x11,   ///< [1.0.0+] u8 bool
+    WebArgType_Unknown12                                = 0x12,   ///< [1.0.0+] u8
+    WebArgType_PlayReportEnabled                        = 0x13,   ///< [1.0.0+] u8 bool
+    WebArgType_Unknown14                                = 0x14,   ///< [1.0.0+] u8
+    WebArgType_Unknown15                                = 0x15,   ///< [1.0.0+] u8
+    WebArgType_BootDisplayKind                          = 0x17,   ///< [1.0.0+] u32 enum enum WebBootDisplayKind
+    WebArgType_BackgroundKind                           = 0x18,   ///< [1.0.0+] u32 enum u32 enum *BackgroundKind
+    WebArgType_FooterEnabled                            = 0x19,   ///< [1.0.0+] u8 bool
+    WebArgType_PointerEnabled                           = 0x1A,   ///< [1.0.0+] u8 bool
+    WebArgType_LeftStickMode                            = 0x1B,   ///< [1.0.0+] u32 enum *LeftStickMode
+    WebArgType_KeyRepeatFrame0                          = 0x1C,   ///< [1.0.0+] s32 KeyRepeatFrame, first param
+    WebArgType_KeyRepeatFrame1                          = 0x1D,   ///< [1.0.0+] s32 KeyRepeatFrame, second param
+    WebArgType_BootAsMediaPlayerInverted                = 0x1E,   ///< [1.0.0+] u8 bool, set after BootAsMediaPlayer with the value inverted.
+    WebArgType_DisplayUrlKind                           = 0x1F,   ///< [1.0.0+] u8 bool, DisplayUrlKind (value = (input_enumval==0x1)).
+    WebArgType_BootAsMediaPlayer                        = 0x21,   ///< [2.0.0+] u8 bool
+    WebArgType_ShopJumpEnabled                          = 0x22,   ///< [2.0.0+] u8 bool
+    WebArgType_MediaPlayerUserGestureRestrictionEnabled = 0x23,   ///< [2.0.0+] u8 bool
+    WebArgType_LobbyParameter                           = 0x24,   ///< [2.0.0+] String, size 0x100.
+    WebArgType_ApplicationAlbumEntry                    = 0x26,   ///< [3.0.0+] Share-applet caps ApplicationAlbumEntry
+    WebArgType_JsExtensionEnabled                       = 0x27,   ///< [3.0.0+] u8 bool
+    WebArgType_AdditionalCommentText                    = 0x28,   ///< [4.0.0+] String, size 0x100. Share-applet AdditionalCommentText.
+    WebArgType_TouchEnabledOnContents                   = 0x29,   ///< [4.0.0+] u8 bool
+    WebArgType_UserAgentAdditionalString                = 0x2A,   ///< [4.0.0+] String, size 0x80.
+    WebArgType_AdditionalMediaData                      = 0x2B,   ///< [4.0.0+] Share-applet 0x10-byte u8 array, AdditionalMediaData. If the user-input size is less than 0x10, the remaining data used for the TLV is cleared.
+    WebArgType_MediaPlayerAutoCloseEnabled              = 0x2C,   ///< [4.0.0+] u8 bool
+    WebArgType_PageCacheEnabled                         = 0x2D,   ///< [4.0.0+] u8 bool
+    WebArgType_WebAudioEnabled                          = 0x2E,   ///< [4.0.0+] u8 bool
+    WebArgType_2F                                       = 0x2F,   ///< [5.0.0+] u8
+    WebArgType_YouTubeVideoFlag                         = 0x31,   ///< [5.0.0+] u8 bool Indicates that the built-in whitelist for YouTubeVideo should be used.
+    WebArgType_FooterFixedKind                          = 0x32,   ///< [5.0.0+] u32 enum *WebFooterFixedKind
+    WebArgType_PageFadeEnabled                          = 0x33,   ///< [5.0.0+] u8 bool
+    WebArgType_MediaCreatorApplicationRatingAge         = 0x34,   ///< [5.0.0+] Share-applet 0x20-byte s8 array, MediaCreatorApplicationRatingAge.
+    WebArgType_BootLoadingIconEnabled                   = 0x35,   ///< [5.0.0+] u8 bool
+    WebArgType_PageScrollIndicatorEnabled               = 0x36,   ///< [5.0.0+] u8 bool
+} WebArgType;
+
 /**
  * @brief Creates the config for WifiWebAuthApplet.
  * @param config WebWifiConfig object.
