@@ -126,6 +126,18 @@ static void _webTLVSet(WebCommonTLVStorage *storage, u16 type, const void* argda
     _webTLVWrite(storage, type, argdata, argdata_size, argdata_size);
 }
 
+static void _webConfigSetU8(WebCommonConfig* config, u16 type, u8 arg) {
+    _webTLVSet(&config->arg, type, &arg, sizeof(arg));
+}
+
+static void _webConfigSetFlag(WebCommonConfig* config, u16 type, bool arg) {
+    _webConfigSetU8(config, type, arg!=0);
+}
+
+/*static void _webConfigSetU32(WebCommonConfig* config, u16 type, u32 arg) {
+    _webTLVSet(&config->arg, type, &arg, sizeof(arg));
+}*/
+
 static void _webConfigSetString(WebCommonConfig* config, u16 type, const char* str, u16 argdata_size_total) {
     u16 arglen = strlen(str);
     if (arglen >= argdata_size_total) arglen = argdata_size_total-1; //The string must be NUL-terminated.
@@ -156,9 +168,8 @@ Result webWifiShow(WebWifiConfig* config, WebWifiReturnValue *out) {
 void webPageCreate(WebCommonConfig* config, const char* url) {
     _webArgInitialize(config, AppletId_web, WebShimKind_Web);
 
-    u8 tmpval=1;
-    _webTLVSet(&config->arg, 0xD, &tmpval, sizeof(tmpval));
-    if (config->version < 0x30000) _webTLVSet(&config->arg, 0x12, &tmpval, sizeof(tmpval)); // Removed from user-process init with [3.0.0+].
+    _webConfigSetU8(config, 0xD, 1);
+    if (config->version < 0x30000) _webConfigSetU8(config, 0x12, 1); // Removed from user-process init with [3.0.0+].
 
     _webConfigSetUrl(config, url);
 }
@@ -166,6 +177,10 @@ void webPageCreate(WebCommonConfig* config, const char* url) {
 void webConfigSetWhitelist(WebCommonConfig* config, const char* whitelist) {
     if (_webGetShimKind(config) != WebShimKind_Web) return;
     _webConfigSetString(config, 0xA, whitelist, 0x1000);
+}
+
+void webConfigSetDisplayUrlKind(WebCommonConfig* config, bool kind) {
+    _webConfigSetFlag(config, 0x1F, kind);
 }
 
 Result webConfigShow(WebCommonConfig* config, WebCommonReturnValue *out) {

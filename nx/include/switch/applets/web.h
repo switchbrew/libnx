@@ -99,6 +99,13 @@ void webPageCreate(WebCommonConfig* config, const char* url);
 void webConfigSetWhitelist(WebCommonConfig* config, const char* whitelist);
 
 /**
+ * @brief Sets the DisplayUrlKind.
+ * @param config WebCommonConfig object.
+ * @param kind Kind
+ */
+void webConfigSetDisplayUrlKind(WebCommonConfig* config, bool kind);
+
+/**
  * @brief Launches the {web applet} with the specified config and waits for it to exit.
  * @param config WebCommonConfig object.
  * @param out Optional output applet reply data, can be NULL.
