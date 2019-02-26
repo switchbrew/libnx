@@ -5,6 +5,7 @@
 #include "services/applet.h"
 #include "applets/libapplet.h"
 #include "applets/web.h"
+#include "runtime/hosversion.h"
 
 static Result _webLaunch(AppletHolder* holder, AppletId id, u32 version, void* arg, size_t arg_size) {
     Result rc=0;
@@ -55,11 +56,20 @@ static Result _webShow(AppletId id, u32 version, void* arg, size_t arg_size, voi
     return rc;
 }
 
-static void _webArgInitialize(WebCommonTLVStorage *storage, WebShimKind shimKind) {
-    WebArgHeader *hdr = (WebArgHeader*)storage->data;
+static void _webArgInitialize(WebCommonConfig* config, AppletId appletid, WebShimKind shimKind) {
+    memset(config, 0, sizeof(*config));
 
-    memset(storage, 0, sizeof(*storage));
+    WebArgHeader *hdr = (WebArgHeader*)config->arg.data;
     hdr->shimKind = shimKind;
+    config->appletid = appletid;
+
+    u32 hosver = hosversionGet();
+    if (hosver >= MAKEHOSVERSION(5,0,0))
+        config->version = 0x50000;
+    else if (hosver >= MAKEHOSVERSION(3,0,0))
+        config->version = 0x30000;
+    else
+        config->version = 0x20000; // [1.0.0+] version
 }
 
 static void _webTLVWrite(WebCommonTLVStorage *storage, u16 type, const void* argdata, u16 argdata_size) {
@@ -121,21 +131,21 @@ Result webWifiShow(WebWifiConfig* config, WebWifiReturnValue *out) {
     return _webShow(AppletId_wifiWebAuth, 0, &config->arg, sizeof(config->arg), out, sizeof(*out));
 }
 
-void webPageCreate(WebPageConfig* config, const char* url) {
+void webPageCreate(WebCommonConfig* config, const char* url) {
     char tmpurl[0xc00];
 
-    _webArgInitialize(&config->arg, WebShimKind_Web);
+    _webArgInitialize(config, AppletId_web, WebShimKind_Web);
 
     u8 tmpval=1;
     _webTLVWrite(&config->arg, 0xD, &tmpval, sizeof(tmpval));
-    _webTLVWrite(&config->arg, 0x12, &tmpval, sizeof(tmpval)); // Removed from user-process init with [3.0.0+].
+    if (config->version < 0x30000) _webTLVWrite(&config->arg, 0x12, &tmpval, sizeof(tmpval)); // Removed from user-process init with [3.0.0+].
 
     memset(tmpurl, 0, sizeof(tmpurl));
     strncpy(tmpurl, url, sizeof(tmpurl)-1);
     _webTLVWrite(&config->arg, 0x1, tmpurl, sizeof(tmpurl));
 }
 
-Result webPageShow(WebPageConfig* config, WebCommonReturnValue *out) {
-    return _webShow(AppletId_web, 0x20000, &config->arg, sizeof(config->arg), out, sizeof(*out));
+Result webShow(WebCommonConfig* config, WebCommonReturnValue *out) {
+    return _webShow(config->appletid, config->version, &config->arg, sizeof(config->arg), out, sizeof(*out));
 }
 

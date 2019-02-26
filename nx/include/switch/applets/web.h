@@ -62,7 +62,9 @@ typedef struct {
 
 typedef struct {
     WebCommonTLVStorage arg;
-} WebPageConfig;
+    AppletId appletid;
+    u32 version;
+} WebCommonConfig;
 
 /**
  * @brief Creates the config for WifiWebAuthApplet.
@@ -83,15 +85,15 @@ Result webWifiShow(WebWifiConfig* config, WebWifiReturnValue *out);
 
 /**
  * @brief Creates the config for WebApplet. This applet uses an URL whitelist loaded from the user-process host title.
- * @param config WebPageConfig object.
+ * @param config WebCommonConfig object.
  * @param url Initial URL navigated to by the applet.
  */
-void webPageCreate(WebPageConfig* config, const char* url);
+void webPageCreate(WebCommonConfig* config, const char* url);
 
 /**
- * @brief Launches WebApplet with the specified config and waits for it to exit.
- * @param config WebPageConfig object.
+ * @brief Launches the {web applet} with the specified config and waits for it to exit.
+ * @param config WebCommonConfig object.
  * @param out Optional output applet reply data, can be NULL.
  */
-Result webPageShow(WebPageConfig* config, WebCommonReturnValue *out);
+Result webShow(WebCommonConfig* config, WebCommonReturnValue *out);
 
