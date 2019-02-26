@@ -72,7 +72,7 @@ static void _webArgInitialize(WebCommonConfig* config, AppletId appletid, WebShi
         config->version = 0x20000; // [1.0.0+] version
 }
 
-static void _webTLVWrite(WebCommonTLVStorage *storage, u16 type, const void* argdata, u16 argdata_size) {
+static void _webTLVWrite(WebCommonTLVStorage *storage, u16 type, const void* argdata, u16 argdata_size, u16 argdata_size_total) {
     size_t i, count, offset;
     u8 *dataptr = storage->data;
     WebArgHeader *hdr = (WebArgHeader*)dataptr;
@@ -81,6 +81,7 @@ static void _webTLVWrite(WebCommonTLVStorage *storage, u16 type, const void* arg
 
     offset = sizeof(WebArgHeader);
     if (size < offset) return;
+    if (argdata_size > argdata_size_total) argdata_size = argdata_size_total;
 
     count = hdr->total_entries;
     tlv = (WebArgTLV*)&dataptr[offset];
@@ -91,7 +92,7 @@ static void _webTLVWrite(WebCommonTLVStorage *storage, u16 type, const void* arg
         tlv = (WebArgTLV*)&dataptr[offset];
 
         if (tlv->type == type) {
-            if (tlv->size != argdata_size) return;
+            if (tlv->size != argdata_size_total) return;
             break;
         }
 
@@ -99,7 +100,7 @@ static void _webTLVWrite(WebCommonTLVStorage *storage, u16 type, const void* arg
         if (size < offset) return;
     }
 
-    if (size < offset + sizeof(WebArgTLV) + argdata_size) return;
+    if (size < offset + sizeof(WebArgTLV) + argdata_size_total) return;
 
     tlv = (WebArgTLV*)&dataptr[offset];
 
@@ -107,12 +108,28 @@ static void _webTLVWrite(WebCommonTLVStorage *storage, u16 type, const void* arg
         if (hdr->total_entries == 0xFFFF) return;
 
         tlv->type = type;
-        tlv->size = argdata_size;
+        tlv->size = argdata_size_total;
         hdr->total_entries++;
     }
 
     offset+= sizeof(WebArgTLV);
     memcpy(&dataptr[offset], argdata, argdata_size);
+    if (argdata_size_total != argdata_size) memset(&dataptr[offset+argdata_size], 0, argdata_size_total-argdata_size);
+}
+
+static void _webTLVSet(WebCommonTLVStorage *storage, u16 type, const void* argdata, u16 argdata_size) {
+    _webTLVWrite(storage, type, argdata, argdata_size, argdata_size);
+}
+
+static void _webConfigSetString(WebCommonConfig* config, u16 type, const char* str, u16 argdata_size_total) {
+    u16 arglen = strlen(str);
+    if (arglen >= argdata_size_total) arglen = argdata_size_total-1; //The string must be NUL-terminated.
+
+    _webTLVWrite(&config->arg, type, str, arglen, argdata_size_total);
+}
+
+static void _webConfigSetUrl(WebCommonConfig* config, const char* url) {
+    _webConfigSetString(config, 0x1, url, 0xc00);
 }
 
 void webWifiCreate(WebWifiConfig* config, const char* conntest_url, const char* initial_url, u128 userID, u32 unk) {
@@ -132,17 +149,13 @@ Result webWifiShow(WebWifiConfig* config, WebWifiReturnValue *out) {
 }
 
 void webPageCreate(WebCommonConfig* config, const char* url) {
-    char tmpurl[0xc00];
-
     _webArgInitialize(config, AppletId_web, WebShimKind_Web);
 
     u8 tmpval=1;
-    _webTLVWrite(&config->arg, 0xD, &tmpval, sizeof(tmpval));
-    if (config->version < 0x30000) _webTLVWrite(&config->arg, 0x12, &tmpval, sizeof(tmpval)); // Removed from user-process init with [3.0.0+].
+    _webTLVSet(&config->arg, 0xD, &tmpval, sizeof(tmpval));
+    if (config->version < 0x30000) _webTLVSet(&config->arg, 0x12, &tmpval, sizeof(tmpval)); // Removed from user-process init with [3.0.0+].
 
-    memset(tmpurl, 0, sizeof(tmpurl));
-    strncpy(tmpurl, url, sizeof(tmpurl)-1);
-    _webTLVWrite(&config->arg, 0x1, tmpurl, sizeof(tmpurl));
+    _webConfigSetUrl(config, url);
 }
 
 Result webShow(WebCommonConfig* config, WebCommonReturnValue *out) {
