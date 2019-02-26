@@ -72,6 +72,11 @@ static void _webArgInitialize(WebCommonConfig* config, AppletId appletid, WebShi
         config->version = 0x20000; // [1.0.0+] version
 }
 
+WebShimKind _webGetShimKind(WebCommonConfig* config) {
+    WebArgHeader *hdr = (WebArgHeader*)config->arg.data;
+    return hdr->shimKind;
+}
+
 static void _webTLVWrite(WebCommonTLVStorage *storage, u16 type, const void* argdata, u16 argdata_size, u16 argdata_size_total) {
     size_t i, count, offset;
     u8 *dataptr = storage->data;
@@ -158,7 +163,12 @@ void webPageCreate(WebCommonConfig* config, const char* url) {
     _webConfigSetUrl(config, url);
 }
 
-Result webShow(WebCommonConfig* config, WebCommonReturnValue *out) {
+void webConfigSetWhitelist(WebCommonConfig* config, const char* whitelist) {
+    if (_webGetShimKind(config) != WebShimKind_Web) return;
+    _webConfigSetString(config, 0xA, whitelist, 0x1000);
+}
+
+Result webConfigShow(WebCommonConfig* config, WebCommonReturnValue *out) {
     return _webShow(config->appletid, config->version, &config->arg, sizeof(config->arg), out, sizeof(*out));
 }
 

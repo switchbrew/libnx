@@ -91,9 +91,17 @@ Result webWifiShow(WebWifiConfig* config, WebWifiReturnValue *out);
 void webPageCreate(WebCommonConfig* config, const char* url);
 
 /**
+ * @brief Sets the whitelist, only available with config created by \ref webPageCreate.
+ * @note If the whitelist isn't formatted properly, the applet will exit briefly after the applet is launched.
+ * @param config WebCommonConfig object.
+ * @param whitelist Whitelist string, each line is a regex for each whitelisted URL.
+ */
+void webConfigSetWhitelist(WebCommonConfig* config, const char* whitelist);
+
+/**
  * @brief Launches the {web applet} with the specified config and waits for it to exit.
  * @param config WebCommonConfig object.
  * @param out Optional output applet reply data, can be NULL.
  */
-Result webShow(WebCommonConfig* config, WebCommonReturnValue *out);
+Result webConfigShow(WebCommonConfig* config, WebCommonReturnValue *out);
 
