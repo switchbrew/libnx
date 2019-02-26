@@ -138,7 +138,24 @@ Result webWifiShow(WebWifiConfig* config, WebWifiReturnValue *out);
 void webPageCreate(WebCommonConfig* config, const char* url);
 
 /**
- * @brief Sets the whitelist, only available with config created by \ref webPageCreate.
+ * @brief Sets the CallbackUrl.
+ * @note Only available with config created by \ref webPageCreate or with Share-applet.
+ * @param config WebCommonConfig object.
+ * @param url URL
+ */
+void webConfigSetCallbackUrl(WebCommonConfig* config, const char* url);
+
+/**
+ * @brief Sets the CallbackableUrl.
+ * @note Only available with config created by \ref webPageCreate.
+ * @param config WebCommonConfig object.
+ * @param url URL
+ */
+void webConfigSetCallbackableUrl(WebCommonConfig* config, const char* url);
+
+/**
+ * @brief Sets the whitelist.
+ * @note Only available with config created by \ref webPageCreate.
  * @note If the whitelist isn't formatted properly, the applet will exit briefly after the applet is launched.
  * @param config WebCommonConfig object.
  * @param whitelist Whitelist string, each line is a regex for each whitelisted URL.
@@ -151,6 +168,14 @@ void webConfigSetWhitelist(WebCommonConfig* config, const char* whitelist);
  * @param kind Kind
  */
 void webConfigSetDisplayUrlKind(WebCommonConfig* config, bool kind);
+
+/**
+ * @brief Sets the UserAgentAdditionalString.
+ * @note Only available with config created by \ref webPageCreate on [4.0.0+].
+ * @param config WebCommonConfig object.
+ * @param str String
+ */
+void webConfigSetUserAgentAdditionalString(WebCommonConfig* config, const char* str);
 
 /**
  * @brief Launches the {web applet} with the specified config and waits for it to exit.

@@ -174,6 +174,17 @@ void webPageCreate(WebCommonConfig* config, const char* url) {
     _webConfigSetUrl(config, url);
 }
 
+void webConfigSetCallbackUrl(WebCommonConfig* config, const char* url) {
+    WebShimKind shim = _webGetShimKind(config);
+    if (shim != WebShimKind_Web && shim != WebShimKind_Share) return;
+    _webConfigSetString(config, WebArgType_CallbackUrl, url, 0x400);
+}
+
+void webConfigSetCallbackableUrl(WebCommonConfig* config, const char* url) {
+    if (_webGetShimKind(config) != WebShimKind_Web) return;
+    _webConfigSetString(config, WebArgType_CallbackableUrl, url, 0x400);
+}
+
 void webConfigSetWhitelist(WebCommonConfig* config, const char* whitelist) {
     if (_webGetShimKind(config) != WebShimKind_Web) return;
     _webConfigSetString(config, WebArgType_Whitelist, whitelist, 0x1000);
@@ -181,6 +192,12 @@ void webConfigSetWhitelist(WebCommonConfig* config, const char* whitelist) {
 
 void webConfigSetDisplayUrlKind(WebCommonConfig* config, bool kind) {
     _webConfigSetFlag(config, WebArgType_DisplayUrlKind, kind);
+}
+
+void webConfigSetUserAgentAdditionalString(WebCommonConfig* config, const char* str) {
+    if (_webGetShimKind(config) != WebShimKind_Web) return;
+    if (hosversionBefore(4,0,0)) return;
+    _webConfigSetString(config, WebArgType_UserAgentAdditionalString, str, 0x80);
 }
 
 Result webConfigShow(WebCommonConfig* config, WebCommonReturnValue *out) {
