@@ -104,7 +104,6 @@ extern "C" {
 #include "switch/audio/driver.h"
 
 #include "switch/applets/libapplet.h"
-#include "switch/applets/error.h"
 #include "switch/applets/swkbd.h"
 #include "switch/applets/web.h"
 
@@ -123,3 +122,4 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
+
