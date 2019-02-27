@@ -9,6 +9,7 @@
 #pragma once
 #include "../types.h"
 #include "../kernel/event.h"
+#include "../services/sm.h"
 
 typedef enum {
     PmLaunchFlag_None           = 0,
@@ -47,6 +48,8 @@ typedef struct {
 
 Result pmdmntInitialize(void);
 void pmdmntExit(void);
+
+Service* pmdmntGetServiceSession(void);
 
 Result pminfoInitialize(void);
 void pminfoExit(void);
