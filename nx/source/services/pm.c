@@ -27,6 +27,10 @@ void pmdmntExit(void)
     }
 }
 
+Service* pmdmntGetServiceSession(void) {
+    return &g_pmdmntSrv;
+}
+
 Result pminfoInitialize(void)
 {
     atomicIncrement64(&g_pminfoRefCnt);
