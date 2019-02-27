@@ -21,17 +21,12 @@ void errorClose(ErrorConfig* c) {
 
 void errorShow(ErrorConfig* c) {
     AppletHolder err;
-    AppletStorage errStor;
     LibAppletArgs errArgs;
 
     appletCreateLibraryApplet(&err, AppletId_error, LibAppletMode_AllForeground);
     libappletArgsCreate(&errArgs, 1);
     libappletArgsPush(&errArgs, &err);
-
-    appletCreateStorage(&errStor, 4120);
-    appletStorageWrite(&errStor, 0, c, 0x1018);
-
-    appletHolderPushInData(&err, &errStor);
+    libappletPushInData(&err, c, 0x1018);
 
     appletHolderStart(&err);
     appletHolderJoin(&err);
