@@ -24,15 +24,12 @@ void errorShow(ErrorConfig* c) {
     AppletStorage errStor;
     LibAppletArgs errArgs;
 
-    u8 args[0x1018] = {0};
-    memcpy(&args, c, 0x1018);
-
     appletCreateLibraryApplet(&err, AppletId_error, LibAppletMode_AllForeground);
     libappletArgsCreate(&errArgs, 1);
     libappletArgsPush(&errArgs, &err);
 
     appletCreateStorage(&errStor, 4120);
-    appletStorageWrite(&errStor, 0, args, 0x1018);
+    appletStorageWrite(&errStor, 0, c, 0x1018);
 
     appletHolderPushInData(&err, &errStor);
 
