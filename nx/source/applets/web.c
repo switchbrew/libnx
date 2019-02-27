@@ -153,9 +153,9 @@ static Result _webConfigSetFlag(WebCommonConfig* config, u16 type, bool arg) {
     return _webConfigSetU8(config, type, arg!=0);
 }
 
-/*static Result _webConfigSetU32(WebCommonConfig* config, u16 type, u32 arg) {
+static Result _webConfigSetU32(WebCommonConfig* config, u16 type, u32 arg) {
     return _webTLVSet(&config->arg, type, &arg, sizeof(arg));
-}*/
+}
 
 static Result _webConfigSetString(WebCommonConfig* config, u16 type, const char* str, u16 argdata_size_total) {
     u16 arglen = strlen(str);
@@ -182,7 +182,7 @@ Result webPageCreate(WebCommonConfig* config, const char* url) {
 
 Result webConfigSetCallbackUrl(WebCommonConfig* config, const char* url) {
     WebShimKind shim = _webGetShimKind(config);
-    if (shim != WebShimKind_Web && shim != WebShimKind_Share) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (shim != WebShimKind_Share && shim != WebShimKind_Web) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     return _webConfigSetString(config, WebArgType_CallbackUrl, url, 0x400);
 }
 
@@ -194,6 +194,12 @@ Result webConfigSetCallbackableUrl(WebCommonConfig* config, const char* url) {
 Result webConfigSetWhitelist(WebCommonConfig* config, const char* whitelist) {
     if (_webGetShimKind(config) != WebShimKind_Web) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     return _webConfigSetString(config, WebArgType_Whitelist, whitelist, 0x1000);
+}
+
+Result webConfigSetBootDisplayKind(WebCommonConfig* config, u32 kind) {
+    WebShimKind shim = _webGetShimKind(config);
+    if (shim != WebShimKind_Web && shim != WebShimKind_Offline) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    return _webConfigSetU32(config, WebArgType_BootDisplayKind, kind);
 }
 
 Result webConfigSetDisplayUrlKind(WebCommonConfig* config, bool kind) {

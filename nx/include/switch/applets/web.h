@@ -10,11 +10,12 @@
 
 /// This indicates the type of web-applet.
 typedef enum {
-    WebShimKind_Login = 2,
-    WebShimKind_Share = 4,
-    WebShimKind_Web   = 5,
-    WebShimKind_Wifi  = 6,
-    WebShimKind_Lobby = 7,
+    WebShimKind_Login   = 2,
+    WebShimKind_Offline = 3,
+    WebShimKind_Share   = 4,
+    WebShimKind_Web     = 5,
+    WebShimKind_Wifi    = 6,
+    WebShimKind_Lobby   = 7,
 } WebShimKind;
 
 typedef struct {
@@ -82,8 +83,8 @@ typedef enum {
     WebArgType_PlayReportEnabled                        = 0x13,   ///< [1.0.0+] u8 bool
     WebArgType_Unknown14                                = 0x14,   ///< [1.0.0+] u8
     WebArgType_Unknown15                                = 0x15,   ///< [1.0.0+] u8
-    WebArgType_BootDisplayKind                          = 0x17,   ///< [1.0.0+] u32 enum enum WebBootDisplayKind
-    WebArgType_BackgroundKind                           = 0x18,   ///< [1.0.0+] u32 enum u32 enum *BackgroundKind
+    WebArgType_BootDisplayKind                          = 0x17,   ///< [1.0.0+] u32 enum *BootDisplayKind
+    WebArgType_BackgroundKind                           = 0x18,   ///< [1.0.0+] u32 enum *BackgroundKind
     WebArgType_FooterEnabled                            = 0x19,   ///< [1.0.0+] u8 bool
     WebArgType_PointerEnabled                           = 0x1A,   ///< [1.0.0+] u8 bool
     WebArgType_LeftStickMode                            = 0x1B,   ///< [1.0.0+] u32 enum *LeftStickMode
@@ -112,6 +113,12 @@ typedef enum {
     WebArgType_BootLoadingIconEnabled                   = 0x35,   ///< [5.0.0+] u8 bool
     WebArgType_PageScrollIndicatorEnabled               = 0x36,   ///< [5.0.0+] u8 bool
 } WebArgType;
+
+/// Kind values for \ref webConfigSetBootDisplayKind with Web applet. Controls the background color while displaying the loading screen during applet boot.
+typedef enum {
+    WebBootDisplayKind_White = 0,  ///< Default white background. Value 1 seems to have same affect.
+    WebBootDisplayKind_Black = 2,  ///< Black background, likewise with values >2 it seems.
+} WebBootDisplayKind;
 
 /**
  * @brief Creates the config for WifiWebAuthApplet.
@@ -161,6 +168,14 @@ Result webConfigSetCallbackableUrl(WebCommonConfig* config, const char* url);
  * @param whitelist Whitelist string, each line is a regex for each whitelisted URL.
  */
 Result webConfigSetWhitelist(WebCommonConfig* config, const char* whitelist);
+
+/**
+ * @brief Sets the BootDisplayKind.
+ * @note Only available with config created by \ref webPageCreate or with Offline-applet.
+ * @param config WebCommonConfig object.
+ * @param kind Kind, different enums for Web (\ref WebBootDisplayKind) and Offline.
+ */
+Result webConfigSetBootDisplayKind(WebCommonConfig* config, u32 kind);
 
 /**
  * @brief Sets the DisplayUrlKind.
