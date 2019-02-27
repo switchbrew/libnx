@@ -212,6 +212,19 @@ Result webConfigSetUserAgentAdditionalString(WebCommonConfig* config, const char
     return _webConfigSetString(config, WebArgType_UserAgentAdditionalString, str, 0x80);
 }
 
+Result webConfigSetMediaPlayerAutoClose(WebCommonConfig* config, bool flag) {
+    if (_webGetShimKind(config) != WebShimKind_Web) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(4,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    return _webConfigSetFlag(config, WebArgType_MediaPlayerAutoClose, flag);
+}
+
+Result webConfigSetBootAsMediaPlayer(WebCommonConfig* config, bool flag) {
+    WebShimKind shim = _webGetShimKind(config);
+    if (shim != WebShimKind_Web && shim != WebShimKind_Offline) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(2,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    return _webConfigSetFlag(config, WebArgType_BootAsMediaPlayer, flag);
+}
+
 Result webConfigShow(WebCommonConfig* config, WebCommonReturnValue *out) {
     return _webShow(config->appletid, config->version, &config->arg, sizeof(config->arg), out, sizeof(*out));
 }
