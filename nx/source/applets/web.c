@@ -180,6 +180,20 @@ Result webPageCreate(WebCommonConfig* config, const char* url) {
     return rc;
 }
 
+Result webNewsCreate(WebCommonConfig* config, const char* url) {
+    Result rc=0;
+    _webArgInitialize(config, AppletId_web, WebShimKind_Web);
+
+    rc = _webConfigSetU8(config, WebArgType_UnknownD, 1);
+    if (R_SUCCEEDED(rc)) rc = _webConfigSetFlag(config, WebArgType_NewsFlag, true);
+    if (R_SUCCEEDED(rc)) rc = webConfigSetEcClientCert(config, true);
+    if (R_SUCCEEDED(rc) && hosversionAtLeast(2,0,0)) rc = webConfigSetShopJump(config, true); // Check version so that rc isn't set to an error on pre-2.0.0.
+
+    if (R_SUCCEEDED(rc)) rc = _webConfigSetUrl(config, url);
+
+    return rc;
+}
+
 Result webConfigSetCallbackUrl(WebCommonConfig* config, const char* url) {
     WebShimKind shim = _webGetShimKind(config);
     if (shim != WebShimKind_Share && shim != WebShimKind_Web) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
@@ -194,6 +208,12 @@ Result webConfigSetCallbackableUrl(WebCommonConfig* config, const char* url) {
 Result webConfigSetWhitelist(WebCommonConfig* config, const char* whitelist) {
     if (_webGetShimKind(config) != WebShimKind_Web) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     return _webConfigSetString(config, WebArgType_Whitelist, whitelist, 0x1000);
+}
+
+Result webConfigSetEcClientCert(WebCommonConfig* config, bool flag) {
+    WebShimKind shim = _webGetShimKind(config);
+    if (shim != WebShimKind_Web && shim != WebShimKind_Offline) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    return _webConfigSetU8(config, WebArgType_EcClientCert, flag);
 }
 
 Result webConfigSetBootDisplayKind(WebCommonConfig* config, u32 kind) {
@@ -223,6 +243,12 @@ Result webConfigSetBootAsMediaPlayer(WebCommonConfig* config, bool flag) {
     if (shim != WebShimKind_Web && shim != WebShimKind_Offline) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     if (hosversionBefore(2,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     return _webConfigSetFlag(config, WebArgType_BootAsMediaPlayer, flag);
+}
+
+Result webConfigSetShopJump(WebCommonConfig* config, bool flag) {
+    if (_webGetShimKind(config) != WebShimKind_Web) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(2,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    return _webConfigSetFlag(config, WebArgType_ShopJump, flag);
 }
 
 Result webConfigShow(WebCommonConfig* config, WebCommonReturnValue *out) {

@@ -90,7 +90,7 @@ typedef enum {
     WebArgType_LeftStickMode                            = 0x1B,   ///< [1.0.0+] u32 enum *LeftStickMode
     WebArgType_KeyRepeatFrame0                          = 0x1C,   ///< [1.0.0+] s32 KeyRepeatFrame, first param
     WebArgType_KeyRepeatFrame1                          = 0x1D,   ///< [1.0.0+] s32 KeyRepeatFrame, second param
-    WebArgType_BootAsMediaPlayerInverted                = 0x1E,   ///< [1.0.0+] u8 bool, set after BootAsMediaPlayer with the value inverted.
+    WebArgType_BootAsMediaPlayerInverted                = 0x1E,   ///< [1.0.0+] u8 bool. With News this is set after BootAsMediaPlayer with the value inverted.
     WebArgType_DisplayUrlKind                           = 0x1F,   ///< [1.0.0+] u8 bool, DisplayUrlKind (value = (input_enumval==0x1)).
     WebArgType_BootAsMediaPlayer                        = 0x21,   ///< [2.0.0+] u8 bool
     WebArgType_ShopJump                                 = 0x22,   ///< [2.0.0+] u8 bool
@@ -142,10 +142,20 @@ Result webWifiShow(WebWifiConfig* config, WebWifiReturnValue *out);
 
 /**
  * @brief Creates the config for WebApplet. This applet uses an URL whitelist loaded from the user-process host title.
+ * @note Sets WebArgType_UnknownD, and WebArgType_Unknown12 on pre-3.0.0, to value 1.
  * @param config WebCommonConfig object.
  * @param url Initial URL navigated to by the applet.
  */
 Result webPageCreate(WebCommonConfig* config, const char* url);
+
+/**
+ * @brief Creates the config for WebApplet. This is based on \ref webPageCreate, for News. Hence other functions referencing \ref webPageCreate also apply to this.
+ * @note Sets WebArgType_UnknownD to value 1, and sets WebArgType_NewsFlag to true. Also uses \ref webConfigSetEcClientCert and \ref webConfigSetShopJump with flag=true.
+ * @note The domain from the input URL is automatically whitelisted, in addition to any already loaded whitelist.
+ * @param config WebCommonConfig object.
+ * @param url Initial URL navigated to by the applet.
+ */
+Result webNewsCreate(WebCommonConfig* config, const char* url);
 
 /**
  * @brief Sets the CallbackUrl.
@@ -173,6 +183,15 @@ Result webConfigSetCallbackableUrl(WebCommonConfig* config, const char* url);
 Result webConfigSetWhitelist(WebCommonConfig* config, const char* whitelist);
 
 /**
+ * @brief Sets the EcClientCert flag.
+ * @note Only available with config created by \ref webPageCreate or with Offline-applet.
+ * @note Used automatically by \ref webNewsCreate with flag=true.
+ * @param config WebCommonConfig object.
+ * @param flag Flag
+ */
+Result webConfigSetEcClientCert(WebCommonConfig* config, bool flag);
+
+/**
  * @brief Sets the BootDisplayKind.
  * @note Only available with config created by \ref webPageCreate or with Offline-applet.
  * @param config WebCommonConfig object.
@@ -194,6 +213,15 @@ Result webConfigSetDisplayUrlKind(WebCommonConfig* config, bool kind);
  * @param flag Flag. true = BootAsMediaPlayer, false = BootAsWebPage.
  */
 Result webConfigSetBootAsMediaPlayer(WebCommonConfig* config, bool flag);
+
+/**
+ * @brief Sets the ShopJump flag.
+ * @note Only available with config created by \ref webPageCreate on [2.0.0+].
+ * @note Used automatically by \ref webNewsCreate with flag=true.
+ * @param config WebCommonConfig object.
+ * @param flag Flag
+ */
+Result webConfigSetShopJump(WebCommonConfig* config, bool flag);
 
 /**
  * @brief Sets the UserAgentAdditionalString.
