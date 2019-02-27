@@ -10,7 +10,13 @@
 
 /// Error configuration struct.
 typedef struct {
-    u8 args[0x1018];
+    bool custom_text;                 ///< Whether to show a custom error message. If this is false, a default message will be shown.
+    u8 pad[7];
+    u32 major_code;                   ///< First part of the error-code.
+    u32 minor_code;                   ///< Second part of the error-code.
+    u8 pad2[8];
+    char short_description[0x800];    ///< Short description.
+    char detailed_description[0x800]; ///< Detailed description (displayed when the user clicks,  on "Details").
 } ErrorConfig;
 
 /**

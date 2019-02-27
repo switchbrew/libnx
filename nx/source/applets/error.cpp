@@ -7,13 +7,12 @@
 #include "applets/error.h"
 
 void errorCreate(ErrorConfig* c) {
-    memset(c->args, 0, 0x1018);
-
-    c->args[0x0] = 0;
-    *(u64*) &c->args[0x8] = 2000;
-    *(u64*) &c->args[0xC] = 0;
-    strcpy((char*) &c->args[0x18], "");
-    strcpy((char*) &c->args[0x818], "");
+    memset(c, 0, sizeof(ErrorConfig));
+    c->custom_text = false;
+    c->major_code = 2000;
+    c->minor_code = 0;
+    strcpy((char*) &c->short_description, "");
+    strcpy((char*) &c->detailed_description, "");
 }
 
 void errorClose(ErrorConfig* c) {
@@ -25,12 +24,15 @@ void errorShow(ErrorConfig* c) {
     AppletStorage errStor;
     LibAppletArgs errArgs;
 
+    u8 args[0x1018] = {0};
+    memcpy(&args, c, 0x1018);
+
     appletCreateLibraryApplet(&err, AppletId_error, LibAppletMode_AllForeground);
     libappletArgsCreate(&errArgs, 1);
     libappletArgsPush(&errArgs, &err);
 
     appletCreateStorage(&errStor, 4120);
-    appletStorageWrite(&errStor, 0, c->args, 0x1018);
+    appletStorageWrite(&errStor, 0, args, 0x1018);
 
     appletHolderPushInData(&err, &errStor);
 
@@ -39,22 +41,22 @@ void errorShow(ErrorConfig* c) {
     appletHolderClose(&err);
 }
 
-void errorConfigSetMajorCode(ErrorConfig* c, u64 code) {
-    *(u64*) &c->args[0x8] = code;
+void errorConfigSetMajorCode(ErrorConfig* c, u32 code) {
+    c->major_code = code;
 }
 
-void errorConfigSetMinorCode(ErrorConfig* c, u64 code) {
-    *(u64*) &c->args[0xC] = code;
+void errorConfigSetMinorCode(ErrorConfig* c, u32 code) {
+    c->minor_code = code;
 }
 
 void errorConfigSetCustomText(ErrorConfig* c, bool customText) {
-    c->args[0x0] = customText;
+    c->custom_text = customText;
 }
 
 void errorConfigSetShortDescription(ErrorConfig* c, const char* str) {
-    strcpy((char*) &c->args[0x18], str);
+    strcpy((char*) &c->short_description, str);
 }
 
 void errorConfigSetDetailedDescription(ErrorConfig* c, const char* str) {
-    strcpy((char*) &c->args[0x818], str);
+    strcpy((char*) &c->detailed_description, str);
 }
