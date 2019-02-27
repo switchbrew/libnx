@@ -46,9 +46,9 @@ void errorConfigSetCustomText(ErrorConfig* c, bool custom_text) {
 }
 
 void errorConfigSetShortDescription(ErrorConfig* c, const char* str) {
-    strcpy((char*) &c->short_description, str);
+    &c->short_description = str;
 }
 
 void errorConfigSetDetailedDescription(ErrorConfig* c, const char* str) {
-    strcpy((char*) &c->detailed_description, str);
+    &c->detailed_description = str;
 }
