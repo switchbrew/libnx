@@ -253,6 +253,24 @@ Result appletSetScreenShotPermission(s32 val);
 Result appletSetScreenShotImageOrientation(s32 val);
 
 /**
+ * @brief Stops forwarding the input to the foreground app, works only in the Overlay applet context.
+ * @note You have to call this to receive inputs through the hid service when running as the overlay applet.
+ */
+Result appletBeginToWatchShortHomeButtonMessage(void);
+
+/**
+ * @brief Forwards input to the foreground app, works only in the Overlay applet context.
+ * @note After calling this the overlay applet won't receive any input until \ref appletBeginToWatchShortHomeButtonMessage is called again.
+ */
+Result appletEndToWatchShortHomeButtonMessage(void);
+
+/**
+ * @brief Get an event that fires when the home button is pressed, doesn't interfere with home menu. This event does not auto clear.
+ * @note Doesn't fire for long press.
+ */
+Result appletHomeButtonReaderLockAccessorGetEvent(Event *out_event);
+
+/**
  * @brief Pushes a storage to the general channel. Used for sending requests to qlaunch.
  * @note  This is not usable under an Application, however it is usable under a LibraryApplet.
  * @note  This uses \ref appletStorageClose automatically.

@@ -1378,7 +1378,34 @@ Result appletQueryApplicationPlayStatistics(AppletApplicationPlayStatistics *sta
     return rc;
 }
 
+// IOverlayFunctions
+
+Result appletBeginToWatchShortHomeButtonMessage(void) {
+    if (__nx_applet_type != AppletType_OverlayApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    
+    return _appletCmdNoIO(&g_appletIFunctions, 0);
+}
+
+Result appletEndToWatchShortHomeButtonMessage(void) {
+    if (__nx_applet_type != AppletType_OverlayApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    
+    return _appletCmdNoIO(&g_appletIFunctions, 1);
+}
+
 // ICommonStateGetter
+
+Result appletHomeButtonReaderLockAccessorGetEvent(Event *out_event) {
+    Service ILockAccessor = {0};
+    Result rc = _appletGetSession(&g_appletICommonStateGetter, &ILockAccessor, 30);
+    if (R_FAILED(rc))
+        return rc;
+    
+    rc = _appletGetEvent(&ILockAccessor, out_event, 3, false);
+    serviceClose(&ILockAccessor);
+    return rc;
+}
 
 static Result _appletReceiveMessage(u32 *out) {
     IpcCommand c;
