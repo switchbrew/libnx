@@ -54,10 +54,10 @@ void errorConfigSetMinorCode(ErrorConfig* c, u32 code);
 
 /**
  * @brief Sets whether to use a custom error message.
- * @param c          ErrorConfig struct
- * @param customText Whether to use a custom message.
+ * @param c           ErrorConfig struct
+ * @param custom_text Whether to use a custom message.
  */
-void errorConfigSetCustomText(ErrorConfig* c, bool customText);
+void errorConfigSetCustomText(ErrorConfig* c, bool custom_text);
 
 /**
  * @brief Sets the short description.

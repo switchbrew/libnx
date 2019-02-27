@@ -49,8 +49,8 @@ void errorConfigSetMinorCode(ErrorConfig* c, u32 code) {
     c->minor_code = code;
 }
 
-void errorConfigSetCustomText(ErrorConfig* c, bool customText) {
-    c->custom_text = customText;
+void errorConfigSetCustomText(ErrorConfig* c, bool custom_text) {
+    c->custom_text = custom_text;
 }
 
 void errorConfigSetShortDescription(ErrorConfig* c, const char* str) {
