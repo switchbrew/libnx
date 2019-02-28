@@ -23,6 +23,7 @@ typedef struct {
  * @brief Creates an ErrorConfg struct.
  * @param c ErrorConfg struct.
  * @note Sets the following fields: majorCode = 2000, minorCode = 0, customText = false, shortDescription = "", detailedDescription = "".
+ * @warning This applet creates an error report that is logged in the system. Proceed at your own risk!
  */
 void errorCreate(ErrorConfig* c);
 
