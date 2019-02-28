@@ -11,10 +11,10 @@
 /// Error configuration struct.
 typedef struct {
     u8 custom_text;                   ///< Whether to show a custom error message. If this is false, a default message will be shown.
-    u8 pad[7];
+    u8 unk[7];
     u32 module;                       ///< Module code.
     u32 description;                  ///< Description code.
-    u8 pad2[8];
+    u8 unk2[8];
     char short_description[0x800];    ///< Short description.
     char detailed_description[0x800]; ///< Detailed description (displayed when the user clicks,  on "Details").
 } ErrorConfig;
