@@ -8,7 +8,6 @@
 #include "../types.h"
 #include "../services/applet.h"
 
-/// Error configuration struct.
 typedef struct {
     u8 custom_text;                   ///< Whether to show a custom error message. If this is false, a default message will be shown.
     u8 unk[7];
@@ -35,41 +34,41 @@ void errorClose(ErrorConfig* c);
 
 /**
  * @brief Launches with the specified config.
- * @param c ErrorConfig struct
+ * @param c ErrorConfig struct.
  */
 void errorShow(ErrorConfig* c);
 
 /**
- * @brief Sets the first part of the error code.
- * @param c    ErrorConfig struct
+ * @brief Sets the error module.
+ * @param c    ErrorConfig struct.
  * @param code Code.
  */
 void errorConfigSetModule(ErrorConfig* c, u32 code);
 
 /**
- * @brief Sets the second part of the error code.
- * @param c    ErrorConfig struct
+ * @brief Sets the error description.
+ * @param c    ErrorConfig struct.
  * @param code Code.
  */
 void errorConfigSetDescription(ErrorConfig* c, u32 code);
 
 /**
  * @brief Sets whether to use a custom error message.
- * @param c           ErrorConfig struct
+ * @param c           ErrorConfig struct.
  * @param custom_text Whether to use a custom message.
  */
 void errorConfigSetCustomText(ErrorConfig* c, bool custom_text);
 
 /**
  * @brief Sets the short description.
- * @param c   ErrorConfig struct
+ * @param c   ErrorConfig struct.
  * @param str Description.
  */
 void errorConfigSetShortDescription(ErrorConfig* c, const char* str);
 
 /**
  * @brief Sets the detailed description.
- * @param c   ErrorConfig struct
+ * @param c   ErrorConfig struct.
  * @param str Description.
  *
  * This gets displayed when the user clicks on "Details".
