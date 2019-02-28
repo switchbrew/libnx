@@ -10,7 +10,7 @@
 
 /// Error configuration struct.
 typedef struct {
-    bool custom_text;                 ///< Whether to show a custom error message. If this is false, a default message will be shown.
+    u8 custom_text;                   ///< Whether to show a custom error message. If this is false, a default message will be shown.
     u8 pad[7];
     u32 module;                       ///< Module code.
     u32 description;                  ///< Description code.
