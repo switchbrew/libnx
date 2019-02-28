@@ -287,7 +287,7 @@ Result webConfigSetShopJump(WebCommonConfig* config, bool flag);
 Result webConfigSetLobbyParameter(WebCommonConfig* config, const char* str);
 
 /**
- * @brief Sets the UserAgentAdditionalString.
+ * @brief Sets the UserAgentAdditionalString. " " followed by this string are appended to the normal User-Agent string.
  * @note Only available with config created by \ref webPageCreate on [4.0.0+].
  * @param config WebCommonConfig object.
  * @param str String
