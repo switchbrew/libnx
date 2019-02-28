@@ -237,6 +237,14 @@ Result webConfigSetBootDisplayKind(WebCommonConfig* config, u32 kind);
 Result webConfigSetBackgroundKind(WebCommonConfig* config, u32 kind);
 
 /**
+ * @brief Sets the whether the UI footer is enabled.
+ * @note Only available with config created by \ref webPageCreate or with Offline-applet.
+ * @param config WebCommonConfig object.
+ * @param flag Flag
+ */
+Result webConfigSetFooter(WebCommonConfig* config, bool flag);
+
+/**
  * @brief Sets the whether the Pointer is enabled.
  * @note Only available with config created by \ref webPageCreate, \ref webLobbyCreate, or with Offline-applet.
  * @note Used automatically by \ref webLobbyCreate with flag=false on [3.0.0+].
@@ -253,6 +261,15 @@ Result webConfigSetPointer(WebCommonConfig* config, bool flag);
  * @param mode Mode, different enums for Web and Offline.
  */
 Result webConfigSetLeftStickMode(WebCommonConfig* config, u32 mode);
+
+/**
+ * @brief Sets the KeyRepeatFrame.
+ * @note Only available with Offline-applet.
+ * @param config WebCommonConfig object.
+ * @param inval0 First input param.
+ * @param inval1 Second input param.
+ */
+Result webConfigSetKeyRepeatFrame(WebCommonConfig* config, s32 inval0, s32 inval1);
 
 /**
  * @brief Sets the DisplayUrlKind.

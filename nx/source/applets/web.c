@@ -269,6 +269,12 @@ Result webConfigSetBackgroundKind(WebCommonConfig* config, u32 kind) {
     return _webConfigSetU32(config, WebArgType_BackgroundKind, kind);
 }
 
+Result webConfigSetFooter(WebCommonConfig* config, bool flag) {
+    WebShimKind shim = _webGetShimKind(config);
+    if (shim != WebShimKind_Offline && shim != WebShimKind_Web) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    return _webConfigSetFlag(config, WebArgType_Footer, flag);
+}
+
 Result webConfigSetPointer(WebCommonConfig* config, bool flag) {
     WebShimKind shim = _webGetShimKind(config);
     if (shim != WebShimKind_Offline && shim != WebShimKind_Web && shim != WebShimKind_Lobby) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
@@ -279,6 +285,15 @@ Result webConfigSetLeftStickMode(WebCommonConfig* config, u32 mode) {
     WebShimKind shim = _webGetShimKind(config);
     if (shim != WebShimKind_Offline && shim != WebShimKind_Web && shim != WebShimKind_Lobby) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     return _webConfigSetU32(config, WebArgType_LeftStickMode, mode);
+}
+
+Result webConfigSetKeyRepeatFrame(WebCommonConfig* config, s32 inval0, s32 inval1) {
+    Result rc=0;
+    WebShimKind shim = _webGetShimKind(config);
+    if (shim != WebShimKind_Offline) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    rc = _webConfigSetU32(config, WebArgType_KeyRepeatFrame0, inval0);
+    if (R_SUCCEEDED(rc)) rc = _webConfigSetU32(config, WebArgType_KeyRepeatFrame1, inval1);
+    return rc;
 }
 
 Result webConfigSetDisplayUrlKind(WebCommonConfig* config, bool kind) {
