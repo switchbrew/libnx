@@ -460,7 +460,20 @@ Result appletStorageGetHandle(AppletStorage *s, s64 *out, Handle *handle);
 Result appletStorageMap(AppletStorage *s, void** addr, size_t *size);
 
 /**
+ * @brief Gets a notification message.
+ */
+Result appletGetMessage(u32 *msg);
+
+/**
+ * @brief Processes the current applet status using the specified msg.
+ * @param msg Notification message, normally from \ref appletGetMessage.
+ * @return Whether the application should continue running.
+ */
+bool appletProcessMessage(u32 msg);
+
+/**
  * @brief Processes the current applet status. Generally used within a main loop.
+ * @note Uses \ref appletGetMessage and \ref appletProcessMessage internally.
  * @return Whether the application should continue running.
  */
 bool appletMainLoop(void);

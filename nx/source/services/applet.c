@@ -2292,22 +2292,28 @@ AppletFocusState appletGetFocusState(void) {
     return (AppletFocusState)g_appletFocusState;
 }
 
-bool appletMainLoop(void) {
-    Result rc;
-    u32    msg = 0;
+Result appletGetMessage(u32 *msg) {
+    Result rc=0;
+    if (msg==NULL) return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
-    if (R_FAILED(eventWait(&g_appletMessageEvent, 0)))
-        return true;
-
-    rc = _appletReceiveMessage(&msg);
-
+    rc = eventWait(&g_appletMessageEvent, 0);
     if (R_FAILED(rc))
-    {
-        if ((rc & 0x3fffff) == 0x680)
-            return true;
+        return rc;
+
+    rc = _appletReceiveMessage(msg);
+
+    if (R_FAILED(rc)) {
+        if (R_VALUE(rc) == MAKERESULT(128, 3))
+            return rc;
 
         fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadAppletReceiveMessage));
     }
+
+    return 0;
+}
+
+bool appletProcessMessage(u32 msg) {
+    Result rc;
 
     switch(msg) {
         case 0x4:
@@ -2341,4 +2347,12 @@ bool appletMainLoop(void) {
     }
 
     return true;
+}
+
+bool appletMainLoop(void) {
+    u32 msg = 0;
+
+    if (R_FAILED(appletGetMessage(&msg))) return true;
+
+    return appletProcessMessage(msg);
 }
