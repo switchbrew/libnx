@@ -167,6 +167,15 @@ Result webNewsCreate(WebCommonConfig* config, const char* url);
 Result webYouTubeVideoCreate(WebCommonConfig* config, const char* url);
 
 /**
+ * @brief Creates the config for LobbyApplet.
+ * @note Only available on [2.0.0+].
+ * @note If a non-zero userID isn't set with \ref webConfigSetUserID prior to using \ref webConfigShow, the applet will launch the profile-selector applet to select an account.
+ * @note Uses \ref webConfigSetLeftStickMode with mode=1, \ref webConfigSetPointer with flag=false on [3.0.0+], \ref webConfigSetUserID with userID=0, and sets WebArgType_Unknown14/WebArgType_Unknown15 to value 1. Uses \ref webConfigSetBootDisplayKind with WebBootDisplayKind_Unknown4, \ref webConfigSetBackgroundKind with kind=2, and sets WebArgType_BootAsMediaPlayerInverted to false.
+ * @param config WebCommonConfig object.
+ */
+Result webLobbyCreate(WebCommonConfig* config);
+
+/**
  * @brief Sets the CallbackUrl.
  * @note Only available with config created by \ref webPageCreate or with Share-applet.
  * @param config WebCommonConfig object.
@@ -193,7 +202,8 @@ Result webConfigSetWhitelist(WebCommonConfig* config, const char* whitelist);
 
 /**
  * @brief Sets the account UserID. Controls which user-specific savedata to mount.
- * @note Only available with config created by \ref webPageCreate, or with Share-applet/Lobby-applet.
+ * @note Only available with config created by \ref webPageCreate, \ref webLobbyCreate, or with Share-applet.
+ * @note Used automatically by \ref webLobbyCreate with userID=0.
  * @param config WebCommonConfig object.
  * @param userID Account userID
  */
@@ -210,11 +220,39 @@ Result webConfigSetEcClientCert(WebCommonConfig* config, bool flag);
 
 /**
  * @brief Sets the BootDisplayKind.
- * @note Only available with config created by \ref webPageCreate or with Offline-applet.
+ * @note Only available with config created by \ref webPageCreate, \ref webLobbyCreate, or with Offline-applet.
+ * @note Used automatically by \ref webLobbyCreate with kind=WebBootDisplayKind_Unknown4.
  * @param config WebCommonConfig object.
  * @param kind Kind, different enums for Web (\ref WebBootDisplayKind) and Offline.
  */
 Result webConfigSetBootDisplayKind(WebCommonConfig* config, u32 kind);
+
+/**
+ * @brief Sets the BackgroundKind.
+ * @note Only available with config created by \ref webPageCreate, \ref webLobbyCreate, or with Offline-applet.
+ * @note Used automatically by \ref webLobbyCreate with kind=2.
+ * @param config WebCommonConfig object.
+ * @param kind Kind, different enums for Web and Offline.
+ */
+Result webConfigSetBackgroundKind(WebCommonConfig* config, u32 kind);
+
+/**
+ * @brief Sets the whether the Pointer is enabled.
+ * @note Only available with config created by \ref webPageCreate, \ref webLobbyCreate, or with Offline-applet.
+ * @note Used automatically by \ref webLobbyCreate with flag=false on [3.0.0+].
+ * @param config WebCommonConfig object.
+ * @param flag Flag
+ */
+Result webConfigSetPointer(WebCommonConfig* config, bool flag);
+
+/**
+ * @brief Sets the LeftStickMode.
+ * @note Only available with config created by \ref webPageCreate, \ref webLobbyCreate, or with Offline-applet.
+ * @note Used automatically by \ref webLobbyCreate with mode=1.
+ * @param config WebCommonConfig object.
+ * @param mode Mode, different enums for Web and Offline.
+ */
+Result webConfigSetLeftStickMode(WebCommonConfig* config, u32 mode);
 
 /**
  * @brief Sets the DisplayUrlKind.
@@ -239,6 +277,14 @@ Result webConfigSetBootAsMediaPlayer(WebCommonConfig* config, bool flag);
  * @param flag Flag
  */
 Result webConfigSetShopJump(WebCommonConfig* config, bool flag);
+
+/**
+ * @brief Sets the LobbyParameter.
+ * @note Only available with config created by \ref webLobbyCreate.
+ * @param config WebCommonConfig object.
+ * @param str String
+ */
+Result webConfigSetLobbyParameter(WebCommonConfig* config, const char* str);
 
 /**
  * @brief Sets the UserAgentAdditionalString.
