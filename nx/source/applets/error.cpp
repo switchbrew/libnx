@@ -30,12 +30,12 @@ void errorShow(ErrorConfig* c) {
     appletHolderClose(&err);
 }
 
-void errorConfigSetMajorCode(ErrorConfig* c, u32 code) {
-    c->major_code = code;
+void errorConfigSetModule(ErrorConfig* c, u32 code) {
+    c->module = code;
 }
 
-void errorConfigSetMinorCode(ErrorConfig* c, u32 code) {
-    c->minor_code = code;
+void errorConfigSetDescription(ErrorConfig* c, u32 code) {
+    c->description = code;
 }
 
 void errorConfigSetCustomText(ErrorConfig* c, bool custom_text) {
