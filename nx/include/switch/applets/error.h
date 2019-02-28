@@ -8,6 +8,7 @@
 #include "../types.h"
 #include "../services/applet.h"
 
+/// Error configuration struct
 typedef struct {
     u8 custom_text;                   ///< Whether to show a custom error message. If this is false, a default message will be shown.
     u8 unk[7];
@@ -27,8 +28,8 @@ typedef struct {
 void errorCreate(ErrorConfig* c);
 
 /**
- * @brief Closes an ErrorConfg struct.
- * @param c ErrorConfg struct.
+ * @brief Closes an ErrorConfig struct.
+ * @param c ErrorConfig struct.
  */
 void errorClose(ErrorConfig* c);
 
