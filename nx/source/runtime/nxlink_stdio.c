@@ -37,5 +37,5 @@ int nxlinkStdio(void)
     fflush(stderr);
     dup2(sock, STDERR_FILENO);
 
-    return ret;
+    return sock;
 }
