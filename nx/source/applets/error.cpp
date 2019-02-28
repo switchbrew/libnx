@@ -23,7 +23,7 @@ void errorShow(ErrorConfig* c) {
     appletCreateLibraryApplet(&err, AppletId_error, LibAppletMode_AllForeground);
     libappletArgsCreate(&errArgs, 1);
     libappletArgsPush(&errArgs, &err);
-    libappletPushInData(&err, c, 0x1018);
+    libappletPushInData(&err, c, sizeof(ErrorConfig));
 
     appletHolderStart(&err);
     appletHolderJoin(&err);
