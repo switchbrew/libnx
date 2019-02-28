@@ -9,10 +9,7 @@
 void errorCreate(ErrorConfig* c) {
     memset(c, 0, sizeof(ErrorConfig));
     c->custom_text = false;
-    c->major_code = 2000;
-    c->minor_code = 0;
-    strcpy((char*) &c->short_description, "");
-    strcpy((char*) &c->detailed_description, "");
+    c->module = 2000;
 }
 
 void errorClose(ErrorConfig* c) {
