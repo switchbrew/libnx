@@ -194,6 +194,21 @@ Result webNewsCreate(WebCommonConfig* config, const char* url) {
     return rc;
 }
 
+Result webYouTubeVideoCreate(WebCommonConfig* config, const char* url) {
+    Result rc=0;
+    if (hosversionBefore(5,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    _webArgInitialize(config, AppletId_web, WebShimKind_Web);
+
+    rc = _webConfigSetU8(config, WebArgType_UnknownD, 1);
+    if (R_SUCCEEDED(rc)) rc = _webConfigSetFlag(config, WebArgType_YouTubeVideoFlag, true);
+    if (R_SUCCEEDED(rc)) rc = webConfigSetBootAsMediaPlayer(config, true);
+
+    if (R_SUCCEEDED(rc)) rc = _webConfigSetUrl(config, url);
+
+    return rc;
+}
+
 Result webConfigSetCallbackUrl(WebCommonConfig* config, const char* url) {
     WebShimKind shim = _webGetShimKind(config);
     if (shim != WebShimKind_Share && shim != WebShimKind_Web) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);

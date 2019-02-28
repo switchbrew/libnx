@@ -141,7 +141,7 @@ void webWifiCreate(WebWifiConfig* config, const char* conntest_url, const char* 
 Result webWifiShow(WebWifiConfig* config, WebWifiReturnValue *out);
 
 /**
- * @brief Creates the config for WebApplet. This applet uses an URL whitelist loaded from the user-process host title.
+ * @brief Creates the config for WebApplet. This applet uses an URL whitelist loaded from the user-process host title, when running under an Application. Content mounting *must* be successful otherwise the applet will throw a fatalerr.
  * @note Sets WebArgType_UnknownD, and WebArgType_Unknown12 on pre-3.0.0, to value 1.
  * @param config WebCommonConfig object.
  * @param url Initial URL navigated to by the applet.
@@ -156,6 +156,15 @@ Result webPageCreate(WebCommonConfig* config, const char* url);
  * @param url Initial URL navigated to by the applet.
  */
 Result webNewsCreate(WebCommonConfig* config, const char* url);
+
+/**
+ * @brief Creates the config for WebApplet. This is based on \ref webPageCreate, for YouTubeVideo. Hence other functions referencing \ref webPageCreate also apply to this. This uses a whitelist which essentially only allows youtube embed/ URLs (without mounting content from the host title).
+ * @note This is only available on [5.0.0+].
+ * @note Sets WebArgType_UnknownD to value 1, and sets WebArgType_YouTubeVideoFlag to true. Also uses \ref webConfigSetBootAsMediaPlayer with flag=true.
+ * @param config WebCommonConfig object.
+ * @param url Initial URL navigated to by the applet.
+ */
+Result webYouTubeVideoCreate(WebCommonConfig* config, const char* url);
 
 /**
  * @brief Sets the CallbackUrl.
