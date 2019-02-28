@@ -192,6 +192,14 @@ Result webConfigSetCallbackableUrl(WebCommonConfig* config, const char* url);
 Result webConfigSetWhitelist(WebCommonConfig* config, const char* whitelist);
 
 /**
+ * @brief Sets the account UserID. Controls which user-specific savedata to mount.
+ * @note Only available with config created by \ref webPageCreate, or with Share-applet/Lobby-applet.
+ * @param config WebCommonConfig object.
+ * @param userID Account userID
+ */
+Result webConfigSetUserID(WebCommonConfig* config, u128 userID);
+
+/**
  * @brief Sets the EcClientCert flag.
  * @note Only available with config created by \ref webPageCreate or with Offline-applet.
  * @note Used automatically by \ref webNewsCreate with flag=true.

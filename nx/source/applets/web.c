@@ -141,12 +141,12 @@ static Result _webTLVWrite(WebCommonTLVStorage *storage, u16 type, const void* a
     return 0;
 }
 
-static Result _webTLVSet(WebCommonTLVStorage *storage, u16 type, const void* argdata, u16 argdata_size) {
-    return _webTLVWrite(storage, type, argdata, argdata_size, argdata_size);
+static Result _webTLVSet(WebCommonConfig* config, u16 type, const void* argdata, u16 argdata_size) {
+    return _webTLVWrite(&config->arg, type, argdata, argdata_size, argdata_size);
 }
 
 static Result _webConfigSetU8(WebCommonConfig* config, u16 type, u8 arg) {
-    return _webTLVSet(&config->arg, type, &arg, sizeof(arg));
+    return _webTLVSet(config, type, &arg, sizeof(arg));
 }
 
 static Result _webConfigSetFlag(WebCommonConfig* config, u16 type, bool arg) {
@@ -154,7 +154,7 @@ static Result _webConfigSetFlag(WebCommonConfig* config, u16 type, bool arg) {
 }
 
 static Result _webConfigSetU32(WebCommonConfig* config, u16 type, u32 arg) {
-    return _webTLVSet(&config->arg, type, &arg, sizeof(arg));
+    return _webTLVSet(config, type, &arg, sizeof(arg));
 }
 
 static Result _webConfigSetString(WebCommonConfig* config, u16 type, const char* str, u16 argdata_size_total) {
@@ -223,6 +223,12 @@ Result webConfigSetCallbackableUrl(WebCommonConfig* config, const char* url) {
 Result webConfigSetWhitelist(WebCommonConfig* config, const char* whitelist) {
     if (_webGetShimKind(config) != WebShimKind_Web) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     return _webConfigSetString(config, WebArgType_Whitelist, whitelist, 0x1000);
+}
+
+Result webConfigSetUserID(WebCommonConfig* config, u128 userID) {
+    WebShimKind shim = _webGetShimKind(config);
+    if (shim != WebShimKind_Share && shim != WebShimKind_Web && shim != WebShimKind_Lobby) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    return _webTLVSet(config, WebArgType_UserID, &userID, sizeof(userID));
 }
 
 Result webConfigSetEcClientCert(WebCommonConfig* config, bool flag) {
