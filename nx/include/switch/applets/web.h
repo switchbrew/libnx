@@ -91,7 +91,7 @@ typedef enum {
     WebArgType_LeftStickMode                            = 0x1B,   ///< [1.0.0+] u32 enum *LeftStickMode
     WebArgType_KeyRepeatFrame0                          = 0x1C,   ///< [1.0.0+] s32 KeyRepeatFrame, first param
     WebArgType_KeyRepeatFrame1                          = 0x1D,   ///< [1.0.0+] s32 KeyRepeatFrame, second param
-    WebArgType_BootAsMediaPlayerInverted                = 0x1E,   ///< [1.0.0+] u8 bool. With News this is set after BootAsMediaPlayer with the value inverted.
+    WebArgType_BootAsMediaPlayerInverted                = 0x1E,   ///< [1.0.0+] u8 bool. With News on [3.0.0+] this is set after BootAsMediaPlayer with the value inverted.
     WebArgType_DisplayUrlKind                           = 0x1F,   ///< [1.0.0+] u8 bool, DisplayUrlKind (value = (input_enumval==0x1)).
     WebArgType_BootAsMediaPlayer                        = 0x21,   ///< [2.0.0+] u8 bool
     WebArgType_ShopJump                                 = 0x22,   ///< [2.0.0+] u8 bool
@@ -290,6 +290,7 @@ Result webConfigSetDisplayUrlKind(WebCommonConfig* config, bool kind);
 /**
  * @brief Sets the BootAsMediaPlayer flag.
  * @note Only available with config created by \ref webPageCreate or with Offline-applet, on [2.0.0+].
+ * @note With config created by \ref webNewsCreate on [3.0.0+], this also sets WebArgType_BootAsMediaPlayerInverted to !flag.
  * @param config WebCommonConfig object.
  * @param flag Flag. true = BootAsMediaPlayer, false = BootAsWebPage.
  */

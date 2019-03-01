@@ -141,8 +141,49 @@ static Result _webTLVWrite(WebCommonTLVStorage *storage, u16 type, const void* a
     return 0;
 }
 
+static Result _webTLVRead(WebCommonTLVStorage *storage, u16 type, void* argdata, u16 argdata_size) {
+    Result rc = MAKERESULT(Module_Libnx, LibnxError_BadInput);
+    size_t i, count, offset;
+    u8 *dataptr = storage->data;
+    WebArgHeader *hdr = (WebArgHeader*)dataptr;
+    WebArgTLV *tlv;
+    size_t size = sizeof(storage->data);
+
+    offset = sizeof(WebArgHeader);
+    if (size < offset) return rc;
+
+    count = hdr->total_entries;
+    tlv = (WebArgTLV*)&dataptr[offset];
+
+    for (i=0; i<count; i++) {
+        if (size < offset + sizeof(WebArgTLV)) return rc;
+
+        tlv = (WebArgTLV*)&dataptr[offset];
+
+        if (tlv->type == type) {
+            if (tlv->size != argdata_size) return rc;
+            break;
+        }
+
+        offset+= sizeof(WebArgTLV) + tlv->size;
+        if (size < offset) return rc;
+    }
+
+    if (i==count) return MAKERESULT(Module_Libnx, LibnxError_NotFound);
+    if (size < offset + sizeof(WebArgTLV) + argdata_size) return rc;
+
+    offset+= sizeof(WebArgTLV);
+    memcpy(argdata, &dataptr[offset], argdata_size);
+
+    return 0;
+}
+
 static Result _webTLVSet(WebCommonConfig* config, u16 type, const void* argdata, u16 argdata_size) {
     return _webTLVWrite(&config->arg, type, argdata, argdata_size, argdata_size);
+}
+
+static Result _webConfigGet(WebCommonConfig* config, u16 type, void* argdata, u16 argdata_size) {
+    return _webTLVRead(&config->arg, type, argdata, argdata_size);
 }
 
 static Result _webConfigSetU8(WebCommonConfig* config, u16 type, u8 arg) {
@@ -166,6 +207,17 @@ static Result _webConfigSetString(WebCommonConfig* config, u16 type, const char*
 
 static Result _webConfigSetUrl(WebCommonConfig* config, const char* url) {
     return _webConfigSetString(config, WebArgType_Url, url, 0xc00);
+}
+
+static Result _webConfigGetU8(WebCommonConfig* config, u16 type, u8 *arg) {
+    return _webConfigGet(config, type, arg, sizeof(*arg));
+}
+
+static Result _webConfigGetFlag(WebCommonConfig* config, u16 type, bool *arg) {
+    u8 tmpdata=0;
+    Result rc = _webConfigGetU8(config, type, &tmpdata);
+    *arg = tmpdata!=0;
+    return rc;
 }
 
 Result webPageCreate(WebCommonConfig* config, const char* url) {
@@ -306,11 +358,19 @@ Result webConfigSetDisplayUrlKind(WebCommonConfig* config, bool kind) {
 }
 
 Result webConfigSetBootAsMediaPlayer(WebCommonConfig* config, bool flag) {
+    Result rc=0;
     WebShimKind shim = _webGetShimKind(config);
     if (shim != WebShimKind_Offline && shim != WebShimKind_Web) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     if (hosversionBefore(2,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    return _webConfigSetFlag(config, WebArgType_BootAsMediaPlayer, flag);
-    //TODO: Need to check for News somehow and set WebArgType_BootAsMediaPlayerInverted.
+    rc = _webConfigSetFlag(config, WebArgType_BootAsMediaPlayer, flag);
+
+    if (R_SUCCEEDED(rc) && config->version >= 0x30000) {//Check if the NewsFlag is set on [3.0.0+], and set WebArgType_BootAsMediaPlayerInverted if so.
+        bool tmpval=false;
+        Result tmprc = _webConfigGetFlag(config, WebArgType_NewsFlag, &tmpval);
+        if (R_SUCCEEDED(tmprc) && tmpval) rc = _webConfigSetFlag(config, WebArgType_BootAsMediaPlayerInverted, !flag);
+    }
+
+    return rc;
 }
 
 Result webConfigSetShopJump(WebCommonConfig* config, bool flag) {
