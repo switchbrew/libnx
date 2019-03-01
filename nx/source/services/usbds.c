@@ -1129,7 +1129,7 @@ Result usbDsEndpoint_GetReportData(UsbDsEndpoint* endpoint, UsbDsReportData *out
     return _usbDsGetReport(&endpoint->h, 3, out);
 }
 
-Result usbDsEndpoint_StallCtrl(UsbDsEndpoint* endpoint)
+Result usbDsEndpoint_Stall(UsbDsEndpoint* endpoint)
 {
     if(!endpoint->initialized)return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 

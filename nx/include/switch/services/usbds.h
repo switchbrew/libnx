@@ -115,6 +115,6 @@ void usbDsEndpoint_Close(UsbDsEndpoint* endpoint);
 Result usbDsEndpoint_Cancel(UsbDsEndpoint* endpoint);
 Result usbDsEndpoint_PostBufferAsync(UsbDsEndpoint* endpoint, void* buffer, size_t size, u32* urbId);
 Result usbDsEndpoint_GetReportData(UsbDsEndpoint* endpoint, UsbDsReportData* out);
-Result usbDsEndpoint_StallCtrl(UsbDsEndpoint* endpoint);
+Result usbDsEndpoint_Stall(UsbDsEndpoint* endpoint);
 Result usbDsEndpoint_SetZlt(UsbDsEndpoint* endpoint, bool zlt); // Sets Zero Length Termination for endpoint
 
