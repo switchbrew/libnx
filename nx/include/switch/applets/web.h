@@ -78,6 +78,7 @@ typedef enum {
     WebArgType_UnknownD                                 = 0xD,    ///< [1.0.0+] u8
     WebArgType_UserID                                   = 0xE,    ///< [1.0.0+] u128 userID, controls which user-specific savedata to mount.
     WebArgType_AlbumEntry                               = 0xF,    ///< [1.0.0+] Share-applet caps AlbumEntry
+    WebArgType_ScreenShot                               = 0x10,   ///< [1.0.0+] u8 bool
     WebArgType_EcClientCert                             = 0x11,   ///< [1.0.0+] u8 bool
     WebArgType_Unknown12                                = 0x12,   ///< [1.0.0+] u8
     WebArgType_PlayReport                               = 0x13,   ///< [1.0.0+] u8 bool
@@ -208,6 +209,14 @@ Result webConfigSetWhitelist(WebCommonConfig* config, const char* whitelist);
  * @param userID Account userID
  */
 Result webConfigSetUserID(WebCommonConfig* config, u128 userID);
+
+/**
+ * @brief Sets the ScreenShot flag, which controls whether screen-shot capture is allowed.
+ * @note Only available with config created by \ref webPageCreate.
+ * @param config WebCommonConfig object.
+ * @param flag Flag
+ */
+Result webConfigSetScreenShot(WebCommonConfig* config, bool flag);
 
 /**
  * @brief Sets the EcClientCert flag.

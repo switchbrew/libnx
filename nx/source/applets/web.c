@@ -251,10 +251,15 @@ Result webConfigSetUserID(WebCommonConfig* config, u128 userID) {
     return _webTLVSet(config, WebArgType_UserID, &userID, sizeof(userID));
 }
 
+Result webConfigSetScreenShot(WebCommonConfig* config, bool flag) {
+    if (_webGetShimKind(config) != WebShimKind_Web) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    return _webConfigSetFlag(config, WebArgType_ScreenShot, flag);
+}
+
 Result webConfigSetEcClientCert(WebCommonConfig* config, bool flag) {
     WebShimKind shim = _webGetShimKind(config);
     if (shim != WebShimKind_Offline && shim != WebShimKind_Web) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-    return _webConfigSetU8(config, WebArgType_EcClientCert, flag);
+    return _webConfigSetFlag(config, WebArgType_EcClientCert, flag);
 }
 
 Result webConfigSetBootDisplayKind(WebCommonConfig* config, u32 kind) {
