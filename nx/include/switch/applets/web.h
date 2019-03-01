@@ -107,7 +107,7 @@ typedef enum {
     WebArgType_WebAudio                                 = 0x2E,   ///< [4.0.0+] u8 bool
     WebArgType_2F                                       = 0x2F,   ///< [5.0.0+] u8
     WebArgType_YouTubeVideoFlag                         = 0x31,   ///< [5.0.0+] u8 bool Indicates that the built-in whitelist for YouTubeVideo should be used.
-    WebArgType_FooterFixedKind                          = 0x32,   ///< [5.0.0+] u32 enum *WebFooterFixedKind
+    WebArgType_FooterFixedKind                          = 0x32,   ///< [5.0.0+] u32 enum *FooterFixedKind
     WebArgType_PageFade                                 = 0x33,   ///< [5.0.0+] u8 bool
     WebArgType_MediaCreatorApplicationRatingAge         = 0x34,   ///< [5.0.0+] Share-applet 0x20-byte s8 array, MediaCreatorApplicationRatingAge.
     WebArgType_BootLoadingIcon                          = 0x35,   ///< [5.0.0+] u8 bool
@@ -296,12 +296,36 @@ Result webConfigSetBootAsMediaPlayer(WebCommonConfig* config, bool flag);
 Result webConfigSetShopJump(WebCommonConfig* config, bool flag);
 
 /**
+ * @brief Sets the MediaPlayerUserGestureRestriction flag.
+ * @note Only available with config created by \ref webPageCreate on [2.0.0+].
+ * @param config WebCommonConfig object.
+ * @param flag Flag
+ */
+Result webConfigSetMediaPlayerUserGestureRestriction(WebCommonConfig* config, bool flag);
+
+/**
  * @brief Sets the LobbyParameter.
  * @note Only available with config created by \ref webLobbyCreate.
  * @param config WebCommonConfig object.
  * @param str String
  */
 Result webConfigSetLobbyParameter(WebCommonConfig* config, const char* str);
+
+/**
+ * @brief Sets whether JsExtension is enabled.
+ * @note Only available with config created by \ref webPageCreate or with Offline-applet, on [3.0.0+].
+ * @param config WebCommonConfig object.
+ * @param flag Flag
+ */
+Result webConfigSetJsExtension(WebCommonConfig* config, bool flag);
+
+/**
+ * @brief Sets the TouchEnabledOnContents flag.
+ * @note Only available with config created by \ref webPageCreate or with Offline-applet, on [4.0.0+].
+ * @param config WebCommonConfig object.
+ * @param flag Flag
+ */
+Result webConfigSetTouchEnabledOnContents(WebCommonConfig* config, bool flag);
 
 /**
  * @brief Sets the UserAgentAdditionalString. " " followed by this string are appended to the normal User-Agent string.
@@ -318,6 +342,54 @@ Result webConfigSetUserAgentAdditionalString(WebCommonConfig* config, const char
  * @param flag Flag
  */
 Result webConfigSetMediaPlayerAutoClose(WebCommonConfig* config, bool flag);
+
+/**
+ * @brief Sets whether PageCache is enabled.
+ * @note Only available with config created by \ref webPageCreate or with Offline-applet, on [4.0.0+].
+ * @param config WebCommonConfig object.
+ * @param flag Flag
+ */
+Result webConfigSetPageCache(WebCommonConfig* config, bool flag);
+
+/**
+ * @brief Sets whether WebAudio is enabled.
+ * @note Only available with config created by \ref webPageCreate or with Offline-applet, on [4.0.0+].
+ * @param config WebCommonConfig object.
+ * @param flag Flag
+ */
+Result webConfigSetWebAudio(WebCommonConfig* config, bool flag);
+
+/**
+ * @brief Sets the FooterFixedKind.
+ * @note Only available with config created by \ref webPageCreate or with Offline-applet, on [5.0.0+].
+ * @param config WebCommonConfig object.
+ * @param kind Kind, different enums for Web and Offline.
+ */
+Result webConfigSetFooterFixedKind(WebCommonConfig* config, u32 kind);
+
+/**
+ * @brief Sets the PageFade flag.
+ * @note Only available with config created by \ref webPageCreate or with Offline-applet, on [5.0.0+].
+ * @param config WebCommonConfig object.
+ * @param flag Flag
+ */
+Result webConfigSetPageFade(WebCommonConfig* config, bool flag);
+
+/**
+ * @brief Sets the BootLoadingIcon flag.
+ * @note Only available with Offline-applet on [5.0.0+].
+ * @param config WebCommonConfig object.
+ * @param flag Flag
+ */
+Result webConfigSetBootLoadingIcon(WebCommonConfig* config, bool flag);
+
+/**
+ * @brief Sets the PageScrollIndicator flag.
+ * @note Only available with config created by \ref webPageCreate or with Offline-applet, on [5.0.0+].
+ * @param config WebCommonConfig object.
+ * @param flag Flag
+ */
+Result webConfigSetPageScrollIndicator(WebCommonConfig* config, bool flag);
 
 /**
  * @brief Launches the {web applet} with the specified config and waits for it to exit.

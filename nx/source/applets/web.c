@@ -305,6 +305,7 @@ Result webConfigSetBootAsMediaPlayer(WebCommonConfig* config, bool flag) {
     if (shim != WebShimKind_Offline && shim != WebShimKind_Web) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     if (hosversionBefore(2,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     return _webConfigSetFlag(config, WebArgType_BootAsMediaPlayer, flag);
+    //TODO: Need to check for News somehow and set WebArgType_BootAsMediaPlayerInverted.
 }
 
 Result webConfigSetShopJump(WebCommonConfig* config, bool flag) {
@@ -313,9 +314,29 @@ Result webConfigSetShopJump(WebCommonConfig* config, bool flag) {
     return _webConfigSetFlag(config, WebArgType_ShopJump, flag);
 }
 
+Result webConfigSetMediaPlayerUserGestureRestriction(WebCommonConfig* config, bool flag) {
+    if (_webGetShimKind(config) != WebShimKind_Web) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(2,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    return _webConfigSetFlag(config, WebArgType_MediaPlayerUserGestureRestriction, flag);
+}
+
 Result webConfigSetLobbyParameter(WebCommonConfig* config, const char* str) {
     if (_webGetShimKind(config) != WebShimKind_Lobby) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     return _webConfigSetString(config, WebArgType_LobbyParameter, str, 0x100);
+}
+
+Result webConfigSetJsExtension(WebCommonConfig* config, bool flag) {
+    WebShimKind shim = _webGetShimKind(config);
+    if (shim != WebShimKind_Offline && shim != WebShimKind_Web) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(3,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    return _webConfigSetFlag(config, WebArgType_JsExtension, flag);
+}
+
+Result webConfigSetTouchEnabledOnContents(WebCommonConfig* config, bool flag) {
+    WebShimKind shim = _webGetShimKind(config);
+    if (shim != WebShimKind_Offline && shim != WebShimKind_Web) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(4,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    return _webConfigSetFlag(config, WebArgType_TouchEnabledOnContents, flag);
 }
 
 Result webConfigSetUserAgentAdditionalString(WebCommonConfig* config, const char* str) {
@@ -328,6 +349,46 @@ Result webConfigSetMediaPlayerAutoClose(WebCommonConfig* config, bool flag) {
     if (_webGetShimKind(config) != WebShimKind_Web) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     if (hosversionBefore(4,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     return _webConfigSetFlag(config, WebArgType_MediaPlayerAutoClose, flag);
+}
+
+Result webConfigSetPageCache(WebCommonConfig* config, bool flag) {
+    WebShimKind shim = _webGetShimKind(config);
+    if (shim != WebShimKind_Offline && shim != WebShimKind_Web) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(4,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    return _webConfigSetFlag(config, WebArgType_PageCache, flag);
+}
+
+Result webConfigSetWebAudio(WebCommonConfig* config, bool flag) {
+    WebShimKind shim = _webGetShimKind(config);
+    if (shim != WebShimKind_Offline && shim != WebShimKind_Web) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(4,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    return _webConfigSetFlag(config, WebArgType_WebAudio, flag);
+}
+
+Result webConfigSetFooterFixedKind(WebCommonConfig* config, u32 kind) {
+    WebShimKind shim = _webGetShimKind(config);
+    if (shim != WebShimKind_Offline && shim != WebShimKind_Web) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    return _webConfigSetU32(config, WebArgType_FooterFixedKind, kind);
+}
+
+Result webConfigSetPageFade(WebCommonConfig* config, bool flag) {
+    WebShimKind shim = _webGetShimKind(config);
+    if (shim != WebShimKind_Offline && shim != WebShimKind_Web) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(5,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    return _webConfigSetFlag(config, WebArgType_PageFade, flag);
+}
+
+Result webConfigSetBootLoadingIcon(WebCommonConfig* config, bool flag) {
+    if (_webGetShimKind(config) != WebShimKind_Offline) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(5,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    return _webConfigSetFlag(config, WebArgType_BootLoadingIcon, flag);
+}
+
+Result webConfigSetPageScrollIndicator(WebCommonConfig* config, bool flag) {
+    WebShimKind shim = _webGetShimKind(config);
+    if (shim != WebShimKind_Offline && shim != WebShimKind_Web) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(5,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    return _webConfigSetFlag(config, WebArgType_PageScrollIndicator, flag);
 }
 
 Result webConfigShow(WebCommonConfig* config, WebCommonReturnValue *out) {
