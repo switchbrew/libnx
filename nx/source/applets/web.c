@@ -261,6 +261,25 @@ Result webYouTubeVideoCreate(WebCommonConfig* config, const char* url) {
     return rc;
 }
 
+Result webShareCreate(WebCommonConfig* config, WebShareStartPage page) {
+    Result rc=0;
+    if (hosversionBefore(2,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    _webArgInitialize(config, AppletId_loginShare, WebShimKind_Share);
+
+    rc = webConfigSetLeftStickMode(config, 1);
+    if (R_SUCCEEDED(rc)) rc = webConfigSetUserID(config, 0);
+    if (R_SUCCEEDED(rc)) rc = webConfigSetDisplayUrlKind(config, true);
+
+    if (R_SUCCEEDED(rc)) rc = _webConfigSetU8(config, WebArgType_Unknown14, 1);
+    if (R_SUCCEEDED(rc)) rc = _webConfigSetU8(config, WebArgType_Unknown15, 1);
+    if (R_SUCCEEDED(rc)) rc = webConfigSetBootDisplayKind(config, WebBootDisplayKind_Unknown3);
+
+    if (R_SUCCEEDED(rc)) rc = _webConfigSetU32(config, WebArgType_ShareStartPage, page);
+
+    return rc;
+}
+
 Result webLobbyCreate(WebCommonConfig* config) {
     Result rc=0;
     if (hosversionBefore(2,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
@@ -316,7 +335,7 @@ Result webConfigSetEcClientCert(WebCommonConfig* config, bool flag) {
 
 Result webConfigSetBootDisplayKind(WebCommonConfig* config, u32 kind) {
     WebShimKind shim = _webGetShimKind(config);
-    if (shim != WebShimKind_Offline && shim != WebShimKind_Web && shim != WebShimKind_Lobby) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (shim != WebShimKind_Offline && shim != WebShimKind_Share && shim != WebShimKind_Web && shim != WebShimKind_Lobby) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     return _webConfigSetU32(config, WebArgType_BootDisplayKind, kind);
 }
 
@@ -340,7 +359,7 @@ Result webConfigSetPointer(WebCommonConfig* config, bool flag) {
 
 Result webConfigSetLeftStickMode(WebCommonConfig* config, u32 mode) {
     WebShimKind shim = _webGetShimKind(config);
-    if (shim != WebShimKind_Offline && shim != WebShimKind_Web && shim != WebShimKind_Lobby) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (shim != WebShimKind_Offline && shim != WebShimKind_Share && shim != WebShimKind_Web && shim != WebShimKind_Lobby) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     return _webConfigSetU32(config, WebArgType_LeftStickMode, mode);
 }
 
@@ -354,6 +373,8 @@ Result webConfigSetKeyRepeatFrame(WebCommonConfig* config, s32 inval0, s32 inval
 }
 
 Result webConfigSetDisplayUrlKind(WebCommonConfig* config, bool kind) {
+    WebShimKind shim = _webGetShimKind(config);
+    if (shim != WebShimKind_Share && shim != WebShimKind_Web) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     return _webConfigSetFlag(config, WebArgType_DisplayUrlKind, kind);
 }
 

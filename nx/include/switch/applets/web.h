@@ -115,6 +115,12 @@ typedef enum {
     WebArgType_PageScrollIndicator                      = 0x36,   ///< [5.0.0+] u8 bool
 } WebArgType;
 
+/// This controls the initial page for ShareApplet, used by \ref webShareCreate.
+typedef enum {
+    WebShareStartPage_Default  = 0,  ///< The default "/" page.
+    WebShareStartPage_Settings = 1,  ///< The "/settings/" page.
+} WebShareStartPage;
+
 /// Kind values for \ref webConfigSetBootDisplayKind with Web applet. Controls the background color while displaying the loading screen during applet boot.
 typedef enum {
     WebBootDisplayKind_White    = 0,  ///< Default white background.
@@ -168,6 +174,16 @@ Result webNewsCreate(WebCommonConfig* config, const char* url);
 Result webYouTubeVideoCreate(WebCommonConfig* config, const char* url);
 
 /**
+ * @brief Creates the config for ShareApplet.
+ * @note Only available on [2.0.0+].
+ * @note If a non-zero userID isn't set with \ref webConfigSetUserID prior to using \ref webConfigShow, the applet will launch the profile-selector applet to select an account.
+ * @note Uses \ref webConfigSetLeftStickMode with mode=1, \ref webConfigSetUserID with userID=0, \ref webConfigSetDisplayUrlKind with kind=true, and sets WebArgType_Unknown14/WebArgType_Unknown15 to value 1. Uses \ref webConfigSetBootDisplayKind with WebBootDisplayKind_Unknown3.
+ * @param config WebCommonConfig object.
+ * @param page \ref WebShareStartPage
+ */
+Result webShareCreate(WebCommonConfig* config, WebShareStartPage page);
+
+/**
  * @brief Creates the config for LobbyApplet.
  * @note Only available on [2.0.0+].
  * @note If a non-zero userID isn't set with \ref webConfigSetUserID prior to using \ref webConfigShow, the applet will launch the profile-selector applet to select an account.
@@ -204,7 +220,7 @@ Result webConfigSetWhitelist(WebCommonConfig* config, const char* whitelist);
 /**
  * @brief Sets the account UserID. Controls which user-specific savedata to mount.
  * @note Only available with config created by \ref webPageCreate, \ref webLobbyCreate, or with Share-applet.
- * @note Used automatically by \ref webLobbyCreate with userID=0.
+ * @note Used automatically by \ref webShareCreate and \ref webLobbyCreate with userID=0.
  * @param config WebCommonConfig object.
  * @param userID Account userID
  */
@@ -229,7 +245,8 @@ Result webConfigSetEcClientCert(WebCommonConfig* config, bool flag);
 
 /**
  * @brief Sets the BootDisplayKind.
- * @note Only available with config created by \ref webPageCreate, \ref webLobbyCreate, or with Offline-applet.
+ * @note Only available with config created by \ref webShareCreate, \ref webPageCreate, \ref webLobbyCreate, or with Offline-applet.
+ * @note Used automatically by \ref webShareCreate with kind=WebBootDisplayKind_Unknown3.
  * @note Used automatically by \ref webLobbyCreate with kind=WebBootDisplayKind_Unknown4.
  * @param config WebCommonConfig object.
  * @param kind Kind, different enums for Web (\ref WebBootDisplayKind) and Offline.
@@ -264,8 +281,8 @@ Result webConfigSetPointer(WebCommonConfig* config, bool flag);
 
 /**
  * @brief Sets the LeftStickMode.
- * @note Only available with config created by \ref webPageCreate, \ref webLobbyCreate, or with Offline-applet.
- * @note Used automatically by \ref webLobbyCreate with mode=1.
+ * @note Only available with config created by \ref webShareCreate, \ref webPageCreate, \ref webLobbyCreate, or with Offline-applet.
+ * @note Used automatically by \ref webShareCreate and \ref webLobbyCreate with mode=1.
  * @param config WebCommonConfig object.
  * @param mode Mode, different enums for Web and Offline.
  */
@@ -282,7 +299,9 @@ Result webConfigSetKeyRepeatFrame(WebCommonConfig* config, s32 inval0, s32 inval
 
 /**
  * @brief Sets the DisplayUrlKind.
+ * @note Only available with config created by \ref webShareCreate or \ref webPageCreate.
  * @param config WebCommonConfig object.
+ * @note Used automatically by \ref webShareCreate with kind=true.
  * @param kind Kind
  */
 Result webConfigSetDisplayUrlKind(WebCommonConfig* config, bool kind);
