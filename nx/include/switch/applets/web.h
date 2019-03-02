@@ -7,6 +7,7 @@
 #pragma once
 #include "../types.h"
 #include "../services/applet.h"
+#include "../services/caps.h"
 
 /// This indicates the type of web-applet.
 typedef enum {
@@ -227,6 +228,14 @@ Result webConfigSetWhitelist(WebCommonConfig* config, const char* whitelist);
 Result webConfigSetUserID(WebCommonConfig* config, u128 userID);
 
 /**
+ * @brief Sets the CapsAlbumEntry.
+ * @note Only available with config created by \ref webShareCreate.
+ * @param config WebCommonConfig object.
+ * @param entry \ref CapsAlbumEntry
+ */
+Result webConfigSetAlbumEntry(WebCommonConfig* config, CapsAlbumEntry *entry);
+
+/**
  * @brief Sets the ScreenShot flag, which controls whether screen-shot capture is allowed.
  * @note Only available with config created by \ref webPageCreate.
  * @param config WebCommonConfig object.
@@ -339,6 +348,14 @@ Result webConfigSetMediaPlayerUserGestureRestriction(WebCommonConfig* config, bo
  * @param str String
  */
 Result webConfigSetLobbyParameter(WebCommonConfig* config, const char* str);
+
+/**
+ * @brief Sets the CapsApplicationAlbumEntry.
+ * @note Only available with config created by \ref webShareCreate on [3.0.0+].
+ * @param config WebCommonConfig object.
+ * @param entry \ref CapsApplicationAlbumEntry
+ */
+Result webConfigSetApplicationAlbumEntry(WebCommonConfig* config, CapsApplicationAlbumEntry *entry);
 
 /**
  * @brief Sets whether JsExtension is enabled.

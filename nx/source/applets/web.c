@@ -2,6 +2,7 @@
 #include <malloc.h>
 #include "types.h"
 #include "result.h"
+#include "services/caps.h"
 #include "services/applet.h"
 #include "applets/libapplet.h"
 #include "applets/web.h"
@@ -322,6 +323,11 @@ Result webConfigSetUserID(WebCommonConfig* config, u128 userID) {
     return _webTLVSet(config, WebArgType_UserID, &userID, sizeof(userID));
 }
 
+Result webConfigSetAlbumEntry(WebCommonConfig* config, CapsAlbumEntry *entry) {
+    if (_webGetShimKind(config) != WebShimKind_Share) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    return _webTLVSet(config, WebArgType_AlbumEntry, entry, sizeof(*entry));
+}
+
 Result webConfigSetScreenShot(WebCommonConfig* config, bool flag) {
     if (_webGetShimKind(config) != WebShimKind_Web) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     return _webConfigSetFlag(config, WebArgType_ScreenShot, flag);
@@ -409,6 +415,12 @@ Result webConfigSetMediaPlayerUserGestureRestriction(WebCommonConfig* config, bo
 Result webConfigSetLobbyParameter(WebCommonConfig* config, const char* str) {
     if (_webGetShimKind(config) != WebShimKind_Lobby) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     return _webConfigSetString(config, WebArgType_LobbyParameter, str, 0x100);
+}
+
+Result webConfigSetApplicationAlbumEntry(WebCommonConfig* config, CapsApplicationAlbumEntry *entry) {
+    if (_webGetShimKind(config) != WebShimKind_Share) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(3,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    return _webTLVSet(config, WebArgType_ApplicationAlbumEntry, entry, sizeof(*entry));
 }
 
 Result webConfigSetJsExtension(WebCommonConfig* config, bool flag) {
