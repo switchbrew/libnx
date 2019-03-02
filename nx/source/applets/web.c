@@ -264,7 +264,6 @@ Result webYouTubeVideoCreate(WebCommonConfig* config, const char* url) {
 
 Result webShareCreate(WebCommonConfig* config, WebShareStartPage page) {
     Result rc=0;
-    if (hosversionBefore(2,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     _webArgInitialize(config, AppletId_loginShare, WebShimKind_Share);
 

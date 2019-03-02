@@ -176,7 +176,6 @@ Result webYouTubeVideoCreate(WebCommonConfig* config, const char* url);
 
 /**
  * @brief Creates the config for ShareApplet.
- * @note Only available on [2.0.0+].
  * @note If a non-zero userID isn't set with \ref webConfigSetUserID prior to using \ref webConfigShow, the applet will launch the profile-selector applet to select an account.
  * @note Uses \ref webConfigSetLeftStickMode with mode=1, \ref webConfigSetUserID with userID=0, \ref webConfigSetDisplayUrlKind with kind=true, and sets WebArgType_Unknown14/WebArgType_Unknown15 to value 1. Uses \ref webConfigSetBootDisplayKind with WebBootDisplayKind_Unknown3.
  * @param config WebCommonConfig object.
