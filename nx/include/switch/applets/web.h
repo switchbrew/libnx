@@ -352,7 +352,7 @@ Result webConfigSetLobbyParameter(WebCommonConfig* config, const char* str);
  * @brief Sets the Share CapsApplicationAlbumEntry.
  * @note Only available with config created by \ref webShareCreate on [3.0.0+].
  * @param config WebCommonConfig object.
- * @param entry \ref CapsApplicationAlbumEntry
+ * @param entry \ref CapsApplicationAlbumEntry, see also capssu.h.
  */
 Result webConfigSetApplicationAlbumEntry(WebCommonConfig* config, CapsApplicationAlbumEntry *entry);
 
