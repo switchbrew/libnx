@@ -429,6 +429,12 @@ Result webConfigSetJsExtension(WebCommonConfig* config, bool flag) {
     return _webConfigSetFlag(config, WebArgType_JsExtension, flag);
 }
 
+Result webConfigSetAdditionalCommentText(WebCommonConfig* config, const char* str) {
+    if (_webGetShimKind(config) != WebShimKind_Share) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(4,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    return _webConfigSetString(config, WebArgType_AdditionalCommentText, str, 0x100);
+}
+
 Result webConfigSetTouchEnabledOnContents(WebCommonConfig* config, bool flag) {
     WebShimKind shim = _webGetShimKind(config);
     if (shim != WebShimKind_Offline && shim != WebShimKind_Web) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
@@ -440,6 +446,12 @@ Result webConfigSetUserAgentAdditionalString(WebCommonConfig* config, const char
     if (_webGetShimKind(config) != WebShimKind_Web) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     if (hosversionBefore(4,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     return _webConfigSetString(config, WebArgType_UserAgentAdditionalString, str, 0x80);
+}
+
+Result webConfigSetAdditionalMediaData(WebCommonConfig* config, const u8* data, size_t size) {
+    if (_webGetShimKind(config) != WebShimKind_Share) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(4,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    return _webTLVWrite(&config->arg, WebArgType_AdditionalMediaData, data, size, 0x10);
 }
 
 Result webConfigSetMediaPlayerAutoClose(WebCommonConfig* config, bool flag) {
@@ -473,6 +485,12 @@ Result webConfigSetPageFade(WebCommonConfig* config, bool flag) {
     if (shim != WebShimKind_Offline && shim != WebShimKind_Web) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     if (hosversionBefore(5,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     return _webConfigSetFlag(config, WebArgType_PageFade, flag);
+}
+
+Result webConfigSetMediaCreatorApplicationRatingAge(WebCommonConfig* config, const s8 *data) {
+    if (_webGetShimKind(config) != WebShimKind_Share) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(5,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    return _webTLVSet(config, WebArgType_MediaCreatorApplicationRatingAge, data, 0x20);
 }
 
 Result webConfigSetBootLoadingIcon(WebCommonConfig* config, bool flag) {

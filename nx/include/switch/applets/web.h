@@ -227,7 +227,7 @@ Result webConfigSetWhitelist(WebCommonConfig* config, const char* whitelist);
 Result webConfigSetUserID(WebCommonConfig* config, u128 userID);
 
 /**
- * @brief Sets the CapsAlbumEntry.
+ * @brief Sets the Share CapsAlbumEntry.
  * @note Only available with config created by \ref webShareCreate.
  * @param config WebCommonConfig object.
  * @param entry \ref CapsAlbumEntry
@@ -349,7 +349,7 @@ Result webConfigSetMediaPlayerUserGestureRestriction(WebCommonConfig* config, bo
 Result webConfigSetLobbyParameter(WebCommonConfig* config, const char* str);
 
 /**
- * @brief Sets the CapsApplicationAlbumEntry.
+ * @brief Sets the Share CapsApplicationAlbumEntry.
  * @note Only available with config created by \ref webShareCreate on [3.0.0+].
  * @param config WebCommonConfig object.
  * @param entry \ref CapsApplicationAlbumEntry
@@ -363,6 +363,14 @@ Result webConfigSetApplicationAlbumEntry(WebCommonConfig* config, CapsApplicatio
  * @param flag Flag
  */
 Result webConfigSetJsExtension(WebCommonConfig* config, bool flag);
+
+/**
+ * @brief Sets the Share AdditionalCommentText.
+ * @note Only available with config created by \ref webShareCreate on [4.0.0+].
+ * @param config WebCommonConfig object.
+ * @param str String
+ */
+Result webConfigSetAdditionalCommentText(WebCommonConfig* config, const char* str);
 
 /**
  * @brief Sets the TouchEnabledOnContents flag.
@@ -379,6 +387,15 @@ Result webConfigSetTouchEnabledOnContents(WebCommonConfig* config, bool flag);
  * @param str String
  */
 Result webConfigSetUserAgentAdditionalString(WebCommonConfig* config, const char* str);
+
+/**
+ * @brief Sets the Share AdditionalMediaData.
+ * @note Only available with config created by \ref webShareCreate on [4.0.0+].
+ * @param config WebCommonConfig object.
+ * @param data Input data
+ * @param size Size of the input data, max size is 0x10.
+ */
+Result webConfigSetAdditionalMediaData(WebCommonConfig* config, const u8* data, size_t size);
 
 /**
  * @brief Sets the MediaPlayerAutoClose flag.
@@ -419,6 +436,14 @@ Result webConfigSetFooterFixedKind(WebCommonConfig* config, u32 kind);
  * @param flag Flag
  */
 Result webConfigSetPageFade(WebCommonConfig* config, bool flag);
+
+/**
+ * @brief Sets the Share MediaCreatorApplicationRatingAge.
+ * @note Only available with config created by \ref webShareCreate on [5.0.0+].
+ * @param config WebCommonConfig object.
+ * @param data 0x20-byte input data
+ */
+Result webConfigSetMediaCreatorApplicationRatingAge(WebCommonConfig* config, const s8 *data);
 
 /**
  * @brief Sets the BootLoadingIcon flag.
