@@ -13,6 +13,12 @@ typedef struct {
     u8 unk_x4[0x3c];
 } CapsScreenShotAttribute;
 
+/// AlbumEntry
+typedef struct {
+    u8 unk_x0[0x20];
+} CapsAlbumEntry;
+
+/// ApplicationAlbumEntry
 typedef struct {
     u8 unk_x0[0x20];
 } CapsApplicationAlbumEntry;
