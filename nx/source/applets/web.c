@@ -506,7 +506,23 @@ Result webConfigSetPageScrollIndicator(WebCommonConfig* config, bool flag) {
     return _webConfigSetFlag(config, WebArgType_PageScrollIndicator, flag);
 }
 
-Result webConfigShow(WebCommonConfig* config, WebCommonReturnValue *out) {
-    return _webShow(config->appletid, config->version, &config->arg, sizeof(config->arg), out, sizeof(*out));
+Result webConfigShow(WebCommonConfig* config, WebCommonReply *out) {
+    void* reply;
+    size_t size;
+
+    // ShareApplet on [3.0.0+] uses TLV storage for the reply, while older versions + everything else uses *ReturnValue.
+    memset(out, 0, sizeof(*out));
+    if (config->version >= 0x30000 && _webGetShimKind(config) == WebShimKind_Share) out->type = true;
+
+    if (!out->type) {
+        reply = &out->ret;
+        size = sizeof(out->ret);
+    }
+    else {
+        reply = &out->storage;
+        size = sizeof(out->storage);
+    }
+
+    return _webShow(config->appletid, config->version, &config->arg, sizeof(config->arg), reply, size);
 }
 

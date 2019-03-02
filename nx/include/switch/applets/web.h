@@ -68,6 +68,12 @@ typedef struct {
     u32 version;
 } WebCommonConfig;
 
+typedef struct {
+    bool type;                     ///< false = ret, true = storage.
+    WebCommonReturnValue ret;
+    WebCommonTLVStorage storage;
+} WebCommonReply;
+
 /// Types for \ref WebArgTLV.
 typedef enum {
     WebArgType_Url                                      = 0x1,    ///< [1.0.0+] String, size 0xC00. Initial URL.
@@ -466,5 +472,5 @@ Result webConfigSetPageScrollIndicator(WebCommonConfig* config, bool flag);
  * @param config WebCommonConfig object.
  * @param out Optional output applet reply data, can be NULL.
  */
-Result webConfigShow(WebCommonConfig* config, WebCommonReturnValue *out);
+Result webConfigShow(WebCommonConfig* config, WebCommonReply *out);
 
