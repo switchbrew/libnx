@@ -8,7 +8,6 @@
 #include "services/nifm.h"
 #include "arm/atomics.h"
 #include "runtime/hosversion.h"
-#include "services/applet.h"
 
 static Service g_nifmSrv;
 static Service g_nifmIGS;
