@@ -8,6 +8,7 @@
 #include "services/nifm.h"
 #include "arm/atomics.h"
 #include "runtime/hosversion.h"
+#include "services/applet.h"
 
 static Service g_nifmSrv;
 static Service g_nifmIGS;
@@ -23,7 +24,25 @@ Result nifmInitialize(void) {
         return 0;
 
     Result rc;
-    rc = smGetService(&g_nifmSrv, "nifm:u");
+    
+    switch (appletGetAppletType()) {
+    case AppletType_None:
+        rc = smGetService(&g_nifmSrv, "nifm:s");
+        break;
+
+    case AppletType_Default:
+    case AppletType_Application:
+    case AppletType_SystemApplication:
+    default:
+        rc = smGetService(&g_nifmSrv, "nifm:u");
+        break;
+
+    case AppletType_SystemApplet:
+    case AppletType_LibraryApplet:
+    case AppletType_OverlayApplet:
+        rc = smGetService(&g_nifmSrv, "nifm:a");
+        break;
+    }    
 
     if (R_SUCCEEDED(rc)) rc = serviceConvertToDomain(&g_nifmSrv);
 
@@ -114,6 +133,41 @@ Result nifmIsWirelessCommunicationEnabled(bool* out) {
 
         if (R_SUCCEEDED(rc) && out) 
             *out = resp->out != 0;
+    }
+
+    return rc;
+}
+
+Result nifmSetWirelessCommunicationEnabled(bool enable) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u8 value;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_nifmIGS, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 16;
+    raw->value = enable;
+
+    Result rc = serviceIpcDispatch(&g_nifmIGS);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_nifmIGS, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
     }
 
     return rc;
