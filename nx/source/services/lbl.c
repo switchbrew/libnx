@@ -29,6 +29,38 @@ void lblExit(void) {
     }
 }
 
+static Result _lblCmdNoIO(u32 cmd_id) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_lblSrv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = cmd_id;
+
+    Result rc = serviceIpcDispatch(&g_lblSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_lblSrv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
 static Result _lblSwitchBacklight(u32 cmd_id, u64 fade_time) {
     IpcCommand c;
     ipcInitialize(&c);
@@ -140,44 +172,12 @@ Result lblGetCurrentBrightnessSetting(float *out_value) {
     return rc;
 }
 
-static Result _lblSetAutoBrightnessControl(u32 cmd_id) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_lblSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = cmd_id;
-
-    Result rc = serviceIpcDispatch(&g_lblSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_lblSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
-}
-
 Result lblEnableAutoBrightnessControl(void) {
-    return _lblSetAutoBrightnessControl(12);
+    return _lblCmdNoIO(12);
 }
 
 Result lblDisableAutoBrightnessControl(void) {
-    return _lblSetAutoBrightnessControl(13);    
+    return _lblCmdNoIO(13);    
 }
 
 Result lblIsAutoBrightnessControlEnabled(bool *out_value){
