@@ -29,7 +29,7 @@ void lblExit(void) {
     }
 }
 
-static Result _lblCmdNoIO(u32 cmd_id) {
+static Result _lblCmdNoIO(u64 cmd_id) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -61,7 +61,7 @@ static Result _lblCmdNoIO(u32 cmd_id) {
     return rc;
 }
 
-static Result _lblSwitchBacklight(u32 cmd_id, u64 fade_time) {
+static Result _lblSwitchBacklight(u64 cmd_id, u64 fade_time) {
     IpcCommand c;
     ipcInitialize(&c);
 
