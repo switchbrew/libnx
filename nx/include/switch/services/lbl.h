@@ -14,7 +14,7 @@ Result lblSwitchBacklightOn(u64 fade_time);
 Result lblSwitchBacklightOff(u64 fade_time);
 
 /**
- * @note The brightness goes from 0 to 1.0
+ * @note The brightness goes from 0 to 1.0.
  */
 Result lblSetCurrentBrightnessSetting(float brightness);
 Result lblGetCurrentBrightnessSetting(float *out_value);
