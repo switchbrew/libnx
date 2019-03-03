@@ -23,27 +23,14 @@ Result nifmInitialize(void) {
     if (serviceIsActive(&g_nifmSrv))
         return 0;
 
-    Result rc;
+    Result rc = smGetService(&g_nifmSrv, "nifm:s");
     
-    switch (appletGetAppletType()) {
-    case AppletType_None:
-        rc = smGetService(&g_nifmSrv, "nifm:s");
-        break;
-
-    case AppletType_Default:
-    case AppletType_Application:
-    case AppletType_SystemApplication:
-    default:
-        rc = smGetService(&g_nifmSrv, "nifm:u");
-        break;
-
-    case AppletType_SystemApplet:
-    case AppletType_LibraryApplet:
-    case AppletType_OverlayApplet:
+    if (R_FAILED(rc))
         rc = smGetService(&g_nifmSrv, "nifm:a");
-        break;
-    }    
-
+    
+    if (R_FAILED(rc))
+        rc = smGetService(&g_nifmSrv, "nifm:u");
+    
     if (R_SUCCEEDED(rc)) rc = serviceConvertToDomain(&g_nifmSrv);
 
     if (R_SUCCEEDED(rc)) {
