@@ -138,13 +138,12 @@ Result nifmSetWirelessCommunicationEnabled(bool enable) {
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 16;
-    raw->value = enable != 0;
+    raw->value = enable!= 0;
 
     Result rc = serviceIpcDispatch(&g_nifmIGS);
 
     if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-
+        IpcParsedCommand r;     
         struct {
             u64 magic;
             u64 result;
