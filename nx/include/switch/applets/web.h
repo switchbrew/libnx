@@ -74,7 +74,7 @@ typedef struct {
     WebCommonTLVStorage storage;
 } WebCommonReply;
 
-/// Types for \ref WebArgTLV.
+/// Types for \ref WebArgTLV, input storage.
 typedef enum {
     WebArgType_Url                                      = 0x1,    ///< [1.0.0+] String, size 0xC00. Initial URL.
     WebArgType_CallbackUrl                              = 0x3,    ///< [1.0.0+] String, size 0x400.
@@ -121,6 +121,19 @@ typedef enum {
     WebArgType_BootLoadingIcon                          = 0x35,   ///< [5.0.0+] u8 bool
     WebArgType_PageScrollIndicator                      = 0x36,   ///< [5.0.0+] u8 bool
 } WebArgType;
+
+/// Types for \ref WebArgTLV, output storage.
+/// Official user-processes doesn't check the TLV size for any of these.
+typedef enum {
+    WebReplyType_ExitReason          = 0x1,  ///< [3.0.0+] u32 ShareExitReason
+    WebReplyType_LastUrl             = 0x2,  ///< [3.0.0+] string
+    WebReplyType_LastUrlSize         = 0x3,  ///< [3.0.0+] u64
+    WebReplyType_SharePostResult     = 0x4,  ///< [3.0.0+] u32 SharePostResult
+    WebReplyType_PostServiceName     = 0x5,  ///< [3.0.0+] string
+    WebReplyType_PostServiceNameSize = 0x6,  ///< [3.0.0+] u64
+    WebReplyType_PostId              = 0x7,  ///< [3.0.0+] string
+    WebReplyType_PostIdSize          = 0x8,  ///< [3.0.0+] u64
+} WebReplyType;
 
 /// This controls the initial page for ShareApplet, used by \ref webShareCreate.
 typedef enum {
@@ -473,4 +486,48 @@ Result webConfigSetPageScrollIndicator(WebCommonConfig* config, bool flag);
  * @param out Optional output applet reply data, can be NULL.
  */
 Result webConfigShow(WebCommonConfig* config, WebCommonReply *out);
+
+/**
+ * @brief Gets the ExitReason from the specified reply.
+ * @param reply WebCommonReply object.
+ * @param exitReason Output exitReason
+ */
+Result webReplyGetExitReason(WebCommonReply *reply, u32 *exitReason);
+
+/**
+ * @brief Gets the LastUrl from the specified reply.
+ * @note If you want to allocate a string buffer on heap, you can call this with outstr=NULL/outstr_maxsize=0 to get the out_size, then call it again with the allocated buffer.
+ * @param outstr Output string buffer. If NULL, the string is not loaded.
+ * @param outstr_maxsize Size of the buffer, including NUL-terminator. If outstr is set, this size must be >1. The size used for the actual string-copy is this size-1, to make sure the output is NUL-terminated (the entire buffer is cleared first).
+ * @param out_size Output string length including NUL-terminator, for the original input string in the reply loaded from a separate size field.
+ */
+Result webReplyGetLastUrl(WebCommonReply *reply, char *outstr, size_t outstr_maxsize, size_t *out_size);
+
+/**
+ * @brief Gets the SharePostResult from the specified reply.
+ * @note Only available with reply data from ShareApplet on [3.0.0+].
+ * @param reply WebCommonReply object.
+ * @param sharePostResult Output sharePostResult
+ */
+Result webReplyGetSharePostResult(WebCommonReply *reply, u32 *sharePostResult);
+
+/**
+ * @brief Gets the PostServiceName from the specified reply.
+ * @note Only available with reply data from ShareApplet on [3.0.0+].
+ * @note If you want to allocate a string buffer on heap, you can call this with outstr=NULL/outstr_maxsize=0 to get the out_size, then call it again with the allocated buffer.
+ * @param outstr Output string buffer. If NULL, the string is not loaded.
+ * @param outstr_maxsize Size of the buffer, including NUL-terminator. If outstr is set, this size must be >1. The size used for the actual string-copy is this size-1, to make sure the output is NUL-terminated (the entire buffer is cleared first).
+ * @param out_size Output string length including NUL-terminator, for the original input string in the reply loaded from a separate size field.
+ */
+Result webReplyGetPostServiceName(WebCommonReply *reply, char *outstr, size_t outstr_maxsize, size_t *out_size);
+
+/**
+ * @brief Gets the PostId from the specified reply.
+ * @note Only available with reply data from ShareApplet on [3.0.0+].
+ * @note If you want to allocate a string buffer on heap, you can call this with outstr=NULL/outstr_maxsize=0 to get the out_size, then call it again with the allocated buffer.
+ * @param outstr Output string buffer. If NULL, the string is not loaded.
+ * @param outstr_maxsize Size of the buffer, including NUL-terminator. If outstr is set, this size must be >1. The size used for the actual string-copy is this size-1, to make sure the output is NUL-terminated (the entire buffer is cleared first).
+ * @param out_size Output string length including NUL-terminator, for the original input string in the reply loaded from a separate size field.
+ */
+Result webReplyGetPostId(WebCommonReply *reply, char *outstr, size_t outstr_maxsize, size_t *out_size);
 

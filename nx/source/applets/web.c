@@ -179,6 +179,43 @@ static Result _webTLVRead(WebCommonTLVStorage *storage, u16 type, void* argdata,
     return 0;
 }
 
+static Result _webTLVReadVarSize(WebCommonTLVStorage *storage, u16 type, void* argdata, size_t argdata_size) {
+    Result rc = MAKERESULT(Module_Libnx, LibnxError_BadInput);
+    size_t i, count, offset;
+    u8 *dataptr = storage->data;
+    WebArgHeader *hdr = (WebArgHeader*)dataptr;
+    WebArgTLV *tlv;
+    size_t size = sizeof(storage->data);
+
+    offset = sizeof(WebArgHeader);
+    if (size < offset) return rc;
+
+    count = hdr->total_entries;
+    tlv = (WebArgTLV*)&dataptr[offset];
+
+    for (i=0; i<count; i++) {
+        if (size < offset + sizeof(WebArgTLV)) return rc;
+
+        tlv = (WebArgTLV*)&dataptr[offset];
+
+        if (tlv->type == type) {
+            if (argdata_size > tlv->size) argdata_size = tlv->size;
+            break;
+        }
+
+        offset+= sizeof(WebArgTLV) + tlv->size;
+        if (size < offset) return rc;
+    }
+
+    if (i==count) return MAKERESULT(Module_Libnx, LibnxError_NotFound);
+    if (size < offset + sizeof(WebArgTLV) + argdata_size) return rc;
+
+    offset+= sizeof(WebArgTLV);
+    memcpy(argdata, &dataptr[offset], argdata_size);
+
+    return 0;
+}
+
 static Result _webTLVSet(WebCommonConfig* config, u16 type, const void* argdata, u16 argdata_size) {
     return _webTLVWrite(&config->arg, type, argdata, argdata_size, argdata_size);
 }
@@ -524,5 +561,66 @@ Result webConfigShow(WebCommonConfig* config, WebCommonReply *out) {
     }
 
     return _webShow(config->appletid, config->version, &config->arg, sizeof(config->arg), reply, size);
+}
+
+// For strings only available via TLVs.
+static Result _webReplyGetString(WebCommonReply *reply, WebReplyType str_type, WebReplyType strsize_type, char *outstr, size_t outstr_maxsize, size_t *out_size) {
+    Result rc=0;
+
+    if (outstr && outstr_maxsize <= 1) return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+
+    if (outstr) memset(outstr, 0, outstr_maxsize);
+
+    if (!reply->type) {
+        rc = MAKERESULT(Module_Libnx, LibnxError_BadInput);
+    }
+    else {
+        if (outstr) rc = _webTLVReadVarSize(&reply->storage, str_type, outstr, outstr_maxsize-1);
+        if (R_SUCCEEDED(rc) && out_size) rc = _webTLVRead(&reply->storage, strsize_type, out_size, sizeof(*out_size));
+    }
+    return rc;
+}
+
+Result webReplyGetExitReason(WebCommonReply *reply, u32 *exitReason) {
+    if (!reply->type) {
+        *exitReason = reply->ret.exitReason;
+    }
+    else {
+        return _webTLVRead(&reply->storage, WebReplyType_ExitReason, exitReason, sizeof(*exitReason));
+    }
+    return 0;
+}
+
+Result webReplyGetLastUrl(WebCommonReply *reply, char *outstr, size_t outstr_maxsize, size_t *out_size) {
+    Result rc=0;
+
+    if (outstr && outstr_maxsize <= 1) return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+
+    if (outstr) memset(outstr, 0, outstr_maxsize);
+
+    if (!reply->type) {
+        if (outstr) strncpy(outstr, reply->ret.lastUrl, outstr_maxsize-1);
+        if (out_size) *out_size = reply->ret.lastUrlSize;
+    }
+    else {
+        if (outstr) rc = _webTLVReadVarSize(&reply->storage, WebReplyType_LastUrl, outstr, outstr_maxsize-1);
+        if (R_SUCCEEDED(rc) && out_size) rc = _webTLVRead(&reply->storage, WebReplyType_LastUrlSize, out_size, sizeof(*out_size));
+    }
+    return rc;
+}
+
+Result webReplyGetSharePostResult(WebCommonReply *reply, u32 *sharePostResult) {
+    if (reply->type) {
+        return _webTLVRead(&reply->storage, WebReplyType_SharePostResult, sharePostResult, sizeof(*sharePostResult));
+    }
+    return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+}
+
+Result webReplyGetPostServiceName(WebCommonReply *reply, char *outstr, size_t outstr_maxsize, size_t *out_size) {
+    return _webReplyGetString(reply, WebReplyType_PostServiceName, WebReplyType_PostServiceNameSize, outstr, outstr_maxsize, out_size);
+}
+
+Result webReplyGetPostId(WebCommonReply *reply, char *outstr, size_t outstr_maxsize, size_t *out_size) {
+    return _webReplyGetString(reply, WebReplyType_PostId, WebReplyType_PostIdSize, outstr, outstr_maxsize, out_size);
 }
 
