@@ -11,6 +11,7 @@
 
 /// This indicates the type of web-applet.
 typedef enum {
+    WebShimKind_Shop    = 1,
     WebShimKind_Login   = 2,
     WebShimKind_Offline = 3,
     WebShimKind_Share   = 4,
@@ -143,7 +144,6 @@ typedef enum {
 } WebArgType;
 
 /// Types for \ref WebArgTLV, output storage.
-/// Official user-processes doesn't check the TLV size for any of these.
 typedef enum {
     WebReplyType_ExitReason          = 0x1,  ///< [3.0.0+] u32 ShareExitReason
     WebReplyType_LastUrl             = 0x2,  ///< [3.0.0+] string
