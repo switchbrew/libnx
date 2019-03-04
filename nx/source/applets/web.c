@@ -423,7 +423,7 @@ Result webConfigSetPlayReport(WebCommonConfig* config, bool flag) {
     return _webConfigSetFlag(config, WebArgType_PlayReport, flag);
 }
 
-Result webConfigSetBootDisplayKind(WebCommonConfig* config, u32 kind) {
+Result webConfigSetBootDisplayKind(WebCommonConfig* config, WebBootDisplayKind kind) {
     WebShimKind shim = _webGetShimKind(config);
     if (shim != WebShimKind_Offline && shim != WebShimKind_Share && shim != WebShimKind_Web && shim != WebShimKind_Lobby) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     return _webConfigSetU32(config, WebArgType_BootDisplayKind, kind);

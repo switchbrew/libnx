@@ -97,9 +97,9 @@ typedef enum {
     WebArgType_CallbackableUrl                          = 0x4,    ///< [1.0.0+] String, size 0x400.
     WebArgType_ApplicationId                            = 0x5,    ///< [1.0.0+] Offline-applet, u64 titleID
     WebArgType_DocumentPath                             = 0x6,    ///< [1.0.0+] Offline-applet, string with size 0xC00.
-    WebArgType_DocumentKind                             = 0x7,    ///< [1.0.0+] Offline-applet, u32 enum OfflineDocumentKind.
+    WebArgType_DocumentKind                             = 0x7,    ///< [1.0.0+] Offline-applet, u32 enum \WebDocumentKind.
     WebArgType_SystemDataId                             = 0x8,    ///< [1.0.0+] Offline-applet, u64 titleID
-    WebArgType_ShareStartPage                           = 0x9,    ///< [1.0.0+] u32 enum WebShareStartPage
+    WebArgType_ShareStartPage                           = 0x9,    ///< [1.0.0+] u32 enum \WebShareStartPage
     WebArgType_Whitelist                                = 0xA,    ///< [1.0.0+] String, size 0x1000.
     WebArgType_NewsFlag                                 = 0xB,    ///< [1.0.0+] u8 bool
     WebArgType_UnknownC                                 = 0xC,    ///< [1.0.0+] u8
@@ -112,7 +112,7 @@ typedef enum {
     WebArgType_PlayReport                               = 0x13,   ///< [1.0.0+] u8 bool
     WebArgType_Unknown14                                = 0x14,   ///< [1.0.0+] u8
     WebArgType_Unknown15                                = 0x15,   ///< [1.0.0+] u8
-    WebArgType_BootDisplayKind                          = 0x17,   ///< [1.0.0+] u32 enum *BootDisplayKind
+    WebArgType_BootDisplayKind                          = 0x17,   ///< [1.0.0+] u32 enum \WebBootDisplayKind
     WebArgType_BackgroundKind                           = 0x18,   ///< [1.0.0+] u32 enum *BackgroundKind
     WebArgType_Footer                                   = 0x19,   ///< [1.0.0+] u8 bool
     WebArgType_Pointer                                  = 0x1A,   ///< [1.0.0+] u8 bool
@@ -168,13 +168,13 @@ typedef enum {
     WebShareStartPage_Settings = 1,  ///< The "/settings/" page.
 } WebShareStartPage;
 
-/// Kind values for \ref webConfigSetBootDisplayKind with Web applet. Controls the background color while displaying the loading screen during applet boot.
+/// Kind values for \ref webConfigSetBootDisplayKind. Controls the background color while displaying the loading screen during applet boot.
 typedef enum {
     WebBootDisplayKind_White    = 0,  ///< Default white background.
-    WebBootDisplayKind_Unknown1 = 1,  ///< Unknown.
+    WebBootDisplayKind_Unknown1 = 1,  ///< Unknown. Used by \ref webOfflineCreate for docKind ::WebDocumentKind_ApplicationLegalInformation/::WebDocumentKind_SystemDataPage.
     WebBootDisplayKind_Black    = 2,  ///< Black background.
-    WebBootDisplayKind_Unknown3 = 3,  ///< Unknown.
-    WebBootDisplayKind_Unknown4 = 4,  ///< Unknown.
+    WebBootDisplayKind_Unknown3 = 3,  ///< Unknown. Used by \ref webShareCreate.
+    WebBootDisplayKind_Unknown4 = 4,  ///< Unknown. Used by \ref webLobbyCreate.
 } WebBootDisplayKind;
 
 /**
@@ -332,9 +332,9 @@ Result webConfigSetPlayReport(WebCommonConfig* config, bool flag);
  * @note Used automatically by \ref webShareCreate with kind=::WebBootDisplayKind_Unknown3.
  * @note Used automatically by \ref webLobbyCreate with kind=::WebBootDisplayKind_Unknown4.
  * @param config WebCommonConfig object.
- * @param kind Kind, different enums for Web (\ref WebBootDisplayKind) and Offline.
+ * @param kind \ref WebBootDisplayKind
  */
-Result webConfigSetBootDisplayKind(WebCommonConfig* config, u32 kind);
+Result webConfigSetBootDisplayKind(WebCommonConfig* config, WebBootDisplayKind kind);
 
 /**
  * @brief Sets the BackgroundKind.
