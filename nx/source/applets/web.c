@@ -630,7 +630,7 @@ static Result _webReplyGetString(WebCommonReply *reply, WebReplyType str_type, W
     return rc;
 }
 
-Result webReplyGetExitReason(WebCommonReply *reply, u32 *exitReason) {
+Result webReplyGetExitReason(WebCommonReply *reply, WebExitReason *exitReason) {
     if (!reply->type) {
         *exitReason = reply->ret.exitReason;
     }

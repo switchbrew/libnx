@@ -19,6 +19,14 @@ typedef enum {
     WebShimKind_Lobby   = 7,
 } WebShimKind;
 
+/// ExitReason
+typedef enum {
+    WebExitReason_ExitButton = 0x0,  ///< User pressed the X button to exit.
+    WebExitReason_BackButton = 0x1,  ///< User pressed the B button to exit, on the initial page.
+    WebExitReason_Unknown2   = 0x2,
+    WebExitReason_LastUrl    = 0x3,  ///< The applet exited due to LastUrl handling, see \ref webReplyGetLastUrl.
+} WebExitReason;
+
 /// Struct for the WebWifi applet input storage.
 typedef struct {
     u32 unk_x0;                 ///< Official sw sets this to 0 with appletStorageWrite, separately from the rest of the config struct.
@@ -46,7 +54,7 @@ typedef struct {
 
 /// Common struct for the applet output storage, for non-TLV-storage.
 typedef struct {
-    u32 exitReason;              ///< ExitReason
+    WebExitReason exitReason;    ///< ExitReason
     u32 pad;                     ///< Padding
     char lastUrl[0x1000];        ///< LastUrl string
     u64 lastUrlSize;             ///< Size of LastUrl, including NUL-terminator.
@@ -248,7 +256,8 @@ Result webShareCreate(WebCommonConfig* config, WebShareStartPage page);
 Result webLobbyCreate(WebCommonConfig* config);
 
 /**
- * @brief Sets the CallbackUrl.
+ * @brief Sets the CallbackUrl. See also \ref webReplyGetLastUrl.
+ * @note With Offline-applet for LastUrl handling, it compares the domain with "localhost" instead.
  * @note Only available with config created by \ref webPageCreate or with Share-applet.
  * @param config WebCommonConfig object.
  * @param url URL
@@ -539,12 +548,13 @@ Result webConfigShow(WebCommonConfig* config, WebCommonReply *out);
 /**
  * @brief Gets the ExitReason from the specified reply.
  * @param reply WebCommonReply object.
- * @param exitReason Output exitReason
+ * @param exitReason Output \ref WebExitReason
  */
-Result webReplyGetExitReason(WebCommonReply *reply, u32 *exitReason);
+Result webReplyGetExitReason(WebCommonReply *reply, WebExitReason *exitReason);
 
 /**
- * @brief Gets the LastUrl from the specified reply.
+ * @brief Gets the LastUrl from the specified reply. When the applet loads a page where the beginning of the URL matches the URL from \ref webConfigSetCallbackUrl, the applet will exit and set LastUrl to that URL (exit doesn't occur when \ref webConfigSetCallbackableUrl was used).
+ * @note This is only available with ::WebExitReason_LastUrl (string is empty otherwise).
  * @note If you want to allocate a string buffer on heap, you can call this with outstr=NULL/outstr_maxsize=0 to get the out_size, then call it again with the allocated buffer.
  * @param reply WebCommonReply object.
  * @param outstr Output string buffer. If NULL, the string is not loaded.
