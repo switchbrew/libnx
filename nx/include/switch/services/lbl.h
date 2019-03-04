@@ -1,7 +1,7 @@
 /**
  * @file lbl.h
  * @brief LBL service IPC wrapper.
- * @author SciresM
+ * @author SciresM, exelix
  * @copyright libnx Authors
  */
 #pragma once
