@@ -1955,6 +1955,17 @@ Result appletHolderStart(AppletHolder *h) {
     return rc;
 }
 
+Result appletHolderRequestExit(AppletHolder *h) {
+    Result rc=0;
+
+    if (!serviceIsActive(&h->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    if (!appletHolderCheckFinished(h)) rc = _appletCmdNoIO(&h->s, 20);//RequestExit
+
+    return rc;
+}
+
 void appletHolderJoin(AppletHolder *h) {
     Result rc=0;
     LibAppletExitReason res = LibAppletExitReason_Normal;

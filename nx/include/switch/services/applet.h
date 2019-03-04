@@ -316,6 +316,12 @@ Result appletHolderGetIndirectLayerConsumerHandle(AppletHolder *h, u64 *out);
 Result appletHolderStart(AppletHolder *h);
 
 /**
+ * @brief Requests the LibraryApplet to exit. The command is only used if \ref appletHolderCheckFinished returns false.
+ * @param h AppletHolder object.
+ */
+Result appletHolderRequestExit(AppletHolder *h);
+
+/**
  * @brief Waits for the LibraryApplet to exit.
  * @param h AppletHolder object.
  */
