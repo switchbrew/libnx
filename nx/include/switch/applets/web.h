@@ -1,6 +1,6 @@
 /**
  * @file web.h
- * @brief Wrapper for using the web LibraryApplets.
+ * @brief Wrapper for using the web LibraryApplets. See also: https://switchbrew.org/wiki/Internet_Browser
  * @author p-sam, yellows8
  * @copyright libnx Authors
  */
@@ -79,9 +79,14 @@ typedef enum {
     WebArgType_Url                                      = 0x1,    ///< [1.0.0+] String, size 0xC00. Initial URL.
     WebArgType_CallbackUrl                              = 0x3,    ///< [1.0.0+] String, size 0x400.
     WebArgType_CallbackableUrl                          = 0x4,    ///< [1.0.0+] String, size 0x400.
+    WebArgType_ApplicationId                            = 0x5,    ///< [1.0.0+] Offline-applet, u64 titleID
+    WebArgType_DocumentPath                             = 0x6,    ///< [1.0.0+] Offline-applet, string with size 0xC00.
+    WebArgType_DocumentKind                             = 0x7,    ///< [1.0.0+] Offline-applet, u32 enum OfflineDocumentKind.
+    WebArgType_SystemDataId                             = 0x8,    ///< [1.0.0+] Offline-applet, u64 titleID
     WebArgType_ShareStartPage                           = 0x9,    ///< [1.0.0+] u32 enum WebShareStartPage
     WebArgType_Whitelist                                = 0xA,    ///< [1.0.0+] String, size 0x1000.
     WebArgType_NewsFlag                                 = 0xB,    ///< [1.0.0+] u8 bool
+    WebArgType_UnknownC                                 = 0xC,    ///< [1.0.0+] u8
     WebArgType_UnknownD                                 = 0xD,    ///< [1.0.0+] u8
     WebArgType_UserID                                   = 0xE,    ///< [1.0.0+] u128 userID, controls which user-specific savedata to mount.
     WebArgType_AlbumEntry                               = 0xF,    ///< [1.0.0+] Share-applet caps AlbumEntry
@@ -134,6 +139,13 @@ typedef enum {
     WebReplyType_PostId              = 0x7,  ///< [3.0.0+] string
     WebReplyType_PostIdSize          = 0x8,  ///< [3.0.0+] u64
 } WebReplyType;
+
+/// This controls the kind of content to mount with Offline-applet.
+typedef enum {
+    WebDocumentKind_OfflineHtmlPage             = 0x1,  ///< Use the HtmlDocument NCA content from the application.
+    WebDocumentKind_ApplicationLegalInformation = 0x2,  ///< Use the LegalInformation NCA content from the application.
+    WebDocumentKind_SystemDataPage              = 0x3,  ///< Use the Data NCA content from the specified title, see also: https://switchbrew.org/wiki/Title_list#System_Data_Archives
+} WebDocumentKind;
 
 /// This controls the initial page for ShareApplet, used by \ref webShareCreate.
 typedef enum {
@@ -192,6 +204,23 @@ Result webNewsCreate(WebCommonConfig* config, const char* url);
  * @param url Initial URL navigated to by the applet.
  */
 Result webYouTubeVideoCreate(WebCommonConfig* config, const char* url);
+
+/**
+ * @brief Creates the config for Offline-applet.
+ * @note Uses \ref webConfigSetLeftStickMode with mode=1 and sets WebArgType_BootAsMediaPlayerInverted to false. Uses \ref webConfigSetPointer with flag = docKind == WebDocumentKind_OfflineHtmlPage.
+ * @note For docKind WebDocumentKind_ApplicationLegalInformation / WebDocumentKind_SystemDataPage, uses \ref webConfigSetFooter with flag=true and \ref webConfigSetBackgroundKind with kind=0.
+ * @note For docKind WebDocumentKind_SystemDataPage, uses \ref webConfigSetBootDisplayKind with WebBootDisplayKind_Unknown1.
+ * @note Sets WebArgType_Unknown14/WebArgType_Unknown15 to value 1. With docKind WebDocumentKind_ApplicationLegalInformation, uses \ref webConfigSetBootDisplayKind with WebBootDisplayKind_Unknown1.
+ * @note Sets WebArgType_UnknownC to value 1.
+ * @note With docKind WebDocumentKind_ApplicationLegalInformation, uses \ref webConfigSetEcClientCert with flag=true.
+ * @note With docKind WebDocumentKind_OfflineHtmlPage on pre-3.0.0, sets WebArgType_Unknown12 to value 1.
+ * @note Lastly, sets the TLVs as needed for the input params.
+ * @param config WebCommonConfig object.
+ * @param docKind \ref WebDocumentKind
+ * @param titleID Title to load the content from. With docKind = WebDocumentKind_OfflineHtmlPage, titleID=0 should be used to specify the user-process titleID (non-zero is ignored with this docKind).
+ * @param docPath Initial document path in RomFS, without the leading '/'. For WebDocumentKind_OfflineHtmlPage, this is relative to "html-document/" in RomFS. For the other docKind values, this is relative to "/" in RomFS.
+ */
+Result webOfflineCreate(WebCommonConfig* config, WebDocumentKind docKind, u64 titleID, const char* docPath);
 
 /**
  * @brief Creates the config for ShareApplet.
@@ -263,7 +292,8 @@ Result webConfigSetScreenShot(WebCommonConfig* config, bool flag);
 
 /**
  * @brief Sets the EcClientCert flag.
- * @note Only available with config created by \ref webPageCreate or with Offline-applet.
+ * @note Only available with config created by \ref webOfflineCreate or \ref webPageCreate.
+ * @note Used automatically by \ref webOfflineCreate, depending on the docKind.
  * @note Used automatically by \ref webNewsCreate with flag=true.
  * @param config WebCommonConfig object.
  * @param flag Flag
@@ -271,8 +301,17 @@ Result webConfigSetScreenShot(WebCommonConfig* config, bool flag);
 Result webConfigSetEcClientCert(WebCommonConfig* config, bool flag);
 
 /**
+ * @brief Sets whether PlayReport is enabled.
+ * @note Only available with config created by \ref webOfflineCreate.
+ * @param config WebCommonConfig object.
+ * @param flag Flag
+ */
+Result webConfigSetPlayReport(WebCommonConfig* config, bool flag);
+
+/**
  * @brief Sets the BootDisplayKind.
- * @note Only available with config created by \ref webShareCreate, \ref webPageCreate, \ref webLobbyCreate, or with Offline-applet.
+ * @note Only available with config created by \ref webOfflineCreate, \ref webShareCreate, \ref webPageCreate, or \ref webLobbyCreate..
+ * @note Used automatically by \ref webOfflineCreate, depending on the docKind.
  * @note Used automatically by \ref webShareCreate with kind=WebBootDisplayKind_Unknown3.
  * @note Used automatically by \ref webLobbyCreate with kind=WebBootDisplayKind_Unknown4.
  * @param config WebCommonConfig object.
@@ -282,7 +321,8 @@ Result webConfigSetBootDisplayKind(WebCommonConfig* config, u32 kind);
 
 /**
  * @brief Sets the BackgroundKind.
- * @note Only available with config created by \ref webPageCreate, \ref webLobbyCreate, or with Offline-applet.
+ * @note Only available with config created by \ref webOfflineCreate, \ref webPageCreate, or \ref webLobbyCreate.
+ * @note Used automatically by \ref webOfflineCreate, depending on the docKind.
  * @note Used automatically by \ref webLobbyCreate with kind=2.
  * @param config WebCommonConfig object.
  * @param kind Kind, different enums for Web and Offline.
@@ -291,7 +331,8 @@ Result webConfigSetBackgroundKind(WebCommonConfig* config, u32 kind);
 
 /**
  * @brief Sets the whether the UI footer is enabled.
- * @note Only available with config created by \ref webPageCreate or with Offline-applet.
+ * @note Only available with config created by \ref webOfflineCreate or \ref webPageCreate.
+ * @note Used automatically by \ref webOfflineCreate, depending on the docKind.
  * @param config WebCommonConfig object.
  * @param flag Flag
  */
@@ -299,7 +340,8 @@ Result webConfigSetFooter(WebCommonConfig* config, bool flag);
 
 /**
  * @brief Sets the whether the Pointer is enabled.
- * @note Only available with config created by \ref webPageCreate, \ref webLobbyCreate, or with Offline-applet.
+ * @note Only available with config created by \ref webOfflineCreate, \ref webPageCreate, or \ref webLobbyCreate.
+ * @note Used automatically by \ref webOfflineCreate.
  * @note Used automatically by \ref webLobbyCreate with flag=false on [3.0.0+].
  * @param config WebCommonConfig object.
  * @param flag Flag
@@ -308,8 +350,8 @@ Result webConfigSetPointer(WebCommonConfig* config, bool flag);
 
 /**
  * @brief Sets the LeftStickMode.
- * @note Only available with config created by \ref webShareCreate, \ref webPageCreate, \ref webLobbyCreate, or with Offline-applet.
- * @note Used automatically by \ref webShareCreate and \ref webLobbyCreate with mode=1.
+ * @note Only available with config created by \ref webOfflineCreate, \ref webShareCreate, \ref webPageCreate, or \ref webLobbyCreate.
+ * @note Used automatically by \ref webOfflineCreate, \ref webShareCreate, and \ref webLobbyCreate with mode=1.
  * @param config WebCommonConfig object.
  * @param mode Mode, different enums for Web and Offline.
  */
@@ -317,7 +359,7 @@ Result webConfigSetLeftStickMode(WebCommonConfig* config, u32 mode);
 
 /**
  * @brief Sets the KeyRepeatFrame.
- * @note Only available with Offline-applet.
+ * @note Only available with config created by \ref webOfflineCreate.
  * @param config WebCommonConfig object.
  * @param inval0 First input param.
  * @param inval1 Second input param.
@@ -335,7 +377,7 @@ Result webConfigSetDisplayUrlKind(WebCommonConfig* config, bool kind);
 
 /**
  * @brief Sets the BootAsMediaPlayer flag.
- * @note Only available with config created by \ref webPageCreate or with Offline-applet, on [2.0.0+].
+ * @note Only available with config created by \ref webOfflineCreate or \ref webPageCreate, on [2.0.0+].
  * @note With config created by \ref webNewsCreate on [3.0.0+], this also sets WebArgType_BootAsMediaPlayerInverted to !flag.
  * @param config WebCommonConfig object.
  * @param flag Flag. true = BootAsMediaPlayer, false = BootAsWebPage.
@@ -377,7 +419,7 @@ Result webConfigSetApplicationAlbumEntry(WebCommonConfig* config, CapsApplicatio
 
 /**
  * @brief Sets whether JsExtension is enabled.
- * @note Only available with config created by \ref webPageCreate or with Offline-applet, on [3.0.0+].
+ * @note Only available with config created by \ref webOfflineCreate or \ref webPageCreate, on [3.0.0+].
  * @param config WebCommonConfig object.
  * @param flag Flag
  */
@@ -393,7 +435,7 @@ Result webConfigSetAdditionalCommentText(WebCommonConfig* config, const char* st
 
 /**
  * @brief Sets the TouchEnabledOnContents flag.
- * @note Only available with config created by \ref webPageCreate or with Offline-applet, on [4.0.0+].
+ * @note Only available with config created by \ref webOfflineCreate or \ref webPageCreate, on [4.0.0+].
  * @param config WebCommonConfig object.
  * @param flag Flag
  */
@@ -418,7 +460,7 @@ Result webConfigSetAdditionalMediaData(WebCommonConfig* config, const u8* data, 
 
 /**
  * @brief Sets the MediaPlayerAutoClose flag.
- * @note Only available with config created by \ref webPageCreate on [4.0.0+].
+ * @note Only available with config created by \ref webOfflineCreate or \ref webPageCreate, on [4.0.0+].
  * @param config WebCommonConfig object.
  * @param flag Flag
  */
@@ -426,7 +468,7 @@ Result webConfigSetMediaPlayerAutoClose(WebCommonConfig* config, bool flag);
 
 /**
  * @brief Sets whether PageCache is enabled.
- * @note Only available with config created by \ref webPageCreate or with Offline-applet, on [4.0.0+].
+ * @note Only available with config created by \ref webOfflineCreate or \ref webPageCreate, on [4.0.0+].
  * @param config WebCommonConfig object.
  * @param flag Flag
  */
@@ -434,7 +476,7 @@ Result webConfigSetPageCache(WebCommonConfig* config, bool flag);
 
 /**
  * @brief Sets whether WebAudio is enabled.
- * @note Only available with config created by \ref webPageCreate or with Offline-applet, on [4.0.0+].
+ * @note Only available with config created by \ref webOfflineCreate or \ref webPageCreate, on [4.0.0+].
  * @param config WebCommonConfig object.
  * @param flag Flag
  */
@@ -442,7 +484,7 @@ Result webConfigSetWebAudio(WebCommonConfig* config, bool flag);
 
 /**
  * @brief Sets the FooterFixedKind.
- * @note Only available with config created by \ref webPageCreate or with Offline-applet, on [5.0.0+].
+ * @note Only available with config created by \ref webOfflineCreate or \ref webPageCreate, on [5.0.0+].
  * @param config WebCommonConfig object.
  * @param kind Kind, different enums for Web and Offline.
  */
@@ -450,7 +492,7 @@ Result webConfigSetFooterFixedKind(WebCommonConfig* config, u32 kind);
 
 /**
  * @brief Sets the PageFade flag.
- * @note Only available with config created by \ref webPageCreate or with Offline-applet, on [5.0.0+].
+ * @note Only available with config created by \ref webOfflineCreate or \ref webPageCreate, on [5.0.0+].
  * @param config WebCommonConfig object.
  * @param flag Flag
  */
@@ -466,7 +508,7 @@ Result webConfigSetMediaCreatorApplicationRatingAge(WebCommonConfig* config, con
 
 /**
  * @brief Sets the BootLoadingIcon flag.
- * @note Only available with Offline-applet on [5.0.0+].
+ * @note Only available with config created by \ref webOfflineCreate on [5.0.0+].
  * @param config WebCommonConfig object.
  * @param flag Flag
  */
@@ -474,7 +516,7 @@ Result webConfigSetBootLoadingIcon(WebCommonConfig* config, bool flag);
 
 /**
  * @brief Sets the PageScrollIndicator flag.
- * @note Only available with config created by \ref webPageCreate or with Offline-applet, on [5.0.0+].
+ * @note Only available with config created by \ref webOfflineCreate or \ref webPageCreate, on [5.0.0+].
  * @param config WebCommonConfig object.
  * @param flag Flag
  */

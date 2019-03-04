@@ -236,6 +236,10 @@ static Result _webConfigSetU32(WebCommonConfig* config, u16 type, u32 arg) {
     return _webTLVSet(config, type, &arg, sizeof(arg));
 }
 
+static Result _webConfigSetU64(WebCommonConfig* config, u16 type, u64 arg) {
+    return _webTLVSet(config, type, &arg, sizeof(arg));
+}
+
 static Result _webConfigSetString(WebCommonConfig* config, u16 type, const char* str, u16 argdata_size_total) {
     u16 arglen = strlen(str);
     if (arglen >= argdata_size_total) arglen = argdata_size_total-1; //The string must be NUL-terminated.
@@ -244,7 +248,7 @@ static Result _webConfigSetString(WebCommonConfig* config, u16 type, const char*
 }
 
 static Result _webConfigSetUrl(WebCommonConfig* config, const char* url) {
-    return _webConfigSetString(config, WebArgType_Url, url, 0xc00);
+    return _webConfigSetString(config, WebArgType_Url, url, 0xC00);
 }
 
 static Result _webConfigGetU8(WebCommonConfig* config, u16 type, u8 *arg) {
@@ -295,6 +299,45 @@ Result webYouTubeVideoCreate(WebCommonConfig* config, const char* url) {
     if (R_SUCCEEDED(rc)) rc = webConfigSetBootAsMediaPlayer(config, true);
 
     if (R_SUCCEEDED(rc)) rc = _webConfigSetUrl(config, url);
+
+    return rc;
+}
+
+Result webOfflineCreate(WebCommonConfig* config, WebDocumentKind docKind, u64 titleID, const char* docPath) {
+    Result rc=0;
+
+    if (docKind < WebDocumentKind_OfflineHtmlPage || docKind > WebDocumentKind_SystemDataPage)
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+
+    _webArgInitialize(config, AppletId_offlineWeb, WebShimKind_Offline);
+
+    rc = webConfigSetLeftStickMode(config, 1);
+    if (R_SUCCEEDED(rc)) rc = _webConfigSetFlag(config, WebArgType_BootAsMediaPlayerInverted, false);
+    if (R_SUCCEEDED(rc)) rc = webConfigSetPointer(config, docKind == WebDocumentKind_OfflineHtmlPage);
+
+    if (docKind == WebDocumentKind_ApplicationLegalInformation || docKind == WebDocumentKind_SystemDataPage) {
+        webConfigSetFooter(config, true);
+        webConfigSetBackgroundKind(config, 0);
+    }
+
+    if (R_SUCCEEDED(rc) && docKind == WebDocumentKind_SystemDataPage) rc = webConfigSetBootDisplayKind(config, WebBootDisplayKind_Unknown1);
+
+    if (R_SUCCEEDED(rc)) rc = _webConfigSetU8(config, WebArgType_Unknown14, 1);
+    if (R_SUCCEEDED(rc)) rc = _webConfigSetU8(config, WebArgType_Unknown15, 1);
+
+    if (R_SUCCEEDED(rc) && docKind == WebDocumentKind_ApplicationLegalInformation) rc = webConfigSetBootDisplayKind(config, WebBootDisplayKind_Unknown1);
+
+    if (R_SUCCEEDED(rc)) rc = _webConfigSetU8(config, WebArgType_UnknownC, 1);
+
+    if (R_SUCCEEDED(rc) && docKind == WebDocumentKind_ApplicationLegalInformation) rc = webConfigSetEcClientCert(config, true);
+
+    if (R_SUCCEEDED(rc) && docKind == WebDocumentKind_OfflineHtmlPage && config->version < 0x30000) rc = _webConfigSetU8(config, WebArgType_Unknown12, 1); // Removed from user-process init with [3.0.0+].
+
+    if (R_SUCCEEDED(rc)) rc = _webConfigSetU32(config, WebArgType_DocumentKind, docKind);
+
+    if (R_SUCCEEDED(rc)) rc = _webConfigSetU64(config, docKind != WebDocumentKind_SystemDataPage ? WebArgType_ApplicationId : WebArgType_SystemDataId, titleID);
+
+    if (R_SUCCEEDED(rc)) rc = _webConfigSetString(config, WebArgType_DocumentPath, docPath, 0xC00);
 
     return rc;
 }
@@ -373,6 +416,11 @@ Result webConfigSetEcClientCert(WebCommonConfig* config, bool flag) {
     WebShimKind shim = _webGetShimKind(config);
     if (shim != WebShimKind_Offline && shim != WebShimKind_Web) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     return _webConfigSetFlag(config, WebArgType_EcClientCert, flag);
+}
+
+Result webConfigSetPlayReport(WebCommonConfig* config, bool flag) {
+    if (_webGetShimKind(config) != WebShimKind_Offline) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    return _webConfigSetFlag(config, WebArgType_PlayReport, flag);
 }
 
 Result webConfigSetBootDisplayKind(WebCommonConfig* config, u32 kind) {
@@ -492,7 +540,8 @@ Result webConfigSetAdditionalMediaData(WebCommonConfig* config, const u8* data, 
 }
 
 Result webConfigSetMediaPlayerAutoClose(WebCommonConfig* config, bool flag) {
-    if (_webGetShimKind(config) != WebShimKind_Web) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    WebShimKind shim = _webGetShimKind(config);
+    if (shim != WebShimKind_Offline && shim != WebShimKind_Web) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     if (hosversionBefore(4,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     return _webConfigSetFlag(config, WebArgType_MediaPlayerAutoClose, flag);
 }
