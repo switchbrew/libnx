@@ -44,15 +44,14 @@ static Result _webHandleExit(AppletHolder* holder, void* reply_buffer, size_t re
     return rc;
 }
 
-static Result _webShow(AppletId id, u32 version, void* arg, size_t arg_size, void* reply_buffer, size_t reply_size) {
+static Result _webShow(AppletHolder *holder, AppletId id, u32 version, void* arg, size_t arg_size, void* reply_buffer, size_t reply_size) {
     Result rc = 0;
-    AppletHolder holder;
 
-    rc = _webLaunch(&holder, id, version, arg, arg_size);
+    rc = _webLaunch(holder, id, version, arg, arg_size);
 
-    if (R_SUCCEEDED(rc)) rc = _webHandleExit(&holder, reply_buffer, reply_size);
+    if (R_SUCCEEDED(rc)) rc = _webHandleExit(holder, reply_buffer, reply_size);
 
-    appletHolderClose(&holder);
+    appletHolderClose(holder);
 
     return rc;
 }
@@ -70,7 +69,8 @@ void webWifiCreate(WebWifiConfig* config, const char* conntest_url, const char* 
 }
 
 Result webWifiShow(WebWifiConfig* config, WebWifiReturnValue *out) {
-    return _webShow(AppletId_wifiWebAuth, 0, &config->arg, sizeof(config->arg), out, sizeof(*out));
+    AppletHolder holder;
+    return _webShow(&holder, AppletId_wifiWebAuth, 0, &config->arg, sizeof(config->arg), out, sizeof(*out));
 }
 
 static void _webArgInitialize(WebCommonConfig* config, AppletId appletid, WebShimKind shimKind) {
@@ -609,7 +609,11 @@ Result webConfigShow(WebCommonConfig* config, WebCommonReply *out) {
         size = sizeof(out->storage);
     }
 
-    return _webShow(config->appletid, config->version, &config->arg, sizeof(config->arg), reply, size);
+    return _webShow(&config->holder, config->appletid, config->version, &config->arg, sizeof(config->arg), reply, size);
+}
+
+Result webConfigRequestExit(WebCommonConfig* config) {
+    return appletHolderRequestExit(&config->holder);
 }
 
 // For strings only available via TLVs.

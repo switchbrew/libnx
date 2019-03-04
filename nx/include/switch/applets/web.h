@@ -23,7 +23,7 @@ typedef enum {
 typedef enum {
     WebExitReason_ExitButton = 0x0,  ///< User pressed the X button to exit.
     WebExitReason_BackButton = 0x1,  ///< User pressed the B button to exit, on the initial page.
-    WebExitReason_Unknown2   = 0x2,
+    WebExitReason_Requested  = 0x2,  ///< The applet exited since \ref webConfigRequestExit was used.
     WebExitReason_LastUrl    = 0x3,  ///< The applet exited due to LastUrl handling, see \ref webReplyGetLastUrl.
 } WebExitReason;
 
@@ -79,6 +79,7 @@ typedef struct {
     WebCommonTLVStorage arg;  ///< TLV storage.
     AppletId appletid;        ///< AppletId
     u32 version;              ///< CommonArgs applet version.
+    AppletHolder holder;      ///< AppletHolder
 } WebCommonConfig;
 
 /// Common container struct for applets' reply data, from the output storage.
@@ -544,6 +545,12 @@ Result webConfigSetPageScrollIndicator(WebCommonConfig* config, bool flag);
  * @param out Optional output applet reply data, can be NULL.
  */
 Result webConfigShow(WebCommonConfig* config, WebCommonReply *out);
+
+/**
+ * @brief Request the applet to exit after \ref webConfigShow was used, while the applet is still running. This is for use from another thread.
+ * @param config WebCommonConfig object.
+ */
+Result webConfigRequestExit(WebCommonConfig* config);
 
 /**
  * @brief Gets the ExitReason from the specified reply.
