@@ -10,11 +10,14 @@
 #include "wait.h"
 
 /// Thread information structure.
-typedef struct {
+typedef struct Thread {
     Handle handle;       ///< Thread handle.
     void*  stack_mem;    ///< Pointer to stack memory.
     void*  stack_mirror; ///< Pointer to stack memory mirror.
     size_t stack_sz;     ///< Stack size.
+    void** tls_array;
+    struct Thread* next;
+    struct Thread** prev_next;
 } Thread;
 
 /// Creates a \ref Waiter for a \ref Thread.
@@ -43,6 +46,11 @@ Result threadCreate(
  * @return Result code.
  */
 Result threadStart(Thread* t);
+
+/**
+ * @brief Exits the current thread immediately.
+ */
+void NORETURN threadExit(void);
 
 /**
  * @brief Waits for a thread to finish executing.
@@ -86,3 +94,30 @@ Result threadDumpContext(ThreadContext* ctx, Thread* t);
  * @return The current thread's handle.
  */
 Handle threadGetCurHandle(void);
+
+/**
+ * @brief Allocates a TLS slot.
+ * @param destructor Function to run automatically when a thread exits.
+ * @return TLS slot ID on success, or a negative value on failure.
+ */
+s32 threadTlsAlloc(void (* destructor)(void*));
+
+/**
+ * @brief Retrieves the value stored in a TLS slot.
+ * @param slot_id TLS slot ID.
+ * @return Value.
+ */
+void* threadTlsGet(s32 slot_id);
+
+/**
+ * @brief Stores the specified value into a TLS slot.
+ * @param slot_id TLS slot ID.
+ * @param value Value.
+ */
+void threadTlsSet(s32 slot_id, void* value);
+
+/**
+ * @brief Frees a TLS slot.
+ * @param slot_id TLS slot ID.
+ */
+void threadTlsFree(s32 slot_id);

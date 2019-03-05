@@ -291,7 +291,7 @@ void thrd_exit(int res)
 {
     thrd_t t = thrd_current();
     t->rc = res;
-    svcExitThread();
+    threadExit();
 }
 
 int thrd_join(thrd_t thr, int *res)
@@ -332,20 +332,32 @@ void thrd_yield(void)
     svcSleepThread(-1);
 }
 
-/*
 int tss_create(tss_t *key, tss_dtor_t dtor)
 {
+    if (!key)
+        return thrd_error;
+
+    s32 slot_id = threadTlsAlloc(dtor);
+    if (slot_id >= 0) {
+        *key = slot_id;
+        return thrd_success;
+    }
+
+    return thrd_error;
 }
 
 void tss_delete(tss_t key)
 {
+    threadTlsFree(key);
 }
 
 void * tss_get(tss_t key)
 {
+    return threadTlsGet(key);
 }
 
 int tss_set(tss_t key, void *val)
 {
+    threadTlsSet(key, val);
+    return thrd_success;
 }
-*/
