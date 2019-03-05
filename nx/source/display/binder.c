@@ -134,7 +134,7 @@ static Result _binderTransactParcelAuto(
         s32 session_id;
         u32 code;
         u32 flags;
-    } *raw;
+    } PACKED *raw;
 
     ipcAddSendSmart(&c, b->ipc_buffer_size, parcel_data, parcel_data_size, 0);
     ipcAddRecvSmart(&c, b->ipc_buffer_size, parcel_reply, parcel_reply_size, 0);
