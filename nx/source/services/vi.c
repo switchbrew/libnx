@@ -327,6 +327,8 @@ Result viSetDisplayMagnification(ViDisplay *display, u32 x, u32 y, u32 width, u3
 
     if (!display->initialized)
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     struct {
         u64 magic;

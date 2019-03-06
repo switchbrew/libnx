@@ -74,6 +74,7 @@ static inline Result viOpenDefaultDisplay(ViDisplay *display)
 
 Result viGetDisplayResolution(ViDisplay *display, u64 *width, u64 *height);
 Result viGetDisplayLogicalResolution(ViDisplay *display, u32 *width, u32 *height);
+/// Only available on [3.0.0+].
 Result viSetDisplayMagnification(ViDisplay *display, u32 x, u32 y, u32 width, u32 height);
 Result viGetDisplayVsyncEvent(ViDisplay *display, Event *event_out);
 Result viSetDisplayPowerState(ViDisplay *display, ViPowerState state);
