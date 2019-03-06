@@ -112,11 +112,11 @@ typedef enum {
     WebArgType_PlayReport                               = 0x13,   ///< [1.0.0+] u8 bool
     WebArgType_Unknown14                                = 0x14,   ///< [1.0.0+] u8
     WebArgType_Unknown15                                = 0x15,   ///< [1.0.0+] u8
-    WebArgType_BootDisplayKind                          = 0x17,   ///< [1.0.0+] u32 enum \WebBootDisplayKind
-    WebArgType_BackgroundKind                           = 0x18,   ///< [1.0.0+] u32 enum *BackgroundKind
+    WebArgType_BootDisplayKind                          = 0x17,   ///< [1.0.0+] u32 enum \ref WebBootDisplayKind
+    WebArgType_BackgroundKind                           = 0x18,   ///< [1.0.0+] u32 enum \ref WebBackgroundKind
     WebArgType_Footer                                   = 0x19,   ///< [1.0.0+] u8 bool
     WebArgType_Pointer                                  = 0x1A,   ///< [1.0.0+] u8 bool
-    WebArgType_LeftStickMode                            = 0x1B,   ///< [1.0.0+] u32 enum *LeftStickMode
+    WebArgType_LeftStickMode                            = 0x1B,   ///< [1.0.0+] u32 enum \ref WebLeftStickMode
     WebArgType_KeyRepeatFrame0                          = 0x1C,   ///< [1.0.0+] s32 KeyRepeatFrame, first param
     WebArgType_KeyRepeatFrame1                          = 0x1D,   ///< [1.0.0+] s32 KeyRepeatFrame, second param
     WebArgType_BootAsMediaPlayerInverted                = 0x1E,   ///< [1.0.0+] u8 bool. With News on [3.0.0+] this is set after BootAsMediaPlayer with the value inverted.
@@ -168,14 +168,27 @@ typedef enum {
     WebShareStartPage_Settings = 1,  ///< The "/settings/" page.
 } WebShareStartPage;
 
-/// Kind values for \ref webConfigSetBootDisplayKind. Controls the background color while displaying the loading screen during applet boot.
+/// Kind values for \ref webConfigSetBootDisplayKind. Controls the background color while displaying the loading screen during applet boot. Also controls the BackgroundKind when value is non-zero.
 typedef enum {
-    WebBootDisplayKind_White    = 0,  ///< Default white background.
-    WebBootDisplayKind_Unknown1 = 1,  ///< Unknown. Used by \ref webOfflineCreate for docKind ::WebDocumentKind_ApplicationLegalInformation/::WebDocumentKind_SystemDataPage.
-    WebBootDisplayKind_Black    = 2,  ///< Black background.
-    WebBootDisplayKind_Unknown3 = 3,  ///< Unknown. Used by \ref webShareCreate.
-    WebBootDisplayKind_Unknown4 = 4,  ///< Unknown. Used by \ref webLobbyCreate.
+    WebBootDisplayKind_Default  = 0,    ///< Default. BackgroundKind is controlled by \ref WebBackgroundKind.
+    WebBootDisplayKind_White    = 1,    ///< White background. Used by \ref webOfflineCreate for docKind ::WebDocumentKind_ApplicationLegalInformation/::WebDocumentKind_SystemDataPage.
+    WebBootDisplayKind_Black    = 2,    ///< Black background.
+    WebBootDisplayKind_Unknown3 = 3,    ///< Unknown. Used by \ref webShareCreate.
+    WebBootDisplayKind_Unknown4 = 4,    ///< Unknown. Used by \ref webLobbyCreate.
 } WebBootDisplayKind;
+
+/// Kind values for \ref webConfigSetBackgroundKind. Controls the background color while displaying the loading screen during applet boot. Only used when \ref WebBootDisplayKind is ::WebBootDisplayKind_Default. If the applet was not launched by an Application, the applet will only use WebBackgroundKind_Default.
+typedef enum {
+    WebBackgroundKind_Default  = 0,    ///< Default. Same as ::WebBootDisplayKind_White/::WebBootDisplayKind_Black, determined via ::WebArgType_BootAsMediaPlayer.
+    WebBackgroundKind_Unknown1 = 1,    ///< Unknown. Same as ::WebBootDisplayKind_Unknown3.
+    WebBackgroundKind_Unknown2 = 2,    ///< Unknown. Same as ::WebBootDisplayKind_Unknown4. Used by \ref webLobbyCreate.
+} WebBackgroundKind;
+
+/// Mode values for \ref webConfigSetLeftStickMode. Controls the initial mode, this can be toggled by the user via the pressing the left-stick button. If the Pointer flag is set to false (\ref webConfigSetPointer), only ::WebLeftStickMode_Cursor will be used and mode toggle by the user is disabled (input value ignored).
+typedef enum {
+    WebLeftStickMode_Pointer = 0,  ///< The user can directly control the pointer via the left-stick.
+    WebLeftStickMode_Cursor  = 1,  ///< The user can only select elements on the page via the left-stick.
+} WebLeftStickMode;
 
 /**
  * @brief Creates the config for WifiWebAuthApplet. This is the captive portal applet.
@@ -222,10 +235,10 @@ Result webYouTubeVideoCreate(WebCommonConfig* config, const char* url);
 
 /**
  * @brief Creates the config for Offline-applet. This applet uses local content loaded from titles.
- * @note Uses \ref webConfigSetLeftStickMode with mode=1 and sets ::WebArgType_BootAsMediaPlayerInverted to false. Uses \ref webConfigSetPointer with flag = docKind == ::WebDocumentKind_OfflineHtmlPage.
- * @note For docKind ::WebDocumentKind_ApplicationLegalInformation / ::WebDocumentKind_SystemDataPage, uses \ref webConfigSetFooter with flag=true and \ref webConfigSetBackgroundKind with kind=0.
- * @note For docKind ::WebDocumentKind_SystemDataPage, uses \ref webConfigSetBootDisplayKind with ::WebBootDisplayKind_Unknown1.
- * @note Sets ::WebArgType_Unknown14/::WebArgType_Unknown15 to value 1. With docKind ::WebDocumentKind_ApplicationLegalInformation, uses \ref webConfigSetBootDisplayKind with ::WebBootDisplayKind_Unknown1.
+ * @note Uses \ref webConfigSetLeftStickMode with ::WebLeftStickMode_Cursor and sets ::WebArgType_BootAsMediaPlayerInverted to false. Uses \ref webConfigSetPointer with flag = docKind == ::WebDocumentKind_OfflineHtmlPage.
+ * @note For docKind ::WebDocumentKind_ApplicationLegalInformation / ::WebDocumentKind_SystemDataPage, uses \ref webConfigSetFooter with flag=true and \ref webConfigSetBackgroundKind with ::WebBackgroundKind_Default.
+ * @note For docKind ::WebDocumentKind_SystemDataPage, uses \ref webConfigSetBootDisplayKind with ::WebBootDisplayKind_White.
+ * @note Sets ::WebArgType_Unknown14/::WebArgType_Unknown15 to value 1. With docKind ::WebDocumentKind_ApplicationLegalInformation, uses \ref webConfigSetBootDisplayKind with ::WebBootDisplayKind_White.
  * @note Sets ::WebArgType_UnknownC to value 1.
  * @note With docKind ::WebDocumentKind_ApplicationLegalInformation, uses \ref webConfigSetEcClientCert with flag=true.
  * @note With docKind ::WebDocumentKind_OfflineHtmlPage on pre-3.0.0, sets ::WebArgType_Unknown12 to value 1.
@@ -241,7 +254,7 @@ Result webOfflineCreate(WebCommonConfig* config, WebDocumentKind docKind, u64 ti
  * @brief Creates the config for ShareApplet. This applet is for social media posting/settings.
  * @note If a non-zero userID isn't set with \ref webConfigSetUserID prior to using \ref webConfigShow, the applet will launch the profile-selector applet to select an account.
  * @note An error will be displayed if neither \ref webConfigSetAlbumEntry or \ref webConfigSetApplicationAlbumEntry are used prior to using \ref webConfigShow, with ::WebShareStartPage_Default.
- * @note Uses \ref webConfigSetLeftStickMode with mode=1, \ref webConfigSetUserID with userID=0, \ref webConfigSetDisplayUrlKind with kind=true, and sets ::WebArgType_Unknown14/::WebArgType_Unknown15 to value 1. Uses \ref webConfigSetBootDisplayKind with ::WebBootDisplayKind_Unknown3.
+ * @note Uses \ref webConfigSetLeftStickMode with ::WebLeftStickMode_Cursor, \ref webConfigSetUserID with userID=0, \ref webConfigSetDisplayUrlKind with kind=true, and sets ::WebArgType_Unknown14/::WebArgType_Unknown15 to value 1. Uses \ref webConfigSetBootDisplayKind with ::WebBootDisplayKind_Unknown3.
  * @param config WebCommonConfig object.
  * @param page \ref WebShareStartPage
  */
@@ -251,7 +264,7 @@ Result webShareCreate(WebCommonConfig* config, WebShareStartPage page);
  * @brief Creates the config for LobbyApplet. This applet is for "Nintendo Switch Online Lounge".
  * @note Only available on [2.0.0+].
  * @note If a non-zero userID isn't set with \ref webConfigSetUserID prior to using \ref webConfigShow, the applet will launch the profile-selector applet to select an account.
- * @note Uses \ref webConfigSetLeftStickMode with mode=1, \ref webConfigSetPointer with flag=false on [3.0.0+], \ref webConfigSetUserID with userID=0, and sets ::WebArgType_Unknown14/::WebArgType_Unknown15 to value 1. Uses \ref webConfigSetBootDisplayKind with ::WebBootDisplayKind_Unknown4, \ref webConfigSetBackgroundKind with kind=2, and sets ::WebArgType_BootAsMediaPlayerInverted to false.
+ * @note Uses \ref webConfigSetLeftStickMode with ::WebLeftStickMode_Cursor, \ref webConfigSetPointer with flag=false on [3.0.0+], \ref webConfigSetUserID with userID=0, and sets ::WebArgType_Unknown14/::WebArgType_Unknown15 to value 1. Uses \ref webConfigSetBootDisplayKind with ::WebBootDisplayKind_Unknown4, \ref webConfigSetBackgroundKind with ::WebBackgroundKind_Unknown2, and sets ::WebArgType_BootAsMediaPlayerInverted to false.
  * @param config WebCommonConfig object.
  */
 Result webLobbyCreate(WebCommonConfig* config);
@@ -342,9 +355,9 @@ Result webConfigSetBootDisplayKind(WebCommonConfig* config, WebBootDisplayKind k
  * @note Used automatically by \ref webOfflineCreate, depending on the docKind.
  * @note Used automatically by \ref webLobbyCreate with kind=2.
  * @param config WebCommonConfig object.
- * @param kind Kind, different enums for Web and Offline.
+ * @param kind \ref WebBackgroundKind
  */
-Result webConfigSetBackgroundKind(WebCommonConfig* config, u32 kind);
+Result webConfigSetBackgroundKind(WebCommonConfig* config, WebBackgroundKind kind);
 
 /**
  * @brief Sets the whether the UI footer is enabled.
@@ -368,11 +381,11 @@ Result webConfigSetPointer(WebCommonConfig* config, bool flag);
 /**
  * @brief Sets the LeftStickMode.
  * @note Only available with config created by \ref webOfflineCreate, \ref webShareCreate, \ref webPageCreate, or \ref webLobbyCreate.
- * @note Used automatically by \ref webOfflineCreate, \ref webShareCreate, and \ref webLobbyCreate with mode=1.
+ * @note Used automatically by \ref webOfflineCreate, \ref webShareCreate, and \ref webLobbyCreate with ::WebLeftStickMode_Cursor.
  * @param config WebCommonConfig object.
  * @param mode Mode, different enums for Web and Offline.
  */
-Result webConfigSetLeftStickMode(WebCommonConfig* config, u32 mode);
+Result webConfigSetLeftStickMode(WebCommonConfig* config, WebLeftStickMode mode);
 
 /**
  * @brief Sets the KeyRepeatFrame.

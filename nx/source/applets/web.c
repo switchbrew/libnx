@@ -311,21 +311,21 @@ Result webOfflineCreate(WebCommonConfig* config, WebDocumentKind docKind, u64 ti
 
     _webArgInitialize(config, AppletId_offlineWeb, WebShimKind_Offline);
 
-    rc = webConfigSetLeftStickMode(config, 1);
+    rc = webConfigSetLeftStickMode(config, WebLeftStickMode_Cursor);
     if (R_SUCCEEDED(rc)) rc = _webConfigSetFlag(config, WebArgType_BootAsMediaPlayerInverted, false);
     if (R_SUCCEEDED(rc)) rc = webConfigSetPointer(config, docKind == WebDocumentKind_OfflineHtmlPage);
 
     if (docKind == WebDocumentKind_ApplicationLegalInformation || docKind == WebDocumentKind_SystemDataPage) {
         webConfigSetFooter(config, true);
-        webConfigSetBackgroundKind(config, 0);
+        webConfigSetBackgroundKind(config, WebBackgroundKind_Default);
     }
 
-    if (R_SUCCEEDED(rc) && docKind == WebDocumentKind_SystemDataPage) rc = webConfigSetBootDisplayKind(config, WebBootDisplayKind_Unknown1);
+    if (R_SUCCEEDED(rc) && docKind == WebDocumentKind_SystemDataPage) rc = webConfigSetBootDisplayKind(config, WebBootDisplayKind_White);
 
     if (R_SUCCEEDED(rc)) rc = _webConfigSetU8(config, WebArgType_Unknown14, 1);
     if (R_SUCCEEDED(rc)) rc = _webConfigSetU8(config, WebArgType_Unknown15, 1);
 
-    if (R_SUCCEEDED(rc) && docKind == WebDocumentKind_ApplicationLegalInformation) rc = webConfigSetBootDisplayKind(config, WebBootDisplayKind_Unknown1);
+    if (R_SUCCEEDED(rc) && docKind == WebDocumentKind_ApplicationLegalInformation) rc = webConfigSetBootDisplayKind(config, WebBootDisplayKind_White);
 
     if (R_SUCCEEDED(rc)) rc = _webConfigSetU8(config, WebArgType_UnknownC, 1);
 
@@ -347,7 +347,7 @@ Result webShareCreate(WebCommonConfig* config, WebShareStartPage page) {
 
     _webArgInitialize(config, AppletId_loginShare, WebShimKind_Share);
 
-    rc = webConfigSetLeftStickMode(config, 1);
+    rc = webConfigSetLeftStickMode(config, WebLeftStickMode_Cursor);
     if (R_SUCCEEDED(rc)) rc = webConfigSetUserID(config, 0);
     if (R_SUCCEEDED(rc)) rc = webConfigSetDisplayUrlKind(config, true);
 
@@ -366,7 +366,7 @@ Result webLobbyCreate(WebCommonConfig* config) {
 
     _webArgInitialize(config, AppletId_loginShare, WebShimKind_Lobby);
 
-    rc = webConfigSetLeftStickMode(config, 1);
+    rc = webConfigSetLeftStickMode(config, WebLeftStickMode_Cursor);
     if (R_SUCCEEDED(rc) && config->version >= 0x30000) rc = webConfigSetPointer(config, false); // Added to user-process init with [3.0.0+].
 
     if (R_SUCCEEDED(rc)) rc = webConfigSetUserID(config, 0);
@@ -374,7 +374,7 @@ Result webLobbyCreate(WebCommonConfig* config) {
     if (R_SUCCEEDED(rc)) rc = _webConfigSetU8(config, WebArgType_Unknown14, 1);
     if (R_SUCCEEDED(rc)) rc = _webConfigSetU8(config, WebArgType_Unknown15, 1);
     if (R_SUCCEEDED(rc)) rc = webConfigSetBootDisplayKind(config, WebBootDisplayKind_Unknown4);
-    if (R_SUCCEEDED(rc)) rc = webConfigSetBackgroundKind(config, 2);
+    if (R_SUCCEEDED(rc)) rc = webConfigSetBackgroundKind(config, WebBackgroundKind_Unknown2);
     if (R_SUCCEEDED(rc)) rc = _webConfigSetFlag(config, WebArgType_BootAsMediaPlayerInverted, false);
 
     return rc;
@@ -429,7 +429,7 @@ Result webConfigSetBootDisplayKind(WebCommonConfig* config, WebBootDisplayKind k
     return _webConfigSetU32(config, WebArgType_BootDisplayKind, kind);
 }
 
-Result webConfigSetBackgroundKind(WebCommonConfig* config, u32 kind) {
+Result webConfigSetBackgroundKind(WebCommonConfig* config, WebBackgroundKind kind) {
     WebShimKind shim = _webGetShimKind(config);
     if (shim != WebShimKind_Offline && shim != WebShimKind_Web && shim != WebShimKind_Lobby) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     return _webConfigSetU32(config, WebArgType_BackgroundKind, kind);
@@ -447,7 +447,7 @@ Result webConfigSetPointer(WebCommonConfig* config, bool flag) {
     return _webConfigSetFlag(config, WebArgType_Pointer, flag);
 }
 
-Result webConfigSetLeftStickMode(WebCommonConfig* config, u32 mode) {
+Result webConfigSetLeftStickMode(WebCommonConfig* config, WebLeftStickMode mode) {
     WebShimKind shim = _webGetShimKind(config);
     if (shim != WebShimKind_Offline && shim != WebShimKind_Share && shim != WebShimKind_Web && shim != WebShimKind_Lobby) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     return _webConfigSetU32(config, WebArgType_LeftStickMode, mode);
