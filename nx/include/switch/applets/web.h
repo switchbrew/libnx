@@ -22,10 +22,11 @@ typedef enum {
 
 /// ExitReason
 typedef enum {
-    WebExitReason_ExitButton = 0x0,  ///< User pressed the X button to exit.
-    WebExitReason_BackButton = 0x1,  ///< User pressed the B button to exit, on the initial page.
-    WebExitReason_Requested  = 0x2,  ///< The applet exited since \ref webConfigRequestExit was used.
-    WebExitReason_LastUrl    = 0x3,  ///< The applet exited due to LastUrl handling, see \ref webReplyGetLastUrl.
+    WebExitReason_ExitButton  = 0x0,  ///< User pressed the X button to exit.
+    WebExitReason_BackButton  = 0x1,  ///< User pressed the B button to exit, on the initial page.
+    WebExitReason_Requested   = 0x2,  ///< The applet exited since \ref webConfigRequestExit was used.
+    WebExitReason_LastUrl     = 0x3,  ///< The applet exited due to LastUrl handling, see \ref webReplyGetLastUrl.
+    WebExitReason_ErrorDialog = 0x7,  ///< The applet exited after displaying an error dialog.
 } WebExitReason;
 
 /// Struct for the WebWifi applet input storage.
