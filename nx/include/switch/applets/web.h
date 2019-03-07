@@ -217,8 +217,8 @@ Result webPageCreate(WebCommonConfig* config, const char* url);
 
 /**
  * @brief Creates the config for WebApplet. This is based on \ref webPageCreate, for News. Hence other functions referencing \ref webPageCreate also apply to this.
- * @note Sets ::WebArgType_UnknownD to value 1, and sets ::WebArgType_NewsFlag to true. Also uses \ref webConfigSetEcClientCert and \ref webConfigSetShopJump with flag=true.
  * @note The domain from the input URL is automatically whitelisted, in addition to any already loaded whitelist.
+ * @note Sets ::WebArgType_UnknownD to value 1, and sets ::WebArgType_NewsFlag to true. Also uses \ref webConfigSetEcClientCert and \ref webConfigSetShopJump with flag=true.
  * @param config WebCommonConfig object.
  * @param url Initial URL navigated to by the applet.
  */
