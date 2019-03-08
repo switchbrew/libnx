@@ -137,7 +137,7 @@ typedef enum {
     WebArgType_WebAudio                                 = 0x2E,   ///< [4.0.0+] u8 bool
     WebArgType_2F                                       = 0x2F,   ///< [5.0.0+] u8
     WebArgType_YouTubeVideoFlag                         = 0x31,   ///< [5.0.0+] u8 bool Indicates that the built-in whitelist for YouTubeVideo should be used.
-    WebArgType_FooterFixedKind                          = 0x32,   ///< [5.0.0+] u32 enum *FooterFixedKind
+    WebArgType_FooterFixedKind                          = 0x32,   ///< [5.0.0+] u32 enum \ref WebFooterFixedKind
     WebArgType_PageFade                                 = 0x33,   ///< [5.0.0+] u8 bool
     WebArgType_MediaCreatorApplicationRatingAge         = 0x34,   ///< [5.0.0+] Share-applet 0x20-byte s8 array, MediaCreatorApplicationRatingAge.
     WebArgType_BootLoadingIcon                          = 0x35,   ///< [5.0.0+] u8 bool
@@ -190,6 +190,13 @@ typedef enum {
     WebLeftStickMode_Pointer = 0,  ///< The user can directly control the pointer via the left-stick.
     WebLeftStickMode_Cursor  = 1,  ///< The user can only select elements on the page via the left-stick.
 } WebLeftStickMode;
+
+/// Kind values for \ref webConfigSetFooterFixedKind. Controls UI footer display behaviour.
+typedef enum {
+    WebFooterFixedKind_Default = 0,  ///< Default. Footer is hidden while scrolling.
+    WebFooterFixedKind_Always  = 1,  ///< Footer is always displayed regardless of scrolling.
+    WebFooterFixedKind_Hidden  = 2,  ///< Footer is hidden regardless of scrolling.
+} WebFooterFixedKind;
 
 /**
  * @brief Creates the config for WifiWebAuthApplet. This is the captive portal applet.
@@ -370,7 +377,7 @@ Result webConfigSetBackgroundKind(WebCommonConfig* config, WebBackgroundKind kin
 Result webConfigSetFooter(WebCommonConfig* config, bool flag);
 
 /**
- * @brief Sets the whether the Pointer is enabled.
+ * @brief Sets the whether the Pointer is enabled. See also \ref WebLeftStickMode.
  * @note Only available with config created by \ref webOfflineCreate, \ref webPageCreate, or \ref webLobbyCreate.
  * @note Used automatically by \ref webOfflineCreate.
  * @note Used automatically by \ref webLobbyCreate with flag=false on [3.0.0+].
@@ -517,9 +524,9 @@ Result webConfigSetWebAudio(WebCommonConfig* config, bool flag);
  * @brief Sets the FooterFixedKind.
  * @note Only available with config created by \ref webOfflineCreate or \ref webPageCreate, on [5.0.0+].
  * @param config WebCommonConfig object.
- * @param kind Kind, different enums for Web and Offline.
+ * @param kind \ref WebFooterFixedKind
  */
-Result webConfigSetFooterFixedKind(WebCommonConfig* config, u32 kind);
+Result webConfigSetFooterFixedKind(WebCommonConfig* config, WebFooterFixedKind kind);
 
 /**
  * @brief Sets the PageFade flag.

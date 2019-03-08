@@ -563,6 +563,7 @@ Result webConfigSetWebAudio(WebCommonConfig* config, bool flag) {
 Result webConfigSetFooterFixedKind(WebCommonConfig* config, u32 kind) {
     WebShimKind shim = _webGetShimKind(config);
     if (shim != WebShimKind_Offline && shim != WebShimKind_Web) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(5,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     return _webConfigSetU32(config, WebArgType_FooterFixedKind, kind);
 }
 
