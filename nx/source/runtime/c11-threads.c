@@ -6,42 +6,6 @@
 
 #define THRD_MAIN_HANDLE ((thrd_t)~(uintptr_t)0)
 
-static bool timespec_subtract(struct timespec x, struct timespec y, struct timespec *__restrict result)
-{
-    // Perform the carry for the later subtraction by updating y
-    if (x.tv_nsec < y.tv_nsec) {
-        int seconds = (y.tv_nsec - x.tv_nsec) / 1000000000 + 1;
-        y.tv_nsec -= 1000000000 * seconds;
-        y.tv_sec += seconds;
-    }
-    if (x.tv_nsec - y.tv_nsec > 1000000000) {
-        int seconds = (x.tv_nsec - y.tv_nsec) / 1000000000;
-        y.tv_nsec += 1000000000 * seconds;
-        y.tv_sec -= seconds;
-    }
-
-    // Compute the time remaining to wait
-    result->tv_sec = x.tv_sec - y.tv_sec;
-    result->tv_nsec = x.tv_nsec - y.tv_nsec;
-
-    // Return true if result is negative
-    return x.tv_sec < y.tv_sec;
-}
-
-static inline u64 impl_timespec2nsec(const struct timespec *__restrict ts)
-{
-    return (u64)ts->tv_sec * 1000000000 + ts->tv_nsec;
-}
-
-static u64 impl_abstimespec2nsec(const struct timespec *__restrict ts)
-{
-    struct timespec now, diff;
-    clock_gettime(CLOCK_REALTIME, &now);
-    if (timespec_subtract(*ts, now, &diff))
-        return 0;
-    return impl_timespec2nsec(&diff);
-}
-
 void call_once(once_flag *flag, void (*func)(void))
 {
     mtx_lock(&flag->mutex);
@@ -125,7 +89,7 @@ int cnd_timedwait(cnd_t *__restrict cond, mtx_t *__restrict mtx, const struct ti
     if (!abs_time)
         return thrd_error;
 
-    return __cnd_timedwait(cond, mtx, impl_abstimespec2nsec(abs_time));
+    return __cnd_timedwait(cond, mtx, abstimespec2nsec(CLOCK_REALTIME, abs_time));
 }
 
 int cnd_wait(cnd_t *cond, mtx_t *mtx)
@@ -318,7 +282,7 @@ int thrd_sleep(const struct timespec *duration, struct timespec *remaining)
     if (!duration)
         return -1;
 
-    svcSleepThread(impl_timespec2nsec(duration));
+    svcSleepThread(timespec2nsec(duration));
     if (remaining) {
         remaining->tv_nsec = 0;
         remaining->tv_sec = 0;

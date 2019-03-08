@@ -12,10 +12,20 @@
 #include "runtime/env.h"
 #include "arm/counter.h"
 #include "kernel/mutex.h"
+#include "kernel/condvar.h"
+#include "kernel/thread.h"
 #include "kernel/svc.h"
 #include "services/fatal.h"
 #include "services/time.h"
 #include "result.h"
+
+#define THRD_MAIN_HANDLE ((struct __pthread_t*)~(uintptr_t)0)
+
+struct __pthread_t
+{
+    Thread thr;
+    void *rc;
+};
 
 void __attribute__((weak)) NORETURN __libnx_exit(int rc);
 
@@ -26,18 +36,258 @@ extern u8 __tls_start[];
 /// TimeType passed to timeGetCurrentTime() during time initialization. If that fails and __nx_time_type isn't TimeType_Default, timeGetCurrentTime() will be called again with TimeType_Default.
 __attribute__((weak)) TimeType __nx_time_type = TimeType_Default;
 
-static struct _reent* __libnx_get_reent(void) {
+static inline int errno_from_result(Result res)
+{
+    switch (R_VALUE(res)) {
+        case 0:
+            return 0;
+        case KERNELRESULT(TimedOut):
+            return ETIMEDOUT;
+        default:
+            return EIO;
+    }
+}
+
+void __syscall_exit(int rc)
+{
+    if (&__libnx_exit)
+        __libnx_exit(rc);
+    for (;;);
+}
+
+struct _reent* __syscall_getreent(void)
+{
     ThreadVars* tv = getThreadVars();
     if (tv->magic != THREADVARS_MAGIC)
         fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadReent));
     return tv->reent;
 }
 
+
+void __syscall_lock_acquire(_LOCK_T *lock)
+{
+    mutexLock(lock);
+}
+
+int __syscall_lock_try_acquire(_LOCK_T *lock)
+{
+    return mutexTryLock(lock) ? 0 : 1;
+}
+
+void __syscall_lock_release(_LOCK_T *lock)
+{
+    mutexUnlock(lock);
+}
+
+void __syscall_lock_acquire_recursive(_LOCK_RECURSIVE_T *lock)
+{
+    rmutexLock(lock);
+}
+
+int __syscall_lock_try_acquire_recursive(_LOCK_RECURSIVE_T *lock)
+{
+    return rmutexTryLock(lock) ? 0 : 1;
+}
+
+void __syscall_lock_release_recursive(_LOCK_RECURSIVE_T *lock)
+{
+    rmutexUnlock(lock);
+}
+
+int __syscall_cond_signal(_COND_T *cond)
+{
+    return errno_from_result(condvarWakeOne(cond));
+}
+
+int __syscall_cond_broadcast(_COND_T *cond)
+{
+    return errno_from_result(condvarWakeAll(cond));
+}
+
+int __syscall_cond_wait(_COND_T *cond, _LOCK_T *lock, uint64_t timeout_ns)
+{
+    return errno_from_result(condvarWaitTimeout(cond, lock, timeout_ns));
+}
+
+int __syscall_cond_wait_recursive(_COND_T *cond, _LOCK_RECURSIVE_T *lock, uint64_t timeout_ns)
+{
+    uint32_t thread_tag_backup = 0;
+    if (lock->counter != 1)
+        return EBADF;
+
+    thread_tag_backup = lock->thread_tag;
+    lock->thread_tag = 0;
+    lock->counter = 0;
+
+    int errcode = errno_from_result(condvarWaitTimeout(cond, &lock->lock, timeout_ns));
+
+    lock->thread_tag = thread_tag_backup;
+    lock->counter = 1;
+
+    return errcode;
+}
+
+struct __pthread_t *__syscall_thread_self(void)
+{
+    Thread* t = getThreadVars()->thread_ptr;
+    return t ? (struct __pthread_t *)t : THRD_MAIN_HANDLE;
+}
+
+void __syscall_thread_exit(void *value)
+{
+    struct __pthread_t *thread = __syscall_thread_self();
+    if (thread == THRD_MAIN_HANDLE)
+        exit(EXIT_FAILURE);
+
+    thread->rc = value;
+    threadExit();
+}
+
+typedef struct
+{
+    void* (*func)(void*);
+    void* arg;
+
+    bool thread_started;
+    Mutex mutex;
+    CondVar cond;
+} __entry_args;
+
+static void __thread_entry(void* __arg)
+{
+    __entry_args* info = (__entry_args*)__arg;
+    void* (*func)(void*) = info->func;
+    void* arg = info->arg;
+
+    mutexLock(&info->mutex);
+    info->thread_started = true;
+    condvarWakeOne(&info->cond);
+    mutexUnlock(&info->mutex);
+
+    void* rc = func(arg);
+    __syscall_thread_exit(rc);
+}
+
+int __syscall_thread_create(struct __pthread_t **thread, void* (*func)(void*), void *arg, void *stack_addr, size_t stack_size)
+{
+    if (stack_addr || (stack_size & 0xFFF))
+        return EINVAL;
+    if (!stack_size)
+        stack_size = 128*1024;
+
+    Result rc;
+    *thread = NULL;
+
+    u64 core_mask = 0;
+    rc = svcGetInfo(&core_mask, 0, CUR_PROCESS_HANDLE, 0);
+    if (R_FAILED(rc))
+        return EPERM;
+
+    struct __pthread_t* t = (struct __pthread_t*)malloc(sizeof(struct __pthread_t));
+    if (!t)
+        return ENOMEM;
+
+    __entry_args info;
+    info.func = func;
+    info.arg = arg;
+    info.thread_started = false;
+    mutexInit(&info.mutex);
+    condvarInit(&info.cond);
+
+    rc = threadCreate(&t->thr, __thread_entry, &info, stack_size, 0x3B, -2);
+    if (R_FAILED(rc))
+        goto _error1;
+
+    rc = svcSetThreadCoreMask(t->thr.handle, -1, core_mask);
+    if (R_FAILED(rc))
+        goto _error2;
+
+    rc = threadStart(&t->thr);
+    if (R_FAILED(rc))
+        goto _error2;
+
+    mutexLock(&info.mutex);
+    while (!info.thread_started)
+        condvarWait(&info.cond, &info.mutex);
+    mutexUnlock(&info.mutex);
+
+    *thread = t;
+    return 0;
+
+_error2:
+    threadClose(&t->thr);
+_error1:
+    free(t);
+    return ENOMEM;
+}
+
+void* __syscall_thread_join(struct __pthread_t *thread)
+{
+    if (thread == THRD_MAIN_HANDLE)
+        return NULL;
+
+    Result rc = threadWaitForExit(&thread->thr);
+    if (R_FAILED(rc))
+        return NULL;
+
+    void* ret = thread->rc;
+    threadClose(&thread->thr);
+    free(thread);
+
+    return ret;
+}
+
+/* Unsupported
+int __syscall_thread_detach(struct __pthread_t *thread)
+{
+}
+*/
+
+int __syscall_tls_create(uint32_t *key, void (*destructor)(void*))
+{
+    s32 slot_id = threadTlsAlloc(destructor);
+    if (slot_id >= 0) {
+        *key = slot_id;
+        return 0;
+    }
+
+    return EAGAIN;
+}
+
+int __syscall_tls_set(uint32_t key, const void *value)
+{
+    threadTlsSet(key, (void*)value);
+    return 0;
+}
+
+void* __syscall_tls_get(uint32_t key)
+{
+    return threadTlsGet(key);
+}
+
+int __syscall_tls_delete(uint32_t key)
+{
+    threadTlsFree(key);
+    return 0;
+}
+
+int sched_yield(void)
+{
+    svcSleepThread(-1);
+    return 0;
+}
+
+int sched_getcpu(void)
+{
+    return svcGetCurrentProcessorNumber();
+}
+
 static u64 __boottime;
 static u64 __bootticks;
 
 // setup boot time variables
-void __libnx_init_time(void) {
+void __libnx_init_time(void)
+{
     TimeCalendarAdditionalInfo info;
     char envstr[64];
     char *strptr;
@@ -92,7 +342,8 @@ void __libnx_init_time(void) {
 
 static const u64 nsec_clockres =  1000000000ULL / 19200000ULL;
 
-int __libnx_clock_getres(clockid_t clock_id, struct timespec *tp) {
+int __syscall_clock_getres(clockid_t clock_id, struct timespec *tp)
+{
     if(clock_id != CLOCK_MONOTONIC && clock_id != CLOCK_REALTIME) {
         errno = EINVAL;
         return -1;
@@ -107,8 +358,8 @@ int __libnx_clock_getres(clockid_t clock_id, struct timespec *tp) {
     }
 }
 
-
-int __libnx_clock_gettime(clockid_t clock_id, struct timespec *tp) {
+int __syscall_clock_gettime(clockid_t clock_id, struct timespec *tp)
+{
     if(clock_id != CLOCK_MONOTONIC && clock_id != CLOCK_REALTIME) {
         errno = EINVAL;
         return -1;
@@ -134,12 +385,8 @@ int __libnx_clock_gettime(clockid_t clock_id, struct timespec *tp) {
     }
 }
 
-int __libnx_clock_settime(clockid_t clock_id,const struct timespec *tp) {
-    errno = ENOSYS;
-    return -1;
-}
-
-int __libnx_gtod(struct _reent *ptr, struct timeval *tp, struct timezone *tz) {
+int __syscall_gettod_r(struct _reent *ptr, struct timeval *tp, struct timezone *tz)
+{
     if (tp != NULL) {
 
         if(__boottime == UINT64_MAX) {
@@ -163,33 +410,23 @@ int __libnx_gtod(struct _reent *ptr, struct timeval *tp, struct timezone *tz) {
     return 0;
 }
 
+int __syscall_nanosleep(const struct timespec *req, struct timespec *rem)
+{
+    if (!req) {
+        errno = EINVAL;
+        return -1;
+    }
 
-int __libnx_nanosleep(const struct timespec *req, struct timespec *rem) {
-    svcSleepThread(req->tv_sec * 1000000000ull + req->tv_nsec);
+    svcSleepThread(timespec2nsec(req));
+    if (rem) {
+        rem->tv_nsec = 0;
+        rem->tv_sec = 0;
+    }
     return 0;
 }
 
-void newlibSetup(void) {
-    // Register newlib syscalls
-    __syscalls.exit     = __libnx_exit;
-    __syscalls.gettod_r = __libnx_gtod;
-    __syscalls.getreent = __libnx_get_reent;
-
-    __syscalls.clock_gettime = __libnx_clock_gettime;
-    __syscalls.clock_getres = __libnx_clock_getres;
-    __syscalls.clock_settime = __libnx_clock_settime;
-
-    __syscalls.nanosleep = __libnx_nanosleep;
-
-
-    // Register locking syscalls
-    __syscalls.lock_init              = mutexInit;
-    __syscalls.lock_acquire           = mutexLock;
-    __syscalls.lock_release           = mutexUnlock;
-    __syscalls.lock_init_recursive    = rmutexInit;
-    __syscalls.lock_acquire_recursive = rmutexLock;
-    __syscalls.lock_release_recursive = rmutexUnlock;
-
+void newlibSetup(void)
+{
     // Initialize thread vars for the main thread
     ThreadVars* tv = getThreadVars();
     tv->magic      = THREADVARS_MAGIC;
