@@ -12,8 +12,8 @@
 typedef enum {
     NifmServiceType_NotInitialized = 0,
     NifmServiceType_User = 1,
-    NifmServiceType_Applet = 2,
-    NifmServiceType_System = 3,
+    NifmServiceType_System = 2,
+    NifmServiceType_Admin = 3,
 } NifmServiceType;
 
 static NifmServiceType g_nifmServiceType = NifmServiceType_NotInitialized;
@@ -31,13 +31,13 @@ Result nifmInitialize(void) {
     if (serviceIsActive(&g_nifmSrv))
         return 0;
 
-    Result rc = smGetService(&g_nifmSrv, "nifm:s");
-    g_nifmServiceType = NifmServiceType_System;
+    Result rc = smGetService(&g_nifmSrv, "nifm:a");
+    g_nifmServiceType = NifmServiceType_Admin;
     
     if (R_FAILED(rc))
     {
-        rc = smGetService(&g_nifmSrv, "nifm:a");
-        g_nifmServiceType = NifmServiceType_Applet;
+        rc = smGetService(&g_nifmSrv, "nifm:s");
+        g_nifmServiceType = NifmServiceType_System;
     }
     
     if (R_FAILED(rc))
@@ -142,7 +142,7 @@ Result nifmIsWirelessCommunicationEnabled(bool* out) {
 }
 
 Result nifmSetWirelessCommunicationEnabled(bool enable) {
-    if (g_nifmServiceType < NifmServiceType_Applet)
+    if (g_nifmServiceType < NifmServiceType_System)
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     IpcCommand c;
