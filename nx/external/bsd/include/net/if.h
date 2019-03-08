@@ -373,7 +373,8 @@ struct	ifreq {
 		struct	sockaddr ifr_dstaddr; /* other end of p-to-p link */
 		struct	sockaddr ifr_broadaddr; /* broadcast address */
 		struct	ifreq_buffer ifr_buffer; /* user supplied buffer with its length */
-		short	ifr_flags[2]; /* flags (low 16 bits) */
+		short	ifr_flags; /* flags (low 16 bits) */
+		short	ifr_flagshigh; /* flags (high 16 bits) */
 		short	ifr_index; /* interface index */
 		int	ifr_jid; /* jail/vnet */
 		int	ifr_metric; /* metric */
