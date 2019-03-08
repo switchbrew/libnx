@@ -10,13 +10,13 @@
 #include "runtime/hosversion.h"
 
 typedef enum {
-    nifmPrivilegeLevel_NotInitialized = 0,
-    nifmPrivilegeLevel_User = 1,
-    nifmPrivilegeLevel_Applet = 2,
-    nifmPrivilegeLevel_System = 3,
-} nifmPrivilegeLevel;
+    NifmServiceType_NotInitialized = 0,
+    NifmServiceType_User = 1,
+    NifmServiceType_Applet = 2,
+    NifmServiceType_System = 3,
+} NifmServiceType;
 
-static nifmPrivilegeLevel g_nifmPrivilegeLevel = nifmPrivilegeLevel_NotInitialized;
+static NifmServiceType g_nifmServiceType = NifmServiceType_NotInitialized;
 
 static Service g_nifmSrv;
 static Service g_nifmIGS;
@@ -32,18 +32,18 @@ Result nifmInitialize(void) {
         return 0;
 
     Result rc = smGetService(&g_nifmSrv, "nifm:s");
-    g_nifmPrivilegeLevel = nifmPrivilegeLevel_System;
+    g_nifmServiceType = NifmServiceType_System;
     
     if (R_FAILED(rc))
     {
         rc = smGetService(&g_nifmSrv, "nifm:a");
-        g_nifmPrivilegeLevel = nifmPrivilegeLevel_Applet;
+        g_nifmServiceType = NifmServiceType_Applet;
     }
     
     if (R_FAILED(rc))
     {
         rc = smGetService(&g_nifmSrv, "nifm:u");
-        g_nifmPrivilegeLevel = nifmPrivilegeLevel_User;
+        g_nifmServiceType = NifmServiceType_User;
     }
     
     if (R_SUCCEEDED(rc)) rc = serviceConvertToDomain(&g_nifmSrv);
@@ -65,7 +65,7 @@ void nifmExit(void) {
     if (atomicDecrement64(&g_refCnt) == 0) {
         serviceClose(&g_nifmIGS);
         serviceClose(&g_nifmSrv);
-        g_nifmPrivilegeLevel = nifmPrivilegeLevel_NotInitialized;
+        g_nifmServiceType = NifmServiceType_NotInitialized;
     }
 }
 
@@ -142,7 +142,7 @@ Result nifmIsWirelessCommunicationEnabled(bool* out) {
 }
 
 Result nifmSetWirelessCommunicationEnabled(bool enable) {
-    if (g_nifmPrivilegeLevel < nifmPrivilegeLevel_Applet)
+    if (g_nifmServiceType < NifmServiceType_Applet)
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     IpcCommand c;
