@@ -9,6 +9,15 @@
 #include "arm/atomics.h"
 #include "runtime/hosversion.h"
 
+typedef enum {
+    nifmPrivilegeLevel_NotInitialized = 0,
+    nifmPrivilegeLevel_User = 1,
+    nifmPrivilegeLevel_Applet = 2,
+    nifmPrivilegeLevel_System = 3,
+} nifmPrivilegeLevel;
+
+static nifmPrivilegeLevel g_nifmPrivilegeLevel = nifmPrivilegeLevel_NotInitialized;
+
 static Service g_nifmSrv;
 static Service g_nifmIGS;
 static u64 g_refCnt;
@@ -23,12 +32,19 @@ Result nifmInitialize(void) {
         return 0;
 
     Result rc = smGetService(&g_nifmSrv, "nifm:s");
+    g_nifmPrivilegeLevel = nifmPrivilegeLevel_System;
     
     if (R_FAILED(rc))
+    {
         rc = smGetService(&g_nifmSrv, "nifm:a");
+        g_nifmPrivilegeLevel = nifmPrivilegeLevel_Applet;
+    }
     
     if (R_FAILED(rc))
+    {
         rc = smGetService(&g_nifmSrv, "nifm:u");
+        g_nifmPrivilegeLevel = nifmPrivilegeLevel_User;
+    }
     
     if (R_SUCCEEDED(rc)) rc = serviceConvertToDomain(&g_nifmSrv);
 
@@ -49,6 +65,7 @@ void nifmExit(void) {
     if (atomicDecrement64(&g_refCnt) == 0) {
         serviceClose(&g_nifmIGS);
         serviceClose(&g_nifmSrv);
+        g_nifmPrivilegeLevel = nifmPrivilegeLevel_NotInitialized;
     }
 }
 
@@ -125,6 +142,9 @@ Result nifmIsWirelessCommunicationEnabled(bool* out) {
 }
 
 Result nifmSetWirelessCommunicationEnabled(bool enable) {
+    if (g_nifmPrivilegeLevel < nifmPrivilegeLevel_Applet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
     IpcCommand c;
     ipcInitialize(&c);
 
