@@ -34,8 +34,8 @@ typedef struct {
     u32 unk_x0;                 ///< Official sw sets this to 0 with appletStorageWrite, separately from the rest of the config struct.
     char conntest_url[0x100];   ///< Connection-test URL.
     char initial_url[0x400];    ///< Initial URL navigated to by the applet.
-    u128 userID;                ///< Account userID, 0 for common.
-    u32 unk_x514;               ///< Unknown.
+    u128 uuid;                  ///< NIFM Network UUID. Only used by the applet when conntest_url isn't set.
+    u32 rev;                    ///< Input value for nifm cmd SetRequirementByRevision. Only used by the applet when conntest_url isn't set.
 } PACKED WebWifiPageArg;
 
 /// Struct for the WebWifi applet output storage.
@@ -201,12 +201,12 @@ typedef enum {
 /**
  * @brief Creates the config for WifiWebAuthApplet. This is the captive portal applet.
  * @param config WebWifiConfig object.
- * @param conntest_url URL used for the connection-test requests, if NULL initial_url is used for this.
+ * @param conntest_url URL used for the connection-test requests. When empty/NULL the applet will enable using various NIFM commands, which includes using uuid/rev. In that case, the applet will test the connection with nifm and throw an error on failure.
  * @param initial_url Initial URL navigated to by the applet.
- * @param userID Account userID, 0 for common.
- * @param unk Value written to \ref WebWifiPageArg unk_x514, this can be 0.
+ * @param uuid NIFM Network UUID, for nifm cmd SetNetworkProfileId. Value 0 can be used. Only used by the applet when conntest_url isn't set.
+ * @param rev Input value for nifm cmd SetRequirementByRevision. Value 0 can be used. Only used by the applet when conntest_url isn't set.
  */
-void webWifiCreate(WebWifiConfig* config, const char* conntest_url, const char* initial_url, u128 userID, u32 unk);
+void webWifiCreate(WebWifiConfig* config, const char* conntest_url, const char* initial_url, u128 uuid, u32 rev);
 
 /**
  * @brief Launches WifiWebAuthApplet with the specified config and waits for it to exit.

@@ -56,16 +56,14 @@ static Result _webShow(AppletHolder *holder, AppletId id, u32 version, void* arg
     return rc;
 }
 
-void webWifiCreate(WebWifiConfig* config, const char* conntest_url, const char* initial_url, u128 userID, u32 unk) {
+void webWifiCreate(WebWifiConfig* config, const char* conntest_url, const char* initial_url, u128 uuid, u32 rev) {
     memset(config, 0, sizeof(*config));
 
-    if (conntest_url==NULL) conntest_url = initial_url;
-
-    strncpy(config->arg.conntest_url, conntest_url, sizeof(config->arg.conntest_url)-1);
+    if (conntest_url) strncpy(config->arg.conntest_url, conntest_url, sizeof(config->arg.conntest_url)-1);
     strncpy(config->arg.initial_url, initial_url, sizeof(config->arg.initial_url)-1);
 
-    config->arg.userID = userID;
-    config->arg.unk_x514 = unk;
+    config->arg.uuid = uuid;
+    config->arg.rev = rev;
 }
 
 Result webWifiShow(WebWifiConfig* config, WebWifiReturnValue *out) {
