@@ -34,8 +34,8 @@ typedef struct {
     u32 unk_x0;                 ///< Official sw sets this to 0 with appletStorageWrite, separately from the rest of the config struct.
     char conntest_url[0x100];   ///< Connection-test URL.
     char initial_url[0x400];    ///< Initial URL navigated to by the applet.
-    u128 uuid;                  ///< NIFM Network UUID. Only used by the applet when conntest_url isn't set.
-    u32 rev;                    ///< Input value for nifm cmd SetRequirementByRevision. Only used by the applet when conntest_url isn't set.
+    u128 uuid;                  ///< NIFM Network UUID. Only used by the applet when conntest_url is set.
+    u32 rev;                    ///< Input value for nifm cmd SetRequirementByRevision. Only used by the applet when conntest_url is set.
 } PACKED WebWifiPageArg;
 
 /// Struct for the WebWifi applet output storage.
@@ -201,10 +201,10 @@ typedef enum {
 /**
  * @brief Creates the config for WifiWebAuthApplet. This is the captive portal applet.
  * @param config WebWifiConfig object.
- * @param conntest_url URL used for the connection-test requests. When empty/NULL the applet will enable using various NIFM commands, which includes using uuid/rev. In that case, the applet will test the connection with nifm and throw an error on failure.
+ * @param conntest_url URL used for the connection-test requests. When empty/NULL the applet will test the connection with nifm and throw an error on failure.
  * @param initial_url Initial URL navigated to by the applet.
- * @param uuid NIFM Network UUID, for nifm cmd SetNetworkProfileId. Value 0 can be used. Only used by the applet when conntest_url isn't set.
- * @param rev Input value for nifm cmd SetRequirementByRevision. Value 0 can be used. Only used by the applet when conntest_url isn't set.
+ * @param uuid NIFM Network UUID, for nifm cmd SetNetworkProfileId. Value 0 can be used. Only used by the applet when conntest_url is set.
+ * @param rev Input value for nifm cmd SetRequirementByRevision. Value 0 can be used. Only used by the applet when conntest_url is set.
  */
 void webWifiCreate(WebWifiConfig* config, const char* conntest_url, const char* initial_url, u128 uuid, u32 rev);
 
