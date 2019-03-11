@@ -18,8 +18,8 @@ typedef struct {
 /// This structure is the start of opusin for \ref hwopusDecodeInterleaved, with the actual opus packet following this.
 /// These fields are big-endian.
 typedef struct {
-    u32 size; ///< Size of the packet following this header.
-    u32 unk;  ///< Unknown, can be left at zero.
+    u32 size;        ///< Size of the packet following this header.
+    u32 final_range; ///< Indicates the final range of the codec encoder's entropy coder. This can be left at zero.
 } HwopusHeader;
 
 /// Used internally.
