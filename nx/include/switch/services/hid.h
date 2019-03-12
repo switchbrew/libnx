@@ -638,6 +638,7 @@ u64 hidMouseButtonsHeld(void);
 u64 hidMouseButtonsDown(void);
 u64 hidMouseButtonsUp(void);
 void hidMouseRead(MousePosition *pos);
+u32 hidMouseMultiRead(MousePosition *entries, u32 num_entries);
 
 bool hidKeyboardModifierHeld(HidKeyboardModifier modifier);
 bool hidKeyboardModifierDown(HidKeyboardModifier modifier);

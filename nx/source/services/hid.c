@@ -16,7 +16,8 @@ static u64 g_refCnt;
 static SharedMemory g_hidSharedmem;
 
 static HidTouchScreenEntry g_touchEntry;
-static HidMouseEntry g_mouseEntry;
+static HidMouseEntry *g_mouseEntry;
+static HidMouse g_mouse;
 static HidKeyboardEntry g_keyboardEntry;
 static HidControllerHeader g_controllerHeaders[10];
 static HidControllerInputEntry g_controllerEntries[10];
@@ -128,13 +129,14 @@ void hidReset(void)
 
     // Reset internal state
     memset(&g_touchEntry, 0, sizeof(HidTouchScreenEntry));
-    memset(&g_mouseEntry, 0, sizeof(HidMouseEntry));
+    memset(&g_mouse, 0, sizeof(HidMouse));
     memset(&g_keyboardEntry, 0, sizeof(HidKeyboardEntry));
     memset(g_controllerHeaders, 0, sizeof(g_controllerHeaders));
     memset(g_controllerEntries, 0, sizeof(g_controllerEntries));
     memset(g_sixaxisLayouts, 0, sizeof(g_sixaxisLayouts));
     memset(g_sixaxisEnabled, 0, sizeof(g_sixaxisEnabled));
 
+    g_mouseEntry = &g_mouse.entries[0];
     g_mouseOld = g_mouseHeld = g_mouseDown = g_mouseUp = 0;
     g_keyboardModOld = g_keyboardModHeld = g_keyboardModDown = g_keyboardModUp = 0;
     for (int i = 0; i < 8; i++)
@@ -195,7 +197,7 @@ void hidScanInput(void) {
     memset(g_keyboardHeld, 0, sizeof(g_keyboardHeld));
     memset(g_controllerHeld, 0, sizeof(g_controllerHeld));
     memset(&g_touchEntry, 0, sizeof(HidTouchScreenEntry));
-    memset(&g_mouseEntry, 0, sizeof(HidMouseEntry));
+    memset(&g_mouse, 0, sizeof(HidMouse));
     memset(&g_keyboardEntry, 0, sizeof(HidKeyboardEntry));
     memset(g_controllerEntries, 0, sizeof(g_controllerEntries));
     memset(g_sixaxisLayouts, 0, sizeof(g_sixaxisLayouts));
@@ -212,11 +214,12 @@ void hidScanInput(void) {
 
     u64 latestMouseEntry = sharedMem->mouse.header.latestEntry;
     HidMouseEntry *newMouseEntry = &sharedMem->mouse.entries[latestMouseEntry];
+    memcpy(&g_mouse, &sharedMem->mouse, sizeof(HidMouse));
     if ((s64)(newMouseEntry->timestamp - g_mouseTimestamp) >= 0) {
-        memcpy(&g_mouseEntry, newMouseEntry, sizeof(HidMouseEntry));
+        g_mouseEntry = &g_mouse.entries[latestMouseEntry];
         g_mouseTimestamp = newMouseEntry->timestamp;
 
-        g_mouseHeld = g_mouseEntry.buttons;
+        g_mouseHeld = g_mouseEntry->buttons;
     }
     g_mouseDown = (~g_mouseOld) & g_mouseHeld;
     g_mouseUp = g_mouseOld & (~g_mouseHeld);
@@ -403,8 +406,42 @@ u64 hidMouseButtonsUp(void) {
 
 void hidMouseRead(MousePosition *pos) {
     rwlockReadLock(&g_hidLock);
-    *pos = g_mouseEntry.position;
+    *pos = g_mouseEntry->position;
     rwlockReadUnlock(&g_hidLock);
+}
+
+u32 hidMouseMultiRead(MousePosition *entries, u32 num_entries) {
+    int entry;
+    int i;
+
+    if (!entries || !num_entries) return 0;
+
+    memset(entries, 0, sizeof(MousePosition) * num_entries);
+
+    rwlockReadLock(&g_hidLock);
+
+    if (num_entries > g_mouse.header.maxEntryIndex + 1)
+        num_entries = g_mouse.header.maxEntryIndex + 1;
+
+    entry = g_mouse.header.latestEntry + 1 - num_entries;
+    if (entry < 0)
+        entry += g_mouse.header.maxEntryIndex + 1;
+
+    u64 timestamp = 0;
+    for (i = 0; i < num_entries; i++) {
+        if (timestamp && g_mouse.entries[entry].timestamp - timestamp != 1)
+            break;
+        memcpy(&entries[i], &g_mouse.entries[entry].position, sizeof(MousePosition));
+        timestamp = g_mouse.entries[entry].timestamp;
+
+        entry++;
+        if (entry > g_mouse.header.maxEntryIndex)
+            entry = 0;
+    }
+
+    rwlockReadUnlock(&g_hidLock);
+
+    return i;
 }
 
 bool hidKeyboardModifierHeld(HidKeyboardModifier modifier) {
