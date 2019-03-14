@@ -86,6 +86,7 @@ extern "C" {
 #include "switch/services/capssc.h"
 #include "switch/services/capssu.h"
 #include "switch/services/nfc.h"
+#include "switch/services/wlaninf.h"
 
 #include "switch/display/binder.h"
 #include "switch/display/parcel.h"
