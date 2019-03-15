@@ -85,7 +85,7 @@ Result usbDsAddUsbStringDescriptor(u8* out_index, const char* string);
 Result usbDsAddUsbLanguageStringDescriptor(u8* out_index, const u16* lang_ids, u16 num_langs);
 Result usbDsDeleteUsbStringDescriptor(u8 index);
 Result usbDsSetUsbDeviceDescriptor(UsbDeviceSpeed speed, struct usb_device_descriptor* descriptor);
-Result usbDsSetBinaryObjectStore(void* bos, size_t bos_size);
+Result usbDsSetBinaryObjectStore(const void* bos, size_t bos_size);
 Result usbDsEnable(void);
 Result usbDsDisable(void);
 
@@ -106,7 +106,7 @@ Result usbDsInterface_GetDsEndpoint(UsbDsInterface* interface, UsbDsEndpoint** e
 
 /// Added in 5.0.0
 Result usbDsInterface_RegisterEndpoint(UsbDsInterface* interface, UsbDsEndpoint** endpoint, u8 endpoint_address);
-Result usbDsInterface_AppendConfigurationData(UsbDsInterface* interface, UsbDeviceSpeed speed, void* buffer, size_t size);
+Result usbDsInterface_AppendConfigurationData(UsbDsInterface* interface, UsbDeviceSpeed speed, const void* buffer, size_t size);
 
 
 /// IDsEndpoint
