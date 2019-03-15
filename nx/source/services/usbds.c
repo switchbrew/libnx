@@ -860,7 +860,7 @@ Result usbDsSetUsbDeviceDescriptor(UsbDeviceSpeed speed, struct usb_device_descr
     return rc;
 }
 
-Result usbDsSetBinaryObjectStore(void* bos, size_t bos_size) {
+Result usbDsSetBinaryObjectStore(const void* bos, size_t bos_size) {
     IpcCommand c;
     ipcInitialize(&c);
     
@@ -1061,7 +1061,7 @@ Result usbDsInterface_RegisterEndpoint(UsbDsInterface* interface, UsbDsEndpoint*
     return rc;
 }
 
-Result usbDsInterface_AppendConfigurationData(UsbDsInterface* interface, UsbDeviceSpeed speed, void* buffer, size_t size) {
+Result usbDsInterface_AppendConfigurationData(UsbDsInterface* interface, UsbDeviceSpeed speed, const void* buffer, size_t size) {
     if(!interface->initialized)return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     
     IpcCommand c;
