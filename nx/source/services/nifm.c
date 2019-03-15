@@ -9,13 +9,6 @@
 #include "arm/atomics.h"
 #include "runtime/hosversion.h"
 
-typedef enum {
-    NifmServiceType_NotInitialized = 0,
-    NifmServiceType_User = 1,
-    NifmServiceType_System = 2,
-    NifmServiceType_Admin = 3,
-} NifmServiceType;
-
 static NifmServiceType g_nifmServiceType = NifmServiceType_NotInitialized;
 
 static Service g_nifmSrv;
@@ -25,25 +18,29 @@ static u64 g_refCnt;
 static Result _nifmCreateGeneralService(Service* out, u64 in);
 static Result _nifmCreateGeneralServiceOld(Service* out);
 
+void nifmSetServiceType(NifmServiceType serviceType) {
+    g_nifmServiceType = serviceType;
+}
+
 Result nifmInitialize(void) {
     atomicIncrement64(&g_refCnt);
 
     if (serviceIsActive(&g_nifmSrv))
         return 0;
 
-    Result rc = smGetService(&g_nifmSrv, "nifm:a");
-    g_nifmServiceType = NifmServiceType_Admin;
-    
-    if (R_FAILED(rc))
-    {
-        rc = smGetService(&g_nifmSrv, "nifm:s");
-        g_nifmServiceType = NifmServiceType_System;
-    }
-    
-    if (R_FAILED(rc))
-    {
-        rc = smGetService(&g_nifmSrv, "nifm:u");
-        g_nifmServiceType = NifmServiceType_User;
+    Result rc = 0;
+    switch (g_nifmServiceType) {
+        case NifmServiceType_NotInitialized:
+        case NifmServiceType_User:
+            g_nifmServiceType = NifmServiceType_User;
+            rc = smGetService(&g_nifmSrv, "nifm:u");
+            break;
+        case NifmServiceType_System:
+            rc = smGetService(&g_nifmSrv, "nifm:s");
+            break;
+        case NifmServiceType_Admin:
+            rc = smGetService(&g_nifmSrv, "nifm:a");
+            break;
     }
     
     if (R_SUCCEEDED(rc)) rc = serviceConvertToDomain(&g_nifmSrv);

@@ -9,6 +9,19 @@
 #include "../kernel/ipc.h"
 #include "../services/sm.h"
 
+typedef enum {
+    NifmServiceType_NotInitialized = 0,
+    NifmServiceType_User = 1,
+    NifmServiceType_System = 2,
+    NifmServiceType_Admin = 3,
+} NifmServiceType;
+
+/**
+ * @brief Sets the \ref NifmServiceType for initialization. Call this function before \ref nifmInitialize.
+ * @note By default nifm:u will be used.
+ */
+void nifmSetServiceType(NifmServiceType serviceType);
+
 Result nifmInitialize(void);
 void nifmExit(void);
 
