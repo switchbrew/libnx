@@ -10,10 +10,10 @@
 #include "../services/sm.h"
 
 typedef enum {
-    NifmServiceType_NotInitialized = 0, ///< initializes nifm:u.
-    NifmServiceType_User           = 1, ///< initializes nifm:u.
-    NifmServiceType_System         = 2, ///< initializes nifm:s.
-    NifmServiceType_Admin          = 3, ///< initializes nifm:a.
+    NifmServiceType_NotInitialized = 0, ///< Initializes nifm:u.
+    NifmServiceType_User           = 1, ///< Initializes nifm:u.
+    NifmServiceType_System         = 2, ///< Initializes nifm:s.
+    NifmServiceType_Admin          = 3, ///< Initializes nifm:a.
 } NifmServiceType;
 
 /**
