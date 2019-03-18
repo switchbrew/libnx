@@ -315,6 +315,54 @@ Result nifmWakeUp(void) {
     return rc;
 }
 
+Result nifmGetInternetConnectionStatus(NifmInternetConnectionType* connectionType, u32* wifiStrength, NifmInternetConnectionStatus* connectionStatus)
+{
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_nifmIGS, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 18;
+
+    Result rc = serviceIpcDispatch(&g_nifmIGS);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+
+        struct {
+            u64 magic;
+            u64 result;
+            u8 out1;
+            u8 out2;
+            u8 out3;
+        } PACKED *resp;
+
+        serviceIpcParse(&g_nifmIGS, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            if (connectionType)
+                *connectionType = resp->out1;
+
+            if (wifiStrength)
+                *wifiStrength = resp->out2;
+
+            if (connectionStatus)
+                *connectionStatus = resp->out3;
+        }
+    }
+
+    return rc;
+}
+
 static Result _nifmCreateGeneralService(Service* out, u64 in) {
     IpcCommand c;
     ipcInitialize(&c);
