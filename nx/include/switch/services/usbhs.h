@@ -27,6 +27,7 @@ typedef enum {
 } UsbHsInterfaceFilterFlags;
 
 /// Interface filtering struct. When the associated flag bit is set, the associated descriptor field and struct field are compared, on mismatch the interface is filtered out.
+/// [7.0.0+]: The filter struct has to be unique, it can't be used by anything else (including other processes). Hence, Flags has to be non-zero. When initialized with usb:hs:a and VID and/or PID filtering is enabled, the VID/PID will be checked against a blacklist.
 typedef struct {
     u16 Flags;              ///< See \ref UsbHsInterfaceFilterFlags. Setting this to 0 is equivalent to disabling filtering.
     u16 idVendor;
