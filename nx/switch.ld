@@ -53,6 +53,8 @@ SECTIONS
 	/* =========== RODATA section =========== */
 	. = ALIGN(0x1000);
 
+	.nx-module-name : { KEEP (*(.nx-module-name)) } :rodata
+
 	.rodata :
 	{
 		*(.rodata .rodata.* .gnu.linkonce.r.*)
