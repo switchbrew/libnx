@@ -1,23 +1,27 @@
 /**
  * @file error.h
  * @brief Wrapper for using the error LibraryApplet.
- * @author StuntHacks
+ * @author StuntHacks, yellows8
  * @copyright libnx Authors
  */
 #pragma once
 #include "../types.h"
 #include "../services/applet.h"
 
-/// Error configuration struct
+/// Error configuration struct (SystemErrorArg)
 typedef struct {
     u8 custom_text;                   ///< Whether to show a custom error message. If this is false, a default message will be shown.
     u8 unk[7];
     u32 module;                       ///< Module code.
     u32 description;                  ///< Description code.
-    u8 unk2[8];
+    u64 languageCode;
     char short_description[0x800];    ///< Short description.
-    char detailed_description[0x800]; ///< Detailed description (displayed when the user clicks,  on "Details").
+    char detailed_description[0x800]; ///< Detailed description (displayed when the user clicks, on "Details").
 } ErrorConfig;
+
+typedef struct {
+    u8 unk_x0[0x200];
+} ErrorContext;
 
 /**
  * @brief Creates an ErrorConfg struct.
@@ -37,7 +41,7 @@ void errorClose(ErrorConfig* c);
  * @brief Launches with the specified config.
  * @param c ErrorConfig struct.
  */
-void errorShow(ErrorConfig* c);
+Result errorShow(ErrorConfig* c);
 
 /**
  * @brief Sets the error module.
