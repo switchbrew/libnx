@@ -216,7 +216,7 @@ void webWifiCreate(WebWifiConfig* config, const char* conntest_url, const char* 
 Result webWifiShow(WebWifiConfig* config, WebWifiReturnValue *out);
 
 /**
- * @brief Creates the config for WebApplet. This applet uses an URL whitelist loaded from the user-process host title, which is only loaded when running under an Application. Content mounting *must* be successful otherwise the applet will throw a fatalerr.
+ * @brief Creates the config for WebApplet. This applet uses an URL whitelist loaded from the user-process host title, which is only loaded when running under an Application.
  * @note Sets ::WebArgType_UnknownD, and ::WebArgType_Unknown12 on pre-3.0.0, to value 1.
  * @param config WebCommonConfig object.
  * @param url Initial URL navigated to by the applet.
@@ -254,7 +254,7 @@ Result webYouTubeVideoCreate(WebCommonConfig* config, const char* url);
  * @param config WebCommonConfig object.
  * @param docKind \ref WebDocumentKind
  * @param titleID Title to load the content from. With docKind = ::WebDocumentKind_OfflineHtmlPage, titleID=0 should be used to specify the user-process titleID (non-zero is ignored with this docKind).
- * @param docPath Initial document path in RomFS, without the leading '/'. For ::WebDocumentKind_OfflineHtmlPage, this is relative to "html-document/" in RomFS. For the other docKind values, this is relative to "/" in RomFS.
+ * @param docPath Initial document path in RomFS, without the leading '/'. For ::WebDocumentKind_OfflineHtmlPage, this is relative to "html-document/" in RomFS. For the other docKind values, this is relative to "/" in RomFS. This path must contain ".htdocs/".
  */
 Result webOfflineCreate(WebCommonConfig* config, WebDocumentKind docKind, u64 titleID, const char* docPath);
 
