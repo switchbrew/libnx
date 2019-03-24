@@ -50,49 +50,45 @@ typedef struct
     uint8_t name[];   ///< Name. (UTF-8)
 } romfs_file;
 
-struct romfs_mount;
-
 /**
  * @brief Mounts the Application's RomFS.
- * @param mount Output mount handle
+ * @param name Device mount name.
  */
-Result romfsMount(struct romfs_mount **mount);
+Result romfsMount(const char *name);
 static inline Result romfsInit(void)
 {
-    return romfsMount(NULL);
+    return romfsMount("romfs");
 }
 
 /**
  * @brief Mounts RomFS from an open file.
  * @param file FsFile of the RomFS image.
  * @param offset Offset of the RomFS within the file.
- * @param mount Output mount handle
+ * @param name Device mount name.
  */
-Result romfsMountFromFile(FsFile file, u64 offset, struct romfs_mount **mount);
+Result romfsMountFromFile(FsFile file, u64 offset, const char *name);
 static inline Result romfsInitFromFile(FsFile file, u64 offset)
 {
-    return romfsMountFromFile(file, offset, NULL);
+    return romfsMountFromFile(file, offset, "romfs");
 }
 
 /**
  * @brief Mounts RomFS from an open storage.
  * @param storage FsStorage of the RomFS image.
  * @param offset Offset of the RomFS within the storage.
- * @param mount Output mount handle
+ * @param name Device mount name.
  */
-Result romfsMountFromStorage(FsStorage storage, u64 offset, struct romfs_mount **mount);
+Result romfsMountFromStorage(FsStorage storage, u64 offset, const char *name);
 static inline Result romfsInitFromStorage(FsStorage storage, u64 offset)
 {
-    return romfsMountFromStorage(storage, offset, NULL);
+    return romfsMountFromStorage(storage, offset, "romfs");
 }
 
-/// Bind the RomFS mount
-Result romfsBind(struct romfs_mount *mount);
 
 /// Unmounts the RomFS device.
-Result romfsUnmount(struct romfs_mount *mount);
+Result romfsUnmount(const char *name);
 static inline Result romfsExit(void)
 {
-    return romfsUnmount(NULL);
+    return romfsUnmount("romfs");
 }
 
