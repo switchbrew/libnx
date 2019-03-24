@@ -283,13 +283,14 @@ static int _fsdevMountDevice(const char *name, FsFileSystem fs, fsdev_fsdevice *
 {
   fsdev_fsdevice *device = NULL;
 
+  _fsdevInit(); //Ensure fsdev is initialized
+
   if(fsdevFindDevice(name)) //Device is already mounted with the same name.
   {
     fsFsClose(&fs);
     return -1;
   }
 
-  _fsdevInit(); //Ensure fsdev is initialized
   device = fsdevFindDevice(NULL);
   if(device==NULL)
   {
