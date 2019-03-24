@@ -353,6 +353,46 @@ Result fsOpenDataStorageByCurrentProcess(FsStorage* out) {
     return rc;
 }
 
+Result fsOpenDataStorageByDataId(FsStorage* out, u64 dataId, FsStorageId storageId) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 storage_id;
+        u64 data_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_fsSrv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 202;
+    raw->storage_id = storageId;
+    raw->data_id = dataId;
+
+    Result rc = serviceIpcDispatch(&g_fsSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_fsSrv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            serviceCreateSubservice(&out->s, &g_fsSrv, &r, 0);
+        }
+    }
+
+    return rc;
+}
+
 Result fsOpenDeviceOperator(FsDeviceOperator* out) {
     IpcCommand c;
     ipcInitialize(&c);

@@ -84,6 +84,13 @@ static inline Result romfsInitFromStorage(FsStorage storage, u64 offset)
     return romfsMountFromStorage(storage, offset, "romfs");
 }
 
+/**
+ * @brief Mounts RomFS from a system data archive.
+ * @param dataId Title ID of system data archive to mount.
+ * @param storageId Storage ID to mount from.
+ * @param name Device mount name.
+ */
+Result romfsMountFromDataArchive(u64 dataId, FsStorageId storageId, const char *name);
 
 /// Unmounts the RomFS device.
 Result romfsUnmount(const char *name);
