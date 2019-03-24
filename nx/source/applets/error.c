@@ -1,10 +1,11 @@
-#include <malloc.h>
 #include <string.h>
 #include "types.h"
 #include "result.h"
 #include "services/applet.h"
+#include "services/set.h"
 #include "applets/libapplet.h"
 #include "applets/error.h"
+#include "runtime/hosversion.h"
 
 static Result _errorAppletCreate(AppletHolder* holder, const void* indata, size_t insize, const void* indata2, size_t insize2) {
     Result rc=0;
@@ -64,36 +65,58 @@ static Result _errorShow(const void* indata, size_t insize, const void* indata2,
     return rc;
 }
 
-void errorCreate(ErrorConfig* c) {
-    memset(c, 0, sizeof(ErrorConfig));
-    c->custom_text = false;
-    c->module = 2000;
+static Result _errorShowContext(const void* indata, size_t insize, ErrorContext* ctx) {
+    void* ctx_ptr = NULL;
+    size_t ctx_size = 0;
+    if (hosversionAtLeast(4,0,0)) {
+        ctx_ptr = ctx;
+        if (ctx_ptr) ctx_size = sizeof(ErrorContext);
+    }
+
+    return _errorShow(indata, insize, ctx_ptr, ctx_size);
 }
 
-void errorClose(ErrorConfig* c) {
-    memset(c, 0, sizeof(ErrorConfig));
+Result errorSystemCreate(ErrorSystemConfig* c, const char* dialog_message, const char* fullscreen_message) {
+    Result rc=0;
+
+    memset(c, 0, sizeof(ErrorSystemConfig));
+    c->arg.hdr.type = 1;
+
+    strncpy(c->arg.dialogMessage, dialog_message, sizeof(c->arg.dialogMessage)-1);
+    strncpy(c->arg.fullscreenMessage, fullscreen_message, sizeof(c->arg.fullscreenMessage)-1);
+
+    if (hosversionBefore(5,0,0)) {
+        rc = setInitialize();
+        if (R_SUCCEEDED(rc)) rc = setMakeLanguageCode(SetLanguage_ENUS, &c->arg.languageCode);
+        setExit();
+    }
+
+    return rc;
 }
 
-Result errorShow(ErrorConfig* c) {
-    return _errorShow(c, sizeof(ErrorConfig), NULL, 0);
+void errorSystemClose(ErrorSystemConfig* c) {
+    memset(c, 0, sizeof(ErrorSystemConfig));
 }
 
-void errorConfigSetModule(ErrorConfig* c, u32 code) {
-    c->module = code;
+Result errorSystemShow(ErrorSystemConfig* c) {
+    return _errorShowContext(&c->arg, sizeof(c->arg), c->arg.hdr.contextFlag!=0 ? &c->ctx : NULL);
 }
 
-void errorConfigSetDescription(ErrorConfig* c, u32 code) {
-    c->description = code;
+void errorSystemSetCode(ErrorSystemConfig* c, u32 low, u32 desc) {
+    c->arg.errorCode = (u64)low | ((u64)desc<<32);
 }
 
-void errorConfigSetCustomText(ErrorConfig* c, bool custom_text) {
-    c->custom_text = custom_text;
+void errorSystemSetResult(ErrorSystemConfig* c, Result res) {
+    errorSystemSetCode(c, 2000 + R_MODULE(res), R_DESCRIPTION(res));
 }
 
-void errorConfigSetShortDescription(ErrorConfig* c, const char* str) {
-    strncpy(c->short_description, str, sizeof(c->short_description) - 1);
+void errorSystemSetLanguageCode(ErrorSystemConfig* c, u64 LanguageCode) {
+    c->arg.languageCode = LanguageCode;
 }
 
-void errorConfigSetDetailedDescription(ErrorConfig* c, const char* str) {
-    strncpy(c->detailed_description, str, sizeof(c->detailed_description) - 1);
+void errorSystemSetContext(ErrorSystemConfig* c, ErrorContext* ctx) {
+    c->arg.hdr.contextFlag = ctx!=0;
+    memset(&c->ctx, 0, sizeof(ErrorContext));
+    if (ctx) memcpy(&c->ctx, ctx, sizeof(ErrorContext));
 }
+
