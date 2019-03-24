@@ -305,7 +305,16 @@ Result romfsMountFromStorage(FsStorage storage, u64 offset, const char *name)
     mount->offset = offset;
 
     return romfsMountCommon(name, mount);
+}
 
+Result romfsMountFromDataArchive(u64 dataId, FsStorageId storageId, const char *name) {
+    FsStorage storage;
+
+    Result rc = fsOpenDataStorageByDataId(&storage, dataId, storageId);
+    if (R_FAILED(rc))
+        return rc;
+
+    return romfsMountFromStorage(storage, 0, name);
 }
 
 Result romfsMountCommon(const char *name, romfs_mount *mount)

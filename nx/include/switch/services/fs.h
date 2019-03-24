@@ -175,6 +175,7 @@ Result fsMountSaveData(FsFileSystem* out, u8 inval, FsSave *save);
 Result fsMountSystemSaveData(FsFileSystem* out, u8 inval, FsSave *save);
 Result fsOpenSaveDataIterator(FsSaveDataIterator* out, s32 SaveDataSpaceId);
 Result fsOpenDataStorageByCurrentProcess(FsStorage* out);
+Result fsOpenDataStorageByDataId(FsStorage* out, u64 dataId, FsStorageId storageId);
 Result fsOpenDeviceOperator(FsDeviceOperator* out);
 Result fsOpenSdCardDetectionEventNotifier(FsEventNotifier* out);
 // todo: Rest of commands here
