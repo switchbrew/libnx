@@ -76,14 +76,16 @@ static Result _errorShowContext(const void* indata, size_t insize, ErrorContext*
     return _errorShow(indata, insize, ctx_ptr, ctx_size);
 }
 
+// System
+
 Result errorSystemCreate(ErrorSystemConfig* c, const char* dialog_message, const char* fullscreen_message) {
     Result rc=0;
 
-    memset(c, 0, sizeof(ErrorSystemConfig));
+    memset(c, 0, sizeof(*c));
     c->arg.hdr.type = 1;
 
     strncpy(c->arg.dialogMessage, dialog_message, sizeof(c->arg.dialogMessage)-1);
-    strncpy(c->arg.fullscreenMessage, fullscreen_message, sizeof(c->arg.fullscreenMessage)-1);
+    if (fullscreen_message) strncpy(c->arg.fullscreenMessage, fullscreen_message, sizeof(c->arg.fullscreenMessage)-1);
 
     if (hosversionBefore(5,0,0)) {
         rc = setInitialize();
@@ -95,7 +97,7 @@ Result errorSystemCreate(ErrorSystemConfig* c, const char* dialog_message, const
 }
 
 void errorSystemClose(ErrorSystemConfig* c) {
-    memset(c, 0, sizeof(ErrorSystemConfig));
+    memset(c, 0, sizeof(*c));
 }
 
 Result errorSystemShow(ErrorSystemConfig* c) {
@@ -118,5 +120,42 @@ void errorSystemSetContext(ErrorSystemConfig* c, ErrorContext* ctx) {
     c->arg.hdr.contextFlag = ctx!=0;
     memset(&c->ctx, 0, sizeof(ErrorContext));
     if (ctx) memcpy(&c->ctx, ctx, sizeof(ErrorContext));
+}
+
+// Application
+
+Result errorApplicationCreate(ErrorApplicationConfig* c, const char* dialog_message, const char* fullscreen_message) {
+    Result rc=0;
+
+    memset(c, 0, sizeof(*c));
+    c->arg.hdr.type = 2;
+    c->arg.hdr.unk_x1 = 1;
+
+    strncpy(c->arg.dialogMessage, dialog_message, sizeof(c->arg.dialogMessage)-1);
+    if (fullscreen_message) strncpy(c->arg.fullscreenMessage, fullscreen_message, sizeof(c->arg.fullscreenMessage)-1);
+
+    if (hosversionBefore(5,0,0)) {
+        rc = setInitialize();
+        if (R_SUCCEEDED(rc)) rc = setMakeLanguageCode(SetLanguage_ENUS, &c->arg.languageCode);
+        setExit();
+    }
+
+    return rc;
+}
+
+void errorApplicationClose(ErrorApplicationConfig* c) {
+    memset(c, 0, sizeof(*c));
+}
+
+Result errorApplicationShow(ErrorApplicationConfig* c) {
+    return _errorShow(&c->arg, sizeof(c->arg), NULL, 0);
+}
+
+void errorApplicationSetNumber(ErrorApplicationConfig* c, u32 errorNumber) {
+    c->arg.errorNumber = errorNumber;
+}
+
+void errorApplicationSetLanguageCode(ErrorApplicationConfig* c, u64 LanguageCode) {
+    c->arg.languageCode = LanguageCode;
 }
 

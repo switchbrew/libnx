@@ -43,11 +43,25 @@ typedef struct {
     ErrorContext ctx;
 } ErrorSystemConfig;
 
+/// ApplicationErrorArg
+typedef struct {
+    ErrorCommonHeader hdr;
+    u32 errorNumber;
+    u64 languageCode;
+    char dialogMessage[0x800];        ///< UTF-8 Dialog message.
+    char fullscreenMessage[0x800];    ///< UTF-8 Fullscreen message (displayed when the user clicks on "Details").
+} PACKED ErrorApplicationArg;
+
+typedef struct {
+    ErrorApplicationArg arg;
+    ErrorContext ctx;
+} ErrorApplicationConfig;
+
 /**
  * @brief Creates an ErrorSystemConfig struct.
  * @param c ErrorSystemConfig struct.
  * @param dialog_message UTF-8 dialog message.
- * @param fullscreen_message UTF-8 fullscreen message, displayed when the user clicks on "Details".
+ * @param fullscreen_message UTF-8 fullscreen message, displayed when the user clicks on "Details". Optional, can be NULL (which disables displaying Details).
  * @note Sets the following fields: type=1 and {strings}. The rest are cleared.
  * @note On pre-5.0.0 this will initialize languageCode by using: setInitialize(), setMakeLanguageCode(SetLanguage_ENUS, ...), and setExit(). This is needed since an empty languageCode wasn't supported until [5.0.0+] (which would also use SetLanguage_ENUS).
  * @warning This applet creates an error report that is logged in the system. Proceed at your own risk!
@@ -61,7 +75,7 @@ Result errorSystemCreate(ErrorSystemConfig* c, const char* dialog_message, const
 void errorSystemClose(ErrorSystemConfig* c);
 
 /**
- * @brief Launches with the specified config.
+ * @brief Launches the applet with the specified config.
  * @param c ErrorSystemConfig struct.
  */
 Result errorSystemShow(ErrorSystemConfig* c);
@@ -95,4 +109,41 @@ void errorSystemSetLanguageCode(ErrorSystemConfig* c, u64 LanguageCode);
  * @param ctx ErrorContext, NULL to clear it.
  */
 void errorSystemSetContext(ErrorSystemConfig* c, ErrorContext* ctx);
+
+/**
+ * @brief Creates an ErrorApplicationConfig struct.
+ * @param c ErrorApplicationConfig struct.
+ * @param dialog_message UTF-8 dialog message.
+ * @param fullscreen_message UTF-8 fullscreen message, displayed when the user clicks on "Details". Optional, can be NULL (which disables displaying Details).
+ * @note Sets the following fields: type=2, unk_x1=1, and {strings}. The rest are cleared.
+ * @note On pre-5.0.0 this will initialize languageCode by using: setInitialize(), setMakeLanguageCode(SetLanguage_ENUS, ...), and setExit(). This is needed since an empty languageCode wasn't supported until [5.0.0+] (which would also use SetLanguage_ENUS).
+ * @warning This applet creates an error report that is logged in the system. Proceed at your own risk!
+ */
+Result errorApplicationCreate(ErrorApplicationConfig* c, const char* dialog_message, const char* fullscreen_message);
+
+/**
+ * @brief Closes an ErrorApplicationConfig struct.
+ * @param c ErrorApplicationConfig struct.
+ */
+void errorApplicationClose(ErrorApplicationConfig* c);
+
+/**
+ * @brief Launches the applet with the specified config.
+ * @param c ErrorApplicationConfig struct.
+ */
+Result errorApplicationShow(ErrorApplicationConfig* c);
+
+/**
+ * @brief Sets the error code number.
+ * @param c           ErrorApplicationConfig struct.
+ * @param errorNumber Error code number. Raw decimal error number which is displayed in the dialog.
+ */
+void errorApplicationSetNumber(ErrorApplicationConfig* c, u32 errorNumber);
+
+/**
+ * @brief Sets the LanguageCode.
+ * @param c            ErrorApplicationConfig struct.
+ * @param LanguageCode LanguageCode, see set.h.
+ */
+void errorApplicationSetLanguageCode(ErrorApplicationConfig* c, u64 LanguageCode);
 
