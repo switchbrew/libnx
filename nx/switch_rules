@@ -38,7 +38,7 @@ endif
 #---------------------------------------------------------------------------------
 define make_pfs0
 	@mkdir -p exefs
-	@[ -d $(BUILD_EXEFS_SRC) ] && cp -R $(BUILD_EXEFS_SRC)/* exefs || echo > /dev/null
+	@[ $(BUILD_EXEFS_SRC) ] && [ -d $(BUILD_EXEFS_SRC) ] && cp -R $(BUILD_EXEFS_SRC)/* exefs || echo > /dev/null
 	@cp $*.nso exefs/main
 	@[ $(APP_JSON) ] && cp $*.npdm exefs/main.npdm || echo > /dev/null
 	@build_pfs0 exefs $@
