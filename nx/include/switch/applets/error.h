@@ -7,6 +7,7 @@
 #pragma once
 #include "../types.h"
 #include "../services/applet.h"
+#include "../services/set.h"
 
 typedef struct {
     u8 unk_x0[0x200];
@@ -28,6 +29,15 @@ typedef struct {
     u64 errorCode;
     Result res;
 } ErrorCommonArg;
+
+typedef struct {
+    ErrorCommonHeader hdr;
+    SetRegion regionCode;
+} ErrorEulaArg;
+
+typedef struct {
+    u8 data[0x20000];
+} ErrorEulaData;
 
 /// SystemErrorArg
 typedef struct {
@@ -56,6 +66,19 @@ typedef struct {
     ErrorApplicationArg arg;
     ErrorContext ctx;
 } ErrorApplicationConfig;
+
+/**
+ * @brief Launches the applet for displaying the EULA.
+ * @param RegionCode \ref SetRegion
+ */
+Result errorEulaShow(SetRegion RegionCode);
+
+/**
+ * @brief Launches the applet for displaying the system-update EULA.
+ * @param RegionCode \ref SetRegion
+ * @param eula EULA data. Address must be 0x1000-byte aligned.
+ */
+Result errorSystemUpdateEulaShow(SetRegion RegionCode, ErrorEulaData* eula);
 
 /**
  * @brief Creates an ErrorSystemConfig struct.

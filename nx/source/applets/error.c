@@ -76,6 +76,45 @@ static Result _errorShowContext(const void* indata, size_t insize, ErrorContext*
     return _errorShow(indata, insize, ctx_ptr, ctx_size);
 }
 
+// Eula
+
+Result errorEulaShow(SetRegion RegionCode) {
+    ErrorEulaArg arg;
+
+    memset(&arg, 0, sizeof(arg));
+    arg.hdr.type = 3;
+    arg.hdr.unk_x1 = 1;
+    arg.regionCode = RegionCode;
+
+    return _errorShow(&arg, sizeof(arg), NULL, 0);
+}
+
+Result errorSystemUpdateEulaShow(SetRegion RegionCode, ErrorEulaData* eula) {
+    Result rc=0;
+    AppletHolder holder;
+    AppletStorage storage={0};
+    ErrorEulaArg arg;
+
+    memset(&arg, 0, sizeof(arg));
+    arg.hdr.type = 8;
+    arg.hdr.unk_x1 = 1;
+    arg.regionCode = RegionCode;
+
+    rc = _errorAppletCreate(&holder, &arg, sizeof(arg), NULL, 0);
+
+    if (R_SUCCEEDED(rc)) {
+        if (R_SUCCEEDED(rc)) rc = appletCreateTransferMemoryStorage(&storage, eula, sizeof(*eula), false);
+        if (R_SUCCEEDED(rc)) rc = appletHolderPushInData(&holder, &storage);
+    }
+
+    if (R_SUCCEEDED(rc)) rc = _errorRun(&holder);
+
+    appletHolderClose(&holder);
+    appletStorageCloseTmem(&storage);
+
+    return rc;
+}
+
 // System
 
 Result errorSystemCreate(ErrorSystemConfig* c, const char* dialog_message, const char* fullscreen_message) {
