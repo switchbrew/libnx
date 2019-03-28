@@ -76,6 +76,35 @@ static Result _errorShowContext(const void* indata, size_t insize, ErrorContext*
     return _errorShow(indata, insize, ctx_ptr, ctx_size);
 }
 
+// Backtrace
+
+Result errorResultBacktraceCreate(ErrorResultBacktrace* backtrace, s32 count, Result* entries) {
+    if (backtrace==NULL || count < 0 || count > sizeof(backtrace->backtrace)/sizeof(Result))
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+
+    memset(backtrace, 0, sizeof(*backtrace));
+    backtrace->count = count;
+    if (backtrace->count) memcpy(&backtrace->backtrace, entries, count);
+
+    return 0;
+}
+
+void errorResultBacktraceClose(ErrorResultBacktrace* backtrace) {
+    memset(backtrace, 0, sizeof(*backtrace));
+}
+
+Result errorResultBacktraceShow(Result res, ErrorResultBacktrace* backtrace) {
+    ErrorCommonArg arg;
+
+    memset(&arg, 0, sizeof(arg));
+    arg.hdr.type = 0;
+    arg.hdr.jumpFlag = 1;
+    arg.hdr.contextFlag = 1;
+    arg.res = res;
+
+    return _errorShow(&arg, sizeof(arg), backtrace, sizeof(*backtrace));
+}
+
 // Eula
 
 Result errorEulaShow(SetRegion RegionCode) {
@@ -83,7 +112,7 @@ Result errorEulaShow(SetRegion RegionCode) {
 
     memset(&arg, 0, sizeof(arg));
     arg.hdr.type = 3;
-    arg.hdr.unk_x1 = 1;
+    arg.hdr.jumpFlag = 1;
     arg.regionCode = RegionCode;
 
     return _errorShow(&arg, sizeof(arg), NULL, 0);
@@ -97,7 +126,7 @@ Result errorSystemUpdateEulaShow(SetRegion RegionCode, ErrorEulaData* eula) {
 
     memset(&arg, 0, sizeof(arg));
     arg.hdr.type = 8;
-    arg.hdr.unk_x1 = 1;
+    arg.hdr.jumpFlag = 1;
     arg.regionCode = RegionCode;
 
     rc = _errorAppletCreate(&holder, &arg, sizeof(arg), NULL, 0);
@@ -168,7 +197,7 @@ Result errorApplicationCreate(ErrorApplicationConfig* c, const char* dialog_mess
 
     memset(c, 0, sizeof(*c));
     c->arg.hdr.type = 2;
-    c->arg.hdr.unk_x1 = 1;
+    c->arg.hdr.jumpFlag = 1;
 
     strncpy(c->arg.dialogMessage, dialog_message, sizeof(c->arg.dialogMessage)-1);
     if (fullscreen_message) strncpy(c->arg.fullscreenMessage, fullscreen_message, sizeof(c->arg.fullscreenMessage)-1);
