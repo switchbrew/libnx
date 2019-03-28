@@ -161,7 +161,7 @@ void errorSystemSetLanguageCode(ErrorSystemConfig* c, u64 LanguageCode);
 
 /**
  * @brief Sets the ErrorContext.
- * @note Only available on [4.0.0+], on older versions \ref errorSystemShow will skip pushing the storage for this.
+ * @note Only available on [4.0.0+], on older versions this will return without setting the context.
  * @param c   ErrorSystemConfig struct.
  * @param ctx ErrorContext, NULL to clear it.
  */
