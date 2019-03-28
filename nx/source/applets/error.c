@@ -76,6 +76,30 @@ static Result _errorShowContext(const void* indata, size_t insize, ErrorContext*
     return _errorShow(indata, insize, ctx_ptr, ctx_size);
 }
 
+// Code
+
+ErrorCode errorCodeCreate(u32 low, u32 desc) {
+    ErrorCode c;
+
+    c.low = low;
+    c.desc = desc;
+
+    return c;
+}
+
+ErrorCode errorCodeCreateResult(Result res) {
+    return errorCodeCreate(2000 + R_MODULE(res), R_DESCRIPTION(res));
+}
+
+ErrorCode errorCodeCreateInvalid(void) {
+    ErrorCode c={0};
+    return c;
+}
+
+bool errorCodeIsValid(ErrorCode errorCode) {
+    return errorCode.low!=0;
+}
+
 // {Result/Code}Show
 
 Result errorResultShow(Result res, bool jumpFlag, ErrorContext* ctx) {
@@ -108,7 +132,7 @@ Result errorResultShow(Result res, bool jumpFlag, ErrorContext* ctx) {
     }
 }
 
-Result errorCodeShow(u32 low, u32 desc, bool jumpFlag, ErrorContext* ctx) {
+Result errorCodeShow(ErrorCode errorCode, bool jumpFlag, ErrorContext* ctx) {
     if (!jumpFlag) ctx = NULL;
     bool flag = hosversionAtLeast(4,0,0) && ctx!=NULL;
     ErrorCommonArg arg;
@@ -118,7 +142,7 @@ Result errorCodeShow(u32 low, u32 desc, bool jumpFlag, ErrorContext* ctx) {
     arg.hdr.jumpFlag = jumpFlag!=0;
     if (flag) arg.hdr.contextFlag2 = 1;
     arg.hdr.resultFlag = 1;
-    arg.errorCode = (u64)low | ((u64)desc<<32);
+    arg.errorCode = errorCode;
 
     return _errorShowContext(&arg, sizeof(arg), ctx);
 }
@@ -194,16 +218,16 @@ Result errorSystemUpdateEulaShow(SetRegion RegionCode, ErrorEulaData* eula) {
 // Record
 
 Result errorResultRecordShow(Result res, u64 timestamp) {
-    return errorCodeRecordShow(2000 + R_MODULE(res), R_DESCRIPTION(res), timestamp);
+    return errorCodeRecordShow(errorCodeCreateResult(res), timestamp);
 }
 
-Result errorCodeRecordShow(u32 low, u32 desc, u64 timestamp) {
+Result errorCodeRecordShow(ErrorCode errorCode, u64 timestamp) {
     ErrorRecordArg arg;
 
     memset(&arg, 0, sizeof(arg));
     arg.hdr.type = 5;
     arg.hdr.jumpFlag = 1;
-    arg.errorCode = (u64)low | ((u64)desc<<32);
+    arg.errorCode = errorCode;
     arg.timestamp = timestamp;
 
     return _errorShow(&arg, sizeof(arg), NULL, 0);
@@ -237,12 +261,12 @@ Result errorSystemShow(ErrorSystemConfig* c) {
     return _errorShowContext(&c->arg, sizeof(c->arg), c->arg.hdr.contextFlag!=0 ? &c->ctx : NULL);
 }
 
-void errorSystemSetCode(ErrorSystemConfig* c, u32 low, u32 desc) {
-    c->arg.errorCode = (u64)low | ((u64)desc<<32);
+void errorSystemSetCode(ErrorSystemConfig* c, ErrorCode errorCode) {
+    c->arg.errorCode = errorCode;
 }
 
 void errorSystemSetResult(ErrorSystemConfig* c, Result res) {
-    errorSystemSetCode(c, 2000 + R_MODULE(res), R_DESCRIPTION(res));
+    errorSystemSetCode(c, errorCodeCreateResult(res));
 }
 
 void errorSystemSetLanguageCode(ErrorSystemConfig* c, u64 LanguageCode) {
