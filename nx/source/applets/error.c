@@ -65,8 +65,8 @@ static Result _errorShow(const void* indata, size_t insize, const void* indata2,
     return rc;
 }
 
-static Result _errorShowContext(const void* indata, size_t insize, ErrorContext* ctx) {
-    void* ctx_ptr = NULL;
+static Result _errorShowContext(const void* indata, size_t insize, const ErrorContext* ctx) {
+    const void* ctx_ptr = NULL;
     size_t ctx_size = 0;
     if (hosversionAtLeast(4,0,0)) {
         ctx_ptr = ctx;
@@ -78,7 +78,7 @@ static Result _errorShowContext(const void* indata, size_t insize, ErrorContext*
 
 // {Result/Code}Show
 
-Result errorResultShow(Result res, bool jumpFlag, ErrorContext* ctx) {
+Result errorResultShow(Result res, bool jumpFlag, const ErrorContext* ctx) {
     if (!jumpFlag) ctx = NULL;
     ErrorCommonArg arg_common;
     ErrorPctlArg arg_pctl;
@@ -108,7 +108,7 @@ Result errorResultShow(Result res, bool jumpFlag, ErrorContext* ctx) {
     }
 }
 
-Result errorCodeShow(ErrorCode errorCode, bool jumpFlag, ErrorContext* ctx) {
+Result errorCodeShow(ErrorCode errorCode, bool jumpFlag, const ErrorContext* ctx) {
     if (!jumpFlag) ctx = NULL;
     bool flag = hosversionAtLeast(4,0,0) && ctx!=NULL;
     ErrorCommonArg arg;
@@ -125,7 +125,7 @@ Result errorCodeShow(ErrorCode errorCode, bool jumpFlag, ErrorContext* ctx) {
 
 // Backtrace
 
-Result errorResultBacktraceCreate(ErrorResultBacktrace* backtrace, s32 count, Result* entries) {
+Result errorResultBacktraceCreate(ErrorResultBacktrace* backtrace, s32 count, const Result* entries) {
     if (backtrace==NULL || count < 0 || count > sizeof(backtrace->backtrace)/sizeof(Result))
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
@@ -136,11 +136,7 @@ Result errorResultBacktraceCreate(ErrorResultBacktrace* backtrace, s32 count, Re
     return 0;
 }
 
-void errorResultBacktraceClose(ErrorResultBacktrace* backtrace) {
-    memset(backtrace, 0, sizeof(*backtrace));
-}
-
-Result errorResultBacktraceShow(Result res, ErrorResultBacktrace* backtrace) {
+Result errorResultBacktraceShow(Result res, const ErrorResultBacktrace* backtrace) {
     ErrorCommonArg arg;
 
     memset(&arg, 0, sizeof(arg));
@@ -165,7 +161,7 @@ Result errorEulaShow(SetRegion RegionCode) {
     return _errorShow(&arg, sizeof(arg), NULL, 0);
 }
 
-Result errorSystemUpdateEulaShow(SetRegion RegionCode, ErrorEulaData* eula) {
+Result errorSystemUpdateEulaShow(SetRegion RegionCode, const ErrorEulaData* eula) {
     Result rc=0;
     AppletHolder holder;
     AppletStorage storage={0};
@@ -179,7 +175,7 @@ Result errorSystemUpdateEulaShow(SetRegion RegionCode, ErrorEulaData* eula) {
     rc = _errorAppletCreate(&holder, &arg, sizeof(arg), NULL, 0);
 
     if (R_SUCCEEDED(rc)) {
-        if (R_SUCCEEDED(rc)) rc = appletCreateTransferMemoryStorage(&storage, eula, sizeof(*eula), false);
+        if (R_SUCCEEDED(rc)) rc = appletCreateTransferMemoryStorage(&storage, (void*)eula, sizeof(*eula), false);
         if (R_SUCCEEDED(rc)) rc = appletHolderPushInData(&holder, &storage);
     }
 
@@ -192,10 +188,6 @@ Result errorSystemUpdateEulaShow(SetRegion RegionCode, ErrorEulaData* eula) {
 }
 
 // Record
-
-Result errorResultRecordShow(Result res, u64 timestamp) {
-    return errorCodeRecordShow(errorCodeCreateResult(res), timestamp);
-}
 
 Result errorCodeRecordShow(ErrorCode errorCode, u64 timestamp) {
     ErrorRecordArg arg;
@@ -229,27 +221,11 @@ Result errorSystemCreate(ErrorSystemConfig* c, const char* dialog_message, const
     return rc;
 }
 
-void errorSystemClose(ErrorSystemConfig* c) {
-    memset(c, 0, sizeof(*c));
-}
-
 Result errorSystemShow(ErrorSystemConfig* c) {
     return _errorShowContext(&c->arg, sizeof(c->arg), c->arg.hdr.contextFlag!=0 ? &c->ctx : NULL);
 }
 
-void errorSystemSetCode(ErrorSystemConfig* c, ErrorCode errorCode) {
-    c->arg.errorCode = errorCode;
-}
-
-void errorSystemSetResult(ErrorSystemConfig* c, Result res) {
-    errorSystemSetCode(c, errorCodeCreateResult(res));
-}
-
-void errorSystemSetLanguageCode(ErrorSystemConfig* c, u64 LanguageCode) {
-    c->arg.languageCode = LanguageCode;
-}
-
-void errorSystemSetContext(ErrorSystemConfig* c, ErrorContext* ctx) {
+void errorSystemSetContext(ErrorSystemConfig* c, const ErrorContext* ctx) {
     if (hosversionBefore(4,0,0)) return;
 
     c->arg.hdr.contextFlag = ctx!=0;
@@ -278,19 +254,11 @@ Result errorApplicationCreate(ErrorApplicationConfig* c, const char* dialog_mess
     return rc;
 }
 
-void errorApplicationClose(ErrorApplicationConfig* c) {
-    memset(c, 0, sizeof(*c));
-}
-
 Result errorApplicationShow(ErrorApplicationConfig* c) {
     return _errorShow(&c->arg, sizeof(c->arg), NULL, 0);
 }
 
 void errorApplicationSetNumber(ErrorApplicationConfig* c, u32 errorNumber) {
     c->arg.errorNumber = errorNumber;
-}
-
-void errorApplicationSetLanguageCode(ErrorApplicationConfig* c, u64 LanguageCode) {
-    c->arg.languageCode = LanguageCode;
 }
 
