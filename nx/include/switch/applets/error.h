@@ -9,82 +9,117 @@
 #include "../services/applet.h"
 #include "../services/set.h"
 
+/// Stores error-codes which are displayed as XXXX-XXXX, low for the former and desc for the latter.
 typedef struct {
-    char str[0x1f4];
-    u8 unk_x1f4[0xc];
+    u32 low;             ///< The module portion of the error, normally this should be set to module + 2000.
+    u32 desc;            ///< The error description.
+} ErrorCode;
+
+/// Error context.
+typedef struct {
+    char str[0x1f4];     ///< String
+    u8 unk_x1f4[0xc];    ///< Unknown
 } PACKED ErrorContext;
 
 /// Common header for the start of the arg storage.
 typedef struct {
-    u8 type;
+    u8 type;             ///< Type
     u8 jumpFlag;         ///< When clear, this indicates WithoutJump.
-    u8 unk_x2[3];
-    u8 contextFlag;
-    u8 resultFlag;       ///< \ref ErrorCommonArg: When clear, errorCode is used, otherwise the applet generates the error-code from res.
+    u8 unk_x2[3];        ///< Unknown
+    u8 contextFlag;      ///< When set with type=0, indicates that an additional storage is pushed for \ref ErrorResultBacktrace. [4.0.0+] Otherwise, when set indicates that an additional storage is pushed for \ref ErrorContext. 
+    u8 resultFlag;       ///< ErrorCommonArg: When clear, errorCode is used, otherwise the applet generates the error-code from res.
     u8 contextFlag2;     ///< Similar to contextFlag except for ErrorCommonArg, indicating \ref ErrorContext is used.
 } ErrorCommonHeader;
 
-/// Error arg data for non-{System/Application}.
+/// Common error arg data.
 typedef struct {
-    ErrorCommonHeader hdr;
-    u64 errorCode;
-    Result res;
+    ErrorCommonHeader hdr;            ///< Common header.
+    ErrorCode errorCode;              ///< \ref ErrorCode
+    Result res;                       ///< Result
 } ErrorCommonArg;
 
 /// Error arg data for certain errors with module PCTL.
 typedef struct {
-    ErrorCommonHeader hdr;
-    Result res;
+    ErrorCommonHeader hdr;            ///< Common header.
+    Result res;                       ///< Result
 } ErrorPctlArg;
 
 /// ResultBacktrace
 typedef struct {
-    s32 count;
-    Result backtrace[0x20];
+    s32 count;                        ///< Total entries in the backtrace array.
+    Result backtrace[0x20];           ///< Result backtrace.
 } ErrorResultBacktrace;
 
+/// Error arg data for EULA.
 typedef struct {
-    ErrorCommonHeader hdr;
-    SetRegion regionCode;
+    ErrorCommonHeader hdr;            ///< Common header.
+    SetRegion regionCode;             ///< \ref SetRegion
 } ErrorEulaArg;
 
+/// Additional input storage data for \ref errorSystemUpdateEulaShow.
 typedef struct {
-    u8 data[0x20000];
+    u8 data[0x20000];                ///< data
 } ErrorEulaData;
 
+/// Error arg data for Record.
 typedef struct {
-    ErrorCommonHeader hdr;
-    u64 errorCode;
-    u64 timestamp;                   ///< POSIX timestamp.
+    ErrorCommonHeader hdr;            ///< Common header.
+    ErrorCode errorCode;              ///< \ref ErrorCode
+    u64 timestamp;                    ///< POSIX timestamp.
 } ErrorRecordArg;
 
 /// SystemErrorArg
 typedef struct {
-    ErrorCommonHeader hdr;
-    u64 errorCode;
-    u64 languageCode;
+    ErrorCommonHeader hdr;            ///< Common header.
+    ErrorCode errorCode;              ///< \ref ErrorCode
+    u64 languageCode;                 ///< See set.h.
     char dialogMessage[0x800];        ///< UTF-8 Dialog message.
     char fullscreenMessage[0x800];    ///< UTF-8 Fullscreen message (displayed when the user clicks on "Details").
 } ErrorSystemArg;
 
+/// Error system config.
 typedef struct {
-    ErrorSystemArg arg;
-    ErrorContext ctx;
+    ErrorSystemArg arg;               ///< Arg data.
+    ErrorContext ctx;                 ///< Optional error context.
 } ErrorSystemConfig;
 
 /// ApplicationErrorArg
 typedef struct {
-    ErrorCommonHeader hdr;
-    u32 errorNumber;
-    u64 languageCode;
+    ErrorCommonHeader hdr;            ///< Common header.
+    u32 errorNumber;                  ///< Raw decimal error number which is displayed in the dialog.
+    u64 languageCode;                 ///< See set.h.
     char dialogMessage[0x800];        ///< UTF-8 Dialog message.
     char fullscreenMessage[0x800];    ///< UTF-8 Fullscreen message (displayed when the user clicks on "Details").
 } PACKED ErrorApplicationArg;
 
+/// Error application config.
 typedef struct {
-    ErrorApplicationArg arg;
-    ErrorContext ctx;
+    ErrorApplicationArg arg;          ///< Arg data.
 } ErrorApplicationConfig;
+
+/**
+ * @brief Creates an \ref ErrorCode.
+ * @param low  The module portion of the error, normally this should be set to module + 2000.
+ * @param desc The error description.
+ */
+ErrorCode errorCodeCreate(u32 low, u32 desc);
+
+/**
+ * @brief Creates an \ref ErrorCode with the input Result. Wrapper for \ref errorCodeCreate.
+ * @param res Input Result.
+ */
+ErrorCode errorCodeCreateResult(Result res);
+
+/**
+ * @brief Creates an invalid \ref ErrorCode.
+ */
+ErrorCode errorCodeCreateInvalid(void);
+
+/**
+ * @brief Checks whether the input ErrorCode is valid.
+ * @param errorCode \ref ErrorCode
+ */
+bool errorCodeIsValid(ErrorCode errorCode);
 
 /**
  * @brief Launches the applet for displaying the specified Result.
@@ -92,21 +127,22 @@ typedef struct {
  * @param jumpFlag Jump flag, normally this is true.
  * @param ctx \ref ErrorContext, unused when jumpFlag=false. Ignored on pre-4.0.0, since it's only available for [4.0.0+].
  * @note Sets the following fields: jumpFlag and contextFlag2. Uses type=0 normally.
- * @note For module=PCTL errors with desc 100-119 this sets \ref ErrorCommonHeader type=4, in which case the applet will display the following dialog (without the report logging mentioned below): "This software is restricted by Parental Controls".
- * @warning This applet creates an error report that is logged in the system. Proceed at your own risk!
+ * @note For module=PCTL errors with desc 100-119 this sets \ref ErrorCommonHeader type=4, in which case the applet will display the following special dialog: "This software is restricted by Parental Controls".
+ * @note If the input Result is 0xC8A2, the applet will display a special dialog regarding the current application requiring a software update, with buttons "Later" and "Restart".
+ * @note [3.0.0+] If the input Result is 0xCAA2, the applet will display a special dialog related to DLC version.
+ * @warning This applet creates an error report that is logged in the system, when not handling the above special dialogs. Proceed at your own risk!
  */
 Result errorResultShow(Result res, bool jumpFlag, ErrorContext* ctx);
 
 /**
  * @brief Launches the applet for displaying the specified ErrorCode.
- * @param low  The module portion of the error, normally this should be set to module + 2000.
- * @param desc The error description.
+ * @param errorCode \ref ErrorCode
  * @param jumpFlag Jump flag, normally this is true.
  * @param ctx \ref ErrorContext, unused when jumpFlag=false. Ignored on pre-4.0.0, since it's only available for [4.0.0+].
  * @note Sets the following fields: jumpFlag and contextFlag2. type=0 and resultFlag=1.
  * @warning This applet creates an error report that is logged in the system. Proceed at your own risk!
  */
-Result errorCodeShow(u32 low, u32 desc, bool jumpFlag, ErrorContext* ctx);
+Result errorCodeShow(ErrorCode errorCode, bool jumpFlag, ErrorContext* ctx);
 
 /**
  * @brief Creates an ErrorResultBacktrace struct.
@@ -126,6 +162,7 @@ void errorResultBacktraceClose(ErrorResultBacktrace* backtrace);
  * @brief Launches the applet for \ref ErrorResultBacktrace.
  * @param backtrace ErrorResultBacktrace struct.
  * @param res Result
+ * @note Sets the following fields: type=0, jumpFlag=1, and contextFlag=1.
  * @warning This applet creates an error report that is logged in the system. Proceed at your own risk!
  */
 Result errorResultBacktraceShow(Result res, ErrorResultBacktrace* backtrace);
@@ -147,18 +184,17 @@ Result errorSystemUpdateEulaShow(SetRegion RegionCode, ErrorEulaData* eula);
  * @brief Launches the applet for displaying an error full-screen, using the specified Result and timestamp.
  * @param res Result
  * @param timestamp POSIX timestamp.
- * @note Wrapper for \ref errorCodeRecordShow.
- * @note The applet does not log an error report for this.
+ * @note Wrapper for \ref errorCodeRecordShow, see \ref errorCodeRecordShow notes.
  */
 Result errorResultRecordShow(Result res, u64 timestamp);
 
 /**
  * @brief Launches the applet for displaying an error full-screen, using the specified ErrorCode and timestamp.
- * @param low  The module portion of the error, normally this should be set to module + 2000.
- * @param desc The error description.
- * @note The applet does not log an error report for this.
+ * @param errorCode \ref ErrorCode
+ * @param timestamp POSIX timestamp.
+ * @note The applet does not log an error report for this. error*RecordShow is used by qlaunch for displaying previously logged error reports.
  */
-Result errorCodeRecordShow(u32 low, u32 desc, u64 timestamp);
+Result errorCodeRecordShow(ErrorCode errorCode, u64 timestamp);
 
 /**
  * @brief Creates an ErrorSystemConfig struct.
@@ -186,10 +222,9 @@ Result errorSystemShow(ErrorSystemConfig* c);
 /**
  * @brief Sets the error code.
  * @param c    ErrorSystemConfig struct.
- * @param low  The module portion of the error, normally this should be set to module + 2000.
- * @param desc The error description.
+ * @param errorCode \ref ErrorCode
  */
-void errorSystemSetCode(ErrorSystemConfig* c, u32 low, u32 desc);
+void errorSystemSetCode(ErrorSystemConfig* c, ErrorCode errorCode);
 
 /**
  * @brief Sets the error code, using the input Result. Wrapper for \ref errorSystemSetCode.
