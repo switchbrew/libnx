@@ -185,6 +185,8 @@ void errorSystemSetLanguageCode(ErrorSystemConfig* c, u64 LanguageCode) {
 }
 
 void errorSystemSetContext(ErrorSystemConfig* c, ErrorContext* ctx) {
+    if (hosversionBefore(4,0,0)) return;
+
     c->arg.hdr.contextFlag = ctx!=0;
     memset(&c->ctx, 0, sizeof(ErrorContext));
     if (ctx) memcpy(&c->ctx, ctx, sizeof(ErrorContext));
