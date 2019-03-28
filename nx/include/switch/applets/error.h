@@ -10,8 +10,9 @@
 #include "../services/set.h"
 
 typedef struct {
-    u8 unk_x0[0x200];
-} ErrorContext;
+    char str[0x1f4];
+    u8 unk_x1f4[0xc];
+} PACKED ErrorContext;
 
 /// Common header for the start of the arg storage.
 typedef struct {
