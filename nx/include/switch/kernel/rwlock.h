@@ -6,12 +6,15 @@
  */
 #pragma once
 #include "../kernel/mutex.h"
+#include "../kernel/condvar.h"
 
 /// Read/write lock structure.
 typedef struct {
-    RMutex r;
-    RMutex g;
-    u64 b;
+    Mutex mutex;
+    CondVar condvar_readers;
+    CondVar condvar_writer;
+    u32  readers : 31;
+    bool writer : 1;
 } RwLock;
 
 /**
