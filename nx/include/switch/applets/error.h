@@ -16,11 +16,11 @@ typedef struct {
 /// Common header for the start of the arg storage.
 typedef struct {
     u8 type;
-    u8 unk_x1;
+    u8 jumpFlag;         ///< When clear, this indicates WithoutJump.
     u8 unk_x2[3];
     u8 contextFlag;
     u8 resultFlag;       ///< \ref ErrorCommonArg: When clear, errorCode is used, otherwise the applet generates the error-code from res.
-    u8 unk_x7;
+    u8 contextFlag2;     ///< Same as contextFlag except for ErrorCommonArg?
 } ErrorCommonHeader;
 
 /// Error arg data for non-{System/Application}.
@@ -30,6 +30,12 @@ typedef struct {
     Result res;
 } ErrorCommonArg;
 
+/// ResultBacktrace
+typedef struct {
+    s32 count;
+    Result backtrace[0x20];
+} ErrorResultBacktrace;
+
 typedef struct {
     ErrorCommonHeader hdr;
     SetRegion regionCode;
@@ -38,6 +44,12 @@ typedef struct {
 typedef struct {
     u8 data[0x20000];
 } ErrorEulaData;
+
+typedef struct {
+    ErrorCommonHeader hdr;
+    u64 errorCode;
+    u64 timestamp;                   ///< POSIX timestamp.
+} ErrorRecordArg;
 
 /// SystemErrorArg
 typedef struct {
@@ -66,6 +78,28 @@ typedef struct {
     ErrorApplicationArg arg;
     ErrorContext ctx;
 } ErrorApplicationConfig;
+
+/**
+ * @brief Creates an ErrorResultBacktrace struct.
+ * @param backtrace \ref ErrorResultBacktrace struct.
+ * @param count Total number of entries.
+ * @param entries Input array of Result.
+ */
+Result errorResultBacktraceCreate(ErrorResultBacktrace* backtrace, s32 count, Result* entries);
+
+/**
+ * @brief Closes an ErrorResultBacktrace struct.
+ * @param backtrace \ref ErrorResultBacktrace struct.
+ */
+void errorResultBacktraceClose(ErrorResultBacktrace* backtrace);
+
+/**
+ * @brief Launches the applet for \ref ErrorResultBacktrace.
+ * @param backtrace ErrorResultBacktrace struct.
+ * @param res Result
+ * @warning This applet creates an error report that is logged in the system. Proceed at your own risk!
+ */
+Result errorResultBacktraceShow(Result res, ErrorResultBacktrace* backtrace);
 
 /**
  * @brief Launches the applet for displaying the EULA.
