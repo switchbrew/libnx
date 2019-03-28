@@ -20,7 +20,7 @@ typedef struct {
     u8 unk_x2[3];
     u8 contextFlag;
     u8 resultFlag;       ///< \ref ErrorCommonArg: When clear, errorCode is used, otherwise the applet generates the error-code from res.
-    u8 contextFlag2;     ///< Same as contextFlag except for ErrorCommonArg?
+    u8 contextFlag2;     ///< Similar to contextFlag except for ErrorCommonArg, indicating \ref ErrorContext is used.
 } ErrorCommonHeader;
 
 /// Error arg data for non-{System/Application}.
@@ -29,6 +29,12 @@ typedef struct {
     u64 errorCode;
     Result res;
 } ErrorCommonArg;
+
+/// Error arg data for certain errors with module PCTL.
+typedef struct {
+    ErrorCommonHeader hdr;
+    Result res;
+} ErrorPctlArg;
 
 /// ResultBacktrace
 typedef struct {
@@ -78,6 +84,28 @@ typedef struct {
     ErrorApplicationArg arg;
     ErrorContext ctx;
 } ErrorApplicationConfig;
+
+/**
+ * @brief Launches the applet for displaying the specified Result.
+ * @param res Result
+ * @param jumpFlag Jump flag, normally this is true.
+ * @param ctx \ref ErrorContext, unused when jumpFlag=false. Ignored on pre-4.0.0, since it's only available for [4.0.0+].
+ * @note Sets the following fields: jumpFlag and contextFlag2. Uses type=0 normally.
+ * @note For module=PCTL errors with desc 100-119 this sets \ref ErrorCommonHeader type=4, in which case the applet will display the following dialog (without the report logging mentioned below): "This software is restricted by Parental Controls".
+ * @warning This applet creates an error report that is logged in the system. Proceed at your own risk!
+ */
+Result errorResultShow(Result res, bool jumpFlag, ErrorContext* ctx);
+
+/**
+ * @brief Launches the applet for displaying the specified ErrorCode.
+ * @param low  The module portion of the error, normally this should be set to module + 2000.
+ * @param desc The error description.
+ * @param jumpFlag Jump flag, normally this is true.
+ * @param ctx \ref ErrorContext, unused when jumpFlag=false. Ignored on pre-4.0.0, since it's only available for [4.0.0+].
+ * @note Sets the following fields: jumpFlag and contextFlag2. type=0 and resultFlag=1.
+ * @warning This applet creates an error report that is logged in the system. Proceed at your own risk!
+ */
+Result errorCodeShow(u32 low, u32 desc, bool jumpFlag, ErrorContext* ctx);
 
 /**
  * @brief Creates an ErrorResultBacktrace struct.

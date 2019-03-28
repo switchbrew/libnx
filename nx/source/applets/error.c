@@ -76,6 +76,53 @@ static Result _errorShowContext(const void* indata, size_t insize, ErrorContext*
     return _errorShow(indata, insize, ctx_ptr, ctx_size);
 }
 
+// {Result/Code}Show
+
+Result errorResultShow(Result res, bool jumpFlag, ErrorContext* ctx) {
+    if (!jumpFlag) ctx = NULL;
+    ErrorCommonArg arg_common;
+    ErrorPctlArg arg_pctl;
+    ErrorCommonHeader *hdr = NULL;
+    bool flag = hosversionAtLeast(4,0,0) && ctx!=NULL;
+    bool argtype;
+    u32 tmp = R_DESCRIPTION(res);
+
+    argtype = R_MODULE(res)==142 && tmp >= 100 && tmp <= 100+19;
+    if (!argtype) hdr = &arg_common.hdr;
+    if (argtype) hdr = &arg_pctl.hdr;
+
+    memset(&arg_common, 0, sizeof(arg_common));
+    memset(&arg_pctl, 0, sizeof(arg_pctl));
+
+    hdr->type = !argtype ? 0 : 4;
+    hdr->jumpFlag = jumpFlag!=0;
+    if (flag) hdr->contextFlag2 = 1;
+
+    if (!argtype) {
+        arg_common.res = res;
+        return _errorShowContext(&arg_common, sizeof(arg_common), ctx);
+    }
+    else {
+        arg_pctl.res = res;
+        return _errorShowContext(&arg_pctl, sizeof(arg_pctl), ctx);
+    }
+}
+
+Result errorCodeShow(u32 low, u32 desc, bool jumpFlag, ErrorContext* ctx) {
+    if (!jumpFlag) ctx = NULL;
+    bool flag = hosversionAtLeast(4,0,0) && ctx!=NULL;
+    ErrorCommonArg arg;
+
+    memset(&arg, 0, sizeof(arg));
+    arg.hdr.type = 0;
+    arg.hdr.jumpFlag = jumpFlag!=0;
+    if (flag) arg.hdr.contextFlag2 = 1;
+    arg.hdr.resultFlag = 1;
+    arg.errorCode = (u64)low | ((u64)desc<<32);
+
+    return _errorShowContext(&arg, sizeof(arg), ctx);
+}
+
 // Backtrace
 
 Result errorResultBacktraceCreate(ErrorResultBacktrace* backtrace, s32 count, Result* entries) {
@@ -143,6 +190,10 @@ Result errorSystemUpdateEulaShow(SetRegion RegionCode, ErrorEulaData* eula) {
 
     return rc;
 }
+
+// Record
+
+//TODO
 
 // System
 
