@@ -30,7 +30,7 @@ typedef struct {
 typedef struct {
     char str[0x1f4];     ///< String
     u8 unk_x1f4[0xc];    ///< Unknown
-} PACKED ErrorContext;
+} ErrorContext;
 
 /// Common header for the start of the arg storage.
 typedef struct {
@@ -114,8 +114,7 @@ typedef struct {
  * @param desc The error description.
  */
 static inline ErrorCode errorCodeCreate(u32 low, u32 desc) {
-    ErrorCode c = {.low = low, .desc = desc};
-    return c;
+    return (ErrorCode){low, desc};
 }
 
 /**
@@ -130,8 +129,7 @@ static inline ErrorCode errorCodeCreateResult(Result res) {
  * @brief Creates an invalid \ref ErrorCode.
  */
 static inline ErrorCode errorCodeCreateInvalid(void) {
-    ErrorCode c={0};
-    return c;
+    return (ErrorCode){0};
 }
 
 /**
@@ -153,7 +151,7 @@ static inline bool errorCodeIsValid(ErrorCode errorCode) {
  * @note [3.0.0+] If the input Result is 0xCAA2, the applet will display a special dialog related to DLC version.
  * @warning This applet creates an error report that is logged in the system, when not handling the above special dialogs. Proceed at your own risk!
  */
-Result errorResultShow(Result res, bool jumpFlag, ErrorContext* ctx);
+Result errorResultShow(Result res, bool jumpFlag, const ErrorContext* ctx);
 
 /**
  * @brief Launches the applet for displaying the specified ErrorCode.
@@ -163,7 +161,7 @@ Result errorResultShow(Result res, bool jumpFlag, ErrorContext* ctx);
  * @note Sets the following fields: jumpFlag and contextFlag2. resultFlag=1. Uses ::ErrorType_Normal.
  * @warning This applet creates an error report that is logged in the system. Proceed at your own risk!
  */
-Result errorCodeShow(ErrorCode errorCode, bool jumpFlag, ErrorContext* ctx);
+Result errorCodeShow(ErrorCode errorCode, bool jumpFlag, const ErrorContext* ctx);
 
 /**
  * @brief Creates an ErrorResultBacktrace struct.
@@ -171,13 +169,7 @@ Result errorCodeShow(ErrorCode errorCode, bool jumpFlag, ErrorContext* ctx);
  * @param count Total number of entries.
  * @param entries Input array of Result.
  */
-Result errorResultBacktraceCreate(ErrorResultBacktrace* backtrace, s32 count, Result* entries);
-
-/**
- * @brief Closes an ErrorResultBacktrace struct.
- * @param backtrace \ref ErrorResultBacktrace struct.
- */
-void errorResultBacktraceClose(ErrorResultBacktrace* backtrace);
+Result errorResultBacktraceCreate(ErrorResultBacktrace* backtrace, s32 count, const Result* entries);
 
 /**
  * @brief Launches the applet for \ref ErrorResultBacktrace.
@@ -186,7 +178,7 @@ void errorResultBacktraceClose(ErrorResultBacktrace* backtrace);
  * @note Sets the following fields: jumpFlag=1, contextFlag=1, and uses ::ErrorType_Normal.
  * @warning This applet creates an error report that is logged in the system. Proceed at your own risk!
  */
-Result errorResultBacktraceShow(Result res, ErrorResultBacktrace* backtrace);
+Result errorResultBacktraceShow(Result res, const ErrorResultBacktrace* backtrace);
 
 /**
  * @brief Launches the applet for displaying the EULA.
@@ -201,15 +193,7 @@ Result errorEulaShow(SetRegion RegionCode);
  * @param eula EULA data. Address must be 0x1000-byte aligned.
  * @note Sets the following fields: jumpFlag=1, regionCode, and uses ::ErrorType_SystemUpdateEula.
  */
-Result errorSystemUpdateEulaShow(SetRegion RegionCode, ErrorEulaData* eula);
-
-/**
- * @brief Launches the applet for displaying an error full-screen, using the specified Result and timestamp.
- * @param res Result
- * @param timestamp POSIX timestamp.
- * @note Wrapper for \ref errorCodeRecordShow, see \ref errorCodeRecordShow notes.
- */
-Result errorResultRecordShow(Result res, u64 timestamp);
+Result errorSystemUpdateEulaShow(SetRegion RegionCode, const ErrorEulaData* eula);
 
 /**
  * @brief Launches the applet for displaying an error full-screen, using the specified ErrorCode and timestamp.
@@ -219,6 +203,16 @@ Result errorResultRecordShow(Result res, u64 timestamp);
  * @note The applet does not log an error report for this. error*RecordShow is used by qlaunch for displaying previously logged error reports.
  */
 Result errorCodeRecordShow(ErrorCode errorCode, u64 timestamp);
+
+/**
+ * @brief Launches the applet for displaying an error full-screen, using the specified Result and timestamp.
+ * @param res Result
+ * @param timestamp POSIX timestamp.
+ * @note Wrapper for \ref errorCodeRecordShow, see \ref errorCodeRecordShow notes.
+ */
+static inline Result errorResultRecordShow(Result res, u64 timestamp) {
+    return errorCodeRecordShow(errorCodeCreateResult(res), timestamp);
+}
 
 /**
  * @brief Creates an ErrorSystemConfig struct.
@@ -232,12 +226,6 @@ Result errorCodeRecordShow(ErrorCode errorCode, u64 timestamp);
 Result errorSystemCreate(ErrorSystemConfig* c, const char* dialog_message, const char* fullscreen_message);
 
 /**
- * @brief Closes an ErrorSystemConfig struct.
- * @param c ErrorSystemConfig struct.
- */
-void errorSystemClose(ErrorSystemConfig* c);
-
-/**
  * @brief Launches the applet with the specified config.
  * @param c ErrorSystemConfig struct.
  */
@@ -248,21 +236,27 @@ Result errorSystemShow(ErrorSystemConfig* c);
  * @param c    ErrorSystemConfig struct.
  * @param errorCode \ref ErrorCode
  */
-void errorSystemSetCode(ErrorSystemConfig* c, ErrorCode errorCode);
+static inline void errorSystemSetCode(ErrorSystemConfig* c, ErrorCode errorCode) {
+    c->arg.errorCode = errorCode;
+}
 
 /**
  * @brief Sets the error code, using the input Result. Wrapper for \ref errorSystemSetCode.
  * @param c    ErrorSystemConfig struct.
  * @param res  The Result to set.
  */
-void errorSystemSetResult(ErrorSystemConfig* c, Result res);
+static inline void errorSystemSetResult(ErrorSystemConfig* c, Result res) {
+    errorSystemSetCode(c, errorCodeCreateResult(res));
+}
 
 /**
  * @brief Sets the LanguageCode.
  * @param c            ErrorSystemConfig struct.
  * @param LanguageCode LanguageCode, see set.h.
  */
-void errorSystemSetLanguageCode(ErrorSystemConfig* c, u64 LanguageCode);
+static inline void errorSystemSetLanguageCode(ErrorSystemConfig* c, u64 LanguageCode) {
+    c->arg.languageCode = LanguageCode;
+}
 
 /**
  * @brief Sets the ErrorContext.
@@ -270,7 +264,7 @@ void errorSystemSetLanguageCode(ErrorSystemConfig* c, u64 LanguageCode);
  * @param c   ErrorSystemConfig struct.
  * @param ctx ErrorContext, NULL to clear it.
  */
-void errorSystemSetContext(ErrorSystemConfig* c, ErrorContext* ctx);
+void errorSystemSetContext(ErrorSystemConfig* c, const ErrorContext* ctx);
 
 /**
  * @brief Creates an ErrorApplicationConfig struct.
@@ -282,12 +276,6 @@ void errorSystemSetContext(ErrorSystemConfig* c, ErrorContext* ctx);
  * @warning This applet creates an error report that is logged in the system. Proceed at your own risk!
  */
 Result errorApplicationCreate(ErrorApplicationConfig* c, const char* dialog_message, const char* fullscreen_message);
-
-/**
- * @brief Closes an ErrorApplicationConfig struct.
- * @param c ErrorApplicationConfig struct.
- */
-void errorApplicationClose(ErrorApplicationConfig* c);
 
 /**
  * @brief Launches the applet with the specified config.
@@ -307,5 +295,7 @@ void errorApplicationSetNumber(ErrorApplicationConfig* c, u32 errorNumber);
  * @param c            ErrorApplicationConfig struct.
  * @param LanguageCode LanguageCode, see set.h.
  */
-void errorApplicationSetLanguageCode(ErrorApplicationConfig* c, u64 LanguageCode);
+static inline void errorApplicationSetLanguageCode(ErrorApplicationConfig* c, u64 LanguageCode) {
+    c->arg.languageCode = LanguageCode;
+}
 
