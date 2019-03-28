@@ -76,30 +76,6 @@ static Result _errorShowContext(const void* indata, size_t insize, ErrorContext*
     return _errorShow(indata, insize, ctx_ptr, ctx_size);
 }
 
-// Code
-
-ErrorCode errorCodeCreate(u32 low, u32 desc) {
-    ErrorCode c;
-
-    c.low = low;
-    c.desc = desc;
-
-    return c;
-}
-
-ErrorCode errorCodeCreateResult(Result res) {
-    return errorCodeCreate(2000 + R_MODULE(res), R_DESCRIPTION(res));
-}
-
-ErrorCode errorCodeCreateInvalid(void) {
-    ErrorCode c={0};
-    return c;
-}
-
-bool errorCodeIsValid(ErrorCode errorCode) {
-    return errorCode.low!=0;
-}
-
 // {Result/Code}Show
 
 Result errorResultShow(Result res, bool jumpFlag, ErrorContext* ctx) {
@@ -118,7 +94,7 @@ Result errorResultShow(Result res, bool jumpFlag, ErrorContext* ctx) {
     memset(&arg_common, 0, sizeof(arg_common));
     memset(&arg_pctl, 0, sizeof(arg_pctl));
 
-    hdr->type = !argtype ? 0 : 4;
+    hdr->type = !argtype ? ErrorType_Normal : ErrorType_Pctl;
     hdr->jumpFlag = jumpFlag!=0;
     if (flag) hdr->contextFlag2 = 1;
 
@@ -138,7 +114,7 @@ Result errorCodeShow(ErrorCode errorCode, bool jumpFlag, ErrorContext* ctx) {
     ErrorCommonArg arg;
 
     memset(&arg, 0, sizeof(arg));
-    arg.hdr.type = 0;
+    arg.hdr.type = ErrorType_Normal;
     arg.hdr.jumpFlag = jumpFlag!=0;
     if (flag) arg.hdr.contextFlag2 = 1;
     arg.hdr.resultFlag = 1;
@@ -168,7 +144,7 @@ Result errorResultBacktraceShow(Result res, ErrorResultBacktrace* backtrace) {
     ErrorCommonArg arg;
 
     memset(&arg, 0, sizeof(arg));
-    arg.hdr.type = 0;
+    arg.hdr.type = ErrorType_Normal;
     arg.hdr.jumpFlag = 1;
     arg.hdr.contextFlag = 1;
     arg.res = res;
@@ -182,7 +158,7 @@ Result errorEulaShow(SetRegion RegionCode) {
     ErrorEulaArg arg;
 
     memset(&arg, 0, sizeof(arg));
-    arg.hdr.type = 3;
+    arg.hdr.type = ErrorType_Eula;
     arg.hdr.jumpFlag = 1;
     arg.regionCode = RegionCode;
 
@@ -196,7 +172,7 @@ Result errorSystemUpdateEulaShow(SetRegion RegionCode, ErrorEulaData* eula) {
     ErrorEulaArg arg;
 
     memset(&arg, 0, sizeof(arg));
-    arg.hdr.type = 8;
+    arg.hdr.type = ErrorType_SystemUpdateEula;
     arg.hdr.jumpFlag = 1;
     arg.regionCode = RegionCode;
 
@@ -225,7 +201,7 @@ Result errorCodeRecordShow(ErrorCode errorCode, u64 timestamp) {
     ErrorRecordArg arg;
 
     memset(&arg, 0, sizeof(arg));
-    arg.hdr.type = 5;
+    arg.hdr.type = ErrorType_Record;
     arg.hdr.jumpFlag = 1;
     arg.errorCode = errorCode;
     arg.timestamp = timestamp;
@@ -239,7 +215,7 @@ Result errorSystemCreate(ErrorSystemConfig* c, const char* dialog_message, const
     Result rc=0;
 
     memset(c, 0, sizeof(*c));
-    c->arg.hdr.type = 1;
+    c->arg.hdr.type = ErrorType_System;
 
     strncpy(c->arg.dialogMessage, dialog_message, sizeof(c->arg.dialogMessage)-1);
     if (fullscreen_message) strncpy(c->arg.fullscreenMessage, fullscreen_message, sizeof(c->arg.fullscreenMessage)-1);
@@ -287,7 +263,7 @@ Result errorApplicationCreate(ErrorApplicationConfig* c, const char* dialog_mess
     Result rc=0;
 
     memset(c, 0, sizeof(*c));
-    c->arg.hdr.type = 2;
+    c->arg.hdr.type = ErrorType_Application;
     c->arg.hdr.jumpFlag = 1;
 
     strncpy(c->arg.dialogMessage, dialog_message, sizeof(c->arg.dialogMessage)-1);

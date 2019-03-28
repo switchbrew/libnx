@@ -9,6 +9,17 @@
 #include "../services/applet.h"
 #include "../services/set.h"
 
+/// Error type for ErrorCommonHeader.type.
+typedef enum {
+    ErrorType_Normal           = 0,  ///< Normal
+    ErrorType_System           = 1,  ///< System
+    ErrorType_Application      = 2,  ///< Application
+    ErrorType_Eula             = 3,  ///< EULA
+    ErrorType_Pctl             = 4,  ///< Parental Controls
+    ErrorType_Record           = 5,  ///< Record
+    ErrorType_SystemUpdateEula = 8,  ///< SystemUpdateEula
+} ErrorType;
+
 /// Stores error-codes which are displayed as XXXX-XXXX, low for the former and desc for the latter.
 typedef struct {
     u32 low;             ///< The module portion of the error, normally this should be set to module + 2000.
@@ -23,10 +34,10 @@ typedef struct {
 
 /// Common header for the start of the arg storage.
 typedef struct {
-    u8 type;             ///< Type
+    u8 type;             ///< Type, see \ref ErrorType.
     u8 jumpFlag;         ///< When clear, this indicates WithoutJump.
     u8 unk_x2[3];        ///< Unknown
-    u8 contextFlag;      ///< When set with type=0, indicates that an additional storage is pushed for \ref ErrorResultBacktrace. [4.0.0+] Otherwise, when set indicates that an additional storage is pushed for \ref ErrorContext. 
+    u8 contextFlag;      ///< When set with ::ErrorType_Normal, indicates that an additional storage is pushed for \ref ErrorResultBacktrace. [4.0.0+] Otherwise, when set indicates that an additional storage is pushed for \ref ErrorContext.
     u8 resultFlag;       ///< ErrorCommonArg: When clear, errorCode is used, otherwise the applet generates the error-code from res.
     u8 contextFlag2;     ///< Similar to contextFlag except for ErrorCommonArg, indicating \ref ErrorContext is used.
 } ErrorCommonHeader;
@@ -102,32 +113,42 @@ typedef struct {
  * @param low  The module portion of the error, normally this should be set to module + 2000.
  * @param desc The error description.
  */
-ErrorCode errorCodeCreate(u32 low, u32 desc);
+static inline ErrorCode errorCodeCreate(u32 low, u32 desc) {
+    ErrorCode c = {.low = low, .desc = desc};
+    return c;
+}
 
 /**
  * @brief Creates an \ref ErrorCode with the input Result. Wrapper for \ref errorCodeCreate.
  * @param res Input Result.
  */
-ErrorCode errorCodeCreateResult(Result res);
+static inline ErrorCode errorCodeCreateResult(Result res) {
+    return errorCodeCreate(2000 + R_MODULE(res), R_DESCRIPTION(res));
+}
 
 /**
  * @brief Creates an invalid \ref ErrorCode.
  */
-ErrorCode errorCodeCreateInvalid(void);
+static inline ErrorCode errorCodeCreateInvalid(void) {
+    ErrorCode c={0};
+    return c;
+}
 
 /**
  * @brief Checks whether the input ErrorCode is valid.
  * @param errorCode \ref ErrorCode
  */
-bool errorCodeIsValid(ErrorCode errorCode);
+static inline bool errorCodeIsValid(ErrorCode errorCode) {
+    return errorCode.low!=0;
+}
 
 /**
  * @brief Launches the applet for displaying the specified Result.
  * @param res Result
  * @param jumpFlag Jump flag, normally this is true.
- * @param ctx \ref ErrorContext, unused when jumpFlag=false. Ignored on pre-4.0.0, since it's only available for [4.0.0+].
- * @note Sets the following fields: jumpFlag and contextFlag2. Uses type=0 normally.
- * @note For module=PCTL errors with desc 100-119 this sets \ref ErrorCommonHeader type=4, in which case the applet will display the following special dialog: "This software is restricted by Parental Controls".
+ * @param ctx Optional \ref ErrorContext, can be NULL. Unused when jumpFlag=false. Ignored on pre-4.0.0, since it's only available for [4.0.0+].
+ * @note Sets the following fields: jumpFlag and contextFlag2. Uses ::ErrorType_Normal normally.
+ * @note For module=PCTL errors with desc 100-119 this sets uses ::ErrorType_Pctl, in which case the applet will display the following special dialog: "This software is restricted by Parental Controls".
  * @note If the input Result is 0xC8A2, the applet will display a special dialog regarding the current application requiring a software update, with buttons "Later" and "Restart".
  * @note [3.0.0+] If the input Result is 0xCAA2, the applet will display a special dialog related to DLC version.
  * @warning This applet creates an error report that is logged in the system, when not handling the above special dialogs. Proceed at your own risk!
@@ -138,8 +159,8 @@ Result errorResultShow(Result res, bool jumpFlag, ErrorContext* ctx);
  * @brief Launches the applet for displaying the specified ErrorCode.
  * @param errorCode \ref ErrorCode
  * @param jumpFlag Jump flag, normally this is true.
- * @param ctx \ref ErrorContext, unused when jumpFlag=false. Ignored on pre-4.0.0, since it's only available for [4.0.0+].
- * @note Sets the following fields: jumpFlag and contextFlag2. type=0 and resultFlag=1.
+ * @param ctx Optional \ref ErrorContext, can be NULL. Unused when jumpFlag=false. Ignored on pre-4.0.0, since it's only available for [4.0.0+].
+ * @note Sets the following fields: jumpFlag and contextFlag2. resultFlag=1. Uses ::ErrorType_Normal.
  * @warning This applet creates an error report that is logged in the system. Proceed at your own risk!
  */
 Result errorCodeShow(ErrorCode errorCode, bool jumpFlag, ErrorContext* ctx);
@@ -162,7 +183,7 @@ void errorResultBacktraceClose(ErrorResultBacktrace* backtrace);
  * @brief Launches the applet for \ref ErrorResultBacktrace.
  * @param backtrace ErrorResultBacktrace struct.
  * @param res Result
- * @note Sets the following fields: type=0, jumpFlag=1, and contextFlag=1.
+ * @note Sets the following fields: jumpFlag=1, contextFlag=1, and uses ::ErrorType_Normal.
  * @warning This applet creates an error report that is logged in the system. Proceed at your own risk!
  */
 Result errorResultBacktraceShow(Result res, ErrorResultBacktrace* backtrace);
@@ -170,6 +191,7 @@ Result errorResultBacktraceShow(Result res, ErrorResultBacktrace* backtrace);
 /**
  * @brief Launches the applet for displaying the EULA.
  * @param RegionCode \ref SetRegion
+ * @note Sets the following fields: jumpFlag=1, regionCode, and uses ::ErrorType_Eula.
  */
 Result errorEulaShow(SetRegion RegionCode);
 
@@ -177,6 +199,7 @@ Result errorEulaShow(SetRegion RegionCode);
  * @brief Launches the applet for displaying the system-update EULA.
  * @param RegionCode \ref SetRegion
  * @param eula EULA data. Address must be 0x1000-byte aligned.
+ * @note Sets the following fields: jumpFlag=1, regionCode, and uses ::ErrorType_SystemUpdateEula.
  */
 Result errorSystemUpdateEulaShow(SetRegion RegionCode, ErrorEulaData* eula);
 
@@ -192,6 +215,7 @@ Result errorResultRecordShow(Result res, u64 timestamp);
  * @brief Launches the applet for displaying an error full-screen, using the specified ErrorCode and timestamp.
  * @param errorCode \ref ErrorCode
  * @param timestamp POSIX timestamp.
+ * @note Sets the following fields: jumpFlag=1, errorCode, timestamp, and uses ::ErrorType_Record.
  * @note The applet does not log an error report for this. error*RecordShow is used by qlaunch for displaying previously logged error reports.
  */
 Result errorCodeRecordShow(ErrorCode errorCode, u64 timestamp);
@@ -201,7 +225,7 @@ Result errorCodeRecordShow(ErrorCode errorCode, u64 timestamp);
  * @param c ErrorSystemConfig struct.
  * @param dialog_message UTF-8 dialog message.
  * @param fullscreen_message UTF-8 fullscreen message, displayed when the user clicks on "Details". Optional, can be NULL (which disables displaying Details).
- * @note Sets the following fields: type=1 and {strings}. The rest are cleared.
+ * @note Sets the following fields: {strings}, and uses ::ErrorType_System. The rest are cleared.
  * @note On pre-5.0.0 this will initialize languageCode by using: setInitialize(), setMakeLanguageCode(SetLanguage_ENUS, ...), and setExit(). This is needed since an empty languageCode wasn't supported until [5.0.0+] (which would also use SetLanguage_ENUS).
  * @warning This applet creates an error report that is logged in the system. Proceed at your own risk!
  */
@@ -253,7 +277,7 @@ void errorSystemSetContext(ErrorSystemConfig* c, ErrorContext* ctx);
  * @param c ErrorApplicationConfig struct.
  * @param dialog_message UTF-8 dialog message.
  * @param fullscreen_message UTF-8 fullscreen message, displayed when the user clicks on "Details". Optional, can be NULL (which disables displaying Details).
- * @note Sets the following fields: type=2, unk_x1=1, and {strings}. The rest are cleared.
+ * @note Sets the following fields: jumpFlag=1, {strings}, and uses ::ErrorType_Application. The rest are cleared.
  * @note On pre-5.0.0 this will initialize languageCode by using: setInitialize(), setMakeLanguageCode(SetLanguage_ENUS, ...), and setExit(). This is needed since an empty languageCode wasn't supported until [5.0.0+] (which would also use SetLanguage_ENUS).
  * @warning This applet creates an error report that is logged in the system. Proceed at your own risk!
  */
