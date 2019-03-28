@@ -26,7 +26,7 @@ void rwlockReadLock(RwLock* r) {
 void rwlockReadUnlock(RwLock* r) {
     mutexLock(&r->mutex);
 
-    if (r->readers-- == 1) {
+    if (--r->readers == 0) {
         condvarWakeAll(&r->condvar_readers);
     }
 

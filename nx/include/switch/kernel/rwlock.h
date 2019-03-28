@@ -13,8 +13,8 @@ typedef struct {
     Mutex mutex;
     CondVar condvar_readers;
     CondVar condvar_writer;
-    u64  readers;
-    bool writer;
+    u32  readers : 31;
+    bool writer : 1;
 } RwLock;
 
 /**
