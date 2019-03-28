@@ -193,7 +193,21 @@ Result errorSystemUpdateEulaShow(SetRegion RegionCode, ErrorEulaData* eula) {
 
 // Record
 
-//TODO
+Result errorResultRecordShow(Result res, u64 timestamp) {
+    return errorCodeRecordShow(2000 + R_MODULE(res), R_DESCRIPTION(res), timestamp);
+}
+
+Result errorCodeRecordShow(u32 low, u32 desc, u64 timestamp) {
+    ErrorRecordArg arg;
+
+    memset(&arg, 0, sizeof(arg));
+    arg.hdr.type = 5;
+    arg.hdr.jumpFlag = 1;
+    arg.errorCode = (u64)low | ((u64)desc<<32);
+    arg.timestamp = timestamp;
+
+    return _errorShow(&arg, sizeof(arg), NULL, 0);
+}
 
 // System
 

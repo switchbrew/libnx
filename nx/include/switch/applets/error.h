@@ -143,6 +143,23 @@ Result errorEulaShow(SetRegion RegionCode);
 Result errorSystemUpdateEulaShow(SetRegion RegionCode, ErrorEulaData* eula);
 
 /**
+ * @brief Launches the applet for displaying an error full-screen, using the specified Result and timestamp.
+ * @param res Result
+ * @param timestamp POSIX timestamp.
+ * @note Wrapper for \ref errorCodeRecordShow.
+ * @note The applet does not log an error report for this.
+ */
+Result errorResultRecordShow(Result res, u64 timestamp);
+
+/**
+ * @brief Launches the applet for displaying an error full-screen, using the specified ErrorCode and timestamp.
+ * @param low  The module portion of the error, normally this should be set to module + 2000.
+ * @param desc The error description.
+ * @note The applet does not log an error report for this.
+ */
+Result errorCodeRecordShow(u32 low, u32 desc, u64 timestamp);
+
+/**
  * @brief Creates an ErrorSystemConfig struct.
  * @param c ErrorSystemConfig struct.
  * @param dialog_message UTF-8 dialog message.
