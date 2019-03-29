@@ -9,7 +9,7 @@ endif
 include $(DEVKITPRO)/devkitA64/base_rules
 
 export LIBNX_MAJOR	:= 2
-export LIBNX_MINOR	:= 0
+export LIBNX_MINOR	:= 1
 export LIBNX_PATCH	:= 0
 
 
@@ -96,7 +96,7 @@ export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 all: lib/libnx.a lib/libnxd.a
 
 dist-bin: all
-	@tar --exclude=*~ -cjf libnx-$(VERSION).tar.bz2 include lib default_icon.jpg switch_rules switch.ld switch.specs -C external/bsd include 
+	@tar --exclude=*~ -cjf libnx-$(VERSION).tar.bz2 include lib default_icon.jpg switch_rules switch.ld switch.specs -C external/bsd include
 
 dist-src:
 	@tar --exclude=*~ -cjf libnx-src-$(VERSION).tar.bz2 include source data external Makefile default_icon.jpg switch_rules switch.ld switch.specs

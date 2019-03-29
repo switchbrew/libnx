@@ -1,5 +1,66 @@
 # Changelog
 
+## Version 2.1.0
+
+#### system
+* **Introduced support for POSIX threads (pthreads) and C++ `std::thread` APIs**, with the help of devkitA64 r13.
+* **Introduced hosversion API**, which replaces the old kernelAbove*X* functions for nearly all use cases. By default HOS version is sourced from set:sys during app startup if available. **Make sure to call hosversionSet with appropriately sourced system version information if you are overriding `__appInit`**.
+* Added support for TLS slots.
+* Homebrew now embeds the module name at the beginning of rodata. This allows Atmosphère to display the proper name of homebrew executable modules in crash reports and in other locations.
+* Added detectJitKernelPatch, detectIgnoreJitKernelPatch and detectKernelVersion.
+* Corrected definition of svcSleepThread.
+* Optimized implementation of the Barrier and RwLock synchronization primitives.
+
+#### applet
+* **Added support for SwkbdInline.**
+* **Added support for the WifiWebAuth, Web, WebOffline, WebShare and WebLobby library applets**. Please note that using some of these applets requires Atmosphère 0.8.6 or higher.
+* **Added support for the Error library applet.**
+* Added appletHolderActive, appletHolderCheckFinished and appletHolderRequestExit.
+* Added appletQueryApplicationPlayStatistics.
+* Added appletRequestLaunchApplication and appletRequestLaunchApplicationForQuest.
+* Added appletBeginToWatchShortHomeButtonMessage, appletEndToWatchShortHomeButtonMessage and appletHomeButtonReaderLockAccessorGetEvent.
+* Added appletGetMessage and appletProcessMessage. appletMainLoop is now a wrapper for these two.
+* Added libappletReadStorage and libappletPopOutData.
+* Added libappletCreateWriteStorage (previously it was an internal function).
+
+#### filesystem
+* **Refactored romfs device to support multiple romfs mounts in a sane way**.
+* Added fsOpenDataStorageByDataId.
+* Added romfsMountFromDataArchive.
+
+#### graphics
+* **Legacy deprecated gfx API has been removed**.
+* Fixed bug that would return unusable default NWindow dimensions on 1.x.
+* Corrected mistakes in NvColorFormat enum.
+* Added vi commands: viGetIndirectLayerImageMap, viGetIndirectLayerImageRequiredMemoryInfo.
+* Fixed stray layer creation on 7.0.0+.
+
+#### hid
+* Introduced `touchPosition::id` to allow multi-touch support to be usable.
+* Added hidMouseMultiRead.
+* Added hidControllerIDToOfficial and hidControllerIDFromOfficial (previously they were internal functions).
+* Added hid:sys service wrappers.
+* Changed types for fields in MousePosition to s32.
+
+#### network
+* Added wlan:inf service wrappers.
+* Added nifm commands: nifmIsWirelessCommunicationEnabled, nifmIsEthernetCommunicationEnabled, nifmIsAnyForegroundRequestAccepted, nifmPutToSleep, nifmWakeUp, nifmGetInternetConnectionStatus.
+* Added nifm:a/nifm:s command: nifmSetWirelessCommunicationEnabled.
+* Added nifmSetServiceType, which allows selecting the privilege level of the nifm service (nifm:u/nifm:s/nifm:a).
+* Fixed definition of struct ifreq's ifr_flags/ifr_flagshigh fields.
+* Fixed IPC bug in bsdRead.
+* Corrected nxlinkStdio to return the socket fd instead of zero on success, allowing for it to be closed later on.
+
+#### other services
+* Added caps:sc/caps:su service wrappers.
+* Added nfp:user service wrappers.
+* Added lbl commands: lblSetCurrentBrightnessSetting, lblGetCurrentBrightnessSetting, lblEnableAutoBrightnessControl, lblDisableAutoBrightnessControl, lblIsAutoBrightnessControlEnabled.
+* Added pmdmntGetServiceSession for retrieving the pm:dmnt session.
+* Renamed usbDsEndpoint_StallCtrl to usbDsEndpoint_Stall.
+
+#### miscellaneous
+* Further improvements to overall system stability and other minor adjustments to enhance the user experience.
+
 ## Version 2.0.0
 
 #### system
@@ -343,7 +404,7 @@
 * Added nsGetApplicationControlData. Imported nacp.h from nx-hbmenu with adjustments.
 * Add ipcAddSendSmart, ipcAddRecvSmart, use where applicable
 * Audio input implementation and audio output fixes.
-* add portlibs bin folder to path 
+* add portlibs bin folder to path
 
 #### miscellaneous
 * Detect 5.0.0 properly.
@@ -356,7 +417,7 @@
 * Added nacpGetLanguageEntry and SetLanguage_Total.
 * [irs] Name image transfer config variables
 * Further improvements to overall system stability and other minor adjustments to enhance the user experience.
- 
+
 ## Version 1.1.0
 
 * Fixed a race condition in HID causing sporadic incorrect key-releases when using hidKeysHeld().
