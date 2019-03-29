@@ -288,7 +288,9 @@ Result errorApplicationShow(ErrorApplicationConfig* c);
  * @param c           ErrorApplicationConfig struct.
  * @param errorNumber Error code number. Raw decimal error number which is displayed in the dialog.
  */
-void errorApplicationSetNumber(ErrorApplicationConfig* c, u32 errorNumber);
+static inline void errorApplicationSetNumber(ErrorApplicationConfig* c, u32 errorNumber) {
+    c->arg.errorNumber = errorNumber;
+}
 
 /**
  * @brief Sets the LanguageCode.
