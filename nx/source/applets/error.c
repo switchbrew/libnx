@@ -258,7 +258,3 @@ Result errorApplicationShow(ErrorApplicationConfig* c) {
     return _errorShow(&c->arg, sizeof(c->arg), NULL, 0);
 }
 
-void errorApplicationSetNumber(ErrorApplicationConfig* c, u32 errorNumber) {
-    c->arg.errorNumber = errorNumber;
-}
-
