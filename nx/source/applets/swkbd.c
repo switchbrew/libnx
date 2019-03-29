@@ -287,7 +287,7 @@ Result swkbdShow(SwkbdConfig* c, char* out_string, size_t out_string_size) {
 
     if (R_SUCCEEDED(rc)) {
         if (R_SUCCEEDED(rc)) rc = appletCreateTransferMemoryStorage(&storage, c->workbuf, c->workbuf_size, true);
-        appletHolderPushInData(&holder, &storage);
+        if (R_SUCCEEDED(rc)) rc = appletHolderPushInData(&holder, &storage);
     }
 
     if (R_SUCCEEDED(rc)) rc = appletHolderStart(&holder);
