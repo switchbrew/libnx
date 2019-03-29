@@ -28,8 +28,10 @@ typedef struct {
 
 /// Error context.
 typedef struct {
-    char str[0x1f4];     ///< String
-    u8 unk_x1f4[0xc];    ///< Unknown
+    u8 type;             ///< Type
+    u8 pad[7];           ///< Padding
+    u8 data[0x1f4];      ///< Data
+    Result res;          ///< Result
 } ErrorContext;
 
 /// Common header for the start of the arg storage.
