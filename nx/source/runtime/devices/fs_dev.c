@@ -487,6 +487,17 @@ FsFileSystem* fsdevGetDefaultFileSystem(void)
   return &fsdev_fsdevices[fsdev_fsdevice_default].fs;
 }
 
+int fsdevTranslatePath(const char *path, FsFileSystem** device, char *outpath)
+{
+  fsdev_fsdevice *tmpdev = NULL;
+
+  int ret = fsdev_getfspath(_REENT, path, &tmpdev, outpath);
+  if(ret==-1)return ret;
+
+  if(device)*device = &tmpdev->fs;
+  return ret;
+}
+
 /*! Open a file
  *
  *  @param[in,out] r          newlib reentrancy struct

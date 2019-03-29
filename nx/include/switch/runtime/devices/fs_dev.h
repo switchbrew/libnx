@@ -42,6 +42,9 @@ FsFileSystem* fsdevGetDeviceFileSystem(const char *name);
 /// Returns the FsFileSystem for the default device (SD card), if mounted. Used internally by romfs_dev.
 FsFileSystem* fsdevGetDefaultFileSystem(void);
 
+/// Writes the FS-path to outpath (which has buffer size FS_MAX_PATH), for the input device path. The FsFileSystem is also written to device when not NULL.
+int fsdevTranslatePath(const char *path, FsFileSystem** device, char *outpath);
+
 /// This calls fsFsSetArchiveBit on the filesystem specified by the input absolute path. 
 Result fsdevSetArchiveBit(const char *path);
 

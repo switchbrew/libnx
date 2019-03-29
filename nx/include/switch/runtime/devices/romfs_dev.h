@@ -85,6 +85,14 @@ static inline Result romfsInitFromStorage(FsStorage storage, u64 offset)
 }
 
 /**
+ * @brief Mounts RomFS from a file path in a mounted fsdev device.
+ * @param path File path.
+ * @param offset Offset of the RomFS within the file.
+ * @param name Device mount name.
+ */
+Result romfsMountFromFsdev(const char *path, u64 offset, const char *name);
+
+/**
  * @brief Mounts RomFS from a system data archive.
  * @param dataId Title ID of system data archive to mount.
  * @param storageId Storage ID to mount from.

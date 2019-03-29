@@ -15,11 +15,16 @@
 #include "runtime/env.h"
 #include "nro.h"
 
+typedef enum {
+    RomfsSource_FsFile,
+    RomfsSource_FsStorage,
+} RomfsSource;
+
 typedef struct romfs_mount
 {
     devoptab_t         device;
     bool               setup;
-    bool               fd_type;
+    RomfsSource        fd_type;
     s32                id;
     FsFile             fd;
     FsStorage          fd_storage;
@@ -49,11 +54,11 @@ static ssize_t _romfs_read(romfs_mount *mount, u64 offset, void* buffer, u64 siz
     u64 pos = mount->offset + offset;
     size_t read = 0;
     Result rc = 0;
-    if(!mount->fd_type)
+    if(mount->fd_type == RomfsSource_FsFile)
     {
         rc = fsFileRead(&mount->fd, pos, buffer, size, &read);
     }
-    else
+    else if(mount->fd_type == RomfsSource_FsStorage)
     {
         rc = fsStorageRead(&mount->fd_storage, pos, buffer, size);
         read = size;
@@ -189,6 +194,13 @@ static void romfs_free(romfs_mount *mount)
     _romfsResetMount(mount, mount->id);
 }
 
+static void romfs_mountclose(romfs_mount *mount)
+{
+    if(mount->fd_type == RomfsSource_FsFile)fsFileClose(&mount->fd);
+    if(mount->fd_type == RomfsSource_FsStorage)fsStorageClose(&mount->fd_storage);
+    romfs_free(mount);
+}
+
 Result romfsMount(const char *name)
 {
     romfs_mount *mount = romfs_alloc();
@@ -199,7 +211,7 @@ Result romfsMount(const char *name)
     {
         // RomFS embedded in a NRO
 
-        mount->fd_type = 0;
+        mount->fd_type = RomfsSource_FsFile;
 
         FsFileSystem *sdfs = fsdevGetDefaultFileSystem();
         if(sdfs==NULL)
@@ -260,7 +272,7 @@ Result romfsMount(const char *name)
     {
         // Regular RomFS
 
-        mount->fd_type = 1;
+        mount->fd_type = RomfsSource_FsStorage;
 
         Result rc = fsOpenDataStorageByCurrentProcess(&mount->fd_storage);
         if (R_FAILED(rc))
@@ -275,9 +287,7 @@ Result romfsMount(const char *name)
     return romfsMountCommon(name, mount);
 
 _fail0:
-    if(!mount->fd_type)fsFileClose(&mount->fd);
-    if(mount->fd_type)fsStorageClose(&mount->fd_storage);
-    romfs_free(mount);
+    romfs_mountclose(mount);
     return 10;
 }
 
@@ -287,7 +297,7 @@ Result romfsMountFromFile(FsFile file, u64 offset, const char *name)
     if(mount == NULL)
         return 99;
 
-    mount->fd_type = 0;
+    mount->fd_type = RomfsSource_FsFile;
     mount->fd     = file;
     mount->offset = offset;
 
@@ -300,9 +310,36 @@ Result romfsMountFromStorage(FsStorage storage, u64 offset, const char *name)
     if(mount == NULL)
         return 99;
 
-    mount->fd_type = 1;
+    mount->fd_type = RomfsSource_FsStorage;
     mount->fd_storage = storage;
     mount->offset = offset;
+
+    return romfsMountCommon(name, mount);
+}
+
+Result romfsMountFromFsdev(const char *path, u64 offset, const char *name)
+{
+    FsFileSystem *tmpfs = NULL;
+    char filepath[FS_MAX_PATH];
+
+    memset(filepath, 0, sizeof(filepath));
+
+    if(fsdevTranslatePath(path, &tmpfs, filepath)==-1)
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+
+    romfs_mount *mount = romfs_alloc();
+    if(mount == NULL)
+        return 99;
+
+    mount->fd_type = RomfsSource_FsFile;
+    mount->offset = offset;
+
+    Result rc = fsFsOpenFile(tmpfs, filepath, FS_OPEN_READ, &mount->fd);
+    if (R_FAILED(rc))
+    {
+        romfs_free(mount);
+        return rc;
+    }
 
     return romfsMountCommon(name, mount);
 }
@@ -358,9 +395,7 @@ Result romfsMountCommon(const char *name, romfs_mount *mount)
     return 0;
 
 fail:
-    if(!mount->fd_type)fsFileClose(&mount->fd);
-    if(mount->fd_type)fsStorageClose(&mount->fd_storage);
-    romfs_free(mount);
+    romfs_mountclose(mount);
     return 10;
 }
 
@@ -377,9 +412,7 @@ Result romfsUnmount(const char *name)
     if (mount == NULL)
         return -1;
 
-    if(!mount->fd_type)fsFileClose(&mount->fd);
-    if(mount->fd_type)fsStorageClose(&mount->fd_storage);
-    romfs_free(mount);
+    romfs_mountclose(mount);
 
     return 0;
 }
