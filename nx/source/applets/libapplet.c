@@ -95,6 +95,44 @@ Result libappletPopOutData(AppletHolder *h, void* buffer, size_t size, size_t *t
     return rc;
 }
 
+Result libappletStart(AppletHolder *h) {
+    Result rc=0;
+
+    rc = appletHolderStart(h);
+
+    if (R_SUCCEEDED(rc)) {
+        appletHolderJoin(h);
+
+        LibAppletExitReason reason = appletHolderGetExitReason(h);
+
+        if (reason == LibAppletExitReason_Canceled || reason == LibAppletExitReason_Abnormal || reason == LibAppletExitReason_Unexpected) {
+            rc = MAKERESULT(Module_Libnx, LibnxError_LibAppletBadExit);
+        }
+    }
+
+    return rc;
+}
+
+Result libappletLaunch(AppletId id, LibAppletArgs *commonargs, const void* arg, size_t arg_size, void* reply, size_t reply_size, size_t *out_reply_size) {
+    Result rc=0;
+    AppletHolder holder;
+
+    rc = appletCreateLibraryApplet(&holder, id, LibAppletMode_AllForeground);
+    if (R_FAILED(rc)) return rc;
+
+    rc = libappletArgsPush(commonargs, &holder);
+
+    if (R_SUCCEEDED(rc) && arg && arg_size) rc = libappletPushInData(&holder, arg, arg_size);
+
+    if (R_SUCCEEDED(rc)) rc = libappletStart(&holder);
+
+    if (R_SUCCEEDED(rc) && reply && reply_size) rc = libappletPopOutData(&holder, reply, reply_size, out_reply_size);
+
+    appletHolderClose(&holder);
+
+    return rc;
+}
+
 Result libappletRequestHomeMenu(void) {
     u8 storagedata[0x10] = {0x53, 0x41, 0x4d, 0x53, 0x01, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00};//RequestHomeMenu
     return _libappletQlaunchRequest(storagedata, sizeof(storagedata));

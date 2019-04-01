@@ -47,7 +47,7 @@ Result libappletCreateWriteStorage(AppletStorage* s, const void* buffer, size_t 
  * @param s Storage object.
  * @param buffer Output buffer.
  * @param size Size to read.
- * @param transfer_size Optional output size field for the actual size used for the read.
+ * @param transfer_size Optional output size field for the actual size used for the read, can be NULL.
  */
 Result libappletReadStorage(AppletStorage* s, void* buffer, size_t size, size_t *transfer_size);
 
@@ -71,9 +71,28 @@ Result libappletPushInData(AppletHolder *h, const void* buffer, size_t size);
  * @param h AppletHolder object.
  * @param buffer Output buffer.
  * @param size Size to read.
- * @param transfer_size Optional output size field for the actual size used for the read.
+ * @param transfer_size Optional output size field for the actual size used for the read, can be NULL.
  */
 Result libappletPopOutData(AppletHolder *h, void* buffer, size_t size, size_t *transfer_size);
+
+/**
+ * @brief Starts the applet and waits for it to finish, then checks the \ref LibAppletExitReason.
+ * @note Uses \ref appletHolderStart and \ref appletHolderJoin.
+ * @param h AppletHolder object.
+ */
+Result libappletStart(AppletHolder *h);
+
+/**
+ * @brief Creates a LibraryApplet with the specified input storage data, uses \ref libappletStart, and reads the output storage reply data via \ref libappletPopOutData.
+ * @param id \ref AppletId
+ * @param commonargs \ref LibAppletArgs struct.
+ * @param arg Input storage data buffer. Optional, can be NULL.
+ * @param arg_size Size of the arg buffer.
+ * @param reply Output storage data buffer. Optional, can be NULL.
+ * @param reply_size Size to read for the reply buffer.
+ * @param out_reply_size Actual read reply data size, see \ref libappletPopOutData.
+ */
+Result libappletLaunch(AppletId id, LibAppletArgs *commonargs, const void* arg, size_t arg_size, void* reply, size_t reply_size, size_t *out_reply_size);
 
 /// Wrapper for \ref appletPushToGeneralChannel, see appletPushToGeneralChannel regarding the requirements for using this.
 /// Returns to the main Home Menu, equivalent to pressing the HOME button.
