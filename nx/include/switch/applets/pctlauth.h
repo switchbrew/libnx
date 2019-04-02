@@ -26,7 +26,7 @@ typedef struct {
 
 /**
  * @brief Launches the applet.
- * @note Should not be used if a PIN is not already registered.
+ * @note Should not be used if a PIN is not already registered. See \ref pctlIsRestrictionEnabled.
  * @param flag Input flag. false = temporarily disable Parental Controls. true = validate the input PIN.
  */
 Result pctlauthShow(bool flag);
@@ -40,7 +40,8 @@ Result pctlauthShow(bool flag);
 Result pctlauthShowEx(u8 arg0, u8 arg1, u8 arg2);
 
 /**
- * @brief Just calls: pctlauthShowEx(1, 0, 1).
+ * @brief Just calls: pctlauthShowEx(1, 0, 1). Launches the applet for checking the PIN, used when changing system-settings.
+ * @note Should not be used if a PIN is not already registered. See \ref pctlIsRestrictionEnabled.
  */
 Result pctlauthShowForConfiguration(void);
 
@@ -51,7 +52,7 @@ Result pctlauthRegisterPasscode(void);
 
 /**
  * @brief Launches the applet for changing the Parental Controls PIN.
- * @note Should not be used if a PIN is not already registered.
+ * @note Should not be used if a PIN is not already registered. See \ref pctlIsRestrictionEnabled.
  */
 Result pctlauthChangePasscode(void);
 
