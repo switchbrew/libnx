@@ -1,6 +1,6 @@
 /**
  * @file aes.h
- * @brief Switch accelerated AES implementation.
+ * @brief Switch accelerated AES-ECB implementation.
  * @copyright libnx Authors
  */
 #pragma once
@@ -27,7 +27,7 @@ typedef struct {
     u8 round_keys[AES_192_NUM_ROUNDS+1][AES_BLOCK_SIZE];
 } Aes192Context;
 
-/// Context for AES-192 operations.
+/// Context for AES-256 operations.
 typedef struct {
     u8 round_keys[AES_256_NUM_ROUNDS+1][AES_BLOCK_SIZE];
 } Aes256Context;
