@@ -124,6 +124,8 @@ extern "C" {
 #include "switch/runtime/devices/romfs_dev.h"
 #include "switch/runtime/devices/socket.h"
 
+#include "switch/crypto.h"
+
 #ifdef __cplusplus
 }
 #endif
