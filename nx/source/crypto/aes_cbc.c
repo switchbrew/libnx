@@ -43,9 +43,9 @@ const uint8x16_t round_key_##n = vld1q_u8(ctx->aes_ctx.round_keys[n])
 
 /* Macro for main body of crypt wrapper. */
 #define CRYPT_FUNC_BODY(block_handler) \
-({ \
-    const u8 *cur_src = (const u8 *)src; \
-    u8 *cur_dst = (u8 *)dst; \
+do { \
+    const u8 *cur_src = src; \
+    u8 *cur_dst = dst; \
 \
     /* Handle pre-buffered data. */ \
     if (ctx->num_buffered > 0) { \
@@ -78,7 +78,7 @@ const uint8x16_t round_key_##n = vld1q_u8(ctx->aes_ctx.round_keys[n])
         ctx->num_buffered = size; \
     } \
     return (size_t)((uintptr_t)cur_dst - (uintptr_t)dst); \
-})
+} while (0)
 
 
 void aes128CbcContextCreate(Aes128CbcContext *out, const void *key, const void *iv, bool is_encryptor) {
@@ -91,10 +91,7 @@ void aes128CbcContextCreate(Aes128CbcContext *out, const void *key, const void *
     out->num_buffered = 0;
 }
 
-static void _aes128CbcEncryptBlocks(Aes128CbcContext *ctx, void *dst, const void *src, size_t num_blocks) {
-    const u8 *src_u8 = (const u8 *)src;
-    u8 *dst_u8 = (u8 *)dst;
-
+static inline void _aes128CbcEncryptBlocks(Aes128CbcContext *ctx, u8 *dst_u8, const u8 *src_u8, size_t num_blocks) {
     /* Preload all round keys + iv into neon registers. */
     DECLARE_ROUND_KEY_VAR(0);
     DECLARE_ROUND_KEY_VAR(1);
@@ -155,10 +152,7 @@ static void _aes128CbcEncryptBlocks(Aes128CbcContext *ctx, void *dst, const void
     vst1q_u8(ctx->iv, cur_iv);
 }
 
-static void _aes128CbcDecryptBlocks(Aes128CbcContext *ctx, void *dst, const void *src, size_t num_blocks) {
-    const u8 *src_u8 = (const u8 *)src;
-    u8 *dst_u8 = (u8 *)dst;
-
+static inline void _aes128CbcDecryptBlocks(Aes128CbcContext *ctx, u8 *dst_u8, const u8 *src_u8, size_t num_blocks) {
     /* Preload all round keys + iv into neon registers. */
     DECLARE_ROUND_KEY_VAR(0);
     DECLARE_ROUND_KEY_VAR(1);
@@ -295,10 +289,7 @@ void aes192CbcContextCreate(Aes192CbcContext *out, const void *key, const void *
     out->num_buffered = 0;
 }
 
-static void _aes192CbcEncryptBlocks(Aes192CbcContext *ctx, void *dst, const void *src, size_t num_blocks) {
-    const u8 *src_u8 = (const u8 *)src;
-    u8 *dst_u8 = (u8 *)dst;
-
+static inline void _aes192CbcEncryptBlocks(Aes192CbcContext *ctx, u8 *dst_u8, const u8 *src_u8, size_t num_blocks) {
     /* Preload all round keys + iv into neon registers. */
     DECLARE_ROUND_KEY_VAR(0);
     DECLARE_ROUND_KEY_VAR(1);
@@ -365,10 +356,7 @@ static void _aes192CbcEncryptBlocks(Aes192CbcContext *ctx, void *dst, const void
     vst1q_u8(ctx->iv, cur_iv);
 }
 
-static void _aes192CbcDecryptBlocks(Aes192CbcContext *ctx, void *dst, const void *src, size_t num_blocks) {
-    const u8 *src_u8 = (const u8 *)src;
-    u8 *dst_u8 = (u8 *)dst;
-
+static inline void _aes192CbcDecryptBlocks(Aes192CbcContext *ctx, u8 *dst_u8, const u8 *src_u8, size_t num_blocks) {
     /* Preload all round keys + iv into neon registers. */
     DECLARE_ROUND_KEY_VAR(0);
     DECLARE_ROUND_KEY_VAR(1);
@@ -515,10 +503,7 @@ void aes256CbcContextCreate(Aes256CbcContext *out, const void *key, const void *
     out->num_buffered = 0;
 }
 
-static void _aes256CbcEncryptBlocks(Aes256CbcContext *ctx, void *dst, const void *src, size_t num_blocks) {
-    const u8 *src_u8 = (const u8 *)src;
-    u8 *dst_u8 = (u8 *)dst;
-
+static inline void _aes256CbcEncryptBlocks(Aes256CbcContext *ctx, u8 *dst_u8, const u8 *src_u8, size_t num_blocks) {
     /* Preload all round keys + iv into neon registers. */
     DECLARE_ROUND_KEY_VAR(0);
     DECLARE_ROUND_KEY_VAR(1);
@@ -591,10 +576,7 @@ static void _aes256CbcEncryptBlocks(Aes256CbcContext *ctx, void *dst, const void
     vst1q_u8(ctx->iv, cur_iv);
 }
 
-static void _aes256CbcDecryptBlocks(Aes256CbcContext *ctx, void *dst, const void *src, size_t num_blocks) {
-    const u8 *src_u8 = (const u8 *)src;
-    u8 *dst_u8 = (u8 *)dst;
-
+static inline void _aes256CbcDecryptBlocks(Aes256CbcContext *ctx, u8 *dst_u8, const u8 *src_u8, size_t num_blocks) {
     /* Preload all round keys + iv into neon registers. */
     DECLARE_ROUND_KEY_VAR(0);
     DECLARE_ROUND_KEY_VAR(1);
