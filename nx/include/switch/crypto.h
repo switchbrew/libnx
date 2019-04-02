@@ -7,3 +7,4 @@
 #include "types.h"
 
 #include "crypto/aes.h"
+#include "crypto/aes_cbc.h"
