@@ -32,12 +32,15 @@ typedef struct {
 
 /// 128-bit CTR API.
 void aes128CtrContextCreate(Aes128CtrContext *out, const void *key, const void *ctr);
+void aes128CtrContextResetCtr(Aes128CtrContext *ctx, const void *ctr);
 void aes128CtrCrypt(Aes128CtrContext *ctx, void *dst, const void *src, size_t size);
 
 /// 192-bit CTR API.
 void aes192CtrContextCreate(Aes192CtrContext *out, const void *key, const void *ctr);
+void aes192CtrContextResetCtr(Aes192CtrContext *ctx, const void *ctr);
 void aes192CtrCrypt(Aes192CtrContext *ctx, void *dst, const void *src, size_t size);
 
 /// 256-bit CTR API.
 void aes256CtrContextCreate(Aes256CtrContext *out, const void *key, const void *ctr);
+void aes256CtrContextResetCtr(Aes256CtrContext *ctx, const void *ctr);
 void aes256CtrCrypt(Aes256CtrContext *ctx, void *dst, const void *src, size_t size);
