@@ -112,11 +112,14 @@ static inline uint8x16_t _incrementCtr(const uint8x16_t ctr) {
 void aes128CtrContextCreate(Aes128CtrContext *out, const void *key, const void *ctr) {
     /* Initialize inner context. */
     aes128ContextCreate(&out->aes_ctx, key, true);
+    aes128CtrContextResetCtr(out, ctr);
+}
 
-    /* Set IV, nothing is buffered. */
-    memcpy(out->ctr, ctr, sizeof(out->ctr));
-    memset(out->enc_ctr_buffer, 0, sizeof(out->enc_ctr_buffer));
-    out->buffer_offset = 0;
+void aes128CtrContextResetCtr(Aes128CtrContext *ctx, const void *ctr) {
+    /* Set CTR, nothing is buffered. */
+    memcpy(ctx->ctr, ctr, sizeof(ctx->ctr));
+    memset(ctx->enc_ctr_buffer, 0, sizeof(ctx->enc_ctr_buffer));
+    ctx->buffer_offset = 0;
 }
 
 static inline void _aes128CtrCryptBlocks(Aes128CtrContext *ctx, u8 *dst_u8, const u8 *src_u8, size_t num_blocks) {
@@ -278,11 +281,14 @@ void aes128CtrCrypt(Aes128CtrContext *ctx, void *dst, const void *src, size_t si
 void aes192CtrContextCreate(Aes192CtrContext *out, const void *key, const void *ctr) {
     /* Initialize inner context. */
     aes192ContextCreate(&out->aes_ctx, key, true);
+    aes192CtrContextResetCtr(out, ctr);
+}
 
-    /* Set IV, nothing is buffered. */
-    memcpy(out->ctr, ctr, sizeof(out->ctr));
-    memset(out->enc_ctr_buffer, 0, sizeof(out->enc_ctr_buffer));
-    out->buffer_offset = 0;
+void aes192CtrContextResetCtr(Aes192CtrContext *ctx, const void *ctr) {
+    /* Set CTR, nothing is buffered. */
+    memcpy(ctx->ctr, ctr, sizeof(ctx->ctr));
+    memset(ctx->enc_ctr_buffer, 0, sizeof(ctx->enc_ctr_buffer));
+    ctx->buffer_offset = 0;
 }
 
 static inline void _aes192CtrCryptBlocks(Aes192CtrContext *ctx, u8 *dst_u8, const u8 *src_u8, size_t num_blocks) {
@@ -449,6 +455,19 @@ static inline void _aes192CtrCryptBlocks(Aes192CtrContext *ctx, u8 *dst_u8, cons
 
 void aes192CtrCrypt(Aes192CtrContext *ctx, void *dst, const void *src, size_t size) {
     CRYPT_FUNC_BODY(_aes192CtrCryptBlocks);
+}
+
+void aes256CtrContextCreate(Aes256CtrContext *out, const void *key, const void *ctr) {
+    /* Initialize inner context. */
+    aes256ContextCreate(&out->aes_ctx, key, true);
+    aes256CtrContextResetCtr(out, ctr);
+}
+
+void aes256CtrContextResetCtr(Aes256CtrContext *ctx, const void *ctr) {
+    /* Set CTR, nothing is buffered. */
+    memcpy(ctx->ctr, ctr, sizeof(ctx->ctr));
+    memset(ctx->enc_ctr_buffer, 0, sizeof(ctx->enc_ctr_buffer));
+    ctx->buffer_offset = 0;
 }
 
 static inline void _aes256CtrCryptBlocks(Aes256CtrContext *ctx, u8 *dst_u8, const u8 *src_u8, size_t num_blocks) {
@@ -622,16 +641,6 @@ static inline void _aes256CtrCryptBlocks(Aes256CtrContext *ctx, u8 *dst_u8, cons
     }
 
     vst1q_u8(ctx->ctr, ctr0);
-}
-
-void aes256CtrContextCreate(Aes256CtrContext *out, const void *key, const void *ctr) {
-    /* Initialize inner context. */
-    aes256ContextCreate(&out->aes_ctx, key, true);
-
-    /* Set IV, nothing is buffered. */
-    memcpy(out->ctr, ctr, sizeof(out->ctr));
-    memset(out->enc_ctr_buffer, 0, sizeof(out->enc_ctr_buffer));
-    out->buffer_offset = 0;
 }
 
 void aes256CtrCrypt(Aes256CtrContext *ctx, void *dst, const void *src, size_t size) {

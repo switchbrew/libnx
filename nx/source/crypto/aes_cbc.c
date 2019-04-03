@@ -84,11 +84,14 @@ do { \
 void aes128CbcContextCreate(Aes128CbcContext *out, const void *key, const void *iv, bool is_encryptor) {
     /* Initialize inner context. */
     aes128ContextCreate(&out->aes_ctx, key, is_encryptor);
+    aes128CbcContextResetIv(out, iv);
+}
 
+void aes128CbcContextResetIv(Aes128CbcContext *ctx, const void *iv) {
     /* Set IV, nothing is buffered. */
-    memcpy(out->iv, iv, sizeof(out->iv));
-    memset(out->buffer, 0, sizeof(out->buffer));
-    out->num_buffered = 0;
+    memcpy(ctx->iv, iv, sizeof(ctx->iv));
+    memset(ctx->buffer, 0, sizeof(ctx->buffer));
+    ctx->num_buffered = 0;
 }
 
 static inline void _aes128CbcEncryptBlocks(Aes128CbcContext *ctx, u8 *dst_u8, const u8 *src_u8, size_t num_blocks) {
@@ -282,11 +285,14 @@ size_t aes128CbcDecrypt(Aes128CbcContext *ctx, void *dst, const void *src, size_
 void aes192CbcContextCreate(Aes192CbcContext *out, const void *key, const void *iv, bool is_encryptor) {
     /* Initialize inner context. */
     aes192ContextCreate(&out->aes_ctx, key, is_encryptor);
+    aes192CbcContextResetIv(out, iv);
+}
 
+void aes192CbcContextResetIv(Aes192CbcContext *ctx, const void *iv) {
     /* Set IV, nothing is buffered. */
-    memcpy(out->iv, iv, sizeof(out->iv));
-    memset(out->buffer, 0, sizeof(out->buffer));
-    out->num_buffered = 0;
+    memcpy(ctx->iv, iv, sizeof(ctx->iv));
+    memset(ctx->buffer, 0, sizeof(ctx->buffer));
+    ctx->num_buffered = 0;
 }
 
 static inline void _aes192CbcEncryptBlocks(Aes192CbcContext *ctx, u8 *dst_u8, const u8 *src_u8, size_t num_blocks) {
@@ -496,11 +502,14 @@ size_t aes192CbcDecrypt(Aes192CbcContext *ctx, void *dst, const void *src, size_
 void aes256CbcContextCreate(Aes256CbcContext *out, const void *key, const void *iv, bool is_encryptor) {
     /* Initialize inner context. */
     aes256ContextCreate(&out->aes_ctx, key, is_encryptor);
+    aes256CbcContextResetIv(out, iv);
+}
 
+void aes256CbcContextResetIv(Aes256CbcContext *ctx, const void *iv) {
     /* Set IV, nothing is buffered. */
-    memcpy(out->iv, iv, sizeof(out->iv));
-    memset(out->buffer, 0, sizeof(out->buffer));
-    out->num_buffered = 0;
+    memcpy(ctx->iv, iv, sizeof(ctx->iv));
+    memset(ctx->buffer, 0, sizeof(ctx->buffer));
+    ctx->num_buffered = 0;
 }
 
 static inline void _aes256CbcEncryptBlocks(Aes256CbcContext *ctx, u8 *dst_u8, const u8 *src_u8, size_t num_blocks) {
