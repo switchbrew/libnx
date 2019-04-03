@@ -129,10 +129,10 @@ void aes128XtsContextResetTweak(Aes128XtsContext *ctx, const void *tweak) {
     ctx->num_buffered = 0;
 }
 
-void aes128XtsContextResetSector(Aes128XtsContext *ctx, uint64_t sector, bool nintendo) {
+void aes128XtsContextResetSector(Aes128XtsContext *ctx, uint64_t sector, bool is_nintendo) {
     /* Set and encrypt tweak, nothing is buffered. */
     uint64_t *tweak_u64 = (uint64_t *)(&ctx->tweak);
-    if (nintendo) {
+    if (is_nintendo) {
         /* Nintendo uses big endian tweak-from-sector, despite little endian gf multiplication. */
         /* This is probably a Nintendo bug, but given all their content relies on it, not like it can change... */
         tweak_u64[0] = 0;
@@ -472,10 +472,10 @@ void aes192XtsContextResetTweak(Aes192XtsContext *ctx, const void *tweak) {
     ctx->num_buffered = 0;
 }
 
-void aes192XtsContextResetSector(Aes192XtsContext *ctx, uint64_t sector, bool nintendo) {
+void aes192XtsContextResetSector(Aes192XtsContext *ctx, uint64_t sector, bool is_nintendo) {
     /* Set and encrypt tweak, nothing is buffered. */
     uint64_t *tweak_u64 = (uint64_t *)(&ctx->tweak);
-    if (nintendo) {
+    if (is_nintendo) {
         /* Nintendo uses big endian tweak-from-sector, despite little endian gf multiplication. */
         /* This is probably a Nintendo bug, but given all their content relies on it, not like it can change... */
         tweak_u64[0] = 0;
@@ -835,10 +835,10 @@ void aes256XtsContextResetTweak(Aes256XtsContext *ctx, const void *tweak) {
     ctx->num_buffered = 0;
 }
 
-void aes256XtsContextResetSector(Aes256XtsContext *ctx, uint64_t sector, bool nintendo) {
+void aes256XtsContextResetSector(Aes256XtsContext *ctx, uint64_t sector, bool is_nintendo) {
     /* Set and encrypt tweak, nothing is buffered. */
     uint64_t *tweak_u64 = (uint64_t *)(&ctx->tweak);
-    if (nintendo) {
+    if (is_nintendo) {
         /* Nintendo uses big endian tweak-from-sector, despite little endian gf multiplication. */
         /* This is probably a Nintendo bug, but given all their content relies on it, not like it can change... */
         tweak_u64[0] = 0;
