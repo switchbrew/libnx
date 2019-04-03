@@ -1,6 +1,6 @@
 /**
  * @file aes_ctr.h
- * @brief Switch accelerated AES-CTR implementation.
+ * @brief Hardware accelerated AES-CTR implementation.
  * @copyright libnx Authors
  */
 #pragma once

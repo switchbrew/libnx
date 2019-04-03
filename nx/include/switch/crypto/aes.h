@@ -1,6 +1,6 @@
 /**
  * @file aes.h
- * @brief Switch accelerated AES-ECB implementation.
+ * @brief Hardware accelerated AES-ECB implementation.
  * @copyright libnx Authors
  */
 #pragma once

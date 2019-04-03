@@ -1,6 +1,6 @@
 /**
  * @file aes_cbc.h
- * @brief Switch accelerated AES-CBC implementation.
+ * @brief Hardware accelerated AES-CBC implementation.
  * @copyright libnx Authors
  */
 #pragma once

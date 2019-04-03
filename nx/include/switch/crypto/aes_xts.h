@@ -1,6 +1,6 @@
 /**
  * @file aes_xts.h
- * @brief Switch accelerated AES-XTS implementation.
+ * @brief Hardware accelerated AES-XTS implementation.
  * @copyright libnx Authors
  */
 #pragma once
@@ -36,20 +36,20 @@ typedef struct {
 /// 128-bit XTS API.
 void aes128XtsContextCreate(Aes128XtsContext *out, const void *key0, const void *key1, bool is_encryptor);
 void aes128XtsContextResetTweak(Aes128XtsContext *ctx, const void *tweak);
-void aes128XtsContextResetSector(Aes128XtsContext *ctx, uint64_t sector, bool nintendo);
+void aes128XtsContextResetSector(Aes128XtsContext *ctx, uint64_t sector, bool is_nintendo);
 size_t aes128XtsEncrypt(Aes128XtsContext *ctx, void *dst, const void *src, size_t size);
 size_t aes128XtsDecrypt(Aes128XtsContext *ctx, void *dst, const void *src, size_t size);
 
 /// 192-bit XTS API.
 void aes192XtsContextCreate(Aes192XtsContext *out, const void *key0, const void *key1, bool is_encryptor);
 void aes192XtsContextResetTweak(Aes192XtsContext *ctx, const void *tweak);
-void aes192XtsContextResetSector(Aes192XtsContext *ctx, uint64_t sector, bool nintendo);
+void aes192XtsContextResetSector(Aes192XtsContext *ctx, uint64_t sector, bool is_nintendo);
 size_t aes192XtsEncrypt(Aes192XtsContext *ctx, void *dst, const void *src, size_t size);
 size_t aes192XtsDecrypt(Aes192XtsContext *ctx, void *dst, const void *src, size_t size);
 
 /// 256-bit XTS API.
 void aes256XtsContextCreate(Aes256XtsContext *out, const void *key0, const void *key1, bool is_encryptor);
 void aes256XtsContextResetTweak(Aes256XtsContext *ctx, const void *tweak);
-void aes256XtsContextResetSector(Aes256XtsContext *ctx, uint64_t sector, bool nintendo);
+void aes256XtsContextResetSector(Aes256XtsContext *ctx, uint64_t sector, bool is_nintendo);
 size_t aes256XtsEncrypt(Aes256XtsContext *ctx, void *dst, const void *src, size_t size);
 size_t aes256XtsDecrypt(Aes256XtsContext *ctx, void *dst, const void *src, size_t size);
