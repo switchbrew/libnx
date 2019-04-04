@@ -12,4 +12,5 @@
 #include "crypto/aes_xts.h"
 
 #include "crypto/sha256.h"
+#include "crypto/sha1.h"
 #include "crypto/hmac.h"
