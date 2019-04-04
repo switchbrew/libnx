@@ -6,8 +6,14 @@
 #pragma once
 #include "../types.h"
 
+
+#ifndef SHA256_HASH_SIZE
 #define SHA256_HASH_SIZE 0x20
+#endif
+
+#ifndef SHA256_BLOCK_SIZE
 #define SHA256_BLOCK_SIZE 0x40
+#endif
 
 /// Context for SHA256 operations.
 typedef struct {

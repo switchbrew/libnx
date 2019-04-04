@@ -6,16 +6,36 @@
 #pragma once
 #include "../types.h"
 
+#ifndef AES_BLOCK_SIZE
 #define AES_BLOCK_SIZE 0x10
+#endif
+#ifndef AES_128_KEY_SIZE
 #define AES_128_KEY_SIZE   0x10
+#endif
+#ifndef AES_128_U32_PER_KEY
 #define AES_128_U32_PER_KEY (AES_128_KEY_SIZE / sizeof(u32))
+#endif
+#ifndef AES_128_NUM_ROUNDS
 #define AES_128_NUM_ROUNDS 10
+#endif
+#ifndef AES_192_KEY_SIZE
 #define AES_192_KEY_SIZE   0x18
+#endif
+#ifndef AES_192_U32_PER_KEY
 #define AES_192_U32_PER_KEY (AES_192_KEY_SIZE / sizeof(u32))
+#endif
+#ifndef AES_192_NUM_ROUNDS
 #define AES_192_NUM_ROUNDS 12
+#endif
+#ifndef AES_256_KEY_SIZE
 #define AES_256_KEY_SIZE   0x20
+#endif
+#ifndef AES_256_U32_PER_KEY
 #define AES_256_U32_PER_KEY (AES_256_KEY_SIZE / sizeof(u32))
+#endif
+#ifndef AES_256_NUM_ROUNDS
 #define AES_256_NUM_ROUNDS 14
+#endif
 
 /// Context for AES-128 operations.
 typedef struct {
