@@ -61,14 +61,14 @@ typedef struct
 /// Save Struct
 typedef struct
 {
-    u64 titleID;          ///< titleID of the savedata to access when accessing other titles' savedata via SaveData, otherwise FS_SAVEDATA_CURRENT_TITLEID.
-    u128 userID;          ///< userID of the user-specific savedata to access, otherwise FS_SAVEDATA_USERID_COMMONSAVE. See account.h.
-    u64 saveID;           ///< saveID, 0 for SaveData.
-    u64 SaveDataType;     ///< See \ref FsSaveDataType.
-    u64 unk_x28;          ///< 0 for SystemSaveData/SaveData.
-    u64 unk_x30;          ///< 0 for SystemSaveData/SaveData.
-    u64 unk_x38;          ///< 0 for SystemSaveData/SaveData.
-} PACKED FsSave;
+    u64 titleID;                    ///< titleID of the savedata to access when accessing other titles' savedata via SaveData, otherwise FS_SAVEDATA_CURRENT_TITLEID.
+    union { u128 userID; } PACKED;  ///< userID of the user-specific savedata to access, otherwise FS_SAVEDATA_USERID_COMMONSAVE. See account.h.
+    u64 saveID;                     ///< saveID, 0 for SaveData.
+    u64 SaveDataType;               ///< See \ref FsSaveDataType.
+    u64 unk_x28;                    ///< 0 for SystemSaveData/SaveData.
+    u64 unk_x30;                    ///< 0 for SystemSaveData/SaveData.
+    u64 unk_x38;                    ///< 0 for SystemSaveData/SaveData.
+} FsSave;
 
 typedef struct
 {
@@ -81,7 +81,7 @@ typedef struct
     u64 titleID;        ///< titleID for FsSaveDataType_SaveData.
     u64 size;           ///< Raw saveimage size.
     u8 unk_x38[0x28];   ///< Unknown. Usually zeros?
-} PACKED FsSaveDataInfo;
+} FsSaveDataInfo;
 
 typedef struct
 {
@@ -90,7 +90,7 @@ typedef struct
     u64 accessed; ///< POSIX timestamp.
     u8 is_valid;  ///< 0x1 when the timestamps are set.
     u8 padding[7];
-} PACKED FsTimeStampRaw;
+} FsTimeStampRaw;
 
 typedef enum {
     ENTRYTYPE_DIR = 0,
