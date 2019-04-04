@@ -9,7 +9,7 @@
 
 #define _CRC_ALIGN(sz, insn) \
 do { \
-    if (((uintptr_t)src_u8 & sizeof(sz)) && len >= sizeof(sz)) { \
+    if (((uintptr_t)src_u8 & sizeof(sz)) && (u64)len >= sizeof(sz)) { \
         crc = __crc32##insn(crc, *((const sz *)src_u8)); \
         src_u8 += sizeof(sz); \
         len -= sizeof(sz); \
