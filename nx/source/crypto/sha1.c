@@ -4,11 +4,21 @@
 
 #include "crypto/sha1.h"
 
+/* Define for loading work var from message. */
+#define SHA1_LOAD_W_FROM_MESSAGE(which) \
+w[which] = vreinterpretq_u32_u8(vrev32q_u8(vld1q_u8(src_u8))); \
+src_u8 += 0x10
+
+#define SHA1_CALCULATE_W_FROM_PREVIOUS(i) \
+w[i] = vsha1su1q_u32(vsha1su0q_u32(w[i-4], w[i-3], w[i-2]), w[i-1])
+
 /* Define for doing four rounds of SHA1. */
-#define SHA1_DO_ROUND(insn, constant) \
-const u32 a = vgetq_lane_u32(cur_abcd, 0); \
-cur_abcd = v##insn##q_u32(cur_abcd, cur_e, vaddq_u32(w[i], constant)); \
-cur_e = vsha1h_u32(a)
+#define SHA1_DO_ROUND(r, insn, constant) \
+do { \
+    const u32 a = vgetq_lane_u32(cur_abcd, 0); \
+    cur_abcd = v##insn##q_u32(cur_abcd, cur_e, vaddq_u32(w[r], constant)); \
+    cur_e = vsha1h_u32(a); \
+} while (0)
 
 static const u32 s_roundConstants[4] = {
     0x5a827999, 0x6ed9eba1, 0x8f1bbcdc, 0xca62c1d6
@@ -46,40 +56,56 @@ static void _sha1ProcessBlocks(Sha1Context *ctx, const u8 *src_u8, size_t num_bl
         uint32x4_t w[20];
 
         /* Setup w[0-3] with message. */
-        for (size_t i = 0; i < 4; i++) {
-            w[i] = vreinterpretq_u32_u8(vrev32q_u8(vld1q_u8(src_u8)));
-            src_u8 += 0x10;
-        }
+        SHA1_LOAD_W_FROM_MESSAGE(0);
+        SHA1_LOAD_W_FROM_MESSAGE(1);
+        SHA1_LOAD_W_FROM_MESSAGE(2);
+        SHA1_LOAD_W_FROM_MESSAGE(3);
 
         /* Calculate w[4-19], w[i] = sha1su1(sha1su0(w[i-4], w[i-3], w[i-2]), w[i-1]); */
-        for (size_t i = 4; i < 20; i++) {
-            w[i] = vsha1su1q_u32(vsha1su0q_u32(w[i-4], w[i-3], w[i-2]), w[i-1]);
-        }
+        SHA1_CALCULATE_W_FROM_PREVIOUS(4);
+        SHA1_CALCULATE_W_FROM_PREVIOUS(5);
+        SHA1_CALCULATE_W_FROM_PREVIOUS(6);
+        SHA1_CALCULATE_W_FROM_PREVIOUS(7);
+        SHA1_CALCULATE_W_FROM_PREVIOUS(8);
+        SHA1_CALCULATE_W_FROM_PREVIOUS(9);
+        SHA1_CALCULATE_W_FROM_PREVIOUS(10);
+        SHA1_CALCULATE_W_FROM_PREVIOUS(11);
+        SHA1_CALCULATE_W_FROM_PREVIOUS(12);
+        SHA1_CALCULATE_W_FROM_PREVIOUS(13);
+        SHA1_CALCULATE_W_FROM_PREVIOUS(14);
+        SHA1_CALCULATE_W_FROM_PREVIOUS(15);
+        SHA1_CALCULATE_W_FROM_PREVIOUS(16);
+        SHA1_CALCULATE_W_FROM_PREVIOUS(17);
+        SHA1_CALCULATE_W_FROM_PREVIOUS(18);
+        SHA1_CALCULATE_W_FROM_PREVIOUS(19);
 
         /* Do round calculations 0-20. Uses sha1c, k0. */
-        size_t i = 0;
-        while (i < 5) {
-            SHA1_DO_ROUND(sha1c, k0);
-            i++;
-        }
+        SHA1_DO_ROUND(0, sha1c, k0);
+        SHA1_DO_ROUND(1, sha1c, k0);
+        SHA1_DO_ROUND(2, sha1c, k0);
+        SHA1_DO_ROUND(3, sha1c, k0);
+        SHA1_DO_ROUND(4, sha1c, k0);
 
         /* Do round calculations 20-40. Uses sha1p, k1. */
-        while (i < 10) {
-            SHA1_DO_ROUND(sha1p, k1);
-            i++;
-        }
+        SHA1_DO_ROUND(5, sha1p, k1);
+        SHA1_DO_ROUND(6, sha1p, k1);
+        SHA1_DO_ROUND(7, sha1p, k1);
+        SHA1_DO_ROUND(8, sha1p, k1);
+        SHA1_DO_ROUND(9, sha1p, k1);
 
         /* Do round calculations 40-60. Uses sha1m, k2. */
-        while (i < 15) {
-            SHA1_DO_ROUND(sha1m, k2);
-            i++;
-        }
+        SHA1_DO_ROUND(10, sha1m, k2);
+        SHA1_DO_ROUND(11, sha1m, k2);
+        SHA1_DO_ROUND(12, sha1m, k2);
+        SHA1_DO_ROUND(13, sha1m, k2);
+        SHA1_DO_ROUND(14, sha1m, k2);
 
         /* Do round calculations 60-80. Uses sha1p, k3. */
-        while (i < 20) {
-            SHA1_DO_ROUND(sha1p, k3);
-            i++;
-        }
+        SHA1_DO_ROUND(15, sha1p, k3);
+        SHA1_DO_ROUND(16, sha1p, k3);
+        SHA1_DO_ROUND(17, sha1p, k3);
+        SHA1_DO_ROUND(18, sha1p, k3);
+        SHA1_DO_ROUND(19, sha1p, k3);
 
         /* Add to previous. */
         cur_abcd = vaddq_u32(cur_abcd, prev_abcd);
