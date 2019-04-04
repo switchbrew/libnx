@@ -23,6 +23,9 @@ typedef struct {
     bool finalized;
 } HmacSha256Context;
 
+#define HMAC_SHA1_KEY_MAX   (sizeof(((HmacSha1Context *)NULL)->key))
+#define HMAC_SHA256_KEY_MAX (sizeof(((HmacSha256Context *)NULL)->key))
+
 /// Initialize a HMAC-SHA256 context.
 void hmacSha256ContextCreate(HmacSha256Context *out, const void *key, size_t key_size);
 /// Updates HMAC-SHA256 context with data to hash
