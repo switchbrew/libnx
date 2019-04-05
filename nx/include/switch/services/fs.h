@@ -64,7 +64,10 @@ typedef struct
     u64 titleID;                    ///< titleID of the savedata to access when accessing other titles' savedata via SaveData, otherwise FS_SAVEDATA_CURRENT_TITLEID.
     union { u128 userID; } PACKED;  ///< userID of the user-specific savedata to access, otherwise FS_SAVEDATA_USERID_COMMONSAVE. See account.h.
     u64 saveID;                     ///< saveID, 0 for SaveData.
-    u64 SaveDataType;               ///< See \ref FsSaveDataType.
+    u8 SaveDataType;                ///< See \ref FsSaveDataType.
+    u8 rank;                        ///< Save data 'rank' or 'precedence'. 0 if this save data is considered the primary save data. 1 if it's considered the secondary save data.
+    u16 index;                      ///< Save data index.
+    u32 pad_x24;                    ///< Padding.
     u64 unk_x28;                    ///< 0 for SystemSaveData/SaveData.
     u64 unk_x30;                    ///< 0 for SystemSaveData/SaveData.
     u64 unk_x38;                    ///< 0 for SystemSaveData/SaveData.
@@ -75,12 +78,14 @@ typedef struct
     u64 saveID_unk;
     u8 SaveDataSpaceId; ///< See \ref FsSaveDataSpaceId.
     u8 SaveDataType;    ///< See \ref FsSaveDataType.
-    u8 pad[6];
+    u8 pad[6];          ///< Padding.
     u128 userID;        ///< See userID for \ref FsSave.
     u64 saveID;         ///< See saveID for \ref FsSave.
     u64 titleID;        ///< titleID for FsSaveDataType_SaveData.
     u64 size;           ///< Raw saveimage size.
-    u8 unk_x38[0x28];   ///< Unknown. Usually zeros?
+    u16 index;          ///< Save data index.
+    u8 rank;            ///< Save data 'rank' or 'precedence'. 0 if this save data is considered the primary save data. 1 if it's considered the secondary save data.
+    u8 unk_x3b[0x25];   ///< Unknown. Usually zeros?
 } FsSaveDataInfo;
 
 typedef struct
