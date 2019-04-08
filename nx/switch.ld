@@ -14,6 +14,7 @@ SECTIONS
 	/* =========== CODE section =========== */
 	PROVIDE(__start__ = 0x0);
 	. = __start__;
+	__code_start = . ;
 
 	.crt0 :
 	{
@@ -52,6 +53,7 @@ SECTIONS
 
 	/* =========== RODATA section =========== */
 	. = ALIGN(0x1000);
+	__rodata_start = . ;
 
 	.nx-module-name : { KEEP (*(.nx-module-name)) } :rodata
 
@@ -80,6 +82,7 @@ SECTIONS
 
 	/* =========== DATA section =========== */
 	. = ALIGN(0x1000);
+	__data_start = . ;
 
 	.eh_frame : ONLY_IF_RW { KEEP (*(.eh_frame)) *(.eh_frame.*) } :data
 	.gcc_except_table : ONLY_IF_RW { *(.gcc_except_table .gcc_except_table.*) } :data

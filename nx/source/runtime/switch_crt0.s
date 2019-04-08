@@ -40,7 +40,7 @@ bssclr_start:
     add  x1, x1, #7  // round up to 8
     bic  x1, x1, #7
 
-bss_loop: 
+bss_loop:
     str  xzr, [x0], #8
     subs x1, x1, #8
     bne  bss_loop
@@ -90,4 +90,9 @@ __nx_mod0:
     .word  __bss_end__          - __nx_mod0
     .word  __eh_frame_hdr_start - __nx_mod0
     .word  __eh_frame_hdr_end   - __nx_mod0
-    .word  0 // "offset to runtime-generated module object" (??)
+    .word  0 // "offset to runtime-generated module object" (neither needed, used nor supported in homebrew)
+
+    // MOD0 extensions for homebrew
+    .ascii "LNY0"
+    .word  __got_start__        - __nx_mod0
+    .word  __got_end__          - __nx_mod0
