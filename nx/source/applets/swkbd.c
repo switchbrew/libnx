@@ -47,12 +47,14 @@ static void _swkbdClampFloat(float *val) {
 
 static void _swkbdConfigClear(SwkbdConfig* c) {
     memset(&c->arg.arg, 0, sizeof(c->arg.arg));
-    memset(c->arg.unk_x3e0, 0xff, sizeof(c->arg.unk_x3e0));
+    memset(c->arg.textGrouping, 0xff, sizeof(c->arg.textGrouping));
 }
 
 static void _swkbdInitVersion(u32* version) {
     u32 hosver = hosversionGet();
-    if (hosver >= MAKEHOSVERSION(5,0,0))
+    if (hosver >= MAKEHOSVERSION(6,0,0))
+        *version = 0x6000B;
+    else if (hosver >= MAKEHOSVERSION(5,0,0))
         *version = 0x50009;
     else if (hosver >= MAKEHOSVERSION(4,0,0))
         *version = 0x40008;
@@ -95,82 +97,82 @@ void swkbdClose(SwkbdConfig* c) {
 void swkbdConfigMakePresetDefault(SwkbdConfig* c) {
     _swkbdConfigClear(c);
 
-    c->arg.arg.type = SwkbdType_QWERTY;
-    c->arg.arg.initialCursorPos = 1;
-    if (c->version < 0x50009) c->arg.arg.textDrawType = SwkbdTextDrawType_Box;//removed with 5.x
-    c->arg.arg.returnButtonFlag = 1;
-    c->arg.arg.blurBackground = 1;
+    swkbdConfigSetType(c, SwkbdType_QWERTY);
+    swkbdConfigSetInitialCursorPos(c, 1);
+    if (c->version < 0x50009) swkbdConfigSetTextDrawType(c, SwkbdTextDrawType_Box);//removed with 5.x
+    swkbdConfigSetReturnButtonFlag(c, 1);
+    swkbdConfigSetBlurBackground(c, 1);
 }
 
 void swkbdConfigMakePresetPassword(SwkbdConfig* c) {
     _swkbdConfigClear(c);
 
-    c->arg.arg.type = SwkbdType_QWERTY;
-    c->arg.arg.initialCursorPos = 1;
-    c->arg.arg.passwordFlag = 1;
-    c->arg.arg.blurBackground = 1;
+    swkbdConfigSetType(c, SwkbdType_QWERTY);
+    swkbdConfigSetInitialCursorPos(c, 1);
+    swkbdConfigSetPasswordFlag(c, 1);
+    swkbdConfigSetBlurBackground(c, 1);
 }
 
 void swkbdConfigMakePresetUserName(SwkbdConfig* c) {
     _swkbdConfigClear(c);
 
-    c->arg.arg.type = SwkbdType_Normal;
-    c->arg.arg.keySetDisableBitmask = SwkbdKeyDisableBitmask_UserName;
-    c->arg.arg.initialCursorPos = 1;
-    c->arg.arg.blurBackground = 1;
+    swkbdConfigSetType(c, SwkbdType_Normal);
+    swkbdConfigSetKeySetDisableBitmask(c, SwkbdKeyDisableBitmask_UserName);
+    swkbdConfigSetInitialCursorPos(c, 1);
+    swkbdConfigSetBlurBackground(c, 1);
 }
 
 void swkbdConfigMakePresetDownloadCode(SwkbdConfig* c) {
     _swkbdConfigClear(c);
 
-    c->arg.arg.type = SwkbdType_Normal;
-    c->arg.arg.keySetDisableBitmask = SwkbdKeyDisableBitmask_DownloadCode;
-    c->arg.arg.initialCursorPos = 1;
+    swkbdConfigSetType(c, SwkbdType_Normal);
+    swkbdConfigSetKeySetDisableBitmask(c, SwkbdKeyDisableBitmask_DownloadCode);
+    swkbdConfigSetInitialCursorPos(c, 1);
 
     if (c->version >= 0x50009) {//5.x
-        c->arg.arg.type = SwkbdType_QWERTY;
+        swkbdConfigSetType(c, SwkbdType_QWERTY);
 
-        c->arg.arg.stringLenMax = 16;
-        c->arg.arg.stringLenMaxExt = 1;
-        c->arg.arg.textDrawType = SwkbdTextDrawType_DownloadCode;
+        swkbdConfigSetStringLenMax(c, 16);
+        swkbdConfigSetStringLenMaxExt(c, 1);
+        swkbdConfigSetTextDrawType(c, SwkbdTextDrawType_DownloadCode);
     }
 
-    c->arg.arg.blurBackground = 1;
+    swkbdConfigSetBlurBackground(c, 1);
 
     if (c->version >= 0x50009) {//5.x
-        c->arg.unk_x3e0[0] = 0x3;
-        c->arg.unk_x3e0[1] = 0x7;
-        c->arg.unk_x3e0[2] = 0xb;
+        swkbdConfigSetTextGrouping(c, 0, 0x3);
+        swkbdConfigSetTextGrouping(c, 1, 0x7);
+        swkbdConfigSetTextGrouping(c, 2, 0xb);
     }
 }
 
 void swkbdConfigSetOkButtonText(SwkbdConfig* c, const char* str) {
-    _swkbdConvertToUTF16ByteSize(c->arg.arg.okButtonText, str, sizeof(c->arg.arg.okButtonText));
+    _swkbdConvertToUTF16ByteSize(c->arg.arg.arg.okButtonText, str, sizeof(c->arg.arg.arg.okButtonText));
 }
 
 void swkbdConfigSetLeftOptionalSymbolKey(SwkbdConfig* c, const char* str) {
-    _swkbdConvertToUTF16(&c->arg.arg.leftButtonText, str, 1);
+    _swkbdConvertToUTF16(&c->arg.arg.arg.leftButtonText, str, 1);
 }
 
 void swkbdConfigSetRightOptionalSymbolKey(SwkbdConfig* c, const char* str) {
-    _swkbdConvertToUTF16(&c->arg.arg.rightButtonText, str, 1);
+    _swkbdConvertToUTF16(&c->arg.arg.arg.rightButtonText, str, 1);
 }
 
 void swkbdConfigSetHeaderText(SwkbdConfig* c, const char* str) {
-    _swkbdConvertToUTF16ByteSize(c->arg.arg.headerText, str, sizeof(c->arg.arg.headerText));
+    _swkbdConvertToUTF16ByteSize(c->arg.arg.arg.headerText, str, sizeof(c->arg.arg.arg.headerText));
 }
 
 void swkbdConfigSetSubText(SwkbdConfig* c, const char* str) {
-    _swkbdConvertToUTF16ByteSize(c->arg.arg.subText, str, sizeof(c->arg.arg.subText));
+    _swkbdConvertToUTF16ByteSize(c->arg.arg.arg.subText, str, sizeof(c->arg.arg.arg.subText));
 }
 
 void swkbdConfigSetGuideText(SwkbdConfig* c, const char* str) {
-    _swkbdConvertToUTF16ByteSize(c->arg.arg.guideText, str, sizeof(c->arg.arg.guideText));
+    _swkbdConvertToUTF16ByteSize(c->arg.arg.arg.guideText, str, sizeof(c->arg.arg.arg.guideText));
 }
 
 void swkbdConfigSetInitialText(SwkbdConfig* c, const char* str) {
-    c->arg.arg.initialStringOffset = 0;
-    c->arg.arg.initialStringSize = 0;
+    c->arg.arg.arg.initialStringOffset = 0;
+    c->arg.arg.arg.initialStringSize = 0;
 
     if (c->workbuf==NULL) return;
     u32 offset=0x14;
@@ -178,25 +180,33 @@ void swkbdConfigSetInitialText(SwkbdConfig* c, const char* str) {
     ssize_t units = _swkbdConvertToUTF16ByteSize((u16*)&c->workbuf[offset], str, 0x1f4);
     if (units<=0) return;
 
-    c->arg.arg.initialStringOffset = offset;
-    c->arg.arg.initialStringSize = units;
+    c->arg.arg.arg.initialStringOffset = offset;
+    c->arg.arg.arg.initialStringSize = units;
 }
 
 void swkbdConfigSetDictionary(SwkbdConfig* c, const SwkbdDictWord *buffer, s32 entries) {
-    c->arg.arg.userDicOffset = 0;
-    c->arg.arg.userDicEntries = 0;
+    c->arg.arg.arg.userDicOffset = 0;
+    c->arg.arg.arg.userDicEntries = 0;
 
     if (c->workbuf==NULL) return;
     if (entries < 1 || entries > c->max_dictwords) return;
     u32 offset=0x7e8;
 
-    c->arg.arg.userDicOffset = offset;
-    c->arg.arg.userDicEntries = entries;
+    c->arg.arg.arg.userDicOffset = offset;
+    c->arg.arg.arg.userDicEntries = entries;
     memcpy(&c->workbuf[offset], buffer, entries*sizeof(SwkbdDictWord));
 }
 
+Result swkbdConfigSetCustomizedDictionaries(SwkbdConfig* c, const SwkbdCustomizedDictionarySet *dic) {
+    if (c->version < 0x6000B) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer); // [6.0.0+]
+
+    memcpy(&c->customizedDictionarySet, dic, sizeof(*dic));
+
+    return 0;
+}
+
 void swkbdConfigSetTextCheckCallback(SwkbdConfig* c, SwkbdTextCheckCb cb) {
-    c->arg.arg.textCheckFlag = cb!=0;
+    c->arg.arg.arg.textCheckFlag = cb!=0;
     c->arg.arg.textCheckCb = cb;
 }
 
@@ -214,7 +224,7 @@ static Result _swkbdProcessInteractive(SwkbdConfig* c, AppletHolder* h, uint16_t
     if (R_SUCCEEDED(rc)) rc = appletStorageRead(&storage, sizeof(strsize), strbuf, strsize);
     appletStorageClose(&storage);
 
-    if (R_SUCCEEDED(rc) && (c->arg.arg.textCheckFlag && c->arg.arg.textCheckCb)) {
+    if (R_SUCCEEDED(rc) && (c->arg.arg.arg.textCheckFlag && c->arg.arg.textCheckCb)) {
         _swkbdConvertToUTF8(tmp_string, strbuf, tmp_string_size-1);
 
         res = c->arg.arg.textCheckCb(tmp_string, tmp_string_size-1);
@@ -257,12 +267,14 @@ Result swkbdShow(SwkbdConfig* c, char* out_string, size_t out_string_size) {
     Result rc=0;
     AppletHolder holder;
     AppletStorage storage;
+    AppletStorage customizedDictionarySet_storage;
     uint16_t* strbuf = NULL;
     size_t strbuf_size = 0x7D4;
 
     if (out_string==NULL || out_string_size==0) return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
     memset(&storage, 0, sizeof(AppletStorage));
+    memset(&customizedDictionarySet_storage, 0, sizeof(customizedDictionarySet_storage));
 
     strbuf = (u16*)malloc(strbuf_size+2);
     if (strbuf==NULL) rc = MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
@@ -280,14 +292,29 @@ Result swkbdShow(SwkbdConfig* c, char* out_string, size_t out_string_size) {
     rc = libappletArgsPush(&commonargs, &holder);
 
     if (R_SUCCEEDED(rc)) {
-        //3.0.0+ has a larger struct.
-        if (c->version < 0x30007) rc = libappletPushInData(&holder, &c->arg.arg, sizeof(c->arg.arg));
-        if (c->version >= 0x30007) rc = libappletPushInData(&holder, &c->arg, sizeof(c->arg));
+        if (c->version >= 0x6000B) {
+            SwkbdArgVB arg_vb;
+
+            memset(&arg_vb, 0, sizeof(arg_vb));
+            memcpy(&arg_vb.arg, &c->arg.arg.arg, sizeof(arg_vb.arg));
+            memcpy(arg_vb.textGrouping, c->arg.textGrouping, sizeof(arg_vb.textGrouping));
+            memcpy(arg_vb.entries, c->customizedDictionarySet.entries, sizeof(arg_vb.entries));
+            arg_vb.total_entries = c->customizedDictionarySet.total_entries;
+
+            rc = libappletPushInData(&holder, &arg_vb, sizeof(arg_vb));
+        }
+        else if (c->version >= 0x30007) rc = libappletPushInData(&holder, &c->arg, sizeof(c->arg)); // [3.0.0+] has a larger struct.
+        else rc = libappletPushInData(&holder, &c->arg.arg, sizeof(c->arg.arg));
     }
 
     if (R_SUCCEEDED(rc)) {
         if (R_SUCCEEDED(rc)) rc = appletCreateTransferMemoryStorage(&storage, c->workbuf, c->workbuf_size, true);
         if (R_SUCCEEDED(rc)) rc = appletHolderPushInData(&holder, &storage);
+    }
+
+    if (R_SUCCEEDED(rc) && c->version >= 0x6000B && c->customizedDictionarySet.buffer_size && c->customizedDictionarySet.total_entries) { // [6.0.0+]
+        rc = appletCreateHandleStorageTmem(&customizedDictionarySet_storage, c->customizedDictionarySet.buffer, c->customizedDictionarySet.buffer_size);
+        if (R_SUCCEEDED(rc)) rc = appletHolderPushInData(&holder, &customizedDictionarySet_storage);
     }
 
     if (R_SUCCEEDED(rc)) rc = appletHolderStart(&holder);
@@ -317,6 +344,7 @@ Result swkbdShow(SwkbdConfig* c, char* out_string, size_t out_string_size) {
 
     appletHolderClose(&holder);
     appletStorageCloseTmem(&storage);
+    appletStorageCloseTmem(&customizedDictionarySet_storage);
 
     free(strbuf);
 
@@ -521,9 +549,11 @@ static void _swkbdProcessReply(SwkbdInline* s, SwkbdReplyType ReplyType, size_t 
         break;
 
         case SwkbdReplyType_UnsetCustomizeDic:
+        case SwkbdReplyType_UnsetCustomizedDictionaries:
             if (s->dicCustomInitialized) {
                 appletStorageCloseTmem(&s->dicStorage);
                 s->dicCustomInitialized = false;
+                s->customizedDictionariesInitialized = false;
             }
         break;
 
@@ -631,13 +661,25 @@ static void _swkbdInlineUpdateAppearFlags(SwkbdInline* s) {
     u32 tmp = s->calcArg.appearArg.flags;
     if (!s->directionalButtonAssignFlag) tmp &= ~mask;
     if (s->directionalButtonAssignFlag) tmp |= mask;
+
+    mask = 0x10000;
+    if (!s->calcArg.triggerFlag) tmp &= ~mask; // Official sw doesn't clear this bitmask.
+    if (s->calcArg.triggerFlag) tmp |= mask;
+
     s->calcArg.appearArg.flags = tmp;
 }
 
-void swkbdInlineAppear(SwkbdInline* s, SwkbdAppearArg* arg) {
+void swkbdInlineAppearEx(SwkbdInline* s, const SwkbdAppearArg* arg, u8 trigger) {
     memcpy(&s->calcArg.appearArg, arg, sizeof(SwkbdAppearArg));
+    if (s->version < 0x6000B) trigger=0; // [6.0.0+]
+    s->calcArg.trigger = trigger;
+    s->calcArg.triggerFlag = s->calcArg.trigger!=0;
     _swkbdInlineUpdateAppearFlags(s);
     s->calcArg.flags = (s->calcArg.flags & ~0x80) | 0x4;
+}
+
+void swkbdInlineAppear(SwkbdInline* s, const SwkbdAppearArg* arg) {
+    swkbdInlineAppearEx(s, arg, 0);
 }
 
 void swkbdInlineDisappear(SwkbdInline* s) {
@@ -760,6 +802,44 @@ void swkbdInlineUnsetCustomizeDic(SwkbdInline* s) {
     s->calcArg.flags |= 0x40;
 }
 
+Result swkbdInlineSetCustomizedDictionaries(SwkbdInline* s, const SwkbdCustomizedDictionarySet *dic) {
+    Result rc=0;
+    u8 tmpdata[0xd0];
+
+    if (s->state > SwkbdState_Initialized || s->dicCustomInitialized) return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
+    if (s->version < 0x6000B) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer); // [6.0.0+]
+
+    rc = appletCreateHandleStorageTmem(&s->dicStorage, dic->buffer, dic->buffer_size);
+    if (R_FAILED(rc)) return rc;
+    rc = appletHolderPushInteractiveInData(&s->holder, &s->dicStorage);
+    if (R_FAILED(rc)) {
+        appletStorageCloseTmem(&s->dicStorage);
+        return rc;
+    }
+
+    s->dicCustomInitialized = true;
+    s->customizedDictionariesInitialized = true;
+
+    memcpy(tmpdata, dic, sizeof(*dic));
+    tmpdata[0xce] = 0;
+    tmpdata[0xcf] = 0;
+
+    rc = _swkbdSendRequest(s, SwkbdRequestCommand_SetCustomizedDictionaries, tmpdata, sizeof(tmpdata));
+
+    return rc;
+}
+
+Result swkbdInlineUnsetCustomizedDictionaries(SwkbdInline* s) {
+    Result rc=0;
+
+    if (s->state > SwkbdState_Initialized || !s->dicCustomInitialized || !s->customizedDictionariesInitialized) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (s->version < 0x6000B) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer); // [6.0.0+]
+
+    rc = _swkbdSendRequest(s, SwkbdRequestCommand_UnsetCustomizedDictionaries, NULL, 0);
+
+    return rc;
+}
+
 void swkbdInlineSetInputModeFadeType(SwkbdInline* s, u8 type) {
     if (s->calcArg.inputModeFadeType == type) return;
     s->calcArg.inputModeFadeType = type;
@@ -828,17 +908,20 @@ void swkbdInlineSetUSBKeyboardFlag(SwkbdInline* s, bool flag) {
 }
 
 void swkbdInlineSetDirectionalButtonAssignFlag(SwkbdInline* s, bool flag) {
+    if (s->version < 0x40008) return; // [4.0.0+]
     s->directionalButtonAssignFlag = flag;
     _swkbdInlineUpdateAppearFlags(s);
     s->calcArg.flags |= 0x1000;
 }
 
 void swkbdInlineSetSeGroup(SwkbdInline* s, u8 seGroup, bool flag) {
+    if (s->version < 0x50009) return; // [5.0.0+]
     s->calcArg.seGroup = seGroup;
     s->calcArg.flags |= flag ? 0x2000 : 0x4000;
 }
 
 void swkbdInlineSetBackspaceFlag(SwkbdInline* s, bool flag) {
+    if (s->version < 0x50009) return; // [5.0.0+]
     s->calcArg.enableBackspace = flag!=0;
     s->calcArg.flags |= 0x8000;
 }
