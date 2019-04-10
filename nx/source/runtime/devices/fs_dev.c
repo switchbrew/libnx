@@ -1599,7 +1599,8 @@ typedef struct
 static const error_map_t error_table[] =
 {
   /* keep this list sorted! */
-  { 0x202, ENOENT,       },
+  { 0x202, ENOENT,          },
+  { 0x402, EEXIST,          },
   { 0x2EE202, EINVAL,       },
   { 0x2EE602, ENAMETOOLONG, },
 };
