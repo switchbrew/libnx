@@ -15,6 +15,7 @@
 __attribute__((weak)) u32 __nx_applet_type = AppletType_Default;
 __attribute__((weak)) bool __nx_applet_auto_notifyrunning = true;
 __attribute__((weak)) u8 __nx_applet_AppletAttribute[0x80];
+/// When set, controls the PerformanceConfiguration passed to apmSetPerformanceConfiguration during app startup, where the array index is the PerformanceMode.
 __attribute__((weak)) u32 __nx_applet_PerformanceConfiguration[2] = {/*0x92220008*//*0x20004*//*0x92220007*/0, 0};
 //// Controls whether to use applet exit cmds during \ref appletExit.  0 (default): Only run exit cmds when running under a NSO. 1: Use exit cmds regardless. >1: Skip exit cmds.
 __attribute__((weak)) u32 __nx_applet_exit_mode = 0;
@@ -58,6 +59,8 @@ static u32 g_appletRecordingInitialized;
 static Event g_appletLibraryAppletLaunchableEvent;
 
 static AppletThemeColorType g_appletThemeColorType = AppletThemeColorType_Default;
+
+static ApmCpuBoostMode g_appletCpuBoostMode = ApmCpuBoostMode_Disabled;
 
 static Result _appletGetHandle(Service* srv, Handle* handle_out, u64 cmd_id);
 static Result _appletGetEvent(Service* srv, Event* event_out, u64 cmd_id, bool autoclear);
@@ -250,7 +253,6 @@ Result appletInitialize(void)
 
     // Official apps aren't known to use apmSetPerformanceConfiguration with mode=1.
     if (R_SUCCEEDED(rc)) {
-        // This is broken with the regular "apm" service.
         u32 i;
         for (i=0; i<2; i++)
         {
@@ -293,6 +295,8 @@ void appletExit(void)
             }
 
             if (__nx_applet_type == AppletType_Application) appletSetFocusHandlingMode(AppletFocusHandlingMode_NoSuspend);
+
+            if (g_appletCpuBoostMode != ApmCpuBoostMode_Disabled) appletSetCpuBoostMode(ApmCpuBoostMode_Disabled);
         }
 
         if ((envIsNso() && __nx_applet_exit_mode==0) || __nx_applet_exit_mode==1) {
@@ -668,6 +672,43 @@ static Result _appletCmdNoInOut64(Service* srv, u64 *out, u64 cmd_id) {
     return rc;
 }
 
+static Result _appletCmdNoInOut32(Service* srv, u32 *out, u64 cmd_id) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(srv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = cmd_id;
+
+    Result rc = serviceIpcDispatch(srv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            u32 out;
+        } *resp;
+
+        serviceIpcParse(srv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && out) {
+            *out = resp->out;
+        }
+    }
+
+    return rc;
+}
+
 static Result _appletCmdInU8(Service* srv, u8 inval, u64 cmd_id) {
     IpcCommand c;
     ipcInitialize(&c);
@@ -677,6 +718,40 @@ static Result _appletCmdInU8(Service* srv, u8 inval, u64 cmd_id) {
         u64 cmd_id;
         u8 inval;
     } *raw;
+
+    raw = serviceIpcPrepareHeader(srv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = cmd_id;
+    raw->inval = inval;
+
+    Result rc = serviceIpcDispatch(srv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(srv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+static Result _appletCmdInU32(Service* srv, u32 inval, u64 cmd_id) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 inval;
+    } PACKED *raw;
 
     raw = serviceIpcPrepareHeader(srv, &c, sizeof(*raw));
 
@@ -1556,6 +1631,23 @@ static Result _appletGetCurrentFocusState(u8 *out) {
 
 Result appletPushToGeneralChannel(AppletStorage *s) {
     return _appletCmdInStorage(&g_appletICommonStateGetter, s, 20);
+}
+
+Result appletSetCpuBoostMode(ApmCpuBoostMode mode) {
+    Result rc=0;
+    if (hosversionBefore(7,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    rc = _appletCmdInU32(&g_appletICommonStateGetter, mode, 66);
+    if (R_SUCCEEDED(rc)) g_appletCpuBoostMode = mode;
+    return rc;
+}
+
+Result appletGetCurrentPerformanceConfiguration(u32 *PerformanceConfiguration) {
+    if (hosversionBefore(7,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdNoInOut32(&g_appletICommonStateGetter, PerformanceConfiguration, 91);
 }
 
 // ISelfController

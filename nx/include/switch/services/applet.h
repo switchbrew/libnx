@@ -8,6 +8,7 @@
 #pragma once
 #include "../types.h"
 #include "../services/sm.h"
+#include "../services/apm.h"
 #include "../kernel/tmem.h"
 #include "../kernel/event.h"
 
@@ -277,6 +278,20 @@ Result appletHomeButtonReaderLockAccessorGetEvent(Event *out_event);
  * @param s Storage object.
  */
 Result appletPushToGeneralChannel(AppletStorage *s);
+
+/**
+ * @brief Sets the \ref ApmCpuBoostMode.
+ * @note Only available with [7.0.0+] (not fully usable system-side with 6.x).
+ * @param mode \ref ApmCpuBoostMode.
+ */
+Result appletSetCpuBoostMode(ApmCpuBoostMode mode);
+
+/**
+ * @brief Gets the current PerformanceConfiguration.
+ * @note Only available with [7.0.0+].
+ * @param PerformanceConfiguration Output PerformanceConfiguration.
+ */
+Result appletGetCurrentPerformanceConfiguration(u32 *PerformanceConfiguration);
 
 /**
  * @brief Creates a LibraryApplet.
