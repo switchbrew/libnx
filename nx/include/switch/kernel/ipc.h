@@ -98,7 +98,7 @@ typedef struct {
  * @param cmd IPC command structure.
  */
 static inline void ipcInitialize(IpcCommand* cmd) {
-    *cmd = (IpcCommand){0};
+    *cmd = (IpcCommand){};
 }
 
 /// IPC buffer descriptor.
