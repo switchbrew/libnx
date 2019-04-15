@@ -138,7 +138,7 @@ void threadExit(void) {
         fatalSimple(MAKERESULT(Module_Libnx, LibnxError_NotInitialized));
 
     u64 tls_mask = __atomic_load_n(&g_tlsUsageMask, __ATOMIC_SEQ_CST);
-    for (s32 i = 0; i < NUM_TLS_SLOTS; i ++) {
+    for (size_t i = 0; i < NUM_TLS_SLOTS; i ++) {
         if (!(tls_mask & ((UINT64_C(1) << i))))
             continue;
         if (t->tls_array[i]) {
@@ -204,7 +204,7 @@ s32 threadTlsAlloc(void (* destructor)(void*)) {
     u64 cur_mask = __atomic_load_n(&g_tlsUsageMask, __ATOMIC_SEQ_CST);
     do {
         slot_id = __builtin_ffs(~cur_mask)-1;
-        if (slot_id < 0 || slot_id >= NUM_TLS_SLOTS) return -1;
+        if (slot_id < 0 || (size_t)slot_id >= NUM_TLS_SLOTS) return -1;
         new_mask = cur_mask | (UINT64_C(1) << slot_id);
     } while (!__atomic_compare_exchange_n(&g_tlsUsageMask, &cur_mask, new_mask, false, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST));
 
