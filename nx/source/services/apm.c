@@ -20,10 +20,7 @@ Result apmInitialize(void)
 
     Result rc = 0;
 
-    rc = smGetService(&g_apmSrv, "apm:p");
-
-    if (R_FAILED(rc))
-        rc = smGetService(&g_apmSrv, "apm");
+    rc = smGetService(&g_apmSrv, "apm");
 
     // OpenSession.
     // Official sw doesn't open this until using commands which need it, when it wasn't already opened.
