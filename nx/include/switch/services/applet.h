@@ -254,6 +254,28 @@ Result appletSetScreenShotPermission(s32 val);
 Result appletSetScreenShotImageOrientation(s32 val);
 
 /**
+ * @brief Gets the current Illuminance from the light sensor.
+ * @note Only available with [3.0.0+].
+ * @param fLux Output fLux
+ */
+Result appletGetCurrentIlluminance(float *fLux);
+
+/**
+ * @brief Gets the current Illuminance from the light sensor. Same as \ref appletGetCurrentIlluminance except for the additional param.
+ * @note Only available with [5.0.0+].
+ * @param bOverLimit Output bOverLimit
+ * @param fLux Output fLux
+ */
+Result appletGetCurrentIlluminanceEx(bool *bOverLimit, float *fLux);
+
+/**
+ * @brief Gets whether Illuminance is available.
+ * @note Only available with [3.0.0+].
+ * @param out Output flag
+ */
+Result appletIsIlluminanceAvailable(bool *out);
+
+/**
  * @brief Stops forwarding the input to the foreground app, works only in the Overlay applet context.
  * @note You have to call this to receive inputs through the hid service when running as the overlay applet.
  */

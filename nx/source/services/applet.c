@@ -709,6 +709,43 @@ static Result _appletCmdNoInOut32(Service* srv, u32 *out, u64 cmd_id) {
     return rc;
 }
 
+static Result _appletCmdNoInOutBool(Service* srv, bool *out, u64 cmd_id) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(srv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = cmd_id;
+
+    Result rc = serviceIpcDispatch(srv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            u8 out;
+        } *resp;
+
+        serviceIpcParse(srv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && out) {
+            *out = resp->out!=0;
+        }
+    }
+
+    return rc;
+}
+
 static Result _appletCmdInU8(Service* srv, u8 inval, u64 cmd_id) {
     IpcCommand c;
     ipcInitialize(&c);
@@ -1888,6 +1925,91 @@ Result appletSetScreenShotImageOrientation(s32 val) {
 
 Result appletCreateManagedDisplayLayer(u64 *out) {
     return _appletCmdNoInOut64(&g_appletISelfController, out, 40);
+}
+
+Result appletGetCurrentIlluminance(float *fLux) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletISelfController, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 66;
+
+    Result rc = serviceIpcDispatch(&g_appletISelfController);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            float fLux;
+        } *resp;
+
+        serviceIpcParse(&g_appletISelfController, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && fLux) *fLux = resp->fLux;
+    }
+
+    return rc;
+}
+
+Result appletIsIlluminanceAvailable(bool *out) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdNoInOutBool(&g_appletISelfController, out, 67);
+}
+
+Result appletGetCurrentIlluminanceEx(bool *bOverLimit, float *fLux) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletISelfController, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 71;
+
+    Result rc = serviceIpcDispatch(&g_appletISelfController);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            u8 bOverLimit;
+            float fLux;
+        } *resp;
+
+        serviceIpcParse(&g_appletISelfController, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && bOverLimit) *bOverLimit = resp->bOverLimit!=0;
+        if (R_SUCCEEDED(rc) && fLux) *fLux = resp->fLux;
+    }
+
+    return rc;
 }
 
 // ILibraryAppletSelfAccessor
