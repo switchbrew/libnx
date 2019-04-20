@@ -154,3 +154,10 @@ Result pctlIsRestrictionEnabled(bool *flag) {
     return _pctlNoInputOutBool(1031, flag);
 }
 
+Result pctlIsStereoVisionPermitted(bool *flag) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _pctlNoInputOutBool(1065, flag);
+}
+

@@ -15,3 +15,6 @@ void pctlExit(void);
 /// Gets whether Parental Controls are enabled.
 Result pctlIsRestrictionEnabled(bool *flag);
 
+/// Gets whether VrMode is allowed. Only available with [5.0.0+].
+Result pctlIsStereoVisionPermitted(bool *flag);
+
