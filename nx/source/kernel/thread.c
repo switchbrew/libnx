@@ -11,7 +11,9 @@
 #include "services/fatal.h"
 #include "../internal.h"
 
-#define NUM_TLS_SLOTS ((0x100 - sizeof(ThreadVars)) / sizeof(void*))
+#define USER_TLS_BEGIN 0x108
+#define USER_TLS_END   (0x200 - sizeof(ThreadVars))
+#define NUM_TLS_SLOTS ((USER_TLS_END - USER_TLS_BEGIN) / sizeof(void*))
 
 extern const u8 __tdata_lma[];
 extern const u8 __tdata_lma_end[];
@@ -45,7 +47,7 @@ static void _EntryWrap(ThreadEntryArgs* args) {
 
     // Initialize thread info
     mutexLock(&g_threadMutex);
-    args->t->tls_array = (void**)((u8*)armGetTls() + 0x100);
+    args->t->tls_array = (void**)((u8*)armGetTls() + USER_TLS_BEGIN);
     args->t->prev_next = &g_threadList;
     args->t->next = g_threadList;
     if (g_threadList)
@@ -219,12 +221,12 @@ s32 threadTlsAlloc(void (* destructor)(void*)) {
 }
 
 void* threadTlsGet(s32 slot_id) {
-    void** tls_array = (void**)((u8*)armGetTls() + 0x100);
+    void** tls_array = (void**)((u8*)armGetTls() + USER_TLS_BEGIN);
     return tls_array[slot_id];
 }
 
 void threadTlsSet(s32 slot_id, void* value) {
-    void** tls_array = (void**)((u8*)armGetTls() + 0x100);
+    void** tls_array = (void**)((u8*)armGetTls() + USER_TLS_BEGIN);
     tls_array[slot_id] = value;
 }
 
