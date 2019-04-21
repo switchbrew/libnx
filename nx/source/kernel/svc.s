@@ -572,6 +572,14 @@ SVC_BEGIN svcUnmapProcessMemory
 	ret
 SVC_END
 
+SVC_BEGIN svcQueryProcessMemory
+	str x1, [sp, #-16]!
+	svc 0x76
+	ldr x2, [sp], #16
+	str w1, [x2]
+	ret
+SVC_END
+
 SVC_BEGIN svcMapProcessCodeMemory
 	svc 0x77
 	ret
