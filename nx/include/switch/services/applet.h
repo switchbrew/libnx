@@ -302,6 +302,22 @@ Result appletHomeButtonReaderLockAccessorGetEvent(Event *out_event);
 Result appletPushToGeneralChannel(AppletStorage *s);
 
 /**
+ * @brief Gets whether VrMode is enabled.
+ * @note Only available with [3.0.0+].
+ * @param out Output flag
+ */
+Result appletIsVrModeEnabled(bool *out);
+
+/**
+ * @brief Sets whether VrMode is enabled.
+ * @note This is only fully usable system-side with [6.0.0+].
+ * @note For checking Parental Controls, see \ref pctlIsStereoVisionPermitted.
+ * @note On pre-7.0.0 this uses cmd SetVrModeEnabled internally, while on [7.0.0+] this uses cmds BeginVrModeEx/EndVrModeEx.
+ * @param flag Flag
+ */
+Result appletSetVrModeEnabled(bool flag);
+
+/**
  * @brief Sets the \ref ApmCpuBoostMode.
  * @note Only available with [7.0.0+] (not fully usable system-side with 6.x).
  * @param mode \ref ApmCpuBoostMode.

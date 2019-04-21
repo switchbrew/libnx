@@ -1670,6 +1670,23 @@ Result appletPushToGeneralChannel(AppletStorage *s) {
     return _appletCmdInStorage(&g_appletICommonStateGetter, s, 20);
 }
 
+Result appletIsVrModeEnabled(bool *out) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdNoInOutBool(&g_appletICommonStateGetter, out, 50);
+}
+
+Result appletSetVrModeEnabled(bool flag) {
+    if (hosversionBefore(6,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    if (hosversionBefore(7,0,0))
+        return _appletCmdInBool(&g_appletICommonStateGetter, flag, 51);
+
+    return _appletCmdNoIO(&g_appletICommonStateGetter, flag ? 53 : 54);
+}
+
 Result appletSetCpuBoostMode(ApmCpuBoostMode mode) {
     Result rc=0;
     if (hosversionBefore(7,0,0))
