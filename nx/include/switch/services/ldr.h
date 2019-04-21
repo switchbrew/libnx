@@ -23,9 +23,9 @@ typedef struct {
 } LoaderProgramInfo;
 
 typedef struct {
+    u8 build_id[0x20];
     u64 base_address;
     u64 size;
-    u8 build_id[0x20];
 } LoaderModuleInfo;
 
 Result ldrShellInitialize(void);
