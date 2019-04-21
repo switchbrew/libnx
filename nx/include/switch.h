@@ -58,6 +58,7 @@ extern "C" {
 #include "switch/services/gpio.h"
 #include "switch/services/bpc.h"
 #include "switch/services/pcv.h"
+#include "switch/services/clkrst.h"
 #include "switch/services/psm.h"
 #include "switch/services/spsm.h"
 //#include "switch/services/bsd.h" Use switch/runtime/devices/socket.h instead
