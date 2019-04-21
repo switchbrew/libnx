@@ -1057,6 +1057,18 @@ Result svcMapProcessMemory(void* dst, Handle proc, u64 src, u64 size);
 Result svcUnmapProcessMemory(void* dst, Handle proc, u64 src, u64 size);
 
 /**
+ * @brief Equivalent to \ref svcQueryMemory, for another process.
+ * @param[out] meminfo_ptr \ref MemoryInfo structure which will be filled in.
+ * @param[out] pageinfo Page information which will be filled in.
+ * @param[in] proc Process handle.
+ * @param[in] addr Address to query.
+ * @return Result code.
+ * @note Syscall number 0x76.
+ * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
+ */
+Result svcQueryProcessMemory(MemoryInfo* meminfo_ptr, u32 *pageinfo, Handle proc, u64 addr);
+
+/**
  * @brief Maps normal heap in a certain process as executable code (used when loading NROs).
  * @param[in] proc Process handle (cannot be \ref CUR_PROCESS_HANDLE).
  * @param[in] dst Destination mapping address.
