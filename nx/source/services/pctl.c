@@ -150,8 +150,22 @@ static Result _pctlNoInputOutBool(u64 cmd_id, bool *flag) {
     return rc;
 }
 
+Result pctlConfirmStereoVisionPermission(void) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _pctlNoIO(1013);
+}
+
 Result pctlIsRestrictionEnabled(bool *flag) {
     return _pctlNoInputOutBool(1031, flag);
+}
+
+Result pctlResetConfirmedStereoVisionPermission(void) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _pctlNoIO(1064);
 }
 
 Result pctlIsStereoVisionPermitted(bool *flag) {
