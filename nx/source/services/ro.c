@@ -8,10 +8,14 @@
 #include "services/ro.h"
 #include "services/sm.h"
 
-static Service g_roSrv, g_dmntSrv;
-static u64 g_roRefCnt, g_dmntRefCnt;
+static Service g_roSrv, g_ro1Srv, g_dmntSrv;
+static u64 g_roRefCnt, g_ro1RefCnt, g_dmntRefCnt;
 
-static Result _ldrRoInitialize(void);
+static Result _rosrvInitialize(Service* srv);
+static Result _rosrvLoadNro(Service* srv, u64* out_address, u64 nro_address, u64 nro_size, u64 bss_address, u64 bss_size);
+static Result _rosrvUnloadNro(Service* srv, u64 nro_address);
+static Result _rosrvLoadNrr(Service* srv, u64 cmd_id, u64 nrr_address, u64 nrr_size);
+static Result _rosrvUnloadNrr(Service* srv, u64 nrr_address);
 
 Result ldrRoInitialize(void) {
     atomicIncrement64(&g_roRefCnt);
@@ -22,7 +26,7 @@ Result ldrRoInitialize(void) {
     Result rc = smGetService(&g_roSrv, "ldr:ro");
 
     if (R_SUCCEEDED(rc)) {
-        rc = _ldrRoInitialize();
+        rc = _rosrvInitialize(&g_roSrv);
     }
 
     return rc;
@@ -31,6 +35,28 @@ Result ldrRoInitialize(void) {
 void ldrRoExit(void) {
     if (atomicDecrement64(&g_roRefCnt) == 0)
         serviceClose(&g_roSrv);
+}
+
+Result ro1Initialize(void) {
+    if (hosversionBefore(7,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    atomicIncrement64(&g_ro1RefCnt);
+
+    if (serviceIsActive(&g_ro1Srv))
+        return 0;
+
+    Result rc = smGetService(&g_ro1Srv, "ro:1");
+
+    if (R_SUCCEEDED(rc)) {
+        rc = _rosrvInitialize(&g_ro1Srv);
+    }
+
+    return rc;
+}
+
+void ro1Exit(void) {
+    if (atomicDecrement64(&g_ro1RefCnt) == 0)
+        serviceClose(&g_ro1Srv);
 }
 
 Result roDmntInitialize(void) {
@@ -49,7 +75,40 @@ void roDmntExit(void) {
         serviceClose(&g_dmntSrv);
 }
 
-Result ldrRoLoadNro(u64* out_address, u64 nro_address, u64 nro_size, u64 bss_address, u64 bss_size) {
+Result _rosrvInitialize(Service* srv) {
+    IpcCommand c;
+    ipcInitialize(&c);
+    ipcSendHandleCopy(&c, CUR_PROCESS_HANDLE);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(srv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 4;
+
+    Result rc = serviceIpcDispatch(srv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(srv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result _rosrvLoadNro(Service* srv, u64* out_address, u64 nro_address, u64 nro_size, u64 bss_address, u64 bss_size) {
     IpcCommand c;
     ipcInitialize(&c);
     ipcSendPid(&c);
@@ -64,7 +123,7 @@ Result ldrRoLoadNro(u64* out_address, u64 nro_address, u64 nro_size, u64 bss_add
         u64 bss_size;
     } *raw;
 
-    raw = serviceIpcPrepareHeader(&g_roSrv, &c, sizeof(*raw));
+    raw = serviceIpcPrepareHeader(srv, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 0;
@@ -74,7 +133,7 @@ Result ldrRoLoadNro(u64* out_address, u64 nro_address, u64 nro_size, u64 bss_add
     raw->bss_address = bss_address;
     raw->bss_size = bss_size;
 
-    Result rc = serviceIpcDispatch(&g_roSrv);
+    Result rc = serviceIpcDispatch(srv);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -84,7 +143,7 @@ Result ldrRoLoadNro(u64* out_address, u64 nro_address, u64 nro_size, u64 bss_add
             u64 out_address;
         } *resp;
 
-        serviceIpcParse(&g_roSrv, &r, sizeof(*resp));
+        serviceIpcParse(srv, &r, sizeof(*resp));
         resp = r.Raw;
 
         rc = resp->result;
@@ -97,7 +156,7 @@ Result ldrRoLoadNro(u64* out_address, u64 nro_address, u64 nro_size, u64 bss_add
     return rc;
 }
 
-Result ldrRoUnloadNro(u64 nro_address) {
+Result _rosrvUnloadNro(Service* srv, u64 nro_address) {
     IpcCommand c;
     ipcInitialize(&c);
     ipcSendPid(&c);
@@ -109,14 +168,14 @@ Result ldrRoUnloadNro(u64 nro_address) {
         u64 nro_address;
     } *raw;
 
-    raw = serviceIpcPrepareHeader(&g_roSrv, &c, sizeof(*raw));
+    raw = serviceIpcPrepareHeader(srv, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 1;
     raw->pid = 0;
     raw->nro_address = nro_address;
 
-    Result rc = serviceIpcDispatch(&g_roSrv);
+    Result rc = serviceIpcDispatch(srv);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -125,7 +184,7 @@ Result ldrRoUnloadNro(u64 nro_address) {
             u64 result;
         } *resp;
 
-        serviceIpcParse(&g_roSrv, &r, sizeof(*resp));
+        serviceIpcParse(srv, &r, sizeof(*resp));
         resp = r.Raw;
 
         rc = resp->result;
@@ -134,7 +193,7 @@ Result ldrRoUnloadNro(u64 nro_address) {
     return rc;
 }
 
-static Result _ldrRoLoadNrr(u64 cmd_id, u64 nrr_address, u64 nrr_size) {
+Result _rosrvLoadNrr(Service* srv, u64 cmd_id, u64 nrr_address, u64 nrr_size) {
     IpcCommand c;
     ipcInitialize(&c);
     ipcSendPid(&c);
@@ -147,7 +206,7 @@ static Result _ldrRoLoadNrr(u64 cmd_id, u64 nrr_address, u64 nrr_size) {
         u64 nrr_size;
     } *raw;
 
-    raw = serviceIpcPrepareHeader(&g_roSrv, &c, sizeof(*raw));
+    raw = serviceIpcPrepareHeader(srv, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = cmd_id;
@@ -155,7 +214,7 @@ static Result _ldrRoLoadNrr(u64 cmd_id, u64 nrr_address, u64 nrr_size) {
     raw->nrr_address = nrr_address;
     raw->nrr_size = nrr_size;
 
-    Result rc = serviceIpcDispatch(&g_roSrv);
+    Result rc = serviceIpcDispatch(srv);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -164,7 +223,7 @@ static Result _ldrRoLoadNrr(u64 cmd_id, u64 nrr_address, u64 nrr_size) {
             u64 result;
         } *resp;
 
-        serviceIpcParse(&g_roSrv, &r, sizeof(*resp));
+        serviceIpcParse(srv, &r, sizeof(*resp));
         resp = r.Raw;
 
         rc = resp->result;
@@ -173,11 +232,7 @@ static Result _ldrRoLoadNrr(u64 cmd_id, u64 nrr_address, u64 nrr_size) {
     return rc;
 }
 
-Result ldrRoLoadNrr(u64 nrr_address, u64 nrr_size) {
-    return _ldrRoLoadNrr(2, nrr_address, nrr_size);
-}
-
-Result ldrRoUnloadNrr(u64 nrr_address) {
+Result _rosrvUnloadNrr(Service* srv, u64 nrr_address) {
     IpcCommand c;
     ipcInitialize(&c);
     ipcSendPid(&c);
@@ -189,14 +244,14 @@ Result ldrRoUnloadNrr(u64 nrr_address) {
         u64 nrr_address;
     } *raw;
 
-    raw = serviceIpcPrepareHeader(&g_roSrv, &c, sizeof(*raw));
+    raw = serviceIpcPrepareHeader(srv, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 3;
     raw->pid = 0;
     raw->nrr_address = nrr_address;
 
-    Result rc = serviceIpcDispatch(&g_roSrv);
+    Result rc = serviceIpcDispatch(srv);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -205,53 +260,56 @@ Result ldrRoUnloadNrr(u64 nrr_address) {
             u64 result;
         } *resp;
 
-        serviceIpcParse(&g_roSrv, &r, sizeof(*resp));
+        serviceIpcParse(srv, &r, sizeof(*resp));
         resp = r.Raw;
 
         rc = resp->result;
     }
 
     return rc;
+}
+
+Result ldrRoLoadNro(u64* out_address, u64 nro_address, u64 nro_size, u64 bss_address, u64 bss_size) {
+    return _rosrvLoadNro(&g_roSrv, out_address, nro_address, nro_size, bss_address, bss_size);
+}
+
+Result ldrRoUnloadNro(u64 nro_address) {
+    return _rosrvUnloadNro(&g_roSrv, nro_address);
+}
+
+Result ldrRoLoadNrr(u64 nrr_address, u64 nrr_size) {
+    return _rosrvLoadNrr(&g_roSrv, 2, nrr_address, nrr_size);
+}
+
+Result ldrRoUnloadNrr(u64 nrr_address) {
+    return _rosrvUnloadNrr(&g_roSrv, nrr_address);
 }
 
 Result ldrRoLoadNrrEx(u64 nrr_address, u64 nrr_size) {
     if (hosversionBefore(7,0,0)) {
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     }
-    return _ldrRoLoadNrr(10, nrr_address, nrr_size);
+    return _rosrvLoadNrr(&g_roSrv, 10, nrr_address, nrr_size);
 }
 
-Result _ldrRoInitialize(void) {
-    IpcCommand c;
-    ipcInitialize(&c);
-    ipcSendHandleCopy(&c, CUR_PROCESS_HANDLE);
+Result ro1LoadNro(u64* out_address, u64 nro_address, u64 nro_size, u64 bss_address, u64 bss_size) {
+    return _rosrvLoadNro(&g_ro1Srv, out_address, nro_address, nro_size, bss_address, bss_size);
+}
 
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
+Result ro1UnloadNro(u64 nro_address) {
+    return _rosrvUnloadNro(&g_ro1Srv, nro_address);
+}
 
-    raw = serviceIpcPrepareHeader(&g_roSrv, &c, sizeof(*raw));
+Result ro1LoadNrr(u64 nrr_address, u64 nrr_size) {
+    return _rosrvLoadNrr(&g_ro1Srv, 2, nrr_address, nrr_size);
+}
 
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 4;
+Result ro1UnloadNrr(u64 nrr_address) {
+    return _rosrvUnloadNrr(&g_ro1Srv, nrr_address);
+}
 
-    Result rc = serviceIpcDispatch(&g_roSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_roSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+Result ro1LoadNrrEx(u64 nrr_address, u64 nrr_size) {
+    return _rosrvLoadNrr(&g_ro1Srv, 10, nrr_address, nrr_size);
 }
 
 Result roDmntGetModuleInfos(u64 pid, LoaderModuleInfo *out_module_infos, size_t max_out_modules, u32 *num_out) {
