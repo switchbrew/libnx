@@ -134,7 +134,7 @@ Result ldrRoUnloadNro(u64 nro_address) {
     return rc;
 }
 
-Result ldrRoLoadNrr(u64 nrr_address, u64 nrr_size) {
+static Result _ldrRoLoadNrr(u64 cmd_id, u64 nrr_address, u64 nrr_size) {
     IpcCommand c;
     ipcInitialize(&c);
     ipcSendPid(&c);
@@ -150,7 +150,7 @@ Result ldrRoLoadNrr(u64 nrr_address, u64 nrr_size) {
     raw = serviceIpcPrepareHeader(&g_roSrv, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 2;
+    raw->cmd_id = cmd_id;
     raw->pid = 0;
     raw->nrr_address = nrr_address;
     raw->nrr_size = nrr_size;
@@ -171,6 +171,10 @@ Result ldrRoLoadNrr(u64 nrr_address, u64 nrr_size) {
     }
 
     return rc;
+}
+
+Result ldrRoLoadNrr(u64 nrr_address, u64 nrr_size) {
+    return _ldrRoLoadNrr(2, nrr_address, nrr_size);
 }
 
 Result ldrRoUnloadNrr(u64 nrr_address) {
@@ -210,6 +214,13 @@ Result ldrRoUnloadNrr(u64 nrr_address) {
     return rc;
 }
 
+Result ldrRoLoadNrrEx(u64 nrr_address, u64 nrr_size) {
+    if (hosversionBefore(7,0,0)) {
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    }
+    return _ldrRoLoadNrr(10, nrr_address, nrr_size);
+}
+
 Result _ldrRoInitialize(void) {
     IpcCommand c;
     ipcInitialize(&c);
@@ -243,11 +254,11 @@ Result _ldrRoInitialize(void) {
     return rc;
 }
 
-Result roDmntGetModuleInfos(u64 pid, LoaderModuleInfo *out_module_infos, size_t out_size, u32 *num_out) {
+Result roDmntGetModuleInfos(u64 pid, LoaderModuleInfo *out_module_infos, size_t max_out_modules, u32 *num_out) {
     IpcCommand c;
     ipcInitialize(&c);
 
-    ipcAddRecvStatic(&c, out_module_infos, out_size, 0);
+    ipcAddRecvBuffer(&c, out_module_infos, max_out_modules * sizeof(*out_module_infos), BufferType_Normal);
 
     struct {
         u64 magic;
