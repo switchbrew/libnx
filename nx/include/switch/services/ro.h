@@ -19,5 +19,6 @@ Result ldrRoLoadNro(u64* out_address, u64 nro_address, u64 nro_size, u64 bss_add
 Result ldrRoUnloadNro(u64 nro_address);
 Result ldrRoLoadNrr(u64 nrr_address, u64 nrr_size);
 Result ldrRoUnloadNrr(u64 nrr_address);
+Result ldrRoLoadNrrEx(u64 nrr_address, u64 nrr_size);
 
-Result roDmntGetModuleInfos(u64 pid, LoaderModuleInfo *out_module_infos, size_t out_size, u32 *num_out);
+Result roDmntGetModuleInfos(u64 pid, LoaderModuleInfo *out_module_infos, size_t max_out_modules, u32 *num_out);
