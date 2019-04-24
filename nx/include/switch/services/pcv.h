@@ -193,7 +193,7 @@ typedef enum {
 Result pcvInitialize(void);
 void pcvExit(void);
 
-PcvModuleId pcvGetModuleId(PcvModule module);
+Result pcvGetModuleId(PcvModuleId *module_id, PcvModule module);
 
 Result pcvGetClockRate(PcvModule module, u32 *out_hz);
 Result pcvSetClockRate(PcvModule module, u32 hz);

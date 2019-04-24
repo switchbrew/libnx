@@ -30,7 +30,7 @@ void pcvExit(void) {
     }
 }
 
-PcvModuleId pcvGetModuleId(PcvModule module) {
+Result pcvGetModuleId(PcvModuleId *module_id, PcvModule module) {
     static const PcvModuleId s_moduleIdMap[PcvModule_Count] = {
         PcvModuleId_CpuBus,         PcvModuleId_GPU,            PcvModuleId_I2S1,               PcvModuleId_I2S2,
         PcvModuleId_I2S3,           PcvModuleId_PWM,            PcvModuleId_I2C1,               PcvModuleId_I2C2,
@@ -55,8 +55,13 @@ PcvModuleId pcvGetModuleId(PcvModule module) {
         PcvModuleId_XUSB_PADCTL,    PcvModuleId_APBDMA,         PcvModuleId_USB2_TRK,           PcvModuleId_PLLE0_2,
         PcvModuleId_PLLE0_3,        PcvModuleId_CEC,            PcvModuleId_EXTPERIPH2,
     };
-    
-    return s_moduleIdMap[module];
+
+    if (module >= PcvModule_Count) {
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+    }
+
+    *module_id = s_moduleIdMap[module];
+    return 0;
 }
 
 Result pcvSetClockRate(PcvModule module, u32 hz) {
