@@ -2,6 +2,7 @@
 #include "result.h"
 #include "arm/atomics.h"
 #include "kernel/ipc.h"
+#include "runtime/hosversion.h"
 #include "services/pcv.h"
 #include "services/sm.h"
 
@@ -30,6 +31,10 @@ void pcvExit(void) {
 }
 
 Result pcvSetClockRate(PcvModule module, u32 hz) {
+    if(hosversionAtLeast(8,0,0)) {
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    }
+
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -66,6 +71,10 @@ Result pcvSetClockRate(PcvModule module, u32 hz) {
 }
 
 Result pcvGetClockRate(PcvModule module, u32 *out_hz) {
+    if(hosversionAtLeast(8,0,0)) {
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    }
+
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -105,6 +114,10 @@ Result pcvGetClockRate(PcvModule module, u32 *out_hz) {
 }
 
 Result pcvSetVoltageEnabled(bool state, u32 voltage) {
+    if(hosversionAtLeast(8,0,0)) {
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    }
+
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -141,6 +154,10 @@ Result pcvSetVoltageEnabled(bool state, u32 voltage) {
 }
 
 Result pcvGetVoltageEnabled(bool *isEnabled, u32 voltage) {
+    if(hosversionAtLeast(8,0,0)) {
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    }
+
     IpcCommand c;
     ipcInitialize(&c);
 
