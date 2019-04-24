@@ -15,7 +15,9 @@ typedef struct {
 
 Result clkrstInitialize(void);
 void clkrstExit(void);
-Result clkrstOpenSession(ClkrstSession* session_out, PcvModule module);
+
+/// Opens a ClkrstSession for the requested PcvModuleId, unk is set to 3 in official sysmodules.
+Result clkrstOpenSession(ClkrstSession* session_out, PcvModuleId module_id, u32 unk);
 void clkrstCloseSession(ClkrstSession* session);
 Result clkrstSetClockRate(ClkrstSession* session, u32 hz);
 Result clkrstGetClockRate(ClkrstSession* session, u32 *out_hz);

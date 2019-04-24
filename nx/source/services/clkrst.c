@@ -37,14 +37,14 @@ void clkrstExit(void) {
     }
 }
 
-Result clkrstOpenSession(ClkrstSession* session_out, PcvModule module) {
+Result clkrstOpenSession(ClkrstSession* session_out, PcvModuleId module_id, u32 unk) {
     IpcCommand c;
     ipcInitialize(&c);
 
     struct {
         u64 magic;
         u64 cmd_id;
-        u32 module;
+        u32 module_id;
         u32 unk;
     } *raw;
 
@@ -52,8 +52,8 @@ Result clkrstOpenSession(ClkrstSession* session_out, PcvModule module) {
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 0;
-    raw->module = 0x40000001 + module;
-    raw->unk = 3;
+    raw->module_id = module_id;
+    raw->unk = unk;
 
     Result rc = serviceIpcDispatch(&g_clkrstSrv);
 
