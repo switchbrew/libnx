@@ -572,7 +572,7 @@ Result splCryptoDecryptAesKey(const void *wrapped_key, u32 key_generation, u32 o
     return rc;
 }
 
-Result splCryptoCryptAesCtr(const void *input, void *output, size_t size, const void *ctr) {
+Result splCryptoCryptAesCtr(const void *input, void *output, size_t size, u32 keyslot, const void *ctr) {
     IpcCommand c;
     ipcInitialize(&c);
     
@@ -583,6 +583,7 @@ Result splCryptoCryptAesCtr(const void *input, void *output, size_t size, const 
         u64 magic;
         u64 cmd_id;
         u8 ctr[0x10];
+        u32 keyslot;
     } *raw;
 
     raw = ipcPrepareHeader(&c, sizeof(*raw));
@@ -590,6 +591,7 @@ Result splCryptoCryptAesCtr(const void *input, void *output, size_t size, const 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 15;
     memcpy(raw->ctr, ctr, sizeof(raw->ctr));
+    raw->keyslot = keyslot;
 
     Result rc = serviceIpcDispatch(_splGetCryptoSrv());
 
