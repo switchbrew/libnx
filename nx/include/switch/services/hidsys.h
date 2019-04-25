@@ -9,6 +9,11 @@
 #include "../services/hid.h"
 #include "../services/sm.h"
 
+/// Structure for \ref hidsysSetNotificationLedPattern.
+typedef struct {
+    u8 unk_x0[0x48]; ///< TODO
+} HidsysNotificationLedPattern;
+
 Result hidsysInitialize(void);
 void hidsysExit(void);
 
@@ -40,4 +45,11 @@ Result hidsysGetUniquePadsFromNpad(HidControllerID id, u64 *UniquePadIds, size_t
  * @param total_entries Total output array entries. Optional, can be NULL.
  */
 Result hidsysGetUniquePadIds(u64 *UniquePadIds, size_t count, size_t *total_entries);
+
+/**
+ * @brief Sets the HOME-button notification LED pattern, for the specified controller.
+ * @param pattern \ref HidsysNotificationLedPattern
+ * @param UniquePadId UniquePadId for the controller.
+ */
+Result hidsysSetNotificationLedPattern(HidsysNotificationLedPattern *pattern, u64 UniquePadId);
 

@@ -261,3 +261,43 @@ Result hidsysGetUniquePadIds(u64 *UniquePadIds, size_t count, size_t *total_entr
     return rc;
 }
 
+Result hidsysSetNotificationLedPattern(HidsysNotificationLedPattern *pattern, u64 UniquePadId) {
+    if (hosversionBefore(7,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    Result rc;
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        HidsysNotificationLedPattern pattern;
+        u64 UniquePadId;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_hidsysSrv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 830;
+    memcpy(&raw->pattern, pattern, sizeof(*pattern));
+    raw->UniquePadId = UniquePadId;
+
+    rc = serviceIpcDispatch(&g_hidsysSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            u64 total_entries;
+        } *resp;
+
+        serviceIpcParse(&g_hidsysSrv, &r, sizeof(*resp));
+        resp = r.Raw;
+    }
+
+    return rc;
+}
+
