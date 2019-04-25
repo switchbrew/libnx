@@ -6,7 +6,9 @@
 #include "kernel/event.h"
 #include "services/applet.h"
 #include "services/hidsys.h"
+#include "services/hid.h"
 #include "services/sm.h"
+#include "runtime/hosversion.h"
 
 static Service g_hidsysSrv;
 static u64 g_hidsysRefCnt;
@@ -179,3 +181,83 @@ Result hidsysActivateSleepButton(void) {
 Result hidsysActivateCaptureButton(void) {
     return _hidsysCmdWithResIdAndPid(151);
 }
+
+Result hidsysGetUniquePadsFromNpad(HidControllerID id, u64 *UniquePadIds, size_t count, size_t *total_entries) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    Result rc;
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 id;
+    } PACKED *raw;
+
+    ipcAddRecvStatic(&c, UniquePadIds, sizeof(u64)*count, 0);
+
+    raw = serviceIpcPrepareHeader(&g_hidsysSrv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 321;
+    raw->id = hidControllerIDToOfficial(id);
+
+    rc = serviceIpcDispatch(&g_hidsysSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            u64 total_entries;
+        } *resp;
+
+        serviceIpcParse(&g_hidsysSrv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        if (R_SUCCEEDED(rc) && total_entries) *total_entries = resp->total_entries;
+    }
+
+    return rc;
+}
+
+Result hidsysGetUniquePadIds(u64 *UniquePadIds, size_t count, size_t *total_entries) {
+    Result rc;
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    ipcAddRecvStatic(&c, UniquePadIds, sizeof(u64)*count, 0);
+
+    raw = serviceIpcPrepareHeader(&g_hidsysSrv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 703;
+
+    rc = serviceIpcDispatch(&g_hidsysSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            u64 total_entries;
+        } *resp;
+
+        serviceIpcParse(&g_hidsysSrv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        if (R_SUCCEEDED(rc) && total_entries) *total_entries = resp->total_entries;
+    }
+
+    return rc;
+}
+
