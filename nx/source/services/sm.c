@@ -56,7 +56,7 @@ Result smInitialize(void)
         return 0;
 
     Result rc = svcConnectToNamedPort(&g_smHandle, "sm:");
-    while (rc == KERNELRESULT(NotFound)) {
+    while (R_VALUE(rc) == KERNELRESULT(NotFound)) {
         svcSleepThread(50000000ul);
         rc = svcConnectToNamedPort(&g_smHandle, "sm:");
     }
