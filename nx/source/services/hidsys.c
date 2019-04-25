@@ -261,7 +261,7 @@ Result hidsysGetUniquePadIds(u64 *UniquePadIds, size_t count, size_t *total_entr
     return rc;
 }
 
-Result hidsysSetNotificationLedPattern(HidsysNotificationLedPattern *pattern, u64 UniquePadId) {
+Result hidsysSetNotificationLedPattern(const HidsysNotificationLedPattern *pattern, u64 UniquePadId) {
     if (hosversionBefore(7,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 

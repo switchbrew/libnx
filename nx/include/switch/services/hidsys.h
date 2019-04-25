@@ -51,5 +51,5 @@ Result hidsysGetUniquePadIds(u64 *UniquePadIds, size_t count, size_t *total_entr
  * @param pattern \ref HidsysNotificationLedPattern
  * @param UniquePadId UniquePadId for the controller.
  */
-Result hidsysSetNotificationLedPattern(HidsysNotificationLedPattern *pattern, u64 UniquePadId);
+Result hidsysSetNotificationLedPattern(const HidsysNotificationLedPattern *pattern, u64 UniquePadId);
 
