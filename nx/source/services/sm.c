@@ -56,8 +56,12 @@ Result smInitialize(void)
         return 0;
 
     Result rc = svcConnectToNamedPort(&g_smHandle, "sm:");
-    Handle tmp;
+    while (rc == 0xF201) {
+        svcSleepThread(50000000ul);
+        rc = svcConnectToNamedPort(&g_smHandle, "sm:");
+    }
 
+    Handle tmp;
     if (R_SUCCEEDED(rc) && smGetServiceOriginal(&tmp, smEncodeName("")) == 0x415) {
         IpcCommand c;
         ipcInitialize(&c);
