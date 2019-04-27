@@ -9,9 +9,27 @@
 #include "../services/hid.h"
 #include "../services/sm.h"
 
-/// Structure for \ref hidsysSetNotificationLedPattern.
+/// Mini Cycle struct for \ref HidsysNotificationLedPattern.
 typedef struct {
-    u8 unk_x0[0x48]; ///< TODO
+    u8 ledIntensity;      ///< Mini Cycle X LED Intensity.
+    u8 fadingTransition;  ///< Fading Transition Duration to Mini Cycle X (Uses PWM). Value is a Multiplier of HidsysNotificationLedPattern::globalMiniCycleDuration.
+    u8 ledDuration;       ///< LED Duration Multiplier of Mini Cycle X. x0 = x1 = x1
+    u8 pad;
+} HidsysNotificationLedPatternCycle;
+
+/// Structure for \ref hidsysSetNotificationLedPattern.
+/// See also: https://switchbrew.org/wiki/HID_services#NotificationLedPattern
+/// Only the low 4bits of each used byte in this struct is used.
+typedef struct {
+    u8 globalMiniCycleDuration;                         ///< Global Mini Cycle Duration. 8ms - 175ms. Value 0x0 = 0ms/OFF.
+    u8 totalMiniCycles;                                 ///< Number of Mini Cycles. 1-15. If number of cycles is > 0 then x0 = x1
+    u8 totalFullCycles;                                 ///< Number of Full Cycles. 1-15. Value 0x0 is repeat forever, but if globalMiniCycleDuration is set to 0x0, it does the 1st Mini Cycle and then the LED stays on with startIntensity.
+    u8 startIntensity;                                  ///< LED Start Intensity. Value 0x0=0% - 0xF=100%.
+
+    HidsysNotificationLedPatternCycle miniCycles[16];   ///< Mini Cycles
+
+    u8 unk_x44[0x2];                                    ///< Unknown
+    u8 pad_x46[0x2];                                    ///< Padding
 } HidsysNotificationLedPattern;
 
 Result hidsysInitialize(void);
