@@ -12,8 +12,8 @@
 /// Mini Cycle struct for \ref HidsysNotificationLedPattern.
 typedef struct {
     u8 ledIntensity;        ///< Mini Cycle X LED Intensity.
-    u8 transitionSteps;     ///< Fading Transition Steps to Mini Cycle X (Uses PWM). Value 0x0: Instant. Each step duration is based on HidsysNotificationLedPattern::globalMiniCycleDuration.
-    u8 finalStepDuration;   ///< Final Step Duration Multiplier of Mini Cycle X. Value 0x0: 12.5ms, 0x1 - xF: 1x - 15x. Value is a Multiplier of HidsysNotificationLedPattern::globalMiniCycleDuration.
+    u8 transitionSteps;     ///< Fading Transition Steps to Mini Cycle X (Uses PWM). Value 0x0: Instant. Each step duration is based on HidsysNotificationLedPattern::baseMiniCycleDuration.
+    u8 finalStepDuration;   ///< Final Step Duration Multiplier of Mini Cycle X. Value 0x0: 12.5ms, 0x1 - xF: 1x - 15x. Value is a Multiplier of HidsysNotificationLedPattern::baseMiniCycleDuration.
     u8 pad;
 } HidsysNotificationLedPatternCycle;
 
@@ -21,9 +21,9 @@ typedef struct {
 /// See also: https://switchbrew.org/wiki/HID_services#NotificationLedPattern
 /// Only the low 4bits of each used byte in this struct is used.
 typedef struct {
-    u8 globalMiniCycleDuration;                         ///< Mini Cycle Base Duration. Value 0x1-0xF: 12.5ms - 187.5ms. Value 0x0 = 0ms/OFF.
-    u8 totalMiniCycles;                                 ///< Number of Mini Cycles + 1. Value 0x0-0xF: 1 - 16 mini cycles
-    u8 totalFullCycles;                                 ///< Number of Full Cycles. Value 0x1-0xF: 1 - 15 full cycles. Value 0x0 is repeat forever, but if globalMiniCycleDuration is set to 0x0, it does the 1st Mini Cycle with a 12.5ms step duration and then the LED stays on with startIntensity.
+    u8 baseMiniCycleDuration;                         ///< Mini Cycle Base Duration. Value 0x1-0xF: 12.5ms - 187.5ms. Value 0x0 = 0ms/OFF.
+    u8 totalMiniCycles;                                 ///< Number of Mini Cycles + 1. Value 0x0-0xF: 1 - 16 mini cycles.
+    u8 totalFullCycles;                                 ///< Number of Full Cycles. Value 0x1-0xF: 1 - 15 full cycles. Value 0x0 is repeat forever, but if baseMiniCycleDuration is set to 0x0, it does the 1st Mini Cycle with a 12.5ms step duration and then the LED stays on with startIntensity.
     u8 startIntensity;                                  ///< LED Start Intensity. Value 0x0=0% - 0xF=100%.
 
     HidsysNotificationLedPatternCycle miniCycles[16];   ///< Mini Cycles
