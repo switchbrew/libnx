@@ -220,7 +220,7 @@ Result nwindowDequeueBuffer(NWindow* nw, s32* out_slot, NvMultiFence* out_fence)
     s32 slot;
     Result rc;
 
-    if (nw->event.revent != INVALID_HANDLE) {
+    if (eventActive(&nw->event)) {
         do {
             eventWait(&nw->event, U64_MAX);
             rc = bqDequeueBuffer(&nw->bq, true, nw->width, nw->height, nw->format, nw->usage, &slot, &fence);

@@ -40,7 +40,7 @@ static Event* _nvGetEvent(int event_id)
 {
     Result rc;
     Event* event = &g_NvEvents[event_id];
-    if (event->revent != INVALID_HANDLE)
+    if (eventActive(event))
         return event;
 
     rc = nvioctlNvhostCtrl_EventRegister(g_ctrl_fd, event_id);
@@ -59,7 +59,7 @@ static Event* _nvGetEvent(int event_id)
 static void _nvFreeEvent(int event_id)
 {
     Event* event = &g_NvEvents[event_id];
-    if (event->revent == INVALID_HANDLE)
+    if (!eventActive(event))
         return;
 
     eventClose(event);

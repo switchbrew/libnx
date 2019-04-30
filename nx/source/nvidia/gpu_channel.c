@@ -50,7 +50,7 @@ void nvGpuChannelClose(NvGpuChannel* c)
     if (!c->base.has_init)
         return;
 
-    if (c->error_event.revent != INVALID_HANDLE) {
+    if (eventActive(&c->error_event)) {
         nvioctlChannel_SetErrorNotifier(c->base.fd, 0);
         eventClose(&c->error_event);
     }
