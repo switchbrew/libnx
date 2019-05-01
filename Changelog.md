@@ -1,5 +1,63 @@
 # Changelog
 
+## Version 2.2.0
+
+#### system
+* **Introduced hardware accelerated cryptography API**, including support for:
+  * Hardware accelerated AES-128/AES-192/AES-256 with single-block ECB and multi-block CBC/CTR/XTS modes
+  * Hardware accelerated SHA-1/SHA-256
+  * Hardware accelerated AES-128-CMAC/AES-192-CMAC/AES-256-CMAC
+  * Hardware accelerated HMAC-SHA1/HMAC-SHA256
+* Added a custom MOD0 extension to make it easier to locate the got section.
+* Added syscall: svcQueryProcessMemory.
+* Improved smInitialize robustness during early system initialization in order to avoid race conditions when SM itself hasn't fully started up.
+* **Fixed TLS slot issue on 8.0.0 - please recompile all your homebrew applications with this libnx release in order to fix crashes on 8.0.0.**
+
+#### applet
+* **Added support for VR mode, available on 6.0.0+**:
+  * Added appletIsVrModeEnabled (3.0.0+) and appletSetVrModeEnabled.
+* **Added support for CPU boost, available on 7.0.0+**:
+  * Added appletSetCpuBoostMode and appletGetCurrentPerformanceConfiguration.
+* **Added support for the light sensor, available on 3.0.0+**:
+  * appletGetCurrentIlluminance, appletGetCurrentIlluminanceEx (5.0.0+) and appletIsIlluminanceAvailable.
+* Added support for the pctlauth library applet.
+* Added libappletStart and libappletLaunch.
+* Updated swkbd support with new functionality present in 6.0.0+, and added accessor functions for the SwkbdConfig struct:
+  * Added swkbdConfigSetType, swkbdConfigSetDicFlag, swkbdConfigSetKeySetDisableBitmask, swkbdConfigSetInitialCursorPos, swkbdConfigSetStringLenMax, swkbdConfigSetStringLenMaxExt, swkbdConfigSetPasswordFlag, swkbdConfigSetTextDrawType, swkbdConfigSetReturnButtonFlag, swkbdConfigSetBlurBackground and swkbdConfigSetTextGrouping.
+  * Added swkbdInlineAppearEx, swkbdInlineSetCustomizedDictionaries and swkbdInlineUnsetCustomizedDictionaries.
+  * Users are advised to use the new accessor functions and stop manipulating directly the contents of the SwkbdConfig struct.
+* Updated web support with new functionality present in 6.0.0+:
+  * Added webConfigSetMediaAutoPlay, webConfigSetMediaPlayerSpeedControl, webConfigAddAlbumEntryAndMediaData, webConfigSetBootFooterButtonVisible, webConfigSetOverrideWebAudioVolume and webConfigSetOverrideMediaAudioVolume.
+
+#### filesystem
+* Added romfsMountFromFsdev.
+* Added fsdevTranslatePath.
+* Updated FsSave/FsSaveDataInfo structures.
+* Fixed leakage of `0x402` error codes (now they get converted to `EEXIST`).
+
+#### hid
+* **Added support for the HOME-button notification LED, available on 7.0.0+**:
+  * Added NotificationLed struct for describing LED patterns.
+  * Added hidsysSetNotificationLedPattern.
+* Added hidsysGetUniquePadsFromNpad and hidsysGetUniquePadIds.
+
+#### other services
+* Added clkrst service wrappers.
+* Added pctl service wrappers.
+* Added ro:1 service wrappers.
+* Added ldr:ro command: ldrRoLoadNrrEx.
+* Improved pcv support for 8.0.0 changes:
+  * Added PcvModuleId enum.
+  * Added pcvGetModuleId for converting PcvModule to PcvModuleId.
+  * Added checks to avoid calling pcv commands removed in 8.0.0 (use clkrst instead).
+* Fixed LoaderModuleInfo struct.
+* Fixed signature of roDmntGetModuleInfos and ldrDmntGetModuleInfos.
+* Fixed signature of splCryptoCryptAesCtr.
+* Removed `apm:p` service support in order to support 8.0.0.
+
+#### miscellaneous
+* Further improvements to overall system stability and other minor adjustments to enhance the user experience.
+
 ## Version 2.1.0
 
 #### system
