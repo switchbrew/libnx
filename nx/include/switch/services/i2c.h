@@ -40,6 +40,8 @@ typedef enum {
     I2cDevice_Max77812_3 = 28,
     I2cDevice_Max77812_2 = 29,
     I2cDevice_Ina226VddDdr0V6 = 30,
+
+    I2cDevice_Count,
 } I2cDevice;
 
 typedef struct {
