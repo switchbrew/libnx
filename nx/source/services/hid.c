@@ -1,4 +1,6 @@
 #include <string.h>
+#include <stdlib.h>
+#include <malloc.h>
 #include "types.h"
 #include "result.h"
 #include "arm/atomics.h"
@@ -9,6 +11,7 @@
 #include "services/applet.h"
 #include "services/hid.h"
 #include "services/sm.h"
+#include "runtime/hosversion.h"
 
 static Service g_hidSrv;
 static Service g_hidIAppletResource;
@@ -33,6 +36,10 @@ static HidControllerLayoutType g_controllerLayout[10];
 static u64 g_touchTimestamp, g_mouseTimestamp, g_keyboardTimestamp, g_controllerTimestamps[10];
 
 static HidControllerID g_controllerP1AutoID;
+
+static u8* g_sevenSixAxisSensorBuffer;
+static TransferMemory g_sevenSixAxisSensorTmem0;
+static TransferMemory g_sevenSixAxisSensorTmem1;
 
 static RwLock g_hidLock;
 
@@ -111,6 +118,8 @@ void hidExit(void)
 {
     if (atomicDecrement64(&g_refCnt) == 0)
     {
+        hidFinalizeSevenSixAxisSensor();
+
         hidSetNpadJoyHoldType(HidJoyHoldType_Default);
 
         _hidSetDualModeAll();
@@ -1394,5 +1403,234 @@ Result hidStopSixAxisSensor(u32 SixAxisSensorHandle) {
         }
     }
     return rc;
+}
+
+static Result _hidActivateSevenSixAxisSensor(void) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _hidCmdWithNoInput(303);
+}
+
+Result hidStartSevenSixAxisSensor(void) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _hidCmdWithNoInput(304);
+}
+
+Result hidStopSevenSixAxisSensor(void) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _hidCmdWithNoInput(305);
+}
+
+static Result _hidInitializeSevenSixAxisSensor(TransferMemory *tmem0, TransferMemory *tmem1) {
+    Result rc;
+    u64 AppletResourceUserId;
+
+    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
+    if (R_FAILED(rc))
+        AppletResourceUserId = 0;
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    ipcSendPid(&c);
+    ipcSendHandleCopy(&c, tmem0->handle);
+    ipcSendHandleCopy(&c, tmem1->handle);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 AppletResourceUserId;
+        u64 size0;
+        u64 size1;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_hidSrv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 306;
+    raw->AppletResourceUserId = AppletResourceUserId;
+    raw->size0 = tmem0->size;
+    raw->size1 = tmem1->size;
+
+    rc = serviceIpcDispatch(&g_hidSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_hidSrv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result hidInitializeSevenSixAxisSensor(void) {
+    Result rc=0;
+    size_t bufsize = 0x80000;
+
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    if (g_sevenSixAxisSensorBuffer != NULL)
+        return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
+
+    g_sevenSixAxisSensorBuffer = (u8*)memalign(0x1000, bufsize);
+    if (g_sevenSixAxisSensorBuffer == NULL)
+        return MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
+    memset(g_sevenSixAxisSensorBuffer, 0, bufsize);
+
+    rc = tmemCreateFromMemory(&g_sevenSixAxisSensorTmem0, g_sevenSixAxisSensorBuffer, 0x1000, Perm_R);
+    if (R_SUCCEEDED(rc)) rc = tmemCreateFromMemory(&g_sevenSixAxisSensorTmem1, &g_sevenSixAxisSensorBuffer[0x1000], bufsize-0x1000, Perm_None);
+
+    if (R_SUCCEEDED(rc)) rc = _hidInitializeSevenSixAxisSensor(&g_sevenSixAxisSensorTmem0, &g_sevenSixAxisSensorTmem1);
+
+    if (R_SUCCEEDED(rc)) {
+        rc = _hidActivateSevenSixAxisSensor();
+        if (R_FAILED(rc)) hidFinalizeSevenSixAxisSensor();
+        return rc;
+    }
+
+    if (R_FAILED(rc)) {
+        tmemClose(&g_sevenSixAxisSensorTmem0);
+        tmemClose(&g_sevenSixAxisSensorTmem1);
+
+        free(g_sevenSixAxisSensorBuffer);
+        g_sevenSixAxisSensorBuffer = NULL;
+    }
+
+    return rc;
+}
+
+Result hidFinalizeSevenSixAxisSensor(void) {
+    Result rc=0;
+
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    if (g_sevenSixAxisSensorBuffer == NULL)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    rc = _hidCmdWithNoInput(307);
+
+    tmemClose(&g_sevenSixAxisSensorTmem0);
+    tmemClose(&g_sevenSixAxisSensorTmem1);
+
+    free(g_sevenSixAxisSensorBuffer);
+    g_sevenSixAxisSensorBuffer = NULL;
+
+    return rc;
+}
+
+Result hidSetSevenSixAxisSensorFusionStrength(float strength) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    Result rc;
+    u64 AppletResourceUserId;
+
+    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
+    if (R_FAILED(rc))
+        AppletResourceUserId = 0;
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        float strength;
+        u64 AppletResourceUserId;
+    } *raw;
+
+    ipcSendPid(&c);
+
+    raw = serviceIpcPrepareHeader(&g_hidSrv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 308;
+    raw->strength = strength;
+    raw->AppletResourceUserId = AppletResourceUserId;
+
+    rc = serviceIpcDispatch(&g_hidSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_hidSrv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result hidGetSevenSixAxisSensorFusionStrength(float *strength) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    Result rc;
+    u64 AppletResourceUserId;
+
+    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
+    if (R_FAILED(rc))
+        AppletResourceUserId = 0;
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 AppletResourceUserId;
+    } *raw;
+
+    ipcSendPid(&c);
+
+    raw = serviceIpcPrepareHeader(&g_hidSrv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 309;
+    raw->AppletResourceUserId = AppletResourceUserId;
+
+    rc = serviceIpcDispatch(&g_hidSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            float strength;
+        } *resp;
+
+        serviceIpcParse(&g_hidSrv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && strength) *strength = resp->strength;
+    }
+
+    return rc;
+}
+
+Result hidResetSevenSixAxisSensorTimestamp(void) {
+    if (hosversionBefore(6,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _hidCmdWithNoInput(310);
 }
 

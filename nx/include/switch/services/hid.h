@@ -717,3 +717,25 @@ Result hidStartSixAxisSensor(u32 SixAxisSensorHandle);
 
 /// Stops the SixAxisSensor for the specified handle.
 Result hidStopSixAxisSensor(u32 SixAxisSensorHandle);
+
+/// Starts the SevenSixAxisSensor. Only available on [5.0.0+].
+Result hidStartSevenSixAxisSensor(void);
+
+/// Stops the SevenSixAxisSensor. Only available on [5.0.0+].
+Result hidStopSevenSixAxisSensor(void);
+
+/// Initializes the SevenSixAxisSensor. Only available on [5.0.0+].
+Result hidInitializeSevenSixAxisSensor(void);
+
+/// Finalizes the SevenSixAxisSensor. Also used automatically by \ref hidExit. Only available on [5.0.0+].
+Result hidFinalizeSevenSixAxisSensor(void);
+
+/// Sets the SevenSixAxisSensor FusionStrength. Only available on [5.0.0+].
+Result hidSetSevenSixAxisSensorFusionStrength(float strength);
+
+/// Gets the SevenSixAxisSensor FusionStrength. Only available on [5.0.0+].
+Result hidGetSevenSixAxisSensorFusionStrength(float *strength);
+
+/// Resets the timestamp for the SevenSixAxisSensor. Only available on [6.0.0+].
+Result hidResetSevenSixAxisSensorTimestamp(void);
+
