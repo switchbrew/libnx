@@ -1,6 +1,6 @@
 /**
- * @file i2c.h
- * @brief I2C service IPC wrapper.
+ * @file gpio.h
+ * @brief GPIO service IPC wrapper.
  * @author SciresM
  * @copyright libnx Authors
  */
