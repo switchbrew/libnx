@@ -344,7 +344,11 @@ Result splIsDevelopment(bool *out_is_development) {
     return rc;
 }
 
-Result splSetSharedData(u32 value) {
+Result splSetBootReason(u32 value) {
+    if (hosversionBefore(3,0,0)) {
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    }
+
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -377,7 +381,11 @@ Result splSetSharedData(u32 value) {
     return rc;
 }
 
-Result splGetSharedData(u32 *out_value) {
+Result splGetBootReason(u32 *out_value) {
+    if (hosversionBefore(3,0,0)) {
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    }
+
     IpcCommand c;
     ipcInitialize(&c);
 
