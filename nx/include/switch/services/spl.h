@@ -57,8 +57,8 @@ Result splUserExpMod(const void *input, const void *modulus, const void *exp, si
 Result splSetConfig(SplConfigItem config_item, u64 value);
 Result splGetRandomBytes(void *out, size_t out_size);
 Result splIsDevelopment(bool *out_is_development);
-Result splSetSharedData(u32 value);
-Result splGetSharedData(u32 *out_value);
+Result splSetBootReason(u32 value);
+Result splGetBootReason(u32 *out_value);
 
 Result splCryptoGenerateAesKek(const void *wrapped_kek, u32 key_generation, u32 option, void *out_sealed_kek);
 Result splCryptoLoadAesKey(const void *sealed_kek, const void *wrapped_key, u32 keyslot);
