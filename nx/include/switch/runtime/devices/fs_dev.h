@@ -48,5 +48,8 @@ int fsdevTranslatePath(const char *path, FsFileSystem** device, char *outpath);
 /// This calls fsFsSetArchiveBit on the filesystem specified by the input absolute path. 
 Result fsdevSetArchiveBit(const char *path);
 
+/// Recursively deletes the directory specified by the input absolute path.
+Result fsdevDeleteDirectoryRecursively(const char *path);
+
 /// Unmounts all devices and cleans up any resources used by the FS driver.
 Result fsdevUnmountAll(void);
