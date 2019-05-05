@@ -380,6 +380,16 @@ Result fsdevSetArchiveBit(const char *path) {
   return fsFsSetArchiveBit(&device->fs, fs_path);
 }
 
+Result fsdevDeleteDirectoryRecursively(const char *path) {
+  char          fs_path[FS_MAX_PATH];
+  fsdev_fsdevice *device = NULL;
+
+  if(fsdev_getfspath(_REENT, path, &device, fs_path)==-1)
+    return MAKERESULT(Module_Libnx, LibnxError_NotFound);
+
+  return fsFsDeleteDirectoryRecursively(&device->fs, fs_path);
+}
+
 /*! Initialize SDMC device */
 Result fsdevMountSdmc(void)
 {
