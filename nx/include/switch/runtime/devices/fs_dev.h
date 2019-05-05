@@ -42,13 +42,13 @@ FsFileSystem* fsdevGetDeviceFileSystem(const char *name);
 /// Returns the FsFileSystem for the default device (SD card), if mounted. Used internally by romfs_dev.
 FsFileSystem* fsdevGetDefaultFileSystem(void);
 
-/// Writes the FS-path to outpath (which has buffer size FS_MAX_PATH), for the input device path. The FsFileSystem is also written to device when not NULL.
+/// Writes the FS-path to outpath (which has buffer size FS_MAX_PATH), for the input path (as used in stdio). The FsFileSystem is also written to device when not NULL.
 int fsdevTranslatePath(const char *path, FsFileSystem** device, char *outpath);
 
-/// This calls fsFsSetArchiveBit on the filesystem specified by the input absolute path. 
+/// This calls fsFsSetArchiveBit on the filesystem specified by the input path (as used in stdio).
 Result fsdevSetArchiveBit(const char *path);
 
-/// Recursively deletes the directory specified by the input absolute path.
+/// Recursively deletes the directory specified by the input path (as used in stdio).
 Result fsdevDeleteDirectoryRecursively(const char *path);
 
 /// Unmounts all devices and cleans up any resources used by the FS driver.
