@@ -53,3 +53,6 @@ Result fsdevDeleteDirectoryRecursively(const char *path);
 
 /// Unmounts all devices and cleans up any resources used by the FS driver.
 Result fsdevUnmountAll(void);
+
+/// Retrieves the last native result code generated during a failed fsdev operation.
+Result fsdevGetLastResult(void);
