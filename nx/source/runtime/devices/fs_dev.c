@@ -101,6 +101,7 @@ typedef struct
 static bool fsdev_initialised = false;
 static s32 fsdev_fsdevice_default = -1;
 static s32 fsdev_fsdevice_cwd = -1;
+static __thread Result fsdev_last_result = 0;
 static fsdev_fsdevice fsdev_fsdevices[32];
 
 /*! @endcond */
@@ -1647,6 +1648,7 @@ error_cmp(const void *p1, const void *p2)
 static int
 fsdev_translate_error(Result error)
 {
+  fsdev_last_result = error;
   error_map_t key = { .fs_error = error };
   const error_map_t *rc = bsearch(&key, error_table, num_errors,
                                   sizeof(error_map_t), error_cmp);
@@ -1654,6 +1656,14 @@ fsdev_translate_error(Result error)
   if(rc != NULL)
     return rc->error;
 
-  return (int)error;
+  return EIO;
+}
+
+/*! Getter for last error code translated to errno by fsdev library.
+ *
+ *  @returns result
+ */
+Result fsdevGetLastResult(void) {
+    return fsdev_last_result;
 }
 
