@@ -986,3 +986,40 @@ Result ncmContentMetaDatabaseCommit(NcmContentMetaDatabase* db) {
     
     return rc;
 }
+
+Result ncmContentMetaDatabaseGetAttributes(NcmContentMetaDatabase* db, const NcmMetaRecord* record, u8* out) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        NcmMetaRecord meta_record;
+    } *raw;
+    
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+    
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 18;
+    memcpy(&raw->meta_record, record, sizeof(NcmMetaRecord));
+    
+    Result rc = serviceIpcDispatch(&db->s);
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u8 out;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            if (out) *out = resp->out;
+        }
+    }
+    
+    return rc;
+}
