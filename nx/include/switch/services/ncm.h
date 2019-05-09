@@ -18,6 +18,23 @@ typedef enum  {
     NcmContentType_Info = 5,
 } NcmContentType;
 
+typedef enum {
+    NcmContentMetaType_SystemProgram        = 0x01,
+    NcmContentMetaType_SystemData           = 0x02,
+    NcmContentMetaType_SystemUpdate         = 0x03,
+    NcmContentMetaType_BootImagePackage     = 0x04,
+    NcmContentMetaType_BootImagePackageSafe = 0x05,
+    NcmContentMetaType_Application          = 0x80,
+    NcmContentMetaType_Patch                = 0x81,
+    NcmContentMetaType_AddOnContent         = 0x82,
+    NcmContentMetaType_Delta                = 0x83,
+} NcmContentMetaType;
+
+typedef enum {
+    NcmContentMetaAttribute_Exfat      = (1 << 0),
+    NcmContentMetaAttribute_Rebootless = (1 << 1),
+} NcmContentMetaAttribute;
+
 typedef struct {
     Service s;
 } NcmContentStorage;
