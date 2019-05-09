@@ -392,6 +392,7 @@ Result romfsMountCommon(const char *name, romfs_mount *mount)
     if(AddDevice(&mount->device) < 0)
         goto fail;
 
+    mount->setup = true;
     return 0;
 
 fail:
