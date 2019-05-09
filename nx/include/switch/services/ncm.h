@@ -93,3 +93,4 @@ Result ncmContentMetaDatabaseListApplication(NcmContentMetaDatabase* db, u8 filt
 Result ncmContentMetaDatabaseHas(NcmContentMetaDatabase* db, const NcmMetaRecord* record, bool* out);
 Result ncmContentMetaDatabaseDisableForcibly(NcmContentMetaDatabase* db);
 Result ncmContentMetaDatabaseCommit(NcmContentMetaDatabase* db);
+Result ncmContentMetaDatabaseGetAttributes(NcmContentMetaDatabase* db, const NcmMetaRecord* record, u8* out);
