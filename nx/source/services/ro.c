@@ -79,6 +79,7 @@ Result _rosrvInitialize(Service* srv) {
     IpcCommand c;
     ipcInitialize(&c);
     ipcSendHandleCopy(&c, CUR_PROCESS_HANDLE);
+    ipcSendPid(&c);
 
     struct {
         u64 magic;
