@@ -96,6 +96,7 @@ typedef struct {
 typedef struct {
     Service s;
     Event eventXfer;                      ///< [2.0.0+] Signaled when PostBufferAsync finishes.
+    size_t ptrbufsize;                    ///< [3.0.0+] IPC pointer buffer size.
 
     struct usb_endpoint_descriptor desc;
 } UsbHsClientEpSession;
