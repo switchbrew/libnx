@@ -45,6 +45,29 @@
 #define __nv_inout
 
 typedef struct {
+    u32 width_align_pixels;            // 0x20  (32)
+    u32 height_align_pixels;           // 0x20  (32)
+    u32 pixel_squares_by_aliquots;     // 0x400 (1024)
+    u32 aliquot_total;                 // 0x800 (2048)
+    u32 region_byte_multiplier;        // 0x20  (32)
+    u32 region_header_size;            // 0x20  (32)
+    u32 subregion_header_size;         // 0xC0  (192)
+    u32 subregion_width_align_pixels;  // 0x20  (32)
+    u32 subregion_height_align_pixels; // 0x40  (64)
+    u32 subregion_count;               // 0x10  (16)
+} nvioctl_zcull_info;
+
+typedef struct {
+    u32 color_ds[4];
+    u32 color_l2[4];
+    u32 depth;
+    u32 ref_cnt;
+    u32 format;
+    u32 type;
+    u32 size;
+} nvioctl_zbc_entry;
+
+typedef struct {
     u32 arch;                           // 0x120 (NVGPU_GPU_ARCH_GM200)
     u32 impl;                           // 0xB (NVGPU_GPU_IMPL_GM20B)
     u32 rev;                            // 0xA1 (Revision A1)
@@ -90,9 +113,9 @@ typedef struct {
 } nvioctl_va_region;
 
 typedef struct {
-    u32 mask;        // always 0x07
-    u32 flush;       // active flush bit field
-} nvioctl_l2_state;
+    u32 slot;        // always 0x07 (?)
+    u32 mask;
+} nvioctl_zbc_slot_mask;
 
 typedef struct {
     u32 id;
@@ -105,6 +128,10 @@ typedef struct {
         u32 desc32[2];
     };
 } nvioctl_gpfifo_entry;
+
+#define NVGPU_ZBC_TYPE_INVALID     0
+#define NVGPU_ZBC_TYPE_COLOR       1
+#define NVGPU_ZBC_TYPE_DEPTH       2
 
 // Used with nvioctlNvmap_Param().
 typedef enum nvioctl_map_param {
@@ -181,10 +208,12 @@ Result nvioctlNvhostCtrl_EventRegister(u32 fd, u32 event_id);
 Result nvioctlNvhostCtrl_EventUnregister(u32 fd, u32 event_id);
 
 Result nvioctlNvhostCtrlGpu_ZCullGetCtxSize(u32 fd, u32 *out);
-Result nvioctlNvhostCtrlGpu_ZCullGetInfo(u32 fd, u32 out[40>>2]);
+Result nvioctlNvhostCtrlGpu_ZCullGetInfo(u32 fd, nvioctl_zcull_info *out);
+Result nvioctlNvhostCtrlGpu_ZbcSetTable(u32 fd, const u32 color_ds[4], const u32 color_l2[4], u32 depth, u32 format, u32 type);
+Result nvioctlNvhostCtrlGpu_ZbcQueryTable(u32 fd, u32 index, nvioctl_zbc_entry *out);
 Result nvioctlNvhostCtrlGpu_GetCharacteristics(u32 fd, nvioctl_gpu_characteristics *out);
-Result nvioctlNvhostCtrlGpu_GetTpcMasks(u32 fd, u32 inval, u32 out[24>>2]);
-Result nvioctlNvhostCtrlGpu_GetL2State(u32 fd, nvioctl_l2_state *out);
+Result nvioctlNvhostCtrlGpu_GetTpcMasks(u32 fd, void *buffer, size_t size);
+Result nvioctlNvhostCtrlGpu_ZbcGetActiveSlotMask(u32 fd, nvioctl_zbc_slot_mask *out);
 
 Result nvioctlNvhostAsGpu_BindChannel(u32 fd, u32 channel_fd);
 Result nvioctlNvhostAsGpu_AllocSpace(u32 fd, u32 pages, u32 page_size, u32 flags, u64 align_or_offset, u64 *offset);
