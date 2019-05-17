@@ -60,5 +60,7 @@ void i2cExit(void);
 
 Result i2cOpenSession(I2cSession *out, I2cDevice dev);
 
-Result i2csessionSendAuto(I2cSession *s, void *buf, size_t size, I2cTransactionOption option);
+Result i2csessionSendAuto(I2cSession *s, const void *buf, size_t size, I2cTransactionOption option);
+Result i2csessionReceiveAuto(I2cSession *s, void *buf, size_t size, I2cTransactionOption option);
+Result i2csessionExecuteCommandList(I2cSession *s, void *dst, size_t dst_size, const void *cmd_list, size_t cmd_list_size);
 void i2csessionClose(I2cSession *s);
