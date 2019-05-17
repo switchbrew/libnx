@@ -71,7 +71,7 @@ Result i2cOpenSession(I2cSession *out, I2cDevice dev) {
     return rc;
 }
 
-Result i2csessionSendAuto(I2cSession *s, void *buf, size_t size, I2cTransactionOption option) {
+Result i2csessionSendAuto(I2cSession *s, const void *buf, size_t size, I2cTransactionOption option) {
     IpcCommand c;
     ipcInitialize(&c);
     ipcAddSendSmart(&c, g_i2cSrvPtrBufSize, buf, size, 0);
@@ -87,6 +87,75 @@ Result i2csessionSendAuto(I2cSession *s, void *buf, size_t size, I2cTransactionO
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 10;
     raw->option = option;
+
+    Result rc = serviceIpcDispatch(&s->s);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&s->s, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result i2csessionReceiveAuto(I2cSession *s, void *buf, size_t size, I2cTransactionOption option) {
+    IpcCommand c;
+    ipcInitialize(&c);
+    ipcAddRecvSmart(&c, g_i2cSrvPtrBufSize, buf, size, 0);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 option;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&s->s, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 11;
+    raw->option = option;
+
+    Result rc = serviceIpcDispatch(&s->s);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&s->s, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result i2csessionExecuteCommandList(I2cSession *s, void *dst, size_t dst_size, const void *cmd_list, size_t cmd_list_size) {
+    IpcCommand c;
+    ipcInitialize(&c);
+    ipcAddSendStatic(&c, cmd_list, cmd_list_size, 0);
+    ipcAddRecvSmart(&c, g_i2cSrvPtrBufSize, dst, dst_size, 0);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&s->s, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 12;
 
     Result rc = serviceIpcDispatch(&s->s);
 
