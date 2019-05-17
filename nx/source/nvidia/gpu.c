@@ -7,7 +7,7 @@
 #include "nvidia/ioctl.h"
 #include "nvidia/gpu.h"
 
-// Official software hardcodes this for both Tegra X1 (and even K1).
+// Official software hardcodes this for Tegra X1 (and even K1).
 #define NUM_TPC_MASKS 1
 
 static u32 g_ctrlgpu_fd = -1;
@@ -90,7 +90,7 @@ Result nvGpuZbcGetActiveSlotMask(u32 *out_slot, u32 *out_mask)
     return rc;
 }
 
-Result nvGpuZbcAddColor(u32 color_l2[4], u32 color_ds[4], u32 format)
+Result nvGpuZbcAddColor(const u32 color_l2[4], const u32 color_ds[4], u32 format)
 {
     return nvioctlNvhostCtrlGpu_ZbcSetTable(g_ctrlgpu_fd, color_ds, color_l2, 0, format, NVGPU_ZBC_TYPE_COLOR);
 }
