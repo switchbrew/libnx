@@ -85,6 +85,12 @@ static inline Result romfsInitFromStorage(FsStorage storage, u64 offset)
 }
 
 /**
+ * @brief Mounts RomFS using the current process host title RomFS.
+ * @param name Device mount name.
+ */
+Result romfsMountFromCurrentProcess(const char *name);
+
+/**
  * @brief Mounts RomFS from a file path in a mounted fsdev device.
  * @param path File path.
  * @param offset Offset of the RomFS within the file.

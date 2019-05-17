@@ -317,6 +317,16 @@ Result romfsMountFromStorage(FsStorage storage, u64 offset, const char *name)
     return romfsMountCommon(name, mount);
 }
 
+Result romfsMountFromCurrentProcess(const char *name) {
+    FsStorage storage;
+
+    Result rc = fsOpenDataStorageByCurrentProcess(&storage);
+    if (R_FAILED(rc))
+        return rc;
+
+    return romfsMountFromStorage(storage, 0, name);
+}
+
 Result romfsMountFromFsdev(const char *path, u64 offset, const char *name)
 {
     FsFileSystem *tmpfs = NULL;
