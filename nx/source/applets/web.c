@@ -79,7 +79,9 @@ static void _webArgInitialize(WebCommonConfig* config, AppletId appletid, WebShi
     config->appletid = appletid;
 
     u32 hosver = hosversionGet();
-    if (hosver >= MAKEHOSVERSION(5,0,0))
+    if (hosver >= MAKEHOSVERSION(6,0,0))
+        config->version = 0x60000;
+    else if (hosver >= MAKEHOSVERSION(5,0,0))
         config->version = 0x50000;
     else if (hosver >= MAKEHOSVERSION(3,0,0))
         config->version = 0x30000;
