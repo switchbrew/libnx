@@ -99,6 +99,7 @@ typedef struct {
 /// Common container struct for applets' reply data, from the output storage.
 typedef struct {
     bool type;                     ///< Type of reply: false = ret, true = storage.
+    WebShimKind shimKind;          ///< ShimKind
     WebCommonReturnValue ret;      ///< Reply data for reply=false.
     WebCommonTLVStorage storage;   ///< Reply data for reply=true.
 } WebCommonReply;
@@ -173,18 +174,22 @@ typedef enum {
     WebArgType_BootFooterButton                         = 0x3E,   ///< [6.0.0+] Array of \ref WebBootFooterButtonEntry with 0x10 entries.
     WebArgType_OverrideWebAudioVolume                   = 0x3F,   ///< [6.0.0+] float
     WebArgType_OverrideMediaAudioVolume                 = 0x40,   ///< [6.0.0+] float
+    WebArgType_SessionBootMode                          = 0x41,   ///< [7.0.0+] u32 enum WebSessionBootMode
+    WebArgType_SessionFlag                              = 0x42,   ///< [7.0.0+] u8 bool, enables using WebSession when set.
+    WebArgType_MediaPlayerUi                            = 0x43,   ///< [8.0.0+] u8 bool
 } WebArgType;
 
 /// Types for \ref WebArgTLV, output storage.
 typedef enum {
-    WebReplyType_ExitReason          = 0x1,  ///< [3.0.0+] u32 ShareExitReason
-    WebReplyType_LastUrl             = 0x2,  ///< [3.0.0+] string
-    WebReplyType_LastUrlSize         = 0x3,  ///< [3.0.0+] u64
-    WebReplyType_SharePostResult     = 0x4,  ///< [3.0.0+] u32 SharePostResult
-    WebReplyType_PostServiceName     = 0x5,  ///< [3.0.0+] string
-    WebReplyType_PostServiceNameSize = 0x6,  ///< [3.0.0+] u64
-    WebReplyType_PostId              = 0x7,  ///< [3.0.0+] string
-    WebReplyType_PostIdSize          = 0x8,  ///< [3.0.0+] u64
+    WebReplyType_ExitReason                        = 0x1,  ///< [3.0.0+] u32 ExitReason
+    WebReplyType_LastUrl                           = 0x2,  ///< [3.0.0+] string
+    WebReplyType_LastUrlSize                       = 0x3,  ///< [3.0.0+] u64
+    WebReplyType_SharePostResult                   = 0x4,  ///< [3.0.0+] u32 SharePostResult
+    WebReplyType_PostServiceName                   = 0x5,  ///< [3.0.0+] string
+    WebReplyType_PostServiceNameSize               = 0x6,  ///< [3.0.0+] u64
+    WebReplyType_PostId                            = 0x7,  ///< [3.0.0+] string
+    WebReplyType_PostIdSize                        = 0x8,  ///< [3.0.0+] u64
+    WebReplyType_MediaPlayerAutoClosedByCompletion = 0x9,  ///< [8.0.0+] u8 bool
 } WebReplyType;
 
 /// This controls the kind of content to mount with Offline-applet.
@@ -643,6 +648,14 @@ Result webConfigSetOverrideWebAudioVolume(WebCommonConfig* config, float value);
 Result webConfigSetOverrideMediaAudioVolume(WebCommonConfig* config, float value);
 
 /**
+ * @brief Sets whether MediaPlayerUi is enabled.
+ * @note Only available with config created by \ref webOfflineCreate on [8.0.0+].
+ * @param config WebCommonConfig object.
+ * @param flag Flag
+ */
+Result webConfigSetMediaPlayerUi(WebCommonConfig* config, bool flag);
+
+/**
  * @brief Launches the {web applet} with the specified config and waits for it to exit.
  * @param config WebCommonConfig object.
  * @param out Optional output applet reply data, can be NULL.
@@ -702,4 +715,12 @@ Result webReplyGetPostServiceName(WebCommonReply *reply, char *outstr, size_t ou
  * @param out_size Output string length including NUL-terminator, for the original input string in the reply loaded from a separate size field.
  */
 Result webReplyGetPostId(WebCommonReply *reply, char *outstr, size_t outstr_maxsize, size_t *out_size);
+
+/**
+ * @brief Gets the MediaPlayerAutoClosedByCompletion flag from the specified reply.
+ * @note Only available with reply data from Web on [8.0.0+].
+ * @param reply WebCommonReply object.
+ * @param flag Output flag
+ */
+Result webReplyGetMediaPlayerAutoClosedByCompletion(WebCommonReply *reply, bool *flag);
 
