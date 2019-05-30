@@ -17,6 +17,15 @@
 /// Masks out unused bits in a result code, retrieving the actual value for use in comparisons.
 #define R_VALUE(res)       ((res)&0x3FFFFF)
 
+/// Evaluates an expression that returns a result, and returns the result if it would fail.
+#define R_TRY(res_expr) \
+    do { \
+        const Result _tmp_r_try_rc = res_expr; \
+        if (R_FAILED(_tmp_r_try_rc)) { \
+            return _tmp_r_try_rc; \
+        } \
+    } while (0)
+
 /// Builds a result code from its constituent components.
 #define MAKERESULT(module,description) \
     ((((module)&0x1FF)) | ((description)&0x1FFF)<<9)
