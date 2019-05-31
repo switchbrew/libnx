@@ -603,8 +603,8 @@ Result fsFsCreateFile(FsFileSystem* fs, const char* path, size_t size, int flags
         u64 magic;
         u64 cmd_id;
         u64 zero;
-        u64 size;
         u32 flags;
+        u64 size;
     } *raw;
 
     raw = serviceIpcPrepareHeader(&fs->s, &c, sizeof(*raw));
@@ -612,8 +612,8 @@ Result fsFsCreateFile(FsFileSystem* fs, const char* path, size_t size, int flags
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 0;
     raw->zero = 0;
-    raw->size = size;
     raw->flags = flags;
+    raw->size = size;
 
     Result rc = serviceIpcDispatch(&fs->s);
 
