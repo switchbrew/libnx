@@ -291,7 +291,6 @@ Result hidsysSetNotificationLedPattern(const HidsysNotificationLedPattern *patte
         struct {
             u64 magic;
             u64 result;
-            u64 total_entries;
         } *resp;
 
         serviceIpcParse(&g_hidsysSrv, &r, sizeof(*resp));
