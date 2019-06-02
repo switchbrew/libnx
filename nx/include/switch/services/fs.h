@@ -98,8 +98,8 @@ typedef struct
 } FsTimeStampRaw;
 
 typedef enum {
-    ENTRYTYPE_DIR = 0,
-    ENTRYTYPE_FILE = 1
+    ENTRYTYPE_DIR  = 0,
+    ENTRYTYPE_FILE = 1,
 } FsEntryType;
 
 typedef enum
@@ -129,15 +129,15 @@ typedef enum
 
 typedef enum
 {
-    FS_WRITEOPTION_NONE = 0,       ///< No option.
+    FS_WRITEOPTION_NONE  = 0,      ///< No option.
     FS_WRITEOPTION_FLUSH = BIT(0), ///< Forces a flush after write.
 } FsWriteOption;
 
 typedef enum
 {
-    FsStorageId_None =       0,
-    FsStorageId_Host =       1,
-    FsStorageId_GameCard =   2,
+    FsStorageId_None       = 0,
+    FsStorageId_Host       = 1,
+    FsStorageId_GameCard   = 2,
     FsStorageId_NandSystem = 3,
     FsStorageId_NandUser   = 4,
     FsStorageId_SdCard     = 5,
@@ -157,7 +157,7 @@ typedef enum
     FsSaveDataSpaceId_SdCard           = 2,
     FsSaveDataSpaceId_TemporaryStorage = 3,
 
-    FsSaveDataSpaceId_All = -1,             ///< Pseudo value for fsOpenSaveDataIterator().
+    FsSaveDataSpaceId_All              = -1, ///< Pseudo value for fsOpenSaveDataIterator().
 } FsSaveDataSpaceId;
 
 typedef enum
@@ -181,7 +181,7 @@ typedef struct {
 } FsGameCardHandle;
 
 typedef struct {
-    u32 aes_ctr_key_type;           ///< Contains bitflags describing how data is AES encrypted
+    u32 aes_ctr_key_type;           ///< Contains bitflags describing how data is AES encrypted.
     u32 speed_emulation_type;       ///< Contains bitflags describing how data is emulated.
     u32 reserved[0x38/sizeof(u32)];
 } FsRangeInfo;
@@ -227,12 +227,12 @@ Result fsMount_SystemSaveData(FsFileSystem* out, u64 saveID);
 
 typedef enum
 {
-    FsFileSystemType_Logo = 2,
-    FsFileSystemType_ContentControl = 3,
-    FsFileSystemType_ContentManual = 4,
-    FsFileSystemType_ContentMeta = 5,
-    FsFileSystemType_ContentData = 6,
-    FsFileSystemType_ApplicationPackage = 7
+    FsFileSystemType_Logo               = 2,
+    FsFileSystemType_ContentControl     = 3,
+    FsFileSystemType_ContentManual      = 4,
+    FsFileSystemType_ContentMeta        = 5,
+    FsFileSystemType_ContentData        = 6,
+    FsFileSystemType_ApplicationPackage = 7,
 } FsFileSystemType;
 
 typedef enum
