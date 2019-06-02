@@ -381,6 +381,16 @@ Result fsdevSetArchiveBit(const char *path) {
   return fsFsSetArchiveBit(&device->fs, fs_path);
 }
 
+Result fsdevCreateFile(const char* path, size_t size, int flags) {
+  char          fs_path[FS_MAX_PATH];
+  fsdev_fsdevice *device = NULL;
+
+  if(fsdev_getfspath(_REENT, path, &device, fs_path)==-1)
+    return MAKERESULT(Module_Libnx, LibnxError_NotFound);
+
+  return fsFsCreateFile(&device->fs, fs_path, size, flags);
+}
+
 Result fsdevDeleteDirectoryRecursively(const char *path) {
   char          fs_path[FS_MAX_PATH];
   fsdev_fsdevice *device = NULL;
@@ -680,7 +690,7 @@ fsdev_write(struct _reent *r,
     }
   }
 
-  rc = fsFileWrite(&file->fd, file->offset, ptr, len);
+  rc = fsFileWrite(&file->fd, file->offset, ptr, len, FS_WRITEOPTION_NONE);
   if(rc == 0xD401)
     return fsdev_write_safe(r, fd, ptr, len);
   if(R_FAILED(rc))
@@ -734,7 +744,7 @@ fsdev_write_safe(struct _reent *r,
     memcpy(tmp_buffer, ptr, toWrite);
 
     /* write the data */
-    rc = fsFileWrite(&file->fd, file->offset, tmp_buffer, toWrite);
+    rc = fsFileWrite(&file->fd, file->offset, tmp_buffer, toWrite, FS_WRITEOPTION_NONE);
 
     if(R_FAILED(rc))
     {
@@ -789,7 +799,7 @@ fsdev_read(struct _reent *r,
   }
 
   /* read the data */
-  rc = fsFileRead(&file->fd, file->offset, ptr, len, &bytes);
+  rc = fsFileRead(&file->fd, file->offset, ptr, len, FS_READOPTION_NONE, &bytes);
   if(rc == 0xD401)
     return fsdev_read_safe(r, fd, ptr, len);
   if(R_SUCCEEDED(rc))
@@ -836,7 +846,7 @@ fsdev_read_safe(struct _reent *r,
       toRead = sizeof(tmp_buffer);
 
     /* read the data */
-    rc = fsFileRead(&file->fd, file->offset, tmp_buffer, toRead, &bytes);
+    rc = fsFileRead(&file->fd, file->offset, tmp_buffer, toRead, FS_READOPTION_NONE, &bytes);
 
     if(bytes > toRead)
       bytes = toRead;

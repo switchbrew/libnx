@@ -56,7 +56,7 @@ static ssize_t _romfs_read(romfs_mount *mount, u64 offset, void* buffer, u64 siz
     Result rc = 0;
     if(mount->fd_type == RomfsSource_FsFile)
     {
-        rc = fsFileRead(&mount->fd, pos, buffer, size, &read);
+        rc = fsFileRead(&mount->fd, pos, buffer, size, FS_READOPTION_NONE, &read);
     }
     else if(mount->fd_type == RomfsSource_FsStorage)
     {
