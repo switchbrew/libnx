@@ -19,7 +19,7 @@ Result fsInitialize(void)
         return 0;
 
     Result rc = smGetService(&g_fsSrv, "fsp-srv");
-    
+
     if (R_SUCCEEDED(rc)) {
         rc = serviceConvertToDomain(&g_fsSrv);
     }
@@ -549,9 +549,9 @@ Result fsOpenFileSystemWithId(FsFileSystem* out, u64 titleId, FsFileSystemType f
             u32 fsType;
             u64 titleId;
         } *raw;
-    
+
         raw = serviceIpcPrepareHeader(&g_fsSrv, &c, sizeof(*raw));
-    
+
         raw->magic = SFCI_MAGIC;
         raw->cmd_id = 8;
         raw->fsType = fsType;
@@ -563,13 +563,57 @@ Result fsOpenFileSystemWithId(FsFileSystem* out, u64 titleId, FsFileSystemType f
             u64 cmd_id;
             u32 fsType;
         } *raw;
-    
+
         raw = serviceIpcPrepareHeader(&g_fsSrv, &c, sizeof(*raw));
-    
+
         raw->magic = SFCI_MAGIC;
         raw->cmd_id = 0;
         raw->fsType = fsType;
     }
+
+    Result rc = serviceIpcDispatch(&g_fsSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_fsSrv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            serviceCreateSubservice(&out->s, &g_fsSrv, &r, 0);
+        }
+    }
+
+    return rc;
+}
+
+Result fsOpenFileSystemWithPatch(FsFileSystem* out, u64 titleId, FsFileSystemType fsType) {
+    if (hosversionBefore(2,0,0)) {
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    }
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 fsType;
+        u64 titleId;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_fsSrv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 7;
+    raw->fsType = fsType;
+    raw->titleId = titleId;
 
     Result rc = serviceIpcDispatch(&g_fsSrv);
 
@@ -602,7 +646,6 @@ Result fsFsCreateFile(FsFileSystem* fs, const char* path, size_t size, int flags
     struct {
         u64 magic;
         u64 cmd_id;
-        u64 zero;
         u32 flags;
         u64 size;
     } *raw;
@@ -611,7 +654,6 @@ Result fsFsCreateFile(FsFileSystem* fs, const char* path, size_t size, int flags
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 0;
-    raw->zero = 0;
     raw->flags = flags;
     raw->size = size;
 
@@ -765,11 +807,11 @@ Result fsFsDeleteDirectoryRecursively(FsFileSystem* fs, const char* path) {
     return rc;
 }
 
-Result fsFsRenameFile(FsFileSystem* fs, const char* path0, const char* path1) {
+Result fsFsRenameFile(FsFileSystem* fs, const char* cur_path, const char* new_path) {
     IpcCommand c;
     ipcInitialize(&c);
-    ipcAddSendStatic(&c, path0, FS_MAX_PATH, 0);
-    ipcAddSendStatic(&c, path1, FS_MAX_PATH, 1);
+    ipcAddSendStatic(&c, cur_path, FS_MAX_PATH, 0);
+    ipcAddSendStatic(&c, new_path, FS_MAX_PATH, 1);
 
     struct {
         u64 magic;
@@ -799,11 +841,11 @@ Result fsFsRenameFile(FsFileSystem* fs, const char* path0, const char* path1) {
     return rc;
 }
 
-Result fsFsRenameDirectory(FsFileSystem* fs, const char* path0, const char* path1) {
+Result fsFsRenameDirectory(FsFileSystem* fs, const char* cur_path, const char* new_path) {
     IpcCommand c;
     ipcInitialize(&c);
-    ipcAddSendStatic(&c, path0, FS_MAX_PATH, 0);
-    ipcAddSendStatic(&c, path1, FS_MAX_PATH, 1);
+    ipcAddSendStatic(&c, cur_path, FS_MAX_PATH, 0);
+    ipcAddSendStatic(&c, new_path, FS_MAX_PATH, 1);
 
     struct {
         u64 magic;
@@ -1187,7 +1229,7 @@ void fsFsClose(FsFileSystem* fs) {
 }
 
 // IFile implementation
-Result fsFileRead(FsFile* f, u64 off, void* buf, size_t len, size_t* out) {
+Result fsFileRead(FsFile* f, u64 off, void* buf, size_t len, u32 option, size_t* out) {
     IpcCommand c;
     ipcInitialize(&c);
     ipcAddRecvBuffer(&c, buf, len, 1);
@@ -1195,7 +1237,7 @@ Result fsFileRead(FsFile* f, u64 off, void* buf, size_t len, size_t* out) {
     struct {
         u64 magic;
         u64 cmd_id;
-        u64 zero;
+        u32 option;
         u64 offset;
         u64 read_size;
     } *raw;
@@ -1204,7 +1246,7 @@ Result fsFileRead(FsFile* f, u64 off, void* buf, size_t len, size_t* out) {
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 0;
-    raw->zero = 0;
+    raw->option = option;
     raw->offset = off;
     raw->read_size = len;
 
@@ -1231,7 +1273,7 @@ Result fsFileRead(FsFile* f, u64 off, void* buf, size_t len, size_t* out) {
     return rc;
 }
 
-Result fsFileWrite(FsFile* f, u64 off, const void* buf, size_t len) {
+Result fsFileWrite(FsFile* f, u64 off, const void* buf, size_t len, u32 option) {
     IpcCommand c;
     ipcInitialize(&c);
     ipcAddSendBuffer(&c, buf, len, 1);
@@ -1239,7 +1281,7 @@ Result fsFileWrite(FsFile* f, u64 off, const void* buf, size_t len) {
     struct {
         u64 magic;
         u64 cmd_id;
-        u64 zero;
+        u32 option;
         u64 offset;
         u64 write_size;
     } *raw;
@@ -1248,7 +1290,7 @@ Result fsFileWrite(FsFile* f, u64 off, const void* buf, size_t len) {
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 1;
-    raw->zero = 0;
+    raw->option = option;
     raw->offset = off;
     raw->write_size = len;
 
@@ -1368,6 +1410,51 @@ Result fsFileGetSize(FsFile* f, u64* out) {
     }
 
     return rc;
+}
+
+Result fsFileOperateRange(FsFile* f, FsOperationId op_id, u64 off, size_t len, FsRangeInfo* out) {
+    if (hosversionBefore(4,0,0)) {
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    }
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 op_id;
+        u64 off;
+        u64 len;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&f->s, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 5;
+    raw->op_id = op_id;
+    raw->off = off;
+    raw->len = len;
+
+    Result rc = serviceIpcDispatch(&f->s);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            FsRangeInfo range_info;
+        } *resp;
+
+        serviceIpcParse(&f->s, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+        if (R_SUCCEEDED(rc) && out) *out = resp->range_info;
+    }
+
+    return rc;
+
 }
 
 void fsFileClose(FsFile* f) {
@@ -1623,6 +1710,50 @@ Result fsStorageGetSize(FsStorage* s, u64* out) {
 
         rc = resp->result;
         if (R_SUCCEEDED(rc) && out) *out = resp->size;
+    }
+
+    return rc;
+}
+
+Result fsStorageOperateRange(FsStorage* s, FsOperationId op_id, u64 off, size_t len, FsRangeInfo* out) {
+    if (hosversionBefore(4,0,0)) {
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    }
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 op_id;
+        u64 off;
+        u64 len;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&s->s, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 5;
+    raw->op_id = op_id;
+    raw->off = off;
+    raw->len = len;
+
+    Result rc = serviceIpcDispatch(&s->s);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            FsRangeInfo range_info;
+        } *resp;
+
+        serviceIpcParse(&s->s, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+        if (R_SUCCEEDED(rc) && out) *out = resp->range_info;
     }
 
     return rc;

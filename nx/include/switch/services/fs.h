@@ -109,12 +109,29 @@ typedef enum
     FS_OPEN_APPEND = BIT(2), ///< Append file.
 } FsFileFlags;
 
+typedef enum
+{
+    FS_CREATE_BIG_FILE = BIT(0), ///< Creates a ConcatenationFile (dir with archive bit) instead of file.
+} FsFileCreateFlags;
+
 /// For use with fsFsOpenDirectory.
 typedef enum
 {
-    FS_DIROPEN_DIRECTORY   = BIT(0), ///< Enable reading directory entries.
-    FS_DIROPEN_FILE  = BIT(1),       ///< Enable reading file entries.
+    FS_DIROPEN_DIRECTORY   = BIT(0),   ///< Enable reading directory entries.
+    FS_DIROPEN_FILE  = BIT(1),         ///< Enable reading file entries.
+    FS_DIROPEN_NO_FILE_SIZE = BIT(31), ///< Causes result entries to not contain filesize information (always 0).
 } FsDirectoryFlags;
+
+typedef enum
+{
+    FS_READOPTION_NONE = 0, ///< No Option.
+} FsReadOption;
+
+typedef enum
+{
+    FS_WRITEOPTION_NONE = 0,       ///< No option.
+    FS_WRITEOPTION_FLUSH = BIT(0), ///< Forces a flush after write.
+} FsWriteOption;
 
 typedef enum
 {
@@ -162,6 +179,19 @@ typedef enum {
 typedef struct {
     u32 value;
 } FsGameCardHandle;
+
+typedef struct {
+    u32 aes_ctr_key_type;           ///< Contains bitflags describing how data is AES encrypted
+    u32 speed_emulation_type;       ///< Contains bitflags describing how data is emulated.
+    u32 reserved[0x38/sizeof(u32)];
+} FsRangeInfo;
+
+typedef enum {
+    FsOperationId_Clear,           ///< Fill range with zero for supported file/storage.
+    FsOperationId_ClearSignature,  ///< Clears signature for supported file/storage.
+    FsOperationId_InvalidateCache, ///< Invalidates cache for supported file/storage.
+    FsOperationId_QueryRange,      ///< Retrieves information on data for supported file/storage.
+} FsOperationId;
 
 Result fsInitialize(void);
 void fsExit(void);
@@ -213,6 +243,7 @@ typedef enum
 /// Mount requested filesystem type from content file
 Result fsOpenFileSystem(FsFileSystem* out, FsFileSystemType fsType, const char* contentPath); /// same as calling fsOpenFileSystemWithId with 0 as titleId
 Result fsOpenFileSystemWithId(FsFileSystem* out, u64 titleId, FsFileSystemType fsType, const char* contentPath); /// works on all firmwares, titleId is ignored on 1.0.0
+Result fsOpenFileSystemWithPatch(FsFileSystem* out, u64 titleId, FsFileSystemType fsType); /// 2.0.0+, like OpenFileSystemWithId but without content path.
 
 // IFileSystem
 Result fsFsCreateFile(FsFileSystem* fs, const char* path, size_t size, int flags);
@@ -220,8 +251,8 @@ Result fsFsDeleteFile(FsFileSystem* fs, const char* path);
 Result fsFsCreateDirectory(FsFileSystem* fs, const char* path);
 Result fsFsDeleteDirectory(FsFileSystem* fs, const char* path);
 Result fsFsDeleteDirectoryRecursively(FsFileSystem* fs, const char* path);
-Result fsFsRenameFile(FsFileSystem* fs, const char* path0, const char* path1);
-Result fsFsRenameDirectory(FsFileSystem* fs, const char* path0, const char* path1);
+Result fsFsRenameFile(FsFileSystem* fs, const char* cur_path, const char* new_path);
+Result fsFsRenameDirectory(FsFileSystem* fs, const char* cur_path, const char* new_path);
 Result fsFsGetEntryType(FsFileSystem* fs, const char* path, FsEntryType* out);
 Result fsFsOpenFile(FsFileSystem* fs, const char* path, int flags, FsFile* out);
 Result fsFsOpenDirectory(FsFileSystem* fs, const char* path, int flags, FsDir* out);
@@ -238,11 +269,12 @@ void fsFsClose(FsFileSystem* fs);
 Result fsFsSetArchiveBit(FsFileSystem* fs, const char *path);
 
 // IFile
-Result fsFileRead(FsFile* f, u64 off, void* buf, size_t len, size_t* out);
-Result fsFileWrite(FsFile* f, u64 off, const void* buf, size_t len);
+Result fsFileRead(FsFile* f, u64 off, void* buf, size_t len, u32 option, size_t* out);
+Result fsFileWrite(FsFile* f, u64 off, const void* buf, size_t len, u32 option);
 Result fsFileFlush(FsFile* f);
 Result fsFileSetSize(FsFile* f, u64 sz);
 Result fsFileGetSize(FsFile* f, u64* out);
+Result fsFileOperateRange(FsFile* f, FsOperationId op_id, u64 off, size_t len, FsRangeInfo* out);
 void fsFileClose(FsFile* f);
 
 // IDirectory
@@ -256,6 +288,7 @@ Result fsStorageWrite(FsStorage* s, u64 off, const void* buf, size_t len);
 Result fsStorageFlush(FsStorage* s);
 Result fsStorageSetSize(FsStorage* s, u64 sz);
 Result fsStorageGetSize(FsStorage* s, u64* out);
+Result fsStorageOperateRange(FsStorage* s, FsOperationId op_id, u64 off, size_t len, FsRangeInfo* out);
 void fsStorageClose(FsStorage* s);
 
 // ISaveDataInfoReader
