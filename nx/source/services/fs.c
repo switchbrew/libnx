@@ -70,7 +70,7 @@ Service* fsGetServiceSession(void) {
     return &g_fsSrv;
 }
 
-Result fsOpenBisStorage(FsStorage* out, u32 PartitionId) {
+Result fsOpenBisStorage(FsStorage* out, FsBisStorageId PartitionId) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -108,7 +108,7 @@ Result fsOpenBisStorage(FsStorage* out, u32 PartitionId) {
     return rc;
 }
 
-Result fsOpenBisFileSystem(FsFileSystem* out, u32 PartitionId, const char* string) {
+Result fsOpenBisFileSystem(FsFileSystem* out, FsBisStorageId PartitionId, const char* string) {
     IpcCommand c;
     ipcInitialize(&c);
 
