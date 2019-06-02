@@ -117,8 +117,8 @@ typedef enum
 /// For use with fsFsOpenDirectory.
 typedef enum
 {
-    FS_DIROPEN_DIRECTORY   = BIT(0),   ///< Enable reading directory entries.
-    FS_DIROPEN_FILE  = BIT(1),         ///< Enable reading file entries.
+    FS_DIROPEN_DIRECTORY    = BIT(0),  ///< Enable reading directory entries.
+    FS_DIROPEN_FILE         = BIT(1),  ///< Enable reading file entries.
     FS_DIROPEN_NO_FILE_SIZE = BIT(31), ///< Causes result entries to not contain filesize information (always 0).
 } FsDirectoryFlags;
 
@@ -274,7 +274,7 @@ Result fsFileWrite(FsFile* f, u64 off, const void* buf, size_t len, u32 option);
 Result fsFileFlush(FsFile* f);
 Result fsFileSetSize(FsFile* f, u64 sz);
 Result fsFileGetSize(FsFile* f, u64* out);
-Result fsFileOperateRange(FsFile* f, FsOperationId op_id, u64 off, size_t len, FsRangeInfo* out);
+Result fsFileOperateRange(FsFile* f, FsOperationId op_id, u64 off, size_t len, FsRangeInfo* out); /// 4.0.0+
 void fsFileClose(FsFile* f);
 
 // IDirectory
@@ -288,7 +288,7 @@ Result fsStorageWrite(FsStorage* s, u64 off, const void* buf, size_t len);
 Result fsStorageFlush(FsStorage* s);
 Result fsStorageSetSize(FsStorage* s, u64 sz);
 Result fsStorageGetSize(FsStorage* s, u64* out);
-Result fsStorageOperateRange(FsStorage* s, FsOperationId op_id, u64 off, size_t len, FsRangeInfo* out);
+Result fsStorageOperateRange(FsStorage* s, FsOperationId op_id, u64 off, size_t len, FsRangeInfo* out); /// 4.0.0+
 void fsStorageClose(FsStorage* s);
 
 // ISaveDataInfoReader
