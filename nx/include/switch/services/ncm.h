@@ -74,10 +74,6 @@ typedef struct {
     u64           baseTitleId;
 } NcmApplicationContentMetaKey;
 
-typedef struct {
-    u8 c[0x10];
-} NcmRightsId;
-
 Result ncmInitialize(void);
 void ncmExit(void);
 
@@ -97,7 +93,7 @@ Result ncmContentStorageCleanupAllPlaceHolder(NcmContentStorage* cs);
 Result ncmContentStorageGetSize(NcmContentStorage* cs, const NcmNcaId* ncaId, u64* out);
 Result ncmContentStorageDisableForcibly(NcmContentStorage* cs);
 Result ncmContentStorageReadContentIdFile(NcmContentStorage* cs, const NcmNcaId* ncaId, u64 offset, void* outBuf, size_t bufSize);
-Result ncmContentStorageGetRightsIdFromContentId(NcmContentStorage* cs, const NcmNcaId* ncaId, NcmRightsId* rightsIdOut, u32* keyGenerationOut);
+Result ncmContentStorageGetRightsIdFromContentId(NcmContentStorage* cs, const NcmNcaId* ncaId, FsRightsId* rightsIdOut, u32* keyGenerationOut);
 
 Result ncmContentMetaDatabaseSet(NcmContentMetaDatabase* db, const NcmMetaRecord* record, u64 inDataSize, const NcmContentMetaRecordsHeader* srcRecordsData);
 Result ncmContentMetaDatabaseGet(NcmContentMetaDatabase* db, const NcmMetaRecord* record, u64 outDataSize, NcmContentMetaRecordsHeader* outRecordsData, u64* sizeRead);
