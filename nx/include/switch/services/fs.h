@@ -193,13 +193,34 @@ typedef enum {
     FsOperationId_QueryRange,      ///< Retrieves information on data for supported file/storage.
 } FsOperationId;
 
+typedef enum {
+    FsBisStorageId_Boot0                           = 0,
+
+    FsBisStorageId_Boot1                           = 10,
+
+    FsBisStorageId_UserDataRoot                    = 20,
+    FsBisStorageId_BootConfigAndPackage2NormalMain = 21,
+    FsBisStorageId_BootConfigAndPackage2NormalSub  = 22,
+    FsBisStorageId_BootConfigAndPackage2SafeMain   = 23,
+    FsBisStorageId_BootConfigAndPackage2SafeSub    = 24,
+    FsBisStorageId_BootConfigAndPackage2RepairMain = 25,
+    FsBisStorageId_BootConfigAndPackage2RepairSub  = 26,
+    FsBisStorageId_CalibrationBinary               = 27,
+    FsBisStorageId_CalibrationFile                 = 28,
+    FsBisStorageId_SafeMode                        = 29,
+    FsBisStorageId_User                            = 30,
+    FsBisStorageId_System                          = 31,
+    FsBisStorageId_SystemProperEncryption          = 32,
+    FsBisStorageId_SystemProperPartition           = 33,
+} FsBisStorageId;
+
 Result fsInitialize(void);
 void fsExit(void);
 
 Service* fsGetServiceSession(void);
 
-Result fsOpenBisStorage(FsStorage* out, u32 PartitionId);
-Result fsOpenBisFileSystem(FsFileSystem* out, u32 PartitionId, const char* string);
+Result fsOpenBisStorage(FsStorage* out, FsBisStorageId PartitionId);
+Result fsOpenBisFileSystem(FsFileSystem* out, FsBisStorageId PartitionId, const char* string);
 
 Result fsIsExFatSupported(bool* out);
 
