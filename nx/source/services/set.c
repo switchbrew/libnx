@@ -692,7 +692,7 @@ Result setsysGetDeviceNickname(char* buffer) {
     ipcInitialize(&c);
 
     ipcAddRecvBuffer(&c, buffer, 0x80, BufferType_Normal);
- 
+
     struct {
         u64 magic;
         u64 cmd_id;
@@ -702,7 +702,7 @@ Result setsysGetDeviceNickname(char* buffer) {
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 77;
-    
+
     Result rc = serviceIpcDispatch(&g_setsysSrv);
 
     if (R_SUCCEEDED(rc)) {
