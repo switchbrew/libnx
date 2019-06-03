@@ -724,7 +724,7 @@ Result setsysSetDeviceNickname(const char* buffer) {
     IpcCommand c;
     ipcInitialize(&c);
 
-    ipcAddSendBuffer(&c, buffer, 0x80, BufferType_Normal);
+    ipcAddSendBuffer(&c, buffer, strlen(buffer) + 1, BufferType_Normal);
 
     struct {
         u64 magic;

@@ -184,6 +184,6 @@ Result setsysGetDeviceNickname(char* buffer);
 
 /**
  * @brief Sets the system's nickname.
- * @param buffer Pointer to read the nickname from. (The buffer size needs to be at least 0x80 bytes)
+ * @param buffer Pointer to read the nickname from.
  */
 Result setsysSetDeviceNickname(const char* buffer);
