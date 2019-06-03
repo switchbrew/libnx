@@ -504,6 +504,9 @@ Result fsOpenSdCardDetectionEventNotifier(FsEventNotifier* out) {
 }
 
 Result fsGetRightsIdByPath(const char* path, FsRightsId* out_rights_id) {
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     char send_path[FS_MAX_PATH] = {0};
     IpcCommand c;
     ipcInitialize(&c);
@@ -535,7 +538,7 @@ Result fsGetRightsIdByPath(const char* path, FsRightsId* out_rights_id) {
         rc = resp->result;
 
         if (R_SUCCEEDED(rc)) {
-            *out_rights_id = resp->rights_id;
+            if (out_rights_id) *out_rights_id = resp->rights_id;
         }
     }
 
@@ -543,6 +546,9 @@ Result fsGetRightsIdByPath(const char* path, FsRightsId* out_rights_id) {
 }
 
 Result fsGetRightsIdAndKeyGenerationByPath(const char* path, u8* out_key_generation, FsRightsId* out_rights_id) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    
     char send_path[FS_MAX_PATH] = {0};
     IpcCommand c;
     ipcInitialize(&c);
@@ -576,8 +582,8 @@ Result fsGetRightsIdAndKeyGenerationByPath(const char* path, u8* out_key_generat
         rc = resp->result;
 
         if (R_SUCCEEDED(rc)) {
-            *out_key_generation = resp->key_generation;
-            *out_rights_id = resp->rights_id;
+            if (out_key_generation) *out_key_generation = resp->key_generation;
+            if (out_rights_id) *out_rights_id = resp->rights_id;
         }
     }
 
