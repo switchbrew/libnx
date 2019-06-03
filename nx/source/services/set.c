@@ -720,7 +720,7 @@ Result setsysGetDeviceNickname(char* buffer) {
     return rc;
 }
 
-Result setsysSetDeviceNickname(char* buffer) {
+Result setsysSetDeviceNickname(const char* buffer) {
     IpcCommand c;
     ipcInitialize(&c);
 
