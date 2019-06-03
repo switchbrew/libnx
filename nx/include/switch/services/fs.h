@@ -189,10 +189,10 @@ Result fsOpenDataStorageByDataId(FsStorage* out, u64 dataId, FsStorageId storage
 Result fsOpenDeviceOperator(FsDeviceOperator* out);
 Result fsOpenSdCardDetectionEventNotifier(FsEventNotifier* out);
 
-// Retrieves the rights id corresponding to the content path. Only available on [2.0.0+].
+/// Retrieves the rights id corresponding to the content path. Only available on [2.0.0+].
 Result fsGetRightsIdByPath(const char* path, FsRightsId* out_rights_id);
 
-// Retrieves the rights id and key generation corresponding to the content path. Only available on [3.0.0+].
+/// Retrieves the rights id and key generation corresponding to the content path. Only available on [3.0.0+].
 Result fsGetRightsIdAndKeyGenerationByPath(const char* path, u8* out_key_generation, FsRightsId* out_rights_id);
 // todo: Rest of commands here
 
