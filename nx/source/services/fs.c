@@ -317,6 +317,44 @@ Result fsOpenSaveDataIterator(FsSaveDataIterator* out, s32 SaveDataSpaceId) {
     return rc;
 }
 
+Result fsOpenContentStorageFileSystem(FsFileSystem* out, FsContentStorageId content_storage_id) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 content_storage_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_fsSrv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 110;
+    raw->content_storage_id = content_storage_id;
+
+    Result rc = serviceIpcDispatch(&g_fsSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_fsSrv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            serviceCreateSubservice(&out->s, &g_fsSrv, &r, 0);
+        }
+    }
+
+    return rc;
+}
+
 Result fsOpenDataStorageByCurrentProcess(FsStorage* out) {
     IpcCommand c;
     ipcInitialize(&c);
@@ -459,6 +497,93 @@ Result fsOpenSdCardDetectionEventNotifier(FsEventNotifier* out) {
 
         if (R_SUCCEEDED(rc)) {
             serviceCreateSubservice(&out->s, &g_fsSrv, &r, 0);
+        }
+    }
+
+    return rc;
+}
+
+Result fsGetRightsIdByPath(const char* path, FsRightsId* out_rights_id) {
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    char send_path[FS_MAX_PATH] = {0};
+    IpcCommand c;
+    ipcInitialize(&c);
+    ipcAddSendStatic(&c, send_path, FS_MAX_PATH, 0);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_fsSrv, &c, sizeof(*raw));
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 609;
+
+    strncpy(send_path, path, FS_MAX_PATH-1);
+    Result rc = serviceIpcDispatch(&g_fsSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            FsRightsId rights_id;
+        } *resp;
+
+        serviceIpcParse(&g_fsSrv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            if (out_rights_id) *out_rights_id = resp->rights_id;
+        }
+    }
+
+    return rc;
+}
+
+Result fsGetRightsIdAndKeyGenerationByPath(const char* path, u8* out_key_generation, FsRightsId* out_rights_id) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    
+    char send_path[FS_MAX_PATH] = {0};
+    IpcCommand c;
+    ipcInitialize(&c);
+    ipcAddSendStatic(&c, send_path, FS_MAX_PATH, 0);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_fsSrv, &c, sizeof(*raw));
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 610;
+
+    strncpy(send_path, path, FS_MAX_PATH-1);
+    Result rc = serviceIpcDispatch(&g_fsSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            u8 key_generation;
+            u8 padding[0x7];
+            FsRightsId rights_id;
+        } *resp;
+
+        serviceIpcParse(&g_fsSrv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            if (out_key_generation) *out_key_generation = resp->key_generation;
+            if (out_rights_id) *out_rights_id = resp->rights_id;
         }
     }
 

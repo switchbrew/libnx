@@ -21,6 +21,10 @@
 #define FS_SAVEDATA_USERID_COMMONSAVE 0
 
 typedef struct {
+    u8 c[0x10];
+} FsRightsId;
+
+typedef struct {
     Service  s;
 } FsFileSystem;
 
@@ -230,10 +234,17 @@ Result fsMountSdcard(FsFileSystem* out);
 Result fsMountSaveData(FsFileSystem* out, u8 inval, FsSave *save);
 Result fsMountSystemSaveData(FsFileSystem* out, u8 inval, FsSave *save);
 Result fsOpenSaveDataIterator(FsSaveDataIterator* out, s32 SaveDataSpaceId);
+Result fsOpenContentStorageFileSystem(FsFileSystem* out, FsContentStorageId content_storage_id);
 Result fsOpenDataStorageByCurrentProcess(FsStorage* out);
 Result fsOpenDataStorageByDataId(FsStorage* out, u64 dataId, FsStorageId storageId);
 Result fsOpenDeviceOperator(FsDeviceOperator* out);
 Result fsOpenSdCardDetectionEventNotifier(FsEventNotifier* out);
+
+/// Retrieves the rights id corresponding to the content path. Only available on [2.0.0+].
+Result fsGetRightsIdByPath(const char* path, FsRightsId* out_rights_id);
+
+/// Retrieves the rights id and key generation corresponding to the content path. Only available on [3.0.0+].
+Result fsGetRightsIdAndKeyGenerationByPath(const char* path, u8* out_key_generation, FsRightsId* out_rights_id);
 // todo: Rest of commands here
 
 /// FsFileSystem can be mounted with fs_dev for use with stdio, see fs_dev.h.

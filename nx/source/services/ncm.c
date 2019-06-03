@@ -542,7 +542,7 @@ Result ncmContentStorageReadContentIdFile(NcmContentStorage* cs, const NcmNcaId*
     return rc;
 }
 
-Result ncmContentStorageGetRightsIdFromContentId(NcmContentStorage* cs, const NcmNcaId* ncaId, NcmRightsId* rightsIdOut, u32* keyGenerationOut) {
+Result ncmContentStorageGetRightsIdFromContentId(NcmContentStorage* cs, const NcmNcaId* ncaId, FsRightsId* rightsIdOut, u32* keyGenerationOut) {
     IpcCommand c;
     ipcInitialize(&c);
     
@@ -566,14 +566,14 @@ Result ncmContentStorageGetRightsIdFromContentId(NcmContentStorage* cs, const Nc
         struct {
             u64 magic;
             u64 result;
-            NcmRightsId rights_id;
+            FsRightsId rights_id;
             u32 key_generation;
         } *resp = r.Raw;
 
         rc = resp->result;
 
         if (R_SUCCEEDED(rc)) {
-            if (rightsIdOut) memcpy(rightsIdOut, &resp->rights_id, sizeof(NcmRightsId));
+            if (rightsIdOut) memcpy(rightsIdOut, &resp->rights_id, sizeof(FsRightsId));
             if (keyGenerationOut) *keyGenerationOut = resp->key_generation;
         }
     }
