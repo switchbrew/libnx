@@ -721,8 +721,7 @@ Result setsysGetDeviceNickname(char* nickname) {
 }
 
 Result setsysSetDeviceNickname(const char* nickname) {
-    char send_nickname[SET_MAX_NICKNAME_SIZE];
-    memset(send_nickname, 0, SET_MAX_NICKNAME_SIZE);
+    char send_nickname[SET_MAX_NICKNAME_SIZE] = {0};
     strncpy(send_nickname, nickname, SET_MAX_NICKNAME_SIZE-1);
 
     IpcCommand c;
