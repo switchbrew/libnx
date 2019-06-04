@@ -52,7 +52,9 @@ static void _swkbdConfigClear(SwkbdConfig* c) {
 
 static void _swkbdInitVersion(u32* version) {
     u32 hosver = hosversionGet();
-    if (hosver >= MAKEHOSVERSION(6,0,0))
+    if (hosver >= MAKEHOSVERSION(8,0,0))
+        *version = 0x8000D;
+    else if (hosver >= MAKEHOSVERSION(6,0,0))
         *version = 0x6000B;
     else if (hosver >= MAKEHOSVERSION(5,0,0))
         *version = 0x50009;
@@ -68,14 +70,17 @@ static void _swkbdInitVersion(u32* version) {
 
 Result swkbdCreate(SwkbdConfig* c, s32 max_dictwords) {
     Result rc=0;
+    s32 maxwords = 0x3e8;
 
     memset(c, 0, sizeof(SwkbdConfig));
     _swkbdConfigClear(c);
 
     _swkbdInitVersion(&c->version);
 
+    if (c->version >= 0x8000D) maxwords = 0x1388;
+
     c->workbuf_size = 0x1000;
-    if (max_dictwords > 0 && max_dictwords <= 0x3e8) c->max_dictwords = max_dictwords;
+    if (max_dictwords > 0 && max_dictwords <= maxwords) c->max_dictwords = max_dictwords;
 
     if (c->max_dictwords) {
         c->workbuf_size = c->max_dictwords*sizeof(SwkbdDictWord) + 0x7e8;
@@ -301,6 +306,11 @@ Result swkbdShow(SwkbdConfig* c, char* out_string, size_t out_string_size) {
             memcpy(arg_vb.entries, c->customizedDictionarySet.entries, sizeof(arg_vb.entries));
             arg_vb.total_entries = c->customizedDictionarySet.total_entries;
 
+            if (c->version >= 0x8000D) { // [8.0.0+]
+                arg_vb.unkFlag = c->unkFlag;
+                arg_vb.trigger = c->trigger;
+            }
+
             rc = libappletPushInData(&holder, &arg_vb, sizeof(arg_vb));
         }
         else if (c->version >= 0x30007) rc = libappletPushInData(&holder, &c->arg, sizeof(c->arg)); // [3.0.0+] has a larger struct.
@@ -380,8 +390,6 @@ Result swkbdInlineCreate(SwkbdInline* s) {
 
     s->calcArg.unk_x0 = 0x30000;
     s->calcArg.size = sizeof(s->calcArg);
-
-    //if (s->version >= 0x50009) s->calcArg.initArg.unk_x5 = 0x1;//Set in a separate init func by official sw on 5.0.0+.
 
     s->calcArg.volume = 1.0f;
     s->calcArg.appearArg.type = SwkbdType_QWERTY;
@@ -479,8 +487,11 @@ Result swkbdInlineClose(SwkbdInline* s) {
     return rc;
 }
 
-Result swkbdInlineLaunch(SwkbdInline* s) {
+static Result _swkbdInlineLaunch(SwkbdInline* s, SwkbdInitializeArg *initArg) {
     Result rc=0;
+
+    memcpy(&s->calcArg.initArg, initArg, sizeof(*initArg));
+    s->calcArg.flags |= 0x1;
 
     rc = appletCreateLibraryApplet(&s->holder, AppletId_swkbd, s->calcArg.initArg.mode!=SwkbdInlineMode_UserDisplay ? LibAppletMode_Background : LibAppletMode_Unknown3);
     if (R_FAILED(rc)) return rc;
@@ -496,6 +507,23 @@ Result swkbdInlineLaunch(SwkbdInline* s) {
     return rc;
 }
 
+Result swkbdInlineLaunch(SwkbdInline* s) {
+    SwkbdInitializeArg initArg = {0};
+
+    if (s->version >= 0x50009) initArg.unk_x5 = 0x1; // [5.0.0+]
+
+    return _swkbdInlineLaunch(s, &initArg);
+}
+
+Result swkbdInlineLaunchForLibraryApplet(SwkbdInline* s, u8 mode, u8 unk_x5) {
+    SwkbdInitializeArg initArg = {0};
+
+    initArg.mode = mode;
+    initArg.unk_x5 = unk_x5;
+
+    return _swkbdInlineLaunch(s, &initArg);
+}
+
 static void _swkbdProcessReply(SwkbdInline* s, SwkbdReplyType ReplyType, size_t size) {
     size_t stringendoff_utf8 = 0x7D4;
     size_t stringendoff_utf16 = 0x3EC;
@@ -507,10 +535,14 @@ static void _swkbdProcessReply(SwkbdInline* s, SwkbdReplyType ReplyType, size_t 
 
     if ((ReplyType==SwkbdReplyType_ChangedString && size != 0x3FC) || (ReplyType==SwkbdReplyType_ChangedStringUtf8 && size != 0x7E4)) return;
     if ((ReplyType==SwkbdReplyType_MovedCursor && size != 0x3F4) || (ReplyType==SwkbdReplyType_MovedCursorUtf8 && size != 0x7DC)) return;
+
+    if ((ReplyType==SwkbdReplyType_ChangedStringV2 && size != 0x3FC+0x1) || (ReplyType==SwkbdReplyType_ChangedStringUtf8V2 && size != 0x7E4+0x1)) return;
+    if ((ReplyType==SwkbdReplyType_MovedCursorV2 && size != 0x3F4+0x1) || (ReplyType==SwkbdReplyType_MovedCursorUtf8V2 && size != 0x7DC+0x1)) return;
+
     if ((ReplyType==SwkbdReplyType_DecidedEnter && size != 0x3F0) || (ReplyType==SwkbdReplyType_DecidedEnterUtf8 && size != 0x7D8)) return;
     if (ReplyType==SwkbdReplyType_MovedTab && size != 0x3F4) return;
 
-    if (ReplyType==SwkbdReplyType_ChangedString || ReplyType==SwkbdReplyType_MovedCursor || ReplyType==SwkbdReplyType_MovedTab || ReplyType==SwkbdReplyType_DecidedEnter) {
+    if (ReplyType==SwkbdReplyType_ChangedString || ReplyType==SwkbdReplyType_ChangedStringV2 || ReplyType==SwkbdReplyType_MovedCursor || ReplyType==SwkbdReplyType_MovedCursorV2 || ReplyType==SwkbdReplyType_MovedTab || ReplyType==SwkbdReplyType_DecidedEnter) {
         _swkbdConvertToUTF8(s->interactive_strbuf, (u16*)strdata, s->interactive_strbuf_size-1);
         strdata = s->interactive_strbuf;
     }
@@ -518,6 +550,10 @@ static void _swkbdProcessReply(SwkbdInline* s, SwkbdReplyType ReplyType, size_t 
     switch(ReplyType) {
         case SwkbdReplyType_FinishedInitialize:
             if (s->finishedInitializeCb) s->finishedInitializeCb();
+        break;
+
+        case SwkbdReplyType_DecidedCancel:
+            if (s->decidedCancelCb) s->decidedCancelCb();
         break;
 
         case SwkbdReplyType_ChangedString:
@@ -528,11 +564,27 @@ static void _swkbdProcessReply(SwkbdInline* s, SwkbdReplyType ReplyType, size_t 
             }
         break;
 
+        case SwkbdReplyType_ChangedStringV2:
+        case SwkbdReplyType_ChangedStringUtf8V2:
+            if (s->changedStringV2Cb) {
+                if (ReplyType==SwkbdReplyType_ChangedStringV2) s->changedStringV2Cb(strdata, (SwkbdChangedStringArg*)argdataend_utf16, s->interactive_tmpbuf[size-1]==0);
+                if (ReplyType==SwkbdReplyType_ChangedStringUtf8V2) s->changedStringV2Cb(strdata, (SwkbdChangedStringArg*)argdataend_utf8, s->interactive_tmpbuf[size-1]==0);
+            }
+        break;
+
         case SwkbdReplyType_MovedCursor:
         case SwkbdReplyType_MovedCursorUtf8:
             if (s->movedCursorCb) {
                 if (ReplyType==SwkbdReplyType_MovedCursor) s->movedCursorCb(strdata, (SwkbdMovedCursorArg*)argdataend_utf16);
                 if (ReplyType==SwkbdReplyType_MovedCursorUtf8) s->movedCursorCb(strdata, (SwkbdMovedCursorArg*)argdataend_utf8);
+            }
+        break;
+
+        case SwkbdReplyType_MovedCursorV2:
+        case SwkbdReplyType_MovedCursorUtf8V2:
+            if (s->movedCursorV2Cb) {
+                if (ReplyType==SwkbdReplyType_MovedCursorV2) s->movedCursorV2Cb(strdata, (SwkbdMovedCursorArg*)argdataend_utf16, s->interactive_tmpbuf[size-1]==0);
+                if (ReplyType==SwkbdReplyType_MovedCursorUtf8V2) s->movedCursorV2Cb(strdata, (SwkbdMovedCursorArg*)argdataend_utf8, s->interactive_tmpbuf[size-1]==0);
             }
         break;
 
@@ -632,16 +684,44 @@ Result swkbdInlineUpdate(SwkbdInline* s, SwkbdState* out_state) {
     return rc;
 }
 
+static inline Result _swkbdSendRequestV2Flag(SwkbdInline* s, SwkbdRequestCommand req, bool flag) {
+    if (s->version < 0x8000D) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    u8 tmp = flag!=0;
+    return _swkbdSendRequest(s, req, &tmp, sizeof(tmp));
+}
+
 void swkbdInlineSetFinishedInitializeCallback(SwkbdInline* s, VoidFn cb) {
     s->finishedInitializeCb = cb;
 }
 
+void swkbdInlineSetDecidedCancelCallback(SwkbdInline* s, VoidFn cb) {
+    s->decidedCancelCb = cb;
+}
+
 void swkbdInlineSetChangedStringCallback(SwkbdInline* s, SwkbdChangedStringCb cb) {
     s->changedStringCb = cb;
+    s->changedStringV2Cb = NULL;
+
+    _swkbdSendRequestV2Flag(s, SwkbdRequestCommand_SetChangedStringV2Flag, false);
+}
+
+void swkbdInlineSetChangedStringV2Callback(SwkbdInline* s, SwkbdChangedStringV2Cb cb) {
+    if (R_FAILED(_swkbdSendRequestV2Flag(s, SwkbdRequestCommand_SetChangedStringV2Flag, cb!=NULL))) return;
+
+    s->changedStringV2Cb = cb;
 }
 
 void swkbdInlineSetMovedCursorCallback(SwkbdInline* s, SwkbdMovedCursorCb cb) {
     s->movedCursorCb = cb;
+    s->movedCursorV2Cb = NULL;
+
+    _swkbdSendRequestV2Flag(s, SwkbdRequestCommand_SetMovedCursorV2Flag, false);
+}
+
+void swkbdInlineSetMovedCursorV2Callback(SwkbdInline* s, SwkbdMovedCursorV2Cb cb) {
+    if (R_FAILED(_swkbdSendRequestV2Flag(s, SwkbdRequestCommand_SetMovedCursorV2Flag, cb!=NULL))) return;
+
+    s->movedCursorV2Cb = cb;
 }
 
 void swkbdInlineSetMovedTabCallback(SwkbdInline* s, SwkbdMovedTabCb cb) {
@@ -726,9 +806,12 @@ void swkbdInlineSetCursorPos(SwkbdInline* s, s32 pos) {
 Result swkbdInlineSetUserWordInfo(SwkbdInline* s, const SwkbdDictWord *input, s32 entries) {
     Result rc=0;
     size_t size=0;
+    s32 maxwords = 0x3e8;
+
+    if (s->version >= 0x8000D) maxwords = 0x1388;
 
     if (s->state > SwkbdState_Initialized || s->wordInfoInitialized) return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
-    if (entries < 0 || entries > 0x3e8) return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+    if (entries < 0 || entries > maxwords) return MAKERESULT(Module_Libnx, LibnxError_BadInput);
     if (input==NULL || entries==0) return swkbdInlineUnsetUserWordInfo(s);
 
     size = size*sizeof(SwkbdDictWord) + 0x8;

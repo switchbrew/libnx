@@ -50,6 +50,8 @@ typedef enum {
     SwkbdRequestCommand_Calc                        = 0xA,
     SwkbdRequestCommand_SetCustomizedDictionaries   = 0xB,
     SwkbdRequestCommand_UnsetCustomizedDictionaries = 0xC,
+    SwkbdRequestCommand_SetChangedStringV2Flag      = 0xD,
+    SwkbdRequestCommand_SetMovedCursorV2Flag        = 0xE,
 } SwkbdRequestCommand;
 
 /// SwkbdInline Interactive output storage reply ID.
@@ -66,6 +68,10 @@ typedef enum {
     SwkbdReplyType_UnsetCustomizeDic            = 0xA,
     SwkbdReplyType_ReleasedUserWordInfo         = 0xB,
     SwkbdReplyType_UnsetCustomizedDictionaries  = 0xC,
+    SwkbdReplyType_ChangedStringV2              = 0xD,
+    SwkbdReplyType_MovedCursorV2                = 0xE,
+    SwkbdReplyType_ChangedStringUtf8V2          = 0xF,
+    SwkbdReplyType_MovedCursorUtf8V2            = 0x10,
 } SwkbdReplyType;
 
 /// SwkbdInline State
@@ -151,7 +157,10 @@ typedef struct {
     u32 textGrouping[8];   ///< Same as SwkbdArgV7::textGrouping.
     u64 entries[0x18];     ///< This is SwkbdCustomizedDictionarySet::entries.
     u8 total_entries;      ///< This is SwkbdCustomizedDictionarySet::total_entries.
-    u8 pad_x4b5[0x13];
+    u8 unkFlag;            ///< [8.0.0+]
+    u8 pad_x4b6[0xD];
+    u8 trigger;            ///< [8.0.0+]
+    u8 pad_x4c4[4];
 } SwkbdArgVB;
 
 typedef struct {
@@ -163,12 +172,16 @@ typedef struct {
 
     SwkbdCustomizedDictionarySet customizedDictionarySet;
 
+    u8 unkFlag;
+    u8 trigger;
+
     u32 version;
 } SwkbdConfig;
 
+/// InitializeArg for SwkbdInline.
 typedef struct {
     u32 unk_x0;
-    u8 mode;            ///< See \ref SwkbdInlineMode.
+    u8 mode;            ///< See \ref SwkbdInlineMode. (u8 bool)
     u8 unk_x5;          ///< Only set on 5.0.0+.
     u8 pad[2];
 } SwkbdInitializeArg;
@@ -259,9 +272,17 @@ typedef struct {
 /// str is the UTF-8 string for the current text.
 typedef void (*SwkbdChangedStringCb)(const char* str, SwkbdChangedStringArg* arg);
 
+/// This callback is used by \ref swkbdInlineUpdate when handling ChangedString*V2 replies (text changed by the user or by \ref swkbdInlineSetInputText).
+/// str is the UTF-8 string for the current text.
+typedef void (*SwkbdChangedStringV2Cb)(const char* str, SwkbdChangedStringArg* arg, bool flag);
+
 /// This callback is used by \ref swkbdInlineUpdate when handling MovedCursor* replies.
 /// str is the UTF-8 string for the current text.
 typedef void (*SwkbdMovedCursorCb)(const char* str, SwkbdMovedCursorArg* arg);
+
+/// This callback is used by \ref swkbdInlineUpdate when handling MovedCursor*V2 replies.
+/// str is the UTF-8 string for the current text.
+typedef void (*SwkbdMovedCursorV2Cb)(const char* str, SwkbdMovedCursorArg* arg, bool flag);
 
 /// This callback is used by \ref swkbdInlineUpdate when handling MovedTab* replies.
 /// str is the UTF-8 string for the current text.
@@ -292,8 +313,11 @@ typedef struct {
     size_t interactive_strbuf_size;
 
     VoidFn finishedInitializeCb;
+    VoidFn decidedCancelCb;
     SwkbdChangedStringCb changedStringCb;
+    SwkbdChangedStringV2Cb changedStringV2Cb;
     SwkbdMovedCursorCb movedCursorCb;
+    SwkbdMovedCursorV2Cb movedCursorV2Cb;
     SwkbdMovedTabCb movedTabCb;
     SwkbdDecidedEnterCb decidedEnterCb;
     VoidFn releasedUserWordInfoCb;
@@ -520,6 +544,22 @@ static inline void swkbdConfigSetTextGrouping(SwkbdConfig* c, u32 index, u32 val
 }
 
 /**
+ * @brief Sets SwkbdConfig::unkFlag, default is 0. Copied to SwkbdArgVB::unkFlag with [8.0.0+].
+ * @param flag Flag
+ */
+static inline void swkbdConfigSetUnkFlag(SwkbdConfig* c, u8 flag) {
+    c->unkFlag = flag;
+}
+
+/**
+ * @brief Sets SwkbdConfig::trigger, default is 0. Copied to SwkbdArgVB::trigger with [8.0.0+].
+ * @param trigger Trigger
+ */
+static inline void swkbdConfigSetTrigger(SwkbdConfig* c, u8 trigger) {
+    c->trigger = trigger;
+}
+
+/**
  * @brief Launch swkbd with the specified config. This will return once swkbd is finished running.
  * @note The string buffer is also used for the buffer passed to the \ref SwkbdTextCheckCb, when it's set. Hence, in that case this buffer should be large enough to handle TextCheck string input/output. The size passed to the callback is the same size passed here, -1.
  * @param c SwkbdConfig struct.
@@ -543,10 +583,19 @@ Result swkbdInlineCreate(SwkbdInline* s);
 Result swkbdInlineClose(SwkbdInline* s);
 
 /**
- * @brief Launches the applet with the SwkbdInline object.
+ * @brief Does setup for \ref SwkbdInitializeArg and launches the applet with the SwkbdInline object.
+ * @note The initArg is cleared, and on [5.0.0+] unk_x5 is set to 1.
  * @param s SwkbdInline object.
  */
 Result swkbdInlineLaunch(SwkbdInline* s);
+
+/**
+ * @brief Same as \ref swkbdInlineLaunch, except mode and unk_x5 for \ref SwkbdInitializeArg are set to the input params.
+ * @param s SwkbdInline object.
+ * @param mode Value for SwkbdInitializeArg::mode.
+ * @param unk_x5 Value for SwkbdInitializeArg::unk_x5.
+ */
+Result swkbdInlineLaunchForLibraryApplet(SwkbdInline* s, u8 mode, u8 unk_x5);
 
 /**
  * @brief Handles updating SwkbdInline state, this should be called periodically.
@@ -565,18 +614,47 @@ Result swkbdInlineUpdate(SwkbdInline* s, SwkbdState* out_state);
 void swkbdInlineSetFinishedInitializeCallback(SwkbdInline* s, VoidFn cb);
 
 /**
+ * @brief Sets the DecidedCancel callback, used by \ref swkbdInlineUpdate. The default is NULL for none.
+ * @param s SwkbdInline object.
+ * @param cb Callback
+ */
+void swkbdInlineSetDecidedCancelCallback(SwkbdInline* s, VoidFn cb);
+
+/**
  * @brief Sets the ChangedString callback, used by \ref swkbdInlineUpdate. The default is NULL for none.
+ * @note This clears the callback set by \ref swkbdInlineSetChangedStringV2Callback.
+ * @note This should be called after \ref swkbdInlineLaunch / \ref swkbdInlineLaunchForLibraryApplet.
  * @param s SwkbdInline object.
  * @param cb \ref SwkbdChangedStringCb Callback
  */
 void swkbdInlineSetChangedStringCallback(SwkbdInline* s, SwkbdChangedStringCb cb);
 
 /**
+ * @brief Sets the ChangedStringV2 callback, used by \ref swkbdInlineUpdate. The default is NULL for none.
+ * @note Only available with [8.0.0+].
+ * @note This must be called after \ref swkbdInlineLaunch / \ref swkbdInlineLaunchForLibraryApplet.
+ * @param s SwkbdInline object.
+ * @param cb \ref SwkbdChangedStringV2Cb Callback
+ */
+void swkbdInlineSetChangedStringV2Callback(SwkbdInline* s, SwkbdChangedStringV2Cb cb);
+
+/**
  * @brief Sets the MovedCursor callback, used by \ref swkbdInlineUpdate. The default is NULL for none.
+ * @note This clears the callback set by \ref swkbdInlineSetMovedCursorV2Callback.
+ * @note This should be called after \ref swkbdInlineLaunch / \ref swkbdInlineLaunchForLibraryApplet.
  * @param s SwkbdInline object.
  * @param cb \ref SwkbdMovedCursorCb Callback
  */
 void swkbdInlineSetMovedCursorCallback(SwkbdInline* s, SwkbdMovedCursorCb cb);
+
+/**
+ * @brief Sets the MovedCursorV2 callback, used by \ref swkbdInlineUpdate. The default is NULL for none.
+ * @note Only available with [8.0.0+].
+ * @note This must be called after \ref swkbdInlineLaunch / \ref swkbdInlineLaunchForLibraryApplet.
+ * @param s SwkbdInline object.
+ * @param cb \ref SwkbdMovedCursorV2Cb Callback
+ */
+void swkbdInlineSetMovedCursorV2Callback(SwkbdInline* s, SwkbdMovedCursorV2Cb cb);
 
 /**
  * @brief Sets the MovedTab callback, used by \ref swkbdInlineUpdate. The default is NULL for none.
