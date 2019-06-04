@@ -11,6 +11,7 @@
 #include "../kernel/event.h"
 
 #define SET_MAX_NAME_SIZE 0x48
+#define SET_MAX_NICKNAME_SIZE 0x80
 
 typedef enum {
     ColorSetId_Light=0,
@@ -175,3 +176,15 @@ Result setsysBindFatalDirtyFlagEvent(Event *out);
  * @param flags_1 Pointer to populate with second 64 flags.
  */
 Result setsysGetFatalDirtyFlags(u64 *flags_0, u64 *flags_1);
+
+/**
+ * @brief Gets the system's nickname.
+ * @param nickname Pointer to output the nickname to. (The buffer size needs to be at least 0x80 bytes)
+ */
+Result setsysGetDeviceNickname(char* nickname);
+
+/**
+ * @brief Sets the system's nickname.
+ * @param nickname Pointer to read the nickname from.
+ */
+Result setsysSetDeviceNickname(const char* nickname);

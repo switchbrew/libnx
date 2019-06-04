@@ -686,3 +686,71 @@ Result setsysGetFatalDirtyFlags(u64 *flags_0, u64 *flags_1) {
 
     return rc;
 }
+
+Result setsysGetDeviceNickname(char* nickname) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    ipcAddRecvBuffer(&c, nickname, SET_MAX_NICKNAME_SIZE, BufferType_Normal);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 77;
+
+    Result rc = serviceIpcDispatch(&g_setsysSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result setsysSetDeviceNickname(const char* nickname) {
+    char send_nickname[SET_MAX_NICKNAME_SIZE] = {0};
+    strncpy(send_nickname, nickname, SET_MAX_NICKNAME_SIZE-1);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+    ipcAddSendBuffer(&c, send_nickname, SET_MAX_NICKNAME_SIZE, 0);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 78;
+
+    Result rc = serviceIpcDispatch(&g_setsysSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
