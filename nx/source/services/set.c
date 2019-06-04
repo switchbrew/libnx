@@ -687,11 +687,11 @@ Result setsysGetFatalDirtyFlags(u64 *flags_0, u64 *flags_1) {
     return rc;
 }
 
-Result setsysGetDeviceNickname(char* buffer) {
+Result setsysGetDeviceNickname(char* nickname) {
     IpcCommand c;
     ipcInitialize(&c);
 
-    ipcAddRecvBuffer(&c, buffer, 0x80, BufferType_Normal);
+    ipcAddRecvBuffer(&c, nickname, SET_MAX_NICKNAME_SIZE, BufferType_Normal);
 
     struct {
         u64 magic;
@@ -720,11 +720,14 @@ Result setsysGetDeviceNickname(char* buffer) {
     return rc;
 }
 
-Result setsysSetDeviceNickname(const char* buffer) {
+Result setsysSetDeviceNickname(const char* nickname) {
+    char send_nickname[SET_MAX_NICKNAME_SIZE];
+    memset(send_nickname, 0, SET_MAX_NICKNAME_SIZE);
+    strncpy(send_nickname, nickname, SET_MAX_NICKNAME_SIZE-1);
+
     IpcCommand c;
     ipcInitialize(&c);
-
-    ipcAddSendBuffer(&c, buffer, strlen(buffer) + 1, BufferType_Normal);
+    ipcAddSendBuffer(&c, send_nickname, SET_MAX_NICKNAME_SIZE, 0);
 
     struct {
         u64 magic;
