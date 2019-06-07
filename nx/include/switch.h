@@ -68,6 +68,7 @@ extern "C" {
 #include "switch/services/usbds.h"
 #include "switch/services/usbhs.h"
 #include "switch/services/hid.h"
+#include "switch/services/hiddbg.h"
 #include "switch/services/hidsys.h"
 #include "switch/services/irs.h"
 #include "switch/services/pl.h"
