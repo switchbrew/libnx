@@ -34,7 +34,7 @@ Result binderInitSession(Binder* b)
 
     rc = binderIncreaseStrongRef(b);
     if (R_FAILED(rc)) {
-        binderDecreaseStrongRef(b);
+        binderDecreaseWeakRef(b);
         return rc;
     }
 
