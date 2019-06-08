@@ -423,6 +423,9 @@ Result romfsUnmount(const char *name)
     if (mount == NULL)
         return -1;
 
+    // Remove device
+    RemoveDevice(name);
+
     romfs_mountclose(mount);
 
     return 0;
