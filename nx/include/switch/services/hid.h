@@ -555,14 +555,49 @@ typedef struct HidControllerSixAxisLayout
     HidControllerSixAxisEntry entries[17];
 } HidControllerSixAxisLayout;
 
+/// Controller flags.
+typedef struct {
+    u32 powerInfo : 6;                                    ///< Use \ref hidGetControllerPowerInfo instead of accessing this directly.
+
+    u32 bit6 : 1;                                         ///< Unused
+    u32 bit7 : 1;                                         ///< Unused
+    u32 bit8 : 1;                                         ///< Unused
+    u32 unsupportedButtonPressed_NpadSystem : 1;          ///< Unsupported button pressed with controller NpadSystem.
+    u32 unsupportedButtonPressed_NpadSystemExt : 1;       ///< Unsupported button pressed with controller NpadSystemExt.
+
+    u32 abxyButtonOriented : 1;
+    u32 slSrButtonOriented : 1;
+    u32 plusButtonCapability : 1;                         ///< [4.0.0+]
+    u32 minusButtonCapability : 1;                        ///< [4.0.0+]
+    u32 directionalButtonsSupported : 1;                  ///< [8.0.0+]
+
+    u32 unused;
+
+    u32 unintendedHomeButtonInputProtectionDisabled : 1;
+} HidFlags;
+
+typedef struct {
+    u32 deviceType;
+    u32 pad;
+    HidFlags flags;
+    u32 batteryCharge[3];
+    u8 unk_1[0x20];
+    HidControllerMAC macLeft;
+    HidControllerMAC macRight;
+} HidControllerMisc;
+
+typedef struct {
+    bool powerConnected;
+    bool isCharging;
+    u32 batteryCharge;    ///< Battery charge, always 0-4.
+} HidPowerInfo;
+
 typedef struct HidController
 {
     HidControllerHeader header;
     HidControllerLayout layouts[7];
     HidControllerSixAxisLayout sixaxis[6];
-    u8 unk_1[0x40];
-    HidControllerMAC macLeft;
-    HidControllerMAC macRight;
+    HidControllerMisc misc;
     u8 unk_2[0xDF8];
 } HidController;
 
@@ -627,6 +662,15 @@ HidControllerLayoutType hidGetControllerLayout(HidControllerID id);
 HidControllerType hidGetControllerType(HidControllerID id);
 void hidGetControllerColors(HidControllerID id, HidControllerColors *colors);
 bool hidIsControllerConnected(HidControllerID id);
+
+/// Gets the DeviceType for the specified controller.
+u32 hidGetControllerDeviceType(HidControllerID id);
+
+/// Gets the flags for the specified controller.
+void hidGetControllerFlags(HidControllerID id, HidFlags *flags);
+
+/// Gets the \ref HidPowerInfo for the specified controller. info is the output array, where total_info is the number of entries. total_info must be 1 or 2: former for the main battery info, latter for reading left/right Joy-Con PowerInfo.
+void hidGetControllerPowerInfo(HidControllerID id, HidPowerInfo *info, size_t total_info);
 
 void hidScanInput(void);
 

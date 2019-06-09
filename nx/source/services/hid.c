@@ -25,6 +25,7 @@ static HidKeyboardEntry g_keyboardEntry;
 static HidControllerHeader g_controllerHeaders[10];
 static HidControllerInputEntry g_controllerEntries[10];
 static HidControllerSixAxisLayout g_sixaxisLayouts[10];
+static HidControllerMisc g_controllerMisc[10];
 
 static u64 g_mouseOld, g_mouseHeld, g_mouseDown, g_mouseUp;
 static u64 g_keyboardModOld, g_keyboardModHeld, g_keyboardModDown, g_keyboardModUp;
@@ -142,6 +143,7 @@ void hidReset(void)
     memset(&g_keyboardEntry, 0, sizeof(HidKeyboardEntry));
     memset(g_controllerHeaders, 0, sizeof(g_controllerHeaders));
     memset(g_controllerEntries, 0, sizeof(g_controllerEntries));
+    memset(g_controllerMisc, 0, sizeof(g_controllerMisc));
     memset(g_sixaxisLayouts, 0, sizeof(g_sixaxisLayouts));
     memset(g_sixaxisEnabled, 0, sizeof(g_sixaxisEnabled));
 
@@ -209,6 +211,7 @@ void hidScanInput(void) {
     memset(&g_mouse, 0, sizeof(HidMouse));
     memset(&g_keyboardEntry, 0, sizeof(HidKeyboardEntry));
     memset(g_controllerEntries, 0, sizeof(g_controllerEntries));
+    memset(g_controllerMisc, 0, sizeof(g_controllerMisc));
     memset(g_sixaxisLayouts, 0, sizeof(g_sixaxisLayouts));
 
     u64 latestTouchEntry = sharedMem->touchscreen.header.latestEntry;
@@ -265,6 +268,8 @@ void hidScanInput(void) {
 
         g_controllerDown[i] = (~g_controllerOld[i]) & g_controllerHeld[i];
         g_controllerUp[i] = g_controllerOld[i] & (~g_controllerHeld[i]);
+
+        memcpy(&g_controllerMisc[i], &sharedMem->controllers[i].misc, sizeof(HidControllerMisc));
 
         if (g_sixaxisEnabled[i]) {
             u32 type = g_controllerHeaders[i].type;
@@ -354,6 +359,57 @@ bool hidIsControllerConnected(HidControllerID id) {
     bool flag = (g_controllerEntries[id].connectionState & CONTROLLER_STATE_CONNECTED) != 0;
     rwlockReadUnlock(&g_hidLock);
     return flag;
+}
+
+u32 hidGetControllerDeviceType(HidControllerID id) {
+    if (id==CONTROLLER_P1_AUTO)
+        return hidGetControllerDeviceType(g_controllerP1AutoID);
+    if (id < 0 || id > 9) return 0;
+
+    rwlockReadLock(&g_hidLock);
+    u32 type = g_controllerMisc[id].deviceType;
+    rwlockReadUnlock(&g_hidLock);
+    return type;
+}
+
+void hidGetControllerFlags(HidControllerID id, HidFlags *flags) {
+    if (id==CONTROLLER_P1_AUTO) {
+        hidGetControllerFlags(g_controllerP1AutoID, flags);
+        return;
+    }
+    if (id < 0 || id > 9) return;
+
+    rwlockReadLock(&g_hidLock);
+    *flags = g_controllerMisc[id].flags;
+    rwlockReadUnlock(&g_hidLock);
+}
+
+void hidGetControllerPowerInfo(HidControllerID id, HidPowerInfo *info, size_t total_info) {
+    size_t i;
+    size_t indexbase;
+    HidFlags flags;
+
+    if (id==CONTROLLER_P1_AUTO) {
+        hidGetControllerPowerInfo(g_controllerP1AutoID, info, total_info);
+        return;
+    }
+    if (id < 0 || id > 9) return;
+
+    if (total_info == 0) return;
+    if (total_info > 2) total_info = 2;
+    indexbase = total_info-1;
+
+    hidGetControllerFlags(id, &flags);
+
+    for (i=0; i<total_info; i++) {
+        info[i].isCharging = (flags.powerInfo & BIT(indexbase+i)) != 0;
+        info[i].powerConnected = (flags.powerInfo & BIT(indexbase+i+3)) != 0;
+
+        rwlockReadLock(&g_hidLock);
+        info[i].batteryCharge = g_controllerMisc[id].batteryCharge[indexbase+i];
+        rwlockReadUnlock(&g_hidLock);
+        if (info[i].batteryCharge > 4) info->batteryCharge = 4;
+    }
 }
 
 u64 hidKeysHeld(HidControllerID id) {

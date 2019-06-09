@@ -8,33 +8,42 @@
 #include "../services/hid.h"
 #include "../services/sm.h"
 
-/// HdlsNpadAssignment
-typedef struct {
-    u8 unk_x0[0x208];         ///< Unknown
-} HiddbgHdlsNpadAssignment;
-
-/// HdlsStateList
-typedef struct {
-    u8 unk_x0[0x408];         ///< Unknown
-} HiddbgHdlsStateList;
-
 /// HdlsDeviceInfo
 typedef struct {
     u32 type;                 ///< See \ref HidControllerType, only one bit can be set.
     u32 singleColorBody;      ///< RGBA Single Body Color
     u32 singleColorButtons;   ///< RGBA Single Buttons Color
     u8 unk_xc;                ///< Unknown
-    u8 pad[0x3];
+    u8 pad[0x3];              ///< Padding
 } HiddbgHdlsDeviceInfo;
 
 /// HdlsState
 typedef struct {
     u8 unk_x0[0x8];                                       ///< Unknown
-    u32 unk_x8;                                           ///< Unknown, written to HidController +0x419C.
+    u32 batteryCharge;                                    ///< batteryCharge for the main PowerInfo, see \ref HidPowerInfo.
     u32 buttons;                                          ///< See \ref HidControllerKeys.
     JoystickPosition joysticks[JOYSTICK_NUM_STICKS];      ///< \ref JoystickPosition
     u32 unused;                                           ///< Unused
 } HiddbgHdlsState;
+
+/// HdlsNpadAssignment
+typedef struct {
+    u8 unk_x0[0x208];         ///< Unknown
+} HiddbgHdlsNpadAssignment;
+
+/// HdlsStateListEntry
+typedef struct {
+    u64 HdlsHandle;                             ///< HdlsHandle
+    HiddbgHdlsDeviceInfo device;                ///< \ref HiddbgHdlsDeviceInfo. With \ref hiddbgApplyHdlsStateList this is only used when creating new devices.
+    HiddbgHdlsState state;                      ///< \ref HiddbgHdlsState
+} HiddbgHdlsStateListEntry;
+
+/// HdlsStateList. This contains a list of all controllers, including non-virtual controllers.
+typedef struct {
+    s32 total_entries;                          ///< Total entries for the below entries.
+    u32 pad;                                    ///< Padding
+    HiddbgHdlsStateListEntry entries[0x10];     ///< \ref HiddbgHdlsStateListEntry
+} HiddbgHdlsStateList;
 
 Result hiddbgInitialize(void);
 void hiddbgExit(void);
@@ -55,6 +64,7 @@ Result hiddbgDumpHdlsStates(HiddbgHdlsStateList *state);
 Result hiddbgApplyHdlsNpadAssignmentState(const HiddbgHdlsNpadAssignment *state, bool flag);
 
 /// Sets state for \ref HiddbgHdlsStateList. Only available with [7.0.0+].
+/// The HiddbgHdlsState will be applied for each HdlsHandle. If a HdlsHandle is not found, code similar to \ref hiddbgAttachHdlsVirtualDevice will run with the \ref HiddbgHdlsDeviceInfo, then it will continue with applying state with the new device.
 Result hiddbgApplyHdlsStateList(const HiddbgHdlsStateList *state);
 
 /// Attach a device with the input info, where the output handle is written to HdlsHandle. Only available with [7.0.0+].
