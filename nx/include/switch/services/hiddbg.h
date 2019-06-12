@@ -23,7 +23,8 @@ typedef struct {
     u32 batteryCharge;                                    ///< batteryCharge for the main PowerInfo, see \ref HidPowerInfo.
     u32 buttons;                                          ///< See \ref HidControllerKeys.
     JoystickPosition joysticks[JOYSTICK_NUM_STICKS];      ///< \ref JoystickPosition
-    u32 unused;                                           ///< Unused
+    u8 unk_x20;                                           ///< Unused for input. Set with output from \ref hiddbgDumpHdlsStates.
+    u8 padding[0x3];                                      ///< Padding
 } HiddbgHdlsState;
 
 /// HdlsNpadAssignment
