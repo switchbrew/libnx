@@ -418,13 +418,18 @@ static void romfsInitMtime(romfs_mount *mount)
 Result romfsUnmount(const char *name)
 {
     romfs_mount *mount;
+    char tmpname[34];
 
     mount = romfsFindMount(name);
     if (mount == NULL)
         return -1;
 
     // Remove device
-    RemoveDevice(name);
+    memset(tmpname, 0, sizeof(tmpname));
+    strncpy(tmpname, mount->name, sizeof(tmpname)-2);
+    strncat(tmpname, ":", sizeof(tmpname)-strlen(tmpname)-1);
+
+    RemoveDevice(tmpname);
 
     romfs_mountclose(mount);
 
