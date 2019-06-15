@@ -12,6 +12,7 @@
 #define HMAC_CONTEXT_CREATE(cipher) \
     /* Clear key. */ \
     memset(out->key, 0, sizeof(out->key)); \
+    out->finalized = false; \
 \
     /* Either hash the key into the context, or copy it directly if possible. */ \
     if (key_size <= sizeof(out->key)) { \
