@@ -168,7 +168,7 @@ typedef enum {
     InfoType_InitialProcessIdRange          = 19, ///< 4.0.0-4.1.0 Min/max initial process IDs.
     InfoType_UserExceptionContextAddress    = 20, ///< 5.0.0+ Address of the process's exception context (for break).
     InfoType_TotalNonSystemMemorySize       = 21, ///< 6.0.0+ Total amount of memory available for process, excluding that for process memory management.
-    InfoType_UsedNonSystemMemorySize        = 22, ///< 6.0.0+ Amount of memory used by process, exclusing that for process memory management.
+    InfoType_UsedNonSystemMemorySize        = 22, ///< 6.0.0+ Amount of memory used by process, excluding that for process memory management.
 
     InfoType_ThreadTickCount                = 0xF0000002, ///< Number of ticks spent on thread.
 } InfoType;
