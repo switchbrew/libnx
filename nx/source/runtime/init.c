@@ -72,8 +72,8 @@ void __attribute__((weak)) __libnx_initheap(void)
     }
     else {
         if (__nx_heap_size==0) {
-            svcGetInfo(&mem_available, 6, CUR_PROCESS_HANDLE, 0);
-            svcGetInfo(&mem_used, 7, CUR_PROCESS_HANDLE, 0);
+            svcGetInfo(&mem_available, InfoType_TotalMemorySize, CUR_PROCESS_HANDLE, 0);
+            svcGetInfo(&mem_used, InfoType_UsedMemorySize, CUR_PROCESS_HANDLE, 0);
             if (mem_available > mem_used+0x200000)
                 size = (mem_available - mem_used - 0x200000) & ~0x1FFFFF;
             if (size==0)

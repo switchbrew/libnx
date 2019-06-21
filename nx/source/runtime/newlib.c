@@ -179,7 +179,7 @@ int __syscall_thread_create(struct __pthread_t **thread, void* (*func)(void*), v
     *thread = NULL;
 
     u64 core_mask = 0;
-    rc = svcGetInfo(&core_mask, 0, CUR_PROCESS_HANDLE, 0);
+    rc = svcGetInfo(&core_mask, InfoType_CoreMask, CUR_PROCESS_HANDLE, 0);
     if (R_FAILED(rc))
         return EPERM;
 
