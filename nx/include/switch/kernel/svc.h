@@ -144,6 +144,66 @@ typedef enum {
     DebugThreadParam_CoreMask=4,
 } DebugThreadParam;
 
+/// GetInfo IDs.
+typedef enum {
+    InfoType_CoreMask                       = 0,  ///< Bitmask of allowed Core IDs.
+    InfoType_PriorityMask                   = 1,  ///< Bitmask of allowed Thread Priorities.
+    InfoType_AliasRegionAddress             = 2,  ///< Base of the Alias memory region.
+    InfoType_AliasRegionSize                = 3,  ///< Size of the Alias memory region.
+    InfoType_HeapRegionAddress              = 4,  ///< Base of the Heap memory region.
+    InfoType_HeapRegionSize                 = 5,  ///< Size of the Heap memory region.
+    InfoType_TotalMemorySize                = 6,  ///< Total amount of memory available for process.
+    InfoType_UsedMemorySize                 = 7,  ///< Amount of memory currently used by process.
+    InfoType_DebuggerAttached               = 8,  ///< Whether current process is being debugged.
+    InfoType_ResourceLimit                  = 9,  ///< Current process's resource limit handle.
+    InfoType_IdleTickCount                  = 10, ///< Number of idle ticks on CPU.
+    InfoType_RandomEntropy                  = 11, ///< 2.0.0+ Random entropy for current process.
+    InfoType_AslrRegionAddress              = 12, ///< 2.0.0+ Base of the process's address space.
+    InfoType_AslrRegionSize                 = 13, ///< 2.0.0+ Size of the process's address space.
+    InfoType_StackRegionAddress             = 14, ///< 2.0.0+ Base of the Stack memory region.
+    InfoType_StackRegionSize                = 15, ///< 2.0.0+ Size of the Stack memory region.
+    InfoType_SystemResourceSizeTotal        = 16, ///< 3.0.0+ Total memory allocated for process memory management.
+    InfoType_SystemResourceSizeUsed         = 17, ///< 3.0.0+ Amount of memory currently used by process memory management.
+    InfoType_TitleId                        = 18, ///< 3.0.0+ Title ID for the process.
+    InfoType_InitialProcessIdRange          = 19, ///< 4.0.0-4.1.0 Min/max initial process IDs.
+    InfoType_UserExceptionContextAddress    = 20, ///< 5.0.0+ Address of the process's exception context (for break).
+    InfoType_TotalNonSystemMemorySize       = 21, ///< 6.0.0+ Total amount of memory available for process, excluding that for process memory management.
+    InfoType_UsedNonSystemMemorySize        = 22, ///< 6.0.0+ Amount of memory used by process, excluding that for process memory management.
+
+    InfoType_ThreadTickCount                = 0xF0000002, ///< Number of ticks spent on thread.
+} InfoType;
+
+/// GetSystemInfo IDs.
+typedef enum {
+    SystemInfoType_TotalPhysicalMemorySize  = 0, ///< Total amount of DRAM available to system.
+    SystemInfoType_UsedPhysicalMemorySize   = 1, ///< Current amount of DRAM used by system.
+    SystemInfoType_InitialProcessIdRange    = 2, ///< Min/max initial process IDs.
+} SystemInfoType;
+
+/// GetInfo Idle/Thread Tick Count Sub IDs.
+typedef enum {
+    TickCountInfo_Core0 = 0,       ///< Tick count on core 0.
+    TickCountInfo_Core1 = 1,       ///< Tick count on core 1.
+    TickCountInfo_Core2 = 2,       ///< Tick count on core 2.
+    TickCountInfo_Core3 = 3,       ///< Tick count on core 3.
+
+    TickCountInfo_Total = U64_MAX, ///< Tick count on all cores.
+} TickCountInfo;
+
+/// GetInfo InitialProcessIdRange Sub IDs.
+typedef enum {
+    InitialProcessIdRangeInfo_Minimum = 0, ///< Lowest initial process ID.
+    InitialProcessIdRangeInfo_Maximum = 1, ///< Highest initial process ID.
+} InitialProcessIdRangeInfo;
+
+/// GetSystemInfo PhysicalMemory Sub IDs.
+typedef enum {
+    PhysicalMemoryInfo_Application  = 0, ///< Memory allocated for application usage.
+    PhysicalMemoryInfo_Applet       = 1, ///< Memory allocated for applet usage.
+    PhysicalMemoryInfo_System       = 2, ///< Memory allocated for system usage.
+    PhysicalMemoryInfo_SystemUnsafe = 3, ///< Memory allocated for unsafe system usage (accessible to devices).
+} PhysicalMemoryInfo;
+
 ///@name Memory management
 ///@{
 

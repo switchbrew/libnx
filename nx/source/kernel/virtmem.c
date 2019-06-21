@@ -45,7 +45,7 @@ static inline bool _InRegion(VirtualRegion* r, u64 addr) {
 }
 
 void virtmemSetup(void) {
-    if (R_FAILED(_GetRegionFromInfo(&g_AddressSpace, 12, 13))) {
+    if (R_FAILED(_GetRegionFromInfo(&g_AddressSpace, InfoType_AslrRegionAddress, InfoType_AslrRegionSize))) {
         // 1.0.0 doesn't expose address space size so we have to do this dirty hack to detect it.
         // Forgive me.
 
@@ -74,16 +74,16 @@ void virtmemSetup(void) {
             fatalSimple(MAKERESULT(Module_Libnx, LibnxError_WeirdKernel));
         }
     } else {
-        if (R_FAILED(_GetRegionFromInfo(&g_Region[REGION_STACK], 14, 15))) {
+        if (R_FAILED(_GetRegionFromInfo(&g_Region[REGION_STACK], InfoType_StackRegionAddress, InfoType_StackRegionSize))) {
             fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadGetInfo_Stack));
         }
     }
 
-    if (R_FAILED(_GetRegionFromInfo(&g_Region[REGION_HEAP], 4, 5))) {
+    if (R_FAILED(_GetRegionFromInfo(&g_Region[REGION_HEAP], InfoType_HeapRegionAddress, InfoType_HeapRegionSize))) {
         fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadGetInfo_Heap));
-    }    
+    }
 
-    _GetRegionFromInfo(&g_Region[REGION_LEGACY_ALIAS], 2, 3);
+    _GetRegionFromInfo(&g_Region[REGION_LEGACY_ALIAS], InfoType_AliasRegionAddress, InfoType_AliasRegionSize);
 }
 
 void* virtmemReserve(size_t size) {
