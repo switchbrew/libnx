@@ -281,10 +281,16 @@ Result smUnregisterService(const char* name);
 bool   smHasInitialized(void);
 
 /**
+ * @brief Gets the Service session used to communicate with SM.
+ * @return Pointer to service session used to communicate with SM.
+ */
+Service *smGetServiceSession(void);
+
+/**
  * @brief Encodes a service name as a 64-bit integer.
  * @param[in] name Name of the service.
  * @return Encoded name.
- */ 
+ */
 u64    smEncodeName(const char* name);
 
 /**

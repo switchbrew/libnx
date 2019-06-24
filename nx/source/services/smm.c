@@ -22,7 +22,11 @@ Result smManagerInitialize(void) {
 
 void smManagerExit(void) {
     if (atomicDecrement64(&g_smManagerRefcnt) == 0)
-        serviceClose(&g_smManagerSrv);    
+        serviceClose(&g_smManagerSrv);
+}
+
+Service* smManagerGetServiceSession(void) {
+    return &g_smManagerSrv;
 }
 
 Result smManagerRegisterProcess(u64 pid, const void *acid_sac, size_t acid_sac_size, const void *aci0_sac, size_t aci0_sac_size) {
@@ -30,63 +34,65 @@ Result smManagerRegisterProcess(u64 pid, const void *acid_sac, size_t acid_sac_s
     ipcInitialize(&c);
     ipcAddSendBuffer(&c, acid_sac, acid_sac_size, BufferType_Normal);
     ipcAddSendBuffer(&c, aci0_sac, aci0_sac_size, BufferType_Normal);
-    
+
     struct {
         u64 magic;
         u64 cmd_id;
         u64 pid;
     } *raw;
-    
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw = serviceIpcPrepareHeader(&g_smManagerSrv, &c, sizeof(*raw));
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 0;
     raw->pid = pid;
-    
+
     Result rc = serviceIpcDispatch(&g_smManagerSrv);
-    
+
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
-        ipcParse(&r);
 
         struct {
             u64 magic;
             u64 result;
-        } *resp = r.Raw;
+        } *resp;
+        serviceIpcParse(&g_smManagerSrv, &r, sizeof(*resp));
 
+        resp = r.Raw;
         rc = resp->result;
     }
-    
+
     return rc;
 }
 
 Result smManagerUnregisterProcess(u64 pid) {
     IpcCommand c;
     ipcInitialize(&c);
-    
+
     struct {
         u64 magic;
         u64 cmd_id;
         u64 pid;
     } *raw;
-    
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw = serviceIpcPrepareHeader(&g_smManagerSrv, &c, sizeof(*raw));
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 1;
     raw->pid = pid;
-    
+
     Result rc = serviceIpcDispatch(&g_smManagerSrv);
-    
+
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
-        ipcParse(&r);
 
         struct {
             u64 magic;
             u64 result;
-        } *resp = r.Raw;
+        } *resp;
+        serviceIpcParse(&g_smManagerSrv, &r, sizeof(*resp));
 
+        resp = r.Raw;
         rc = resp->result;
     }
-    
+
     return rc;
 }
