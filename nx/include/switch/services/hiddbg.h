@@ -10,7 +10,7 @@
 
 /// HdlsDeviceInfo
 typedef struct {
-    u32 type;                 ///< See \ref HidControllerType, only one bit can be set.
+    u32 type;                 ///< Only one bit can be set. BIT(0) = Pro-Controller, BIT(1) = Joy-Con Left, BIT(2) = Joy-Con Right.
     u32 singleColorBody;      ///< RGBA Single Body Color
     u32 singleColorButtons;   ///< RGBA Single Buttons Color
     u8 unk_xc;                ///< Unknown
@@ -19,7 +19,9 @@ typedef struct {
 
 /// HdlsState
 typedef struct {
-    u8 unk_x0[0x8];                                       ///< Unknown
+    u8 powerConnected;                                    ///< powerConnected for the main PowerInfo, see \ref HidFlags.
+    u8 flags;                                             ///< ORRed with powerConnected to set the value of the first byte for \ref HidFlags. For example, value 1 here will set isCharging for the main PowerInfo.
+    u8 unk_x2[0x6];                                       ///< Unknown
     u32 batteryCharge;                                    ///< batteryCharge for the main PowerInfo, see \ref HidPowerInfo.
     u32 buttons;                                          ///< See \ref HidControllerKeys.
     JoystickPosition joysticks[JOYSTICK_NUM_STICKS];      ///< \ref JoystickPosition
