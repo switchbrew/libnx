@@ -54,8 +54,12 @@ Service* pmdmntGetServiceSession(void);
 Result pminfoInitialize(void);
 void pminfoExit(void);
 
+Service* pminfoGetServiceSession(void);
+
 Result pmshellInitialize(void);
 void pmshellExit(void);
+
+Service* pmshellGetServiceSession(void);
 
 Result pmdmntGetDebugProcesses(u32* out_count, u64* out_pids, size_t max_pids);
 Result pmdmntStartProcess(u64 pid);

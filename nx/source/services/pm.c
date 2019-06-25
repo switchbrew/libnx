@@ -48,6 +48,11 @@ void pminfoExit(void)
     }
 }
 
+Service* pminfoGetServiceSession(void)
+{
+    return &g_pminfoSrv;
+}
+
 Result pmshellInitialize(void)
 {
     atomicIncrement64(&g_pmshellRefCnt);
@@ -63,6 +68,11 @@ void pmshellExit(void)
     if (atomicDecrement64(&g_pmshellRefCnt) == 0) {
         serviceClose(&g_pmshellSrv);
     }
+}
+
+Service* pmshellGetServiceSession(void)
+{
+    return &g_pmshellSrv;
 }
 
 Result pmdmntGetDebugProcesses(u32* out_count, u64* out_pids, size_t max_pids) {
@@ -475,7 +485,7 @@ Result pmshellGetProcessEvent(Event* out) {
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
         ipcParse(&r);
-        
+
         struct {
             u64 magic;
             u64 result;
@@ -510,7 +520,7 @@ Result pmshellGetProcessEventInfo(PmProcessEventInfo* out) {
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
         ipcParse(&r);
-        
+
         struct {
             u64 magic;
             u64 result;
@@ -534,7 +544,7 @@ Result pmshellGetProcessEventInfo(PmProcessEventInfo* out) {
 
 Result pmshellFinalizeDeadProcess(u64 pid) {
     if (hosversionAtLeast(5,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    
+
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -569,7 +579,7 @@ Result pmshellFinalizeDeadProcess(u64 pid) {
 
 Result pmshellClearProcessExceptionOccurred(u64 pid) {
     if (hosversionAtLeast(5,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    
+
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -671,7 +681,7 @@ Result pmshellGetApplicationPid(u64* pid_out) {
 
 Result pmshellBoostSystemMemoryResourceLimit(u64 boost_size) {
     if (hosversionBefore(4,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    
+
     IpcCommand c;
     ipcInitialize(&c);
 
