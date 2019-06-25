@@ -10,10 +10,10 @@
 
 /// HdlsDeviceInfo
 typedef struct {
-    u32 type;                 ///< Only one bit can be set. BIT(0) = Pro-Controller, BIT(1) = Joy-Con Left, BIT(2) = Joy-Con Right.
+    u32 type;                 ///< Only one bit can be set. BIT(0) = Pro-Controller, BIT(1) = Joy-Con Left, BIT(2) = Joy-Con Right, BIT(21) = unknown.
     u32 singleColorBody;      ///< RGBA Single Body Color
     u32 singleColorButtons;   ///< RGBA Single Buttons Color
-    u8 unk_xc;                ///< Unknown
+    u8 type2;                 ///< Additional type field used with the above type field, if the value doesn't match one of the following a default is used. Type Pro-Controller: value 0x3 indicates that the controller is connected via USB. Type Joy-Con Left/Right: with value 0x2 the system doesn't list the controller in hid sharedmem. Type BIT(21): value 0x3 = unknown.
     u8 pad[0x3];              ///< Padding
 } HiddbgHdlsDeviceInfo;
 
