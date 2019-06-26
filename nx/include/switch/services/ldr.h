@@ -31,11 +31,17 @@ typedef struct {
 Result ldrShellInitialize(void);
 void ldrShellExit(void);
 
+Service* ldrShellGetServiceSession(void);
+
 Result ldrDmntInitialize(void);
 void ldrDmntExit(void);
 
+Service* ldrDmntGetServiceSession(void);
+
 Result ldrPmInitialize(void);
 void ldrPmExit(void);
+
+Service* ldrPmGetServiceSession(void);
 
 Result ldrShellAddTitleToLaunchQueue(u64 tid, const void *args, size_t args_size);
 Result ldrShellClearLaunchQueue(void);
