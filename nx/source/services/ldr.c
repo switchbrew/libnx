@@ -59,7 +59,7 @@ void ldrPmExit(void) {
 }
 
 Service* ldrPmGetServiceSession(void) {
-    return &g_dmntSrv;
+    return &g_pmSrv;
 }
 
 static Result _ldrAddTitleToLaunchQueue(Service* srv, u64 tid, const void *args, size_t args_size) {
