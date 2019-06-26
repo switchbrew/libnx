@@ -14,10 +14,10 @@ static u64 g_shellRefCnt, g_dmntRefCnt, g_pmRefCnt;
 /* Service init/exit helpers. */
 static Result _ldrSrvInitialize(Service* srv, u64 *refcnt, const char *name) {
     atomicIncrement64(refcnt);
-    
+
     if (serviceIsActive(srv))
         return 0;
-    
+
     return smGetService(srv, name);
 }
 
@@ -34,12 +34,20 @@ void ldrShellExit(void) {
     return _ldrSrvExit(&g_shellSrv, &g_shellRefCnt);
 }
 
+Service* ldrShellGetServiceSession(void) {
+    return &g_shellSrv;
+}
+
 Result ldrDmntInitialize(void) {
     return _ldrSrvInitialize(&g_dmntSrv, &g_dmntRefCnt, "ldr:dmnt");
 }
 
 void ldrDmntExit(void) {
     return _ldrSrvExit(&g_dmntSrv, &g_dmntRefCnt);
+}
+
+Service* ldrDmntGetServiceSession(void) {
+    return &g_dmntSrv;
 }
 
 Result ldrPmInitialize(void) {
@@ -50,10 +58,14 @@ void ldrPmExit(void) {
     return _ldrSrvExit(&g_pmSrv, &g_pmRefCnt);
 }
 
+Service* ldrPmGetServiceSession(void) {
+    return &g_dmntSrv;
+}
+
 static Result _ldrAddTitleToLaunchQueue(Service* srv, u64 tid, const void *args, size_t args_size) {
     IpcCommand c;
     ipcInitialize(&c);
-    
+
     ipcAddSendStatic(&c, args, args_size, 0);
 
     struct {
@@ -88,7 +100,7 @@ static Result _ldrAddTitleToLaunchQueue(Service* srv, u64 tid, const void *args,
 static Result _ldrClearLaunchQueue(Service* srv) {
     IpcCommand c;
     ipcInitialize(&c);
-    
+
     struct {
         u64 magic;
         u64 cmd_id;
@@ -135,7 +147,7 @@ Result ldrDmntClearLaunchQueue(void) {
 Result ldrDmntGetModuleInfos(u64 pid, LoaderModuleInfo *out_module_infos, size_t max_out_modules, u32 *num_out) {
     IpcCommand c;
     ipcInitialize(&c);
-    
+
     ipcAddRecvStatic(&c, out_module_infos, max_out_modules * sizeof(*out_module_infos), 0);
 
     struct {
@@ -174,7 +186,7 @@ Result ldrDmntGetModuleInfos(u64 pid, LoaderModuleInfo *out_module_infos, size_t
 Result ldrPmCreateProcess(u64 flags, u64 launch_index, Handle reslimit_h, Handle *out_process_h) {
     IpcCommand c;
     ipcInitialize(&c);
-    
+
     ipcSendHandleCopy(&c, reslimit_h);
 
     struct {
@@ -215,7 +227,7 @@ Result ldrPmCreateProcess(u64 flags, u64 launch_index, Handle reslimit_h, Handle
 Result ldrPmGetProgramInfo(u64 title_id, FsStorageId storage_id, LoaderProgramInfo *out_program_info) {
     IpcCommand c;
     ipcInitialize(&c);
-    
+
     ipcAddRecvStatic(&c, out_program_info, sizeof(LoaderProgramInfo), 0);
 
     struct {
@@ -252,7 +264,7 @@ Result ldrPmGetProgramInfo(u64 title_id, FsStorageId storage_id, LoaderProgramIn
 Result ldrPmRegisterTitle(u64 title_id, FsStorageId storage_id, u64 *out_index) {
     IpcCommand c;
     ipcInitialize(&c);
-    
+
     struct {
         u64 magic;
         u64 cmd_id;
@@ -291,7 +303,7 @@ Result ldrPmRegisterTitle(u64 title_id, FsStorageId storage_id, u64 *out_index) 
 Result ldrPmUnregisterTitle(u64 launch_index) {
     IpcCommand c;
     ipcInitialize(&c);
-    
+
     struct {
         u64 magic;
         u64 cmd_id;
