@@ -140,6 +140,94 @@ static Result _hiddbgCmdInU64NoOut(u64 cmd_id, u64 val) {
     return rc;
 }
 
+Result hiddbgUpdateControllerColor(u32 colorBody, u32 colorButtons, u64 UniquePadId) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 colorBody;
+        u32 colorButtons;
+        u64 UniquePadId;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_hiddbgSrv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 221;
+    raw->colorBody = colorBody;
+    raw->colorButtons = colorButtons;
+    raw->UniquePadId = UniquePadId;
+
+    Result rc = serviceIpcDispatch(&g_hiddbgSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_hiddbgSrv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result hiddbgUpdateDesignInfo(u32 colorBody, u32 colorButtons, u32 colorLeftGrip, u32 colorRightGrip, u8 inval, u64 UniquePadId) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 colorBody;
+        u32 colorButtons;
+        u32 colorLeftGrip;
+        u32 colorRightGrip;
+        u8 inval;
+        u64 UniquePadId;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_hiddbgSrv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 224;
+    raw->colorBody = colorBody;
+    raw->colorButtons = colorButtons;
+    raw->colorLeftGrip = colorLeftGrip;
+    raw->colorRightGrip = colorRightGrip;
+    raw->inval = inval;
+    raw->UniquePadId = UniquePadId;
+
+    Result rc = serviceIpcDispatch(&g_hiddbgSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_hiddbgSrv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
 static Result _hiddbgReadSerialFlash(TransferMemory *tmem, u32 offset, u64 size, u64 UniquePadId) {
     IpcCommand c;
     ipcInitialize(&c);

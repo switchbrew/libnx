@@ -51,6 +51,12 @@ typedef struct {
 Result hiddbgInitialize(void);
 void hiddbgExit(void);
 
+/// Writes the input RGB colors to the spi-flash for the specified controller (offset 0x6050 size 0x6). See hidsys.h for UniquePadId. Only available with [3.0.0+].
+Result hiddbgUpdateControllerColor(u32 colorBody, u32 colorButtons, u64 UniquePadId);
+
+/// Writes the input RGB colors followed by inval to the spi-flash for the specified controller (offset 0x6050 size 0xD). See hidsys.h for UniquePadId. Only available with [5.0.0+].
+Result hiddbgUpdateDesignInfo(u32 colorBody, u32 colorButtons, u32 colorLeftGrip, u32 colorRightGrip, u8 inval, u64 UniquePadId);
+
 /// Reads spi-flash for the specified controller. See hidsys.h for UniquePadId.
 /// This doesn't seem to be usable?
 Result hiddbgReadSerialFlash(u32 offset, void* buffer, size_t size, u64 UniquePadId);
