@@ -140,6 +140,63 @@ static Result _hiddbgCmdInU64NoOut(u64 cmd_id, u64 val) {
     return rc;
 }
 
+static Result _hiddbgReadSerialFlash(TransferMemory *tmem, u32 offset, u64 size, u64 UniquePadId) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    ipcSendHandleCopy(&c, tmem->handle);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 offset;
+        u64 size;
+        u64 UniquePadId;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_hiddbgSrv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 229;
+    raw->offset = offset;
+    raw->size = size;
+    raw->UniquePadId = UniquePadId;
+
+    Result rc = serviceIpcDispatch(&g_hiddbgSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_hiddbgSrv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result hiddbgReadSerialFlash(u32 offset, void* buffer, size_t size, u64 UniquePadId) {
+    Result rc=0;
+    TransferMemory tmem;
+    size_t sizealign = (size+0x1000) & ~0xfff;
+
+    if (hosversionBefore(6,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    rc = tmemCreate(&tmem, sizealign, Perm_Rw);
+    if (R_FAILED(rc)) return rc;
+
+    rc = _hiddbgReadSerialFlash(&tmem, offset, size, UniquePadId);
+    if (R_SUCCEEDED(rc)) memcpy(buffer, tmem.src_addr, size);
+    tmemClose(&g_hiddbgHdlsTmem);
+    return rc;
+}
+
 static Result _hiddbgAttachHdlsWorkBuffer(TransferMemory *tmem) {
     IpcCommand c;
     ipcInitialize(&c);

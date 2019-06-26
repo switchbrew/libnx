@@ -51,6 +51,10 @@ typedef struct {
 Result hiddbgInitialize(void);
 void hiddbgExit(void);
 
+/// Reads spi-flash for the specified controller. See hidsys.h for UniquePadId.
+/// This doesn't seem to be usable?
+Result hiddbgReadSerialFlash(u32 offset, void* buffer, size_t size, u64 UniquePadId);
+
 /// Initialize Hdls. Hdls is for virtual HID controllers. Only available with [7.0.0+].
 Result hiddbgAttachHdlsWorkBuffer(void);
 
