@@ -1163,7 +1163,7 @@ Result svcUnmapProcessCodeMemory(Handle proc, u64 dst, u64 src, u64 size);
  * @note Syscall number 0x79.
  * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
  */
-Result svcCreateProcess(Handle* out, void* proc_info, u32* caps, u64 cap_num);
+Result svcCreateProcess(Handle* out, const void* proc_info, const u32* caps, u64 cap_num);
 
 /**
  * @brief Starts executing a freshly created process.
