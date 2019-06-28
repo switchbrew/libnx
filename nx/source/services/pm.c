@@ -797,7 +797,7 @@ Result pmbmGetBootMode(PmBootMode *out) {
 
         rc = resp->result;
 
-        if (R_SUCCEEDED(rc)) {
+        if (R_SUCCEEDED(rc) && out) {
             *out = (PmBootMode)resp->boot_mode;
         }
     }
