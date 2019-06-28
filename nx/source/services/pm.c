@@ -769,7 +769,7 @@ Result pmshellBoostSystemThreadResourceLimit(void) {
     return rc;
 }
 
-Result pmbmGetBootMode(u32 *out) {
+Result pmbmGetBootMode(PmBootMode *out) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -798,7 +798,7 @@ Result pmbmGetBootMode(u32 *out) {
         rc = resp->result;
 
         if (R_SUCCEEDED(rc)) {
-            *out = resp->boot_mode;
+            *out = (PmBootMode)resp->boot_mode;
         }
     }
 

@@ -94,5 +94,5 @@ Result pmshellGetApplicationPid(u64* pid_out);
 Result pmshellBoostSystemMemoryResourceLimit(u64 boost_size);
 Result pmshellBoostSystemThreadResourceLimit(void);
 
-Result pmbmGetBootMode(u32 *out);
+Result pmbmGetBootMode(PmBootMode *out);
 Result pmbmSetMaintenanceBoot(void);
