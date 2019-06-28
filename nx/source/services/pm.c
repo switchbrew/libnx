@@ -7,8 +7,8 @@
 #include "services/pm.h"
 #include "services/sm.h"
 
-static Service g_pmdmntSrv, g_pmshellSrv, g_pminfoSrv;
-static u64 g_pmdmntRefCnt, g_pmshellRefCnt, g_pminfoRefCnt;
+static Service g_pmdmntSrv, g_pmshellSrv, g_pminfoSrv, g_pmbmSrv;
+static u64 g_pmdmntRefCnt, g_pmshellRefCnt, g_pminfoRefCnt, g_pmbmRefCnt;
 
 Result pmdmntInitialize(void)
 {
@@ -73,6 +73,28 @@ void pmshellExit(void)
 Service* pmshellGetServiceSession(void)
 {
     return &g_pmshellSrv;
+}
+
+Result pmbmInitialize(void)
+{
+    atomicIncrement64(&g_pmbmRefCnt);
+
+    if (serviceIsActive(&g_pmbmSrv))
+        return 0;
+
+    return smGetService(&g_pmbmSrv, "pm:bm");
+}
+
+void pmbmExit(void)
+{
+    if (atomicDecrement64(&g_pmbmRefCnt) == 0) {
+        serviceClose(&g_pmbmSrv);
+    }
+}
+
+Service* pmbmGetServiceSession(void)
+{
+    return &g_pmbmSrv;
 }
 
 Result pmdmntGetDebugProcesses(u32* out_count, u64* out_pids, size_t max_pids) {
@@ -698,6 +720,106 @@ Result pmshellBoostSystemMemoryResourceLimit(u64 boost_size) {
     raw->boost_size = boost_size;
 
     Result rc = serviceIpcDispatch(&g_pmshellSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result pmshellBoostSystemThreadResourceLimit(void) {
+    if (hosversionBefore(7,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 8;
+
+    Result rc = serviceIpcDispatch(&g_pmshellSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result pmbmGetBootMode(PmBootMode *out) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 0;
+
+    Result rc = serviceIpcDispatch(&g_pmbmSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u32 boot_mode;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && out) {
+            *out = (PmBootMode)resp->boot_mode;
+        }
+    }
+
+    return rc;
+}
+
+Result pmbmSetMaintenanceBoot(void) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 1;
+
+    Result rc = serviceIpcDispatch(&g_pmbmSrv);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;

@@ -46,6 +46,12 @@ typedef struct {
     u64 process_id;
 } PmProcessEventInfo;
 
+typedef enum {
+    PmBootMode_Normal      = 0,
+    PmBootMode_Maintenance = 1,
+    PmBootMode_SafeMode    = 2,
+} PmBootMode;
+
 Result pmdmntInitialize(void);
 void pmdmntExit(void);
 
@@ -60,6 +66,11 @@ Result pmshellInitialize(void);
 void pmshellExit(void);
 
 Service* pmshellGetServiceSession(void);
+
+Result pmbmInitialize();
+void pmbmExit();
+
+Service* pmbmGetServiceSession(void);
 
 Result pmdmntGetDebugProcesses(u32* out_count, u64* out_pids, size_t max_pids);
 Result pmdmntStartProcess(u64 pid);
@@ -81,3 +92,7 @@ Result pmshellClearProcessExceptionOccurred(u64 pid);
 Result pmshellNotifyBootFinished(void);
 Result pmshellGetApplicationPid(u64* pid_out);
 Result pmshellBoostSystemMemoryResourceLimit(u64 boost_size);
+Result pmshellBoostSystemThreadResourceLimit(void);
+
+Result pmbmGetBootMode(PmBootMode *out);
+Result pmbmSetMaintenanceBoot(void);
