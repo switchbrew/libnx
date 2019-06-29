@@ -29,9 +29,21 @@ typedef struct {
     u8 padding[0x3];                                      ///< Padding
 } HiddbgHdlsState;
 
-/// HdlsNpadAssignment
+/// HdlsNpadAssignmentEntry
 typedef struct {
-    u8 unk_x0[0x208];         ///< Unknown
+    u64 HdlsHandle;                             ///< HdlsHandle
+    u32 unk_x8;                                 ///< Unknown
+    u32 unk_xc;                                 ///< Unknown
+    u64 unk_x10;                                ///< Unknown
+    u8 unk_x18;                                 ///< Unknown
+    u8 pad[0x7];                                ///< Padding
+} HiddbgHdlsNpadAssignmentEntry;
+
+/// HdlsNpadAssignment. Same controllers as \ref HiddbgHdlsStateList, with different entry data.
+typedef struct {
+    s32 total_entries;                               ///< Total entries for the below entries.
+    u32 pad;                                         ///< Padding
+    HiddbgHdlsNpadAssignmentEntry entries[0x10];     ///< \ref HiddbgHdlsNpadAssignmentEntry
 } HiddbgHdlsNpadAssignment;
 
 /// HdlsStateListEntry
