@@ -88,9 +88,9 @@ Result hiddbgGetAbstractedPadsState(u64 *AbstractedPadHandles, HiddbgAbstractedP
 
 /// Sets AutoPilot state for the specified pad.
 /// AbstractedVirtualPadId can be any unique value as long as it's within bounds. For example, 0-7 is usable.
-Result hiddbgSetAutoPilotVirtualPadState(s8 AbstractedVirtualPadId, HiddbgAbstractedPadState *state);
+Result hiddbgSetAutoPilotVirtualPadState(s8 AbstractedVirtualPadId, const HiddbgAbstractedPadState *state);
 
-/// Clears AutoPilot state for the specified pad set \ref hiddbgSetAutoPilotVirtualPadState.
+/// Clears AutoPilot state for the specified pad set by \ref hiddbgSetAutoPilotVirtualPadState.
 Result hiddbgUnsetAutoPilotVirtualPadState(s8 AbstractedVirtualPadId);
 
 /// Clears AutoPilot state for all pads set by \ref hiddbgSetAutoPilotVirtualPadState.

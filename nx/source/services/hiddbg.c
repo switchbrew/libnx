@@ -409,7 +409,7 @@ Result hiddbgGetAbstractedPadsState(u64 *AbstractedPadHandles, HiddbgAbstractedP
     return rc;
 }
 
-Result hiddbgSetAutoPilotVirtualPadState(s8 AbstractedVirtualPadId, HiddbgAbstractedPadState *state) {
+Result hiddbgSetAutoPilotVirtualPadState(s8 AbstractedVirtualPadId, const HiddbgAbstractedPadState *state) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
