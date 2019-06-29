@@ -11,6 +11,7 @@
 
 static Service g_hiddbgSrv;
 static u64 g_hiddbgRefCnt;
+static size_t g_hiddbgPtrbufsize;
 
 static bool g_hiddbgHdlsInitialized;
 static TransferMemory g_hiddbgHdlsTmem;
@@ -22,10 +23,12 @@ Result hiddbgInitialize(void) {
         return 0;
 
     Result rc = smGetService(&g_hiddbgSrv, "hid:dbg");
-    if (R_FAILED(rc))
-        return rc;
 
-    return 0;
+    if (R_SUCCEEDED(rc)) rc = ipcQueryPointerBufferSize(g_hiddbgSrv.handle, &g_hiddbgPtrbufsize);
+
+    if (R_FAILED(rc)) hiddbgExit();
+
+    return rc;
 }
 
 void hiddbgExit(void) {
@@ -283,6 +286,211 @@ Result hiddbgReadSerialFlash(u32 offset, void* buffer, size_t size, u64 UniquePa
     if (R_SUCCEEDED(rc)) memcpy(buffer, tmem.src_addr, size);
     tmemClose(&g_hiddbgHdlsTmem);
     return rc;
+}
+
+Result hiddbgGetAbstractedPadHandles(u64 *AbstractedPadHandles, s32 count, s32 *total_entries) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    Result rc;
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    ipcAddRecvStatic(&c, AbstractedPadHandles, sizeof(u64)*count, 0);
+
+    raw = serviceIpcPrepareHeader(&g_hiddbgSrv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 301;
+
+    rc = serviceIpcDispatch(&g_hiddbgSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            s32 total_entries;
+        } *resp;
+
+        serviceIpcParse(&g_hiddbgSrv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        if (R_SUCCEEDED(rc) && total_entries) *total_entries = resp->total_entries;
+    }
+
+    return rc;
+}
+
+Result hiddbgGetAbstractedPadState(u64 AbstractedPadHandle, HiddbgAbstractedPadState *state) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    Result rc;
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 AbstractedPadHandle;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_hiddbgSrv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 302;
+    raw->AbstractedPadHandle = AbstractedPadHandle;
+
+    rc = serviceIpcDispatch(&g_hiddbgSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            HiddbgAbstractedPadState state;
+        } *resp;
+
+        serviceIpcParse(&g_hiddbgSrv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        if (R_SUCCEEDED(rc) && state) memcpy(state, &resp->state, sizeof(*state));
+    }
+
+    return rc;
+}
+
+Result hiddbgGetAbstractedPadsState(u64 *AbstractedPadHandles, HiddbgAbstractedPadState *states, s32 count, s32 *total_entries) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    Result rc;
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    ipcAddRecvStatic(&c, AbstractedPadHandles, sizeof(u64)*count, 0);
+    ipcAddRecvSmart(&c, g_hiddbgPtrbufsize, states, sizeof(HiddbgAbstractedPadState)*count, 0);
+
+    raw = serviceIpcPrepareHeader(&g_hiddbgSrv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 303;
+
+    rc = serviceIpcDispatch(&g_hiddbgSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            s32 total_entries;
+        } *resp;
+
+        serviceIpcParse(&g_hiddbgSrv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        if (R_SUCCEEDED(rc) && total_entries) *total_entries = resp->total_entries;
+    }
+
+    return rc;
+}
+
+Result hiddbgSetAutoPilotVirtualPadState(s8 AbstractedVirtualPadId, HiddbgAbstractedPadState *state) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    Result rc;
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        s8 AbstractedVirtualPadId;
+        u8 pad[7];
+        HiddbgAbstractedPadState state;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_hiddbgSrv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 321;
+    raw->AbstractedVirtualPadId = AbstractedVirtualPadId;
+    memcpy(&raw->state, state, sizeof(*state));
+
+    rc = serviceIpcDispatch(&g_hiddbgSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_hiddbgSrv, &r, sizeof(*resp));
+        resp = r.Raw;
+    }
+
+    return rc;
+}
+
+Result hiddbgUnsetAutoPilotVirtualPadState(s8 AbstractedVirtualPadId) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    Result rc;
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        s8 AbstractedVirtualPadId;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_hiddbgSrv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 322;
+    raw->AbstractedVirtualPadId = AbstractedVirtualPadId;
+
+    rc = serviceIpcDispatch(&g_hiddbgSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_hiddbgSrv, &r, sizeof(*resp));
+        resp = r.Raw;
+    }
+
+    return rc;
+}
+
+Result hiddbgUnsetAllAutoPilotVirtualPadState(void) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _hiddbgCmdNoIO(323);
 }
 
 static Result _hiddbgAttachHdlsWorkBuffer(TransferMemory *tmem) {

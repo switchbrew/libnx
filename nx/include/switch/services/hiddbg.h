@@ -13,7 +13,7 @@ typedef struct {
     u32 type;                 ///< Only one bit can be set. BIT(N*4+0) = Pro-Controller, BIT(N*4+1) = Joy-Con Left, BIT(N*4+2) = Joy-Con Right, BIT(N*4+3) = invalid. Where N is 0-1. BIT(8-10) = Pro-Controller, BIT(11) = Famicom-Controller, BIT(12) = Famicom-Controller II with microphone, BIT(13) = NES-Controller(DeviceType=0x200), BIT(14) = NES-Controller(DeviceType=0x400), BIT(15-16) = invalid, BIT(17) = unknown(DeviceType=0x8000), BIT(18-20) = invalid, BIT(21-23) = unknown(DeviceType=0x80000000).
     u32 singleColorBody;      ///< RGBA Single Body Color
     u32 singleColorButtons;   ///< RGBA Single Buttons Color
-    u8 type2;                 ///< Additional type field used with the above type field (only applies to type bit0-bit2 and bit21), if the value doesn't match one of the following a default is used. Type Pro-Controller: value 0x3 indicates that the controller is connected via USB. Type Joy-Con Left/Right: with value 0x2 the system doesn't list the controller in hid sharedmem. Type BIT(21): value 0x3 = unknown.
+    u8 type2;                 ///< Additional type field used with the above type field (only applies to type bit0-bit2 and bit21), if the value doesn't match one of the following a default is used. Type Pro-Controller: value 0x3 indicates that the controller is connected via USB. Type BIT(21): value 0x3 = unknown. When value is 0x2, state is merged with an existing controller (when the type value is compatible with this). Otherwise, it's a dedicated controller.
     u8 pad[0x3];              ///< Padding
 } HiddbgHdlsDeviceInfo;
 
@@ -25,7 +25,7 @@ typedef struct {
     u32 batteryCharge;                                    ///< batteryCharge for the main PowerInfo, see \ref HidPowerInfo.
     u32 buttons;                                          ///< See \ref HidControllerKeys.
     JoystickPosition joysticks[JOYSTICK_NUM_STICKS];      ///< \ref JoystickPosition
-    u8 unk_x20;                                           ///< Unused for input. Set with output from \ref hiddbgDumpHdlsStates.
+    u8 unk_x20;                                           ///< Unused for input. Set with output from \ref hiddbgDumpHdlsStates. Not set by \ref hiddbgGetAbstractedPadsState.
     u8 padding[0x3];                                      ///< Padding
 } HiddbgHdlsState;
 
@@ -48,6 +48,22 @@ typedef struct {
     HiddbgHdlsStateListEntry entries[0x10];     ///< \ref HiddbgHdlsStateListEntry
 } HiddbgHdlsStateList;
 
+/// AbstractedPadState
+typedef struct {
+    u32 type;                 ///< Type. Converted to HiddbgHdlsDeviceInfo::type internally by \ref hiddbgSetAutoPilotVirtualPadState. BIT(0) -> BIT(0), BIT(1) -> BIT(15), BIT(2-3) -> BIT(1-2), BIT(4-5) -> BIT(1-2), BIT(6) -> BIT(3). BIT(7-11) -> BIT(11-15), BIT(12-14) -> BIT(12-14), BIT(15) -> BIT(17), BIT(31) -> BIT(21).
+    u8 flags;                ///< Flags. Only bit0 is used by \ref hiddbgSetAutoPilotVirtualPadState: when clear it will skip using the rest of the input and run \ref hiddbgUnsetAutoPilotVirtualPadState internally.
+    u8 pad[0x3];              ///< Padding
+
+    u32 singleColorBody;      ///< RGBA Single Body Color
+    u32 singleColorButtons;   ///< RGBA Single Buttons Color
+    u8 type2;                 ///< See HiddbgHdlsDeviceInfo::type2.
+    u8 pad2[0x3];             ///< Padding
+
+    HiddbgHdlsState state;    ///< State
+
+    u8 unused[0x60];         ///< Unused with \ref hiddbgSetAutoPilotVirtualPadState. Not set by \ref hiddbgGetAbstractedPadsState.
+} HiddbgAbstractedPadState;
+
 Result hiddbgInitialize(void);
 void hiddbgExit(void);
 
@@ -60,6 +76,25 @@ Result hiddbgUpdateDesignInfo(u32 colorBody, u32 colorButtons, u32 colorLeftGrip
 /// Reads spi-flash for the specified controller. See hidsys.h for UniquePadId.
 /// This doesn't seem to be usable?
 Result hiddbgReadSerialFlash(u32 offset, void* buffer, size_t size, u64 UniquePadId);
+
+/// Gets a list of AbstractedPadHandles, where AbstractedPadHandles is the output array with max entries = count. total_entries is total entries written to the output array. Only available with [5.0.0+].
+Result hiddbgGetAbstractedPadHandles(u64 *AbstractedPadHandles, s32 count, s32 *total_entries);
+
+/// Gets the state for the specified AbstractedPadHandle. Only available with [5.0.0+].
+Result hiddbgGetAbstractedPadState(u64 AbstractedPadHandle, HiddbgAbstractedPadState *state);
+
+/// Similar to \ref hiddbgGetAbstractedPadHandles except this also returns the state for each pad in output array states. Only available with [5.0.0+].
+Result hiddbgGetAbstractedPadsState(u64 *AbstractedPadHandles, HiddbgAbstractedPadState *states, s32 count, s32 *total_entries);
+
+/// Sets AutoPilot state for the specified pad.
+/// AbstractedVirtualPadId can be any unique value as long as it's within bounds. For example, 0-7 is usable.
+Result hiddbgSetAutoPilotVirtualPadState(s8 AbstractedVirtualPadId, HiddbgAbstractedPadState *state);
+
+/// Clears AutoPilot state for the specified pad set \ref hiddbgSetAutoPilotVirtualPadState.
+Result hiddbgUnsetAutoPilotVirtualPadState(s8 AbstractedVirtualPadId);
+
+/// Clears AutoPilot state for all pads set by \ref hiddbgSetAutoPilotVirtualPadState.
+Result hiddbgUnsetAllAutoPilotVirtualPadState(void);
 
 /// Initialize Hdls. Hdls is for virtual HID controllers. Only available with [7.0.0+].
 Result hiddbgAttachHdlsWorkBuffer(void);
