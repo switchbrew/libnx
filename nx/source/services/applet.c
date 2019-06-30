@@ -1445,8 +1445,8 @@ Result appletInitializeGamePlayRecording(void) {
     return rc;
 }
 
-//Official sw has this under 'pdm'.
-Result appletQueryApplicationPlayStatistics(AppletApplicationPlayStatistics *stats, const u64 *titleIDs, s32 count, s32 *out) {
+//Official sw has these under 'pdm'.
+Result appletQueryApplicationPlayStatistics(PdmApplicationPlayStatistics *stats, const u64 *titleIDs, s32 count, s32 *total_out) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -1456,8 +1456,8 @@ Result appletQueryApplicationPlayStatistics(AppletApplicationPlayStatistics *sta
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    ipcAddRecvBuffer(&c, stats, count*sizeof(AppletApplicationPlayStatistics), BufferType_Normal);
     ipcAddSendBuffer(&c, titleIDs, count*sizeof(u64), BufferType_Normal);
+    ipcAddRecvBuffer(&c, stats, count*sizeof(PdmApplicationPlayStatistics), BufferType_Normal);
 
     struct {
         u64 magic;
@@ -1476,7 +1476,7 @@ Result appletQueryApplicationPlayStatistics(AppletApplicationPlayStatistics *sta
         struct {
             u64 magic;
             u64 result;
-            s32 out;
+            s32 total_out;
         } *resp;
 
         serviceIpcParse(&g_appletIFunctions, &r, sizeof(*resp));
@@ -1484,7 +1484,53 @@ Result appletQueryApplicationPlayStatistics(AppletApplicationPlayStatistics *sta
 
         rc = resp->result;
 
-        if (R_SUCCEEDED(rc) && out) *out = resp->out;
+        if (R_SUCCEEDED(rc) && total_out) *total_out = resp->total_out;
+    }
+
+    return rc;
+}
+
+Result appletQueryApplicationPlayStatisticsByUid(u128 userID, PdmApplicationPlayStatistics *stats, const u64 *titleIDs, s32 count, s32 *total_out) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    if (!serviceIsActive(&g_appletSrv) || !_appletIsRegularApplication())
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    if (hosversionBefore(6,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    ipcAddSendBuffer(&c, titleIDs, count*sizeof(u64), BufferType_Normal);
+    ipcAddRecvBuffer(&c, stats, count*sizeof(PdmApplicationPlayStatistics), BufferType_Normal);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u128 userID;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletIFunctions, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 111;
+    raw->userID = userID;
+
+    Result rc = serviceIpcDispatch(&g_appletIFunctions);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            s32 total_out;
+        } *resp;
+
+        serviceIpcParse(&g_appletIFunctions, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && total_out) *total_out = resp->total_out;
     }
 
     return rc;

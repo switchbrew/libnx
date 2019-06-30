@@ -9,6 +9,7 @@
 #include "../types.h"
 #include "../services/sm.h"
 #include "../services/apm.h"
+#include "../services/pdm.h"
 #include "../kernel/tmem.h"
 #include "../kernel/event.h"
 
@@ -135,11 +136,6 @@ typedef struct {
     LibAppletExitReason exitreason;    ///< Set by \ref appletHolderJoin using the output from cmd GetResult, see \ref LibAppletExitReason.
 } AppletHolder;
 
-/// 'pdm' ApplicationPlayStatistics
-typedef struct {
-    u8 unk_x0[0x8];
-} AppletApplicationPlayStatistics;
-
 /// Attributes for launching applications for Quest.
 typedef struct {
     u32 unk_x0;
@@ -226,13 +222,24 @@ Result appletEndBlockingHomeButton(void);
 /**
  * @brief Gets ApplicationPlayStatistics.
  * @note Only available with AppletType_*Application on 5.0.0+.
- * @note This may return no output in some cases.
- * @param stats Output \ref AppletApplicationPlayStatistics array.
+ * @note The input titleIDs must be allowed via control.nacp with the current host title. The minimum allowed titleID is the titleID for the current-process.
+ * @param stats Output \ref PdmApplicationPlayStatistics array.
  * @param titleIDs Input titleIDs array.
  * @param count Total entries in the input/output arrays.
- * @param out Output s32.
+ * @param total_out Total output entries.
  */
-Result appletQueryApplicationPlayStatistics(AppletApplicationPlayStatistics *stats, const u64 *titleIDs, s32 count, s32 *out);
+Result appletQueryApplicationPlayStatistics(PdmApplicationPlayStatistics *stats, const u64 *titleIDs, s32 count, s32 *total_out);
+
+/**
+ * @brief Same as \ref appletQueryApplicationPlayStatistics except this gets playstats specific to the input userID.
+ * @note Only available with AppletType_*Application on 6.0.0+.
+ * @param userID userID
+ * @param stats Output \ref PdmApplicationPlayStatistics array.
+ * @param titleIDs Input titleIDs array.
+ * @param count Total entries in the input/output arrays.
+ * @param total_out Total output entries.
+ */
+Result appletQueryApplicationPlayStatisticsByUid(u128 userID, PdmApplicationPlayStatistics *stats, const u64 *titleIDs, s32 count, s32 *total_out);
 
 /**
  * @brief Delay exiting until \ref appletUnlockExit is called, with a 15 second timeout once exit is requested.
