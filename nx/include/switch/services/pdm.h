@@ -11,6 +11,7 @@
 /// ApplicationPlayStatistics
 typedef struct {
     u64 titleID;                      ///< titleID
-    u8 unk_x8[0x10];                  ///< Unknown
+    u64 totalPlayTime;                ///< Total play-time in nanoseconds.
+    u64 totalLaunches;                ///< Total times the application title was launched.
 } PdmApplicationPlayStatistics;
 
