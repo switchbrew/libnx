@@ -271,6 +271,9 @@ typedef enum
     KEY_SL_RIGHT     = BIT(26),      ///< SL on Right Joy-Con
     KEY_SR_RIGHT     = BIT(27),      ///< SR on Right Joy-Con
 
+    KEY_HOME         = BIT(18),      ///< HOME button, only available for use with HiddbgHdlsState::buttons.
+    KEY_CAPTURE      = BIT(19),      ///< Capture button, only available for use with HiddbgHdlsState::buttons.
+
     // Pseudo-key for at least one finger on the touch screen
     KEY_TOUCH       = BIT(28),
 
