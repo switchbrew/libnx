@@ -443,7 +443,7 @@ Result irsGetIrCameraHandle(u32 *IrCameraHandle, HidControllerID id) {
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 311;
-    raw->id = id;
+    raw->id = hidControllerIDToOfficial(id);
 
     Result rc = serviceIpcDispatch(&g_irsSrv);
 
