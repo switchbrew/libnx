@@ -35,6 +35,15 @@ typedef struct {
     s32 offset; ///< Seconds relative to UTC for this timezone.
 } TimeCalendarAdditionalInfo;
 
+typedef struct {
+    char reserved[0x4000];
+} TimeZoneRule;
+
+typedef struct
+{
+    char name[0x24];
+} LocationName;
+
 Result timeInitialize(void);
 void timeExit(void);
 
@@ -50,5 +59,15 @@ Result timeGetCurrentTime(TimeType type, u64 *timestamp);
  */
 Result timeSetCurrentTime(TimeType type, u64 timestamp);
 
+Result timeGetDeviceLocationName(LocationName *name);
+Result timeSetDeviceLocationName(const LocationName *name);
+Result timeGetTotalLocationNameCount(u32 *total_location_name_count);
+Result timeLoadLocationNameList(u32 index, LocationName *location_name_array, size_t location_name_size, u32 *location_name_count);
+
+Result timeLoadTimeZoneRule(const LocationName *name, TimeZoneRule *rule);
+
+Result timeToPosixTime(const TimeZoneRule *rule, TimeCalendarTime caltime, u64 *timestamp_list, size_t timestamp_list_size, u32 *timestamp_count);
+Result timeToPosixTimeWithMyRule(TimeCalendarTime caltime, u64 *timestamp_list, size_t timestamp_list_size, u32 *timestamp_count);
+Result timeToCalendarTime(const TimeZoneRule *rule, u64 timestamp, TimeCalendarTime *caltime, TimeCalendarAdditionalInfo *info);
 Result timeToCalendarTimeWithMyRule(u64 timestamp, TimeCalendarTime *caltime, TimeCalendarAdditionalInfo *info);
 
