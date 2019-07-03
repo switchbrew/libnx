@@ -191,6 +191,217 @@ Result timeSetCurrentTime(TimeType type, u64 timestamp) {
     return rc;
 }
 
+Result timeGetDeviceLocationName(TimeLocationName *name) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 0;
+
+    Result rc = serviceIpcDispatch(&g_timeTimeZoneService);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            TimeLocationName name;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && name) memcpy(name, &resp->name, sizeof(TimeLocationName));
+    }
+
+    return rc;
+}
+
+Result timeSetDeviceLocationName(const TimeLocationName *name) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        TimeLocationName name;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 1;
+    memcpy(&raw->name, name, sizeof(TimeLocationName));
+
+    Result rc = serviceIpcDispatch(&g_timeTimeZoneService);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result timeGetTotalLocationNameCount(u32 *total_location_name_count) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 2;
+
+    Result rc = serviceIpcDispatch(&g_timeTimeZoneService);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u32 total_location_name_count;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && total_location_name_count) *total_location_name_count = resp->total_location_name_count;
+    }
+
+    return rc;
+}
+
+Result timeLoadLocationNameList(u32 index, TimeLocationName *location_name_array, size_t location_name_size, u32 *location_name_count) {
+    IpcCommand c;
+    ipcInitialize(&c);
+    ipcAddRecvBuffer(&c, location_name_array, location_name_size, BufferType_Normal);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 index;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 3;
+    raw->index = index;
+
+    Result rc = serviceIpcDispatch(&g_timeTimeZoneService);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u32 location_name_count;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && location_name_count) *location_name_count = resp->location_name_count;
+    }
+
+    return rc;
+}
+
+Result timeLoadTimeZoneRule(const TimeLocationName *name, TimeZoneRule *rule) {
+    IpcCommand c;
+    ipcInitialize(&c);
+    ipcAddRecvBuffer(&c, rule, sizeof(TimeZoneRule), BufferType_Normal);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        TimeLocationName name;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 4;
+    memcpy(&raw->name, name, sizeof(TimeLocationName));
+
+    Result rc = serviceIpcDispatch(&g_timeTimeZoneService);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result timeToCalendarTime(const TimeZoneRule *rule, u64 timestamp, TimeCalendarTime *caltime, TimeCalendarAdditionalInfo *info) {
+    IpcCommand c;
+    ipcInitialize(&c);
+    ipcAddSendBuffer(&c, rule, sizeof(TimeZoneRule), BufferType_Normal);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 timestamp;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 100;
+    raw->timestamp = timestamp;
+
+    Result rc = serviceIpcDispatch(&g_timeTimeZoneService);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            TimeCalendarTime caltime;
+            TimeCalendarAdditionalInfo info;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && caltime) memcpy(caltime, &resp->caltime, sizeof(TimeCalendarTime));
+        if (R_SUCCEEDED(rc) && info) memcpy(info, &resp->info, sizeof(TimeCalendarAdditionalInfo));
+    }
+
+    return rc;
+}
+
 Result timeToCalendarTimeWithMyRule(u64 timestamp, TimeCalendarTime *caltime, TimeCalendarAdditionalInfo *info) {
     IpcCommand c;
     ipcInitialize(&c);
@@ -229,3 +440,77 @@ Result timeToCalendarTimeWithMyRule(u64 timestamp, TimeCalendarTime *caltime, Ti
     return rc;
 }
 
+Result timeToPosixTime(const TimeZoneRule *rule, const TimeCalendarTime *caltime, u64 *timestamp_list, size_t timestamp_list_size, u32 *timestamp_count) {
+    IpcCommand c;
+    ipcInitialize(&c);
+    ipcAddSendBuffer(&c, rule, sizeof(TimeZoneRule), BufferType_Normal);
+    ipcAddRecvStatic(&c, timestamp_list, timestamp_list_size, 0);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        TimeCalendarTime caltime;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 201;
+    raw->caltime = *caltime;
+
+    Result rc = serviceIpcDispatch(&g_timeTimeZoneService);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u32 timestamp_count;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && timestamp_count) *timestamp_count = resp->timestamp_count;
+    }
+
+    return rc;
+}
+
+Result timeToPosixTimeWithMyRule(const TimeCalendarTime *caltime, u64 *timestamp_list, size_t timestamp_list_size, u32 *timestamp_count) {
+    IpcCommand c;
+    ipcInitialize(&c);
+    ipcAddRecvStatic(&c, timestamp_list, timestamp_list_size, 0);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        TimeCalendarTime caltime;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 202;
+    raw->caltime = *caltime;
+
+    Result rc = serviceIpcDispatch(&g_timeTimeZoneService);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u32 timestamp_count;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && timestamp_count) *timestamp_count = resp->timestamp_count;
+    }
+
+    return rc;
+}
