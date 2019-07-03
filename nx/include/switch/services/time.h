@@ -36,13 +36,12 @@ typedef struct {
 } TimeCalendarAdditionalInfo;
 
 typedef struct {
-    char reserved[0x4000];
+    u8 data[0x4000];
 } TimeZoneRule;
 
-typedef struct
-{
+typedef struct {
     char name[0x24];
-} LocationName;
+} TimeLocationName;
 
 Result timeInitialize(void);
 void timeExit(void);
@@ -59,15 +58,15 @@ Result timeGetCurrentTime(TimeType type, u64 *timestamp);
  */
 Result timeSetCurrentTime(TimeType type, u64 timestamp);
 
-Result timeGetDeviceLocationName(LocationName *name);
-Result timeSetDeviceLocationName(const LocationName *name);
+Result timeGetDeviceLocationName(TimeLocationName *name);
+Result timeSetDeviceLocationName(const TimeLocationName *name);
 Result timeGetTotalLocationNameCount(u32 *total_location_name_count);
-Result timeLoadLocationNameList(u32 index, LocationName *location_name_array, size_t location_name_size, u32 *location_name_count);
+Result timeLoadLocationNameList(u32 index, TimeLocationName *location_name_array, size_t location_name_size, u32 *location_name_count);
 
-Result timeLoadTimeZoneRule(const LocationName *name, TimeZoneRule *rule);
+Result timeLoadTimeZoneRule(const TimeLocationName *name, TimeZoneRule *rule);
 
-Result timeToPosixTime(const TimeZoneRule *rule, TimeCalendarTime caltime, u64 *timestamp_list, size_t timestamp_list_size, u32 *timestamp_count);
-Result timeToPosixTimeWithMyRule(TimeCalendarTime caltime, u64 *timestamp_list, size_t timestamp_list_size, u32 *timestamp_count);
+Result timeToPosixTime(const TimeZoneRule *rule, const TimeCalendarTime *caltime, u64 *timestamp_list, size_t timestamp_list_size, u32 *timestamp_count);
+Result timeToPosixTimeWithMyRule(const TimeCalendarTime *caltime, u64 *timestamp_list, size_t timestamp_list_size, u32 *timestamp_count);
 Result timeToCalendarTime(const TimeZoneRule *rule, u64 timestamp, TimeCalendarTime *caltime, TimeCalendarAdditionalInfo *info);
 Result timeToCalendarTimeWithMyRule(u64 timestamp, TimeCalendarTime *caltime, TimeCalendarAdditionalInfo *info);
 
