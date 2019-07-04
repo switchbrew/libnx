@@ -312,14 +312,14 @@ Result hidsysGetUniquePadSerialNumber(u64 UniquePadId, char *serial) {
     struct {
         u64 magic;
         u64 cmd_id;
-        u64 pad_id;
+        u64 UniquePadId;
     } *raw;
 
     raw = serviceIpcPrepareHeader(&g_hidsysSrv, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 809;
-    raw->pad_id = UniquePadId;
+    raw->UniquePadId = UniquePadId;
 
     Result rc = serviceIpcDispatch(&g_hidsysSrv);
 
