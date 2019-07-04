@@ -238,7 +238,7 @@ Service* fsGetServiceSession(void);
 Result fsOpenBisStorage(FsStorage* out, FsBisStorageId PartitionId);
 Result fsOpenBisFileSystem(FsFileSystem* out, FsBisStorageId PartitionId, const char* string);
 
-Result fsCreateSaveDataFileSystemBySystemSaveDataId(FsSave* save, FsSaveCreate* create);
+Result fsCreateSaveDataFileSystemBySystemSaveDataId(const FsSave* save, const FsSaveCreate* create);
 
 Result fsIsExFatSupported(bool* out);
 

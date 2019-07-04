@@ -150,7 +150,7 @@ Result fsOpenBisFileSystem(FsFileSystem* out, FsBisStorageId PartitionId, const 
     return rc;
 }
 
-Result fsCreateSaveDataFileSystemBySystemSaveDataId(FsSave* save, FsSaveCreate* create) {
+Result fsCreateSaveDataFileSystemBySystemSaveDataId(const FsSave* save, const FsSaveCreate* create) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -702,19 +702,18 @@ Result fsIsExFatSupported(bool* out)
 
 // Wrapper(s) for fsCreateSaveDataFileSystemBySystemSaveDataId.
 Result fsCreate_SystemSaveDataWithOwner(FsSaveDataSpaceId SaveDataSpaceId, u64 saveID, u128 userID, u64 ownerId, u64 size, u64 journalSize, u32 flags) {
-    FsSave save;
-    FsSaveCreate create;
-
-    memset(&save, 0, sizeof(save));
-    save.userID = userID;
-    save.saveID = saveID;
-    memset(&create, 0, sizeof(create));
-    create.size = size;
-    create.journalSize = journalSize;
-    create.blockSize = 0x4000;
-    create.ownerId = ownerId; 
-    create.flags = flags;
-    create.SaveDataSpaceId = SaveDataSpaceId;
+    FsSave save = {
+        .userID = userID,
+        .saveID = saveID,
+    };
+    FsSaveCreate create = {
+        .size = size,
+        .journalSize = journalSize,
+        .blockSize = 0x4000,
+        .ownerId = ownerId,
+        .flags = flags,
+        .SaveDataSpaceId = SaveDataSpaceId,
+    };
 
     return fsCreateSaveDataFileSystemBySystemSaveDataId(&save, &create);
 }
