@@ -719,8 +719,8 @@ Result fsCreate_SystemSaveDataWithOwner(FsSaveDataSpaceId SaveDataSpaceId, u64 s
     return fsCreateSaveDataFileSystemBySystemSaveDataId(&save, &create);
 }
 
-Result fsCreate_SystemSaveData(FsSaveDataSpaceId space_id, u64 save_data_id, u64 size, u64 journal_size, u32 flags) {
-    return fsCreate_SystemSaveDataWithOwner(space_id, save_data_id, 0, 0, size, journal_size, flags);
+Result fsCreate_SystemSaveData(FsSaveDataSpaceId SaveDataSpaceId, u64 saveID, u64 size, u64 journalSize, u32 flags) {
+    return fsCreate_SystemSaveDataWithOwner(SaveDataSpaceId, saveID, 0, 0, size, journalSize, flags);
 }
 
 // Wrapper(s) for fsMountSaveData.
