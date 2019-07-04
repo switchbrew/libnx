@@ -82,7 +82,7 @@ typedef struct {
     u64 size;           ///< Size of the save data.
     u64 journalSize;    ///< Journal size of the save data.
     u64 blockSize;      ///< Block size of the save data.
-    u64 ownerId;        ///< Id of the save data's owner.
+    u64 ownerId;        ///< Title Id of the owner of this save data. 0 for SystemSaveData.
     u32 flags;          ///< Save data flags.
     u8 SaveDataSpaceId; ///< See \ref FsSaveDataSpaceId.
     u8 unk;             ///< 0 for SystemSaveData.
