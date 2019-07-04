@@ -300,3 +300,46 @@ Result hidsysSetNotificationLedPattern(const HidsysNotificationLedPattern *patte
     return rc;
 }
 
+Result hidsysGetUniquePadSerialNumber(u64 pad_id, char *serial) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    if (serial) memset(serial, 0, 0x19);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 pad_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_hidsysSrv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 809;
+    raw->pad_id = pad_id;
+
+    Result rc = serviceIpcDispatch(&g_hidsysSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+
+        struct {
+            u64 magic;
+            u64 result;
+            char serial[0x18];
+        } *resp;
+
+        serviceIpcParse(&g_hidsysSrv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && serial)
+            memcpy(serial, resp->serial, 0x18);
+    }
+
+    return rc;
+}
