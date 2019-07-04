@@ -77,6 +77,19 @@ typedef struct
     u64 unk_x38;                    ///< 0 for SystemSaveData/SaveData.
 } FsSave;
 
+/// SaveCreate Struct
+typedef struct
+{
+    u64 journalSize;
+    u64 flags;
+    u64 blockSize;
+    u64 size;
+    u32 unk_x20;
+    u8 SaveDataSpaceId;
+    u8 unk_x25;
+    u8 uninitialized[0x1A];
+} FsSaveCreate;
+
 typedef struct
 {
     u64 saveID_unk;
@@ -226,6 +239,8 @@ Service* fsGetServiceSession(void);
 Result fsOpenBisStorage(FsStorage* out, FsBisStorageId PartitionId);
 Result fsOpenBisFileSystem(FsFileSystem* out, FsBisStorageId PartitionId, const char* string);
 
+Result fsCreateSaveDataFileSystemBySystemSaveDataId(FsSave* save, FsSaveCreate* create);
+
 Result fsIsExFatSupported(bool* out);
 
 /// Do not call this directly, see fs_dev.h.
@@ -245,7 +260,13 @@ Result fsGetRightsIdByPath(const char* path, FsRightsId* out_rights_id);
 
 /// Retrieves the rights id and key generation corresponding to the content path. Only available on [3.0.0+].
 Result fsGetRightsIdAndKeyGenerationByPath(const char* path, u8* out_key_generation, FsRightsId* out_rights_id);
+
+Result fsDisableAutoSaveDataCreation(void);
 // todo: Rest of commands here
+
+// Wrapper(s) for fsCreateSaveDataFileSystemBySystemSaveDataId.
+Result fsCreate_SystemSaveDataWithOwner(FsSaveDataSpaceId space_id, u64 save_data_id, u64 user_id, u64 owner_id, u64 size, u64 journal_size, u32 flags);
+Result fsCreate_SystemSaveData(FsSaveDataSpaceId space_id, u64 save_data_id, u64 size, u64 journal_size, u32 flags);
 
 /// FsFileSystem can be mounted with fs_dev for use with stdio, see fs_dev.h.
 
