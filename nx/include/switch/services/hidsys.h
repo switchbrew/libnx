@@ -73,7 +73,7 @@ Result hidsysSetNotificationLedPattern(const HidsysNotificationLedPattern *patte
 
 /**
  * @brief Gets the unique pad's serial number.
- * @param pad_id Id of the unique pad.
+ * @param UniquePadId UniquePadId for the controller.
  * @param serial Pointer to output the serial to. (The buffer size needs to be at least 0x19 bytes)
  */
-Result hidsysGetUniquePadSerialNumber(u64 pad_id, char *serial);
+Result hidsysGetUniquePadSerialNumber(u64 UniquePadId, char *serial);

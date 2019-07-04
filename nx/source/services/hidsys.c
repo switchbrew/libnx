@@ -300,7 +300,7 @@ Result hidsysSetNotificationLedPattern(const HidsysNotificationLedPattern *patte
     return rc;
 }
 
-Result hidsysGetUniquePadSerialNumber(u64 pad_id, char *serial) {
+Result hidsysGetUniquePadSerialNumber(u64 UniquePadId, char *serial) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
@@ -319,7 +319,7 @@ Result hidsysGetUniquePadSerialNumber(u64 pad_id, char *serial) {
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 809;
-    raw->pad_id = pad_id;
+    raw->pad_id = UniquePadId;
 
     Result rc = serviceIpcDispatch(&g_hidsysSrv);
 
