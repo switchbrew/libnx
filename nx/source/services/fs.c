@@ -701,20 +701,20 @@ Result fsIsExFatSupported(bool* out)
 }
 
 // Wrapper(s) for fsCreateSaveDataFileSystemBySystemSaveDataId.
-Result fsCreate_SystemSaveDataWithOwner(FsSaveDataSpaceId space_id, u64 save_data_id, u64 user_id, u64 owner_id, u64 size, u64 journal_size, u32 flags) {
+Result fsCreate_SystemSaveDataWithOwner(FsSaveDataSpaceId SaveDataSpaceId, u64 saveID, u128 userID, u64 ownerId, u64 size, u64 journalSize, u32 flags) {
     FsSave save;
     FsSaveCreate create;
 
     memset(&save, 0, sizeof(save));
-    save.userID = (u128)user_id | ((u128)owner_id << 64);
-    save.saveID = save_data_id;
+    save.userID = userID;
+    save.saveID = saveID;
     memset(&create, 0, sizeof(create));
     create.size = size;
-    create.journalSize = journal_size;
+    create.journalSize = journalSize;
     create.blockSize = 0x4000;
-    create.ownerId = owner_id; 
+    create.ownerId = ownerId; 
     create.flags = flags;
-    create.SaveDataSpaceId = space_id;
+    create.SaveDataSpaceId = SaveDataSpaceId;
 
     return fsCreateSaveDataFileSystemBySystemSaveDataId(&save, &create);
 }

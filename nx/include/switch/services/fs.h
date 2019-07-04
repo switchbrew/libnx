@@ -78,16 +78,15 @@ typedef struct
 } FsSave;
 
 /// SaveCreate Struct
-typedef struct
-{
-    u64 size;
-    u64 journalSize;
-    u64 blockSize;
-    u64 ownerId;
-    u32 flags;
-    u8 SaveDataSpaceId;
-    u8 unk_x25;
-    u8 padding[0x1A];
+typedef struct {
+    u64 size;           ///< Size of the save data.
+    u64 journalSize;    ///< Journal size of the save data.
+    u64 blockSize;      ///< Block size of the save data.
+    u64 ownerId;        ///< Id of the save data's owner.
+    u32 flags;          ///< Save data flags.
+    u8 SaveDataSpaceId; ///< See \ref FsSaveDataSpaceId.
+    u8 unk;             ///< 0 for SystemSaveData.
+    u8 padding[0x1A];   ///< Uninitialized for SystemSaveData.
 } FsSaveCreate;
 
 typedef struct
@@ -265,8 +264,8 @@ Result fsDisableAutoSaveDataCreation(void);
 // todo: Rest of commands here
 
 // Wrapper(s) for fsCreateSaveDataFileSystemBySystemSaveDataId.
-Result fsCreate_SystemSaveDataWithOwner(FsSaveDataSpaceId space_id, u64 save_data_id, u64 user_id, u64 owner_id, u64 size, u64 journal_size, u32 flags);
-Result fsCreate_SystemSaveData(FsSaveDataSpaceId space_id, u64 save_data_id, u64 size, u64 journal_size, u32 flags);
+Result fsCreate_SystemSaveDataWithOwner(FsSaveDataSpaceId SaveDataSpaceId, u64 saveID, u128 userID, u64 ownerId, u64 size, u64 journalSize, u32 flags);
+Result fsCreate_SystemSaveData(FsSaveDataSpaceId SaveDataSpaceId, u64 saveID, u64 size, u64 journalSize, u32 flags);
 
 /// FsFileSystem can be mounted with fs_dev for use with stdio, see fs_dev.h.
 
