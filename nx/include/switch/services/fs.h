@@ -80,14 +80,14 @@ typedef struct
 /// SaveCreate Struct
 typedef struct
 {
-    u64 journalSize;
-    u64 flags;
-    u64 blockSize;
     u64 size;
-    u32 unk_x20;
+    u64 journalSize;
+    u64 blockSize;
+    u64 ownerId;
+    u32 flags;
     u8 SaveDataSpaceId;
     u8 unk_x25;
-    u8 uninitialized[0x1A];
+    u8 padding[0x1A];
 } FsSaveCreate;
 
 typedef struct

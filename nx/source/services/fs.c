@@ -709,11 +709,12 @@ Result fsCreate_SystemSaveDataWithOwner(FsSaveDataSpaceId space_id, u64 save_dat
     save.userID = (u128)user_id | ((u128)owner_id << 64);
     save.saveID = save_data_id;
     memset(&create, 0, sizeof(create));
-    create.SaveDataSpaceId = space_id;
-    create.blockSize = 0x4000;
-    create.journalSize = journal_size;
-    create.flags = flags;
     create.size = size;
+    create.journalSize = journal_size;
+    create.blockSize = 0x4000;
+    create.ownerId = owner_id; 
+    create.flags = flags;
+    create.SaveDataSpaceId = space_id;
 
     return fsCreateSaveDataFileSystemBySystemSaveDataId(&save, &create);
 }
