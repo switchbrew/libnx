@@ -68,7 +68,7 @@ typedef struct
     u64 titleID;                    ///< titleID of the savedata to access when accessing other titles' savedata via SaveData, otherwise FS_SAVEDATA_CURRENT_TITLEID.
     union { u128 userID; } PACKED;  ///< userID of the user-specific savedata to access, otherwise FS_SAVEDATA_USERID_COMMONSAVE. See account.h.
     u64 saveID;                     ///< saveID, 0 for SaveData.
-    u8 SaveDataType;                ///< See \ref FsSaveDataType.
+    u8 saveDataType;                ///< See \ref FsSaveDataType.
     u8 rank;                        ///< Save data 'rank' or 'precedence'. 0 if this save data is considered the primary save data. 1 if it's considered the secondary save data.
     u16 index;                      ///< Save data index.
     u32 pad_x24;                    ///< Padding.
@@ -84,7 +84,7 @@ typedef struct {
     u64 blockSize;      ///< Block size of the save data.
     u64 ownerId;        ///< Title id of the owner of this save data. 0 for SystemSaveData.
     u32 flags;          ///< Save data flags.
-    u8 SaveDataSpaceId; ///< See \ref FsSaveDataSpaceId.
+    u8 saveDataSpaceId; ///< See \ref FsSaveDataSpaceId.
     u8 unk;             ///< 0 for SystemSaveData.
     u8 padding[0x1A];   ///< Uninitialized for SystemSaveData.
 } FsSaveCreate;
@@ -92,8 +92,8 @@ typedef struct {
 typedef struct
 {
     u64 saveID_unk;
-    u8 SaveDataSpaceId; ///< See \ref FsSaveDataSpaceId.
-    u8 SaveDataType;    ///< See \ref FsSaveDataType.
+    u8 saveDataSpaceId; ///< See \ref FsSaveDataSpaceId.
+    u8 saveDataType;    ///< See \ref FsSaveDataType.
     u8 pad[6];          ///< Padding.
     u128 userID;        ///< See userID for \ref FsSave.
     u64 saveID;         ///< See saveID for \ref FsSave.
@@ -235,8 +235,8 @@ void fsExit(void);
 
 Service* fsGetServiceSession(void);
 
-Result fsOpenBisStorage(FsStorage* out, FsBisStorageId PartitionId);
-Result fsOpenBisFileSystem(FsFileSystem* out, FsBisStorageId PartitionId, const char* string);
+Result fsOpenBisStorage(FsStorage* out, FsBisStorageId partitionId);
+Result fsOpenBisFileSystem(FsFileSystem* out, FsBisStorageId partitionId, const char* string);
 
 Result fsCreateSaveDataFileSystemBySystemSaveDataId(const FsSave* save, const FsSaveCreate* create);
 
@@ -247,7 +247,7 @@ Result fsMountSdcard(FsFileSystem* out);
 
 Result fsMountSaveData(FsFileSystem* out, u8 inval, FsSave *save);
 Result fsMountSystemSaveData(FsFileSystem* out, u8 inval, FsSave *save);
-Result fsOpenSaveDataIterator(FsSaveDataIterator* out, s32 SaveDataSpaceId);
+Result fsOpenSaveDataIterator(FsSaveDataIterator* out, s32 saveDataSpaceId);
 Result fsOpenContentStorageFileSystem(FsFileSystem* out, FsContentStorageId content_storage_id);
 Result fsOpenDataStorageByCurrentProcess(FsStorage* out);
 Result fsOpenDataStorageByDataId(FsStorage* out, u64 dataId, FsStorageId storageId);
@@ -264,8 +264,8 @@ Result fsDisableAutoSaveDataCreation(void);
 // todo: Rest of commands here
 
 // Wrapper(s) for fsCreateSaveDataFileSystemBySystemSaveDataId.
-Result fsCreate_SystemSaveDataWithOwner(FsSaveDataSpaceId SaveDataSpaceId, u64 saveID, u128 userID, u64 ownerId, u64 size, u64 journalSize, u32 flags);
-Result fsCreate_SystemSaveData(FsSaveDataSpaceId SaveDataSpaceId, u64 saveID, u64 size, u64 journalSize, u32 flags);
+Result fsCreate_SystemSaveDataWithOwner(FsSaveDataSpaceId saveDataSpaceId, u64 saveID, u128 userID, u64 ownerId, u64 size, u64 journalSize, u32 flags);
+Result fsCreate_SystemSaveData(FsSaveDataSpaceId saveDataSpaceId, u64 saveID, u64 size, u64 journalSize, u32 flags);
 
 /// FsFileSystem can be mounted with fs_dev for use with stdio, see fs_dev.h.
 
