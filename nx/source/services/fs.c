@@ -70,7 +70,7 @@ Service* fsGetServiceSession(void) {
     return &g_fsSrv;
 }
 
-Result fsOpenBisStorage(FsStorage* out, FsBisStorageId PartitionId) {
+Result fsOpenBisStorage(FsStorage* out, FsBisStorageId partitionId) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -84,7 +84,7 @@ Result fsOpenBisStorage(FsStorage* out, FsBisStorageId PartitionId) {
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 12;
-    raw->PartitionId = PartitionId;
+    raw->PartitionId = partitionId;
 
     Result rc = serviceIpcDispatch(&g_fsSrv);
 
@@ -108,7 +108,7 @@ Result fsOpenBisStorage(FsStorage* out, FsBisStorageId PartitionId) {
     return rc;
 }
 
-Result fsOpenBisFileSystem(FsFileSystem* out, FsBisStorageId PartitionId, const char* string) {
+Result fsOpenBisFileSystem(FsFileSystem* out, FsBisStorageId partitionId, const char* string) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -126,7 +126,7 @@ Result fsOpenBisFileSystem(FsFileSystem* out, FsBisStorageId PartitionId, const 
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 11;
-    raw->PartitionId = PartitionId;
+    raw->PartitionId = partitionId;
 
     Result rc = serviceIpcDispatch(&g_fsSrv);
 
@@ -145,6 +145,42 @@ Result fsOpenBisFileSystem(FsFileSystem* out, FsBisStorageId PartitionId, const 
         if (R_SUCCEEDED(rc)) {
             serviceCreateSubservice(&out->s, &g_fsSrv, &r, 0);
         }
+    }
+
+    return rc;
+}
+
+Result fsCreateSaveDataFileSystemBySystemSaveDataId(const FsSave* save, const FsSaveCreate* create) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        FsSave save;
+        FsSaveCreate create;
+    } PACKED *raw;
+
+    raw = serviceIpcPrepareHeader(&g_fsSrv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 23;
+    memcpy(&raw->save, save, sizeof(FsSave));
+    memcpy(&raw->create, create, sizeof(FsSaveCreate));
+
+    Result rc = serviceIpcDispatch(&g_fsSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_fsSrv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
     }
 
     return rc;
@@ -266,7 +302,7 @@ Result fsMountSystemSaveData(FsFileSystem* out, u8 inval, FsSave *save) {
     return rc;
 }
 
-Result fsOpenSaveDataIterator(FsSaveDataIterator* out, s32 SaveDataSpaceId) {
+Result fsOpenSaveDataIterator(FsSaveDataIterator* out, s32 saveDataSpaceId) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -278,10 +314,10 @@ Result fsOpenSaveDataIterator(FsSaveDataIterator* out, s32 SaveDataSpaceId) {
     struct {
         u64 magic;
         u64 cmd_id;
-        u8 SaveDataSpaceId;
+        u8 saveDataSpaceId;
     } *raw2;
 
-    if (SaveDataSpaceId == FsSaveDataSpaceId_All) {
+    if (saveDataSpaceId == FsSaveDataSpaceId_All) {
         raw = serviceIpcPrepareHeader(&g_fsSrv, &c, sizeof(*raw));
 
         raw->magic = SFCI_MAGIC;
@@ -292,7 +328,7 @@ Result fsOpenSaveDataIterator(FsSaveDataIterator* out, s32 SaveDataSpaceId) {
 
         raw2->magic = SFCI_MAGIC;
         raw2->cmd_id = 61;
-        raw2->SaveDataSpaceId = SaveDataSpaceId;
+        raw2->saveDataSpaceId = saveDataSpaceId;
     }
 
     Result rc = serviceIpcDispatch(&g_fsSrv);
@@ -590,6 +626,37 @@ Result fsGetRightsIdAndKeyGenerationByPath(const char* path, u8* out_key_generat
     return rc;
 }
 
+Result fsDisableAutoSaveDataCreation(void) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_fsSrv, &c, sizeof(*raw));
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 1003;
+
+    Result rc = serviceIpcDispatch(&g_fsSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_fsSrv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
 Result fsIsExFatSupported(bool* out)
 {
     if (hosversionBefore(2,0,0)) {
@@ -633,6 +700,28 @@ Result fsIsExFatSupported(bool* out)
     return rc;
 }
 
+// Wrapper(s) for fsCreateSaveDataFileSystemBySystemSaveDataId.
+Result fsCreate_SystemSaveDataWithOwner(FsSaveDataSpaceId saveDataSpaceId, u64 saveID, u128 userID, u64 ownerId, u64 size, u64 journalSize, u32 flags) {
+    FsSave save = {
+        .userID = userID,
+        .saveID = saveID,
+    };
+    FsSaveCreate create = {
+        .size = size,
+        .journalSize = journalSize,
+        .blockSize = 0x4000,
+        .ownerId = ownerId,
+        .flags = flags,
+        .saveDataSpaceId = saveDataSpaceId,
+    };
+
+    return fsCreateSaveDataFileSystemBySystemSaveDataId(&save, &create);
+}
+
+Result fsCreate_SystemSaveData(FsSaveDataSpaceId saveDataSpaceId, u64 saveID, u64 size, u64 journalSize, u32 flags) {
+    return fsCreate_SystemSaveDataWithOwner(saveDataSpaceId, saveID, 0, 0, size, journalSize, flags);
+}
+
 // Wrapper(s) for fsMountSaveData.
 Result fsMount_SaveData(FsFileSystem* out, u64 titleID, u128 userID) {
     FsSave save;
@@ -640,7 +729,7 @@ Result fsMount_SaveData(FsFileSystem* out, u64 titleID, u128 userID) {
     memset(&save, 0, sizeof(save));
     save.titleID = titleID;
     save.userID = userID;
-    save.SaveDataType = FsSaveDataType_SaveData;
+    save.saveDataType = FsSaveDataType_SaveData;
 
     return fsMountSaveData(out, FsSaveDataSpaceId_NandUser, &save);
 }
@@ -650,7 +739,7 @@ Result fsMount_SystemSaveData(FsFileSystem* out, u64 saveID) {
 
     memset(&save, 0, sizeof(save));
     save.saveID = saveID;
-    save.SaveDataType = FsSaveDataType_SystemSaveData;
+    save.saveDataType = FsSaveDataType_SystemSaveData;
 
     return fsMountSystemSaveData(out, FsSaveDataSpaceId_NandSystem, &save);
 }
