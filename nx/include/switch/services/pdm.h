@@ -36,7 +36,7 @@ typedef enum {
     PdmPlayLogPolicy_None    = 2,        ///< The pdm:ntfy commands which handle ::PdmPlayEventType_Applet logging will immediately return 0 when the input param matches this value.
 } PdmPlayLogPolicy;
 
-/// ApplicationEvent
+/// ApplicationEvent.
 /// Timestamp format, converted from PosixTime: total minutes since epoch UTC 1999/12/31 00:00:00.
 /// See \ref pdmPlayTimestampToPosix.
 typedef struct {
@@ -64,7 +64,7 @@ typedef struct {
     u32 totalLaunches;                ///< Total times the application title was launched.
 } PdmPlayStatistics;
 
-/// LastPlayTime
+/// LastPlayTime.
 /// This contains data from the last time the title was played.
 typedef struct {
     u64 titleID;                      ///< Application titleID.
@@ -75,7 +75,7 @@ typedef struct {
     u8 pad[3];                        ///< Padding.
 } PdmLastPlayTime;
 
-/// PlayEvent
+/// PlayEvent.
 /// This is the raw entry struct directly read from FS, without any entry filtering.
 typedef struct {
     union {
@@ -138,11 +138,11 @@ typedef struct {
     u64 timestampUser;                ///< See PdmPlayEvent::timestampUser.
     u64 timestampNetwork;             ///< See PdmPlayEvent::timestampNetwork.
     u64 timestampSteady;              ///< See PdmPlayEvent::timestampSteady.
-    u8 eventType;                     ///< Account eventType.
+    u8 type;                          ///< See PdmPlayEvent::eventData::account::type.
     u8 pad_x31[7];                    ///< Padding.
 } PdmAccountEvent;
 
-/// AccountPlayEvent
+/// AccountPlayEvent.
 /// This is the raw entry struct directly read from FS, without any entry filtering. This is separate from \ref PdmPlayEvent.
 typedef struct {
     u8 unk_x0[4];                     ///< Unknown.
