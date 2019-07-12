@@ -193,9 +193,9 @@ Result fsDeleteSaveDataFileSystemBySaveDataSpaceId(FsSaveDataSpaceId saveDataSpa
     struct {
         u64 magic;
         u64 cmd_id;
-        FsSaveDataSpaceId saveDataSpaceId;
+        u8 saveDataSpaceId;
         u64 saveID;
-    } PACKED *raw;
+    } *raw;
 
     raw = serviceIpcPrepareHeader(&g_fsSrv, &c, sizeof(*raw));
 
