@@ -106,6 +106,13 @@ typedef enum {
     AppletThemeColorType_Unknown3 = 3,
 } AppletThemeColorType;
 
+/// Permission values for \ref appletSetScreenShotPermission.
+typedef enum {
+    AppletScreenShotPermission_Inherit = 0,        ///< Inherit from parent applet.
+    AppletScreenShotPermission_Enable  = 1,        ///< Enable.
+    AppletScreenShotPermission_Disable = 2,        ///< Disable.
+} AppletScreenShotPermission;
+
 /// applet hook function.
 typedef void (*AppletHookFn)(AppletHookType hook, void* param);
 
@@ -138,9 +145,18 @@ typedef struct {
 
 /// Attributes for launching applications for Quest.
 typedef struct {
-    u32 unk_x0;
-    u32 unk_x4;
+    u32 unk_x0;                        ///< See AppletApplicationAttribute::unk_x0.
+    u32 unk_x4;                        ///< See AppletApplicationAttribute::unk_x4.
+    float volume;                      ///< [7.0.0+] See AppletApplicationAttribute::volume.
 } AppletApplicationAttributeForQuest;
+
+/// ApplicationAttribute
+typedef struct {
+    u32 unk_x0;                        ///< Default is 0 for non-Quest. Only used when non-zero: unknown value in seconds.
+    u32 unk_x4;                        ///< Default is 0 for non-Quest. Only used when non-zero: unknown value in seconds.
+    float volume;                      ///< Audio volume. Must be in the range of 0.0f-1.0f. The default is 1.0f.
+    u8 unused[0x14];                   ///< Unused. Default is 0.
+} AppletApplicationAttribute;
 
 /// Initialize applet, called automatically during app startup.
 Result appletInitialize(void);
@@ -180,6 +196,7 @@ Result appletRequestLaunchApplication(u64 titleID, AppletStorage* s);
 /**
  * @brief Requests to launch the specified application, for kiosk systems.
  * @note Only available with AppletType_*Application on 3.0.0+.
+ * @note Identical to \ref appletRequestLaunchApplication, except this allows the user to specify the attribute fields instead of the defaults being used.
  * @param[in] titleID Application titleID
  * @param s Optional AppletStorage object, can be NULL. This is automatically closed. When NULL on pre-4.0.0, this will internally create a tmp storage with size 0 for use with the cmd. This is the storage available to the launched application via \ref appletPopLaunchParameter with ::AppletLaunchParameterKind_Application.
  * @param[in] attr Kiosk application attributes.
@@ -207,7 +224,7 @@ Result appletSetGamePlayRecordingState(bool state);
 /// Initializes video recording. This allocates a 0x6000000-byte buffer for the TransferMemory, cleanup is handled automatically during app exit in \ref appletExit.
 /// Only available with AppletType_Application on 3.0.0+, hence errors from this can be ignored.
 /// Video recording is only fully available system-side with 4.0.0+.
-/// Only usable when running under a title which supports video recording.
+/// Only usable when running under a title which supports video recording. Using this is only needed when the host title control.nacp has VideoCaptureMode set to Enabled, with Automatic appletInitializeGamePlayRecording is not needed.
 Result appletInitializeGamePlayRecording(void);
 
 /**
@@ -242,6 +259,15 @@ Result appletQueryApplicationPlayStatistics(PdmApplicationPlayStatistics *stats,
 Result appletQueryApplicationPlayStatisticsByUid(u128 userID, PdmApplicationPlayStatistics *stats, const u64 *titleIDs, s32 count, s32 *total_out);
 
 /**
+ * @brief Gets an Event which is signaled for GpuErrorDetected.
+ * @note Only available with AppletType_*Application on [8.0.0+].
+ * @note The Event must be closed by the user once finished with it.
+ * @note Official sw waits on this Event from a seperate thread, triggering an abort when it's signaled.
+ * @param[out] event_out Output Event with autoclear=false.
+ */
+Result appletGetGpuErrorDetectedSystemEvent(Event *out_event);
+
+/**
  * @brief Delay exiting until \ref appletUnlockExit is called, with a 15 second timeout once exit is requested.
  * @note When exit is requested \ref appletMainLoop will return false, hence any main-loop using appletMainLoop will exit. This allows the app to handle cleanup post-main-loop instead of being force-terminated.
  * @note If the above timeout occurs after exit was requested where \ref appletUnlockExit was not called, the process will be forced-terminated.
@@ -254,9 +280,9 @@ Result appletUnlockExit(void);
 
 /**
  * @brief Controls whether screenshot-capture is allowed.
- * @param val 0 = disable, 1 = enable.
+ * @param permission \ref AppletScreenShotPermission
  */
-Result appletSetScreenShotPermission(s32 val);
+Result appletSetScreenShotPermission(AppletScreenShotPermission permission);
 
 Result appletSetScreenShotImageOrientation(s32 val);
 

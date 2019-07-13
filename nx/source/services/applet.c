@@ -1084,11 +1084,11 @@ static Result _appletCreateApplicationAndPushAndRequestToStartForQuest(u64 title
     return rc;
 }
 
-static Result _appletCreateApplicationAndRequestToStart(u64 titleID) { //4.0.0+
+static Result _appletCreateApplicationAndRequestToStart(u64 titleID) { // [4.0.0+]
     return _appletCmdInU64(&g_appletIFunctions, titleID, 12);
 }
 
-static Result _appletCreateApplicationAndRequestToStartForQuest(u64 titleID, const AppletApplicationAttributeForQuest *attr) { //4.0.0+
+static Result _appletCreateApplicationAndRequestToStartForQuest(u64 titleID, const AppletApplicationAttributeForQuest *attr) { // [4.0.0+]
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -1105,6 +1105,80 @@ static Result _appletCreateApplicationAndRequestToStartForQuest(u64 titleID, con
     raw->cmd_id = 13;
     raw->val0 = attr->unk_x0;
     raw->val1 = attr->unk_x4;
+    raw->titleID = titleID;
+
+    Result rc = serviceIpcDispatch(&g_appletIFunctions);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_appletIFunctions, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+static Result _appletCreateApplicationWithAttributeAndPushAndRequestToStartForQuest(u64 titleID, AppletStorage* s, const AppletApplicationAttribute *attr) { // [7.0.0+]
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    serviceSendObject(&s->s, &c);
+
+    ipcAddSendBuffer(&c, attr, sizeof(*attr), BufferType_Normal);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 titleID;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletIFunctions, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 14;
+    raw->titleID = titleID;
+
+    Result rc = serviceIpcDispatch(&g_appletIFunctions);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_appletIFunctions, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+static Result _appletCreateApplicationWithAttributeAndRequestToStartForQuest(u64 titleID, const AppletApplicationAttribute *attr) { // [7.0.0+]
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    ipcAddSendBuffer(&c, attr, sizeof(*attr), BufferType_Normal);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 titleID;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletIFunctions, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 15;
     raw->titleID = titleID;
 
     Result rc = serviceIpcDispatch(&g_appletIFunctions);
@@ -1160,6 +1234,7 @@ Result appletRequestLaunchApplication(u64 titleID, AppletStorage* s) {
 
 Result appletRequestLaunchApplicationForQuest(u64 titleID, AppletStorage* s, const AppletApplicationAttributeForQuest *attr) {
     AppletStorage tmpstorage={0};
+    AppletApplicationAttribute appattr={0};
     Result rc=0;
 
     if (!serviceIsActive(&g_appletSrv) || !_appletIsApplication())
@@ -1173,12 +1248,26 @@ Result appletRequestLaunchApplicationForQuest(u64 titleID, AppletStorage* s, con
         if (R_FAILED(rc)) return rc;
     }
 
+    if (hosversionAtLeast(7,0,0)) {
+        appattr.unk_x0 = attr->unk_x0;
+        appattr.unk_x4 = attr->unk_x4;
+        appattr.volume = attr->volume;
+    }
+
     if (hosversionAtLeast(4,0,0) && s==NULL) {
-        rc = _appletCreateApplicationAndRequestToStartForQuest(titleID, attr);
+        if (hosversionAtLeast(7,0,0))
+            rc = _appletCreateApplicationWithAttributeAndRequestToStartForQuest(titleID, &appattr);
+        else
+            rc = _appletCreateApplicationAndRequestToStartForQuest(titleID, attr);
     }
     else {
         if (hosversionBefore(3,0,0)) rc = MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-        if (R_SUCCEEDED(rc)) rc = _appletCreateApplicationAndPushAndRequestToStartForQuest(titleID, s, attr);
+        if (R_SUCCEEDED(rc)) {
+            if (hosversionAtLeast(7,0,0))
+                rc = _appletCreateApplicationWithAttributeAndPushAndRequestToStartForQuest(titleID, s, &appattr);
+            else
+                rc = _appletCreateApplicationAndPushAndRequestToStartForQuest(titleID, s, attr);
+        }
     }
 
     if (s) appletStorageClose(s);
@@ -1450,7 +1539,7 @@ Result appletQueryApplicationPlayStatistics(PdmApplicationPlayStatistics *stats,
     IpcCommand c;
     ipcInitialize(&c);
 
-    if (!serviceIsActive(&g_appletSrv) || !_appletIsRegularApplication())
+    if (!serviceIsActive(&g_appletSrv) || !_appletIsApplication())
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     if (hosversionBefore(5,0,0))
@@ -1494,7 +1583,7 @@ Result appletQueryApplicationPlayStatisticsByUid(u128 userID, PdmApplicationPlay
     IpcCommand c;
     ipcInitialize(&c);
 
-    if (!serviceIsActive(&g_appletSrv) || !_appletIsRegularApplication())
+    if (!serviceIsActive(&g_appletSrv) || !_appletIsApplication())
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     if (hosversionBefore(6,0,0))
@@ -1534,6 +1623,16 @@ Result appletQueryApplicationPlayStatisticsByUid(u128 userID, PdmApplicationPlay
     }
 
     return rc;
+}
+
+Result appletGetGpuErrorDetectedSystemEvent(Event *out_event) {
+    if (!serviceIsActive(&g_appletSrv) || !_appletIsApplication())
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    if (hosversionBefore(8,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletGetEvent(&g_appletIFunctions, out_event, 130, false);
 }
 
 // IOverlayFunctions
@@ -1775,21 +1874,21 @@ static Result _appletWaitLibraryAppletLaunchableEvent(void) {
     return rc;
 }
 
-Result appletSetScreenShotPermission(s32 val) {
+Result appletSetScreenShotPermission(AppletScreenShotPermission permission) {
     IpcCommand c;
     ipcInitialize(&c);
 
     struct {
         u64 magic;
         u64 cmd_id;
-        s32 val;
+        s32 permission;
     } *raw;
 
     raw = serviceIpcPrepareHeader(&g_appletISelfController, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 10;
-    raw->val = val;
+    raw->permission = permission;
 
     Result rc = serviceIpcDispatch(&g_appletISelfController);
 
