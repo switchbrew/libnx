@@ -27,8 +27,7 @@ void lrExit(void) {
     }
 }
 
-Service* lrGetServiceSession(void)
-{
+Service* lrGetServiceSession(void) {
     return &g_managerSrv;
 }
 

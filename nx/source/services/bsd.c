@@ -277,8 +277,7 @@ void bsdExit(void) {
     tmemClose(&g_bsdTmem);
 }
 
-Service* bsdGetServiceSession(void)
-{
+Service* bsdGetServiceSession(void) {
     return &g_bsdSrv;
 }
 

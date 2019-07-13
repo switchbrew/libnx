@@ -37,8 +37,7 @@ void hiddbgExit(void) {
     }
 }
 
-Service* hiddbgGetServiceSession(void)
-{
+Service* hiddbgGetServiceSession(void) {
     return &g_hiddbgSrv;
 }
 

@@ -53,8 +53,7 @@ void plExit(void)
     }
 }
 
-Service* plGetServiceSession(void)
-{
+Service* plGetServiceSession(void) {
     return &g_plSrv;
 }
 

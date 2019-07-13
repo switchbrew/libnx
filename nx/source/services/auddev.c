@@ -47,8 +47,7 @@ void auddevExit(void) {
     }
 }
 
-Service* auddevGetServiceSession(void)
-{
+Service* auddevGetServiceSession(void) {
     return &g_auddevIAudioDevice;
 }
 

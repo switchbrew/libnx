@@ -25,8 +25,7 @@ void csrngExit(void) {
         serviceClose(&g_csrngSrv);
 }
 
-Service* csrngGetServiceSession(void)
-{
+Service* csrngGetServiceSession(void) {
     return &g_csrngSrv;
 }
 

@@ -33,8 +33,7 @@ void i2cExit(void) {
     }
 }
 
-Service* i2cGetServiceSession(void)
-{
+Service* i2cGetServiceSession(void) {
     return &g_i2cSrv;
 }
 

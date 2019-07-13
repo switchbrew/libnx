@@ -39,8 +39,7 @@ void fsldrExit(void) {
         serviceClose(&g_fsldrSrv);
 }
 
-Service* fsldrGetServiceSession(void)
-{
+Service* fsldrGetServiceSession(void) {
     return &g_fsldrSrv;
 }
 

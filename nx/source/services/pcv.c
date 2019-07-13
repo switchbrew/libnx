@@ -30,8 +30,7 @@ void pcvExit(void) {
     }
 }
 
-Service* pcvGetServiceSession(void)
-{
+Service* pcvGetServiceSession(void) {
     return &g_pcvSrv;
 }
 

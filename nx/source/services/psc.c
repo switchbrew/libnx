@@ -45,8 +45,7 @@ void pscExit(void) {
     }
 }
 
-Service* pscGetServiceSession(void)
-{
+Service* pscGetServiceSession(void) {
     return &g_pscSrv;
 }
 

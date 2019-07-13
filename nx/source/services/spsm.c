@@ -29,8 +29,7 @@ void spsmExit(void) {
     }
 }
 
-Service* spsmGetServiceSession(void)
-{
+Service* spsmGetServiceSession(void) {
     return &g_spsmSrv;
 }
 

@@ -20,8 +20,7 @@ void ncmExit(void) {
     }
 }
 
-Service* ncmGetServiceSession(void)
-{
+Service* ncmGetServiceSession(void) {
     return &g_ncmSrv;
 }
 

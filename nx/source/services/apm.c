@@ -41,8 +41,7 @@ void apmExit(void)
     }
 }
 
-Service* apmGetServiceSession(void)
-{
+Service* apmGetServiceSession(void) {
     return &g_apmSrv;    
 }
 

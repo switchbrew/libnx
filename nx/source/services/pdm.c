@@ -29,8 +29,7 @@ void pdmqryExit(void) {
         serviceClose(&g_pdmqrySrv);
 }
 
-Service* pdmqryGetServiceSession(void)
-{
+Service* pdmqryGetServiceSession(void) {
     return &g_pdmqrySrv;
 }
 

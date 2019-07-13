@@ -29,8 +29,7 @@ void lblExit(void) {
     }
 }
 
-Service* lblGetServiceSession(void)
-{
+Service* lblGetServiceSession(void) {
     return &g_lblSrv;
 }
 

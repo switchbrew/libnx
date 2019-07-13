@@ -45,8 +45,7 @@ void setExit(void)
     }
 }
 
-Service* setGetServiceSession(void)
-{
+Service* setGetServiceSession(void) {
     return &g_setSrv;
 }
 
@@ -67,8 +66,7 @@ void setsysExit(void)
     }
 }
 
-Service* setsysGetSessionService(void)
-{
+Service* setsysGetSessionService(void) {
     return &g_setsysSrv;
 }
 

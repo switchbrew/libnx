@@ -35,8 +35,7 @@ void capssuExit(void) {
         serviceClose(&g_capssuSrv);
 }
 
-Service* capssuGetServiceSession(void)
-{
+Service* capssuGetServiceSession(void) {
     return &g_capssuSrv;
 }
 

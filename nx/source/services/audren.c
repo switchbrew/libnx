@@ -129,8 +129,7 @@ void audrenExit(void)
     tmemClose(&g_audrenWorkBuf);
 }
 
-Service* audrenGetServiceSession(void)
-{
+Service* audrenGetServiceSession(void) {
     return &g_audrenIAudioRenderer;
 }
 

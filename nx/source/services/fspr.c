@@ -39,8 +39,7 @@ void fsprExit(void) {
         serviceClose(&g_fsprSrv);
 }
 
-Service* fsprGetServiceSession(void)
-{
+Service* fsprGetServiceSession(void) {
     return &g_fsprSrv;
 }
 

@@ -37,8 +37,7 @@ void psmExit(void) {
     }
 }
 
-Service* psmGetServiceSession(void)
-{
+Service* psmGetServiceSession(void) {
     return &g_psmSrv;
 }
 

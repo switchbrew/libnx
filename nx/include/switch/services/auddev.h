@@ -11,7 +11,7 @@
 
 Result auddevInitialize(void);
 void auddevExit(void);
-Service* auddevgetServiceSession(void);
+Service* auddevGetServiceSession(void);
 
 Result auddevListAudioDeviceName(AudioDeviceName *DeviceNames, s32 max_names, s32 *total_names);
 Result auddevSetAudioDeviceOutputVolume(const AudioDeviceName *DeviceName, float volume);

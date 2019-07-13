@@ -94,8 +94,7 @@ void splExit(void) {
     return _splSrvExit(&g_splSrv, &g_splRefCnt);
 }
 
-Service* splGetServiceSession(void)
-{
+Service* splGetServiceSession(void) {
     return &g_splSrv;
 }
 
@@ -115,8 +114,7 @@ void splCryptoExit(void) {
     }
 }
 
-Service* splCryptogetServiceSession(void)
-{
+Service* splCryptogetServiceSession(void) {
     return &g_splCryptoSrv;
 }
 
@@ -136,8 +134,7 @@ void splSslExit(void) {
     }
 }
 
-Service* splSslGetServiceSession(void)
-{
+Service* splSslGetServiceSession(void) {
     return &g_splSslSrv;
 }
 
@@ -157,8 +154,7 @@ void splEsExit(void) {
     }
 }
 
-Service* splEsGetServiceSession(void)
-{
+Service* splEsGetServiceSession(void) {
     return &g_splEsSrv;
 }
 
@@ -178,8 +174,7 @@ void splFsExit(void) {
     }
 }
 
-Service* splFsGetServiceSession(void)
-{
+Service* splFsGetServiceSession(void) {
     return &g_splFsSrv;
 }
 
@@ -191,8 +186,7 @@ void splManuExit(void) {
      return _splSrvExit(&g_splManuSrv, &g_splManuRefCnt);
 }
 
-Service* splManuGetServiceSession(void)
-{
+Service* splManuGetServiceSession(void) {
     return &g_splManuSrv;
 }
 

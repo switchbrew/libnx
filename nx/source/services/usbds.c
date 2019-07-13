@@ -78,8 +78,7 @@ void usbDsExit(void)
     serviceClose(&g_usbDsSrv);
 }
 
-Service* usbDsGetServiceSession(void)
-{
+Service* usbDsGetServiceSession(void) {
     return &g_usbDsSrv;
 }
 

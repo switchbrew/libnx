@@ -33,8 +33,7 @@ void capsscExit(void) {
         serviceClose(&g_capsscSrv);
 }
 
-Service* capsscGetServiceSession(void)
-{
+Service* capsscGetServiceSession(void) {
     return &g_capsscSrv;
 }
 

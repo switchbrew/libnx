@@ -36,8 +36,7 @@ void wlaninfExit(void) {
     }
 }
 
-Service* wlaninfGetServiceSession(void)
-{
+Service* wlaninfGetServiceSession(void) {
     return &g_wlaninfSrv;
 }
 

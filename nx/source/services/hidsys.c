@@ -38,8 +38,7 @@ void hidsysExit(void) {
     }
 }
 
-Service* hidsysGetServiceSession(void)
-{
+Service* hidsysGetServiceSession(void) {
     return &g_hidsysSrv;
 }
 

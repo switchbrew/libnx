@@ -29,8 +29,7 @@ void gpioExit(void) {
     }
 }
 
-Service* gpioGetServiceSession(void)
-{
+Service* gpioGetServiceSession(void) {
     return &g_gpioSrv;
 }
 

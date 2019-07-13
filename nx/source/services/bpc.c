@@ -29,8 +29,7 @@ void bpcExit(void)
         serviceClose(&g_bpcSrv);
 }
 
-Service* bpcGetServiceSession(void)
-{
+Service* bpcGetServiceSession(void) {
     return &g_bpcSrv;
 }
 

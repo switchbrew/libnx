@@ -37,8 +37,7 @@ void clkrstExit(void) {
     }
 }
 
-Service* clkrstGetServiceSession(void)
-{
+Service* clkrstGetServiceSession(void) {
     return &g_clkrstSrv;
 }
 

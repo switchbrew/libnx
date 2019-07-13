@@ -37,8 +37,7 @@ void ldrRoExit(void) {
         serviceClose(&g_roSrv);
 }
 
-Service* ldrRoGetServiceSession(void)
-{
+Service* ldrRoGetServiceSession(void) {
     return &g_roSrv;
 }
 
@@ -64,8 +63,7 @@ void ro1Exit(void) {
         serviceClose(&g_ro1Srv);
 }
 
-Service* ro1GetServiceSession(void)
-{
+Service* ro1GetServiceSession(void) {
     return &g_ro1Srv;
 }
 
@@ -85,8 +83,7 @@ void roDmntExit(void) {
         serviceClose(&g_dmntSrv);
 }
 
-Service* roDmntGetServiceSession(void)
-{
+Service* roDmntGetServiceSession(void) {
     return &g_dmntSrv;
 }
 
