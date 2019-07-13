@@ -27,6 +27,7 @@ typedef struct {
 
 Result plInitialize(void);
 void plExit(void);
+Service* plGetServiceSession(void);
 void* plGetSharedmemAddr(void);
 
 ///< Gets a specific shared-font via SharedFontType, see \ref PlSharedFontType.

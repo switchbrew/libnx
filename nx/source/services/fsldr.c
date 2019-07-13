@@ -39,6 +39,10 @@ void fsldrExit(void) {
         serviceClose(&g_fsldrSrv);
 }
 
+Service* fsldrGetServiceSession(void) {
+    return &g_fsldrSrv;
+}
+
 Result fsldrOpenCodeFileSystem(u64 tid, const char *path, FsFileSystem* out) {
     char send_path[FS_MAX_PATH+1] = {0};
     IpcCommand c;

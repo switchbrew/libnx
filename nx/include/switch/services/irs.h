@@ -55,7 +55,7 @@ Result irsInitialize(void);
 /// Exit irs.
 void irsExit(void);
 
-Service* irsGetSessionService(void);
+Service* irsGetServiceSession(void);
 void* irsGetSharedmemAddr(void);
 
 /// (De)activate the IR sensor, this is automatically used by \ref irsExit. Must be called after irsInitialize() to activate the IR sensor.

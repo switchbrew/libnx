@@ -26,6 +26,7 @@ typedef struct {
 
 Result pscInitialize(void);
 void pscExit(void);
+Service* pscGetServiceSession(void);
 
 Result pscGetPmModule(PscPmModule *out, u16 module_id, const u16 *dependencies, size_t dependency_count, bool autoclear);
 

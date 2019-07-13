@@ -6,6 +6,7 @@
  */
 #pragma once
 #include "../types.h"
+#include "../services/sm.h"
 
 typedef enum {
     BpcSleepButtonState_Held = 0,
@@ -14,6 +15,7 @@ typedef enum {
 
 Result bpcInitialize(void);
 void bpcExit(void);
+Service* bpcGetServiceSession(void);
 
 Result bpcShutdownSystem(void);
 Result bpcRebootSystem(void);

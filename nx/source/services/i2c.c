@@ -33,6 +33,10 @@ void i2cExit(void) {
     }
 }
 
+Service* i2cGetServiceSession(void) {
+    return &g_i2cSrv;
+}
+
 Result i2cOpenSession(I2cSession *out, I2cDevice dev) {
     IpcCommand c;
     ipcInitialize(&c);

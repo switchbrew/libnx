@@ -41,6 +41,10 @@ void apmExit(void)
     }
 }
 
+Service* apmGetServiceSession(void) {
+    return &g_apmSrv;    
+}
+
 static Result _apmGetSession(Service* srv, Service* srv_out, u64 cmd_id) {
     IpcCommand c;
     ipcInitialize(&c);

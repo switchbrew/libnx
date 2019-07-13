@@ -78,6 +78,10 @@ void usbDsExit(void)
     serviceClose(&g_usbDsSrv);
 }
 
+Service* usbDsGetServiceSession(void) {
+    return &g_usbDsSrv;
+}
+
 Event* usbDsGetStateChangeEvent(void)
 {
     return &g_usbDsStateChangeEvent;

@@ -104,6 +104,7 @@ typedef struct {
 /// Initialize/exit usb:hs.
 Result usbHsInitialize(void);
 void usbHsExit(void);
+Service* usbHsGetServiceSession(void);
 
 /// Returns the Event loaded during init with autoclear=false.
 /// Signaled when a device was removed.

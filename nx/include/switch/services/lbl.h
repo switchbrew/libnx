@@ -6,9 +6,11 @@
  */
 #pragma once
 #include "../types.h"
+#include "../services/sm.h"
 
 Result lblInitialize(void);
 void lblExit(void);
+Service* lblGetServiceSession(void);
 
 Result lblSwitchBacklightOn(u64 fade_time);
 Result lblSwitchBacklightOff(u64 fade_time);

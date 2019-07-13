@@ -64,6 +64,7 @@ typedef enum {
 Result usbDsInitialize(void);
 /// Closes the usb:ds session. Any interfaces/endpoints which are left open are automatically closed, since otherwise usb-sysmodule won't fully reset usb:ds to defaults.
 void usbDsExit(void);
+Service* usbDsGetServiceSession(void);
 
 /// Helpers
 Result usbDsWaitReady(u64 timeout);

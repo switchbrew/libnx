@@ -15,6 +15,7 @@ typedef struct {
 
 Result clkrstInitialize(void);
 void clkrstExit(void);
+Service* clkrstGetServiceSession(void);
 
 /// Opens a ClkrstSession for the requested PcvModuleId, unk is set to 3 in official sysmodules.
 Result clkrstOpenSession(ClkrstSession* session_out, PcvModuleId module_id, u32 unk);

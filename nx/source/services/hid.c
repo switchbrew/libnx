@@ -167,7 +167,7 @@ void hidReset(void)
     rwlockWriteUnlock(&g_hidLock);
 }
 
-Service* hidGetSessionService(void) {
+Service* hidGetServiceSession(void) {
     return &g_hidSrv;
 }
 

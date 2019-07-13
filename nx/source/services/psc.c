@@ -45,6 +45,10 @@ void pscExit(void) {
     }
 }
 
+Service* pscGetServiceSession(void) {
+    return &g_pscSrv;
+}
+
 Result pscGetPmModule(PscPmModule *out, u16 module_id, const u16 *dependencies, size_t dependency_count, bool autoclear) {
     IpcCommand c;
     ipcInitialize(&c);

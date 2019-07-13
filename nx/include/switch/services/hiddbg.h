@@ -78,6 +78,7 @@ typedef struct {
 
 Result hiddbgInitialize(void);
 void hiddbgExit(void);
+Service* hiddbgGetServiceSession(void);
 
 /// Writes the input RGB colors to the spi-flash for the specified controller (offset 0x6050 size 0x6). See hidsys.h for UniquePadId. Only available with [3.0.0+].
 Result hiddbgUpdateControllerColor(u32 colorBody, u32 colorButtons, u64 UniquePadId);

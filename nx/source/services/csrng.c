@@ -25,6 +25,10 @@ void csrngExit(void) {
         serviceClose(&g_csrngSrv);
 }
 
+Service* csrngGetServiceSession(void) {
+    return &g_csrngSrv;
+}
+
 Result csrngGetRandomBytes(void *out, size_t out_size) {
     IpcCommand c;
     ipcInitialize(&c);

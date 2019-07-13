@@ -29,6 +29,10 @@ void lblExit(void) {
     }
 }
 
+Service* lblGetServiceSession(void) {
+    return &g_lblSrv;
+}
+
 static Result _lblCmdNoIO(u64 cmd_id) {
     IpcCommand c;
     ipcInitialize(&c);

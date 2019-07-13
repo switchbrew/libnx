@@ -18,6 +18,8 @@ static Service* _splGetRsaSrv(void);
 
 static Service* _splGetEsSrv(void);
 static Service* _splGetFsSrv(void);
+static Service* _splGetSslSrv(void);
+static Service* _splGetManuSrv(void);
 
 Service* _splGetGeneralSrv(void) {
     if (hosversionBefore(4,0,0)) {
@@ -71,6 +73,14 @@ Service* _splGetFsSrv(void) {
     return hosversionAtLeast(4,0,0) ? &g_splFsSrv : &g_splSrv;
 }
 
+Service* _splGetSslSrv(void) {
+    return hosversionAtLeast(4,0,0) ? &g_splSslSrv : &g_splSrv;
+}
+
+Service* _splGetManuSrv(void) {
+    return hosversionAtLeast(4,0,0) ? &g_splManuSrv : &g_splSrv;
+}
+
 /* There are like six services, so these helpers will initialize/exit the relevant services. */
 static Result _splSrvInitialize(Service* srv, u64 *refcnt, const char *name) {
     atomicIncrement64(refcnt);
@@ -94,6 +104,10 @@ void splExit(void) {
     return _splSrvExit(&g_splSrv, &g_splRefCnt);
 }
 
+Service* splGetServiceSession(void) {
+    return _splGetGeneralSrv();
+}
+
 Result splCryptoInitialize(void) {
     if (hosversionAtLeast(4,0,0)) {
         return _splSrvInitialize(&g_splCryptoSrv, &g_splCryptoRefCnt, "spl:mig");
@@ -108,6 +122,10 @@ void splCryptoExit(void) {
     } else {
         return splExit();
     }
+}
+
+Service* splCryptoGetServiceSession(void) {
+    return _splGetCryptoSrv();
 }
 
 Result splSslInitialize(void) {
@@ -126,6 +144,10 @@ void splSslExit(void) {
     }
 }
 
+Service* splSslGetServiceSession(void) {
+    return _splGetSslSrv();
+}
+
 Result splEsInitialize(void) {
     if (hosversionAtLeast(4,0,0)) {
         return _splSrvInitialize(&g_splEsSrv, &g_splEsRefCnt, "spl:es");
@@ -140,6 +162,10 @@ void splEsExit(void) {
     } else {
         return splExit();
     }
+}
+
+Service* splEsGetServiceSession(void) {
+    return _splGetEsSrv();
 }
 
 Result splFsInitialize(void) {
@@ -158,12 +184,20 @@ void splFsExit(void) {
     }
 }
 
+Service* splFsGetServiceSession(void) {
+    return _splGetFsSrv();
+}
+
 Result splManuInitialize(void) {
     return _splSrvInitialize(&g_splManuSrv, &g_splManuRefCnt, "spl:manu");
 }
 
 void splManuExit(void) {
      return _splSrvExit(&g_splManuSrv, &g_splManuRefCnt);
+}
+
+Service* splManuGetServiceSession(void) {
+    return _splGetManuSrv();
 }
 
 

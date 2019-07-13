@@ -29,6 +29,10 @@ void gpioExit(void) {
     }
 }
 
+Service* gpioGetServiceSession(void) {
+    return &g_gpioSrv;
+}
+
 Result gpioOpenSession(GpioPadSession *out, GpioPadName name) {
     IpcCommand c;
     ipcInitialize(&c);

@@ -20,6 +20,10 @@ void ncmExit(void) {
     }
 }
 
+Service* ncmGetServiceSession(void) {
+    return &g_ncmSrv;
+}
+
 Result ncmOpenContentStorage(FsStorageId storage, NcmContentStorage* out) {
     IpcCommand c;
     ipcInitialize(&c);

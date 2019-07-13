@@ -29,6 +29,10 @@ void bpcExit(void)
         serviceClose(&g_bpcSrv);
 }
 
+Service* bpcGetServiceSession(void) {
+    return &g_bpcSrv;
+}
+
 Result bpcShutdownSystem(void)
 {
     IpcCommand c;

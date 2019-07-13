@@ -39,6 +39,10 @@ void fsprExit(void) {
         serviceClose(&g_fsprSrv);
 }
 
+Service* fsprGetServiceSession(void) {
+    return &g_fsprSrv;
+}
+
 Result fsprRegisterProgram(u64 pid, u64 titleID, FsStorageId storageID, const void *fs_access_header, size_t fah_size, const void *fs_access_control, size_t fac_size) {
     IpcCommand c;
     ipcInitialize(&c);

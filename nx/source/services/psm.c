@@ -37,6 +37,10 @@ void psmExit(void) {
     }
 }
 
+Service* psmGetServiceSession(void) {
+    return &g_psmSrv;
+}
+
 static Result _psmGetOutU32(u64 cmd_id, u32 *out) {
     IpcCommand c;
     ipcInitialize(&c);

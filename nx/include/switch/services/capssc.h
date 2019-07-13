@@ -12,6 +12,7 @@
 /// Initialize caps:sc. Only available on 2.0.0+.
 Result capsscInitialize(void);
 void capsscExit(void);
+Service* capsscGetServiceSession(void);
 
 /**
  * @brief This takes a screenshot, with the screenshot being written into the output buffer.

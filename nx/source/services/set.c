@@ -45,6 +45,10 @@ void setExit(void)
     }
 }
 
+Service* setGetServiceSession(void) {
+    return &g_setSrv;
+}
+
 Result setsysInitialize(void)
 {
     atomicIncrement64(&g_refCntSys);
@@ -60,6 +64,10 @@ void setsysExit(void)
     if (atomicDecrement64(&g_refCntSys) == 0) {
         serviceClose(&g_setsysSrv);
     }
+}
+
+Service* setsysGetSessionService(void) {
+    return &g_setsysSrv;
 }
 
 static Result setInitializeLanguageCodesCache(void) {

@@ -38,6 +38,10 @@ void hidsysExit(void) {
     }
 }
 
+Service* hidsysGetServiceSession(void) {
+    return &g_hidsysSrv;
+}
+
 Result hidsysEnableAppletToGetInput(bool enable) {  
     IpcCommand c;
     ipcInitialize(&c);

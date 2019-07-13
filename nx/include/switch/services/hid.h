@@ -656,7 +656,7 @@ Result hidInitialize(void);
 void hidExit(void);
 void hidReset(void);
 
-Service* hidGetSessionService(void);
+Service* hidGetServiceSession(void);
 void* hidGetSharedmemAddr(void);
 
 void hidSetControllerLayout(HidControllerID id, HidControllerLayoutType layoutType);

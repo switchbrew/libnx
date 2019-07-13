@@ -161,6 +161,7 @@ typedef struct {
 
 Result pdmqryInitialize(void);
 void pdmqryExit(void);
+Service* pdmqueryGetServiceSession(void);
 
 /**
  * @brief Gets a list of \ref PdmApplicationEvent.

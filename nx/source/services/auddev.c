@@ -47,6 +47,10 @@ void auddevExit(void) {
     }
 }
 
+Service* auddevGetServiceSession(void) {
+    return &g_auddevIAudioDevice;
+}
+
 static Result _auddevGetAudioDeviceService(Service* srv, Service* out_srv, u64 aruid) {
     IpcCommand c;
     ipcInitialize(&c);

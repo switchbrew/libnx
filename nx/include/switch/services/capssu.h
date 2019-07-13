@@ -12,6 +12,7 @@
 /// Initialize caps:su. Only available on 4.0.0+.
 Result capssuInitialize(void);
 void capssuExit(void);
+Service* capssuGetServiceSession(void);
 
 /// Same as \ref capssuSaveScreenShotEx0, except this uses an all-zero CapsScreenShotAttribute where the first u32 is set to attr_val. attr_val can be zero.
 Result capssuSaveScreenShot(const void* buffer, size_t size, u32 unk, u32 attr_val, CapsApplicationAlbumEntry *out);
