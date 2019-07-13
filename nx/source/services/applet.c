@@ -1362,51 +1362,25 @@ Result appletGetDisplayVersion(char *displayVersion) {
     return rc;
 }
 
-Result appletSetMediaPlaybackState(bool state) {
-    if (!serviceIsActive(&g_appletSrv))
-        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-
-    if (!_appletIsApplication())
-        return _appletCmdInBool(&g_appletISelfController, state, 61);//SetMediaPlaybackState
-
-    return _appletCmdInBool(&g_appletIFunctions, state, 60);//SetMediaPlaybackStateForApplication
-}
-
-Result appletBeginBlockingHomeButton(s64 val) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
+Result appletBeginBlockingHomeButtonShortAndLongPressed(s64 val) {
     if (!serviceIsActive(&g_appletSrv) || !_appletIsApplication())
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        s64 val;
-    } *raw;
+    return _appletCmdInU64(&g_appletIFunctions, val, 30);
+}
 
-    raw = serviceIpcPrepareHeader(&g_appletIFunctions, &c, sizeof(*raw));
+Result appletEndBlockingHomeButtonShortAndLongPressed(void) {
+    if (!serviceIsActive(&g_appletSrv) || !_appletIsApplication())
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 32;
-    raw->val = val;
+    return _appletCmdNoIO(&g_appletIFunctions, 31);
+}
 
-    Result rc = serviceIpcDispatch(&g_appletIFunctions);
+Result appletBeginBlockingHomeButton(s64 val) {
+    if (!serviceIsActive(&g_appletSrv) || !_appletIsApplication())
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_appletIFunctions, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    return _appletCmdInU64(&g_appletIFunctions, val, 32);
 }
 
 Result appletEndBlockingHomeButton(void) {
@@ -1454,6 +1428,16 @@ void appletNotifyRunning(u8 *out) {
     }
 
     if (R_FAILED(rc)) fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadAppletNotifyRunning));
+}
+
+Result appletSetMediaPlaybackState(bool state) {
+    if (!serviceIsActive(&g_appletSrv))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    if (!_appletIsApplication())
+        return _appletCmdInBool(&g_appletISelfController, state, 61);//SetMediaPlaybackState
+
+    return _appletCmdInBool(&g_appletIFunctions, state, 60);//SetMediaPlaybackStateForApplication
 }
 
 Result appletIsGamePlayRecordingSupported(bool *flag) {

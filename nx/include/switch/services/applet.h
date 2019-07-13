@@ -167,9 +167,6 @@ void appletExit(void);
 Result appletGetAppletResourceUserId(u64 *out);
 AppletType appletGetAppletType(void);
 
-void appletNotifyRunning(u8 *out);
-Result appletCreateManagedDisplayLayer(u64 *out);
-
 /// Sets the state field for \ref AppletThemeColorType.
 void appletSetThemeColorType(AppletThemeColorType theme);
 
@@ -215,6 +212,34 @@ Result appletSetTerminateResult(Result res);
  */
 Result appletGetDisplayVersion(char *displayVersion);
 
+/**
+ * @brief Blocks the usage of the home button, for short (Home Menu) and long (Overlay) presses.
+ * @note Only available with AppletType_*Application.
+ * @param val Unknown. Official sw only uses hard-coded value 0 for this.
+ */
+Result appletBeginBlockingHomeButtonShortAndLongPressed(s64 val);
+
+/**
+ * @brief Ends the blocking started by \ref appletBeginBlockingHomeButtonShortAndLongPressed.
+ * @note Only available with AppletType_*Application.
+ */
+Result appletEndBlockingHomeButtonShortAndLongPressed(void);
+
+/**
+ * @brief Blocks the usage of the home button, for short presses (Home Menu).
+ * @note Only available with AppletType_*Application.
+ * @param val Unknown nanoseconds. Value 0 can be used.
+ */
+Result appletBeginBlockingHomeButton(s64 val);
+
+/**
+ * @brief Ends the blocking started by \ref appletBeginBlockingHomeButton.
+ * @note Only available with AppletType_*Application.
+ */
+Result appletEndBlockingHomeButton(void);
+
+void appletNotifyRunning(u8 *out);
+
 /// Set media playback state.
 /// If state is set to true, screen dimming and auto sleep is disabled.
 /// For *Application, this uses cmd SetMediaPlaybackStateForApplication, otherwise cmd SetMediaPlaybackState is used.
@@ -233,15 +258,6 @@ Result appletSetGamePlayRecordingState(bool state);
 /// Video recording is only fully available system-side with 4.0.0+.
 /// Only usable when running under a title which supports video recording. Using this is only needed when the host title control.nacp has VideoCaptureMode set to Enabled, with Automatic appletInitializeGamePlayRecording is not needed.
 Result appletInitializeGamePlayRecording(void);
-
-/**
- * @brief Blocks the usage of the home button.
- * @param val Unknown nanoseconds. Value 0 can be used.
- * @note Can only be used in regularapps.
- */
-Result appletBeginBlockingHomeButton(s64 val);
-
-Result appletEndBlockingHomeButton(void);
 
 /**
  * @brief Gets ApplicationPlayStatistics.
@@ -292,6 +308,8 @@ Result appletUnlockExit(void);
 Result appletSetScreenShotPermission(AppletScreenShotPermission permission);
 
 Result appletSetScreenShotImageOrientation(s32 val);
+
+Result appletCreateManagedDisplayLayer(u64 *out);
 
 /**
  * @brief Gets the current Illuminance from the light sensor.
