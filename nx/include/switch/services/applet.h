@@ -208,6 +208,13 @@ Result appletGetDesiredLanguage(u64 *LanguageCode);
 /// Only available with AppletType_*Application.
 Result appletSetTerminateResult(Result res);
 
+/**
+ * @brief Gets the DisplayVersion for the current host title control.nacp.
+ * @note Only available with AppletType_*Application.
+ * @param[out] displayVersion Output DisplayVersion string, must be at least 0x10-bytes. This is always NUL-terminated.
+ */
+Result appletGetDisplayVersion(char *displayVersion);
+
 /// Set media playback state.
 /// If state is set to true, screen dimming and auto sleep is disabled.
 /// For *Application, this uses cmd SetMediaPlaybackStateForApplication, otherwise cmd SetMediaPlaybackState is used.

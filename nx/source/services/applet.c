@@ -1319,6 +1319,49 @@ Result appletSetTerminateResult(Result res) {
     return rc;
 }
 
+Result appletGetDisplayVersion(char *displayVersion) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    if (displayVersion) memset(displayVersion, 0, 0x10);
+
+    if (!serviceIsActive(&g_appletSrv) || !_appletIsApplication())
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletIFunctions, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 23;
+
+    Result rc = serviceIpcDispatch(&g_appletIFunctions);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            char displayVersion[0x10];
+        } *resp;
+
+        serviceIpcParse(&g_appletIFunctions, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && displayVersion) {
+            strncpy(displayVersion, resp->displayVersion, 0x10);
+            displayVersion[0xf] = 0;
+        }
+    }
+
+    return rc;
+}
+
 Result appletSetMediaPlaybackState(bool state) {
     if (!serviceIsActive(&g_appletSrv))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
