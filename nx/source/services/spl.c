@@ -18,6 +18,8 @@ static Service* _splGetRsaSrv(void);
 
 static Service* _splGetEsSrv(void);
 static Service* _splGetFsSrv(void);
+static Service* _splGetSslSrv(void);
+static Service* _splGetManuSrv(void);
 
 Service* _splGetGeneralSrv(void) {
     if (hosversionBefore(4,0,0)) {
@@ -71,6 +73,14 @@ Service* _splGetFsSrv(void) {
     return hosversionAtLeast(4,0,0) ? &g_splFsSrv : &g_splSrv;
 }
 
+Service* _splGetSslSrv(void) {
+    return hosversionAtLeast(4,0,0) ? &g_splSslSrv : &g_splSrv;
+}
+
+Service* _splGetManuSrv(void) {
+    return hosversionAtLeast(4,0,0) ? &g_splManuSrv : &g_splSrv;
+}
+
 /* There are like six services, so these helpers will initialize/exit the relevant services. */
 static Result _splSrvInitialize(Service* srv, u64 *refcnt, const char *name) {
     atomicIncrement64(refcnt);
@@ -95,7 +105,7 @@ void splExit(void) {
 }
 
 Service* splGetServiceSession(void) {
-    return &g_splSrv;
+    return _splGetGeneralSrv();
 }
 
 Result splCryptoInitialize(void) {
@@ -115,7 +125,7 @@ void splCryptoExit(void) {
 }
 
 Service* splCryptoGetServiceSession(void) {
-    return &g_splCryptoSrv;
+    return _splGetCryptoSrv();
 }
 
 Result splSslInitialize(void) {
@@ -135,7 +145,7 @@ void splSslExit(void) {
 }
 
 Service* splSslGetServiceSession(void) {
-    return &g_splSslSrv;
+    return _splGetSslSrv();
 }
 
 Result splEsInitialize(void) {
@@ -155,7 +165,7 @@ void splEsExit(void) {
 }
 
 Service* splEsGetServiceSession(void) {
-    return &g_splEsSrv;
+    return _splGetEsSrv();
 }
 
 Result splFsInitialize(void) {
@@ -175,7 +185,7 @@ void splFsExit(void) {
 }
 
 Service* splFsGetServiceSession(void) {
-    return &g_splFsSrv;
+    return _splGetFsSrv();
 }
 
 Result splManuInitialize(void) {
@@ -187,7 +197,7 @@ void splManuExit(void) {
 }
 
 Service* splManuGetServiceSession(void) {
-    return &g_splManuSrv;
+    return _splGetManuSrv();
 }
 
 
