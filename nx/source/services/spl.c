@@ -114,7 +114,7 @@ void splCryptoExit(void) {
     }
 }
 
-Service* splCryptogetServiceSession(void) {
+Service* splCryptoGetServiceSession(void) {
     return &g_splCryptoSrv;
 }
 
