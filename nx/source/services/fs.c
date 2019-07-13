@@ -186,6 +186,42 @@ Result fsCreateSaveDataFileSystemBySystemSaveDataId(const FsSave* save, const Fs
     return rc;
 }
 
+Result fsDeleteSaveDataFileSystemBySaveDataSpaceId(FsSaveDataSpaceId saveDataSpaceId, u64 saveID) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u8 saveDataSpaceId;
+        u64 saveID;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_fsSrv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 25;
+    raw->saveDataSpaceId = saveDataSpaceId;
+    raw->saveID = saveID;
+
+    Result rc = serviceIpcDispatch(&g_fsSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_fsSrv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
 Result fsMountSdcard(FsFileSystem* out) {
     IpcCommand c;
     ipcInitialize(&c);

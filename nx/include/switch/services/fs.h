@@ -239,6 +239,7 @@ Result fsOpenBisStorage(FsStorage* out, FsBisStorageId partitionId);
 Result fsOpenBisFileSystem(FsFileSystem* out, FsBisStorageId partitionId, const char* string);
 
 Result fsCreateSaveDataFileSystemBySystemSaveDataId(const FsSave* save, const FsSaveCreate* create);
+Result fsDeleteSaveDataFileSystemBySaveDataSpaceId(FsSaveDataSpaceId saveDataSpaceId, u64 saveID);
 
 Result fsIsExFatSupported(bool* out);
 
