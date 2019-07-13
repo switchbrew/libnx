@@ -9,6 +9,7 @@
 #pragma once
 #include "../result.h"
 #include "../kernel/event.h"
+#include "../services/sm.h"
 
 #define SET_MAX_NAME_SIZE 0x48
 #define SET_MAX_NICKNAME_SIZE 0x80
@@ -86,6 +87,7 @@ typedef struct {
 
 Result setInitialize(void);
 void setExit(void);
+Service* setGetServiceSession(void);
 
 /// Converts LanguageCode to Language.
 Result setMakeLanguage(u64 LanguageCode, s32 *Language);
@@ -114,6 +116,7 @@ Result setGetRegionCode(SetRegion *out);
 
 Result setsysInitialize(void);
 void setsysExit(void);
+Service* setsysGetServiceSession(void);
 
 /// Gets the current system theme.
 Result setsysGetColorSetId(ColorSetId *out);

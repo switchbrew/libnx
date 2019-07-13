@@ -19,6 +19,7 @@ typedef struct {
 
 Result lrInitialize(void);
 void lrExit(void);
+Service* lrGetServiceSession(void);
 
 Result lrOpenLocationResolver(FsStorageId storage, LrLocationResolver* out);
 Result lrOpenRegisteredLocationResolver(LrRegisteredLocationResolver* out);

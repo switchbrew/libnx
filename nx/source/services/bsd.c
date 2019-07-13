@@ -277,6 +277,11 @@ void bsdExit(void) {
     tmemClose(&g_bsdTmem);
 }
 
+Service* bsdGetServiceSession(void)
+{
+    return &g_bsdSrv;
+}
+
 int bsdSocket(int domain, int type, int protocol) {
     return _bsdSocketCreationCommand(2, domain, type, protocol);
 }

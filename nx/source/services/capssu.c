@@ -35,6 +35,11 @@ void capssuExit(void) {
         serviceClose(&g_capssuSrv);
 }
 
+Service* capssuGetServiceSession(void)
+{
+    return &g_capssuSrv;
+}
+
 static Result _capssuSaveScreenShotEx0(const void* buffer, size_t size, CapsScreenShotAttribute *attr, u32 unk, CapsApplicationAlbumEntry *out) {
     u64 AppletResourceUserId = 0;
     appletGetAppletResourceUserId(&AppletResourceUserId);

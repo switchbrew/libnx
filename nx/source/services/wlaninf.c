@@ -36,6 +36,11 @@ void wlaninfExit(void) {
     }
 }
 
+Service* wlaninfGetServiceSession(void)
+{
+    return &g_wlaninfSrv;
+}
+
 Result wlaninfGetState(WlanInfState* out) {
     IpcCommand c;
     ipcInitialize(&c);

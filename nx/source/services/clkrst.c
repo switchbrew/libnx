@@ -37,6 +37,11 @@ void clkrstExit(void) {
     }
 }
 
+Service* clkrstGetServiceSession(void)
+{
+    return &g_clkrstSrv;
+}
+
 Result clkrstOpenSession(ClkrstSession* session_out, PcvModuleId module_id, u32 unk) {
     IpcCommand c;
     ipcInitialize(&c);

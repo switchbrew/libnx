@@ -29,6 +29,11 @@ void pdmqryExit(void) {
         serviceClose(&g_pdmqrySrv);
 }
 
+Service* pdmqryGetServiceSession(void)
+{
+    return &g_pdmqrySrv;
+}
+
 static Result _pdmqryQueryEvent(u64 cmd_id, u32 entryindex, void* events, size_t entrysize, s32 count, s32 *total_out) {
     IpcCommand c;
     ipcInitialize(&c);

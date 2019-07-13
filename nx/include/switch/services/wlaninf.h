@@ -18,6 +18,7 @@ typedef enum {
 
 Result wlaninfInitialize(void);
 void wlaninfExit(void);
+Service* wlaninfGetServiceSession(void);
 
 Result wlaninfGetState(WlanInfState* out);
 

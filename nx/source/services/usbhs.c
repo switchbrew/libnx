@@ -52,6 +52,11 @@ void usbHsExit(void) {
     serviceClose(&g_usbHsSrv);
 }
 
+Service* usbHsGetServiceSession(void)
+{
+    return &g_usbHsSrv;
+}
+
 Event* usbHsGetInterfaceStateChangeEvent(void) {
     return &g_usbHsInterfaceStateChangeEvent;
 }

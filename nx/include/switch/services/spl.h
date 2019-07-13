@@ -36,21 +36,27 @@ typedef enum {
 
 Result splInitialize(void);
 void splExit(void);
+Service* splGetServiceSession(void);
 
 Result splCryptoInitialize(void);
 void splCryptoExit(void);
+Service* splCryptoGetServiceSession(void);
 
 Result splSslInitialize(void);
 void splSslExit(void);
+Service* splSslGetServiceSession(void);
 
 Result splEsInitialize(void);
 void splEsExit(void);
+Service* splEsGetServiceSession(void);
 
 Result splFsInitialize(void);
 void splFsExit(void);
+Service* splFsGetServiceSession(void);
 
 Result splManuInitialize(void);
 void splManuExit(void);
+Service* splManuGetServiceSession(void);
 
 Result splGetConfig(SplConfigItem config_item, u64 *out_config);
 Result splUserExpMod(const void *input, const void *modulus, const void *exp, size_t exp_size, void *dst);

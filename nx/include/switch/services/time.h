@@ -46,7 +46,7 @@ typedef struct {
 Result timeInitialize(void);
 void timeExit(void);
 
-Service* timeGetSessionService(void);
+Service* timeGetServiceSession(void);
 
 Result timeGetCurrentTime(TimeType type, u64 *timestamp);
 

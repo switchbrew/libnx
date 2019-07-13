@@ -27,6 +27,11 @@ void lrExit(void) {
     }
 }
 
+Service* lrGetServiceSession(void)
+{
+    return &g_managerSrv;
+}
+
 Result lrOpenLocationResolver(FsStorageId storage, LrLocationResolver* out) {
     IpcCommand c;
     ipcInitialize(&c);

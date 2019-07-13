@@ -34,6 +34,7 @@ typedef struct {
 
 Result hidsysInitialize(void);
 void hidsysExit(void);
+Service* hidsysGetServiceSession(void);
 
 Result hidsysEnableAppletToGetInput(bool enable);
 

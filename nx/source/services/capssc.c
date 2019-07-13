@@ -33,6 +33,11 @@ void capsscExit(void) {
         serviceClose(&g_capsscSrv);
 }
 
+Service* capsscGetServiceSession(void)
+{
+    return &g_capsscSrv;
+}
+
 Result capsscCaptureScreenshot(void* buf, size_t size, u32 inval, u64 width, u64 height, s64 buffer_count, s64 buffer_index, u64 timeout) {
     IpcCommand c;
     ipcInitialize(&c);

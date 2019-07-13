@@ -135,7 +135,7 @@ static void _IrsCameraEntryFree(IrsCameraEntry *entry) {
     memset(entry, 0, sizeof(IrsCameraEntry));
 }
 
-Service* irsGetSessionService(void) {
+Service* irsGetServiceSession(void) {
     return &g_irsSrv;
 }
 

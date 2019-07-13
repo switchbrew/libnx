@@ -76,6 +76,7 @@ typedef struct {
 
 Result ncmInitialize(void);
 void ncmExit(void);
+Service* ncmGetServiceSession(void);
 
 Result ncmOpenContentStorage(FsStorageId storage, NcmContentStorage* out);
 Result ncmOpenContentMetaDatabase(FsStorageId storage, NcmContentMetaDatabase* out);

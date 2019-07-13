@@ -33,7 +33,7 @@ typedef struct
 
 Result accountInitialize(void);
 void accountExit(void);
-Service* accountGetService(void);
+Service* accountGetServiceSession(void);
 
 /// Get the total number of user profiles
 Result accountGetUserCount(s32* user_count);

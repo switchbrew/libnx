@@ -57,6 +57,7 @@ typedef enum {
 
 Result i2cInitialize(void);
 void i2cExit(void);
+Service* i2cGetServiceSession(void);
 
 Result i2cOpenSession(I2cSession *out, I2cDevice dev);
 

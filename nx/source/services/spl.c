@@ -94,6 +94,11 @@ void splExit(void) {
     return _splSrvExit(&g_splSrv, &g_splRefCnt);
 }
 
+Service* splGetServiceSession(void)
+{
+    return &g_splSrv;
+}
+
 Result splCryptoInitialize(void) {
     if (hosversionAtLeast(4,0,0)) {
         return _splSrvInitialize(&g_splCryptoSrv, &g_splCryptoRefCnt, "spl:mig");
@@ -108,6 +113,11 @@ void splCryptoExit(void) {
     } else {
         return splExit();
     }
+}
+
+Service* splCryptogetServiceSession(void)
+{
+    return &g_splCryptoSrv;
 }
 
 Result splSslInitialize(void) {
@@ -126,6 +136,11 @@ void splSslExit(void) {
     }
 }
 
+Service* splSslGetServiceSession(void)
+{
+    return &g_splSslSrv;
+}
+
 Result splEsInitialize(void) {
     if (hosversionAtLeast(4,0,0)) {
         return _splSrvInitialize(&g_splEsSrv, &g_splEsRefCnt, "spl:es");
@@ -140,6 +155,11 @@ void splEsExit(void) {
     } else {
         return splExit();
     }
+}
+
+Service* splEsGetServiceSession(void)
+{
+    return &g_splEsSrv;
 }
 
 Result splFsInitialize(void) {
@@ -158,12 +178,22 @@ void splFsExit(void) {
     }
 }
 
+Service* splFsGetServiceSession(void)
+{
+    return &g_splFsSrv;
+}
+
 Result splManuInitialize(void) {
     return _splSrvInitialize(&g_splManuSrv, &g_splManuRefCnt, "spl:manu");
 }
 
 void splManuExit(void) {
      return _splSrvExit(&g_splManuSrv, &g_splManuRefCnt);
+}
+
+Service* splManuGetServiceSession(void)
+{
+    return &g_splManuSrv;
 }
 
 

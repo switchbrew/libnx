@@ -60,7 +60,7 @@ void timeExit(void)
     }
 }
 
-Service* timeGetSessionService(void) {
+Service* timeGetServiceSession(void) {
     return &g_timeSrv;
 }
 

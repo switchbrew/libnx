@@ -53,6 +53,11 @@ void plExit(void)
     }
 }
 
+Service* plGetServiceSession(void)
+{
+    return &g_plSrv;
+}
+
 void* plGetSharedmemAddr(void) {
     return shmemGetAddr(&g_plSharedmem);
 }

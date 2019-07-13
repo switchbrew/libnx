@@ -12,6 +12,7 @@
 
 #include "../types.h"
 #include "../kernel/tmem.h"
+#include "../services/sm.h"
 
 /// Configuration structure for bsdInitalize
 typedef struct  {
@@ -37,6 +38,7 @@ const BsdInitConfig *bsdGetDefaultInitConfig(void);
 Result bsdInitialize(const BsdInitConfig *config);
 /// Deinitialize the BSD service.
 void bsdExit(void);
+Service* bsdGetServiceSession(void);
 
 /// Creates a socket.
 int bsdSocket(int domain, int type, int protocol);

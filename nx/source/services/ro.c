@@ -37,6 +37,11 @@ void ldrRoExit(void) {
         serviceClose(&g_roSrv);
 }
 
+Service* ldrRoGetServiceSession(void)
+{
+    return &g_roSrv;
+}
+
 Result ro1Initialize(void) {
     if (hosversionBefore(7,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
@@ -59,6 +64,11 @@ void ro1Exit(void) {
         serviceClose(&g_ro1Srv);
 }
 
+Service* ro1GetServiceSession(void)
+{
+    return &g_ro1Srv;
+}
+
 Result roDmntInitialize(void) {
     if (hosversionBefore(3,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
@@ -73,6 +83,11 @@ Result roDmntInitialize(void) {
 void roDmntExit(void) {
     if (atomicDecrement64(&g_dmntRefCnt) == 0)
         serviceClose(&g_dmntSrv);
+}
+
+Service* roDmntGetServiceSession(void)
+{
+    return &g_dmntSrv;
 }
 
 Result _rosrvInitialize(Service* srv) {

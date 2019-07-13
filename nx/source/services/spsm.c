@@ -29,6 +29,11 @@ void spsmExit(void) {
     }
 }
 
+Service* spsmGetServiceSession(void)
+{
+    return &g_spsmSrv;
+}
+
 Result spsmShutdown(bool reboot) {
     IpcCommand c;
     ipcInitialize(&c);

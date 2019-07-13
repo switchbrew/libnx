@@ -30,6 +30,7 @@ typedef enum {
 
 Result gpioInitialize(void);
 void gpioExit(void);
+Service* gpioGetServiceSession(void);
 
 Result gpioOpenSession(GpioPadSession *out, GpioPadName name);
 

@@ -7,6 +7,7 @@
 #pragma once
 
 #include "../audio/audio.h"
+#include "../services/sm.h"
 
 #if __cplusplus >= 201402L
 #define AUDREN_CONSTEXPR constexpr
@@ -321,6 +322,7 @@ AUDREN_CONSTEXPR size_t audrenGetOutputParamSize(const AudioRendererConfig* conf
 
 Result audrenInitialize(const AudioRendererConfig* config);
 void audrenExit(void);
+Service* audrenGetServiceSession(void);
 void audrenWaitFrame(void);
 Result audrenGetState(u32* out_state);
 Result audrenRequestUpdateAudioRenderer(const void* in_param_buf, size_t in_param_buf_size, void* out_param_buf, size_t out_param_buf_size, void* perf_buf, size_t perf_buf_size);

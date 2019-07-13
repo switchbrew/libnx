@@ -6,6 +6,7 @@
  */
 #pragma once
 #include "../types.h"
+#include "../services/sm.h"
 
 typedef enum {
     PcvModule_CpuBus            = 0,
@@ -192,6 +193,7 @@ typedef enum {
 
 Result pcvInitialize(void);
 void pcvExit(void);
+Service* pcvGetServiceSession(void);
 
 Result pcvGetModuleId(PcvModuleId *module_id, PcvModule module);
 

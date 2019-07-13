@@ -30,6 +30,11 @@ void pcvExit(void) {
     }
 }
 
+Service* pcvGetServiceSession(void)
+{
+    return &g_pcvSrv;
+}
+
 Result pcvGetModuleId(PcvModuleId *module_id, PcvModule module) {
     static const PcvModuleId s_moduleIdMap[PcvModule_Count] = {
         PcvModuleId_CpuBus,         PcvModuleId_GPU,            PcvModuleId_I2S1,               PcvModuleId_I2S2,

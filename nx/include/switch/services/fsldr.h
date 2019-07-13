@@ -11,6 +11,7 @@
 
 Result fsldrInitialize(void);
 void fsldrExit(void);
+Service* fsldrGetServiceSession(void);
 
 Result fsldrOpenCodeFileSystem(u64 tid, const char *path, FsFileSystem* out);
 Result fsldrIsArchivedProgram(u64 pid, bool *out);

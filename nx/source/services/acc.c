@@ -30,7 +30,7 @@ void accountExit(void)
         serviceClose(&g_accSrv);
 }
 
-Service* accountGetService(void) {
+Service* accountGetServiceSession(void) {
     return &g_accSrv;
 }
 

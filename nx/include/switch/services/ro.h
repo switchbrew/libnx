@@ -11,12 +11,15 @@
 
 Result ldrRoInitialize(void);
 void ldrRoExit(void);
+Service* ldrRoGetServiceSession(void);
 
 Result ro1Initialize(void);
 void ro1Exit(void);
+Service* ro1GetServiceSession(void);
 
 Result roDmntInitialize(void);
 void roDmntExit(void);
+Service* roDmntGetServiceSession(void);
 
 Result ldrRoLoadNro(u64* out_address, u64 nro_address, u64 nro_size, u64 bss_address, u64 bss_size);
 Result ldrRoUnloadNro(u64 nro_address);

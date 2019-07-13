@@ -37,6 +37,11 @@ void hiddbgExit(void) {
     }
 }
 
+Service* hiddbgGetServiceSession(void)
+{
+    return &g_hiddbgSrv;
+}
+
 static Result _hiddbgCmdNoIO(u64 cmd_id) {
     Result rc;
 

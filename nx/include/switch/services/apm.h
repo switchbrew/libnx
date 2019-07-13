@@ -6,6 +6,7 @@
  */
 #pragma once
 #include "../types.h"
+#include "../services/sm.h"
 
 /// CpuBoostMode. With \ref appletSetCpuBoostMode, only values 0/1 are available. This allows using higher clock rates.
 typedef enum {
@@ -16,6 +17,7 @@ typedef enum {
 
 Result apmInitialize(void);
 void apmExit(void);
+Service* apmGetServiceSession(void);
 
 Result apmSetPerformanceConfiguration(u32 PerformanceMode, u32 PerformanceConfiguration);
 Result apmGetPerformanceConfiguration(u32 PerformanceMode, u32 *PerformanceConfiguration);
