@@ -161,7 +161,7 @@ typedef struct {
 /// Initialize applet, called automatically during app startup.
 Result appletInitialize(void);
 
-/// Exit applet, called automatically during app startup.
+/// Exit applet, called automatically during app exit.
 void appletExit(void);
 
 Result appletGetAppletResourceUserId(u64 *out);
@@ -270,6 +270,34 @@ Result appletRequestToShutdown(void);
  * @note Only available with AppletType_*Application on 3.0.0+.
  */
 Result appletRequestToReboot(void);
+
+/**
+ * @brief Initializes the ApplicationCopyrightFrameBuffer, with dimensions 1280x720 + the tmem for it. This is used as an overlay for screenshots.
+ * @note Only available with AppletType_*Application on 5.0.0+.
+ * @note Cleanup for this is handled automatically during app exit in \ref appletExit.
+ */
+Result appletInitializeApplicationCopyrightFrameBuffer(void);
+
+/**
+ * @brief Sets the RGBA8 image for use with \ref appletInitializeApplicationCopyrightFrameBuffer. Overrides the current image, if this was already used previously.
+ * @note Only available with AppletType_*Application on 5.0.0+.
+ * @note The specified coordinates and width/height must be within the bounds of the framebuffer setup by \ref appletInitializeApplicationCopyrightFrameBuffer.
+ * @param[in] buffer Input image buffer.
+ * @param[in] size Input image buffer size.
+ * @param[in] x X coordinate. Must not be negative.
+ * @param[in] y Y coordinate. Must not be negative.
+ * @param[in] width Image width. Must be >=1.
+ * @param[in] height Image height. Must be >=1.
+ * @param[in] mode WindowOriginMode. Should be at least 1.
+ */
+Result appletSetApplicationCopyrightImage(const void* buffer, size_t size, s32 x, s32 y, s32 width, s32 height, s32 mode);
+
+/**
+ * @brief Sets the visibility for the image set by \ref appletSetApplicationCopyrightImage, in screenshots.
+ * @note Only available with AppletType_*Application on 5.0.0+.
+ * @param[in] visible Whether the image is visible. The default is true.
+ */
+Result appletSetApplicationCopyrightVisibility(bool visible);
 
 /**
  * @brief Gets ApplicationPlayStatistics.

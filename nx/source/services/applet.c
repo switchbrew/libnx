@@ -56,6 +56,9 @@ static AppletHookCookie g_appletFirstHook;
 static TransferMemory g_appletRecordingTmem;
 static u32 g_appletRecordingInitialized;
 
+static TransferMemory g_appletCopyrightTmem;
+static bool g_appletCopyrightInitialized;
+
 static Event g_appletLibraryAppletLaunchableEvent;
 
 static AppletThemeColorType g_appletThemeColorType = AppletThemeColorType_Default;
@@ -353,6 +356,11 @@ void appletExit(void)
         if (g_appletRecordingInitialized > 0) {
             tmemClose(&g_appletRecordingTmem);
             g_appletRecordingInitialized = 0;
+        }
+
+        if (g_appletCopyrightInitialized) {
+            tmemClose(&g_appletCopyrightTmem);
+            g_appletCopyrightInitialized = 0;
         }
     }
 }
@@ -1577,6 +1585,131 @@ Result appletRequestToReboot(void) {
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return _appletCmdNoIO(&g_appletIFunctions, 71);
+}
+
+static Result _appletInitializeApplicationCopyrightFrameBuffer(TransferMemory *tmem, s32 width, s32 height) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    ipcSendHandleCopy(&c, tmem->handle);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        s32 width;
+        s32 height;
+        u64 size;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletIFunctions, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 100;
+    raw->width = width;
+    raw->height = height;
+    raw->size = tmem->size;
+
+    Result rc = serviceIpcDispatch(&g_appletIFunctions);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_appletIFunctions, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result appletInitializeApplicationCopyrightFrameBuffer(void) {
+    Result rc=0;
+    s32 width = 1280;
+    s32 height = 720;
+    size_t size = 0x3C0000;
+
+    if (!serviceIsActive(&g_appletSrv) || !_appletIsApplication())
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    if (g_appletCopyrightInitialized)
+        return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
+
+    rc = tmemCreate(&g_appletCopyrightTmem, size, Perm_None);
+    if (R_FAILED(rc)) return rc;
+
+    rc = _appletInitializeApplicationCopyrightFrameBuffer(&g_appletCopyrightTmem, width, height);
+    if (R_FAILED(rc)) {
+        tmemClose(&g_appletCopyrightTmem);
+        return rc;
+    }
+
+    g_appletCopyrightInitialized = 1;
+
+    return rc;
+}
+
+Result appletSetApplicationCopyrightImage(const void* buffer, size_t size, s32 x, s32 y, s32 width, s32 height, s32 mode) {
+    if (!serviceIsActive(&g_appletSrv) || !_appletIsApplication())
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    ipcAddSendBuffer(&c, buffer, size, BufferType_Type1);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        s32 x;
+        s32 y;
+        s32 width;
+        s32 height;
+        s32 mode;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletIFunctions, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 101;
+    raw->x = x;
+    raw->y = y;
+    raw->width = width;
+    raw->height = height;
+    raw->mode = mode;
+
+    Result rc = serviceIpcDispatch(&g_appletIFunctions);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_appletIFunctions, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result appletSetApplicationCopyrightVisibility(bool visible) {
+    if (!serviceIsActive(&g_appletSrv) || !_appletIsApplication())
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdInBool(&g_appletIFunctions, visible, 102);
 }
 
 //Official sw has these under 'pdm'.
