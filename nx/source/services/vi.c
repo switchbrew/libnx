@@ -48,12 +48,12 @@ Result viInitialize(ViServiceType service_type)
         struct {
             u64 magic;
             u64 cmd_id;
-            u64 inval0;
+            u64 inval;
         } raw;
 
         raw.magic = SFCI_MAGIC;
         raw.cmd_id = g_viServiceType; // ViServiceType matches the cmdid needed to open an IApplicationDisplayService session.
-        raw.inval0 = 0;
+        raw.inval = (g_viServiceType == ViServiceType_Manager || g_viServiceType == ViServiceType_System) ? 1 : 0;
 
         rc = _viGetSession(&root_srv, &g_viIApplicationDisplayService, &raw, sizeof(raw));
         serviceClose(&root_srv);
@@ -733,7 +733,7 @@ static Result _viCreateStrayLayer(const ViDisplay *display, u32 layer_flags, u64
     raw->layer_flags = layer_flags;
     raw->pad = 0;
     raw->display_id = display->display_id;
-    
+
     Result rc=0;
     if (!serviceIsActive(target_srv)) rc = MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     if (R_SUCCEEDED(rc)) rc = serviceIpcDispatch(target_srv);
