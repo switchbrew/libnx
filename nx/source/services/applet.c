@@ -42,6 +42,8 @@ static Service g_appletIAudioController;
 static Service g_appletIDisplayController;
 static Service g_appletIDebugFunctions;
 
+static size_t g_appletISelfController_ptrbufsize;
+
 static Event g_appletMessageEvent;
 
 static u64 g_appletResourceUserId = 0;
@@ -196,6 +198,9 @@ Result appletInitialize(void)
     // GetDebugFunctions
     if (R_SUCCEEDED(rc))
         rc = _appletGetSession(&g_appletProxySession, &g_appletIDebugFunctions, 1000);
+
+    if (R_SUCCEEDED(rc))
+        rc = ipcQueryPointerBufferSize(g_appletISelfController.handle, &g_appletISelfController_ptrbufsize);
 
     // ICommonStateGetter::GetEventHandle
     if (R_SUCCEEDED(rc))
@@ -1438,6 +1443,46 @@ void appletNotifyRunning(u8 *out) {
     if (R_FAILED(rc)) fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadAppletNotifyRunning));
 }
 
+Result appletGetPseudoDeviceId(u128 *out) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    if (!serviceIsActive(&g_appletSrv) || !_appletIsApplication())
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletIFunctions, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 50;
+
+    Result rc = serviceIpcDispatch(&g_appletIFunctions);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            u128 out;
+        } *resp;
+
+        serviceIpcParse(&g_appletIFunctions, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+        if (R_SUCCEEDED(rc) && out) *out = resp->out;
+    }
+
+    return rc;
+}
+
 Result appletSetMediaPlaybackState(bool state) {
     if (!serviceIsActive(&g_appletSrv))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
@@ -2347,6 +2392,43 @@ Result appletGetCurrentIlluminanceEx(bool *bOverLimit, float *fLux) {
 
         if (R_SUCCEEDED(rc) && bOverLimit) *bOverLimit = resp->bOverLimit!=0;
         if (R_SUCCEEDED(rc) && fLux) *fLux = resp->fLux;
+    }
+
+    return rc;
+}
+
+Result appletSetApplicationAlbumUserData(const void* buffer, size_t size) {
+    if (hosversionBefore(8,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    ipcAddSendSmart(&c, g_appletISelfController_ptrbufsize, buffer, size, 0);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletISelfController, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 110;
+
+    Result rc = serviceIpcDispatch(&g_appletISelfController);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_appletISelfController, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
     }
 
     return rc;

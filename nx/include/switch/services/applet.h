@@ -240,6 +240,13 @@ Result appletEndBlockingHomeButton(void);
 
 void appletNotifyRunning(u8 *out);
 
+/**
+ * @brief Gets the PseudoDeviceId. This is derived from the output of a ns command, and from data in the host title control.nacp.
+ * @note Only available with AppletType_*Application on 2.0.0+.
+ * @param[out] out Output PseudoDeviceId.
+ */
+Result appletGetPseudoDeviceId(u128 *out);
+
 /// Set media playback state.
 /// If state is set to true, screen dimming and auto sleep is disabled.
 /// For *Application, this uses cmd SetMediaPlaybackStateForApplication, otherwise cmd SetMediaPlaybackState is used.
@@ -359,6 +366,13 @@ Result appletCreateManagedDisplayLayer(u64 *out);
 Result appletGetCurrentIlluminance(float *fLux);
 
 /**
+ * @brief Gets whether Illuminance is available.
+ * @note Only available with [3.0.0+].
+ * @param out Output flag
+ */
+Result appletIsIlluminanceAvailable(bool *out);
+
+/**
  * @brief Gets the current Illuminance from the light sensor. Same as \ref appletGetCurrentIlluminance except for the additional param.
  * @note Only available with [5.0.0+].
  * @param bOverLimit Output bOverLimit
@@ -367,11 +381,12 @@ Result appletGetCurrentIlluminance(float *fLux);
 Result appletGetCurrentIlluminanceEx(bool *bOverLimit, float *fLux);
 
 /**
- * @brief Gets whether Illuminance is available.
- * @note Only available with [3.0.0+].
- * @param out Output flag
+ * @brief Sets the Application AlbumUserData.
+ * @note Only available with [8.0.0+].
+ * @param[in] buffer Buffer containing arbitrary UserData.
+ * @param[in] size Buffer size, must be <=0x400.
  */
-Result appletIsIlluminanceAvailable(bool *out);
+Result appletSetApplicationAlbumUserData(const void* buffer, size_t size);
 
 /**
  * @brief Stops forwarding the input to the foreground app, works only in the Overlay applet context.
