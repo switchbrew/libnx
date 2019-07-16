@@ -2086,6 +2086,14 @@ Result appletUnlockExit(void) {
     return _appletCmdNoIO(&g_appletISelfController, 2);
 }
 
+Result appletEnterFatalSection(void) {
+    return _appletCmdNoIO(&g_appletISelfController, 3);
+}
+
+Result appletLeaveFatalSection(void) {
+    return _appletCmdNoIO(&g_appletISelfController, 4);
+}
+
 static Result _appletWaitLibraryAppletLaunchableEvent(void) {
     Result rc=0;
 

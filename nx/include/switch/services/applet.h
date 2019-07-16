@@ -349,6 +349,16 @@ Result appletLockExit(void);
 Result appletUnlockExit(void);
 
 /**
+ * @brief Enter FatalSection.
+ */
+Result appletEnterFatalSection(void);
+
+/**
+ * @brief Leave FatalSection.
+ */
+Result appletLeaveFatalSection(void);
+
+/**
  * @brief Controls whether screenshot-capture is allowed.
  * @param permission \ref AppletScreenShotPermission
  */
