@@ -5,9 +5,12 @@
 #include "services/acc.h"
 #include "services/sm.h"
 #include "services/applet.h"
+#include "runtime/hosversion.h"
 
 static Service g_accSrv;
 static u64 g_refCnt;
+
+static Result _accountInitializeApplicationInfo(void);
 
 Result accountInitialize(void)
 {
@@ -19,7 +22,12 @@ Result accountInitialize(void)
         return 0;
 
     rc = smGetService(&g_accSrv, "acc:u1");
-    if (R_FAILED(rc)) rc = smGetService(&g_accSrv, "acc:u0");
+    if (R_FAILED(rc)) {
+        rc = smGetService(&g_accSrv, "acc:u0");
+        if (R_SUCCEEDED(rc)) rc = _accountInitializeApplicationInfo();
+    }
+
+    if (R_FAILED(rc)) accountExit();
 
     return rc;
 }
@@ -32,6 +40,42 @@ void accountExit(void)
 
 Service* accountGetServiceSession(void) {
     return &g_accSrv;
+}
+
+static Result _accountInitializeApplicationInfo(void) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 pid_placeholder;
+    } *raw;
+
+    ipcSendPid(&c);
+
+    raw = serviceIpcPrepareHeader(&g_accSrv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = hosversionBefore(6,0,0) ? 100 : 140;
+    raw->pid_placeholder = 0;
+
+    Result rc = serviceIpcDispatch(&g_accSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_accSrv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
 }
 
 Result accountGetUserCount(s32* user_count)
