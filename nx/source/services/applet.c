@@ -75,8 +75,8 @@ static Result _appletGetSessionProxy(Service* srv_out, u64 cmd_id, Handle procha
 static Result _appletGetAppletResourceUserId(u64 *out);
 
 static Result _appletGetCurrentFocusState(u8 *out);
-static Result _appletSetFocusHandlingMode(u8 inval0, u8 inval1, u8 inval2);
-static Result _appletSetOutOfFocusSuspendingEnabled(u8 inval);
+static Result _appletSetFocusHandlingMode(bool inval0, bool inval1, bool inval2);
+static Result _appletSetOutOfFocusSuspendingEnabled(bool inval);
 
 static Result _appletReceiveMessage(u32 *out);
 static Result _appletAcquireForegroundRights(void);
@@ -84,8 +84,8 @@ static Result _appletAcquireForegroundRights(void);
 static Result _appletGetOperationMode(u8 *out);
 static Result _appletGetPerformanceMode(u32 *out);
 
-static Result _appletSetOperationModeChangedNotification(u8 flag);
-static Result _appletSetPerformanceModeChangedNotification(u8 flag);
+static Result _appletSetOperationModeChangedNotification(bool flag);
+static Result _appletSetPerformanceModeChangedNotification(bool flag);
 
 static Result _appletSelfExit(void);
 
@@ -416,7 +416,7 @@ AppletThemeColorType appletGetThemeColorType(void) {
 
 Result appletSetFocusHandlingMode(AppletFocusHandlingMode mode) {
     Result rc;
-    u8 invals[4];
+    bool invals[4];
 
     if (mode >= AppletFocusHandlingMode_Max)
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
@@ -2106,108 +2106,18 @@ static Result _appletWaitLibraryAppletLaunchableEvent(void) {
 }
 
 Result appletSetScreenShotPermission(AppletScreenShotPermission permission) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        s32 permission;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_appletISelfController, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 10;
-    raw->permission = permission;
-
-    Result rc = serviceIpcDispatch(&g_appletISelfController);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_appletISelfController, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    return _appletCmdInU32(&g_appletISelfController, permission, 10);
 }
 
-static Result _appletSetOperationModeChangedNotification(u8 flag) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u8 flag;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_appletISelfController, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 11;
-    raw->flag = flag;
-
-    Result rc = serviceIpcDispatch(&g_appletISelfController);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_appletISelfController, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+static Result _appletSetOperationModeChangedNotification(bool flag) {
+    return _appletCmdInBool(&g_appletISelfController, flag, 11);
 }
 
-static Result _appletSetPerformanceModeChangedNotification(u8 flag) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u8 flag;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_appletISelfController, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 12;
-    raw->flag = flag;
-
-    Result rc = serviceIpcDispatch(&g_appletISelfController);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_appletISelfController, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+static Result _appletSetPerformanceModeChangedNotification(bool flag) {
+    return _appletCmdInBool(&g_appletISelfController, flag, 12);
 }
 
-static Result _appletSetFocusHandlingMode(u8 inval0, u8 inval1, u8 inval2) {
+static Result _appletSetFocusHandlingMode(bool inval0, bool inval1, bool inval2) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -2223,9 +2133,9 @@ static Result _appletSetFocusHandlingMode(u8 inval0, u8 inval1, u8 inval2) {
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 13;
-    raw->inval0 = inval0;
-    raw->inval1 = inval1;
-    raw->inval2 = inval2;
+    raw->inval0 = inval0!=0;
+    raw->inval1 = inval1!=0;
+    raw->inval2 = inval2!=0;
 
     Result rc = serviceIpcDispatch(&g_appletISelfController);
 
@@ -2245,75 +2155,14 @@ static Result _appletSetFocusHandlingMode(u8 inval0, u8 inval1, u8 inval2) {
     return rc;
 }
 
-static Result _appletSetOutOfFocusSuspendingEnabled(u8 inval) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u8 inval;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_appletISelfController, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 16;
-    raw->inval = inval;
-
-    Result rc = serviceIpcDispatch(&g_appletISelfController);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_appletISelfController, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+static Result _appletSetOutOfFocusSuspendingEnabled(bool flag) {
+    return _appletCmdInBool(&g_appletISelfController, flag, 16);
 }
 
 Result appletSetScreenShotImageOrientation(s32 val) {
     if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        s32 val;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_appletISelfController, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 19;
-    raw->val = val;
-
-    Result rc = serviceIpcDispatch(&g_appletISelfController);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_appletISelfController, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    return _appletCmdInU32(&g_appletISelfController, val, 19);
 }
 
 Result appletCreateManagedDisplayLayer(u64 *out) {
