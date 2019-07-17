@@ -2155,11 +2155,22 @@ static Result _appletSetFocusHandlingMode(bool inval0, bool inval1, bool inval2)
     return rc;
 }
 
+Result appletSetRestartMessageEnabled(bool flag) {
+    return _appletCmdInBool(&g_appletISelfController, flag, 14);
+}
+
 static Result _appletSetOutOfFocusSuspendingEnabled(bool flag) {
     return _appletCmdInBool(&g_appletISelfController, flag, 16);
 }
 
-Result appletSetScreenShotImageOrientation(s32 val) {
+Result appletSetRequiresCaptureButtonShortPressedMessage(bool flag) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdInBool(&g_appletISelfController, flag, 18);
+}
+
+Result appletSetAlbumImageOrientation(s32 val) {
     if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     return _appletCmdInU32(&g_appletISelfController, val, 19);
@@ -2252,6 +2263,13 @@ Result appletGetCurrentIlluminanceEx(bool *bOverLimit, float *fLux) {
     }
 
     return rc;
+}
+
+Result appletSetAlbumImageTakenNotificationEnabled(bool flag) {
+    if (hosversionBefore(7,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdInBool(&g_appletISelfController, flag, 100);
 }
 
 Result appletSetApplicationAlbumUserData(const void* buffer, size_t size) {
@@ -2820,12 +2838,12 @@ bool appletProcessMessage(u32 msg) {
     Result rc;
 
     switch(msg) {
-        case 0x4:
+        case AppletNotificationMessage_ExitRequested:
             appletCallHook(AppletHookType_OnExitRequest);
             return false;
         break;
 
-        case 0xF:
+        case AppletNotificationMessage_FocusStateChanged:
             rc = _appletGetCurrentFocusState(&g_appletFocusState);
             if (R_FAILED(rc))
                 fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadAppletGetCurrentFocusState));
@@ -2833,7 +2851,11 @@ bool appletProcessMessage(u32 msg) {
             appletCallHook(AppletHookType_OnFocusState);
         break;
 
-        case 0x1E:
+        case AppletNotificationMessage_Restart:
+            appletCallHook(AppletHookType_OnRestart);
+        break;
+
+        case AppletNotificationMessage_OperationModeChanged:
             rc = _appletGetOperationMode(&g_appletOperationMode);
             if (R_FAILED(rc))
                 fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadAppletGetOperationMode));
@@ -2841,12 +2863,20 @@ bool appletProcessMessage(u32 msg) {
             appletCallHook(AppletHookType_OnOperationMode);
         break;
 
-        case 0x1F:
+        case AppletNotificationMessage_PerformanceModeChanged:
             rc = _appletGetPerformanceMode(&g_appletPerformanceMode);
             if (R_FAILED(rc))
                 fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadAppletGetPerformanceMode));
 
             appletCallHook(AppletHookType_OnPerformanceMode);
+        break;
+
+        case AppletNotificationMessage_CaptureButtonShortPressed:
+            appletCallHook(AppletHookType_OnCaptureButtonShortPressed);
+        break;
+
+        case AppletNotificationMessage_AlbumImageTaken:
+            appletCallHook(AppletHookType_OnAlbumImageTaken);
         break;
     }
 

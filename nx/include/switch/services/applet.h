@@ -13,6 +13,7 @@
 #include "../kernel/tmem.h"
 #include "../kernel/event.h"
 
+/// AppletType
 typedef enum {
     AppletType_None = -2,
     AppletType_Default = -1,
@@ -23,6 +24,7 @@ typedef enum {
     AppletType_SystemApplication = 4,
 } AppletType;
 
+/// OperationMode
 typedef enum {
     AppletOperationMode_Handheld = 0,
     AppletOperationMode_Docked = 1,
@@ -30,20 +32,36 @@ typedef enum {
 
 /// applet hook types.
 typedef enum {
-    AppletHookType_OnFocusState = 0,  ///< FocusState changed.
-    AppletHookType_OnOperationMode,   ///< OperationMode changed.
-    AppletHookType_OnPerformanceMode, ///< PerformanceMode changed.
-    AppletHookType_OnExitRequest,     ///< Exit requested.
+    AppletHookType_OnFocusState = 0,                    ///< ::AppletNotificationMessage_FocusStateChanged
+    AppletHookType_OnOperationMode,                     ///< ::AppletNotificationMessage_OperationModeChanged
+    AppletHookType_OnPerformanceMode,                   ///< ::AppletNotificationMessage_PerformanceModeChanged
+    AppletHookType_OnExitRequest,                       ///< ::AppletNotificationMessage_ExitRequested
+    AppletHookType_OnRestart,                           ///< ::AppletNotificationMessage_Restart
+    AppletHookType_OnCaptureButtonShortPressed,         ///< ::AppletNotificationMessage_CaptureButtonShortPressed
+    AppletHookType_OnAlbumImageTaken,                   ///< ::AppletNotificationMessage_AlbumImageTaken
 
-    AppletHookType_Max,               ///< Number of applet hook types.
+    AppletHookType_Max,                                 ///< Number of applet hook types.
 } AppletHookType;
 
+/// NotificationMessage, for \ref appletGetMessage. See also \ref AppletHookType.
+typedef enum {
+    AppletNotificationMessage_ExitRequested             = 0x4,    ///< Exit requested.
+    AppletNotificationMessage_FocusStateChanged         = 0xF,    ///< FocusState changed.
+    AppletNotificationMessage_Restart                   = 0x10,   ///< Current applet execution was resumed.
+    AppletNotificationMessage_OperationModeChanged      = 0x1E,   ///< OperationMode changed.
+    AppletNotificationMessage_PerformanceModeChanged    = 0x1F,   ///< PerformanceMode changed.
+    AppletNotificationMessage_CaptureButtonShortPressed = 0x5A,   ///< Capture button was short-pressed.
+    AppletNotificationMessage_AlbumImageTaken           = 0x5C,   ///< Screenshot was taken.
+} AppletNotificationMessage;
+
+/// FocusState
 typedef enum {
     AppletFocusState_Focused = 1,                   ///< Applet is focused.
     AppletFocusState_NotFocusedLibraryApplet = 2,   ///< Out of focus - LibraryApplet open.
     AppletFocusState_NotFocusedHomeSleep = 3        ///< Out of focus - HOME menu open / console is sleeping.
 } AppletFocusState;
 
+/// FocusHandlingMode
 typedef enum {
   AppletFocusHandlingMode_SuspendHomeSleep = 0,       ///< Suspend only when HOME menu is open / console is sleeping (default).
   AppletFocusHandlingMode_NoSuspend,                  ///< Don't suspend when out of focus.
@@ -53,12 +71,14 @@ typedef enum {
   AppletFocusHandlingMode_Max,                        ///< Number of focus handling modes.
 } AppletFocusHandlingMode;
 
+/// LaunchParameterKind
 typedef enum {
     AppletLaunchParameterKind_Application     = 1, ///< Application-specific LaunchParameter
     AppletLaunchParameterKind_PreselectedUser = 2, ///< account PreselectedUser
     AppletLaunchParameterKind_Unknown         = 3, ///< Unknown if used by anything?
 } AppletLaunchParameterKind;
 
+/// AppletId
 typedef enum {
     AppletId_overlayDisp = 0x02,    ///< 010000000000100C "overlayDisp"
     AppletId_qlaunch = 0x03,        ///< 0100000000001000 "qlaunch" (SystemAppletMenu)
@@ -364,7 +384,25 @@ Result appletLeaveFatalSection(void);
  */
 Result appletSetScreenShotPermission(AppletScreenShotPermission permission);
 
-Result appletSetScreenShotImageOrientation(s32 val);
+/**
+ * @brief Sets whether ::AppletNotificationMessage_Restart is enabled.
+ * @param[in] flag Whether to enable the notification.
+ */
+Result appletSetRestartMessageEnabled(bool flag);
+
+/**
+ * @brief Sets whether ::AppletNotificationMessage_CaptureButtonShortPressed is enabled.
+ * @note Only available with [3.0.0+].
+ * @note When enabled with a non-Overlay applet, Overlay applet will not be notified of capture button short-presses for screenshots.
+ * @param[in] flag Whether to enable the notification.
+ */
+Result appletSetRequiresCaptureButtonShortPressedMessage(bool flag);
+
+/**
+ * @brief Sets the Album screenshot ImageOrientation.
+ * @param[in] val Input value.
+ */
+Result appletSetAlbumImageOrientation(s32 val);
 
 Result appletCreateManagedDisplayLayer(u64 *out);
 
@@ -389,6 +427,13 @@ Result appletIsIlluminanceAvailable(bool *out);
  * @param fLux Output fLux
  */
 Result appletGetCurrentIlluminanceEx(bool *bOverLimit, float *fLux);
+
+/**
+ * @brief Sets whether ::AppletNotificationMessage_AlbumImageTaken is enabled.
+ * @note Only available with [7.0.0+].
+ * @param[in] flag Whether to enable the notification.
+ */
+Result appletSetAlbumImageTakenNotificationEnabled(bool flag);
 
 /**
  * @brief Sets the Application AlbumUserData.
