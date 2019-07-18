@@ -17,7 +17,7 @@ void binderCreate(Binder* b, s32 id)
     b->id = id;
 }
 
-Result binderInitSession(Binder* b, Service *relay)
+Result binderInitSession(Binder* b, Service* relay)
 {
     Result rc = 0;
 
