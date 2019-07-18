@@ -60,7 +60,7 @@ Result nwindowCreate(NWindow* nw, s32 binder_id, bool producer_controlled_by_app
     nw->producer_controlled_by_app = producer_controlled_by_app;
 
     binderCreate(&nw->bq, binder_id);
-    rc = binderInitSession(&nw->bq);
+    rc = binderInitSession(&nw->bq, viGetSession_IHOSBinderDriverRelay());
 
     if (R_SUCCEEDED(rc))
         binderGetNativeHandle(&nw->bq, 0x0f, &nw->event);

@@ -3,12 +3,11 @@
 #include "result.h"
 #include "kernel/ipc.h"
 #include "runtime/hosversion.h"
-#include "services/vi.h"
 #include "display/binder.h"
 
-static Result _binderIpcDispatch(void)
+static Result _binderIpcDispatch(Binder* b)
 {
-    return serviceIpcDispatch(viGetSession_IHOSBinderDriverRelay());
+    return serviceIpcDispatch(b->relay);
 }
 
 void binderCreate(Binder* b, s32 id)
@@ -18,7 +17,7 @@ void binderCreate(Binder* b, s32 id)
     b->id = id;
 }
 
-Result binderInitSession(Binder* b)
+Result binderInitSession(Binder* b, Service *relay)
 {
     Result rc = 0;
 
@@ -27,6 +26,8 @@ Result binderInitSession(Binder* b)
 
     if (b->initialized)
         return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
+
+    b->relay = relay;
 
     rc = binderIncreaseWeakRef(b);
     if (R_FAILED(rc))
@@ -40,7 +41,7 @@ Result binderInitSession(Binder* b)
 
     b->initialized = true;
 
-    rc = ipcQueryPointerBufferSize(viGetSession_IHOSBinderDriverRelay()->handle, &b->ipc_buffer_size);
+    rc = ipcQueryPointerBufferSize(b->relay->handle, &b->ipc_buffer_size);
     if (R_FAILED(rc)) {
         binderClose(b);
         return rc;
@@ -99,7 +100,7 @@ static Result _binderTransactParcel(
     raw->code = code;
     raw->flags = flags;
 
-    Result rc = _binderIpcDispatch();
+    Result rc = _binderIpcDispatch(b);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -146,7 +147,7 @@ static Result _binderTransactParcelAuto(
     raw->code = code;
     raw->flags = flags;
 
-    Result rc = _binderIpcDispatch();
+    Result rc = _binderIpcDispatch(b);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -228,7 +229,7 @@ Result binderAdjustRefcount(Binder* b, s32 addval, s32 type)
     raw->addval = addval;
     raw->type = type;
 
-    Result rc = _binderIpcDispatch();
+    Result rc = _binderIpcDispatch(b);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
@@ -267,7 +268,7 @@ Result binderGetNativeHandle(Binder* b, u32 inval, Event *event_out)
     raw->session_id = b->id;
     raw->inval = inval;
 
-    Result rc = _binderIpcDispatch();
+    Result rc = _binderIpcDispatch(b);
 
     if (R_SUCCEEDED(rc)) {
         IpcParsedCommand r;
