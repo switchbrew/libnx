@@ -103,7 +103,7 @@ void* parcelReadData(Parcel *ctx, void* data, size_t data_size)
 
     aligned_data_size = (data_size+3) & ~3;
 
-    if (ctx->pos + aligned_data_size >= ctx->payload_size)
+    if (ctx->pos + aligned_data_size > ctx->payload_size)
         return NULL;
 
     if (data)
