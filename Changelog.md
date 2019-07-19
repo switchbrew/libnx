@@ -1,5 +1,69 @@
 # Changelog
 
+## Version 2.3.0
+
+#### system
+* **Added xxGetServiceSession functions for most services** (those which already had GetSessionService were renamed to GetServiceSession).
+* Added InfoType, SystemInfoType, TickCountInfo, InitialProcessIdRangeInfo and PhysicalMemoryInfo enums for syscalls.
+
+#### applet
+* **Added 8.0+ web applet functions**: webConfigSetMediaPlayerUi, webReplyGetMediaPlayerAutoClosedByCompletion.
+* **Added 8.0+ software keyboard functions**: swkbdConfigSetUnkFlag, swkbdConfigSetTrigger, swkbdInlineSetChangedStringV2Callback, swkbdInlineSetMovedCursorV2Callback.
+* Added swkbdInlineLaunchForLibraryApplet, swkbdInlineSetDecidedCancelCallback.
+* **Added many new applet command wrappers**, some of which expose functions introduced in more recent system versions: appletQueryApplicationPlayStatisticsByUid, appletGetGpuErrorDetectedSystemEvent, appletGetDisplayVersion, appletBeginBlockingHomeButtonShortAndLongPressed, appletEndBlockingHomeButtonShortAndLongPressed, appletRequestToShutdown, appletRequestToReboot, appletInitializeApplicationCopyrightFrameBuffer, appletSetApplicationCopyrightImage, appletSetApplicationCopyrightVisibility, appletGetPseudoDeviceId, appletSetApplicationAlbumUserData, appletEnterFatalSection, appletLeaveFatalSection, appletSetRestartMessageEnabled, appletSetRequiresCaptureButtonShortPressedMessage, appletSetAlbumImageTakenNotificationEnabled.
+* Added AppletScreenShotPermission enum (now used by appletSetScreenShotPermission).
+* Added AppletNotificationMessage enum, which describes the currently known return values of appletGetMessage.
+* Added AppletHookType_OnRestart, AppletHookType_OnCaptureButtonShortPressed and AppletHookType_OnAlbumImageTaken hook types.
+* Renamed appletSetScreenShotImageOrientation to appletSetAlbumImageOrientation.
+* Moved AppletApplicationPlayStatistics struct to PDM (now it's called PdmApplicationPlayStatistics).
+* Fixed web applet arg passing code to actually use 6.0+ format on 6.0+.
+* Fixed appletQueryApplicationPlayStatistics.
+
+#### filesystem
+* Added fsdevCreateFile, fsdevDeleteDirectoryRecursively, fsdevGetLastResult.
+* Added fsOpenFileSystemWithPatch, fsOpenContentStorageFileSystem, fsGetRightsIdByPath, fsGetRightsIdAndKeyGenerationByPath, fsCreateSaveDataFileSystemBySystemSaveDataId, fsDeleteSaveDataFileSystemBySaveDataSpaceId, fsDisableAutoSaveDataCreation, fsCreate_SystemSaveDataWithOwner, fsCreate_SystemSaveData.
+* Added fsFileOperateRange, fsStorageOperateRange.
+* Added option parameter to fsFileRead, fsFileWrite.
+* Added romfsMountFromCurrentProcess.
+* Added FsBisStorageId, FsFileCreateFlags, FsReadOption, FsWriteOption and FsOperationId enums.
+* Added FS_DIROPEN_NO_FILE_SIZE to FsDirectoryFlags enum.
+* Added FsRangeInfo struct.
+* Fixed romfs unmount corruption.
+* Fixed IPC fail in fsFsCreateFile.
+
+#### input
+* **Added partial support for SevenSixAxisSensor**.
+* **Added hid:dbg service support (virtual HID controllers)**.
+* Added hid commands: hidGetControllerDeviceType, hidGetControllerFlags, hidGetControllerPowerInfo.
+* Added hid:sys commands: hidsysGetUniquePadSerialNumber.
+* Fixed bug in irsGetIrCameraHandle.
+* Fixed IPC fail in hidsysSetNotificationLedPattern.
+
+#### other services
+* Added pm:bm service support.
+* Added pdm:qry service support.
+* Added i2c commands: i2csessionReceiveAuto, i2csessionExecuteCommandList.
+* Added ncm commands: ncmContentMetaDatabaseGetAttributes.
+* Added NcmContentMetaType and NcmContentMetaAttributa enums.
+* Added pm:shell commands: pmshellBoostSystemThreadResourceLimit.
+* Added set:sys commands: setsysGetDeviceNickname, setsysSetDeviceNickname.
+* Added time commands: timeGetDeviceLocationName, timeSetDeviceLocationName, timeGetTotalLocationNameCount, timeLoadLocationNameList, timeLoadTimeZoneRule, timeToPosixTime, timeToPosixTimeWithMyRule, timeToCalendarTime.
+* Added and corrected several /dev/nvhost-ctrl-gpu ioctls.
+* Added nvGpuGetZcullInfo, nvGpuGetTpcMasks, nvGpuZbcGetActiveSlotMask, nvGpuZbcAddColor, nvGpuZbcAddDepth.
+* Improved I2cDevice enum.
+* Improved accountInitialize to internally call InitializeApplicationInfo.
+* Changed binderInitSession to accept an arbitrary relay session handle.
+* Renamed PdmAccountEvent::eventType to type.
+* Corrected names of several spl functions: splSetBootReason, splGetBootReason.
+* Corrected ro service initialization code.
+* Corrected bug in internal USB IPC code.
+* Corrected bug in binderInitSession.
+* Corrected bug in parcelReadData.
+* Corrected bug in viInitialize when using Manager/System.
+
+#### miscellaneous
+* Further improvements to overall system stability and other minor adjustments to enhance the user experience.
+
 ## Version 2.2.0
 
 #### system
