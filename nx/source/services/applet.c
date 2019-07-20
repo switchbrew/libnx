@@ -8,6 +8,7 @@
 #include "services/fatal.h"
 #include "services/applet.h"
 #include "services/apm.h"
+#include "services/caps.h"
 #include "services/sm.h"
 #include "runtime/env.h"
 #include "runtime/hosversion.h"
@@ -2163,6 +2164,13 @@ static Result _appletSetOutOfFocusSuspendingEnabled(bool flag) {
     return _appletCmdInBool(&g_appletISelfController, flag, 16);
 }
 
+Result appletSetControllerFirmwareUpdateSection(bool flag) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdInBool(&g_appletISelfController, flag, 17);
+}
+
 Result appletSetRequiresCaptureButtonShortPressedMessage(bool flag) {
     if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
@@ -2170,14 +2178,89 @@ Result appletSetRequiresCaptureButtonShortPressedMessage(bool flag) {
     return _appletCmdInBool(&g_appletISelfController, flag, 18);
 }
 
-Result appletSetAlbumImageOrientation(s32 val) {
+Result appletSetAlbumImageOrientation(AlbumImageOrientation orientation) {
     if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    return _appletCmdInU32(&g_appletISelfController, val, 19);
+
+    return _appletCmdInU32(&g_appletISelfController, orientation, 19);
+}
+
+Result appletSetDesirableKeyboardLayout(u32 layout) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdInU32(&g_appletISelfController, layout, 20);
 }
 
 Result appletCreateManagedDisplayLayer(u64 *out) {
     return _appletCmdNoInOut64(&g_appletISelfController, out, 40);
+}
+
+Result appletSetHandlesRequestToDisplay(bool flag) {
+    return _appletCmdInBool(&g_appletISelfController, flag, 50);
+}
+
+Result appletApproveToDisplay(void) {
+    return _appletCmdNoIO(&g_appletISelfController, 51);
+}
+
+Result appletOverrideAutoSleepTimeAndDimmingTime(s32 inval0, s32 inval1, s32 inval2, s32 inval3) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        s32 inval0;
+        s32 inval1;
+        s32 inval2;
+        s32 inval3;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletISelfController, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 60;
+    raw->inval0 = inval0;
+    raw->inval1 = inval1;
+    raw->inval2 = inval2;
+    raw->inval3 = inval3;
+
+    Result rc = serviceIpcDispatch(&g_appletISelfController);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_appletISelfController, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result appletSetIdleTimeDetectionExtension(AppletIdleTimeDetectionExtension ext) {
+    return _appletCmdInU32(&g_appletISelfController, ext, 62);
+}
+
+Result appletGetIdleTimeDetectionExtension(AppletIdleTimeDetectionExtension *ext) {
+    return _appletCmdNoInOut32(&g_appletISelfController, ext, 63);
+}
+
+Result appletSetInputDetectionSourceSet(u32 val) {
+    return _appletCmdInU32(&g_appletISelfController, val, 64);
+}
+
+Result appletReportUserIsActive(void) {
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdNoIO(&g_appletISelfController, 65);
 }
 
 Result appletGetCurrentIlluminance(float *fLux) {
@@ -2225,6 +2308,20 @@ Result appletIsIlluminanceAvailable(bool *out) {
     return _appletCmdNoInOutBool(&g_appletISelfController, out, 67);
 }
 
+Result appletSetAutoSleepDisabled(bool flag) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdInBool(&g_appletISelfController, flag, 68);
+}
+
+Result appletIsAutoSleepDisabled(bool *out) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdNoInOutBool(&g_appletISelfController, out, 69);
+}
+
 Result appletGetCurrentIlluminanceEx(bool *bOverLimit, float *fLux) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
@@ -2263,6 +2360,13 @@ Result appletGetCurrentIlluminanceEx(bool *bOverLimit, float *fLux) {
     }
 
     return rc;
+}
+
+Result appletSetWirelessPriorityMode(AppletWirelessPriorityMode mode) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdInU32(&g_appletISelfController, mode, 80);
 }
 
 Result appletSetAlbumImageTakenNotificationEnabled(bool flag) {
@@ -2869,6 +2973,10 @@ bool appletProcessMessage(u32 msg) {
                 fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadAppletGetPerformanceMode));
 
             appletCallHook(AppletHookType_OnPerformanceMode);
+        break;
+
+        case AppletNotificationMessage_RequestToDisplay:
+            appletCallHook(AppletHookType_RequestToDisplay);
         break;
 
         case AppletNotificationMessage_CaptureButtonShortPressed:

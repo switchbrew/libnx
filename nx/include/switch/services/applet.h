@@ -10,6 +10,7 @@
 #include "../services/sm.h"
 #include "../services/apm.h"
 #include "../services/pdm.h"
+#include "../services/caps.h"
 #include "../kernel/tmem.h"
 #include "../kernel/event.h"
 
@@ -39,6 +40,7 @@ typedef enum {
     AppletHookType_OnRestart,                           ///< ::AppletNotificationMessage_Restart
     AppletHookType_OnCaptureButtonShortPressed,         ///< ::AppletNotificationMessage_CaptureButtonShortPressed
     AppletHookType_OnAlbumImageTaken,                   ///< ::AppletNotificationMessage_AlbumImageTaken
+    AppletHookType_RequestToDisplay,                    ///< ::AppletNotificationMessage_RequestToDisplay
 
     AppletHookType_Max,                                 ///< Number of applet hook types.
 } AppletHookType;
@@ -50,6 +52,7 @@ typedef enum {
     AppletNotificationMessage_Restart                   = 0x10,   ///< Current applet execution was resumed.
     AppletNotificationMessage_OperationModeChanged      = 0x1E,   ///< OperationMode changed.
     AppletNotificationMessage_PerformanceModeChanged    = 0x1F,   ///< PerformanceMode changed.
+    AppletNotificationMessage_RequestToDisplay          = 0x33,   ///< Display requested, see \ref appletApproveToDisplay.
     AppletNotificationMessage_CaptureButtonShortPressed = 0x5A,   ///< Capture button was short-pressed.
     AppletNotificationMessage_AlbumImageTaken           = 0x5C,   ///< Screenshot was taken.
 } AppletNotificationMessage;
@@ -132,6 +135,19 @@ typedef enum {
     AppletScreenShotPermission_Enable  = 1,        ///< Enable.
     AppletScreenShotPermission_Disable = 2,        ///< Disable.
 } AppletScreenShotPermission;
+
+/// Extension values for \ref appletSetIdleTimeDetectionExtension / \ref appletGetIdleTimeDetectionExtension, for extending user inactivity detection.
+typedef enum {
+    AppletIdleTimeDetectionExtension_None           = 0,       ///< No extension.
+    AppletIdleTimeDetectionExtension_Extended       = 1,       ///< Extended
+    AppletIdleTimeDetectionExtension_ExtendedUnsafe = 2,       ///< ExtendedUnsafe
+} AppletIdleTimeDetectionExtension;
+
+/// Input mode values for \ref appletSetWirelessPriorityMode.
+typedef enum {
+    AppletWirelessPriorityMode_Unknown1 = 1,       ///< Unknown.
+    AppletWirelessPriorityMode_Unknown2 = 2,       ///< Unknown.
+} AppletWirelessPriorityMode;
 
 /// applet hook function.
 typedef void (*AppletHookFn)(AppletHookType hook, void* param);
@@ -391,6 +407,14 @@ Result appletSetScreenShotPermission(AppletScreenShotPermission permission);
 Result appletSetRestartMessageEnabled(bool flag);
 
 /**
+ * @brief Sets ControllerFirmwareUpdateSection.
+ * @note Only available with [3.0.0+].
+ * @note This throws error 0x40280 when the internal state flag already matches the input value.
+ * @param[in] flag Flag
+ */
+Result appletSetControllerFirmwareUpdateSection(bool flag);
+
+/**
  * @brief Sets whether ::AppletNotificationMessage_CaptureButtonShortPressed is enabled.
  * @note Only available with [3.0.0+].
  * @note When enabled with a non-Overlay applet, Overlay applet will not be notified of capture button short-presses for screenshots.
@@ -400,11 +424,64 @@ Result appletSetRequiresCaptureButtonShortPressedMessage(bool flag);
 
 /**
  * @brief Sets the Album screenshot ImageOrientation.
- * @param[in] val Input value.
+ * @note Only available with [3.0.0+].
+ * @param[in] orientation \ref AlbumImageOrientation
  */
-Result appletSetAlbumImageOrientation(s32 val);
+Result appletSetAlbumImageOrientation(AlbumImageOrientation orientation);
+
+/**
+ * @brief Sets the DesirableKeyboardLayout.
+ * @note Only available with [4.0.0+].
+ * @param[in] layout Input layout.
+ */
+Result appletSetDesirableKeyboardLayout(u32 layout);
 
 Result appletCreateManagedDisplayLayer(u64 *out);
+
+/**
+ * @brief Sets whether ::AppletNotificationMessage_RequestToDisplay is enabled.
+ * @note Sets an internal state flag. When the input flag is 0, this will in additional run the same code as \ref appletApproveToDisplay.
+ * @param[in] flag Flag
+ */
+Result appletSetHandlesRequestToDisplay(bool flag);
+
+/**
+ * @brief Approve the display requested by ::AppletNotificationMessage_RequestToDisplay, see also \ref appletSetHandlesRequestToDisplay.
+ */
+Result appletApproveToDisplay(void);
+
+/**
+ * @brief OverrideAutoSleepTimeAndDimmingTime
+ * @param[in] inval0 Unknown input value.
+ * @param[in] inval1 Unknown input value.
+ * @param[in] inval2 Unknown input value.
+ * @param[in] inval3 Unknown input value.
+ */
+Result appletOverrideAutoSleepTimeAndDimmingTime(s32 inval0, s32 inval1, s32 inval2, s32 inval3);
+
+/**
+ * @brief Sets the IdleTimeDetectionExtension.
+ * @param[in] ext \ref AppletIdleTimeDetectionExtension Must be 0-2: 0 = disabled, 1 = Extended, and 2 = ExtendedUnsafe.
+ */
+Result appletSetIdleTimeDetectionExtension(AppletIdleTimeDetectionExtension ext);
+
+/**
+ * @brief Gets the value set by \ref appletSetIdleTimeDetectionExtension.
+ * @param[out] ext \ref AppletIdleTimeDetectionExtension
+ */
+Result appletGetIdleTimeDetectionExtension(AppletIdleTimeDetectionExtension *ext);
+
+/**
+ * @brief Sets the InputDetectionSourceSet.
+ * @param[in] val Input value.
+ */
+Result appletSetInputDetectionSourceSet(u32 val);
+
+/**
+ * @brief Reports that the user is active, for idle detection (screen dimming / auto-sleep). This is equivalent to when the user uses HID input.
+ * @note Only available with [2.0.0+].
+ */
+Result appletReportUserIsActive(void);
 
 /**
  * @brief Gets the current Illuminance from the light sensor.
@@ -421,12 +498,33 @@ Result appletGetCurrentIlluminance(float *fLux);
 Result appletIsIlluminanceAvailable(bool *out);
 
 /**
+ * @brief Sets AutoSleepDisabled.
+ * @note Only available with [5.0.0+].
+ * @param[in] flag Flag
+ */
+Result appletSetAutoSleepDisabled(bool flag);
+
+/**
+ * @brief Gets AutoSleepDisabled.
+ * @note Only available with [5.0.0+].
+ * @param[out] out Output flag
+ */
+Result appletIsAutoSleepDisabled(bool *out);
+
+/**
  * @brief Gets the current Illuminance from the light sensor. Same as \ref appletGetCurrentIlluminance except for the additional param.
  * @note Only available with [5.0.0+].
  * @param bOverLimit Output bOverLimit
  * @param fLux Output fLux
  */
 Result appletGetCurrentIlluminanceEx(bool *bOverLimit, float *fLux);
+
+/**
+ * @brief Sets the WirelessPriorityMode.
+ * @note Only available with [4.0.0+].
+ * @param[in] mode \ref AppletWirelessPriorityMode
+ */
+Result appletSetWirelessPriorityMode(AppletWirelessPriorityMode mode);
 
 /**
  * @brief Sets whether ::AppletNotificationMessage_AlbumImageTaken is enabled.
