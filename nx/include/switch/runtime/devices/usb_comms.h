@@ -7,6 +7,7 @@
  */
 #pragma once
 #include "../../types.h"
+#include "../../services/usbds.h"
 
 typedef struct {
     u8 bInterfaceClass;
@@ -37,3 +38,9 @@ size_t usbCommsReadEx(void* buffer, size_t size, u32 interface);
 
 /// Same as usbCommsWrite except with the specified interface.
 size_t usbCommsWriteEx(const void* buffer, size_t size, u32 interface);
+
+/// Gets the raw usbDs data for the default usbComms interface.
+Result usbCommsGetInfo(UsbDsInterface ** interface, UsbDsEndpoint ** endpoint_in, UsbDsEndpoint ** endpoint_out);
+
+/// Same as usbCommsGetInfo except with the specified interface. 
+Result usbCommsGetInfoEx(UsbDsInterface ** interface, UsbDsEndpoint ** endpoint_in, UsbDsEndpoint ** endpoint_out, u32 interface);

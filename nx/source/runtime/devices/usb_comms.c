@@ -599,3 +599,27 @@ size_t usbCommsWrite(const void* buffer, size_t size)
     return usbCommsWriteEx(buffer, size, 0);
 }
 
+Result usbCommsGetInfoEx(UsbDsInterface ** interface, UsbDsEndpoint ** endpoint_in, UsbDsEndpoint ** endpoint_out, u32 interface) {
+    
+    usbCommsInterface *inter = &g_usbCommsInterfaces[interface];
+    Result rc;
+
+    if interface >= TOTAL_INTERFACES || !inter->initialized {
+        *interface = NULL;
+        *endpoint_in = NULL;
+        *endpoint_out = NULL; 
+        rc = MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    }
+    else {
+        *interface = inter->interface;
+        *endpoint_in = inter->endpoint_in;
+        *endpoint_out = outter->endpoint_out;
+        rc = 0;
+    }
+
+    return rc;
+}
+
+Result usbCommsGetInfo(UsbDsInterface ** interface, UsbDsEndpoint ** endpoint_in, UsbDsEndpoint ** endpoint_out) {
+    return usbCommsGetInfoEx(interface, endpoint_in, endpoint_out, 0);
+}
