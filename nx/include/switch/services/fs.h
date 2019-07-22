@@ -192,6 +192,12 @@ typedef enum {
     FsGameCardAttribute_Repair     = (1 << 2), ///< Indicates that this gamecard is a repair tool.
 } FsGameCardAttribute;
 
+typedef enum {
+    FsGameCardPartiton_Update = 0,
+    FsGameCardPartiton_Normal = 1,
+    FsGameCardPartiton_Secure = 2,
+} FsGameCardPartiton;
+
 typedef struct {
     u32 value;
 } FsGameCardHandle;
@@ -242,6 +248,7 @@ Result fsCreateSaveDataFileSystemBySystemSaveDataId(const FsSave* save, const Fs
 Result fsDeleteSaveDataFileSystemBySaveDataSpaceId(FsSaveDataSpaceId saveDataSpaceId, u64 saveID);
 
 Result fsIsExFatSupported(bool* out);
+Result fsOpenGameCardFileSystem(FsFileSystem* out, const FsGameCardHandle* handle, FsGameCardPartiton partition);
 
 /// Do not call this directly, see fs_dev.h.
 Result fsMountSdcard(FsFileSystem* out);
