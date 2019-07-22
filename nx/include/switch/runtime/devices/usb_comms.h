@@ -40,7 +40,7 @@ size_t usbCommsReadEx(void* buffer, size_t size, u32 interface);
 size_t usbCommsWriteEx(const void* buffer, size_t size, u32 interface);
 
 /// Gets the raw usbDs data for the default usbComms interface.
-Result usbCommsGetInfo(UsbDsInterface ** interface, UsbDsEndpoint ** endpoint_in, UsbDsEndpoint ** endpoint_out);
+Result usbCommsGetInfo(UsbDsInterface ** interface_data, UsbDsEndpoint ** endpoint_in, UsbDsEndpoint ** endpoint_out);
 
 /// Same as usbCommsGetInfo except with the specified interface. 
-Result usbCommsGetInfoEx(UsbDsInterface ** interface, UsbDsEndpoint ** endpoint_in, UsbDsEndpoint ** endpoint_out, u32 interface);
+Result usbCommsGetInfoEx(UsbDsInterface ** interface_data, UsbDsEndpoint ** endpoint_in, UsbDsEndpoint ** endpoint_out, u32 interface);
