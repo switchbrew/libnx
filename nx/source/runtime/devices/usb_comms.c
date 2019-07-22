@@ -613,7 +613,7 @@ Result usbCommsGetInfoEx(UsbDsInterface ** interface_data, UsbDsEndpoint ** endp
     else {
         *interface_data = inter->interface;
         *endpoint_in = inter->endpoint_in;
-        *endpoint_out = outter->endpoint_out;
+        *endpoint_out = inter->endpoint_out;
         rc = 0;
     }
 
