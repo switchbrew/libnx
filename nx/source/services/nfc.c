@@ -65,18 +65,18 @@ Result nfpuInitialize(const NfpuInitConfig *config) {
         rc = _nfpuCreateInterface(&g_nfcuSrv, &g_nfcuInterface);
 
     if (R_SUCCEEDED(rc))
-        rc = _nfpuInterfaceInitialize(&g_nfcuInterface, hosversionAtLeast(4,0,0) ? 0 : 400, aruid, config);
+        rc = _nfpuInterfaceInitialize(&g_nfcuInterface, hosversionBefore(4,0,0) ? 0 : 400, aruid, config);
 
     if (R_FAILED(rc))
         nfpuExit();
 
-    return rc;        
+    return rc;
 }
 
 void nfpuExit(void) {
     if (atomicDecrement64(&g_refCnt) == 0) {
         _nfpuInterfaceFinalize(&g_nfpuInterface, 1);
-        _nfpuInterfaceFinalize(&g_nfcuInterface, hosversionAtLeast(4,0,0) ? 1 : 401);
+        _nfpuInterfaceFinalize(&g_nfcuInterface, hosversionBefore(4,0,0) ? 1 : 401);
         serviceClose(&g_nfpuInterface);
         serviceClose(&g_nfcuInterface);
         serviceClose(&g_nfpuSrv);
@@ -386,7 +386,7 @@ Result nfpuGetState(NfpuState *out) {
         rc = resp->result;
 
         if (R_SUCCEEDED(rc) && out)
-            *out = resp->state;            
+            *out = resp->state;
     }
 
     return rc;
@@ -424,7 +424,7 @@ Result nfpuGetDeviceState(HidControllerID id, NfpuDeviceState *out) {
         rc = resp->result;
 
         if (R_SUCCEEDED(rc) && out)
-            *out = resp->state;            
+            *out = resp->state;
     }
 
     return rc;
@@ -551,7 +551,7 @@ Result nfpuMount(HidControllerID id, NfpuDeviceType device_type, NfpuMountTarget
         serviceIpcParse(&g_nfpuInterface, &r, sizeof(*resp));
         resp = r.Raw;
 
-        rc = resp->result;          
+        rc = resp->result;
     }
 
     return rc;
@@ -608,10 +608,10 @@ Result nfpuOpenApplicationArea(HidControllerID id, u32 app_id, u32 *npad_id) {
         serviceIpcParse(&g_nfpuInterface, &r, sizeof(*resp));
         resp = r.Raw;
 
-        rc = resp->result; 
+        rc = resp->result;
 
         if (R_SUCCEEDED(rc) && npad_id)
-            *npad_id = resp->npad_id;         
+            *npad_id = resp->npad_id;
     }
 
     return rc;
@@ -647,7 +647,7 @@ Result nfpuGetApplicationArea(HidControllerID id, void* buf, size_t buf_size) {
         serviceIpcParse(&g_nfpuInterface, &r, sizeof(*resp));
         resp = r.Raw;
 
-        rc = resp->result;          
+        rc = resp->result;
     }
 
     return rc;
@@ -683,7 +683,7 @@ Result nfpuSetApplicationArea(HidControllerID id, const void* buf, size_t buf_si
         serviceIpcParse(&g_nfpuInterface, &r, sizeof(*resp));
         resp = r.Raw;
 
-        rc = resp->result;          
+        rc = resp->result;
     }
 
     return rc;
@@ -721,7 +721,7 @@ Result nfpuCreateApplicationArea(HidControllerID id, u32 app_id, const void* buf
         serviceIpcParse(&g_nfpuInterface, &r, sizeof(*resp));
         resp = r.Raw;
 
-        rc = resp->result;          
+        rc = resp->result;
     }
 
     return rc;
@@ -747,7 +747,7 @@ Result nfpuIsNfcEnabled(bool *out) {
     raw = serviceIpcPrepareHeader(&g_nfcuInterface, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
-    raw->cmd_id = hosversionAtLeast(2,0,0) ? 3 : 403;
+    raw->cmd_id = hosversionBefore(4,0,0) ? 3 : 403;
 
     Result rc = serviceIpcDispatch(&g_nfcuInterface);
 
