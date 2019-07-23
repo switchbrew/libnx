@@ -269,7 +269,9 @@ Result fsDeleteSaveDataFileSystemBySaveDataSpaceId(FsSaveDataSpaceId saveDataSpa
 
 Result fsIsExFatSupported(bool* out);
 Result fsOpenGameCardFileSystem(FsFileSystem* out, const FsGameCardHandle* handle, FsGameCardPartiton partition);
+Result fsReadSaveDataFileSystemExtraDataBySaveDataSpaceId(void* buf, size_t len, FsSaveDataSpaceId saveDataSpaceId, u64 saveID);
 Result fsReadSaveDataFileSystemExtraData(void* buf, size_t len, u64 saveID);
+Result fsWriteSaveDataFileSystemExtraData(const void* buf, size_t len, FsSaveDataSpaceId saveDataSpaceId, u64 saveID);
 
 /// Do not call this directly, see fs_dev.h.
 Result fsMountSdcard(FsFileSystem* out);

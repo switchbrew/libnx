@@ -776,6 +776,46 @@ Result fsOpenGameCardFileSystem(FsFileSystem* out, const FsGameCardHandle* handl
     return rc;
 }
 
+Result fsReadSaveDataFileSystemExtraDataBySaveDataSpaceId(void* buf, size_t len, FsSaveDataSpaceId saveDataSpaceId, u64 saveID) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    
+    IpcCommand c;
+    ipcInitialize(&c);
+    ipcAddRecvBuffer(&c, buf, len, BufferType_Normal);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 saveDataSpaceId;
+        u64 saveID;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_fsSrv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 57;
+    raw->saveDataSpaceId = saveDataSpaceId;
+    raw->saveID = saveID;
+
+    Result rc = serviceIpcDispatch(&g_fsSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_fsSrv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
 Result fsReadSaveDataFileSystemExtraData(void* buf, size_t len, u64 saveID) {
     IpcCommand c;
     ipcInitialize(&c);
@@ -784,13 +824,53 @@ Result fsReadSaveDataFileSystemExtraData(void* buf, size_t len, u64 saveID) {
     struct {
         u64 magic;
         u64 cmd_id;
-        u32 saveID;
+        u64 saveID;
     } *raw;
 
     raw = serviceIpcPrepareHeader(&g_fsSrv, &c, sizeof(*raw));
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 58;
+    raw->saveID = saveID;
+
+    Result rc = serviceIpcDispatch(&g_fsSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_fsSrv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result fsWriteSaveDataFileSystemExtraData(const void* buf, size_t len, FsSaveDataSpaceId saveDataSpaceId, u64 saveID) {
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+    ipcAddSendBuffer(&c, buf, len, BufferType_Normal);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 saveDataSpaceId;
+        u64 saveID;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_fsSrv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 59;
+    raw->saveDataSpaceId = saveDataSpaceId;
     raw->saveID = saveID;
 
     Result rc = serviceIpcDispatch(&g_fsSrv);
