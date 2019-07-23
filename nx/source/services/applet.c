@@ -2,6 +2,7 @@
 #include "types.h"
 #include "result.h"
 #include "arm/atomics.h"
+#include "arm/counter.h"
 #include "kernel/ipc.h"
 #include "kernel/tmem.h"
 #include "kernel/event.h"
@@ -62,6 +63,11 @@ static u32 g_appletRecordingInitialized;
 static TransferMemory g_appletCopyrightTmem;
 static bool g_appletCopyrightInitialized;
 
+static Event g_appletSuspendedTickEvent;
+static u64 g_appletInitTickBase;
+static u64 g_appletSuspendedTick;
+static bool g_appletSuspendedTickInitialized;
+
 static Event g_appletLibraryAppletLaunchableEvent;
 
 static AppletThemeColorType g_appletThemeColorType = AppletThemeColorType_Default;
@@ -91,6 +97,9 @@ static Result _appletSetPerformanceModeChangedNotification(bool flag);
 static Result _appletSelfExit(void);
 
 static Result _appletExitProcessAndReturn(void);
+
+static Result _appletGetAccumulatedSuspendedTickValue(u64 *tick);
+static Result _appletGetAccumulatedSuspendedTickChangedEvent(Event *out_event);
 
 Result appletInitialize(void)
 {
@@ -202,6 +211,13 @@ Result appletInitialize(void)
 
     if (R_SUCCEEDED(rc))
         rc = ipcQueryPointerBufferSize(g_appletISelfController.handle, &g_appletISelfController_ptrbufsize);
+
+    Result rc2 = _appletGetAccumulatedSuspendedTickChangedEvent(&g_appletSuspendedTickEvent);
+    if (R_SUCCEEDED(rc2)) {
+        g_appletInitTickBase = armGetSystemTick();
+        g_appletSuspendedTick = 0;
+        g_appletSuspendedTickInitialized = true;
+    }
 
     // ICommonStateGetter::GetEventHandle
     if (R_SUCCEEDED(rc))
@@ -331,6 +347,11 @@ void appletExit(void)
         eventClose(&g_appletLibraryAppletLaunchableEvent);
 
         eventClose(&g_appletMessageEvent);
+
+        if (g_appletSuspendedTickInitialized) {
+            eventClose(&g_appletSuspendedTickEvent);
+            g_appletSuspendedTickInitialized = false;
+        }
 
         serviceClose(&g_appletIDebugFunctions);
         serviceClose(&g_appletIDisplayController);
@@ -2374,6 +2395,39 @@ Result appletSetAlbumImageTakenNotificationEnabled(bool flag) {
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return _appletCmdInBool(&g_appletISelfController, flag, 100);
+}
+
+static Result _appletGetAccumulatedSuspendedTickValue(u64 *tick) {
+    if (hosversionBefore(6,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdNoInOut64(&g_appletISelfController, tick, 90);
+}
+
+static Result _appletGetAccumulatedSuspendedTickChangedEvent(Event *out_event) {
+    if (hosversionBefore(6,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletGetEvent(&g_appletISelfController, out_event, 91, true);
+}
+
+Result appletGetProgramTotalActiveTime(u64 *activeTime) {
+    if (!g_appletSuspendedTickInitialized)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    Result rc=0;
+    u64 suspendedTick = 0;
+
+    while (R_SUCCEEDED(eventWait(&g_appletSuspendedTickEvent, 0))) {
+        rc = _appletGetAccumulatedSuspendedTickValue(&suspendedTick);
+        if (R_FAILED(rc)) return rc;
+
+        if (suspendedTick > g_appletSuspendedTick) g_appletSuspendedTick = suspendedTick;
+    }
+
+    *activeTime = armTicksToNs(armGetSystemTick() - g_appletInitTickBase - g_appletSuspendedTick);
+
+    return rc;
 }
 
 Result appletSetApplicationAlbumUserData(const void* buffer, size_t size) {

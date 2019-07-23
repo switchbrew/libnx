@@ -534,6 +534,13 @@ Result appletSetWirelessPriorityMode(AppletWirelessPriorityMode mode);
 Result appletSetAlbumImageTakenNotificationEnabled(bool flag);
 
 /**
+ * @brief Gets the total time in nanoseconds that the current process was actively running (not suspended), relative to when \ref appletInitialize was last used.
+ * @note Only available with [6.0.0+].
+ * @param[out] activeTime Output nanoseconds value.
+ */
+Result appletGetProgramTotalActiveTime(u64 *activeTime);
+
+/**
  * @brief Sets the Application AlbumUserData.
  * @note Only available with [8.0.0+].
  * @param[in] buffer Buffer containing arbitrary UserData.
