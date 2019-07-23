@@ -80,13 +80,13 @@ typedef struct
 /// SaveDataExtraData Struct
 typedef struct {
     FsSave save;      ///< Save struct.
-    u64 owner_id;     ///< Title id of the owner of this save data. 0 for SystemSaveData.
+    u64 ownerId;      ///< Title id of the owner of this save data. 0 for SystemSaveData.
     u64 timestamp;    ///< POSIX timestamp.
     u32 flags;        ///< Save data flags. See \ref FsSaveDataFlags.
     u32 unk_x54;      ///< Normally 0. Possibly unused?
-    u64 data_size;    ///< Usable save data size.
-    u64 journal_size; ///< Journal size of the save data.
-    u64 commit_id;    ///< Id of the latest commit.
+    u64 dataSize;     ///< Usable save data size.
+    u64 journalSize;  ///< Journal size of the save data.
+    u64 commitId;     ///< Id of the latest commit.
     u8 unused[0x190]; ///< Uninitialized.
 } FsSaveDataExtraData;
 
@@ -199,8 +199,8 @@ typedef enum
     FsSaveDataType_CacheStorage             = 5, ///< [3.0.0+]
 } FsSaveDataType;
 
-typedef enum
-{
+/// SaveDataFlags
+typedef enum {
     FsSaveDataFlags_SurviveFactoryReset                    = BIT(0),
     FsSaveDataFlags_SurviveFactoryResetForRefurbishment    = BIT(1),
     FsSaveDataFlags_SurviveFactoryResetWithoutUserSaveData = BIT(2),
