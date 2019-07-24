@@ -83,6 +83,7 @@ typedef enum {
 
 /// AppletId
 typedef enum {
+    AppletId_application = 0x01,    ///<                  Application. Not valid for use with LibraryApplets.
     AppletId_overlayDisp = 0x02,    ///< 010000000000100C "overlayDisp"
     AppletId_qlaunch = 0x03,        ///< 0100000000001000 "qlaunch" (SystemAppletMenu)
     AppletId_starter = 0x04,        ///< 0100000000001012 "starter"
@@ -179,6 +180,13 @@ typedef struct {
     LibAppletExitReason exitreason;    ///< Set by \ref appletHolderJoin using the output from cmd GetResult, see \ref LibAppletExitReason.
 } AppletHolder;
 
+/// IdentityInfo
+typedef struct {
+    AppletId appletId;                 ///< \ref AppletId
+    u32 pad;                           ///< Padding.
+    u64 titleID;                       ///< titleID, only set with appletId == ::AppletId_application.
+} AppletIdentityInfo;
+
 /// Attributes for launching applications for Quest.
 typedef struct {
     u32 unk_x0;                        ///< See AppletApplicationAttribute::unk_x0.
@@ -200,7 +208,10 @@ Result appletInitialize(void);
 /// Exit applet, called automatically during app exit.
 void appletExit(void);
 
+/// Get the cached AppletResourceUserId.
 Result appletGetAppletResourceUserId(u64 *out);
+
+/// Get the \ref AppletType.
 AppletType appletGetAppletType(void);
 
 /// Sets the state field for \ref AppletThemeColorType.
@@ -208,6 +219,8 @@ void appletSetThemeColorType(AppletThemeColorType theme);
 
 /// Gets the state field for \ref AppletThemeColorType. Used internally by \ref libappletArgsCreate.
 AppletThemeColorType appletGetThemeColorType(void);
+
+// IFunctions for AppletType_*Application (IApplicationFunctions).
 
 /**
  * @brief Pops a LaunchParameter AppletStorage, the storage will be removed from sysmodule state during this.
@@ -373,6 +386,68 @@ Result appletQueryApplicationPlayStatisticsByUid(u128 userID, PdmApplicationPlay
  */
 Result appletGetGpuErrorDetectedSystemEvent(Event *out_event);
 
+// IFunctions for AppletType_OverlayApplet (IOverlayFunctions).
+
+/**
+ * @brief Stops forwarding the input to the foreground app, works only in the Overlay applet context.
+ * @note You have to call this to receive inputs through the hid service when running as the overlay applet.
+ */
+Result appletBeginToWatchShortHomeButtonMessage(void);
+
+/**
+ * @brief Forwards input to the foreground app, works only in the Overlay applet context.
+ * @note After calling this the overlay applet won't receive any input until \ref appletBeginToWatchShortHomeButtonMessage is called again.
+ */
+Result appletEndToWatchShortHomeButtonMessage(void);
+
+// ICommonStateGetter
+
+/**
+ * @brief Get an event that fires when the home button is pressed, doesn't interfere with home menu. This event does not auto clear.
+ * @note Doesn't fire for long press.
+ */
+Result appletHomeButtonReaderLockAccessorGetEvent(Event *out_event);
+
+/**
+ * @brief Pushes a storage to the general channel. Used for sending requests to qlaunch.
+ * @note  This is not usable under an Application, however it is usable under a LibraryApplet.
+ * @note  This uses \ref appletStorageClose automatically.
+ * @param s Storage object.
+ */
+Result appletPushToGeneralChannel(AppletStorage *s);
+
+/**
+ * @brief Gets whether VrMode is enabled.
+ * @note Only available with [3.0.0+].
+ * @param out Output flag
+ */
+Result appletIsVrModeEnabled(bool *out);
+
+/**
+ * @brief Sets whether VrMode is enabled.
+ * @note This is only fully usable system-side with [6.0.0+].
+ * @note For checking Parental Controls, see \ref pctlIsStereoVisionPermitted.
+ * @note On pre-7.0.0 this uses cmd SetVrModeEnabled internally, while on [7.0.0+] this uses cmds BeginVrModeEx/EndVrModeEx.
+ * @param flag Flag
+ */
+Result appletSetVrModeEnabled(bool flag);
+
+/**
+ * @brief Sets the \ref ApmCpuBoostMode.
+ * @note Only available with [7.0.0+] (not fully usable system-side with 6.x).
+ * @param mode \ref ApmCpuBoostMode.
+ */
+Result appletSetCpuBoostMode(ApmCpuBoostMode mode);
+
+/**
+ * @brief Gets the current PerformanceConfiguration.
+ * @note Only available with [7.0.0+].
+ * @param PerformanceConfiguration Output PerformanceConfiguration.
+ */
+Result appletGetCurrentPerformanceConfiguration(u32 *PerformanceConfiguration);
+
+// ISelfController
+
 /**
  * @brief Delay exiting until \ref appletUnlockExit is called, with a 15 second timeout once exit is requested.
  * @note When exit is requested \ref appletMainLoop will return false, hence any main-loop using appletMainLoop will exit. This allows the app to handle cleanup post-main-loop instead of being force-terminated.
@@ -405,6 +480,12 @@ Result appletSetScreenShotPermission(AppletScreenShotPermission permission);
  * @param[in] flag Whether to enable the notification.
  */
 Result appletSetRestartMessageEnabled(bool flag);
+
+/**
+ * @brief Sets the \ref AppletIdentityInfo for screenshots.
+ * @param[in] info \ref AppletIdentityInfo
+ */
+Result appletSetScreenShotAppletIdentityInfo(AppletIdentityInfo *info);
 
 /**
  * @brief Sets ControllerFirmwareUpdateSection.
@@ -548,61 +629,39 @@ Result appletGetProgramTotalActiveTime(u64 *activeTime);
  */
 Result appletSetApplicationAlbumUserData(const void* buffer, size_t size);
 
-/**
- * @brief Stops forwarding the input to the foreground app, works only in the Overlay applet context.
- * @note You have to call this to receive inputs through the hid service when running as the overlay applet.
- */
-Result appletBeginToWatchShortHomeButtonMessage(void);
+// ILibraryAppletSelfAccessor
 
 /**
- * @brief Forwards input to the foreground app, works only in the Overlay applet context.
- * @note After calling this the overlay applet won't receive any input until \ref appletBeginToWatchShortHomeButtonMessage is called again.
+ * @brief Gets the \ref AppletIdentityInfo for the MainApplet.
+ * @note Only available with AppletType_LibraryApplet.
+ * @param[out] \ref AppletIdentityInfo
  */
-Result appletEndToWatchShortHomeButtonMessage(void);
+Result appletGetMainAppletIdentityInfo(AppletIdentityInfo *info);
 
 /**
- * @brief Get an event that fires when the home button is pressed, doesn't interfere with home menu. This event does not auto clear.
- * @note Doesn't fire for long press.
+ * @brief Gets the \ref AppletIdentityInfo for the CallerApplet.
+ * @note Only available with AppletType_LibraryApplet.
+ * @param[out] \ref AppletIdentityInfo
  */
-Result appletHomeButtonReaderLockAccessorGetEvent(Event *out_event);
+Result appletGetCallerAppletIdentityInfo(AppletIdentityInfo *info);
 
 /**
- * @brief Pushes a storage to the general channel. Used for sending requests to qlaunch.
- * @note  This is not usable under an Application, however it is usable under a LibraryApplet.
- * @note  This uses \ref appletStorageClose automatically.
- * @param s Storage object.
+ * @brief Gets an array of \ref AppletIdentityInfo for the CallerStack.
+ * @note Only available with AppletType_LibraryApplet on [3.0.0+].
+ * @param[out] stack Output array of \ref AppletIdentityInfo.
+ * @param[in] count Size of the stack array.
+ * @param[out] total_out Total output entries.
  */
-Result appletPushToGeneralChannel(AppletStorage *s);
+Result appletGetCallerAppletIdentityInfoStack(AppletIdentityInfo *stack, s32 count, s32 *total_out);
 
 /**
- * @brief Gets whether VrMode is enabled.
- * @note Only available with [3.0.0+].
- * @param out Output flag
+ * @brief Gets the \ref AppletIdentityInfo for the NextReturnDestinationApplet.
+ * @note Only available with AppletType_LibraryApplet on [4.0.0+].
+ * @param[out] \ref AppletIdentityInfo
  */
-Result appletIsVrModeEnabled(bool *out);
+Result appletGetNextReturnDestinationAppletIdentityInfo(AppletIdentityInfo *info);
 
-/**
- * @brief Sets whether VrMode is enabled.
- * @note This is only fully usable system-side with [6.0.0+].
- * @note For checking Parental Controls, see \ref pctlIsStereoVisionPermitted.
- * @note On pre-7.0.0 this uses cmd SetVrModeEnabled internally, while on [7.0.0+] this uses cmds BeginVrModeEx/EndVrModeEx.
- * @param flag Flag
- */
-Result appletSetVrModeEnabled(bool flag);
-
-/**
- * @brief Sets the \ref ApmCpuBoostMode.
- * @note Only available with [7.0.0+] (not fully usable system-side with 6.x).
- * @param mode \ref ApmCpuBoostMode.
- */
-Result appletSetCpuBoostMode(ApmCpuBoostMode mode);
-
-/**
- * @brief Gets the current PerformanceConfiguration.
- * @note Only available with [7.0.0+].
- * @param PerformanceConfiguration Output PerformanceConfiguration.
- */
-Result appletGetCurrentPerformanceConfiguration(u32 *PerformanceConfiguration);
+// ILibraryAppletCreator
 
 /**
  * @brief Creates a LibraryApplet.

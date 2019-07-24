@@ -982,6 +982,41 @@ static Result _appletCmdNoInOutStorage(Service* srv, AppletStorage* s, u64 cmd_i
     return _appletGetSession(srv, &s->s, cmd_id);
 }
 
+static Result _appletGetIdentityInfo(Service* srv, AppletIdentityInfo *info, u64 cmd_id) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(srv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = cmd_id;
+
+    Result rc = serviceIpcDispatch(srv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            AppletIdentityInfo info;
+        } *resp;
+
+        serviceIpcParse(srv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && info) memcpy(info, &resp->info, sizeof(AppletIdentityInfo));
+    }
+
+    return rc;
+}
+
 // IWindowController
 
 static Result _appletGetAppletResourceUserId(u64 *out) {
@@ -1000,7 +1035,7 @@ Result appletGetAppletResourceUserId(u64 *out) {
     return 0;
 }
 
-// IFunctions
+// IApplicationFunctions
 
 Result appletPopLaunchParameter(AppletStorage *s, AppletLaunchParameterKind kind) {
     IpcCommand c;
@@ -2181,6 +2216,44 @@ Result appletSetRestartMessageEnabled(bool flag) {
     return _appletCmdInBool(&g_appletISelfController, flag, 14);
 }
 
+Result appletSetScreenShotAppletIdentityInfo(AppletIdentityInfo *info) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        AppletIdentityInfo info;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletISelfController, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 15;
+    memcpy(&raw->info, info, sizeof(AppletIdentityInfo));
+
+    Result rc = serviceIpcDispatch(&g_appletISelfController);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            AppletIdentityInfo info;
+        } *resp;
+
+        serviceIpcParse(&g_appletISelfController, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
 static Result _appletSetOutOfFocusSuspendingEnabled(bool flag) {
     return _appletCmdInBool(&g_appletISelfController, flag, 16);
 }
@@ -2470,7 +2543,76 @@ Result appletSetApplicationAlbumUserData(const void* buffer, size_t size) {
 // ILibraryAppletSelfAccessor
 
 static Result _appletExitProcessAndReturn(void) {
+    if (__nx_applet_type != AppletType_LibraryApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
     return _appletCmdNoIO(&g_appletILibraryAppletSelfAccessor, 10);
+}
+
+Result appletGetMainAppletIdentityInfo(AppletIdentityInfo *info) {
+    if (__nx_applet_type != AppletType_LibraryApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _appletGetIdentityInfo(&g_appletILibraryAppletSelfAccessor, info, 12);
+}
+
+Result appletGetCallerAppletIdentityInfo(AppletIdentityInfo *info) {
+    if (__nx_applet_type != AppletType_LibraryApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _appletGetIdentityInfo(&g_appletILibraryAppletSelfAccessor, info, 14);
+}
+
+Result appletGetCallerAppletIdentityInfoStack(AppletIdentityInfo *stack, s32 count, s32 *total_out) {
+    if (__nx_applet_type != AppletType_LibraryApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    ipcAddRecvBuffer(&c, stack, count*sizeof(AppletIdentityInfo), BufferType_Normal);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletILibraryAppletSelfAccessor, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 17;
+
+    Result rc = serviceIpcDispatch(&g_appletILibraryAppletSelfAccessor);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            s32 total_out;
+        } *resp;
+
+        serviceIpcParse(&g_appletILibraryAppletSelfAccessor, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && total_out) *total_out = resp->total_out;
+    }
+
+    return rc;
+}
+
+Result appletGetNextReturnDestinationAppletIdentityInfo(AppletIdentityInfo *info) {
+    if (__nx_applet_type != AppletType_LibraryApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletGetIdentityInfo(&g_appletILibraryAppletSelfAccessor, info, 18);
 }
 
 // ILibraryAppletCreator
