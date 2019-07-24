@@ -520,6 +520,27 @@ Result appletSetDesirableKeyboardLayout(u32 layout);
 Result appletCreateManagedDisplayLayer(u64 *out);
 
 /**
+ * @brief Checks whether SystemBufferSharing is enabled, throwing an error otherwise.
+ * @note Only available with [4.0.0+]. Not usable with AppletType_*Application.
+ */
+Result appletIsSystemBufferSharingEnabled(void);
+
+/**
+ * @brief Gets the System SharedBufferHandle and SharedLayerHandle.
+ * @note Only available with [4.0.0+]. Not usable with AppletType_*Application.
+ * @param[out] SharedBufferHandle Output System SharedBufferHandle.
+ * @param[out] SharedLayerHandle Output System SharedLayerHandle.
+ */
+Result appletGetSystemSharedLayerHandle(u64 *SharedBufferHandle, u64 *SharedLayerHandle);
+
+/**
+ * @brief Same as \ref appletGetSystemSharedLayerHandle except this just gets the SharedBufferHandle.
+ * @note Only available with [5.0.0+]. Not usable with AppletType_*Application.
+ * @param[out] SharedBufferHandle Output System SharedBufferHandle.
+ */
+Result appletGetSystemSharedBufferHandle(u64 *SharedBufferHandle);
+
+/**
  * @brief Sets whether ::AppletNotificationMessage_RequestToDisplay is enabled.
  * @note Sets an internal state flag. When the input flag is 0, this will in additional run the same code as \ref appletApproveToDisplay.
  * @param[in] flag Flag

@@ -2242,7 +2242,6 @@ Result appletSetScreenShotAppletIdentityInfo(AppletIdentityInfo *info) {
         struct {
             u64 magic;
             u64 result;
-            AppletIdentityInfo info;
         } *resp;
 
         serviceIpcParse(&g_appletISelfController, &r, sizeof(*resp));
@@ -2288,6 +2287,60 @@ Result appletSetDesirableKeyboardLayout(u32 layout) {
 
 Result appletCreateManagedDisplayLayer(u64 *out) {
     return _appletCmdNoInOut64(&g_appletISelfController, out, 40);
+}
+
+Result appletIsSystemBufferSharingEnabled(void) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdNoIO(&g_appletISelfController, 41);
+}
+
+Result appletGetSystemSharedLayerHandle(u64 *SharedBufferHandle, u64 *SharedLayerHandle) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletISelfController, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 42;
+
+    Result rc = serviceIpcDispatch(&g_appletISelfController);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            u64 SharedBufferHandle;
+            u64 SharedLayerHandle;
+        } *resp;
+
+        serviceIpcParse(&g_appletISelfController, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && SharedBufferHandle) *SharedBufferHandle = resp->SharedBufferHandle;
+        if (R_SUCCEEDED(rc) && SharedLayerHandle) *SharedLayerHandle = resp->SharedLayerHandle;
+    }
+
+    return rc;
+}
+
+Result appletGetSystemSharedBufferHandle(u64 *SharedBufferHandle) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdNoInOut64(&g_appletISelfController, SharedBufferHandle, 43);
 }
 
 Result appletSetHandlesRequestToDisplay(bool flag) {
