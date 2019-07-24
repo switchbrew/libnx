@@ -90,6 +90,7 @@ Result viSetLayerSize(ViLayer *layer, u64 width, u64 height);
 Result viSetLayerZ(ViLayer *layer, u64 z);
 Result viSetLayerPosition(ViLayer *layer, float x, float y);
 Result viCloseLayer(ViLayer *layer);
+Result viDestroyManagedLayer(ViLayer *layer);
 
 Result viSetLayerScalingMode(ViLayer *layer, ViScalingMode scaling_mode);
 

@@ -615,6 +615,38 @@ Result viCreateManagedLayer(const ViDisplay *display, ViLayerFlags layer_flags, 
     return rc;
 }
 
+Result viDestroyManagedLayer(ViLayer *layer) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 layer_id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 2011;
+    raw->layer_id = layer->layer_id;
+
+    Result rc = serviceIpcDispatch(&g_viIManagerDisplayService);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
 Result viSetContentVisibility(bool v) {
     IpcCommand c;
     ipcInitialize(&c);
@@ -960,7 +992,7 @@ Result viCloseLayer(ViLayer *layer)
         } *resp = r.Raw;
 
         rc = resp->result;
-        memset(layer, 0, sizeof(ViLayer));
+        layer->initialized = false;
     }
 
     return rc;
