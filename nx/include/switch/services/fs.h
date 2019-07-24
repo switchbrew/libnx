@@ -77,13 +77,26 @@ typedef struct
     u64 unk_x38;                    ///< 0 for SystemSaveData/SaveData.
 } FsSave;
 
+/// SaveDataExtraData Struct
+typedef struct {
+    FsSave save;      ///< Save struct.
+    u64 ownerId;      ///< Title id of the owner of this save data. 0 for SystemSaveData.
+    u64 timestamp;    ///< POSIX timestamp.
+    u32 flags;        ///< Save data flags. See \ref FsSaveDataFlags.
+    u32 unk_x54;      ///< Normally 0. Possibly unused?
+    u64 dataSize;     ///< Usable save data size.
+    u64 journalSize;  ///< Journal size of the save data.
+    u64 commitId;     ///< Id of the latest commit.
+    u8 unused[0x190]; ///< Uninitialized.
+} FsSaveDataExtraData;
+
 /// SaveCreate Struct
 typedef struct {
     u64 size;           ///< Size of the save data.
     u64 journalSize;    ///< Journal size of the save data.
     u64 blockSize;      ///< Block size of the save data.
     u64 ownerId;        ///< Title id of the owner of this save data. 0 for SystemSaveData.
-    u32 flags;          ///< Save data flags.
+    u32 flags;          ///< Save data flags. See \ref FsSaveDataFlags.
     u8 saveDataSpaceId; ///< See \ref FsSaveDataSpaceId.
     u8 unk;             ///< 0 for SystemSaveData.
     u8 padding[0x1A];   ///< Uninitialized for SystemSaveData.
@@ -186,6 +199,13 @@ typedef enum
     FsSaveDataType_CacheStorage             = 5, ///< [3.0.0+]
 } FsSaveDataType;
 
+/// SaveDataFlags
+typedef enum {
+    FsSaveDataFlags_SurviveFactoryReset                    = BIT(0),
+    FsSaveDataFlags_SurviveFactoryResetForRefurbishment    = BIT(1),
+    FsSaveDataFlags_SurviveFactoryResetWithoutUserSaveData = BIT(2),
+} FsSaveDataFlags;
+
 typedef enum {
     FsGameCardAttribute_AutoBoot   = (1 << 0), ///< Causes the cartridge to automatically start on bootup
     FsGameCardAttribute_ForceError = (1 << 1), ///< Causes NS to throw an error on attempt to load the cartridge
@@ -249,6 +269,9 @@ Result fsDeleteSaveDataFileSystemBySaveDataSpaceId(FsSaveDataSpaceId saveDataSpa
 
 Result fsIsExFatSupported(bool* out);
 Result fsOpenGameCardFileSystem(FsFileSystem* out, const FsGameCardHandle* handle, FsGameCardPartiton partition);
+Result fsReadSaveDataFileSystemExtraDataBySaveDataSpaceId(void* buf, size_t len, FsSaveDataSpaceId saveDataSpaceId, u64 saveID);
+Result fsReadSaveDataFileSystemExtraData(void* buf, size_t len, u64 saveID);
+Result fsWriteSaveDataFileSystemExtraData(const void* buf, size_t len, FsSaveDataSpaceId saveDataSpaceId, u64 saveID);
 
 /// Do not call this directly, see fs_dev.h.
 Result fsMountSdcard(FsFileSystem* out);
