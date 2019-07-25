@@ -220,186 +220,6 @@ void appletSetThemeColorType(AppletThemeColorType theme);
 /// Gets the state field for \ref AppletThemeColorType. Used internally by \ref libappletArgsCreate.
 AppletThemeColorType appletGetThemeColorType(void);
 
-// IFunctions for AppletType_*Application (IApplicationFunctions).
-
-/**
- * @brief Pops a LaunchParameter AppletStorage, the storage will be removed from sysmodule state during this.
- * @param s Output storage.
- * @param kind See \ref AppletLaunchParameterKind.
- * @note Can only be used in Applications.
- * @note See also acc.h \ref accountGetPreselectedUser (wrapper for appletPopLaunchParameter etc).
- */
-Result appletPopLaunchParameter(AppletStorage *s, AppletLaunchParameterKind kind);
-
-/**
- * @brief Requests to launch the specified application.
- * @note Only available with AppletType_*Application, or AppletType_LibraryApplet on 5.0.0+.
- * @param[in] titleID Application titleID. Value 0 can be used to relaunch the current application.
- * @param s Optional AppletStorage object, can be NULL. This is automatically closed. When NULL on pre-4.0.0 (or with AppletType_LibraryApplet), this will internally create a tmp storage with size 0 for use with the cmd. This is the storage available to the launched application via \ref appletPopLaunchParameter with ::AppletLaunchParameterKind_Application.
- */
-Result appletRequestLaunchApplication(u64 titleID, AppletStorage* s);
-
-/**
- * @brief Requests to launch the specified application, for kiosk systems.
- * @note Only available with AppletType_*Application on 3.0.0+.
- * @note Identical to \ref appletRequestLaunchApplication, except this allows the user to specify the attribute fields instead of the defaults being used.
- * @param[in] titleID Application titleID
- * @param s Optional AppletStorage object, can be NULL. This is automatically closed. When NULL on pre-4.0.0, this will internally create a tmp storage with size 0 for use with the cmd. This is the storage available to the launched application via \ref appletPopLaunchParameter with ::AppletLaunchParameterKind_Application.
- * @param[in] attr Kiosk application attributes.
- */
-Result appletRequestLaunchApplicationForQuest(u64 titleID, AppletStorage* s, const AppletApplicationAttributeForQuest *attr);
-
-Result appletGetDesiredLanguage(u64 *LanguageCode);
-
-/// Only available with AppletType_*Application.
-Result appletSetTerminateResult(Result res);
-
-/**
- * @brief Gets the DisplayVersion for the current host title control.nacp.
- * @note Only available with AppletType_*Application.
- * @param[out] displayVersion Output DisplayVersion string, must be at least 0x10-bytes. This is always NUL-terminated.
- */
-Result appletGetDisplayVersion(char *displayVersion);
-
-/**
- * @brief Blocks the usage of the home button, for short (Home Menu) and long (Overlay) presses.
- * @note Only available with AppletType_*Application.
- * @param val Unknown. Official sw only uses hard-coded value 0 for this.
- */
-Result appletBeginBlockingHomeButtonShortAndLongPressed(s64 val);
-
-/**
- * @brief Ends the blocking started by \ref appletBeginBlockingHomeButtonShortAndLongPressed.
- * @note Only available with AppletType_*Application.
- */
-Result appletEndBlockingHomeButtonShortAndLongPressed(void);
-
-/**
- * @brief Blocks the usage of the home button, for short presses (Home Menu).
- * @note Only available with AppletType_*Application.
- * @param val Unknown nanoseconds. Value 0 can be used.
- */
-Result appletBeginBlockingHomeButton(s64 val);
-
-/**
- * @brief Ends the blocking started by \ref appletBeginBlockingHomeButton.
- * @note Only available with AppletType_*Application.
- */
-Result appletEndBlockingHomeButton(void);
-
-void appletNotifyRunning(u8 *out);
-
-/**
- * @brief Gets the PseudoDeviceId. This is derived from the output of a ns command, and from data in the host title control.nacp.
- * @note Only available with AppletType_*Application on 2.0.0+.
- * @param[out] out Output PseudoDeviceId.
- */
-Result appletGetPseudoDeviceId(u128 *out);
-
-/// Set media playback state.
-/// If state is set to true, screen dimming and auto sleep is disabled.
-/// For *Application, this uses cmd SetMediaPlaybackStateForApplication, otherwise cmd SetMediaPlaybackState is used.
-Result appletSetMediaPlaybackState(bool state);
-
-/// Gets whether video recording is supported.
-/// See also \ref appletInitializeGamePlayRecording.
-Result appletIsGamePlayRecordingSupported(bool *flag);
-
-/// Disable/enable video recording. Only available after \ref appletInitializeGamePlayRecording was used.
-/// See also \ref appletInitializeGamePlayRecording.
-Result appletSetGamePlayRecordingState(bool state);
-
-/// Initializes video recording. This allocates a 0x6000000-byte buffer for the TransferMemory, cleanup is handled automatically during app exit in \ref appletExit.
-/// Only available with AppletType_Application on 3.0.0+, hence errors from this can be ignored.
-/// Video recording is only fully available system-side with 4.0.0+.
-/// Only usable when running under a title which supports video recording. Using this is only needed when the host title control.nacp has VideoCaptureMode set to Enabled, with Automatic appletInitializeGamePlayRecording is not needed.
-Result appletInitializeGamePlayRecording(void);
-
-/**
- * @brief Requests a system shutdown.
- * @note Only available with AppletType_*Application on 3.0.0+.
- */
-Result appletRequestToShutdown(void);
-
-/**
- * @brief Requests a system reboot.
- * @note Only available with AppletType_*Application on 3.0.0+.
- */
-Result appletRequestToReboot(void);
-
-/**
- * @brief Initializes the ApplicationCopyrightFrameBuffer, with dimensions 1280x720 + the tmem for it. This is used as an overlay for screenshots.
- * @note Only available with AppletType_*Application on 5.0.0+.
- * @note Cleanup for this is handled automatically during app exit in \ref appletExit.
- */
-Result appletInitializeApplicationCopyrightFrameBuffer(void);
-
-/**
- * @brief Sets the RGBA8 image for use with \ref appletInitializeApplicationCopyrightFrameBuffer. Overrides the current image, if this was already used previously.
- * @note Only available with AppletType_*Application on 5.0.0+.
- * @note The specified coordinates and width/height must be within the bounds of the framebuffer setup by \ref appletInitializeApplicationCopyrightFrameBuffer.
- * @param[in] buffer Input image buffer.
- * @param[in] size Input image buffer size.
- * @param[in] x X coordinate. Must not be negative.
- * @param[in] y Y coordinate. Must not be negative.
- * @param[in] width Image width. Must be >=1.
- * @param[in] height Image height. Must be >=1.
- * @param[in] mode WindowOriginMode. Should be at least 1.
- */
-Result appletSetApplicationCopyrightImage(const void* buffer, size_t size, s32 x, s32 y, s32 width, s32 height, s32 mode);
-
-/**
- * @brief Sets the visibility for the image set by \ref appletSetApplicationCopyrightImage, in screenshots.
- * @note Only available with AppletType_*Application on 5.0.0+.
- * @param[in] visible Whether the image is visible. The default is true.
- */
-Result appletSetApplicationCopyrightVisibility(bool visible);
-
-/**
- * @brief Gets ApplicationPlayStatistics.
- * @note Only available with AppletType_*Application on 5.0.0+.
- * @note The input titleIDs must be allowed via control.nacp with the current host title. The minimum allowed titleID is the titleID for the current-process.
- * @param stats Output \ref PdmApplicationPlayStatistics array.
- * @param titleIDs Input titleIDs array.
- * @param count Total entries in the input/output arrays.
- * @param total_out Total output entries.
- */
-Result appletQueryApplicationPlayStatistics(PdmApplicationPlayStatistics *stats, const u64 *titleIDs, s32 count, s32 *total_out);
-
-/**
- * @brief Same as \ref appletQueryApplicationPlayStatistics except this gets playstats specific to the input userID.
- * @note Only available with AppletType_*Application on 6.0.0+.
- * @param userID userID
- * @param stats Output \ref PdmApplicationPlayStatistics array.
- * @param titleIDs Input titleIDs array.
- * @param count Total entries in the input/output arrays.
- * @param total_out Total output entries.
- */
-Result appletQueryApplicationPlayStatisticsByUid(u128 userID, PdmApplicationPlayStatistics *stats, const u64 *titleIDs, s32 count, s32 *total_out);
-
-/**
- * @brief Gets an Event which is signaled for GpuErrorDetected.
- * @note Only available with AppletType_*Application on [8.0.0+].
- * @note The Event must be closed by the user once finished with it.
- * @note Official sw waits on this Event from a seperate thread, triggering an abort when it's signaled.
- * @param[out] event_out Output Event with autoclear=false.
- */
-Result appletGetGpuErrorDetectedSystemEvent(Event *out_event);
-
-// IFunctions for AppletType_OverlayApplet (IOverlayFunctions).
-
-/**
- * @brief Stops forwarding the input to the foreground app, works only in the Overlay applet context.
- * @note You have to call this to receive inputs through the hid service when running as the overlay applet.
- */
-Result appletBeginToWatchShortHomeButtonMessage(void);
-
-/**
- * @brief Forwards input to the foreground app, works only in the Overlay applet context.
- * @note After calling this the overlay applet won't receive any input until \ref appletBeginToWatchShortHomeButtonMessage is called again.
- */
-Result appletEndToWatchShortHomeButtonMessage(void);
-
 // ICommonStateGetter
 
 /**
@@ -650,38 +470,6 @@ Result appletGetProgramTotalActiveTime(u64 *activeTime);
  */
 Result appletSetApplicationAlbumUserData(const void* buffer, size_t size);
 
-// ILibraryAppletSelfAccessor
-
-/**
- * @brief Gets the \ref AppletIdentityInfo for the MainApplet.
- * @note Only available with AppletType_LibraryApplet.
- * @param[out] \ref AppletIdentityInfo
- */
-Result appletGetMainAppletIdentityInfo(AppletIdentityInfo *info);
-
-/**
- * @brief Gets the \ref AppletIdentityInfo for the CallerApplet.
- * @note Only available with AppletType_LibraryApplet.
- * @param[out] \ref AppletIdentityInfo
- */
-Result appletGetCallerAppletIdentityInfo(AppletIdentityInfo *info);
-
-/**
- * @brief Gets an array of \ref AppletIdentityInfo for the CallerStack.
- * @note Only available with AppletType_LibraryApplet on [3.0.0+].
- * @param[out] stack Output array of \ref AppletIdentityInfo.
- * @param[in] count Size of the stack array.
- * @param[out] total_out Total output entries.
- */
-Result appletGetCallerAppletIdentityInfoStack(AppletIdentityInfo *stack, s32 count, s32 *total_out);
-
-/**
- * @brief Gets the \ref AppletIdentityInfo for the NextReturnDestinationApplet.
- * @note Only available with AppletType_LibraryApplet on [4.0.0+].
- * @param[out] \ref AppletIdentityInfo
- */
-Result appletGetNextReturnDestinationAppletIdentityInfo(AppletIdentityInfo *info);
-
 // ILibraryAppletCreator
 
 /**
@@ -790,6 +578,8 @@ Result appletHolderPushInteractiveInData(AppletHolder *h, AppletStorage *s);
  */
 Result appletHolderPopInteractiveOutData(AppletHolder *h, AppletStorage *s);
 
+// (ILibraryAppletCreator ->) IStorage
+
 /**
  * @brief Creates a storage.
  * @param s Storage object.
@@ -870,6 +660,220 @@ Result appletStorageGetHandle(AppletStorage *s, s64 *out, Handle *handle);
  * @param size Output size (optional).
  */
 Result appletStorageMap(AppletStorage *s, void** addr, size_t *size);
+
+// IFunctions for AppletType_*Application (IApplicationFunctions).
+
+/**
+ * @brief Pops a LaunchParameter AppletStorage, the storage will be removed from sysmodule state during this.
+ * @param s Output storage.
+ * @param kind See \ref AppletLaunchParameterKind.
+ * @note Only available with AppletType_*Application.
+ * @note See also acc.h \ref accountGetPreselectedUser (wrapper for appletPopLaunchParameter etc).
+ */
+Result appletPopLaunchParameter(AppletStorage *s, AppletLaunchParameterKind kind);
+
+/**
+ * @brief Requests to launch the specified application.
+ * @note Only available with AppletType_*Application, or AppletType_LibraryApplet on 5.0.0+.
+ * @param[in] titleID Application titleID. Value 0 can be used to relaunch the current application.
+ * @param s Optional AppletStorage object, can be NULL. This is automatically closed. When NULL on pre-4.0.0 (or with AppletType_LibraryApplet), this will internally create a tmp storage with size 0 for use with the cmd. This is the storage available to the launched application via \ref appletPopLaunchParameter with ::AppletLaunchParameterKind_Application.
+ */
+Result appletRequestLaunchApplication(u64 titleID, AppletStorage* s);
+
+/**
+ * @brief Requests to launch the specified application, for kiosk systems.
+ * @note Only available with AppletType_*Application on 3.0.0+.
+ * @note Identical to \ref appletRequestLaunchApplication, except this allows the user to specify the attribute fields instead of the defaults being used.
+ * @param[in] titleID Application titleID
+ * @param s Optional AppletStorage object, can be NULL. This is automatically closed. When NULL on pre-4.0.0, this will internally create a tmp storage with size 0 for use with the cmd. This is the storage available to the launched application via \ref appletPopLaunchParameter with ::AppletLaunchParameterKind_Application.
+ * @param[in] attr Kiosk application attributes.
+ */
+Result appletRequestLaunchApplicationForQuest(u64 titleID, AppletStorage* s, const AppletApplicationAttributeForQuest *attr);
+
+Result appletGetDesiredLanguage(u64 *LanguageCode);
+
+/// Only available with AppletType_*Application.
+Result appletSetTerminateResult(Result res);
+
+/**
+ * @brief Gets the DisplayVersion for the current host title control.nacp.
+ * @note Only available with AppletType_*Application.
+ * @param[out] displayVersion Output DisplayVersion string, must be at least 0x10-bytes. This is always NUL-terminated.
+ */
+Result appletGetDisplayVersion(char *displayVersion);
+
+/**
+ * @brief Blocks the usage of the home button, for short (Home Menu) and long (Overlay) presses.
+ * @note Only available with AppletType_*Application.
+ * @param val Unknown. Official sw only uses hard-coded value 0 for this.
+ */
+Result appletBeginBlockingHomeButtonShortAndLongPressed(s64 val);
+
+/**
+ * @brief Ends the blocking started by \ref appletBeginBlockingHomeButtonShortAndLongPressed.
+ * @note Only available with AppletType_*Application.
+ */
+Result appletEndBlockingHomeButtonShortAndLongPressed(void);
+
+/**
+ * @brief Blocks the usage of the home button, for short presses (Home Menu).
+ * @note Only available with AppletType_*Application.
+ * @param val Unknown nanoseconds. Value 0 can be used.
+ */
+Result appletBeginBlockingHomeButton(s64 val);
+
+/**
+ * @brief Ends the blocking started by \ref appletBeginBlockingHomeButton.
+ * @note Only available with AppletType_*Application.
+ */
+Result appletEndBlockingHomeButton(void);
+
+void appletNotifyRunning(u8 *out);
+
+/**
+ * @brief Gets the PseudoDeviceId. This is derived from the output of a ns command, and from data in the host title control.nacp.
+ * @note Only available with AppletType_*Application on 2.0.0+.
+ * @param[out] out Output PseudoDeviceId.
+ */
+Result appletGetPseudoDeviceId(u128 *out);
+
+/// Set media playback state.
+/// If state is set to true, screen dimming and auto sleep is disabled.
+/// For *Application, this uses cmd SetMediaPlaybackStateForApplication, otherwise cmd SetMediaPlaybackState is used.
+Result appletSetMediaPlaybackState(bool state);
+
+/// Gets whether video recording is supported.
+/// See also \ref appletInitializeGamePlayRecording.
+Result appletIsGamePlayRecordingSupported(bool *flag);
+
+/// Disable/enable video recording. Only available after \ref appletInitializeGamePlayRecording was used.
+/// See also \ref appletInitializeGamePlayRecording.
+Result appletSetGamePlayRecordingState(bool state);
+
+/// Initializes video recording. This allocates a 0x6000000-byte buffer for the TransferMemory, cleanup is handled automatically during app exit in \ref appletExit.
+/// Only available with AppletType_Application on 3.0.0+, hence errors from this can be ignored.
+/// Video recording is only fully available system-side with 4.0.0+.
+/// Only usable when running under a title which supports video recording. Using this is only needed when the host title control.nacp has VideoCaptureMode set to Enabled, with Automatic appletInitializeGamePlayRecording is not needed.
+Result appletInitializeGamePlayRecording(void);
+
+/**
+ * @brief Requests a system shutdown.
+ * @note Only available with AppletType_*Application on 3.0.0+.
+ */
+Result appletRequestToShutdown(void);
+
+/**
+ * @brief Requests a system reboot.
+ * @note Only available with AppletType_*Application on 3.0.0+.
+ */
+Result appletRequestToReboot(void);
+
+/**
+ * @brief Initializes the ApplicationCopyrightFrameBuffer, with dimensions 1280x720 + the tmem for it. This is used as an overlay for screenshots.
+ * @note Only available with AppletType_*Application on 5.0.0+.
+ * @note Cleanup for this is handled automatically during app exit in \ref appletExit.
+ */
+Result appletInitializeApplicationCopyrightFrameBuffer(void);
+
+/**
+ * @brief Sets the RGBA8 image for use with \ref appletInitializeApplicationCopyrightFrameBuffer. Overrides the current image, if this was already used previously.
+ * @note Only available with AppletType_*Application on 5.0.0+.
+ * @note The specified coordinates and width/height must be within the bounds of the framebuffer setup by \ref appletInitializeApplicationCopyrightFrameBuffer.
+ * @param[in] buffer Input image buffer.
+ * @param[in] size Input image buffer size.
+ * @param[in] x X coordinate. Must not be negative.
+ * @param[in] y Y coordinate. Must not be negative.
+ * @param[in] width Image width. Must be >=1.
+ * @param[in] height Image height. Must be >=1.
+ * @param[in] mode WindowOriginMode. Should be at least 1.
+ */
+Result appletSetApplicationCopyrightImage(const void* buffer, size_t size, s32 x, s32 y, s32 width, s32 height, s32 mode);
+
+/**
+ * @brief Sets the visibility for the image set by \ref appletSetApplicationCopyrightImage, in screenshots.
+ * @note Only available with AppletType_*Application on 5.0.0+.
+ * @param[in] visible Whether the image is visible. The default is true.
+ */
+Result appletSetApplicationCopyrightVisibility(bool visible);
+
+/**
+ * @brief Gets ApplicationPlayStatistics.
+ * @note Only available with AppletType_*Application on 5.0.0+.
+ * @note The input titleIDs must be allowed via control.nacp with the current host title. The minimum allowed titleID is the titleID for the current-process.
+ * @param stats Output \ref PdmApplicationPlayStatistics array.
+ * @param titleIDs Input titleIDs array.
+ * @param count Total entries in the input/output arrays.
+ * @param total_out Total output entries.
+ */
+Result appletQueryApplicationPlayStatistics(PdmApplicationPlayStatistics *stats, const u64 *titleIDs, s32 count, s32 *total_out);
+
+/**
+ * @brief Same as \ref appletQueryApplicationPlayStatistics except this gets playstats specific to the input userID.
+ * @note Only available with AppletType_*Application on 6.0.0+.
+ * @param userID userID
+ * @param stats Output \ref PdmApplicationPlayStatistics array.
+ * @param titleIDs Input titleIDs array.
+ * @param count Total entries in the input/output arrays.
+ * @param total_out Total output entries.
+ */
+Result appletQueryApplicationPlayStatisticsByUid(u128 userID, PdmApplicationPlayStatistics *stats, const u64 *titleIDs, s32 count, s32 *total_out);
+
+/**
+ * @brief Gets an Event which is signaled for GpuErrorDetected.
+ * @note Only available with AppletType_*Application on [8.0.0+].
+ * @note The Event must be closed by the user once finished with it.
+ * @note Official sw waits on this Event from a seperate thread, triggering an abort when it's signaled.
+ * @param[out] event_out Output Event with autoclear=false.
+ */
+Result appletGetGpuErrorDetectedSystemEvent(Event *out_event);
+
+// ILibraryAppletSelfAccessor
+
+/**
+ * @brief Gets the \ref AppletIdentityInfo for the MainApplet.
+ * @note Only available with AppletType_LibraryApplet.
+ * @param[out] \ref AppletIdentityInfo
+ */
+Result appletGetMainAppletIdentityInfo(AppletIdentityInfo *info);
+
+/**
+ * @brief Gets the \ref AppletIdentityInfo for the CallerApplet.
+ * @note Only available with AppletType_LibraryApplet.
+ * @param[out] \ref AppletIdentityInfo
+ */
+Result appletGetCallerAppletIdentityInfo(AppletIdentityInfo *info);
+
+/**
+ * @brief Gets an array of \ref AppletIdentityInfo for the CallerStack.
+ * @note Only available with AppletType_LibraryApplet on [3.0.0+].
+ * @param[out] stack Output array of \ref AppletIdentityInfo.
+ * @param[in] count Size of the stack array.
+ * @param[out] total_out Total output entries.
+ */
+Result appletGetCallerAppletIdentityInfoStack(AppletIdentityInfo *stack, s32 count, s32 *total_out);
+
+/**
+ * @brief Gets the \ref AppletIdentityInfo for the NextReturnDestinationApplet.
+ * @note Only available with AppletType_LibraryApplet on [4.0.0+].
+ * @param[out] \ref AppletIdentityInfo
+ */
+Result appletGetNextReturnDestinationAppletIdentityInfo(AppletIdentityInfo *info);
+
+// IFunctions for AppletType_OverlayApplet (IOverlayFunctions).
+
+/**
+ * @brief Stops forwarding the input to the foreground app, works only in the Overlay applet context.
+ * @note You have to call this to receive inputs through the hid service when running as the overlay applet.
+ */
+Result appletBeginToWatchShortHomeButtonMessage(void);
+
+/**
+ * @brief Forwards input to the foreground app, works only in the Overlay applet context.
+ * @note After calling this the overlay applet won't receive any input until \ref appletBeginToWatchShortHomeButtonMessage is called again.
+ */
+Result appletEndToWatchShortHomeButtonMessage(void);
+
+// State / other
 
 /**
  * @brief Gets a notification message.

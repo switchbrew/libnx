@@ -1017,6 +1017,668 @@ static Result _appletGetIdentityInfo(Service* srv, AppletIdentityInfo *info, u64
     return rc;
 }
 
+// ICommonStateGetter
+
+Result appletHomeButtonReaderLockAccessorGetEvent(Event *out_event) {
+    Service ILockAccessor = {0};
+    Result rc = _appletGetSession(&g_appletICommonStateGetter, &ILockAccessor, 30);
+    if (R_FAILED(rc))
+        return rc;
+
+    rc = _appletGetEvent(&ILockAccessor, out_event, 3, false);
+    serviceClose(&ILockAccessor);
+    return rc;
+}
+
+static Result _appletReceiveMessage(u32 *out) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletICommonStateGetter, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 1;
+
+    Result rc = serviceIpcDispatch(&g_appletICommonStateGetter);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            u32 out;
+        } *resp;
+
+        serviceIpcParse(&g_appletICommonStateGetter, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            *out = resp->out;
+        }
+    }
+
+    return rc;
+}
+
+static Result _appletGetOperationMode(u8 *out) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletICommonStateGetter, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 5;
+
+    Result rc = serviceIpcDispatch(&g_appletICommonStateGetter);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            u8 out;
+        } *resp;
+
+        serviceIpcParse(&g_appletICommonStateGetter, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            *out = resp->out;
+        }
+    }
+
+    return rc;
+}
+static Result _appletGetPerformanceMode(u32 *out) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletICommonStateGetter, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 6;
+
+    Result rc = serviceIpcDispatch(&g_appletICommonStateGetter);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            u32 out;
+        } *resp;
+
+        serviceIpcParse(&g_appletICommonStateGetter, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            *out = resp->out;
+        }
+    }
+
+    return rc;
+}
+
+static Result _appletGetCurrentFocusState(u8 *out) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletICommonStateGetter, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 9;
+
+    Result rc = serviceIpcDispatch(&g_appletICommonStateGetter);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            u8 out;
+        } *resp;
+
+        serviceIpcParse(&g_appletICommonStateGetter, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            *out = resp->out;
+        }
+    }
+
+    return rc;
+}
+
+Result appletPushToGeneralChannel(AppletStorage *s) {
+    return _appletCmdInStorage(&g_appletICommonStateGetter, s, 20);
+}
+
+Result appletIsVrModeEnabled(bool *out) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdNoInOutBool(&g_appletICommonStateGetter, out, 50);
+}
+
+Result appletSetVrModeEnabled(bool flag) {
+    if (hosversionBefore(6,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    if (hosversionBefore(7,0,0))
+        return _appletCmdInBool(&g_appletICommonStateGetter, flag, 51);
+
+    return _appletCmdNoIO(&g_appletICommonStateGetter, flag ? 53 : 54);
+}
+
+Result appletSetCpuBoostMode(ApmCpuBoostMode mode) {
+    Result rc=0;
+    if (hosversionBefore(7,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    rc = _appletCmdInU32(&g_appletICommonStateGetter, mode, 66);
+    if (R_SUCCEEDED(rc)) g_appletCpuBoostMode = mode;
+    return rc;
+}
+
+Result appletGetCurrentPerformanceConfiguration(u32 *PerformanceConfiguration) {
+    if (hosversionBefore(7,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdNoInOut32(&g_appletICommonStateGetter, PerformanceConfiguration, 91);
+}
+
+// ISelfController
+
+static Result _appletSelfExit(void) {
+    return _appletCmdNoIO(&g_appletISelfController, 0);
+}
+
+Result appletLockExit(void) {
+    return _appletCmdNoIO(&g_appletISelfController, 1);
+}
+
+Result appletUnlockExit(void) {
+    return _appletCmdNoIO(&g_appletISelfController, 2);
+}
+
+Result appletEnterFatalSection(void) {
+    return _appletCmdNoIO(&g_appletISelfController, 3);
+}
+
+Result appletLeaveFatalSection(void) {
+    return _appletCmdNoIO(&g_appletISelfController, 4);
+}
+
+static Result _appletWaitLibraryAppletLaunchableEvent(void) {
+    Result rc=0;
+
+    if (!eventActive(&g_appletLibraryAppletLaunchableEvent))
+        rc = _appletGetEvent(&g_appletISelfController, &g_appletLibraryAppletLaunchableEvent, 9, false);
+
+    if (R_SUCCEEDED(rc)) rc = eventWait(&g_appletLibraryAppletLaunchableEvent, U64_MAX);
+
+    return rc;
+}
+
+Result appletSetScreenShotPermission(AppletScreenShotPermission permission) {
+    return _appletCmdInU32(&g_appletISelfController, permission, 10);
+}
+
+static Result _appletSetOperationModeChangedNotification(bool flag) {
+    return _appletCmdInBool(&g_appletISelfController, flag, 11);
+}
+
+static Result _appletSetPerformanceModeChangedNotification(bool flag) {
+    return _appletCmdInBool(&g_appletISelfController, flag, 12);
+}
+
+static Result _appletSetFocusHandlingMode(bool inval0, bool inval1, bool inval2) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u8 inval0;
+        u8 inval1;
+        u8 inval2;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletISelfController, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 13;
+    raw->inval0 = inval0!=0;
+    raw->inval1 = inval1!=0;
+    raw->inval2 = inval2!=0;
+
+    Result rc = serviceIpcDispatch(&g_appletISelfController);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_appletISelfController, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result appletSetRestartMessageEnabled(bool flag) {
+    return _appletCmdInBool(&g_appletISelfController, flag, 14);
+}
+
+Result appletSetScreenShotAppletIdentityInfo(AppletIdentityInfo *info) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        AppletIdentityInfo info;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletISelfController, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 15;
+    memcpy(&raw->info, info, sizeof(AppletIdentityInfo));
+
+    Result rc = serviceIpcDispatch(&g_appletISelfController);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_appletISelfController, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+static Result _appletSetOutOfFocusSuspendingEnabled(bool flag) {
+    return _appletCmdInBool(&g_appletISelfController, flag, 16);
+}
+
+Result appletSetControllerFirmwareUpdateSection(bool flag) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdInBool(&g_appletISelfController, flag, 17);
+}
+
+Result appletSetRequiresCaptureButtonShortPressedMessage(bool flag) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdInBool(&g_appletISelfController, flag, 18);
+}
+
+Result appletSetAlbumImageOrientation(AlbumImageOrientation orientation) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdInU32(&g_appletISelfController, orientation, 19);
+}
+
+Result appletSetDesirableKeyboardLayout(u32 layout) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdInU32(&g_appletISelfController, layout, 20);
+}
+
+Result appletCreateManagedDisplayLayer(u64 *out) {
+    return _appletCmdNoInOut64(&g_appletISelfController, out, 40);
+}
+
+Result appletIsSystemBufferSharingEnabled(void) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdNoIO(&g_appletISelfController, 41);
+}
+
+Result appletGetSystemSharedLayerHandle(u64 *SharedBufferHandle, u64 *SharedLayerHandle) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletISelfController, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 42;
+
+    Result rc = serviceIpcDispatch(&g_appletISelfController);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            u64 SharedBufferHandle;
+            u64 SharedLayerHandle;
+        } *resp;
+
+        serviceIpcParse(&g_appletISelfController, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && SharedBufferHandle) *SharedBufferHandle = resp->SharedBufferHandle;
+        if (R_SUCCEEDED(rc) && SharedLayerHandle) *SharedLayerHandle = resp->SharedLayerHandle;
+    }
+
+    return rc;
+}
+
+Result appletGetSystemSharedBufferHandle(u64 *SharedBufferHandle) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdNoInOut64(&g_appletISelfController, SharedBufferHandle, 43);
+}
+
+Result appletSetHandlesRequestToDisplay(bool flag) {
+    return _appletCmdInBool(&g_appletISelfController, flag, 50);
+}
+
+Result appletApproveToDisplay(void) {
+    return _appletCmdNoIO(&g_appletISelfController, 51);
+}
+
+Result appletOverrideAutoSleepTimeAndDimmingTime(s32 inval0, s32 inval1, s32 inval2, s32 inval3) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        s32 inval0;
+        s32 inval1;
+        s32 inval2;
+        s32 inval3;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletISelfController, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 60;
+    raw->inval0 = inval0;
+    raw->inval1 = inval1;
+    raw->inval2 = inval2;
+    raw->inval3 = inval3;
+
+    Result rc = serviceIpcDispatch(&g_appletISelfController);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_appletISelfController, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result appletSetIdleTimeDetectionExtension(AppletIdleTimeDetectionExtension ext) {
+    return _appletCmdInU32(&g_appletISelfController, ext, 62);
+}
+
+Result appletGetIdleTimeDetectionExtension(AppletIdleTimeDetectionExtension *ext) {
+    return _appletCmdNoInOut32(&g_appletISelfController, ext, 63);
+}
+
+Result appletSetInputDetectionSourceSet(u32 val) {
+    return _appletCmdInU32(&g_appletISelfController, val, 64);
+}
+
+Result appletReportUserIsActive(void) {
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdNoIO(&g_appletISelfController, 65);
+}
+
+Result appletGetCurrentIlluminance(float *fLux) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletISelfController, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 66;
+
+    Result rc = serviceIpcDispatch(&g_appletISelfController);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            float fLux;
+        } *resp;
+
+        serviceIpcParse(&g_appletISelfController, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && fLux) *fLux = resp->fLux;
+    }
+
+    return rc;
+}
+
+Result appletIsIlluminanceAvailable(bool *out) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdNoInOutBool(&g_appletISelfController, out, 67);
+}
+
+Result appletSetAutoSleepDisabled(bool flag) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdInBool(&g_appletISelfController, flag, 68);
+}
+
+Result appletIsAutoSleepDisabled(bool *out) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdNoInOutBool(&g_appletISelfController, out, 69);
+}
+
+Result appletGetCurrentIlluminanceEx(bool *bOverLimit, float *fLux) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletISelfController, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 71;
+
+    Result rc = serviceIpcDispatch(&g_appletISelfController);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            u8 bOverLimit;
+            float fLux;
+        } *resp;
+
+        serviceIpcParse(&g_appletISelfController, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && bOverLimit) *bOverLimit = resp->bOverLimit!=0;
+        if (R_SUCCEEDED(rc) && fLux) *fLux = resp->fLux;
+    }
+
+    return rc;
+}
+
+Result appletSetWirelessPriorityMode(AppletWirelessPriorityMode mode) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdInU32(&g_appletISelfController, mode, 80);
+}
+
+Result appletSetAlbumImageTakenNotificationEnabled(bool flag) {
+    if (hosversionBefore(7,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdInBool(&g_appletISelfController, flag, 100);
+}
+
+static Result _appletGetAccumulatedSuspendedTickValue(u64 *tick) {
+    if (hosversionBefore(6,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdNoInOut64(&g_appletISelfController, tick, 90);
+}
+
+static Result _appletGetAccumulatedSuspendedTickChangedEvent(Event *out_event) {
+    if (hosversionBefore(6,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletGetEvent(&g_appletISelfController, out_event, 91, true);
+}
+
+Result appletGetProgramTotalActiveTime(u64 *activeTime) {
+    if (!g_appletSuspendedTickInitialized)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    Result rc=0;
+    u64 suspendedTick = 0;
+
+    while (R_SUCCEEDED(eventWait(&g_appletSuspendedTickEvent, 0))) {
+        rc = _appletGetAccumulatedSuspendedTickValue(&suspendedTick);
+        if (R_FAILED(rc)) return rc;
+
+        if (suspendedTick > g_appletSuspendedTick) g_appletSuspendedTick = suspendedTick;
+    }
+
+    *activeTime = armTicksToNs(armGetSystemTick() - g_appletInitTickBase - g_appletSuspendedTick);
+
+    return rc;
+}
+
+Result appletSetApplicationAlbumUserData(const void* buffer, size_t size) {
+    if (hosversionBefore(8,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    ipcAddSendSmart(&c, g_appletISelfController_ptrbufsize, buffer, size, 0);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletISelfController, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 110;
+
+    Result rc = serviceIpcDispatch(&g_appletISelfController);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_appletISelfController, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
 // IWindowController
 
 static Result _appletGetAppletResourceUserId(u64 *out) {
@@ -1033,6 +1695,493 @@ Result appletGetAppletResourceUserId(u64 *out) {
 
     *out = g_appletResourceUserId;
     return 0;
+}
+
+// ILibraryAppletCreator
+
+static Result _appletCreateLibraryApplet(Service* srv_out, AppletId id, LibAppletMode mode) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 id;
+        u32 mode;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletILibraryAppletCreator, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 0;
+    raw->id = id;
+    raw->mode = mode;
+
+    Result rc = serviceIpcDispatch(&g_appletILibraryAppletCreator);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_appletILibraryAppletCreator, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && srv_out) {
+            serviceCreateSubservice(srv_out, &g_appletILibraryAppletCreator, &r, 0);
+        }
+    }
+
+    return rc;
+}
+
+static Result _appletGetIndirectLayerConsumerHandle(Service* srv, u64 *out) {
+    Result rc;
+    u64 AppletResourceUserId;
+
+    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
+    if (R_FAILED(rc)) return rc;
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 AppletResourceUserId;
+    } *raw;
+
+    ipcSendPid(&c);
+
+    raw = serviceIpcPrepareHeader(srv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 160;
+    raw->AppletResourceUserId = AppletResourceUserId;
+
+    rc = serviceIpcDispatch(srv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            u64 out;
+        } *resp;
+
+        serviceIpcParse(srv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && out) *out = resp->out;
+    }
+
+    return rc;
+}
+
+static Result _appletHolderCreate(AppletHolder *h, AppletId id, LibAppletMode mode, bool creating_self) {
+    Result rc=0;
+
+    memset(h, 0, sizeof(AppletHolder));
+    h->mode = mode;
+    h->creating_self = creating_self;
+
+    if (!h->creating_self) rc = _appletWaitLibraryAppletLaunchableEvent();
+
+    if (R_SUCCEEDED(rc)) rc = _appletCreateLibraryApplet(&h->s, id, mode);
+
+    if (R_SUCCEEDED(rc)) rc = _appletGetEvent(&h->s, &h->StateChangedEvent, 0, false);//GetAppletStateChangedEvent
+
+    if (R_SUCCEEDED(rc) && hosversionAtLeast(2,0,0) && h->mode == LibAppletMode_Unknown3) rc = _appletGetIndirectLayerConsumerHandle(&h->s, &h->layer_handle);
+
+    return rc;
+}
+
+Result appletCreateLibraryApplet(AppletHolder *h, AppletId id, LibAppletMode mode) {
+    return _appletHolderCreate(h, id, mode, false);
+}
+
+Result appletCreateLibraryAppletSelf(AppletHolder *h, AppletId id, LibAppletMode mode) {
+    return _appletHolderCreate(h, id, mode, true);
+}
+
+void appletHolderClose(AppletHolder *h) {
+    eventClose(&h->PopInteractiveOutDataEvent);
+
+    eventClose(&h->StateChangedEvent);
+    serviceClose(&h->s);
+    memset(h, 0, sizeof(AppletHolder));
+}
+
+bool appletHolderActive(AppletHolder *h) {
+    return serviceIsActive(&h->s);
+}
+
+Result appletHolderGetIndirectLayerConsumerHandle(AppletHolder *h, u64 *out) {
+    if (!serviceIsActive(&h->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (h->mode!=LibAppletMode_Unknown3)
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    if (out) *out = h->layer_handle;
+
+    return 0;
+}
+
+Result appletHolderStart(AppletHolder *h) {
+    Result rc=0;
+
+    if (!serviceIsActive(&h->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    if (!h->creating_self) rc = _appletWaitLibraryAppletLaunchableEvent();
+
+    if (R_SUCCEEDED(rc)) rc = _appletCmdNoIO(&h->s, 10);//Start
+
+    return rc;
+}
+
+Result appletHolderRequestExit(AppletHolder *h) {
+    Result rc=0;
+
+    if (!serviceIsActive(&h->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    if (!appletHolderCheckFinished(h)) rc = _appletCmdNoIO(&h->s, 20);//RequestExit
+
+    return rc;
+}
+
+void appletHolderJoin(AppletHolder *h) {
+    Result rc=0;
+    LibAppletExitReason res = LibAppletExitReason_Normal;
+    u32 desc=0;
+
+    eventWait(&h->StateChangedEvent, U64_MAX);
+    rc = _appletCmdNoIO(&h->s, 30);//GetResult
+
+    if (R_FAILED(rc)) {
+        res = LibAppletExitReason_Unexpected;
+        if (R_MODULE(rc) == 128) {
+            desc = R_DESCRIPTION(rc);
+            if (desc == 22) res = LibAppletExitReason_Canceled;
+            else {
+                if (desc >= 0x14 && desc < 0x32)res = LibAppletExitReason_Abnormal;
+            }
+        }
+    }
+
+    h->exitreason = res;
+}
+
+bool appletHolderCheckFinished(AppletHolder *h) {
+    return R_SUCCEEDED(eventWait(&h->StateChangedEvent, 0));
+}
+
+u32 appletHolderGetExitReason(AppletHolder *h) {
+    return h->exitreason;
+}
+
+static Result _appletHolderGetPopInteractiveOutDataEvent(AppletHolder *h) {
+    Result rc=0;
+
+    if (eventActive(&h->PopInteractiveOutDataEvent)) return 0;
+
+    rc = _appletGetEvent(&h->s, &h->PopInteractiveOutDataEvent, 106, false);
+
+    return rc;
+}
+
+bool appletHolderWaitInteractiveOut(AppletHolder *h) {
+    Result rc=0;
+    s32 idx = 0;
+
+    rc = _appletHolderGetPopInteractiveOutDataEvent(h);
+    if (R_FAILED(rc)) return false;
+
+    rc = waitMulti(&idx, U64_MAX, waiterForEvent(&h->PopInteractiveOutDataEvent), waiterForEvent(&h->StateChangedEvent));
+    if (R_FAILED(rc)) return false;
+
+    return idx==0;
+}
+
+Result appletHolderPushInData(AppletHolder *h, AppletStorage *s) {
+    return _appletCmdInStorage(&h->s, s, 100);
+}
+
+Result appletHolderPopOutData(AppletHolder *h, AppletStorage *s) {
+    return _appletCmdNoInOutStorage(&h->s, s, 101);
+}
+
+Result appletHolderPushExtraStorage(AppletHolder *h, AppletStorage *s) {
+    return _appletCmdInStorage(&h->s, s, 102);
+}
+
+Result appletHolderPushInteractiveInData(AppletHolder *h, AppletStorage *s) {
+    return _appletCmdInStorage(&h->s, s, 103);
+}
+
+Result appletHolderPopInteractiveOutData(AppletHolder *h, AppletStorage *s) {
+    return _appletCmdNoInOutStorage(&h->s, s, 104);
+}
+
+// (ILibraryAppletCreator ->) IStorage
+
+Result appletCreateStorage(AppletStorage *s, s64 size) {
+    memset(s, 0, sizeof(AppletStorage));
+
+    return _appletGetSessionIn64(&g_appletILibraryAppletCreator, &s->s, 10, size);
+}
+
+static Result _appletCreateTransferMemoryStorage(Service* srv_out, TransferMemory *tmem, bool writable) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    ipcSendHandleCopy(&c, tmem->handle);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u8 writable;
+        u64 size;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletILibraryAppletCreator, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 11;
+    raw->writable = writable!=0;
+    raw->size = tmem->size;
+
+    Result rc = serviceIpcDispatch(&g_appletILibraryAppletCreator);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_appletILibraryAppletCreator, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && srv_out) {
+            serviceCreateSubservice(srv_out, &g_appletILibraryAppletCreator, &r, 0);
+        }
+    }
+
+    return rc;
+}
+
+Result appletCreateTransferMemoryStorage(AppletStorage *s, void* buffer, s64 size, bool writable) {
+    Result rc=0;
+
+    memset(s, 0, sizeof(AppletStorage));
+
+    if (buffer==NULL) rc = tmemCreate(&s->tmem, size, Perm_None);
+    else rc = tmemCreateFromMemory(&s->tmem, buffer, size, Perm_None);
+    if (R_FAILED(rc)) return rc;
+
+    rc = _appletCreateTransferMemoryStorage(&s->s, &s->tmem, writable);
+    if (R_FAILED(rc)) tmemClose(&s->tmem);
+
+    return rc;
+}
+
+Result appletCreateHandleStorage(AppletStorage *s, s64 inval, Handle handle) {
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdInHandle64(&g_appletILibraryAppletCreator, &s->s, 12, handle, inval);
+}
+
+Result appletCreateHandleStorageTmem(AppletStorage *s, void* buffer, s64 size) {
+    Result rc=0;
+
+    memset(s, 0, sizeof(AppletStorage));
+
+    if (buffer==NULL) rc = tmemCreate(&s->tmem, size, Perm_None);
+    else rc = tmemCreateFromMemory(&s->tmem, buffer, size, Perm_None);
+    if (R_FAILED(rc)) return rc;
+
+    rc = appletCreateHandleStorage(s, s->tmem.size, s->tmem.handle);
+    if (R_FAILED(rc)) tmemClose(&s->tmem);
+
+    return rc;
+}
+
+void appletStorageClose(AppletStorage *s) {
+    serviceClose(&s->s);
+}
+
+void appletStorageCloseTmem(AppletStorage *s) {
+    tmemClose(&s->tmem);
+}
+
+static Result _appletStorageAccessorRW(Service* srv, size_t ipcbufsize, s64 offset, void* buffer, size_t size, bool rw) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    if(!rw)ipcAddRecvSmart(&c, ipcbufsize, buffer, size, 0);
+    if(rw)ipcAddSendSmart(&c, ipcbufsize, buffer, size, 0);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        s64 offset;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(srv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = rw!=0 ? 10 : 11;
+    raw->offset = offset;
+
+    Result rc = serviceIpcDispatch(srv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(srv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result appletStorageGetSize(AppletStorage *s, s64 *size) {
+    Result rc=0;
+    Service tmp_srv;//IStorageAccessor
+
+    if (!serviceIsActive(&s->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    rc = _appletGetSession(&s->s, &tmp_srv, 0);//Open
+    if (R_FAILED(rc)) return rc;
+
+    rc = _appletCmdNoInOut64(&tmp_srv, (u64*)size, 0);
+    serviceClose(&tmp_srv);
+
+    return rc;
+}
+
+static Result _appletStorageRW(AppletStorage *s, s64 offset, void* buffer, size_t size, bool rw) {
+    Result rc=0;
+    size_t ipcbufsize=0;
+    Service tmp_srv;//IStorageAccessor
+
+    if (!serviceIsActive(&s->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    rc = _appletGetSession(&s->s, &tmp_srv, 0);//Open
+    if (R_FAILED(rc)) return rc;
+
+    rc = ipcQueryPointerBufferSize(tmp_srv.handle, &ipcbufsize);
+
+    if (R_SUCCEEDED(rc)) rc = _appletStorageAccessorRW(&tmp_srv, ipcbufsize, offset, buffer, size, rw);
+    serviceClose(&tmp_srv);
+
+    return rc;
+}
+
+Result appletStorageWrite(AppletStorage *s, s64 offset, const void* buffer, size_t size) {
+    return _appletStorageRW(s, offset, (void*)buffer, size, true);
+}
+
+Result appletStorageRead(AppletStorage *s, s64 offset, void* buffer, size_t size) {
+    return _appletStorageRW(s, offset, buffer, size, false);
+}
+
+static Result _appletStorageGetHandle(Service* srv, s64 *out, Handle *handle) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(srv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 1;
+
+    Result rc = serviceIpcDispatch(srv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            s64 out;
+        } *resp;
+
+        serviceIpcParse(srv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            if (out) *out = resp->out;
+            if (handle) *handle = r.Handles[0];
+        }
+    }
+
+    return rc;
+}
+
+Result appletStorageGetHandle(AppletStorage *s, s64 *out, Handle *handle) {
+    Result rc=0;
+    Service tmp_srv;//ITransferStorageAccessor
+
+    if (!serviceIsActive(&s->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    rc = _appletGetSession(&s->s, &tmp_srv, 1);//OpenTransferStorage
+    if (R_FAILED(rc)) return rc;
+
+    rc = _appletStorageGetHandle(&tmp_srv, out, handle);
+    serviceClose(&tmp_srv);
+
+    return rc;
+}
+
+Result appletStorageMap(AppletStorage *s, void** addr, size_t *size) {
+    Result rc=0;
+    s64 tmpsize=0;
+    Handle tmphandle=0;
+
+    rc = appletStorageGetHandle(s, &tmpsize, &tmphandle);
+    if (R_FAILED(rc)) return rc;
+
+    tmemLoadRemote(&s->tmem, tmphandle, tmpsize, Perm_None);
+    rc = tmemMap(&s->tmem);
+    if (R_FAILED(rc)) tmemClose(&s->tmem);
+
+    if (R_SUCCEEDED(rc)) {
+        if (addr) *addr = s->tmem.map_addr;
+        if (size) *size = s->tmem.size;
+    }
+
+    return rc;
 }
 
 // IApplicationFunctions
@@ -1915,684 +3064,6 @@ Result appletGetGpuErrorDetectedSystemEvent(Event *out_event) {
     return _appletGetEvent(&g_appletIFunctions, out_event, 130, false);
 }
 
-// IOverlayFunctions
-
-Result appletBeginToWatchShortHomeButtonMessage(void) {
-    if (__nx_applet_type != AppletType_OverlayApplet)
-        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-    
-    return _appletCmdNoIO(&g_appletIFunctions, 0);
-}
-
-Result appletEndToWatchShortHomeButtonMessage(void) {
-    if (__nx_applet_type != AppletType_OverlayApplet)
-        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-    
-    return _appletCmdNoIO(&g_appletIFunctions, 1);
-}
-
-// ICommonStateGetter
-
-Result appletHomeButtonReaderLockAccessorGetEvent(Event *out_event) {
-    Service ILockAccessor = {0};
-    Result rc = _appletGetSession(&g_appletICommonStateGetter, &ILockAccessor, 30);
-    if (R_FAILED(rc))
-        return rc;
-    
-    rc = _appletGetEvent(&ILockAccessor, out_event, 3, false);
-    serviceClose(&ILockAccessor);
-    return rc;
-}
-
-static Result _appletReceiveMessage(u32 *out) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_appletICommonStateGetter, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 1;
-
-    Result rc = serviceIpcDispatch(&g_appletICommonStateGetter);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            u32 out;
-        } *resp;
-
-        serviceIpcParse(&g_appletICommonStateGetter, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            *out = resp->out;
-        }
-    }
-
-    return rc;
-}
-
-static Result _appletGetOperationMode(u8 *out) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_appletICommonStateGetter, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 5;
-
-    Result rc = serviceIpcDispatch(&g_appletICommonStateGetter);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            u8 out;
-        } *resp;
-
-        serviceIpcParse(&g_appletICommonStateGetter, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            *out = resp->out;
-        }
-    }
-
-    return rc;
-}
-static Result _appletGetPerformanceMode(u32 *out) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_appletICommonStateGetter, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 6;
-
-    Result rc = serviceIpcDispatch(&g_appletICommonStateGetter);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            u32 out;
-        } *resp;
-
-        serviceIpcParse(&g_appletICommonStateGetter, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            *out = resp->out;
-        }
-    }
-
-    return rc;
-}
-
-static Result _appletGetCurrentFocusState(u8 *out) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_appletICommonStateGetter, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 9;
-
-    Result rc = serviceIpcDispatch(&g_appletICommonStateGetter);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            u8 out;
-        } *resp;
-
-        serviceIpcParse(&g_appletICommonStateGetter, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            *out = resp->out;
-        }
-    }
-
-    return rc;
-}
-
-Result appletPushToGeneralChannel(AppletStorage *s) {
-    return _appletCmdInStorage(&g_appletICommonStateGetter, s, 20);
-}
-
-Result appletIsVrModeEnabled(bool *out) {
-    if (hosversionBefore(3,0,0))
-        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-
-    return _appletCmdNoInOutBool(&g_appletICommonStateGetter, out, 50);
-}
-
-Result appletSetVrModeEnabled(bool flag) {
-    if (hosversionBefore(6,0,0))
-        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-
-    if (hosversionBefore(7,0,0))
-        return _appletCmdInBool(&g_appletICommonStateGetter, flag, 51);
-
-    return _appletCmdNoIO(&g_appletICommonStateGetter, flag ? 53 : 54);
-}
-
-Result appletSetCpuBoostMode(ApmCpuBoostMode mode) {
-    Result rc=0;
-    if (hosversionBefore(7,0,0))
-        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-
-    rc = _appletCmdInU32(&g_appletICommonStateGetter, mode, 66);
-    if (R_SUCCEEDED(rc)) g_appletCpuBoostMode = mode;
-    return rc;
-}
-
-Result appletGetCurrentPerformanceConfiguration(u32 *PerformanceConfiguration) {
-    if (hosversionBefore(7,0,0))
-        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-
-    return _appletCmdNoInOut32(&g_appletICommonStateGetter, PerformanceConfiguration, 91);
-}
-
-// ISelfController
-
-static Result _appletSelfExit(void) {
-    return _appletCmdNoIO(&g_appletISelfController, 0);
-}
-
-Result appletLockExit(void) {
-    return _appletCmdNoIO(&g_appletISelfController, 1);
-}
-
-Result appletUnlockExit(void) {
-    return _appletCmdNoIO(&g_appletISelfController, 2);
-}
-
-Result appletEnterFatalSection(void) {
-    return _appletCmdNoIO(&g_appletISelfController, 3);
-}
-
-Result appletLeaveFatalSection(void) {
-    return _appletCmdNoIO(&g_appletISelfController, 4);
-}
-
-static Result _appletWaitLibraryAppletLaunchableEvent(void) {
-    Result rc=0;
-
-    if (!eventActive(&g_appletLibraryAppletLaunchableEvent))
-        rc = _appletGetEvent(&g_appletISelfController, &g_appletLibraryAppletLaunchableEvent, 9, false);
-
-    if (R_SUCCEEDED(rc)) rc = eventWait(&g_appletLibraryAppletLaunchableEvent, U64_MAX);
-
-    return rc;
-}
-
-Result appletSetScreenShotPermission(AppletScreenShotPermission permission) {
-    return _appletCmdInU32(&g_appletISelfController, permission, 10);
-}
-
-static Result _appletSetOperationModeChangedNotification(bool flag) {
-    return _appletCmdInBool(&g_appletISelfController, flag, 11);
-}
-
-static Result _appletSetPerformanceModeChangedNotification(bool flag) {
-    return _appletCmdInBool(&g_appletISelfController, flag, 12);
-}
-
-static Result _appletSetFocusHandlingMode(bool inval0, bool inval1, bool inval2) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u8 inval0;
-        u8 inval1;
-        u8 inval2;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_appletISelfController, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 13;
-    raw->inval0 = inval0!=0;
-    raw->inval1 = inval1!=0;
-    raw->inval2 = inval2!=0;
-
-    Result rc = serviceIpcDispatch(&g_appletISelfController);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_appletISelfController, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
-}
-
-Result appletSetRestartMessageEnabled(bool flag) {
-    return _appletCmdInBool(&g_appletISelfController, flag, 14);
-}
-
-Result appletSetScreenShotAppletIdentityInfo(AppletIdentityInfo *info) {
-    if (hosversionBefore(3,0,0))
-        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        AppletIdentityInfo info;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_appletISelfController, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 15;
-    memcpy(&raw->info, info, sizeof(AppletIdentityInfo));
-
-    Result rc = serviceIpcDispatch(&g_appletISelfController);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_appletISelfController, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
-}
-
-static Result _appletSetOutOfFocusSuspendingEnabled(bool flag) {
-    return _appletCmdInBool(&g_appletISelfController, flag, 16);
-}
-
-Result appletSetControllerFirmwareUpdateSection(bool flag) {
-    if (hosversionBefore(3,0,0))
-        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-
-    return _appletCmdInBool(&g_appletISelfController, flag, 17);
-}
-
-Result appletSetRequiresCaptureButtonShortPressedMessage(bool flag) {
-    if (hosversionBefore(3,0,0))
-        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-
-    return _appletCmdInBool(&g_appletISelfController, flag, 18);
-}
-
-Result appletSetAlbumImageOrientation(AlbumImageOrientation orientation) {
-    if (hosversionBefore(3,0,0))
-        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-
-    return _appletCmdInU32(&g_appletISelfController, orientation, 19);
-}
-
-Result appletSetDesirableKeyboardLayout(u32 layout) {
-    if (hosversionBefore(4,0,0))
-        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-
-    return _appletCmdInU32(&g_appletISelfController, layout, 20);
-}
-
-Result appletCreateManagedDisplayLayer(u64 *out) {
-    return _appletCmdNoInOut64(&g_appletISelfController, out, 40);
-}
-
-Result appletIsSystemBufferSharingEnabled(void) {
-    if (hosversionBefore(4,0,0))
-        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-
-    return _appletCmdNoIO(&g_appletISelfController, 41);
-}
-
-Result appletGetSystemSharedLayerHandle(u64 *SharedBufferHandle, u64 *SharedLayerHandle) {
-    if (hosversionBefore(4,0,0))
-        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_appletISelfController, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 42;
-
-    Result rc = serviceIpcDispatch(&g_appletISelfController);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            u64 SharedBufferHandle;
-            u64 SharedLayerHandle;
-        } *resp;
-
-        serviceIpcParse(&g_appletISelfController, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && SharedBufferHandle) *SharedBufferHandle = resp->SharedBufferHandle;
-        if (R_SUCCEEDED(rc) && SharedLayerHandle) *SharedLayerHandle = resp->SharedLayerHandle;
-    }
-
-    return rc;
-}
-
-Result appletGetSystemSharedBufferHandle(u64 *SharedBufferHandle) {
-    if (hosversionBefore(5,0,0))
-        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-
-    return _appletCmdNoInOut64(&g_appletISelfController, SharedBufferHandle, 43);
-}
-
-Result appletSetHandlesRequestToDisplay(bool flag) {
-    return _appletCmdInBool(&g_appletISelfController, flag, 50);
-}
-
-Result appletApproveToDisplay(void) {
-    return _appletCmdNoIO(&g_appletISelfController, 51);
-}
-
-Result appletOverrideAutoSleepTimeAndDimmingTime(s32 inval0, s32 inval1, s32 inval2, s32 inval3) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        s32 inval0;
-        s32 inval1;
-        s32 inval2;
-        s32 inval3;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_appletISelfController, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 60;
-    raw->inval0 = inval0;
-    raw->inval1 = inval1;
-    raw->inval2 = inval2;
-    raw->inval3 = inval3;
-
-    Result rc = serviceIpcDispatch(&g_appletISelfController);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_appletISelfController, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
-}
-
-Result appletSetIdleTimeDetectionExtension(AppletIdleTimeDetectionExtension ext) {
-    return _appletCmdInU32(&g_appletISelfController, ext, 62);
-}
-
-Result appletGetIdleTimeDetectionExtension(AppletIdleTimeDetectionExtension *ext) {
-    return _appletCmdNoInOut32(&g_appletISelfController, ext, 63);
-}
-
-Result appletSetInputDetectionSourceSet(u32 val) {
-    return _appletCmdInU32(&g_appletISelfController, val, 64);
-}
-
-Result appletReportUserIsActive(void) {
-    if (hosversionBefore(2,0,0))
-        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-
-    return _appletCmdNoIO(&g_appletISelfController, 65);
-}
-
-Result appletGetCurrentIlluminance(float *fLux) {
-    if (hosversionBefore(3,0,0))
-        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_appletISelfController, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 66;
-
-    Result rc = serviceIpcDispatch(&g_appletISelfController);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            float fLux;
-        } *resp;
-
-        serviceIpcParse(&g_appletISelfController, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && fLux) *fLux = resp->fLux;
-    }
-
-    return rc;
-}
-
-Result appletIsIlluminanceAvailable(bool *out) {
-    if (hosversionBefore(3,0,0))
-        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-
-    return _appletCmdNoInOutBool(&g_appletISelfController, out, 67);
-}
-
-Result appletSetAutoSleepDisabled(bool flag) {
-    if (hosversionBefore(5,0,0))
-        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-
-    return _appletCmdInBool(&g_appletISelfController, flag, 68);
-}
-
-Result appletIsAutoSleepDisabled(bool *out) {
-    if (hosversionBefore(5,0,0))
-        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-
-    return _appletCmdNoInOutBool(&g_appletISelfController, out, 69);
-}
-
-Result appletGetCurrentIlluminanceEx(bool *bOverLimit, float *fLux) {
-    if (hosversionBefore(5,0,0))
-        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_appletISelfController, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 71;
-
-    Result rc = serviceIpcDispatch(&g_appletISelfController);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            u8 bOverLimit;
-            float fLux;
-        } *resp;
-
-        serviceIpcParse(&g_appletISelfController, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && bOverLimit) *bOverLimit = resp->bOverLimit!=0;
-        if (R_SUCCEEDED(rc) && fLux) *fLux = resp->fLux;
-    }
-
-    return rc;
-}
-
-Result appletSetWirelessPriorityMode(AppletWirelessPriorityMode mode) {
-    if (hosversionBefore(4,0,0))
-        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-
-    return _appletCmdInU32(&g_appletISelfController, mode, 80);
-}
-
-Result appletSetAlbumImageTakenNotificationEnabled(bool flag) {
-    if (hosversionBefore(7,0,0))
-        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-
-    return _appletCmdInBool(&g_appletISelfController, flag, 100);
-}
-
-static Result _appletGetAccumulatedSuspendedTickValue(u64 *tick) {
-    if (hosversionBefore(6,0,0))
-        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-
-    return _appletCmdNoInOut64(&g_appletISelfController, tick, 90);
-}
-
-static Result _appletGetAccumulatedSuspendedTickChangedEvent(Event *out_event) {
-    if (hosversionBefore(6,0,0))
-        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-
-    return _appletGetEvent(&g_appletISelfController, out_event, 91, true);
-}
-
-Result appletGetProgramTotalActiveTime(u64 *activeTime) {
-    if (!g_appletSuspendedTickInitialized)
-        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-
-    Result rc=0;
-    u64 suspendedTick = 0;
-
-    while (R_SUCCEEDED(eventWait(&g_appletSuspendedTickEvent, 0))) {
-        rc = _appletGetAccumulatedSuspendedTickValue(&suspendedTick);
-        if (R_FAILED(rc)) return rc;
-
-        if (suspendedTick > g_appletSuspendedTick) g_appletSuspendedTick = suspendedTick;
-    }
-
-    *activeTime = armTicksToNs(armGetSystemTick() - g_appletInitTickBase - g_appletSuspendedTick);
-
-    return rc;
-}
-
-Result appletSetApplicationAlbumUserData(const void* buffer, size_t size) {
-    if (hosversionBefore(8,0,0))
-        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    ipcAddSendSmart(&c, g_appletISelfController_ptrbufsize, buffer, size, 0);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_appletISelfController, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 110;
-
-    Result rc = serviceIpcDispatch(&g_appletISelfController);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_appletISelfController, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
-}
-
 // ILibraryAppletSelfAccessor
 
 static Result _appletExitProcessAndReturn(void) {
@@ -2668,492 +3139,23 @@ Result appletGetNextReturnDestinationAppletIdentityInfo(AppletIdentityInfo *info
     return _appletGetIdentityInfo(&g_appletILibraryAppletSelfAccessor, info, 18);
 }
 
-// ILibraryAppletCreator
+// IOverlayFunctions
 
-static Result _appletCreateLibraryApplet(Service* srv_out, AppletId id, LibAppletMode mode) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u32 id;
-        u32 mode;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_appletILibraryAppletCreator, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 0;
-    raw->id = id;
-    raw->mode = mode;
-
-    Result rc = serviceIpcDispatch(&g_appletILibraryAppletCreator);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_appletILibraryAppletCreator, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && srv_out) {
-            serviceCreateSubservice(srv_out, &g_appletILibraryAppletCreator, &r, 0);
-        }
-    }
-
-    return rc;
-}
-
-static Result _appletGetIndirectLayerConsumerHandle(Service* srv, u64 *out) {
-    Result rc;
-    u64 AppletResourceUserId;
-
-    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
-    if (R_FAILED(rc)) return rc;
-
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u64 AppletResourceUserId;
-    } *raw;
-
-    ipcSendPid(&c);
-
-    raw = serviceIpcPrepareHeader(srv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 160;
-    raw->AppletResourceUserId = AppletResourceUserId;
-
-    rc = serviceIpcDispatch(srv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            u64 out;
-        } *resp;
-
-        serviceIpcParse(srv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && out) *out = resp->out;
-    }
-
-    return rc;
-}
-
-static Result _appletHolderCreate(AppletHolder *h, AppletId id, LibAppletMode mode, bool creating_self) {
-    Result rc=0;
-
-    memset(h, 0, sizeof(AppletHolder));
-    h->mode = mode;
-    h->creating_self = creating_self;
-
-    if (!h->creating_self) rc = _appletWaitLibraryAppletLaunchableEvent();
-
-    if (R_SUCCEEDED(rc)) rc = _appletCreateLibraryApplet(&h->s, id, mode);
-
-    if (R_SUCCEEDED(rc)) rc = _appletGetEvent(&h->s, &h->StateChangedEvent, 0, false);//GetAppletStateChangedEvent
-
-    if (R_SUCCEEDED(rc) && hosversionAtLeast(2,0,0) && h->mode == LibAppletMode_Unknown3) rc = _appletGetIndirectLayerConsumerHandle(&h->s, &h->layer_handle);
-
-    return rc;
-}
-
-Result appletCreateLibraryApplet(AppletHolder *h, AppletId id, LibAppletMode mode) {
-    return _appletHolderCreate(h, id, mode, false);
-}
-
-Result appletCreateLibraryAppletSelf(AppletHolder *h, AppletId id, LibAppletMode mode) {
-    return _appletHolderCreate(h, id, mode, true);
-}
-
-void appletHolderClose(AppletHolder *h) {
-    eventClose(&h->PopInteractiveOutDataEvent);
-
-    eventClose(&h->StateChangedEvent);
-    serviceClose(&h->s);
-    memset(h, 0, sizeof(AppletHolder));
-}
-
-bool appletHolderActive(AppletHolder *h) {
-    return serviceIsActive(&h->s);
-}
-
-Result appletHolderGetIndirectLayerConsumerHandle(AppletHolder *h, u64 *out) {
-    if (!serviceIsActive(&h->s))
-        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-    if (h->mode!=LibAppletMode_Unknown3)
-        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
-    if (hosversionBefore(2,0,0))
-        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-
-    if (out) *out = h->layer_handle;
-
-    return 0;
-}
-
-Result appletHolderStart(AppletHolder *h) {
-    Result rc=0;
-
-    if (!serviceIsActive(&h->s))
+Result appletBeginToWatchShortHomeButtonMessage(void) {
+    if (__nx_applet_type != AppletType_OverlayApplet)
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    if (!h->creating_self) rc = _appletWaitLibraryAppletLaunchableEvent();
-
-    if (R_SUCCEEDED(rc)) rc = _appletCmdNoIO(&h->s, 10);//Start
-
-    return rc;
+    return _appletCmdNoIO(&g_appletIFunctions, 0);
 }
 
-Result appletHolderRequestExit(AppletHolder *h) {
-    Result rc=0;
-
-    if (!serviceIsActive(&h->s))
+Result appletEndToWatchShortHomeButtonMessage(void) {
+    if (__nx_applet_type != AppletType_OverlayApplet)
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    if (!appletHolderCheckFinished(h)) rc = _appletCmdNoIO(&h->s, 20);//RequestExit
-
-    return rc;
+    return _appletCmdNoIO(&g_appletIFunctions, 1);
 }
 
-void appletHolderJoin(AppletHolder *h) {
-    Result rc=0;
-    LibAppletExitReason res = LibAppletExitReason_Normal;
-    u32 desc=0;
-
-    eventWait(&h->StateChangedEvent, U64_MAX);
-    rc = _appletCmdNoIO(&h->s, 30);//GetResult
-
-    if (R_FAILED(rc)) {
-        res = LibAppletExitReason_Unexpected;
-        if (R_MODULE(rc) == 128) {
-            desc = R_DESCRIPTION(rc);
-            if (desc == 22) res = LibAppletExitReason_Canceled;
-            else {
-                if (desc >= 0x14 && desc < 0x32)res = LibAppletExitReason_Abnormal;
-            }
-        }
-    }
-
-    h->exitreason = res;
-}
-
-bool appletHolderCheckFinished(AppletHolder *h) {
-    return R_SUCCEEDED(eventWait(&h->StateChangedEvent, 0));
-}
-
-u32 appletHolderGetExitReason(AppletHolder *h) {
-    return h->exitreason;
-}
-
-static Result _appletHolderGetPopInteractiveOutDataEvent(AppletHolder *h) {
-    Result rc=0;
-
-    if (eventActive(&h->PopInteractiveOutDataEvent)) return 0;
-
-    rc = _appletGetEvent(&h->s, &h->PopInteractiveOutDataEvent, 106, false);
-
-    return rc;
-}
-
-bool appletHolderWaitInteractiveOut(AppletHolder *h) {
-    Result rc=0;
-    s32 idx = 0;
-
-    rc = _appletHolderGetPopInteractiveOutDataEvent(h);
-    if (R_FAILED(rc)) return false;
-
-    rc = waitMulti(&idx, U64_MAX, waiterForEvent(&h->PopInteractiveOutDataEvent), waiterForEvent(&h->StateChangedEvent));
-    if (R_FAILED(rc)) return false;
-
-    return idx==0;
-}
-
-Result appletHolderPushInData(AppletHolder *h, AppletStorage *s) {
-    return _appletCmdInStorage(&h->s, s, 100);
-}
-
-Result appletHolderPopOutData(AppletHolder *h, AppletStorage *s) {
-    return _appletCmdNoInOutStorage(&h->s, s, 101);
-}
-
-Result appletHolderPushExtraStorage(AppletHolder *h, AppletStorage *s) {
-    return _appletCmdInStorage(&h->s, s, 102);
-}
-
-Result appletHolderPushInteractiveInData(AppletHolder *h, AppletStorage *s) {
-    return _appletCmdInStorage(&h->s, s, 103);
-}
-
-Result appletHolderPopInteractiveOutData(AppletHolder *h, AppletStorage *s) {
-    return _appletCmdNoInOutStorage(&h->s, s, 104);
-}
-
-Result appletCreateStorage(AppletStorage *s, s64 size) {
-    memset(s, 0, sizeof(AppletStorage));
-
-    return _appletGetSessionIn64(&g_appletILibraryAppletCreator, &s->s, 10, size);
-}
-
-static Result _appletCreateTransferMemoryStorage(Service* srv_out, TransferMemory *tmem, bool writable) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    ipcSendHandleCopy(&c, tmem->handle);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u8 writable;
-        u64 size;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_appletILibraryAppletCreator, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 11;
-    raw->writable = writable!=0;
-    raw->size = tmem->size;
-
-    Result rc = serviceIpcDispatch(&g_appletILibraryAppletCreator);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_appletILibraryAppletCreator, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && srv_out) {
-            serviceCreateSubservice(srv_out, &g_appletILibraryAppletCreator, &r, 0);
-        }
-    }
-
-    return rc;
-}
-
-Result appletCreateTransferMemoryStorage(AppletStorage *s, void* buffer, s64 size, bool writable) {
-    Result rc=0;
-
-    memset(s, 0, sizeof(AppletStorage));
-
-    if (buffer==NULL) rc = tmemCreate(&s->tmem, size, Perm_None);
-    else rc = tmemCreateFromMemory(&s->tmem, buffer, size, Perm_None);
-    if (R_FAILED(rc)) return rc;
-
-    rc = _appletCreateTransferMemoryStorage(&s->s, &s->tmem, writable);
-    if (R_FAILED(rc)) tmemClose(&s->tmem);
-
-    return rc;
-}
-
-Result appletCreateHandleStorage(AppletStorage *s, s64 inval, Handle handle) {
-    if (hosversionBefore(2,0,0))
-        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-
-    return _appletCmdInHandle64(&g_appletILibraryAppletCreator, &s->s, 12, handle, inval);
-}
-
-Result appletCreateHandleStorageTmem(AppletStorage *s, void* buffer, s64 size) {
-    Result rc=0;
-
-    memset(s, 0, sizeof(AppletStorage));
-
-    if (buffer==NULL) rc = tmemCreate(&s->tmem, size, Perm_None);
-    else rc = tmemCreateFromMemory(&s->tmem, buffer, size, Perm_None);
-    if (R_FAILED(rc)) return rc;
-
-    rc = appletCreateHandleStorage(s, s->tmem.size, s->tmem.handle);
-    if (R_FAILED(rc)) tmemClose(&s->tmem);
-
-    return rc;
-}
-
-void appletStorageClose(AppletStorage *s) {
-    serviceClose(&s->s);
-}
-
-void appletStorageCloseTmem(AppletStorage *s) {
-    tmemClose(&s->tmem);
-}
-
-static Result _appletStorageAccessorRW(Service* srv, size_t ipcbufsize, s64 offset, void* buffer, size_t size, bool rw) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    if(!rw)ipcAddRecvSmart(&c, ipcbufsize, buffer, size, 0);
-    if(rw)ipcAddSendSmart(&c, ipcbufsize, buffer, size, 0);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        s64 offset;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(srv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = rw!=0 ? 10 : 11;
-    raw->offset = offset;
-
-    Result rc = serviceIpcDispatch(srv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(srv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
-}
-
-Result appletStorageGetSize(AppletStorage *s, s64 *size) {
-    Result rc=0;
-    Service tmp_srv;//IStorageAccessor
-
-    if (!serviceIsActive(&s->s))
-        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-
-    rc = _appletGetSession(&s->s, &tmp_srv, 0);//Open
-    if (R_FAILED(rc)) return rc;
-
-    rc = _appletCmdNoInOut64(&tmp_srv, (u64*)size, 0);
-    serviceClose(&tmp_srv);
-
-    return rc;
-}
-
-static Result _appletStorageRW(AppletStorage *s, s64 offset, void* buffer, size_t size, bool rw) {
-    Result rc=0;
-    size_t ipcbufsize=0;
-    Service tmp_srv;//IStorageAccessor
-
-    if (!serviceIsActive(&s->s))
-        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-
-    rc = _appletGetSession(&s->s, &tmp_srv, 0);//Open
-    if (R_FAILED(rc)) return rc;
-
-    rc = ipcQueryPointerBufferSize(tmp_srv.handle, &ipcbufsize);
-
-    if (R_SUCCEEDED(rc)) rc = _appletStorageAccessorRW(&tmp_srv, ipcbufsize, offset, buffer, size, rw);
-    serviceClose(&tmp_srv);
-
-    return rc;
-}
-
-Result appletStorageWrite(AppletStorage *s, s64 offset, const void* buffer, size_t size) {
-    return _appletStorageRW(s, offset, (void*)buffer, size, true);
-}
-
-Result appletStorageRead(AppletStorage *s, s64 offset, void* buffer, size_t size) {
-    return _appletStorageRW(s, offset, buffer, size, false);
-}
-
-static Result _appletStorageGetHandle(Service* srv, s64 *out, Handle *handle) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(srv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 1;
-
-    Result rc = serviceIpcDispatch(srv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            s64 out;
-        } *resp;
-
-        serviceIpcParse(srv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            if (out) *out = resp->out;
-            if (handle) *handle = r.Handles[0];
-        }
-    }
-
-    return rc;
-}
-
-Result appletStorageGetHandle(AppletStorage *s, s64 *out, Handle *handle) {
-    Result rc=0;
-    Service tmp_srv;//ITransferStorageAccessor
-
-    if (!serviceIsActive(&s->s))
-        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-
-    if (hosversionBefore(2,0,0))
-        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-
-    rc = _appletGetSession(&s->s, &tmp_srv, 1);//OpenTransferStorage
-    if (R_FAILED(rc)) return rc;
-
-    rc = _appletStorageGetHandle(&tmp_srv, out, handle);
-    serviceClose(&tmp_srv);
-
-    return rc;
-}
-
-Result appletStorageMap(AppletStorage *s, void** addr, size_t *size) {
-    Result rc=0;
-    s64 tmpsize=0;
-    Handle tmphandle=0;
-
-    rc = appletStorageGetHandle(s, &tmpsize, &tmphandle);
-    if (R_FAILED(rc)) return rc;
-
-    tmemLoadRemote(&s->tmem, tmphandle, tmpsize, Perm_None);
-    rc = tmemMap(&s->tmem);
-    if (R_FAILED(rc)) tmemClose(&s->tmem);
-
-    if (R_SUCCEEDED(rc)) {
-        if (addr) *addr = s->tmem.map_addr;
-        if (size) *size = s->tmem.size;
-    }
-
-    return rc;
-}
-
-// state / other
+// State / other
 
 u8 appletGetOperationMode(void) {
     return g_appletOperationMode;
