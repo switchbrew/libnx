@@ -312,6 +312,14 @@ Result appletGetHdcpAuthenticationStateChangeEvent(Event *out_event);
 Result appletSetTvPowerStateMatchingMode(AppletTvPowerStateMatchingMode mode);
 
 /**
+ * @brief Gets the application titleID for the specified ContentActionName string.
+ * @note Only available when the current applet is ::AppletId_starter on [5.1.0+].
+ * @param[out] titleID Application titleID.
+ * @param[in] name ContentActionName string.
+ */
+Result appletGetApplicationIdByContentActionName(u64 *titleID, const char *name);
+
+/**
  * @brief Sets the \ref ApmCpuBoostMode.
  * @note Only available with [7.0.0+] (not fully usable system-side with 6.x).
  * @param mode \ref ApmCpuBoostMode.

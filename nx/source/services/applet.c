@@ -1275,6 +1275,46 @@ Result appletSetTvPowerStateMatchingMode(AppletTvPowerStateMatchingMode mode) {
     return _appletCmdInU32(&g_appletICommonStateGetter, mode, 64);
 }
 
+Result appletGetApplicationIdByContentActionName(u64 *titleID, const char *name) {
+    if (hosversionBefore(5,1,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    ipcAddSendBuffer(&c, name, strlen(name)+1, BufferType_Normal);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletICommonStateGetter, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 65;
+
+    Result rc = serviceIpcDispatch(&g_appletICommonStateGetter);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            u64 titleID;
+        } *resp;
+
+        serviceIpcParse(&g_appletICommonStateGetter, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && titleID) *titleID = resp->titleID;
+    }
+
+    return rc;
+}
+
 Result appletSetCpuBoostMode(ApmCpuBoostMode mode) {
     Result rc=0;
     if (hosversionBefore(7,0,0))
