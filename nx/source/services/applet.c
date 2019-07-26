@@ -2609,42 +2609,11 @@ Result appletEndBlockingHomeButton(void) {
     return _appletCmdNoIO(&g_appletIFunctions, 33);
 }
 
-void appletNotifyRunning(u8 *out) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
+void appletNotifyRunning(bool *out) {
     if (__nx_applet_type!=AppletType_Application || g_appletNotifiedRunning) return;
     g_appletNotifiedRunning = 1;
 
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_appletIFunctions, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 40;
-
-    Result rc = serviceIpcDispatch(&g_appletIFunctions);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            u8 out;
-        } *resp;
-
-        serviceIpcParse(&g_appletIFunctions, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && out) {
-            *out = resp->out;
-        }
-    }
+    Result rc = _appletCmdNoInOutBool(&g_appletIFunctions, out, 40);
 
     if (R_FAILED(rc)) fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadAppletNotifyRunning));
 }

@@ -728,7 +728,11 @@ Result appletBeginBlockingHomeButton(s64 val);
  */
 Result appletEndBlockingHomeButton(void);
 
-void appletNotifyRunning(u8 *out);
+/**
+ * @brief Notify that the app is now running, for the Application logo screen. This throws a fatal-error on failure.
+ * @note This will just return when applet-type isn't AppletType_Application, or when this was already used previously. Used automatically by \ref appletInitialize when __nx_applet_auto_notifyrunning is set to true (the default value).
+ */
+void appletNotifyRunning(bool *out);
 
 /**
  * @brief Gets the PseudoDeviceId. This is derived from the output of a ns command, and from data in the host title control.nacp.
