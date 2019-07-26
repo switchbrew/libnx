@@ -130,6 +130,20 @@ typedef enum {
     AppletThemeColorType_Unknown3 = 3,
 } AppletThemeColorType;
 
+/// Mode values for \ref appletSetTvPowerStateMatchingMode.
+typedef enum {
+    AppletTvPowerStateMatchingMode_Unknown0 = 0,   ///< Unknown.
+    AppletTvPowerStateMatchingMode_Unknown1 = 1,   ///< Unknown.
+} AppletTvPowerStateMatchingMode;
+
+/// Type values for \ref PerformSystemButtonPressingIfInFocus.
+typedef enum {
+    AppletSystemButtonType_HomeButtonShortPressing    = 1,   ///< Short-pressing with the HOME-button.
+    AppletSystemButtonType_HomeButtonLongPressing     = 2,   ///< Long-pressing with the HOME-button.
+    AppletSystemButtonType_CaptureButtonShortPressing = 6,   ///< Short-pressing with the Capture-button.
+    AppletSystemButtonType_CaptureButtonLongPressing  = 7,   ///< Long-pressing with the Capture-button.
+} AppletSystemButtonType;
+
 /// Permission values for \ref appletSetScreenShotPermission.
 typedef enum {
     AppletScreenShotPermission_Inherit = 0,        ///< Inherit from parent applet.
@@ -253,11 +267,63 @@ Result appletIsVrModeEnabled(bool *out);
 Result appletSetVrModeEnabled(bool flag);
 
 /**
+ * @brief Sets whether the LCD screen backlight is turned off.
+ * @note Only available with [4.0.0+].
+ * @param[in] flag Flag
+ */
+Result appletSetLcdBacklightOffEnabled(bool flag);
+
+/**
+ * @brief Gets the DefaultDisplayResolution.
+ * @note Only available with [3.0.0+].
+ * @param[out] width Output width.
+ * @param[out] height Output height.
+ */
+Result appletGetDefaultDisplayResolution(s32 *width, s32 *height);
+
+/**
+ * @brief Gets an Event which is signaled when the output from \ref appletGetDefaultDisplayResolution changes.
+ * @note Only available with [3.0.0+].
+ * @note The Event must be closed by the user once finished with it.
+ * @param[out] out_event Output Event with autoclear=true.
+ */
+Result appletGetDefaultDisplayResolutionChangeEvent(Event *out_event);
+
+/**
+ * @brief Gets the HdcpAuthenticationState.
+ * @note Only available with [4.0.0+].
+ * @param[out] state Output state.
+ */
+Result appletGetHdcpAuthenticationState(s32 *state);
+
+/**
+ * @brief Gets an Event which is signaled when the output from \ref appletGetHdcpAuthenticationState changes.
+ * @note Only available with [4.0.0+].
+ * @note The Event must be closed by the user once finished with it.
+ * @param[out] out_event Output Event with autoclear=true.
+ */
+Result appletGetHdcpAuthenticationStateChangeEvent(Event *out_event);
+
+/**
+ * @brief Sets the \ref AppletTvPowerStateMatchingMode.
+ * @note Only available with [5.0.0+].
+ * @param[in] mode \ref AppletTvPowerStateMatchingMode
+ */
+Result appletSetTvPowerStateMatchingMode(AppletTvPowerStateMatchingMode mode);
+
+/**
  * @brief Sets the \ref ApmCpuBoostMode.
  * @note Only available with [7.0.0+] (not fully usable system-side with 6.x).
  * @param mode \ref ApmCpuBoostMode.
  */
 Result appletSetCpuBoostMode(ApmCpuBoostMode mode);
+
+/**
+ * @brief Perform SystemButtonPressing with the specified \ref AppletSystemButtonType.
+ * @note Only available with [6.0.0+].
+ * @param[in] type \ref AppletSystemButtonType
+ */
+Result appletPerformSystemButtonPressingIfInFocus(AppletSystemButtonType type);
 
 /**
  * @brief Gets the current PerformanceConfiguration.
@@ -827,7 +893,7 @@ Result appletQueryApplicationPlayStatisticsByUid(u128 userID, PdmApplicationPlay
  * @note Only available with AppletType_*Application on [8.0.0+].
  * @note The Event must be closed by the user once finished with it.
  * @note Official sw waits on this Event from a seperate thread, triggering an abort when it's signaled.
- * @param[out] event_out Output Event with autoclear=false.
+ * @param[out] out_event Output Event with autoclear=false.
  */
 Result appletGetGpuErrorDetectedSystemEvent(Event *out_event);
 

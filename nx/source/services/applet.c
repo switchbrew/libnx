@@ -75,7 +75,7 @@ static AppletThemeColorType g_appletThemeColorType = AppletThemeColorType_Defaul
 static ApmCpuBoostMode g_appletCpuBoostMode = ApmCpuBoostMode_Disabled;
 
 static Result _appletGetHandle(Service* srv, Handle* handle_out, u64 cmd_id);
-static Result _appletGetEvent(Service* srv, Event* event_out, u64 cmd_id, bool autoclear);
+static Result _appletGetEvent(Service* srv, Event* out_event, u64 cmd_id, bool autoclear);
 static Result _appletGetSession(Service* srv, Service* srv_out, u64 cmd_id);
 static Result _appletGetSessionProxy(Service* srv_out, u64 cmd_id, Handle prochandle, u8 *AppletAttribute);
 
@@ -513,12 +513,12 @@ static Result _appletGetHandle(Service* srv, Handle* handle_out, u64 cmd_id) {
     return rc;
 }
 
-static Result _appletGetEvent(Service* srv, Event* event_out, u64 cmd_id, bool autoclear) {
+static Result _appletGetEvent(Service* srv, Event* out_event, u64 cmd_id, bool autoclear) {
     Handle tmp_handle=0;
     Result rc = 0;
 
     rc = _appletGetHandle(srv, &tmp_handle, cmd_id);
-    if (R_SUCCEEDED(rc)) eventLoadRemote(event_out, tmp_handle, autoclear);
+    if (R_SUCCEEDED(rc)) eventLoadRemote(out_event, tmp_handle, autoclear);
     return rc;
 }
 
@@ -1198,6 +1198,83 @@ Result appletSetVrModeEnabled(bool flag) {
     return _appletCmdNoIO(&g_appletICommonStateGetter, flag ? 53 : 54);
 }
 
+Result appletSetLcdBacklightOffEnabled(bool flag) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdInBool(&g_appletICommonStateGetter, flag, 52);
+}
+
+Result appletGetDefaultDisplayResolution(s32 *width, s32 *height) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletICommonStateGetter, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 60;
+
+    Result rc = serviceIpcDispatch(&g_appletICommonStateGetter);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            s32 width;
+            s32 height;
+        } *resp;
+
+        serviceIpcParse(&g_appletICommonStateGetter, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            if (width) *width = resp->width;
+            if (width) *height = resp->height;
+        }
+    }
+
+    return rc;
+}
+
+Result appletGetDefaultDisplayResolutionChangeEvent(Event *out_event) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletGetEvent(&g_appletICommonStateGetter, out_event, 61, true);
+}
+
+Result appletGetHdcpAuthenticationState(s32 *state) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdNoInOut32(&g_appletICommonStateGetter, (u32*)state, 62);
+}
+
+Result appletGetHdcpAuthenticationStateChangeEvent(Event *out_event) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletGetEvent(&g_appletICommonStateGetter, out_event, 63, true);
+}
+
+Result appletSetTvPowerStateMatchingMode(AppletTvPowerStateMatchingMode mode) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdInU32(&g_appletICommonStateGetter, mode, 64);
+}
+
 Result appletSetCpuBoostMode(ApmCpuBoostMode mode) {
     Result rc=0;
     if (hosversionBefore(7,0,0))
@@ -1206,6 +1283,13 @@ Result appletSetCpuBoostMode(ApmCpuBoostMode mode) {
     rc = _appletCmdInU32(&g_appletICommonStateGetter, mode, 66);
     if (R_SUCCEEDED(rc)) g_appletCpuBoostMode = mode;
     return rc;
+}
+
+Result appletPerformSystemButtonPressingIfInFocus(AppletSystemButtonType type) {
+    if (hosversionBefore(6,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdInU32(&g_appletICommonStateGetter, type, 80);
 }
 
 Result appletGetCurrentPerformanceConfiguration(u32 *PerformanceConfiguration) {
