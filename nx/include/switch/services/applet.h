@@ -11,6 +11,7 @@
 #include "../services/apm.h"
 #include "../services/pdm.h"
 #include "../services/caps.h"
+#include "../services/pm.h"
 #include "../kernel/tmem.h"
 #include "../kernel/event.h"
 
@@ -136,7 +137,7 @@ typedef enum {
     AppletTvPowerStateMatchingMode_Unknown1 = 1,   ///< Unknown.
 } AppletTvPowerStateMatchingMode;
 
-/// Type values for \ref PerformSystemButtonPressingIfInFocus.
+/// Type values for \ref appletPerformSystemButtonPressingIfInFocus.
 typedef enum {
     AppletSystemButtonType_HomeButtonShortPressing    = 1,   ///< Short-pressing with the HOME-button.
     AppletSystemButtonType_HomeButtonLongPressing     = 2,   ///< Long-pressing with the HOME-button.
@@ -241,6 +242,18 @@ AppletThemeColorType appletGetThemeColorType(void);
  * @note Doesn't fire for long press.
  */
 Result appletHomeButtonReaderLockAccessorGetEvent(Event *out_event);
+
+/**
+ * @brief Gets the CradleStatus.
+ * @param[out] status Output Dock status.
+ */
+Result appletGetCradleStatus(u8 *status);
+
+/**
+ * @brief Gets the BootMode which originated from \ref pmbmGetBootMode.
+ * @param[out] mode \ref PmBootMode
+ */
+Result appletGetBootMode(PmBootMode *mode);
 
 /**
  * @brief Pushes a storage to the general channel. Used for sending requests to qlaunch.
@@ -910,14 +923,14 @@ Result appletGetGpuErrorDetectedSystemEvent(Event *out_event);
 /**
  * @brief Gets the \ref AppletIdentityInfo for the MainApplet.
  * @note Only available with AppletType_LibraryApplet.
- * @param[out] \ref AppletIdentityInfo
+ * @param[out] info \ref AppletIdentityInfo
  */
 Result appletGetMainAppletIdentityInfo(AppletIdentityInfo *info);
 
 /**
  * @brief Gets the \ref AppletIdentityInfo for the CallerApplet.
  * @note Only available with AppletType_LibraryApplet.
- * @param[out] \ref AppletIdentityInfo
+ * @param[out] info \ref AppletIdentityInfo
  */
 Result appletGetCallerAppletIdentityInfo(AppletIdentityInfo *info);
 
@@ -933,7 +946,7 @@ Result appletGetCallerAppletIdentityInfoStack(AppletIdentityInfo *stack, s32 cou
 /**
  * @brief Gets the \ref AppletIdentityInfo for the NextReturnDestinationApplet.
  * @note Only available with AppletType_LibraryApplet on [4.0.0+].
- * @param[out] \ref AppletIdentityInfo
+ * @param[out] info \ref AppletIdentityInfo
  */
 Result appletGetNextReturnDestinationAppletIdentityInfo(AppletIdentityInfo *info);
 

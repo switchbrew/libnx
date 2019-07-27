@@ -10,6 +10,7 @@
 #include "services/applet.h"
 #include "services/apm.h"
 #include "services/caps.h"
+#include "services/pm.h"
 #include "services/sm.h"
 #include "runtime/env.h"
 #include "runtime/hosversion.h"
@@ -744,7 +745,7 @@ static Result _appletCmdNoInOut32(Service* srv, u32 *out, u64 cmd_id) {
     return rc;
 }
 
-static Result _appletCmdNoInOutBool(Service* srv, bool *out, u64 cmd_id) {
+static Result _appletCmdNoInOutU8(Service* srv, u8 *out, u64 cmd_id) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -774,10 +775,17 @@ static Result _appletCmdNoInOutBool(Service* srv, bool *out, u64 cmd_id) {
         rc = resp->result;
 
         if (R_SUCCEEDED(rc) && out) {
-            *out = resp->out!=0;
+            *out = resp->out;
         }
     }
 
+    return rc;
+}
+
+static Result _appletCmdNoInOutBool(Service* srv, bool *out, u64 cmd_id) {
+    u8 tmp=0;
+    Result rc = _appletCmdNoInOutU8(srv, &tmp, cmd_id);
+    if (R_SUCCEEDED(rc) && out) *out = tmp!=0;
     return rc;
 }
 
@@ -1137,6 +1145,17 @@ static Result _appletGetPerformanceMode(u32 *out) {
         }
     }
 
+    return rc;
+}
+
+Result appletGetCradleStatus(u8 *status) {
+    return _appletCmdNoInOutU8(&g_appletICommonStateGetter, status, 7);
+}
+
+Result appletGetBootMode(PmBootMode *mode) {
+    u8 tmp=0;
+    Result rc = _appletCmdNoInOutU8(&g_appletICommonStateGetter, &tmp, 8);
+    if (R_SUCCEEDED(rc) && mode) *mode = tmp;
     return rc;
 }
 
