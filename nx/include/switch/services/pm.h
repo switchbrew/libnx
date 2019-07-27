@@ -11,6 +11,7 @@
 #include "../kernel/event.h"
 #include "../services/sm.h"
 
+/// LaunchFlag
 typedef enum {
     PmLaunchFlag_None           = 0,
 
@@ -32,6 +33,7 @@ typedef enum {
     PmLaunchFlagOld_SignalOnStart  = (1 << 5),
 } PmLaunchFlag;
 
+/// ProcessEvent
 typedef enum {
     PmProcessEvent_None = 0,
     PmProcessEvent_Exit = 1,
@@ -41,15 +43,17 @@ typedef enum {
     PmProcessEvent_DebugBreak = 5,
 } PmProcessEvent;
 
+/// ProcessEventInfo
 typedef struct {
     PmProcessEvent event;
     u64 process_id;
 } PmProcessEventInfo;
 
+/// BootMode
 typedef enum {
-    PmBootMode_Normal      = 0,
-    PmBootMode_Maintenance = 1,
-    PmBootMode_SafeMode    = 2,
+    PmBootMode_Normal      = 0,    ///< Normal
+    PmBootMode_Maintenance = 1,    ///< Maintenance
+    PmBootMode_SafeMode    = 2,    ///< SafeMode
 } PmBootMode;
 
 Result pmdmntInitialize(void);
@@ -94,5 +98,13 @@ Result pmshellGetApplicationPid(u64* pid_out);
 Result pmshellBoostSystemMemoryResourceLimit(u64 boost_size);
 Result pmshellBoostSystemThreadResourceLimit(void);
 
+/**
+ * @brief Gets the \ref PmBootMode.
+ * @param[out] out \ref PmBootMode
+ */
 Result pmbmGetBootMode(PmBootMode *out);
+
+/**
+ * @brief Sets the \ref PmBootMode to ::PmBootMode_Maintenance.
+ */
 Result pmbmSetMaintenanceBoot(void);
