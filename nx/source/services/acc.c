@@ -5,16 +5,23 @@
 #include "services/acc.h"
 #include "services/sm.h"
 #include "services/applet.h"
+#include "runtime/env.h"
 #include "runtime/hosversion.h"
 
 static Service g_accSrv;
 static u64 g_refCnt;
+static u128 g_accPreselectedUserID;
+static bool g_accPreselectedUserInitialized;
 
 static Result _accountInitializeApplicationInfo(void);
+
+static Result _accountGetPreselectedUser(u128 *userID);
 
 Result accountInitialize(void)
 {
     Result rc=0;
+    Result rc2=0;
+    u128 *userIdEnv = envGetUserIdStorage();
 
     atomicIncrement64(&g_refCnt);
 
@@ -25,6 +32,18 @@ Result accountInitialize(void)
     if (R_FAILED(rc)) {
         rc = smGetService(&g_accSrv, "acc:u0");
         if (R_SUCCEEDED(rc)) rc = _accountInitializeApplicationInfo();
+    }
+
+    if (R_SUCCEEDED(rc)) {
+        rc2 = _accountGetPreselectedUser(&g_accPreselectedUserID);
+        if (R_SUCCEEDED(rc2)) {
+            g_accPreselectedUserInitialized = true;
+            if (userIdEnv) *userIdEnv = g_accPreselectedUserID;
+        }
+        else if (userIdEnv) {
+            g_accPreselectedUserID = *userIdEnv;
+            if (g_accPreselectedUserID) g_accPreselectedUserInitialized = true;
+        }
     }
 
     if (R_FAILED(rc)) accountExit();
@@ -179,7 +198,7 @@ Result accountListAllUsers(u128* userIDs, size_t max_userIDs, size_t *actual_tot
     return rc;
 }
 
-Result accountGetActiveUser(u128 *userID, bool *account_selected)
+Result accountGetLastOpenedUser(u128 *userID, bool *account_selected)
 {
     IpcCommand c;
     ipcInitialize(&c);
@@ -370,7 +389,7 @@ void accountProfileClose(AccountProfile* profile) {
     serviceClose(&profile->s);
 }
 
-Result accountGetPreselectedUser(u128 *userID) {
+static Result _accountGetPreselectedUser(u128 *userID) {
     Result rc=0;
     AppletStorage storage;
     s64 tmpsize=0;
@@ -403,5 +422,13 @@ Result accountGetPreselectedUser(u128 *userID) {
     }
 
     return rc;
+}
+
+Result accountGetPreselectedUser(u128 *userID) {
+    if (!g_accPreselectedUserInitialized) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    *userID = g_accPreselectedUserID;
+
+    return 0;
 }
 
