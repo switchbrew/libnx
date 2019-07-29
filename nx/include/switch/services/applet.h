@@ -588,6 +588,29 @@ Result appletGetProgramTotalActiveTime(u64 *activeTime);
  */
 Result appletSetApplicationAlbumUserData(const void* buffer, size_t size);
 
+// IWindowController
+
+/**
+ * @brief Gets the AppletResourceUserId of the CallerApplet.
+ * @note Only available with [6.0.0+].
+ * @param[out] out AppletResourceUserId
+ */
+Result appletGetAppletResourceUserIdOfCallerApplet(u64 *out);
+
+/**
+ * @brief Sets the current applet WindowVisibility.
+ * @note Only available with [7.0.0+].
+ * @param[in] flag Flag
+ */
+Result appletSetAppletWindowVisibility(bool flag);
+
+/**
+ * @brief Sets the AppletGpuTimeSlice.
+ * @note Only available with [7.0.0+].
+ * @param[in] val Input value, must not be negative.
+ */
+Result appletSetAppletGpuTimeSlice(s64 val);
+
 // ILibraryAppletCreator
 
 /**

@@ -1895,16 +1895,39 @@ static Result _appletGetAppletResourceUserId(u64 *out) {
     return _appletCmdNoInOut64(&g_appletIWindowController, out, 1);
 }
 
-static Result _appletAcquireForegroundRights(void) {
-    return _appletCmdNoIO(&g_appletIWindowController, 10);
-}
-
 Result appletGetAppletResourceUserId(u64 *out) {
     if (!serviceIsActive(&g_appletSrv))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     *out = g_appletResourceUserId;
     return 0;
+}
+
+Result appletGetAppletResourceUserIdOfCallerApplet(u64 *out) {
+    if (hosversionBefore(6,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    if (!serviceIsActive(&g_appletSrv))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _appletCmdNoInOut64(&g_appletIWindowController, out, 2);
+}
+
+static Result _appletAcquireForegroundRights(void) {
+    return _appletCmdNoIO(&g_appletIWindowController, 10);
+}
+
+Result appletSetAppletWindowVisibility(bool flag) {
+    if (hosversionBefore(7,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdInBool(&g_appletIWindowController, flag, 20);
+}
+
+Result appletSetAppletGpuTimeSlice(s64 val) {
+    if (hosversionBefore(7,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdInU64(&g_appletIWindowController, val, 21);
 }
 
 // ILibraryAppletCreator
