@@ -705,12 +705,15 @@ u32 hidSixAxisSensorValuesRead(SixAxisSensorValues *values, HidControllerID id, 
 /// Returns 0 when CONTROLLER_PLAYER_1 is connected, otherwise returns 1 for handheld-mode.
 bool hidGetHandheldMode(void);
 
+/// Sets which controller types are supported. This is automatically called with all types in \ref hidInitialize.
+Result hidSetSupportedNpadStyleSet(HidControllerType type);
+
+/// Gets which controller types are supported.
+Result hidGetSupportedNpadStyleSet(HidControllerType *type);
+
 /// This is automatically called with CONTROLLER_PLAYER_{1-8} and CONTROLLER_HANDHELD in \ref hidInitialize.
 /// count must be <=10. Each entry in buf must be CONTROLLER_PLAYER_{1-8} or CONTROLLER_HANDHELD.
 Result hidSetSupportedNpadIdType(HidControllerID *buf, size_t count);
-
-/// Sets which controller types are supported. This is automatically called with all types in \ref hidInitialize.
-Result hidSetSupportedNpadStyleSet(HidControllerType type);
 
 /// Gets an event with the specified autoclear for the input controller.
 /// The user *must* close the event when finished with it / before the app exits.

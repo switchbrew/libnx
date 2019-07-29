@@ -723,69 +723,6 @@ static Result _hidGetSharedMemoryHandle(Service* srv, Handle* handle_out) {
     return rc;
 }
 
-Result hidSetSupportedNpadIdType(HidControllerID *buf, size_t count) {
-    Result rc;
-    u64 AppletResourceUserId;
-    size_t i;
-    u32 tmpval=0;
-    u32 tmpbuf[10];
-
-    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
-    if (R_FAILED(rc))
-        AppletResourceUserId = 0;
-
-    if (count > 10)
-        return MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
-
-    memset(tmpbuf, 0, sizeof(tmpbuf));
-    for (i=0; i<count; i++) {
-        tmpval = buf[i];
-        if (tmpval == CONTROLLER_HANDHELD) {
-            tmpval = 0x20;
-        }
-        else if (tmpval >= CONTROLLER_UNKNOWN) {
-            return MAKERESULT(Module_Libnx, LibnxError_BadInput);
-        }
-
-        tmpbuf[i] = tmpval;
-    }
-
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u64 AppletResourceUserId;
-    } *raw;
-
-    ipcSendPid(&c);
-
-    ipcAddSendStatic(&c, tmpbuf, sizeof(u32)*count, 0);
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 102;
-    raw->AppletResourceUserId = AppletResourceUserId;
-
-    rc = serviceIpcDispatch(&g_hidSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
-}
-
 static Result _hidCmdWithInputU32(u64 cmd_id, u32 inputval) {
     Result rc;
     u64 AppletResourceUserId;
@@ -825,6 +762,51 @@ static Result _hidCmdWithInputU32(u64 cmd_id, u32 inputval) {
         } *resp = r.Raw;
 
         rc = resp->result;
+    }
+
+    return rc;
+}
+
+static Result _hidCmdOutU32(u64 cmd_id, u32 *out) {
+    Result rc;
+    u64 AppletResourceUserId;
+
+    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
+    if (R_FAILED(rc))
+        AppletResourceUserId = 0;
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 AppletResourceUserId;
+    } *raw;
+
+    ipcSendPid(&c);
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = cmd_id;
+    raw->AppletResourceUserId = AppletResourceUserId;
+
+    rc = serviceIpcDispatch(&g_hidSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u32 out;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && out) *out = resp->out;
     }
 
     return rc;
@@ -918,6 +900,73 @@ static Result _hidCmdWithNoInput(u64 cmd_id) {
 
 Result hidSetSupportedNpadStyleSet(HidControllerType type) {
     return _hidCmdWithInputU32(100, type);
+}
+
+Result hidGetSupportedNpadStyleSet(HidControllerType *type) {
+    return _hidCmdOutU32(101, type);
+}
+
+Result hidSetSupportedNpadIdType(HidControllerID *buf, size_t count) {
+    Result rc;
+    u64 AppletResourceUserId;
+    size_t i;
+    u32 tmpval=0;
+    u32 tmpbuf[10];
+
+    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
+    if (R_FAILED(rc))
+        AppletResourceUserId = 0;
+
+    if (count > 10)
+        return MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
+
+    memset(tmpbuf, 0, sizeof(tmpbuf));
+    for (i=0; i<count; i++) {
+        tmpval = buf[i];
+        if (tmpval == CONTROLLER_HANDHELD) {
+            tmpval = 0x20;
+        }
+        else if (tmpval >= CONTROLLER_UNKNOWN) {
+            return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+        }
+
+        tmpbuf[i] = tmpval;
+    }
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 AppletResourceUserId;
+    } *raw;
+
+    ipcSendPid(&c);
+
+    ipcAddSendStatic(&c, tmpbuf, sizeof(u32)*count, 0);
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 102;
+    raw->AppletResourceUserId = AppletResourceUserId;
+
+    rc = serviceIpcDispatch(&g_hidSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
 }
 
 static Result _hidActivateNpad(void) {

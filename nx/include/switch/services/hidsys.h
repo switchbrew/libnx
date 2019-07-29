@@ -48,6 +48,13 @@ Result hidsysActivateSleepButton(void);
 Result hidsysActivateCaptureButton(void);
 
 /**
+ * @brief Gets the SupportedNpadStyleSet for the CallerApplet. applet must be initialized in order to use this (uses \ref appletGetAppletResourceUserIdOfCallerApplet).
+ * @note Only available on [6.0.0+].
+ * @param[out] out \ref HidControllerType
+ */
+Result hidsysGetSupportedNpadStyleSetOfCallerApplet(HidControllerType *out);
+
+/**
  * @brief Gets the UniquePadIds for the specified controller.
  * @note Only available on [3.0.0+].
  * @param id Controller ID. Must not be CONTROLLER_P1_AUTO.

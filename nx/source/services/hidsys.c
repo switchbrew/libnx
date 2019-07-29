@@ -186,6 +186,56 @@ Result hidsysActivateCaptureButton(void) {
     return _hidsysCmdWithResIdAndPid(151);
 }
 
+static Result _hidsysGetMaskedSupportedNpadStyleSet(u64 AppletResourceUserId, HidControllerType *out) {
+    if (hosversionBefore(6,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 AppletResourceUserId;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_hidsysSrv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 310;
+    raw->AppletResourceUserId = g_hidsysAppletResourceUserId;
+
+    Result rc = serviceIpcDispatch(&g_hidsysSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            u32 out;
+        } *resp;
+
+        serviceIpcParse(&g_hidsysSrv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && out) *out = resp->out;
+    }
+
+    return rc;
+}
+
+Result hidsysGetSupportedNpadStyleSetOfCallerApplet(HidControllerType *out) {
+    u64 AppletResourceUserId=0;
+    Result rc=0;
+
+    rc = appletGetAppletResourceUserIdOfCallerApplet(&AppletResourceUserId);
+    if (R_FAILED(rc) && rc != MAKERESULT(128, 82)) return rc;
+
+    return _hidsysGetMaskedSupportedNpadStyleSet(AppletResourceUserId, out);
+}
+
 Result hidsysGetUniquePadsFromNpad(HidControllerID id, u64 *UniquePadIds, size_t count, size_t *total_entries) {
     if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
