@@ -238,12 +238,6 @@ AppletThemeColorType appletGetThemeColorType(void);
 // ICommonStateGetter
 
 /**
- * @brief Get an event that fires when the home button is pressed, doesn't interfere with home menu. This event does not auto clear.
- * @note Doesn't fire for long press.
- */
-Result appletHomeButtonReaderLockAccessorGetEvent(Event *out_event);
-
-/**
  * @brief Gets the CradleStatus.
  * @param[out] status Output Dock status.
  */
@@ -262,6 +256,22 @@ Result appletGetBootMode(PmBootMode *mode);
  * @param s Storage object.
  */
 Result appletPushToGeneralChannel(AppletStorage *s);
+
+/**
+ * @brief Get an event that fires when the home button is pressed, doesn't interfere with home menu. This event does not auto clear.
+ * @note Doesn't fire for long press.
+ */
+Result appletHomeButtonReaderLockAccessorGetEvent(Event *out_event);
+
+/**
+ * @brief Gets the Dock firmware version.
+ * @note Only available with [2.0.0+].
+ * @param[out] out0 First output value.
+ * @param[out] out1 Second output value.
+ * @param[out] out2 Third output value.
+ * @param[out] out3 Fourth output value.
+ */
+Result appletGetCradleFwVersion(u32 *out0, u32 *out1, u32 *out2, u32 *out3);
 
 /**
  * @brief Gets whether VrMode is enabled.
@@ -285,6 +295,13 @@ Result appletSetVrModeEnabled(bool flag);
  * @param[in] flag Flag
  */
 Result appletSetLcdBacklightOffEnabled(bool flag);
+
+/**
+ * @brief Gets the ControllerFirmwareUpdateSection flag.
+ * @note Only available with [3.0.0+].
+ * @param[out] out Output flag.
+ */
+Result appletIsInControllerFirmwareUpdateSection(bool *out);
 
 /**
  * @brief Gets the DefaultDisplayResolution.
@@ -347,11 +364,25 @@ Result appletSetCpuBoostMode(ApmCpuBoostMode mode);
 Result appletPerformSystemButtonPressingIfInFocus(AppletSystemButtonType type);
 
 /**
+ * @brief Sets whether PerformanceConfigurationChangedNotification is enabled.
+ * @note Only available with [7.0.0+].
+ * @param[in] flag Whether to enable the notification.
+ */
+Result appletSetPerformanceConfigurationChangedNotification(bool flag);
+
+/**
  * @brief Gets the current PerformanceConfiguration.
  * @note Only available with [7.0.0+].
  * @param PerformanceConfiguration Output PerformanceConfiguration.
  */
 Result appletGetCurrentPerformanceConfiguration(u32 *PerformanceConfiguration);
+
+/**
+ * @brief Gets the OperationModeSystemInfo.
+ * @note Only available with [7.0.0+].
+ * @param[out] info Output info.
+ */
+Result appletGetOperationModeSystemInfo(u32 *info);
 
 // ISelfController
 

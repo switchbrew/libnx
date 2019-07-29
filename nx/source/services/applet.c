@@ -1027,17 +1027,6 @@ static Result _appletGetIdentityInfo(Service* srv, AppletIdentityInfo *info, u64
 
 // ICommonStateGetter
 
-Result appletHomeButtonReaderLockAccessorGetEvent(Event *out_event) {
-    Service ILockAccessor = {0};
-    Result rc = _appletGetSession(&g_appletICommonStateGetter, &ILockAccessor, 30);
-    if (R_FAILED(rc))
-        return rc;
-
-    rc = _appletGetEvent(&ILockAccessor, out_event, 3, false);
-    serviceClose(&ILockAccessor);
-    return rc;
-}
-
 static Result _appletReceiveMessage(u32 *out) {
     IpcCommand c;
     ipcInitialize(&c);
@@ -1200,6 +1189,63 @@ Result appletPushToGeneralChannel(AppletStorage *s) {
     return _appletCmdInStorage(&g_appletICommonStateGetter, s, 20);
 }
 
+Result appletHomeButtonReaderLockAccessorGetEvent(Event *out_event) {
+    Service ILockAccessor = {0};
+    Result rc = _appletGetSession(&g_appletICommonStateGetter, &ILockAccessor, 30);
+    if (R_FAILED(rc))
+        return rc;
+
+    rc = _appletGetEvent(&ILockAccessor, out_event, 3, false);
+    serviceClose(&ILockAccessor);
+    return rc;
+}
+
+Result appletGetCradleFwVersion(u32 *out0, u32 *out1, u32 *out2, u32 *out3) {
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletICommonStateGetter, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 40;
+
+    Result rc = serviceIpcDispatch(&g_appletICommonStateGetter);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            u32 out0;
+            u32 out1;
+            u32 out2;
+            u32 out3;
+        } *resp;
+
+        serviceIpcParse(&g_appletICommonStateGetter, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            if (out0) *out0 = resp->out0;
+            if (out1) *out1 = resp->out1;
+            if (out2) *out2 = resp->out2;
+            if (out3) *out3 = resp->out3;
+        }
+    }
+
+    return rc;
+}
+
 Result appletIsVrModeEnabled(bool *out) {
     if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
@@ -1222,6 +1268,13 @@ Result appletSetLcdBacklightOffEnabled(bool flag) {
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return _appletCmdInBool(&g_appletICommonStateGetter, flag, 52);
+}
+
+Result appletIsInControllerFirmwareUpdateSection(bool *out) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdNoInOutBool(&g_appletICommonStateGetter, out, 55);
 }
 
 Result appletGetDefaultDisplayResolution(s32 *width, s32 *height) {
@@ -1259,7 +1312,7 @@ Result appletGetDefaultDisplayResolution(s32 *width, s32 *height) {
 
         if (R_SUCCEEDED(rc)) {
             if (width) *width = resp->width;
-            if (width) *height = resp->height;
+            if (height) *height = resp->height;
         }
     }
 
@@ -1351,11 +1404,25 @@ Result appletPerformSystemButtonPressingIfInFocus(AppletSystemButtonType type) {
     return _appletCmdInU32(&g_appletICommonStateGetter, type, 80);
 }
 
+Result appletSetPerformanceConfigurationChangedNotification(bool flag) {
+    if (hosversionBefore(7,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdInBool(&g_appletICommonStateGetter, flag, 90);
+}
+
 Result appletGetCurrentPerformanceConfiguration(u32 *PerformanceConfiguration) {
     if (hosversionBefore(7,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return _appletCmdNoInOut32(&g_appletICommonStateGetter, PerformanceConfiguration, 91);
+}
+
+Result appletGetOperationModeSystemInfo(u32 *info) {
+    if (hosversionBefore(7,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdNoInOut32(&g_appletICommonStateGetter, info, 200);
 }
 
 // ISelfController
