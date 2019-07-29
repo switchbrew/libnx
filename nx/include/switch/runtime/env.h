@@ -34,6 +34,8 @@ enum {
     EntryType_ProcessHandle=10,       ///< Provides the process handle.
     EntryType_LastLoadResult=11,      ///< Provides the last load result.
     EntryType_RandomSeed=14,          ///< Provides random data used to seed the pseudo-random number generator.
+    EntryType_UserIdStorage=15,       ///< Provides persistent storage for the preselected user id.
+    EntryType_HosVersion=16,          ///< Provides the currently running Horizon OS version.
 };
 
 enum {
@@ -50,6 +52,11 @@ typedef void NORETURN (*LoaderReturnFn)(int result_code);
  * @param saved_lr Reserved.
  */
 void envSetup(void* ctx, Handle main_thread, LoaderReturnFn saved_lr);
+
+/// Returns information text about the loader, if present.
+const char* envGetLoaderInfo(void);
+/// Returns the size of the loader information text.
+u64 envGetLoaderInfoSize(void);
 
 /// Retrieves the handle to the main thread.
 Handle envGetMainThreadHandle(void);
@@ -105,3 +112,6 @@ bool envHasRandomSeed(void);
  * @param out Pointer to a u64[2] buffer which will contain the random seed on return.
  */
 void envGetRandomSeed(u64 out[2]);
+
+/// Returns a pointer to the user id storage area (if present).
+u128* envGetUserIdStorage(void);
