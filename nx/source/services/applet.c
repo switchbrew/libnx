@@ -1930,6 +1930,123 @@ Result appletSetAppletGpuTimeSlice(s64 val) {
     return _appletCmdInU64(&g_appletIWindowController, val, 21);
 }
 
+// IAudioController
+
+Result appletSetExpectedMasterVolume(float mainAppletVolume, float libraryAppletVolume) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        float mainAppletVolume;
+        float libraryAppletVolume;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletIAudioController, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 0;
+    raw->mainAppletVolume = mainAppletVolume;
+    raw->libraryAppletVolume = libraryAppletVolume;
+
+    Result rc = serviceIpcDispatch(&g_appletIAudioController);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_appletIAudioController, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result appletGetExpectedMasterVolume(float *mainAppletVolume, float *libraryAppletVolume) {
+    Result rc=0;
+
+    if (mainAppletVolume) rc = _appletCmdNoInOut32(&g_appletIAudioController, (u32*)mainAppletVolume, 1); // GetMainAppletExpectedMasterVolume
+    if (R_SUCCEEDED(rc) && libraryAppletVolume) rc = _appletCmdNoInOut32(&g_appletIAudioController, (u32*)libraryAppletVolume, 2); // GetLibraryAppletExpectedMasterVolume
+
+    return rc;
+}
+
+Result appletChangeMainAppletMasterVolume(float volume, u64 unk) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        float volume;
+        u64 unk;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletIAudioController, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 3;
+    raw->volume = volume;
+    raw->unk = unk;
+
+    Result rc = serviceIpcDispatch(&g_appletIAudioController);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_appletIAudioController, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result appletSetTransparentVolumeRate(float val) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        float val;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletIAudioController, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 4;
+    raw->val = val;
+
+    Result rc = serviceIpcDispatch(&g_appletIAudioController);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_appletIAudioController, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
 // ILibraryAppletCreator
 
 static Result _appletCreateLibraryApplet(Service* srv_out, AppletId id, LibAppletMode mode) {

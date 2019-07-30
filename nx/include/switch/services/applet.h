@@ -611,6 +611,37 @@ Result appletSetAppletWindowVisibility(bool flag);
  */
 Result appletSetAppletGpuTimeSlice(s64 val);
 
+// IAudioController
+
+/**
+ * @brief Sets the ExpectedMasterVolume for MainApplet and LibraryApplet.
+ * @note Used by some official apps before/after launching LibraryApplets. Prior to changing the volume, the official app uses \ref appletGetExpectedMasterVolume, with the output being used to restore the volume after LibraryApplet handling.
+ * @param[in] mainAppletVolume MainApplet ExpectedMasterVolume.
+ * @param[in] libraryAppletVolume LibraryApplet ExpectedMasterVolume.
+ */
+Result appletSetExpectedMasterVolume(float mainAppletVolume, float libraryAppletVolume);
+
+/**
+ * @brief Gets the ExpectedMasterVolume for MainApplet and LibraryApplet.
+ * @note See also \ref appletSetExpectedMasterVolume.
+ * @param[out] mainAppletVolume MainApplet ExpectedMasterVolume. Optional, can be NULL. Used with cmd GetMainAppletExpectedMasterVolume when not NULL.
+ * @param[out] libraryAppletVolume LibraryApplet ExpectedMasterVolume. Optional, can be NULL. Used with cmd GetLibraryAppletExpectedMasterVolume when not NULL.
+ */
+Result appletGetExpectedMasterVolume(float *mainAppletVolume, float *libraryAppletVolume);
+
+/**
+ * @brief Change the MainApplet MasterVolume.
+ * @param[in] volume MainApplet MasterVolume.
+ * @param[in] unk Unknown.
+ */
+Result appletChangeMainAppletMasterVolume(float volume, u64 unk);
+
+/**
+ * @brief Sets the TransparentVolumeRate.
+ * @param[in] val Input value.
+ */
+Result appletSetTransparentVolumeRate(float val);
+
 // ILibraryAppletCreator
 
 /**
