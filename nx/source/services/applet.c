@@ -2147,7 +2147,7 @@ static Result _appletHolderCreate(AppletHolder *h, AppletId id, LibAppletMode mo
 
     if (R_SUCCEEDED(rc)) rc = _appletGetEvent(&h->s, &h->StateChangedEvent, 0, false);//GetAppletStateChangedEvent
 
-    if (R_SUCCEEDED(rc) && hosversionAtLeast(2,0,0) && h->mode == LibAppletMode_Unknown3) rc = _appletGetIndirectLayerConsumerHandle(&h->s, &h->layer_handle);
+    if (R_SUCCEEDED(rc) && hosversionAtLeast(2,0,0) && h->mode == LibAppletMode_BackgroundIndirect) rc = _appletGetIndirectLayerConsumerHandle(&h->s, &h->layer_handle);
 
     return rc;
 }
@@ -2175,7 +2175,7 @@ bool appletHolderActive(AppletHolder *h) {
 Result appletHolderGetIndirectLayerConsumerHandle(AppletHolder *h, u64 *out) {
     if (!serviceIsActive(&h->s))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-    if (h->mode!=LibAppletMode_Unknown3)
+    if (h->mode!=LibAppletMode_BackgroundIndirect)
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
     if (hosversionBefore(2,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
@@ -2237,6 +2237,13 @@ bool appletHolderCheckFinished(AppletHolder *h) {
 
 u32 appletHolderGetExitReason(AppletHolder *h) {
     return h->exitreason;
+}
+
+Result appletHolderSetOutOfFocusApplicationSuspendingEnabled(AppletHolder *h, bool flag) {
+    if (!serviceIsActive(&g_appletSrv) || !_appletIsApplication())
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _appletCmdInBool(&h->s, flag, 50);
 }
 
 static Result _appletHolderGetPopInteractiveOutDataEvent(AppletHolder *h) {

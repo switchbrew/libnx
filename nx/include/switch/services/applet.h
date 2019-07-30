@@ -109,10 +109,11 @@ typedef enum {
 
 /// LibraryAppletMode
 typedef enum {
-    LibAppletMode_AllForeground = 0,  ///< Foreground
-    LibAppletMode_Background = 1,     ///< Background
-    LibAppletMode_Unknown2 = 2,       ///< Unknown
-    LibAppletMode_Unknown3 = 3,       ///< Unknown
+    LibAppletMode_AllForeground                = 0,       ///< Foreground.
+    LibAppletMode_Background                   = 1,       ///< Background.
+    LibAppletMode_NoUi                         = 2,       ///< No UI.
+    LibAppletMode_BackgroundIndirect           = 3,       ///< Background with indirect display, see \ref appletHolderGetIndirectLayerConsumerHandle.
+    LibAppletMode_AllForegroundInitiallyHidden = 4,       ///< Foreground except initially hidden.
 } LibAppletMode;
 
 /// LibraryAppletExitReason
@@ -669,7 +670,7 @@ bool appletHolderActive(AppletHolder *h);
 
 /**
  * @brief Gets the IndirectLayerConsumerHandle loaded during \ref appletCreateLibraryApplet, on 2.0.0+.
- * @note  Only available when \ref LibAppletMode is ::LibAppletMode_Unknown3.
+ * @note  Only available when \ref LibAppletMode is ::LibAppletMode_BackgroundIndirect.
  * @param h AppletHolder object.
  * @param out Output IndirectLayerConsumerHandle.
  */
@@ -704,6 +705,14 @@ bool appletHolderCheckFinished(AppletHolder *h);
  * @param h AppletHolder object.
  */
 LibAppletExitReason appletHolderGetExitReason(AppletHolder *h);
+
+/**
+ * @brief Sets OutOfFocusApplicationSuspendingEnabled.
+ * @note Only available with AppletType_*Application.
+ * @param h AppletHolder object.
+ * @param[in] flag Flag
+ */
+Result appletHolderSetOutOfFocusApplicationSuspendingEnabled(AppletHolder *h, bool flag);
 
 /**
  * @brief Waits for the PopInteractiveOutDataEvent and StateChangedEvent.
