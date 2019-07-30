@@ -85,13 +85,13 @@ typedef struct {
             union {
                 struct {
                     u32 version;      ///< Title version.
-                } application;        ///< For AppletId = 0x01.
+                } application;        ///< For AppletId == ::AppletId_application.
 
                 struct {
                     u8 flag;          ///< Set to 0x1 by pdm:ntfy cmd8, indicating that the below field is set to an input param.
-                    u8 unk_x9;        ///< Input value from pdm:ntfy cmd8.
+                    u8 mode;          ///< Input value from pdm:ntfy cmd8, see \ref LibAppletMode.
                     u8 pad[2];        ///< Padding.
-                } applet;             ///< For AppletId != 0x01.
+                } applet;             ///< For AppletId != ::AppletId_application.
 
                 u32 data;
             } unk_x8;
