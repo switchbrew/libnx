@@ -85,7 +85,7 @@ Result nvAddressSpaceModify(NvAddressSpace* a, iova_t iova, u64 offset, u64 size
     if (iova & (a->page_size - 1))
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
     u64 end_offset = (offset + size + a->page_size - 1) &~ (a->page_size - 1);
-    offset &= a->page_size - 1;
+    offset &= ~(a->page_size - 1);
     size = end_offset - offset;
     return nvioctlNvhostAsGpu_MapBufferEx(a->fd, NvMapBufferFlags_Modify, kind, 0, 0, offset, size, iova, NULL);
 }
