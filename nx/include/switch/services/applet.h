@@ -196,6 +196,12 @@ typedef struct {
     LibAppletExitReason exitreason;    ///< Set by \ref appletHolderJoin using the output from cmd GetResult, see \ref LibAppletExitReason.
 } AppletHolder;
 
+/// LibraryAppletInfo
+typedef struct {
+    AppletId appletId;                 ///< \ref AppletId
+    LibAppletMode mode;                ///< \ref LibAppletMode
+} LibAppletInfo;
+
 /// IdentityInfo
 typedef struct {
     AppletId appletId;                 ///< \ref AppletId
@@ -759,6 +765,13 @@ Result appletHolderPushInteractiveInData(AppletHolder *h, AppletStorage *s);
  */
 Result appletHolderPopInteractiveOutData(AppletHolder *h, AppletStorage *s);
 
+/**
+ * @brief Gets the \ref LibAppletInfo for the specified LibraryApplet.
+ * @param h AppletHolder object.
+ * @param[out] info \ref LibAppletInfo
+ */
+Result appletHolderGetLibraryAppletInfo(AppletHolder *h, LibAppletInfo *info);
+
 // (ILibraryAppletCreator ->) IStorage
 
 /**
@@ -1013,6 +1026,13 @@ Result appletQueryApplicationPlayStatisticsByUid(u128 userID, PdmApplicationPlay
 Result appletGetGpuErrorDetectedSystemEvent(Event *out_event);
 
 // ILibraryAppletSelfAccessor
+
+/**
+ * @brief Gets the \ref LibAppletInfo for the current LibraryApplet.
+ * @note Only available with AppletType_LibraryApplet.
+ * @param[out] info \ref LibAppletInfo
+ */
+Result appletGetLibraryAppletInfo(LibAppletInfo *info);
 
 /**
  * @brief Gets the \ref AppletIdentityInfo for the MainApplet.

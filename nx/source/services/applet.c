@@ -990,6 +990,41 @@ static Result _appletCmdNoInOutStorage(Service* srv, AppletStorage* s, u64 cmd_i
     return _appletGetSession(srv, &s->s, cmd_id);
 }
 
+static Result _appletGetLibraryAppletInfo(Service* srv, LibAppletInfo *info, u64 cmd_id) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(srv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = cmd_id;
+
+    Result rc = serviceIpcDispatch(srv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            LibAppletInfo info;
+        } *resp;
+
+        serviceIpcParse(srv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && info) memcpy(info, &resp->info, sizeof(LibAppletInfo));
+    }
+
+    return rc;
+}
+
 static Result _appletGetIdentityInfo(Service* srv, AppletIdentityInfo *info, u64 cmd_id) {
     IpcCommand c;
     ipcInitialize(&c);
@@ -2289,6 +2324,10 @@ Result appletHolderPopInteractiveOutData(AppletHolder *h, AppletStorage *s) {
     return _appletCmdNoInOutStorage(&h->s, s, 104);
 }
 
+Result appletHolderGetLibraryAppletInfo(AppletHolder *h, LibAppletInfo *info) {
+    return _appletGetLibraryAppletInfo(&h->s, info, 120);
+}
+
 // (ILibraryAppletCreator ->) IStorage
 
 Result appletCreateStorage(AppletStorage *s, s64 size) {
@@ -3397,6 +3436,13 @@ static Result _appletExitProcessAndReturn(void) {
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     return _appletCmdNoIO(&g_appletILibraryAppletSelfAccessor, 10);
+}
+
+Result appletGetLibraryAppletInfo(LibAppletInfo *info) {
+    if (__nx_applet_type != AppletType_LibraryApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _appletGetLibraryAppletInfo(&g_appletILibraryAppletSelfAccessor, info, 11);
 }
 
 Result appletGetMainAppletIdentityInfo(AppletIdentityInfo *info) {
