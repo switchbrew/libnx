@@ -166,6 +166,13 @@ typedef enum {
     AppletWirelessPriorityMode_Unknown2 = 2,       ///< Unknown.
 } AppletWirelessPriorityMode;
 
+/// CaptureSharedBuffer for the IDisplayController commands.
+typedef enum {
+    AppletCaptureSharedBuffer_LastApplication = 0,                     ///< LastApplication
+    AppletCaptureSharedBuffer_LastForeground  = 1,                     ///< LastForeground
+    AppletCaptureSharedBuffer_CallerApplet    = 2,                     ///< CallerApplet
+} AppletCaptureSharedBuffer;
+
 /// applet hook function.
 typedef void (*AppletHookFn)(AppletHookType hook, void* param);
 
@@ -648,6 +655,125 @@ Result appletChangeMainAppletMasterVolume(float volume, u64 unk);
  * @param[in] val Input value.
  */
 Result appletSetTransparentVolumeRate(float val);
+
+// IDisplayController
+
+/**
+ * @brief Update the LastForeground CaptureImage.
+ */
+Result appletUpdateLastForegroundCaptureImage(void);
+
+/**
+ * @brief Update the CallerApplet CaptureImage.
+ */
+Result appletUpdateCallerAppletCaptureImage(void);
+
+/**
+ * @brief Gets the LastForeground CaptureImage.
+ * @param[out] buffer Output buffer containing the 1280x720 RGBA8 image.
+ * @param[out] size Buffer size, must match 0x384000.
+ * @param[out] flag Output flag.
+ */
+Result appletGetLastForegroundCaptureImageEx(void* buffer, size_t size, bool *flag);
+
+/**
+ * @brief Gets the LastApplication CaptureImage.
+ * @param[out] buffer Output buffer containing the 1280x720 RGBA8 image.
+ * @param[out] size Buffer size, must match 0x384000.
+ * @param[out] flag Output flag.
+ */
+Result appletGetLastApplicationCaptureImageEx(void* buffer, size_t size, bool *flag);
+
+/**
+ * @brief Gets the CallerApplet CaptureImage.
+ * @param[out] buffer Output buffer containing the 1280x720 RGBA8 image.
+ * @param[out] size Buffer size, must match 0x384000.
+ * @param[out] flag Output flag.
+ */
+Result appletGetCallerAppletCaptureImageEx(void* buffer, size_t size, bool *flag);
+
+/**
+ * @brief Takes a screenshot of the current applet Layer into the specified CaptureSharedBuffer.
+ * @note Only available with [2.0.0+].
+ * @param[in] flag Flag.
+ * @param[in] captureBuf \ref AppletCaptureSharedBuffer
+ */
+Result appletTakeScreenShotOfOwnLayer(bool flag, AppletCaptureSharedBuffer captureBuf);
+
+/**
+ * @brief Copies image data from a CaptureSharedBuffer to another CaptureSharedBuffer.
+ * @note Only available with [5.0.0+].
+ * @param[in] dstCaptureBuf Destination \ref AppletCaptureSharedBuffer.
+ * @param[in] srcCaptureBuf Source \ref AppletCaptureSharedBuffer.
+ */
+Result appletCopyBetweenCaptureBuffers(AppletCaptureSharedBuffer dstCaptureBuf, AppletCaptureSharedBuffer srcCaptureBuf);
+
+/**
+ * @brief Clear the input CaptureSharedBuffer with the specified color.
+ * @note Only available with [3.0.0+].
+ * @param[in] flag Flag.
+ * @param[in] captureBuf \ref AppletCaptureSharedBuffer
+ * @param[in] color RGBA8 color.
+ */
+Result appletClearCaptureBuffer(bool flag, AppletCaptureSharedBuffer captureBuf, u32 color);
+
+/**
+ * @brief Clear the AppletTransitionBuffer with the specified color.
+ * @note Only available with [3.0.0+].
+ * @param[in] color RGBA8 color.
+ */
+Result appletClearAppletTransitionBuffer(u32 color);
+
+/**
+ * @brief Acquire the LastApplication CaptureSharedBuffer.
+ * @note Only available with [4.0.0+].
+ * @param[out] flag Output flag.
+ * @param[out] id Output ID.
+ */
+Result appletAcquireLastApplicationCaptureSharedBuffer(bool *flag, s32 *id);
+
+/**
+ * @brief Release the LastApplication CaptureSharedBuffer.
+ * @note Only available with [4.0.0+].
+ */
+Result appletReleaseLastApplicationCaptureSharedBuffer(void);
+
+/**
+ * @brief Acquire the LastForeground CaptureSharedBuffer.
+ * @note Only available with [4.0.0+].
+ * @param[out] flag Output flag.
+ * @param[out] id Output ID.
+ */
+Result appletAcquireLastForegroundCaptureSharedBuffer(bool *flag, s32 *id);
+
+/**
+ * @brief Release the LastForeground CaptureSharedBuffer.
+ * @note Only available with [4.0.0+].
+ */
+Result appletReleaseLastForegroundCaptureSharedBuffer(void);
+
+/**
+ * @brief Acquire the CallerApplet CaptureSharedBuffer.
+ * @note Only available with [4.0.0+].
+ * @param[out] flag Output flag.
+ * @param[out] id Output ID.
+ */
+Result appletAcquireCallerAppletCaptureSharedBuffer(bool *flag, s32 *id);
+
+/**
+ * @brief Release the CallerApplet CaptureSharedBuffer.
+ * @note Only available with [4.0.0+].
+ */
+Result appletReleaseCallerAppletCaptureSharedBuffer(void);
+
+/**
+ * @brief Takes a screenshot of the current applet Layer into the specified CaptureSharedBuffer. Same as \ref appletTakeScreenShotOfOwnLayer except for the additional immediately param.
+ * @note Only available with [6.0.0+].
+ * @param[in] flag0 Flag0.
+ * @param[in] immediately Whether the screenshot should be taken immediately.
+ * @param[in] captureBuf \ref AppletCaptureSharedBuffer
+ */
+Result appletTakeScreenShotOfOwnLayerEx(bool flag0, bool immediately, AppletCaptureSharedBuffer captureBuf);
 
 // ILibraryAppletCreator
 

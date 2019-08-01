@@ -2082,6 +2082,311 @@ Result appletSetTransparentVolumeRate(float val) {
     return rc;
 }
 
+// IDisplayController
+
+Result appletUpdateLastForegroundCaptureImage(void) {
+    return _appletCmdNoIO(&g_appletIDisplayController, 1);
+}
+
+Result appletUpdateCallerAppletCaptureImage(void) {
+    return _appletCmdNoIO(&g_appletIDisplayController, 4);
+}
+
+static Result _appletGetCaptureImageEx(void* buffer, size_t size, bool *flag, u64 cmd_id) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    ipcAddRecvBuffer(&c, buffer, size, BufferType_Normal);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletIDisplayController, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = cmd_id;
+
+    Result rc = serviceIpcDispatch(&g_appletIDisplayController);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            u8 flag;
+        } *resp;
+
+        serviceIpcParse(&g_appletIDisplayController, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && flag) *flag = resp->flag!=0;
+    }
+
+    return rc;
+}
+
+Result appletGetLastForegroundCaptureImageEx(void* buffer, size_t size, bool *flag) {
+    return _appletGetCaptureImageEx(buffer, size, flag, 5);
+}
+
+Result appletGetLastApplicationCaptureImageEx(void* buffer, size_t size, bool *flag) {
+    return _appletGetCaptureImageEx(buffer, size, flag, 6);
+}
+
+Result appletGetCallerAppletCaptureImageEx(void* buffer, size_t size, bool *flag) {
+    return _appletGetCaptureImageEx(buffer, size, flag, 7);
+}
+
+Result appletTakeScreenShotOfOwnLayer(bool flag, AppletCaptureSharedBuffer captureBuf) {
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u8 flag;
+        s32 captureBuf;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletIDisplayController, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 8;
+    raw->flag = flag!=0;
+    raw->captureBuf = captureBuf;
+
+    Result rc = serviceIpcDispatch(&g_appletIDisplayController);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_appletIDisplayController, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result appletCopyBetweenCaptureBuffers(AppletCaptureSharedBuffer dstCaptureBuf, AppletCaptureSharedBuffer srcCaptureBuf) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        s32 dstCaptureBuf;
+        s32 srcCaptureBuf;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletIDisplayController, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 9;
+    raw->dstCaptureBuf = dstCaptureBuf;
+    raw->srcCaptureBuf = srcCaptureBuf;
+
+    Result rc = serviceIpcDispatch(&g_appletIDisplayController);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_appletIDisplayController, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result appletClearCaptureBuffer(bool flag, AppletCaptureSharedBuffer captureBuf, u32 color) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u8 flag;
+        s32 captureBuf;
+        u32 color;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletIDisplayController, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 20;
+    raw->flag = flag!=0;
+    raw->captureBuf = captureBuf;
+    raw->color = color;
+
+    Result rc = serviceIpcDispatch(&g_appletIDisplayController);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_appletIDisplayController, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result appletClearAppletTransitionBuffer(u32 color) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdInU32(&g_appletIDisplayController, color, 21);
+}
+
+static Result _appletAcquireCaptureSharedBuffer(bool *flag, s32 *id, u64 cmd_id) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletIDisplayController, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = cmd_id;
+
+    Result rc = serviceIpcDispatch(&g_appletIDisplayController);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            u8 flag;
+            s32 id;
+        } *resp;
+
+        serviceIpcParse(&g_appletIDisplayController, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && flag) *flag = resp->flag!=0;
+        if (R_SUCCEEDED(rc) && id) *id = resp->id;
+    }
+
+    return rc;
+}
+
+Result appletAcquireLastApplicationCaptureSharedBuffer(bool *flag, s32 *id) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletAcquireCaptureSharedBuffer(flag, id, 22);
+}
+
+Result appletReleaseLastApplicationCaptureSharedBuffer(void) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdNoIO(&g_appletIDisplayController, 23);
+}
+
+Result appletAcquireLastForegroundCaptureSharedBuffer(bool *flag, s32 *id) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletAcquireCaptureSharedBuffer(flag, id, 24);
+}
+
+Result appletReleaseLastForegroundCaptureSharedBuffer(void) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdNoIO(&g_appletIDisplayController, 25);
+}
+
+Result appletAcquireCallerAppletCaptureSharedBuffer(bool *flag, s32 *id) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletAcquireCaptureSharedBuffer(flag, id, 26);
+}
+
+Result appletReleaseCallerAppletCaptureSharedBuffer(void) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdNoIO(&g_appletIDisplayController, 27);
+}
+
+Result appletTakeScreenShotOfOwnLayerEx(bool flag0, bool immediately, AppletCaptureSharedBuffer captureBuf) {
+    if (hosversionBefore(6,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u8 flag0;
+        u8 immediately;
+        s32 captureBuf;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletIDisplayController, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 28;
+    raw->flag0 = flag0!=0;
+    raw->immediately = immediately!=0;
+    raw->captureBuf = captureBuf;
+
+    Result rc = serviceIpcDispatch(&g_appletIDisplayController);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_appletIDisplayController, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
 // ILibraryAppletCreator
 
 static Result _appletCreateLibraryApplet(Service* srv_out, AppletId id, LibAppletMode mode) {
