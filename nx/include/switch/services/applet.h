@@ -1204,6 +1204,62 @@ Result appletBeginToWatchShortHomeButtonMessage(void);
  */
 Result appletEndToWatchShortHomeButtonMessage(void);
 
+// IAppletCommonFunctions
+
+/**
+ * @brief Reads the ThemeStorage for the current applet.
+ * @note Only available with AppletType_SystemApplet, AppletType_LibraryApplet, or AppletType_OverlayApplet, on [7.0.0+].
+ * @note offset(+size) must be <=0x400.
+ * @param[out] buffer Output buffer data.
+ * @param[in] size Size to read.
+ * @param[in] offset Offset within the ThemeStorage.
+ * @param[out] transfer_size Actual read size.
+ */
+Result appletReadThemeStorage(void* buffer, size_t size, u64 offset, size_t *transfer_size);
+
+/**
+ * @brief Writes the ThemeStorage for the current applet.
+ * @note Only available with AppletType_SystemApplet, AppletType_LibraryApplet, or AppletType_OverlayApplet, on [7.0.0+].
+ * @note offset(+size) must be <=0x400.
+ * @param[in] buffer Input buffer data.
+ * @param[in] size Size to write.
+ * @param[in] offset Offset within the ThemeStorage.
+ */
+Result appletWriteThemeStorage(const void* buffer, size_t size, u64 offset);
+
+/**
+ * @brief Gets the DisplayLogicalResolution.
+ * @note Only available with AppletType_SystemApplet, AppletType_LibraryApplet, or AppletType_OverlayApplet, on [8.0.0+].
+ * @param[out] width Output width.
+ * @param[out] height Output height.
+ */
+Result appletGetDisplayLogicalResolution(s32 *width, s32 *height);
+
+/**
+ * @brief Sets the DisplayMagnification. This is essentially layer image crop, for everything non-Overlay.
+ * @note Only available with AppletType_SystemApplet, AppletType_LibraryApplet, or AppletType_OverlayApplet, on [8.0.0+].
+ * @note x and width are multiplied with the same width value returned by \ref appletGetDisplayLogicalResolution, so these should be in the range 0.0f-1.0f. Likewise for y and height, except those are multipled with the height value.
+ * @param[in] x X position.
+ * @param[in] y Y position.
+ * @param[in] width Width.
+ * @param[in] height Height.
+ */
+Result appletSetDisplayMagnification(float x, float y, float width, float height);
+
+/**
+ * @brief Sets whether HomeButtonDoubleClick is enabled.
+ * @note Only available with AppletType_SystemApplet, AppletType_LibraryApplet, or AppletType_OverlayApplet, on [8.0.0+].
+ * @param[in] flag Flag
+ */
+Result appletSetHomeButtonDoubleClickEnabled(bool flag);
+
+/**
+ * @brief Gets whether HomeButtonDoubleClick is enabled.
+ * @note Only available with AppletType_SystemApplet, AppletType_LibraryApplet, or AppletType_OverlayApplet, on [8.0.0+].
+ * @param[out] out Output flag.
+ */
+Result appletGetHomeButtonDoubleClickEnabled(bool *out);
+
 // State / other
 
 /**

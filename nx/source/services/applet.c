@@ -29,6 +29,8 @@ static u64 g_refCnt;
 static bool g_appletExitProcessFlag;
 
 // From Get*Functions.
+static Service g_appletIAppletCommonFunctions;
+
 static Service g_appletIFunctions;
 
 static Service g_appletIGlobalStateController;
@@ -45,6 +47,7 @@ static Service g_appletIAudioController;
 static Service g_appletIDisplayController;
 static Service g_appletIDebugFunctions;
 
+static size_t g_appletIAppletCommonFunctions_ptrbufsize;
 static size_t g_appletISelfController_ptrbufsize;
 
 static Event g_appletMessageEvent;
@@ -161,6 +164,14 @@ Result appletInitialize(void)
             }
 
         } while (rc == AM_BUSY_ERROR);
+    }
+
+    // [7.0.0+] GetAppletCommonFunctions
+    if (R_SUCCEEDED(rc) && hosversionAtLeast(7,0,0)) {
+        if (__nx_applet_type == AppletType_SystemApplet || __nx_applet_type == AppletType_LibraryApplet || __nx_applet_type == AppletType_OverlayApplet) {
+            rc = _appletGetSession(&g_appletProxySession, &g_appletIAppletCommonFunctions, __nx_applet_type == AppletType_SystemApplet ? 23 : 21);
+            if (R_SUCCEEDED(rc)) rc = ipcQueryPointerBufferSize(g_appletIAppletCommonFunctions.handle, &g_appletIAppletCommonFunctions_ptrbufsize);
+        }
     }
 
     // Get*Functions
@@ -374,6 +385,8 @@ void appletExit(void)
             serviceClose(&g_appletIProcessWindingController);
             serviceClose(&g_appletILibraryAppletSelfAccessor);
         }
+
+        serviceClose(&g_appletIAppletCommonFunctions);
 
         serviceClose(&g_appletProxySession);
         serviceClose(&g_appletSrv);
@@ -1060,6 +1073,45 @@ static Result _appletGetIdentityInfo(Service* srv, AppletIdentityInfo *info, u64
     return rc;
 }
 
+static Result _appletGetResolution(Service* srv, s32 *width, s32 *height, u64 cmd_id) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(srv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = cmd_id;
+
+    Result rc = serviceIpcDispatch(srv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            s32 width;
+            s32 height;
+        } *resp;
+
+        serviceIpcParse(srv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            if (width) *width = resp->width;
+            if (height) *height = resp->height;
+        }
+    }
+
+    return rc;
+}
+
 // ICommonStateGetter
 
 static Result _appletReceiveMessage(u32 *out) {
@@ -1316,42 +1368,7 @@ Result appletGetDefaultDisplayResolution(s32 *width, s32 *height) {
     if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_appletICommonStateGetter, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 60;
-
-    Result rc = serviceIpcDispatch(&g_appletICommonStateGetter);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            s32 width;
-            s32 height;
-        } *resp;
-
-        serviceIpcParse(&g_appletICommonStateGetter, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            if (width) *width = resp->width;
-            if (height) *height = resp->height;
-        }
-    }
-
-    return rc;
+    return _appletGetResolution(&g_appletICommonStateGetter, width, height, 60);
 }
 
 Result appletGetDefaultDisplayResolutionChangeEvent(Event *out_event) {
@@ -3830,6 +3847,161 @@ Result appletEndToWatchShortHomeButtonMessage(void) {
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     return _appletCmdNoIO(&g_appletIFunctions, 1);
+}
+
+// IAppletCommonFunctions
+
+Result appletReadThemeStorage(void* buffer, size_t size, u64 offset, size_t *transfer_size) {
+    if (!serviceIsActive(&g_appletIAppletCommonFunctions))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    ipcAddRecvSmart(&c, g_appletIAppletCommonFunctions_ptrbufsize, buffer, size, 0);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 offset;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletIAppletCommonFunctions, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 10;
+    raw->offset = offset;
+
+    Result rc = serviceIpcDispatch(&g_appletIAppletCommonFunctions);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            u64 transfer_size;
+        } *resp;
+
+        serviceIpcParse(&g_appletIAppletCommonFunctions, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && transfer_size) *transfer_size = resp->transfer_size;
+    }
+
+    return rc;
+}
+
+Result appletWriteThemeStorage(const void* buffer, size_t size, u64 offset) {
+    if (!serviceIsActive(&g_appletIAppletCommonFunctions))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    ipcAddSendSmart(&c, g_appletIAppletCommonFunctions_ptrbufsize, buffer, size, 0);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 offset;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletIAppletCommonFunctions, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 11;
+    raw->offset = offset;
+
+    Result rc = serviceIpcDispatch(&g_appletIAppletCommonFunctions);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_appletIAppletCommonFunctions, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result appletGetDisplayLogicalResolution(s32 *width, s32 *height) {
+    if (!serviceIsActive(&g_appletIAppletCommonFunctions))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(8,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+     return _appletGetResolution(&g_appletIAppletCommonFunctions, width, height, 40);
+}
+
+Result appletSetDisplayMagnification(float x, float y, float width, float height) {
+    if (!serviceIsActive(&g_appletIAppletCommonFunctions))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(8,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        float x;
+        float y;
+        float width;
+        float height;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletIAppletCommonFunctions, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 42;
+    raw->x = x;
+    raw->y = y;
+    raw->width = width;
+    raw->height = height;
+
+    Result rc = serviceIpcDispatch(&g_appletIAppletCommonFunctions);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_appletIAppletCommonFunctions, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+Result appletSetHomeButtonDoubleClickEnabled(bool flag) {
+    if (!serviceIsActive(&g_appletIAppletCommonFunctions))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(8,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdInBool(&g_appletIAppletCommonFunctions, flag, 50);
+}
+
+Result appletGetHomeButtonDoubleClickEnabled(bool *out) {
+    if (!serviceIsActive(&g_appletIAppletCommonFunctions))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(8,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdNoInOutBool(&g_appletIAppletCommonFunctions, out, 51);
 }
 
 // State / other
