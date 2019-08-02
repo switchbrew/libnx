@@ -1238,7 +1238,7 @@ Result appletGetDisplayLogicalResolution(s32 *width, s32 *height);
 /**
  * @brief Sets the DisplayMagnification. This is essentially layer image crop, for everything non-Overlay.
  * @note Only available with AppletType_SystemApplet, AppletType_LibraryApplet, or AppletType_OverlayApplet, on [8.0.0+].
- * @note x and width are multiplied with the same width value returned by \ref appletGetDisplayLogicalResolution, so these should be in the range 0.0f-1.0f. Likewise for y and height, except those are multipled with the height value.
+ * @note x and width are multiplied with the same width value returned by \ref appletGetDisplayLogicalResolution, so these should be in the range 0.0f-1.0f. Likewise for y and height, except these are multipled with the height value.
  * @param[in] x X position.
  * @param[in] y Y position.
  * @param[in] width Width.
