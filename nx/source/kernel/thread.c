@@ -144,9 +144,10 @@ void threadExit(void) {
         if (!(tls_mask & ((UINT64_C(1) << i))))
             continue;
         if (t->tls_array[i]) {
-            if (g_tlsDestructors[i])
-                g_tlsDestructors[i](t->tls_array[i]);
+            void* old_value = t->tls_array[i];
             t->tls_array[i] = NULL;
+            if (g_tlsDestructors[i])
+                g_tlsDestructors[i](old_value);
         }
     }
 
