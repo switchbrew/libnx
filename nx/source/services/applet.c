@@ -1272,6 +1272,36 @@ static Result _appletGetCurrentFocusState(u8 *out) {
     return rc;
 }
 
+static Result _appletGetAcquiredSleepLockEvent(Event *out_event) {
+    return _appletGetEvent(&g_appletICommonStateGetter, out_event, 13, false);
+}
+
+static Result _appletWaitAcquiredSleepLockEvent(void) {
+    Result rc=0;
+    Event tmpevent={0};
+
+    rc = _appletGetAcquiredSleepLockEvent(&tmpevent);
+    if (R_SUCCEEDED(rc)) rc = eventWait(&tmpevent, U64_MAX);
+    eventClose(&tmpevent);
+    return rc;
+}
+
+Result appletRequestToAcquireSleepLock(void) {
+    Result rc = _appletCmdNoIO(&g_appletICommonStateGetter, 10);
+    if (R_SUCCEEDED(rc)) rc = _appletWaitAcquiredSleepLockEvent();
+    return rc;
+}
+
+Result appletReleaseSleepLock(void) {
+    return _appletCmdNoIO(&g_appletICommonStateGetter, 11);
+}
+
+Result appletReleaseSleepLockTransiently(void) {
+    Result rc = _appletCmdNoIO(&g_appletICommonStateGetter, 12);
+    if (R_SUCCEEDED(rc)) rc = _appletWaitAcquiredSleepLockEvent();
+    return rc;
+}
+
 Result appletPushToGeneralChannel(AppletStorage *s) {
     return _appletCmdInStorage(&g_appletICommonStateGetter, s, 20);
 }

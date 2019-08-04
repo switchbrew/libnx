@@ -264,6 +264,23 @@ Result appletGetCradleStatus(u8 *status);
 Result appletGetBootMode(PmBootMode *mode);
 
 /**
+ * @brief Request to AcquireSleepLock.
+ * @note On success, this then uses cmd GetAcquiredSleepLockEvent and waits on that event.
+ */
+Result appletRequestToAcquireSleepLock(void);
+
+/**
+ * @brief Release the SleepLock.
+ */
+Result appletReleaseSleepLock(void);
+
+/**
+ * @brief Release the SleepLock transiently.
+ * @note On success, this then uses cmd GetAcquiredSleepLockEvent and waits on that event.
+ */
+Result appletReleaseSleepLockTransiently(void);
+
+/**
  * @brief Pushes a storage to the general channel. Used for sending requests to qlaunch.
  * @note  This is not usable under an Application, however it is usable under a LibraryApplet.
  * @note  This uses \ref appletStorageClose automatically.
