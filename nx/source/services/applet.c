@@ -652,6 +652,44 @@ static Result _appletGetSessionIn64(Service* srv, Service* srv_out, u64 cmd_id, 
     return rc;
 }
 
+static Result _appletGetSessionIn32(Service* srv, Service* srv_out, u64 cmd_id, u32 inval) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 inval;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(srv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = cmd_id;
+    raw->inval = inval;
+
+    Result rc = serviceIpcDispatch(srv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(srv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            serviceCreateSubservice(srv_out, srv, &r, 0);
+        }
+    }
+
+    return rc;
+}
+
 static Result _appletCmdNoIO(Service* session, u64 cmd_id) {
     IpcCommand c;
     ipcInitialize(&c);
@@ -1306,15 +1344,46 @@ Result appletPushToGeneralChannel(AppletStorage *s) {
     return _appletCmdInStorage(&g_appletICommonStateGetter, s, 20);
 }
 
-Result appletHomeButtonReaderLockAccessorGetEvent(Event *out_event) {
-    Service ILockAccessor = {0};
-    Result rc = _appletGetSession(&g_appletICommonStateGetter, &ILockAccessor, 30);
+static Result _appletGetHomeButtonRwLockAccessor(Service* srv, AppletLockAccessor *a, u64 cmd_id) {
+    Result rc = _appletGetSession(srv, &a->s, cmd_id);
     if (R_FAILED(rc))
         return rc;
 
-    rc = _appletGetEvent(&ILockAccessor, out_event, 3, false);
-    serviceClose(&ILockAccessor);
+    rc = _appletGetEvent(&a->s, &a->event, 3, false);
+    if (R_FAILED(rc)) serviceClose(&a->s);
     return rc;
+}
+
+Result appletGetHomeButtonReaderLockAccessor(AppletLockAccessor *a) {
+    return _appletGetHomeButtonRwLockAccessor(&g_appletICommonStateGetter, a, 30);
+}
+
+static Result _appletGetRwLockAccessor(Service* srv, AppletLockAccessor *a, u64 cmd_id, s32 inval) {
+    Result rc = _appletGetSessionIn32(srv, &a->s, cmd_id, inval);
+    if (R_FAILED(rc))
+        return rc;
+
+    rc = _appletGetEvent(&a->s, &a->event, 3, false);
+    if (R_FAILED(rc)) serviceClose(&a->s);
+    return rc;
+}
+
+Result appletGetReaderLockAccessorEx(AppletLockAccessor *a, u32 inval) {
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletGetRwLockAccessor(&g_appletICommonStateGetter, a, 31, inval);
+}
+
+Result appletGetWriterLockAccessorEx(AppletLockAccessor *a, u32 inval) {
+    if (hosversionBefore(7,0,0)) {
+        if (__nx_applet_type == AppletType_SystemApplet && hosversionAtLeast(2,0,0))
+            return _appletGetRwLockAccessor(&g_appletIFunctions, a, 31, inval);
+
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    }
+
+    return _appletGetRwLockAccessor(&g_appletICommonStateGetter, a, 32, inval);
 }
 
 Result appletGetCradleFwVersion(u32 *out0, u32 *out1, u32 *out2, u32 *out3) {
@@ -2432,6 +2501,86 @@ Result appletTakeScreenShotOfOwnLayerEx(bool flag0, bool immediately, AppletCapt
     }
 
     return rc;
+}
+
+// LockAccessor
+void appletLockAccessorClose(AppletLockAccessor *a) {
+    eventClose(&a->event);
+    serviceClose(&a->s);
+}
+
+static Result _appletLockAccessorTryLock(AppletLockAccessor *a, bool get_handle, Handle* handle_out, bool *outflag) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u8 inflag;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&a->s, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 1;
+    raw->inflag = get_handle!=0;
+
+    Result rc = serviceIpcDispatch(&a->s);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            u8 outflag;
+        } *resp;
+
+        serviceIpcParse(&a->s, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            if (handle_out) *handle_out = r.Handles[0];
+            if (outflag) *outflag = resp->outflag!=0;
+        }
+    }
+
+    return rc;
+}
+
+Result appletLockAccessorTryLock(AppletLockAccessor *a, bool *flag) {
+    Result rc=0;
+
+    if (!serviceIsActive(&a->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    rc = eventWait(&a->event, 0);
+    if (R_SUCCEEDED(rc)) rc = _appletLockAccessorTryLock(a, false, NULL, flag);
+    return rc;
+}
+
+Result appletLockAccessorLock(AppletLockAccessor *a) {
+    Result rc=0;
+    bool flag=0;
+
+    if (!serviceIsActive(&a->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    do {
+        rc = eventWait(&a->event, U64_MAX);
+        if (R_SUCCEEDED(rc)) rc = _appletLockAccessorTryLock(a, false, NULL, &flag);
+        if (R_FAILED(rc)) break;
+    } while(!flag);
+
+    return rc;
+}
+
+Result appletLockAccessorUnlock(AppletLockAccessor *a) {
+    if (!serviceIsActive(&a->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _appletCmdNoIO(&a->s, 2);
 }
 
 // ILibraryAppletCreator
@@ -3779,6 +3928,15 @@ Result appletGetGpuErrorDetectedSystemEvent(Event *out_event) {
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return _appletGetEvent(&g_appletIFunctions, out_event, 130, false);
+}
+
+// IHomeMenuFunctions
+
+Result appletGetHomeButtonWriterLockAccessor(AppletLockAccessor *a) {
+    if (__nx_applet_type != AppletType_SystemApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _appletGetHomeButtonRwLockAccessor(&g_appletIFunctions, a, 30);
 }
 
 // ILibraryAppletSelfAccessor

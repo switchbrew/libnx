@@ -186,6 +186,12 @@ struct AppletHookCookie
     void* param;             ///< Callback parameter.
 };
 
+/// LockAccessor
+typedef struct {
+    Service s;                         ///< ILockAccessor
+    Event event;                       ///< Event from the GetEvent cmd, with autoclear=false.
+} AppletLockAccessor;
+
 /// applet IStorage
 typedef struct {
     Service s;
@@ -289,10 +295,27 @@ Result appletReleaseSleepLockTransiently(void);
 Result appletPushToGeneralChannel(AppletStorage *s);
 
 /**
- * @brief Get an event that fires when the home button is pressed, doesn't interfere with home menu. This event does not auto clear.
- * @note Doesn't fire for long press.
+ * @brief Gets a \ref AppletLockAccessor for HomeButtonReader.
+ * @note Similar to using \ref appletGetReaderLockAccessorEx with inval=0.
+ * @param a LockAccessor object.
  */
-Result appletHomeButtonReaderLockAccessorGetEvent(Event *out_event);
+Result appletGetHomeButtonReaderLockAccessor(AppletLockAccessor *a);
+
+/**
+ * @brief Gets a Reader \ref AppletLockAccessor.
+ * @note Only available with [2.0.0+].
+ * @param a LockAccessor object.
+ * @param[in] inval Input value, must be 0-3. 0 = HomeButton.
+ */
+Result appletGetReaderLockAccessorEx(AppletLockAccessor *a, u32 inval);
+
+/**
+ * @brief Gets a Writer \ref AppletLockAccessor.
+ * @note Only available with [7.0.0+]. On older sysvers, this is only available with AppletType_SystemApplet on [2.0.0+].
+ * @param a LockAccessor object.
+ * @param[in] inval Input value, must be 0-3. 0 = HomeButton.
+ */
+Result appletGetWriterLockAccessorEx(AppletLockAccessor *a, u32 inval);
 
 /**
  * @brief Gets the Dock firmware version.
@@ -792,6 +815,34 @@ Result appletReleaseCallerAppletCaptureSharedBuffer(void);
  */
 Result appletTakeScreenShotOfOwnLayerEx(bool flag0, bool immediately, AppletCaptureSharedBuffer captureBuf);
 
+// LockAccessor
+
+/**
+ * @brief Closes a LockAccessor.
+ * @param a LockAccessor object.
+ */
+void appletLockAccessorClose(AppletLockAccessor *a);
+
+/**
+ * @brief TryLock a LockAccessor.
+ * @param a LockAccessor object.
+ * @param[out] flag Whether locking was successful, when false this indicates that this func should be called again.
+ */
+Result appletLockAccessorTryLock(AppletLockAccessor *a, bool *flag);
+
+/**
+ * @brief Lock a LockAccessor.
+ * @note Similar to \ref appletLockAccessorTryLock, except this uses timeout U64_MAX with the eventWait call, and this uses TryLock repeatedly until the output flag value is true.
+ * @param a LockAccessor object.
+ */
+Result appletLockAccessorLock(AppletLockAccessor *a);
+
+/**
+ * @brief Unlock a LockAccessor.
+ * @param a LockAccessor object.
+ */
+Result appletLockAccessorUnlock(AppletLockAccessor *a);
+
 // ILibraryAppletCreator
 
 /**
@@ -1167,6 +1218,16 @@ Result appletQueryApplicationPlayStatisticsByUid(u128 userID, PdmApplicationPlay
  * @param[out] out_event Output Event with autoclear=false.
  */
 Result appletGetGpuErrorDetectedSystemEvent(Event *out_event);
+
+// IHomeMenuFunctions
+
+/**
+ * @brief Gets a \ref AppletLockAccessor for HomeButtonWriter.
+ * @note Only available with AppletType_SystemApplet.
+ * @note Similar to using \ref appletGetWriterLockAccessorEx with inval=0.
+ * @param a LockAccessor object.
+ */
+Result appletGetHomeButtonWriterLockAccessor(AppletLockAccessor *a);
 
 // ILibraryAppletSelfAccessor
 
