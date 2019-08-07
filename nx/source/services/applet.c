@@ -3932,6 +3932,41 @@ Result appletGetGpuErrorDetectedSystemEvent(Event *out_event) {
 
 // IHomeMenuFunctions
 
+Result appletRequestToGetForeground(void) {
+    if (__nx_applet_type != AppletType_SystemApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _appletCmdNoIO(&g_appletIFunctions, 10);
+}
+
+Result appletLockForeground(void) {
+    if (__nx_applet_type != AppletType_SystemApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _appletCmdNoIO(&g_appletIFunctions, 11);
+}
+
+Result appletUnlockForeground(void) {
+    if (__nx_applet_type != AppletType_SystemApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _appletCmdNoIO(&g_appletIFunctions, 12);
+}
+
+Result appletPopFromGeneralChannel(AppletStorage *s) {
+    if (__nx_applet_type != AppletType_SystemApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _appletCmdNoInOutStorage(&g_appletIFunctions, s, 20);
+}
+
+Result appletGetPopFromGeneralChannelEvent(Event *out_event) {
+    if (__nx_applet_type != AppletType_SystemApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _appletGetEvent(&g_appletIFunctions, out_event, 21, false);
+}
+
 Result appletGetHomeButtonWriterLockAccessor(AppletLockAccessor *a) {
     if (__nx_applet_type != AppletType_SystemApplet)
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);

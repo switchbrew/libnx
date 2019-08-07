@@ -1222,6 +1222,39 @@ Result appletGetGpuErrorDetectedSystemEvent(Event *out_event);
 // IHomeMenuFunctions
 
 /**
+ * @brief RequestToGetForeground
+ * @note Only available with AppletType_SystemApplet.
+ */
+Result appletRequestToGetForeground(void);
+
+/**
+ * @brief LockForeground
+ * @note Only available with AppletType_SystemApplet.
+ */
+Result appletLockForeground(void);
+
+/**
+ * @brief UnlockForeground
+ * @note Only available with AppletType_SystemApplet.
+ */
+Result appletUnlockForeground(void);
+
+/**
+ * @brief Pops a storage from the general channel.
+ * @note Only available with AppletType_SystemApplet.
+ * @param[out] s Storage object.
+ */
+Result appletPopFromGeneralChannel(AppletStorage *s);
+
+/**
+ * @brief Gets an Event which is signaled when a new storage is available with \ref appletPopFromGeneralChannel.
+ * @note Only available with AppletType_SystemApplet.
+ * @note The Event must be closed by the user once finished with it.
+ * @param[out] out_event Output Event with autoclear=false.
+ */
+Result appletGetPopFromGeneralChannelEvent(Event *out_event);
+
+/**
  * @brief Gets a \ref AppletLockAccessor for HomeButtonWriter.
  * @note Only available with AppletType_SystemApplet.
  * @note Similar to using \ref appletGetWriterLockAccessorEx with inval=0.
