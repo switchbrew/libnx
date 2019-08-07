@@ -46,8 +46,8 @@ typedef enum {
 /// Used with viSetDisplayPowerState.
 typedef enum {
     ViPowerState_Off           = 0, ///< Screen is off.
-    ViPowerState_NotScanning   = 1, ///< Screen is on, but not scanning content.
-    ViPowerState_On            = 2, ///< Screen is on.
+    ViPowerState_NotScanning   = 1, ///< [3.0.0+] Screen is on, but not scanning content.
+    ViPowerState_On            = 2, ///< [3.0.0+] Screen is on.
 
     ViPowerState_On_Deprecated = 1, ///< [1.0.0 - 2.3.0] Screen is on.
 } ViPowerState;
