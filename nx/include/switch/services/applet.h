@@ -1422,13 +1422,13 @@ Result appletSetScreenShotPermissionGlobally(bool flag);
 
 /**
  * @brief Start the system-shutdown sequence.
- * @note Only available with AppletType_SystemApplet on [6.0.0+].
+ * @note Only available with AppletType_OverlayApplet on [6.0.0+].
  */
 Result appletStartShutdownSequenceForOverlay(void);
 
 /**
  * @brief Start the system-reboot sequence.
- * @note Only available with AppletType_SystemApplet on [6.0.0+].
+ * @note Only available with AppletType_OverlayApplet on [6.0.0+].
  */
 Result appletStartRebootSequenceForOverlay(void);
 
