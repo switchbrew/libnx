@@ -4154,6 +4154,74 @@ Result appletEndToWatchShortHomeButtonMessage(void) {
     return _appletCmdNoIO(&g_appletIFunctions, 1);
 }
 
+Result appletGetApplicationIdForLogo(u64 *titleID) {
+    if (__nx_applet_type != AppletType_OverlayApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _appletCmdNoInOut64(&g_appletIFunctions, titleID, 2);
+}
+
+Result appletSetGpuTimeSliceBoost(u64 val) {
+    if (__nx_applet_type != AppletType_OverlayApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _appletCmdInU64(&g_appletIFunctions, val, 3);
+}
+
+Result appletSetAutoSleepTimeAndDimmingTimeEnabled(bool flag) {
+    if (__nx_applet_type != AppletType_OverlayApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdInBool(&g_appletIFunctions, flag, 4);
+}
+
+Result appletTerminateApplicationAndSetReason(Result reason) {
+    if (__nx_applet_type != AppletType_OverlayApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdInU32(&g_appletIFunctions, reason, 5);
+}
+
+Result appletSetScreenShotPermissionGlobally(bool flag) {
+    if (__nx_applet_type != AppletType_OverlayApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdInBool(&g_appletIFunctions, flag, 6);
+}
+
+Result appletStartShutdownSequenceForOverlay(void) {
+    if (__nx_applet_type != AppletType_OverlayApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(6,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdNoIO(&g_appletIFunctions, 10);
+}
+
+Result appletStartRebootSequenceForOverlay(void) {
+    if (__nx_applet_type != AppletType_OverlayApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(6,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdNoIO(&g_appletIFunctions, 11);
+}
+
+Result appletSetHandlingHomeButtonShortPressedEnabled(bool flag) {
+    if (__nx_applet_type != AppletType_OverlayApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(8,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdInBool(&g_appletIFunctions, flag, 20);
+}
+
 // IAppletCommonFunctions
 
 Result appletReadThemeStorage(void* buffer, size_t size, u64 offset, size_t *transfer_size) {

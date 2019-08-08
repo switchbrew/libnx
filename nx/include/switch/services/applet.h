@@ -1372,16 +1372,72 @@ Result appletGetNextReturnDestinationAppletIdentityInfo(AppletIdentityInfo *info
 // IFunctions for AppletType_OverlayApplet (IOverlayFunctions).
 
 /**
- * @brief Stops forwarding the input to the foreground app, works only in the Overlay applet context.
+ * @brief Stops forwarding the input to the foreground app.
+ * @note Only available with AppletType_OverlayApplet.
  * @note You have to call this to receive inputs through the hid service when running as the overlay applet.
  */
 Result appletBeginToWatchShortHomeButtonMessage(void);
 
 /**
- * @brief Forwards input to the foreground app, works only in the Overlay applet context.
+ * @brief Forwards input to the foreground app.
+ * @note Only available with AppletType_OverlayApplet.
  * @note After calling this the overlay applet won't receive any input until \ref appletBeginToWatchShortHomeButtonMessage is called again.
  */
 Result appletEndToWatchShortHomeButtonMessage(void);
+
+/**
+ * @brief Gets the application titleID for displaying the logo screen during application launch.
+ * @note Only available with AppletType_OverlayApplet.
+ * @param[out] titleID Output application titleID, 0 when no application is running.
+ */
+Result appletGetApplicationIdForLogo(u64 *titleID);
+
+/**
+ * @brief Sets the GpuTimeSliceBoost.
+ * @note Only available with AppletType_OverlayApplet.
+ * @param[in] val Input value.
+ */
+Result appletSetGpuTimeSliceBoost(u64 val);
+
+/**
+ * @brief Sets AutoSleepTimeAndDimmingTimeEnabled.
+ * @note Only available with AppletType_OverlayApplet on [2.0.0+].
+ * @param[in] flag Flag
+ */
+Result appletSetAutoSleepTimeAndDimmingTimeEnabled(bool flag);
+
+/**
+ * @brief TerminateApplicationAndSetReason
+ * @note Only available with AppletType_OverlayApplet on [2.0.0+].
+ * @param[in] reason Result reason.
+ */
+Result appletTerminateApplicationAndSetReason(Result reason);
+
+/**
+ * @brief Sets ScreenShotPermissionGlobally.
+ * @note Only available with AppletType_OverlayApplet on [3.0.0+].
+ * @param[in] flag Flag
+ */
+Result appletSetScreenShotPermissionGlobally(bool flag);
+
+/**
+ * @brief Start the system-shutdown sequence.
+ * @note Only available with AppletType_SystemApplet on [6.0.0+].
+ */
+Result appletStartShutdownSequenceForOverlay(void);
+
+/**
+ * @brief Start the system-reboot sequence.
+ * @note Only available with AppletType_SystemApplet on [6.0.0+].
+ */
+Result appletStartRebootSequenceForOverlay(void);
+
+/**
+ * @brief Sets HandlingHomeButtonShortPressedEnabled.
+ * @note Only available with AppletType_OverlayApplet on [8.0.0+].
+ * @param[in] flag Flag
+ */
+Result appletSetHandlingHomeButtonShortPressedEnabled(bool flag);
 
 // IAppletCommonFunctions
 
