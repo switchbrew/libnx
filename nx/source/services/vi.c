@@ -642,6 +642,7 @@ Result viDestroyManagedLayer(ViLayer *layer) {
         } *resp = r.Raw;
 
         rc = resp->result;
+        memset(layer, 0, sizeof(ViLayer));
     }
 
     return rc;
@@ -992,7 +993,7 @@ Result viCloseLayer(ViLayer *layer)
         } *resp = r.Raw;
 
         rc = resp->result;
-        layer->initialized = false;
+        memset(layer, 0, sizeof(ViLayer));
     }
 
     return rc;
