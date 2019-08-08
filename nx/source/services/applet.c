@@ -3974,6 +3974,88 @@ Result appletGetHomeButtonWriterLockAccessor(AppletLockAccessor *a) {
     return _appletGetHomeButtonRwLockAccessor(&g_appletIFunctions, a, 30);
 }
 
+// IGlobalStateController
+
+Result appletStartSleepSequence(bool flag) {
+    if (__nx_applet_type != AppletType_SystemApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _appletCmdInBool(&g_appletIGlobalStateController, flag, 2);
+}
+
+Result appletStartShutdownSequence(void) {
+    if (__nx_applet_type != AppletType_SystemApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _appletCmdNoIO(&g_appletIGlobalStateController, 3);
+}
+
+Result appletStartRebootSequence(void) {
+    if (__nx_applet_type != AppletType_SystemApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _appletCmdNoIO(&g_appletIGlobalStateController, 4);
+}
+
+Result appletIsAutoPowerDownRequested(bool *out) {
+    if (__nx_applet_type != AppletType_SystemApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(7,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdNoInOutBool(&g_appletIGlobalStateController, out, 9);
+}
+
+Result appletLoadAndApplyIdlePolicySettings(void) {
+    if (__nx_applet_type != AppletType_SystemApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _appletCmdNoIO(&g_appletIGlobalStateController, 10);
+}
+
+Result appletNotifyCecSettingsChanged(void) {
+    if (__nx_applet_type != AppletType_SystemApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdNoIO(&g_appletIGlobalStateController, 11);
+}
+
+Result appletSetDefaultHomeButtonLongPressTime(s64 val) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdInU64(&g_appletIGlobalStateController, val, 12);
+}
+
+Result appletUpdateDefaultDisplayResolution(void) {
+    if (__nx_applet_type != AppletType_SystemApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdNoIO(&g_appletIGlobalStateController, 13);
+}
+
+Result appletShouldSleepOnBoot(bool *out) {
+    if (__nx_applet_type != AppletType_SystemApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdNoInOutBool(&g_appletIGlobalStateController, out, 14);
+}
+
+Result appletGetHdcpAuthenticationFailedEvent(Event *out_event) {
+    if (__nx_applet_type != AppletType_SystemApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletGetEvent(&g_appletIGlobalStateController, out_event, 15, false);
+}
+
 // ILibraryAppletSelfAccessor
 
 static Result _appletExitProcessAndReturn(void) {

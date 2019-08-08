@@ -1262,6 +1262,74 @@ Result appletGetPopFromGeneralChannelEvent(Event *out_event);
  */
 Result appletGetHomeButtonWriterLockAccessor(AppletLockAccessor *a);
 
+// IGlobalStateController
+
+/**
+ * @brief Start the sequence for entering sleep-mode.
+ * @note Only available with AppletType_SystemApplet.
+ * @param[in] flag Flag, official sw uses hard-coded value = true.
+ */
+Result appletStartSleepSequence(bool flag);
+
+/**
+ * @brief Start the system-shutdown sequence.
+ * @note Only available with AppletType_SystemApplet.
+ */
+Result appletStartShutdownSequence(void);
+
+/**
+ * @brief Start the system-reboot sequence.
+ * @note Only available with AppletType_SystemApplet.
+ */
+Result appletStartRebootSequence(void);
+
+/**
+ * @brief IsAutoPowerDownRequested. Uses an idle:sys cmd internally.
+ * @note Only available with AppletType_SystemApplet on [7.0.0+].
+ * @param[out] out Output flag.
+ */
+Result appletIsAutoPowerDownRequested(bool *out);
+
+/**
+ * @brief LoadAndApplyIdlePolicySettings. Uses an idle:sys cmd internally.
+ * @note Only available with AppletType_SystemApplet.
+ */
+Result appletLoadAndApplyIdlePolicySettings(void);
+
+/**
+ * @brief NotifyCecSettingsChanged. Uses an omm cmd internally.
+ * @note Only available with AppletType_SystemApplet on [2.0.0+].
+ */
+Result appletNotifyCecSettingsChanged(void);
+
+/**
+ * @brief Sets the DefaultHomeButtonLongPressTime.
+ * @note Only available with AppletType_SystemApplet on [3.0.0+].
+ * @param[in] val Input value.
+ */
+Result appletSetDefaultHomeButtonLongPressTime(s64 val);
+
+/**
+ * @brief UpdateDefaultDisplayResolution. Uses an omm cmd internally.
+ * @note Only available with AppletType_SystemApplet on [3.0.0+].
+ */
+Result appletUpdateDefaultDisplayResolution(void);
+
+/**
+ * @brief ShouldSleepOnBoot. Uses an omm cmd internally.
+ * @note Only available with AppletType_SystemApplet on [3.0.0+].
+ * @param[out] out Output flag.
+ */
+Result appletShouldSleepOnBoot(bool *out);
+
+/**
+ * @brief Gets an Event which is signaled for HdcpAuthenticationFailed.
+ * @note Only available with AppletType_SystemApplet on [4.0.0+].
+ * @note The Event must be closed by the user once finished with it.
+ * @param[out] out_event Output Event with autoclear=false.
+ */
+Result appletGetHdcpAuthenticationFailedEvent(Event *out_event);
+
 // ILibraryAppletSelfAccessor
 
 /**
