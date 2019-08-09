@@ -1,5 +1,57 @@
 # Changelog
 
+## Version 2.4.0
+
+#### system
+* **Added support for new Homebrew ABI keys**, including: UserIdStorage, HosVersion.
+* TLS destructors now run after clearing the corresponding TLS value, as per the standard.
+
+#### applet
+* Added AppletIdentityInfo and LibAppletInfo structs.
+* Added AppletId_application.
+* Updated LibAppletMode enum.
+* Added AppletSystemButtonType enum.
+* Added AppletHookType_RequestToDisplay and AppletNotificationMessage_RequestToDisplay.
+* Added appletHolderSetOutOfFocusApplicationSuspendingEnabled and appletHolderGetLibraryAppletInfo.
+* Replaced appletHomeButtonReaderLockAccessorGetEvent with appletGetHomeButtonReaderLockAccessor.
+* Added appletGetReaderLockAccessorEx, appletGetWriterLockAccessorEx, and appletGetHomeButtonWriterLockAccessor.
+* Added support for AppletLockAccessor.
+* **ISelfController**: Added appletSetScreenShotAppletIdentityInfo, appletSetControllerFirmwareUpdateSection, appletSetDesirableKeyboardLayout, appletIsSystemBufferSharingEnabled, appletGetSystemSharedLayerHandle, appletGetSystemSharedBufferHandle, appletSetHandlesRequestToDisplay, appletApproveToDisplay, appletOverrideAutoSleepTimeAndDimmingTime, appletSetIdleTimeDetectionExtension, appletGetIdleTimeDetectionExtension, appletSetInputDetectionSourceSet, appletReportUserIsActive, appletSetAutoSleepDisabled, appletIsAutoSleepDisabled, appletSetWirelessPriorityMode, appletGetProgramTotalActiveTime.
+* **ILibraryAppletSelfAccessor**: Added appletGetMainAppletIdentityInfo, appletGetCallerAppletIdentityInfo, appletGetCallerAppletIdentityInfoStack, appletGetNextReturnDestinationAppletIdentityInfo, appletGetLibraryAppletInfo.
+* **ICommonStateGetter**: Added appletGetCradleStatus, appletGetBootMode, appletRequestToAcquireSleepLock, appletReleaseSleepLock, appletReleaseSleepLockTransiently, appletGetCradleFwVersion, AppletTvPowerStateMatchingMode, appletSetLcdBacklightOffEnabled, appletIsInControllerFirmwareUpdateSection, appletGetDefaultDisplayResolution, appletGetDefaultDisplayResolutionChangeEvent, appletGetHdcpAuthenticationState, appletGetHdcpAuthenticationStateChangeEvent, appletSetTvPowerStateMatchingMode, appletGetApplicationIdByContentActionName, appletPerformSystemButtonPressingIfInFocus, appletSetPerformanceConfigurationChangedNotification, appletGetOperationModeSystemInfo.
+* **IWindowController**: Added appletGetAppletResourceUserIdOfCallerApplet, appletSetAppletWindowVisibility, appletSetAppletGpuTimeSlice.
+* **Added full support for IAudioController**.
+* **IDisplayController**: Added appletUpdateLastForegroundCaptureImage, appletUpdateCallerAppletCaptureImage, appletGetLastForegroundCaptureImageEx, appletGetLastApplicationCaptureImageEx, appletGetCallerAppletCaptureImageEx, appletTakeScreenShotOfOwnLayer, appletCopyBetweenCaptureBuffers, appletClearCaptureBuffer, appletClearAppletTransitionBuffer, appletAcquireLastApplicationCaptureSharedBuffer, appletReleaseLastApplicationCaptureSharedBuffer, appletAcquireLastForegroundCaptureSharedBuffer, appletReleaseLastForegroundCaptureSharedBuffer, appletAcquireCallerAppletCaptureSharedBuffer, appletReleaseCallerAppletCaptureSharedBuffer, appletTakeScreenShotOfOwnLayerEx.
+* **Added full support for IAppletCommonFunctions**.
+* **IHomeMenuFunctions**: Added appletRequestToGetForeground, appletLockForeground, appletUnlockForeground, appletPopFromGeneralChannel, appletGetPopFromGeneralChannelEvent.
+* **IGlobalStateController**: Added appletStartSleepSequence, appletStartShutdownSequence, appletStartRebootSequence, appletIsAutoPowerDownRequested, appletLoadAndApplyIdlePolicySettings, appletNotifyCecSettingsChanged, appletSetDefaultHomeButtonLongPressTime, appletUpdateDefaultDisplayResolution, appletShouldSleepOnBoot, appletGetHdcpAuthenticationFailedEvent.
+* **IOverlayFunctions**: Added appletGetApplicationIdForLogo, appletSetGpuTimeSliceBoost, appletSetAutoSleepTimeAndDimmingTimeEnabled, appletTerminateApplicationAndSetReason, appletSetScreenShotPermissionGlobally, appletStartShutdownSequenceForOverlay, appletStartRebootSequenceForOverlay, appletSetHandlingHomeButtonShortPressedEnabled.
+
+#### graphics
+* Added viDestroyManagedLayer.
+* Added ViPowerState_On_Deprecated to ViPowerState enum.
+* Fixed bug in nvAddressSpaceModify.
+
+#### filesystem
+* Added fsOpenGameCardFileSystem.
+* Added fsReadSaveDataFileSystemExtraDataBySaveDataSpaceId, fsReadSaveDataFileSystemExtraData, fsWriteSaveDataFileSystemExtraData.
+* Added FsSaveDataExtraData struct.
+* Added FsGameCardPartiton, FsSaveDataFlags enums.
+
+#### input
+* Added hidGetSupportedNpadStyleSet, hidsysGetSupportedNpadStyleSetOfCallerApplet.
+
+#### other services
+* **Added UserIdStorage caching support to the account IPC wrappers**: the current account can be read using accountGetPreselectedUser.
+* Added AlbumImageOrientation enum.
+* Renamed accountGetActiveUser to accountGetLastOpenedUser.
+* Corrected name of pdmqryGetServiceSession.
+* Fixed NFC service IPC bugs.
+* Updated PdmPlayEvent's unk_x8 union.
+
+#### miscellaneous
+* Further improvements to overall system stability and other minor adjustments have been made to enhance the user experience.
+
 ## Version 2.3.0
 
 #### system
