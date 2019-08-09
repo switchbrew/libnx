@@ -593,7 +593,7 @@ void NORETURN svcReturnFromException(Result res);
  * @remark The full list of property IDs can be found on the <a href="https://switchbrew.org/wiki/SVC#svcGetInfo">switchbrew.org wiki</a>.
  * @note Syscall number 0x29.
  */
-Result svcGetInfo(u64* out, u64 id0, Handle handle, u64 id1);
+Result svcGetInfo(u64* out, u32 id0, Handle handle, u64 id1);
 
 ///@}
 
