@@ -181,6 +181,12 @@ typedef enum
 
 typedef enum
 {
+    FsCustomStorageId_NandUser = 0,
+    FsCustomStorageId_SdCard   = 1,
+} FsCustomStorageId;
+
+typedef enum
+{
     FsSaveDataSpaceId_NandSystem       = 0,
     FsSaveDataSpaceId_NandUser         = 1,
     FsSaveDataSpaceId_SdCard           = 2,
@@ -280,6 +286,7 @@ Result fsMountSaveData(FsFileSystem* out, u8 inval, FsSave *save);
 Result fsMountSystemSaveData(FsFileSystem* out, u8 inval, FsSave *save);
 Result fsOpenSaveDataIterator(FsSaveDataIterator* out, s32 saveDataSpaceId);
 Result fsOpenContentStorageFileSystem(FsFileSystem* out, FsContentStorageId content_storage_id);
+Result fsOpenCustomStorageFileSystem(FsFileSystem* out, FsCustomStorageId custom_storage_id);
 Result fsOpenDataStorageByCurrentProcess(FsStorage* out);
 Result fsOpenDataStorageByDataId(FsStorage* out, u64 dataId, FsStorageId storageId);
 Result fsOpenDeviceOperator(FsDeviceOperator* out);
