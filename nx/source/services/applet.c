@@ -17,7 +17,7 @@
 
 __attribute__((weak)) u32 __nx_applet_type = AppletType_Default;
 __attribute__((weak)) bool __nx_applet_auto_notifyrunning = true;
-__attribute__((weak)) u8 __nx_applet_AppletAttribute[0x80];
+__attribute__((weak)) AppletAttribute __nx_applet_AppletAttribute;
 /// When set, controls the PerformanceConfiguration passed to apmSetPerformanceConfiguration during app startup, where the array index is the PerformanceMode.
 __attribute__((weak)) u32 __nx_applet_PerformanceConfiguration[2] = {/*0x92220008*//*0x20004*//*0x92220007*/0, 0};
 //// Controls whether to use applet exit cmds during \ref appletExit.  0 (default): Only run exit cmds when running under a NSO. 1: Use exit cmds regardless. >1: Skip exit cmds.
@@ -81,7 +81,7 @@ static ApmCpuBoostMode g_appletCpuBoostMode = ApmCpuBoostMode_Disabled;
 static Result _appletGetHandle(Service* srv, Handle* handle_out, u64 cmd_id);
 static Result _appletGetEvent(Service* srv, Event* out_event, u64 cmd_id, bool autoclear);
 static Result _appletGetSession(Service* srv, Service* srv_out, u64 cmd_id);
-static Result _appletGetSessionProxy(Service* srv_out, u64 cmd_id, Handle prochandle, u8 *AppletAttribute);
+static Result _appletGetSessionProxy(Service* srv_out, u64 cmd_id, Handle prochandle, const AppletAttribute *attr);
 
 static Result _appletGetAppletResourceUserId(u64 *out);
 
@@ -107,6 +107,8 @@ static Result _appletGetAccumulatedSuspendedTickChangedEvent(Event *out_event);
 
 Result appletInitialize(void)
 {
+    AppletAttribute *attr = NULL;
+
     atomicIncrement64(&g_refCnt);
 
     if (serviceIsActive(&g_appletSrv))
@@ -157,7 +159,12 @@ Result appletInitialize(void)
             default: fatalSimple(MAKERESULT(Module_Libnx, LibnxError_AppletCmdidNotFound));
             }
 
-            rc = _appletGetSessionProxy(&g_appletProxySession, cmd_id, CUR_PROCESS_HANDLE, NULL);
+            if (__nx_applet_type == AppletType_LibraryApplet && hosversionAtLeast(3,0,0)) {
+                cmd_id = 201;
+                attr = &__nx_applet_AppletAttribute;
+            }
+
+            rc = _appletGetSessionProxy(&g_appletProxySession, cmd_id, CUR_PROCESS_HANDLE, attr);
 
             if (rc == AM_BUSY_ERROR) {
                 svcSleepThread(10000000);
@@ -572,7 +579,7 @@ static Result _appletGetSession(Service* srv, Service* srv_out, u64 cmd_id) {
     return rc;
 }
 
-static Result _appletGetSessionProxy(Service* srv_out, u64 cmd_id, Handle prochandle, u8 *AppletAttribute) {
+static Result _appletGetSessionProxy(Service* srv_out, u64 cmd_id, Handle prochandle, const AppletAttribute *attr) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -584,7 +591,7 @@ static Result _appletGetSessionProxy(Service* srv_out, u64 cmd_id, Handle procha
 
     ipcSendPid(&c);
     ipcSendHandleCopy(&c, prochandle);
-    if (AppletAttribute) ipcAddSendBuffer(&c, AppletAttribute, 0x80, BufferType_Normal);
+    if (attr) ipcAddSendBuffer(&c, attr, sizeof(AppletAttribute), BufferType_Normal);
 
     raw = serviceIpcPrepareHeader(&g_appletSrv, &c, sizeof(*raw));
 

@@ -209,6 +209,12 @@ typedef struct {
     LibAppletExitReason exitreason;    ///< Set by \ref appletHolderJoin using the output from cmd GetResult, see \ref LibAppletExitReason.
 } AppletHolder;
 
+/// Used by \ref appletInitialize with __nx_applet_AppletAttribute for cmd OpenLibraryAppletProxy (AppletType_LibraryApplet), on [3.0.0+]. The default for this struct is all-zero.
+typedef struct {
+    u8 flag;                           ///< Flag. When non-zero, two state fields are set to 1.
+    u8 reserved[0x7F];                 ///< Unused.
+} AppletAttribute;
+
 /// LibraryAppletInfo
 typedef struct {
     AppletId appletId;                 ///< \ref AppletId
