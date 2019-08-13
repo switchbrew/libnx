@@ -12,6 +12,7 @@ typedef struct {
     char author[0x100];
 } NacpLanguageEntry;
 
+/// ns ApplicationControlProperty
 typedef struct {
     NacpLanguageEntry lang[16];
 
