@@ -12,6 +12,7 @@
 #include "services/caps.h"
 #include "services/pm.h"
 #include "services/sm.h"
+#include "services/fs.h"
 #include "runtime/env.h"
 #include "runtime/hosversion.h"
 #include "nacp.h"
@@ -4140,6 +4141,20 @@ Result appletGetMainAppletApplicationControlProperty(NacpStruct *nacp) {
     return rc;
 }
 
+Result appletGetMainAppletStorageId(FsStorageId *storageId) {
+    u8 tmp=0;
+    Result rc=0;
+
+    if (__nx_applet_type != AppletType_LibraryApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    rc = _appletCmdNoInOutU8(&g_appletILibraryAppletSelfAccessor, &tmp, 16);
+    if (R_SUCCEEDED(rc) && storageId) *storageId = tmp;
+    return rc;
+}
+
 Result appletGetCallerAppletIdentityInfoStack(AppletIdentityInfo *stack, s32 count, s32 *total_out) {
     if (__nx_applet_type != AppletType_LibraryApplet)
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
@@ -4192,6 +4207,24 @@ Result appletGetNextReturnDestinationAppletIdentityInfo(AppletIdentityInfo *info
     return _appletGetIdentityInfo(&g_appletILibraryAppletSelfAccessor, info, 18);
 }
 
+Result appletGetDesirableKeyboardLayout(u32 *layout) {
+    if (__nx_applet_type != AppletType_LibraryApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdNoInOut32(&g_appletILibraryAppletSelfAccessor, layout, 19);
+}
+
+Result appletGetIndirectLayerProducerHandle(u64 *out) {
+    if (__nx_applet_type != AppletType_LibraryApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdNoInOut64(&g_appletILibraryAppletSelfAccessor, out, 40);
+}
+
 Result appletGetMainAppletApplicationDesiredLanguage(u64 *LanguageCode) {
     if (__nx_applet_type != AppletType_LibraryApplet)
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
@@ -4199,6 +4232,15 @@ Result appletGetMainAppletApplicationDesiredLanguage(u64 *LanguageCode) {
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return _appletCmdNoInOut64(&g_appletILibraryAppletSelfAccessor, LanguageCode, 60);
+}
+
+Result appletGetCurrentApplicationId(u64 *titleID) {
+    if (__nx_applet_type != AppletType_LibraryApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(8,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdNoInOut64(&g_appletILibraryAppletSelfAccessor, titleID, 70);
 }
 
 Result appletRequestExitToSelf(void) {

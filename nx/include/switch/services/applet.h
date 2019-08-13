@@ -12,6 +12,7 @@
 #include "../services/pdm.h"
 #include "../services/caps.h"
 #include "../services/pm.h"
+#include "../services/fs.h"
 #include "../kernel/tmem.h"
 #include "../kernel/event.h"
 #include "../nacp.h"
@@ -1380,6 +1381,13 @@ Result appletGetCallerAppletIdentityInfo(AppletIdentityInfo *info);
 Result appletGetMainAppletApplicationControlProperty(NacpStruct *nacp);
 
 /**
+ * @brief Gets the FsStorageId for the MainApplet.
+ * @note Only available with AppletType_LibraryApplet on [2.0.0+].
+ * @param[out] storageId FsStorageId
+ */
+Result appletGetMainAppletStorageId(FsStorageId *storageId);
+
+/**
  * @brief Gets an array of \ref AppletIdentityInfo for the CallerStack.
  * @note Only available with AppletType_LibraryApplet on [3.0.0+].
  * @param[out] stack Output array of \ref AppletIdentityInfo.
@@ -1396,11 +1404,32 @@ Result appletGetCallerAppletIdentityInfoStack(AppletIdentityInfo *stack, s32 cou
 Result appletGetNextReturnDestinationAppletIdentityInfo(AppletIdentityInfo *info);
 
 /**
+ * @brief Gets the DesirableKeyboardLayout previously set by \ref appletSetDesirableKeyboardLayout. An error is returned when it's not set.
+ * @note Only available with AppletType_LibraryApplet on [4.0.0+].
+ * @param[out] layout Output layout.
+ */
+Result appletGetDesirableKeyboardLayout(u32 *layout);
+
+/**
+ * @brief Gets the IndirectLayerProducerHandle.
+ * @note Only available with AppletType_LibraryApplet on [2.0.0+].
+ * @param[out] out Output IndirectLayerProducerHandle.
+ */
+Result appletGetIndirectLayerProducerHandle(u64 *out);
+
+/**
  * @brief Gets the DesiredLanguage for the MainApplet.
  * @note Only available with AppletType_LibraryApplet on [4.0.0+].
  * @param[out] LanguageCode Output LanguageCode, see set.h.
  */
 Result appletGetMainAppletApplicationDesiredLanguage(u64 *LanguageCode);
+
+/**
+ * @brief Gets the titleID for the currently running Application.
+ * @note Only available with AppletType_LibraryApplet on [8.0.0+].
+ * @param[out] titleID Output titleID, 0 when no Application is running.
+ */
+Result appletGetCurrentApplicationId(u64 *titleID);
 
 /**
  * @brief Exits the current applet. Same as \ref appletHolderRequestExit except this is for the current applet.
