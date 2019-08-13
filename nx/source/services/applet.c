@@ -14,6 +14,7 @@
 #include "services/sm.h"
 #include "runtime/env.h"
 #include "runtime/hosversion.h"
+#include "nacp.h"
 
 __attribute__((weak)) u32 __nx_applet_type = AppletType_Default;
 __attribute__((weak)) bool __nx_applet_auto_notifyrunning = true;
@@ -4086,11 +4087,57 @@ Result appletGetMainAppletIdentityInfo(AppletIdentityInfo *info) {
     return _appletGetIdentityInfo(&g_appletILibraryAppletSelfAccessor, info, 12);
 }
 
+Result appletCanUseApplicationCore(bool *out) {
+    if (__nx_applet_type != AppletType_LibraryApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _appletCmdNoInOutBool(&g_appletILibraryAppletSelfAccessor, out, 13);
+}
+
 Result appletGetCallerAppletIdentityInfo(AppletIdentityInfo *info) {
     if (__nx_applet_type != AppletType_LibraryApplet)
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     return _appletGetIdentityInfo(&g_appletILibraryAppletSelfAccessor, info, 14);
+}
+
+Result appletGetMainAppletApplicationControlProperty(NacpStruct *nacp) {
+    if (__nx_applet_type != AppletType_LibraryApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    ipcAddRecvBuffer(&c, nacp, sizeof(*nacp), BufferType_Normal);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletILibraryAppletSelfAccessor, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 15;
+
+    Result rc = serviceIpcDispatch(&g_appletILibraryAppletSelfAccessor);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_appletILibraryAppletSelfAccessor, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
 }
 
 Result appletGetCallerAppletIdentityInfoStack(AppletIdentityInfo *stack, s32 count, s32 *total_out) {
@@ -4143,6 +4190,15 @@ Result appletGetNextReturnDestinationAppletIdentityInfo(AppletIdentityInfo *info
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return _appletGetIdentityInfo(&g_appletILibraryAppletSelfAccessor, info, 18);
+}
+
+Result appletGetMainAppletApplicationDesiredLanguage(u64 *LanguageCode) {
+    if (__nx_applet_type != AppletType_LibraryApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdNoInOut64(&g_appletILibraryAppletSelfAccessor, LanguageCode, 60);
 }
 
 // IOverlayFunctions

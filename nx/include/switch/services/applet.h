@@ -14,6 +14,7 @@
 #include "../services/pm.h"
 #include "../kernel/tmem.h"
 #include "../kernel/event.h"
+#include "../nacp.h"
 
 /// AppletType
 typedef enum {
@@ -1084,6 +1085,11 @@ Result appletRequestLaunchApplication(u64 titleID, AppletStorage* s);
  */
 Result appletRequestLaunchApplicationForQuest(u64 titleID, AppletStorage* s, const AppletApplicationAttributeForQuest *attr);
 
+/**
+ * @brief Gets the DesiredLanguage for the current host title control.nacp.
+ * @note Only available with AppletType_*Application.
+ * @param[out] LanguageCode Output LanguageCode, see set.h.
+ */
 Result appletGetDesiredLanguage(u64 *LanguageCode);
 
 /// Only available with AppletType_*Application.
@@ -1353,11 +1359,25 @@ Result appletGetLibraryAppletInfo(LibAppletInfo *info);
 Result appletGetMainAppletIdentityInfo(AppletIdentityInfo *info);
 
 /**
+ * @brief CanUseApplicationCore
+ * @note Only available with AppletType_LibraryApplet.
+ * @param[out] out Output flag.
+ */
+Result appletCanUseApplicationCore(bool *out);
+
+/**
  * @brief Gets the \ref AppletIdentityInfo for the CallerApplet.
  * @note Only available with AppletType_LibraryApplet.
  * @param[out] info \ref AppletIdentityInfo
  */
 Result appletGetCallerAppletIdentityInfo(AppletIdentityInfo *info);
+
+/**
+ * @brief Gets the \ref NacpStruct for the MainApplet.
+ * @note Only available with AppletType_LibraryApplet on [2.0.0+].
+ * @param[out] nacp \ref NacpStruct
+ */
+Result appletGetMainAppletApplicationControlProperty(NacpStruct *nacp);
 
 /**
  * @brief Gets an array of \ref AppletIdentityInfo for the CallerStack.
@@ -1374,6 +1394,13 @@ Result appletGetCallerAppletIdentityInfoStack(AppletIdentityInfo *stack, s32 cou
  * @param[out] info \ref AppletIdentityInfo
  */
 Result appletGetNextReturnDestinationAppletIdentityInfo(AppletIdentityInfo *info);
+
+/**
+ * @brief Gets the DesiredLanguage for the MainApplet.
+ * @note Only available with AppletType_LibraryApplet on [4.0.0+].
+ * @param[out] LanguageCode Output LanguageCode, see set.h.
+ */
+Result appletGetMainAppletApplicationDesiredLanguage(u64 *LanguageCode);
 
 // IFunctions for AppletType_OverlayApplet (IOverlayFunctions).
 
