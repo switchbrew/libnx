@@ -1402,6 +1402,12 @@ Result appletGetNextReturnDestinationAppletIdentityInfo(AppletIdentityInfo *info
  */
 Result appletGetMainAppletApplicationDesiredLanguage(u64 *LanguageCode);
 
+/**
+ * @brief Exits the current applet. Same as \ref appletHolderRequestExit except this is for the current applet.
+ * @note Only available with AppletType_LibraryApplet on [6.0.0+].
+ */
+Result appletRequestExitToSelf(void);
+
 // IFunctions for AppletType_OverlayApplet (IOverlayFunctions).
 
 /**

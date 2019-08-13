@@ -4201,6 +4201,15 @@ Result appletGetMainAppletApplicationDesiredLanguage(u64 *LanguageCode) {
     return _appletCmdNoInOut64(&g_appletILibraryAppletSelfAccessor, LanguageCode, 60);
 }
 
+Result appletRequestExitToSelf(void) {
+    if (__nx_applet_type != AppletType_LibraryApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(6,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdNoIO(&g_appletILibraryAppletSelfAccessor, 80);
+}
+
 // IOverlayFunctions
 
 Result appletBeginToWatchShortHomeButtonMessage(void) {
