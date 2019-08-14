@@ -20,7 +20,7 @@ Result nvAddressSpaceCreate(NvAddressSpace* a, u32 page_size)
         a->fd = -1;
 
     if (R_SUCCEEDED(rc))
-        rc = nvioctlNvhostAsGpu_InitializeEx(a->fd, 1, 0x10000); // Official sw uses hardcoded size
+        rc = nvioctlNvhostAsGpu_InitializeEx(a->fd, 1, page_size);
 
     if (R_FAILED(rc))
         nvAddressSpaceClose(a);
