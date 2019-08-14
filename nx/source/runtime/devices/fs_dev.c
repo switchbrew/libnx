@@ -335,7 +335,6 @@ static int _fsdevUnmountDeviceStruct(fsdev_fsdevice *device)
   strncat(name, ":", sizeof(name)-strlen(name)-1);
 
   RemoveDevice(name);
-  fsFsClose(&device->fs);
 
   if(device->id == fsdev_fsdevice_default)
     fsdev_fsdevice_default = -1;
@@ -349,7 +348,7 @@ static int _fsdevUnmountDeviceStruct(fsdev_fsdevice *device)
   return 0;
 }
 
-int fsdevUnmountDevice(const char *name)
+int fsdevDeleteDevice(const char *name)
 {
   fsdev_fsdevice *device;
 
@@ -358,6 +357,21 @@ int fsdevUnmountDevice(const char *name)
     return -1;
 
   return _fsdevUnmountDeviceStruct(device);
+}
+
+int fsdevUnmountDevice(const char *name)
+{
+  fsdev_fsdevice *device;
+
+  device = fsdevFindDevice(name);
+  if(device==NULL)
+    return -1;
+
+  int ret = _fsdevUnmountDeviceStruct(device);
+  if(ret==0)
+    fsFsClose(&device->fs);
+  
+  return ret;
 }
 
 Result fsdevCommitDevice(const char *name)
