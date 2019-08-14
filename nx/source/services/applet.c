@@ -4252,6 +4252,50 @@ Result appletRequestExitToSelf(void) {
     return _appletCmdNoIO(&g_appletILibraryAppletSelfAccessor, 80);
 }
 
+Result appletGetMainAppletAvailableUsers(u128 *userIDs, s32 count, bool *flag, s32 *total_out) {
+    if (__nx_applet_type != AppletType_LibraryApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(6,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    ipcAddRecvBuffer(&c, userIDs, count*sizeof(u128), BufferType_Normal);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletILibraryAppletSelfAccessor, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 110;
+
+    Result rc = serviceIpcDispatch(&g_appletILibraryAppletSelfAccessor);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            u8 flag;
+            s32 total_out;
+        } *resp;
+
+        serviceIpcParse(&g_appletILibraryAppletSelfAccessor, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && flag) *flag = resp->flag!=0;
+        if (R_SUCCEEDED(rc) && total_out) *total_out = resp->total_out;
+    }
+
+    return rc;
+}
+
 // IOverlayFunctions
 
 Result appletBeginToWatchShortHomeButtonMessage(void) {

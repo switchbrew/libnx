@@ -1437,6 +1437,16 @@ Result appletGetCurrentApplicationId(u64 *titleID);
  */
 Result appletRequestExitToSelf(void);
 
+/**
+ * @brief Gets an array of userIDs for the MainApplet AvailableUsers.
+ * @note Only available with AppletType_LibraryApplet on [6.0.0+].
+ * @param[out] userIDs Output array of userIDs.
+ * @param[in] count Size of the userID array, must be at least ACC_USER_LIST_SIZE.
+ * @param[out] flag When true, this indicates that no users are available.
+ * @param[out] total_out Total output entries. This is -1 when flag is true.
+ */
+Result appletGetMainAppletAvailableUsers(u128 *userIDs, s32 count, bool *flag, s32 *total_out);
+
 // IFunctions for AppletType_OverlayApplet (IOverlayFunctions).
 
 /**
