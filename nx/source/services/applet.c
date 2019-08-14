@@ -4067,6 +4067,48 @@ Result appletGetHdcpAuthenticationFailedEvent(Event *out_event) {
 
 // ILibraryAppletSelfAccessor
 
+Result appletPopInData(AppletStorage *s) {
+    if (__nx_applet_type != AppletType_LibraryApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _appletCmdNoInOutStorage(&g_appletILibraryAppletSelfAccessor, s, 0);
+}
+
+Result appletPushOutData(AppletStorage *s) {
+    if (__nx_applet_type != AppletType_LibraryApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _appletCmdInStorage(&g_appletILibraryAppletSelfAccessor, s, 1);
+}
+
+Result appletPopInteractiveInData(AppletStorage *s) {
+    if (__nx_applet_type != AppletType_LibraryApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _appletCmdNoInOutStorage(&g_appletILibraryAppletSelfAccessor, s, 2);
+}
+
+Result appletPushInteractiveOutData(AppletStorage *s) {
+    if (__nx_applet_type != AppletType_LibraryApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _appletCmdInStorage(&g_appletILibraryAppletSelfAccessor, s, 3);
+}
+
+Result appletGetPopInDataEvent(Event *out_event) {
+    if (__nx_applet_type != AppletType_LibraryApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _appletGetEvent(&g_appletILibraryAppletSelfAccessor, out_event, 5, false);
+}
+
+Result appletGetPopInteractiveInDataEvent(Event *out_event) {
+    if (__nx_applet_type != AppletType_LibraryApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _appletGetEvent(&g_appletILibraryAppletSelfAccessor, out_event, 6, false);
+}
+
 static Result _appletExitProcessAndReturn(void) {
     if (__nx_applet_type != AppletType_LibraryApplet)
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
@@ -4214,6 +4256,34 @@ Result appletGetDesirableKeyboardLayout(u32 *layout) {
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return _appletCmdNoInOut32(&g_appletILibraryAppletSelfAccessor, layout, 19);
+}
+
+Result appletPopExtraStorage(AppletStorage *s) {
+    if (__nx_applet_type != AppletType_LibraryApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _appletCmdNoInOutStorage(&g_appletILibraryAppletSelfAccessor, s, 20);
+}
+
+Result appletGetPopExtraStorageEvent(Event *out_event) {
+    if (__nx_applet_type != AppletType_LibraryApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _appletGetEvent(&g_appletILibraryAppletSelfAccessor, out_event, 25, false);
+}
+
+Result appletUnpopInData(AppletStorage *s) {
+    if (__nx_applet_type != AppletType_LibraryApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _appletCmdInStorage(&g_appletILibraryAppletSelfAccessor, s, 30);
+}
+
+Result appletUnpopExtraStorage(AppletStorage *s) {
+    if (__nx_applet_type != AppletType_LibraryApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _appletCmdInStorage(&g_appletILibraryAppletSelfAccessor, s, 31);
 }
 
 Result appletGetIndirectLayerProducerHandle(u64 *out) {

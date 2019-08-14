@@ -295,10 +295,10 @@ Result appletReleaseSleepLock(void);
 Result appletReleaseSleepLockTransiently(void);
 
 /**
- * @brief Pushes a storage to the general channel. Used for sending requests to qlaunch.
+ * @brief Pushes a storage to the general channel. Used for sending requests to SystemApplet.
  * @note  This is not usable under an Application, however it is usable under a LibraryApplet.
  * @note  This uses \ref appletStorageClose automatically.
- * @param s Storage object.
+ * @param[in] s Storage object.
  */
 Result appletPushToGeneralChannel(AppletStorage *s);
 
@@ -924,7 +924,7 @@ Result appletHolderSetOutOfFocusApplicationSuspendingEnabled(AppletHolder *h, bo
 
 /**
  * @brief Waits for the PopInteractiveOutDataEvent and StateChangedEvent.
- * @return false for error / when StateChangedEvent was signaled, and true when PopInteractiveOutDataEvent was signaled.
+ * @return false for error / when StateChangedEvent was signaled, and true when PopInteractiveOutDataEvent was signaled. The latter is signaled when a new storage is available with \ref appletHolderPopInteractiveOutData where previously no storage was available (this willl not clear the event), this event is automatically cleared by the system once the last storage is popped.
  * @param h AppletHolder object.
  */
 bool appletHolderWaitInteractiveOut(AppletHolder *h);
@@ -933,14 +933,14 @@ bool appletHolderWaitInteractiveOut(AppletHolder *h);
  * @brief Pushes a storage for LibraryApplet input.
  * @note  This uses \ref appletStorageClose automatically.
  * @param h AppletHolder object.
- * @param s Storage object.
+ * @param[in] s Storage object.
  */
 Result appletHolderPushInData(AppletHolder *h, AppletStorage *s);
 
 /**
  * @brief Pops a storage from LibraryApplet output.
  * @param h AppletHolder object.
- * @param s Storage object.
+ * @param[out] s Storage object.
  */
 Result appletHolderPopOutData(AppletHolder *h, AppletStorage *s);
 
@@ -948,7 +948,7 @@ Result appletHolderPopOutData(AppletHolder *h, AppletStorage *s);
  * @brief Pushes a storage for LibraryApplet Extra storage input.
  * @note  This uses \ref appletStorageClose automatically.
  * @param h AppletHolder object.
- * @param s Storage object.
+ * @param[in] s Storage object.
  */
 Result appletHolderPushExtraStorage(AppletHolder *h, AppletStorage *s);
 
@@ -956,14 +956,14 @@ Result appletHolderPushExtraStorage(AppletHolder *h, AppletStorage *s);
  * @brief Pushes a storage for LibraryApplet Interactive input.
  * @note  This uses \ref appletStorageClose automatically.
  * @param h AppletHolder object.
- * @param s Storage object.
+ * @param[in] s Storage object.
  */
 Result appletHolderPushInteractiveInData(AppletHolder *h, AppletStorage *s);
 
 /**
  * @brief Pops a storage from LibraryApplet Interactive output.
  * @param h AppletHolder object.
- * @param s Storage object.
+ * @param[out] s Storage object.
  */
 Result appletHolderPopInteractiveOutData(AppletHolder *h, AppletStorage *s);
 
@@ -1061,7 +1061,7 @@ Result appletStorageMap(AppletStorage *s, void** addr, size_t *size);
 
 /**
  * @brief Pops a LaunchParameter AppletStorage, the storage will be removed from sysmodule state during this.
- * @param s Output storage.
+ * @param[out] s Output storage.
  * @param kind See \ref AppletLaunchParameterKind.
  * @note Only available with AppletType_*Application.
  * @note See also acc.h \ref accountGetPreselectedUser (wrapper for appletPopLaunchParameter etc).
@@ -1072,7 +1072,7 @@ Result appletPopLaunchParameter(AppletStorage *s, AppletLaunchParameterKind kind
  * @brief Requests to launch the specified application.
  * @note Only available with AppletType_*Application, or AppletType_LibraryApplet on 5.0.0+.
  * @param[in] titleID Application titleID. Value 0 can be used to relaunch the current application.
- * @param s Optional AppletStorage object, can be NULL. This is automatically closed. When NULL on pre-4.0.0 (or with AppletType_LibraryApplet), this will internally create a tmp storage with size 0 for use with the cmd. This is the storage available to the launched application via \ref appletPopLaunchParameter with ::AppletLaunchParameterKind_Application.
+ * @param[in] s Optional AppletStorage object, can be NULL. This is automatically closed. When NULL on pre-4.0.0 (or with AppletType_LibraryApplet), this will internally create a tmp storage with size 0 for use with the cmd. This is the storage available to the launched application via \ref appletPopLaunchParameter with ::AppletLaunchParameterKind_Application.
  */
 Result appletRequestLaunchApplication(u64 titleID, AppletStorage* s);
 
@@ -1081,7 +1081,7 @@ Result appletRequestLaunchApplication(u64 titleID, AppletStorage* s);
  * @note Only available with AppletType_*Application on 3.0.0+.
  * @note Identical to \ref appletRequestLaunchApplication, except this allows the user to specify the attribute fields instead of the defaults being used.
  * @param[in] titleID Application titleID
- * @param s Optional AppletStorage object, can be NULL. This is automatically closed. When NULL on pre-4.0.0, this will internally create a tmp storage with size 0 for use with the cmd. This is the storage available to the launched application via \ref appletPopLaunchParameter with ::AppletLaunchParameterKind_Application.
+ * @param[in] s Optional AppletStorage object, can be NULL. This is automatically closed. When NULL on pre-4.0.0, this will internally create a tmp storage with size 0 for use with the cmd. This is the storage available to the launched application via \ref appletPopLaunchParameter with ::AppletLaunchParameterKind_Application.
  * @param[in] attr Kiosk application attributes.
  */
 Result appletRequestLaunchApplicationForQuest(u64 titleID, AppletStorage* s, const AppletApplicationAttributeForQuest *attr);
@@ -1260,7 +1260,7 @@ Result appletUnlockForeground(void);
 Result appletPopFromGeneralChannel(AppletStorage *s);
 
 /**
- * @brief Gets an Event which is signaled when a new storage is available with \ref appletPopFromGeneralChannel.
+ * @brief Gets an Event which is signaled when a new storage is available with \ref appletPopFromGeneralChannel where previously no storage was available, this event is automatically cleared by the system once the last storage is popped.
  * @note Only available with AppletType_SystemApplet.
  * @note The Event must be closed by the user once finished with it.
  * @param[out] out_event Output Event with autoclear=false.
@@ -1346,6 +1346,52 @@ Result appletGetHdcpAuthenticationFailedEvent(Event *out_event);
 // ILibraryAppletSelfAccessor
 
 /**
+ * @brief Pops a storage from current-LibraryApplet input.
+ * @note Only available with AppletType_LibraryApplet.
+ * @param[out] s Storage object.
+ */
+Result appletPopInData(AppletStorage *s);
+
+/**
+ * @brief Pushes a storage for current-LibraryApplet output.
+ * @note Only available with AppletType_LibraryApplet.
+ * @note This uses \ref appletStorageClose automatically.
+ * @param[in] s Storage object.
+ */
+Result appletPushOutData(AppletStorage *s);
+
+/**
+ * @brief Pops a storage from current-LibraryApplet Interactive input.
+ * @note Only available with AppletType_LibraryApplet.
+ * @param[out] s Storage object.
+ */
+Result appletPopInteractiveInData(AppletStorage *s);
+
+/**
+ * @brief Pushes a storage for current-LibraryApplet Interactive output.
+ * @note Only available with AppletType_LibraryApplet.
+ * @note This uses \ref appletStorageClose automatically.
+ * @param[in] s Storage object.
+ */
+Result appletPushInteractiveOutData(AppletStorage *s);
+
+/**
+ * @brief Gets an Event which is signaled when a new storage is available with \ref appletPopInData where previously no storage was available, this event is automatically cleared by the system once the last storage is popped.
+ * @note Only available with AppletType_LibraryApplet.
+ * @note The Event must be closed by the user once finished with it.
+ * @param[out] out_event Output Event with autoclear=false.
+ */
+Result appletGetPopInDataEvent(Event *out_event);
+
+/**
+ * @brief Gets an Event which is signaled when a new storage is available with \ref appletPopInteractiveInData where previously no storage was available, this event is automatically cleared by the system once the last storage is popped.
+ * @note Only available with AppletType_LibraryApplet.
+ * @note The Event must be closed by the user once finished with it.
+ * @param[out] out_event Output Event with autoclear=false.
+ */
+Result appletGetPopInteractiveInDataEvent(Event *out_event);
+
+/**
  * @brief Gets the \ref LibAppletInfo for the current LibraryApplet.
  * @note Only available with AppletType_LibraryApplet.
  * @param[out] info \ref LibAppletInfo
@@ -1409,6 +1455,37 @@ Result appletGetNextReturnDestinationAppletIdentityInfo(AppletIdentityInfo *info
  * @param[out] layout Output layout.
  */
 Result appletGetDesirableKeyboardLayout(u32 *layout);
+
+/**
+ * @brief Pops a storage from current-LibraryApplet Extra input.
+ * @note Only available with AppletType_LibraryApplet.
+ * @param[out] s Storage object.
+ */
+Result appletPopExtraStorage(AppletStorage *s);
+
+/**
+ * @brief Gets an Event which is signaled when a new storage is available with \ref appletPopExtraStorage where previously no storage was available, this event is automatically cleared by the system once the last storage is popped.
+ * @note Only available with AppletType_LibraryApplet.
+ * @note The Event must be closed by the user once finished with it.
+ * @param[out] out_event Output Event with autoclear=false.
+ */
+Result appletGetPopExtraStorageEvent(Event *out_event);
+
+/**
+ * @brief Unpop a storage for current-LibraryApplet input.
+ * @note Only available with AppletType_LibraryApplet.
+ * @note This uses \ref appletStorageClose automatically.
+ * @param[in] s Storage object.
+ */
+Result appletUnpopInData(AppletStorage *s);
+
+/**
+ * @brief Unpop a storage for current-LibraryApplet Extra input.
+ * @note Only available with AppletType_LibraryApplet.
+ * @note This uses \ref appletStorageClose automatically.
+ * @param[in] s Storage object.
+ */
+Result appletUnpopExtraStorage(AppletStorage *s);
 
 /**
  * @brief Gets the IndirectLayerProducerHandle.
