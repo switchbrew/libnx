@@ -25,9 +25,12 @@ typedef struct
 /// Initializes and mounts the sdmc device if accessible. Also initializes current working directory to point to the folder containing the path to the executable (argv[0]), if it is provided by the environment.
 Result fsdevMountSdmc(void);
 
-/// Mounts the input fs with the specified device name. fsdev will handle closing the fs when required, including when fsdevMountDevice() fails.
+/// Mounts the input fs with the specified device name. fsdev will handle closing the fs when required (this can be avoided by unmounting it with fsdevDeleteDevice), including when fsdevMountDevice() fails.
 /// Returns -1 when any errors occur.
 int fsdevMountDevice(const char *name, FsFileSystem fs);
+
+/// Unmounts the specified device without closing its fs service.
+int fsdevDeleteDevice(const char *name);
 
 /// Unmounts the specified device.
 int fsdevUnmountDevice(const char *name);
