@@ -10,10 +10,10 @@
 
 /// CommonArguments
 typedef struct {
-    u32 CommonArgs_version;
-    u32 CommonArgs_size;
+    u32 CommonArgs_version;  ///< \ref libappletArgsCreate sets this to 1, and \ref libappletArgsPop requires value 1. v0 is not supported.
+    u32 CommonArgs_size;     ///< Size of this struct.
 
-    u32 LaVersion;           ///< LibraryApplet API version
+    u32 LaVersion;           ///< LibraryApplet API version.
     s32 ExpectedThemeColor;  ///< Set to the output from \ref appletGetThemeColorType by \ref libappletArgsCreate.
     u8  PlayStartupSound;    ///< bool flag, default is false.
     u8  pad[7];
@@ -57,6 +57,12 @@ Result libappletReadStorage(AppletStorage* s, void* buffer, size_t size, size_t 
  * @param h AppletHolder object.
  */
 Result libappletArgsPush(LibAppletArgs* a, AppletHolder *h);
+
+/**
+ * @brief Uses \ref appletPopInData and reads it to the specified LibAppletArgs. The LibAppletArgs is validated, an error is thrown when invalid.
+ * @param[out] a LibAppletArgs struct.
+ */
+Result libappletArgsPop(LibAppletArgs* a);
 
 /**
  * @brief Creates a storage using the input buffer which is pushed to the AppletHolder via \ref appletHolderPushInData.
