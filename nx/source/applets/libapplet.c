@@ -5,6 +5,8 @@
 #include "services/applet.h"
 #include "applets/libapplet.h"
 
+static bool g_libappletJumpFlag;
+
 void libappletArgsCreate(LibAppletArgs* a, u32 version) {
     memset(a, 0, sizeof(LibAppletArgs));
 
@@ -117,8 +119,15 @@ Result libappletPopOutData(AppletHolder *h, void* buffer, size_t size, size_t *t
     return rc;
 }
 
+void libappletSetJumpFlag(bool flag) {
+    g_libappletJumpFlag = flag;
+}
+
 Result libappletStart(AppletHolder *h) {
     Result rc=0;
+
+    if (g_libappletJumpFlag)
+        return appletHolderJump(h);
 
     rc = appletHolderStart(h);
 

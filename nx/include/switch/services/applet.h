@@ -223,6 +223,19 @@ typedef struct {
     LibAppletMode mode;                ///< \ref LibAppletMode
 } LibAppletInfo;
 
+/// AppletProcessLaunchReason, from GetLaunchReason.
+typedef struct {
+    u8 flag;                           ///< When non-zero, indicates that OpenCallingLibraryApplet should be used.
+    u8 unk_x1[3];                      ///< Always zero.
+} AppletProcessLaunchReason;
+
+/// Cached info for the current LibraryApplet, from \ref appletGetAppletInfo.
+typedef struct {
+    LibAppletInfo info;                ///< Output from \ref appletGetLibraryAppletInfo.
+    bool caller_flag;                  ///< Loaded from AppletProcessLaunchReason::flag, indicates that the below AppletHolder is initialized.
+    AppletHolder caller;               ///< \ref AppletHolder for the CallingLibraryApplet, automatically closed by \ref appletExit when needed.
+} AppletInfo;
+
 /// IdentityInfo
 typedef struct {
     AppletId appletId;                 ///< \ref AppletId
@@ -823,6 +836,23 @@ Result appletReleaseCallerAppletCaptureSharedBuffer(void);
  */
 Result appletTakeScreenShotOfOwnLayerEx(bool flag0, bool immediately, AppletCaptureSharedBuffer captureBuf);
 
+// IProcessWindingController
+
+/**
+ * @brief Pushes a storage to the ContextStack. Normally this should only be used when AppletInfo::caller_flag is true.
+ * @note Only available with AppletType_LibraryApplet.
+ * @note This uses \ref appletStorageClose automatically.
+ * @param[in] s Storage object.
+ */
+Result appletPushContext(AppletStorage *s);
+
+/**
+ * @brief Pops a storage from the ContextStack. Normally this should only be used when AppletInfo::caller_flag is true.
+ * @note Only available with AppletType_LibraryApplet.
+ * @param[out] s Storage object.
+ */
+Result appletPopContext(AppletStorage *s);
+
 // LockAccessor
 
 /**
@@ -889,6 +919,13 @@ Result appletHolderGetIndirectLayerConsumerHandle(AppletHolder *h, u64 *out);
  * @param h AppletHolder object.
  */
 Result appletHolderStart(AppletHolder *h);
+
+/**
+ * @brief Jumps to the LibraryApplet, with the current-LibraryApplet being terminated. This will enter an infinite-sleep-loop on success.
+ * @note Only available with AppletType_LibraryApplet.
+ * @param h AppletHolder object.
+ */
+Result appletHolderJump(AppletHolder *h);
 
 /**
  * @brief Requests the LibraryApplet to exit. The command is only used if \ref appletHolderCheckFinished returns false.
@@ -1651,6 +1688,12 @@ Result appletSetHomeButtonDoubleClickEnabled(bool flag);
 Result appletGetHomeButtonDoubleClickEnabled(bool *out);
 
 // State / other
+
+/**
+ * @brief Gets the cached \ref AppletInfo loaded during \ref appletInitialize. This will return NULL when the info is not initialized, due to not running as AppletType_LibraryApplet, or when any of the used cmds fail.
+ * @note Only available with AppletType_LibraryApplet.
+ */
+AppletInfo *appletGetAppletInfo(void);
 
 /**
  * @brief Gets a notification message.

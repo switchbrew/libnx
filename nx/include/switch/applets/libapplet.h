@@ -82,7 +82,13 @@ Result libappletPushInData(AppletHolder *h, const void* buffer, size_t size);
 Result libappletPopOutData(AppletHolder *h, void* buffer, size_t size, size_t *transfer_size);
 
 /**
- * @brief Starts the applet and waits for it to finish, then checks the \ref LibAppletExitReason.
+ * @brief Sets whether \ref libappletStart uses \ref appletHolderJump.
+ * @param flag Flag. Value true should not be used unless running as AppletType_LibraryApplet.
+ */
+void libappletSetJumpFlag(bool flag);
+
+/**
+ * @brief If the flag from \ref libappletSetJumpFlag is set, this just uses \ref appletHolderJump. Otherwise, starts the applet and waits for it to finish, then checks the \ref LibAppletExitReason.
  * @note Uses \ref appletHolderStart and \ref appletHolderJoin.
  * @param h AppletHolder object.
  */

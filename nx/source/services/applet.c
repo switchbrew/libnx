@@ -80,6 +80,9 @@ static AppletThemeColorType g_appletThemeColorType = AppletThemeColorType_Defaul
 
 static ApmCpuBoostMode g_appletCpuBoostMode = ApmCpuBoostMode_Disabled;
 
+static AppletInfo g_appletInfo;
+static bool g_appletInfoInitialized;
+
 static Result _appletGetHandle(Service* srv, Handle* handle_out, u64 cmd_id);
 static Result _appletGetEvent(Service* srv, Event* out_event, u64 cmd_id, bool autoclear);
 static Result _appletGetSession(Service* srv, Service* srv_out, u64 cmd_id);
@@ -107,6 +110,11 @@ static Result _appletExitProcessAndReturn(void);
 static Result _appletGetAccumulatedSuspendedTickValue(u64 *tick);
 static Result _appletGetAccumulatedSuspendedTickChangedEvent(Event *out_event);
 
+static Result _appletGetLaunchReason(AppletProcessLaunchReason *reason);
+static Result _appletOpenCallingLibraryApplet(AppletHolder *h);
+
+static Result _appletHolderCreateState(AppletHolder *h, LibAppletMode mode, bool creating_self);
+
 Result appletInitialize(void)
 {
     AppletAttribute *attr = NULL;
@@ -128,6 +136,9 @@ Result appletInitialize(void)
     g_appletNotifiedRunning = 0;
     g_appletExitProcessFlag = 0;
     g_appletRecordingInitialized = 0;
+
+    g_appletInfoInitialized = 0;
+    memset(&g_appletInfo, 0, sizeof(g_appletInfo));
 
     switch (__nx_applet_type) {
     case AppletType_Default:
@@ -310,6 +321,21 @@ Result appletInitialize(void)
         }
     }
 
+    if (R_SUCCEEDED(rc) && __nx_applet_type == AppletType_LibraryApplet) {
+        AppletProcessLaunchReason launchreason={0};
+
+        Result rc2 = appletGetLibraryAppletInfo(&g_appletInfo.info);
+
+        if (R_SUCCEEDED(rc2)) rc2 = _appletGetLaunchReason(&launchreason);
+
+        if (R_SUCCEEDED(rc2)) {
+            g_appletInfo.caller_flag = launchreason.flag!=0;
+            if (g_appletInfo.caller_flag) rc2 = _appletOpenCallingLibraryApplet(&g_appletInfo.caller);
+        }
+
+        if (R_SUCCEEDED(rc2)) g_appletInfoInitialized = true;
+    }
+
     if (R_FAILED(rc))
         appletExit();
 
@@ -363,6 +389,12 @@ void appletExit(void)
                         _appletExitProcessAndReturn();
                 }
             }
+        }
+
+        if (g_appletInfoInitialized) {
+            if (g_appletInfo.caller_flag) appletHolderClose(&g_appletInfo.caller);
+            g_appletInfoInitialized = 0;
+            memset(&g_appletInfo, 0, sizeof(g_appletInfo));
         }
 
         eventClose(&g_appletLibraryAppletLaunchableEvent);
@@ -2512,6 +2544,103 @@ Result appletTakeScreenShotOfOwnLayerEx(bool flag0, bool immediately, AppletCapt
     return rc;
 }
 
+// IProcessWindingController
+
+static Result _appletGetLaunchReason(AppletProcessLaunchReason *reason) {
+    if (__nx_applet_type != AppletType_LibraryApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletIProcessWindingController, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 0;
+
+    Result rc = serviceIpcDispatch(&g_appletIProcessWindingController);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            AppletProcessLaunchReason reason;
+        } *resp;
+
+        serviceIpcParse(&g_appletIProcessWindingController, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && reason) *reason = resp->reason;
+    }
+
+    return rc;
+}
+
+static Result _appletOpenCallingLibraryApplet(AppletHolder *h) {
+    if (__nx_applet_type != AppletType_LibraryApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    Result rc=0;
+    LibAppletInfo info={0};
+
+    memset(h, 0, sizeof(AppletHolder));
+
+    rc = _appletGetSession(&g_appletIProcessWindingController, &h->s, 11);
+
+    if (R_SUCCEEDED(rc)) rc = appletHolderGetLibraryAppletInfo(h, &info);
+
+    if (R_SUCCEEDED(rc)) rc = _appletHolderCreateState(h, info.mode, false);
+
+    if (R_FAILED(rc)) appletHolderClose(h);
+
+    return rc;
+}
+
+Result appletPushContext(AppletStorage *s) {
+    if (__nx_applet_type != AppletType_LibraryApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _appletCmdInStorage(&g_appletIProcessWindingController, s, 21);
+}
+
+Result appletPopContext(AppletStorage *s) {
+    if (__nx_applet_type != AppletType_LibraryApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _appletCmdNoInOutStorage(&g_appletIProcessWindingController, s, 22);
+}
+
+static Result _appletWindAndDoReserved(void) {
+    if (__nx_applet_type != AppletType_LibraryApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _appletCmdNoIO(&g_appletIProcessWindingController, 30);
+}
+
+static Result _appletReserveToStartAndWaitAndUnwindThis(AppletHolder *h) {
+    if (__nx_applet_type != AppletType_LibraryApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _appletCmdInSession(&g_appletIProcessWindingController, &h->s, 40);
+}
+
+static Result _appletReserveToStartAndWait(AppletHolder *h) {
+    if (__nx_applet_type != AppletType_LibraryApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdInSession(&g_appletIProcessWindingController, &h->s, 41);
+}
+
 // LockAccessor
 void appletLockAccessorClose(AppletLockAccessor *a) {
     eventClose(&a->event);
@@ -2679,20 +2808,29 @@ static Result _appletGetIndirectLayerConsumerHandle(Service* srv, u64 *out) {
     return rc;
 }
 
+static Result _appletHolderCreateState(AppletHolder *h, LibAppletMode mode, bool creating_self) {
+    Result rc=0;
+
+    h->mode = mode;
+    h->creating_self = creating_self;
+
+    if (R_SUCCEEDED(rc)) rc = _appletGetEvent(&h->s, &h->StateChangedEvent, 0, false);//GetAppletStateChangedEvent
+
+    if (R_SUCCEEDED(rc) && hosversionAtLeast(2,0,0) && h->mode == LibAppletMode_BackgroundIndirect) rc = _appletGetIndirectLayerConsumerHandle(&h->s, &h->layer_handle);
+
+    return rc;
+}
+
 static Result _appletHolderCreate(AppletHolder *h, AppletId id, LibAppletMode mode, bool creating_self) {
     Result rc=0;
 
     memset(h, 0, sizeof(AppletHolder));
-    h->mode = mode;
-    h->creating_self = creating_self;
 
     if (!h->creating_self) rc = _appletWaitLibraryAppletLaunchableEvent();
 
     if (R_SUCCEEDED(rc)) rc = _appletCreateLibraryApplet(&h->s, id, mode);
 
-    if (R_SUCCEEDED(rc)) rc = _appletGetEvent(&h->s, &h->StateChangedEvent, 0, false);//GetAppletStateChangedEvent
-
-    if (R_SUCCEEDED(rc) && hosversionAtLeast(2,0,0) && h->mode == LibAppletMode_BackgroundIndirect) rc = _appletGetIndirectLayerConsumerHandle(&h->s, &h->layer_handle);
+    if (R_SUCCEEDED(rc)) rc = _appletHolderCreateState(h, mode, creating_self);
 
     return rc;
 }
@@ -2739,6 +2877,28 @@ Result appletHolderStart(AppletHolder *h) {
     if (!h->creating_self) rc = _appletWaitLibraryAppletLaunchableEvent();
 
     if (R_SUCCEEDED(rc)) rc = _appletCmdNoIO(&h->s, 10);//Start
+
+    return rc;
+}
+
+Result appletHolderJump(AppletHolder *h) {
+    Result rc=0;
+
+    if (!serviceIsActive(&h->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    if (!h->creating_self) rc = _appletWaitLibraryAppletLaunchableEvent();
+
+    if (hosversionBefore(4,0,0))
+        rc = _appletReserveToStartAndWaitAndUnwindThis(h);
+    else
+        rc = _appletReserveToStartAndWait(h);
+
+    if (R_SUCCEEDED(rc)) rc = _appletWindAndDoReserved();
+
+    if (R_FAILED(rc)) return rc;
+
+    while(1)svcSleepThread(86400000000000ULL);
 
     return rc;
 }
@@ -4617,6 +4777,11 @@ u32 appletGetPerformanceMode(void) {
 
 AppletFocusState appletGetFocusState(void) {
     return (AppletFocusState)g_appletFocusState;
+}
+
+AppletInfo *appletGetAppletInfo(void) {
+    if (!g_appletInfoInitialized) return NULL;
+    return &g_appletInfo;
 }
 
 Result appletGetMessage(u32 *msg) {
