@@ -4808,12 +4808,12 @@ bool appletProcessMessage(u32 msg) {
     Result rc;
 
     switch(msg) {
-        case AppletNotificationMessage_ExitRequested:
+        case AppletMessage_ExitRequested:
             appletCallHook(AppletHookType_OnExitRequest);
             return false;
         break;
 
-        case AppletNotificationMessage_FocusStateChanged:
+        case AppletMessage_FocusStateChanged:
             rc = _appletGetCurrentFocusState(&g_appletFocusState);
             if (R_FAILED(rc))
                 fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadAppletGetCurrentFocusState));
@@ -4821,11 +4821,11 @@ bool appletProcessMessage(u32 msg) {
             appletCallHook(AppletHookType_OnFocusState);
         break;
 
-        case AppletNotificationMessage_Restart:
+        case AppletMessage_Restart:
             appletCallHook(AppletHookType_OnRestart);
         break;
 
-        case AppletNotificationMessage_OperationModeChanged:
+        case AppletMessage_OperationModeChanged:
             rc = _appletGetOperationMode(&g_appletOperationMode);
             if (R_FAILED(rc))
                 fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadAppletGetOperationMode));
@@ -4833,7 +4833,7 @@ bool appletProcessMessage(u32 msg) {
             appletCallHook(AppletHookType_OnOperationMode);
         break;
 
-        case AppletNotificationMessage_PerformanceModeChanged:
+        case AppletMessage_PerformanceModeChanged:
             rc = _appletGetPerformanceMode(&g_appletPerformanceMode);
             if (R_FAILED(rc))
                 fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadAppletGetPerformanceMode));
@@ -4841,15 +4841,15 @@ bool appletProcessMessage(u32 msg) {
             appletCallHook(AppletHookType_OnPerformanceMode);
         break;
 
-        case AppletNotificationMessage_RequestToDisplay:
+        case AppletMessage_RequestToDisplay:
             appletCallHook(AppletHookType_RequestToDisplay);
         break;
 
-        case AppletNotificationMessage_CaptureButtonShortPressed:
+        case AppletMessage_CaptureButtonShortPressed:
             appletCallHook(AppletHookType_OnCaptureButtonShortPressed);
         break;
 
-        case AppletNotificationMessage_AlbumImageTaken:
+        case AppletMessage_AlbumImageTaken:
             appletCallHook(AppletHookType_OnAlbumImageTaken);
         break;
     }

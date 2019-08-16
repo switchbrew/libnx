@@ -36,29 +36,29 @@ typedef enum {
 
 /// applet hook types.
 typedef enum {
-    AppletHookType_OnFocusState = 0,                    ///< ::AppletNotificationMessage_FocusStateChanged
-    AppletHookType_OnOperationMode,                     ///< ::AppletNotificationMessage_OperationModeChanged
-    AppletHookType_OnPerformanceMode,                   ///< ::AppletNotificationMessage_PerformanceModeChanged
-    AppletHookType_OnExitRequest,                       ///< ::AppletNotificationMessage_ExitRequested
-    AppletHookType_OnRestart,                           ///< ::AppletNotificationMessage_Restart
-    AppletHookType_OnCaptureButtonShortPressed,         ///< ::AppletNotificationMessage_CaptureButtonShortPressed
-    AppletHookType_OnAlbumImageTaken,                   ///< ::AppletNotificationMessage_AlbumImageTaken
-    AppletHookType_RequestToDisplay,                    ///< ::AppletNotificationMessage_RequestToDisplay
+    AppletHookType_OnFocusState = 0,                    ///< ::AppletMessage_FocusStateChanged
+    AppletHookType_OnOperationMode,                     ///< ::AppletMessage_OperationModeChanged
+    AppletHookType_OnPerformanceMode,                   ///< ::AppletMessage_PerformanceModeChanged
+    AppletHookType_OnExitRequest,                       ///< ::AppletMessage_ExitRequested
+    AppletHookType_OnRestart,                           ///< ::AppletMessage_Restart
+    AppletHookType_OnCaptureButtonShortPressed,         ///< ::AppletMessage_CaptureButtonShortPressed
+    AppletHookType_OnAlbumImageTaken,                   ///< ::AppletMessage_AlbumImageTaken
+    AppletHookType_RequestToDisplay,                    ///< ::AppletMessage_RequestToDisplay
 
     AppletHookType_Max,                                 ///< Number of applet hook types.
 } AppletHookType;
 
-/// NotificationMessage, for \ref appletGetMessage. See also \ref AppletHookType.
+/// AppletMessage, for \ref appletGetMessage. See also \ref AppletHookType.
 typedef enum {
-    AppletNotificationMessage_ExitRequested             = 0x4,    ///< Exit requested.
-    AppletNotificationMessage_FocusStateChanged         = 0xF,    ///< FocusState changed.
-    AppletNotificationMessage_Restart                   = 0x10,   ///< Current applet execution was resumed.
-    AppletNotificationMessage_OperationModeChanged      = 0x1E,   ///< OperationMode changed.
-    AppletNotificationMessage_PerformanceModeChanged    = 0x1F,   ///< PerformanceMode changed.
-    AppletNotificationMessage_RequestToDisplay          = 0x33,   ///< Display requested, see \ref appletApproveToDisplay.
-    AppletNotificationMessage_CaptureButtonShortPressed = 0x5A,   ///< Capture button was short-pressed.
-    AppletNotificationMessage_AlbumImageTaken           = 0x5C,   ///< Screenshot was taken.
-} AppletNotificationMessage;
+    AppletMessage_ExitRequested             = 0x4,    ///< Exit requested.
+    AppletMessage_FocusStateChanged         = 0xF,    ///< FocusState changed.
+    AppletMessage_Restart                   = 0x10,   ///< Current applet execution was resumed.
+    AppletMessage_OperationModeChanged      = 0x1E,   ///< OperationMode changed.
+    AppletMessage_PerformanceModeChanged    = 0x1F,   ///< PerformanceMode changed.
+    AppletMessage_RequestToDisplay          = 0x33,   ///< Display requested, see \ref appletApproveToDisplay.
+    AppletMessage_CaptureButtonShortPressed = 0x5A,   ///< Capture button was short-pressed.
+    AppletMessage_AlbumImageTaken           = 0x5C,   ///< Screenshot was taken.
+} AppletMessage;
 
 /// FocusState
 typedef enum {
@@ -489,7 +489,7 @@ Result appletLeaveFatalSection(void);
 Result appletSetScreenShotPermission(AppletScreenShotPermission permission);
 
 /**
- * @brief Sets whether ::AppletNotificationMessage_Restart is enabled.
+ * @brief Sets whether ::AppletMessage_Restart is enabled.
  * @param[in] flag Whether to enable the notification.
  */
 Result appletSetRestartMessageEnabled(bool flag);
@@ -509,7 +509,7 @@ Result appletSetScreenShotAppletIdentityInfo(AppletIdentityInfo *info);
 Result appletSetControllerFirmwareUpdateSection(bool flag);
 
 /**
- * @brief Sets whether ::AppletNotificationMessage_CaptureButtonShortPressed is enabled.
+ * @brief Sets whether ::AppletMessage_CaptureButtonShortPressed is enabled.
  * @note Only available with [3.0.0+].
  * @note When enabled with a non-Overlay applet, Overlay applet will not be notified of capture button short-presses for screenshots.
  * @param[in] flag Whether to enable the notification.
@@ -554,14 +554,14 @@ Result appletGetSystemSharedLayerHandle(u64 *SharedBufferHandle, u64 *SharedLaye
 Result appletGetSystemSharedBufferHandle(u64 *SharedBufferHandle);
 
 /**
- * @brief Sets whether ::AppletNotificationMessage_RequestToDisplay is enabled.
+ * @brief Sets whether ::AppletMessage_RequestToDisplay is enabled.
  * @note Sets an internal state flag. When the input flag is 0, this will in additional run the same code as \ref appletApproveToDisplay.
  * @param[in] flag Flag
  */
 Result appletSetHandlesRequestToDisplay(bool flag);
 
 /**
- * @brief Approve the display requested by ::AppletNotificationMessage_RequestToDisplay, see also \ref appletSetHandlesRequestToDisplay.
+ * @brief Approve the display requested by ::AppletMessage_RequestToDisplay, see also \ref appletSetHandlesRequestToDisplay.
  */
 Result appletApproveToDisplay(void);
 
@@ -642,7 +642,7 @@ Result appletGetCurrentIlluminanceEx(bool *bOverLimit, float *fLux);
 Result appletSetWirelessPriorityMode(AppletWirelessPriorityMode mode);
 
 /**
- * @brief Sets whether ::AppletNotificationMessage_AlbumImageTaken is enabled.
+ * @brief Sets whether ::AppletMessage_AlbumImageTaken is enabled.
  * @note Only available with [7.0.0+].
  * @param[in] flag Whether to enable the notification.
  */
@@ -1696,7 +1696,7 @@ Result appletGetHomeButtonDoubleClickEnabled(bool *out);
 AppletInfo *appletGetAppletInfo(void);
 
 /**
- * @brief Gets a notification message.
+ * @brief Gets a notification message, see \ref AppletMessage.
  */
 Result appletGetMessage(u32 *msg);
 
