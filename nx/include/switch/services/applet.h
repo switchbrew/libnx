@@ -79,7 +79,7 @@ typedef enum {
 
 /// LaunchParameterKind
 typedef enum {
-    AppletLaunchParameterKind_Application     = 1, ///< Application-specific LaunchParameter
+    AppletLaunchParameterKind_UserChannel     = 1, ///< UserChannel. Application-specific LaunchParameter.
     AppletLaunchParameterKind_PreselectedUser = 2, ///< account PreselectedUser
     AppletLaunchParameterKind_Unknown         = 3, ///< Unknown if used by anything?
 } AppletLaunchParameterKind;
@@ -1112,7 +1112,7 @@ Result appletPopLaunchParameter(AppletStorage *s, AppletLaunchParameterKind kind
  * @brief Requests to launch the specified application.
  * @note Only available with AppletType_*Application, or AppletType_LibraryApplet on 5.0.0+.
  * @param[in] titleID Application titleID. Value 0 can be used to relaunch the current application.
- * @param[in] s Optional AppletStorage object, can be NULL. This is automatically closed. When NULL on pre-4.0.0 (or with AppletType_LibraryApplet), this will internally create a tmp storage with size 0 for use with the cmd. This is the storage available to the launched application via \ref appletPopLaunchParameter with ::AppletLaunchParameterKind_Application.
+ * @param[in] s Optional AppletStorage object, can be NULL. This is automatically closed. When NULL on pre-4.0.0 (or with AppletType_LibraryApplet), this will internally create a tmp storage with size 0 for use with the cmd. This is the storage available to the launched application via \ref appletPopLaunchParameter with ::AppletLaunchParameterKind_UserChannel.
  */
 Result appletRequestLaunchApplication(u64 titleID, AppletStorage* s);
 
@@ -1121,7 +1121,7 @@ Result appletRequestLaunchApplication(u64 titleID, AppletStorage* s);
  * @note Only available with AppletType_*Application on 3.0.0+.
  * @note Identical to \ref appletRequestLaunchApplication, except this allows the user to specify the attribute fields instead of the defaults being used.
  * @param[in] titleID Application titleID
- * @param[in] s Optional AppletStorage object, can be NULL. This is automatically closed. When NULL on pre-4.0.0, this will internally create a tmp storage with size 0 for use with the cmd. This is the storage available to the launched application via \ref appletPopLaunchParameter with ::AppletLaunchParameterKind_Application.
+ * @param[in] s Optional AppletStorage object, can be NULL. This is automatically closed. When NULL on pre-4.0.0, this will internally create a tmp storage with size 0 for use with the cmd. This is the storage available to the launched application via \ref appletPopLaunchParameter with ::AppletLaunchParameterKind_UserChannel.
  * @param[in] attr Kiosk application attributes.
  */
 Result appletRequestLaunchApplicationForQuest(u64 titleID, AppletStorage* s, const AppletApplicationAttributeForQuest *attr);
