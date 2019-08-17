@@ -1709,6 +1709,17 @@ Result appletPerformSystemButtonPressing(AppletSystemButtonType type);
  */
 Result appletInvalidateTransitionLayer(void);
 
+/**
+ * @brief Requests to launch the specified Application, with the specified users.
+ * @note Only available on [6.0.0+].
+ * @param[in] userIDs Input array of userIDs.
+ * @param[in] total_userIDs Total input userIDs, must be <=ACC_USER_LIST_SIZE.
+ * @param[in] flag Whether to use the specified buffer to create a storage which will be pushed for ::AppletLaunchParameterKind_UserChannel.
+ * @param[in] buffer Buffer containing the above storage data.
+ * @param[in] size Size of the storage buffer.
+ */
+Result appletRequestLaunchApplicationWithUserAndArgumentForDebug(u64 titleID, u128 *userIDs, size_t total_userIDs, bool flag, const void* buffer, size_t size);
+
 // State / other
 
 /**

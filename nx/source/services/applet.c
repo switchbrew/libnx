@@ -4795,6 +4795,48 @@ Result appletInvalidateTransitionLayer(void) {
     return _appletCmdNoIO(&g_appletIDebugFunctions, 20);
 }
 
+Result appletRequestLaunchApplicationWithUserAndArgumentForDebug(u64 titleID, u128 *userIDs, size_t total_userIDs, bool flag, const void* buffer, size_t size) {
+    if (hosversionBefore(6,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    ipcAddSendBuffer(&c, userIDs, total_userIDs*sizeof(u128), BufferType_Normal);
+    ipcAddSendBuffer(&c, buffer, size, BufferType_Normal);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u8 flag;
+        u64 titleID;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletIDebugFunctions, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 30;
+    raw->flag = flag!=0;
+    raw->titleID = titleID;
+
+    Result rc = serviceIpcDispatch(&g_appletIDebugFunctions);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_appletIDebugFunctions, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
 // State / other
 
 u8 appletGetOperationMode(void) {
