@@ -4785,6 +4785,12 @@ Result appletGetHomeButtonDoubleClickEnabled(bool *out) {
     return _appletCmdNoInOutBool(&g_appletIAppletCommonFunctions, out, 51);
 }
 
+// IDebugFunctions
+
+Result appletPerformSystemButtonPressing(AppletSystemButtonType type) {
+    return _appletCmdInU32(&g_appletIDebugFunctions, type, 10);
+}
+
 // State / other
 
 u8 appletGetOperationMode(void) {

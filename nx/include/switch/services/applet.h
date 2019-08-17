@@ -144,6 +144,9 @@ typedef enum {
 typedef enum {
     AppletSystemButtonType_HomeButtonShortPressing    = 1,   ///< Short-pressing with the HOME-button.
     AppletSystemButtonType_HomeButtonLongPressing     = 2,   ///< Long-pressing with the HOME-button.
+    AppletSystemButtonType_PowerButtonShortPressing   = 3,   ///< Short-pressing with the Power-button. Only available with \ref appletPerformSystemButtonPressing.
+    AppletSystemButtonType_PowerButtonLongPressing    = 4,   ///< Long-pressing with the Power-button. Only available with \ref appletPerformSystemButtonPressing.
+    AppletSystemButtonType_Shutdown                   = 5,   ///< Shutdown the system, as if the Power-button was held for longer than ::AppletSystemButtonType_PowerButtonLongPressing. Only available with \ref appletPerformSystemButtonPressing.
     AppletSystemButtonType_CaptureButtonShortPressing = 6,   ///< Short-pressing with the Capture-button.
     AppletSystemButtonType_CaptureButtonLongPressing  = 7,   ///< Long-pressing with the Capture-button.
 } AppletSystemButtonType;
@@ -432,7 +435,7 @@ Result appletGetApplicationIdByContentActionName(u64 *titleID, const char *name)
 Result appletSetCpuBoostMode(ApmCpuBoostMode mode);
 
 /**
- * @brief Perform SystemButtonPressing with the specified \ref AppletSystemButtonType.
+ * @brief Perform SystemButtonPressing with the specified \ref AppletSystemButtonType. Internally this cmd checks a state field, verifies that the type is allowed, then runs the same func as \ref appletPerformSystemButtonPressing internally.
  * @note Only available with [6.0.0+].
  * @param[in] type \ref AppletSystemButtonType
  */
@@ -1692,6 +1695,14 @@ Result appletSetHomeButtonDoubleClickEnabled(bool flag);
  * @param[out] out Output flag.
  */
 Result appletGetHomeButtonDoubleClickEnabled(bool *out);
+
+// IDebugFunctions
+
+/**
+ * @brief Perform SystemButtonPressing with the specified \ref AppletSystemButtonType.
+ * @param[in] type \ref AppletSystemButtonType
+ */
+Result appletPerformSystemButtonPressing(AppletSystemButtonType type);
 
 // State / other
 
