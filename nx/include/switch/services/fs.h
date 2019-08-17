@@ -84,16 +84,16 @@ typedef struct {
     u64 timestamp;    ///< POSIX timestamp.
     u32 flags;        ///< Save data flags. See \ref FsSaveDataFlags.
     u32 unk_x54;      ///< Normally 0. Possibly unused?
-    u64 dataSize;     ///< Usable save data size.
-    u64 journalSize;  ///< Journal size of the save data.
+    s64 dataSize;     ///< Usable save data size.
+    s64 journalSize;  ///< Journal size of the save data.
     u64 commitId;     ///< Id of the latest commit.
     u8 unused[0x190]; ///< Uninitialized.
 } FsSaveDataExtraData;
 
 /// SaveCreate Struct
 typedef struct {
-    u64 size;           ///< Size of the save data.
-    u64 journalSize;    ///< Journal size of the save data.
+    s64 size;           ///< Size of the save data.
+    s64 journalSize;    ///< Journal size of the save data.
     u64 blockSize;      ///< Block size of the save data.
     u64 ownerId;        ///< Title id of the owner of this save data. 0 for SystemSaveData.
     u32 flags;          ///< Save data flags. See \ref FsSaveDataFlags.
@@ -178,6 +178,12 @@ typedef enum
     FS_CONTENTSTORAGEID_NandUser   = 1,
     FS_CONTENTSTORAGEID_SdCard     = 2,
 } FsContentStorageId;
+
+typedef enum
+{
+    FsCustomStorageId_NandUser = 0,
+    FsCustomStorageId_SdCard   = 1,
+} FsCustomStorageId;
 
 typedef enum
 {
@@ -272,6 +278,7 @@ Result fsOpenGameCardFileSystem(FsFileSystem* out, const FsGameCardHandle* handl
 Result fsReadSaveDataFileSystemExtraDataBySaveDataSpaceId(void* buf, size_t len, FsSaveDataSpaceId saveDataSpaceId, u64 saveID);
 Result fsReadSaveDataFileSystemExtraData(void* buf, size_t len, u64 saveID);
 Result fsWriteSaveDataFileSystemExtraData(const void* buf, size_t len, FsSaveDataSpaceId saveDataSpaceId, u64 saveID);
+Result fsExtendSaveDataFileSystem(FsSaveDataSpaceId saveDataSpaceId, u64 saveID, s64 dataSize, s64 journalSize); /// 3.0.0+
 
 /// Do not call this directly, see fs_dev.h.
 Result fsMountSdcard(FsFileSystem* out);
@@ -280,6 +287,7 @@ Result fsMountSaveData(FsFileSystem* out, u8 inval, FsSave *save);
 Result fsMountSystemSaveData(FsFileSystem* out, u8 inval, FsSave *save);
 Result fsOpenSaveDataIterator(FsSaveDataIterator* out, s32 saveDataSpaceId);
 Result fsOpenContentStorageFileSystem(FsFileSystem* out, FsContentStorageId content_storage_id);
+Result fsOpenCustomStorageFileSystem(FsFileSystem* out, FsCustomStorageId custom_storage_id); /// 7.0.0+
 Result fsOpenDataStorageByCurrentProcess(FsStorage* out);
 Result fsOpenDataStorageByDataId(FsStorage* out, u64 dataId, FsStorageId storageId);
 Result fsOpenDeviceOperator(FsDeviceOperator* out);
@@ -292,6 +300,9 @@ Result fsGetRightsIdByPath(const char* path, FsRightsId* out_rights_id);
 Result fsGetRightsIdAndKeyGenerationByPath(const char* path, u8* out_key_generation, FsRightsId* out_rights_id);
 
 Result fsDisableAutoSaveDataCreation(void);
+
+Result fsSetGlobalAccessLogMode(u32 mode);
+Result fsGetGlobalAccessLogMode(u32* out_mode);
 // todo: Rest of commands here
 
 // Wrapper(s) for fsCreateSaveDataFileSystemBySystemSaveDataId.
