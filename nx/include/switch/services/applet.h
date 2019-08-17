@@ -1704,6 +1704,11 @@ Result appletGetHomeButtonDoubleClickEnabled(bool *out);
  */
 Result appletPerformSystemButtonPressing(AppletSystemButtonType type);
 
+/**
+ * @brief InvalidateTransitionLayer.
+ */
+Result appletInvalidateTransitionLayer(void);
+
 // State / other
 
 /**

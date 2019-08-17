@@ -4791,6 +4791,10 @@ Result appletPerformSystemButtonPressing(AppletSystemButtonType type) {
     return _appletCmdInU32(&g_appletIDebugFunctions, type, 10);
 }
 
+Result appletInvalidateTransitionLayer(void) {
+    return _appletCmdNoIO(&g_appletIDebugFunctions, 20);
+}
+
 // State / other
 
 u8 appletGetOperationMode(void) {
