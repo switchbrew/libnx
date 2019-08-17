@@ -278,6 +278,7 @@ Result fsOpenGameCardFileSystem(FsFileSystem* out, const FsGameCardHandle* handl
 Result fsReadSaveDataFileSystemExtraDataBySaveDataSpaceId(void* buf, size_t len, FsSaveDataSpaceId saveDataSpaceId, u64 saveID);
 Result fsReadSaveDataFileSystemExtraData(void* buf, size_t len, u64 saveID);
 Result fsWriteSaveDataFileSystemExtraData(const void* buf, size_t len, FsSaveDataSpaceId saveDataSpaceId, u64 saveID);
+Result fsExtendSaveDataFileSystem(FsSaveDataSpaceId saveDataSpaceId, u64 saveID, s64 dataSize, s64 journalSize);
 
 /// Do not call this directly, see fs_dev.h.
 Result fsMountSdcard(FsFileSystem* out);
@@ -299,6 +300,9 @@ Result fsGetRightsIdByPath(const char* path, FsRightsId* out_rights_id);
 Result fsGetRightsIdAndKeyGenerationByPath(const char* path, u8* out_key_generation, FsRightsId* out_rights_id);
 
 Result fsDisableAutoSaveDataCreation(void);
+
+Result fsSetGlobalAccessLogMode(u32 mode);
+Result fsGetGlobalAccessLogMode(u32* out_mode);
 // todo: Rest of commands here
 
 // Wrapper(s) for fsCreateSaveDataFileSystemBySystemSaveDataId.
