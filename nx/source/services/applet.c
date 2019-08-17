@@ -2896,9 +2896,7 @@ Result appletHolderJump(AppletHolder *h) {
 
     if (R_SUCCEEDED(rc)) rc = _appletWindAndDoReserved();
 
-    if (R_FAILED(rc)) return rc;
-
-    while(1)svcSleepThread(86400000000000ULL);
+    if (R_SUCCEEDED(rc)) while(1)svcSleepThread(86400000000000ULL);
 
     return rc;
 }
@@ -3856,21 +3854,29 @@ Result appletInitializeGamePlayRecording(void) {
 }
 
 Result appletRequestToShutdown(void) {
+    Result rc=0;
+
     if (!serviceIsActive(&g_appletSrv) || !_appletIsApplication())
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return _appletCmdNoIO(&g_appletIFunctions, 70);
+    rc = _appletCmdNoIO(&g_appletIFunctions, 70);
+    if (R_SUCCEEDED(rc)) while(1)svcSleepThread(86400000000000ULL);
+    return rc;
 }
 
 Result appletRequestToReboot(void) {
+    Result rc=0;
+
     if (!serviceIsActive(&g_appletSrv) || !_appletIsApplication())
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return _appletCmdNoIO(&g_appletIFunctions, 71);
+    rc = _appletCmdNoIO(&g_appletIFunctions, 71);
+    if (R_SUCCEEDED(rc)) while(1)svcSleepThread(86400000000000ULL);
+    return rc;
 }
 
 static Result _appletInitializeApplicationCopyrightFrameBuffer(TransferMemory *tmem, s32 width, s32 height) {

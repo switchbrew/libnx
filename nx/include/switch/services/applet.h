@@ -1199,13 +1199,13 @@ Result appletSetGamePlayRecordingState(bool state);
 Result appletInitializeGamePlayRecording(void);
 
 /**
- * @brief Requests a system shutdown.
+ * @brief Requests a system shutdown. This will enter an infinite-sleep-loop on success.
  * @note Only available with AppletType_*Application on 3.0.0+.
  */
 Result appletRequestToShutdown(void);
 
 /**
- * @brief Requests a system reboot.
+ * @brief Requests a system reboot. This will enter an infinite-sleep-loop on success.
  * @note Only available with AppletType_*Application on 3.0.0+.
  */
 Result appletRequestToReboot(void);
