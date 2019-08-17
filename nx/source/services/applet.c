@@ -29,6 +29,7 @@ static Service g_appletSrv;
 static Service g_appletProxySession;
 static u64 g_refCnt;
 static bool g_appletExitProcessFlag;
+static Result g_appletExitProcessResult;
 
 // From Get*Functions.
 static Service g_appletIAppletCommonFunctions;
@@ -345,6 +346,8 @@ Result appletInitialize(void)
 static void NORETURN _appletExitProcess(int result_code) {
     appletExit();
 
+    if (R_SUCCEEDED(g_appletExitProcessResult)) while(1)svcSleepThread(86400000000000ULL);
+
     svcExitProcess();
     __builtin_unreachable();
 }
@@ -381,12 +384,10 @@ void appletExit(void)
                     return;
                 }
                 else {
-                    if (_appletIsApplication()) {
-                        //appletSetTerminateResult(0);
-                        _appletSelfExit();
-                    }
+                    if (_appletIsApplication())
+                        g_appletExitProcessResult = _appletSelfExit();
                     if (__nx_applet_type == AppletType_LibraryApplet)
-                        _appletExitProcessAndReturn();
+                        g_appletExitProcessResult = _appletExitProcessAndReturn();
                 }
             }
         }
