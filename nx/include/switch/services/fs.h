@@ -278,7 +278,7 @@ Result fsOpenGameCardFileSystem(FsFileSystem* out, const FsGameCardHandle* handl
 Result fsReadSaveDataFileSystemExtraDataBySaveDataSpaceId(void* buf, size_t len, FsSaveDataSpaceId saveDataSpaceId, u64 saveID);
 Result fsReadSaveDataFileSystemExtraData(void* buf, size_t len, u64 saveID);
 Result fsWriteSaveDataFileSystemExtraData(const void* buf, size_t len, FsSaveDataSpaceId saveDataSpaceId, u64 saveID);
-Result fsExtendSaveDataFileSystem(FsSaveDataSpaceId saveDataSpaceId, u64 saveID, s64 dataSize, s64 journalSize);
+Result fsExtendSaveDataFileSystem(FsSaveDataSpaceId saveDataSpaceId, u64 saveID, s64 dataSize, s64 journalSize); /// 3.0.0+
 
 /// Do not call this directly, see fs_dev.h.
 Result fsMountSdcard(FsFileSystem* out);
@@ -287,7 +287,7 @@ Result fsMountSaveData(FsFileSystem* out, u8 inval, FsSave *save);
 Result fsMountSystemSaveData(FsFileSystem* out, u8 inval, FsSave *save);
 Result fsOpenSaveDataIterator(FsSaveDataIterator* out, s32 saveDataSpaceId);
 Result fsOpenContentStorageFileSystem(FsFileSystem* out, FsContentStorageId content_storage_id);
-Result fsOpenCustomStorageFileSystem(FsFileSystem* out, FsCustomStorageId custom_storage_id);
+Result fsOpenCustomStorageFileSystem(FsFileSystem* out, FsCustomStorageId custom_storage_id); /// 7.0.0+
 Result fsOpenDataStorageByCurrentProcess(FsStorage* out);
 Result fsOpenDataStorageByDataId(FsStorage* out, u64 dataId, FsStorageId storageId);
 Result fsOpenDeviceOperator(FsDeviceOperator* out);

@@ -976,8 +976,7 @@ Result fsExtendSaveDataFileSystem(FsSaveDataSpaceId saveDataSpaceId, u64 saveID,
     return rc;
 }
 
-Result fsSetGlobalAccessLogMode(u32 mode)
-{
+Result fsSetGlobalAccessLogMode(u32 mode) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -1011,8 +1010,7 @@ Result fsSetGlobalAccessLogMode(u32 mode)
     return rc;
 }
 
-Result fsGetGlobalAccessLogMode(u32* out_mode)
-{
+Result fsGetGlobalAccessLogMode(u32* out_mode) {
     IpcCommand c;
     ipcInitialize(&c);
 
