@@ -1211,6 +1211,12 @@ Result appletRequestToShutdown(void);
 Result appletRequestToReboot(void);
 
 /**
+ * @brief Exit the application and return to the kiosk demo menu. This terminates the current process. This will enter an infinite-sleep-loop on success.
+ * @note Only available with AppletType_*Application on [4.0.0+], on kiosk systems (QuestFlag set).
+ */
+Result appletExitAndRequestToShowThanksMessage(void);
+
+/**
  * @brief Initializes the ApplicationCopyrightFrameBuffer, with dimensions 1280x720 + the tmem for it. This is used as an overlay for screenshots.
  * @note Only available with AppletType_*Application on 5.0.0+.
  * @note Cleanup for this is handled automatically during app exit in \ref appletExit.

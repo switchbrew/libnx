@@ -3880,6 +3880,19 @@ Result appletRequestToReboot(void) {
     return rc;
 }
 
+Result appletExitAndRequestToShowThanksMessage(void) {
+    Result rc=0;
+
+    if (!serviceIsActive(&g_appletSrv) || !_appletIsApplication())
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    rc = _appletCmdNoIO(&g_appletIFunctions, 80);
+    if (R_SUCCEEDED(rc)) while(1)svcSleepThread(86400000000000ULL);
+    return rc;
+}
+
 static Result _appletInitializeApplicationCopyrightFrameBuffer(TransferMemory *tmem, s32 width, s32 height) {
     IpcCommand c;
     ipcInitialize(&c);
