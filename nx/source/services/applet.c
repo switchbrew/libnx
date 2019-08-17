@@ -4837,6 +4837,44 @@ Result appletRequestLaunchApplicationWithUserAndArgumentForDebug(u64 titleID, u1
     return rc;
 }
 
+Result appletGetAppletResourceUsageInfo(AppletResourceUsageInfo *info) {
+    if (hosversionBefore(6,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletIDebugFunctions, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 40;
+
+    Result rc = serviceIpcDispatch(&g_appletIDebugFunctions);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            AppletResourceUsageInfo info;
+        } *resp;
+
+        serviceIpcParse(&g_appletIDebugFunctions, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && info) *info = resp->info;
+    }
+
+    return rc;
+}
+
 // State / other
 
 u8 appletGetOperationMode(void) {

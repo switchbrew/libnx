@@ -261,6 +261,14 @@ typedef struct {
     u8 unused[0x14];                   ///< Unused. Default is 0.
 } AppletApplicationAttribute;
 
+/// AppletResourceUsageInfo, from \ref appletGetAppletResourceUsageInfo.
+typedef struct {
+    u32 counter0;                      ///< Unknown counter.
+    u32 counter1;                      ///< Unknown counter.
+    u32 counter2;                      ///< Output from ns cmd GetRightsEnvironmentCountForDebug.
+    u8 unused[0x14];                   ///< Always zero.
+} AppletResourceUsageInfo;
+
 /// Initialize applet, called automatically during app startup.
 Result appletInitialize(void);
 
@@ -1719,6 +1727,13 @@ Result appletInvalidateTransitionLayer(void);
  * @param[in] size Size of the storage buffer.
  */
 Result appletRequestLaunchApplicationWithUserAndArgumentForDebug(u64 titleID, u128 *userIDs, size_t total_userIDs, bool flag, const void* buffer, size_t size);
+
+/**
+ * @brief Gets the \ref AppletResourceUsageInfo.
+ * @note Only available on [6.0.0+].
+ * @param[out] info \ref AppletResourceUsageInfo
+ */
+Result appletGetAppletResourceUsageInfo(AppletResourceUsageInfo *info);
 
 // State / other
 
