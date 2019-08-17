@@ -84,16 +84,16 @@ typedef struct {
     u64 timestamp;    ///< POSIX timestamp.
     u32 flags;        ///< Save data flags. See \ref FsSaveDataFlags.
     u32 unk_x54;      ///< Normally 0. Possibly unused?
-    u64 dataSize;     ///< Usable save data size.
-    u64 journalSize;  ///< Journal size of the save data.
+    s64 dataSize;     ///< Usable save data size.
+    s64 journalSize;  ///< Journal size of the save data.
     u64 commitId;     ///< Id of the latest commit.
     u8 unused[0x190]; ///< Uninitialized.
 } FsSaveDataExtraData;
 
 /// SaveCreate Struct
 typedef struct {
-    u64 size;           ///< Size of the save data.
-    u64 journalSize;    ///< Journal size of the save data.
+    s64 size;           ///< Size of the save data.
+    s64 journalSize;    ///< Journal size of the save data.
     u64 blockSize;      ///< Block size of the save data.
     u64 ownerId;        ///< Title id of the owner of this save data. 0 for SystemSaveData.
     u32 flags;          ///< Save data flags. See \ref FsSaveDataFlags.
