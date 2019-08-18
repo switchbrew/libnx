@@ -15,36 +15,54 @@ typedef struct {
 /// ns ApplicationControlProperty
 typedef struct {
     NacpLanguageEntry lang[16];
-
-    u8  x3000_unk[0x24];////Normally all-zero?
-    u32 x3024_unk;
-    u32 x3028_unk;
-    u32 x302C_unk;
-    u32 x3030_unk;
-    u32 x3034_unk;
-    u64 titleID0;
-
-    u8 x3040_unk[0x20];
+    u8 isbn[0x25];
+    u8 startupUserAccount;
+    u8 userAccountSwitchLock;
+    u8 addOnContentRegistrationType;
+    u32 applicationAttribute;
+    u32 supportedLanguages;
+    u32 parentalControl;
+    u8 screenshot;
+    u8 videoCaptureMode;
+    u8 dataLossConfirmation;
+    u8 playLogPolicy;
+    u64 presenceGroupId;
+    char ratingAge[0x20];
     char version[0x10];
-
-    u64 titleID_DlcBase;
-    u64 titleID1;
-
-    u32 x3080_unk;
-    u32 x3084_unk;
-    u32 x3088_unk;
-    u8 x308C_unk[0x24];//zeros?
-
-    u64 titleID2;
-    u64 titleIDs[7];//"Array of application titleIDs, normally the same as the above app-titleIDs. Only set for game-updates?"
-
-    u32 x30F0_unk;
-    u32 x30F4_unk;
-
-    u64 titleID3;//"Application titleID. Only set for game-updates?"
-
-    char bcatPassphrase[0x40];
-    u8 x3140_unk[0xEC0];//Normally all-zero?
+    u64 addOnContentBaseId;
+    u64 saveDataOwnerId;
+    u64 userAccountSaveDataSize;
+    u64 userAccountSaveDataJournalSize;
+    u64 deviceSaveDataSize;
+    u64 deviceSaveDataJournalSize;
+    u64 bcatDeliveryCacheStorageSize;
+    u64 applicationErrorCodeCategory;
+    u64 localCommunicationIds[0x08];
+    u8 logoType;
+    u8 logoHandling;
+    u8 runtimeAddOnContentInstall;
+    u8 reserved_x30F3[0x03];
+    u8 crashReport;
+    u8 hdcp;
+    u64 pseudoDeviceIdSeed;
+    char bcatPassphrase[0x41];
+    u8 reserved_x3141;
+    u8 reserved_x3142[0x06];
+    u64 userAccountSaveDataMaxSize;
+    u64 userAccountSaveDataMaxJournalSize;
+    u64 deviceSaveDataMaxSize;
+    u64 deviceSaveDataMaxJournalSize;
+    u64 temporaryStorageSize;
+    u64 cacheStorageSize;
+    u64 cacheStorageJournalSize;
+    u64 cacheStorageAndJournalMaxSize;
+    u64 cacheStorageMaxIndex;
+    u64 playLogQueryableApplicationId[0x10];
+    u8 playLogQueryCapability;
+    u8 repairFlag;
+    u8 programIndex;
+    u8 requiredNetworkServiceLicenseOnLaunch;
+    u8 reserved_x3214[0xDEC];
 } NacpStruct;
 
 /// Get the NacpLanguageEntry from the input nacp corresponding to the current system language (this may fallback to other languages when needed). Output langentry is NULL if none found / content of entry is empty.
