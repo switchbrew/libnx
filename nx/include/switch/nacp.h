@@ -35,7 +35,7 @@ typedef struct {
     u64 userAccountSaveDataJournalSize;
     u64 deviceSaveDataSize;
     u64 deviceSaveDataJournalSize;
-    u64 bcatDeliveryCacheStroageSize;
+    u64 bcatDeliveryCacheStorageSize;
     u64 applicationErrorCodeCategory;
     u64 localCommunicationIds[0x08];
     u8 logoType;
@@ -53,7 +53,7 @@ typedef struct {
     u64 deviceSaveDataMaxSize;
     u64 deviceSaveDataMaxJournalSize;
     u64 temporaryStorageSize;
-    u64 cacheStrageSize;
+    u64 cacheStorageSize;
     u64 cacheStorageJournalSize;
     u64 cacheStorageAndJournalMaxSize;
     u64 cacheStorageMaxIndex;
