@@ -126,6 +126,17 @@ typedef enum {
     LibAppletExitReason_Unexpected = 10,
 } LibAppletExitReason;
 
+/// AppletApplicationExitReason
+typedef enum {
+    AppletApplicationExitReason_Normal     = 0,
+    AppletApplicationExitReason_Unknown1   = 1,
+    AppletApplicationExitReason_Unknown2   = 2,
+    AppletApplicationExitReason_Unknown3   = 3,
+    AppletApplicationExitReason_Unknown4   = 4,
+    AppletApplicationExitReason_Unknown5   = 5,
+    AppletApplicationExitReason_Unexpected = 100,
+} AppletApplicationExitReason;
+
 /// ThemeColorType
 typedef enum {
     AppletThemeColorType_Default = 0,
@@ -214,6 +225,13 @@ typedef struct {
     LibAppletExitReason exitreason;    ///< Set by \ref appletHolderJoin using the output from cmd GetResult, see \ref LibAppletExitReason.
 } AppletHolder;
 
+/// IApplicationAccessor container.
+typedef struct {
+    Service s;                                 ///< IApplicationAccessor
+    Event StateChangedEvent;                   ///< Output from GetAppletStateChangedEvent, autoclear=false.
+    AppletApplicationExitReason exitreason;    ///< Set by \ref appletApplicationJoin using the output from cmd GetResult, see \ref AppletApplicationExitReason.
+} AppletApplication;
+
 /// Used by \ref appletInitialize with __nx_applet_AppletAttribute for cmd OpenLibraryAppletProxy (AppletType_LibraryApplet), on [3.0.0+]. The default for this struct is all-zero.
 typedef struct {
     u8 flag;                           ///< Flag. When non-zero, two state fields are set to 1.
@@ -260,6 +278,23 @@ typedef struct {
     float volume;                      ///< Audio volume. Must be in the range of 0.0f-1.0f. The default is 1.0f.
     u8 unused[0x14];                   ///< Unused. Default is 0.
 } AppletApplicationAttribute;
+
+/// ApplicationLaunchProperty
+typedef struct {
+    u64 titleID;                       ///< Application titleID.
+    u32 version;                       ///< Application title-version.
+    u8 app_storageId;                  ///< FsStorageId for the Application base title.
+    u8 update_storageId;               ///< FsStorageId for the Application update title.
+    u8 unk_xa;                         ///< Unknown.
+    u8 pad;                            ///< Padding.
+} AppletApplicationLaunchProperty;
+
+/// ApplicationLaunchRequestInfo
+typedef struct {
+    u32 unk_x0;                        ///< Unknown.
+    u32 unk_x4;                        ///< Unknown.
+    u8 unk_x8[0x8];                    ///< Unknown.
+} AppletApplicationLaunchRequestInfo;
 
 /// AppletResourceUsageInfo, from \ref appletGetAppletResourceUsageInfo.
 typedef struct {
@@ -1397,6 +1432,191 @@ Result appletShouldSleepOnBoot(bool *out);
  */
 Result appletGetHdcpAuthenticationFailedEvent(Event *out_event);
 
+// IApplicationCreator
+
+/**
+ * @brief Creates an Application.
+ * @note Only available with AppletType_SystemApplet.
+ * @param[out] a \ref AppletApplication
+ * @param[in] titleID Application titleID.
+ */
+Result appletCreateApplication(AppletApplication *a, u64 titleID);
+
+/**
+ * @brief Pops a \ref AppletApplication for a requested Application launch.
+ * @note Only available with AppletType_SystemApplet.
+ * @param[out] a \ref AppletApplication
+ */
+Result appletPopLaunchRequestedApplication(AppletApplication *a);
+
+/**
+ * @brief Creates a SystemApplication.
+ * @note Only available with AppletType_SystemApplet.
+ * @param[out] a \ref AppletApplication
+ * @param[in] titleID SystemApplication titleID.
+ */
+Result appletCreateSystemApplication(AppletApplication *a, u64 titleID);
+
+/**
+ * @brief PopFloatingApplicationForDevelopment.
+ * @note Only available with AppletType_SystemApplet. Should not be used if no FloatingApplication is available.
+ * @param[out] a \ref AppletApplication
+ */
+Result appletPopFloatingApplicationForDevelopment(AppletApplication *a);
+
+/**
+ * @brief Close an \ref AppletApplication.
+ * @param a \ref AppletApplication
+ */
+void appletApplicationClose(AppletApplication *a);
+
+/**
+ * @brief Returns whether the AppletApplication object was initialized.
+ * @param a \ref AppletApplication
+ */
+bool appletApplicationActive(AppletApplication *a);
+
+/**
+ * @brief Starts the Application.
+ * @param a \ref AppletApplication
+ */
+Result appletApplicationStart(AppletApplication *a);
+
+/**
+ * @brief Requests the Application to exit.
+ * @param a \ref AppletApplication
+ */
+Result appletApplicationRequestExit(AppletApplication *a);
+
+/**
+ * @brief Terminate the Application.
+ * @param a \ref AppletApplication
+ */
+Result appletApplicationTerminate(AppletApplication *a);
+
+/**
+ * @brief Waits for the Application to exit.
+ * @param a \ref AppletApplication
+ */
+void appletApplicationJoin(AppletApplication *a);
+
+/**
+ * @brief Waits on the Application StateChangedEvent with timeout=0, and returns whether it was successful.
+ * @param a \ref AppletApplication
+ */
+bool appletApplicationCheckFinished(AppletApplication *a);
+
+/**
+ * @brief Gets the \ref AppletApplicationExitReason set by \ref appletApplicationJoin.
+ * @param a \ref AppletApplication
+ */
+AppletApplicationExitReason appletApplicationGetExitReason(AppletApplication *a);
+
+/**
+ * @brief RequestForApplicationToGetForeground.
+ * @param a \ref AppletApplication
+ */
+Result appletApplicationRequestForApplicationToGetForeground(AppletApplication *a);
+
+/**
+ * @brief Gets the titleID for the Application.
+ * @param a \ref AppletApplication
+ * @param[out] titleID Output Application titleID.
+ */
+Result appletApplicationGetApplicationId(AppletApplication *a, u64 *titleID);
+
+/**
+ * @brief Pushes a LaunchParameter AppletStorage to the Application.
+ * @note This uses \ref appletStorageClose automatically.
+ * @param[in] s Input storage.
+ * @param kind \ref AppletLaunchParameterKind
+ */
+Result appletApplicationPushLaunchParameter(AppletApplication *a, AppletLaunchParameterKind kind, AppletStorage* s);
+
+/**
+ * @brief Gets the \ref NacpStruct for the Application.
+ * @param a \ref AppletApplication
+ * @param[out] nacp \ref NacpStruct
+ */
+Result appletApplicationGetApplicationControlProperty(AppletApplication *a, NacpStruct *nacp);
+
+/**
+ * @brief Gets the \ref AppletApplicationLaunchProperty for the Application.
+ * @note Only available on [2.0.0+]. Not usable when the AppletId is ::AppletId_starter.
+ * @param a \ref AppletApplication
+ * @param[out] out \ref AppletApplicationLaunchProperty
+ */
+Result appletApplicationGetApplicationLaunchProperty(AppletApplication *a, AppletApplicationLaunchProperty *out);
+
+/**
+ * @brief Gets the \ref AppletApplicationLaunchRequestInfo for the Application.
+ * @note Only available on [6.0.0+].
+ * @param a \ref AppletApplication
+ * @param[out] out \ref AppletApplicationLaunchRequestInfo
+ */
+Result appletApplicationGetApplicationLaunchRequestInfo(AppletApplication *a, AppletApplicationLaunchRequestInfo *out);
+
+/**
+ * @brief SetUsers for the Application.
+ * @note Only available on [6.0.0+].
+ * @param a \ref AppletApplication
+ * @param[in] userIDs Input array of userIDs.
+ * @param[in] count Size of the userID array in entries, must be <=ACC_USER_LIST_SIZE.
+ * @param[in] flag When this flag is true, this just clears the users_available state flag to 0 and returns.
+ */
+Result appletApplicationSetUsers(AppletApplication *a, const u128 *userIDs, s32 count, bool flag);
+
+/**
+ * @brief CheckRightsEnvironmentAvailable.
+ * @note Only available on [6.0.0+].
+ * @param a \ref AppletApplication
+ * @param[out] out Output flag.
+ */
+Result appletApplicationCheckRightsEnvironmentAvailable(AppletApplication *a, bool *out);
+
+/**
+ * @brief GetNsRightsEnvironmentHandle.
+ * @note Only available on [6.0.0+].
+ * @param a \ref AppletApplication
+ * @param[out] handle Output NsRightsEnvironmentHandle.
+ */
+Result appletApplicationGetNsRightsEnvironmentHandle(AppletApplication *a, u64 *handle);
+
+/**
+ * @brief Gets an array of userIDs for the Application DesirableUids.
+ * @note Only available on [6.0.0+].
+ * @note qlaunch only uses 1 userID with this.
+ * @param a \ref AppletApplication
+ * @param[out] userIDs Output array of userIDs.
+ * @param[in] count Size of the userID array in entries, must be at least the size stored in state.
+ * @param[out] total_out Total output entries.
+ */
+Result appletApplicationGetDesirableUids(AppletApplication *a, u128 *userIDs, s32 count, s32 *total_out);
+
+/**
+ * @brief ReportApplicationExitTimeout.
+ * @note Only available on [6.0.0+].
+ * @param a \ref AppletApplication
+ */
+Result appletApplicationReportApplicationExitTimeout(AppletApplication *a);
+
+/**
+ * @brief Sets the \ref AppletApplicationAttribute for the Application.
+ * @note Only available on [8.0.0+].
+ * @param a \ref AppletApplication
+ * @param[in] attr \ref AppletApplicationAttribute
+ */
+Result appletApplicationSetApplicationAttribute(AppletApplication *a, const AppletApplicationAttribute *attr);
+
+/**
+ * @brief Gets whether the savedata specified by the input titleID is accessible.
+ * @note Only available on [8.0.0+].
+ * @param a \ref AppletApplication
+ * @param[in] titleID titleID for the savedata.
+ * @param[out] out Output flag.
+ */
+Result appletApplicationHasSaveDataAccessPermission(AppletApplication *a, u64 titleID, bool *out);
+
 // ILibraryAppletSelfAccessor
 
 /**
@@ -1572,7 +1792,7 @@ Result appletRequestExitToSelf(void);
  * @brief Gets an array of userIDs for the MainApplet AvailableUsers.
  * @note Only available with AppletType_LibraryApplet on [6.0.0+].
  * @param[out] userIDs Output array of userIDs.
- * @param[in] count Size of the userID array, must be at least ACC_USER_LIST_SIZE.
+ * @param[in] count Size of the userID array in entries, must be at least ACC_USER_LIST_SIZE.
  * @param[out] flag When true, this indicates that no users are available.
  * @param[out] total_out Total output entries. This is -1 when flag is true.
  */
@@ -1705,6 +1925,13 @@ Result appletSetHomeButtonDoubleClickEnabled(bool flag);
 Result appletGetHomeButtonDoubleClickEnabled(bool *out);
 
 // IDebugFunctions
+
+/**
+ * @brief Open an \ref AppletApplication for the currently running Application.
+ * @note Should not be used when no Application is running.
+ * @param[out] a \ref AppletApplication
+ */
+Result appletOpenMainApplication(AppletApplication *a);
 
 /**
  * @brief Perform SystemButtonPressing with the specified \ref AppletSystemButtonType.
