@@ -62,7 +62,7 @@ typedef struct {
     u8 repairFlag;
     u8 programIndex;
     u8 requiredNetworkServiceLicenseOnLaunch;
-    u8 reserved_3214[0xDEC];
+    u8 reserved_x3214[0xDEC];
 } NacpStruct;
 
 /// Get the NacpLanguageEntry from the input nacp corresponding to the current system language (this may fallback to other languages when needed). Output langentry is NULL if none found / content of entry is empty.
