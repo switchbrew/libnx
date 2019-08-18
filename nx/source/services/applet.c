@@ -343,10 +343,14 @@ Result appletInitialize(void)
     return rc;
 }
 
+static void _appletInfiniteSleepLoop(void) {
+    while(1) svcSleepThread(86400000000000ULL);
+}
+
 static void NORETURN _appletExitProcess(int result_code) {
     appletExit();
 
-    if (R_SUCCEEDED(g_appletExitProcessResult)) while(1)svcSleepThread(86400000000000ULL);
+    if (R_SUCCEEDED(g_appletExitProcessResult)) _appletInfiniteSleepLoop();
 
     svcExitProcess();
     __builtin_unreachable();
@@ -2965,7 +2969,7 @@ Result appletHolderJump(AppletHolder *h) {
 
     if (R_SUCCEEDED(rc)) rc = _appletWindAndDoReserved();
 
-    if (R_SUCCEEDED(rc)) while(1)svcSleepThread(86400000000000ULL);
+    if (R_SUCCEEDED(rc)) _appletInfiniteSleepLoop();
 
     return rc;
 }
@@ -3931,7 +3935,7 @@ Result appletRequestToShutdown(void) {
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     rc = _appletCmdNoIO(&g_appletIFunctions, 70);
-    if (R_SUCCEEDED(rc)) while(1)svcSleepThread(86400000000000ULL);
+    if (R_SUCCEEDED(rc)) _appletInfiniteSleepLoop();
     return rc;
 }
 
@@ -3944,7 +3948,7 @@ Result appletRequestToReboot(void) {
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     rc = _appletCmdNoIO(&g_appletIFunctions, 71);
-    if (R_SUCCEEDED(rc)) while(1)svcSleepThread(86400000000000ULL);
+    if (R_SUCCEEDED(rc)) _appletInfiniteSleepLoop();
     return rc;
 }
 
@@ -3957,7 +3961,7 @@ Result appletExitAndRequestToShowThanksMessage(void) {
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     rc = _appletCmdNoIO(&g_appletIFunctions, 80);
-    if (R_SUCCEEDED(rc)) while(1)svcSleepThread(86400000000000ULL);
+    if (R_SUCCEEDED(rc)) _appletInfiniteSleepLoop();
     return rc;
 }
 
@@ -5076,21 +5080,29 @@ Result appletSetScreenShotPermissionGlobally(bool flag) {
 }
 
 Result appletStartShutdownSequenceForOverlay(void) {
+    Result rc=0;
+
     if (__nx_applet_type != AppletType_OverlayApplet)
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     if (hosversionBefore(6,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return _appletCmdNoIO(&g_appletIFunctions, 10);
+    rc = _appletCmdNoIO(&g_appletIFunctions, 10);
+    if (R_SUCCEEDED(rc)) _appletInfiniteSleepLoop();
+    return rc;
 }
 
 Result appletStartRebootSequenceForOverlay(void) {
+    Result rc=0;
+
     if (__nx_applet_type != AppletType_OverlayApplet)
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     if (hosversionBefore(6,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return _appletCmdNoIO(&g_appletIFunctions, 11);
+    rc = _appletCmdNoIO(&g_appletIFunctions, 11);
+    if (R_SUCCEEDED(rc)) _appletInfiniteSleepLoop();
+    return rc;
 }
 
 Result appletSetHandlingHomeButtonShortPressedEnabled(bool flag) {

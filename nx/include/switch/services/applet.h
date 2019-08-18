@@ -1850,13 +1850,13 @@ Result appletTerminateApplicationAndSetReason(Result reason);
 Result appletSetScreenShotPermissionGlobally(bool flag);
 
 /**
- * @brief Start the system-shutdown sequence.
+ * @brief Start the system-shutdown sequence. This will enter an infinite-sleep-loop on success.
  * @note Only available with AppletType_OverlayApplet on [6.0.0+].
  */
 Result appletStartShutdownSequenceForOverlay(void);
 
 /**
- * @brief Start the system-reboot sequence.
+ * @brief Start the system-reboot sequence. This will enter an infinite-sleep-loop on success.
  * @note Only available with AppletType_OverlayApplet on [6.0.0+].
  */
 Result appletStartRebootSequenceForOverlay(void);
