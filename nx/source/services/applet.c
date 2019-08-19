@@ -115,6 +115,7 @@ static Result _appletGetLaunchReason(AppletProcessLaunchReason *reason);
 static Result _appletOpenCallingLibraryApplet(AppletHolder *h);
 
 static Result _appletHolderCreateState(AppletHolder *h, LibAppletMode mode, bool creating_self);
+static Result _appletOpenExistingLibraryApplet(AppletHolder *h, Service* srv, u64 cmd_id);
 
 Result appletInitialize(void)
 {
@@ -2661,20 +2662,7 @@ static Result _appletOpenCallingLibraryApplet(AppletHolder *h) {
     if (__nx_applet_type != AppletType_LibraryApplet)
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    Result rc=0;
-    LibAppletInfo info={0};
-
-    memset(h, 0, sizeof(AppletHolder));
-
-    rc = _appletGetSession(&g_appletIProcessWindingController, &h->s, 11);
-
-    if (R_SUCCEEDED(rc)) rc = appletHolderGetLibraryAppletInfo(h, &info);
-
-    if (R_SUCCEEDED(rc)) rc = _appletHolderCreateState(h, info.mode, false);
-
-    if (R_FAILED(rc)) appletHolderClose(h);
-
-    return rc;
+    return _appletOpenExistingLibraryApplet(h, &g_appletIProcessWindingController, 11);
 }
 
 Result appletPushContext(AppletStorage *s) {
@@ -2908,6 +2896,26 @@ static Result _appletHolderCreate(AppletHolder *h, AppletId id, LibAppletMode mo
     return rc;
 }
 
+static Result _appletOpenExistingLibraryApplet(AppletHolder *h, Service* srv, u64 cmd_id) {
+    if (__nx_applet_type != AppletType_LibraryApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    Result rc=0;
+    LibAppletInfo info={0};
+
+    memset(h, 0, sizeof(AppletHolder));
+
+    rc = _appletGetSession(srv, &h->s, cmd_id);
+
+    if (R_SUCCEEDED(rc)) rc = appletHolderGetLibraryAppletInfo(h, &info);
+
+    if (R_SUCCEEDED(rc)) rc = _appletHolderCreateState(h, info.mode, false);
+
+    if (R_FAILED(rc)) appletHolderClose(h);
+
+    return rc;
+}
+
 Result appletCreateLibraryApplet(AppletHolder *h, AppletId id, LibAppletMode mode) {
     return _appletHolderCreate(h, id, mode, false);
 }
@@ -2983,6 +2991,33 @@ Result appletHolderRequestExit(AppletHolder *h) {
     if (!appletHolderCheckFinished(h)) rc = _appletCmdNoIO(&h->s, 20);//RequestExit
 
     return rc;
+}
+
+static Result _appletAccessorRequestExitOrTerminate(Service* srv, u64 timeout) {
+    Result rc=0;
+    Event StateChangedEvent={0};
+
+    if (!serviceIsActive(srv))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    rc = _appletGetEvent(srv, &StateChangedEvent, 0, false);//GetAppletStateChangedEvent
+
+    if (R_SUCCEEDED(rc)) rc = _appletCmdNoIO(srv, 20);//RequestExit
+
+    if (R_SUCCEEDED(rc)) {
+        rc = eventWait(&StateChangedEvent, timeout);
+
+        if (R_FAILED(rc) && R_VALUE(rc) == KERNELRESULT(TimedOut))
+            rc = _appletCmdNoIO(srv, 25);//Terminate
+    }
+
+    eventClose(&StateChangedEvent);
+
+    return rc;
+}
+
+Result appletHolderRequestExitOrTerminate(AppletHolder *h, u64 timeout) {
+    return _appletAccessorRequestExitOrTerminate(&h->s, timeout);
 }
 
 void appletHolderJoin(AppletHolder *h) {
@@ -4462,6 +4497,20 @@ Result appletApplicationRequestForApplicationToGetForeground(AppletApplication *
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     rc = _appletCmdNoIO(&a->s, 101);//RequestForApplicationToGetForeground
+
+    return rc;
+}
+
+Result appletApplicationRequestExitLibraryAppletOrTerminate(AppletApplication *a, u64 timeout) {
+    Result rc=0;
+    Service srv={0};
+
+    if (!serviceIsActive(&a->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    rc = _appletGetSession(&a->s, &srv, 112);//GetCurrentLibraryApplet
+    if (R_SUCCEEDED(rc)) rc = _appletAccessorRequestExitOrTerminate(&srv, timeout);
+    serviceClose(&srv);
 
     return rc;
 }

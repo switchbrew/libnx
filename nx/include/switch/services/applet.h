@@ -980,6 +980,13 @@ Result appletHolderJump(AppletHolder *h);
 Result appletHolderRequestExit(AppletHolder *h);
 
 /**
+ * @brief Uses cmds GetAppletStateChangedEvent and RequestExit, then waits for the LibraryApplet to exit with the specified timeout. If a timeout occurs, the Terminate cmd is used.
+ * @param h AppletHolder object.
+ * @param[in] timeout Timeout in nanoseconds. U64_MAX for no timeout.
+ */
+Result appletHolderRequestExitOrTerminate(AppletHolder *h, u64 timeout);
+
+/**
  * @brief Waits for the LibraryApplet to exit.
  * @param h AppletHolder object.
  */
@@ -1517,6 +1524,13 @@ AppletApplicationExitReason appletApplicationGetExitReason(AppletApplication *a)
  * @param a \ref AppletApplication
  */
 Result appletApplicationRequestForApplicationToGetForeground(AppletApplication *a);
+
+/**
+ * @brief Calls the same func as \ref appletHolderRequestExitOrTerminate with the output IAppletAccessor from the GetCurrentLibraryApplet cmd.
+ * @param a \ref AppletApplication
+ * @param[in] timeout Timeout in nanoseconds. U64_MAX for no timeout.
+ */
+Result appletApplicationRequestExitLibraryAppletOrTerminate(AppletApplication *a, u64 timeout);
 
 /**
  * @brief Gets the titleID for the Application.
