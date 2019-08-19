@@ -89,7 +89,7 @@ typedef enum {
     AppletId_application = 0x01,    ///<                  Application. Not valid for use with LibraryApplets.
     AppletId_overlayDisp = 0x02,    ///< 010000000000100C "overlayDisp"
     AppletId_qlaunch = 0x03,        ///< 0100000000001000 "qlaunch" (SystemAppletMenu)
-    AppletId_starter = 0x04,        ///< 0100000000001012 "starter"
+    AppletId_starter = 0x04,        ///< 0100000000001012 "starter" SystemApplication.
     AppletId_auth = 0x0A,           ///< 0100000000001001 "auth"
     AppletId_cabinet = 0x0B,        ///< 0100000000001002 "cabinet"
     AppletId_controller = 0x0C,     ///< 0100000000001003 "controller"
@@ -291,9 +291,9 @@ typedef struct {
 
 /// ApplicationLaunchRequestInfo
 typedef struct {
-    u32 unk_x0;                        ///< Unknown.
-    u32 unk_x4;                        ///< Unknown.
-    u8 unk_x8[0x8];                    ///< Unknown.
+    u32 unk_x0;                        ///< Unknown. The default is 0x0 with \ref appletCreateSystemApplication, 0x3 with \ref appletCreateApplication.
+    u32 unk_x4;                        ///< Unknown. The default is 0x0 with \ref appletCreateSystemApplication, 0x3 with \ref appletCreateApplication.
+    u8 unk_x8[0x8];                    ///< Unknown. The default is 0x0.
 } AppletApplicationLaunchRequestInfo;
 
 /// AppletResourceUsageInfo, from \ref appletGetAppletResourceUsageInfo.
@@ -464,7 +464,7 @@ Result appletSetTvPowerStateMatchingMode(AppletTvPowerStateMatchingMode mode);
 
 /**
  * @brief Gets the application titleID for the specified ContentActionName string.
- * @note Only available when the current applet is ::AppletId_starter on [5.1.0+].
+ * @note Only available when the current applet is a AppletType_SystemApplication on [5.1.0+].
  * @param[out] titleID Application titleID.
  * @param[in] name ContentActionName string.
  */
@@ -1556,7 +1556,7 @@ Result appletApplicationGetApplicationControlProperty(AppletApplication *a, Nacp
 
 /**
  * @brief Gets the \ref AppletApplicationLaunchProperty for the Application.
- * @note Only available on [2.0.0+]. Not usable when the AppletId is ::AppletId_starter.
+ * @note Only available on [2.0.0+]. Not usable when the \ref AppletApplication is for a AppletType_SystemApplication.
  * @param a \ref AppletApplication
  * @param[out] out \ref AppletApplicationLaunchProperty
  */
