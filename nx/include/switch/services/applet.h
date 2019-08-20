@@ -980,6 +980,12 @@ Result appletHolderJump(AppletHolder *h);
 Result appletHolderRequestExit(AppletHolder *h);
 
 /**
+ * @brief Terminate the LibraryApplet.
+ * @param h AppletHolder object.
+ */
+Result appletHolderTerminate(AppletHolder *h);
+
+/**
  * @brief Uses cmds GetAppletStateChangedEvent and RequestExit, then waits for the LibraryApplet to exit with the specified timeout. If a timeout occurs, the Terminate cmd is used.
  * @param h AppletHolder object.
  * @param[in] timeout Timeout in nanoseconds. U64_MAX for no timeout.

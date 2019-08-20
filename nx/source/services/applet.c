@@ -2993,6 +2993,17 @@ Result appletHolderRequestExit(AppletHolder *h) {
     return rc;
 }
 
+Result appletHolderTerminate(AppletHolder *h) {
+    Result rc=0;
+
+    if (!serviceIsActive(&h->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    rc = _appletCmdNoIO(&h->s, 25);//Terminate
+
+    return rc;
+}
+
 static Result _appletAccessorRequestExitOrTerminate(Service* srv, u64 timeout) {
     Result rc=0;
     Event StateChangedEvent={0};
