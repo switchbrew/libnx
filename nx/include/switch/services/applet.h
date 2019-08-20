@@ -464,7 +464,7 @@ Result appletSetTvPowerStateMatchingMode(AppletTvPowerStateMatchingMode mode);
 
 /**
  * @brief Gets the application titleID for the specified ContentActionName string.
- * @note Only available when the current applet is a AppletType_SystemApplication on [5.1.0+].
+ * @note Only available when the current applet is an AppletType_SystemApplication on [5.1.0+].
  * @param[out] titleID Application titleID.
  * @param[in] name ContentActionName string.
  */
@@ -1595,6 +1595,7 @@ Result appletApplicationPushLaunchParameter(AppletApplication *a, AppletLaunchPa
 
 /**
  * @brief Gets the \ref NacpStruct for the Application.
+ * @note Not usable when the \ref AppletApplication is for an AppletType_SystemApplication.
  * @param a \ref AppletApplication
  * @param[out] nacp \ref NacpStruct
  */
@@ -1602,7 +1603,7 @@ Result appletApplicationGetApplicationControlProperty(AppletApplication *a, Nacp
 
 /**
  * @brief Gets the \ref AppletApplicationLaunchProperty for the Application.
- * @note Only available on [2.0.0+]. Not usable when the \ref AppletApplication is for a AppletType_SystemApplication.
+ * @note Only available on [2.0.0+]. Not usable when the \ref AppletApplication is for an AppletType_SystemApplication.
  * @param a \ref AppletApplication
  * @param[out] out \ref AppletApplicationLaunchProperty
  */
