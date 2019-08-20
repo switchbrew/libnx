@@ -3772,6 +3772,48 @@ Result appletGetDisplayVersion(char *displayVersion) {
     return rc;
 }
 
+Result appletGetLaunchStorageInfoForDebug(FsStorageId *app_storageId, FsStorageId *update_storageId) {
+    if (!serviceIsActive(&g_appletSrv) || !_appletIsApplication())
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletIFunctions, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 24;
+
+    Result rc = serviceIpcDispatch(&g_appletIFunctions);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            u8 app_storageId;
+            u8 update_storageId;
+        } *resp;
+
+        serviceIpcParse(&g_appletIFunctions, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && app_storageId) *app_storageId = resp->app_storageId;
+        if (R_SUCCEEDED(rc) && update_storageId) *update_storageId = resp->update_storageId;
+    }
+
+    return rc;
+}
+
 Result appletBeginBlockingHomeButtonShortAndLongPressed(s64 val) {
     if (!serviceIsActive(&g_appletSrv) || !_appletIsApplication())
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);

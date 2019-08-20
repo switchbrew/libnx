@@ -1212,6 +1212,14 @@ Result appletSetTerminateResult(Result res);
 Result appletGetDisplayVersion(char *displayVersion);
 
 /**
+ * @brief Gets the LaunchStorageInfo.
+ * @note Only available with AppletType_*Application on [2.0.0+].
+ * @param[out] app_storageId Same as AppletApplicationLaunchProperty::app_storageId.
+ * @param[out] update_storageId Same as AppletApplicationLaunchProperty::update_storageId.
+ */
+Result appletGetLaunchStorageInfoForDebug(FsStorageId *app_storageId, FsStorageId *update_storageId);
+
+/**
  * @brief Blocks the usage of the home button, for short (Home Menu) and long (Overlay) presses.
  * @note Only available with AppletType_*Application.
  * @param val Unknown. Official sw only uses hard-coded value 0 for this.
