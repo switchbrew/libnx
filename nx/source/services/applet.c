@@ -4314,6 +4314,19 @@ Result appletPopRequestLaunchApplicationForDebug(u128 *userIDs, s32 count, u64 *
     return rc;
 }
 
+Result appletLaunchDevMenu(void) {
+    Result rc=0;
+
+    if (__nx_applet_type != AppletType_SystemApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(8,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    rc = _appletCmdNoIO(&g_appletIFunctions, 200);
+    if (R_SUCCEEDED(rc)) _appletInfiniteSleepLoop();
+    return rc;
+}
+
 // IGlobalStateController
 
 Result appletStartSleepSequence(bool flag) {

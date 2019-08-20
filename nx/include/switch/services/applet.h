@@ -1381,6 +1381,13 @@ Result appletGetHomeButtonWriterLockAccessor(AppletLockAccessor *a);
  */
 Result appletPopRequestLaunchApplicationForDebug(u128 *userIDs, s32 count, u64 *titleID, s32 *total_out);
 
+/**
+ * @brief Launches DevMenu and the dev Overlay-applet. This will enter an infinite-sleep-loop on success.
+ * @note Only available with AppletType_SystemApplet on [8.0.0+].
+ * @note This verifies that DebugMode is enabled, then uses a ns cmd. That cmd then loads the system-settings for these two titleIDs (which normally only exist on devunits), and verifies that these titles are installed + launches them.
+ */
+Result appletLaunchDevMenu(void);
+
 // IGlobalStateController
 
 /**
