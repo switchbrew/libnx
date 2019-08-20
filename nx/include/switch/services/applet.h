@@ -1371,6 +1371,16 @@ Result appletGetPopFromGeneralChannelEvent(Event *out_event);
  */
 Result appletGetHomeButtonWriterLockAccessor(AppletLockAccessor *a);
 
+/**
+ * @brief PopRequestLaunchApplicationForDebug
+ * @note Only available with AppletType_SystemApplet on [6.0.0+].
+ * @param[out] userIDs Output array of userIDs.
+ * @param[in] count Size of the userID array in entries, must be at least the size stored in state.
+ * @param[out] titleID Output Application titleID.
+ * @param[out] total_out Total output userID entries.
+ */
+Result appletPopRequestLaunchApplicationForDebug(u128 *userIDs, s32 count, u64 *titleID, s32 *total_out);
+
 // IGlobalStateController
 
 /**

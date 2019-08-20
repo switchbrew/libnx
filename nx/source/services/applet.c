@@ -4270,6 +4270,50 @@ Result appletGetHomeButtonWriterLockAccessor(AppletLockAccessor *a) {
     return _appletGetHomeButtonRwLockAccessor(&g_appletIFunctions, a, 30);
 }
 
+Result appletPopRequestLaunchApplicationForDebug(u128 *userIDs, s32 count, u64 *titleID, s32 *total_out) {
+    if (__nx_applet_type != AppletType_SystemApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(6,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    ipcAddRecvBuffer(&c, userIDs, count*sizeof(u128), BufferType_Normal);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletIFunctions, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 100;
+
+    Result rc = serviceIpcDispatch(&g_appletIFunctions);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            u64 titleID;
+            s32 total_out;
+        } *resp;
+
+        serviceIpcParse(&g_appletIFunctions, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && titleID) *titleID = resp->titleID;
+        if (R_SUCCEEDED(rc) && total_out) *total_out = resp->total_out;
+    }
+
+    return rc;
+}
+
 // IGlobalStateController
 
 Result appletStartSleepSequence(bool flag) {
