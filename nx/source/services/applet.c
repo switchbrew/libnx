@@ -2924,6 +2924,14 @@ Result appletCreateLibraryAppletSelf(AppletHolder *h, AppletId id, LibAppletMode
     return _appletHolderCreate(h, id, mode, true);
 }
 
+Result appletTerminateAllLibraryApplets(void) {
+    return _appletCmdNoIO(&g_appletILibraryAppletCreator, 1);
+}
+
+Result appletAreAnyLibraryAppletsLeft(bool *out) {
+    return _appletCmdNoInOutBool(&g_appletILibraryAppletCreator, out, 2);
+}
+
 void appletHolderClose(AppletHolder *h) {
     eventClose(&h->PopInteractiveOutDataEvent);
 
@@ -4567,6 +4575,20 @@ Result appletApplicationRequestForApplicationToGetForeground(AppletApplication *
     rc = _appletCmdNoIO(&a->s, 101);//RequestForApplicationToGetForeground
 
     return rc;
+}
+
+Result appletApplicationTerminateAllLibraryApplets(AppletApplication *a) {
+    if (!serviceIsActive(&a->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _appletCmdNoIO(&a->s, 110);
+}
+
+Result appletApplicationAreAnyLibraryAppletsLeft(AppletApplication *a, bool *out) {
+    if (!serviceIsActive(&a->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _appletCmdNoInOutBool(&a->s, out, 111);
 }
 
 Result appletApplicationRequestExitLibraryAppletOrTerminate(AppletApplication *a, u64 timeout) {

@@ -946,6 +946,18 @@ Result appletCreateLibraryApplet(AppletHolder *h, AppletId id, LibAppletMode mod
  */
 Result appletCreateLibraryAppletSelf(AppletHolder *h, AppletId id, LibAppletMode mode);
 
+/**
+ * @brief TerminateAllLibraryApplets which were created by the current applet.
+ * @note Normally LibraryApplet cleanup should be handled via \ref AppletHolder.
+ */
+Result appletTerminateAllLibraryApplets(void);
+
+/**
+ * @brief AreAnyLibraryAppletsLeft which were created by the current applet.
+ * @param[out] out Output flag.
+ */
+Result appletAreAnyLibraryAppletsLeft(bool *out);
+
 /// Closes an AppletHolder object.
 void appletHolderClose(AppletHolder *h);
 
@@ -1547,6 +1559,17 @@ AppletApplicationExitReason appletApplicationGetExitReason(AppletApplication *a)
  * @param a \ref AppletApplication
  */
 Result appletApplicationRequestForApplicationToGetForeground(AppletApplication *a);
+
+/**
+ * @brief TerminateAllLibraryApplets which were created by the Application.
+ */
+Result appletApplicationTerminateAllLibraryApplets(AppletApplication *a);
+
+/**
+ * @brief AreAnyLibraryAppletsLeft which were created by the Application.
+ * @param[out] out Output flag.
+ */
+Result appletApplicationAreAnyLibraryAppletsLeft(AppletApplication *a, bool *out);
 
 /**
  * @brief Calls the same func as \ref appletHolderRequestExitOrTerminate with the output IAppletAccessor from the GetCurrentLibraryApplet cmd.
