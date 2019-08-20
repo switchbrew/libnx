@@ -1882,6 +1882,12 @@ Result appletStartRebootSequenceForOverlay(void);
  */
 Result appletSetHandlingHomeButtonShortPressedEnabled(bool flag);
 
+/**
+ * @brief Enables HID input for the OverlayApplet, without disabling input for the foreground applet. Generally \ref appletBeginToWatchShortHomeButtonMessage / appletEndToWatchShortHomeButtonMessage should be used instead.
+ * @note Only available with AppletType_OverlayApplet on [5.0.0+].
+ */
+Result appletBeginToObserveHidInputForDevelop(void);
+
 // IAppletCommonFunctions
 
 /**

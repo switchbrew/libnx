@@ -5163,6 +5163,15 @@ Result appletSetHandlingHomeButtonShortPressedEnabled(bool flag) {
     return _appletCmdInBool(&g_appletIFunctions, flag, 20);
 }
 
+Result appletBeginToObserveHidInputForDevelop(void) {
+    if (__nx_applet_type != AppletType_OverlayApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdNoIO(&g_appletIFunctions, 101);
+}
+
 // IAppletCommonFunctions
 
 Result appletReadThemeStorage(void* buffer, size_t size, u64 offset, size_t *transfer_size) {
