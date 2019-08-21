@@ -1354,6 +1354,13 @@ Result appletQueryApplicationPlayStatisticsByUid(u128 userID, PdmApplicationPlay
  */
 Result appletGetGpuErrorDetectedSystemEvent(Event *out_event);
 
+/**
+ * @brief Launches the jit-sysmodule when it was not previously launched by this cmd. Returns 0 when it was previously launched.
+ * @note Only available with AppletType_*Application on [5.0.0+].
+ * @note Requires the jit-sysmodule to actually be installed.
+ */
+Result appletPrepareForJit(void);
+
 // IHomeMenuFunctions
 
 /**

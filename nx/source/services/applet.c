@@ -4287,6 +4287,15 @@ Result appletGetGpuErrorDetectedSystemEvent(Event *out_event) {
     return _appletGetEvent(&g_appletIFunctions, out_event, 130, false);
 }
 
+Result appletPrepareForJit(void) {
+    if (!serviceIsActive(&g_appletSrv) || !_appletIsApplication())
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdNoIO(&g_appletIFunctions, 1001);
+}
+
 // IHomeMenuFunctions
 
 Result appletRequestToGetForeground(void) {
