@@ -4277,6 +4277,112 @@ Result appletQueryApplicationPlayStatisticsByUid(u128 userID, PdmApplicationPlay
     return rc;
 }
 
+static Result _appletExecuteProgramCmd(AppletProgramSpecifyKind kind, u64 inval) {
+    if (!serviceIsActive(&g_appletSrv) || !_appletIsApplication())
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 kind;
+        u64 inval;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletIFunctions, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 120;
+    raw->kind = kind;
+    raw->inval = inval;
+
+    Result rc = serviceIpcDispatch(&g_appletIFunctions);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_appletIFunctions, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+static Result _appletClearUserChannel(void) {
+    if (!serviceIsActive(&g_appletSrv) || !_appletIsApplication())
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdNoIO(&g_appletIFunctions, 121);
+}
+
+static Result _appletUnpopToUserChannel(AppletStorage *s) {
+    if (!serviceIsActive(&g_appletSrv) || !_appletIsApplication())
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdInStorage(&g_appletIFunctions, s, 122);
+}
+
+static Result _appletExecuteProgram(AppletProgramSpecifyKind kind, u64 inval, const void* buffer, size_t size) {
+    Result rc=0;
+    AppletStorage storage={0};
+
+    if (size > 0x1000)
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+
+    if (buffer!=NULL && size!=0) {
+        rc = appletCreateStorage(&storage, size);
+        if (R_SUCCEEDED(rc)) rc = appletStorageWrite(&storage, 0, buffer, size);
+    }
+
+    if (R_SUCCEEDED(rc)) rc = _appletClearUserChannel();
+    if (R_SUCCEEDED(rc) && buffer!=0 && size!=0) rc = _appletUnpopToUserChannel(&storage);
+    if (R_SUCCEEDED(rc)) rc = _appletExecuteProgramCmd(kind, inval);
+
+    appletStorageClose(&storage);
+
+    return rc;
+}
+
+Result appletExecuteProgram(s32 programIndex, const void* buffer, size_t size) {
+    Result rc=0;
+
+    if (programIndex<0 || programIndex>0xff) rc = MAKERESULT(Module_Libnx, LibnxError_BadInput);
+    if (R_SUCCEEDED(rc)) rc = _appletExecuteProgram(AppletProgramSpecifyKind_ExecuteProgram, (u64)programIndex, buffer, size);
+    if (R_SUCCEEDED(rc)) _appletInfiniteSleepLoop();
+    return rc;
+}
+
+Result appletJumpToSubApplicationProgramForDevelopment(u64 titleID, const void* buffer, size_t size) {
+    return _appletExecuteProgram(AppletProgramSpecifyKind_JumpToSubApplicationProgramForDevelopment, titleID, buffer, size);
+}
+
+Result appletRestartProgram(const void* buffer, size_t size) {
+    return _appletExecuteProgram(AppletProgramSpecifyKind_RestartProgram, 0, buffer, size);
+}
+
+Result appletGetPreviousProgramIndex(s32 *programIndex) {
+    if (!serviceIsActive(&g_appletSrv) || !_appletIsApplication())
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdNoInOut32(&g_appletIFunctions, (u32*)programIndex, 123);
+}
+
 Result appletGetGpuErrorDetectedSystemEvent(Event *out_event) {
     if (!serviceIsActive(&g_appletSrv) || !_appletIsApplication())
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);

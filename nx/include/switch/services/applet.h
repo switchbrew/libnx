@@ -189,6 +189,13 @@ typedef enum {
     AppletCaptureSharedBuffer_CallerApplet    = 2,                     ///< CallerApplet
 } AppletCaptureSharedBuffer;
 
+/// ProgramSpecifyKind for the ExecuteProgram cmd. Controls the type of the u64 passed to the ExecuteProgram cmd.
+typedef enum {
+    AppletProgramSpecifyKind_ExecuteProgram                            = 0,    ///< u8 ProgramIndex.
+    AppletProgramSpecifyKind_JumpToSubApplicationProgramForDevelopment = 1,    ///< u64 titleID. Only available when DebugMode is enabled.
+    AppletProgramSpecifyKind_RestartProgram                            = 2,    ///< u64 = value 0.
+} AppletProgramSpecifyKind;
+
 /// applet hook function.
 typedef void (*AppletHookFn)(AppletHookType hook, void* param);
 
@@ -1344,6 +1351,42 @@ Result appletQueryApplicationPlayStatistics(PdmApplicationPlayStatistics *stats,
  * @param total_out Total output entries.
  */
 Result appletQueryApplicationPlayStatisticsByUid(u128 userID, PdmApplicationPlayStatistics *stats, const u64 *titleIDs, s32 count, s32 *total_out);
+
+/**
+ * @brief Launches Application title {current_titleID}+programIndex. This will enter an infinite-sleep-loop on success.
+ * @note Only available with AppletType_*Application on [5.0.0+].
+ * @note Creates the storage if needed. Uses cmd ClearUserChannel. Uses cmd UnpopToUserChannel when the storage was created. Lastly cmd ExecuteProgramCmd is used.
+ * @param[in] programIndex ProgramIndex, must be 0x0-0xFF. 0 is the same as the current titleID. ProgramIndex values where the title is not installed should not be used.
+ * @param[in] buffer Optional buffer containing the storage data which will be used for ::AppletLaunchParameterKind_UserChannel with the launched Application, can be NULL.
+ * @param[in] size Size of the above buffer, 0 to not use the storage. Must be <=0x1000.
+ */
+Result appletExecuteProgram(s32 programIndex, const void* buffer, size_t size);
+
+/**
+ * @brief Launches the specified Application titleID.
+ * @note Only available with AppletType_*Application on [5.0.0+], with DebugMode enabled.
+ * @note Creates the storage if needed. Uses cmd ClearUserChannel. Uses cmd UnpopToUserChannel when the storage was created. Lastly cmd ExecuteProgramCmd is used.
+ * @param[in] titleID Application titleID.
+ * @param[in] buffer Optional buffer containing the storage data which will be used for ::AppletLaunchParameterKind_UserChannel with the launched Application, can be NULL.
+ * @param[in] size Size of the above buffer, 0 to not use the storage. Must be <=0x1000.
+ */
+Result appletJumpToSubApplicationProgramForDevelopment(u64 titleID, const void* buffer, size_t size);
+
+/**
+ * @brief Relaunches the current Application.
+ * @note Only available with AppletType_*Application on [5.0.0+].
+ * @note Creates the storage if needed. Uses cmd ClearUserChannel. Uses cmd UnpopToUserChannel when the storage was created. Lastly cmd ExecuteProgramCmd is used.
+ * @param[in] buffer Optional buffer containing the storage data which will be used for ::AppletLaunchParameterKind_UserChannel with the launched Application, can be NULL.
+ * @param[in] size Size of the above buffer, 0 to not use the storage. Must be <=0x1000.
+ */
+Result appletRestartProgram(const void* buffer, size_t size);
+
+/**
+ * @brief Gets the ProgramIndex of the Application which launched this title.
+ * @note Only available with AppletType_*Application on [5.0.0+].
+ * @param[out] programIndex ProgramIndex, -1 when there was no previous title.
+ */
+Result appletGetPreviousProgramIndex(s32 *programIndex);
 
 /**
  * @brief Gets an Event which is signaled for GpuErrorDetected.
