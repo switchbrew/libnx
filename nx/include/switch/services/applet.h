@@ -1285,6 +1285,12 @@ Result appletSetGamePlayRecordingState(bool state);
 Result appletInitializeGamePlayRecording(void);
 
 /**
+ * @brief Requests to save the video recording, as if the Capture-button was held.
+ * @note Only available with AppletType_*Application on [4.0.0+].
+ */
+Result appletRequestFlushGamePlayingMovieForDebug(void);
+
+/**
  * @brief Requests a system shutdown. This will enter an infinite-sleep-loop on success.
  * @note Only available with AppletType_*Application on 3.0.0+.
  */

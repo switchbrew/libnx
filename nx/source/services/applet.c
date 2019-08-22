@@ -4022,6 +4022,15 @@ Result appletInitializeGamePlayRecording(void) {
     return rc;
 }
 
+Result appletRequestFlushGamePlayingMovieForDebug(void) {
+    if (!serviceIsActive(&g_appletSrv) || !_appletIsApplication())
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdNoIO(&g_appletIFunctions, 68);
+}
+
 Result appletRequestToShutdown(void) {
     Result rc=0;
 
