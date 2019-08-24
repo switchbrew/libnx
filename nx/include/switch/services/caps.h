@@ -13,9 +13,30 @@ typedef struct {
     u8 unk_x4[0x3c];
 } CapsScreenShotAttribute;
 
+/// AlbumFileDateTime. This corresponds to each field in the Album entry filename, prior to the "-".
+typedef struct {
+    u16 year;                                    ///< Year.
+    u8 month;                                    ///< Month.
+    u8 day;                                      ///< Day.
+    u8 hour;                                     ///< Hour.
+    u8 minute;                                   ///< Minute.
+    u8 second;                                   ///< Second.
+    u8 unk_x7;                                   ///< Unknown.
+} CapsAlbumFileDateTime;
+
+/// AlbumEntryId
+typedef struct {
+    u64 titleID;                                 ///< titleID.
+    CapsAlbumFileDateTime datetime;              ///< \ref CapsAlbumFileDateTime
+    u8 unk_x10;                                  ///< Unknown.
+    u8 unk_x11;                                  ///< Unknown.
+    u8 pad[6];                                   ///< Padding?
+} CapsAlbumEntryId;
+
 /// AlbumEntry
 typedef struct {
-    u8 unk_x0[0x20];
+    u8 unk_x0[0x8];
+    CapsAlbumEntryId id;
 } CapsAlbumEntry;
 
 /// ApplicationAlbumEntry

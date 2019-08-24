@@ -1914,6 +1914,27 @@ Result appletGetCurrentApplicationId(u64 *titleID);
 Result appletRequestExitToSelf(void);
 
 /**
+ * @brief CreateGameMovieTrimmer. Do not use this directly, use \ref grcTrimGameMovie instead.
+ * @note Only available with AppletType_LibraryApplet on [4.0.0+].
+ * @note See also \ref appletReserveResourceForMovieOperation and \ref appletUnreserveResourceForMovieOperation.
+ * @param[out] srv_out Output Service for grc IGameMovieTrimmer.
+ * @param[in] tmem TransferMemory
+ */
+Result appletCreateGameMovieTrimmer(Service* srv_out, TransferMemory *tmem);
+
+/**
+ * @brief ReserveResourceForMovieOperation. Must be used at some point prior to \ref appletCreateGameMovieTrimmer.
+ * @note Only available with AppletType_LibraryApplet on [5.0.0+].
+ */
+Result appletReserveResourceForMovieOperation(void);
+
+/**
+ * @brief UnreserveResourceForMovieOperation. Must be used at some point after all finished with GameMovieTrimmer usage (\ref appletCreateGameMovieTrimmer).
+ * @note Only available with AppletType_LibraryApplet on [5.0.0+].
+ */
+Result appletUnreserveResourceForMovieOperation(void);
+
+/**
  * @brief Gets an array of userIDs for the MainApplet AvailableUsers.
  * @note Only available with AppletType_LibraryApplet on [6.0.0+].
  * @param[out] userIDs Output array of userIDs.

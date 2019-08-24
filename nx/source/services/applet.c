@@ -5283,6 +5283,69 @@ Result appletRequestExitToSelf(void) {
     return _appletCmdNoIO(&g_appletILibraryAppletSelfAccessor, 80);
 }
 
+Result appletCreateGameMovieTrimmer(Service* srv_out, TransferMemory *tmem) {
+    if (__nx_applet_type != AppletType_LibraryApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    ipcSendHandleCopy(&c, tmem->handle);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 size;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_appletILibraryAppletSelfAccessor, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 100;
+    raw->size = tmem->size;
+
+    Result rc = serviceIpcDispatch(&g_appletILibraryAppletSelfAccessor);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_appletILibraryAppletSelfAccessor, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && srv_out) {
+            serviceCreateSubservice(srv_out, &g_appletILibraryAppletSelfAccessor, &r, 0);
+        }
+    }
+
+    return rc;
+}
+
+Result appletReserveResourceForMovieOperation(void) {
+    if (__nx_applet_type != AppletType_LibraryApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdNoIO(&g_appletILibraryAppletSelfAccessor, 101);
+}
+
+Result appletUnreserveResourceForMovieOperation(void) {
+    if (__nx_applet_type != AppletType_LibraryApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdNoIO(&g_appletILibraryAppletSelfAccessor, 102);
+}
+
 Result appletGetMainAppletAvailableUsers(u128 *userIDs, s32 count, bool *flag, s32 *total_out) {
     if (__nx_applet_type != AppletType_LibraryApplet)
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);

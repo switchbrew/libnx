@@ -91,6 +91,7 @@ extern "C" {
 #include "switch/services/wlaninf.h"
 #include "switch/services/pctl.h"
 #include "switch/services/pdm.h"
+#include "switch/services/grc.h"
 
 #include "switch/display/binder.h"
 #include "switch/display/parcel.h"
