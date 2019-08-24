@@ -27,8 +27,8 @@ typedef struct {
  * @brief Creates a \ref GrcGameMovieTrimmer using \ref appletCreateGameMovieTrimmer, uses the cmds from it to trim the specified video, then closes it.
  * @note See \ref appletCreateGameMovieTrimmer for the requirements for using this.
  * @note This will block until video trimming finishes.
- * @param[out] dst_movieid \ref GrcGameMovieTrimmer for the output video.
- * @param[in] src_movieid \ref GrcGameMovieTrimmer for the input video.
+ * @param[out] dst_movieid \ref GrcGameMovieId for the output video.
+ * @param[in] src_movieid \ref GrcGameMovieId for the input video.
  * @param[in] tmem_size TransferMemory size. Official sw uses size 0x2000000.
  * @param[in] thumbnail Optional, can be NULL. RGBA8 1280x720 thumbnail image data.
  * @param[in] start Start timestamp in 0.5s units.
