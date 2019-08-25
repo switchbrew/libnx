@@ -12,6 +12,38 @@
 
 static void _grcGameMovieTrimmerClose(GrcGameMovieTrimmer *t);
 
+static Result _grcCmdNoIO(Service* srv, u64 cmd_id) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(srv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = cmd_id;
+
+    Result rc = serviceIpcDispatch(srv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(srv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
 static Result _grcGetEvent(Service* srv, Event* out_event, u64 cmd_id, bool autoclear) {
     IpcCommand c;
     ipcInitialize(&c);
@@ -223,6 +255,82 @@ Result grcTrimGameMovie(GrcGameMovieId *dst_movieid, const GrcGameMovieId *src_m
 
         eventClose(&trimevent);
         _grcGameMovieTrimmerClose(&trimmer);
+    }
+
+    return rc;
+}
+
+// grc:d
+
+static Service g_grcdSrv;
+static u64 g_grcdRefCnt;
+
+Result grcdInitialize(void) {
+    atomicIncrement64(&g_grcdRefCnt);
+
+    if (serviceIsActive(&g_grcdSrv))
+        return 0;
+
+    Result rc = smGetService(&g_grcdSrv, "grc:d");
+
+    if (R_FAILED(rc)) grcdExit();
+
+    return rc;
+}
+
+void grcdExit(void) {
+    if (atomicDecrement64(&g_grcdRefCnt) == 0)
+        serviceClose(&g_grcdSrv);
+}
+
+Service* grcdGetServiceSession(void) {
+    return &g_grcdSrv;
+}
+
+Result grcdBegin(void) {
+    return _grcCmdNoIO(&g_grcdSrv, 1);
+}
+
+Result grcdRead(GrcStream stream, void* buffer, size_t size, u32 *unk, u32 *data_size, u64 *timestamp) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    ipcAddRecvBuffer(&c, buffer, size, BufferType_Normal);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 stream;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&g_grcdSrv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 2;
+    raw->stream = stream;
+
+    Result rc = serviceIpcDispatch(&g_grcdSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            u32 unk;
+            u32 data_size;
+            u64 timestamp;
+        } *resp;
+
+        serviceIpcParse(&g_grcdSrv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            if (unk) *unk = resp->unk;
+            if (data_size) *data_size = resp->data_size;
+            if (timestamp) *timestamp = resp->timestamp;
+        }
     }
 
     return rc;
