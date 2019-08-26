@@ -217,8 +217,8 @@ typedef struct {
 
 /// applet IStorage
 typedef struct {
-    Service s;
-    TransferMemory tmem;
+    Service s;                         ///< IStorage
+    TransferMemory tmem;               ///< TransferMemory
 } AppletStorage;
 
 /// LibraryApplet state.
@@ -227,7 +227,7 @@ typedef struct {
     Event StateChangedEvent;           ///< Output from GetAppletStateChangedEvent, autoclear=false.
     Event PopInteractiveOutDataEvent;  ///< Output from GetPopInteractiveOutDataEvent, autoclear=false.
     LibAppletMode mode;                ///< See ref \ref LibAppletMode.
-    u64 layer_handle;                  ///< Output from GetIndirectLayerConsumerHandle on 2.0.0+.
+    u64 layer_handle;                  ///< Output from GetIndirectLayerConsumerHandle on [2.0.0+].
     bool creating_self;                ///< When set, indicates that the LibraryApplet title is creating itself.
     LibAppletExitReason exitreason;    ///< Set by \ref appletHolderJoin using the output from cmd GetResult, see \ref LibAppletExitReason.
 } AppletHolder;
@@ -317,6 +317,48 @@ Result appletInitialize(void);
 /// Exit applet, called automatically during app exit.
 void appletExit(void);
 
+/// Gets the Service object for the actual "appletOE"/"appletAE" service session.
+Service* appletGetServiceSession_Proxy(void);
+
+/// Gets the Service object for IAppletCommonFunctions. Only initialized with AppletType_SystemApplet, AppletType_LibraryApplet, or AppletType_OverlayApplet, on [7.0.0+].
+Service* appletGetServiceSession_AppletCommonFunctions(void);
+
+/// Gets the Service object for I*Functions, specific to each AppletType (IApplicationFunctions for AppletType_*Application). Not initialized with AppletType_LibraryApplet.
+Service* appletGetServiceSession_Functions(void);
+
+/// Gets the Service object for IGlobalStateController. Only initialized with AppletType_SystemApplet.
+Service* appletGetServiceSession_GlobalStateController(void);
+
+/// Gets the Service object for IApplicationCreator. Only initialized with AppletType_SystemApplet.
+Service* appletGetServiceSession_ApplicationCreator(void);
+
+/// Gets the Service object for ILibraryAppletSelfAccessor. Only initialized with AppletType_LibraryApplet.
+Service* appletGetServiceSession_LibraryAppletSelfAccessor(void);
+
+/// Gets the Service object for IProcessWindingController. Only initialized with AppletType_LibraryApplet.
+Service* appletGetServiceSession_ProcessWindingController(void);
+
+/// Gets the Service object for ILibraryAppletCreator.
+Service* appletGetServiceSession_LibraryAppletCreator(void);
+
+/// Gets the Service object for ICommonStateGetter.
+Service* appletGetServiceSession_CommonStateGetter(void);
+
+/// Gets the Service object for ISelfController.
+Service* appletGetServiceSession_SelfController(void);
+
+/// Gets the Service object for IWindowController.
+Service* appletGetServiceSession_WindowController(void);
+
+/// Gets the Service object for IAudioController.
+Service* appletGetServiceSession_AudioController(void);
+
+/// Gets the Service object for IDisplayController.
+Service* appletGetServiceSession_DisplayController(void);
+
+/// Gets the Service object for IDebugFunctions.
+Service* appletGetServiceSession_DebugFunctions(void);
+
 /// Get the cached AppletResourceUserId.
 Result appletGetAppletResourceUserId(u64 *out);
 
@@ -329,7 +371,8 @@ void appletSetThemeColorType(AppletThemeColorType theme);
 /// Gets the state field for \ref AppletThemeColorType. Used internally by \ref libappletArgsCreate.
 AppletThemeColorType appletGetThemeColorType(void);
 
-// ICommonStateGetter
+///@name ICommonStateGetter
+///@{
 
 /**
  * @brief Gets the CradleStatus.
@@ -512,7 +555,10 @@ Result appletGetCurrentPerformanceConfiguration(u32 *PerformanceConfiguration);
  */
 Result appletGetOperationModeSystemInfo(u32 *info);
 
-// ISelfController
+///@}
+
+///@name ISelfController
+///@{
 
 /**
  * @brief Delay exiting until \ref appletUnlockExit is called, with a 15 second timeout once exit is requested.
@@ -716,7 +762,10 @@ Result appletGetProgramTotalActiveTime(u64 *activeTime);
  */
 Result appletSetApplicationAlbumUserData(const void* buffer, size_t size);
 
-// IWindowController
+///@}
+
+///@name IWindowController
+///@{
 
 /**
  * @brief Gets the AppletResourceUserId of the CallerApplet.
@@ -739,7 +788,10 @@ Result appletSetAppletWindowVisibility(bool flag);
  */
 Result appletSetAppletGpuTimeSlice(s64 val);
 
-// IAudioController
+///@}
+
+///@name IAudioController
+///@{
 
 /**
  * @brief Sets the ExpectedMasterVolume for MainApplet and LibraryApplet.
@@ -770,7 +822,10 @@ Result appletChangeMainAppletMasterVolume(float volume, u64 unk);
  */
 Result appletSetTransparentVolumeRate(float val);
 
-// IDisplayController
+///@}
+
+///@name IDisplayController
+///@{
 
 /**
  * @brief Update the LastForeground CaptureImage.
@@ -889,7 +944,10 @@ Result appletReleaseCallerAppletCaptureSharedBuffer(void);
  */
 Result appletTakeScreenShotOfOwnLayerEx(bool flag0, bool immediately, AppletCaptureSharedBuffer captureBuf);
 
-// IProcessWindingController
+///@}
+
+///@name IProcessWindingController
+///@{
 
 /**
  * @brief Pushes a storage to the ContextStack. Normally this should only be used when AppletInfo::caller_flag is true.
@@ -934,7 +992,10 @@ Result appletLockAccessorLock(AppletLockAccessor *a);
  */
 Result appletLockAccessorUnlock(AppletLockAccessor *a);
 
-// ILibraryAppletCreator
+///@}
+
+///@name ILibraryAppletCreator
+///@{
 
 /**
  * @brief Creates a LibraryApplet.
@@ -965,6 +1026,11 @@ Result appletTerminateAllLibraryApplets(void);
  */
 Result appletAreAnyLibraryAppletsLeft(bool *out);
 
+///@}
+
+///@name ILibraryAppletAccessor
+///@{
+
 /// Closes an AppletHolder object.
 void appletHolderClose(AppletHolder *h);
 
@@ -972,7 +1038,7 @@ void appletHolderClose(AppletHolder *h);
 bool appletHolderActive(AppletHolder *h);
 
 /**
- * @brief Gets the IndirectLayerConsumerHandle loaded during \ref appletCreateLibraryApplet, on 2.0.0+.
+ * @brief Gets the IndirectLayerConsumerHandle loaded during \ref appletCreateLibraryApplet, on [2.0.0+].
  * @note  Only available when \ref LibAppletMode is ::LibAppletMode_BackgroundIndirect.
  * @param h AppletHolder object.
  * @param out Output IndirectLayerConsumerHandle.
@@ -1089,7 +1155,10 @@ Result appletHolderPopInteractiveOutData(AppletHolder *h, AppletStorage *s);
  */
 Result appletHolderGetLibraryAppletInfo(AppletHolder *h, LibAppletInfo *info);
 
-// (ILibraryAppletCreator ->) IStorage
+///@}
+
+///@name (ILibraryAppletCreator ->) IStorage
+///@{
 
 /**
  * @brief Creates a storage.
@@ -1108,7 +1177,8 @@ Result appletCreateStorage(AppletStorage *s, s64 size);
 Result appletCreateTransferMemoryStorage(AppletStorage *s, void* buffer, s64 size, bool writable);
 
 /**
- * @brief Creates a HandleStorage. Only available on 2.0.0+.
+ * @brief Creates a HandleStorage.
+ * @note Only available on [2.0.0+].
  * @param s Storage object.
  * @param inval Arbitrary input value.
  * @param handle Arbitrary input handle.
@@ -1155,7 +1225,7 @@ Result appletStorageRead(AppletStorage *s, s64 offset, void* buffer, size_t size
 
 /**
  * @brief Gets data for a HandleStorage originally from \ref appletCreateHandleStorage input.
- * @note  Only available on 2.0.0+.
+ * @note  Only available on [2.0.0+].
  * @param s Storage object.
  * @param out Output value.
  * @param handle Output handle.
@@ -1172,7 +1242,10 @@ Result appletStorageGetHandle(AppletStorage *s, s64 *out, Handle *handle);
  */
 Result appletStorageMap(AppletStorage *s, void** addr, size_t *size);
 
-// IFunctions for AppletType_*Application (IApplicationFunctions).
+///@}
+
+///@name IApplicationFunctions: IFunctions for AppletType_*Application.
+///@{
 
 /**
  * @brief Pops a LaunchParameter AppletStorage, the storage will be removed from sysmodule state during this.
@@ -1185,7 +1258,7 @@ Result appletPopLaunchParameter(AppletStorage *s, AppletLaunchParameterKind kind
 
 /**
  * @brief Requests to launch the specified application.
- * @note Only available with AppletType_*Application, or AppletType_LibraryApplet on 5.0.0+.
+ * @note Only available with AppletType_*Application, or AppletType_LibraryApplet on [5.0.0+].
  * @param[in] titleID Application titleID. Value 0 can be used to relaunch the current application.
  * @param[in] s Optional AppletStorage object, can be NULL. This is automatically closed. When NULL on pre-4.0.0 (or with AppletType_LibraryApplet), this will internally create a tmp storage with size 0 for use with the cmd. This is the storage available to the launched application via \ref appletPopLaunchParameter with ::AppletLaunchParameterKind_UserChannel.
  */
@@ -1193,7 +1266,7 @@ Result appletRequestLaunchApplication(u64 titleID, AppletStorage* s);
 
 /**
  * @brief Requests to launch the specified application, for kiosk systems.
- * @note Only available with AppletType_*Application on 3.0.0+.
+ * @note Only available with AppletType_*Application on [3.0.0+].
  * @note Identical to \ref appletRequestLaunchApplication, except this allows the user to specify the attribute fields instead of the defaults being used.
  * @param[in] titleID Application titleID
  * @param[in] s Optional AppletStorage object, can be NULL. This is automatically closed. When NULL on pre-4.0.0, this will internally create a tmp storage with size 0 for use with the cmd. This is the storage available to the launched application via \ref appletPopLaunchParameter with ::AppletLaunchParameterKind_UserChannel.
@@ -1260,7 +1333,7 @@ void appletNotifyRunning(bool *out);
 
 /**
  * @brief Gets the PseudoDeviceId. This is derived from the output of a ns command, and from data in the host title control.nacp.
- * @note Only available with AppletType_*Application on 2.0.0+.
+ * @note Only available with AppletType_*Application on [2.0.0+].
  * @param[out] out Output PseudoDeviceId.
  */
 Result appletGetPseudoDeviceId(u128 *out);
@@ -1279,8 +1352,8 @@ Result appletIsGamePlayRecordingSupported(bool *flag);
 Result appletSetGamePlayRecordingState(bool state);
 
 /// Initializes video recording. This allocates a 0x6000000-byte buffer for the TransferMemory, cleanup is handled automatically during app exit in \ref appletExit.
-/// Only available with AppletType_Application on 3.0.0+, hence errors from this can be ignored.
-/// Video recording is only fully available system-side with 4.0.0+.
+/// Only available with AppletType_Application on [3.0.0+], hence errors from this can be ignored.
+/// Video recording is only fully available system-side with [4.0.0+].
 /// Only usable when running under a title which supports video recording. Using this is only needed when the host title control.nacp has VideoCaptureMode set to Enabled, with Automatic appletInitializeGamePlayRecording is not needed.
 Result appletInitializeGamePlayRecording(void);
 
@@ -1292,13 +1365,13 @@ Result appletRequestFlushGamePlayingMovieForDebug(void);
 
 /**
  * @brief Requests a system shutdown. This will enter an infinite-sleep-loop on success.
- * @note Only available with AppletType_*Application on 3.0.0+.
+ * @note Only available with AppletType_*Application on [3.0.0+].
  */
 Result appletRequestToShutdown(void);
 
 /**
  * @brief Requests a system reboot. This will enter an infinite-sleep-loop on success.
- * @note Only available with AppletType_*Application on 3.0.0+.
+ * @note Only available with AppletType_*Application on [3.0.0+].
  */
 Result appletRequestToReboot(void);
 
@@ -1310,14 +1383,14 @@ Result appletExitAndRequestToShowThanksMessage(void);
 
 /**
  * @brief Initializes the ApplicationCopyrightFrameBuffer, with dimensions 1280x720 + the tmem for it. This is used as an overlay for screenshots.
- * @note Only available with AppletType_*Application on 5.0.0+.
+ * @note Only available with AppletType_*Application on [5.0.0+].
  * @note Cleanup for this is handled automatically during app exit in \ref appletExit.
  */
 Result appletInitializeApplicationCopyrightFrameBuffer(void);
 
 /**
  * @brief Sets the RGBA8 image for use with \ref appletInitializeApplicationCopyrightFrameBuffer. Overrides the current image, if this was already used previously.
- * @note Only available with AppletType_*Application on 5.0.0+.
+ * @note Only available with AppletType_*Application on [5.0.0+].
  * @note The specified coordinates and width/height must be within the bounds of the framebuffer setup by \ref appletInitializeApplicationCopyrightFrameBuffer.
  * @param[in] buffer Input image buffer.
  * @param[in] size Input image buffer size.
@@ -1331,14 +1404,14 @@ Result appletSetApplicationCopyrightImage(const void* buffer, size_t size, s32 x
 
 /**
  * @brief Sets the visibility for the image set by \ref appletSetApplicationCopyrightImage, in screenshots.
- * @note Only available with AppletType_*Application on 5.0.0+.
+ * @note Only available with AppletType_*Application on [5.0.0+].
  * @param[in] visible Whether the image is visible. The default is true.
  */
 Result appletSetApplicationCopyrightVisibility(bool visible);
 
 /**
  * @brief Gets ApplicationPlayStatistics.
- * @note Only available with AppletType_*Application on 5.0.0+.
+ * @note Only available with AppletType_*Application on [5.0.0+].
  * @note The input titleIDs must be allowed via control.nacp with the current host title. The minimum allowed titleID is the titleID for the current-process.
  * @param stats Output \ref PdmApplicationPlayStatistics array.
  * @param titleIDs Input titleIDs array.
@@ -1349,7 +1422,7 @@ Result appletQueryApplicationPlayStatistics(PdmApplicationPlayStatistics *stats,
 
 /**
  * @brief Same as \ref appletQueryApplicationPlayStatistics except this gets playstats specific to the input userID.
- * @note Only available with AppletType_*Application on 6.0.0+.
+ * @note Only available with AppletType_*Application on [6.0.0+].
  * @param userID userID
  * @param stats Output \ref PdmApplicationPlayStatistics array.
  * @param titleIDs Input titleIDs array.
@@ -1410,7 +1483,10 @@ Result appletGetGpuErrorDetectedSystemEvent(Event *out_event);
  */
 Result appletPrepareForJit(void);
 
-// IHomeMenuFunctions
+///@}
+
+///@name IHomeMenuFunctions: IFunctions for AppletType_SystemApplet.
+///@{
 
 /**
  * @brief RequestToGetForeground
@@ -1470,7 +1546,10 @@ Result appletPopRequestLaunchApplicationForDebug(u128 *userIDs, s32 count, u64 *
  */
 Result appletLaunchDevMenu(void);
 
-// IGlobalStateController
+///@}
+
+///@name IGlobalStateController
+///@{
 
 /**
  * @brief Start the sequence for entering sleep-mode.
@@ -1538,7 +1617,10 @@ Result appletShouldSleepOnBoot(bool *out);
  */
 Result appletGetHdcpAuthenticationFailedEvent(Event *out_event);
 
-// IApplicationCreator
+///@}
+
+///@name IApplicationCreator
+///@{
 
 /**
  * @brief Creates an Application.
@@ -1569,6 +1651,11 @@ Result appletCreateSystemApplication(AppletApplication *a, u64 titleID);
  * @param[out] a \ref AppletApplication
  */
 Result appletPopFloatingApplicationForDevelopment(AppletApplication *a);
+
+///@}
+
+///@name IApplicationAccessor
+///@{
 
 /**
  * @brief Close an \ref AppletApplication.
@@ -1631,6 +1718,7 @@ Result appletApplicationTerminateAllLibraryApplets(AppletApplication *a);
 
 /**
  * @brief AreAnyLibraryAppletsLeft which were created by the Application.
+ * @param a \ref AppletApplication
  * @param[out] out Output flag.
  */
 Result appletApplicationAreAnyLibraryAppletsLeft(AppletApplication *a, bool *out);
@@ -1652,8 +1740,9 @@ Result appletApplicationGetApplicationId(AppletApplication *a, u64 *titleID);
 /**
  * @brief Pushes a LaunchParameter AppletStorage to the Application.
  * @note This uses \ref appletStorageClose automatically.
+ * @param a \ref AppletApplication
+ * @param[in] kind \ref AppletLaunchParameterKind
  * @param[in] s Input storage.
- * @param kind \ref AppletLaunchParameterKind
  */
 Result appletApplicationPushLaunchParameter(AppletApplication *a, AppletLaunchParameterKind kind, AppletStorage* s);
 
@@ -1742,7 +1831,10 @@ Result appletApplicationSetApplicationAttribute(AppletApplication *a, const Appl
  */
 Result appletApplicationHasSaveDataAccessPermission(AppletApplication *a, u64 titleID, bool *out);
 
-// ILibraryAppletSelfAccessor
+///@}
+
+///@name ILibraryAppletSelfAccessor
+///@{
 
 /**
  * @brief Pops a storage from current-LibraryApplet input.
@@ -1944,7 +2036,10 @@ Result appletUnreserveResourceForMovieOperation(void);
  */
 Result appletGetMainAppletAvailableUsers(u128 *userIDs, s32 count, bool *flag, s32 *total_out);
 
-// IFunctions for AppletType_OverlayApplet (IOverlayFunctions).
+///@}
+
+///@name IOverlayFunctions: IFunctions for AppletType_OverlayApplet.
+///@{
 
 /**
  * @brief Stops forwarding the input to the foreground app.
@@ -2020,7 +2115,10 @@ Result appletSetHandlingHomeButtonShortPressedEnabled(bool flag);
  */
 Result appletBeginToObserveHidInputForDevelop(void);
 
-// IAppletCommonFunctions
+///@}
+
+///@name IAppletCommonFunctions
+///@{
 
 /**
  * @brief Reads the ThemeStorage for the current applet.
@@ -2076,7 +2174,10 @@ Result appletSetHomeButtonDoubleClickEnabled(bool flag);
  */
 Result appletGetHomeButtonDoubleClickEnabled(bool *out);
 
-// IDebugFunctions
+///@}
+
+///@name IDebugFunctions
+///@{
 
 /**
  * @brief Open an \ref AppletApplication for the currently running Application.
@@ -2099,6 +2200,7 @@ Result appletInvalidateTransitionLayer(void);
 /**
  * @brief Requests to launch the specified Application, with the specified users.
  * @note Only available on [6.0.0+].
+ * @param[in] titleID Application titleID.
  * @param[in] userIDs Input array of userIDs.
  * @param[in] total_userIDs Total input userIDs, must be <=ACC_USER_LIST_SIZE.
  * @param[in] flag Whether to use the specified buffer to create a storage which will be pushed for ::AppletLaunchParameterKind_UserChannel.
@@ -2114,7 +2216,10 @@ Result appletRequestLaunchApplicationWithUserAndArgumentForDebug(u64 titleID, u1
  */
 Result appletGetAppletResourceUsageInfo(AppletResourceUsageInfo *info);
 
-// State / other
+///@}
+
+///@name State / other
+///@{
 
 /**
  * @brief Gets the cached \ref AppletInfo loaded during \ref appletInitialize. This will return NULL when the info is not initialized, due to not running as AppletType_LibraryApplet, or when any of the used cmds fail.
@@ -2162,3 +2267,5 @@ u32 appletGetPerformanceMode(void);
 AppletFocusState appletGetFocusState(void);
 
 Result appletSetFocusHandlingMode(AppletFocusHandlingMode mode);
+
+///@}

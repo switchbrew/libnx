@@ -271,7 +271,7 @@ Result appletInitialize(void)
 
                 if (R_FAILED(rc))
                 {
-                    if ((rc & 0x3fffff) == 0x680)
+                    if (R_VALUE(rc) == 0x680)
                         continue;
 
                     break;
@@ -451,6 +451,62 @@ void appletExit(void)
             g_appletCopyrightInitialized = 0;
         }
     }
+}
+
+Service* appletGetServiceSession_Proxy(void) {
+    return &g_appletProxySession;
+}
+
+Service* appletGetServiceSession_AppletCommonFunctions(void) {
+    return &g_appletIAppletCommonFunctions;
+}
+
+Service* appletGetServiceSession_Functions(void) {
+    return &g_appletIFunctions;
+}
+
+Service* appletGetServiceSession_GlobalStateController(void) {
+    return &g_appletIGlobalStateController;
+}
+
+Service* appletGetServiceSession_ApplicationCreator(void) {
+    return &g_appletIApplicationCreator;
+}
+
+Service* appletGetServiceSession_LibraryAppletSelfAccessor(void) {
+    return &g_appletILibraryAppletSelfAccessor;
+}
+
+Service* appletGetServiceSession_ProcessWindingController(void) {
+    return &g_appletIProcessWindingController;
+}
+
+Service* appletGetServiceSession_LibraryAppletCreator(void) {
+    return &g_appletILibraryAppletCreator;
+}
+
+Service* appletGetServiceSession_CommonStateGetter(void) {
+    return &g_appletICommonStateGetter;
+}
+
+Service* appletGetServiceSession_SelfController(void) {
+    return &g_appletISelfController;
+}
+
+Service* appletGetServiceSession_WindowController(void) {
+    return &g_appletIWindowController;
+}
+
+Service* appletGetServiceSession_AudioController(void) {
+    return &g_appletIAudioController;
+}
+
+Service* appletGetServiceSession_DisplayController(void) {
+    return &g_appletIDisplayController;
+}
+
+Service* appletGetServiceSession_DebugFunctions(void) {
+    return &g_appletIDebugFunctions;
 }
 
 AppletType appletGetAppletType(void) {
@@ -1268,113 +1324,15 @@ static Result _appletGetResolution(Service* srv, s32 *width, s32 *height, u64 cm
 // ICommonStateGetter
 
 static Result _appletReceiveMessage(u32 *out) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_appletICommonStateGetter, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 1;
-
-    Result rc = serviceIpcDispatch(&g_appletICommonStateGetter);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            u32 out;
-        } *resp;
-
-        serviceIpcParse(&g_appletICommonStateGetter, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            *out = resp->out;
-        }
-    }
-
-    return rc;
+    return _appletCmdNoInOut32(&g_appletICommonStateGetter, out, 1);
 }
 
 static Result _appletGetOperationMode(u8 *out) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_appletICommonStateGetter, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 5;
-
-    Result rc = serviceIpcDispatch(&g_appletICommonStateGetter);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            u8 out;
-        } *resp;
-
-        serviceIpcParse(&g_appletICommonStateGetter, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            *out = resp->out;
-        }
-    }
-
-    return rc;
+    return _appletCmdNoInOutU8(&g_appletICommonStateGetter, out, 5);
 }
+
 static Result _appletGetPerformanceMode(u32 *out) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_appletICommonStateGetter, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 6;
-
-    Result rc = serviceIpcDispatch(&g_appletICommonStateGetter);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            u32 out;
-        } *resp;
-
-        serviceIpcParse(&g_appletICommonStateGetter, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            *out = resp->out;
-        }
-    }
-
-    return rc;
+    return _appletCmdNoInOut32(&g_appletICommonStateGetter, out, 6);
 }
 
 Result appletGetCradleStatus(u8 *status) {
@@ -1389,40 +1347,7 @@ Result appletGetBootMode(PmBootMode *mode) {
 }
 
 static Result _appletGetCurrentFocusState(u8 *out) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_appletICommonStateGetter, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 9;
-
-    Result rc = serviceIpcDispatch(&g_appletICommonStateGetter);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            u8 out;
-        } *resp;
-
-        serviceIpcParse(&g_appletICommonStateGetter, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            *out = resp->out;
-        }
-    }
-
-    return rc;
+    return _appletCmdNoInOutU8(&g_appletICommonStateGetter, out, 9);
 }
 
 static Result _appletGetAcquiredSleepLockEvent(Event *out_event) {
@@ -2932,6 +2857,8 @@ Result appletAreAnyLibraryAppletsLeft(bool *out) {
     return _appletCmdNoInOutBool(&g_appletILibraryAppletCreator, out, 2);
 }
 
+// ILibraryAppletAccessor
+
 void appletHolderClose(AppletHolder *h) {
     eventClose(&h->PopInteractiveOutDataEvent);
 
@@ -3455,7 +3382,7 @@ static Result _appletCreateApplicationAndPushAndRequestToStart(Service* srv, u64
     return rc;
 }
 
-static Result _appletCreateApplicationAndPushAndRequestToStartForQuest(u64 titleID, AppletStorage* s, const AppletApplicationAttributeForQuest *attr) { //2.0.0+
+static Result _appletCreateApplicationAndPushAndRequestToStartForQuest(u64 titleID, AppletStorage* s, const AppletApplicationAttributeForQuest *attr) { // [2.0.0+]
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -4655,6 +4582,8 @@ Result appletPopFloatingApplicationForDevelopment(AppletApplication *a) {
 
     return _appletApplicationCreate(a, &g_appletIApplicationCreator, 100);
 }
+
+// IApplicationAccessor
 
 void appletApplicationClose(AppletApplication *a) {
     eventClose(&a->StateChangedEvent);

@@ -16,8 +16,8 @@ typedef struct {
     u32 LaVersion;           ///< LibraryApplet API version.
     s32 ExpectedThemeColor;  ///< Set to the output from \ref appletGetThemeColorType by \ref libappletArgsCreate.
     u8  PlayStartupSound;    ///< bool flag, default is false.
-    u8  pad[7];
-    u64 tick;
+    u8  pad[7];              ///< Padding.
+    u64 tick;                ///< System tick. Set to the output from \ref armGetSystemTick during \ref libappletArgsPush.
 } LibAppletArgs;
 
 /**
