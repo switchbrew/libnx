@@ -58,10 +58,11 @@ NWindow* nwindowGetDefault(void);
 /**
  * @brief Creates a \ref NWindow.
  * @param[out] nw Output \ref NWindow structure.
+ * @param[in] binder_session Service object for the Android IGraphicBufferProducer binder session.
  * @param[in] binder_id Android IGraphicBufferProducer binder session ID.
  * @param[in] producer_controlled_by_app Specifies whether the producer is controlled by the application.
  */
-Result nwindowCreate(NWindow* nw, s32 binder_id, bool producer_controlled_by_app);
+Result nwindowCreate(NWindow* nw, Service* binder_session, s32 binder_id, bool producer_controlled_by_app);
 
 /**
  * @brief Creates a \ref NWindow operating on a \ref ViLayer.

@@ -48,7 +48,7 @@ bool nwindowIsValid(NWindow* nw)
     return nw && nw->magic == NWINDOW_MAGIC;
 }
 
-Result nwindowCreate(NWindow* nw, s32 binder_id, bool producer_controlled_by_app)
+Result nwindowCreate(NWindow* nw, Service* binder_session, s32 binder_id, bool producer_controlled_by_app)
 {
     Result rc;
 
@@ -60,7 +60,7 @@ Result nwindowCreate(NWindow* nw, s32 binder_id, bool producer_controlled_by_app
     nw->producer_controlled_by_app = producer_controlled_by_app;
 
     binderCreate(&nw->bq, binder_id);
-    rc = binderInitSession(&nw->bq, viGetSession_IHOSBinderDriverRelay());
+    rc = binderInitSession(&nw->bq, binder_session);
 
     if (R_SUCCEEDED(rc))
         binderGetNativeHandle(&nw->bq, 0x0f, &nw->event);
@@ -76,7 +76,7 @@ Result nwindowCreate(NWindow* nw, s32 binder_id, bool producer_controlled_by_app
 
 Result nwindowCreateFromLayer(NWindow* nw, const ViLayer* layer)
 {
-    return nwindowCreate(nw, layer->igbp_binder_obj_id, false);
+    return nwindowCreate(nw, viGetSession_IHOSBinderDriverRelay(), layer->igbp_binder_obj_id, false);
 }
 
 void nwindowClose(NWindow* nw)
