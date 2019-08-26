@@ -15,7 +15,7 @@
 typedef enum {
     PmLaunchFlag_None           = 0,
 
-    ///< PmLaunchFlag_* should be used on 5.0.0+.
+    ///< PmLaunchFlag_* should be used on [5.0.0+].
     PmLaunchFlag_SignalOnExit   = (1 << 0),
     PmLaunchFlag_SignalOnStart  = (1 << 1),
     PmLaunchFlag_SignalOnCrash  = (1 << 2),
@@ -23,13 +23,13 @@ typedef enum {
     PmLaunchFlag_StartSuspended = (1 << 4),
     PmLaunchFlag_DisableAslr    = (1 << 5),
 
-    ///< PmLaunchFlagOld_* should be used on 1.0.0-4.1.0.
+    ///< PmLaunchFlagOld_* should be used on [1.0.0-4.1.0].
     PmLaunchFlagOld_SignalOnExit   = (1 << 0),
     PmLaunchFlagOld_StartSuspended = (1 << 1),
     PmLaunchFlagOld_SignalOnCrash  = (1 << 2),
     PmLaunchFlagOld_DisableAslr    = (1 << 3),
     PmLaunchFlagOld_SignalOnDebug  = (1 << 4),
-    ///< PmLaunchFlagOld_SignalOnStart was added in 2.0.0.
+    ///< PmLaunchFlagOld_SignalOnStart is only available on [2.0.0+].
     PmLaunchFlagOld_SignalOnStart  = (1 << 5),
 } PmLaunchFlag;
 

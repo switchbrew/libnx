@@ -278,7 +278,7 @@ Result fsOpenGameCardFileSystem(FsFileSystem* out, const FsGameCardHandle* handl
 Result fsReadSaveDataFileSystemExtraDataBySaveDataSpaceId(void* buf, size_t len, FsSaveDataSpaceId saveDataSpaceId, u64 saveID);
 Result fsReadSaveDataFileSystemExtraData(void* buf, size_t len, u64 saveID);
 Result fsWriteSaveDataFileSystemExtraData(const void* buf, size_t len, FsSaveDataSpaceId saveDataSpaceId, u64 saveID);
-Result fsExtendSaveDataFileSystem(FsSaveDataSpaceId saveDataSpaceId, u64 saveID, s64 dataSize, s64 journalSize); /// 3.0.0+
+Result fsExtendSaveDataFileSystem(FsSaveDataSpaceId saveDataSpaceId, u64 saveID, s64 dataSize, s64 journalSize); /// [3.0.0+]
 
 /// Do not call this directly, see fs_dev.h.
 Result fsMountSdcard(FsFileSystem* out);
@@ -287,7 +287,7 @@ Result fsMountSaveData(FsFileSystem* out, u8 inval, FsSave *save);
 Result fsMountSystemSaveData(FsFileSystem* out, u8 inval, FsSave *save);
 Result fsOpenSaveDataIterator(FsSaveDataIterator* out, s32 saveDataSpaceId);
 Result fsOpenContentStorageFileSystem(FsFileSystem* out, FsContentStorageId content_storage_id);
-Result fsOpenCustomStorageFileSystem(FsFileSystem* out, FsCustomStorageId custom_storage_id); /// 7.0.0+
+Result fsOpenCustomStorageFileSystem(FsFileSystem* out, FsCustomStorageId custom_storage_id); /// [7.0.0+]
 Result fsOpenDataStorageByCurrentProcess(FsStorage* out);
 Result fsOpenDataStorageByDataId(FsStorage* out, u64 dataId, FsStorageId storageId);
 Result fsOpenDeviceOperator(FsDeviceOperator* out);
@@ -336,8 +336,8 @@ typedef enum
 
 /// Mount requested filesystem type from content file
 Result fsOpenFileSystem(FsFileSystem* out, FsFileSystemType fsType, const char* contentPath); /// same as calling fsOpenFileSystemWithId with 0 as titleId
-Result fsOpenFileSystemWithId(FsFileSystem* out, u64 titleId, FsFileSystemType fsType, const char* contentPath); /// works on all firmwares, titleId is ignored on 1.0.0
-Result fsOpenFileSystemWithPatch(FsFileSystem* out, u64 titleId, FsFileSystemType fsType); /// 2.0.0+, like OpenFileSystemWithId but without content path.
+Result fsOpenFileSystemWithId(FsFileSystem* out, u64 titleId, FsFileSystemType fsType, const char* contentPath); /// works on all firmwares, titleId is ignored on [1.0.0]
+Result fsOpenFileSystemWithPatch(FsFileSystem* out, u64 titleId, FsFileSystemType fsType); /// [2.0.0+], like OpenFileSystemWithId but without content path.
 
 // IFileSystem
 Result fsFsCreateFile(FsFileSystem* fs, const char* path, size_t size, int flags);
@@ -353,9 +353,9 @@ Result fsFsOpenDirectory(FsFileSystem* fs, const char* path, int flags, FsDir* o
 Result fsFsCommit(FsFileSystem* fs);
 Result fsFsGetFreeSpace(FsFileSystem* fs, const char* path, u64* out);
 Result fsFsGetTotalSpace(FsFileSystem* fs, const char* path, u64* out);
-Result fsFsGetFileTimeStampRaw(FsFileSystem* fs, const char* path, FsTimeStampRaw *out);/// 3.0.0+
-Result fsFsCleanDirectoryRecursively(FsFileSystem* fs, const char* path);/// 3.0.0+
-Result fsFsQueryEntry(FsFileSystem* fs, void *out, size_t out_size, const void *in, size_t in_size, const char* path, FsFileSystemQueryType query_type);/// 4.0.0+
+Result fsFsGetFileTimeStampRaw(FsFileSystem* fs, const char* path, FsTimeStampRaw *out); /// [3.0.0+]
+Result fsFsCleanDirectoryRecursively(FsFileSystem* fs, const char* path); /// [3.0.0+]
+Result fsFsQueryEntry(FsFileSystem* fs, void *out, size_t out_size, const void *in, size_t in_size, const char* path, FsFileSystemQueryType query_type); /// [4.0.0+]
 void fsFsClose(FsFileSystem* fs);
 
 /// Uses \ref fsFsQueryEntry to set the archive bit on the specified absolute directory path.
@@ -368,7 +368,7 @@ Result fsFileWrite(FsFile* f, u64 off, const void* buf, size_t len, u32 option);
 Result fsFileFlush(FsFile* f);
 Result fsFileSetSize(FsFile* f, u64 sz);
 Result fsFileGetSize(FsFile* f, u64* out);
-Result fsFileOperateRange(FsFile* f, FsOperationId op_id, u64 off, size_t len, FsRangeInfo* out); /// 4.0.0+
+Result fsFileOperateRange(FsFile* f, FsOperationId op_id, u64 off, size_t len, FsRangeInfo* out); /// [4.0.0+]
 void fsFileClose(FsFile* f);
 
 // IDirectory
@@ -382,7 +382,7 @@ Result fsStorageWrite(FsStorage* s, u64 off, const void* buf, size_t len);
 Result fsStorageFlush(FsStorage* s);
 Result fsStorageSetSize(FsStorage* s, u64 sz);
 Result fsStorageGetSize(FsStorage* s, u64* out);
-Result fsStorageOperateRange(FsStorage* s, FsOperationId op_id, u64 off, size_t len, FsRangeInfo* out); /// 4.0.0+
+Result fsStorageOperateRange(FsStorage* s, FsOperationId op_id, u64 off, size_t len, FsRangeInfo* out); /// [4.0.0+]
 void fsStorageClose(FsStorage* s);
 
 // ISaveDataInfoReader

@@ -46,7 +46,7 @@ static inline bool _InRegion(VirtualRegion* r, u64 addr) {
 
 void virtmemSetup(void) {
     if (R_FAILED(_GetRegionFromInfo(&g_AddressSpace, InfoType_AslrRegionAddress, InfoType_AslrRegionSize))) {
-        // 1.0.0 doesn't expose address space size so we have to do this dirty hack to detect it.
+        // [1.0.0] doesn't expose address space size so we have to do this dirty hack to detect it.
         // Forgive me.
 
         Result rc = svcUnmapMemory((void*) 0xFFFFFFFFFFFFE000ULL, (void*) 0xFFFFFE000ull, 0x1000);

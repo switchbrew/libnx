@@ -157,18 +157,18 @@ typedef enum {
     InfoType_DebuggerAttached               = 8,  ///< Whether current process is being debugged.
     InfoType_ResourceLimit                  = 9,  ///< Current process's resource limit handle.
     InfoType_IdleTickCount                  = 10, ///< Number of idle ticks on CPU.
-    InfoType_RandomEntropy                  = 11, ///< 2.0.0+ Random entropy for current process.
-    InfoType_AslrRegionAddress              = 12, ///< 2.0.0+ Base of the process's address space.
-    InfoType_AslrRegionSize                 = 13, ///< 2.0.0+ Size of the process's address space.
-    InfoType_StackRegionAddress             = 14, ///< 2.0.0+ Base of the Stack memory region.
-    InfoType_StackRegionSize                = 15, ///< 2.0.0+ Size of the Stack memory region.
-    InfoType_SystemResourceSizeTotal        = 16, ///< 3.0.0+ Total memory allocated for process memory management.
-    InfoType_SystemResourceSizeUsed         = 17, ///< 3.0.0+ Amount of memory currently used by process memory management.
-    InfoType_TitleId                        = 18, ///< 3.0.0+ Title ID for the process.
-    InfoType_InitialProcessIdRange          = 19, ///< 4.0.0-4.1.0 Min/max initial process IDs.
-    InfoType_UserExceptionContextAddress    = 20, ///< 5.0.0+ Address of the process's exception context (for break).
-    InfoType_TotalNonSystemMemorySize       = 21, ///< 6.0.0+ Total amount of memory available for process, excluding that for process memory management.
-    InfoType_UsedNonSystemMemorySize        = 22, ///< 6.0.0+ Amount of memory used by process, excluding that for process memory management.
+    InfoType_RandomEntropy                  = 11, ///< [2.0.0+] Random entropy for current process.
+    InfoType_AslrRegionAddress              = 12, ///< [2.0.0+] Base of the process's address space.
+    InfoType_AslrRegionSize                 = 13, ///< [2.0.0+] Size of the process's address space.
+    InfoType_StackRegionAddress             = 14, ///< [2.0.0+] Base of the Stack memory region.
+    InfoType_StackRegionSize                = 15, ///< [2.0.0+] Size of the Stack memory region.
+    InfoType_SystemResourceSizeTotal        = 16, ///< [3.0.0+] Total memory allocated for process memory management.
+    InfoType_SystemResourceSizeUsed         = 17, ///< [3.0.0+] Amount of memory currently used by process memory management.
+    InfoType_TitleId                        = 18, ///< [3.0.0+] Title ID for the process.
+    InfoType_InitialProcessIdRange          = 19, ///< [4.0.0-4.1.0] Min/max initial process IDs.
+    InfoType_UserExceptionContextAddress    = 20, ///< [5.0.0+] Address of the process's exception context (for break).
+    InfoType_TotalNonSystemMemorySize       = 21, ///< [6.0.0+] Total amount of memory available for process, excluding that for process memory management.
+    InfoType_UsedNonSystemMemorySize        = 22, ///< [6.0.0+] Amount of memory used by process, excluding that for process memory management.
 
     InfoType_ThreadTickCount                = 0xF0000002, ///< Number of ticks spent on thread.
 } InfoType;
@@ -928,7 +928,7 @@ Result svcGetDebugEvent(u8* event_out, Handle debug);
  * @return Result code.
  * @note Syscall number 0x64.
  * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
- * @warning Only exists on 3.0.0+. For older versions use \ref svcLegacyContinueDebugEvent.
+ * @warning Only exists on [3.0.0+]. For older versions use \ref svcLegacyContinueDebugEvent.
  */
 Result svcContinueDebugEvent(Handle debug, u32 flags, u64* tid_list, u32 num_tids);
 
@@ -937,7 +937,7 @@ Result svcContinueDebugEvent(Handle debug, u32 flags, u64* tid_list, u32 num_tid
  * @return Result code.
  * @note Syscall number 0x64.
  * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
- * @warning Only exists on 1.0.0-2.3.0. For newer versions use \ref svcContinueDebugEvent.
+ * @warning Only exists on [1.0.0-2.3.0]. For newer versions use \ref svcContinueDebugEvent.
  */
 Result svcLegacyContinueDebugEvent(Handle debug, u32 flags, u64 threadID);
 

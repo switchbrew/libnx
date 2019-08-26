@@ -9,14 +9,14 @@
 #include "../services/sm.h"
 #include "../services/caps.h"
 
-/// Initialize caps:sc. Only available on 2.0.0+.
+/// Initialize caps:sc. Only available on [2.0.0+].
 Result capsscInitialize(void);
 void capsscExit(void);
 Service* capsscGetServiceSession(void);
 
 /**
  * @brief This takes a screenshot, with the screenshot being written into the output buffer.
- * @note Not available with 5.0.0+ (stubbed).
+ * @note Not available with [5.0.0+] (stubbed).
  * @note buffer_index and buffer_count correspond to buffers with size 0x384000(1280*720*4). These must not be negative.
  * @param buf Output buffer containing the RGBA8 image.
  * @param size Size of buf, should be 0x384000(1280*720*4) * buffer_count.

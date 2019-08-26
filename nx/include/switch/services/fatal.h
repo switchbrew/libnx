@@ -11,7 +11,7 @@
 typedef enum {
     FatalType_ErrorReportAndErrorScreen = 0,
     FatalType_ErrorReport = 1,
-    FatalType_ErrorScreen = 2 ///< Only available with 3.0.0+. If specified, FatalType_ErrorReportAndErrorScreen will be used instead on pre-3.0.0.
+    FatalType_ErrorScreen = 2 ///< Only available with [3.0.0+]. If specified, FatalType_ErrorReportAndErrorScreen will be used instead on pre-3.0.0.
 } FatalType;
 
 /// Struct for fatal Cpu context, 64-bit.

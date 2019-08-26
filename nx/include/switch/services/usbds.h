@@ -74,11 +74,11 @@ Result usbDsParseReportData(UsbDsReportData *reportdata, u32 urbId, u32 *request
 Event* usbDsGetStateChangeEvent(void);
 Result usbDsGetState(u32* out);
 
-/// Removed in 5.0.0
+/// Removed in [5.0.0+]
 Result usbDsGetDsInterface(UsbDsInterface** out, struct usb_interface_descriptor* descriptor, const char* interface_name);
 Result usbDsSetVidPidBcd(const UsbDsDeviceInfo* deviceinfo);
 
-/// Added in 5.0.0
+/// Added in [5.0.0+]
 Result usbDsRegisterInterface(UsbDsInterface** out);
 Result usbDsRegisterInterfaceEx(UsbDsInterface** out, u32 intf_num);
 Result usbDsClearDeviceData(void);
@@ -102,10 +102,10 @@ Result usbDsInterface_GetCtrlInReportData(UsbDsInterface* interface, UsbDsReport
 Result usbDsInterface_GetCtrlOutReportData(UsbDsInterface* interface, UsbDsReportData* out);
 Result usbDsInterface_StallCtrl(UsbDsInterface* interface);
 
-/// Removed in 5.0.0
+/// Removed in [5.0.0+]
 Result usbDsInterface_GetDsEndpoint(UsbDsInterface* interface, UsbDsEndpoint** endpoint, struct usb_endpoint_descriptor* descriptor);
 
-/// Added in 5.0.0
+/// Added in [5.0.0+]
 Result usbDsInterface_RegisterEndpoint(UsbDsInterface* interface, UsbDsEndpoint** endpoint, u8 endpoint_address);
 Result usbDsInterface_AppendConfigurationData(UsbDsInterface* interface, UsbDeviceSpeed speed, const void* buffer, size_t size);
 

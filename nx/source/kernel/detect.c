@@ -64,7 +64,7 @@ static void _CacheJitKernelPatch(void)
         rc = svcCreateCodeMemory(&code, heap, 0x1000);
 
         if (R_SUCCEEDED(rc)) {
-            // On an unpatched kernel on 5.0.0 and above, this would return InvalidMemoryState (0xD401).
+            // On an unpatched kernel on [5.0.0+], this would return InvalidMemoryState (0xD401).
             // It is not allowed for the creator-process of a CodeMemory object to use svcControlCodeMemory on it.
             // If the patch is present, the function should return InvalidEnumValue (0xF001), because -1 is not a valid enum CodeOperation.
             rc = svcControlCodeMemory(code, -1, 0, 0x1000, 0);

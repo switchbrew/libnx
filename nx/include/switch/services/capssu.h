@@ -9,7 +9,7 @@
 #include "../services/sm.h"
 #include "../services/caps.h"
 
-/// Initialize caps:su. Only available on 4.0.0+.
+/// Initialize caps:su. Only available on [4.0.0+].
 Result capssuInitialize(void);
 void capssuExit(void);
 Service* capssuGetServiceSession(void);

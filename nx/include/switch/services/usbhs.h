@@ -198,7 +198,7 @@ Result usbHsIfGetInterface(UsbHsClientIfSession* s, UsbHsInterfaceInfo* inf);
  */
 Result usbHsIfGetAlternateInterface(UsbHsClientIfSession* s, UsbHsInterfaceInfo* inf, u8 id);
 
-/// On 1.0.0 this is stubbed, just returns 0 with out=0.
+/// On [1.0.0] this is stubbed, just returns 0 with out=0.
 Result usbHsIfGetCurrentFrame(UsbHsClientIfSession* s, u32* out);
 
 /// Uses a control transfer, this will block until the transfer finishes. The buffer address and size should be aligned to 0x1000-bytes, where wLength is the original size.

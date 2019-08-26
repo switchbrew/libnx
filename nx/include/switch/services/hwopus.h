@@ -34,7 +34,7 @@ typedef struct {
 Result hwopusDecoderInitialize(HwopusDecoder* decoder, s32 SampleRate, s32 ChannelCount);
 void hwopusDecoderExit(HwopusDecoder* decoder);
 
-/// Only available on 3.0.0+.
+/// Only available on [3.0.0+].
 /// See libopus multistream docs.
 Result hwopusDecoderMultistreamInitialize(HwopusDecoder* decoder, s32 SampleRate, s32 ChannelCount, s32 TotalStreamCount, s32 StereoStreamCount, u8 *channel_mapping);
 

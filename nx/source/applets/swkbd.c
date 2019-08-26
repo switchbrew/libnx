@@ -65,7 +65,7 @@ static void _swkbdInitVersion(u32* version) {
     else if (hosver >= MAKEHOSVERSION(2,0,0))
         *version = 0x10006;
     else
-        *version=0x5;//1.0.0+ version
+        *version=0x5; // [1.0.0+] version
 }
 
 Result swkbdCreate(SwkbdConfig* c, s32 max_dictwords) {
@@ -385,7 +385,7 @@ Result swkbdInlineCreate(SwkbdInline* s) {
 
     _swkbdInitVersion(&s->version);
 
-    //swkbd-inline is only available on 2.0.0+.
+    // swkbd-inline is only available on [2.0.0+].
     if (s->version < 0x10006) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     s->calcArg.unk_x0 = 0x30000;

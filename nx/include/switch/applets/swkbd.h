@@ -39,7 +39,7 @@ enum {
 typedef enum {
     SwkbdTextDrawType_Line          = 0,  ///< The text will be displayed on a line. Also enables displaying the Header and Sub text.
     SwkbdTextDrawType_Box           = 1,  ///< The text will be displayed in a box.
-    SwkbdTextDrawType_DownloadCode  = 2,  ///< Used by \ref swkbdConfigMakePresetDownloadCode on 5.0.0+. Enables using \ref SwkbdArgV7 unk_x3e0.
+    SwkbdTextDrawType_DownloadCode  = 2,  ///< Used by \ref swkbdConfigMakePresetDownloadCode on [5.0.0+]. Enables using \ref SwkbdArgV7 unk_x3e0.
 } SwkbdTextDrawType;
 
 /// SwkbdInline Interactive input storage request ID.
@@ -182,7 +182,7 @@ typedef struct {
 typedef struct {
     u32 unk_x0;
     u8 mode;            ///< See \ref SwkbdInlineMode. (u8 bool)
-    u8 unk_x5;          ///< Only set on 5.0.0+.
+    u8 unk_x5;          ///< Only set on [5.0.0+].
     u8 pad[2];
 } SwkbdInitializeArg;
 
@@ -217,7 +217,7 @@ typedef struct {
     u16 inputText[0x3f4/2];      ///< Flags bitmask 0x8.
     u8 utf8Mode;                 ///< Flags bitmask 0x20.
     u8 unk_x45d;
-    u8 enableBackspace;          ///< Flags bitmask 0x8000. Only available with 5.0.0+.
+    u8 enableBackspace;          ///< Flags bitmask 0x8000. Only available with [5.0.0+].
     u8 unk_x45f[3];
     u8 keytopAsFloating;         ///< Flags bitmask 0x200.
     u8 footerScalable;           ///< Flags bitmask 0x100.
@@ -237,7 +237,7 @@ typedef struct {
     float balloonScale;          ///< Flags bitmask 0x200.
     float unk_x48c;
     u8 unk_x490[0xc];
-    u8 seGroup;                  ///< Flags bitmask: enable=0x2000, disable=0x4000. Only available with 5.0.0+.
+    u8 seGroup;                  ///< Flags bitmask: enable=0x2000, disable=0x4000. Only available with [5.0.0+].
     u8 triggerFlag;              ///< [6.0.0+] Enables using the trigger field when set.
     u8 trigger;                  ///< [6.0.0+] Trigger
     u8 pad_x49f;
@@ -363,7 +363,7 @@ void swkbdConfigMakePresetUserName(SwkbdConfig* c);
 /**
  * @brief Clears the args in the SwkbdConfig struct and initializes it with the DownloadCode Preset.
  * @note Do not use this before \ref swkbdCreate.
- * @note Uses the following: swkbdConfigSetType() with \ref SwkbdType_Normal (\ref SwkbdType_QWERTY on 5.0.0+), swkbdConfigSetKeySetDisableBitmask() with SwkbdKeyDisableBitmask_DownloadCode, swkbdConfigSetInitialCursorPos() with value 1, and swkbdConfigSetBlurBackground() with value 1. 5.0.0+: swkbdConfigSetStringLenMax() with value 16, swkbdConfigSetStringLenMaxExt() with value 1, and swkbdConfigSetTextDrawType() with SwkbdTextDrawType_DownloadCode. Uses swkbdConfigSetTextGrouping() for [0-2] with: 0x3, 0x7, and 0xb.
+ * @note Uses the following: swkbdConfigSetType() with \ref SwkbdType_Normal (\ref SwkbdType_QWERTY on [5.0.0+]), swkbdConfigSetKeySetDisableBitmask() with SwkbdKeyDisableBitmask_DownloadCode, swkbdConfigSetInitialCursorPos() with value 1, and swkbdConfigSetBlurBackground() with value 1. [5.0.0+]: swkbdConfigSetStringLenMax() with value 16, swkbdConfigSetStringLenMaxExt() with value 1, and swkbdConfigSetTextDrawType() with SwkbdTextDrawType_DownloadCode. Uses swkbdConfigSetTextGrouping() for [0-2] with: 0x3, 0x7, and 0xb.
  * @param c SwkbdConfig struct.
  */
 void swkbdConfigMakePresetDownloadCode(SwkbdConfig* c);
