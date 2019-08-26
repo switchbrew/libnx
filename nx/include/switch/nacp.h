@@ -27,7 +27,7 @@ typedef struct {
     u8 dataLossConfirmation;
     u8 playLogPolicy;
     u64 presenceGroupId;
-    char ratingAge[0x20];
+    s8 ratingAge[0x20];
     char version[0x10];
     u64 addOnContentBaseId;
     u64 saveDataOwnerId;
