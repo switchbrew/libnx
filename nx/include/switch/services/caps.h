@@ -52,3 +52,6 @@ typedef enum {
     AlbumImageOrientation_Unknown3 = 3,          ///< Unknown.
 } AlbumImageOrientation;
 
+// Get the ShimLibraryVersion.
+u64 capsGetShimLibraryVersion(void);
+
