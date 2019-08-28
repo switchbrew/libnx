@@ -1321,6 +1321,46 @@ static Result _appletGetResolution(Service* srv, s32 *width, s32 *height, u64 cm
     return rc;
 }
 
+static Result _appletCreateMovieSession(Service* srv, Service* srv_out, u64 cmd_id, TransferMemory *tmem) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    ipcSendHandleCopy(&c, tmem->handle);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 size;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(srv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = cmd_id;
+    raw->size = tmem->size;
+
+    Result rc = serviceIpcDispatch(srv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(srv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && srv_out) {
+            serviceCreateSubservice(srv_out, srv, &r, 0);
+        }
+    }
+
+    return rc;
+}
+
 // ICommonStateGetter
 
 static Result _appletReceiveMessage(u32 *out) {
@@ -4329,6 +4369,15 @@ Result appletGetGpuErrorDetectedSystemEvent(Event *out_event) {
     return _appletGetEvent(&g_appletIFunctions, out_event, 130, false);
 }
 
+Result appletCreateMovieMaker(Service* srv_out, TransferMemory *tmem) {
+    if (!serviceIsActive(&g_appletSrv) || !_appletIsApplication())
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCreateMovieSession(&g_appletIFunctions, srv_out, 1000, tmem);
+}
+
 Result appletPrepareForJit(void) {
     if (!serviceIsActive(&g_appletSrv) || !_appletIsApplication())
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
@@ -5218,43 +5267,7 @@ Result appletCreateGameMovieTrimmer(Service* srv_out, TransferMemory *tmem) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    ipcSendHandleCopy(&c, tmem->handle);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u64 size;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_appletILibraryAppletSelfAccessor, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 100;
-    raw->size = tmem->size;
-
-    Result rc = serviceIpcDispatch(&g_appletILibraryAppletSelfAccessor);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_appletILibraryAppletSelfAccessor, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && srv_out) {
-            serviceCreateSubservice(srv_out, &g_appletILibraryAppletSelfAccessor, &r, 0);
-        }
-    }
-
-    return rc;
+    return _appletCreateMovieSession(&g_appletILibraryAppletSelfAccessor, srv_out, 100, tmem);
 }
 
 Result appletReserveResourceForMovieOperation(void) {

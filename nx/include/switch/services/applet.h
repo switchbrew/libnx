@@ -1477,6 +1477,14 @@ Result appletGetPreviousProgramIndex(s32 *programIndex);
 Result appletGetGpuErrorDetectedSystemEvent(Event *out_event);
 
 /**
+ * @brief CreateMovieMaker. Do not use this directly, use \ref grcCreateMovieMaker instead.
+ * @note Only available with AppletType_*Application on [5.0.0+].
+ * @param[out] srv_out Output Service for applet IMovieMaker.
+ * @param[in] tmem TransferMemory
+ */
+Result appletCreateMovieMaker(Service* srv_out, TransferMemory *tmem);
+
+/**
  * @brief Launches the jit-sysmodule when it was not previously launched by this cmd. Returns 0 when it was previously launched.
  * @note Only available with AppletType_*Application on [5.0.0+].
  * @note Requires the jit-sysmodule to actually be installed.
