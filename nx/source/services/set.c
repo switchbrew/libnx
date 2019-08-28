@@ -66,7 +66,7 @@ void setsysExit(void)
     }
 }
 
-Service* setsysGetSessionService(void) {
+Service* setsysGetServiceSession(void) {
     return &g_setsysSrv;
 }
 
