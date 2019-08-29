@@ -39,9 +39,14 @@ typedef struct {
     CapsAlbumEntryId id;
 } CapsAlbumEntry;
 
-/// ApplicationAlbumEntry
+/// AlbumFileEntry
 typedef struct {
     u8 unk_x0[0x20];
+} AlbumFileEntry;
+
+/// ApplicationAlbumEntry
+typedef struct {
+    u8 data[0x20];
 } CapsApplicationAlbumEntry;
 
 /// ImageOrientation

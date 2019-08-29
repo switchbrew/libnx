@@ -144,9 +144,9 @@ Result grcMovieMakerAbort(GrcMovieMaker *m);
  * @param[in] appdata_size Size of the UserData input buffer. Optional, can be 0. Must be <=0x400.
  * @param[in] thumbnail RGBA8 image buffer containing the thumbnail. Optional, can be NULL.
  * @param[in] thumbnail_size Size of the thumbnail buffer. Optional, can be 0.
- * @param[out] entry Output \ref CapsApplicationAlbumEntry for the recorded video. Optional, can be NULL. Only available on [7.0.0+], if this is not NULL on pre-7.0.0 an error is thrown.
+ * @param[out] entry Output \ref AlbumFileEntry for the recorded video. Optional, can be NULL. Only available on [7.0.0+], if this is not NULL on pre-7.0.0 an error is thrown.
  */
-Result grcMovieMakerFinish(GrcMovieMaker *m, s32 width, s32 height, const void* appdata, size_t appdata_size, const void* thumbnail, size_t thumbnail_size, CapsApplicationAlbumEntry *entry);
+Result grcMovieMakerFinish(GrcMovieMaker *m, s32 width, s32 height, const void* appdata, size_t appdata_size, const void* thumbnail, size_t thumbnail_size, AlbumFileEntry *entry);
 
 /**
  * @brief Gets the recording error with the specified MovieMaker.

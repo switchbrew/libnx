@@ -666,7 +666,7 @@ static Result _grcMovieMakerCompleteOffscreenRecordingFinishEx1(GrcMovieMaker *m
     return rc;
 }
 
-Result grcMovieMakerFinish(GrcMovieMaker *m, s32 width, s32 height, const void* buffer0, size_t size0, const void* buffer1, size_t size1, CapsApplicationAlbumEntry *entry) {
+Result grcMovieMakerFinish(GrcMovieMaker *m, s32 width, s32 height, const void* buffer0, size_t size0, const void* buffer1, size_t size1, AlbumFileEntry *entry) {
     Result rc=0;
 
     if (!serviceIsActive(&m->s))
@@ -679,7 +679,7 @@ Result grcMovieMakerFinish(GrcMovieMaker *m, s32 width, s32 height, const void* 
     if (R_SUCCEEDED(rc)) rc = eventWait(&m->recording_event, U64_MAX);
 
     if (hosversionAtLeast(7,0,0))
-        rc = _grcMovieMakerCompleteOffscreenRecordingFinishEx1(m, width, height, buffer0, size0, buffer1, size1, entry);
+        rc = _grcMovieMakerCompleteOffscreenRecordingFinishEx1(m, width, height, buffer0, size0, buffer1, size1, (CapsApplicationAlbumEntry*)entry);
     else
         rc = _grcMovieMakerCompleteOffscreenRecordingFinishEx0(m, width, height, buffer0, size0, buffer1, size1);
 
