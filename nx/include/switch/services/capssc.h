@@ -27,5 +27,5 @@ Service* capsscGetServiceSession(void);
  * @param buffer_index Starting image buffer index. Must be < buffer_count.
  * @param timeout Timeout in nanoseconds. A default value of 100000000 can be used.
  */
-Result capsscCaptureScreenshot(void* buf, size_t size, u32 inval, u64 width, u64 height, s64 buffer_count, s64 buffer_index, u64 timeout);
+Result capsscCaptureRawImageWithTimeout(void* buf, size_t size, u32 inval, u64 width, u64 height, s64 buffer_count, s64 buffer_index, u64 timeout);
 
