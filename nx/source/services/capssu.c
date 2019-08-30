@@ -12,6 +12,8 @@
 static Service g_capssuSrv;
 static u64 g_capssuRefCnt;
 
+static Result _capssuSetShimLibraryVersion(u64 version);
+
 Result capssuInitialize(void) {
     Result rc=0;
 
@@ -25,6 +27,8 @@ Result capssuInitialize(void) {
 
     if (R_SUCCEEDED(rc)) rc = smGetService(&g_capssuSrv, "caps:su");
 
+    if (R_SUCCEEDED(rc) && hosversionAtLeast(7,0,0)) rc = _capssuSetShimLibraryVersion(capsGetShimLibraryVersion());
+
     if (R_FAILED(rc)) capssuExit();
 
     return rc;
@@ -37,6 +41,50 @@ void capssuExit(void) {
 
 Service* capssuGetServiceSession(void) {
     return &g_capssuSrv;
+}
+
+static Result _capssuSetShimLibraryVersion(u64 version) {
+    if (hosversionBefore(7,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    u64 AppletResourceUserId = 0;
+    appletGetAppletResourceUserId(&AppletResourceUserId);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 version;
+        u64 AppletResourceUserId;
+    } *raw;
+
+    ipcSendPid(&c);
+
+    raw = serviceIpcPrepareHeader(&g_capssuSrv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 32;
+    raw->version = version;
+    raw->AppletResourceUserId = AppletResourceUserId;
+
+    Result rc = serviceIpcDispatch(&g_capssuSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&g_capssuSrv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
 }
 
 static Result _capssuSaveScreenShotEx0(const void* buffer, size_t size, CapsScreenShotAttribute *attr, u32 unk, CapsApplicationAlbumEntry *out) {
