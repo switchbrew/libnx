@@ -47,18 +47,18 @@ typedef struct {
 /// OffscreenRecordingParameter
 typedef struct {
     u8 unk_x0[0x10];              ///< Unknown. Default value is 0.
-    u32 unk_x10;                  ///< Unknown. Default value is 0x103.
+    u32 unk_x10;                  ///< Unknown. Must match value 0x103, which is the default value.
 
-    s32 video_bitrate;            ///< VideoBitRate. Default value is 8000000.
-    s32 video_width;              ///< VideoWidth. Default value is 1280.
-    s32 video_height;             ///< VideoHeight. Default value is 720.
-    s32 video_framerate;          ///< VideoFrameRate. Default value is 30.
-    s32 video_keyFrameInterval;   ///< VideoKeyFrameInterval. Default value is 30.
+    s32 video_bitrate;            ///< VideoBitRate, 0 is invalid. Default value is 8000000.
+    s32 video_width;              ///< VideoWidth, must match 1280 or 1920. Default value is 1280.
+    s32 video_height;             ///< VideoHeight, must match 720 or 1080. Default value is 720.
+    s32 video_framerate;          ///< VideoFrameRate, must match 30 or 60. Default value is 30.
+    s32 video_keyFrameInterval;   ///< VideoKeyFrameInterval, 0 is invalid. Default value is 30.
 
     s32 audio_bitrate;            ///< AudioBitRate. Default value is 128000 ([5.0.0-5.1.0] 1536000).
-    s32 audio_samplerate;         ///< AudioSampleRate. Default value is 48000.
-    s32 audio_channel_count;      ///< AudioChannelCount. Default value is 2.
-    s32 audio_sample_format;      ///< \ref PcmFormat AudioSampleFormat. Default value is PcmFormat_Int16.
+    s32 audio_samplerate;         ///< AudioSampleRate, 0 is invalid. Default value is 48000.
+    s32 audio_channel_count;      ///< AudioChannelCount. Must match 2, which is the default value.
+    s32 audio_sample_format;      ///< \ref PcmFormat AudioSampleFormat. Must match PcmFormat_Int16, which is the default value.
 
     s32 video_imageOrientation;   ///< \ref AlbumImageOrientation VideoImageOrientation. Default value is ::AlbumImageOrientation_Unknown0.
 
@@ -140,13 +140,13 @@ Result grcMovieMakerAbort(GrcMovieMaker *m);
  * @param m \ref GrcMovieMaker
  * @param width Width for the thumbnail, must be 1280.
  * @param height Height for the thumbnail, must be 720.
- * @param[in] appdata UserData input buffer for the JPEG thumbnail. Optional, can be NULL.
- * @param[in] appdata_size Size of the UserData input buffer. Optional, can be 0. Must be <=0x400.
+ * @param[in] userdata UserData input buffer for the JPEG thumbnail. Optional, can be NULL.
+ * @param[in] userdata_size Size of the UserData input buffer. Optional, can be 0. Must be <=0x400.
  * @param[in] thumbnail RGBA8 image buffer containing the thumbnail. Optional, can be NULL.
  * @param[in] thumbnail_size Size of the thumbnail buffer. Optional, can be 0.
  * @param[out] entry Output \ref CapsApplicationAlbumEntry for the recorded video. Optional, can be NULL. Only available on [7.0.0+], if this is not NULL on pre-7.0.0 an error is thrown.
  */
-Result grcMovieMakerFinish(GrcMovieMaker *m, s32 width, s32 height, const void* appdata, size_t appdata_size, const void* thumbnail, size_t thumbnail_size, CapsApplicationAlbumEntry *entry);
+Result grcMovieMakerFinish(GrcMovieMaker *m, s32 width, s32 height, const void* userdata, size_t userdata_size, const void* thumbnail, size_t thumbnail_size, CapsApplicationAlbumEntry *entry);
 
 /**
  * @brief Gets the recording error with the specified MovieMaker.
