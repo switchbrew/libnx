@@ -25,6 +25,7 @@ typedef enum {
     AlbumReportOption_Unknown3 = 3,             ///< Unknown.
 } AlbumReportOption;
 
+/// ScreenShotAttribute
 typedef struct {
     u32 unk_x0;                                 ///< Always set to 0 by official sw.
     u32 orientation;                            ///< \ref AlbumImageOrientation
@@ -33,7 +34,7 @@ typedef struct {
     u8 unk_x10[0x30];                           ///< Always set to 0 by official sw.
 } CapsScreenShotAttribute;
 
-/// AlbumFileDateTime. This corresponds to each field in the Album entry filename, prior to the "-".
+/// AlbumFileDateTime. This corresponds to each field in the Album entry filename, prior to the "-": "YYYYMMDDHHMMSSII".
 typedef struct {
     u16 year;                                    ///< Year.
     u8 month;                                    ///< Month.
@@ -41,7 +42,7 @@ typedef struct {
     u8 hour;                                     ///< Hour.
     u8 minute;                                   ///< Minute.
     u8 second;                                   ///< Second.
-    u8 unk_x7;                                   ///< Unknown.
+    u8 id;                                       ///< Unique ID for when there's multiple Album files with the same timestamp.
 } CapsAlbumFileDateTime;
 
 /// AlbumEntryId
