@@ -170,7 +170,7 @@ static romfs_mount *romfsFindMount(const char *name)
         }
         else if(mount->setup) //Find the mount with the input name.
         {
-            if(strncmp(mount->name, name, strlen(mount->name))==0)
+            if(strncmp(mount->name, name, sizeof(mount->name)-1)==0)
                 return mount;
         }
     }
