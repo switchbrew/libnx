@@ -104,7 +104,7 @@ static Result _capssuSaveScreenShotEx0(const void* buffer, size_t size, const Ca
     } *raw;
 
     ipcSendPid(&c);
-    ipcAddSendBuffer(&c, buffer, size, 1);
+    ipcAddSendBuffer(&c, buffer, size, BufferType_Type1);
 
     raw = serviceIpcPrepareHeader(&g_capssuSrv, &c, sizeof(*raw));
 
