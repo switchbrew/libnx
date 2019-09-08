@@ -47,7 +47,7 @@ typedef struct {
     u8 unk_x4;                                  ///< Unknown.
     u8 unk_x5;                                  ///< Unknown.
     u8 unk_x6;                                  ///< Unknown.
-    u8 pad;                                     ///< Unknown.
+    u8 pad;                                     ///< Padding.
     u32 unk_x8;                                 ///< Unknown.
     u32 unk_xc;                                 ///< Unknown.
     u32 unk_x10;                                ///< Unknown.
