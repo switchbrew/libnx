@@ -11,7 +11,11 @@
 
 /// Initialize caps:sc. Only available on [2.0.0+].
 Result capsscInitialize(void);
+
+/// Exit caps:sc.
 void capsscExit(void);
+
+/// Gets the Service for caps:sc.
 Service* capsscGetServiceSession(void);
 
 /**

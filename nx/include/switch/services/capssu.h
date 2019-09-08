@@ -74,7 +74,7 @@ Result capssuSaveScreenShotEx0(const void* buffer, size_t size, const CapsScreen
  * @param[in] size Size of the buffer, must be at least 0x384000.
  * @param[in] attr \ref CapsScreenShotAttribute
  * @param[in] reportoption \ref AlbumReportOption
- * @parma[in] appdata \ref CapsApplicationData
+ * @param[in] appdata \ref CapsApplicationData
  * @param[out] out \ref CapsApplicationAlbumEntry. Optional, can be NULL.
  */
 Result capssuSaveScreenShotEx1(const void* buffer, size_t size, const CapsScreenShotAttribute *attr, AlbumReportOption reportoption, CapsApplicationData *appdata, CapsApplicationAlbumEntry *out);
@@ -86,7 +86,7 @@ Result capssuSaveScreenShotEx1(const void* buffer, size_t size, const CapsScreen
  * @param[in] size Size of the buffer, must be at least 0x384000.
  * @param[in] attr \ref CapsScreenShotAttribute
  * @param[in] reportoption \ref AlbumReportOption
- * @parma[in] list \ref CapsUserIdList
+ * @param[in] list \ref CapsUserIdList
  * @param[out] out \ref CapsApplicationAlbumEntry. Optional, can be NULL.
  */
 Result capssuSaveScreenShotEx2(const void* buffer, size_t size, const CapsScreenShotAttribute *attr, AlbumReportOption reportoption, CapsUserIdList *list, CapsApplicationAlbumEntry *out);
