@@ -112,6 +112,7 @@ extern "C" {
 #include "switch/audio/driver.h"
 
 #include "switch/applets/libapplet.h"
+#include "switch/applets/album_la.h"
 #include "switch/applets/pctlauth.h"
 #include "switch/applets/error.h"
 #include "switch/applets/swkbd.h"
