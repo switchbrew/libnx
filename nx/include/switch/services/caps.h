@@ -19,10 +19,8 @@ typedef enum {
 
 /// AlbumReportOption
 typedef enum {
-    AlbumReportOption_Unknown0 = 0,             ///< Unknown.
-    AlbumReportOption_Unknown1 = 1,             ///< Unknown.
-    AlbumReportOption_Unknown2 = 2,             ///< Unknown.
-    AlbumReportOption_Unknown3 = 3,             ///< Unknown.
+    AlbumReportOption_Disable = 0,             ///< Don't display the screenshot-taken Overlay-applet notification.
+    AlbumReportOption_Enable = 1,              ///< Display the screenshot-taken Overlay notification.
 } AlbumReportOption;
 
 /// ContentType
