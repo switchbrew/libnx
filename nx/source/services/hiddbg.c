@@ -293,7 +293,7 @@ Result hiddbgReadSerialFlash(u32 offset, void* buffer, size_t size, u64 UniquePa
 }
 
 Result hiddbgGetAbstractedPadHandles(u64 *AbstractedPadHandles, s32 count, s32 *total_entries) {
-    if (hosversionBefore(5,0,0))
+    if (hosversionBefore(5,0,0) || hosversionAtLeast(9,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     Result rc;
@@ -333,7 +333,7 @@ Result hiddbgGetAbstractedPadHandles(u64 *AbstractedPadHandles, s32 count, s32 *
 }
 
 Result hiddbgGetAbstractedPadState(u64 AbstractedPadHandle, HiddbgAbstractedPadState *state) {
-    if (hosversionBefore(5,0,0))
+    if (hosversionBefore(5,0,0) || hosversionAtLeast(9,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     Result rc;
@@ -373,7 +373,7 @@ Result hiddbgGetAbstractedPadState(u64 AbstractedPadHandle, HiddbgAbstractedPadS
 }
 
 Result hiddbgGetAbstractedPadsState(u64 *AbstractedPadHandles, HiddbgAbstractedPadState *states, s32 count, s32 *total_entries) {
-    if (hosversionBefore(5,0,0))
+    if (hosversionBefore(5,0,0) || hosversionAtLeast(9,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     Result rc;
@@ -414,7 +414,7 @@ Result hiddbgGetAbstractedPadsState(u64 *AbstractedPadHandles, HiddbgAbstractedP
 }
 
 Result hiddbgSetAutoPilotVirtualPadState(s8 AbstractedVirtualPadId, const HiddbgAbstractedPadState *state) {
-    if (hosversionBefore(5,0,0))
+    if (hosversionBefore(5,0,0) || hosversionAtLeast(9,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     Result rc;
@@ -454,7 +454,7 @@ Result hiddbgSetAutoPilotVirtualPadState(s8 AbstractedVirtualPadId, const Hiddbg
 }
 
 Result hiddbgUnsetAutoPilotVirtualPadState(s8 AbstractedVirtualPadId) {
-    if (hosversionBefore(5,0,0))
+    if (hosversionBefore(5,0,0) || hosversionAtLeast(9,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     Result rc;

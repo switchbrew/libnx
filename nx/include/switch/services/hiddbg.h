@@ -90,20 +90,25 @@ Result hiddbgUpdateDesignInfo(u32 colorBody, u32 colorButtons, u32 colorLeftGrip
 /// This doesn't seem to be usable?
 Result hiddbgReadSerialFlash(u32 offset, void* buffer, size_t size, u64 UniquePadId);
 
-/// Gets a list of AbstractedPadHandles, where AbstractedPadHandles is the output array with max entries = count. total_entries is total entries written to the output array. Only available with [5.0.0+].
+/// Gets a list of AbstractedPadHandles, where AbstractedPadHandles is the output array with max entries = count. total_entries is total entries written to the output array.
+/// Only available with [5.0.0-8.1.0].
 Result hiddbgGetAbstractedPadHandles(u64 *AbstractedPadHandles, s32 count, s32 *total_entries);
 
-/// Gets the state for the specified AbstractedPadHandle. Only available with [5.0.0+].
+/// Gets the state for the specified AbstractedPadHandle.
+/// Only available with [5.0.0-8.1.0].
 Result hiddbgGetAbstractedPadState(u64 AbstractedPadHandle, HiddbgAbstractedPadState *state);
 
-/// Similar to \ref hiddbgGetAbstractedPadHandles except this also returns the state for each pad in output array states. Only available with [5.0.0+].
+/// Similar to \ref hiddbgGetAbstractedPadHandles except this also returns the state for each pad in output array states.
+/// Only available with [5.0.0-8.1.0].
 Result hiddbgGetAbstractedPadsState(u64 *AbstractedPadHandles, HiddbgAbstractedPadState *states, s32 count, s32 *total_entries);
 
 /// Sets AutoPilot state for the specified pad.
 /// AbstractedVirtualPadId can be any unique value as long as it's within bounds. For example, 0-7 is usable.
+/// Only available with [5.0.0-8.1.0].
 Result hiddbgSetAutoPilotVirtualPadState(s8 AbstractedVirtualPadId, const HiddbgAbstractedPadState *state);
 
 /// Clears AutoPilot state for the specified pad set by \ref hiddbgSetAutoPilotVirtualPadState.
+/// Only available with [5.0.0-8.1.0].
 Result hiddbgUnsetAutoPilotVirtualPadState(s8 AbstractedVirtualPadId);
 
 /// Clears AutoPilot state for all pads set by \ref hiddbgSetAutoPilotVirtualPadState.
