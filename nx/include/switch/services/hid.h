@@ -222,6 +222,9 @@ typedef enum
     TYPE_JOYCON_PAIR   = BIT(2),
     TYPE_JOYCON_LEFT   = BIT(3),
     TYPE_JOYCON_RIGHT  = BIT(4),
+
+    TYPE_SYSTEM_EXT    = BIT(29),
+    TYPE_SYSTEM        = BIT(30),
 } HidControllerType;
 
 typedef enum

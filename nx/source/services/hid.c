@@ -97,7 +97,7 @@ Result hidInitialize(void)
         rc = _hidActivateNpad();
 
     if (R_SUCCEEDED(rc))
-        rc = hidSetSupportedNpadStyleSet(TYPE_PROCONTROLLER | TYPE_HANDHELD | TYPE_JOYCON_PAIR | TYPE_JOYCON_LEFT | TYPE_JOYCON_RIGHT);
+        rc = hidSetSupportedNpadStyleSet(TYPE_PROCONTROLLER | TYPE_HANDHELD | TYPE_JOYCON_PAIR | TYPE_JOYCON_LEFT | TYPE_JOYCON_RIGHT | TYPE_SYSTEM_EXT | TYPE_SYSTEM);
 
     if (R_SUCCEEDED(rc))
         rc = hidSetSupportedNpadIdType(idbuf, 9);
