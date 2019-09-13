@@ -189,7 +189,7 @@ static Result _lrRedirectPath(Service* s, u64 cmd_id, u64 tid, const char *path)
 */
 static Result _lrRedirectApplicationPath(Service* s, u64 cmd_id, u64 tid, u64 tid2, const char *path) {
     // On < 9.0.0, call the original redirection helper.
-    if (hosversionBefore(9, 0, 0)) {
+    if (hosversionBefore(9,0,0)) {
         return _lrRedirectPath(s, cmd_id, tid, path);
     }
 
