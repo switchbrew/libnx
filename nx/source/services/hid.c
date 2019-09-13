@@ -1739,3 +1739,44 @@ Result hidResetSevenSixAxisSensorTimestamp(void) {
     return _hidCmdWithNoInput(310);
 }
 
+Result hidGetNpadInterfaceType(HidControllerID id, u8 *out) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    Result rc;
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 405;
+    raw->id = hidControllerIDToOfficial(id);
+
+    rc = serviceIpcDispatch(&g_hidSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u8 out;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && out) *out = resp->out;
+    }
+
+    return rc;
+}
+

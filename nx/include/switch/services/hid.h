@@ -792,3 +792,7 @@ Result hidGetSevenSixAxisSensorFusionStrength(float *strength);
 /// Resets the timestamp for the SevenSixAxisSensor. Only available on [6.0.0+].
 Result hidResetSevenSixAxisSensorTimestamp(void);
 
+/// Gets the NpadInterfaceType for the specified controller.
+/// Only available on [4.0.0+].
+Result hidGetNpadInterfaceType(HidControllerID id, u8 *out);
+
