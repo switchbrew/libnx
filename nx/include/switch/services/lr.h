@@ -33,8 +33,8 @@ Result lrLrResolveApplicationHtmlDocumentPath(LrLocationResolver* lr, u64 tid, c
 Result lrLrResolveDataPath(LrLocationResolver* lr, u64 tid, char *out);
 Result lrLrRedirectApplicationControlPath(LrLocationResolver* lr, u64 tid, u64 tid2, const char *path);
 Result lrLrRedirectApplicationHtmlDocumentPath(LrLocationResolver* lr, u64 tid, u64 tid2, const char *path);
-Result lrLrResolveLegalInformationPath(LrLocationResolver* lr, u64 tid, char *out);
-Result lrLrRedirectLegalInformationPath(LrLocationResolver* lr, u64 tid, const char *path);
+Result lrLrResolveApplicationLegalInformationPath(LrLocationResolver* lr, u64 tid, char *out);
+Result lrLrRedirectApplicationLegalInformationPath(LrLocationResolver* lr, u64 tid, u64 tid2, const char *path);
 Result lrLrRefresh(LrLocationResolver* lr);
 
 // IRegisteredLocationResolver

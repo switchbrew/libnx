@@ -257,12 +257,12 @@ Result lrLrRedirectApplicationHtmlDocumentPath(LrLocationResolver* lr, u64 tid, 
     return _lrRedirectApplicationPath(&lr->s, 6, tid, tid2, path);
 }
 
-Result lrLrResolveLegalInformationPath(LrLocationResolver* lr, u64 tid, char *out) {
+Result lrLrResolveApplicationLegalInformationPath(LrLocationResolver* lr, u64 tid, char *out) {
     return _lrResolvePath(&lr->s, 7, tid, out);
 }
 
-Result lrLrRedirectLegalInformationPath(LrLocationResolver* lr, u64 tid, const char *path) {
-    return _lrRedirectPath(&lr->s, 8, tid, path);
+Result lrLrRedirectApplicationLegalInformationPath(LrLocationResolver* lr, u64 tid, u64 tid2, const char *path) {
+    return _lrRedirectApplicationPath(&lr->s, 8, tid, tid2, path);
 }
 
 Result lrLrRefresh(LrLocationResolver* lr) {
