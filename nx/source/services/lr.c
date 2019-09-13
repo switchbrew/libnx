@@ -209,7 +209,7 @@ static Result _lrRedirectApplicationPath(Service* s, u64 cmd_id, u64 tid, u64 ti
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = cmd_id;
     raw->tid = tid;
-    raw->tid = tid2;
+    raw->tid2 = tid2;
 
     strncpy(send_path, path, FS_MAX_PATH);
     Result rc = serviceIpcDispatch(s);
