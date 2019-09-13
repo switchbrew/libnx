@@ -330,6 +330,15 @@ typedef enum
     HidJoyHoldType_Horizontal = 1, ///< Joy-Con held horizontally with HID state orientation adjustment, see \ref HidControllerLayoutType.
 } HidJoyHoldType;
 
+/// NpadInterfaceType
+typedef enum
+{
+    NpadInterfaceType_Bluetooth = 1,    ///< Bluetooth.
+    NpadInterfaceType_Rail      = 2,    ///< Rail.
+    NpadInterfaceType_USB       = 3,    ///< USB.
+    NpadInterfaceType_Unknown4  = 4,    ///< Unknown.
+} HidNpadInterfaceType;
+
 typedef struct touchPosition
 {
     u32 id;
@@ -792,7 +801,7 @@ Result hidGetSevenSixAxisSensorFusionStrength(float *strength);
 /// Resets the timestamp for the SevenSixAxisSensor. Only available on [6.0.0+].
 Result hidResetSevenSixAxisSensorTimestamp(void);
 
-/// Gets the NpadInterfaceType for the specified controller.
+/// Gets the \ref HidNpadInterfaceType for the specified controller.
 /// Only available on [4.0.0+].
 Result hidGetNpadInterfaceType(HidControllerID id, u8 *out);
 
