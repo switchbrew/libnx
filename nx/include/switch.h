@@ -93,6 +93,7 @@ extern "C" {
 #include "switch/services/pctl.h"
 #include "switch/services/pdm.h"
 #include "switch/services/grc.h"
+#include "switch/services/friends.h"
 
 #include "switch/display/binder.h"
 #include "switch/display/parcel.h"
@@ -113,6 +114,7 @@ extern "C" {
 
 #include "switch/applets/libapplet.h"
 #include "switch/applets/album_la.h"
+#include "switch/applets/friends_la.h"
 #include "switch/applets/pctlauth.h"
 #include "switch/applets/error.h"
 #include "switch/applets/swkbd.h"
