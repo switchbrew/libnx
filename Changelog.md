@@ -1,5 +1,100 @@
 # Changelog
 
+## Version 2.5.0
+
+#### system
+* Corrected type of id0 in svcGetInfo.
+
+#### filesystem
+* Added fsExtendSaveDataFileSystem, fsOpenCustomStorageFileSystem, fsSetGlobalAccessLogMode, fsGetGlobalAccessLogMode.
+* Added FsCustomStorageId enum.
+* Fixed by-name RomFS mount lookups to actually compare the entire name.
+
+#### graphics
+* Added binder session argument to nwindowCreate (nwindowCreateFromLayer not affected).
+* Binder code now supports domain objects.
+* Fixed bug in nvAddressSpaceCreate.
+
+#### input
+* **Explicitly announce support for System/SystemExt layouts, which in turn fixes input on 9.0.0+. It is of utmost importance that all homebrew be recompiled as soon as possible in order to work properly on 9.0.0+.**
+* **Fixed Hdls to work on 9.0.0+.**
+  * Several Hdls structs were redefined in 9.0.0+ and libnx was updated to reflect the new struct definitions (this is a breaking change). The old structs are still available but they now have a `V7` suffix, and libnx transparently handles conversion to/from the new 9.x structs at runtime on older system versions; so the new structs are *always* used regardless of system version. List of structs affected:
+    * HiddbgHdlsDeviceInfo(V7)
+    * HiddbgHdlsState(V7)
+    * HiddbgHdlsStateListEntry(V7)
+    * HiddbgHdlsStateList(V7)
+  * Added hiddbgGetUniquePadDeviceTypeSetInternal.
+* Added hidGetNpadInterfaceType.
+* Added HidNpadInterfaceType, HidDeviceTypeBits, HidDeviceType enums.
+* Prevent AbstractedPad/VirtualPad commands from being used on 9.0.0+ since they were removed.
+* Corrected several commands by internally calling hidControllerIDToOfficial.
+
+#### applet
+* Added AppletAttribute, AppletProcessLaunchReason, AppletInfo, AppletApplicationLaunchProperty, AppletApplicationLaunchRequestInfo, AppletResourceUsageInfo structs.
+* Added AppletApplicationExitReason, AppletSystemButtonType, AppletProgramSpecifyKind enums.
+* Renamed AppletNotificationMessage to AppletMessage.
+* Renamed AppletLaunchParameterKind_Application to AppletLaunchParameterKind_UserChannel.
+* Added appletGetServiceSession_* funcs.
+* Added appletGetAppletInfo.
+* Changed appletRequestToShutdown/appletRequestToReboot and appletStartShutdownSequenceForOverlay/appletStartRebootSequenceForOverlay on success to enter an infinite sleep loop.
+  * This is also used with `_appletExitProcess` when the exit commands were successful, which is used during `__nx_applet_exit_mode` handling.
+* Use OpenLibraryAppletProxy command on 3.0.0+ when running appletInitialize for AppletType_LibraryApplet.
+* Added libappletArgsPop and libappletSetJumpFlag.
+
+* **ILibraryAppletSelfAccessor**:
+  * Added appletPopInData, appletPushOutData, appletPopInteractiveInData, appletPushInteractiveOutData, appletGetPopInDataEvent, appletGetPopInteractiveInDataEvent.
+  * Added appletCanUseApplicationCore, appletGetMainAppletApplicationControlProperty, appletGetMainAppletStorageId, appletGetDesirableKeyboardLayout.
+  * Added appletPopExtraStorage, appletGetPopExtraStorageEvent, appletUnpopInData, appletUnpopExtraStorage.
+  * Added appletGetIndirectLayerProducerHandle, appletGetMainAppletApplicationDesiredLanguage, appletGetCurrentApplicationId.
+  * Added appletCreateGameMovieTrimmer, appletReserveResourceForMovieOperation, appletUnreserveResourceForMovieOperation.
+  * Added appletGetMainAppletAvailableUsers.
+* **IProcessWindingController**:
+  * Added appletPushContext, appletPopContext.
+* **IDebugFunctions**:
+  * Added appletOpenMainApplication, appletPerformSystemButtonPressing, appletInvalidateTransitionLayer, appletRequestLaunchApplicationWithUserAndArgumentForDebug, appletGetAppletResourceUsageInfo.
+* **ILibraryAppletAccessor**:
+  * Added appletHolderTerminate, appletHolderRequestExitOrTerminate.
+* **IProcessWindingController**:
+  * Added appletHolderJump.
+* **IOverlayFunctions**:
+  * Added appletBeginToObserveHidInputForDevelop.
+* **IHomeMenuFunctions**:
+  * Added appletPopRequestLaunchApplicationForDebug, appletLaunchDevMenu.
+* **IApplicationCreator**:
+  * Added support for AppletApplication.
+  * Added appletCreateApplication, appletPopLaunchRequestedApplication, appletCreateSystemApplication, appletPopFloatingApplicationForDevelopment.
+* **ILibraryAppletCreator**:
+  * Added appletTerminateAllLibraryApplets, appletAreAnyLibraryAppletsLeft.
+* **IApplicationFunctions**:
+  * Added appletGetLaunchStorageInfoForDebug, appletRequestFlushGamePlayingMovieForDebug, appletExitAndRequestToShowThanksMessage.
+  * Added appletExecuteProgram, appletJumpToSubApplicationProgramForDevelopment, appletRestartProgram, and appletGetPreviousProgramIndex.
+  * Added appletCreateMovieMaker and appletPrepareForJit.
+
+#### libapplets
+* Added support for launching the Album applet via albumLa.
+
+#### other services
+* **Added GRC service support** (video recording, streaming and trimming).
+* Changes to caps (capture service) wrappers:
+  * Added support for the caps:u service.
+  * Added CapsAlbumFileDateTime, CapsAlbumEntryId, CapsApplicationData, CapsUserIdList, CapsScreenShotAttributeForApplication, CapsScreenShotDecodeOption, CapsApplicationAlbumFileEntry, CapsLoadAlbumScreenShotImageOutputForApplication structs.
+  * Added AlbumReportOption, CapsContentType enums.
+  * Added capsGetShimLibraryVersion (not an actual IPC wrapper).
+  * Added capsGetDefaultStartDateTime, capsGetDefaultEndDateTime, capsConvertApplicationAlbumFileEntryToApplicationAlbumEntry, capsConvertApplicationAlbumEntryToApplicationAlbumFileEntry helper functions.
+  * Added capssuSaveScreenShotWithUserData, capssuSaveScreenShotWithUserIds, capssuSaveScreenShotEx1, capssuSaveScreenShotEx2.
+  * Improved definition of capssuSaveScreenShot and capssuSaveScreenShotEx0.
+  * Improved definition of CapsScreenShotAttribute, CapsApplicationAlbumEntry structs.
+  * Changed caps:su wrapper to call SetShimLibraryVersion on 7.0.0+.
+  * Renamed capsscCaptureScreenshot with capsscCaptureRawImageWithTimeout.
+* Fixed lr RedirectApplication commands on 9.0.0+.
+    * Renamed lrLrResolveLegalInformationPath to lrLrResolveApplicationLegalInformationPath.
+    * Renamed lrLrRedirectLegalInformationPath to lrLrRedirectApplicationLegalInformationPath.
+* Added missing fields to NacpStruct and other miscellaneous corrections.
+* Fixed definition of setsysGetServiceSession.
+
+#### miscellaneous
+* Further improvements to overall system stability and other minor adjustments have been made to enhance the user experience.
+
 ## Version 2.4.0
 
 #### system
