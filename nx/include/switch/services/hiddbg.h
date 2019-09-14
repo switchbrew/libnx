@@ -8,16 +8,27 @@
 #include "../services/hid.h"
 #include "../services/sm.h"
 
-/// HdlsDeviceInfo
+/// HdlsDeviceInfo, for [7.0.0-8.1.0].
 typedef struct {
-    u32 type;                 ///< Only one bit can be set. BIT(N*4+0) = Pro-Controller, BIT(N*4+1) = Joy-Con Left, BIT(N*4+2) = Joy-Con Right, BIT(N*4+3) = invalid. Where N is 0-1. BIT(8-10) = Pro-Controller, BIT(11) = Famicom-Controller, BIT(12) = Famicom-Controller II with microphone, BIT(13) = NES-Controller(DeviceType=0x200), BIT(14) = NES-Controller(DeviceType=0x400), BIT(15-16) = invalid, BIT(17) = unknown(DeviceType=0x8000), BIT(18-20) = invalid, BIT(21-23) = unknown(DeviceType=0x80000000).
-    u32 singleColorBody;      ///< RGBA Single Body Color
-    u32 singleColorButtons;   ///< RGBA Single Buttons Color
-    u8 type2;                 ///< Additional type field used with the above type field (only applies to type bit0-bit2 and bit21), if the value doesn't match one of the following a default is used. Type Pro-Controller: value 0x3 indicates that the controller is connected via USB. Type BIT(21): value 0x3 = unknown. When value is 0x2, state is merged with an existing controller (when the type value is compatible with this). Otherwise, it's a dedicated controller.
-    u8 pad[0x3];              ///< Padding
+    u32 deviceTypeInternal;   ///< Only one bit can be set. BIT(N*4+0) = Pro-Controller, BIT(N*4+1) = Joy-Con Left, BIT(N*4+2) = Joy-Con Right, BIT(N*4+3) = invalid. Where N is 0-1. BIT(8-10) = Pro-Controller, BIT(11) = Famicom-Controller, BIT(12) = Famicom-Controller II with microphone, BIT(13) = NES-Controller(DeviceType=0x200), BIT(14) = NES-Controller(DeviceType=0x400), BIT(15-16) = invalid, BIT(17) = unknown(DeviceType=0x8000), BIT(18-20) = invalid, BIT(21-23) = unknown(DeviceType=0x80000000).
+    u32 singleColorBody;      ///< RGBA Single Body Color.
+    u32 singleColorButtons;   ///< RGBA Single Buttons Color.
+    u8 npadInterfaceType;     ///< \ref HidNpadInterfaceType. Additional type field used with the above type field (only applies to type bit0-bit2 and bit21), if the value doesn't match one of the following a default is used. Type Pro-Controller: value 0x3 indicates that the controller is connected via USB. Type BIT(21): value 0x3 = unknown. When value is 0x2, state is merged with an existing controller (when the type value is compatible with this). Otherwise, it's a dedicated controller.
+    u8 pad[0x3];              ///< Padding.
+} HiddbgHdlsDeviceInfoV7;
+
+/// HdlsDeviceInfo, for [9.0.0+]. Converted to/from \ref HiddbgHdlsDeviceInfoV7 on prior sysvers.
+typedef struct {
+    u8 deviceType;            ///< \ref HidDeviceType
+    u8 npadInterfaceType;     ///< \ref HidNpadInterfaceType. Additional type field used with the above type field (only applies to ::HidDeviceType_JoyRight1, ::HidDeviceType_JoyLeft2, ::HidDeviceType_FullKey3, and ::HidDeviceType_System19), if the value doesn't match one of the following a default is used. ::HidDeviceType_FullKey3: ::NpadInterfaceType_USB indicates that the controller is connected via USB. :::HidDeviceType_System19: ::NpadInterfaceType_USB = unknown. When value is ::NpadInterfaceType_Rail, state is merged with an existing controller (with ::HidDeviceType_JoyRight1 / ::HidDeviceType_JoyLeft2). Otherwise, it's a dedicated controller.
+    u8 pad[0x2];              ///< Padding.
+    u32 singleColorBody;      ///< RGBA Single Body Color.
+    u32 singleColorButtons;   ///< RGBA Single Buttons Color.
+    u32 colorLeftGrip;        ///< [9.0.0+] RGBA Left Grip Color.
+    u32 colorRightGrip;       ///< [9.0.0+] RGBA Right Grip Color.
 } HiddbgHdlsDeviceInfo;
 
-/// HdlsState
+/// HdlsState, for [7.0.0-8.1.0].
 typedef struct {
     u8 powerConnected;                                    ///< powerConnected for the main PowerInfo, see \ref HidFlags.
     u8 flags;                                             ///< ORRed with powerConnected to set the value of the first byte for \ref HidFlags. For example, value 1 here will set isCharging for the main PowerInfo.
@@ -26,6 +37,16 @@ typedef struct {
     u32 buttons;                                          ///< See \ref HidControllerKeys.
     JoystickPosition joysticks[JOYSTICK_NUM_STICKS];      ///< \ref JoystickPosition
     u8 unk_x20;                                           ///< Unused for input. Set with output from \ref hiddbgDumpHdlsStates. Not set by \ref hiddbgGetAbstractedPadsState.
+    u8 padding[0x3];                                      ///< Padding
+} HiddbgHdlsStateV7;
+
+/// HdlsState, for [9.0.0+]. Converted to/from \ref HiddbgHdlsDeviceInfoV7 on prior sysvers.
+typedef struct {
+    u32 batteryCharge;                                    ///< batteryCharge for the main PowerInfo, see \ref HidPowerInfo.
+    u32 flags;                                            ///< Used to set the main PowerInfo for \ref HidFlags. BIT(0) -> powerConnected, BIT(1) -> isCharging.
+    u64 buttons;                                          ///< See \ref HidControllerKeys. [9.0.0+] Masked with 0xfffffffff00fffff.
+    JoystickPosition joysticks[JOYSTICK_NUM_STICKS];      ///< \ref JoystickPosition
+    u8 unk_x20;                                           ///< Unused for input. Set with output from \ref hiddbgDumpHdlsStates.
     u8 padding[0x3];                                      ///< Padding
 } HiddbgHdlsState;
 
@@ -46,14 +67,29 @@ typedef struct {
     HiddbgHdlsNpadAssignmentEntry entries[0x10];     ///< \ref HiddbgHdlsNpadAssignmentEntry
 } HiddbgHdlsNpadAssignment;
 
-/// HdlsStateListEntry
+/// HdlsStateListEntryV7, for [7.0.0-8.1.0].
+typedef struct {
+    u64 HdlsHandle;                             ///< HdlsHandle
+    HiddbgHdlsDeviceInfoV7 device;              ///< \ref HiddbgHdlsDeviceInfoV7. With \ref hiddbgApplyHdlsStateList this is only used when creating new devices.
+    HiddbgHdlsStateV7 state;                      ///< \ref HiddbgHdlsState
+} HiddbgHdlsStateListEntryV7;
+
+/// HdlsStateListV7, for [7.0.0-8.1.0]. This contains a list of all controllers, including non-virtual controllers.
+typedef struct {
+    s32 total_entries;                          ///< Total entries for the below entries.
+    u32 pad;                                    ///< Padding
+    HiddbgHdlsStateListEntryV7 entries[0x10];   ///< \ref HiddbgHdlsStateListEntryV7
+} HiddbgHdlsStateListV7;
+
+/// HdlsStateListEntry, for [9.0.0+]. Converted to/from \ref HiddbgHdlsStateListEntryV7 on prior sysvers.
 typedef struct {
     u64 HdlsHandle;                             ///< HdlsHandle
     HiddbgHdlsDeviceInfo device;                ///< \ref HiddbgHdlsDeviceInfo. With \ref hiddbgApplyHdlsStateList this is only used when creating new devices.
-    HiddbgHdlsState state;                      ///< \ref HiddbgHdlsState
+    alignas(8) HiddbgHdlsState state;           ///< \ref HiddbgHdlsState
 } HiddbgHdlsStateListEntry;
 
-/// HdlsStateList. This contains a list of all controllers, including non-virtual controllers.
+/// HdlsStateList, for [9.0.0+]. Converted to/from \ref HiddbgHdlsStateListV7 on prior sysvers.
+/// This contains a list of all controllers, including non-virtual controllers.
 typedef struct {
     s32 total_entries;                          ///< Total entries for the below entries.
     u32 pad;                                    ///< Padding
@@ -62,16 +98,16 @@ typedef struct {
 
 /// AbstractedPadState
 typedef struct {
-    u32 type;                 ///< Type. Converted to HiddbgHdlsDeviceInfo::type internally by \ref hiddbgSetAutoPilotVirtualPadState. BIT(0) -> BIT(0), BIT(1) -> BIT(15), BIT(2-3) -> BIT(1-2), BIT(4-5) -> BIT(1-2), BIT(6) -> BIT(3). BIT(7-11) -> BIT(11-15), BIT(12-14) -> BIT(12-14), BIT(15) -> BIT(17), BIT(31) -> BIT(21).
+    u32 type;                 ///< Type. Converted to HiddbgHdlsDeviceInfoV7::type internally by \ref hiddbgSetAutoPilotVirtualPadState. BIT(0) -> BIT(0), BIT(1) -> BIT(15), BIT(2-3) -> BIT(1-2), BIT(4-5) -> BIT(1-2), BIT(6) -> BIT(3). BIT(7-11) -> BIT(11-15), BIT(12-14) -> BIT(12-14), BIT(15) -> BIT(17), BIT(31) -> BIT(21).
     u8 flags;                ///< Flags. Only bit0 is used by \ref hiddbgSetAutoPilotVirtualPadState: when clear it will skip using the rest of the input and run \ref hiddbgUnsetAutoPilotVirtualPadState internally.
     u8 pad[0x3];              ///< Padding
 
     u32 singleColorBody;      ///< RGBA Single Body Color
     u32 singleColorButtons;   ///< RGBA Single Buttons Color
-    u8 type2;                 ///< See HiddbgHdlsDeviceInfo::type2.
+    u8 npadInterfaceType;     ///< See HiddbgHdlsDeviceInfo::npadInterfaceType.
     u8 pad2[0x3];             ///< Padding
 
-    HiddbgHdlsState state;    ///< State
+    HiddbgHdlsStateV7 state;    ///< State
 
     u8 unused[0x60];         ///< Unused with \ref hiddbgSetAutoPilotVirtualPadState. Not set by \ref hiddbgGetAbstractedPadsState.
 } HiddbgAbstractedPadState;
@@ -89,6 +125,11 @@ Result hiddbgUpdateDesignInfo(u32 colorBody, u32 colorButtons, u32 colorLeftGrip
 /// Reads spi-flash for the specified controller. See hidsys.h for UniquePadId.
 /// This doesn't seem to be usable?
 Result hiddbgReadSerialFlash(u32 offset, void* buffer, size_t size, u64 UniquePadId);
+
+/// Gets the internal DeviceType for the specified controller. See hidsys.h for UniquePadId.
+/// Only available with [6.0.0+].
+/// Pre-9.0.0 the output is an u32, with [9.0.0+] it's an u8.
+Result hiddbgGetUniquePadDeviceTypeSetInternal(u64 UniquePadId, u32 *out);
 
 /// Gets a list of AbstractedPadHandles, where AbstractedPadHandles is the output array with max entries = count. total_entries is total entries written to the output array.
 /// Only available with [5.0.0-8.1.0].
