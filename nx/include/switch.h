@@ -78,6 +78,7 @@ extern "C" {
 #include "switch/services/ns.h"
 #include "switch/services/ldr.h"
 #include "switch/services/ro.h"
+#include "switch/services/ts.h"
 #include "switch/services/pm.h"
 #include "switch/services/set.h"
 #include "switch/services/lr.h"
