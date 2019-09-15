@@ -1,6 +1,6 @@
 /**
  * @file friend.h
- * @brief Friends (friend:*) service IPC header.
+ * @brief Friends (friend:*) service IPC wrapper.
  * @author yellows8
  * @copyright libnx Authors
  */

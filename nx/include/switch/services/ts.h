@@ -1,5 +1,5 @@
 /**
- * @file friend.h
+ * @file ts.h
  * @brief Temperature measurement (ts) service IPC wrapper.
  * @author yellows8
  * @copyright libnx Authors
