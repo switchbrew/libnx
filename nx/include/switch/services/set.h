@@ -22,22 +22,24 @@ typedef enum {
 /// IDs for Language.
 typedef enum
 {
-    SetLanguage_JA =    0,  ///< Japanese
-    SetLanguage_ENUS =  1,  ///< US English ("AmericanEnglish")
-    SetLanguage_FR =    2,  ///< French
-    SetLanguage_DE =    3,  ///< German
-    SetLanguage_IT =    4,  ///< Italian
-    SetLanguage_ES =    5,  ///< Spanish
-    SetLanguage_ZHCN =  6,  ///< Simplified Chinese ("Chinese")
-    SetLanguage_KO =    7,  ///< Korean
-    SetLanguage_NL =    8,  ///< Dutch
-    SetLanguage_PT =    9,  ///< Portuguese
-    SetLanguage_RU =    10, ///< Russian
-    SetLanguage_ZHTW =  11, ///< Traditional Chinese ("Taiwanese")
-    SetLanguage_ENGB =  12, ///< GB English ("BritishEnglish")
-    SetLanguage_FRCA =  13, ///< CA French ("CanadianFrench")
-    SetLanguage_ES419 = 14, ///< "LatinAmericanSpanish"
-    SetLanguage_Total,      ///< Total languages supported by this enum.
+    SetLanguage_JA =    0,   ///< Japanese
+    SetLanguage_ENUS =  1,   ///< US English ("AmericanEnglish")
+    SetLanguage_FR =    2,   ///< French
+    SetLanguage_DE =    3,   ///< German
+    SetLanguage_IT =    4,   ///< Italian
+    SetLanguage_ES =    5,   ///< Spanish
+    SetLanguage_ZHCN =  6,   ///< Simplified Chinese ("Chinese")
+    SetLanguage_KO =    7,   ///< Korean
+    SetLanguage_NL =    8,   ///< Dutch
+    SetLanguage_PT =    9,   ///< Portuguese
+    SetLanguage_RU =    10,  ///< Russian
+    SetLanguage_ZHTW =  11,  ///< Traditional Chinese ("Taiwanese")
+    SetLanguage_ENGB =  12,  ///< GB English ("BritishEnglish")
+    SetLanguage_FRCA =  13,  ///< CA French ("CanadianFrench")
+    SetLanguage_ES419 = 14,  ///< "LatinAmericanSpanish"
+    SetLanguage_ZHHANS = 15, ///< [4.0.0+] ChineseSimplified
+    SetLanguage_ZHHANT = 16, ///< [4.0.0+] ChineseTraditional
+    SetLanguage_Total,       ///< Total languages supported by this enum.
 } SetLanguage;
 
 /// Region codes.
@@ -46,6 +48,9 @@ typedef enum {
     SetRegion_USA = 1, ///< The Americas
     SetRegion_EUR = 2, ///< Europe
     SetRegion_AUS = 3, ///< Australia/New Zealand
+    SetRegion_CHN = 4, ///< China
+    SetRegion_KOR = 5, ///< Korea
+    SetRegion_TWN = 6, ///< Taiwan
 } SetRegion;
 
 /// Command IDs for setsysGetFlag/setsysSetFlag.
