@@ -642,7 +642,7 @@ Result nsdevPrepareLaunchProgramFromHost(NsLaunchProperties* out, const char* pa
     return rc;
 }
 
-Result nsdevLaunchApplication(u64* out_pid, u64 app_title_id, u32 flags) {
+Result nsdevLaunchApplicationForDevelop(u64* out_pid, u64 app_title_id, u32 flags) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -685,7 +685,7 @@ Result nsdevLaunchApplication(u64* out_pid, u64 app_title_id, u32 flags) {
     return rc;
 }
 
-Result nsdevLaunchApplicationWithStorageId(u64* out_pid, u64 app_title_id, u32 flags, u8 app_storage_id, u8 patch_storage_id) {
+Result nsdevLaunchApplicationWithStorageIdForDevelop(u64* out_pid, u64 app_title_id, u32 flags, u8 app_storage_id, u8 patch_storage_id) {
     IpcCommand c;
     ipcInitialize(&c);
 
@@ -733,7 +733,7 @@ Result nsdevLaunchApplicationWithStorageId(u64* out_pid, u64 app_title_id, u32 f
 }
 
 Result nsdevIsSystemMemoryResourceLimitBoosted(bool* out) {
-    if (hosversionBefore(6,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    if (hosversionBefore(6,0,0) || hosversionAtLeast(9,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     IpcCommand c;
     ipcInitialize(&c);
@@ -771,7 +771,7 @@ Result nsdevIsSystemMemoryResourceLimitBoosted(bool* out) {
     return rc;
 }
 
-Result nsdevGetRunningApplicationProcessId(u64* out_pid) {
+Result nsdevGetRunningApplicationProcessIdForDevelop(u64* out_pid) {
     if (hosversionBefore(6,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     IpcCommand c;
@@ -810,7 +810,7 @@ Result nsdevGetRunningApplicationProcessId(u64* out_pid) {
     return rc;
 }
 
-Result nsdevSetCurrentApplicationRightsEnvironmentCanBeActive(bool can_be_active) {
+Result nsdevSetCurrentApplicationRightsEnvironmentCanBeActiveForDevelop(bool can_be_active) {
     if (hosversionBefore(6,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     IpcCommand c;

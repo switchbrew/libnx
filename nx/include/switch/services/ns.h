@@ -90,12 +90,12 @@ void nsdevExit(void);
 Result nsdevLaunchProgram(u64* out_pid, const NsLaunchProperties* properties, u32 flags);
 Result nsdevTerminateProcess(u64 pid);
 Result nsdevTerminateProgram(u64 tid);
-Result nsdevGetShellEvent(Event* out); // Autoclear for nsdevShellEvent is always true.
+Result nsdevGetShellEvent(Event* out); ///< Autoclear for nsdevShellEvent is always true.
 Result nsdevGetShellEventInfo(NsShellEventInfo* out);
 Result nsdevTerminateApplication(void);
 Result nsdevPrepareLaunchProgramFromHost(NsLaunchProperties* out, const char* path, size_t path_len);
-Result nsdevLaunchApplication(u64* out_pid, u64 app_title_id, u32 flags);
-Result nsdevLaunchApplicationWithStorageId(u64* out_pid, u64 app_title_id, u32 flags, u8 app_storage_id, u8 patch_storage_id);
-Result nsdevIsSystemMemoryResourceLimitBoosted(bool* out);
-Result nsdevGetRunningApplicationProcessId(u64* out_pid);
-Result nsdevSetCurrentApplicationRightsEnvironmentCanBeActive(bool can_be_active);
+Result nsdevLaunchApplicationForDevelop(u64* out_pid, u64 app_title_id, u32 flags);
+Result nsdevLaunchApplicationWithStorageIdForDevelop(u64* out_pid, u64 app_title_id, u32 flags, u8 app_storage_id, u8 patch_storage_id);
+Result nsdevIsSystemMemoryResourceLimitBoosted(bool* out); ///< [6.0.0-8.1.0]
+Result nsdevGetRunningApplicationProcessIdForDevelop(u64* out_pid);
+Result nsdevSetCurrentApplicationRightsEnvironmentCanBeActiveForDevelop(bool can_be_active);
