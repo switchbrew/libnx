@@ -1,3 +1,4 @@
+#define NX_SERVICE_ASSUME_NON_DOMAIN
 #include <string.h>
 #include "types.h"
 #include "result.h"

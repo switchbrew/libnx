@@ -166,6 +166,11 @@ NX_CONSTEXPR void serviceCreateDomainSubservice(Service* s, Service* parent, u32
  */
 NX_INLINE void serviceClose(Service* s)
 {
+#if defined(NX_SERVICE_ASSUME_NON_DOMAIN)
+    if (s->object_id)
+        __builtin_unreachable();
+#endif
+
     if (s->own_handle || s->object_id) {
         cmifMakeCloseRequest(armGetTls(), s->own_handle ? 0 : s->object_id);
         svcSendSyncRequest(s->session);
@@ -182,6 +187,11 @@ NX_INLINE void serviceClose(Service* s)
  */
 NX_INLINE Result serviceClone(Service* s, Service* out_s)
 {
+#if defined(NX_SERVICE_ASSUME_NON_DOMAIN)
+    if (s->object_id)
+        __builtin_unreachable();
+#endif
+
     out_s->session = 0;
     out_s->own_handle = 1;
     out_s->object_id = s->object_id;
@@ -197,6 +207,11 @@ NX_INLINE Result serviceClone(Service* s, Service* out_s)
  */
 NX_INLINE Result serviceCloneEx(Service* s, u32 tag, Service* out_s)
 {
+#if defined(NX_SERVICE_ASSUME_NON_DOMAIN)
+    if (s->object_id)
+        __builtin_unreachable();
+#endif
+
     out_s->session = 0;
     out_s->own_handle = 1;
     out_s->object_id = s->object_id;
@@ -211,9 +226,6 @@ NX_INLINE Result serviceCloneEx(Service* s, u32 tag, Service* out_s)
  */
 NX_INLINE Result serviceConvertToDomain(Service* s)
 {
-    if (s->object_id)
-        return 0; // Nothing to do
-
     if (!s->own_handle)
     {
         // For overridden services, create a clone first.
@@ -298,6 +310,11 @@ NX_INLINE void* serviceMakeRequest(
     u32 num_objects, const Service* const* objects,
     u32 num_handles, const Handle* handles
 ) {
+#if defined(NX_SERVICE_ASSUME_NON_DOMAIN)
+    if (s->object_id)
+        __builtin_unreachable();
+#endif
+
     CmifRequestFormat fmt = {};
     fmt.object_id = s->object_id;
     fmt.request_id = request_id;
@@ -358,6 +375,11 @@ NX_INLINE Result serviceParseResponse(
     u32 num_out_objects, Service* out_objects,
     const SfOutHandleAttrs out_handle_attrs, Handle* out_handles
 ) {
+#if defined(NX_SERVICE_ASSUME_NON_DOMAIN)
+    if (s->object_id)
+        __builtin_unreachable();
+#endif
+
     CmifResponse res = {};
     bool is_domain = s->object_id != 0;
     Result rc = cmifParseResponse(&res, armGetTls(), is_domain, out_size);

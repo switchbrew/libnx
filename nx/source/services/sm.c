@@ -1,4 +1,5 @@
 // Copyright 2017 plutoo
+#define NX_SERVICE_ASSUME_NON_DOMAIN
 #include "types.h"
 #include "result.h"
 #include "arm/atomics.h"

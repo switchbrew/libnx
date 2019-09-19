@@ -1,4 +1,5 @@
 // Copyright 2017 plutoo
+#define NX_SERVICE_ASSUME_NON_DOMAIN
 #include "types.h"
 #include "result.h"
 #include "kernel/detect.h"
@@ -38,6 +39,7 @@ static void _fatalImpl(u32 cmd_id, Result err, FatalType type, FatalContext *ctx
             .buffers      = { { ctx, sizeof(*ctx) } },
             .in_send_pid  = true,
         );
+        serviceClose(&s);
     }
 
     switch (type) {
