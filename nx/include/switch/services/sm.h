@@ -10,6 +10,9 @@
 #include "../kernel/svc.h"
 #include "../kernel/ipc.h"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 /// Service type.
 typedef enum {
     ServiceType_Uninitialized,      ///< Uninitialized service.
@@ -77,6 +80,7 @@ static inline u32 serviceGetObjectId(Service* s) {
  * @param object_id ID of the object to close.
  * @return Result code.
  */
+DEPRECATED
 static inline Result serviceCloseObjectById(Service* s, u32 object_id) {
     return ipcCloseObjectById(s->handle, object_id);
 }
@@ -86,6 +90,7 @@ static inline Result serviceCloseObjectById(Service* s, u32 object_id) {
  * @param[in] s Service object.
  * @return Result code.
  */
+DEPRECATED
 static inline Result serviceIpcDispatch(Service* s) {
     return ipcDispatch(s->handle);
 }
@@ -120,6 +125,7 @@ static inline void serviceCreateDomainSubservice(Service* s, Service* parent, u3
  * @param[in] r Parsed IPC command containing handles/object IDs to create subservice from.
  * @param[in] i The index of the handle/object ID to create subservice from.
  */
+DEPRECATED
 static inline void serviceCreateSubservice(Service* s, Service* parent, IpcParsedCommand* r, int i) {
     if (r->IsDomainResponse) {
         return serviceCreateDomainSubservice(s, parent, r->OutObjectIds[i]);
@@ -133,6 +139,7 @@ static inline void serviceCreateSubservice(Service* s, Service* parent, IpcParse
  * @param[in] s Service object to send.
  * @param[in] cmd IPC command structure.
  */
+DEPRECATED
 static inline void serviceSendObject(Service* s, IpcCommand* cmd) {
     if (serviceIsDomain(s) || serviceIsDomainSubservice(s)) {
         ipcSendObjectId(cmd, s->object_id);
@@ -197,6 +204,7 @@ static inline void serviceClose(Service* s) {
  * @param sizeof_raw Size in bytes of the raw data structure to embed inside the IPC request
  * @return Pointer to the raw embedded data structure in the request, ready to be filled out.
  */
+DEPRECATED
 static inline void* serviceIpcPrepareHeader(Service* s, IpcCommand* cmd, size_t sizeof_raw) {
     if (serviceIsDomain(s) || serviceIsDomainSubservice(s)) {
         return ipcPrepareHeaderForDomain(cmd, sizeof_raw, serviceGetObjectId(s));
@@ -212,6 +220,7 @@ static inline void* serviceIpcPrepareHeader(Service* s, IpcCommand* cmd, size_t 
  * @param sizeof_raw Size in bytes of the raw data structure.
  * @return Result code.
  */
+DEPRECATED
 static inline Result serviceIpcParse(Service* s, IpcParsedCommand* r, size_t sizeof_raw) {
     if (serviceIsDomain(s) || serviceIsDomainSubservice(s)) {
         return ipcParseDomainResponse(r, sizeof_raw);
@@ -299,3 +308,5 @@ u64    smEncodeName(const char* name);
  * @param[in] handle IPC session handle.
  */
 void   smAddOverrideHandle(u64 name, Handle handle);
+
+#pragma GCC diagnostic pop

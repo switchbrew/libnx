@@ -9,6 +9,9 @@
 #include "../arm/tls.h"
 #include "../kernel/svc.h"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 /// IPC input header magic
 #define SFCI_MAGIC 0x49434653
 /// IPC output header magic
@@ -29,13 +32,13 @@ typedef enum {
     BufferType_Type1=1,   ///< Allows ProcessMemory and shared TransferMemory.
     BufferType_Invalid=2,
     BufferType_Type3=3    ///< Same as Type1 except remote process is not allowed to use device-mapping.
-} BufferType;
+} BufferType DEPRECATED;
 
 typedef enum {
     BufferDirection_Send=0,
     BufferDirection_Recv=1,
     BufferDirection_Exch=2,
-} BufferDirection;
+} BufferDirection DEPRECATED;
 
 typedef enum {
     IpcCommandType_Invalid = 0,
@@ -46,13 +49,13 @@ typedef enum {
     IpcCommandType_Control = 5,
     IpcCommandType_RequestWithContext = 6,
     IpcCommandType_ControlWithContext = 7,
-} IpcCommandType;
+} IpcCommandType DEPRECATED;
 
 typedef enum {
     DomainMessageType_Invalid = 0,
     DomainMessageType_SendMessage = 1,
     DomainMessageType_Close = 2,
-} DomainMessageType;
+} DomainMessageType DEPRECATED;
 
 /// IPC domain message header.
 typedef struct {
@@ -61,13 +64,13 @@ typedef struct {
     u16 Length;
     u32 ThisObjectId;
     u32 Pad[2];
-} DomainMessageHeader;
+} DomainMessageHeader DEPRECATED;
 
 /// IPC domain response header.
 typedef struct {
     u32 NumObjectIds;
     u32 Pad[3];
-} DomainResponseHeader;
+} DomainResponseHeader DEPRECATED;
 
 
 typedef struct {
@@ -91,12 +94,13 @@ typedef struct {
 
     size_t NumObjectIds;
     u32    ObjectIds[IPC_MAX_OBJECTS];
-} IpcCommand;
+} IpcCommand DEPRECATED;
 
 /**
  * @brief Initializes an IPC command structure.
  * @param cmd IPC command structure.
  */
+DEPRECATED
 static inline void ipcInitialize(IpcCommand* cmd) {
     *cmd = (IpcCommand){};
 }
@@ -106,19 +110,19 @@ typedef struct {
     u32 Size;   ///< Size of the buffer.
     u32 Addr;   ///< Lower 32-bits of the address of the buffer
     u32 Packed; ///< Packed data (including higher bits of the address)
-} IpcBufferDescriptor;
+} IpcBufferDescriptor DEPRECATED;
 
 /// IPC static send-buffer descriptor.
 typedef struct {
     u32 Packed; ///< Packed data (including higher bits of the address)
     u32 Addr;   ///< Lower 32-bits of the address
-} IpcStaticSendDescriptor;
+} IpcStaticSendDescriptor DEPRECATED;
 
 /// IPC static receive-buffer descriptor.
 typedef struct {
     u32 Addr;   ///< Lower 32-bits of the address of the buffer
     u32 Packed; ///< Packed data (including higher bits of the address)
-} IpcStaticRecvDescriptor;
+} IpcStaticRecvDescriptor DEPRECATED;
 
 /**
  * @brief Adds a buffer to an IPC command structure.
@@ -127,6 +131,7 @@ typedef struct {
  * @param size Size of the buffer.
  * @param type Buffer type.
  */
+DEPRECATED
 static inline void ipcAddSendBuffer(IpcCommand* cmd, const void* buffer, size_t size, BufferType type) {
     size_t off = cmd->NumSend;
     cmd->Buffers[off] = buffer;
@@ -142,6 +147,7 @@ static inline void ipcAddSendBuffer(IpcCommand* cmd, const void* buffer, size_t 
  * @param size Size of the buffer.
  * @param type Buffer type.
  */
+DEPRECATED
 static inline void ipcAddRecvBuffer(IpcCommand* cmd, void* buffer, size_t size, BufferType type) {
     size_t off = cmd->NumSend + cmd->NumRecv;
     cmd->Buffers[off] = buffer;
@@ -157,6 +163,7 @@ static inline void ipcAddRecvBuffer(IpcCommand* cmd, void* buffer, size_t size, 
  * @param size Size of the buffer.
  * @param type Buffer type.
  */
+DEPRECATED
 static inline void ipcAddExchBuffer(IpcCommand* cmd, void* buffer, size_t size, BufferType type) {
     size_t off = cmd->NumSend + cmd->NumRecv + cmd->NumExch;
     cmd->Buffers[off] = buffer;
@@ -172,6 +179,7 @@ static inline void ipcAddExchBuffer(IpcCommand* cmd, void* buffer, size_t size, 
  * @param size Size of the buffer.
  * @param index Index of buffer.
  */
+DEPRECATED
 static inline void ipcAddSendStatic(IpcCommand* cmd, const void* buffer, size_t size, u8 index) {
     size_t off = cmd->NumStaticIn;
     cmd->Statics[off] = buffer;
@@ -187,6 +195,7 @@ static inline void ipcAddSendStatic(IpcCommand* cmd, const void* buffer, size_t 
  * @param size Size of the buffer.
  * @param index Index of buffer.
  */
+DEPRECATED
 static inline void ipcAddRecvStatic(IpcCommand* cmd, void* buffer, size_t size, u8 index) {
     size_t off = cmd->NumStaticIn + cmd->NumStaticOut;
     cmd->Statics[off] = buffer;
@@ -203,6 +212,7 @@ static inline void ipcAddRecvStatic(IpcCommand* cmd, void* buffer, size_t size, 
  * @param size Size of the buffer.
  * @param index Index of buffer.
  */
+DEPRECATED
 static inline void ipcAddSendSmart(IpcCommand* cmd, size_t pointer_buffer_size, const void* buffer, size_t size, u8 index) {
     if (pointer_buffer_size != 0 && size <= pointer_buffer_size) {
         ipcAddSendBuffer(cmd, NULL, 0, BufferType_Normal);
@@ -221,6 +231,7 @@ static inline void ipcAddSendSmart(IpcCommand* cmd, size_t pointer_buffer_size, 
  * @param size Size of the buffer.
  * @param index Index of buffer.
  */
+DEPRECATED
 static inline void ipcAddRecvSmart(IpcCommand* cmd, size_t pointer_buffer_size, void* buffer, size_t size, u8 index) {
     if (pointer_buffer_size != 0 && size <= pointer_buffer_size) {
         ipcAddRecvBuffer(cmd, NULL, 0, BufferType_Normal);
@@ -235,6 +246,7 @@ static inline void ipcAddRecvSmart(IpcCommand* cmd, size_t pointer_buffer_size, 
  * @brief Tags an IPC command structure to send the PID.
  * @param cmd IPC command structure.
  */
+DEPRECATED
 static inline void ipcSendPid(IpcCommand* cmd) {
     cmd->SendPid = true;
 }
@@ -245,6 +257,7 @@ static inline void ipcSendPid(IpcCommand* cmd) {
  * @param h Handle to send.
  * @remark The receiving process gets a copy of the handle.
  */
+DEPRECATED
 static inline void ipcSendHandleCopy(IpcCommand* cmd, Handle h) {
     cmd->Handles[cmd->NumHandlesCopy++] = h;
 }
@@ -255,6 +268,7 @@ static inline void ipcSendHandleCopy(IpcCommand* cmd, Handle h) {
  * @param h Handle to send.
  * @remark The sending process loses ownership of the handle, which is transferred to the receiving process.
  */
+DEPRECATED
 static inline void ipcSendHandleMove(IpcCommand* cmd, Handle h) {
     cmd->Handles[cmd->NumHandlesCopy + cmd->NumHandlesMove++] = h;
 }
@@ -265,6 +279,7 @@ static inline void ipcSendHandleMove(IpcCommand* cmd, Handle h) {
  * @param sizeof_raw Size in bytes of the raw data structure to embed inside the IPC request
  * @return Pointer to the raw embedded data structure in the request, ready to be filled out.
  */
+DEPRECATED
 static inline void* ipcPrepareHeader(IpcCommand* cmd, size_t sizeof_raw) {
     u32* buf = (u32*)armGetTls();
     size_t i;
@@ -350,6 +365,7 @@ static inline void* ipcPrepareHeader(IpcCommand* cmd, size_t sizeof_raw) {
  * @param session IPC session handle.
  * @return Result code.
  */
+DEPRECATED
 static inline Result ipcDispatch(Handle session) {
     return svcSendSyncRequest(session);
 }
@@ -361,8 +377,8 @@ static inline Result ipcDispatch(Handle session) {
 
 /// IPC parsed command (response) structure.
 typedef struct {
-    IpcCommandType CommandType;               ///< Type of the command  
-    
+    IpcCommandType CommandType;               ///< Type of the command
+
     bool HasPid;                              ///< true if the 'Pid' field is filled out.
     u64  Pid;                                 ///< PID included in the response (only if HasPid is true)
 
@@ -376,7 +392,7 @@ typedef struct {
     u32    InThisObjectId;                    ///< Object ID to call the command on (for domain messages).
     size_t InNumObjectIds;                    ///< Number of object IDs (for domain messages).
     u32    InObjectIds[IPC_MAX_OBJECTS];      ///< Object IDs (for domain messages).
-    
+
     bool   IsDomainResponse;                  ///< true if the the message is a Domain response.
     size_t OutNumObjectIds;                   ///< Number of object IDs (for domain responses).
     u32    OutObjectIds[IPC_MAX_OBJECTS];     ///< Object IDs (for domain responses).
@@ -391,25 +407,26 @@ typedef struct {
     void*  Statics[IPC_MAX_BUFFERS];          ///< Pointers to the statics.
     size_t StaticSizes[IPC_MAX_BUFFERS];      ///< Sizes of the statics.
     u8     StaticIndices[IPC_MAX_BUFFERS];    ///< Indices of the statics.
-    
+
     size_t NumStaticsOut;                     ///< Number of output statics available in the response.
 
     void*  Raw;                               ///< Pointer to the raw embedded data structure in the response.
     void*  RawWithoutPadding;                 ///< Pointer to the raw embedded data structure, without padding.
     size_t RawSize;                           ///< Size of the raw embedded data.
-} IpcParsedCommand;
+} IpcParsedCommand DEPRECATED;
 
 /**
  * @brief Parse an IPC command response into an IPC parsed command structure.
  * @param r IPC parsed command structure to fill in.
  * @return Result code.
  */
+DEPRECATED
 static inline Result ipcParse(IpcParsedCommand* r) {
     u32* buf = (u32*)armGetTls();
     u32 ctrl0 = *buf++;
     u32 ctrl1 = *buf++;
     size_t i;
-    
+
     r->IsDomainRequest = false;
     r->IsDomainResponse = false;
 
@@ -417,7 +434,7 @@ static inline Result ipcParse(IpcParsedCommand* r) {
     r->HasPid = false;
     r->RawSize = (ctrl1 & 0x1ff) * 4;
     r->NumHandles = 0;
-    
+
     r->NumStaticsOut = (ctrl1 >> 10) & 15;
     if (r->NumStaticsOut >> 1) r->NumStaticsOut--; // Value 2  -> Single descriptor
     if (r->NumStaticsOut >> 1) r->NumStaticsOut--; // Value 3+ -> (Value - 2) descriptors
@@ -505,6 +522,7 @@ static inline Result ipcParse(IpcParsedCommand* r) {
  * @param size Output variable in which to store the size.
  * @return Result code.
  */
+DEPRECATED
 static inline Result ipcQueryPointerBufferSize(Handle session, size_t *size) {
     u32* buf = (u32*)armGetTls();
 
@@ -544,6 +562,7 @@ static inline Result ipcQueryPointerBufferSize(Handle session, size_t *size) {
  * @param session IPC session handle.
  * @return Result code.
  */
+DEPRECATED
 static inline Result ipcCloseSession(Handle session) {
     u32* buf = (u32*)armGetTls();
     buf[0] = IpcCommandType_Close;
@@ -558,6 +577,7 @@ static inline Result ipcCloseSession(Handle session) {
  * @param new_session_out Output cloned IPC session handle.
  * @return Result code.
  */
+DEPRECATED
 static inline Result ipcCloneSession(Handle session, u32 unk, Handle* new_session_out) {
     u32* buf = (u32*)armGetTls();
 
@@ -603,6 +623,7 @@ static inline Result ipcCloneSession(Handle session, u32 unk, Handle* new_sessio
  * @param object_id_out Output variable in which to store the object ID.
  * @return Result code.
  */
+DEPRECATED
 static inline Result ipcConvertSessionToDomain(Handle session, u32* object_id_out) {
     u32* buf = (u32*)armGetTls();
 
@@ -640,6 +661,7 @@ static inline Result ipcConvertSessionToDomain(Handle session, u32* object_id_ou
  * @param cmd IPC domain command structure.
  * @param object_id Object ID to send.
  */
+DEPRECATED
 static inline void ipcSendObjectId(IpcCommand* cmd, u32 object_id) {
     cmd->ObjectIds[cmd->NumObjectIds++] = object_id;
 }
@@ -651,6 +673,7 @@ static inline void ipcSendObjectId(IpcCommand* cmd, u32 object_id) {
  * @param object_id Domain object ID.
  * @return Pointer to the raw embedded data structure in the request, ready to be filled out.
  */
+DEPRECATED
 static inline void* ipcPrepareHeaderForDomain(IpcCommand* cmd, size_t sizeof_raw, u32 object_id) {
     void* raw = ipcPrepareHeader(cmd, sizeof_raw + sizeof(DomainMessageHeader) + cmd->NumObjectIds*sizeof(u32));
     DomainMessageHeader* hdr = (DomainMessageHeader*) raw;
@@ -672,6 +695,7 @@ static inline void* ipcPrepareHeaderForDomain(IpcCommand* cmd, size_t sizeof_raw
  * @param r IPC parsed command structure to fill in.
  * @return Result code.
  */
+DEPRECATED
 static inline Result ipcParseDomainRequest(IpcParsedCommand* r) {
     Result rc = ipcParse(r);
     DomainMessageHeader *hdr;
@@ -710,6 +734,7 @@ static inline Result ipcParseDomainRequest(IpcParsedCommand* r) {
  * @param sizeof_raw Size in bytes of the raw data structure.
  * @return Result code.
  */
+DEPRECATED
 static inline Result ipcParseDomainResponse(IpcParsedCommand* r, size_t sizeof_raw) {
     Result rc = ipcParse(r);
     DomainResponseHeader *hdr;
@@ -722,7 +747,7 @@ static inline Result ipcParseDomainResponse(IpcParsedCommand* r, size_t sizeof_r
     object_ids = (u32*)(((uintptr_t) r->Raw) + sizeof_raw);//Official sw doesn't align this.
 
     r->IsDomainResponse = true;
-    
+
     r->OutNumObjectIds = hdr->NumObjectIds > 8 ? 8 : hdr->NumObjectIds;
     if ((uintptr_t)object_ids + sizeof(u32) * r->OutNumObjectIds - (uintptr_t)armGetTls() >= 0x100) {
         return MAKERESULT(Module_Libnx, LibnxError_DomainMessageTooManyObjectIds);
@@ -739,6 +764,7 @@ static inline Result ipcParseDomainResponse(IpcParsedCommand* r, size_t sizeof_r
  * @param object_id ID of the object to close.
  * @return Result code.
  */
+DEPRECATED
 static inline Result ipcCloseObjectById(Handle session, u32 object_id) {
     IpcCommand c;
     DomainMessageHeader* hdr;
@@ -756,3 +782,5 @@ static inline Result ipcCloseObjectById(Handle session, u32 object_id) {
 }
 
 ///@}
+
+#pragma GCC diagnostic pop
