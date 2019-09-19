@@ -332,6 +332,20 @@ NX_INLINE Result cmifCopyFromCurrentDomain(Handle h, u32 object_id, Handle* out_
     return rc;
 }
 
+NX_INLINE Result cmifCloneCurrentObject(Handle h, Handle* out_h)
+{
+    cmifMakeControlRequest(armGetTls(), 2, 0);
+    Result rc = svcSendSyncRequest(h);
+    if (R_SUCCEEDED(rc))
+    {
+        CmifResponse resp = {};
+        rc = cmifParseResponse(&resp, armGetTls(), false, 0);
+        if (R_SUCCEEDED(rc) && out_h)
+            *out_h = resp.move_handles[0];
+    }
+    return rc;
+}
+
 NX_INLINE Result cmifQueryPointerBufferSize(Handle h, u16* out_size)
 {
     cmifMakeControlRequest(armGetTls(), 3, 0);
@@ -346,10 +360,10 @@ NX_INLINE Result cmifQueryPointerBufferSize(Handle h, u16* out_size)
     return rc;
 }
 
-NX_INLINE Result cmifCloneCurrentObjectEx(Handle h, u32 unk, Handle* out_h)
+NX_INLINE Result cmifCloneCurrentObjectEx(Handle h, u32 tag, Handle* out_h)
 {
     void* raw = cmifMakeControlRequest(armGetTls(), 4, sizeof(u32));
-    *(u32*)raw = unk;
+    *(u32*)raw = tag;
     Result rc = svcSendSyncRequest(h);
     if (R_SUCCEEDED(rc))
     {

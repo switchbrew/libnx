@@ -178,16 +178,30 @@ NX_INLINE void serviceClose(Service* s)
 /**
  * @brief Clones a service.
  * @param[in] s Service object.
- * @param[in] unk Unknown parameter.
  * @param[out] out_s Output service object.
  */
-NX_INLINE Result serviceCloneEx(Service* s, u32 unk, Service* out_s)
+NX_INLINE Result serviceClone(Service* s, Service* out_s)
 {
     out_s->session = 0;
     out_s->own_handle = 1;
     out_s->object_id = s->object_id;
     out_s->pointer_buffer_size = s->pointer_buffer_size;
-    return cmifCloneCurrentObjectEx(s->session, unk, &out_s->session);
+    return cmifCloneCurrentObject(s->session, &out_s->session);
+}
+
+/**
+ * @brief Clones a service with a session manager tag.
+ * @param[in] s Service object.
+ * @param[in] tag Session manager tag (unused in current official server code)
+ * @param[out] out_s Output service object.
+ */
+NX_INLINE Result serviceCloneEx(Service* s, u32 tag, Service* out_s)
+{
+    out_s->session = 0;
+    out_s->own_handle = 1;
+    out_s->object_id = s->object_id;
+    out_s->pointer_buffer_size = s->pointer_buffer_size;
+    return cmifCloneCurrentObjectEx(s->session, tag, &out_s->session);
 }
 
 /**
