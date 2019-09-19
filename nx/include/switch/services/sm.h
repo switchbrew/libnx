@@ -168,7 +168,13 @@ Service *smGetServiceSession(void);
  * @param[in] name Name of the service.
  * @return Encoded name.
  */
-u64    smEncodeName(const char* name);
+NX_CONSTEXPR u64 smEncodeName(const char* name)
+{
+    u64 name_encoded = 0;
+    for (unsigned i = 0; name[i] && i < 8; i ++)
+        name_encoded |= ((u64) name[i]) << (8*i);
+    return name_encoded;
+}
 
 /**
  * @brief Overrides a service with a custom IPC service handle.

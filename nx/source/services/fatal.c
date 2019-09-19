@@ -3,6 +3,7 @@
 #include "result.h"
 #include "kernel/detect.h"
 #include "kernel/svc.h"
+#include "sf/service.h"
 #include "services/fatal.h"
 #include "services/sm.h"
 

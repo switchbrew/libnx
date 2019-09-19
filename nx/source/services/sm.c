@@ -2,7 +2,7 @@
 #include "types.h"
 #include "result.h"
 #include "arm/atomics.h"
-#include "kernel/ipc.h"
+#include "sf/service.h"
 #include "services/fatal.h"
 #include "services/sm.h"
 
@@ -94,37 +94,24 @@ Service *smGetServiceSession(void)
     return &g_smSrv;
 }
 
-u64 smEncodeName(const char* name)
-{
-    u64 name_encoded = 0;
-    size_t i;
-
-    for (i=0; i<8; i++)
-    {
-        if (name[i] == '\0')
-            break;
-
-        name_encoded |= ((u64) name[i]) << (8*i);
-    }
-
-    return name_encoded;
-}
-
 Result smGetService(Service* service_out, const char* name)
 {
     u64 name_encoded = smEncodeName(name);
     Handle handle = smGetServiceOverride(name_encoded);
+    bool own_handle = false;
+    Result rc = 0;
 
-    if (handle != INVALID_HANDLE)
+    if (handle == INVALID_HANDLE)
     {
-        serviceCreate(service_out, handle);
-        service_out->own_handle = 0;
-        return 0;
+        own_handle = true;
+        rc = smGetServiceOriginal(&handle, name_encoded);
     }
 
-    Result rc = smGetServiceOriginal(&handle, name_encoded);
     if (R_SUCCEEDED(rc))
+    {
         serviceCreate(service_out, handle);
+        service_out->own_handle = own_handle;
+    }
 
     return rc;
 }
@@ -157,9 +144,6 @@ Result smRegisterService(Handle* handle_out, const char* name, bool is_light, in
 
 Result smUnregisterService(const char* name)
 {
-    IpcCommand c;
-    ipcInitialize(&c);
-
     const struct {
         u64 service_name;
     } in = { smEncodeName(name) };
