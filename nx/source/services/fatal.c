@@ -17,29 +17,27 @@ static void _fatalImpl(u32 cmd_id, Result err, FatalType type, FatalContext *ctx
         svcBreak(0x80000000, err, 0);
     }
 
-    if (!smHasInitialized()) {
-        rc = smInitialize();
+    Handle session;
+    rc = smInitialize();
+    if (R_SUCCEEDED(rc)) {
+        rc = smGetServiceOriginal(&session, smEncodeName("fatal:u"));
+        smExit();
     }
 
     if (R_SUCCEEDED(rc)) {
-        Handle srv;
-        rc = smGetServiceOriginal(&srv, smEncodeName("fatal:u"));
+        const struct {
+            u32 result;
+            u32 type;
+            u64 pid_placeholder;
+        } in = { err, type };
 
-        if (R_SUCCEEDED(rc)) {
-            const struct {
-                u32 result;
-                u32 type;
-                u64 pid_placeholder;
-            } in = { err, type };
-
-            Service s;
-            serviceCreate(&s, srv);
-            serviceDispatchIn(&s, cmd_id, in,
-                .buffer_attrs = { ctx ? (SfBufferAttr_In | SfBufferAttr_HipcMapAlias) : 0U },
-                .buffers      = { { ctx, sizeof(*ctx) } },
-                .in_send_pid  = true,
-            );
-        }
+        Service s;
+        serviceCreate(&s, session);
+        serviceDispatchIn(&s, cmd_id, in,
+            .buffer_attrs = { ctx ? (SfBufferAttr_In | SfBufferAttr_HipcMapAlias) : 0U },
+            .buffers      = { { ctx, sizeof(*ctx) } },
+            .in_send_pid  = true,
+        );
     }
 
     switch (type) {

@@ -44,9 +44,6 @@ Handle smGetServiceOverride(u64 name)
     return INVALID_HANDLE;
 }
 
-bool smHasInitialized(void) {
-    return serviceIsActive(&g_smSrv);
-}
 
 Result smInitialize(void)
 {

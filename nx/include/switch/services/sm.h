@@ -152,12 +152,6 @@ Result smRegisterService(Handle* handle_out, const char* name, bool is_light, in
 Result smUnregisterService(const char* name);
 
 /**
- * @brief Check whether SM is initialized.
- * @return true if initialized.
- */
-bool   smHasInitialized(void);
-
-/**
  * @brief Gets the Service session used to communicate with SM.
  * @return Pointer to service session used to communicate with SM.
  */
