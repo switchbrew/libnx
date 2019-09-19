@@ -9,70 +9,10 @@
 #include "../types.h"
 #include "../kernel/svc.h"
 #include "../kernel/ipc.h"
+#include "../sf/service.h"
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-
-/// Service type.
-typedef enum {
-    ServiceType_Uninitialized,      ///< Uninitialized service.
-    ServiceType_Normal,             ///< Normal service.
-    ServiceType_Domain,             ///< Domain.
-    ServiceType_DomainSubservice,   ///< Domain subservice;
-    ServiceType_Override,           ///< Service overriden in the homebrew environment.
-} ServiceType;
-
-/// Service object structure.
-typedef struct {
-    Handle handle;
-    u32 object_id;
-    ServiceType type;
-} Service;
-
-/**
- * @brief Returns whether a service is overriden in the homebrew environment.
- * @param[in] s Service object.
- * @return true if overriden.
- */
-static inline bool serviceIsOverride(Service* s) {
-    return s->type == ServiceType_Override;
-}
-
-/**
- * @brief Returns whether a service has been initialized.
- * @param[in] s Service object.
- * @return true if initialized.
- */
-static inline bool serviceIsActive(Service* s) {
-    return s->type != ServiceType_Uninitialized;
-}
-
-/**
- * @brief Returns whether a service is a domain.
- * @param[in] s Service object.
- * @return true if a domain.
- */
-static inline bool serviceIsDomain(Service* s) {
-    return s->type == ServiceType_Domain;
-}
-
-/**
- * @brief Returns whether a service is a domain subservice.
- * @param[in] s Service object.
- * @return true if a domain subservice.
- */
-static inline bool serviceIsDomainSubservice(Service* s) {
-    return s->type == ServiceType_DomainSubservice;
-}
-
-/**
- * @brief For a domain/domain subservice, return the associated object ID.
- * @param[in] s Service object, necessarily a domain or domain subservice.
- * @return The object ID.
- */
-static inline u32 serviceGetObjectId(Service* s) {
-    return s->object_id;
-}
 
 /**
  * @brief Closes a domain object by ID.
@@ -82,7 +22,7 @@ static inline u32 serviceGetObjectId(Service* s) {
  */
 DEPRECATED
 static inline Result serviceCloseObjectById(Service* s, u32 object_id) {
-    return ipcCloseObjectById(s->handle, object_id);
+    return ipcCloseObjectById(s->session, object_id);
 }
 
 /**
@@ -92,30 +32,7 @@ static inline Result serviceCloseObjectById(Service* s, u32 object_id) {
  */
 DEPRECATED
 static inline Result serviceIpcDispatch(Service* s) {
-    return ipcDispatch(s->handle);
-}
-
-/**
- * @brief Creates a service object from an IPC session handle.
- * @param[out] s Service object.
- * @param[in] h IPC session handle.
- */
-static inline void serviceCreate(Service* s, Handle h) {
-    s->handle = h;
-    s->type = ServiceType_Normal;
-    s->object_id = IPC_INVALID_OBJECT_ID;
-}
-
-/**
- * @brief Creates a domain subservice object from a parent service.
- * @param[out] s Service object.
- * @param[in] parent Parent service, necessarily a domain or domain subservice.
- * @param[in] object_id Object ID for this subservice.
- */
-static inline void serviceCreateDomainSubservice(Service* s, Service* parent, u32 object_id) {
-    s->handle = parent->handle;
-    s->type = ServiceType_DomainSubservice;
-    s->object_id = object_id;
+    return ipcDispatch(s->session);
 }
 
 /**
@@ -145,57 +62,6 @@ static inline void serviceSendObject(Service* s, IpcCommand* cmd) {
         ipcSendObjectId(cmd, s->object_id);
     }
 }
-
-/**
- * @brief Converts a regular service to a domain.
- * @param[in] s Service object.
- * @return Result code.
- */
-static inline Result serviceConvertToDomain(Service* s) {
-    Result rc = 0;
-    if (serviceIsOverride(s)) {
-        rc = ipcCloneSession(s->handle, 1, &s->handle);
-        if (R_FAILED(rc)) {
-            return rc;
-        }
-        s->type = ServiceType_Normal;
-    }
-    rc = ipcConvertSessionToDomain(s->handle, &s->object_id);
-    if (R_SUCCEEDED(rc)) {
-        s->type = ServiceType_Domain;
-    }
-    return rc;
-}
-
-/**
- * @brief Closes a service.
- * @param[in] s Service object.
- */
-static inline void serviceClose(Service* s) {
-    switch (s->type) {
-
-    case ServiceType_Normal:
-    case ServiceType_Domain:
-        ipcCloseSession(s->handle);
-        svcCloseHandle(s->handle);
-        break;
-
-    case ServiceType_DomainSubservice:
-        serviceCloseObjectById(s, s->object_id);
-        break;
-
-    case ServiceType_Override:
-        // Don't close because we don't own the overridden handle.
-        break;
-
-    case ServiceType_Uninitialized:
-        break;
-    }
-
-    s->type = ServiceType_Uninitialized;
-}
-
-
 
 /**
  * @brief Prepares the header of an IPC command structure for a service.
@@ -228,6 +94,8 @@ static inline Result serviceIpcParse(Service* s, IpcParsedCommand* r, size_t siz
         return ipcParse(r);
     }
 }
+
+#pragma GCC diagnostic pop
 
 /**
  * @brief Initializes SM.
@@ -308,5 +176,3 @@ u64    smEncodeName(const char* name);
  * @param[in] handle IPC session handle.
  */
 void   smAddOverrideHandle(u64 name, Handle handle);
-
-#pragma GCC diagnostic pop

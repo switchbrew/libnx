@@ -24,7 +24,6 @@ __thread Result g_bsdResult;
 __thread int g_bsdErrno;
 
 static Service g_bsdSrv;
-static size_t g_bsdSrvIpcBufferSize;
 static Service g_bsdMonitor;
 static u64 g_bsdClientPid = -1;
 
@@ -189,7 +188,7 @@ static int _bsdNameGetterCommand(u32 cmd_id, int sockfd, struct sockaddr *addr, 
 
     socklen_t maxaddrlen = addrlen == NULL ? 0 : *addrlen;
 
-    ipcAddRecvSmart(&c, g_bsdSrvIpcBufferSize, addr, maxaddrlen, 0);
+    ipcAddRecvSmart(&c, g_bsdSrv.pointer_buffer_size, addr, maxaddrlen, 0);
 
     struct {
         u64 magic;
@@ -247,9 +246,6 @@ Result bsdInitialize(const BsdInitConfig *config) {
     }
     if(R_FAILED(rc)) goto error;
 
-    rc = ipcQueryPointerBufferSize(g_bsdSrv.handle, &g_bsdSrvIpcBufferSize);
-    if(R_FAILED(rc)) goto error;
-
     rc = smGetService(&g_bsdMonitor, bsd_srv);
     if(R_FAILED(rc)) goto error;
 
@@ -270,7 +266,6 @@ error:
 }
 
 void bsdExit(void) {
-    g_bsdSrvIpcBufferSize = 0;
     g_bsdClientPid = 0;
     serviceClose(&g_bsdMonitor);
     serviceClose(&g_bsdSrv);
@@ -294,7 +289,7 @@ int bsdOpen(const char *pathname, int flags) {
     ipcInitialize(&c);
 
     size_t pathlen = strlen(pathname) + 1;
-    ipcAddSendSmart(&c, g_bsdSrvIpcBufferSize, pathname, pathlen, 0);
+    ipcAddSendSmart(&c, g_bsdSrv.pointer_buffer_size, pathname, pathlen, 0);
 
     struct {
         u64 magic;
@@ -315,15 +310,15 @@ int bsdSelect(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, st
     IpcCommand c;
     ipcInitialize(&c);
 
-    ipcAddSendSmart(&c, g_bsdSrvIpcBufferSize, readfds, readfds == NULL ? 0 : sizeof(fd_set), 0);
-    ipcAddSendSmart(&c, g_bsdSrvIpcBufferSize, writefds, writefds == NULL ? 0 : sizeof(fd_set), 1);
-    ipcAddSendSmart(&c, g_bsdSrvIpcBufferSize, exceptfds, exceptfds == NULL ? 0 : sizeof(fd_set), 2);
-    ipcAddSendSmart(&c, g_bsdSrvIpcBufferSize, exceptfds, exceptfds == NULL ? 0 : sizeof(fd_set), 3);
+    ipcAddSendSmart(&c, g_bsdSrv.pointer_buffer_size, readfds, readfds == NULL ? 0 : sizeof(fd_set), 0);
+    ipcAddSendSmart(&c, g_bsdSrv.pointer_buffer_size, writefds, writefds == NULL ? 0 : sizeof(fd_set), 1);
+    ipcAddSendSmart(&c, g_bsdSrv.pointer_buffer_size, exceptfds, exceptfds == NULL ? 0 : sizeof(fd_set), 2);
+    ipcAddSendSmart(&c, g_bsdSrv.pointer_buffer_size, exceptfds, exceptfds == NULL ? 0 : sizeof(fd_set), 3);
 
-    ipcAddRecvSmart(&c, g_bsdSrvIpcBufferSize, readfds, readfds == NULL ? 0 : sizeof(fd_set), 0);
-    ipcAddRecvSmart(&c, g_bsdSrvIpcBufferSize, writefds, writefds == NULL ? 0 : sizeof(fd_set), 1);
-    ipcAddRecvSmart(&c, g_bsdSrvIpcBufferSize, exceptfds, exceptfds == NULL ? 0 : sizeof(fd_set), 2);
-    ipcAddRecvSmart(&c, g_bsdSrvIpcBufferSize, exceptfds, exceptfds == NULL ? 0 : sizeof(fd_set), 3);
+    ipcAddRecvSmart(&c, g_bsdSrv.pointer_buffer_size, readfds, readfds == NULL ? 0 : sizeof(fd_set), 0);
+    ipcAddRecvSmart(&c, g_bsdSrv.pointer_buffer_size, writefds, writefds == NULL ? 0 : sizeof(fd_set), 1);
+    ipcAddRecvSmart(&c, g_bsdSrv.pointer_buffer_size, exceptfds, exceptfds == NULL ? 0 : sizeof(fd_set), 2);
+    ipcAddRecvSmart(&c, g_bsdSrv.pointer_buffer_size, exceptfds, exceptfds == NULL ? 0 : sizeof(fd_set), 3);
 
 
     struct {
@@ -349,8 +344,8 @@ int bsdPoll(struct pollfd *fds, nfds_t nfds, int timeout) {
     IpcCommand c;
     ipcInitialize(&c);
 
-    ipcAddSendSmart(&c, g_bsdSrvIpcBufferSize, fds, nfds * sizeof(struct pollfd), 0);
-    ipcAddRecvSmart(&c, g_bsdSrvIpcBufferSize, fds, nfds * sizeof(struct pollfd), 0);
+    ipcAddSendSmart(&c, g_bsdSrv.pointer_buffer_size, fds, nfds * sizeof(struct pollfd), 0);
+    ipcAddRecvSmart(&c, g_bsdSrv.pointer_buffer_size, fds, nfds * sizeof(struct pollfd), 0);
 
     struct {
         u64 magic;
@@ -375,10 +370,10 @@ int bsdSysctl(const int *name, unsigned int namelen, void *oldp, size_t *oldlenp
 
     ipcInitialize(&c);
 
-    ipcAddSendSmart(&c, g_bsdSrvIpcBufferSize, name, 4 * namelen, 0);
-    ipcAddSendSmart(&c, g_bsdSrvIpcBufferSize, newp, newlen, 1);
+    ipcAddSendSmart(&c, g_bsdSrv.pointer_buffer_size, name, 4 * namelen, 0);
+    ipcAddSendSmart(&c, g_bsdSrv.pointer_buffer_size, newp, newlen, 1);
 
-    ipcAddRecvSmart(&c, g_bsdSrvIpcBufferSize, oldp, inlen, 0);
+    ipcAddRecvSmart(&c, g_bsdSrv.pointer_buffer_size, oldp, inlen, 0);
 
     struct {
         u64 magic;
@@ -405,7 +400,7 @@ int bsdSysctl(const int *name, unsigned int namelen, void *oldp, size_t *oldlenp
 ssize_t bsdRecv(int sockfd, void *buf, size_t len, int flags) {
     IpcCommand c;
     ipcInitialize(&c);
-    ipcAddRecvSmart(&c, g_bsdSrvIpcBufferSize, buf, len, 0);
+    ipcAddRecvSmart(&c, g_bsdSrv.pointer_buffer_size, buf, len, 0);
 
     struct {
         u64 magic;
@@ -430,8 +425,8 @@ ssize_t bsdRecvFrom(int sockfd, void *buf, size_t len, int flags, struct sockadd
 
     ipcInitialize(&c);
 
-    ipcAddRecvSmart(&c, g_bsdSrvIpcBufferSize, buf, len, 0);
-    ipcAddRecvSmart(&c, g_bsdSrvIpcBufferSize, src_addr, inaddrlen, 1);
+    ipcAddRecvSmart(&c, g_bsdSrv.pointer_buffer_size, buf, len, 0);
+    ipcAddRecvSmart(&c, g_bsdSrv.pointer_buffer_size, src_addr, inaddrlen, 1);
 
     struct {
         u64 magic;
@@ -453,7 +448,7 @@ ssize_t bsdRecvFrom(int sockfd, void *buf, size_t len, int flags, struct sockadd
 ssize_t bsdSend(int sockfd, const void* buf, size_t len, int flags) {
     IpcCommand c;
     ipcInitialize(&c);
-    ipcAddSendSmart(&c, g_bsdSrvIpcBufferSize, buf, len, 0);
+    ipcAddSendSmart(&c, g_bsdSrv.pointer_buffer_size, buf, len, 0);
 
     struct {
         u64 magic;
@@ -475,8 +470,8 @@ ssize_t bsdSend(int sockfd, const void* buf, size_t len, int flags) {
 ssize_t bsdSendTo(int sockfd, const void *buf, size_t len, int flags, const struct sockaddr *dest_addr, socklen_t addrlen) {
     IpcCommand c;
     ipcInitialize(&c);
-    ipcAddSendSmart(&c, g_bsdSrvIpcBufferSize, buf, len, 0);
-    ipcAddSendSmart(&c, g_bsdSrvIpcBufferSize, dest_addr, addrlen, 1);
+    ipcAddSendSmart(&c, g_bsdSrv.pointer_buffer_size, buf, len, 0);
+    ipcAddSendSmart(&c, g_bsdSrv.pointer_buffer_size, dest_addr, addrlen, 1);
 
     struct {
         u64 magic;
@@ -502,7 +497,7 @@ int bsdAccept(int sockfd, struct sockaddr *addr, socklen_t *addrlen) {
 int bsdBind(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
     IpcCommand c;
     ipcInitialize(&c);
-    ipcAddSendSmart(&c, g_bsdSrvIpcBufferSize, addr, addrlen, 0);
+    ipcAddSendSmart(&c, g_bsdSrv.pointer_buffer_size, addr, addrlen, 0);
 
     struct {
         u64 magic;
@@ -522,7 +517,7 @@ int bsdBind(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
 int bsdConnect(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
     IpcCommand c;
     ipcInitialize(&c);
-    ipcAddSendSmart(&c, g_bsdSrvIpcBufferSize, addr, addrlen, 0);
+    ipcAddSendSmart(&c, g_bsdSrv.pointer_buffer_size, addr, addrlen, 0);
 
     struct {
         u64 magic;
@@ -553,7 +548,7 @@ int bsdGetSockOpt(int sockfd, int level, int optname, void *optval, socklen_t *o
 
     socklen_t inoptlen = optlen == NULL ? 0 : *optlen;
 
-    ipcAddRecvSmart(&c, g_bsdSrvIpcBufferSize, optval, inoptlen, 0);
+    ipcAddRecvSmart(&c, g_bsdSrv.pointer_buffer_size, optval, inoptlen, 0);
 
     struct {
         u64 magic;
@@ -645,15 +640,15 @@ int bsdIoctl(int fd, int request, void *data) {
 
     ipcInitialize(&c);
 
-    ipcAddSendSmart(&c, g_bsdSrvIpcBufferSize, in1, in1sz, 0);
-    ipcAddSendSmart(&c, g_bsdSrvIpcBufferSize, in2, in2sz, 1);
-    ipcAddSendSmart(&c, g_bsdSrvIpcBufferSize, in3, in3sz, 2);
-    ipcAddSendSmart(&c, g_bsdSrvIpcBufferSize, in4, in4sz, 3);
+    ipcAddSendSmart(&c, g_bsdSrv.pointer_buffer_size, in1, in1sz, 0);
+    ipcAddSendSmart(&c, g_bsdSrv.pointer_buffer_size, in2, in2sz, 1);
+    ipcAddSendSmart(&c, g_bsdSrv.pointer_buffer_size, in3, in3sz, 2);
+    ipcAddSendSmart(&c, g_bsdSrv.pointer_buffer_size, in4, in4sz, 3);
 
-    ipcAddRecvSmart(&c, g_bsdSrvIpcBufferSize, out1, out1sz, 0);
-    ipcAddRecvSmart(&c, g_bsdSrvIpcBufferSize, out2, out2sz, 1);
-    ipcAddRecvSmart(&c, g_bsdSrvIpcBufferSize, out3, out3sz, 2);
-    ipcAddRecvSmart(&c, g_bsdSrvIpcBufferSize, out4, out4sz, 3);
+    ipcAddRecvSmart(&c, g_bsdSrv.pointer_buffer_size, out1, out1sz, 0);
+    ipcAddRecvSmart(&c, g_bsdSrv.pointer_buffer_size, out2, out2sz, 1);
+    ipcAddRecvSmart(&c, g_bsdSrv.pointer_buffer_size, out3, out3sz, 2);
+    ipcAddRecvSmart(&c, g_bsdSrv.pointer_buffer_size, out4, out4sz, 3);
 
     struct {
         u64 magic;
@@ -711,7 +706,7 @@ int bsdSetSockOpt(int sockfd, int level, int optname, const void *optval, sockle
     IpcCommand c;
     ipcInitialize(&c);
 
-    ipcAddSendSmart(&c, g_bsdSrvIpcBufferSize, optval, optlen, 0);
+    ipcAddSendSmart(&c, g_bsdSrv.pointer_buffer_size, optval, optlen, 0);
 
     struct {
         u64 magic;
@@ -775,7 +770,7 @@ int bsdShutdownAllSockets(int how) {
 ssize_t bsdWrite(int fd, const void *buf, size_t count) {
     IpcCommand c;
     ipcInitialize(&c);
-    ipcAddSendSmart(&c, g_bsdSrvIpcBufferSize, buf, count, 0);
+    ipcAddSendSmart(&c, g_bsdSrv.pointer_buffer_size, buf, count, 0);
 
     struct {
         u64 magic;
@@ -795,7 +790,7 @@ ssize_t bsdWrite(int fd, const void *buf, size_t count) {
 ssize_t bsdRead(int fd, void *buf, size_t count) {
     IpcCommand c;
     ipcInitialize(&c);
-    ipcAddRecvSmart(&c, g_bsdSrvIpcBufferSize, buf, count, 0);
+    ipcAddRecvSmart(&c, g_bsdSrv.pointer_buffer_size, buf, count, 0);
 
     struct {
         u64 magic;

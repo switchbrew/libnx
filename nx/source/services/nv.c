@@ -51,8 +51,7 @@ Result nvInitialize(void)
     }
 
     if (R_SUCCEEDED(rc)) {
-        g_nvIpcBufferSize = 0;
-        rc = ipcQueryPointerBufferSize(g_nvSrv.handle, &g_nvIpcBufferSize);
+        g_nvIpcBufferSize = g_nvSrv.pointer_buffer_size;
 
         if (R_SUCCEEDED(rc))
             rc = tmemCreate(&g_nvTransfermem, __nx_nv_transfermem_size, Perm_None);
@@ -63,7 +62,7 @@ Result nvInitialize(void)
         // Clone the session handle - the cloned session is used to execute certain commands in parallel
         Handle nv_clone = INVALID_HANDLE;
         if (R_SUCCEEDED(rc))
-            rc = ipcCloneSession(g_nvSrv.handle, 1, &nv_clone);
+            rc = ipcCloneSession(g_nvSrv.session, 1, &nv_clone);
 
         if (R_SUCCEEDED(rc))
             serviceCreate(&g_nvSrvClone, nv_clone);

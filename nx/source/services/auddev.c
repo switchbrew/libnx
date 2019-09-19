@@ -11,7 +11,6 @@
 
 static Service g_auddevIAudioDevice;
 static u64 g_auddevRefCnt;
-static size_t g_auddevIpcBufferSize;
 
 static Result _auddevGetAudioDeviceService(Service* srv, Service* out_srv, u64 aruid);
 
@@ -32,8 +31,6 @@ Result auddevInitialize(void) {
         rc = _auddevGetAudioDeviceService(&audrenMgrSrv, &g_auddevIAudioDevice, aruid);
 
         serviceClose(&audrenMgrSrv);
-
-        if (R_SUCCEEDED(rc)) rc = ipcQueryPointerBufferSize(g_auddevIAudioDevice.handle, &g_auddevIpcBufferSize);
     }
 
     if (R_FAILED(rc)) auddevExit();
@@ -102,7 +99,7 @@ Result auddevListAudioDeviceName(AudioDeviceName *DeviceNames, s32 max_names, s3
     } *raw;
 
     if (!new_cmd) ipcAddRecvBuffer(&c, DeviceNames, sizeof(AudioDeviceName) * max_names, BufferType_Normal);
-    if (new_cmd) ipcAddRecvSmart(&c, g_auddevIpcBufferSize, DeviceNames, sizeof(AudioDeviceName)  * max_names, 0);
+    if (new_cmd) ipcAddRecvSmart(&c, g_auddevIAudioDevice.pointer_buffer_size, DeviceNames, sizeof(AudioDeviceName)  * max_names, 0);
 
     raw = serviceIpcPrepareHeader(&g_auddevIAudioDevice, &c, sizeof(*raw));
 
@@ -144,7 +141,7 @@ Result auddevSetAudioDeviceOutputVolume(const AudioDeviceName *DeviceName, float
     } *raw;
 
     if (!new_cmd) ipcAddSendBuffer(&c, DeviceName, sizeof(AudioDeviceName), BufferType_Normal);
-    if (new_cmd) ipcAddSendSmart(&c, g_auddevIpcBufferSize, DeviceName, sizeof(AudioDeviceName), 0);
+    if (new_cmd) ipcAddSendSmart(&c, g_auddevIAudioDevice.pointer_buffer_size, DeviceName, sizeof(AudioDeviceName), 0);
 
     raw = serviceIpcPrepareHeader(&g_auddevIAudioDevice, &c, sizeof(*raw));
 
@@ -183,7 +180,7 @@ Result auddevGetAudioDeviceOutputVolume(const AudioDeviceName *DeviceName, float
     } *raw;
 
     if (!new_cmd) ipcAddSendBuffer(&c, DeviceName, sizeof(AudioDeviceName), BufferType_Normal);
-    if (new_cmd) ipcAddSendSmart(&c, g_auddevIpcBufferSize, DeviceName, sizeof(AudioDeviceName), 0);
+    if (new_cmd) ipcAddSendSmart(&c, g_auddevIAudioDevice.pointer_buffer_size, DeviceName, sizeof(AudioDeviceName), 0);
 
     raw = serviceIpcPrepareHeader(&g_auddevIAudioDevice, &c, sizeof(*raw));
 

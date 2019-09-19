@@ -725,8 +725,6 @@ Result usbHsIfOpenUsbEp(UsbHsClientIfSession* s, UsbHsClientEpSession* ep, u16 m
             if (R_SUCCEEDED(rc)) rc = _usbHsGetEvent(&ep->s, &ep->eventXfer, 2);
         }
 
-        if (hosversionAtLeast(3,0,0) && R_SUCCEEDED(rc)) rc = ipcQueryPointerBufferSize(ep->s.handle, &ep->ptrbufsize);
-
         if (R_FAILED(rc)) {
             serviceClose(&ep->s);
             eventClose(&ep->eventXfer);
@@ -854,7 +852,7 @@ static Result _usbHsEpGetXferReport(UsbHsClientEpSession* s, UsbHsXferReport* re
         ipcAddRecvBuffer(&c, reports, sizeof(UsbHsXferReport) * max_reports, BufferType_Normal);
     }
     else {
-        ipcAddRecvSmart(&c, s->ptrbufsize, reports, sizeof(UsbHsXferReport) * max_reports, 0);
+        ipcAddRecvSmart(&c, s->s.pointer_buffer_size, reports, sizeof(UsbHsXferReport) * max_reports, 0);
     }
 
     raw = serviceIpcPrepareHeader(&s->s, &c, sizeof(*raw));

@@ -11,7 +11,6 @@
 
 static Service g_hiddbgSrv;
 static u64 g_hiddbgRefCnt;
-static size_t g_hiddbgPtrbufsize;
 
 static bool g_hiddbgHdlsInitialized;
 static TransferMemory g_hiddbgHdlsTmem;
@@ -48,8 +47,6 @@ Result hiddbgInitialize(void) {
         return 0;
 
     Result rc = smGetService(&g_hiddbgSrv, "hid:dbg");
-
-    if (R_SUCCEEDED(rc)) rc = ipcQueryPointerBufferSize(g_hiddbgSrv.handle, &g_hiddbgPtrbufsize);
 
     if (R_FAILED(rc)) hiddbgExit();
 
@@ -463,7 +460,7 @@ Result hiddbgGetAbstractedPadsState(u64 *AbstractedPadHandles, HiddbgAbstractedP
     } *raw;
 
     ipcAddRecvStatic(&c, AbstractedPadHandles, sizeof(u64)*count, 0);
-    ipcAddRecvSmart(&c, g_hiddbgPtrbufsize, states, sizeof(HiddbgAbstractedPadState)*count, 0);
+    ipcAddRecvSmart(&c, g_hiddbgSrv.pointer_buffer_size, states, sizeof(HiddbgAbstractedPadState)*count, 0);
 
     raw = serviceIpcPrepareHeader(&g_hiddbgSrv, &c, sizeof(*raw));
 

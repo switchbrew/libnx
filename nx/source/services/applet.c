@@ -50,9 +50,6 @@ static Service g_appletIAudioController;
 static Service g_appletIDisplayController;
 static Service g_appletIDebugFunctions;
 
-static size_t g_appletIAppletCommonFunctions_ptrbufsize;
-static size_t g_appletISelfController_ptrbufsize;
-
 static Event g_appletMessageEvent;
 
 static u64 g_appletResourceUserId = 0;
@@ -192,7 +189,6 @@ Result appletInitialize(void)
     if (R_SUCCEEDED(rc) && hosversionAtLeast(7,0,0)) {
         if (__nx_applet_type == AppletType_SystemApplet || __nx_applet_type == AppletType_LibraryApplet || __nx_applet_type == AppletType_OverlayApplet) {
             rc = _appletGetSession(&g_appletProxySession, &g_appletIAppletCommonFunctions, __nx_applet_type == AppletType_SystemApplet ? 23 : 21);
-            if (R_SUCCEEDED(rc)) rc = ipcQueryPointerBufferSize(g_appletIAppletCommonFunctions.handle, &g_appletIAppletCommonFunctions_ptrbufsize);
         }
     }
 
@@ -242,9 +238,6 @@ Result appletInitialize(void)
     // GetDebugFunctions
     if (R_SUCCEEDED(rc))
         rc = _appletGetSession(&g_appletProxySession, &g_appletIDebugFunctions, 1000);
-
-    if (R_SUCCEEDED(rc))
-        rc = ipcQueryPointerBufferSize(g_appletISelfController.handle, &g_appletISelfController_ptrbufsize);
 
     Result rc2 = _appletGetAccumulatedSuspendedTickChangedEvent(&g_appletSuspendedTickEvent);
     if (R_SUCCEEDED(rc2)) {
@@ -2090,7 +2083,7 @@ Result appletSetApplicationAlbumUserData(const void* buffer, size_t size) {
     IpcCommand c;
     ipcInitialize(&c);
 
-    ipcAddSendSmart(&c, g_appletISelfController_ptrbufsize, buffer, size, 0);
+    ipcAddSendSmart(&c, g_appletISelfController.pointer_buffer_size, buffer, size, 0);
 
     struct {
         u64 magic;
@@ -3240,7 +3233,6 @@ Result appletStorageGetSize(AppletStorage *s, s64 *size) {
 
 static Result _appletStorageRW(AppletStorage *s, s64 offset, void* buffer, size_t size, bool rw) {
     Result rc=0;
-    size_t ipcbufsize=0;
     Service tmp_srv;//IStorageAccessor
 
     if (!serviceIsActive(&s->s))
@@ -3249,9 +3241,7 @@ static Result _appletStorageRW(AppletStorage *s, s64 offset, void* buffer, size_
     rc = _appletGetSession(&s->s, &tmp_srv, 0);//Open
     if (R_FAILED(rc)) return rc;
 
-    rc = ipcQueryPointerBufferSize(tmp_srv.handle, &ipcbufsize);
-
-    if (R_SUCCEEDED(rc)) rc = _appletStorageAccessorRW(&tmp_srv, ipcbufsize, offset, buffer, size, rw);
+    if (R_SUCCEEDED(rc)) rc = _appletStorageAccessorRW(&tmp_srv, tmp_srv.pointer_buffer_size, offset, buffer, size, rw);
     serviceClose(&tmp_srv);
 
     return rc;
@@ -5442,7 +5432,7 @@ Result appletReadThemeStorage(void* buffer, size_t size, u64 offset, size_t *tra
     IpcCommand c;
     ipcInitialize(&c);
 
-    ipcAddRecvSmart(&c, g_appletIAppletCommonFunctions_ptrbufsize, buffer, size, 0);
+    ipcAddRecvSmart(&c, g_appletIAppletCommonFunctions.pointer_buffer_size, buffer, size, 0);
 
     struct {
         u64 magic;
@@ -5484,7 +5474,7 @@ Result appletWriteThemeStorage(const void* buffer, size_t size, u64 offset) {
     IpcCommand c;
     ipcInitialize(&c);
 
-    ipcAddSendSmart(&c, g_appletIAppletCommonFunctions_ptrbufsize, buffer, size, 0);
+    ipcAddSendSmart(&c, g_appletIAppletCommonFunctions.pointer_buffer_size, buffer, size, 0);
 
     struct {
         u64 magic;

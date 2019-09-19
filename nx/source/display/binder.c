@@ -51,12 +51,6 @@ Result binderInitSession(Binder* b, Service* relay)
 
     b->initialized = true;
 
-    rc = ipcQueryPointerBufferSize(b->relay->handle, &b->ipc_buffer_size);
-    if (R_FAILED(rc)) {
-        binderClose(b);
-        return rc;
-    }
-
     // Use TransactParcelAuto when available.
     if (hosversionAtLeast(3,0,0))
         b->has_transact_auto = true;
@@ -148,8 +142,8 @@ static Result _binderTransactParcelAuto(
         u32 flags;
     } PACKED *raw;
 
-    ipcAddSendSmart(&c, b->ipc_buffer_size, parcel_data, parcel_data_size, 0);
-    ipcAddRecvSmart(&c, b->ipc_buffer_size, parcel_reply, parcel_reply_size, 0);
+    ipcAddSendSmart(&c, b->relay->pointer_buffer_size, parcel_data, parcel_data_size, 0);
+    ipcAddRecvSmart(&c, b->relay->pointer_buffer_size, parcel_reply, parcel_reply_size, 0);
 
     raw = _binderIpcPrepareHeader(b, &c, sizeof(*raw));
     raw->magic = SFCI_MAGIC;
