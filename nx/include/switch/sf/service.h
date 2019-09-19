@@ -68,6 +68,7 @@ typedef struct SfOutHandleAttrs
 typedef struct SfDispatchParams
 {
     Handle target_session;
+    u32 context;
 
     SfBufferAttrs buffer_attrs;
     SfBuffer buffers[8];
@@ -305,7 +306,7 @@ NX_CONSTEXPR void _serviceRequestProcessBuffer(CmifRequest* req, const SfBuffer*
 }
 
 NX_INLINE void* serviceMakeRequest(
-    Service* s, u32 request_id, u32 data_size, bool send_pid,
+    Service* s, u32 request_id, u32 context, u32 data_size, bool send_pid,
     const SfBufferAttrs buffer_attrs, const SfBuffer* buffers,
     u32 num_objects, const Service* const* objects,
     u32 num_handles, const Handle* handles
@@ -318,6 +319,7 @@ NX_INLINE void* serviceMakeRequest(
     CmifRequestFormat fmt = {};
     fmt.object_id = s->object_id;
     fmt.request_id = request_id;
+    fmt.context = context;
     fmt.data_size = data_size;
     fmt.server_pointer_size = s->pointer_buffer_size;
     fmt.num_objects = num_objects;
@@ -416,7 +418,7 @@ NX_INLINE Result serviceDispatchImpl(
     SfDispatchParams disp
 )
 {
-    void* in = serviceMakeRequest(s, request_id,
+    void* in = serviceMakeRequest(s, request_id, disp.context,
         in_data_size, disp.in_send_pid,
         disp.buffer_attrs, disp.buffers,
         disp.in_num_objects, disp.in_objects,

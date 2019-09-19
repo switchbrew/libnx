@@ -112,7 +112,7 @@ NX_CONSTEXPR CmifRequest cmifMakeRequest(void* base, CmifRequestFormat fmt)
 
     CmifRequest req = {};
     req.hipc = hipcMakeRequestInline(base,
-        .type             = CmifCommandType_Request,
+        .type             = fmt.context ? CmifCommandType_RequestWithContext : CmifCommandType_Request,
         .num_send_statics = fmt.num_in_auto_buffers  + fmt.num_in_pointers,
         .num_send_buffers = fmt.num_in_auto_buffers  + fmt.num_in_buffers,
         .num_recv_buffers = fmt.num_out_auto_buffers + fmt.num_out_buffers,
@@ -135,7 +135,7 @@ NX_CONSTEXPR CmifRequest cmifMakeRequest(void* base, CmifRequestFormat fmt)
             .data_size      = (u16)payload_size,
             .object_id      = fmt.object_id,
             .padding        = 0,
-            .token          = 0,
+            .token          = fmt.context,
         };
         hdr = (CmifInHeader*)(domain_hdr+1);
         req.objects = (u32*)((u8*)hdr + payload_size);
@@ -144,9 +144,9 @@ NX_CONSTEXPR CmifRequest cmifMakeRequest(void* base, CmifRequestFormat fmt)
 
     *hdr = (CmifInHeader){
         .magic      = CMIF_IN_HEADER_MAGIC,
-        .version    = 0,
+        .version    = fmt.context ? 1 : 0,
         .command_id = fmt.request_id,
-        .token      = 0,
+        .token      = fmt.object_id ? 0 : fmt.context,
     };
 
     req.data = hdr+1;
