@@ -77,5 +77,15 @@ typedef void (*VoidFn)(void);       ///< Function without arguments nor return v
 #endif
 #endif
 
+/// Flags a function as (always) inline.
+#define NX_INLINE __attribute__((always_inline)) static inline
+
+/// Flags a function as constexpr in C++14 and above; or as (always) inline otherwise.
+#if __cplusplus >= 201402L
+#define NX_CONSTEXPR NX_INLINE constexpr
+#else
+#define NX_CONSTEXPR NX_INLINE
+#endif
+
 /// Invalid handle.
 #define INVALID_HANDLE ((Handle) 0)

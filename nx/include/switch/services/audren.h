@@ -9,12 +9,6 @@
 #include "../audio/audio.h"
 #include "../services/sm.h"
 
-#if __cplusplus >= 201402L
-#define AUDREN_CONSTEXPR constexpr
-#else
-#define AUDREN_CONSTEXPR static inline
-#endif
-
 #define AUDREN_TIMER_FREQ_HZ           200.0f
 #define AUDREN_TIMER_PERIOD_MS         5.0f
 #define AUDREN_SAMPLES_PER_FRAME_32KHZ 160
@@ -287,12 +281,12 @@ static inline u32 audrenGetRevision(void)
     return g_audrenRevision;
 }
 
-AUDREN_CONSTEXPR int audrenGetMemPoolCount(const AudioRendererConfig* config)
+NX_CONSTEXPR int audrenGetMemPoolCount(const AudioRendererConfig* config)
 {
     return config->num_effects + 4 * config->num_voices;
 }
 
-AUDREN_CONSTEXPR size_t audrenGetInputParamSize(const AudioRendererConfig* config)
+NX_CONSTEXPR size_t audrenGetInputParamSize(const AudioRendererConfig* config)
 {
     size_t size = 0;
     size += sizeof(AudioRendererUpdateDataHeader);
@@ -307,7 +301,7 @@ AUDREN_CONSTEXPR size_t audrenGetInputParamSize(const AudioRendererConfig* confi
     return size;
 }
 
-AUDREN_CONSTEXPR size_t audrenGetOutputParamSize(const AudioRendererConfig* config)
+NX_CONSTEXPR size_t audrenGetOutputParamSize(const AudioRendererConfig* config)
 {
     size_t size = 0;
     size += sizeof(AudioRendererUpdateDataHeader);
