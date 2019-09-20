@@ -197,12 +197,13 @@ typedef struct {
     s32 unk_x20;
     s32 unk_x24;
     u8 returnButtonFlag;             ///< Controls whether the Return button is enabled, for newlines input. 0 = disabled, non-zero = enabled.
-    u16 unk_x29;
+    u8 unk_x29;
+    u8 unk_x2a;
     u8 unk_x2b;
     u32 flags;                       ///< Bitmask 0x4: unknown.
     u8 unk_x30;
     u8 unk_x31[0x17];
-} PACKED SwkbdAppearArg;
+} SwkbdAppearArg;
 
 typedef struct {
     u32 unk_x0;
@@ -226,7 +227,8 @@ typedef struct {
     u8 disableTouch;             ///< Flags bitmask 0x200.
     u8 disableUSBKeyboard;       ///< Flags bitmask 0x800.
     u8 unk_x468[5];
-    u16 unk_x46d;
+    u8 unk_x46d;
+    u8 unk_x46e;
     u8 unk_x46f;
     float keytopScaleX;          ///< Flags bitmask 0x200.
     float keytopScaleY;          ///< Flags bitmask 0x200.
@@ -241,7 +243,7 @@ typedef struct {
     u8 triggerFlag;              ///< [6.0.0+] Enables using the trigger field when set.
     u8 trigger;                  ///< [6.0.0+] Trigger
     u8 pad_x49f;
-} PACKED SwkbdInlineCalcArg;
+} SwkbdInlineCalcArg;
 
 /// Struct data for SwkbdInline Interactive reply storage ChangedString*, at the end following the string.
 typedef struct {

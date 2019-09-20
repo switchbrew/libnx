@@ -15,7 +15,7 @@ struct in_addr __nxlink_host;
 extern char* fake_heap_start;
 extern char* fake_heap_end;
 
-extern u32 __argdata__;
+extern u8 __argdata__[];
 
 static char* g_argv_empty = NULL;
 
@@ -27,7 +27,7 @@ void argvSetup(void)
     MemoryInfo meminfo;
     u32 pageinfo=0;
 
-    u8 *argdata = (u8*)&__argdata__;
+    u8 *argdata = __argdata__;
     u32 *arg32 = (u32*)argdata;
     u64 argdata_allocsize=0;
     u64 argdata_strsize=0;
@@ -94,7 +94,7 @@ void argvSetup(void)
     argstart = NULL;
 
     for(argi=0; argi<argdata_strsize; argi++) {
-        if (argstart == NULL && isspace(args[argi])) continue;
+        if (argstart == NULL && isspace((unsigned char)args[argi])) continue;
 
         if (argstart == NULL) {
             if (args[argi] == '"') {
@@ -112,7 +112,7 @@ void argvSetup(void)
             if (quote_flag) {
                 if (args[argi] == '"') end_flag = 1;
             }
-            else if (isspace(args[argi])) {
+            else if (isspace((unsigned char)args[argi])) {
                 end_flag = 1;
             }
 

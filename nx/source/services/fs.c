@@ -73,10 +73,9 @@ NX_INLINE Result _fsObjectDispatchImpl(
     int slot = -1;
     if (_fsObjectIsChild(s)) {
         slot = _fsGetSessionSlot();
+        if (slot < 0) __builtin_unreachable();
         disp.target_session = g_fsSessions[slot];
         serviceAssumeDomain(s);
-        if (slot < 0)
-            __builtin_unreachable();
     }
 
     Result rc = serviceDispatchImpl(s, request_id, in_data, in_data_size, out_data, out_data_size, disp);

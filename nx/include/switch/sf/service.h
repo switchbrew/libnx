@@ -160,11 +160,10 @@ NX_CONSTEXPR void serviceCreateDomainSubservice(Service* s, Service* parent, u32
  * @brief Hints the compiler that a service will always contain a domain object.
  * @param[in] s Service object.
  */
-NX_CONSTEXPR void serviceAssumeDomain(Service* s)
-{
-    if (!s->object_id)
-        __builtin_unreachable();
-}
+#define serviceAssumeDomain(_s) do { \
+    if (!(_s)->object_id) \
+        __builtin_unreachable(); \
+} while(0)
 
 /**
  * @brief Closes a service.
