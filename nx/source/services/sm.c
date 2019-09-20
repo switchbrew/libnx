@@ -1,14 +1,9 @@
 // Copyright 2017 plutoo
 #define NX_SERVICE_ASSUME_NON_DOMAIN
-#include "types.h"
-#include "result.h"
-#include "arm/atomics.h"
-#include "sf/service.h"
+#include "service_guard.h"
 #include "services/fatal.h"
-#include "services/sm.h"
 
 static Service g_smSrv;
-static u64 g_refCnt;
 
 #define MAX_OVERRIDES 32
 
@@ -45,14 +40,10 @@ Handle smGetServiceOverride(u64 name)
     return INVALID_HANDLE;
 }
 
+NX_GENERATE_SERVICE_GUARD(sm);
 
-Result smInitialize(void)
+Result _smInitialize(void)
 {
-    atomicIncrement64(&g_refCnt);
-
-    if (smHasInitialized())
-        return 0;
-
     Handle sm_handle;
     Result rc = svcConnectToNamedPort(&sm_handle, "sm:");
     while (R_VALUE(rc) == KERNELRESULT(NotFound)) {
@@ -73,18 +64,12 @@ Result smInitialize(void)
         rc = serviceDispatchIn(&g_smSrv, 0, in, .in_send_pid = true);
     }
 
-    if (R_FAILED(rc))
-        smExit();
-
     return rc;
 }
 
-void smExit(void)
+void _smCleanup(void)
 {
-    if (atomicDecrement64(&g_refCnt) == 0)
-    {
-        serviceClose(&g_smSrv);
-    }
+    serviceClose(&g_smSrv);
 }
 
 Service *smGetServiceSession(void)

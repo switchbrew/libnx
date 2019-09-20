@@ -1,34 +1,26 @@
 #define NX_SERVICE_ASSUME_NON_DOMAIN
 #include <string.h>
-#include "types.h"
-#include "result.h"
-#include "arm/atomics.h"
+#include "service_guard.h"
 #include "kernel/tmem.h"
-#include "sf/service.h"
 #include "services/applet.h"
-#include "nvidia/ioctl.h"
 #include "services/nv.h"
-#include "services/sm.h"
+#include "nvidia/ioctl.h"
 
 __attribute__((weak)) u32 __nx_nv_transfermem_size = 0x800000;
 
 static Service g_nvSrv;
 static Service g_nvSrvClone;
-static u64 g_refCnt;
 
 static size_t g_nvIpcBufferSize = 0;
 static TransferMemory g_nvTransfermem;
 
-static Result _nvInitialize(Handle proc, Handle sharedmem, u32 transfermem_size);
+static Result _nvCmdInitialize(Handle proc, Handle sharedmem, u32 transfermem_size);
 static Result _nvSetClientPID(u64 AppletResourceUserId);
 
-Result nvInitialize(void)
+NX_GENERATE_SERVICE_GUARD(nv);
+
+Result _nvInitialize(void)
 {
-    atomicIncrement64(&g_refCnt);
-
-    if (serviceIsActive(&g_nvSrv))
-        return 0;
-
     Result rc = 0;
     u64 AppletResourceUserId = 0;
 
@@ -58,7 +50,7 @@ Result nvInitialize(void)
             rc = tmemCreate(&g_nvTransfermem, __nx_nv_transfermem_size, Perm_None);
 
         if (R_SUCCEEDED(rc))
-            rc = _nvInitialize(CUR_PROCESS_HANDLE, g_nvTransfermem.handle, __nx_nv_transfermem_size);
+            rc = _nvCmdInitialize(CUR_PROCESS_HANDLE, g_nvTransfermem.handle, __nx_nv_transfermem_size);
 
         // Clone the session handle - the cloned session is used to execute certain commands in parallel
         if (R_SUCCEEDED(rc))
@@ -80,16 +72,14 @@ Result nvInitialize(void)
     return rc;
 }
 
-void nvExit(void)
+void _nvCleanup(void)
 {
-    if (atomicDecrement64(&g_refCnt) == 0) {
-        serviceClose(&g_nvSrvClone);
-        serviceClose(&g_nvSrv);
-        tmemClose(&g_nvTransfermem);
-    }
+    serviceClose(&g_nvSrvClone);
+    serviceClose(&g_nvSrv);
+    tmemClose(&g_nvTransfermem);
 }
 
-static Result _nvInitialize(Handle proc, Handle sharedmem, u32 transfermem_size)
+static Result _nvCmdInitialize(Handle proc, Handle sharedmem, u32 transfermem_size)
 {
     return serviceDispatchIn(&g_nvSrv, 3, transfermem_size,
         .in_num_handles = 2,
