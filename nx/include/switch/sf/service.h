@@ -157,6 +157,16 @@ NX_CONSTEXPR void serviceCreateDomainSubservice(Service* s, Service* parent, u32
 }
 
 /**
+ * @brief Hints the compiler that a service will always contain a domain object.
+ * @param[in] s Service object.
+ */
+NX_CONSTEXPR void serviceAssumeDomain(Service* s)
+{
+    if (!s->object_id)
+        __builtin_unreachable();
+}
+
+/**
  * @brief Closes a service.
  * @param[in] s Service object.
  */
@@ -410,7 +420,10 @@ NX_INLINE Result serviceDispatchImpl(
     SfDispatchParams disp
 )
 {
-    void* in = serviceMakeRequest(s, request_id, disp.context,
+    // Make a copy of the service struct, so that the compiler can assume that it won't be modified by function calls.
+    Service srv = *s;
+
+    void* in = serviceMakeRequest(&srv, request_id, disp.context,
         in_data_size, disp.in_send_pid,
         disp.buffer_attrs, disp.buffers,
         disp.in_num_objects, disp.in_objects,
@@ -422,7 +435,7 @@ NX_INLINE Result serviceDispatchImpl(
     Result rc = svcSendSyncRequest(disp.target_session == INVALID_HANDLE ? s->session : disp.target_session);
     if (R_SUCCEEDED(rc)) {
         void* out = NULL;
-        rc = serviceParseResponse(s,
+        rc = serviceParseResponse(&srv,
             out_data_size, &out,
             disp.out_num_objects, disp.out_objects,
             disp.out_handle_attrs, disp.out_handles);
