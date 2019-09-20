@@ -10,16 +10,14 @@
 #include "cmif.h"
 
 /// Service object structure
-typedef struct Service
-{
+typedef struct Service {
     Handle session;
     u32 own_handle;
     u32 object_id;
     u16 pointer_buffer_size;
 } Service;
 
-enum
-{
+enum {
     SfBufferAttr_In                             = BIT(0),
     SfBufferAttr_Out                            = BIT(1),
     SfBufferAttr_HipcMapAlias                   = BIT(2),
@@ -41,8 +39,7 @@ typedef struct SfBufferAttrs {
     u32 attr7;
 } SfBufferAttrs;
 
-typedef struct SfBuffer
-{
+typedef struct SfBuffer {
     const void* ptr;
     size_t size;
 } SfBuffer;
@@ -53,8 +50,7 @@ typedef enum SfOutHandleAttr {
     SfOutHandleAttr_HipcMove = 2,
 } SfOutHandleAttr;
 
-typedef struct SfOutHandleAttrs
-{
+typedef struct SfOutHandleAttrs {
     SfOutHandleAttr attr0;
     SfOutHandleAttr attr1;
     SfOutHandleAttr attr2;
@@ -65,8 +61,7 @@ typedef struct SfOutHandleAttrs
     SfOutHandleAttr attr7;
 } SfOutHandleAttrs;
 
-typedef struct SfDispatchParams
-{
+typedef struct SfDispatchParams {
     Handle target_session;
     u32 context;
 
@@ -227,8 +222,7 @@ NX_INLINE Result serviceCloneEx(Service* s, u32 tag, Service* out_s)
  */
 NX_INLINE Result serviceConvertToDomain(Service* s)
 {
-    if (!s->own_handle)
-    {
+    if (!s->own_handle) {
         // For overridden services, create a clone first.
         Result rc = cmifCloneCurrentObjectEx(s->session, 0, &s->session);
         if (R_FAILED(rc))
@@ -358,8 +352,7 @@ NX_INLINE void* serviceMakeRequest(
 
 NX_CONSTEXPR void _serviceResponseGetHandle(CmifResponse* res, SfOutHandleAttr type, Handle* out)
 {
-    switch (type)
-    {
+    switch (type) {
         default:
         case SfOutHandleAttr_None:
             break;
@@ -391,8 +384,7 @@ NX_INLINE Result serviceParseResponse(
     if (out_size)
         *out_data = res.data;
 
-    for (u32 i = 0; i < num_out_objects; i ++)
-    {
+    for (u32 i = 0; i < num_out_objects; i ++) {
         if (is_domain)
             serviceCreateDomainSubservice(&out_objects[i], s, cmifResponseGetObject(&res));
         else // Output objects are marshalled as move handles at the beginning of the list.
@@ -428,8 +420,7 @@ NX_INLINE Result serviceDispatchImpl(
         __builtin_memcpy(in, in_data, in_data_size);
 
     Result rc = svcSendSyncRequest(disp.target_session == INVALID_HANDLE ? s->session : disp.target_session);
-    if (R_SUCCEEDED(rc))
-    {
+    if (R_SUCCEEDED(rc)) {
         void* out = NULL;
         rc = serviceParseResponse(s,
             out_data_size, &out,

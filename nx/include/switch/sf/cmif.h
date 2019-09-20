@@ -264,8 +264,7 @@ NX_CONSTEXPR Result cmifParseResponse(CmifResponse* res, void* base, bool is_dom
 
     CmifOutHeader* hdr = NULL;
     u32* objects = NULL;
-    if (is_domain)
-    {
+    if (is_domain) {
         CmifDomainOutHeader* domain_hdr = (CmifDomainOutHeader*)start;
         hdr = (CmifOutHeader*)(domain_hdr+1);
         objects = (u32*)((u8*)hdr + sizeof(CmifOutHeader) + size);
@@ -274,7 +273,7 @@ NX_CONSTEXPR Result cmifParseResponse(CmifResponse* res, void* base, bool is_dom
         hdr = (CmifOutHeader*)start;
 
     if (hdr->magic != CMIF_OUT_HEADER_MAGIC)
-        return MAKERESULT(Module_Libnx, LibnxError_BadInput); // todo: proper result code
+        return MAKERESULT(Module_Libnx, LibnxError_InvalidCmifOutHeader);
     if (R_FAILED(hdr->result))
         return hdr->result;
 
@@ -307,8 +306,7 @@ NX_INLINE Result cmifConvertCurrentObjectToDomain(Handle h, u32* out_object_id)
 {
     cmifMakeControlRequest(armGetTls(), 0, 0);
     Result rc = svcSendSyncRequest(h);
-    if (R_SUCCEEDED(rc))
-    {
+    if (R_SUCCEEDED(rc)) {
         CmifResponse resp = {};
         rc = cmifParseResponse(&resp, armGetTls(), false, sizeof(u32));
         if (R_SUCCEEDED(rc) && out_object_id)
@@ -322,8 +320,7 @@ NX_INLINE Result cmifCopyFromCurrentDomain(Handle h, u32 object_id, Handle* out_
     void* raw = cmifMakeControlRequest(armGetTls(), 1, sizeof(u32));
     *(u32*)raw = object_id;
     Result rc = svcSendSyncRequest(h);
-    if (R_SUCCEEDED(rc))
-    {
+    if (R_SUCCEEDED(rc)) {
         CmifResponse resp = {};
         rc = cmifParseResponse(&resp, armGetTls(), false, 0);
         if (R_SUCCEEDED(rc) && out_h)
@@ -336,8 +333,7 @@ NX_INLINE Result cmifCloneCurrentObject(Handle h, Handle* out_h)
 {
     cmifMakeControlRequest(armGetTls(), 2, 0);
     Result rc = svcSendSyncRequest(h);
-    if (R_SUCCEEDED(rc))
-    {
+    if (R_SUCCEEDED(rc)) {
         CmifResponse resp = {};
         rc = cmifParseResponse(&resp, armGetTls(), false, 0);
         if (R_SUCCEEDED(rc) && out_h)
@@ -350,8 +346,7 @@ NX_INLINE Result cmifQueryPointerBufferSize(Handle h, u16* out_size)
 {
     cmifMakeControlRequest(armGetTls(), 3, 0);
     Result rc = svcSendSyncRequest(h);
-    if (R_SUCCEEDED(rc))
-    {
+    if (R_SUCCEEDED(rc)) {
         CmifResponse resp = {};
         rc = cmifParseResponse(&resp, armGetTls(), false, sizeof(u16));
         if (R_SUCCEEDED(rc) && out_size)
@@ -365,8 +360,7 @@ NX_INLINE Result cmifCloneCurrentObjectEx(Handle h, u32 tag, Handle* out_h)
     void* raw = cmifMakeControlRequest(armGetTls(), 4, sizeof(u32));
     *(u32*)raw = tag;
     Result rc = svcSendSyncRequest(h);
-    if (R_SUCCEEDED(rc))
-    {
+    if (R_SUCCEEDED(rc)) {
         CmifResponse resp = {};
         rc = cmifParseResponse(&resp, armGetTls(), false, 0);
         if (R_SUCCEEDED(rc) && out_h)

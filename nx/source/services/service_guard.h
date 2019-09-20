@@ -5,8 +5,7 @@
 #include "sf/service.h"
 #include "services/sm.h"
 
-typedef struct ServiceGuard
-{
+typedef struct ServiceGuard {
     Mutex mutex;
     u32 refCount;
 } ServiceGuard;
@@ -19,8 +18,7 @@ NX_INLINE bool serviceGuardBeginInit(ServiceGuard* g)
 
 NX_INLINE Result serviceGuardEndInit(ServiceGuard* g, Result rc, void (*cleanupFunc)(void))
 {
-    if (R_FAILED(rc))
-    {
+    if (R_FAILED(rc)) {
         cleanupFunc();
         --g->refCount;
     }

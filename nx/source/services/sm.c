@@ -29,13 +29,9 @@ void smAddOverrideHandle(u64 name, Handle handle)
 
 Handle smGetServiceOverride(u64 name)
 {
-    size_t i;
-
-    for (i=0; i<g_smOverridesNum; i++)
-    {
+    for (size_t i = 0; i < g_smOverridesNum; i++)
         if (g_smOverrides[i].name == name)
             return g_smOverrides[i].handle;
-    }
 
     return INVALID_HANDLE;
 }
@@ -84,14 +80,12 @@ Result smGetService(Service* service_out, const char* name)
     bool own_handle = false;
     Result rc = 0;
 
-    if (handle == INVALID_HANDLE)
-    {
+    if (handle == INVALID_HANDLE) {
         own_handle = true;
         rc = smGetServiceOriginal(&handle, name_encoded);
     }
 
-    if (R_SUCCEEDED(rc))
-    {
+    if (R_SUCCEEDED(rc)) {
         serviceCreate(service_out, handle);
         service_out->own_handle = own_handle;
     }
