@@ -1,22 +1,111 @@
 // Copyright 2017 plutoo
 #include <string.h>
-#include "types.h"
-#include "result.h"
-#include "arm/atomics.h"
-#include "kernel/ipc.h"
+#include "service_guard.h"
+#include "kernel/mutex.h"
+#include "kernel/condvar.h"
 #include "runtime/hosversion.h"
 #include "services/fs.h"
-#include "services/sm.h"
+
+#define FS_MAX_SESSIONS 8
+
+__attribute__((weak)) u32 __nx_fs_num_sessions = 3;
 
 static Service g_fsSrv;
-static u64 g_refCnt;
 
-Result fsInitialize(void)
+static Handle g_fsSessions[FS_MAX_SESSIONS];
+static u32 g_fsSessionFreeMask;
+static Mutex g_fsSessionMutex;
+static CondVar g_fsSessionCondVar;
+static bool g_fsSessionWaiting;
+
+static int _fsGetSessionSlot(void)
 {
-    atomicIncrement64(&g_refCnt);
+    mutexLock(&g_fsSessionMutex);
+    int slot;
+    for (;;) {
+        slot = __builtin_ffs(g_fsSessionFreeMask)-1;
+        if (slot >= 0) break;
+        g_fsSessionWaiting = true;
+        condvarWait(&g_fsSessionCondVar, &g_fsSessionMutex);
+    }
+    g_fsSessionFreeMask &= ~(1U << slot);
+    mutexUnlock(&g_fsSessionMutex);
+    return slot;
+}
 
-    if (serviceIsActive(&g_fsSrv))
-        return 0;
+static void _fsPutSessionSlot(int slot)
+{
+    mutexLock(&g_fsSessionMutex);
+    g_fsSessionFreeMask |= 1U << slot;
+    if (g_fsSessionWaiting) {
+        g_fsSessionWaiting = false;
+        condvarWakeOne(&g_fsSessionCondVar);
+    }
+    mutexUnlock(&g_fsSessionMutex);
+}
+
+NX_INLINE bool _fsObjectIsChild(Service* s)
+{
+    return s->session == g_fsSrv.session;
+}
+
+static void _fsObjectClose(Service* s)
+{
+    if (!_fsObjectIsChild(s)) {
+        serviceClose(s);
+    }
+    else {
+        int slot = _fsGetSessionSlot();
+        uint32_t object_id = serviceGetObjectId(s);
+        serviceAssumeDomain(s);
+        cmifMakeCloseRequest(armGetTls(), object_id);
+        svcSendSyncRequest(g_fsSessions[slot]);
+        _fsPutSessionSlot(slot);
+    }
+}
+
+NX_INLINE Result _fsObjectDispatchImpl(
+    Service* s, u32 request_id,
+    const void* in_data, u32 in_data_size,
+    void* out_data, u32 out_data_size,
+    SfDispatchParams disp
+) {
+    int slot = -1;
+    if (_fsObjectIsChild(s)) {
+        slot = _fsGetSessionSlot();
+        disp.target_session = g_fsSessions[slot];
+        serviceAssumeDomain(s);
+        if (slot < 0)
+            __builtin_unreachable();
+    }
+
+    Result rc = serviceDispatchImpl(s, request_id, in_data, in_data_size, out_data, out_data_size, disp);
+
+    if (slot >= 0) {
+        _fsPutSessionSlot(slot);
+    }
+
+    return rc;
+}
+
+#define _fsObjectDispatch(_s,_rid,...) \
+    _fsObjectDispatchImpl((_s),(_rid),NULL,0,NULL,0,(SfDispatchParams){ __VA_ARGS__ })
+
+#define _fsObjectDispatchIn(_s,_rid,_in,...) \
+    _fsObjectDispatchImpl((_s),(_rid),&(_in),sizeof(_in),NULL,0,(SfDispatchParams){ __VA_ARGS__ })
+
+#define _fsObjectDispatchOut(_s,_rid,_out,...) \
+    _fsObjectDispatchImpl((_s),(_rid),NULL,0,&(_out),sizeof(_out),(SfDispatchParams){ __VA_ARGS__ })
+
+#define _fsObjectDispatchInOut(_s,_rid,_in,_out,...) \
+    _fsObjectDispatchImpl((_s),(_rid),&(_in),sizeof(_in),&(_out),sizeof(_out),(SfDispatchParams){ __VA_ARGS__ })
+
+NX_GENERATE_SERVICE_GUARD(fs);
+
+Result _fsInitialize(void)
+{
+    if (__nx_fs_num_sessions < 1 || __nx_fs_num_sessions > FS_MAX_SESSIONS)
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
     Result rc = smGetService(&g_fsSrv, "fsp-srv");
 
@@ -25,45 +114,37 @@ Result fsInitialize(void)
     }
 
     if (R_SUCCEEDED(rc)) {
-        IpcCommand c;
-        ipcInitialize(&c);
-        ipcSendPid(&c);
+        u64 pid_placeholder = 0;
+        serviceAssumeDomain(&g_fsSrv);
+        rc = serviceDispatchIn(&g_fsSrv, 1, pid_placeholder, .in_send_pid = true);
+    }
 
-        struct {
-            u64 magic;
-            u64 cmd_id;
-            u64 unk;
-        } *raw;
+    if (R_SUCCEEDED(rc)) {
+        g_fsSessionFreeMask = (1U << __nx_fs_num_sessions) - 1U;
+        g_fsSessions[0] = g_fsSrv.session;
+    }
 
-        raw = serviceIpcPrepareHeader(&g_fsSrv, &c, sizeof(*raw));
-
-        raw->magic = SFCI_MAGIC;
-        raw->cmd_id = 1;
-        raw->unk = 0;
-
-        rc = serviceIpcDispatch(&g_fsSrv);
-
-        if (R_SUCCEEDED(rc)) {
-            IpcParsedCommand r;
-            struct {
-                u64 magic;
-                u64 result;
-            } *resp;
-
-            serviceIpcParse(&g_fsSrv, &r, sizeof(*resp));
-            resp = r.Raw;
-
-            rc = resp->result;
-        }
+    for (u32 i = 1; R_SUCCEEDED(rc) && i < __nx_fs_num_sessions; i ++) {
+        rc = cmifCloneCurrentObject(g_fsSessions[0], &g_fsSessions[i]);
     }
 
     return rc;
 }
 
-void fsExit(void)
+void _fsCleanup(void)
 {
-    if (atomicDecrement64(&g_refCnt) == 0)
-        serviceClose(&g_fsSrv);
+    // Close extra sessions
+    g_fsSessions[0] = INVALID_HANDLE;
+    for (u32 i = 1; i < __nx_fs_num_sessions; i ++) {
+        if (g_fsSessions[i] != INVALID_HANDLE) {
+            cmifMakeCloseRequest(armGetTls(), 0);
+            svcSendSyncRequest(g_fsSessions[i]);
+            g_fsSessions[i] = INVALID_HANDLE;
+        }
+    }
+
+    // We can't assume g_fsSrv is a domain here because serviceConvertToDomain might have failed
+    serviceClose(&g_fsSrv);
 }
 
 Service* fsGetServiceSession(void) {
@@ -661,7 +742,7 @@ Result fsGetRightsIdByPath(const char* path, FsRightsId* out_rights_id) {
 Result fsGetRightsIdAndKeyGenerationByPath(const char* path, u8* out_key_generation, FsRightsId* out_rights_id) {
     if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    
+
     char send_path[FS_MAX_PATH] = {0};
     IpcCommand c;
     ipcInitialize(&c);
@@ -820,7 +901,7 @@ Result fsOpenGameCardFileSystem(FsFileSystem* out, const FsGameCardHandle* handl
 Result fsReadSaveDataFileSystemExtraDataBySaveDataSpaceId(void* buf, size_t len, FsSaveDataSpaceId saveDataSpaceId, u64 saveID) {
     if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    
+
     IpcCommand c;
     ipcInitialize(&c);
     ipcAddRecvBuffer(&c, buf, len, BufferType_Normal);
@@ -1786,7 +1867,7 @@ Result fsFsSetArchiveBit(FsFileSystem* fs, const char *path) {
 }
 
 void fsFsClose(FsFileSystem* fs) {
-    serviceClose(&fs->s);
+    _fsObjectClose(&fs->s);
 }
 
 // IFile implementation
@@ -2019,12 +2100,12 @@ Result fsFileOperateRange(FsFile* f, FsOperationId op_id, u64 off, size_t len, F
 }
 
 void fsFileClose(FsFile* f) {
-    serviceClose(&f->s);
+    _fsObjectClose(&f->s);
 }
 
 // IDirectory implementation
 void fsDirClose(FsDir* d) {
-    serviceClose(&d->s);
+    _fsObjectClose(&d->s);
 }
 
 Result fsDirRead(FsDir* d, u64 inval, size_t* total_entries, size_t max_entries, FsDirectoryEntry *buf) {
@@ -2321,7 +2402,7 @@ Result fsStorageOperateRange(FsStorage* s, FsOperationId op_id, u64 off, size_t 
 }
 
 void fsStorageClose(FsStorage* s) {
-    serviceClose(&s->s);
+    _fsObjectClose(&s->s);
 }
 
 // ISaveDataInfoReader
@@ -2364,7 +2445,7 @@ Result fsSaveDataIteratorRead(FsSaveDataIterator *s, FsSaveDataInfo* buf, size_t
 }
 
 void fsSaveDataIteratorClose(FsSaveDataIterator* s) {
-    serviceClose(&s->s);
+    _fsObjectClose(&s->s);
 }
 
 // IEventNotifier
@@ -2405,7 +2486,7 @@ Result fsEventNotifierGetEventHandle(FsEventNotifier* e, Handle* out) {
 }
 
 void fsEventNotifierClose(FsEventNotifier* e) {
-    serviceClose(&e->s);
+    _fsObjectClose(&e->s);
 }
 
 // IDeviceOperator
@@ -2531,5 +2612,5 @@ Result fsDeviceOperatorGetGameCardAttribute(FsDeviceOperator* d, const FsGameCar
 }
 
 void fsDeviceOperatorClose(FsDeviceOperator* d) {
-    serviceClose(&d->s);
+    _fsObjectClose(&d->s);
 }
