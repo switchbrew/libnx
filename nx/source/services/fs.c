@@ -530,11 +530,11 @@ Result fsOpenFileSystemWithPatch(FsFileSystem* out, u64 titleId, FsFileSystemTyp
 // IFileSystem
 //-----------------------------------------------------------------------------
 
-Result fsFsCreateFile(FsFileSystem* fs, const char* path, u64 size, u32 flags) {
+Result fsFsCreateFile(FsFileSystem* fs, const char* path, u64 size, u32 option) {
     const struct {
-        u32 flags;
+        u32 option;
         u64 size;
-    } in = { flags, size };
+    } in = { option, size };
 
     return _fsObjectDispatchIn(&fs->s, 0, in,
         .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_In },
@@ -586,7 +586,7 @@ Result fsFsRenameDirectory(FsFileSystem* fs, const char* cur_path, const char* n
     return _fsFsCmdWithTwoInPaths(fs, cur_path, new_path, 6);
 }
 
-Result fsFsGetEntryType(FsFileSystem* fs, const char* path, FsEntryType* out) {
+Result fsFsGetEntryType(FsFileSystem* fs, const char* path, FsDirEntryType* out) {
     return _fsObjectDispatchOut(&fs->s, 7, *out,
         .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_In },
         .buffers = { { path, FS_MAX_PATH } },
@@ -602,12 +602,12 @@ static Result _fsFsOpenCommon(FsFileSystem* fs, const char* path, u32 flags, Ser
     );
 }
 
-Result fsFsOpenFile(FsFileSystem* fs, const char* path, u32 flags, FsFile* out) {
-    return _fsFsOpenCommon(fs, path, flags, &out->s, 8);
+Result fsFsOpenFile(FsFileSystem* fs, const char* path, u32 mode, FsFile* out) {
+    return _fsFsOpenCommon(fs, path, mode, &out->s, 8);
 }
 
-Result fsFsOpenDirectory(FsFileSystem* fs, const char* path, u32 flags, FsDir* out) {
-    return _fsFsOpenCommon(fs, path, flags, &out->s, 9);
+Result fsFsOpenDirectory(FsFileSystem* fs, const char* path, u32 mode, FsDir* out) {
+    return _fsFsOpenCommon(fs, path, mode, &out->s, 9);
 }
 
 Result fsFsCommit(FsFileSystem* fs) {

@@ -58,7 +58,7 @@ typedef struct
 {
     char name[FS_MAX_PATH];      ///< Entry name.
     u8 pad[3];
-    s8 type;       ///< See FsEntryType.
+    s8 type;       ///< See FsDirEntryType.
     u8 pad2[3];     ///< ?
     u64 fileSize;         ///< File size.
 } FsDirectoryEntry;
@@ -127,40 +127,45 @@ typedef struct
     u8 padding[7];
 } FsTimeStampRaw;
 
+/// Returned by fsFsGetEntryType.
 typedef enum {
-    ENTRYTYPE_DIR  = 0,
-    ENTRYTYPE_FILE = 1,
-} FsEntryType;
+    FsDirEntryType_Dir  = 0, ///< Entry is a directory.
+    FsDirEntryType_File = 1, ///< Entry is a file.
+} FsDirEntryType;
 
+/// For use with fsFsOpenFile.
 typedef enum
 {
-    FS_OPEN_READ   = BIT(0), ///< Open for reading.
-    FS_OPEN_WRITE  = BIT(1), ///< Open for writing.
-    FS_OPEN_APPEND = BIT(2), ///< Append file.
-} FsFileFlags;
+    FsOpenMode_Read   = BIT(0), ///< Open for reading.
+    FsOpenMode_Write  = BIT(1), ///< Open for writing.
+    FsOpenMode_Append = BIT(2), ///< Append file.
+} FsOpenMode;
 
+/// For use with fsFsCreateFile.
 typedef enum
 {
-    FS_CREATE_BIG_FILE = BIT(0), ///< Creates a ConcatenationFile (dir with archive bit) instead of file.
-} FsFileCreateFlags;
+    FsCreateOption_BigFile = BIT(0), ///< Creates a ConcatenationFile (dir with archive bit) instead of file.
+} FsCreateOption;
 
 /// For use with fsFsOpenDirectory.
 typedef enum
 {
-    FS_DIROPEN_DIRECTORY    = BIT(0),  ///< Enable reading directory entries.
-    FS_DIROPEN_FILE         = BIT(1),  ///< Enable reading file entries.
-    FS_DIROPEN_NO_FILE_SIZE = BIT(31), ///< Causes result entries to not contain filesize information (always 0).
-} FsDirectoryFlags;
+    FsDirOpenMode_ReadDirs   = BIT(0),  ///< Enable reading directory entries.
+    FsDirOpenMode_ReadFiles  = BIT(1),  ///< Enable reading file entries.
+    FsDirOpenMode_NoFileSize = BIT(31), ///< Causes result entries to not contain filesize information (always 0).
+} FsDirOpenMode;
 
+/// For use with fsFileRead.
 typedef enum
 {
-    FS_READOPTION_NONE = 0, ///< No Option.
+    FsReadOption_None = 0, ///< No option.
 } FsReadOption;
 
+/// For use with fsFileWrite.
 typedef enum
 {
-    FS_WRITEOPTION_NONE  = 0,      ///< No option.
-    FS_WRITEOPTION_FLUSH = BIT(0), ///< Forces a flush after write.
+    FsWriteOption_None  = 0,      ///< No option.
+    FsWriteOption_Flush = BIT(0), ///< Forces a flush after write.
 } FsWriteOption;
 
 typedef enum
@@ -175,9 +180,9 @@ typedef enum
 
 typedef enum
 {
-    FS_CONTENTSTORAGEID_NandSystem = 0,
-    FS_CONTENTSTORAGEID_NandUser   = 1,
-    FS_CONTENTSTORAGEID_SdCard     = 2,
+    FsContentStorageId_NandSystem = 0,
+    FsContentStorageId_NandUser   = 1,
+    FsContentStorageId_SdCard     = 2,
 } FsContentStorageId;
 
 typedef enum
@@ -214,9 +219,9 @@ typedef enum {
 } FsSaveDataFlags;
 
 typedef enum {
-    FsGameCardAttribute_AutoBoot   = (1 << 0), ///< Causes the cartridge to automatically start on bootup
-    FsGameCardAttribute_ForceError = (1 << 1), ///< Causes NS to throw an error on attempt to load the cartridge
-    FsGameCardAttribute_Repair     = (1 << 2), ///< Indicates that this gamecard is a repair tool.
+    FsGameCardAttribute_AutoBoot   = BIT(0), ///< Causes the cartridge to automatically start on bootup
+    FsGameCardAttribute_ForceError = BIT(1), ///< Causes NS to throw an error on attempt to load the cartridge
+    FsGameCardAttribute_Repair     = BIT(2), ///< Indicates that this gamecard is a repair tool.
 } FsGameCardAttribute;
 
 typedef enum {
@@ -350,16 +355,16 @@ Result fsOpenFileSystemWithId(FsFileSystem* out, u64 titleId, FsFileSystemType f
 Result fsOpenFileSystemWithPatch(FsFileSystem* out, u64 titleId, FsFileSystemType fsType); /// [2.0.0+], like OpenFileSystemWithId but without content path.
 
 // IFileSystem
-Result fsFsCreateFile(FsFileSystem* fs, const char* path, u64 size, u32 flags);
+Result fsFsCreateFile(FsFileSystem* fs, const char* path, u64 size, u32 option);
 Result fsFsDeleteFile(FsFileSystem* fs, const char* path);
 Result fsFsCreateDirectory(FsFileSystem* fs, const char* path);
 Result fsFsDeleteDirectory(FsFileSystem* fs, const char* path);
 Result fsFsDeleteDirectoryRecursively(FsFileSystem* fs, const char* path);
 Result fsFsRenameFile(FsFileSystem* fs, const char* cur_path, const char* new_path);
 Result fsFsRenameDirectory(FsFileSystem* fs, const char* cur_path, const char* new_path);
-Result fsFsGetEntryType(FsFileSystem* fs, const char* path, FsEntryType* out);
-Result fsFsOpenFile(FsFileSystem* fs, const char* path, u32 flags, FsFile* out);
-Result fsFsOpenDirectory(FsFileSystem* fs, const char* path, u32 flags, FsDir* out);
+Result fsFsGetEntryType(FsFileSystem* fs, const char* path, FsDirEntryType* out);
+Result fsFsOpenFile(FsFileSystem* fs, const char* path, u32 mode, FsFile* out);
+Result fsFsOpenDirectory(FsFileSystem* fs, const char* path, u32 mode, FsDir* out);
 Result fsFsCommit(FsFileSystem* fs);
 Result fsFsGetFreeSpace(FsFileSystem* fs, const char* path, u64* out);
 Result fsFsGetTotalSpace(FsFileSystem* fs, const char* path, u64* out);
