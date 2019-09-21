@@ -52,7 +52,7 @@ static char __thread __component[PATH_MAX+1];
 static ssize_t _romfs_read(romfs_mount *mount, u64 offset, void* buffer, u64 size)
 {
     u64 pos = mount->offset + offset;
-    size_t read = 0;
+    u64 read = 0;
     Result rc = 0;
     if(mount->fd_type == RomfsSource_FsFile)
     {

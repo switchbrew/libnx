@@ -158,7 +158,7 @@ NX_CONSTEXPR void serviceCreateDomainSubservice(Service* s, Service* parent, u32
 
 /**
  * @brief Hints the compiler that a service will always contain a domain object.
- * @param[in] s Service object.
+ * @param[in] _s Service object.
  */
 #define serviceAssumeDomain(_s) do { \
     if (!(_s)->object_id) \

@@ -381,7 +381,7 @@ Result fsdevSetArchiveBit(const char *path) {
   return fsFsSetArchiveBit(&device->fs, fs_path);
 }
 
-Result fsdevCreateFile(const char* path, size_t size, int flags) {
+Result fsdevCreateFile(const char* path, size_t size, u32 flags) {
   char          fs_path[FS_MAX_PATH];
   fsdev_fsdevice *device = NULL;
 
@@ -786,7 +786,7 @@ fsdev_read(struct _reent *r,
           size_t         len)
 {
   Result      rc;
-  size_t      bytes;
+  u64         bytes;
 
   /* get pointer to our data */
   fsdev_file_t *file = (fsdev_file_t*)fd;
@@ -830,7 +830,7 @@ fsdev_read_safe(struct _reent *r,
                 size_t        len)
 {
   Result      rc;
-  size_t      bytesRead = 0, bytes = 0;
+  u64         bytesRead = 0, bytes = 0;
 
   /* get pointer to our data */
   fsdev_file_t *file = (fsdev_file_t*)fd;
@@ -841,7 +841,7 @@ fsdev_read_safe(struct _reent *r,
   static __thread char tmp_buffer[8192];
   while(len > 0)
   {
-    size_t toRead = len;
+    u64 toRead = len;
     if(toRead > sizeof(tmp_buffer))
       toRead = sizeof(tmp_buffer);
 
@@ -1299,7 +1299,7 @@ fsdev_dirnext(struct _reent *r,
              struct stat   *filestat)
 {
   Result              rc;
-  size_t              entries;
+  u64                 entries;
   ssize_t             units;
   FsDirectoryEntry   *entry;
 
