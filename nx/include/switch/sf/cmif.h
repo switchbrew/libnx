@@ -131,7 +131,7 @@ NX_CONSTEXPR CmifRequest cmifMakeRequest(void* base, CmifRequestFormat fmt)
         u32 payload_size = sizeof(CmifInHeader) + fmt.data_size;
         *domain_hdr = (CmifDomainInHeader){
             .type           = CmifDomainRequestType_SendMessage,
-            .num_in_objects = fmt.num_objects,
+            .num_in_objects = (u8)fmt.num_objects,
             .data_size      = (u16)payload_size,
             .object_id      = fmt.object_id,
             .padding        = 0,
@@ -144,13 +144,13 @@ NX_CONSTEXPR CmifRequest cmifMakeRequest(void* base, CmifRequestFormat fmt)
 
     *hdr = (CmifInHeader){
         .magic      = CMIF_IN_HEADER_MAGIC,
-        .version    = fmt.context ? 1 : 0,
+        .version    = fmt.context ? 1U : 0U,
         .command_id = fmt.request_id,
-        .token      = fmt.object_id ? 0 : fmt.context,
+        .token      = fmt.object_id ? 0U : fmt.context,
     };
 
     req.data = hdr+1;
-    req.out_pointer_sizes = (u16*)((u8*)req.hipc.data_words + out_pointer_size_table_offset);
+    req.out_pointer_sizes = (u16*)(void*)((u8*)(void*)req.hipc.data_words + out_pointer_size_table_offset);
     req.server_pointer_size = fmt.server_pointer_size;
 
     return req;
