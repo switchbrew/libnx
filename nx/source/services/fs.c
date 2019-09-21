@@ -18,6 +18,8 @@ static Mutex g_fsSessionMutex;
 static CondVar g_fsSessionCondVar;
 static bool g_fsSessionWaiting;
 
+static __thread u32 g_fsPriority = FsPriority_Normal;
+
 static int _fsGetSessionSlot(void)
 {
     mutexLock(&g_fsSessionMutex);
@@ -78,6 +80,7 @@ NX_INLINE Result _fsObjectDispatchImpl(
         serviceAssumeDomain(s);
     }
 
+    disp.context = g_fsPriority;
     Result rc = serviceDispatchImpl(s, request_id, in_data, in_data_size, out_data, out_data_size, disp);
 
     if (slot >= 0) {
@@ -148,6 +151,12 @@ void _fsCleanup(void)
 
 Service* fsGetServiceSession(void) {
     return &g_fsSrv;
+}
+
+void fsSetPriority(FsPriority prio)
+{
+    if (hosversionAtLeast(5,0,0))
+        g_fsPriority = prio;
 }
 
 Result fsOpenBisStorage(FsStorage* out, FsBisStorageId partitionId) {

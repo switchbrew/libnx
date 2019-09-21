@@ -262,10 +262,19 @@ typedef enum {
     FsBisStorageId_SystemProperPartition           = 33,
 } FsBisStorageId;
 
+typedef enum {
+    FsPriority_Normal     = 0,
+    FsPriority_Realtime   = 1,
+    FsPriority_Low        = 2,
+    FsPriority_Background = 3,
+} FsPriority;
+
 Result fsInitialize(void);
 void fsExit(void);
 
 Service* fsGetServiceSession(void);
+
+void fsSetPriority(FsPriority prio);
 
 Result fsOpenBisStorage(FsStorage* out, FsBisStorageId partitionId);
 Result fsOpenBisFileSystem(FsFileSystem* out, FsBisStorageId partitionId, const char* string);
