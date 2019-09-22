@@ -7,10 +7,12 @@
 #include <sys/iosupport.h>
 #include <sys/param.h>
 #include <unistd.h>
+#include <time.h>
 
 #include "runtime/devices/fs_dev.h"
 #include "runtime/util/utf.h"
 #include "services/fs.h"
+#include "services/time.h"
 
 
 /*! @internal
@@ -254,6 +256,28 @@ static ssize_t fsdev_convertfromfspath(uint8_t *out, uint8_t *in, size_t len)
 {
   strncpy((char*)out, (char*)in, len);
   return strnlen((char*)out, len);
+}
+
+static time_t fsdev_converttimetoutc(u64 timestamp)
+{
+  // Parse timestamp into y/m/d h:m:s
+  time_t posixtime = (time_t)timestamp;
+  struct tm *t = gmtime(&posixtime);
+
+  // Convert time/date into an actual UTC POSIX timestamp using the system's timezone rules
+  TimeCalendarTime caltime;
+  caltime.year   = 1900 + t->tm_year;
+  caltime.month  = 1 + t->tm_mon;
+  caltime.day    = t->tm_mday;
+  caltime.hour   = t->tm_hour;
+  caltime.minute = t->tm_min;
+  caltime.second = t->tm_sec;
+  u64 new_timestamp;
+  Result rc = timeToPosixTimeWithMyRule(&caltime, &new_timestamp, 1, NULL);
+  if (R_SUCCEEDED(rc))
+    posixtime = (time_t)new_timestamp;
+
+  return posixtime;
 }
 
 extern int __system_argc;
@@ -965,9 +989,9 @@ fsdev_fstat(struct _reent *r,
 
     if(file->timestamps.is_valid)
     {
-      st->st_ctime = file->timestamps.created;
-      st->st_mtime = file->timestamps.modified;
-      st->st_atime = file->timestamps.accessed;
+      st->st_ctime = fsdev_converttimetoutc(file->timestamps.created);
+      st->st_mtime = fsdev_converttimetoutc(file->timestamps.modified);
+      st->st_atime = fsdev_converttimetoutc(file->timestamps.accessed);
     }
 
     return 0;
@@ -1030,9 +1054,9 @@ fsdev_stat(struct _reent *r,
           rc = fsFsGetFileTimeStampRaw(&device->fs, fs_path, &timestamps);
           if(R_SUCCEEDED(rc) && timestamps.is_valid)
           {
-            st->st_ctime = timestamps.created;
-            st->st_mtime = timestamps.modified;
-            st->st_atime = timestamps.accessed;
+            st->st_ctime = fsdev_converttimetoutc(timestamps.created);
+            st->st_mtime = fsdev_converttimetoutc(timestamps.modified);
+            st->st_atime = fsdev_converttimetoutc(timestamps.accessed);
           }
         }
 
