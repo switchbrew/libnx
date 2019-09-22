@@ -440,11 +440,14 @@ Result timeToCalendarTimeWithMyRule(u64 timestamp, TimeCalendarTime *caltime, Ti
     return rc;
 }
 
-Result timeToPosixTime(const TimeZoneRule *rule, const TimeCalendarTime *caltime, u64 *timestamp_list, size_t timestamp_list_size, u32 *timestamp_count) {
+Result timeToPosixTime(const TimeZoneRule *rule, const TimeCalendarTime *caltime, u64 *timestamp_list, size_t timestamp_list_count, u32 *timestamp_count) {
+    if (!serviceIsActive(&g_timeTimeZoneService))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
     IpcCommand c;
     ipcInitialize(&c);
     ipcAddSendBuffer(&c, rule, sizeof(TimeZoneRule), BufferType_Normal);
-    ipcAddRecvStatic(&c, timestamp_list, timestamp_list_size, 0);
+    ipcAddRecvStatic(&c, timestamp_list, sizeof(u64)*timestamp_list_count, 0);
 
     struct {
         u64 magic;
@@ -478,10 +481,13 @@ Result timeToPosixTime(const TimeZoneRule *rule, const TimeCalendarTime *caltime
     return rc;
 }
 
-Result timeToPosixTimeWithMyRule(const TimeCalendarTime *caltime, u64 *timestamp_list, size_t timestamp_list_size, u32 *timestamp_count) {
+Result timeToPosixTimeWithMyRule(const TimeCalendarTime *caltime, u64 *timestamp_list, size_t timestamp_list_count, u32 *timestamp_count) {
+    if (!serviceIsActive(&g_timeTimeZoneService))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
     IpcCommand c;
     ipcInitialize(&c);
-    ipcAddRecvStatic(&c, timestamp_list, timestamp_list_size, 0);
+    ipcAddRecvStatic(&c, timestamp_list, sizeof(u64)*timestamp_list_count, 0);
 
     struct {
         u64 magic;
