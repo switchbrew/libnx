@@ -9,59 +9,68 @@
 #include "../services/fs.h"
 #include "../services/sm.h"
 
+/// ContentType
 typedef enum  {
-    NcmContentType_CNMT = 0,
-    NcmContentType_Program = 1,
-    NcmContentType_Data = 2,
-    NcmContentType_Icon = 3,
-    NcmContentType_Doc = 4,
-    NcmContentType_Info = 5,
+    NcmContentType_CNMT    = 0,                            ///< CNMT
+    NcmContentType_Program = 1,                            ///< Program
+    NcmContentType_Data    = 2,                            ///< Data
+    NcmContentType_Icon    = 3,                            ///< Icon
+    NcmContentType_Doc     = 4,                            ///< Doc
+    NcmContentType_Info    = 5,                            ///< Info
 } NcmContentType;
 
+/// ContentMetaType
 typedef enum {
-    NcmContentMetaType_SystemProgram        = 0x01,
-    NcmContentMetaType_SystemData           = 0x02,
-    NcmContentMetaType_SystemUpdate         = 0x03,
-    NcmContentMetaType_BootImagePackage     = 0x04,
-    NcmContentMetaType_BootImagePackageSafe = 0x05,
-    NcmContentMetaType_Application          = 0x80,
-    NcmContentMetaType_Patch                = 0x81,
-    NcmContentMetaType_AddOnContent         = 0x82,
-    NcmContentMetaType_Delta                = 0x83,
+    NcmContentMetaType_SystemProgram        = 0x01,        ///< SystemProgram
+    NcmContentMetaType_SystemData           = 0x02,        ///< SystemData
+    NcmContentMetaType_SystemUpdate         = 0x03,        ///< SystemUpdate
+    NcmContentMetaType_BootImagePackage     = 0x04,        ///< BootImagePackage
+    NcmContentMetaType_BootImagePackageSafe = 0x05,        ///< BootImagePackageSafe
+    NcmContentMetaType_Application          = 0x80,        ///< Application
+    NcmContentMetaType_Patch                = 0x81,        ///< Patch
+    NcmContentMetaType_AddOnContent         = 0x82,        ///< AddOnContent
+    NcmContentMetaType_Delta                = 0x83,        ///< Delta
 } NcmContentMetaType;
 
+/// ContentMetaAttribute
 typedef enum {
-    NcmContentMetaAttribute_Exfat      = (1 << 0),
-    NcmContentMetaAttribute_Rebootless = (1 << 1),
+    NcmContentMetaAttribute_Exfat      = (1 << 0),         ///< Exfat
+    NcmContentMetaAttribute_Rebootless = (1 << 1),         ///< Rebootless
 } NcmContentMetaAttribute;
 
+/// NcmContentStorage
 typedef struct {
-    Service s;
+    Service s;                                             ///< IContentStorage
 } NcmContentStorage;
 
+/// NcmContentMetaDatabase
 typedef struct {
-    Service s;
+    Service s;                                             ///< IContentMetaDatabase
 } NcmContentMetaDatabase;
 
+/// NcaId
 typedef struct {
-    u8 c[0x10];
+    u8 c[0x10];                                            ///< Id
 } NcmNcaId;
 
+/// MetaRecord
 typedef struct {
-    u64 titleId;
-    u32 version;
-    u8  type;
-    u8  flags;
-    u8  padding[2];
+    u64 titleId;                                           ///< titleID.
+    u32 version;                                           ///< Title version.
+    u8  type;                                              ///< Type.
+    u8  flags;                                             ///< Flags.
+    u8  padding[2];                                        ///< Padding.
 } NcmMetaRecord;
 
+/// ContentRecord
 typedef struct {
-    NcmNcaId  ncaId;
-    u8        size[0x6];
-    u8        type;
-    u8        padding;
+    NcmNcaId  ncaId;                                       ///< \ref NcmNcaId
+    u8        size[0x6];                                   ///< Content size.
+    u8        type;                                        ///< Type.
+    u8        padding;                                     ///< Padding.
 } NcmContentRecord;
 
+/// ContentMetaRecordsHeader
 typedef struct {
     u16 numExtraBytes;     ///< Size of optional struct that comes after this one.
     u16 numContentRecords; ///< Number of NcmContentRecord entries after the extra bytes.
@@ -69,9 +78,10 @@ typedef struct {
     u16 padding;           ///< Always zero.
 } NcmContentMetaRecordsHeader;
 
+/// ApplicationContentMetaKey
 typedef struct {
-    NcmMetaRecord metaRecord;
-    u64           baseTitleId;
+    NcmMetaRecord metaRecord;                              ///< \ref NcmMetaRecord
+    u64           baseTitleId;                             ///< Base titleID.
 } NcmApplicationContentMetaKey;
 
 Result ncmInitialize(void);
