@@ -9,12 +9,12 @@
 #include "../services/fs.h"
 #include "../services/sm.h"
 
-/// NcmContentStorage
+/// ContentStorage
 typedef struct {
     Service s; ///< IContentStorage
 } NcmContentStorage;
 
-/// NcmContentMetaDatabase
+/// ContentMetaDatabase
 typedef struct {
     Service s; ///< IContentMetaDatabase
 } NcmContentMetaDatabase;
@@ -86,7 +86,7 @@ typedef struct {
     u8 id_offset;                ///< Offset of this content. Unused by most applications.
 } NcmContentInfo;
 
-/* Used by system updates. They share the exact same struct as NcmContentMetaKey */
+/// Used by system updates. They share the exact same struct as NcmContentMetaKey
 typedef NcmContentMetaKey NcmContentMetaInfo;
 
 /// ContentMetaHeader
