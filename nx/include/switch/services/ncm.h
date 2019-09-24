@@ -9,76 +9,87 @@
 #include "../services/fs.h"
 #include "../services/sm.h"
 
+/// NcmContentStorage
 typedef struct {
-    Service s;
+    Service s; ///< IContentStorage
 } NcmContentStorage;
 
+/// NcmContentMetaDatabase
 typedef struct {
-    Service s;
+    Service s; ///< IContentMetaDatabase
 } NcmContentMetaDatabase;
 
+/// ContentType
 typedef enum  {
-    NcmContentType_Meta             = 0,
-    NcmContentType_Program          = 1,
-    NcmContentType_Data             = 2,
-    NcmContentType_Control          = 3,
-    NcmContentType_HtmlDocument     = 4,
-    NcmContentType_LegalInformation = 5,
-    NcmContentType_DeltaFragment    = 6,
+    NcmContentType_Meta             = 0, ///< Meta
+    NcmContentType_Program          = 1, ///< Program
+    NcmContentType_Data             = 2, ///< Data
+    NcmContentType_Control          = 3, ///< Control
+    NcmContentType_HtmlDocument     = 4, ///< HtmlDocument
+    NcmContentType_LegalInformation = 5, ///< LegalInformation
+    NcmContentType_DeltaFragment    = 6, ///< DeltaFragment
 } NcmContentType;
 
+/// ContentMetaType
 typedef enum {
-    NcmContentMetaType_Unknown              = 0x0,
-    NcmContentMetaType_SystemProgram        = 0x1,
-    NcmContentMetaType_SystemData           = 0x2,
-    NcmContentMetaType_SystemUpdate         = 0x3,
-    NcmContentMetaType_BootImagePackage     = 0x4,
-    NcmContentMetaType_BootImagePackageSafe = 0x5,
-    NcmContentMetaType_Application          = 0x80,
-    NcmContentMetaType_Patch                = 0x81,
-    NcmContentMetaType_AddOnContent         = 0x82,
-    NcmContentMetaType_Delta                = 0x83,
+    NcmContentMetaType_Unknown              = 0x0,  ///< Unknown
+    NcmContentMetaType_SystemProgram        = 0x1,  ///< SystemProgram
+    NcmContentMetaType_SystemData           = 0x2,  ///< SystemData
+    NcmContentMetaType_SystemUpdate         = 0x3,  ///< SystemUpdate
+    NcmContentMetaType_BootImagePackage     = 0x4,  ///< BootImagePackage
+    NcmContentMetaType_BootImagePackageSafe = 0x5,  ///< BootImagePackageSafe
+    NcmContentMetaType_Application          = 0x80, ///< Application
+    NcmContentMetaType_Patch                = 0x81, ///< Patch
+    NcmContentMetaType_AddOnContent         = 0x82, ///< AddOnContent
+    NcmContentMetaType_Delta                = 0x83, ///< Delta
 } NcmContentMetaType;
 
+/// ContentMetaAttribute
 typedef enum {
-    NcmContentMetaAttribute_None                = 0,
-    NcmContentMetaAttribute_IncludesExFatDriver = BIT(0),
-    NcmContentMetaAttribute_Rebootless          = BIT(1),
+    NcmContentMetaAttribute_None                = 0,      ///< None
+    NcmContentMetaAttribute_IncludesExFatDriver = BIT(0), ///< IncludesExFatDriver
+    NcmContentMetaAttribute_Rebootless          = BIT(1), ///< Rebootless
 } NcmContentMetaAttribute;
 
+/// ContentInstallType
 typedef enum {
-    NcmContentInstallType_Full         = 0,
-    NcmContentInstallType_FragmentOnly = 1,
-    NcmContentInstallType_Unknown      = 7,
+    NcmContentInstallType_Full         = 0, ///< Full
+    NcmContentInstallType_FragmentOnly = 1, ///< FragmentOnly
+    NcmContentInstallType_Unknown      = 7, ///< Unknown
 } NcmContentInstallType;
 
+/// NcaId
 typedef struct {
-    u8 c[0x10];
+    u8 c[0x10]; ///< Id
 } NcmNcaId;
 
+/// ContentMetaKey
 typedef struct {
-    u64 id;
-    u32 version;
-    NcmContentMetaType type;
-    NcmContentInstallType install_type;
-    u8 padding[2];
+    u64 id;                             ///< Title id.
+    u32 version;                        ///< Title version.
+    NcmContentMetaType type;            ///< \ref NcmContentMetaType
+    NcmContentInstallType install_type; ///< \ref NcmContentInstallType
+    u8 padding[2];                      ///< Padding.
 } NcmContentMetaKey;
 
+/// ApplicationContentMetaKey
 typedef struct {
-    NcmContentMetaKey key;
-    u64 application_id;
+    NcmContentMetaKey key; ///< \ref NcmContentMetaKey
+    u64 application_id;    ///< Title id of an application.
 } NcmApplicationContentMetaKey;
 
+/// ContentInfo
 typedef struct {
-    NcmNcaId content_id;
-    u8 size[0x6];
-    NcmContentType content_type;
-    u8 id_offset;
+    NcmNcaId content_id;         ///< \ref NcmNcaId
+    u8 size[0x6];                ///< Content size.
+    NcmContentType content_type; ///< \ref NcmContentType.
+    u8 id_offset;                ///< Offset of this content. Unused by most applications.
 } NcmContentInfo;
 
 /* Used by system updates. They share the exact same struct as NcmContentMetaKey */
 typedef NcmContentMetaKey NcmContentMetaInfo;
 
+/// ContentMetaHeader
 typedef struct {
     u16 extended_header_size;           ///< Size of optional struct that comes after this one.
     u16 content_count;                  ///< Number of NcmContentInfos after the extra bytes.
@@ -87,27 +98,31 @@ typedef struct {
     FsStorageId storage_id;             ///< Usually None (0).
 } NcmContentMetaHeader;
 
+/// ApplicationMetaExtendedHeader
 typedef struct {
-    u64 patch_id;
-    u32 required_system_version;
-    u32 padding;
+    u64 patch_id;                ///< Title id of this application's patch.
+    u32 required_system_version; ///< Firmware version required by this application.
+    u32 padding;                 ///< Padding.
 } NcmApplicationMetaExtendedHeader;
 
+/// PatchMetaExtendedHeader
 typedef struct {
-    u64 application_id;
-    u32 required_system_version;
-    u32 extended_data_size;
-    u8 reserved[0x8];
+    u64 application_id;          ///< Title id of this patch's corresponding application.
+    u32 required_system_version; ///< Firmware version required by this patch.
+    u32 extended_data_size;      ///< Size of the extended data following the NcmContentInfos.
+    u8 reserved[0x8];            ///< Unused.
 } NcmPatchMetaExtendedHeader;
 
+/// AddOnContentMetaExtendedHeader
 typedef struct {
-    u64 application_id;
-    u32 required_application_version;
-    u32 padding;
+    u64 application_id;               ///< Title id of this add-on-content's corresponding application.
+    u32 required_application_version; ///< Version of the application required by this add-on-content.
+    u32 padding;                      ///< Padding.
 } NcmAddOnContentMetaExtendedHeader;
 
+/// SystemUpdateMetaExtendedHeader
 typedef struct {
-    u32 extended_data_size;
+    u32 extended_data_size; ///< Size of the extended data after NcmContentInfos and NcmContentMetaInfos.
 } NcmSystemUpdateMetaExtendedHeader;
 
 Result ncmInitialize(void);
