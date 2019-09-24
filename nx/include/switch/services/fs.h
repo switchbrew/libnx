@@ -168,14 +168,14 @@ typedef enum
     FsWriteOption_Flush = BIT(0), ///< Forces a flush after write.
 } FsWriteOption;
 
-typedef enum
-{
-    FsStorageId_None       = 0,
-    FsStorageId_Host       = 1,
-    FsStorageId_GameCard   = 2,
-    FsStorageId_NandSystem = 3,
-    FsStorageId_NandUser   = 4,
-    FsStorageId_SdCard     = 5,
+/// StorageId
+typedef enum {
+    FsStorageId_None       = 0,   ///< None
+    FsStorageId_Host       = 1,   ///< Host
+    FsStorageId_GameCard   = 2,   ///< GameCard
+    FsStorageId_NandSystem = 3,   ///< NandSystem
+    FsStorageId_NandUser   = 4,   ///< NandUser
+    FsStorageId_SdCard     = 5,   ///< SdCard
 } FsStorageId;
 
 typedef enum
