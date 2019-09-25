@@ -27,27 +27,27 @@ static Result _ncmGetInterfaceInU8(Service* srv_out, u32 cmd_id, u8 inval) {
     );
 }
 
-NX_INLINE Result _ncmCmdNoIo(Service* srv, u32 cmd_id) {
+static Result _ncmCmdNoIo(Service* srv, u32 cmd_id) {
     return serviceDispatch(srv, cmd_id);
 }
 
-NX_INLINE Result _ncmCmdNoInOutU64(Service* srv, u32 cmd_id, u64* outval) {
+static Result _ncmCmdNoInOutU64(Service* srv, u32 cmd_id, u64* outval) {
     return serviceDispatchOut(srv, cmd_id, *outval);
 }
 
-NX_INLINE Result _ncmCmdOutNcaId(Service* srv, u32 cmd_id, NcmNcaId* outval) {
+static Result _ncmCmdOutNcaId(Service* srv, u32 cmd_id, NcmNcaId* outval) {
     return serviceDispatchOut(srv, cmd_id, *outval);
 }
 
-NX_INLINE Result _ncmCmdInU8(Service* srv, u32 cmd_id, u8 inval) {
+static Result _ncmCmdInU8(Service* srv, u32 cmd_id, u8 inval) {
     return serviceDispatchIn(srv, cmd_id, inval);
 }
 
-NX_INLINE Result _ncmCmdInNcaId(Service* srv, u32 cmd_id, const NcmNcaId* inval) {
+static Result _ncmCmdInNcaId(Service* srv, u32 cmd_id, const NcmNcaId* inval) {
     return serviceDispatchIn(srv, cmd_id, *inval);
 }
 
-NX_INLINE Result _ncmCmdInNcaIdOutU64(Service* srv, u32 cmd_id, const NcmNcaId* inval, u64* outval) {
+static Result _ncmCmdInNcaIdOutU64(Service* srv, u32 cmd_id, const NcmNcaId* inval, u64* outval) {
     return serviceDispatchInOut(srv, cmd_id, *inval, *outval);
 }
 
