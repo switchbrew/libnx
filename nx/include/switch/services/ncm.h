@@ -144,6 +144,7 @@ Result ncmActivateContentMetaDatabase(FsStorageId storage_id); ///< [2.0.0+]
 Result ncmInactivateContentMetaDatabase(FsStorageId storage_id); ///< [2.0.0+]
 Result ncmInvalidateRightsIdCache(void); ///< [9.0.0+]
 
+void ncmContentStorageClose(NcmContentStorage* cs);
 Result ncmContentStorageGeneratePlaceHolderId(NcmContentStorage* cs, NcmNcaId* out_id);
 Result ncmContentStorageCreatePlaceHolder(NcmContentStorage* cs, const NcmNcaId* content_id, const NcmNcaId* placeholder_id, u64 size);
 Result ncmContentStorageDeletePlaceHolder(NcmContentStorage* cs, const NcmNcaId* placeholder_id);
@@ -172,8 +173,8 @@ Result ncmContentStorageFlushPlaceHolder(NcmContentStorage* cs); ///< [3.0.0+]
 Result ncmContentStorageGetSizeFromPlaceHolderId(NcmContentStorage* cs, u64* out_size, const NcmNcaId* placeholder_id); ///< [4.0.0+]
 Result ncmContentStorageRepairInvalidFileAttribute(NcmContentStorage* cs); ///< [4.0.0+]
 Result ncmContentStorageGetRightsIdFromPlaceHolderIdWithCache(NcmContentStorage* cs, FsRightsId* out_rights_id, u32* out_key_generation, const NcmNcaId* placeholder_id, const NcmNcaId* cache_content_id); ///< [8.0.0+]
-void ncmContentStorageClose(NcmContentStorage* cs);
 
+void ncmContentMetaDatabaseClose(NcmContentMetaDatabase* db);
 Result ncmContentMetaDatabaseSet(NcmContentMetaDatabase* db, const NcmContentMetaKey* key, const void* data, u64 data_size);
 Result ncmContentMetaDatabaseGet(NcmContentMetaDatabase* db, const NcmContentMetaKey* key, u64* out_size, void* out_data, u64 out_data_size);
 Result ncmContentMetaDatabaseRemove(NcmContentMetaDatabase* db, const NcmContentMetaKey *key);
@@ -195,4 +196,3 @@ Result ncmContentMetaDatabaseListContentMetaInfo(NcmContentMetaDatabase* db, u32
 Result ncmContentMetaDatabaseGetAttributes(NcmContentMetaDatabase* db, const NcmContentMetaKey* key, u8* out);
 Result ncmContentMetaDatabaseGetRequiredApplicationVersion(NcmContentMetaDatabase* db, u64* out_version, const NcmContentMetaKey* key); ///< [2.0.0+]
 Result ncmContentMetaDatabaseGetContentIdByTypeAndIdOffset(NcmContentMetaDatabase* db, NcmNcaId* out_content_id, const NcmContentMetaKey* key, NcmContentType type, u8 id_offset); ///< [5.0.0+]
-void ncmContentMetaDatabaseClose(NcmContentMetaDatabase* db);
