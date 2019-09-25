@@ -20,68 +20,73 @@ Service* ncmGetServiceSession(void) {
     return &g_ncmSrv;
 }
 
+static Result _ncmGetInterfaceInU8(Service* srv_out, u32 cmd_id, u8 inval) {
+    return serviceDispatchIn(&g_ncmSrv, cmd_id, inval,
+        .out_num_objects = 1,
+        .out_objects = srv_out,
+    );
+}
+
+static Result _ncmCmdInU8(Service* srv, u32 cmd_id, u8 inval) {
+    return serviceDispatchIn(srv, cmd_id, inval);
+}
+
 Result ncmCreateContentStorage(FsStorageId storage_id) {
-    return serviceDispatchIn(&g_ncmSrv, 0, storage_id);
+    return _ncmCmdInU8(&g_ncmSrv, 0, storage_id);
 }
 
 Result ncmCreateContentMetaDatabase(FsStorageId storage_id) {
-    return serviceDispatchIn(&g_ncmSrv, 1, storage_id);
+    return _ncmCmdInU8(&g_ncmSrv, 1, storage_id);
 }
 
 Result ncmVerifyContentStorage(FsStorageId storage_id) {
-    return serviceDispatchIn(&g_ncmSrv, 2, storage_id);
+    return _ncmCmdInU8(&g_ncmSrv, 2, storage_id);
 }
 
 Result ncmVerifyContentMetaDatabase(FsStorageId storage_id) {
-    return serviceDispatchIn(&g_ncmSrv, 3, storage_id);
+    return _ncmCmdInU8(&g_ncmSrv, 3, storage_id);
 }
 
 Result ncmOpenContentStorage(NcmContentStorage* out_content_storage, FsStorageId storage_id) {
-    return serviceDispatchIn(&g_ncmSrv, 4, storage_id,
-        .out_num_objects = 1,
-        .out_objects = &out_content_storage->s,
-    );
+    return serviceDispatchIn(&g_ncmSrv, 4, storage_id);
 }
 
 Result ncmOpenContentMetaDatabase(NcmContentMetaDatabase* out_content_meta_database, FsStorageId storage_id) {
-    return serviceDispatchIn(&g_ncmSrv, 5, storage_id,
-        .out_num_objects = 1,
-        .out_objects = &out_content_meta_database->s,
-    );
+    return _ncmGetInterfaceInU8(&g_ncmSrv, 5, storage_id);
 }
 
 Result ncmCloseContentStorageForcibly(FsStorageId storage_id) {
     if (hosversionAtLeast(2,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    return serviceDispatchIn(&g_ncmSrv, 6, storage_id);
+    return _ncmCmdInU8(&g_ncmSrv, 6, storage_id);
 }
 
 Result ncmCloseContentMetaDatabaseForcibly(FsStorageId storage_id) {
     if (hosversionAtLeast(2,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    return serviceDispatchIn(&g_ncmSrv, 7, storage_id);
+    return _ncmCmdInU8(&g_ncmSrv, 7, storage_id);
 }
 
 Result ncmCleanupContentMetaDatabase(FsStorageId storage_id) {
-    return serviceDispatchIn(&g_ncmSrv, 8, storage_id);
+    return _ncmCmdInU8(&g_ncmSrv, 8, storage_id);
 }
 
 Result ncmActivateContentStorage(FsStorageId storage_id) {
     if (hosversionBefore(2,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    return serviceDispatchIn(&g_ncmSrv, 9, storage_id);
+    return _ncmCmdInU8(&g_ncmSrv, 9, storage_id);
 }
 
 Result ncmInactivateContentStorage(FsStorageId storage_id) {
     if (hosversionBefore(2,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    return serviceDispatchIn(&g_ncmSrv, 10, storage_id);
+    return _ncmCmdInU8(&g_ncmSrv, 10, storage_id);
 }
 
 Result ncmActivateContentMetaDatabase(FsStorageId storage_id) {
     if (hosversionBefore(2,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    return serviceDispatchIn(&g_ncmSrv, 11, storage_id);
+    return _ncmCmdInU8(&g_ncmSrv, 11, storage_id);
 }
 
 Result ncmInactivateContentMetaDatabase(FsStorageId storage_id) {
     if (hosversionBefore(2,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    return serviceDispatchIn(&g_ncmSrv, 12, storage_id);
+    return _ncmCmdInU8(&g_ncmSrv, 12, storage_id);
 }
 
 Result ncmInvalidateRightsIdCache(void) {
@@ -295,6 +300,10 @@ Result ncmContentStorageGetRightsIdFromPlaceHolderIdWithCache(NcmContentStorage*
     return rc;
 }
 
+void ncmContentStorageClose(NcmContentStorage* cs) {
+    serviceClose(&cs->s);
+}
+
 Result ncmContentMetaDatabaseSet(NcmContentMetaDatabase* db, const NcmContentMetaKey* key, const void* data, u64 data_size) {
     return serviceDispatchIn(&db->s, 0, *key,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
@@ -448,4 +457,8 @@ Result ncmContentMetaDatabaseGetContentIdByTypeAndIdOffset(NcmContentMetaDatabas
         NcmContentMetaKey key;
     } in = { type, id_offset, {0}, *key };
     return serviceDispatchInOut(&db->s, 20, in, *out_content_id);
+}
+
+void ncmContentMetaDatabaseClose(NcmContentMetaDatabase* db) {
+    serviceClose(&db->s);
 }

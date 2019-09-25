@@ -65,7 +65,7 @@ typedef struct {
 
 /// ContentMetaKey
 typedef struct {
-    u64 id;                             ///< Title id.
+    u64 title_id;                             ///< Title id.
     u32 version;                        ///< Title version.
     NcmContentMetaType type;            ///< \ref NcmContentMetaType
     NcmContentInstallType install_type; ///< \ref NcmContentInstallType
@@ -172,6 +172,7 @@ Result ncmContentStorageFlushPlaceHolder(NcmContentStorage* cs);
 Result ncmContentStorageGetSizeFromPlaceHolderId(NcmContentStorage* cs, u64* out_size, const NcmNcaId* placeholder_id);
 Result ncmContentStorageRepairInvalidFileAttribute(NcmContentStorage* cs);
 Result ncmContentStorageGetRightsIdFromPlaceHolderIdWithCache(NcmContentStorage* cs, FsRightsId* out_rights_id, u32* out_key_generation, const NcmNcaId* placeholder_id, const NcmNcaId* cache_content_id);
+void ncmContentStorageClose(NcmContentStorage* cs);
 
 Result ncmContentMetaDatabaseSet(NcmContentMetaDatabase* db, const NcmContentMetaKey* key, const void* data, u64 data_size);
 Result ncmContentMetaDatabaseGet(NcmContentMetaDatabase* db, const NcmContentMetaKey* key, u64* out_size, void* out_data, u64 out_data_size);
@@ -194,3 +195,4 @@ Result ncmContentMetaDatabaseListContentMetaInfo(NcmContentMetaDatabase* db, u32
 Result ncmContentMetaDatabaseGetAttributes(NcmContentMetaDatabase* db, const NcmContentMetaKey* key, u8* out);
 Result ncmContentMetaDatabaseGetRequiredApplicationVersion(NcmContentMetaDatabase* db, u64* out_version, const NcmContentMetaKey* key);
 Result ncmContentMetaDatabaseGetContentIdByTypeAndIdOffset(NcmContentMetaDatabase* db, NcmNcaId* out_content_id, const NcmContentMetaKey* key, NcmContentType type, u8 id_offset);
+void ncmContentMetaDatabaseClose(NcmContentMetaDatabase* db);
