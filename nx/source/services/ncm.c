@@ -283,12 +283,12 @@ Result ncmContentStorageWriteContentForDebug(NcmContentStorage* cs, const NcmNca
 
 Result ncmContentStorageGetFreeSpaceSize(NcmContentStorage* cs, u64* out_size) {
     if (hosversionBefore(2,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    return serviceDispatchOut(&cs->s, 22, *out_size);
+    return _ncmCmdNoInOutU64(&cs->s, 22, out_size);
 }
 
 Result ncmContentStorageGetTotalSpaceSize(NcmContentStorage* cs, u64* out_size) {
     if (hosversionBefore(2,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    return serviceDispatchOut(&cs->s, 23, *out_size);
+    return _ncmCmdNoInOutU64(&cs->s, 23, out_size);
 }
 
 Result ncmContentStorageFlushPlaceHolder(NcmContentStorage* cs) {
