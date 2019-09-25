@@ -154,7 +154,7 @@ Result ncmContentStorageRegister(NcmContentStorage* cs, const NcmNcaId* content_
 Result ncmContentStorageDelete(NcmContentStorage* cs, const NcmNcaId* content_id);
 Result ncmContentStorageHas(NcmContentStorage* cs, bool* out, const NcmNcaId* content_id);
 Result ncmContentStorageGetPath(NcmContentStorage* cs, char* out_path, size_t out_size, const NcmNcaId* content_id);
-Result ncmContentStorageGetPlaceHolderPath(NcmContentStorage* cs, const char* out_path, size_t out_size, NcmNcaId* placeholder_id);
+Result ncmContentStorageGetPlaceHolderPath(NcmContentStorage* cs, const char* out_path, size_t out_size, const NcmNcaId* placeholder_id);
 Result ncmContentStorageCleanupAllPlaceHolder(NcmContentStorage* cs);
 Result ncmContentStorageListPlaceHolder(NcmContentStorage* cs, NcmNcaId* out_ids, size_t out_ids_size, u32* out_count);
 Result ncmContentStorageGetContentCount(NcmContentStorage* cs, u32* out_count);

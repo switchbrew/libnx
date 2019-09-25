@@ -27,12 +27,28 @@ static Result _ncmGetInterfaceInU8(Service* srv_out, u32 cmd_id, u8 inval) {
     );
 }
 
-static Result _ncmCmdNoIo(Service* srv, u32 cmd_id) {
+NX_INLINE Result _ncmCmdNoIo(Service* srv, u32 cmd_id) {
     return serviceDispatch(srv, cmd_id);
 }
 
-static Result _ncmCmdInU8(Service* srv, u32 cmd_id, u8 inval) {
+NX_INLINE Result _ncmCmdNoInOutU64(Service* srv, u32 cmd_id, u64* outval) {
+    return serviceDispatchOut(srv, cmd_id, *outval);
+}
+
+NX_INLINE Result _ncmCmdOutNcaId(Service* srv, u32 cmd_id, NcmNcaId* outval) {
+    return serviceDispatchOut(srv, cmd_id, *outval);
+}
+
+NX_INLINE Result _ncmCmdInU8(Service* srv, u32 cmd_id, u8 inval) {
     return serviceDispatchIn(srv, cmd_id, inval);
+}
+
+NX_INLINE Result _ncmCmdInNcaId(Service* srv, u32 cmd_id, const NcmNcaId* inval) {
+    return serviceDispatchIn(srv, cmd_id, *inval);
+}
+
+NX_INLINE Result _ncmCmdInNcaIdOutU64(Service* srv, u32 cmd_id, const NcmNcaId* inval, u64* outval) {
+    return serviceDispatchInOut(srv, cmd_id, *inval, *outval);
 }
 
 Result ncmCreateContentStorage(FsStorageId storage_id) {
@@ -98,8 +114,12 @@ Result ncmInvalidateRightsIdCache(void) {
     return _ncmCmdNoIo(&g_ncmSrv, 13);
 }
 
+void ncmContentStorageClose(NcmContentStorage* cs) {
+    serviceClose(&cs->s);
+}
+
 Result ncmContentStorageGeneratePlaceHolderId(NcmContentStorage* cs, NcmNcaId* out_id) {
-    return serviceDispatchOut(&cs->s, 0, *out_id);
+    return _ncmCmdOutNcaId(&cs->s, 0, out_id);
 }
 
 Result ncmContentStorageCreatePlaceHolder(NcmContentStorage* cs, const NcmNcaId* content_id, const NcmNcaId* placeholder_id, u64 size) {
@@ -112,7 +132,7 @@ Result ncmContentStorageCreatePlaceHolder(NcmContentStorage* cs, const NcmNcaId*
 }
 
 Result ncmContentStorageDeletePlaceHolder(NcmContentStorage* cs, const NcmNcaId* placeholder_id) {
-    return serviceDispatchIn(&cs->s, 2, *placeholder_id);
+    return _ncmCmdInNcaId(&cs->s, 2, placeholder_id);
 }
 
 Result ncmContentStorageHasPlaceHolder(NcmContentStorage* cs, bool* out, const NcmNcaId* placeholder_id) {
@@ -139,7 +159,7 @@ Result ncmContentStorageRegister(NcmContentStorage* cs, const NcmNcaId* content_
 }
 
 Result ncmContentStorageDelete(NcmContentStorage* cs, const NcmNcaId* content_id) {
-    return serviceDispatchIn(&cs->s, 6, *content_id);
+    return _ncmCmdInNcaId(&cs->s, 6, content_id);
 }
 
 Result ncmContentStorageHas(NcmContentStorage* cs, bool* out, const NcmNcaId* content_id) {
@@ -153,7 +173,7 @@ Result ncmContentStorageGetPath(NcmContentStorage* cs, char* out_path, size_t ou
     );
 }
 
-Result ncmContentStorageGetPlaceHolderPath(NcmContentStorage* cs, const char* out_path, size_t out_size, NcmNcaId* placeholder_id) {
+Result ncmContentStorageGetPlaceHolderPath(NcmContentStorage* cs, const char* out_path, size_t out_size, const NcmNcaId* placeholder_id) {
     return serviceDispatchIn(&cs->s, 9, *placeholder_id, 
         .buffer_attrs = { SfBufferAttr_FixedSize | SfBufferAttr_HipcPointer | SfBufferAttr_Out },
         .buffers = { { out_path, out_size } },
@@ -161,7 +181,7 @@ Result ncmContentStorageGetPlaceHolderPath(NcmContentStorage* cs, const char* ou
 }
 
 Result ncmContentStorageCleanupAllPlaceHolder(NcmContentStorage* cs) {
-    return serviceDispatch(&cs->s, 10);
+    return _ncmCmdNoIo(&cs->s, 10);
 }
 
 Result ncmContentStorageListPlaceHolder(NcmContentStorage* cs, NcmNcaId* out_ids, size_t out_ids_size, u32* out_count) {
@@ -183,11 +203,11 @@ Result ncmContentStorageListContentId(NcmContentStorage* cs, NcmNcaId* out_ids, 
 }
 
 Result ncmContentStorageGetSizeFromContentId(NcmContentStorage* cs, u64* out_size, const NcmNcaId* content_id) {
-    return serviceDispatchInOut(&cs->s, 14, *content_id, *out_size);
+    return _ncmCmdInNcaIdOutU64(&cs->s, 14, content_id, out_size);
 }
 
 Result ncmContentStorageDisableForcibly(NcmContentStorage* cs) {
-    return serviceDispatch(&cs->s, 15);
+    return _ncmCmdNoIo(&cs->s, 15);
 }
 
 Result ncmContentStorageRevertToPlaceHolder(NcmContentStorage* cs, const NcmNcaId* placeholder_id, const NcmNcaId* old_content_id, const NcmNcaId* new_content_id) {
@@ -273,17 +293,17 @@ Result ncmContentStorageGetTotalSpaceSize(NcmContentStorage* cs, u64* out_size) 
 
 Result ncmContentStorageFlushPlaceHolder(NcmContentStorage* cs) {
     if (hosversionBefore(3,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    return serviceDispatch(&cs->s, 24);
+    return _ncmCmdNoIo(&cs->s, 24);
 }
 
 Result ncmContentStorageGetSizeFromPlaceHolderId(NcmContentStorage* cs, u64* out_size, const NcmNcaId* placeholder_id) {
     if (hosversionBefore(4,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    return serviceDispatchInOut(&cs->s, 25, *placeholder_id, *out_size);
+    return _ncmCmdInNcaIdOutU64(&cs->s, 25, placeholder_id, out_size);
 }
 
 Result ncmContentStorageRepairInvalidFileAttribute(NcmContentStorage* cs) {
     if (hosversionBefore(4,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    return serviceDispatch(&cs->s, 26);
+    return _ncmCmdNoIo(&cs->s, 26);
 }
 
 Result ncmContentStorageGetRightsIdFromPlaceHolderIdWithCache(NcmContentStorage* cs, FsRightsId* out_rights_id, u32* out_key_generation, const NcmNcaId* placeholder_id, const NcmNcaId* cache_content_id) {
@@ -304,8 +324,8 @@ Result ncmContentStorageGetRightsIdFromPlaceHolderIdWithCache(NcmContentStorage*
     return rc;
 }
 
-void ncmContentStorageClose(NcmContentStorage* cs) {
-    serviceClose(&cs->s);
+void ncmContentMetaDatabaseClose(NcmContentMetaDatabase* db) {
+    serviceClose(&db->s);
 }
 
 Result ncmContentMetaDatabaseSet(NcmContentMetaDatabase* db, const NcmContentMetaKey* key, const void* data, u64 data_size) {
@@ -403,7 +423,7 @@ Result ncmContentMetaDatabaseGetPatchId(NcmContentMetaDatabase* db, u64* out_pat
 }
 
 Result ncmContentMetaDatabaseDisableForcibly(NcmContentMetaDatabase* db) {
-    return serviceDispatch(&db->s, 13);
+    return _ncmCmdNoIo(&db->s, 13);
 }
 
 Result ncmContentMetaDatabaseLookupOrphanContent(NcmContentMetaDatabase* db, bool* out_orphaned, size_t out_orphaned_size, const NcmNcaId* content_ids, size_t content_ids_size) {
@@ -420,7 +440,7 @@ Result ncmContentMetaDatabaseLookupOrphanContent(NcmContentMetaDatabase* db, boo
 }
 
 Result ncmContentMetaDatabaseCommit(NcmContentMetaDatabase* db) {
-    return serviceDispatch(&db->s, 15);
+    return _ncmCmdNoIo(&db->s, 15);
 }
 
 Result ncmContentMetaDatabaseHasContent(NcmContentMetaDatabase* db, bool* out, const NcmContentMetaKey* key, const NcmNcaId* content_id) {
@@ -461,8 +481,4 @@ Result ncmContentMetaDatabaseGetContentIdByTypeAndIdOffset(NcmContentMetaDatabas
         NcmContentMetaKey key;
     } in = { type, id_offset, {0}, *key };
     return serviceDispatchInOut(&db->s, 20, in, *out_content_id);
-}
-
-void ncmContentMetaDatabaseClose(NcmContentMetaDatabase* db) {
-    serviceClose(&db->s);
 }
