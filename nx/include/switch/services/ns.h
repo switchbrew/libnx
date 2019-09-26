@@ -103,12 +103,13 @@ typedef struct {
 
 /// SystemDeliveryInfo
 typedef struct {
-    u32 protocol_version;          ///< Must be <= to and match a system-setting.
-    u8 unk_x4[0x8];                ///< Unknown.
-    u32 unk_xc;                    ///< Unknown.
-    u64 unk_x10;                   ///< Unknown.
-    u8 unk_x18[0xc8];              ///< Unknown.
-    u8 hmac[0x20];                 ///< HMAC-SHA256 over the previous 0xe0-bytes.
+    u32 protocol_version;           ///< Must be <= to and match a system-setting.
+    u8 unk_x4[0x8];                 ///< Unused by NS, besides HMAC validation.
+    u32 systemupdate_meta_version;  ///< SystemUpdate meta version.
+    u64 systemupdate_meta_titleid;  ///< SystemUpdate meta titleID.
+    u8 unk_x18;                     ///< Copied into state by \ref nssuRequestSendSystemUpdate.
+    u8 unk_x19[0xc7];               ///< Unused by NS, besides HMAC validation.
+    u8 hmac[0x20];                  ///< HMAC-SHA256 over the previous 0xe0-bytes.
 } NsSystemDeliveryInfo;
 
 /// Default size for \ref nssuControlSetupCardUpdate / \ref nssuControlSetupCardUpdateViaSystemUpdater. This is the size used by qlaunch for SetupCardUpdate.
