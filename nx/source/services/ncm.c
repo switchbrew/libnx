@@ -475,9 +475,9 @@ Result ncmContentMetaDatabaseGetRequiredApplicationVersion(NcmContentMetaDatabas
 Result ncmContentMetaDatabaseGetContentIdByTypeAndIdOffset(NcmContentMetaDatabase* db, NcmNcaId* out_content_id, const NcmContentMetaKey* key, NcmContentType type, u8 id_offset) {
     if (hosversionBefore(5,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     const struct {
-        u32 type;
+        u8 type;
         u8 id_offset;
-        u8 padding[3];
+        u8 padding[6];
         NcmContentMetaKey key;
     } in = { type, id_offset, {0}, *key };
     return serviceDispatchInOut(&db->s, 20, in, *out_content_id);
