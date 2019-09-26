@@ -22,6 +22,13 @@ typedef enum {
     NsShellEvent_Debug = 4,         ///< Debug
 } NsShellEvent;
 
+/// ApplicationControlSource
+typedef enum {
+    NsApplicationControlSource_CacheOnly   = 0,       ///< Returns data from cache.
+    NsApplicationControlSource_Storage     = 1,       ///< Returns data from storage if not present in cache.
+    NsApplicationControlSource_StorageOnly = 2,       ///< Returns data from storage without using cache.
+} NsApplicationControlSource;
+
 /// BackgroundNetworkUpdateState
 typedef enum {
     NsBackgroundNetworkUpdateState_None        = 0,   ///< No sysupdate task exists.
@@ -140,7 +147,7 @@ Result nsListApplicationContentMetaStatus(u64 titleID, s32 index, NsApplicationC
  * @param[in] size Size of the buffer.
  * @param[out] actual_size Actual output size.
  */
-Result nsGetApplicationControlData(u8 flag, u64 titleID, NsApplicationControlData* buffer, size_t size, u64* actual_size);
+Result nsGetApplicationControlData(NsApplicationControlSource source, u64 titleID, NsApplicationControlData* buffer, size_t size, u64* actual_size);
 
 /**
  * @brief Returns the total storage capacity (used + free) from content manager services.

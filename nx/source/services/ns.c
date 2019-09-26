@@ -186,16 +186,20 @@ Result nsListApplicationContentMetaStatus(u64 titleID, s32 index, NsApplicationC
     );
 }
 
-Result nsGetApplicationControlData(u8 flag, u64 titleID, NsApplicationControlData* buffer, size_t size, u64* actual_size) {
+Result nsGetApplicationControlData(NsApplicationControlSource source, u64 titleID, NsApplicationControlData* buffer, size_t size, u64* actual_size) {
     const struct {
-        u8 flag;
+        u8 source;
         u64 titleID;
-    } in = { flag, titleID };
+    } in = { source, titleID };
 
-    return serviceDispatchInOut(&g_nsAppManSrv, 400, in, *actual_size,
+    u32 tmp=0;
+
+    Result rc = serviceDispatchInOut(&g_nsAppManSrv, 400, in, tmp,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
         .buffers = { { buffer, size } },
     );
+    if (R_SUCCEEDED(rc) && actual_size) *actual_size = tmp;
+    return rc;
 }
 
 Result nsGetTotalSpaceSize(FsStorageId storage_id, u64 *size) {
