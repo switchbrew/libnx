@@ -165,7 +165,7 @@ Result nsvmInitialize(void);
 void nsvmExit(void);
 
 Result nsvmNeedsUpdateVulnerability(bool *out);
-Result nsvmGetSafeSystemVersion(u16 *out);
+Result nsvmGetSafeSystemVersion(NcmContentMetaKey *out); ///< [4.0.0+]
 
 ///@}
 

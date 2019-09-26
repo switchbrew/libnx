@@ -233,8 +233,8 @@ Result nsvmNeedsUpdateVulnerability(bool *out) {
     return _nsCmdNoInOutBool(srv, out, 1200);
 }
 
-Result nsvmGetSafeSystemVersion(u16 *out) {
-    if (hosversionBefore(3,0,0))
+Result nsvmGetSafeSystemVersion(NcmContentMetaKey *out) {
+    if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return serviceDispatchOut(&g_nsvmSrv, 1202, out);
