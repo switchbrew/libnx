@@ -348,10 +348,10 @@ Result ncmContentMetaDatabaseRemove(NcmContentMetaDatabase* db, const NcmContent
 
 Result ncmContentMetaDatabaseGetContentIdByType(NcmContentMetaDatabase* db, NcmNcaId* out_content_id, const NcmContentMetaKey* key, NcmContentType type) {
     const struct {
-        u32 type;
-        u32 padding;
+        u8 type;
+        u8 padding[7];
         NcmContentMetaKey key;
-    } in = { type, 0, *key };
+    } in = { type, {0}, *key };
     return serviceDispatchInOut(&db->s, 3, in, *out_content_id);
 }
 
