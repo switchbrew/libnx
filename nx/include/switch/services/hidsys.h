@@ -43,6 +43,11 @@ Result hidsysEnableAppletToGetInput(bool enable);
 **/ 
 Result hidsysAcquireHomeButtonEventHandle(Event* event_out);
 
+/**
+* @brief Returns an event that fires when the capture button is pressed. This event does not auto clear.
+**/ 
+Result hidsysAcquireCaptureButtonEventHandle(Event* event_out);
+
 Result hidsysActivateHomeButton(void);
 Result hidsysActivateSleepButton(void);
 Result hidsysActivateCaptureButton(void);
