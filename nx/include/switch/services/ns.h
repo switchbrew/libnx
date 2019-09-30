@@ -92,8 +92,8 @@ typedef struct {
 
 /// SystemUpdateProgress. Commands which have this as output will return 0 with the output cleared, when no task is available.
 typedef struct {
-    s64 current_size;              ///< Current size.
-    s64 total_size;                ///< Total size, <=0 indicates that no progress is available.
+    s64 current_size;              ///< Current size. This value can be larger than total_size when the async operation is finishing. When total_size is <=0, this current_size field may contain a progress value for when the total_size is not yet determined.
+    s64 total_size;                ///< Total size, this field this only valid when >0.
 } NsSystemUpdateProgress;
 
 /// EulaDataPath
