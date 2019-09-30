@@ -67,8 +67,8 @@ typedef struct {
 typedef struct {
     u64 title_id;                       ///< Title id.
     u32 version;                        ///< Title version.
-    NcmContentMetaType type;            ///< \ref NcmContentMetaType
-    NcmContentInstallType install_type; ///< \ref NcmContentInstallType
+    u8 type;                            ///< \ref NcmContentMetaType
+    u8 install_type;                    ///< \ref NcmContentInstallType
     u8 padding[2];                      ///< Padding.
 } NcmContentMetaKey;
 
@@ -82,7 +82,7 @@ typedef struct {
 typedef struct {
     NcmNcaId content_id;         ///< \ref NcmNcaId
     u8 size[0x6];                ///< Content size.
-    NcmContentType content_type; ///< \ref NcmContentType.
+    u8 content_type;             ///< \ref NcmContentType.
     u8 id_offset;                ///< Offset of this content. Unused by most applications.
 } NcmContentInfo;
 
@@ -94,8 +94,8 @@ typedef struct {
     u16 extended_header_size;           ///< Size of optional struct that comes after this one.
     u16 content_count;                  ///< Number of NcmContentInfos after the extra bytes.
     u16 content_meta_count;             ///< Number of NcmContentMetaInfos that come after the NcmContentInfos.
-    NcmContentMetaAttribute attributes; ///< Usually None (0).
-    FsStorageId storage_id;             ///< Usually None (0).
+    u8 attributes;                      ///< Usually None (0).
+    u8 storage_id;                      ///< Usually None (0).
 } NcmContentMetaHeader;
 
 /// ApplicationMetaExtendedHeader
