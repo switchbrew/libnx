@@ -118,8 +118,17 @@ typedef struct {
 ///@name ns
 ///@{
 
+/// Initialize ns services. Uses ns:am on pre-3.0.0, ns:am2 on [3.0.0+].
 Result nsInitialize(void);
+
+/// Exit ns services.
 void nsExit(void);
+
+/// Gets the Service object for the actual ns:* service session. Only initialized on [3.0.0+], on pre-3.0.0 see \ref nsGetServiceSession_ApplicationManagerInterface.
+Service* nsGetServiceSession_GetterInterface(void);
+
+/// Gets the Service object for IApplicationManagerInterface.
+Service* nsGetServiceSession_ApplicationManagerInterface(void);
 
 /**
  * @brief Gets an listing of \ref NsApplicationRecord.
@@ -169,8 +178,14 @@ Result nsGetFreeSpaceSize(FsStorageId storage_id, u64 *size);
 ///@name ns:vm
 ///@{
 
+/// Initialize ns:vm. On pre-3.0.0 this must be used with \ref nsInitialize.
 Result nsvmInitialize(void);
+
+/// Exit ns:vm.
 void nsvmExit(void);
+
+/// Gets the Service object for ns:vm. This is only initialized on [3.0.0+].
+Service* nsvmGetServiceSession(void);
 
 Result nsvmNeedsUpdateVulnerability(bool *out);
 Result nsvmGetSafeSystemVersion(NcmContentMetaKey *out); ///< [4.0.0+]
@@ -180,8 +195,14 @@ Result nsvmGetSafeSystemVersion(NcmContentMetaKey *out); ///< [4.0.0+]
 ///@name ns:dev
 ///@{
 
+/// Initialize ns:dev.
 Result nsdevInitialize(void);
+
+/// Initialize ns:dev.
 void nsdevExit(void);
+
+/// Gets the Service object for ns:dev.
+Service* nsdevGetServiceSession(void);
 
 Result nsdevLaunchProgram(u64* out_pid, const NsLaunchProperties* properties, u32 flags);
 Result nsdevTerminateProcess(u64 pid);
@@ -201,8 +222,14 @@ Result nsdevSetCurrentApplicationRightsEnvironmentCanBeActiveForDevelop(bool can
 ///@name ns:su
 ///@{
 
+/// Initialize ns:su.
 Result nssuInitialize(void);
+
+/// Exit ns:su.
 void nssuExit(void);
+
+/// Gets the Service object for ns:su.
+Service* nssuGetServiceSession(void);
 
 /**
  * @brief Gets the \ref NsBackgroundNetworkUpdateState.

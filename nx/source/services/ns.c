@@ -44,6 +44,14 @@ void _nsCleanup(void)
     serviceClose(&g_nsGetterSrv);
 }
 
+Service* nsGetServiceSession_GetterInterface(void) {
+    return &g_nsGetterSrv;
+}
+
+Service* nsGetServiceSession_ApplicationManagerInterface(void) {
+    return &g_nsAppManSrv;
+}
+
 static Result _nsGetSession(Service* srv, Service* srv_out, u32 cmd_id) {
     return serviceDispatch(srv, cmd_id,
         .out_num_objects = 1,
@@ -230,6 +238,10 @@ void _nsvmCleanup(void)
     serviceClose(&g_nsvmSrv);
 }
 
+Service* nsvmGetServiceSession(void) {
+    return &g_nsvmSrv;
+}
+
 Result nsvmNeedsUpdateVulnerability(bool *out) {
     Service *srv = &g_nsAppManSrv;
     if (hosversionAtLeast(3,0,0)) srv = &g_nsvmSrv;
@@ -254,6 +266,10 @@ Result _nsdevInitialize(void) {
 
 void _nsdevCleanup(void) {
     serviceClose(&g_nsdevSrv);
+}
+
+Service* nsdevGetServiceSession(void) {
+    return &g_nsdevSrv;
 }
 
 Result nsdevLaunchProgram(u64* out_pid, const NsLaunchProperties* properties, u32 flags) {
@@ -350,6 +366,10 @@ Result _nssuInitialize(void) {
 
 void _nssuCleanup(void) {
     serviceClose(&g_nssuSrv);
+}
+
+Service* nssuGetServiceSession(void) {
+    return &g_nssuSrv;
 }
 
 Result nssuGetBackgroundNetworkUpdateState(NsBackgroundNetworkUpdateState *out) {
