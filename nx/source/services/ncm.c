@@ -185,7 +185,7 @@ Result ncmContentStorageCleanupAllPlaceHolder(NcmContentStorage* cs) {
 }
 
 Result ncmContentStorageListPlaceHolder(NcmContentStorage* cs, NcmNcaId* out_ids, size_t out_ids_size, u32* out_count) {
-    return serviceDispatchOut(&cs->s, 11, out_count, *out_count, 
+    return serviceDispatchOut(&cs->s, 11, *out_count,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
         .buffers = { { out_ids, out_ids_size } },
     );

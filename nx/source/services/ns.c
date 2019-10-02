@@ -253,7 +253,7 @@ Result nsvmGetSafeSystemVersion(NcmContentMetaKey *out) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return serviceDispatchOut(&g_nsvmSrv, 1202, out);
+    return serviceDispatchOut(&g_nsvmSrv, 1202, *out);
 }
 
 // ns:dev
@@ -312,7 +312,7 @@ Result nsdevTerminateApplication(void) {
 }
 
 Result nsdevPrepareLaunchProgramFromHost(NsLaunchProperties* out, const char* path, size_t path_len) {
-    return serviceDispatchOut(&g_nsdevSrv, 7, out,
+    return serviceDispatchOut(&g_nsdevSrv, 7, *out,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
         .buffers = { { path, path_len } },
     );
