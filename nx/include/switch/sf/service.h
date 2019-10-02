@@ -439,7 +439,7 @@ NX_INLINE Result serviceDispatchImpl(
             disp.out_num_objects, disp.out_objects,
             disp.out_handle_attrs, disp.out_handles);
 
-        if (R_SUCCEEDED(rc) && out_data_size)
+        if (R_SUCCEEDED(rc) && out_data && out_data_size)
             __builtin_memcpy(out_data, out, out_data_size);
     }
 
