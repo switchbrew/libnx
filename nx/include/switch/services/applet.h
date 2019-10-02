@@ -7,7 +7,6 @@
  */
 #pragma once
 #include "../types.h"
-#include "../services/sm.h"
 #include "../services/apm.h"
 #include "../services/pdm.h"
 #include "../services/caps.h"
@@ -2137,7 +2136,7 @@ Result appletBeginToObserveHidInputForDevelop(void);
  * @param[in] offset Offset within the ThemeStorage.
  * @param[out] transfer_size Actual read size.
  */
-Result appletReadThemeStorage(void* buffer, size_t size, u64 offset, size_t *transfer_size);
+Result appletReadThemeStorage(void* buffer, size_t size, u64 offset, u64 *transfer_size);
 
 /**
  * @brief Writes the ThemeStorage for the current applet.
