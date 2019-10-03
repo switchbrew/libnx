@@ -100,9 +100,9 @@ typedef struct {
 
 /// ApplicationMetaExtendedHeader
 typedef struct {
-    u64 patch_id;                ///< Title id of this application's patch.
-    u32 required_system_version; ///< Firmware version required by this application.
-    u32 padding;                 ///< Padding.
+    u64 patch_id;                     ///< Title id of this application's patch.
+    u32 required_system_version;      ///< Firmware version required by this application.
+    u32 required_application_version; ///< [9.0.0+] Owner application version required by this application. Previously padding.
 } NcmApplicationMetaExtendedHeader;
 
 /// PatchMetaExtendedHeader
