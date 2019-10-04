@@ -7,16 +7,16 @@
  * @copyright libnx Authors
  */
 #pragma once
-#include "../result.h"
+#include "../types.h"
 #include "../kernel/event.h"
-#include "../services/sm.h"
+#include "../sf/service.h"
 
 #define SET_MAX_NAME_SIZE 0x48
 #define SET_MAX_NICKNAME_SIZE 0x80
 
 typedef enum {
-    ColorSetId_Light=0,
-    ColorSetId_Dark=1
+    ColorSetId_Light = 0,
+    ColorSetId_Dark  = 1,
 } ColorSetId;
 
 /// IDs for Language.
@@ -55,23 +55,23 @@ typedef enum {
 
 /// Command IDs for setsysGetFlag/setsysSetFlag.
 typedef enum {
-    SetSysFlag_LockScreen = 7,
-    SetSysFlag_ConsoleInformationUpload = 25,
+    SetSysFlag_LockScreen                   = 7,
+    SetSysFlag_ConsoleInformationUpload     = 25,
     SetSysFlag_AutomaticApplicationDownload = 27,
-    SetSysFlag_Quest = 47,
-    SetSysFlag_Usb30Enable = 65,
-    SetSysFlag_NfcEnable = 69,
-    SetSysFlag_WirelessLanEnable = 73,
-    SetSysFlag_BluetoothEnable = 88,
-    SetSysFlag_AutoUpdateEnable = 95,
-    SetSysFlag_BatteryPercentage = 99,
-    SetSysFlag_ExternalRtcReset = 101,
-    SetSysFlag_UsbFullKeyEnable = 103,
-    SetSysFlag_BluetoothAfhEnable = 111,
-    SetSysFlag_BluetoothBoostEnable = 113,
-    SetSysFlag_InRepairProcessEnable = 115,
-    SetSysFlag_HeadphoneVolumeUpdate = 117,
-    SetSysFlag_RequiresRunRepairTimeReviser = 141,
+    SetSysFlag_Quest                        = 47,
+    SetSysFlag_Usb30Enable                  = 65,
+    SetSysFlag_NfcEnable                    = 69,
+    SetSysFlag_WirelessLanEnable            = 73,
+    SetSysFlag_BluetoothEnable              = 88,
+    SetSysFlag_AutoUpdateEnable             = 95,    ///< [2.0.0+]
+    SetSysFlag_BatteryPercentage            = 99,    ///< [2.0.0+]
+    SetSysFlag_ExternalRtcReset             = 101,   ///< [2.0.0+]
+    SetSysFlag_UsbFullKeyEnable             = 103,   ///< [3.0.0+]
+    SetSysFlag_BluetoothAfhEnable           = 111,   ///< [3.0.0+]
+    SetSysFlag_BluetoothBoostEnable         = 113,   ///< [3.0.0+]
+    SetSysFlag_InRepairProcessEnable        = 115,   ///< [3.0.0+]
+    SetSysFlag_HeadphoneVolumeUpdate        = 117,   ///< [3.0.0+]
+    SetSysFlag_RequiresRunRepairTimeReviser = 141,   ///< [5.0.0+]
 } SetSysFlag;
 
 /// Structure returned by \ref setsysGetFirmwareVersion
@@ -94,11 +94,11 @@ Result setInitialize(void);
 void setExit(void);
 Service* setGetServiceSession(void);
 
-/// Converts LanguageCode to Language.
-Result setMakeLanguage(u64 LanguageCode, s32 *Language);
+/// Converts LanguageCode to \ref SetLanguage.
+Result setMakeLanguage(u64 LanguageCode, SetLanguage *Language);
 
-/// Converts Language to LanguageCode.
-Result setMakeLanguageCode(s32 Language, u64 *LanguageCode);
+/// Converts \ref SetLanguage to LanguageCode.
+Result setMakeLanguageCode(SetLanguage Language, u64 *LanguageCode);
 
 /// Gets the current system LanguageCode.
 /// Normally this should be used instead of \ref setGetLanguageCode.
@@ -143,8 +143,9 @@ Result setsysGetSettingsItemValueSize(const char *name, const char *item_key, u6
  * @param item_key Item key string.
  * @param value_out Pointer to output the value to.
  * @param value_out_size Size of the value_out buffer.
+ * @param size_out Total size which was copied to value_out.
  */
-Result setsysGetSettingsItemValue(const char *name, const char *item_key, void *value_out, size_t value_out_size);
+Result setsysGetSettingsItemValue(const char *name, const char *item_key, void *value_out, size_t value_out_size, u64 *size_out);
 
 /**
  * @brief Gets the system's serial number.
@@ -174,9 +175,9 @@ Result setsysGetFirmwareVersion(SetSysFirmwareVersion *out);
 
 /**
  * @brief Gets an event that settings will signal on flag change.
- * @param out Event to bind. Output event will have autoclear=false.
+ * @param out_event Event to bind. Output event will have autoclear=false.
  */
-Result setsysBindFatalDirtyFlagEvent(Event *out);
+Result setsysBindFatalDirtyFlagEvent(Event *out_event);
 
 /**
  * @brief Gets the settings flags that have changed.
