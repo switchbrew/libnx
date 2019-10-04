@@ -7,6 +7,7 @@
 #pragma once
 #include "../types.h"
 #include "../nacp.h"
+#include "../sf/service.h"
 #include "../services/fs.h"
 #include "../services/ncm.h"
 #include "../services/async.h"

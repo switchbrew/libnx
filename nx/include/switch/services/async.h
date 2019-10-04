@@ -6,6 +6,7 @@
  */
 #pragma once
 #include "../types.h"
+#include "../sf/service.h"
 #include "../applets/error.h"
 #include "../kernel/event.h"
 

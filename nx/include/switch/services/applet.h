@@ -7,6 +7,7 @@
  */
 #pragma once
 #include "../types.h"
+#include "../sf/service.h"
 #include "../services/apm.h"
 #include "../services/pdm.h"
 #include "../services/caps.h"
