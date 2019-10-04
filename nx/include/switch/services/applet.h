@@ -740,18 +740,18 @@ Result appletGetCurrentIlluminanceEx(bool *bOverLimit, float *fLux);
 Result appletSetWirelessPriorityMode(AppletWirelessPriorityMode mode);
 
 /**
- * @brief Sets whether ::AppletMessage_AlbumImageTaken is enabled.
- * @note Only available with [7.0.0+].
- * @param[in] flag Whether to enable the notification.
- */
-Result appletSetAlbumImageTakenNotificationEnabled(bool flag);
-
-/**
  * @brief Gets the total time in nanoseconds that the current process was actively running (not suspended), relative to when \ref appletInitialize was last used.
  * @note Only available with [6.0.0+].
  * @param[out] activeTime Output nanoseconds value.
  */
 Result appletGetProgramTotalActiveTime(u64 *activeTime);
+
+/**
+ * @brief Sets whether ::AppletMessage_AlbumImageTaken is enabled.
+ * @note Only available with [7.0.0+].
+ * @param[in] flag Whether to enable the notification.
+ */
+Result appletSetAlbumImageTakenNotificationEnabled(bool flag);
 
 /**
  * @brief Sets the Application AlbumUserData.
