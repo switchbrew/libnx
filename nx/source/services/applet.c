@@ -8,7 +8,6 @@
 #include "services/apm.h"
 #include "services/caps.h"
 #include "services/pm.h"
-#include "services/sm.h"
 #include "services/fs.h"
 #include "runtime/env.h"
 #include "runtime/hosversion.h"
