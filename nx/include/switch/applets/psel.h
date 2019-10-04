@@ -13,7 +13,7 @@
 typedef enum {
     PselMode_Normal            = 0,  ///< Simple user selection (new users cannot be created).
     PselMode_UserCreation      = 1,  ///< Only user creation (the user is later returned).
-    PselMode_ForStarter        = 2,  ///< Mode "starter" uses to register the console's first user on the initial setup
+    PselMode_ForStarter        = 5,  ///< Mode "starter" uses to register the console's first user on the initial setup
 } PselMode;
 
 // Config data for playerSelect applet.
