@@ -1,69 +1,87 @@
 /**
  * @file psel.h
- * @brief Wrapper for using playerSelect applet (user selection applet).
+ * @brief Wrapper for using playerSelect (user selection applet).
  * @author XorTroll
  * @copyright libnx Authors
  */
 #pragma once
 #include "../types.h"
 #include "../services/applet.h"
-#include "../services/set.h"
+#include "../services/acc.h"
 
-// playerSelect applet modes. There are more of them related to network accounts.
+// playerSelect UI modes.
 typedef enum {
-    PselMode_Normal            = 0,  ///< Simple user selection (new users cannot be created).
-    PselMode_UserCreation      = 1,  ///< Only user creation (the user is later returned).
-    PselMode_ForStarter        = 5,  ///< Mode "starter" uses to register the console's first user on the initial setup
-} PselMode;
+    PselUiMode_SelectUser                           = 0,  ///< Simple user selection (new users cannot be created).
+    PselUiMode_UserCreation                         = 1,  ///< Only user creation (the user is later returned).
+    PselUiMode_EnsureNsaAvailable                   = 2,  ///< EnsureNsaAvailable
+    PselUiMode_IconEditor                           = 3,  ///< IconEditor
+    PselUiMode_NicknameEditor                       = 4,  ///< NicknameEditor
+    PselUiMode_ForStarter                           = 5,  ///< Mode "starter" uses to register the console's first user on the initial setup
+    PselUiMode_NetworkServiceAccountRegistration    = 8,  ///< NetworkServiceAccountRegistration
+    PselUiMode_NintendoAccountNnidLinker            = 9,  ///< NintendoAccountNnidLinker
+    PselUiMode_LicenseRequirementsForNetworkService = 10, ///< LicenseRequirementsForNetworkService
+    PselUiMode_NaLoginTest                          = 12, ///< NaLoginTest
+} PselUiMode;
 
-// Config data for playerSelect applet.
+// UI settings for playerSelect.
 typedef struct {
-    u32 mode;                        ///< Mode, see \ref PselMode.
-    u8 unk1[0x8f];                   ///< Unknown
-    u8 userCreationFlag;             ///< If set, a new user can be created and chosen (for ::PselMode_Normal).
-    u8 omitOptionFlag;               ///< If set, an "Omit" button is shown.
-    u8 unk2[11];                      ///< Unknown
-} PselUserSelectionConfig;
+    u32 mode;                                     ///< UI mode, see \ref PselUiMode.
+    u32 dialogType;                               ///< Dialog type
+    u128 invalidUserList[ACC_USER_LIST_SIZE];     ///< List of user IDs which will be disabled.
+    u8 unk1[8];                                   ///< Unknown.
+    u8 networkServiceRequired;                    ///< Whether the user needs to be linked to a Nintendo account.
+    u8 unk2[2];                                   ///< Unknown.
+    u8 allowUserCreation;                         ///< (With ::PselUiMode_SelectUser) enables the option to create a new user.
+    u8 skipEnabled;                               ///< Enables the option to skip user selection (a new button is shown)
+    u8 unk3[11];                                  ///< Unknown.
+} PselUiSettings;
 
-// Result data returned after execution.
+// Result data sent after execution.
 typedef struct {
-    u32 result;                      ///< Result (0 = Success, 2 = Failure)
-    u128 userId;                     ///< UUID of selected user
+    u32 result;                      ///< Result code.
+    u128 userId;                     ///< Selected user ID.
 } PselResult;
 
-// Config holder structure.
-typedef struct {
-    PselUserSelectionConfig config;  ///< User selection config
-} PselConfig;
-
 /**
- * @brief Creates a new config for playerSelect applet with the specified mode.
- * @param c PselConfig struct.
- * @param mode playerSelect applet mode.
+ * @brief Creates a new UI config for playerSelect applet with the specified mode.
+ * @param ui PseluiSettings struct.
+ * @param mode playerSelect UI mode.
  */
-Result pselConfigCreate(PselConfig *c, PselMode mode);
+Result pselUiCreate(PselUiSettings *ui, PselUiMode mode);
 
 /**
- * @brief Sets the UserCreation flag.
- * @param c PselConfig struct.
+ * @brief Adds a user to the invalid user list (these users will be blacklisted in the applet)
+ * @param ui PselUiSettings struct.
+ * @param user_id user ID.
+ */
+void pselUiAddInvalidUser(PselUiSettings *ui, u128 user_id);
+
+/**
+ * @brief Sets whether users can be created in the applet
+ * @param ui PselUiSettings struct.
+ * @param flag Flag value.
+ * @note Only used for ::PselUiMode_SelectUser
+ */
+void pselUiSetAllowUserCreation(PselUiSettings *ui, bool flag);
+
+/**
+ * @brief Sets whether users need to be linked to a Nintendo account.
+ * @param ui PselUiSettings struct.
  * @param flag Flag value.
  */
-static inline void pselConfigSetUserCreationFlag(PselConfig *c, bool flag) {
-    c->config.userCreationFlag = flag;
-}
+void pselUiSetNetworkServiceRequired(PselUiSettings *ui, bool flag);
 
 /**
- * @brief Sets the OmitOption flag.
- * @param c PselConfig struct.
+ * @brief Sets whether selection can be skipped (with a new button)
+ * @param ui PselUiSettings struct.
  * @param flag Flag value.
  */
-static inline void pselConfigSetOmitOptionFlag(PselConfig *c, bool flag) {
-    c->config.omitOptionFlag = flag;
-}
+void pselUiSetSkipEnabled(PselUiSettings *ui, bool flag);
 
 /**
- * @brief Shows the applet with the specified config.
- * @param c PselConfig struct.
- * @param out_uid Output user ID.
+ * @brief Shows the applet with the specified UI settings.
+ * @param ui PselUiSettings struct.
+ * @param out_uid Selected user ID.
+ * @note If user skips (see \ref pselUiSetSkipEnabled) this will return successfully but the output ID will be 0.
  */
-Result pselConfigShow(PselConfig *c, u128 *out_uid);
+Result pselUiShow(PselUiSettings *ui, u128 *out_user);
