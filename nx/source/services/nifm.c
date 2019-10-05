@@ -1,33 +1,22 @@
-/**
- * @file nifm.c
- * @brief Network interface service IPC wrapper.
- * @author shadowninja108, shibboleet
- * @copyright libnx Authors
- */
-
+#include "service_guard.h"
 #include "services/nifm.h"
-#include "arm/atomics.h"
 #include "runtime/hosversion.h"
 
 static NifmServiceType g_nifmServiceType = NifmServiceType_NotInitialized;
 
 static Service g_nifmSrv;
 static Service g_nifmIGS;
-static u64 g_refCnt;
 
-static Result _nifmCreateGeneralService(Service* out, u64 in);
-static Result _nifmCreateGeneralServiceOld(Service* out);
+static Result _nifmCreateGeneralService(Service* srv_out);
+static Result _nifmCreateGeneralServiceOld(Service* srv_out);
+
+NX_GENERATE_SERVICE_GUARD(nifm);
 
 void nifmSetServiceType(NifmServiceType serviceType) {
     g_nifmServiceType = serviceType;
 }
 
-Result nifmInitialize(void) {
-    atomicIncrement64(&g_refCnt);
-
-    if (serviceIsActive(&g_nifmSrv))
-        return 0;
-
+Result _nifmInitialize(void) {
     Result rc = 0;
     switch (g_nifmServiceType) {
         case NifmServiceType_NotInitialized:
@@ -47,393 +36,125 @@ Result nifmInitialize(void) {
 
     if (R_SUCCEEDED(rc)) {
         if (hosversionAtLeast(3,0,0))
-            rc = _nifmCreateGeneralService(&g_nifmIGS, 0); // What does this parameter do?
+            rc = _nifmCreateGeneralService(&g_nifmIGS);
         else
             rc = _nifmCreateGeneralServiceOld(&g_nifmIGS);
     }
 
-    if (R_FAILED(rc))
-        nifmExit();
-
     return rc;
 }
 
-void nifmExit(void) {
-    if (atomicDecrement64(&g_refCnt) == 0) {
-        serviceClose(&g_nifmIGS);
-        serviceClose(&g_nifmSrv);
-        g_nifmServiceType = NifmServiceType_NotInitialized;
-    }
+void _nifmCleanup(void) {
+    serviceClose(&g_nifmIGS);
+    serviceClose(&g_nifmSrv);
+    g_nifmServiceType = NifmServiceType_NotInitialized;
+}
+
+Service* nifmGetServiceSession_StaticService(void) {
+    return &g_nifmSrv;
+}
+
+Service* nifmGetServiceSession_GeneralService(void) {
+    return &g_nifmIGS;
+}
+
+static Result _nifmCmdNoIO(Service* srv, u32 cmd_id) {
+    serviceAssumeDomain(srv);
+    return serviceDispatch(srv, cmd_id);
+}
+
+static Result _nifmCmdGetSession(Service* srv, Service* srv_out, u32 cmd_id) {
+    serviceAssumeDomain(srv);
+    return serviceDispatch(srv, cmd_id,
+        .out_num_objects = 1,
+        .out_objects = srv_out,
+    );
+}
+
+static Result _nifmCmdNoInOutU32(Service* srv, u32 *out, u32 cmd_id) {
+    serviceAssumeDomain(srv);
+    return serviceDispatchOut(srv, cmd_id, *out);
+}
+
+static Result _nifmCmdNoInOutU8(Service* srv, u8 *out, u32 cmd_id) {
+    serviceAssumeDomain(srv);
+    return serviceDispatchOut(srv, cmd_id, *out);
+}
+
+static Result _nifmCmdNoInOutBool(Service* srv, bool *out, u32 cmd_id) {
+    u8 tmp=0;
+    Result rc = _nifmCmdNoInOutU8(srv, &tmp, cmd_id);
+    if (R_SUCCEEDED(rc) && out) *out = tmp!=0;
+    return rc;
+}
+
+static Result _nifmCmdInU8NoOut(Service* srv, u8 inval, u64 cmd_id) {
+    serviceAssumeDomain(srv);
+    return serviceDispatchIn(srv, cmd_id, inval);
+}
+
+static Result _nifmCmdInBoolNoOut(Service* srv, bool inval, u32 cmd_id) {
+    return _nifmCmdInU8NoOut(srv, inval!=0, cmd_id);
+}
+
+static Result _nifmCreateGeneralServiceOld(Service* srv_out) {
+    return _nifmCmdGetSession(&g_nifmSrv, srv_out, 4);
+}
+
+static Result _nifmCreateGeneralService(Service* srv_out) {
+    u64 reserved=0;
+    serviceAssumeDomain(&g_nifmSrv);
+    return serviceDispatchIn(&g_nifmSrv, 5, reserved,
+        .in_send_pid = true,
+        .out_num_objects = 1,
+        .out_objects = srv_out,
+    );
 }
 
 Result nifmGetCurrentIpAddress(u32* out) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_nifmIGS, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 12;
-
-    Result rc = serviceIpcDispatch(&g_nifmIGS);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-
-        struct {
-            u64 magic;
-            u64 result;
-            u32 out;
-        } *resp;
-
-        serviceIpcParse(&g_nifmIGS, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-        *out = resp->out;
-    }
-
-    return rc;
-}
-
-Result nifmIsWirelessCommunicationEnabled(bool* out) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_nifmIGS, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 17;
-
-    Result rc = serviceIpcDispatch(&g_nifmIGS);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-
-        struct {
-            u64 magic;
-            u64 result;
-            u8 out;
-        } *resp;
-
-        serviceIpcParse(&g_nifmIGS, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && out) 
-            *out = resp->out != 0;
-    }
-
-    return rc;
+    return _nifmCmdNoInOutU32(&g_nifmIGS, out, 12);
 }
 
 Result nifmSetWirelessCommunicationEnabled(bool enable) {
     if (g_nifmServiceType < NifmServiceType_System)
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    IpcCommand c;
-    ipcInitialize(&c);
+    return _nifmCmdInBoolNoOut(&g_nifmIGS, enable, 16);
+}
 
+Result nifmIsWirelessCommunicationEnabled(bool* out) {
+    return _nifmCmdNoInOutBool(&g_nifmIGS, out, 17);
+}
+
+Result nifmGetInternetConnectionStatus(NifmInternetConnectionType* connectionType, u32* wifiStrength, NifmInternetConnectionStatus* connectionStatus) {
     struct {
-        u64 magic;
-        u64 cmd_id;
-        u8 value;
-    } *raw;
+        u8 out1;
+        u8 out2;
+        u8 out3;
+    } out;
 
-    raw = serviceIpcPrepareHeader(&g_nifmIGS, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 16;
-    raw->value = enable!= 0;
-
-    Result rc = serviceIpcDispatch(&g_nifmIGS);
-
+    serviceAssumeDomain(&g_nifmIGS);
+    Result rc = serviceDispatchOut(&g_nifmIGS, 18, out);
     if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;     
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_nifmIGS, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
+        if (connectionType) *connectionType = out.out1;
+        if (wifiStrength) *wifiStrength = out.out2;
+        if (connectionStatus) *connectionStatus = out.out3;
     }
-
     return rc;
 }
 
 Result nifmIsEthernetCommunicationEnabled(bool* out) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_nifmIGS, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 20;
-
-    Result rc = serviceIpcDispatch(&g_nifmIGS);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-
-        struct {
-            u64 magic;
-            u64 result;
-            u8 out;
-        } *resp;
-
-        serviceIpcParse(&g_nifmIGS, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && out) 
-            *out = resp->out != 0;
-    }
-
-    return rc;
+    return _nifmCmdNoInOutBool(&g_nifmIGS, out, 20);
 }
 
 Result nifmIsAnyForegroundRequestAccepted(bool* out) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_nifmIGS, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 22;
-
-    Result rc = serviceIpcDispatch(&g_nifmIGS);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-
-        struct {
-            u64 magic;
-            u64 result;
-            u8 out;
-        } *resp;
-
-        serviceIpcParse(&g_nifmIGS, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && out) 
-            *out = resp->out != 0;
-    }
-
-    return rc;
+    return _nifmCmdNoInOutBool(&g_nifmIGS, out, 22);
 }
 
 Result nifmPutToSleep(void) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_nifmIGS, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 23;
-
-    Result rc = serviceIpcDispatch(&g_nifmIGS);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_nifmIGS, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    return _nifmCmdNoIO(&g_nifmIGS, 23);
 }
 
 Result nifmWakeUp(void) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_nifmIGS, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 24;
-
-    Result rc = serviceIpcDispatch(&g_nifmIGS);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_nifmIGS, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
-}
-
-Result nifmGetInternetConnectionStatus(NifmInternetConnectionType* connectionType, u32* wifiStrength, NifmInternetConnectionStatus* connectionStatus)
-{
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_nifmIGS, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 18;
-
-    Result rc = serviceIpcDispatch(&g_nifmIGS);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-
-        struct {
-            u64 magic;
-            u64 result;
-            u8 out1;
-            u8 out2;
-            u8 out3;
-        } PACKED *resp;
-
-        serviceIpcParse(&g_nifmIGS, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            if (connectionType)
-                *connectionType = resp->out1;
-
-            if (wifiStrength)
-                *wifiStrength = resp->out2;
-
-            if (connectionStatus)
-                *connectionStatus = resp->out3;
-        }
-    }
-
-    return rc;
-}
-
-static Result _nifmCreateGeneralService(Service* out, u64 in) {
-    IpcCommand c;
-    ipcInitialize(&c);
-    ipcSendPid(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u64 param;
-    } PACKED *raw;
-
-    raw = serviceIpcPrepareHeader(&g_nifmSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 5;
-    raw->param = in;
-
-    Result rc = serviceIpcDispatch(&g_nifmSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_nifmSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc))
-            serviceCreateSubservice(out, &g_nifmSrv, &r, 0);
-    }
-
-    return rc;
-}
-
-static Result _nifmCreateGeneralServiceOld(Service* out) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } PACKED *raw;
-
-    raw = serviceIpcPrepareHeader(&g_nifmSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 4;
-
-    Result rc = serviceIpcDispatch(&g_nifmSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_nifmSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc))
-            serviceCreateSubservice(out, &g_nifmSrv, &r, 0);
-    }
-
-    return rc;
+    return _nifmCmdNoIO(&g_nifmIGS, 24);
 }
