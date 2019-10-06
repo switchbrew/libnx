@@ -1,135 +1,80 @@
-#include "types.h"
-#include "result.h"
-#include "arm/atomics.h"
-#include "kernel/ipc.h"
+#define NX_SERVICE_ASSUME_NON_DOMAIN
+#include "service_guard.h"
 #include "kernel/event.h"
 #include "services/psm.h"
-#include "services/sm.h"
 
 static Service g_psmSrv;
-static u64 g_refCnt;
 
-static Result _psmOpenSession(Service* out);
+static Result _psmOpenSession(Service* srv_out);
 static Result _psmBindStateChangeEvent(PsmSession* s, Event* event_out);
 
 static Result _psmSetChargerTypeChangeEventEnabled(PsmSession* s, bool flag);
 static Result _psmSetPowerSupplyChangeEventEnabled(PsmSession* s, bool flag);
 static Result _psmSetBatteryVoltageStateChangeEventEnabled(PsmSession* s, bool flag);
 
-Result psmInitialize(void) {
-    Result rc = 0;
-    
-    atomicIncrement64(&g_refCnt);
+NX_GENERATE_SERVICE_GUARD(psm);
 
-    if (serviceIsActive(&g_psmSrv))
-        return 0;
-
-    rc = smGetService(&g_psmSrv, "psm");
-
-    if (R_FAILED(rc)) psmExit();
-
-    return rc;
+Result _psmInitialize(void) {
+    return smGetService(&g_psmSrv, "psm");
 }
 
-void psmExit(void) {
-    if (atomicDecrement64(&g_refCnt) == 0) {
-        serviceClose(&g_psmSrv);
-    }
+void _psmCleanup(void) {
+    serviceClose(&g_psmSrv);
 }
 
 Service* psmGetServiceSession(void) {
     return &g_psmSrv;
 }
 
-static Result _psmGetOutU32(u64 cmd_id, u32 *out) {
-    IpcCommand c;
-    ipcInitialize(&c);
-    
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-    
-    raw = serviceIpcPrepareHeader(&g_psmSrv, &c, sizeof(*raw));
-    
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = cmd_id;
-    
-    Result rc = serviceIpcDispatch(&g_psmSrv);
-    
-    if(R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
+static Result _psmCmdNoIO(Service* srv, u32 cmd_id) {
+    return serviceDispatch(srv, cmd_id);
+}
 
-        struct {
-            u64 magic;
-            u64 result;
-            u32 out;
-        } *resp;
+static Result _psmCmdGetEvent(Service* srv, Event* out_event, bool autoclear, u32 cmd_id) {
+    Handle event = INVALID_HANDLE;
+    Result rc = serviceDispatch(srv, cmd_id,
+        .out_handle_attrs = { SfOutHandleAttr_HipcCopy },
+        .out_handles = &event,
+    );
 
-        serviceIpcParse(&g_psmSrv, &r, sizeof(*resp));
-        resp = r.Raw;
+    if (R_SUCCEEDED(rc))
+        eventLoadRemote(out_event, event, autoclear);
 
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            *out = resp->out;
-        }
-    }
-    
     return rc;
 }
 
+static Result _psmCmdInU8NoOut(Service* srv, u8 inval, u32 cmd_id) {
+    return serviceDispatchIn(srv, cmd_id, inval);
+}
+
+static Result _psmCmdInBoolNoOut(Service* srv, bool inval, u32 cmd_id) {
+    return _psmCmdInU8NoOut(srv, inval!=0, cmd_id);
+}
+
+static Result _psmCmdNoInOutU32(Service* srv, u32 *out, u32 cmd_id) {
+    return serviceDispatchOut(srv, cmd_id, *out);
+}
+
 Result psmGetBatteryChargePercentage(u32 *out) {
-    return _psmGetOutU32(0, out);
+    return _psmCmdNoInOutU32(&g_psmSrv, out, 0);
 }
 
 Result psmGetChargerType(ChargerType *out) {
-    return _psmGetOutU32(1, out);
+    return _psmCmdNoInOutU32(&g_psmSrv, out, 1);
 }
 
 Result psmGetBatteryVoltageState(PsmBatteryVoltageState *out) {
     u32 state;
-    Result rc = _psmGetOutU32(12, &state);
-    if (R_SUCCEEDED(rc)) {
-        *out = (PsmBatteryVoltageState)state;
-    }
+    Result rc = _psmCmdNoInOutU32(&g_psmSrv, &state, 12);
+    if (R_SUCCEEDED(rc) && out) *out = state;
     return rc;
 }
 
-static Result _psmOpenSession(Service* out) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_psmSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 7;
-
-    Result rc = serviceIpcDispatch(&g_psmSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_psmSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc))
-            serviceCreateSubservice(out, &g_psmSrv, &r, 0);
-    }
-
-    return rc;
+static Result _psmOpenSession(Service* srv_out) {
+    return serviceDispatch(&g_psmSrv, 7,
+        .out_num_objects = 1,
+        .out_objects = srv_out,
+    );
 }
 
 Result psmBindStateChangeEvent(PsmSession* s, bool ChargerType, bool PowerSupply, bool BatteryVoltage) {
@@ -162,71 +107,12 @@ Result psmWaitStateChangeEvent(PsmSession* s, u64 timeout) {
 }
 
 static Result _psmBindStateChangeEvent(PsmSession* s, Event *event_out) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&s->s, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 0;
-
-    Result rc = serviceIpcDispatch(&s->s);
-
-    if(R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&s->s, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            eventLoadRemote(event_out, r.Handles[0], false);
-        }
-    }
-
-    return rc;
+    return _psmCmdGetEvent(&s->s, event_out, false, 0);
 }
 
 Result psmUnbindStateChangeEvent(PsmSession* s) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&s->s, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 1;
-
-    Result rc = serviceIpcDispatch(&s->s);
-
-    if(R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&s->s, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
+    Result rc=0;
+    if (serviceIsActive(&s->s)) rc = _psmCmdNoIO(&s->s, 1);
 
     eventClose(&s->StateChangeEvent);
     serviceClose(&s->s);
@@ -234,49 +120,18 @@ Result psmUnbindStateChangeEvent(PsmSession* s) {
     return rc;
 }
 
-static Result _psmSetEventEnabled(PsmSession* s, u64 cmd_id, bool flag) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u8 flag;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&s->s, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = cmd_id;
-    raw->flag = (flag != 0);
-
-    Result rc = serviceIpcDispatch(&s->s);
-
-    if(R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&s->s, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+static Result _psmSetEventEnabled(PsmSession* s, bool flag, u32 cmd_id) {
+    return _psmCmdInBoolNoOut(&s->s, flag, cmd_id);
 }
 
 static Result _psmSetChargerTypeChangeEventEnabled(PsmSession* s, bool flag) {
-    return _psmSetEventEnabled(s, 2, flag);
+    return _psmSetEventEnabled(s, flag, 2);
 }
 
 static Result _psmSetPowerSupplyChangeEventEnabled(PsmSession* s, bool flag) {
-    return _psmSetEventEnabled(s, 3, flag);
+    return _psmSetEventEnabled(s, flag, 3);
 }
 
 static Result _psmSetBatteryVoltageStateChangeEventEnabled(PsmSession* s, bool flag) {
-    return _psmSetEventEnabled(s, 4, flag);
+    return _psmSetEventEnabled(s, flag, 4);
 }
