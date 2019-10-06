@@ -1,153 +1,55 @@
-#include "types.h"
-#include "result.h"
-#include "arm/atomics.h"
-#include "kernel/ipc.h"
+#define NX_SERVICE_ASSUME_NON_DOMAIN
+#include "service_guard.h"
 #include "services/apm.h"
-#include "services/sm.h"
 
 static Service g_apmSrv;
 static Service g_apmISession;
-static u64 g_refCnt;
 
-static Result _apmGetSession(Service* srv, Service* srv_out, u64 cmd_id);
+static Result _apmCmdGetSession(Service* srv, Service* srv_out, u32 cmd_id);
 
-Result apmInitialize(void)
-{
-    atomicIncrement64(&g_refCnt);
+NX_GENERATE_SERVICE_GUARD(apm);
 
-    if (serviceIsActive(&g_apmSrv))
-        return 0;
-
-    Result rc = 0;
-
-    rc = smGetService(&g_apmSrv, "apm");
+Result _apmInitialize(void) {
+    Result rc = smGetService(&g_apmSrv, "apm");
 
     // OpenSession.
     // Official sw doesn't open this until using commands which need it, when it wasn't already opened.
-    if (R_SUCCEEDED(rc))
-        rc = _apmGetSession(&g_apmSrv, &g_apmISession, 0);
-
-    if (R_FAILED(rc))
-        apmExit();
+    if (R_SUCCEEDED(rc)) rc = _apmCmdGetSession(&g_apmSrv, &g_apmISession, 0);
 
     return rc;
 }
 
-void apmExit(void)
-{
-    if (atomicDecrement64(&g_refCnt) == 0) {
-        serviceClose(&g_apmISession);
-        serviceClose(&g_apmSrv);
-    }
+void _apmCleanup(void) {
+    serviceClose(&g_apmISession);
+    serviceClose(&g_apmSrv);
 }
 
 Service* apmGetServiceSession(void) {
     return &g_apmSrv;    
 }
 
-static Result _apmGetSession(Service* srv, Service* srv_out, u64 cmd_id) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = cmd_id;
-
-    Result rc = serviceIpcDispatch(srv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            serviceCreate(srv_out, r.Handles[0]);
-        }
-    }
-
-    return rc;
+Service* apmGetServiceSession_Session(void) {
+    return &g_apmISession;
 }
 
-Result apmSetPerformanceConfiguration(u32 PerformanceMode, u32 PerformanceConfiguration) {
-    IpcCommand c;
-    ipcInitialize(&c);
+static Result _apmCmdGetSession(Service* srv, Service* srv_out, u32 cmd_id) {
+    return serviceDispatch(srv, cmd_id,
+        .out_num_objects = 1,
+        .out_objects = srv_out,
+    );
+}
 
-    struct {
-        u64 magic;
-        u64 cmd_id;
+Result apmSetPerformanceConfiguration(ApmPerformanceMode PerformanceMode, u32 PerformanceConfiguration) {
+    const struct {
         u32 PerformanceMode;
         u32 PerformanceConfiguration;
-    } *raw;
+    } in = { PerformanceMode, PerformanceConfiguration };
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 0;
-    raw->PerformanceMode = PerformanceMode;
-    raw->PerformanceConfiguration = PerformanceConfiguration;
-
-    Result rc = serviceIpcDispatch(&g_apmISession);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    return serviceDispatchIn(&g_apmISession, 0, in);
 }
 
-Result apmGetPerformanceConfiguration(u32 PerformanceMode, u32 *PerformanceConfiguration) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u32 PerformanceMode;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 1;
-    raw->PerformanceMode = PerformanceMode;
-
-    Result rc = serviceIpcDispatch(&g_apmISession);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-            u32 PerformanceConfiguration;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && PerformanceConfiguration) *PerformanceConfiguration = resp->PerformanceConfiguration;
-    }
-
-    return rc;
+Result apmGetPerformanceConfiguration(ApmPerformanceMode PerformanceMode, u32 *PerformanceConfiguration) {
+    u32 tmp=PerformanceMode;
+    return serviceDispatchInOut(&g_apmISession, 1, tmp, *PerformanceConfiguration);
 }
 

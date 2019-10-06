@@ -1,12 +1,18 @@
 /**
  * @file apm.h
- * @brief Performance management (apm) service IPC wrapper. This is used internally by applet with __nx_applet_PerformanceConfiguration, however if you prefer non-init/exit can be used manually.
+ * @brief Performance management (apm) service IPC wrapper. This is used internally by applet with __nx_applet_PerformanceConfiguration, however if you prefer non-init/exit can be used manually. See also: https://switchbrew.org/wiki/PTM_services#apm:am
  * @author yellows8
  * @copyright libnx Authors
  */
 #pragma once
 #include "../types.h"
-#include "../services/sm.h"
+#include "../sf/service.h"
+
+/// PerformanceMode
+typedef enum {
+    ApmPerformanceMode_Handheld = 0,   ///< Handheld
+    ApmPerformanceMode_Docked   = 1,   ///< Docked
+} ApmPerformanceMode;
 
 /// CpuBoostMode. With \ref appletSetCpuBoostMode, only values 0/1 are available. This allows using higher clock rates.
 typedef enum {
@@ -15,9 +21,28 @@ typedef enum {
     ApmCpuBoostMode_Type2    = 2,  ///< Use performance configurations 0x9222000B and 0x9222000C.
 } ApmCpuBoostMode;
 
+/// Initialize apm. Used automatically by \ref appletInitialize.
 Result apmInitialize(void);
+
+/// Exit apm. Used automatically by \ref appletExit.
 void apmExit(void);
+
+/// Gets the Service object for the actual apm service session.
 Service* apmGetServiceSession(void);
 
-Result apmSetPerformanceConfiguration(u32 PerformanceMode, u32 PerformanceConfiguration);
-Result apmGetPerformanceConfiguration(u32 PerformanceMode, u32 *PerformanceConfiguration);
+/// Gets the Service object for ISession.
+Service* apmGetServiceSession_Session(void);
+
+/**
+ * @brief Sets the PerformanceConfiguration for the specified PerformanceMode.
+ * @param[in] PerformanceMode \ref ApmPerformanceMode
+ * @param[in] PerformanceConfiguration PerformanceConfiguration
+ */
+Result apmSetPerformanceConfiguration(ApmPerformanceMode PerformanceMode, u32 PerformanceConfiguration);
+
+/**
+ * @brief Gets the PerformanceConfiguration for the specified PerformanceMode.
+ * @param[in] PerformanceMode \ref ApmPerformanceMode
+ * @param[out] PerformanceConfiguration PerformanceConfiguration
+ */
+Result apmGetPerformanceConfiguration(ApmPerformanceMode PerformanceMode, u32 *PerformanceConfiguration);
