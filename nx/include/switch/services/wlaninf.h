@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "../kernel/ipc.h"
+#include "../types.h"
 #include "../sf/service.h"
 
 /// WLAN State.

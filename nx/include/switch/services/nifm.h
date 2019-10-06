@@ -6,8 +6,8 @@
  */
 
 #pragma once
-#include "../kernel/ipc.h"
-#include "../services/sm.h"
+#include "../types.h"
+#include "../sf/service.h"
 
 typedef enum {
     NifmServiceType_NotInitialized = 0, ///< Initializes nifm:u.
