@@ -2682,11 +2682,11 @@ Result appletGetAppletResourceUsageInfo(AppletResourceUsageInfo *info) {
 
 // State / other
 
-u8 appletGetOperationMode(void) {
+AppletOperationMode appletGetOperationMode(void) {
     return g_appletOperationMode;
 }
 
-u32 appletGetPerformanceMode(void) {
+ApmPerformanceMode appletGetPerformanceMode(void) {
     return g_appletPerformanceMode;
 }
 

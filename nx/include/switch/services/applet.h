@@ -2270,8 +2270,8 @@ void appletHook(AppletHookCookie* cookie, AppletHookFn callback, void* param);
 void appletUnhook(AppletHookCookie* cookie);
 
 /// These return state which is updated by appletMainLoop() when notifications are received.
-u8  appletGetOperationMode(void);
-u32 appletGetPerformanceMode(void);
+AppletOperationMode appletGetOperationMode(void);
+ApmPerformanceMode appletGetPerformanceMode(void);
 AppletFocusState appletGetFocusState(void);
 
 Result appletSetFocusHandlingMode(AppletFocusHandlingMode mode);
