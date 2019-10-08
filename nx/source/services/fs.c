@@ -5,6 +5,7 @@
 #include "kernel/condvar.h"
 #include "runtime/hosversion.h"
 #include "services/fs.h"
+#include "services/acc.h"
 
 #define FS_MAX_SESSIONS 8
 
@@ -430,9 +431,9 @@ Result fsGetGlobalAccessLogMode(u32* out_mode) {
 }
 
 // Wrapper(s) for fsCreateSaveDataFileSystemBySystemSaveDataId.
-Result fsCreate_SystemSaveDataWithOwner(FsSaveDataSpaceId saveDataSpaceId, u64 saveID, u128 userID, u64 ownerId, u64 size, u64 journalSize, u32 flags) {
+Result fsCreate_SystemSaveDataWithOwner(FsSaveDataSpaceId saveDataSpaceId, u64 saveID, AccountUid *userID, u64 ownerId, u64 size, u64 journalSize, u32 flags) {
     FsSave save = {
-        .userID = userID,
+        .userID = *userID,
         .saveID = saveID,
     };
     FsSaveCreate create = {
@@ -452,12 +453,12 @@ Result fsCreate_SystemSaveData(FsSaveDataSpaceId saveDataSpaceId, u64 saveID, u6
 }
 
 // Wrapper(s) for fsMountSaveData.
-Result fsMount_SaveData(FsFileSystem* out, u64 titleID, u128 userID) {
+Result fsMount_SaveData(FsFileSystem* out, u64 titleID, AccountUid *userID) {
     FsSave save;
 
     memset(&save, 0, sizeof(save));
     save.titleID = titleID;
-    save.userID = userID;
+    save.userID = *userID;
     save.saveDataType = FsSaveDataType_SaveData;
 
     return fsMountSaveData(out, FsSaveDataSpaceId_NandUser, &save);

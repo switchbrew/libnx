@@ -9,6 +9,7 @@
 #pragma once
 #include "../types.h"
 #include "../kernel/event.h"
+#include "../services/acc.h"
 #include "../sf/service.h"
 
 // We use wrapped handles for type safety.
@@ -17,9 +18,6 @@
 
 /// For use with FsSave.
 #define FS_SAVEDATA_CURRENT_TITLEID 0
-
-/// For use with \ref FsSave and \ref FsSaveDataInfo.
-#define FS_SAVEDATA_USERID_COMMONSAVE 0
 
 typedef struct {
     u8 c[0x10];
@@ -67,7 +65,7 @@ typedef struct
 typedef struct
 {
     u64 titleID;                    ///< titleID of the savedata to access when accessing other titles' savedata via SaveData, otherwise FS_SAVEDATA_CURRENT_TITLEID.
-    union { u128 userID; } PACKED;  ///< userID of the user-specific savedata to access, otherwise FS_SAVEDATA_USERID_COMMONSAVE. See account.h.
+    AccountUid userID;              ///< \ref AccountUid for the user-specific savedata to access, otherwise 0 for common savedata.
     u64 saveID;                     ///< saveID, 0 for SaveData.
     u8 saveDataType;                ///< See \ref FsSaveDataType.
     u8 rank;                        ///< Save data 'rank' or 'precedence'. 0 if this save data is considered the primary save data. 1 if it's considered the secondary save data.
@@ -109,7 +107,7 @@ typedef struct
     u8 saveDataSpaceId; ///< See \ref FsSaveDataSpaceId.
     u8 saveDataType;    ///< See \ref FsSaveDataType.
     u8 pad[6];          ///< Padding.
-    u128 userID;        ///< See userID for \ref FsSave.
+    AccountUid userID;  ///< FsSave::userID
     u64 saveID;         ///< See saveID for \ref FsSave.
     u64 titleID;        ///< titleID for FsSaveDataType_SaveData.
     u64 size;           ///< Raw saveimage size.
@@ -321,14 +319,14 @@ Result fsGetGlobalAccessLogMode(u32* out_mode);
 // todo: Rest of commands here
 
 // Wrapper(s) for fsCreateSaveDataFileSystemBySystemSaveDataId.
-Result fsCreate_SystemSaveDataWithOwner(FsSaveDataSpaceId saveDataSpaceId, u64 saveID, u128 userID, u64 ownerId, u64 size, u64 journalSize, u32 flags);
+Result fsCreate_SystemSaveDataWithOwner(FsSaveDataSpaceId saveDataSpaceId, u64 saveID, AccountUid *userID, u64 ownerId, u64 size, u64 journalSize, u32 flags);
 Result fsCreate_SystemSaveData(FsSaveDataSpaceId saveDataSpaceId, u64 saveID, u64 size, u64 journalSize, u32 flags);
 
 /// FsFileSystem can be mounted with fs_dev for use with stdio, see fs_dev.h.
 
 /// Wrapper(s) for fsMountSaveData.
 /// See FsSave for titleID and userID.
-Result fsMount_SaveData(FsFileSystem* out, u64 titleID, u128 userID);
+Result fsMount_SaveData(FsFileSystem* out, u64 titleID, AccountUid *userID);
 
 /// Wrapper for fsMountSystemSaveData.
 /// WARNING: You can brick when writing to SystemSaveData, if the data is corrupted etc.
