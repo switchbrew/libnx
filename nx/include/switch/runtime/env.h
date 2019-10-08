@@ -6,6 +6,7 @@
  */
 #pragma once
 #include "../types.h"
+#include "../services/acc.h"
 
 /// Structure representing an entry in the homebrew environment configuration.
 typedef struct {
@@ -114,4 +115,4 @@ bool envHasRandomSeed(void);
 void envGetRandomSeed(u64 out[2]);
 
 /// Returns a pointer to the user id storage area (if present).
-u128* envGetUserIdStorage(void);
+AccountUid* envGetUserIdStorage(void);
