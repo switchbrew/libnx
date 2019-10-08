@@ -8,6 +8,7 @@
 #include "../types.h"
 #include "../services/applet.h"
 #include "../services/caps.h"
+#include "../services/acc.h"
 
 /// This indicates the type of web-applet.
 typedef enum {
@@ -126,7 +127,7 @@ typedef enum {
     WebArgType_NewsFlag                                 = 0xB,    ///< [1.0.0+] u8 bool
     WebArgType_UnknownC                                 = 0xC,    ///< [1.0.0+] u8
     WebArgType_UnknownD                                 = 0xD,    ///< [1.0.0+] u8
-    WebArgType_UserID                                   = 0xE,    ///< [1.0.0+] u128 userID, controls which user-specific savedata to mount.
+    WebArgType_Uid                                      = 0xE,    ///< [1.0.0+] \ref AccountUid, controls which user-specific savedata to mount.
     WebArgType_AlbumEntry0                              = 0xF,    ///< [1.0.0+] Share-applet caps AlbumEntry, entry 0.
     WebArgType_ScreenShot                               = 0x10,   ///< [1.0.0+] u8 bool
     WebArgType_EcClientCert                             = 0x11,   ///< [1.0.0+] u8 bool
@@ -344,9 +345,9 @@ Result webConfigSetWhitelist(WebCommonConfig* config, const char* whitelist);
  * @note Only available with config created by \ref webPageCreate, \ref webLobbyCreate, or with Share-applet.
  * @note Used automatically by \ref webShareCreate and \ref webLobbyCreate with userID=0.
  * @param config WebCommonConfig object.
- * @param userID Account userID
+ * @param uid \ref AccountUid
  */
-Result webConfigSetUserID(WebCommonConfig* config, u128 userID);
+Result webConfigSetUid(WebCommonConfig* config, AccountUid *uid);
 
 /**
  * @brief Sets the Share CapsAlbumEntry.
