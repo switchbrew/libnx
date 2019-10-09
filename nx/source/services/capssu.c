@@ -1,27 +1,20 @@
+#define NX_SERVICE_ASSUME_NON_DOMAIN
 #include <string.h>
-#include "types.h"
-#include "result.h"
-#include "arm/atomics.h"
-#include "kernel/ipc.h"
+#include "service_guard.h"
 #include "runtime/hosversion.h"
 #include "services/applet.h"
 #include "services/caps.h"
 #include "services/capssu.h"
 #include "services/acc.h"
-#include "services/sm.h"
 
 static Service g_capssuSrv;
-static u64 g_capssuRefCnt;
 
 static Result _capssuSetShimLibraryVersion(u64 version);
 
-Result capssuInitialize(void) {
+NX_GENERATE_SERVICE_GUARD(capssu);
+
+Result _capssuInitialize(void) {
     Result rc=0;
-
-    atomicIncrement64(&g_capssuRefCnt);
-
-    if (serviceIsActive(&g_capssuSrv))
-        return 0;
 
     if (hosversionBefore(4,0,0))
         rc = MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
@@ -30,14 +23,11 @@ Result capssuInitialize(void) {
 
     if (R_SUCCEEDED(rc) && hosversionAtLeast(7,0,0)) rc = _capssuSetShimLibraryVersion(capsGetShimLibraryVersion());
 
-    if (R_FAILED(rc)) capssuExit();
-
     return rc;
 }
 
-void capssuExit(void) {
-    if (atomicDecrement64(&g_capssuRefCnt) == 0)
-        serviceClose(&g_capssuSrv);
+void _capssuCleanup(void) {
+    serviceClose(&g_capssuSrv);
 }
 
 Service* capssuGetServiceSession(void) {
@@ -51,136 +41,54 @@ static Result _capssuSetShimLibraryVersion(u64 version) {
     u64 AppletResourceUserId = 0;
     appletGetAppletResourceUserId(&AppletResourceUserId);
 
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         u64 version;
         u64 AppletResourceUserId;
-    } *raw;
+    } in = { version, AppletResourceUserId };
 
-    ipcSendPid(&c);
-
-    raw = serviceIpcPrepareHeader(&g_capssuSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 32;
-    raw->version = version;
-    raw->AppletResourceUserId = AppletResourceUserId;
-
-    Result rc = serviceIpcDispatch(&g_capssuSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_capssuSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    return serviceDispatchIn(&g_capssuSrv, 32, in,
+        .in_send_pid = true,
+    );
 }
 
 static Result _capssuSaveScreenShotEx0(const void* buffer, size_t size, const CapsScreenShotAttribute *attr, AlbumReportOption reportoption, CapsApplicationAlbumEntry *out) {
     u64 AppletResourceUserId = 0;
     appletGetAppletResourceUserId(&AppletResourceUserId);
 
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         CapsScreenShotAttribute attr;
         u32 reportoption;
         u64 AppletResourceUserId;
-    } *raw;
+    } in = { *attr, reportoption, AppletResourceUserId };
 
-    ipcSendPid(&c);
-    ipcAddSendBuffer(&c, buffer, size, BufferType_Type1);
-
-    raw = serviceIpcPrepareHeader(&g_capssuSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 203;
-    raw->attr = *attr;
-    raw->reportoption = reportoption;
-    raw->AppletResourceUserId = AppletResourceUserId;
-
-    Result rc = serviceIpcDispatch(&g_capssuSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            CapsApplicationAlbumEntry out;
-        } *resp;
-
-        serviceIpcParse(&g_capssuSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && out) *out = resp->out;
-    }
-
-    return rc;
+    return serviceDispatchInOut(&g_capssuSrv, 203, in, *out,
+        .buffer_attrs = { SfBufferAttr_HipcMapTransferAllowsNonSecure | SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
+        .buffers = { { buffer, size } },
+        .in_send_pid = true,
+    );
 }
 
-static Result _capssuSaveScreenShotEx(u64 cmd_id, bool pid, const void* argbuf, size_t argbuf_size, const void* buffer, size_t size, const CapsScreenShotAttribute *attr, AlbumReportOption reportoption, CapsApplicationAlbumEntry *out) {
+static Result _capssuSaveScreenShotEx(u32 cmd_id, bool pid, const void* argbuf, size_t argbuf_size, const void* buffer, size_t size, const CapsScreenShotAttribute *attr, AlbumReportOption reportoption, CapsApplicationAlbumEntry *out) {
     u64 AppletResourceUserId = 0;
     appletGetAppletResourceUserId(&AppletResourceUserId);
 
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         CapsScreenShotAttribute attr;
         u32 reportoption;
         u64 AppletResourceUserId;
-    } *raw;
+    } in = { *attr, reportoption, AppletResourceUserId };
 
-    if (pid) ipcSendPid(&c);
-    ipcAddSendBuffer(&c, argbuf, argbuf_size, BufferType_Normal);
-    ipcAddSendBuffer(&c, buffer, size, BufferType_Type1);
-
-    raw = serviceIpcPrepareHeader(&g_capssuSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = cmd_id;
-    raw->attr = *attr;
-    raw->reportoption = reportoption;
-    raw->AppletResourceUserId = AppletResourceUserId;
-
-    Result rc = serviceIpcDispatch(&g_capssuSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            CapsApplicationAlbumEntry out;
-        } *resp;
-
-        serviceIpcParse(&g_capssuSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && out) *out = resp->out;
-    }
-
-    return rc;
+    return serviceDispatchInOut(&g_capssuSrv, cmd_id, in, *out,
+        .buffer_attrs = {
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_In,
+            SfBufferAttr_HipcMapTransferAllowsNonSecure | SfBufferAttr_HipcMapAlias | SfBufferAttr_In,
+        },
+        .buffers = {
+            { argbuf, argbuf_size },
+            { buffer, size },
+        },
+        .in_send_pid = pid,
+    );
 }
 
 Result capssuSaveScreenShot(const void* buffer, size_t size, AlbumReportOption reportoption, AlbumImageOrientation orientation, CapsApplicationAlbumEntry *out) {
@@ -211,7 +119,7 @@ Result capssuSaveScreenShotWithUserData(const void* buffer, size_t size, AlbumRe
     return capssuSaveScreenShotEx1(buffer, size, &attr, reportoption, &appdata, out);
 }
 
-Result capssuSaveScreenShotWithUserIds(const void* buffer, size_t size, AlbumReportOption reportoption, AlbumImageOrientation orientation, const u128* userIDs, size_t userID_count, CapsApplicationAlbumEntry *out) {
+Result capssuSaveScreenShotWithUserIds(const void* buffer, size_t size, AlbumReportOption reportoption, AlbumImageOrientation orientation, const AccountUid* userIDs, size_t userID_count, CapsApplicationAlbumEntry *out) {
     CapsScreenShotAttribute attr;
     CapsUserIdList list;
 
@@ -223,7 +131,7 @@ Result capssuSaveScreenShotWithUserIds(const void* buffer, size_t size, AlbumRep
     attr.unk_xc = 1;
 
     memset(&list, 0, sizeof(list));
-    if (userIDs && userID_count) memcpy(list.userIDs, userIDs, userID_count*sizeof(u128));
+    if (userIDs && userID_count) memcpy(list.userIDs, userIDs, userID_count*sizeof(AccountUid));
     list.count = userID_count;
 
     return capssuSaveScreenShotEx2(buffer, size, &attr, reportoption, &list, out);

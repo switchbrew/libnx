@@ -6,7 +6,8 @@
  */
 #pragma once
 #include "../types.h"
-#include "../services/sm.h"
+#include "../sf/service.h"
+#include "../services/acc.h"
 #include "../services/caps.h"
 
 /// Initialize caps:su. Only available on [4.0.0+].
@@ -51,11 +52,11 @@ Result capssuSaveScreenShotWithUserData(const void* buffer, size_t size, AlbumRe
  * @param[in] size Size of the buffer.
  * @param[in] reportoption \ref AlbumReportOption
  * @param[in] orientation \ref AlbumImageOrientation
- * @param[in] userIDs Input array of account userIDs. If NULL, the \ref CapsUserIdList will be empty.
+ * @param[in] userIDs Input array of \ref AccountUid. If NULL, the \ref CapsUserIdList will be empty.
  * @param[in] userID_count Size of the userID array in entries, must be within bounds for CapsUserIdList::userIDs. If 0, the \ref CapsUserIdList will be empty.
  * @param[out] out \ref CapsApplicationAlbumEntry. Optional, can be NULL.
  */
-Result capssuSaveScreenShotWithUserIds(const void* buffer, size_t size, AlbumReportOption reportoption, AlbumImageOrientation orientation, const u128* userIDs, size_t userID_count, CapsApplicationAlbumEntry *out);
+Result capssuSaveScreenShotWithUserIds(const void* buffer, size_t size, AlbumReportOption reportoption, AlbumImageOrientation orientation, const AccountUid* userIDs, size_t userID_count, CapsApplicationAlbumEntry *out);
 
 /**
  * @brief Saves an Album screenshot using the specified gfx data in the buffer, with the specified \ref CapsScreenShotAttribute.

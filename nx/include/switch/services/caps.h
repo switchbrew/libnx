@@ -123,7 +123,7 @@ typedef struct {
 
 /// UserIdList
 typedef struct {
-    union { u128 userIDs[ACC_USER_LIST_SIZE]; } PACKED;   ///< userIDs.
+    AccountUid userIDs[ACC_USER_LIST_SIZE];               ///< \ref AccountUid
     u8 count;                                             ///< Total userIDs.
     u8 pad[7];                                            ///< Padding.
 } CapsUserIdList;
