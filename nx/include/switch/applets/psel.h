@@ -9,7 +9,7 @@
 #include "../services/applet.h"
 #include "../services/acc.h"
 
-// playerSelect UI modes.
+/// playerSelect UI modes.
 typedef enum {
     PselUiMode_SelectUser                           = 0,  ///< Simple user selection (new users cannot be created).
     PselUiMode_UserCreation                         = 1,  ///< Only user creation (the user is later returned).
@@ -23,23 +23,23 @@ typedef enum {
     PselUiMode_NaLoginTest                          = 12, ///< NaLoginTest
 } PselUiMode;
 
-// UI settings for playerSelect.
+/// UI settings for playerSelect.
 typedef struct {
-    u32 mode;                                     ///< UI mode, see \ref PselUiMode.
-    u32 dialogType;                               ///< Dialog type
-    u128 invalidUserList[ACC_USER_LIST_SIZE];     ///< List of user IDs which will be disabled.
-    u8 unk1[8];                                   ///< Unknown.
-    u8 networkServiceRequired;                    ///< Whether the user needs to be linked to a Nintendo account.
-    u8 unk2[2];                                   ///< Unknown.
-    u8 allowUserCreation;                         ///< (With ::PselUiMode_SelectUser) enables the option to create a new user.
-    u8 skipEnabled;                               ///< Enables the option to skip user selection (a new button is shown)
-    u8 unk3[11];                                  ///< Unknown.
+    u32 mode;                                                   ///< UI mode, see \ref PselUiMode.
+    u32 dialogType;                                             ///< Dialog type
+    union { u128 invalidUserList[ACC_USER_LIST_SIZE]; } PACKED; ///< List of user IDs which will be disabled.
+    u8 unk_x0[0x8];                                             ///< Unknown.
+    u8 networkServiceRequired;                                  ///< Whether the user needs to be linked to a Nintendo account.
+    u8 unk_x1[0x2];                                             ///< Unknown.
+    u8 allowUserCreation;                                       ///< (With ::PselUiMode_SelectUser) enables the option to create a new user.
+    u8 skipEnabled;                                             ///< Enables the option to skip user selection (a new button is shown)
+    u8 unk_x2[0xB];                                             ///< Unknown.
 } PselUiSettings;
 
-// Result data sent after execution.
+/// Result data sent after execution.
 typedef struct {
     u32 result;                      ///< Result code.
-    u128 userId;                     ///< Selected user ID.
+    union { u128 userId; } PACKED;   ///< Selected user ID.
 } PselResult;
 
 /**
