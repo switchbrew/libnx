@@ -33,7 +33,7 @@ typedef struct {
     u8 unk_x91[0x2];                                  ///< Unknown.
     u8 allowUserCreation;                             ///< (With ::PselUiMode_SelectUser) enables the option to create a new user.
     u8 skipEnabled;                                   ///< Enables the option to skip user selection (a new button is shown)
-    u8 unk_95[0xb];                                   ///< Unknown.
+    u8 unk_x95[0xb];                                   ///< Unknown.
 } PselUiSettings;
 
 /// Result data sent after execution.
