@@ -13,12 +13,12 @@ Result pselUiCreate(PselUiSettings *ui, PselUiMode mode) {
     return 0;
 }
 
-void pselUiAddInvalidUser(PselUiSettings *ui, AccountUid user_id) {
+void pselUiAddInvalidUser(PselUiSettings *ui, AccountUid *user_id) {
     int i;
     for(i = 0; i < ACC_USER_LIST_SIZE; i++) {
 
         if(!accountUidIsValid(&ui->invalidUserList[i])) {
-            __builtin_memcpy(&ui->invalidUserList[i], &user_id, sizeof(user_id));
+            __builtin_memcpy(&ui->invalidUserList[i], user_id, sizeof(AccountUid));
             break;
         }
     }

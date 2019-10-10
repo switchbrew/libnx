@@ -54,7 +54,7 @@ Result pselUiCreate(PselUiSettings *ui, PselUiMode mode);
  * @param ui PselUiSettings struct.
  * @param user_id user ID.
  */
-void pselUiAddInvalidUser(PselUiSettings *ui, AccountUid user_id);
+void pselUiAddInvalidUser(PselUiSettings *ui, AccountUid *user_id);
 
 /**
  * @brief Sets whether users can be created in the applet
