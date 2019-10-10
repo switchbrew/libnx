@@ -25,21 +25,21 @@ typedef enum {
 
 /// UI settings for playerSelect.
 typedef struct {
-    u32 mode;                                                   ///< UI mode, see \ref PselUiMode.
-    u32 dialogType;                                             ///< Dialog type
-    union { u128 invalidUserList[ACC_USER_LIST_SIZE]; } PACKED; ///< List of user IDs which will be disabled.
-    u8 unk_x0[0x8];                                             ///< Unknown.
-    u8 networkServiceRequired;                                  ///< Whether the user needs to be linked to a Nintendo account.
-    u8 unk_x1[0x2];                                             ///< Unknown.
-    u8 allowUserCreation;                                       ///< (With ::PselUiMode_SelectUser) enables the option to create a new user.
-    u8 skipEnabled;                                             ///< Enables the option to skip user selection (a new button is shown)
-    u8 unk_x2[0xB];                                             ///< Unknown.
+    u32 mode;                                         ///< UI mode, see \ref PselUiMode.
+    u32 dialogType;                                   ///< Dialog type
+    AccountUid invalidUserList[ACC_USER_LIST_SIZE];   ///< List of \ref AccountUid user IDs which will be disabled.
+    u8 unk_x88[0x8];                                  ///< Unknown.
+    u8 networkServiceRequired;                        ///< Whether the user needs to be linked to a Nintendo account.
+    u8 unk_x91[0x2];                                  ///< Unknown.
+    u8 allowUserCreation;                             ///< (With ::PselUiMode_SelectUser) enables the option to create a new user.
+    u8 skipEnabled;                                   ///< Enables the option to skip user selection (a new button is shown)
+    u8 unk_95[0xb];                                   ///< Unknown.
 } PselUiSettings;
 
 /// Result data sent after execution.
 typedef struct {
-    u32 result;                      ///< Result code.
-    union { u128 userId; } PACKED;   ///< Selected user ID.
+    u32 result;                                       ///< Result code.
+    AccountUid userId;                                ///< Selected \ref AccountUid.
 } PselResult;
 
 /**
@@ -54,7 +54,7 @@ Result pselUiCreate(PselUiSettings *ui, PselUiMode mode);
  * @param ui PselUiSettings struct.
  * @param user_id user ID.
  */
-void pselUiAddInvalidUser(PselUiSettings *ui, u128 user_id);
+void pselUiAddInvalidUser(PselUiSettings *ui, AccountUid user_id);
 
 /**
  * @brief Sets whether users can be created in the applet
@@ -84,4 +84,4 @@ void pselUiSetSkipEnabled(PselUiSettings *ui, bool flag);
  * @param out_uid Selected user ID.
  * @note If user skips (see \ref pselUiSetSkipEnabled) this will return successfully but the output ID will be 0.
  */
-Result pselUiShow(PselUiSettings *ui, u128 *out_user);
+Result pselUiShow(PselUiSettings *ui, AccountUid *out_user);

@@ -13,11 +13,11 @@ Result pselUiCreate(PselUiSettings *ui, PselUiMode mode) {
     return 0;
 }
 
-void pselUiAddInvalidUser(PselUiSettings *ui, u128 user_id) {
+void pselUiAddInvalidUser(PselUiSettings *ui, AccountUid user_id) {
     int i;
     for(i = 0; i < ACC_USER_LIST_SIZE; i++) {
 
-        if(!ui->invalidUserList[i]) {
+        if(!accountUidIsValid(&ui->invalidUserList[i])) {
             __builtin_memcpy(&ui->invalidUserList[i], &user_id, sizeof(user_id));
             break;
         }
@@ -47,7 +47,7 @@ static u32 _pselGetLaVersion() {
     return ver;
 }
 
-Result pselUiShow(PselUiSettings *ui, u128 *out_user) {
+Result pselUiShow(PselUiSettings *ui, AccountUid *out_user) {
     Result rc = 0;
     LibAppletArgs args;
     u32 la_ver = _pselGetLaVersion();
