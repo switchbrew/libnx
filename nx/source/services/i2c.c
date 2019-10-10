@@ -6,20 +6,17 @@
 #include "services/sm.h"
 
 static Service g_i2cSrv;
-static size_t g_i2cSrvPtrBufSize;
 static u64 g_refCnt;
 
 Result i2cInitialize(void) {
     Result rc = 0;
-    
+
     atomicIncrement64(&g_refCnt);
 
     if (serviceIsActive(&g_i2cSrv))
         return 0;
 
     rc = smGetService(&g_i2cSrv, "i2c");
-    
-    if (R_SUCCEEDED(rc)) rc = ipcQueryPointerBufferSize(g_i2cSrv.handle, &g_i2cSrvPtrBufSize);
 
     if (R_FAILED(rc)) i2cExit();
 
@@ -28,7 +25,6 @@ Result i2cInitialize(void) {
 
 void i2cExit(void) {
     if (atomicDecrement64(&g_refCnt) == 0) {
-        g_i2cSrvPtrBufSize = 0;
         serviceClose(&g_i2cSrv);
     }
 }
@@ -78,7 +74,7 @@ Result i2cOpenSession(I2cSession *out, I2cDevice dev) {
 Result i2csessionSendAuto(I2cSession *s, const void *buf, size_t size, I2cTransactionOption option) {
     IpcCommand c;
     ipcInitialize(&c);
-    ipcAddSendSmart(&c, g_i2cSrvPtrBufSize, buf, size, 0);
+    ipcAddSendSmart(&c, s->s.pointer_buffer_size, buf, size, 0);
 
     struct {
         u64 magic;
@@ -113,7 +109,7 @@ Result i2csessionSendAuto(I2cSession *s, const void *buf, size_t size, I2cTransa
 Result i2csessionReceiveAuto(I2cSession *s, void *buf, size_t size, I2cTransactionOption option) {
     IpcCommand c;
     ipcInitialize(&c);
-    ipcAddRecvSmart(&c, g_i2cSrvPtrBufSize, buf, size, 0);
+    ipcAddRecvSmart(&c, s->s.pointer_buffer_size, buf, size, 0);
 
     struct {
         u64 magic;
@@ -149,7 +145,7 @@ Result i2csessionExecuteCommandList(I2cSession *s, void *dst, size_t dst_size, c
     IpcCommand c;
     ipcInitialize(&c);
     ipcAddSendStatic(&c, cmd_list, cmd_list_size, 0);
-    ipcAddRecvSmart(&c, g_i2cSrvPtrBufSize, dst, dst_size, 0);
+    ipcAddRecvSmart(&c, s->s.pointer_buffer_size, dst, dst_size, 0);
 
     struct {
         u64 magic;

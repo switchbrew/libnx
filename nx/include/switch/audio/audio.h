@@ -8,6 +8,7 @@
 
 #include "../types.h"
 
+/// PcmFormat
 typedef enum {
     PcmFormat_Invalid = 0,
     PcmFormat_Int8 = 1,
@@ -18,6 +19,7 @@ typedef enum {
     PcmFormat_Adpcm = 6,
 } PcmFormat;
 
+/// AudioDeviceName
 typedef struct {
     char name[0x100];
 } AudioDeviceName;

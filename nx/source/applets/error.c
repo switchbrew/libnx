@@ -214,7 +214,9 @@ Result errorSystemCreate(ErrorSystemConfig* c, const char* dialog_message, const
 
     if (hosversionBefore(5,0,0)) {
         rc = setInitialize();
-        if (R_SUCCEEDED(rc)) rc = setMakeLanguageCode(SetLanguage_ENUS, &c->arg.languageCode);
+        u64 languageCode = 0;
+        if (R_SUCCEEDED(rc)) rc = setMakeLanguageCode(SetLanguage_ENUS, &languageCode);
+        if (R_SUCCEEDED(rc)) c->arg.languageCode = languageCode;
         setExit();
     }
 
@@ -247,7 +249,9 @@ Result errorApplicationCreate(ErrorApplicationConfig* c, const char* dialog_mess
 
     if (hosversionBefore(5,0,0)) {
         rc = setInitialize();
-        if (R_SUCCEEDED(rc)) rc = setMakeLanguageCode(SetLanguage_ENUS, &c->arg.languageCode);
+        u64 languageCode = 0;
+        if (R_SUCCEEDED(rc)) rc = setMakeLanguageCode(SetLanguage_ENUS, &languageCode);
+        if (R_SUCCEEDED(rc)) c->arg.languageCode = languageCode;
         setExit();
     }
 

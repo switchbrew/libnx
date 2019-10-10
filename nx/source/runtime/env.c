@@ -5,6 +5,7 @@
 #include "services/sm.h"
 #include "services/fatal.h"
 #include "services/applet.h"
+#include "services/acc.h"
 
 void NORETURN __nx_exit(Result rc, LoaderReturnFn retaddr);
 
@@ -23,7 +24,7 @@ static char*  g_nextLoadArgv = NULL;
 static Result g_lastLoadResult = 0;
 static bool   g_hasRandomSeed = false;
 static u64    g_randomSeed[2] = { 0, 0 };
-static u128*  g_userIdStorage = NULL;
+static AccountUid*  g_userIdStorage = NULL;
 
 extern __attribute__((weak)) u32 __nx_applet_type;
 
@@ -104,7 +105,7 @@ void envSetup(void* ctx, Handle main_thread, LoaderReturnFn saved_lr)
             break;
 
         case EntryType_UserIdStorage:
-            g_userIdStorage = (u128*)(uintptr_t)ent->Value[0];
+            g_userIdStorage = (AccountUid*)(uintptr_t)ent->Value[0];
             break;
 
         case EntryType_HosVersion:
@@ -222,6 +223,6 @@ void envGetRandomSeed(u64 out[2]) {
     out[1] = g_randomSeed[1];
 }
 
-u128* envGetUserIdStorage(void) {
+AccountUid* envGetUserIdStorage(void) {
     return g_userIdStorage;
 }

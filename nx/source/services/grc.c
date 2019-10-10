@@ -7,7 +7,10 @@
 #include "kernel/tmem.h"
 #include "services/sm.h"
 #include "services/grc.h"
+#include "services/caps.h"
 #include "services/applet.h"
+#include "display/native_window.h"
+#include "audio/audio.h"
 #include "runtime/hosversion.h"
 
 static void _grcGameMovieTrimmerClose(GrcGameMovieTrimmer *t);
@@ -44,6 +47,114 @@ static Result _grcCmdNoIO(Service* srv, u64 cmd_id) {
     return rc;
 }
 
+static Result _grcCmdInU64(Service* srv, u64 inval, u64 cmd_id) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 inval;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(srv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = cmd_id;
+    raw->inval = inval;
+
+    Result rc = serviceIpcDispatch(srv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(srv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+static Result _grcCmdInU64Out32(Service* srv, u64 inval, u32 *out, u64 cmd_id) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 inval;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(srv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = cmd_id;
+    raw->inval = inval;
+
+    Result rc = serviceIpcDispatch(srv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            u32 out;
+        } *resp;
+
+        serviceIpcParse(srv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && out) *out = resp->out;
+    }
+
+    return rc;
+}
+
+static Result _grcCmdNoInOut64(Service* srv, u64 *out, u64 cmd_id) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(srv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = cmd_id;
+
+    Result rc = serviceIpcDispatch(srv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            u64 out;
+        } *resp;
+
+        serviceIpcParse(srv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && out) {
+            *out = resp->out;
+        }
+    }
+
+    return rc;
+}
+
 static Result _grcGetEvent(Service* srv, Event* out_event, u64 cmd_id, bool autoclear) {
     IpcCommand c;
     ipcInitialize(&c);
@@ -74,6 +185,80 @@ static Result _grcGetEvent(Service* srv, Event* out_event, u64 cmd_id, bool auto
 
         if (R_SUCCEEDED(rc)) {
             eventLoadRemote(out_event, r.Handles[0], autoclear);
+        }
+    }
+
+    return rc;
+}
+
+static Result _grcCmdInU64OutEvent(Service* srv, u64 inval, Event* out_event, u64 cmd_id, bool autoclear) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 inval;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(srv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = cmd_id;
+    raw->inval = inval;
+
+    Result rc = serviceIpcDispatch(srv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(srv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            eventLoadRemote(out_event, r.Handles[0], autoclear);
+        }
+    }
+
+    return rc;
+}
+
+static Result _grcGetSession(Service* srv, Service* srv_out, u64 cmd_id) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(srv, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = cmd_id;
+
+    Result rc = serviceIpcDispatch(srv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(srv, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc)) {
+            serviceCreateSubservice(srv_out, srv, &r, 0);
         }
     }
 
@@ -255,6 +440,314 @@ Result grcTrimGameMovie(GrcGameMovieId *dst_movieid, const GrcGameMovieId *src_m
 
         eventClose(&trimevent);
         _grcGameMovieTrimmerClose(&trimmer);
+    }
+
+    return rc;
+}
+
+// IMovieMaker
+
+void grcCreateOffscreenRecordingParameter(GrcOffscreenRecordingParameter *param) {
+    memset(param, 0, sizeof(*param));
+    param->unk_x10 = 0x103;
+
+    param->video_bitrate = 8000000;
+    param->video_width = 1280;
+    param->video_height = 720;
+    param->video_framerate = 30;
+    param->video_keyFrameInterval = 30;
+
+    param->audio_bitrate = hosversionAtLeast(6,0,0) ? 128000 : 1536000;
+    param->audio_samplerate = 48000;
+    param->audio_channel_count = 2;
+    param->audio_sample_format = PcmFormat_Int16;
+
+    param->video_imageOrientation = AlbumImageOrientation_Unknown0;
+}
+
+Result grcCreateMovieMaker(GrcMovieMaker *m, size_t size) {
+    Result rc=0;
+    Result retryrc = MAKERESULT(212, 4);
+    s32 binder_id=0;
+
+    memset(m, 0, sizeof(*m));
+
+    rc = tmemCreate(&m->tmem, size, Perm_None);
+    if (R_SUCCEEDED(rc)) {
+        rc = appletCreateMovieMaker(&m->a, &m->tmem);
+
+        while(rc == retryrc) {
+            svcSleepThread(100000000);
+            rc = appletCreateMovieMaker(&m->a, &m->tmem);
+        }
+    }
+
+    if (R_SUCCEEDED(rc)) rc = _grcGetSession(&m->a, &m->s, 0); // GetGrcMovieMaker
+
+    if (R_SUCCEEDED(rc) && hosversionAtLeast(7,0,0)) rc = _grcCmdInU64(&m->s, capsGetShimLibraryVersion(), 9); // SetAlbumShimLibraryVersion
+
+    if (R_SUCCEEDED(rc)) rc = _grcCmdNoInOut64(&m->a, &m->layer_handle, 1); // GetLayerHandle
+
+
+    if (R_SUCCEEDED(rc)) rc = _grcGetSession(&m->s, &m->video_proxy, 2); // CreateVideoProxy
+
+    if (R_SUCCEEDED(rc)) rc = _grcCmdInU64Out32(&m->s, m->layer_handle, (u32*)&binder_id, 10); // OpenOffscreenLayer
+    if (R_SUCCEEDED(rc)) m->layer_open = true;
+
+    if (R_SUCCEEDED(rc)) rc = nwindowCreate(&m->win, &m->video_proxy, binder_id, false);
+    if (R_SUCCEEDED(rc)) rc = nwindowSetDimensions(&m->win, 1280, 720);
+
+    if (R_SUCCEEDED(rc)) rc = _grcCmdInU64OutEvent(&m->s, m->layer_handle, &m->recording_event, 50, false); // GetOffscreenLayerRecordingFinishReadyEvent
+    if (R_SUCCEEDED(rc)) rc = _grcCmdInU64OutEvent(&m->s, m->layer_handle, &m->audio_event, 52, false); // GetOffscreenLayerAudioEncodeReadyEvent
+
+    if (R_FAILED(rc)) grcMovieMakerClose(m);
+
+    return rc;
+}
+
+void grcMovieMakerClose(GrcMovieMaker *m) {
+    grcMovieMakerAbort(m);
+
+    eventClose(&m->audio_event);
+    eventClose(&m->recording_event);
+
+    nwindowClose(&m->win);
+    if (m->layer_open) {
+        _grcCmdInU64(&m->s, m->layer_handle, 11); // CloseOffscreenLayer
+        m->layer_open = false;
+    }
+
+    serviceClose(&m->video_proxy);
+    serviceClose(&m->s);
+    serviceClose(&m->a);
+    tmemClose(&m->tmem);
+}
+
+Result grcMovieMakerStart(GrcMovieMaker *m, const GrcOffscreenRecordingParameter *param) {
+    if (!serviceIsActive(&m->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 layer_handle;
+        GrcOffscreenRecordingParameter param;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&m->s, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 24;
+    raw->layer_handle = m->layer_handle;
+    memcpy(&raw->param, param, sizeof(GrcOffscreenRecordingParameter));
+
+    Result rc = serviceIpcDispatch(&m->s);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+        } *resp;
+
+        serviceIpcParse(&m->s, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    if (R_SUCCEEDED(rc)) m->started_flag = true;
+
+    return rc;
+}
+
+Result grcMovieMakerAbort(GrcMovieMaker *m) {
+    Result rc=0;
+
+    if (!serviceIsActive(&m->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (!m->started_flag)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    rc = _grcCmdInU64(&m->s, m->layer_handle, 21); // AbortOffscreenRecording
+    if (R_SUCCEEDED(rc)) m->started_flag = false;
+    return rc;
+}
+
+static Result _grcMovieMakerCompleteOffscreenRecordingFinishEx0(GrcMovieMaker *m, s32 width, s32 height, const void* userdata, size_t userdata_size, const void* thumbnail, size_t thumbnail_size) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    ipcAddSendBuffer(&c, userdata, userdata_size, BufferType_Normal);
+    ipcAddSendBuffer(&c, thumbnail, thumbnail_size, BufferType_Normal);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        s32 width;
+        s32 height;
+        u64 layer_handle;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&m->s, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 25;
+    raw->width = width;
+    raw->height = height;
+    raw->layer_handle = m->layer_handle;
+
+    Result rc = serviceIpcDispatch(&m->s);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            CapsApplicationAlbumEntry entry;
+        } *resp;
+
+        serviceIpcParse(&m->s, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+    }
+
+    return rc;
+}
+
+static Result _grcMovieMakerCompleteOffscreenRecordingFinishEx1(GrcMovieMaker *m, s32 width, s32 height, const void* userdata, size_t userdata_size, const void* thumbnail, size_t thumbnail_size, CapsApplicationAlbumEntry *entry) {
+    if (hosversionBefore(7,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    ipcAddSendBuffer(&c, userdata, userdata_size, BufferType_Normal);
+    ipcAddSendBuffer(&c, thumbnail, thumbnail_size, BufferType_Normal);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        s32 width;
+        s32 height;
+        u64 layer_handle;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&m->s, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 26;
+    raw->width = width;
+    raw->height = height;
+    raw->layer_handle = m->layer_handle;
+
+    Result rc = serviceIpcDispatch(&m->s);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            CapsApplicationAlbumEntry entry;
+        } *resp;
+
+        serviceIpcParse(&m->s, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && entry) *entry = resp->entry;
+    }
+
+    return rc;
+}
+
+Result grcMovieMakerFinish(GrcMovieMaker *m, s32 width, s32 height, const void* userdata, size_t userdata_size, const void* thumbnail, size_t thumbnail_size, CapsApplicationAlbumEntry *entry) {
+    Result rc=0;
+
+    if (!serviceIsActive(&m->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(7,0,0) && entry)
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    rc = _grcCmdInU64(&m->s, m->layer_handle, 22); // RequestOffscreenRecordingFinishReady
+
+    if (R_SUCCEEDED(rc)) rc = eventWait(&m->recording_event, U64_MAX);
+
+    if (hosversionAtLeast(7,0,0))
+        rc = _grcMovieMakerCompleteOffscreenRecordingFinishEx1(m, width, height, userdata, userdata_size, thumbnail, thumbnail_size, entry);
+    else
+        rc = _grcMovieMakerCompleteOffscreenRecordingFinishEx0(m, width, height, userdata, userdata_size, thumbnail, thumbnail_size);
+
+    if (R_FAILED(rc)) grcMovieMakerAbort(m);
+    return rc;
+}
+
+Result grcMovieMakerGetError(GrcMovieMaker *m) {
+    if (!serviceIsActive(&m->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _grcCmdInU64(&m->s, m->layer_handle, 30); // GetOffscreenLayerError
+}
+
+static Result _grcMovieMakerEncodeOffscreenLayerAudioSample(GrcMovieMaker *m, const void* buffer, size_t size, u64 *out_size) {
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    ipcAddSendBuffer(&c, buffer, size, BufferType_Normal);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u64 layer_handle;
+    } *raw;
+
+    raw = serviceIpcPrepareHeader(&m->s, &c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 41;
+    raw->layer_handle = m->layer_handle;
+
+    Result rc = serviceIpcDispatch(&m->s);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        struct {
+            u64 magic;
+            u64 result;
+            u64 out_size;
+        } *resp;
+
+        serviceIpcParse(&m->s, &r, sizeof(*resp));
+        resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && out_size) *out_size = resp->out_size;
+    }
+
+    return rc;
+}
+
+Result grcMovieMakerEncodeAudioSample(GrcMovieMaker *m, const void* buffer, size_t size) {
+    Result rc=0;
+    u64 out_size=0;
+    u8 *bufptr = (u8*)buffer;
+
+    if (!serviceIsActive(&m->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    for (u64 pos=0; size!=0; pos+=out_size, size-=out_size) {
+        rc = eventWait(&m->audio_event, U64_MAX);
+        if (R_FAILED(rc)) break;
+
+        rc = _grcMovieMakerEncodeOffscreenLayerAudioSample(m, &bufptr[pos], size, &out_size);
+        if (R_FAILED(rc)) break;
+        if (out_size > size) out_size = size;
     }
 
     return rc;

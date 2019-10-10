@@ -29,7 +29,7 @@ static u32 g_nacpLanguageTable[15] = {
 Result nacpGetLanguageEntry(NacpStruct* nacp, NacpLanguageEntry** langentry) {
     Result rc=0;
     u64 LanguageCode=0;
-    s32 Language=0;
+    SetLanguage Language=0;
     NacpLanguageEntry *entry = NULL;
     u32 i=0;
 

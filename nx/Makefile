@@ -9,7 +9,7 @@ endif
 include $(DEVKITPRO)/devkitA64/base_rules
 
 export LIBNX_MAJOR	:= 2
-export LIBNX_MINOR	:= 4
+export LIBNX_MINOR	:= 5
 export LIBNX_PATCH	:= 0
 
 
@@ -39,7 +39,7 @@ CFLAGS	:=	-g -Wall -Werror \
 			$(ARCH) \
 			$(BUILD_CFLAGS)
 
-CFLAGS	+=	$(INCLUDE) -DSWITCH
+CFLAGS	+=	$(INCLUDE) -D__SWITCH__ -DLIBNX_NO_DEPRECATION
 
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
 

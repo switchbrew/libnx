@@ -6,6 +6,7 @@
  */
 #pragma once
 #include "../types.h"
+#include "../sf/service.h"
 #include "../kernel/event.h"
 
 Result nvInitialize(void);

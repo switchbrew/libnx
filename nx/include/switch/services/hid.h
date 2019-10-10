@@ -222,6 +222,9 @@ typedef enum
     TYPE_JOYCON_PAIR   = BIT(2),
     TYPE_JOYCON_LEFT   = BIT(3),
     TYPE_JOYCON_RIGHT  = BIT(4),
+
+    TYPE_SYSTEM_EXT    = BIT(29),
+    TYPE_SYSTEM        = BIT(30),
 } HidControllerType;
 
 typedef enum
@@ -240,6 +243,7 @@ typedef enum
     COLORS_NONEXISTENT = BIT(1),
 } HidControllerColorDescription;
 
+/// HidControllerKeys
 typedef enum
 {
     KEY_A            = BIT(0),       ///< A
@@ -326,6 +330,52 @@ typedef enum
     HidJoyHoldType_Default    = 0, ///< Default / Joy-Con held vertically.
     HidJoyHoldType_Horizontal = 1, ///< Joy-Con held horizontally with HID state orientation adjustment, see \ref HidControllerLayoutType.
 } HidJoyHoldType;
+
+/// DeviceType
+typedef enum {
+    HidDeviceTypeBits_FullKey       = BIT(0),  ///< Pro Controller and Gc controller.
+    HidDeviceTypeBits_Unknown1      = BIT(1),  ///< Unknown.
+    HidDeviceTypeBits_HandheldLeft  = BIT(2),  ///< Joy-Con/Famicom/NES left controller in handheld mode.
+    HidDeviceTypeBits_HandheldRight = BIT(3),  ///< Joy-Con/Famicom/NES right controller in handheld mode.
+    HidDeviceTypeBits_JoyLeft       = BIT(4),  ///< Joy-Con left controller.
+    HidDeviceTypeBits_JoyRight      = BIT(5),  ///< Joy-Con right controller.
+    HidDeviceTypeBits_Palma         = BIT(6),  ///< Poké Ball Plus controller.
+    HidDeviceTypeBits_LarkLeftHVC   = BIT(7),  ///< Famicom left controller.
+    HidDeviceTypeBits_LarkRightHVC  = BIT(8),  ///< Famicom right controller (with microphone).
+    HidDeviceTypeBits_LarkLeftNES   = BIT(9),  ///< NES left controller.
+    HidDeviceTypeBits_LarkRightNES  = BIT(10), ///< NES right controller.
+    HidDeviceTypeBits_SystemExt     = BIT(15), ///< Generic external controller.
+    HidDeviceTypeBits_System        = BIT(31), ///< Generic controller.
+} HidDeviceTypeBits;
+
+/// Internal DeviceType for [9.0.0+]. Converted to/from the pre-9.0.0 version of this by the hiddbg funcs.
+typedef enum {
+    HidDeviceType_JoyRight1       = 1,   ///< ::HidDeviceTypeBits_JoyRight
+    HidDeviceType_JoyLeft2        = 2,   ///< ::HidDeviceTypeBits_JoyLeft
+    HidDeviceType_FullKey3        = 3,   ///< ::HidDeviceTypeBits_FullKey
+    HidDeviceType_JoyLeft4        = 4,   ///< ::HidDeviceTypeBits_JoyLeft
+    HidDeviceType_JoyRight5       = 5,   ///< ::HidDeviceTypeBits_JoyRight
+    HidDeviceType_FullKey6        = 6,   ///< ::HidDeviceTypeBits_FullKey
+    HidDeviceType_LarkLeftHVC     = 7,   ///< ::HidDeviceTypeBits_LarkLeftHVC
+    HidDeviceType_LarkRightHVC    = 8,   ///< ::HidDeviceTypeBits_LarkRightHVC
+    HidDeviceType_LarkLeftNES     = 9,   ///< ::HidDeviceTypeBits_LarkLeftNES
+    HidDeviceType_LarkRightNES    = 10,  ///< ::HidDeviceTypeBits_LarkRightNES
+    HidDeviceType_Palma           = 12,  ///< [9.0.0+] ::HidDeviceTypeBits_Palma
+    HidDeviceType_FullKey13       = 13,  ///< ::HidDeviceTypeBits_FullKey
+    HidDeviceType_FullKey15       = 15,  ///< ::HidDeviceTypeBits_FullKey
+    HidDeviceType_System19        = 19,  ///< ::HidDeviceTypeBits_System with HidControllerType |= TYPE_PROCONTROLLER.
+    HidDeviceType_System20        = 20,  ///< ::HidDeviceTypeBits_System with HidControllerType |= TYPE_JOYCON_PAIR.
+    HidDeviceType_System21        = 21,  ///< ::HidDeviceTypeBits_System with HidControllerType |= TYPE_JOYCON_PAIR.
+} HidDeviceType;
+
+/// NpadInterfaceType
+typedef enum
+{
+    NpadInterfaceType_Bluetooth = 1,    ///< Bluetooth.
+    NpadInterfaceType_Rail      = 2,    ///< Rail.
+    NpadInterfaceType_USB       = 3,    ///< USB.
+    NpadInterfaceType_Unknown4  = 4,    ///< Unknown.
+} HidNpadInterfaceType;
 
 typedef struct touchPosition
 {
@@ -666,7 +716,7 @@ HidControllerType hidGetControllerType(HidControllerID id);
 void hidGetControllerColors(HidControllerID id, HidControllerColors *colors);
 bool hidIsControllerConnected(HidControllerID id);
 
-/// Gets the DeviceType for the specified controller.
+/// Gets the \ref HidDeviceTypeBits for the specified controller.
 u32 hidGetControllerDeviceType(HidControllerID id);
 
 /// Gets the flags for the specified controller.
@@ -788,4 +838,8 @@ Result hidGetSevenSixAxisSensorFusionStrength(float *strength);
 
 /// Resets the timestamp for the SevenSixAxisSensor. Only available on [6.0.0+].
 Result hidResetSevenSixAxisSensorTimestamp(void);
+
+/// Gets the \ref HidNpadInterfaceType for the specified controller.
+/// Only available on [4.0.0+].
+Result hidGetNpadInterfaceType(HidControllerID id, u8 *out);
 

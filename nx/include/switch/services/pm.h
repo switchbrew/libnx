@@ -9,7 +9,7 @@
 #pragma once
 #include "../types.h"
 #include "../kernel/event.h"
-#include "../services/sm.h"
+#include "../sf/service.h"
 
 /// LaunchFlag
 typedef enum {
@@ -79,10 +79,10 @@ Service* pmbmGetServiceSession(void);
 Result pmdmntGetDebugProcesses(u32* out_count, u64* out_pids, size_t max_pids);
 Result pmdmntStartProcess(u64 pid);
 Result pmdmntGetTitlePid(u64* pid_out, u64 title_id);
-Result pmdmntEnableDebugForTitleId(Handle* handle_out, u64 title_id);
+Result pmdmntEnableDebugForTitleId(Event* out, u64 title_id);
 Result pmdmntGetApplicationPid(u64* pid_out);
-Result pmdmntEnableDebugForApplication(Handle* handle_out);
-Result pmdmntDisableDebug(void);
+Result pmdmntEnableDebugForApplication(Event* out);
+Result pmdmntDisableDebug(u32 which);
 
 Result pminfoGetTitleId(u64* title_id_out, u64 pid);
 

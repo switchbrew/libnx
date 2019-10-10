@@ -1,13 +1,13 @@
 /**
  * @file nifm.h
  * @brief Network interface service IPC wrapper.
- * @author shadowninja108, shibboleet, exelix
+ * @author shadowninja108, shibboleet, exelix, yellows8
  * @copyright libnx Authors
  */
 
 #pragma once
-#include "../kernel/ipc.h"
-#include "../services/sm.h"
+#include "../types.h"
+#include "../sf/service.h"
 
 typedef enum {
     NifmServiceType_NotInitialized = 0, ///< Initializes nifm:u.
@@ -35,17 +35,26 @@ typedef enum {
  */
 void nifmSetServiceType(NifmServiceType serviceType);
 
+/// Initialize nifm. This is used automatically by \ref socketInitialize.
 Result nifmInitialize(void);
+
+/// Exit nifm. This is used automatically by \ref socketExit.
 void nifmExit(void);
 
-Result nifmGetCurrentIpAddress(u32* out);
+/// Gets the Service object for the actual nifm:* service session.
+Service* nifmGetServiceSession_StaticService(void);
 
-Result nifmIsWirelessCommunicationEnabled(bool* out);
+/// Gets the Service object for IGeneralService.
+Service* nifmGetServiceSession_GeneralService(void);
+
+Result nifmGetCurrentIpAddress(u32* out);
 
 /**
  * @note Works only if called from nifm:a or nifm:s.
  */
 Result nifmSetWirelessCommunicationEnabled(bool enable);
+
+Result nifmIsWirelessCommunicationEnabled(bool* out);
 
 /**
  * @note Will fail with 0xd46ed if Internet is neither connecting or connected (airplane mode or no known network in reach).

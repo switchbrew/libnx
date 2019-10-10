@@ -7,10 +7,12 @@
 #include <sys/iosupport.h>
 #include <sys/param.h>
 #include <unistd.h>
+#include <time.h>
 
 #include "runtime/devices/fs_dev.h"
 #include "runtime/util/utf.h"
 #include "services/fs.h"
+#include "services/time.h"
 
 
 /*! @internal
@@ -256,6 +258,28 @@ static ssize_t fsdev_convertfromfspath(uint8_t *out, uint8_t *in, size_t len)
   return strnlen((char*)out, len);
 }
 
+static time_t fsdev_converttimetoutc(u64 timestamp)
+{
+  // Parse timestamp into y/m/d h:m:s
+  time_t posixtime = (time_t)timestamp;
+  struct tm *t = gmtime(&posixtime);
+
+  // Convert time/date into an actual UTC POSIX timestamp using the system's timezone rules
+  TimeCalendarTime caltime;
+  caltime.year   = 1900 + t->tm_year;
+  caltime.month  = 1 + t->tm_mon;
+  caltime.day    = t->tm_mday;
+  caltime.hour   = t->tm_hour;
+  caltime.minute = t->tm_min;
+  caltime.second = t->tm_sec;
+  u64 new_timestamp;
+  Result rc = timeToPosixTimeWithMyRule(&caltime, &new_timestamp, 1, NULL);
+  if (R_SUCCEEDED(rc))
+    posixtime = (time_t)new_timestamp;
+
+  return posixtime;
+}
+
 extern int __system_argc;
 extern char** __system_argv;
 
@@ -381,7 +405,7 @@ Result fsdevSetArchiveBit(const char *path) {
   return fsFsSetArchiveBit(&device->fs, fs_path);
 }
 
-Result fsdevCreateFile(const char* path, size_t size, int flags) {
+Result fsdevCreateFile(const char* path, size_t size, u32 flags) {
   char          fs_path[FS_MAX_PATH];
   fsdev_fsdevice *device = NULL;
 
@@ -555,7 +579,7 @@ fsdev_open(struct _reent *r,
   {
     /* read-only: do not allow O_APPEND */
     case O_RDONLY:
-      fsdev_flags |= FS_OPEN_READ;
+      fsdev_flags |= FsOpenMode_Read;
       if(flags & O_APPEND)
       {
         r->_errno = EINVAL;
@@ -565,12 +589,12 @@ fsdev_open(struct _reent *r,
 
     /* write-only */
     case O_WRONLY:
-      fsdev_flags |= FS_OPEN_WRITE | FS_OPEN_APPEND;
+      fsdev_flags |= FsOpenMode_Write | FsOpenMode_Append;
       break;
 
     /* read and write */
     case O_RDWR:
-      fsdev_flags |= (FS_OPEN_READ | FS_OPEN_WRITE | FS_OPEN_APPEND);
+      fsdev_flags |= (FsOpenMode_Read | FsOpenMode_Write | FsOpenMode_Append);
       break;
 
     /* an invalid option was supplied */
@@ -690,7 +714,7 @@ fsdev_write(struct _reent *r,
     }
   }
 
-  rc = fsFileWrite(&file->fd, file->offset, ptr, len, FS_WRITEOPTION_NONE);
+  rc = fsFileWrite(&file->fd, file->offset, ptr, len, FsWriteOption_None);
   if(rc == 0xD401)
     return fsdev_write_safe(r, fd, ptr, len);
   if(R_FAILED(rc))
@@ -744,7 +768,7 @@ fsdev_write_safe(struct _reent *r,
     memcpy(tmp_buffer, ptr, toWrite);
 
     /* write the data */
-    rc = fsFileWrite(&file->fd, file->offset, tmp_buffer, toWrite, FS_WRITEOPTION_NONE);
+    rc = fsFileWrite(&file->fd, file->offset, tmp_buffer, toWrite, FsWriteOption_None);
 
     if(R_FAILED(rc))
     {
@@ -786,7 +810,7 @@ fsdev_read(struct _reent *r,
           size_t         len)
 {
   Result      rc;
-  size_t      bytes;
+  u64         bytes;
 
   /* get pointer to our data */
   fsdev_file_t *file = (fsdev_file_t*)fd;
@@ -799,7 +823,7 @@ fsdev_read(struct _reent *r,
   }
 
   /* read the data */
-  rc = fsFileRead(&file->fd, file->offset, ptr, len, FS_READOPTION_NONE, &bytes);
+  rc = fsFileRead(&file->fd, file->offset, ptr, len, FsReadOption_None, &bytes);
   if(rc == 0xD401)
     return fsdev_read_safe(r, fd, ptr, len);
   if(R_SUCCEEDED(rc))
@@ -830,7 +854,7 @@ fsdev_read_safe(struct _reent *r,
                 size_t        len)
 {
   Result      rc;
-  size_t      bytesRead = 0, bytes = 0;
+  u64         bytesRead = 0, bytes = 0;
 
   /* get pointer to our data */
   fsdev_file_t *file = (fsdev_file_t*)fd;
@@ -841,12 +865,12 @@ fsdev_read_safe(struct _reent *r,
   static __thread char tmp_buffer[8192];
   while(len > 0)
   {
-    size_t toRead = len;
+    u64 toRead = len;
     if(toRead > sizeof(tmp_buffer))
       toRead = sizeof(tmp_buffer);
 
     /* read the data */
-    rc = fsFileRead(&file->fd, file->offset, tmp_buffer, toRead, FS_READOPTION_NONE, &bytes);
+    rc = fsFileRead(&file->fd, file->offset, tmp_buffer, toRead, FsReadOption_None, &bytes);
 
     if(bytes > toRead)
       bytes = toRead;
@@ -965,9 +989,9 @@ fsdev_fstat(struct _reent *r,
 
     if(file->timestamps.is_valid)
     {
-      st->st_ctime = file->timestamps.created;
-      st->st_mtime = file->timestamps.modified;
-      st->st_atime = file->timestamps.accessed;
+      st->st_ctime = fsdev_converttimetoutc(file->timestamps.created);
+      st->st_mtime = fsdev_converttimetoutc(file->timestamps.modified);
+      st->st_atime = fsdev_converttimetoutc(file->timestamps.accessed);
     }
 
     return 0;
@@ -998,7 +1022,7 @@ fsdev_stat(struct _reent *r,
   char    fs_path[FS_MAX_PATH];
   fsdev_fsdevice *device = NULL;
   FsTimeStampRaw timestamps = {0};
-  FsEntryType type;
+  FsDirEntryType type;
 
   if(fsdev_getfspath(r, file, &device, fs_path)==-1)
     return -1;
@@ -1006,9 +1030,9 @@ fsdev_stat(struct _reent *r,
   rc = fsFsGetEntryType(&device->fs, fs_path, &type);
   if(R_SUCCEEDED(rc))
   {
-    if(type == ENTRYTYPE_DIR)
+    if(type == FsDirEntryType_Dir)
     {
-      if(R_SUCCEEDED(rc = fsFsOpenDirectory(&device->fs, fs_path, FS_DIROPEN_DIRECTORY | FS_DIROPEN_FILE, &fdir)))
+      if(R_SUCCEEDED(rc = fsFsOpenDirectory(&device->fs, fs_path, FsDirOpenMode_ReadDirs | FsDirOpenMode_ReadFiles, &fdir)))
       {
         memset(st, 0, sizeof(struct stat));
         st->st_nlink = 1;
@@ -1017,9 +1041,9 @@ fsdev_stat(struct _reent *r,
         return 0;
       }
     }
-    else if(type == ENTRYTYPE_FILE)
+    else if(type == FsDirEntryType_File)
     {
-      if(R_SUCCEEDED(rc = fsFsOpenFile(&device->fs, fs_path, FS_OPEN_READ, &fd)))
+      if(R_SUCCEEDED(rc = fsFsOpenFile(&device->fs, fs_path, FsOpenMode_Read, &fd)))
       {
         fsdev_file_t tmpfd = { .fd = fd };
         ret = fsdev_fstat(r, &tmpfd, st);
@@ -1030,9 +1054,9 @@ fsdev_stat(struct _reent *r,
           rc = fsFsGetFileTimeStampRaw(&device->fs, fs_path, &timestamps);
           if(R_SUCCEEDED(rc) && timestamps.is_valid)
           {
-            st->st_ctime = timestamps.created;
-            st->st_mtime = timestamps.modified;
-            st->st_atime = timestamps.accessed;
+            st->st_ctime = fsdev_converttimetoutc(timestamps.created);
+            st->st_mtime = fsdev_converttimetoutc(timestamps.modified);
+            st->st_atime = fsdev_converttimetoutc(timestamps.accessed);
           }
         }
 
@@ -1115,7 +1139,7 @@ fsdev_chdir(struct _reent *r,
   if(fsdev_getfspath(r, name, &device, fs_path)==-1)
     return -1;
 
-  rc = fsFsOpenDirectory(&device->fs, fs_path, FS_DIROPEN_DIRECTORY | FS_DIROPEN_FILE, &fd);
+  rc = fsFsOpenDirectory(&device->fs, fs_path, FsDirOpenMode_ReadDirs | FsDirOpenMode_ReadFiles, &fd);
   if(R_SUCCEEDED(rc))
   {
     fsDirClose(&fd);
@@ -1153,7 +1177,7 @@ fsdev_rename(struct _reent *r,
             const char    *newName)
 {
   Result  rc;
-  FsEntryType type;
+  FsDirEntryType type;
   fsdev_fsdevice *device_old = NULL, *device_new = NULL;
   char fs_path_old[FS_MAX_PATH];
   char fs_path_new[FS_MAX_PATH];
@@ -1173,13 +1197,13 @@ fsdev_rename(struct _reent *r,
   rc = fsFsGetEntryType(&device_old->fs, fs_path_old, &type);
   if(R_SUCCEEDED(rc))
   {
-    if(type == ENTRYTYPE_DIR)
+    if(type == FsDirEntryType_Dir)
     {
       rc = fsFsRenameDirectory(&device_old->fs, fs_path_old, fs_path_new);
       if(R_SUCCEEDED(rc))
       return 0;
     }
-    else if(type == ENTRYTYPE_FILE)
+    else if(type == FsDirEntryType_File)
     {
       rc = fsFsRenameFile(&device_old->fs, fs_path_old, fs_path_new);
       if(R_SUCCEEDED(rc))
@@ -1251,7 +1275,7 @@ fsdev_diropen(struct _reent *r,
   fsdev_dir_t *dir = (fsdev_dir_t*)(dirState->dirStruct);
 
   /* open the directory */
-  rc = fsFsOpenDirectory(&device->fs, fs_path, FS_DIROPEN_DIRECTORY | FS_DIROPEN_FILE, &fd);
+  rc = fsFsOpenDirectory(&device->fs, fs_path, FsDirOpenMode_ReadDirs | FsDirOpenMode_ReadFiles, &fd);
   if(R_SUCCEEDED(rc))
   {
     dir->magic = FSDEV_DIRITER_MAGIC;
@@ -1299,7 +1323,7 @@ fsdev_dirnext(struct _reent *r,
              struct stat   *filestat)
 {
   Result              rc;
-  size_t              entries;
+  u64                 entries;
   ssize_t             units;
   FsDirectoryEntry   *entry;
 
@@ -1342,9 +1366,9 @@ fsdev_dirnext(struct _reent *r,
 
     /* fill in the stat info */
     filestat->st_ino = 0;
-    if(entry->type == ENTRYTYPE_DIR)
+    if(entry->type == FsDirEntryType_Dir)
       filestat->st_mode = S_IFDIR;
-    else if(entry->type == ENTRYTYPE_FILE)
+    else if(entry->type == FsDirEntryType_File)
     {
       filestat->st_mode = S_IFREG;
       filestat->st_size = entry->fileSize;

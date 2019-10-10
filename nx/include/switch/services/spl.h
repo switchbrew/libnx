@@ -6,6 +6,7 @@
  */
 #pragma once
 #include "../types.h"
+#include "../kernel/event.h"
 
 #define SPL_RSA_BUFFER_SIZE (0x100)
 
@@ -74,7 +75,7 @@ Result splCryptoCryptAesCtr(const void *input, void *output, size_t size, u32 ke
 Result splCryptoComputeCmac(const void *input, size_t size, u32 keyslot, void *out_cmac);
 Result splCryptoLockAesEngine(u32 *out_keyslot);
 Result splCryptoUnlockAesEngine(u32 keyslot);
-Result splCryptoGetSecurityEngineEvent(Handle *out_event);
+Result splCryptoGetSecurityEngineEvent(Event *out_event);
 
 Result splRsaDecryptPrivateKey(const void *sealed_kek, const void *wrapped_key, const void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version, void *dst, size_t dst_size);
 
@@ -86,6 +87,8 @@ Result splEsUnwrapRsaOaepWrappedTitlekey(const void *rsa_wrapped_titlekey, const
 Result splEsUnwrapAesWrappedTitlekey(const void *aes_wrapped_titlekey, u32 key_generation, void *out_sealed_titlekey);
 Result splEsLoadSecureExpModKey(const void *sealed_kek, const void *wrapped_key, const void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version);
 Result splEsSecureExpMod(const void *input, const void *modulus, void *dst);
+Result splEsUnwrapElicenseKey(const void *rsa_wrapped_elicense_key, const void *modulus, const void *label_hash, size_t label_hash_size, u32 key_generation, void *out_sealed_elicense_key);
+Result splEsLoadElicenseKey(const void *sealed_elicense_key, u32 keyslot);
 
 Result splFsLoadSecureExpModKey(const void *sealed_kek, const void *wrapped_key, const void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version);
 Result splFsSecureExpMod(const void *input, const void *modulus, void *dst);

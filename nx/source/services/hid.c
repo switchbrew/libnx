@@ -97,7 +97,7 @@ Result hidInitialize(void)
         rc = _hidActivateNpad();
 
     if (R_SUCCEEDED(rc))
-        rc = hidSetSupportedNpadStyleSet(TYPE_PROCONTROLLER | TYPE_HANDHELD | TYPE_JOYCON_PAIR | TYPE_JOYCON_LEFT | TYPE_JOYCON_RIGHT);
+        rc = hidSetSupportedNpadStyleSet(TYPE_PROCONTROLLER | TYPE_HANDHELD | TYPE_JOYCON_PAIR | TYPE_JOYCON_LEFT | TYPE_JOYCON_RIGHT | TYPE_SYSTEM_EXT | TYPE_SYSTEM);
 
     if (R_SUCCEEDED(rc))
         rc = hidSetSupportedNpadIdType(idbuf, 9);
@@ -1032,11 +1032,11 @@ Result hidSetNpadJoyHoldType(HidJoyHoldType type) {
 }
 
 Result hidSetNpadJoyAssignmentModeSingleByDefault(HidControllerID id) {
-    return _hidCmdWithInputU32(122, id);
+    return _hidCmdWithInputU32(122, hidControllerIDToOfficial(id));
 }
 
 Result hidSetNpadJoyAssignmentModeDual(HidControllerID id) {
-    return _hidCmdWithInputU32(124, id);
+    return _hidCmdWithInputU32(124, hidControllerIDToOfficial(id));
 }
 
 Result hidMergeSingleJoyAsDualJoy(HidControllerID id0, HidControllerID id1) {
@@ -1063,8 +1063,8 @@ Result hidMergeSingleJoyAsDualJoy(HidControllerID id0, HidControllerID id1) {
 
     raw->magic = SFCI_MAGIC;
     raw->cmd_id = 125;
-    raw->id0 = id0;
-    raw->id1 = id1;
+    raw->id0 = hidControllerIDToOfficial(id0);
+    raw->id1 = hidControllerIDToOfficial(id1);
     raw->AppletResourceUserId = AppletResourceUserId;
 
     rc = serviceIpcDispatch(&g_hidSrv);
@@ -1737,5 +1737,46 @@ Result hidResetSevenSixAxisSensorTimestamp(void) {
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return _hidCmdWithNoInput(310);
+}
+
+Result hidGetNpadInterfaceType(HidControllerID id, u8 *out) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    Result rc;
+
+    IpcCommand c;
+    ipcInitialize(&c);
+
+    struct {
+        u64 magic;
+        u64 cmd_id;
+        u32 id;
+    } *raw;
+
+    raw = ipcPrepareHeader(&c, sizeof(*raw));
+
+    raw->magic = SFCI_MAGIC;
+    raw->cmd_id = 405;
+    raw->id = hidControllerIDToOfficial(id);
+
+    rc = serviceIpcDispatch(&g_hidSrv);
+
+    if (R_SUCCEEDED(rc)) {
+        IpcParsedCommand r;
+        ipcParse(&r);
+
+        struct {
+            u64 magic;
+            u64 result;
+            u8 out;
+        } *resp = r.Raw;
+
+        rc = resp->result;
+
+        if (R_SUCCEEDED(rc) && out) *out = resp->out;
+    }
+
+    return rc;
 }
 

@@ -10,7 +10,7 @@ typedef struct {
     bool     initialized       : 1;
     bool     has_transact_auto : 1;
     s32      id;
-    size_t   ipc_buffer_size;
+    size_t   dummy;
     Service* relay;
 } Binder;
 

@@ -52,11 +52,11 @@ static char __thread __component[PATH_MAX+1];
 static ssize_t _romfs_read(romfs_mount *mount, u64 offset, void* buffer, u64 size)
 {
     u64 pos = mount->offset + offset;
-    size_t read = 0;
+    u64 read = 0;
     Result rc = 0;
     if(mount->fd_type == RomfsSource_FsFile)
     {
-        rc = fsFileRead(&mount->fd, pos, buffer, size, FS_READOPTION_NONE, &read);
+        rc = fsFileRead(&mount->fd, pos, buffer, size, FsReadOption_None, &read);
     }
     else if(mount->fd_type == RomfsSource_FsStorage)
     {
@@ -170,7 +170,7 @@ static romfs_mount *romfsFindMount(const char *name)
         }
         else if(mount->setup) //Find the mount with the input name.
         {
-            if(strncmp(mount->name, name, strlen(mount->name))==0)
+            if(strncmp(mount->name, name, sizeof(mount->name))==0)
                 return mount;
         }
     }
@@ -244,7 +244,7 @@ Result romfsMount(const char *name)
             return 2;
         }
 
-        Result rc = fsFsOpenFile(sdfs, filename, FS_OPEN_READ, &mount->fd);
+        Result rc = fsFsOpenFile(sdfs, filename, FsOpenMode_Read, &mount->fd);
         if (R_FAILED(rc))
         {
             romfs_free(mount);
@@ -344,7 +344,7 @@ Result romfsMountFromFsdev(const char *path, u64 offset, const char *name)
     mount->fd_type = RomfsSource_FsFile;
     mount->offset = offset;
 
-    Result rc = fsFsOpenFile(tmpfs, filepath, FS_OPEN_READ, &mount->fd);
+    Result rc = fsFsOpenFile(tmpfs, filepath, FsOpenMode_Read, &mount->fd);
     if (R_FAILED(rc))
     {
         romfs_free(mount);

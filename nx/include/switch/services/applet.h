@@ -7,12 +7,13 @@
  */
 #pragma once
 #include "../types.h"
-#include "../services/sm.h"
+#include "../sf/service.h"
 #include "../services/apm.h"
 #include "../services/pdm.h"
 #include "../services/caps.h"
 #include "../services/pm.h"
 #include "../services/fs.h"
+#include "../services/acc.h"
 #include "../kernel/tmem.h"
 #include "../kernel/event.h"
 #include "../nacp.h"
@@ -741,18 +742,18 @@ Result appletGetCurrentIlluminanceEx(bool *bOverLimit, float *fLux);
 Result appletSetWirelessPriorityMode(AppletWirelessPriorityMode mode);
 
 /**
- * @brief Sets whether ::AppletMessage_AlbumImageTaken is enabled.
- * @note Only available with [7.0.0+].
- * @param[in] flag Whether to enable the notification.
- */
-Result appletSetAlbumImageTakenNotificationEnabled(bool flag);
-
-/**
  * @brief Gets the total time in nanoseconds that the current process was actively running (not suspended), relative to when \ref appletInitialize was last used.
  * @note Only available with [6.0.0+].
  * @param[out] activeTime Output nanoseconds value.
  */
 Result appletGetProgramTotalActiveTime(u64 *activeTime);
+
+/**
+ * @brief Sets whether ::AppletMessage_AlbumImageTaken is enabled.
+ * @note Only available with [7.0.0+].
+ * @param[in] flag Whether to enable the notification.
+ */
+Result appletSetAlbumImageTakenNotificationEnabled(bool flag);
 
 /**
  * @brief Sets the Application AlbumUserData.
@@ -1423,13 +1424,13 @@ Result appletQueryApplicationPlayStatistics(PdmApplicationPlayStatistics *stats,
 /**
  * @brief Same as \ref appletQueryApplicationPlayStatistics except this gets playstats specific to the input userID.
  * @note Only available with AppletType_*Application on [6.0.0+].
- * @param userID userID
- * @param stats Output \ref PdmApplicationPlayStatistics array.
- * @param titleIDs Input titleIDs array.
- * @param count Total entries in the input/output arrays.
- * @param total_out Total output entries.
+ * @param[in] uid \ref AccountUid
+ * @param[out] stats Output \ref PdmApplicationPlayStatistics array.
+ * @param[in] titleIDs Input titleIDs array.
+ * @param[in] count Total entries in the input/output arrays.
+ * @param[out] total_out Total output entries.
  */
-Result appletQueryApplicationPlayStatisticsByUid(u128 userID, PdmApplicationPlayStatistics *stats, const u64 *titleIDs, s32 count, s32 *total_out);
+Result appletQueryApplicationPlayStatisticsByUid(AccountUid *uid, PdmApplicationPlayStatistics *stats, const u64 *titleIDs, s32 count, s32 *total_out);
 
 /**
  * @brief Launches Application title {current_titleID}+programIndex. This will enter an infinite-sleep-loop on success.
@@ -1475,6 +1476,14 @@ Result appletGetPreviousProgramIndex(s32 *programIndex);
  * @param[out] out_event Output Event with autoclear=false.
  */
 Result appletGetGpuErrorDetectedSystemEvent(Event *out_event);
+
+/**
+ * @brief CreateMovieMaker. Do not use this directly, use \ref grcCreateMovieMaker instead.
+ * @note Only available with AppletType_*Application on [5.0.0+].
+ * @param[out] srv_out Output Service for applet IMovieMaker.
+ * @param[in] tmem TransferMemory
+ */
+Result appletCreateMovieMaker(Service* srv_out, TransferMemory *tmem);
 
 /**
  * @brief Launches the jit-sysmodule when it was not previously launched by this cmd. Returns 0 when it was previously launched.
@@ -1532,12 +1541,12 @@ Result appletGetHomeButtonWriterLockAccessor(AppletLockAccessor *a);
 /**
  * @brief PopRequestLaunchApplicationForDebug
  * @note Only available with AppletType_SystemApplet on [6.0.0+].
- * @param[out] userIDs Output array of userIDs.
+ * @param[out] userIDs Output array of \ref AccountUid.
  * @param[in] count Size of the userID array in entries, must be at least the size stored in state.
  * @param[out] titleID Output Application titleID.
  * @param[out] total_out Total output userID entries.
  */
-Result appletPopRequestLaunchApplicationForDebug(u128 *userIDs, s32 count, u64 *titleID, s32 *total_out);
+Result appletPopRequestLaunchApplicationForDebug(AccountUid *userIDs, s32 count, u64 *titleID, s32 *total_out);
 
 /**
  * @brief Launches DevMenu and the dev Overlay-applet. This will enter an infinite-sleep-loop on success.
@@ -1774,11 +1783,11 @@ Result appletApplicationGetApplicationLaunchRequestInfo(AppletApplication *a, Ap
  * @brief SetUsers for the Application.
  * @note Only available on [6.0.0+].
  * @param a \ref AppletApplication
- * @param[in] userIDs Input array of userIDs.
+ * @param[in] userIDs Input array of \ref AccountUid.
  * @param[in] count Size of the userID array in entries, must be <=ACC_USER_LIST_SIZE.
  * @param[in] flag When this flag is true, this just clears the users_available state flag to 0 and returns.
  */
-Result appletApplicationSetUsers(AppletApplication *a, const u128 *userIDs, s32 count, bool flag);
+Result appletApplicationSetUsers(AppletApplication *a, const AccountUid *userIDs, s32 count, bool flag);
 
 /**
  * @brief CheckRightsEnvironmentAvailable.
@@ -1801,11 +1810,11 @@ Result appletApplicationGetNsRightsEnvironmentHandle(AppletApplication *a, u64 *
  * @note Only available on [6.0.0+].
  * @note qlaunch only uses 1 userID with this.
  * @param a \ref AppletApplication
- * @param[out] userIDs Output array of userIDs.
+ * @param[out] userIDs Output array of \ref AccountUid.
  * @param[in] count Size of the userID array in entries, must be at least the size stored in state.
  * @param[out] total_out Total output entries.
  */
-Result appletApplicationGetDesirableUids(AppletApplication *a, u128 *userIDs, s32 count, s32 *total_out);
+Result appletApplicationGetDesirableUids(AppletApplication *a, AccountUid *userIDs, s32 count, s32 *total_out);
 
 /**
  * @brief ReportApplicationExitTimeout.
@@ -2029,12 +2038,12 @@ Result appletUnreserveResourceForMovieOperation(void);
 /**
  * @brief Gets an array of userIDs for the MainApplet AvailableUsers.
  * @note Only available with AppletType_LibraryApplet on [6.0.0+].
- * @param[out] userIDs Output array of userIDs.
+ * @param[out] userIDs Output array of \ref AccountUid.
  * @param[in] count Size of the userID array in entries, must be at least ACC_USER_LIST_SIZE.
  * @param[out] flag When true, this indicates that no users are available.
  * @param[out] total_out Total output entries. This is -1 when flag is true.
  */
-Result appletGetMainAppletAvailableUsers(u128 *userIDs, s32 count, bool *flag, s32 *total_out);
+Result appletGetMainAppletAvailableUsers(AccountUid *userIDs, s32 count, bool *flag, s32 *total_out);
 
 ///@}
 
@@ -2129,7 +2138,7 @@ Result appletBeginToObserveHidInputForDevelop(void);
  * @param[in] offset Offset within the ThemeStorage.
  * @param[out] transfer_size Actual read size.
  */
-Result appletReadThemeStorage(void* buffer, size_t size, u64 offset, size_t *transfer_size);
+Result appletReadThemeStorage(void* buffer, size_t size, u64 offset, u64 *transfer_size);
 
 /**
  * @brief Writes the ThemeStorage for the current applet.
@@ -2201,13 +2210,13 @@ Result appletInvalidateTransitionLayer(void);
  * @brief Requests to launch the specified Application, with the specified users.
  * @note Only available on [6.0.0+].
  * @param[in] titleID Application titleID.
- * @param[in] userIDs Input array of userIDs.
+ * @param[in] userIDs Input array of \ref AccountUid.
  * @param[in] total_userIDs Total input userIDs, must be <=ACC_USER_LIST_SIZE.
  * @param[in] flag Whether to use the specified buffer to create a storage which will be pushed for ::AppletLaunchParameterKind_UserChannel.
  * @param[in] buffer Buffer containing the above storage data.
  * @param[in] size Size of the storage buffer.
  */
-Result appletRequestLaunchApplicationWithUserAndArgumentForDebug(u64 titleID, u128 *userIDs, size_t total_userIDs, bool flag, const void* buffer, size_t size);
+Result appletRequestLaunchApplicationWithUserAndArgumentForDebug(u64 titleID, AccountUid *userIDs, size_t total_userIDs, bool flag, const void* buffer, size_t size);
 
 /**
  * @brief Gets the \ref AppletResourceUsageInfo.
@@ -2262,8 +2271,8 @@ void appletHook(AppletHookCookie* cookie, AppletHookFn callback, void* param);
 void appletUnhook(AppletHookCookie* cookie);
 
 /// These return state which is updated by appletMainLoop() when notifications are received.
-u8  appletGetOperationMode(void);
-u32 appletGetPerformanceMode(void);
+AppletOperationMode appletGetOperationMode(void);
+ApmPerformanceMode appletGetPerformanceMode(void);
 AppletFocusState appletGetFocusState(void);
 
 Result appletSetFocusHandlingMode(AppletFocusHandlingMode mode);

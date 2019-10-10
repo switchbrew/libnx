@@ -6,12 +6,16 @@
  */
 #pragma once
 #include "../types.h"
-#include "../services/sm.h"
+#include "../sf/service.h"
 #include "../services/caps.h"
 
 /// Initialize caps:sc. Only available on [2.0.0+].
 Result capsscInitialize(void);
+
+/// Exit caps:sc.
 void capsscExit(void);
+
+/// Gets the Service for caps:sc.
 Service* capsscGetServiceSession(void);
 
 /**
@@ -27,5 +31,5 @@ Service* capsscGetServiceSession(void);
  * @param buffer_index Starting image buffer index. Must be < buffer_count.
  * @param timeout Timeout in nanoseconds. A default value of 100000000 can be used.
  */
-Result capsscCaptureScreenshot(void* buf, size_t size, u32 inval, u64 width, u64 height, s64 buffer_count, s64 buffer_index, u64 timeout);
+Result capsscCaptureRawImageWithTimeout(void* buf, size_t size, u32 inval, u64 width, u64 height, s64 buffer_count, s64 buffer_index, u64 timeout);
 
