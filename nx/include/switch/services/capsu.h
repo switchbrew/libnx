@@ -7,8 +7,9 @@
  */
 #pragma once
 #include "../types.h"
-#include "../services/sm.h"
+#include "../sf/service.h"
 #include "../services/caps.h"
+#include "../services/acc.h"
 
 /// Initialize caps:u. Only available on [5.0.0+].
 Result capsuInitialize(void);
@@ -19,7 +20,7 @@ void capsuExit(void);
 /// Gets the Service for caps:u.
 Service* capsuGetServiceSession(void);
 
-/// Gets the Service for IAlbumAccessorApplicationSession, only initialized after \ref capsuOpenAlbumMovieStream (unaffected by using \ref capsuCloseAlbumMovieStream).
+/// Gets the Service for IAlbumAccessorApplicationSession, only initialized after \ref capsuOpenAlbumMovieStream was used (unaffected by using \ref capsuCloseAlbumMovieStream).
 Service* capsuGetServiceSession_Accessor(void);
 
 /**
@@ -33,7 +34,7 @@ Service* capsuGetServiceSession_Accessor(void);
  * @param[in] end_datetime End \ref CapsAlbumFileDateTime, when NULL the default is used.
  * @param[out] total_entries Total output entries.
  */
-Result capsuGetAlbumFileListDeprecated1(CapsApplicationAlbumFileEntry *entries, size_t count, CapsContentType type, const CapsAlbumFileDateTime *start_datetime, const CapsAlbumFileDateTime *end_datetime, u64 *total_entries);
+Result capsuGetAlbumFileListDeprecated1(CapsApplicationAlbumFileEntry *entries, s32 count, CapsContentType type, const CapsAlbumFileDateTime *start_datetime, const CapsAlbumFileDateTime *end_datetime, s32 *total_entries);
 
 /**
  * @brief Gets a listing of \ref CapsApplicationAlbumFileEntry, where the AlbumFile has an UserId which matches the input one. See also \ref capssuSaveScreenShotWithUserIds.
@@ -44,10 +45,10 @@ Result capsuGetAlbumFileListDeprecated1(CapsApplicationAlbumFileEntry *entries, 
  * @param[in] type \ref CapsContentType
  * @param[in] start_datetime Start \ref CapsAlbumFileDateTime, when NULL the default is used.
  * @param[in] end_datetime End \ref CapsAlbumFileDateTime, when NULL the default is used.
- * @param[in] userID userID.
+ * @param[in] userID \ref AccountUid
  * @param[out] total_entries Total output entries.
  */
-Result capsuGetAlbumFileListDeprecated2(CapsApplicationAlbumFileEntry *entries, size_t count, CapsContentType type, const CapsAlbumFileDateTime *start_datetime, const CapsAlbumFileDateTime *end_datetime, u128 userID, u64 *total_entries);
+Result capsuGetAlbumFileListDeprecated2(CapsApplicationAlbumFileEntry *entries, s32 count, CapsContentType type, const CapsAlbumFileDateTime *start_datetime, const CapsAlbumFileDateTime *end_datetime, AccountUid *userID, s32 *total_entries);
 
 /**
  * @brief Gets a listing of \ref CapsApplicationAlbumEntry.
@@ -59,7 +60,7 @@ Result capsuGetAlbumFileListDeprecated2(CapsApplicationAlbumFileEntry *entries, 
  * @param[in] end_datetime End \ref CapsAlbumFileDateTime, when NULL the default is used.
  * @param[out] total_entries Total output entries.
  */
-Result capsuGetAlbumFileList3(CapsApplicationAlbumEntry *entries, size_t count, CapsContentType type, const CapsAlbumFileDateTime *start_datetime, const CapsAlbumFileDateTime *end_datetime, u64 *total_entries);
+Result capsuGetAlbumFileList3(CapsApplicationAlbumEntry *entries, s32 count, CapsContentType type, const CapsAlbumFileDateTime *start_datetime, const CapsAlbumFileDateTime *end_datetime, s32 *total_entries);
 
 /**
  * @brief Gets a listing of \ref CapsApplicationAlbumEntry, where the AlbumFile has an UserId which matches the input one. See also \ref capssuSaveScreenShotWithUserIds.
@@ -69,10 +70,10 @@ Result capsuGetAlbumFileList3(CapsApplicationAlbumEntry *entries, size_t count, 
  * @param[in] type \ref CapsContentType
  * @param[in] start_datetime Start \ref CapsAlbumFileDateTime, when NULL the default is used.
  * @param[in] end_datetime End \ref CapsAlbumFileDateTime, when NULL the default is used.
- * @param[in] userID userID.
+ * @param[in] userID \ref AccountUid
  * @param[out] total_entries Total output entries.
  */
-Result capsuGetAlbumFileList4(CapsApplicationAlbumEntry *entries, size_t count, CapsContentType type, const CapsAlbumFileDateTime *start_datetime, const CapsAlbumFileDateTime *end_datetime, u128 userID, u64 *total_entries);
+Result capsuGetAlbumFileList4(CapsApplicationAlbumEntry *entries, s32 count, CapsContentType type, const CapsAlbumFileDateTime *start_datetime, const CapsAlbumFileDateTime *end_datetime, AccountUid *userID, s32 *total_entries);
 
 /**
  * @brief Deletes the specified AlbumFile.

@@ -1,28 +1,22 @@
+#define NX_SERVICE_ASSUME_NON_DOMAIN
 #include <string.h>
 #include <time.h>
-#include "types.h"
-#include "result.h"
-#include "arm/atomics.h"
-#include "kernel/ipc.h"
+#include "service_guard.h"
 #include "runtime/hosversion.h"
 #include "services/applet.h"
 #include "services/caps.h"
 #include "services/capsu.h"
-#include "services/sm.h"
+#include "services/acc.h"
 
 static Service g_capsuSrv;
 static Service g_capsuAccessor;
-static u64 g_capsuRefCnt;
 
 static Result _capsuSetShimLibraryVersion(u64 version);
 
-Result capsuInitialize(void) {
+NX_GENERATE_SERVICE_GUARD(capsu);
+
+Result _capsuInitialize(void) {
     Result rc=0;
-
-    atomicIncrement64(&g_capsuRefCnt);
-
-    if (serviceIsActive(&g_capsuSrv))
-        return 0;
 
     if (hosversionBefore(5,0,0))
         rc = MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
@@ -31,16 +25,12 @@ Result capsuInitialize(void) {
 
     if (R_SUCCEEDED(rc) && hosversionAtLeast(7,0,0)) rc = _capsuSetShimLibraryVersion(capsGetShimLibraryVersion());
 
-    if (R_FAILED(rc)) capsuExit();
-
     return rc;
 }
 
-void capsuExit(void) {
-    if (atomicDecrement64(&g_capsuRefCnt) == 0) {
-        serviceClose(&g_capsuAccessor);
-        serviceClose(&g_capsuSrv);
-    }
+void _capsuCleanup(void) {
+    serviceClose(&g_capsuAccessor);
+    serviceClose(&g_capsuSrv);
 }
 
 Service* capsuGetServiceSession(void) {
@@ -51,38 +41,8 @@ Service* capsuGetServiceSession_Accessor(void) {
     return &g_capsuAccessor;
 }
 
-static Result _capsuCmdInU64(Service* srv, u64 inval, u64 cmd_id) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u64 inval;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(srv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = cmd_id;
-    raw->inval = inval;
-
-    Result rc = serviceIpcDispatch(srv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(srv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+static Result _capsuCmdInU64NoOut(Service* srv, u64 inval, u32 cmd_id) {
+    return serviceDispatchIn(srv, cmd_id, inval);
 }
 
 static Result _capsuSetShimLibraryVersion(u64 version) {
@@ -92,366 +52,146 @@ static Result _capsuSetShimLibraryVersion(u64 version) {
     u64 AppletResourceUserId = 0;
     appletGetAppletResourceUserId(&AppletResourceUserId);
 
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         u64 version;
         u64 AppletResourceUserId;
-    } *raw;
+    } in = { version, AppletResourceUserId };
 
-    ipcSendPid(&c);
-
-    raw = serviceIpcPrepareHeader(&g_capsuSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 32;
-    raw->version = version;
-    raw->AppletResourceUserId = AppletResourceUserId;
-
-    Result rc = serviceIpcDispatch(&g_capsuSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_capsuSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    return serviceDispatchIn(&g_capsuSrv, 32, in,
+        .in_send_pid = true,
+    );
 }
 
-static Result _capsuGetAlbumFileList0AafeAruidDeprecated(void* entries, size_t entrysize, size_t count, u8 type, u64 start_timestamp, u64 end_timestamp, u64 *total_entries) {
+static Result _capsuGetAlbumFileList0AafeAruidDeprecated(void* entries, size_t entrysize, s32 count, u8 type, u64 start_timestamp, u64 end_timestamp, s32 *total_entries) {
     u64 AppletResourceUserId = 0;
     appletGetAppletResourceUserId(&AppletResourceUserId);
 
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         u8 type;
         u64 start_timestamp;
         u64 end_timestamp;
         u64 AppletResourceUserId;
-    } *raw;
+    } in = { type, start_timestamp, end_timestamp, AppletResourceUserId };
 
-    ipcSendPid(&c);
-    ipcAddRecvBuffer(&c, entries, count*entrysize, BufferType_Normal);
-
-    raw = serviceIpcPrepareHeader(&g_capsuSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 102;
-    raw->type = type;
-    raw->start_timestamp = start_timestamp;
-    raw->end_timestamp = end_timestamp;
-    raw->AppletResourceUserId = AppletResourceUserId;
-
-    Result rc = serviceIpcDispatch(&g_capsuSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            u64 total_entries;
-        } *resp;
-
-        serviceIpcParse(&g_capsuSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && total_entries) *total_entries = resp->total_entries;
-    }
-
+    u64 total_out=0;
+    Result rc = serviceDispatchInOut(&g_capsuSrv, 102, in, total_out,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { entries, count*entrysize } },
+        .in_send_pid = true,
+    );
+    if (R_SUCCEEDED(rc) && total_entries) *total_entries = total_out;
     return rc;
 }
 
-static Result _capsuDeleteAlbumFileByAruid(u64 cmd_id, u8 type, const CapsApplicationAlbumFileEntry *entry) {
+static Result _capsuDeleteAlbumFileByAruid(u32 cmd_id, u8 type, const CapsApplicationAlbumFileEntry *entry) {
     u64 AppletResourceUserId = 0;
     appletGetAppletResourceUserId(&AppletResourceUserId);
 
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         u8 type;
         CapsApplicationAlbumFileEntry entry;
         u64 AppletResourceUserId;
-    } *raw;
+    } in = { type, *entry, AppletResourceUserId };
 
-    ipcSendPid(&c);
-
-    raw = serviceIpcPrepareHeader(&g_capsuSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = cmd_id;
-    raw->type = type;
-    raw->entry = *entry;
-    raw->AppletResourceUserId = AppletResourceUserId;
-
-    Result rc = serviceIpcDispatch(&g_capsuSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_capsuSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    return serviceDispatchIn(&g_capsuSrv, 103, in,
+        .in_send_pid = true,
+    );
 }
 
 static Result _capsuGetAlbumFileSizeByAruid(const CapsApplicationAlbumFileEntry *entry, u64 *size) {
     u64 AppletResourceUserId = 0;
     appletGetAppletResourceUserId(&AppletResourceUserId);
 
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         CapsApplicationAlbumFileEntry entry;
         u64 AppletResourceUserId;
-    } *raw;
+    } in = { *entry, AppletResourceUserId };
 
-    ipcSendPid(&c);
-
-    raw = serviceIpcPrepareHeader(&g_capsuSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 104;
-    raw->entry = *entry;
-    raw->AppletResourceUserId = AppletResourceUserId;
-
-    Result rc = serviceIpcDispatch(&g_capsuSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            u64 size;
-        } *resp;
-
-        serviceIpcParse(&g_capsuSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && size) *size = resp->size;
-    }
-
-    return rc;
+    return serviceDispatchInOut(&g_capsuSrv, 104, in, *size,
+        .in_send_pid = true,
+    );
 }
 
 static Result _capsuPrecheckToCreateContentsByAruid(u8 type, u64 unk) {
     u64 AppletResourceUserId = 0;
     appletGetAppletResourceUserId(&AppletResourceUserId);
 
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         u8 type;
         u64 unk;
         u64 AppletResourceUserId;
-    } *raw;
+    } in = { type, unk, AppletResourceUserId };
 
-    ipcSendPid(&c);
-
-    raw = serviceIpcPrepareHeader(&g_capsuSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 130;
-    raw->type = type;
-    raw->unk = unk;
-    raw->AppletResourceUserId = AppletResourceUserId;
-
-    Result rc = serviceIpcDispatch(&g_capsuSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_capsuSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    return serviceDispatchIn(&g_capsuSrv, 130, in,
+        .in_send_pid = true,
+    );
 }
 
-static Result _capsuLoadAlbumScreenShotImageByAruid(u64 cmd_id, CapsLoadAlbumScreenShotImageOutputForApplication *out, void* image, size_t image_size, void* workbuf, size_t workbuf_size, const CapsApplicationAlbumFileEntry *entry, const CapsScreenShotDecodeOption *option) {
+static Result _capsuLoadAlbumScreenShotImageByAruid(u32 cmd_id, CapsLoadAlbumScreenShotImageOutputForApplication *out, void* image, size_t image_size, void* workbuf, size_t workbuf_size, const CapsApplicationAlbumFileEntry *entry, const CapsScreenShotDecodeOption *option) {
     u64 AppletResourceUserId = 0;
     appletGetAppletResourceUserId(&AppletResourceUserId);
 
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         CapsApplicationAlbumFileEntry entry;
         CapsScreenShotDecodeOption option;
         u64 AppletResourceUserId;
-    } *raw;
+    } in = { *entry, *option, AppletResourceUserId };
 
-    ipcSendPid(&c);
-    ipcAddRecvBuffer(&c, out, sizeof(*out), BufferType_Normal);
-    ipcAddRecvBuffer(&c, image, image_size, BufferType_Type1);
-    ipcAddRecvBuffer(&c, workbuf, workbuf_size, BufferType_Normal);
-
-    raw = serviceIpcPrepareHeader(&g_capsuSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = cmd_id;
-    raw->entry = *entry;
-    raw->option = *option;
-    raw->AppletResourceUserId = AppletResourceUserId;
-
-    Result rc = serviceIpcDispatch(&g_capsuSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_capsuSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    return serviceDispatchIn(&g_capsuSrv, cmd_id, in,
+        .buffer_attrs = {
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_Out,
+            SfBufferAttr_HipcMapTransferAllowsNonSecure | SfBufferAttr_HipcMapAlias | SfBufferAttr_Out,
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_Out,
+        },
+        .buffers = {
+            { out, sizeof(*out) },
+            { image, image_size },
+            { workbuf, workbuf_size },
+        },
+        .in_send_pid = true,
+    );
 }
 
-static Result _capsuGetAlbumFileListAaeAruid(u64 cmd_id, void* entries, size_t entrysize, size_t count, u8 type, const CapsAlbumFileDateTime *start_datetime, const CapsAlbumFileDateTime *end_datetime, u64 *total_entries) {
+static Result _capsuGetAlbumFileListAaeAruid(u32 cmd_id, void* entries, size_t entrysize, s32 count, u8 type, const CapsAlbumFileDateTime *start_datetime, const CapsAlbumFileDateTime *end_datetime, s32 *total_entries) {
     u64 AppletResourceUserId = 0;
     appletGetAppletResourceUserId(&AppletResourceUserId);
 
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         u8 type;
         CapsAlbumFileDateTime start_datetime;
         CapsAlbumFileDateTime end_datetime;
         u64 AppletResourceUserId;
-    } *raw;
+    } in = { type, *start_datetime, *end_datetime, AppletResourceUserId };
 
-    ipcSendPid(&c);
-    ipcAddRecvBuffer(&c, entries, count*entrysize, BufferType_Normal);
-
-    raw = serviceIpcPrepareHeader(&g_capsuSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = cmd_id;
-    raw->type = type;
-    raw->start_datetime = *start_datetime;
-    raw->end_datetime = *end_datetime;
-    raw->AppletResourceUserId = AppletResourceUserId;
-
-    Result rc = serviceIpcDispatch(&g_capsuSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            u64 total_entries;
-        } *resp;
-
-        serviceIpcParse(&g_capsuSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && total_entries) *total_entries = resp->total_entries;
-    }
-
+    u64 total_out=0;
+    Result rc = serviceDispatchInOut(&g_capsuSrv, cmd_id, in, total_out,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { entries, count*entrysize } },
+        .in_send_pid = true,
+    );
+    if (R_SUCCEEDED(rc) && total_entries) *total_entries = total_out;
     return rc;
 }
 
-static Result _capsuGetAlbumFileListAaeUidAruid(u64 cmd_id, void* entries, size_t entrysize, size_t count, u8 type, const CapsAlbumFileDateTime *start_datetime, const CapsAlbumFileDateTime *end_datetime, u128 userID, u64 *total_entries) {
+static Result _capsuGetAlbumFileListAaeUidAruid(u32 cmd_id, void* entries, size_t entrysize, s32 count, u8 type, const CapsAlbumFileDateTime *start_datetime, const CapsAlbumFileDateTime *end_datetime, AccountUid *userID, s32 *total_entries) {
     u64 AppletResourceUserId = 0;
     appletGetAppletResourceUserId(&AppletResourceUserId);
 
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         u8 type;
         CapsAlbumFileDateTime start_datetime;
         CapsAlbumFileDateTime end_datetime;
-        u8 pad[6];
-        union { u128 userID; } PACKED;
+        AccountUid userID;
         u64 AppletResourceUserId;
-    } *raw;
+    } in = { type, *start_datetime, *end_datetime, *userID, AppletResourceUserId };
 
-    ipcSendPid(&c);
-    ipcAddRecvBuffer(&c, entries, count*entrysize, BufferType_Normal);
-
-    raw = serviceIpcPrepareHeader(&g_capsuSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = cmd_id;
-    raw->type = type;
-    raw->start_datetime = *start_datetime;
-    raw->end_datetime = *end_datetime;
-    raw->userID = userID;
-    raw->AppletResourceUserId = AppletResourceUserId;
-
-    Result rc = serviceIpcDispatch(&g_capsuSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            u64 total_entries;
-        } *resp;
-
-        serviceIpcParse(&g_capsuSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && total_entries) *total_entries = resp->total_entries;
-    }
-
+    u64 total_out=0;
+    Result rc = serviceDispatchInOut(&g_capsuSrv, cmd_id, in, total_out,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { entries, count*entrysize } },
+        .in_send_pid = true,
+    );
+    if (R_SUCCEEDED(rc) && total_entries) *total_entries = total_out;
     return rc;
 }
 
@@ -459,167 +199,46 @@ static Result _capsuOpenAccessorSessionForApplication(Service* srv_out, const Ca
     u64 AppletResourceUserId = 0;
     appletGetAppletResourceUserId(&AppletResourceUserId);
 
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         CapsApplicationAlbumFileEntry entry;
         u64 AppletResourceUserId;
-    } *raw;
+    } in = { *entry, AppletResourceUserId };
 
-    ipcSendPid(&c);
-
-    raw = serviceIpcPrepareHeader(&g_capsuSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 60002;
-    raw->entry = *entry;
-    raw->AppletResourceUserId = AppletResourceUserId;
-
-    Result rc = serviceIpcDispatch(&g_capsuSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_capsuSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && srv_out) {
-            serviceCreateSubservice(srv_out, &g_capsuSrv, &r, 0);
-        }
-    }
-
-    return rc;
+    return serviceDispatchIn(&g_capsuSrv, 60002, in,
+        .in_send_pid = true,
+        .out_num_objects = 1,
+        .out_objects = srv_out,
+    );
 }
 
 static Result _capsuOpenAlbumMovieReadStream(u64 *stream, const CapsApplicationAlbumFileEntry *entry) {
     u64 AppletResourceUserId = 0;
     appletGetAppletResourceUserId(&AppletResourceUserId);
 
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         CapsApplicationAlbumFileEntry entry;
         u64 AppletResourceUserId;
-    } *raw;
+    } in = { *entry, AppletResourceUserId };
 
-    ipcSendPid(&c);
-
-    raw = serviceIpcPrepareHeader(&g_capsuAccessor, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 2001;
-    raw->entry = *entry;
-    raw->AppletResourceUserId = AppletResourceUserId;
-
-    Result rc = serviceIpcDispatch(&g_capsuAccessor);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            u64 stream;
-        } *resp;
-
-        serviceIpcParse(&g_capsuAccessor, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && stream) *stream = resp->stream;
-    }
-
-    return rc;
+    return serviceDispatchInOut(&g_capsuAccessor, 2001, in, *stream,
+        .in_send_pid = true,
+    );
 }
 
 static Result _capsuGetAlbumMovieReadStreamMovieDataSize(u64 stream, u64 *size) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u64 stream;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_capsuAccessor, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 2003;
-    raw->stream = stream;
-
-    Result rc = serviceIpcDispatch(&g_capsuAccessor);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            u64 size;
-        } *resp;
-
-        serviceIpcParse(&g_capsuAccessor, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && size) *size = resp->size;
-    }
-
-    return rc;
+    return serviceDispatchInOut(&g_capsuAccessor, 2003, stream, *size);
 }
 
 static Result _capsuReadMovieDataFromAlbumMovieReadStream(u64 stream, s64 offset, void* buffer, size_t size, u64 *actual_size) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         u64 stream;
         s64 offset;
-    } *raw;
+    } in = { stream, offset };
 
-    ipcAddRecvBuffer(&c, buffer, size, BufferType_Normal);
-
-    raw = serviceIpcPrepareHeader(&g_capsuAccessor, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 2004;
-    raw->stream = stream;
-    raw->offset = offset;
-
-    Result rc = serviceIpcDispatch(&g_capsuAccessor);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            u64 actual_size;
-        } *resp;
-
-        serviceIpcParse(&g_capsuAccessor, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && actual_size) *actual_size = resp->actual_size;
-    }
-
-    return rc;
+    return serviceDispatchInOut(&g_capsuAccessor, 2004, in, *actual_size,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { buffer, size } },
+    );
 }
 
 static inline u64 _capsuMakeTimestamp(const CapsAlbumFileDateTime *datetime) {
@@ -629,7 +248,7 @@ static inline u64 _capsuMakeTimestamp(const CapsAlbumFileDateTime *datetime) {
     return mktime(&tmptm);
 }
 
-Result capsuGetAlbumFileListDeprecated1(CapsApplicationAlbumFileEntry *entries, size_t count, CapsContentType type, const CapsAlbumFileDateTime *start_datetime, const CapsAlbumFileDateTime *end_datetime, u64 *total_entries) {
+Result capsuGetAlbumFileListDeprecated1(CapsApplicationAlbumFileEntry *entries, s32 count, CapsContentType type, const CapsAlbumFileDateTime *start_datetime, const CapsAlbumFileDateTime *end_datetime, s32 *total_entries) {
     u64 start_timestamp = 0x386BF200;
     u64 end_timestamp = 0xF4865700;
 
@@ -645,7 +264,7 @@ Result capsuGetAlbumFileListDeprecated1(CapsApplicationAlbumFileEntry *entries, 
     return _capsuGetAlbumFileListAaeAruid(140, entries, sizeof(CapsApplicationAlbumFileEntry), count, type, start_datetime ? start_datetime : &default_start, end_datetime ? end_datetime : &default_end, total_entries);
 }
 
-Result capsuGetAlbumFileListDeprecated2(CapsApplicationAlbumFileEntry *entries, size_t count, CapsContentType type, const CapsAlbumFileDateTime *start_datetime, const CapsAlbumFileDateTime *end_datetime, u128 userID, u64 *total_entries) {
+Result capsuGetAlbumFileListDeprecated2(CapsApplicationAlbumFileEntry *entries, s32 count, CapsContentType type, const CapsAlbumFileDateTime *start_datetime, const CapsAlbumFileDateTime *end_datetime, AccountUid *userID, s32 *total_entries) {
     if (hosversionBefore(6,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
@@ -655,7 +274,7 @@ Result capsuGetAlbumFileListDeprecated2(CapsApplicationAlbumFileEntry *entries, 
     return _capsuGetAlbumFileListAaeUidAruid(141, entries, sizeof(CapsApplicationAlbumFileEntry), count, type, start_datetime ? start_datetime : &default_start, end_datetime ? end_datetime : &default_end, userID, total_entries);
 }
 
-Result capsuGetAlbumFileList3(CapsApplicationAlbumEntry *entries, size_t count, CapsContentType type, const CapsAlbumFileDateTime *start_datetime, const CapsAlbumFileDateTime *end_datetime, u64 *total_entries) {
+Result capsuGetAlbumFileList3(CapsApplicationAlbumEntry *entries, s32 count, CapsContentType type, const CapsAlbumFileDateTime *start_datetime, const CapsAlbumFileDateTime *end_datetime, s32 *total_entries) {
     if (hosversionBefore(7,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
@@ -665,7 +284,7 @@ Result capsuGetAlbumFileList3(CapsApplicationAlbumEntry *entries, size_t count, 
     return _capsuGetAlbumFileListAaeAruid(142, entries, sizeof(CapsApplicationAlbumEntry), count, type, start_datetime ? start_datetime : &default_start, end_datetime ? end_datetime : &default_end, total_entries);
 }
 
-Result capsuGetAlbumFileList4(CapsApplicationAlbumEntry *entries, size_t count, CapsContentType type, const CapsAlbumFileDateTime *start_datetime, const CapsAlbumFileDateTime *end_datetime, u128 userID, u64 *total_entries) {
+Result capsuGetAlbumFileList4(CapsApplicationAlbumEntry *entries, s32 count, CapsContentType type, const CapsAlbumFileDateTime *start_datetime, const CapsAlbumFileDateTime *end_datetime, AccountUid *userID, s32 *total_entries) {
     if (hosversionBefore(7,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
@@ -735,7 +354,7 @@ Result capsuCloseAlbumMovieStream(u64 stream) {
     if (!serviceIsActive(&g_capsuAccessor))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    return _capsuCmdInU64(&g_capsuAccessor, stream, 2002);
+    return _capsuCmdInU64NoOut(&g_capsuAccessor, stream, 2002);
 }
 
 Result capsuGetAlbumMovieStreamSize(u64 stream, u64 *size) {
@@ -756,6 +375,6 @@ Result capsuGetAlbumMovieStreamBrokenReason(u64 stream) {
     if (!serviceIsActive(&g_capsuAccessor))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    return _capsuCmdInU64(&g_capsuAccessor, stream, 2005);
+    return _capsuCmdInU64NoOut(&g_capsuAccessor, stream, 2005);
 }
 
