@@ -7,7 +7,7 @@
 #include "../types.h"
 #include "../kernel/event.h"
 #include "../services/hid.h"
-#include "../services/sm.h"
+#include "../sf/service.h"
 
 /// Mini Cycle struct for \ref HidsysNotificationLedPattern.
 typedef struct {
@@ -32,24 +32,49 @@ typedef struct {
     u8 pad_x46[0x2];                                    ///< Padding
 } HidsysNotificationLedPattern;
 
+/// Initialize hidsys.
 Result hidsysInitialize(void);
+
+/// Exit hidsys.
 void hidsysExit(void);
+
+/// Gets the Service object for the actual hidsys service session.
 Service* hidsysGetServiceSession(void);
 
-Result hidsysEnableAppletToGetInput(bool enable);
+/**
+ * @brief Returns an event that fires when the home button is pressed, this will prevent the home menu from opening when the button is pressed.
+ * @note The Event must be closed by the user once finished with it.
+ * @param[out] out_event Output Event with autoclear=false.
+**/
+Result hidsysAcquireHomeButtonEventHandle(Event* out_event);
 
 /**
-* @brief Returns an event that fires when the home button is pressed, this will prevent the home menu from opening when the button is pressed. This event does not auto clear.
-**/ 
-Result hidsysAcquireHomeButtonEventHandle(Event* event_out);
+ * @brief Returns an event that fires when the sleep button is pressed.
+ * @note The Event must be closed by the user once finished with it.
+ * @param[out] out_event Output Event with autoclear=false.
+**/
+Result hidsysAcquireSleepButtonEventHandle(Event* out_event);
 
 /**
-* @brief Returns an event that fires when the capture button is pressed. This event does not auto clear.
-**/ 
-Result hidsysAcquireCaptureButtonEventHandle(Event* event_out);
+ * @brief Returns an event that fires when the capture button is pressed.
+ * @note The Event must be closed by the user once finished with it.
+ * @param[out] out_event Output Event with autoclear=false.
+**/
+Result hidsysAcquireCaptureButtonEventHandle(Event* out_event);
 
+/**
+ * @brief ActivateHomeButton
+**/
 Result hidsysActivateHomeButton(void);
+
+/**
+ * @brief ActivateSleepButton
+**/
 Result hidsysActivateSleepButton(void);
+
+/**
+ * @brief ActivateCaptureButton
+**/
 Result hidsysActivateCaptureButton(void);
 
 /**
@@ -67,7 +92,13 @@ Result hidsysGetSupportedNpadStyleSetOfCallerApplet(HidControllerType *out);
  * @param Max number of entries for the UniquePadIds array.
  * @param total_entries Total output array entries. Optional, can be NULL.
  */
-Result hidsysGetUniquePadsFromNpad(HidControllerID id, u64 *UniquePadIds, size_t count, size_t *total_entries);
+Result hidsysGetUniquePadsFromNpad(HidControllerID id, u64 *UniquePadIds, s32 count, s32 *total_entries);
+
+/**
+ * @brief EnableAppletToGetInput
+ * @param[in] enable Input flag.
+**/
+Result hidsysEnableAppletToGetInput(bool enable);
 
 /**
  * @brief Gets a list of all UniquePadIds.
@@ -75,7 +106,7 @@ Result hidsysGetUniquePadsFromNpad(HidControllerID id, u64 *UniquePadIds, size_t
  * @param Max number of entries for the UniquePadIds array.
  * @param total_entries Total output array entries. Optional, can be NULL.
  */
-Result hidsysGetUniquePadIds(u64 *UniquePadIds, size_t count, size_t *total_entries);
+Result hidsysGetUniquePadIds(u64 *UniquePadIds, s32 count, s32 *total_entries);
 
 /**
  * @brief Sets the HOME-button notification LED pattern, for the specified controller.
