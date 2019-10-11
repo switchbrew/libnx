@@ -6,11 +6,20 @@
  */
 
 #pragma once
-#include "../kernel/ipc.h"
-#include "../services/sm.h"
+#include "../types.h"
+#include "../sf/service.h"
 
+/// Initialize pctl.
 Result pctlInitialize(void);
+
+/// Exit pctl.
 void pctlExit(void);
+
+/// Gets the Service object for the actual pctl service session.
+Service* pctlGetServiceSession(void);
+
+/// Gets the Service object for IParentalControlService.
+Service* pctlGetServiceSession_Service(void);
 
 /// Confirm whether VrMode is allowed. Only available with [4.0.0+].
 Result pctlConfirmStereoVisionPermission(void);
