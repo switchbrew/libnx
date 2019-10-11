@@ -6,10 +6,15 @@
  */
 #pragma once
 #include "../types.h"
-#include "../services/sm.h"
+#include "../sf/service.h"
 
+/// Initialize lbl.
 Result lblInitialize(void);
+
+/// Exit lbl.
 void lblExit(void);
+
+/// Gets the Service object for the actual lbl service session.
 Service* lblGetServiceSession(void);
 
 Result lblSwitchBacklightOn(u64 fade_time);

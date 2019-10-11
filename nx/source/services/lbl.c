@@ -1,179 +1,56 @@
-#include "types.h"
-#include "result.h"
-#include "arm/atomics.h"
-#include "kernel/ipc.h"
+#define NX_SERVICE_ASSUME_NON_DOMAIN
+#include "service_guard.h"
 #include "services/lbl.h"
-#include "services/sm.h"
 
 static Service g_lblSrv;
-static u64 g_refCnt;
 
-Result lblInitialize(void) {
-    Result rc = 0;
-    
-    atomicIncrement64(&g_refCnt);
+NX_GENERATE_SERVICE_GUARD(lbl);
 
-    if (serviceIsActive(&g_lblSrv))
-        return 0;
-
-    rc = smGetService(&g_lblSrv, "lbl");
-
-    if (R_FAILED(rc)) lblExit();
-
-    return rc;
+Result _lblInitialize(void) {
+    return smGetService(&g_lblSrv, "lbl");
 }
 
-void lblExit(void) {
-    if (atomicDecrement64(&g_refCnt) == 0) {
-        serviceClose(&g_lblSrv);
-    }
+void _lblCleanup(void) {
+    serviceClose(&g_lblSrv);
 }
 
 Service* lblGetServiceSession(void) {
     return &g_lblSrv;
 }
 
-static Result _lblCmdNoIO(u64 cmd_id) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_lblSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = cmd_id;
-
-    Result rc = serviceIpcDispatch(&g_lblSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_lblSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+static Result _lblCmdNoIO(u32 cmd_id) {
+    return serviceDispatch(&g_lblSrv, cmd_id);
 }
 
-static Result _lblSwitchBacklight(u64 cmd_id, u64 fade_time) {
-    IpcCommand c;
-    ipcInitialize(&c);
+static Result _lblCmdInU64NoOut(u64 inval, u32 cmd_id) {
+    return serviceDispatchIn(&g_lblSrv, cmd_id, inval);
+}
 
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u64 fade_time;
-    } *raw;
+static Result _lblCmdNoInOutU8(u8 *out, u32 cmd_id) {
+    return serviceDispatchOut(&g_lblSrv, cmd_id, *out);
+}
 
-    raw = serviceIpcPrepareHeader(&g_lblSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = cmd_id;
-    raw->fade_time = fade_time;
-
-    Result rc = serviceIpcDispatch(&g_lblSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_lblSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
+static Result _lblCmdNoInOutBool(bool *out, u32 cmd_id) {
+    u8 tmpout=0;
+    Result rc = _lblCmdNoInOutU8(&tmpout, cmd_id);
+    if (R_SUCCEEDED(rc) && out) *out = tmpout!=0;
     return rc;
 }
 
 Result lblSwitchBacklightOn(u64 fade_time) {
-    return _lblSwitchBacklight(6, fade_time);
+    return _lblCmdInU64NoOut(fade_time, 6);
 }
 
 Result lblSwitchBacklightOff(u64 fade_time) {
-    return _lblSwitchBacklight(7, fade_time);
+    return _lblCmdInU64NoOut(fade_time, 7);
 }
 
 Result lblSetCurrentBrightnessSetting(float brightness) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        float value;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_lblSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 2;
-    raw->value = brightness;
-
-    Result rc = serviceIpcDispatch(&g_lblSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_lblSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    return serviceDispatchIn(&g_lblSrv, 2, brightness);
 }
 
 Result lblGetCurrentBrightnessSetting(float *out_value) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_lblSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 3;
-
-    Result rc = serviceIpcDispatch(&g_lblSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            float brightness;
-        } *resp;
-
-        serviceIpcParse(&g_lblSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-        if (R_SUCCEEDED(rc))
-            *out_value = resp->brightness;
-    }
-
-    return rc;
+    return serviceDispatchOut(&g_lblSrv, 3, *out_value);
 }
 
 Result lblEnableAutoBrightnessControl(void) {
@@ -185,36 +62,5 @@ Result lblDisableAutoBrightnessControl(void) {
 }
 
 Result lblIsAutoBrightnessControlEnabled(bool *out_value){
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_lblSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 14;
-
-    Result rc = serviceIpcDispatch(&g_lblSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            u8 isEnabled;
-        } *resp;
-
-        serviceIpcParse(&g_lblSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-        if (R_SUCCEEDED(rc))
-            *out_value = resp->isEnabled != 0;
-    }
-
-    return rc;
+    return _lblCmdNoInOutBool(out_value, 14);
 }
