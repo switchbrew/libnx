@@ -6,7 +6,7 @@
 #pragma once
 #include "../types.h"
 #include "../services/hid.h"
-#include "../services/sm.h"
+#include "../sf/service.h"
 
 /// HdlsDeviceInfo, for [7.0.0-8.1.0].
 typedef struct {
@@ -112,8 +112,13 @@ typedef struct {
     u8 unused[0x60];         ///< Unused with \ref hiddbgSetAutoPilotVirtualPadState. Not set by \ref hiddbgGetAbstractedPadsState.
 } HiddbgAbstractedPadState;
 
+/// Initialize hiddbg.
 Result hiddbgInitialize(void);
+
+/// Exit hiddbg.
 void hiddbgExit(void);
+
+/// Gets the Service object for the actual hiddbg service session.
 Service* hiddbgGetServiceSession(void);
 
 /// Writes the input RGB colors to the spi-flash for the specified controller (offset 0x6050 size 0x6). See hidsys.h for UniquePadId. Only available with [3.0.0+].

@@ -1,16 +1,12 @@
+#define NX_SERVICE_ASSUME_NON_DOMAIN
+#include "service_guard.h"
 #include <string.h>
-#include "types.h"
-#include "result.h"
-#include "arm/atomics.h"
-#include "kernel/ipc.h"
 #include "kernel/tmem.h"
 #include "services/hiddbg.h"
 #include "services/hid.h"
-#include "services/sm.h"
 #include "runtime/hosversion.h"
 
 static Service g_hiddbgSrv;
-static u64 g_hiddbgRefCnt;
 
 static bool g_hiddbgHdlsInitialized;
 static TransferMemory g_hiddbgHdlsTmem;
@@ -40,261 +36,83 @@ static const u32 g_hiddbgDeviceTypeInternalTable[] = {
     BIT(23),    // DeviceType 21 ::HidDeviceType System with HidControllerType |= TYPE_JOYCON_PAIR.
 };
 
-Result hiddbgInitialize(void) {
-    atomicIncrement64(&g_hiddbgRefCnt);
+NX_GENERATE_SERVICE_GUARD(hiddbg);
 
-    if (serviceIsActive(&g_hiddbgSrv))
-        return 0;
-
-    Result rc = smGetService(&g_hiddbgSrv, "hid:dbg");
-
-    if (R_FAILED(rc)) hiddbgExit();
-
-    return rc;
+Result _hiddbgInitialize(void) {
+    return smGetService(&g_hiddbgSrv, "hid:dbg");
 }
 
-void hiddbgExit(void) {
-    if (atomicDecrement64(&g_hiddbgRefCnt) == 0) {
-        serviceClose(&g_hiddbgSrv);
-    }
+void _hiddbgCleanup(void) {
+    serviceClose(&g_hiddbgSrv);
 }
 
 Service* hiddbgGetServiceSession(void) {
     return &g_hiddbgSrv;
 }
 
-static Result _hiddbgCmdNoIO(u64 cmd_id) {
-    Result rc;
-
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_hiddbgSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = cmd_id;
-
-    rc = serviceIpcDispatch(&g_hiddbgSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_hiddbgSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+static Result _hiddbgCmdNoIO(u32 cmd_id) {
+    return serviceDispatch(&g_hiddbgSrv, cmd_id);
 }
 
-static Result _hiddbgCmdInU8NoOut(u64 cmd_id, u8 val) {
-    Result rc;
-
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u8 val;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_hiddbgSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = cmd_id;
-    raw->val = val;
-
-    rc = serviceIpcDispatch(&g_hiddbgSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_hiddbgSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+static Result _hiddbgCmdInU8NoOut(u8 inval, u32 cmd_id) {
+    return serviceDispatchIn(&g_hiddbgSrv, cmd_id, inval);
 }
 
-static Result _hiddbgCmdInU64NoOut(u64 cmd_id, u64 val) {
-    Result rc;
+static Result _hiddbgCmdInU64NoOut(u64 inval, u32 cmd_id) {
+    return serviceDispatchIn(&g_hiddbgSrv, cmd_id, inval);
+}
 
-    IpcCommand c;
-    ipcInitialize(&c);
+static Result _hiddbgCmdInHandle64NoOut(Handle handle, u64 inval, u32 cmd_id) {
+    return serviceDispatchIn(&g_hiddbgSrv, cmd_id, inval,
+        .in_num_handles = 1,
+        .in_handles = { handle },
+    );
+}
 
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u64 val;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_hiddbgSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = cmd_id;
-    raw->val = val;
-
-    rc = serviceIpcDispatch(&g_hiddbgSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_hiddbgSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+static Result _hiddbgCmdInTmemNoOut(TransferMemory *tmem, u32 cmd_id) {
+    return _hiddbgCmdInHandle64NoOut(tmem->handle, tmem->size, cmd_id);
 }
 
 Result hiddbgUpdateControllerColor(u32 colorBody, u32 colorButtons, u64 UniquePadId) {
     if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         u32 colorBody;
         u32 colorButtons;
         u64 UniquePadId;
-    } *raw;
+    } in = { colorBody, colorButtons, UniquePadId };
 
-    raw = serviceIpcPrepareHeader(&g_hiddbgSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 221;
-    raw->colorBody = colorBody;
-    raw->colorButtons = colorButtons;
-    raw->UniquePadId = UniquePadId;
-
-    Result rc = serviceIpcDispatch(&g_hiddbgSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_hiddbgSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    return serviceDispatchIn(&g_hiddbgSrv, 221, in);
 }
 
 Result hiddbgUpdateDesignInfo(u32 colorBody, u32 colorButtons, u32 colorLeftGrip, u32 colorRightGrip, u8 inval, u64 UniquePadId) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         u32 colorBody;
         u32 colorButtons;
         u32 colorLeftGrip;
         u32 colorRightGrip;
         u8 inval;
         u64 UniquePadId;
-    } *raw;
+    } in = { colorBody, colorButtons, colorLeftGrip, colorRightGrip, inval, UniquePadId };
 
-    raw = serviceIpcPrepareHeader(&g_hiddbgSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 224;
-    raw->colorBody = colorBody;
-    raw->colorButtons = colorButtons;
-    raw->colorLeftGrip = colorLeftGrip;
-    raw->colorRightGrip = colorRightGrip;
-    raw->inval = inval;
-    raw->UniquePadId = UniquePadId;
-
-    Result rc = serviceIpcDispatch(&g_hiddbgSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_hiddbgSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    return serviceDispatchIn(&g_hiddbgSrv, 224, in);
 }
 
 static Result _hiddbgReadSerialFlash(TransferMemory *tmem, u32 offset, u64 size, u64 UniquePadId) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    ipcSendHandleCopy(&c, tmem->handle);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         u32 offset;
         u64 size;
         u64 UniquePadId;
-    } *raw;
+    } in = { offset, size, UniquePadId };
 
-    raw = serviceIpcPrepareHeader(&g_hiddbgSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 229;
-    raw->offset = offset;
-    raw->size = size;
-    raw->UniquePadId = UniquePadId;
-
-    Result rc = serviceIpcDispatch(&g_hiddbgSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_hiddbgSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    return serviceDispatchIn(&g_hiddbgSrv, 229, in,
+        .in_num_handles = 1,
+        .in_handles = { tmem->handle },
+    );
 }
 
 Result hiddbgReadSerialFlash(u32 offset, void* buffer, size_t size, u64 UniquePadId) {
@@ -318,46 +136,14 @@ Result hiddbgGetUniquePadDeviceTypeSetInternal(u64 UniquePadId, u32 *out) {
     if (hosversionBefore(6,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    Result rc;
-
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u64 UniquePadId;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_hiddbgSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 234;
-    raw->UniquePadId = UniquePadId;
-
-    rc = serviceIpcDispatch(&g_hiddbgSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            u32 out;
-        } *resp;
-
-        serviceIpcParse(&g_hiddbgSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && out) { //Pre-9.0.0 output is an u32, with [9.0.0+] it's an u8.
-            if (hosversionBefore(9,0,0))
-                *out = resp->out;
-            else
-                *out = resp->out & 0xFF;
-        }
+    u32 tmp=0;
+    Result rc = serviceDispatchInOut(&g_hiddbgSrv, 234, UniquePadId, tmp);
+    if (R_SUCCEEDED(rc) && out) { // Pre-9.0.0 output is an u32, with [9.0.0+] it's an u8.
+        if (hosversionBefore(9,0,0))
+            *out = tmp;
+        else
+            *out = tmp & 0xFF;
     }
-
     return rc;
 }
 
@@ -365,208 +151,53 @@ Result hiddbgGetAbstractedPadHandles(u64 *AbstractedPadHandles, s32 count, s32 *
     if (hosversionBefore(5,0,0) || hosversionAtLeast(9,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    Result rc;
-
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    ipcAddRecvStatic(&c, AbstractedPadHandles, sizeof(u64)*count, 0);
-
-    raw = serviceIpcPrepareHeader(&g_hiddbgSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 301;
-
-    rc = serviceIpcDispatch(&g_hiddbgSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            s32 total_entries;
-        } *resp;
-
-        serviceIpcParse(&g_hiddbgSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && total_entries) *total_entries = resp->total_entries;
-    }
-
-    return rc;
+    return serviceDispatchOut(&g_hiddbgSrv, 301, *total_entries,
+        .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_Out },
+        .buffers = { { AbstractedPadHandles, count*sizeof(u64) } },
+    );
 }
 
 Result hiddbgGetAbstractedPadState(u64 AbstractedPadHandle, HiddbgAbstractedPadState *state) {
     if (hosversionBefore(5,0,0) || hosversionAtLeast(9,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    Result rc;
-
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u64 AbstractedPadHandle;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_hiddbgSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 302;
-    raw->AbstractedPadHandle = AbstractedPadHandle;
-
-    rc = serviceIpcDispatch(&g_hiddbgSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            HiddbgAbstractedPadState state;
-        } *resp;
-
-        serviceIpcParse(&g_hiddbgSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && state) memcpy(state, &resp->state, sizeof(*state));
-    }
-
-    return rc;
+    return serviceDispatchInOut(&g_hiddbgSrv, 302, AbstractedPadHandle, *state);
 }
 
 Result hiddbgGetAbstractedPadsState(u64 *AbstractedPadHandles, HiddbgAbstractedPadState *states, s32 count, s32 *total_entries) {
     if (hosversionBefore(5,0,0) || hosversionAtLeast(9,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    Result rc;
-
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    ipcAddRecvStatic(&c, AbstractedPadHandles, sizeof(u64)*count, 0);
-    ipcAddRecvSmart(&c, g_hiddbgSrv.pointer_buffer_size, states, sizeof(HiddbgAbstractedPadState)*count, 0);
-
-    raw = serviceIpcPrepareHeader(&g_hiddbgSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 303;
-
-    rc = serviceIpcDispatch(&g_hiddbgSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            s32 total_entries;
-        } *resp;
-
-        serviceIpcParse(&g_hiddbgSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && total_entries) *total_entries = resp->total_entries;
-    }
-
-    return rc;
+    return serviceDispatchOut(&g_hiddbgSrv, 303, *total_entries,
+        .buffer_attrs = {
+            SfBufferAttr_HipcPointer | SfBufferAttr_Out,
+            SfBufferAttr_HipcAutoSelect | SfBufferAttr_Out,
+        },
+        .buffers = {
+            { AbstractedPadHandles, count*sizeof(u64) },
+            { states, count*sizeof(HiddbgAbstractedPadState) },
+        },
+    );
 }
 
 Result hiddbgSetAutoPilotVirtualPadState(s8 AbstractedVirtualPadId, const HiddbgAbstractedPadState *state) {
     if (hosversionBefore(5,0,0) || hosversionAtLeast(9,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    Result rc;
-
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         s8 AbstractedVirtualPadId;
         u8 pad[7];
         HiddbgAbstractedPadState state;
-    } *raw;
+    } in = { AbstractedVirtualPadId, {0}, *state };
 
-    raw = serviceIpcPrepareHeader(&g_hiddbgSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 321;
-    raw->AbstractedVirtualPadId = AbstractedVirtualPadId;
-    memcpy(&raw->state, state, sizeof(*state));
-
-    rc = serviceIpcDispatch(&g_hiddbgSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_hiddbgSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    return serviceDispatchIn(&g_hiddbgSrv, 321, in);
 }
 
 Result hiddbgUnsetAutoPilotVirtualPadState(s8 AbstractedVirtualPadId) {
     if (hosversionBefore(5,0,0) || hosversionAtLeast(9,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    Result rc;
-
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        s8 AbstractedVirtualPadId;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_hiddbgSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 322;
-    raw->AbstractedVirtualPadId = AbstractedVirtualPadId;
-
-    rc = serviceIpcDispatch(&g_hiddbgSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_hiddbgSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    return _hiddbgCmdInU8NoOut(AbstractedVirtualPadId, 322);
 }
 
 Result hiddbgUnsetAllAutoPilotVirtualPadState(void) {
@@ -604,7 +235,7 @@ static void _hiddbgConvertHdlsDeviceInfoFromV7(HiddbgHdlsDeviceInfo *out, const 
     out->npadInterfaceType = in->npadInterfaceType;
     out->singleColorBody = in->singleColorBody;
     out->singleColorButtons = in->singleColorButtons;
-    //Leave out color*Grip at zero since V7 doesn't have those.
+    //Leave color*Grip at zero since V7 doesn't have those.
 }
 
 static void _hiddbgConverHiddbgHdlsStateToV7(HiddbgHdlsStateV7 *out, const HiddbgHdlsState *in) {
@@ -655,39 +286,7 @@ static void _hiddbgConvertHdlsStateListFromV7(HiddbgHdlsStateList *out, const Hi
 }
 
 static Result _hiddbgAttachHdlsWorkBuffer(TransferMemory *tmem) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    ipcSendHandleCopy(&c, tmem->handle);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u64 size;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_hiddbgSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 324;
-    raw->size = tmem->size;
-
-    Result rc = serviceIpcDispatch(&g_hiddbgSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_hiddbgSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    return _hiddbgCmdInTmemNoOut(tmem, 324);
 }
 
 Result hiddbgAttachHdlsWorkBuffer(void) {
@@ -774,7 +373,7 @@ Result hiddbgApplyHdlsNpadAssignmentState(const HiddbgHdlsNpadAssignment *state,
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
     memcpy(g_hiddbgHdlsTmem.src_addr, state, sizeof(*state));
-    return _hiddbgCmdInU8NoOut(328, flag!=0);
+    return _hiddbgCmdInU8NoOut(flag!=0, 328);
 }
 
 Result hiddbgApplyHdlsStateList(const HiddbgHdlsStateList *state) {
@@ -799,77 +398,11 @@ Result hiddbgApplyHdlsStateList(const HiddbgHdlsStateList *state) {
 }
 
 static Result _hiddbgAttachHdlsVirtualDeviceV7(u64 *HdlsHandle, const HiddbgHdlsDeviceInfoV7 *info) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        HiddbgHdlsDeviceInfoV7 info;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_hiddbgSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 330;
-    raw->info = *info;
-
-    Result rc = serviceIpcDispatch(&g_hiddbgSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            u64 handle;
-        } *resp;
-
-        serviceIpcParse(&g_hiddbgSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && HdlsHandle) *HdlsHandle = resp->handle;
-    }
-
-    return rc;
+    return serviceDispatchInOut(&g_hiddbgSrv, 330, *info, *HdlsHandle);
 }
 
 static Result _hiddbgAttachHdlsVirtualDevice(u64 *HdlsHandle, const HiddbgHdlsDeviceInfo *info) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        HiddbgHdlsDeviceInfo info;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_hiddbgSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 330;
-    raw->info = *info;
-
-    Result rc = serviceIpcDispatch(&g_hiddbgSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            u64 handle;
-        } *resp;
-
-        serviceIpcParse(&g_hiddbgSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && HdlsHandle) *HdlsHandle = resp->handle;
-    }
-
-    return rc;
+    return serviceDispatchInOut(&g_hiddbgSrv, 330, *info, *HdlsHandle);
 }
 
 Result hiddbgAttachHdlsVirtualDevice(u64 *HdlsHandle, const HiddbgHdlsDeviceInfo *info) {
@@ -895,57 +428,26 @@ Result hiddbgDetachHdlsVirtualDevice(u64 HdlsHandle) {
     if (!g_hiddbgHdlsInitialized)
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    return _hiddbgCmdInU64NoOut(331, HdlsHandle);
+    return _hiddbgCmdInU64NoOut(HdlsHandle, 331);
+}
+
+static Result _hiddbgSetHdlsStateV7(u64 HdlsHandle, const HiddbgHdlsState *state) {
+    struct {
+        HiddbgHdlsStateV7 state;
+        u64 handle;
+    } in = { .handle = HdlsHandle };
+    _hiddbgConverHiddbgHdlsStateToV7(&in.state, state);
+
+    return serviceDispatchIn(&g_hiddbgSrv, 332, in);
 }
 
 static Result _hiddbgSetHdlsState(u64 HdlsHandle, const HiddbgHdlsState *state) {
-    IpcCommand c;
-    ipcInitialize(&c);
+    const struct {
+        u64 handle;
+        HiddbgHdlsState state;
+    } in = { HdlsHandle, *state };
 
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        union {
-            struct {
-                HiddbgHdlsStateV7 state;
-                u64 handle;
-            } v7; // [7.0.0-8.1.0]
-            struct {
-                u64 handle;
-                HiddbgHdlsState state;
-            } v9; // [9.0.0+]
-        };
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_hiddbgSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 332;
-    if (hosversionBefore(9,0,0)) {
-        _hiddbgConverHiddbgHdlsStateToV7(&raw->v7.state, state);
-        raw->v7.handle = HdlsHandle;
-    }
-    else {
-        raw->v9.handle = HdlsHandle;
-        memcpy(&raw->v9.state, state, sizeof(*state));
-    }
-
-    Result rc = serviceIpcDispatch(&g_hiddbgSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_hiddbgSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    return serviceDispatchIn(&g_hiddbgSrv, 332, in);
 }
 
 Result hiddbgSetHdlsState(u64 HdlsHandle, const HiddbgHdlsState *state) {
@@ -955,6 +457,9 @@ Result hiddbgSetHdlsState(u64 HdlsHandle, const HiddbgHdlsState *state) {
     if (!g_hiddbgHdlsInitialized)
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    return _hiddbgSetHdlsState(HdlsHandle, state);
+    if (hosversionBefore(9,0,0))
+        return _hiddbgSetHdlsStateV7(HdlsHandle, state);
+    else
+        return _hiddbgSetHdlsState(HdlsHandle, state);
 }
 
