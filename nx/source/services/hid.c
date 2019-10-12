@@ -1,21 +1,17 @@
+#define NX_SERVICE_ASSUME_NON_DOMAIN
+#include "service_guard.h"
 #include <string.h>
 #include <stdlib.h>
 #include <malloc.h>
-#include "types.h"
-#include "result.h"
-#include "arm/atomics.h"
-#include "kernel/ipc.h"
 #include "kernel/shmem.h"
 #include "kernel/rwlock.h"
 #include "kernel/event.h"
 #include "services/applet.h"
 #include "services/hid.h"
-#include "services/sm.h"
 #include "runtime/hosversion.h"
 
 static Service g_hidSrv;
 static Service g_hidIAppletResource;
-static u64 g_refCnt;
 static SharedMemory g_hidSharedmem;
 
 static HidTouchScreenEntry g_touchEntry;
@@ -52,8 +48,9 @@ static Result _hidDeactivateNpad(void);
 
 static Result _hidSetDualModeAll(void);
 
-Result hidInitialize(void)
-{
+NX_GENERATE_SERVICE_GUARD(hid);
+
+Result _hidInitialize(void) {
     HidControllerID idbuf[9] = {
         CONTROLLER_PLAYER_1,
         CONTROLLER_PLAYER_2,
@@ -65,12 +62,7 @@ Result hidInitialize(void)
         CONTROLLER_PLAYER_8,
         CONTROLLER_HANDHELD};
 
-    atomicIncrement64(&g_refCnt);
-
-    if (serviceIsActive(&g_hidSrv))
-        return 0;
-
-    Result rc;
+    Result rc=0;
     Handle sharedmem_handle;
 
     // If this failed (for example because we're a sysmodule) AppletResourceUserId stays zero
@@ -86,8 +78,7 @@ Result hidInitialize(void)
     if (R_SUCCEEDED(rc))
         rc = _hidGetSharedMemoryHandle(&g_hidIAppletResource, &sharedmem_handle);
 
-    if (R_SUCCEEDED(rc))
-    {
+    if (R_SUCCEEDED(rc)) {
         shmemLoadRemote(&g_hidSharedmem, sharedmem_handle, 0x40000, Perm_R);
 
         rc = shmemMap(&g_hidSharedmem);
@@ -108,33 +99,25 @@ Result hidInitialize(void)
     if (R_SUCCEEDED(rc))
         rc = hidSetNpadJoyHoldType(HidJoyHoldType_Default);
 
-    if (R_FAILED(rc))
-        hidExit();
-
     hidReset();
     return rc;
 }
 
-void hidExit(void)
-{
-    if (atomicDecrement64(&g_refCnt) == 0)
-    {
-        hidFinalizeSevenSixAxisSensor();
+void _hidCleanup(void) {
+    hidFinalizeSevenSixAxisSensor();
 
-        hidSetNpadJoyHoldType(HidJoyHoldType_Default);
+    hidSetNpadJoyHoldType(HidJoyHoldType_Default);
 
-        _hidSetDualModeAll();
+    _hidSetDualModeAll();
 
-        _hidDeactivateNpad();
+    _hidDeactivateNpad();
 
-        serviceClose(&g_hidIAppletResource);
-        serviceClose(&g_hidSrv);
-        shmemClose(&g_hidSharedmem);
-    }
+    serviceClose(&g_hidIAppletResource);
+    serviceClose(&g_hidSrv);
+    shmemClose(&g_hidSharedmem);
 }
 
-void hidReset(void)
-{
+void hidReset(void) {
     rwlockWriteLock(&g_hidLock);
 
     // Reset internal state
@@ -649,261 +632,126 @@ static Result _hidSetDualModeAll(void) {
     return rc;
 }
 
-static Result _hidCreateAppletResource(Service* srv, Service* srv_out, u64 AppletResourceUserId) {
-    IpcCommand c;
-    ipcInitialize(&c);
+static Result _hidCmdGetHandle(Service* srv, Handle* handle_out, u32 cmd_id) {
+    return serviceDispatch(srv, cmd_id,
+        .out_handle_attrs = { SfOutHandleAttr_HipcCopy },
+        .out_handles = handle_out,
+    );
+}
 
-    struct {
-        u64 magic;
-        u64 cmd_id;
+static Result _hidCmdGetSession(Service* srv_out, u32 cmd_id) {
+    return serviceDispatch(&g_hidSrv, cmd_id,
+        .out_num_objects = 1,
+        .out_objects = srv_out,
+    );
+}
+
+static Result _hidCmdWithNoInput(u32 cmd_id) {
+    Result rc=0;
+    u64 AppletResourceUserId;
+
+    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
+    if (R_FAILED(rc))
+        AppletResourceUserId = 0;
+
+    return serviceDispatchIn(&g_hidSrv, cmd_id, AppletResourceUserId,
+        .in_send_pid = true,
+    );
+}
+
+static Result _hidCmdInU8NoOut(u8 inval, u32 cmd_id) {
+    return serviceDispatchIn(&g_hidSrv, cmd_id, inval);
+}
+
+static Result _hidCmdInBoolNoOut(bool inval, u32 cmd_id) {
+    return _hidCmdInU8NoOut(inval!=0, cmd_id);
+}
+
+static Result _hidCmdInU32NoOut(Service* srv, u32 inval, u32 cmd_id) {
+    return serviceDispatchIn(srv, cmd_id, inval);
+}
+
+static Result _hidCmdWithInputU32(u32 inval, u32 cmd_id) {
+    Result rc;
+    u64 AppletResourceUserId;
+
+    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
+    if (R_FAILED(rc))
+        AppletResourceUserId = 0;
+
+    const struct {
+        u32 inval;
         u64 AppletResourceUserId;
-    } *raw;
+    } in = { inval, AppletResourceUserId };
 
-    ipcSendPid(&c);
+    return serviceDispatchIn(&g_hidSrv, cmd_id, in,
+        .in_send_pid = true,
+    );
+}
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
+static Result _hidCmdWithInputU64(u64 inval, u32 cmd_id) {
+    Result rc;
+    u64 AppletResourceUserId;
 
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 0;
-    raw->AppletResourceUserId = AppletResourceUserId;
+    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
+    if (R_FAILED(rc))
+        AppletResourceUserId = 0;
 
-    Result rc = serviceIpcDispatch(srv);
+    const struct {
+        u64 AppletResourceUserId;
+        u64 inval;
+    } in = { AppletResourceUserId, inval };
 
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
+    return serviceDispatchIn(&g_hidSrv, cmd_id, in,
+        .in_send_pid = true,
+    );
+}
 
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
+static Result _hidCmdOutU32(u32 *out, u32 cmd_id) {
+    Result rc;
+    u64 AppletResourceUserId;
 
-        rc = resp->result;
+    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
+    if (R_FAILED(rc))
+        AppletResourceUserId = 0;
 
-        if (R_SUCCEEDED(rc)) {
-            serviceCreate(srv_out, r.Handles[0]);
-        }
-    }
+    return serviceDispatchInOut(&g_hidSrv, cmd_id, AppletResourceUserId, *out,
+        .in_send_pid = true,
+    );
+}
 
+static Result _hidCmdNoInOutU8(u8 *out, u32 cmd_id) {
+    return serviceDispatchOut(&g_hidSrv, cmd_id, *out);
+}
+
+static Result _hidCmdNoInOutBool(bool *out, u32 cmd_id) {
+    u8 tmp=0;
+    Result rc = _hidCmdNoInOutU8(&tmp, cmd_id);
+    if (R_SUCCEEDED(rc) && out) *out = tmp!=0;
     return rc;
+}
+
+static Result _hidCreateAppletResource(Service* srv, Service* srv_out, u64 AppletResourceUserId) {
+    return serviceDispatchIn(srv, 0, AppletResourceUserId,
+        .in_send_pid = true,
+        .out_num_objects = 1,
+        .out_objects = srv_out,
+    );
 }
 
 static Result _hidGetSharedMemoryHandle(Service* srv, Handle* handle_out) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 0;
-
-    Result rc = serviceIpcDispatch(srv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            *handle_out = r.Handles[0];
-        }
-    }
-
-    return rc;
-}
-
-static Result _hidCmdWithInputU32(u64 cmd_id, u32 inputval) {
-    Result rc;
-    u64 AppletResourceUserId;
-
-    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
-    if (R_FAILED(rc))
-        AppletResourceUserId = 0;
-
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u32 val;
-        u64 AppletResourceUserId;
-    } *raw;
-
-    ipcSendPid(&c);
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = cmd_id;
-    raw->val = inputval;
-    raw->AppletResourceUserId = AppletResourceUserId;
-
-    rc = serviceIpcDispatch(&g_hidSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
-}
-
-static Result _hidCmdOutU32(u64 cmd_id, u32 *out) {
-    Result rc;
-    u64 AppletResourceUserId;
-
-    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
-    if (R_FAILED(rc))
-        AppletResourceUserId = 0;
-
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u64 AppletResourceUserId;
-    } *raw;
-
-    ipcSendPid(&c);
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = cmd_id;
-    raw->AppletResourceUserId = AppletResourceUserId;
-
-    rc = serviceIpcDispatch(&g_hidSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-            u32 out;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && out) *out = resp->out;
-    }
-
-    return rc;
-}
-
-static Result _hidCmdWithInputU64(u64 cmd_id, u64 inputval) {
-    Result rc;
-    u64 AppletResourceUserId;
-
-    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
-    if (R_FAILED(rc))
-        AppletResourceUserId = 0;
-
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u64 AppletResourceUserId;
-        u64 val;
-    } *raw;
-
-    ipcSendPid(&c);
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = cmd_id;
-    raw->val = inputval;
-    raw->AppletResourceUserId = AppletResourceUserId;
-
-    rc = serviceIpcDispatch(&g_hidSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
-}
-
-static Result _hidCmdWithNoInput(u64 cmd_id) {
-    Result rc;
-    u64 AppletResourceUserId;
-
-    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
-    if (R_FAILED(rc))
-        AppletResourceUserId = 0;
-
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u64 AppletResourceUserId;
-    } *raw;
-
-    ipcSendPid(&c);
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = cmd_id;
-    raw->AppletResourceUserId = AppletResourceUserId;
-
-    rc = serviceIpcDispatch(&g_hidSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    return _hidCmdGetHandle(srv, handle_out, 0);
 }
 
 Result hidSetSupportedNpadStyleSet(HidControllerType type) {
-    return _hidCmdWithInputU32(100, type);
+    return _hidCmdWithInputU32(type, 100);
 }
 
 Result hidGetSupportedNpadStyleSet(HidControllerType *type) {
-    return _hidCmdOutU32(101, type);
+    u32 tmp=0;
+    Result rc = _hidCmdOutU32(&tmp, 101);
+    if (R_SUCCEEDED(rc) && type) *type = tmp;
+    return rc;
 }
 
 Result hidSetSupportedNpadIdType(HidControllerID *buf, size_t count) {
@@ -933,40 +781,11 @@ Result hidSetSupportedNpadIdType(HidControllerID *buf, size_t count) {
         tmpbuf[i] = tmpval;
     }
 
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u64 AppletResourceUserId;
-    } *raw;
-
-    ipcSendPid(&c);
-
-    ipcAddSendStatic(&c, tmpbuf, sizeof(u32)*count, 0);
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 102;
-    raw->AppletResourceUserId = AppletResourceUserId;
-
-    rc = serviceIpcDispatch(&g_hidSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    return serviceDispatchIn(&g_hidSrv, 102, AppletResourceUserId,
+        .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_In },
+        .buffers = { { tmpbuf, count*sizeof(u32) } },
+        .in_send_pid = true,
+    );
 }
 
 static Result _hidActivateNpad(void) {
@@ -977,66 +796,40 @@ static Result _hidDeactivateNpad(void) {
     return _hidCmdWithNoInput(104);
 }
 
-Result hidAcquireNpadStyleSetUpdateEventHandle(HidControllerID id, Event* event, bool autoclear) {
+Result hidAcquireNpadStyleSetUpdateEventHandle(HidControllerID id, Event* out_event, bool autoclear) {
     Result rc;
+    Handle tmp_handle = INVALID_HANDLE;
     u64 AppletResourceUserId;
 
     rc = appletGetAppletResourceUserId(&AppletResourceUserId);
     if (R_FAILED(rc))
         AppletResourceUserId = 0;
 
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         u32 id;
         u64 AppletResourceUserId;
-        u64 event_ptr;
-    } *raw;
+        u64 event_ptr; // Official sw sets this to a ptr, which the sysmodule doesn't seem to use.
+    } in = { hidControllerIDToOfficial(id), AppletResourceUserId, 0 };
 
-    ipcSendPid(&c);
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 106;
-    raw->id = hidControllerIDToOfficial(id);
-    raw->AppletResourceUserId = AppletResourceUserId;
-    raw->event_ptr = 0;//Official sw sets this to a ptr, which the sysmodule doesn't seem to use.
-
-    rc = serviceIpcDispatch(&g_hidSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            eventLoadRemote(event, r.Handles[0], autoclear);
-        }
-    }
-
+    rc = serviceDispatchIn(&g_hidSrv, 106, in,
+        .in_send_pid = true,
+        .out_handle_attrs = { SfOutHandleAttr_HipcCopy },
+        .out_handles = &tmp_handle,
+    );
+    if (R_SUCCEEDED(rc)) eventLoadRemote(out_event, tmp_handle, autoclear);
     return rc;
 }
 
 Result hidSetNpadJoyHoldType(HidJoyHoldType type) {
-    return _hidCmdWithInputU64(120, type);
+    return _hidCmdWithInputU64(type, 120);
 }
 
 Result hidSetNpadJoyAssignmentModeSingleByDefault(HidControllerID id) {
-    return _hidCmdWithInputU32(122, hidControllerIDToOfficial(id));
+    return _hidCmdWithInputU32(hidControllerIDToOfficial(id), 122);
 }
 
 Result hidSetNpadJoyAssignmentModeDual(HidControllerID id) {
-    return _hidCmdWithInputU32(124, hidControllerIDToOfficial(id));
+    return _hidCmdWithInputU32(hidControllerIDToOfficial(id), 124);
 }
 
 Result hidMergeSingleJoyAsDualJoy(HidControllerID id0, HidControllerID id1) {
@@ -1047,147 +840,26 @@ Result hidMergeSingleJoyAsDualJoy(HidControllerID id0, HidControllerID id1) {
     if (R_FAILED(rc))
         AppletResourceUserId = 0;
 
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         u32 id0, id1;
         u64 AppletResourceUserId;
-    } *raw;
+    } in = { hidControllerIDToOfficial(id0), hidControllerIDToOfficial(id1), AppletResourceUserId };
 
-    ipcSendPid(&c);
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 125;
-    raw->id0 = hidControllerIDToOfficial(id0);
-    raw->id1 = hidControllerIDToOfficial(id1);
-    raw->AppletResourceUserId = AppletResourceUserId;
-
-    rc = serviceIpcDispatch(&g_hidSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    return serviceDispatchIn(&g_hidSrv, 125, in,
+        .in_send_pid = true,
+    );
 }
 
 static Result _hidCreateActiveVibrationDeviceList(Service* srv_out) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 203;
-
-    Result rc = serviceIpcDispatch(&g_hidSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            serviceCreate(srv_out, r.Handles[0]);
-        }
-    }
-
-    return rc;
+    return _hidCmdGetSession(srv_out, 203);
 }
 
 static Result _hidActivateVibrationDevice(Service* srv, u32 VibrationDeviceHandle) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u32 VibrationDeviceHandle;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 0;
-    raw->VibrationDeviceHandle = VibrationDeviceHandle;
-
-    Result rc = serviceIpcDispatch(srv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    return _hidCmdInU32NoOut(srv, VibrationDeviceHandle, 0);
 }
 
 Result hidGetVibrationDeviceInfo(u32 *VibrationDeviceHandle, HidVibrationDeviceInfo *VibrationDeviceInfo) {
-    Result rc;
-
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u32 VibrationDeviceHandle;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 200;
-    raw->VibrationDeviceHandle = *VibrationDeviceHandle;
-
-    rc = serviceIpcDispatch(&g_hidSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-            HidVibrationDeviceInfo VibrationDeviceInfo;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && VibrationDeviceInfo) memcpy(VibrationDeviceInfo, &resp->VibrationDeviceInfo, sizeof(HidVibrationDeviceInfo));
-    }
-
-    return rc;
+    return serviceDispatchInOut(&g_hidSrv, 200, *VibrationDeviceHandle, *VibrationDeviceInfo);
 }
 
 Result hidSendVibrationValue(u32 *VibrationDeviceHandle, HidVibrationValue *VibrationValue) {
@@ -1198,42 +870,15 @@ Result hidSendVibrationValue(u32 *VibrationDeviceHandle, HidVibrationValue *Vibr
     if (R_FAILED(rc))
         AppletResourceUserId = 0;
 
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         u32 VibrationDeviceHandle;
         HidVibrationValue VibrationValue;
         u64 AppletResourceUserId;
-    } *raw;
+    } in = { *VibrationDeviceHandle, *VibrationValue, AppletResourceUserId };
 
-    ipcSendPid(&c);
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 201;
-    raw->VibrationDeviceHandle = *VibrationDeviceHandle;
-    raw->AppletResourceUserId = AppletResourceUserId;
-    memcpy(&raw->VibrationValue, VibrationValue, sizeof(HidVibrationValue));
-
-    rc = serviceIpcDispatch(&g_hidSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    return serviceDispatchIn(&g_hidSrv, 201, in,
+        .in_send_pid = true,
+    );
 }
 
 Result hidGetActualVibrationValue(u32 *VibrationDeviceHandle, HidVibrationValue *VibrationValue) {
@@ -1244,114 +889,25 @@ Result hidGetActualVibrationValue(u32 *VibrationDeviceHandle, HidVibrationValue 
     if (R_FAILED(rc))
         AppletResourceUserId = 0;
 
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         u32 VibrationDeviceHandle;
         u64 AppletResourceUserId;
-    } *raw;
+    } in = { *VibrationDeviceHandle, AppletResourceUserId };
 
-    ipcSendPid(&c);
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 202;
-    raw->VibrationDeviceHandle = *VibrationDeviceHandle;
-    raw->AppletResourceUserId = AppletResourceUserId;
-
-    rc = serviceIpcDispatch(&g_hidSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-            HidVibrationValue VibrationValue;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && VibrationValue) memcpy(VibrationValue, &resp->VibrationValue, sizeof(HidVibrationValue));
-    }
-
-    return rc;
+    return serviceDispatchInOut(&g_hidSrv, 202, in, *VibrationValue,
+        .in_send_pid = true,
+    );
 }
 
 Result hidPermitVibration(bool flag) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u8 flag;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 204;
-    raw->flag = !!flag;
-
-    Result rc = serviceIpcDispatch(&g_hidSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    return _hidCmdInBoolNoOut(flag, 204);
 }
 
 Result hidIsVibrationPermitted(bool *flag) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 205;
-
-    Result rc = serviceIpcDispatch(&g_hidSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-            u8 flag;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && flag)
-            *flag = resp->flag & 1;
-    }
-
-    return rc;
+    return _hidCmdNoInOutBool(flag, 205);
 }
 
-Result hidSendVibrationValues(u32 *VibrationDeviceHandles, HidVibrationValue *VibrationValues, size_t count) {
+Result hidSendVibrationValues(u32 *VibrationDeviceHandles, HidVibrationValue *VibrationValues, s32 count) {
     Result rc;
     u64 AppletResourceUserId;
 
@@ -1359,47 +915,24 @@ Result hidSendVibrationValues(u32 *VibrationDeviceHandles, HidVibrationValue *Vi
     if (R_FAILED(rc))
         AppletResourceUserId = 0;
 
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u64 AppletResourceUserId;
-    } *raw;
-
-    ipcAddSendStatic(&c, VibrationDeviceHandles, sizeof(u32)*count, 0);
-    ipcAddSendStatic(&c, VibrationValues, sizeof(HidVibrationValue)*count, 0);
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 206;
-    raw->AppletResourceUserId = AppletResourceUserId;
-
-    rc = serviceIpcDispatch(&g_hidSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    return serviceDispatchIn(&g_hidSrv, 206, AppletResourceUserId,
+        .buffer_attrs = {
+            SfBufferAttr_HipcPointer | SfBufferAttr_In,
+            SfBufferAttr_HipcPointer | SfBufferAttr_In,
+        },
+        .buffers = {
+            { VibrationDeviceHandles, count*sizeof(u32) },
+            { VibrationValues, count*sizeof(HidVibrationValue) },
+        },
+    );
 }
 
-static Result _hidGetDeviceHandles(u32 devicetype, u32 *DeviceHandles, size_t total_handles, HidControllerID id, HidControllerType type) {
+static Result _hidGetDeviceHandles(u32 devicetype, u32 *DeviceHandles, s32 total_handles, HidControllerID id, HidControllerType type) {
     Result rc=0;
     u32 tmp_type = type & 0xff;
     u32 tmp_id = id;
 
-    if (total_handles == 0 || total_handles > 2 || devicetype > 1)
+    if (total_handles <= 0 || total_handles > 2 || devicetype > 1)
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
     if (tmp_id == CONTROLLER_HANDHELD)
@@ -1421,11 +954,10 @@ static Result _hidGetDeviceHandles(u32 devicetype, u32 *DeviceHandles, size_t to
         tmp_type = 7;
         tmp_type |= 0x010000;
     }
-    //Official sw checks for these bits but libnx hid.h doesn't have these currently.
-    else if (tmp_type & BIT(29)) {
+    else if (tmp_type & TYPE_SYSTEM_EXT) {
         tmp_type = 0x20;
     }
-    else if (tmp_type & BIT(30)) {
+    else if (tmp_type & TYPE_SYSTEM) {
         tmp_type = 0x21;
     }
     else {
@@ -1453,10 +985,10 @@ static Result _hidGetDeviceHandles(u32 devicetype, u32 *DeviceHandles, size_t to
     return rc;
 }
 
-Result hidInitializeVibrationDevices(u32 *VibrationDeviceHandles, size_t total_handles, HidControllerID id, HidControllerType type) {
+Result hidInitializeVibrationDevices(u32 *VibrationDeviceHandles, s32 total_handles, HidControllerID id, HidControllerType type) {
     Result rc=0;
     Service srv;
-    size_t i;
+    s32 i;
 
     rc = _hidGetDeviceHandles(0, VibrationDeviceHandles, total_handles, id, type);
     if (R_FAILED(rc)) return rc;
@@ -1476,12 +1008,12 @@ Result hidInitializeVibrationDevices(u32 *VibrationDeviceHandles, size_t total_h
     return rc;
 }
 
-Result hidGetSixAxisSensorHandles(u32 *SixAxisSensorHandles, size_t total_handles, HidControllerID id, HidControllerType type) {
+Result hidGetSixAxisSensorHandles(u32 *SixAxisSensorHandles, s32 total_handles, HidControllerID id, HidControllerType type) {
     return _hidGetDeviceHandles(1, SixAxisSensorHandles, total_handles, id, type);
 }
 
 Result hidStartSixAxisSensor(u32 SixAxisSensorHandle) {
-    u32 rc = _hidCmdWithInputU32(66, SixAxisSensorHandle);
+    u32 rc = _hidCmdWithInputU32(SixAxisSensorHandle, 66);
     if (R_SUCCEEDED(rc)) {
         int controller = (SixAxisSensorHandle >> 8) & 0xff;
         if (controller == 0x20)
@@ -1496,7 +1028,7 @@ Result hidStartSixAxisSensor(u32 SixAxisSensorHandle) {
 }
 
 Result hidStopSixAxisSensor(u32 SixAxisSensorHandle) {
-    u32 rc = _hidCmdWithInputU32(67, SixAxisSensorHandle);
+    u32 rc = _hidCmdWithInputU32(SixAxisSensorHandle, 67);
     if (R_SUCCEEDED(rc)) {
         int controller = (SixAxisSensorHandle >> 8) & 0xff;
         if (controller == 0x20)
@@ -1539,45 +1071,17 @@ static Result _hidInitializeSevenSixAxisSensor(TransferMemory *tmem0, TransferMe
     if (R_FAILED(rc))
         AppletResourceUserId = 0;
 
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    ipcSendPid(&c);
-    ipcSendHandleCopy(&c, tmem0->handle);
-    ipcSendHandleCopy(&c, tmem1->handle);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         u64 AppletResourceUserId;
         u64 size0;
         u64 size1;
-    } *raw;
+    } in = { AppletResourceUserId, tmem0->size, tmem1->size };
 
-    raw = serviceIpcPrepareHeader(&g_hidSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 306;
-    raw->AppletResourceUserId = AppletResourceUserId;
-    raw->size0 = tmem0->size;
-    raw->size1 = tmem1->size;
-
-    rc = serviceIpcDispatch(&g_hidSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_hidSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    return serviceDispatchIn(&g_hidSrv, 306, in,
+        .in_send_pid = true,
+        .in_num_handles = 2,
+        .in_handles = { tmem0->handle, tmem1->handle },
+    );
 }
 
 Result hidInitializeSevenSixAxisSensor(void) {
@@ -1646,41 +1150,14 @@ Result hidSetSevenSixAxisSensorFusionStrength(float strength) {
     if (R_FAILED(rc))
         AppletResourceUserId = 0;
 
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         float strength;
         u64 AppletResourceUserId;
-    } *raw;
+    } in = { strength, AppletResourceUserId };
 
-    ipcSendPid(&c);
-
-    raw = serviceIpcPrepareHeader(&g_hidSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 308;
-    raw->strength = strength;
-    raw->AppletResourceUserId = AppletResourceUserId;
-
-    rc = serviceIpcDispatch(&g_hidSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_hidSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    return serviceDispatchIn(&g_hidSrv, 308, in,
+        .in_send_pid = true,
+    );
 }
 
 Result hidGetSevenSixAxisSensorFusionStrength(float *strength) {
@@ -1694,42 +1171,9 @@ Result hidGetSevenSixAxisSensorFusionStrength(float *strength) {
     if (R_FAILED(rc))
         AppletResourceUserId = 0;
 
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u64 AppletResourceUserId;
-    } *raw;
-
-    ipcSendPid(&c);
-
-    raw = serviceIpcPrepareHeader(&g_hidSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 309;
-    raw->AppletResourceUserId = AppletResourceUserId;
-
-    rc = serviceIpcDispatch(&g_hidSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            float strength;
-        } *resp;
-
-        serviceIpcParse(&g_hidSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && strength) *strength = resp->strength;
-    }
-
-    return rc;
+    return serviceDispatchInOut(&g_hidSrv, 309, AppletResourceUserId, *strength,
+        .in_send_pid = true,
+    );
 }
 
 Result hidResetSevenSixAxisSensorTimestamp(void) {
@@ -1743,40 +1187,7 @@ Result hidGetNpadInterfaceType(HidControllerID id, u8 *out) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    Result rc;
-
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u32 id;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 405;
-    raw->id = hidControllerIDToOfficial(id);
-
-    rc = serviceIpcDispatch(&g_hidSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-            u8 out;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && out) *out = resp->out;
-    }
-
-    return rc;
+    u32 tmp = hidControllerIDToOfficial(id);
+    return serviceDispatchInOut(&g_hidSrv, 405, tmp, *out);
 }
 

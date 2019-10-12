@@ -8,12 +8,12 @@
 #pragma once
 #include "../types.h"
 #include "../kernel/event.h"
-#include "../services/sm.h"
+#include "../sf/service.h"
 
 // Begin enums and output structs
 
-typedef enum
-{
+/// HidMouseButton
+typedef enum {
     MOUSE_LEFT    = BIT(0),
     MOUSE_RIGHT   = BIT(1),
     MOUSE_MIDDLE  = BIT(2),
@@ -21,8 +21,8 @@ typedef enum
     MOUSE_BACK    = BIT(4),
 } HidMouseButton;
 
-typedef enum
-{
+/// HidKeyboardModifier
+typedef enum {
     KBD_MOD_LCTRL      = BIT(0),
     KBD_MOD_LSHIFT     = BIT(1),
     KBD_MOD_LALT       = BIT(2),
@@ -36,8 +36,8 @@ typedef enum
     KBD_MOD_NUMLOCK    = BIT(10),
 } HidKeyboardModifier;
 
-typedef enum
-{
+/// HidKeyboardScancode
+typedef enum {
     KBD_NONE = 0x00,
     KBD_ERR_OVF = 0x01,
 
@@ -215,8 +215,7 @@ typedef enum
 } HidKeyboardScancode;
 
 /// HID controller type
-typedef enum
-{
+typedef enum {
     TYPE_PROCONTROLLER = BIT(0),
     TYPE_HANDHELD      = BIT(1),
     TYPE_JOYCON_PAIR   = BIT(2),
@@ -227,8 +226,8 @@ typedef enum
     TYPE_SYSTEM        = BIT(30),
 } HidControllerType;
 
-typedef enum
-{
+/// HidControllerLayoutType
+typedef enum {
     LAYOUT_PROCONTROLLER   = 0, ///< Pro Controller or Hid gamepad.
     LAYOUT_HANDHELD        = 1, ///< Two Joy-Con docked to rails.
     LAYOUT_SINGLE          = 2, ///< Single Joy-Con or pair of Joy-Con, only available in dual-mode with no orientation adjustment.
@@ -238,14 +237,13 @@ typedef enum
     LAYOUT_DEFAULT         = 6, ///< Safe default. Single-mode and ::HidJoyHoldType_Horizontal: Joy-Con have buttons/sticks rotated for orientation, where physical Z(L/R) are unavailable and S(L/R) are mapped to L/R (with physical L/R unavailable).
 } HidControllerLayoutType;
 
-typedef enum
-{
+/// HidControllerColorDescription
+typedef enum {
     COLORS_NONEXISTENT = BIT(1),
 } HidControllerColorDescription;
 
 /// HidControllerKeys
-typedef enum
-{
+typedef enum {
     KEY_A            = BIT(0),       ///< A
     KEY_B            = BIT(1),       ///< B
     KEY_X            = BIT(2),       ///< X
@@ -296,22 +294,22 @@ typedef enum
     KEY_SR    = KEY_SR_LEFT | KEY_SR_RIGHT,                        ///< SR on Left or Right Joy-Con
 } HidControllerKeys;
 
-typedef enum
-{
+/// HidControllerJoystick
+typedef enum {
     JOYSTICK_LEFT  = 0,
     JOYSTICK_RIGHT = 1,
 
     JOYSTICK_NUM_STICKS = 2,
 } HidControllerJoystick;
 
-typedef enum
-{
+/// HidControllerConnectionState
+typedef enum {
     CONTROLLER_STATE_CONNECTED = BIT(0),
     CONTROLLER_STATE_WIRED     = BIT(1),
 } HidControllerConnectionState;
 
-typedef enum
-{
+/// HidControllerID
+typedef enum {
     CONTROLLER_PLAYER_1 = 0,
     CONTROLLER_PLAYER_2 = 1,
     CONTROLLER_PLAYER_3 = 2,
@@ -325,8 +323,8 @@ typedef enum
     CONTROLLER_P1_AUTO = 10, ///< Not an actual HID-sysmodule ID. Only for hidKeys*()/hidJoystickRead()/hidSixAxisSensorValuesRead()/hidGetControllerType()/hidGetControllerColors()/hidIsControllerConnected(). Automatically uses CONTROLLER_PLAYER_1 when connected, otherwise uses CONTROLLER_HANDHELD.
 } HidControllerID;
 
-typedef enum
-{
+/// JoyHoldType
+typedef enum {
     HidJoyHoldType_Default    = 0, ///< Default / Joy-Con held vertically.
     HidJoyHoldType_Horizontal = 1, ///< Joy-Con held horizontally with HID state orientation adjustment, see \ref HidControllerLayoutType.
 } HidJoyHoldType;
@@ -369,16 +367,15 @@ typedef enum {
 } HidDeviceType;
 
 /// NpadInterfaceType
-typedef enum
-{
+typedef enum {
     NpadInterfaceType_Bluetooth = 1,    ///< Bluetooth.
     NpadInterfaceType_Rail      = 2,    ///< Rail.
     NpadInterfaceType_USB       = 3,    ///< USB.
     NpadInterfaceType_Unknown4  = 4,    ///< Unknown.
 } HidNpadInterfaceType;
 
-typedef struct touchPosition
-{
+/// touchPosition
+typedef struct touchPosition {
     u32 id;
     u32 px;
     u32 py;
@@ -387,14 +384,14 @@ typedef struct touchPosition
     u32 angle;
 } touchPosition;
 
-typedef struct JoystickPosition
-{
+/// JoystickPosition
+typedef struct JoystickPosition {
     s32 dx;
     s32 dy;
 } JoystickPosition;
 
-typedef struct MousePosition
-{
+/// MousePosition
+typedef struct MousePosition {
     s32 x;
     s32 y;
     s32 velocityX;
@@ -403,15 +400,15 @@ typedef struct MousePosition
     s32 scrollVelocityY;
 } MousePosition;
 
-typedef struct HidVector
-{
+/// HidVector
+typedef struct HidVector {
     float x;
     float y;
     float z;
 } HidVector;
 
-typedef struct SixAxisSensorValues
-{
+/// SixAxisSensorValues
+typedef struct SixAxisSensorValues {
     HidVector accelerometer;
     HidVector gyroscope;
     HidVector unk;
@@ -425,8 +422,8 @@ typedef struct SixAxisSensorValues
 
 // Begin HidTouchScreen
 
-typedef struct HidTouchScreenHeader
-{
+/// HidTouchScreenHeader
+typedef struct HidTouchScreenHeader {
     u64 timestampTicks;
     u64 numEntries;
     u64 latestEntry;
@@ -434,14 +431,14 @@ typedef struct HidTouchScreenHeader
     u64 timestamp;
 } HidTouchScreenHeader;
 
-typedef struct HidTouchScreenEntryHeader
-{
+/// HidTouchScreenEntryHeader
+typedef struct HidTouchScreenEntryHeader {
     u64 timestamp;
     u64 numTouches;
 } HidTouchScreenEntryHeader;
 
-typedef struct HidTouchScreenEntryTouch
-{
+/// HidTouchScreenEntryTouch
+typedef struct HidTouchScreenEntryTouch {
     u64 timestamp;
     u32 padding;
     u32 touchIndex;
@@ -453,15 +450,15 @@ typedef struct HidTouchScreenEntryTouch
     u32 padding_2;
 } HidTouchScreenEntryTouch;
 
-typedef struct HidTouchScreenEntry
-{
+/// HidTouchScreenEntry
+typedef struct HidTouchScreenEntry {
     HidTouchScreenEntryHeader header;
     HidTouchScreenEntryTouch touches[16];
     u64 unk;
 } HidTouchScreenEntry;
 
-typedef struct HidTouchScreen
-{
+/// HidTouchScreen
+typedef struct HidTouchScreen {
     HidTouchScreenHeader header;
     HidTouchScreenEntry entries[17];
     u8 padding[0x3c0];
@@ -471,24 +468,24 @@ typedef struct HidTouchScreen
 
 // Begin HidMouse
 
-typedef struct HidMouseHeader
-{
+/// HidMouseHeader
+typedef struct HidMouseHeader {
     u64 timestampTicks;
     u64 numEntries;
     u64 latestEntry;
     u64 maxEntryIndex;
 } HidMouseHeader;
 
-typedef struct HidMouseEntry
-{
+/// HidMouseEntry
+typedef struct HidMouseEntry {
     u64 timestamp;
     u64 timestamp_2;
     MousePosition position;
     u64 buttons;
 } HidMouseEntry;
 
-typedef struct HidMouse
-{
+/// HidMouse
+typedef struct HidMouse {
     HidMouseHeader header;
     HidMouseEntry entries[17];
     u8 padding[0xB0];
@@ -498,24 +495,24 @@ typedef struct HidMouse
 
 // Begin HidKeyboard
 
-typedef struct HidKeyboardHeader
-{
+/// HidKeyboardHeader
+typedef struct HidKeyboardHeader {
     u64 timestampTicks;
     u64 numEntries;
     u64 latestEntry;
     u64 maxEntryIndex;
 } HidKeyboardHeader;
 
-typedef struct HidKeyboardEntry
-{
+/// HidKeyboardEntry
+typedef struct HidKeyboardEntry {
     u64 timestamp;
     u64 timestamp_2;
     u64 modifier;
     u32 keys[8];
 } HidKeyboardEntry;
 
-typedef struct HidKeyboard
-{
+/// HidKeyboard
+typedef struct HidKeyboard {
     HidKeyboardHeader header;
     HidKeyboardEntry entries[17];
     u8 padding[0x28];
@@ -525,16 +522,16 @@ typedef struct HidKeyboard
 
 // Begin HidController
 
-typedef struct HidControllerMAC
-{
+/// HidControllerMAC
+typedef struct HidControllerMAC {
     u64 timestamp;
     u8 mac[0x8];
     u64 unk;
     u64 timestamp_2;
 } HidControllerMAC;
 
-typedef struct HidControllerHeader
-{
+/// HidControllerHeader
+typedef struct HidControllerHeader {
     u32 type;
     u32 isHalf;
     u32 singleColorsDescriptor;
@@ -562,16 +559,16 @@ typedef struct HidControllerColors
     u32 rightColorButtons;  ///< RGBA Right Buttons Color
 } HidControllerColors;
 
-typedef struct HidControllerLayoutHeader
-{
+/// HidControllerLayoutHeader
+typedef struct HidControllerLayoutHeader {
     u64 timestampTicks;
     u64 numEntries;
     u64 latestEntry;
     u64 maxEntryIndex;
 } HidControllerLayoutHeader;
 
-typedef struct HidControllerInputEntry
-{
+/// HidControllerInputEntry
+typedef struct HidControllerInputEntry {
     u64 timestamp;
     u64 timestamp_2;
     u64 buttons;
@@ -579,22 +576,22 @@ typedef struct HidControllerInputEntry
     u64 connectionState;
 } HidControllerInputEntry;
 
-typedef struct HidControllerLayout
-{
+/// HidControllerLayout
+typedef struct HidControllerLayout {
     HidControllerLayoutHeader header;
     HidControllerInputEntry entries[17];
 } HidControllerLayout;
 
-typedef struct HidControllerSixAxisHeader
-{
+/// HidControllerSixAxisHeader
+typedef struct HidControllerSixAxisHeader {
     u64 timestamp;
     u64 numEntries;
     u64 latestEntry;
     u64 maxEntryIndex;
 } HidControllerSixAxisHeader;
 
-typedef struct HidControllerSixAxisEntry
-{
+/// HidControllerSixAxisEntry
+typedef struct HidControllerSixAxisEntry {
     u64 timestamp;
     u64 unk_1;
     u64 timestamp_2;
@@ -602,8 +599,8 @@ typedef struct HidControllerSixAxisEntry
     u64 unk_3;
 } HidControllerSixAxisEntry;
 
-typedef struct HidControllerSixAxisLayout
-{
+/// HidControllerSixAxisLayout
+typedef struct HidControllerSixAxisLayout {
     HidControllerSixAxisHeader header;
     HidControllerSixAxisEntry entries[17];
 } HidControllerSixAxisLayout;
@@ -629,6 +626,7 @@ typedef struct {
     u32 unintendedHomeButtonInputProtectionDisabled : 1;
 } HidFlags;
 
+/// HidControllerMisc
 typedef struct {
     u32 deviceType;
     u32 pad;
@@ -639,14 +637,15 @@ typedef struct {
     HidControllerMAC macRight;
 } HidControllerMisc;
 
+/// HidPowerInfo
 typedef struct {
     bool powerConnected;
     bool isCharging;
     u32 batteryCharge;    ///< Battery charge, always 0-4.
 } HidPowerInfo;
 
-typedef struct HidController
-{
+/// HidController
+typedef struct HidController {
     HidControllerHeader header;
     HidControllerLayout layouts[7];
     HidControllerSixAxisLayout sixaxis[6];
@@ -656,8 +655,8 @@ typedef struct HidController
 
 // End HidController
 
-typedef struct HidSharedMemory
-{
+/// HidSharedMemory
+typedef struct HidSharedMemory {
     u8 header[0x400];
     HidTouchScreen touchscreen;
     HidMouse mouse;
@@ -675,14 +674,14 @@ typedef struct HidSharedMemory
     u8 unkSection9[0x4600];
 } HidSharedMemory;
 
-typedef struct HidVibrationDeviceInfo
-{
+/// HidVibrationDeviceInfo
+typedef struct HidVibrationDeviceInfo {
     u32 unk_x0;
     u32 unk_x4; ///< 0x1 for left-joycon, 0x2 for right-joycon.
 } HidVibrationDeviceInfo;
 
-typedef struct HidVibrationValue
-{
+/// HidVibrationValue
+typedef struct HidVibrationValue {
     float amp_low;   ///< Low Band amplitude. 1.0f: Max amplitude.
     float freq_low;  ///< Low Band frequency in Hz.
     float amp_high;  ///< High Band amplitude. 1.0f: Max amplitude.
@@ -701,12 +700,18 @@ static inline HidControllerID hidControllerIDFromOfficial(u32 id) {
     return CONTROLLER_UNKNOWN;
 }
 
-/// Initializes hid, called automatically during app startup.
+/// Initialize hid. Called automatically during app startup.
 Result hidInitialize(void);
+
+/// Exit hid. Called automatically during app exit.
 void hidExit(void);
+
 void hidReset(void);
 
+/// Gets the Service object for the actual hid service session.
 Service* hidGetServiceSession(void);
+
+/// Gets the address of the SharedMemory.
 void* hidGetSharedmemAddr(void);
 
 void hidSetControllerLayout(HidControllerID id, HidControllerLayoutType layoutType);
@@ -768,7 +773,7 @@ Result hidSetSupportedNpadIdType(HidControllerID *buf, size_t count);
 /// Gets an event with the specified autoclear for the input controller.
 /// The user *must* close the event when finished with it / before the app exits.
 /// This is signaled when the \ref hidGetControllerType output is updated for the controller.
-Result hidAcquireNpadStyleSetUpdateEventHandle(HidControllerID id, Event* event, bool autoclear);
+Result hidAcquireNpadStyleSetUpdateEventHandle(HidControllerID id, Event* out_event, bool autoclear);
 
 /// Sets the hold-type, see \ref HidJoyHoldType.
 Result hidSetNpadJoyHoldType(HidJoyHoldType type);
@@ -789,7 +794,7 @@ Result hidSetNpadJoyAssignmentModeDual(HidControllerID id);
 /// If successful, the id of the resulting dual controller is set to id0.
 Result hidMergeSingleJoyAsDualJoy(HidControllerID id0, HidControllerID id1);
 
-Result hidInitializeVibrationDevices(u32 *VibrationDeviceHandles, size_t total_handles, HidControllerID id, HidControllerType type);
+Result hidInitializeVibrationDevices(u32 *VibrationDeviceHandles, s32 total_handles, HidControllerID id, HidControllerType type);
 
 /// Gets HidVibrationDeviceInfo for the specified VibrationDeviceHandle.
 Result hidGetVibrationDeviceInfo(u32 *VibrationDeviceHandle, HidVibrationDeviceInfo *VibrationDeviceInfo);
@@ -807,10 +812,10 @@ Result hidPermitVibration(bool flag);
 Result hidIsVibrationPermitted(bool *flag);
 
 /// Send VibrationValues[index] to VibrationDeviceHandles[index], where count is the number of entries in the VibrationDeviceHandles/VibrationValues arrays.
-Result hidSendVibrationValues(u32 *VibrationDeviceHandles, HidVibrationValue *VibrationValues, size_t count);
+Result hidSendVibrationValues(u32 *VibrationDeviceHandles, HidVibrationValue *VibrationValues, s32 count);
 
 /// Gets SixAxisSensorHandles. total_handles==2 can only be used with TYPE_JOYCON_PAIR.
-Result hidGetSixAxisSensorHandles(u32 *SixAxisSensorHandles, size_t total_handles, HidControllerID id, HidControllerType type);
+Result hidGetSixAxisSensorHandles(u32 *SixAxisSensorHandles, s32 total_handles, HidControllerID id, HidControllerType type);
 
 /// Starts the SixAxisSensor for the specified handle.
 Result hidStartSixAxisSensor(u32 SixAxisSensorHandle);
