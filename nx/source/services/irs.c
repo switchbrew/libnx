@@ -1,14 +1,11 @@
+#define NX_SERVICE_ASSUME_NON_DOMAIN
+#include "service_guard.h"
 #include <string.h>
-#include "types.h"
-#include "result.h"
-#include "arm/atomics.h"
-#include "kernel/ipc.h"
 #include "kernel/shmem.h"
 #include "kernel/tmem.h"
 #include "services/applet.h"
 #include "services/irs.h"
 #include "services/hid.h"
-#include "services/sm.h"
 
 typedef struct {
     bool initialized;
@@ -17,7 +14,6 @@ typedef struct {
 } IrsCameraEntry;
 
 static Service g_irsSrv;
-static u64 g_refCnt;
 static SharedMemory g_irsSharedmem;
 static bool g_irsSensorActivated;
 
@@ -25,14 +21,10 @@ static IrsCameraEntry g_irsCameras[8];
 
 static Result _irsGetIrsensorSharedMemoryHandle(Handle* handle_out, u64 AppletResourceUserId);
 
-Result irsInitialize(void)
-{
-    atomicIncrement64(&g_refCnt);
+NX_GENERATE_SERVICE_GUARD(irs);
 
-    if (serviceIsActive(&g_irsSrv))
-        return 0;
-
-    Result rc;
+Result _irsInitialize(void) {
+    Result rc=0;
     Handle sharedmem_handle;
 
     g_irsSensorActivated = 0;
@@ -48,38 +40,37 @@ Result irsInitialize(void)
 
     rc = _irsGetIrsensorSharedMemoryHandle(&sharedmem_handle, AppletResourceUserId);
 
-    if (R_SUCCEEDED(rc))
-    {
+    if (R_SUCCEEDED(rc)) {
         shmemLoadRemote(&g_irsSharedmem, sharedmem_handle, 0x8000, Perm_R);
 
         rc = shmemMap(&g_irsSharedmem);
     }
 
-    if (R_FAILED(rc))
-        irsExit();
-
     return rc;
 }
 
-void irsExit(void)
-{
-    if (atomicDecrement64(&g_refCnt) == 0)
-    {
-        size_t entrycount = sizeof(g_irsCameras)/sizeof(IrsCameraEntry);
-        IrsCameraEntry *entry;
+void _irsCleanup(void) {
+    size_t entrycount = sizeof(g_irsCameras)/sizeof(IrsCameraEntry);
+    IrsCameraEntry *entry;
 
-        int i;
-        for(i=0; i<entrycount; i++) {
-            entry = &g_irsCameras[i];
-            if (!entry->initialized) continue;
-            irsStopImageProcessor(entry->IrCameraHandle);
-        }
-
-        irsActivateIrsensor(0);
-
-        serviceClose(&g_irsSrv);
-        shmemClose(&g_irsSharedmem);
+    for(size_t i=0; i<entrycount; i++) {
+        entry = &g_irsCameras[i];
+        if (!entry->initialized) continue;
+        irsStopImageProcessor(entry->IrCameraHandle);
     }
+
+    irsActivateIrsensor(0);
+
+    serviceClose(&g_irsSrv);
+    shmemClose(&g_irsSharedmem);
+}
+
+Service* irsGetServiceSession(void) {
+    return &g_irsSrv;
+}
+
+void* irsGetSharedmemAddr(void) {
+    return shmemGetAddr(&g_irsSharedmem);
 }
 
 static Result _IrsCameraEntryAlloc(u32 IrCameraHandle, IrsCameraEntry **out_entry) {
@@ -135,14 +126,6 @@ static void _IrsCameraEntryFree(IrsCameraEntry *entry) {
     memset(entry, 0, sizeof(IrsCameraEntry));
 }
 
-Service* irsGetServiceSession(void) {
-    return &g_irsSrv;
-}
-
-void* irsGetSharedmemAddr(void) {
-    return shmemGetAddr(&g_irsSharedmem);
-}
-
 Result irsActivateIrsensor(bool activate) {
     if (g_irsSensorActivated==activate) return 0;
 
@@ -153,116 +136,30 @@ Result irsActivateIrsensor(bool activate) {
     if (R_FAILED(rc))
         return rc;
 
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u64 AppletResourceUserId;
-    } *raw;
-
-    ipcSendPid(&c);
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = activate ? 302 : 303;
-    raw->AppletResourceUserId = AppletResourceUserId;
-
-    rc = serviceIpcDispatch(&g_irsSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) g_irsSensorActivated = activate;
-    }
-
+    rc = serviceDispatchIn(&g_irsSrv, activate ? 302 : 303, AppletResourceUserId,
+        .in_send_pid = true,
+    );
+    if (R_SUCCEEDED(rc)) g_irsSensorActivated = activate;
     return rc;
 }
 
 static Result _irsGetIrsensorSharedMemoryHandle(Handle* handle_out, u64 AppletResourceUserId) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u64 AppletResourceUserId;
-    } *raw;
-
-    ipcSendPid(&c);
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 304;
-    raw->AppletResourceUserId = AppletResourceUserId;
-
-    Result rc = serviceIpcDispatch(&g_irsSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            *handle_out = r.Handles[0];
-        }
-    }
-
-    return rc;
+    return serviceDispatchIn(&g_irsSrv, 304, AppletResourceUserId,
+        .in_send_pid = true,
+        .out_handle_attrs = { SfOutHandleAttr_HipcCopy },
+        .out_handles = handle_out,
+    );
 }
 
 static Result _irsStopImageProcessor(u32 IrCameraHandle, u64 AppletResourceUserId) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         u32 IrCameraHandle;
         u64 AppletResourceUserId;
-    } *raw;
+    } in = { IrCameraHandle, AppletResourceUserId };
 
-    ipcSendPid(&c);
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 305;
-    raw->IrCameraHandle = IrCameraHandle;
-    raw->AppletResourceUserId = AppletResourceUserId;
-
-    Result rc = serviceIpcDispatch(&g_irsSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    return serviceDispatchIn(&g_irsSrv, 305, in,
+        .in_send_pid = true,
+    );
 }
 
 Result irsStopImageProcessor(u32 IrCameraHandle) {
@@ -289,47 +186,19 @@ Result irsStopImageProcessor(u32 IrCameraHandle) {
     return rc;
 }
 
-static Result _irsRunImageTransferProcessor(u32 IrCameraHandle, u64 AppletResourceUserId, IrsPackedImageTransferProcessorConfig *config, Handle transfermem, u64 transfermem_size) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+static Result _irsRunImageTransferProcessor(u32 IrCameraHandle, u64 AppletResourceUserId, IrsPackedImageTransferProcessorConfig *config, TransferMemory *tmem) {
+    const struct {
         u32 IrCameraHandle;
         u64 AppletResourceUserId;
         IrsPackedImageTransferProcessorConfig config;
         u64 TransferMemory_size;
-    } *raw;
+    } in = { IrCameraHandle, AppletResourceUserId, *config, tmem->size };
 
-    ipcSendPid(&c);
-    ipcSendHandleCopy(&c, transfermem);
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 308;
-    raw->IrCameraHandle = IrCameraHandle;
-    raw->AppletResourceUserId = AppletResourceUserId;
-    raw->TransferMemory_size = transfermem_size;
-
-    memcpy(&raw->config, config, sizeof(raw->config));
-
-    Result rc = serviceIpcDispatch(&g_irsSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    return serviceDispatchIn(&g_irsSrv, 308, in,
+        .in_send_pid = true,
+        .in_num_handles = 1,
+        .in_handles = { tmem->handle },
+    );
 }
 
 Result irsRunImageTransferProcessor(u32 IrCameraHandle, IrsImageTransferProcessorConfig *config, size_t size) {
@@ -358,7 +227,7 @@ Result irsRunImageTransferProcessor(u32 IrCameraHandle, IrsImageTransferProcesso
     rc = tmemCreate(&entry->transfermem, size, Perm_None);
     if (R_FAILED(rc)) return rc;
 
-    rc = _irsRunImageTransferProcessor(IrCameraHandle, AppletResourceUserId, &packed_config, entry->transfermem.handle, size);
+    rc = _irsRunImageTransferProcessor(IrCameraHandle, AppletResourceUserId, &packed_config, &entry->transfermem);
 
     if (R_FAILED(rc)) _IrsCameraEntryFree(entry);
 
@@ -366,45 +235,16 @@ Result irsRunImageTransferProcessor(u32 IrCameraHandle, IrsImageTransferProcesso
 }
 
 static Result _irsGetImageTransferProcessorState(u32 IrCameraHandle, u64 AppletResourceUserId, void* buffer, size_t size, IrsImageTransferProcessorState *state) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         u32 IrCameraHandle;
         u64 AppletResourceUserId;
-    } *raw;
+    } in = { IrCameraHandle, AppletResourceUserId };
 
-    ipcSendPid(&c);
-    ipcAddRecvBuffer(&c, buffer, size, 0);
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 309;
-    raw->IrCameraHandle = IrCameraHandle;
-    raw->AppletResourceUserId = AppletResourceUserId;
-
-    Result rc = serviceIpcDispatch(&g_irsSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-            IrsImageTransferProcessorState state;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && state)
-            memcpy(state, &resp->state, sizeof(IrsImageTransferProcessorState)); 
-    }
-
-    return rc;
+    return serviceDispatchInOut(&g_irsSrv, 309, in, *state,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { buffer, size } },
+        .in_send_pid = true,
+    );
 }
 
 Result irsGetImageTransferProcessorState(u32 IrCameraHandle, void* buffer, size_t size, IrsImageTransferProcessorState *state) {
@@ -430,78 +270,19 @@ void irsGetDefaultImageTransferProcessorConfig(IrsImageTransferProcessorConfig *
 }
 
 Result irsGetIrCameraHandle(u32 *IrCameraHandle, HidControllerID id) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u32 id;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 311;
-    raw->id = hidControllerIDToOfficial(id);
-
-    Result rc = serviceIpcDispatch(&g_irsSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-            u32 IrCameraHandle;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && IrCameraHandle) {
-            *IrCameraHandle = resp->IrCameraHandle;
-        }
-    }
-
-    return rc;
+    u32 tmp = hidControllerIDToOfficial(id);
+    return serviceDispatchInOut(&g_irsSrv, 311, tmp, *IrCameraHandle);
 }
 
 static Result _irsSuspendImageProcessor(u32 IrCameraHandle, u64 AppletResourceUserId) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         u32 IrCameraHandle;
         u64 AppletResourceUserId;
-    } *raw;
+    } in = { IrCameraHandle, AppletResourceUserId };
 
-    ipcSendPid(&c);
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 313;
-    raw->IrCameraHandle = IrCameraHandle;
-    raw->AppletResourceUserId = AppletResourceUserId;
-
-    Result rc = serviceIpcDispatch(&g_irsSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    return serviceDispatchIn(&g_irsSrv, 313, in,
+        .in_send_pid = true,
+    );
 }
 
 Result irsSuspendImageProcessor(u32 IrCameraHandle) {

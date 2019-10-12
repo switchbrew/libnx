@@ -7,7 +7,7 @@
 #pragma once
 
 #include "../types.h"
-#include "../services/sm.h"
+#include "../sf/service.h"
 #include "../services/hid.h"
 
 typedef struct {
@@ -55,12 +55,16 @@ Result irsInitialize(void);
 /// Exit irs.
 void irsExit(void);
 
+/// Gets the Service object for the actual irs service session.
 Service* irsGetServiceSession(void);
+
+/// Gets the address of the SharedMemory.
 void* irsGetSharedmemAddr(void);
 
 /// (De)activate the IR sensor, this is automatically used by \ref irsExit. Must be called after irsInitialize() to activate the IR sensor.
 Result irsActivateIrsensor(bool activate);
 
+/// Gets the IrCameraHandle for the specified controller.
 Result irsGetIrCameraHandle(u32 *IrCameraHandle, HidControllerID id);
 
 /**
