@@ -7,6 +7,7 @@
 
 #pragma once
 #include "../types.h"
+#include "../sf/service.h"
 #include "../services/hid.h"
 
 typedef struct {
@@ -128,40 +129,54 @@ typedef enum {
     NfpuMountTarget_All = 3,
 } NfpuMountTarget;
 
+/// Initialize nfp:user and nfc:user.
 Result nfpuInitialize(const NfpuInitConfig *config);
-void nfpuExit(void);
-Service* nfpuGetInterface(void);
 
+/// Exit nfp:user and nfc:user.
+void nfpuExit(void);
+
+/// Gets the Service object for the actual nfp:user service session.
+Service* nfpuGetServiceSession(void);
+
+/// Gets the Service object for the interface from nfp:user.
+Service* nfpuGetServiceSession_Interface(void);
+
+/// Gets the Service object for the actual nfc:user service session.
+Service* nfcuGetServiceSession(void);
+
+/// Gets the Service object for the interface from nfc:user.
+Service* nfcuGetServiceSession_Interface(void);
+
+Result nfpuListDevices(s32 *count, HidControllerID *out, size_t num_elements);
 Result nfpuStartDetection(HidControllerID id);
 Result nfpuStopDetection(HidControllerID id);
-
-/// Returned event will have autoclear off.
-Result nfpuAttachActivateEvent(HidControllerID id, Event *out);
-/// Returned event will have autoclear off.
-Result nfpuAttachDeactivateEvent(HidControllerID id, Event *out);
-/// Returned event will have autoclear on.
-Result nfpuAttachAvailabilityChangeEvent(Event *out);
-
-Result nfpuGetState(NfpuState *out);
-Result nfpuGetDeviceState(HidControllerID id, NfpuDeviceState *out);
-Result nfpuListDevices(u32 *count, HidControllerID *out, size_t num_elements);
-Result nfpuGetNpadId(HidControllerID id, u32 *out);
-
 Result nfpuMount(HidControllerID id, NfpuDeviceType device_type, NfpuMountTarget mount_target);
 Result nfpuUnmount(HidControllerID id);
+
+Result nfpuOpenApplicationArea(HidControllerID id, u32 app_id, u32 *npad_id);
+Result nfpuGetApplicationArea(HidControllerID id, void* buf, size_t buf_size);
+Result nfpuSetApplicationArea(HidControllerID id, const void* buf, size_t buf_size);
+Result nfpuFlush(HidControllerID id);
+Result nfpuRestore(HidControllerID id);
+Result nfpuCreateApplicationArea(HidControllerID id, u32 app_id, const void* buf, size_t buf_size);
 
 Result nfpuGetTagInfo(HidControllerID id, NfpuTagInfo *out);
 Result nfpuGetRegisterInfo(HidControllerID id, NfpuRegisterInfo *out);
 Result nfpuGetCommonInfo(HidControllerID id, NfpuCommonInfo *out);
 Result nfpuGetModelInfo(HidControllerID id, NfpuModelInfo *out);
 
-Result nfpuOpenApplicationArea(HidControllerID id, u32 app_id, u32 *npad_id);
-Result nfpuGetApplicationArea(HidControllerID id, void* buf, size_t buf_size);
-Result nfpuSetApplicationArea(HidControllerID id, const void* buf, size_t buf_size);
-Result nfpuCreateApplicationArea(HidControllerID id, u32 app_id, const void* buf, size_t buf_size);
+/// Returned event will have autoclear off.
+Result nfpuAttachActivateEvent(HidControllerID id, Event *out_event);
+/// Returned event will have autoclear off.
+Result nfpuAttachDeactivateEvent(HidControllerID id, Event *out_event);
 
-Result nfpuFlush(HidControllerID id);
-Result nfpuRestore(HidControllerID id);
+Result nfpuGetState(NfpuState *out);
+Result nfpuGetDeviceState(HidControllerID id, NfpuDeviceState *out);
+Result nfpuGetNpadId(HidControllerID id, u32 *out);
+
+/// Returned event will have autoclear on.
+/// Only available with [3.0.0+].
+Result nfpuAttachAvailabilityChangeEvent(Event *out_event);
 
 /// Calls nfc:user.
 Result nfpuIsNfcEnabled(bool *out);
