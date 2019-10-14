@@ -23,14 +23,13 @@ static const NfcRequiredMcuVersionData g_nfcVersionData[2] = {
     },
 };
 
-static Result _nfpCreateInterface(Service* srv, Service* srv_out);
-static Result _nfpInterfaceInitialize(Service* srv, u64 aruid, const NfcRequiredMcuVersionData *version, s32 count, u32 cmd_id);
-static Result _nfpInterfaceFinalize(Service* srv, u32 cmd_id);
+static Result _nfcCreateInterface(Service* srv, Service* srv_out);
+static Result _nfcInterfaceInitialize(Service* srv, u64 aruid, const NfcRequiredMcuVersionData *version, s32 count, u32 cmd_id);
 
-static Result _nfpCmdNoIO(Service* srv, u32 cmd_id);
-static Result _nfpCmdInIdNoOut(Service* srv, HidControllerID id, u32 cmd_id);
-static Result _nfpCmdInIdOutEvent(Service* srv, HidControllerID id, Event *out_event, u32 cmd_id);
-static Result _nfpCmdInIdOutBuffer(Service* srv, HidControllerID id, void* buf, size_t buf_size, u32 cmd_id);
+static Result _nfcCmdNoIO(Service* srv, u32 cmd_id);
+static Result _nfcCmdInDevhandleNoOut(Service* srv, const NfcDeviceHandle *handle, u32 cmd_id);
+static Result _nfcCmdInDevhandleOutEvent(Service* srv, const NfcDeviceHandle *handle, Event *out_event, u32 cmd_id);
+static Result _nfcCmdInDevhandleOutBuffer(Service* srv, const NfcDeviceHandle *handle, void* buf, size_t buf_size, u32 cmd_id);
 
 NX_GENERATE_SERVICE_GUARD(nfp);
 
@@ -67,16 +66,16 @@ Result _nfpInitialize(void) {
         rc = serviceConvertToDomain(&g_nfpSrv);
 
     if (R_SUCCEEDED(rc))
-        rc = _nfpCreateInterface(&g_nfpSrv, &g_nfpInterface);
+        rc = _nfcCreateInterface(&g_nfpSrv, &g_nfpInterface);
 
     if (R_SUCCEEDED(rc))
-        rc = _nfpInterfaceInitialize(&g_nfpInterface, aruid, g_nfcVersionData, 2, 0);
+        rc = _nfcInterfaceInitialize(&g_nfpInterface, aruid, g_nfcVersionData, 2, 0);
 
     return rc;
 }
 
 void _nfpCleanup(void) {
-    _nfpInterfaceFinalize(&g_nfpInterface, 1);
+    _nfcCmdNoIO(&g_nfpInterface, 1); // Finalize
     serviceClose(&g_nfpInterface);
     serviceClose(&g_nfpSrv);
     g_nfpServiceType = NfpServiceType_NotInitialized;
@@ -106,16 +105,16 @@ Result _nfcInitialize(void) {
         rc = serviceConvertToDomain(&g_nfcSrv);
 
     if (R_SUCCEEDED(rc))
-        rc = _nfpCreateInterface(&g_nfcSrv, &g_nfcInterface);
+        rc = _nfcCreateInterface(&g_nfcSrv, &g_nfcInterface);
 
     if (R_SUCCEEDED(rc))
-        rc = _nfpInterfaceInitialize(&g_nfcInterface, aruid, g_nfcVersionData, 2, hosversionBefore(4,0,0) ? 0 : 400);
+        rc = _nfcInterfaceInitialize(&g_nfcInterface, aruid, g_nfcVersionData, 2, hosversionBefore(4,0,0) ? 0 : 400);
 
     return rc;
 }
 
 void _nfcCleanup(void) {
-    _nfpInterfaceFinalize(&g_nfcInterface, hosversionBefore(4,0,0) ? 1 : 401);
+    _nfcCmdNoIO(&g_nfcInterface, hosversionBefore(4,0,0) ? 1 : 401); // Finalize
     serviceClose(&g_nfcInterface);
     serviceClose(&g_nfcSrv);
     g_nfcServiceType = NfcServiceType_NotInitialized;
@@ -137,7 +136,7 @@ Service* nfcGetServiceSession_Interface(void) {
     return &g_nfpInterface;
 }
 
-static Result _nfpCreateInterface(Service* srv, Service* srv_out) {
+static Result _nfcCreateInterface(Service* srv, Service* srv_out) {
     serviceAssumeDomain(srv);
     return serviceDispatch(srv, 0,
         .out_num_objects = 1,
@@ -145,7 +144,7 @@ static Result _nfpCreateInterface(Service* srv, Service* srv_out) {
     );
 }
 
-static Result _nfpCmdGetHandle(Service* srv, Handle* handle_out, u32 cmd_id) {
+static Result _nfcCmdGetHandle(Service* srv, Handle* handle_out, u32 cmd_id) {
     serviceAssumeDomain(srv);
     return serviceDispatch(srv, cmd_id,
         .out_handle_attrs = { SfOutHandleAttr_HipcCopy },
@@ -153,54 +152,51 @@ static Result _nfpCmdGetHandle(Service* srv, Handle* handle_out, u32 cmd_id) {
     );
 }
 
-static Result _fpuCmdGetEvent(Service* srv, Event* out_event, bool autoclear, u32 cmd_id) {
+static Result _nfcCmdGetEvent(Service* srv, Event* out_event, bool autoclear, u32 cmd_id) {
     Handle tmp_handle = INVALID_HANDLE;
     Result rc = 0;
 
-    rc = _nfpCmdGetHandle(srv, &tmp_handle, cmd_id);
+    rc = _nfcCmdGetHandle(srv, &tmp_handle, cmd_id);
     if (R_SUCCEEDED(rc)) eventLoadRemote(out_event, tmp_handle, autoclear);
     return rc;
 }
 
-static Result _nfpCmdNoIO(Service* srv, u32 cmd_id) {
+static Result _nfcCmdNoIO(Service* srv, u32 cmd_id) {
     serviceAssumeDomain(srv);
     return serviceDispatch(srv, cmd_id);
 }
 
-static Result _nfpCmdInIdNoOut(Service* srv, HidControllerID id, u32 cmd_id) {
+static Result _nfcCmdInDevhandleNoOut(Service* srv, const NfcDeviceHandle *handle, u32 cmd_id) {
     serviceAssumeDomain(srv);
-    u64 tmp = hidControllerIDToOfficial(id);
-    return serviceDispatchIn(srv, cmd_id, tmp);
+    return serviceDispatchIn(srv, cmd_id, *handle);
 }
 
-static Result _nfpCmdInIdOutU32(Service* srv, HidControllerID id, u32 *out, u32 cmd_id) {
+static Result _nfcCmdInDevhandleOutU32(Service* srv, const NfcDeviceHandle *handle, u32 *out, u32 cmd_id) {
     serviceAssumeDomain(srv);
-    u64 tmp = hidControllerIDToOfficial(id);
-    return serviceDispatchInOut(srv, cmd_id, tmp, *out);
+    return serviceDispatchInOut(srv, cmd_id, *handle, *out);
 }
 
-static Result _nfpCmdNoInOutU32(Service* srv, u32 *out, u32 cmd_id) {
+static Result _nfcCmdNoInOutU32(Service* srv, u32 *out, u32 cmd_id) {
     serviceAssumeDomain(srv);
     return serviceDispatchOut(srv, cmd_id, *out);
 }
 
-static Result _nfpCmdNoInOutU8(Service* srv, u8 *out, u32 cmd_id) {
+static Result _nfcCmdNoInOutU8(Service* srv, u8 *out, u32 cmd_id) {
     serviceAssumeDomain(srv);
     return serviceDispatchOut(srv, cmd_id, *out);
 }
 
-static Result _nfpCmdNoInOutBool(Service* srv, bool *out, u32 cmd_id) {
+static Result _nfcCmdNoInOutBool(Service* srv, bool *out, u32 cmd_id) {
     u8 tmp=0;
-    Result rc = _nfpCmdNoInOutU8(srv, &tmp, cmd_id);
+    Result rc = _nfcCmdNoInOutU8(srv, &tmp, cmd_id);
     if (R_SUCCEEDED(rc) && out) *out = tmp!=0;
     return rc;
 }
 
-static Result _nfpCmdInIdOutEvent(Service* srv, HidControllerID id, Event *out_event, u32 cmd_id) {
+static Result _nfcCmdInDevhandleOutEvent(Service* srv, const NfcDeviceHandle *handle, Event *out_event, u32 cmd_id) {
     Handle tmp_handle = INVALID_HANDLE;
-    u64 tmp = hidControllerIDToOfficial(id);
     serviceAssumeDomain(srv);
-    Result rc = serviceDispatchIn(srv, cmd_id, tmp,
+    Result rc = serviceDispatchIn(srv, cmd_id, *handle,
         .out_handle_attrs = { SfOutHandleAttr_HipcCopy },
         .out_handles = &tmp_handle,
     );
@@ -208,16 +204,15 @@ static Result _nfpCmdInIdOutEvent(Service* srv, HidControllerID id, Event *out_e
     return rc;
 }
 
-static Result _nfpCmdInIdOutBuffer(Service* srv, HidControllerID id, void* buf, size_t buf_size, u32 cmd_id) {
-    u64 tmp = hidControllerIDToOfficial(id);
+static Result _nfcCmdInDevhandleOutBuffer(Service* srv, const NfcDeviceHandle *handle, void* buf, size_t buf_size, u32 cmd_id) {
     serviceAssumeDomain(srv);
-    return serviceDispatchIn(srv, cmd_id, tmp,
+    return serviceDispatchIn(srv, cmd_id, *handle,
         .buffer_attrs = { SfBufferAttr_FixedSize | SfBufferAttr_HipcPointer | SfBufferAttr_Out },
         .buffers = { { buf, buf_size } },
     );
 }
 
-static Result _nfpInterfaceInitialize(Service* srv, u64 aruid, const NfcRequiredMcuVersionData *version, s32 count, u32 cmd_id) {
+static Result _nfcInterfaceInitialize(Service* srv, u64 aruid, const NfcRequiredMcuVersionData *version, s32 count, u32 cmd_id) {
     const struct {
         u64 aruid;
         u64 zero;
@@ -231,108 +226,88 @@ static Result _nfpInterfaceInitialize(Service* srv, u64 aruid, const NfcRequired
     );
 }
 
-static Result _nfpInterfaceFinalize(Service* srv, u32 cmd_id) {
-    return _nfpCmdNoIO(srv, cmd_id);
-}
-
-Result nfpListDevices(s32 *count, HidControllerID *out, size_t num_elements) {
-    // This is the maximum number of controllers that can be connected to a console at a time
-    // Incidentally, this is the biggest value official software (SSBU) was observed using
-    size_t max_controllers = 9;
-    if (num_elements > max_controllers)
-        num_elements = max_controllers;
-
-    u64 buf[max_controllers];
-    memset(buf, 0, sizeof(buf));
-
+Result nfpListDevices(s32 *total_out, NfcDeviceHandle *out, s32 count) {
     serviceAssumeDomain(&g_nfpInterface);
-    Result rc = serviceDispatchOut(&g_nfpInterface, 2, *count,
+    return serviceDispatchOut(&g_nfpInterface, 2, *total_out,
         .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_Out },
-        .buffers = { { buf, max_controllers*sizeof(u64) } },
+        .buffers = { { out, count*sizeof(NfcDeviceHandle) } },
     );
-    if (R_SUCCEEDED(rc) && out) {
-        for (size_t i=0; i<num_elements; i++)
-            out[i] = hidControllerIDFromOfficial(buf[i]);
-    }
-    return rc;
 }
 
-Result nfpStartDetection(HidControllerID id) {
-    return _nfpCmdInIdNoOut(&g_nfpInterface, id, 3);
+Result nfpStartDetection(const NfcDeviceHandle *handle) {
+    return _nfcCmdInDevhandleNoOut(&g_nfpInterface, handle, 3);
 }
 
-Result nfpStopDetection(HidControllerID id) {
-    return _nfpCmdInIdNoOut(&g_nfpInterface, id, 4);
+Result nfpStopDetection(const NfcDeviceHandle *handle) {
+    return _nfcCmdInDevhandleNoOut(&g_nfpInterface, handle, 4);
 }
 
-Result nfpMount(HidControllerID id, NfpDeviceType device_type, NfpMountTarget mount_target) {
+Result nfpMount(const NfcDeviceHandle *handle, NfpDeviceType device_type, NfpMountTarget mount_target) {
     const struct {
-        u64 id;
+        NfcDeviceHandle handle;
         u32 device_type;
         u32 mount_target;
-    } in = { hidControllerIDToOfficial(id), device_type, mount_target };
+    } in = { *handle, device_type, mount_target };
 
     serviceAssumeDomain(&g_nfpInterface);
     return serviceDispatchIn(&g_nfpInterface, 5, in);
 }
 
-Result nfpUnmount(HidControllerID id) {
-    return _nfpCmdInIdNoOut(&g_nfpInterface, id, 6);
+Result nfpUnmount(const NfcDeviceHandle *handle) {
+    return _nfcCmdInDevhandleNoOut(&g_nfpInterface, handle, 6);
 }
 
-Result nfpOpenApplicationArea(HidControllerID id, u32 app_id, u32 *npad_id) {
+Result nfpOpenApplicationArea(const NfcDeviceHandle *handle, u32 app_id, u32 *npad_id) {
     if (g_nfpServiceType == NfpServiceType_System)
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     const struct {
-        u64 id;
+        NfcDeviceHandle handle;
         u32 app_id;
-    } in = { hidControllerIDToOfficial(id), app_id };
+    } in = { *handle, app_id };
 
     serviceAssumeDomain(&g_nfpInterface);
     return serviceDispatchInOut(&g_nfpInterface, 7, in, *npad_id);
 }
 
-Result nfpGetApplicationArea(HidControllerID id, void* buf, size_t buf_size) {
+Result nfpGetApplicationArea(const NfcDeviceHandle *handle, void* buf, size_t buf_size) {
     if (g_nfpServiceType == NfpServiceType_System)
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    u64 tmp = hidControllerIDToOfficial(id);
     serviceAssumeDomain(&g_nfpInterface);
-    return serviceDispatchIn(&g_nfpInterface, 8, tmp,
+    return serviceDispatchIn(&g_nfpInterface, 8, *handle,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
         .buffers = { { buf, buf_size } },
     );
 }
 
-Result nfpSetApplicationArea(HidControllerID id, const void* buf, size_t buf_size) {
+Result nfpSetApplicationArea(const NfcDeviceHandle *handle, const void* buf, size_t buf_size) {
     if (g_nfpServiceType == NfpServiceType_System)
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    u64 tmp = hidControllerIDToOfficial(id);
     serviceAssumeDomain(&g_nfpInterface);
-    return serviceDispatchIn(&g_nfpInterface, 9, tmp,
+    return serviceDispatchIn(&g_nfpInterface, 9, *handle,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
         .buffers = { { buf, buf_size } },
     );
 }
 
-Result nfpFlush(HidControllerID id) {
-    return _nfpCmdInIdNoOut(&g_nfpInterface, id, 10);
+Result nfpFlush(const NfcDeviceHandle *handle) {
+    return _nfcCmdInDevhandleNoOut(&g_nfpInterface, handle, 10);
 }
 
-Result nfpRestore(HidControllerID id) {
-    return _nfpCmdInIdNoOut(&g_nfpInterface, id, 11);
+Result nfpRestore(const NfcDeviceHandle *handle) {
+    return _nfcCmdInDevhandleNoOut(&g_nfpInterface, handle, 11);
 }
 
-Result nfpCreateApplicationArea(HidControllerID id, u32 app_id, const void* buf, size_t buf_size) {
+Result nfpCreateApplicationArea(const NfcDeviceHandle *handle, u32 app_id, const void* buf, size_t buf_size) {
     if (g_nfpServiceType == NfpServiceType_System)
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     const struct {
-        u64 id;
+        NfcDeviceHandle handle;
         u32 app_id;
-    } PACKED in = { hidControllerIDToOfficial(id), app_id };
+    } PACKED in = { *handle, app_id };
 
     serviceAssumeDomain(&g_nfpInterface);
     return serviceDispatchIn(&g_nfpInterface, 12, in,
@@ -341,55 +316,55 @@ Result nfpCreateApplicationArea(HidControllerID id, u32 app_id, const void* buf,
     );
 }
 
-Result nfpGetTagInfo(HidControllerID id, NfpTagInfo *out) {
-    return _nfpCmdInIdOutBuffer(&g_nfpInterface, id, out, sizeof(NfpTagInfo), 13);
+Result nfpGetTagInfo(const NfcDeviceHandle *handle, NfpTagInfo *out) {
+    return _nfcCmdInDevhandleOutBuffer(&g_nfpInterface, handle, out, sizeof(NfpTagInfo), 13);
 }
 
-Result nfpGetRegisterInfo(HidControllerID id, NfpRegisterInfo *out) {
-    return _nfpCmdInIdOutBuffer(&g_nfpInterface, id, out, sizeof(NfpRegisterInfo), 14);
+Result nfpGetRegisterInfo(const NfcDeviceHandle *handle, NfpRegisterInfo *out) {
+    return _nfcCmdInDevhandleOutBuffer(&g_nfpInterface, handle, out, sizeof(NfpRegisterInfo), 14);
 }
 
-Result nfpGetCommonInfo(HidControllerID id, NfpCommonInfo *out) {
-    return _nfpCmdInIdOutBuffer(&g_nfpInterface, id, out, sizeof(NfpCommonInfo), 15);
+Result nfpGetCommonInfo(const NfcDeviceHandle *handle, NfpCommonInfo *out) {
+    return _nfcCmdInDevhandleOutBuffer(&g_nfpInterface, handle, out, sizeof(NfpCommonInfo), 15);
 }
 
-Result nfpGetModelInfo(HidControllerID id, NfpModelInfo *out) {
-    return _nfpCmdInIdOutBuffer(&g_nfpInterface, id, out, sizeof(NfpModelInfo), 16);
+Result nfpGetModelInfo(const NfcDeviceHandle *handle, NfpModelInfo *out) {
+    return _nfcCmdInDevhandleOutBuffer(&g_nfpInterface, handle, out, sizeof(NfpModelInfo), 16);
 }
 
-Result nfpAttachActivateEvent(HidControllerID id, Event *out_event) {
-    return _nfpCmdInIdOutEvent(&g_nfpInterface, id, out_event, 17);
+Result nfpAttachActivateEvent(const NfcDeviceHandle *handle, Event *out_event) {
+    return _nfcCmdInDevhandleOutEvent(&g_nfpInterface, handle, out_event, 17);
 }
 
-Result nfpAttachDeactivateEvent(HidControllerID id, Event *out_event) {
-    return _nfpCmdInIdOutEvent(&g_nfpInterface, id, out_event, 18);
+Result nfpAttachDeactivateEvent(const NfcDeviceHandle *handle, Event *out_event) {
+    return _nfcCmdInDevhandleOutEvent(&g_nfpInterface, handle, out_event, 18);
 }
 
 Result nfpGetState(NfpState *out) {
     u32 tmp=0;
-    Result rc = _nfpCmdNoInOutU32(&g_nfpInterface, &tmp, 19);
+    Result rc = _nfcCmdNoInOutU32(&g_nfpInterface, &tmp, 19);
     if (R_SUCCEEDED(rc) && out) *out = tmp;
     return rc;
 }
 
-Result nfpGetDeviceState(HidControllerID id, NfpDeviceState *out) {
+Result nfpGetDeviceState(const NfcDeviceHandle *handle, NfpDeviceState *out) {
     u32 tmp=0;
-    Result rc = _nfpCmdInIdOutU32(&g_nfpInterface, id, &tmp, 20);
+    Result rc = _nfcCmdInDevhandleOutU32(&g_nfpInterface, handle, &tmp, 20);
     if (R_SUCCEEDED(rc) && out) *out = tmp;
     return rc;
 }
 
-Result nfpGetNpadId(HidControllerID id, u32 *out) {
-    return _nfpCmdInIdOutU32(&g_nfpInterface, id, out, 21);
+Result nfpGetNpadId(const NfcDeviceHandle *handle, u32 *out) {
+    return _nfcCmdInDevhandleOutU32(&g_nfpInterface, handle, out, 21);
 }
 
 Result nfpAttachAvailabilityChangeEvent(Event *out_event) {
     if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return _fpuCmdGetEvent(&g_nfpInterface, out_event, true, 23);
+    return _nfcCmdGetEvent(&g_nfpInterface, out_event, true, 23);
 }
 
 Result nfcIsNfcEnabled(bool *out) {
-    return _nfpCmdNoInOutBool(&g_nfcInterface, out, hosversionBefore(4,0,0) ? 3 : 403);
+    return _nfcCmdNoInOutBool(&g_nfcInterface, out, hosversionBefore(4,0,0) ? 3 : 403);
 }

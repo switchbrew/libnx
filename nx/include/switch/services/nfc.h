@@ -142,6 +142,11 @@ typedef struct {
     u64 reserved[3];
 } NfcRequiredMcuVersionData;
 
+/// Nfc/Nfp DeviceHandle
+typedef struct {
+    u64 handle;            ///< Handle.
+} NfcDeviceHandle;
+
 /**
  * @brief Sets the \ref NfpServiceType for initialization. Call this function before \ref nfpInitialize, if needed.
  * @note By default ::NfpServiceType_NotInitialized will be used.
@@ -178,39 +183,39 @@ Service* nfcGetServiceSession(void);
 /// Gets the Service object for the interface from nfc:*.
 Service* nfcGetServiceSession_Interface(void);
 
-Result nfpListDevices(s32 *count, HidControllerID *out, size_t num_elements);
-Result nfpStartDetection(HidControllerID id);
-Result nfpStopDetection(HidControllerID id);
-Result nfpMount(HidControllerID id, NfpDeviceType device_type, NfpMountTarget mount_target);
-Result nfpUnmount(HidControllerID id);
+Result nfpListDevices(s32 *total_out, NfcDeviceHandle *out, s32 count);
+Result nfpStartDetection(const NfcDeviceHandle *handle);
+Result nfpStopDetection(const NfcDeviceHandle *handle);
+Result nfpMount(const NfcDeviceHandle *handle, NfpDeviceType device_type, NfpMountTarget mount_target);
+Result nfpUnmount(const NfcDeviceHandle *handle);
 
 /// Not available with ::NfpServiceType_System.
-Result nfpOpenApplicationArea(HidControllerID id, u32 app_id, u32 *npad_id);
+Result nfpOpenApplicationArea(const NfcDeviceHandle *handle, u32 app_id, u32 *npad_id);
 
 /// Not available with ::NfpServiceType_System.
-Result nfpGetApplicationArea(HidControllerID id, void* buf, size_t buf_size);
+Result nfpGetApplicationArea(const NfcDeviceHandle *handle, void* buf, size_t buf_size);
 
 /// Not available with ::NfpServiceType_System.
-Result nfpSetApplicationArea(HidControllerID id, const void* buf, size_t buf_size);
-Result nfpFlush(HidControllerID id);
-Result nfpRestore(HidControllerID id);
+Result nfpSetApplicationArea(const NfcDeviceHandle *handle, const void* buf, size_t buf_size);
+Result nfpFlush(const NfcDeviceHandle *handle);
+Result nfpRestore(const NfcDeviceHandle *handle);
 
 /// Not available with ::NfpServiceType_System.
-Result nfpCreateApplicationArea(HidControllerID id, u32 app_id, const void* buf, size_t buf_size);
+Result nfpCreateApplicationArea(const NfcDeviceHandle *handle, u32 app_id, const void* buf, size_t buf_size);
 
-Result nfpGetTagInfo(HidControllerID id, NfpTagInfo *out);
-Result nfpGetRegisterInfo(HidControllerID id, NfpRegisterInfo *out);
-Result nfpGetCommonInfo(HidControllerID id, NfpCommonInfo *out);
-Result nfpGetModelInfo(HidControllerID id, NfpModelInfo *out);
+Result nfpGetTagInfo(const NfcDeviceHandle *handle, NfpTagInfo *out);
+Result nfpGetRegisterInfo(const NfcDeviceHandle *handle, NfpRegisterInfo *out);
+Result nfpGetCommonInfo(const NfcDeviceHandle *handle, NfpCommonInfo *out);
+Result nfpGetModelInfo(const NfcDeviceHandle *handle, NfpModelInfo *out);
 
 /// Returned event will have autoclear off.
-Result nfpAttachActivateEvent(HidControllerID id, Event *out_event);
+Result nfpAttachActivateEvent(const NfcDeviceHandle *handle, Event *out_event);
 /// Returned event will have autoclear off.
-Result nfpAttachDeactivateEvent(HidControllerID id, Event *out_event);
+Result nfpAttachDeactivateEvent(const NfcDeviceHandle *handle, Event *out_event);
 
 Result nfpGetState(NfpState *out);
-Result nfpGetDeviceState(HidControllerID id, NfpDeviceState *out);
-Result nfpGetNpadId(HidControllerID id, u32 *out);
+Result nfpGetDeviceState(const NfcDeviceHandle *handle, NfpDeviceState *out);
+Result nfpGetNpadId(const NfcDeviceHandle *handle, u32 *out);
 
 /// Returned event will have autoclear on.
 /// Only available with [3.0.0+].
