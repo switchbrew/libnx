@@ -186,6 +186,30 @@ Result setGetRegionCode(SetRegion *out) {
     return rc;
 }
 
+static Result _setsysGetFirmwareVersionImpl(SetSysFirmwareVersion *out, u32 cmd_id) {
+    return serviceDispatch(&g_setsysSrv, cmd_id,
+        .buffer_attrs = { SfBufferAttr_FixedSize | SfBufferAttr_HipcPointer | SfBufferAttr_Out },
+        .buffers = { { out, sizeof(*out) } },
+    );
+}
+
+Result setsysGetFirmwareVersion(SetSysFirmwareVersion *out) {
+    /* GetFirmwareVersion2 does exactly what GetFirmwareVersion does, except it doesn't zero the revision field. */
+    if (hosversionAtLeast(3,0,0)) {
+        return _setsysGetFirmwareVersionImpl(out, 4);
+    } else {
+        return _setsysGetFirmwareVersionImpl(out, 3);
+    }
+}
+
+Result setsysGetLockScreenFlag(bool *out) {
+    return _setCmdNoInOutBool(&g_setsysSrv, out, 7);
+}
+
+Result setsysSetLockScreenFlag(bool flag) {
+    return _setCmdInBoolNoOut(&g_setsysSrv, flag, 8);
+}
+
 Result setsysGetColorSetId(ColorSetId *out) {
     u32 color_set=0;
     Result rc = _setCmdNoInOutU32(&g_setsysSrv, &color_set, 23);
@@ -195,6 +219,22 @@ Result setsysGetColorSetId(ColorSetId *out) {
 
 Result setsysSetColorSetId(ColorSetId id) {
     return _setCmdInU32NoOut(&g_setsysSrv, id, 24);
+}
+
+Result setsysGetConsoleInformationUploadFlag(bool *out) {
+    return _setCmdNoInOutBool(&g_setsysSrv, out, 25);
+}
+
+Result setsysSetConsoleInformationUploadFlag(bool flag) {
+    return _setCmdInBoolNoOut(&g_setsysSrv, flag, 26);
+}
+
+Result setsysGetAutomaticApplicationDownloadFlag(bool *out) {
+    return _setCmdNoInOutBool(&g_setsysSrv, out, 27);
+}
+
+Result setsysSetAutomaticApplicationDownloadFlag(bool flag) {
+    return _setCmdInBoolNoOut(&g_setsysSrv, flag, 28);
 }
 
 Result setsysGetSettingsItemValueSize(const char *name, const char *item_key, u64 *size_out) {
@@ -241,6 +281,22 @@ Result setsysGetSettingsItemValue(const char *name, const char *item_key, void *
     );
 }
 
+Result setsysGetQuestFlag(bool *out) {
+    return _setCmdNoInOutBool(&g_setsysSrv, out, 47);
+}
+
+Result setsysSetQuestFlag(bool flag) {
+    return _setCmdInBoolNoOut(&g_setsysSrv, flag, 48);
+}
+
+Result setsysGetUsb30EnableFlag(bool *out) {
+    return _setCmdNoInOutBool(&g_setsysSrv, out, 65);
+}
+
+Result setsysSetUsb30EnableFlag(bool flag) {
+    return _setCmdInBoolNoOut(&g_setsysSrv, flag, 66);
+}
+
 Result setsysGetSerialNumber(char *serial) {
     char out[0x18]={0};
 
@@ -252,28 +308,45 @@ Result setsysGetSerialNumber(char *serial) {
     return rc;
 }
 
-Result setsysGetFlag(SetSysFlag flag, bool *out) {
-    return _setCmdNoInOutBool(&g_setsysSrv, out, flag);
+Result setsysGetNfcEnableFlag(bool *out) {
+    return _setCmdNoInOutBool(&g_setsysSrv, out, 69);
 }
 
-Result setsysSetFlag(SetSysFlag flag, bool enable) {
-    return _setCmdInBoolNoOut(&g_setsysSrv, enable, flag + 1);
+Result setsysSetNfcEnableFlag(bool flag) {
+    return _setCmdInBoolNoOut(&g_setsysSrv, flag, 70);
 }
 
-static Result _setsysGetFirmwareVersionImpl(SetSysFirmwareVersion *out, u32 cmd_id) {
-    return serviceDispatch(&g_setsysSrv, cmd_id,
-        .buffer_attrs = { SfBufferAttr_FixedSize | SfBufferAttr_HipcPointer | SfBufferAttr_Out },
-        .buffers = { { out, sizeof(*out) } },
+Result setsysGetWirelessLanEnableFlag(bool *out) {
+    return _setCmdNoInOutBool(&g_setsysSrv, out, 73);
+}
+
+Result setsysSetWirelessLanEnableFlag(bool flag) {
+    return _setCmdInBoolNoOut(&g_setsysSrv, flag, 74);
+}
+
+Result setsysGetDeviceNickname(char* nickname) {
+    return serviceDispatch(&g_setsysSrv, 77,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { nickname, SET_MAX_NICKNAME_SIZE } },
     );
 }
 
-Result setsysGetFirmwareVersion(SetSysFirmwareVersion *out) {
-    /* GetFirmwareVersion2 does exactly what GetFirmwareVersion does, except it doesn't zero the revision field. */
-    if (hosversionAtLeast(3,0,0)) {
-        return _setsysGetFirmwareVersionImpl(out, 4);
-    } else {
-        return _setsysGetFirmwareVersionImpl(out, 3);
-    }
+Result setsysSetDeviceNickname(const char* nickname) {
+    char send_nickname[SET_MAX_NICKNAME_SIZE] = {0};
+    strncpy(send_nickname, nickname, SET_MAX_NICKNAME_SIZE-1);
+
+    return serviceDispatch(&g_setsysSrv, 78,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
+        .buffers = { { send_nickname, SET_MAX_NICKNAME_SIZE } },
+    );
+}
+
+Result setsysGetBluetoothEnableFlag(bool *out) {
+    return _setCmdNoInOutBool(&g_setsysSrv, out, 88);
+}
+
+Result setsysSetBluetoothEnableFlag(bool flag) {
+    return _setCmdInBoolNoOut(&g_setsysSrv, flag, 89);
 }
 
 Result setsysBindFatalDirtyFlagEvent(Event *out_event) {
@@ -292,19 +365,128 @@ Result setsysGetFatalDirtyFlags(u64 *flags_0, u64 *flags_1) {
     return rc;
 }
 
-Result setsysGetDeviceNickname(char* nickname) {
-    return serviceDispatch(&g_setsysSrv, 77,
-        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
-        .buffers = { { nickname, SET_MAX_NICKNAME_SIZE } },
-    );
+Result setsysGetAutoUpdateEnableFlag(bool *out) {
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdNoInOutBool(&g_setsysSrv, out, 95);
 }
 
-Result setsysSetDeviceNickname(const char* nickname) {
-    char send_nickname[SET_MAX_NICKNAME_SIZE] = {0};
-    strncpy(send_nickname, nickname, SET_MAX_NICKNAME_SIZE-1);
+Result setsysSetAutoUpdateEnableFlag(bool flag) {
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return serviceDispatch(&g_setsysSrv, 78,
-        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
-        .buffers = { { send_nickname, SET_MAX_NICKNAME_SIZE } },
-    );
+    return _setCmdInBoolNoOut(&g_setsysSrv, flag, 96);
+}
+
+Result setsysGetBatteryPercentageFlag(bool *out) {
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdNoInOutBool(&g_setsysSrv, out, 99);
+}
+
+Result setsysSetBatteryPercentageFlag(bool flag) {
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdInBoolNoOut(&g_setsysSrv, flag, 100);
+}
+
+Result setsysGetExternalRtcResetFlag(bool *out) {
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdNoInOutBool(&g_setsysSrv, out, 101);
+}
+
+Result setsysSetExternalRtcResetFlag(bool flag) {
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdInBoolNoOut(&g_setsysSrv, flag, 102);
+}
+
+Result setsysGetUsbFullKeyEnableFlag(bool *out) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdNoInOutBool(&g_setsysSrv, out, 103);
+}
+
+Result setsysSetUsbFullKeyEnableFlag(bool flag) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdInBoolNoOut(&g_setsysSrv, flag, 104);
+}
+
+Result setsysGetBluetoothAfhEnableFlag(bool *out) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdNoInOutBool(&g_setsysSrv, out, 111);
+}
+
+Result setsysSetBluetoothAfhEnableFlag(bool flag) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdInBoolNoOut(&g_setsysSrv, flag, 112);
+}
+
+Result setsysGetBluetoothBoostEnableFlag(bool *out) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdNoInOutBool(&g_setsysSrv, out, 113);
+}
+
+Result setsysSetBluetoothBoostEnableFlag(bool flag) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdInBoolNoOut(&g_setsysSrv, flag, 114);
+}
+
+Result setsysGetInRepairProcessEnableFlag(bool *out) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdNoInOutBool(&g_setsysSrv, out, 115);
+}
+
+Result setsysSetInRepairProcessEnableFlag(bool flag) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdInBoolNoOut(&g_setsysSrv, flag, 116);
+}
+
+Result setsysGetHeadphoneVolumeUpdateFlag(bool *out) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdNoInOutBool(&g_setsysSrv, out, 117);
+}
+
+Result setsysSetHeadphoneVolumeUpdateFlag(bool flag) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdInBoolNoOut(&g_setsysSrv, flag, 118);
+}
+
+Result setsysGetRequiresRunRepairTimeReviser(bool *out) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdNoInOutBool(&g_setsysSrv, out, 141);
+}
+
+Result setsysSetRequiresRunRepairTimeReviser(bool flag) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdInBoolNoOut(&g_setsysSrv, flag, 142);
 }

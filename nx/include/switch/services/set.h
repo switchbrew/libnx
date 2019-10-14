@@ -53,27 +53,6 @@ typedef enum {
     SetRegion_TWN = 6, ///< Taiwan
 } SetRegion;
 
-/// Command IDs for setsysGetFlag/setsysSetFlag.
-typedef enum {
-    SetSysFlag_LockScreen                   = 7,
-    SetSysFlag_ConsoleInformationUpload     = 25,
-    SetSysFlag_AutomaticApplicationDownload = 27,
-    SetSysFlag_Quest                        = 47,
-    SetSysFlag_Usb30Enable                  = 65,
-    SetSysFlag_NfcEnable                    = 69,
-    SetSysFlag_WirelessLanEnable            = 73,
-    SetSysFlag_BluetoothEnable              = 88,
-    SetSysFlag_AutoUpdateEnable             = 95,    ///< [2.0.0+]
-    SetSysFlag_BatteryPercentage            = 99,    ///< [2.0.0+]
-    SetSysFlag_ExternalRtcReset             = 101,   ///< [2.0.0+]
-    SetSysFlag_UsbFullKeyEnable             = 103,   ///< [3.0.0+]
-    SetSysFlag_BluetoothAfhEnable           = 111,   ///< [3.0.0+]
-    SetSysFlag_BluetoothBoostEnable         = 113,   ///< [3.0.0+]
-    SetSysFlag_InRepairProcessEnable        = 115,   ///< [3.0.0+]
-    SetSysFlag_HeadphoneVolumeUpdate        = 117,   ///< [3.0.0+]
-    SetSysFlag_RequiresRunRepairTimeReviser = 141,   ///< [5.0.0+]
-} SetSysFlag;
-
 /// Structure returned by \ref setsysGetFirmwareVersion
 typedef struct {
     u8 major;
@@ -90,8 +69,13 @@ typedef struct {
     char display_title[0x80];
 } SetSysFirmwareVersion;
 
+/// Initialize set.
 Result setInitialize(void);
+
+/// Exit set.
 void setExit(void);
+
+/// Gets the Service object for the actual set service session.
 Service* setGetServiceSession(void);
 
 /// Converts LanguageCode to \ref SetLanguage.
@@ -119,15 +103,62 @@ Result setGetAvailableLanguageCodeCount(s32 *total);
 /// Gets the RegionCode.
 Result setGetRegionCode(SetRegion *out);
 
+/// Initialize setsys.
 Result setsysInitialize(void);
+
+/// Exit setsys.
 void setsysExit(void);
+
+/// Gets the Service object for the actual setsys service session.
 Service* setsysGetServiceSession(void);
+
+/**
+ * @brief Gets the system firmware version.
+ * @param[out] out Firmware version to populate.
+ */
+Result setsysGetFirmwareVersion(SetSysFirmwareVersion *out);
+
+/**
+ * @brief GetLockScreenFlag
+ * @param[out] out Output flag.
+ */
+Result setsysGetLockScreenFlag(bool *out);
+
+/**
+ * @brief SetLockScreenFlag
+ * @param[in] flag Input flag.
+ */
+Result setsysSetLockScreenFlag(bool flag);
 
 /// Gets the current system theme.
 Result setsysGetColorSetId(ColorSetId *out);
 
 /// Sets the current system theme.
 Result setsysSetColorSetId(ColorSetId id);
+
+/**
+ * @brief GetConsoleInformationUploadFlag
+ * @param[out] out Output flag.
+ */
+Result setsysGetConsoleInformationUploadFlag(bool *out);
+
+/**
+ * @brief SetConsoleInformationUploadFlag
+ * @param[in] flag Input flag.
+ */
+Result setsysSetConsoleInformationUploadFlag(bool flag);
+
+/**
+ * @brief GetAutomaticApplicationDownloadFlag
+ * @param[out] out Output flag.
+ */
+Result setsysGetAutomaticApplicationDownloadFlag(bool *out);
+
+/**
+ * @brief SetAutomaticApplicationDownloadFlag
+ * @param[in] flag Input flag.
+ */
+Result setsysSetAutomaticApplicationDownloadFlag(bool flag);
 
 /**
  * @brief Gets the size of a settings item value.
@@ -148,30 +179,82 @@ Result setsysGetSettingsItemValueSize(const char *name, const char *item_key, u6
 Result setsysGetSettingsItemValue(const char *name, const char *item_key, void *value_out, size_t value_out_size, u64 *size_out);
 
 /**
+ * @brief GetQuestFlag
+ * @param[out] out Output flag.
+ */
+Result setsysGetQuestFlag(bool *out);
+
+/**
+ * @brief SetQuestFlag
+ * @param[in] flag Input flag.
+ */
+Result setsysSetQuestFlag(bool flag);
+
+/**
+ * @brief GetUsb30EnableFlag
+ * @param[out] out Output flag.
+ */
+Result setsysGetUsb30EnableFlag(bool *out);
+
+/**
+ * @brief SetUsb30EnableFlag
+ * @param[in] flag Input flag.
+ */
+Result setsysSetUsb30EnableFlag(bool flag);
+
+/**
  * @brief Gets the system's serial number.
  * @param serial Pointer to output the serial to. (The buffer size needs to be at least 0x19 bytes)
  */
 Result setsysGetSerialNumber(char *serial);
 
 /**
- * @brief Gets the status of the specified settings flag.
- * @param flag The specified settings flag.
- * @param out Output pointer for the status.
+ * @brief GetNfcEnableFlag
+ * @param[out] out Output flag.
  */
-Result setsysGetFlag(SetSysFlag flag, bool *out);
+Result setsysGetNfcEnableFlag(bool *out);
 
 /**
- * @brief Enables/disables the specified settings flag.
- * @param flag The specified settings flag.
- * @param enable To enable/disable the flag.
+ * @brief SetNfcEnableFlag
+ * @param[in] flag Input flag.
  */
-Result setsysSetFlag(SetSysFlag flag, bool enable);
+Result setsysSetNfcEnableFlag(bool flag);
 
 /**
- * @brief Gets the system firmware version.
- * @param out Firmware version to populate.
+ * @brief GetWirelessLanEnableFlag
+ * @param[out] out Output flag.
  */
-Result setsysGetFirmwareVersion(SetSysFirmwareVersion *out);
+Result setsysGetWirelessLanEnableFlag(bool *out);
+
+/**
+ * @brief SetWirelessLanEnableFlag
+ * @param[in] flag Input flag.
+ */
+Result setsysSetWirelessLanEnableFlag(bool flag);
+
+/**
+ * @brief Gets the system's nickname.
+ * @param nickname Pointer to output the nickname to. (The buffer size needs to be at least 0x80 bytes)
+ */
+Result setsysGetDeviceNickname(char* nickname);
+
+/**
+ * @brief Sets the system's nickname.
+ * @param nickname Pointer to read the nickname from.
+ */
+Result setsysSetDeviceNickname(const char* nickname);
+
+/**
+ * @brief GetBluetoothEnableFlag
+ * @param[out] out Output flag.
+ */
+Result setsysGetBluetoothEnableFlag(bool *out);
+
+/**
+ * @brief SetBluetoothEnableFlag
+ * @param[in] flag Input flag.
+ */
+Result setsysSetBluetoothEnableFlag(bool flag);
 
 /**
  * @brief Gets an event that settings will signal on flag change.
@@ -187,13 +270,127 @@ Result setsysBindFatalDirtyFlagEvent(Event *out_event);
 Result setsysGetFatalDirtyFlags(u64 *flags_0, u64 *flags_1);
 
 /**
- * @brief Gets the system's nickname.
- * @param nickname Pointer to output the nickname to. (The buffer size needs to be at least 0x80 bytes)
+ * @brief GetAutoUpdateEnableFlag
+ * @note Only available on [2.0.0+].
+ * @param[out] out Output flag.
  */
-Result setsysGetDeviceNickname(char* nickname);
+Result setsysGetAutoUpdateEnableFlag(bool *out);
 
 /**
- * @brief Sets the system's nickname.
- * @param nickname Pointer to read the nickname from.
+ * @brief SetAutoUpdateEnableFlag
+ * @note Only available on [2.0.0+].
+ * @param[in] flag Input flag.
  */
-Result setsysSetDeviceNickname(const char* nickname);
+Result setsysSetAutoUpdateEnableFlag(bool flag);
+
+/**
+ * @brief GetBatteryPercentageFlag
+ * @note Only available on [2.0.0+].
+ * @param[out] out Output flag.
+ */
+Result setsysGetBatteryPercentageFlag(bool *out);
+
+/**
+ * @brief SetBatteryPercentageFlag
+ * @note Only available on [2.0.0+].
+ * @param[in] flag Input flag.
+ */
+Result setsysSetBatteryPercentageFlag(bool flag);
+
+/**
+ * @brief GetExternalRtcResetFlag
+ * @note Only available on [2.0.0+].
+ * @param[out] out Output flag.
+ */
+Result setsysGetExternalRtcResetFlag(bool *out);
+
+/**
+ * @brief SetExternalRtcResetFlag
+ * @note Only available on [2.0.0+].
+ * @param[in] flag Input flag.
+ */
+Result setsysSetExternalRtcResetFlag(bool flag);
+
+/**
+ * @brief GetUsbFullKeyEnableFlag
+ * @note Only available on [3.0.0+].
+ * @param[out] out Output flag.
+ */
+Result setsysGetUsbFullKeyEnableFlag(bool *out);
+
+/**
+ * @brief SetUsbFullKeyEnableFlag
+ * @note Only available on [3.0.0+].
+ * @param[in] flag Input flag.
+ */
+Result setsysSetUsbFullKeyEnableFlag(bool flag);
+
+/**
+ * @brief GetBluetoothAfhEnableFlag
+ * @note Only available on [3.0.0+].
+ * @param[out] out Output flag.
+ */
+Result setsysGetBluetoothAfhEnableFlag(bool *out);
+
+/**
+ * @brief SetBluetoothAfhEnableFlag
+ * @note Only available on [3.0.0+].
+ * @param[in] flag Input flag.
+ */
+Result setsysSetBluetoothAfhEnableFlag(bool flag);
+
+/**
+ * @brief GetBluetoothBoostEnableFlag
+ * @note Only available on [3.0.0+].
+ * @param[out] out Output flag.
+ */
+Result setsysGetBluetoothBoostEnableFlag(bool *out);
+
+/**
+ * @brief SetBluetoothBoostEnableFlag
+ * @note Only available on [3.0.0+].
+ * @param[in] flag Input flag.
+ */
+Result setsysSetBluetoothBoostEnableFlag(bool flag);
+
+/**
+ * @brief GetInRepairProcessEnableFlag
+ * @note Only available on [3.0.0+].
+ * @param[out] out Output flag.
+ */
+Result setsysGetInRepairProcessEnableFlag(bool *out);
+
+/**
+ * @brief SetInRepairProcessEnableFlag
+ * @note Only available on [3.0.0+].
+ * @param[in] flag Input flag.
+ */
+Result setsysSetInRepairProcessEnableFlag(bool flag);
+
+/**
+ * @brief GetHeadphoneVolumeUpdateFlag
+ * @note Only available on [3.0.0+].
+ * @param[out] out Output flag.
+ */
+Result setsysGetHeadphoneVolumeUpdateFlag(bool *out);
+
+/**
+ * @brief SetHeadphoneVolumeUpdateFlag
+ * @note Only available on [3.0.0+].
+ * @param[in] flag Input flag.
+ */
+Result setsysSetHeadphoneVolumeUpdateFlag(bool flag);
+
+/**
+ * @brief GetRequiresRunRepairTimeReviser
+ * @note Only available on [5.0.0+].
+ * @param[out] out Output flag.
+ */
+Result setsysGetRequiresRunRepairTimeReviser(bool *out);
+
+/**
+ * @brief SetRequiresRunRepairTimeReviser
+ * @note Only available on [5.0.0+].
+ * @param[in] flag Input flag.
+ */
+Result setsysSetRequiresRunRepairTimeReviser(bool flag);
