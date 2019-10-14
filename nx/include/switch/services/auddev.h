@@ -1,16 +1,21 @@
 /**
  * @file auddev.h
- * @brief Audio device.
+ * @brief IAudioDevice IPC wrapper.
  * @author yellows8
  * @copyright libnx Authors
  */
 #pragma once
 
 #include "../audio/audio.h"
-#include "../services/sm.h"
+#include "../sf/service.h"
 
+/// Initialize IAudioDevice.
 Result auddevInitialize(void);
+
+/// Exit IAudioDevice.
 void auddevExit(void);
+
+/// Gets the Service object for IAudioDevice.
 Service* auddevGetServiceSession(void);
 
 Result auddevListAudioDeviceName(AudioDeviceName *DeviceNames, s32 max_names, s32 *total_names);

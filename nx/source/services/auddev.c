@@ -1,27 +1,19 @@
+#define NX_SERVICE_ASSUME_NON_DOMAIN
 #include <string.h>
-#include "types.h"
-#include "result.h"
-#include "arm/atomics.h"
-#include "kernel/ipc.h"
+#include "service_guard.h"
 #include "kernel/event.h"
 #include "runtime/hosversion.h"
 #include "services/auddev.h"
 #include "services/applet.h"
-#include "services/sm.h"
 
 static Service g_auddevIAudioDevice;
-static u64 g_auddevRefCnt;
 
-static Result _auddevGetAudioDeviceService(Service* srv, Service* out_srv, u64 aruid);
+static Result _auddevGetAudioDeviceService(Service* srv, Service* srv_out, u64 aruid);
 
-Result auddevInitialize(void) {
+NX_GENERATE_SERVICE_GUARD(auddev);
+
+Result _auddevInitialize(void) {
     Result rc=0;
-
-    atomicIncrement64(&g_auddevRefCnt);
-
-    if (serviceIsActive(&g_auddevIAudioDevice))
-        return 0;
-
     u64 aruid = 0;
     rc = appletGetAppletResourceUserId(&aruid);
 
@@ -33,178 +25,44 @@ Result auddevInitialize(void) {
         serviceClose(&audrenMgrSrv);
     }
 
-    if (R_FAILED(rc)) auddevExit();
-
     return rc;
 }
 
-void auddevExit(void) {
-    if (atomicDecrement64(&g_auddevRefCnt) == 0) {
-        serviceClose(&g_auddevIAudioDevice);
-    }
+void _auddevCleanup(void) {
+    serviceClose(&g_auddevIAudioDevice);
 }
 
 Service* auddevGetServiceSession(void) {
     return &g_auddevIAudioDevice;
 }
 
-static Result _auddevGetAudioDeviceService(Service* srv, Service* out_srv, u64 aruid) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u64 aruid;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(srv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 2;
-    raw->aruid = aruid;
-
-    Result rc = serviceIpcDispatch(srv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(srv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            serviceCreateSubservice(out_srv, srv, &r, 0);
-        }
-    }
-
-    return rc;
+static Result _auddevGetAudioDeviceService(Service* srv, Service* srv_out, u64 aruid) {
+    return serviceDispatchIn(srv, 2, aruid,
+        .out_num_objects = 1,
+        .out_objects = srv_out,
+    );
 }
 
 Result auddevListAudioDeviceName(AudioDeviceName *DeviceNames, s32 max_names, s32 *total_names) {
     bool new_cmd = hosversionAtLeast(3,0,0);
-
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    if (!new_cmd) ipcAddRecvBuffer(&c, DeviceNames, sizeof(AudioDeviceName) * max_names, BufferType_Normal);
-    if (new_cmd) ipcAddRecvSmart(&c, g_auddevIAudioDevice.pointer_buffer_size, DeviceNames, sizeof(AudioDeviceName)  * max_names, 0);
-
-    raw = serviceIpcPrepareHeader(&g_auddevIAudioDevice, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = new_cmd==0 ? 0 : 6;
-
-    Result rc = serviceIpcDispatch(&g_auddevIAudioDevice);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-
-        struct {
-            u64 magic;
-            u64 result;
-            s32 total_names;
-        } *resp;
-
-        serviceIpcParse(&g_auddevIAudioDevice, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && total_names) *total_names = resp->total_names;
-    }
-
-    return rc;
+    return serviceDispatchOut(&g_auddevIAudioDevice, new_cmd==0 ? 0 : 6, *total_names,
+        .buffer_attrs = { (new_cmd==0 ? SfBufferAttr_HipcMapAlias : SfBufferAttr_HipcAutoSelect) | SfBufferAttr_Out },
+        .buffers = { { DeviceNames, max_names*sizeof(AudioDeviceName) } },
+    );
 }
 
 Result auddevSetAudioDeviceOutputVolume(const AudioDeviceName *DeviceName, float volume) {
     bool new_cmd = hosversionAtLeast(3,0,0);
-
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        float volume;
-    } *raw;
-
-    if (!new_cmd) ipcAddSendBuffer(&c, DeviceName, sizeof(AudioDeviceName), BufferType_Normal);
-    if (new_cmd) ipcAddSendSmart(&c, g_auddevIAudioDevice.pointer_buffer_size, DeviceName, sizeof(AudioDeviceName), 0);
-
-    raw = serviceIpcPrepareHeader(&g_auddevIAudioDevice, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = new_cmd==0 ? 1 : 7;
-    raw->volume = volume;
-
-    Result rc = serviceIpcDispatch(&g_auddevIAudioDevice);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_auddevIAudioDevice, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    return serviceDispatchIn(&g_auddevIAudioDevice, new_cmd==0 ? 1 : 7, volume,
+        .buffer_attrs = { (new_cmd==0 ? SfBufferAttr_HipcMapAlias : SfBufferAttr_HipcAutoSelect) | SfBufferAttr_In },
+        .buffers = { { DeviceName, sizeof(AudioDeviceName) } },
+    );
 }
 
 Result auddevGetAudioDeviceOutputVolume(const AudioDeviceName *DeviceName, float *volume) {
     bool new_cmd = hosversionAtLeast(3,0,0);
-
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    if (!new_cmd) ipcAddSendBuffer(&c, DeviceName, sizeof(AudioDeviceName), BufferType_Normal);
-    if (new_cmd) ipcAddSendSmart(&c, g_auddevIAudioDevice.pointer_buffer_size, DeviceName, sizeof(AudioDeviceName), 0);
-
-    raw = serviceIpcPrepareHeader(&g_auddevIAudioDevice, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = new_cmd==0 ? 2 : 8;
-
-    Result rc = serviceIpcDispatch(&g_auddevIAudioDevice);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-
-        struct {
-            u64 magic;
-            u64 result;
-            float volume;
-        } *resp;
-
-        serviceIpcParse(&g_auddevIAudioDevice, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && volume) *volume = resp->volume;
-    }
-
-    return rc;
+    return serviceDispatchOut(&g_auddevIAudioDevice, new_cmd==0 ? 2 : 8, *volume,
+        .buffer_attrs = { (new_cmd==0 ? SfBufferAttr_HipcMapAlias : SfBufferAttr_HipcAutoSelect) | SfBufferAttr_In },
+        .buffers = { { DeviceName, sizeof(AudioDeviceName) } },
+    );
 }
