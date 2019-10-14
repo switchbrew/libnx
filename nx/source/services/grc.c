@@ -1,11 +1,7 @@
+#include "service_guard.h"
 #include <string.h>
-#include "types.h"
-#include "result.h"
-#include "arm/atomics.h"
-#include "kernel/ipc.h"
 #include "kernel/event.h"
 #include "kernel/tmem.h"
-#include "services/sm.h"
 #include "services/grc.h"
 #include "services/caps.h"
 #include "services/applet.h"
@@ -13,256 +9,57 @@
 #include "audio/audio.h"
 #include "runtime/hosversion.h"
 
+static Service g_grcdSrv;
+
 static void _grcGameMovieTrimmerClose(GrcGameMovieTrimmer *t);
 
-static Result _grcCmdNoIO(Service* srv, u64 cmd_id) {
-    IpcCommand c;
-    ipcInitialize(&c);
+static Result _grcCmdNoIO(Service* srv, u32 cmd_id) {
+    return serviceDispatch(srv, cmd_id);
+}
 
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
+static Result _grcCmdInU64NoOut(Service* srv, u64 inval, u32 cmd_id) {
+    return serviceDispatchIn(srv, cmd_id, inval);
+}
 
-    raw = serviceIpcPrepareHeader(srv, &c, sizeof(*raw));
+static Result _grcCmdInU64OutU32(Service* srv, u64 inval, u32 *out, u32 cmd_id) {
+    return serviceDispatchInOut(srv, cmd_id, inval, *out);
+}
 
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = cmd_id;
+static Result _grcCmdNoInOutU64(Service* srv, u64 *out, u32 cmd_id) {
+    return serviceDispatchOut(srv, cmd_id, *out);
+}
 
-    Result rc = serviceIpcDispatch(srv);
+static Result _grcCmdGetEvent(Service* srv, Event* out_event, bool autoclear, u32 cmd_id) {
+    Handle event = INVALID_HANDLE;
+    Result rc = serviceDispatch(srv, cmd_id,
+        .out_handle_attrs = { SfOutHandleAttr_HipcCopy },
+        .out_handles = &event,
+    );
 
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(srv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
+    if (R_SUCCEEDED(rc))
+        eventLoadRemote(out_event, event, autoclear);
 
     return rc;
 }
 
-static Result _grcCmdInU64(Service* srv, u64 inval, u64 cmd_id) {
-    IpcCommand c;
-    ipcInitialize(&c);
+static Result _grcCmdInU64OutEvent(Service* srv, u64 inval, Event* out_event, bool autoclear, u32 cmd_id) {
+    Handle event = INVALID_HANDLE;
+    Result rc = serviceDispatchIn(srv, cmd_id, inval,
+        .out_handle_attrs = { SfOutHandleAttr_HipcCopy },
+        .out_handles = &event,
+    );
 
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u64 inval;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(srv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = cmd_id;
-    raw->inval = inval;
-
-    Result rc = serviceIpcDispatch(srv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(srv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
+    if (R_SUCCEEDED(rc))
+        eventLoadRemote(out_event, event, autoclear);
 
     return rc;
 }
 
-static Result _grcCmdInU64Out32(Service* srv, u64 inval, u32 *out, u64 cmd_id) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u64 inval;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(srv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = cmd_id;
-    raw->inval = inval;
-
-    Result rc = serviceIpcDispatch(srv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            u32 out;
-        } *resp;
-
-        serviceIpcParse(srv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && out) *out = resp->out;
-    }
-
-    return rc;
-}
-
-static Result _grcCmdNoInOut64(Service* srv, u64 *out, u64 cmd_id) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(srv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = cmd_id;
-
-    Result rc = serviceIpcDispatch(srv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            u64 out;
-        } *resp;
-
-        serviceIpcParse(srv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && out) {
-            *out = resp->out;
-        }
-    }
-
-    return rc;
-}
-
-static Result _grcGetEvent(Service* srv, Event* out_event, u64 cmd_id, bool autoclear) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(srv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = cmd_id;
-
-    Result rc = serviceIpcDispatch(srv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(srv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            eventLoadRemote(out_event, r.Handles[0], autoclear);
-        }
-    }
-
-    return rc;
-}
-
-static Result _grcCmdInU64OutEvent(Service* srv, u64 inval, Event* out_event, u64 cmd_id, bool autoclear) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u64 inval;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(srv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = cmd_id;
-    raw->inval = inval;
-
-    Result rc = serviceIpcDispatch(srv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(srv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            eventLoadRemote(out_event, r.Handles[0], autoclear);
-        }
-    }
-
-    return rc;
-}
-
-static Result _grcGetSession(Service* srv, Service* srv_out, u64 cmd_id) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(srv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = cmd_id;
-
-    Result rc = serviceIpcDispatch(srv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(srv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            serviceCreateSubservice(srv_out, srv, &r, 0);
-        }
-    }
-
-    return rc;
+static Result _grcCmdGetSession(Service* srv, Service* srv_out, u32 cmd_id) {
+    return serviceDispatch(srv, cmd_id,
+        .out_num_objects = 1,
+        .out_objects = srv_out,
+    );
 }
 
 static Result _grcCreateGameMovieTrimmer(GrcGameMovieTrimmer *t, size_t size) {
@@ -297,127 +94,42 @@ static Result _grcGameMovieTrimmerBeginTrim(GrcGameMovieTrimmer *t, const GrcGam
     if (!serviceIsActive(&t->s))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         s32 start;
         s32 end;
         GrcGameMovieId id;
-    } *raw;
+    } in = { start, end, *id };
 
-    raw = serviceIpcPrepareHeader(&t->s, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 1;
-    raw->start = start;
-    raw->end = end;
-    memcpy(&raw->id, id, sizeof(GrcGameMovieId));
-
-    Result rc = serviceIpcDispatch(&t->s);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&t->s, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    return serviceDispatchIn(&t->s, 1, in);
 }
 
 static Result _grcGameMovieTrimmerEndTrim(GrcGameMovieTrimmer *t, GrcGameMovieId *id) {
     if (!serviceIsActive(&t->s))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&t->s, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 2;
-
-    Result rc = serviceIpcDispatch(&t->s);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            GrcGameMovieId id;
-        } *resp;
-
-        serviceIpcParse(&t->s, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && id) memcpy(id, &resp->id, sizeof(GrcGameMovieId));
-    }
-
-    return rc;
+    return serviceDispatchOut(&t->s, 2, *id);
 }
 
 static Result _grcGameMovieTrimmerGetNotTrimmingEvent(GrcGameMovieTrimmer *t, Event *out_event) {
     if (!serviceIsActive(&t->s))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    return _grcGetEvent(&t->s, out_event, 10, false);
+    return _grcCmdGetEvent(&t->s, out_event, false, 10);
 }
 
 static Result _grcGameMovieTrimmerSetThumbnailRgba(GrcGameMovieTrimmer *t, const void* buffer, size_t size, s32 width, s32 height) {
     if (!serviceIsActive(&t->s))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    ipcAddSendBuffer(&c, buffer, size, BufferType_Type1);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         s32 width;
         s32 height;
-    } *raw;
+    } in = { width, height };
 
-    raw = serviceIpcPrepareHeader(&t->s, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 20;
-    raw->width = width;
-    raw->height = height;
-
-    Result rc = serviceIpcDispatch(&t->s);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&t->s, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    return serviceDispatchIn(&t->s, 20, in,
+        .buffer_attrs = { SfBufferAttr_HipcMapTransferAllowsNonSecure | SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
+        .buffers = { { buffer, size } },
+    );
 }
 
 Result grcTrimGameMovie(GrcGameMovieId *dst_movieid, const GrcGameMovieId *src_movieid, size_t tmem_size, const void* thumbnail, s32 start, s32 end) {
@@ -482,23 +194,22 @@ Result grcCreateMovieMaker(GrcMovieMaker *m, size_t size) {
         }
     }
 
-    if (R_SUCCEEDED(rc)) rc = _grcGetSession(&m->a, &m->s, 0); // GetGrcMovieMaker
+    if (R_SUCCEEDED(rc)) rc = _grcCmdGetSession(&m->a, &m->s, 0); // GetGrcMovieMaker
 
-    if (R_SUCCEEDED(rc) && hosversionAtLeast(7,0,0)) rc = _grcCmdInU64(&m->s, capsGetShimLibraryVersion(), 9); // SetAlbumShimLibraryVersion
+    if (R_SUCCEEDED(rc) && hosversionAtLeast(7,0,0)) rc = _grcCmdInU64NoOut(&m->s, capsGetShimLibraryVersion(), 9); // SetAlbumShimLibraryVersion
 
-    if (R_SUCCEEDED(rc)) rc = _grcCmdNoInOut64(&m->a, &m->layer_handle, 1); // GetLayerHandle
+    if (R_SUCCEEDED(rc)) rc = _grcCmdNoInOutU64(&m->a, &m->layer_handle, 1); // GetLayerHandle
 
+    if (R_SUCCEEDED(rc)) rc = _grcCmdGetSession(&m->s, &m->video_proxy, 2); // CreateVideoProxy
 
-    if (R_SUCCEEDED(rc)) rc = _grcGetSession(&m->s, &m->video_proxy, 2); // CreateVideoProxy
-
-    if (R_SUCCEEDED(rc)) rc = _grcCmdInU64Out32(&m->s, m->layer_handle, (u32*)&binder_id, 10); // OpenOffscreenLayer
+    if (R_SUCCEEDED(rc)) rc = _grcCmdInU64OutU32(&m->s, m->layer_handle, (u32*)&binder_id, 10); // OpenOffscreenLayer
     if (R_SUCCEEDED(rc)) m->layer_open = true;
 
     if (R_SUCCEEDED(rc)) rc = nwindowCreate(&m->win, &m->video_proxy, binder_id, false);
     if (R_SUCCEEDED(rc)) rc = nwindowSetDimensions(&m->win, 1280, 720);
 
-    if (R_SUCCEEDED(rc)) rc = _grcCmdInU64OutEvent(&m->s, m->layer_handle, &m->recording_event, 50, false); // GetOffscreenLayerRecordingFinishReadyEvent
-    if (R_SUCCEEDED(rc)) rc = _grcCmdInU64OutEvent(&m->s, m->layer_handle, &m->audio_event, 52, false); // GetOffscreenLayerAudioEncodeReadyEvent
+    if (R_SUCCEEDED(rc)) rc = _grcCmdInU64OutEvent(&m->s, m->layer_handle, &m->recording_event, false, 50); // GetOffscreenLayerRecordingFinishReadyEvent
+    if (R_SUCCEEDED(rc)) rc = _grcCmdInU64OutEvent(&m->s, m->layer_handle, &m->audio_event, false, 52); // GetOffscreenLayerAudioEncodeReadyEvent
 
     if (R_FAILED(rc)) grcMovieMakerClose(m);
 
@@ -513,7 +224,7 @@ void grcMovieMakerClose(GrcMovieMaker *m) {
 
     nwindowClose(&m->win);
     if (m->layer_open) {
-        _grcCmdInU64(&m->s, m->layer_handle, 11); // CloseOffscreenLayer
+        _grcCmdInU64NoOut(&m->s, m->layer_handle, 11); // CloseOffscreenLayer
         m->layer_open = false;
     }
 
@@ -521,47 +232,6 @@ void grcMovieMakerClose(GrcMovieMaker *m) {
     serviceClose(&m->s);
     serviceClose(&m->a);
     tmemClose(&m->tmem);
-}
-
-Result grcMovieMakerStart(GrcMovieMaker *m, const GrcOffscreenRecordingParameter *param) {
-    if (!serviceIsActive(&m->s))
-        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u64 layer_handle;
-        GrcOffscreenRecordingParameter param;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&m->s, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 24;
-    raw->layer_handle = m->layer_handle;
-    memcpy(&raw->param, param, sizeof(GrcOffscreenRecordingParameter));
-
-    Result rc = serviceIpcDispatch(&m->s);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&m->s, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    if (R_SUCCEEDED(rc)) m->started_flag = true;
-
-    return rc;
 }
 
 Result grcMovieMakerAbort(GrcMovieMaker *m) {
@@ -572,98 +242,64 @@ Result grcMovieMakerAbort(GrcMovieMaker *m) {
     if (!m->started_flag)
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    rc = _grcCmdInU64(&m->s, m->layer_handle, 21); // AbortOffscreenRecording
+    rc = _grcCmdInU64NoOut(&m->s, m->layer_handle, 21); // AbortOffscreenRecording
     if (R_SUCCEEDED(rc)) m->started_flag = false;
     return rc;
 }
 
+Result grcMovieMakerStart(GrcMovieMaker *m, const GrcOffscreenRecordingParameter *param) {
+    if (!serviceIsActive(&m->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    const struct {
+        u64 layer_handle;
+        GrcOffscreenRecordingParameter param;
+    } in = { m->layer_handle, *param };
+
+    Result rc = serviceDispatchIn(&m->s, 24, in);
+    if (R_SUCCEEDED(rc)) m->started_flag = true;
+    return rc;
+}
+
 static Result _grcMovieMakerCompleteOffscreenRecordingFinishEx0(GrcMovieMaker *m, s32 width, s32 height, const void* userdata, size_t userdata_size, const void* thumbnail, size_t thumbnail_size) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    ipcAddSendBuffer(&c, userdata, userdata_size, BufferType_Normal);
-    ipcAddSendBuffer(&c, thumbnail, thumbnail_size, BufferType_Normal);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         s32 width;
         s32 height;
         u64 layer_handle;
-    } *raw;
+    } in = { width, height, m->layer_handle };
 
-    raw = serviceIpcPrepareHeader(&m->s, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 25;
-    raw->width = width;
-    raw->height = height;
-    raw->layer_handle = m->layer_handle;
-
-    Result rc = serviceIpcDispatch(&m->s);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            CapsApplicationAlbumEntry entry;
-        } *resp;
-
-        serviceIpcParse(&m->s, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    return serviceDispatchIn(&m->s, 25, in,
+        .buffer_attrs = {
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_In,
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_In,
+        },
+        .buffers = {
+            { userdata, userdata_size },
+            { thumbnail, thumbnail_size },
+        },
+    );
 }
 
 static Result _grcMovieMakerCompleteOffscreenRecordingFinishEx1(GrcMovieMaker *m, s32 width, s32 height, const void* userdata, size_t userdata_size, const void* thumbnail, size_t thumbnail_size, CapsApplicationAlbumEntry *entry) {
     if (hosversionBefore(7,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    ipcAddSendBuffer(&c, userdata, userdata_size, BufferType_Normal);
-    ipcAddSendBuffer(&c, thumbnail, thumbnail_size, BufferType_Normal);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         s32 width;
         s32 height;
         u64 layer_handle;
-    } *raw;
+    } in = { width, height, m->layer_handle };
 
-    raw = serviceIpcPrepareHeader(&m->s, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 26;
-    raw->width = width;
-    raw->height = height;
-    raw->layer_handle = m->layer_handle;
-
-    Result rc = serviceIpcDispatch(&m->s);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            CapsApplicationAlbumEntry entry;
-        } *resp;
-
-        serviceIpcParse(&m->s, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && entry) *entry = resp->entry;
-    }
-
-    return rc;
+    return serviceDispatchInOut(&m->s, 26, in, *entry,
+        .buffer_attrs = {
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_In,
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_In,
+        },
+        .buffers = {
+            { userdata, userdata_size },
+            { thumbnail, thumbnail_size },
+        },
+    );
 }
 
 Result grcMovieMakerFinish(GrcMovieMaker *m, s32 width, s32 height, const void* userdata, size_t userdata_size, const void* thumbnail, size_t thumbnail_size, CapsApplicationAlbumEntry *entry) {
@@ -674,7 +310,7 @@ Result grcMovieMakerFinish(GrcMovieMaker *m, s32 width, s32 height, const void* 
     if (hosversionBefore(7,0,0) && entry)
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    rc = _grcCmdInU64(&m->s, m->layer_handle, 22); // RequestOffscreenRecordingFinishReady
+    rc = _grcCmdInU64NoOut(&m->s, m->layer_handle, 22); // RequestOffscreenRecordingFinishReady
 
     if (R_SUCCEEDED(rc)) rc = eventWait(&m->recording_event, U64_MAX);
 
@@ -691,46 +327,14 @@ Result grcMovieMakerGetError(GrcMovieMaker *m) {
     if (!serviceIsActive(&m->s))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    return _grcCmdInU64(&m->s, m->layer_handle, 30); // GetOffscreenLayerError
+    return _grcCmdInU64NoOut(&m->s, m->layer_handle, 30); // GetOffscreenLayerError
 }
 
 static Result _grcMovieMakerEncodeOffscreenLayerAudioSample(GrcMovieMaker *m, const void* buffer, size_t size, u64 *out_size) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    ipcAddSendBuffer(&c, buffer, size, BufferType_Normal);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u64 layer_handle;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&m->s, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 41;
-    raw->layer_handle = m->layer_handle;
-
-    Result rc = serviceIpcDispatch(&m->s);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            u64 out_size;
-        } *resp;
-
-        serviceIpcParse(&m->s, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && out_size) *out_size = resp->out_size;
-    }
-
-    return rc;
+    return serviceDispatchInOut(&m->s, 41, m->layer_handle, *out_size,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
+        .buffers = { { buffer, size } },
+    );
 }
 
 Result grcMovieMakerEncodeAudioSample(GrcMovieMaker *m, const void* buffer, size_t size) {
@@ -755,25 +359,14 @@ Result grcMovieMakerEncodeAudioSample(GrcMovieMaker *m, const void* buffer, size
 
 // grc:d
 
-static Service g_grcdSrv;
-static u64 g_grcdRefCnt;
+NX_GENERATE_SERVICE_GUARD(grcd);
 
-Result grcdInitialize(void) {
-    atomicIncrement64(&g_grcdRefCnt);
-
-    if (serviceIsActive(&g_grcdSrv))
-        return 0;
-
-    Result rc = smGetService(&g_grcdSrv, "grc:d");
-
-    if (R_FAILED(rc)) grcdExit();
-
-    return rc;
+Result _grcdInitialize(void) {
+    return smGetService(&g_grcdSrv, "grc:d");
 }
 
-void grcdExit(void) {
-    if (atomicDecrement64(&g_grcdRefCnt) == 0)
-        serviceClose(&g_grcdSrv);
+void _grcdCleanup(void) {
+    serviceClose(&g_grcdSrv);
 }
 
 Service* grcdGetServiceSession(void) {
@@ -785,47 +378,22 @@ Result grcdBegin(void) {
 }
 
 Result grcdRead(GrcStream stream, void* buffer, size_t size, u32 *unk, u32 *data_size, u64 *timestamp) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    ipcAddRecvBuffer(&c, buffer, size, BufferType_Normal);
-
     struct {
-        u64 magic;
-        u64 cmd_id;
-        u32 stream;
-    } *raw;
+        u32 unk;
+        u32 data_size;
+        u64 timestamp;
+    } out;
 
-    raw = serviceIpcPrepareHeader(&g_grcdSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 2;
-    raw->stream = stream;
-
-    Result rc = serviceIpcDispatch(&g_grcdSrv);
-
+    u32 tmp=stream;
+    Result rc = serviceDispatchInOut(&g_grcdSrv, 2, tmp, out,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { buffer, size } },
+    );
     if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            u32 unk;
-            u32 data_size;
-            u64 timestamp;
-        } *resp;
-
-        serviceIpcParse(&g_grcdSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            if (unk) *unk = resp->unk;
-            if (data_size) *data_size = resp->data_size;
-            if (timestamp) *timestamp = resp->timestamp;
-        }
+        if (unk) *unk = out.unk;
+        if (data_size) *data_size = out.data_size;
+        if (timestamp) *timestamp = out.timestamp;
     }
-
     return rc;
 }
 

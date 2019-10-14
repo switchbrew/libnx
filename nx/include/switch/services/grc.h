@@ -6,7 +6,7 @@
  */
 #pragma once
 #include "../types.h"
-#include "../services/sm.h"
+#include "../sf/service.h"
 #include "../services/caps.h"
 #include "../kernel/event.h"
 #include "../kernel/tmem.h"
@@ -119,19 +119,19 @@ static inline NWindow* grcMovieMakerGetNWindow(GrcMovieMaker *m) {
 }
 
 /**
- * @brief Starts recording with the specified MovieMaker and \ref GrcOffscreenRecordingParameter.
- * @param m \ref GrcMovieMaker
- * @param[in] param \ref GrcOffscreenRecordingParameter
- */
-Result grcMovieMakerStart(GrcMovieMaker *m, const GrcOffscreenRecordingParameter *param);
-
-/**
  * @brief Aborts recording with the specified MovieMaker.
  * @note This is used automatically by \ref grcMovieMakerClose.
  * @note This will throw an error if \ref grcMovieMakerStart was not used previously, with the flag used for this being cleared afterwards on success.
  * @param m \ref GrcMovieMaker
  */
 Result grcMovieMakerAbort(GrcMovieMaker *m);
+
+/**
+ * @brief Starts recording with the specified MovieMaker and \ref GrcOffscreenRecordingParameter.
+ * @param m \ref GrcMovieMaker
+ * @param[in] param \ref GrcOffscreenRecordingParameter
+ */
+Result grcMovieMakerStart(GrcMovieMaker *m, const GrcOffscreenRecordingParameter *param);
 
 /**
  * @brief Finishes recording with the specified MovieMaker.
