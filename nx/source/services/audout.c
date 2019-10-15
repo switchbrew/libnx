@@ -2,6 +2,7 @@
 #include "service_guard.h"
 #include "kernel/event.h"
 #include "services/audout.h"
+#include "runtime/hosversion.h"
 
 #define DEVICE_NAME_LENGTH 0x100
 #define DEFAULT_SAMPLE_RATE 0xBB80
@@ -123,13 +124,16 @@ Result audoutPlayBuffer(AudioOutBuffer *source, AudioOutBuffer **released) {
 }
 
 Result audoutListAudioOuts(char *DeviceNames, s32 count, u32 *DeviceNamesCount) {
-    return serviceDispatchOut(&g_audoutSrv, 0, *DeviceNamesCount,
-        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+    bool new_cmd = hosversionAtLeast(3,0,0);
+    return serviceDispatchOut(&g_audoutSrv, new_cmd==0 ? 0 : 2, *DeviceNamesCount,
+        .buffer_attrs = { (new_cmd==0 ? SfBufferAttr_HipcMapAlias : SfBufferAttr_HipcAutoSelect) | SfBufferAttr_Out },
         .buffers = { { DeviceNames, count*DEVICE_NAME_LENGTH } },
     );
 }
 
 Result audoutOpenAudioOut(const char *DeviceNameIn, char *DeviceNameOut, u32 SampleRateIn, u32 ChannelCountIn, u32 *SampleRateOut, u32 *ChannelCountOut, PcmFormat *Format, AudioOutState *State) {
+    bool new_cmd = hosversionAtLeast(3,0,0);
+
     const struct {
         u32 sample_rate;
         u32 channel_count;
@@ -143,10 +147,11 @@ Result audoutOpenAudioOut(const char *DeviceNameIn, char *DeviceNameOut, u32 Sam
         u32 state;
     } out;
 
-    Result rc = serviceDispatchInOut(&g_audoutSrv, 1, in, out,
+    u32 tmpattr = new_cmd==0 ? SfBufferAttr_HipcMapAlias : SfBufferAttr_HipcAutoSelect;
+    Result rc = serviceDispatchInOut(&g_audoutSrv, new_cmd==0 ? 1 : 3, in, out,
         .buffer_attrs = {
-            SfBufferAttr_HipcMapAlias | SfBufferAttr_In,
-            SfBufferAttr_HipcMapAlias | SfBufferAttr_Out,
+            tmpattr | SfBufferAttr_In,
+            tmpattr | SfBufferAttr_Out,
         },
         .buffers = {
             { DeviceNameIn, DEVICE_NAME_LENGTH },
@@ -183,9 +188,10 @@ Result audoutStopAudioOut(void) {
 }
 
 Result audoutAppendAudioOutBuffer(AudioOutBuffer *Buffer) {
+    bool new_cmd = hosversionAtLeast(3,0,0);
     u64 tmp = (u64)Buffer;
-    return serviceDispatchIn(&g_audoutIAudioOut, 3, tmp,
-        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
+    return serviceDispatchIn(&g_audoutIAudioOut, new_cmd==0 ? 3 : 7, tmp,
+        .buffer_attrs = { (new_cmd==0 ? SfBufferAttr_HipcMapAlias : SfBufferAttr_HipcAutoSelect) | SfBufferAttr_In },
         .buffers = { { Buffer, sizeof(*Buffer) } },
     );
 }
@@ -195,8 +201,9 @@ static Result _audoutRegisterBufferEvent(Event *BufferEvent) {
 }
 
 Result audoutGetReleasedAudioOutBuffer(AudioOutBuffer **Buffer, u32 *ReleasedBuffersCount) {
-    return serviceDispatchOut(&g_audoutIAudioOut, 5, *ReleasedBuffersCount,
-        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+    bool new_cmd = hosversionAtLeast(3,0,0);
+    return serviceDispatchOut(&g_audoutIAudioOut, new_cmd==0 ? 5 : 8, *ReleasedBuffersCount,
+        .buffer_attrs = { (new_cmd==0 ? SfBufferAttr_HipcMapAlias : SfBufferAttr_HipcAutoSelect) | SfBufferAttr_Out },
         .buffers = { { Buffer, sizeof(*Buffer) } },
     );
 }
