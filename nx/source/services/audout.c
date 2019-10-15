@@ -102,7 +102,7 @@ static Result _audoutCmdNoIO(Service* srv, u32 cmd_id) {
     return serviceDispatch(srv, cmd_id);
 }
 
-static Result _audoutCmdNoInOut32(Service* srv, u32 *out, u32 cmd_id) {
+static Result _audoutCmdNoInOutU32(Service* srv, u32 *out, u32 cmd_id) {
     return serviceDispatchOut(srv, cmd_id, *out);
 }
 
@@ -182,7 +182,7 @@ Result audoutOpenAudioOut(const char *DeviceNameIn, char *DeviceNameOut, u32 Sam
 
 Result audoutGetAudioOutState(AudioOutState *State) {
     u32 tmp=0;
-    Result rc = _audoutCmdNoInOut32(&g_audoutIAudioOut, &tmp, 0);
+    Result rc = _audoutCmdNoInOutU32(&g_audoutIAudioOut, &tmp, 0);
     if (R_SUCCEEDED(rc) && State) *State = tmp;
     return rc;
 }
