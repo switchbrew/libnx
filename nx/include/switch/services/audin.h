@@ -6,7 +6,9 @@
  */
 #pragma once
 
+#include "../types.h"
 #include "../audio/audio.h"
+#include "../sf/service.h"
 
 typedef enum {
     AudioInState_Started = 0,
@@ -25,10 +27,19 @@ struct AudioInBuffer
     u64 data_offset;            ///< Offset of data inside the buffer. (Unused?)
 };
 
+/// Initialize audin.
 Result audinInitialize(void);
+
+/// Exit audin.
 void audinExit(void);
 
-Result audinListAudioIns(char *DeviceNames, u32 *DeviceNamesCount);
+/// Gets the Service object for the actual audin service session.
+Service* audinGetServiceSession(void);
+
+/// Gets the Service object for IAudioIn.
+Service* audinGetServiceSession_AudioIn(void);
+
+Result audinListAudioIns(char *DeviceNames, s32 count, u32 *DeviceNamesCount);
 Result audinOpenAudioIn(const char *DeviceNameIn, char *DeviceNameOut, u32 SampleRateIn, u32 ChannelCountIn, u32 *SampleRateOut, u32 *ChannelCountOut, PcmFormat *Format, AudioInState *State);
 Result audinGetAudioInState(AudioInState *State);
 Result audinStartAudioIn(void);
