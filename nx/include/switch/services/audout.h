@@ -27,8 +27,17 @@ struct AudioOutBuffer
     u64 data_offset;            ///< Offset of data inside the buffer. (Unused?)
 };
 
+/// Initialize audout.
 Result audoutInitialize(void);
+
+/// Exit audout.
 void audoutExit(void);
+
+/// Gets the Service object for the actual audout service session.
+Service* audoutGetServiceSession(void);
+
+/// Gets the Service object for IAudioOut.
+Service* audoutGetServiceSession_AudioOut(void);
 
 Result audoutListAudioOuts(char *DeviceNames, s32 count, u32 *DeviceNamesCount);
 Result audoutOpenAudioOut(const char *DeviceNameIn, char *DeviceNameOut, u32 SampleRateIn, u32 ChannelCountIn, u32 *SampleRateOut, u32 *ChannelCountOut, PcmFormat *Format, AudioOutState *State);

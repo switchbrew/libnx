@@ -58,6 +58,14 @@ void _audoutCleanup(void) {
     serviceClose(&g_audoutSrv);
 }
 
+Service* audoutGetServiceSession(void) {
+    return &g_audoutSrv;
+}
+
+Service* audoutGetServiceSession_AudioOut(void) {
+    return &g_audoutIAudioOut;
+}
+
 u32 audoutGetSampleRate(void) {
     return g_sampleRate;
 }
