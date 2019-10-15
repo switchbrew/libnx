@@ -1,11 +1,7 @@
-#include <string.h>
-#include "types.h"
-#include "result.h"
-#include "arm/atomics.h"
-#include "kernel/ipc.h"
+#define NX_SERVICE_ASSUME_NON_DOMAIN
+#include "service_guard.h"
 #include "kernel/event.h"
 #include "services/audout.h"
-#include "services/sm.h"
 
 #define DEVICE_NAME_LENGTH 0x100
 #define DEFAULT_SAMPLE_RATE 0xBB80
@@ -13,7 +9,6 @@
 
 static Service g_audoutSrv;
 static Service g_audoutIAudioOut;
-static u64 g_refCnt;
 
 static Event g_audoutBufferEvent;
 
@@ -24,19 +19,14 @@ static AudioOutState g_deviceState = AudioOutState_Stopped;
 
 static Result _audoutRegisterBufferEvent(Event *BufferEvent);
 
-Result audoutInitialize(void)
-{
-    atomicIncrement64(&g_refCnt);
+NX_GENERATE_SERVICE_GUARD(audout);
 
-    if (serviceIsActive(&g_audoutSrv))
-        return 0;
-
+Result _audoutInitialize(void) {
     Result rc = 0;
     rc = smGetService(&g_audoutSrv, "audout:u");
     
     // Setup the default device
-    if (R_SUCCEEDED(rc))
-    {        
+    if (R_SUCCEEDED(rc)) {
         // Passing an empty device name will open the default "DeviceOut"
         char DeviceNameIn[DEVICE_NAME_LENGTH] = {0};
         char DeviceNameOut[DEVICE_NAME_LENGTH] = {0};
@@ -55,20 +45,16 @@ Result audoutInitialize(void)
     return rc;
 }
 
-void audoutExit(void)
-{
-    if (atomicDecrement64(&g_refCnt) == 0)
-    {
-        eventClose(&g_audoutBufferEvent);
+void _audoutCleanup(void) {
+    eventClose(&g_audoutBufferEvent);
 
-        g_sampleRate = 0;
-        g_channelCount = 0;
-        g_pcmFormat = PcmFormat_Invalid;
-        g_deviceState = AudioOutState_Stopped;
+    g_sampleRate = 0;
+    g_channelCount = 0;
+    g_pcmFormat = PcmFormat_Invalid;
+    g_deviceState = AudioOutState_Stopped;
 
-        serviceClose(&g_audoutIAudioOut);
-        serviceClose(&g_audoutSrv);
-    }
+    serviceClose(&g_audoutIAudioOut);
+    serviceClose(&g_audoutSrv);
 }
 
 u32 audoutGetSampleRate(void) {
@@ -87,12 +73,35 @@ AudioOutState audoutGetDeviceState(void) {
     return g_deviceState;
 }
 
+static Result _audoutCmdGetHandle(Service* srv, Handle* handle_out, u32 cmd_id) {
+    return serviceDispatch(srv, cmd_id,
+        .out_handle_attrs = { SfOutHandleAttr_HipcCopy },
+        .out_handles = handle_out,
+    );
+}
+
+static Result _audoutCmdGetEvent(Service* srv, Event* out_event, bool autoclear, u32 cmd_id) {
+    Handle tmp_handle = INVALID_HANDLE;
+    Result rc = 0;
+
+    rc = _audoutCmdGetHandle(srv, &tmp_handle, cmd_id);
+    if (R_SUCCEEDED(rc)) eventLoadRemote(out_event, tmp_handle, autoclear);
+    return rc;
+}
+
+static Result _audoutCmdNoIO(Service* srv, u32 cmd_id) {
+    return serviceDispatch(srv, cmd_id);
+}
+
+static Result _audoutCmdNoInOut32(Service* srv, u32 *out, u32 cmd_id) {
+    return serviceDispatchOut(srv, cmd_id, *out);
+}
+
 Result audoutWaitPlayFinish(AudioOutBuffer **released, u32* released_count, u64 timeout) {
     // Wait on the buffer event handle
     Result rc = eventWait(&g_audoutBufferEvent, timeout);
     
-    if (R_SUCCEEDED(rc))
-    {
+    if (R_SUCCEEDED(rc)) {
         // Grab the released buffer
         rc = audoutGetReleasedAudioOutBuffer(released, released_count);
     }
@@ -113,341 +122,89 @@ Result audoutPlayBuffer(AudioOutBuffer *source, AudioOutBuffer **released) {
     return rc;
 }
 
-Result audoutListAudioOuts(char *DeviceNames, u32 *DeviceNamesCount) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    ipcAddRecvBuffer(&c, DeviceNames, DEVICE_NAME_LENGTH, 0);
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-    
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 0;
-
-    Result rc = serviceIpcDispatch(&g_audoutSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-            u32 DeviceNamesCount;
-        } *resp = r.Raw;
-        
-        rc = resp->result;
-        
-        if (R_SUCCEEDED(rc) && DeviceNamesCount)
-            *DeviceNamesCount = resp->DeviceNamesCount;
-    }
-
-    return rc;
+Result audoutListAudioOuts(char *DeviceNames, s32 count, u32 *DeviceNamesCount) {
+    return serviceDispatchOut(&g_audoutSrv, 0, *DeviceNamesCount,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { DeviceNames, count*DEVICE_NAME_LENGTH } },
+    );
 }
 
 Result audoutOpenAudioOut(const char *DeviceNameIn, char *DeviceNameOut, u32 SampleRateIn, u32 ChannelCountIn, u32 *SampleRateOut, u32 *ChannelCountOut, PcmFormat *Format, AudioOutState *State) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         u32 sample_rate;
         u32 channel_count;
         u64 client_pid;
-    } *raw;
+    } in = { SampleRateIn, ChannelCountIn, 0 };
 
-    ipcSendPid(&c);
-    ipcSendHandleCopy(&c, CUR_PROCESS_HANDLE);
-    ipcAddSendBuffer(&c, DeviceNameIn, DEVICE_NAME_LENGTH, 0);
-    ipcAddRecvBuffer(&c, DeviceNameOut, DEVICE_NAME_LENGTH, 0);
+    struct {
+        u32 sample_rate;
+        u32 channel_count;
+        u32 pcm_format;
+        u32 state;
+    } out;
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 1;
-    raw->sample_rate = SampleRateIn;
-    raw->channel_count = ChannelCountIn;
-    raw->client_pid = 0;
-
-    Result rc = serviceIpcDispatch(&g_audoutSrv);
-
+    Result rc = serviceDispatchInOut(&g_audoutSrv, 1, in, out,
+        .buffer_attrs = {
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_In,
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_Out,
+        },
+        .buffers = {
+            { DeviceNameIn, DEVICE_NAME_LENGTH },
+            { DeviceNameOut, DEVICE_NAME_LENGTH },
+        },
+        .in_send_pid = true,
+        .in_num_handles = 1,
+        .in_handles = { CUR_PROCESS_HANDLE },
+        .out_num_objects = 1,
+        .out_objects = &g_audoutIAudioOut,
+    );
     if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-            u32 sample_rate;
-            u32 channel_count;
-            u32 pcm_format;
-            u32 state;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            serviceCreate(&g_audoutIAudioOut, r.Handles[0]);
-            
-            if (SampleRateOut)
-                *SampleRateOut = resp->sample_rate;
-            
-            if (ChannelCountOut)
-                *ChannelCountOut = resp->channel_count;
-            
-            if (Format)
-                *Format = resp->pcm_format;
-            
-            if (State)
-                *State = resp->state;
-        }
+        if (SampleRateOut) *SampleRateOut = out.sample_rate;
+        if (ChannelCountOut) *ChannelCountOut = out.channel_count;
+        if (Format) *Format = out.pcm_format;
+        if (State) *State = out.state;
     }
-
     return rc;
 }
 
 Result audoutGetAudioOutState(AudioOutState *State) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-    
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 0;
-
-    Result rc = serviceIpcDispatch(&g_audoutIAudioOut);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-            u32 state;
-        } *resp = r.Raw;
-        
-        rc = resp->result;
-        
-        if (R_SUCCEEDED(rc) && State)
-            *State = resp->state;
-    }
-
+    u32 tmp=0;
+    Result rc = _audoutCmdNoInOut32(&g_audoutIAudioOut, &tmp, 0);
+    if (R_SUCCEEDED(rc) && State) *State = tmp;
     return rc;
 }
 
 Result audoutStartAudioOut(void) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-    
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 1;
-
-    Result rc = serviceIpcDispatch(&g_audoutIAudioOut);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-        
-        rc = resp->result;
-    }
-
-    return rc;
+    return _audoutCmdNoIO(&g_audoutIAudioOut, 1);
 }
 
 Result audoutStopAudioOut(void) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-    
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 2;
-
-    Result rc = serviceIpcDispatch(&g_audoutIAudioOut);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-        
-        rc = resp->result;
-    }
-
-    return rc;
+    return _audoutCmdNoIO(&g_audoutIAudioOut, 2);
 }
 
 Result audoutAppendAudioOutBuffer(AudioOutBuffer *Buffer) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u64 tag;
-    } *raw;
-
-    ipcAddSendBuffer(&c, Buffer, sizeof(*Buffer), 0);
-    
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-    
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 3;
-    raw->tag = (u64)Buffer;
-
-    Result rc = serviceIpcDispatch(&g_audoutIAudioOut);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-        
-        rc = resp->result;
-    }
-
-    return rc;
+    u64 tmp = (u64)Buffer;
+    return serviceDispatchIn(&g_audoutIAudioOut, 3, tmp,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
+        .buffers = { { Buffer, sizeof(*Buffer) } },
+    );
 }
 
 static Result _audoutRegisterBufferEvent(Event *BufferEvent) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-    
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 4;
-
-    Result rc = serviceIpcDispatch(&g_audoutIAudioOut);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-        
-        rc = resp->result;
-        
-        if (R_SUCCEEDED(rc) && BufferEvent)
-            eventLoadRemote(BufferEvent, r.Handles[0], true);
-    }
-
-    return rc;
+    return _audoutCmdGetEvent(&g_audoutIAudioOut, BufferEvent, true, 4);
 }
 
 Result audoutGetReleasedAudioOutBuffer(AudioOutBuffer **Buffer, u32 *ReleasedBuffersCount) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    ipcAddRecvBuffer(&c, Buffer, sizeof(*Buffer), 0);
-    
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-    
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 5;
-
-    Result rc = serviceIpcDispatch(&g_audoutIAudioOut);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-            u32 released_buffers_count;
-        } *resp = r.Raw;
-        
-        rc = resp->result;
-        
-        if (R_SUCCEEDED(rc) && ReleasedBuffersCount)
-            *ReleasedBuffersCount = resp->released_buffers_count;
-    }
-
-    return rc;
+    return serviceDispatchOut(&g_audoutIAudioOut, 5, *ReleasedBuffersCount,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { Buffer, sizeof(*Buffer) } },
+    );
 }
 
 Result audoutContainsAudioOutBuffer(AudioOutBuffer *Buffer, bool *ContainsBuffer) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u64 tag;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-    
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 6;
-    raw->tag = (u64)Buffer;
-
-    Result rc = serviceIpcDispatch(&g_audoutIAudioOut);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-            u32 contains_buffer;
-        } *resp = r.Raw;
-        
-        rc = resp->result;
-        
-        if (R_SUCCEEDED(rc) && ContainsBuffer)
-            *ContainsBuffer = (resp->contains_buffer & 0x01);
-    }
-
+    u64 tmp = (u64)Buffer;
+    u8 out=0;
+    Result rc = serviceDispatchInOut(&g_audoutIAudioOut, 6, tmp, out);
+    if (R_SUCCEEDED(rc) && ContainsBuffer) *ContainsBuffer = out!=0;
     return rc;
 }

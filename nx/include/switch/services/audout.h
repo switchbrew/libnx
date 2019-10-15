@@ -6,7 +6,9 @@
  */
 #pragma once
 
+#include "../types.h"
 #include "../audio/audio.h"
+#include "../sf/service.h"
 
 typedef enum {
     AudioOutState_Started = 0,
@@ -28,7 +30,7 @@ struct AudioOutBuffer
 Result audoutInitialize(void);
 void audoutExit(void);
 
-Result audoutListAudioOuts(char *DeviceNames, u32 *DeviceNamesCount);
+Result audoutListAudioOuts(char *DeviceNames, s32 count, u32 *DeviceNamesCount);
 Result audoutOpenAudioOut(const char *DeviceNameIn, char *DeviceNameOut, u32 SampleRateIn, u32 ChannelCountIn, u32 *SampleRateOut, u32 *ChannelCountOut, PcmFormat *Format, AudioOutState *State);
 Result audoutGetAudioOutState(AudioOutState *State);
 Result audoutStartAudioOut(void);
