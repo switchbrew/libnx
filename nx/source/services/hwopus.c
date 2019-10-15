@@ -1,16 +1,13 @@
+#define NX_SERVICE_ASSUME_NON_DOMAIN
 #include <string.h>
-#include "types.h"
-#include "result.h"
-#include "arm/atomics.h"
-#include "kernel/ipc.h"
+#include "service_guard.h"
 #include "kernel/tmem.h"
 #include "services/hwopus.h"
-#include "services/sm.h"
 #include "runtime/hosversion.h"
 
-static Result _hwopusInitialize(Service* srv, Service* out_srv, TransferMemory *tmem, s32 SampleRate, s32 ChannelCount);
+static Result _hwopusInitialize(Service* srv, Service* srv_out, TransferMemory *tmem, s32 SampleRate, s32 ChannelCount);
 static Result _hwopusGetWorkBufferSize(Service* srv, u32 *size, s32 SampleRate, s32 ChannelCount);
-static Result _hwopusOpenHardwareOpusDecoderForMultiStream(Service* srv, Service* out_srv, TransferMemory *tmem, HwopusMultistreamState *state);
+static Result _hwopusOpenHardwareOpusDecoderForMultiStream(Service* srv, Service* srv_out, TransferMemory *tmem, HwopusMultistreamState *state);
 static Result _hwopusGetWorkBufferSizeForMultiStream(Service* srv, u32 *size, HwopusMultistreamState *state);
 
 static Result _hwopusDecodeInterleavedWithPerfOld(HwopusDecoder* decoder, s32 *DecodedDataSize, s32 *DecodedSampleCount, u64 *perf, const void* opusin, size_t opusin_size, s16 *pcmbuf, size_t pcmbuf_size);
@@ -92,288 +89,111 @@ void hwopusDecoderExit(HwopusDecoder* decoder) {
     tmemClose(&decoder->tmem);
 }
 
-static Result _hwopusInitialize(Service* srv, Service* out_srv, TransferMemory *tmem, s32 SampleRate, s32 ChannelCount) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    ipcSendHandleCopy(&c, tmem->handle);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+static Result _hwopusInitialize(Service* srv, Service* srv_out, TransferMemory *tmem, s32 SampleRate, s32 ChannelCount) {
+    const struct {
         u64 val;
         u32 size;
-    } *raw;
+    } in = { (u64)SampleRate | ((u64)ChannelCount<<32), tmem->size };
 
-    raw = serviceIpcPrepareHeader(srv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 0;
-    raw->val = (u64)SampleRate | ((u64)ChannelCount<<32);
-    raw->size = tmem->size;
-
-    Result rc = serviceIpcDispatch(srv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(srv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            serviceCreateSubservice(out_srv, srv, &r, 0);
-        }
-    }
-
-    return rc;
+    return serviceDispatchIn(srv, 0, in,
+        .in_num_handles = 1,
+        .in_handles = { tmem->handle },
+        .out_num_objects = 1,
+        .out_objects = srv_out,
+    );
 }
 
 static Result _hwopusGetWorkBufferSize(Service* srv, u32 *size, s32 SampleRate, s32 ChannelCount) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u64 val;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(srv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 1;
-    raw->val = (u64)SampleRate | ((u64)ChannelCount<<32);
-
-    Result rc = serviceIpcDispatch(srv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            u32 size;
-        } *resp;
-
-        serviceIpcParse(srv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && size) *size = resp->size;
-    }
-
-    return rc;
+    u64 val = (u64)SampleRate | ((u64)ChannelCount<<32);;
+    return serviceDispatchInOut(srv, 1, val, *size);
 }
 
-static Result _hwopusOpenHardwareOpusDecoderForMultiStream(Service* srv, Service* out_srv, TransferMemory *tmem, HwopusMultistreamState *state) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    ipcSendHandleCopy(&c, tmem->handle);
-    ipcAddSendStatic(&c, state, sizeof(HwopusMultistreamState), 0);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u32 size;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(srv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 2;
-    raw->size = tmem->size;
-
-    Result rc = serviceIpcDispatch(srv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(srv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            serviceCreateSubservice(out_srv, srv, &r, 0);
-        }
-    }
-
-    return rc;
+static Result _hwopusOpenHardwareOpusDecoderForMultiStream(Service* srv, Service* srv_out, TransferMemory *tmem, HwopusMultistreamState *state) {
+    u64 tmp=tmem->size;
+    return serviceDispatchIn(srv, 2, tmp,
+        .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_In },
+        .buffers = { { state, sizeof(HwopusMultistreamState) } },
+        .in_num_handles = 1,
+        .in_handles = { tmem->handle },
+        .out_num_objects = 1,
+        .out_objects = srv_out,
+    );
 }
 
 static Result _hwopusGetWorkBufferSizeForMultiStream(Service* srv, u32 *size, HwopusMultistreamState *state) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    ipcAddSendStatic(&c, state, sizeof(HwopusMultistreamState), 0);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(srv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 3;
-
-    Result rc = serviceIpcDispatch(srv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            u32 size;
-        } *resp;
-
-        serviceIpcParse(srv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && size) *size = resp->size;
-    }
-
-    return rc;
+    return serviceDispatchOut(srv, 3, *size,
+        .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_In },
+        .buffers = { { state, sizeof(HwopusMultistreamState) } },
+    );
 }
 
 Result hwopusDecodeInterleaved(HwopusDecoder* decoder, s32 *DecodedDataSize, s32 *DecodedSampleCount, const void* opusin, size_t opusin_size, s16 *pcmbuf, size_t pcmbuf_size) {
     if (hosversionAtLeast(6,0,0)) return _hwopusDecodeInterleaved(decoder, DecodedDataSize, DecodedSampleCount, NULL, 0, opusin, opusin_size, pcmbuf, pcmbuf_size);
     if (hosversionAtLeast(4,0,0)) return _hwopusDecodeInterleavedWithPerfOld(decoder, DecodedDataSize, DecodedSampleCount, NULL, opusin, opusin_size, pcmbuf, pcmbuf_size);
 
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    ipcAddSendBuffer(&c, opusin, opusin_size, BufferType_Normal);
-    ipcAddRecvBuffer(&c, pcmbuf, pcmbuf_size, BufferType_Normal);
-
     struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
+        s32 DecodedDataSize;
+        s32 DecodedSampleCount;
+    } out;
 
-    raw = serviceIpcPrepareHeader(&decoder->s, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = decoder->multistream==0 ? 0 : 2;
-
-    Result rc = serviceIpcDispatch(&decoder->s);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            s32 DecodedDataSize;
-            s32 DecodedSampleCount;
-        } *resp;
-
-        serviceIpcParse(&decoder->s, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && DecodedSampleCount) *DecodedSampleCount = resp->DecodedSampleCount;
-        if (R_SUCCEEDED(rc) && DecodedDataSize) *DecodedDataSize = resp->DecodedDataSize;
-    }
-
+    Result rc = serviceDispatchOut(&decoder->s, decoder->multistream==0 ? 0 : 2, out,
+        .buffer_attrs = {
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_In,
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_Out,
+        },
+        .buffers = {
+            { opusin, opusin_size },
+            { pcmbuf, pcmbuf_size },
+        },
+    );
+    if (R_SUCCEEDED(rc) && DecodedSampleCount) *DecodedSampleCount = out.DecodedSampleCount;
+    if (R_SUCCEEDED(rc) && DecodedDataSize) *DecodedDataSize = out.DecodedDataSize;
     return rc;
 }
 
 static Result _hwopusDecodeInterleavedWithPerfOld(HwopusDecoder* decoder, s32 *DecodedDataSize, s32 *DecodedSampleCount, u64 *perf, const void* opusin, size_t opusin_size, s16 *pcmbuf, size_t pcmbuf_size) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    ipcAddSendBuffer(&c, opusin, opusin_size, BufferType_Normal);
-    ipcAddRecvBuffer(&c, pcmbuf, pcmbuf_size, BufferType_Type1);
-
     struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
+        s32 DecodedDataSize;
+        s32 DecodedSampleCount;
+        u64 perf;
+    } out;
 
-    raw = serviceIpcPrepareHeader(&decoder->s, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = decoder->multistream==0 ? 4 : 5;
-
-    Result rc = serviceIpcDispatch(&decoder->s);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            s32 DecodedDataSize;
-            s32 DecodedSampleCount;
-            u64 perf;
-        } *resp;
-
-        serviceIpcParse(&decoder->s, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && DecodedSampleCount) *DecodedSampleCount = resp->DecodedSampleCount;
-        if (R_SUCCEEDED(rc) && DecodedDataSize) *DecodedDataSize = resp->DecodedDataSize;
-        if (R_SUCCEEDED(rc) && perf) *perf = resp->perf;
-    }
-
+    Result rc = serviceDispatchOut(&decoder->s, decoder->multistream==0 ? 4 : 5, out,
+        .buffer_attrs = {
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_In,
+            SfBufferAttr_HipcMapTransferAllowsNonSecure | SfBufferAttr_HipcMapAlias | SfBufferAttr_Out,
+        },
+        .buffers = {
+            { opusin, opusin_size },
+            { pcmbuf, pcmbuf_size },
+        },
+    );
+    if (R_SUCCEEDED(rc) && DecodedSampleCount) *DecodedSampleCount = out.DecodedSampleCount;
+    if (R_SUCCEEDED(rc) && DecodedDataSize) *DecodedDataSize = out.DecodedDataSize;
+    if (R_SUCCEEDED(rc) && perf) *perf = out.perf;
     return rc;
 }
 
 static Result _hwopusDecodeInterleaved(HwopusDecoder* decoder, s32 *DecodedDataSize, s32 *DecodedSampleCount, u64 *perf, bool reset_context, const void* opusin, size_t opusin_size, s16 *pcmbuf, size_t pcmbuf_size) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    ipcAddSendBuffer(&c, opusin, opusin_size, BufferType_Normal);
-    ipcAddRecvBuffer(&c, pcmbuf, pcmbuf_size, BufferType_Type1);
-
     struct {
-        u64 magic;
-        u64 cmd_id;
-        u8 flag;
-    } *raw;
+        s32 DecodedDataSize;
+        s32 DecodedSampleCount;
+        u64 perf;
+    } out;
 
-    raw = serviceIpcPrepareHeader(&decoder->s, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = decoder->multistream==0 ? 6 : 7;
-    raw->flag = reset_context!=0;
-
-    Result rc = serviceIpcDispatch(&decoder->s);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            s32 DecodedDataSize;
-            s32 DecodedSampleCount;
-            u64 perf;
-        } *resp;
-
-        serviceIpcParse(&decoder->s, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && DecodedSampleCount) *DecodedSampleCount = resp->DecodedSampleCount;
-        if (R_SUCCEEDED(rc) && DecodedDataSize) *DecodedDataSize = resp->DecodedDataSize;
-        if (R_SUCCEEDED(rc) && perf) *perf = resp->perf;
-    }
-
+    u8 tmp = reset_context!=0;
+    Result rc = serviceDispatchInOut(&decoder->s, decoder->multistream==0 ? 6 : 7, tmp, out,
+        .buffer_attrs = {
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_In,
+            SfBufferAttr_HipcMapTransferAllowsNonSecure | SfBufferAttr_HipcMapAlias | SfBufferAttr_Out,
+        },
+        .buffers = {
+            { opusin, opusin_size },
+            { pcmbuf, pcmbuf_size },
+        },
+    );
+    if (R_SUCCEEDED(rc) && DecodedSampleCount) *DecodedSampleCount = out.DecodedSampleCount;
+    if (R_SUCCEEDED(rc) && DecodedDataSize) *DecodedDataSize = out.DecodedDataSize;
+    if (R_SUCCEEDED(rc) && perf) *perf = out.perf;
     return rc;
 }

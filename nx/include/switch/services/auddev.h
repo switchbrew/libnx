@@ -6,6 +6,7 @@
  */
 #pragma once
 
+#include "../types.h"
 #include "../audio/audio.h"
 #include "../sf/service.h"
 

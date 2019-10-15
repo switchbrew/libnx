@@ -1,12 +1,13 @@
 /**
  * @file hwopus.h
- * @brief Hardware Opus audio service.
+ * @brief Hardware Opus audio service IPC wrapper.
  * @author yellows8
  * @copyright libnx Authors
  */
 #pragma once
 
-#include "../services/sm.h"
+#include "../types.h"
+#include "../sf/service.h"
 #include "../kernel/tmem.h"
 
 typedef struct {
