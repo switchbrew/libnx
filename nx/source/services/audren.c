@@ -1,12 +1,8 @@
-#include <string.h>
-#include "types.h"
-#include "result.h"
-#include "arm/atomics.h"
-#include "kernel/ipc.h"
+#define NX_SERVICE_ASSUME_NON_DOMAIN
+#include "service_guard.h"
 #include "kernel/tmem.h"
 #include "kernel/event.h"
 #include "runtime/hosversion.h"
-#include "services/sm.h"
 #include "services/applet.h"
 #include "services/audren.h"
 
@@ -33,15 +29,14 @@ typedef struct {
     u32 revision;
 } AudioRendererParameter;
 
-static Result _audrenOpenAudioRenderer(Service* audren_mgr, const AudioRendererParameter* param, u64 aruid);
-static Result _audrenGetWorkBufferSize(Service* audren_mgr, const AudioRendererParameter* param, u64* out_size);
-static Result _audrenQuerySystemEvent(void);
+static Result _audrenOpenAudioRenderer(Service* srv, Service* srv_out, const AudioRendererParameter* param, u64 aruid);
+static Result _audrenGetWorkBufferSize(Service* srv, const AudioRendererParameter* param, u64* out_size);
+static Result _audrenQuerySystemEvent(Event* out_event);
 
-Result audrenInitialize(const AudioRendererConfig* config)
-{
-    Result rc;
-    if (serviceIsActive(&g_audrenIAudioRenderer))
-        return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
+NX_GENERATE_SERVICE_GUARD_PARAMS(audren, (const AudioRendererConfig* config), (config));
+
+Result _audrenInitialize(const AudioRendererConfig* config) {
+    Result rc=0;
 
     // Validate configuration
     if (config->num_voices < 1 || config->num_voices > 1024)
@@ -89,24 +84,20 @@ Result audrenInitialize(const AudioRendererConfig* config)
     // Open IAudioRendererManager
     Service audrenMgrSrv;
     rc = smGetService(&audrenMgrSrv, "audren:u");
-    if (R_SUCCEEDED(rc))
-    {
+    if (R_SUCCEEDED(rc)) {
         // Get required work buffer size
-        size_t workBufSize = 0;
+        u64 workBufSize = 0;
         rc = _audrenGetWorkBufferSize(&audrenMgrSrv, &param, &workBufSize);
-        if (R_SUCCEEDED(rc))
-        {
+        if (R_SUCCEEDED(rc)) {
             // Create transfermem work buffer object
             workBufSize = (workBufSize + 0xFFF) &~ 0xFFF; // 1.x fails hard and returns a non-page-aligned work buffer size
             rc = tmemCreate(&g_audrenWorkBuf, workBufSize, Perm_None);
-            if (R_SUCCEEDED(rc))
-            {
+            if (R_SUCCEEDED(rc)) {
                 // Create the IAudioRenderer service
-                rc = _audrenOpenAudioRenderer(&audrenMgrSrv, &param, aruid);
-                if (R_SUCCEEDED(rc))
-                {
+                rc = _audrenOpenAudioRenderer(&audrenMgrSrv, &g_audrenIAudioRenderer, &param, aruid);
+                if (R_SUCCEEDED(rc)) {
                     // Finally, get the handle to the system event
-                    rc = _audrenQuerySystemEvent();
+                    rc = _audrenQuerySystemEvent(&g_audrenEvent);
                     if (R_FAILED(rc))
                         serviceClose(&g_audrenIAudioRenderer);
                 }
@@ -119,311 +110,98 @@ Result audrenInitialize(const AudioRendererConfig* config)
     return rc;
 }
 
-void audrenExit(void)
-{
-    if (!serviceIsActive(&g_audrenIAudioRenderer))
-        return;
-
+void _audrenCleanup(void) {
     eventClose(&g_audrenEvent);
     serviceClose(&g_audrenIAudioRenderer);
     tmemClose(&g_audrenWorkBuf);
 }
 
-Service* audrenGetServiceSession(void) {
+Service* audrenGetServiceSession_AudioRenderer(void) {
     return &g_audrenIAudioRenderer;
 }
 
-void audrenWaitFrame(void)
-{
+static Result _audrenCmdGetHandle(Service* srv, Handle* handle_out, u32 cmd_id) {
+    return serviceDispatch(srv, cmd_id,
+        .out_handle_attrs = { SfOutHandleAttr_HipcCopy },
+        .out_handles = handle_out,
+    );
+}
+
+static Result _audrenCmdGetEvent(Service* srv, Event* out_event, bool autoclear, u32 cmd_id) {
+    Handle tmp_handle = INVALID_HANDLE;
+    Result rc = 0;
+
+    rc = _audrenCmdGetHandle(srv, &tmp_handle, cmd_id);
+    if (R_SUCCEEDED(rc)) eventLoadRemote(out_event, tmp_handle, autoclear);
+    return rc;
+}
+
+static Result _audrenCmdNoIO(Service* srv, u32 cmd_id) {
+    return serviceDispatch(srv, cmd_id);
+}
+
+static Result _audrenCmdNoInOutU32(Service* srv, u32 *out, u32 cmd_id) {
+    return serviceDispatchOut(srv, cmd_id, *out);
+}
+
+void audrenWaitFrame(void) {
     eventWait(&g_audrenEvent, U64_MAX);
 }
 
-Result _audrenOpenAudioRenderer(Service* audren_mgr, const AudioRendererParameter* param, u64 aruid)
-{
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-
+Result _audrenOpenAudioRenderer(Service* srv, Service* srv_out, const AudioRendererParameter* param, u64 aruid) {
+    const struct {
         AudioRendererParameter param;
         u64 work_buffer_size;
         u64 aruid;
-    } *raw;
+    } in = { *param, g_audrenWorkBuf.size, aruid };
 
-    ipcSendPid(&c);
-    ipcSendHandleCopy(&c, g_audrenWorkBuf.handle);
-    ipcSendHandleCopy(&c, CUR_PROCESS_HANDLE);
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 0;
-    raw->param = *param;
-    raw->work_buffer_size = g_audrenWorkBuf.size;
-    raw->aruid = aruid;
-
-    Result rc = serviceIpcDispatch(audren_mgr);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc))
-            serviceCreate(&g_audrenIAudioRenderer, r.Handles[0]);
-    }
-
-    return rc;
+    return serviceDispatchIn(srv, 0, in,
+        .in_send_pid = true,
+        .in_num_handles = 2,
+        .in_handles = { g_audrenWorkBuf.handle, CUR_PROCESS_HANDLE },
+        .out_num_objects = 1,
+        .out_objects = srv_out,
+    );
 }
 
-Result _audrenGetWorkBufferSize(Service* audren_mgr, const AudioRendererParameter* param, size_t* out_size)
-{
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-
-        AudioRendererParameter param;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 1;
-    raw->param = *param;
-
-    Result rc = serviceIpcDispatch(audren_mgr);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-            u64 work_buf_size;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && out_size)
-            *out_size = resp->work_buf_size;
-    }
-
-    return rc;
+Result _audrenGetWorkBufferSize(Service* srv, const AudioRendererParameter* param, u64* out_size) {
+    return serviceDispatchInOut(srv, 1, *param, *out_size);
 }
 
-Result audrenGetState(u32* out_state)
-{
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 3;
-
-    Result rc = serviceIpcDispatch(&g_audrenIAudioRenderer);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-            u32 state;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && out_state)
-            *out_state = resp->state;
-    }
-
-    return rc;
+Result audrenGetState(u32* out_state) {
+    return _audrenCmdNoInOutU32(&g_audrenIAudioRenderer, out_state, 3);
 }
 
-Result audrenRequestUpdateAudioRenderer(const void* in_param_buf, size_t in_param_buf_size, void* out_param_buf, size_t out_param_buf_size, void* perf_buf, size_t perf_buf_size)
-{
-    IpcCommand c;
-    ipcInitialize(&c);
+Result audrenRequestUpdateAudioRenderer(const void* in_param_buf, size_t in_param_buf_size, void* out_param_buf, size_t out_param_buf_size, void* perf_buf, size_t perf_buf_size) {
+    bool new_cmd = hosversionAtLeast(3,0,0);
 
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    ipcAddSendBuffer(&c, in_param_buf, in_param_buf_size, BufferType_Normal);
-    ipcAddRecvBuffer(&c, out_param_buf, out_param_buf_size, BufferType_Normal);
-    ipcAddRecvBuffer(&c, perf_buf, perf_buf_size, BufferType_Normal);
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 4;
-
-    Result rc = serviceIpcDispatch(&g_audrenIAudioRenderer);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    u32 tmpattr = new_cmd==0 ? SfBufferAttr_HipcMapAlias : SfBufferAttr_HipcAutoSelect;
+    return serviceDispatch(&g_audrenIAudioRenderer, new_cmd==0 ? 4 : 10,
+        .buffer_attrs = {
+            tmpattr | SfBufferAttr_Out,
+            tmpattr | SfBufferAttr_Out,
+            tmpattr | SfBufferAttr_In,
+        },
+        .buffers = {
+            { out_param_buf, out_param_buf_size },
+            { perf_buf, perf_buf_size },
+            { in_param_buf, in_param_buf_size },
+        },
+    );
 }
 
-Result audrenStartAudioRenderer(void)
-{
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 5;
-
-    Result rc = serviceIpcDispatch(&g_audrenIAudioRenderer);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+Result audrenStartAudioRenderer(void) {
+    return _audrenCmdNoIO(&g_audrenIAudioRenderer, 5);
 }
 
-Result audrenStopAudioRenderer(void)
-{
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 6;
-
-    Result rc = serviceIpcDispatch(&g_audrenIAudioRenderer);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+Result audrenStopAudioRenderer(void) {
+    return _audrenCmdNoIO(&g_audrenIAudioRenderer, 6);
 }
 
-Result _audrenQuerySystemEvent(void)
-{
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 7;
-
-    Result rc = serviceIpcDispatch(&g_audrenIAudioRenderer);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc))
-            eventLoadRemote(&g_audrenEvent, r.Handles[0], true);
-    }
-
-    return rc;
+Result _audrenQuerySystemEvent(Event* out_event) {
+    return _audrenCmdGetEvent(&g_audrenIAudioRenderer, out_event, true, 7);
 }
 
-Result audrenSetAudioRendererRenderingTimeLimit(int percent)
-{
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        int percent;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 8;
-    raw->percent = percent;
-
-    Result rc = serviceIpcDispatch(&g_audrenIAudioRenderer);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+Result audrenSetAudioRendererRenderingTimeLimit(int percent) {
+    return serviceDispatchIn(&g_audrenIAudioRenderer, 8, percent);
 }

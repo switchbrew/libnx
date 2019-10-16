@@ -6,8 +6,9 @@
  */
 #pragma once
 
+#include "../types.h"
 #include "../audio/audio.h"
-#include "../services/sm.h"
+#include "../sf/service.h"
 
 #define AUDREN_TIMER_FREQ_HZ           200.0f
 #define AUDREN_TIMER_PERIOD_MS         5.0f
@@ -314,9 +315,15 @@ NX_CONSTEXPR size_t audrenGetOutputParamSize(const AudioRendererConfig* config)
     return size;
 }
 
+/// Initialize audren.
 Result audrenInitialize(const AudioRendererConfig* config);
+
+/// Exit audren.
 void audrenExit(void);
-Service* audrenGetServiceSession(void);
+
+/// Gets the Service object for IAudioRenderer.
+Service* audrenGetServiceSession_AudioRenderer(void);
+
 void audrenWaitFrame(void);
 Result audrenGetState(u32* out_state);
 Result audrenRequestUpdateAudioRenderer(const void* in_param_buf, size_t in_param_buf_size, void* out_param_buf, size_t out_param_buf_size, void* perf_buf, size_t perf_buf_size);
