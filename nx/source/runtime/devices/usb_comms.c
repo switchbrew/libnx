@@ -140,10 +140,6 @@ Result usbCommsInitializeEx(u32 num_interfaces, const UsbCommsInterfaceInfo *inf
         if (R_SUCCEEDED(rc) && hosversionAtLeast(5,0,0)) {
             rc = usbDsEnable();
         }
-        
-        if (R_FAILED(rc)) {
-            usbCommsExit();
-        }
     }
     
     if (R_SUCCEEDED(rc)) {
@@ -152,6 +148,11 @@ Result usbCommsInitializeEx(u32 num_interfaces, const UsbCommsInterfaceInfo *inf
     }
 
     rwlockWriteUnlock(&g_usbCommsLock);
+
+    if (R_FAILED(rc)) {
+        usbCommsExit();
+    }
+
     return rc;
 }
 
