@@ -42,24 +42,24 @@ typedef enum {
 /// See \ref pdmPlayTimestampToPosix.
 typedef struct {
     u64 titleID;                      ///< Application titleID.
-    u32 entryindex;                   ///< Entry index.
+    u32 entry_index;                  ///< Entry index.
     u32 timestampUser;                ///< See PdmPlayEvent::timestampUser, with the above timestamp format.
     u32 timestampNetwork;             ///< See PdmPlayEvent::timestampNetwork, with the above timestamp format.
     u8 eventType;                     ///< \ref PdmAppletEventType
     u8 pad[3];                        ///< Padding.
-} PdmApplicationEvent;
+} PdmAppletEvent;
 
 /// PlayStatistics
 typedef struct {
     u64 titleID;                      ///< Application titleID.
 
-    u32 first_entryindex;             ///< Entry index for the first time the title was played.
-    u32 first_timestampUser;          ///< See PdmApplicationEvent::timestampUser. This is for the first time the title was played.
-    u32 first_timestampNetwork;       ///< See PdmApplicationEvent::timestampNetwork. This is for the first time the title was played.
+    u32 first_entry_index;            ///< Entry index for the first time the title was played.
+    u32 first_timestampUser;          ///< See PdmAppletEvent::timestampUser. This is for the first time the title was played.
+    u32 first_timestampNetwork;       ///< See PdmAppletEvent::timestampNetwork. This is for the first time the title was played.
 
-    u32 last_entryindex;              ///< Entry index for the last time the title was played.
-    u32 last_timestampUser;           ///< See PdmApplicationEvent::timestampUser. This is for the last time the title was played.
-    u32 last_timestampNetwork;        ///< See PdmApplicationEvent::timestampNetwork. This is for the last time the title was played.
+    u32 last_entry_index;             ///< Entry index for the last time the title was played.
+    u32 last_timestampUser;           ///< See PdmAppletEvent::timestampUser. This is for the last time the title was played.
+    u32 last_timestampNetwork;        ///< See PdmAppletEvent::timestampNetwork. This is for the last time the title was played.
 
     u32 playtimeMinutes;              ///< Total play-time in minutes.
     u32 totalLaunches;                ///< Total times the application title was launched.
@@ -69,8 +69,8 @@ typedef struct {
 /// This contains data from the last time the title was played.
 typedef struct {
     u64 titleID;                      ///< Application titleID.
-    u32 timestampUser;                ///< See PdmApplicationEvent::timestampUser.
-    u32 timestampNetwork;             ///< See PdmApplicationEvent::timestampNetwork.
+    u32 timestampUser;                ///< See PdmAppletEvent::timestampUser.
+    u32 timestampNetwork;             ///< See PdmAppletEvent::timestampNetwork.
     u32 lastPlayedMinutes;            ///< Total minutes since the title was last played.
     u8 flag;                          ///< Flag indicating whether the above field is set.
     u8 pad[3];                        ///< Padding.
@@ -133,8 +133,8 @@ typedef struct {
 
 /// AccountEvent
 typedef struct {
-    AccountUid userID;                ///< \ref AccountUid
-    u32 entryindex;                   ///< Entry index.
+    AccountUid uid;                   ///< \ref AccountUid
+    u32 entry_index;                  ///< Entry index.
     u8 pad[4];                        ///< Padding.
     u64 timestampUser;                ///< See PdmPlayEvent::timestampUser.
     u64 timestampNetwork;             ///< See PdmPlayEvent::timestampNetwork.
@@ -165,13 +165,13 @@ void pdmqryExit(void);
 Service* pdmqryGetServiceSession(void);
 
 /**
- * @brief Gets a list of \ref PdmApplicationEvent.
- * @param[in] entryindex Start entry index.
- * @param[out] events Output \ref PdmApplicationEvent array.
+ * @brief Gets a list of \ref PdmAppletEvent.
+ * @param[in] entry_index Start entry index.
+ * @param[out] events Output \ref PdmAppletEvent array.
  * @param[in] count Max entries in the output array.
  * @param[out] total_out Total output entries.
  */
-Result pdmqryQueryApplicationEvent(u32 entryindex, PdmApplicationEvent *events, s32 count, s32 *total_out);
+Result pdmqryQueryAppletEvent(s32 entry_index, PdmAppletEvent *events, s32 count, s32 *total_out);
 
 /**
  * @brief Gets \ref PdmPlayStatistics for the specified titleID.
@@ -183,10 +183,10 @@ Result pdmqryQueryPlayStatisticsByApplicationId(u64 titleID, PdmPlayStatistics *
 /**
  * @brief Gets \ref PdmPlayStatistics for the specified titleID and account userID.
  * @param[in] titleID Application titleID.
- * @param[in] userID \ref AccountUid
+ * @param[in] uid \ref AccountUid
  * @param[out] stats \ref PdmPlayStatistics
  */
-Result pdmqryQueryPlayStatisticsByApplicationIdAndUserAccountId(u64 titleID, AccountUid *userID, PdmPlayStatistics *stats);
+Result pdmqryQueryPlayStatisticsByApplicationIdAndUserAccountId(u64 titleID, AccountUid *uid, PdmPlayStatistics *stats);
 
 /**
  * @brief Gets \ref PdmLastPlayTime for the specified titles.
@@ -199,59 +199,59 @@ Result pdmqryQueryLastPlayTime(PdmLastPlayTime *playtimes, const u64 *titleIDs, 
 
 /**
  * @brief Gets a list of \ref PdmPlayEvent.
- * @param[in] entryindex Start entry index.
+ * @param[in] entry_index Start entry index.
  * @param[out] events Output \ref PdmPlayEvent array.
  * @param[in] count Max entries in the output array.
  * @param[out] total_out Total output entries.
  */
-Result pdmqryQueryPlayEvent(u32 entryindex, PdmPlayEvent *events, s32 count, s32 *total_out);
+Result pdmqryQueryPlayEvent(s32 entry_index, PdmPlayEvent *events, s32 count, s32 *total_out);
 
 /**
  * @brief Gets range fields which can then be used with the other pdmqry funcs, except for \ref pdmqryQueryAccountPlayEvent.
  * @param[out] total_entries Total entries.
- * @param[out] start_entryindex Start entry index.
- * @param[out] end_entryindex End entry index.
+ * @param[out] start_entry_index Start entry index.
+ * @param[out] end_entry_index End entry index.
  */
-Result pdmqryGetAvailablePlayEventRange(u32 *total_entries, u32 *start_entryindex, u32 *end_entryindex);
+Result pdmqryGetAvailablePlayEventRange(s32 *total_entries, s32 *start_entry_index, s32 *end_entry_index);
 
 /**
  * @brief Gets a list of \ref PdmAccountEvent.
- * @param[in] entryindex Start entry index.
+ * @param[in] entry_index Start entry index.
  * @param[out] events Output \ref PdmAccountEvent array.
  * @param[in] count Max entries in the output array.
  * @param[out] total_out Total output entries.
  */
-Result pdmqryQueryAccountEvent(u32 entryindex, PdmAccountEvent *events, s32 count, s32 *total_out);
+Result pdmqryQueryAccountEvent(s32 entry_index, PdmAccountEvent *events, s32 count, s32 *total_out);
 
 /**
  * @brief Gets a list of \ref PdmAccountPlayEvent.
  * @note Only available with [4.0.0+].
- * @param[in] entryindex Start entry index.
- * @param[in] userID \ref AccountUid
+ * @param[in] entry_index Start entry index.
+ * @param[in] uid \ref AccountUid
  * @param[out] events Output \ref PdmAccountPlayEvent array.
  * @param[in] count Max entries in the output array.
  * @param[out] total_out Total output entries.
  */
-Result pdmqryQueryAccountPlayEvent(u32 entryindex, AccountUid *userID, PdmAccountPlayEvent *events, s32 count, s32 *total_out);
+Result pdmqryQueryAccountPlayEvent(s32 entry_index, AccountUid *uid, PdmAccountPlayEvent *events, s32 count, s32 *total_out);
 
 /**
  * @brief Gets range fields which can then be used with \ref pdmqryQueryAccountPlayEvent.
- * @param[in] userID \ref AccountUid
+ * @param[in] uid \ref AccountUid
  * @param[out] total_entries Total entries.
- * @param[out] start_entryindex Start entry index.
- * @param[out] end_entryindex End entry index.
+ * @param[out] start_entry_index Start entry index.
+ * @param[out] end_entry_index End entry index.
  */
-Result pdmqryGetAvailableAccountPlayEventRange(AccountUid *userID, u32 *total_entries, u32 *start_entryindex, u32 *end_entryindex);
+Result pdmqryGetAvailableAccountPlayEventRange(AccountUid *uid, s32 *total_entries, s32 *start_entry_index, s32 *end_entry_index);
 
 /**
  * @brief Gets a list of titles played by the specified user.
  * @note Only available with [6.0.0+].
- * @param[in] userID \ref AccountUid
+ * @param[in] uid \ref AccountUid
  * @param[out] titleIDs Output titleID array.
  * @param[in] count Max entries in the output array.
  * @param[out] total_out Total output entries.
  */
-Result pdmqryQueryRecentlyPlayedApplication(AccountUid *userID, u64 *titleIDs, size_t count, u32 *total_out);
+Result pdmqryQueryRecentlyPlayedApplication(AccountUid *uid, u64 *titleIDs, s32 count, s32 *total_out);
 
 /**
  * @brief Gets an Event which is signaled when logging a new \ref PdmPlayEvent which would be available via \ref pdmqryQueryAccountEvent, where PdmPlayEvent::eventData::account::type is 0. 

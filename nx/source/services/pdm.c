@@ -35,26 +35,26 @@ static Result _pdmCmdGetEvent(Service* srv, Event* out_event, bool autoclear, u3
     return rc;
 }
 
-static Result _pdmqryQueryEvent(u32 cmd_id, u32 entryindex, void* events, size_t entrysize, s32 count, s32 *total_out) {
-    return serviceDispatchInOut(&g_pdmqrySrv, cmd_id, entryindex, *total_out,
+static Result _pdmqryQueryEvent(s32 entry_index, void* events, size_t entrysize, s32 count, s32 *total_out, u32 cmd_id) {
+    return serviceDispatchInOut(&g_pdmqrySrv, cmd_id, entry_index, *total_out,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
         .buffers = { { events, count*entrysize } },
     );
 }
 
-Result pdmqryQueryApplicationEvent(u32 entryindex, PdmApplicationEvent *events, s32 count, s32 *total_out) {
-    return _pdmqryQueryEvent(0, entryindex, events, sizeof(PdmApplicationEvent), count, total_out);
+Result pdmqryQueryAppletEvent(s32 entry_index, PdmAppletEvent *events, s32 count, s32 *total_out) {
+    return _pdmqryQueryEvent(entry_index, events, sizeof(PdmAppletEvent), count, total_out, 0);
 }
 
 Result pdmqryQueryPlayStatisticsByApplicationId(u64 titleID, PdmPlayStatistics *stats) {
     return serviceDispatchInOut(&g_pdmqrySrv, 4, titleID, *stats);
 }
 
-Result pdmqryQueryPlayStatisticsByApplicationIdAndUserAccountId(u64 titleID, AccountUid *userID, PdmPlayStatistics *stats) {
+Result pdmqryQueryPlayStatisticsByApplicationIdAndUserAccountId(u64 titleID, AccountUid *uid, PdmPlayStatistics *stats) {
     const struct {
         u64 titleID;
-        AccountUid userID;
-    } in = { titleID, *userID };
+        AccountUid uid;
+    } in = { titleID, *uid };
 
     return serviceDispatchInOut(&g_pdmqrySrv, 5, in, *stats);
 }
@@ -72,38 +72,38 @@ Result pdmqryQueryLastPlayTime(PdmLastPlayTime *playtimes, const u64 *titleIDs, 
     );
 }
 
-Result pdmqryQueryPlayEvent(u32 entryindex, PdmPlayEvent *events, s32 count, s32 *total_out) {
-    return _pdmqryQueryEvent(8, entryindex, events, sizeof(PdmPlayEvent), count, total_out);
+Result pdmqryQueryPlayEvent(s32 entry_index, PdmPlayEvent *events, s32 count, s32 *total_out) {
+    return _pdmqryQueryEvent(entry_index, events, sizeof(PdmPlayEvent), count, total_out, 8);
 }
 
-Result pdmqryGetAvailablePlayEventRange(u32 *total_entries, u32 *start_entryindex, u32 *end_entryindex) {
+Result pdmqryGetAvailablePlayEventRange(s32 *total_entries, s32 *start_entry_index, s32 *end_entry_index) {
     struct {
-        u32 total_entries;
-        u32 start_entryindex;
-        u32 end_entryindex;
+        s32 total_entries;
+        s32 start_entry_index;
+        s32 end_entry_index;
     } out;
 
     Result rc = serviceDispatchOut(&g_pdmqrySrv, 9, out);
     if (R_SUCCEEDED(rc)) {
         if (total_entries) *total_entries = out.total_entries;
-        if (start_entryindex) *start_entryindex = out.start_entryindex;
-        if (end_entryindex) *end_entryindex = out.end_entryindex;
+        if (start_entry_index) *start_entry_index = out.start_entry_index;
+        if (end_entry_index) *end_entry_index = out.end_entry_index;
     }
     return rc;
 }
 
-Result pdmqryQueryAccountEvent(u32 entryindex, PdmAccountEvent *events, s32 count, s32 *total_out) {
-    return _pdmqryQueryEvent(10, entryindex, events, sizeof(PdmAccountEvent), count, total_out);
+Result pdmqryQueryAccountEvent(s32 entry_index, PdmAccountEvent *events, s32 count, s32 *total_out) {
+    return _pdmqryQueryEvent(entry_index, events, sizeof(PdmAccountEvent), count, total_out, 10);
 }
 
-Result pdmqryQueryAccountPlayEvent(u32 entryindex, AccountUid *userID, PdmAccountPlayEvent *events, s32 count, s32 *total_out) {
+Result pdmqryQueryAccountPlayEvent(s32 entry_index, AccountUid *uid, PdmAccountPlayEvent *events, s32 count, s32 *total_out) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     const struct {
-        u32 entryindex;
-        AccountUid userID;
-    } in = { entryindex, *userID };
+        s32 entry_index;
+        AccountUid uid;
+    } in = { entry_index, *uid };
 
     return serviceDispatchInOut(&g_pdmqrySrv, 11, in, *total_out,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
@@ -111,30 +111,30 @@ Result pdmqryQueryAccountPlayEvent(u32 entryindex, AccountUid *userID, PdmAccoun
     );
 }
 
-Result pdmqryGetAvailableAccountPlayEventRange(AccountUid *userID, u32 *total_entries, u32 *start_entryindex, u32 *end_entryindex) {
+Result pdmqryGetAvailableAccountPlayEventRange(AccountUid *uid, s32 *total_entries, s32 *start_entry_index, s32 *end_entry_index) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     struct {
-        u32 total_entries;
-        u32 start_entryindex;
-        u32 end_entryindex;
+        s32 total_entries;
+        s32 start_entry_index;
+        s32 end_entry_index;
     } out;
 
-    Result rc = serviceDispatchInOut(&g_pdmqrySrv, 12, *userID, out);
+    Result rc = serviceDispatchInOut(&g_pdmqrySrv, 12, *uid, out);
     if (R_SUCCEEDED(rc)) {
         if (total_entries) *total_entries = out.total_entries;
-        if (start_entryindex) *start_entryindex = out.start_entryindex;
-        if (end_entryindex) *end_entryindex = out.end_entryindex;
+        if (start_entry_index) *start_entry_index = out.start_entry_index;
+        if (end_entry_index) *end_entry_index = out.end_entry_index;
     }
     return rc;
 }
 
-Result pdmqryQueryRecentlyPlayedApplication(AccountUid *userID, u64 *titleIDs, size_t count, u32 *total_out) {
+Result pdmqryQueryRecentlyPlayedApplication(AccountUid *uid, u64 *titleIDs, s32 count, s32 *total_out) {
     if (hosversionBefore(6,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return serviceDispatchInOut(&g_pdmqrySrv, 14, *userID, *total_out,
+    return serviceDispatchInOut(&g_pdmqrySrv, 14, *uid, *total_out,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
         .buffers = { { titleIDs, count*sizeof(u64) } },
     );
