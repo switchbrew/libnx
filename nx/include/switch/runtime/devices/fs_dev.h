@@ -19,8 +19,13 @@ typedef struct
   FsDir             fd;            ///< File descriptor
   ssize_t           index;         ///< Current entry index
   size_t            size;          ///< Current batch size
-  FsDirectoryEntry entry_data[32]; ///< Temporary storage for reading entries
 } fsdev_dir_t;
+
+/// Retrieves a pointer to temporary stage for reading entries
+NX_CONSTEXPR FsDirectoryEntry* fsdevDirGetEntries(fsdev_dir_t *dir)
+{
+  return (FsDirectoryEntry*)(void*)(dir+1);
+}
 
 /// Initializes and mounts the sdmc device if accessible. Also initializes current working directory to point to the folder containing the path to the executable (argv[0]), if it is provided by the environment.
 Result fsdevMountSdmc(void);

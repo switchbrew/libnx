@@ -111,6 +111,8 @@ static fsdev_fsdevice fsdev_fsdevices[32];
 static char     __cwd[PATH_MAX+1] = "/";
 static __thread char     __fixedpath[PATH_MAX+1];
 
+__attribute__((weak)) u32 __nx_fsdev_direntry_cache_size = 32;
+
 static fsdev_fsdevice *fsdevFindDevice(const char *name)
 {
   u32 i;
@@ -254,8 +256,11 @@ fsdev_getfspath(struct _reent *r,
 
 static ssize_t fsdev_convertfromfspath(uint8_t *out, uint8_t *in, size_t len)
 {
-  strncpy((char*)out, (char*)in, len);
-  return strnlen((char*)out, len);
+  ssize_t inlen = strnlen((char*)in, len);
+  memcpy(out, in, inlen);
+  if (inlen < len)
+    out[inlen+1] = 0;
+  return inlen;
 }
 
 static time_t fsdev_converttimetoutc(u64 timestamp)
@@ -296,6 +301,7 @@ static void _fsdevInit(void)
     {
       memcpy(&fsdev_fsdevices[i].device, &fsdev_devoptab, sizeof(fsdev_devoptab));
       fsdev_fsdevices[i].device.name = fsdev_fsdevices[i].name;
+      fsdev_fsdevices[i].device.dirStateSize += sizeof(FsDirectoryEntry)*__nx_fsdev_direntry_cache_size;
       fsdev_fsdevices[i].id = i;
     }
 
@@ -1282,7 +1288,7 @@ fsdev_diropen(struct _reent *r,
     dir->fd    = fd;
     dir->index = -1;
     dir->size  = 0;
-    memset(&dir->entry_data, 0, sizeof(dir->entry_data));
+    memset(fsdevDirGetEntries(dir), 0, sizeof(FsDirectoryEntry)*__nx_fsdev_direntry_cache_size);
     return dirState;
   }
 
@@ -1330,7 +1336,8 @@ fsdev_dirnext(struct _reent *r,
   /* get pointer to our data */
   fsdev_dir_t *dir = (fsdev_dir_t*)(dirState->dirStruct);
 
-  static const size_t max_entries = sizeof(dir->entry_data) / sizeof(dir->entry_data[0]);
+  const size_t max_entries = __nx_fsdev_direntry_cache_size;
+  FsDirectoryEntry *entry_data = fsdevDirGetEntries(dir);
 
   /* check if it's in the batch already */
   if(++dir->index < dir->size)
@@ -1344,8 +1351,8 @@ fsdev_dirnext(struct _reent *r,
     dir->size  = 0;
 
     /* fetch the next batch */
-    memset(dir->entry_data, 0, sizeof(dir->entry_data));
-    rc = fsDirRead(&dir->fd, 0, &entries, max_entries, dir->entry_data);
+    memset(entry_data, 0, sizeof(FsDirectoryEntry)*max_entries);
+    rc = fsDirRead(&dir->fd, 0, &entries, max_entries, entry_data);
     if(R_SUCCEEDED(rc))
     {
       if(entries == 0)
@@ -1362,7 +1369,7 @@ fsdev_dirnext(struct _reent *r,
 
   if(R_SUCCEEDED(rc))
   {
-    entry = &dir->entry_data[dir->index];
+    entry = &entry_data[dir->index];
 
     /* fill in the stat info */
     filestat->st_ino = 0;
