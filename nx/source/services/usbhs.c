@@ -1,23 +1,19 @@
+#include "service_guard.h"
 #include <string.h>
-#include "types.h"
-#include "result.h"
 #include "arm/cache.h"
-#include "kernel/ipc.h"
 #include "runtime/hosversion.h"
 #include "services/usb.h"
 #include "services/usbhs.h"
-#include "services/sm.h"
 
 static Service g_usbHsSrv;
 static Event g_usbHsInterfaceStateChangeEvent = {0};
 
 static Result _usbHsBindClientProcess(Handle prochandle);
-static Result _usbHsGetEvent(Service* srv, Event* event_out, u64 cmd_id);
+static Result _usbHsGetEvent(Service* srv, Event* out_event, bool autoclear, u32 cmd_id);
 
-Result usbHsInitialize(void) {
-    if (serviceIsActive(&g_usbHsSrv))
-        return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
+NX_GENERATE_SERVICE_GUARD(usbHs);
 
+Result _usbHsInitialize(void) {
     Result rc = 0;
 
     rc = smGetService(&g_usbHsSrv, "usb:hs");
@@ -31,22 +27,12 @@ Result usbHsInitialize(void) {
 
     // GetInterfaceStateChangeEvent
     if (R_SUCCEEDED(rc))
-        rc = _usbHsGetEvent(&g_usbHsSrv, &g_usbHsInterfaceStateChangeEvent, hosversionAtLeast(2,0,0) ? 6 : 5);
-
-    if (R_FAILED(rc))
-    {
-        eventClose(&g_usbHsInterfaceStateChangeEvent);
-
-        serviceClose(&g_usbHsSrv);
-    }
+        rc = _usbHsGetEvent(&g_usbHsSrv, &g_usbHsInterfaceStateChangeEvent, false, hosversionAtLeast(2,0,0) ? 6 : 5);
 
     return rc;
 }
 
-void usbHsExit(void) {
-    if (!serviceIsActive(&g_usbHsSrv))
-        return;
-
+void _usbHsCleanup(void) {
     eventClose(&g_usbHsInterfaceStateChangeEvent);
 
     serviceClose(&g_usbHsSrv);
@@ -60,147 +46,60 @@ Event* usbHsGetInterfaceStateChangeEvent(void) {
     return &g_usbHsInterfaceStateChangeEvent;
 }
 
-static Result _usbHsCmdNoIO(Service* s, u64 cmd_id) {
-    IpcCommand c;
-    ipcInitialize(&c);
+static Result _usbHsGetHandle(Service* srv, Handle* handle_out, u32 cmd_id) {
+    serviceAssumeDomain(srv);
+    return serviceDispatch(srv, cmd_id,
+        .out_handle_attrs = { SfOutHandleAttr_HipcCopy },
+        .out_handles = handle_out,
+    );
+}
 
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
+static Result _usbHsGetEvent(Service* srv, Event* out_event, bool autoclear, u32 cmd_id) {
+    Handle tmp_handle = INVALID_HANDLE;
+    Result rc = 0;
 
-    raw = serviceIpcPrepareHeader(s, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = cmd_id;
-
-    Result rc = serviceIpcDispatch(s);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(s, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
+    rc = _usbHsGetHandle(srv, &tmp_handle, cmd_id);
+    if (R_SUCCEEDED(rc)) eventLoadRemote(out_event, tmp_handle, autoclear);
     return rc;
+}
+
+static Result _usbHsCmdNoIO(Service* srv, u64 cmd_id) {
+    serviceAssumeDomain(srv);
+    return serviceDispatch(srv, cmd_id);
+}
+
+static Result _usbHsCmdInU8NoOut(Service* srv, u8 inval, u32 cmd_id) {
+    serviceAssumeDomain(srv);
+    return serviceDispatchIn(srv, cmd_id, inval);
+}
+
+static Result _usbDsCmdNoInOutU32(Service* srv, u32 *out, u32 cmd_id) {
+    serviceAssumeDomain(srv);
+    return serviceDispatchOut(srv, cmd_id, *out);
+}
+
+static Result _usbHsCmdRecvBufNoOut(Service* srv, void* buffer, size_t size, u32 cmd_id) {
+    serviceAssumeDomain(srv);
+    return serviceDispatch(srv, cmd_id,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { buffer, size } },
+    );
 }
 
 static Result _usbHsBindClientProcess(Handle prochandle) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    ipcSendHandleCopy(&c, prochandle);
-
-    raw = serviceIpcPrepareHeader(&g_usbHsSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 0;
-
-    Result rc = serviceIpcDispatch(&g_usbHsSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_usbHsSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    serviceAssumeDomain(&g_usbHsSrv);
+    return serviceDispatch(&g_usbHsSrv, 0,
+        .in_num_handles = 1,
+        .in_handles = { prochandle },
+    );
 }
 
-static Result _usbHsGetEvent(Service* srv, Event* event_out, u64 cmd_id) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(srv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = cmd_id;
-
-    Result rc = serviceIpcDispatch(srv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(srv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            eventLoadRemote(event_out, r.Handles[0], false);
-        }
-    }
-
-    return rc;
-}
-
-static Result _usbHsQueryInterfaces(u64 base_cmdid, const UsbHsInterfaceFilter* filter, UsbHsInterface* interfaces, size_t interfaces_maxsize, s32* total_entries) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        UsbHsInterfaceFilter filter;
-    } *raw;
-
-    ipcAddRecvBuffer(&c, interfaces, interfaces_maxsize, BufferType_Normal);
-
-    raw = serviceIpcPrepareHeader(&g_usbHsSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = hosversionAtLeast(2,0,0) ? base_cmdid+1 : base_cmdid;
-    raw->filter = *filter;
-
-    Result rc = serviceIpcDispatch(&g_usbHsSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            s32 total_entries;
-        } *resp;
-
-        serviceIpcParse(&g_usbHsSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && total_entries) *total_entries = resp->total_entries;
-    }
-
-    return rc;
+static Result _usbHsQueryInterfaces(u32 base_cmdid, const UsbHsInterfaceFilter* filter, UsbHsInterface* interfaces, size_t interfaces_maxsize, s32* total_entries) {
+    serviceAssumeDomain(&g_usbHsSrv);
+    return serviceDispatchInOut(&g_usbHsSrv, hosversionAtLeast(2,0,0) ? base_cmdid+1 : base_cmdid, *filter, *total_entries,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { interfaces, interfaces_maxsize } },
+    );
 }
 
 Result usbHsQueryAllInterfaces(const UsbHsInterfaceFilter* filter, UsbHsInterface* interfaces, size_t interfaces_maxsize, s32* total_entries) {
@@ -212,178 +111,80 @@ Result usbHsQueryAvailableInterfaces(const UsbHsInterfaceFilter* filter, UsbHsIn
 }
 
 Result usbHsQueryAcquiredInterfaces(UsbHsInterface* interfaces, size_t interfaces_maxsize, s32* total_entries) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    ipcAddRecvBuffer(&c, interfaces, interfaces_maxsize, BufferType_Normal);
-
-    raw = serviceIpcPrepareHeader(&g_usbHsSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = hosversionAtLeast(2,0,0) ? 3 : 2;
-
-    Result rc = serviceIpcDispatch(&g_usbHsSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            s32 total_entries;
-        } *resp;
-
-        serviceIpcParse(&g_usbHsSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && total_entries) *total_entries = resp->total_entries;
-    }
-
-    return rc;
+    serviceAssumeDomain(&g_usbHsSrv);
+    return serviceDispatchOut(&g_usbHsSrv, hosversionAtLeast(2,0,0) ? 3 : 2, *total_entries,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { interfaces, interfaces_maxsize } },
+    );
 }
 
-Result usbHsCreateInterfaceAvailableEvent(Event* event, bool autoclear, u8 index, const UsbHsInterfaceFilter* filter) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+Result usbHsCreateInterfaceAvailableEvent(Event* out_event, bool autoclear, u8 index, const UsbHsInterfaceFilter* filter) {
+    const struct {
         u8 index;
         u8 pad;
         UsbHsInterfaceFilter filter;
-    } *raw;
+    } in = { index, 0, *filter };
 
-    raw = serviceIpcPrepareHeader(&g_usbHsSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = hosversionAtLeast(2,0,0) ? 4 : 3;
-    raw->index = index;
-    raw->filter = *filter;
-
-    Result rc = serviceIpcDispatch(&g_usbHsSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_usbHsSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            eventLoadRemote(event, r.Handles[0], autoclear);
-        }
-    }
-
+    Handle tmp_handle = INVALID_HANDLE;
+    serviceAssumeDomain(&g_usbHsSrv);
+    Result rc = serviceDispatchIn(&g_usbHsSrv, hosversionAtLeast(2,0,0) ? 4 : 3, in,
+        .out_handle_attrs = { SfOutHandleAttr_HipcCopy },
+        .out_handles = &tmp_handle,
+    );
+    if (R_SUCCEEDED(rc)) eventLoadRemote(out_event, tmp_handle, autoclear);
     return rc;
 }
 
 Result usbHsDestroyInterfaceAvailableEvent(Event* event, u8 index) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u8 index;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_usbHsSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = hosversionAtLeast(2,0,0) ? 5 : 4;
-    raw->index = index;
-
-    Result rc = serviceIpcDispatch(&g_usbHsSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_usbHsSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
+    Result rc = _usbHsCmdInU8NoOut(&g_usbHsSrv, index, hosversionAtLeast(2,0,0) ? 5 : 4);
     eventClose(event);
-
     return rc;
 }
 
+static Result _usbHsAcquireUsbIfOld(UsbHsClientIfSession* s, UsbHsInterface *interface) { // pre-2.0.0
+    serviceAssumeDomain(&g_usbHsSrv);
+    return serviceDispatchIn(&g_usbHsSrv, 6, s->ID,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { &s->inf.inf, sizeof(UsbHsInterfaceInfo) } },
+        .out_num_objects = 1,
+        .out_objects = &s->s,
+    );
+}
+
+static Result _usbHsAcquireUsbIf(UsbHsClientIfSession* s, UsbHsInterface *interface) { // [2.0.0+]
+    // These buffer addresses are the inverse of what official sw does - needed to get the correct UsbHsInterface output for some reason.
+    serviceAssumeDomain(&g_usbHsSrv);
+    return serviceDispatchIn(&g_usbHsSrv, 7, s->ID,
+        .buffer_attrs = {
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_Out,
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_Out,
+        },
+        .buffers = {
+            { &s->inf.pathstr, sizeof(UsbHsInterface) - sizeof(UsbHsInterfaceInfo) },
+            { &s->inf.inf, sizeof(UsbHsInterfaceInfo) },
+        },
+        .out_num_objects = 1,
+        .out_objects = &s->s,
+    );
+}
+
 Result usbHsAcquireUsbIf(UsbHsClientIfSession* s, UsbHsInterface *interface) {
-    IpcCommand c;
-    ipcInitialize(&c);
+    Result rc=0;
 
     memset(s, 0, sizeof(UsbHsClientIfSession));
     memcpy(&s->inf, interface, sizeof(UsbHsInterface));
     s->ID = interface->inf.ID;
 
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        s32 ID;
-    } *raw;
-
-    if (hosversionBefore(3,0,0)) {
-        ipcAddRecvBuffer(&c, &s->inf.inf, sizeof(UsbHsInterfaceInfo), BufferType_Normal);
-    }
-    else {
-        //These buffer addresses are the inverse of what official sw does - needed to get the correct UsbHsInterface output for some reason.
-        ipcAddRecvBuffer(&c, &s->inf.pathstr, sizeof(UsbHsInterface) - sizeof(UsbHsInterfaceInfo), BufferType_Normal);
-        ipcAddRecvBuffer(&c, &s->inf.inf, sizeof(UsbHsInterfaceInfo), BufferType_Normal);
-    }
-
-    raw = serviceIpcPrepareHeader(&g_usbHsSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = hosversionAtLeast(2,0,0) ? 7 : 6;
-    raw->ID = s->ID;
-
-    Result rc = serviceIpcDispatch(&g_usbHsSrv);
+    if (hosversionAtLeast(2,0,0))
+        rc = _usbHsAcquireUsbIf(s, interface);
+    else
+        rc = _usbHsAcquireUsbIfOld(s, interface);
 
     if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
+        rc = _usbHsGetEvent(&s->s, &s->event0, false, 0);
+        if (hosversionAtLeast(2,0,0)) rc = _usbHsGetEvent(&s->s, &s->eventCtrlXfer, false, 6);
 
-        serviceIpcParse(&g_usbHsSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            serviceCreateSubservice(&s->s, &g_usbHsSrv, &r, 0);
-        }
-    }
-
-    if (R_SUCCEEDED(rc)) {
-        rc = _usbHsGetEvent(&s->s, &s->event0, 0);
-        if (hosversionAtLeast(2,0,0)) rc = _usbHsGetEvent(&s->s, &s->eventCtrlXfer, 6);
-
-        if (R_FAILED(rc)) {
-            serviceClose(&s->s);
-            eventClose(&s->event0);
-            eventClose(&s->eventCtrlXfer);
-        }
+        if (R_FAILED(rc)) usbHsIfClose(s);
     }
 
     return rc;
@@ -396,42 +197,14 @@ void usbHsIfClose(UsbHsClientIfSession* s) {
     memset(s, 0, sizeof(UsbHsClientIfSession));
 }
 
-static Result _usbHsIfGetInf(UsbHsClientIfSession* s, UsbHsInterfaceInfo* inf, u8 id, u64 cmd_id) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
+static Result _usbHsIfGetInf(UsbHsClientIfSession* s, UsbHsInterfaceInfo* inf, u8 id, u32 cmd_id) {
     if (inf==NULL) inf = &s->inf.inf;
 
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u8  id;
-    } *raw;
-
-    ipcAddRecvBuffer(&c, inf, sizeof(UsbHsInterfaceInfo), BufferType_Normal);
-
-    raw = serviceIpcPrepareHeader(&s->s, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = cmd_id;
-    raw->id = id;
-
-    Result rc = serviceIpcDispatch(&s->s);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&s->s, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    serviceAssumeDomain(&s->s);
+    return serviceDispatchIn(&s->s, cmd_id, id,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { inf, sizeof(UsbHsInterfaceInfo) } },
+    );
 }
 
 Result usbHsIfSetInterface(UsbHsClientIfSession* s, UsbHsInterfaceInfo* inf, u8 id) {
@@ -443,74 +216,13 @@ Result usbHsIfGetAlternateInterface(UsbHsClientIfSession* s, UsbHsInterfaceInfo*
 }
 
 Result usbHsIfGetInterface(UsbHsClientIfSession* s, UsbHsInterfaceInfo* inf) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
     if (inf==NULL) inf = &s->inf.inf;
 
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    ipcAddRecvBuffer(&c, inf, sizeof(UsbHsInterfaceInfo), BufferType_Normal);
-
-    raw = serviceIpcPrepareHeader(&s->s, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 2;
-
-    Result rc = serviceIpcDispatch(&s->s);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&s->s, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    return _usbHsCmdRecvBufNoOut(&s->s, inf, sizeof(UsbHsInterfaceInfo), 2);
 }
 
 Result usbHsIfGetCurrentFrame(UsbHsClientIfSession* s, u32* out) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&s->s, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = hosversionAtLeast(2,0,0) ? 4 : 5;
-
-    Result rc = serviceIpcDispatch(&s->s);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            u32 out;
-        } *resp;
-
-        serviceIpcParse(&s->s, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && out) *out = resp->out;
-    }
-
-    return rc;
+    return _usbDsCmdNoInOutU32(&s->s, out, hosversionAtLeast(2,0,0) ? 4 : 5);
 }
 
 static Result _usbHsIfSubmitControlRequest(UsbHsClientIfSession* s, u8 bRequest, u8 bmRequestType, u16 wValue, u16 wIndex, u16 wLength, void* buffer, u32 timeoutInMs, u32* transferredSize) {
@@ -519,133 +231,40 @@ static Result _usbHsIfSubmitControlRequest(UsbHsClientIfSession* s, u8 bRequest,
 
     armDCacheFlush(buffer, wLength);
 
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         u8 bRequest;
         u8 bmRequestType;
         u16 wValue;
         u16 wIndex;
         u16 wLength;
         u32 timeoutInMs;
-    } PACKED *raw;
+    } in = { bRequest, bmRequestType, wValue, wIndex, wLength, timeoutInMs };
 
-    if (dir) ipcAddRecvBuffer(&c, buffer, bufsize, BufferType_Normal);
-    if (!dir) ipcAddSendBuffer(&c, buffer, bufsize, BufferType_Normal);
-
-    raw = serviceIpcPrepareHeader(&s->s, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = dir ? 6 : 7;
-    raw->bRequest = bRequest;
-    raw->bmRequestType = bmRequestType;
-    raw->wValue = wValue;
-    raw->wIndex = wIndex;
-    raw->wLength = wLength;
-    raw->timeoutInMs = timeoutInMs;
-
-    Result rc = serviceIpcDispatch(&s->s);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            u32 transferredSize;
-        } *resp;
-
-        serviceIpcParse(&s->s, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && transferredSize) *transferredSize = resp->transferredSize;
-    }
-
+    serviceAssumeDomain(&s->s);
+    Result rc = serviceDispatchInOut(&s->s, dir ? 6 : 7, in, *transferredSize,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | (dir ? SfBufferAttr_Out : SfBufferAttr_In) },
+        .buffers = { { buffer, bufsize } },
+    );
     if (dir) armDCacheFlush(buffer, wLength);
-
     return rc;
 }
 
 static Result _usbHsIfCtrlXferAsync(UsbHsClientIfSession* s, u8 bmRequestType, u8 bRequest, u16 wValue, u16 wIndex, u16 wLength, void* buffer) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         u8 bmRequestType;
         u8 bRequest;
         u16 wValue;
         u16 wIndex;
         u16 wLength;
         u64 buffer;
-    } PACKED *raw;
+    } PACKED in = { bmRequestType, bRequest, wValue, wIndex, wLength, (u64)buffer };
 
-    raw = serviceIpcPrepareHeader(&s->s, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 5;
-    raw->bmRequestType = bmRequestType;
-    raw->bRequest = bRequest;
-    raw->wValue = wValue;
-    raw->wIndex = wIndex;
-    raw->wLength = wLength;
-    raw->buffer = (u64)buffer;
-
-    Result rc = serviceIpcDispatch(&s->s);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&s->s, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    serviceAssumeDomain(&s->s);
+    return serviceDispatchIn(&s->s, 5, in);
 }
 
 static Result _usbHsIfGetCtrlXferReport(UsbHsClientIfSession* s, UsbHsXferReport* report) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    ipcAddRecvBuffer(&c, report, sizeof(UsbHsXferReport), BufferType_Normal);
-
-    raw = serviceIpcPrepareHeader(&s->s, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 7;
-
-    Result rc = serviceIpcDispatch(&s->s);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&s->s, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    return _usbHsCmdRecvBufNoOut(&s->s, report, sizeof(UsbHsXferReport), 7);
 }
 
 Result usbHsIfCtrlXfer(UsbHsClientIfSession* s, u8 bmRequestType, u8 bRequest, u16 wValue, u16 wIndex, u16 wLength, void* buffer, u32* transferredSize) {
@@ -671,58 +290,35 @@ Result usbHsIfCtrlXfer(UsbHsClientIfSession* s, u8 bmRequestType, u8 bRequest, u
     return rc;
 }
 
-Result usbHsIfOpenUsbEp(UsbHsClientIfSession* s, UsbHsClientEpSession* ep, u16 maxUrbCount, u32 maxXferSize, struct usb_endpoint_descriptor *desc) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    memset(ep, 0, sizeof(UsbHsClientEpSession));
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+static Result _usbHsIfOpenUsbEp(UsbHsClientIfSession* s, UsbHsClientEpSession* ep, u16 maxUrbCount, u32 maxXferSize, struct usb_endpoint_descriptor *desc) {
+    const struct {
         u16 maxUrbCount;
         u32 epType;
         u32 epNumber;
         u32 epDirection;
         u32 maxXferSize;
-    } *raw;
+    } in = {
+        maxUrbCount,
+        (desc->bmAttributes & USB_TRANSFER_TYPE_MASK) + 1,
+        desc->bEndpointAddress & USB_ENDPOINT_ADDRESS_MASK,
+        (desc->bEndpointAddress & USB_ENDPOINT_IN) == 0 ? 0x1 : 0x2,
+        maxXferSize
+    };
 
-    raw = serviceIpcPrepareHeader(&s->s, &c, sizeof(*raw));
+    serviceAssumeDomain(&s->s);
+    return serviceDispatchInOut(&s->s, hosversionAtLeast(2,0,0) ? 9 : 4, in, ep->desc,
+        .out_num_objects = 1,
+        .out_objects = &ep->s,
+    );
+}
 
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = hosversionAtLeast(2,0,0) ? 9 : 4;
-    raw->maxUrbCount = maxUrbCount;
-    raw->epType = (desc->bmAttributes & USB_TRANSFER_TYPE_MASK) + 1;
-    raw->epNumber = desc->bEndpointAddress & USB_ENDPOINT_ADDRESS_MASK;
-    raw->epDirection = (desc->bEndpointAddress & USB_ENDPOINT_IN) == 0 ? 0x1 : 0x2;
-    raw->maxXferSize = maxXferSize;
-
-    Result rc = serviceIpcDispatch(&s->s);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            struct usb_endpoint_descriptor desc;
-        } PACKED *resp;
-
-        serviceIpcParse(&s->s, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) memcpy(&ep->desc, &resp->desc, sizeof(struct usb_endpoint_descriptor));
-
-        if (R_SUCCEEDED(rc)) {
-            serviceCreateSubservice(&ep->s, &s->s, &r, 0);
-        }
-    }
-
+Result usbHsIfOpenUsbEp(UsbHsClientIfSession* s, UsbHsClientEpSession* ep, u16 maxUrbCount, u32 maxXferSize, struct usb_endpoint_descriptor *desc) {
+    memset(ep, 0, sizeof(UsbHsClientEpSession));
+    Result rc = _usbHsIfOpenUsbEp(s, ep, maxUrbCount, maxXferSize, desc);
     if (R_SUCCEEDED(rc)) {
         if (hosversionAtLeast(2,0,0)) {
             rc = _usbHsCmdNoIO(&ep->s, 3);//Populate
-            if (R_SUCCEEDED(rc)) rc = _usbHsGetEvent(&ep->s, &ep->eventXfer, 2);
+            if (R_SUCCEEDED(rc)) rc = _usbHsGetEvent(&ep->s, &ep->eventXfer, false, 2);
         }
 
         if (R_FAILED(rc)) {
@@ -730,7 +326,6 @@ Result usbHsIfOpenUsbEp(UsbHsClientIfSession* s, UsbHsClientEpSession* ep, u16 m
             eventClose(&ep->eventXfer);
         }
     }
-
     return rc;
 }
 
@@ -754,132 +349,37 @@ static Result _usbHsEpSubmitRequest(UsbHsClientEpSession* s, void* buffer, u32 s
 
     armDCacheFlush(buffer, size);
 
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         u32 size;
         u32 timeoutInMs;//?
-    } *raw;
+    } in = { size, timeoutInMs };
 
-    if (dir) ipcAddRecvBuffer(&c, buffer, bufsize, BufferType_Normal);
-    if (!dir) ipcAddSendBuffer(&c, buffer, bufsize, BufferType_Normal);
-
-    raw = serviceIpcPrepareHeader(&s->s, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = dir ? 1 : 0;
-    raw->size = size;
-    raw->timeoutInMs = timeoutInMs;
-
-    Result rc = serviceIpcDispatch(&s->s);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            u32 transferredSize;
-        } *resp;
-
-        serviceIpcParse(&s->s, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && transferredSize) *transferredSize = resp->transferredSize;
-    }
-
+    serviceAssumeDomain(&s->s);
+    Result rc = serviceDispatchInOut(&s->s, dir ? 1 : 0, in, *transferredSize,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | (dir ? SfBufferAttr_Out : SfBufferAttr_In) },
+        .buffers = { { buffer, bufsize } },
+    );
     if (dir) armDCacheFlush(buffer, size);
-
     return rc;
 }
 
 static Result _usbHsEpPostBufferAsync(UsbHsClientEpSession* s, void* buffer, u32 size, u64 unk, u32* xferId) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         u32 size;
         u64 buffer;
         u64 unk;
-    } *raw;
+    } in = { size, (u64)buffer, unk };
 
-    raw = serviceIpcPrepareHeader(&s->s, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 4;
-    raw->size = size;
-    raw->buffer = (u64)buffer;
-    raw->unk = unk;
-
-    Result rc = serviceIpcDispatch(&s->s);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            u32 xferId;
-        } *resp;
-
-        serviceIpcParse(&s->s, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && xferId) *xferId = resp->xferId;
-    }
-
-    return rc;
+    serviceAssumeDomain(&s->s);
+    return serviceDispatchInOut(&s->s, 4, in, *xferId);
 }
 
 static Result _usbHsEpGetXferReport(UsbHsClientEpSession* s, UsbHsXferReport* reports, u32 max_reports, u32* count) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u32 max_reports;
-    } *raw;
-
-    if (hosversionBefore(3,0,0)) {
-        ipcAddRecvBuffer(&c, reports, sizeof(UsbHsXferReport) * max_reports, BufferType_Normal);
-    }
-    else {
-        ipcAddRecvSmart(&c, s->s.pointer_buffer_size, reports, sizeof(UsbHsXferReport) * max_reports, 0);
-    }
-
-    raw = serviceIpcPrepareHeader(&s->s, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 5;
-    raw->max_reports = max_reports;
-
-    Result rc = serviceIpcDispatch(&s->s);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            u32 count;
-        } *resp;
-
-        serviceIpcParse(&s->s, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc) && count) *count = resp->count;
-    }
-
-    return rc;
+    serviceAssumeDomain(&s->s);
+    return serviceDispatchInOut(&s->s, 5, max_reports, *count,
+        .buffer_attrs = { (hosversionBefore(3,0,0) ? SfBufferAttr_HipcMapAlias : SfBufferAttr_HipcAutoSelect) | SfBufferAttr_Out },
+        .buffers = { { reports, max_reports*sizeof(UsbHsXferReport) } },
+    );
 }
 
 Result usbHsEpPostBuffer(UsbHsClientEpSession* s, void* buffer, u32 size, u32* transferredSize) {
