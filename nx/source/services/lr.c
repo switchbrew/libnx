@@ -1,144 +1,54 @@
-// Copyright 2018 SciresM
+#define NX_SERVICE_ASSUME_NON_DOMAIN
 #include <string.h>
-#include "types.h"
-#include "result.h"
-#include "arm/atomics.h"
-#include "kernel/ipc.h"
+#include "service_guard.h"
 #include "services/lr.h"
-#include "services/fs.h"
-#include "services/sm.h"
 #include "runtime/hosversion.h"
 
-static Service g_managerSrv;
-static u64 g_managerRefCnt;
+static Service g_lrSrv;
 
-Result lrInitialize(void) {
-    atomicIncrement64(&g_managerRefCnt);
+NX_GENERATE_SERVICE_GUARD(lr);
 
-    if (serviceIsActive(&g_managerSrv)) {
-        return 0;
-    }
-
-    return smGetService(&g_managerSrv, "lr");
+Result _lrInitialize(void) {
+    return smGetService(&g_lrSrv, "lr");
 }
 
-void lrExit(void) {
-    if (atomicDecrement64(&g_managerRefCnt) == 0) {
-        serviceClose(&g_managerSrv);
-    }
+void _lrCleanup(void) {
+    serviceClose(&g_lrSrv);
 }
 
 Service* lrGetServiceSession(void) {
-    return &g_managerSrv;
+    return &g_lrSrv;
 }
 
 Result lrOpenLocationResolver(FsStorageId storage, LrLocationResolver* out) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u32 storage_id; // Actually u8
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 0;
-    raw->storage_id = (u32)storage;
-
-    Result rc = serviceIpcDispatch(&g_managerSrv);
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            serviceCreate(&out->s, r.Handles[0]);
-        }
-    }
-
-    return rc;
+    const u8 in = (u8)storage;
+    return serviceDispatchIn(&g_lrSrv, 0, in,
+        .out_num_objects = 1,
+        .out_objects = &out->s,
+    );
 }
 
 Result lrOpenRegisteredLocationResolver(LrRegisteredLocationResolver* out) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 1;
-
-    Result rc = serviceIpcDispatch(&g_managerSrv);
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            serviceCreate(&out->s, r.Handles[0]);
-        }
-    }
-
-    return rc;
+    return serviceDispatch(&g_lrSrv, 1,
+        .out_num_objects = 1,
+        .out_objects = &out->s,
+    );
 }
 
 /*
     All the LocationResolver/RegisteredLocationResolver "Resolve" commands have a common API.
     This is a helper function to perform the work for those funcs, given a command ID.
 */
-static Result _lrResolvePath(Service* s, u64 cmd_id, u64 tid, char *out) {
+static Result _lrResolvePath(Service* s, u64 tid, char *out, u32 cmd_id) {
     char out_path[FS_MAX_PATH] = {0};
-    IpcCommand c;
-    ipcInitialize(&c);
-    ipcAddRecvStatic(&c, out_path, FS_MAX_PATH, 0);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u64 tid;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = cmd_id;
-    raw->tid = tid;
-
-    Result rc = serviceIpcDispatch(s);
+    Result rc = serviceDispatchIn(s, cmd_id, tid,
+        .buffer_attrs = { SfBufferAttr_Out | SfBufferAttr_HipcPointer },
+        .buffers = { { out_path, FS_MAX_PATH } },
+    );
 
     if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            strncpy(out, out_path, FS_MAX_PATH);
-        }
+        strncpy(out, out_path, FS_MAX_PATH);
+        out[FS_MAX_PATH-1] = 0;
     }
 
     return rc;
@@ -148,154 +58,82 @@ static Result _lrResolvePath(Service* s, u64 cmd_id, u64 tid, char *out) {
     All the LocationResolver/RegisteredLocationResolver "Redirect" commands have a common API.
     This is a helper function to perform the work for those funcs, given a command ID.
 */
-static Result _lrRedirectPath(Service* s, u64 cmd_id, u64 tid, const char *path) {
-    char send_path[FS_MAX_PATH+1] = {0};
-    IpcCommand c;
-    ipcInitialize(&c);
-    ipcAddSendStatic(&c, send_path, FS_MAX_PATH, 0);
+static Result _lrRedirectPath(Service* s, u64 tid, const char *path, u32 cmd_id) {
+    char send_path[FS_MAX_PATH] = {0};
+    strncpy(send_path, path, FS_MAX_PATH-1);
+    send_path[FS_MAX_PATH-1] = 0;
 
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u64 tid;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = cmd_id;
-    raw->tid = tid;
-
-    strncpy(send_path, path, FS_MAX_PATH);
-    Result rc = serviceIpcDispatch(s);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    return serviceDispatchIn(s, cmd_id, tid,
+        .buffer_attrs = { SfBufferAttr_In | SfBufferAttr_HipcPointer },
+        .buffers = { { send_path, FS_MAX_PATH } },
+    );
 }
 
 /*
     In 9.0.0, "RedirectApplication" commands began taking in a second tid argument.
     This is a helper function to perform the work for those funcs, given a command ID.
 */
-static Result _lrRedirectApplicationPath(Service* s, u64 cmd_id, u64 tid, u64 tid2, const char *path) {
+static Result _lrRedirectApplicationPath(Service* s, u64 tid, u64 tid2, const char *path, u32 cmd_id) {
     // On < 9.0.0, call the original redirection helper.
     if (hosversionBefore(9,0,0)) {
-        return _lrRedirectPath(s, cmd_id, tid, path);
+        return _lrRedirectPath(s, tid, path, cmd_id);
     }
 
-    char send_path[FS_MAX_PATH+1] = {0};
-    IpcCommand c;
-    ipcInitialize(&c);
-    ipcAddSendStatic(&c, send_path, FS_MAX_PATH, 0);
+    char send_path[FS_MAX_PATH] = {0};
+    strncpy(send_path, path, FS_MAX_PATH-1);
+    send_path[FS_MAX_PATH-1] = 0;
 
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         u64 tid;
         u64 tid2;
-    } *raw;
+    } in = { tid, tid2 };
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = cmd_id;
-    raw->tid = tid;
-    raw->tid2 = tid2;
-
-    strncpy(send_path, path, FS_MAX_PATH);
-    Result rc = serviceIpcDispatch(s);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    return serviceDispatchIn(s, cmd_id, in,
+        .buffer_attrs = { SfBufferAttr_In | SfBufferAttr_HipcPointer },
+        .buffers = { { send_path, FS_MAX_PATH } },
+    );
 }
 
 Result lrLrResolveProgramPath(LrLocationResolver* lr, u64 tid, char *out) {
-    return _lrResolvePath(&lr->s, 0, tid, out);
+    return _lrResolvePath(&lr->s, tid, out, 0);
 }
 
 Result lrLrRedirectProgramPath(LrLocationResolver* lr, u64 tid, const char *path) {
-    return _lrRedirectPath(&lr->s, 1, tid, path);
+    return _lrRedirectPath(&lr->s, tid, path, 1);
 }
 
 Result lrLrResolveApplicationControlPath(LrLocationResolver* lr, u64 tid, char *out) {
-    return _lrResolvePath(&lr->s, 2, tid, out);
+    return _lrResolvePath(&lr->s, tid, out, 2);
 }
 
 Result lrLrResolveApplicationHtmlDocumentPath(LrLocationResolver* lr, u64 tid, char *out) {
-    return _lrResolvePath(&lr->s, 3, tid, out);
+    return _lrResolvePath(&lr->s, tid, out, 3);
 }
 
 Result lrLrResolveDataPath(LrLocationResolver* lr, u64 tid, char *out) {
-    return _lrResolvePath(&lr->s, 4, tid, out);
+    return _lrResolvePath(&lr->s, tid, out, 4);
 }
 
 Result lrLrRedirectApplicationControlPath(LrLocationResolver* lr, u64 tid, u64 tid2, const char *path) {
-    return _lrRedirectApplicationPath(&lr->s, 5, tid, tid2, path);
+    return _lrRedirectApplicationPath(&lr->s, tid, tid2, path, 5);
 }
 
 Result lrLrRedirectApplicationHtmlDocumentPath(LrLocationResolver* lr, u64 tid, u64 tid2, const char *path) {
-    return _lrRedirectApplicationPath(&lr->s, 6, tid, tid2, path);
+    return _lrRedirectApplicationPath(&lr->s, tid, tid2, path, 6);
 }
 
 Result lrLrResolveApplicationLegalInformationPath(LrLocationResolver* lr, u64 tid, char *out) {
-    return _lrResolvePath(&lr->s, 7, tid, out);
+    return _lrResolvePath(&lr->s, tid, out, 7);
 }
 
 Result lrLrRedirectApplicationLegalInformationPath(LrLocationResolver* lr, u64 tid, u64 tid2, const char *path) {
-    return _lrRedirectApplicationPath(&lr->s, 8, tid, tid2, path);
+    return _lrRedirectApplicationPath(&lr->s, tid, tid2, path, 8);
 }
 
 Result lrLrRefresh(LrLocationResolver* lr) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 9;
-
-    Result rc = serviceIpcDispatch(&lr->s);
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    return serviceDispatch(&lr->s, 9);
 }
 
-
 Result lrRegLrResolveProgramPath(LrRegisteredLocationResolver* reg, u64 tid, char *out) {
-    return _lrResolvePath(&reg->s, 0, tid, out);
+    return _lrResolvePath(&reg->s, tid, out, 0);
 }
