@@ -110,13 +110,25 @@ Result hidsysGetUniquePadIds(u64 *UniquePadIds, s32 count, s32 *total_entries);
 
 /**
  * @brief Sets the HOME-button notification LED pattern, for the specified controller.
+ * @note Generally this should only be used if \ref hidsysSetNotificationLedPatternWithTimeout is not usable.
+ * @note Only available on [7.0.0+].
  * @param pattern \ref HidsysNotificationLedPattern
  * @param UniquePadId UniquePadId for the controller.
  */
 Result hidsysSetNotificationLedPattern(const HidsysNotificationLedPattern *pattern, u64 UniquePadId);
 
 /**
+ * @brief Sets the HOME-button notification LED pattern, for the specified controller. The LED will automatically be disabled once the specified timeout occurs.
+ * @note Only available on [9.0.0+], and with controllers which have the [9.0.0+] firmware installed.
+ * @param[in] pattern \ref HidsysNotificationLedPattern
+ * @param[in] UniquePadId UniquePadId for the controller.
+ * @param[in] timeout Timeout in nanoseconds.
+ */
+Result hidsysSetNotificationLedPatternWithTimeout(const HidsysNotificationLedPattern *pattern, u64 UniquePadId, u64 timeout);
+
+/**
  * @brief Gets the unique pad's serial number.
+ * @note Only available on [5.0.0+].
  * @param UniquePadId UniquePadId for the controller.
  * @param serial Pointer to output the serial to. (The buffer size needs to be at least 0x19 bytes)
  */

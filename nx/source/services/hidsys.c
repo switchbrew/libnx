@@ -146,6 +146,19 @@ Result hidsysSetNotificationLedPattern(const HidsysNotificationLedPattern *patte
     return serviceDispatchIn(&g_hidsysSrv, 830, in);
 }
 
+Result hidsysSetNotificationLedPatternWithTimeout(const HidsysNotificationLedPattern *pattern, u64 UniquePadId, u64 timeout) {
+    if (hosversionBefore(9,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    const struct {
+        HidsysNotificationLedPattern pattern;
+        u64 UniquePadId;
+        u64 timeout;
+    } in = { *pattern, UniquePadId, timeout };
+
+    return serviceDispatchIn(&g_hidsysSrv, 831, in);
+}
+
 Result hidsysGetUniquePadSerialNumber(u64 UniquePadId, char *serial) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
