@@ -36,6 +36,8 @@ Service* fsldrGetServiceSession(void) {
 Result fsldrOpenCodeFileSystem(u64 tid, const char *path, FsFileSystem* out) {
     char send_path[FS_MAX_PATH + 1];
     strncpy(send_path, path, FS_MAX_PATH);
+
+    serviceAssumeDomain(&g_fsldrSrv);
     return serviceDispatchIn(&g_fsldrSrv, 0, tid,
         .buffer_attrs = {
             SfBufferAttr_HipcPointer | SfBufferAttr_In,
@@ -49,10 +51,12 @@ Result fsldrOpenCodeFileSystem(u64 tid, const char *path, FsFileSystem* out) {
 }
 
 Result fsldrIsArchivedProgram(u64 pid, bool *out) {
+    serviceAssumeDomain(&g_fsldrSrv);
     return serviceDispatchInOut(&g_fsldrSrv, 1, pid, *out);
 }
 
 Result _fsldrSetCurrentProcess(void) {
     u64 pid_placeholder = 0;
+    serviceAssumeDomain(&g_fsldrSrv);
     return serviceDispatchIn(&g_fsldrSrv, 2, pid_placeholder, .in_send_pid = true);
 }
