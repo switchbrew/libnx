@@ -1,32 +1,17 @@
-#include "types.h"
-#include "result.h"
-#include "arm/atomics.h"
-#include "kernel/ipc.h"
+#define NX_SERVICE_ASSUME_NON_DOMAIN
+#include "service_guard.h"
 #include "services/spsm.h"
-#include "services/sm.h"
 
 static Service g_spsmSrv;
-static u64 g_refCnt;
 
-Result spsmInitialize(void) {
-    Result rc = 0;
-    
-    atomicIncrement64(&g_refCnt);
+NX_GENERATE_SERVICE_GUARD(spsm);
 
-    if (serviceIsActive(&g_spsmSrv))
-        return 0;
-
-    rc = smGetService(&g_spsmSrv, "spsm");
-
-    if (R_FAILED(rc)) spsmExit();
-
-    return rc;
+Result _spsmInitialize(void) {
+    return smGetService(&g_spsmSrv, "spsm");
 }
 
-void spsmExit(void) {
-    if (atomicDecrement64(&g_refCnt) == 0) {
-        serviceClose(&g_spsmSrv);
-    }
+void _spsmCleanup(void) {
+    serviceClose(&g_spsmSrv);
 }
 
 Service* spsmGetServiceSession(void) {
@@ -34,67 +19,10 @@ Service* spsmGetServiceSession(void) {
 }
 
 Result spsmShutdown(bool reboot) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u32 reboot;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_spsmSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 3;
-    raw->reboot = reboot;
-
-    Result rc = serviceIpcDispatch(&g_spsmSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_spsmSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    const u8 in = reboot != 0;
+    return serviceDispatchIn(&g_spsmSrv, 3, in);
 }
 
 Result spsmPutErrorState(void) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_spsmSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 10;
-
-    Result rc = serviceIpcDispatch(&g_spsmSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_spsmSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    return serviceDispatch(&g_spsmSrv, 10);
 }
