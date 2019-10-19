@@ -70,13 +70,14 @@ Result threadCreate(
     void* reent;
     const size_t reent_sz = (sizeof(struct _reent)+0xF) &~ 0xF;
 
+    bool owns_stack_mem;
     if (stack_mem == NULL) {
         // Allocate new memory, stack then reent then tls.
         stack_mem = memalign(0x1000, ((stack_sz + reent_sz + tls_sz)+0xFFF) & ~0xFFF);
         reent = (void*)((uintptr_t)stack_mem + stack_sz);
         tls  = (void*)((uintptr_t)reent + reent_sz);
 
-        t->owns_stack_mem = true;
+        owns_stack_mem = true;
     } else {
         // Use provided memory for stack, reent, and tls.
         if (((uintptr_t)stack_mem & 0xFFF) || (stack_sz & 0xFFF)) {
@@ -92,7 +93,7 @@ Result threadCreate(
             return MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
         }
 
-        t->owns_stack_mem = false;
+        owns_stack_mem = false;
     }
 
     if (stack_mem == NULL) {
@@ -117,6 +118,7 @@ Result threadCreate(
         if (R_SUCCEEDED(rc))
         {
             t->handle = handle;
+            t->owns_stack_mem = owns_stack_mem;
             t->stack_mem = stack_mem;
             t->stack_mirror = stack_mirror;
             t->stack_sz = stack_sz - sizeof(ThreadEntryArgs);
@@ -147,13 +149,13 @@ Result threadCreate(
         }
 
         if (R_FAILED(rc)) {
-            svcUnmapMemory(stack_mirror, stack_mem, stack_sz);
+            svcUnmapMemory(stack_mirror, stack_mem, aligned_stack_sz);
         }
     }
 
     if (R_FAILED(rc)) {
-        virtmemFreeStack(stack_mirror, stack_sz);
-        if (t->owns_stack_mem) {
+        virtmemFreeStack(stack_mirror, aligned_stack_sz);
+        if (owns_stack_mem) {
             free(stack_mem);
         }
     }
@@ -204,10 +206,14 @@ Result threadClose(Thread* t) {
     if (t->tls_array)
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
-    rc = svcUnmapMemory(t->stack_mirror, t->stack_mem, t->stack_sz);
+    const size_t tls_sz = (__tls_end-__tls_start+0xF) &~ 0xF;
+    const size_t reent_sz = (sizeof(struct _reent)+0xF) &~ 0xF;
+    const size_t aligned_stack_sz = (t->stack_sz + tls_sz + reent_sz + 0xFFF) & ~0xFFF;
+
+    rc = svcUnmapMemory(t->stack_mirror, t->stack_mem, aligned_stack_sz);
 
     if (R_SUCCEEDED(rc)) {
-        virtmemFreeStack(t->stack_mirror, t->stack_sz);
+        virtmemFreeStack(t->stack_mirror, aligned_stack_sz);
         if (t->owns_stack_mem) {
             free(t->stack_mem);
         }
