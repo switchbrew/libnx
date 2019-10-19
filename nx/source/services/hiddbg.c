@@ -102,6 +102,21 @@ Result hiddbgUpdateDesignInfo(u32 colorBody, u32 colorButtons, u32 colorLeftGrip
     return serviceDispatchIn(&g_hiddbgSrv, 224, in);
 }
 
+Result hiddbgAcquireOperationEventHandle(Event* out_event, bool autoclear, u64 UniquePadId) {
+    if (hosversionBefore(6,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    Handle tmp_handle = INVALID_HANDLE;
+    Result rc = 0;
+
+    rc = serviceDispatchIn(&g_hiddbgSrv, 228, UniquePadId,
+        .out_handle_attrs = { SfOutHandleAttr_HipcCopy },
+        .out_handles = &tmp_handle,
+    );
+    if (R_SUCCEEDED(rc)) eventLoadRemote(out_event, tmp_handle, autoclear);
+    return rc;
+}
+
 static Result _hiddbgReadSerialFlash(TransferMemory *tmem, u32 offset, u64 size, u64 UniquePadId) {
     const struct {
         u32 offset;
@@ -115,8 +130,10 @@ static Result _hiddbgReadSerialFlash(TransferMemory *tmem, u32 offset, u64 size,
     );
 }
 
+// sdk-nso doesn't use hiddbgAcquireOperationEventHandle/hiddbgGetOperationResult in the ReadSerialFlash impl, those are used seperately by the user.
 Result hiddbgReadSerialFlash(u32 offset, void* buffer, size_t size, u64 UniquePadId) {
     Result rc=0;
+    Event tmpevent={0};
     TransferMemory tmem;
     size_t sizealign = (size+0x1000) & ~0xfff;
 
@@ -126,10 +143,20 @@ Result hiddbgReadSerialFlash(u32 offset, void* buffer, size_t size, u64 UniquePa
     rc = tmemCreate(&tmem, sizealign, Perm_Rw);
     if (R_FAILED(rc)) return rc;
 
-    rc = _hiddbgReadSerialFlash(&tmem, offset, size, UniquePadId);
+    rc = hiddbgAcquireOperationEventHandle(&tmpevent, true, UniquePadId); // *Must* be used before _hiddbgReadSerialFlash.
+    if (R_SUCCEEDED(rc)) rc = _hiddbgReadSerialFlash(&tmem, offset, size, UniquePadId);
+    if (R_SUCCEEDED(rc)) rc = eventWait(&tmpevent, U64_MAX);
+    if (R_SUCCEEDED(rc)) rc = hiddbgGetOperationResult(UniquePadId);
     if (R_SUCCEEDED(rc)) memcpy(buffer, tmem.src_addr, size);
-    tmemClose(&g_hiddbgHdlsTmem);
+    eventClose(&tmpevent);
+    tmemClose(&tmem);
     return rc;
+}
+
+Result hiddbgGetOperationResult(u64 UniquePadId) {
+    if (hosversionBefore(6,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    return _hiddbgCmdInU64NoOut(UniquePadId, 231);
 }
 
 Result hiddbgGetUniquePadDeviceTypeSetInternal(u64 UniquePadId, u32 *out) {

@@ -127,9 +127,19 @@ Result hiddbgUpdateControllerColor(u32 colorBody, u32 colorButtons, u64 UniquePa
 /// Writes the input RGB colors followed by inval to the spi-flash for the specified controller (offset 0x6050 size 0xD). See hidsys.h for UniquePadId. Only available with [5.0.0+].
 Result hiddbgUpdateDesignInfo(u32 colorBody, u32 colorButtons, u32 colorLeftGrip, u32 colorRightGrip, u8 inval, u64 UniquePadId);
 
+/// Get the OperationEvent for the specified controller. See hidsys.h for UniquePadId.
+/// The Event must be closed by the user once finished with it.
+/// Only available with [6.0.0+].
+Result hiddbgAcquireOperationEventHandle(Event* out_event, bool autoclear, u64 UniquePadId);
+
 /// Reads spi-flash for the specified controller. See hidsys.h for UniquePadId.
-/// This doesn't seem to be usable?
+/// This also uses \ref hiddbgAcquireOperationEventHandle to wait for the operation to finish, then \ref hiddbgGetOperationResult is used.
+/// Only available with [6.0.0+].
 Result hiddbgReadSerialFlash(u32 offset, void* buffer, size_t size, u64 UniquePadId);
+
+/// Get the Result for the Operation and handles cleanup, for the specified controller. See hidsys.h for UniquePadId.
+/// Only available with [6.0.0+].
+Result hiddbgGetOperationResult(u64 UniquePadId);
 
 /// Gets the internal DeviceType for the specified controller. See hidsys.h for UniquePadId.
 /// Only available with [6.0.0+].
