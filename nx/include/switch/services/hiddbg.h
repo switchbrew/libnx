@@ -137,6 +137,12 @@ Result hiddbgAcquireOperationEventHandle(Event* out_event, bool autoclear, u64 U
 /// Only available with [6.0.0+].
 Result hiddbgReadSerialFlash(u32 offset, void* buffer, size_t size, u64 UniquePadId);
 
+/// Writes spi-flash for the specified controller. See hidsys.h for UniquePadId.
+/// buffer and tmem_size must be page-aligned. size is the actual transfer size.
+/// This also uses \ref hiddbgAcquireOperationEventHandle to wait for the operation to finish, then \ref hiddbgGetOperationResult is used.
+/// Only available with [6.0.0+].
+Result hiddbgWriteSerialFlash(u32 offset, void* buffer, size_t tmem_size, size_t size, u64 UniquePadId);
+
 /// Get the Result for the Operation and handles cleanup, for the specified controller. See hidsys.h for UniquePadId.
 /// Only available with [6.0.0+].
 Result hiddbgGetOperationResult(u64 UniquePadId);

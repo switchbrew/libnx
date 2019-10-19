@@ -130,7 +130,21 @@ static Result _hiddbgReadSerialFlash(TransferMemory *tmem, u32 offset, u64 size,
     );
 }
 
-// sdk-nso doesn't use hiddbgAcquireOperationEventHandle/hiddbgGetOperationResult in the ReadSerialFlash impl, those are used seperately by the user.
+static Result _hiddbgWriteSerialFlash(TransferMemory *tmem, u32 offset, u64 tmem_size, u64 size, u64 UniquePadId) {
+    const struct {
+        u32 offset;
+        u64 tmem_size;
+        u64 size;
+        u64 UniquePadId;
+    } in = { offset, tmem_size, size, UniquePadId };
+
+    return serviceDispatchIn(&g_hiddbgSrv, 230, in,
+        .in_num_handles = 1,
+        .in_handles = { tmem->handle },
+    );
+}
+
+// sdk-nso doesn't use hiddbgAcquireOperationEventHandle/hiddbgGetOperationResult in the *SerialFlash impl, those are used seperately by the user. [9.0.0+] sdk-nso no longer exposes *SerialFlash and related functionality.
 Result hiddbgReadSerialFlash(u32 offset, void* buffer, size_t size, u64 UniquePadId) {
     Result rc=0;
     Event tmpevent={0};
@@ -148,6 +162,26 @@ Result hiddbgReadSerialFlash(u32 offset, void* buffer, size_t size, u64 UniquePa
     if (R_SUCCEEDED(rc)) rc = eventWait(&tmpevent, U64_MAX);
     if (R_SUCCEEDED(rc)) rc = hiddbgGetOperationResult(UniquePadId);
     if (R_SUCCEEDED(rc)) memcpy(buffer, tmem.src_addr, size);
+    eventClose(&tmpevent);
+    tmemClose(&tmem);
+    return rc;
+}
+
+Result hiddbgWriteSerialFlash(u32 offset, void* buffer, size_t tmem_size, size_t size, u64 UniquePadId) {
+    Result rc=0;
+    Event tmpevent={0};
+    TransferMemory tmem;
+
+    if (hosversionBefore(6,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    rc = tmemCreateFromMemory(&tmem, buffer, tmem_size, Perm_R);
+    if (R_FAILED(rc)) return rc;
+
+    rc = hiddbgAcquireOperationEventHandle(&tmpevent, true, UniquePadId); // *Must* be used before _hiddbgWriteSerialFlash.
+    if (R_SUCCEEDED(rc)) rc = _hiddbgWriteSerialFlash(&tmem, offset, tmem_size, size, UniquePadId);
+    if (R_SUCCEEDED(rc)) rc = eventWait(&tmpevent, U64_MAX);
+    if (R_SUCCEEDED(rc)) rc = hiddbgGetOperationResult(UniquePadId);
     eventClose(&tmpevent);
     tmemClose(&tmem);
     return rc;
