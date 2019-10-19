@@ -340,7 +340,7 @@ void usbHsEpClose(UsbHsClientEpSession* s) {
 
     serviceClose(&s->s);
     eventClose(&s->eventXfer);
-    memset(s, 0, sizeof(UsbHsClientIfSession));
+    memset(s, 0, sizeof(UsbHsClientEpSession));
 }
 
 static Result _usbHsEpSubmitRequest(UsbHsClientEpSession* s, void* buffer, u32 size, u32 timeoutInMs, u32* transferredSize) {
