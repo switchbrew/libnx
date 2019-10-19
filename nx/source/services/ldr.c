@@ -1,334 +1,95 @@
-// Copyright 2018 SciresM
-#include <string.h>
-#include "types.h"
-#include "result.h"
-#include "arm/atomics.h"
-#include "kernel/ipc.h"
+#define NX_SERVICE_ASSUME_NON_DOMAIN
+#include "service_guard.h"
+#include "runtime/hosversion.h"
 #include "services/ldr.h"
-#include "services/fs.h"
-#include "services/sm.h"
 
-static Service g_shellSrv, g_dmntSrv, g_pmSrv;
-static u64 g_shellRefCnt, g_dmntRefCnt, g_pmRefCnt;
-
-/* Service init/exit helpers. */
-static Result _ldrSrvInitialize(Service* srv, u64 *refcnt, const char *name) {
-    atomicIncrement64(refcnt);
-
-    if (serviceIsActive(srv))
-        return 0;
-
-    return smGetService(srv, name);
+#define LDR_GENERATE_SERVICE_INIT(name, srvname)            \
+static Service g_ldr##name##Srv;                            \
+                                                            \
+NX_GENERATE_SERVICE_GUARD(ldr##name);                       \
+                                                            \
+Result _ldr##name##Initialize(void) {                       \
+    return smGetService(&g_ldr##name##Srv, "ldr:"#srvname); \
+}                                                           \
+                                                            \
+void _ldr##name##Cleanup(void) {                            \
+    serviceClose(&g_ldr##name##Srv);                        \
+}                                                           \
+                                                            \
+Service* ldr##name##GetServiceSession(void) {               \
+    return &g_ldr##name##Srv;                               \
 }
 
-static void _ldrSrvExit(Service* srv, u64 *refcnt) {
-    if (atomicDecrement64(refcnt) == 0)
-        serviceClose(srv);
+LDR_GENERATE_SERVICE_INIT(Shell, shel);
+LDR_GENERATE_SERVICE_INIT(Dmnt,  dmnt);
+LDR_GENERATE_SERVICE_INIT(Pm,    pm);
+
+NX_INLINE Result _ldrAddTitleToLaunchQueue(Service* srv, u64 tid, const void *args, size_t args_size) {
+    return serviceDispatchIn(srv, 0, tid,
+        .buffer_attrs = { SfBufferAttr_In | SfBufferAttr_HipcPointer },
+        .buffers = { { args,  args_size } },
+    );
 }
 
-Result ldrShellInitialize(void) {
-    return _ldrSrvInitialize(&g_shellSrv, &g_shellRefCnt, "ldr:shel");
-}
-
-void ldrShellExit(void) {
-    return _ldrSrvExit(&g_shellSrv, &g_shellRefCnt);
-}
-
-Service* ldrShellGetServiceSession(void) {
-    return &g_shellSrv;
-}
-
-Result ldrDmntInitialize(void) {
-    return _ldrSrvInitialize(&g_dmntSrv, &g_dmntRefCnt, "ldr:dmnt");
-}
-
-void ldrDmntExit(void) {
-    return _ldrSrvExit(&g_dmntSrv, &g_dmntRefCnt);
-}
-
-Service* ldrDmntGetServiceSession(void) {
-    return &g_dmntSrv;
-}
-
-Result ldrPmInitialize(void) {
-    return _ldrSrvInitialize(&g_pmSrv, &g_pmRefCnt, "ldr:pm");
-}
-
-void ldrPmExit(void) {
-    return _ldrSrvExit(&g_pmSrv, &g_pmRefCnt);
-}
-
-Service* ldrPmGetServiceSession(void) {
-    return &g_pmSrv;
-}
-
-static Result _ldrAddTitleToLaunchQueue(Service* srv, u64 tid, const void *args, size_t args_size) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    ipcAddSendStatic(&c, args, args_size, 0);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u64 tid;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 0;
-    raw->tid = tid;
-
-    Result rc = serviceIpcDispatch(srv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
-}
-
-static Result _ldrClearLaunchQueue(Service* srv) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 1;
-
-    Result rc = serviceIpcDispatch(srv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+NX_INLINE Result _ldrClearLaunchQueue(Service* srv) {
+    return serviceDispatch(srv, 1);
 }
 
 Result ldrShellAddTitleToLaunchQueue(u64 tid, const void *args, size_t args_size) {
-    return _ldrAddTitleToLaunchQueue(&g_shellSrv, tid, args, args_size);
+    return _ldrAddTitleToLaunchQueue(&g_ldrShellSrv, tid, args, args_size);
 }
 
 Result ldrShellClearLaunchQueue(void) {
-    return _ldrClearLaunchQueue(&g_shellSrv);
+    return _ldrClearLaunchQueue(&g_ldrShellSrv);
 }
 
 Result ldrDmntAddTitleToLaunchQueue(u64 tid, const void *args, size_t args_size) {
-    return _ldrAddTitleToLaunchQueue(&g_dmntSrv, tid, args, args_size);
+    return _ldrAddTitleToLaunchQueue(&g_ldrDmntSrv, tid, args, args_size);
 }
 
 Result ldrDmntClearLaunchQueue(void) {
-    return _ldrClearLaunchQueue(&g_dmntSrv);
+    return _ldrClearLaunchQueue(&g_ldrDmntSrv);
 }
 
 Result ldrDmntGetModuleInfos(u64 pid, LoaderModuleInfo *out_module_infos, size_t max_out_modules, u32 *num_out) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    ipcAddRecvStatic(&c, out_module_infos, max_out_modules * sizeof(*out_module_infos), 0);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u64 pid;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 2;
-    raw->pid = pid;
-
-    Result rc = serviceIpcDispatch(&g_dmntSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-            u32 num_out;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-        if (R_SUCCEEDED(rc) && num_out != NULL) {
-            *num_out = resp->num_out;
-        }
-    }
-
-    return rc;
+    return serviceDispatchInOut(&g_ldrDmntSrv, 2, pid, *num_out,
+        .buffer_attrs = { SfBufferAttr_Out | SfBufferAttr_HipcPointer },
+        .buffers = { { out_module_infos, max_out_modules * sizeof(*out_module_infos) } },
+    );
 }
 
 Result ldrPmCreateProcess(u64 flags, u64 launch_index, Handle reslimit_h, Handle *out_process_h) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    ipcSendHandleCopy(&c, reslimit_h);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         u64 flags;
         u64 launch_index;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 0;
-    raw->flags = flags;
-    raw->launch_index = launch_index;
-
-    Result rc = serviceIpcDispatch(&g_pmSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            *out_process_h = r.Handles[0];
-        }
-    }
-
-    return rc;
+    } in = { flags, launch_index };
+    return serviceDispatchIn(&g_ldrPmSrv, 0, in,
+        .in_num_handles = 1,
+        .in_handles = { reslimit_h },
+        .out_handle_attrs = { SfOutHandleAttr_HipcMove },
+        .out_handles = out_process_h,
+    );
 }
 
 Result ldrPmGetProgramInfo(u64 title_id, FsStorageId storage_id, LoaderProgramInfo *out_program_info) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    ipcAddRecvStatic(&c, out_program_info, sizeof(LoaderProgramInfo), 0);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         u64 title_id;
         u64 storage_id;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 1;
-    raw->title_id = title_id;
-    raw->storage_id = storage_id;
-
-    Result rc = serviceIpcDispatch(&g_pmSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    } in = { title_id, storage_id };
+    return serviceDispatchIn(&g_ldrPmSrv, 1, in,
+        .buffer_attrs = { SfBufferAttr_Out | SfBufferAttr_HipcPointer | SfBufferAttr_FixedSize },
+        .buffers = { { out_program_info, sizeof(*out_program_info) } },
+    );
 }
 
 Result ldrPmRegisterTitle(u64 title_id, FsStorageId storage_id, u64 *out_index) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         u64 title_id;
         u64 storage_id;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 2;
-    raw->title_id = title_id;
-    raw->storage_id = storage_id;
-
-    Result rc = serviceIpcDispatch(&g_pmSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-            u64 index;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-        if (R_SUCCEEDED(rc)) {
-            *out_index = resp->index;
-        }
-    }
-
-    return rc;
+    } in = { title_id, storage_id };
+    return serviceDispatchInOut(&g_ldrPmSrv, 2, in, *out_index);
 }
 
 Result ldrPmUnregisterTitle(u64 launch_index) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u64 launch_index;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 3;
-    raw->launch_index = launch_index;
-
-    Result rc = serviceIpcDispatch(&g_pmSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    return serviceDispatchIn(&g_ldrPmSrv, 3, launch_index);
 }
