@@ -33,7 +33,7 @@ static inline Waiter waiterForThread(Thread* t)
  * @param entry Entrypoint of the thread.
  * @param arg Argument to pass to the entrypoint.
  * @param stack_mem Memory to use as backing for stack/tls/reent. Must be page-aligned. NULL argument means to allocate new memory.
- * @param stack_sz  Stack size (rounded up to page alignment if stack_mem is NULL).
+ * @param stack_sz  If stack_mem is NULL, size to use for stack. If stack_mem is non-NULL, size to use for stack + reent + tls (must be page-aligned).
  * @param prio Thread priority (0x00~0x3F); 0x2C is the usual priority of the main thread, 0x3B is a special priority on cores 0..2 that enables preemptive multithreading (0x3F on core 3).
  * @param cpuid ID of the core on which to create the thread (0~3); or -2 to use the default core for the current process.
  * @return Result code.
