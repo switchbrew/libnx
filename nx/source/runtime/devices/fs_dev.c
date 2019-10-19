@@ -763,7 +763,7 @@ fsdev_write_safe(struct _reent *r,
   /* Copy to internal buffer and transfer in chunks.
    * You cannot use FS read/write with certain memory.
    */
-  static __thread char tmp_buffer[8192];
+  char tmp_buffer[0x1000];
   while(len > 0)
   {
     size_t toWrite = len;
@@ -868,7 +868,7 @@ fsdev_read_safe(struct _reent *r,
   /* Transfer in chunks with internal buffer.
    * You cannot use FS read/write with certain memory.
    */
-  static __thread char tmp_buffer[8192];
+  char tmp_buffer[0x1000];
   while(len > 0)
   {
     u64 toRead = len;
