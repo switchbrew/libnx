@@ -99,7 +99,7 @@ Result threadCreate(
         return MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
     }
 
-    // Stack size may be unaligned in the
+    // Stack size may be unaligned in either case.
     const size_t aligned_stack_sz = (stack_sz+0xFFF) & ~0xFFF;
     void* stack_mirror = virtmemReserveStack(aligned_stack_sz);
     Result rc = svcMapMemory(stack_mirror, stack_mem, aligned_stack_sz);
