@@ -6,13 +6,14 @@
  */
 #pragma once
 #include "../types.h"
-#include "../services/sm.h"
+#include "../sf/service.h"
 #include "../services/pcv.h"
 
 typedef struct {
     Service  s;
 } ClkrstSession;
 
+/// Only available on [8.0.0+].
 Result clkrstInitialize(void);
 void clkrstExit(void);
 Service* clkrstGetServiceSession(void);
