@@ -7,11 +7,15 @@
 #pragma once
 #include "../types.h"
 #include "../kernel/event.h"
-#include "../services/sm.h"
+#include "../sf/service.h"
+
+typedef struct {
+    char data[0x40];
+} ViDisplayName;
 
 typedef struct {
     u64  display_id;
-    char display_name[0x40];
+    ViDisplayName display_name;
     bool initialized;
 } ViDisplay;
 
@@ -98,5 +102,5 @@ Result viSetLayerScalingMode(ViLayer *layer, ViScalingMode scaling_mode);
 
 // IndirectLayer functions
 
-Result viGetIndirectLayerImageMap(void* buffer, size_t size, s32 width, s32 height, u64 IndirectLayerConsumerHandle, u64 *out0, u64 *out1);
+Result viGetIndirectLayerImageMap(void* buffer, size_t size, s32 width, s32 height, u64 IndirectLayerConsumerHandle, u64 *out_size, u64 *out_stride);
 Result viGetIndirectLayerImageRequiredMemoryInfo(s32 width, s32 height, u64 *out_size, u64 *out_alignment);

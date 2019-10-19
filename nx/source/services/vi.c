@@ -1,11 +1,10 @@
+#define NX_SERVICE_ASSUME_NON_DOMAIN
 #include <string.h>
-#include "types.h"
-#include "result.h"
-#include "kernel/ipc.h"
-#include "runtime/hosversion.h"
+#include "service_guard.h"
 #include "services/applet.h"
 #include "services/vi.h"
 #include "display/parcel.h"
+#include "runtime/hosversion.h"
 
 __attribute__((weak)) u64 __nx_vi_layer_id = 0;
 __attribute__((weak)) ViLayerFlags __nx_vi_stray_layer_flags = ViLayerFlags_Default;
@@ -18,14 +17,23 @@ static Service g_viISystemDisplayService;
 static Service g_viIManagerDisplayService;
 static Service g_viIHOSBinderDriverIndirect;
 
-static Result _viGetSession(Service* srv, Service* srv_out, void* inraw, size_t rawsize);
-static Result _viGetSessionNoParams(Service* srv, Service* srv_out, u64 cmd_id);
+static Result _viCmdGetSession(Service* srv, Service* srv_out, u32 inval, u32 cmd_id) {
+    return serviceDispatchIn(srv, cmd_id, inval,
+        .out_num_objects = 1,
+        .out_objects = srv_out,
+    );
+}
 
-Result viInitialize(ViServiceType service_type)
-{
-    if (serviceIsActive(&g_viIApplicationDisplayService))
-        return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
+static Result _viCmdGetSessionNoParams(Service* srv, Service* srv_out, u32 cmd_id) {
+    return serviceDispatch(srv, cmd_id,
+        .out_num_objects = 1,
+        .out_objects = srv_out,
+    );
+}
 
+NX_GENERATE_SERVICE_GUARD_PARAMS(vi, (ViServiceType service_type), (service_type));
+
+Result _viInitialize(ViServiceType service_type) {
     Service root_srv;
     Result rc = 0;
 
@@ -45,40 +53,31 @@ Result viInitialize(ViServiceType service_type)
     }
 
     if (R_SUCCEEDED(rc)) {
-        struct {
-            u64 magic;
-            u64 cmd_id;
-            u64 inval;
-        } raw;
-
-        raw.magic = SFCI_MAGIC;
-        raw.cmd_id = g_viServiceType; // ViServiceType matches the cmdid needed to open an IApplicationDisplayService session.
-        raw.inval = (g_viServiceType == ViServiceType_Manager || g_viServiceType == ViServiceType_System) ? 1 : 0;
-
-        rc = _viGetSession(&root_srv, &g_viIApplicationDisplayService, &raw, sizeof(raw));
+        const u32 inval = (g_viServiceType == ViServiceType_Manager || g_viServiceType == ViServiceType_System) ? 1 : 0;
+        rc = _viCmdGetSession(&root_srv, &g_viIApplicationDisplayService, inval, g_viServiceType);
         serviceClose(&root_srv);
     }
 
-    if (R_SUCCEEDED(rc))
-        rc = _viGetSessionNoParams(&g_viIApplicationDisplayService, &g_viIHOSBinderDriverRelay, 100);
+    if (R_SUCCEEDED(rc)) {
+        rc = _viCmdGetSessionNoParams(&g_viIApplicationDisplayService, &g_viIHOSBinderDriverRelay, 100);
+    }
 
-    if (g_viServiceType >= ViServiceType_System && R_SUCCEEDED(rc))
-        rc = _viGetSessionNoParams(&g_viIApplicationDisplayService, &g_viISystemDisplayService, 101);
+    if (g_viServiceType >= ViServiceType_System && R_SUCCEEDED(rc)) {
+        rc = _viCmdGetSessionNoParams(&g_viIApplicationDisplayService, &g_viISystemDisplayService, 101);
+    }
 
-    if (g_viServiceType >= ViServiceType_Manager && R_SUCCEEDED(rc))
-        rc = _viGetSessionNoParams(&g_viIApplicationDisplayService, &g_viIManagerDisplayService, 102);
+    if (g_viServiceType >= ViServiceType_Manager && R_SUCCEEDED(rc)) {
+        rc = _viCmdGetSessionNoParams(&g_viIApplicationDisplayService, &g_viIManagerDisplayService, 102);
+    }
 
-    if (g_viServiceType >= ViServiceType_System && R_SUCCEEDED(rc) && hosversionAtLeast(2,0,0))
-        rc = _viGetSessionNoParams(&g_viIApplicationDisplayService, &g_viIHOSBinderDriverIndirect, 103);
-
-    if (R_FAILED(rc))
-        viExit();
+    if (g_viServiceType >= ViServiceType_System && R_SUCCEEDED(rc) && hosversionAtLeast(2,0,0)) {
+        rc = _viCmdGetSessionNoParams(&g_viIApplicationDisplayService, &g_viIHOSBinderDriverIndirect, 103);
+    }
 
     return rc;
 }
 
-void viExit(void)
-{
+void _viCleanup(void) {
     serviceClose(&g_viIHOSBinderDriverIndirect);
     serviceClose(&g_viIManagerDisplayService);
     serviceClose(&g_viISystemDisplayService);
@@ -87,720 +86,270 @@ void viExit(void)
     g_viServiceType = ViServiceType_Default;
 }
 
-Service* viGetSession_IApplicationDisplayService(void)
-{
+Service* viGetSession_IApplicationDisplayService(void) {
     return &g_viIApplicationDisplayService;
 }
 
-Service* viGetSession_IHOSBinderDriverRelay(void)
-{
+Service* viGetSession_IHOSBinderDriverRelay(void) {
     return &g_viIHOSBinderDriverRelay;
 }
 
-Service* viGetSession_ISystemDisplayService(void)
-{
+Service* viGetSession_ISystemDisplayService(void) {
     return &g_viISystemDisplayService;
 }
 
-Service* viGetSession_IManagerDisplayService(void)
-{
+Service* viGetSession_IManagerDisplayService(void) {
     return &g_viIManagerDisplayService;
 }
 
-Service* viGetSession_IHOSBinderDriverIndirect(void)
-{
+Service* viGetSession_IHOSBinderDriverIndirect(void) {
     return &g_viIHOSBinderDriverIndirect;
 }
 
-static Result _viGetSession(Service* srv, Service* srv_out, void* inraw, size_t rawsize)
-{
-    IpcCommand c;
-    ipcInitialize(&c);
+Result viOpenDisplay(const char *display_name, ViDisplay *display) {
+    memset(display, 0, sizeof(*display));
+    strncpy(display->display_name.data, display_name, sizeof(display->display_name) - 1);
 
-    memcpy(ipcPrepareHeader(&c, rawsize), inraw, rawsize);
-
-    Result rc = serviceIpcDispatch(srv);
+    Result rc = serviceDispatchInOut(&g_viIApplicationDisplayService, 1010, display->display_name, display->display_id);
 
     if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            serviceCreate(srv_out, r.Handles[0]);
-        }
+        display->initialized = true;
     }
 
     return rc;
 }
 
-static Result _viGetSessionNoParams(Service* srv, Service* srv_out, u64 cmd_id)
-{
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } raw;
-
-    raw.magic = SFCI_MAGIC;
-    raw.cmd_id = cmd_id;
-
-    return _viGetSession(srv, srv_out, &raw, sizeof(raw));
-}
-
-Result viOpenDisplay(const char *display_name, ViDisplay *display)
-{
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        char display_name[0x40];
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 1010;
-
-    memset(display, 0, sizeof(ViDisplay));
-    strncpy(display->display_name, display_name, sizeof(display->display_name)-1);
-    memcpy(raw->display_name, display->display_name, sizeof(display->display_name));
-
-    Result rc = serviceIpcDispatch(&g_viIApplicationDisplayService);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-            u64 display_id;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            display->display_id = resp->display_id;
-            display->initialized = true;
-        }
-    }
-
-    return rc;
-}
-
-Result viCloseDisplay(ViDisplay *display)
-{
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    if (!display->initialized)
+Result viCloseDisplay(ViDisplay *display) {
+    if (!display->initialized) {
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    }
 
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u64 display_id;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 1020;
-    raw->display_id = display->display_id;
-
-    Result rc = serviceIpcDispatch(&g_viIApplicationDisplayService);
+    Result rc = serviceDispatchIn(&g_viIApplicationDisplayService, 1020, display->display_id);
 
     if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-        memset(display, 0, sizeof(ViDisplay));
+        memset(display, 0, sizeof(*display));
     }
 
     return rc;
 }
 
-Result viGetDisplayResolution(ViDisplay *display, u64 *width, u64 *height)
-{
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    if (!display->initialized)
+Result viGetDisplayResolution(ViDisplay *display, u64 *width, u64 *height) {
+    if (!display->initialized) {
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    }
 
     struct {
-        u64 magic;
-        u64 cmd_id;
-        u64 display_id;
-    } *raw;
+        u64 width;
+        u64 height;
+    } out;
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 1102;
-    raw->display_id = display->display_id;
-
-    Result rc = serviceIpcDispatch(&g_viIApplicationDisplayService);
+    Result rc = serviceDispatchInOut(&g_viIApplicationDisplayService, 1102, display->display_id, out);
 
     if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-            u64 width;
-            u64 height;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            if (width) *width = resp->width;
-            if (height) *height = resp->height;
-        }
+        if (width)  *width  = out.width;
+        if (height) *height = out.height;
     }
 
     return rc;
 }
 
-Result viGetDisplayLogicalResolution(ViDisplay *display, u32 *width, u32 *height)
-{
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    if (!display->initialized)
+Result viGetDisplayLogicalResolution(ViDisplay *display, u32 *width, u32 *height) {
+    if (!display->initialized) {
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    }
 
     struct {
-        u64 magic;
-        u64 cmd_id;
-        u64 display_id;
-    } *raw;
+        u32 width;
+        u32 height;
+    } out;
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 1203;
-    raw->display_id = display->display_id;
-
-    Result rc = serviceIpcDispatch(&g_viISystemDisplayService);
+    Result rc = serviceDispatchInOut(&g_viISystemDisplayService, 1203, display->display_id, out);
 
     if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-            u32 width;
-            u32 height;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            if (width) *width = resp->width;
-            if (height) *height = resp->height;
-        }
+        if (width)  *width  = out.width;
+        if (height) *height = out.height;
     }
 
     return rc;
+
 }
 
-Result viSetDisplayMagnification(ViDisplay *display, u32 x, u32 y, u32 width, u32 height)
-{
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    if (!display->initialized)
+Result viSetDisplayMagnification(ViDisplay *display, u32 x, u32 y, u32 width, u32 height) {
+    if (!display->initialized) {
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-    if (hosversionBefore(3,0,0))
+    }
+    if (hosversionBefore(3,0,0)) {
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    }
 
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         u32 x;
         u32 y;
         u32 width;
         u32 height;
         u64 display_id;
-    } *raw;
+    } in = { x, y, width, height, display->display_id };
+    return serviceDispatchIn(&g_viISystemDisplayService, 1204, in);
+}
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
+Result viGetDisplayVsyncEvent(ViDisplay *display, Event *event_out) {
+    if (!display->initialized) {
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    }
 
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 1204;
-    raw->display_id = display->display_id;
-    raw->x = x;
-    raw->y = y;
-    raw->width = width;
-    raw->height = height;
-
-    Result rc = serviceIpcDispatch(&g_viISystemDisplayService);
+    Handle evt_handle;
+    Result rc = serviceDispatchIn(&g_viIApplicationDisplayService, 5202, display->display_id,
+        .out_handle_attrs = { SfOutHandleAttr_HipcCopy },
+        .out_handles = &evt_handle,
+    );
 
     if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
+        eventLoadRemote(event_out, evt_handle, true);
     }
 
     return rc;
 }
 
-Result viGetDisplayVsyncEvent(ViDisplay *display, Event *event_out)
-{
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    if (!display->initialized)
+Result viSetDisplayPowerState(ViDisplay *display, ViPowerState state) {
+    if (!display->initialized) {
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u64 display_id;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 5202;
-    raw->display_id = display->display_id;
-
-    Result rc = serviceIpcDispatch(&g_viIApplicationDisplayService);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            eventLoadRemote(event_out, r.Handles[0], true);
-        }
     }
 
-    return rc;
-}
-
-Result viSetDisplayPowerState(ViDisplay *display, ViPowerState state)
-{
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    if (!display->initialized)
-        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         u32 power_state;
         u64 display_id;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 4205;
-    raw->display_id = display->display_id;
-    raw->power_state = state;
-
-    Result rc = serviceIpcDispatch(&g_viIManagerDisplayService);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    } in = { state, display->display_id };
+    return serviceDispatchIn(&g_viIManagerDisplayService, 4205, in);
 }
 
-Result viSetDisplayAlpha(ViDisplay *display, float alpha)
-{
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    if (!display->initialized)
+Result viSetDisplayAlpha(ViDisplay *display, float alpha) {
+    if (!display->initialized) {
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        float alpha;
-        u64 display_id;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 4201;
-    raw->display_id = display->display_id;
-    raw->alpha = alpha;
-
-    Result rc = serviceIpcDispatch(&g_viIManagerDisplayService);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
     }
 
-    return rc;
+    const struct {
+        float alpha;
+        u64 display_id;
+    } in = { alpha, display->display_id };
+    return serviceDispatchIn(&g_viIManagerDisplayService, 4201, in);
 }
 
 Result viGetDisplayMinimumZ(ViDisplay *display, u64 *z) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    if (!display->initialized)
+    if (!display->initialized) {
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u64 display_id;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 1200;
-    raw->display_id = display->display_id;
-
-    Result rc = serviceIpcDispatch(&g_viISystemDisplayService);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-            u64 z;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            if (z) *z = resp->z;
-        }
     }
 
-    return rc;
+    return serviceDispatchInOut(&g_viISystemDisplayService, 1200, display->display_id, *z);
 }
 
 Result viGetDisplayMaximumZ(ViDisplay *display, u64 *z) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    if (!display->initialized)
+    if (!display->initialized) {
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u64 display_id;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 1202;
-    raw->display_id = display->display_id;
-
-    Result rc = serviceIpcDispatch(&g_viISystemDisplayService);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-            u64 z;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            if (z) *z = resp->z;
-        }
     }
 
-    return rc;
+    return serviceDispatchInOut(&g_viISystemDisplayService, 1202, display->display_id, *z);
 }
 
-Result viCreateManagedLayer(const ViDisplay *display, ViLayerFlags layer_flags, u64 aruid, u64 *layer_id)
-{
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    if (!display->initialized)
+Result viCreateManagedLayer(const ViDisplay *display, ViLayerFlags layer_flags, u64 aruid, u64 *layer_id) {
+    if (!display->initialized) {
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u32 layer_flags;
-        u32 pad;
-        u64 display_id;
-        u64 aruid;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 2010;
-    raw->layer_flags = layer_flags;
-    raw->pad = 0;
-    raw->display_id = display->display_id;
-    raw->aruid = aruid;
-
-    Result rc = serviceIpcDispatch(&g_viIManagerDisplayService);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-            u64 layer_id;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            *layer_id = resp->layer_id;
-        }
     }
 
-    return rc;
+    const struct {
+        u32 layer_flags;
+        u64 display_id;
+        u64 aruid;
+    } in = { layer_flags, display->display_id, aruid };
+    return serviceDispatchInOut(&g_viIManagerDisplayService, 2010, in, *layer_id);
 }
 
 Result viDestroyManagedLayer(ViLayer *layer) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u64 layer_id;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 2011;
-    raw->layer_id = layer->layer_id;
-
-    Result rc = serviceIpcDispatch(&g_viIManagerDisplayService);
+    Result rc = serviceDispatchIn(&g_viIManagerDisplayService, 2011, layer->layer_id);
 
     if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-        memset(layer, 0, sizeof(ViLayer));
+        memset(layer, 0, sizeof(*layer));
     }
 
     return rc;
 }
 
 Result viSetContentVisibility(bool v) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u32 visibility;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 7000;
-    raw->visibility = v;
-
-    Result rc = serviceIpcDispatch(&g_viIManagerDisplayService);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    return serviceDispatchIn(&g_viIManagerDisplayService, 7000, v);
 }
 
 static Result _viOpenLayer(const ViDisplay *display, u64 layer_id, u64 aruid, u8 native_window[0x100], u64 *native_window_size)
 {
-    IpcCommand c;
-    ipcInitialize(&c);
+    if (!display->initialized) {
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    }
 
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        char display_name[0x40];
+    const struct {
+        ViDisplayName display_name;
         u64 layer_id;
         u64 aruid;
-    } *raw;
-
-    ipcSendPid(&c);
-    ipcAddRecvBuffer(&c, native_window, 0x100, 0);
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 2020;
-
-    memcpy(raw->display_name, display->display_name, sizeof(display->display_name));
-
-    raw->layer_id = layer_id;
-    raw->aruid = aruid;
-
-    Result rc = serviceIpcDispatch(&g_viIApplicationDisplayService);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-            u64 native_window_size;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            *native_window_size = resp->native_window_size;
-        }
-    }
-
-    return rc;
+    } in = { display->display_name, layer_id, aruid };
+    return serviceDispatchInOut(&g_viIApplicationDisplayService, 2020, in, *native_window_size,
+        .in_send_pid = true,
+        .buffer_attrs = { SfBufferAttr_Out | SfBufferAttr_HipcMapAlias },
+        .buffers = { { native_window, 0x100 } },
+    );
 }
 
-static Result _viCreateStrayLayer(const ViDisplay *display, u32 layer_flags, u64 *layer_id, u8 native_window[0x100], u64 *native_window_size)
-{
-    Service* target_srv = &g_viIApplicationDisplayService;
-    bool sysver_flag = hosversionBefore(7,0,0);
+static Result _viCreateStrayLayer(const ViDisplay *display, u32 layer_flags, u64 *layer_id, u8 native_window[0x100], u64 *native_window_size) {
+    if (!display->initialized) {
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    }
 
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u32 layer_flags;
-        u32 pad;
-        u64 display_id;
-    } *raw;
-
-    ipcAddRecvBuffer(&c, native_window, 0x100, 0);
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-    raw->magic = SFCI_MAGIC;
+    Service* target_srv;
+    u32 cmd_id;
 
     if (g_viServiceType < ViServiceType_System) {
-        raw->cmd_id = 2030;
         target_srv = &g_viIApplicationDisplayService;
-    }
-    else {
-        if (sysver_flag) {
-            raw->cmd_id = 2312;
+        cmd_id = 2030;
+    } else {
+        if (hosversionBefore(7,0,0)) {
             target_srv = &g_viISystemDisplayService;
-        }
-        else {
-            raw->cmd_id = 2012;
+            cmd_id = 2312;
+        } else {
             target_srv = &g_viIManagerDisplayService;
+            cmd_id = 2012;
         }
     }
 
-    raw->layer_flags = layer_flags;
-    raw->pad = 0;
-    raw->display_id = display->display_id;
+    if (!serviceIsActive(target_srv)) {
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    }
 
-    Result rc=0;
-    if (!serviceIsActive(target_srv)) rc = MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-    if (R_SUCCEEDED(rc)) rc = serviceIpcDispatch(target_srv);
+    const struct {
+        u32 layer_flags;
+        u64 display_id;
+    } in = { layer_flags, display->display_id };
+
+    struct {
+        u64 layer_id;
+        u64 native_window_size;
+    } out;
+
+    Result rc = serviceDispatchInOut(target_srv, cmd_id, in, out,
+        .buffer_attrs = { SfBufferAttr_Out | SfBufferAttr_HipcMapAlias },
+        .buffers = { { native_window, 0x100 } },
+    );
 
     if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-            u64 layer_id;
-            u64 native_window_size;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            *layer_id = resp->layer_id;
-            *native_window_size = resp->native_window_size;
-        }
+        *layer_id = out.layer_id;
+        *native_window_size = out.native_window_size;
     }
 
     return rc;
 }
 
-Result viCreateLayer(const ViDisplay *display, ViLayer *layer)
-{
+Result viCreateLayer(const ViDisplay *display, ViLayer *layer) {
+    if (!display->initialized) {
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    }
+
     alignas(8) u8 native_window_raw[0x100];
     u64 native_window_size = 0;
-    Result rc = 0;
-
-    if (!display->initialized)
-        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     u64 aruid = 0;
     appletGetAppletResourceUserId(&aruid); // failure is not fatal
@@ -808,6 +357,7 @@ Result viCreateLayer(const ViDisplay *display, ViLayer *layer)
     memset(layer, 0, sizeof(ViLayer));
     layer->layer_id = __nx_vi_layer_id;
 
+    Result rc = 0;
     if (!layer->layer_id && aruid) {
         rc = appletCreateManagedDisplayLayer(&layer->layer_id);
         if (R_FAILED(rc)) return rc;
@@ -845,292 +395,117 @@ _bad_parcel:
 }
 
 Result viSetLayerSize(ViLayer *layer, u64 width, u64 height) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    if (!layer->initialized)
+    if (!layer->initialized) {
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    }
 
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         u64 layer_id;
         u64 width;
         u64 height;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 2203;
-    raw->layer_id = layer->layer_id;
-    raw->width = width;
-    raw->height = height;
-
-    Result rc = serviceIpcDispatch(&g_viISystemDisplayService);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    } in = { layer->layer_id, width, height };
+    return serviceDispatchIn(&g_viISystemDisplayService, 2203, in);
 }
 
 Result viSetLayerZ(ViLayer *layer, u64 z) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    if (!layer->initialized)
+    if (!layer->initialized) {
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u64 layer_id;
-        u64 z;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 2205;
-    raw->layer_id = layer->layer_id;
-    raw->z = z;
-
-    Result rc = serviceIpcDispatch(&g_viISystemDisplayService);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
     }
 
-    return rc;
+    const struct {
+        u64 layer_id;
+        u64 z;
+    } in = { layer->layer_id, z };
+    return serviceDispatchIn(&g_viISystemDisplayService, 2205, in);
 }
 
 Result viSetLayerPosition(ViLayer *layer, float x, float y) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    if (!layer->initialized)
+    if (!layer->initialized) {
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    }
 
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         float x;
         float y;
         u64 layer_id;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 2201;
-    raw->layer_id = layer->layer_id;
-    raw->x = x;
-    raw->y = y;
-
-    Result rc = serviceIpcDispatch(&g_viISystemDisplayService);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    } in = { x, y, layer->layer_id };
+    return serviceDispatchIn(&g_viISystemDisplayService, 2201, in);
 }
 
-Result viCloseLayer(ViLayer *layer)
-{
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    if (!layer->initialized)
+Result viCloseLayer(ViLayer *layer) {
+    if (!layer->initialized) {
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    }
 
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u64 layer_id;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = layer->stray_layer ? 2021 : 2031;
-    raw->layer_id = layer->layer_id;
-
-    Result rc = serviceIpcDispatch(&g_viIApplicationDisplayService);
+    Result rc = serviceDispatchIn(&g_viIApplicationDisplayService, layer->stray_layer ? 2021 : 2031, layer->layer_id);
 
     if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-        memset(layer, 0, sizeof(ViLayer));
+        memset(layer, 0, sizeof(*layer));
     }
 
     return rc;
 }
 
-Result viSetLayerScalingMode(ViLayer *layer, ViScalingMode scaling_mode)
-{
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    if (!layer->initialized)
+Result viSetLayerScalingMode(ViLayer *layer, ViScalingMode scaling_mode) {
+    if (!layer->initialized) {
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u32 scaling_mode;
-        u32 pad;
-        u64 layer_id;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 2101;
-    raw->scaling_mode = scaling_mode;
-    raw->pad = 0;
-    raw->layer_id = layer->layer_id;
-
-    Result rc = serviceIpcDispatch(&g_viIApplicationDisplayService);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        rc = resp->result;
     }
 
-    return rc;
+    const struct {
+        u64 scaling_mode;
+        u64 layer_id;
+    } in = { scaling_mode, layer->layer_id };
+    return serviceDispatchIn(&g_viIApplicationDisplayService, 2101, in);
 }
 
-Result viGetIndirectLayerImageMap(void* buffer, size_t size, s32 width, s32 height, u64 IndirectLayerConsumerHandle, u64 *out0, u64 *out1)
-{
-    IpcCommand c;
-    ipcInitialize(&c);
-
+Result viGetIndirectLayerImageMap(void* buffer, size_t size, s32 width, s32 height, u64 IndirectLayerConsumerHandle, u64 *out_size, u64 *out_stride) {
     u64 aruid = 0;
     Result rc = appletGetAppletResourceUserId(&aruid);
     if (R_FAILED(rc)) return rc;
 
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         u64 width;
         u64 height;
         u64 IndirectLayerConsumerHandle;
         u64 aruid;
-    } *raw;
-
-    ipcSendPid(&c);
-    ipcAddRecvBuffer(&c, buffer, size, BufferType_Type1);
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 2450;
-    raw->width = width;
-    raw->height = height;
-    raw->IndirectLayerConsumerHandle = IndirectLayerConsumerHandle;
-    raw->aruid = aruid;
-
-    rc = serviceIpcDispatch(&g_viIApplicationDisplayService);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-            u64 out0;
-            u64 out1;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            if (out0) *out0 = resp->out0;
-            if (out1) *out1 = resp->out1;
-        }
-    }
-
-    return rc;
-}
-
-Result viGetIndirectLayerImageRequiredMemoryInfo(s32 width, s32 height, u64 *out_size, u64 *out_alignment)
-{
-    IpcCommand c;
-    ipcInitialize(&c);
+    } in = { width, height, IndirectLayerConsumerHandle, aruid };
 
     struct {
-        u64 magic;
-        u64 cmd_id;
-        u64 width;
-        u64 height;
-    } *raw;
+        u64 size;
+        u64 stride;
+    } out;
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 2460;
-    raw->width = width;
-    raw->height = height;
-
-    Result rc = serviceIpcDispatch(&g_viIApplicationDisplayService);
+    rc = serviceDispatchInOut(&g_viIApplicationDisplayService, 2450, in, out,
+        .in_send_pid = true,
+        .buffer_attrs = { SfBufferAttr_Out | SfBufferAttr_HipcMapAlias | SfBufferAttr_HipcMapTransferAllowsNonSecure },
+        .buffers = { { buffer, size } },
+    );
 
     if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-            u64 out_size;
-            u64 out_alignment;
-        } *resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            if (out_size) *out_size = resp->out_size;
-            if (out_alignment) *out_alignment = resp->out_alignment;
-        }
+        if (out_size)   *out_size   = out.size;
+        if (out_stride) *out_stride = out.stride;
     }
 
     return rc;
 }
 
+Result viGetIndirectLayerImageRequiredMemoryInfo(s32 width, s32 height, u64 *out_size, u64 *out_alignment) {
+    const struct {
+        u64 width;
+        u64 height;
+    } in = { width, height };
+
+    struct {
+        u64 size;
+        u64 alignment;
+    } out;
+
+    Result rc = serviceDispatchInOut(&g_viIApplicationDisplayService, 2460, in, out);
+
+    if (R_SUCCEEDED(rc)) {
+        if (out_size)      *out_size      = out.size;
+        if (out_alignment) *out_alignment = out.alignment;
+    }
+
+    return rc;
+}
