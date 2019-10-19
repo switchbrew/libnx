@@ -65,17 +65,13 @@ Result threadCreate(
     int prio, int cpuid)
 {
 
-    void* tls;
     const size_t tls_sz = (__tls_end-__tls_start+0xF) &~ 0xF;
-    void* reent;
     const size_t reent_sz = (sizeof(struct _reent)+0xF) &~ 0xF;
 
     bool owns_stack_mem;
     if (stack_mem == NULL) {
         // Allocate new memory, stack then reent then tls.
-        stack_mem = memalign(0x1000, ((stack_sz + reent_sz + tls_sz)+0xFFF) & ~0xFFF);
-        reent = (void*)((uintptr_t)stack_mem + stack_sz);
-        tls  = (void*)((uintptr_t)reent + reent_sz);
+        stack_mem = memalign(0x1000, ((stack_sz + reent_sz + tls_sz) + 0xFFF) & ~0xFFF);
 
         owns_stack_mem = true;
     } else {
@@ -84,15 +80,12 @@ Result threadCreate(
             return MAKERESULT(Module_Libnx, LibnxError_BadInput);
         }
 
-        tls = (void*)((uintptr_t)stack_mem + stack_sz - tls_sz);
-        reent = (void*)((uintptr_t)tls - reent_sz);
-        stack_sz -= tls_sz + reent_sz;
-
         // Ensure we don't go out of bounds.
-        if ((uintptr_t)reent <= (uintptr_t)stack_mem) {
+        if (stack_sz <= tls_sz + reent_sz) {
             return MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
         }
 
+        stack_sz -= tls_sz + reent_sz;
         owns_stack_mem = false;
     }
 
@@ -101,14 +94,16 @@ Result threadCreate(
     }
 
     // Stack size may be unaligned in either case.
-    const size_t aligned_stack_sz = (stack_sz+0xFFF) & ~0xFFF;
+    const size_t aligned_stack_sz = (stack_sz + tls_sz + reent_sz +0xFFF) & ~0xFFF;
     void* stack_mirror = virtmemReserveStack(aligned_stack_sz);
     Result rc = svcMapMemory(stack_mirror, stack_mem, aligned_stack_sz);
 
     if (R_SUCCEEDED(rc))
     {
-        uintptr_t stack_top = ((uintptr_t)stack_mirror) + stack_sz - sizeof(ThreadEntryArgs);
+        uintptr_t stack_top = (uintptr_t)stack_mirror + stack_sz - sizeof(ThreadEntryArgs);
         ThreadEntryArgs* args = (ThreadEntryArgs*) stack_top;
+        void *reent = (void*)((uintptr_t)stack_mirror + stack_sz);
+        void *tls = (void*)((uintptr_t)reent + reent_sz);
         Handle handle;
 
         rc = svcCreateThread(
