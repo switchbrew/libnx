@@ -170,7 +170,7 @@ static void __thread_entry(void* __arg)
 
 int __syscall_thread_create(struct __pthread_t **thread, void* (*func)(void*), void *arg, void *stack_addr, size_t stack_size)
 {
-    if (stack_addr || (stack_size & 0xFFF))
+    if (((uintptr_t)stack_addr & 0xFFF) || (stack_size & 0xFFF))
         return EINVAL;
     if (!stack_size)
         stack_size = 128*1024;
@@ -194,7 +194,7 @@ int __syscall_thread_create(struct __pthread_t **thread, void* (*func)(void*), v
     mutexInit(&info.mutex);
     condvarInit(&info.cond);
 
-    rc = threadCreate(&t->thr, __thread_entry, &info, stack_size, 0x3B, -2);
+    rc = threadCreate(&t->thr, __thread_entry, &info, stack_addr, stack_size, 0x3B, -2);
     if (R_FAILED(rc))
         goto _error1;
 

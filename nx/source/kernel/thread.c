@@ -61,73 +61,97 @@ static void _EntryWrap(ThreadEntryArgs* args) {
 }
 
 Result threadCreate(
-    Thread* t, ThreadFunc entry, void* arg, size_t stack_sz, int prio,
-    int cpuid)
+    Thread* t, ThreadFunc entry, void* arg, void* stack_mem, size_t stack_sz,
+    int prio, int cpuid)
 {
-    stack_sz = (stack_sz+0xFFF) &~ 0xFFF;
 
-    Result rc = 0;
-    size_t reent_sz = (sizeof(struct _reent)+0xF) &~ 0xF;
-    size_t tls_sz = (__tls_end-__tls_start+0xF) &~ 0xF;
-    void*  stack = memalign(0x1000, stack_sz + reent_sz + tls_sz);
+    const size_t tls_sz = (__tls_end-__tls_start+0xF) &~ 0xF;
+    const size_t reent_sz = (sizeof(struct _reent)+0xF) &~ 0xF;
 
-    if (stack == NULL) {
-        rc = MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
+    bool owns_stack_mem;
+    if (stack_mem == NULL) {
+        // Allocate new memory, stack then reent then tls.
+        stack_mem = memalign(0x1000, ((stack_sz + reent_sz + tls_sz) + 0xFFF) & ~0xFFF);
+
+        owns_stack_mem = true;
+    } else {
+        // Use provided memory for stack, reent, and tls.
+        if (((uintptr_t)stack_mem & 0xFFF) || (stack_sz & 0xFFF)) {
+            return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+        }
+
+        // Ensure we don't go out of bounds.
+        if (stack_sz <= tls_sz + reent_sz) {
+            return MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
+        }
+
+        stack_sz -= tls_sz + reent_sz;
+        owns_stack_mem = false;
     }
-    else {
-        void* stack_mirror = virtmemReserveStack(stack_sz);
-        rc = svcMapMemory(stack_mirror, stack, stack_sz);
+
+    if (stack_mem == NULL) {
+        return MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
+    }
+
+    // Stack size may be unaligned in either case.
+    const size_t aligned_stack_sz = (stack_sz + tls_sz + reent_sz +0xFFF) & ~0xFFF;
+    void* stack_mirror = virtmemReserveStack(aligned_stack_sz);
+    Result rc = svcMapMemory(stack_mirror, stack_mem, aligned_stack_sz);
+
+    if (R_SUCCEEDED(rc))
+    {
+        uintptr_t stack_top = (uintptr_t)stack_mirror + stack_sz - sizeof(ThreadEntryArgs);
+        ThreadEntryArgs* args = (ThreadEntryArgs*) stack_top;
+        void *reent = (void*)((uintptr_t)stack_mirror + stack_sz);
+        void *tls = (void*)((uintptr_t)reent + reent_sz);
+        Handle handle;
+
+        rc = svcCreateThread(
+            &handle, (ThreadFunc) &_EntryWrap, args, (void*)stack_top,
+            prio, cpuid);
 
         if (R_SUCCEEDED(rc))
         {
-            u64 stack_top = ((u64)stack_mirror) + stack_sz - sizeof(ThreadEntryArgs);
-            ThreadEntryArgs* args = (ThreadEntryArgs*) stack_top;
-            Handle handle;
+            t->handle = handle;
+            t->owns_stack_mem = owns_stack_mem;
+            t->stack_mem = stack_mem;
+            t->stack_mirror = stack_mirror;
+            t->stack_sz = stack_sz - sizeof(ThreadEntryArgs);
+            t->tls_array = NULL;
+            t->next = NULL;
+            t->prev_next = NULL;
 
-            rc = svcCreateThread(
-                &handle, (ThreadFunc) &_EntryWrap, args, (void*)stack_top,
-                prio, cpuid);
+            args->t = t;
+            args->entry = entry;
+            args->arg = arg;
+            args->reent = reent;
+            args->tls = tls;
 
-            if (R_SUCCEEDED(rc))
-            {
-                t->handle = handle;
-                t->stack_mem = stack;
-                t->stack_mirror = stack_mirror;
-                t->stack_sz = stack_sz;
-                t->tls_array = NULL;
-                t->next = NULL;
-                t->prev_next = NULL;
+            // Set up child thread's reent struct, inheriting standard file handles
+            _REENT_INIT_PTR(args->reent);
+            struct _reent* cur = getThreadVars()->reent;
+            args->reent->_stdin  = cur->_stdin;
+            args->reent->_stdout = cur->_stdout;
+            args->reent->_stderr = cur->_stderr;
 
-                args->t = t;
-                args->entry = entry;
-                args->arg = arg;
-                args->reent = (struct _reent*)((u8*)stack + stack_sz);
-                args->tls = (u8*)stack + stack_sz + reent_sz;
-
-                // Set up child thread's reent struct, inheriting standard file handles
-                _REENT_INIT_PTR(args->reent);
-                struct _reent* cur = getThreadVars()->reent;
-                args->reent->_stdin  = cur->_stdin;
-                args->reent->_stdout = cur->_stdout;
-                args->reent->_stderr = cur->_stderr;
-
-                // Set up child thread's TLS segment
-                size_t tls_load_sz = __tdata_lma_end - __tdata_lma;
-                size_t tls_bss_sz = tls_sz - tls_load_sz;
-                if (tls_load_sz)
-                    memcpy(args->tls, __tdata_lma, tls_load_sz);
-                if (tls_bss_sz)
-                    memset(args->tls+tls_load_sz, 0, tls_bss_sz);
-            }
-
-            if (R_FAILED(rc)) {
-                svcUnmapMemory(stack_mirror, stack, stack_sz);
-            }
+            // Set up child thread's TLS segment
+            size_t tls_load_sz = __tdata_lma_end - __tdata_lma;
+            size_t tls_bss_sz = tls_sz - tls_load_sz;
+            if (tls_load_sz)
+                memcpy(args->tls, __tdata_lma, tls_load_sz);
+            if (tls_bss_sz)
+                memset(args->tls+tls_load_sz, 0, tls_bss_sz);
         }
 
         if (R_FAILED(rc)) {
-            virtmemFreeStack(stack_mirror, stack_sz);
-            free(stack);
+            svcUnmapMemory(stack_mirror, stack_mem, aligned_stack_sz);
+        }
+    }
+
+    if (R_FAILED(rc)) {
+        virtmemFreeStack(stack_mirror, aligned_stack_sz);
+        if (owns_stack_mem) {
+            free(stack_mem);
         }
     }
 
@@ -177,10 +201,19 @@ Result threadClose(Thread* t) {
     if (t->tls_array)
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
-    rc = svcUnmapMemory(t->stack_mirror, t->stack_mem, t->stack_sz);
-    virtmemFreeStack(t->stack_mirror, t->stack_sz);
-    free(t->stack_mem);
-    svcCloseHandle(t->handle);
+    const size_t tls_sz = (__tls_end-__tls_start+0xF) &~ 0xF;
+    const size_t reent_sz = (sizeof(struct _reent)+0xF) &~ 0xF;
+    const size_t aligned_stack_sz = (t->stack_sz + sizeof(ThreadEntryArgs) + tls_sz + reent_sz + 0xFFF) & ~0xFFF;
+
+    rc = svcUnmapMemory(t->stack_mirror, t->stack_mem, aligned_stack_sz);
+
+    if (R_SUCCEEDED(rc)) {
+        virtmemFreeStack(t->stack_mirror, aligned_stack_sz);
+        if (t->owns_stack_mem) {
+            free(t->stack_mem);
+        }
+        svcCloseHandle(t->handle);
+    }
 
     return rc;
 }
