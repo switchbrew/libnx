@@ -72,8 +72,7 @@ Result threadCreate(
 
     if (stack_mem == NULL) {
         // Allocate new memory, stack then reent then tls.
-        stack_sz = (stack_sz+0xFFF) & ~0xFFF;
-        stack_mem = memalign(0x1000, stack_sz + reent_sz + tls_sz);
+        stack_mem = memalign(0x1000, ((stack_sz + reent_sz + tls_sz)+0xFFF) & ~0xFFF);
         reent = (void*)((uintptr_t)stack_mem + stack_sz);
         tls  = (void*)((uintptr_t)reent + reent_sz);
 
@@ -86,6 +85,7 @@ Result threadCreate(
 
         tls = (void*)((uintptr_t)stack_mem + stack_sz - tls_sz);
         reent = (void*)((uintptr_t)tls - reent_sz);
+        stack_sz -= tls_sz + reent_sz;
 
         // Ensure we don't go out of bounds.
         if ((uintptr_t)reent <= (uintptr_t)stack_mem) {
@@ -99,8 +99,10 @@ Result threadCreate(
         return MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
     }
 
-    void* stack_mirror = virtmemReserveStack(stack_sz);
-    Result rc = svcMapMemory(stack_mirror, stack_mem, stack_sz);
+    // Stack size may be unaligned in the
+    const size_t aligned_stack_sz = (stack_sz+0xFFF) & ~0xFFF;
+    void* stack_mirror = virtmemReserveStack(aligned_stack_sz);
+    Result rc = svcMapMemory(stack_mirror, stack_mem, aligned_stack_sz);
 
     if (R_SUCCEEDED(rc))
     {
