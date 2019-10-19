@@ -6,7 +6,7 @@
  */
 #pragma once
 #include "../types.h"
-#include "sm.h"
+#include "../sf/service.h"
 
 typedef enum {
     I2cDevice_DebugPad          = 0,
