@@ -1,134 +1,41 @@
-#include "types.h"
-#include "result.h"
-#include "arm/atomics.h"
-#include "kernel/ipc.h"
-#include "runtime/hosversion.h"
+#define NX_SERVICE_ASSUME_NON_DOMAIN
+#include "service_guard.h"
 #include "services/bpc.h"
-#include "services/sm.h"
+#include "runtime/hosversion.h"
 
 static Service g_bpcSrv;
-static u64 g_refCnt;
 
-Result bpcInitialize(void)
-{
-    Result rc = 0;
-    
-    atomicIncrement64(&g_refCnt);
+NX_GENERATE_SERVICE_GUARD(bpc);
 
-    if (serviceIsActive(&g_bpcSrv))
-        return 0;
-
-    rc = smGetService(&g_bpcSrv, hosversionAtLeast(2,0,0) ? "bpc" : "bpc:c");
-
-    return rc;
+Result _bpcInitialize(void) {
+    return smGetService(&g_bpcSrv, hosversionAtLeast(2,0,0) ? "bpc" : "bpc:c");
 }
 
-void bpcExit(void)
-{
-    if (atomicDecrement64(&g_refCnt) == 0)
-        serviceClose(&g_bpcSrv);
+void _bpcCleanup(void) {
+    serviceClose(&g_bpcSrv);
 }
 
 Service* bpcGetServiceSession(void) {
     return &g_bpcSrv;
 }
 
-Result bpcShutdownSystem(void)
-{
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_bpcSrv, &c, sizeof(*raw));
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 0;
-
-    Result rc = serviceIpcDispatch(&g_bpcSrv);
-
-    if(R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_bpcSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-        
-        rc = resp->result;
-    }
-
-    return rc;
+static Result _bpcCmdNoIO(Service *srv, u32 cmd_id) {
+    return serviceDispatch(srv, cmd_id);
 }
 
-Result bpcRebootSystem(void)
-{
-    IpcCommand c;
-    ipcInitialize(&c);
+Result bpcShutdownSystem(void) {
+    return _bpcCmdNoIO(&g_bpcSrv, 0);
+}
 
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_bpcSrv, &c, sizeof(*raw));
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 1;
-
-    Result rc = serviceIpcDispatch(&g_bpcSrv);
-
-    if(R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_bpcSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-        
-        rc = resp->result;
-    }
-
-    return rc;
+Result bpcRebootSystem(void) {
+    return _bpcCmdNoIO(&g_bpcSrv, 1);
 }
 
 Result bpcGetSleepButtonState(BpcSleepButtonState *out) {
-    IpcCommand c;
-    ipcInitialize(&c);
+    u8 tmp = 0;
+    Result rc = serviceDispatchOut(&g_bpcSrv, 6, tmp);
 
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_bpcSrv, &c, sizeof(*raw));
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 6;
-
-    Result rc = serviceIpcDispatch(&g_bpcSrv);
-
-    if(R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            u8 state;
-        } *resp;
-
-        serviceIpcParse(&g_bpcSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            *out = (BpcSleepButtonState)resp->state;
-        }
-    }
+    if (R_SUCCEEDED(rc) && out) *out = tmp;
 
     return rc;
 }
