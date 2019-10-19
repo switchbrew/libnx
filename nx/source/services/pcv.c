@@ -1,33 +1,18 @@
-#include "types.h"
-#include "result.h"
-#include "arm/atomics.h"
-#include "kernel/ipc.h"
-#include "runtime/hosversion.h"
+#define NX_SERVICE_ASSUME_NON_DOMAIN
+#include "service_guard.h"
 #include "services/pcv.h"
-#include "services/sm.h"
+#include "runtime/hosversion.h"
 
 static Service g_pcvSrv;
-static u64 g_refCnt;
 
-Result pcvInitialize(void) {
-    Result rc = 0;
-    
-    atomicIncrement64(&g_refCnt);
+NX_GENERATE_SERVICE_GUARD(pcv);
 
-    if (serviceIsActive(&g_pcvSrv))
-        return 0;
-
-    rc = smGetService(&g_pcvSrv, "pcv");
-
-    if (R_FAILED(rc)) pcvExit();
-
-    return rc;
+Result _pcvInitialize(void) {
+    return smGetService(&g_pcvSrv, "pcv");
 }
 
-void pcvExit(void) {
-    if (atomicDecrement64(&g_refCnt) == 0) {
-        serviceClose(&g_pcvSrv);
-    }
+void _pcvCleanup(void) {
+    serviceClose(&g_pcvSrv);
 }
 
 Service* pcvGetServiceSession(void) {
@@ -69,166 +54,43 @@ Result pcvGetModuleId(PcvModuleId *module_id, PcvModule module) {
 }
 
 Result pcvSetClockRate(PcvModule module, u32 hz) {
-    if(hosversionAtLeast(8,0,0)) {
+    if(hosversionAtLeast(8,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    }
 
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         u32 module;
         u32 hz;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_pcvSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 2;
-    raw->module = module;
-    raw->hz = hz;
-
-    Result rc = serviceIpcDispatch(&g_pcvSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_pcvSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    } in = { module, hz };
+    return serviceDispatchIn(&g_pcvSrv, 2, in);
 }
 
 Result pcvGetClockRate(PcvModule module, u32 *out_hz) {
-    if(hosversionAtLeast(8,0,0)) {
+    if(hosversionAtLeast(8,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    }
 
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u32 module;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_pcvSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 3;
-    raw->module = module;
-
-    Result rc = serviceIpcDispatch(&g_pcvSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            u32 hz;
-        } *resp;
-
-        serviceIpcParse(&g_pcvSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-        
-        if (R_SUCCEEDED(rc)) {
-            *out_hz = resp->hz;
-        }
-    }
-
-    return rc;
+    const u32 in = module;
+    return serviceDispatchInOut(&g_pcvSrv, 3, in, *out_hz);
 }
 
-Result pcvSetVoltageEnabled(bool state, u32 voltage) {
-    if(hosversionAtLeast(8,0,0)) {
+Result pcvSetVoltageEnabled(u32 power_domain, bool state) {
+    if(hosversionAtLeast(8,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    }
 
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         u8 state;
-        u32 voltage;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_pcvSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 8;
-    raw->state = (u8)state;
-    raw->voltage = voltage;
-
-    Result rc = serviceIpcDispatch(&g_pcvSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_pcvSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+        u32 power_domain;
+    } in = { state != 0, power_domain };
+    return serviceDispatchIn(&g_pcvSrv, 8, in);
 }
 
-Result pcvGetVoltageEnabled(bool *isEnabled, u32 voltage) {
-    if(hosversionAtLeast(8,0,0)) {
+Result pcvGetVoltageEnabled(bool *isEnabled, u32 power_domain) {
+    if(hosversionAtLeast(8,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    }
 
-    IpcCommand c;
-    ipcInitialize(&c);
+    u8 tmp = 0;
+    Result rc = serviceDispatchInOut(&g_pcvSrv, 9, power_domain, tmp);
 
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u32 voltage;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&g_pcvSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 9;
-    raw->voltage = voltage;
-
-    Result rc = serviceIpcDispatch(&g_pcvSrv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            u8 isEnabled;
-        } *resp;
-
-        serviceIpcParse(&g_pcvSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-        if(R_SUCCEEDED(rc) && isEnabled) {
-            *isEnabled = (bool)resp->isEnabled;
-        }
-    }
+    if (R_SUCCEEDED(rc) && isEnabled) *isEnabled = tmp & 1;
 
     return rc;
 }

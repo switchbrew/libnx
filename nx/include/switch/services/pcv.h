@@ -6,7 +6,7 @@
  */
 #pragma once
 #include "../types.h"
-#include "../services/sm.h"
+#include "../sf/service.h"
 
 typedef enum {
     PcvModule_CpuBus            = 0,
@@ -197,7 +197,11 @@ Service* pcvGetServiceSession(void);
 
 Result pcvGetModuleId(PcvModuleId *module_id, PcvModule module);
 
+/// Only available on [1.0.0-7.0.1].
 Result pcvGetClockRate(PcvModule module, u32 *out_hz);
+/// Only available on [1.0.0-7.0.1].
 Result pcvSetClockRate(PcvModule module, u32 hz);
-Result pcvSetVoltageEnabled(bool state, u32 voltage);
-Result pcvGetVoltageEnabled(bool *isEnabled, u32 voltage);
+/// Only available on [1.0.0-7.0.1].
+Result pcvSetVoltageEnabled(u32 power_domain, bool state);
+/// Only available on [1.0.0-7.0.1].
+Result pcvGetVoltageEnabled(bool *isEnabled, u32 power_domain);
