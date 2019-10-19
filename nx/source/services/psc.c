@@ -1,276 +1,102 @@
-/**
- * @file psc.h
- * @brief PSC service IPC wrapper.
- * @author SciresM
- * @copyright libnx Authors
- */
-#include "types.h"
-#include "result.h"
-#include "arm/atomics.h"
-#include "kernel/ipc.h"
-#include "kernel/event.h"
+#include "service_guard.h"
 #include "services/psc.h"
-#include "services/sm.h"
 #include "runtime/hosversion.h"
 
-static Service g_pscSrv;
-static u64 g_refCnt;
+static Service g_pscmSrv;
 
-static Result _pscPmModuleInitialize(PscPmModule *module, u16 module_id, const u16 *dependencies, size_t dependency_count, bool autoclear);
-static Result _pscPmModuleAcknowledge(PscPmModule *module);
-static Result _pscPmModuleAcknowledgeEx(PscPmModule *module, PscPmState state);
+NX_GENERATE_SERVICE_GUARD(pscm);
 
-Result pscInitialize(void) {
-    Result rc = 0;
-
-    atomicIncrement64(&g_refCnt);
-
-    if (serviceIsActive(&g_pscSrv))
-        return rc;
-
-    rc = smGetService(&g_pscSrv, "psc:m");
+Result _pscmInitialize(void) {
+    Result rc = smGetService(&g_pscmSrv, "psc:m");
 
     if (R_SUCCEEDED(rc)) {
-        rc = serviceConvertToDomain(&g_pscSrv);
+        rc = serviceConvertToDomain(&g_pscmSrv);
     }
-
-    if (R_FAILED(rc)) pscExit();
 
     return rc;
 }
 
-void pscExit(void) {
-    if (atomicDecrement64(&g_refCnt) == 0) {
-        serviceClose(&g_pscSrv);
-    }
+void _pscmCleanup(void) {
+    serviceClose(&g_pscmSrv);
 }
 
-Service* pscGetServiceSession(void) {
-    return &g_pscSrv;
+Service* pscmGetServiceSession(void) {
+    return &g_pscmSrv;
 }
 
-Result pscGetPmModule(PscPmModule *out, u16 module_id, const u16 *dependencies, size_t dependency_count, bool autoclear) {
-    IpcCommand c;
-    ipcInitialize(&c);
 
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
+NX_INLINE Result _pscPmModuleInitialize(PscPmModule *module, PscPmModuleId module_id, const u16 *dependencies, size_t dependency_count, bool autoclear);
 
-    raw = serviceIpcPrepareHeader(&g_pscSrv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 0;
-
-    Result rc = serviceIpcDispatch(&g_pscSrv);
+Result pscmGetPmModule(PscPmModule *out, PscPmModuleId module_id, const u16 *dependencies, size_t dependency_count, bool autoclear) {
+    serviceAssumeDomain(&g_pscmSrv);
+    Result rc = serviceDispatch(&g_pscmSrv, 0,
+        .out_num_objects = 1,
+        .out_objects = &out->srv,
+    );
 
     if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&g_pscSrv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            serviceCreateSubservice(&out->srv, &g_pscSrv, &r, 0);
-
-            rc = _pscPmModuleInitialize(out, module_id, dependencies, dependency_count, autoclear);
-            if (R_FAILED(rc)) {
-                serviceClose(&out->srv);
-            }
+        if (R_FAILED((rc = _pscPmModuleInitialize(out, module_id, dependencies, dependency_count, autoclear)))) {
+            pscPmModuleClose(out);
         }
     }
 
     return rc;
 }
 
-Result _pscPmModuleInitialize(PscPmModule *module, u16 module_id, const u16 *dependencies, size_t dependency_count, bool autoclear) {
-    IpcCommand c;
-    ipcInitialize(&c);
-    ipcAddSendBuffer(&c, dependencies, dependency_count * sizeof(u16), BufferType_Normal);
+Result _pscPmModuleInitialize(PscPmModule *module, PscPmModuleId module_id, const u16 *dependencies, size_t dependency_count, bool autoclear) {
+    _Static_assert(sizeof(module_id) == sizeof(u32), "PscPmModuleId size");
 
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u32 module_id;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&module->srv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 0;
-    raw->module_id = module_id;
-
-    Result rc = serviceIpcDispatch(&module->srv);
+    Handle evt_handle = INVALID_HANDLE;
+    serviceAssumeDomain(&module->srv);
+    Result rc = serviceDispatchIn(&module->srv, 0, module_id,
+        .buffer_attrs = { SfBufferAttr_In | SfBufferAttr_HipcMapAlias },
+        .buffers = { { dependencies,  dependency_count * sizeof(*dependencies) } },
+        .out_handle_attrs = { SfOutHandleAttr_HipcCopy },
+        .out_handles = &evt_handle,
+    );
 
     if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&module->srv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            eventLoadRemote(&module->event, r.Handles[0], autoclear);
-            module->module_id = module_id;
-        }
+        eventLoadRemote(&module->event, evt_handle, autoclear);
+        module->module_id = module_id;
     }
 
     return rc;
 }
 
 Result pscPmModuleGetRequest(PscPmModule *module, PscPmState *out_state, u32 *out_flags) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
     struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
+        u32 state;
+        u32 flags;
+    } out;
 
-    raw = serviceIpcPrepareHeader(&module->srv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 1;
-
-    Result rc = serviceIpcDispatch(&module->srv);
+    serviceAssumeDomain(&module->srv);
+    Result rc = serviceDispatchOut(&module->srv, 1, out);
 
     if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-            u32 state;
-            u32 flags;
-        } *resp;
-
-        serviceIpcParse(&module->srv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            *out_state = (PscPmState)resp->state;
-            *out_flags = resp->flags;
-        }
+        if (out_state) *out_state = (PscPmState)out.state;
+        if (out_flags) *out_flags = out.flags;
     }
 
     return rc;
 }
 
 Result pscPmModuleAcknowledge(PscPmModule *module, PscPmState state) {
+    serviceAssumeDomain(&module->srv);
+
     if (hosversionAtLeast(6,0,0)) {
-        return _pscPmModuleAcknowledgeEx(module, state);
+        _Static_assert(sizeof(state) == sizeof(u32), "PscPmState size");
+        return serviceDispatchIn(&module->srv, 4, state);
     } else {
-        return _pscPmModuleAcknowledge(module);
+        return serviceDispatch(&module->srv, 2);
     }
 }
 
 Result pscPmModuleFinalize(PscPmModule *module) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&module->srv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 3;
-
-    Result rc = serviceIpcDispatch(&module->srv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&module->srv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    serviceAssumeDomain(&module->srv);
+    return serviceDispatch(&module->srv, 3);
 }
 
-static Result _pscPmModuleAcknowledge(PscPmModule *module) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&module->srv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 2;
-
-    Result rc = serviceIpcDispatch(&module->srv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&module->srv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
-}
-
-static Result _pscPmModuleAcknowledgeEx(PscPmModule *module, PscPmState state) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u32 state;
-    } *raw;
-
-    raw = serviceIpcPrepareHeader(&module->srv, &c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 4;
-    raw->state = state;
-
-    Result rc = serviceIpcDispatch(&module->srv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        serviceIpcParse(&module->srv, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+void pscPmModuleClose(PscPmModule *module) {
+    serviceAssumeDomain(&module->srv);
+    serviceClose(&module->srv);
 }
