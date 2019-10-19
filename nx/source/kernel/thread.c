@@ -208,7 +208,7 @@ Result threadClose(Thread* t) {
 
     const size_t tls_sz = (__tls_end-__tls_start+0xF) &~ 0xF;
     const size_t reent_sz = (sizeof(struct _reent)+0xF) &~ 0xF;
-    const size_t aligned_stack_sz = (t->stack_sz + tls_sz + reent_sz + 0xFFF) & ~0xFFF;
+    const size_t aligned_stack_sz = (t->stack_sz + sizeof(ThreadEntryArgs) + tls_sz + reent_sz + 0xFFF) & ~0xFFF;
 
     rc = svcUnmapMemory(t->stack_mirror, t->stack_mem, aligned_stack_sz);
 
