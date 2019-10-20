@@ -102,7 +102,7 @@ typedef struct
     u32        childFile;
 } romfs_diriter;
 
-static devoptab_t romFS_devoptab =
+static const devoptab_t romFS_devoptab =
 {
     .structSize   = sizeof(romfs_fileobj),
     .open_r       = romfs_open,
@@ -201,101 +201,63 @@ static void romfs_mountclose(romfs_mount *mount)
     romfs_free(mount);
 }
 
-Result romfsMount(const char *name)
+Result romfsMountSelf(const char *name)
 {
-    romfs_mount *mount = romfs_alloc();
-    if(mount == NULL)
-        return 99;
+    // Check whether we are a NSO; if so then just mount the RomFS from the current process
+    if (envIsNso())
+        return romfsMountFromCurrentProcess(name);
 
-    if (!envIsNso())
-    {
-        // RomFS embedded in a NRO
+    // Otherwise, we are a homebrew NRO and we need to use our embedded RomFS
+    // Retrieve the filename of our NRO
+    const char* filename = __romfs_path;
+    if (__system_argc > 0 && __system_argv[0])
+        filename = __system_argv[0];
+    if (!filename)
+        return MAKERESULT(Module_Libnx, LibnxError_NotFound);
 
-        mount->fd_type = RomfsSource_FsFile;
+    // Retrieve IFileSystem object + fixed path for our NRO
+    FsFileSystem *tmpfs = NULL;
+    char* path_buf = __nx_dev_path_buf;
+    if(fsdevTranslatePath(filename, &tmpfs, path_buf)==-1)
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
-        FsFileSystem *sdfs = fsdevGetDefaultFileSystem();
-        if(sdfs==NULL)
-        {
-            romfs_free(mount);
-            return 1;
-        }
+    // Open the NRO file
+    FsFile nro_file;
+    Result rc = fsFsOpenFile(tmpfs, path_buf, FsOpenMode_Read, &nro_file);
+    if (R_FAILED(rc))
+        return rc;
 
-        const char* filename = __romfs_path;
-        if (__system_argc > 0 && __system_argv[0])
-            filename = __system_argv[0];
-        if (!filename)
-        {
-            romfs_free(mount);
-            return 1;
-        }
+    // Read and parse the header
+    NroHeader hdr;
+    u64 readbytes = 0;
+    rc = fsFileRead(&nro_file, sizeof(NroStart), &hdr, sizeof(hdr), FsReadOption_None, &readbytes);
+    if (R_FAILED(rc) || readbytes != sizeof(hdr)) goto _fail_io;
+    if (hdr.magic != NROHEADER_MAGIC) goto _fail_io;
 
-        if (strncmp(filename, "sdmc:/", 6) == 0)
-            filename += 5;
-        else if (strncmp(filename, "nxlink:/", 8) == 0)
-        {
-            strncpy(__nx_dev_path_buf, "/switch",  PATH_MAX);
-            strncat(__nx_dev_path_buf, filename+7, PATH_MAX);
-            __nx_dev_path_buf[PATH_MAX] = 0;
-            filename = __nx_dev_path_buf;
-        }
-        else
-        {
-            romfs_free(mount);
-            return 2;
-        }
+    // Read and parse the asset header
+    NroAssetHeader asset_header;
+    rc = fsFileRead(&nro_file, hdr.size, &asset_header, sizeof(asset_header), FsReadOption_None, &readbytes);
+    if (R_FAILED(rc) || readbytes != sizeof(asset_header)) goto _fail_io;
+    if (asset_header.magic != NROASSETHEADER_MAGIC
+        || asset_header.version > NROASSETHEADER_VERSION
+        || asset_header.romfs.offset == 0
+        || asset_header.romfs.size == 0)
+        goto _fail_io;
 
-        Result rc = fsFsOpenFile(sdfs, filename, FsOpenMode_Read, &mount->fd);
-        if (R_FAILED(rc))
-        {
-            romfs_free(mount);
-            return rc;
-        }
+    // Calculate the start offset of the embedded RomFS and mount it
+    u64 romfs_offset = hdr.size + asset_header.romfs.offset;
+    return romfsMountFromFile(nro_file, romfs_offset, name);
 
-        romfsInitMtime(mount);
-
-        NroHeader hdr;
-        NroAssetHeader asset_header;
-
-        if (!_romfs_read_chk(mount, sizeof(NroStart), &hdr, sizeof(hdr))) goto _fail0;
-        if (hdr.magic != NROHEADER_MAGIC) goto _fail0;
-        if (!_romfs_read_chk(mount, hdr.size, &asset_header, sizeof(asset_header))) goto _fail0;
-
-        if (asset_header.magic != NROASSETHEADER_MAGIC
-            || asset_header.version > NROASSETHEADER_VERSION
-            || asset_header.romfs.offset == 0
-            || asset_header.romfs.size == 0)
-        goto _fail0;
-
-        mount->offset = hdr.size + asset_header.romfs.offset;
-    }
-    else
-    {
-        // Regular RomFS
-
-        mount->fd_type = RomfsSource_FsStorage;
-
-        Result rc = fsOpenDataStorageByCurrentProcess(&mount->fd_storage);
-        if (R_FAILED(rc))
-        {
-            romfs_free(mount);
-            return rc;
-        }
-
-        romfsInitMtime(mount);
-    }
-
-    return romfsMountCommon(name, mount);
-
-_fail0:
-    romfs_mountclose(mount);
-    return 10;
+_fail_io:
+    fsFileClose(&nro_file);
+    return MAKERESULT(Module_Libnx, LibnxError_IoError);
 }
 
 Result romfsMountFromFile(FsFile file, u64 offset, const char *name)
 {
     romfs_mount *mount = romfs_alloc();
     if(mount == NULL)
-        return 99;
+        return MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
 
     mount->fd_type = RomfsSource_FsFile;
     mount->fd     = file;
@@ -308,7 +270,7 @@ Result romfsMountFromStorage(FsStorage storage, u64 offset, const char *name)
 {
     romfs_mount *mount = romfs_alloc();
     if(mount == NULL)
-        return 99;
+        return MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
 
     mount->fd_type = RomfsSource_FsStorage;
     mount->fd_storage = storage;
@@ -330,21 +292,17 @@ Result romfsMountFromCurrentProcess(const char *name) {
 Result romfsMountFromFsdev(const char *path, u64 offset, const char *name)
 {
     FsFileSystem *tmpfs = NULL;
-    char filepath[FS_MAX_PATH];
-
-    memset(filepath, 0, sizeof(filepath));
-
-    if(fsdevTranslatePath(path, &tmpfs, filepath)==-1)
+    if(fsdevTranslatePath(path, &tmpfs, __nx_dev_path_buf)==-1)
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
     romfs_mount *mount = romfs_alloc();
     if(mount == NULL)
-        return 99;
+        return MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
 
     mount->fd_type = RomfsSource_FsFile;
     mount->offset = offset;
 
-    Result rc = fsFsOpenFile(tmpfs, filepath, FsOpenMode_Read, &mount->fd);
+    Result rc = fsFsOpenFile(tmpfs, __nx_dev_path_buf, FsOpenMode_Read, &mount->fd);
     if (R_FAILED(rc))
     {
         romfs_free(mount);
@@ -369,45 +327,50 @@ Result romfsMountCommon(const char *name, romfs_mount *mount)
     memset(mount->name, 0, sizeof(mount->name));
     strncpy(mount->name, name, sizeof(mount->name)-1);
 
+    romfsInitMtime(mount);
+
     if (_romfs_read(mount, 0, &mount->header, sizeof(mount->header)) != sizeof(mount->header))
-        goto fail;
+        goto fail_io;
 
     mount->dirHashTable = (u32*)malloc(mount->header.dirHashTableSize);
     if (!mount->dirHashTable)
-        goto fail;
+        goto fail_oom;
     if (!_romfs_read_chk(mount, mount->header.dirHashTableOff, mount->dirHashTable, mount->header.dirHashTableSize))
-        goto fail;
+        goto fail_io;
 
     mount->dirTable = malloc(mount->header.dirTableSize);
     if (!mount->dirTable)
-        goto fail;
+        goto fail_oom;
     if (!_romfs_read_chk(mount, mount->header.dirTableOff, mount->dirTable, mount->header.dirTableSize))
-        goto fail;
+        goto fail_io;
 
     mount->fileHashTable = (u32*)malloc(mount->header.fileHashTableSize);
     if (!mount->fileHashTable)
-        goto fail;
+        goto fail_oom;
     if (!_romfs_read_chk(mount, mount->header.fileHashTableOff, mount->fileHashTable, mount->header.fileHashTableSize))
-        goto fail;
+        goto fail_io;
 
     mount->fileTable = malloc(mount->header.fileTableSize);
     if (!mount->fileTable)
-        goto fail;
+        goto fail_oom;
     if (!_romfs_read_chk(mount, mount->header.fileTableOff, mount->fileTable, mount->header.fileTableSize))
-        goto fail;
+        goto fail_io;
 
     mount->cwd = romFS_root(mount);
 
-    // add device if this is the first one
     if(AddDevice(&mount->device) < 0)
-        goto fail;
+        goto fail_oom;
 
     mount->setup = true;
     return 0;
 
-fail:
+fail_oom:
     romfs_mountclose(mount);
-    return 10;
+    return MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
+
+fail_io:
+    romfs_mountclose(mount);
+    return MAKERESULT(Module_Libnx, LibnxError_IoError);
 }
 
 static void romfsInitMtime(romfs_mount *mount)
@@ -422,7 +385,7 @@ Result romfsUnmount(const char *name)
 
     mount = romfsFindMount(name);
     if (mount == NULL)
-        return -1;
+        return MAKERESULT(Module_Libnx, LibnxError_NotFound);
 
     // Remove device
     memset(tmpname, 0, sizeof(tmpname));

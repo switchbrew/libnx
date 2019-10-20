@@ -17,6 +17,7 @@ void virtmemSetup(void);
 void newlibSetup(void);
 void argvSetup(void);
 void __libnx_init_time(void);
+void __libnx_init_cwd(void);
 
 extern u32 __nx_applet_type;
 
@@ -141,6 +142,7 @@ void __attribute__((weak)) __appInit(void)
         fatalSimple(MAKERESULT(Module_Libnx, LibnxError_InitFail_FS));
 
     fsdevMountSdmc();
+    __libnx_init_cwd();
 
     if (&__nx_win_init) __nx_win_init();
     if (&userAppInit) userAppInit();
