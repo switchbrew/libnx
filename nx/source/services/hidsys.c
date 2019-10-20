@@ -134,6 +134,17 @@ Result hidsysGetUniquePadIds(u64 *UniquePadIds, s32 count, s32 *total_entries) {
     return rc;
 }
 
+Result hidsysGetUniquePadSerialNumber(u64 UniquePadId, char *serial) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    char out[0x10]={0};
+    if (serial) memset(serial, 0, 0x11);
+    Result rc = serviceDispatchInOut(&g_hidsysSrv, 809, UniquePadId, out);
+    if (R_SUCCEEDED(rc) && serial) memcpy(serial, out, 0x10);
+    return rc;
+}
+
 Result hidsysSetNotificationLedPattern(const HidsysNotificationLedPattern *pattern, u64 UniquePadId) {
     if (hosversionBefore(7,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
@@ -157,15 +168,4 @@ Result hidsysSetNotificationLedPatternWithTimeout(const HidsysNotificationLedPat
     } in = { *pattern, UniquePadId, timeout };
 
     return serviceDispatchIn(&g_hidsysSrv, 831, in);
-}
-
-Result hidsysGetUniquePadSerialNumber(u64 UniquePadId, char *serial) {
-    if (hosversionBefore(5,0,0))
-        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-
-    char out[0x18]={0};
-    if (serial) memset(serial, 0, 0x19);
-    Result rc = serviceDispatchInOut(&g_hidsysSrv, 809, UniquePadId, out);
-    if (R_SUCCEEDED(rc) && serial) memcpy(serial, out, 0x18);
-    return rc;
 }
