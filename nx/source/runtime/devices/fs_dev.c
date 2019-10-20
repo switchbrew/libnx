@@ -14,6 +14,7 @@
 #include "services/fs.h"
 #include "services/time.h"
 
+#include "path_buf.h"
 
 /*! @internal
  *
@@ -109,7 +110,6 @@ static fsdev_fsdevice fsdev_fsdevices[32];
 /*! @endcond */
 
 static char     __cwd[PATH_MAX+1] = "/";
-static __thread char     __fixedpath[PATH_MAX+1];
 
 __attribute__((weak)) u32 __nx_fsdev_direntry_cache_size = 32;
 
@@ -202,17 +202,17 @@ fsdev_fixpath(struct _reent *r,
   } while(code != 0);
 
   if(path[0] == '/')
-    strncpy(__fixedpath, path, PATH_MAX);
+    strncpy(__nx_dev_path_buf, path, PATH_MAX);
   else
   {
-    strncpy(__fixedpath, __cwd, PATH_MAX);
-    __fixedpath[PATH_MAX] = '\0';
-    strncat(__fixedpath, path, PATH_MAX - strlen(__cwd));
+    strncpy(__nx_dev_path_buf, __cwd, PATH_MAX);
+    __nx_dev_path_buf[PATH_MAX] = '\0';
+    strncat(__nx_dev_path_buf, path, PATH_MAX - strlen(__cwd));
   }
 
-  if(__fixedpath[PATH_MAX] != 0)
+  if(__nx_dev_path_buf[PATH_MAX] != 0)
   {
-    __fixedpath[PATH_MAX] = 0;
+    __nx_dev_path_buf[PATH_MAX] = 0;
     r->_errno = ENAMETOOLONG;
     return NULL;
   }
@@ -236,7 +236,7 @@ fsdev_fixpath(struct _reent *r,
     }
   }
 
-  return __fixedpath;
+  return __nx_dev_path_buf;
 }
 
 static int
@@ -248,7 +248,7 @@ fsdev_getfspath(struct _reent *r,
   if(fsdev_fixpath(r, path, device) == NULL)
     return -1;
 
-  memcpy(outpath, __fixedpath,FS_MAX_PATH-1);
+  memcpy(outpath, __nx_dev_path_buf,FS_MAX_PATH-1);
   outpath[FS_MAX_PATH-1] = '\0';
 
   return 0;
@@ -462,15 +462,15 @@ Result fsdevMountSdmc(void)
       {
         if(FindDevice(__system_argv[0]) == dev)
         {
-          strncpy(__fixedpath,__system_argv[0],PATH_MAX);
-          if(__fixedpath[PATH_MAX] != 0)
+          strncpy(__nx_dev_path_buf,__system_argv[0],PATH_MAX);
+          if(__nx_dev_path_buf[PATH_MAX] != 0)
           {
-            __fixedpath[PATH_MAX] = 0;
+            __nx_dev_path_buf[PATH_MAX] = 0;
           }
           else
           {
             char *last_slash = NULL;
-            p = __fixedpath;
+            p = __nx_dev_path_buf;
             do
             {
               units = decode_utf8(&code, (const uint8_t*)p);
@@ -489,7 +489,7 @@ Result fsdevMountSdmc(void)
             if(last_slash != NULL)
             {
               last_slash[0] = 0;
-              chdir(__fixedpath);
+              chdir(__nx_dev_path_buf);
             }
           }
         }

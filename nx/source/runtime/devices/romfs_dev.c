@@ -15,6 +15,8 @@
 #include "runtime/env.h"
 #include "nro.h"
 
+#include "path_buf.h"
+
 typedef enum {
     RomfsSource_FsFile,
     RomfsSource_FsStorage,
@@ -39,8 +41,6 @@ typedef struct romfs_mount
 
 extern int __system_argc;
 extern char** __system_argv;
-
-static char __thread __component[PATH_MAX+1];
 
 #define romFS_root(m)   ((romfs_dir*)(m)->dirTable)
 #define romFS_dir(m,x)  ((romfs_dir*) ((u8*)(m)->dirTable  + (x)))
@@ -233,10 +233,10 @@ Result romfsMount(const char *name)
             filename += 5;
         else if (strncmp(filename, "nxlink:/", 8) == 0)
         {
-            strncpy(__component, "/switch",     PATH_MAX);
-            strncat(__component, filename+7, PATH_MAX);
-            __component[PATH_MAX] = 0;
-            filename = __component;
+            strncpy(__nx_dev_path_buf, "/switch",  PATH_MAX);
+            strncat(__nx_dev_path_buf, filename+7, PATH_MAX);
+            __nx_dev_path_buf[PATH_MAX] = 0;
+            filename = __nx_dev_path_buf;
         }
         else
         {
@@ -501,7 +501,7 @@ static int navigateToDir(romfs_mount *mount, romfs_dir** ppDir, const char** pPa
     while (**pPath)
     {
         char* slashPos = strchr(*pPath, '/');
-        char* component = __component;
+        char* component = __nx_dev_path_buf;
 
         if (slashPos)
         {
