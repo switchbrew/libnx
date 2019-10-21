@@ -173,7 +173,7 @@ static Result _capsuGetAlbumFileListAaeAruid(u32 cmd_id, void* entries, size_t e
     return rc;
 }
 
-static Result _capsuGetAlbumFileListAaeUidAruid(u32 cmd_id, void* entries, size_t entrysize, s32 count, u8 type, const CapsAlbumFileDateTime *start_datetime, const CapsAlbumFileDateTime *end_datetime, AccountUid *userID, s32 *total_entries) {
+static Result _capsuGetAlbumFileListAaeUidAruid(u32 cmd_id, void* entries, size_t entrysize, s32 count, u8 type, const CapsAlbumFileDateTime *start_datetime, const CapsAlbumFileDateTime *end_datetime, AccountUid userID, s32 *total_entries) {
     u64 AppletResourceUserId = 0;
     appletGetAppletResourceUserId(&AppletResourceUserId);
 
@@ -183,7 +183,7 @@ static Result _capsuGetAlbumFileListAaeUidAruid(u32 cmd_id, void* entries, size_
         CapsAlbumFileDateTime end_datetime;
         AccountUid userID;
         u64 AppletResourceUserId;
-    } in = { type, *start_datetime, *end_datetime, *userID, AppletResourceUserId };
+    } in = { type, *start_datetime, *end_datetime, userID, AppletResourceUserId };
 
     u64 total_out=0;
     Result rc = serviceDispatchInOut(&g_capsuSrv, cmd_id, in, total_out,
@@ -264,7 +264,7 @@ Result capsuGetAlbumFileListDeprecated1(CapsApplicationAlbumFileEntry *entries, 
     return _capsuGetAlbumFileListAaeAruid(140, entries, sizeof(CapsApplicationAlbumFileEntry), count, type, start_datetime ? start_datetime : &default_start, end_datetime ? end_datetime : &default_end, total_entries);
 }
 
-Result capsuGetAlbumFileListDeprecated2(CapsApplicationAlbumFileEntry *entries, s32 count, CapsContentType type, const CapsAlbumFileDateTime *start_datetime, const CapsAlbumFileDateTime *end_datetime, AccountUid *userID, s32 *total_entries) {
+Result capsuGetAlbumFileListDeprecated2(CapsApplicationAlbumFileEntry *entries, s32 count, CapsContentType type, const CapsAlbumFileDateTime *start_datetime, const CapsAlbumFileDateTime *end_datetime, AccountUid userID, s32 *total_entries) {
     if (hosversionBefore(6,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
@@ -284,7 +284,7 @@ Result capsuGetAlbumFileList3(CapsApplicationAlbumEntry *entries, s32 count, Cap
     return _capsuGetAlbumFileListAaeAruid(142, entries, sizeof(CapsApplicationAlbumEntry), count, type, start_datetime ? start_datetime : &default_start, end_datetime ? end_datetime : &default_end, total_entries);
 }
 
-Result capsuGetAlbumFileList4(CapsApplicationAlbumEntry *entries, s32 count, CapsContentType type, const CapsAlbumFileDateTime *start_datetime, const CapsAlbumFileDateTime *end_datetime, AccountUid *userID, s32 *total_entries) {
+Result capsuGetAlbumFileList4(CapsApplicationAlbumEntry *entries, s32 count, CapsContentType type, const CapsAlbumFileDateTime *start_datetime, const CapsAlbumFileDateTime *end_datetime, AccountUid userID, s32 *total_entries) {
     if (hosversionBefore(7,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 

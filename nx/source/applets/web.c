@@ -355,7 +355,7 @@ Result webShareCreate(WebCommonConfig* config, WebShareStartPage page) {
     _webArgInitialize(config, AppletId_loginShare, WebShimKind_Share);
 
     rc = webConfigSetLeftStickMode(config, WebLeftStickMode_Cursor);
-    if (R_SUCCEEDED(rc)) rc = webConfigSetUid(config, &uid);
+    if (R_SUCCEEDED(rc)) rc = webConfigSetUid(config, uid);
     if (R_SUCCEEDED(rc)) rc = webConfigSetDisplayUrlKind(config, true);
 
     if (R_SUCCEEDED(rc)) rc = _webConfigSetU8(config, WebArgType_Unknown14, 1);
@@ -377,7 +377,7 @@ Result webLobbyCreate(WebCommonConfig* config) {
     rc = webConfigSetLeftStickMode(config, WebLeftStickMode_Cursor);
     if (R_SUCCEEDED(rc) && config->version >= 0x30000) rc = webConfigSetPointer(config, false); // Added to user-process init with [3.0.0+].
 
-    if (R_SUCCEEDED(rc)) rc = webConfigSetUid(config, &uid);
+    if (R_SUCCEEDED(rc)) rc = webConfigSetUid(config, uid);
 
     if (R_SUCCEEDED(rc)) rc = _webConfigSetU8(config, WebArgType_Unknown14, 1);
     if (R_SUCCEEDED(rc)) rc = _webConfigSetU8(config, WebArgType_Unknown15, 1);
@@ -404,10 +404,10 @@ Result webConfigSetWhitelist(WebCommonConfig* config, const char* whitelist) {
     return _webConfigSetString(config, WebArgType_Whitelist, whitelist, 0x1000);
 }
 
-Result webConfigSetUid(WebCommonConfig* config, AccountUid *uid) {
+Result webConfigSetUid(WebCommonConfig* config, AccountUid uid) {
     WebShimKind shim = _webGetShimKind(config);
     if (shim != WebShimKind_Share && shim != WebShimKind_Web && shim != WebShimKind_Lobby) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-    return _webTLVSet(config, WebArgType_Uid, uid, sizeof(*uid));
+    return _webTLVSet(config, WebArgType_Uid, &uid, sizeof(uid));
 }
 
 static Result _webConfigSetAlbumEntryTLV(WebCommonConfig* config, WebArgType type, const CapsAlbumEntry *entry) {

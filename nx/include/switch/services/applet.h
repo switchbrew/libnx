@@ -1430,7 +1430,7 @@ Result appletQueryApplicationPlayStatistics(PdmApplicationPlayStatistics *stats,
  * @param[in] count Total entries in the input/output arrays.
  * @param[out] total_out Total output entries.
  */
-Result appletQueryApplicationPlayStatisticsByUid(AccountUid *uid, PdmApplicationPlayStatistics *stats, const u64 *titleIDs, s32 count, s32 *total_out);
+Result appletQueryApplicationPlayStatisticsByUid(AccountUid uid, PdmApplicationPlayStatistics *stats, const u64 *titleIDs, s32 count, s32 *total_out);
 
 /**
  * @brief Launches Application title {current_titleID}+programIndex. This will enter an infinite-sleep-loop on success.
@@ -2216,7 +2216,7 @@ Result appletInvalidateTransitionLayer(void);
  * @param[in] buffer Buffer containing the above storage data.
  * @param[in] size Size of the storage buffer.
  */
-Result appletRequestLaunchApplicationWithUserAndArgumentForDebug(u64 titleID, AccountUid *userIDs, size_t total_userIDs, bool flag, const void* buffer, size_t size);
+Result appletRequestLaunchApplicationWithUserAndArgumentForDebug(u64 titleID, const AccountUid *userIDs, size_t total_userIDs, bool flag, const void* buffer, size_t size);
 
 /**
  * @brief Gets the \ref AppletResourceUsageInfo.

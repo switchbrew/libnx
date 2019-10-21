@@ -186,7 +186,7 @@ Result pdmqryQueryPlayStatisticsByApplicationId(u64 titleID, PdmPlayStatistics *
  * @param[in] uid \ref AccountUid
  * @param[out] stats \ref PdmPlayStatistics
  */
-Result pdmqryQueryPlayStatisticsByApplicationIdAndUserAccountId(u64 titleID, AccountUid *uid, PdmPlayStatistics *stats);
+Result pdmqryQueryPlayStatisticsByApplicationIdAndUserAccountId(u64 titleID, AccountUid uid, PdmPlayStatistics *stats);
 
 /**
  * @brief Gets \ref PdmLastPlayTime for the specified titles.
@@ -232,7 +232,7 @@ Result pdmqryQueryAccountEvent(s32 entry_index, PdmAccountEvent *events, s32 cou
  * @param[in] count Max entries in the output array.
  * @param[out] total_out Total output entries.
  */
-Result pdmqryQueryAccountPlayEvent(s32 entry_index, AccountUid *uid, PdmAccountPlayEvent *events, s32 count, s32 *total_out);
+Result pdmqryQueryAccountPlayEvent(s32 entry_index, AccountUid uid, PdmAccountPlayEvent *events, s32 count, s32 *total_out);
 
 /**
  * @brief Gets range fields which can then be used with \ref pdmqryQueryAccountPlayEvent.
@@ -241,7 +241,7 @@ Result pdmqryQueryAccountPlayEvent(s32 entry_index, AccountUid *uid, PdmAccountP
  * @param[out] start_entry_index Start entry index.
  * @param[out] end_entry_index End entry index.
  */
-Result pdmqryGetAvailableAccountPlayEventRange(AccountUid *uid, s32 *total_entries, s32 *start_entry_index, s32 *end_entry_index);
+Result pdmqryGetAvailableAccountPlayEventRange(AccountUid uid, s32 *total_entries, s32 *start_entry_index, s32 *end_entry_index);
 
 /**
  * @brief Gets a list of titles played by the specified user.
@@ -251,10 +251,10 @@ Result pdmqryGetAvailableAccountPlayEventRange(AccountUid *uid, s32 *total_entri
  * @param[in] count Max entries in the output array.
  * @param[out] total_out Total output entries.
  */
-Result pdmqryQueryRecentlyPlayedApplication(AccountUid *uid, u64 *titleIDs, s32 count, s32 *total_out);
+Result pdmqryQueryRecentlyPlayedApplication(AccountUid uid, u64 *titleIDs, s32 count, s32 *total_out);
 
 /**
- * @brief Gets an Event which is signaled when logging a new \ref PdmPlayEvent which would be available via \ref pdmqryQueryAccountEvent, where PdmPlayEvent::eventData::account::type is 0. 
+ * @brief Gets an Event which is signaled when logging a new \ref PdmPlayEvent which would be available via \ref pdmqryQueryAccountEvent, where PdmPlayEvent::eventData::account::type is 0.
  * @note Only available with [6.0.0+].
  * @note The Event must be closed by the user once finished with it.
  * @param[out] out_event Output Event with autoclear=false.

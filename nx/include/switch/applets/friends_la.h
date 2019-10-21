@@ -36,7 +36,7 @@ typedef struct {
  * @brief Launches the applet with ::FriendsLaArgType_ShowFriendList, the specified input, and playStartupSound=false.
  * @param[in] userID \ref AccountUid
  */
-Result friendsLaShowFriendList(AccountUid *userID);
+Result friendsLaShowFriendList(AccountUid userID);
 
 /**
  * @brief Launches the applet with ::FriendsLaArgType_ShowUserDetailInfo, the specified input, and playStartupSound=false.
@@ -45,7 +45,7 @@ Result friendsLaShowFriendList(AccountUid *userID);
  * @param[in] first_inAppScreenName First \ref FriendsInAppScreenName.
  * @param[in] second_inAppScreenName Second \ref FriendsInAppScreenName.
  */
-Result friendsLaShowUserDetailInfo(AccountUid *userID, u64 networkServiceAccountId, const FriendsInAppScreenName *first_inAppScreenName, const FriendsInAppScreenName *second_inAppScreenName);
+Result friendsLaShowUserDetailInfo(AccountUid userID, u64 networkServiceAccountId, const FriendsInAppScreenName *first_inAppScreenName, const FriendsInAppScreenName *second_inAppScreenName);
 
 /**
  * @brief Launches the applet with ::FriendsLaArgType_StartSendingFriendRequest, the specified input, and playStartupSound=false. On success, this will load the output Result from the output storage.
@@ -54,41 +54,41 @@ Result friendsLaShowUserDetailInfo(AccountUid *userID, u64 networkServiceAccount
  * @param[in] first_inAppScreenName First \ref FriendsInAppScreenName.
  * @param[in] second_inAppScreenName Second \ref FriendsInAppScreenName.
  */
-Result friendsLaStartSendingFriendRequest(AccountUid *userID, u64 networkServiceAccountId, const FriendsInAppScreenName *first_inAppScreenName, const FriendsInAppScreenName *second_inAppScreenName);
+Result friendsLaStartSendingFriendRequest(AccountUid userID, u64 networkServiceAccountId, const FriendsInAppScreenName *first_inAppScreenName, const FriendsInAppScreenName *second_inAppScreenName);
 
 /**
  * @brief Launches the applet with ::FriendsLaArgType_ShowMethodsOfSendingFriendRequest, the specified input, and playStartupSound=false.
  * @param[in] userID \ref AccountUid
  */
-Result friendsLaShowMethodsOfSendingFriendRequest(AccountUid *userID);
+Result friendsLaShowMethodsOfSendingFriendRequest(AccountUid userID);
 
 /**
  * @brief Launches the applet with ::FriendsLaArgType_StartFacedFriendRequest, the specified input, and playStartupSound=false.
  * @param[in] userID \ref AccountUid
  */
-Result friendsLaStartFacedFriendRequest(AccountUid *userID);
+Result friendsLaStartFacedFriendRequest(AccountUid userID);
 
 /**
  * @brief Launches the applet with ::FriendsLaArgType_ShowReceivedFriendRequestList, the specified input, and playStartupSound=false.
  * @param[in] userID \ref AccountUid
  */
-Result friendsLaShowReceivedFriendRequestList(AccountUid *userID);
+Result friendsLaShowReceivedFriendRequestList(AccountUid userID);
 
 /**
  * @brief Launches the applet with ::FriendsLaArgType_ShowBlockedUserList, the specified input, and playStartupSound=false.
  * @param[in] userID \ref AccountUid
  */
-Result friendsLaShowBlockedUserList(AccountUid *userID);
+Result friendsLaShowBlockedUserList(AccountUid userID);
 
 /**
  * @brief Launches the applet with ::FriendsLaArgType_ShowMyProfile, the specified input, and playStartupSound=false.
  * @param[in] userID \ref AccountUid
  */
-Result friendsLaShowMyProfile(AccountUid *userID);
+Result friendsLaShowMyProfile(AccountUid userID);
 
 /**
  * @brief Same as \ref friendsLaShowMyProfile except with playStartupSound=true.
  * @param[in] userID \ref AccountUid
  */
-Result friendsLaShowMyProfileForHomeMenu(AccountUid *userID);
+Result friendsLaShowMyProfileForHomeMenu(AccountUid userID);
 

@@ -48,7 +48,7 @@ Result capsuGetAlbumFileListDeprecated1(CapsApplicationAlbumFileEntry *entries, 
  * @param[in] userID \ref AccountUid
  * @param[out] total_entries Total output entries.
  */
-Result capsuGetAlbumFileListDeprecated2(CapsApplicationAlbumFileEntry *entries, s32 count, CapsContentType type, const CapsAlbumFileDateTime *start_datetime, const CapsAlbumFileDateTime *end_datetime, AccountUid *userID, s32 *total_entries);
+Result capsuGetAlbumFileListDeprecated2(CapsApplicationAlbumFileEntry *entries, s32 count, CapsContentType type, const CapsAlbumFileDateTime *start_datetime, const CapsAlbumFileDateTime *end_datetime, AccountUid userID, s32 *total_entries);
 
 /**
  * @brief Gets a listing of \ref CapsApplicationAlbumEntry.
@@ -73,7 +73,7 @@ Result capsuGetAlbumFileList3(CapsApplicationAlbumEntry *entries, s32 count, Cap
  * @param[in] userID \ref AccountUid
  * @param[out] total_entries Total output entries.
  */
-Result capsuGetAlbumFileList4(CapsApplicationAlbumEntry *entries, s32 count, CapsContentType type, const CapsAlbumFileDateTime *start_datetime, const CapsAlbumFileDateTime *end_datetime, AccountUid *userID, s32 *total_entries);
+Result capsuGetAlbumFileList4(CapsApplicationAlbumEntry *entries, s32 count, CapsContentType type, const CapsAlbumFileDateTime *start_datetime, const CapsAlbumFileDateTime *end_datetime, AccountUid userID, s32 *total_entries);
 
 /**
  * @brief Deletes the specified AlbumFile.

@@ -31,7 +31,7 @@ NX_CONSTEXPR FsDirectoryEntry* fsdevDirGetEntries(fsdev_dir_t *dir)
 Result fsdevMountSdmc(void);
 
 /// Mounts the specified save data.
-Result fsdevMountSaveData(const char *name, u64 titleID, AccountUid *userID);
+Result fsdevMountSaveData(const char *name, u64 titleID, AccountUid userID);
 
 /// Mounts the specified system save data.
 Result fsdevMountSystemSaveData(const char *name, u64 saveID);

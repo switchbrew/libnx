@@ -443,7 +443,7 @@ Result fsdevMountSdmc(void)
   return rc;
 }
 
-Result fsdevMountSaveData(const char *name, u64 titleID, AccountUid *userID)
+Result fsdevMountSaveData(const char *name, u64 titleID, AccountUid userID)
 {
   FsFileSystem fs;
   Result rc = fsOpen_SaveData(&fs, titleID, userID);

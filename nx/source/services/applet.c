@@ -2168,14 +2168,14 @@ Result appletQueryApplicationPlayStatistics(PdmApplicationPlayStatistics *stats,
     );
 }
 
-Result appletQueryApplicationPlayStatisticsByUid(AccountUid *uid, PdmApplicationPlayStatistics *stats, const u64 *titleIDs, s32 count, s32 *total_out) {
+Result appletQueryApplicationPlayStatisticsByUid(AccountUid uid, PdmApplicationPlayStatistics *stats, const u64 *titleIDs, s32 count, s32 *total_out) {
     if (!serviceIsActive(&g_appletSrv) || !_appletIsApplication())
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     if (hosversionBefore(6,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     serviceAssumeDomain(&g_appletIFunctions);
-    return serviceDispatchInOut(&g_appletIFunctions, 111, *uid, *total_out,
+    return serviceDispatchInOut(&g_appletIFunctions, 111, uid, *total_out,
         .buffer_attrs = {
             SfBufferAttr_HipcMapAlias | SfBufferAttr_Out,
             SfBufferAttr_HipcMapAlias | SfBufferAttr_In,
@@ -2651,7 +2651,7 @@ IPC_MAKE_CMD_IMPL(Result appletOpenMainApplication(AppletApplication *a),       
 IPC_MAKE_CMD_IMPL(Result appletPerformSystemButtonPressing(AppletSystemButtonType type), &g_appletIDebugFunctions, 10, _appletCmdInU32,          type)
 IPC_MAKE_CMD_IMPL(Result appletInvalidateTransitionLayer(void),                          &g_appletIDebugFunctions, 20, _appletCmdNoIO)
 
-Result appletRequestLaunchApplicationWithUserAndArgumentForDebug(u64 titleID, AccountUid *userIDs, size_t total_userIDs, bool flag, const void* buffer, size_t size) {
+Result appletRequestLaunchApplicationWithUserAndArgumentForDebug(u64 titleID, const AccountUid *userIDs, size_t total_userIDs, bool flag, const void* buffer, size_t size) {
     if (hosversionBefore(6,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 

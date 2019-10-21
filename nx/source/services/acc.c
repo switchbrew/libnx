@@ -115,8 +115,8 @@ Result accountGetLastOpenedUser(AccountUid *userID) {
     return serviceDispatchOut(&g_accSrv, 4, *userID);
 }
 
-Result accountGetProfile(AccountProfile* out, const AccountUid *userID) {
-    return serviceDispatchIn(&g_accSrv, 5, *userID,
+Result accountGetProfile(AccountProfile* out, AccountUid userID) {
+    return serviceDispatchIn(&g_accSrv, 5, userID,
         .out_num_objects = 1,
         .out_objects = &out->s,
     );

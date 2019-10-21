@@ -319,14 +319,14 @@ Result fsGetGlobalAccessLogMode(u32* out_mode);
 // todo: Rest of commands here
 
 // Wrapper(s) for fsCreateSaveDataFileSystemBySystemSaveDataId.
-Result fsCreate_SystemSaveDataWithOwner(FsSaveDataSpaceId saveDataSpaceId, u64 saveID, AccountUid *userID, u64 ownerId, u64 size, u64 journalSize, u32 flags);
+Result fsCreate_SystemSaveDataWithOwner(FsSaveDataSpaceId saveDataSpaceId, u64 saveID, AccountUid userID, u64 ownerId, u64 size, u64 journalSize, u32 flags);
 Result fsCreate_SystemSaveData(FsSaveDataSpaceId saveDataSpaceId, u64 saveID, u64 size, u64 journalSize, u32 flags);
 
 /// FsFileSystem can be mounted with fs_dev for use with stdio, see fs_dev.h.
 
 /// Wrapper(s) for fsOpenSaveDataFileSystem.
 /// See FsSave for titleID and userID.
-Result fsOpen_SaveData(FsFileSystem* out, u64 titleID, AccountUid *userID);
+Result fsOpen_SaveData(FsFileSystem* out, u64 titleID, AccountUid userID);
 
 /// Wrapper for fsOpenSaveDataFileSystemBySystemSaveDataId.
 /// WARNING: You can brick when writing to SystemSaveData, if the data is corrupted etc.

@@ -30,7 +30,7 @@ typedef struct {
 /// UserData
 typedef struct {
     u32 unk_x0;                ///< Unknown.
-    u32 iconID;                ///< Icon ID. 0 = Mii, the rest are character icon IDs. 
+    u32 iconID;                ///< Icon ID. 0 = Mii, the rest are character icon IDs.
     u8  iconBackgroundColorID; ///< Profile icon background color ID
     u8  unk_x9[0x7];           ///< Unknown.
     u8  miiID[0x10];           ///< Some ID related to the Mii? All zeros when a character icon is used.
@@ -74,7 +74,7 @@ Result accountListAllUsers(AccountUid* userIDs, s32 max_userIDs, s32 *actual_tot
 Result accountGetLastOpenedUser(AccountUid *userID);
 
 /// Get an AccountProfile for the specified userID.
-Result accountGetProfile(AccountProfile* out, const AccountUid *userID);
+Result accountGetProfile(AccountProfile* out, AccountUid userID);
 
 /// Close the AccountProfile.
 void accountProfileClose(AccountProfile* profile);

@@ -50,11 +50,11 @@ Result pdmqryQueryPlayStatisticsByApplicationId(u64 titleID, PdmPlayStatistics *
     return serviceDispatchInOut(&g_pdmqrySrv, 4, titleID, *stats);
 }
 
-Result pdmqryQueryPlayStatisticsByApplicationIdAndUserAccountId(u64 titleID, AccountUid *uid, PdmPlayStatistics *stats) {
+Result pdmqryQueryPlayStatisticsByApplicationIdAndUserAccountId(u64 titleID, AccountUid uid, PdmPlayStatistics *stats) {
     const struct {
         u64 titleID;
         AccountUid uid;
-    } in = { titleID, *uid };
+    } in = { titleID, uid };
 
     return serviceDispatchInOut(&g_pdmqrySrv, 5, in, *stats);
 }
@@ -96,14 +96,14 @@ Result pdmqryQueryAccountEvent(s32 entry_index, PdmAccountEvent *events, s32 cou
     return _pdmqryQueryEvent(entry_index, events, sizeof(PdmAccountEvent), count, total_out, 10);
 }
 
-Result pdmqryQueryAccountPlayEvent(s32 entry_index, AccountUid *uid, PdmAccountPlayEvent *events, s32 count, s32 *total_out) {
+Result pdmqryQueryAccountPlayEvent(s32 entry_index, AccountUid uid, PdmAccountPlayEvent *events, s32 count, s32 *total_out) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     const struct {
         s32 entry_index;
         AccountUid uid;
-    } in = { entry_index, *uid };
+    } in = { entry_index, uid };
 
     return serviceDispatchInOut(&g_pdmqrySrv, 11, in, *total_out,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
@@ -111,7 +111,7 @@ Result pdmqryQueryAccountPlayEvent(s32 entry_index, AccountUid *uid, PdmAccountP
     );
 }
 
-Result pdmqryGetAvailableAccountPlayEventRange(AccountUid *uid, s32 *total_entries, s32 *start_entry_index, s32 *end_entry_index) {
+Result pdmqryGetAvailableAccountPlayEventRange(AccountUid uid, s32 *total_entries, s32 *start_entry_index, s32 *end_entry_index) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
@@ -121,7 +121,7 @@ Result pdmqryGetAvailableAccountPlayEventRange(AccountUid *uid, s32 *total_entri
         s32 end_entry_index;
     } out;
 
-    Result rc = serviceDispatchInOut(&g_pdmqrySrv, 12, *uid, out);
+    Result rc = serviceDispatchInOut(&g_pdmqrySrv, 12, uid, out);
     if (R_SUCCEEDED(rc)) {
         if (total_entries) *total_entries = out.total_entries;
         if (start_entry_index) *start_entry_index = out.start_entry_index;
@@ -130,11 +130,11 @@ Result pdmqryGetAvailableAccountPlayEventRange(AccountUid *uid, s32 *total_entri
     return rc;
 }
 
-Result pdmqryQueryRecentlyPlayedApplication(AccountUid *uid, u64 *titleIDs, s32 count, s32 *total_out) {
+Result pdmqryQueryRecentlyPlayedApplication(AccountUid uid, u64 *titleIDs, s32 count, s32 *total_out) {
     if (hosversionBefore(6,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return serviceDispatchInOut(&g_pdmqrySrv, 14, *uid, *total_out,
+    return serviceDispatchInOut(&g_pdmqrySrv, 14, uid, *total_out,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
         .buffers = { { titleIDs, count*sizeof(u64) } },
     );

@@ -347,7 +347,7 @@ Result webConfigSetWhitelist(WebCommonConfig* config, const char* whitelist);
  * @param config WebCommonConfig object.
  * @param uid \ref AccountUid
  */
-Result webConfigSetUid(WebCommonConfig* config, AccountUid *uid);
+Result webConfigSetUid(WebCommonConfig* config, AccountUid uid);
 
 /**
  * @brief Sets the Share CapsAlbumEntry.
