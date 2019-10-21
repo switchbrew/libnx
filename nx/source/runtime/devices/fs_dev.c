@@ -443,6 +443,32 @@ Result fsdevMountSdmc(void)
   return rc;
 }
 
+Result fsdevMountSaveData(const char *name, u64 titleID, AccountUid *userID)
+{
+  FsFileSystem fs;
+  Result rc = fsOpen_SaveData(&fs, titleID, userID);
+  if(R_SUCCEEDED(rc))
+  {
+    int ret = fsdevMountDevice(name, fs);
+    if(ret==-1)
+      rc = MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
+  }
+  return rc;
+}
+
+Result fsdevMountSystemSaveData(const char *name, u64 saveID)
+{
+  FsFileSystem fs;
+  Result rc = fsOpen_SystemSaveData(&fs, saveID);
+  if(R_SUCCEEDED(rc))
+  {
+    int ret = fsdevMountDevice(name, fs);
+    if(ret==-1)
+      rc = MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
+  }
+  return rc;
+}
+
 void __libnx_init_cwd(void)
 {
   if(envIsNso() || __system_argc==0 || __system_argv[0] == NULL)

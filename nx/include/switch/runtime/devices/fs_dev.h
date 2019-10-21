@@ -30,6 +30,12 @@ NX_CONSTEXPR FsDirectoryEntry* fsdevDirGetEntries(fsdev_dir_t *dir)
 /// Initializes and mounts the sdmc device if accessible.
 Result fsdevMountSdmc(void);
 
+/// Mounts the specified save data.
+Result fsdevMountSaveData(const char *name, u64 titleID, AccountUid *userID);
+
+/// Mounts the specified system save data.
+Result fsdevMountSystemSaveData(const char *name, u64 saveID);
+
 /// Mounts the input fs with the specified device name. fsdev will handle closing the fs when required, including when fsdevMountDevice() fails.
 /// Returns -1 when any errors occur.
 int fsdevMountDevice(const char *name, FsFileSystem fs);
