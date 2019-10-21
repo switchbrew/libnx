@@ -432,7 +432,7 @@ Result fsdevDeleteDirectoryRecursively(const char *path) {
 Result fsdevMountSdmc(void)
 {
   FsFileSystem fs;
-  Result rc = fsMountSdcard(&fs);
+  Result rc = fsOpenSdCardFileSystem(&fs);
   if(R_SUCCEEDED(rc))
   {
     int ret = fsdevMountDevice("sdmc", fs);

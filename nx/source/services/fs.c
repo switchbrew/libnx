@@ -193,6 +193,9 @@ Result fsCreateSaveDataFileSystemBySystemSaveDataId(const FsSave* save, const Fs
 }
 
 Result fsDeleteSaveDataFileSystemBySaveDataSpaceId(FsSaveDataSpaceId saveDataSpaceId, u64 saveID) {
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     const struct {
         u8 saveDataSpaceId;
         u64 saveID;
@@ -201,18 +204,18 @@ Result fsDeleteSaveDataFileSystemBySaveDataSpaceId(FsSaveDataSpaceId saveDataSpa
     return _fsObjectDispatchIn(&g_fsSrv, 25, in);
 }
 
-Result fsMountSdcard(FsFileSystem* out) {
+Result fsOpenSdCardFileSystem(FsFileSystem* out) {
     return _fsObjectDispatch(&g_fsSrv, 18,
         .out_num_objects = 1,
         .out_objects = &out->s,
     );
 }
 
-Result fsMountSaveData(FsFileSystem* out, u8 inval, const FsSave *save) {
+Result fsOpenSaveDataFileSystem(FsFileSystem* out, FsSaveDataSpaceId saveDataSpaceId, const FsSave *save) {
     const struct {
-        u8 inval;
+        u8 saveDataSpaceId;
         FsSave save;
-    } in = { inval, *save };
+    } in = { (u8)saveDataSpaceId, *save };
 
     return _fsObjectDispatchIn(&g_fsSrv, 51, in,
         .out_num_objects = 1,
@@ -220,11 +223,11 @@ Result fsMountSaveData(FsFileSystem* out, u8 inval, const FsSave *save) {
     );
 }
 
-Result fsMountSystemSaveData(FsFileSystem* out, u8 inval, const FsSave *save) {
+Result fsOpenSaveDataFileSystemBySystemSaveDataId(FsFileSystem* out, FsSaveDataSpaceId saveDataSpaceId, const FsSave *save) {
     const struct {
-        u8 inval;
+        u8 saveDataSpaceId;
         FsSave save;
-    } in = { inval, *save };
+    } in = { (u8)saveDataSpaceId, *save };
 
     return _fsObjectDispatchIn(&g_fsSrv, 52, in,
         .out_num_objects = 1,
@@ -232,14 +235,14 @@ Result fsMountSystemSaveData(FsFileSystem* out, u8 inval, const FsSave *save) {
     );
 }
 
-static Result _fsOpenSaveDataInfoReader(FsSaveDataIterator* out) {
+static Result _fsOpenSaveDataInfoReader(FsSaveDataInfoReader* out) {
     return _fsObjectDispatch(&g_fsSrv, 60,
         .out_num_objects = 1,
         .out_objects = &out->s,
     );
 }
 
-static Result _fsOpenSaveDataInfoReaderBySaveDataSpaceId(FsSaveDataIterator* out, FsSaveDataSpaceId saveDataSpaceId) {
+static Result _fsOpenSaveDataInfoReaderBySaveDataSpaceId(FsSaveDataInfoReader* out, FsSaveDataSpaceId saveDataSpaceId) {
     u8 in = (u8)saveDataSpaceId;
     return _fsObjectDispatchIn(&g_fsSrv, 61, in,
         .out_num_objects = 1,
@@ -248,7 +251,7 @@ static Result _fsOpenSaveDataInfoReaderBySaveDataSpaceId(FsSaveDataIterator* out
 
 }
 
-Result fsOpenSaveDataIterator(FsSaveDataIterator* out, FsSaveDataSpaceId saveDataSpaceId) {
+Result fsOpenSaveDataInfoReader(FsSaveDataInfoReader* out, FsSaveDataSpaceId saveDataSpaceId) {
     if (saveDataSpaceId == FsSaveDataSpaceId_All) {
         return _fsOpenSaveDataInfoReader(out);
     } else {
@@ -452,8 +455,8 @@ Result fsCreate_SystemSaveData(FsSaveDataSpaceId saveDataSpaceId, u64 saveID, u6
     return fsCreate_SystemSaveDataWithOwner(saveDataSpaceId, saveID, 0, 0, size, journalSize, flags);
 }
 
-// Wrapper(s) for fsMountSaveData.
-Result fsMount_SaveData(FsFileSystem* out, u64 titleID, AccountUid *userID) {
+// Wrapper(s) for fsOpenSaveDataFileSystem.
+Result fsOpen_SaveData(FsFileSystem* out, u64 titleID, AccountUid *userID) {
     FsSave save;
 
     memset(&save, 0, sizeof(save));
@@ -461,17 +464,17 @@ Result fsMount_SaveData(FsFileSystem* out, u64 titleID, AccountUid *userID) {
     save.userID = *userID;
     save.saveDataType = FsSaveDataType_SaveData;
 
-    return fsMountSaveData(out, FsSaveDataSpaceId_NandUser, &save);
+    return fsOpenSaveDataFileSystem(out, FsSaveDataSpaceId_NandUser, &save);
 }
 
-Result fsMount_SystemSaveData(FsFileSystem* out, u64 saveID) {
+Result fsOpen_SystemSaveData(FsFileSystem* out, u64 saveID) {
     FsSave save;
 
     memset(&save, 0, sizeof(save));
     save.saveID = saveID;
     save.saveDataType = FsSaveDataType_SystemSaveData;
 
-    return fsMountSystemSaveData(out, FsSaveDataSpaceId_NandSystem, &save);
+    return fsOpenSaveDataFileSystemBySystemSaveDataId(out, FsSaveDataSpaceId_NandSystem, &save);
 }
 
 Result fsOpenFileSystem(FsFileSystem* out, FsFileSystemType fsType, const char* contentPath) {
@@ -512,9 +515,8 @@ Result fsOpenFileSystemWithId(FsFileSystem* out, u64 titleId, FsFileSystemType f
 }
 
 Result fsOpenFileSystemWithPatch(FsFileSystem* out, u64 titleId, FsFileSystemType fsType) {
-    if (hosversionBefore(2,0,0)) {
+    if (hosversionBefore(2,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    }
 
     const struct {
         FsFileSystemType fsType;
@@ -719,9 +721,8 @@ Result fsFileGetSize(FsFile* f, u64* out) {
 }
 
 Result fsFileOperateRange(FsFile* f, FsOperationId op_id, u64 off, u64 len, FsRangeInfo* out) {
-    if (hosversionBefore(4,0,0)) {
+    if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    }
 
     const struct {
         u32 op_id;
@@ -793,9 +794,8 @@ Result fsStorageGetSize(FsStorage* s, u64* out) {
 }
 
 Result fsStorageOperateRange(FsStorage* s, FsOperationId op_id, u64 off, u64 len, FsRangeInfo* out) {
-    if (hosversionBefore(4,0,0)) {
+    if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    }
 
     const struct {
         u32 op_id;
@@ -814,14 +814,15 @@ void fsStorageClose(FsStorage* s) {
 // ISaveDataInfoReader
 //-----------------------------------------------------------------------------
 
-Result fsSaveDataIteratorRead(FsSaveDataIterator *s, FsSaveDataInfo* buf, size_t max_entries, u64* total_entries) {
+// Actually called ReadSaveDataInfo
+Result fsSaveDataInfoReaderRead(FsSaveDataInfoReader *s, FsSaveDataInfo* buf, size_t max_entries, u64* total_entries) {
     return _fsObjectDispatchOut(&s->s, 0, *total_entries,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
         .buffers = { { buf, sizeof(FsSaveDataInfo)*max_entries } },
     );
 }
 
-void fsSaveDataIteratorClose(FsSaveDataIterator* s) {
+void fsSaveDataInfoReaderClose(FsSaveDataInfoReader* s) {
     _fsObjectClose(&s->s);
 }
 
