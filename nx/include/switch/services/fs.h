@@ -330,7 +330,7 @@ Result fsOpen_SaveData(FsFileSystem* out, u64 titleID, AccountUid userID);
 
 /// Wrapper for fsOpenSaveDataFileSystemBySystemSaveDataId.
 /// WARNING: You can brick when writing to SystemSaveData, if the data is corrupted etc.
-Result fsOpen_SystemSaveData(FsFileSystem* out, u64 saveID);
+Result fsOpen_SystemSaveData(FsFileSystem* out, FsSaveDataSpaceId saveDataSpaceId, u64 saveID, AccountUid userID);
 
 typedef enum
 {

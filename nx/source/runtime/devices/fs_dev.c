@@ -456,10 +456,10 @@ Result fsdevMountSaveData(const char *name, u64 titleID, AccountUid userID)
   return rc;
 }
 
-Result fsdevMountSystemSaveData(const char *name, u64 saveID)
+Result fsdevMountSystemSaveData(const char *name, FsSaveDataSpaceId saveDataSpaceId, u64 saveID, AccountUid userID)
 {
   FsFileSystem fs;
-  Result rc = fsOpen_SystemSaveData(&fs, saveID);
+  Result rc = fsOpen_SystemSaveData(&fs, saveDataSpaceId, saveID, userID);
   if(R_SUCCEEDED(rc))
   {
     int ret = fsdevMountDevice(name, fs);

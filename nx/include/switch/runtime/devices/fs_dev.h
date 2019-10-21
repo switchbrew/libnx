@@ -34,7 +34,7 @@ Result fsdevMountSdmc(void);
 Result fsdevMountSaveData(const char *name, u64 titleID, AccountUid userID);
 
 /// Mounts the specified system save data.
-Result fsdevMountSystemSaveData(const char *name, u64 saveID);
+Result fsdevMountSystemSaveData(const char *name, FsSaveDataSpaceId saveDataSpaceId, u64 saveID, AccountUid userID);
 
 /// Mounts the input fs with the specified device name. fsdev will handle closing the fs when required, including when fsdevMountDevice() fails.
 /// Returns -1 when any errors occur.

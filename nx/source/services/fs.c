@@ -467,14 +467,15 @@ Result fsOpen_SaveData(FsFileSystem* out, u64 titleID, AccountUid userID) {
     return fsOpenSaveDataFileSystem(out, FsSaveDataSpaceId_NandUser, &save);
 }
 
-Result fsOpen_SystemSaveData(FsFileSystem* out, u64 saveID) {
+Result fsOpen_SystemSaveData(FsFileSystem* out, FsSaveDataSpaceId saveDataSpaceId, u64 saveID, AccountUid userID) {
     FsSave save;
 
     memset(&save, 0, sizeof(save));
+    save.userID = userID;
     save.saveID = saveID;
     save.saveDataType = FsSaveDataType_SystemSaveData;
 
-    return fsOpenSaveDataFileSystemBySystemSaveDataId(out, FsSaveDataSpaceId_NandSystem, &save);
+    return fsOpenSaveDataFileSystemBySystemSaveDataId(out, saveDataSpaceId, &save);
 }
 
 Result fsOpenFileSystem(FsFileSystem* out, FsFileSystemType fsType, const char* contentPath) {
