@@ -97,6 +97,55 @@ static inline Result serviceIpcParse(Service* s, IpcParsedCommand* r, size_t siz
 
 #pragma GCC diagnostic pop
 
+/// Structure representing a service name (null terminated, remaining characters set to zero).
+typedef struct SmServiceName {
+    char name[8];
+} SmServiceName;
+
+/// Converts a service name into a 64-bit integer.
+NX_CONSTEXPR u64 smServiceNameToU64(SmServiceName name)
+{
+    u64 ret = 0;
+    __builtin_memcpy(&ret, &name, sizeof(u64));
+    return ret;
+}
+
+/// Converts a 64-bit integer into a service name.
+NX_CONSTEXPR SmServiceName smServiceNameFromU64(u64 name)
+{
+    SmServiceName ret = {0};
+    __builtin_memcpy(&ret, &name, sizeof(SmServiceName));
+    return ret;
+}
+
+/**
+ * @brief Checks whether two service names are equal.
+ * @param[in] a First name.
+ * @param[in] b Second name.
+ * @return Comparison result.
+ */
+NX_CONSTEXPR bool smServiceNamesAreEqual(SmServiceName a, SmServiceName b)
+{
+    return smServiceNameToU64(a) == smServiceNameToU64(b);
+}
+
+/**
+ * @brief Encodes a service name string as a \ref SmServiceName structure.
+ * @param[in] name Name of the service.
+ * @return Encoded name.
+ */
+NX_CONSTEXPR SmServiceName smEncodeName(const char* name)
+{
+    SmServiceName name_encoded = {};
+    unsigned len = __builtin_strlen(name);
+#define __COPY_CHAR(_n) \
+    if (len > _n) name_encoded.name[_n] = name[_n]
+    __COPY_CHAR(0); __COPY_CHAR(1); __COPY_CHAR(2); __COPY_CHAR(3);
+    __COPY_CHAR(4); __COPY_CHAR(5); __COPY_CHAR(6); __COPY_CHAR(7);
+#undef __COPY_CHAR
+    return name_encoded;
+}
+
 /**
  * @brief Initializes SM.
  * @return Result code.
@@ -112,12 +161,12 @@ Result smInitialize(void);
 void   smExit(void);
 
 /**
- * @brief Requests a service from SM.
+ * @brief Requests a service from SM, allowing overrides.
  * @param[out] service_out Service structure which will be filled in.
  * @param[in] name Name of the service to request.
  * @return Result code.
  */
-Result smGetService(Service* service_out, const char* name);
+Result smGetServiceWrapper(Service* service_out, SmServiceName name);
 
 /**
  * @brief Requests a service from SM, as an IPC session handle directly
@@ -125,14 +174,25 @@ Result smGetService(Service* service_out, const char* name);
  * @param[in] name Name of the service to request.
  * @return Result code.
  */
-Result smGetServiceOriginal(Handle* handle_out, u64 name);
+Result smGetServiceOriginal(Handle* handle_out, SmServiceName name);
+
+/**
+ * @brief Requests a service from SM.
+ * @param[out] service_out Service structure which will be filled in.
+ * @param[in] name Name of the service to request (as a string).
+ * @return Result code.
+ */
+NX_INLINE Result smGetService(Service* service_out, const char* name)
+{
+    return smGetServiceWrapper(service_out, smEncodeName(name));
+}
 
 /**
  * @brief Retrieves an overriden service in the homebrew environment.
- * @param[in] name Name of the service to request (as 64-bit integer).
+ * @param[in] name Name of the service to request.
  * @return IPC session handle.
  */
-Handle smGetServiceOverride(u64 name);
+Handle smGetServiceOverride(SmServiceName name);
 
 /**
  * @brief Creates and registers a new service within SM.
@@ -142,14 +202,14 @@ Handle smGetServiceOverride(u64 name);
  * @param[in] max_sessions Maximum number of concurrent sessions that the service will accept.
  * @return Result code.
  */
-Result smRegisterService(Handle* handle_out, const char* name, bool is_light, s32 max_sessions);
+Result smRegisterService(Handle* handle_out, SmServiceName name, bool is_light, s32 max_sessions);
 
 /**
  * @brief Unregisters a previously registered service in SM.
  * @param[in] name Name of the service.
  * @return Result code.
  */
-Result smUnregisterService(const char* name);
+Result smUnregisterService(SmServiceName name);
 
 /**
  * @brief Gets the Service session used to communicate with SM.
@@ -158,21 +218,8 @@ Result smUnregisterService(const char* name);
 Service *smGetServiceSession(void);
 
 /**
- * @brief Encodes a service name as a 64-bit integer.
- * @param[in] name Name of the service.
- * @return Encoded name.
- */
-NX_CONSTEXPR u64 smEncodeName(const char* name)
-{
-    u64 name_encoded = 0;
-    for (unsigned i = 0; name[i] && i < 8; i ++)
-        name_encoded |= ((u64) name[i]) << (8*i);
-    return name_encoded;
-}
-
-/**
  * @brief Overrides a service with a custom IPC service handle.
- * @param[in] name Name of the service (as 64-bit integer).
+ * @param[in] name Name of the service.
  * @param[in] handle IPC session handle.
  */
-void   smAddOverrideHandle(u64 name, Handle handle);
+void smAddOverrideHandle(SmServiceName name, Handle handle);
