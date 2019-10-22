@@ -119,7 +119,7 @@ void* virtmemReserve(size_t size) {
             continue;
         }
 
-        if (size > meminfo.size) {
+        if (addr + size > meminfo.addr + meminfo.size) {
             // We can't fit in this region, let's move past it.
             addr = meminfo.addr + meminfo.size;
             continue;
@@ -190,7 +190,7 @@ void* virtmemReserveStack(size_t size)
             continue;
         }
 
-        if (size > meminfo.size) {
+        if (addr + size > meminfo.addr + meminfo.size) {
             // We can't fit in this region, let's move past it.
             addr = meminfo.addr + meminfo.size;
             continue;
