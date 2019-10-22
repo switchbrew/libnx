@@ -1,14 +1,13 @@
 #pragma once
 #include "../types.h"
 #include "../kernel/event.h"
-#include "../services/sm.h"
+#include "../sf/service.h"
 
 #define BINDER_FIRST_CALL_TRANSACTION 0x1
 
 typedef struct {
-    bool     created           : 1;
-    bool     initialized       : 1;
-    bool     has_transact_auto : 1;
+    bool     created;
+    bool     initialized;
     s32      id;
     size_t   dummy;
     Service* relay;

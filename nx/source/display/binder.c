@@ -1,24 +1,9 @@
 #include <string.h>
 #include "types.h"
 #include "result.h"
-#include "kernel/ipc.h"
+#include "sf/service.h"
 #include "runtime/hosversion.h"
 #include "display/binder.h"
-
-static void* _binderIpcPrepareHeader(Binder* b, IpcCommand* cmd, size_t sizeof_raw)
-{
-    return serviceIpcPrepareHeader(b->relay, cmd, sizeof_raw);
-}
-
-static Result _binderIpcDispatch(Binder* b)
-{
-    return serviceIpcDispatch(b->relay);
-}
-
-static Result _binderIpcParse(Binder* b, IpcParsedCommand* r, size_t sizeof_raw)
-{
-    return serviceIpcParse(b->relay, r, sizeof_raw);
-}
 
 void binderCreate(Binder* b, s32 id)
 {
@@ -51,10 +36,6 @@ Result binderInitSession(Binder* b, Service* relay)
 
     b->initialized = true;
 
-    // Use TransactParcelAuto when available.
-    if (hosversionAtLeast(3,0,0))
-        b->has_transact_auto = true;
-
     return rc;
 }
 
@@ -74,116 +55,35 @@ void binderClose(Binder* b)
     b->initialized = false;
 }
 
-static Result _binderTransactParcel(
-    Binder* b, u32 code,
-    void* parcel_data,  size_t parcel_data_size,
-    void* parcel_reply, size_t parcel_reply_size,
-    u32 flags)
-{
-    if (!b->created || !b->initialized)
-        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        s32 session_id;
-        u32 code;
-        u32 flags;
-    } *raw;
-
-    ipcAddSendBuffer(&c, parcel_data, parcel_data_size, 0);
-    ipcAddRecvBuffer(&c, parcel_reply, parcel_reply_size, 0);
-
-    raw = _binderIpcPrepareHeader(b, &c, sizeof(*raw));
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 0;
-    raw->session_id = b->id;
-    raw->code = code;
-    raw->flags = flags;
-
-    Result rc = _binderIpcDispatch(b);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        _binderIpcParse(b, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
-}
-
-static Result _binderTransactParcelAuto(
-    Binder* b, u32 code,
-    void* parcel_data,  size_t parcel_data_size,
-    void* parcel_reply, size_t parcel_reply_size,
-    u32 flags)
-{
-    if (!b->created || !b->initialized)
-        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        s32 session_id;
-        u32 code;
-        u32 flags;
-    } PACKED *raw;
-
-    ipcAddSendSmart(&c, b->relay->pointer_buffer_size, parcel_data, parcel_data_size, 0);
-    ipcAddRecvSmart(&c, b->relay->pointer_buffer_size, parcel_reply, parcel_reply_size, 0);
-
-    raw = _binderIpcPrepareHeader(b, &c, sizeof(*raw));
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 3;
-    raw->session_id = b->id;
-    raw->code = code;
-    raw->flags = flags;
-
-    Result rc = _binderIpcDispatch(b);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        _binderIpcParse(b, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
-}
-
 Result binderTransactParcel(
     Binder* b, u32 code,
     void* parcel_data,  size_t parcel_data_size,
     void* parcel_reply, size_t parcel_reply_size,
     u32 flags)
 {
-    Result rc = 0;
+    if (!b->created || !b->initialized)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    if (b->has_transact_auto)
-        rc = _binderTransactParcelAuto(b, code, parcel_data, parcel_data_size, parcel_reply, parcel_reply_size, flags);
-    else
-        rc = _binderTransactParcel(b, code, parcel_data, parcel_data_size, parcel_reply, parcel_reply_size, flags);
+    const bool use_auto = hosversionAtLeast(3,0,0);
+    const u32 cmd_id = use_auto ? 3 : 0;
+    const u32 buf_mode = use_auto ? SfBufferAttr_HipcAutoSelect : SfBufferAttr_HipcMapAlias;
 
-    return rc;
+    const struct {
+        s32 session_id;
+        u32 code;
+        u32 flags;
+    } in = { b->id, code, flags };
+
+    return serviceDispatchIn(b->relay, cmd_id, in,
+        .buffer_attrs = {
+            buf_mode | SfBufferAttr_In,
+            buf_mode | SfBufferAttr_Out,
+        },
+        .buffers = {
+            { parcel_data,  parcel_data_size  },
+            { parcel_reply, parcel_reply_size },
+        },
+    );
 }
 
 Result binderConvertErrorCode(s32 code)
@@ -217,40 +117,13 @@ Result binderAdjustRefcount(Binder* b, s32 addval, s32 type)
     if (!b->created)
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         s32 session_id;
         s32 addval;
         s32 type;
-    } *raw;
+    } in = { b->id, addval, type };
 
-    raw = _binderIpcPrepareHeader(b, &c, sizeof(*raw));
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 1;
-    raw->session_id = b->id;
-    raw->addval = addval;
-    raw->type = type;
-
-    Result rc = _binderIpcDispatch(b);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp;
-
-        _binderIpcParse(b, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-    }
-
-    return rc;
+    return serviceDispatchIn(b->relay, 1, in);
 }
 
 Result binderGetNativeHandle(Binder* b, u32 inval, Event *event_out)
@@ -258,41 +131,19 @@ Result binderGetNativeHandle(Binder* b, u32 inval, Event *event_out)
     if (!b->created)
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         s32 session_id;
         u32 inval;
-    } *raw;
+    } in = { b->id, inval };
 
-    raw = _binderIpcPrepareHeader(b, &c, sizeof(*raw));
+    Handle h = INVALID_HANDLE;
+    Result rc = serviceDispatchIn(b->relay, 2, in,
+        .out_handle_attrs = { SfOutHandleAttr_HipcCopy },
+        .out_handles = &h,
+    );
 
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 2;
-    raw->session_id = b->id;
-    raw->inval = inval;
-
-    Result rc = _binderIpcDispatch(b);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        _binderIpcParse(b, &r, sizeof(*resp));
-        resp = r.Raw;
-
-        rc = resp->result;
-
-        if (R_SUCCEEDED(rc)) {
-            eventLoadRemote(event_out, r.Handles[0], false);
-        }
-    }
+    if (R_SUCCEEDED(rc) && event_out)
+        eventLoadRemote(event_out, h, false);
 
     return rc;
 }
