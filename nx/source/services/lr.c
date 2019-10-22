@@ -42,7 +42,7 @@ Result lrOpenRegisteredLocationResolver(LrRegisteredLocationResolver* out) {
 static Result _lrResolvePath(Service* s, u64 tid, char *out, u32 cmd_id) {
     char out_path[FS_MAX_PATH] = {0};
     Result rc = serviceDispatchIn(s, cmd_id, tid,
-        .buffer_attrs = { SfBufferAttr_Out | SfBufferAttr_HipcPointer },
+        .buffer_attrs = { SfBufferAttr_Out | SfBufferAttr_HipcPointer | SfBufferAttr_FixedSize },
         .buffers = { { out_path, FS_MAX_PATH } },
     );
 
