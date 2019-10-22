@@ -142,7 +142,7 @@ Handle smGetServiceOverride(u64 name);
  * @param[in] max_sessions Maximum number of concurrent sessions that the service will accept.
  * @return Result code.
  */
-Result smRegisterService(Handle* handle_out, const char* name, bool is_light, int max_sessions);
+Result smRegisterService(Handle* handle_out, const char* name, bool is_light, s32 max_sessions);
 
 /**
  * @brief Unregisters a previously registered service in SM.

@@ -1,4 +1,3 @@
-// Copyright 2017 plutoo
 #define NX_SERVICE_ASSUME_NON_DOMAIN
 #include "service_guard.h"
 #include "services/fatal.h"
@@ -14,8 +13,7 @@ static struct {
 
 static size_t g_smOverridesNum = 0;
 
-void smAddOverrideHandle(u64 name, Handle handle)
-{
+void smAddOverrideHandle(u64 name, Handle handle) {
     if (g_smOverridesNum == MAX_OVERRIDES)
         fatalSimple(MAKERESULT(Module_Libnx, LibnxError_TooManyOverrides));
 
@@ -27,8 +25,7 @@ void smAddOverrideHandle(u64 name, Handle handle)
     g_smOverridesNum++;
 }
 
-Handle smGetServiceOverride(u64 name)
-{
+Handle smGetServiceOverride(u64 name) {
     for (size_t i = 0; i < g_smOverridesNum; i++)
         if (g_smOverrides[i].name == name)
             return g_smOverrides[i].handle;
@@ -38,8 +35,7 @@ Handle smGetServiceOverride(u64 name)
 
 NX_GENERATE_SERVICE_GUARD(sm);
 
-Result _smInitialize(void)
-{
+Result _smInitialize(void) {
     Handle sm_handle;
     Result rc = svcConnectToNamedPort(&sm_handle, "sm:");
     while (R_VALUE(rc) == KERNELRESULT(NotFound)) {
@@ -63,18 +59,15 @@ Result _smInitialize(void)
     return rc;
 }
 
-void _smCleanup(void)
-{
+void _smCleanup(void) {
     serviceClose(&g_smSrv);
 }
 
-Service *smGetServiceSession(void)
-{
+Service *smGetServiceSession(void) {
     return &g_smSrv;
 }
 
-Result smGetService(Service* service_out, const char* name)
-{
+Result smGetService(Service* service_out, const char* name) {
     u64 name_encoded = smEncodeName(name);
     Handle handle = smGetServiceOverride(name_encoded);
     bool own_handle = false;
@@ -93,25 +86,19 @@ Result smGetService(Service* service_out, const char* name)
     return rc;
 }
 
-Result smGetServiceOriginal(Handle* handle_out, u64 name)
-{
-    const struct {
-        u64 service_name;
-    } in = { name };
-
-    return serviceDispatchIn(&g_smSrv, 1, in,
+Result smGetServiceOriginal(Handle* handle_out, u64 name) {
+    return serviceDispatchIn(&g_smSrv, 1, name,
         .out_handle_attrs = { SfOutHandleAttr_HipcMove },
         .out_handles = handle_out,
     );
 }
 
-Result smRegisterService(Handle* handle_out, const char* name, bool is_light, int max_sessions)
-{
+Result smRegisterService(Handle* handle_out, const char* name, bool is_light, s32 max_sessions) {
     const struct {
         u64 service_name;
-        u32 is_light;
-        u32 max_sessions;
-    } in = { smEncodeName(name), !!is_light, max_sessions };
+        u8 is_light;
+        s32 max_sessions;
+    } in = { smEncodeName(name), is_light!=0, max_sessions };
 
     return serviceDispatchIn(&g_smSrv, 2, in,
         .out_handle_attrs = { SfOutHandleAttr_HipcMove },
@@ -119,11 +106,7 @@ Result smRegisterService(Handle* handle_out, const char* name, bool is_light, in
     );
 }
 
-Result smUnregisterService(const char* name)
-{
-    const struct {
-        u64 service_name;
-    } in = { smEncodeName(name) };
-
-    return serviceDispatchIn(&g_smSrv, 3, in);
+Result smUnregisterService(const char* name) {
+    u64 service_name = smEncodeName(name);
+    return serviceDispatchIn(&g_smSrv, 3, service_name);
 }
