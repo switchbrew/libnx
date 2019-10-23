@@ -1,4 +1,3 @@
-#define NX_SERVICE_ASSUME_NON_DOMAIN
 #include "service_guard.h"
 #include "services/fspr.h"
 #include "runtime/hosversion.h"
@@ -9,6 +8,10 @@ NX_GENERATE_SERVICE_GUARD(fspr);
 
 Result _fsprInitialize(void) {
     Result rc = smGetService(&g_fsprSrv, "fsp-pr");
+
+    if (R_SUCCEEDED(rc)) {
+        rc = serviceConvertToDomain(&g_fsprSrv);
+    }
 
     if (R_SUCCEEDED(rc) && hosversionAtLeast(4,0,0)) {
         rc = fsprSetCurrentProcess();
@@ -41,11 +44,13 @@ Result fsprRegisterProgram(u64 pid, u64 tid, FsStorageId sid, const void *fs_acc
 
     const struct {
         u8 sid;
+        u8 pad[7];
         u64 pid;
         u64 tid;
         u64 fah_size;
         u64 fac_size;
-    } in = { sid, pid, tid, fah_size, fac_size };
+    } in = { sid, {0}, pid, tid, fah_size, fac_size };
+    serviceAssumeDomain(&g_fsprSrv);
     return serviceDispatchIn(&g_fsprSrv, 0, in,
         .buffer_attrs = {
             SfBufferAttr_In | SfBufferAttr_HipcMapAlias,
@@ -59,6 +64,7 @@ Result fsprRegisterProgram(u64 pid, u64 tid, FsStorageId sid, const void *fs_acc
 }
 
 Result fsprUnregisterProgram(u64 pid) {
+    serviceAssumeDomain(&g_fsprSrv);
     return serviceDispatchIn(&g_fsprSrv, 1, pid);
 }
 
@@ -67,10 +73,12 @@ Result fsprSetCurrentProcess(void) {
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     u64 pid_placeholder = 0;
+    serviceAssumeDomain(&g_fsprSrv);
     return serviceDispatchIn(&g_fsprSrv, 2, pid_placeholder, .in_send_pid = true);
 }
 
 Result fsprSetEnabledProgramVerification(bool enabled) {
     const u8 in = enabled != 0;
+    serviceAssumeDomain(&g_fsprSrv);
     return serviceDispatchIn(&g_fsprSrv, 256, in);
 }
