@@ -133,14 +133,14 @@ Result viCloseDisplay(ViDisplay *display) {
     return rc;
 }
 
-Result viGetDisplayResolution(ViDisplay *display, u64 *width, u64 *height) {
+Result viGetDisplayResolution(ViDisplay *display, s32 *width, s32 *height) {
     if (!display->initialized) {
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     }
 
     struct {
-        u64 width;
-        u64 height;
+        s64 width;
+        s64 height;
     } out;
 
     Result rc = serviceDispatchInOut(&g_viIApplicationDisplayService, 1102, display->display_id, out);
@@ -153,14 +153,14 @@ Result viGetDisplayResolution(ViDisplay *display, u64 *width, u64 *height) {
     return rc;
 }
 
-Result viGetDisplayLogicalResolution(ViDisplay *display, u32 *width, u32 *height) {
+Result viGetDisplayLogicalResolution(ViDisplay *display, s32 *width, s32 *height) {
     if (!display->initialized) {
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     }
 
     struct {
-        u32 width;
-        u32 height;
+        s32 width;
+        s32 height;
     } out;
 
     Result rc = serviceDispatchInOut(&g_viISystemDisplayService, 1203, display->display_id, out);
@@ -174,7 +174,7 @@ Result viGetDisplayLogicalResolution(ViDisplay *display, u32 *width, u32 *height
 
 }
 
-Result viSetDisplayMagnification(ViDisplay *display, u32 x, u32 y, u32 width, u32 height) {
+Result viSetDisplayMagnification(ViDisplay *display, s32 x, s32 y, s32 width, s32 height) {
     if (!display->initialized) {
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     }
@@ -183,10 +183,10 @@ Result viSetDisplayMagnification(ViDisplay *display, u32 x, u32 y, u32 width, u3
     }
 
     const struct {
-        u32 x;
-        u32 y;
-        u32 width;
-        u32 height;
+        s32 x;
+        s32 y;
+        s32 width;
+        s32 height;
         u64 display_id;
     } in = { x, y, width, height, display->display_id };
     return serviceDispatchIn(&g_viISystemDisplayService, 1204, in);
@@ -234,20 +234,26 @@ Result viSetDisplayAlpha(ViDisplay *display, float alpha) {
     return serviceDispatchIn(&g_viIManagerDisplayService, 4201, in);
 }
 
-Result viGetDisplayMinimumZ(ViDisplay *display, u64 *z) {
+Result viGetZOrderCountMin(ViDisplay *display, s32 *z) {
     if (!display->initialized) {
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     }
 
-    return serviceDispatchInOut(&g_viISystemDisplayService, 1200, display->display_id, *z);
+    s64 tmp=0;
+    Result rc = serviceDispatchInOut(&g_viISystemDisplayService, 1200, display->display_id, tmp);
+    if (R_SUCCEEDED(rc) && z) *z = tmp;
+    return rc;
 }
 
-Result viGetDisplayMaximumZ(ViDisplay *display, u64 *z) {
+Result viGetZOrderCountMax(ViDisplay *display, s32 *z) {
     if (!display->initialized) {
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     }
 
-    return serviceDispatchInOut(&g_viISystemDisplayService, 1202, display->display_id, *z);
+    s64 tmp=0;
+    Result rc = serviceDispatchInOut(&g_viISystemDisplayService, 1202, display->display_id, tmp);
+    if (R_SUCCEEDED(rc) && z) *z = tmp;
+    return rc;
 }
 
 Result viCreateManagedLayer(const ViDisplay *display, ViLayerFlags layer_flags, u64 aruid, u64 *layer_id) {
@@ -257,9 +263,10 @@ Result viCreateManagedLayer(const ViDisplay *display, ViLayerFlags layer_flags, 
 
     const struct {
         u32 layer_flags;
+        u32 pad;
         u64 display_id;
         u64 aruid;
-    } in = { layer_flags, display->display_id, aruid };
+    } in = { layer_flags, 0, display->display_id, aruid };
     return serviceDispatchInOut(&g_viIManagerDisplayService, 2010, in, *layer_id);
 }
 
@@ -274,11 +281,11 @@ Result viDestroyManagedLayer(ViLayer *layer) {
 }
 
 Result viSetContentVisibility(bool v) {
-    return serviceDispatchIn(&g_viIManagerDisplayService, 7000, v);
+    u8 tmp = v!=0;
+    return serviceDispatchIn(&g_viIManagerDisplayService, 7000, tmp);
 }
 
-static Result _viOpenLayer(const ViDisplay *display, u64 layer_id, u64 aruid, u8 native_window[0x100], u64 *native_window_size)
-{
+static Result _viOpenLayer(const ViDisplay *display, u64 layer_id, u64 aruid, u8 native_window[0x100], u64 *native_window_size) {
     if (!display->initialized) {
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     }
@@ -322,8 +329,9 @@ static Result _viCreateStrayLayer(const ViDisplay *display, u32 layer_flags, u64
 
     const struct {
         u32 layer_flags;
+        u32 pad;
         u64 display_id;
-    } in = { layer_flags, display->display_id };
+    } in = { layer_flags, 0, display->display_id };
 
     struct {
         u64 layer_id;
@@ -394,27 +402,27 @@ _bad_parcel:
     return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 }
 
-Result viSetLayerSize(ViLayer *layer, u64 width, u64 height) {
+Result viSetLayerSize(ViLayer *layer, s32 width, s32 height) {
     if (!layer->initialized) {
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     }
 
     const struct {
         u64 layer_id;
-        u64 width;
-        u64 height;
+        s64 width;
+        s64 height;
     } in = { layer->layer_id, width, height };
     return serviceDispatchIn(&g_viISystemDisplayService, 2203, in);
 }
 
-Result viSetLayerZ(ViLayer *layer, u64 z) {
+Result viSetLayerZ(ViLayer *layer, s32 z) {
     if (!layer->initialized) {
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     }
 
     const struct {
         u64 layer_id;
-        u64 z;
+        s64 z;
     } in = { layer->layer_id, z };
     return serviceDispatchIn(&g_viISystemDisplayService, 2205, in);
 }
@@ -452,9 +460,10 @@ Result viSetLayerScalingMode(ViLayer *layer, ViScalingMode scaling_mode) {
     }
 
     const struct {
-        u64 scaling_mode;
+        u32 scaling_mode;
+        u32 pad;
         u64 layer_id;
-    } in = { scaling_mode, layer->layer_id };
+    } in = { scaling_mode, 0, layer->layer_id };
     return serviceDispatchIn(&g_viIApplicationDisplayService, 2101, in);
 }
 
@@ -464,15 +473,15 @@ Result viGetIndirectLayerImageMap(void* buffer, size_t size, s32 width, s32 heig
     if (R_FAILED(rc)) return rc;
 
     const struct {
-        u64 width;
-        u64 height;
+        s64 width;
+        s64 height;
         u64 IndirectLayerConsumerHandle;
         u64 aruid;
     } in = { width, height, IndirectLayerConsumerHandle, aruid };
 
     struct {
-        u64 size;
-        u64 stride;
+        s64 size;
+        s64 stride;
     } out;
 
     rc = serviceDispatchInOut(&g_viIApplicationDisplayService, 2450, in, out,
@@ -491,13 +500,13 @@ Result viGetIndirectLayerImageMap(void* buffer, size_t size, s32 width, s32 heig
 
 Result viGetIndirectLayerImageRequiredMemoryInfo(s32 width, s32 height, u64 *out_size, u64 *out_alignment) {
     const struct {
-        u64 width;
-        u64 height;
+        s64 width;
+        s64 height;
     } in = { width, height };
 
     struct {
-        u64 size;
-        u64 alignment;
+        s64 size;
+        s64 alignment;
     } out;
 
     Result rc = serviceDispatchInOut(&g_viIApplicationDisplayService, 2460, in, out);

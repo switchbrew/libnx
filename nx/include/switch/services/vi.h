@@ -78,22 +78,22 @@ static inline Result viOpenDefaultDisplay(ViDisplay *display)
     return viOpenDisplay("Default", display);
 }
 
-Result viGetDisplayResolution(ViDisplay *display, u64 *width, u64 *height);
-Result viGetDisplayLogicalResolution(ViDisplay *display, u32 *width, u32 *height);
+Result viGetDisplayResolution(ViDisplay *display, s32 *width, s32 *height);
+Result viGetDisplayLogicalResolution(ViDisplay *display, s32 *width, s32 *height);
 /// Only available on [3.0.0+].
-Result viSetDisplayMagnification(ViDisplay *display, u32 x, u32 y, u32 width, u32 height);
+Result viSetDisplayMagnification(ViDisplay *display, s32 x, s32 y, s32 width, s32 height);
 Result viGetDisplayVsyncEvent(ViDisplay *display, Event *event_out);
 Result viSetDisplayPowerState(ViDisplay *display, ViPowerState state);
 Result viSetDisplayAlpha(ViDisplay *display, float alpha);
-Result viGetDisplayMinimumZ(ViDisplay *display, u64 *z);
-Result viGetDisplayMaximumZ(ViDisplay *display, u64 *z);
+Result viGetZOrderCountMin(ViDisplay *display, s32 *z);
+Result viGetZOrderCountMax(ViDisplay *display, s32 *z);
 
 // Layer functions
 
 Result viCreateLayer(const ViDisplay *display, ViLayer *layer);
 Result viCreateManagedLayer(const ViDisplay *display, ViLayerFlags layer_flags, u64 aruid, u64 *layer_id);
-Result viSetLayerSize(ViLayer *layer, u64 width, u64 height);
-Result viSetLayerZ(ViLayer *layer, u64 z);
+Result viSetLayerSize(ViLayer *layer, s32 width, s32 height);
+Result viSetLayerZ(ViLayer *layer, s32 z);
 Result viSetLayerPosition(ViLayer *layer, float x, float y);
 Result viCloseLayer(ViLayer *layer);
 Result viDestroyManagedLayer(ViLayer *layer);
