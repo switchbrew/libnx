@@ -3,6 +3,7 @@
 #include "service_guard.h"
 #include "runtime/hosversion.h"
 #include "services/pm.h"
+#include "services/ncm.h"
 
 #define PM_GENERATE_SERVICE_INIT(name)                  \
 static Service g_pm##name##Srv;                         \
@@ -26,7 +27,20 @@ PM_GENERATE_SERVICE_INIT(shell);
 PM_GENERATE_SERVICE_INIT(info);
 PM_GENERATE_SERVICE_INIT(bm);
 
-Result pmdmntGetDebugProcesses(u32* out_count, u64* out_pids, size_t max_pids) {
+// pmbm
+
+Result pmbmGetBootMode(PmBootMode *out) {
+    _Static_assert(sizeof(*out) == sizeof(u32), "PmBootMode");
+    return serviceDispatchOut(&g_pmbmSrv, 0, *out);
+}
+
+Result pmbmSetMaintenanceBoot(void) {
+    return serviceDispatch(&g_pmbmSrv, 1);
+}
+
+// pmdmnt
+
+Result pmdmntGetJitDebugProcessIdList(u32* out_count, u64* out_pids, size_t max_pids) {
     const u64 cmd_id = hosversionAtLeast(5,0,0) ? 0 : 1;
     return serviceDispatchOut(&g_pmdmntSrv, cmd_id, *out_count,
         .buffer_attrs = {
@@ -43,12 +57,12 @@ Result pmdmntStartProcess(u64 pid) {
     return serviceDispatchIn(&g_pmdmntSrv, cmd_id, pid);
 }
 
-Result pmdmntGetTitlePid(u64* pid_out, u64 title_id) {
+Result pmdmntGetProcessId(u64* pid_out, u64 title_id) {
     const u64 cmd_id = hosversionAtLeast(5,0,0) ? 2 : 3;
     return serviceDispatchInOut(&g_pmdmntSrv, cmd_id, title_id, *pid_out);
 }
 
-Result pmdmntEnableDebugForTitleId(Event* out_event, u64 title_id) {
+Result pmdmntHookToCreateProcess(Event* out_event, u64 title_id) {
     const u64 cmd_id = hosversionAtLeast(5,0,0) ? 3 : 4;
     Handle event = INVALID_HANDLE;
     Result rc = serviceDispatchIn(&g_pmdmntSrv, cmd_id, title_id,
@@ -60,12 +74,12 @@ Result pmdmntEnableDebugForTitleId(Event* out_event, u64 title_id) {
     return rc;
 }
 
-Result pmdmntGetApplicationPid(u64* pid_out) {
+Result pmdmntGetApplicationProcessId(u64* pid_out) {
     const u64 cmd_id = hosversionAtLeast(5,0,0) ? 4 : 5;
     return serviceDispatchOut(&g_pmdmntSrv, cmd_id, *pid_out);
 }
 
-Result pmdmntEnableDebugForApplication(Event* out_event) {
+Result pmdmntHookToCreateApplicationProcess(Event* out_event) {
     const u64 cmd_id = hosversionAtLeast(5,0,0) ? 5 : 6;
     Handle event = INVALID_HANDLE;
     Result rc = serviceDispatch(&g_pmdmntSrv, cmd_id,
@@ -77,29 +91,37 @@ Result pmdmntEnableDebugForApplication(Event* out_event) {
     return rc;
 }
 
-Result pmdmntDisableDebug(u32 which) {
+Result pmdmntClearHook(u32 which) {
     if (hosversionBefore(6,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     return serviceDispatchIn(&g_pmdmntSrv, 6, which);
 }
 
-Result pmshellLaunchProcess(u32 launch_flags, u64 titleID, u64 storageID, u64 *pid) {
+// pminfo
+
+Result pminfoGetProgramId(u64* title_id_out, u64 pid) {
+    return serviceDispatchInOut(&g_pminfoSrv, 0, pid, *title_id_out);
+}
+
+// pmshell
+
+Result pmshellLaunchProgram(u32 launch_flags, NcmProgramLocation *location, u64 *pid) {
     const struct {
         u32 launch_flags;
-        u64 titleID;
-        u64 storageID;
-    } in = { launch_flags, titleID, storageID };
+        u32 pad;
+        NcmProgramLocation location;
+    } in = { launch_flags, 0, *location };
     return serviceDispatchInOut(&g_pmshellSrv, 0, in, *pid);
 }
 
-Result pmshellTerminateProcessByProcessId(u64 processID) {
+Result pmshellTerminateProcess(u64 processID) {
     return serviceDispatchIn(&g_pmshellSrv, 1, processID);
 }
 
-Result pmshellTerminateProcessByTitleId(u64 titleID) {
+Result pmshellTerminateProgram(u64 titleID) {
     return serviceDispatchIn(&g_pmshellSrv, 2, titleID);
 }
 
-Result pmshellGetProcessEvent(Event* out_event) {
+Result pmshellGetProcessEventHandle(Event* out_event) {
     Handle event = INVALID_HANDLE;
     Result rc = serviceDispatch(&g_pmshellSrv, 3,
         .out_handle_attrs = { SfOutHandleAttr_HipcCopy },
@@ -115,12 +137,12 @@ Result pmshellGetProcessEventInfo(PmProcessEventInfo* out) {
     return serviceDispatchOut(&g_pmshellSrv, 4, *out);
 }
 
-Result pmshellFinalizeDeadProcess(u64 pid) {
+Result pmshellCleanupProcess(u64 pid) {
     if (hosversionAtLeast(5,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     return serviceDispatchIn(&g_pmshellSrv, 5, pid);
 }
 
-Result pmshellClearProcessExceptionOccurred(u64 pid) {
+Result pmshellClearJitDebugOccured(u64 pid) {
     if (hosversionAtLeast(5,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     return serviceDispatchIn(&g_pmshellSrv, 6, pid);
 }
@@ -130,7 +152,7 @@ Result pmshellNotifyBootFinished(void) {
     return serviceDispatch(&g_pmshellSrv, cmd_id);
 }
 
-Result pmshellGetApplicationPid(u64* pid_out) {
+Result pmshellGetApplicationProcessIdForShell(u64* pid_out) {
     const u64 cmd_id = hosversionAtLeast(5,0,0) ? 6 : 8;
     return serviceDispatchOut(&g_pmshellSrv, cmd_id, *pid_out);
 }
@@ -144,17 +166,4 @@ Result pmshellBoostSystemMemoryResourceLimit(u64 boost_size) {
 Result pmshellBoostSystemThreadResourceLimit(void) {
     if (hosversionBefore(7,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     return serviceDispatch(&g_pmshellSrv, 8);
-}
-
-Result pminfoGetTitleId(u64* title_id_out, u64 pid) {
-    return serviceDispatchInOut(&g_pminfoSrv, 0, pid, *title_id_out);
-}
-
-Result pmbmGetBootMode(PmBootMode *out) {
-    _Static_assert(sizeof(*out) == sizeof(u32), "PmBootMode");
-    return serviceDispatchOut(&g_pmbmSrv, 0, *out);
-}
-
-Result pmbmSetMaintenanceBoot(void) {
-    return serviceDispatch(&g_pmbmSrv, 1);
 }

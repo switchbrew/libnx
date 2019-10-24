@@ -132,6 +132,13 @@ typedef struct {
     u8 pad[7];              ///< [3.0.0+]
 } NcmRightsId;
 
+/// ProgramLocation
+typedef struct {
+    u64 titleID;
+    u8 storageID;           ///< \ref FsStorageId
+    u8 pad[7];
+} NcmProgramLocation;
+
 Result ncmInitialize(void);
 void ncmExit(void);
 Service* ncmGetServiceSession(void);
