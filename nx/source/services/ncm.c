@@ -20,7 +20,7 @@ Service* ncmGetServiceSession(void) {
     return &g_ncmSrv;
 }
 
-static Result _ncmGetInterfaceInU8(Service* srv_out, u32 cmd_id, u8 inval) {
+static Result _ncmGetInterfaceInU8(Service* srv_out, u8 inval, u32 cmd_id) {
     return serviceDispatchIn(&g_ncmSrv, cmd_id, inval,
         .out_num_objects = 1,
         .out_objects = srv_out,
@@ -31,82 +31,82 @@ static Result _ncmCmdNoIO(Service* srv, u32 cmd_id) {
     return serviceDispatch(srv, cmd_id);
 }
 
-static Result _ncmCmdNoInOutU64(Service* srv, u32 cmd_id, u64* outval) {
+static Result _ncmCmdNoInOutU64(Service* srv, u64* outval, u32 cmd_id) {
     return serviceDispatchOut(srv, cmd_id, *outval);
 }
 
-static Result _ncmCmdOutContentId(Service* srv, u32 cmd_id, NcmContentId* outval) {
+static Result _ncmCmdOutContentId(Service* srv, NcmContentId* outval, u32 cmd_id) {
     return serviceDispatchOut(srv, cmd_id, *outval);
 }
 
-static Result _ncmCmdInU8(Service* srv, u32 cmd_id, u8 inval) {
+static Result _ncmCmdInU8(Service* srv, u8 inval, u32 cmd_id) {
     return serviceDispatchIn(srv, cmd_id, inval);
 }
 
-static Result _ncmCmdInContentId(Service* srv, u32 cmd_id, const NcmContentId* inval) {
+static Result _ncmCmdInContentId(Service* srv, const NcmContentId* inval, u32 cmd_id) {
     return serviceDispatchIn(srv, cmd_id, *inval);
 }
 
-static Result _ncmCmdInContentIdOutU64(Service* srv, u32 cmd_id, const NcmContentId* inval, u64* outval) {
+static Result _ncmCmdInContentIdOutU64(Service* srv, const NcmContentId* inval, u64* outval, u32 cmd_id) {
     return serviceDispatchInOut(srv, cmd_id, *inval, *outval);
 }
 
 Result ncmCreateContentStorage(FsStorageId storage_id) {
-    return _ncmCmdInU8(&g_ncmSrv, 0, storage_id);
+    return _ncmCmdInU8(&g_ncmSrv, storage_id, 0);
 }
 
 Result ncmCreateContentMetaDatabase(FsStorageId storage_id) {
-    return _ncmCmdInU8(&g_ncmSrv, 1, storage_id);
+    return _ncmCmdInU8(&g_ncmSrv, storage_id, 1);
 }
 
 Result ncmVerifyContentStorage(FsStorageId storage_id) {
-    return _ncmCmdInU8(&g_ncmSrv, 2, storage_id);
+    return _ncmCmdInU8(&g_ncmSrv, storage_id, 2);
 }
 
 Result ncmVerifyContentMetaDatabase(FsStorageId storage_id) {
-    return _ncmCmdInU8(&g_ncmSrv, 3, storage_id);
+    return _ncmCmdInU8(&g_ncmSrv, storage_id, 3);
 }
 
 Result ncmOpenContentStorage(NcmContentStorage* out_content_storage, FsStorageId storage_id) {
-    return _ncmGetInterfaceInU8(&out_content_storage->s, 4, storage_id);
+    return _ncmGetInterfaceInU8(&out_content_storage->s, storage_id, 4);
 }
 
 Result ncmOpenContentMetaDatabase(NcmContentMetaDatabase* out_content_meta_database, FsStorageId storage_id) {
-    return _ncmGetInterfaceInU8(&out_content_meta_database->s, 5, storage_id);
+    return _ncmGetInterfaceInU8(&out_content_meta_database->s, storage_id, 5);
 }
 
 Result ncmCloseContentStorageForcibly(FsStorageId storage_id) {
     if (hosversionAtLeast(2,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    return _ncmCmdInU8(&g_ncmSrv, 6, storage_id);
+    return _ncmCmdInU8(&g_ncmSrv, storage_id, 6);
 }
 
 Result ncmCloseContentMetaDatabaseForcibly(FsStorageId storage_id) {
     if (hosversionAtLeast(2,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    return _ncmCmdInU8(&g_ncmSrv, 7, storage_id);
+    return _ncmCmdInU8(&g_ncmSrv, storage_id, 7);
 }
 
 Result ncmCleanupContentMetaDatabase(FsStorageId storage_id) {
-    return _ncmCmdInU8(&g_ncmSrv, 8, storage_id);
+    return _ncmCmdInU8(&g_ncmSrv, storage_id, 8);
 }
 
 Result ncmActivateContentStorage(FsStorageId storage_id) {
     if (hosversionBefore(2,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    return _ncmCmdInU8(&g_ncmSrv, 9, storage_id);
+    return _ncmCmdInU8(&g_ncmSrv, storage_id, 9);
 }
 
 Result ncmInactivateContentStorage(FsStorageId storage_id) {
     if (hosversionBefore(2,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    return _ncmCmdInU8(&g_ncmSrv, 10, storage_id);
+    return _ncmCmdInU8(&g_ncmSrv, storage_id, 10);
 }
 
 Result ncmActivateContentMetaDatabase(FsStorageId storage_id) {
     if (hosversionBefore(2,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    return _ncmCmdInU8(&g_ncmSrv, 11, storage_id);
+    return _ncmCmdInU8(&g_ncmSrv, storage_id, 11);
 }
 
 Result ncmInactivateContentMetaDatabase(FsStorageId storage_id) {
     if (hosversionBefore(2,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    return _ncmCmdInU8(&g_ncmSrv, 12, storage_id);
+    return _ncmCmdInU8(&g_ncmSrv, storage_id, 12);
 }
 
 Result ncmInvalidateRightsIdCache(void) {
@@ -119,7 +119,7 @@ void ncmContentStorageClose(NcmContentStorage* cs) {
 }
 
 Result ncmContentStorageGeneratePlaceHolderId(NcmContentStorage* cs, NcmContentId* out_id) {
-    return _ncmCmdOutContentId(&cs->s, 0, out_id);
+    return _ncmCmdOutContentId(&cs->s, out_id, 0);
 }
 
 Result ncmContentStorageCreatePlaceHolder(NcmContentStorage* cs, const NcmContentId* content_id, const NcmContentId* placeholder_id, u64 size) {
@@ -132,7 +132,7 @@ Result ncmContentStorageCreatePlaceHolder(NcmContentStorage* cs, const NcmConten
 }
 
 Result ncmContentStorageDeletePlaceHolder(NcmContentStorage* cs, const NcmContentId* placeholder_id) {
-    return _ncmCmdInContentId(&cs->s, 2, placeholder_id);
+    return _ncmCmdInContentId(&cs->s, placeholder_id, 2);
 }
 
 Result ncmContentStorageHasPlaceHolder(NcmContentStorage* cs, bool* out, const NcmContentId* placeholder_id) {
@@ -162,7 +162,7 @@ Result ncmContentStorageRegister(NcmContentStorage* cs, const NcmContentId* cont
 }
 
 Result ncmContentStorageDelete(NcmContentStorage* cs, const NcmContentId* content_id) {
-    return _ncmCmdInContentId(&cs->s, 6, content_id);
+    return _ncmCmdInContentId(&cs->s, content_id, 6);
 }
 
 Result ncmContentStorageHas(NcmContentStorage* cs, bool* out, const NcmContentId* content_id) {
@@ -221,7 +221,7 @@ Result ncmContentStorageListContentId(NcmContentStorage* cs, NcmContentId* out_i
 }
 
 Result ncmContentStorageGetSizeFromContentId(NcmContentStorage* cs, s64* out_size, const NcmContentId* content_id) {
-    return _ncmCmdInContentIdOutU64(&cs->s, 14, content_id, (u64*)out_size);
+    return _ncmCmdInContentIdOutU64(&cs->s, content_id, (u64*)out_size, 14);
 }
 
 Result ncmContentStorageDisableForcibly(NcmContentStorage* cs) {
@@ -290,12 +290,12 @@ Result ncmContentStorageWriteContentForDebug(NcmContentStorage* cs, const NcmCon
 
 Result ncmContentStorageGetFreeSpaceSize(NcmContentStorage* cs, s64* out_size) {
     if (hosversionBefore(2,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    return _ncmCmdNoInOutU64(&cs->s, 22, (u64*)out_size);
+    return _ncmCmdNoInOutU64(&cs->s, (u64*)out_size, 22);
 }
 
 Result ncmContentStorageGetTotalSpaceSize(NcmContentStorage* cs, s64* out_size) {
     if (hosversionBefore(2,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    return _ncmCmdNoInOutU64(&cs->s, 23, (u64*)out_size);
+    return _ncmCmdNoInOutU64(&cs->s, (u64*)out_size, 23);
 }
 
 Result ncmContentStorageFlushPlaceHolder(NcmContentStorage* cs) {
@@ -305,7 +305,7 @@ Result ncmContentStorageFlushPlaceHolder(NcmContentStorage* cs) {
 
 Result ncmContentStorageGetSizeFromPlaceHolderId(NcmContentStorage* cs, s64* out_size, const NcmContentId* placeholder_id) {
     if (hosversionBefore(4,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    return _ncmCmdInContentIdOutU64(&cs->s, 25, placeholder_id, (u64*)out_size);
+    return _ncmCmdInContentIdOutU64(&cs->s, placeholder_id, (u64*)out_size, 25);
 }
 
 Result ncmContentStorageRepairInvalidFileAttribute(NcmContentStorage* cs) {
