@@ -9,10 +9,10 @@
 
 /// Type of thrown fatal error.
 typedef enum {
-    FatalType_ErrorReportAndErrorScreen = 0,
-    FatalType_ErrorReport = 1,
-    FatalType_ErrorScreen = 2 ///< Only available with [3.0.0+]. If specified, FatalType_ErrorReportAndErrorScreen will be used instead on pre-3.0.0.
-} FatalType;
+    FatalPolicy_ErrorReportAndErrorScreen = 0,
+    FatalPolicy_ErrorReport = 1,
+    FatalPolicy_ErrorScreen = 2 ///< Only available with [3.0.0+]. If specified, FatalPolicy_ErrorReportAndErrorScreen will be used instead on pre-3.0.0.
+} FatalPolicy;
 
 /// Struct for fatal Cpu context, 64-bit.
 typedef struct {
@@ -68,32 +68,32 @@ typedef struct {
         FatalAarch64Context aarch64_ctx;
         FatalAarch32Context aarch32_ctx;
     };
-    
+
     bool is_aarch32;
     u32 type;
-} FatalContext;
+} FatalCpuContext;
 
 /**
  * @brief Triggers a system fatal error.
  * @param[in] err Result code to throw.
  * @note This function does not return.
- * @note This uses \ref fatalWithType with \ref FatalType_ErrorScreen internally.
+ * @note This uses \ref fatalThrowWithPolicy with \ref FatalPolicy_ErrorScreen internally.
  */
-void NORETURN fatalSimple(Result err);
+void NORETURN fatalThrow(Result err);
 
 /**
- * @brief Triggers a system fatal error with a custom \ref FatalType.
+ * @brief Triggers a system fatal error with a custom \ref FatalPolicy.
  * @param[in] err Result code to throw.
  * @param[in] type Type of fatal error to throw.
- * @note This function may not return, depending on \ref FatalType.
+ * @note This function may not return, depending on \ref FatalPolicy.
  */
-void fatalWithType(Result err, FatalType type);
+void fatalThrowWithPolicy(Result err, FatalPolicy type);
 
 /**
- * @brief Triggers a system fatal error with a custom \ref FatalType and \ref FatalContext.
+ * @brief Triggers a system fatal error with a custom \ref FatalPolicy and \ref FatalCpuContext.
  * @param[in] err  Result code to throw.
  * @param[in] type Type of fatal error to throw.
  * @param[in] ctx  Cpu context for fatal error to throw.
- * @note This function may not return, depending on \ref FatalType.
+ * @note This function may not return, depending on \ref FatalPolicy.
  */
-void fatalWithContext(Result err, FatalType type, FatalContext *ctx);
+void fatalThrowWithContext(Result err, FatalPolicy type, FatalCpuContext *ctx);

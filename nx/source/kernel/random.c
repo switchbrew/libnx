@@ -137,7 +137,7 @@ static void _randomInit(void)
     {
         // Get process TRNG seeds from kernel.
         if (R_FAILED(svcGetInfo(&seed[i], InfoType_RandomEntropy, INVALID_HANDLE, i)))
-            fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadGetInfo_Rng));
+            fatalThrow(MAKERESULT(Module_Libnx, LibnxError_BadGetInfo_Rng));
     }
 
     if (envHasRandomSeed())

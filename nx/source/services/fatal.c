@@ -1,4 +1,3 @@
-// Copyright 2017 plutoo
 #define NX_SERVICE_ASSUME_NON_DOMAIN
 #include "types.h"
 #include "result.h"
@@ -8,11 +7,11 @@
 #include "services/fatal.h"
 #include "services/sm.h"
 
-static void _fatalImpl(u32 cmd_id, Result err, FatalType type, FatalContext *ctx) {
+static void _fatalCmd(Result err, FatalPolicy type, FatalCpuContext *ctx, u32 cmd_id) {
     Result rc = 0;
 
-    //Only [3.0.0+] supports FatalType_ErrorScreen, when specified on pre-3.0.0 use FatalType_ErrorReportAndErrorScreen instead.
-    if (type == FatalType_ErrorScreen && !kernelAbove300()) type = FatalType_ErrorReportAndErrorScreen;
+    //Only [3.0.0+] supports FatalPolicy_ErrorScreen, when specified on pre-3.0.0 use FatalPolicy_ErrorReportAndErrorScreen instead.
+    if (type == FatalPolicy_ErrorScreen && !kernelAbove300()) type = FatalPolicy_ErrorReportAndErrorScreen;
 
     if (detectDebugger()) {
         svcBreak(0x80000000, err, 0);
@@ -43,27 +42,29 @@ static void _fatalImpl(u32 cmd_id, Result err, FatalType type, FatalContext *ctx
     }
 
     switch (type) {
-        case FatalType_ErrorReport:
+        case FatalPolicy_ErrorReport:
             break;
-        case FatalType_ErrorReportAndErrorScreen:
-        case FatalType_ErrorScreen:
+        case FatalPolicy_ErrorReportAndErrorScreen:
+        case FatalPolicy_ErrorScreen:
         default:
             svcExitProcess();
             __builtin_unreachable();
     }
 }
 
-void NORETURN fatalSimple(Result err) {
-    /* By default, do not generate an error report. */
-    fatalWithType(err, FatalType_ErrorScreen);
+void NORETURN fatalThrow(Result err) {
+    // By default, do not generate an error report.
+    fatalThrowWithPolicy(err, FatalPolicy_ErrorScreen);
     svcExitProcess();
     __builtin_unreachable();
 }
 
-void fatalWithType(Result err, FatalType type) {
-    _fatalImpl(1, err, type, NULL);
+void fatalThrowWithPolicy(Result err, FatalPolicy type) {
+    _fatalCmd(err, type, NULL, 1);
 }
 
-void fatalWithContext(Result err, FatalType type, FatalContext *ctx) {
-    _fatalImpl(2, err, type, ctx);
+void fatalThrowWithContext(Result err, FatalPolicy type, FatalCpuContext *ctx) {
+    _fatalCmd(err, type, ctx, 2);
 }
+
+void NORETURN fatalSimple(Result) __attribute__((alias("fatalThrow")));

@@ -59,7 +59,7 @@ struct _reent* __syscall_getreent(void)
 {
     ThreadVars* tv = getThreadVars();
     if (tv->magic != THREADVARS_MAGIC)
-        fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadReent));
+        fatalThrow(MAKERESULT(Module_Libnx, LibnxError_BadReent));
     return tv->reent;
 }
 

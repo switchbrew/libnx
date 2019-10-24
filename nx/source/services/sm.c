@@ -15,7 +15,7 @@ static size_t g_smOverridesNum = 0;
 
 void smAddOverrideHandle(SmServiceName name, Handle handle) {
     if (g_smOverridesNum == MAX_OVERRIDES)
-        fatalSimple(MAKERESULT(Module_Libnx, LibnxError_TooManyOverrides));
+        fatalThrow(MAKERESULT(Module_Libnx, LibnxError_TooManyOverrides));
 
     size_t i = g_smOverridesNum;
 

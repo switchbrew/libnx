@@ -71,16 +71,16 @@ void virtmemSetup(void) {
         }
         else {
             // Wat.
-            fatalSimple(MAKERESULT(Module_Libnx, LibnxError_WeirdKernel));
+            fatalThrow(MAKERESULT(Module_Libnx, LibnxError_WeirdKernel));
         }
     } else {
         if (R_FAILED(_GetRegionFromInfo(&g_Region[REGION_STACK], InfoType_StackRegionAddress, InfoType_StackRegionSize))) {
-            fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadGetInfo_Stack));
+            fatalThrow(MAKERESULT(Module_Libnx, LibnxError_BadGetInfo_Stack));
         }
     }
 
     if (R_FAILED(_GetRegionFromInfo(&g_Region[REGION_HEAP], InfoType_HeapRegionAddress, InfoType_HeapRegionSize))) {
-        fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadGetInfo_Heap));
+        fatalThrow(MAKERESULT(Module_Libnx, LibnxError_BadGetInfo_Heap));
     }
 
     _GetRegionFromInfo(&g_Region[REGION_LEGACY_ALIAS], InfoType_AliasRegionAddress, InfoType_AliasRegionSize);
@@ -110,7 +110,7 @@ void* virtmemReserve(size_t size) {
         rc = svcQueryMemory(&meminfo, &pageinfo, addr);
 
         if (R_FAILED(rc)) {
-            fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadQueryMemory));
+            fatalThrow(MAKERESULT(Module_Libnx, LibnxError_BadQueryMemory));
         }
 
         if (meminfo.type != 0) {
@@ -181,7 +181,7 @@ void* virtmemReserveStack(size_t size)
         rc = svcQueryMemory(&meminfo, &pageinfo, addr);
 
         if (R_FAILED(rc)) {
-            fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadQueryMemory));
+            fatalThrow(MAKERESULT(Module_Libnx, LibnxError_BadQueryMemory));
         }
 
         if (meminfo.type != 0) {

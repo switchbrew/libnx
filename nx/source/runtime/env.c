@@ -145,7 +145,7 @@ Handle envGetMainThreadHandle(void) {
         return g_mainThreadHandle;
     }
 
-    fatalSimple(MAKERESULT(Module_Libnx, LibnxError_HandleTooEarly));
+    fatalThrow(MAKERESULT(Module_Libnx, LibnxError_HandleTooEarly));
 }
 
 bool envIsNso(void) {

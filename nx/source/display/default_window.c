@@ -42,7 +42,7 @@ void __nx_win_init(void)
             viExit();
     }
     if (R_FAILED(rc))
-        fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadGfxInit));
+        fatalThrow(MAKERESULT(Module_Libnx, LibnxError_BadGfxInit));
 }
 
 void __nx_win_exit(void)

@@ -161,7 +161,7 @@ Result threadCreate(
 void threadExit(void) {
     Thread* t = getThreadVars()->thread_ptr;
     if (!t)
-        fatalSimple(MAKERESULT(Module_Libnx, LibnxError_NotInitialized));
+        fatalThrow(MAKERESULT(Module_Libnx, LibnxError_NotInitialized));
 
     u64 tls_mask = __atomic_load_n(&g_tlsUsageMask, __ATOMIC_SEQ_CST);
     for (s32 i = 0; i < NUM_TLS_SLOTS; i ++) {

@@ -154,7 +154,7 @@ void* framebufferBegin(Framebuffer* fb, u32* out_stride)
     s32 slot;
     Result rc = nwindowDequeueBuffer(fb->win, &slot, NULL);
     if (R_FAILED(rc))
-        fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadGfxDequeueBuffer));
+        fatalThrow(MAKERESULT(Module_Libnx, LibnxError_BadGfxDequeueBuffer));
 
     if (out_stride)
         *out_stride = fb->stride;
@@ -223,5 +223,5 @@ void framebufferEnd(Framebuffer* fb)
 
     Result rc = nwindowQueueBuffer(fb->win, fb->win->cur_slot, NULL);
     if (R_FAILED(rc))
-        fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadGfxQueueBuffer));
+        fatalThrow(MAKERESULT(Module_Libnx, LibnxError_BadGfxQueueBuffer));
 }

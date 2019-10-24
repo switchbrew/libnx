@@ -21,7 +21,7 @@ void __nx_dynamic(uintptr_t base, const Elf64_Dyn* dyn)
 	}
 
 	if (rela == NULL)
-		fatalSimple(MAKERESULT(Module_Libnx, LibnxError_BadReloc));
+		fatalThrow(MAKERESULT(Module_Libnx, LibnxError_BadReloc));
 
 	for (; relasz--; rela++)
 	{
