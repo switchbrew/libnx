@@ -25,7 +25,13 @@ LDR_GENERATE_SERVICE_INIT(Dmnt,  dmnt);
 LDR_GENERATE_SERVICE_INIT(Pm,    pm);
 
 NX_INLINE Result _ldrAddTitleToLaunchQueue(Service* srv, u64 tid, const void *args, size_t args_size) {
-    return serviceDispatchIn(srv, 0, tid,
+    const struct {
+        u32 args_size;
+        u32 pad;
+        u64 tid;
+    } in = { args_size, 0, tid };
+
+    return serviceDispatchIn(srv, 0, in,
         .buffer_attrs = { SfBufferAttr_In | SfBufferAttr_HipcPointer },
         .buffers = { { args,  args_size } },
     );

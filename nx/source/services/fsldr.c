@@ -52,7 +52,10 @@ Result fsldrOpenCodeFileSystem(u64 tid, const char *path, FsFileSystem* out) {
 
 Result fsldrIsArchivedProgram(u64 pid, bool *out) {
     serviceAssumeDomain(&g_fsldrSrv);
-    return serviceDispatchInOut(&g_fsldrSrv, 1, pid, *out);
+    u8 tmp=0;
+    Result rc = serviceDispatchInOut(&g_fsldrSrv, 1, pid, tmp);
+    if (R_SUCCEEDED(rc) && out) *out = tmp & 1;
+    return rc;
 }
 
 Result _fsldrSetCurrentProcess(void) {

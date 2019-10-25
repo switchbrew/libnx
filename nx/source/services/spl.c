@@ -128,6 +128,17 @@ NX_GENERATE_SPL_SRV_INIT(Es,     es)
 NX_GENERATE_SPL_SRV_INIT(Fs,     fs)
 NX_GENERATE_SPL_SRV_INIT(Manu,   manu)
 
+static Result _splCmdNoInOutU8(Service* srv, u8 *out, u32 cmd_id) {
+    return serviceDispatchOut(srv, cmd_id, *out);
+}
+
+static Result _splCmdNoInOutBool(Service* srv, bool *out, u32 cmd_id) {
+    u8 tmp=0;
+    Result rc = _splCmdNoInOutU8(srv, &tmp, cmd_id);
+    if (R_SUCCEEDED(rc) && out) *out = tmp & 1;
+    return rc;
+}
+
 /* SPL IGeneralService functionality. */
 Result splGetConfig(SplConfigItem config_item, u64 *out_config) {
     const struct {
@@ -173,7 +184,7 @@ Result splGetRandomBytes(void *out, size_t out_size) {
 }
 
 Result splIsDevelopment(bool *out_is_development) {
-    return serviceDispatchOut(_splGetGeneralSrv(), 11, *out_is_development);
+    return _splCmdNoInOutBool(_splGetGeneralSrv(), out_is_development, 11);
 }
 
 Result splSetBootReason(u32 value) {
@@ -301,7 +312,7 @@ Result splRsaDecryptPrivateKey(const void *sealed_kek, const void *wrapped_key, 
 }
 
 /* Helper function for RSA key importing. */
-NX_INLINE Result _splImportSecureExpModKey(Service* srv, u64 cmd_id, const void *sealed_kek, const void *wrapped_key, const void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version) {
+NX_INLINE Result _splImportSecureExpModKey(Service* srv, u32 cmd_id, const void *sealed_kek, const void *wrapped_key, const void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version) {
     const struct {
         SplKey sealed_kek;
         SplKey wrapped_key;
@@ -317,7 +328,7 @@ NX_INLINE Result _splImportSecureExpModKey(Service* srv, u64 cmd_id, const void 
     );
 }
 
-NX_INLINE Result _splSecureExpMod(Service* srv, u64 cmd_id, const void *input, const void *modulus, void *dst) {
+NX_INLINE Result _splSecureExpMod(Service* srv, u32 cmd_id, const void *input, const void *modulus, void *dst) {
     return serviceDispatch(srv, cmd_id,
         .buffer_attrs = {
             SfBufferAttr_HipcPointer | SfBufferAttr_Out,
@@ -348,7 +359,7 @@ Result splSslSecureExpMod(const void *input, const void *modulus, void *dst) {
 }
 
 /* SPL IEsService functionality. */
-NX_INLINE Result _splUnwrapRsaOaepWrappedKey(Service *srv, u64 cmd_id, const void *rsa_wrapped_key, const void *modulus, const void *label_hash, size_t label_hash_size, u32 key_generation, void *out_sealed_key) {
+NX_INLINE Result _splUnwrapRsaOaepWrappedKey(Service *srv, u32 cmd_id, const void *rsa_wrapped_key, const void *modulus, const void *label_hash, size_t label_hash_size, u32 key_generation, void *out_sealed_key) {
     return serviceDispatchInOut(srv, cmd_id, key_generation, *((SplKey *)out_sealed_key),
         .buffer_attrs = {
             SfBufferAttr_HipcPointer | SfBufferAttr_In,
@@ -363,7 +374,7 @@ NX_INLINE Result _splUnwrapRsaOaepWrappedKey(Service *srv, u64 cmd_id, const voi
     );
 }
 
-NX_INLINE Result _splLoadContentKey(Service *srv, u64 cmd_id, const void *sealed_key, u32 keyslot) {
+NX_INLINE Result _splLoadContentKey(Service *srv, u32 cmd_id, const void *sealed_key, u32 keyslot) {
     const struct {
         SplKey sealed_key;
         u32 keyslot;
