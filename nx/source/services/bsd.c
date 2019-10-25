@@ -1,4 +1,4 @@
-// Copyright 2017 plutoo
+#define NX_SERVICE_ASSUME_NON_DOMAIN
 #include <errno.h>
 #include <string.h>
 
@@ -12,13 +12,15 @@
 #include <net/if.h>
 #include <net/if_media.h>
 
-#include "types.h"
-#include "result.h"
-#include "kernel/ipc.h"
+#include "service_guard.h"
 #include "kernel/shmem.h"
 #include "kernel/rwlock.h"
 #include "services/bsd.h"
-#include "services/sm.h"
+
+typedef struct BsdSelectTimeval {
+    struct timeval tv;
+    bool is_null;
+} BsdSelectTimeval;
 
 __thread Result g_bsdResult;
 __thread int g_bsdErrno;
@@ -43,229 +45,175 @@ static const BsdInitConfig g_defaultBsdInitConfig = {
     .sb_efficiency = 4,
 };
 
-/*
-    This function computes the minimal size of the transfer memory to be passed to @ref bsdInitalize.
-    Should the transfer memory be smaller than that, the BSD sockets service would only send
-    ZeroWindow packets (for TCP), resulting in a transfer rate not exceeding 1 byte/s.
-*/
-static size_t _bsdGetTransferMemSizeForConfig(const BsdInitConfig *config) {
+NX_GENERATE_SERVICE_GUARD_PARAMS(bsd, (const BsdInitConfig *config), (config));
+
+// This function computes the minimal size of the transfer memory to be passed to @ref bsdInitalize.
+// Should the transfer memory be smaller than that, the BSD sockets service would only send
+// ZeroWindow packets (for TCP), resulting in a transfer rate not exceeding 1 byte/s.
+NX_CONSTEXPR size_t _bsdGetTransferMemSizeForConfig(const BsdInitConfig *config) {
     u32 tcp_tx_buf_max_size = config->tcp_tx_buf_max_size != 0 ? config->tcp_tx_buf_max_size : config->tcp_tx_buf_size;
     u32 tcp_rx_buf_max_size = config->tcp_rx_buf_max_size != 0 ? config->tcp_rx_buf_max_size : config->tcp_rx_buf_size;
     u32 sum = tcp_tx_buf_max_size + tcp_rx_buf_max_size + config->udp_tx_buf_size + config->udp_rx_buf_size;
 
-    sum = ((sum + 0xFFF) >> 12) << 12; // page round-up
+    sum = (sum + 0xFFF) &~ 0xFFF; // page round-up
     return (size_t)(config->sb_efficiency * sum);
 }
 
-static Result _bsdRegisterClient(Service* srv, TransferMemory* tmem, const BsdInitConfig *config, u64* pid_out) {
-    IpcCommand c;
-    ipcInitialize(&c);
-    ipcSendPid(&c);
-    ipcSendHandleCopy(&c, tmem->handle);
+NX_CONSTEXPR BsdSelectTimeval _bsdCreateSelectTimeval(struct timeval *timeval) {
+    BsdSelectTimeval ret = {};
+    if (timeval)
+        ret.tv = *timeval;
+    else
+        ret.is_null = true;
+    return ret;
+}
 
-    struct {
-        u64 magic;
-        u64 cmd_id;
+static Result _bsdRegisterClient(TransferMemory* tmem, const BsdInitConfig *config, u64* pid_out) {
+    const struct {
         BsdInitConfig config;
-        u64 pid_reserved;
+        u64 pid_placeholder;
         u64 tmem_sz;
-    } *raw;
+    } in = { *config, 0, tmem->size };
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
+    Result rc = serviceDispatchInOut(&g_bsdSrv, 0, in, *pid_out,
+        .in_send_pid = true,
+        .in_num_handles = 1,
+        .in_handles = { tmem->handle },
+    );
 
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 0;
-    raw->config = *config;
-    raw->pid_reserved = 0;
-    raw->tmem_sz = tmem->size;
-
-    Result rc = serviceIpcDispatch(srv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-            u64 pid;
-        } *resp = r.Raw;
-
-        *pid_out = resp->pid;
-        g_bsdResult = rc = resp->result;
-        g_bsdErrno = 0;
-    }
-
+    g_bsdResult = rc;
+    g_bsdErrno = 0;
     return rc;
 }
 
-static Result _bsdStartMonitor(Service* srv, u64 pid) {
-    IpcCommand c;
-    ipcInitialize(&c);
-    ipcSendPid(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        u64 pid;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 1;
-    raw->pid = pid;
-
-    Result rc = serviceIpcDispatch(srv);
-
-    if (R_SUCCEEDED(rc)) {
-        IpcParsedCommand r;
-        ipcParse(&r);
-
-        struct {
-            u64 magic;
-            u64 result;
-        } *resp = r.Raw;
-
-        g_bsdResult = rc = resp->result;
-        g_bsdErrno = 0;
-    }
-
+static Result _bsdStartMonitoring(u64 pid) {
+    Result rc = serviceDispatchIn(&g_bsdMonitor, 1, pid, .in_send_pid = true);
+    g_bsdResult = rc;
+    g_bsdErrno = 0;
     return rc;
 }
 
-typedef struct  {
-    u64 magic;
-    u64 result;
-    int ret;
-    int errno_;
-} BsdIpcResponseBase;
+NX_INLINE int _bsdDispatchImpl(
+    u32 request_id,
+    const void* in_data, u32 in_data_size,
+    void* out_data, u32 out_data_size,
+    SfDispatchParams disp
+)
+{
+    // Make a copy of the service struct, so that the compiler can assume that it won't be modified by function calls.
+    Service srv = g_bsdSrv;
 
-static int _bsdDispatchBasicCommand(IpcCommand *c, IpcParsedCommand *rOut) {
-    Result rc = serviceIpcDispatch(&g_bsdSrv);
-    IpcParsedCommand r;
+    void* in = serviceMakeRequest(&srv, request_id, disp.context,
+        in_data_size, disp.in_send_pid,
+        disp.buffer_attrs, disp.buffers,
+        disp.in_num_objects, disp.in_objects,
+        disp.in_num_handles, disp.in_handles);
+
+    if (in_data_size)
+        __builtin_memcpy(in, in_data, in_data_size);
+
+    Result rc = svcSendSyncRequest(srv.session);
     int ret = -1;
-
+    int errno_ = -1;
+    void* out_ptr = NULL;
     if (R_SUCCEEDED(rc)) {
-        ipcParse(&r);
+        // This is only correct if extra outputs need 32-bit alignment or more
+        // So far no BSD commands with extra outputs smaller than 32-bit have been observed
+        struct {
+            int ret;
+            int errno_;
+        } *out = NULL;
 
-        BsdIpcResponseBase *resp = r.Raw;
-
-        rc = resp->result;
+        rc = serviceParseResponse(&srv,
+            sizeof(*out)+out_data_size, (void**)&out,
+            disp.out_num_objects, disp.out_objects,
+            disp.out_handle_attrs, disp.out_handles);
 
         if (R_SUCCEEDED(rc)) {
-            ret = resp->ret;
-            g_bsdErrno = (ret < 0) ? resp->errno_ : 0;
+            ret = out->ret;
+            errno_ = ret < 0 ? out->errno_ : 0;
+            if (errno_ == 0)
+                out_ptr = out+1;
         }
     }
 
-    if (R_FAILED(rc))
-        g_bsdErrno = -1;
-
-    if(rOut != NULL)
-        *rOut = r;
+    if (out_ptr && out_data && out_data_size)
+        __builtin_memcpy(out_data, out_ptr, out_data_size);
 
     g_bsdResult = rc;
+    g_bsdErrno = errno_;
     return ret;
 }
 
-static int _bsdDispatchCommandWithOutAddrlen(IpcCommand *c, socklen_t *addrlen) {
-    IpcParsedCommand r;
-    int ret = _bsdDispatchBasicCommand(c, &r);
-    if(ret != -1 && addrlen != NULL) {
-        struct {
-            BsdIpcResponseBase bsd_resp;
-            socklen_t addrlen;
-        } *resp = r.Raw;
-        *addrlen = resp->addrlen;
-    }
-    return ret;
+#define _bsdDispatch(_rid,...) \
+    _bsdDispatchImpl((_rid),NULL,0,NULL,0,(SfDispatchParams){ __VA_ARGS__ })
+
+#define _bsdDispatchIn(_rid,_in,...) \
+    _bsdDispatchImpl((_rid),&(_in),sizeof(_in),NULL,0,(SfDispatchParams){ __VA_ARGS__ })
+
+#define _bsdDispatchOut(_rid,_out,...) \
+    _bsdDispatchImpl((_rid),NULL,0,&(_out),sizeof(_out),(SfDispatchParams){ __VA_ARGS__ })
+
+#define _bsdDispatchInOut(_rid,_in,_out,...) \
+    _bsdDispatchImpl((_rid),&(_in),sizeof(_in),&(_out),sizeof(_out),(SfDispatchParams){ __VA_ARGS__ })
+
+static int _bsdCmdInSockfdOutSockaddr(int sockfd, struct sockaddr *addr, socklen_t *addrlen, u32 cmd_id) {
+    socklen_t maxaddrlen = addrlen ? *addrlen : 0;
+
+    return _bsdDispatchInOut(cmd_id, sockfd, *addrlen,
+        .buffer_attrs = { SfBufferAttr_HipcAutoSelect | SfBufferAttr_Out },
+        .buffers = { { addr, maxaddrlen } },
+    );
 }
 
-static int _bsdNameGetterCommand(u32 cmd_id, int sockfd, struct sockaddr *addr, socklen_t *addrlen) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    socklen_t maxaddrlen = addrlen == NULL ? 0 : *addrlen;
-
-    ipcAddRecvSmart(&c, g_bsdSrv.pointer_buffer_size, addr, maxaddrlen, 0);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        int sockfd;
-    } PACKED *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = cmd_id;
-    raw->sockfd = sockfd;
-
-    return _bsdDispatchCommandWithOutAddrlen(&c, addrlen);
+static int _bsdCmdInSockfdSockaddr(int sockfd, const struct sockaddr *addr, socklen_t addrlen, u32 cmd_id) {
+    return _bsdDispatchIn(cmd_id, sockfd,
+        .buffer_attrs = { SfBufferAttr_HipcAutoSelect | SfBufferAttr_In },
+        .buffers = { { addr, addrlen } },
+    );
 }
 
-static int _bsdSocketCreationCommand(u32 cmd_id, int domain, int type, int protocol) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+static int _bsdCmdInDomainTypeProtocol(int domain, int type, int protocol, u32 cmd_id) {
+    const struct {
         int domain;
         int type;
         int protocol;
-    } *raw;
+    } in = { domain, type, protocol };
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = cmd_id;
-    raw->domain = domain;
-    raw->type = type;
-    raw->protocol = protocol;
-
-    return _bsdDispatchBasicCommand(&c, NULL);
+    return _bsdDispatchIn(cmd_id, in);
 }
 
 const BsdInitConfig *bsdGetDefaultInitConfig(void) {
     return &g_defaultBsdInitConfig;
 }
 
-Result bsdInitialize(const BsdInitConfig *config) {
+Result _bsdInitialize(const BsdInitConfig *config) {
+    if (!config)
+        config = &g_defaultBsdInitConfig;
+
     const char* bsd_srv = "bsd:s";
-
-    if(serviceIsActive(&g_bsdSrv) || serviceIsActive(&g_bsdMonitor))
-        return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
-
     Result rc = smGetService(&g_bsdSrv, bsd_srv);
-
     if (R_FAILED(rc)) {
         bsd_srv = "bsd:u";
         rc = smGetService(&g_bsdSrv, bsd_srv);
     }
-    if(R_FAILED(rc)) goto error;
 
-    rc = smGetService(&g_bsdMonitor, bsd_srv);
-    if(R_FAILED(rc)) goto error;
+    if (R_SUCCEEDED(rc))
+        rc = smGetService(&g_bsdMonitor, bsd_srv);
 
-    rc = tmemCreate(&g_bsdTmem, _bsdGetTransferMemSizeForConfig(config), 0);
-    if(R_FAILED(rc)) goto error;
+    if (R_SUCCEEDED(rc))
+        rc = tmemCreate(&g_bsdTmem, _bsdGetTransferMemSizeForConfig(config), 0);
 
-    rc = _bsdRegisterClient(&g_bsdSrv, &g_bsdTmem, config, &g_bsdClientPid);
-    if(R_FAILED(rc)) goto error;
+    if (R_SUCCEEDED(rc))
+        rc = _bsdRegisterClient(&g_bsdTmem, config, &g_bsdClientPid);
 
-    rc = _bsdStartMonitor(&g_bsdMonitor, g_bsdClientPid);
-    if(R_FAILED(rc)) goto error;
+    if (R_SUCCEEDED(rc))
+        rc = _bsdStartMonitoring(g_bsdClientPid);
 
-    return rc;
-
-error:
-    bsdExit();
     return rc;
 }
 
-void bsdExit(void) {
+void _bsdCleanup(void) {
     g_bsdClientPid = 0;
     serviceClose(&g_bsdMonitor);
     serviceClose(&g_bsdSrv);
@@ -277,322 +225,194 @@ Service* bsdGetServiceSession(void) {
 }
 
 int bsdSocket(int domain, int type, int protocol) {
-    return _bsdSocketCreationCommand(2, domain, type, protocol);
+    return _bsdCmdInDomainTypeProtocol(domain, type, protocol, 2);
 }
 
 int bsdSocketExempt(int domain, int type, int protocol) {
-    return _bsdSocketCreationCommand(3, domain, type, protocol);
+    return _bsdCmdInDomainTypeProtocol(domain, type, protocol, 3);
 }
 
 int bsdOpen(const char *pathname, int flags) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    size_t pathlen = strlen(pathname) + 1;
-    ipcAddSendSmart(&c, g_bsdSrv.pointer_buffer_size, pathname, pathlen, 0);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        int flags;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 4;
-    raw->flags = flags;
-
-    return _bsdDispatchBasicCommand(&c, NULL);
+    return _bsdDispatchIn(4, flags,
+        .buffer_attrs = { SfBufferAttr_HipcAutoSelect | SfBufferAttr_In },
+        .buffers = { { pathname, strlen(pathname) + 1 } },
+    );
 }
 
 int bsdSelect(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struct timeval *timeout) {
-    IpcCommand c;
-    ipcInitialize(&c);
+    size_t readfds_size   = readfds   ? sizeof(fd_set) : 0;
+    size_t writefds_size  = writefds  ? sizeof(fd_set) : 0;
+    size_t exceptfds_size = exceptfds ? sizeof(fd_set) : 0;
 
-    ipcAddSendSmart(&c, g_bsdSrv.pointer_buffer_size, readfds, readfds == NULL ? 0 : sizeof(fd_set), 0);
-    ipcAddSendSmart(&c, g_bsdSrv.pointer_buffer_size, writefds, writefds == NULL ? 0 : sizeof(fd_set), 1);
-    ipcAddSendSmart(&c, g_bsdSrv.pointer_buffer_size, exceptfds, exceptfds == NULL ? 0 : sizeof(fd_set), 2);
-    ipcAddSendSmart(&c, g_bsdSrv.pointer_buffer_size, exceptfds, exceptfds == NULL ? 0 : sizeof(fd_set), 3);
-
-    ipcAddRecvSmart(&c, g_bsdSrv.pointer_buffer_size, readfds, readfds == NULL ? 0 : sizeof(fd_set), 0);
-    ipcAddRecvSmart(&c, g_bsdSrv.pointer_buffer_size, writefds, writefds == NULL ? 0 : sizeof(fd_set), 1);
-    ipcAddRecvSmart(&c, g_bsdSrv.pointer_buffer_size, exceptfds, exceptfds == NULL ? 0 : sizeof(fd_set), 2);
-    ipcAddRecvSmart(&c, g_bsdSrv.pointer_buffer_size, exceptfds, exceptfds == NULL ? 0 : sizeof(fd_set), 3);
-
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         int nfds;
-        struct timeval timeout;
-        bool nullTimeout;
-    } *raw;
+        BsdSelectTimeval timeout;
+    } in = { nfds, _bsdCreateSelectTimeval(timeout) };
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 5;
-    raw->nfds = nfds;
-    if(!(raw->nullTimeout = timeout == NULL))
-        raw->timeout = *timeout;
-
-    return _bsdDispatchBasicCommand(&c, NULL);
+    return _bsdDispatchIn(5, in,
+        .buffer_attrs = {
+            SfBufferAttr_HipcAutoSelect | SfBufferAttr_In,
+            SfBufferAttr_HipcAutoSelect | SfBufferAttr_In,
+            SfBufferAttr_HipcAutoSelect | SfBufferAttr_In,
+            SfBufferAttr_HipcAutoSelect | SfBufferAttr_Out,
+            SfBufferAttr_HipcAutoSelect | SfBufferAttr_Out,
+            SfBufferAttr_HipcAutoSelect | SfBufferAttr_Out,
+        },
+        .buffers = {
+            { readfds,   readfds_size   },
+            { writefds,  writefds_size  },
+            { exceptfds, exceptfds_size },
+            { readfds,   readfds_size   },
+            { writefds,  writefds_size  },
+            { exceptfds, exceptfds_size },
+        },
+    );
 }
 
 int bsdPoll(struct pollfd *fds, nfds_t nfds, int timeout) {
-    IpcCommand c;
-    ipcInitialize(&c);
+    size_t fds_size = nfds * sizeof(struct pollfd);
 
-    ipcAddSendSmart(&c, g_bsdSrv.pointer_buffer_size, fds, nfds * sizeof(struct pollfd), 0);
-    ipcAddRecvSmart(&c, g_bsdSrv.pointer_buffer_size, fds, nfds * sizeof(struct pollfd), 0);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         nfds_t nfds;
         int timeout;
-    } *raw;
+    } in = { nfds, timeout };
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 6;
-    raw->nfds = nfds;
-    raw->timeout = timeout;
-
-    return _bsdDispatchBasicCommand(&c, NULL);
+    return _bsdDispatchIn(6, in,
+        .buffer_attrs = {
+            SfBufferAttr_HipcAutoSelect | SfBufferAttr_In,
+            SfBufferAttr_HipcAutoSelect | SfBufferAttr_Out,
+        },
+        .buffers = {
+            { fds, fds_size },
+            { fds, fds_size },
+        },
+    );
 }
 
 int bsdSysctl(const int *name, unsigned int namelen, void *oldp, size_t *oldlenp, const void *newp, size_t newlen) {
-    IpcCommand c;
-    size_t inlen = oldlenp == NULL ? 0 : *oldlenp;
+    size_t inlen = oldlenp ? *oldlenp : 0;
 
-    ipcInitialize(&c);
-
-    ipcAddSendSmart(&c, g_bsdSrv.pointer_buffer_size, name, 4 * namelen, 0);
-    ipcAddSendSmart(&c, g_bsdSrv.pointer_buffer_size, newp, newlen, 1);
-
-    ipcAddRecvSmart(&c, g_bsdSrv.pointer_buffer_size, oldp, inlen, 0);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 7;
-
-    IpcParsedCommand r;
-    int ret = _bsdDispatchBasicCommand(&c, &r);
-    if(ret != -1 && oldlenp != NULL) {
-        struct {
-            BsdIpcResponseBase bsd_resp;
-            size_t oldlenp;
-        } *resp = r.Raw;
-        *oldlenp = resp->oldlenp;
-    }
-    return ret;
+    return _bsdDispatchOut(7, *oldlenp,
+        .buffer_attrs = {
+            SfBufferAttr_HipcAutoSelect | SfBufferAttr_In,
+            SfBufferAttr_HipcAutoSelect | SfBufferAttr_In,
+            SfBufferAttr_HipcAutoSelect | SfBufferAttr_Out,
+        },
+        .buffers = {
+            { name, 4*namelen },
+            { newp, newlen    },
+            { oldp, inlen     },
+        },
+    );
 }
 
 ssize_t bsdRecv(int sockfd, void *buf, size_t len, int flags) {
-    IpcCommand c;
-    ipcInitialize(&c);
-    ipcAddRecvSmart(&c, g_bsdSrv.pointer_buffer_size, buf, len, 0);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         int sockfd;
         int flags;
-    } *raw;
+    } in = { sockfd, flags };
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 8;
-    raw->sockfd = sockfd;
-    raw->flags = flags;
-
-    return _bsdDispatchBasicCommand(&c, NULL);
+    return _bsdDispatchIn(8, in,
+        .buffer_attrs = { SfBufferAttr_HipcAutoSelect | SfBufferAttr_Out },
+        .buffers = { { buf, len } },
+    );
 }
 
 ssize_t bsdRecvFrom(int sockfd, void *buf, size_t len, int flags, struct sockaddr *src_addr, socklen_t *addrlen){
-    IpcCommand c;
-    socklen_t inaddrlen = addrlen == NULL ? 0 : *addrlen;
+    socklen_t inaddrlen = addrlen ? *addrlen : 0;
 
-    ipcInitialize(&c);
-
-    ipcAddRecvSmart(&c, g_bsdSrv.pointer_buffer_size, buf, len, 0);
-    ipcAddRecvSmart(&c, g_bsdSrv.pointer_buffer_size, src_addr, inaddrlen, 1);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         int sockfd;
         int flags;
-    } *raw;
+    } in = { sockfd, flags };
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 9;
-    raw->sockfd = sockfd;
-    raw->flags = flags;
-
-    return _bsdDispatchCommandWithOutAddrlen(&c, addrlen);
+    return _bsdDispatchInOut(9, in, *addrlen,
+        .buffer_attrs = {
+            SfBufferAttr_HipcAutoSelect | SfBufferAttr_Out,
+            SfBufferAttr_HipcAutoSelect | SfBufferAttr_Out,
+        },
+        .buffers = {
+            { buf,      len       },
+            { src_addr, inaddrlen },
+        },
+    );
 }
 
 ssize_t bsdSend(int sockfd, const void* buf, size_t len, int flags) {
-    IpcCommand c;
-    ipcInitialize(&c);
-    ipcAddSendSmart(&c, g_bsdSrv.pointer_buffer_size, buf, len, 0);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         int sockfd;
         int flags;
-    } *raw;
+    } in = { sockfd, flags };
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 10;
-    raw->sockfd = sockfd;
-    raw->flags = flags;
-
-    return _bsdDispatchBasicCommand(&c, NULL);
+    return _bsdDispatchIn(10, in,
+        .buffer_attrs = { SfBufferAttr_HipcAutoSelect | SfBufferAttr_In },
+        .buffers = { { buf, len } },
+    );
 }
 
 ssize_t bsdSendTo(int sockfd, const void *buf, size_t len, int flags, const struct sockaddr *dest_addr, socklen_t addrlen) {
-    IpcCommand c;
-    ipcInitialize(&c);
-    ipcAddSendSmart(&c, g_bsdSrv.pointer_buffer_size, buf, len, 0);
-    ipcAddSendSmart(&c, g_bsdSrv.pointer_buffer_size, dest_addr, addrlen, 1);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         int sockfd;
         int flags;
-    } *raw;
+    } in = { sockfd, flags };
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 11;
-    raw->sockfd = sockfd;
-    raw->flags = flags;
-
-    return _bsdDispatchBasicCommand(&c, NULL);
+    return _bsdDispatchIn(11, in,
+        .buffer_attrs = {
+            SfBufferAttr_HipcAutoSelect | SfBufferAttr_In,
+            SfBufferAttr_HipcAutoSelect | SfBufferAttr_In,
+        },
+        .buffers = {
+            { buf,       len     },
+            { dest_addr, addrlen },
+        },
+    );
 }
 
 int bsdAccept(int sockfd, struct sockaddr *addr, socklen_t *addrlen) {
-    return _bsdNameGetterCommand(12, sockfd, addr, addrlen);
+    return _bsdCmdInSockfdOutSockaddr(sockfd, addr, addrlen, 12);
 }
 
 int bsdBind(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
-    IpcCommand c;
-    ipcInitialize(&c);
-    ipcAddSendSmart(&c, g_bsdSrv.pointer_buffer_size, addr, addrlen, 0);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        int sockfd;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 13;
-    raw->sockfd = sockfd;
-
-    return _bsdDispatchBasicCommand(&c, NULL);
+    return _bsdCmdInSockfdSockaddr(sockfd, addr, addrlen, 13);
 }
 
 int bsdConnect(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
-    IpcCommand c;
-    ipcInitialize(&c);
-    ipcAddSendSmart(&c, g_bsdSrv.pointer_buffer_size, addr, addrlen, 0);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        int sockfd;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 14;
-    raw->sockfd = sockfd;
-
-    return _bsdDispatchBasicCommand(&c, NULL);
+    return _bsdCmdInSockfdSockaddr(sockfd, addr, addrlen, 14);
 }
 
 int bsdGetPeerName(int sockfd, struct sockaddr *addr, socklen_t *addrlen) {
-    return _bsdNameGetterCommand(15, sockfd, addr, addrlen);
+    return _bsdCmdInSockfdOutSockaddr(sockfd, addr, addrlen, 15);
 }
 
 int bsdGetSockName(int sockfd, struct sockaddr *addr, socklen_t *addrlen) {
-    return _bsdNameGetterCommand(16, sockfd, addr, addrlen);
+    return _bsdCmdInSockfdOutSockaddr(sockfd, addr, addrlen, 16);
 }
 
 int bsdGetSockOpt(int sockfd, int level, int optname, void *optval, socklen_t *optlen) {
-    IpcCommand c;
-    ipcInitialize(&c);
+    socklen_t inoptlen = optlen ? *optlen : 0;
 
-    socklen_t inoptlen = optlen == NULL ? 0 : *optlen;
-
-    ipcAddRecvSmart(&c, g_bsdSrv.pointer_buffer_size, optval, inoptlen, 0);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         int sockfd;
         int level;
         int optname;
-    } PACKED *raw;
+    } in = { sockfd, level, optname };
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 17;
-    raw->sockfd = sockfd;
-    raw->level = level;
-    raw->optname = optname;
-
-    return _bsdDispatchBasicCommand(&c, NULL);
+    return _bsdDispatchInOut(17, in, *optlen,
+        .buffer_attrs = { SfBufferAttr_HipcAutoSelect | SfBufferAttr_Out },
+        .buffers = { { optval, inoptlen } },
+    );
 }
 
 int bsdListen(int sockfd, int backlog) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
     struct {
-        u64 magic;
-        u64 cmd_id;
         int sockfd;
         int backlog;
-    } *raw;
+    } in = { sockfd, backlog };
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 18;
-    raw->sockfd = sockfd;
-    raw->backlog = backlog;
-
-    return _bsdDispatchBasicCommand(&c, NULL);
+    return _bsdDispatchIn(18, in);
 }
 
 int bsdIoctl(int fd, int request, void *data) {
-    IpcCommand c;
-
     const void *in1 = NULL, *in2 = NULL, *in3 = NULL, *in4 = NULL;
     size_t in1sz = 0, in2sz = 0, in3sz = 0, in4sz = 0;
 
@@ -638,40 +458,37 @@ int bsdIoctl(int fd, int request, void *data) {
         }
     }
 
-    ipcInitialize(&c);
-
-    ipcAddSendSmart(&c, g_bsdSrv.pointer_buffer_size, in1, in1sz, 0);
-    ipcAddSendSmart(&c, g_bsdSrv.pointer_buffer_size, in2, in2sz, 1);
-    ipcAddSendSmart(&c, g_bsdSrv.pointer_buffer_size, in3, in3sz, 2);
-    ipcAddSendSmart(&c, g_bsdSrv.pointer_buffer_size, in4, in4sz, 3);
-
-    ipcAddRecvSmart(&c, g_bsdSrv.pointer_buffer_size, out1, out1sz, 0);
-    ipcAddRecvSmart(&c, g_bsdSrv.pointer_buffer_size, out2, out2sz, 1);
-    ipcAddRecvSmart(&c, g_bsdSrv.pointer_buffer_size, out3, out3sz, 2);
-    ipcAddRecvSmart(&c, g_bsdSrv.pointer_buffer_size, out4, out4sz, 3);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         int fd;
         int request;
         int bufcount;
-    } PACKED *raw;
+    } in = { fd, request, bufcount };
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 19;
-    raw->fd = fd;
-    raw->request = request;
-    raw->bufcount = bufcount;
-
-    return _bsdDispatchBasicCommand(&c, NULL);
+    return _bsdDispatchIn(19, in,
+        .buffer_attrs = {
+            SfBufferAttr_HipcAutoSelect | SfBufferAttr_In,
+            SfBufferAttr_HipcAutoSelect | SfBufferAttr_In,
+            SfBufferAttr_HipcAutoSelect | SfBufferAttr_In,
+            SfBufferAttr_HipcAutoSelect | SfBufferAttr_In,
+            SfBufferAttr_HipcAutoSelect | SfBufferAttr_Out,
+            SfBufferAttr_HipcAutoSelect | SfBufferAttr_Out,
+            SfBufferAttr_HipcAutoSelect | SfBufferAttr_Out,
+            SfBufferAttr_HipcAutoSelect | SfBufferAttr_Out,
+        },
+        .buffers = {
+            { in1,  in1sz  },
+            { in2,  in2sz  },
+            { in3,  in3sz  },
+            { in4,  in4sz  },
+            { out1, out1sz },
+            { out2, out2sz },
+            { out3, out3sz },
+            { out4, out4sz },
+        },
+    );
 }
 
 int bsdFcntl(int fd, int cmd, int flags) {
-    IpcCommand c;
-
     if(cmd != F_GETFL && cmd != F_SETFL) {
         g_bsdResult = 0;
         g_bsdErrno = EOPNOTSUPP;
@@ -681,168 +498,65 @@ int bsdFcntl(int fd, int cmd, int flags) {
     if(cmd == F_GETFL)
         flags = 0;
 
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         int fd;
         int cmd;
         int flags;
-    } *raw;
+    } in = { fd, cmd, flags };
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 20;
-    raw->fd = fd;
-    raw->cmd = cmd;
-    raw->flags = flags;
-
-    return _bsdDispatchBasicCommand(&c, NULL);
+    return _bsdDispatchIn(20, in);
 }
 
 int bsdSetSockOpt(int sockfd, int level, int optname, const void *optval, socklen_t optlen) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    ipcAddSendSmart(&c, g_bsdSrv.pointer_buffer_size, optval, optlen, 0);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         int sockfd;
         int level;
         int optname;
-    } *raw;
+    } in = { sockfd, level, optname };
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 21;
-    raw->sockfd = sockfd;
-    raw->level = level;
-    raw->optname = optname;
-
-    return _bsdDispatchBasicCommand(&c, NULL);
+    return _bsdDispatchIn(21, in,
+        .buffer_attrs = { SfBufferAttr_HipcAutoSelect | SfBufferAttr_In },
+        .buffers = { { optval, optlen } },
+    );
 }
 
 int bsdShutdown(int sockfd, int how) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         int sockfd;
         int how;
-    } *raw;
+    } in = { sockfd, how };
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 22;
-    raw->sockfd = sockfd;
-    raw->how = how;
-
-    return _bsdDispatchBasicCommand(&c, NULL);
+    return _bsdDispatchIn(22, in);
 }
 
 int bsdShutdownAllSockets(int how) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        int how;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 23;
-    raw->how = how;
-
-    return _bsdDispatchBasicCommand(&c, NULL);
+    return _bsdDispatchIn(23, how);
 }
 
 ssize_t bsdWrite(int fd, const void *buf, size_t count) {
-    IpcCommand c;
-    ipcInitialize(&c);
-    ipcAddSendSmart(&c, g_bsdSrv.pointer_buffer_size, buf, count, 0);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        int fd;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 24;
-    raw->fd = fd;
-
-    return _bsdDispatchBasicCommand(&c, NULL);
+    return _bsdDispatchIn(24, fd,
+        .buffer_attrs = { SfBufferAttr_HipcAutoSelect | SfBufferAttr_In },
+        .buffers = { { buf, count } },
+    );
 }
 
 ssize_t bsdRead(int fd, void *buf, size_t count) {
-    IpcCommand c;
-    ipcInitialize(&c);
-    ipcAddRecvSmart(&c, g_bsdSrv.pointer_buffer_size, buf, count, 0);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        int fd;
-    } PACKED *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 25;
-    raw->fd = fd;
-
-    return _bsdDispatchBasicCommand(&c, NULL);
+    return _bsdDispatchIn(25, fd,
+        .buffer_attrs = { SfBufferAttr_HipcAutoSelect | SfBufferAttr_Out },
+        .buffers = { { buf, count } },
+    );
 }
 
 int bsdClose(int fd) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
-        int fd;
-    } *raw;
-
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 26;
-    raw->fd = fd;
-
-    return _bsdDispatchBasicCommand(&c, NULL);
+    return _bsdDispatchIn(26, fd);
 }
 
 int bsdDuplicateSocket(int sockfd) {
-    IpcCommand c;
-    ipcInitialize(&c);
-
-    struct {
-        u64 magic;
-        u64 cmd_id;
+    const struct {
         int sockfd;
+        u32 _padding;
         u64 reserved;
-    } *raw;
+    } in = { sockfd, 0, 0 };
 
-    raw = ipcPrepareHeader(&c, sizeof(*raw));
-
-    raw->magic = SFCI_MAGIC;
-    raw->cmd_id = 27;
-    raw->sockfd = sockfd;
-    raw->reserved = 0;
-
-    return _bsdDispatchBasicCommand(&c, NULL);
+    return _bsdDispatchIn(27, in);
 }

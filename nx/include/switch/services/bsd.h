@@ -12,7 +12,7 @@
 
 #include "../types.h"
 #include "../kernel/tmem.h"
-#include "../services/sm.h"
+#include "../sf/service.h"
 
 /// Configuration structure for bsdInitalize
 typedef struct  {
