@@ -2216,7 +2216,7 @@ Result appletInvalidateTransitionLayer(void);
  * @param[in] buffer Buffer containing the above storage data.
  * @param[in] size Size of the storage buffer.
  */
-Result appletRequestLaunchApplicationWithUserAndArgumentForDebug(u64 titleID, const AccountUid *userIDs, size_t total_userIDs, bool flag, const void* buffer, size_t size);
+Result appletRequestLaunchApplicationWithUserAndArgumentForDebug(u64 titleID, const AccountUid *userIDs, s32 total_userIDs, bool flag, const void* buffer, size_t size);
 
 /**
  * @brief Gets the \ref AppletResourceUsageInfo.
