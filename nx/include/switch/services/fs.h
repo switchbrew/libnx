@@ -266,72 +266,6 @@ typedef enum {
     FsBisStorageId_SystemProperPartition           = 33,
 } FsBisStorageId;
 
-typedef enum {
-    FsPriority_Normal     = 0,
-    FsPriority_Realtime   = 1,
-    FsPriority_Low        = 2,
-    FsPriority_Background = 3,
-} FsPriority;
-
-Result fsInitialize(void);
-void fsExit(void);
-
-Service* fsGetServiceSession(void);
-
-void fsSetPriority(FsPriority prio);
-
-Result fsOpenBisStorage(FsStorage* out, FsBisStorageId partitionId);
-Result fsOpenBisFileSystem(FsFileSystem* out, FsBisStorageId partitionId, const char* string);
-
-Result fsCreateSaveDataFileSystemBySystemSaveDataId(const FsSave* save, const FsSaveCreate* create);
-Result fsDeleteSaveDataFileSystemBySaveDataSpaceId(FsSaveDataSpaceId saveDataSpaceId, u64 saveID); /// [2.0.0+]
-
-Result fsIsExFatSupported(bool* out);
-Result fsOpenGameCardFileSystem(FsFileSystem* out, const FsGameCardHandle* handle, FsGameCardPartiton partition);
-Result fsReadSaveDataFileSystemExtraDataBySaveDataSpaceId(void* buf, size_t len, FsSaveDataSpaceId saveDataSpaceId, u64 saveID);
-Result fsReadSaveDataFileSystemExtraData(void* buf, size_t len, u64 saveID);
-Result fsWriteSaveDataFileSystemExtraData(const void* buf, size_t len, FsSaveDataSpaceId saveDataSpaceId, u64 saveID);
-Result fsExtendSaveDataFileSystem(FsSaveDataSpaceId saveDataSpaceId, u64 saveID, s64 dataSize, s64 journalSize); /// [3.0.0+]
-
-/// Do not call this directly, see fs_dev.h.
-Result fsOpenSdCardFileSystem(FsFileSystem* out);
-
-Result fsOpenSaveDataFileSystem(FsFileSystem* out, FsSaveDataSpaceId saveDataSpaceId, const FsSave *save);
-Result fsOpenSaveDataFileSystemBySystemSaveDataId(FsFileSystem* out, FsSaveDataSpaceId saveDataSpaceId, const FsSave *save);
-Result fsOpenSaveDataInfoReader(FsSaveDataInfoReader* out, FsSaveDataSpaceId saveDataSpaceId);
-Result fsOpenContentStorageFileSystem(FsFileSystem* out, FsContentStorageId content_storage_id);
-Result fsOpenCustomStorageFileSystem(FsFileSystem* out, FsCustomStorageId custom_storage_id); /// [7.0.0+]
-Result fsOpenDataStorageByCurrentProcess(FsStorage* out);
-Result fsOpenDataStorageByDataId(FsStorage* out, u64 dataId, FsStorageId storageId);
-Result fsOpenDeviceOperator(FsDeviceOperator* out);
-Result fsOpenSdCardDetectionEventNotifier(FsEventNotifier* out);
-
-/// Retrieves the rights id corresponding to the content path. Only available on [2.0.0+].
-Result fsGetRightsIdByPath(const char* path, FsRightsId* out_rights_id);
-
-/// Retrieves the rights id and key generation corresponding to the content path. Only available on [3.0.0+].
-Result fsGetRightsIdAndKeyGenerationByPath(const char* path, u8* out_key_generation, FsRightsId* out_rights_id);
-
-Result fsDisableAutoSaveDataCreation(void);
-
-Result fsSetGlobalAccessLogMode(u32 mode);
-Result fsGetGlobalAccessLogMode(u32* out_mode);
-// todo: Rest of commands here
-
-// Wrapper(s) for fsCreateSaveDataFileSystemBySystemSaveDataId.
-Result fsCreate_SystemSaveDataWithOwner(FsSaveDataSpaceId saveDataSpaceId, u64 saveID, AccountUid userID, u64 ownerId, u64 size, u64 journalSize, u32 flags);
-Result fsCreate_SystemSaveData(FsSaveDataSpaceId saveDataSpaceId, u64 saveID, u64 size, u64 journalSize, u32 flags);
-
-/// FsFileSystem can be mounted with fs_dev for use with stdio, see fs_dev.h.
-
-/// Wrapper(s) for fsOpenSaveDataFileSystem.
-/// See FsSave for titleID and userID.
-Result fsOpen_SaveData(FsFileSystem* out, u64 titleID, AccountUid userID);
-
-/// Wrapper for fsOpenSaveDataFileSystemBySystemSaveDataId.
-/// WARNING: You can brick when writing to SystemSaveData, if the data is corrupted etc.
-Result fsOpen_SystemSaveData(FsFileSystem* out, FsSaveDataSpaceId saveDataSpaceId, u64 saveID, AccountUid userID);
-
 typedef enum
 {
     FsFileSystemType_Logo               = 2,
@@ -347,10 +281,80 @@ typedef enum
     FsFileSystemQueryType_SetArchiveBit = 0,
 } FsFileSystemQueryType;
 
+typedef enum {
+    FsPriority_Normal     = 0,
+    FsPriority_Realtime   = 1,
+    FsPriority_Low        = 2,
+    FsPriority_Background = 3,
+} FsPriority;
+
+Result fsInitialize(void);
+void fsExit(void);
+
+Service* fsGetServiceSession(void);
+
+void fsSetPriority(FsPriority prio);
+
 /// Mount requested filesystem type from content file
 Result fsOpenFileSystem(FsFileSystem* out, FsFileSystemType fsType, const char* contentPath); ///< same as calling fsOpenFileSystemWithId with 0 as titleId
-Result fsOpenFileSystemWithId(FsFileSystem* out, u64 titleId, FsFileSystemType fsType, const char* contentPath); ///< works on all firmwares, titleId is ignored on [1.0.0]
 Result fsOpenFileSystemWithPatch(FsFileSystem* out, u64 titleId, FsFileSystemType fsType); ///< [2.0.0+], like OpenFileSystemWithId but without content path.
+Result fsOpenFileSystemWithId(FsFileSystem* out, u64 titleId, FsFileSystemType fsType, const char* contentPath); ///< works on all firmwares, titleId is ignored on [1.0.0]
+
+Result fsOpenBisFileSystem(FsFileSystem* out, FsBisStorageId partitionId, const char* string);
+Result fsOpenBisStorage(FsStorage* out, FsBisStorageId partitionId);
+
+/// Do not call this directly, see fs_dev.h.
+Result fsOpenSdCardFileSystem(FsFileSystem* out);
+
+Result fsCreateSaveDataFileSystemBySystemSaveDataId(const FsSave* save, const FsSaveCreate* create);
+Result fsDeleteSaveDataFileSystemBySaveDataSpaceId(FsSaveDataSpaceId saveDataSpaceId, u64 saveID); /// [2.0.0+]
+
+Result fsIsExFatSupported(bool* out);
+
+Result fsOpenGameCardFileSystem(FsFileSystem* out, const FsGameCardHandle* handle, FsGameCardPartiton partition);
+
+Result fsExtendSaveDataFileSystem(FsSaveDataSpaceId saveDataSpaceId, u64 saveID, s64 dataSize, s64 journalSize); /// [3.0.0+]
+
+Result fsOpenSaveDataFileSystem(FsFileSystem* out, FsSaveDataSpaceId saveDataSpaceId, const FsSave *save);
+Result fsOpenSaveDataFileSystemBySystemSaveDataId(FsFileSystem* out, FsSaveDataSpaceId saveDataSpaceId, const FsSave *save);
+
+Result fsReadSaveDataFileSystemExtraDataBySaveDataSpaceId(void* buf, size_t len, FsSaveDataSpaceId saveDataSpaceId, u64 saveID);
+Result fsReadSaveDataFileSystemExtraData(void* buf, size_t len, u64 saveID);
+Result fsWriteSaveDataFileSystemExtraData(const void* buf, size_t len, FsSaveDataSpaceId saveDataSpaceId, u64 saveID);
+
+Result fsOpenSaveDataInfoReader(FsSaveDataInfoReader* out, FsSaveDataSpaceId saveDataSpaceId);
+
+Result fsOpenContentStorageFileSystem(FsFileSystem* out, FsContentStorageId content_storage_id);
+Result fsOpenCustomStorageFileSystem(FsFileSystem* out, FsCustomStorageId custom_storage_id); /// [7.0.0+]
+
+Result fsOpenDataStorageByCurrentProcess(FsStorage* out);
+Result fsOpenDataStorageByDataId(FsStorage* out, u64 dataId, FsStorageId storageId);
+
+Result fsOpenDeviceOperator(FsDeviceOperator* out);
+Result fsOpenSdCardDetectionEventNotifier(FsEventNotifier* out);
+
+/// Retrieves the rights id corresponding to the content path. Only available on [2.0.0+].
+Result fsGetRightsIdByPath(const char* path, FsRightsId* out_rights_id);
+
+/// Retrieves the rights id and key generation corresponding to the content path. Only available on [3.0.0+].
+Result fsGetRightsIdAndKeyGenerationByPath(const char* path, u8* out_key_generation, FsRightsId* out_rights_id);
+
+Result fsDisableAutoSaveDataCreation(void);
+
+Result fsSetGlobalAccessLogMode(u32 mode);
+Result fsGetGlobalAccessLogMode(u32* out_mode);
+
+// Wrapper(s) for fsCreateSaveDataFileSystemBySystemSaveDataId.
+Result fsCreate_SystemSaveDataWithOwner(FsSaveDataSpaceId saveDataSpaceId, u64 saveID, AccountUid userID, u64 ownerId, u64 size, u64 journalSize, u32 flags);
+Result fsCreate_SystemSaveData(FsSaveDataSpaceId saveDataSpaceId, u64 saveID, u64 size, u64 journalSize, u32 flags);
+
+/// Wrapper(s) for fsOpenSaveDataFileSystem.
+/// See FsSave for titleID and userID.
+Result fsOpen_SaveData(FsFileSystem* out, u64 titleID, AccountUid userID);
+
+/// Wrapper for fsOpenSaveDataFileSystemBySystemSaveDataId.
+/// WARNING: You can brick when writing to SystemSaveData, if the data is corrupted etc.
+Result fsOpen_SystemSaveData(FsFileSystem* out, FsSaveDataSpaceId saveDataSpaceId, u64 saveID, AccountUid userID);
 
 // IFileSystem
 Result fsFsCreateFile(FsFileSystem* fs, const char* path, u64 size, u32 option);
