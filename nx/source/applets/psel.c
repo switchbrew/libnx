@@ -24,20 +24,6 @@ void pselUiAddInvalidUser(PselUiSettings *ui, AccountUid *user_id) {
     }
 }
 
-void pselUiSetAllowUserCreation(PselUiSettings *ui, bool flag) {
-    if(ui->mode == PselUiMode_SelectUser) {
-        ui->allowUserCreation = flag;
-    }
-}
-
-void pselUiSetNetworkServiceRequired(PselUiSettings *ui, bool flag) {
-    ui->networkServiceRequired = flag;
-}
-
-void pselUiSetSkipEnabled(PselUiSettings *ui, bool flag) {
-    ui->skipEnabled = flag;
-}
-
 static u32 _pselGetLaVersion() {
     u32 ver = 0;
     u32 hosver = hosversionGet();
