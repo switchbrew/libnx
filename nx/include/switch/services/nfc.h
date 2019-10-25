@@ -144,7 +144,7 @@ typedef struct {
 
 /// Nfc/Nfp DeviceHandle
 typedef struct {
-    u64 handle;            ///< Handle.
+    u8 handle[0x8];            ///< Handle.
 } NfcDeviceHandle;
 
 /**
