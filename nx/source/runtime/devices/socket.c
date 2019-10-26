@@ -84,6 +84,9 @@ static const SocketInitConfig g_defaultSocketInitConfig = {
 
     .sb_efficiency = 4,
 
+    .num_bsd_sessions = 3,
+    .bsd_service_type = BsdServiceType_User,
+
     .serialized_out_addrinfos_max_size  = 0x1000,
     .serialized_out_hostent_max_size    = 0x200,
     .bypass_nsd                         = false,
@@ -96,6 +99,9 @@ const SocketInitConfig *socketGetDefaultInitConfig(void) {
 
 Result socketInitialize(const SocketInitConfig *config) {
     Result ret = 0;
+    if (!config)
+        config = &g_defaultSocketInitConfig;
+
     BsdInitConfig bcfg = {
         .version = config->bsdsockets_version,
 
@@ -109,6 +115,14 @@ Result socketInitialize(const SocketInitConfig *config) {
 
         .sb_efficiency = config->sb_efficiency,
     };
+
+    u32 num_bsd_sessions = config->num_bsd_sessions;
+    u32 bsd_service_type = config->bsd_service_type;
+
+    if (!num_bsd_sessions)
+        num_bsd_sessions = g_defaultSocketInitConfig.num_bsd_sessions;
+    if (!bsd_service_type)
+        bsd_service_type = g_defaultSocketInitConfig.bsd_service_type;
 
     SfdnsresConfig sfdnsresConfig = {
         .serialized_out_addrinfos_max_size  = config->serialized_out_addrinfos_max_size,
@@ -124,7 +138,7 @@ Result socketInitialize(const SocketInitConfig *config) {
     ret = nifmInitialize();
     if(R_FAILED(ret)) return ret;
 
-    ret = bsdInitialize(&bcfg);
+    ret = bsdInitialize(&bcfg, num_bsd_sessions, bsd_service_type);
     if(R_SUCCEEDED(ret))
         dev = AddDevice(&g_socketDevoptab);
     else {
@@ -1614,7 +1628,7 @@ long gethostid(void) {
     rc = nifmGetCurrentIpAddress(&id);
     if(R_SUCCEEDED(rc))
         return id;
-    return INADDR_LOOPBACK; 
+    return INADDR_LOOPBACK;
 }
 
 int gethostname(char *name, size_t namelen) {

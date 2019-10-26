@@ -1,6 +1,13 @@
 #pragma once
 #include "../../types.h"
 
+/// BSD service type used by the socket driver.
+typedef enum {
+    BsdServiceType_User   = BIT(0), ///< Uses bsd:u (default).
+    BsdServiceType_System = BIT(1), ///< Uses bsd:s.
+    BsdServiceType_Auto   = BsdServiceType_User | BsdServiceType_System, ///< Tries to use bsd:s first, and if that fails uses bsd:u (official software behavior).
+} BsdServiceType;
+
 /// Configuration structure for socketInitalize
 typedef struct  {
     u32 bsdsockets_version;                     ///< Observed 1 on 2.0 LibAppletWeb, 2 on 3.0.
@@ -14,6 +21,9 @@ typedef struct  {
     u32 udp_rx_buf_size;                        ///< Size of the UDP receive buffer (typically 0xA500 bytes).
 
     u32 sb_efficiency;                          ///< Number of buffers for each socket (standard values range from 1 to 8).
+
+    u32 num_bsd_sessions;                       ///< Number of BSD service sessions (typically 3).
+    BsdServiceType bsd_service_type;            ///< BSD service type (typically \ref BsdServiceType_User).
 
     size_t serialized_out_addrinfos_max_size;   ///< For getaddrinfo.
     size_t serialized_out_hostent_max_size;     ///< For gethostbyname/gethostbyaddr.
@@ -33,7 +43,6 @@ Result socketGetLastSfdnsresResult(void);
 void socketExit(void);
 
 /// Initalize the socket driver using the default configuration.
-static inline Result socketInitializeDefault(void) {
-    return socketInitialize(socketGetDefaultInitConfig());
+NX_INLINE Result socketInitializeDefault(void) {
+    return socketInitialize(NULL);
 }
-

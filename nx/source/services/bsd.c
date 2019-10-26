@@ -15,6 +15,7 @@
 #include "service_guard.h"
 #include "kernel/shmem.h"
 #include "kernel/rwlock.h"
+#include "sf/sessionmgr.h"
 #include "services/bsd.h"
 
 typedef struct BsdSelectTimeval {
@@ -27,6 +28,7 @@ __thread int g_bsdErrno;
 
 static Service g_bsdSrv;
 static Service g_bsdMonitor;
+static SessionMgr g_bsdSessionMgr;
 static u64 g_bsdClientPid = -1;
 
 static TransferMemory g_bsdTmem;
@@ -45,7 +47,7 @@ static const BsdInitConfig g_defaultBsdInitConfig = {
     .sb_efficiency = 4,
 };
 
-NX_GENERATE_SERVICE_GUARD_PARAMS(bsd, (const BsdInitConfig *config), (config));
+NX_GENERATE_SERVICE_GUARD_PARAMS(bsd, (const BsdInitConfig *config, u32 num_sessions, u32 service_type), (config, num_sessions, service_type));
 
 // This function computes the minimal size of the transfer memory to be passed to @ref bsdInitalize.
 // Should the transfer memory be smaller than that, the BSD sockets service would only send
@@ -112,7 +114,10 @@ NX_INLINE int _bsdDispatchImpl(
     if (in_data_size)
         __builtin_memcpy(in, in_data, in_data_size);
 
-    Result rc = svcSendSyncRequest(srv.session);
+    int slot = sessionmgrAttachClient(&g_bsdSessionMgr);
+    Result rc = svcSendSyncRequest(sessionmgrGetClientSession(&g_bsdSessionMgr, slot));
+    sessionmgrDetachClient(&g_bsdSessionMgr, slot);
+
     int ret = -1;
     int errno_ = -1;
     void* out_ptr = NULL;
@@ -187,19 +192,25 @@ const BsdInitConfig *bsdGetDefaultInitConfig(void) {
     return &g_defaultBsdInitConfig;
 }
 
-Result _bsdInitialize(const BsdInitConfig *config) {
+Result _bsdInitialize(const BsdInitConfig *config, u32 num_sessions, u32 service_type) {
     if (!config)
         config = &g_defaultBsdInitConfig;
 
-    const char* bsd_srv = "bsd:s";
-    Result rc = smGetService(&g_bsdSrv, bsd_srv);
-    if (R_FAILED(rc)) {
-        bsd_srv = "bsd:u";
-        rc = smGetService(&g_bsdSrv, bsd_srv);
+    SmServiceName bsd_srv = {0};
+    Result rc = MAKERESULT(Module_Libnx, LibnxError_BadInput);
+
+    if (service_type & BIT(1)) {
+        bsd_srv = smEncodeName("bsd:s");
+        rc = smGetServiceWrapper(&g_bsdSrv, bsd_srv);
+    }
+
+    if (R_FAILED(rc) && (service_type & BIT(0))) {
+        bsd_srv = smEncodeName("bsd:u");
+        rc = smGetServiceWrapper(&g_bsdSrv, bsd_srv);
     }
 
     if (R_SUCCEEDED(rc))
-        rc = smGetService(&g_bsdMonitor, bsd_srv);
+        rc = smGetServiceWrapper(&g_bsdMonitor, bsd_srv);
 
     if (R_SUCCEEDED(rc))
         rc = tmemCreate(&g_bsdTmem, _bsdGetTransferMemSizeForConfig(config), 0);
@@ -210,11 +221,15 @@ Result _bsdInitialize(const BsdInitConfig *config) {
     if (R_SUCCEEDED(rc))
         rc = _bsdStartMonitoring(g_bsdClientPid);
 
+    if (R_SUCCEEDED(rc))
+        rc = sessionmgrCreate(&g_bsdSessionMgr, g_bsdSrv.session, num_sessions);
+
     return rc;
 }
 
 void _bsdCleanup(void) {
     g_bsdClientPid = 0;
+    sessionmgrClose(&g_bsdSessionMgr);
     serviceClose(&g_bsdMonitor);
     serviceClose(&g_bsdSrv);
     tmemClose(&g_bsdTmem);

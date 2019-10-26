@@ -35,7 +35,7 @@ extern __thread int g_bsdErrno;        ///< Last errno, per-thread
 /// Fetch the default configuration for bsdInitialize.
 const BsdInitConfig *bsdGetDefaultInitConfig(void);
 /// Initialize the BSD service.
-Result bsdInitialize(const BsdInitConfig *config);
+Result bsdInitialize(const BsdInitConfig *config, u32 num_sessions, u32 service_type);
 /// Deinitialize the BSD service.
 void bsdExit(void);
 Service* bsdGetServiceSession(void);
@@ -73,8 +73,3 @@ int bsdClose(int fd);
 int bsdDuplicateSocket(int sockfd);
 
 // TODO: Reverse-engineer GetResourceStatistics. Implement sendmmsg/recvmmsg (custom (un)serialization)
-
-/// Initialize the BSD service using the default configuration.
-static inline Result bsdInitializeDefault(void) {
-    return bsdInitialize(bsdGetDefaultInitConfig());
-}
