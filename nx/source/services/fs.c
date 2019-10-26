@@ -1,51 +1,17 @@
 // Copyright 2017 plutoo
 #include <string.h>
 #include "service_guard.h"
-#include "kernel/mutex.h"
-#include "kernel/condvar.h"
+#include "sf/sessionmgr.h"
 #include "runtime/hosversion.h"
 #include "services/fs.h"
 #include "services/acc.h"
 
-#define FS_MAX_SESSIONS 8
-
 __attribute__((weak)) u32 __nx_fs_num_sessions = 3;
 
 static Service g_fsSrv;
-
-static Handle g_fsSessions[FS_MAX_SESSIONS];
-static u32 g_fsSessionFreeMask;
-static Mutex g_fsSessionMutex;
-static CondVar g_fsSessionCondVar;
-static bool g_fsSessionWaiting;
+static SessionMgr g_fsSessionMgr;
 
 static __thread u32 g_fsPriority = FsPriority_Normal;
-
-static int _fsGetSessionSlot(void)
-{
-    mutexLock(&g_fsSessionMutex);
-    int slot;
-    for (;;) {
-        slot = __builtin_ffs(g_fsSessionFreeMask)-1;
-        if (slot >= 0) break;
-        g_fsSessionWaiting = true;
-        condvarWait(&g_fsSessionCondVar, &g_fsSessionMutex);
-    }
-    g_fsSessionFreeMask &= ~(1U << slot);
-    mutexUnlock(&g_fsSessionMutex);
-    return slot;
-}
-
-static void _fsPutSessionSlot(int slot)
-{
-    mutexLock(&g_fsSessionMutex);
-    g_fsSessionFreeMask |= 1U << slot;
-    if (g_fsSessionWaiting) {
-        g_fsSessionWaiting = false;
-        condvarWakeOne(&g_fsSessionCondVar);
-    }
-    mutexUnlock(&g_fsSessionMutex);
-}
 
 NX_INLINE bool _fsObjectIsChild(Service* s)
 {
@@ -58,12 +24,12 @@ static void _fsObjectClose(Service* s)
         serviceClose(s);
     }
     else {
-        int slot = _fsGetSessionSlot();
+        int slot = sessionmgrAttachClient(&g_fsSessionMgr);
         uint32_t object_id = serviceGetObjectId(s);
         serviceAssumeDomain(s);
         cmifMakeCloseRequest(armGetTls(), object_id);
-        svcSendSyncRequest(g_fsSessions[slot]);
-        _fsPutSessionSlot(slot);
+        svcSendSyncRequest(sessionmgrGetClientSession(&g_fsSessionMgr, slot));
+        sessionmgrDetachClient(&g_fsSessionMgr, slot);
     }
 }
 
@@ -75,9 +41,9 @@ NX_INLINE Result _fsObjectDispatchImpl(
 ) {
     int slot = -1;
     if (_fsObjectIsChild(s)) {
-        slot = _fsGetSessionSlot();
+        slot = sessionmgrAttachClient(&g_fsSessionMgr);
         if (slot < 0) __builtin_unreachable();
-        disp.target_session = g_fsSessions[slot];
+        disp.target_session = sessionmgrGetClientSession(&g_fsSessionMgr, slot);
         serviceAssumeDomain(s);
     }
 
@@ -85,7 +51,7 @@ NX_INLINE Result _fsObjectDispatchImpl(
     Result rc = serviceDispatchImpl(s, request_id, in_data, in_data_size, out_data, out_data_size, disp);
 
     if (slot >= 0) {
-        _fsPutSessionSlot(slot);
+        sessionmgrDetachClient(&g_fsSessionMgr, slot);
     }
 
     return rc;
@@ -106,9 +72,6 @@ NX_INLINE Result _fsObjectDispatchImpl(
 NX_GENERATE_SERVICE_GUARD(fs);
 
 Result _fsInitialize(void) {
-    if (__nx_fs_num_sessions < 1 || __nx_fs_num_sessions > FS_MAX_SESSIONS)
-        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
-
     Result rc = smGetService(&g_fsSrv, "fsp-srv");
 
     if (R_SUCCEEDED(rc)) {
@@ -121,28 +84,15 @@ Result _fsInitialize(void) {
         rc = serviceDispatchIn(&g_fsSrv, 1, pid_placeholder, .in_send_pid = true);
     }
 
-    if (R_SUCCEEDED(rc)) {
-        g_fsSessionFreeMask = (1U << __nx_fs_num_sessions) - 1U;
-        g_fsSessions[0] = g_fsSrv.session;
-    }
-
-    for (u32 i = 1; R_SUCCEEDED(rc) && i < __nx_fs_num_sessions; i ++) {
-        rc = cmifCloneCurrentObject(g_fsSessions[0], &g_fsSessions[i]);
-    }
+    if (R_SUCCEEDED(rc))
+        rc = sessionmgrCreate(&g_fsSessionMgr, g_fsSrv.session, __nx_fs_num_sessions);
 
     return rc;
 }
 
 void _fsCleanup(void) {
     // Close extra sessions
-    g_fsSessions[0] = INVALID_HANDLE;
-    for (u32 i = 1; i < __nx_fs_num_sessions; i ++) {
-        if (g_fsSessions[i] != INVALID_HANDLE) {
-            cmifMakeCloseRequest(armGetTls(), 0);
-            svcSendSyncRequest(g_fsSessions[i]);
-            g_fsSessions[i] = INVALID_HANDLE;
-        }
-    }
+    sessionmgrClose(&g_fsSessionMgr);
 
     // We can't assume g_fsSrv is a domain here because serviceConvertToDomain might have failed
     serviceClose(&g_fsSrv);
