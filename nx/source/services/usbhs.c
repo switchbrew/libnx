@@ -191,6 +191,7 @@ Result usbHsAcquireUsbIf(UsbHsClientIfSession* s, UsbHsInterface *interface) {
 }
 
 void usbHsIfClose(UsbHsClientIfSession* s) {
+    serviceAssumeDomain(&s->s);
     serviceClose(&s->s);
     eventClose(&s->event0);
     eventClose(&s->eventCtrlXfer);
@@ -257,7 +258,7 @@ static Result _usbHsIfCtrlXferAsync(UsbHsClientIfSession* s, u8 bmRequestType, u
         u16 wIndex;
         u16 wLength;
         u64 buffer;
-    } PACKED in = { bmRequestType, bRequest, wValue, wIndex, wLength, (u64)buffer };
+    } in = { bmRequestType, bRequest, wValue, wIndex, wLength, (u64)buffer };
 
     serviceAssumeDomain(&s->s);
     return serviceDispatchIn(&s->s, 5, in);
@@ -293,12 +294,14 @@ Result usbHsIfCtrlXfer(UsbHsClientIfSession* s, u8 bmRequestType, u8 bRequest, u
 static Result _usbHsIfOpenUsbEp(UsbHsClientIfSession* s, UsbHsClientEpSession* ep, u16 maxUrbCount, u32 maxXferSize, struct usb_endpoint_descriptor *desc) {
     const struct {
         u16 maxUrbCount;
+        u16 pad;
         u32 epType;
         u32 epNumber;
         u32 epDirection;
         u32 maxXferSize;
     } in = {
         maxUrbCount,
+        0,
         (desc->bmAttributes & USB_TRANSFER_TYPE_MASK) + 1,
         desc->bEndpointAddress & USB_ENDPOINT_ADDRESS_MASK,
         (desc->bEndpointAddress & USB_ENDPOINT_IN) == 0 ? 0x1 : 0x2,
@@ -322,6 +325,7 @@ Result usbHsIfOpenUsbEp(UsbHsClientIfSession* s, UsbHsClientEpSession* ep, u16 m
         }
 
         if (R_FAILED(rc)) {
+            serviceAssumeDomain(&s->s);
             serviceClose(&ep->s);
             eventClose(&ep->eventXfer);
         }
@@ -338,6 +342,7 @@ void usbHsEpClose(UsbHsClientEpSession* s) {
 
     _usbHsCmdNoIO(&s->s, hosversionAtLeast(2,0,0) ? 1 : 3);//Close
 
+    serviceAssumeDomain(&s->s);
     serviceClose(&s->s);
     eventClose(&s->eventXfer);
     memset(s, 0, sizeof(UsbHsClientEpSession));
@@ -366,9 +371,10 @@ static Result _usbHsEpSubmitRequest(UsbHsClientEpSession* s, void* buffer, u32 s
 static Result _usbHsEpPostBufferAsync(UsbHsClientEpSession* s, void* buffer, u32 size, u64 unk, u32* xferId) {
     const struct {
         u32 size;
+        u32 pad;
         u64 buffer;
         u64 unk;
-    } in = { size, (u64)buffer, unk };
+    } in = { size, 0, (u64)buffer, unk };
 
     serviceAssumeDomain(&s->s);
     return serviceDispatchInOut(&s->s, 4, in, *xferId);

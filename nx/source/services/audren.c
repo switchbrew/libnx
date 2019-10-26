@@ -151,9 +151,10 @@ void audrenWaitFrame(void) {
 Result _audrenOpenAudioRenderer(Service* srv, Service* srv_out, const AudioRendererParameter* param, u64 aruid) {
     const struct {
         AudioRendererParameter param;
+        u32 pad;
         u64 work_buffer_size;
         u64 aruid;
-    } in = { *param, g_audrenWorkBuf.size, aruid };
+    } in = { *param, 0, g_audrenWorkBuf.size, aruid };
 
     return serviceDispatchIn(srv, 0, in,
         .in_send_pid = true,

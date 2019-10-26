@@ -112,6 +112,7 @@ static void _usbDsFreeEndpoint(UsbDsEndpoint* endpoint) {
 
     eventClose(&endpoint->CompletionEvent);
 
+    serviceAssumeDomain(&endpoint->s);
     serviceClose(&endpoint->s);
 
     endpoint->initialized = false;
@@ -133,6 +134,7 @@ static void _usbDsFreeInterface(UsbDsInterface* interface) {
     eventClose(&interface->CtrlInCompletionEvent);
     eventClose(&interface->SetupEvent);
 
+    serviceAssumeDomain(&interface->s);
     serviceClose(&interface->s);
 
     interface->initialized = false;
@@ -328,6 +330,7 @@ Result usbDsGetDsInterface(UsbDsInterface** interface, struct usb_interface_desc
     
     UsbDsInterface* ptr = _usbDsTryAllocateInterface(send_desc.bInterfaceNumber);
     if(ptr == NULL) {
+        serviceAssumeDomain(&srv);
         serviceClose(&srv);
         return MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
     }
@@ -379,6 +382,7 @@ Result usbDsRegisterInterface(UsbDsInterface** interface) {
     
     UsbDsInterface* ptr = _usbDsTryAllocateInterface(intf_num);
     if (ptr == NULL) {
+        serviceAssumeDomain(&srv);
         serviceClose(&srv);
         return MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
     }

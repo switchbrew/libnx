@@ -727,7 +727,7 @@ static Result _hidCmdNoInOutU8(u8 *out, u32 cmd_id) {
 static Result _hidCmdNoInOutBool(bool *out, u32 cmd_id) {
     u8 tmp=0;
     Result rc = _hidCmdNoInOutU8(&tmp, cmd_id);
-    if (R_SUCCEEDED(rc) && out) *out = tmp!=0;
+    if (R_SUCCEEDED(rc) && out) *out = tmp & 1;
     return rc;
 }
 
@@ -807,9 +807,10 @@ Result hidAcquireNpadStyleSetUpdateEventHandle(HidControllerID id, Event* out_ev
 
     const struct {
         u32 id;
+        u32 pad;
         u64 AppletResourceUserId;
         u64 event_ptr; // Official sw sets this to a ptr, which the sysmodule doesn't seem to use.
-    } in = { hidControllerIDToOfficial(id), AppletResourceUserId, 0 };
+    } in = { hidControllerIDToOfficial(id), 0, AppletResourceUserId, 0 };
 
     rc = serviceDispatchIn(&g_hidSrv, 106, in,
         .in_send_pid = true,
@@ -873,8 +874,9 @@ Result hidSendVibrationValue(u32 *VibrationDeviceHandle, HidVibrationValue *Vibr
     const struct {
         u32 VibrationDeviceHandle;
         HidVibrationValue VibrationValue;
+        u32 pad;
         u64 AppletResourceUserId;
-    } in = { *VibrationDeviceHandle, *VibrationValue, AppletResourceUserId };
+    } in = { *VibrationDeviceHandle, *VibrationValue, 0, AppletResourceUserId };
 
     return serviceDispatchIn(&g_hidSrv, 201, in,
         .in_send_pid = true,

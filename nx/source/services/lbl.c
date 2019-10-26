@@ -33,7 +33,7 @@ static Result _lblCmdNoInOutU8(u8 *out, u32 cmd_id) {
 static Result _lblCmdNoInOutBool(bool *out, u32 cmd_id) {
     u8 tmpout=0;
     Result rc = _lblCmdNoInOutU8(&tmpout, cmd_id);
-    if (R_SUCCEEDED(rc) && out) *out = tmpout!=0;
+    if (R_SUCCEEDED(rc) && out) *out = tmpout & 1;
     return rc;
 }
 

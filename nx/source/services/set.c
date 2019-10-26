@@ -75,7 +75,7 @@ static Result _setCmdNoInOutU8(Service* srv, u8 *out, u32 cmd_id) {
 static Result _setCmdNoInOutBool(Service* srv, bool *out, u32 cmd_id) {
     u8 tmp=0;
     Result rc = _setCmdNoInOutU8(srv, &tmp, cmd_id);
-    if (R_SUCCEEDED(rc) && out) *out = tmp!=0;
+    if (R_SUCCEEDED(rc) && out) *out = tmp & 1;
     return rc;
 }
 

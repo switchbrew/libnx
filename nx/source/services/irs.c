@@ -189,10 +189,11 @@ Result irsStopImageProcessor(u32 IrCameraHandle) {
 static Result _irsRunImageTransferProcessor(u32 IrCameraHandle, u64 AppletResourceUserId, IrsPackedImageTransferProcessorConfig *config, TransferMemory *tmem) {
     const struct {
         u32 IrCameraHandle;
+        u32 pad;
         u64 AppletResourceUserId;
         IrsPackedImageTransferProcessorConfig config;
         u64 TransferMemory_size;
-    } in = { IrCameraHandle, AppletResourceUserId, *config, tmem->size };
+    } in = { IrCameraHandle, 0, AppletResourceUserId, *config, tmem->size };
 
     return serviceDispatchIn(&g_irsSrv, 308, in,
         .in_send_pid = true,

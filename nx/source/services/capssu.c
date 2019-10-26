@@ -58,8 +58,9 @@ static Result _capssuSaveScreenShotEx0(const void* buffer, size_t size, const Ca
     const struct {
         CapsScreenShotAttribute attr;
         u32 reportoption;
+        u32 pad;
         u64 AppletResourceUserId;
-    } in = { *attr, reportoption, AppletResourceUserId };
+    } in = { *attr, reportoption, 0, AppletResourceUserId };
 
     return serviceDispatchInOut(&g_capssuSrv, 203, in, *out,
         .buffer_attrs = { SfBufferAttr_HipcMapTransferAllowsNonSecure | SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
@@ -75,8 +76,9 @@ static Result _capssuSaveScreenShotEx(u32 cmd_id, bool pid, const void* argbuf, 
     const struct {
         CapsScreenShotAttribute attr;
         u32 reportoption;
+        u32 pad;
         u64 AppletResourceUserId;
-    } in = { *attr, reportoption, AppletResourceUserId };
+    } in = { *attr, reportoption, 0, AppletResourceUserId };
 
     return serviceDispatchInOut(&g_capssuSrv, cmd_id, in, *out,
         .buffer_attrs = {

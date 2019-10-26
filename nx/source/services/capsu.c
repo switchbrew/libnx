@@ -68,10 +68,11 @@ static Result _capsuGetAlbumFileList0AafeAruidDeprecated(void* entries, size_t e
 
     const struct {
         u8 type;
+        u8 pad[7];
         u64 start_timestamp;
         u64 end_timestamp;
         u64 AppletResourceUserId;
-    } in = { type, start_timestamp, end_timestamp, AppletResourceUserId };
+    } in = { type, {0}, start_timestamp, end_timestamp, AppletResourceUserId };
 
     u64 total_out=0;
     Result rc = serviceDispatchInOut(&g_capsuSrv, 102, in, total_out,
@@ -89,9 +90,10 @@ static Result _capsuDeleteAlbumFileByAruid(u32 cmd_id, u8 type, const CapsApplic
 
     const struct {
         u8 type;
+        u8 pad[7];
         CapsApplicationAlbumFileEntry entry;
         u64 AppletResourceUserId;
-    } in = { type, *entry, AppletResourceUserId };
+    } in = { type, {0}, *entry, AppletResourceUserId };
 
     return serviceDispatchIn(&g_capsuSrv, 103, in,
         .in_send_pid = true,
@@ -118,9 +120,10 @@ static Result _capsuPrecheckToCreateContentsByAruid(u8 type, u64 unk) {
 
     const struct {
         u8 type;
+        u8 pad[7];
         u64 unk;
         u64 AppletResourceUserId;
-    } in = { type, unk, AppletResourceUserId };
+    } in = { type, {0}, unk, AppletResourceUserId };
 
     return serviceDispatchIn(&g_capsuSrv, 130, in,
         .in_send_pid = true,
@@ -158,10 +161,12 @@ static Result _capsuGetAlbumFileListAaeAruid(u32 cmd_id, void* entries, size_t e
 
     const struct {
         u8 type;
+        u8 pad;
         CapsAlbumFileDateTime start_datetime;
         CapsAlbumFileDateTime end_datetime;
+        u8 pad2[6];
         u64 AppletResourceUserId;
-    } in = { type, *start_datetime, *end_datetime, AppletResourceUserId };
+    } in = { type, 0, *start_datetime, *end_datetime, {0}, AppletResourceUserId };
 
     u64 total_out=0;
     Result rc = serviceDispatchInOut(&g_capsuSrv, cmd_id, in, total_out,
@@ -179,11 +184,13 @@ static Result _capsuGetAlbumFileListAaeUidAruid(u32 cmd_id, void* entries, size_
 
     const struct {
         u8 type;
+        u8 pad;
         CapsAlbumFileDateTime start_datetime;
         CapsAlbumFileDateTime end_datetime;
+        u8 pad2[6];
         AccountUid userID;
         u64 AppletResourceUserId;
-    } in = { type, *start_datetime, *end_datetime, userID, AppletResourceUserId };
+    } in = { type, 0, *start_datetime, *end_datetime, {0}, userID, AppletResourceUserId };
 
     u64 total_out=0;
     Result rc = serviceDispatchInOut(&g_capsuSrv, cmd_id, in, total_out,

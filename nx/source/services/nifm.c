@@ -84,7 +84,7 @@ static Result _nifmCmdNoInOutU8(Service* srv, u8 *out, u32 cmd_id) {
 static Result _nifmCmdNoInOutBool(Service* srv, bool *out, u32 cmd_id) {
     u8 tmp=0;
     Result rc = _nifmCmdNoInOutU8(srv, &tmp, cmd_id);
-    if (R_SUCCEEDED(rc) && out) *out = tmp!=0;
+    if (R_SUCCEEDED(rc) && out) *out = tmp & 1;
     return rc;
 }
 

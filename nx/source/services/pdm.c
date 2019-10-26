@@ -102,8 +102,9 @@ Result pdmqryQueryAccountPlayEvent(s32 entry_index, AccountUid uid, PdmAccountPl
 
     const struct {
         s32 entry_index;
+        u32 pad;
         AccountUid uid;
-    } in = { entry_index, uid };
+    } in = { entry_index, 0, uid };
 
     return serviceDispatchInOut(&g_pdmqrySrv, 11, in, *total_out,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },

@@ -217,6 +217,6 @@ Result audinContainsAudioInBuffer(AudioInBuffer *Buffer, bool *ContainsBuffer) {
     u64 tmp = (u64)Buffer;
     u8 out=0;
     Result rc = serviceDispatchInOut(&g_audinIAudioIn, 6, tmp, out);
-    if (R_SUCCEEDED(rc) && ContainsBuffer) *ContainsBuffer = out!=0;
+    if (R_SUCCEEDED(rc) && ContainsBuffer) *ContainsBuffer = out & 1;
     return rc;
 }

@@ -19,8 +19,7 @@ static Result _nsGetSession(Service* srv, Service* srv_out, u32 cmd_id);
 
 NX_GENERATE_SERVICE_GUARD(ns);
 
-Result _nsInitialize(void)
-{
+Result _nsInitialize(void) {
     Result rc=0;
 
     if(hosversionBefore(3,0,0))
@@ -36,8 +35,7 @@ Result _nsInitialize(void)
     return rc;
 }
 
-void _nsCleanup(void)
-{
+void _nsCleanup(void) {
     serviceClose(&g_nsAppManSrv);
     if(hosversionBefore(3,0,0)) return;
 
@@ -108,7 +106,7 @@ static Result _nsCmdNoInOutU8(Service* srv, u8 *out, u32 cmd_id) {
 static Result _nsCmdNoInOutBool(Service* srv, bool *out, u32 cmd_id) {
     u8 tmpout=0;
     Result rc = _nsCmdNoInOutU8(srv, &tmpout, cmd_id);
-    if (R_SUCCEEDED(rc) && out) *out = tmpout!=0;
+    if (R_SUCCEEDED(rc) && out) *out = tmpout & 1;
     return rc;
 }
 
@@ -124,7 +122,7 @@ static Result _nsCmdRequestSendReceiveSystemUpdate(Service* srv, AsyncResult *a,
     const struct {
         u16 inval0;
         u32 inval1;
-    } in = { inval0, inval1 };
+    } in = { inval1, inval0 };
 
     memset(a, 0, sizeof(*a));
     Handle event = INVALID_HANDLE;
@@ -275,8 +273,9 @@ Service* nsdevGetServiceSession(void) {
 Result nsdevLaunchProgram(u64* out_pid, const NsLaunchProperties* properties, u32 flags) {
     const struct {
         u32 flags;
+        u32 pad;
         NsLaunchProperties properties;
-    } in = { flags, *properties};
+    } in = { flags, 0, *properties};
 
     return serviceDispatchInOut(&g_nsdevSrv, 0, in, *out_pid);
 }
