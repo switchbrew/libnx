@@ -128,7 +128,7 @@ typedef struct {
 /// RightsId
 typedef struct {
     FsRightsId rights_id;
-    u32 key_generation;     ///< [3.0.0+]
+    u8 key_generation;      ///< [3.0.0+]
     u8 pad[7];              ///< [3.0.0+]
 } NcmRightsId;
 
