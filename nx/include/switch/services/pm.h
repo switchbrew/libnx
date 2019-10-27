@@ -98,7 +98,7 @@ Result pmdmntClearHook(u32 which);
 
 Result pminfoGetProgramId(u64* title_id_out, u64 pid);
 
-Result pmshellLaunchProgram(u32 launch_flags, NcmProgramLocation *location, u64 *pid);
+Result pmshellLaunchProgram(u32 launch_flags, const NcmProgramLocation *location, u64 *pid);
 Result pmshellTerminateProcess(u64 processID);
 Result pmshellTerminateProgram(u64 titleID);
 Result pmshellGetProcessEventHandle(Event* out); // Autoclear for pmshellProcessEvent is always true.

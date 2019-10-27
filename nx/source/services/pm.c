@@ -104,7 +104,7 @@ Result pminfoGetProgramId(u64* title_id_out, u64 pid) {
 
 // pmshell
 
-Result pmshellLaunchProgram(u32 launch_flags, NcmProgramLocation *location, u64 *pid) {
+Result pmshellLaunchProgram(u32 launch_flags, const NcmProgramLocation *location, u64 *pid) {
     const struct {
         u32 launch_flags;
         u32 pad;
