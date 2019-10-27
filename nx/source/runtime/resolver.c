@@ -9,13 +9,18 @@
 #include <sys/socket.h>
 
 #include "result.h"
+//#include "kernel/random.h"
 #include "services/sfdnsres.h"
 #include "services/nifm.h"
+#include "runtime/hosversion.h"
 #include "runtime/resolver.h"
 
 __thread int h_errno;
 
 static __thread Result g_resolverResult;
+static __thread u32 g_resolverCancelHandle;             // ResolverOptionKey::RequestCancelHandleInteger
+static __thread bool g_resolverDisableServiceDiscovery; // ResolverOptionKey::RequestEnableServiceDiscoveryBoolean (inverted)
+static __thread bool g_resolverDisableDnsCache;         // ResolverOptionKey::RequestEnableDnsCacheBoolean (inverted)
 
 static size_t g_resolverHostByNameBufferSize    = 0x200;  // ResolverOptionLocalKey::GetHostByNameBufferSizeUnsigned64
 static size_t g_resolverHostByAddrBufferSize    = 0x200;  // ResolverOptionLocalKey::GetHostByAddrBufferSizeUnsigned64
@@ -24,6 +29,52 @@ static size_t g_resolverAddrInfoHintsBufferSize = 0x400;  // ResolverOptionLocal
 
 Result resolverGetLastResult(void) {
     return g_resolverResult;
+}
+
+u32 resolverGetCancelHandle(void) {
+    // ResolverOptionKey::GetCancelHandleInteger on 5.0.0+
+    /* Below code should be used instead of invoking sfdnsresResolverGetOptionRequest
+    while (g_resolverCancelHandle == 0)
+        randomGet(&g_resolverCancelHandle, sizeof(u32));
+    */
+    if (g_resolverCancelHandle == 0)
+        sfdnsresGetCancelHandleRequest(&g_resolverCancelHandle);
+    return g_resolverCancelHandle;
+}
+
+bool resolverGetEnableServiceDiscovery(void) {
+    return !g_resolverDisableServiceDiscovery;
+}
+
+bool resolverGetEnableDnsCache(void) {
+    return !g_resolverDisableDnsCache;
+}
+
+void resolverSetEnableServiceDiscovery(bool enable) {
+    g_resolverDisableServiceDiscovery = !enable;
+}
+
+void resolverSetEnableDnsCache(bool enable) {
+    g_resolverDisableDnsCache = !enable;
+}
+
+Result resolverCancel(u32 handle) {
+    // ResolverOptionKey::SetCancelHandleInteger on [5.0.0+]
+    return sfdnsresCancelRequest(handle);
+}
+
+Result resolverRemoveHostnameFromCache(const char* hostname) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return MAKERESULT(Module_Libnx, LibnxError_NotInitialized); // not implemented
+}
+
+Result resolverRemoveIpAddressFromCache(u32 ip) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return MAKERESULT(Module_Libnx, LibnxError_NotInitialized); // not implemented
 }
 
 static struct hostent *_resolverDeserializeHostent(int *err, const void *out_he_serialized) {
@@ -318,13 +369,15 @@ struct hostent *gethostbyname(const char *name) {
         goto cleanup;
     }
     rc = sfdnsresGetHostByNameRequest(
-        0,
-        true,
+        g_resolverCancelHandle,
+        !g_resolverDisableServiceDiscovery,
         name,
         &ret,
         &errno_,
         out_he_serialized, g_resolverHostByNameBufferSize,
         NULL);
+    g_resolverCancelHandle = 0;
+
     if(rc == 0xD401) {
         h_errno = NO_RECOVERY;
         errno = EFAULT; // POSIX leaves this unspecified
@@ -372,11 +425,13 @@ struct hostent *gethostbyaddr(const void *addr, socklen_t len, int type) {
     rc = sfdnsresGetHostByAddrRequest(
         addr, len,
         type,
-        0,
+        g_resolverCancelHandle,
         &ret,
         &errno_,
         out_he_serialized, g_resolverHostByAddrBufferSize,
         NULL);
+    g_resolverCancelHandle = 0;
+
     if(rc == 0xD401) {
         h_errno = NO_RECOVERY; // POSIX leaves this unspecified
         errno = EFAULT;
@@ -466,8 +521,8 @@ int getaddrinfo(const char *node, const char *service, const struct addrinfo *hi
 
     s32 gaie = 0;
     Result rc = sfdnsresGetAddrInfoRequest(
-        0,
-        true,
+        g_resolverCancelHandle,
+        !g_resolverDisableServiceDiscovery,
         node,
         service,
         hints_serialized, hints_sz,
@@ -476,6 +531,7 @@ int getaddrinfo(const char *node, const char *service, const struct addrinfo *hi
         &gaie,
         NULL);
     g_resolverResult = rc;
+    g_resolverCancelHandle = 0;
     free(hints_serialized);
 
     if (R_FAILED(rc)) {
@@ -513,9 +569,11 @@ int getnameinfo(const struct sockaddr *sa, socklen_t salen,
         sa, salen,
         host, hostlen,
         serv, servlen,
-        0,
+        g_resolverCancelHandle,
         &errno_,
         &gaie);
+    g_resolverCancelHandle = 0;
+
     if(rc == 0xD401) {
         gaie = EAI_SYSTEM;
         errno = EFAULT;
