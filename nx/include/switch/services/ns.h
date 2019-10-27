@@ -104,13 +104,15 @@ typedef struct {
 
 /// SystemDeliveryInfo
 typedef struct {
-    u32 protocol_version;           ///< Must be <= to and match a system-setting.
-    u8 unk_x4[0x8];                 ///< Unused by \ref nssuRequestSendSystemUpdate / \ref nssuControlRequestReceiveSystemUpdate, besides HMAC validation.
-    u32 systemupdate_meta_version;  ///< SystemUpdate meta version.
-    u64 systemupdate_meta_titleid;  ///< SystemUpdate meta titleID.
-    u8 unk_x18;                     ///< Copied into state by \ref nssuRequestSendSystemUpdate.
-    u8 unk_x19[0xc7];               ///< Unused by \ref nssuRequestSendSystemUpdate / \ref nssuControlRequestReceiveSystemUpdate, besides HMAC validation.
-    u8 hmac[0x20];                  ///< HMAC-SHA256 over the previous 0xe0-bytes.
+    u32 system_delivery_protocol_version;       ///< Must be <= to and match a system-setting.
+    u32 application_delivery_protocol_version;  ///< Loaded from a system-setting. Unused by \ref nssuRequestSendSystemUpdate / \ref nssuControlRequestReceiveSystemUpdate, besides HMAC validation.
+    u32 includes_exfat;                         ///< Whether ExFat is included. Unused by \ref nssuRequestSendSystemUpdate / \ref nssuControlRequestReceiveSystemUpdate, besides HMAC validation.
+    u32 systemupdate_meta_version;              ///< SystemUpdate meta version.
+    u64 systemupdate_meta_titleid;              ///< SystemUpdate meta titleID.
+    u8 unk_x18;                                 ///< Copied into state by \ref nssuRequestSendSystemUpdate.
+    u8 unk_x19;                                 ///< Unused by \ref nssuRequestSendSystemUpdate / \ref nssuControlRequestReceiveSystemUpdate, besides HMAC validation.
+    u8 unk_x1a[0xc6];                           ///< Unused by \ref nssuRequestSendSystemUpdate / \ref nssuControlRequestReceiveSystemUpdate, besides HMAC validation.
+    u8 hmac[0x20];                              ///< HMAC-SHA256 over the previous 0xe0-bytes.
 } NsSystemDeliveryInfo;
 
 /// Default size for \ref nssuControlSetupCardUpdate / \ref nssuControlSetupCardUpdateViaSystemUpdater. This is the size used by qlaunch for SetupCardUpdate.
@@ -173,6 +175,13 @@ Result nsGetTotalSpaceSize(FsStorageId storage_id, u64 *size);
  * @param[out] size Pointer to output the free storage size to.
  */
 Result nsGetFreeSpaceSize(FsStorageId storage_id, u64 *size);
+
+/**
+ * @brief Generates a \ref NsSystemDeliveryInfo using the currently installed SystemUpdate meta title.
+ * @note Only available on [4.0.0+].
+ * @param[out] info \ref NsSystemDeliveryInfo
+ */
+Result nsGetSystemDeliveryInfo(NsSystemDeliveryInfo *info);
 
 ///@}
 

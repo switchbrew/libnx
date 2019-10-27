@@ -216,6 +216,16 @@ Result nsGetFreeSpaceSize(FsStorageId storage_id, u64 *size) {
     return _nsCmdInU64OutU64(&g_nsAppManSrv, storage_id, size, 48);
 }
 
+Result nsGetSystemDeliveryInfo(NsSystemDeliveryInfo *info) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatch(&g_nsAppManSrv, 2000,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { info, sizeof(*info) } },
+    );
+}
+
 // ns:vm
 
 NX_GENERATE_SERVICE_GUARD(nsvm);
