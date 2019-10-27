@@ -25,6 +25,14 @@
 #include "services/nifm.h"
 #include "result.h"
 
+/// Configuration structure for sfdnsres.
+typedef struct {
+    size_t serialized_out_addrinfos_max_size;   ///< For getaddrinfo.
+    size_t serialized_out_hostent_max_size;     ///< For gethostbyname/gethostbyaddr.
+    bool bypass_nsd;                            ///< For name gethostbyname/getaddrinfo: bypass the Name Server Daemon.
+    int timeout;                                ///< For DNS requests: timeout or 0.
+} SfdnsresConfig;
+
 __attribute__((weak)) size_t __nx_pollfd_sb_max_fds = 64;
 
 int _convert_errno(int bsdErrno);
@@ -1425,14 +1433,22 @@ struct hostent *gethostbyname(const char *name) {
     Result rc = 0;
     void *out_he_serialized = malloc(g_sfdnsresConfig.serialized_out_hostent_max_size);
     struct hostent *he = NULL;
-    SfdnsresRequestResults ret;
+    u32 ret = 0;
+    u32 errno_ = 0;
 
     if(out_he_serialized == NULL) {
         h_errno = NO_RECOVERY;
         errno = ENOMEM; // POSIX leaves this unspecified
         goto cleanup;
     }
-    rc = sfdnsresGetHostByName(&ret, &g_sfdnsresConfig, out_he_serialized, name);
+    rc = sfdnsresGetHostByNameRequest(
+        g_sfdnsresConfig.timeout,
+        !g_sfdnsresConfig.bypass_nsd,
+        name,
+        &ret,
+        &errno_,
+        out_he_serialized, g_sfdnsresConfig.serialized_out_hostent_max_size,
+        NULL);
     if(rc == 0xD401) {
         h_errno = NO_RECOVERY;
         errno = EFAULT; // POSIX leaves this unspecified
@@ -1448,9 +1464,9 @@ struct hostent *gethostbyname(const char *name) {
         errno = EINVAL; // POSIX leaves this unspecified
         goto cleanup;
     }
-    if(ret.ret != NETDB_SUCCESS) {
-        h_errno = ret.ret;
-        errno = ret.errno_; // POSIX leaves this unspecified
+    if(ret != NETDB_SUCCESS) {
+        h_errno = ret;
+        errno = errno_; // POSIX leaves this unspecified
         goto cleanup;
     }
 
@@ -1469,14 +1485,22 @@ struct hostent *gethostbyaddr(const void *addr, socklen_t len, int type) {
     Result rc = 0;
     void *out_he_serialized = malloc(g_sfdnsresConfig.serialized_out_hostent_max_size);
     struct hostent *he = NULL;
-    SfdnsresRequestResults ret;
+    u32 ret = 0;
+    u32 errno_ = 0;
 
     if(out_he_serialized == NULL) {
         h_errno = NO_RECOVERY;
         errno = ENOMEM; // POSIX leaves this unspecified
         goto cleanup;
     }
-    rc = sfdnsresGetHostByAddr(&ret, &g_sfdnsresConfig, out_he_serialized, addr, len, type);
+    rc = sfdnsresGetHostByAddrRequest(
+        addr, len,
+        type,
+        g_sfdnsresConfig.timeout,
+        &ret,
+        &errno_,
+        out_he_serialized, g_sfdnsresConfig.serialized_out_hostent_max_size,
+        NULL);
     if(rc == 0xD401) {
         h_errno = NO_RECOVERY; // POSIX leaves this unspecified
         errno = EFAULT;
@@ -1492,9 +1516,9 @@ struct hostent *gethostbyaddr(const void *addr, socklen_t len, int type) {
         errno = EINVAL; // POSIX leaves this unspecified
         goto cleanup;
     }
-    if(ret.ret != NETDB_SUCCESS) {
-        h_errno = ret.ret;
-        errno = ret.errno_; // POSIX leaves this unspecified
+    if(ret != NETDB_SUCCESS) {
+        h_errno = ret;
+        errno = errno_; // POSIX leaves this unspecified
         goto cleanup;
     }
 
@@ -1511,7 +1535,7 @@ cleanup:
 
 const char *hstrerror(int err) {
     static __thread char buf[0x80];
-    Result rc = sfdnsresGetHostStringError(err, buf, 0x80);
+    Result rc = sfdnsresGetHostStringErrorRequest(err, buf, sizeof(buf));
     if(R_FAILED(rc)) // a bit limiting, given the broad range of errors the kernel can give to us...
         strcpy(buf, "System busy, try again.");
     g_sfdnsresResult = rc;
@@ -1524,7 +1548,7 @@ void herror(const char *str) {
 
 const char *gai_strerror(int err) {
     static __thread char buf[0x80];
-    Result rc = sfdnsresGetGaiStringError(err, buf, 0x80);
+    Result rc = sfdnsresGetGaiStringErrorRequest(err, buf, sizeof(buf));
     if(R_FAILED(rc))
         strcpy(buf, "System busy, try again.");
     g_sfdnsresResult = rc;
@@ -1532,13 +1556,13 @@ const char *gai_strerror(int err) {
 }
 
 int getaddrinfo(const char *node, const char *service, const struct addrinfo *hints, struct addrinfo **res) {
-    int gaie = 0;
     Result rc = 0;
     size_t hints_sz;
     struct addrinfo_serialized_hdr *hints_serialized = _socketSerializeAddrInfoList(&hints_sz, hints);
     struct addrinfo_serialized_hdr *out_serialized = NULL;
     struct addrinfo *out = NULL;
-    SfdnsresRequestResults ret;
+    u32 errno_ = 0;
+    s32 gaie = 0;
 
     if(hints_serialized == NULL) {
         gaie = EAI_MEMORY;
@@ -1552,7 +1576,16 @@ int getaddrinfo(const char *node, const char *service, const struct addrinfo *hi
         goto cleanup;
     }
 
-    rc = sfdnsresGetAddrInfo(&ret, &g_sfdnsresConfig, node, service, hints_serialized, hints_sz, out_serialized);
+    rc = sfdnsresGetAddrInfoRequest(
+        g_sfdnsresConfig.timeout,
+        !g_sfdnsresConfig.bypass_nsd,
+        node,
+        service,
+        hints_serialized, hints_sz,
+        out_serialized, g_sfdnsresConfig.serialized_out_addrinfos_max_size,
+        &errno_,
+        &gaie,
+        NULL);
 
     if(rc == 0xD401) {
         gaie = EAI_SYSTEM;
@@ -1568,10 +1601,9 @@ int getaddrinfo(const char *node, const char *service, const struct addrinfo *hi
         goto cleanup;
     }
 
-    gaie = ret.ret;
     if(gaie != 0) {
         if(gaie == EAI_SYSTEM)
-            errno = ret.errno_;
+            errno = errno_;
         goto cleanup;
     }
 
@@ -1591,11 +1623,18 @@ int getnameinfo(const struct sockaddr *sa, socklen_t salen,
                 char *host, socklen_t hostlen,
                 char *serv, socklen_t servlen,
                 int flags) {
-    int gaie = 0;
     Result rc = 0;
-    SfdnsresRequestResults ret;
+    u32 errno_ = 0;
+    s32 gaie = 0;
 
-    rc = sfdnsresGetNameInfo(&ret, &g_sfdnsresConfig, sa, salen, host, hostlen, serv, servlen, flags);
+    rc = sfdnsresGetNameInfoRequest(
+        flags,
+        sa, salen,
+        host, hostlen,
+        serv, servlen,
+        g_sfdnsresConfig.timeout,
+        &errno_,
+        &gaie);
     if(rc == 0xD401) {
         gaie = EAI_SYSTEM;
         errno = EFAULT;
@@ -1610,11 +1649,9 @@ int getnameinfo(const struct sockaddr *sa, socklen_t salen,
         goto cleanup;
     }
 
-
-    gaie = ret.ret;
     if(gaie != 0) {
         if(gaie == EAI_SYSTEM)
-            errno = ret.errno_;
+            errno = errno_;
     }
 
 cleanup:
