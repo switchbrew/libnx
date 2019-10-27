@@ -35,7 +35,7 @@ static Result _ncmCmdNoInOutU64(Service* srv, u64* outval, u32 cmd_id) {
     return serviceDispatchOut(srv, cmd_id, *outval);
 }
 
-static Result _ncmCmdOutContentId(Service* srv, NcmContentId* outval, u32 cmd_id) {
+static Result _ncmCmdOutPlaceHolderId(Service* srv, NcmPlaceHolderId* outval, u32 cmd_id) {
     return serviceDispatchOut(srv, cmd_id, *outval);
 }
 
@@ -47,7 +47,15 @@ static Result _ncmCmdInContentId(Service* srv, const NcmContentId* inval, u32 cm
     return serviceDispatchIn(srv, cmd_id, *inval);
 }
 
+static Result _ncmCmdInPlaceHolderId(Service* srv, const NcmPlaceHolderId* inval, u32 cmd_id) {
+    return serviceDispatchIn(srv, cmd_id, *inval);
+}
+
 static Result _ncmCmdInContentIdOutU64(Service* srv, const NcmContentId* inval, u64* outval, u32 cmd_id) {
+    return serviceDispatchInOut(srv, cmd_id, *inval, *outval);
+}
+
+static Result _ncmCmdInPlaceHolderIdOutU64(Service* srv, const NcmPlaceHolderId* inval, u64* outval, u32 cmd_id) {
     return serviceDispatchInOut(srv, cmd_id, *inval, *outval);
 }
 
@@ -118,33 +126,33 @@ void ncmContentStorageClose(NcmContentStorage* cs) {
     serviceClose(&cs->s);
 }
 
-Result ncmContentStorageGeneratePlaceHolderId(NcmContentStorage* cs, NcmContentId* out_id) {
-    return _ncmCmdOutContentId(&cs->s, out_id, 0);
+Result ncmContentStorageGeneratePlaceHolderId(NcmContentStorage* cs, NcmPlaceHolderId* out_id) {
+    return _ncmCmdOutPlaceHolderId(&cs->s, out_id, 0);
 }
 
-Result ncmContentStorageCreatePlaceHolder(NcmContentStorage* cs, const NcmContentId* content_id, const NcmContentId* placeholder_id, u64 size) {
+Result ncmContentStorageCreatePlaceHolder(NcmContentStorage* cs, const NcmContentId* content_id, const NcmPlaceHolderId* placeholder_id, u64 size) {
     const struct {
         NcmContentId content_id;
-        NcmContentId placeholder_id;
+        NcmPlaceHolderId placeholder_id;
         u64 size;
     } in = { *content_id, *placeholder_id, size };
     return serviceDispatchIn(&cs->s, 1, in);
 }
 
-Result ncmContentStorageDeletePlaceHolder(NcmContentStorage* cs, const NcmContentId* placeholder_id) {
-    return _ncmCmdInContentId(&cs->s, placeholder_id, 2);
+Result ncmContentStorageDeletePlaceHolder(NcmContentStorage* cs, const NcmPlaceHolderId* placeholder_id) {
+    return _ncmCmdInPlaceHolderId(&cs->s, placeholder_id, 2);
 }
 
-Result ncmContentStorageHasPlaceHolder(NcmContentStorage* cs, bool* out, const NcmContentId* placeholder_id) {
+Result ncmContentStorageHasPlaceHolder(NcmContentStorage* cs, bool* out, const NcmPlaceHolderId* placeholder_id) {
     u8 tmp=0;
     Result rc = serviceDispatchInOut(&cs->s, 3, *placeholder_id, tmp);
     if (R_SUCCEEDED(rc) && out) *out = tmp & 1;
     return rc;
 }
 
-Result ncmContentStorageWritePlaceHolder(NcmContentStorage* cs, const NcmContentId* placeholder_id, u64 offset, const void* data, size_t data_size) {
+Result ncmContentStorageWritePlaceHolder(NcmContentStorage* cs, const NcmPlaceHolderId* placeholder_id, u64 offset, const void* data, size_t data_size) {
     const struct {
-        NcmContentId placeholder_id;
+        NcmPlaceHolderId placeholder_id;
         u64 offset;
     } in = { *placeholder_id, offset };
     return serviceDispatchIn(&cs->s, 4, in, 
@@ -153,10 +161,10 @@ Result ncmContentStorageWritePlaceHolder(NcmContentStorage* cs, const NcmContent
     );
 }
 
-Result ncmContentStorageRegister(NcmContentStorage* cs, const NcmContentId* content_id, const NcmContentId* placeholder_id) {
+Result ncmContentStorageRegister(NcmContentStorage* cs, const NcmContentId* content_id, const NcmPlaceHolderId* placeholder_id) {
     const struct {
         NcmContentId content_id;
-        NcmContentId placeholder_id;
+        NcmPlaceHolderId placeholder_id;
     } in = { *content_id, *placeholder_id };
     return serviceDispatchIn(&cs->s, 5, in);
 }
@@ -185,7 +193,7 @@ Result ncmContentStorageGetPath(NcmContentStorage* cs, char* out_path, size_t ou
     return rc;
 }
 
-Result ncmContentStorageGetPlaceHolderPath(NcmContentStorage* cs, char* out_path, size_t out_size, const NcmContentId* placeholder_id) {
+Result ncmContentStorageGetPlaceHolderPath(NcmContentStorage* cs, char* out_path, size_t out_size, const NcmPlaceHolderId* placeholder_id) {
     char tmpbuf[0x300]={0};
     Result rc = serviceDispatchIn(&cs->s, 9, *placeholder_id,
         .buffer_attrs = { SfBufferAttr_FixedSize | SfBufferAttr_HipcPointer | SfBufferAttr_Out },
@@ -202,10 +210,10 @@ Result ncmContentStorageCleanupAllPlaceHolder(NcmContentStorage* cs) {
     return _ncmCmdNoIO(&cs->s, 10);
 }
 
-Result ncmContentStorageListPlaceHolder(NcmContentStorage* cs, NcmContentId* out_ids, s32 count, s32* out_count) {
+Result ncmContentStorageListPlaceHolder(NcmContentStorage* cs, NcmPlaceHolderId* out_ids, s32 count, s32* out_count) {
     return serviceDispatchOut(&cs->s, 11, *out_count,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
-        .buffers = { { out_ids, count*sizeof(NcmContentId) } },
+        .buffers = { { out_ids, count*sizeof(NcmPlaceHolderId) } },
     );
 }
 
@@ -228,20 +236,20 @@ Result ncmContentStorageDisableForcibly(NcmContentStorage* cs) {
     return _ncmCmdNoIO(&cs->s, 15);
 }
 
-Result ncmContentStorageRevertToPlaceHolder(NcmContentStorage* cs, const NcmContentId* placeholder_id, const NcmContentId* old_content_id, const NcmContentId* new_content_id) {
+Result ncmContentStorageRevertToPlaceHolder(NcmContentStorage* cs, const NcmPlaceHolderId* placeholder_id, const NcmContentId* old_content_id, const NcmContentId* new_content_id) {
     if (hosversionBefore(2,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     const struct {
         NcmContentId old_content_id;
         NcmContentId new_content_id;
-        NcmContentId placeholder_id;
+        NcmPlaceHolderId placeholder_id;
     } in = { *old_content_id, *new_content_id, *placeholder_id };
     return serviceDispatchIn(&cs->s, 16, in);
 }
 
-Result ncmContentStorageSetPlaceHolderSize(NcmContentStorage* cs, const NcmContentId* placeholder_id, s64 size) {
+Result ncmContentStorageSetPlaceHolderSize(NcmContentStorage* cs, const NcmPlaceHolderId* placeholder_id, s64 size) {
     if (hosversionBefore(2,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     const struct {
-        NcmContentId placeholder_id;
+        NcmPlaceHolderId placeholder_id;
         s64 size;
     } in = { *placeholder_id, size };
     return serviceDispatchIn(&cs->s, 17, in);
@@ -259,7 +267,7 @@ Result ncmContentStorageReadContentIdFile(NcmContentStorage* cs, void* out_data,
     );
 }
 
-Result ncmContentStorageGetRightsIdFromPlaceHolderId(NcmContentStorage* cs, NcmRightsId* out_rights_id, const NcmContentId* placeholder_id) {
+Result ncmContentStorageGetRightsIdFromPlaceHolderId(NcmContentStorage* cs, NcmRightsId* out_rights_id, const NcmPlaceHolderId* placeholder_id) {
     if (hosversionBefore(2,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     if (hosversionBefore(3,0,0))
         return serviceDispatchInOut(&cs->s, 19, *placeholder_id, out_rights_id->rights_id);
@@ -303,9 +311,9 @@ Result ncmContentStorageFlushPlaceHolder(NcmContentStorage* cs) {
     return _ncmCmdNoIO(&cs->s, 24);
 }
 
-Result ncmContentStorageGetSizeFromPlaceHolderId(NcmContentStorage* cs, s64* out_size, const NcmContentId* placeholder_id) {
+Result ncmContentStorageGetSizeFromPlaceHolderId(NcmContentStorage* cs, s64* out_size, const NcmPlaceHolderId* placeholder_id) {
     if (hosversionBefore(4,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    return _ncmCmdInContentIdOutU64(&cs->s, placeholder_id, (u64*)out_size, 25);
+    return _ncmCmdInPlaceHolderIdOutU64(&cs->s, placeholder_id, (u64*)out_size, 25);
 }
 
 Result ncmContentStorageRepairInvalidFileAttribute(NcmContentStorage* cs) {
@@ -313,11 +321,11 @@ Result ncmContentStorageRepairInvalidFileAttribute(NcmContentStorage* cs) {
     return _ncmCmdNoIO(&cs->s, 26);
 }
 
-Result ncmContentStorageGetRightsIdFromPlaceHolderIdWithCache(NcmContentStorage* cs, NcmRightsId* out_rights_id, const NcmContentId* placeholder_id, const NcmContentId* cache_content_id) {
+Result ncmContentStorageGetRightsIdFromPlaceHolderIdWithCache(NcmContentStorage* cs, NcmRightsId* out_rights_id, const NcmPlaceHolderId* placeholder_id, const NcmContentId* cache_content_id) {
     if (hosversionBefore(8,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     const struct {
         NcmContentId cache_content_id;
-        NcmContentId placeholder_id;
+        NcmPlaceHolderId placeholder_id;
     } in = { *cache_content_id, *placeholder_id };
 
     if (hosversionBefore(3,0,0))

@@ -60,8 +60,13 @@ typedef enum {
 
 /// ContentId
 typedef struct {
-    u8 c[0x10]; ///< Id
+    alignas(4) u8 c[0x10]; ///< Id
 } NcmContentId;
+
+/// PlaceHolderId
+typedef struct {
+    alignas(8) u8 c[0x10]; ///< Id
+} NcmPlaceHolderId;
 
 /// ContentMetaKey
 typedef struct {
@@ -159,34 +164,34 @@ Result ncmInactivateContentMetaDatabase(FsStorageId storage_id); ///< [2.0.0+]
 Result ncmInvalidateRightsIdCache(void); ///< [9.0.0+]
 
 void ncmContentStorageClose(NcmContentStorage* cs);
-Result ncmContentStorageGeneratePlaceHolderId(NcmContentStorage* cs, NcmContentId* out_id);
-Result ncmContentStorageCreatePlaceHolder(NcmContentStorage* cs, const NcmContentId* content_id, const NcmContentId* placeholder_id, u64 size);
-Result ncmContentStorageDeletePlaceHolder(NcmContentStorage* cs, const NcmContentId* placeholder_id);
-Result ncmContentStorageHasPlaceHolder(NcmContentStorage* cs, bool* out, const NcmContentId* placeholder_id);
-Result ncmContentStorageWritePlaceHolder(NcmContentStorage* cs, const NcmContentId* placeholder_id, u64 offset, const void* data, size_t data_size);
-Result ncmContentStorageRegister(NcmContentStorage* cs, const NcmContentId* content_id, const NcmContentId* placeholder_id);
+Result ncmContentStorageGeneratePlaceHolderId(NcmContentStorage* cs, NcmPlaceHolderId* out_id);
+Result ncmContentStorageCreatePlaceHolder(NcmContentStorage* cs, const NcmContentId* content_id, const NcmPlaceHolderId* placeholder_id, u64 size);
+Result ncmContentStorageDeletePlaceHolder(NcmContentStorage* cs, const NcmPlaceHolderId* placeholder_id);
+Result ncmContentStorageHasPlaceHolder(NcmContentStorage* cs, bool* out, const NcmPlaceHolderId* placeholder_id);
+Result ncmContentStorageWritePlaceHolder(NcmContentStorage* cs, const NcmPlaceHolderId* placeholder_id, u64 offset, const void* data, size_t data_size);
+Result ncmContentStorageRegister(NcmContentStorage* cs, const NcmContentId* content_id, const NcmPlaceHolderId* placeholder_id);
 Result ncmContentStorageDelete(NcmContentStorage* cs, const NcmContentId* content_id);
 Result ncmContentStorageHas(NcmContentStorage* cs, bool* out, const NcmContentId* content_id);
 Result ncmContentStorageGetPath(NcmContentStorage* cs, char* out_path, size_t out_size, const NcmContentId* content_id);
-Result ncmContentStorageGetPlaceHolderPath(NcmContentStorage* cs, char* out_path, size_t out_size, const NcmContentId* placeholder_id);
+Result ncmContentStorageGetPlaceHolderPath(NcmContentStorage* cs, char* out_path, size_t out_size, const NcmPlaceHolderId* placeholder_id);
 Result ncmContentStorageCleanupAllPlaceHolder(NcmContentStorage* cs);
-Result ncmContentStorageListPlaceHolder(NcmContentStorage* cs, NcmContentId* out_ids, s32 count, s32* out_count);
+Result ncmContentStorageListPlaceHolder(NcmContentStorage* cs, NcmPlaceHolderId* out_ids, s32 count, s32* out_count);
 Result ncmContentStorageGetContentCount(NcmContentStorage* cs, s32* out_count);
 Result ncmContentStorageListContentId(NcmContentStorage* cs, NcmContentId* out_ids, s32 count, s32* out_count, s32 start_offset);
 Result ncmContentStorageGetSizeFromContentId(NcmContentStorage* cs, s64* out_size, const NcmContentId* content_id);
 Result ncmContentStorageDisableForcibly(NcmContentStorage* cs);
-Result ncmContentStorageRevertToPlaceHolder(NcmContentStorage* cs, const NcmContentId* placeholder_id, const NcmContentId* old_content_id, const NcmContentId* new_content_id); ///< [2.0.0+]
-Result ncmContentStorageSetPlaceHolderSize(NcmContentStorage* cs, const NcmContentId* placeholder_id, s64 size); ///< [2.0.0+]
+Result ncmContentStorageRevertToPlaceHolder(NcmContentStorage* cs, const NcmPlaceHolderId* placeholder_id, const NcmContentId* old_content_id, const NcmContentId* new_content_id); ///< [2.0.0+]
+Result ncmContentStorageSetPlaceHolderSize(NcmContentStorage* cs, const NcmPlaceHolderId* placeholder_id, s64 size); ///< [2.0.0+]
 Result ncmContentStorageReadContentIdFile(NcmContentStorage* cs, void* out_data, size_t out_data_size, const NcmContentId* content_id, s64 offset); ///< [2.0.0+]
-Result ncmContentStorageGetRightsIdFromPlaceHolderId(NcmContentStorage* cs, NcmRightsId* out_rights_id, const NcmContentId* placeholder_id); ///< [2.0.0+]
+Result ncmContentStorageGetRightsIdFromPlaceHolderId(NcmContentStorage* cs, NcmRightsId* out_rights_id, const NcmPlaceHolderId* placeholder_id); ///< [2.0.0+]
 Result ncmContentStorageGetRightsIdFromContentId(NcmContentStorage* cs, NcmRightsId* out_rights_id, const NcmContentId* content_id); ///< [2.0.0+]
 Result ncmContentStorageWriteContentForDebug(NcmContentStorage* cs, const NcmContentId* content_id, s64 offset, const void* data, size_t data_size); ///< [2.0.0+]
 Result ncmContentStorageGetFreeSpaceSize(NcmContentStorage* cs, s64* out_size); ///< [2.0.0+]
 Result ncmContentStorageGetTotalSpaceSize(NcmContentStorage* cs, s64* out_size); ///< [2.0.0+]
 Result ncmContentStorageFlushPlaceHolder(NcmContentStorage* cs); ///< [3.0.0+]
-Result ncmContentStorageGetSizeFromPlaceHolderId(NcmContentStorage* cs, s64* out_size, const NcmContentId* placeholder_id); ///< [4.0.0+]
+Result ncmContentStorageGetSizeFromPlaceHolderId(NcmContentStorage* cs, s64* out_size, const NcmPlaceHolderId* placeholder_id); ///< [4.0.0+]
 Result ncmContentStorageRepairInvalidFileAttribute(NcmContentStorage* cs); ///< [4.0.0+]
-Result ncmContentStorageGetRightsIdFromPlaceHolderIdWithCache(NcmContentStorage* cs, NcmRightsId* out_rights_id, const NcmContentId* placeholder_id, const NcmContentId* cache_content_id); ///< [8.0.0+]
+Result ncmContentStorageGetRightsIdFromPlaceHolderIdWithCache(NcmContentStorage* cs, NcmRightsId* out_rights_id, const NcmPlaceHolderId* placeholder_id, const NcmContentId* cache_content_id); ///< [8.0.0+]
 
 void ncmContentMetaDatabaseClose(NcmContentMetaDatabase* db);
 Result ncmContentMetaDatabaseSet(NcmContentMetaDatabase* db, const NcmContentMetaKey* key, const void* data, u64 data_size);
