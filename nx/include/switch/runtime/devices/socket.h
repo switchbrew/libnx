@@ -24,11 +24,6 @@ typedef struct  {
 
     u32 num_bsd_sessions;                       ///< Number of BSD service sessions (typically 3).
     BsdServiceType bsd_service_type;            ///< BSD service type (typically \ref BsdServiceType_User).
-
-    size_t serialized_out_addrinfos_max_size;   ///< For getaddrinfo.
-    size_t serialized_out_hostent_max_size;     ///< For gethostbyname/gethostbyaddr.
-    bool bypass_nsd;                            ///< For name gethostbyname/getaddrinfo: bypass the Name Server Daemon.
-    int dns_timeout;                            ///< For DNS requests: timeout or 0.
 } SocketInitConfig;
 
 /// Fetch the default configuration for the socket driver.
@@ -36,9 +31,7 @@ const SocketInitConfig *socketGetDefaultInitConfig(void);
 /// Initalize the socket driver.
 Result socketInitialize(const SocketInitConfig *config);
 /// Fetch the last bsd:u/s Switch result code (thread-local).
-Result socketGetLastBsdResult(void);
-/// Fetch the last sfdnsres Switch result code (thread-local).
-Result socketGetLastSfdnsresResult(void);
+Result socketGetLastResult(void);
 /// Deinitialize the socket driver.
 void socketExit(void);
 

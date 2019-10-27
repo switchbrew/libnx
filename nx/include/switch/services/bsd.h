@@ -1,6 +1,6 @@
 /**
  * @file bsd.h
- * @brief BSD sockets (bsd:u/s) service IPC wrapper. Please use socket.c instead.
+ * @brief BSD sockets (bsd:u/s) service IPC wrapper. Please use the standard <sys/socket.h> interface instead.
  * @author plutoo
  * @author TuxSH
  * @copyright libnx Authors

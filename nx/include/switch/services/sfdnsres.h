@@ -1,6 +1,6 @@
 /**
  * @file sfdnsres.h
- * @brief Domain name resolution service IPC wrapper. Please use socket.c instead.
+ * @brief Domain name resolution service IPC wrapper. Please use the standard <netdb.h> interface instead.
  * @author TuxSH
  * @author fincs
  * @copyright libnx Authors
