@@ -164,7 +164,7 @@ typedef enum {
     InfoType_StackRegionSize                = 15, ///< [2.0.0+] Size of the Stack memory region.
     InfoType_SystemResourceSizeTotal        = 16, ///< [3.0.0+] Total memory allocated for process memory management.
     InfoType_SystemResourceSizeUsed         = 17, ///< [3.0.0+] Amount of memory currently used by process memory management.
-    InfoType_TitleId                        = 18, ///< [3.0.0+] Title ID for the process.
+    InfoType_ProgramId                      = 18, ///< [3.0.0+] Program ID for the process.
     InfoType_InitialProcessIdRange          = 19, ///< [4.0.0-4.1.0] Min/max initial process IDs.
     InfoType_UserExceptionContextAddress    = 20, ///< [5.0.0+] Address of the process's exception context (for break).
     InfoType_TotalNonSystemMemorySize       = 21, ///< [6.0.0+] Total amount of memory available for process, excluding that for process memory management.
