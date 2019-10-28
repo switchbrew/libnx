@@ -8,6 +8,7 @@
 #include "../types.h"
 #include "../sf/service.h"
 #include "../services/fs.h"
+#include "../services/ncm.h"
 
 typedef struct {
         u8 main_thread_priority;
@@ -43,14 +44,14 @@ void ldrPmExit(void);
 
 Service* ldrPmGetServiceSession(void);
 
-Result ldrShellAddTitleToLaunchQueue(u64 tid, const void *args, size_t args_size);
-Result ldrShellClearLaunchQueue(void);
+Result ldrShellSetProgramArguments(u64 program_id, const void *args, size_t args_size);
+Result ldrShellFlushArguments(void);
 
-Result ldrDmntAddTitleToLaunchQueue(u64 tid, const void *args, size_t args_size);
-Result ldrDmntClearLaunchQueue(void);
-Result ldrDmntGetModuleInfos(u64 pid, LoaderModuleInfo *out_module_infos, size_t max_out_modules, u32 *num_out);
+Result ldrDmntSetProgramArguments(u64 program_id, const void *args, size_t args_size);
+Result ldrDmntFlushArguments(void);
+Result ldrDmntGetProcessModuleInfo(u64 pid, LoaderModuleInfo *out_module_infos, size_t max_out_modules, s32 *num_out);
 
-Result ldrPmCreateProcess(u64 flags, u64 launch_index, Handle reslimit_h, Handle *out_process_h);
-Result ldrPmGetProgramInfo(u64 title_id, FsStorageId storage_id, LoaderProgramInfo *out_program_info);
-Result ldrPmRegisterTitle(u64 title_id, FsStorageId storage_id, u64 *out_index);
-Result ldrPmUnregisterTitle(u64 launch_index);
+Result ldrPmCreateProcess(u64 pin_id, u32 flags, Handle reslimit_h, Handle *out_process_h);
+Result ldrPmGetProgramInfo(const NcmProgramLocation *loc, LoaderProgramInfo *out_program_info);
+Result ldrPmPinProgram(const NcmProgramLocation *loc, u64 *out_pin_id);
+Result ldrPmUnpinProgram(u64 pin_id);
