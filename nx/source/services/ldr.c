@@ -24,12 +24,12 @@ LDR_GENERATE_SERVICE_INIT(Shell, shel);
 LDR_GENERATE_SERVICE_INIT(Dmnt,  dmnt);
 LDR_GENERATE_SERVICE_INIT(Pm,    pm);
 
-NX_INLINE Result _ldrAddTitleToLaunchQueue(Service* srv, u64 tid, const void *args, size_t args_size) {
+static Result _ldrSetProgramArguments(Service* srv, u64 program_id, const void *args, size_t args_size) {
     const struct {
         u32 args_size;
         u32 pad;
-        u64 tid;
-    } in = { args_size, 0, tid };
+        u64 program_id;
+    } in = { args_size, 0, program_id };
 
     return serviceDispatchIn(srv, 0, in,
         .buffer_attrs = { SfBufferAttr_In | SfBufferAttr_HipcPointer },
@@ -37,38 +37,39 @@ NX_INLINE Result _ldrAddTitleToLaunchQueue(Service* srv, u64 tid, const void *ar
     );
 }
 
-NX_INLINE Result _ldrClearLaunchQueue(Service* srv) {
+static Result _ldrFlushArguments(Service* srv) {
     return serviceDispatch(srv, 1);
 }
 
-Result ldrShellAddTitleToLaunchQueue(u64 tid, const void *args, size_t args_size) {
-    return _ldrAddTitleToLaunchQueue(&g_ldrShellSrv, tid, args, args_size);
+Result ldrShellSetProgramArguments(u64 program_id, const void *args, size_t args_size) {
+    return _ldrSetProgramArguments(&g_ldrShellSrv, program_id, args, args_size);
 }
 
 Result ldrShellClearLaunchQueue(void) {
-    return _ldrClearLaunchQueue(&g_ldrShellSrv);
+    return _ldrFlushArguments(&g_ldrShellSrv);
 }
 
-Result ldrDmntAddTitleToLaunchQueue(u64 tid, const void *args, size_t args_size) {
-    return _ldrAddTitleToLaunchQueue(&g_ldrDmntSrv, tid, args, args_size);
+Result ldrDmntSetProgramArguments(u64 program_id, const void *args, size_t args_size) {
+    return _ldrSetProgramArguments(&g_ldrDmntSrv, program_id, args, args_size);
 }
 
 Result ldrDmntClearLaunchQueue(void) {
-    return _ldrClearLaunchQueue(&g_ldrDmntSrv);
+    return _ldrFlushArguments(&g_ldrDmntSrv);
 }
 
-Result ldrDmntGetModuleInfos(u64 pid, LoaderModuleInfo *out_module_infos, size_t max_out_modules, u32 *num_out) {
+Result ldrDmntGetProcessModuleInfo(u64 pid, LoaderModuleInfo *out_module_infos, size_t max_out_modules, s32 *num_out) {
     return serviceDispatchInOut(&g_ldrDmntSrv, 2, pid, *num_out,
         .buffer_attrs = { SfBufferAttr_Out | SfBufferAttr_HipcPointer },
         .buffers = { { out_module_infos, max_out_modules * sizeof(*out_module_infos) } },
     );
 }
 
-Result ldrPmCreateProcess(u64 flags, u64 launch_index, Handle reslimit_h, Handle *out_process_h) {
+Result ldrPmCreateProcess(u64 pin_id, u32 flags, Handle reslimit_h, Handle *out_process_h) {
     const struct {
-        u64 flags;
-        u64 launch_index;
-    } in = { flags, launch_index };
+        u32 flags;
+        u32 pad;
+        u64 pin_id;
+    } in = { flags, 0, pin_id };
     return serviceDispatchIn(&g_ldrPmSrv, 0, in,
         .in_num_handles = 1,
         .in_handles = { reslimit_h },
@@ -77,25 +78,17 @@ Result ldrPmCreateProcess(u64 flags, u64 launch_index, Handle reslimit_h, Handle
     );
 }
 
-Result ldrPmGetProgramInfo(u64 title_id, FsStorageId storage_id, LoaderProgramInfo *out_program_info) {
-    const struct {
-        u64 title_id;
-        u64 storage_id;
-    } in = { title_id, storage_id };
-    return serviceDispatchIn(&g_ldrPmSrv, 1, in,
+Result ldrPmGetProgramInfo(const NcmProgramLocation *loc, LoaderProgramInfo *out_program_info) {
+    return serviceDispatchIn(&g_ldrPmSrv, 1, *loc,
         .buffer_attrs = { SfBufferAttr_Out | SfBufferAttr_HipcPointer | SfBufferAttr_FixedSize },
         .buffers = { { out_program_info, sizeof(*out_program_info) } },
     );
 }
 
-Result ldrPmRegisterTitle(u64 title_id, FsStorageId storage_id, u64 *out_index) {
-    const struct {
-        u64 title_id;
-        u64 storage_id;
-    } in = { title_id, storage_id };
-    return serviceDispatchInOut(&g_ldrPmSrv, 2, in, *out_index);
+Result ldrPmPinProgram(const NcmProgramLocation *loc, u64 *out_pin_id) {
+    return serviceDispatchInOut(&g_ldrPmSrv, 2, *loc, *out_pin_id);
 }
 
-Result ldrPmUnregisterTitle(u64 launch_index) {
-    return serviceDispatchIn(&g_ldrPmSrv, 3, launch_index);
+Result ldrPmUnpinProgram(u64 pin_id) {
+    return serviceDispatchIn(&g_ldrPmSrv, 3, pin_id);
 }
