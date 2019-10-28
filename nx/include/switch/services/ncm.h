@@ -70,7 +70,7 @@ typedef struct {
 
 /// ContentMetaKey
 typedef struct {
-    u64 title_id;                       ///< Title id.
+    u64 id;                             ///< Id.
     u32 version;                        ///< Title version.
     u8 type;                            ///< \ref NcmContentMetaType
     u8 install_type;                    ///< \ref NcmContentInstallType
