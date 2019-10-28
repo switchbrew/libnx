@@ -30,7 +30,7 @@ static void _CacheVersion(void)
     g_Version = 1;
     if (R_VALUE(svcGetInfo(&tmp, InfoType_AslrRegionAddress, INVALID_HANDLE, 0)) != KERNELRESULT(InvalidEnumValue))
         g_Version = 2;
-    if (R_VALUE(svcGetInfo(&tmp, InfoType_TitleId, INVALID_HANDLE, 0)) != KERNELRESULT(InvalidEnumValue))
+    if (R_VALUE(svcGetInfo(&tmp, InfoType_ProgramId, INVALID_HANDLE, 0)) != KERNELRESULT(InvalidEnumValue))
         g_Version = 3;
     if (R_VALUE(svcGetInfo(&tmp, InfoType_InitialProcessIdRange, INVALID_HANDLE, 0)) != KERNELRESULT(InvalidEnumValue))
         g_Version = 4;
