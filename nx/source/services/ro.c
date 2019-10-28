@@ -147,7 +147,7 @@ Result ro1LoadNrrEx(u64 nrr_address, u64 nrr_size) {
     return _rosrvLoadNrr(&g_ro1Srv, 10, nrr_address, nrr_size);
 }
 
-Result roDmntGetModuleInfos(u64 pid, LoaderModuleInfo *out_module_infos, size_t max_out_modules, u32 *num_out) {
+Result roDmntGetProcessModuleInfo(u64 pid, LoaderModuleInfo *out_module_infos, size_t max_out_modules, s32 *num_out) {
     return serviceDispatchInOut(&g_dmntSrv, 0, pid, *num_out,
         .buffer_attrs = {
             SfBufferAttr_HipcMapAlias | SfBufferAttr_Out,

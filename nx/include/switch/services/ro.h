@@ -33,4 +33,4 @@ Result ro1LoadNrr(u64 nrr_address, u64 nrr_size);
 Result ro1UnloadNrr(u64 nrr_address);
 Result ro1LoadNrrEx(u64 nrr_address, u64 nrr_size);
 
-Result roDmntGetModuleInfos(u64 pid, LoaderModuleInfo *out_module_infos, size_t max_out_modules, u32 *num_out);
+Result roDmntGetProcessModuleInfo(u64 pid, LoaderModuleInfo *out_module_infos, size_t max_out_modules, s32 *num_out);
