@@ -85,7 +85,7 @@ typedef struct {
 
 /// ContentInfo
 typedef struct {
-    NcmContentId content_id;         ///< \ref NcmContentId
+    NcmContentId content_id;     ///< \ref NcmContentId
     u8 size[0x6];                ///< Content size.
     u8 content_type;             ///< \ref NcmContentType.
     u8 id_offset;                ///< Offset of this content. Unused by most applications.
@@ -139,7 +139,7 @@ typedef struct {
 
 /// ProgramLocation
 typedef struct {
-    u64 titleID;
+    u64 program_id;         ///< ProgramId
     u8 storageID;           ///< \ref FsStorageId
     u8 pad[7];
 } NcmProgramLocation;
