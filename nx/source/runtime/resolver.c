@@ -99,10 +99,9 @@ static struct hostent *_resolverDeserializeHostent(int *err, const void *out_he_
 
     pos_aliases = pos;
 
-    if(nb_aliases>0) {
-        for(nb_pos=0, len = 1; nb_pos<nb_aliases; nb_pos++, pos += len + 1) {
+    if (nb_aliases) {
+        for (nb_pos = 0, len = 1; nb_pos < nb_aliases; nb_pos++, pos += len + 1)
             len = strlen(pos);
-        }
     }
 
     total_aliases_size = pos - pos_aliases;
@@ -114,7 +113,7 @@ static struct hostent *_resolverDeserializeHostent(int *err, const void *out_he_
     pos += 2;
 
     // sfdnsres will only return IPv4 addresses for the "host" commands
-    if(addrtype != AF_INET || addrlen != sizeof(struct in_addr)) {
+    if (addrtype != AF_INET || addrlen != sizeof(struct in_addr)) {
         *err = NO_ADDRESS;
         return NULL;
     }
@@ -126,7 +125,7 @@ static struct hostent *_resolverDeserializeHostent(int *err, const void *out_he_
     pos_addresses = pos;
     pos += addrlen * nb_addresses;
 
-    he = (struct hostent *)malloc(
+    he = malloc(
         sizeof(struct hostent)
         + name_size
         + 8 * (nb_aliases + 1 + nb_addresses + 1)
@@ -134,7 +133,7 @@ static struct hostent *_resolverDeserializeHostent(int *err, const void *out_he_
         + addrlen * nb_addresses
     );
 
-    if(he == NULL) {
+    if (!he) {
         *err = NO_RECOVERY;
         return NULL;
     }
@@ -153,7 +152,7 @@ static struct hostent *_resolverDeserializeHostent(int *err, const void *out_he_
     he->h_length = addrlen;
     he->h_addr_list = he->h_aliases + nb_aliases + 1;
 
-    if(nb_aliases>0) {
+    if (nb_aliases) {
         char *alias = (char *)(he->h_addr_list + nb_addresses + 1);
         memcpy(alias, pos_aliases, total_aliases_size);
         for(size_t i = 0; i < nb_aliases; i++) {
@@ -163,10 +162,10 @@ static struct hostent *_resolverDeserializeHostent(int *err, const void *out_he_
     }
     he->h_aliases[nb_aliases] = NULL;
 
-    if(nb_addresses>0) {
+    if (nb_addresses) {
         struct in_addr *addresses = (struct in_addr *)(he->h_addr_list + nb_addresses + 1 + total_aliases_size);
         memcpy(addresses, pos_addresses, addrlen * nb_addresses);
-        for(size_t i = 0; i < nb_addresses; i++) {
+        for (size_t i = 0; i < nb_addresses; i ++) {
             he->h_addr_list[i] = (char *)&addresses[i];
             addresses[i].s_addr = ntohl(addresses[i].s_addr); // lol Nintendo
         }
@@ -186,21 +185,21 @@ struct addrinfo_serialized_hdr {
 };
 
 static size_t _resolverSerializeAddrInfo(struct addrinfo_serialized_hdr *hdr, const struct addrinfo *ai) {
-    size_t subsize1 = (ai->ai_addr == NULL || ai->ai_addrlen == 0) ? 4 : ai->ai_addrlen; // not posix-compliant ?
-    size_t subsize2 = ai->ai_canonname == NULL ? 1 : (strlen(ai->ai_canonname) + 1);
+    size_t subsize1 = (ai->ai_addr && ai->ai_addrlen) ? ai->ai_addrlen : 4; // not posix-compliant ?
+    size_t subsize2 = ai->ai_canonname ? strlen(ai->ai_canonname) + 1 : 1;
 
     hdr->magic = htonl(0xBEEFCAFE); // Seriously.
     hdr->ai_flags = htonl(ai->ai_flags);
     hdr->ai_family = htonl(ai->ai_family);
     hdr->ai_socktype = htonl(ai->ai_socktype);
     hdr->ai_protocol = htonl(ai->ai_protocol);
-    hdr->ai_addrlen = ai->ai_addr == NULL ? 0 : htonl((u32)ai->ai_addrlen);
+    hdr->ai_addrlen = ai->ai_addr ? htonl((u32)ai->ai_addrlen) : 0;
 
-    if(hdr->ai_addrlen == 0)
+    if (hdr->ai_addrlen == 0)
         *(u32 *)((u8 *)hdr + sizeof(struct addrinfo_serialized_hdr)) = 0;
     else {
         // Nintendo just byteswaps everything recursively... even fields that are already byteswapped.
-        switch(ai->ai_family) {
+        switch (ai->ai_family) {
             case AF_INET: {
                 struct sockaddr_in sa = {0};
                 memcpy(&sa, ai->ai_addr, subsize1 <= sizeof(struct sockaddr_in) ? subsize1 : sizeof(struct sockaddr_in));
@@ -223,36 +222,38 @@ static size_t _resolverSerializeAddrInfo(struct addrinfo_serialized_hdr *hdr, co
         }
     }
 
-    if(ai->ai_canonname == NULL)
-        *((u8 *)hdr + sizeof(struct addrinfo_serialized_hdr) + subsize1) = 0;
-    else
+    if (ai->ai_canonname)
         memcpy((u8 *)hdr + sizeof(struct addrinfo_serialized_hdr) + subsize1, ai->ai_canonname, subsize2);
+    else
+        *((u8 *)hdr + sizeof(struct addrinfo_serialized_hdr) + subsize1) = 0;
 
     return sizeof(struct addrinfo_serialized_hdr) + subsize1 + subsize2;
 }
 
 static struct addrinfo_serialized_hdr *_resolverSerializeAddrInfoList(size_t *out_size, const struct addrinfo *ai) {
     size_t total_addrlen = 0, total_namelen = 0, n = 0;
-    struct addrinfo_serialized_hdr *out, *pos;
-
-    for(const struct addrinfo *node = ai; node != NULL; node = node->ai_next) {
-        total_addrlen += node->ai_addrlen == 0 ? 4 : node->ai_addrlen;
-        total_namelen += node->ai_canonname == NULL ? 1 : (strlen(node->ai_canonname) + 1);
+    for (const struct addrinfo *node = ai; node; node = node->ai_next) {
+        total_addrlen += node->ai_addrlen ? node->ai_addrlen : 4;
+        total_namelen += node->ai_canonname ? strlen(node->ai_canonname) + 1 : 1;
         n++;
     }
 
-    out = (struct addrinfo_serialized_hdr *)malloc(sizeof(struct addrinfo_serialized_hdr) * n + total_addrlen + total_namelen + 4);
-    if(out == NULL)
+    size_t reqsize = sizeof(struct addrinfo_serialized_hdr) * n + total_addrlen + total_namelen + 4;
+    if (reqsize > g_resolverAddrInfoHintsBufferSize)
         return NULL;
 
-    pos = out;
-    for(const struct addrinfo *node = ai; node != NULL; node = node->ai_next) {
+    struct addrinfo_serialized_hdr *out = malloc(reqsize);
+    if (!out)
+        return NULL;
+
+    struct addrinfo_serialized_hdr *pos = out;
+    for (const struct addrinfo *node = ai; node; node = node->ai_next) {
         size_t len = _resolverSerializeAddrInfo(pos, node);
         pos = (struct addrinfo_serialized_hdr *)((u8 *)pos + len);
     }
-    *(u32 *)pos = 0; // Sentinel value
 
-    *out_size = (u8 *)pos - (u8 *)out + 4;
+    *(u32 *)pos = 0; // Sentinel value
+    *out_size = reqsize;
     return out;
 }
 
@@ -263,12 +264,12 @@ static struct addrinfo *_resolverDeserializeAddrInfo(size_t *out_len, const stru
         char canonname[];
     };
 
-    size_t subsize1 = hdr->ai_addrlen == 0 ? 4 : ntohl(hdr->ai_addrlen);
+    size_t subsize1 = hdr->ai_addrlen ? ntohl(hdr->ai_addrlen) : 4;
     size_t subsize2 = strlen((const char *)hdr + sizeof(struct addrinfo_serialized_hdr) + subsize1) + 1;
-    struct addrinfo_node *node = (struct addrinfo_node *)malloc(sizeof(struct addrinfo_node) + subsize2);
+    struct addrinfo_node *node = malloc(sizeof(struct addrinfo_node) + subsize2);
 
     *out_len = sizeof(struct addrinfo_serialized_hdr) + subsize1 + subsize2;
-    if(node == NULL)
+    if (!node)
         return NULL;
 
     node->info.ai_flags = ntohl(hdr->ai_flags);
@@ -278,16 +279,16 @@ static struct addrinfo *_resolverDeserializeAddrInfo(size_t *out_len, const stru
     node->info.ai_addrlen = ntohl(hdr->ai_addrlen);
 
     // getaddrinfo enforces addrlen = sizeof(struct sockaddr) and family = AF_INET, ie. only IPv4, anyways...
-    if(node->info.ai_addrlen > sizeof(struct sockaddr_storage))
+    if (node->info.ai_addrlen > sizeof(struct sockaddr_storage))
         node->info.ai_addrlen = sizeof(struct sockaddr_storage);
 
-    if(node->info.ai_addrlen == 0)
+    if (node->info.ai_addrlen == 0)
         node->info.ai_addr = NULL;
     else {
         node->info.ai_addr = (struct sockaddr *)&node->addr;
         memcpy(node->info.ai_addr, (const u8 *)hdr + sizeof(struct addrinfo_serialized_hdr), node->info.ai_addrlen);
         // Nintendo just byteswaps everything recursively... even fields that are already byteswapped.
-        switch(node->info.ai_family) {
+        switch (node->info.ai_family) {
             case AF_INET: {
                 struct sockaddr_in *sa = (struct sockaddr_in *)node->info.ai_addr;
                 sa->sin_len = 6;
@@ -307,7 +308,7 @@ static struct addrinfo *_resolverDeserializeAddrInfo(size_t *out_len, const stru
         }
     }
 
-    if(subsize2 == 1)
+    if (subsize2 == 1)
         node->info.ai_canonname = NULL;
     else {
         node->info.ai_canonname = node->canonname;
@@ -322,19 +323,19 @@ static struct addrinfo *_resolverDeserializeAddrInfo(size_t *out_len, const stru
 static struct addrinfo *_resolverDeserializeAddrInfoList(struct addrinfo_serialized_hdr *hdr) {
     struct addrinfo *first = NULL, *prev = NULL;
 
-    while(hdr->magic == htonl(0xBEEFCAFE)) {
+    while (hdr->magic == htonl(0xBEEFCAFE)) {
         size_t len;
         struct addrinfo *node = _resolverDeserializeAddrInfo(&len, hdr);
-        if(node == NULL) {
-            if(first != NULL)
+        if (!node) {
+            if (first)
                 freeaddrinfo(first);
             return NULL;
         }
 
-        if(first == NULL)
+        if (!first)
             first = node;
 
-        if(prev != NULL)
+        if (prev)
             prev->ai_next = node;
 
         prev = node;
@@ -349,8 +350,7 @@ void freehostent(struct hostent *he) {
 }
 
 void freeaddrinfo(struct addrinfo *ai) {
-    if(ai == NULL) return; // not specified by POSIX, but that's convenient (FreeBSD does this too, etc.).
-    for(struct addrinfo *node = ai, *next; node != NULL; node = next) {
+    for (struct addrinfo *node = ai, *next; node; node = next) {
         next = node->ai_next;
         free(node);
     }
@@ -503,8 +503,6 @@ int getaddrinfo(const char *node, const char *service, const struct addrinfo *hi
     size_t hints_sz = 0;
     struct addrinfo_serialized_hdr *hints_serialized = NULL;
     if (hints) {
-        // TODO: fixed size for serialized hints (g_resolverAddrInfoHintsBufferSize)
-        (void)g_resolverAddrInfoHintsBufferSize;
         hints_serialized = _resolverSerializeAddrInfoList(&hints_sz, hints);
         if (!hints_serialized) {
             errno = ENOMEM;
@@ -616,7 +614,7 @@ int gethostname(char *name, size_t namelen) {
     struct in_addr in;
     in.s_addr = gethostid();
     const char *hostname = inet_ntop(AF_INET, &in, name, namelen);
-    return hostname == NULL ? -1 : 0;
+    return hostname ? 0 : -1;
 }
 
 // Unimplementable functions, left for compliance:
