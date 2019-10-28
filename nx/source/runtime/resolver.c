@@ -77,7 +77,7 @@ Result resolverRemoveIpAddressFromCache(u32 ip) {
     return MAKERESULT(Module_Libnx, LibnxError_NotInitialized); // not implemented
 }
 
-static struct hostent *_resolverDeserializeHostent(int *err, const void *out_he_serialized) {
+static struct hostent *_resolverDeserializeHostent(const void *out_he_serialized) {
     const char *buf = (const char *)out_he_serialized;
     const char *pos, *pos_aliases, *pos_addresses;
     size_t name_size, total_aliases_size = 0;
@@ -114,7 +114,8 @@ static struct hostent *_resolverDeserializeHostent(int *err, const void *out_he_
 
     // sfdnsres will only return IPv4 addresses for the "host" commands
     if (addrtype != AF_INET || addrlen != sizeof(struct in_addr)) {
-        *err = NO_ADDRESS;
+        h_errno = NO_ADDRESS;
+        errno = EINVAL;
         return NULL;
     }
 
@@ -134,7 +135,8 @@ static struct hostent *_resolverDeserializeHostent(int *err, const void *out_he_
     );
 
     if (!he) {
-        *err = NO_RECOVERY;
+        h_errno = NETDB_INTERNAL;
+        errno = ENOMEM;
         return NULL;
     }
 
@@ -357,111 +359,107 @@ void freeaddrinfo(struct addrinfo *ai) {
 }
 
 struct hostent *gethostbyname(const char *name) {
-    Result rc = 0;
-    void *out_he_serialized = malloc(g_resolverHostByNameBufferSize);
-    struct hostent *he = NULL;
-    u32 ret = 0;
-    u32 errno_ = 0;
-
-    if(out_he_serialized == NULL) {
-        h_errno = NO_RECOVERY;
-        errno = ENOMEM; // POSIX leaves this unspecified
-        goto cleanup;
+    if (!name) {
+        h_errno = HOST_NOT_FOUND;
+        errno = EINVAL;
+        return NULL;
     }
-    rc = sfdnsresGetHostByNameRequest(
+
+    if (!g_resolverHostByNameBufferSize) {
+        h_errno = NETDB_INTERNAL;
+        errno = ENOSPC;
+        return NULL;
+    }
+
+    void *out_serialized = malloc(g_resolverHostByNameBufferSize);
+    if (!out_serialized) {
+        h_errno = NETDB_INTERNAL;
+        errno = ENOMEM;
+        return NULL;
+    }
+
+    Result rc = sfdnsresGetHostByNameRequest(
         g_resolverCancelHandle,
         !g_resolverDisableServiceDiscovery,
         name,
-        &ret,
-        &errno_,
-        out_he_serialized, g_resolverHostByNameBufferSize,
+        (u32*)&h_errno,
+        (u32*)&errno,
+        out_serialized, g_resolverHostByNameBufferSize,
         NULL);
     g_resolverCancelHandle = 0;
-
-    if(rc == 0xD401) {
-        h_errno = NO_RECOVERY;
-        errno = EFAULT; // POSIX leaves this unspecified
-        goto cleanup;
-    }
-    else if(R_FAILED(rc) && R_MODULE(rc) == 1) { // Kernel
-        h_errno = TRY_AGAIN;
-        errno = EAGAIN; // POSIX leaves this unspecified
-        goto cleanup;
-    }
-    else if(R_FAILED(rc)) {
-        h_errno = NO_RECOVERY;
-        errno = EINVAL; // POSIX leaves this unspecified
-        goto cleanup;
-    }
-    if(ret != NETDB_SUCCESS) {
-        h_errno = ret;
-        errno = errno_; // POSIX leaves this unspecified
-        goto cleanup;
-    }
-
-    he = _resolverDeserializeHostent(&h_errno, out_he_serialized);
-    if(he == NULL) {
-        h_errno = NO_RECOVERY;
-        errno = ENOMEM; // POSIX leaves this unspecified
-    }
-cleanup:
     g_resolverResult = rc;
-    free(out_he_serialized);
-    return he;
+
+    if (R_FAILED(rc)) {
+        if (R_MODULE(rc) == 21) // SM
+            errno = EAGAIN;
+        else if (R_MODULE(rc) == 1) // Kernel
+            errno = EFAULT;
+        else
+            errno = EPIPE;
+        h_errno = NETDB_INTERNAL;
+    }
+
+    struct hostent *ret = NULL;
+    if (h_errno == NETDB_SUCCESS)
+        ret = _resolverDeserializeHostent(out_serialized);
+
+    free(out_serialized);
+    return ret;
 }
 
 struct hostent *gethostbyaddr(const void *addr, socklen_t len, int type) {
-    Result rc = 0;
-    void *out_he_serialized = malloc(g_resolverHostByAddrBufferSize);
-    struct hostent *he = NULL;
-    u32 ret = 0;
-    u32 errno_ = 0;
-
-    if(out_he_serialized == NULL) {
-        h_errno = NO_RECOVERY;
-        errno = ENOMEM; // POSIX leaves this unspecified
-        goto cleanup;
+    if (!addr || !len) {
+        h_errno = HOST_NOT_FOUND;
+        errno = EINVAL;
+        return NULL;
     }
-    rc = sfdnsresGetHostByAddrRequest(
+
+    if (type != AF_INET) {
+        h_errno = HOST_NOT_FOUND;
+        errno = EOPNOTSUPP;
+        return NULL;
+    }
+
+    if (!g_resolverHostByAddrBufferSize) {
+        h_errno = NETDB_INTERNAL;
+        errno = ENOSPC;
+        return NULL;
+    }
+
+    void *out_serialized = malloc(g_resolverHostByAddrBufferSize);
+    if (!out_serialized) {
+        h_errno = NETDB_INTERNAL;
+        errno = ENOMEM;
+        return NULL;
+    }
+
+    Result rc = sfdnsresGetHostByAddrRequest(
         addr, len,
         type,
         g_resolverCancelHandle,
-        &ret,
-        &errno_,
-        out_he_serialized, g_resolverHostByAddrBufferSize,
+        (void*)&h_errno,
+        (void*)&errno,
+        out_serialized, g_resolverHostByAddrBufferSize,
         NULL);
     g_resolverCancelHandle = 0;
-
-    if(rc == 0xD401) {
-        h_errno = NO_RECOVERY; // POSIX leaves this unspecified
-        errno = EFAULT;
-        goto cleanup;
-    }
-    else if(R_FAILED(rc) && R_MODULE(rc) == 1) { // Kernel
-        h_errno = TRY_AGAIN;
-        errno = EAGAIN; // POSIX leaves this unspecified
-        goto cleanup;
-    }
-    else if(R_FAILED(rc)) {
-        h_errno = NO_RECOVERY;
-        errno = EINVAL; // POSIX leaves this unspecified
-        goto cleanup;
-    }
-    if(ret != NETDB_SUCCESS) {
-        h_errno = ret;
-        errno = errno_; // POSIX leaves this unspecified
-        goto cleanup;
-    }
-
-    he = _resolverDeserializeHostent(&h_errno, out_he_serialized);
-    if(he == NULL) {
-        h_errno = NO_RECOVERY;
-        errno = ENOMEM; // POSIX leaves this unspecified
-    }
-cleanup:
     g_resolverResult = rc;
-    free(out_he_serialized);
-    return he;
+
+    if (R_FAILED(rc)) {
+        if (R_MODULE(rc) == 21) // SM
+            errno = EAGAIN;
+        else if (R_MODULE(rc) == 1) // Kernel
+            errno = EFAULT;
+        else
+            errno = EPIPE;
+        h_errno = NETDB_INTERNAL;
+    }
+
+    struct hostent *ret = NULL;
+    if (h_errno == NETDB_SUCCESS)
+        ret = _resolverDeserializeHostent(out_serialized);
+
+    free(out_serialized);
+    return ret;
 }
 
 const char *hstrerror(int err) {
@@ -517,7 +515,7 @@ int getaddrinfo(const char *node, const char *service, const struct addrinfo *hi
         return EAI_FAIL;
     }
 
-    s32 gaie = 0;
+    s32 ret = 0;
     Result rc = sfdnsresGetAddrInfoRequest(
         g_resolverCancelHandle,
         !g_resolverDisableServiceDiscovery,
@@ -526,7 +524,7 @@ int getaddrinfo(const char *node, const char *service, const struct addrinfo *hi
         hints_serialized, hints_sz,
         out_serialized, g_resolverAddrInfoBufferSize,
         (u32*)&errno,
-        &gaie,
+        &ret,
         NULL);
     g_resolverResult = rc;
     g_resolverCancelHandle = 0;
@@ -539,61 +537,48 @@ int getaddrinfo(const char *node, const char *service, const struct addrinfo *hi
             errno = EFAULT;
         else
             errno = EPIPE;
-        gaie = EAI_SYSTEM;
+        ret = EAI_SYSTEM;
     }
 
-    if (gaie == 0) {
+    if (ret == 0) {
         *res = _resolverDeserializeAddrInfoList(out_serialized);
         if (!*res) {
             errno = ENOMEM;
-            gaie = EAI_MEMORY;
+            ret = EAI_MEMORY;
         }
     }
 
     free(out_serialized);
-    return gaie;
+    return ret;
 }
 
 int getnameinfo(const struct sockaddr *sa, socklen_t salen,
                 char *host, socklen_t hostlen,
                 char *serv, socklen_t servlen,
                 int flags) {
-    Result rc = 0;
-    u32 errno_ = 0;
-    s32 gaie = 0;
-
-    rc = sfdnsresGetNameInfoRequest(
+    s32 ret = 0;
+    Result rc = sfdnsresGetNameInfoRequest(
         flags,
         sa, salen,
         host, hostlen,
         serv, servlen,
         g_resolverCancelHandle,
-        &errno_,
-        &gaie);
+        (u32*)&errno,
+        &ret);
+    g_resolverResult = rc;
     g_resolverCancelHandle = 0;
 
-    if(rc == 0xD401) {
-        gaie = EAI_SYSTEM;
-        errno = EFAULT;
-        goto cleanup;
-    }
-    else if(R_FAILED(rc) && R_MODULE(rc) == 1) { // Kernel
-        gaie = EAI_AGAIN;
-        goto cleanup;
-    }
-    else if(R_FAILED(rc)) {
-        gaie = EAI_FAIL;
-        goto cleanup;
+    if (R_FAILED(rc)) {
+        if (R_MODULE(rc) == 21) // SM
+            errno = EAGAIN;
+        else if (R_MODULE(rc) == 1) // Kernel
+            errno = EFAULT;
+        else
+            errno = EPIPE;
+        ret = EAI_SYSTEM;
     }
 
-    if(gaie != 0) {
-        if(gaie == EAI_SYSTEM)
-            errno = errno_;
-    }
-
-cleanup:
-    g_resolverResult = rc;
-    return gaie;
+    return ret;
 }
 
 long gethostid(void) {
