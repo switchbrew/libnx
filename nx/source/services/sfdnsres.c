@@ -70,7 +70,7 @@ static Result _sfdnsresCmdInErrOutStr(u32 err, char *out_str, size_t out_str_siz
     );
 }
 
-Result sfdnsresGetHostByNameRequest(u32 cancel_handle, bool use_nsd, const char *name, u32 *ret, u32 *errno_, void *out_buffer, size_t out_buffer_size, u32 *out_serialized_size) {
+Result sfdnsresGetHostByNameRequest(u32 cancel_handle, bool use_nsd, const char *name, u32 *h_errno_, u32 *errno_, void *out_buffer, size_t out_buffer_size, u32 *out_serialized_size) {
     const struct {
         u32 use_nsd; // actually u8 bool, but promoted to u32 for convenience
         u32 cancel_handle;
@@ -78,7 +78,7 @@ Result sfdnsresGetHostByNameRequest(u32 cancel_handle, bool use_nsd, const char 
     } in = { use_nsd ? 1 : 0, cancel_handle, 0 };
 
     struct {
-        u32 ret;
+        u32 h_errno_;
         u32 errno_;
         u32 serialized_size;
     } out = {};
@@ -96,7 +96,7 @@ Result sfdnsresGetHostByNameRequest(u32 cancel_handle, bool use_nsd, const char 
     );
 
     if (R_SUCCEEDED(rc)) {
-        if (ret) *ret = out.ret;
+        if (h_errno_) *h_errno_ = out.h_errno_;
         if (errno_) *errno_ = out.errno_;
         if (out_serialized_size) *out_serialized_size = out.serialized_size;
     }
@@ -104,7 +104,7 @@ Result sfdnsresGetHostByNameRequest(u32 cancel_handle, bool use_nsd, const char 
     return rc;
 }
 
-Result sfdnsresGetHostByAddrRequest(const void *in_addr, size_t in_addr_len, u32 type, u32 cancel_handle, u32 *ret, u32 *errno_, void *out_buffer, size_t out_buffer_size, u32 *out_serialized_size) {
+Result sfdnsresGetHostByAddrRequest(const void *in_addr, size_t in_addr_len, u32 type, u32 cancel_handle, u32 *h_errno_, u32 *errno_, void *out_buffer, size_t out_buffer_size, u32 *out_serialized_size) {
     const struct {
         u32 len; // wtf nintendo
         u32 type;
@@ -114,7 +114,7 @@ Result sfdnsresGetHostByAddrRequest(const void *in_addr, size_t in_addr_len, u32
     } in = { (u32)in_addr_len, type, cancel_handle, 0, 0 };
 
     struct {
-        u32 ret;
+        u32 h_errno_;
         u32 errno_;
         u32 serialized_size;
     } out = {};
@@ -131,7 +131,7 @@ Result sfdnsresGetHostByAddrRequest(const void *in_addr, size_t in_addr_len, u32
     );
 
     if (R_SUCCEEDED(rc)) {
-        if (ret) *ret = out.ret;
+        if (h_errno_) *h_errno_ = out.h_errno_;
         if (errno_) *errno_ = out.errno_;
         if (out_serialized_size) *out_serialized_size = out.serialized_size;
     }
@@ -147,7 +147,7 @@ Result sfdnsresGetGaiStringErrorRequest(u32 err, char *out_str, size_t out_str_s
     return _sfdnsresCmdInErrOutStr(err, out_str, out_str_size, 5);
 }
 
-Result sfdnsresGetAddrInfoRequest(u32 cancel_handle, bool use_nsd, const char *node, const char *service, const void *in_hints, size_t in_hints_size, void *out_buffer, size_t out_buffer_size, u32 *errno_, s32 *gaie, u32 *out_serialized_size) {
+Result sfdnsresGetAddrInfoRequest(u32 cancel_handle, bool use_nsd, const char *node, const char *service, const void *in_hints, size_t in_hints_size, void *out_buffer, size_t out_buffer_size, u32 *errno_, s32 *ret, u32 *out_serialized_size) {
     const struct {
         u32 use_nsd; // actually u8 bool, but promoted to u32 for convenience
         u32 cancel_handle;
@@ -156,7 +156,7 @@ Result sfdnsresGetAddrInfoRequest(u32 cancel_handle, bool use_nsd, const char *n
 
     struct {
         u32 errno_;
-        s32 gaie;
+        s32 ret;
         u32 serialized_size;
     } out = {};
 
@@ -178,14 +178,14 @@ Result sfdnsresGetAddrInfoRequest(u32 cancel_handle, bool use_nsd, const char *n
 
     if (R_SUCCEEDED(rc)) {
         if (errno_) *errno_ = out.errno_;
-        if (gaie) *gaie = out.gaie;
+        if (ret) *ret = out.ret;
         if (out_serialized_size) *out_serialized_size = out.serialized_size;
     }
 
     return rc;
 }
 
-Result sfdnsresGetNameInfoRequest(u32 flags, const void *in_sa, size_t in_sa_size, char *out_host, size_t out_host_size, char *out_serv, size_t out_serv_len, u32 cancel_handle, u32 *errno_, s32 *gaie) {
+Result sfdnsresGetNameInfoRequest(u32 flags, const void *in_sa, size_t in_sa_size, char *out_host, size_t out_host_size, char *out_serv, size_t out_serv_len, u32 cancel_handle, u32 *errno_, s32 *ret) {
     const struct {
         u32 flags;
         u32 cancel_handle;
@@ -194,7 +194,7 @@ Result sfdnsresGetNameInfoRequest(u32 flags, const void *in_sa, size_t in_sa_siz
 
     struct {
         u32 errno_;
-        s32 gaie;
+        s32 ret;
     } out;
 
     Result rc = _sfdnsresDispatchInOut(7, in, out,
@@ -213,7 +213,7 @@ Result sfdnsresGetNameInfoRequest(u32 flags, const void *in_sa, size_t in_sa_siz
 
     if (R_SUCCEEDED(rc)) {
         if (errno_) *errno_ = out.errno_;
-        if (gaie) *gaie = out.gaie;
+        if (ret) *ret = out.ret;
     }
 
     return rc;
