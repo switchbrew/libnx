@@ -118,11 +118,11 @@ static Result _nsCmdNoInOutSystemUpdateProgress(Service* srv, NsSystemUpdateProg
     return serviceDispatchOut(srv, cmd_id, *out);
 }
 
-static Result _nsCmdRequestSendReceiveSystemUpdate(Service* srv, AsyncResult *a, u32 inval0, u16 inval1, NsSystemDeliveryInfo *info, u32 cmd_id) {
+static Result _nsCmdRequestSendReceiveSystemUpdate(Service* srv, AsyncResult *a, u32 addr, u16 port, NsSystemDeliveryInfo *info, u32 cmd_id) {
     const struct {
-        u16 inval0;
-        u32 inval1;
-    } in = { inval1, inval0 };
+        u16 port;
+        u32 addr;
+    } in = { port, addr };
 
     memset(a, 0, sizeof(*a));
     Handle event = INVALID_HANDLE;
@@ -434,11 +434,11 @@ Result nssuDestroySystemUpdateTask(void) {
     return _nsCmdNoIO(&g_nssuSrv, 16);
 }
 
-Result nssuRequestSendSystemUpdate(AsyncResult *a, u32 inval0, u16 inval1, NsSystemDeliveryInfo *info) {
+Result nssuRequestSendSystemUpdate(AsyncResult *a, u32 addr, u16 port, NsSystemDeliveryInfo *info) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return _nsCmdRequestSendReceiveSystemUpdate(&g_nssuSrv, a, inval0, inval1, info, 17);
+    return _nsCmdRequestSendReceiveSystemUpdate(&g_nssuSrv, a, addr, port, info, 17);
 }
 
 Result nssuGetSendSystemUpdateProgress(NsSystemUpdateProgress *out) {
@@ -614,13 +614,13 @@ Result nssuControlHasReceived(NsSystemUpdateControl *c, bool* out) {
     return _nsCmdNoInOutBool(&c->s, out, 15);
 }
 
-Result nssuControlRequestReceiveSystemUpdate(NsSystemUpdateControl *c, AsyncResult *a, u32 inval0, u16 inval1, NsSystemDeliveryInfo *info) {
+Result nssuControlRequestReceiveSystemUpdate(NsSystemUpdateControl *c, AsyncResult *a, u32 addr, u16 port, NsSystemDeliveryInfo *info) {
     if (!serviceIsActive(&c->s))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return _nsCmdRequestSendReceiveSystemUpdate(&c->s, a, inval0, inval1, info, 16);
+    return _nsCmdRequestSendReceiveSystemUpdate(&c->s, a, addr, port, info, 16);
 }
 
 Result nssuControlGetReceiveProgress(NsSystemUpdateControl *c, NsSystemUpdateProgress *out) {

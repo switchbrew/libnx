@@ -311,13 +311,14 @@ Result nssuDestroySystemUpdateTask(void);
 
 /**
  * @brief RequestSendSystemUpdate
+ * @note The system will use the input addr/port with bind(). addr/port are little-endian.
  * @note Only available on [4.0.0+].
  * @param[out] a \ref AsyncResult
- * @param[in] inval0 Unknown input value.
- * @param[in] inval1 Unknown input value. qlaunch uses value 0xD904 (55556).
+ * @param[in] addr IPv4 address. qlaunch uses a local-WLAN addr, however this can be any addr.
+ * @param[in] port Socket port. qlaunch uses value 55556.
  * @param[in] info \ref NsSystemDeliveryInfo
  */
-Result nssuRequestSendSystemUpdate(AsyncResult *a, u32 inval0, u16 inval1, NsSystemDeliveryInfo *info);
+Result nssuRequestSendSystemUpdate(AsyncResult *a, u32 addr, u16 port, NsSystemDeliveryInfo *info);
 
 /**
  * @brief GetSendSystemUpdateProgress
@@ -471,14 +472,15 @@ Result nssuControlHasReceived(NsSystemUpdateControl *c, bool* out);
 
 /**
  * @brief RequestReceiveSystemUpdate
+ * @note The system will use the input addr/port with connect(). addr/port are little-endian.
  * @note Only available on [4.0.0+].
  * @param c \ref NsSystemUpdateControl
  * @param[out] a \ref AsyncResult
- * @param[in] inval0 Unknown input value.
- * @param[in] inval1 Unknown input value. qlaunch uses value 0xD904 (55556).
+ * @param[in] addr IPv4 address. qlaunch uses a local-WLAN addr, however this can be any addr.
+ * @param[in] port Socket port. qlaunch uses value 55556.
  * @param[in] info \ref NsSystemDeliveryInfo
  */
-Result nssuControlRequestReceiveSystemUpdate(NsSystemUpdateControl *c, AsyncResult *a, u32 inval0, u16 inval1, NsSystemDeliveryInfo *info);
+Result nssuControlRequestReceiveSystemUpdate(NsSystemUpdateControl *c, AsyncResult *a, u32 addr, u16 port, NsSystemDeliveryInfo *info);
 
 /**
  * @brief GetReceiveProgress
