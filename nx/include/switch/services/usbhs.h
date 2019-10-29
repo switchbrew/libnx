@@ -43,6 +43,7 @@ typedef struct {
 } UsbHsInterfaceFilter;
 
 /// Descriptors which are not available are set to all-zero.
+/// The INPUT/OUTPUT endpoint descriptors were swapped with [8.0.0+], libnx converts this struct to the newer layout when running on pre-8.0.0.
 typedef struct {
     s32 ID;
     u32 deviceID_2;
@@ -50,13 +51,13 @@ typedef struct {
 
     struct usb_interface_descriptor interface_desc;
     u8 pad_x15[0x7];
-    struct usb_endpoint_descriptor output_endpoint_descs[15];
-    u8 pad_x85[0x7];
     struct usb_endpoint_descriptor input_endpoint_descs[15];
+    u8 pad_x85[0x7];
+    struct usb_endpoint_descriptor output_endpoint_descs[15];
     u8 pad_xf5[0x6];
-    struct usb_ss_endpoint_companion_descriptor output_ss_endpoint_companion_descs[15];  ///< ?
+    struct usb_ss_endpoint_companion_descriptor input_ss_endpoint_companion_descs[15];  ///< ?
     u8 pad_x155[0x6];
-    struct usb_ss_endpoint_companion_descriptor input_ss_endpoint_companion_descs[15];   ///< ?
+    struct usb_ss_endpoint_companion_descriptor output_ss_endpoint_companion_descs[15]; ///< ?
     u8 pad_x1b5[0x3];
 } PACKED UsbHsInterfaceInfo;
 

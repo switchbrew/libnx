@@ -94,12 +94,35 @@ static Result _usbHsBindClientProcess(Handle prochandle) {
     );
 }
 
+// The INPUT/OUTPUT endpoint descriptors were swapped with [8.0.0+], however the sysmodule code which writes this output struct was basically unchanged.
+static void _usbHsConvertInterfaceInfoToV8(UsbHsInterfaceInfo *info) {
+    UsbHsInterfaceInfo tmp;
+    if (hosversionAtLeast(8,0,0) || info==NULL) return;
+
+    memcpy(&tmp, info, sizeof(UsbHsInterfaceInfo));
+
+    memcpy(info->output_endpoint_descs, tmp.input_endpoint_descs, sizeof(tmp.input_endpoint_descs));
+    memcpy(info->input_endpoint_descs, tmp.output_endpoint_descs, sizeof(tmp.output_endpoint_descs));
+    memcpy(info->output_ss_endpoint_companion_descs, tmp.input_ss_endpoint_companion_descs, sizeof(tmp.input_ss_endpoint_companion_descs));
+    memcpy(info->input_ss_endpoint_companion_descs, tmp.output_ss_endpoint_companion_descs, sizeof(tmp.output_ss_endpoint_companion_descs));
+}
+
+static void _usbHsConvertInterfacesToV8(UsbHsInterface* interfaces, s32 total_entries) {
+    for (s32 i=0; i<total_entries; i++) {
+        _usbHsConvertInterfaceInfoToV8(&interfaces[i].inf);
+    }
+}
+
 static Result _usbHsQueryInterfaces(u32 base_cmdid, const UsbHsInterfaceFilter* filter, UsbHsInterface* interfaces, size_t interfaces_maxsize, s32* total_entries) {
     serviceAssumeDomain(&g_usbHsSrv);
-    return serviceDispatchInOut(&g_usbHsSrv, hosversionAtLeast(2,0,0) ? base_cmdid+1 : base_cmdid, *filter, *total_entries,
+    s32 tmp=0;
+    Result rc = serviceDispatchInOut(&g_usbHsSrv, hosversionAtLeast(2,0,0) ? base_cmdid+1 : base_cmdid, *filter, tmp,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
         .buffers = { { interfaces, interfaces_maxsize } },
     );
+    if (R_SUCCEEDED(rc) && total_entries) *total_entries = tmp;
+    if (R_SUCCEEDED(rc)) _usbHsConvertInterfacesToV8(interfaces, tmp);
+    return rc;
 }
 
 Result usbHsQueryAllInterfaces(const UsbHsInterfaceFilter* filter, UsbHsInterface* interfaces, size_t interfaces_maxsize, s32* total_entries) {
@@ -112,10 +135,14 @@ Result usbHsQueryAvailableInterfaces(const UsbHsInterfaceFilter* filter, UsbHsIn
 
 Result usbHsQueryAcquiredInterfaces(UsbHsInterface* interfaces, size_t interfaces_maxsize, s32* total_entries) {
     serviceAssumeDomain(&g_usbHsSrv);
-    return serviceDispatchOut(&g_usbHsSrv, hosversionAtLeast(2,0,0) ? 3 : 2, *total_entries,
+    s32 tmp=0;
+    Result rc = serviceDispatchOut(&g_usbHsSrv, hosversionAtLeast(2,0,0) ? 3 : 2, tmp,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
         .buffers = { { interfaces, interfaces_maxsize } },
     );
+    if (R_SUCCEEDED(rc) && total_entries) *total_entries = tmp;
+    if (R_SUCCEEDED(rc)) _usbHsConvertInterfacesToV8(interfaces, tmp);
+    return rc;
 }
 
 Result usbHsCreateInterfaceAvailableEvent(Event* out_event, bool autoclear, u8 index, const UsbHsInterfaceFilter* filter) {
@@ -181,6 +208,7 @@ Result usbHsAcquireUsbIf(UsbHsClientIfSession* s, UsbHsInterface *interface) {
         rc = _usbHsAcquireUsbIfOld(s, interface);
 
     if (R_SUCCEEDED(rc)) {
+        _usbHsConvertInterfaceInfoToV8(&interface->inf);
         rc = _usbHsGetEvent(&s->s, &s->event0, false, 0);
         if (hosversionAtLeast(2,0,0)) rc = _usbHsGetEvent(&s->s, &s->eventCtrlXfer, false, 6);
 
@@ -202,10 +230,12 @@ static Result _usbHsIfGetInf(UsbHsClientIfSession* s, UsbHsInterfaceInfo* inf, u
     if (inf==NULL) inf = &s->inf.inf;
 
     serviceAssumeDomain(&s->s);
-    return serviceDispatchIn(&s->s, cmd_id, id,
+    Result rc = serviceDispatchIn(&s->s, cmd_id, id,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
         .buffers = { { inf, sizeof(UsbHsInterfaceInfo) } },
     );
+    if (R_SUCCEEDED(rc)) _usbHsConvertInterfaceInfoToV8(inf);
+    return rc;
 }
 
 Result usbHsIfSetInterface(UsbHsClientIfSession* s, UsbHsInterfaceInfo* inf, u8 id) {
@@ -219,7 +249,9 @@ Result usbHsIfGetAlternateInterface(UsbHsClientIfSession* s, UsbHsInterfaceInfo*
 Result usbHsIfGetInterface(UsbHsClientIfSession* s, UsbHsInterfaceInfo* inf) {
     if (inf==NULL) inf = &s->inf.inf;
 
-    return _usbHsCmdRecvBufNoOut(&s->s, inf, sizeof(UsbHsInterfaceInfo), 2);
+    Result rc = _usbHsCmdRecvBufNoOut(&s->s, inf, sizeof(UsbHsInterfaceInfo), 2);
+    if (R_SUCCEEDED(rc)) _usbHsConvertInterfaceInfoToV8(inf);
+    return rc;
 }
 
 Result usbHsIfGetCurrentFrame(UsbHsClientIfSession* s, u32* out) {
