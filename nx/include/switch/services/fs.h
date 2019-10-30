@@ -64,7 +64,7 @@ typedef struct
 /// Save Struct
 typedef struct
 {
-    u64 program_id;                 ///< ProgramId of the savedata to access when accessing other programs' savedata via SaveData, otherwise FS_SAVEDATA_CURRENT_TITLEID.
+    u64 program_id;                 ///< ProgramId of the savedata to access when accessing other programs' savedata via SaveData, otherwise FS_SAVEDATA_CURRENT_PROGRAMID.
     AccountUid uid;                 ///< \ref AccountUid for the user-specific savedata to access, otherwise 0 for common savedata.
     u64 saveID;                     ///< saveID, 0 for SaveData.
     u8 saveDataType;                ///< See \ref FsSaveDataType.
