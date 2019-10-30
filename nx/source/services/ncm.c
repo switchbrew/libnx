@@ -394,8 +394,10 @@ Result ncmContentMetaDatabaseList(NcmContentMetaDatabase* db, s32* out_entries_t
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
         .buffers = { { out_keys, count*sizeof(NcmContentMetaKey) } },
     );
-    if (R_SUCCEEDED(rc) && out_entries_total) *out_entries_total = out.out_entries_total;
-    if (R_SUCCEEDED(rc) && out_entries_written) *out_entries_written = out.out_entries_written;
+    if (R_SUCCEEDED(rc)) {
+        if (out_entries_total) *out_entries_total = out.out_entries_total;
+        if (out_entries_written) *out_entries_written = out.out_entries_written;
+    }
     return rc;
 }
 
@@ -412,8 +414,10 @@ Result ncmContentMetaDatabaseListApplication(NcmContentMetaDatabase* db, s32* ou
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
         .buffers = { { out_keys, count*sizeof(NcmApplicationContentMetaKey) } },
     );
-    if (R_SUCCEEDED(rc) && out_entries_total) *out_entries_total = out.out_entries_total;
-    if (R_SUCCEEDED(rc) && out_entries_written) *out_entries_written = out.out_entries_written;
+    if (R_SUCCEEDED(rc)) {
+        if (out_entries_total) *out_entries_total = out.out_entries_total;
+        if (out_entries_written) *out_entries_written = out.out_entries_written;
+    }
     return rc;
 }
 
