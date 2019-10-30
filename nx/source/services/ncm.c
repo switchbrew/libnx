@@ -390,10 +390,15 @@ Result ncmContentMetaDatabaseList(NcmContentMetaDatabase* db, s32* out_entries_t
         s32 out_entries_total;
         s32 out_entries_written;
     } out;
-    return serviceDispatchInOut(&db->s, 5, in, out,
+    Result rc = serviceDispatchInOut(&db->s, 5, in, out,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
         .buffers = { { out_keys, count*sizeof(NcmContentMetaKey) } },
     );
+    if (R_SUCCEEDED(rc)) {
+        if (out_entries_total) *out_entries_total = out.out_entries_total;
+        if (out_entries_written) *out_entries_written = out.out_entries_written;
+    }
+    return rc;
 }
 
 Result ncmContentMetaDatabaseGetLatestContentMetaKey(NcmContentMetaDatabase* db, NcmContentMetaKey* out_key, u64 title_id) {
@@ -405,10 +410,15 @@ Result ncmContentMetaDatabaseListApplication(NcmContentMetaDatabase* db, s32* ou
         s32 out_entries_total;
         s32 out_entries_written;
     } out;
-    return serviceDispatchInOut(&db->s, 7, meta_type, out, 
+    Result rc = serviceDispatchInOut(&db->s, 7, meta_type, out,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
         .buffers = { { out_keys, count*sizeof(NcmApplicationContentMetaKey) } },
     );
+    if (R_SUCCEEDED(rc)) {
+        if (out_entries_total) *out_entries_total = out.out_entries_total;
+        if (out_entries_written) *out_entries_written = out.out_entries_written;
+    }
+    return rc;
 }
 
 Result ncmContentMetaDatabaseHas(NcmContentMetaDatabase* db, bool* out, const NcmContentMetaKey* key) {
