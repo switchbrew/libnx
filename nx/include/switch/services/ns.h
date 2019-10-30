@@ -58,28 +58,28 @@ typedef struct {
 
 /// NsApplicationContentMetaStatus
 typedef struct {
-    u8 title_type;                 ///< \ref NcmContentMetaType
+    u8 meta_type;                  ///< \ref NcmContentMetaType
     u8 storageID;                  ///< \ref FsStorageId
     u8 unk_x02;                    ///< Unknown.
     u8 padding;                    ///< Padding.
-    u32 title_version;             ///< Title version.
-    u64 titleID;                   ///< titleID.
+    u32 version;                   ///< Application version.
+    u64 application_id;            ///< ApplicationId.
 } NsApplicationContentMetaStatus;
 
 /// ApplicationRecord
 typedef struct {
-    u64 titleID;                   ///< titleID.
+    u64 application_id;            ///< ApplicationId.
     u8 type;                       ///< Type.
     u8 unk_x09;                    ///< Unknown.
-    u8 unk_x0A[6];                 ///< Unknown.
+    u8 unk_x0a[6];                 ///< Unknown.
     u8 unk_x10;                    ///< Unknown.
     u8 unk_x11[7];                 ///< Unknown.
 } NsApplicationRecord;
 
 /// LaunchProperties
 typedef struct {
-    u64 titleID;                   ///< titleID.
-    u32 version;                   ///< Title version.
+    u64 program_id;                ///< program_id.
+    u32 version;                   ///< Program version.
     u8 storageID;                  ///< \ref FsStorageId
     u8 index;                      ///< Index.
     u8 is_application;             ///< Whether this is an Application.
@@ -107,8 +107,8 @@ typedef struct {
     u32 system_delivery_protocol_version;       ///< Must be <= to and match a system-setting.
     u32 application_delivery_protocol_version;  ///< Loaded from a system-setting. Unused by \ref nssuRequestSendSystemUpdate / \ref nssuControlRequestReceiveSystemUpdate, besides HMAC validation.
     u32 includes_exfat;                         ///< Whether ExFat is included. Unused by \ref nssuRequestSendSystemUpdate / \ref nssuControlRequestReceiveSystemUpdate, besides HMAC validation.
-    u32 systemupdate_meta_version;              ///< SystemUpdate meta version.
-    u64 systemupdate_meta_titleid;              ///< SystemUpdate meta titleID.
+    u32 system_update_meta_version;             ///< SystemUpdate meta version.
+    u64 system_update_meta_id;                  ///< SystemUpdate meta Id.
     u8 unk_x18;                                 ///< Copied into state by \ref nssuRequestSendSystemUpdate.
     u8 unk_x19;                                 ///< Unused by \ref nssuRequestSendSystemUpdate / \ref nssuControlRequestReceiveSystemUpdate, besides HMAC validation.
     u8 unk_x1a[0xc6];                           ///< Unused by \ref nssuRequestSendSystemUpdate / \ref nssuControlRequestReceiveSystemUpdate, besides HMAC validation.
@@ -144,23 +144,23 @@ Result nsListApplicationRecord(NsApplicationRecord* records, s32 count, s32 entr
 
 /**
  * @brief Gets an listing of \ref NsApplicationContentMetaStatus.
- * @param[in] titleID titleID.
+ * @param[in] application_id ApplicationId.
  * @param[in] index Starting entry index.
  * @param[out] list Output array of \ref NsApplicationContentMetaStatus.
  * @param[in] count Size of the list array in entries.
  * @param[out] out_entrycount Total output entries.
  */
-Result nsListApplicationContentMetaStatus(u64 titleID, s32 index, NsApplicationContentMetaStatus* list, s32 count, s32* out_entrycount);
+Result nsListApplicationContentMetaStatus(u64 application_id, s32 index, NsApplicationContentMetaStatus* list, s32 count, s32* out_entrycount);
 
 /**
- * @brief Gets the \ref NsApplicationControlData for the specified title.
- * @param[in] flag Flag, official sw uses value 1.
- * @param[in] titleID titleID.
+ * @brief Gets the \ref NsApplicationControlData for the specified application.
+ * @param[in] source Source, official sw uses ::NsApplicationControlSource_Storage.
+ * @param[in] application_id ApplicationId.
  * @param[out] buffer \ref NsApplicationControlData
  * @param[in] size Size of the buffer.
  * @param[out] actual_size Actual output size.
  */
-Result nsGetApplicationControlData(NsApplicationControlSource source, u64 titleID, NsApplicationControlData* buffer, size_t size, u64* actual_size);
+Result nsGetApplicationControlData(NsApplicationControlSource source, u64 application_id, NsApplicationControlData* buffer, size_t size, u64* actual_size);
 
 /**
  * @brief Returns the total storage capacity (used + free) from content manager services.
@@ -177,7 +177,7 @@ Result nsGetTotalSpaceSize(FsStorageId storage_id, u64 *size);
 Result nsGetFreeSpaceSize(FsStorageId storage_id, u64 *size);
 
 /**
- * @brief Generates a \ref NsSystemDeliveryInfo using the currently installed SystemUpdate meta title.
+ * @brief Generates a \ref NsSystemDeliveryInfo using the currently installed SystemUpdate meta.
  * @note Only available on [4.0.0+].
  * @param[out] info \ref NsSystemDeliveryInfo
  */
@@ -221,8 +221,8 @@ Result nsdevGetShellEvent(Event* out_event); ///< Autoclear for nsdevShellEvent 
 Result nsdevGetShellEventInfo(NsShellEventInfo* out);
 Result nsdevTerminateApplication(void);
 Result nsdevPrepareLaunchProgramFromHost(NsLaunchProperties* out, const char* path, size_t path_len);
-Result nsdevLaunchApplicationForDevelop(u64* out_pid, u64 app_title_id, u32 flags);
-Result nsdevLaunchApplicationWithStorageIdForDevelop(u64* out_pid, u64 app_title_id, u32 flags, u8 app_storage_id, u8 patch_storage_id);
+Result nsdevLaunchApplicationForDevelop(u64* out_pid, u64 application_id, u32 flags);
+Result nsdevLaunchApplicationWithStorageIdForDevelop(u64* out_pid, u64 application_id, u32 flags, u8 app_storage_id, u8 patch_storage_id);
 Result nsdevIsSystemMemoryResourceLimitBoosted(bool* out); ///< [6.0.0-8.1.0]
 Result nsdevGetRunningApplicationProcessIdForDevelop(u64* out_pid); ///< [6.0.0+]
 Result nsdevSetCurrentApplicationRightsEnvironmentCanBeActiveForDevelop(bool can_be_active); ///< [6.0.0+]
@@ -404,7 +404,7 @@ Result nssuControlApplyCardUpdate(NsSystemUpdateControl *c);
 
 /**
  * @brief Gets the filesize for the specified DownloadedEulaData.
- * @note This mounts the Eula title, then uses the file "<mountname>:/<input path>".
+ * @note This mounts the Eula SystemData, then uses the file "<mountname>:/<input path>".
  * @param c \ref NsSystemUpdateControl
  * @param[in] path EulaData path.
  * @param[out] filesize Output filesize.

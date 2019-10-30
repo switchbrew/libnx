@@ -9,7 +9,7 @@
 
 /// Arg type values pushed for the applet input storage, stored as an u8.
 typedef enum {
-    AlbumLaArg_ShowAlbumFiles                 = 0,  ///< ShowAlbumFiles. Only displays AlbumFiles associated with the title which launched the Album applet, with the filter button disabled.
+    AlbumLaArg_ShowAlbumFiles                 = 0,  ///< ShowAlbumFiles. Only displays AlbumFiles associated with the application which launched the Album applet, with the filter button disabled.
     AlbumLaArg_ShowAllAlbumFiles              = 1,  ///< ShowAllAlbumFiles. Displays all AlbumFiles, with filtering allowed.
     AlbumLaArg_ShowAllAlbumFilesForHomeMenu   = 2,  ///< ShowAllAlbumFilesForHomeMenu. Similar to ::AlbumLaArg_ShowAllAlbumFiles.
 } AlbumLaArg;

@@ -118,10 +118,10 @@ typedef enum {
     WebArgType_Url                                      = 0x1,    ///< [1.0.0+] String, size 0xC00. Initial URL.
     WebArgType_CallbackUrl                              = 0x3,    ///< [1.0.0+] String, size 0x400.
     WebArgType_CallbackableUrl                          = 0x4,    ///< [1.0.0+] String, size 0x400.
-    WebArgType_ApplicationId                            = 0x5,    ///< [1.0.0+] Offline-applet, u64 titleID
+    WebArgType_ApplicationId                            = 0x5,    ///< [1.0.0+] Offline-applet, u64 ApplicationId
     WebArgType_DocumentPath                             = 0x6,    ///< [1.0.0+] Offline-applet, string with size 0xC00.
     WebArgType_DocumentKind                             = 0x7,    ///< [1.0.0+] Offline-applet, u32 enum \WebDocumentKind.
-    WebArgType_SystemDataId                             = 0x8,    ///< [1.0.0+] Offline-applet, u64 titleID
+    WebArgType_SystemDataId                             = 0x8,    ///< [1.0.0+] Offline-applet, u64 SystemDataId
     WebArgType_ShareStartPage                           = 0x9,    ///< [1.0.0+] u32 enum \WebShareStartPage
     WebArgType_Whitelist                                = 0xA,    ///< [1.0.0+] String, size 0x1000.
     WebArgType_NewsFlag                                 = 0xB,    ///< [1.0.0+] u8 bool
@@ -197,7 +197,7 @@ typedef enum {
 typedef enum {
     WebDocumentKind_OfflineHtmlPage             = 0x1,  ///< Use the HtmlDocument NCA content from the application.
     WebDocumentKind_ApplicationLegalInformation = 0x2,  ///< Use the LegalInformation NCA content from the application.
-    WebDocumentKind_SystemDataPage              = 0x3,  ///< Use the Data NCA content from the specified title, see also: https://switchbrew.org/wiki/Title_list#System_Data_Archives
+    WebDocumentKind_SystemDataPage              = 0x3,  ///< Use the Data NCA content from the specified SystemData, see also: https://switchbrew.org/wiki/Title_list#System_Data_Archives
 } WebDocumentKind;
 
 /// This controls the initial page for ShareApplet, used by \ref webShareCreate.
@@ -253,7 +253,7 @@ void webWifiCreate(WebWifiConfig* config, const char* conntest_url, const char* 
 Result webWifiShow(WebWifiConfig* config, WebWifiReturnValue *out);
 
 /**
- * @brief Creates the config for WebApplet. This applet uses an URL whitelist loaded from the user-process host title, which is only loaded when running under an Application.
+ * @brief Creates the config for WebApplet. This applet uses an URL whitelist loaded from the user-process host Application, which is only loaded when running under an Application.
  * @note Sets ::WebArgType_UnknownD, and ::WebArgType_Unknown12 on pre-3.0.0, to value 1.
  * @param config WebCommonConfig object.
  * @param url Initial URL navigated to by the applet.
@@ -270,7 +270,7 @@ Result webPageCreate(WebCommonConfig* config, const char* url);
 Result webNewsCreate(WebCommonConfig* config, const char* url);
 
 /**
- * @brief Creates the config for WebApplet. This is based on \ref webPageCreate, for YouTubeVideo. Hence other functions referencing \ref webPageCreate also apply to this. This uses a whitelist which essentially only allows youtube embed/ URLs (without mounting content from the host title).
+ * @brief Creates the config for WebApplet. This is based on \ref webPageCreate, for YouTubeVideo. Hence other functions referencing \ref webPageCreate also apply to this. This uses a whitelist which essentially only allows youtube embed/ URLs (without mounting content from the host Application).
  * @note This is only available on [5.0.0+].
  * @note Sets ::WebArgType_UnknownD to value 1, and sets ::WebArgType_YouTubeVideoFlag to true. Also uses \ref webConfigSetBootAsMediaPlayer with flag=true.
  * @param config WebCommonConfig object.
@@ -279,7 +279,7 @@ Result webNewsCreate(WebCommonConfig* config, const char* url);
 Result webYouTubeVideoCreate(WebCommonConfig* config, const char* url);
 
 /**
- * @brief Creates the config for Offline-applet. This applet uses local content loaded from titles.
+ * @brief Creates the config for Offline-applet. This applet uses data loaded from content.
  * @note Uses \ref webConfigSetLeftStickMode with ::WebLeftStickMode_Cursor and sets ::WebArgType_BootAsMediaPlayerInverted to false. Uses \ref webConfigSetPointer with flag = docKind == ::WebDocumentKind_OfflineHtmlPage.
  * @note For docKind ::WebDocumentKind_ApplicationLegalInformation / ::WebDocumentKind_SystemDataPage, uses \ref webConfigSetFooter with flag=true and \ref webConfigSetBackgroundKind with ::WebBackgroundKind_Default.
  * @note For docKind ::WebDocumentKind_SystemDataPage, uses \ref webConfigSetBootDisplayKind with ::WebBootDisplayKind_White.
@@ -290,16 +290,16 @@ Result webYouTubeVideoCreate(WebCommonConfig* config, const char* url);
  * @note Lastly, sets the TLVs as needed for the input params.
  * @param config WebCommonConfig object.
  * @param docKind \ref WebDocumentKind
- * @param titleID Title to load the content from. With docKind = ::WebDocumentKind_OfflineHtmlPage, titleID=0 should be used to specify the user-process titleID (non-zero is ignored with this docKind).
+ * @param id Id to load the content from. With docKind = ::WebDocumentKind_OfflineHtmlPage, id=0 should be used to specify the user-process application (non-zero is ignored with this docKind).
  * @param docPath Initial document path in RomFS, without the leading '/'. For ::WebDocumentKind_OfflineHtmlPage, this is relative to "html-document/" in RomFS. For the other docKind values, this is relative to "/" in RomFS. This path must contain ".htdocs/".
  */
-Result webOfflineCreate(WebCommonConfig* config, WebDocumentKind docKind, u64 titleID, const char* docPath);
+Result webOfflineCreate(WebCommonConfig* config, WebDocumentKind docKind, u64 id, const char* docPath);
 
 /**
  * @brief Creates the config for ShareApplet. This applet is for social media posting/settings.
- * @note If a non-zero userID isn't set with \ref webConfigSetUserID prior to using \ref webConfigShow, the applet will launch the profile-selector applet to select an account.
+ * @note If a non-zero uid isn't set with \ref webConfigSetUid prior to using \ref webConfigShow, the applet will launch the profile-selector applet to select an account.
  * @note An error will be displayed if neither \ref webConfigSetAlbumEntry, nor \ref webConfigSetApplicationAlbumEntry, nor \ref webConfigAddAlbumEntryAndMediaData are used prior to using \ref webConfigShow, with ::WebShareStartPage_Default.
- * @note Uses \ref webConfigSetLeftStickMode with ::WebLeftStickMode_Cursor, \ref webConfigSetUserID with userID=0, \ref webConfigSetDisplayUrlKind with kind=true, and sets ::WebArgType_Unknown14/::WebArgType_Unknown15 to value 1. Uses \ref webConfigSetBootDisplayKind with ::WebBootDisplayKind_Unknown3.
+ * @note Uses \ref webConfigSetLeftStickMode with ::WebLeftStickMode_Cursor, \ref webConfigSetUid with uid=0, \ref webConfigSetDisplayUrlKind with kind=true, and sets ::WebArgType_Unknown14/::WebArgType_Unknown15 to value 1. Uses \ref webConfigSetBootDisplayKind with ::WebBootDisplayKind_Unknown3.
  * @param config WebCommonConfig object.
  * @param page \ref WebShareStartPage
  */
@@ -308,8 +308,8 @@ Result webShareCreate(WebCommonConfig* config, WebShareStartPage page);
 /**
  * @brief Creates the config for LobbyApplet. This applet is for "Nintendo Switch Online Lounge".
  * @note Only available on [2.0.0+].
- * @note If a non-zero userID isn't set with \ref webConfigSetUserID prior to using \ref webConfigShow, the applet will launch the profile-selector applet to select an account.
- * @note Uses \ref webConfigSetLeftStickMode with ::WebLeftStickMode_Cursor, \ref webConfigSetPointer with flag=false on [3.0.0+], \ref webConfigSetUserID with userID=0, and sets ::WebArgType_Unknown14/::WebArgType_Unknown15 to value 1. Uses \ref webConfigSetBootDisplayKind with ::WebBootDisplayKind_Unknown4, \ref webConfigSetBackgroundKind with ::WebBackgroundKind_Unknown2, and sets ::WebArgType_BootAsMediaPlayerInverted to false.
+ * @note If a non-zero uid isn't set with \ref webConfigSetUid prior to using \ref webConfigShow, the applet will launch the profile-selector applet to select an account.
+ * @note Uses \ref webConfigSetLeftStickMode with ::WebLeftStickMode_Cursor, \ref webConfigSetPointer with flag=false on [3.0.0+], \ref webConfigSetUid with uid=0, and sets ::WebArgType_Unknown14/::WebArgType_Unknown15 to value 1. Uses \ref webConfigSetBootDisplayKind with ::WebBootDisplayKind_Unknown4, \ref webConfigSetBackgroundKind with ::WebBackgroundKind_Unknown2, and sets ::WebArgType_BootAsMediaPlayerInverted to false.
  * @param config WebCommonConfig object.
  */
 Result webLobbyCreate(WebCommonConfig* config);
@@ -341,9 +341,9 @@ Result webConfigSetCallbackableUrl(WebCommonConfig* config, const char* url);
 Result webConfigSetWhitelist(WebCommonConfig* config, const char* whitelist);
 
 /**
- * @brief Sets the account UserID. Controls which user-specific savedata to mount.
+ * @brief Sets the account uid. Controls which user-specific savedata to mount.
  * @note Only available with config created by \ref webPageCreate, \ref webLobbyCreate, or with Share-applet.
- * @note Used automatically by \ref webShareCreate and \ref webLobbyCreate with userID=0.
+ * @note Used automatically by \ref webShareCreate and \ref webLobbyCreate with uid=0.
  * @param config WebCommonConfig object.
  * @param uid \ref AccountUid
  */

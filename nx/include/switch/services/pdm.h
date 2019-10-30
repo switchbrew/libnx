@@ -37,11 +37,11 @@ typedef enum {
     PdmPlayLogPolicy_None    = 2,        ///< The pdm:ntfy commands which handle ::PdmPlayEventType_Applet logging will immediately return 0 when the input param matches this value.
 } PdmPlayLogPolicy;
 
-/// ApplicationEvent.
+/// AppletEvent.
 /// Timestamp format, converted from PosixTime: total minutes since epoch UTC 1999/12/31 00:00:00.
 /// See \ref pdmPlayTimestampToPosix.
 typedef struct {
-    u64 titleID;                      ///< Application titleID.
+    u64 program_id;                   ///< ProgramId.
     u32 entry_index;                  ///< Entry index.
     u32 timestampUser;                ///< See PdmPlayEvent::timestampUser, with the above timestamp format.
     u32 timestampNetwork;             ///< See PdmPlayEvent::timestampNetwork, with the above timestamp format.
@@ -51,27 +51,27 @@ typedef struct {
 
 /// PlayStatistics
 typedef struct {
-    u64 titleID;                      ///< Application titleID.
+    u64 application_id;               ///< ApplicationId.
 
-    u32 first_entry_index;            ///< Entry index for the first time the title was played.
-    u32 first_timestampUser;          ///< See PdmAppletEvent::timestampUser. This is for the first time the title was played.
-    u32 first_timestampNetwork;       ///< See PdmAppletEvent::timestampNetwork. This is for the first time the title was played.
+    u32 first_entry_index;            ///< Entry index for the first time the application was played.
+    u32 first_timestampUser;          ///< See PdmAppletEvent::timestampUser. This is for the first time the application was played.
+    u32 first_timestampNetwork;       ///< See PdmAppletEvent::timestampNetwork. This is for the first time the application was played.
 
-    u32 last_entry_index;             ///< Entry index for the last time the title was played.
-    u32 last_timestampUser;           ///< See PdmAppletEvent::timestampUser. This is for the last time the title was played.
-    u32 last_timestampNetwork;        ///< See PdmAppletEvent::timestampNetwork. This is for the last time the title was played.
+    u32 last_entry_index;             ///< Entry index for the last time the application was played.
+    u32 last_timestampUser;           ///< See PdmAppletEvent::timestampUser. This is for the last time the application was played.
+    u32 last_timestampNetwork;        ///< See PdmAppletEvent::timestampNetwork. This is for the last time the application was played.
 
     u32 playtimeMinutes;              ///< Total play-time in minutes.
-    u32 totalLaunches;                ///< Total times the application title was launched.
+    u32 totalLaunches;                ///< Total times the application was launched.
 } PdmPlayStatistics;
 
 /// LastPlayTime.
-/// This contains data from the last time the title was played.
+/// This contains data from the last time the application was played.
 typedef struct {
-    u64 titleID;                      ///< Application titleID.
+    u64 application_id;               ///< ApplicationId.
     u32 timestampUser;                ///< See PdmAppletEvent::timestampUser.
     u32 timestampNetwork;             ///< See PdmAppletEvent::timestampNetwork.
-    u32 lastPlayedMinutes;            ///< Total minutes since the title was last played.
+    u32 lastPlayedMinutes;            ///< Total minutes since the application was last played.
     u8 flag;                          ///< Flag indicating whether the above field is set.
     u8 pad[3];                        ///< Padding.
 } PdmLastPlayTime;
@@ -81,11 +81,11 @@ typedef struct {
 typedef struct {
     union {
         struct {
-            u32 titleID[2];           ///< titleID.
+            u32 program_id[2];        ///< ProgramId.
 
             union {
                 struct {
-                    u32 version;      ///< Title version.
+                    u32 version;      ///< Application version.
                 } application;        ///< For AppletId == ::AppletId_application.
 
                 struct {
@@ -105,9 +105,9 @@ typedef struct {
         } applet;
 
         struct {
-            u32 userID[4];            ///< userID.
-            u32 titleID[2];           ///< Application titleID, see below.
-            u8 type;                  ///< 0-1 to be listed by \ref pdmqryQueryAccountEvent, or 2 to include the above titleID.
+            u32 uid[4];               ///< userId.
+            u32 application_id[2];    ///< ApplicationId, see below.
+            u8 type;                  ///< 0-1 to be listed by \ref pdmqryQueryAccountEvent, or 2 to include the above ApplicationId.
         } account;
 
         struct {
@@ -121,7 +121,7 @@ typedef struct {
         } operationModeChange;
 
         u8 data[0x1c];
-    } eventData;                      ///< titleID/userID stored within here have the u32 low/high swapped in each u64.
+    } eventData;                      ///< ProgramId/ApplicationId/userId stored within here have the u32 low/high swapped in each u64.
 
     u8 playEventType;                 ///< \ref PdmPlayEventType. Controls which struct in the above eventData is used. ::PdmPlayEventType_Initialize doesn't use eventData.
     u8 pad[3];                        ///< Padding.
@@ -147,7 +147,7 @@ typedef struct {
 /// This is the raw entry struct directly read from FS, without any entry filtering. This is separate from \ref PdmPlayEvent.
 typedef struct {
     u8 unk_x0[4];                     ///< Unknown.
-    u32 titleID[2];                   ///< titleID, with the u32 low/high words swapped.
+    u32 application_id[2];            ///< ApplicationId, with the u32 low/high words swapped.
     u8 unk_xc[0xc];                   ///< Unknown.
     u64 timestamp0;                   ///< POSIX timestamp.
     u64 timestamp1;                   ///< POSIX timestamp.
@@ -155,9 +155,9 @@ typedef struct {
 
 /// ApplicationPlayStatistics
 typedef struct {
-    u64 titleID;                      ///< Application titleID.
+    u64 application_id;               ///< ApplicationId.
     u64 totalPlayTime;                ///< Total play-time in nanoseconds.
-    u64 totalLaunches;                ///< Total times the application title was launched.
+    u64 totalLaunches;                ///< Total times the application was launched.
 } PdmApplicationPlayStatistics;
 
 Result pdmqryInitialize(void);
@@ -174,28 +174,28 @@ Service* pdmqryGetServiceSession(void);
 Result pdmqryQueryAppletEvent(s32 entry_index, PdmAppletEvent *events, s32 count, s32 *total_out);
 
 /**
- * @brief Gets \ref PdmPlayStatistics for the specified titleID.
- * @param[in] titleID Application titleID.
+ * @brief Gets \ref PdmPlayStatistics for the specified ApplicationId.
+ * @param[in] application_id ApplicationId
  * @param[out] stats \ref PdmPlayStatistics
  */
-Result pdmqryQueryPlayStatisticsByApplicationId(u64 titleID, PdmPlayStatistics *stats);
+Result pdmqryQueryPlayStatisticsByApplicationId(u64 application_id, PdmPlayStatistics *stats);
 
 /**
- * @brief Gets \ref PdmPlayStatistics for the specified titleID and account userID.
- * @param[in] titleID Application titleID.
+ * @brief Gets \ref PdmPlayStatistics for the specified ApplicationId and account userId.
+ * @param[in] application_id ApplicationId
  * @param[in] uid \ref AccountUid
  * @param[out] stats \ref PdmPlayStatistics
  */
-Result pdmqryQueryPlayStatisticsByApplicationIdAndUserAccountId(u64 titleID, AccountUid uid, PdmPlayStatistics *stats);
+Result pdmqryQueryPlayStatisticsByApplicationIdAndUserAccountId(u64 application_id, AccountUid uid, PdmPlayStatistics *stats);
 
 /**
- * @brief Gets \ref PdmLastPlayTime for the specified titles.
+ * @brief Gets \ref PdmLastPlayTime for the specified applications.
  * @param[out] playtimes Output \ref PdmLastPlayTime array.
- * @param[in] titleIDs Input titleIDs array.
+ * @param[in] application_ids Input ApplicationIds array.
  * @param[in] count Total entries in the input/output arrays.
  * @param[out] total_out Total output entries.
  */
-Result pdmqryQueryLastPlayTime(PdmLastPlayTime *playtimes, const u64 *titleIDs, s32 count, s32 *total_out);
+Result pdmqryQueryLastPlayTime(PdmLastPlayTime *playtimes, const u64 *application_ids, s32 count, s32 *total_out);
 
 /**
  * @brief Gets a list of \ref PdmPlayEvent.
@@ -244,14 +244,14 @@ Result pdmqryQueryAccountPlayEvent(s32 entry_index, AccountUid uid, PdmAccountPl
 Result pdmqryGetAvailableAccountPlayEventRange(AccountUid uid, s32 *total_entries, s32 *start_entry_index, s32 *end_entry_index);
 
 /**
- * @brief Gets a list of titles played by the specified user.
+ * @brief Gets a list of applications played by the specified user.
  * @note Only available with [6.0.0+].
  * @param[in] uid \ref AccountUid
- * @param[out] titleIDs Output titleID array.
+ * @param[out] application_ids Output ApplicationIds array.
  * @param[in] count Max entries in the output array.
  * @param[out] total_out Total output entries.
  */
-Result pdmqryQueryRecentlyPlayedApplication(AccountUid uid, u64 *titleIDs, s32 count, s32 *total_out);
+Result pdmqryQueryRecentlyPlayedApplication(AccountUid uid, u64 *application_ids, s32 count, s32 *total_out);
 
 /**
  * @brief Gets an Event which is signaled when logging a new \ref PdmPlayEvent which would be available via \ref pdmqryQueryAccountEvent, where PdmPlayEvent::eventData::account::type is 0.

@@ -71,7 +71,7 @@ typedef struct {
 /// ContentMetaKey
 typedef struct {
     u64 id;                             ///< Id.
-    u32 version;                        ///< Title version.
+    u32 version;                        ///< Version.
     u8 type;                            ///< \ref NcmContentMetaType
     u8 install_type;                    ///< \ref NcmContentInstallType
     u8 padding[2];                      ///< Padding.
@@ -80,7 +80,7 @@ typedef struct {
 /// ApplicationContentMetaKey
 typedef struct {
     NcmContentMetaKey key; ///< \ref NcmContentMetaKey
-    u64 application_id;    ///< Title id of an application.
+    u64 application_id;    ///< ApplicationId.
 } NcmApplicationContentMetaKey;
 
 /// ContentInfo
@@ -105,14 +105,14 @@ typedef struct {
 
 /// ApplicationMetaExtendedHeader
 typedef struct {
-    u64 patch_id;                     ///< Title id of this application's patch.
+    u64 patch_id;                     ///< PatchId of this application's patch.
     u32 required_system_version;      ///< Firmware version required by this application.
     u32 required_application_version; ///< [9.0.0+] Owner application version required by this application. Previously padding.
 } NcmApplicationMetaExtendedHeader;
 
 /// PatchMetaExtendedHeader
 typedef struct {
-    u64 application_id;          ///< Title id of this patch's corresponding application.
+    u64 application_id;          ///< ApplicationId of this patch's corresponding application.
     u32 required_system_version; ///< Firmware version required by this patch.
     u32 extended_data_size;      ///< Size of the extended data following the NcmContentInfos.
     u8 reserved[0x8];            ///< Unused.
@@ -120,7 +120,7 @@ typedef struct {
 
 /// AddOnContentMetaExtendedHeader
 typedef struct {
-    u64 application_id;               ///< Title id of this add-on-content's corresponding application.
+    u64 application_id;               ///< ApplicationId of this add-on-content's corresponding application.
     u32 required_application_version; ///< Version of the application required by this add-on-content.
     u32 padding;                      ///< Padding.
 } NcmAddOnContentMetaExtendedHeader;
@@ -199,8 +199,8 @@ Result ncmContentMetaDatabaseGet(NcmContentMetaDatabase* db, const NcmContentMet
 Result ncmContentMetaDatabaseRemove(NcmContentMetaDatabase* db, const NcmContentMetaKey *key);
 Result ncmContentMetaDatabaseGetContentIdByType(NcmContentMetaDatabase* db, NcmContentId* out_content_id, const NcmContentMetaKey* key, NcmContentType type);
 Result ncmContentMetaDatabaseListContentInfo(NcmContentMetaDatabase* db, s32* out_entries_written, NcmContentInfo* out_info, s32 count, const NcmContentMetaKey* key, s32 start_index);
-Result ncmContentMetaDatabaseList(NcmContentMetaDatabase* db, s32* out_entries_total, s32* out_entries_written, NcmContentMetaKey* out_keys, s32 count, NcmContentMetaType meta_type, u64 application_title_id, u64 title_id_min, u64 title_id_max, NcmContentInstallType install_type);
-Result ncmContentMetaDatabaseGetLatestContentMetaKey(NcmContentMetaDatabase* db, NcmContentMetaKey* out_key, u64 title_id);
+Result ncmContentMetaDatabaseList(NcmContentMetaDatabase* db, s32* out_entries_total, s32* out_entries_written, NcmContentMetaKey* out_keys, s32 count, NcmContentMetaType meta_type, u64 id, u64 id_min, u64 id_max, NcmContentInstallType install_type);
+Result ncmContentMetaDatabaseGetLatestContentMetaKey(NcmContentMetaDatabase* db, NcmContentMetaKey* out_key, u64 id);
 Result ncmContentMetaDatabaseListApplication(NcmContentMetaDatabase* db, s32* out_entries_total, s32* out_entries_written, NcmApplicationContentMetaKey* out_keys, s32 count, NcmContentMetaType meta_type);
 Result ncmContentMetaDatabaseHas(NcmContentMetaDatabase* db, bool* out, const NcmContentMetaKey* key);
 Result ncmContentMetaDatabaseHasAll(NcmContentMetaDatabase* db, bool* out, const NcmContentMetaKey* keys, s32 count);

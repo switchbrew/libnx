@@ -57,15 +57,15 @@ Result pmdmntStartProcess(u64 pid) {
     return serviceDispatchIn(&g_pmdmntSrv, cmd_id, pid);
 }
 
-Result pmdmntGetProcessId(u64* pid_out, u64 title_id) {
+Result pmdmntGetProcessId(u64* pid_out, u64 program_id) {
     const u64 cmd_id = hosversionAtLeast(5,0,0) ? 2 : 3;
-    return serviceDispatchInOut(&g_pmdmntSrv, cmd_id, title_id, *pid_out);
+    return serviceDispatchInOut(&g_pmdmntSrv, cmd_id, program_id, *pid_out);
 }
 
-Result pmdmntHookToCreateProcess(Event* out_event, u64 title_id) {
+Result pmdmntHookToCreateProcess(Event* out_event, u64 program_id) {
     const u64 cmd_id = hosversionAtLeast(5,0,0) ? 3 : 4;
     Handle event = INVALID_HANDLE;
-    Result rc = serviceDispatchIn(&g_pmdmntSrv, cmd_id, title_id,
+    Result rc = serviceDispatchIn(&g_pmdmntSrv, cmd_id, program_id,
         .out_handle_attrs = { SfOutHandleAttr_HipcCopy },
         .out_handles = &event,
     );
@@ -98,8 +98,8 @@ Result pmdmntClearHook(u32 which) {
 
 // pminfo
 
-Result pminfoGetProgramId(u64* title_id_out, u64 pid) {
-    return serviceDispatchInOut(&g_pminfoSrv, 0, pid, *title_id_out);
+Result pminfoGetProgramId(u64* program_id_out, u64 pid) {
+    return serviceDispatchInOut(&g_pminfoSrv, 0, pid, *program_id_out);
 }
 
 // pmshell
@@ -117,8 +117,8 @@ Result pmshellTerminateProcess(u64 processID) {
     return serviceDispatchIn(&g_pmshellSrv, 1, processID);
 }
 
-Result pmshellTerminateProgram(u64 titleID) {
-    return serviceDispatchIn(&g_pmshellSrv, 2, titleID);
+Result pmshellTerminateProgram(u64 program_id) {
+    return serviceDispatchIn(&g_pmshellSrv, 2, program_id);
 }
 
 Result pmshellGetProcessEventHandle(Event* out_event) {

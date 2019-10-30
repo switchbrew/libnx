@@ -180,11 +180,11 @@ Result nsListApplicationRecord(NsApplicationRecord* records, s32 count, s32 entr
     );
 }
 
-Result nsListApplicationContentMetaStatus(u64 titleID, s32 index, NsApplicationContentMetaStatus* list, s32 count, s32* out_entrycount) {
+Result nsListApplicationContentMetaStatus(u64 application_id, s32 index, NsApplicationContentMetaStatus* list, s32 count, s32* out_entrycount) {
     const struct {
         s32 index;
-        u64 titleID;
-    } in = { index, titleID };
+        u64 application_id;
+    } in = { index, application_id };
 
     return serviceDispatchInOut(&g_nsAppManSrv, 601, in, *out_entrycount,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
@@ -192,11 +192,11 @@ Result nsListApplicationContentMetaStatus(u64 titleID, s32 index, NsApplicationC
     );
 }
 
-Result nsGetApplicationControlData(NsApplicationControlSource source, u64 titleID, NsApplicationControlData* buffer, size_t size, u64* actual_size) {
+Result nsGetApplicationControlData(NsApplicationControlSource source, u64 application_id, NsApplicationControlData* buffer, size_t size, u64* actual_size) {
     const struct {
         u8 source;
-        u64 titleID;
-    } in = { source, titleID };
+        u64 application_id;
+    } in = { source, application_id };
 
     u32 tmp=0;
 
@@ -327,22 +327,22 @@ Result nsdevPrepareLaunchProgramFromHost(NsLaunchProperties* out, const char* pa
     );
 }
 
-Result nsdevLaunchApplicationForDevelop(u64* out_pid, u64 app_title_id, u32 flags) {
+Result nsdevLaunchApplicationForDevelop(u64* out_pid, u64 application_id, u32 flags) {
     const struct {
         u32 flags;
-        u64 app_title_id;
-    } in = { .flags = flags, .app_title_id = app_title_id};
+        u64 application_id;
+    } in = { .flags = flags, .application_id = application_id};
 
     return serviceDispatchInOut(&g_nsdevSrv, 8, in, *out_pid);
 }
 
-Result nsdevLaunchApplicationWithStorageIdForDevelop(u64* out_pid, u64 app_title_id, u32 flags, u8 app_storage_id, u8 patch_storage_id) {
+Result nsdevLaunchApplicationWithStorageIdForDevelop(u64* out_pid, u64 application_id, u32 flags, u8 app_storage_id, u8 patch_storage_id) {
     const struct {
         u8 app_storage_id;
         u8 patch_storage_id;
         u32 flags;
-        u64 app_title_id;
-    } in = { .app_storage_id = app_storage_id, .patch_storage_id = patch_storage_id, .flags = flags, .app_title_id = app_title_id};
+        u64 application_id;
+    } in = { .app_storage_id = app_storage_id, .patch_storage_id = patch_storage_id, .flags = flags, .application_id = application_id};
 
     return serviceDispatchInOut(&g_nsdevSrv, 9, in, *out_pid);
 }

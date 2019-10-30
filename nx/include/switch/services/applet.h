@@ -103,7 +103,7 @@ typedef enum {
     AppletId_web = 0x13,            ///< 010000000000100A "LibAppletWeb" WebApplet applet
     AppletId_shop = 0x14,           ///< 010000000000100B "LibAppletShop" ShopN applet
     AppletId_photoViewer = 0x15,    ///< 010000000000100D "photoViewer"
-    AppletId_set = 0x16,            ///< 010000000000100E "set" (This title is currently not present on retail devices.)
+    AppletId_set = 0x16,            ///< 010000000000100E "set" (This applet is currently not present on retail devices.)
     AppletId_offlineWeb = 0x17,     ///< 010000000000100F "LibAppletOff" Offline web-applet
     AppletId_loginShare = 0x18,     ///< 0100000000001010 "LibAppletLns" Whitelisted web-applet
     AppletId_wifiWebAuth = 0x19,    ///< 0100000000001011 "LibAppletAuth" WifiWebAuth applet
@@ -193,7 +193,7 @@ typedef enum {
 /// ProgramSpecifyKind for the ExecuteProgram cmd. Controls the type of the u64 passed to the ExecuteProgram cmd.
 typedef enum {
     AppletProgramSpecifyKind_ExecuteProgram                            = 0,    ///< u8 ProgramIndex.
-    AppletProgramSpecifyKind_JumpToSubApplicationProgramForDevelopment = 1,    ///< u64 titleID. Only available when DebugMode is enabled.
+    AppletProgramSpecifyKind_JumpToSubApplicationProgramForDevelopment = 1,    ///< u64 application_id. Only available when DebugMode is enabled.
     AppletProgramSpecifyKind_RestartProgram                            = 2,    ///< u64 = value 0.
 } AppletProgramSpecifyKind;
 
@@ -229,7 +229,7 @@ typedef struct {
     Event PopInteractiveOutDataEvent;  ///< Output from GetPopInteractiveOutDataEvent, autoclear=false.
     LibAppletMode mode;                ///< See ref \ref LibAppletMode.
     u64 layer_handle;                  ///< Output from GetIndirectLayerConsumerHandle on [2.0.0+].
-    bool creating_self;                ///< When set, indicates that the LibraryApplet title is creating itself.
+    bool creating_self;                ///< When set, indicates that the LibraryApplet is creating itself.
     LibAppletExitReason exitreason;    ///< Set by \ref appletHolderJoin using the output from cmd GetResult, see \ref LibAppletExitReason.
 } AppletHolder;
 
@@ -269,7 +269,7 @@ typedef struct {
 typedef struct {
     AppletId appletId;                 ///< \ref AppletId
     u32 pad;                           ///< Padding.
-    u64 titleID;                       ///< titleID, only set with appletId == ::AppletId_application.
+    u64 application_id;                ///< ApplicationId, only set with appletId == ::AppletId_application.
 } AppletIdentityInfo;
 
 /// Attributes for launching applications for Quest.
@@ -289,10 +289,10 @@ typedef struct {
 
 /// ApplicationLaunchProperty
 typedef struct {
-    u64 titleID;                       ///< Application titleID.
-    u32 version;                       ///< Application title-version.
-    u8 app_storageId;                  ///< FsStorageId for the Application base title.
-    u8 update_storageId;               ///< FsStorageId for the Application update title.
+    u64 application_id;                ///< ApplicationId.
+    u32 version;                       ///< Application version.
+    u8 app_storageId;                  ///< FsStorageId for the Application.
+    u8 update_storageId;               ///< FsStorageId for the Application update.
     u8 unk_xa;                         ///< Unknown.
     u8 pad;                            ///< Padding.
 } AppletApplicationLaunchProperty;
@@ -514,12 +514,12 @@ Result appletGetHdcpAuthenticationStateChangeEvent(Event *out_event);
 Result appletSetTvPowerStateMatchingMode(AppletTvPowerStateMatchingMode mode);
 
 /**
- * @brief Gets the application titleID for the specified ContentActionName string.
+ * @brief Gets the ApplicationId for the specified ContentActionName string.
  * @note Only available when the current applet is an AppletType_SystemApplication on [5.1.0+].
- * @param[out] titleID Application titleID.
+ * @param[out] application_id ApplicationId.
  * @param[in] name ContentActionName string.
  */
-Result appletGetApplicationIdByContentActionName(u64 *titleID, const char *name);
+Result appletGetApplicationIdByContentActionName(u64 *application_id, const char *name);
 
 /**
  * @brief Sets the \ref ApmCpuBoostMode.
@@ -1007,7 +1007,7 @@ Result appletLockAccessorUnlock(AppletLockAccessor *a);
 Result appletCreateLibraryApplet(AppletHolder *h, AppletId id, LibAppletMode mode);
 
 /**
- * @brief Creates a LibraryApplet. This is for when a LibraryApplet title creates itself.
+ * @brief Creates a LibraryApplet. This is for when a LibraryApplet creates itself.
  * @note  Identical to \ref appletCreateLibraryApplet except this sets the creating_self flag to true.
  * @param h AppletHolder object.
  * @param id See \ref AppletId.
@@ -1260,23 +1260,23 @@ Result appletPopLaunchParameter(AppletStorage *s, AppletLaunchParameterKind kind
 /**
  * @brief Requests to launch the specified application.
  * @note Only available with AppletType_*Application, or AppletType_LibraryApplet on [5.0.0+].
- * @param[in] titleID Application titleID. Value 0 can be used to relaunch the current application.
+ * @param[in] application_id ApplicationId. Value 0 can be used to relaunch the current application.
  * @param[in] s Optional AppletStorage object, can be NULL. This is automatically closed. When NULL on pre-4.0.0 (or with AppletType_LibraryApplet), this will internally create a tmp storage with size 0 for use with the cmd. This is the storage available to the launched application via \ref appletPopLaunchParameter with ::AppletLaunchParameterKind_UserChannel.
  */
-Result appletRequestLaunchApplication(u64 titleID, AppletStorage* s);
+Result appletRequestLaunchApplication(u64 application_id, AppletStorage* s);
 
 /**
  * @brief Requests to launch the specified application, for kiosk systems.
  * @note Only available with AppletType_*Application on [3.0.0+].
  * @note Identical to \ref appletRequestLaunchApplication, except this allows the user to specify the attribute fields instead of the defaults being used.
- * @param[in] titleID Application titleID
+ * @param[in] application_id ApplicationId
  * @param[in] s Optional AppletStorage object, can be NULL. This is automatically closed. When NULL on pre-4.0.0, this will internally create a tmp storage with size 0 for use with the cmd. This is the storage available to the launched application via \ref appletPopLaunchParameter with ::AppletLaunchParameterKind_UserChannel.
  * @param[in] attr Kiosk application attributes.
  */
-Result appletRequestLaunchApplicationForQuest(u64 titleID, AppletStorage* s, const AppletApplicationAttributeForQuest *attr);
+Result appletRequestLaunchApplicationForQuest(u64 application_id, AppletStorage* s, const AppletApplicationAttributeForQuest *attr);
 
 /**
- * @brief Gets the DesiredLanguage for the current host title control.nacp.
+ * @brief Gets the DesiredLanguage for the current host application control.nacp.
  * @note Only available with AppletType_*Application.
  * @param[out] LanguageCode Output LanguageCode, see set.h.
  */
@@ -1286,7 +1286,7 @@ Result appletGetDesiredLanguage(u64 *LanguageCode);
 Result appletSetTerminateResult(Result res);
 
 /**
- * @brief Gets the DisplayVersion for the current host title control.nacp.
+ * @brief Gets the DisplayVersion for the current host application control.nacp.
  * @note Only available with AppletType_*Application.
  * @param[out] displayVersion Output DisplayVersion string, must be at least 0x10-bytes. This is always NUL-terminated.
  */
@@ -1333,7 +1333,7 @@ Result appletEndBlockingHomeButton(void);
 void appletNotifyRunning(bool *out);
 
 /**
- * @brief Gets the PseudoDeviceId. This is derived from the output of a ns command, and from data in the host title control.nacp.
+ * @brief Gets the PseudoDeviceId. This is derived from the output of a ns command, and from data in the host application control.nacp.
  * @note Only available with AppletType_*Application on [2.0.0+].
  * @param[out] out Output PseudoDeviceId.
  */
@@ -1355,7 +1355,7 @@ Result appletSetGamePlayRecordingState(bool state);
 /// Initializes video recording. This allocates a 0x6000000-byte buffer for the TransferMemory, cleanup is handled automatically during app exit in \ref appletExit.
 /// Only available with AppletType_Application on [3.0.0+], hence errors from this can be ignored.
 /// Video recording is only fully available system-side with [4.0.0+].
-/// Only usable when running under a title which supports video recording. Using this is only needed when the host title control.nacp has VideoCaptureMode set to Enabled, with Automatic appletInitializeGamePlayRecording is not needed.
+/// Only usable when running under an application which supports video recording. Using this is only needed when the host application control.nacp has VideoCaptureMode set to Enabled, with Automatic appletInitializeGamePlayRecording is not needed.
 Result appletInitializeGamePlayRecording(void);
 
 /**
@@ -1413,44 +1413,44 @@ Result appletSetApplicationCopyrightVisibility(bool visible);
 /**
  * @brief Gets ApplicationPlayStatistics.
  * @note Only available with AppletType_*Application on [5.0.0+].
- * @note The input titleIDs must be allowed via control.nacp with the current host title. The minimum allowed titleID is the titleID for the current-process.
+ * @note The input ApplicationIds must be allowed via control.nacp with the current host application. The minimum allowed ApplicationId is the ApplicationId for the current application.
  * @param stats Output \ref PdmApplicationPlayStatistics array.
- * @param titleIDs Input titleIDs array.
+ * @param application_ids Input ApplicationIds array.
  * @param count Total entries in the input/output arrays.
  * @param total_out Total output entries.
  */
-Result appletQueryApplicationPlayStatistics(PdmApplicationPlayStatistics *stats, const u64 *titleIDs, s32 count, s32 *total_out);
+Result appletQueryApplicationPlayStatistics(PdmApplicationPlayStatistics *stats, const u64 *application_ids, s32 count, s32 *total_out);
 
 /**
- * @brief Same as \ref appletQueryApplicationPlayStatistics except this gets playstats specific to the input userID.
+ * @brief Same as \ref appletQueryApplicationPlayStatistics except this gets playstats specific to the input userId.
  * @note Only available with AppletType_*Application on [6.0.0+].
  * @param[in] uid \ref AccountUid
  * @param[out] stats Output \ref PdmApplicationPlayStatistics array.
- * @param[in] titleIDs Input titleIDs array.
+ * @param[in] application_ids Input ApplicationIds array.
  * @param[in] count Total entries in the input/output arrays.
  * @param[out] total_out Total output entries.
  */
-Result appletQueryApplicationPlayStatisticsByUid(AccountUid uid, PdmApplicationPlayStatistics *stats, const u64 *titleIDs, s32 count, s32 *total_out);
+Result appletQueryApplicationPlayStatisticsByUid(AccountUid uid, PdmApplicationPlayStatistics *stats, const u64 *application_ids, s32 count, s32 *total_out);
 
 /**
- * @brief Launches Application title {current_titleID}+programIndex. This will enter an infinite-sleep-loop on success.
+ * @brief Launches Application {current_ApplicationId}+programIndex. This will enter an infinite-sleep-loop on success.
  * @note Only available with AppletType_*Application on [5.0.0+].
  * @note Creates the storage if needed. Uses cmd ClearUserChannel. Uses cmd UnpopToUserChannel when the storage was created. Lastly cmd ExecuteProgramCmd is used.
- * @param[in] programIndex ProgramIndex, must be 0x0-0xFF. 0 is the same as the current titleID. ProgramIndex values where the title is not installed should not be used.
+ * @param[in] programIndex ProgramIndex, must be 0x0-0xFF. 0 is the same as the current application. ProgramIndex values where the application is not installed should not be used.
  * @param[in] buffer Optional buffer containing the storage data which will be used for ::AppletLaunchParameterKind_UserChannel with the launched Application, can be NULL.
  * @param[in] size Size of the above buffer, 0 to not use the storage. Must be <=0x1000.
  */
 Result appletExecuteProgram(s32 programIndex, const void* buffer, size_t size);
 
 /**
- * @brief Launches the specified Application titleID.
+ * @brief Launches the specified ApplicationId.
  * @note Only available with AppletType_*Application on [5.0.0+], with DebugMode enabled.
  * @note Creates the storage if needed. Uses cmd ClearUserChannel. Uses cmd UnpopToUserChannel when the storage was created. Lastly cmd ExecuteProgramCmd is used.
- * @param[in] titleID Application titleID.
+ * @param[in] application_id ApplicationId.
  * @param[in] buffer Optional buffer containing the storage data which will be used for ::AppletLaunchParameterKind_UserChannel with the launched Application, can be NULL.
  * @param[in] size Size of the above buffer, 0 to not use the storage. Must be <=0x1000.
  */
-Result appletJumpToSubApplicationProgramForDevelopment(u64 titleID, const void* buffer, size_t size);
+Result appletJumpToSubApplicationProgramForDevelopment(u64 application_id, const void* buffer, size_t size);
 
 /**
  * @brief Relaunches the current Application.
@@ -1462,9 +1462,9 @@ Result appletJumpToSubApplicationProgramForDevelopment(u64 titleID, const void* 
 Result appletRestartProgram(const void* buffer, size_t size);
 
 /**
- * @brief Gets the ProgramIndex of the Application which launched this title.
+ * @brief Gets the ProgramIndex of the program which launched this program.
  * @note Only available with AppletType_*Application on [5.0.0+].
- * @param[out] programIndex ProgramIndex, -1 when there was no previous title.
+ * @param[out] programIndex ProgramIndex, -1 when there was no previous program.
  */
 Result appletGetPreviousProgramIndex(s32 *programIndex);
 
@@ -1541,17 +1541,17 @@ Result appletGetHomeButtonWriterLockAccessor(AppletLockAccessor *a);
 /**
  * @brief PopRequestLaunchApplicationForDebug
  * @note Only available with AppletType_SystemApplet on [6.0.0+].
- * @param[out] userIDs Output array of \ref AccountUid.
- * @param[in] count Size of the userID array in entries, must be at least the size stored in state.
- * @param[out] titleID Output Application titleID.
+ * @param[out] uids Output array of \ref AccountUid.
+ * @param[in] count Size of the uids array in entries, must be at least the size stored in state.
+ * @param[out] application_id Output ApplicationId.
  * @param[out] total_out Total output userID entries.
  */
-Result appletPopRequestLaunchApplicationForDebug(AccountUid *userIDs, s32 count, u64 *titleID, s32 *total_out);
+Result appletPopRequestLaunchApplicationForDebug(AccountUid *uids, s32 count, u64 *application_id, s32 *total_out);
 
 /**
  * @brief Launches DevMenu and the dev Overlay-applet. This will enter an infinite-sleep-loop on success.
  * @note Only available with AppletType_SystemApplet on [8.0.0+].
- * @note This verifies that DebugMode is enabled, then uses a ns cmd. That cmd then loads the system-settings for these two titleIDs (which normally only exist on devunits), and verifies that these titles are installed + launches them.
+ * @note This verifies that DebugMode is enabled, then uses a ns cmd. That cmd then loads the system-settings for these two ProgramIds (which normally only exist on devunits), and verifies that these programs are installed + launches them.
  */
 Result appletLaunchDevMenu(void);
 
@@ -1635,9 +1635,9 @@ Result appletGetHdcpAuthenticationFailedEvent(Event *out_event);
  * @brief Creates an Application.
  * @note Only available with AppletType_SystemApplet.
  * @param[out] a \ref AppletApplication
- * @param[in] titleID Application titleID.
+ * @param[in] application_id ApplicationId.
  */
-Result appletCreateApplication(AppletApplication *a, u64 titleID);
+Result appletCreateApplication(AppletApplication *a, u64 application_id);
 
 /**
  * @brief Pops a \ref AppletApplication for a requested Application launch.
@@ -1650,9 +1650,9 @@ Result appletPopLaunchRequestedApplication(AppletApplication *a);
  * @brief Creates a SystemApplication.
  * @note Only available with AppletType_SystemApplet.
  * @param[out] a \ref AppletApplication
- * @param[in] titleID SystemApplication titleID.
+ * @param[in] system_application_id SystemApplicationId.
  */
-Result appletCreateSystemApplication(AppletApplication *a, u64 titleID);
+Result appletCreateSystemApplication(AppletApplication *a, u64 system_application_id);
 
 /**
  * @brief PopFloatingApplicationForDevelopment.
@@ -1740,11 +1740,11 @@ Result appletApplicationAreAnyLibraryAppletsLeft(AppletApplication *a, bool *out
 Result appletApplicationRequestExitLibraryAppletOrTerminate(AppletApplication *a, u64 timeout);
 
 /**
- * @brief Gets the titleID for the Application.
+ * @brief Gets the ApplicationId for the Application.
  * @param a \ref AppletApplication
- * @param[out] titleID Output Application titleID.
+ * @param[out] application_id Output ApplicationId.
  */
-Result appletApplicationGetApplicationId(AppletApplication *a, u64 *titleID);
+Result appletApplicationGetApplicationId(AppletApplication *a, u64 *application_id);
 
 /**
  * @brief Pushes a LaunchParameter AppletStorage to the Application.
@@ -1783,11 +1783,11 @@ Result appletApplicationGetApplicationLaunchRequestInfo(AppletApplication *a, Ap
  * @brief SetUsers for the Application.
  * @note Only available on [6.0.0+].
  * @param a \ref AppletApplication
- * @param[in] userIDs Input array of \ref AccountUid.
- * @param[in] count Size of the userID array in entries, must be <=ACC_USER_LIST_SIZE.
+ * @param[in] uids Input array of \ref AccountUid.
+ * @param[in] count Size of the uids array in entries, must be <=ACC_USER_LIST_SIZE.
  * @param[in] flag When this flag is true, this just clears the users_available state flag to 0 and returns.
  */
-Result appletApplicationSetUsers(AppletApplication *a, const AccountUid *userIDs, s32 count, bool flag);
+Result appletApplicationSetUsers(AppletApplication *a, const AccountUid *uids, s32 count, bool flag);
 
 /**
  * @brief CheckRightsEnvironmentAvailable.
@@ -1806,15 +1806,15 @@ Result appletApplicationCheckRightsEnvironmentAvailable(AppletApplication *a, bo
 Result appletApplicationGetNsRightsEnvironmentHandle(AppletApplication *a, u64 *handle);
 
 /**
- * @brief Gets an array of userIDs for the Application DesirableUids.
+ * @brief Gets an array of userIds for the Application DesirableUids.
  * @note Only available on [6.0.0+].
- * @note qlaunch only uses 1 userID with this.
+ * @note qlaunch only uses 1 userId with this.
  * @param a \ref AppletApplication
- * @param[out] userIDs Output array of \ref AccountUid.
- * @param[in] count Size of the userID array in entries, must be at least the size stored in state.
+ * @param[out] uids Output array of \ref AccountUid.
+ * @param[in] count Size of the uids array in entries, must be at least the size stored in state.
  * @param[out] total_out Total output entries.
  */
-Result appletApplicationGetDesirableUids(AppletApplication *a, AccountUid *userIDs, s32 count, s32 *total_out);
+Result appletApplicationGetDesirableUids(AppletApplication *a, AccountUid *uids, s32 count, s32 *total_out);
 
 /**
  * @brief ReportApplicationExitTimeout.
@@ -1832,13 +1832,13 @@ Result appletApplicationReportApplicationExitTimeout(AppletApplication *a);
 Result appletApplicationSetApplicationAttribute(AppletApplication *a, const AppletApplicationAttribute *attr);
 
 /**
- * @brief Gets whether the savedata specified by the input titleID is accessible.
+ * @brief Gets whether the savedata specified by the input ApplicationId is accessible.
  * @note Only available on [8.0.0+].
  * @param a \ref AppletApplication
- * @param[in] titleID titleID for the savedata.
+ * @param[in] application_id ApplicationId for the savedata.
  * @param[out] out Output flag.
  */
-Result appletApplicationHasSaveDataAccessPermission(AppletApplication *a, u64 titleID, bool *out);
+Result appletApplicationHasSaveDataAccessPermission(AppletApplication *a, u64 application_id, bool *out);
 
 ///@}
 
@@ -2002,11 +2002,11 @@ Result appletGetIndirectLayerProducerHandle(u64 *out);
 Result appletGetMainAppletApplicationDesiredLanguage(u64 *LanguageCode);
 
 /**
- * @brief Gets the titleID for the currently running Application.
+ * @brief Gets the ApplicationId for the currently running Application.
  * @note Only available with AppletType_LibraryApplet on [8.0.0+].
- * @param[out] titleID Output titleID, 0 when no Application is running.
+ * @param[out] application_id Output ApplicationId, 0 when no Application is running.
  */
-Result appletGetCurrentApplicationId(u64 *titleID);
+Result appletGetCurrentApplicationId(u64 *application_id);
 
 /**
  * @brief Exits the current applet. Same as \ref appletHolderRequestExit except this is for the current applet.
@@ -2036,14 +2036,14 @@ Result appletReserveResourceForMovieOperation(void);
 Result appletUnreserveResourceForMovieOperation(void);
 
 /**
- * @brief Gets an array of userIDs for the MainApplet AvailableUsers.
+ * @brief Gets an array of userIds for the MainApplet AvailableUsers.
  * @note Only available with AppletType_LibraryApplet on [6.0.0+].
- * @param[out] userIDs Output array of \ref AccountUid.
- * @param[in] count Size of the userID array in entries, must be at least ACC_USER_LIST_SIZE.
+ * @param[out] uids Output array of \ref AccountUid.
+ * @param[in] count Size of the uids array in entries, must be at least ACC_USER_LIST_SIZE.
  * @param[out] flag When true, this indicates that no users are available.
  * @param[out] total_out Total output entries. This is -1 when flag is true.
  */
-Result appletGetMainAppletAvailableUsers(AccountUid *userIDs, s32 count, bool *flag, s32 *total_out);
+Result appletGetMainAppletAvailableUsers(AccountUid *uids, s32 count, bool *flag, s32 *total_out);
 
 ///@}
 
@@ -2065,11 +2065,11 @@ Result appletBeginToWatchShortHomeButtonMessage(void);
 Result appletEndToWatchShortHomeButtonMessage(void);
 
 /**
- * @brief Gets the application titleID for displaying the logo screen during application launch.
+ * @brief Gets the ApplicationId for displaying the logo screen during application launch.
  * @note Only available with AppletType_OverlayApplet.
- * @param[out] titleID Output application titleID, 0 when no application is running.
+ * @param[out] application_id Output ApplicationId, 0 when no application is running.
  */
-Result appletGetApplicationIdForLogo(u64 *titleID);
+Result appletGetApplicationIdForLogo(u64 *application_id);
 
 /**
  * @brief Sets the GpuTimeSliceBoost.
@@ -2209,14 +2209,14 @@ Result appletInvalidateTransitionLayer(void);
 /**
  * @brief Requests to launch the specified Application, with the specified users.
  * @note Only available on [6.0.0+].
- * @param[in] titleID Application titleID.
- * @param[in] userIDs Input array of \ref AccountUid.
- * @param[in] total_userIDs Total input userIDs, must be <=ACC_USER_LIST_SIZE.
+ * @param[in] application_id ApplicationId.
+ * @param[in] uids Input array of \ref AccountUid.
+ * @param[in] total_uids Total input uids, must be <=ACC_USER_LIST_SIZE.
  * @param[in] flag Whether to use the specified buffer to create a storage which will be pushed for ::AppletLaunchParameterKind_UserChannel.
  * @param[in] buffer Buffer containing the above storage data.
  * @param[in] size Size of the storage buffer.
  */
-Result appletRequestLaunchApplicationWithUserAndArgumentForDebug(u64 titleID, const AccountUid *userIDs, s32 total_userIDs, bool flag, const void* buffer, size_t size);
+Result appletRequestLaunchApplicationWithUserAndArgumentForDebug(u64 application_id, const AccountUid *uids, s32 total_uids, bool flag, const void* buffer, size_t size);
 
 /**
  * @brief Gets the \ref AppletResourceUsageInfo.

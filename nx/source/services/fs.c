@@ -147,14 +147,14 @@ static Result _fsOpenFileSystem(FsFileSystem* out, FsFileSystemType fsType, cons
     );
 }
 
-Result fsOpenFileSystemWithPatch(FsFileSystem* out, u64 titleId, FsFileSystemType fsType) {
+Result fsOpenFileSystemWithPatch(FsFileSystem* out, u64 id, FsFileSystemType fsType) {
     if (hosversionBefore(2,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     const struct {
         u32 fsType;
-        u64 titleId;
-    } in = { fsType, titleId };
+        u64 id;
+    } in = { fsType, id };
 
     return _fsObjectDispatchIn(&g_fsSrv, 7, in,
         .out_num_objects = 1,
@@ -162,11 +162,11 @@ Result fsOpenFileSystemWithPatch(FsFileSystem* out, u64 titleId, FsFileSystemTyp
     );
 }
 
-static Result _fsOpenFileSystemWithId(FsFileSystem* out, u64 titleId, FsFileSystemType fsType, const char* contentPath) {
+static Result _fsOpenFileSystemWithId(FsFileSystem* out, u64 id, FsFileSystemType fsType, const char* contentPath) {
     const struct {
         u32 fsType;
-        u64 titleId;
-    } in = { fsType, titleId };
+        u64 id;
+    } in = { fsType, id };
 
     return _fsObjectDispatchIn(&g_fsSrv, 8, in,
         .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_In },
@@ -176,12 +176,12 @@ static Result _fsOpenFileSystemWithId(FsFileSystem* out, u64 titleId, FsFileSyst
     );
 }
 
-Result fsOpenFileSystemWithId(FsFileSystem* out, u64 titleId, FsFileSystemType fsType, const char* contentPath) {
+Result fsOpenFileSystemWithId(FsFileSystem* out, u64 id, FsFileSystemType fsType, const char* contentPath) {
     char sendStr[FS_MAX_PATH] = {0};
     strncpy(sendStr, contentPath, sizeof(sendStr)-1);
 
     if (hosversionAtLeast(2,0,0))
-        return _fsOpenFileSystemWithId(out, titleId, fsType, sendStr);
+        return _fsOpenFileSystemWithId(out, id, fsType, sendStr);
     else
         return _fsOpenFileSystem(out, fsType, sendStr);
 }
@@ -447,9 +447,9 @@ Result fsGetGlobalAccessLogMode(u32* out_mode) {
 }
 
 // Wrapper(s) for fsCreateSaveDataFileSystemBySystemSaveDataId.
-Result fsCreate_SystemSaveDataWithOwner(FsSaveDataSpaceId saveDataSpaceId, u64 saveID, AccountUid userID, u64 ownerId, u64 size, u64 journalSize, u32 flags) {
+Result fsCreate_SystemSaveDataWithOwner(FsSaveDataSpaceId saveDataSpaceId, u64 saveID, AccountUid uid, u64 ownerId, u64 size, u64 journalSize, u32 flags) {
     FsSave save = {
-        .userID = userID,
+        .uid = uid,
         .saveID = saveID,
     };
     FsSaveCreate create = {
@@ -469,22 +469,22 @@ Result fsCreate_SystemSaveData(FsSaveDataSpaceId saveDataSpaceId, u64 saveID, u6
 }
 
 // Wrapper(s) for fsOpenSaveDataFileSystem.
-Result fsOpen_SaveData(FsFileSystem* out, u64 titleID, AccountUid userID) {
+Result fsOpen_SaveData(FsFileSystem* out, u64 program_id, AccountUid uid) {
     FsSave save;
 
     memset(&save, 0, sizeof(save));
-    save.titleID = titleID;
-    save.userID = userID;
+    save.program_id = program_id;
+    save.uid = uid;
     save.saveDataType = FsSaveDataType_SaveData;
 
     return fsOpenSaveDataFileSystem(out, FsSaveDataSpaceId_NandUser, &save);
 }
 
-Result fsOpen_SystemSaveData(FsFileSystem* out, FsSaveDataSpaceId saveDataSpaceId, u64 saveID, AccountUid userID) {
+Result fsOpen_SystemSaveData(FsFileSystem* out, FsSaveDataSpaceId saveDataSpaceId, u64 saveID, AccountUid uid) {
     FsSave save;
 
     memset(&save, 0, sizeof(save));
-    save.userID = userID;
+    save.uid = uid;
     save.saveID = saveID;
     save.saveDataType = FsSaveDataType_SystemSaveData;
 

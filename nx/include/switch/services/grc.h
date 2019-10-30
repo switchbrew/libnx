@@ -182,8 +182,8 @@ Service* grcdGetServiceSession(void);
 Result grcdBegin(void);
 
 /**
- * @brief Retrieves stream data from the continuous recorder in use (from the video recording of the currently running game title).
- * @note This will block until data is available. This will hang if there is no game title running which has video capture enabled.
+ * @brief Retrieves stream data from the continuous recorder in use (from the video recording of the currently running application).
+ * @note This will block until data is available. This will hang if there is no application running which has video capture enabled.
  * @param[in] stream \ref GrcStream
  * @param[out] buffer Output buffer.
  * @param[in] size Max size of the output buffer.

@@ -443,10 +443,10 @@ Result fsdevMountSdmc(void)
   return rc;
 }
 
-Result fsdevMountSaveData(const char *name, u64 titleID, AccountUid userID)
+Result fsdevMountSaveData(const char *name, u64 program_id, AccountUid uid)
 {
   FsFileSystem fs;
-  Result rc = fsOpen_SaveData(&fs, titleID, userID);
+  Result rc = fsOpen_SaveData(&fs, program_id, uid);
   if(R_SUCCEEDED(rc))
   {
     int ret = fsdevMountDevice(name, fs);
@@ -456,10 +456,10 @@ Result fsdevMountSaveData(const char *name, u64 titleID, AccountUid userID)
   return rc;
 }
 
-Result fsdevMountSystemSaveData(const char *name, FsSaveDataSpaceId saveDataSpaceId, u64 saveID, AccountUid userID)
+Result fsdevMountSystemSaveData(const char *name, FsSaveDataSpaceId saveDataSpaceId, u64 saveID, AccountUid uid)
 {
   FsFileSystem fs;
-  Result rc = fsOpen_SystemSaveData(&fs, saveDataSpaceId, saveID, userID);
+  Result rc = fsOpen_SystemSaveData(&fs, saveDataSpaceId, saveID, uid);
   if(R_SUCCEEDED(rc))
   {
     int ret = fsdevMountDevice(name, fs);

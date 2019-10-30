@@ -26,51 +26,51 @@ static Result _friendsLaShow(const FriendsLaArg *arg, bool playStartupSound) {
     return rc;
 }
 
-static Result _friendsLaShowSimple(FriendsLaArgType type, AccountUid userID, bool playStartupSound) {
-    FriendsLaArg arg = {.type = type, .userID = userID};
+static Result _friendsLaShowSimple(FriendsLaArgType type, AccountUid uid, bool playStartupSound) {
+    FriendsLaArg arg = {.type = type, .uid = uid};
 
     return _friendsLaShow(&arg, playStartupSound);
 }
 
-static Result _friendsLaShowAll(FriendsLaArgType type, AccountUid userID, u64 networkServiceAccountId, const FriendsInAppScreenName *first_inAppScreenName, const FriendsInAppScreenName *second_inAppScreenName, bool playStartupSound) {
-    FriendsLaArg arg = {.type = type, .userID = userID, .networkServiceAccountId = networkServiceAccountId, .first_inAppScreenName = *first_inAppScreenName, .second_inAppScreenName = *second_inAppScreenName};
+static Result _friendsLaShowAll(FriendsLaArgType type, AccountUid uid, u64 networkServiceAccountId, const FriendsInAppScreenName *first_inAppScreenName, const FriendsInAppScreenName *second_inAppScreenName, bool playStartupSound) {
+    FriendsLaArg arg = {.type = type, .uid = uid, .networkServiceAccountId = networkServiceAccountId, .first_inAppScreenName = *first_inAppScreenName, .second_inAppScreenName = *second_inAppScreenName};
 
     return _friendsLaShow(&arg, playStartupSound);
 }
 
-Result friendsLaShowFriendList(AccountUid userID) {
-    return _friendsLaShowSimple(FriendsLaArgType_ShowFriendList, userID, false);
+Result friendsLaShowFriendList(AccountUid uid) {
+    return _friendsLaShowSimple(FriendsLaArgType_ShowFriendList, uid, false);
 }
 
-Result friendsLaShowUserDetailInfo(AccountUid userID, u64 networkServiceAccountId, const FriendsInAppScreenName *first_inAppScreenName, const FriendsInAppScreenName *second_inAppScreenName) {
-    return _friendsLaShowAll(FriendsLaArgType_ShowUserDetailInfo, userID, networkServiceAccountId, first_inAppScreenName, second_inAppScreenName, false);
+Result friendsLaShowUserDetailInfo(AccountUid uid, u64 networkServiceAccountId, const FriendsInAppScreenName *first_inAppScreenName, const FriendsInAppScreenName *second_inAppScreenName) {
+    return _friendsLaShowAll(FriendsLaArgType_ShowUserDetailInfo, uid, networkServiceAccountId, first_inAppScreenName, second_inAppScreenName, false);
 }
 
-Result friendsLaStartSendingFriendRequest(AccountUid userID, u64 networkServiceAccountId, const FriendsInAppScreenName *first_inAppScreenName, const FriendsInAppScreenName *second_inAppScreenName) {
-    return _friendsLaShowAll(FriendsLaArgType_StartSendingFriendRequest, userID, networkServiceAccountId, first_inAppScreenName, second_inAppScreenName, false);
+Result friendsLaStartSendingFriendRequest(AccountUid uid, u64 networkServiceAccountId, const FriendsInAppScreenName *first_inAppScreenName, const FriendsInAppScreenName *second_inAppScreenName) {
+    return _friendsLaShowAll(FriendsLaArgType_StartSendingFriendRequest, uid, networkServiceAccountId, first_inAppScreenName, second_inAppScreenName, false);
 }
 
-Result friendsLaShowMethodsOfSendingFriendRequest(AccountUid userID) {
-    return _friendsLaShowSimple(FriendsLaArgType_ShowMethodsOfSendingFriendRequest, userID, false);
+Result friendsLaShowMethodsOfSendingFriendRequest(AccountUid uid) {
+    return _friendsLaShowSimple(FriendsLaArgType_ShowMethodsOfSendingFriendRequest, uid, false);
 }
 
-Result friendsLaStartFacedFriendRequest(AccountUid userID) {
-    return _friendsLaShowSimple(FriendsLaArgType_StartFacedFriendRequest, userID, false);
+Result friendsLaStartFacedFriendRequest(AccountUid uid) {
+    return _friendsLaShowSimple(FriendsLaArgType_StartFacedFriendRequest, uid, false);
 }
 
-Result friendsLaShowReceivedFriendRequestList(AccountUid userID) {
-    return _friendsLaShowSimple(FriendsLaArgType_ShowReceivedFriendRequestList, userID, false);
+Result friendsLaShowReceivedFriendRequestList(AccountUid uid) {
+    return _friendsLaShowSimple(FriendsLaArgType_ShowReceivedFriendRequestList, uid, false);
 }
 
-Result friendsLaShowBlockedUserList(AccountUid userID) {
-    return _friendsLaShowSimple(FriendsLaArgType_ShowBlockedUserList, userID, false);
+Result friendsLaShowBlockedUserList(AccountUid uid) {
+    return _friendsLaShowSimple(FriendsLaArgType_ShowBlockedUserList, uid, false);
 }
 
-Result friendsLaShowMyProfile(AccountUid userID) {
-    return _friendsLaShowSimple(FriendsLaArgType_ShowMyProfile, userID, false);
+Result friendsLaShowMyProfile(AccountUid uid) {
+    return _friendsLaShowSimple(FriendsLaArgType_ShowMyProfile, uid, false);
 }
 
-Result friendsLaShowMyProfileForHomeMenu(AccountUid userID) {
-    return _friendsLaShowSimple(FriendsLaArgType_ShowMyProfile, userID, true);
+Result friendsLaShowMyProfileForHomeMenu(AccountUid uid) {
+    return _friendsLaShowSimple(FriendsLaArgType_ShowMyProfile, uid, true);
 }
 

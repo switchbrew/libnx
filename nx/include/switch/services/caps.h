@@ -27,7 +27,7 @@ typedef enum {
 typedef enum {
     CapsContentType_Screenshot = 0,             ///< Album screenshots.
     CapsContentType_Movie      = 1,             ///< Album videos.
-    CapsContentType_ExtraMovie = 3,             ///< Videos recorded by the current Application host title via \ref grcCreateMovieMaker.
+    CapsContentType_ExtraMovie = 3,             ///< Videos recorded by the current host Application via \ref grcCreateMovieMaker.
 } CapsContentType;
 
 /// ScreenShotAttribute
@@ -77,7 +77,7 @@ typedef struct {
 
 /// AlbumEntryId
 typedef struct {
-    u64 titleID;                                 ///< titleID.
+    u64 program_id;                              ///< ProgramId.
     CapsAlbumFileDateTime datetime;              ///< \ref CapsAlbumFileDateTime
     u8 unk_x10;                                  ///< Unknown.
     u8 unk_x11;                                  ///< Unknown.
@@ -123,7 +123,7 @@ typedef struct {
 
 /// UserIdList
 typedef struct {
-    AccountUid userIDs[ACC_USER_LIST_SIZE];               ///< \ref AccountUid
+    AccountUid uids[ACC_USER_LIST_SIZE];                  ///< \ref AccountUid
     u8 count;                                             ///< Total userIDs.
     u8 pad[7];                                            ///< Padding.
 } CapsUserIdList;

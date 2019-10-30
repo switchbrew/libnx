@@ -46,20 +46,20 @@ Result pdmqryQueryAppletEvent(s32 entry_index, PdmAppletEvent *events, s32 count
     return _pdmqryQueryEvent(entry_index, events, sizeof(PdmAppletEvent), count, total_out, 0);
 }
 
-Result pdmqryQueryPlayStatisticsByApplicationId(u64 titleID, PdmPlayStatistics *stats) {
-    return serviceDispatchInOut(&g_pdmqrySrv, 4, titleID, *stats);
+Result pdmqryQueryPlayStatisticsByApplicationId(u64 application_id, PdmPlayStatistics *stats) {
+    return serviceDispatchInOut(&g_pdmqrySrv, 4, application_id, *stats);
 }
 
-Result pdmqryQueryPlayStatisticsByApplicationIdAndUserAccountId(u64 titleID, AccountUid uid, PdmPlayStatistics *stats) {
+Result pdmqryQueryPlayStatisticsByApplicationIdAndUserAccountId(u64 application_id, AccountUid uid, PdmPlayStatistics *stats) {
     const struct {
-        u64 titleID;
+        u64 application_id;
         AccountUid uid;
-    } in = { titleID, uid };
+    } in = { application_id, uid };
 
     return serviceDispatchInOut(&g_pdmqrySrv, 5, in, *stats);
 }
 
-Result pdmqryQueryLastPlayTime(PdmLastPlayTime *playtimes, const u64 *titleIDs, s32 count, s32 *total_out) {
+Result pdmqryQueryLastPlayTime(PdmLastPlayTime *playtimes, const u64 *application_ids, s32 count, s32 *total_out) {
     return serviceDispatchOut(&g_pdmqrySrv, 7, *total_out,
         .buffer_attrs = {
             SfBufferAttr_HipcMapAlias | SfBufferAttr_Out,
@@ -67,7 +67,7 @@ Result pdmqryQueryLastPlayTime(PdmLastPlayTime *playtimes, const u64 *titleIDs, 
         },
         .buffers = {
             { playtimes, count*sizeof(PdmLastPlayTime) },
-            { titleIDs, count*sizeof(u64) },
+            { application_ids, count*sizeof(u64) },
         },
     );
 }
@@ -131,13 +131,13 @@ Result pdmqryGetAvailableAccountPlayEventRange(AccountUid uid, s32 *total_entrie
     return rc;
 }
 
-Result pdmqryQueryRecentlyPlayedApplication(AccountUid uid, u64 *titleIDs, s32 count, s32 *total_out) {
+Result pdmqryQueryRecentlyPlayedApplication(AccountUid uid, u64 *application_ids, s32 count, s32 *total_out) {
     if (hosversionBefore(6,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return serviceDispatchInOut(&g_pdmqrySrv, 14, uid, *total_out,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
-        .buffers = { { titleIDs, count*sizeof(u64) } },
+        .buffers = { { application_ids, count*sizeof(u64) } },
     );
 }
 

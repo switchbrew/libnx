@@ -11,16 +11,16 @@
 #include "../services/ncm.h"
 
 typedef struct {
-        u8 main_thread_priority;
-        u8 default_cpu_id;
-        u16 application_type;
-        u32 main_thread_stack_size;
-        u64 title_id;
-        u32 acid_sac_size;
-        u32 aci0_sac_size;
-        u32 acid_fac_size;
-        u32 aci0_fah_size;
-        u8 ac_buffer[0x3E0];
+    u8 main_thread_priority;
+    u8 default_cpu_id;
+    u16 application_type;
+    u32 main_thread_stack_size;
+    u64 program_id;
+    u32 acid_sac_size;
+    u32 aci0_sac_size;
+    u32 acid_fac_size;
+    u32 aci0_fah_size;
+    u8 ac_buffer[0x3E0];
 } LoaderProgramInfo;
 
 typedef struct {

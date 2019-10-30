@@ -377,15 +377,15 @@ Result ncmContentMetaDatabaseListContentInfo(NcmContentMetaDatabase* db, s32* ou
     );
 }
 
-Result ncmContentMetaDatabaseList(NcmContentMetaDatabase* db, s32* out_entries_total, s32* out_entries_written, NcmContentMetaKey* out_keys, s32 count, NcmContentMetaType meta_type, u64 application_title_id, u64 title_id_min, u64 title_id_max, NcmContentInstallType install_type) {
+Result ncmContentMetaDatabaseList(NcmContentMetaDatabase* db, s32* out_entries_total, s32* out_entries_written, NcmContentMetaKey* out_keys, s32 count, NcmContentMetaType meta_type, u64 id, u64 id_min, u64 id_max, NcmContentInstallType install_type) {
     const struct {
         u8 meta_type;
         u8 install_type;
         u8 padding[6];
-        u64 application_title_id;
-        u64 title_id_min;
-        u64 title_id_max;
-    } in = { meta_type, install_type, {0}, application_title_id, title_id_min, title_id_max };
+        u64 id;
+        u64 id_min;
+        u64 id_max;
+    } in = { meta_type, install_type, {0}, id, id_min, id_max };
     struct {
         s32 out_entries_total;
         s32 out_entries_written;
@@ -401,8 +401,8 @@ Result ncmContentMetaDatabaseList(NcmContentMetaDatabase* db, s32* out_entries_t
     return rc;
 }
 
-Result ncmContentMetaDatabaseGetLatestContentMetaKey(NcmContentMetaDatabase* db, NcmContentMetaKey* out_key, u64 title_id) {
-    return serviceDispatchInOut(&db->s, 6, title_id, *out_key);
+Result ncmContentMetaDatabaseGetLatestContentMetaKey(NcmContentMetaDatabase* db, NcmContentMetaKey* out_key, u64 id) {
+    return serviceDispatchInOut(&db->s, 6, id, *out_key);
 }
 
 Result ncmContentMetaDatabaseListApplication(NcmContentMetaDatabase* db, s32* out_entries_total, s32* out_entries_written, NcmApplicationContentMetaKey* out_keys, s32 count, NcmContentMetaType meta_type) {

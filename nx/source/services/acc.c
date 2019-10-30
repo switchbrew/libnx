@@ -13,7 +13,7 @@ static bool g_accPreselectedUserInitialized;
 
 static Result _accountInitializeApplicationInfo(void);
 
-static Result _accountGetPreselectedUser(AccountUid *userID);
+static Result _accountGetPreselectedUser(AccountUid *uid);
 
 NX_GENERATE_SERVICE_GUARD(account);
 
@@ -80,43 +80,43 @@ Result accountGetUserCount(s32* user_count) {
     return _accountCmdNoInOutU32(&g_accSrv, (u32*)user_count, 0);
 }
 
-static Result _accountListAllUsers(AccountUid* userIDs) {
+static Result _accountListAllUsers(AccountUid* uids) {
     return serviceDispatch(&g_accSrv, 2,
         .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_Out },
-        .buffers = { { userIDs, sizeof(AccountUid)*ACC_USER_LIST_SIZE } },
+        .buffers = { { uids, sizeof(AccountUid)*ACC_USER_LIST_SIZE } },
     );
 }
 
-Result accountListAllUsers(AccountUid* userIDs, s32 max_userIDs, s32 *actual_total) {
+Result accountListAllUsers(AccountUid* uids, s32 max_uids, s32 *actual_total) {
     Result rc=0;
-    AccountUid temp_userIDs[ACC_USER_LIST_SIZE];
-    memset(temp_userIDs, 0, sizeof(temp_userIDs));
+    AccountUid temp_uids[ACC_USER_LIST_SIZE];
+    memset(temp_uids, 0, sizeof(temp_uids));
 
-    rc = _accountListAllUsers(temp_userIDs);
+    rc = _accountListAllUsers(temp_uids);
 
     if (R_SUCCEEDED(rc)) {
-        s32 total_userIDs;
-        for (total_userIDs=0; total_userIDs<ACC_USER_LIST_SIZE; total_userIDs++) {
-            if (!accountUidIsValid(&temp_userIDs[total_userIDs])) break;
+        s32 total_uids;
+        for (total_uids=0; total_uids<ACC_USER_LIST_SIZE; total_uids++) {
+            if (!accountUidIsValid(&temp_uids[total_uids])) break;
         }
 
-        if (max_userIDs > total_userIDs) {
-            max_userIDs = total_userIDs;
+        if (max_uids > total_uids) {
+            max_uids = total_uids;
         }
 
-        memcpy(userIDs, temp_userIDs, sizeof(AccountUid)*max_userIDs);
-        *actual_total = max_userIDs;
+        memcpy(uids, temp_uids, sizeof(AccountUid)*max_uids);
+        *actual_total = max_uids;
     }
 
     return rc;
 }
 
-Result accountGetLastOpenedUser(AccountUid *userID) {
-    return serviceDispatchOut(&g_accSrv, 4, *userID);
+Result accountGetLastOpenedUser(AccountUid *uid) {
+    return serviceDispatchOut(&g_accSrv, 4, *uid);
 }
 
-Result accountGetProfile(AccountProfile* out, AccountUid userID) {
-    return serviceDispatchIn(&g_accSrv, 5, userID,
+Result accountGetProfile(AccountProfile* out, AccountUid uid) {
+    return serviceDispatchIn(&g_accSrv, 5, uid,
         .out_num_objects = 1,
         .out_objects = &out->s,
     );
@@ -170,7 +170,7 @@ Result accountProfileLoadImage(AccountProfile* profile, void* buf, size_t len, u
     );
 }
 
-static Result _accountGetPreselectedUser(AccountUid *userID) {
+static Result _accountGetPreselectedUser(AccountUid *uid) {
     Result rc=0;
     AppletStorage storage;
     s64 tmpsize=0;
@@ -179,7 +179,7 @@ static Result _accountGetPreselectedUser(AccountUid *userID) {
         u32  magicnum;//These two fields must match fixed values.
         u8   unk_x4;
         u8   pad[3];
-        AccountUid userID;
+        AccountUid uid;
         u8   unk_x18[0x70];//unused
     } storagedata;
 
@@ -199,16 +199,16 @@ static Result _accountGetPreselectedUser(AccountUid *userID) {
         if (R_SUCCEEDED(rc) && (storagedata.magicnum!=0xc79497ca || storagedata.unk_x4!=1))
             rc = MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
-        if (R_SUCCEEDED(rc) && userID) *userID = storagedata.userID;
+        if (R_SUCCEEDED(rc) && uid) *uid = storagedata.uid;
     }
 
     return rc;
 }
 
-Result accountGetPreselectedUser(AccountUid *userID) {
+Result accountGetPreselectedUser(AccountUid *uid) {
     if (!g_accPreselectedUserInitialized) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    *userID = g_accPreselectedUserID;
+    *uid = g_accPreselectedUserID;
 
     return 0;
 }

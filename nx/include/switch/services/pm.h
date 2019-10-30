@@ -90,17 +90,17 @@ Result pmbmSetMaintenanceBoot(void);
 
 Result pmdmntGetJitDebugProcessIdList(u32* out_count, u64* out_pids, size_t max_pids);
 Result pmdmntStartProcess(u64 pid);
-Result pmdmntGetProcessId(u64* pid_out, u64 title_id);
-Result pmdmntHookToCreateProcess(Event* out, u64 title_id);
+Result pmdmntGetProcessId(u64* pid_out, u64 program_id);
+Result pmdmntHookToCreateProcess(Event* out, u64 program_id);
 Result pmdmntGetApplicationProcessId(u64* pid_out);
 Result pmdmntHookToCreateApplicationProcess(Event* out);
 Result pmdmntClearHook(u32 which);
 
-Result pminfoGetProgramId(u64* title_id_out, u64 pid);
+Result pminfoGetProgramId(u64* program_id_out, u64 pid);
 
 Result pmshellLaunchProgram(u32 launch_flags, const NcmProgramLocation *location, u64 *pid);
 Result pmshellTerminateProcess(u64 processID);
-Result pmshellTerminateProgram(u64 titleID);
+Result pmshellTerminateProgram(u64 program_id);
 Result pmshellGetProcessEventHandle(Event* out); // Autoclear for pmshellProcessEvent is always true.
 Result pmshellGetProcessEventInfo(PmProcessEventInfo* out);
 Result pmshellCleanupProcess(u64 pid);

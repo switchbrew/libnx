@@ -76,7 +76,7 @@ Result romfsMountFromFile(FsFile file, u64 offset, const char *name);
 Result romfsMountFromStorage(FsStorage storage, u64 offset, const char *name);
 
 /**
- * @brief Mounts RomFS using the current process host title RomFS.
+ * @brief Mounts RomFS using the current process host program RomFS.
  * @param name Device mount name.
  */
 Result romfsMountFromCurrentProcess(const char *name);
@@ -90,8 +90,8 @@ Result romfsMountFromCurrentProcess(const char *name);
 Result romfsMountFromFsdev(const char *path, u64 offset, const char *name);
 
 /**
- * @brief Mounts RomFS from a system data archive.
- * @param dataId Title ID of system data archive to mount.
+ * @brief Mounts RomFS from SystemData.
+ * @param dataId SystemDataId to mount.
  * @param storageId Storage ID to mount from.
  * @param name Device mount name.
  */

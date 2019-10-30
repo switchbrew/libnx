@@ -948,12 +948,12 @@ IPC_MAKE_CMD_IMPL_HOSVER(Result appletGetHdcpAuthenticationState(s32 *state),   
 IPC_MAKE_CMD_IMPL_HOSVER(Result appletGetHdcpAuthenticationStateChangeEvent(Event *out_event),          &g_appletICommonStateGetter, 63, _appletCmdGetEvent,    (4,0,0), out_event, true)
 IPC_MAKE_CMD_IMPL_HOSVER(Result appletSetTvPowerStateMatchingMode(AppletTvPowerStateMatchingMode mode), &g_appletICommonStateGetter, 64, _appletCmdInU32NoOut,  (5,0,0), mode)
 
-Result appletGetApplicationIdByContentActionName(u64 *titleID, const char *name) {
+Result appletGetApplicationIdByContentActionName(u64 *application_id, const char *name) {
     if (hosversionBefore(5,1,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     serviceAssumeDomain(&g_appletICommonStateGetter);
-    return serviceDispatchOut(&g_appletICommonStateGetter, 65, *titleID,
+    return serviceDispatchOut(&g_appletICommonStateGetter, 65, *application_id,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
         .buffers = { { name, strlen(name)+1 } },
     );
@@ -1808,19 +1808,19 @@ Result appletPopLaunchParameter(AppletStorage *s, AppletLaunchParameterKind kind
     );
 }
 
-static Result _appletCreateApplicationAndPushAndRequestToStart(Service* srv, u64 titleID, AppletStorage* s, u32 cmd_id) {
+static Result _appletCreateApplicationAndPushAndRequestToStart(Service* srv, u64 application_id, AppletStorage* s, u32 cmd_id) {
     serviceAssumeDomain(srv);
-    return serviceDispatchIn(srv, cmd_id, titleID,
+    return serviceDispatchIn(srv, cmd_id, application_id,
         .in_num_objects = 1,
         .in_objects = { &s->s },
     );
 }
 
-static Result _appletCreateApplicationAndPushAndRequestToStartForQuest(u64 titleID, AppletStorage* s, const AppletApplicationAttributeForQuest *attr) { // [2.0.0+]
+static Result _appletCreateApplicationAndPushAndRequestToStartForQuest(u64 application_id, AppletStorage* s, const AppletApplicationAttributeForQuest *attr) { // [2.0.0+]
     const struct {
         u32 val0, val1;
-        u64 titleID;
-    } in = { attr->unk_x0, attr->unk_x4, titleID };
+        u64 application_id;
+    } in = { attr->unk_x0, attr->unk_x4, application_id };
 
     serviceAssumeDomain(&g_appletIFunctions);
     return serviceDispatchIn(&g_appletIFunctions, 11, in,
@@ -1829,23 +1829,23 @@ static Result _appletCreateApplicationAndPushAndRequestToStartForQuest(u64 title
     );
 }
 
-static Result _appletCreateApplicationAndRequestToStart(u64 titleID) { // [4.0.0+]
-    return _appletCmdInU64NoOut(&g_appletIFunctions, titleID, 12);
+static Result _appletCreateApplicationAndRequestToStart(u64 application_id) { // [4.0.0+]
+    return _appletCmdInU64NoOut(&g_appletIFunctions, application_id, 12);
 }
 
-static Result _appletCreateApplicationAndRequestToStartForQuest(u64 titleID, const AppletApplicationAttributeForQuest *attr) { // [4.0.0+]
+static Result _appletCreateApplicationAndRequestToStartForQuest(u64 application_id, const AppletApplicationAttributeForQuest *attr) { // [4.0.0+]
     const struct {
         u32 val0, val1;
-        u64 titleID;
-    } in = { attr->unk_x0, attr->unk_x4, titleID };
+        u64 application_id;
+    } in = { attr->unk_x0, attr->unk_x4, application_id };
 
     serviceAssumeDomain(&g_appletIFunctions);
     return serviceDispatchIn(&g_appletIFunctions, 13, in);
 }
 
-static Result _appletCreateApplicationWithAttributeAndPushAndRequestToStartForQuest(u64 titleID, AppletStorage* s, const AppletApplicationAttribute *attr) { // [7.0.0+]
+static Result _appletCreateApplicationWithAttributeAndPushAndRequestToStartForQuest(u64 application_id, AppletStorage* s, const AppletApplicationAttribute *attr) { // [7.0.0+]
     serviceAssumeDomain(&g_appletIFunctions);
-    return serviceDispatchIn(&g_appletIFunctions, 14, titleID,
+    return serviceDispatchIn(&g_appletIFunctions, 14, application_id,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
         .buffers = { { attr, sizeof(*attr) } },
         .in_num_objects = 1,
@@ -1853,15 +1853,15 @@ static Result _appletCreateApplicationWithAttributeAndPushAndRequestToStartForQu
     );
 }
 
-static Result _appletCreateApplicationWithAttributeAndRequestToStartForQuest(u64 titleID, const AppletApplicationAttribute *attr) { // [7.0.0+]
+static Result _appletCreateApplicationWithAttributeAndRequestToStartForQuest(u64 application_id, const AppletApplicationAttribute *attr) { // [7.0.0+]
     serviceAssumeDomain(&g_appletIFunctions);
-    return serviceDispatchIn(&g_appletIFunctions, 15, titleID,
+    return serviceDispatchIn(&g_appletIFunctions, 15, application_id,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
         .buffers = { { attr, sizeof(*attr) } },
     );
 }
 
-Result appletRequestLaunchApplication(u64 titleID, AppletStorage* s) {
+Result appletRequestLaunchApplication(u64 application_id, AppletStorage* s) {
     AppletStorage tmpstorage={0};
     Result rc=0;
     bool is_libraryapplet = hosversionAtLeast(5,0,0) && __nx_applet_type == AppletType_LibraryApplet;
@@ -1878,14 +1878,14 @@ Result appletRequestLaunchApplication(u64 titleID, AppletStorage* s) {
     }
 
     if (is_libraryapplet) {
-        rc = _appletCreateApplicationAndPushAndRequestToStart(&g_appletILibraryAppletSelfAccessor, titleID, s, 90);
+        rc = _appletCreateApplicationAndPushAndRequestToStart(&g_appletILibraryAppletSelfAccessor, application_id, s, 90);
     }
     else {
         if (hosversionAtLeast(4,0,0) && s==NULL) {
-            rc = _appletCreateApplicationAndRequestToStart(titleID);
+            rc = _appletCreateApplicationAndRequestToStart(application_id);
         }
         else {
-            rc = _appletCreateApplicationAndPushAndRequestToStart(&g_appletIFunctions, titleID, s, 10);
+            rc = _appletCreateApplicationAndPushAndRequestToStart(&g_appletIFunctions, application_id, s, 10);
         }
     }
 
@@ -1894,7 +1894,7 @@ Result appletRequestLaunchApplication(u64 titleID, AppletStorage* s) {
     return rc;
 }
 
-Result appletRequestLaunchApplicationForQuest(u64 titleID, AppletStorage* s, const AppletApplicationAttributeForQuest *attr) {
+Result appletRequestLaunchApplicationForQuest(u64 application_id, AppletStorage* s, const AppletApplicationAttributeForQuest *attr) {
     AppletStorage tmpstorage={0};
     AppletApplicationAttribute appattr={0};
     Result rc=0;
@@ -1918,17 +1918,17 @@ Result appletRequestLaunchApplicationForQuest(u64 titleID, AppletStorage* s, con
 
     if (hosversionAtLeast(4,0,0) && s==NULL) {
         if (hosversionAtLeast(7,0,0))
-            rc = _appletCreateApplicationWithAttributeAndRequestToStartForQuest(titleID, &appattr);
+            rc = _appletCreateApplicationWithAttributeAndRequestToStartForQuest(application_id, &appattr);
         else
-            rc = _appletCreateApplicationAndRequestToStartForQuest(titleID, attr);
+            rc = _appletCreateApplicationAndRequestToStartForQuest(application_id, attr);
     }
     else {
         if (hosversionBefore(3,0,0)) rc = MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
         if (R_SUCCEEDED(rc)) {
             if (hosversionAtLeast(7,0,0))
-                rc = _appletCreateApplicationWithAttributeAndPushAndRequestToStartForQuest(titleID, s, &appattr);
+                rc = _appletCreateApplicationWithAttributeAndPushAndRequestToStartForQuest(application_id, s, &appattr);
             else
-                rc = _appletCreateApplicationAndPushAndRequestToStartForQuest(titleID, s, attr);
+                rc = _appletCreateApplicationAndPushAndRequestToStartForQuest(application_id, s, attr);
         }
     }
 
@@ -2155,7 +2155,7 @@ Result appletSetApplicationCopyrightVisibility(bool visible) {
 }
 
 //Official sw has these under 'pdm'.
-Result appletQueryApplicationPlayStatistics(PdmApplicationPlayStatistics *stats, const u64 *titleIDs, s32 count, s32 *total_out) {
+Result appletQueryApplicationPlayStatistics(PdmApplicationPlayStatistics *stats, const u64 *application_ids, s32 count, s32 *total_out) {
     if (!serviceIsActive(&g_appletSrv) || !_appletIsApplication())
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     if (hosversionBefore(5,0,0))
@@ -2169,12 +2169,12 @@ Result appletQueryApplicationPlayStatistics(PdmApplicationPlayStatistics *stats,
         },
         .buffers = {
             { stats, count*sizeof(PdmApplicationPlayStatistics) },
-            { titleIDs, count*sizeof(u64) },
+            { application_ids, count*sizeof(u64) },
         },
     );
 }
 
-Result appletQueryApplicationPlayStatisticsByUid(AccountUid uid, PdmApplicationPlayStatistics *stats, const u64 *titleIDs, s32 count, s32 *total_out) {
+Result appletQueryApplicationPlayStatisticsByUid(AccountUid uid, PdmApplicationPlayStatistics *stats, const u64 *application_ids, s32 count, s32 *total_out) {
     if (!serviceIsActive(&g_appletSrv) || !_appletIsApplication())
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     if (hosversionBefore(6,0,0))
@@ -2188,7 +2188,7 @@ Result appletQueryApplicationPlayStatisticsByUid(AccountUid uid, PdmApplicationP
         },
         .buffers = {
             { stats, count*sizeof(PdmApplicationPlayStatistics) },
-            { titleIDs, count*sizeof(u64) },
+            { application_ids, count*sizeof(u64) },
         },
     );
 }
@@ -2241,8 +2241,8 @@ Result appletExecuteProgram(s32 programIndex, const void* buffer, size_t size) {
     return rc;
 }
 
-Result appletJumpToSubApplicationProgramForDevelopment(u64 titleID, const void* buffer, size_t size) {
-    return _appletExecuteProgram(AppletProgramSpecifyKind_JumpToSubApplicationProgramForDevelopment, titleID, buffer, size);
+Result appletJumpToSubApplicationProgramForDevelopment(u64 application_id, const void* buffer, size_t size) {
+    return _appletExecuteProgram(AppletProgramSpecifyKind_JumpToSubApplicationProgramForDevelopment, application_id, buffer, size);
 }
 
 Result appletRestartProgram(const void* buffer, size_t size) {
@@ -2263,23 +2263,23 @@ IPC_MAKE_CMD_IMPL_INITEXPR(Result appletPopFromGeneralChannel(AppletStorage *s),
 IPC_MAKE_CMD_IMPL_INITEXPR(Result appletGetPopFromGeneralChannelEvent(Event *out_event),        &g_appletIFunctions, 21, _appletCmdGetEvent,                 __nx_applet_type != AppletType_SystemApplet, out_event, false)
 IPC_MAKE_CMD_IMPL_INITEXPR(Result appletGetHomeButtonWriterLockAccessor(AppletLockAccessor *a), &g_appletIFunctions, 30, _appletGetHomeButtonRwLockAccessor, __nx_applet_type != AppletType_SystemApplet, a)
 
-Result appletPopRequestLaunchApplicationForDebug(AccountUid *userIDs, s32 count, u64 *titleID, s32 *total_out) {
+Result appletPopRequestLaunchApplicationForDebug(AccountUid *uids, s32 count, u64 *application_id, s32 *total_out) {
     if (__nx_applet_type != AppletType_SystemApplet)
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     if (hosversionBefore(6,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     struct {
-        u64 titleID;
+        u64 application_id;
         s32 total_out;
     } out;
 
     serviceAssumeDomain(&g_appletIFunctions);
     Result rc = serviceDispatchOut(&g_appletIFunctions, 100, out,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
-        .buffers = { { userIDs, count*sizeof(AccountUid) } },
+        .buffers = { { uids, count*sizeof(AccountUid) } },
     );
-    if (R_SUCCEEDED(rc) && titleID) *titleID = out.titleID;
+    if (R_SUCCEEDED(rc) && application_id) *application_id = out.application_id;
     if (R_SUCCEEDED(rc) && total_out) *total_out = out.total_out;
     return rc;
 }
@@ -2340,10 +2340,10 @@ static Result _appletApplicationCreateIn64(Service* srv, AppletApplication *a, u
     return rc;
 }
 
-IPC_MAKE_CMD_IMPL_INITEXPR(Result appletCreateApplication(AppletApplication *a, u64 titleID),       &g_appletIApplicationCreator, 0,   _appletApplicationCreateIn64, __nx_applet_type != AppletType_SystemApplet, a, titleID)
-IPC_MAKE_CMD_IMPL_INITEXPR(Result appletPopLaunchRequestedApplication(AppletApplication *a),        &g_appletIApplicationCreator, 1,   _appletApplicationCreate,     __nx_applet_type != AppletType_SystemApplet, a)
-IPC_MAKE_CMD_IMPL_INITEXPR(Result appletCreateSystemApplication(AppletApplication *a, u64 titleID), &g_appletIApplicationCreator, 10,  _appletApplicationCreateIn64, __nx_applet_type != AppletType_SystemApplet, a, titleID)
-IPC_MAKE_CMD_IMPL_INITEXPR(Result appletPopFloatingApplicationForDevelopment(AppletApplication *a), &g_appletIApplicationCreator, 100, _appletApplicationCreate,     __nx_applet_type != AppletType_SystemApplet, a)
+IPC_MAKE_CMD_IMPL_INITEXPR(Result appletCreateApplication(AppletApplication *a, u64 application_id), &g_appletIApplicationCreator, 0,   _appletApplicationCreateIn64, __nx_applet_type != AppletType_SystemApplet, a, application_id)
+IPC_MAKE_CMD_IMPL_INITEXPR(Result appletPopLaunchRequestedApplication(AppletApplication *a),         &g_appletIApplicationCreator, 1,   _appletApplicationCreate,     __nx_applet_type != AppletType_SystemApplet, a)
+IPC_MAKE_CMD_IMPL_INITEXPR(Result appletCreateSystemApplication(AppletApplication *a, u64 system_application_id), &g_appletIApplicationCreator, 10,  _appletApplicationCreateIn64, __nx_applet_type != AppletType_SystemApplet, a, system_application_id)
+IPC_MAKE_CMD_IMPL_INITEXPR(Result appletPopFloatingApplicationForDevelopment(AppletApplication *a),  &g_appletIApplicationCreator, 100, _appletApplicationCreate,     __nx_applet_type != AppletType_SystemApplet, a)
 
 // IApplicationAccessor
 
@@ -2414,7 +2414,7 @@ Result appletApplicationRequestExitLibraryAppletOrTerminate(AppletApplication *a
     return rc;
 }
 
-IPC_MAKE_CMD_IMPL_HOSVER(Result appletApplicationGetApplicationId(AppletApplication *a, u64 *titleID), &a->s, 120, _appletCmdNoInOutU64, (6,0,0), titleID)
+IPC_MAKE_CMD_IMPL_HOSVER(Result appletApplicationGetApplicationId(AppletApplication *a, u64 *application_id), &a->s, 120, _appletCmdNoInOutU64, (6,0,0), application_id)
 
 Result appletApplicationPushLaunchParameter(AppletApplication *a, AppletLaunchParameterKind kind, AppletStorage* s) {
     if (!serviceIsActive(&a->s))
@@ -2445,7 +2445,7 @@ Result appletApplicationGetApplicationLaunchRequestInfo(AppletApplication *a, Ap
     return serviceDispatchOut(&a->s, 124, *out);
 }
 
-Result appletApplicationSetUsers(AppletApplication *a, const AccountUid *userIDs, s32 count, bool flag) {
+Result appletApplicationSetUsers(AppletApplication *a, const AccountUid *uids, s32 count, bool flag) {
     if (!serviceIsActive(&a->s))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     if (hosversionBefore(6,0,0))
@@ -2455,14 +2455,14 @@ Result appletApplicationSetUsers(AppletApplication *a, const AccountUid *userIDs
     serviceAssumeDomain(&a->s);
     return serviceDispatchIn(&a->s, 130, tmp,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
-        .buffers = { { userIDs, count*sizeof(AccountUid) } },
+        .buffers = { { uids, count*sizeof(AccountUid) } },
     );
 }
 
 IPC_MAKE_CMD_IMPL_HOSVER(Result appletApplicationCheckRightsEnvironmentAvailable(AppletApplication *a, bool *out), &a->s, 131, _appletCmdNoInOutBool, (6,0,0), out)
 IPC_MAKE_CMD_IMPL_HOSVER(Result appletApplicationGetNsRightsEnvironmentHandle(AppletApplication *a, u64 *handle),  &a->s, 132, _appletCmdNoInOutU64,  (6,0,0), handle)
 
-Result appletApplicationGetDesirableUids(AppletApplication *a, AccountUid *userIDs, s32 count, s32 *total_out) {
+Result appletApplicationGetDesirableUids(AppletApplication *a, AccountUid *uids, s32 count, s32 *total_out) {
     if (!serviceIsActive(&a->s))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     if (hosversionBefore(6,0,0))
@@ -2471,14 +2471,14 @@ Result appletApplicationGetDesirableUids(AppletApplication *a, AccountUid *userI
     serviceAssumeDomain(&a->s);
     return serviceDispatchOut(&a->s, 140, *total_out,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
-        .buffers = { { userIDs, count*sizeof(AccountUid) } },
+        .buffers = { { uids, count*sizeof(AccountUid) } },
     );
 }
 
 IPC_MAKE_CMD_IMPL_HOSVER(Result appletApplicationReportApplicationExitTimeout(AppletApplication *a),                                    &a->s, 150, _appletCmdNoIO,         (6,0,0))
 IPC_MAKE_CMD_IMPL_HOSVER(Result appletApplicationSetApplicationAttribute(AppletApplication *a, const AppletApplicationAttribute *attr), &a->s, 160, _appletCmdSendBufNoOut, (8,0,0), attr, sizeof(*attr))
 
-Result appletApplicationHasSaveDataAccessPermission(AppletApplication *a, u64 titleID, bool *out) {
+Result appletApplicationHasSaveDataAccessPermission(AppletApplication *a, u64 application_id, bool *out) {
     if (!serviceIsActive(&a->s))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     if (hosversionBefore(8,0,0))
@@ -2486,7 +2486,7 @@ Result appletApplicationHasSaveDataAccessPermission(AppletApplication *a, u64 ti
 
     u8 tmpout=0;
     serviceAssumeDomain(&a->s);
-    Result rc = serviceDispatchInOut(&a->s, 170, titleID, tmpout);
+    Result rc = serviceDispatchInOut(&a->s, 170, application_id, tmpout);
     if (R_SUCCEEDED(rc) && out) *out = tmpout & 1;
     return rc;
 }
@@ -2541,13 +2541,13 @@ IPC_MAKE_CMD_IMPL_INITEXPR(       Result appletUnpopInData(AppletStorage *s),   
 IPC_MAKE_CMD_IMPL_INITEXPR(       Result appletUnpopExtraStorage(AppletStorage *s),                                  &g_appletILibraryAppletSelfAccessor, 31,  _appletCmdInStorage,        __nx_applet_type != AppletType_LibraryApplet,          s)
 IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletGetIndirectLayerProducerHandle(u64 *out),                             &g_appletILibraryAppletSelfAccessor, 40,  _appletCmdNoInOutU64,       __nx_applet_type != AppletType_LibraryApplet, (2,0,0), out)
 IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletGetMainAppletApplicationDesiredLanguage(u64 *LanguageCode),           &g_appletILibraryAppletSelfAccessor, 60,  _appletCmdNoInOutU64,       __nx_applet_type != AppletType_LibraryApplet, (4,0,0), LanguageCode)
-IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletGetCurrentApplicationId(u64 *titleID),                                &g_appletILibraryAppletSelfAccessor, 70,  _appletCmdNoInOutU64,       __nx_applet_type != AppletType_LibraryApplet, (8,0,0), titleID)
+IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletGetCurrentApplicationId(u64 *application_id),                         &g_appletILibraryAppletSelfAccessor, 70,  _appletCmdNoInOutU64,       __nx_applet_type != AppletType_LibraryApplet, (8,0,0), application_id)
 IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletRequestExitToSelf(void),                                              &g_appletILibraryAppletSelfAccessor, 80,  _appletCmdNoIO,             __nx_applet_type != AppletType_LibraryApplet, (6,0,0))
 IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletCreateGameMovieTrimmer(Service* srv_out, TransferMemory *tmem),       &g_appletILibraryAppletSelfAccessor, 100, _appletCmdInTmemOutSession, __nx_applet_type != AppletType_LibraryApplet, (4,0,0), srv_out, tmem)
 IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletReserveResourceForMovieOperation(void),                               &g_appletILibraryAppletSelfAccessor, 101, _appletCmdNoIO,             __nx_applet_type != AppletType_LibraryApplet, (5,0,0))
 IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletUnreserveResourceForMovieOperation(void),                             &g_appletILibraryAppletSelfAccessor, 102, _appletCmdNoIO,             __nx_applet_type != AppletType_LibraryApplet, (5,0,0))
 
-Result appletGetMainAppletAvailableUsers(AccountUid *userIDs, s32 count, bool *flag, s32 *total_out) {
+Result appletGetMainAppletAvailableUsers(AccountUid *uids, s32 count, bool *flag, s32 *total_out) {
     if (__nx_applet_type != AppletType_LibraryApplet)
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     if (hosversionBefore(6,0,0))
@@ -2561,7 +2561,7 @@ Result appletGetMainAppletAvailableUsers(AccountUid *userIDs, s32 count, bool *f
     serviceAssumeDomain(&g_appletILibraryAppletSelfAccessor);
     Result rc = serviceDispatchOut(&g_appletILibraryAppletSelfAccessor, 110, out,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
-        .buffers = { { userIDs, count*sizeof(AccountUid) } },
+        .buffers = { { uids, count*sizeof(AccountUid) } },
     );
     if (R_SUCCEEDED(rc) && flag) *flag = out.flag & 1;
     if (R_SUCCEEDED(rc) && total_out) *total_out = out.total_out;
@@ -2572,7 +2572,7 @@ Result appletGetMainAppletAvailableUsers(AccountUid *userIDs, s32 count, bool *f
 
 IPC_MAKE_CMD_IMPL_INITEXPR(       Result appletBeginToWatchShortHomeButtonMessage(void),         &g_appletIFunctions, 0, _appletCmdNoIO,        __nx_applet_type != AppletType_OverlayApplet)
 IPC_MAKE_CMD_IMPL_INITEXPR(       Result appletEndToWatchShortHomeButtonMessage(void),           &g_appletIFunctions, 1, _appletCmdNoIO,        __nx_applet_type != AppletType_OverlayApplet)
-IPC_MAKE_CMD_IMPL_INITEXPR(       Result appletGetApplicationIdForLogo(u64 *titleID),            &g_appletIFunctions, 2, _appletCmdNoInOutU64,  __nx_applet_type != AppletType_OverlayApplet,          titleID)
+IPC_MAKE_CMD_IMPL_INITEXPR(       Result appletGetApplicationIdForLogo(u64 *application_id),     &g_appletIFunctions, 2, _appletCmdNoInOutU64,  __nx_applet_type != AppletType_OverlayApplet,          application_id)
 IPC_MAKE_CMD_IMPL_INITEXPR(       Result appletSetGpuTimeSliceBoost(u64 val),                    &g_appletIFunctions, 3, _appletCmdInU64NoOut,  __nx_applet_type != AppletType_OverlayApplet,          val)
 IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletSetAutoSleepTimeAndDimmingTimeEnabled(bool flag), &g_appletIFunctions, 4, _appletCmdInBoolNoOut, __nx_applet_type != AppletType_OverlayApplet, (2,0,0), flag)
 IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletTerminateApplicationAndSetReason(Result reason),  &g_appletIFunctions, 5, _appletCmdInU32NoOut,  __nx_applet_type != AppletType_OverlayApplet, (2,0,0), reason)
@@ -2659,14 +2659,14 @@ IPC_MAKE_CMD_IMPL(Result appletOpenMainApplication(AppletApplication *a),       
 IPC_MAKE_CMD_IMPL(Result appletPerformSystemButtonPressing(AppletSystemButtonType type), &g_appletIDebugFunctions, 10, _appletCmdInU32NoOut,     type)
 IPC_MAKE_CMD_IMPL(Result appletInvalidateTransitionLayer(void),                          &g_appletIDebugFunctions, 20, _appletCmdNoIO)
 
-Result appletRequestLaunchApplicationWithUserAndArgumentForDebug(u64 titleID, const AccountUid *userIDs, s32 total_userIDs, bool flag, const void* buffer, size_t size) {
+Result appletRequestLaunchApplicationWithUserAndArgumentForDebug(u64 application_id, const AccountUid *uids, s32 total_uids, bool flag, const void* buffer, size_t size) {
     if (hosversionBefore(6,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     const struct {
         u8 flag;
-        u64 titleID;
-    } in = { flag!=0, titleID };
+        u64 application_id;
+    } in = { flag!=0, application_id };
 
     serviceAssumeDomain(&g_appletIDebugFunctions);
     return serviceDispatchIn(&g_appletIDebugFunctions, 30, in,
@@ -2675,7 +2675,7 @@ Result appletRequestLaunchApplicationWithUserAndArgumentForDebug(u64 titleID, co
             SfBufferAttr_HipcMapAlias | SfBufferAttr_In,
         },
         .buffers = {
-            { userIDs, total_userIDs*sizeof(AccountUid) },
+            { uids, total_uids*sizeof(AccountUid) },
             { buffer, size },
         },
     );

@@ -22,11 +22,11 @@ typedef enum {
 } FriendsLaArgType;
 
 /// Arg struct pushed for the applet input storage.
-/// The fields following the userID are only set for ::FriendsLaArgType_ShowUserDetailInfo/::FriendsLaArgType_StartSendingFriendRequest, for everything else these are cleared.
+/// The fields following the uid are only set for ::FriendsLaArgType_ShowUserDetailInfo/::FriendsLaArgType_StartSendingFriendRequest, for everything else these are cleared.
 typedef struct {
     u32 type;                                                 ///< \ref FriendsLaArgType
     u32 pad;                                                  ///< Padding.
-    AccountUid userID;                                        ///< \ref AccountUid
+    AccountUid uid;                                           ///< \ref AccountUid
     u64 networkServiceAccountId;                              ///< NetworkServiceAccountId for the other account.
     FriendsInAppScreenName first_inAppScreenName;             ///< First InAppScreenName.
     FriendsInAppScreenName second_inAppScreenName;            ///< Second InAppScreenName.
@@ -34,61 +34,61 @@ typedef struct {
 
 /**
  * @brief Launches the applet with ::FriendsLaArgType_ShowFriendList, the specified input, and playStartupSound=false.
- * @param[in] userID \ref AccountUid
+ * @param[in] uid \ref AccountUid
  */
-Result friendsLaShowFriendList(AccountUid userID);
+Result friendsLaShowFriendList(AccountUid uid);
 
 /**
  * @brief Launches the applet with ::FriendsLaArgType_ShowUserDetailInfo, the specified input, and playStartupSound=false.
- * @param[in] userID \ref AccountUid
+ * @param[in] uid \ref AccountUid
  * @param[in] networkServiceAccountId NetworkServiceAccountId for the user to show UserDetailInfo for.
  * @param[in] first_inAppScreenName First \ref FriendsInAppScreenName.
  * @param[in] second_inAppScreenName Second \ref FriendsInAppScreenName.
  */
-Result friendsLaShowUserDetailInfo(AccountUid userID, u64 networkServiceAccountId, const FriendsInAppScreenName *first_inAppScreenName, const FriendsInAppScreenName *second_inAppScreenName);
+Result friendsLaShowUserDetailInfo(AccountUid uid, u64 networkServiceAccountId, const FriendsInAppScreenName *first_inAppScreenName, const FriendsInAppScreenName *second_inAppScreenName);
 
 /**
  * @brief Launches the applet with ::FriendsLaArgType_StartSendingFriendRequest, the specified input, and playStartupSound=false. On success, this will load the output Result from the output storage.
- * @param[in] userID \ref AccountUid
+ * @param[in] uid \ref AccountUid
  * @param[in] networkServiceAccountId NetworkServiceAccountId to send the friend request to.
  * @param[in] first_inAppScreenName First \ref FriendsInAppScreenName.
  * @param[in] second_inAppScreenName Second \ref FriendsInAppScreenName.
  */
-Result friendsLaStartSendingFriendRequest(AccountUid userID, u64 networkServiceAccountId, const FriendsInAppScreenName *first_inAppScreenName, const FriendsInAppScreenName *second_inAppScreenName);
+Result friendsLaStartSendingFriendRequest(AccountUid uid, u64 networkServiceAccountId, const FriendsInAppScreenName *first_inAppScreenName, const FriendsInAppScreenName *second_inAppScreenName);
 
 /**
  * @brief Launches the applet with ::FriendsLaArgType_ShowMethodsOfSendingFriendRequest, the specified input, and playStartupSound=false.
- * @param[in] userID \ref AccountUid
+ * @param[in] uid \ref AccountUid
  */
-Result friendsLaShowMethodsOfSendingFriendRequest(AccountUid userID);
+Result friendsLaShowMethodsOfSendingFriendRequest(AccountUid uid);
 
 /**
  * @brief Launches the applet with ::FriendsLaArgType_StartFacedFriendRequest, the specified input, and playStartupSound=false.
- * @param[in] userID \ref AccountUid
+ * @param[in] uid \ref AccountUid
  */
-Result friendsLaStartFacedFriendRequest(AccountUid userID);
+Result friendsLaStartFacedFriendRequest(AccountUid uid);
 
 /**
  * @brief Launches the applet with ::FriendsLaArgType_ShowReceivedFriendRequestList, the specified input, and playStartupSound=false.
- * @param[in] userID \ref AccountUid
+ * @param[in] uid \ref AccountUid
  */
-Result friendsLaShowReceivedFriendRequestList(AccountUid userID);
+Result friendsLaShowReceivedFriendRequestList(AccountUid uid);
 
 /**
  * @brief Launches the applet with ::FriendsLaArgType_ShowBlockedUserList, the specified input, and playStartupSound=false.
- * @param[in] userID \ref AccountUid
+ * @param[in] uid \ref AccountUid
  */
-Result friendsLaShowBlockedUserList(AccountUid userID);
+Result friendsLaShowBlockedUserList(AccountUid uid);
 
 /**
  * @brief Launches the applet with ::FriendsLaArgType_ShowMyProfile, the specified input, and playStartupSound=false.
- * @param[in] userID \ref AccountUid
+ * @param[in] uid \ref AccountUid
  */
-Result friendsLaShowMyProfile(AccountUid userID);
+Result friendsLaShowMyProfile(AccountUid uid);
 
 /**
  * @brief Same as \ref friendsLaShowMyProfile except with playStartupSound=true.
- * @param[in] userID \ref AccountUid
+ * @param[in] uid \ref AccountUid
  */
-Result friendsLaShowMyProfileForHomeMenu(AccountUid userID);
+Result friendsLaShowMyProfileForHomeMenu(AccountUid uid);
 

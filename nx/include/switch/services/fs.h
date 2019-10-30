@@ -17,7 +17,7 @@
 #define FS_MAX_PATH 0x301
 
 /// For use with FsSave.
-#define FS_SAVEDATA_CURRENT_TITLEID 0
+#define FS_SAVEDATA_CURRENT_PROGRAMID 0
 
 typedef struct {
     u8 c[0x10];
@@ -54,18 +54,18 @@ typedef struct {
 /// Directory entry.
 typedef struct
 {
-    char name[FS_MAX_PATH];      ///< Entry name.
+    char name[FS_MAX_PATH];         ///< Entry name.
     u8 pad[3];
-    s8 type;       ///< See FsDirEntryType.
-    u8 pad2[3];     ///< ?
-    u64 fileSize;         ///< File size.
+    s8 type;                        ///< See FsDirEntryType.
+    u8 pad2[3];                     ///< ?
+    u64 fileSize;                   ///< File size.
 } FsDirectoryEntry;
 
 /// Save Struct
 typedef struct
 {
-    u64 titleID;                    ///< titleID of the savedata to access when accessing other titles' savedata via SaveData, otherwise FS_SAVEDATA_CURRENT_TITLEID.
-    AccountUid userID;              ///< \ref AccountUid for the user-specific savedata to access, otherwise 0 for common savedata.
+    u64 program_id;                 ///< ProgramId of the savedata to access when accessing other programs' savedata via SaveData, otherwise FS_SAVEDATA_CURRENT_TITLEID.
+    AccountUid uid;                 ///< \ref AccountUid for the user-specific savedata to access, otherwise 0 for common savedata.
     u64 saveID;                     ///< saveID, 0 for SaveData.
     u8 saveDataType;                ///< See \ref FsSaveDataType.
     u8 rank;                        ///< Save data 'rank' or 'precedence'. 0 if this save data is considered the primary save data. 1 if it's considered the secondary save data.
@@ -79,7 +79,7 @@ typedef struct
 /// SaveDataExtraData Struct
 typedef struct {
     FsSave save;      ///< Save struct.
-    u64 ownerId;      ///< Title id of the owner of this save data. 0 for SystemSaveData.
+    u64 ownerId;      ///< Id of the owner of this save data. 0 for SystemSaveData.
     u64 timestamp;    ///< POSIX timestamp.
     u32 flags;        ///< Save data flags. See \ref FsSaveDataFlags.
     u32 unk_x54;      ///< Normally 0. Possibly unused?
@@ -94,7 +94,7 @@ typedef struct {
     s64 size;           ///< Size of the save data.
     s64 journalSize;    ///< Journal size of the save data.
     u64 blockSize;      ///< Block size of the save data.
-    u64 ownerId;        ///< Title id of the owner of this save data. 0 for SystemSaveData.
+    u64 ownerId;        ///< ProgramId of the owner of this save data. 0 for SystemSaveData.
     u32 flags;          ///< Save data flags. See \ref FsSaveDataFlags.
     u8 saveDataSpaceId; ///< See \ref FsSaveDataSpaceId.
     u8 unk;             ///< 0 for SystemSaveData.
@@ -107,9 +107,9 @@ typedef struct
     u8 saveDataSpaceId; ///< See \ref FsSaveDataSpaceId.
     u8 saveDataType;    ///< See \ref FsSaveDataType.
     u8 pad[6];          ///< Padding.
-    AccountUid userID;  ///< FsSave::userID
+    AccountUid uid;     ///< FsSave::userID
     u64 saveID;         ///< See saveID for \ref FsSave.
-    u64 titleID;        ///< titleID for FsSaveDataType_SaveData.
+    u64 application_id; ///< ApplicationId for FsSaveDataType_SaveData.
     u64 size;           ///< Raw saveimage size.
     u16 index;          ///< Save data index.
     u8 rank;            ///< Save data 'rank' or 'precedence'. 0 if this save data is considered the primary save data. 1 if it's considered the secondary save data.
@@ -296,9 +296,9 @@ Service* fsGetServiceSession(void);
 void fsSetPriority(FsPriority prio);
 
 /// Mount requested filesystem type from content file
-Result fsOpenFileSystem(FsFileSystem* out, FsFileSystemType fsType, const char* contentPath); ///< same as calling fsOpenFileSystemWithId with 0 as titleId
-Result fsOpenFileSystemWithPatch(FsFileSystem* out, u64 titleId, FsFileSystemType fsType); ///< [2.0.0+], like OpenFileSystemWithId but without content path.
-Result fsOpenFileSystemWithId(FsFileSystem* out, u64 titleId, FsFileSystemType fsType, const char* contentPath); ///< works on all firmwares, titleId is ignored on [1.0.0]
+Result fsOpenFileSystem(FsFileSystem* out, FsFileSystemType fsType, const char* contentPath); ///< same as calling fsOpenFileSystemWithId with 0 as id
+Result fsOpenFileSystemWithPatch(FsFileSystem* out, u64 id, FsFileSystemType fsType); ///< [2.0.0+], like OpenFileSystemWithId but without content path.
+Result fsOpenFileSystemWithId(FsFileSystem* out, u64 id, FsFileSystemType fsType, const char* contentPath); ///< works on all firmwares, id is ignored on [1.0.0]
 
 Result fsOpenBisFileSystem(FsFileSystem* out, FsBisStorageId partitionId, const char* string);
 Result fsOpenBisStorage(FsStorage* out, FsBisStorageId partitionId);
@@ -345,16 +345,16 @@ Result fsSetGlobalAccessLogMode(u32 mode);
 Result fsGetGlobalAccessLogMode(u32* out_mode);
 
 // Wrapper(s) for fsCreateSaveDataFileSystemBySystemSaveDataId.
-Result fsCreate_SystemSaveDataWithOwner(FsSaveDataSpaceId saveDataSpaceId, u64 saveID, AccountUid userID, u64 ownerId, u64 size, u64 journalSize, u32 flags);
+Result fsCreate_SystemSaveDataWithOwner(FsSaveDataSpaceId saveDataSpaceId, u64 saveID, AccountUid uid, u64 ownerId, u64 size, u64 journalSize, u32 flags);
 Result fsCreate_SystemSaveData(FsSaveDataSpaceId saveDataSpaceId, u64 saveID, u64 size, u64 journalSize, u32 flags);
 
 /// Wrapper(s) for fsOpenSaveDataFileSystem.
-/// See FsSave for titleID and userID.
-Result fsOpen_SaveData(FsFileSystem* out, u64 titleID, AccountUid userID);
+/// See FsSave for program_id and uid.
+Result fsOpen_SaveData(FsFileSystem* out, u64 program_id, AccountUid uid);
 
 /// Wrapper for fsOpenSaveDataFileSystemBySystemSaveDataId.
 /// WARNING: You can brick when writing to SystemSaveData, if the data is corrupted etc.
-Result fsOpen_SystemSaveData(FsFileSystem* out, FsSaveDataSpaceId saveDataSpaceId, u64 saveID, AccountUid userID);
+Result fsOpen_SystemSaveData(FsFileSystem* out, FsSaveDataSpaceId saveDataSpaceId, u64 saveID, AccountUid uid);
 
 // IFileSystem
 Result fsFsCreateFile(FsFileSystem* fs, const char* path, u64 size, u32 option);
