@@ -929,6 +929,30 @@ Result hidSendVibrationValues(u32 *VibrationDeviceHandles, HidVibrationValue *Vi
     );
 }
 
+Result hidIsVibrationDeviceMounted(u32 *VibrationDeviceHandle, bool *flag) {
+    if (hosversionBefore(7,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    Result rc;
+    u64 AppletResourceUserId;
+
+    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
+    if (R_FAILED(rc))
+        AppletResourceUserId = 0;
+
+    const struct {
+        u32 VibrationDeviceHandle;
+        u64 AppletResourceUserId;
+    } in = { *VibrationDeviceHandle, AppletResourceUserId };
+
+    u8 tmp=0;
+    rc = serviceDispatchInOut(&g_hidSrv, 211, in, tmp,
+        .in_send_pid = true,
+    );
+    if (R_SUCCEEDED(rc) && flag) *flag = tmp & 1;
+    return rc;
+}
+
 static Result _hidGetDeviceHandles(u32 devicetype, u32 *DeviceHandles, s32 total_handles, HidControllerID id, HidControllerType type) {
     Result rc=0;
     u32 tmp_type = type & 0xff;
