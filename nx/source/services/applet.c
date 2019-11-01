@@ -334,9 +334,6 @@ Result _appletInitialize(void) {
         if (R_SUCCEEDED(rc2)) g_appletInfoInitialized = true;
     }
 
-    if (R_FAILED(rc))
-        appletExit();
-
     return rc;
 }
 
@@ -361,8 +358,7 @@ static bool _appletIsRegularApplication(void) {
     return __nx_applet_type == AppletType_Application;
 }
 
-void _appletCleanup(void)
-{
+void _appletCleanup(void) {
     if (!g_appletExitProcessFlag) {
         if (g_appletRecordingInitialized > 0) {
             if (g_appletRecordingInitialized == 2) appletSetGamePlayRecordingState(0);

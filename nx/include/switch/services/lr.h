@@ -17,8 +17,13 @@ typedef struct {
     Service  s;
 } LrRegisteredLocationResolver;
 
+/// Initialize lr.
 Result lrInitialize(void);
+
+/// Exit lr.
 void lrExit(void);
+
+/// Gets the Service object for the actual lr service session.
 Service* lrGetServiceSession(void);
 
 Result lrOpenLocationResolver(FsStorageId storage, LrLocationResolver* out);

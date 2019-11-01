@@ -47,24 +47,17 @@ Result _usbDsInitialize(void) {
     if (R_SUCCEEDED(rc) && hosversionAtLeast(5,0,0))
         usbDsClearDeviceData();
 
-    if (R_FAILED(rc)) {
-        eventClose(&g_usbDsStateChangeEvent);
-
-        serviceClose(&g_usbDsSrv);
-    }
-
     return rc;
 }
 
 void _usbDsCleanup(void) {
-    if (hosversionAtLeast(5,0,0)) {
+    if (hosversionAtLeast(5,0,0) && serviceIsActive(&g_usbDsSrv)) {
         usbDsDisable();
     }
 
     _usbDsFreeTables();
 
     eventClose(&g_usbDsStateChangeEvent);
-
     serviceClose(&g_usbDsSrv);
 }
 

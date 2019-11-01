@@ -57,24 +57,40 @@ typedef enum {
     PmBootMode_SafeMode    = 2,    ///< SafeMode
 } PmBootMode;
 
+/// Initialize pm:dmnt.
 Result pmdmntInitialize(void);
+
+/// Exit pm:dmnt.
 void pmdmntExit(void);
 
+/// Gets the Service object for the actual pm:dmnt service session.
 Service* pmdmntGetServiceSession(void);
 
+/// Initialize pm:info.
 Result pminfoInitialize(void);
+
+/// Exit pm:info.
 void pminfoExit(void);
 
+/// Gets the Service object for the actual pm:info service session.
 Service* pminfoGetServiceSession(void);
 
+/// Initialize pm:shell.
 Result pmshellInitialize(void);
+
+/// Exit pm:shell.
 void pmshellExit(void);
 
+/// Gets the Service object for the actual pm:shell service session.
 Service* pmshellGetServiceSession(void);
 
+/// Initialize pm:bm.
 Result pmbmInitialize();
+
+/// Exit pm:bm.
 void pmbmExit();
 
+/// Gets the Service object for the actual pm:bm service session.
 Service* pmbmGetServiceSession(void);
 
 /**

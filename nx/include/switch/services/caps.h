@@ -6,7 +6,6 @@
  */
 #pragma once
 #include "../types.h"
-#include "../services/sm.h"
 #include "../services/acc.h"
 
 /// ImageOrientation

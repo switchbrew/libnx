@@ -19,9 +19,8 @@ static Result _nvSetClientPID(u64 AppletResourceUserId);
 
 NX_GENERATE_SERVICE_GUARD(nv);
 
-Result _nvInitialize(void)
-{
-    Result rc = 0;
+Result _nvInitialize(void) {
+    Result rc = MAKERESULT(Module_Libnx, LibnxError_BadInput);
     u64 AppletResourceUserId = 0;
 
     switch (appletGetAppletType()) {
@@ -56,8 +55,7 @@ Result _nvInitialize(void)
         if (R_SUCCEEDED(rc))
             rc = serviceCloneEx(&g_nvSrv, 1, &g_nvSrvClone);
 
-        if (R_SUCCEEDED(rc))
-        {
+        if (R_SUCCEEDED(rc)) {
             // Send aruid if available (non-fatal condition if get-aruid fails)
             Result aruid_rc = appletGetAppletResourceUserId(&AppletResourceUserId);
             if (R_SUCCEEDED(aruid_rc))
@@ -65,35 +63,31 @@ Result _nvInitialize(void)
         }
     }
 
-    if (R_FAILED(rc)) {
-        nvExit();
-    }
-
     return rc;
 }
 
-void _nvCleanup(void)
-{
+void _nvCleanup(void) {
     serviceClose(&g_nvSrvClone);
     serviceClose(&g_nvSrv);
     tmemClose(&g_nvTransfermem);
 }
 
-static Result _nvCmdInitialize(Handle proc, Handle sharedmem, u32 transfermem_size)
-{
+Service* nvGetServiceSession(void) {
+    return &g_nvSrv;
+}
+
+static Result _nvCmdInitialize(Handle proc, Handle sharedmem, u32 transfermem_size) {
     return serviceDispatchIn(&g_nvSrv, 3, transfermem_size,
         .in_num_handles = 2,
         .in_handles = { proc, sharedmem },
     );
 }
 
-static Result _nvSetClientPID(u64 AppletResourceUserId)
-{
+static Result _nvSetClientPID(u64 AppletResourceUserId) {
     return serviceDispatchIn(&g_nvSrv, 8, AppletResourceUserId, .in_send_pid = true);
 }
 
-Result nvOpen(u32 *fd, const char *devicepath)
-{
+Result nvOpen(u32 *fd, const char *devicepath) {
     struct {
         u32 fd;
         u32 error;
@@ -114,8 +108,7 @@ Result nvOpen(u32 *fd, const char *devicepath)
 }
 
 // Get the appropriate session for the specified request (same logic as official sw)
-static inline Service* _nvGetSessionForRequest(u32 request)
-{
+static inline Service* _nvGetSessionForRequest(u32 request) {
     if (
         (request & 0xC000FFFF) == 0xC0004808 || // NVGPU_IOCTL_CHANNEL_SUBMIT_GPFIFO
         request == 0xC018481B ||                // NVGPU_IOCTL_CHANNEL_KICKOFF_PB
@@ -126,8 +119,7 @@ static inline Service* _nvGetSessionForRequest(u32 request)
     return &g_nvSrv;
 }
 
-Result nvIoctl(u32 fd, u32 request, void* argp)
-{
+Result nvIoctl(u32 fd, u32 request, void* argp) {
     size_t bufsize = _NV_IOC_SIZE(request);
     u32 dir = _NV_IOC_DIR(request);
 
@@ -167,8 +159,7 @@ Result nvIoctl(u32 fd, u32 request, void* argp)
     return rc;
 }
 
-Result nvIoctl2(u32 fd, u32 request, void* argp, const void* inbuf, size_t inbuf_size)
-{
+Result nvIoctl2(u32 fd, u32 request, void* argp, const void* inbuf, size_t inbuf_size) {
     size_t bufsize = _NV_IOC_SIZE(request);
     u32 dir = _NV_IOC_DIR(request);
 
@@ -210,8 +201,7 @@ Result nvIoctl2(u32 fd, u32 request, void* argp, const void* inbuf, size_t inbuf
     return rc;
 }
 
-Result nvClose(u32 fd)
-{
+Result nvClose(u32 fd) {
     u32 error = 0;
     Result rc = serviceDispatchInOut(&g_nvSrv, 2, fd, error);
 
@@ -221,8 +211,7 @@ Result nvClose(u32 fd)
     return rc;
 }
 
-Result nvQueryEvent(u32 fd, u32 event_id, Event *event_out)
-{
+Result nvQueryEvent(u32 fd, u32 event_id, Event *event_out) {
     const struct {
         u32 fd;
         u32 event_id;
@@ -244,8 +233,7 @@ Result nvQueryEvent(u32 fd, u32 event_id, Event *event_out)
     return rc;
 }
 
-Result nvConvertError(int rc)
-{
+Result nvConvertError(int rc) {
     if (rc == 0) // Fast path.
         return 0;
 

@@ -10,12 +10,16 @@
 #include "../services/pcv.h"
 
 typedef struct {
-    Service  s;
+    Service s;
 } ClkrstSession;
 
-/// Only available on [8.0.0+].
+/// Initialize clkrst. Only available on [8.0.0+].
 Result clkrstInitialize(void);
+
+/// Exit clkrst.
 void clkrstExit(void);
+
+/// Gets the Service object for the actual clkrst service session.
 Service* clkrstGetServiceSession(void);
 
 /// Opens a ClkrstSession for the requested PcvModuleId, unk is set to 3 in official sysmodules.

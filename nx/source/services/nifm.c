@@ -17,7 +17,7 @@ void nifmSetServiceType(NifmServiceType serviceType) {
 }
 
 Result _nifmInitialize(void) {
-    Result rc = 0;
+    Result rc = MAKERESULT(Module_Libnx, LibnxError_BadInput);
     switch (g_nifmServiceType) {
         case NifmServiceType_NotInitialized:
         case NifmServiceType_User:

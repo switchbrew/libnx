@@ -35,28 +35,58 @@ typedef enum {
     RsaKeyVersion_Extended = 1,
 } RsaKeyVersion;
 
+/// Initialize 'spl:'.
 Result splInitialize(void);
+
+/// Exit 'spl:'.
 void splExit(void);
+
+/// Gets the Service object for the IGeneralInterface usable with spl*().
 Service* splGetServiceSession(void);
 
+/// Initialize spl:mig. On pre-4.0.0 this just calls \ref splInitialize.
 Result splCryptoInitialize(void);
+
+/// Exit spl:mig. On pre-4.0.0 this just calls \ref splExit.
 void splCryptoExit(void);
+
+/// Gets the Service object for the IGeneralInterface usable with splCrypto*().
 Service* splCryptoGetServiceSession(void);
 
+/// Initialize spl:ssl. On pre-4.0.0 this just calls \ref splInitialize.
 Result splSslInitialize(void);
+
+/// Exit spl:ssl. On pre-4.0.0 this just calls \ref splExit.
 void splSslExit(void);
+
+/// Gets the Service object for the IGeneralInterface usable with splSsl*().
 Service* splSslGetServiceSession(void);
 
+/// Initialize spl:es. On pre-4.0.0 this just calls \ref splInitialize.
 Result splEsInitialize(void);
+
+/// Exit spl:es. On pre-4.0.0 this just calls \ref splExit.
 void splEsExit(void);
+
+/// Gets the Service object for the IGeneralInterface usable with splEs*().
 Service* splEsGetServiceSession(void);
 
+/// Initialize spl:fs. On pre-4.0.0 this just calls \ref splInitialize.
 Result splFsInitialize(void);
+
+/// Exit spl:fs. On pre-4.0.0 this just calls \ref splExit.
 void splFsExit(void);
+
+/// Gets the Service object for the IGeneralInterface usable with splFs*().
 Service* splFsGetServiceSession(void);
 
+/// Initialize spl:manu. On pre-4.0.0 this just calls \ref splInitialize.
 Result splManuInitialize(void);
+
+/// Exit spl:manu. On pre-4.0.0 this just calls \ref splExit.
 void splManuExit(void);
+
+/// Gets the Service object for the IGeneralInterface usable with splManu*().
 Service* splManuGetServiceSession(void);
 
 Result splGetConfig(SplConfigItem config_item, u64 *out_config);

@@ -113,9 +113,9 @@ static Result _spl##name##Initialize(void) {                    \
                                                                 \
 static void _spl##name##Cleanup() {                             \
     if (hosversionAtLeast(4,0,0)) {                             \
-        splExit();                                              \
-    } else {                                                    \
         serviceClose(&g_spl##name##Srv);                        \
+    } else {                                                    \
+        splExit();                                              \
     }                                                           \
 }                                                               \
 Service* _spl##name##GetServiceSession() {                      \

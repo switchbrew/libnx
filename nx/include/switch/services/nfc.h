@@ -168,7 +168,7 @@ void nfpExit(void);
 /// Initialize nfc:*.
 Result nfcInitialize(void);
 
-/// Exit nfc:*..
+/// Exit nfc:*.
 void nfcExit(void);
 
 /// Gets the Service object for the actual nfp:* service session.

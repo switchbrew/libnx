@@ -191,8 +191,13 @@ typedef enum {
     PcvModuleId_EXTPERIPH2          = 0x40000057,
 } PcvModuleId;
 
+/// Initialize pcv.
 Result pcvInitialize(void);
+
+/// Exit pcv.
 void pcvExit(void);
+
+/// Gets the Service object for the actual pcv service session.
 Service* pcvGetServiceSession(void);
 
 Result pcvGetModuleId(PcvModuleId *module_id, PcvModule module);

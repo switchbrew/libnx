@@ -35,7 +35,7 @@ NX_GENERATE_SERVICE_GUARD_PARAMS(vi, (ViServiceType service_type), (service_type
 
 Result _viInitialize(ViServiceType service_type) {
     Service root_srv;
-    Result rc = 0;
+    Result rc = MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
     if (service_type == ViServiceType_Default || service_type == ViServiceType_Manager) {
         rc = smGetService(&root_srv, "vi:m");

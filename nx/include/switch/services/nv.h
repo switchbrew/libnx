@@ -9,8 +9,14 @@
 #include "../sf/service.h"
 #include "../kernel/event.h"
 
+/// Initialize nvdrv*.
 Result nvInitialize(void);
+
+/// Exit nvdrv*.
 void nvExit(void);
+
+/// Gets the Service object for the actual nvdrv* service session.
+Service* nvGetServiceSession(void);
 
 typedef enum {
     NvEventId_Gpu_SmException_BptIntReport=1,

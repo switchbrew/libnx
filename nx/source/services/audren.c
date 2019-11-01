@@ -98,11 +98,7 @@ Result _audrenInitialize(const AudioRendererConfig* config) {
                 if (R_SUCCEEDED(rc)) {
                     // Finally, get the handle to the system event
                     rc = _audrenQuerySystemEvent(&g_audrenEvent);
-                    if (R_FAILED(rc))
-                        serviceClose(&g_audrenIAudioRenderer);
                 }
-                if (R_FAILED(rc))
-                    tmemClose(&g_audrenWorkBuf);
             }
         }
         serviceClose(&audrenMgrSrv);

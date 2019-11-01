@@ -29,19 +29,31 @@ typedef struct {
     u64 size;
 } LoaderModuleInfo;
 
+/// Initialize ldr:shel.
 Result ldrShellInitialize(void);
+
+/// Exit ldr:shel.
 void ldrShellExit(void);
 
+/// Gets the Service object for the actual ldr:shel service session.
 Service* ldrShellGetServiceSession(void);
 
+/// Initialize ldr:dmnt.
 Result ldrDmntInitialize(void);
+
+/// Exit ldr:dmnt.
 void ldrDmntExit(void);
 
+/// Gets the Service object for the actual ldr:dmnt service session.
 Service* ldrDmntGetServiceSession(void);
 
+/// Initialize ldr:pm.
 Result ldrPmInitialize(void);
+
+/// Exit ldr:pm.
 void ldrPmExit(void);
 
+/// Gets the Service object for the actual ldr:pm service session.
 Service* ldrPmGetServiceSession(void);
 
 Result ldrShellSetProgramArguments(u64 program_id, const void *args, size_t args_size);

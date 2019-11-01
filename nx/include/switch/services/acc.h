@@ -31,9 +31,9 @@ typedef struct {
 typedef struct {
     u32 unk_x0;                ///< Unknown.
     u32 iconID;                ///< Icon ID. 0 = Mii, the rest are character icon IDs.
-    u8  iconBackgroundColorID; ///< Profile icon background color ID
-    u8  unk_x9[0x7];           ///< Unknown.
-    u8  miiID[0x10];           ///< Some ID related to the Mii? All zeros when a character icon is used.
+    u8 iconBackgroundColorID;  ///< Profile icon background color ID
+    u8 unk_x9[0x7];            ///< Unknown.
+    u8 miiID[0x10];            ///< Some ID related to the Mii? All zeros when a character icon is used.
     u8 unk_x20[0x60];          ///< Usually zeros?
 } AccountUserData;
 

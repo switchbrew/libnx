@@ -42,7 +42,7 @@ void nfcSetServiceType(NfcServiceType serviceType) {
 }
 
 Result _nfpInitialize(void) {
-    Result rc=0;
+    Result rc = MAKERESULT(Module_Libnx, LibnxError_BadInput);
     u64 aruid = 0;
 
     // If this fails (for example because we're a sysmodule) aruid stays zero

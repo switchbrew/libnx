@@ -85,8 +85,13 @@ typedef struct {
     PscPmModuleId module_id;
 } PscPmModule;
 
+/// Initialize psc:m.
 Result pscmInitialize(void);
+
+/// Exit psc:m.
 void pscmExit(void);
+
+/// Gets the Service object for the actual psc:m service session.
 Service* pscmGetServiceSession(void);
 
 Result pscmGetPmModule(PscPmModule *out, PscPmModuleId module_id, const u16 *dependencies, size_t dependency_count, bool autoclear);

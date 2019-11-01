@@ -13,8 +13,13 @@ typedef enum {
     BpcSleepButtonState_Released = 1,
 } BpcSleepButtonState;
 
+/// Initialize bpc.
 Result bpcInitialize(void);
+
+/// Exit bpc.
 void bpcExit(void);
+
+/// Gets the Service object for the actual bpc service session.
 Service* bpcGetServiceSession(void);
 
 Result bpcShutdownSystem(void);

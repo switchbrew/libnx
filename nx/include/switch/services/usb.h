@@ -6,8 +6,6 @@
  */
 #pragma once
 #include "../types.h"
-#include "../services/sm.h"
-#include "../kernel/event.h"
 
 /// Names starting with "libusb" were changed to "usb" to avoid collision with actual libusb if it's ever used.
 

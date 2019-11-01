@@ -7,7 +7,7 @@
 #pragma once
 #include "../types.h"
 #include "../services/fs.h"
-#include "../services/sm.h"
+#include "../sf/service.h"
 
 /// ContentStorage
 typedef struct {
@@ -144,8 +144,13 @@ typedef struct {
     u8 pad[7];
 } NcmProgramLocation;
 
+/// Initialize ncm.
 Result ncmInitialize(void);
+
+/// Exit ncm.
 void ncmExit(void);
+
+/// Gets the Service object for the actual ncm service session.
 Service* ncmGetServiceSession(void);
 
 Result ncmCreateContentStorage(FsStorageId storage_id);

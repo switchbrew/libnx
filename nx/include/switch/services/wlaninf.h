@@ -16,8 +16,13 @@ typedef enum {
     WlanInfState_Connected,        ///< WLAN is connected.
 } WlanInfState;
 
+/// Initialize wlan:inf.
 Result wlaninfInitialize(void);
+
+/// Exit wlan:inf.
 void wlaninfExit(void);
+
+/// Gets the Service object for the actual wlan:inf service session.
 Service* wlaninfGetServiceSession(void);
 
 /// Gets \ref WlanInfState.

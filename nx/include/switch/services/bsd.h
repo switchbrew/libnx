@@ -34,10 +34,14 @@ extern __thread int g_bsdErrno;        ///< Last errno, per-thread
 
 /// Fetch the default configuration for bsdInitialize.
 const BsdInitConfig *bsdGetDefaultInitConfig(void);
+
 /// Initialize the BSD service.
 Result bsdInitialize(const BsdInitConfig *config, u32 num_sessions, u32 service_type);
-/// Deinitialize the BSD service.
+
+/// Exit the BSD service.
 void bsdExit(void);
+
+/// Gets the Service object for the actual BSD service session.
 Service* bsdGetServiceSession(void);
 
 /// Creates a socket.

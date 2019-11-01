@@ -160,8 +160,13 @@ typedef struct {
     u64 totalLaunches;                ///< Total times the application was launched.
 } PdmApplicationPlayStatistics;
 
+/// Initialize pdm:qry.
 Result pdmqryInitialize(void);
+
+/// Exit pdm:qry.
 void pdmqryExit(void);
+
+/// Gets the Service object for the actual pdm:qry service session.
 Service* pdmqryGetServiceSession(void);
 
 /**

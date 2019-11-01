@@ -39,9 +39,6 @@ Result _audoutInitialize(void) {
     // Register global handle for buffer events
     if (R_SUCCEEDED(rc))
         rc = _audoutRegisterBufferEvent(&g_audoutBufferEvent);
-    
-    if (R_FAILED(rc))
-        audoutExit();
 
     return rc;
 }

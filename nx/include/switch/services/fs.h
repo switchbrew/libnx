@@ -24,36 +24,35 @@ typedef struct {
 } FsRightsId;
 
 typedef struct {
-    Service  s;
+    Service s;
 } FsFileSystem;
 
 typedef struct {
-    Service  s;
+    Service s;
 } FsFile;
 
 typedef struct {
-    Service  s;
+    Service s;
 } FsDir;
 
 typedef struct {
-    Service  s;
+    Service s;
 } FsStorage;
 
 typedef struct {
-    Service  s;
+    Service s;
 } FsSaveDataInfoReader;
 
 typedef struct {
-    Service  s;
+    Service s;
 } FsEventNotifier;
 
 typedef struct {
-    Service  s;
+    Service s;
 } FsDeviceOperator;
 
 /// Directory entry.
-typedef struct
-{
+typedef struct {
     char name[FS_MAX_PATH];         ///< Entry name.
     u8 pad[3];
     s8 type;                        ///< See FsDirEntryType.
@@ -62,8 +61,7 @@ typedef struct
 } FsDirectoryEntry;
 
 /// Save Struct
-typedef struct
-{
+typedef struct {
     u64 program_id;                 ///< ProgramId of the savedata to access when accessing other programs' savedata via SaveData, otherwise FS_SAVEDATA_CURRENT_PROGRAMID.
     AccountUid uid;                 ///< \ref AccountUid for the user-specific savedata to access, otherwise 0 for common savedata.
     u64 saveID;                     ///< saveID, 0 for SaveData.
@@ -101,8 +99,7 @@ typedef struct {
     u8 padding[0x1A];   ///< Uninitialized for SystemSaveData.
 } FsSaveCreate;
 
-typedef struct
-{
+typedef struct {
     u64 saveID_unk;
     u8 saveDataSpaceId; ///< See \ref FsSaveDataSpaceId.
     u8 saveDataType;    ///< See \ref FsSaveDataType.
@@ -116,8 +113,7 @@ typedef struct
     u8 unk_x3b[0x25];   ///< Unknown. Usually zeros?
 } FsSaveDataInfo;
 
-typedef struct
-{
+typedef struct {
     u64 created;  ///< POSIX timestamp.
     u64 modified; ///< POSIX timestamp.
     u64 accessed; ///< POSIX timestamp.
@@ -132,36 +128,31 @@ typedef enum {
 } FsDirEntryType;
 
 /// For use with fsFsOpenFile.
-typedef enum
-{
+typedef enum {
     FsOpenMode_Read   = BIT(0), ///< Open for reading.
     FsOpenMode_Write  = BIT(1), ///< Open for writing.
     FsOpenMode_Append = BIT(2), ///< Append file.
 } FsOpenMode;
 
 /// For use with fsFsCreateFile.
-typedef enum
-{
+typedef enum {
     FsCreateOption_BigFile = BIT(0), ///< Creates a ConcatenationFile (dir with archive bit) instead of file.
 } FsCreateOption;
 
 /// For use with fsFsOpenDirectory.
-typedef enum
-{
+typedef enum {
     FsDirOpenMode_ReadDirs   = BIT(0),  ///< Enable reading directory entries.
     FsDirOpenMode_ReadFiles  = BIT(1),  ///< Enable reading file entries.
     FsDirOpenMode_NoFileSize = BIT(31), ///< Causes result entries to not contain filesize information (always 0).
 } FsDirOpenMode;
 
 /// For use with fsFileRead.
-typedef enum
-{
+typedef enum {
     FsReadOption_None = 0, ///< No option.
 } FsReadOption;
 
 /// For use with fsFileWrite.
-typedef enum
-{
+typedef enum {
     FsWriteOption_None  = 0,      ///< No option.
     FsWriteOption_Flush = BIT(0), ///< Forces a flush after write.
 } FsWriteOption;
@@ -176,21 +167,18 @@ typedef enum {
     FsStorageId_SdCard     = 5,   ///< SdCard
 } FsStorageId;
 
-typedef enum
-{
+typedef enum {
     FsContentStorageId_NandSystem = 0,
     FsContentStorageId_NandUser   = 1,
     FsContentStorageId_SdCard     = 2,
 } FsContentStorageId;
 
-typedef enum
-{
+typedef enum {
     FsCustomStorageId_NandUser = 0,
     FsCustomStorageId_SdCard   = 1,
 } FsCustomStorageId;
 
-typedef enum
-{
+typedef enum {
     FsSaveDataSpaceId_NandSystem       = 0,
     FsSaveDataSpaceId_NandUser         = 1,
     FsSaveDataSpaceId_SdCard           = 2,
@@ -199,8 +187,7 @@ typedef enum
     FsSaveDataSpaceId_All              = -1, ///< Pseudo value for fsOpenSaveDataInfoReader().
 } FsSaveDataSpaceId;
 
-typedef enum
-{
+typedef enum {
     FsSaveDataType_SystemSaveData           = 0,
     FsSaveDataType_SaveData                 = 1,
     FsSaveDataType_BcatDeliveryCacheStorage = 2,
@@ -266,8 +253,7 @@ typedef enum {
     FsBisStorageId_SystemProperPartition           = 33,
 } FsBisStorageId;
 
-typedef enum
-{
+typedef enum {
     FsFileSystemType_Logo               = 2,
     FsFileSystemType_ContentControl     = 3,
     FsFileSystemType_ContentManual      = 4,
@@ -276,8 +262,7 @@ typedef enum
     FsFileSystemType_ApplicationPackage = 7,
 } FsFileSystemType;
 
-typedef enum
-{
+typedef enum {
     FsFileSystemQueryType_SetArchiveBit = 0,
 } FsFileSystemQueryType;
 
@@ -288,9 +273,13 @@ typedef enum {
     FsPriority_Background = 3,
 } FsPriority;
 
+/// Initialize fsp-srv. Used automatically during app startup.
 Result fsInitialize(void);
+
+/// Exit fsp-srv. Used automatically during app exit.
 void fsExit(void);
 
+/// Gets the Service object for the actual fsp-srv service session.
 Service* fsGetServiceSession(void);
 
 void fsSetPriority(FsPriority prio);

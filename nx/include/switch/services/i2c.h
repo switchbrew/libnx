@@ -55,8 +55,13 @@ typedef enum {
     I2cTransactionOption_All = I2cTransactionOption_Start | I2cTransactionOption_Stop,
 } I2cTransactionOption;
 
+/// Initialize i2c.
 Result i2cInitialize(void);
+
+/// Exit i2c.
 void i2cExit(void);
+
+/// Gets the Service object for the actual i2c service session.
 Service* i2cGetServiceSession(void);
 
 Result i2cOpenSession(I2cSession *out, I2cDevice dev);

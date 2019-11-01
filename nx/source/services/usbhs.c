@@ -34,7 +34,6 @@ Result _usbHsInitialize(void) {
 
 void _usbHsCleanup(void) {
     eventClose(&g_usbHsInterfaceStateChangeEvent);
-
     serviceClose(&g_usbHsSrv);
 }
 

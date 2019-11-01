@@ -22,7 +22,7 @@ void accountSetServiceType(AccountServiceType serviceType) {
 }
 
 Result _accountInitialize(void) {
-    Result rc=0;
+    Result rc = MAKERESULT(Module_Libnx, LibnxError_BadInput);
     Result rc2=0;
     AccountUid *userIdEnv = envGetUserIdStorage();
 

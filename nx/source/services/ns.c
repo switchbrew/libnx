@@ -30,8 +30,6 @@ Result _nsInitialize(void) {
 
     rc = _nsGetSession(&g_nsGetterSrv, &g_nsAppManSrv, 7996);
 
-    if (R_FAILED(rc)) serviceClose(&g_nsGetterSrv);
-
     return rc;
 }
 
@@ -230,16 +228,14 @@ Result nsGetSystemDeliveryInfo(NsSystemDeliveryInfo *info) {
 
 NX_GENERATE_SERVICE_GUARD(nsvm);
 
-Result _nsvmInitialize(void)
-{
+Result _nsvmInitialize(void) {
     if (hosversionBefore(3,0,0))
         return 0;
 
     return smGetService(&g_nsvmSrv, "ns:vm");
 }
 
-void _nsvmCleanup(void)
-{
+void _nsvmCleanup(void) {
     if (hosversionBefore(3,0,0))
         return;
 

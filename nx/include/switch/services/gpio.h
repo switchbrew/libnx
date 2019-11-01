@@ -28,8 +28,13 @@ typedef enum {
     GpioValue_High = 1,
 } GpioValue;
 
+/// Initialize gpio.
 Result gpioInitialize(void);
+
+/// Exit gpio.
 void gpioExit(void);
+
+/// Gets the Service object for the actual gpio service session.
 Service* gpioGetServiceSession(void);
 
 Result gpioOpenSession(GpioPadSession *out, GpioPadName name);

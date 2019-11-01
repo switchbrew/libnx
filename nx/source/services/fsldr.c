@@ -34,8 +34,8 @@ Service* fsldrGetServiceSession(void) {
 }
 
 Result fsldrOpenCodeFileSystem(u64 tid, const char *path, FsFileSystem* out) {
-    char send_path[FS_MAX_PATH + 1];
-    strncpy(send_path, path, FS_MAX_PATH);
+    char send_path[FS_MAX_PATH]={0};
+    strncpy(send_path, path, FS_MAX_PATH-1);
 
     serviceAssumeDomain(&g_fsldrSrv);
     return serviceDispatchIn(&g_fsldrSrv, 0, tid,
