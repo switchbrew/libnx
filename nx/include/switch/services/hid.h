@@ -797,13 +797,13 @@ Result hidMergeSingleJoyAsDualJoy(HidControllerID id0, HidControllerID id1);
 Result hidInitializeVibrationDevices(u32 *VibrationDeviceHandles, s32 total_handles, HidControllerID id, HidControllerType type);
 
 /// Gets HidVibrationDeviceInfo for the specified VibrationDeviceHandle.
-Result hidGetVibrationDeviceInfo(u32 *VibrationDeviceHandle, HidVibrationDeviceInfo *VibrationDeviceInfo);
+Result hidGetVibrationDeviceInfo(const u32 *VibrationDeviceHandle, HidVibrationDeviceInfo *VibrationDeviceInfo);
 
 /// Send the VibrationValue to the specified VibrationDeviceHandle.
-Result hidSendVibrationValue(u32 *VibrationDeviceHandle, HidVibrationValue *VibrationValue);
+Result hidSendVibrationValue(const u32 *VibrationDeviceHandle, HidVibrationValue *VibrationValue);
 
 /// Gets the current HidVibrationValue for the specified VibrationDeviceHandle.
-Result hidGetActualVibrationValue(u32 *VibrationDeviceHandle, HidVibrationValue *VibrationValue);
+Result hidGetActualVibrationValue(const u32 *VibrationDeviceHandle, HidVibrationValue *VibrationValue);
 
 /// Sets whether vibration is allowed, this also affects the config displayed by System Settings.
 Result hidPermitVibration(bool flag);
@@ -812,10 +812,10 @@ Result hidPermitVibration(bool flag);
 Result hidIsVibrationPermitted(bool *flag);
 
 /// Send VibrationValues[index] to VibrationDeviceHandles[index], where count is the number of entries in the VibrationDeviceHandles/VibrationValues arrays.
-Result hidSendVibrationValues(u32 *VibrationDeviceHandles, HidVibrationValue *VibrationValues, s32 count);
+Result hidSendVibrationValues(const u32 *VibrationDeviceHandles, HidVibrationValue *VibrationValues, s32 count);
 
 /// Gets whether vibration is available with the specified device. Only available on [7.0.0+].
-Result hidIsVibrationDeviceMounted(u32 *VibrationDeviceHandle, bool *flag);
+Result hidIsVibrationDeviceMounted(const u32 *VibrationDeviceHandle, bool *flag);
 
 /// Gets SixAxisSensorHandles. total_handles==2 can only be used with TYPE_JOYCON_PAIR.
 Result hidGetSixAxisSensorHandles(u32 *SixAxisSensorHandles, s32 total_handles, HidControllerID id, HidControllerType type);

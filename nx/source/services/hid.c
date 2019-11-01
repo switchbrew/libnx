@@ -859,11 +859,11 @@ static Result _hidActivateVibrationDevice(Service* srv, u32 VibrationDeviceHandl
     return _hidCmdInU32NoOut(srv, VibrationDeviceHandle, 0);
 }
 
-Result hidGetVibrationDeviceInfo(u32 *VibrationDeviceHandle, HidVibrationDeviceInfo *VibrationDeviceInfo) {
+Result hidGetVibrationDeviceInfo(const u32 *VibrationDeviceHandle, HidVibrationDeviceInfo *VibrationDeviceInfo) {
     return serviceDispatchInOut(&g_hidSrv, 200, *VibrationDeviceHandle, *VibrationDeviceInfo);
 }
 
-Result hidSendVibrationValue(u32 *VibrationDeviceHandle, HidVibrationValue *VibrationValue) {
+Result hidSendVibrationValue(const u32 *VibrationDeviceHandle, HidVibrationValue *VibrationValue) {
     Result rc;
     u64 AppletResourceUserId;
 
@@ -883,7 +883,7 @@ Result hidSendVibrationValue(u32 *VibrationDeviceHandle, HidVibrationValue *Vibr
     );
 }
 
-Result hidGetActualVibrationValue(u32 *VibrationDeviceHandle, HidVibrationValue *VibrationValue) {
+Result hidGetActualVibrationValue(const u32 *VibrationDeviceHandle, HidVibrationValue *VibrationValue) {
     Result rc;
     u64 AppletResourceUserId;
 
@@ -909,7 +909,7 @@ Result hidIsVibrationPermitted(bool *flag) {
     return _hidCmdNoInOutBool(flag, 205);
 }
 
-Result hidSendVibrationValues(u32 *VibrationDeviceHandles, HidVibrationValue *VibrationValues, s32 count) {
+Result hidSendVibrationValues(const u32 *VibrationDeviceHandles, HidVibrationValue *VibrationValues, s32 count) {
     Result rc;
     u64 AppletResourceUserId;
 
@@ -929,7 +929,7 @@ Result hidSendVibrationValues(u32 *VibrationDeviceHandles, HidVibrationValue *Vi
     );
 }
 
-Result hidIsVibrationDeviceMounted(u32 *VibrationDeviceHandle, bool *flag) {
+Result hidIsVibrationDeviceMounted(const u32 *VibrationDeviceHandle, bool *flag) {
     if (hosversionBefore(7,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
