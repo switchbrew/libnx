@@ -1,6 +1,9 @@
 #define NX_SERVICE_ASSUME_NON_DOMAIN
 #include "service_guard.h"
 #include "services/time.h"
+#include "runtime/hosversion.h"
+
+__attribute__((weak)) TimeServiceType __nx_time_service_type = TimeServiceType_User;
 
 static Service g_timeSrv;
 static Service g_timeUserSystemClock;
@@ -13,11 +16,30 @@ static Result _timeCmdGetSession(Service* srv, Service* srv_out, u32 cmd_id);
 NX_GENERATE_SERVICE_GUARD(time);
 
 Result _timeInitialize(void) {
-    Result rc=0;
-
-    rc = smGetService(&g_timeSrv, "time:s");
-    if (R_FAILED(rc))
-        rc = smGetService(&g_timeSrv, "time:u");
+    Result rc = MAKERESULT(Module_Libnx, LibnxError_BadInput);
+    switch (__nx_time_service_type) {
+        case TimeServiceType_User:
+            rc = smGetService(&g_timeSrv, "time:u");
+            break;
+        case TimeServiceType_Menu:
+            rc = smGetService(&g_timeSrv, "time:a");
+            break;
+        case TimeServiceType_System:
+            rc = smGetService(&g_timeSrv, "time:s");
+            break;
+        case TimeServiceType_Repair:
+            if (hosversionBefore(9,0,0))
+                return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+            else
+                rc = smGetService(&g_timeSrv, "time:r");
+            break;
+        case TimeServiceType_SystemUser:
+            if (hosversionBefore(9,0,0))
+                return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+            else
+                rc = smGetService(&g_timeSrv, "time:su");
+            break;
+    }
 
     if (R_FAILED(rc))
         return rc;

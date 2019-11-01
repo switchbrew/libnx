@@ -9,6 +9,15 @@
 #include "../types.h"
 #include "../sf/service.h"
 
+/// Values for __nx_time_service_type.
+typedef enum {
+    TimeServiceType_User           = 0, ///< Default. Initializes time:u.
+    TimeServiceType_Menu           = 1, ///< Initializes time:a
+    TimeServiceType_System         = 2, ///< Initializes time:s.
+    TimeServiceType_Repair         = 3, ///< Initializes time:r. Only available with [9.0.0+].
+    TimeServiceType_SystemUser     = 4, ///< Initializes time:su. Only available with [9.0.0+].
+} TimeServiceType;
+
 /// Time clock type.
 typedef enum {
     TimeType_UserSystemClock,
