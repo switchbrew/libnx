@@ -59,6 +59,12 @@ typedef enum {
     SetSysPlatformRegion_China  = 2,
 } SetSysPlatformRegion;
 
+/// TouchScreenMode, for "Touch-Screen Sensitivity".
+typedef enum {
+    SetSysTouchScreenMode_Stylus   = 0,   ///< Stylus.
+    SetSysTouchScreenMode_Standard = 1,   ///< Standard, the default.
+} SetSysTouchScreenMode;
+
 /// Structure returned by \ref setsysGetFirmwareVersion.
 typedef struct {
     u8 major;
@@ -420,9 +426,9 @@ Result setsysSetRequiresRunRepairTimeReviser(bool flag);
 /**
  * @brief Gets the \ref SetSysPlatformRegion.
  * @note Only available on [9.0.0+].
- * @param[out] region \ref SetSysPlatformRegion
+ * @param[out] out \ref SetSysPlatformRegion
  */
-Result setsysGetPlatformRegion(SetSysPlatformRegion *region);
+Result setsysGetPlatformRegion(SetSysPlatformRegion *out);
 
 /**
  * @brief Sets the \ref SetSysPlatformRegion.
@@ -445,3 +451,17 @@ Result setsysGetHomeMenuSchemeModel(u32 *out);
  * @param[out] out Output flag.
  */
 Result setsysGetMemoryUsageRateFlag(bool *out);
+
+/**
+ * @brief Gets the \ref SetSysTouchScreenMode.
+ * @note Only available on [9.0.0+].
+ * @param[out] out \ref SetSysTouchScreenMode
+ */
+Result setsysGetTouchScreenMode(SetSysTouchScreenMode *out);
+
+/**
+ * @brief Sets the \ref SetSysTouchScreenMode.
+ * @note Only available on [9.0.0+].
+ * @param[in] mode \ref SetSysTouchScreenMode
+ */
+Result setsysSetTouchScreenMode(SetSysTouchScreenMode mode);

@@ -498,13 +498,13 @@ Result setsysGetHomeMenuScheme(SetSysHomeMenuScheme *out) {
     return serviceDispatchOut(&g_setsysSrv, 174, *out);
 }
 
-Result setsysGetPlatformRegion(SetSysPlatformRegion *region) {
+Result setsysGetPlatformRegion(SetSysPlatformRegion *out) {
     if (hosversionBefore(9,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     u32 tmp=0;
     Result rc = _setCmdNoInOutU32(&g_setsysSrv, &tmp, 183);
-    if (R_SUCCEEDED(rc) && region) *region = tmp;
+    if (R_SUCCEEDED(rc) && out) *out = tmp;
     return rc;
 }
 
@@ -527,4 +527,21 @@ Result setsysGetMemoryUsageRateFlag(bool *out) {
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return _setCmdNoInOutBool(&g_setsysSrv, out, 186);
+}
+
+Result setsysGetTouchScreenMode(SetSysTouchScreenMode *out) {
+    if (hosversionBefore(9,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    u32 tmp=0;
+    Result rc = _setCmdNoInOutU32(&g_setsysSrv, &tmp, 187);
+    if (R_SUCCEEDED(rc) && out) *out = tmp;
+    return rc;
+}
+
+Result setsysSetTouchScreenMode(SetSysTouchScreenMode mode) {
+    if (hosversionBefore(9,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdInU32NoOut(&g_setsysSrv, mode, 188);
 }
