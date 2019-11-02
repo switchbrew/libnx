@@ -69,6 +69,12 @@ typedef struct {
     char display_title[0x80];
 } SetSysFirmwareVersion;
 
+/// PlatformRegion. Other values not listed here should be handled as "Unknown".
+typedef enum {
+    SetSysPlatformRegion_Global = 1,
+    SetSysPlatformRegion_China = 2,
+} SetSysPlatformRegion;
+
 /// Initialize set.
 Result setInitialize(void);
 
@@ -394,3 +400,17 @@ Result setsysGetRequiresRunRepairTimeReviser(bool *out);
  * @param[in] flag Input flag.
  */
 Result setsysSetRequiresRunRepairTimeReviser(bool flag);
+
+/**
+ * @brief Gets the \ref SetSysPlatformRegion.
+ * @note Only available on [9.0.0+].
+ * @param[out] region \ref SetSysPlatformRegion
+ */
+Result setsysGetPlatformRegion(SetSysPlatformRegion *region);
+
+/**
+ * @brief Sets the \ref SetSysPlatformRegion.
+ * @note Only available on [9.0.0+].
+ * @param[in] region \ref SetSysPlatformRegion
+ */
+Result setsysSetPlatformRegion(SetSysPlatformRegion region);

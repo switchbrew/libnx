@@ -490,3 +490,20 @@ Result setsysSetRequiresRunRepairTimeReviser(bool flag) {
 
     return _setCmdInBoolNoOut(&g_setsysSrv, flag, 142);
 }
+
+Result setsysGetPlatformRegion(SetSysPlatformRegion *region) {
+    if (hosversionBefore(9,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    u32 tmp=0;
+    Result rc = _setCmdNoInOutU32(&g_setsysSrv, &tmp, 183);
+    if (R_SUCCEEDED(rc) && region) *region = tmp;
+    return rc;
+}
+
+Result setsysSetPlatformRegion(SetSysPlatformRegion region) {
+    if (hosversionBefore(9,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdInU32NoOut(&g_setsysSrv, region, 184);
+}
