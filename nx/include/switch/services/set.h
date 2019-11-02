@@ -72,7 +72,7 @@ typedef struct {
 /// PlatformRegion. Other values not listed here should be handled as "Unknown".
 typedef enum {
     SetSysPlatformRegion_Global = 1,
-    SetSysPlatformRegion_China = 2,
+    SetSysPlatformRegion_China  = 2,
 } SetSysPlatformRegion;
 
 /// Initialize set.
