@@ -491,6 +491,13 @@ Result setsysSetRequiresRunRepairTimeReviser(bool flag) {
     return _setCmdInBoolNoOut(&g_setsysSrv, flag, 142);
 }
 
+Result setsysGetHomeMenuScheme(SetSysHomeMenuScheme *out) {
+    if (hosversionBefore(9,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchOut(&g_setsysSrv, 174, *out);
+}
+
 Result setsysGetPlatformRegion(SetSysPlatformRegion *region) {
     if (hosversionBefore(9,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
@@ -506,4 +513,11 @@ Result setsysSetPlatformRegion(SetSysPlatformRegion region) {
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return _setCmdInU32NoOut(&g_setsysSrv, region, 184);
+}
+
+Result setsysGetHomeMenuSchemeModel(u32 *out) {
+    if (hosversionBefore(9,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdNoInOutU32(&g_setsysSrv, out, 185);
 }

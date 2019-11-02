@@ -53,7 +53,13 @@ typedef enum {
     SetRegion_TWN = 6, ///< Taiwan
 } SetRegion;
 
-/// Structure returned by \ref setsysGetFirmwareVersion
+/// PlatformRegion. Other values not listed here should be handled as "Unknown".
+typedef enum {
+    SetSysPlatformRegion_Global = 1,
+    SetSysPlatformRegion_China  = 2,
+} SetSysPlatformRegion;
+
+/// Structure returned by \ref setsysGetFirmwareVersion.
 typedef struct {
     u8 major;
     u8 minor;
@@ -69,11 +75,14 @@ typedef struct {
     char display_title[0x80];
 } SetSysFirmwareVersion;
 
-/// PlatformRegion. Other values not listed here should be handled as "Unknown".
-typedef enum {
-    SetSysPlatformRegion_Global = 1,
-    SetSysPlatformRegion_China  = 2,
-} SetSysPlatformRegion;
+/// Output from \ref setsysGetHomeMenuScheme. This contains RGBA8 colors which correspond with the physical shell of the system.
+typedef struct {
+    u32 main_color;       ///< Main Color.
+    u32 back_color;       ///< Back Color.
+    u32 sub_color;        ///< Sub Color.
+    u32 bezel_color;      ///< Bezel Color.
+    u32 extra_color;      ///< Extra Color.
+} SetSysHomeMenuScheme;
 
 /// Initialize set.
 Result setInitialize(void);
@@ -395,6 +404,13 @@ Result setsysSetHeadphoneVolumeUpdateFlag(bool flag);
 Result setsysGetRequiresRunRepairTimeReviser(bool *out);
 
 /**
+ * @brief Gets the \ref SetSysHomeMenuScheme.
+ * @note Only available on [9.0.0+].
+ * @param[out] out \ref SetSysHomeMenuScheme
+ */
+Result setsysGetHomeMenuScheme(SetSysHomeMenuScheme *out);
+
+/**
  * @brief SetRequiresRunRepairTimeReviser
  * @note Only available on [5.0.0+].
  * @param[in] flag Input flag.
@@ -414,3 +430,11 @@ Result setsysGetPlatformRegion(SetSysPlatformRegion *region);
  * @param[in] region \ref SetSysPlatformRegion
  */
 Result setsysSetPlatformRegion(SetSysPlatformRegion region);
+
+/**
+ * @brief GetHomeMenuSchemeModel
+ * @note This will throw an error when loading the "settings_debug!{...}" system-setting which is used with this fails.
+ * @note Only available on [9.0.0+].
+ * @param[out] out HomeMenuSchemeModel.
+ */
+Result setsysGetHomeMenuSchemeModel(u32 *out);
