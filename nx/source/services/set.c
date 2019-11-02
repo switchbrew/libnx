@@ -521,3 +521,10 @@ Result setsysGetHomeMenuSchemeModel(u32 *out) {
 
     return _setCmdNoInOutU32(&g_setsysSrv, out, 185);
 }
+
+Result setsysGetMemoryUsageRateFlag(bool *out) {
+    if (hosversionBefore(9,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdNoInOutBool(&g_setsysSrv, out, 186);
+}

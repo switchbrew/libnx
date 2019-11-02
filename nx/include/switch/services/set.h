@@ -438,3 +438,10 @@ Result setsysSetPlatformRegion(SetSysPlatformRegion region);
  * @param[out] out HomeMenuSchemeModel.
  */
 Result setsysGetHomeMenuSchemeModel(u32 *out);
+
+/**
+ * @brief GetMemoryUsageRateFlag
+ * @note Only available on [9.0.0+].
+ * @param[out] out Output flag.
+ */
+Result setsysGetMemoryUsageRateFlag(bool *out);
