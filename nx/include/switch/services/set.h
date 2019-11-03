@@ -410,18 +410,32 @@ Result setsysSetHeadphoneVolumeUpdateFlag(bool flag);
 Result setsysGetRequiresRunRepairTimeReviser(bool *out);
 
 /**
- * @brief Gets the \ref SetSysHomeMenuScheme.
- * @note Only available on [9.0.0+].
- * @param[out] out \ref SetSysHomeMenuScheme
- */
-Result setsysGetHomeMenuScheme(SetSysHomeMenuScheme *out);
-
-/**
  * @brief SetRequiresRunRepairTimeReviser
  * @note Only available on [5.0.0+].
  * @param[in] flag Input flag.
  */
 Result setsysSetRequiresRunRepairTimeReviser(bool flag);
+
+/**
+ * @brief GetPctlReadyFlag
+ * @note Only available on [6.0.0+].
+ * @param[out] out Output flag.
+ */
+Result setsysGetPctlReadyFlag(bool *out);
+
+/**
+ * @brief SetPctlReadyFlag
+ * @note Only available on [6.0.0+].
+ * @param[in] flag Input flag.
+ */
+Result setsysSetPctlReadyFlag(bool flag);
+
+/**
+ * @brief Gets the \ref SetSysHomeMenuScheme.
+ * @note Only available on [9.0.0+].
+ * @param[out] out \ref SetSysHomeMenuScheme
+ */
+Result setsysGetHomeMenuScheme(SetSysHomeMenuScheme *out);
 
 /**
  * @brief Gets the \ref SetSysPlatformRegion.

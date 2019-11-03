@@ -491,6 +491,20 @@ Result setsysSetRequiresRunRepairTimeReviser(bool flag) {
     return _setCmdInBoolNoOut(&g_setsysSrv, flag, 142);
 }
 
+Result setsysGetPctlReadyFlag(bool *out) {
+    if (hosversionBefore(6,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdNoInOutBool(&g_setsysSrv, out, 156);
+}
+
+Result setsysSetPctlReadyFlag(bool flag) {
+    if (hosversionBefore(6,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdInBoolNoOut(&g_setsysSrv, flag, 157);
+}
+
 Result setsysGetHomeMenuScheme(SetSysHomeMenuScheme *out) {
     if (hosversionBefore(9,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
