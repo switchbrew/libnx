@@ -130,11 +130,11 @@ Result ncmContentStorageGeneratePlaceHolderId(NcmContentStorage* cs, NcmPlaceHol
     return _ncmCmdOutPlaceHolderId(&cs->s, out_id, 0);
 }
 
-Result ncmContentStorageCreatePlaceHolder(NcmContentStorage* cs, const NcmContentId* content_id, const NcmPlaceHolderId* placeholder_id, u64 size) {
+Result ncmContentStorageCreatePlaceHolder(NcmContentStorage* cs, const NcmContentId* content_id, const NcmPlaceHolderId* placeholder_id, s64 size) {
     const struct {
         NcmContentId content_id;
         NcmPlaceHolderId placeholder_id;
-        u64 size;
+        s64 size;
     } in = { *content_id, *placeholder_id, size };
     return serviceDispatchIn(&cs->s, 1, in);
 }
