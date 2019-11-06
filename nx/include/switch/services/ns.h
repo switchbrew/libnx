@@ -311,10 +311,11 @@ Result nssuDestroySystemUpdateTask(void);
 
 /**
  * @brief RequestSendSystemUpdate
- * @note The system will use the input addr/port with bind(). addr/port are little-endian.
+ * @note The system will use the input addr/port with bind(), the input addr will eventually be validated with the addr from accept(). addr/port are little-endian.
+ * @note After the system accepts a connection etc, an error will be thrown if the system is Internet-connected.
  * @note Only available on [4.0.0+].
  * @param[out] a \ref AsyncResult
- * @param[in] addr IPv4 address. qlaunch uses a local-WLAN addr, however this can be any addr.
+ * @param[in] addr Client IPv4 address. qlaunch uses a local-WLAN addr.
  * @param[in] port Socket port. qlaunch uses value 55556.
  * @param[in] info \ref NsSystemDeliveryInfo
  */
@@ -476,7 +477,7 @@ Result nssuControlHasReceived(NsSystemUpdateControl *c, bool* out);
  * @note Only available on [4.0.0+].
  * @param c \ref NsSystemUpdateControl
  * @param[out] a \ref AsyncResult
- * @param[in] addr IPv4 address. qlaunch uses a local-WLAN addr, however this can be any addr.
+ * @param[in] addr Server IPv4 address. qlaunch uses a local-WLAN addr, however this can be any addr.
  * @param[in] port Socket port. qlaunch uses value 55556.
  * @param[in] info \ref NsSystemDeliveryInfo
  */
