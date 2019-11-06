@@ -182,6 +182,9 @@ Result hiddbgAttachHdlsWorkBuffer(void);
 /// Exit Hdls, must be called at some point prior to hiddbgExit. Only available with [7.0.0+].
 Result hiddbgReleaseHdlsWorkBuffer(void);
 
+/// Gets the Tmem pointer. Use only after calling hiddbgAttachHdlsWorkBuffer()
+TransferMemory *hiddbgGetWorkBufferTransferMemoryAddress();
+
 /// Gets state for \ref HiddbgHdlsNpadAssignment. Only available with [7.0.0+].
 Result hiddbgDumpHdlsNpadAssignmentState(HiddbgHdlsNpadAssignment *state);
 

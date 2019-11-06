@@ -392,6 +392,11 @@ Result hiddbgReleaseHdlsWorkBuffer(void) {
     return rc;
 }
 
+TransferMemory *hiddbgGetWorkBufferTransferMemoryAddress()
+{
+	return &g_hiddbgHdlsTmem;
+}
+
 Result hiddbgDumpHdlsNpadAssignmentState(HiddbgHdlsNpadAssignment *state) {
     Result rc=0;
 
