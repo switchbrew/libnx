@@ -396,7 +396,7 @@ Result hiddbgIsHdlsVirtualDeviceAttached(u64 HdlsHandle, bool *isAttached)
 {
     Result rc = 0;
 
-    if (hosversionBefore(7, 0, 0))
+    if (hosversionBefore(7,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     if (!g_hiddbgHdlsInitialized)
@@ -406,7 +406,7 @@ Result hiddbgIsHdlsVirtualDeviceAttached(u64 HdlsHandle, bool *isAttached)
     if (R_FAILED(rc)) return rc;
     if (isAttached) {
 		*isAttached = false;
-        if (hosversionBefore(9, 0, 0)) {
+        if (hosversionBefore(9,0,0)) {
             HiddbgHdlsStateListV7 *stateList = (HiddbgHdlsStateListV7 *)(g_hiddbgHdlsTmem.src_addr);
             for (s32 i = 0; i < stateList->total_entries; i++) {
                 if (stateList->entries[i].HdlsHandle == HdlsHandle) {
