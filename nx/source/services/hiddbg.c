@@ -405,7 +405,7 @@ Result hiddbgIsHdlsVirtualDeviceAttached(u64 HdlsHandle, bool *isAttached)
     rc = _hiddbgCmdNoIO(327);
     if (R_FAILED(rc)) return rc;
     if (isAttached) {
-		*isAttached = false;
+        *isAttached = false;
         if (hosversionBefore(9,0,0)) {
             HiddbgHdlsStateListV7 *stateList = (HiddbgHdlsStateListV7*)(g_hiddbgHdlsTmem.src_addr);
             for (s32 i = 0; i < stateList->total_entries; i++) {
