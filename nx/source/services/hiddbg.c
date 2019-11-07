@@ -392,9 +392,48 @@ Result hiddbgReleaseHdlsWorkBuffer(void) {
     return rc;
 }
 
-TransferMemory *hiddbgGetWorkBufferTransferMemoryAddress()
+Result hiddbgIsHdlsVirtualDeviceAttached(u64 HdlsHandle, bool *isAttached)
 {
-	return &g_hiddbgHdlsTmem;
+    Result rc = 0;
+
+    if (hosversionBefore(7, 0, 0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    if (!g_hiddbgHdlsInitialized)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    rc = _hiddbgCmdNoIO(327);
+    if (R_FAILED(rc))
+        return rc;
+    if (isAttached)
+    {
+		*isAttached = false;
+        if (hosversionBefore(9, 0, 0))
+        {
+            HiddbgHdlsStateListV7 *stateList = (HiddbgHdlsStateListV7 *)(g_hiddbgHdlsTmem.src_addr);
+            for (s32 i = 0; i < stateList->total_entries; i++)
+            {
+                if (stateList->entries[i].HdlsHandle == HdlsHandle)
+                {
+                    *isAttached = true;
+                    break;
+                }
+            }
+        }
+        else
+        {
+            HiddbgHdlsStateList *stateList = (HiddbgHdlsStateList *)(g_hiddbgHdlsTmem.src_addr);
+            for (s32 i = 0; i < stateList->total_entries; i++)
+            {
+                if (stateList->entries[i].HdlsHandle == HdlsHandle)
+                {
+                    *isAttached = true;
+                    break;
+                }
+            }
+        }
+    }
+    return rc;
 }
 
 Result hiddbgDumpHdlsNpadAssignmentState(HiddbgHdlsNpadAssignment *state) {
