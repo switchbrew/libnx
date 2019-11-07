@@ -392,8 +392,7 @@ Result hiddbgReleaseHdlsWorkBuffer(void) {
     return rc;
 }
 
-Result hiddbgIsHdlsVirtualDeviceAttached(u64 HdlsHandle, bool *isAttached)
-{
+Result hiddbgIsHdlsVirtualDeviceAttached(u64 HdlsHandle, bool *isAttached) {
     Result rc = 0;
 
     if (hosversionBefore(7,0,0))
