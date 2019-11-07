@@ -182,6 +182,9 @@ Result hiddbgAttachHdlsWorkBuffer(void);
 /// Exit Hdls, must be called at some point prior to hiddbgExit. Only available with [7.0.0+].
 Result hiddbgReleaseHdlsWorkBuffer(void);
 
+/// Checks if the given HdlsHandle is still attached, where the result is written to isAttached.  Only available with [7.0.0+].
+Result hiddbgIsHdlsVirtualDeviceAttached(u64 HdlsHandle, bool *isAttached);
+
 /// Gets state for \ref HiddbgHdlsNpadAssignment. Only available with [7.0.0+].
 Result hiddbgDumpHdlsNpadAssignmentState(HiddbgHdlsNpadAssignment *state);
 
