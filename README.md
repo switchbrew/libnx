@@ -1,3 +1,7 @@
-Used for building sys-con.
+# Nintendo Switch AArch64-only userland library.
+Based on libctru.
 
-At the current moment i can't figure out how to build it locally, so replace the libnx folder with this in devkitpro.
+[![Build status](https://doozer.io/badge/switchbrew/libnx/buildstatus/master)](https://doozer.io/switchbrew/libnx)
+
+# Install instructions
+See [Switchbrew](https://switchbrew.org/wiki/Setting_up_Development_Environment).
