@@ -408,7 +408,7 @@ Result hiddbgIsHdlsVirtualDeviceAttached(u64 HdlsHandle, bool *isAttached)
         *isAttached = false;
         if (hosversionBefore(9,0,0)) {
             HiddbgHdlsStateListV7 *stateList = (HiddbgHdlsStateListV7*)(g_hiddbgHdlsTmem.src_addr);
-            for (s32 i = 0; i < stateList->total_entries; i++) {
+            for (s32 i=0; i <stateList->total_entries; i++) {
                 if (stateList->entries[i].HdlsHandle == HdlsHandle) {
                     *isAttached = true;
                     break;
@@ -417,7 +417,7 @@ Result hiddbgIsHdlsVirtualDeviceAttached(u64 HdlsHandle, bool *isAttached)
         }
         else {
             HiddbgHdlsStateList *stateList = (HiddbgHdlsStateList*)(g_hiddbgHdlsTmem.src_addr);
-            for (s32 i = 0; i < stateList->total_entries; i++) {
+            for (s32 i=0; i <stateList->total_entries; i++) {
                 if (stateList->entries[i].HdlsHandle == HdlsHandle) {
                     *isAttached = true;
                     break;
