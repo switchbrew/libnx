@@ -104,16 +104,27 @@ typedef struct {
 
 /// SystemDeliveryInfo
 typedef struct {
-    u32 system_delivery_protocol_version;       ///< Must be <= to and match a system-setting.
-    u32 application_delivery_protocol_version;  ///< Loaded from a system-setting. Unused by \ref nssuRequestSendSystemUpdate / \ref nssuControlRequestReceiveSystemUpdate, besides HMAC validation.
-    u32 includes_exfat;                         ///< Whether ExFat is included. Unused by \ref nssuRequestSendSystemUpdate / \ref nssuControlRequestReceiveSystemUpdate, besides HMAC validation.
-    u32 system_update_meta_version;             ///< SystemUpdate meta version.
-    u64 system_update_meta_id;                  ///< SystemUpdate meta Id.
-    u8 unk_x18;                                 ///< Copied into state by \ref nssuRequestSendSystemUpdate.
-    u8 unk_x19;                                 ///< Unused by \ref nssuRequestSendSystemUpdate / \ref nssuControlRequestReceiveSystemUpdate, besides HMAC validation.
-    u8 unk_x1a[0xc6];                           ///< Unused by \ref nssuRequestSendSystemUpdate / \ref nssuControlRequestReceiveSystemUpdate, besides HMAC validation.
-    u8 hmac[0x20];                              ///< HMAC-SHA256 over the previous 0xe0-bytes.
+    struct {
+        u32 system_delivery_protocol_version;       ///< Must match a system-setting.
+        u32 application_delivery_protocol_version;  ///< Loaded from a system-setting. Unused by \ref nssuRequestSendSystemUpdate / \ref nssuControlRequestReceiveSystemUpdate, besides HMAC validation.
+        u32 includes_exfat;                         ///< Whether ExFat is included. Unused by \ref nssuRequestSendSystemUpdate / \ref nssuControlRequestReceiveSystemUpdate, besides HMAC validation.
+        u32 system_update_meta_version;             ///< SystemUpdate meta version.
+        u64 system_update_meta_id;                  ///< SystemUpdate meta Id.
+        u8 unk_x18;                                 ///< Copied into state by \ref nssuRequestSendSystemUpdate.
+        u8 unk_x19;                                 ///< Unused by \ref nssuRequestSendSystemUpdate / \ref nssuControlRequestReceiveSystemUpdate, besides HMAC validation.
+        u8 unk_x1a;                                 ///< Unknown.
+        u8 unk_x1b[0xc5];                           ///< Unused by \ref nssuRequestSendSystemUpdate / \ref nssuControlRequestReceiveSystemUpdate, besides HMAC validation.
+    } data;                                         ///< Data used with the below hmac.
+    u8 hmac[0x20];                                  ///< HMAC-SHA256 over the above data.
 } NsSystemDeliveryInfo;
+
+/// ApplicationDeliveryInfo
+typedef struct {
+    struct {
+        u8 unk_x0[0xe0];                            ///< Unknown.
+    } data;                                         ///< Data used with the below hmac.
+    u8 hmac[0x20];                                  ///< HMAC-SHA256 over the above data.
+} NsApplicationDeliveryInfo;
 
 /// Default size for \ref nssuControlSetupCardUpdate / \ref nssuControlSetupCardUpdateViaSystemUpdater. This is the size used by qlaunch for SetupCardUpdate.
 #define NSSU_CARDUPDATE_TMEM_SIZE_DEFAULT 0x100000
@@ -182,6 +193,17 @@ Result nsGetFreeSpaceSize(FsStorageId storage_id, u64 *size);
  * @param[out] info \ref NsSystemDeliveryInfo
  */
 Result nsGetSystemDeliveryInfo(NsSystemDeliveryInfo *info);
+
+/**
+ * @brief Generates \ref NsApplicationDeliveryInfo for the specified ApplicationId.
+ * @note Only available on [4.0.0+].
+ * @param[out] info Output array of \ref NsApplicationDeliveryInfo.
+ * @param[in] count Size of the array in entries.
+ * @param[in] application_id ApplicationId
+ * @param[in] attr ApplicationDeliveryAttributeTag bitmask.
+ * @param[out] total_out Total output entries.
+ */
+Result nsGetApplicationDeliveryInfo(NsApplicationDeliveryInfo* info, s32 count, u64 application_id, u32 attr, s32* total_out);
 
 ///@}
 

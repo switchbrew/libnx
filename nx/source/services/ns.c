@@ -224,6 +224,22 @@ Result nsGetSystemDeliveryInfo(NsSystemDeliveryInfo *info) {
     );
 }
 
+Result nsGetApplicationDeliveryInfo(NsApplicationDeliveryInfo* info, s32 count, u64 application_id, u32 attr, s32* total_out) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    const struct {
+        u32 attr;
+        u32 pad;
+        u64 application_id;
+    } in = { attr, 0, application_id };
+
+    return serviceDispatchInOut(&g_nsAppManSrv, 2003, in, *total_out,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { info, count*sizeof(NsApplicationDeliveryInfo) } },
+    );
+}
+
 // ns:vm
 
 NX_GENERATE_SERVICE_GUARD(nsvm);
