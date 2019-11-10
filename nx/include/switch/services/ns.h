@@ -97,6 +97,12 @@ typedef struct {
     s64 total_size;                ///< Total size, this field is only valid when >0.
 } NsSystemUpdateProgress;
 
+/// ReceiveApplicationProgress. Same as \ref NsSystemUpdateProgress, except cmds which return this will return actual errors on failure, instead of returning 0 with a cleared struct.
+typedef NsSystemUpdateProgress NsReceiveApplicationProgress;
+
+/// SendApplicationProgress. Same as \ref NsSystemUpdateProgress, except cmds which return this will return actual errors on failure, instead of returning 0 with a cleared struct.
+typedef NsSystemUpdateProgress NsSendApplicationProgress;
+
 /// EulaDataPath
 typedef struct {
     char path[0x100];              ///< Path.
@@ -121,7 +127,12 @@ typedef struct {
 /// ApplicationDeliveryInfo
 typedef struct {
     struct {
-        u8 unk_x0[0xe0];                            ///< Unknown.
+        u8 unk_x0[0x10];                            ///< Unknown.
+        u32 application_version;                    ///< Application version.
+        u32 unk_x14;                                ///< Unknown.
+        u32 required_system_version;                ///< Required system version, see NsSystemDeliveryInfo::system_update_meta_version.
+        u32 unk_x1c;                                ///< Unknown.
+        u8 unk_x20[0xc0];                           ///< Unknown.
     } data;                                         ///< Data used with the below hmac.
     u8 hmac[0x20];                                  ///< HMAC-SHA256 over the above data.
 } NsApplicationDeliveryInfo;
@@ -195,6 +206,26 @@ Result nsGetFreeSpaceSize(FsStorageId storage_id, u64 *size);
 Result nsGetSystemDeliveryInfo(NsSystemDeliveryInfo *info);
 
 /**
+ * @brief SelectLatestSystemDeliveryInfo
+ * @note This selects the \ref NsSystemDeliveryInfo with the latest version from sys_list, using minimum versions determined from app_list/state and base_info. This also does various validation, etc.
+ * @note Only available on [4.0.0+].
+ * @param[in] sys_list Input array of \ref NsSystemDeliveryInfo.
+ * @param[in] sys_count Size of the sys_list array in entries.
+ * @param[in] base_info \ref NsSystemDeliveryInfo
+ * @param[in] app_list Input array of \ref NsApplicationDeliveryInfo. This can be NULL.
+ * @param[in] app_count Size of the app_list array in entries. This can be 0.
+ * @param[out] index Output index for the selected entry in sys_list, -1 if none found.
+ */
+Result nsSelectLatestSystemDeliveryInfo(const NsSystemDeliveryInfo *sys_list, s32 sys_count, const NsSystemDeliveryInfo *base_info, const NsApplicationDeliveryInfo *app_list, s32 app_count, s32 *index);
+
+/**
+ * @brief VerifyDeliveryProtocolVersion
+ * @note Only available on [4.0.0+].
+ * @param[in] info \ref NsSystemDeliveryInfo
+ */
+Result nsVerifyDeliveryProtocolVersion(const NsSystemDeliveryInfo *info);
+
+/**
  * @brief Generates \ref NsApplicationDeliveryInfo for the specified ApplicationId.
  * @note Only available on [4.0.0+].
  * @param[out] info Output array of \ref NsApplicationDeliveryInfo.
@@ -203,7 +234,149 @@ Result nsGetSystemDeliveryInfo(NsSystemDeliveryInfo *info);
  * @param[in] attr ApplicationDeliveryAttributeTag bitmask.
  * @param[out] total_out Total output entries.
  */
-Result nsGetApplicationDeliveryInfo(NsApplicationDeliveryInfo* info, s32 count, u64 application_id, u32 attr, s32* total_out);
+Result nsGetApplicationDeliveryInfo(NsApplicationDeliveryInfo *info, s32 count, u64 application_id, u32 attr, s32 *total_out);
+
+/**
+ * @brief HasAllContentsToDeliver
+ * @note Only available on [4.0.0+].
+ * @param[in] info Input array of \ref NsApplicationDeliveryInfo.
+ * @param[in] count Size of the array in entries. Must be value 1.
+ * @param[out] out Output flag.
+ */
+Result nsHasAllContentsToDeliver(const NsApplicationDeliveryInfo* info, s32 count, bool *out);
+
+/**
+ * @brief Both \ref NsApplicationDeliveryInfo are validated, then the application_version in the first/second \ref NsApplicationDeliveryInfo are compared.
+ * @note Only available on [4.0.0+].
+ * @param[in] info0 First input array of \ref NsApplicationDeliveryInfo.
+ * @param[in] count0 Size of the info0 array in entries. Must be value 1.
+ * @param[in] info1 Second input array of \ref NsApplicationDeliveryInfo.
+ * @param[in] count1 Size of the info1 array in entries. Must be value 1.
+ * @param[out] out Comparison result: -1 for less than, 0 for equal, and 1 for higher than.
+ */
+Result nsCompareApplicationDeliveryInfo(const NsApplicationDeliveryInfo *info0, s32 count0, const NsApplicationDeliveryInfo *info1, s32 count1, s32 *out);
+
+/**
+ * @brief CanDeliverApplication
+ * @note Only available on [4.0.0+].
+ * @param[in] info0 First input array of \ref NsApplicationDeliveryInfo.
+ * @param[in] count0 Size of the info0 array in entries. Must be value <=1, when 0 this will return 0 with out set to 0.
+ * @param[in] info1 Second input array of \ref NsApplicationDeliveryInfo.
+ * @param[in] count1 Size of the info1 array in entries. Must be value 1.
+ * @param[out] out Output flag.
+ */
+Result nsCanDeliverApplication(const NsApplicationDeliveryInfo *info0, s32 count0, const NsApplicationDeliveryInfo *info1, s32 count1, bool *out);
+
+/**
+ * @brief ListContentMetaKeyToDeliverApplication
+ * @note Only available on [4.0.0+].
+ * @param[out] meta Output array of \ref NcmContentMetaKey.
+ * @param[in] meta_count Size of the meta array in entries. Must be at least 1, only 1 entry will be returned.
+ * @param[in] meta_index Meta entry index. An output \ref NcmContentMetaKey will not be returned when this value is larger than 0.
+ * @param[in] info Input array of \ref NsApplicationDeliveryInfo.
+ * @param[in] info_count Size of the info array in entries. Must be value 1.
+ * @param[out] total_out Total output entries.
+ */
+Result nsListContentMetaKeyToDeliverApplication(NcmContentMetaKey *meta, s32 meta_count, s32 meta_index, const NsApplicationDeliveryInfo *info, s32 info_count, s32 *total_out);
+
+/**
+ * @brief After validation etc, this sets the output bool by comparing system-version fields in the \ref NsSystemDeliveryInfo / info-array and with a state field. 
+ * @note Only available on [4.0.0+].
+ * @param[in] info Input array of \ref NsApplicationDeliveryInfo.
+ * @param[in] count Size of the info array in entries. Must be value 1.
+ * @param[in] sys_info \ref NsSystemDeliveryInfo
+ * @param[out] out Output flag.
+ */
+Result nsNeedsSystemUpdateToDeliverApplication(const NsApplicationDeliveryInfo *info, s32 count, const NsSystemDeliveryInfo *sys_info, bool *out);
+
+/**
+ * @brief EstimateRequiredSize
+ * @note Only available on [4.0.0+].
+ * @param[in] meta Input array of \ref NcmContentMetaKey.
+ * @param[in] count Size of the meta array in entries. When less than 1, this will return 0 with out set to 0.
+ * @param[out] out Output size.
+ */
+Result nsEstimateRequiredSize(const NcmContentMetaKey *meta, s32 count, s64 *out);
+
+/**
+ * @brief RequestReceiveApplication
+ * @note The system will use the input addr/port with connect(). addr/port are little-endian.
+ * @note Only available on [4.0.0+].
+ * @param[out] a \ref AsyncResult
+ * @param[in] addr Server IPv4 address.
+ * @param[in] port Socket port. qlaunch uses value 55556.
+ * @param[in] application_id ApplicationId
+ * @param[in] meta Input array of \ref NcmContentMetaKey. The ::NcmContentMetaType must match ::NcmContentMetaType_Patch.
+ * @param[in] count Size of the meta array in entries.
+ * @param[in] storage_id ::FsStorageId. qlaunch uses value 6.
+ */
+Result nsRequestReceiveApplication(AsyncResult *a, u32 addr, u16 port, u64 application_id, const NcmContentMetaKey *meta, s32 count, FsStorageId storage_id);
+
+/**
+ * @brief CommitReceiveApplication
+ * @note Only available on [4.0.0+].
+ * @param[in] application_id ApplicationId
+ */
+Result nsCommitReceiveApplication(u64 application_id);
+
+/**
+ * @brief GetReceiveApplicationProgress
+ * @note Only available on [4.0.0+].
+ * @param[in] application_id ApplicationId
+ * @param[out] out \ref NsReceiveApplicationProgress
+ */
+Result nsGetReceiveApplicationProgress(u64 application_id, NsReceiveApplicationProgress *out);
+
+/**
+ * @brief RequestSendApplication
+ * @note The system will use the input addr/port with bind(), the input addr will eventually be validated with the addr from accept(). addr/port are little-endian.
+ * @note After the system accepts a connection etc, an error will be thrown if the system is Internet-connected.
+ * @note Only available on [4.0.0+].
+ * @param[out] a \ref AsyncResult
+ * @param[in] addr Client IPv4 address.
+ * @param[in] port Socket port. qlaunch uses value 55556.
+ * @param[in] application_id ApplicationId
+ * @param[in] meta Input array of \ref NcmContentMetaKey. The ::NcmContentMetaType must match ::NcmContentMetaType_Patch.
+ * @param[in] count Size of the meta array in entries.
+ */
+Result nsRequestSendApplication(AsyncResult *a, u32 addr, u16 port, u64 application_id, const NcmContentMetaKey *meta, s32 count);
+
+/**
+ * @brief GetSendApplicationProgress
+ * @note Only available on [4.0.0+].
+ * @param[in] application_id ApplicationId
+ * @param[out] out \ref NsSendApplicationProgress
+ */
+Result nsGetSendApplicationProgress(u64 application_id, NsSendApplicationProgress *out);
+
+/**
+ * @brief Both \ref NsSystemDeliveryInfo are validated, then the system_update_meta_version in the first/second \ref NsSystemDeliveryInfo are compared.
+ * @note Only available on [4.0.0+].
+ * @param[in] info0 First \ref NsSystemDeliveryInfo.
+ * @param[in] info1 Second \ref NsSystemDeliveryInfo.
+ * @param[out] out Comparison result: -1 for less than, 0 for equal, and 1 for higher than.
+ */
+Result nsCompareSystemDeliveryInfo(const NsSystemDeliveryInfo *info0, const NsSystemDeliveryInfo *info1, s32 *out);
+
+/**
+ * @brief ListNotCommittedContentMeta
+ * @note Only available on [4.0.0+].
+ * @param[out] meta Output array of \ref NcmContentMetaKey.
+ * @param[in] count Size of the meta array in entries.
+ * @param[in] application_id ApplicationId
+ * @param[in] unk Unknown.
+ * @param[out] total_out Total output entries.
+ */
+Result nsListNotCommittedContentMeta(NcmContentMetaKey *meta, s32 count, u64 application_id, s32 unk, s32 *total_out);
+
+/**
+ * @brief This extracts data from the input array for hashing with SHA256, with validation being done when handling each entry.
+ * @note Only available on [5.0.0+].
+ * @param[in] info Input array of \ref NsApplicationDeliveryInfo.
+ * @param[in] count Size of the array in entries.
+ * @param[out] out_hash Output 0x20-byte SHA256 hash.
+ */
+Result nsGetApplicationDeliveryInfoHash(const NsApplicationDeliveryInfo *info, s32 count, u8 *out_hash);
 
 ///@}
 
@@ -448,7 +621,6 @@ Result nssuControlGetDownloadedEulaData(NsSystemUpdateControl *c, const char* pa
 /**
  * @brief SetupCardUpdate
  * @param c \ref NsSystemUpdateControl
- * @param[in] path EulaData path.
  * @param[in] buffer TransferMemory buffer, when NULL this is automatically allocated.
  * @param[in] size TransferMemory buffer size, see \ref NSSU_CARDUPDATE_TMEM_SIZE_DEFAULT.
  */
@@ -479,7 +651,6 @@ Result nssuControlGetPreparedCardUpdateEulaData(NsSystemUpdateControl *c, const 
  * @note Same as \ref nssuControlSetupCardUpdate, except this doesn't run the code for fs cmds GetGameCardHandle/GetGameCardUpdatePartitionInfo, and uses fs OpenRegisteredUpdatePartition instead of OpenGameCardFileSystem.
  * @note Only available on [4.0.0+].
  * @param c \ref NsSystemUpdateControl
- * @param[in] path EulaData path.
  * @param[in] buffer TransferMemory buffer, when NULL this is automatically allocated.
  * @param[in] size TransferMemory buffer size, see \ref NSSU_CARDUPDATE_TMEM_SIZE_DEFAULT.
  */
