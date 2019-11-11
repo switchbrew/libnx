@@ -2,6 +2,7 @@
 #include <string.h>
 #include "service_guard.h"
 #include "services/lr.h"
+#include "services/fs.h"
 #include "runtime/hosversion.h"
 
 static Service g_lrSrv;
@@ -20,7 +21,7 @@ Service* lrGetServiceSession(void) {
     return &g_lrSrv;
 }
 
-Result lrOpenLocationResolver(FsStorageId storage, LrLocationResolver* out) {
+Result lrOpenLocationResolver(NcmStorageId storage, LrLocationResolver* out) {
     const u8 in = (u8)storage;
     return serviceDispatchIn(&g_lrSrv, 0, in,
         .out_num_objects = 1,

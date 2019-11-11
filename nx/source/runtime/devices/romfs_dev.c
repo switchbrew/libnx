@@ -12,6 +12,7 @@
 #include "runtime/devices/fs_dev.h"
 #include "runtime/util/utf.h"
 #include "services/fs.h"
+#include "services/ncm_types.h"
 #include "runtime/env.h"
 #include "nro.h"
 
@@ -326,7 +327,7 @@ Result romfsMountFromFsdev(const char *path, u64 offset, const char *name)
     return romfsMountCommon(name, mount);
 }
 
-Result romfsMountFromDataArchive(u64 dataId, FsStorageId storageId, const char *name) {
+Result romfsMountFromDataArchive(u64 dataId, NcmStorageId storageId, const char *name) {
     FsStorage storage;
 
     Result rc = fsOpenDataStorageByDataId(&storage, dataId, storageId);

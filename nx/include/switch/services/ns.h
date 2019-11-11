@@ -8,8 +8,7 @@
 #include "../types.h"
 #include "../nacp.h"
 #include "../sf/service.h"
-#include "../services/fs.h"
-#include "../services/ncm.h"
+#include "../services/ncm_types.h"
 #include "../services/async.h"
 #include "../kernel/event.h"
 #include "../kernel/tmem.h"
@@ -59,7 +58,7 @@ typedef struct {
 /// NsApplicationContentMetaStatus
 typedef struct {
     u8 meta_type;                  ///< \ref NcmContentMetaType
-    u8 storageID;                  ///< \ref FsStorageId
+    u8 storageID;                  ///< \ref NcmStorageId
     u8 unk_x02;                    ///< Unknown.
     u8 padding;                    ///< Padding.
     u32 version;                   ///< Application version.
@@ -80,7 +79,7 @@ typedef struct {
 typedef struct {
     u64 program_id;                ///< program_id.
     u32 version;                   ///< Program version.
-    u8 storageID;                  ///< \ref FsStorageId
+    u8 storageID;                  ///< \ref NcmStorageId
     u8 index;                      ///< Index.
     u8 is_application;             ///< Whether this is an Application.
 } NsLaunchProperties;
@@ -186,17 +185,17 @@ Result nsGetApplicationControlData(NsApplicationControlSource source, u64 applic
 
 /**
  * @brief Returns the total storage capacity (used + free) from content manager services.
- * @param[in] storage_id Specified FsStorageId. (Must be FsStorageId_SdCard)
+ * @param[in] storage_id \ref NcmStorageId. Must be ::NcmStorageId_SdCard.
  * @param[out] size Pointer to output the total storage size to.
  */
-Result nsGetTotalSpaceSize(FsStorageId storage_id, u64 *size);
+Result nsGetTotalSpaceSize(NcmStorageId storage_id, u64 *size);
 
 /**
  * @brief Returns the available storage capacity from content manager services.
- * @param[in] storage_id Specified FsStorageId. (Must be FsStorageId_SdCard)
+ * @param[in] storage_id \ref NcmStorageId. Must be ::NcmStorageId_SdCard.
  * @param[out] size Pointer to output the free storage size to.
  */
-Result nsGetFreeSpaceSize(FsStorageId storage_id, u64 *size);
+Result nsGetFreeSpaceSize(NcmStorageId storage_id, u64 *size);
 
 /**
  * @brief Generates a \ref NsSystemDeliveryInfo using the currently installed SystemUpdate meta.
@@ -308,9 +307,9 @@ Result nsEstimateRequiredSize(const NcmContentMetaKey *meta, s32 count, s64 *out
  * @param[in] application_id ApplicationId
  * @param[in] meta Input array of \ref NcmContentMetaKey. The ::NcmContentMetaType must match ::NcmContentMetaType_Patch.
  * @param[in] count Size of the meta array in entries.
- * @param[in] storage_id ::FsStorageId. qlaunch uses value 6.
+ * @param[in] storage_id \ref NcmStorageId. qlaunch uses ::NcmStorageId_Any.
  */
-Result nsRequestReceiveApplication(AsyncResult *a, u32 addr, u16 port, u64 application_id, const NcmContentMetaKey *meta, s32 count, FsStorageId storage_id);
+Result nsRequestReceiveApplication(AsyncResult *a, u32 addr, u16 port, u64 application_id, const NcmContentMetaKey *meta, s32 count, NcmStorageId storage_id);
 
 /**
  * @brief CommitReceiveApplication

@@ -9,6 +9,7 @@
 #pragma once
 #include "../types.h"
 #include "../kernel/event.h"
+#include "../services/ncm_types.h"
 #include "../services/acc.h"
 #include "../sf/service.h"
 
@@ -156,16 +157,6 @@ typedef enum {
     FsWriteOption_None  = 0,      ///< No option.
     FsWriteOption_Flush = BIT(0), ///< Forces a flush after write.
 } FsWriteOption;
-
-/// StorageId
-typedef enum {
-    FsStorageId_None       = 0,   ///< None
-    FsStorageId_Host       = 1,   ///< Host
-    FsStorageId_GameCard   = 2,   ///< GameCard
-    FsStorageId_NandSystem = 3,   ///< NandSystem
-    FsStorageId_NandUser   = 4,   ///< NandUser
-    FsStorageId_SdCard     = 5,   ///< SdCard
-} FsStorageId;
 
 typedef enum {
     FsContentStorageId_NandSystem = 0,
@@ -317,7 +308,7 @@ Result fsOpenContentStorageFileSystem(FsFileSystem* out, FsContentStorageId cont
 Result fsOpenCustomStorageFileSystem(FsFileSystem* out, FsCustomStorageId custom_storage_id); /// [7.0.0+]
 
 Result fsOpenDataStorageByCurrentProcess(FsStorage* out);
-Result fsOpenDataStorageByDataId(FsStorage* out, u64 dataId, FsStorageId storageId);
+Result fsOpenDataStorageByDataId(FsStorage* out, u64 dataId, NcmStorageId storageId);
 
 Result fsOpenDeviceOperator(FsDeviceOperator* out);
 Result fsOpenSdCardDetectionEventNotifier(FsEventNotifier* out);

@@ -8,7 +8,7 @@
 #include "services/apm.h"
 #include "services/caps.h"
 #include "services/pm.h"
-#include "services/fs.h"
+#include "services/ncm_types.h"
 #include "services/acc.h"
 #include "runtime/env.h"
 #include "runtime/hosversion.h"
@@ -1953,7 +1953,7 @@ Result appletGetDisplayVersion(char *displayVersion) {
     return rc;
 }
 
-Result appletGetLaunchStorageInfoForDebug(FsStorageId *app_storageId, FsStorageId *update_storageId) {
+Result appletGetLaunchStorageInfoForDebug(NcmStorageId *app_storageId, NcmStorageId *update_storageId) {
     if (!serviceIsActive(&g_appletSrv) || !_appletIsApplication())
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     if (hosversionBefore(2,0,0))
@@ -2502,7 +2502,7 @@ IPC_MAKE_CMD_IMPL_INITEXPR(       Result appletCanUseApplicationCore(bool *out),
 IPC_MAKE_CMD_IMPL_INITEXPR(       Result appletGetCallerAppletIdentityInfo(AppletIdentityInfo *info),     &g_appletILibraryAppletSelfAccessor, 14, _appletGetIdentityInfo,      __nx_applet_type != AppletType_LibraryApplet,          info)
 IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletGetMainAppletApplicationControlProperty(NacpStruct *nacp), &g_appletILibraryAppletSelfAccessor, 15, _appletCmdNoInRecvBuf,       __nx_applet_type != AppletType_LibraryApplet, (2,0,0), nacp, sizeof(*nacp))
 
-Result appletGetMainAppletStorageId(FsStorageId *storageId) {
+Result appletGetMainAppletStorageId(NcmStorageId *storageId) {
     u8 tmp=0;
     Result rc=0;
 

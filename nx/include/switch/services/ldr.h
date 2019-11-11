@@ -7,8 +7,7 @@
 #pragma once
 #include "../types.h"
 #include "../sf/service.h"
-#include "../services/fs.h"
-#include "../services/ncm.h"
+#include "../services/ncm_types.h"
 
 typedef struct {
     u8 main_thread_priority;

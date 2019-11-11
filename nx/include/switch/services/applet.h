@@ -12,7 +12,7 @@
 #include "../services/pdm.h"
 #include "../services/caps.h"
 #include "../services/pm.h"
-#include "../services/fs.h"
+#include "../services/ncm_types.h"
 #include "../services/acc.h"
 #include "../kernel/tmem.h"
 #include "../kernel/event.h"
@@ -291,8 +291,8 @@ typedef struct {
 typedef struct {
     u64 application_id;                ///< ApplicationId.
     u32 version;                       ///< Application version.
-    u8 app_storageId;                  ///< FsStorageId for the Application.
-    u8 update_storageId;               ///< FsStorageId for the Application update.
+    u8 app_storageId;                  ///< \ref NcmStorageId for the Application.
+    u8 update_storageId;               ///< \ref NcmStorageId for the Application update.
     u8 unk_xa;                         ///< Unknown.
     u8 pad;                            ///< Padding.
 } AppletApplicationLaunchProperty;
@@ -1298,7 +1298,7 @@ Result appletGetDisplayVersion(char *displayVersion);
  * @param[out] app_storageId Same as AppletApplicationLaunchProperty::app_storageId.
  * @param[out] update_storageId Same as AppletApplicationLaunchProperty::update_storageId.
  */
-Result appletGetLaunchStorageInfoForDebug(FsStorageId *app_storageId, FsStorageId *update_storageId);
+Result appletGetLaunchStorageInfoForDebug(NcmStorageId *app_storageId, NcmStorageId *update_storageId);
 
 /**
  * @brief Blocks the usage of the home button, for short (Home Menu) and long (Overlay) presses.
@@ -1927,11 +1927,11 @@ Result appletGetCallerAppletIdentityInfo(AppletIdentityInfo *info);
 Result appletGetMainAppletApplicationControlProperty(NacpStruct *nacp);
 
 /**
- * @brief Gets the FsStorageId for the MainApplet.
+ * @brief Gets the NcmStorageId for the MainApplet.
  * @note Only available with AppletType_LibraryApplet on [2.0.0+].
- * @param[out] storageId FsStorageId
+ * @param[out] storageId \ref NcmStorageId
  */
-Result appletGetMainAppletStorageId(FsStorageId *storageId);
+Result appletGetMainAppletStorageId(NcmStorageId *storageId);
 
 /**
  * @brief Gets an array of \ref AppletIdentityInfo for the CallerStack.

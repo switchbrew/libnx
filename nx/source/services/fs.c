@@ -4,6 +4,7 @@
 #include "sf/sessionmgr.h"
 #include "runtime/hosversion.h"
 #include "services/fs.h"
+#include "services/ncm_types.h"
 #include "services/acc.h"
 
 __attribute__((weak)) u32 __nx_fs_num_sessions = 3;
@@ -375,7 +376,7 @@ Result fsOpenDataStorageByCurrentProcess(FsStorage* out) {
     return _fsCmdGetSession(&g_fsSrv, &out->s, 200);
 }
 
-Result fsOpenDataStorageByDataId(FsStorage* out, u64 dataId, FsStorageId storageId) {
+Result fsOpenDataStorageByDataId(FsStorage* out, u64 dataId, NcmStorageId storageId) {
     const struct {
         u8 storage_id;
         u64 data_id;

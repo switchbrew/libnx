@@ -98,7 +98,7 @@ typedef struct {
             } unk_x8;
 
             u8 appletId;              ///< \ref AppletId
-            u8 storageId;             ///< See FsStorageId.
+            u8 storageId;             ///< \ref NcmStorageId
             u8 logPolicy;             ///< \ref PdmPlayLogPolicy
             u8 eventType;             ///< \ref PdmAppletEventType
             u8 unused[0xc];           ///< Unused.

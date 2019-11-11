@@ -3,8 +3,7 @@
 #include "service_guard.h"
 #include "runtime/hosversion.h"
 #include "services/ns.h"
-#include "services/fs.h"
-#include "services/ncm.h"
+#include "services/ncm_types.h"
 #include "services/async.h"
 #include "kernel/tmem.h"
 
@@ -206,11 +205,11 @@ Result nsGetApplicationControlData(NsApplicationControlSource source, u64 applic
     return rc;
 }
 
-Result nsGetTotalSpaceSize(FsStorageId storage_id, u64 *size) {
+Result nsGetTotalSpaceSize(NcmStorageId storage_id, u64 *size) {
     return _nsCmdInU64OutU64(&g_nsAppManSrv, storage_id, size, 47);
 }
 
-Result nsGetFreeSpaceSize(FsStorageId storage_id, u64 *size) {
+Result nsGetFreeSpaceSize(NcmStorageId storage_id, u64 *size) {
     return _nsCmdInU64OutU64(&g_nsAppManSrv, storage_id, size, 48);
 }
 
@@ -361,7 +360,7 @@ Result nsEstimateRequiredSize(const NcmContentMetaKey *meta, s32 count, s64 *out
     );
 }
 
-Result nsRequestReceiveApplication(AsyncResult *a, u32 addr, u16 port, u64 application_id, const NcmContentMetaKey *meta, s32 count, FsStorageId storage_id) {
+Result nsRequestReceiveApplication(AsyncResult *a, u32 addr, u16 port, u64 application_id, const NcmContentMetaKey *meta, s32 count, NcmStorageId storage_id) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 

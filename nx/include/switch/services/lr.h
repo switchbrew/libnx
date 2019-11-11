@@ -7,7 +7,7 @@
 #pragma once
 #include "../types.h"
 #include "../sf/service.h"
-#include "../services/fs.h"
+#include "../services/ncm_types.h"
 
 typedef struct {
     Service  s;
@@ -26,7 +26,7 @@ void lrExit(void);
 /// Gets the Service object for the actual lr service session.
 Service* lrGetServiceSession(void);
 
-Result lrOpenLocationResolver(FsStorageId storage, LrLocationResolver* out);
+Result lrOpenLocationResolver(NcmStorageId storage, LrLocationResolver* out);
 Result lrOpenRegisteredLocationResolver(LrRegisteredLocationResolver* out);
 // TODO: Other ILocationResolverManager commands
 

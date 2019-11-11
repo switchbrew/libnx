@@ -10,6 +10,7 @@
 
 #include "../../types.h"
 #include "../../services/fs.h"
+#include "../../services/ncm_types.h"
 
 /// RomFS header.
 typedef struct
@@ -95,7 +96,7 @@ Result romfsMountFromFsdev(const char *path, u64 offset, const char *name);
  * @param storageId Storage ID to mount from.
  * @param name Device mount name.
  */
-Result romfsMountFromDataArchive(u64 dataId, FsStorageId storageId, const char *name);
+Result romfsMountFromDataArchive(u64 dataId, NcmStorageId storageId, const char *name);
 
 /// Unmounts the RomFS device.
 Result romfsUnmount(const char *name);
