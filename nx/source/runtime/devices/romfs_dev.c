@@ -43,11 +43,25 @@ extern int __system_argc;
 extern char** __system_argv;
 
 #define romFS_root(m)   ((romfs_dir*)(m)->dirTable)
-#define romFS_dir(m,x)  ((romfs_dir*) ((u8*)(m)->dirTable  + (x)))
-#define romFS_file(m,x) ((romfs_file*)((u8*)(m)->fileTable + (x)))
 #define romFS_none      ((u32)~0)
 #define romFS_dir_mode  (S_IFDIR | S_IRUSR | S_IRGRP | S_IROTH)
 #define romFS_file_mode (S_IFREG | S_IRUSR | S_IRGRP | S_IROTH)
+
+static romfs_dir *romFS_dir(romfs_mount *mount, u32 off)
+{
+    if (off + sizeof(romfs_dir) > mount->header.dirTableSize) return NULL;
+    romfs_dir* curDir = ((romfs_dir*) ((u8*)mount->dirTable + off));
+    if (off + sizeof(romfs_dir) + curDir->nameLen > mount->header.dirTableSize) return NULL;
+    return curDir;
+}
+
+static romfs_file *romFS_file(romfs_mount *mount, u32 off)
+{
+    if (off + sizeof(romfs_file) > mount->header.fileTableSize) return NULL;
+    romfs_file* curFile = ((romfs_file*) ((u8*)mount->fileTable + off));
+    if (off + sizeof(romfs_file) + curFile->nameLen > mount->header.fileTableSize) return NULL;
+    return curFile;
+}
 
 static ssize_t _romfs_read(romfs_mount *mount, u64 offset, void* buffer, u64 size)
 {
@@ -413,38 +427,44 @@ static u32 calcHash(u32 parent, const uint8_t* name, u32 namelen, u32 total)
     return hash % total;
 }
 
-static romfs_dir* searchForDir(romfs_mount *mount, romfs_dir* parent, const uint8_t* name, u32 namelen)
+static int searchForDir(romfs_mount *mount, romfs_dir* parent, const uint8_t* name, u32 namelen, romfs_dir** out)
 {
     u64 parentOff = (uintptr_t)parent - (uintptr_t)mount->dirTable;
     u32 hash = calcHash(parentOff, name, namelen, mount->header.dirHashTableSize/4);
     romfs_dir* curDir = NULL;
     u32 curOff;
+    *out = NULL;
     for (curOff = mount->dirHashTable[hash]; curOff != romFS_none; curOff = curDir->nextHash)
     {
         curDir = romFS_dir(mount, curOff);
+        if (curDir == NULL) return EFAULT;
         if (curDir->parent != parentOff) continue;
         if (curDir->nameLen != namelen) continue;
         if (memcmp(curDir->name, name, namelen) != 0) continue;
-        return curDir;
+        *out = curDir;
+        return 0;
     }
-    return NULL;
+    return ENOENT;
 }
 
-static romfs_file* searchForFile(romfs_mount *mount, romfs_dir* parent, const uint8_t* name, u32 namelen)
+static int searchForFile(romfs_mount *mount, romfs_dir* parent, const uint8_t* name, u32 namelen, romfs_file** out)
 {
     u64 parentOff = (uintptr_t)parent - (uintptr_t)mount->dirTable;
     u32 hash = calcHash(parentOff, name, namelen, mount->header.fileHashTableSize/4);
     romfs_file* curFile = NULL;
     u32 curOff;
+    *out = NULL;
     for (curOff = mount->fileHashTable[hash]; curOff != romFS_none; curOff = curFile->nextHash)
     {
         curFile = romFS_file(mount, curOff);
+        if (curFile == NULL) return EFAULT;
         if (curFile->parent != parentOff) continue;
         if (curFile->nameLen != namelen) continue;
         if (memcmp(curFile->name, name, namelen) != 0) continue;
-        return curFile;
+        *out = curFile;
+        return 0;
     }
-    return NULL;
+    return ENOENT;
 }
 
 static int navigateToDir(romfs_mount *mount, romfs_dir** ppDir, const char** pPath, bool isDir)
@@ -490,13 +510,15 @@ static int navigateToDir(romfs_mount *mount, romfs_dir** ppDir, const char** pPa
             if (component[1]=='.' && !component[2])
             {
                 *ppDir = romFS_dir(mount, (*ppDir)->parent);
+                if (!*ppDir)
+                    return EFAULT;
                 continue;
             }
         }
 
-        *ppDir = searchForDir(mount, *ppDir, (uint8_t*)component, strlen(component));
-        if (!*ppDir)
-            return EEXIST;
+        int ret = searchForDir(mount, *ppDir, (uint8_t*)component, strlen(component), ppDir);
+        if (ret !=0)
+            return ret;
     }
 
     if (!isDir && !**pPath)
@@ -523,6 +545,7 @@ static nlink_t dir_nlink(romfs_mount *mount, romfs_dir *dir)
     while(offset != romFS_none)
     {
         romfs_dir *tmp = romFS_dir(mount, offset);
+        if (!tmp) break;
         ++count;
         offset = tmp->sibling;
     }
@@ -531,6 +554,7 @@ static nlink_t dir_nlink(romfs_mount *mount, romfs_dir *dir)
     while(offset != romFS_none)
     {
         romfs_file *tmp = romFS_file(mount, offset);
+        if (!tmp) break;
         ++count;
         offset = tmp->sibling;
     }
@@ -562,13 +586,14 @@ int romfs_open(struct _reent *r, void *fileStruct, const char *path, int flags, 
     if (r->_errno != 0)
         return -1;
 
-    romfs_file* file = searchForFile(fileobj->mount, curDir, (uint8_t*)path, strlen(path));
-    if (!file)
+    romfs_file* file = NULL;
+    int ret = searchForFile(fileobj->mount, curDir, (uint8_t*)path, strlen(path), &file);
+    if (ret != 0)
     {
-        if(flags & O_CREAT)
+        if(ret == ENOENT && (flags & O_CREAT))
             r->_errno = EROFS;
         else
-            r->_errno = ENOENT;
+            r->_errno = ret;
         return -1;
     }
     else if((flags & O_CREAT) && (flags & O_EXCL))
@@ -680,8 +705,15 @@ int romfs_stat(struct _reent *r, const char *path, struct stat *st)
     if(r->_errno != 0)
         return -1;
 
-    romfs_dir* dir = searchForDir(mount, curDir, (uint8_t*)path, strlen(path));
-    if(dir)
+    romfs_dir* dir = NULL;
+    int ret=0;
+    ret = searchForDir(mount, curDir, (uint8_t*)path, strlen(path), &dir);
+    if (ret != 0 && ret != ENOENT)
+    {
+        r->_errno = ret;
+        return -1;
+    }
+    if(ret == 0)
     {
         memset(st, 0, sizeof(*st));
         st->st_ino     = dir_inode(mount, dir);
@@ -695,8 +727,14 @@ int romfs_stat(struct _reent *r, const char *path, struct stat *st)
         return 0;
     }
 
-    romfs_file* file = searchForFile(mount, curDir, (uint8_t*)path, strlen(path));
-    if(file)
+    romfs_file* file = NULL;
+    ret = searchForFile(mount, curDir, (uint8_t*)path, strlen(path), &file);
+    if (ret != 0 && ret != ENOENT)
+    {
+        r->_errno = ret;
+        return -1;
+    }
+    if(ret == 0)
     {
         memset(st, 0, sizeof(*st));
         st->st_ino   = file_inode(mount, file);
@@ -774,6 +812,11 @@ int romfs_dirnext(struct _reent *r, DIR_ITER *dirState, char *filename, struct s
     {
         /* '..' entry */
         romfs_dir* dir = romFS_dir(iter->mount, iter->dir->parent);
+        if(!dir)
+        {
+            r->_errno = EFAULT;
+            return -1;
+        }
 
         memset(filestat, 0, sizeof(*filestat));
         filestat->st_ino = dir_inode(iter->mount, dir);
@@ -787,6 +830,12 @@ int romfs_dirnext(struct _reent *r, DIR_ITER *dirState, char *filename, struct s
     if(iter->childDir != romFS_none)
     {
         romfs_dir* dir = romFS_dir(iter->mount, iter->childDir);
+        if(!dir)
+        {
+            r->_errno = EFAULT;
+            return -1;
+        }
+
         iter->childDir = dir->sibling;
 
         memset(filestat, 0, sizeof(*filestat));
@@ -808,6 +857,12 @@ int romfs_dirnext(struct _reent *r, DIR_ITER *dirState, char *filename, struct s
     else if(iter->childFile != romFS_none)
     {
         romfs_file* file = romFS_file(iter->mount, iter->childFile);
+        if(!file)
+        {
+            r->_errno = EFAULT;
+            return -1;
+        }
+
         iter->childFile = file->sibling;
 
         memset(filestat, 0, sizeof(*filestat));
