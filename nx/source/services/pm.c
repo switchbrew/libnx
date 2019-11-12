@@ -3,7 +3,6 @@
 #include "service_guard.h"
 #include "runtime/hosversion.h"
 #include "services/pm.h"
-#include "services/ncm.h"
 
 #define PM_GENERATE_SERVICE_INIT(name)                  \
 static Service g_pm##name##Srv;                         \

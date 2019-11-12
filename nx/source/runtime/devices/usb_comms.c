@@ -4,7 +4,6 @@
 #include "result.h"
 #include "kernel/rwlock.h"
 #include "services/fatal.h"
-#include "services/usb.h"
 #include "services/usbds.h"
 #include "runtime/hosversion.h"
 #include "runtime/devices/usb_comms.h"

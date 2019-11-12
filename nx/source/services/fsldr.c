@@ -2,7 +2,6 @@
 #include <string.h>
 #include "service_guard.h"
 #include "runtime/hosversion.h"
-#include "services/fs.h"
 #include "services/fsldr.h"
 
 static Service g_fsldrSrv;

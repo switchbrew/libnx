@@ -2,7 +2,6 @@
 #include <malloc.h>
 #include "types.h"
 #include "result.h"
-#include "services/caps.h"
 #include "services/applet.h"
 #include "applets/libapplet.h"
 #include "applets/web.h"

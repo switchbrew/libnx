@@ -10,7 +10,7 @@
 #include "../types.h"
 #include "../kernel/event.h"
 #include "../sf/service.h"
-#include "../services/ncm.h"
+#include "../services/ncm_types.h"
 
 /// LaunchFlag
 typedef enum {

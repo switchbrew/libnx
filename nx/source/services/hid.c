@@ -5,7 +5,6 @@
 #include <malloc.h>
 #include "kernel/shmem.h"
 #include "kernel/rwlock.h"
-#include "kernel/event.h"
 #include "services/applet.h"
 #include "services/hid.h"
 #include "runtime/hosversion.h"

@@ -1,11 +1,7 @@
 #include "service_guard.h"
 #include <string.h>
-#include "kernel/event.h"
-#include "kernel/tmem.h"
 #include "services/grc.h"
-#include "services/caps.h"
 #include "services/applet.h"
-#include "display/native_window.h"
 #include "audio/audio.h"
 #include "runtime/hosversion.h"
 

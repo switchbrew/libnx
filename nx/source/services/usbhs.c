@@ -2,7 +2,6 @@
 #include <string.h>
 #include "arm/cache.h"
 #include "runtime/hosversion.h"
-#include "services/usb.h"
 #include "services/usbhs.h"
 
 static Service g_usbHsSrv;

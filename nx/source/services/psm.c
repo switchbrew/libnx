@@ -1,6 +1,5 @@
 #define NX_SERVICE_ASSUME_NON_DOMAIN
 #include "service_guard.h"
-#include "kernel/event.h"
 #include "services/psm.h"
 
 static Service g_psmSrv;

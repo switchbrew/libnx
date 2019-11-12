@@ -3,9 +3,7 @@
 #include "service_guard.h"
 #include "runtime/hosversion.h"
 #include "services/applet.h"
-#include "services/caps.h"
 #include "services/capssu.h"
-#include "services/acc.h"
 
 static Service g_capssuSrv;
 

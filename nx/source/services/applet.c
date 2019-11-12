@@ -1,18 +1,10 @@
 #include <string.h>
 #include "service_guard.h"
 #include "arm/counter.h"
-#include "kernel/tmem.h"
-#include "kernel/event.h"
 #include "services/fatal.h"
 #include "services/applet.h"
-#include "services/apm.h"
-#include "services/caps.h"
-#include "services/pm.h"
-#include "services/ncm_types.h"
-#include "services/acc.h"
 #include "runtime/env.h"
 #include "runtime/hosversion.h"
-#include "nacp.h"
 
 __attribute__((weak)) u32 __nx_applet_type = AppletType_Default;
 __attribute__((weak)) bool __nx_applet_auto_notifyrunning = true;

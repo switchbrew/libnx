@@ -11,8 +11,6 @@
 #include "runtime/devices/romfs_dev.h"
 #include "runtime/devices/fs_dev.h"
 #include "runtime/util/utf.h"
-#include "services/fs.h"
-#include "services/ncm_types.h"
 #include "runtime/env.h"
 #include "nro.h"
 

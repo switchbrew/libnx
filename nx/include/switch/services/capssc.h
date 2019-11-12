@@ -7,7 +7,6 @@
 #pragma once
 #include "../types.h"
 #include "../sf/service.h"
-#include "../services/caps.h"
 
 /// Initialize caps:sc. Only available on [2.0.0+].
 Result capsscInitialize(void);

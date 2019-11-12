@@ -5,7 +5,6 @@
 #include "kernel/tmem.h"
 #include "services/applet.h"
 #include "services/irs.h"
-#include "services/hid.h"
 
 typedef struct {
     bool initialized;

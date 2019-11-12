@@ -3,9 +3,7 @@
 #include "service_guard.h"
 #include "runtime/hosversion.h"
 #include "services/ns.h"
-#include "services/ncm_types.h"
 #include "services/async.h"
-#include "kernel/tmem.h"
 
 static Service g_nsAppManSrv, g_nsGetterSrv;
 static Service g_nsvmSrv;

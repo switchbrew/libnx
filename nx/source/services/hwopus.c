@@ -1,7 +1,6 @@
 #define NX_SERVICE_ASSUME_NON_DOMAIN
 #include <string.h>
 #include "service_guard.h"
-#include "kernel/tmem.h"
 #include "services/hwopus.h"
 #include "runtime/hosversion.h"
 

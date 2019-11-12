@@ -1,9 +1,7 @@
 #define NX_SERVICE_ASSUME_NON_DOMAIN
 #include "service_guard.h"
 #include <string.h>
-#include "kernel/event.h"
 #include "services/pdm.h"
-#include "services/acc.h"
 #include "runtime/hosversion.h"
 
 static Service g_pdmqrySrv;

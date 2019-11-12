@@ -1,7 +1,6 @@
 #include "service_guard.h"
 #include <string.h>
 #include "runtime/hosversion.h"
-#include "services/hid.h"
 #include "services/applet.h"
 #include "services/nfc.h"
 

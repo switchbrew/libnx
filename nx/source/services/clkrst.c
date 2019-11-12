@@ -1,6 +1,5 @@
 #define NX_SERVICE_ASSUME_NON_DOMAIN
 #include "service_guard.h"
-#include "services/pcv.h"
 #include "services/clkrst.h"
 #include "runtime/hosversion.h"
 

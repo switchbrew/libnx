@@ -1,7 +1,6 @@
 #define NX_SERVICE_ASSUME_NON_DOMAIN
 #include "service_guard.h"
 #include "runtime/hosversion.h"
-#include "services/caps.h"
 #include "services/capssc.h"
 
 static Service g_capsscSrv;

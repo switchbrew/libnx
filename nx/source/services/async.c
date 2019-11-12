@@ -1,7 +1,6 @@
 #include "sf/service.h"
 #include "runtime/hosversion.h"
 #include "services/async.h"
-#include "applets/error.h"
 
 static Result _asyncCmdNoIO(Service* srv, u32 cmd_id) {
     return serviceDispatch(srv, cmd_id);

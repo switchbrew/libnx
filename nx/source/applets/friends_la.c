@@ -1,7 +1,6 @@
 #include <string.h>
 #include "types.h"
 #include "result.h"
-#include "services/acc.h"
 #include "services/applet.h"
 #include "applets/libapplet.h"
 #include "applets/friends_la.h"

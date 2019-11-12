@@ -3,7 +3,6 @@
 #include <string.h>
 #include "kernel/tmem.h"
 #include "services/hiddbg.h"
-#include "services/hid.h"
 #include "runtime/hosversion.h"
 
 static Service g_hiddbgSrv;

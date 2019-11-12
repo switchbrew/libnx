@@ -8,7 +8,6 @@
 #pragma once
 #include "../types.h"
 #include "../sf/service.h"
-#include "../services/hid.h"
 
 /// NfpServiceType
 typedef enum {

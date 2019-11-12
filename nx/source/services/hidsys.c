@@ -1,10 +1,8 @@
 #define NX_SERVICE_ASSUME_NON_DOMAIN
 #include "service_guard.h"
 #include <string.h>
-#include "kernel/event.h"
 #include "services/applet.h"
 #include "services/hidsys.h"
-#include "services/hid.h"
 #include "runtime/hosversion.h"
 
 static Service g_hidsysSrv;

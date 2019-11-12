@@ -6,7 +6,6 @@
  */
 #pragma once
 #include "../types.h"
-#include "../services/applet.h"
 #include "../services/set.h"
 
 /// Error type for ErrorCommonHeader.type.

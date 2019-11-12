@@ -12,7 +12,6 @@
 #include "runtime/devices/fs_dev.h"
 #include "runtime/util/utf.h"
 #include "runtime/env.h"
-#include "services/fs.h"
 #include "services/time.h"
 
 #include "path_buf.h"

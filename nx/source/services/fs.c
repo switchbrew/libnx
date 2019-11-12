@@ -4,8 +4,6 @@
 #include "sf/sessionmgr.h"
 #include "runtime/hosversion.h"
 #include "services/fs.h"
-#include "services/ncm_types.h"
-#include "services/acc.h"
 
 __attribute__((weak)) u32 __nx_fs_num_sessions = 3;
 

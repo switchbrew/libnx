@@ -1,7 +1,6 @@
 #include "service_guard.h"
 #include <string.h>
 #include "arm/cache.h"
-#include "services/usb.h"
 #include "services/usbds.h"
 #include "runtime/hosversion.h"
 #include "runtime/util/utf.h"
