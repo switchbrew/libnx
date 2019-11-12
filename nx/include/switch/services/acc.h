@@ -44,6 +44,11 @@ typedef struct {
     char nickname[0x20];   ///< UTF-8 Nickname.
 } AccountProfileBase;
 
+/// NetworkServiceAccountId
+typedef struct {
+    u64 id;                ///< Id.
+} AccountNetworkServiceAccountId;
+
 /**
  * @brief Sets the \ref AccountServiceType for initialization. Call this function before \ref accountInitialize, if needed.
  * @note By default ::AccountServiceType_NotInitialized will be used.
