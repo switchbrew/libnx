@@ -133,5 +133,5 @@ typedef struct {
 typedef struct {
     u64 program_id;         ///< ProgramId
     u8 storageID;           ///< \ref NcmStorageId
-    u8 pad[7];
+    u8 pad[7];              ///< Padding
 } NcmProgramLocation;

@@ -299,7 +299,7 @@ Result nsEstimateRequiredSize(const NcmContentMetaKey *meta, s32 count, s64 *out
 
 /**
  * @brief RequestReceiveApplication
- * @note The system will use the input addr/port with connect(). addr/port are little-endian.
+ * @note This is the Application version of \ref nssuControlRequestReceiveSystemUpdate, see the notes for that.
  * @note Only available on [4.0.0+].
  * @param[out] a \ref AsyncResult
  * @param[in] addr Server IPv4 address.
@@ -328,8 +328,7 @@ Result nsGetReceiveApplicationProgress(u64 application_id, NsReceiveApplicationP
 
 /**
  * @brief RequestSendApplication
- * @note The system will use the input addr/port with bind(), the input addr will eventually be validated with the addr from accept(). addr/port are little-endian.
- * @note After the system accepts a connection etc, an error will be thrown if the system is Internet-connected.
+ * @note This is the Application version of \ref nssuRequestSendSystemUpdate, see the notes for that.
  * @note Only available on [4.0.0+].
  * @param[out] a \ref AsyncResult
  * @param[in] addr Client IPv4 address.
