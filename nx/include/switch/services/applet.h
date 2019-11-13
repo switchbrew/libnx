@@ -1282,23 +1282,12 @@ Result appletRequestLaunchApplicationForQuest(u64 application_id, AppletStorage*
  */
 Result appletGetDesiredLanguage(u64 *LanguageCode);
 
-/// Only available with AppletType_*Application.
-Result appletSetTerminateResult(Result res);
-
 /**
  * @brief Gets the DisplayVersion for the current host application control.nacp.
  * @note Only available with AppletType_*Application.
  * @param[out] displayVersion Output DisplayVersion string, must be at least 0x10-bytes. This is always NUL-terminated.
  */
 Result appletGetDisplayVersion(char *displayVersion);
-
-/**
- * @brief Gets the LaunchStorageInfo.
- * @note Only available with AppletType_*Application on [2.0.0+].
- * @param[out] app_storageId Same as AppletApplicationLaunchProperty::app_storageId.
- * @param[out] update_storageId Same as AppletApplicationLaunchProperty::update_storageId.
- */
-Result appletGetLaunchStorageInfoForDebug(NcmStorageId *app_storageId, NcmStorageId *update_storageId);
 
 /**
  * @brief Blocks the usage of the home button, for short (Home Menu) and long (Overlay) presses.
@@ -1467,15 +1456,6 @@ Result appletRestartProgram(const void* buffer, size_t size);
  * @param[out] programIndex ProgramIndex, -1 when there was no previous program.
  */
 Result appletGetPreviousProgramIndex(s32 *programIndex);
-
-/**
- * @brief Gets an Event which is signaled for GpuErrorDetected.
- * @note Only available with AppletType_*Application on [8.0.0+].
- * @note The Event must be closed by the user once finished with it.
- * @note Official sw waits on this Event from a seperate thread, triggering an abort when it's signaled.
- * @param[out] out_event Output Event with autoclear=false.
- */
-Result appletGetGpuErrorDetectedSystemEvent(Event *out_event);
 
 /**
  * @brief CreateMovieMaker. Do not use this directly, use \ref grcCreateMovieMaker instead.
@@ -2224,6 +2204,35 @@ Result appletRequestLaunchApplicationWithUserAndArgumentForDebug(u64 application
  * @param[out] info \ref AppletResourceUsageInfo
  */
 Result appletGetAppletResourceUsageInfo(AppletResourceUsageInfo *info);
+
+///@}
+
+///@name Common cmds
+///@{
+
+/**
+ * @brief SetTerminateResult
+ * @note Only available with AppletType_*Application. Or with AppletType_SystemApplet, AppletType_LibraryApplet, or AppletType_OverlayApplet, on [9.0.0+].
+ * @param[in] res Result
+ */
+Result appletSetTerminateResult(Result res);
+
+/**
+ * @brief Gets the LaunchStorageInfo.
+ * @note Only available with AppletType_*Application on [2.0.0+], or with AppletType_LibraryApplet on [9.0.0+].
+ * @param[out] app_storageId Same as AppletApplicationLaunchProperty::app_storageId.
+ * @param[out] update_storageId Same as AppletApplicationLaunchProperty::update_storageId.
+ */
+Result appletGetLaunchStorageInfoForDebug(NcmStorageId *app_storageId, NcmStorageId *update_storageId);
+
+/**
+ * @brief Gets an Event which is signaled for GpuErrorDetected.
+ * @note Only available with AppletType_*Application on [8.0.0+], or with AppletType_LibraryApplet on [9.0.0+].
+ * @note The Event must be closed by the user once finished with it.
+ * @note Official sw waits on this Event from a seperate thread, triggering an abort when it's signaled.
+ * @param[out] out_event Output Event with autoclear=false.
+ */
+Result appletGetGpuErrorDetectedSystemEvent(Event *out_event);
 
 ///@}
 

@@ -1926,7 +1926,6 @@ Result appletRequestLaunchApplicationForQuest(u64 application_id, AppletStorage*
 }
 
 IPC_MAKE_CMD_IMPL_INITEXPR(Result appletGetDesiredLanguage(u64 *LanguageCode), &g_appletIFunctions, 21, _appletCmdNoInOutU64, !_appletIsApplication(), LanguageCode)
-IPC_MAKE_CMD_IMPL_INITEXPR(Result appletSetTerminateResult(Result res),        &g_appletIFunctions, 22, _appletCmdInU32NoOut, !_appletIsApplication(), res)
 
 Result appletGetDisplayVersion(char *displayVersion) {
     char out[0x10]={0};
@@ -1942,24 +1941,6 @@ Result appletGetDisplayVersion(char *displayVersion) {
         strncpy(displayVersion, out, 0x10);
         displayVersion[0xf] = 0;
     }
-    return rc;
-}
-
-Result appletGetLaunchStorageInfoForDebug(NcmStorageId *app_storageId, NcmStorageId *update_storageId) {
-    if (!serviceIsActive(&g_appletSrv) || !_appletIsApplication())
-        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-    if (hosversionBefore(2,0,0))
-        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-
-    struct {
-        u8 app_storageId;
-        u8 update_storageId;
-    } out;
-
-    serviceAssumeDomain(&g_appletIFunctions);
-    Result rc = serviceDispatchOut(&g_appletIFunctions, 24, out);
-    if (R_SUCCEEDED(rc) && app_storageId) *app_storageId = out.app_storageId;
-    if (R_SUCCEEDED(rc) && update_storageId) *update_storageId = out.update_storageId;
     return rc;
 }
 
@@ -2238,7 +2219,6 @@ Result appletRestartProgram(const void* buffer, size_t size) {
 }
 
 IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletGetPreviousProgramIndex(s32 *programIndex),               &g_appletIFunctions, 123,  _appletCmdNoInOutU32,       !_appletIsApplication(), (5,0,0), (u32*)programIndex)
-IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletGetGpuErrorDetectedSystemEvent(Event *out_event),         &g_appletIFunctions, 130,  _appletCmdGetEvent,         !_appletIsApplication(), (8,0,0), out_event, false)
 IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletCreateMovieMaker(Service* srv_out, TransferMemory *tmem), &g_appletIFunctions, 1000, _appletCmdInTmemOutSession, !_appletIsApplication(), (5,0,0), srv_out, tmem)
 IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletPrepareForJit(void),                                      &g_appletIFunctions, 1001, _appletCmdNoIO,             !_appletIsApplication(), (5,0,0))
 
@@ -2675,6 +2655,65 @@ Result appletGetAppletResourceUsageInfo(AppletResourceUsageInfo *info) {
 
     serviceAssumeDomain(&g_appletIDebugFunctions);
     return serviceDispatchOut(&g_appletIDebugFunctions, 40, *info);
+}
+
+// Common cmds
+Result appletSetTerminateResult(Result res) {
+    if (!serviceIsActive(&g_appletSrv) || (!_appletIsApplication() && !serviceIsActive(&g_appletIAppletCommonFunctions)))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (serviceIsActive(&g_appletIAppletCommonFunctions) && hosversionBefore(9,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    Service *srv = &g_appletIFunctions;
+    u32 cmd_id = 22;
+    if (serviceIsActive(&g_appletIAppletCommonFunctions)) {
+        srv = &g_appletIAppletCommonFunctions;
+        cmd_id = 0;
+    }
+
+    return _appletCmdInU32NoOut(srv, res, cmd_id);
+}
+
+Result appletGetLaunchStorageInfoForDebug(NcmStorageId *app_storageId, NcmStorageId *update_storageId) {
+    if (!serviceIsActive(&g_appletSrv) || (!_appletIsApplication() && __nx_applet_type != AppletType_LibraryApplet))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (_appletIsApplication() && hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    if (__nx_applet_type == AppletType_LibraryApplet && hosversionBefore(9,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    Service *srv = &g_appletIFunctions;
+    u32 cmd_id = 24;
+    if (__nx_applet_type == AppletType_LibraryApplet) {
+        srv = &g_appletILibraryAppletSelfAccessor;
+        cmd_id = 120;
+    }
+
+    struct {
+        u8 app_storageId;
+        u8 update_storageId;
+    } out;
+
+    serviceAssumeDomain(srv);
+    Result rc = serviceDispatchOut(srv, cmd_id, out);
+    if (R_SUCCEEDED(rc) && app_storageId) *app_storageId = out.app_storageId;
+    if (R_SUCCEEDED(rc) && update_storageId) *update_storageId = out.update_storageId;
+    return rc;
+}
+
+Result appletGetGpuErrorDetectedSystemEvent(Event *out_event) {
+    if (!serviceIsActive(&g_appletSrv) || (!_appletIsApplication() && __nx_applet_type != AppletType_LibraryApplet))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (_appletIsApplication() && hosversionBefore(8,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    if (__nx_applet_type == AppletType_LibraryApplet && hosversionBefore(9,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    Service *srv = &g_appletIFunctions;
+    if (__nx_applet_type == AppletType_LibraryApplet)
+        srv = &g_appletILibraryAppletSelfAccessor;
+
+    return _appletCmdGetEvent(srv, out_event, false, 130);
 }
 
 // State / other
