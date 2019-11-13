@@ -61,7 +61,7 @@ typedef struct {
     u64 fileSize;                   ///< File size.
 } FsDirectoryEntry;
 
-/// Save Struct
+/// SaveDataAttribute
 typedef struct {
     u64 program_id;                 ///< ProgramId of the savedata to access when accessing other programs' savedata via SaveData, otherwise FS_SAVEDATA_CURRENT_PROGRAMID.
     AccountUid uid;                 ///< \ref AccountUid for the user-specific savedata to access, otherwise 0 for common savedata.
@@ -73,22 +73,22 @@ typedef struct {
     u64 unk_x28;                    ///< 0 for SystemSaveData/SaveData.
     u64 unk_x30;                    ///< 0 for SystemSaveData/SaveData.
     u64 unk_x38;                    ///< 0 for SystemSaveData/SaveData.
-} FsSave;
+} FsSaveDataAttribute;
 
-/// SaveDataExtraData Struct
+/// SaveDataExtraData
 typedef struct {
-    FsSave save;      ///< Save struct.
-    u64 ownerId;      ///< Id of the owner of this save data. 0 for SystemSaveData.
-    u64 timestamp;    ///< POSIX timestamp.
-    u32 flags;        ///< Save data flags. See \ref FsSaveDataFlags.
-    u32 unk_x54;      ///< Normally 0. Possibly unused?
-    s64 dataSize;     ///< Usable save data size.
-    s64 journalSize;  ///< Journal size of the save data.
-    u64 commitId;     ///< Id of the latest commit.
-    u8 unused[0x190]; ///< Uninitialized.
+    FsSaveDataAttribute attr;       ///< \ref FsSaveDataAttribute
+    u64 ownerId;                    ///< Id of the owner of this save data. 0 for SystemSaveData.
+    u64 timestamp;                  ///< POSIX timestamp.
+    u32 flags;                      ///< Save data flags. See \ref FsSaveDataFlags.
+    u32 unk_x54;                    ///< Normally 0. Possibly unused?
+    s64 dataSize;                   ///< Usable save data size.
+    s64 journalSize;                ///< Journal size of the save data.
+    u64 commitId;                   ///< Id of the latest commit.
+    u8 unused[0x190];               ///< Uninitialized.
 } FsSaveDataExtraData;
 
-/// SaveCreate Struct
+/// SaveDataCreationInfo
 typedef struct {
     s64 size;           ///< Size of the save data.
     s64 journalSize;    ///< Journal size of the save data.
@@ -98,15 +98,16 @@ typedef struct {
     u8 saveDataSpaceId; ///< See \ref FsSaveDataSpaceId.
     u8 unk;             ///< 0 for SystemSaveData.
     u8 padding[0x1A];   ///< Uninitialized for SystemSaveData.
-} FsSaveCreate;
+} FsSaveDataCreationInfo;
 
+/// SaveDataInfo
 typedef struct {
     u64 saveID_unk;
     u8 saveDataSpaceId; ///< See \ref FsSaveDataSpaceId.
     u8 saveDataType;    ///< See \ref FsSaveDataType.
     u8 pad[6];          ///< Padding.
     AccountUid uid;     ///< FsSave::userID
-    u64 saveID;         ///< See saveID for \ref FsSave.
+    u64 saveID;         ///< FsSaveDataAttribute::saveID
     u64 application_id; ///< ApplicationId for FsSaveDataType_SaveData.
     u64 size;           ///< Raw saveimage size.
     u16 index;          ///< Save data index.
@@ -159,25 +160,28 @@ typedef enum {
 } FsWriteOption;
 
 typedef enum {
-    FsContentStorageId_NandSystem = 0,
-    FsContentStorageId_NandUser   = 1,
-    FsContentStorageId_SdCard     = 2,
+    FsContentStorageId_System = 0,
+    FsContentStorageId_User   = 1,
+    FsContentStorageId_SdCard = 2,
 } FsContentStorageId;
 
 typedef enum {
-    FsCustomStorageId_NandUser = 0,
+    FsCustomStorageId_System   = 0,
     FsCustomStorageId_SdCard   = 1,
 } FsCustomStorageId;
 
+/// SaveDataSpaceId
 typedef enum {
-    FsSaveDataSpaceId_NandSystem       = 0,
-    FsSaveDataSpaceId_NandUser         = 1,
+    FsSaveDataSpaceId_System           = 0,
+    FsSaveDataSpaceId_User             = 1,
     FsSaveDataSpaceId_SdCard           = 2,
-    FsSaveDataSpaceId_TemporaryStorage = 3,
+    FsSaveDataSpaceId_TemporaryStorage = 3,    ///< [3.0.0+]
+    FsSaveDataSpaceId_ProperSystem     = 100,  ///< [3.0.0+]
 
-    FsSaveDataSpaceId_All              = -1, ///< Pseudo value for fsOpenSaveDataInfoReader().
+    FsSaveDataSpaceId_All              = -1,   ///< Pseudo value for fsOpenSaveDataInfoReader().
 } FsSaveDataSpaceId;
 
+/// SaveDataType
 typedef enum {
     FsSaveDataType_SystemSaveData           = 0,
     FsSaveDataType_SaveData                 = 1,
@@ -244,13 +248,15 @@ typedef enum {
     FsBisStorageId_SystemProperPartition           = 33,
 } FsBisStorageId;
 
+/// FileSystemType
 typedef enum {
-    FsFileSystemType_Logo               = 2,
-    FsFileSystemType_ContentControl     = 3,
-    FsFileSystemType_ContentManual      = 4,
-    FsFileSystemType_ContentMeta        = 5,
-    FsFileSystemType_ContentData        = 6,
-    FsFileSystemType_ApplicationPackage = 7,
+    FsFileSystemType_Logo               = 2,  ///< Logo
+    FsFileSystemType_ContentControl     = 3,  ///< ContentControl
+    FsFileSystemType_ContentManual      = 4,  ///< ContentManual
+    FsFileSystemType_ContentMeta        = 5,  ///< ContentMeta
+    FsFileSystemType_ContentData        = 6,  ///< ContentData
+    FsFileSystemType_ApplicationPackage = 7,  ///< ApplicationPackage
+    FsFileSystemType_RegisteredUpdate   = 8,  ///< [4.0.0+] RegisteredUpdate
 } FsFileSystemType;
 
 typedef enum {
@@ -286,7 +292,7 @@ Result fsOpenBisStorage(FsStorage* out, FsBisStorageId partitionId);
 /// Do not call this directly, see fs_dev.h.
 Result fsOpenSdCardFileSystem(FsFileSystem* out);
 
-Result fsCreateSaveDataFileSystemBySystemSaveDataId(const FsSave* save, const FsSaveCreate* create);
+Result fsCreateSaveDataFileSystemBySystemSaveDataId(const FsSaveDataAttribute* attr, const FsSaveDataCreationInfo* creation_info);
 Result fsDeleteSaveDataFileSystemBySaveDataSpaceId(FsSaveDataSpaceId saveDataSpaceId, u64 saveID); /// [2.0.0+]
 
 Result fsIsExFatSupported(bool* out);
@@ -295,8 +301,8 @@ Result fsOpenGameCardFileSystem(FsFileSystem* out, const FsGameCardHandle* handl
 
 Result fsExtendSaveDataFileSystem(FsSaveDataSpaceId saveDataSpaceId, u64 saveID, s64 dataSize, s64 journalSize); /// [3.0.0+]
 
-Result fsOpenSaveDataFileSystem(FsFileSystem* out, FsSaveDataSpaceId saveDataSpaceId, const FsSave *save);
-Result fsOpenSaveDataFileSystemBySystemSaveDataId(FsFileSystem* out, FsSaveDataSpaceId saveDataSpaceId, const FsSave *save);
+Result fsOpenSaveDataFileSystem(FsFileSystem* out, FsSaveDataSpaceId saveDataSpaceId, const FsSaveDataAttribute *attr);
+Result fsOpenSaveDataFileSystemBySystemSaveDataId(FsFileSystem* out, FsSaveDataSpaceId saveDataSpaceId, const FsSaveDataAttribute *attr);
 
 Result fsReadSaveDataFileSystemExtraDataBySaveDataSpaceId(void* buf, size_t len, FsSaveDataSpaceId saveDataSpaceId, u64 saveID);
 Result fsReadSaveDataFileSystemExtraData(void* buf, size_t len, u64 saveID);

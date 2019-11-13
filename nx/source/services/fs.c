@@ -210,11 +210,11 @@ Result fsOpenSdCardFileSystem(FsFileSystem* out) {
     return _fsCmdGetSession(&g_fsSrv, &out->s, 18);
 }
 
-Result fsCreateSaveDataFileSystemBySystemSaveDataId(const FsSave* save, const FsSaveCreate* create) {
+Result fsCreateSaveDataFileSystemBySystemSaveDataId(const FsSaveDataAttribute* attr, const FsSaveDataCreationInfo* creation_info) {
     const struct {
-        FsSave save;
-        FsSaveCreate create;
-    } in = { *save, *create };
+        FsSaveDataAttribute attr;
+        FsSaveDataCreationInfo creation_info;
+    } in = { *attr, *creation_info };
 
     return _fsObjectDispatchIn(&g_fsSrv, 23, in);
 }
@@ -267,12 +267,12 @@ Result fsExtendSaveDataFileSystem(FsSaveDataSpaceId saveDataSpaceId, u64 saveID,
     return _fsObjectDispatchIn(&g_fsSrv, 32, in);
 }
 
-Result fsOpenSaveDataFileSystem(FsFileSystem* out, FsSaveDataSpaceId saveDataSpaceId, const FsSave *save) {
+Result fsOpenSaveDataFileSystem(FsFileSystem* out, FsSaveDataSpaceId saveDataSpaceId, const FsSaveDataAttribute *attr) {
     const struct {
         u8 saveDataSpaceId;
         u8 pad[7];
-        FsSave save;
-    } in = { (u8)saveDataSpaceId, {0}, *save };
+        FsSaveDataAttribute attr;
+    } in = { (u8)saveDataSpaceId, {0}, *attr };
 
     return _fsObjectDispatchIn(&g_fsSrv, 51, in,
         .out_num_objects = 1,
@@ -280,12 +280,12 @@ Result fsOpenSaveDataFileSystem(FsFileSystem* out, FsSaveDataSpaceId saveDataSpa
     );
 }
 
-Result fsOpenSaveDataFileSystemBySystemSaveDataId(FsFileSystem* out, FsSaveDataSpaceId saveDataSpaceId, const FsSave *save) {
+Result fsOpenSaveDataFileSystemBySystemSaveDataId(FsFileSystem* out, FsSaveDataSpaceId saveDataSpaceId, const FsSaveDataAttribute *attr) {
     const struct {
         u8 saveDataSpaceId;
         u8 pad[7];
-        FsSave save;
-    } in = { (u8)saveDataSpaceId, {0}, *save };
+        FsSaveDataAttribute attr;
+    } in = { (u8)saveDataSpaceId, {0}, *attr };
 
     return _fsObjectDispatchIn(&g_fsSrv, 52, in,
         .out_num_objects = 1,
@@ -447,11 +447,11 @@ Result fsGetGlobalAccessLogMode(u32* out_mode) {
 
 // Wrapper(s) for fsCreateSaveDataFileSystemBySystemSaveDataId.
 Result fsCreate_SystemSaveDataWithOwner(FsSaveDataSpaceId saveDataSpaceId, u64 saveID, AccountUid uid, u64 ownerId, u64 size, u64 journalSize, u32 flags) {
-    FsSave save = {
+    FsSaveDataAttribute attr = {
         .uid = uid,
         .saveID = saveID,
     };
-    FsSaveCreate create = {
+    FsSaveDataCreationInfo create = {
         .size = size,
         .journalSize = journalSize,
         .blockSize = 0x4000,
@@ -460,7 +460,7 @@ Result fsCreate_SystemSaveDataWithOwner(FsSaveDataSpaceId saveDataSpaceId, u64 s
         .saveDataSpaceId = saveDataSpaceId,
     };
 
-    return fsCreateSaveDataFileSystemBySystemSaveDataId(&save, &create);
+    return fsCreateSaveDataFileSystemBySystemSaveDataId(&attr, &create);
 }
 
 Result fsCreate_SystemSaveData(FsSaveDataSpaceId saveDataSpaceId, u64 saveID, u64 size, u64 journalSize, u32 flags) {
@@ -469,25 +469,25 @@ Result fsCreate_SystemSaveData(FsSaveDataSpaceId saveDataSpaceId, u64 saveID, u6
 
 // Wrapper(s) for fsOpenSaveDataFileSystem.
 Result fsOpen_SaveData(FsFileSystem* out, u64 program_id, AccountUid uid) {
-    FsSave save;
+    FsSaveDataAttribute attr;
 
-    memset(&save, 0, sizeof(save));
-    save.program_id = program_id;
-    save.uid = uid;
-    save.saveDataType = FsSaveDataType_SaveData;
+    memset(&attr, 0, sizeof(attr));
+    attr.program_id = program_id;
+    attr.uid = uid;
+    attr.saveDataType = FsSaveDataType_SaveData;
 
-    return fsOpenSaveDataFileSystem(out, FsSaveDataSpaceId_NandUser, &save);
+    return fsOpenSaveDataFileSystem(out, FsSaveDataSpaceId_User, &attr);
 }
 
 Result fsOpen_SystemSaveData(FsFileSystem* out, FsSaveDataSpaceId saveDataSpaceId, u64 saveID, AccountUid uid) {
-    FsSave save;
+    FsSaveDataAttribute attr;
 
-    memset(&save, 0, sizeof(save));
-    save.uid = uid;
-    save.saveID = saveID;
-    save.saveDataType = FsSaveDataType_SystemSaveData;
+    memset(&attr, 0, sizeof(attr));
+    attr.uid = uid;
+    attr.saveID = saveID;
+    attr.saveDataType = FsSaveDataType_SystemSaveData;
 
-    return fsOpenSaveDataFileSystemBySystemSaveDataId(out, saveDataSpaceId, &save);
+    return fsOpenSaveDataFileSystemBySystemSaveDataId(out, saveDataSpaceId, &attr);
 }
 
 //-----------------------------------------------------------------------------
