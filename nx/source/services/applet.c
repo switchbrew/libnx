@@ -2599,6 +2599,9 @@ Result appletWriteThemeStorage(const void* buffer, size_t size, u64 offset) {
     );
 }
 
+IPC_MAKE_CMD_IMPL_HOSVER(Result appletPushToAppletBoundChannel(AppletStorage *s),     &g_appletIAppletCommonFunctions, 20, _appletCmdInStorage,      (9,0,0), s)
+IPC_MAKE_CMD_IMPL_HOSVER(Result appletTryPopFromAppletBoundChannel(AppletStorage *s), &g_appletIAppletCommonFunctions, 21, _appletCmdNoInOutStorage, (9,0,0), s)
+
 IPC_MAKE_CMD_IMPL_HOSVER(Result appletGetDisplayLogicalResolution(s32 *width, s32 *height), &g_appletIAppletCommonFunctions, 40, _appletGetResolution, (8,0,0), width, height)
 
 Result appletSetDisplayMagnification(float x, float y, float width, float height) {

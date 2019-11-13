@@ -2131,6 +2131,21 @@ Result appletReadThemeStorage(void* buffer, size_t size, u64 offset, u64 *transf
 Result appletWriteThemeStorage(const void* buffer, size_t size, u64 offset);
 
 /**
+ * @brief PushToAppletBoundChannel
+ * @note Only available with AppletType_SystemApplet, AppletType_LibraryApplet, or AppletType_OverlayApplet, on [9.0.0+].
+ * @note This uses \ref appletStorageClose automatically.
+ * @param[in] s Storage object.
+ */
+Result appletPushToAppletBoundChannel(AppletStorage *s);
+
+/**
+ * @brief TryPopFromAppletBoundChannel
+ * @note Only available with AppletType_SystemApplet, AppletType_LibraryApplet, or AppletType_OverlayApplet, on [9.0.0+].
+ * @param[out] s Storage object.
+ */
+Result appletTryPopFromAppletBoundChannel(AppletStorage *s);
+
+/**
  * @brief Gets the DisplayLogicalResolution.
  * @note Only available with AppletType_SystemApplet, AppletType_LibraryApplet, or AppletType_OverlayApplet, on [8.0.0+].
  * @param[out] width Output width.
