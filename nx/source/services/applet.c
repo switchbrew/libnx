@@ -2265,6 +2265,8 @@ Result appletPopRequestLaunchApplicationForDebug(AccountUid *uids, s32 count, u6
     return rc;
 }
 
+IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletIsForceTerminateApplicationDisabledForDebug(bool *out), &g_appletIFunctions, 110,  _appletCmdNoInOutBool, __nx_applet_type != AppletType_SystemApplet, (9,0,0), out)
+
 Result appletLaunchDevMenu(void) {
     Result rc=0;
 

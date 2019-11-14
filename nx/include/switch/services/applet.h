@@ -1565,6 +1565,13 @@ Result appletGetHomeButtonWriterLockAccessor(AppletLockAccessor *a);
 Result appletPopRequestLaunchApplicationForDebug(AccountUid *uids, s32 count, u64 *application_id, s32 *total_out);
 
 /**
+ * @brief IsForceTerminateApplicationDisabledForDebug
+ * @note Only available with AppletType_SystemApplet on [9.0.0+].
+ * @param[out] out Output flag. 0 when DebugMode is not enabled, otherwise this is loaded from a system-setting.
+ */
+Result appletIsForceTerminateApplicationDisabledForDebug(bool *out);
+
+/**
  * @brief Launches DevMenu and the dev Overlay-applet. This will enter an infinite-sleep-loop on success.
  * @note Only available with AppletType_SystemApplet on [8.0.0+].
  * @note This verifies that DebugMode is enabled, then uses a ns cmd. That cmd then loads the system-settings for these two ProgramIds (which normally only exist on devunits), and verifies that these programs are installed + launches them.
@@ -2135,7 +2142,7 @@ Result appletStartRebootSequenceForOverlay(void);
 Result appletSetHandlingHomeButtonShortPressedEnabled(bool flag);
 
 /**
- * @brief This writes the input bool into state and signals an Event.
+ * @brief SetHealthWarningShowingState
  * @note Only available with AppletType_OverlayApplet on [9.0.0+].
  * @param[in] flag Flag
  */
