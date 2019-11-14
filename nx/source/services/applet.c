@@ -2230,6 +2230,7 @@ Result appletRestartProgram(const void* buffer, size_t size) {
 }
 
 IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletGetPreviousProgramIndex(s32 *programIndex),               &g_appletIFunctions, 123,  _appletCmdNoInOutU32,       !_appletIsApplication(), (5,0,0), (u32*)programIndex)
+IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletGetHealthWarningDisappearedSystemEvent(Event *out_event), &g_appletIFunctions, 160,  _appletCmdGetEvent,         !_appletIsApplication(), (9,0,0), out_event, false)
 IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletSetHdcpAuthenticationActivated(bool flag),                &g_appletIFunctions, 170,  _appletCmdInBoolNoOut,      !_appletIsApplication(), (9,0,0), flag)
 IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletCreateMovieMaker(Service* srv_out, TransferMemory *tmem), &g_appletIFunctions, 1000, _appletCmdInTmemOutSession, !_appletIsApplication(), (5,0,0), srv_out, tmem)
 IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletPrepareForJit(void),                                      &g_appletIFunctions, 1001, _appletCmdNoIO,             !_appletIsApplication(), (5,0,0))
@@ -2585,6 +2586,7 @@ Result appletStartRebootSequenceForOverlay(void) {
 }
 
 IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletSetHandlingHomeButtonShortPressedEnabled(bool flag), &g_appletIFunctions, 20,  _appletCmdInBoolNoOut, __nx_applet_type != AppletType_OverlayApplet, (8,0,0), flag)
+IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletSetHealthWarningShowingState(bool flag),             &g_appletIFunctions, 30,  _appletCmdInBoolNoOut, __nx_applet_type != AppletType_OverlayApplet, (9,0,0), flag)
 IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletBeginToObserveHidInputForDevelop(void),              &g_appletIFunctions, 101, _appletCmdNoIO,        __nx_applet_type != AppletType_OverlayApplet, (5,0,0))
 
 // IAppletCommonFunctions

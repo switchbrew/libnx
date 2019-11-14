@@ -1479,6 +1479,14 @@ Result appletRestartProgram(const void* buffer, size_t size);
 Result appletGetPreviousProgramIndex(s32 *programIndex);
 
 /**
+ * @brief GetHealthWarningDisappearedSystemEvent
+ * @note Only available with AppletType_*Application on [9.0.0+].
+ * @note The Event must be closed by the user once finished with it.
+ * @param[out] out_event Output Event with autoclear=false.
+ */
+Result appletGetHealthWarningDisappearedSystemEvent(Event *out_event);
+
+/**
  * @brief SetHdcpAuthenticationActivated
  * @note Only available with AppletType_*Application on [9.0.0+].
  * @param[in] flag Whether HdcpAuthentication is activated.
@@ -2125,6 +2133,13 @@ Result appletStartRebootSequenceForOverlay(void);
  * @param[in] flag Flag
  */
 Result appletSetHandlingHomeButtonShortPressedEnabled(bool flag);
+
+/**
+ * @brief This writes the input bool into state and signals an Event.
+ * @note Only available with AppletType_OverlayApplet on [9.0.0+].
+ * @param[in] flag Flag
+ */
+Result appletSetHealthWarningShowingState(bool flag);
 
 /**
  * @brief Enables HID input for the OverlayApplet, without disabling input for the foreground applet. Generally \ref appletBeginToWatchShortHomeButtonMessage / appletEndToWatchShortHomeButtonMessage should be used instead.
