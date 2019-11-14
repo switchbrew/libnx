@@ -1089,6 +1089,7 @@ Result appletGetCurrentIlluminanceEx(bool *bOverLimit, float *fLux) {
     return rc;
 }
 
+IPC_MAKE_CMD_IMPL_HOSVER(       Result appletSetInputDetectionPolicy(AppletInputDetectionPolicy policy), &g_appletISelfController, 72,  _appletCmdInU32NoOut, (9,0,0), policy)
 IPC_MAKE_CMD_IMPL_HOSVER(       Result appletSetWirelessPriorityMode(AppletWirelessPriorityMode mode),   &g_appletISelfController, 80,  _appletCmdInU32NoOut, (4,0,0), mode)
 IPC_MAKE_CMD_IMPL_HOSVER(static Result _appletGetAccumulatedSuspendedTickValue(u64 *tick),               &g_appletISelfController, 90,  _appletCmdNoInOutU64, (6,0,0), tick)
 IPC_MAKE_CMD_IMPL_HOSVER(static Result _appletGetAccumulatedSuspendedTickChangedEvent(Event *out_event), &g_appletISelfController, 91,  _appletCmdGetEvent,   (6,0,0), out_event, true)

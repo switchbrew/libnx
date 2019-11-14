@@ -178,6 +178,12 @@ typedef enum {
     AppletIdleTimeDetectionExtension_ExtendedUnsafe = 2,       ///< ExtendedUnsafe
 } AppletIdleTimeDetectionExtension;
 
+/// Input policy values for \ref appletSetInputDetectionPolicy.
+typedef enum {
+    AppletInputDetectionPolicy_Unknown0 = 0,       ///< Unknown.
+    AppletInputDetectionPolicy_Unknown1 = 1,       ///< Unknown.
+} AppletInputDetectionPolicy;
+
 /// Input mode values for \ref appletSetWirelessPriorityMode.
 typedef enum {
     AppletWirelessPriorityMode_Unknown1 = 1,       ///< Unknown.
@@ -741,6 +747,13 @@ Result appletIsAutoSleepDisabled(bool *out);
  * @param fLux Output fLux
  */
 Result appletGetCurrentIlluminanceEx(bool *bOverLimit, float *fLux);
+
+/**
+ * @brief Sets the \ref AppletInputDetectionPolicy.
+ * @note Only available with [9.0.0+].
+ * @param[in] policy \ref AppletInputDetectionPolicy
+ */
+Result appletSetInputDetectionPolicy(AppletInputDetectionPolicy policy);
 
 /**
  * @brief Sets the WirelessPriorityMode.
