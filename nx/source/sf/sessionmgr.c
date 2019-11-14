@@ -31,6 +31,7 @@ void sessionmgrClose(SessionMgr* mgr) {
         if (mgr->sessions[i] != INVALID_HANDLE) {
             cmifMakeCloseRequest(armGetTls(), 0);
             svcSendSyncRequest(mgr->sessions[i]);
+            svcCloseHandle(mgr->sessions[i]);
             mgr->sessions[i] = INVALID_HANDLE;
         }
     }
