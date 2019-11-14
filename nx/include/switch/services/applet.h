@@ -14,6 +14,7 @@
 #include "../services/pm.h"
 #include "../services/ncm_types.h"
 #include "../services/acc.h"
+#include "../services/set.h"
 #include "../kernel/tmem.h"
 #include "../kernel/event.h"
 #include "../nacp.h"
@@ -555,6 +556,13 @@ Result appletGetCurrentPerformanceConfiguration(u32 *PerformanceConfiguration);
  * @param[out] info Output info.
  */
 Result appletGetOperationModeSystemInfo(u32 *info);
+
+/**
+ * @brief This uses \ref setsysGetPlatformRegion internally.
+ * @note Only available with [9.0.0+].
+ * @param[out] out \ref SetSysPlatformRegion
+ */
+Result appletGetSettingsPlatformRegion(SetSysPlatformRegion *out);
 
 ///@}
 
@@ -1456,6 +1464,13 @@ Result appletRestartProgram(const void* buffer, size_t size);
  * @param[out] programIndex ProgramIndex, -1 when there was no previous program.
  */
 Result appletGetPreviousProgramIndex(s32 *programIndex);
+
+/**
+ * @brief SetHdcpAuthenticationActivated
+ * @note Only available with AppletType_*Application on [9.0.0+].
+ * @param[in] flag Whether HdcpAuthentication is activated.
+ */
+Result appletSetHdcpAuthenticationActivated(bool flag);
 
 /**
  * @brief CreateMovieMaker. Do not use this directly, use \ref grcCreateMovieMaker instead.

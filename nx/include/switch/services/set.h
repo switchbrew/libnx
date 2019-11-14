@@ -439,6 +439,7 @@ Result setsysGetHomeMenuScheme(SetSysHomeMenuScheme *out);
 
 /**
  * @brief Gets the \ref SetSysPlatformRegion.
+ * @note This is used internally by \ref appletGetSettingsPlatformRegion.
  * @note Only available on [9.0.0+].
  * @param[out] out \ref SetSysPlatformRegion
  */

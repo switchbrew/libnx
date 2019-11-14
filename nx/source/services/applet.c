@@ -962,6 +962,16 @@ IPC_MAKE_CMD_IMPL_HOSVER(Result appletSetPerformanceConfigurationChangedNotifica
 IPC_MAKE_CMD_IMPL_HOSVER(Result appletGetCurrentPerformanceConfiguration(u32 *PerformanceConfiguration), &g_appletICommonStateGetter, 91,  _appletCmdNoInOutU32,  (7,0,0), PerformanceConfiguration)
 IPC_MAKE_CMD_IMPL_HOSVER(Result appletGetOperationModeSystemInfo(u32 *info),                             &g_appletICommonStateGetter, 200, _appletCmdNoInOutU32,  (7,0,0), info)
 
+Result appletGetSettingsPlatformRegion(SetSysPlatformRegion *out) {
+    if (hosversionBefore(9,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    u8 tmp=0;
+    Result rc = _appletCmdNoInOutU8(&g_appletICommonStateGetter, &tmp, 300);
+    if (R_SUCCEEDED(rc) && out) *out = tmp;
+    return rc;
+}
+
 // ISelfController
 
 IPC_MAKE_CMD_IMPL(static Result _appletSelfExit(void),         &g_appletISelfController, 0, _appletCmdNoIO)
@@ -2219,6 +2229,7 @@ Result appletRestartProgram(const void* buffer, size_t size) {
 }
 
 IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletGetPreviousProgramIndex(s32 *programIndex),               &g_appletIFunctions, 123,  _appletCmdNoInOutU32,       !_appletIsApplication(), (5,0,0), (u32*)programIndex)
+IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletSetHdcpAuthenticationActivated(bool flag),                &g_appletIFunctions, 170,  _appletCmdInBoolNoOut,      !_appletIsApplication(), (9,0,0), flag)
 IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletCreateMovieMaker(Service* srv_out, TransferMemory *tmem), &g_appletIFunctions, 1000, _appletCmdInTmemOutSession, !_appletIsApplication(), (5,0,0), srv_out, tmem)
 IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletPrepareForJit(void),                                      &g_appletIFunctions, 1001, _appletCmdNoIO,             !_appletIsApplication(), (5,0,0))
 
