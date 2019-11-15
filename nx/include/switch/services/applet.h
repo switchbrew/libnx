@@ -1906,18 +1906,17 @@ Result appletApplicationHasSaveDataAccessPermission(AppletApplication *a, u64 ap
  * @param[in] buffer Input buffer.
  * @param[in] size Input buffer size.
  */
-Result appletPushToFriendInvitationStorageChannel(AppletApplication *a, AccountUid uid, const void* buffer, u64 size);
+Result appletApplicationPushToFriendInvitationStorageChannel(AppletApplication *a, AccountUid uid, const void* buffer, u64 size);
 
 /**
  * @brief Creates a storage using the specified input then pushes it to the Notification StorageChannel.
  * @note The system will clear the StorageChannel before pushing the storage.
  * @note Only available on [9.0.0+].
  * @param a \ref AppletApplication
- * @param[in] uid \ref AccountUid
  * @param[in] buffer Input buffer.
  * @param[in] size Input buffer size.
  */
-Result appletPushToNotificationStorageChannel(AppletApplication *a, const void* buffer, u64 size);
+Result appletApplicationPushToNotificationStorageChannel(AppletApplication *a, const void* buffer, u64 size);
 
 ///@}
 
@@ -2237,7 +2236,7 @@ Result appletReadThemeStorage(void* buffer, size_t size, u64 offset, u64 *transf
 Result appletWriteThemeStorage(const void* buffer, size_t size, u64 offset);
 
 /**
- * @brief PushToAppletBoundChannel
+ * @brief This is similar to \ref appletPushToAppletBoundChannelForDebug (no DebugMode check), except the used channel is loaded from elsewhere and must be in the range 31-32.
  * @note Only available with AppletType_SystemApplet, AppletType_LibraryApplet, or AppletType_OverlayApplet, on [9.0.0+].
  * @note This uses \ref appletStorageClose automatically.
  * @param[in] s Storage object.
@@ -2245,7 +2244,7 @@ Result appletWriteThemeStorage(const void* buffer, size_t size, u64 offset);
 Result appletPushToAppletBoundChannel(AppletStorage *s);
 
 /**
- * @brief TryPopFromAppletBoundChannel
+ * @brief This is similar to \ref appletTryPopFromAppletBoundChannelForDebug (no DebugMode check), except the used channel is loaded from elsewhere and must be in the range 31-32.
  * @note Only available with AppletType_SystemApplet, AppletType_LibraryApplet, or AppletType_OverlayApplet, on [9.0.0+].
  * @param[out] s Storage object.
  */
@@ -2325,6 +2324,70 @@ Result appletRequestLaunchApplicationWithUserAndArgumentForDebug(u64 application
  * @param[out] info \ref AppletResourceUsageInfo
  */
 Result appletGetAppletResourceUsageInfo(AppletResourceUsageInfo *info);
+
+/**
+ * @brief The channel must match the value already stored in state when the state value is non-zero, otherwise an error is returned. When the state value is 0, the channel is written into state. Then the input storage is pushed to the StorageChannel.
+ * @note Only available on [9.0.0+]. DebugMode must be enabled.
+ * @note This uses \ref appletStorageClose automatically.
+ * @param[in] s Storage object.
+ * @param[in] channel Channel.
+ */
+Result appletPushToAppletBoundChannelForDebug(AppletStorage *s, s32 channel);
+
+/**
+ * @brief The channel must not be 0 and must match the value previously saved by \ref appletPushToAppletBoundChannelForDebug, otherwise errors are returned. Then the output storage is popped from the StorageChannel.
+ * @note Only available on [9.0.0+]. DebugMode must be enabled.
+ * @param[out] s Storage object.
+ * @param[in] channel Channel.
+ */
+Result appletTryPopFromAppletBoundChannelForDebug(AppletStorage *s, s32 channel);
+
+/**
+ * @brief Clears a StorageChannel, pushes the input storage there, and writes the ApplicationId into state.
+ * @note Only available on [9.0.0+].
+ * @note This uses \ref appletStorageClose automatically.
+ * @param[in] s Storage object.
+ * @param[in] application_id ApplicationId
+ */
+Result appletAlarmSettingNotificationEnableAppEventReserve(AppletStorage *s, u64 application_id);
+
+/**
+ * @brief Clears the StorageChannel/saved-ApplicationId used by \ref appletAlarmSettingNotificationEnableAppEventReserve.
+ * @note Only available on [9.0.0+].
+ */
+Result appletAlarmSettingNotificationDisableAppEventReserve(void);
+
+/**
+ * @brief Same as \ref appletApplicationPushToNotificationStorageChannel except this uses the MainApplication.
+ * @note Only available on [9.0.0+].
+ * @param[in] buffer Input buffer.
+ * @param[in] size Input buffer size.
+ */
+Result appletAlarmSettingNotificationPushAppEventNotify(const void* buffer, u64 size);
+
+/**
+ * @brief Clears a StorageChannel, pushes the input storage there, and writes the ApplicationId into state.
+ * @note Only available on [9.0.0+].
+ * @note This uses \ref appletStorageClose automatically.
+ * @param[in] s Storage object.
+ * @param[in] application_id ApplicationId
+ */
+Result appletFriendInvitationSetApplicationParameter(AppletStorage *s, u64 application_id);
+
+/**
+ * @brief Clears the StorageChannel/saved-ApplicationId used by \ref appletFriendInvitationSetApplicationParameter.
+ * @note Only available on [9.0.0+].
+ */
+Result appletFriendInvitationClearApplicationParameter(void);
+
+/**
+ * @brief Same as \ref appletApplicationPushToFriendInvitationStorageChannel except this uses the MainApplication.
+ * @note Only available on [9.0.0+].
+ * @param[in] uid \ref AccountUid
+ * @param[in] buffer Input buffer.
+ * @param[in] size Input buffer size.
+ */
+Result appletFriendInvitationPushApplicationParameter(AccountUid uid, const void* buffer, u64 size);
 
 ///@}
 

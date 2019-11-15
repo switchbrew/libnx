@@ -766,6 +766,42 @@ static Result _appletCmdInStorage(Service* srv, AppletStorage* s, u32 cmd_id) {
     return rc;
 }
 
+static Result _appletCmdInStorageU32(Service* srv, AppletStorage* s, u32 inval, u32 cmd_id) {
+    if (!serviceIsActive(&s->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    serviceAssumeDomain(srv);
+    Result rc = serviceDispatchIn(srv, cmd_id, inval,
+        .in_num_objects = 1,
+        .in_objects = { &s->s },
+    );
+    appletStorageClose(s);
+    return rc;
+}
+
+static Result _appletCmdInStorageU64(Service* srv, AppletStorage* s, u64 inval, u32 cmd_id) {
+    if (!serviceIsActive(&s->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    serviceAssumeDomain(srv);
+    Result rc = serviceDispatchIn(srv, cmd_id, inval,
+        .in_num_objects = 1,
+        .in_objects = { &s->s },
+    );
+    appletStorageClose(s);
+    return rc;
+}
+
+static Result _appletCmdInU32OutStorage(Service* srv, AppletStorage* s, u32 inval, u32 cmd_id) {
+    memset(s, 0, sizeof(AppletStorage));
+    serviceAssumeDomain(srv);
+    Result rc = serviceDispatchIn(srv, cmd_id, inval,
+        .out_num_objects = 1,
+        .out_objects = &s->s,
+    );
+    return rc;
+}
+
 static Result _appletCmdNoInOutStorage(Service* srv, AppletStorage* s, u32 cmd_id) {
     memset(s, 0, sizeof(AppletStorage));
     return _appletCmdGetSession(srv, &s->s, cmd_id);
@@ -2406,17 +2442,8 @@ IPC_MAKE_CMD_IMPL_HOSVER(Result appletApplicationGetApplicationId(AppletApplicat
 Result appletApplicationPushLaunchParameter(AppletApplication *a, AppletLaunchParameterKind kind, AppletStorage* s) {
     if (!serviceIsActive(&a->s))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-    if (!serviceIsActive(&s->s))
-        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    u32 tmpkind=kind;
-    serviceAssumeDomain(&a->s);
-    Result rc = serviceDispatchIn(&a->s, 121, tmpkind,
-        .in_num_objects = 1,
-        .in_objects = { &s->s },
-    );
-    appletStorageClose(s);
-    return rc;
+    return _appletCmdInStorageU32(&a->s, s, kind, 121);
 }
 
 IPC_MAKE_CMD_IMPL(       Result appletApplicationGetApplicationControlProperty(AppletApplication *a, NacpStruct *nacp),                    &a->s, 122, _appletCmdNoInRecvBuf,          nacp, sizeof(*nacp))
@@ -2478,9 +2505,7 @@ Result appletApplicationHasSaveDataAccessPermission(AppletApplication *a, u64 ap
     return rc;
 }
 
-Result appletPushToFriendInvitationStorageChannel(AppletApplication *a, AccountUid uid, const void* buffer, u64 size) {
-    if (!serviceIsActive(&a->s))
-        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+static Result _appletPushToFriendInvitationStorageChannel(Service* srv, AccountUid uid, const void* buffer, u64 size, u32 cmd_id) {
     if (hosversionBefore(9,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
@@ -2490,15 +2515,13 @@ Result appletPushToFriendInvitationStorageChannel(AppletApplication *a, AccountU
     rc = appletCreateStorage(&storage, size+sizeof(uid));
     if (R_SUCCEEDED(rc)) rc = appletStorageWrite(&storage, 0, &uid, sizeof(uid));
     if (R_SUCCEEDED(rc)) rc = appletStorageWrite(&storage, sizeof(uid), buffer, size);
-    if (R_SUCCEEDED(rc)) rc = _appletCmdInStorage(&a->s, &storage, 180);
+    if (R_SUCCEEDED(rc)) rc = _appletCmdInStorage(srv, &storage, cmd_id);
     appletStorageClose(&storage);
 
     return rc;
 }
 
-Result appletPushToNotificationStorageChannel(AppletApplication *a, const void* buffer, u64 size) {
-    if (!serviceIsActive(&a->s))
-        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+static Result _appletPushToNotificationStorageChannel(Service* srv, const void* buffer, u64 size, u32 cmd_id) {
     if (hosversionBefore(9,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
@@ -2507,10 +2530,24 @@ Result appletPushToNotificationStorageChannel(AppletApplication *a, const void* 
 
     rc = appletCreateStorage(&storage, size);
     if (R_SUCCEEDED(rc)) rc = appletStorageWrite(&storage, 0, buffer, size);
-    if (R_SUCCEEDED(rc)) rc = _appletCmdInStorage(&a->s, &storage, 190);
+    if (R_SUCCEEDED(rc)) rc = _appletCmdInStorage(srv, &storage, cmd_id);
     appletStorageClose(&storage);
 
     return rc;
+}
+
+Result appletApplicationPushToFriendInvitationStorageChannel(AppletApplication *a, AccountUid uid, const void* buffer, u64 size) {
+    if (!serviceIsActive(&a->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _appletPushToFriendInvitationStorageChannel(&a->s, uid, buffer, size, 180);
+}
+
+Result appletApplicationPushToNotificationStorageChannel(AppletApplication *a, const void* buffer, u64 size) {
+    if (!serviceIsActive(&a->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _appletPushToNotificationStorageChannel(&a->s, buffer, size, 190);
 }
 
 // ILibraryAppletSelfAccessor
@@ -2714,6 +2751,15 @@ Result appletGetAppletResourceUsageInfo(AppletResourceUsageInfo *info) {
     serviceAssumeDomain(&g_appletIDebugFunctions);
     return serviceDispatchOut(&g_appletIDebugFunctions, 40, *info);
 }
+
+IPC_MAKE_CMD_IMPL_HOSVER(Result appletPushToAppletBoundChannelForDebug(AppletStorage *s, s32 channel),                        &g_appletIDebugFunctions, 110, _appletCmdInStorageU32,                      (9,0,0), s, channel)
+IPC_MAKE_CMD_IMPL_HOSVER(Result appletTryPopFromAppletBoundChannelForDebug(AppletStorage *s, s32 channel),                    &g_appletIDebugFunctions, 111, _appletCmdInU32OutStorage,                   (9,0,0), s, channel)
+IPC_MAKE_CMD_IMPL_HOSVER(Result appletAlarmSettingNotificationEnableAppEventReserve(AppletStorage *s, u64 application_id),    &g_appletIDebugFunctions, 120, _appletCmdInStorageU64,                      (9,0,0), s, application_id)
+IPC_MAKE_CMD_IMPL_HOSVER(Result appletAlarmSettingNotificationDisableAppEventReserve(void),                                   &g_appletIDebugFunctions, 121, _appletCmdNoIO,                              (9,0,0))
+IPC_MAKE_CMD_IMPL_HOSVER(Result appletAlarmSettingNotificationPushAppEventNotify(const void* buffer, u64 size),               &g_appletIDebugFunctions, 122, _appletPushToNotificationStorageChannel,     (9,0,0), buffer, size)
+IPC_MAKE_CMD_IMPL_HOSVER(Result appletFriendInvitationSetApplicationParameter(AppletStorage *s, u64 application_id),          &g_appletIDebugFunctions, 130, _appletCmdInStorageU64,                      (9,0,0), s, application_id)
+IPC_MAKE_CMD_IMPL_HOSVER(Result appletFriendInvitationClearApplicationParameter(void),                                        &g_appletIDebugFunctions, 131, _appletCmdNoIO,                              (9,0,0))
+IPC_MAKE_CMD_IMPL_HOSVER(Result appletFriendInvitationPushApplicationParameter(AccountUid uid, const void* buffer, u64 size), &g_appletIDebugFunctions, 132, _appletPushToFriendInvitationStorageChannel, (9,0,0), uid, buffer, size)
 
 // Common cmds
 Result appletSetTerminateResult(Result res) {
