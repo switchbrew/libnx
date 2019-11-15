@@ -102,6 +102,7 @@ extern "C" {
 #include "switch/services/pdm.h"
 #include "switch/services/grc.h"
 #include "switch/services/friends.h"
+#include "switch/services/notif.h"
 
 #include "switch/display/binder.h"
 #include "switch/display/parcel.h"

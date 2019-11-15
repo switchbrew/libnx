@@ -1479,6 +1479,40 @@ Result appletRestartProgram(const void* buffer, size_t size);
 Result appletGetPreviousProgramIndex(s32 *programIndex);
 
 /**
+ * @brief Gets an Event which is signaled when a new storage is available with \ref appletTryPopFromFriendInvitationStorageChannel where previously no storage was available, this event is automatically cleared by the system once the last storage is popped.
+ * @note This is used by \ref friendsGetFriendInvitationNotificationEvent.
+ * @note Only available with AppletType_*Application on [9.0.0+].
+ * @note The Event must be closed by the user once finished with it.
+ * @param[out] out_event Output Event with autoclear=false.
+ */
+Result appletGetFriendInvitationStorageChannelEvent(Event *out_event);
+
+/**
+ * @brief Pops a storage from the FriendInvitation StorageChannel.
+ * @note This is used by \ref friendsTryPopFriendInvitationNotificationInfo.
+ * @note Only available with AppletType_*Application on [9.0.0+].
+ * @param[out] s Storage object.
+ */
+Result appletTryPopFromFriendInvitationStorageChannel(AppletStorage *s);
+
+/**
+ * @brief Gets an Event which is signaled when a new storage is available with \ref appletTryPopFromNotificationStorageChannel where previously no storage was available, this event is automatically cleared by the system once the last storage is popped.
+ * @note This is used by \ref notifGetNotificationSystemEvent.
+ * @note Only available with AppletType_*Application on [9.0.0+].
+ * @note The Event must be closed by the user once finished with it.
+ * @param[out] out_event Output Event with autoclear=false.
+ */
+Result appletGetNotificationStorageChannelEvent(Event *out_event);
+
+/**
+ * @brief Pops a storage from the Notification StorageChannel.
+ * @note This is used by \ref notifTryPopNotifiedApplicationParameter.
+ * @note Only available with AppletType_*Application on [9.0.0+].
+ * @param[out] s Storage object.
+ */
+Result appletTryPopFromNotificationStorageChannel(AppletStorage *s);
+
+/**
  * @brief GetHealthWarningDisappearedSystemEvent
  * @note Only available with AppletType_*Application on [9.0.0+].
  * @note The Event must be closed by the user once finished with it.
@@ -1862,6 +1896,28 @@ Result appletApplicationSetApplicationAttribute(AppletApplication *a, const Appl
  * @param[out] out Output flag.
  */
 Result appletApplicationHasSaveDataAccessPermission(AppletApplication *a, u64 application_id, bool *out);
+
+/**
+ * @brief Creates a storage using the specified input then pushes it to the FriendInvitation StorageChannel.
+ * @note The system will clear the StorageChannel before pushing the storage.
+ * @note Only available on [9.0.0+].
+ * @param a \ref AppletApplication
+ * @param[in] uid \ref AccountUid
+ * @param[in] buffer Input buffer.
+ * @param[in] size Input buffer size.
+ */
+Result appletPushToFriendInvitationStorageChannel(AppletApplication *a, AccountUid uid, const void* buffer, u64 size);
+
+/**
+ * @brief Creates a storage using the specified input then pushes it to the Notification StorageChannel.
+ * @note The system will clear the StorageChannel before pushing the storage.
+ * @note Only available on [9.0.0+].
+ * @param a \ref AppletApplication
+ * @param[in] uid \ref AccountUid
+ * @param[in] buffer Input buffer.
+ * @param[in] size Input buffer size.
+ */
+Result appletPushToNotificationStorageChannel(AppletApplication *a, const void* buffer, u64 size);
 
 ///@}
 

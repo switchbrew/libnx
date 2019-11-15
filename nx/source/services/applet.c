@@ -2229,11 +2229,15 @@ Result appletRestartProgram(const void* buffer, size_t size) {
     return _appletExecuteProgram(AppletProgramSpecifyKind_RestartProgram, 0, buffer, size);
 }
 
-IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletGetPreviousProgramIndex(s32 *programIndex),               &g_appletIFunctions, 123,  _appletCmdNoInOutU32,       !_appletIsApplication(), (5,0,0), (u32*)programIndex)
-IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletGetHealthWarningDisappearedSystemEvent(Event *out_event), &g_appletIFunctions, 160,  _appletCmdGetEvent,         !_appletIsApplication(), (9,0,0), out_event, false)
-IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletSetHdcpAuthenticationActivated(bool flag),                &g_appletIFunctions, 170,  _appletCmdInBoolNoOut,      !_appletIsApplication(), (9,0,0), flag)
-IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletCreateMovieMaker(Service* srv_out, TransferMemory *tmem), &g_appletIFunctions, 1000, _appletCmdInTmemOutSession, !_appletIsApplication(), (5,0,0), srv_out, tmem)
-IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletPrepareForJit(void),                                      &g_appletIFunctions, 1001, _appletCmdNoIO,             !_appletIsApplication(), (5,0,0))
+IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletGetPreviousProgramIndex(s32 *programIndex),                 &g_appletIFunctions, 123,  _appletCmdNoInOutU32,       !_appletIsApplication(), (5,0,0), (u32*)programIndex)
+IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletGetFriendInvitationStorageChannelEvent(Event *out_event),   &g_appletIFunctions, 140,  _appletCmdGetEvent,         !_appletIsApplication(), (9,0,0), out_event, false)
+IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletTryPopFromFriendInvitationStorageChannel(AppletStorage *s), &g_appletIFunctions, 141,  _appletCmdNoInOutStorage,   !_appletIsApplication(), (9,0,0), s)
+IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletGetNotificationStorageChannelEvent(Event *out_event),       &g_appletIFunctions, 150,  _appletCmdGetEvent,         !_appletIsApplication(), (9,0,0), out_event, false)
+IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletTryPopFromNotificationStorageChannel(AppletStorage *s),     &g_appletIFunctions, 151,  _appletCmdNoInOutStorage,   !_appletIsApplication(), (9,0,0), s)
+IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletGetHealthWarningDisappearedSystemEvent(Event *out_event),   &g_appletIFunctions, 160,  _appletCmdGetEvent,         !_appletIsApplication(), (9,0,0), out_event, false)
+IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletSetHdcpAuthenticationActivated(bool flag),                  &g_appletIFunctions, 170,  _appletCmdInBoolNoOut,      !_appletIsApplication(), (9,0,0), flag)
+IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletCreateMovieMaker(Service* srv_out, TransferMemory *tmem),   &g_appletIFunctions, 1000, _appletCmdInTmemOutSession, !_appletIsApplication(), (5,0,0), srv_out, tmem)
+IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletPrepareForJit(void),                                        &g_appletIFunctions, 1001, _appletCmdNoIO,             !_appletIsApplication(), (5,0,0))
 
 // IHomeMenuFunctions
 
@@ -2471,6 +2475,41 @@ Result appletApplicationHasSaveDataAccessPermission(AppletApplication *a, u64 ap
     serviceAssumeDomain(&a->s);
     Result rc = serviceDispatchInOut(&a->s, 170, application_id, tmpout);
     if (R_SUCCEEDED(rc) && out) *out = tmpout & 1;
+    return rc;
+}
+
+Result appletPushToFriendInvitationStorageChannel(AppletApplication *a, AccountUid uid, const void* buffer, u64 size) {
+    if (!serviceIsActive(&a->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(9,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    Result rc=0;
+    AppletStorage storage;
+
+    rc = appletCreateStorage(&storage, size+sizeof(uid));
+    if (R_SUCCEEDED(rc)) rc = appletStorageWrite(&storage, 0, &uid, sizeof(uid));
+    if (R_SUCCEEDED(rc)) rc = appletStorageWrite(&storage, sizeof(uid), buffer, size);
+    if (R_SUCCEEDED(rc)) rc = _appletCmdInStorage(&a->s, &storage, 180);
+    appletStorageClose(&storage);
+
+    return rc;
+}
+
+Result appletPushToNotificationStorageChannel(AppletApplication *a, const void* buffer, u64 size) {
+    if (!serviceIsActive(&a->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(9,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    Result rc=0;
+    AppletStorage storage;
+
+    rc = appletCreateStorage(&storage, size);
+    if (R_SUCCEEDED(rc)) rc = appletStorageWrite(&storage, 0, buffer, size);
+    if (R_SUCCEEDED(rc)) rc = _appletCmdInStorage(&a->s, &storage, 190);
+    appletStorageClose(&storage);
+
     return rc;
 }
 
