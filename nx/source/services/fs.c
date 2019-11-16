@@ -185,7 +185,7 @@ Result fsOpenFileSystemWithId(FsFileSystem* out, u64 id, FsFileSystemType fsType
         return _fsOpenFileSystem(out, fsType, sendStr);
 }
 
-Result fsOpenBisFileSystem(FsFileSystem* out, FsBisStorageId partitionId, const char* string) {
+Result fsOpenBisFileSystem(FsFileSystem* out, FsBisPartitionId partitionId, const char* string) {
     char tmpstr[FS_MAX_PATH] = {0};
     strncpy(tmpstr, string, sizeof(tmpstr)-1);
 
@@ -198,7 +198,7 @@ Result fsOpenBisFileSystem(FsFileSystem* out, FsBisStorageId partitionId, const 
     );
 }
 
-Result fsOpenBisStorage(FsStorage* out, FsBisStorageId partitionId) {
+Result fsOpenBisStorage(FsStorage* out, FsBisPartitionId partitionId) {
     u32 tmp=partitionId;
     return _fsObjectDispatchIn(&g_fsSrv, 12, tmp,
         .out_num_objects = 1,
@@ -219,14 +219,14 @@ Result fsCreateSaveDataFileSystemBySystemSaveDataId(const FsSaveDataAttribute* a
     return _fsObjectDispatchIn(&g_fsSrv, 23, in);
 }
 
-Result fsDeleteSaveDataFileSystemBySaveDataSpaceId(FsSaveDataSpaceId saveDataSpaceId, u64 saveID) {
+Result fsDeleteSaveDataFileSystemBySaveDataSpaceId(FsSaveDataSpaceId save_data_space_id, u64 saveID) {
     if (hosversionBefore(2,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     const struct {
-        u8 saveDataSpaceId;
+        u8 save_data_space_id;
         u64 saveID;
-    } in = { (u8)saveDataSpaceId, saveID };
+    } in = { (u8)save_data_space_id, saveID };
 
     return _fsObjectDispatchIn(&g_fsSrv, 25, in);
 }
@@ -240,7 +240,7 @@ Result fsIsExFatSupported(bool* out) {
     return _fsCmdNoInOutBool(&g_fsSrv, out, 27);
 }
 
-Result fsOpenGameCardFileSystem(FsFileSystem* out, const FsGameCardHandle* handle, FsGameCardPartiton partition) {
+Result fsOpenGameCardFileSystem(FsFileSystem* out, const FsGameCardHandle* handle, FsGameCardPartition partition) {
     const struct {
         FsGameCardHandle handle;
         u32 partition;
@@ -252,27 +252,27 @@ Result fsOpenGameCardFileSystem(FsFileSystem* out, const FsGameCardHandle* handl
     );
 }
 
-Result fsExtendSaveDataFileSystem(FsSaveDataSpaceId saveDataSpaceId, u64 saveID, s64 dataSize, s64 journalSize) {
+Result fsExtendSaveDataFileSystem(FsSaveDataSpaceId save_data_space_id, u64 saveID, s64 data_size, s64 journal_size) {
     if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     const struct {
-        u8 saveDataSpaceId;
+        u8 save_data_space_id;
         u8 pad[7];
         u64 saveID;
-        s64 dataSize;
-        s64 journalSize;
-    } in = { (u8)saveDataSpaceId, {0}, saveID, dataSize, journalSize };
+        s64 data_size;
+        s64 journal_size;
+    } in = { (u8)save_data_space_id, {0}, saveID, data_size, journal_size };
 
     return _fsObjectDispatchIn(&g_fsSrv, 32, in);
 }
 
-Result fsOpenSaveDataFileSystem(FsFileSystem* out, FsSaveDataSpaceId saveDataSpaceId, const FsSaveDataAttribute *attr) {
+Result fsOpenSaveDataFileSystem(FsFileSystem* out, FsSaveDataSpaceId save_data_space_id, const FsSaveDataAttribute *attr) {
     const struct {
-        u8 saveDataSpaceId;
+        u8 save_data_space_id;
         u8 pad[7];
         FsSaveDataAttribute attr;
-    } in = { (u8)saveDataSpaceId, {0}, *attr };
+    } in = { (u8)save_data_space_id, {0}, *attr };
 
     return _fsObjectDispatchIn(&g_fsSrv, 51, in,
         .out_num_objects = 1,
@@ -280,12 +280,12 @@ Result fsOpenSaveDataFileSystem(FsFileSystem* out, FsSaveDataSpaceId saveDataSpa
     );
 }
 
-Result fsOpenSaveDataFileSystemBySystemSaveDataId(FsFileSystem* out, FsSaveDataSpaceId saveDataSpaceId, const FsSaveDataAttribute *attr) {
+Result fsOpenSaveDataFileSystemBySystemSaveDataId(FsFileSystem* out, FsSaveDataSpaceId save_data_space_id, const FsSaveDataAttribute *attr) {
     const struct {
-        u8 saveDataSpaceId;
+        u8 save_data_space_id;
         u8 pad[7];
         FsSaveDataAttribute attr;
-    } in = { (u8)saveDataSpaceId, {0}, *attr };
+    } in = { (u8)save_data_space_id, {0}, *attr };
 
     return _fsObjectDispatchIn(&g_fsSrv, 52, in,
         .out_num_objects = 1,
@@ -293,14 +293,14 @@ Result fsOpenSaveDataFileSystemBySystemSaveDataId(FsFileSystem* out, FsSaveDataS
     );
 }
 
-Result fsReadSaveDataFileSystemExtraDataBySaveDataSpaceId(void* buf, size_t len, FsSaveDataSpaceId saveDataSpaceId, u64 saveID) {
+Result fsReadSaveDataFileSystemExtraDataBySaveDataSpaceId(void* buf, size_t len, FsSaveDataSpaceId save_data_space_id, u64 saveID) {
     if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     const struct {
-        u8 saveDataSpaceId;
+        u8 save_data_space_id;
         u64 saveID;
-    } in = { (u8)saveDataSpaceId, saveID };
+    } in = { (u8)save_data_space_id, saveID };
 
     return _fsObjectDispatchIn(&g_fsSrv, 57, in,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
@@ -315,14 +315,14 @@ Result fsReadSaveDataFileSystemExtraData(void* buf, size_t len, u64 saveID) {
     );
 }
 
-Result fsWriteSaveDataFileSystemExtraData(const void* buf, size_t len, FsSaveDataSpaceId saveDataSpaceId, u64 saveID) {
+Result fsWriteSaveDataFileSystemExtraData(const void* buf, size_t len, FsSaveDataSpaceId save_data_space_id, u64 saveID) {
     if (hosversionBefore(2,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     const struct {
-        u8 saveDataSpaceId;
+        u8 save_data_space_id;
         u64 saveID;
-    } in = { (u8)saveDataSpaceId, saveID };
+    } in = { (u8)save_data_space_id, saveID };
 
     return _fsObjectDispatchIn(&g_fsSrv, 59, in,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
@@ -334,8 +334,8 @@ static Result _fsOpenSaveDataInfoReader(FsSaveDataInfoReader* out) {
     return _fsCmdGetSession(&g_fsSrv, &out->s, 60);
 }
 
-static Result _fsOpenSaveDataInfoReaderBySaveDataSpaceId(FsSaveDataInfoReader* out, FsSaveDataSpaceId saveDataSpaceId) {
-    u8 in = (u8)saveDataSpaceId;
+static Result _fsOpenSaveDataInfoReaderBySaveDataSpaceId(FsSaveDataInfoReader* out, FsSaveDataSpaceId save_data_space_id) {
+    u8 in = (u8)save_data_space_id;
     return _fsObjectDispatchIn(&g_fsSrv, 61, in,
         .out_num_objects = 1,
         .out_objects = &out->s,
@@ -343,11 +343,11 @@ static Result _fsOpenSaveDataInfoReaderBySaveDataSpaceId(FsSaveDataInfoReader* o
 
 }
 
-Result fsOpenSaveDataInfoReader(FsSaveDataInfoReader* out, FsSaveDataSpaceId saveDataSpaceId) {
-    if (saveDataSpaceId == FsSaveDataSpaceId_All) {
+Result fsOpenSaveDataInfoReader(FsSaveDataInfoReader* out, FsSaveDataSpaceId save_data_space_id) {
+    if (save_data_space_id == FsSaveDataSpaceId_All) {
         return _fsOpenSaveDataInfoReader(out);
     } else {
-        return _fsOpenSaveDataInfoReaderBySaveDataSpaceId(out, saveDataSpaceId);
+        return _fsOpenSaveDataInfoReaderBySaveDataSpaceId(out, save_data_space_id);
     }
 }
 
@@ -446,48 +446,48 @@ Result fsGetGlobalAccessLogMode(u32* out_mode) {
 }
 
 // Wrapper(s) for fsCreateSaveDataFileSystemBySystemSaveDataId.
-Result fsCreate_SystemSaveDataWithOwner(FsSaveDataSpaceId saveDataSpaceId, u64 saveID, AccountUid uid, u64 ownerId, u64 size, u64 journalSize, u32 flags) {
+Result fsCreate_SystemSaveDataWithOwner(FsSaveDataSpaceId save_data_space_id, u64 system_save_data_id, AccountUid uid, u64 owner_id, u64 size, u64 journal_size, u32 flags) {
     FsSaveDataAttribute attr = {
         .uid = uid,
-        .saveID = saveID,
+        .system_save_data_id = system_save_data_id,
     };
     FsSaveDataCreationInfo create = {
-        .size = size,
-        .journalSize = journalSize,
-        .blockSize = 0x4000,
-        .ownerId = ownerId,
+        .save_data_size = size,
+        .journal_size = journal_size,
+        .available_size = 0x4000,
+        .owner_id = owner_id,
         .flags = flags,
-        .saveDataSpaceId = saveDataSpaceId,
+        .save_data_space_id = save_data_space_id,
     };
 
     return fsCreateSaveDataFileSystemBySystemSaveDataId(&attr, &create);
 }
 
-Result fsCreate_SystemSaveData(FsSaveDataSpaceId saveDataSpaceId, u64 saveID, u64 size, u64 journalSize, u32 flags) {
-    return fsCreate_SystemSaveDataWithOwner(saveDataSpaceId, saveID, (AccountUid){}, 0, size, journalSize, flags);
+Result fsCreate_SystemSaveData(FsSaveDataSpaceId save_data_space_id, u64 system_save_data_id, u64 size, u64 journal_size, u32 flags) {
+    return fsCreate_SystemSaveDataWithOwner(save_data_space_id, system_save_data_id, (AccountUid){}, 0, size, journal_size, flags);
 }
 
 // Wrapper(s) for fsOpenSaveDataFileSystem.
-Result fsOpen_SaveData(FsFileSystem* out, u64 program_id, AccountUid uid) {
+Result fsOpen_SaveData(FsFileSystem* out, u64 application_id, AccountUid uid) {
     FsSaveDataAttribute attr;
 
     memset(&attr, 0, sizeof(attr));
-    attr.program_id = program_id;
+    attr.application_id = application_id;
     attr.uid = uid;
-    attr.saveDataType = FsSaveDataType_SaveData;
+    attr.save_data_type = FsSaveDataType_Account;
 
     return fsOpenSaveDataFileSystem(out, FsSaveDataSpaceId_User, &attr);
 }
 
-Result fsOpen_SystemSaveData(FsFileSystem* out, FsSaveDataSpaceId saveDataSpaceId, u64 saveID, AccountUid uid) {
+Result fsOpen_SystemSaveData(FsFileSystem* out, FsSaveDataSpaceId save_data_space_id, u64 system_save_data_id, AccountUid uid) {
     FsSaveDataAttribute attr;
 
     memset(&attr, 0, sizeof(attr));
     attr.uid = uid;
-    attr.saveID = saveID;
-    attr.saveDataType = FsSaveDataType_SystemSaveData;
+    attr.system_save_data_id = system_save_data_id;
+    attr.save_data_type = FsSaveDataType_System;
 
-    return fsOpenSaveDataFileSystemBySystemSaveDataId(out, saveDataSpaceId, &attr);
+    return fsOpenSaveDataFileSystemBySystemSaveDataId(out, save_data_space_id, &attr);
 }
 
 //-----------------------------------------------------------------------------
