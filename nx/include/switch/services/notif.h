@@ -119,7 +119,7 @@ Result notifAlarmSettingDisable(NotifAlarmSetting *alarm_setting, u32 day_of_wee
  * @param[out] alarm_setting_id AlarmSettingId
  * @param[in] alarm_setting \ref NotifAlarmSetting
  * @param[in] buffer Input buffer containing the ApplicationParameter. Optional, can be NULL.
- * @param[in] size Input buffer size. Optional, can be 0.
+ * @param[in] size Input buffer size, must be <=0x400. Optional, can be 0.
  */
 Result notifRegisterAlarmSetting(u16 *alarm_setting_id, const NotifAlarmSetting *alarm_setting, const void* buffer, size_t size);
 
@@ -127,7 +127,7 @@ Result notifRegisterAlarmSetting(u16 *alarm_setting_id, const NotifAlarmSetting 
  * @brief Updates the specified AlarmSetting.
  * @param[in] alarm_setting \ref NotifAlarmSetting
  * @param[in] buffer Input buffer containing the ApplicationParameter. Optional, can be NULL.
- * @param[in] size Input buffer size. Optional, can be 0.
+ * @param[in] size Input buffer size, must be <=0x400. Optional, can be 0.
  */
 Result notifUpdateAlarmSetting(const NotifAlarmSetting *alarm_setting, const void* buffer, size_t size);
 
