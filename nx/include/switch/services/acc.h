@@ -11,10 +11,9 @@
 #define ACC_USER_LIST_SIZE 8
 
 typedef enum {
-    AccountServiceType_NotInitialized = 0,  ///< Same as ::AccountServiceType_Application during \ref accountInitialize.
-    AccountServiceType_Application    = 1,  ///< Initializes acc:u0.
-    AccountServiceType_System         = 2,  ///< Initializes acc:u1.
-    AccountServiceType_Administrator  = 3,  ///< Initializes acc:su.
+    AccountServiceType_Application    = 0,  ///< Initializes acc:u0.
+    AccountServiceType_System         = 1,  ///< Initializes acc:u1.
+    AccountServiceType_Administrator  = 2,  ///< Initializes acc:su.
 } AccountServiceType;
 
 /// Profile
@@ -49,14 +48,8 @@ typedef struct {
     u64 id;                ///< Id.
 } AccountNetworkServiceAccountId;
 
-/**
- * @brief Sets the \ref AccountServiceType for initialization. Call this function before \ref accountInitialize, if needed.
- * @note By default ::AccountServiceType_NotInitialized will be used.
- */
-void accountSetServiceType(AccountServiceType serviceType);
-
 /// Initialize account.
-Result accountInitialize(void);
+Result accountInitialize(AccountServiceType service_type);
 
 /// Exit account.
 void accountExit(void);

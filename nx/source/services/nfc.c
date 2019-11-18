@@ -4,8 +4,8 @@
 #include "services/applet.h"
 #include "services/nfc.h"
 
-static NfpServiceType g_nfpServiceType = NfpServiceType_NotInitialized;
-static NfcServiceType g_nfcServiceType = NfcServiceType_NotInitialized;
+static NfpServiceType g_nfpServiceType;
+static NfcServiceType g_nfcServiceType;
 static Service g_nfpSrv;
 static Service g_nfpInterface;
 static Service g_nfcSrv;
@@ -30,27 +30,18 @@ static Result _nfcCmdInDevhandleNoOut(Service* srv, const NfcDeviceHandle *handl
 static Result _nfcCmdInDevhandleOutEvent(Service* srv, const NfcDeviceHandle *handle, Event *out_event, u32 cmd_id);
 static Result _nfcCmdInDevhandleOutBuffer(Service* srv, const NfcDeviceHandle *handle, void* buf, size_t buf_size, u32 cmd_id);
 
-NX_GENERATE_SERVICE_GUARD(nfp);
+NX_GENERATE_SERVICE_GUARD_PARAMS(nfp, (NfpServiceType service_type), (service_type));
 
-void nfpSetServiceType(NfpServiceType serviceType) {
-    g_nfpServiceType = serviceType;
-}
-
-void nfcSetServiceType(NfcServiceType serviceType) {
-    g_nfcServiceType = serviceType;
-}
-
-Result _nfpInitialize(void) {
+Result _nfpInitialize(NfpServiceType service_type) {
     Result rc = MAKERESULT(Module_Libnx, LibnxError_BadInput);
     u64 aruid = 0;
 
     // If this fails (for example because we're a sysmodule) aruid stays zero
     appletGetAppletResourceUserId(&aruid);
 
+    g_nfpServiceType = service_type;
     switch (g_nfpServiceType) {
-        case NfpServiceType_NotInitialized:
         case NfpServiceType_User:
-            g_nfpServiceType = NfpServiceType_User;
             rc = smGetService(&g_nfpSrv, "nfp:user");
             break;
         case NfpServiceType_Debug:
@@ -77,22 +68,20 @@ void _nfpCleanup(void) {
     _nfcCmdNoIO(&g_nfpInterface, 1); // Finalize
     serviceClose(&g_nfpInterface);
     serviceClose(&g_nfpSrv);
-    g_nfpServiceType = NfpServiceType_NotInitialized;
 }
 
-NX_GENERATE_SERVICE_GUARD(nfc);
+NX_GENERATE_SERVICE_GUARD_PARAMS(nfc, (NfcServiceType service_type), (service_type));
 
-Result _nfcInitialize(void) {
+Result _nfcInitialize(NfcServiceType service_type) {
     Result rc=0;
     u64 aruid = 0;
 
     // If this fails (for example because we're a sysmodule) aruid stays zero
     appletGetAppletResourceUserId(&aruid);
 
+    g_nfcServiceType = service_type;
     switch (g_nfcServiceType) {
-        case NfcServiceType_NotInitialized:
         case NfcServiceType_User:
-            g_nfcServiceType = NfcServiceType_User;
             rc = smGetService(&g_nfcSrv, "nfc:user");
             break;
         case NfcServiceType_System:
@@ -116,7 +105,6 @@ void _nfcCleanup(void) {
     _nfcCmdNoIO(&g_nfcInterface, hosversionBefore(4,0,0) ? 1 : 401); // Finalize
     serviceClose(&g_nfcInterface);
     serviceClose(&g_nfcSrv);
-    g_nfcServiceType = NfcServiceType_NotInitialized;
 }
 
 Service* nfpGetServiceSession(void) {

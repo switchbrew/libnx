@@ -584,7 +584,7 @@ int getnameinfo(const struct sockaddr *sa, socklen_t salen,
 long gethostid(void) {
     u32 id = INADDR_LOOPBACK;
 
-    Result rc = nifmInitialize();
+    Result rc = nifmInitialize(NifmServiceType_User);
     if (R_SUCCEEDED(rc)) {
         rc = nifmGetCurrentIpAddress(&id);
         nifmExit();

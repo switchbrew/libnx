@@ -11,17 +11,15 @@
 
 /// NfpServiceType
 typedef enum {
-    NfpServiceType_NotInitialized = 0,  ///< Same as ::NfpServiceType_User during \ref nfpInitialize.
-    NfpServiceType_User           = 1,  ///< Initializes nfp:user.
-    NfpServiceType_Debug          = 2,  ///< Initializes nfp:dbg.
-    NfpServiceType_System         = 3,  ///< Initializes nfp:sys.
+    NfpServiceType_User           = 0,  ///< Initializes nfp:user.
+    NfpServiceType_Debug          = 1,  ///< Initializes nfp:dbg.
+    NfpServiceType_System         = 2,  ///< Initializes nfp:sys.
 } NfpServiceType;
 
 /// NfcServiceType
 typedef enum {
-    NfcServiceType_NotInitialized = 0,  ///< Same as ::NfcServiceType_User during \ref nfcInitialize.
-    NfcServiceType_User           = 1,  ///< Initializes nfc:user.
-    NfcServiceType_System         = 3,  ///< Initializes nfc:sys.
+    NfcServiceType_User           = 0,  ///< Initializes nfc:user.
+    NfcServiceType_System         = 1,  ///< Initializes nfc:sys.
 } NfcServiceType;
 
 typedef enum {
@@ -146,26 +144,14 @@ typedef struct {
     u8 handle[0x8];            ///< Handle.
 } NfcDeviceHandle;
 
-/**
- * @brief Sets the \ref NfpServiceType for initialization. Call this function before \ref nfpInitialize, if needed.
- * @note By default ::NfpServiceType_NotInitialized will be used.
- */
-void nfpSetServiceType(NfpServiceType serviceType);
-
-/**
- * @brief Sets the \ref NfcServiceType for initialization. Call this function before \ref nfcInitialize, if needed.
- * @note By default ::NfcServiceType_NotInitialized will be used.
- */
-void nfcSetServiceType(NfcServiceType serviceType);
-
 /// Initialize nfp:*.
-Result nfpInitialize(void);
+Result nfpInitialize(NfpServiceType service_type);
 
 /// Exit nfp:*.
 void nfpExit(void);
 
 /// Initialize nfc:*.
-Result nfcInitialize(void);
+Result nfcInitialize(NfcServiceType service_type);
 
 /// Exit nfc:*.
 void nfcExit(void);

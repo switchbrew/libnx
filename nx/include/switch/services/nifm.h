@@ -10,10 +10,9 @@
 #include "../sf/service.h"
 
 typedef enum {
-    NifmServiceType_NotInitialized = 0, ///< Initializes nifm:u.
-    NifmServiceType_User           = 1, ///< Initializes nifm:u.
-    NifmServiceType_System         = 2, ///< Initializes nifm:s.
-    NifmServiceType_Admin          = 3, ///< Initializes nifm:a.
+    NifmServiceType_User           = 0, ///< Initializes nifm:u.
+    NifmServiceType_System         = 1, ///< Initializes nifm:s.
+    NifmServiceType_Admin          = 2, ///< Initializes nifm:a.
 } NifmServiceType;
 
 typedef enum {
@@ -29,16 +28,10 @@ typedef enum {
     NifmInternetConnectionStatus_Connected              = 4, ///< Internet is connected.
 } NifmInternetConnectionStatus;
 
-/**
- * @brief Sets the \ref NifmServiceType for initialization. Call this function before \ref nifmInitialize.
- * @note By default nifm:u will be used.
- */
-void nifmSetServiceType(NifmServiceType serviceType);
+/// Initialize nifm. This is used automatically by gethostid().
+Result nifmInitialize(NifmServiceType service_type);
 
-/// Initialize nifm. This is used automatically by \ref socketInitialize.
-Result nifmInitialize(void);
-
-/// Exit nifm. This is used automatically by \ref socketExit.
+/// Exit nifm. This is used automatically by gethostid().
 void nifmExit(void);
 
 /// Gets the Service object for the actual nifm:* service session.

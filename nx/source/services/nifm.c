@@ -2,7 +2,7 @@
 #include "services/nifm.h"
 #include "runtime/hosversion.h"
 
-static NifmServiceType g_nifmServiceType = NifmServiceType_NotInitialized;
+static NifmServiceType g_nifmServiceType;
 
 static Service g_nifmSrv;
 static Service g_nifmIGS;
@@ -10,18 +10,13 @@ static Service g_nifmIGS;
 static Result _nifmCreateGeneralService(Service* srv_out);
 static Result _nifmCreateGeneralServiceOld(Service* srv_out);
 
-NX_GENERATE_SERVICE_GUARD(nifm);
+NX_GENERATE_SERVICE_GUARD_PARAMS(nifm, (NifmServiceType service_type), (service_type));
 
-void nifmSetServiceType(NifmServiceType serviceType) {
-    g_nifmServiceType = serviceType;
-}
-
-Result _nifmInitialize(void) {
+Result _nifmInitialize(NifmServiceType service_type) {
     Result rc = MAKERESULT(Module_Libnx, LibnxError_BadInput);
+    g_nifmServiceType = service_type;
     switch (g_nifmServiceType) {
-        case NifmServiceType_NotInitialized:
         case NifmServiceType_User:
-            g_nifmServiceType = NifmServiceType_User;
             rc = smGetService(&g_nifmSrv, "nifm:u");
             break;
         case NifmServiceType_System:
@@ -47,7 +42,6 @@ Result _nifmInitialize(void) {
 void _nifmCleanup(void) {
     serviceClose(&g_nifmIGS);
     serviceClose(&g_nifmSrv);
-    g_nifmServiceType = NifmServiceType_NotInitialized;
 }
 
 Service* nifmGetServiceSession_StaticService(void) {
