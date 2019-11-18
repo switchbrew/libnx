@@ -788,7 +788,18 @@ Result hidSetSupportedNpadIdType(HidControllerID *buf, size_t count) {
 }
 
 static Result _hidActivateNpad(void) {
-    return _hidCmdWithNoInput(103);
+    u32 revision=0x0;
+
+    if (hosversionBefore(5,0,0))
+        return _hidCmdWithNoInput(103); // ActivateNpad
+
+    revision = 0x1; // [5.0.0+]
+    if (hosversionAtLeast(6,0,0))
+        revision = 0x2; // [6.0.0+]
+    if (hosversionAtLeast(8,0,0))
+        revision = 0x3; // [8.0.0+]
+
+    return _hidCmdWithInputU32(revision, 109); // ActivateNpadWithRevision
 }
 
 static Result _hidDeactivateNpad(void) {
