@@ -1078,8 +1078,8 @@ Result hidStopSixAxisSensor(u32 SixAxisSensorHandle) {
     return rc;
 }
 
-static Result _hidActivateSevenSixAxisSensor(void) {
-    if (hosversionBefore(5,0,0))
+static Result _hidActivateConsoleSixAxisSensor(void) {
+    if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return _hidCmdWithNoInput(303);
@@ -1129,6 +1129,9 @@ Result hidInitializeSevenSixAxisSensor(void) {
     if (g_sevenSixAxisSensorBuffer != NULL)
         return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
 
+    rc = _hidActivateConsoleSixAxisSensor();
+    if (R_FAILED(rc)) return rc;
+
     g_sevenSixAxisSensorBuffer = (u8*)memalign(0x1000, bufsize);
     if (g_sevenSixAxisSensorBuffer == NULL)
         return MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
@@ -1138,12 +1141,6 @@ Result hidInitializeSevenSixAxisSensor(void) {
     if (R_SUCCEEDED(rc)) rc = tmemCreateFromMemory(&g_sevenSixAxisSensorTmem1, &g_sevenSixAxisSensorBuffer[0x1000], bufsize-0x1000, Perm_None);
 
     if (R_SUCCEEDED(rc)) rc = _hidInitializeSevenSixAxisSensor(&g_sevenSixAxisSensorTmem0, &g_sevenSixAxisSensorTmem1);
-
-    if (R_SUCCEEDED(rc)) {
-        rc = _hidActivateSevenSixAxisSensor();
-        if (R_FAILED(rc)) hidFinalizeSevenSixAxisSensor();
-        return rc;
-    }
 
     if (R_FAILED(rc)) {
         tmemClose(&g_sevenSixAxisSensorTmem0);
