@@ -713,6 +713,7 @@ Result nssuControlGetReceivedEulaData(NsSystemUpdateControl *c, const char* path
 
 /**
  * @brief Does setup for ReceiveSystemUpdate by using the same nim cmds as \ref nssuDestroySystemUpdateTask.
+ * @note qlaunch uses this before \ref nssuControlRequestReceiveSystemUpdate.
  * @note Only available on [4.0.0+].
  * @param c \ref NsSystemUpdateControl
  */
