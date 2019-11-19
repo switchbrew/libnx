@@ -289,6 +289,14 @@ Result setsysSetQuestFlag(bool flag) {
     return _setCmdInBoolNoOut(&g_setsysSrv, flag, 48);
 }
 
+Result setsysIsUserSystemClockAutomaticCorrectionEnabled(bool *out) {
+    return _setCmdNoInOutBool(&g_setsysSrv, out, 60);
+}
+
+Result setsysSetUserSystemClockAutomaticCorrectionEnabled(bool flag) {
+    return _setCmdInBoolNoOut(&g_setsysSrv, flag, 61);
+}
+
 Result setsysGetUsb30EnableFlag(bool *out) {
     return _setCmdNoInOutBool(&g_setsysSrv, out, 65);
 }

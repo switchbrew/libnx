@@ -212,6 +212,18 @@ Result setsysGetQuestFlag(bool *out);
 Result setsysSetQuestFlag(bool flag);
 
 /**
+ * @brief IsUserSystemClockAutomaticCorrectionEnabled
+ * @param[out] out Output flag.
+ */
+Result setsysIsUserSystemClockAutomaticCorrectionEnabled(bool *out);
+
+/**
+ * @brief SetUserSystemClockAutomaticCorrectionEnabled
+ * @param[in] flag Input flag.
+ */
+Result setsysSetUserSystemClockAutomaticCorrectionEnabled(bool flag);
+
+/**
  * @brief GetUsb30EnableFlag
  * @param[out] out Output flag.
  */
