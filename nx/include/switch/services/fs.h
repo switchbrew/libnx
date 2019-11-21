@@ -205,6 +205,7 @@ typedef enum {
     FsSaveDataFlags_KeepAfterResettingSystemSaveData                    = BIT(0),
     FsSaveDataFlags_KeepAfterRefurbishment                              = BIT(1),
     FsSaveDataFlags_KeepAfterResettingSystemSaveDataWithoutUserSaveData = BIT(2),
+    FsSaveDataFlags_NeedsSecureDelete                                   = BIT(3),
 } FsSaveDataFlags;
 
 typedef enum {
