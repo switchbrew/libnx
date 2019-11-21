@@ -143,6 +143,20 @@ NX_INLINE void serviceCreate(Service* s, Handle h)
 }
 
 /**
+ * @brief Creates a non-domain subservice object from a parent service.
+ * @param[out] s Service object.
+ * @param[in] parent Parent service.
+ * @param[in] h IPC session handle for this subservice.
+ */
+NX_INLINE void serviceCreateNonDomainSubservice(Service* s, Service* parent, Handle h)
+{
+    s->session = h;
+    s->own_handle = 1;
+    s->object_id = 0;
+    s->pointer_buffer_size = parent->pointer_buffer_size;
+}
+
+/**
  * @brief Creates a domain subservice object from a parent service.
  * @param[out] s Service object.
  * @param[in] parent Parent service, necessarily a domain or domain subservice.
@@ -397,7 +411,7 @@ NX_INLINE Result serviceParseResponse(
         if (is_domain)
             serviceCreateDomainSubservice(&out_objects[i], s, cmifResponseGetObject(&res));
         else // Output objects are marshalled as move handles at the beginning of the list.
-            serviceCreate(&out_objects[i], cmifResponseGetMoveHandle(&res));
+            serviceCreateNonDomainSubservice(&out_objects[i], s, cmifResponseGetMoveHandle(&res));
     }
 
     _serviceResponseGetHandle(&res, out_handle_attrs.attr0, &out_handles[0]);
