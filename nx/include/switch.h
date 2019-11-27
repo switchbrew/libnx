@@ -125,6 +125,7 @@ extern "C" {
 #include "switch/applets/album_la.h"
 #include "switch/applets/friends_la.h"
 #include "switch/applets/pctlauth.h"
+#include "switch/applets/psel.h"
 #include "switch/applets/error.h"
 #include "switch/applets/swkbd.h"
 #include "switch/applets/web.h"
