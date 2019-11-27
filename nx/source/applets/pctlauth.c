@@ -1,8 +1,5 @@
 #include <string.h>
-#include "types.h"
-#include "result.h"
-#include "services/applet.h"
-#include "applets/libapplet.h"
+#include "libapplet_internal.h"
 #include "applets/pctlauth.h"
 #include "runtime/hosversion.h"
 

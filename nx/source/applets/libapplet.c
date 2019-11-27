@@ -1,9 +1,6 @@
 #include <string.h>
-#include "types.h"
-#include "result.h"
+#include "libapplet_internal.h"
 #include "arm/counter.h"
-#include "services/applet.h"
-#include "applets/libapplet.h"
 
 static bool g_libappletJumpFlag;
 

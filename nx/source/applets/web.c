@@ -1,9 +1,6 @@
 #include <string.h>
 #include <malloc.h>
-#include "types.h"
-#include "result.h"
-#include "services/applet.h"
-#include "applets/libapplet.h"
+#include "libapplet_internal.h"
 #include "applets/web.h"
 #include "runtime/hosversion.h"
 
