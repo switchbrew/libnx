@@ -50,9 +50,10 @@ typedef struct {
 Result pselUiCreate(PselUiSettings *ui, PselUiMode mode);
 
 /**
- * @brief Adds a user to the invalid user list (these users will be blacklisted in the applet)
+ * @brief Adds a user to the user list of the applet.
  * @param ui PselUiSettings struct.
  * @param user_id user ID.
+ * @note The users will be treated as invalid users for user selection mode, and as the input user for other modes.
  */
 void pselUiAddUser(PselUiSettings *ui, AccountUid *user_id);
 
