@@ -13,7 +13,7 @@ Result pselUiCreate(PselUiSettings *ui, PselUiMode mode) {
     return 0;
 }
 
-void pselUiAddInvalidUser(PselUiSettings *ui, AccountUid *user_id) {
+void pselUiAddUser(PselUiSettings *ui, AccountUid *user_id) {
     int i;
     for(i = 0; i < ACC_USER_LIST_SIZE; i++) {
 
@@ -45,8 +45,48 @@ Result pselUiShow(PselUiSettings *ui, AccountUid *out_user) {
     
     if (R_SUCCEEDED(rc)) {
         if (res.result != 0) rc = MAKERESULT(Module_Libnx, LibnxError_LibAppletBadExit);
-        if (R_SUCCEEDED(rc)) *out_user = res.userId;
+        if (R_SUCCEEDED(rc)) {
+            if(out_user) *out_user = res.userId;
+        }
     }
 
+    return rc;
+}
+
+Result pselShowUserSelector(AccountUid *out_user) {
+    PselUiSettings ui;
+    Result rc = pselUiCreate(&ui, PselUiMode_SelectUser);
+    if(R_SUCCEEDED(rc)) {
+        rc = pselUiShow(&ui, out_user);
+    }
+    return rc;
+}
+
+Result pselShowUserCreator(AccountUid *out_user) {
+    PselUiSettings ui;
+    Result rc = pselUiCreate(&ui, PselUiMode_UserCreation);
+    if(R_SUCCEEDED(rc)) {
+        rc = pselUiShow(&ui, out_user);
+    }
+    return rc;
+}
+
+Result pselShowIconEditor(AccountUid *user) {
+    PselUiSettings ui;
+    Result rc = pselUiCreate(&ui, PselUiMode_IconEditor);
+    if(R_SUCCEEDED(rc)) {
+        pselUiAddUser(&ui, user);
+        rc = pselUiShow(&ui, NULL);
+    }
+    return rc;
+}
+
+Result pselShowNicknameEditor(AccountUid *user) {
+    PselUiSettings ui;
+    Result rc = pselUiCreate(&ui, PselUiMode_NicknameEditor);
+    if(R_SUCCEEDED(rc)) {
+        pselUiAddUser(&ui, user);
+        rc = pselUiShow(&ui, NULL);
+    }
     return rc;
 }

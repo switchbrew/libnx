@@ -54,7 +54,7 @@ Result pselUiCreate(PselUiSettings *ui, PselUiMode mode);
  * @param ui PselUiSettings struct.
  * @param user_id user ID.
  */
-void pselUiAddInvalidUser(PselUiSettings *ui, AccountUid *user_id);
+void pselUiAddUser(PselUiSettings *ui, AccountUid *user_id);
 
 /**
  * @brief Sets whether users can be created in the applet
@@ -87,9 +87,33 @@ NX_CONSTEXPR void pselUiSetSkipEnabled(PselUiSettings *ui, bool flag) {
 }
 
 /**
- * @brief Shows the applet with the specified UI settings.
+ * @brief Shows playerSelect applet with the specified UI settings.
  * @param ui PselUiSettings struct.
- * @param out_uid Selected user ID.
+ * @param out_user Selected user ID.
  * @note If user skips (see \ref pselUiSetSkipEnabled) this will return successfully but the output ID will be 0.
  */
 Result pselUiShow(PselUiSettings *ui, AccountUid *out_user);
+
+/**
+ * @brief Shows playerSelect applet to select a user.
+ * @param out_user Returned selected user ID.
+ */
+Result pselShowUserSelector(AccountUid *out_user);
+
+/**
+ * @brief Shows playerSelect applet to create a user.
+ * @param out_user Returned created user ID.
+ */
+Result pselShowUserCreator(AccountUid *out_user);
+
+/**
+ * @brief Shows playerSelect applet to change a user's icon.
+ * @param user Input user ID.
+ */
+Result pselShowIconEditor(AccountUid *user);
+
+/**
+ * @brief Shows playerSelect applet to change a user's nickname.
+ * @param user Input user ID.
+ */
+Result pselShowNicknameEditor(AccountUid *user);
