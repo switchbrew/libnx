@@ -446,7 +446,7 @@ Result fsGetGlobalAccessLogMode(u32* out_mode) {
 }
 
 // Wrapper(s) for fsCreateSaveDataFileSystemBySystemSaveDataId.
-Result fsCreate_SystemSaveDataWithOwner(FsSaveDataSpaceId save_data_space_id, u64 system_save_data_id, AccountUid uid, u64 owner_id, u64 size, u64 journal_size, u32 flags) {
+Result fsCreate_SystemSaveDataWithOwner(FsSaveDataSpaceId save_data_space_id, u64 system_save_data_id, AccountUid uid, u64 owner_id, s64 size, s64 journal_size, u32 flags) {
     FsSaveDataAttribute attr = {
         .uid = uid,
         .system_save_data_id = system_save_data_id,
@@ -463,7 +463,7 @@ Result fsCreate_SystemSaveDataWithOwner(FsSaveDataSpaceId save_data_space_id, u6
     return fsCreateSaveDataFileSystemBySystemSaveDataId(&attr, &create);
 }
 
-Result fsCreate_SystemSaveData(FsSaveDataSpaceId save_data_space_id, u64 system_save_data_id, u64 size, u64 journal_size, u32 flags) {
+Result fsCreate_SystemSaveData(FsSaveDataSpaceId save_data_space_id, u64 system_save_data_id, s64 size, s64 journal_size, u32 flags) {
     return fsCreate_SystemSaveDataWithOwner(save_data_space_id, system_save_data_id, (AccountUid){}, 0, size, journal_size, flags);
 }
 
@@ -494,7 +494,7 @@ Result fsOpen_SystemSaveData(FsFileSystem* out, FsSaveDataSpaceId save_data_spac
 // IFileSystem
 //-----------------------------------------------------------------------------
 
-Result fsFsCreateFile(FsFileSystem* fs, const char* path, u64 size, u32 option) {
+Result fsFsCreateFile(FsFileSystem* fs, const char* path, s64 size, u32 option) {
     const struct {
         u32 option;
         u64 size;
@@ -585,12 +585,12 @@ static Result _fsFsCmdWithInPathAndOutU64(FsFileSystem* fs, const char* path, u6
     );
 }
 
-Result fsFsGetFreeSpace(FsFileSystem* fs, const char* path, u64* out) {
-    return _fsFsCmdWithInPathAndOutU64(fs, path, out, 11);
+Result fsFsGetFreeSpace(FsFileSystem* fs, const char* path, s64* out) {
+    return _fsFsCmdWithInPathAndOutU64(fs, path, (u64*)out, 11);
 }
 
-Result fsFsGetTotalSpace(FsFileSystem* fs, const char* path, u64* out) {
-    return _fsFsCmdWithInPathAndOutU64(fs, path, out, 12);
+Result fsFsGetTotalSpace(FsFileSystem* fs, const char* path, s64* out) {
+    return _fsFsCmdWithInPathAndOutU64(fs, path, (u64*)out, 12);
 }
 
 Result fsFsCleanDirectoryRecursively(FsFileSystem* fs, const char* path) {
@@ -610,14 +610,14 @@ Result fsFsGetFileTimeStampRaw(FsFileSystem* fs, const char* path, FsTimeStampRa
     );
 }
 
-Result fsFsQueryEntry(FsFileSystem* fs, void *out, size_t out_size, const void *in, size_t in_size, const char* path, FsFileSystemQueryType query_type) {
+Result fsFsQueryEntry(FsFileSystem* fs, void *out, size_t out_size, const void *in, size_t in_size, const char* path, FsFileSystemQueryId query_id) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     char send_path[FS_MAX_PATH] = {0};
     strncpy(send_path, path, sizeof(send_path)-1);
 
-    return _fsObjectDispatchIn(&fs->s, 15, query_type,
+    return _fsObjectDispatchIn(&fs->s, 15, query_id,
         .buffer_attrs = {
             SfBufferAttr_HipcPointer  | SfBufferAttr_In,
             SfBufferAttr_HipcMapAlias | SfBufferAttr_In  | SfBufferAttr_HipcMapTransferAllowsNonSecure,
@@ -631,8 +631,8 @@ Result fsFsQueryEntry(FsFileSystem* fs, void *out, size_t out_size, const void *
     );
 }
 
-Result fsFsSetArchiveBit(FsFileSystem* fs, const char *path) {
-    return fsFsQueryEntry(fs, NULL, 0, NULL, 0, path, FsFileSystemQueryType_SetArchiveBit);
+Result fsFsSetConcatenationFileAttribute(FsFileSystem* fs, const char *path) {
+    return fsFsQueryEntry(fs, NULL, 0, NULL, 0, path, FsFileSystemQueryId_SetConcatenationFileAttribute);
 }
 
 void fsFsClose(FsFileSystem* fs) {
@@ -643,11 +643,11 @@ void fsFsClose(FsFileSystem* fs) {
 // IFile
 //-----------------------------------------------------------------------------
 
-Result fsFileRead(FsFile* f, u64 off, void* buf, u64 read_size, u32 option, u64* bytes_read) {
+Result fsFileRead(FsFile* f, s64 off, void* buf, u64 read_size, u32 option, u64* bytes_read) {
     const struct {
         u32 option;
         u32 pad;
-        u64 offset;
+        s64 offset;
         u64 read_size;
     } in = { option, 0, off, read_size };
 
@@ -657,11 +657,11 @@ Result fsFileRead(FsFile* f, u64 off, void* buf, u64 read_size, u32 option, u64*
     );
 }
 
-Result fsFileWrite(FsFile* f, u64 off, const void* buf, u64 write_size, u32 option) {
+Result fsFileWrite(FsFile* f, s64 off, const void* buf, u64 write_size, u32 option) {
     const struct {
         u32 option;
         u32 pad;
-        u64 offset;
+        s64 offset;
         u64 write_size;
     } in = { option, 0, off, write_size };
 
@@ -675,23 +675,23 @@ Result fsFileFlush(FsFile* f) {
     return _fsCmdNoIO(&f->s, 2);
 }
 
-Result fsFileSetSize(FsFile* f, u64 sz) {
+Result fsFileSetSize(FsFile* f, s64 sz) {
     return _fsObjectDispatchIn(&f->s, 3, sz);
 }
 
-Result fsFileGetSize(FsFile* f, u64* out) {
+Result fsFileGetSize(FsFile* f, s64* out) {
     return _fsObjectDispatchOut(&f->s, 4, *out);
 }
 
-Result fsFileOperateRange(FsFile* f, FsOperationId op_id, u64 off, u64 len, FsRangeInfo* out) {
+Result fsFileOperateRange(FsFile* f, FsOperationId op_id, s64 off, s64 len, FsRangeInfo* out) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     const struct {
         u32 op_id;
         u32 pad;
-        u64 off;
-        u64 len;
+        s64 off;
+        s64 len;
     } in = { op_id, 0, off, len };
 
     return _fsObjectDispatchInOut(&f->s, 5, in, *out);
@@ -706,14 +706,14 @@ void fsDirClose(FsDir* d) {
     _fsObjectClose(&d->s);
 }
 
-Result fsDirRead(FsDir* d, u64 inval, u64* total_entries, size_t max_entries, FsDirectoryEntry *buf) {
-    return _fsObjectDispatchInOut(&d->s, 0, inval, *total_entries,
+Result fsDirRead(FsDir* d, s64* total_entries, size_t max_entries, FsDirectoryEntry *buf) {
+    return _fsObjectDispatchOut(&d->s, 0, *total_entries,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
-        .buffers = { { buf, sizeof(FsDirectoryEntry)*max_entries } },
+        .buffers = { { buf, max_entries*sizeof(FsDirectoryEntry) } },
     );
 }
 
-Result fsDirGetEntryCount(FsDir* d, u64* count) {
+Result fsDirGetEntryCount(FsDir* d, s64* count) {
     return _fsObjectDispatchOut(&d->s, 1, *count);
 }
 
@@ -721,9 +721,9 @@ Result fsDirGetEntryCount(FsDir* d, u64* count) {
 // IStorage
 //-----------------------------------------------------------------------------
 
-Result fsStorageRead(FsStorage* s, u64 off, void* buf, u64 read_size) {
+Result fsStorageRead(FsStorage* s, s64 off, void* buf, u64 read_size) {
     const struct {
-        u64 offset;
+        s64 offset;
         u64 read_size;
     } in = { off, read_size };
 
@@ -733,9 +733,9 @@ Result fsStorageRead(FsStorage* s, u64 off, void* buf, u64 read_size) {
     );
 }
 
-Result fsStorageWrite(FsStorage* s, u64 off, const void* buf, u64 write_size) {
+Result fsStorageWrite(FsStorage* s, s64 off, const void* buf, u64 write_size) {
     const struct {
-        u64 offset;
+        s64 offset;
         u64 write_size;
     } in = { off, write_size };
 
@@ -749,23 +749,23 @@ Result fsStorageFlush(FsStorage* s) {
     return _fsCmdNoIO(&s->s, 2);
 }
 
-Result fsStorageSetSize(FsStorage* s, u64 sz) {
+Result fsStorageSetSize(FsStorage* s, s64 sz) {
     return _fsObjectDispatchIn(&s->s, 3, sz);
 }
 
-Result fsStorageGetSize(FsStorage* s, u64* out) {
+Result fsStorageGetSize(FsStorage* s, s64* out) {
     return _fsObjectDispatchOut(&s->s, 4, *out);
 }
 
-Result fsStorageOperateRange(FsStorage* s, FsOperationId op_id, u64 off, u64 len, FsRangeInfo* out) {
+Result fsStorageOperateRange(FsStorage* s, FsOperationId op_id, s64 off, s64 len, FsRangeInfo* out) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     const struct {
         u32 op_id;
         u32 pad;
-        u64 off;
-        u64 len;
+        s64 off;
+        s64 len;
     } in = { op_id, 0, off, len };
 
     return _fsObjectDispatchInOut(&s->s, 5, in, *out);
@@ -780,10 +780,10 @@ void fsStorageClose(FsStorage* s) {
 //-----------------------------------------------------------------------------
 
 // Actually called ReadSaveDataInfo
-Result fsSaveDataInfoReaderRead(FsSaveDataInfoReader *s, FsSaveDataInfo* buf, size_t max_entries, u64* total_entries) {
+Result fsSaveDataInfoReaderRead(FsSaveDataInfoReader *s, FsSaveDataInfo* buf, size_t max_entries, s64* total_entries) {
     return _fsObjectDispatchOut(&s->s, 0, *total_entries,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
-        .buffers = { { buf, sizeof(FsSaveDataInfo)*max_entries } },
+        .buffers = { { buf, max_entries*sizeof(FsSaveDataInfo) } },
     );
 }
 
