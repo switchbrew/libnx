@@ -719,6 +719,19 @@ static Result _hidCmdOutU32(u32 *out, u32 cmd_id) {
     );
 }
 
+static Result _hidCmdOutU64(u64 *out, u32 cmd_id) {
+    Result rc;
+    u64 AppletResourceUserId;
+
+    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
+    if (R_FAILED(rc))
+        AppletResourceUserId = 0;
+
+    return serviceDispatchInOut(&g_hidSrv, cmd_id, AppletResourceUserId, *out,
+        .in_send_pid = true,
+    );
+}
+
 static Result _hidCmdNoInOutU8(u8 *out, u32 cmd_id) {
     return serviceDispatchOut(&g_hidSrv, cmd_id, *out);
 }
@@ -833,6 +846,13 @@ Result hidAcquireNpadStyleSetUpdateEventHandle(HidControllerID id, Event* out_ev
 
 Result hidSetNpadJoyHoldType(HidJoyHoldType type) {
     return _hidCmdWithInputU64(type, 120);
+}
+
+Result hidGetNpadJoyHoldType(HidJoyHoldType *type) {
+    u64 tmp=0;
+    Result rc = _hidCmdOutU64(&tmp, 121);
+    if (R_SUCCEEDED(rc) && type) *type = tmp;
+    return rc;
 }
 
 Result hidSetNpadJoyAssignmentModeSingleByDefault(HidControllerID id) {

@@ -778,6 +778,9 @@ Result hidAcquireNpadStyleSetUpdateEventHandle(HidControllerID id, Event* out_ev
 /// Sets the hold-type, see \ref HidJoyHoldType.
 Result hidSetNpadJoyHoldType(HidJoyHoldType type);
 
+/// Gets the hold-type, see \ref HidJoyHoldType.
+Result hidGetNpadJoyHoldType(HidJoyHoldType *type);
+
 /// Use this if you want to use a single joy-con as a dedicated CONTROLLER_PLAYER_*.
 /// When used, both joy-cons in a pair should be used with this (CONTROLLER_PLAYER_1 and CONTROLLER_PLAYER_2 for example).
 /// id must be CONTROLLER_PLAYER_*.
