@@ -8,7 +8,7 @@
 #include "../types.h"
 #include "../services/hid.h"
 
-/// Type values for HidLaControllerSupportArgPrivate::type.
+/// Mode values for HidLaControllerSupportArgPrivate::mode.
 typedef enum {
     HidLaControllerSupportMode_ShowControllerSupport           = 0,    ///< ShowControllerSupport
     HidLaControllerSupportMode_ShowControllerStrapGuide        = 1,    ///< [3.0.0+] ShowControllerStrapGuide
@@ -28,7 +28,7 @@ typedef struct {
     u8 flag0;                                                          ///< Flag0
     u8 flag1;                                                          ///< Flag1
     u8 mode;                                                           ///< \ref HidLaControllerSupportMode
-    u8 controller_support_caller;                                      ///< Always zero except with ShowControllerFirmwareUpdateForSystem, which sets this to the input param.
+    u8 controller_support_caller;                                      ///< \ref HidLaControllerSupportCaller. Always zero except with \ref hidLaShowControllerFirmwareUpdateForSystem, which sets this to the input param.
     u32 npad_style_set;                                                ///< Output from \ref hidGetSupportedNpadStyleSet. With ShowControllerSupportForSystem on pre-3.0.0 this is value 0.
     u32 npad_joy_hold_type;                                            ///< Output from \ref hidGetNpadJoyHoldType. With ShowControllerSupportForSystem on pre-3.0.0 this is value 1.
 } HidLaControllerSupportArgPrivate;
