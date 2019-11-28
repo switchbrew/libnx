@@ -41,7 +41,7 @@ typedef struct {
     u8 enable_take_over_connection;                                    ///< enableTakeOverConnection, non-zero to enable. Disconnects the controllers when not enabled.
     u8 enable_left_justify;                                            ///< enableLeftJustify, non-zero to enable.
     u8 enable_permit_joy_dual;                                         ///< enablePermitJoyDual, non-zero to enable.
-    u8 enable_single_mode;                                             ///< enableSingleMode, non-zero to enable. Enables using a single player in handheld-mode, dual-mode, or single-mode (player_count_* are overriden). Using handheld-mode is not allowed if this is not enabled.
+    u8 enable_single_mode;                                             ///< enableSingleMode, non-zero to enable. Enables using a single player in handheld-mode, dual-mode, or single-mode (player_count_* are overridden). Using handheld-mode is not allowed if this is not enabled.
     u8 enable_identification_color;                                    ///< When non-zero enables using identification_color.
 } HidLaControllerSupportArgHeader;
 
