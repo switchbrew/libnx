@@ -56,6 +56,9 @@ int fsdevTranslatePath(const char *path, FsFileSystem** device, char *outpath);
 /// This calls fsFsSetConcatenationFileAttribute on the filesystem specified by the input path (as used in stdio).
 Result fsdevSetConcatenationFileAttribute(const char *path);
 
+// Uses \ref fsFsIsValidSignedSystemPartitionOnSdCard with the specified device.
+Result fsdevIsValidSignedSystemPartitionOnSdCard(const char *name, bool *out);
+
 /// This calls fsFsCreateFile on the filesystem specified by the input path (as used in stdio).
 Result fsdevCreateFile(const char* path, size_t size, u32 flags);
 

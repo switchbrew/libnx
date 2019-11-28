@@ -635,6 +635,16 @@ Result fsFsSetConcatenationFileAttribute(FsFileSystem* fs, const char *path) {
     return fsFsQueryEntry(fs, NULL, 0, NULL, 0, path, FsFileSystemQueryId_SetConcatenationFileAttribute);
 }
 
+Result fsFsIsValidSignedSystemPartitionOnSdCard(FsFileSystem* fs, bool *out) {
+    if (hosversionBefore(8,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    u8 tmp=0;
+    Result rc = fsFsQueryEntry(fs, &tmp, sizeof(tmp), NULL, 0, "/", FsFileSystemQueryId_IsValidSignedSystemPartitionOnSdCard);
+    if (R_SUCCEEDED(rc) && out) *out = tmp & 1;
+    return rc;
+}
+
 void fsFsClose(FsFileSystem* fs) {
     _fsObjectClose(&fs->s);
 }

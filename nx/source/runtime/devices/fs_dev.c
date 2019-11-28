@@ -407,6 +407,16 @@ Result fsdevSetConcatenationFileAttribute(const char *path) {
   return fsFsSetConcatenationFileAttribute(&device->fs, fs_path);
 }
 
+Result fsdevIsValidSignedSystemPartitionOnSdCard(const char *name, bool *out) {
+  fsdev_fsdevice *device;
+
+  device = fsdevFindDevice(name);
+  if(device==NULL)
+    return MAKERESULT(Module_Libnx, LibnxError_NotFound);
+
+  return fsFsIsValidSignedSystemPartitionOnSdCard(&device->fs, out);
+}
+
 Result fsdevCreateFile(const char* path, size_t size, u32 flags) {
   char           *fs_path = __nx_dev_path_buf;
   fsdev_fsdevice *device = NULL;

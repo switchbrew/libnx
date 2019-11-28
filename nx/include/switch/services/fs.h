@@ -272,8 +272,10 @@ typedef enum {
     FsFileSystemType_RegisteredUpdate   = 8,  ///< [4.0.0+] RegisteredUpdate
 } FsFileSystemType;
 
+/// FileSystemQueryId
 typedef enum {
-    FsFileSystemQueryId_SetConcatenationFileAttribute = 0,
+    FsFileSystemQueryId_SetConcatenationFileAttribute           = 0,  ///< [4.0.0+]
+    FsFileSystemQueryId_IsValidSignedSystemPartitionOnSdCard    = 2,  ///< [8.0.0+]
 } FsFileSystemQueryId;
 
 /// FsPriority
@@ -379,6 +381,10 @@ void fsFsClose(FsFileSystem* fs);
 /// Uses \ref fsFsQueryEntry to set the archive bit on the specified absolute directory path.
 /// This will cause HOS to treat the directory as if it were a file containing the directory's concatenated contents.
 Result fsFsSetConcatenationFileAttribute(FsFileSystem* fs, const char *path);
+
+/// Wrapper for fsFsQueryEntry with FsFileSystemQueryId_IsValidSignedSystemPartitionOnSdCard.
+/// Only available on [8.0.0+].
+Result fsFsIsValidSignedSystemPartitionOnSdCard(FsFileSystem* fs, bool *out);
 
 // IFile
 Result fsFileRead(FsFile* f, s64 off, void* buf, u64 read_size, u32 option, u64* bytes_read);
