@@ -11,8 +11,8 @@ Result pselUiCreate(PselUiSettings *ui, PselUiMode mode) {
 
 void pselUiAddUser(PselUiSettings *ui, AccountUid user_id) {
     for(u32 i=0; i<ACC_USER_LIST_SIZE; i++) {
-        if(!accountUidIsValid(&ui->settings.user_list[i])) {
-            ui->settings.user_list[i] = user_id;
+        if(!accountUidIsValid(&ui->settings.invalid_uid_list[i])) {
+            ui->settings.invalid_uid_list[i] = user_id;
             break;
         }
     }
@@ -42,6 +42,8 @@ Result pselUiShow(PselUiSettings *ui, AccountUid *out_user) {
         arg_size = sizeof(ui->settings);
     }
 
+    // TODO: Official sw supports pushing an optional additional storage from appletCreateTransferMemoryStorage with writable=0 using an input buffer, when that buffer is specified. However, sdknso itself doesn't use this besides a wrapper func. Figure out what this, and implement it?(libappletLaunch could no longer be used with this)
+
     rc = libappletLaunch(AppletId_playerSelect, &args, arg_ptr, arg_size, &ret, sizeof(ret), &reply_size);
     
     if (R_SUCCEEDED(rc)) {
@@ -52,21 +54,100 @@ Result pselUiShow(PselUiSettings *ui, AccountUid *out_user) {
     return rc;
 }
 
-Result pselShowUserSelector(AccountUid *out_user) {
+static Result _pselUserSelectorCommonInit(PselUiSettings *ui, const PselUserSelectionSettings *settings) {
+    Result rc=0;
+    bool tmp=0;
+
+    rc = accountIsUserRegistrationRequestPermitted(&tmp);
+    if (R_FAILED(rc)) return rc;
+    ui->settings.is_permitted = tmp!=0;
+
+    memcpy(&ui->settings.invalid_uid_list, settings->invalid_uid_list, sizeof(settings->invalid_uid_list));
+    ui->settings.is_network_service_account_required = settings->is_network_service_account_required;
+    ui->settings.is_skip_enabled = settings->is_skip_enabled;
+
+    ui->settings.show_skip_button = settings->show_skip_button;
+    ui->settings.additional_select = settings->additional_select;
+    if (hosversionAtLeast(6,0,0))
+        ui->settings.unk_x97 = settings->is_unqualified_user_selectable ^ 1;
+
+    return rc;
+}
+
+static Result _pselShowUserSelectorCommon(PselUiSettings *ui, AccountUid *out_user) {
+    Result rc=0;
+    bool show_psel=1;
+
+    if (ui->settings.is_skip_enabled!=0) {
+        if (accountUidIsValid(&ui->settings.invalid_uid_list[0]) || ui->settings.additional_select)
+            rc = MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen);
+
+        if (R_SUCCEEDED(rc)) rc = accountTrySelectUserWithoutInteraction(out_user, ui->settings.is_network_service_account_required);
+        if (R_SUCCEEDED(rc) && accountUidIsValid(out_user)) show_psel = 0;
+    }
+
+    if (R_SUCCEEDED(rc) && show_psel)
+        rc = pselUiShow(ui, out_user);
+
+    return rc;
+}
+
+Result pselShowUserSelectorForSystem(AccountUid *out_user, const PselUserSelectionSettings *settings, const PselUserSelectionSettingsForSystemService *settings_system) {
     PselUiSettings ui;
     Result rc = pselUiCreate(&ui, PselUiMode_UserSelector);
-    // TODO: This is missing the rest of the UiSettings setup done by official sw.
     if(R_SUCCEEDED(rc)) {
-        rc = pselUiShow(&ui, out_user);
+        rc = _pselUserSelectorCommonInit(&ui, settings);
+        if(R_SUCCEEDED(rc)) {
+            ui.settings.unk_x92 = 1;
+            if (hosversionAtLeast(2,0,0)) {
+                ui.settings.unk_x96 = settings_system->enable_user_creation_button;
+                ui.unk_x98 = settings_system->purpose;
+            }
+        }
+
+        if(R_SUCCEEDED(rc)) rc = _pselShowUserSelectorCommon(&ui, out_user);
+    }
+    return rc;
+}
+
+Result pselShowUserSelectorForLauncher(AccountUid *out_user, const PselUserSelectionSettings *settings, u64 application_id) {
+    PselUiSettings ui;
+    Result rc = pselUiCreate(&ui, PselUiMode_UserSelector);
+    if(R_SUCCEEDED(rc)) {
+        rc = _pselUserSelectorCommonInit(&ui, settings);
+        if(R_SUCCEEDED(rc)) {
+            ui.settings.application_id = application_id;
+            ui.settings.unk_x92 = 1;
+            if (hosversionAtLeast(2,0,0))
+                ui.settings.unk_x96 = 1;
+        }
+
+        if(R_SUCCEEDED(rc)) rc = _pselShowUserSelectorCommon(&ui, out_user);
+    }
+    return rc;
+}
+
+Result pselShowUserSelector(AccountUid *out_user, const PselUserSelectionSettings *settings) {
+    PselUiSettings ui;
+    Result rc = pselUiCreate(&ui, PselUiMode_UserSelector);
+    if(R_SUCCEEDED(rc)) {
+        rc = _pselUserSelectorCommonInit(&ui, settings);
+        if(R_SUCCEEDED(rc) && hosversionAtLeast(2,0,0)) ui.settings.unk_x96 = 1;
+
+        if(R_SUCCEEDED(rc)) rc = _pselShowUserSelectorCommon(&ui, out_user);
     }
     return rc;
 }
 
 Result pselShowUserCreator(void) {
     PselUiSettings ui;
+    bool tmp=0;
     Result rc = pselUiCreate(&ui, PselUiMode_UserCreator);
     if(R_SUCCEEDED(rc)) {
-        rc = pselUiShow(&ui, NULL);
+        rc = accountIsUserRegistrationRequestPermitted(&tmp);
+        if(R_SUCCEEDED(rc) && tmp==0) rc = MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen);
+
+        if(R_SUCCEEDED(rc)) rc = pselUiShow(&ui, NULL);
     }
     return rc;
 }
