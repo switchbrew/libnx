@@ -74,6 +74,12 @@ Result accountGetLastOpenedUser(AccountUid *uid);
 /// Get an AccountProfile for the specified userId.
 Result accountGetProfile(AccountProfile* out, AccountUid uid);
 
+/// IsUserRegistrationRequestPermitted
+Result accountIsUserRegistrationRequestPermitted(bool *out);
+
+/// TrySelectUserWithoutInteraction
+Result accountTrySelectUserWithoutInteraction(AccountUid *uid, bool is_network_service_account_required);
+
 /// Close the AccountProfile.
 void accountProfileClose(AccountProfile* profile);
 

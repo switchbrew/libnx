@@ -116,6 +116,21 @@ Result accountGetProfile(AccountProfile* out, AccountUid uid) {
     );
 }
 
+Result accountIsUserRegistrationRequestPermitted(bool *out) {
+    u64 pid_placeholder=0;
+    u8 tmp=0;
+    Result rc = serviceDispatchInOut(&g_accSrv, 50, pid_placeholder, tmp,
+        .in_send_pid = true,
+    );
+    if (R_SUCCEEDED(rc) && out) *out = tmp & 1;
+    return rc;
+}
+
+Result accountTrySelectUserWithoutInteraction(AccountUid *uid, bool is_network_service_account_required) {
+    u8 tmp=is_network_service_account_required!=0;
+    return serviceDispatchInOut(&g_accSrv, 51, tmp, *uid);
+}
+
 // IProfile
 
 void accountProfileClose(AccountProfile* profile) {
