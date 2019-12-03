@@ -124,6 +124,7 @@ enum {
     LibnxError_NvbufFailedToInitialize,
     LibnxError_LibAppletBadExit,
     LibnxError_InvalidCmifOutHeader,
+    LibnxError_ShouldNotHappen,
 };
 
 /// libnx binder error codes
