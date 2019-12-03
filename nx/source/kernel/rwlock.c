@@ -54,7 +54,7 @@ bool rwlockTryReadLock(RwLock* r) {
 
     const bool got_lock = r->write_waiter_count == 0;
     if (got_lock) {
-        r->read_waiter_count++;
+        r->read_lock_count++;
     }
 
     mutexUnlock(&r->mutex);
