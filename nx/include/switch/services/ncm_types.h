@@ -97,8 +97,14 @@ typedef struct {
     NcmContentInfo info;
 } NcmPackagedContentInfo;
 
-/// Used by system updates. They share the exact same struct as NcmContentMetaKey
-typedef NcmContentMetaKey NcmContentMetaInfo;
+/// ContentMetaInfo
+typedef struct {
+    u64 id;                             ///< Id.
+    u32 version;                        ///< Version.
+    u8 type;                            ///< \ref NcmContentMetaType
+    u8 attr;                            ///< \ref NcmContentMetaAttribute
+    u8 padding[2];                      ///< Padding.
+} NcmContentMetaInfo;
 
 /// ContentMetaHeader
 typedef struct {
