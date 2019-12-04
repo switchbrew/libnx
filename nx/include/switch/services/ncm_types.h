@@ -65,7 +65,7 @@ typedef struct {
 
 /// PlaceHolderId
 typedef struct {
-    alignas(8) u8 c[0x10]; ///< Id
+    alignas(8) Uuid uuid;  ///< UUID
 } NcmPlaceHolderId;
 
 /// ContentMetaKey

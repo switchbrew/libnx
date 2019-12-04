@@ -2005,7 +2005,7 @@ void appletNotifyRunning(bool *out) {
     if (R_FAILED(rc)) fatalThrow(MAKERESULT(Module_Libnx, LibnxError_BadAppletNotifyRunning));
 }
 
-Result appletGetPseudoDeviceId(u128 *out) {
+Result appletGetPseudoDeviceId(Uuid *out) {
     if (!serviceIsActive(&g_appletSrv) || !_appletIsApplication())
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     if (hosversionBefore(2,0,0))

@@ -1347,7 +1347,7 @@ void appletNotifyRunning(bool *out);
  * @note Only available with AppletType_*Application on [2.0.0+].
  * @param[out] out Output PseudoDeviceId.
  */
-Result appletGetPseudoDeviceId(u128 *out);
+Result appletGetPseudoDeviceId(Uuid *out);
 
 /// Set media playback state.
 /// If state is set to true, screen dimming and auto sleep is disabled.

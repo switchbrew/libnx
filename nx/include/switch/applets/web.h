@@ -47,15 +47,15 @@ typedef struct {
     u32 unk_x0;                 ///< Official sw sets this to 0 with appletStorageWrite, separately from the rest of the config struct.
     char conntest_url[0x100];   ///< Connection-test URL.
     char initial_url[0x400];    ///< Initial URL navigated to by the applet.
-    u128 uuid;                  ///< NIFM Network UUID. Only used by the applet when conntest_url is set.
+    Uuid uuid;                  ///< NIFM Network UUID. Only used by the applet when conntest_url is set.
     u32 rev;                    ///< Input value for nifm cmd SetRequirementByRevision. Only used by the applet when conntest_url is set.
-} PACKED WebWifiPageArg;
+} WebWifiPageArg;
 
 /// Struct for the WebWifi applet output storage.
 typedef struct {
     u32 unk_x0;  ///< Unknown.
     Result res;  ///< Result
-} PACKED WebWifiReturnValue;
+} WebWifiReturnValue;
 
 /// Config for WebWifi.
 typedef struct {
@@ -243,7 +243,7 @@ typedef enum {
  * @param uuid NIFM Network UUID, for nifm cmd SetNetworkProfileId. Value 0 can be used. Only used by the applet when conntest_url is set.
  * @param rev Input value for nifm cmd SetRequirementByRevision. Value 0 can be used. Only used by the applet when conntest_url is set.
  */
-void webWifiCreate(WebWifiConfig* config, const char* conntest_url, const char* initial_url, u128 uuid, u32 rev);
+void webWifiCreate(WebWifiConfig* config, const char* conntest_url, const char* initial_url, Uuid uuid, u32 rev);
 
 /**
  * @brief Launches WifiWebAuthApplet with the specified config and waits for it to exit.

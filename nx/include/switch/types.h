@@ -48,6 +48,8 @@ typedef u32 Result;                 ///< Function error code result type.
 typedef void (*ThreadFunc)(void *); ///< Thread entrypoint function.
 typedef void (*VoidFn)(void);       ///< Function without arguments nor return value.
 
+typedef struct { u8 uuid[0x10]; } Uuid;   ///< Unique identifier.
+
 /// Creates a bitmask from a bit number.
 #ifndef BIT
 #define BIT(n) (1U<<(n))
