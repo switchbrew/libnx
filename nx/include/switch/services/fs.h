@@ -209,9 +209,11 @@ typedef enum {
 } FsSaveDataFlags;
 
 typedef enum {
-    FsGameCardAttribute_AutoBootFlag     = BIT(0), ///< Causes the cartridge to automatically start on bootup
-    FsGameCardAttribute_HistoryEraseFlag = BIT(1), ///< Causes NS to throw an error on attempt to load the cartridge
-    FsGameCardAttribute_RepairToolFlag   = BIT(2), ///< Indicates that this gamecard is a repair tool.
+    FsGameCardAttribute_AutoBootFlag                          = BIT(0), ///< Causes the cartridge to automatically start on bootup
+    FsGameCardAttribute_HistoryEraseFlag                      = BIT(1), ///< Causes NS to throw an error on attempt to load the cartridge
+    FsGameCardAttribute_RepairToolFlag                        = BIT(2), ///< [4.0.0+] Indicates that this gamecard is a repair tool.
+    FsGameCardAttribute_DifferentRegionCupToTerraDeviceFlag   = BIT(3), ///< [9.0.0+] DifferentRegionCupToTerraDeviceFlag
+    FsGameCardAttribute_DifferentRegionCupToGlobalDeviceFlag  = BIT(4), ///< [9.0.0+] DifferentRegionCupToGlobalDeviceFlag
 } FsGameCardAttribute;
 
 typedef enum {
