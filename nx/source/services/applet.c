@@ -1056,7 +1056,7 @@ IPC_MAKE_CMD_IMPL(static Result _appletSetOutOfFocusSuspendingEnabled(bool flag)
 IPC_MAKE_CMD_IMPL_HOSVER(Result appletSetControllerFirmwareUpdateSection(bool flag),               &g_appletISelfController, 17, _appletCmdInBoolNoOut, (3,0,0), flag)
 IPC_MAKE_CMD_IMPL_HOSVER(Result appletSetRequiresCaptureButtonShortPressedMessage(bool flag),      &g_appletISelfController, 18, _appletCmdInBoolNoOut, (3,0,0), flag)
 IPC_MAKE_CMD_IMPL_HOSVER(Result appletSetAlbumImageOrientation(AlbumImageOrientation orientation), &g_appletISelfController, 19, _appletCmdInU32NoOut,  (3,0,0), orientation)
-IPC_MAKE_CMD_IMPL_HOSVER(Result appletSetDesirableKeyboardLayout(u32 layout),                      &g_appletISelfController, 20, _appletCmdInU32NoOut,  (4,0,0), layout)
+IPC_MAKE_CMD_IMPL_HOSVER(Result appletSetDesirableKeyboardLayout(SetKeyboardLayout layout),        &g_appletISelfController, 20, _appletCmdInU32NoOut,  (4,0,0), layout)
 IPC_MAKE_CMD_IMPL(       Result appletCreateManagedDisplayLayer(u64 *out),                         &g_appletISelfController, 40, _appletCmdNoInOutU64,           out)
 IPC_MAKE_CMD_IMPL_HOSVER(Result appletIsSystemBufferSharingEnabled(void),                          &g_appletISelfController, 41, _appletCmdNoIO,        (4,0,0))
 
@@ -2593,7 +2593,19 @@ Result appletGetCallerAppletIdentityInfoStack(AppletIdentityInfo *stack, s32 cou
 }
 
 IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletGetNextReturnDestinationAppletIdentityInfo(AppletIdentityInfo *info), &g_appletILibraryAppletSelfAccessor, 18,  _appletGetIdentityInfo,     __nx_applet_type != AppletType_LibraryApplet, (4,0,0), info)
-IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletGetDesirableKeyboardLayout(u32 *layout),                              &g_appletILibraryAppletSelfAccessor, 19,  _appletCmdNoInOutU32,       __nx_applet_type != AppletType_LibraryApplet, (4,0,0), layout)
+
+Result appletGetDesirableKeyboardLayout(SetKeyboardLayout *layout) {
+    if (__nx_applet_type != AppletType_LibraryApplet)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    u32 tmp=0;
+    Result rc = _appletCmdNoInOutU32(&g_appletILibraryAppletSelfAccessor, &tmp, 19);
+    if (R_SUCCEEDED(rc) && layout) *layout = tmp;
+    return rc;
+}
+
 IPC_MAKE_CMD_IMPL_INITEXPR(       Result appletPopExtraStorage(AppletStorage *s),                                    &g_appletILibraryAppletSelfAccessor, 20,  _appletCmdNoInOutStorage,   __nx_applet_type != AppletType_LibraryApplet,          s)
 IPC_MAKE_CMD_IMPL_INITEXPR(       Result appletGetPopExtraStorageEvent(Event *out_event),                            &g_appletILibraryAppletSelfAccessor, 25,  _appletCmdGetEvent,         __nx_applet_type != AppletType_LibraryApplet,          out_event, false)
 IPC_MAKE_CMD_IMPL_INITEXPR(       Result appletUnpopInData(AppletStorage *s),                                        &g_appletILibraryAppletSelfAccessor, 30,  _appletCmdInStorage,        __nx_applet_type != AppletType_LibraryApplet,          s)
