@@ -2675,7 +2675,6 @@ Result appletStartRebootSequenceForOverlay(void) {
     return rc;
 }
 
-IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletSetHandlingHomeButtonShortPressedEnabled(bool flag), &g_appletIFunctions, 20,  _appletCmdInBoolNoOut, __nx_applet_type != AppletType_OverlayApplet, (8,0,0), flag)
 IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletSetHealthWarningShowingState(bool flag),             &g_appletIFunctions, 30,  _appletCmdInBoolNoOut, __nx_applet_type != AppletType_OverlayApplet, (9,0,0), flag)
 IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletBeginToObserveHidInputForDevelop(void),              &g_appletIFunctions, 101, _appletCmdNoIO,        __nx_applet_type != AppletType_OverlayApplet, (5,0,0))
 
@@ -2830,6 +2829,22 @@ Result appletGetGpuErrorDetectedSystemEvent(Event *out_event) {
         srv = &g_appletILibraryAppletSelfAccessor;
 
     return _appletCmdGetEvent(srv, out_event, false, 130);
+}
+
+Result appletSetHandlingHomeButtonShortPressedEnabled(bool flag) {
+    if (__nx_applet_type == AppletType_OverlayApplet && hosversionBefore(8,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    if (__nx_applet_type != AppletType_OverlayApplet && hosversionBefore(9,1,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    Service *srv = &g_appletIFunctions;
+    u32 cmd_id = 20;
+    if (__nx_applet_type != AppletType_OverlayApplet && hosversionAtLeast(9,1,0)) {
+        srv = &g_appletICommonStateGetter;
+        cmd_id = 100;
+    }
+
+    return _appletCmdInBoolNoOut(srv, flag, cmd_id);
 }
 
 // State / other
