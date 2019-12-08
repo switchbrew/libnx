@@ -57,7 +57,7 @@ typedef struct
 {
   FsFile fd;
   int    flags;  /*! Flags used in open(2) */
-  u64    offset; /*! Current file offset */
+  s64    offset; /*! Current file offset */
   FsTimeStampRaw timestamps;
 } fsdev_file_t;
 
@@ -397,14 +397,24 @@ Result fsdevCommitDevice(const char *name)
   return fsFsCommit(&device->fs);
 }
 
-Result fsdevSetArchiveBit(const char *path) {
+Result fsdevSetConcatenationFileAttribute(const char *path) {
   char           *fs_path = __nx_dev_path_buf;
   fsdev_fsdevice *device = NULL;
 
   if(fsdev_getfspath(_REENT, path, &device, fs_path)==-1)
     return MAKERESULT(Module_Libnx, LibnxError_NotFound);
 
-  return fsFsSetArchiveBit(&device->fs, fs_path);
+  return fsFsSetConcatenationFileAttribute(&device->fs, fs_path);
+}
+
+Result fsdevIsValidSignedSystemPartitionOnSdCard(const char *name, bool *out) {
+  fsdev_fsdevice *device;
+
+  device = fsdevFindDevice(name);
+  if(device==NULL)
+    return MAKERESULT(Module_Libnx, LibnxError_NotFound);
+
+  return fsFsIsValidSignedSystemPartitionOnSdCard(&device->fs, out);
 }
 
 Result fsdevCreateFile(const char* path, size_t size, u32 flags) {
@@ -911,7 +921,7 @@ fsdev_seek(struct _reent *r,
           int           whence)
 {
   Result      rc;
-  u64         offset;
+  s64         offset;
 
   /* get pointer to our data */
   fsdev_file_t *file = (fsdev_file_t*)fd;
@@ -973,7 +983,7 @@ fsdev_fstat(struct _reent *r,
            struct stat   *st)
 {
   Result      rc;
-  u64         size;
+  s64         size;
   fsdev_file_t *file = (fsdev_file_t*)fd;
 
   rc = fsFileGetSize(&file->fd, &size);
@@ -1318,7 +1328,7 @@ fsdev_dirnext(struct _reent *r,
              struct stat   *filestat)
 {
   Result              rc;
-  u64                 entries;
+  s64                 entries;
   ssize_t             units;
   FsDirectoryEntry   *entry;
 
@@ -1341,7 +1351,7 @@ fsdev_dirnext(struct _reent *r,
 
     /* fetch the next batch */
     memset(entry_data, 0, sizeof(FsDirectoryEntry)*max_entries);
-    rc = fsDirRead(&dir->fd, 0, &entries, max_entries, entry_data);
+    rc = fsDirRead(&dir->fd, &entries, max_entries, entry_data);
     if(R_SUCCEEDED(rc))
     {
       if(entries == 0)
@@ -1367,7 +1377,7 @@ fsdev_dirnext(struct _reent *r,
     else if(entry->type == FsDirEntryType_File)
     {
       filestat->st_mode = S_IFREG;
-      filestat->st_size = entry->fileSize;
+      filestat->st_size = entry->file_size;
     }
     else
     {
@@ -1440,7 +1450,7 @@ fsdev_statvfs(struct _reent  *r,
   Result rc=0;
   char  *fs_path = __nx_dev_path_buf;
   fsdev_fsdevice *device = r->deviceData;
-  u64 freespace = 0, total_space = 0;
+  s64 freespace = 0, total_space = 0;
 
   if(fsdev_getfspath(r, path, &device, fs_path)==-1)
     return -1;

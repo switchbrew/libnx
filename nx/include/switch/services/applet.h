@@ -640,9 +640,9 @@ Result appletSetAlbumImageOrientation(AlbumImageOrientation orientation);
 /**
  * @brief Sets the DesirableKeyboardLayout.
  * @note Only available with [4.0.0+].
- * @param[in] layout Input layout.
+ * @param[in] layout Input \ref SetKeyboardLayout.
  */
-Result appletSetDesirableKeyboardLayout(u32 layout);
+Result appletSetDesirableKeyboardLayout(SetKeyboardLayout layout);
 
 Result appletCreateManagedDisplayLayer(u64 *out);
 
@@ -1347,7 +1347,7 @@ void appletNotifyRunning(bool *out);
  * @note Only available with AppletType_*Application on [2.0.0+].
  * @param[out] out Output PseudoDeviceId.
  */
-Result appletGetPseudoDeviceId(u128 *out);
+Result appletGetPseudoDeviceId(Uuid *out);
 
 /// Set media playback state.
 /// If state is set to true, screen dimming and auto sleep is disabled.
@@ -2030,9 +2030,9 @@ Result appletGetNextReturnDestinationAppletIdentityInfo(AppletIdentityInfo *info
 /**
  * @brief Gets the DesirableKeyboardLayout previously set by \ref appletSetDesirableKeyboardLayout. An error is returned when it's not set.
  * @note Only available with AppletType_LibraryApplet on [4.0.0+].
- * @param[out] layout Output layout.
+ * @param[out] layout Output \ref SetKeyboardLayout.
  */
-Result appletGetDesirableKeyboardLayout(u32 *layout);
+Result appletGetDesirableKeyboardLayout(SetKeyboardLayout *layout);
 
 /**
  * @brief Pops a storage from current-LibraryApplet Extra input.

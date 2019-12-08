@@ -58,7 +58,7 @@ typedef struct {
     u8 pad[3];
     s8 type;                        ///< See FsDirEntryType.
     u8 pad2[3];                     ///< ?
-    u64 fileSize;                   ///< File size.
+    s64 file_size;                  ///< File size.
 } FsDirectoryEntry;
 
 /// SaveDataAttribute
@@ -209,9 +209,11 @@ typedef enum {
 } FsSaveDataFlags;
 
 typedef enum {
-    FsGameCardAttribute_AutoBootFlag     = BIT(0), ///< Causes the cartridge to automatically start on bootup
-    FsGameCardAttribute_HistoryEraseFlag = BIT(1), ///< Causes NS to throw an error on attempt to load the cartridge
-    FsGameCardAttribute_RepairToolFlag   = BIT(2), ///< Indicates that this gamecard is a repair tool.
+    FsGameCardAttribute_AutoBootFlag                          = BIT(0), ///< Causes the cartridge to automatically start on bootup
+    FsGameCardAttribute_HistoryEraseFlag                      = BIT(1), ///< Causes NS to throw an error on attempt to load the cartridge
+    FsGameCardAttribute_RepairToolFlag                        = BIT(2), ///< [4.0.0+] Indicates that this gamecard is a repair tool.
+    FsGameCardAttribute_DifferentRegionCupToTerraDeviceFlag   = BIT(3), ///< [9.0.0+] DifferentRegionCupToTerraDeviceFlag
+    FsGameCardAttribute_DifferentRegionCupToGlobalDeviceFlag  = BIT(4), ///< [9.0.0+] DifferentRegionCupToGlobalDeviceFlag
 } FsGameCardAttribute;
 
 typedef enum {
@@ -272,9 +274,11 @@ typedef enum {
     FsFileSystemType_RegisteredUpdate   = 8,  ///< [4.0.0+] RegisteredUpdate
 } FsFileSystemType;
 
+/// FileSystemQueryId
 typedef enum {
-    FsFileSystemQueryType_SetArchiveBit = 0,
-} FsFileSystemQueryType;
+    FsFileSystemQueryId_SetConcatenationFileAttribute           = 0,  ///< [4.0.0+]
+    FsFileSystemQueryId_IsValidSignedSystemPartitionOnSdCard    = 2,  ///< [8.0.0+]
+} FsFileSystemQueryId;
 
 /// FsPriority
 typedef enum {
@@ -346,8 +350,8 @@ Result fsSetGlobalAccessLogMode(u32 mode);
 Result fsGetGlobalAccessLogMode(u32* out_mode);
 
 // Wrapper(s) for fsCreateSaveDataFileSystemBySystemSaveDataId.
-Result fsCreate_SystemSaveDataWithOwner(FsSaveDataSpaceId save_data_space_id, u64 system_save_data_id, AccountUid uid, u64 owner_id, u64 size, u64 journal_size, u32 flags);
-Result fsCreate_SystemSaveData(FsSaveDataSpaceId save_data_space_id, u64 system_save_data_id, u64 size, u64 journal_size, u32 flags);
+Result fsCreate_SystemSaveDataWithOwner(FsSaveDataSpaceId save_data_space_id, u64 system_save_data_id, AccountUid uid, u64 owner_id, s64 size, s64 journal_size, u32 flags);
+Result fsCreate_SystemSaveData(FsSaveDataSpaceId save_data_space_id, u64 system_save_data_id, s64 size, s64 journal_size, u32 flags);
 
 /// Wrapper(s) for fsOpenSaveDataFileSystem.
 /// See FsSave for program_id and uid.
@@ -358,7 +362,7 @@ Result fsOpen_SaveData(FsFileSystem* out, u64 application_id, AccountUid uid);
 Result fsOpen_SystemSaveData(FsFileSystem* out, FsSaveDataSpaceId save_data_space_id, u64 system_save_data_id, AccountUid uid);
 
 // IFileSystem
-Result fsFsCreateFile(FsFileSystem* fs, const char* path, u64 size, u32 option);
+Result fsFsCreateFile(FsFileSystem* fs, const char* path, s64 size, u32 option);
 Result fsFsDeleteFile(FsFileSystem* fs, const char* path);
 Result fsFsCreateDirectory(FsFileSystem* fs, const char* path);
 Result fsFsDeleteDirectory(FsFileSystem* fs, const char* path);
@@ -369,44 +373,48 @@ Result fsFsGetEntryType(FsFileSystem* fs, const char* path, FsDirEntryType* out)
 Result fsFsOpenFile(FsFileSystem* fs, const char* path, u32 mode, FsFile* out);
 Result fsFsOpenDirectory(FsFileSystem* fs, const char* path, u32 mode, FsDir* out);
 Result fsFsCommit(FsFileSystem* fs);
-Result fsFsGetFreeSpace(FsFileSystem* fs, const char* path, u64* out);
-Result fsFsGetTotalSpace(FsFileSystem* fs, const char* path, u64* out);
+Result fsFsGetFreeSpace(FsFileSystem* fs, const char* path, s64* out);
+Result fsFsGetTotalSpace(FsFileSystem* fs, const char* path, s64* out);
 Result fsFsGetFileTimeStampRaw(FsFileSystem* fs, const char* path, FsTimeStampRaw *out); ///< [3.0.0+]
 Result fsFsCleanDirectoryRecursively(FsFileSystem* fs, const char* path); ///< [3.0.0+]
-Result fsFsQueryEntry(FsFileSystem* fs, void *out, size_t out_size, const void *in, size_t in_size, const char* path, FsFileSystemQueryType query_type); ///< [4.0.0+]
+Result fsFsQueryEntry(FsFileSystem* fs, void *out, size_t out_size, const void *in, size_t in_size, const char* path, FsFileSystemQueryId query_id); ///< [4.0.0+]
 void fsFsClose(FsFileSystem* fs);
 
 /// Uses \ref fsFsQueryEntry to set the archive bit on the specified absolute directory path.
 /// This will cause HOS to treat the directory as if it were a file containing the directory's concatenated contents.
-Result fsFsSetArchiveBit(FsFileSystem* fs, const char *path);
+Result fsFsSetConcatenationFileAttribute(FsFileSystem* fs, const char *path);
+
+/// Wrapper for fsFsQueryEntry with FsFileSystemQueryId_IsValidSignedSystemPartitionOnSdCard.
+/// Only available on [8.0.0+].
+Result fsFsIsValidSignedSystemPartitionOnSdCard(FsFileSystem* fs, bool *out);
 
 // IFile
-Result fsFileRead(FsFile* f, u64 off, void* buf, u64 read_size, u32 option, u64* bytes_read);
-Result fsFileWrite(FsFile* f, u64 off, const void* buf, u64 write_size, u32 option);
+Result fsFileRead(FsFile* f, s64 off, void* buf, u64 read_size, u32 option, u64* bytes_read);
+Result fsFileWrite(FsFile* f, s64 off, const void* buf, u64 write_size, u32 option);
 Result fsFileFlush(FsFile* f);
-Result fsFileSetSize(FsFile* f, u64 sz);
-Result fsFileGetSize(FsFile* f, u64* out);
-Result fsFileOperateRange(FsFile* f, FsOperationId op_id, u64 off, u64 len, FsRangeInfo* out); ///< [4.0.0+]
+Result fsFileSetSize(FsFile* f, s64 sz);
+Result fsFileGetSize(FsFile* f, s64* out);
+Result fsFileOperateRange(FsFile* f, FsOperationId op_id, s64 off, s64 len, FsRangeInfo* out); ///< [4.0.0+]
 void fsFileClose(FsFile* f);
 
 // IDirectory
-Result fsDirRead(FsDir* d, u64 inval, u64* total_entries, size_t max_entries, FsDirectoryEntry *buf);
-Result fsDirGetEntryCount(FsDir* d, u64* count);
+Result fsDirRead(FsDir* d, s64* total_entries, size_t max_entries, FsDirectoryEntry *buf);
+Result fsDirGetEntryCount(FsDir* d, s64* count);
 void fsDirClose(FsDir* d);
 
 // IStorage
-Result fsStorageRead(FsStorage* s, u64 off, void* buf, u64 read_size);
-Result fsStorageWrite(FsStorage* s, u64 off, const void* buf, u64 write_size);
+Result fsStorageRead(FsStorage* s, s64 off, void* buf, u64 read_size);
+Result fsStorageWrite(FsStorage* s, s64 off, const void* buf, u64 write_size);
 Result fsStorageFlush(FsStorage* s);
-Result fsStorageSetSize(FsStorage* s, u64 sz);
-Result fsStorageGetSize(FsStorage* s, u64* out);
-Result fsStorageOperateRange(FsStorage* s, FsOperationId op_id, u64 off, u64 len, FsRangeInfo* out); ///< [4.0.0+]
+Result fsStorageSetSize(FsStorage* s, s64 sz);
+Result fsStorageGetSize(FsStorage* s, s64* out);
+Result fsStorageOperateRange(FsStorage* s, FsOperationId op_id, s64 off, s64 len, FsRangeInfo* out); ///< [4.0.0+]
 void fsStorageClose(FsStorage* s);
 
 // ISaveDataInfoReader
 
 /// Read FsSaveDataInfo data into the buf array.
-Result fsSaveDataInfoReaderRead(FsSaveDataInfoReader *s, FsSaveDataInfo* buf, size_t max_entries, u64* total_entries);
+Result fsSaveDataInfoReaderRead(FsSaveDataInfoReader *s, FsSaveDataInfo* buf, size_t max_entries, s64* total_entries);
 void fsSaveDataInfoReaderClose(FsSaveDataInfoReader *s);
 
 // IEventNotifier

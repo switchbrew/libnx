@@ -1,9 +1,6 @@
 #include <string.h>
 #include <malloc.h>
-#include "types.h"
-#include "result.h"
-#include "services/applet.h"
-#include "applets/libapplet.h"
+#include "libapplet_internal.h"
 #include "applets/web.h"
 #include "runtime/hosversion.h"
 
@@ -55,7 +52,7 @@ static Result _webShow(AppletHolder *holder, AppletId id, u32 version, void* arg
     return rc;
 }
 
-void webWifiCreate(WebWifiConfig* config, const char* conntest_url, const char* initial_url, u128 uuid, u32 rev) {
+void webWifiCreate(WebWifiConfig* config, const char* conntest_url, const char* initial_url, Uuid uuid, u32 rev) {
     memset(config, 0, sizeof(*config));
 
     if (conntest_url) strncpy(config->arg.conntest_url, conntest_url, sizeof(config->arg.conntest_url)-1);

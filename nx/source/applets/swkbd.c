@@ -1,10 +1,7 @@
 #include <string.h>
 #include <malloc.h>
 #include <math.h>
-#include "types.h"
-#include "result.h"
-#include "services/applet.h"
-#include "applets/libapplet.h"
+#include "libapplet_internal.h"
 #include "applets/swkbd.h"
 #include "runtime/hosversion.h"
 #include "runtime/util/utf.h"

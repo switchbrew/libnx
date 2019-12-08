@@ -52,6 +52,11 @@ typedef struct {
     char name[0x24];
 } TimeLocationName;
 
+typedef struct {
+    s64 time_point;        ///< A point in time.
+    Uuid source_id;        ///< An ID representing the clock source.
+} TimeSteadyClockTimePoint;
+
 /// Initialize time. Used automatically during app startup.
 Result timeInitialize(void);
 

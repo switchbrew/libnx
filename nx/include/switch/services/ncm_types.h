@@ -6,6 +6,7 @@
  */
 #pragma once
 #include "../types.h"
+#include "../crypto/sha256.h"
 
 /// StorageId
 typedef enum {
@@ -64,7 +65,7 @@ typedef struct {
 
 /// PlaceHolderId
 typedef struct {
-    alignas(8) u8 c[0x10]; ///< Id
+    alignas(8) Uuid uuid;  ///< UUID
 } NcmPlaceHolderId;
 
 /// ContentMetaKey
@@ -90,8 +91,20 @@ typedef struct {
     u8 id_offset;                ///< Offset of this content. Unused by most applications.
 } NcmContentInfo;
 
-/// Used by system updates. They share the exact same struct as NcmContentMetaKey
-typedef NcmContentMetaKey NcmContentMetaInfo;
+/// PackagedContentInfo
+typedef struct {
+    u8 hash[SHA256_HASH_SIZE];
+    NcmContentInfo info;
+} NcmPackagedContentInfo;
+
+/// ContentMetaInfo
+typedef struct {
+    u64 id;                             ///< Id.
+    u32 version;                        ///< Version.
+    u8 type;                            ///< \ref NcmContentMetaType
+    u8 attr;                            ///< \ref NcmContentMetaAttribute
+    u8 padding[2];                      ///< Padding.
+} NcmContentMetaInfo;
 
 /// ContentMetaHeader
 typedef struct {

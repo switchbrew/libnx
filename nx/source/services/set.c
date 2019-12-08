@@ -79,6 +79,10 @@ static Result _setCmdNoInOutBool(Service* srv, bool *out, u32 cmd_id) {
     return rc;
 }
 
+static Result _setCmdNoInOutUuid(Service* srv, Uuid *out, u32 cmd_id) {
+    return serviceDispatchOut(srv, cmd_id, *out);
+}
+
 static Result _setCmdInU8NoOut(Service* srv, u8 inval, u64 cmd_id) {
     return serviceDispatchIn(srv, cmd_id, inval);
 }
@@ -88,6 +92,10 @@ static Result _setCmdInBoolNoOut(Service* srv, bool inval, u32 cmd_id) {
 }
 
 static Result _setCmdInU32NoOut(Service* srv, u32 inval, u32 cmd_id) {
+    return serviceDispatchIn(srv, cmd_id, inval);
+}
+
+static Result _setCmdInU64NoOut(Service* srv, u64 inval, u32 cmd_id) {
     return serviceDispatchIn(srv, cmd_id, inval);
 }
 
@@ -186,6 +194,10 @@ Result setGetRegionCode(SetRegion *out) {
     return rc;
 }
 
+Result setsysSetLanguageCode(u64 LanguageCode) {
+    return _setCmdInU64NoOut(&g_setsysSrv, LanguageCode, 0);
+}
+
 static Result _setsysGetFirmwareVersionImpl(SetSysFirmwareVersion *out, u32 cmd_id) {
     return serviceDispatch(&g_setsysSrv, cmd_id,
         .buffer_attrs = { SfBufferAttr_FixedSize | SfBufferAttr_HipcPointer | SfBufferAttr_Out },
@@ -208,6 +220,28 @@ Result setsysGetLockScreenFlag(bool *out) {
 
 Result setsysSetLockScreenFlag(bool flag) {
     return _setCmdInBoolNoOut(&g_setsysSrv, flag, 8);
+}
+
+Result setsysGetAccountSettings(SetSysAccountSettings *out) {
+    return serviceDispatchOut(&g_setsysSrv, 17, *out);
+}
+
+Result setsysSetAccountSettings(SetSysAccountSettings settings) {
+    return serviceDispatchIn(&g_setsysSrv, 18, settings);
+}
+
+Result setsysGetEulaVersions(s32 *total_out, SetSysEulaVersion *versions, s32 count) {
+    return serviceDispatchOut(&g_setsysSrv, 21, *total_out,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { versions, count*sizeof(SetSysEulaVersion) } },
+    );
+}
+
+Result setsysSetEulaVersions(const SetSysEulaVersion *versions, s32 count) {
+    return serviceDispatch(&g_setsysSrv, 22,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
+        .buffers = { { versions, count*sizeof(SetSysEulaVersion) } },
+    );
 }
 
 Result setsysGetColorSetId(ColorSetId *out) {
@@ -235,6 +269,28 @@ Result setsysGetAutomaticApplicationDownloadFlag(bool *out) {
 
 Result setsysSetAutomaticApplicationDownloadFlag(bool flag) {
     return _setCmdInBoolNoOut(&g_setsysSrv, flag, 28);
+}
+
+Result setsysGetNotificationSettings(SetSysNotificationSettings *out) {
+    return serviceDispatchOut(&g_setsysSrv, 29, *out);
+}
+
+Result setsysSetNotificationSettings(const SetSysNotificationSettings *settings) {
+    return serviceDispatchIn(&g_setsysSrv, 30, *settings);
+}
+
+Result setsysGetAccountNotificationSettings(s32 *total_out, SetSysAccountNotificationSettings *settings, s32 count) {
+    return serviceDispatchOut(&g_setsysSrv, 31, *total_out,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { settings, count*sizeof(SetSysAccountNotificationSettings) } },
+    );
+}
+
+Result setsysSetAccountNotificationSettings(const SetSysAccountNotificationSettings *settings, s32 count) {
+    return serviceDispatch(&g_setsysSrv, 32,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
+        .buffers = { { settings, count*sizeof(SetSysAccountNotificationSettings) } },
+    );
 }
 
 Result setsysGetSettingsItemValueSize(const char *name, const char *item_key, u64 *size_out) {
@@ -281,12 +337,43 @@ Result setsysGetSettingsItemValue(const char *name, const char *item_key, void *
     );
 }
 
+Result setsysGetTvSettings(SetSysTvSettings *out) {
+    return serviceDispatchOut(&g_setsysSrv, 39, *out);
+}
+
+Result setsysSetTvSettings(const SetSysTvSettings *settings) {
+    return serviceDispatchIn(&g_setsysSrv, 40, *settings);
+}
+
 Result setsysGetQuestFlag(bool *out) {
     return _setCmdNoInOutBool(&g_setsysSrv, out, 47);
 }
 
 Result setsysSetQuestFlag(bool flag) {
     return _setCmdInBoolNoOut(&g_setsysSrv, flag, 48);
+}
+
+Result setsysGetDataDeletionSettings(SetSysDataDeletionSettings *out) {
+    return serviceDispatchOut(&g_setsysSrv, 49, *out);
+}
+
+Result setsysSetDataDeletionSettings(const SetSysDataDeletionSettings *settings) {
+    return serviceDispatchIn(&g_setsysSrv, 50, *settings);
+}
+
+Result setsysGetWirelessCertificationFileSize(u64 *out_size) {
+    return _setCmdNoInOut64(&g_setsysSrv, out_size, 55);
+}
+
+Result setsysGetWirelessCertificationFile(void* buffer, size_t size, u64 *out_size) {
+    return serviceDispatchOut(&g_setsysSrv, 56, *out_size,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { buffer, size } },
+    );
+}
+
+Result setsysSetRegionCode(SetRegion region) {
+    return _setCmdInU32NoOut(&g_setsysSrv, region, 57);
 }
 
 Result setsysIsUserSystemClockAutomaticCorrectionEnabled(bool *out) {
@@ -297,12 +384,27 @@ Result setsysSetUserSystemClockAutomaticCorrectionEnabled(bool flag) {
     return _setCmdInBoolNoOut(&g_setsysSrv, flag, 61);
 }
 
+Result setsysGetPrimaryAlbumStorage(SetSysPrimaryAlbumStorage *out) {
+    u32 tmp=0;
+    Result rc = _setCmdNoInOutU32(&g_setsysSrv, &tmp, 63);
+    if (R_SUCCEEDED(rc) && out) *out = tmp;
+    return rc;
+}
+
+Result setsysSetPrimaryAlbumStorage(SetSysPrimaryAlbumStorage storage) {
+    return _setCmdInU32NoOut(&g_setsysSrv, storage, 64);
+}
+
 Result setsysGetUsb30EnableFlag(bool *out) {
     return _setCmdNoInOutBool(&g_setsysSrv, out, 65);
 }
 
 Result setsysSetUsb30EnableFlag(bool flag) {
     return _setCmdInBoolNoOut(&g_setsysSrv, flag, 66);
+}
+
+Result setsysGetBatteryLot(SetBatteryLot *out) {
+    return serviceDispatchOut(&g_setsysSrv, 67, *out);
 }
 
 Result setsysGetSerialNumber(char *serial) {
@@ -324,12 +426,28 @@ Result setsysSetNfcEnableFlag(bool flag) {
     return _setCmdInBoolNoOut(&g_setsysSrv, flag, 70);
 }
 
+Result setsysGetSleepSettings(SetSysSleepSettings *out) {
+    return serviceDispatchOut(&g_setsysSrv, 71, *out);
+}
+
+Result setsysSetSleepSettings(const SetSysSleepSettings *settings) {
+    return serviceDispatchIn(&g_setsysSrv, 72, *settings);
+}
+
 Result setsysGetWirelessLanEnableFlag(bool *out) {
     return _setCmdNoInOutBool(&g_setsysSrv, out, 73);
 }
 
 Result setsysSetWirelessLanEnableFlag(bool flag) {
     return _setCmdInBoolNoOut(&g_setsysSrv, flag, 74);
+}
+
+Result setsysGetInitialLaunchSettings(SetSysInitialLaunchSettings *out) {
+    return serviceDispatchOut(&g_setsysSrv, 75, *out);
+}
+
+Result setsysSetInitialLaunchSettings(const SetSysInitialLaunchSettings *settings) {
+    return serviceDispatchIn(&g_setsysSrv, 76, *settings);
 }
 
 Result setsysGetDeviceNickname(char* nickname) {
@@ -349,12 +467,20 @@ Result setsysSetDeviceNickname(const char* nickname) {
     );
 }
 
+Result setsysGetProductModel(s32 *out) {
+    return _setCmdNoInOutU32(&g_setsysSrv, (u32*)out, 79);
+}
+
 Result setsysGetBluetoothEnableFlag(bool *out) {
     return _setCmdNoInOutBool(&g_setsysSrv, out, 88);
 }
 
 Result setsysSetBluetoothEnableFlag(bool flag) {
     return _setCmdInBoolNoOut(&g_setsysSrv, flag, 89);
+}
+
+Result setsysGetMiiAuthorId(Uuid *out) {
+    return _setCmdNoInOutUuid(&g_setsysSrv, out, 90);
 }
 
 Result setsysBindFatalDirtyFlagEvent(Event *out_event) {
@@ -485,11 +611,66 @@ Result setsysSetHeadphoneVolumeUpdateFlag(bool flag) {
     return _setCmdInBoolNoOut(&g_setsysSrv, flag, 118);
 }
 
+Result setsysGetErrorReportSharePermission(SetSysErrorReportSharePermission *out) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    u32 tmp=0;
+    Result rc = _setCmdNoInOutU32(&g_setsysSrv, &tmp, 124);
+    if (R_SUCCEEDED(rc) && out) *out = tmp;
+    return rc;
+}
+
+Result setsysSetErrorReportSharePermission(SetSysErrorReportSharePermission permission) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdInU32NoOut(&g_setsysSrv, permission, 125);
+}
+
+Result setsysGetAppletLaunchFlags(u32 *out) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdNoInOutU32(&g_setsysSrv, out, 126);
+}
+
+Result setsysSetAppletLaunchFlags(u32 flags) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdInU32NoOut(&g_setsysSrv, flags, 127);
+}
+
+Result setsysGetKeyboardLayout(SetKeyboardLayout *out) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    u32 tmp=0;
+    Result rc = _setCmdNoInOutU32(&g_setsysSrv, &tmp, 136);
+    if (R_SUCCEEDED(rc) && out) *out = tmp;
+    return rc;
+}
+
+Result setsysSetKeyboardLayout(SetKeyboardLayout layout) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdInU32NoOut(&g_setsysSrv, layout, 137);
+}
+
 Result setsysGetRequiresRunRepairTimeReviser(bool *out) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return _setCmdNoInOutBool(&g_setsysSrv, out, 141);
+}
+
+Result setsysGetRebootlessSystemUpdateVersion(SetSysRebootlessSystemUpdateVersion *out) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchOut(&g_setsysSrv, 149, *out);
 }
 
 Result setsysSetRequiresRunRepairTimeReviser(bool flag) {
@@ -511,6 +692,23 @@ Result setsysSetPctlReadyFlag(bool flag) {
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return _setCmdInBoolNoOut(&g_setsysSrv, flag, 157);
+}
+
+Result setsysGetChineseTraditionalInputMethod(SetChineseTraditionalInputMethod *out) {
+    if (hosversionBefore(7,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    u32 tmp=0;
+    Result rc = _setCmdNoInOutU32(&g_setsysSrv, &tmp, 170);
+    if (R_SUCCEEDED(rc) && out) *out = tmp;
+    return rc;
+}
+
+Result setsysSetChineseTraditionalInputMethod(SetChineseTraditionalInputMethod method) {
+    if (hosversionBefore(7,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdInU32NoOut(&g_setsysSrv, method, 171);
 }
 
 Result setsysGetHomeMenuScheme(SetSysHomeMenuScheme *out) {

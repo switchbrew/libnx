@@ -64,7 +64,7 @@ static romfs_file *romFS_file(romfs_mount *mount, u32 off)
 
 static ssize_t _romfs_read(romfs_mount *mount, u64 offset, void* buffer, u64 size)
 {
-    u64 pos = mount->offset + offset;
+    s64 pos = mount->offset + offset;
     u64 read = 0;
     Result rc = 0;
     if(mount->fd_type == RomfsSource_FsFile)
