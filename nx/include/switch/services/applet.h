@@ -2190,13 +2190,6 @@ Result appletStartShutdownSequenceForOverlay(void);
 Result appletStartRebootSequenceForOverlay(void);
 
 /**
- * @brief Sets HandlingHomeButtonShortPressedEnabled.
- * @note Only available with AppletType_OverlayApplet on [8.0.0+].
- * @param[in] flag Flag
- */
-Result appletSetHandlingHomeButtonShortPressedEnabled(bool flag);
-
-/**
  * @brief SetHealthWarningShowingState
  * @note Only available with AppletType_OverlayApplet on [9.0.0+].
  * @param[in] flag Flag
@@ -2417,6 +2410,13 @@ Result appletGetLaunchStorageInfoForDebug(NcmStorageId *app_storageId, NcmStorag
  * @param[out] out_event Output Event with autoclear=false.
  */
 Result appletGetGpuErrorDetectedSystemEvent(Event *out_event);
+
+/**
+ * @brief Sets HandlingHomeButtonShortPressedEnabled.
+ * @note Only available with AppletType_OverlayApplet on [8.0.0+]. Or with non-AppletType_OverlayApplet on [9.1.0+].
+ * @param[in] flag Flag
+ */
+Result appletSetHandlingHomeButtonShortPressedEnabled(bool flag);
 
 ///@}
 
