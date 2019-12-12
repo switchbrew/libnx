@@ -738,7 +738,7 @@ u64 hidKeysUp(HidControllerID id);
 
 u64 hidKeysAllHeld();
 u64 hidKeysAllDown();
-u64 hidKeysUp();
+u64 hidKeysAllUp();
 
 u64 hidMouseButtonsHeld(void);
 u64 hidMouseButtonsDown(void);
