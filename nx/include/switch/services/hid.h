@@ -740,6 +740,8 @@ u64 hidKeysAllHeld();
 u64 hidKeysAllDown();
 u64 hidKeysAllUp();
 
+u32 hidGetControllerCount();
+
 u64 hidMouseButtonsHeld(void);
 u64 hidMouseButtonsDown(void);
 u64 hidMouseButtonsUp(void);

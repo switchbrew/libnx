@@ -431,7 +431,7 @@ u64 hidKeysAllDown() {
     u64 kDown = 0;
 
     rwlockReadLock(&g_hidLock);
-    for (u8 controller=0; controller<10; controller++) {
+    for (u8 controller=0; controller<hidGetControllerCount()+1; controller++) {
         kDown |= g_controllerDown[controller];
     }
     rwlockReadUnlock(&g_hidLock);
@@ -440,27 +440,36 @@ u64 hidKeysAllDown() {
 }
 
 u64 hidKeysAllUp() {
-    u64 kDown = 0;
+    u64 kUp = 0;
 
     rwlockReadLock(&g_hidLock);
-    for (u8 controller=0; controller<10; controller++) {
-        kDown |= g_controllerUp[controller];
+    for (u8 controller=0; controller<hidGetControllerCount()+1; controller++) {
+        kUp |= g_controllerUp[controller];
     }
     rwlockReadUnlock(&g_hidLock);
       
-    return kDown;
+    return kUp;
 }
 
 u64 hidKeysAllHeld() {
-    u64 kDown = 0;
+    u64 kHeld = 0;
 
     rwlockReadLock(&g_hidLock);
-    for (u8 controller=0; controller<10; controller++) {
-        kDown |= g_controllerHeld[controller];
+    for (u8 controller=0; controller<hidGetControllerCount()+1; controller++) {
+        kHeld |= g_controllerHeld[controller];
     }
     rwlockReadUnlock(&g_hidLock);
       
-    return kDown;
+    return kHeld;
+}
+
+u32 hidGetControllerCount() {
+    u32 count = 0;
+
+    for (u32 controller=0; controller<10; controller++) {
+        if (hidIsControllerConnected(controller)) count++;
+    }
+    return count;
 }
 
 u64 hidMouseButtonsHeld(void) {
