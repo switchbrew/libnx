@@ -432,7 +432,7 @@ u64 hidKeysAllDown() {
 
     rwlockReadLock(&g_hidLock);
     for (u8 controller=0; controller<10; controller++) {
-        if (hidIsControllerConnected(controller)) kDown |= g_controllerDown[controller];
+        if ((g_controllerEntries[controller].connectionState & CONTROLLER_STATE_CONNECTED) != 0) kDown |= g_controllerDown[controller];
     }
     rwlockReadUnlock(&g_hidLock);
       
@@ -444,7 +444,7 @@ u64 hidKeysAllUp() {
 
     rwlockReadLock(&g_hidLock);
     for (u8 controller=0; controller<10; controller++) {
-        if (hidIsControllerConnected(controller)) kUp |= g_controllerUp[controller];
+        if ((g_controllerEntries[controller].connectionState & CONTROLLER_STATE_CONNECTED) != 0) kUp |= g_controllerUp[controller];
     }
     rwlockReadUnlock(&g_hidLock);
       
@@ -456,7 +456,7 @@ u64 hidKeysAllHeld() {
 
     rwlockReadLock(&g_hidLock);
     for (u8 controller=0; controller<10; controller++) {
-        if (hidIsControllerConnected(controller)) kHeld |= g_controllerHeld[controller];
+        if ((g_controllerEntries[controller].connectionState & CONTROLLER_STATE_CONNECTED) != 0) kHeld |= g_controllerHeld[controller];
     }
     rwlockReadUnlock(&g_hidLock);
       
@@ -465,10 +465,13 @@ u64 hidKeysAllHeld() {
 
 u32 hidGetControllerCount() {
     u32 count = 0;
-
+    
+    rwlockReadlock(&g_hidLock);
     for (u32 controller=0; controller<10; controller++) {
-        if (hidIsControllerConnected(controller)) count++;
+        if ((g_controllerEntries[controller].connectionState & CONTROLLER_STATE_CONNECTED) != 0) count++;
     }
+    rwlockReadUnlock(&g_hidLock);
+
     return count;
 }
 
