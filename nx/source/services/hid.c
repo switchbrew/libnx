@@ -244,6 +244,7 @@ void hidScanInput(void) {
         if ((s64)(newInputEntry->timestamp - g_controllerTimestamps[i]) >= 0) {
             memcpy(&g_controllerEntries[i], newInputEntry, sizeof(HidControllerInputEntry));
             g_controllerTimestamps[i] = newInputEntry->timestamp;
+            g_controllerTimestamps[i] = newInputEntry->timestamp;
 
             g_controllerHeld[i] |= g_controllerEntries[i].buttons;
         }
@@ -425,6 +426,42 @@ u64 hidKeysUp(HidControllerID id) {
     rwlockReadUnlock(&g_hidLock);
 
     return tmp;
+}
+
+u64 hidKeysAllDown() {
+    u64 kDown = 0;
+
+    rwlockReadLock(&g_hidLock);
+    for (u8 controller=0; controller<10; controller++) {
+        kDown |= g_controllerDown[controller];
+    }
+    rwlockReadUnlock(&g_hidLock);
+      
+    return kDown;
+}
+
+u64 hidKeysAllUp() {
+    u64 kDown = 0;
+
+    rwlockReadLock(&g_hidLock);
+    for (u8 controller=0; controller<10; controller++) {
+        kDown |= g_controllerUp[controller];
+    }
+    rwlockReadUnlock(&g_hidLock);
+      
+    return kDown;
+}
+
+u64 hidKeysAllHeld() {
+    u64 kDown = 0;
+
+    rwlockReadLock(&g_hidLock);
+    for (u8 controller=0; controller<10; controller++) {
+        kDown |= g_controllerHeld[controller];
+    }
+    rwlockReadUnlock(&g_hidLock);
+      
+    return kDown;
 }
 
 u64 hidMouseButtonsHeld(void) {
