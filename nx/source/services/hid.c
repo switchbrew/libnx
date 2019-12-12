@@ -431,8 +431,8 @@ u64 hidKeysAllDown() {
     u64 kDown = 0;
 
     rwlockReadLock(&g_hidLock);
-    for (u8 controller=0; controller<hidGetControllerCount()+1; controller++) {
-        kDown |= g_controllerDown[controller];
+    for (u8 controller=0; controller<10; controller++) {
+        if (hidIsControllerConnected(controller)) kDown |= g_controllerDown[controller];
     }
     rwlockReadUnlock(&g_hidLock);
       
@@ -443,8 +443,8 @@ u64 hidKeysAllUp() {
     u64 kUp = 0;
 
     rwlockReadLock(&g_hidLock);
-    for (u8 controller=0; controller<hidGetControllerCount()+1; controller++) {
-        kUp |= g_controllerUp[controller];
+    for (u8 controller=0; controller<10; controller++) {
+        if (hidIsControllerConnected(controller)) kUp |= g_controllerUp[controller];
     }
     rwlockReadUnlock(&g_hidLock);
       
@@ -455,8 +455,8 @@ u64 hidKeysAllHeld() {
     u64 kHeld = 0;
 
     rwlockReadLock(&g_hidLock);
-    for (u8 controller=0; controller<hidGetControllerCount()+1; controller++) {
-        kHeld |= g_controllerHeld[controller];
+    for (u8 controller=0; controller<10; controller++) {
+        if (hidIsControllerConnected(controller)) kHeld |= g_controllerHeld[controller];
     }
     rwlockReadUnlock(&g_hidLock);
       
