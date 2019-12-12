@@ -244,7 +244,6 @@ void hidScanInput(void) {
         if ((s64)(newInputEntry->timestamp - g_controllerTimestamps[i]) >= 0) {
             memcpy(&g_controllerEntries[i], newInputEntry, sizeof(HidControllerInputEntry));
             g_controllerTimestamps[i] = newInputEntry->timestamp;
-            g_controllerTimestamps[i] = newInputEntry->timestamp;
 
             g_controllerHeld[i] |= g_controllerEntries[i].buttons;
         }
