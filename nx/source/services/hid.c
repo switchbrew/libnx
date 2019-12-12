@@ -466,7 +466,7 @@ u64 hidKeysAllHeld() {
 u32 hidGetControllerCount() {
     u32 count = 0;
     
-    rwlockReadlock(&g_hidLock);
+    rwlockReadLock(&g_hidLock);
     for (u32 controller=0; controller<10; controller++) {
         if ((g_controllerEntries[controller].connectionState & CONTROLLER_STATE_CONNECTED) != 0) count++;
     }
