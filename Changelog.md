@@ -1,5 +1,241 @@
 # Changelog
 
+## Version 3.0.0
+
+#### system
+* **The IPC system has been redesigned with a brand new interface and implementation**.
+  * Changed serviceClone to actually use the non-Ex cmif control command.
+  * Added serviceCloneEx.
+* Added NX_INLINE and NX_CONSTEXPR helper macros.
+* Added ServiceMgr object, used for multiplexed multithreaded services.
+* Native threading API now supports using user-provided memory as stack.
+  * pthread explicit stack ptr/size attributes are now supported.
+* Fixed incorrect bounds check in virtmem code (solves long-standing JIT bug).
+* Added InfoType_IsApplication.
+* Added LibnxError_ShouldNotHappen.
+* Read-write lock object (rwlock) was completely rewritten to closely match the official implementation.
+
+#### services in general
+* **All service wrappers have been converted to use the new IPC interface**.
+  * Fixed thread safety during service init/exit.
+  * Numerous commands that had IPC bugs were fixed.
+* Improved documentation for many services (list too long to fit here).
+* Corrected and documented system version checks for many different commands.
+* Corrected many structs to avoid using types with incorrect alignment or size.
+* Changed many names of fields in several structs to be more consistent and less random.
+* Corrected many parameter types and names to be more consistent with official software (as well as using enums when possible).
+* Phased out non-existent "Title ID" concept in favor of "Program ID" or other applicable official ID names.
+  * Many parameter and enum names were renamed as a result.
+* Added AccountUid struct, which replaces u128 user ids throughout libnx and reduces the need for packed structs. "userID" replaced by "uid" throughout libnx.
+  * Added accountUidIsValid.
+* Added Uuid struct, which replaces u128 uuids where applicable and reduces the need for packed structs.
+* Added NacpSendReceiveConfiguration struct.
+* Updated NacpStruct with many fixes and additions.
+* Fixed locking issue in usbComms which caused a hang in usbCommsInitialize(Ex) on failure.
+
+#### sm
+* Introduced SmServiceName structure:
+  * Added constexpr helper functions: smServiceNameToU64, smServiceNameFromU64, smServiceNamesAreEqual, smEncodeName.
+  * All SM functions now take in SmServiceName instead of a string, except for smGetService.
+    * Added smGetServiceWrapper (which takes SmServiceName and looks inside the override list).
+    * smGetService is now an inline wrapper for smEncodeName+smGetServiceWrapper.
+* Removed smHasInitialized.
+
+#### filesystem
+* **Added transparent multithreaded filesystem support.**
+  * Default maximum number of concurrent filesystem operations is 3, this can be changed through the `__nx_fs_num_sessions` weak var.
+* Added fsSetPriority, fsFsIsValidSignedSystemPartitionOnSdCard.
+* Thoroughly fixed the names of commands, enums, flags to match official software and be more consistent with the libnx code style (list too long to fit here).
+* Removed FS_SAVEDATA_USERID_COMMONSAVE.
+* Renamed FsStorageId to NcmStorageId (and renamed enum value names too).
+* Added FsSaveDataSpaceId_ProperSystem, FsFileSystemType_RegisteredUpdate, FsSaveDataSpaceId_SdUser, FsSaveDataSpaceId_SafeMode.
+* Added FsSaveDataType_SystemBcat.
+* Added FsGameCardPartition_Logo. (also, a typo was fixed in the name of this enum)
+* Added FsSaveDataFlags_NeedsSecureDelete.
+* Added FsSaveDataRank enum.
+* Added FsFileSystemQueryId_IsValidSignedSystemPartitionOnSdCard.
+* Added FsGameCardAttribute_DifferentRegionCupToTerraDeviceFlag, FsGameCardAttribute_DifferentRegionCupToGlobalDeviceFlag.
+* Renamed FsBisStorageId to FsBisPartitionId.
+  * Added FsBisPartitionId_SignedSystemPartitionOnSafeMode.
+* Removed spurious inval param from fsDirRead.
+* fspr:
+  * Now using domains.
+* fsdev:
+  * Timestamps are now converted into proper POSIX UTC format instead of local time.
+  * Directory iterator memory footprint can now be configured with `__nx_fsdev_direntry_cache_size`.
+  * Reduced TLS footprint for rarely used codepaths.
+  * Reduced TLS footprint by sharing the path buffer with romfsdev.
+  * Removed fsdevGetDefaultFileSystem and default-fs handling.
+  * Refactored CWD support to have (dynamically allocated) per-device CWDs (CWD support as a whole can be turned off with `__nx_fsdev_support_cwd`).
+  * Many internal optimizations that reduce unnecessary lookups and buffer copies.
+  * Fixed string comparison logic in fsdevFindDevice.
+  * Mounting a filesystem now automatically sets the default device if there wasn't any previous default device (or if it's stdnull).
+  * fsdevMountSdmc no longer sets cwd to the folder containing the executable; this logic was moved to a new internal function called on startup by default (and it is now disabled for NSOs).
+  * Added fsdevMountSaveData/SystemSaveData wrappers.
+  * Added fsdevIsValidSignedSystemPartitionOnSdCard.
+  * Enhanced fsOpen_SystemSaveData/fsdevMountSystemSaveData with new parameters.
+* romfsdev:
+  * Reduced TLS footprint by sharing the path buffer with fsdev.
+  * Cleaned up romfsMount\* functions and removed unused/unnecessary logic.
+  * Changed romfsMount\* functions to return real result codes.
+  * Renamed romfsMount to romfsMountSelf.
+  * Removed romfsInitFromFile and romfsInitFromStorage (use Mount instead).
+  * Added bounds-checking safety measures.
+  * Fixed errno to use ENOENT instead of EEXIST where required.
+
+#### network
+* **Added transparent multithreaded socket support.**
+  * Default maximum number of concurrent socket operations is 3, this can be changed through `SocketInitConfig::num_bsd_sessions`.
+* **DNS resolver support was rewritten** and spun off from the socket device wrapper.
+  * No initialization is required to use resolver functions.
+  * Removed phantom sfdnsres commands.
+  * Redesigned sfdnsres IPC wrappers.
+    * "timeout" was actually the cancel handle.
+  * Fixed bug in addrinfo deserialization.
+  * Fixed bug in getaddrinfo when hints is NULL.
+  * Added commands to configure behavior: resolverGetCancelHandle, resolverGetEnableServiceDiscovery, resolverSetEnableServiceDiscovery, resolverCancel.
+    * Placeholders for not-yet-implemented 5.0+ config keys: resolverGetEnableDnsCache, resolverSetEnableDnsCache, resolverRemoveHostnameFromCache, resolverRemoveIpAddressFromCache.
+* Added service session getters: nifmGetServiceSession_StaticService, nifmGetServiceSession_GeneralService.
+* Introduced BsdServiceType enum, which is now used for revised service type handling (bsd:u is now the default service).
+* SocketInitConfig was changed:
+  * Added num_bsd_sessions and bsd_service_type fields.
+  * Removed fields related to sfdnsres.
+* socketInitialize no longer initializes nifm. As a result, gethostid now calls nifmInitialize/nifmExit as needed.
+* Renamed socketGetLastBsdResult to socketGetLastResult.
+* Renamed socketGetLastSfdnsresResult to resolverGetLastResult.
+
+#### applet
+* Many internal improvements and fixes stemming from new IPC refactoring.
+* appletGetOperationMode now returns AppletOperationMode instead of u8.
+* appletGetPerformanceMode now returns ApmPerformanceMode instead of u8.
+* Added 9.0+ support for using appletSetTerminateResult via IAppletCommonFunctions.
+* Added 9.0+ support for using appletGetLaunchStorageInfoForDebug, appletGetGpuErrorDetectedSystemEvent with AppletType_LibraryApplet.
+* Added 9.1+ support for using appletSetHandlingHomeButtonShortPressedEnabled with non-AppletType_OverlayApplet.
+* Added appletPushToAppletBoundChannel, appletTryPopFromAppletBoundChannel, appletGetSettingsPlatformRegion, appletSetHdcpAuthenticationActivated, appletSetInputDetectionPolicy, appletSetHealthWarningShowingState, appletGetHealthWarningDisappearedSystemEvent, appletIsForceTerminateApplicationDisabledForDebug, appletGetFriendInvitationStorageChannelEvent, appletTryPopFromFriendInvitationStorageChannel, appletGetNotificationStorageChannelEvent, appletTryPopFromNotificationStorageChannel, appletApplicationPushToFriendInvitationStorageChannel, appletApplicationPushToNotificationStorageChannel, appletPushToAppletBoundChannelForDebug, appletTryPopFromAppletBoundChannelForDebug, appletAlarmSettingNotificationEnableAppEventReserve, appletAlarmSettingNotificationDisableAppEventReserve, appletAlarmSettingNotificationPushAppEventNotify, appletFriendInvitationSetApplicationParameter, appletFriendInvitationClearApplicationParameter, appletFriendInvitationPushApplicationParameter.
+* Added enum: AppletInputDetectionPolicy.
+
+#### libapplets
+* Added support for the friendsLa libapplet.
+* Added support for the psel (player select) libapplet.
+* Added support for the hidLa (controller configuration) libapplet.
+* Renamed webConfigSetUserID to webConfigSetUid.
+* Renamed WebArgType_UserID to WebArgType_Uid.
+
+#### ns
+* Corrected names of nsdevLaunchApplicationForDevelop, nsdevLaunchApplicationWithStorageIdForDevelop, nsdevGetRunningApplicationProcessIdForDevelop, nsdevSetCurrentApplicationRightsEnvironmentCanBeActiveForDevelop.
+* Corrected parameters of nsListApplicationRecord, nsListApplicationContentMetaStatus, nsvmGetSafeSystemVersion.
+* Added support for ns:su.
+* Added enum: NsApplicationControlSource.
+* Added service session getters: nsGetServiceSession_GetterInterface, nsGetServiceSession_ApplicationManagerInterface, nsdevGetServiceSession, nssuGetServiceSession.
+* Added structs: NsApplicationDeliveryInfo, NsReceiveApplicationProgress, NsSendApplicationProgress, NsSystemDeliveryInfo, NsSystemUpdateProgress.
+* Added nsGetSystemDeliveryInfo, nsGetApplicationDeliveryInfo, nsSelectLatestSystemDeliveryInfo, nsVerifyDeliveryProtocolVersion, nsHasAllContentsToDeliver, nsCompareApplicationDeliveryInfo, nsCanDeliverApplication, nsListContentMetaKeyToDeliverApplication, nsNeedsSystemUpdateToDeliverApplication, nsEstimateRequiredSize, nsRequestReceiveApplication, nsCommitReceiveApplication, nsGetReceiveApplicationProgress, nsRequestSendApplication, nsGetSendApplicationProgress, nsCompareSystemDeliveryInfo, nsListNotCommittedContentMeta, nsGetApplicationDeliveryInfoHash.
+
+#### other services
+* account:
+  * Added AccountServiceType, and changed accountInitialize to accept it.
+  * Renamed AccountProfileBase::username to nickname.
+  * Removed output bool from accountGetLastOpenedUser.
+  * Added AccountNetworkServiceAccountId struct.
+  * Added accountIsUserRegistrationRequestPermitted, accountTrySelectUserWithoutInteraction.
+* apm:
+  * Added enum: ApmPerformanceMode.
+  * Added service session getter: apmGetServiceSession_Session.
+* async: Added support for the IAsyncValue/IAsyncResult interfaces.
+* audin:
+  * Added missing count param to audinListAudioIns.
+  * Changed wrapper to use 3.x+ Auto commands if available.
+  * Added service session getters: audinGetServiceSession, audinGetServiceSession_AudioIn.
+* audout:
+  * Added missing count param to audoutListAudioOuts.
+  * Changed wrapper to use 3.x+ Auto commands if available.
+  * Added service session getters: audoutGetServiceSession, audoutGetServiceSession_AudioOut.
+* audren:
+  * Changed wrapper to use 3.x+ Auto commands if available.
+  * Renamed audrenGetServiceSession to audrenGetServiceSession_AudioRenderer.
+* fatal:
+  * Corrected names of commands and types to match official names more closely.
+    * **fatalSimple was renamed to fatalThrow**.
+* friends:
+  * Added structs: FriendsInAppScreenName, FriendsFriendInvitationGameModeDescription, FriendsFriendInvitationId, FriendsFriendInvitationGroupId.
+  * Added friendsGetFriendInvitationNotificationEvent, friendsTryPopFriendInvitationNotificationInfo.
+* grc:
+  * Renamed grcdRead to grcdTransfer.
+* hid:
+  * Added hidIsVibrationDeviceMounted, hidGetNpadJoyHoldType.
+  * Added internal 5.0+ support for using ActivateNpadWithRevision with the sysver-specific revision value.
+  * Changed hidInitializeSevenSixAxisSensor to use ActivateConsoleSixAxisSensor earlier on instead of ActivateSevenSixAxisSensor.
+* hiddbg:
+  * Added hiddbgAcquireOperationEventHandle, hiddbgGetOperationResult, hiddbgWriteSerialFlash, hiddbgIsHdlsVirtualDeviceAttached.
+  * Fixed bug in hiddbgReadSerialFlash.
+* hidsys:
+  * Added hidsysSetNotificationLedPatternWithTimeout.
+  * Added hidsysAcquireCaptureButtonEventHandle, hidsysAcquireSleepButtonEventHandle to header.
+  * Corrected bug that affected internal GetMaskedSupportedNpadStyleSet logic.
+* loader (ldrShell/ldrDmnt/ldrPm):
+  * Updated names to match official software.
+* ncm:
+  * Added new ncm_types.h header, which is used by several other services that need NCM types.
+  * Updated structs: NcmContentMetaKey, NcmContentInfo, NcmContentMetaHeader, NcmApplicationMetaExtendedHeader.
+  * Renamed NcmNcaId to NcmContentId.
+  * Added NcmRightsId struct, which is now used by the RightsId funcs.
+  * Added NcmProgramLocation, which is now used by pmshellLaunchProgram.
+  * Changed several commands to accept array element count instead of byte size.
+  * Fixed handling for ncmContentStorageGetPath/ncmContentStorageGetPlaceHolderPath.
+  * Corrected NcmContentId struct alignment.
+  * Added NcmPlaceHolderId struct, which is used instead of NcmContentId where needed.
+  * Renamed FsStorageId to NcmStorageId (and renamed enum value names too).
+  * Added structs: NcmPackagedContentInfo, NcmContentMetaInfo.
+* nfc/nfp:
+  * Renamed from nfcu/nfpu to nfc/nfp.
+  * Separated nfc service init/exit into nfcInitialize/nfcExit.
+  * Renamed nfpuIsNfcEnabled to nfcIsNfcEnabled.
+  * Renamed NfpuInitConfig to NfcRequiredMcuVersionData, removed it from nfpInitialize input, and changed it to be handled properly as an array.
+  * Added NfcDeviceHandle struct, which is now used instead of HidControllerID.
+  * Added NfpServiceType/NfcServiceType, and changed nfpInitialize/nfpInitialize to accept them.
+  * Added service session getters: nfpuGetServiceSession, nfcuGetServiceSession, nfcuGetServiceSession_Interface, nfpuGetServiceSession_Interface (previously known as nfpuGetInterface).
+* nifm:
+  * Replaced nifmSetServiceType with service type parameter in nifmInitialize.
+* notif: Added support.
+* nv:
+  * Added service session getter: nvGetServiceSession.
+* pctl:
+  * Added service session getters: pctlGetServiceSession, pctlGetServiceSession_Service.
+* pdm:
+  * Renamed PdmApplicationEvent to PdmAppletEvent.
+  * Renamed pdmqryQueryApplicationEvent to pdmqryQueryAppletEvent.
+* pdmqry:
+  * Renamed pdmqryGetUserPlayedApplications to pdmqryQueryRecentlyPlayedApplication.
+  * Renamed pdmqryGetUserAccountEvent to pdmqryGetRecentlyPlayedApplicationUpdateEvent.
+* pm:
+  * Corrected names of commands to match official software.
+* roDmnt:
+  * Renamed roDmntGetModuleInfos to roDmntGetProcessModuleInfo.
+* set:
+  * Added SetLanguage_ZHHANS, SetLanguage_ZHHANT.
+  * Added SetRegion_CHN, SetRegion_KOR, SetRegion_TWN.
+  * Added size_out parameter to setsysGetSettingsItemValue, which was previously missing.
+  * Replaced SetSysFlag/setsysGetFlag/setsysSetFlag with dedicated funcs for each flag.
+  * Use SetLanguage instead of s32 in setMakeLanguage(Code).
+  * Added setsysGetPlatformRegion, setsysSetPlatformRegion, setsysGetHomeMenuScheme, setsysGetHomeMenuSchemeModel, setsysGetMemoryUsageRateFlag, setsysGetTouchScreenMode, setsysSetTouchScreenMode, setsysGetPctlReadyFlag, setsysSetPctlReadyFlag, setsysIsUserSystemClockAutomaticCorrectionEnabled, setsysSetUserSystemClockAutomaticCorrectionEnabled, setsysSetLanguageCode, setsysGetAccountSettings, setsysSetAccountSettings, setsysGetEulaVersions, setsysSetEulaVersions, setsysGetNotificationSettings, setsysSetNotificationSettings, setsysGetAccountNotificationSettings, setsysSetAccountNotificationSettings, setsysGetTvSettings, setsysSetTvSettings, setsysGetDataDeletionSettings, setsysSetDataDeletionSettings, setsysGetWirelessCertificationFileSize, setsysGetWirelessCertificationFile, setsysSetRegionCode, setsysGetPrimaryAlbumStorage, setsysSetPrimaryAlbumStorage, setsysGetBatteryLot, setsysGetSleepSettings, setsysSetSleepSettings, setsysGetInitialLaunchSettings, setsysSetInitialLaunchSettings, setsysGetProductModel, setsysGetMiiAuthorId, setsysGetErrorReportSharePermission, setsysSetErrorReportSharePermission, setsysGetAppletLaunchFlags, setsysSetAppletLaunchFlags, setsysGetKeyboardLayout, setsysSetKeyboardLayout, setsysGetRebootlessSystemUpdateVersion, setsysGetChineseTraditionalInputMethod, setsysSetChineseTraditionalInputMethod.
+  * Added enums: SetSysPlatformRegion, SetSysHomeMenuScheme, SetSysTouchScreenMode, SetSysUserSelectorFlag, SetSysEulaVersionClockType, SetSysNotificationVolume, SetSysFriendPresenceOverlayPermission, SetSysPrimaryAlbumStorage, SetSysHandheldSleepPlan, SetSysConsoleSleepPlan, SetSysErrorReportSharePermission, SetKeyboardLayout, SetChineseTraditionalInputMethod.
+  * Added structs: SetBatteryLot, SetSysUserSelectorSettings, SetSysAccountSettings, SetSysEulaVersion, SetSysNotificationTime, SetSysNotificationSettings, SetSysAccountNotificationSettings, SetSysTvSettings, SetSysDataDeletionSettings, SetSysSleepSettings, SetSysInitialLaunchSettings, SetSysRebootlessSystemUpdateVersion.
+* time:
+  * Changed service type handling to use new TimeServiceType enum (and `__nx_time_service_type` weak var), time:u is now the default service.
+  * Changed timeToPosixTime/timeToPosixTimeWithMyRule to accept array element count instead of byte size.
+  * Changed timeLoadLocationNameList to accept array element count instead of byte size.
+  * Added service session getters: timeGetServiceSession_SystemClock, timeGetServiceSession_TimeZoneService.
+  * Added TimeSteadyClockTimePoint struct (which is now used elsewhere in libnx).
+* ts: Added support.
+* usbhs:
+  * 8.0+ support fixed; UsbHsInterfaceInfo input/output endpoints were swapped.
+  * Fixed bug in usbHsEpClose.
+* vi:
+  * Renamed viGetDisplayMinimumZ to viGetZOrderCountMin.
+  * Renamed viGetDisplayMaximumZ to viGetZOrderCountMax.
+
+#### miscellaneous
+* Further improvements to overall system stability and other minor adjustments have been made to enhance the user experience.
+
 ## Version 2.5.0
 
 #### system

@@ -8,8 +8,8 @@ endif
 
 include $(DEVKITPRO)/devkitA64/base_rules
 
-export LIBNX_MAJOR	:= 2
-export LIBNX_MINOR	:= 5
+export LIBNX_MAJOR	:= 3
+export LIBNX_MINOR	:= 0
 export LIBNX_PATCH	:= 0
 
 

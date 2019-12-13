@@ -36,7 +36,6 @@ extern "C" {
 #include "switch/kernel/detect.h"
 #include "switch/kernel/random.h"
 #include "switch/kernel/jit.h"
-#include "switch/kernel/ipc.h" // Deprecated
 #include "switch/kernel/barrier.h"
 
 #include "switch/sf/hipc.h"
