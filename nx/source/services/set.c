@@ -7,6 +7,7 @@
 
 static Service g_setSrv;
 static Service g_setsysSrv;
+static Service g_setcalSrv;
 
 static bool g_setLanguageCodesInitialized;
 static u64 g_setLanguageCodes[0x40];
@@ -42,6 +43,20 @@ void _setsysCleanup(void) {
 
 Service* setsysGetServiceSession(void) {
     return &g_setsysSrv;
+}
+
+NX_GENERATE_SERVICE_GUARD(setcal);
+
+Result _setcalInitialize(void) {
+    return smGetService(&g_setcalSrv, "set:cal");
+}
+
+void _setcalCleanup(void) {
+    serviceClose(&g_setcalSrv);
+}
+
+Service* setcalGetServiceSession(void) {
+    return &g_setcalSrv;
 }
 
 static Result _setCmdGetHandle(Service* srv, Handle* handle_out, u32 cmd_id) {
@@ -97,6 +112,55 @@ static Result _setCmdInU32NoOut(Service* srv, u32 inval, u32 cmd_id) {
 
 static Result _setCmdInU64NoOut(Service* srv, u64 inval, u32 cmd_id) {
     return serviceDispatchIn(srv, cmd_id, inval);
+}
+
+Result setcalGetEciDeviceCertificate(void *certificate, size_t size) {
+    return serviceDispatch(&g_setcalSrv, 14,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { certificate, size } },
+    );
+}
+
+Result setcalGetEticketDeviceCertificate(void *certificate, size_t size) {
+    return serviceDispatch(&g_setcalSrv, 15,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { certificate, size } },
+    );
+}
+
+Result setcalGetSslKey(void *key, size_t size) {
+    return serviceDispatch(&g_setcalSrv, 16,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { key, size } },
+    );
+}
+
+Result setcalGetSslCertificate(void *certificate, size_t size) {
+    return serviceDispatch(&g_setcalSrv, 17,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { certificate, size } },
+    );
+}
+
+Result setcalGetGameCardKey(void *key, size_t size) {
+    return serviceDispatch(&g_setcalSrv, 18,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { key, size } },
+    );
+}
+
+Result setcalGetGameCardCertificate(void *certificate, size_t size) {
+    return serviceDispatch(&g_setcalSrv, 19,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { certificate, size } },
+    );
+}
+
+Result setcalGetEticketDeviceKey(void *key, size_t size) {
+    return serviceDispatch(&g_setcalSrv, 21,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { key, size } },
+    );
 }
 
 static Result setInitializeLanguageCodesCache(void) {

@@ -271,6 +271,36 @@ void setExit(void);
 /// Gets the Service object for the actual set service session.
 Service* setGetServiceSession(void);
 
+/// Initialize setcal.
+Result setcalInitialize(void);
+
+/// Exit setcal.
+void setcalExit(void);
+
+/// Gets the Service object for the actual setcal service session.
+Service* setcalGetServiceSession(void);
+
+/// Gets EciDeviceCertificate of size 0x180.
+Result setcalGetEciDeviceCertificate(void *certificate, size_t size);
+
+/// Gets EticketDeviceCertificate of size 0x240.
+Result setcalGetEticketDeviceCertificate(void *certificate, size_t size);
+
+/// Gets SslKey of size 0x134.
+Result setcalGetSslKey(void *key, size_t size);
+
+/// Gets SslCertificate of size 0x804.
+Result setcalGetSslCertificate(void *certificate, size_t size);
+
+/// Gets GameCardKey of size 0x134.
+Result setcalGetGameCardKey(void *key, size_t size);
+
+/// Gets GameCardCertificate of size 0x404.
+Result setcalGetGameCardCertificate(void *certificate, size_t size);
+
+/// Gets EticketDeviceKey of size 0x244.
+Result setcalGetEticketDeviceKey(void *key, size_t size);
+
 /// Converts LanguageCode to \ref SetLanguage.
 Result setMakeLanguage(u64 LanguageCode, SetLanguage *Language);
 
