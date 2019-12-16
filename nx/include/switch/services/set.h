@@ -262,6 +262,50 @@ typedef struct {
     u32 extra_color;      ///< Extra Color.
 } SetSysHomeMenuScheme;
 
+typedef struct {
+    u32 size;       ///< Size of the data.
+} SetCalContainer;
+
+typedef struct {
+    SetCalContainer container;  ///< \ref SetCalContainer.
+    u8 key[0x130];
+} SetCalSslKey;
+
+typedef struct {
+    u32 offset;         ///< Relative to current position.
+    u8 cert[0x800];
+} SetCalSslCertificate;
+
+typedef struct {
+    SetCalContainer container;  ///< \ref SetCalContainer.
+    u8 key[0x130];
+} SetCalGameCardKey;
+
+typedef struct {
+    u8 cert[0x400];
+} SetCalGameCardCertificate;
+
+typedef struct {
+    u8 key[0x50];
+    u32 pad;                ///< Used on fw 5.0.0+
+} SetCalEccB233DeviceKey;
+
+typedef struct {
+    u32 offset;                     ///< Relative to current position.
+    u8 cert[0x17C];
+} SetCalEccB233DeviceCertificate;
+
+typedef struct {
+    SetCalContainer container;  ///< \ref SetCalContainer.
+    u8 key[0x240];
+} SetCalRsa2048DeviceKey;
+
+typedef struct {
+    u32 offset;                     ///< Relative to current position.
+    u8 cert[0x23C];
+} SetCalRsa2048DeviceCertificate;
+
+
 /// Initialize set.
 Result setInitialize(void);
 
@@ -270,36 +314,6 @@ void setExit(void);
 
 /// Gets the Service object for the actual set service session.
 Service* setGetServiceSession(void);
-
-/// Initialize setcal.
-Result setcalInitialize(void);
-
-/// Exit setcal.
-void setcalExit(void);
-
-/// Gets the Service object for the actual setcal service session.
-Service* setcalGetServiceSession(void);
-
-/// Gets EciDeviceCertificate of size 0x180.
-Result setcalGetEciDeviceCertificate(void *certificate, size_t size);
-
-/// Gets EticketDeviceCertificate of size 0x240.
-Result setcalGetEticketDeviceCertificate(void *certificate, size_t size);
-
-/// Gets SslKey of size 0x134.
-Result setcalGetSslKey(void *key, size_t size);
-
-/// Gets SslCertificate of size 0x804.
-Result setcalGetSslCertificate(void *certificate, size_t size);
-
-/// Gets GameCardKey of size 0x134.
-Result setcalGetGameCardKey(void *key, size_t size);
-
-/// Gets GameCardCertificate of size 0x404.
-Result setcalGetGameCardCertificate(void *certificate, size_t size);
-
-/// Gets EticketDeviceKey of size 0x244.
-Result setcalGetEticketDeviceKey(void *key, size_t size);
 
 /// Converts LanguageCode to \ref SetLanguage.
 Result setMakeLanguage(u64 LanguageCode, SetLanguage *Language);
@@ -915,3 +929,33 @@ Result setsysGetTouchScreenMode(SetSysTouchScreenMode *out);
  * @param[in] mode \ref SetSysTouchScreenMode
  */
 Result setsysSetTouchScreenMode(SetSysTouchScreenMode mode);
+
+/// Initialize setcal.
+Result setcalInitialize(void);
+
+/// Exit setcal.
+void setcalExit(void);
+
+/// Gets the Service object for the actual setcal service session.
+Service* setcalGetServiceSession(void);
+
+/// Gets EciDeviceCertificate of size 0x180.
+Result setcalGetEciDeviceCertificate(SetCalEccB233DeviceCertificate *out);
+
+/// Gets EticketDeviceCertificate of size 0x240.
+Result setcalGetEticketDeviceCertificate(SetCalRsa2048DeviceCertificate *out);
+
+/// Gets SslKey of size 0x134.
+Result setcalGetSslKey(SetCalSslKey *out);
+
+/// Gets SslCertificate of size 0x804.
+Result setcalGetSslCertificate(SetCalSslCertificate *out);
+
+/// Gets GameCardKey of size 0x134.
+Result setcalGetGameCardKey(SetCalGameCardKey *out);
+
+/// Gets GameCardCertificate of size 0x404.
+Result setcalGetGameCardCertificate(SetCalGameCardCertificate *out);
+
+/// Gets EticketDeviceKey of size 0x244.
+Result setcalGetEticketDeviceKey(SetCalRsa2048DeviceKey *out);

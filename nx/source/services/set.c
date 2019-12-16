@@ -114,55 +114,6 @@ static Result _setCmdInU64NoOut(Service* srv, u64 inval, u32 cmd_id) {
     return serviceDispatchIn(srv, cmd_id, inval);
 }
 
-Result setcalGetEciDeviceCertificate(void *certificate, size_t size) {
-    return serviceDispatch(&g_setcalSrv, 14,
-        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
-        .buffers = { { certificate, size } },
-    );
-}
-
-Result setcalGetEticketDeviceCertificate(void *certificate, size_t size) {
-    return serviceDispatch(&g_setcalSrv, 15,
-        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
-        .buffers = { { certificate, size } },
-    );
-}
-
-Result setcalGetSslKey(void *key, size_t size) {
-    return serviceDispatch(&g_setcalSrv, 16,
-        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
-        .buffers = { { key, size } },
-    );
-}
-
-Result setcalGetSslCertificate(void *certificate, size_t size) {
-    return serviceDispatch(&g_setcalSrv, 17,
-        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
-        .buffers = { { certificate, size } },
-    );
-}
-
-Result setcalGetGameCardKey(void *key, size_t size) {
-    return serviceDispatch(&g_setcalSrv, 18,
-        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
-        .buffers = { { key, size } },
-    );
-}
-
-Result setcalGetGameCardCertificate(void *certificate, size_t size) {
-    return serviceDispatch(&g_setcalSrv, 19,
-        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
-        .buffers = { { certificate, size } },
-    );
-}
-
-Result setcalGetEticketDeviceKey(void *key, size_t size) {
-    return serviceDispatch(&g_setcalSrv, 21,
-        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
-        .buffers = { { key, size } },
-    );
-}
-
 static Result setInitializeLanguageCodesCache(void) {
     if (g_setLanguageCodesInitialized) return 0;
     Result rc = 0;
@@ -828,4 +779,53 @@ Result setsysSetTouchScreenMode(SetSysTouchScreenMode mode) {
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return _setCmdInU32NoOut(&g_setsysSrv, mode, 188);
+}
+
+Result setcalGetEciDeviceCertificate(SetCalEccB233DeviceCertificate *out) {
+    return serviceDispatch(&g_setcalSrv, 14,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { out, sizeof(SetCalEccB233DeviceCertificate) } },
+    );
+}
+
+Result setcalGetEticketDeviceCertificate(SetCalRsa2048DeviceCertificate *out) {
+    return serviceDispatch(&g_setcalSrv, 15,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { out, sizeof(SetCalRsa2048DeviceCertificate) } },
+    );
+}
+
+Result setcalGetSslKey(SetCalSslKey *out) {
+    return serviceDispatch(&g_setcalSrv, 16,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { out, sizeof(SetCalSslKey) } },
+    );
+}
+
+Result setcalGetSslCertificate(SetCalSslCertificate *out) {
+    return serviceDispatch(&g_setcalSrv, 17,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { out, sizeof(SetCalSslCertificate) } },
+    );
+}
+
+Result setcalGetGameCardKey(SetCalGameCardKey *out) {
+    return serviceDispatch(&g_setcalSrv, 18,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { out, sizeof(SetCalGameCardKey) } },
+    );
+}
+
+Result setcalGetGameCardCertificate(SetCalGameCardCertificate *out) {
+    return serviceDispatch(&g_setcalSrv, 19,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { out, sizeof(SetCalGameCardCertificate) } },
+    );
+}
+
+Result setcalGetEticketDeviceKey(SetCalRsa2048DeviceKey *out) {
+    return serviceDispatch(&g_setcalSrv, 21,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { out, sizeof(SetCalRsa2048DeviceKey) } },
+    );
 }
