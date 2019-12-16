@@ -263,32 +263,64 @@ typedef struct {
 } SetSysHomeMenuScheme;
 
 typedef struct {
-    u32 size;       ///< Size of the data.
-} SetCalContainer;
+    u8 offset[0x6];
+} SetCalAccelerometerOffset;
 
 typedef struct {
-    SetCalContainer container;  ///< \ref SetCalContainer.
-    u8 key[0x130];
-} SetCalSslKey;
+    u8 scale[0x6];
+} SetCalAccelerometerScale;
 
 typedef struct {
-    u32 offset;         ///< Relative to current position.
-    u8 cert[0x800];
-} SetCalSslCertificate;
+    u8 cert[0x70];
+} SetCalAmiiboEcdsaCertificate;
 
 typedef struct {
-    SetCalContainer container;  ///< \ref SetCalContainer.
-    u8 key[0x130];
-} SetCalGameCardKey;
+    u8 cert[0x20];
+} SetCalAmiiboEcqvBlsCertificate;
 
 typedef struct {
-    u8 cert[0x400];
-} SetCalGameCardCertificate;
+    u8 key[0x44];
+} SetCalAmiiboEcqvBlsKey;
 
 typedef struct {
-    u8 key[0x50];
-    u32 pad;                ///< Used on fw 5.0.0+
-} SetCalEccB233DeviceKey;
+    u8 cert[0x90];
+} SetCalAmiiboEcqvBlsRootCertificate;
+
+typedef struct {
+    u8 cert[0x14];
+} SetCalAmiiboEcqvCertificate;
+
+typedef struct {
+    u8 key[0x54];
+} SetCalAmiiboKey;
+
+typedef struct {
+    u8 calibration[0x9];
+} SetCalAnalogStickFactoryCalibration;
+
+typedef struct {
+    u8 parameter[0x12];
+} SetCalAnalogStickModelParameter;
+
+typedef struct {
+    u8 battery_lot[0x18];
+} SetCalBatteryLot;
+
+typedef struct {
+    u8 bd_addr[0x6];
+} SetCalBdAddress;
+
+typedef struct {
+    u8 cfgId1[0x1E];
+} SetCalConfigurationId1;
+
+typedef struct {
+    u8 offset[0x6];
+} SetCalConsoleSixAxisSensorHorizontalOffset;
+
+typedef struct {
+    u32 code[0x4];
+} SetCalCountryCode;
 
 typedef struct {
     u32 offset;                     ///< Relative to current position.
@@ -296,15 +328,61 @@ typedef struct {
 } SetCalEccB233DeviceCertificate;
 
 typedef struct {
-    SetCalContainer container;  ///< \ref SetCalContainer.
-    u8 key[0x240];
-} SetCalRsa2048DeviceKey;
+    u8 key[0x58];
+} SetCalEccB233DeviceKey;
+
+typedef struct {
+    u8 cert[0x400];
+} SetCalGameCardCertificate;
+
+typedef struct {
+    u32 size;           ///< Size of the entire key.
+    u8 key[0x130];
+} SetCalGameCardKey;
+
+typedef struct {
+    u8 offset[0x6];
+} SetCalGyroscopeOffset;
+
+typedef struct {
+    u8 scale[0x6];
+} SetCalGyroscopeScale;
+
+typedef struct {
+    u8 addr[0x6];
+} SetCalMacAddress;
 
 typedef struct {
     u32 offset;                     ///< Relative to current position.
     u8 cert[0x23C];
 } SetCalRsa2048DeviceCertificate;
 
+typedef struct {
+    size_t size;            ///< Size of the entire key.
+    u8 key[0x240];
+} SetCalRsa2048DeviceKey;
+
+typedef struct {
+    u8 number[0x18];
+} SetCalSerialNumber;
+
+typedef struct {
+    u8 parameter[0x5A];
+} SetCalSpeakerParameter;
+
+typedef struct {
+    u32 size;         ///< Size of the certificate data.
+    u8 cert[0x800];
+} SetCalSslCertificate;
+
+typedef struct {
+    size_t size;    ///< Size of the entire key.
+    u8 key[0x130];
+} SetCalSslKey;
+
+typedef struct {
+    u32 code;
+} SetCalRegionCode;
 
 /// Initialize set.
 Result setInitialize(void);
@@ -954,7 +1032,7 @@ Result setcalGetSslCertificate(SetCalSslCertificate *out);
 /// Gets GameCardKey of size 0x134.
 Result setcalGetGameCardKey(SetCalGameCardKey *out);
 
-/// Gets GameCardCertificate of size 0x404.
+/// Gets GameCardCertificate of size 0x400.
 Result setcalGetGameCardCertificate(SetCalGameCardCertificate *out);
 
 /// Gets EticketDeviceKey of size 0x244.
