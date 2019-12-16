@@ -319,11 +319,11 @@ typedef struct {
 } SetCalConsoleSixAxisSensorHorizontalOffset;
 
 typedef struct {
-    u32 code[0x4];
+    u32 code[0x4];          ///< Country code.
 } SetCalCountryCode;
 
 typedef struct {
-    u32 offset;                     ///< Relative to current position.
+    u32 offset;             ///< Relative to current position.
     u8 cert[0x17C];
 } SetCalEccB233DeviceCertificate;
 
@@ -336,7 +336,7 @@ typedef struct {
 } SetCalGameCardCertificate;
 
 typedef struct {
-    u32 size;           ///< Size of the entire key.
+    u32 size;               ///< Size of the entire key.
     u8 key[0x130];
 } SetCalGameCardKey;
 
@@ -349,11 +349,11 @@ typedef struct {
 } SetCalGyroscopeScale;
 
 typedef struct {
-    u8 addr[0x6];
+    u8 addr[0x6];           ///< Mac address.
 } SetCalMacAddress;
 
 typedef struct {
-    u32 offset;                     ///< Relative to current position.
+    u32 offset;             ///< Relative to current position.
     u8 cert[0x23C];
 } SetCalRsa2048DeviceCertificate;
 
@@ -371,17 +371,17 @@ typedef struct {
 } SetCalSpeakerParameter;
 
 typedef struct {
-    u32 size;         ///< Size of the certificate data.
+    u32 size;               ///< Size of the certificate data.
     u8 cert[0x800];
 } SetCalSslCertificate;
 
 typedef struct {
-    u32 size;       ///< Size of the entire key.
+    u32 size;               ///< Size of the entire key.
     u8 key[0x130];
 } SetCalSslKey;
 
 typedef struct {
-    u32 code;
+    u32 code;               ///< Region code.
 } SetCalRegionCode;
 
 /// Initialize set.
