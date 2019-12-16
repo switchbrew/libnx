@@ -358,7 +358,7 @@ typedef struct {
 } SetCalRsa2048DeviceCertificate;
 
 typedef struct {
-    size_t size;            ///< Size of the entire key.
+    u32 size;               ///< Size of the entire key.
     u8 key[0x240];
 } SetCalRsa2048DeviceKey;
 
@@ -376,7 +376,7 @@ typedef struct {
 } SetCalSslCertificate;
 
 typedef struct {
-    size_t size;    ///< Size of the entire key.
+    u32 size;       ///< Size of the entire key.
     u8 key[0x130];
 } SetCalSslKey;
 
