@@ -311,7 +311,7 @@ typedef struct {
 } SetCalBdAddress;
 
 typedef struct {
-    u8 cfgId1[0x1E];
+    u8 cfg[0x1E];
 } SetCalConfigurationId1;
 
 typedef struct {
