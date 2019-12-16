@@ -1017,23 +1017,23 @@ void setcalExit(void);
 /// Gets the Service object for the actual setcal service session.
 Service* setcalGetServiceSession(void);
 
-/// Gets EciDeviceCertificate of size 0x180.
+/// Gets the \ref SetCalEccB233DeviceCertificate.
 Result setcalGetEciDeviceCertificate(SetCalEccB233DeviceCertificate *out);
 
-/// Gets EticketDeviceCertificate of size 0x240.
+/// Gets the \ref SetCalRsa2048DeviceCertificate.
 Result setcalGetEticketDeviceCertificate(SetCalRsa2048DeviceCertificate *out);
 
-/// Gets SslKey of size 0x134.
+/// Gets the \ref SetCalSslKey.
 Result setcalGetSslKey(SetCalSslKey *out);
 
-/// Gets SslCertificate of size 0x804.
+/// Gets the \ref SetCalSslCertificate.
 Result setcalGetSslCertificate(SetCalSslCertificate *out);
 
-/// Gets GameCardKey of size 0x134.
+/// Gets the \ref SetCalGameCardKey.
 Result setcalGetGameCardKey(SetCalGameCardKey *out);
 
-/// Gets GameCardCertificate of size 0x400.
+/// Gets the \ref SetCalGameCardCertificate.
 Result setcalGetGameCardCertificate(SetCalGameCardCertificate *out);
 
-/// Gets EticketDeviceKey of size 0x244.
+/// Gets the \ref SetCalRsa2048DeviceKey.
 Result setcalGetEticketDeviceKey(SetCalRsa2048DeviceKey *out);
