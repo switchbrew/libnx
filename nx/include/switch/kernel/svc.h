@@ -472,10 +472,9 @@ Result svcWaitProcessWideKeyAtomic(u32* key, u32* tag_location, u32 self_tag, u6
 
 /**
  * @brief Performs a condition variable wake-up operation in userspace.
- * @return Result code.
  * @note Syscall number 0x1D.
  */
-Result svcSignalProcessWideKey(u32* key, s32 num);
+void svcSignalProcessWideKey(u32* key, s32 num);
 
 ///@}
 
