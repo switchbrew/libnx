@@ -321,7 +321,7 @@ void __libnx_init_time(void)
         memset(envstr, 0, sizeof(envstr));
 
         //Avoid using *printf.
-        strncpy(envstr, info.timezoneName, sizeof(envstr)-1);
+        strncpy(envstr, /*info.timezoneName*/"NX", sizeof(envstr)-1); // Some tznames have numeric characters and '-'/'+', so the actual tzname can't be used.
         strptr = &envstr[strlen(envstr)];
         *strptr++ = is_west ? '+' : '-';
 
