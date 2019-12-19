@@ -42,8 +42,6 @@ Result pselUiShow(PselUiSettings *ui, AccountUid *out_user) {
         arg_size = sizeof(ui->settings);
     }
 
-    // TODO: Official sw supports pushing an optional additional storage from appletCreateTransferMemoryStorage with writable=0 using an input buffer, when that buffer is specified. However, sdknso itself doesn't use this besides a wrapper func. Figure out what this, and implement it?(libappletLaunch could no longer be used with this)
-
     rc = libappletLaunch(AppletId_playerSelect, &args, arg_ptr, arg_size, &ret, sizeof(ret), &reply_size);
     
     if (R_SUCCEEDED(rc)) {
