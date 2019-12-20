@@ -22,6 +22,11 @@ typedef enum {
     AlbumReportOption_Enable = 1,              ///< Display the screenshot-taken Overlay notification.
 } AlbumReportOption;
 
+typedef enum {
+    AlbumObjectLocation_BuiltInUser = 0,        ///< BuiltInUser
+    AlbumObjectLocation_SdCard      = 1,        ///< SdCard
+} AlbumObjectLocation;
+
 /// ContentType
 typedef enum {
     CapsContentType_Screenshot = 0,             ///< Album screenshots.

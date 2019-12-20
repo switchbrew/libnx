@@ -18,7 +18,7 @@ void _capsaCleanup(void) {
     serviceClose(&g_capsaSrv);
 }
 
-Service* capsuGetServiceSession(void) {
+Service* capsaGetServiceSession(void) {
     return &g_capsaSrv;
 }
 
@@ -60,7 +60,7 @@ Result capsaGetAlbumFileSize(CapsAlbumEntryId entry_id, u64* size) {
     return serviceDispatchInOut(&g_capsaSrv, 7, entry_id, *size);
 }
 
-Result capsLoadAlbumFileThumbnail(CapsAlbumEntryId entry_id, u8 unk[8], void* jpeg_buffer, u64 jpeg_buffer_size) {
+Result capsaLoadAlbumFileThumbnail(CapsAlbumEntryId entry_id, u8 unk[8], void* jpeg_buffer, u64 jpeg_buffer_size) {
     return serviceDispatchInOut(&g_capsaSrv, 8, entry_id, *unk,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
         .buffers = { { jpeg_buffer, jpeg_buffer_size } },
