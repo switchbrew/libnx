@@ -78,7 +78,7 @@ typedef struct {
 typedef struct {
     u64 program_id;                              ///< ProgramId.
     CapsAlbumFileDateTime datetime;              ///< \ref CapsAlbumFileDateTime
-    u8 unk_x10;                                  ///< Unknown.
+    u8 location;                                 ///< AlbumLocation
     u8 unk_x11;                                  ///< Unknown.
     u8 pad[6];                                   ///< Padding?
 } CapsAlbumEntryId;
@@ -99,10 +99,10 @@ typedef struct {
         } v0; ///< Pre-7.0.0
 
         struct {
-            u8 unk_x0[0x8];                      ///< Unknown.
-            u8 unk_x8[0x8];                      ///< Unknown.
-            CapsAlbumFileDateTime datetime;      ///< \ref CapsAlbumFileDateTime
-            u8 unk_x18[0x8];                     ///< Unknown.
+            u64 size;                           ///< size of the entry
+            u64 program_id;                     ///< ProgramId
+            CapsAlbumFileDateTime datetime;     ///< \ref CapsAlbumFileDateTime
+            u8 unk_x18[0x8];                    ///< Unknown.
         } v1; ///< [7.0.0+]
     };
 } CapsApplicationAlbumEntry;
