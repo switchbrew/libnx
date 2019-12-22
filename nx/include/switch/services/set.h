@@ -262,6 +262,128 @@ typedef struct {
     u32 extra_color;      ///< Extra Color.
 } SetSysHomeMenuScheme;
 
+typedef struct {
+    u8 offset[0x6];
+} SetCalAccelerometerOffset;
+
+typedef struct {
+    u8 scale[0x6];
+} SetCalAccelerometerScale;
+
+typedef struct {
+    u8 cert[0x70];
+} SetCalAmiiboEcdsaCertificate;
+
+typedef struct {
+    u8 cert[0x20];
+} SetCalAmiiboEcqvBlsCertificate;
+
+typedef struct {
+    u8 key[0x44];
+} SetCalAmiiboEcqvBlsKey;
+
+typedef struct {
+    u8 cert[0x90];
+} SetCalAmiiboEcqvBlsRootCertificate;
+
+typedef struct {
+    u8 cert[0x14];
+} SetCalAmiiboEcqvCertificate;
+
+typedef struct {
+    u8 key[0x54];
+} SetCalAmiiboKey;
+
+typedef struct {
+    u8 calibration[0x9];
+} SetCalAnalogStickFactoryCalibration;
+
+typedef struct {
+    u8 parameter[0x12];
+} SetCalAnalogStickModelParameter;
+
+typedef struct {
+    u8 battery_lot[0x18];
+} SetCalBatteryLot;
+
+typedef struct {
+    u8 bd_addr[0x6];
+} SetCalBdAddress;
+
+typedef struct {
+    u8 cfg[0x1E];
+} SetCalConfigurationId1;
+
+typedef struct {
+    u8 offset[0x6];
+} SetCalConsoleSixAxisSensorHorizontalOffset;
+
+typedef struct {
+    u32 code[0x4];          ///< Country code.
+} SetCalCountryCode;
+
+typedef struct {
+    u32 offset;             ///< Relative to current position.
+    u8 cert[0x17C];
+} SetCalEccB233DeviceCertificate;
+
+typedef struct {
+    u8 key[0x58];
+} SetCalEccB233DeviceKey;
+
+typedef struct {
+    u8 cert[0x400];
+} SetCalGameCardCertificate;
+
+typedef struct {
+    u32 size;               ///< Size of the entire key.
+    u8 key[0x130];
+} SetCalGameCardKey;
+
+typedef struct {
+    u8 offset[0x6];
+} SetCalGyroscopeOffset;
+
+typedef struct {
+    u8 scale[0x6];
+} SetCalGyroscopeScale;
+
+typedef struct {
+    u8 addr[0x6];           ///< Mac address.
+} SetCalMacAddress;
+
+typedef struct {
+    u32 offset;             ///< Relative to current position.
+    u8 cert[0x23C];
+} SetCalRsa2048DeviceCertificate;
+
+typedef struct {
+    u32 size;               ///< Size of the entire key.
+    u8 key[0x240];
+} SetCalRsa2048DeviceKey;
+
+typedef struct {
+    u8 number[0x18];
+} SetCalSerialNumber;
+
+typedef struct {
+    u8 parameter[0x5A];
+} SetCalSpeakerParameter;
+
+typedef struct {
+    u32 size;               ///< Size of the certificate data.
+    u8 cert[0x800];
+} SetCalSslCertificate;
+
+typedef struct {
+    u32 size;               ///< Size of the entire key.
+    u8 key[0x130];
+} SetCalSslKey;
+
+typedef struct {
+    u32 code;               ///< Region code.
+} SetCalRegionCode;
+
 /// Initialize set.
 Result setInitialize(void);
 
@@ -885,3 +1007,33 @@ Result setsysGetTouchScreenMode(SetSysTouchScreenMode *out);
  * @param[in] mode \ref SetSysTouchScreenMode
  */
 Result setsysSetTouchScreenMode(SetSysTouchScreenMode mode);
+
+/// Initialize setcal.
+Result setcalInitialize(void);
+
+/// Exit setcal.
+void setcalExit(void);
+
+/// Gets the Service object for the actual setcal service session.
+Service* setcalGetServiceSession(void);
+
+/// Gets the \ref SetCalEccB233DeviceCertificate.
+Result setcalGetEciDeviceCertificate(SetCalEccB233DeviceCertificate *out);
+
+/// Gets the \ref SetCalRsa2048DeviceCertificate.
+Result setcalGetEticketDeviceCertificate(SetCalRsa2048DeviceCertificate *out);
+
+/// Gets the \ref SetCalSslKey.
+Result setcalGetSslKey(SetCalSslKey *out);
+
+/// Gets the \ref SetCalSslCertificate.
+Result setcalGetSslCertificate(SetCalSslCertificate *out);
+
+/// Gets the \ref SetCalGameCardKey.
+Result setcalGetGameCardKey(SetCalGameCardKey *out);
+
+/// Gets the \ref SetCalGameCardCertificate.
+Result setcalGetGameCardCertificate(SetCalGameCardCertificate *out);
+
+/// Gets the \ref SetCalRsa2048DeviceKey.
+Result setcalGetEticketDeviceKey(SetCalRsa2048DeviceKey *out);

@@ -334,6 +334,7 @@ static void _appletInfiniteSleepLoop(void) {
 }
 
 static void NORETURN _appletExitProcess(int result_code) {
+    appletInitialize();
     appletExit();
 
     if (R_SUCCEEDED(g_appletExitProcessResult)) _appletInfiniteSleepLoop();

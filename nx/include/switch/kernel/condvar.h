@@ -51,7 +51,8 @@ static inline Result condvarWait(CondVar* c, Mutex* m)
  */
 static inline Result condvarWake(CondVar* c, int num)
 {
-    return svcSignalProcessWideKey(c, num);
+    svcSignalProcessWideKey(c, num);
+    return 0;
 }
 
 /**
