@@ -21,10 +21,10 @@ typedef enum {
     ApmCpuBoostMode_Type2    = 2,  ///< Use performance configurations 0x9222000B and 0x9222000C.
 } ApmCpuBoostMode;
 
-/// Initialize apm. Used automatically by \ref appletInitialize.
+/// Initialize apm. Used automatically by \ref appletInitialize with AppletType_Application.
 Result apmInitialize(void);
 
-/// Exit apm. Used automatically by \ref appletExit.
+/// Exit apm. Used automatically by \ref appletExit with AppletType_Application.
 void apmExit(void);
 
 /// Gets the Service object for the actual apm service session.
