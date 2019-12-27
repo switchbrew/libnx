@@ -118,8 +118,10 @@ Result _appletInitialize(void) {
     if (__nx_applet_type == AppletType_None)
         return 0;
 
-    if (R_FAILED(apmInitialize()))
-        return MAKERESULT(Module_Libnx, LibnxError_ApmFailedToInitialize);
+    if (__nx_applet_type == AppletType_Default || __nx_applet_type == AppletType_Application) {
+        if (R_FAILED(apmInitialize()))
+            return MAKERESULT(Module_Libnx, LibnxError_ApmFailedToInitialize);
+    }
 
     Result rc = 0;
 
@@ -422,8 +424,6 @@ void _appletCleanup(void) {
     serviceClose(&g_appletSrv);
     g_appletResourceUserId = 0;
 
-    apmExit();
-
     if (g_appletRecordingInitialized > 0) {
         tmemClose(&g_appletRecordingTmem);
         g_appletRecordingInitialized = 0;
@@ -433,6 +433,8 @@ void _appletCleanup(void) {
         tmemClose(&g_appletCopyrightTmem);
         g_appletCopyrightInitialized = 0;
     }
+
+    if (_appletIsRegularApplication()) apmExit();
 }
 
 Service* appletGetServiceSession_Proxy(void) {
