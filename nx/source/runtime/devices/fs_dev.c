@@ -315,7 +315,12 @@ static int _fsdevMountDevice(const char *name, FsFileSystem fs, fsdev_fsdevice *
 
   device->fs = fs;
   memset(device->name, 0, sizeof(device->name));
-  strncpy(device->name, name, sizeof(device->name)-1);
+  
+  size_t devnamelen = strlen(name);
+  if (devnamelen > (sizeof(device->name) - 1)) devnamelen = (sizeof(device->name) - 1); // Truncate the device name if it's too long
+  if (name[devnamelen - 1] == ':') devnamelen--; // Make sure we don't copy a trailing colon if it was provided
+  
+  strncpy(device->name, name, devnamelen);
 
   int dev = AddDevice(&device->device);
   if(dev==-1)
