@@ -40,7 +40,7 @@ typedef struct {
 
 /// GameMovieId
 typedef struct {
-    CapsAlbumEntryId album_id;    ///< \ref CapsAlbumEntryId
+    CapsAlbumFileId file_id;      ///< \ref CapsAlbumFileId
     u8 reserved[0x28];            ///< Unused, always zero.
 } GrcGameMovieId;
 
