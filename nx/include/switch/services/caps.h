@@ -84,14 +84,14 @@ typedef struct {
     u64 application_id;                          ///< ApplicationId
     CapsAlbumFileDateTime datetime;              ///< \ref CapsAlbumFileDateTime
     u8 storage;                                  ///< AlbumStorage
-    u8 contentsType;                             ///< FileContentsType
+    u8 content;                                  ///< FileContentsType
     u32 pad_x12;                                 ///< Set to 0 by official software
     u16 pad_x16;                                 ///< Set to 0 by official software
-} CapsAlbumFileId;
+} PACKED CapsAlbumFileId;
 
 /// AlbumEntry
 typedef struct {
-    u8 unk_x0[0x8];                              ///< Unknown.
+    u64 size;                                    ///< Unknown.
     CapsAlbumFileId file_id;                     ///< \ref CapsAlbumFileId
 } CapsAlbumEntry;
 
@@ -143,6 +143,7 @@ typedef struct {
     s64 size;
     u32 flags;
     u8 file_contents;
+    u8 pad_x15[0x3];
 } CapsAlbumContentsUsage;
 
 typedef struct {
