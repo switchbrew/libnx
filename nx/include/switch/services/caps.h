@@ -23,8 +23,8 @@ typedef enum {
 } AlbumReportOption;
 
 typedef enum {
-    CapsAlbumStorage_Nand = 0,        ///< BuiltInUser
-    CapsAlbumStorage_Sd   = 1,        ///< SdCard
+    CapsAlbumStorage_Nand = 0,        ///< Nand
+    CapsAlbumStorage_Sd   = 1,        ///< Sd
 } CapsAlbumStorage;
 
 /// ContentType
@@ -83,15 +83,15 @@ typedef struct {
 typedef struct {
     u64 application_id;                          ///< ApplicationId
     CapsAlbumFileDateTime datetime;              ///< \ref CapsAlbumFileDateTime
-    u8 storage;                                  ///< AlbumStorage
-    u8 content;                                  ///< FileContentsType
+    u8 storage;                                  ///< \ref CapsAlbumStorage
+    u8 content;                                  ///< \ref CapsAlbumFileContents
     u32 pad_x12;                                 ///< Set to 0 by official software
     u16 pad_x16;                                 ///< Set to 0 by official software
 } PACKED CapsAlbumFileId;
 
 /// AlbumEntry
 typedef struct {
-    u64 size;                                    ///< Unknown.
+    u64 size;                                    ///< Size.
     CapsAlbumFileId file_id;                     ///< \ref CapsAlbumFileId
 } CapsAlbumEntry;
 
@@ -126,6 +126,7 @@ typedef struct {
     u32 size;                                    ///< UserData size.
 } CapsApplicationData;
 
+/// AlbumFileContents
 typedef enum {
     CapsAlbumFileContents_ScreenShot      = 0,
     CapsAlbumFileContents_Movie           = 1,
