@@ -1102,7 +1102,7 @@ static Result _hidActivateConsoleSixAxisSensor(void) {
     if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return _hidCmdWithNoInput(303);
+    return _hidCmdWithNoInput(300);
 }
 
 Result hidStartSevenSixAxisSensor(void) {
