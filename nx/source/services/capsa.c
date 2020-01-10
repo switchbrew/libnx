@@ -79,14 +79,14 @@ Result capsaGetAlbumFileSize(const CapsAlbumFileId *file_id, u64* size) {
     return serviceDispatchInOut(&g_capsaSrv, 7, *file_id, *size);
 }
 
-Result capsaLoadAlbumFileThumbnail(const CapsAlbumFileId *file_id, u64 *out_size, void* workbuf, u64 workbuf_size) {
+Result capsaLoadAlbumFileThumbnail(const CapsAlbumFileId *file_id, u64 *out_size, void* image, u64 image_size) {
     return serviceDispatchInOut(&g_capsaSrv, 8, *file_id, *out_size,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
-        .buffers = { { workbuf, workbuf_size } },
+        .buffers = { { image, image_size } },
     );
 }
 
-static Result _capsaLoadAlbumScreenshot(u64* width, u64* height, const CapsAlbumFileId *file_id, void* workbuf, u64 workbuf_size, void* rawbuf, u64 rawbuf_size, u32 cmd_id) {
+static Result _capsaLoadAlbumScreenshot(u64* width, u64* height, const CapsAlbumFileId *file_id, void* image, u64 image_size, void* workbuf, u64 workbuf_size, u32 cmd_id) {
     if (hosversionBefore(2,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     struct {
@@ -95,22 +95,22 @@ static Result _capsaLoadAlbumScreenshot(u64* width, u64* height, const CapsAlbum
     } out;
     Result rc = serviceDispatchInOut(&g_capsaSrv, cmd_id, *file_id, out,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out | SfBufferAttr_HipcMapTransferAllowsNonSecure, SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
-        .buffers = { { rawbuf, rawbuf_size }, { workbuf, workbuf_size } },
+        .buffers = { { image, image_size }, { workbuf, workbuf_size } },
     );
     *width = out.width;
     *height = out.height;
     return rc;
 }
 
-Result capsaLoadAlbumScreenShotImage(u64* width, u64* height, const CapsAlbumFileId *file_id, void* workbuf, u64 workbuf_size, void* rawbuf, u64 rawbuf_size) {
-    return _capsaLoadAlbumScreenshot(width, height, file_id, workbuf, workbuf_size, rawbuf, rawbuf_size, 9);
+Result capsaLoadAlbumScreenShotImage(u64* width, u64* height, const CapsAlbumFileId *file_id, void* image, u64 image_size, void* workbuf, u64 workbuf_size) {
+    return _capsaLoadAlbumScreenshot(width, height, file_id, image, image_size, workbuf, workbuf_size, 9);
 }
 
-Result capsaLoadAlbumScreenShotThumbnailImage(u64* width, u64* height, const CapsAlbumFileId *file_id, void* workbuf, u64 workbuf_size, void* rawbuf, u64 rawbuf_size) {
-    return _capsaLoadAlbumScreenshot(width, height, file_id, workbuf, workbuf_size, rawbuf, rawbuf_size, 10);
+Result capsaLoadAlbumScreenShotThumbnailImage(u64* width, u64* height, const CapsAlbumFileId *file_id, void* image, u64 image_size, void* workbuf, u64 workbuf_size) {
+    return _capsaLoadAlbumScreenshot(width, height, file_id, image, image_size, workbuf, workbuf_size, 10);
 }
 
-static Result _capsaLoadAlbumScreenshotEx(u64* width, u64* height, const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, void* workbuf, u64 workbuf_size, void* rawbuf, u64 rawbuf_size, u32 cmd_id) {
+static Result _capsaLoadAlbumScreenshotEx(u64* width, u64* height, const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, void* image, u64 image_size, void* workbuf, u64 workbuf_size, u32 cmd_id) {
     if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     struct {
@@ -123,19 +123,19 @@ static Result _capsaLoadAlbumScreenshotEx(u64* width, u64* height, const CapsAlb
     } out;
     Result rc = serviceDispatchInOut(&g_capsaSrv, cmd_id, in, out,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out | SfBufferAttr_HipcMapTransferAllowsNonSecure, SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
-        .buffers = { { rawbuf, rawbuf_size }, { workbuf, workbuf_size } },
+        .buffers = { { image, image_size }, { workbuf, workbuf_size } },
     );
     *width = out.width;
     *height = out.height;
     return rc;
 }
 
-Result capsaLoadAlbumScreenShotImageEx(u64* width, u64* height, const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, void* workbuf, u64 workbuf_size, void* rawbuf, u64 rawbuf_size) {
-    return _capsaLoadAlbumScreenshotEx(width, height, file_id, opts, workbuf, workbuf_size, rawbuf, rawbuf_size, 12);
+Result capsaLoadAlbumScreenShotImageEx(u64* width, u64* height, const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, void* image, u64 image_size, void* workbuf, u64 workbuf_size) {
+    return _capsaLoadAlbumScreenshotEx(width, height, file_id, opts, image, image_size, workbuf, workbuf_size, 12);
 }
 
-Result capsaLoadAlbumScreenShotThumbnailImageEx(u64* width, u64* height, const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, void* workbuf, u64 workbuf_size, void* rawbuf, u64 rawbuf_size) {
-    return _capsaLoadAlbumScreenshotEx(width, height, file_id, opts, workbuf, workbuf_size, rawbuf, rawbuf_size, 13);
+Result capsaLoadAlbumScreenShotThumbnailImageEx(u64* width, u64* height, const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, void* image, u64 image_size, void* workbuf, u64 workbuf_size) {
+    return _capsaLoadAlbumScreenshotEx(width, height, file_id, opts, image, image_size, workbuf, workbuf_size, 13);
 }
 
 Result capsaGetAlbumUsage3(CapsAlbumStorage storage, CapsAlbumUsage3 *out) {
@@ -173,7 +173,7 @@ Result capsaGetRequiredStorageSpaceSizeToCopyAll(CapsAlbumStorage dst_storage, C
     return serviceDispatchInOut(&g_capsaSrv, 501, in, *out);
 }
 
-Result capsaLoadAlbumScreenShotThumbnailImageEx1(const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, void* work_buffer, u64 work_buffer_size, void* raw_buffer, u64 raw_buffer_size, void* out, u64 out_size) {
+Result capsaLoadAlbumScreenShotThumbnailImageEx1(const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, void* image, u64 image_size, void* workbuf, u64 workbuf_size, void* out, u64 out_size) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     struct {
@@ -182,7 +182,7 @@ Result capsaLoadAlbumScreenShotThumbnailImageEx1(const CapsAlbumFileId *file_id,
     } in = { *file_id, *opts };
     return serviceDispatchIn(&g_capsaSrv, 1003, in,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out | SfBufferAttr_FixedSize, SfBufferAttr_HipcMapAlias | SfBufferAttr_Out | SfBufferAttr_HipcMapTransferAllowsNonSecure, SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
-        .buffers = { { out, out_size }, { raw_buffer, raw_buffer_size }, { work_buffer, work_buffer_size } },
+        .buffers = { { out, out_size }, { image, image_size }, { workbuf, workbuf_size } },
     );
 }
 
