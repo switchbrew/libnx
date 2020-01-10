@@ -41,14 +41,14 @@ Result capsaGetAlbumFileList(CapsAlbumStorage storage, u64 *count, CapsAlbumEntr
     u8 inval = storage;
     return serviceDispatchInOut(&g_capsaSrv, 1, inval, *count,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
-        .buffers = { { buffer, buffer_size } },
+        .buffers = { { entries, size } },
     );
 }
 
-Result capsaLoadAlbumFile(const CapsAlbumFileId *file_id, u64 *out_size, void *workbuf, u64 workbuf_size) {
+Result capsaLoadAlbumFile(const CapsAlbumFileId *file_id, u64 *out_size, void* filebuf, u64 filebuf_size) {
     return serviceDispatchInOut(&g_capsaSrv, 2, *file_id, *out_size,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
-        .buffers = { { workbuf, workbuf_size } },
+        .buffers = { { filebuf, filebuf_size } },
     );
 }
 
@@ -79,14 +79,14 @@ Result capsaGetAlbumFileSize(const CapsAlbumFileId *file_id, u64 *size) {
     return serviceDispatchInOut(&g_capsaSrv, 7, *file_id, *size);
 }
 
-Result capsaLoadAlbumFileThumbnail(const CapsAlbumFileId *file_id, u64 *out_size, void *image, u64 image_size) {
+Result capsaLoadAlbumFileThumbnail(const CapsAlbumFileId *file_id, u64 *out_size, void* image, u64 image_size) {
     return serviceDispatchInOut(&g_capsaSrv, 8, *file_id, *out_size,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
         .buffers = { { image, image_size } },
     );
 }
 
-static Result _capsaLoadAlbumScreenshot(u64 *width, u64 *height, const CapsAlbumFileId *file_id, void *image, u64 image_size, void *workbuf, u64 workbuf_size, u32 cmd_id) {
+static Result _capsaLoadAlbumScreenshot(u64 *width, u64 *height, const CapsAlbumFileId *file_id, void* image, u64 image_size, void* workbuf, u64 workbuf_size, u32 cmd_id) {
     if (hosversionBefore(2,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     struct {
@@ -102,15 +102,15 @@ static Result _capsaLoadAlbumScreenshot(u64 *width, u64 *height, const CapsAlbum
     return rc;
 }
 
-Result capsaLoadAlbumScreenShotImage(u64 *width, u64 *height, const CapsAlbumFileId *file_id, void *image, u64 image_size, void *workbuf, u64 workbuf_size) {
+Result capsaLoadAlbumScreenShotImage(u64 *width, u64 *height, const CapsAlbumFileId *file_id, void* image, u64 image_size, void* workbuf, u64 workbuf_size) {
     return _capsaLoadAlbumScreenshot(width, height, file_id, image, image_size, workbuf, workbuf_size, 9);
 }
 
-Result capsaLoadAlbumScreenShotThumbnailImage(u64 *width, u64 *height, const CapsAlbumFileId *file_id, void *image, u64 image_size, void *workbuf, u64 workbuf_size) {
+Result capsaLoadAlbumScreenShotThumbnailImage(u64 *width, u64 *height, const CapsAlbumFileId *file_id, void* image, u64 image_size, void* workbuf, u64 workbuf_size) {
     return _capsaLoadAlbumScreenshot(width, height, file_id, image, image_size, workbuf, workbuf_size, 10);
 }
 
-static Result _capsaLoadAlbumScreenshotEx(u64 *width, u64 *height, const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, void *image, u64 image_size, void *workbuf, u64 workbuf_size, u32 cmd_id) {
+static Result _capsaLoadAlbumScreenshotEx(u64 *width, u64 *height, const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, void* image, u64 image_size, void* workbuf, u64 workbuf_size, u32 cmd_id) {
     if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     struct {
@@ -130,11 +130,11 @@ static Result _capsaLoadAlbumScreenshotEx(u64 *width, u64 *height, const CapsAlb
     return rc;
 }
 
-Result capsaLoadAlbumScreenShotImageEx(u64 *width, u64 *height, const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, void *image, u64 image_size, void *workbuf, u64 workbuf_size) {
+Result capsaLoadAlbumScreenShotImageEx(u64 *width, u64 *height, const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, void* image, u64 image_size, void* workbuf, u64 workbuf_size) {
     return _capsaLoadAlbumScreenshotEx(width, height, file_id, opts, image, image_size, workbuf, workbuf_size, 12);
 }
 
-Result capsaLoadAlbumScreenShotThumbnailImageEx(u64 *width, u64 *height, const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, void *image, u64 image_size, void *workbuf, u64 workbuf_size) {
+Result capsaLoadAlbumScreenShotThumbnailImageEx(u64 *width, u64 *height, const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, void* image, u64 image_size, void* workbuf, u64 workbuf_size) {
     return _capsaLoadAlbumScreenshotEx(width, height, file_id, opts, image, image_size, workbuf, workbuf_size, 13);
 }
 
@@ -173,7 +173,7 @@ Result capsaGetRequiredStorageSpaceSizeToCopyAll(CapsAlbumStorage dst_storage, C
     return serviceDispatchInOut(&g_capsaSrv, 501, in, *out);
 }
 
-Result capsaLoadAlbumScreenShotThumbnailImageEx1(const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, void *image, u64 image_size, void *workbuf, u64 workbuf_size, void *out, u64 out_size) {
+Result capsaLoadAlbumScreenShotThumbnailImageEx1(const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, void* image, u64 image_size, void* workbuf, u64 workbuf_size, void* out, u64 out_size) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     struct {
@@ -213,7 +213,7 @@ static Result _capsaOpenAlbumMovieReadStream(u64 *stream, const CapsAlbumFileId 
     return serviceDispatchInOut(&g_capsaAccessor, 2001, *file_id, *stream);
 }
 
-static Result _capsaReadMovieDataFromAlbumMovieReadStream(u64 stream, s64 offset, void *buffer, size_t size, u64 *actual_size) {
+static Result _capsaReadMovieDataFromAlbumMovieReadStream(u64 stream, s64 offset, void* buffer, size_t size, u64 *actual_size) {
     const struct {
         u64 stream;
         s64 offset;
@@ -225,7 +225,7 @@ static Result _capsaReadMovieDataFromAlbumMovieReadStream(u64 stream, s64 offset
     );
 }
 
-static Result _capsaReadImageDataFromAlbumMovieReadStream(u64 stream, s64 offset, void *buffer, size_t size, u64 *actual_size) {
+static Result _capsaReadImageDataFromAlbumMovieReadStream(u64 stream, s64 offset, void* buffer, size_t size, u64 *actual_size) {
     const struct {
         u64 stream;
         s64 offset;
@@ -270,7 +270,7 @@ Result capsaGetAlbumMovieStreamSize(u64 stream, u64 *size) {
     return serviceDispatchInOut(&g_capsaAccessor, 2003, stream, *size);
 }
 
-Result capsaReadMovieDataFromAlbumMovieReadStream(u64 stream, s64 offset, void *buffer, size_t size, u64 *actual_size) {
+Result capsaReadMovieDataFromAlbumMovieReadStream(u64 stream, s64 offset, void* buffer, size_t size, u64 *actual_size) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
@@ -300,7 +300,7 @@ Result capsaGetAlbumMovieReadStreamImageDataSize(u64 stream, u64 *size) {
     return serviceDispatchInOut(&g_capsaAccessor, 2006, stream, *size);
 }
 
-Result capsaReadImageDataFromAlbumMovieReadStream(u64 stream, s64 offset, void *buffer, size_t size, u64 *actual_size) {
+Result capsaReadImageDataFromAlbumMovieReadStream(u64 stream, s64 offset, void* buffer, size_t size, u64 *actual_size) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
