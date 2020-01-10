@@ -26,14 +26,16 @@ Service* capsaGetServiceSession_Accessor(void);
  * @param[in] storage \ref CapsAlbumStorage
  * @param[out] count Amount of files.
  */
-Result capsaGetAlbumFileCount(CapsAlbumStorage storage, u64* count);
+Result capsaGetAlbumFileCount(CapsAlbumStorage storage, u64 *count);
 
 /**
  * @brief Gets a listing of \ref CapsAlbumEntry, where the AlbumFile's storage matches the input one.
  * @param[in] storage \ref CapsAlbumStorage
  * @param[out] count Total output entries.
+ * @param[out] entries Output array of \ref CapsAlbumEntry.
+ * @param[in] size Reserved size at entries
  */
-Result capsaGetAlbumFileList(CapsAlbumStorage storage, u64* count, CapsAlbumEntry* buffer, u64 size);
+Result capsaGetAlbumFileList(CapsAlbumStorage storage, u64 *count, CapsAlbumEntry *entries, u64 size);
 
 /**
  * @brief Loads a file into the specified buffer.
@@ -42,7 +44,7 @@ Result capsaGetAlbumFileList(CapsAlbumStorage storage, u64* count, CapsAlbumEntr
  * @param[out] workbuf File output buffer.
  * @param[in] workbuf_size Size of the workbuf.
  */
-Result capsaLoadAlbumFile(const CapsAlbumFileId *file_id, u64 *out_size, void* workbuf, u64 workbuf_size);
+Result capsaLoadAlbumFile(const CapsAlbumFileId *file_id, u64 *out_size, void *workbuf, u64 workbuf_size);
 
 /**
  * @brief Deletes an AlbumFile corresponding to the specified \ref CapsAlbumFileId.
@@ -62,7 +64,7 @@ Result capsaStorageCopyAlbumFile(const CapsAlbumFileId *file_id, CapsAlbumStorag
  * @param[in] storage \ref CapsAlbumStorage
  * @param[out] is_mounted
  */
-Result capsaIsAlbumMounted(CapsAlbumStorage storage, bool* is_mounted);
+Result capsaIsAlbumMounted(CapsAlbumStorage storage, bool *is_mounted);
 
 /**
  * @brief Returns the AlbumUsage for a specified \ref CapsAlbumStorage.
@@ -76,7 +78,7 @@ Result capsaGetAlbumUsage(CapsAlbumStorage storage, CapsAlbumUsage2 *out);
  * @param[in] file_id \ref CapsAlbumFileId
  * @param[out] size Size of the file.
  */
-Result capsaGetAlbumFileSize(const CapsAlbumFileId *file_id, u64* size);
+Result capsaGetAlbumFileSize(const CapsAlbumFileId *file_id, u64 *size);
 
 /**
  * @brief Load the Thumbnail for the specified AlbumFile.
@@ -86,7 +88,7 @@ Result capsaGetAlbumFileSize(const CapsAlbumFileId *file_id, u64* size);
  * @param[out] image JPEG image output buffer.
  * @param[in] image_size Image buffer size.
  */
-Result capsaLoadAlbumFileThumbnail(const CapsAlbumFileId *file_id, u64 *out_size, void* image, u64 image_size);
+Result capsaLoadAlbumFileThumbnail(const CapsAlbumFileId *file_id, u64 *out_size, void *image, u64 image_size);
 
 /**
  * @brief Load the ScreenShotImage for the specified AlbumFile.
@@ -99,7 +101,7 @@ Result capsaLoadAlbumFileThumbnail(const CapsAlbumFileId *file_id, u64 *out_size
  * @param[out] workbuf Work buffer, cleared to 0 by the cmd before it returns.
  * @param[in] workbuf_size Work buffer size, must be at least the size of the JPEG within the AlbumFile.
  */
-Result capsaLoadAlbumScreenShotImage(u64* width, u64* height, const CapsAlbumFileId *file_id, void* image, u64 image_size, void* workbuf, u64 workbuf_size);
+Result capsaLoadAlbumScreenShotImage(u64 *width, u64 *height, const CapsAlbumFileId *file_id, void *image, u64 image_size, void *workbuf, u64 workbuf_size);
 
 /**
  * @brief Load the ScreenShotThumbnailImage for the specified AlbumFile.
@@ -112,7 +114,7 @@ Result capsaLoadAlbumScreenShotImage(u64* width, u64* height, const CapsAlbumFil
  * @param[out] workbuf Work buffer, cleared to 0 by the cmd before it returns.
  * @param[in] workbuf_size Work buffer size, must be at least the size of the JPEG within the AlbumFile.
  */
-Result capsaLoadAlbumScreenShotThumbnailImage(u64* width, u64* height, const CapsAlbumFileId *file_id, void* image, u64 image_size, void* workbuf, u64 workbuf_size);
+Result capsaLoadAlbumScreenShotThumbnailImage(u64 *width, u64 *height, const CapsAlbumFileId *file_id, void *image, u64 image_size, void *workbuf, u64 workbuf_size);
 
 /**
  * @brief Load the ScreenShotImage for the specified AlbumFile.
@@ -126,7 +128,7 @@ Result capsaLoadAlbumScreenShotThumbnailImage(u64* width, u64* height, const Cap
  * @param[out] workbuf Work buffer, cleared to 0 by the cmd before it returns.
  * @param[in] workbuf_size Work buffer size, must be at least the size of the JPEG within the AlbumFile.
  */
-Result capsaLoadAlbumScreenShotImageEx(u64* width, u64* height, const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, void* image, u64 image_size, void* workbuf, u64 workbuf_size);
+Result capsaLoadAlbumScreenShotImageEx(u64 *width, u64 *height, const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, void *image, u64 image_size, void *workbuf, u64 workbuf_size);
 
 /**
  * @brief Load the ScreenShotThumbnailImage for the specified AlbumFile.
@@ -140,7 +142,7 @@ Result capsaLoadAlbumScreenShotImageEx(u64* width, u64* height, const CapsAlbumF
  * @param[out] workbuf Work buffer, cleared to 0 by the cmd before it returns.
  * @param[in] workbuf_size Work buffer size, must be at least the size of the JPEG within the AlbumFile.
  */
-Result capsaLoadAlbumScreenShotThumbnailImageEx(u64* width, u64* height, const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, void* image, u64 image_size, void* workbuf, u64 workbuf_size);
+Result capsaLoadAlbumScreenShotThumbnailImageEx(u64 *width, u64 *height, const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, void *image, u64 image_size, void *workbuf, u64 workbuf_size);
 
 /**
  * @brief Returns the AlbumUsage for a specified \ref CapsAlbumStorage.
@@ -169,7 +171,7 @@ Result capsaGetAlbumUsage16(CapsAlbumStorage storage, CapsAlbumUsage16 *out);
  * @note Wrapper around setsysGetPrimaryAlbumStorage but defaults to NAND if SD isn't available.
  * @param[out] storage \ref CapsAlbumStorage
  */
-Result capsaGetAutoSavingStorage(CapsAlbumStorage* storage);
+Result capsaGetAutoSavingStorage(CapsAlbumStorage *storage);
 
 /**
  * @brief Gets required size to copy all files from one Storage to another.
@@ -177,7 +179,7 @@ Result capsaGetAutoSavingStorage(CapsAlbumStorage* storage);
  * @param[in] src_storage \ref CapsAlbumStorage
  * @param[out] out Required storage space size.
  */
-Result capsaGetRequiredStorageSpaceSizeToCopyAll(CapsAlbumStorage dst_storage, CapsAlbumStorage src_storage, u64* out);
+Result capsaGetRequiredStorageSpaceSizeToCopyAll(CapsAlbumStorage dst_storage, CapsAlbumStorage src_storage, u64 *out);
 
 /**
  * @brief Load the ScreenShotThumbnailImage for the specified AlbumFile.
@@ -191,7 +193,7 @@ Result capsaGetRequiredStorageSpaceSizeToCopyAll(CapsAlbumStorage dst_storage, C
  * @param[out] out Data buffer.
  * @param[in] out_size Size of the Data buffer.
  */
-Result capsaLoadAlbumScreenShotThumbnailImageEx1(const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, void* image, u64 image_size, void* workbuf, u64 workbuf_size, void* out, u64 out_size);
+Result capsaLoadAlbumScreenShotThumbnailImageEx1(const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, void *image, u64 image_size, void *workbuf, u64 workbuf_size, void *out, u64 out_size);
 
 /**
  * @brief Unmounts the specified AlbumStorage.
@@ -248,7 +250,7 @@ Result capsaGetAlbumMovieStreamSize(u64 stream, u64 *size);
  * @param[in] size Data buffer size.
  * @param[out] actual_size Actual read size.
  */
-Result capsaReadMovieDataFromAlbumMovieReadStream(u64 stream, s64 offset, void* buffer, size_t size, u64 *actual_size);
+Result capsaReadMovieDataFromAlbumMovieReadStream(u64 stream, s64 offset, void *buffer, size_t size, u64 *actual_size);
 
 /**
  * @brief Gets the BrokenReason for an AlbumMovieStream.
@@ -275,11 +277,11 @@ Result capsaGetAlbumMovieReadStreamImageDataSize(u64 stream, u64 *size);
  * @param[in] size Data buffer size.
  * @param[out] actual_size Actual read size.
  */
-Result capsaReadImageDataFromAlbumMovieReadStream(u64 stream, s64 offset, void* buffer, size_t size, u64 *actual_size);
+Result capsaReadImageDataFromAlbumMovieReadStream(u64 stream, s64 offset, void *buffer, size_t size, u64 *actual_size);
 
 /**
  * @brief Gets the file attribute of an AlbumMovieStream.
  * @param[in] stream Stream handle.
  * @param[out] attr \ref CapsScreenShotAttributeForApplication.
  */
-Result capsaReadFileAttributeFromAlbumMovieReadStream(u64 stream, CapsScreenShotAttributeForApplication* attr);
+Result capsaReadFileAttributeFromAlbumMovieReadStream(u64 stream, CapsScreenShotAttributeForApplication *attr);
