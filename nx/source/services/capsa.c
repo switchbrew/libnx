@@ -198,7 +198,7 @@ Result capsaRefreshAlbumCache(CapsAlbumStorage storage) {
     return _capsaCmdInU8NoOut(&g_capsaSrv, storage, 8011);
 }
 
-static Result _capsaOpenAccessorSessionForApplication(Service* srv_out) {
+static Result _capsaOpenAccessorSession(Service* srv_out) {
     u64 AppletResourceUserId = 0;
     appletGetAppletResourceUserId(&AppletResourceUserId);
 
@@ -238,9 +238,12 @@ static Result _capsaReadImageDataFromAlbumMovieReadStream(u64 stream, s64 offset
 }
 
 Result capsaOpenAlbumMovieStream(u64 *stream, const CapsAlbumFileId *file_id) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     Result rc=0;
 
-    if (!serviceIsActive(&g_capsaAccessor)) rc =_capsaOpenAccessorSessionForApplication(&g_capsaAccessor);
+    if (!serviceIsActive(&g_capsaAccessor)) rc =_capsaOpenAccessorSession(&g_capsaAccessor);
 
     if (R_SUCCEEDED(rc)) rc = _capsaOpenAlbumMovieReadStream(stream, file_id);
 
@@ -248,6 +251,9 @@ Result capsaOpenAlbumMovieStream(u64 *stream, const CapsAlbumFileId *file_id) {
 }
 
 Result capsaCloseAlbumMovieStream(u64 stream) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     if (!serviceIsActive(&g_capsaAccessor))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
@@ -255,6 +261,9 @@ Result capsaCloseAlbumMovieStream(u64 stream) {
 }
 
 Result capsaGetAlbumMovieStreamSize(u64 stream, u64 *size) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     if (!serviceIsActive(&g_capsaAccessor))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
@@ -262,6 +271,9 @@ Result capsaGetAlbumMovieStreamSize(u64 stream, u64 *size) {
 }
 
 Result capsaReadMovieDataFromAlbumMovieReadStream(u64 stream, s64 offset, void* buffer, size_t size, u64 *actual_size) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     if (!serviceIsActive(&g_capsaAccessor))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
@@ -269,6 +281,9 @@ Result capsaReadMovieDataFromAlbumMovieReadStream(u64 stream, s64 offset, void* 
 }
 
 Result capsaGetAlbumMovieReadStreamBrokenReason(u64 stream) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     if (!serviceIsActive(&g_capsaAccessor))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
@@ -276,6 +291,9 @@ Result capsaGetAlbumMovieReadStreamBrokenReason(u64 stream) {
 }
 
 Result capsaGetAlbumMovieReadStreamImageDataSize(u64 stream, u64 *size) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     if (!serviceIsActive(&g_capsaAccessor))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
@@ -283,6 +301,9 @@ Result capsaGetAlbumMovieReadStreamImageDataSize(u64 stream, u64 *size) {
 }
 
 Result capsaReadImageDataFromAlbumMovieReadStream(u64 stream, s64 offset, void* buffer, size_t size, u64 *actual_size) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     if (!serviceIsActive(&g_capsaAccessor))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
@@ -290,6 +311,9 @@ Result capsaReadImageDataFromAlbumMovieReadStream(u64 stream, s64 offset, void* 
 }
 
 Result capsaReadFileAttributeFromAlbumMovieReadStream(u64 stream, CapsScreenShotAttributeForApplication* attribute) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     if (!serviceIsActive(&g_capsaAccessor))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
