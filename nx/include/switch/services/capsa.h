@@ -18,6 +18,9 @@ void capsaExit(void);
 /// Gets the Service for caps:a.
 Service* capsaGetServiceSession(void);
 
+/// Gets the Service for IAlbumAccessorSession, only initialized after \ref capsaOpenAlbumMovieStream was used (unaffected by using \ref capsaCloseAlbumMovieStream).
+Service* capsaGetServiceSession_Accessor(void);
+
 Result capsaGetAlbumFileCount(CapsAlbumStorage storage, u64* count);
 Result capsaGetAlbumFileList(CapsAlbumStorage storage, u64* count, CapsAlbumEntry* buffer, u64 size);
 Result capsaLoadAlbumFile(const CapsAlbumFileId *file_id, u64 *out_size, void* workbuf, u64 workbuf_size);
@@ -46,3 +49,13 @@ Result capsaLoadAlbumScreenShotThumbnailImageEx1(const CapsAlbumFileId *file_id,
 Result capsaForceAlbumUnmounted(CapsAlbumStorage storage);
 Result capsaResetAlbumMountStatus(CapsAlbumStorage storage);
 Result capsaRefreshAlbumCache(CapsAlbumStorage storage);
+
+/// Only available on [4.0.0+]
+Result capsaOpenAlbumMovieStream(u64 *stream, const CapsAlbumFileId *file_id);
+Result capsaCloseAlbumMovieStream(u64 stream);
+Result capsaGetAlbumMovieStreamSize(u64 stream, u64 *size);
+Result capsaReadMovieDataFromAlbumMovieReadStream(u64 stream, s64 offset, void* buffer, size_t size, u64 *actual_size);
+Result capsaGetAlbumMovieReadStreamBrokenReason(u64 stream);
+Result capsaGetAlbumMovieReadStreamImageDataSize(u64 stream, u64 *size);
+Result capsaReadImageDataFromAlbumMovieReadStream(u64 stream, s64 offset, void* buffer, size_t size, u64 *actual_size);
+Result capsaReadFileAttributeFromAlbumMovieReadStream(u64 stream, CapsScreenShotAttributeForApplication* attribute);

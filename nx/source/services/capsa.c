@@ -7,6 +7,7 @@
 #include "services/capsa.h"
 
 static Service g_capsaSrv;
+static Service g_capsaAccessor;
 
 NX_GENERATE_SERVICE_GUARD(capsa);
 
@@ -15,11 +16,16 @@ Result _capsaInitialize(void) {
 }
 
 void _capsaCleanup(void) {
+    serviceClose(&g_capsaAccessor);
     serviceClose(&g_capsaSrv);
 }
 
 Service* capsaGetServiceSession(void) {
     return &g_capsaSrv;
+}
+
+Service* capsaGetServiceSession_Accessor(void) {
+    return &g_capsaAccessor;
 }
 
 static Result _capsaCmdInU8NoOut(Service* srv, u8 inval, u32 cmd_id) {
@@ -190,4 +196,102 @@ Result capsaResetAlbumMountStatus(CapsAlbumStorage storage) {
 
 Result capsaRefreshAlbumCache(CapsAlbumStorage storage) {
     return _capsaCmdInU8NoOut(&g_capsaSrv, storage, 8011);
+}
+
+static Result _capsaOpenAccessorSessionForApplication(Service* srv_out) {
+    u64 AppletResourceUserId = 0;
+    appletGetAppletResourceUserId(&AppletResourceUserId);
+
+    return serviceDispatchIn(&g_capsaSrv, 60002, AppletResourceUserId,
+        .in_send_pid = true,
+        .out_num_objects = 1,
+        .out_objects = srv_out,
+    );
+}
+
+static Result _capsaOpenAlbumMovieReadStream(u64 *stream, const CapsAlbumFileId *file_id) {
+    return serviceDispatchInOut(&g_capsaAccessor, 2001, *file_id, *stream);
+}
+
+static Result _capsaReadMovieDataFromAlbumMovieReadStream(u64 stream, s64 offset, void* buffer, size_t size, u64 *actual_size) {
+    const struct {
+        u64 stream;
+        s64 offset;
+    } in = { stream, offset };
+
+    return serviceDispatchInOut(&g_capsaAccessor, 2004, in, *actual_size,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { buffer, size } },
+    );
+}
+
+static Result _capsaReadImageDataFromAlbumMovieReadStream(u64 stream, s64 offset, void* buffer, size_t size, u64 *actual_size) {
+    const struct {
+        u64 stream;
+        s64 offset;
+    } in = { stream, offset };
+
+    return serviceDispatchInOut(&g_capsaAccessor, 2007, in, *actual_size,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { buffer, size } },
+    );
+}
+
+Result capsaOpenAlbumMovieStream(u64 *stream, const CapsAlbumFileId *file_id) {
+    Result rc=0;
+
+    if (!serviceIsActive(&g_capsaAccessor)) rc =_capsaOpenAccessorSessionForApplication(&g_capsaAccessor);
+
+    if (R_SUCCEEDED(rc)) rc = _capsaOpenAlbumMovieReadStream(stream, file_id);
+
+    return rc;
+}
+
+Result capsaCloseAlbumMovieStream(u64 stream) {
+    if (!serviceIsActive(&g_capsaAccessor))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return serviceDispatchIn(&g_capsaAccessor, 2002, stream);
+}
+
+Result capsaGetAlbumMovieStreamSize(u64 stream, u64 *size) {
+    if (!serviceIsActive(&g_capsaAccessor))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return serviceDispatchInOut(&g_capsaAccessor, 2003, stream, *size);
+}
+
+Result capsaReadMovieDataFromAlbumMovieReadStream(u64 stream, s64 offset, void* buffer, size_t size, u64 *actual_size) {
+    if (!serviceIsActive(&g_capsaAccessor))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _capsaReadMovieDataFromAlbumMovieReadStream(stream, offset, buffer, size, actual_size);
+}
+
+Result capsaGetAlbumMovieReadStreamBrokenReason(u64 stream) {
+    if (!serviceIsActive(&g_capsaAccessor))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return serviceDispatchIn(&g_capsaAccessor, 2005, stream);
+}
+
+Result capsaGetAlbumMovieReadStreamImageDataSize(u64 stream, u64 *size) {
+    if (!serviceIsActive(&g_capsaAccessor))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return serviceDispatchInOut(&g_capsaAccessor, 2006, stream, *size);
+}
+
+Result capsaReadImageDataFromAlbumMovieReadStream(u64 stream, s64 offset, void* buffer, size_t size, u64 *actual_size) {
+    if (!serviceIsActive(&g_capsaAccessor))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _capsaReadImageDataFromAlbumMovieReadStream(stream, offset, buffer, size, actual_size);
+}
+
+Result capsaReadFileAttributeFromAlbumMovieReadStream(u64 stream, CapsScreenShotAttributeForApplication* attribute) {
+    if (!serviceIsActive(&g_capsaAccessor))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return serviceDispatchInOut(&g_capsaAccessor, 2008, stream, *attribute);
 }
