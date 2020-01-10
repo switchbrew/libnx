@@ -243,7 +243,7 @@ Result capsaOpenAlbumMovieStream(u64 *stream, const CapsAlbumFileId *file_id) {
 
     Result rc=0;
 
-    if (!serviceIsActive(&g_capsaAccessor)) rc =_capsaOpenAccessorSession(&g_capsaAccessor);
+    if (!serviceIsActive(&g_capsaAccessor)) rc = _capsaOpenAccessorSession(&g_capsaAccessor);
 
     if (R_SUCCEEDED(rc)) rc = _capsaOpenAlbumMovieReadStream(stream, file_id);
 

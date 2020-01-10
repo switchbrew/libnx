@@ -348,7 +348,7 @@ Result capsuPrecheckToCreateContents(CapsContentType type, u64 unk) {
 Result capsuOpenAlbumMovieStream(u64 *stream, const CapsApplicationAlbumFileEntry *entry) {
     Result rc=0;
 
-    if (!serviceIsActive(&g_capsuAccessor)) rc =_capsuOpenAccessorSessionForApplication(&g_capsuAccessor, entry);
+    if (!serviceIsActive(&g_capsuAccessor)) rc = _capsuOpenAccessorSessionForApplication(&g_capsuAccessor, entry);
 
     if (R_SUCCEEDED(rc)) rc = _capsuOpenAlbumMovieReadStream(stream, entry);
 
