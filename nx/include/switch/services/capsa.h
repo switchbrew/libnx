@@ -186,14 +186,13 @@ Result capsaGetRequiredStorageSpaceSizeToCopyAll(CapsAlbumStorage dst_storage, C
  * @note Only available on [4.0.0+].
  * @param[in] file_id \ref CapsAlbumFileId
  * @param[in] opts \ref CapsScreenShotDecodeOption
+ * @param[out] out \ref CapsLoadAlbumScreenShotImageOutputForApplication
  * @param[out] image RGBA8 image output buffer.
  * @param[in] image_size Image buffer size, should be at least large enough for RGBA8 320x180.
  * @param[out] workbuf Work buffer, cleared to 0 by the cmd before it returns.
  * @param[in] workbuf_size Work buffer size, must be at least the size of the JPEG within the AlbumFile.
- * @param[out] out Data buffer.
- * @param[in] out_size Size of the Data buffer.
  */
-Result capsaLoadAlbumScreenShotThumbnailImageEx1(const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, void* image, u64 image_size, void* workbuf, u64 workbuf_size, void* out, u64 out_size);
+Result capsaLoadAlbumScreenShotThumbnailImageEx1(const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, CapsLoadAlbumScreenShotImageOutputForApplication *out, void* image, u64 image_size, void* workbuf, u64 workbuf_size);
 
 /**
  * @brief Unmounts the specified AlbumStorage.
@@ -283,6 +282,6 @@ Result capsaReadImageDataFromAlbumMovieReadStream(u64 stream, s64 offset, void* 
  * @brief Gets the file attribute of an AlbumMovieStream.
  * @note Only available on [4.0.0+].
  * @param[in] stream Stream handle.
- * @param[out] attr \ref CapsScreenShotAttributeForApplication.
+ * @param[out] attr \ref CapsScreenShotAttributeForApplication
  */
 Result capsaReadFileAttributeFromAlbumMovieReadStream(u64 stream, CapsScreenShotAttributeForApplication *attr);
