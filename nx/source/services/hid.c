@@ -755,6 +755,61 @@ static Result _hidGetSharedMemoryHandle(Service* srv, Handle* handle_out) {
     return _hidCmdGetHandle(srv, handle_out, 0);
 }
 
+Result hidSetSixAxisSensorFusionParameters(u32 SixAxisSensorHandle, float unk0, float unk1) {
+    if (unk0 < 0.0f || unk0 > 1.0f)
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+
+    Result rc;
+    u64 AppletResourceUserId;
+
+    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
+    if (R_FAILED(rc))
+        AppletResourceUserId = 0;
+
+    const struct {
+        u32 SixAxisSensorHandle;
+        float unk0;
+        float unk1;
+        u32 pad;
+        u64 AppletResourceUserId;
+    } in = { SixAxisSensorHandle, unk0, unk1, 0, AppletResourceUserId };
+
+    return serviceDispatchIn(&g_hidSrv, 70, in,
+        .in_send_pid = true,
+    );
+}
+
+Result hidGetSixAxisSensorFusionParameters(u32 SixAxisSensorHandle, float *unk0, float *unk1) {
+    Result rc;
+    u64 AppletResourceUserId;
+
+    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
+    if (R_FAILED(rc))
+        AppletResourceUserId = 0;
+
+    const struct {
+        u32 SixAxisSensorHandle;
+        u32 pad;
+        u64 AppletResourceUserId;
+    } in = { SixAxisSensorHandle, 0, AppletResourceUserId };
+
+    struct {
+        float unk0;
+        float unk1;
+    } out;
+
+    rc = serviceDispatchInOut(&g_hidSrv, 71, in, out,
+        .in_send_pid = true,
+    );
+    if (R_SUCCEEDED(rc) && unk0) *unk0 = out.unk0;
+    if (R_SUCCEEDED(rc) && unk1) *unk1 = out.unk1;
+    return rc;
+}
+
+Result hidResetSixAxisSensorFusionParameters(u32 SixAxisSensorHandle) {
+    return _hidCmdWithInputU32(SixAxisSensorHandle, 72);
+}
+
 Result hidSetSupportedNpadStyleSet(HidControllerType type) {
     return _hidCmdWithInputU32(type, 100);
 }
