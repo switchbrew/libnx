@@ -11,6 +11,7 @@
 
 static Service g_hidSrv;
 static Service g_hidIAppletResource;
+static Service g_hidIActiveVibrationDeviceList;
 static SharedMemory g_hidSharedmem;
 
 static HidTouchScreenEntry g_touchEntry;
@@ -103,6 +104,8 @@ Result _hidInitialize(void) {
 }
 
 void _hidCleanup(void) {
+    serviceClose(&g_hidIActiveVibrationDeviceList);
+
     hidFinalizeSevenSixAxisSensor();
 
     hidSetNpadJoyHoldType(HidJoyHoldType_Default);
@@ -1098,19 +1101,20 @@ static Result _hidGetDeviceHandles(u32 devicetype, u32 *DeviceHandles, s32 total
 
 Result hidInitializeVibrationDevices(u32 *VibrationDeviceHandles, s32 total_handles, HidControllerID id, HidControllerType type) {
     Result rc=0;
-    Service srv;
     s32 i;
 
     rc = _hidGetDeviceHandles(0, VibrationDeviceHandles, total_handles, id, type);
     if (R_FAILED(rc)) return rc;
 
-    for (i=0; i<total_handles; i++) {
-        rc = _hidCreateActiveVibrationDeviceList(&srv);
-        if (R_FAILED(rc))
-            break;
+    rwlockWriteLock(&g_hidLock);
+    if (!serviceIsActive(&g_hidIActiveVibrationDeviceList)) {
+        rc = _hidCreateActiveVibrationDeviceList(&g_hidIActiveVibrationDeviceList);
+        if (R_FAILED(rc)) return rc;
+    }
+    rwlockWriteUnlock(&g_hidLock);
 
-        rc = _hidActivateVibrationDevice(&srv, VibrationDeviceHandles[i]);
-        serviceClose(&srv);
+    for (i=0; i<total_handles; i++) {
+        rc = _hidActivateVibrationDevice(&g_hidIActiveVibrationDeviceList, VibrationDeviceHandles[i]);
 
         if (R_FAILED(rc))
             break;
