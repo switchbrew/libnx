@@ -192,7 +192,7 @@ Result capsaGetRequiredStorageSpaceSizeToCopyAll(CapsAlbumStorage dst_storage, C
  * @param[out] workbuf Work buffer, cleared to 0 by the cmd before it returns.
  * @param[in] workbuf_size Work buffer size, must be at least the size of the JPEG within the AlbumFile.
  */
-Result capsaLoadAlbumScreenShotThumbnailImageEx1(const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, CapsLoadAlbumScreenShotImageOutputForApplication *out, void* image, u64 image_size, void* workbuf, u64 workbuf_size);
+Result capsaLoadAlbumScreenShotThumbnailImageEx1(const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, CapsLoadAlbumScreenShotImageOutput *out, void* image, u64 image_size, void* workbuf, u64 workbuf_size);
 
 /**
  * @brief Unmounts the specified AlbumStorage.

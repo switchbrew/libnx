@@ -175,6 +175,14 @@ typedef struct {
     u8 reserved[0xac];                                    ///< Unused.
 } CapsLoadAlbumScreenShotImageOutputForApplication;
 
+/// LoadAlbumScreenShotImageOutput
+typedef struct {
+    s64 width;                                            ///< Width. Official sw copies this to a s32 output field.
+    s64 height;                                           ///< Height. Official sw copies this to a s32 output field.
+    CapsScreenShotAttributeForApplication attr;           ///< \ref CapsScreenShotAttributeForApplication
+    u8 unk_x50[0x400];
+} CapsLoadAlbumScreenShotImageOutput;
+
 /// Gets the ShimLibraryVersion.
 u64 capsGetShimLibraryVersion(void);
 
