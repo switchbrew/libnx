@@ -57,7 +57,7 @@ Result capsaDeleteAlbumFile(const CapsAlbumFileId *file_id) {
 }
 
 Result capsaStorageCopyAlbumFile(const CapsAlbumFileId *file_id, CapsAlbumStorage dst_storage) {
-    struct {
+    const struct {
         u8 storage;
         u8 pad_x1[0x7];
         CapsAlbumFileId file_id;
@@ -113,7 +113,7 @@ Result capsaLoadAlbumScreenShotThumbnailImage(u64 *width, u64 *height, const Cap
 static Result _capsaLoadAlbumScreenshotEx(u64 *width, u64 *height, const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, void* image, u64 image_size, void* workbuf, u64 workbuf_size, u32 cmd_id) {
     if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    struct {
+    const struct {
         CapsAlbumFileId file_id;
         CapsScreenShotDecodeOption opts;
     } in = { *file_id, *opts };
@@ -136,6 +136,32 @@ Result capsaLoadAlbumScreenShotImageEx(u64 *width, u64 *height, const CapsAlbumF
 
 Result capsaLoadAlbumScreenShotThumbnailImageEx(u64 *width, u64 *height, const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, void* image, u64 image_size, void* workbuf, u64 workbuf_size) {
     return _capsaLoadAlbumScreenshotEx(width, height, file_id, opts, image, image_size, workbuf, workbuf_size, 13);
+}
+
+Result _capsaLoadAlbumScreenShotEx0(u64 *width, u64 *height, CapsScreenShotAttributeForApplication *attr, const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, void* image, u64 image_size, void* workbuf, u64 workbuf_size, u32 cmd_id) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    const struct {
+        CapsAlbumFileId file_id;
+        CapsScreenShotDecodeOption opts;
+    } in = { *file_id, *opts };
+    struct {
+        CapsScreenShotAttributeForApplication attr;
+        s64 width;
+        s64 height;
+    } out = {0};
+    Result rc = serviceDispatchInOut(&g_capsaSrv, cmd_id, in, out,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out | SfBufferAttr_HipcMapTransferAllowsNonSecure, SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { image, image_size }, { workbuf, workbuf_size } },
+    );
+    *attr = out.attr;
+    *width = out.width;
+    *height = out.height;
+    return rc;
+}
+
+Result capsaLoadAlbumScreenShotImageEx0(u64 *width, u64 *height, CapsScreenShotAttributeForApplication *attr, const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, void* image, u64 image_size, void* workbuf, u64 workbuf_size) {
+    return _capsaLoadAlbumScreenShotEx0(width, height, attr, file_id, opts, image, image_size, workbuf, workbuf_size, 14);
 }
 
 Result capsaGetAlbumUsage3(CapsAlbumStorage storage, CapsAlbumUsage3 *out) {
@@ -166,24 +192,36 @@ Result capsaGetAutoSavingStorage(CapsAlbumStorage *storage) {
 }
 
 Result capsaGetRequiredStorageSpaceSizeToCopyAll(CapsAlbumStorage dst_storage, CapsAlbumStorage src_storage, u64 *out) {
-    struct {
+    const struct {
         u8 dest;
         u8 src;
     } in = { dst_storage, src_storage };
     return serviceDispatchInOut(&g_capsaSrv, 501, in, *out);
 }
 
-Result capsaLoadAlbumScreenShotThumbnailImageEx1(const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, CapsLoadAlbumScreenShotImageOutput *out, void* image, u64 image_size, void* workbuf, u64 workbuf_size) {
+Result capsLoadAlbumScreenShotThumbnailImageEx0(u64 *width, u64 *height, CapsScreenShotAttributeForApplication *attr, const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, void* image, u64 image_size, void* workbuf, u64 workbuf_size) {
+    return _capsaLoadAlbumScreenShotEx0(width, height, attr, file_id, opts, image, image_size, workbuf, workbuf_size, 1001);
+}
+
+Result _capsaLoadAlbumScreenShotEx1(const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, CapsLoadAlbumScreenShotImageOutput *out, void* image, u64 image_size, void* workbuf, u64 workbuf_size, u32 cmd_id) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    struct {
+    const struct {
         CapsAlbumFileId file_id;
         CapsScreenShotDecodeOption opts;
     } in = { *file_id, *opts };
-    return serviceDispatchIn(&g_capsaSrv, 1003, in,
+    return serviceDispatchIn(&g_capsaSrv, cmd_id, in,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out | SfBufferAttr_FixedSize, SfBufferAttr_HipcMapAlias | SfBufferAttr_Out | SfBufferAttr_HipcMapTransferAllowsNonSecure, SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
         .buffers = { { out, sizeof(CapsLoadAlbumScreenShotImageOutput) }, { image, image_size }, { workbuf, workbuf_size } },
     );
+}
+
+Result capsaLoadAlbumScreenShotImageEx1(const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, CapsLoadAlbumScreenShotImageOutput *out, void* image, u64 image_size, void* workbuf, u64 workbuf_size) {
+    return _capsaLoadAlbumScreenShotEx1(file_id, opts, out, image, image_size, workbuf, workbuf_size, 1002);
+}
+
+Result capsaLoadAlbumScreenShotThumbnailImageEx1(const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, CapsLoadAlbumScreenShotImageOutput *out, void* image, u64 image_size, void* workbuf, u64 workbuf_size) {
+    return _capsaLoadAlbumScreenShotEx1(file_id, opts, out, image, image_size, workbuf, workbuf_size, 1003);
 }
 
 Result capsaForceAlbumUnmounted(CapsAlbumStorage storage) {

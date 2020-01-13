@@ -145,6 +145,21 @@ Result capsaLoadAlbumScreenShotImageEx(u64 *width, u64 *height, const CapsAlbumF
 Result capsaLoadAlbumScreenShotThumbnailImageEx(u64 *width, u64 *height, const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, void* image, u64 image_size, void* workbuf, u64 workbuf_size);
 
 /**
+ * @brief Load the ScreenShotImage for the specified AlbumFile.
+ * @note Only available on [3.0.0+].
+ * @param[out] width Output image width. Optional, can be NULL.
+ * @param[out] height Output image height. Optional, can be NULL.
+ * @param[out] attr \ref CapsScreenShotAttributeForApplication
+ * @param[in] file_id \ref CapsAlbumFileId
+ * @param[in] opts \ref CapsScreenShotDecodeOption
+ * @param[out] image RGBA8 image output buffer.
+ * @param[in] image_size Image buffer size, should be at least large enough for RGBA8 320x180.
+ * @param[out] workbuf Work buffer, cleared to 0 by the cmd before it returns.
+ * @param[in] workbuf_size Work buffer size, must be at least the size of the JPEG within the AlbumFile.
+ */
+Result capsaLoadAlbumScreenShotImageEx0(u64 *width, u64 *height, CapsScreenShotAttributeForApplication *attr, const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, void* image, u64 image_size, void* workbuf, u64 workbuf_size);
+
+/**
  * @brief Returns the AlbumUsage for a specified \ref CapsAlbumStorage.
  * @note Only available on [4.0.0+].
  * @param[in] storage \ref CapsAlbumStorage
@@ -183,10 +198,38 @@ Result capsaGetRequiredStorageSpaceSizeToCopyAll(CapsAlbumStorage dst_storage, C
 
 /**
  * @brief Load the ScreenShotThumbnailImage for the specified AlbumFile.
+ * @note Only available on [3.0.0+].
+ * @param[out] width Output image width. Optional, can be NULL.
+ * @param[out] height Output image height. Optional, can be NULL.
+ * @param[out] attr \ref CapsScreenShotAttributeForApplication
+ * @param[in] file_id \ref CapsAlbumFileId
+ * @param[in] opts \ref CapsScreenShotDecodeOption
+ * @param[out] image RGBA8 image output buffer.
+ * @param[in] image_size Image buffer size, should be at least large enough for RGBA8 320x180.
+ * @param[out] workbuf Work buffer, cleared to 0 by the cmd before it returns.
+ * @param[in] workbuf_size Work buffer size, must be at least the size of the JPEG within the AlbumFile.
+ */
+Result capsLoadAlbumScreenShotThumbnailImageEx0(u64 *width, u64 *height, CapsScreenShotAttributeForApplication *attr, const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, void* image, u64 image_size, void* workbuf, u64 workbuf_size);
+
+/**
+ * @brief Load the ScreenShotImage for the specified AlbumFile.
  * @note Only available on [4.0.0+].
  * @param[in] file_id \ref CapsAlbumFileId
  * @param[in] opts \ref CapsScreenShotDecodeOption
- * @param[out] out \ref CapsLoadAlbumScreenShotImageOutputForApplication
+ * @param[out] out \ref CapsLoadAlbumScreenShotImageOutput
+ * @param[out] image RGBA8 image output buffer.
+ * @param[in] image_size Image buffer size, should be at least large enough for RGBA8 320x180.
+ * @param[out] workbuf Work buffer, cleared to 0 by the cmd before it returns.
+ * @param[in] workbuf_size Work buffer size, must be at least the size of the JPEG within the AlbumFile.
+ */
+Result capsaLoadAlbumScreenShotImageEx1(const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, CapsLoadAlbumScreenShotImageOutput *out, void* image, u64 image_size, void* workbuf, u64 workbuf_size);
+
+/**
+ * @brief Load the ScreenShotThumbnailImage for the specified AlbumFile.
+ * @note Only available on [4.0.0+].
+ * @param[in] file_id \ref CapsAlbumFileId
+ * @param[in] opts \ref CapsScreenShotDecodeOption
+ * @param[out] out \ref CapsLoadAlbumScreenShotImageOutput
  * @param[out] image RGBA8 image output buffer.
  * @param[in] image_size Image buffer size, should be at least large enough for RGBA8 320x180.
  * @param[out] workbuf Work buffer, cleared to 0 by the cmd before it returns.
