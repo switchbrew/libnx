@@ -760,6 +760,15 @@ u32 hidSixAxisSensorValuesRead(SixAxisSensorValues *values, HidControllerID id, 
 /// Returns 0 when CONTROLLER_PLAYER_1 is connected, otherwise returns 1 for handheld-mode.
 bool hidGetHandheldMode(void);
 
+/// SetSixAxisSensorFusionParameters. unk0 must be 0.0f-1.0f.
+Result hidSetSixAxisSensorFusionParameters(u32 SixAxisSensorHandle, float unk0, float unk1);
+
+/// GetSixAxisSensorFusionParameters
+Result hidGetSixAxisSensorFusionParameters(u32 SixAxisSensorHandle, float *unk0, float *unk1);
+
+/// ResetSixAxisSensorFusionParameters
+Result hidResetSixAxisSensorFusionParameters(u32 SixAxisSensorHandle);
+
 /// Sets which controller types are supported. This is automatically called with all types in \ref hidInitialize.
 Result hidSetSupportedNpadStyleSet(HidControllerType type);
 

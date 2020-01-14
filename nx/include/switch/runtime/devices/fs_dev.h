@@ -38,6 +38,7 @@ Result fsdevMountSystemSaveData(const char *name, FsSaveDataSpaceId save_data_sp
 
 /// Mounts the input fs with the specified device name. fsdev will handle closing the fs when required, including when fsdevMountDevice() fails.
 /// Returns -1 when any errors occur.
+/// Input device name string shouldn't exceed 31 characters, and shouldn't have a trailing colon.
 int fsdevMountDevice(const char *name, FsFileSystem fs);
 
 /// Unmounts the specified device.
