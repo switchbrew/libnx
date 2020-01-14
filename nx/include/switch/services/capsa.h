@@ -62,7 +62,7 @@ Result capsaStorageCopyAlbumFile(const CapsAlbumFileId *file_id, CapsAlbumStorag
 /**
  * @brief Gets the mount status of the specified \ref CapsAlbumStorage.
  * @param[in] storage \ref CapsAlbumStorage
- * @param[out] is_mounted Boolean over wether the storage is mounted or not.
+ * @param[out] is_mounted Boolean over whether the storage is mounted or not.
  */
 Result capsaIsAlbumMounted(CapsAlbumStorage storage, bool *is_mounted);
 
@@ -185,7 +185,7 @@ Result capsaGetAlbumUsage16(CapsAlbumStorage storage, CapsAlbumUsage16 *out);
 /**
  * @brief Returns the start and end of the Applet Id range.
  * @note Only available on [6.0.0+].
- * @param[out] success Returns bool over wether the call was handled or not.
+ * @param[out] success Returns bool over whether the call was handled or not.
  * @param[out] min Mimimum applet id. Always 0x0100000000001000
  * @param[out] max Maximum applet id. Always 0x0100000000001FFF
  */

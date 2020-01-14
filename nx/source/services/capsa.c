@@ -196,9 +196,11 @@ Result capsaGetMinMaxAppletId(bool *success, u64* min, u64* max) {
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out | SfBufferAttr_HipcMapTransferAllowsNonSecure, },
         .buffers = { { app_ids, sizeof(app_ids) }, },
     );
-    *min = app_ids[0];
-    *max = app_ids[1];
-    *success = out.success;
+    if (R_SUCCEEDED(rc)) {
+        if (min) *min = app_ids[0];
+        if (max) *max = app_ids[1];
+        if (success) *success = out.success;
+    }
     return rc;
 }
 
