@@ -97,8 +97,10 @@ static Result _capsaLoadAlbumScreenshot(u64 *width, u64 *height, const CapsAlbum
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out | SfBufferAttr_HipcMapTransferAllowsNonSecure, SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
         .buffers = { { image, image_size }, { workbuf, workbuf_size } },
     );
-    *width = out.width;
-    *height = out.height;
+    if (R_SUCCEEDED(rc)) {
+        if (width) *width = out.width;
+        if (height) *height = out.height;
+    }
     return rc;
 }
 
@@ -125,8 +127,10 @@ static Result _capsaLoadAlbumScreenshotEx(u64 *width, u64 *height, const CapsAlb
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out | SfBufferAttr_HipcMapTransferAllowsNonSecure, SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
         .buffers = { { image, image_size }, { workbuf, workbuf_size } },
     );
-    *width = out.width;
-    *height = out.height;
+    if (R_SUCCEEDED(rc)) {
+        if (width) *width = out.width;
+        if (height) *height = out.height;
+    }
     return rc;
 }
 
@@ -154,9 +158,11 @@ Result _capsaLoadAlbumScreenShotEx0(u64 *width, u64 *height, CapsScreenShotAttri
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out | SfBufferAttr_HipcMapTransferAllowsNonSecure, SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
         .buffers = { { image, image_size }, { workbuf, workbuf_size } },
     );
-    *attr = out.attr;
-    *width = out.width;
-    *height = out.height;
+    if (R_SUCCEEDED(rc)) {
+        if (attr) *attr = out.attr;
+        if (width) *width = out.width;
+        if (height) *height = out.height;
+    }
     return rc;
 }
 
@@ -251,7 +257,9 @@ Result capsaGetLastOverlayMovieThumbnail(CapsOverlayThumbnailData *data, void* i
 Result capsaGetAutoSavingStorage(CapsAlbumStorage *storage) {
     u8 tmpval = 0;
     Result rc = serviceDispatchOut(&g_capsaSrv, 401, tmpval);
-    *storage = tmpval;
+    if (R_SUCCEEDED(rc)) {
+        if (storage) *storage = tmpval;
+    }
     return rc;
 }
 
