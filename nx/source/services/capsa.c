@@ -139,7 +139,7 @@ Result capsaLoadAlbumScreenShotThumbnailImageEx(u64 *width, u64 *height, const C
 }
 
 Result _capsaLoadAlbumScreenShotEx0(u64 *width, u64 *height, CapsScreenShotAttributeForApplication *attr, const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, void* image, u64 image_size, void* workbuf, u64 workbuf_size, u32 cmd_id) {
-    if (hosversionBefore(4,0,0))
+    if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     const struct {
         CapsAlbumFileId file_id;
@@ -182,6 +182,68 @@ Result capsaGetAlbumUsage16(CapsAlbumStorage storage, CapsAlbumUsage16 *out) {
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     u8 inval = storage;
     return serviceDispatchInOut(&g_capsaSrv, 17, inval, *out);
+}
+
+Result capsaGetMinMaxAppletId(bool *success, u64* min, u64* max) {
+    if (hosversionBefore(6,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    u64 app_ids[2];
+    struct {
+        bool success;
+        u8 pad[0x3];
+    } out;
+    Result rc = serviceDispatchOut(&g_capsaSrv, 18, out,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out | SfBufferAttr_HipcMapTransferAllowsNonSecure, },
+        .buffers = { { app_ids, sizeof(app_ids) }, },
+    );
+    *min = app_ids[0];
+    *max = app_ids[1];
+    *success = out.success;
+    return rc;
+}
+
+Result capsaGetAlbumFileCountEx0(CapsAlbumStorage storage, CapsAlbumFileContents contents, u64 *count) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    struct {
+        CapsAlbumStorage storage;
+        u8 pad_x1[0x7];
+        CapsAlbumFileContents contents;
+        u8 pad_x9[0x7];
+    } in = { storage, {0}, contents, {0} };
+    return serviceDispatchInOut(&g_capsaSrv, 100, in, *count);
+}
+
+Result capsaGetAlbumFileListEx0(CapsAlbumStorage storage, CapsAlbumFileContents contents, u64 *count, CapsAlbumEntry *entries, u64 size) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    struct {
+        CapsAlbumStorage storage;
+        u8 pad_x1[0x7];
+        CapsAlbumFileContents contents;
+        u8 pad_x9[0x7];
+    } in = { storage, {0}, contents, {0} };
+    return serviceDispatchInOut(&g_capsaSrv, 101, in, *count,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { entries, size } },
+    );
+}
+
+Result _capsaGetLastOverlayThumbnail(CapsOverlayThumbnailData *data, void* image, u64 image_size, u32 cmd_id) {
+    return serviceDispatchOut(&g_capsaSrv, cmd_id, *data,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out, },
+        .buffers = { { image, image_size }, },
+    );
+}
+
+Result capsaGetLastOverlayScreenShotThumbnail(CapsOverlayThumbnailData *data, void* image, u64 image_size) {
+    return _capsaGetLastOverlayThumbnail(data, image, image_size, 301);
+}
+
+Result capsaGetLastOverlayMovieThumbnail(CapsOverlayThumbnailData *data, void* image, u64 image_size) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    return _capsaGetLastOverlayThumbnail(data, image, image_size, 302);
 }
 
 Result capsaGetAutoSavingStorage(CapsAlbumStorage *storage) {
@@ -234,6 +296,20 @@ Result capsaResetAlbumMountStatus(CapsAlbumStorage storage) {
 
 Result capsaRefreshAlbumCache(CapsAlbumStorage storage) {
     return _capsaCmdInU8NoOut(&g_capsaSrv, storage, 8011);
+}
+
+Result capsaGetAlbumCache(CapsAlbumStorage storage, CapsAlbumCache *cache) {
+    return serviceDispatchInOut(&g_capsaSrv, 8012, storage, *cache);
+}
+
+Result capsaGetAlbumCacheEx(CapsAlbumStorage storage, CapsAlbumFileContents contents, CapsAlbumCache *cache) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    struct {
+        u8 storage;
+        u8 contents;
+    } in = { storage, contents };
+    return serviceDispatchInOut(&g_capsaSrv, 8013, in, *cache);
 }
 
 static Result _capsaOpenAccessorSession(Service *srv_out) {

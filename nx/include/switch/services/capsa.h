@@ -169,6 +169,7 @@ Result capsaGetAlbumUsage3(CapsAlbumStorage storage, CapsAlbumUsage3 *out);
 
 /**
  * @brief Returns the result for a AlbumStorage mount.
+ * @note Only available on [4.0.0+].
  * @param[in] storage \ref CapsAlbumStorage
  */
 Result capsaGetAlbumMountResult(CapsAlbumStorage storage);
@@ -180,6 +181,52 @@ Result capsaGetAlbumMountResult(CapsAlbumStorage storage);
  * @param[out] out \ref CapsAlbumUsage16
  */
 Result capsaGetAlbumUsage16(CapsAlbumStorage storage, CapsAlbumUsage16 *out);
+
+/**
+ * @brief Returns the start and end of the Applet Id range.
+ * @note Only available on [6.0.0+].
+ * @param[out] success Returns bool over wether the call was handled or not.
+ * @param[out] min Mimimum applet id. Always 0x0100000000001000
+ * @param[out] max Maximum applet id. Always 0x0100000000001FFF
+ */
+Result capsaGetMinMaxAppletId(bool* success, u64* min, u64* max);
+
+/**
+ * @brief Gets the amount of files of the specified type at a AlbumStorage.
+ * @note Only available on [5.0.0+].
+ * @param[in] storage \ref CapsAlbumStorage
+ * @param[in] contents \ref CapsAlbumFileContents
+ * @param[out] count Amount of files.
+ */
+Result capsaGetAlbumFileCountEx0(CapsAlbumStorage storage, CapsAlbumFileContents contents, u64 *count);
+
+/**
+ * @brief Gets a listing of \ref CapsAlbumEntry, where the AlbumFile's storage and type matches the input one.
+ * @note Only available on [5.0.0+].
+ * @param[in] storage \ref CapsAlbumStorage
+ * @param[in] contents \ref CapsAlbumFileContents
+ * @param[out] count Total output entries.
+ * @param[out] entries Output array of \ref CapsAlbumEntry.
+ * @param[in] size Reserved size at entries
+ */
+Result capsaGetAlbumFileListEx0(CapsAlbumStorage storage, CapsAlbumFileContents contents, u64 *count, CapsAlbumEntry *entries, u64 size);
+
+/**
+ * @brief Returns the image from the last shown ScreenShot Overlay.
+ * @param[out] data \ref CapsOverlayThumbnailData
+ * @param[out] image RGBA8 image output buffer.
+ * @param[in] image_size Image buffer size, should be at least large enough for RGBA8 96×54.
+ */
+Result capsaGetLastOverlayScreenShotThumbnail(CapsOverlayThumbnailData *data, void* image, u64 image_size);
+
+/**
+ * @brief Returns the image from the last shown Movie Overlay.
+ * @note Only available on [4.0.0+].
+ * @param[out] data \ref CapsOverlayThumbnailData
+ * @param[out] image RGBA8 image output buffer.
+ * @param[in] image_size Image buffer size, should be at least large enough for RGBA8 96×54.
+ */
+Result capsaGetLastOverlayMovieThumbnail(CapsOverlayThumbnailData *data, void* image, u64 image_size);
 
 /**
  * @brief Gets the currently set autosaving storage.
@@ -255,6 +302,23 @@ Result capsaResetAlbumMountStatus(CapsAlbumStorage storage);
  * @param[in] storage \ref CapsAlbumStorage
  */
 Result capsaRefreshAlbumCache(CapsAlbumStorage storage);
+
+/**
+ * @brief Gets the AlbumCache of the specified AlbumStorage.
+ * @note use \ref capsaGetAlbumCacheEx instead.
+ * @param[in] storage \ref CapsAlbumStorage
+ * @param[out] cache \ref CapsAlbumCache
+ */
+Result capsaGetAlbumCache(CapsAlbumStorage storage, CapsAlbumCache *cache);
+
+/**
+ * @brief Gets the AlbumCache for the specified type of the specified AlbumStorage.
+ * @note Stubbed on [4.0.0+].
+ * @param[in] storage \ref CapsAlbumStorage
+ * @param[in] contents \ref CapsAlbumFileContents
+ * @param[out] cache \ref CapsAlbumCache
+ */
+Result capsaGetAlbumCacheEx(CapsAlbumStorage storage, CapsAlbumFileContents contents, CapsAlbumCache *cache);
 
 /**
  * @brief Opens an AlbumMovieStream.
