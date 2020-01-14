@@ -31,11 +31,11 @@ Result capsaGetAlbumFileCount(CapsAlbumStorage storage, u64 *count);
 /**
  * @brief Gets a listing of \ref CapsAlbumEntry, where the AlbumFile's storage matches the input one.
  * @param[in] storage \ref CapsAlbumStorage
- * @param[out] count Total output entries.
+ * @param[out] out Total output entries.
  * @param[out] entries Output array of \ref CapsAlbumEntry.
- * @param[in] size Reserved size at entries
+ * @param[in] count Reserved entry count.
  */
-Result capsaGetAlbumFileList(CapsAlbumStorage storage, u64 *count, CapsAlbumEntry *entries, u64 size);
+Result capsaGetAlbumFileList(CapsAlbumStorage storage, u64 *out, CapsAlbumEntry *entries, u64 count);
 
 /**
  * @brief Loads a file into the specified buffer.
@@ -195,21 +195,21 @@ Result capsaGetMinMaxAppletId(bool* success, u64* min, u64* max);
  * @brief Gets the amount of files of the specified type at a AlbumStorage.
  * @note Only available on [5.0.0+].
  * @param[in] storage \ref CapsAlbumStorage
- * @param[in] contents \ref CapsAlbumFileContents
+ * @param[in] flags \ref CapsAlbumFileContentsFlag
  * @param[out] count Amount of files.
  */
-Result capsaGetAlbumFileCountEx0(CapsAlbumStorage storage, CapsAlbumFileContents contents, u64 *count);
+Result capsaGetAlbumFileCountEx0(CapsAlbumStorage storage, u8 flags, u64 *count);
 
 /**
  * @brief Gets a listing of \ref CapsAlbumEntry, where the AlbumFile's storage and type matches the input one.
  * @note Only available on [5.0.0+].
  * @param[in] storage \ref CapsAlbumStorage
- * @param[in] contents \ref CapsAlbumFileContents
- * @param[out] count Total output entries.
+ * @param[in] flags \ref CapsAlbumFileContentsFlag
+ * @param[out] out Total output entries.
  * @param[out] entries Output array of \ref CapsAlbumEntry.
- * @param[in] size Reserved size at entries
+ * @param[in] count Reserved entry count.
  */
-Result capsaGetAlbumFileListEx0(CapsAlbumStorage storage, CapsAlbumFileContents contents, u64 *count, CapsAlbumEntry *entries, u64 size);
+Result capsaGetAlbumFileListEx0(CapsAlbumStorage storage, u8 flags, u64 *out, CapsAlbumEntry *entries, u64 count);
 
 /**
  * @brief Returns the image from the last shown ScreenShot Overlay.

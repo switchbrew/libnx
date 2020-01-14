@@ -37,11 +37,11 @@ Result capsaGetAlbumFileCount(CapsAlbumStorage storage, u64 *count) {
     return serviceDispatchInOut(&g_capsaSrv, 0, inval, *count);
 }
 
-Result capsaGetAlbumFileList(CapsAlbumStorage storage, u64 *count, CapsAlbumEntry *entries, u64 size) {
+Result capsaGetAlbumFileList(CapsAlbumStorage storage, u64 *out, CapsAlbumEntry *entries, u64 count) {
     u8 inval = storage;
-    return serviceDispatchInOut(&g_capsaSrv, 1, inval, *count,
+    return serviceDispatchInOut(&g_capsaSrv, 1, inval, *out,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
-        .buffers = { { entries, size } },
+        .buffers = { { entries, count * sizeof(CapsAlbumEntry) } },
     );
 }
 
@@ -210,30 +210,30 @@ Result capsaGetMinMaxAppletId(bool *success, u64* min, u64* max) {
     return rc;
 }
 
-Result capsaGetAlbumFileCountEx0(CapsAlbumStorage storage, CapsAlbumFileContents contents, u64 *count) {
+Result capsaGetAlbumFileCountEx0(CapsAlbumStorage storage, u8 flags, u64 *count) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     struct {
-        CapsAlbumStorage storage;
-        u8 pad_x1[0x7];
-        CapsAlbumFileContents contents;
-        u8 pad_x9[0x7];
-    } in = { storage, {0}, contents, {0} };
+        u8 storage;
+        u8 pad_x1[7];
+        u8 flags;
+        u8 pad_x9[7];
+    } in = { storage, {0}, flags, {0} };
     return serviceDispatchInOut(&g_capsaSrv, 100, in, *count);
 }
 
-Result capsaGetAlbumFileListEx0(CapsAlbumStorage storage, CapsAlbumFileContents contents, u64 *count, CapsAlbumEntry *entries, u64 size) {
+Result capsaGetAlbumFileListEx0(CapsAlbumStorage storage, u8 flags, u64 *out, CapsAlbumEntry *entries, u64 count) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     struct {
-        CapsAlbumStorage storage;
-        u8 pad_x1[0x7];
-        CapsAlbumFileContents contents;
-        u8 pad_x9[0x7];
-    } in = { storage, {0}, contents, {0} };
-    return serviceDispatchInOut(&g_capsaSrv, 101, in, *count,
+        u8 storage;
+        u8 pad_x1[7];
+        u8 contents;
+        u8 pad_x9[7];
+    } in = { storage, {0}, flags, {0} };
+    return serviceDispatchInOut(&g_capsaSrv, 101, in, *out,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
-        .buffers = { { entries, size } },
+        .buffers = { { entries, count * sizeof(CapsAlbumEntry) } },
     );
 }
 

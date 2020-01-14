@@ -189,6 +189,12 @@ typedef struct {
     u8 unk_x50[0x400];                                    ///< Unused.
 } CapsLoadAlbumScreenShotImageOutput;
 
+/// AlbumFileContentsFlag
+typedef enum {
+    CapsAlbumFileContentsFlag_ScreenShot = BIT(0),        ///< Query for ScreenShot files.
+    CapsAlbumFileContentsFlag_Movie      = BIT(1),        ///< Query for Movie files.
+} CapsAlbumFileContentsFlag;
+
 /// AlbumCache
 typedef struct {
     u64 count;                                            ///< Count
