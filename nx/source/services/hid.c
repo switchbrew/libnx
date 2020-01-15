@@ -809,6 +809,10 @@ Result hidGetSixAxisSensorFusionParameters(u32 SixAxisSensorHandle, float *unk0,
     return rc;
 }
 
+Result hidResetSixAxisSensorFusionParameters(u32 SixAxisSensorHandle) {
+    return _hidCmdWithInputU32(SixAxisSensorHandle, 72);
+}
+
 Result hidSetGyroscopeZeroDriftMode(u32 SixAxisSensorHandle, HidGyroscopeZeroDriftMode mode) {
     Result rc;
     u64 AppletResourceUserId;
@@ -848,10 +852,6 @@ Result hidGetGyroscopeZeroDriftMode(u32 SixAxisSensorHandle, HidGyroscopeZeroDri
     );
     if (R_SUCCEEDED(rc) && mode) *mode = tmp;
     return rc;
-}
-
-Result hidResetSixAxisSensorFusionParameters(u32 SixAxisSensorHandle) {
-    return _hidCmdWithInputU32(SixAxisSensorHandle, 72);
 }
 
 Result hidResetGyroscopeZeroDriftMode(u32 SixAxisSensorHandle) {
