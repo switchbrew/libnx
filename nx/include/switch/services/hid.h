@@ -323,6 +323,13 @@ typedef enum {
     CONTROLLER_P1_AUTO = 10, ///< Not an actual HID-sysmodule ID. Only for hidKeys*()/hidJoystickRead()/hidSixAxisSensorValuesRead()/hidGetControllerType()/hidGetControllerColors()/hidIsControllerConnected(). Automatically uses CONTROLLER_PLAYER_1 when connected, otherwise uses CONTROLLER_HANDHELD.
 } HidControllerID;
 
+/// GyroscopeZeroDriftMode
+typedef enum {
+    HidGyroscopeZeroDriftMode_Loose    = 0,   ///< Loose
+    HidGyroscopeZeroDriftMode_Standard = 1,   ///< Standard
+    HidGyroscopeZeroDriftMode_Tight    = 2,   ///< Tight
+} HidGyroscopeZeroDriftMode;
+
 /// JoyHoldType
 typedef enum {
     HidJoyHoldType_Default    = 0, ///< Default / Joy-Con held vertically.
@@ -768,6 +775,15 @@ Result hidGetSixAxisSensorFusionParameters(u32 SixAxisSensorHandle, float *unk0,
 
 /// ResetSixAxisSensorFusionParameters
 Result hidResetSixAxisSensorFusionParameters(u32 SixAxisSensorHandle);
+
+/// Sets the ::HidGyroscopeZeroDriftMode for the specified SixAxisSensorHandle.
+Result hidSetGyroscopeZeroDriftMode(u32 SixAxisSensorHandle, HidGyroscopeZeroDriftMode mode);
+
+/// Gets the ::HidGyroscopeZeroDriftMode for the specified SixAxisSensorHandle.
+Result hidGetGyroscopeZeroDriftMode(u32 SixAxisSensorHandle, HidGyroscopeZeroDriftMode *mode);
+
+/// Resets the ::HidGyroscopeZeroDriftMode for the specified SixAxisSensorHandle to ::HidGyroscopeZeroDriftMode_Standard.
+Result hidResetGyroscopeZeroDriftMode(u32 SixAxisSensorHandle);
 
 /// Sets which controller types are supported. This is automatically called with all types in \ref hidInitialize.
 Result hidSetSupportedNpadStyleSet(HidControllerType type);

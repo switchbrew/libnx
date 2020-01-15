@@ -809,8 +809,53 @@ Result hidGetSixAxisSensorFusionParameters(u32 SixAxisSensorHandle, float *unk0,
     return rc;
 }
 
+Result hidSetGyroscopeZeroDriftMode(u32 SixAxisSensorHandle, HidGyroscopeZeroDriftMode mode) {
+    Result rc;
+    u64 AppletResourceUserId;
+
+    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
+    if (R_FAILED(rc))
+        AppletResourceUserId = 0;
+
+    const struct {
+        u32 SixAxisSensorHandle;
+        u32 mode;
+        u64 AppletResourceUserId;
+    } in = { SixAxisSensorHandle, mode, AppletResourceUserId };
+
+    return serviceDispatchIn(&g_hidSrv, 79, in,
+        .in_send_pid = true,
+    );
+}
+
+Result hidGetGyroscopeZeroDriftMode(u32 SixAxisSensorHandle, HidGyroscopeZeroDriftMode *mode) {
+    Result rc;
+    u64 AppletResourceUserId;
+
+    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
+    if (R_FAILED(rc))
+        AppletResourceUserId = 0;
+
+    const struct {
+        u32 SixAxisSensorHandle;
+        u32 pad;
+        u64 AppletResourceUserId;
+    } in = { SixAxisSensorHandle, 0, AppletResourceUserId };
+
+    u32 tmp=0;
+    rc = serviceDispatchInOut(&g_hidSrv, 80, in, tmp,
+        .in_send_pid = true,
+    );
+    if (R_SUCCEEDED(rc) && mode) *mode = tmp;
+    return rc;
+}
+
 Result hidResetSixAxisSensorFusionParameters(u32 SixAxisSensorHandle) {
     return _hidCmdWithInputU32(SixAxisSensorHandle, 72);
+}
+
+Result hidResetGyroscopeZeroDriftMode(u32 SixAxisSensorHandle) {
+    return _hidCmdWithInputU32(SixAxisSensorHandle, 81);
 }
 
 Result hidSetSupportedNpadStyleSet(HidControllerType type) {
