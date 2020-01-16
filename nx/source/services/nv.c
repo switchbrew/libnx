@@ -21,7 +21,6 @@ NX_GENERATE_SERVICE_GUARD(nv);
 
 Result _nvInitialize(void) {
     Result rc = MAKERESULT(Module_Libnx, LibnxError_BadInput);
-    u64 AppletResourceUserId = 0;
 
     switch (appletGetAppletType()) {
     case AppletType_None:
@@ -56,10 +55,10 @@ Result _nvInitialize(void) {
             rc = serviceCloneEx(&g_nvSrv, 1, &g_nvSrvClone);
 
         if (R_SUCCEEDED(rc)) {
-            // Send aruid if available (non-fatal condition if get-aruid fails)
-            Result aruid_rc = appletGetAppletResourceUserId(&AppletResourceUserId);
-            if (R_SUCCEEDED(aruid_rc))
-                rc = _nvSetClientPID(AppletResourceUserId);
+            // Send aruid if available
+            u64 aruid = appletGetAppletResourceUserId();
+            if (aruid)
+                rc = _nvSetClientPID(aruid);
         }
     }
 

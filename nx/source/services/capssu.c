@@ -36,13 +36,10 @@ static Result _capssuSetShimLibraryVersion(u64 version) {
     if (hosversionBefore(7,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    u64 AppletResourceUserId = 0;
-    appletGetAppletResourceUserId(&AppletResourceUserId);
-
     const struct {
         u64 version;
         u64 AppletResourceUserId;
-    } in = { version, AppletResourceUserId };
+    } in = { version, appletGetAppletResourceUserId() };
 
     return serviceDispatchIn(&g_capssuSrv, 32, in,
         .in_send_pid = true,
@@ -50,15 +47,12 @@ static Result _capssuSetShimLibraryVersion(u64 version) {
 }
 
 static Result _capssuSaveScreenShotEx0(const void* buffer, size_t size, const CapsScreenShotAttribute *attr, AlbumReportOption reportoption, CapsApplicationAlbumEntry *out) {
-    u64 AppletResourceUserId = 0;
-    appletGetAppletResourceUserId(&AppletResourceUserId);
-
     const struct {
         CapsScreenShotAttribute attr;
         u32 reportoption;
         u32 pad;
         u64 AppletResourceUserId;
-    } in = { *attr, reportoption, 0, AppletResourceUserId };
+    } in = { *attr, reportoption, 0, appletGetAppletResourceUserId() };
 
     return serviceDispatchInOut(&g_capssuSrv, 203, in, *out,
         .buffer_attrs = { SfBufferAttr_HipcMapTransferAllowsNonSecure | SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
@@ -68,15 +62,12 @@ static Result _capssuSaveScreenShotEx0(const void* buffer, size_t size, const Ca
 }
 
 static Result _capssuSaveScreenShotEx(u32 cmd_id, bool pid, const void* argbuf, size_t argbuf_size, const void* buffer, size_t size, const CapsScreenShotAttribute *attr, AlbumReportOption reportoption, CapsApplicationAlbumEntry *out) {
-    u64 AppletResourceUserId = 0;
-    appletGetAppletResourceUserId(&AppletResourceUserId);
-
     const struct {
         CapsScreenShotAttribute attr;
         u32 reportoption;
         u32 pad;
         u64 AppletResourceUserId;
-    } in = { *attr, reportoption, 0, AppletResourceUserId };
+    } in = { *attr, reportoption, 0, appletGetAppletResourceUserId() };
 
     return serviceDispatchInOut(&g_capssuSrv, cmd_id, in, *out,
         .buffer_attrs = {

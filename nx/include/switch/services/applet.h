@@ -368,7 +368,7 @@ Service* appletGetServiceSession_DisplayController(void);
 Service* appletGetServiceSession_DebugFunctions(void);
 
 /// Get the cached AppletResourceUserId.
-Result appletGetAppletResourceUserId(u64 *out);
+u64 appletGetAppletResourceUserId(void);
 
 /// Get the \ref AppletType.
 AppletType appletGetAppletType(void);

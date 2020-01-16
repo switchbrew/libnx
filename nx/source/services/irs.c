@@ -18,7 +18,7 @@ static bool g_irsSensorActivated;
 
 static IrsCameraEntry g_irsCameras[8];
 
-static Result _irsGetIrsensorSharedMemoryHandle(Handle* handle_out, u64 AppletResourceUserId);
+static Result _irsGetIrsensorSharedMemoryHandle(Handle* handle_out);
 
 NX_GENERATE_SERVICE_GUARD(irs);
 
@@ -29,15 +29,11 @@ Result _irsInitialize(void) {
     g_irsSensorActivated = 0;
     memset(g_irsCameras, 0, sizeof(g_irsCameras));
 
-    // If this failed (for example because we're a sysmodule) AppletResourceUserId stays zero
-    u64 AppletResourceUserId=0;
-    appletGetAppletResourceUserId(&AppletResourceUserId);
-
     rc = smGetService(&g_irsSrv, "irs");
     if (R_FAILED(rc))
         return rc;
 
-    rc = _irsGetIrsensorSharedMemoryHandle(&sharedmem_handle, AppletResourceUserId);
+    rc = _irsGetIrsensorSharedMemoryHandle(&sharedmem_handle);
 
     if (R_SUCCEEDED(rc)) {
         shmemLoadRemote(&g_irsSharedmem, sharedmem_handle, 0x8000, Perm_R);
@@ -131,11 +127,7 @@ Result irsActivateIrsensor(bool activate) {
     if (g_irsSensorActivated==activate) return 0;
 
     Result rc=0;
-    u64 AppletResourceUserId=0;
-
-    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
-    if (R_FAILED(rc))
-        return rc;
+    u64 AppletResourceUserId = appletGetAppletResourceUserId();
 
     rc = serviceDispatchIn(&g_irsSrv, activate ? 302 : 303, AppletResourceUserId,
         .in_send_pid = true,
@@ -144,7 +136,9 @@ Result irsActivateIrsensor(bool activate) {
     return rc;
 }
 
-static Result _irsGetIrsensorSharedMemoryHandle(Handle* handle_out, u64 AppletResourceUserId) {
+static Result _irsGetIrsensorSharedMemoryHandle(Handle* handle_out) {
+    u64 AppletResourceUserId = appletGetAppletResourceUserId();
+
     return serviceDispatchIn(&g_irsSrv, 304, AppletResourceUserId,
         .in_send_pid = true,
         .out_handle_attrs = { SfOutHandleAttr_HipcCopy },
@@ -152,11 +146,11 @@ static Result _irsGetIrsensorSharedMemoryHandle(Handle* handle_out, u64 AppletRe
     );
 }
 
-static Result _irsStopImageProcessor(u32 IrCameraHandle, u64 AppletResourceUserId) {
+static Result _irsStopImageProcessor(u32 IrCameraHandle) {
     const struct {
         u32 IrCameraHandle;
         u64 AppletResourceUserId;
-    } in = { IrCameraHandle, AppletResourceUserId };
+    } in = { IrCameraHandle, appletGetAppletResourceUserId() };
 
     return serviceDispatchIn(&g_irsSrv, 305, in,
         .in_send_pid = true,
@@ -165,15 +159,10 @@ static Result _irsStopImageProcessor(u32 IrCameraHandle, u64 AppletResourceUserI
 
 Result irsStopImageProcessor(u32 IrCameraHandle) {
     Result rc=0;
-    u64 AppletResourceUserId=0;
     IrsCameraEntry *entry = NULL;
 
     if (!serviceIsActive(&g_irsSrv))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-
-    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
-    if (R_FAILED(rc))
-        return rc;
 
     rc = _IrsCameraEntryGet(IrCameraHandle, &entry);
     if (R_FAILED(rc))
@@ -182,19 +171,19 @@ Result irsStopImageProcessor(u32 IrCameraHandle) {
     if (entry->transfermem.handle == INVALID_HANDLE)
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    rc = _irsStopImageProcessor(IrCameraHandle, AppletResourceUserId);
+    rc = _irsStopImageProcessor(IrCameraHandle);
     _IrsCameraEntryFree(entry);
     return rc;
 }
 
-static Result _irsRunImageTransferProcessor(u32 IrCameraHandle, u64 AppletResourceUserId, IrsPackedImageTransferProcessorConfig *config, TransferMemory *tmem) {
+static Result _irsRunImageTransferProcessor(u32 IrCameraHandle, IrsPackedImageTransferProcessorConfig *config, TransferMemory *tmem) {
     const struct {
         u32 IrCameraHandle;
         u32 pad;
         u64 AppletResourceUserId;
         IrsPackedImageTransferProcessorConfig config;
         u64 TransferMemory_size;
-    } in = { IrCameraHandle, 0, AppletResourceUserId, *config, tmem->size };
+    } in = { IrCameraHandle, 0, appletGetAppletResourceUserId(), *config, tmem->size };
 
     return serviceDispatchIn(&g_irsSrv, 308, in,
         .in_send_pid = true,
@@ -205,7 +194,6 @@ static Result _irsRunImageTransferProcessor(u32 IrCameraHandle, u64 AppletResour
 
 Result irsRunImageTransferProcessor(u32 IrCameraHandle, IrsImageTransferProcessorConfig *config, size_t size) {
     Result rc=0;
-    u64 AppletResourceUserId=0;
     IrsCameraEntry *entry = NULL;
     IrsPackedImageTransferProcessorConfig packed_config;
 
@@ -218,10 +206,6 @@ Result irsRunImageTransferProcessor(u32 IrCameraHandle, IrsImageTransferProcesso
     packed_config.unk_constant = 0xa0003;
     packed_config.sensor_res = config->sensor_res;
 
-    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
-    if (R_FAILED(rc))
-        return rc;
-
     rc = _IrsCameraEntryAlloc(IrCameraHandle, &entry);
     if (R_FAILED(rc))
         return rc;
@@ -229,36 +213,24 @@ Result irsRunImageTransferProcessor(u32 IrCameraHandle, IrsImageTransferProcesso
     rc = tmemCreate(&entry->transfermem, size, Perm_None);
     if (R_FAILED(rc)) return rc;
 
-    rc = _irsRunImageTransferProcessor(IrCameraHandle, AppletResourceUserId, &packed_config, &entry->transfermem);
+    rc = _irsRunImageTransferProcessor(IrCameraHandle, &packed_config, &entry->transfermem);
 
     if (R_FAILED(rc)) _IrsCameraEntryFree(entry);
 
     return rc;
 }
 
-static Result _irsGetImageTransferProcessorState(u32 IrCameraHandle, u64 AppletResourceUserId, void* buffer, size_t size, IrsImageTransferProcessorState *state) {
+Result irsGetImageTransferProcessorState(u32 IrCameraHandle, void* buffer, size_t size, IrsImageTransferProcessorState *state) {
     const struct {
         u32 IrCameraHandle;
         u64 AppletResourceUserId;
-    } in = { IrCameraHandle, AppletResourceUserId };
+    } in = { IrCameraHandle, appletGetAppletResourceUserId() };
 
     return serviceDispatchInOut(&g_irsSrv, 309, in, *state,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
         .buffers = { { buffer, size } },
         .in_send_pid = true,
     );
-}
-
-Result irsGetImageTransferProcessorState(u32 IrCameraHandle, void* buffer, size_t size, IrsImageTransferProcessorState *state) {
-    Result rc=0;
-    u64 AppletResourceUserId=0;
-
-    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
-    if (R_FAILED(rc))
-        return rc;
-
-    rc = _irsGetImageTransferProcessorState(IrCameraHandle, AppletResourceUserId, buffer, size, state);
-    return rc;
 }
 
 void irsGetDefaultImageTransferProcessorConfig(IrsImageTransferProcessorConfig *config) {
@@ -276,26 +248,13 @@ Result irsGetIrCameraHandle(u32 *IrCameraHandle, HidControllerID id) {
     return serviceDispatchInOut(&g_irsSrv, 311, tmp, *IrCameraHandle);
 }
 
-static Result _irsSuspendImageProcessor(u32 IrCameraHandle, u64 AppletResourceUserId) {
+Result irsSuspendImageProcessor(u32 IrCameraHandle) {
     const struct {
         u32 IrCameraHandle;
         u64 AppletResourceUserId;
-    } in = { IrCameraHandle, AppletResourceUserId };
+    } in = { IrCameraHandle, appletGetAppletResourceUserId() };
 
     return serviceDispatchIn(&g_irsSrv, 313, in,
         .in_send_pid = true,
     );
 }
-
-Result irsSuspendImageProcessor(u32 IrCameraHandle) {
-    Result rc=0;
-    u64 AppletResourceUserId=0;
-
-    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
-    if (R_FAILED(rc))
-        return rc;
-
-    rc = _irsSuspendImageProcessor(IrCameraHandle, AppletResourceUserId);
-    return rc;
-}
-

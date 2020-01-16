@@ -13,14 +13,10 @@ static Result _auddevGetAudioDeviceService(Service* srv, Service* srv_out, u64 a
 NX_GENERATE_SERVICE_GUARD(auddev);
 
 Result _auddevInitialize(void) {
-    Result rc=0;
-    u64 aruid = 0;
-    rc = appletGetAppletResourceUserId(&aruid);
-
     Service audrenMgrSrv;
-    rc = smGetService(&audrenMgrSrv, "audren:u");
+    Result rc = smGetService(&audrenMgrSrv, "audren:u");
     if (R_SUCCEEDED(rc)) {
-        rc = _auddevGetAudioDeviceService(&audrenMgrSrv, &g_auddevIAudioDevice, aruid);
+        rc = _auddevGetAudioDeviceService(&audrenMgrSrv, &g_auddevIAudioDevice, appletGetAppletResourceUserId());
 
         serviceClose(&audrenMgrSrv);
     }
