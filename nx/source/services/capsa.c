@@ -323,8 +323,7 @@ Result capsaGetAlbumCacheEx(CapsAlbumStorage storage, CapsAlbumFileContents cont
 }
 
 static Result _capsaOpenAccessorSession(Service *srv_out) {
-    u64 AppletResourceUserId = 0;
-    appletGetAppletResourceUserId(&AppletResourceUserId);
+    u64 AppletResourceUserId = appletGetAppletResourceUserId();
 
     return serviceDispatchIn(&g_capsaSrv, 60002, AppletResourceUserId,
         .in_send_pid = true,
