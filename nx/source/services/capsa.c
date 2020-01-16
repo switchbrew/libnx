@@ -142,7 +142,7 @@ Result capsaLoadAlbumScreenShotThumbnailImageEx(u64 *width, u64 *height, const C
     return _capsaLoadAlbumScreenshotEx(width, height, file_id, opts, image, image_size, workbuf, workbuf_size, 13);
 }
 
-Result _capsaLoadAlbumScreenShotEx0(u64 *width, u64 *height, CapsScreenShotAttributeForApplication *attr, const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, void* image, u64 image_size, void* workbuf, u64 workbuf_size, u32 cmd_id) {
+Result _capsaLoadAlbumScreenShotEx0(u64 *width, u64 *height, CapsScreenShotAttribute *attr, const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, void* image, u64 image_size, void* workbuf, u64 workbuf_size, u32 cmd_id) {
     if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     const struct {
@@ -150,7 +150,7 @@ Result _capsaLoadAlbumScreenShotEx0(u64 *width, u64 *height, CapsScreenShotAttri
         CapsScreenShotDecodeOption opts;
     } in = { *file_id, *opts };
     struct {
-        CapsScreenShotAttributeForApplication attr;
+        CapsScreenShotAttribute attr;
         s64 width;
         s64 height;
     } out = {0};
@@ -166,7 +166,7 @@ Result _capsaLoadAlbumScreenShotEx0(u64 *width, u64 *height, CapsScreenShotAttri
     return rc;
 }
 
-Result capsaLoadAlbumScreenShotImageEx0(u64 *width, u64 *height, CapsScreenShotAttributeForApplication *attr, const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, void* image, u64 image_size, void* workbuf, u64 workbuf_size) {
+Result capsaLoadAlbumScreenShotImageEx0(u64 *width, u64 *height, CapsScreenShotAttribute *attr, const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, void* image, u64 image_size, void* workbuf, u64 workbuf_size) {
     return _capsaLoadAlbumScreenShotEx0(width, height, attr, file_id, opts, image, image_size, workbuf, workbuf_size, 14);
 }
 
@@ -271,7 +271,7 @@ Result capsaGetRequiredStorageSpaceSizeToCopyAll(CapsAlbumStorage dst_storage, C
     return serviceDispatchInOut(&g_capsaSrv, 501, in, *out);
 }
 
-Result capsLoadAlbumScreenShotThumbnailImageEx0(u64 *width, u64 *height, CapsScreenShotAttributeForApplication *attr, const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, void* image, u64 image_size, void* workbuf, u64 workbuf_size) {
+Result capsLoadAlbumScreenShotThumbnailImageEx0(u64 *width, u64 *height, CapsScreenShotAttribute *attr, const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, void* image, u64 image_size, void* workbuf, u64 workbuf_size) {
     return _capsaLoadAlbumScreenShotEx0(width, height, attr, file_id, opts, image, image_size, workbuf, workbuf_size, 1001);
 }
 
@@ -433,7 +433,7 @@ Result capsaReadImageDataFromAlbumMovieReadStream(u64 stream, s64 offset, void* 
     return _capsaReadImageDataFromAlbumMovieReadStream(stream, offset, buffer, size, actual_size);
 }
 
-Result capsaReadFileAttributeFromAlbumMovieReadStream(u64 stream, CapsScreenShotAttributeForApplication *attribute) {
+Result capsaReadFileAttributeFromAlbumMovieReadStream(u64 stream, CapsScreenShotAttribute *attribute) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 

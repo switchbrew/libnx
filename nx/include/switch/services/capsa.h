@@ -149,7 +149,7 @@ Result capsaLoadAlbumScreenShotThumbnailImageEx(u64 *width, u64 *height, const C
  * @note Only available on [3.0.0+].
  * @param[out] width Output image width. Optional, can be NULL.
  * @param[out] height Output image height. Optional, can be NULL.
- * @param[out] attr \ref CapsScreenShotAttributeForApplication
+ * @param[out] attr \ref CapsScreenShotAttribute
  * @param[in] file_id \ref CapsAlbumFileId
  * @param[in] opts \ref CapsScreenShotDecodeOption
  * @param[out] image RGBA8 image output buffer.
@@ -157,7 +157,7 @@ Result capsaLoadAlbumScreenShotThumbnailImageEx(u64 *width, u64 *height, const C
  * @param[out] workbuf Work buffer, cleared to 0 by the cmd before it returns.
  * @param[in] workbuf_size Work buffer size, must be at least the size of the JPEG within the AlbumFile.
  */
-Result capsaLoadAlbumScreenShotImageEx0(u64 *width, u64 *height, CapsScreenShotAttributeForApplication *attr, const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, void* image, u64 image_size, void* workbuf, u64 workbuf_size);
+Result capsaLoadAlbumScreenShotImageEx0(u64 *width, u64 *height, CapsScreenShotAttribute *attr, const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, void* image, u64 image_size, void* workbuf, u64 workbuf_size);
 
 /**
  * @brief Returns the AlbumUsage for a specified \ref CapsAlbumStorage.
@@ -248,7 +248,7 @@ Result capsaGetRequiredStorageSpaceSizeToCopyAll(CapsAlbumStorage dst_storage, C
  * @note Only available on [3.0.0+].
  * @param[out] width Output image width. Optional, can be NULL.
  * @param[out] height Output image height. Optional, can be NULL.
- * @param[out] attr \ref CapsScreenShotAttributeForApplication
+ * @param[out] attr \ref CapsScreenShotAttribute
  * @param[in] file_id \ref CapsAlbumFileId
  * @param[in] opts \ref CapsScreenShotDecodeOption
  * @param[out] image RGBA8 image output buffer.
@@ -256,7 +256,7 @@ Result capsaGetRequiredStorageSpaceSizeToCopyAll(CapsAlbumStorage dst_storage, C
  * @param[out] workbuf Work buffer, cleared to 0 by the cmd before it returns.
  * @param[in] workbuf_size Work buffer size, must be at least the size of the JPEG within the AlbumFile.
  */
-Result capsLoadAlbumScreenShotThumbnailImageEx0(u64 *width, u64 *height, CapsScreenShotAttributeForApplication *attr, const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, void* image, u64 image_size, void* workbuf, u64 workbuf_size);
+Result capsLoadAlbumScreenShotThumbnailImageEx0(u64 *width, u64 *height, CapsScreenShotAttribute *attr, const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, void* image, u64 image_size, void* workbuf, u64 workbuf_size);
 
 /**
  * @brief Load the ScreenShotImage for the specified AlbumFile.
@@ -389,6 +389,6 @@ Result capsaReadImageDataFromAlbumMovieReadStream(u64 stream, s64 offset, void* 
  * @brief Gets the file attribute of an AlbumMovieStream.
  * @note Only available on [4.0.0+].
  * @param[in] stream Stream handle.
- * @param[out] attr \ref CapsScreenShotAttributeForApplication
+ * @param[out] attr \ref CapsScreenShotAttribute
  */
-Result capsaReadFileAttributeFromAlbumMovieReadStream(u64 stream, CapsScreenShotAttributeForApplication *attr);
+Result capsaReadFileAttributeFromAlbumMovieReadStream(u64 stream, CapsScreenShotAttribute *attr);
