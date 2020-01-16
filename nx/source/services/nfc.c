@@ -23,7 +23,7 @@ static const NfcRequiredMcuVersionData g_nfcVersionData[2] = {
 };
 
 static Result _nfcCreateInterface(Service* srv, Service* srv_out);
-static Result _nfcInterfaceInitialize(Service* srv, u64 aruid, const NfcRequiredMcuVersionData *version, s32 count, u32 cmd_id);
+static Result _nfcInterfaceInitialize(Service* srv, const NfcRequiredMcuVersionData *version, s32 count, u32 cmd_id);
 
 static Result _nfcCmdNoIO(Service* srv, u32 cmd_id);
 static Result _nfcCmdInDevhandleNoOut(Service* srv, const NfcDeviceHandle *handle, u32 cmd_id);
@@ -34,10 +34,6 @@ NX_GENERATE_SERVICE_GUARD_PARAMS(nfp, (NfpServiceType service_type), (service_ty
 
 Result _nfpInitialize(NfpServiceType service_type) {
     Result rc = MAKERESULT(Module_Libnx, LibnxError_BadInput);
-    u64 aruid = 0;
-
-    // If this fails (for example because we're a sysmodule) aruid stays zero
-    appletGetAppletResourceUserId(&aruid);
 
     g_nfpServiceType = service_type;
     switch (g_nfpServiceType) {
@@ -59,7 +55,7 @@ Result _nfpInitialize(NfpServiceType service_type) {
         rc = _nfcCreateInterface(&g_nfpSrv, &g_nfpInterface);
 
     if (R_SUCCEEDED(rc))
-        rc = _nfcInterfaceInitialize(&g_nfpInterface, aruid, g_nfcVersionData, 2, 0);
+        rc = _nfcInterfaceInitialize(&g_nfpInterface, g_nfcVersionData, 2, 0);
 
     return rc;
 }
@@ -74,10 +70,6 @@ NX_GENERATE_SERVICE_GUARD_PARAMS(nfc, (NfcServiceType service_type), (service_ty
 
 Result _nfcInitialize(NfcServiceType service_type) {
     Result rc=0;
-    u64 aruid = 0;
-
-    // If this fails (for example because we're a sysmodule) aruid stays zero
-    appletGetAppletResourceUserId(&aruid);
 
     g_nfcServiceType = service_type;
     switch (g_nfcServiceType) {
@@ -96,7 +88,7 @@ Result _nfcInitialize(NfcServiceType service_type) {
         rc = _nfcCreateInterface(&g_nfcSrv, &g_nfcInterface);
 
     if (R_SUCCEEDED(rc))
-        rc = _nfcInterfaceInitialize(&g_nfcInterface, aruid, g_nfcVersionData, 2, hosversionBefore(4,0,0) ? 0 : 400);
+        rc = _nfcInterfaceInitialize(&g_nfcInterface, g_nfcVersionData, 2, hosversionBefore(4,0,0) ? 0 : 400);
 
     return rc;
 }
@@ -199,11 +191,11 @@ static Result _nfcCmdInDevhandleOutBuffer(Service* srv, const NfcDeviceHandle *h
     );
 }
 
-static Result _nfcInterfaceInitialize(Service* srv, u64 aruid, const NfcRequiredMcuVersionData *version, s32 count, u32 cmd_id) {
+static Result _nfcInterfaceInitialize(Service* srv, const NfcRequiredMcuVersionData *version, s32 count, u32 cmd_id) {
     const struct {
         u64 aruid;
         u64 zero;
-    } in = { aruid, 0 };
+    } in = { appletGetAppletResourceUserId(), 0 };
 
     serviceAssumeDomain(srv);
     return serviceDispatchIn(srv, cmd_id, in,

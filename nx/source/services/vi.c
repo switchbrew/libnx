@@ -285,7 +285,7 @@ Result viSetContentVisibility(bool v) {
     return serviceDispatchIn(&g_viIManagerDisplayService, 7000, tmp);
 }
 
-static Result _viOpenLayer(const ViDisplay *display, u64 layer_id, u64 aruid, u8 native_window[0x100], u64 *native_window_size) {
+static Result _viOpenLayer(const ViDisplay *display, u64 layer_id, u8 native_window[0x100], u64 *native_window_size) {
     if (!display->initialized) {
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     }
@@ -294,7 +294,7 @@ static Result _viOpenLayer(const ViDisplay *display, u64 layer_id, u64 aruid, u8
         ViDisplayName display_name;
         u64 layer_id;
         u64 aruid;
-    } in = { display->display_name, layer_id, aruid };
+    } in = { display->display_name, layer_id, appletGetAppletResourceUserId() };
     return serviceDispatchInOut(&g_viIApplicationDisplayService, 2020, in, *native_window_size,
         .in_send_pid = true,
         .buffer_attrs = { SfBufferAttr_Out | SfBufferAttr_HipcMapAlias },
@@ -359,20 +359,17 @@ Result viCreateLayer(const ViDisplay *display, ViLayer *layer) {
     alignas(8) u8 native_window_raw[0x100];
     u64 native_window_size = 0;
 
-    u64 aruid = 0;
-    appletGetAppletResourceUserId(&aruid); // failure is not fatal
-
     memset(layer, 0, sizeof(ViLayer));
     layer->layer_id = __nx_vi_layer_id;
 
     Result rc = 0;
-    if (!layer->layer_id && aruid) {
+    if (!layer->layer_id && appletGetAppletResourceUserId()) {
         rc = appletCreateManagedDisplayLayer(&layer->layer_id);
         if (R_FAILED(rc)) return rc;
     }
 
     if (layer->layer_id) {
-        rc = _viOpenLayer(display, layer->layer_id, aruid, native_window_raw, &native_window_size);
+        rc = _viOpenLayer(display, layer->layer_id, native_window_raw, &native_window_size);
     } else {
         layer->stray_layer = true;
         rc = _viCreateStrayLayer(display, __nx_vi_stray_layer_flags, &layer->layer_id, native_window_raw, &native_window_size);
@@ -468,16 +465,14 @@ Result viSetLayerScalingMode(ViLayer *layer, ViScalingMode scaling_mode) {
 }
 
 Result viGetIndirectLayerImageMap(void* buffer, size_t size, s32 width, s32 height, u64 IndirectLayerConsumerHandle, u64 *out_size, u64 *out_stride) {
-    u64 aruid = 0;
-    Result rc = appletGetAppletResourceUserId(&aruid);
-    if (R_FAILED(rc)) return rc;
+    Result rc = 0;
 
     const struct {
         s64 width;
         s64 height;
         u64 IndirectLayerConsumerHandle;
         u64 aruid;
-    } in = { width, height, IndirectLayerConsumerHandle, aruid };
+    } in = { width, height, IndirectLayerConsumerHandle, appletGetAppletResourceUserId() };
 
     struct {
         s64 size;

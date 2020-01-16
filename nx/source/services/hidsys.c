@@ -15,12 +15,9 @@ Result _hidsysInitialize(void) {
     Result rc = smGetService(&g_hidsysSrv, "hid:sys");
     if (R_FAILED(rc))
         return rc;
-    
-    rc = appletGetAppletResourceUserId(&g_hidsysAppletResourceUserId);
-    if (R_FAILED(rc))
-        g_hidsysAppletResourceUserId = 0;
 
-    return 0; 
+    g_hidsysAppletResourceUserId = appletGetAppletResourceUserId();
+    return 0;
 }
 
 void _hidsysCleanup(void) {

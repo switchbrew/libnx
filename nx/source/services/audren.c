@@ -29,7 +29,7 @@ typedef struct {
     u32 revision;
 } AudioRendererParameter;
 
-static Result _audrenOpenAudioRenderer(Service* srv, Service* srv_out, const AudioRendererParameter* param, u64 aruid);
+static Result _audrenOpenAudioRenderer(Service* srv, Service* srv_out, const AudioRendererParameter* param);
 static Result _audrenGetWorkBufferSize(Service* srv, const AudioRendererParameter* param, u64* out_size);
 static Result _audrenQuerySystemEvent(Event* out_event);
 
@@ -76,11 +76,6 @@ Result _audrenInitialize(const AudioRendererConfig* config) {
     param.effect_count     = config->num_effects;
     param.revision         = g_audrenRevision;
 
-    // Get aruid
-    u64 aruid = 0;
-    rc = appletGetAppletResourceUserId(&aruid);
-    //if (R_FAILED(rc)) return rc; // apparently audren still inits fine with aruid = 0 so this isn't a fatal error condition
-
     // Open IAudioRendererManager
     Service audrenMgrSrv;
     rc = smGetService(&audrenMgrSrv, "audren:u");
@@ -94,7 +89,7 @@ Result _audrenInitialize(const AudioRendererConfig* config) {
             rc = tmemCreate(&g_audrenWorkBuf, workBufSize, Perm_None);
             if (R_SUCCEEDED(rc)) {
                 // Create the IAudioRenderer service
-                rc = _audrenOpenAudioRenderer(&audrenMgrSrv, &g_audrenIAudioRenderer, &param, aruid);
+                rc = _audrenOpenAudioRenderer(&audrenMgrSrv, &g_audrenIAudioRenderer, &param);
                 if (R_SUCCEEDED(rc)) {
                     // Finally, get the handle to the system event
                     rc = _audrenQuerySystemEvent(&g_audrenEvent);
@@ -144,13 +139,13 @@ void audrenWaitFrame(void) {
     eventWait(&g_audrenEvent, U64_MAX);
 }
 
-Result _audrenOpenAudioRenderer(Service* srv, Service* srv_out, const AudioRendererParameter* param, u64 aruid) {
+Result _audrenOpenAudioRenderer(Service* srv, Service* srv_out, const AudioRendererParameter* param) {
     const struct {
         AudioRendererParameter param;
         u32 pad;
         u64 work_buffer_size;
         u64 aruid;
-    } in = { *param, 0, g_audrenWorkBuf.size, aruid };
+    } in = { *param, 0, g_audrenWorkBuf.size, appletGetAppletResourceUserId() };
 
     return serviceDispatchIn(srv, 0, in,
         .in_send_pid = true,
