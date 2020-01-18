@@ -640,6 +640,7 @@ Result svcGetInfo(u64* out, u32 id0, Handle handle, u64 id1);
  * @brief Flushes the entire data cache (by set/way).
  * @note Syscall number 0x2A.
  * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
+ * @warning This syscall is dangerous, and should not be used.
  */
 void svcFlushEntireDataCache(void);
 
@@ -647,6 +648,7 @@ void svcFlushEntireDataCache(void);
  * @brief Flushes data cache for a virtual address range.
  * @param[in] address Address of region to flush.
  * @param[in] size Size of region to flush.
+ * @remark armDCacheFlush should be used instead of this syscall whenever possible.
  * @note Syscall number 0x2B.
  */
 Result svcFlushDataCache(void *address, size_t size);
@@ -677,18 +679,25 @@ Result svcUnmapPhysicalMemory(void *address, u64 size);
 
 /**
  * @brief Gets information about a thread that will be scheduled in the future. [5.0.0+]
+ * @param[out] out_context Output \ref LastThreadContext for the thread that will be scheduled.
+ * @param[out] out_thread_id Output thread id for the thread that will be scheduled.
+ * @param[in] debug Debug handle.
+ * @param[in] ns Nanoseconds in the future to get scheduled thread at.
  * @return Result code.
  * @note Syscall number 0x2E.
  * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
  */
-Result GetDebugFutureThreadInfo(LastThreadContext *out_context, u64 *out_thread_id, Handle debug, s64 ns);
+Result svcGetDebugFutureThreadInfo(LastThreadContext *out_context, u64 *out_thread_id, Handle debug, s64 ns);
 
 /**
  * @brief Gets information about the previously-scheduled thread.
+ * @param[out] out_context Output \ref LastThreadContext for the previously scheduled thread.
+ * @param[out] out_tls_address Output tls address for the previously scheduled thread.
+ * @param[out] out_flags Output flags for the previously scheduled thread.
  * @return Result code.
  * @note Syscall number 0x2F.
  */
-Result GetLastThreadInfo(LastThreadContext *out_context, u64 *out_tls_address, u32 *out_flags);
+Result svcGetLastThreadInfo(LastThreadContext *out_context, u64 *out_tls_address, u32 *out_flags);
 
 ///@}
 
@@ -782,7 +791,7 @@ void svcSynchronizePreemptionState(void);
  * @note Syscall number 0x3C.
  * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
  */
-void DumpInfo(u32 dump_info_type, u64 arg0);
+void svcDumpInfo(u32 dump_info_type, u64 arg0);
 
 /**
  * @brief Performs a debugging operation on the kernel. [4.0.0+]
@@ -793,7 +802,7 @@ void DumpInfo(u32 dump_info_type, u64 arg0);
  * @note Syscall number 0x3C.
  * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
  */
-void KernelDebug(u32 kern_debug_type, u64 arg0, u64 arg1, u64 arg2);
+void svcKernelDebug(u32 kern_debug_type, u64 arg0, u64 arg1, u64 arg2);
 
 /**
  * @brief Performs a debugging operation on the kernel. [4.0.0+]
@@ -801,7 +810,7 @@ void KernelDebug(u32 kern_debug_type, u64 arg0, u64 arg1, u64 arg2);
  * @note Syscall number 0x3D.
  * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
  */
-void ChangeKernelTraceState(u32 kern_trace_state);
+void svcChangeKernelTraceState(u32 kern_trace_state);
 
 ///@}
                                                                                                                                                                                                                       \
