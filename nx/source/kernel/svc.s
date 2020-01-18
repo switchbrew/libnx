@@ -191,6 +191,11 @@ SVC_BEGIN svcConnectToNamedPort
 	ret
 SVC_END
 
+SVC_BEGIN svcSendSyncRequestLight
+	svc 0x20
+	ret
+SVC_END
+
 SVC_BEGIN svcSendSyncRequest
 	svc 0x21
 	ret
@@ -248,6 +253,16 @@ SVC_BEGIN svcGetInfo
 	ret
 SVC_END
 
+SVC_BEGIN svcFlushEntireDataCache
+	svc 0x2A
+	ret
+SVC_END
+
+SVC_BEGIN svcFlushDataCache
+	svc 0x2B
+	ret
+SVC_END
+
 SVC_BEGIN svcMapPhysicalMemory
 	svc 0x2C
 	ret
@@ -255,6 +270,29 @@ SVC_END
 
 SVC_BEGIN svcUnmapPhysicalMemory
 	svc 0x2D
+	ret
+SVC_END
+
+SVC_BEGIN svcGetDebugFutureThreadInfo
+	stp x0, x1, [sp, #-16]!
+	svc 0x2E
+	ldp x6, x7, [sp], #16
+	stp x1, x2, [x6]
+	stp x3, x4, [x6, #16]
+	str x5, [x7]
+	ret
+SVC_END
+
+SVC_BEGIN svcGetLastThreadInfo
+	stp x1, x2, [sp, #-16]!
+	str x0, [sp, #-16]!
+	svc 0x2F
+	ldr x7, [sp], #16
+	stp x1, x2, [x7]
+	stp x3, x4, [x7, #16]
+	ldp x1, x2, [sp], #16
+	str x5, [x1]
+	str w6, [x2]
 	ret
 SVC_END
 
@@ -284,6 +322,36 @@ SVC_BEGIN svcGetThreadContext3
 	ret
 SVC_END
 
+SVC_BEGIN svcWaitForAddress
+	svc 0x34
+	ret
+SVC_END
+
+SVC_BEGIN svcSignalToAddress
+	svc 0x35
+	ret
+SVC_END
+
+SVC_BEGIN svcSynchronizePreemptionState
+	svc 0x36
+	ret
+SVC_END
+
+SVC_BEGIN svcDumpInfo
+	svc 0x3C
+	ret
+SVC_END
+
+SVC_BEGIN svcKernelDebug
+	svc 0x3C
+	ret
+SVC_END
+
+SVC_BEGIN svcChangeKernelTraceState
+	svc 0x3D
+	ret
+SVC_END
+
 SVC_BEGIN svcCreateSession
 	stp x0, x1, [sp, #-16]!
 	svc 0x40
@@ -298,6 +366,11 @@ SVC_BEGIN svcAcceptSession
 	svc 0x41
 	ldr x2, [sp], #16
 	str w1, [x2]
+	ret
+SVC_END
+
+SVC_BEGIN svcReplyAndReceiveLight
+	svc 0x42
 	ret
 SVC_END
 
@@ -354,11 +427,21 @@ SVC_BEGIN svcControlCodeMemory
 	ret
 SVC_END
 
+SVC_BEGIN svcSleepSystem
+	svc 0x4D
+	ret
+SVC_END
+
 SVC_BEGIN svcReadWriteRegister
 	str x0, [sp, #-16]!
 	svc 0x4E
 	ldr x2, [sp], #16
 	str w1, [x2]
+	ret
+SVC_END
+
+SVC_BEGIN svcSetProcessActivity
+	svc 0x4F
 	ret
 SVC_END
 
@@ -433,8 +516,31 @@ SVC_BEGIN svcMapDeviceAddressSpaceAligned
 	ret
 SVC_END
 
+SVC_BEGIN svcMapDeviceAddressSpace
+	str x0, [sp, #-16]!
+	svc 0x5B
+	ldr x2, [sp], #16
+	str w1, [x2]
+	ret
+SVC_END
+
 SVC_BEGIN svcUnmapDeviceAddressSpace
 	svc 0x5C
+	ret
+SVC_END
+
+SVC_BEGIN svcInvalidateProcessDataCache
+	svc 0x5D
+	ret
+SVC_END
+
+SVC_BEGIN svcStoreProcessDataCache
+	svc 0x5E
+	ret
+SVC_END
+
+SVC_BEGIN svcFlushProcessDataCache
+	svc 0x5F
 	ret
 SVC_END
 
@@ -512,6 +618,11 @@ SVC_END
 
 SVC_BEGIN svcWriteDebugProcessMemory
 	svc 0x6B
+	ret
+SVC_END
+
+SVC_BEGIN svcSetHardwareBreakPoint
+	svc 0x6C
 	ret
 SVC_END
 
