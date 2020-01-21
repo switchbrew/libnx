@@ -62,6 +62,43 @@ static romfs_file *romFS_file(romfs_mount *mount, u32 off)
     return curFile;
 }
 
+static ssize_t _romfs_read_safe(romfs_mount *mount, u64 pos, void* buffer, u64 size)
+{
+    u8 tmp_buffer[0x1000];
+    u64 total_read = 0;
+
+    while (size)
+    {
+        u64 cur_size = size > sizeof(tmp_buffer) ? sizeof(tmp_buffer) : size;
+        u64 cur_read = 0;
+        Result rc = 0;
+
+        if (mount->fd_type == RomfsSource_FsFile)
+        {
+            rc = fsFileRead(&mount->fd, pos, tmp_buffer, cur_size, FsReadOption_None, &cur_read);
+        }
+        else if (mount->fd_type == RomfsSource_FsStorage)
+        {
+            rc = fsStorageRead(&mount->fd_storage, pos, tmp_buffer, cur_size);
+            cur_read = cur_size;
+        }
+
+        if (R_FAILED(rc))
+            return -1;
+
+        memcpy(buffer, tmp_buffer, cur_read);
+        buffer = (u8*)buffer + cur_read;
+        pos += cur_read;
+        total_read += cur_read;
+        size -= cur_read;
+
+        if (cur_read != cur_size)
+            break;
+    }
+
+    return total_read;
+}
+
 static ssize_t _romfs_read(romfs_mount *mount, u64 offset, void* buffer, u64 size)
 {
     s64 pos = mount->offset + offset;
@@ -76,6 +113,7 @@ static ssize_t _romfs_read(romfs_mount *mount, u64 offset, void* buffer, u64 siz
         rc = fsStorageRead(&mount->fd_storage, pos, buffer, size);
         read = size;
     }
+    if (rc == 0xD401) return _romfs_read_safe(mount, pos, buffer, size);
     if (R_FAILED(rc)) return -1;
     return read;
 }
