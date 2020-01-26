@@ -117,12 +117,13 @@ Result capsaLoadAlbumScreenShotImage(u64 *width, u64 *height, const CapsAlbumFil
 Result capsaLoadAlbumScreenShotThumbnailImage(u64 *width, u64 *height, const CapsAlbumFileId *file_id, void* image, u64 image_size, void* workbuf, u64 workbuf_size);
 
 /**
- * @brief Load an \ref CapsAlbumEntry from a \ref CapsApplicationAlbumEntry
+ * @brief Load an \ref CapsAlbumEntry from a \ref CapsApplicationAlbumEntry and an Application Id.
  * @note Only available on [2.0.0+].
  * @param[out] entry \ref CapsAlbumEntry
  * @param[in] application_entry \ref CapsApplicationAlbumEntry
+ * @param[in] application_id Application Id
  */
-Result capsaGetAlbumEntryFromApplicationAlbumEntry(CapsAlbumEntry *entry, const CapsApplicationAlbumEntry *application_entry);
+Result capsaGetAlbumEntryFromApplicationAlbumEntry(CapsAlbumEntry *entry, const CapsApplicationAlbumEntry *application_entry, u64 application_id);
 
 /**
  * @brief Load the ScreenShotImage for the specified AlbumFile.
@@ -329,13 +330,13 @@ Result capsaGetAlbumCache(CapsAlbumStorage storage, CapsAlbumCache *cache);
 Result capsaGetAlbumCacheEx(CapsAlbumStorage storage, CapsAlbumFileContents contents, CapsAlbumCache *cache);
 
 /**
- * @brief Load an \ref CapsAlbumEntry from a \ref CapsApplicationAlbumEntry
+ * @brief Load an \ref CapsAlbumEntry from a \ref CapsApplicationAlbumEntry and an Applet Resource User Id.
  * @note Only available on [2.0.0+].
- * @note despite this having aruid in the name \ref capsaGetAlbumEntryFromApplicationAlbumEntry also sends it.
  * @param[out] entry \ref CapsAlbumEntry
  * @param[in] application_entry \ref CapsApplicationAlbumEntry
+ * @param[in] appletResourceUserId Application Resouce User Id
  */
-Result capsaGetAlbumEntryFromApplicationAlbumEntryAruid(CapsAlbumEntry *entry, const CapsApplicationAlbumEntry *application_entry);
+Result capsaGetAlbumEntryFromApplicationAlbumEntryAruid(CapsAlbumEntry *entry, const CapsApplicationAlbumEntry *application_entry, u64 appletResourceUserId);
 
 /**
  * @brief Opens an AlbumMovieStream.
