@@ -60,8 +60,8 @@ Result capscRegisterAppletResourceUserId(void) {
     if (hosversionBefore(2,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     const struct {
-        u64 AppletResourceUserId;
         u64 version;
+        u64 AppletResourceUserId;
     } in = { capsGetShimLibraryVersion(), appletGetAppletResourceUserId() };
     return serviceDispatchIn(&g_capscSrv, 2011, in);
 }
@@ -70,8 +70,8 @@ Result capscUnregisterAppletResourceUserId(void) {
     if (hosversionBefore(2,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     const struct {
-        u64 AppletResourceUserId;
         u64 version;
+        u64 AppletResourceUserId;
     } in = { capsGetShimLibraryVersion(), appletGetAppletResourceUserId() };
     return serviceDispatchIn(&g_capscSrv, 2012, in);
 }
