@@ -17,6 +17,8 @@ void capscExit(void);
 
 /// Gets the Service for caps:c.
 Service* capscGetServiceSession(void);
+Result capscRegisterAppletResourceUserId(void);
+Result capscUnregisterAppletResourceUserId(void);
 Result capscNotifyAlbumStorageIsAvailable(CapsAlbumStorage storage);
 Result capscNotifyAlbumStorageIsUnAvailable(CapsAlbumStorage storage);
 Result capscGetApplicationIdFromAruid(u64 *application_id, u64 aruid);

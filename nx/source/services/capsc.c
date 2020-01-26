@@ -9,10 +9,18 @@
 static Service g_capscSrv;
 static Service g_capscControl;
 
+static Result _capscSetShimLibraryVersion(u64 version);
+
 NX_GENERATE_SERVICE_GUARD(capsc);
 
 Result _capscInitialize(void) {
-    return smGetService(&g_capscSrv, "caps:c");
+    Result rc=0;
+
+    rc = smGetService(&g_capscSrv, "caps:c");
+
+    if (R_SUCCEEDED(rc) && hosversionAtLeast(7,0,0)) rc = _capscSetShimLibraryVersion(capsGetShimLibraryVersion());
+
+    return rc;
 }
 
 void _capscCleanup(void) {
@@ -24,29 +32,66 @@ Service* capscGetServiceSession(void) {
     return &g_capscSrv;
 }
 
-static Result _capscCmdInU8NoOut(Service *srv, u32 cmd_id, u8 inval) {
+static Result _capscSetShimLibraryVersion(u64 version) {
+    if (hosversionBefore(7,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    const struct {
+        u64 version;
+        u64 AppletResourceUserId;
+    } in = { version, appletGetAppletResourceUserId() };
+    return serviceDispatchIn(&g_capscSrv, 33, in);
+}
+
+static Result _capscCmdInU8NoOut(Service *srv, u32 cmd_id, u64 inval) {
     return serviceDispatchIn(srv, cmd_id, inval);
 }
 
 Result capscNotifyAlbumStorageIsAvailable(CapsAlbumStorage storage) {
     u8 inval = storage;
-    return _capscCmdInU8NoOut(&g_capscSrv, 1001, inval);
+    return _capscCmdInU8NoOut(&g_capscSrv, 2001, inval);
 }
 
 Result capscNotifyAlbumStorageIsUnAvailable(CapsAlbumStorage storage) {
     u8 inval = storage;
-    return _capscCmdInU8NoOut(&g_capscSrv, 1002, inval);
+    return _capscCmdInU8NoOut(&g_capscSrv, 2002, inval);
+}
+
+Result capscRegisterAppletResourceUserId(void) {
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    const struct {
+        u64 AppletResourceUserId;
+        u64 version;
+    } in = { capsGetShimLibraryVersion(), appletGetAppletResourceUserId() };
+    return serviceDispatchIn(&g_capscSrv, 2011, in);
+}
+
+Result capscUnregisterAppletResourceUserId(void) {
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    const struct {
+        u64 AppletResourceUserId;
+        u64 version;
+    } in = { capsGetShimLibraryVersion(), appletGetAppletResourceUserId() };
+    return serviceDispatchIn(&g_capscSrv, 2012, in);
 }
 
 Result capscGetApplicationIdFromAruid(u64 *application_id, u64 aruid) {
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     return serviceDispatchInOut(&g_capscSrv, 2013, aruid, *application_id);
 }
 
 Result capscCheckApplicationIdRegistered(u64 application_id) {
-    return _capscCmdInU8NoOut(&g_capscSrv, 2014, application_id);
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchIn(&g_capscSrv, 2014, application_id);
 }
 
 Result capscGenerateCurrentAlbumFileId(u64 application_id, CapsAlbumFileContents contents, CapsAlbumFileId *file_id) {
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     const struct {
         u8 type;
         u64 application_id;
@@ -78,7 +123,7 @@ Result capscSaveAlbumScreenShotFileEx(CapsAlbumFileId *file_id, u64 unk_0, u64 u
     );
 }
 
-Result _capscSetOverlayThumbnailData(u32 cmd_id, CapsAlbumFileId *file_id, void* buffer, u64 size) {
+static Result _capscSetOverlayThumbnailData(u32 cmd_id, CapsAlbumFileId *file_id, void* buffer, u64 size) {
     return serviceDispatchIn(&g_capscSrv, cmd_id, *file_id,
         .buffer_attrs = { SfBufferAttr_HipcMapTransferAllowsNonSecure | SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
         .buffers = { { buffer, size }, },
@@ -99,7 +144,6 @@ Result capscSetOverlayMovieThumbnailData(CapsAlbumFileId *file_id, void* buffer,
 
 static Result _capscOpenControlSession(Service *srv_out) {
     u64 AppletResourceUserId = appletGetAppletResourceUserId();
-
     return serviceDispatchIn(&g_capscSrv, 60001, AppletResourceUserId,
         .in_send_pid = true,
         .out_num_objects = 1,
@@ -107,48 +151,39 @@ static Result _capscOpenControlSession(Service *srv_out) {
     );
 }
 
-Result _capscOpenAlbumMovieStream(u32 cmd_id, const CapsAlbumFileId *file_id, u64 *stream) {
+static Result _capscOpenAlbumMovieStream(u32 cmd_id, const CapsAlbumFileId *file_id, u64 *stream) {
     return serviceDispatchInOut(&g_capscControl, cmd_id, *file_id, *stream);
 }
 
-Result _capscControlReadDataFromAlbumMovieStream(u32 cmd_id, u64 stream, u64 offset, void* buffer, size_t size, u64 *actual_size) {
+static Result _capscControlReadDataFromAlbumMovieStream(u32 cmd_id, u64 stream, u64 offset, void* buffer, size_t size, u64 *actual_size) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-
     if (!serviceIsActive(&g_capscControl))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-
     const struct {
         u64 stream;
         u64 offset;
     } in = { stream, offset };
-
     return serviceDispatchInOut(&g_capscControl, cmd_id, in, *actual_size,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
         .buffers = { { buffer, size } },
     );
 }
 
-Result _capscControlCmdInU8NoOut(u32 cmd_id, u8 inval) {
+static Result _capscControlCmdInU8NoOut(u32 cmd_id, u8 inval) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-
     if (!serviceIsActive(&g_capscControl))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-
     return serviceDispatchIn(&g_capscControl, cmd_id, inval);
 }
 
 Result capscOpenAlbumMovieReadStream(u64 *stream, const CapsAlbumFileId *file_id) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-
     Result rc=0;
-
     if (!serviceIsActive(&g_capscControl)) rc = _capscOpenControlSession(&g_capscControl);
-
     if (R_SUCCEEDED(rc)) rc = _capscOpenAlbumMovieStream(2001, file_id, stream);
-
     return rc;
 }
 
@@ -159,10 +194,8 @@ Result capscCloseAlbumMovieStream(u64 stream) {
 Result capscGetAlbumMovieStreamSize(u64 stream, u64 *size) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-
     if (!serviceIsActive(&g_capscControl))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-
     return serviceDispatchInOut(&g_capscControl, 2003, stream, *size);
 }
 
@@ -177,10 +210,8 @@ Result capscGetAlbumMovieReadStreamBrokenReason(u64 stream) {
 Result capscGetAlbumMovieReadStreamImageDataSize(u64 stream, u64 *size) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-
     if (!serviceIsActive(&g_capscControl))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-
     return serviceDispatchInOut(&g_capscControl, 2006, stream, *size);
 }
 
@@ -257,13 +288,11 @@ Result capscReadDataFromAlbumMovieWriteStream(u64 stream, u64 offset, void* buff
     return _capscControlReadDataFromAlbumMovieStream(2421, stream, offset, buffer, size, actual_size);
 }
 
-Result _capscWriteToAlbumMovieWriteStream(u32 cmd_id, u64 stream, u64 offset, void* buffer, u64 size) {
+static Result _capscWriteToAlbumMovieWriteStream(u32 cmd_id, u64 stream, u64 offset, void* buffer, u64 size) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-
     if (!serviceIsActive(&g_capscControl))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-
     const struct {
         u64 stream;
         u64 offset;
