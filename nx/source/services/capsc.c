@@ -56,23 +56,23 @@ Result capscNotifyAlbumStorageIsUnAvailable(CapsAlbumStorage storage) {
     return _capscCmdInU8NoOut(&g_capscSrv, 2002, inval);
 }
 
-Result capscRegisterAppletResourceUserId(void) {
+Result capscRegisterAppletResourceUserId(u64 appletResourceUserId) {
     if (hosversionBefore(2,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     const struct {
         u64 version;
         u64 AppletResourceUserId;
-    } in = { capsGetShimLibraryVersion(), appletGetAppletResourceUserId() };
+    } in = { capsGetShimLibraryVersion(), appletResourceUserId };
     return serviceDispatchIn(&g_capscSrv, 2011, in);
 }
 
-Result capscUnregisterAppletResourceUserId(void) {
+Result capscUnregisterAppletResourceUserId(u64 appletResourceUserId) {
     if (hosversionBefore(2,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     const struct {
         u64 version;
         u64 AppletResourceUserId;
-    } in = { capsGetShimLibraryVersion(), appletGetAppletResourceUserId() };
+    } in = { capsGetShimLibraryVersion(), appletResourceUserId };
     return serviceDispatchIn(&g_capscSrv, 2012, in);
 }
 
@@ -100,7 +100,7 @@ Result capscGenerateCurrentAlbumFileId(u64 application_id, CapsAlbumFileContents
 }
 
 Result capscSaveAlbumScreenShotFile(CapsAlbumFileId *file_id, void* buffer, u64 buffer_size) {
-    if (hosversionAtLeast(4,0,0))
+    if (hosversionBefore(2,0,0) || hosversionAtLeast(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     return serviceDispatchIn(&g_capscSrv, 2201, file_id,
         .buffer_attrs = { SfBufferAttr_HipcMapTransferAllowsNonSecure | SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
@@ -265,7 +265,7 @@ Result capscCommitAlbumMovieWriteStreamEx(u64 stream, CapsAlbumCommitOutput *out
     if (!serviceIsActive(&g_capscControl))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    return serviceDispatchInOut(&g_capscControl, 2008, stream, *out);
+    return serviceDispatchInOut(&g_capscControl, 2406, stream, *out);
 }
 
 Result capscStartAlbumMovieWriteStreamDataSection(u64 stream) {
@@ -308,7 +308,7 @@ Result capscWriteDataToAlbumMovieWriteStream(u64 stream, u64 offset, void* buffe
 }
 
 Result capscWriteMetaToAlbumMovieWriteStream(u64 stream, u64 offset, void* buffer, u64 size) {
-    return _capscWriteToAlbumMovieWriteStream(2422, stream, offset, buffer, size);
+    return _capscWriteToAlbumMovieWriteStream(2424, stream, offset, buffer, size);
 }
 
 Result capscGetAlbumMovieWriteStreamBrokenReason(u64 stream) {
@@ -338,6 +338,3 @@ Result capscSetAlbumMovieWriteStreamDataSize(u64 stream, u64 size) {
     } in = { stream, size };
     return serviceDispatchIn(&g_capscControl, 2434, in);
 }
-
-
-
