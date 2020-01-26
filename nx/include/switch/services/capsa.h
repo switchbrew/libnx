@@ -117,6 +117,14 @@ Result capsaLoadAlbumScreenShotImage(u64 *width, u64 *height, const CapsAlbumFil
 Result capsaLoadAlbumScreenShotThumbnailImage(u64 *width, u64 *height, const CapsAlbumFileId *file_id, void* image, u64 image_size, void* workbuf, u64 workbuf_size);
 
 /**
+ * @brief Load an \ref CapsAlbumEntry from a \ref CapsApplicationAlbumEntry
+ * @note Only available on [2.0.0+].
+ * @param[out] entry \ref CapsAlbumEntry
+ * @param[in] application_entry \ref CapsApplicationAlbumEntry
+ */
+Result capsaGetAlbumEntryFromApplicationAlbumEntry(CapsAlbumEntry *entry, const CapsApplicationAlbumEntry *application_entry);
+
+/**
  * @brief Load the ScreenShotImage for the specified AlbumFile.
  * @note Only available on [3.0.0+].
  * @param[out] width Output image width. Optional, can be NULL.
@@ -305,6 +313,7 @@ Result capsaRefreshAlbumCache(CapsAlbumStorage storage);
 
 /**
  * @brief Gets the AlbumCache of the specified AlbumStorage.
+ * @note Stubbed on [4.0.0+].
  * @note use \ref capsaGetAlbumCacheEx instead.
  * @param[in] storage \ref CapsAlbumStorage
  * @param[out] cache \ref CapsAlbumCache
@@ -313,12 +322,20 @@ Result capsaGetAlbumCache(CapsAlbumStorage storage, CapsAlbumCache *cache);
 
 /**
  * @brief Gets the AlbumCache for the specified type of the specified AlbumStorage.
- * @note Stubbed on [4.0.0+].
  * @param[in] storage \ref CapsAlbumStorage
  * @param[in] contents \ref CapsAlbumFileContents
  * @param[out] cache \ref CapsAlbumCache
  */
 Result capsaGetAlbumCacheEx(CapsAlbumStorage storage, CapsAlbumFileContents contents, CapsAlbumCache *cache);
+
+/**
+ * @brief Load an \ref CapsAlbumEntry from a \ref CapsApplicationAlbumEntry
+ * @note Only available on [2.0.0+].
+ * @note despite this having aruid in the name \ref capsaGetAlbumEntryFromApplicationAlbumEntry also sends it.
+ * @param[out] entry \ref CapsAlbumEntry
+ * @param[in] application_entry \ref CapsApplicationAlbumEntry
+ */
+Result capsaGetAlbumEntryFromApplicationAlbumEntryAruid(CapsAlbumEntry *entry, const CapsApplicationAlbumEntry *application_entry);
 
 /**
  * @brief Opens an AlbumMovieStream.

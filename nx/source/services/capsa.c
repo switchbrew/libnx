@@ -112,6 +112,16 @@ Result capsaLoadAlbumScreenShotThumbnailImage(u64 *width, u64 *height, const Cap
     return _capsaLoadAlbumScreenshot(width, height, file_id, image, image_size, workbuf, workbuf_size, 10);
 }
 
+Result capsaGetAlbumEntryFromApplicationAlbumEntry(CapsAlbumEntry *entry, const CapsApplicationAlbumEntry *application_entry) {
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    const struct {
+        CapsApplicationAlbumEntry application_entry;
+        u64 aruid;
+    } in = { *application_entry, appletGetAppletResourceUserId() };
+    return serviceDispatchInOut(&g_capsaSrv, 11, in, *entry);
+}
+
 static Result _capsaLoadAlbumScreenshotEx(u64 *width, u64 *height, const CapsAlbumFileId *file_id, const CapsScreenShotDecodeOption *opts, void* image, u64 image_size, void* workbuf, u64 workbuf_size, u32 cmd_id) {
     if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
@@ -320,6 +330,16 @@ Result capsaGetAlbumCacheEx(CapsAlbumStorage storage, CapsAlbumFileContents cont
         u8 contents;
     } in = { storage, contents };
     return serviceDispatchInOut(&g_capsaSrv, 8013, in, *cache);
+}
+
+Result capsaGetAlbumEntryFromApplicationAlbumEntryAruid(CapsAlbumEntry *entry, const CapsApplicationAlbumEntry *application_entry) {
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    const struct {
+        CapsApplicationAlbumEntry application_entry;
+        u64 aruid;
+    } in = { *application_entry, appletGetAppletResourceUserId() };
+    return serviceDispatchInOut(&g_capsaSrv, 8021, in, *entry, .in_send_pid = true);
 }
 
 static Result _capsaOpenAccessorSession(Service *srv_out) {
