@@ -187,9 +187,10 @@ Result capsaGetAlbumMountResult(CapsAlbumStorage storage);
  * @brief Returns the AlbumUsage for a specified \ref CapsAlbumStorage.
  * @note Only available on [4.0.0+].
  * @param[in] storage \ref CapsAlbumStorage
+ * @param[in] flags \ref CapsAlbumFileContentsFlag
  * @param[out] out \ref CapsAlbumUsage16
  */
-Result capsaGetAlbumUsage16(CapsAlbumStorage storage, CapsAlbumUsage16 *out);
+Result capsaGetAlbumUsage16(CapsAlbumStorage storage, u8 flags, CapsAlbumUsage16 *out);
 
 /**
  * @brief Returns the start and end of the Applet Id range.

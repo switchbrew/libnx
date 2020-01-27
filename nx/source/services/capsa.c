@@ -193,11 +193,19 @@ Result capsaGetAlbumMountResult(CapsAlbumStorage storage) {
     return _capsaCmdInU8NoOut(&g_capsaSrv, storage, 16);
 }
 
-Result capsaGetAlbumUsage16(CapsAlbumStorage storage, CapsAlbumUsage16 *out) {
+Result capsaGetAlbumUsage16(CapsAlbumStorage storage, u8 flags, CapsAlbumUsage16 *out) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    u8 inval = storage;
-    return serviceDispatchInOut(&g_capsaSrv, 17, inval, *out);
+    struct {
+        u8 storage;
+        u8 pad_x1[7];
+        u8 flags;
+        u8 pad_x9[7];
+    } in = { storage, {0}, flags, {0} };
+    return serviceDispatchIn(&g_capsaSrv, 17, in,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out | SfBufferAttr_FixedSize, },
+        .buffers = { { out, sizeof(CapsAlbumUsage16) } },
+    );
 }
 
 Result capsaGetMinMaxAppletId(bool *success, u64* min, u64* max) {
@@ -238,7 +246,7 @@ Result capsaGetAlbumFileListEx0(CapsAlbumStorage storage, u8 flags, u64 *out, Ca
     struct {
         u8 storage;
         u8 pad_x1[7];
-        u8 contents;
+        u8 flags;
         u8 pad_x9[7];
     } in = { storage, {0}, flags, {0} };
     return serviceDispatchInOut(&g_capsaSrv, 101, in, *out,
@@ -319,7 +327,8 @@ Result capsaRefreshAlbumCache(CapsAlbumStorage storage) {
 }
 
 Result capsaGetAlbumCache(CapsAlbumStorage storage, CapsAlbumCache *cache) {
-    return serviceDispatchInOut(&g_capsaSrv, 8012, storage, *cache);
+    u8 inval = storage;
+    return serviceDispatchInOut(&g_capsaSrv, 8012, inval, *cache);
 }
 
 Result capsaGetAlbumCacheEx(CapsAlbumStorage storage, CapsAlbumFileContents contents, CapsAlbumCache *cache) {

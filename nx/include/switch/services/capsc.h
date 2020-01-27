@@ -47,7 +47,7 @@ Result capscStartAlbumMovieWriteStreamMetaSection(u64 stream);
 Result capscEndAlbumMovieWriteStreamMetaSection(u64 stream);
 Result capscReadDataFromAlbumMovieWriteStream(u64 stream, u64 offset, void* buffer, u64 size, u64 *actual_size);
 Result capscWriteDataToAlbumMovieWriteStream(u64 stream, u64 offset, void* buffer, u64 size);
-Result capscWriteMetaToAlbumMovieWriteStream();
+Result capscWriteMetaToAlbumMovieWriteStream(u64 stream, u64 offset, void* buffer, u64 size);
 Result capscGetAlbumMovieWriteStreamBrokenReason(u64 stream);
 Result capscGetAlbumMovieWriteStreamDataSize(u64 stream, u64 *size);
 Result capscSetAlbumMovieWriteStreamDataSize(u64 stream, u64 size);
