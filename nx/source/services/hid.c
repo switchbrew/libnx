@@ -40,7 +40,7 @@ static TransferMemory g_sevenSixAxisSensorTmem1;
 
 static RwLock g_hidLock;
 
-static Result _hidCreateAppletResource(Service* srv, Service* srv_out, u64 AppletResourceUserId);
+static Result _hidCreateAppletResource(Service* srv, Service* srv_out);
 static Result _hidGetSharedMemoryHandle(Service* srv, Handle* handle_out);
 
 static Result _hidActivateNpad(void);
@@ -65,15 +65,11 @@ Result _hidInitialize(void) {
     Result rc=0;
     Handle sharedmem_handle;
 
-    // If this failed (for example because we're a sysmodule) AppletResourceUserId stays zero
-    u64 AppletResourceUserId = 0;
-    appletGetAppletResourceUserId(&AppletResourceUserId);
-
     rc = smGetService(&g_hidSrv, "hid");
     if (R_FAILED(rc))
         return rc;
 
-    rc = _hidCreateAppletResource(&g_hidSrv, &g_hidIAppletResource, AppletResourceUserId);
+    rc = _hidCreateAppletResource(&g_hidSrv, &g_hidIAppletResource);
 
     if (R_SUCCEEDED(rc))
         rc = _hidGetSharedMemoryHandle(&g_hidIAppletResource, &sharedmem_handle);
@@ -649,12 +645,7 @@ static Result _hidCmdGetSession(Service* srv_out, u32 cmd_id) {
 }
 
 static Result _hidCmdWithNoInput(u32 cmd_id) {
-    Result rc=0;
-    u64 AppletResourceUserId;
-
-    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
-    if (R_FAILED(rc))
-        AppletResourceUserId = 0;
+    u64 AppletResourceUserId = appletGetAppletResourceUserId();
 
     return serviceDispatchIn(&g_hidSrv, cmd_id, AppletResourceUserId,
         .in_send_pid = true,
@@ -674,17 +665,10 @@ static Result _hidCmdInU32NoOut(Service* srv, u32 inval, u32 cmd_id) {
 }
 
 static Result _hidCmdWithInputU32(u32 inval, u32 cmd_id) {
-    Result rc;
-    u64 AppletResourceUserId;
-
-    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
-    if (R_FAILED(rc))
-        AppletResourceUserId = 0;
-
     const struct {
         u32 inval;
         u64 AppletResourceUserId;
-    } in = { inval, AppletResourceUserId };
+    } in = { inval, appletGetAppletResourceUserId() };
 
     return serviceDispatchIn(&g_hidSrv, cmd_id, in,
         .in_send_pid = true,
@@ -692,17 +676,10 @@ static Result _hidCmdWithInputU32(u32 inval, u32 cmd_id) {
 }
 
 static Result _hidCmdWithInputU64(u64 inval, u32 cmd_id) {
-    Result rc;
-    u64 AppletResourceUserId;
-
-    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
-    if (R_FAILED(rc))
-        AppletResourceUserId = 0;
-
     const struct {
         u64 AppletResourceUserId;
         u64 inval;
-    } in = { AppletResourceUserId, inval };
+    } in = { appletGetAppletResourceUserId(), inval };
 
     return serviceDispatchIn(&g_hidSrv, cmd_id, in,
         .in_send_pid = true,
@@ -710,12 +687,7 @@ static Result _hidCmdWithInputU64(u64 inval, u32 cmd_id) {
 }
 
 static Result _hidCmdOutU32(u32 *out, u32 cmd_id) {
-    Result rc;
-    u64 AppletResourceUserId;
-
-    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
-    if (R_FAILED(rc))
-        AppletResourceUserId = 0;
+    u64 AppletResourceUserId = appletGetAppletResourceUserId();
 
     return serviceDispatchInOut(&g_hidSrv, cmd_id, AppletResourceUserId, *out,
         .in_send_pid = true,
@@ -723,12 +695,7 @@ static Result _hidCmdOutU32(u32 *out, u32 cmd_id) {
 }
 
 static Result _hidCmdOutU64(u64 *out, u32 cmd_id) {
-    Result rc;
-    u64 AppletResourceUserId;
-
-    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
-    if (R_FAILED(rc))
-        AppletResourceUserId = 0;
+    u64 AppletResourceUserId = appletGetAppletResourceUserId();
 
     return serviceDispatchInOut(&g_hidSrv, cmd_id, AppletResourceUserId, *out,
         .in_send_pid = true,
@@ -746,7 +713,9 @@ static Result _hidCmdNoInOutBool(bool *out, u32 cmd_id) {
     return rc;
 }
 
-static Result _hidCreateAppletResource(Service* srv, Service* srv_out, u64 AppletResourceUserId) {
+static Result _hidCreateAppletResource(Service* srv, Service* srv_out) {
+    u64 AppletResourceUserId = appletGetAppletResourceUserId();
+
     return serviceDispatchIn(srv, 0, AppletResourceUserId,
         .in_send_pid = true,
         .out_num_objects = 1,
@@ -762,20 +731,13 @@ Result hidSetSixAxisSensorFusionParameters(u32 SixAxisSensorHandle, float unk0, 
     if (unk0 < 0.0f || unk0 > 1.0f)
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
-    Result rc;
-    u64 AppletResourceUserId;
-
-    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
-    if (R_FAILED(rc))
-        AppletResourceUserId = 0;
-
     const struct {
         u32 SixAxisSensorHandle;
         float unk0;
         float unk1;
         u32 pad;
         u64 AppletResourceUserId;
-    } in = { SixAxisSensorHandle, unk0, unk1, 0, AppletResourceUserId };
+    } in = { SixAxisSensorHandle, unk0, unk1, 0, appletGetAppletResourceUserId() };
 
     return serviceDispatchIn(&g_hidSrv, 70, in,
         .in_send_pid = true,
@@ -784,17 +746,12 @@ Result hidSetSixAxisSensorFusionParameters(u32 SixAxisSensorHandle, float unk0, 
 
 Result hidGetSixAxisSensorFusionParameters(u32 SixAxisSensorHandle, float *unk0, float *unk1) {
     Result rc;
-    u64 AppletResourceUserId;
-
-    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
-    if (R_FAILED(rc))
-        AppletResourceUserId = 0;
 
     const struct {
         u32 SixAxisSensorHandle;
         u32 pad;
         u64 AppletResourceUserId;
-    } in = { SixAxisSensorHandle, 0, AppletResourceUserId };
+    } in = { SixAxisSensorHandle, 0, appletGetAppletResourceUserId() };
 
     struct {
         float unk0;
@@ -813,6 +770,39 @@ Result hidResetSixAxisSensorFusionParameters(u32 SixAxisSensorHandle) {
     return _hidCmdWithInputU32(SixAxisSensorHandle, 72);
 }
 
+Result hidSetGyroscopeZeroDriftMode(u32 SixAxisSensorHandle, HidGyroscopeZeroDriftMode mode) {
+    const struct {
+        u32 SixAxisSensorHandle;
+        u32 mode;
+        u64 AppletResourceUserId;
+    } in = { SixAxisSensorHandle, mode, appletGetAppletResourceUserId() };
+
+    return serviceDispatchIn(&g_hidSrv, 79, in,
+        .in_send_pid = true,
+    );
+}
+
+Result hidGetGyroscopeZeroDriftMode(u32 SixAxisSensorHandle, HidGyroscopeZeroDriftMode *mode) {
+    Result rc;
+
+    const struct {
+        u32 SixAxisSensorHandle;
+        u32 pad;
+        u64 AppletResourceUserId;
+    } in = { SixAxisSensorHandle, 0, appletGetAppletResourceUserId() };
+
+    u32 tmp=0;
+    rc = serviceDispatchInOut(&g_hidSrv, 80, in, tmp,
+        .in_send_pid = true,
+    );
+    if (R_SUCCEEDED(rc) && mode) *mode = tmp;
+    return rc;
+}
+
+Result hidResetGyroscopeZeroDriftMode(u32 SixAxisSensorHandle) {
+    return _hidCmdWithInputU32(SixAxisSensorHandle, 81);
+}
+
 Result hidSetSupportedNpadStyleSet(HidControllerType type) {
     return _hidCmdWithInputU32(type, 100);
 }
@@ -825,15 +815,10 @@ Result hidGetSupportedNpadStyleSet(HidControllerType *type) {
 }
 
 Result hidSetSupportedNpadIdType(HidControllerID *buf, size_t count) {
-    Result rc;
-    u64 AppletResourceUserId;
+    u64 AppletResourceUserId = appletGetAppletResourceUserId();
     size_t i;
     u32 tmpval=0;
     u32 tmpbuf[10];
-
-    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
-    if (R_FAILED(rc))
-        AppletResourceUserId = 0;
 
     if (count > 10)
         return MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
@@ -880,18 +865,13 @@ static Result _hidDeactivateNpad(void) {
 Result hidAcquireNpadStyleSetUpdateEventHandle(HidControllerID id, Event* out_event, bool autoclear) {
     Result rc;
     Handle tmp_handle = INVALID_HANDLE;
-    u64 AppletResourceUserId;
-
-    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
-    if (R_FAILED(rc))
-        AppletResourceUserId = 0;
 
     const struct {
         u32 id;
         u32 pad;
         u64 AppletResourceUserId;
         u64 event_ptr; // Official sw sets this to a ptr, which the sysmodule doesn't seem to use.
-    } in = { hidControllerIDToOfficial(id), 0, AppletResourceUserId, 0 };
+    } in = { hidControllerIDToOfficial(id), 0, appletGetAppletResourceUserId(), 0 };
 
     rc = serviceDispatchIn(&g_hidSrv, 106, in,
         .in_send_pid = true,
@@ -922,17 +902,10 @@ Result hidSetNpadJoyAssignmentModeDual(HidControllerID id) {
 }
 
 Result hidMergeSingleJoyAsDualJoy(HidControllerID id0, HidControllerID id1) {
-    Result rc;
-    u64 AppletResourceUserId;
-
-    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
-    if (R_FAILED(rc))
-        AppletResourceUserId = 0;
-
     const struct {
         u32 id0, id1;
         u64 AppletResourceUserId;
-    } in = { hidControllerIDToOfficial(id0), hidControllerIDToOfficial(id1), AppletResourceUserId };
+    } in = { hidControllerIDToOfficial(id0), hidControllerIDToOfficial(id1), appletGetAppletResourceUserId() };
 
     return serviceDispatchIn(&g_hidSrv, 125, in,
         .in_send_pid = true,
@@ -952,19 +925,12 @@ Result hidGetVibrationDeviceInfo(const u32 *VibrationDeviceHandle, HidVibrationD
 }
 
 Result hidSendVibrationValue(const u32 *VibrationDeviceHandle, HidVibrationValue *VibrationValue) {
-    Result rc;
-    u64 AppletResourceUserId;
-
-    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
-    if (R_FAILED(rc))
-        AppletResourceUserId = 0;
-
     const struct {
         u32 VibrationDeviceHandle;
         HidVibrationValue VibrationValue;
         u32 pad;
         u64 AppletResourceUserId;
-    } in = { *VibrationDeviceHandle, *VibrationValue, 0, AppletResourceUserId };
+    } in = { *VibrationDeviceHandle, *VibrationValue, 0, appletGetAppletResourceUserId() };
 
     return serviceDispatchIn(&g_hidSrv, 201, in,
         .in_send_pid = true,
@@ -972,17 +938,10 @@ Result hidSendVibrationValue(const u32 *VibrationDeviceHandle, HidVibrationValue
 }
 
 Result hidGetActualVibrationValue(const u32 *VibrationDeviceHandle, HidVibrationValue *VibrationValue) {
-    Result rc;
-    u64 AppletResourceUserId;
-
-    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
-    if (R_FAILED(rc))
-        AppletResourceUserId = 0;
-
     const struct {
         u32 VibrationDeviceHandle;
         u64 AppletResourceUserId;
-    } in = { *VibrationDeviceHandle, AppletResourceUserId };
+    } in = { *VibrationDeviceHandle, appletGetAppletResourceUserId() };
 
     return serviceDispatchInOut(&g_hidSrv, 202, in, *VibrationValue,
         .in_send_pid = true,
@@ -998,12 +957,7 @@ Result hidIsVibrationPermitted(bool *flag) {
 }
 
 Result hidSendVibrationValues(const u32 *VibrationDeviceHandles, HidVibrationValue *VibrationValues, s32 count) {
-    Result rc;
-    u64 AppletResourceUserId;
-
-    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
-    if (R_FAILED(rc))
-        AppletResourceUserId = 0;
+    u64 AppletResourceUserId = appletGetAppletResourceUserId();
 
     return serviceDispatchIn(&g_hidSrv, 206, AppletResourceUserId,
         .buffer_attrs = {
@@ -1022,16 +976,11 @@ Result hidIsVibrationDeviceMounted(const u32 *VibrationDeviceHandle, bool *flag)
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     Result rc;
-    u64 AppletResourceUserId;
-
-    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
-    if (R_FAILED(rc))
-        AppletResourceUserId = 0;
 
     const struct {
         u32 VibrationDeviceHandle;
         u64 AppletResourceUserId;
-    } in = { *VibrationDeviceHandle, AppletResourceUserId };
+    } in = { *VibrationDeviceHandle, appletGetAppletResourceUserId() };
 
     u8 tmp=0;
     rc = serviceDispatchInOut(&g_hidSrv, 211, in, tmp,
@@ -1179,18 +1128,11 @@ Result hidStopSevenSixAxisSensor(void) {
 }
 
 static Result _hidInitializeSevenSixAxisSensor(TransferMemory *tmem0, TransferMemory *tmem1) {
-    Result rc;
-    u64 AppletResourceUserId;
-
-    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
-    if (R_FAILED(rc))
-        AppletResourceUserId = 0;
-
     const struct {
         u64 AppletResourceUserId;
         u64 size0;
         u64 size1;
-    } in = { AppletResourceUserId, tmem0->size, tmem1->size };
+    } in = { appletGetAppletResourceUserId(), tmem0->size, tmem1->size };
 
     return serviceDispatchIn(&g_hidSrv, 306, in,
         .in_send_pid = true,
@@ -1255,17 +1197,10 @@ Result hidSetSevenSixAxisSensorFusionStrength(float strength) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    Result rc;
-    u64 AppletResourceUserId;
-
-    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
-    if (R_FAILED(rc))
-        AppletResourceUserId = 0;
-
     const struct {
         float strength;
         u64 AppletResourceUserId;
-    } in = { strength, AppletResourceUserId };
+    } in = { strength, appletGetAppletResourceUserId() };
 
     return serviceDispatchIn(&g_hidSrv, 308, in,
         .in_send_pid = true,
@@ -1276,12 +1211,7 @@ Result hidGetSevenSixAxisSensorFusionStrength(float *strength) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    Result rc;
-    u64 AppletResourceUserId;
-
-    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
-    if (R_FAILED(rc))
-        AppletResourceUserId = 0;
+    u64 AppletResourceUserId = appletGetAppletResourceUserId();
 
     return serviceDispatchInOut(&g_hidSrv, 309, AppletResourceUserId, *strength,
         .in_send_pid = true,

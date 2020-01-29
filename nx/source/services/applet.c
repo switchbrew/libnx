@@ -1169,12 +1169,8 @@ Result appletSetApplicationAlbumUserData(const void* buffer, size_t size) {
 
 IPC_MAKE_CMD_IMPL(static Result _appletGetAppletResourceUserId(u64 *out), &g_appletIWindowController, 1, _appletCmdNoInOutU64, out)
 
-Result appletGetAppletResourceUserId(u64 *out) {
-    if (!serviceIsActive(&g_appletSrv))
-        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-
-    *out = g_appletResourceUserId;
-    return 0;
+u64 appletGetAppletResourceUserId(void) {
+    return g_appletResourceUserId;
 }
 
 IPC_MAKE_CMD_IMPL_HOSVER(Result appletGetAppletResourceUserIdOfCallerApplet(u64 *out), &g_appletIWindowController, 2,  _appletCmdNoInOutU64,  (6,0,0), out)
@@ -1432,11 +1428,7 @@ static Result _appletCreateLibraryApplet(Service* srv_out, AppletId id, LibApple
 }
 
 static Result _appletGetIndirectLayerConsumerHandle(Service* srv, u64 *out) {
-    Result rc;
-    u64 AppletResourceUserId;
-
-    rc = appletGetAppletResourceUserId(&AppletResourceUserId);
-    if (R_FAILED(rc)) return rc;
+    u64 AppletResourceUserId = appletGetAppletResourceUserId();
 
     serviceAssumeDomain(srv);
     return serviceDispatchInOut(srv, 160, AppletResourceUserId, *out,

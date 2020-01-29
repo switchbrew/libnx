@@ -118,7 +118,7 @@ static void _spl##name##Cleanup() {                             \
         splExit();                                              \
     }                                                           \
 }                                                               \
-Service* _spl##name##GetServiceSession() {                      \
+Service* spl##name##GetServiceSession() {                      \
     return _splGet##name##Srv();                                \
 }
 

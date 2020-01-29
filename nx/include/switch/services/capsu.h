@@ -98,9 +98,9 @@ Result capsuGetAlbumFileSize(const CapsApplicationAlbumFileEntry *entry, u64 *si
  * @param[in] userdata_maxsize Max size of the userdata buffer. Optional, can be 0.
  * @param[out] userdata_size Userdata size field, clamped to max size sizeof(CapsApplicationData::userdata) when needed.
  * @param[out] image RGBA8 image output buffer.
- * @param[out] image_size Image buffer size, should be at least large enough for RGBA8 1280x720.
+ * @param[in] image_size Image buffer size, should be at least large enough for RGBA8 1280x720.
  * @param[out] workbuf Work buffer, cleared to 0 by the cmd before it returns.
- * @param[out] workbuf_size Work buffer size, must be at least the size of the JPEG within the AlbumFile.
+ * @param[in] workbuf_size Work buffer size, must be at least the size of the JPEG within the AlbumFile.
  * @param[in] entry \ref CapsApplicationAlbumFileEntry
  * @param[in] option \ref CapsScreenShotDecodeOption
  */
@@ -115,9 +115,9 @@ Result capsuLoadAlbumScreenShotImage(s32 *width, s32 *height, CapsScreenShotAttr
  * @param[in] userdata_maxsize Max size of the userdata buffer. Optional, can be 0.
  * @param[out] userdata_size Userdata size field, clamped to max size sizeof(CapsApplicationData::userdata) when needed.
  * @param[out] image RGBA8 image output buffer.
- * @param[out] image_size Image buffer size, should be at least large enough for RGBA8 320x180.
+ * @param[in] image_size Image buffer size, should be at least large enough for RGBA8 320x180.
  * @param[out] workbuf Work buffer, cleared to 0 by the cmd before it returns.
- * @param[out] workbuf_size Work buffer size, must be at least the size of the JPEG within the AlbumFile.
+ * @param[in] workbuf_size Work buffer size, must be at least the size of the JPEG within the AlbumFile.
  * @param[in] entry \ref CapsApplicationAlbumFileEntry
  * @param[in] option \ref CapsScreenShotDecodeOption
  */

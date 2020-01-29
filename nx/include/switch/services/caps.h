@@ -18,13 +18,13 @@ typedef enum {
 
 /// AlbumReportOption
 typedef enum {
-    AlbumReportOption_Disable = 0,             ///< Don't display the screenshot-taken Overlay-applet notification.
-    AlbumReportOption_Enable = 1,              ///< Display the screenshot-taken Overlay notification.
+    AlbumReportOption_Disable = 0,              ///< Don't display the screenshot-taken Overlay-applet notification.
+    AlbumReportOption_Enable = 1,               ///< Display the screenshot-taken Overlay notification.
 } AlbumReportOption;
 
 typedef enum {
-    CapsAlbumStorage_Nand = 0,        ///< Nand
-    CapsAlbumStorage_Sd   = 1,        ///< Sd
+    CapsAlbumStorage_Nand = 0,                  ///< Nand
+    CapsAlbumStorage_Sd   = 1,                  ///< Sd
 } CapsAlbumStorage;
 
 /// ContentType
@@ -70,38 +70,38 @@ typedef struct {
 
 /// AlbumFileDateTime. This corresponds to each field in the Album entry filename, prior to the "-": "YYYYMMDDHHMMSSII".
 typedef struct {
-    u16 year;                                    ///< Year.
-    u8 month;                                    ///< Month.
-    u8 day;                                      ///< Day of the month.
-    u8 hour;                                     ///< Hour.
-    u8 minute;                                   ///< Minute.
-    u8 second;                                   ///< Second.
-    u8 id;                                       ///< Unique ID for when there's multiple Album files with the same timestamp.
+    u16 year;                                   ///< Year.
+    u8 month;                                   ///< Month.
+    u8 day;                                     ///< Day of the month.
+    u8 hour;                                    ///< Hour.
+    u8 minute;                                  ///< Minute.
+    u8 second;                                  ///< Second.
+    u8 id;                                      ///< Unique ID for when there's multiple Album files with the same timestamp.
 } CapsAlbumFileDateTime;
 
 /// AlbumEntryId
 typedef struct {
-    u64 application_id;                          ///< ApplicationId
-    CapsAlbumFileDateTime datetime;              ///< \ref CapsAlbumFileDateTime
-    u8 storage;                                  ///< \ref CapsAlbumStorage
-    u8 content;                                  ///< \ref CapsAlbumFileContents
-    u32 pad_x12;                                 ///< Set to 0 by official software
-    u16 pad_x16;                                 ///< Set to 0 by official software
+    u64 application_id;                         ///< ApplicationId
+    CapsAlbumFileDateTime datetime;             ///< \ref CapsAlbumFileDateTime
+    u8 storage;                                 ///< \ref CapsAlbumStorage
+    u8 content;                                 ///< \ref CapsAlbumFileContents
+    u32 pad_x12;                                ///< Set to 0 by official software
+    u16 pad_x16;                                ///< Set to 0 by official software
 } PACKED CapsAlbumFileId;
 
 /// AlbumEntry
 typedef struct {
-    u64 size;                                    ///< Size.
-    CapsAlbumFileId file_id;                     ///< \ref CapsAlbumFileId
+    u64 size;                                   ///< Size.
+    CapsAlbumFileId file_id;                    ///< \ref CapsAlbumFileId
 } CapsAlbumEntry;
 
 /// ApplicationAlbumEntry
 typedef struct {
     union {
-        u8 data[0x20];                           ///< Data.
+        u8 data[0x20];                          ///< Data.
 
         struct {
-            u8 unk_x0[0x20];                     ///< Unknown.
+            u8 unk_x0[0x20];                    ///< Unknown.
         } v0; ///< Pre-7.0.0
 
         struct {
@@ -115,15 +115,15 @@ typedef struct {
 
 /// ApplicationAlbumFileEntry
 typedef struct {
-    CapsApplicationAlbumEntry entry;             ///< \ref CapsApplicationAlbumEntry
-    CapsAlbumFileDateTime datetime;              ///< \ref CapsAlbumFileDateTime
-    u64 unk_x28;                                 ///< Unknown.
+    CapsApplicationAlbumEntry entry;            ///< \ref CapsApplicationAlbumEntry
+    CapsAlbumFileDateTime datetime;             ///< \ref CapsAlbumFileDateTime
+    u64 unk_x28;                                ///< Unknown.
 } CapsApplicationAlbumFileEntry;
 
 /// ApplicationData
 typedef struct {
-    u8 userdata[0x400];                          ///< UserData.
-    u32 size;                                    ///< UserData size.
+    u8 userdata[0x400];                         ///< UserData.
+    u32 size;                                   ///< UserData size.
 } CapsApplicationData;
 
 /// AlbumFileContents
@@ -140,24 +140,30 @@ typedef enum {
 } CapsAlbumContentsUsageFlag;
 
 typedef struct {
-    s64 count;
-    s64 size;
-    u32 flags;
-    u8 file_contents;
-    u8 pad_x15[0x3];
+    s64 count;                                            ///< Count.
+    s64 size;                                             ///< Size. Used storage space.
+    u32 flags;                                            ///< \ref CapsAlbumContentsUsageFlag
+    u8 file_contents;                                     ///< \ref CapsAlbumFileContents
+    u8 pad_x15[0x3];                                      ///< Unused
 } CapsAlbumContentsUsage;
 
 typedef struct {
-    CapsAlbumContentsUsage usages[2];
+    CapsAlbumContentsUsage usages[2];                     ///< \ref CapsAlbumContentsUsage
 } CapsAlbumUsage2;
 
 typedef struct {
-    CapsAlbumContentsUsage usages[3];
+    CapsAlbumContentsUsage usages[3];                     ///< \ref CapsAlbumContentsUsage
 } CapsAlbumUsage3;
 
 typedef struct {
-    CapsAlbumContentsUsage usages[16];
+    CapsAlbumContentsUsage usages[16];                    ///< \ref CapsAlbumContentsUsage
 } CapsAlbumUsage16;
+
+/// OverlayThumbnailData
+typedef struct {
+    CapsAlbumFileId file_id;                              ///< \ref CapsAlbumFileId
+    u64 size;                                             ///< Size.
+} CapsOverlayThumbnailData;
 
 /// UserIdList
 typedef struct {
@@ -174,6 +180,26 @@ typedef struct {
     CapsApplicationData appdata;                          ///< \ref CapsApplicationData
     u8 reserved[0xac];                                    ///< Unused.
 } CapsLoadAlbumScreenShotImageOutputForApplication;
+
+/// LoadAlbumScreenShotImageOutput
+typedef struct {
+    s64 width;                                            ///< Width. Official sw copies this to a s32 output field.
+    s64 height;                                           ///< Height. Official sw copies this to a s32 output field.
+    CapsScreenShotAttribute attr;                         ///< \ref CapsScreenShotAttribute
+    u8 unk_x50[0x400];                                    ///< Unused.
+} CapsLoadAlbumScreenShotImageOutput;
+
+/// AlbumFileContentsFlag
+typedef enum {
+    CapsAlbumFileContentsFlag_ScreenShot = BIT(0),        ///< Query for ScreenShot files.
+    CapsAlbumFileContentsFlag_Movie      = BIT(1),        ///< Query for Movie files.
+} CapsAlbumFileContentsFlag;
+
+/// AlbumCache
+typedef struct {
+    u64 count;                                            ///< Count
+    u8 unk_x8[8];                                         ///< Unknown
+} CapsAlbumCache;
 
 /// Gets the ShimLibraryVersion.
 u64 capsGetShimLibraryVersion(void);

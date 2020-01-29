@@ -47,13 +47,10 @@ static Result _capsuSetShimLibraryVersion(u64 version) {
     if (hosversionBefore(7,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    u64 AppletResourceUserId = 0;
-    appletGetAppletResourceUserId(&AppletResourceUserId);
-
     const struct {
         u64 version;
         u64 AppletResourceUserId;
-    } in = { version, AppletResourceUserId };
+    } in = { version, appletGetAppletResourceUserId() };
 
     return serviceDispatchIn(&g_capsuSrv, 32, in,
         .in_send_pid = true,
@@ -61,16 +58,13 @@ static Result _capsuSetShimLibraryVersion(u64 version) {
 }
 
 static Result _capsuGetAlbumFileList0AafeAruidDeprecated(void* entries, size_t entrysize, s32 count, u8 type, u64 start_timestamp, u64 end_timestamp, s32 *total_entries) {
-    u64 AppletResourceUserId = 0;
-    appletGetAppletResourceUserId(&AppletResourceUserId);
-
     const struct {
         u8 type;
         u8 pad[7];
         u64 start_timestamp;
         u64 end_timestamp;
         u64 AppletResourceUserId;
-    } in = { type, {0}, start_timestamp, end_timestamp, AppletResourceUserId };
+    } in = { type, {0}, start_timestamp, end_timestamp, appletGetAppletResourceUserId() };
 
     u64 total_out=0;
     Result rc = serviceDispatchInOut(&g_capsuSrv, 102, in, total_out,
@@ -83,15 +77,12 @@ static Result _capsuGetAlbumFileList0AafeAruidDeprecated(void* entries, size_t e
 }
 
 static Result _capsuDeleteAlbumFileByAruid(u32 cmd_id, u8 type, const CapsApplicationAlbumFileEntry *entry) {
-    u64 AppletResourceUserId = 0;
-    appletGetAppletResourceUserId(&AppletResourceUserId);
-
     const struct {
         u8 type;
         u8 pad[7];
         CapsApplicationAlbumFileEntry entry;
         u64 AppletResourceUserId;
-    } in = { type, {0}, *entry, AppletResourceUserId };
+    } in = { type, {0}, *entry, appletGetAppletResourceUserId() };
 
     return serviceDispatchIn(&g_capsuSrv, 103, in,
         .in_send_pid = true,
@@ -99,13 +90,10 @@ static Result _capsuDeleteAlbumFileByAruid(u32 cmd_id, u8 type, const CapsApplic
 }
 
 static Result _capsuGetAlbumFileSizeByAruid(const CapsApplicationAlbumFileEntry *entry, u64 *size) {
-    u64 AppletResourceUserId = 0;
-    appletGetAppletResourceUserId(&AppletResourceUserId);
-
     const struct {
         CapsApplicationAlbumFileEntry entry;
         u64 AppletResourceUserId;
-    } in = { *entry, AppletResourceUserId };
+    } in = { *entry, appletGetAppletResourceUserId() };
 
     return serviceDispatchInOut(&g_capsuSrv, 104, in, *size,
         .in_send_pid = true,
@@ -113,15 +101,12 @@ static Result _capsuGetAlbumFileSizeByAruid(const CapsApplicationAlbumFileEntry 
 }
 
 static Result _capsuPrecheckToCreateContentsByAruid(u8 type, u64 unk) {
-    u64 AppletResourceUserId = 0;
-    appletGetAppletResourceUserId(&AppletResourceUserId);
-
     const struct {
         u8 type;
         u8 pad[7];
         u64 unk;
         u64 AppletResourceUserId;
-    } in = { type, {0}, unk, AppletResourceUserId };
+    } in = { type, {0}, unk, appletGetAppletResourceUserId() };
 
     return serviceDispatchIn(&g_capsuSrv, 130, in,
         .in_send_pid = true,
@@ -129,14 +114,11 @@ static Result _capsuPrecheckToCreateContentsByAruid(u8 type, u64 unk) {
 }
 
 static Result _capsuLoadAlbumScreenShotImageByAruid(u32 cmd_id, CapsLoadAlbumScreenShotImageOutputForApplication *out, void* image, size_t image_size, void* workbuf, size_t workbuf_size, const CapsApplicationAlbumFileEntry *entry, const CapsScreenShotDecodeOption *option) {
-    u64 AppletResourceUserId = 0;
-    appletGetAppletResourceUserId(&AppletResourceUserId);
-
     const struct {
         CapsApplicationAlbumFileEntry entry;
         CapsScreenShotDecodeOption option;
         u64 AppletResourceUserId;
-    } in = { *entry, *option, AppletResourceUserId };
+    } in = { *entry, *option, appletGetAppletResourceUserId() };
 
     return serviceDispatchIn(&g_capsuSrv, cmd_id, in,
         .buffer_attrs = {
@@ -154,9 +136,6 @@ static Result _capsuLoadAlbumScreenShotImageByAruid(u32 cmd_id, CapsLoadAlbumScr
 }
 
 static Result _capsuGetAlbumFileListAaeAruid(u32 cmd_id, void* entries, size_t entrysize, s32 count, u8 type, const CapsAlbumFileDateTime *start_datetime, const CapsAlbumFileDateTime *end_datetime, s32 *total_entries) {
-    u64 AppletResourceUserId = 0;
-    appletGetAppletResourceUserId(&AppletResourceUserId);
-
     const struct {
         u8 type;
         u8 pad;
@@ -164,7 +143,7 @@ static Result _capsuGetAlbumFileListAaeAruid(u32 cmd_id, void* entries, size_t e
         CapsAlbumFileDateTime end_datetime;
         u8 pad2[6];
         u64 AppletResourceUserId;
-    } in = { type, 0, *start_datetime, *end_datetime, {0}, AppletResourceUserId };
+    } in = { type, 0, *start_datetime, *end_datetime, {0}, appletGetAppletResourceUserId() };
 
     u64 total_out=0;
     Result rc = serviceDispatchInOut(&g_capsuSrv, cmd_id, in, total_out,
@@ -177,9 +156,6 @@ static Result _capsuGetAlbumFileListAaeAruid(u32 cmd_id, void* entries, size_t e
 }
 
 static Result _capsuGetAlbumFileListAaeUidAruid(u32 cmd_id, void* entries, size_t entrysize, s32 count, u8 type, const CapsAlbumFileDateTime *start_datetime, const CapsAlbumFileDateTime *end_datetime, AccountUid uid, s32 *total_entries) {
-    u64 AppletResourceUserId = 0;
-    appletGetAppletResourceUserId(&AppletResourceUserId);
-
     const struct {
         u8 type;
         u8 pad;
@@ -188,7 +164,7 @@ static Result _capsuGetAlbumFileListAaeUidAruid(u32 cmd_id, void* entries, size_
         u8 pad2[6];
         AccountUid uid;
         u64 AppletResourceUserId;
-    } in = { type, 0, *start_datetime, *end_datetime, {0}, uid, AppletResourceUserId };
+    } in = { type, 0, *start_datetime, *end_datetime, {0}, uid, appletGetAppletResourceUserId() };
 
     u64 total_out=0;
     Result rc = serviceDispatchInOut(&g_capsuSrv, cmd_id, in, total_out,
@@ -201,13 +177,10 @@ static Result _capsuGetAlbumFileListAaeUidAruid(u32 cmd_id, void* entries, size_
 }
 
 static Result _capsuOpenAccessorSessionForApplication(Service* srv_out, const CapsApplicationAlbumFileEntry *entry) {
-    u64 AppletResourceUserId = 0;
-    appletGetAppletResourceUserId(&AppletResourceUserId);
-
     const struct {
         CapsApplicationAlbumFileEntry entry;
         u64 AppletResourceUserId;
-    } in = { *entry, AppletResourceUserId };
+    } in = { *entry, appletGetAppletResourceUserId() };
 
     return serviceDispatchIn(&g_capsuSrv, 60002, in,
         .in_send_pid = true,
@@ -217,13 +190,10 @@ static Result _capsuOpenAccessorSessionForApplication(Service* srv_out, const Ca
 }
 
 static Result _capsuOpenAlbumMovieReadStream(u64 *stream, const CapsApplicationAlbumFileEntry *entry) {
-    u64 AppletResourceUserId = 0;
-    appletGetAppletResourceUserId(&AppletResourceUserId);
-
     const struct {
         CapsApplicationAlbumFileEntry entry;
         u64 AppletResourceUserId;
-    } in = { *entry, AppletResourceUserId };
+    } in = { *entry, appletGetAppletResourceUserId() };
 
     return serviceDispatchInOut(&g_capsuAccessor, 2001, in, *stream,
         .in_send_pid = true,
@@ -348,7 +318,7 @@ Result capsuPrecheckToCreateContents(CapsContentType type, u64 unk) {
 Result capsuOpenAlbumMovieStream(u64 *stream, const CapsApplicationAlbumFileEntry *entry) {
     Result rc=0;
 
-    if (!serviceIsActive(&g_capsuAccessor)) rc =_capsuOpenAccessorSessionForApplication(&g_capsuAccessor, entry);
+    if (!serviceIsActive(&g_capsuAccessor)) rc = _capsuOpenAccessorSessionForApplication(&g_capsuAccessor, entry);
 
     if (R_SUCCEEDED(rc)) rc = _capsuOpenAlbumMovieReadStream(stream, entry);
 

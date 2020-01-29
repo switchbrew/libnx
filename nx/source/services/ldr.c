@@ -45,7 +45,7 @@ Result ldrShellSetProgramArguments(u64 program_id, const void *args, size_t args
     return _ldrSetProgramArguments(&g_ldrShellSrv, program_id, args, args_size);
 }
 
-Result ldrShellClearLaunchQueue(void) {
+Result ldrShellFlushArguments(void) {
     return _ldrFlushArguments(&g_ldrShellSrv);
 }
 
@@ -53,7 +53,7 @@ Result ldrDmntSetProgramArguments(u64 program_id, const void *args, size_t args_
     return _ldrSetProgramArguments(&g_ldrDmntSrv, program_id, args, args_size);
 }
 
-Result ldrDmntClearLaunchQueue(void) {
+Result ldrDmntFlushArguments(void) {
     return _ldrFlushArguments(&g_ldrDmntSrv);
 }
 
