@@ -351,6 +351,14 @@ Result fsOpenSaveDataInfoReader(FsSaveDataInfoReader* out, FsSaveDataSpaceId sav
     }
 }
 
+Result fsOpenImageDirectoryFileSystem(FsFileSystem* out, FsImageDirectoryId image_directory_id) {
+    u32 tmp=image_directory_id;
+    return _fsObjectDispatchIn(&g_fsSrv, 100, tmp,
+        .out_num_objects = 1,
+        .out_objects = &out->s,
+    );
+}
+
 Result fsOpenContentStorageFileSystem(FsFileSystem* out, FsContentStorageId content_storage_id) {
     u32 tmp=content_storage_id;
     return _fsObjectDispatchIn(&g_fsSrv, 110, tmp,
