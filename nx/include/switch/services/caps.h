@@ -198,7 +198,7 @@ typedef enum {
 /// AlbumCache
 typedef struct {
     u64 count;                                            ///< Count
-    u8 unk_x8[8];                                         ///< Unknown
+    u64 unk_x8;                                           ///< Unknown
 } CapsAlbumCache;
 
 /// AlbumCommitOutput
