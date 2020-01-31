@@ -66,7 +66,7 @@ typedef struct {
 /// ScreenShotDecodeOption
 typedef struct {
     u8 fancy_upsampling;    ///< See libjpeg-turbo do_fancy_upsampling.
-    u8 block_smoothing;     ///< See libjpec-turbo do_block_smoothing.
+    u8 block_smoothing;     ///< See libjpeg-turbo do_block_smoothing.
     u8 pad_x2[0x6];         ///< Padding.
     u64 unk_x8[0x3];        ///< Unknown. Ignored by official sw.
 } CapsScreenShotDecodeOption;

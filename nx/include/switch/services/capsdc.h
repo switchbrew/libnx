@@ -23,7 +23,7 @@ Service* capsdcGetServiceSession(void);
  * @brief Decodes a jpeg buffer into RGBX.
  * @param[in] width Image width.
  * @param[in] height Image height.
- * @param[in] opts CapsScreenShotDecodeOption decode options.
+ * @param[in] opts \ref CapsScreenShotDecodeOption.
  * @param[in] jpeg Jpeg image input buffer.
  * @param[in] jpeg_size Input image buffer size.
  * @param[out] out_image RGBA8 image output buffer.

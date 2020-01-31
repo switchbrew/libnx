@@ -31,7 +31,7 @@ Result capsdcDecodeJpeg(u32 width, u32 height, const CapsScreenShotDecodeOption 
         },
         .buffers = {
             { jpeg, jpeg_size },
-            { image, image_size },
+            { out_image, out_image_size },
         }
     );
 }
