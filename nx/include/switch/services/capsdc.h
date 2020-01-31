@@ -1,6 +1,6 @@
 /**
  * @file capsdc.h
- * @brief Jpeg Decoder (caps:dc) service IPC wrapper. Only Available on 4.0.0+.
+ * @brief Jpeg Decoder (caps:dc) service IPC wrapper. Only Available on [4.0.0+].
  * @note Only holds one session that is occupied by capsrv.
  * @author Behemoth
  * @copyright libnx Authors
@@ -29,4 +29,4 @@ Service* capsdcGetServiceSession(void);
  * @param[out] image RGBA8 image output buffer.
  * @param[in] image_size Output image buffer size, should be at least large enough for RGBA8 width x height.
  */
-Result capsdcDecodeJpeg(const u32 width, const u32 height, const CapsScreenShotDecodeOption *opts, const void* jpeg, const u64 jpeg_size, void* image, const u64 image_size);
+Result capsdcDecodeJpeg(u32 width, u32 height, const CapsScreenShotDecodeOption *opts, const void* jpeg, const u64 jpeg_size, void* image, const u64 image_size);

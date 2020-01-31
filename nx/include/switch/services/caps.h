@@ -67,8 +67,7 @@ typedef struct {
 typedef struct {
     bool fancy_upsampling;
     bool block_smoothing;
-    u8 unk_x2[0x6];         ///< Padding.
-    u64 unk_x8[3];          ///< Unknown. Ignored by official sw.
+    u8 unk_x2[0x1e];        ///< Unknown. Ignored by official sw.
 } CapsScreenShotDecodeOption;
 
 /// AlbumFileDateTime. This corresponds to each field in the Album entry filename, prior to the "-": "YYYYMMDDHHMMSSII".
