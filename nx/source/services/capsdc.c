@@ -1,5 +1,6 @@
 #define NX_SERVICE_ASSUME_NON_DOMAIN
 #include "service_guard.h"
+#include "runtime/hosversion.h"
 #include "services/capsdc.h"
 
 static Service g_capsdcSrv;
@@ -7,6 +8,9 @@ static Service g_capsdcSrv;
 NX_GENERATE_SERVICE_GUARD(capsdc);
 
 Result _capsdcInitialize(void) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     return smGetService(&g_capsdcSrv, "caps:dc");
 }
 
