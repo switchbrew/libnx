@@ -1,6 +1,6 @@
 /**
  * @file capsdc.h
- * @brief Jpeg Decoder (caps:dc) service IPC wrapper. Only Available on [4.0.0+].
+ * @brief Jpeg Decoder (caps:dc) service IPC wrapper. Only available on [4.0.0+].
  * @note Only holds one session that is occupied by capsrv.
  * @author Behemoth
  * @copyright libnx Authors
