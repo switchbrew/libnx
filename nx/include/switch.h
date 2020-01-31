@@ -93,6 +93,7 @@ extern "C" {
 #include "switch/services/psc.h"
 #include "switch/services/caps.h"
 #include "switch/services/capsa.h"
+#include "switch/services/capsdc.h"
 #include "switch/services/capsu.h"
 #include "switch/services/capssc.h"
 #include "switch/services/capssu.h"
