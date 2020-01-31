@@ -18,7 +18,7 @@ Service* capsdcGetServiceSession(void) {
     return &g_capsdcSrv;
 }
 
-Result capsdcDecodeJpeg(u32 width, u32 height, const CapsScreenShotDecodeOption *opts, const void* jpeg, const u64 jpeg_size, void* image, const u64 image_size) {
+Result capsdcDecodeJpeg(u32 width, u32 height, const CapsScreenShotDecodeOption *opts, const void* jpeg, size_t jpeg_size, void* out_image, size_t out_image_size) {
     const struct {
         u32 width;
         u32 height;

@@ -26,7 +26,7 @@ Service* capsdcGetServiceSession(void);
  * @param[in] opts CapsScreenShotDecodeOption decode options.
  * @param[in] jpeg Jpeg image input buffer.
  * @param[in] jpeg_size Input image buffer size.
- * @param[out] image RGBA8 image output buffer.
- * @param[in] image_size Output image buffer size, should be at least large enough for RGBA8 width x height.
+ * @param[out] out_image RGBA8 image output buffer.
+ * @param[in] out_image_size Output image buffer size, should be at least large enough for RGBA8 width x height.
  */
-Result capsdcDecodeJpeg(u32 width, u32 height, const CapsScreenShotDecodeOption *opts, const void* jpeg, const u64 jpeg_size, void* image, const u64 image_size);
+Result capsdcDecodeJpeg(u32 width, u32 height, const CapsScreenShotDecodeOption *opts, const void* jpeg, size_t jpeg_size, void* out_image, size_t out_image_size);
