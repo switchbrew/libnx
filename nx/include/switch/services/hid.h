@@ -422,7 +422,7 @@ typedef struct SixAxisSensorValues {
     HidVector orientation[3];
 } SixAxisSensorValues;
 
-#define JOYSTICK_MAX (0x8000)
+#define JOYSTICK_MAX (0x7FFF)
 #define JOYSTICK_MIN (-0x8000)
 
 // End enums and output structs

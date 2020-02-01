@@ -170,6 +170,12 @@ typedef enum {
     FsCustomStorageId_SdCard   = 1,
 } FsCustomStorageId;
 
+/// ImageDirectoryId
+typedef enum {
+    FsImageDirectoryId_Nand = 0,
+    FsImageDirectoryId_Sd   = 1,
+} FsImageDirectoryId;
+
 /// SaveDataSpaceId
 typedef enum {
     FsSaveDataSpaceId_System           = 0,    ///< System
@@ -329,6 +335,7 @@ Result fsWriteSaveDataFileSystemExtraData(const void* buf, size_t len, FsSaveDat
 
 Result fsOpenSaveDataInfoReader(FsSaveDataInfoReader* out, FsSaveDataSpaceId save_data_space_id);
 
+Result fsOpenImageDirectoryFileSystem(FsFileSystem* out, FsImageDirectoryId image_directory_id);
 Result fsOpenContentStorageFileSystem(FsFileSystem* out, FsContentStorageId content_storage_id);
 Result fsOpenCustomStorageFileSystem(FsFileSystem* out, FsCustomStorageId custom_storage_id); /// [7.0.0+]
 

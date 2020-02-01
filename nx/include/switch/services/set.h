@@ -959,7 +959,7 @@ Result setsysSetChineseTraditionalInputMethod(SetChineseTraditionalInputMethod m
 
 /**
  * @brief Gets the \ref SetSysHomeMenuScheme.
- * @note Only available on [9.0.0+].
+ * @note Only available on [8.1.1+].
  * @param[out] out \ref SetSysHomeMenuScheme
  */
 Result setsysGetHomeMenuScheme(SetSysHomeMenuScheme *out);

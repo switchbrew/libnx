@@ -727,7 +727,7 @@ Result setsysSetChineseTraditionalInputMethod(SetChineseTraditionalInputMethod m
 }
 
 Result setsysGetHomeMenuScheme(SetSysHomeMenuScheme *out) {
-    if (hosversionBefore(9,0,0))
+    if (hosversionBefore(8,1,1))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return serviceDispatchOut(&g_setsysSrv, 174, *out);

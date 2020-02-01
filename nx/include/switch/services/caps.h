@@ -65,7 +65,10 @@ typedef struct {
 
 /// ScreenShotDecodeOption
 typedef struct {
-    u8 unk_x0[0x20];                            ///< Unknown. Set to all-zero by official sw.
+    u8 fancy_upsampling;    ///< See libjpeg-turbo do_fancy_upsampling.
+    u8 block_smoothing;     ///< See libjpeg-turbo do_block_smoothing.
+    u8 pad_x2[0x6];         ///< Padding.
+    u64 unk_x8[0x3];        ///< Unknown. Ignored by official sw.
 } CapsScreenShotDecodeOption;
 
 /// AlbumFileDateTime. This corresponds to each field in the Album entry filename, prior to the "-": "YYYYMMDDHHMMSSII".
