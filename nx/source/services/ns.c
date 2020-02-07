@@ -175,16 +175,12 @@ Result nsListApplicationRecord(NsApplicationRecord* records, s32 count, s32 entr
     );
 }
 
-Result nsListApplicationContentMetaStatus(u64 application_id, s32 index, NsApplicationContentMetaStatus* list, s32 count, s32* out_entrycount) {
-    const struct {
-        s32 index;
-        u64 application_id;
-    } in = { index, application_id };
+Result nsGetTotalSpaceSize(NcmStorageId storage_id, u64 *size) {
+    return _nsCmdInU64OutU64(&g_nsAppManSrv, storage_id, size, 47);
+}
 
-    return serviceDispatchInOut(&g_nsAppManSrv, 601, in, *out_entrycount,
-        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
-        .buffers = { { list, count*sizeof(NsApplicationContentMetaStatus) } },
-    );
+Result nsGetFreeSpaceSize(NcmStorageId storage_id, u64 *size) {
+    return _nsCmdInU64OutU64(&g_nsAppManSrv, storage_id, size, 48);
 }
 
 Result nsGetApplicationControlData(NsApplicationControlSource source, u64 application_id, NsApplicationControlData* buffer, size_t size, u64* actual_size) {
@@ -203,12 +199,16 @@ Result nsGetApplicationControlData(NsApplicationControlSource source, u64 applic
     return rc;
 }
 
-Result nsGetTotalSpaceSize(NcmStorageId storage_id, u64 *size) {
-    return _nsCmdInU64OutU64(&g_nsAppManSrv, storage_id, size, 47);
-}
+Result nsListApplicationContentMetaStatus(u64 application_id, s32 index, NsApplicationContentMetaStatus* list, s32 count, s32* out_entrycount) {
+    const struct {
+        s32 index;
+        u64 application_id;
+    } in = { index, application_id };
 
-Result nsGetFreeSpaceSize(NcmStorageId storage_id, u64 *size) {
-    return _nsCmdInU64OutU64(&g_nsAppManSrv, storage_id, size, 48);
+    return serviceDispatchInOut(&g_nsAppManSrv, 601, in, *out_entrycount,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { list, count*sizeof(NsApplicationContentMetaStatus) } },
+    );
 }
 
 Result nsGetSystemDeliveryInfo(NsSystemDeliveryInfo *info) {

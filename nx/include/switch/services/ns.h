@@ -164,26 +164,6 @@ Service* nsGetServiceSession_ApplicationManagerInterface(void);
 Result nsListApplicationRecord(NsApplicationRecord* records, s32 count, s32 entry_offset, s32* out_entrycount);
 
 /**
- * @brief Gets an listing of \ref NsApplicationContentMetaStatus.
- * @param[in] application_id ApplicationId.
- * @param[in] index Starting entry index.
- * @param[out] list Output array of \ref NsApplicationContentMetaStatus.
- * @param[in] count Size of the list array in entries.
- * @param[out] out_entrycount Total output entries.
- */
-Result nsListApplicationContentMetaStatus(u64 application_id, s32 index, NsApplicationContentMetaStatus* list, s32 count, s32* out_entrycount);
-
-/**
- * @brief Gets the \ref NsApplicationControlData for the specified application.
- * @param[in] source Source, official sw uses ::NsApplicationControlSource_Storage.
- * @param[in] application_id ApplicationId.
- * @param[out] buffer \ref NsApplicationControlData
- * @param[in] size Size of the buffer.
- * @param[out] actual_size Actual output size.
- */
-Result nsGetApplicationControlData(NsApplicationControlSource source, u64 application_id, NsApplicationControlData* buffer, size_t size, u64* actual_size);
-
-/**
  * @brief Returns the total storage capacity (used + free) from content manager services.
  * @param[in] storage_id \ref NcmStorageId. Must be ::NcmStorageId_SdCard.
  * @param[out] size Pointer to output the total storage size to.
@@ -196,6 +176,26 @@ Result nsGetTotalSpaceSize(NcmStorageId storage_id, u64 *size);
  * @param[out] size Pointer to output the free storage size to.
  */
 Result nsGetFreeSpaceSize(NcmStorageId storage_id, u64 *size);
+
+/**
+ * @brief Gets the \ref NsApplicationControlData for the specified application.
+ * @param[in] source Source, official sw uses ::NsApplicationControlSource_Storage.
+ * @param[in] application_id ApplicationId.
+ * @param[out] buffer \ref NsApplicationControlData
+ * @param[in] size Size of the buffer.
+ * @param[out] actual_size Actual output size.
+ */
+Result nsGetApplicationControlData(NsApplicationControlSource source, u64 application_id, NsApplicationControlData* buffer, size_t size, u64* actual_size);
+
+/**
+ * @brief Gets an listing of \ref NsApplicationContentMetaStatus.
+ * @param[in] application_id ApplicationId.
+ * @param[in] index Starting entry index.
+ * @param[out] list Output array of \ref NsApplicationContentMetaStatus.
+ * @param[in] count Size of the list array in entries.
+ * @param[out] out_entrycount Total output entries.
+ */
+Result nsListApplicationContentMetaStatus(u64 application_id, s32 index, NsApplicationContentMetaStatus* list, s32 count, s32* out_entrycount);
 
 /**
  * @brief Generates a \ref NsSystemDeliveryInfo using the currently installed SystemUpdate meta.
