@@ -56,23 +56,23 @@ Result capscNotifyAlbumStorageIsUnAvailable(CapsAlbumStorage storage) {
     return _capscCmdInU8NoOut(&g_capscSrv, 2002, inval);
 }
 
-Result capscRegisterAppletResourceUserId(u64 appletResourceUserId) {
+Result capscRegisterAppletResourceUserId(u64 appletResourceUserId, u64 application_id) {
     if (hosversionBefore(2,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     const struct {
-        u64 version;
-        u64 AppletResourceUserId;
-    } in = { capsGetShimLibraryVersion(), appletResourceUserId };
+        u64 appletResourceUserId;
+        u64 applicationId;
+    } in = { appletResourceUserId, application_id };
     return serviceDispatchIn(&g_capscSrv, 2011, in);
 }
 
-Result capscUnregisterAppletResourceUserId(u64 appletResourceUserId) {
+Result capscUnregisterAppletResourceUserId(u64 appletResourceUserId, u64 application_id) {
     if (hosversionBefore(2,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     const struct {
-        u64 version;
-        u64 AppletResourceUserId;
-    } in = { capsGetShimLibraryVersion(), appletResourceUserId };
+        u64 appletResourceUserId;
+        u64 applicationId;
+    } in = { appletResourceUserId, application_id };
     return serviceDispatchIn(&g_capscSrv, 2012, in);
 }
 
@@ -85,7 +85,6 @@ Result capscGetApplicationIdFromAruid(u64 *application_id, u64 aruid) {
 Result capscCheckApplicationIdRegistered(u64 application_id) {
     if (hosversionBefore(2,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-
     return serviceDispatchIn(&g_capscSrv, 2014, application_id);
 }
 
@@ -94,9 +93,19 @@ Result capscGenerateCurrentAlbumFileId(u64 application_id, CapsAlbumFileContents
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     const struct {
         u8 type;
-        u64 application_id;
+        u64 applicationId;
     } in = { contents, application_id };
     return serviceDispatchInOut(&g_capscSrv, 2101, in, *file_id);
+}
+
+Result capscGenerateApplicationAlbumEntry(CapsApplicationAlbumEntry *appEntry, const CapsAlbumEntry *entry, u64 application_id) {
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    const struct {
+        CapsAlbumEntry entry;
+        u64 applicationId;
+    } in = { *entry, application_id };
+    return serviceDispatchInOut(&g_capscSrv, 2102, in, *appEntry);
 }
 
 Result capscSaveAlbumScreenShotFile(CapsAlbumFileId *file_id, void* buffer, u64 buffer_size) {
@@ -123,23 +132,23 @@ Result capscSaveAlbumScreenShotFileEx(CapsAlbumFileId *file_id, u64 unk_0, u64 u
     );
 }
 
-static Result _capscSetOverlayThumbnailData(u32 cmd_id, CapsAlbumFileId *file_id, void* buffer, u64 size) {
+static Result _capscSetOverlayThumbnailData(u32 cmd_id, const CapsAlbumFileId *file_id, const void* image, u64 image_size) {
     return serviceDispatchIn(&g_capscSrv, cmd_id, *file_id,
         .buffer_attrs = { SfBufferAttr_HipcMapTransferAllowsNonSecure | SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
-        .buffers = { { buffer, size }, },
+        .buffers = { { image, image_size }, },
     );
 }
 
-Result capscSetOverlayScreenShotThumbnailData(CapsAlbumFileId *file_id, void* buffer, u64 size) {
+Result capscSetOverlayScreenShotThumbnailData(const CapsAlbumFileId *file_id, const void* image, u64 image_size) {
     if (hosversionBefore(2,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    return _capscSetOverlayThumbnailData(2301, file_id, buffer, size);
+    return _capscSetOverlayThumbnailData(2301, file_id, image, image_size);
 }
 
-Result capscSetOverlayMovieThumbnailData(CapsAlbumFileId *file_id, void* buffer, u64 size) {
+Result capscSetOverlayMovieThumbnailData(const CapsAlbumFileId *file_id, const void* image, u64 image_size) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    return _capscSetOverlayThumbnailData(2302, file_id, buffer, size);
+    return _capscSetOverlayThumbnailData(2302, file_id, image, image_size);
 }
 
 static Result _capscOpenControlSession(Service *srv_out) {

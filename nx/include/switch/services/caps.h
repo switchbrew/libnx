@@ -88,9 +88,8 @@ typedef struct {
     CapsAlbumFileDateTime datetime;             ///< \ref CapsAlbumFileDateTime
     u8 storage;                                 ///< \ref CapsAlbumStorage
     u8 content;                                 ///< \ref CapsAlbumFileContents
-    u32 pad_x12;                                ///< Set to 0 by official software
-    u16 pad_x16;                                ///< Set to 0 by official software
-} PACKED CapsAlbumFileId;
+    u8 pad_x12[0x6];                            ///< padding
+} CapsAlbumFileId;
 
 /// AlbumEntry
 typedef struct {
@@ -104,14 +103,17 @@ typedef struct {
         u8 data[0x20];                          ///< Data.
 
         struct {
-            u8 unk_x0[0x20];                    ///< Unknown.
+            u8 unk_x0[0x20];                    ///< aes256 with random key over \ref AlbumEntry.
         } v0; ///< Pre-7.0.0
 
         struct {
             u64 size;                           ///< size of the entry
-            u64 application_id;                 ///< ApplicationId
+            u64 hash;                           ///< aes256 with hardcoded key over \ref AlbumEntry.
             CapsAlbumFileDateTime datetime;     ///< \ref CapsAlbumFileDateTime
-            u8 unk_x18[0x8];                    ///< Unknown.
+            u8 storage;                         ///< \ref CapsAlbumStorage
+            u8 content;                         ///< \ref CapsAlbumFileContents
+            u8 pad_x1a[0x5];                    ///< padding
+            u8 unk_x1f;                         ///< Set to 1 by official software
         } v1; ///< [7.0.0+]
     };
 } CapsApplicationAlbumEntry;
