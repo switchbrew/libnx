@@ -19,13 +19,16 @@ void capscExit(void);
 Service* capscGetServiceSession(void);
 Result capscNotifyAlbumStorageIsAvailable(CapsAlbumStorage storage);
 Result capscNotifyAlbumStorageIsUnAvailable(CapsAlbumStorage storage);
-Result capscRegisterAppletResourceUserId(u64 appletResourceUserId);
-Result capscUnregisterAppletResourceUserId(u64 appletResourceUserId);
+Result capscRegisterAppletResourceUserId(u64 appletResourceUserId, u64 application_id);
+Result capscUnregisterAppletResourceUserId(u64 appletResourceUserId, u64 application_id);
 Result capscGetApplicationIdFromAruid(u64 *application_id, u64 aruid);
 Result capscCheckApplicationIdRegistered(u64 application_id);
 Result capscGenerateCurrentAlbumFileId(u64 application_id, CapsAlbumFileContents contents, CapsAlbumFileId *file_id);
+Result capscGenerateApplicationAlbumEntry(CapsApplicationAlbumEntry *appEntry, const CapsAlbumEntry *entry, u64 application_id);
 Result capscSaveAlbumScreenShotFile(CapsAlbumFileId *file_id, void* buffer, u64 buffer_size);
 Result capscSaveAlbumScreenShotFileEx(CapsAlbumFileId *file_id, u64 unk_0, u64 unk_1, u64 unk_2, void* buffer, u64 buffer_size);
+Result capscSetOverlayScreenShotThumbnailData(const CapsAlbumFileId *file_id, const void* image, u64 image_size);
+Result capscSetOverlayMovieThumbnailData(const CapsAlbumFileId *file_id, const void* image, u64 image_size);
 
 Result capscOpenAlbumMovieReadStream(u64 *stream, const CapsAlbumFileId *file_id);
 Result capscCloseAlbumMovieStream(u64 stream);
