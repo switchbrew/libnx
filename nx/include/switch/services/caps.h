@@ -164,12 +164,6 @@ typedef struct {
     CapsAlbumContentsUsage usages[16];                    ///< \ref CapsAlbumContentsUsage
 } CapsAlbumUsage16;
 
-/// OverlayThumbnailData
-typedef struct {
-    CapsAlbumFileId file_id;                              ///< \ref CapsAlbumFileId
-    u64 size;                                             ///< Size.
-} CapsOverlayThumbnailData;
-
 /// UserIdList
 typedef struct {
     AccountUid uids[ACC_USER_LIST_SIZE];                  ///< \ref AccountUid
