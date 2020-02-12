@@ -108,7 +108,7 @@ Result capscGenerateApplicationAlbumEntry(CapsApplicationAlbumEntry *appEntry, c
     return serviceDispatchInOut(&g_capscSrv, 2102, in, *appEntry);
 }
 
-Result capscSaveAlbumScreenShotFile(CapsAlbumFileId *file_id, void* buffer, u64 buffer_size) {
+Result capscSaveAlbumScreenShotFile(const CapsAlbumFileId *file_id, const void* buffer, u64 buffer_size) {
     if (hosversionBefore(2,0,0) || hosversionAtLeast(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     return serviceDispatchIn(&g_capscSrv, 2201, file_id,
@@ -117,15 +117,15 @@ Result capscSaveAlbumScreenShotFile(CapsAlbumFileId *file_id, void* buffer, u64 
     );
 }
 
-Result capscSaveAlbumScreenShotFileEx(CapsAlbumFileId *file_id, u64 unk_0, u64 unk_1, u64 unk_2, void* buffer, u64 buffer_size) {
+Result capscSaveAlbumScreenShotFileEx(const CapsAlbumFileId *file_id, u64 version, u64 makernote_offset, u64 makernote_size, const void* buffer, u64 buffer_size) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     const struct {
         CapsAlbumFileId file_id;
-        u64 unk_0;
-        u64 unk_1;
-        u64 unk_2;
-    } in = { *file_id, unk_0, unk_1, unk_2 };
+        u64 version;
+        u64 mn_offset;
+        u64 mn_size;
+    } in = { *file_id, version, makernote_offset, makernote_size };
     return serviceDispatchIn(&g_capscSrv, 2202, in,
         .buffer_attrs = { SfBufferAttr_HipcMapTransferAllowsNonSecure | SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
         .buffers = { { buffer, buffer_size }, },
