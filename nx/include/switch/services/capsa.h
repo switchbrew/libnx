@@ -223,20 +223,22 @@ Result capsaGetAlbumFileListEx0(CapsAlbumStorage storage, u8 flags, u64 *out, Ca
 
 /**
  * @brief Returns the image from the last shown ScreenShot Overlay.
- * @param[out] data \ref CapsOverlayThumbnailData
+ * @param[out] file_id \ref CapsAlbumFileId
+ * @param[out] out_size Size of the thumbnail image. Always 0x5100.
  * @param[out] image RGBA8 image output buffer.
  * @param[in] image_size Image buffer size, should be at least large enough for RGBA8 96×54.
  */
-Result capsaGetLastOverlayScreenShotThumbnail(CapsOverlayThumbnailData *data, void* image, u64 image_size);
+Result capsaGetLastOverlayScreenShotThumbnail(CapsAlbumFileId *file_id, u64 *out_size, void* image, u64 image_size);
 
 /**
  * @brief Returns the image from the last shown Movie Overlay.
  * @note Only available on [4.0.0+].
- * @param[out] data \ref CapsOverlayThumbnailData
+ * @param[out] file_id \ref CapsAlbumFileId
+ * @param[out] out_size Size of the thumbnail image. Always 0x5100.
  * @param[out] image RGBA8 image output buffer.
  * @param[in] image_size Image buffer size, should be at least large enough for RGBA8 96×54.
  */
-Result capsaGetLastOverlayMovieThumbnail(CapsOverlayThumbnailData *data, void* image, u64 image_size);
+Result capsaGetLastOverlayMovieThumbnail(CapsAlbumFileId *file_id, u64 *out_size, void* image, u64 image_size);
 
 /**
  * @brief Gets the currently set autosaving storage.

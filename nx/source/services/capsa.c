@@ -255,21 +255,30 @@ Result capsaGetAlbumFileListEx0(CapsAlbumStorage storage, u8 flags, u64 *out, Ca
     );
 }
 
-Result _capsaGetLastOverlayThumbnail(CapsOverlayThumbnailData *data, void* image, u64 image_size, u32 cmd_id) {
-    return serviceDispatchOut(&g_capsaSrv, cmd_id, *data,
+Result _capsaGetLastOverlayThumbnail(CapsAlbumFileId *file_id, u64 *out_size, void* image, u64 image_size, u32 cmd_id) {
+    struct {
+        CapsAlbumFileId file_id;
+        u64 size;
+    } out;
+    Result rc = serviceDispatchOut(&g_capsaSrv, cmd_id, out,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out, },
         .buffers = { { image, image_size }, },
     );
+    if (R_SUCCEEDED(rc)) {
+        if (file_id) *file_id = out.file_id;
+        if (out_size) *out_size = out.size;
+    }
+    return rc;
 }
 
-Result capsaGetLastOverlayScreenShotThumbnail(CapsOverlayThumbnailData *data, void* image, u64 image_size) {
-    return _capsaGetLastOverlayThumbnail(data, image, image_size, 301);
+Result capsaGetLastOverlayScreenShotThumbnail(CapsAlbumFileId *file_id, u64 *out_size, void* image, u64 image_size) {
+    return _capsaGetLastOverlayThumbnail(file_id, out_size, image, image_size, 301);
 }
 
-Result capsaGetLastOverlayMovieThumbnail(CapsOverlayThumbnailData *data, void* image, u64 image_size) {
+Result capsaGetLastOverlayMovieThumbnail(CapsAlbumFileId *file_id, u64 *out_size, void* image, u64 image_size) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    return _capsaGetLastOverlayThumbnail(data, image, image_size, 302);
+    return _capsaGetLastOverlayThumbnail(file_id, out_size, image, image_size, 302);
 }
 
 Result capsaGetAutoSavingStorage(CapsAlbumStorage *storage) {
