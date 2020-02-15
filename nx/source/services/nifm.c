@@ -105,6 +105,16 @@ static Result _nifmCreateGeneralService(Service* srv_out) {
     );
 }
 
+NifmClientId nifmGetClientId(void) {
+    NifmClientId id={0};
+    Result rc = serviceDispatch(&g_nifmIGS, 1,
+        .buffer_attrs = { SfBufferAttr_FixedSize | SfBufferAttr_HipcPointer | SfBufferAttr_Out },
+        .buffers = { { &id, sizeof(id) } },
+    );
+    if (R_FAILED(rc)) id.id = 0;
+    return id;
+}
+
 Result nifmGetCurrentIpAddress(u32* out) {
     return _nifmCmdNoInOutU32(&g_nifmIGS, out, 12);
 }
@@ -139,6 +149,15 @@ Result nifmGetInternetConnectionStatus(NifmInternetConnectionType* connectionTyp
 
 Result nifmIsEthernetCommunicationEnabled(bool* out) {
     return _nifmCmdNoInOutBool(&g_nifmIGS, out, 20);
+}
+
+bool nifmIsAnyInternetRequestAccepted(NifmClientId id) {
+    u8 tmp=0;
+    Result rc = serviceDispatchOut(&g_nifmIGS, 21, tmp,
+        .buffer_attrs = { SfBufferAttr_FixedSize | SfBufferAttr_HipcPointer | SfBufferAttr_In },
+        .buffers = { { &id, sizeof(id) } },
+    );
+    return R_SUCCEEDED(rc) ? tmp & 1 : 0;
 }
 
 Result nifmIsAnyForegroundRequestAccepted(bool* out) {
