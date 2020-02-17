@@ -4,6 +4,7 @@
 #include "runtime/hosversion.h"
 #include "services/ns.h"
 #include "services/async.h"
+#include "services/nifm.h"
 
 static Service g_nsAppManSrv, g_nsGetterSrv;
 static Service g_nsvmSrv;
@@ -197,6 +198,42 @@ static Result _nsCmdNoInOutAsyncResult(Service* srv, AsyncResult *a, u32 cmd_id)
     return rc;
 }
 
+static Result _nsCmdInU64OutAsyncValue(Service* srv, AsyncValue *a, u64 inval, u32 cmd_id) {
+    memset(a, 0, sizeof(*a));
+    Handle event = INVALID_HANDLE;
+    Result rc = serviceDispatchIn(srv, cmd_id, inval,
+        .out_num_objects = 1,
+        .out_objects = &a->s,
+        .out_handle_attrs = { SfOutHandleAttr_HipcCopy },
+        .out_handles = &event,
+    );
+
+    if (R_SUCCEEDED(rc))
+        eventLoadRemote(&a->event, event, false);
+
+    return rc;
+}
+
+static Result _nsCmdInU64OutAsyncResult(Service* srv, AsyncResult *a, u64 inval, u32 cmd_id) {
+    memset(a, 0, sizeof(*a));
+    Handle event = INVALID_HANDLE;
+    Result rc = serviceDispatchIn(srv, cmd_id, inval,
+        .out_num_objects = 1,
+        .out_objects = &a->s,
+        .out_handle_attrs = { SfOutHandleAttr_HipcCopy },
+        .out_handles = &event,
+    );
+
+    if (R_SUCCEEDED(rc))
+        eventLoadRemote(&a->event, event, false);
+
+    return rc;
+}
+
+static Result _nsCheckNifm(void) {
+    return nifmIsAnyInternetRequestAccepted(nifmGetClientId()) ? 0 : MAKERESULT(16, 340);
+}
+
 Result nsListApplicationRecord(NsApplicationRecord* records, s32 count, s32 entry_offset, s32* out_entrycount) {
     return serviceDispatchInOut(&g_nsAppManSrv, 0, entry_offset, *out_entrycount,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
@@ -235,6 +272,13 @@ Result nsIsApplicationEntityMovable(u64 application_id, NcmStorageId storage_id,
 
 Result nsMoveApplicationEntity(u64 application_id, NcmStorageId storage_id) {
     return _nsCmdInU8U64NoOut(&g_nsAppManSrv, storage_id, application_id, 9);
+}
+
+Result nsRequestApplicationUpdateInfo(AsyncValue *a, u64 application_id) {
+    Result rc = _nsCheckNifm();
+    if (R_FAILED(rc)) return rc;
+
+    return _nsCmdInU64OutAsyncValue(&g_nsAppManSrv, a, application_id, 30);
 }
 
 Result nsCancelApplicationDownload(u64 application_id) {
@@ -352,6 +396,16 @@ Result nsGetStorageSize(NcmStorageId storage_id, s64 *total_space_size, s64 *fre
     return rc;
 }
 
+Result nsRequestUpdateApplication2(AsyncResult *a, u64 application_id) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    Result rc = _nsCheckNifm();
+    if (R_FAILED(rc)) return rc;
+
+    return _nsCmdInU64OutAsyncResult(&g_nsAppManSrv, a, application_id, 85);
+}
+
 Result nsDeleteUserSystemSaveData(AccountUid uid, u64 system_save_data_id) {
     const struct {
         AccountUid uid;
@@ -393,6 +447,79 @@ Result nsGetApplicationControlData(NsApplicationControlSource source, u64 applic
         .buffers = { { buffer, size } },
     );
     if (R_SUCCEEDED(rc) && actual_size) *actual_size = tmp;
+    return rc;
+}
+
+Result nsRequestDownloadApplicationControlData(AsyncResult *a, u64 application_id) {
+    Result rc = _nsCheckNifm();
+    if (R_FAILED(rc)) return rc;
+
+    return _nsCmdInU64OutAsyncResult(&g_nsAppManSrv, a, application_id, 402);
+}
+
+Result nsRequestCheckGameCardRegistration(AsyncResult *a, u64 application_id) {
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    Result rc = _nsCheckNifm();
+    if (R_FAILED(rc)) return rc;
+
+    return _nsCmdInU64OutAsyncResult(&g_nsAppManSrv, a, application_id, 502);
+}
+
+Result nsRequestGameCardRegistrationGoldPoint(AsyncValue *a, AccountUid uid, u64 application_id) {
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    Result rc = _nsCheckNifm();
+    if (R_FAILED(rc)) return rc;
+
+    const struct {
+        AccountUid uid;
+        u64 application_id;
+    } in = { uid, application_id };
+
+    memset(a, 0, sizeof(*a));
+    Handle event = INVALID_HANDLE;
+    rc = serviceDispatchIn(&g_nsAppManSrv, 503, in,
+        .out_num_objects = 1,
+        .out_objects = &a->s,
+        .out_handle_attrs = { SfOutHandleAttr_HipcCopy },
+        .out_handles = &event,
+    );
+
+    if (R_SUCCEEDED(rc))
+        eventLoadRemote(&a->event, event, false);
+
+    return rc;
+}
+
+Result nsRequestRegisterGameCard(AsyncResult *a, AccountUid uid, u64 application_id, s32 inval) {
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    Result rc = _nsCheckNifm();
+    if (R_FAILED(rc)) return rc;
+
+    const struct {
+        s32 inval;
+        u32 pad;
+        AccountUid uid;
+        u64 application_id;
+    } in = { inval, 0, uid, application_id };
+
+    memset(a, 0, sizeof(*a));
+    Handle event = INVALID_HANDLE;
+    rc = serviceDispatchIn(&g_nsAppManSrv, 504, in,
+        .out_num_objects = 1,
+        .out_objects = &a->s,
+        .out_handle_attrs = { SfOutHandleAttr_HipcCopy },
+        .out_handles = &event,
+    );
+
+    if (R_SUCCEEDED(rc))
+        eventLoadRemote(&a->event, event, false);
+
     return rc;
 }
 
@@ -523,6 +650,16 @@ Result nsGetLastSdCardFormatUnexpectedResult(void) {
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return _nsCmdNoIO(&g_nsAppManSrv, 1502);
+}
+
+Result nsRequestDownloadApplicationPrepurchasedRights(AsyncResult *a, u64 application_id) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    Result rc = _nsCheckNifm();
+    if (R_FAILED(rc)) return rc;
+
+    return _nsCmdInU64OutAsyncResult(&g_nsAppManSrv, a, application_id, 1901);
 }
 
 Result nsGetSystemDeliveryInfo(NsSystemDeliveryInfo *info) {
@@ -801,6 +938,26 @@ Result nsGetApplicationTerminateResult(u64 application_id, Result *res) {
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return serviceDispatchInOut(&g_nsAppManSrv, 2100, application_id, *res);
+}
+
+Result nsRequestNoDownloadRightsErrorResolution(AsyncValue *a, u64 application_id) {
+    if (hosversionBefore(9,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    Result rc = _nsCheckNifm();
+    if (R_FAILED(rc)) return rc;
+
+    return _nsCmdInU64OutAsyncValue(&g_nsAppManSrv, a, application_id, 2351);
+}
+
+Result nsRequestResolveNoDownloadRightsError(AsyncValue *a, u64 application_id) {
+    if (hosversionBefore(9,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    Result rc = _nsCheckNifm();
+    if (R_FAILED(rc)) return rc;
+
+    return _nsCmdInU64OutAsyncValue(&g_nsAppManSrv, a, application_id, 2352);
 }
 
 // IRequestServerStopper
