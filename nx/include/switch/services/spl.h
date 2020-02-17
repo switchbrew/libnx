@@ -109,13 +109,13 @@ Result splCryptoGetSecurityEngineEvent(Event *out_event);
 
 Result splRsaDecryptPrivateKey(const void *sealed_kek, const void *wrapped_key, const void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version, void *dst, size_t dst_size);
 
-Result splSslLoadSecureExpModKey(const void *sealed_kek, const void *wrapped_key, const void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version);
+Result splSslLoadSecureExpModKey(const void *sealed_kek, const void *wrapped_key, const void *wrapped_rsa_key, size_t wrapped_rsa_key_size);
 Result splSslSecureExpMod(const void *input, const void *modulus, void *dst);
 
 Result splEsLoadRsaOaepKey(const void *sealed_kek, const void *wrapped_key, const void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version);
 Result splEsUnwrapRsaOaepWrappedTitlekey(const void *rsa_wrapped_titlekey, const void *modulus, const void *label_hash, size_t label_hash_size, u32 key_generation, void *out_sealed_titlekey);
 Result splEsUnwrapAesWrappedTitlekey(const void *aes_wrapped_titlekey, u32 key_generation, void *out_sealed_titlekey);
-Result splEsLoadSecureExpModKey(const void *sealed_kek, const void *wrapped_key, const void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version);
+Result splEsLoadSecureExpModKey(const void *sealed_kek, const void *wrapped_key, const void *wrapped_rsa_key, size_t wrapped_rsa_key_size);
 Result splEsSecureExpMod(const void *input, const void *modulus, void *dst);
 Result splEsUnwrapElicenseKey(const void *rsa_wrapped_elicense_key, const void *modulus, const void *label_hash, size_t label_hash_size, u32 key_generation, void *out_sealed_elicense_key);
 Result splEsLoadElicenseKey(const void *sealed_elicense_key, u32 keyslot);
