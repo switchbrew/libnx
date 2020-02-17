@@ -294,25 +294,42 @@ Result splCryptoGetSecurityEngineEvent(Event *out_event) {
 
 /* SPL IRsaService functionality. NOTE: IRsaService is not a real part of inheritance, unlike ICryptoService/IGeneralService. */
 Result splRsaDecryptPrivateKey(const void *sealed_kek, const void *wrapped_key, const void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version, void *dst, size_t dst_size) {
-    const struct {
-        SplKey sealed_kek;
-        SplKey wrapped_key;
-        u32    version;
-    } in = { *((const SplKey *)sealed_kek), *((const SplKey *)wrapped_key), version };
-    return serviceDispatchIn(_splGetRsaSrv(), 13, in,
-        .buffer_attrs = {
-            SfBufferAttr_HipcPointer | SfBufferAttr_Out,
-            SfBufferAttr_HipcPointer | SfBufferAttr_In,
-        },
-        .buffers = {
-            { dst, dst_size },
-            { wrapped_rsa_key, wrapped_rsa_key_size },
-        },
-    );
+    if (hosversionBefore(5,0,0)) {
+        const struct {
+            SplKey sealed_kek;
+            SplKey wrapped_key;
+            u32    version;
+        } in = { *((const SplKey *)sealed_kek), *((const SplKey *)wrapped_key), version };
+        return serviceDispatchIn(_splGetRsaSrv(), 13, in,
+            .buffer_attrs = {
+                SfBufferAttr_HipcPointer | SfBufferAttr_Out,
+                SfBufferAttr_HipcPointer | SfBufferAttr_In,
+            },
+            .buffers = {
+                { dst, dst_size },
+                { wrapped_rsa_key, wrapped_rsa_key_size },
+            },
+        );
+    } else {
+        const struct {
+            SplKey sealed_kek;
+            SplKey wrapped_key;
+        } in = { *((const SplKey *)sealed_kek), *((const SplKey *)wrapped_key) };
+        return serviceDispatchIn(_splGetRsaSrv(), 13, in,
+            .buffer_attrs = {
+                SfBufferAttr_HipcPointer | SfBufferAttr_Out,
+                SfBufferAttr_HipcPointer | SfBufferAttr_In,
+            },
+            .buffers = {
+                { dst, dst_size },
+                { wrapped_rsa_key, wrapped_rsa_key_size },
+            },
+        );
+    }
 }
 
 /* Helper function for RSA key importing. */
-NX_INLINE Result _splImportSecureExpModKey(Service* srv, u32 cmd_id, const void *sealed_kek, const void *wrapped_key, const void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version) {
+static Result _splImportSecureExpModKeyDeprecated(Service* srv, u32 cmd_id, const void *sealed_kek, const void *wrapped_key, const void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version) {
     const struct {
         SplKey sealed_kek;
         SplKey wrapped_key;
@@ -328,7 +345,22 @@ NX_INLINE Result _splImportSecureExpModKey(Service* srv, u32 cmd_id, const void 
     );
 }
 
-NX_INLINE Result _splSecureExpMod(Service* srv, u32 cmd_id, const void *input, const void *modulus, void *dst) {
+static Result _splImportSecureExpModKey(Service* srv, u32 cmd_id, const void *sealed_kek, const void *wrapped_key, const void *wrapped_rsa_key, size_t wrapped_rsa_key_size) {
+    const struct {
+        SplKey sealed_kek;
+        SplKey wrapped_key;
+    } in = { *((const SplKey *)sealed_kek), *((const SplKey *)wrapped_key) };
+    return serviceDispatchIn(srv, cmd_id, in,
+        .buffer_attrs = {
+            SfBufferAttr_HipcPointer | SfBufferAttr_In,
+        },
+        .buffers = {
+            { wrapped_rsa_key, wrapped_rsa_key_size },
+        },
+    );
+}
+
+static Result _splSecureExpMod(Service* srv, u32 cmd_id, const void *input, const void *modulus, void *dst) {
     return serviceDispatch(srv, cmd_id,
         .buffer_attrs = {
             SfBufferAttr_HipcPointer | SfBufferAttr_Out,
@@ -344,11 +376,11 @@ NX_INLINE Result _splSecureExpMod(Service* srv, u32 cmd_id, const void *input, c
 }
 
 /* SPL ISslService functionality. */
-Result splSslLoadSecureExpModKey(const void *sealed_kek, const void *wrapped_key, const void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version) {
+Result splSslLoadSecureExpModKey(const void *sealed_kek, const void *wrapped_key, const void *wrapped_rsa_key, size_t wrapped_rsa_key_size) {
     if (hosversionBefore(5,0,0)) {
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     }
-    return _splImportSecureExpModKey(&g_splSslSrv, 26, sealed_kek, wrapped_key, wrapped_rsa_key, wrapped_rsa_key_size, version);
+    return _splImportSecureExpModKey(&g_splSslSrv, 26, sealed_kek, wrapped_key, wrapped_rsa_key, wrapped_rsa_key_size);
 }
 
 Result splSslSecureExpMod(const void *input, const void *modulus, void *dst) {
@@ -359,7 +391,7 @@ Result splSslSecureExpMod(const void *input, const void *modulus, void *dst) {
 }
 
 /* SPL IEsService functionality. */
-NX_INLINE Result _splUnwrapRsaOaepWrappedKey(Service *srv, u32 cmd_id, const void *rsa_wrapped_key, const void *modulus, const void *label_hash, size_t label_hash_size, u32 key_generation, void *out_sealed_key) {
+static Result _splUnwrapRsaOaepWrappedKey(Service *srv, u32 cmd_id, const void *rsa_wrapped_key, const void *modulus, const void *label_hash, size_t label_hash_size, u32 key_generation, void *out_sealed_key) {
     return serviceDispatchInOut(srv, cmd_id, key_generation, *((SplKey *)out_sealed_key),
         .buffer_attrs = {
             SfBufferAttr_HipcPointer | SfBufferAttr_In,
@@ -374,7 +406,7 @@ NX_INLINE Result _splUnwrapRsaOaepWrappedKey(Service *srv, u32 cmd_id, const voi
     );
 }
 
-NX_INLINE Result _splLoadContentKey(Service *srv, u32 cmd_id, const void *sealed_key, u32 keyslot) {
+static Result _splLoadContentKey(Service *srv, u32 cmd_id, const void *sealed_key, u32 keyslot) {
     const struct {
         SplKey sealed_key;
         u32 keyslot;
@@ -383,7 +415,11 @@ NX_INLINE Result _splLoadContentKey(Service *srv, u32 cmd_id, const void *sealed
 }
 
 Result splEsLoadRsaOaepKey(const void *sealed_kek, const void *wrapped_key, const void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version) {
-    return _splImportSecureExpModKey(_splGetEsSrv(), 17, sealed_kek, wrapped_key, wrapped_rsa_key, wrapped_rsa_key_size, version);
+    if (hosversionBefore(5,0,0)) {
+        return _splImportSecureExpModKeyDeprecated(_splGetEsSrv(), 17, sealed_kek, wrapped_key, wrapped_rsa_key, wrapped_rsa_key_size, version);
+    } else {
+        return _splImportSecureExpModKey(_splGetEsSrv(), 17, sealed_kek, wrapped_key, wrapped_rsa_key, wrapped_rsa_key_size);
+    }
 }
 
 Result splEsUnwrapRsaOaepWrappedTitlekey(const void *rsa_wrapped_titlekey, const void *modulus, const void *label_hash, size_t label_hash_size, u32 key_generation, void *out_sealed_titlekey) {
@@ -401,11 +437,11 @@ Result splEsUnwrapAesWrappedTitlekey(const void *aes_wrapped_titlekey, u32 key_g
     return serviceDispatchInOut(_splGetEsSrv(), 20, in, *((SplKey *)out_sealed_titlekey));
 }
 
-Result splEsLoadSecureExpModKey(const void *sealed_kek, const void *wrapped_key, const void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version) {
+Result splEsLoadSecureExpModKey(const void *sealed_kek, const void *wrapped_key, const void *wrapped_rsa_key, size_t wrapped_rsa_key_size) {
     if (hosversionBefore(5,0,0)) {
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     }
-    return _splImportSecureExpModKey(&g_splEsSrv, 28, sealed_kek, wrapped_key, wrapped_rsa_key, wrapped_rsa_key_size, version);
+    return _splImportSecureExpModKey(&g_splEsSrv, 28, sealed_kek, wrapped_key, wrapped_rsa_key, wrapped_rsa_key_size);
 }
 
 Result splEsSecureExpMod(const void *input, const void *modulus, void *dst) {
@@ -431,7 +467,11 @@ Result splEsLoadElicenseKey(const void *sealed_elicense_key, u32 keyslot) {
 
 /* SPL IFsService functionality. */
 Result splFsLoadSecureExpModKey(const void *sealed_kek, const void *wrapped_key, const void *wrapped_rsa_key, size_t wrapped_rsa_key_size, RsaKeyVersion version) {
-    return _splImportSecureExpModKey(_splGetFsSrv(), 9, sealed_kek, wrapped_key, wrapped_rsa_key, wrapped_rsa_key_size, version);
+    if (hosversionBefore(5,0,0)) {
+        return _splImportSecureExpModKeyDeprecated(_splGetFsSrv(), 9, sealed_kek, wrapped_key, wrapped_rsa_key, wrapped_rsa_key_size, version);
+    } else {
+        return _splImportSecureExpModKey(_splGetFsSrv(), 9, sealed_kek, wrapped_key, wrapped_rsa_key, wrapped_rsa_key_size);
+    }
 }
 
 Result splFsSecureExpMod(const void *input, const void *modulus, void *dst) {
