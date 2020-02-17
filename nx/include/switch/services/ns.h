@@ -210,6 +210,14 @@ Result nsIsApplicationEntityMovable(u64 application_id, NcmStorageId storage_id,
 Result nsMoveApplicationEntity(u64 application_id, NcmStorageId storage_id);
 
 /**
+ * @brief RequestApplicationUpdateInfo
+ * @note \ref nifmInitialize must be used prior to this. Before using the cmd, this calls \ref nifmIsAnyInternetRequestAccepted with the output from \ref nifmGetClientId, an error is returned when that returns false.
+ * @param[out] a \ref AsyncValue. The data that can be read from this is u8 ApplicationUpdateInfo. qlaunch just checks whether this is 0.
+ * @param application_id ApplicationId.
+ */
+Result nsRequestApplicationUpdateInfo(AsyncValue *a, u64 application_id);
+
+/**
  * @brief CancelApplicationDownload
  * @param[in] application_id ApplicationId.
  */
@@ -344,6 +352,15 @@ Result nsResumeAll(void);
 Result nsGetStorageSize(NcmStorageId storage_id, s64 *total_space_size, s64 *free_space_size);
 
 /**
+ * @brief RequestUpdateApplication2
+ * @note \ref nifmInitialize must be used prior to this. Before using the cmd, this calls \ref nifmIsAnyInternetRequestAccepted with the output from \ref nifmGetClientId, an error is returned when that returns false.
+ * @note Only available on [4.0.0+].
+ * @param[out] a \ref AsyncResult
+ * @param[in] application_id ApplicationId.
+ */
+Result nsRequestUpdateApplication2(AsyncResult *a, u64 application_id);
+
+/**
  * @brief DeleteUserSystemSaveData
  * @param[in] uid \ref AccountUid
  * @param[in] system_save_data_id SystemSaveDataId
@@ -380,6 +397,44 @@ Result nsUnregisterNetworkServiceAccountWithUserSaveDataDeletion(AccountUid uid)
  * @param[out] actual_size Actual output size.
  */
 Result nsGetApplicationControlData(NsApplicationControlSource source, u64 application_id, NsApplicationControlData* buffer, size_t size, u64* actual_size);
+
+/**
+ * @brief RequestDownloadApplicationControlData
+ * @note \ref nifmInitialize must be used prior to this. Before using the cmd, this calls \ref nifmIsAnyInternetRequestAccepted with the output from \ref nifmGetClientId, an error is returned when that returns false.
+ * @param[out] a \ref AsyncResult
+ * @param[in] application_id ApplicationId.
+ */
+Result nsRequestDownloadApplicationControlData(AsyncResult *a, u64 application_id);
+
+/**
+ * @brief RequestCheckGameCardRegistration
+ * @note \ref nifmInitialize must be used prior to this. Before using the cmd, this calls \ref nifmIsAnyInternetRequestAccepted with the output from \ref nifmGetClientId, an error is returned when that returns false.
+ * @note Only available on [2.0.0+].
+ * @param[out] a \ref AsyncResult
+ * @param[in] application_id ApplicationId.
+ */
+Result nsRequestCheckGameCardRegistration(AsyncResult *a, u64 application_id);
+
+/**
+ * @brief RequestGameCardRegistrationGoldPoint
+ * @note \ref nifmInitialize must be used prior to this. Before using the cmd, this calls \ref nifmIsAnyInternetRequestAccepted with the output from \ref nifmGetClientId, an error is returned when that returns false.
+ * @note Only available on [2.0.0+].
+ * @param[out] a \ref AsyncValue. The data that can be read from this is 4-bytes.
+ * @param[in] uid \ref AccountUid
+ * @param[in] application_id ApplicationId.
+ */
+Result nsRequestGameCardRegistrationGoldPoint(AsyncValue *a, AccountUid uid, u64 application_id);
+
+/**
+ * @brief RequestRegisterGameCard
+ * @note \ref nifmInitialize must be used prior to this. Before using the cmd, this calls \ref nifmIsAnyInternetRequestAccepted with the output from \ref nifmGetClientId, an error is returned when that returns false.
+ * @note Only available on [2.0.0+].
+ * @param[out] a \ref AsyncResult
+ * @param[in] uid \ref AccountUid
+ * @param[in] application_id ApplicationId.
+ * @param[in] inval Input value.
+ */
+Result nsRequestRegisterGameCard(AsyncResult *a, AccountUid uid, u64 application_id, s32 inval);
 
 /**
  * @brief GetGameCardMountFailureEvent
@@ -485,6 +540,15 @@ Result nsNeedsSystemUpdateToFormatSdCard(bool *out);
  * @note Only available on [2.0.0+].
  */
 Result nsGetLastSdCardFormatUnexpectedResult(void);
+
+/**
+ * @brief RequestDownloadApplicationPrepurchasedRights
+ * @note \ref nifmInitialize must be used prior to this. Before using the cmd, this calls \ref nifmIsAnyInternetRequestAccepted with the output from \ref nifmGetClientId, an error is returned when that returns false.
+ * @note Only available on [4.0.0+].
+ * @param[out] a \ref AsyncResult
+ * @param[in] application_id ApplicationId.
+ */
+Result nsRequestDownloadApplicationPrepurchasedRights(AsyncResult *a, u64 application_id);
 
 /**
  * @brief Generates a \ref NsSystemDeliveryInfo using the currently installed SystemUpdate meta.
@@ -672,6 +736,24 @@ Result nsGetApplicationDeliveryInfoHash(const NsApplicationDeliveryInfo *info, s
  * @param[out] res Output Result.
  */
 Result nsGetApplicationTerminateResult(u64 application_id, Result *res);
+
+/**
+ * @brief RequestNoDownloadRightsErrorResolution
+ * @note \ref nifmInitialize must be used prior to this. Before using the cmd, this calls \ref nifmIsAnyInternetRequestAccepted with the output from \ref nifmGetClientId, an error is returned when that returns false.
+ * @note Only available on [9.0.0+].
+ * @param[out] a \ref AsyncValue. The data that can be read from this is u8 NoDownloadRightsErrorResolution.
+ * @param application_id ApplicationId.
+ */
+Result nsRequestNoDownloadRightsErrorResolution(AsyncValue *a, u64 application_id);
+
+/**
+ * @brief RequestResolveNoDownloadRightsError
+ * @note \ref nifmInitialize must be used prior to this. Before using the cmd, this calls \ref nifmIsAnyInternetRequestAccepted with the output from \ref nifmGetClientId, an error is returned when that returns false.
+ * @note Only available on [9.0.0+].
+ * @param[out] a \ref AsyncValue. The data that can be read from this is u8 NoDownloadRightsErrorResolution.
+ * @param application_id ApplicationId.
+ */
+Result nsRequestResolveNoDownloadRightsError(AsyncValue *a, u64 application_id);
 
 ///@}
 
