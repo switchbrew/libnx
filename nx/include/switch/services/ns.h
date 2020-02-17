@@ -143,6 +143,15 @@ typedef struct {
     u8 hmac[0x20];                                  ///< HMAC-SHA256 over the above data.
 } NsApplicationDeliveryInfo;
 
+/// NsApplicationRightsOnClient
+typedef struct {
+    u64 application_id;                             ///< ApplicationId.
+    AccountUid uid;                                 ///< \ref AccountUid
+    u8 flags_x18;                                   ///< qlaunch uses bit0-bit4 and bit7 from here.
+    u8 flags_x19;                                   ///< qlaunch uses bit0 from here.
+    u8 unk_x1a[0x6];                                ///< Unknown.
+} NsApplicationRightsOnClient;
+
 /// Default size for \ref nssuControlSetupCardUpdate / \ref nssuControlSetupCardUpdateViaSystemUpdater. This is the size used by qlaunch for SetupCardUpdate.
 #define NSSU_CARDUPDATE_TMEM_SIZE_DEFAULT 0x100000
 
@@ -736,6 +745,18 @@ Result nsGetApplicationDeliveryInfoHash(const NsApplicationDeliveryInfo *info, s
  * @param[out] res Output Result.
  */
 Result nsGetApplicationTerminateResult(u64 application_id, Result *res);
+
+/**
+ * @brief GetApplicationRightsOnClient
+ * @note Only available on [6.0.0+].
+ * @param[out] rights Output array of \ref NsApplicationRightsOnClient.
+ * @param[in] count Size of the rights array in entries. qlaunch uses value 3 for this.
+ * @param[in] application_id ApplicationId
+ * @param[in] uid \ref AccountUid, can optionally be all-zero.
+ * @param[in] flags Flags. Official sw hard-codes this to value 0x3.
+ * @param[out] total_out Total output entries.
+ */
+Result nsGetApplicationRightsOnClient(NsApplicationRightsOnClient *rights, s32 count, u64 application_id, AccountUid uid, u32 flags, s32 *total_out);
 
 /**
  * @brief RequestNoDownloadRightsErrorResolution

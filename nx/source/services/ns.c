@@ -940,6 +940,23 @@ Result nsGetApplicationTerminateResult(u64 application_id, Result *res) {
     return serviceDispatchInOut(&g_nsAppManSrv, 2100, application_id, *res);
 }
 
+Result nsGetApplicationRightsOnClient(NsApplicationRightsOnClient *rights, s32 count, u64 application_id, AccountUid uid, u32 flags, s32 *total_out) {
+    if (hosversionBefore(6,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    const struct {
+        u32 flags;
+        u32 pad;
+        u64 application_id;
+        AccountUid uid;
+    } in = { flags, 0, application_id, uid };
+
+    return serviceDispatchInOut(&g_nsAppManSrv, 2050, in, *total_out,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { rights, count*sizeof(NsApplicationRightsOnClient) } },
+    );
+}
+
 Result nsRequestNoDownloadRightsErrorResolution(AsyncValue *a, u64 application_id) {
     if (hosversionBefore(9,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
