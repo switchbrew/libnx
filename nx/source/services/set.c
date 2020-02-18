@@ -810,7 +810,7 @@ Result setcalGetWirelessLanMacAddress(SetCalMacAddress *out) {
 }
 
 Result setcalGetWirelessLanCountryCodeCount(s32 *out_count) {
-    return serviceDispatchOut(&g_setsysSrv, 7, *out_count);
+    return _setCmdNoInOutU32(&g_setsysSrv, (u32*)out_count, 7);
 }
 
 Result setcalGetWirelessLanCountryCodes(s32 *total_out, SetCalCountryCode *codes, s32 count) {
@@ -825,11 +825,11 @@ Result setcalGetSerialNumber(SetCalSerialNumber *out) {
 }
 
 Result setcalSetInitialSystemAppletProgramId(u64 program_id) {
-    return serviceDispatchIn(&g_setsysSrv, 10, program_id);
+    return _setCmdInU64NoOut(&g_setsysSrv, program_id, 10);
 }
 
 Result setcalSetOverlayDispProgramId(u64 program_id) {
-    return serviceDispatchIn(&g_setsysSrv, 11, program_id);
+    return _setCmdInU64NoOut(&g_setsysSrv, program_id, 11);
 }
 
 Result setcalGetBatteryLot(SetBatteryLot *out) {
@@ -897,7 +897,7 @@ Result setcalGetLcdVendorId(u32 *out_vendor_id) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return serviceDispatchOut(&g_setcalSrv, 23, *out_vendor_id);
+    return _setCmdNoInOutU32(&g_setcalSrv, out_vendor_id, 23);
 }
 
 Result setcalGetEciDeviceCertificate2(SetCalRsa2048DeviceCertificate *out) {
@@ -966,14 +966,14 @@ Result setcalGetUsbTypeCPowerSourceCircuitVersion(u8 *out_version) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return serviceDispatchOut(&g_setcalSrv, 32, *out_version);
+    return _setCmdNoInOutU8(&g_setcalSrv, out_version, 32);
 }
 
 Result setcalGetAnalogStickModuleTypeL(u8 *out_type) {
     if (hosversionBefore(8,1,1))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return serviceDispatchOut(&g_setcalSrv, 33, *out_type);
+    return _setCmdNoInOutU8(&g_setcalSrv, out_type, 33);
 }
 
 Result setcalGetAnalogStickModelParameterL(SetCalAnalogStickModelParameter *out) {
@@ -994,7 +994,7 @@ Result setcalGetAnalogStickModuleTypeR(u8 *out_type) {
     if (hosversionBefore(8,1,1))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return serviceDispatchOut(&g_setcalSrv, 36, *out_type);
+    return _setCmdNoInOutU8(&g_setcalSrv, out_type, 36);
 }
 
 Result setcalGetAnalogStickModelParameterR(SetCalAnalogStickModelParameter *out) {
@@ -1015,7 +1015,7 @@ Result setcalGetConsoleSixAxisSensorModuleType(u8 *out_type) {
     if (hosversionBefore(8,1,1))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return serviceDispatchOut(&g_setcalSrv, 39, *out_type);
+    return _setCmdNoInOutU8(&g_setcalSrv, out_type, 39);
 }
 
 Result setcalGetConsoleSixAxisSensorHorizontalOffset(SetCalConsoleSixAxisSensorHorizontalOffset *out) {
@@ -1029,5 +1029,5 @@ Result setcalGetBatteryVersion(u8 *out_version) {
     if (hosversionBefore(6,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return serviceDispatchOut(&g_setcalSrv, 41, *out_version);
+    return _setCmdNoInOutU8(&g_setcalSrv, out_version, 41);
 }
