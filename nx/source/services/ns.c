@@ -245,6 +245,19 @@ Result nsGetApplicationRecordUpdateSystemEvent(Event* out_event) {
     return _nsCmdGetEvent(&g_nsAppManSrv, out_event, true, 2);
 }
 
+Result nsGetApplicationViewDeprecated(NsApplicationViewDeprecated *views, const u64 *application_ids, s32 count) {
+    return serviceDispatch(&g_nsAppManSrv, 3,
+        .buffer_attrs = {
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_Out,
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_In,
+        },
+        .buffers = {
+            { views, count*sizeof(NsApplicationViewDeprecated) },
+            { application_ids, count*sizeof(u64) },
+        },
+    );
+}
+
 Result nsDeleteApplicationEntity(u64 application_id) {
     return _nsCmdInU64(&g_nsAppManSrv, application_id, 4);
 }
@@ -652,6 +665,48 @@ Result nsGetLastSdCardFormatUnexpectedResult(void) {
     return _nsCmdNoIO(&g_nsAppManSrv, 1502);
 }
 
+Result nsGetApplicationView(NsApplicationView *views, const u64 *application_ids, s32 count) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatch(&g_nsAppManSrv, 1701,
+        .buffer_attrs = {
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_Out,
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_In,
+        },
+        .buffers = {
+            { views, count*sizeof(NsApplicationView) },
+            { application_ids, count*sizeof(u64) },
+        },
+    );
+}
+
+Result nsGetApplicationViewDownloadErrorContext(u64 application_id, ErrorContext *context) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchIn(&g_nsAppManSrv, 1703, application_id,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { context, sizeof(*context) } },
+    );
+}
+
+Result nsGetApplicationViewWithPromotionInfo(NsApplicationViewWithPromotionInfo *out, const u64 *application_ids, s32 count) {
+    if (hosversionBefore(8,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatch(&g_nsAppManSrv, 1704,
+        .buffer_attrs = {
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_Out,
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_In,
+        },
+        .buffers = {
+            { out, count*sizeof(NsApplicationViewWithPromotionInfo) },
+            { application_ids, count*sizeof(u64) },
+        },
+    );
+}
+
 Result nsRequestDownloadApplicationPrepurchasedRights(AsyncResult *a, u64 application_id) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
@@ -975,6 +1030,26 @@ Result nsRequestResolveNoDownloadRightsError(AsyncValue *a, u64 application_id) 
     if (R_FAILED(rc)) return rc;
 
     return _nsCmdInU64OutAsyncValue(&g_nsAppManSrv, a, application_id, 2352);
+}
+
+Result nsGetPromotionInfo(NsPromotionInfo *promotion, u64 application_id, AccountUid uid) {
+    if (hosversionBefore(8,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    // These are arrays, but official sw uses hard-coded value 1 for array-count.
+
+    return serviceDispatch(&g_nsAppManSrv, 2400,
+        .buffer_attrs = {
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_Out,
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_In,
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_In,
+        },
+        .buffers = {
+            { promotion, sizeof(NsPromotionInfo) },
+            { &application_id, sizeof(u64) },
+            { &uid, sizeof(AccountUid) },
+        },
+    );
 }
 
 // IRequestServerStopper
