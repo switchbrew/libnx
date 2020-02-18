@@ -328,7 +328,7 @@ typedef struct {
 
 typedef struct {
     char code[0x3];          ///< Country code.
-} PACKED SetCalCountryCode;
+} SetCalCountryCode;
 
 typedef struct {
     u8 cert[0x180];
