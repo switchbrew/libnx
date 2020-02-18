@@ -781,6 +781,61 @@ Result setsysSetTouchScreenMode(SetSysTouchScreenMode mode) {
     return _setCmdInU32NoOut(&g_setsysSrv, mode, 188);
 }
 
+Result setcalGetBdAddress(SetCalBdAddress *out) {
+    return serviceDispatchOut(&g_setsysSrv, 0, *out);
+}
+
+Result setcalGetConfigurationId1(SetCalConfigurationId1 *out) {
+    return serviceDispatchOut(&g_setsysSrv, 1, *out);
+}
+
+Result setcalGetAccelerometerOffset(SetCalAccelerometerOffset *out) {
+    return serviceDispatchOut(&g_setsysSrv, 2, *out);
+}
+
+Result setcalGetAccelerometerScale(SetCalAccelerometerScale *out) {
+    return serviceDispatchOut(&g_setsysSrv, 3, *out);
+}
+
+Result setcalGetGyroscopeOffset(SetCalAccelerometerOffset *out) {
+    return serviceDispatchOut(&g_setsysSrv, 4, *out);
+}
+
+Result setcalGetGyroscopeScale(SetCalGyroscopeScale *out) {
+    return serviceDispatchOut(&g_setsysSrv, 5, *out);
+}
+
+Result setcalGetWirelessLanMacAddress(SetCalMacAddress *out) {
+    return serviceDispatchOut(&g_setsysSrv, 6, *out);
+}
+
+Result setcalGetWirelessLanCountryCodeCount(s32 *out_count) {
+    return _setCmdNoInOutU32(&g_setsysSrv, (u32*)out_count, 7);
+}
+
+Result setcalGetWirelessLanCountryCodes(s32 *total_out, SetCalCountryCode *codes, s32 count) {
+    return serviceDispatchOut(&g_setsysSrv, 8, *total_out,
+        .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_Out },
+        .buffers = { { codes, count*sizeof(SetCalCountryCode) } },
+    );
+}
+
+Result setcalGetSerialNumber(SetCalSerialNumber *out) {
+    return serviceDispatchOut(&g_setsysSrv, 9, *out);
+}
+
+Result setcalSetInitialSystemAppletProgramId(u64 program_id) {
+    return _setCmdInU64NoOut(&g_setsysSrv, program_id, 10);
+}
+
+Result setcalSetOverlayDispProgramId(u64 program_id) {
+    return _setCmdInU64NoOut(&g_setsysSrv, program_id, 11);
+}
+
+Result setcalGetBatteryLot(SetBatteryLot *out) {
+    return serviceDispatchOut(&g_setsysSrv, 12, *out);
+}
+
 Result setcalGetEciDeviceCertificate(SetCalEccB233DeviceCertificate *out) {
     return serviceDispatch(&g_setcalSrv, 14,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
@@ -823,9 +878,156 @@ Result setcalGetGameCardCertificate(SetCalGameCardCertificate *out) {
     );
 }
 
+Result setcalGetEciDeviceKey(SetCalEccB233DeviceKey *out) {
+    return serviceDispatchOut(&g_setcalSrv, 20, *out);
+}
+
 Result setcalGetEticketDeviceKey(SetCalRsa2048DeviceKey *out) {
     return serviceDispatch(&g_setcalSrv, 21,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
         .buffers = { { out, sizeof(SetCalRsa2048DeviceKey) } },
     );
+}
+
+Result setcalGetSpeakerParameter(SetCalSpeakerParameter *out) {
+    return serviceDispatchOut(&g_setcalSrv, 22, *out);
+}
+
+Result setcalGetLcdVendorId(u32 *out_vendor_id) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdNoInOutU32(&g_setcalSrv, out_vendor_id, 23);
+}
+
+Result setcalGetEciDeviceCertificate2(SetCalRsa2048DeviceCertificate *out) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatch(&g_setcalSrv, 24,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { out, sizeof(SetCalRsa2048DeviceCertificate) } },
+    );
+}
+
+Result setcalGetEciDeviceKey2(SetCalRsa2048DeviceKey *out) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatch(&g_setcalSrv, 25,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { out, sizeof(SetCalRsa2048DeviceKey) } },
+    );
+}
+
+Result setcalGetAmiiboKey(SetCalAmiiboKey *out) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchOut(&g_setcalSrv, 26, *out);
+}
+
+Result setcalGetAmiiboEcqvCertificate(SetCalAmiiboEcqvCertificate *out) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchOut(&g_setcalSrv, 27, *out);
+}
+
+Result setcalGetAmiiboEcdsaCertificate(SetCalAmiiboEcdsaCertificate *out) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchOut(&g_setcalSrv, 28, *out);
+}
+
+Result setcalGetAmiiboEcqvBlsKey(SetCalAmiiboEcqvBlsKey *out) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchOut(&g_setcalSrv, 29, *out);
+}
+
+Result setcalGetAmiiboEcqvBlsCertificate(SetCalAmiiboEcqvBlsCertificate *out) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchOut(&g_setcalSrv, 30, *out);
+}
+
+Result setcalGetAmiiboEcqvBlsRootCertificate(SetCalAmiiboEcqvBlsRootCertificate *out) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchOut(&g_setcalSrv, 31, *out);
+}
+
+Result setcalGetUsbTypeCPowerSourceCircuitVersion(u8 *out_version) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdNoInOutU8(&g_setcalSrv, out_version, 32);
+}
+
+Result setcalGetAnalogStickModuleTypeL(u8 *out_type) {
+    if (hosversionBefore(8,1,1))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdNoInOutU8(&g_setcalSrv, out_type, 33);
+}
+
+Result setcalGetAnalogStickModelParameterL(SetCalAnalogStickModelParameter *out) {
+    if (hosversionBefore(8,1,1))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchOut(&g_setcalSrv, 34, *out);
+}
+
+Result setcalGetAnalogStickFactoryCalibrationL(SetCalAnalogStickFactoryCalibration *out) {
+    if (hosversionBefore(8,1,1))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchOut(&g_setcalSrv, 35, *out);
+}
+
+Result setcalGetAnalogStickModuleTypeR(u8 *out_type) {
+    if (hosversionBefore(8,1,1))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdNoInOutU8(&g_setcalSrv, out_type, 36);
+}
+
+Result setcalGetAnalogStickModelParameterR(SetCalAnalogStickModelParameter *out) {
+    if (hosversionBefore(8,1,1))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchOut(&g_setcalSrv, 37, *out);
+}
+
+Result setcalGetAnalogStickFactoryCalibrationR(SetCalAnalogStickFactoryCalibration *out) {
+    if (hosversionBefore(8,1,1))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchOut(&g_setcalSrv, 38, *out);
+}
+
+Result setcalGetConsoleSixAxisSensorModuleType(u8 *out_type) {
+    if (hosversionBefore(8,1,1))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdNoInOutU8(&g_setcalSrv, out_type, 39);
+}
+
+Result setcalGetConsoleSixAxisSensorHorizontalOffset(SetCalConsoleSixAxisSensorHorizontalOffset *out) {
+    if (hosversionBefore(8,1,1))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchOut(&g_setcalSrv, 40, *out);
+}
+
+Result setcalGetBatteryVersion(u8 *out_version) {
+    if (hosversionBefore(6,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdNoInOutU8(&g_setcalSrv, out_version, 41);
 }
