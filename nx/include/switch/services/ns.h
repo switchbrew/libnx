@@ -12,6 +12,7 @@
 #include "../services/async.h"
 #include "../services/acc.h"
 #include "../services/fs.h"
+#include "../applets/error.h"
 #include "../kernel/event.h"
 #include "../kernel/tmem.h"
 
@@ -81,6 +82,53 @@ typedef struct {
     u8 unk_x10;                    ///< Unknown.
     u8 unk_x11[7];                 ///< Unknown.
 } NsApplicationRecord;
+
+/// ApplicationViewDeprecated. The below comments are for the \ref NsApplicationView to NsApplicationViewDeprecated conversion done by \ref nsGetApplicationViewDeprecated on newer system-versions.
+typedef struct {
+    u64 application_id;                    ///< Same as NsApplicationView::application_id.
+    u8 unk_x8[0x4];                        ///< Same as NsApplicationView::unk_x8.
+    u32 flags;                             ///< Same as NsApplicationView::flags.
+    u8 unk_x10[0x10];                      ///< Same as NsApplicationView::unk_x10.
+    u32 unk_x20;                           ///< Same as NsApplicationView::unk_x20.
+    u16 unk_x24;                           ///< Same as NsApplicationView::unk_x24.
+    u8 unk_x26[0x2];                       ///< Cleared to zero.
+    u8 unk_x28[0x10];                      ///< Same as NsApplicationView::unk_x30.
+    u32 unk_x38;                           ///< Same as NsApplicationView::unk_x40.
+    u8 unk_x3c;                            ///< Same as NsApplicationView::unk_x44.
+    u8 unk_x3d[3];                         ///< Cleared to zero.
+} NsApplicationViewDeprecated;
+
+/// ApplicationView
+typedef struct {
+    u64 application_id;                    ///< ApplicationId.
+    u8 unk_x8[0x4];                        ///< Unknown.
+    u32 flags;                             ///< Flags.
+    u8 unk_x10[0x10];                      ///< Unknown.
+    u32 unk_x20;                           ///< Unknown.
+    u16 unk_x24;                           ///< Unknown.
+    u8 unk_x26[0x2];                       ///< Unknown.
+    u8 unk_x28[0x8];                       ///< Unknown.
+    u8 unk_x30[0x10];                      ///< Unknown.
+    u32 unk_x40;                           ///< Unknown.
+    u8 unk_x44;                            ///< Unknown.
+    u8 unk_x45[0xb];                       ///< Unknown.
+} NsApplicationView;
+
+/// NsPromotionInfo
+typedef struct {
+    u64 start_timestamp;                   ///< POSIX timestamp for the promotion start.
+    u64 end_timestamp;                     ///< POSIX timestamp for the promotion end.
+    s64 remaining_time;                    ///< Remaining time until the promotion ends, in nanoseconds ({end_timestamp - current_time} converted to nanoseconds).
+    u8 unk_x18[0x4];                       ///< Not set, left at zero.
+    u8 flags;                              ///< Flags. Bit0: whether the PromotionInfo is valid (including bit1). Bit1 clear: remaining_time is set. 
+    u8 pad[3];                             ///< Padding.
+} NsPromotionInfo;
+
+/// NsApplicationViewWithPromotionInfo
+typedef struct {
+    NsApplicationView view;                ///< \ref NsApplicationView
+    NsPromotionInfo promotion;             ///< \ref NsPromotionInfo
+} NsApplicationViewWithPromotionInfo;
 
 /// LaunchProperties
 typedef struct {
@@ -185,6 +233,15 @@ Result nsListApplicationRecord(NsApplicationRecord* records, s32 count, s32 entr
  * @param[out] out_event Output Event with autoclear=true.
  */
 Result nsGetApplicationRecordUpdateSystemEvent(Event* out_event);
+
+/**
+ * @brief GetApplicationViewDeprecated
+ * @note On [3.0.0+] you should generally use \ref nsGetApplicationView instead.
+ * @param[out] out Output array of \ref NsApplicationViewDeprecated.
+ * @param[in] application_ids Input array of ApplicationIds.
+ * @param[in] count Size of the input/output arrays in entries.
+ */
+Result nsGetApplicationViewDeprecated(NsApplicationViewDeprecated *views, const u64 *application_ids, s32 count);
 
 /**
  * @brief DeleteApplicationEntity
@@ -551,6 +608,32 @@ Result nsNeedsSystemUpdateToFormatSdCard(bool *out);
 Result nsGetLastSdCardFormatUnexpectedResult(void);
 
 /**
+ * @brief GetApplicationView
+ * @note Only available on [3.0.0+], on prior system-versions use \ref nsGetApplicationViewDeprecated instead.
+ * @param[out] out Output array of \ref NsApplicationView.
+ * @param[in] application_ids Input array of ApplicationIds.
+ * @param[in] count Size of the input/output arrays in entries.
+ */
+Result nsGetApplicationView(NsApplicationView *views, const u64 *application_ids, s32 count);
+
+/**
+ * @brief GetApplicationViewDownloadErrorContext
+ * @note Only available on [4.0.0+].
+ * @param[in] application_id ApplicationId
+ * @param[out] context \ref ErrorContext
+ */
+Result nsGetApplicationViewDownloadErrorContext(u64 application_id, ErrorContext *context);
+
+/**
+ * @brief GetApplicationViewWithPromotionInfo
+ * @note Only available on [8.0.0+].
+ * @param[out] out Output array of \ref NsApplicationViewWithPromotionInfo.
+ * @param[in] application_ids Input array of ApplicationIds.
+ * @param[in] count Size of the input/output arrays in entries.
+ */
+Result nsGetApplicationViewWithPromotionInfo(NsApplicationViewWithPromotionInfo *out, const u64 *application_ids, s32 count);
+
+/**
  * @brief RequestDownloadApplicationPrepurchasedRights
  * @note \ref nifmInitialize must be used prior to this. Before using the cmd, this calls \ref nifmIsAnyInternetRequestAccepted with the output from \ref nifmGetClientId, an error is returned when that returns false.
  * @note Only available on [4.0.0+].
@@ -775,6 +858,15 @@ Result nsRequestNoDownloadRightsErrorResolution(AsyncValue *a, u64 application_i
  * @param application_id ApplicationId.
  */
 Result nsRequestResolveNoDownloadRightsError(AsyncValue *a, u64 application_id);
+
+/**
+ * @brief GetPromotionInfo
+ * @note Only available on [8.0.0+].
+ * @param[out] promotion \ref NsPromotionInfo
+ * @param application_id ApplicationId.
+ * @param[in] uid \ref AccountUid
+ */
+Result nsGetPromotionInfo(NsPromotionInfo *promotion, u64 application_id, AccountUid uid);
 
 ///@}
 
