@@ -824,12 +824,12 @@ Result setcalGetSerialNumber(SetCalSerialNumber *out) {
     return serviceDispatchOut(&g_setsysSrv, 9, *out);
 }
 
-Result setcalSetInitialSystemAppletProgramId(const u64 *program_id) {
-    return serviceDispatchIn(&g_setsysSrv, 10, *program_id);
+Result setcalSetInitialSystemAppletProgramId(u64 program_id) {
+    return serviceDispatchIn(&g_setsysSrv, 10, program_id);
 }
 
-Result setcalSetOverlayDispProgramId(const u64 *program_id) {
-    return serviceDispatchIn(&g_setsysSrv, 11, *program_id);
+Result setcalSetOverlayDispProgramId(u64 program_id) {
+    return serviceDispatchIn(&g_setsysSrv, 11, program_id);
 }
 
 Result setcalGetBatteryLot(SetBatteryLot *out) {

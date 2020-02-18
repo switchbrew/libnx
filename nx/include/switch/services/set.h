@@ -1094,13 +1094,13 @@ Result setcalGetSerialNumber(SetCalSerialNumber *out);
  * @brief SetInitialSystemAppletProgramId
  * @param[in] program_id input ProgramId.
  */
-Result setcalSetInitialSystemAppletProgramId(const u64 *program_id);
+Result setcalSetInitialSystemAppletProgramId(u64 program_id);
 
 /**
  * @brief SetOverlayDispProgramId
  * @param[in] program_id input ProgramId.
  */
-Result setcalSetOverlayDispProgramId(const u64 *program_id);
+Result setcalSetOverlayDispProgramId(u64 program_id);
 
 /**
  * @brief Gets the \ref SetBatteryLot.
