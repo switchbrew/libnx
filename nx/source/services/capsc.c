@@ -179,7 +179,7 @@ static Result _capscControlReadDataFromAlbumMovieStream(u32 cmd_id, u64 stream, 
     );
 }
 
-static Result _capscControlCmdInU8NoOut(u32 cmd_id, u8 inval) {
+static Result _capscControlCmdInU64NoOut(u32 cmd_id, u64 inval) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     if (!serviceIsActive(&g_capscControl))
@@ -197,7 +197,7 @@ Result capscOpenAlbumMovieReadStream(u64 *stream, const CapsAlbumFileId *file_id
 }
 
 Result capscCloseAlbumMovieStream(u64 stream) {
-    return _capscControlCmdInU8NoOut(2002, stream);
+    return _capscControlCmdInU64NoOut(2002, stream);
 }
 
 Result capscGetAlbumMovieStreamSize(u64 stream, u64 *size) {
@@ -213,7 +213,7 @@ Result capscReadMovieDataFromAlbumMovieReadStream(u64 stream, u64 offset, void* 
 }
 
 Result capscGetAlbumMovieReadStreamBrokenReason(u64 stream) {
-    return _capscControlCmdInU8NoOut(2005, stream);
+    return _capscControlCmdInU64NoOut(2005, stream);
 }
 
 Result capscGetAlbumMovieReadStreamImageDataSize(u64 stream, u64 *size) {
@@ -252,45 +252,43 @@ Result capscOpenAlbumMovieWriteStream(u64 *stream, const CapsAlbumFileId *file_i
 }
 
 Result capscFinishAlbumMovieWriteStream(u64 stream) {
-    return _capscControlCmdInU8NoOut(2402, stream);
+    return _capscControlCmdInU64NoOut(2402, stream);
 }
 
 Result capscCommitAlbumMovieWriteStream(u64 stream) {
-    return _capscControlCmdInU8NoOut(2403, stream);
+    return _capscControlCmdInU64NoOut(2403, stream);
 }
 
 Result capscDiscardAlbumMovieWriteStream(u64 stream) {
-    return _capscControlCmdInU8NoOut(2404, stream);
+    return _capscControlCmdInU64NoOut(2404, stream);
 }
 
 Result capscDiscardAlbumMovieWriteStreamNoDelete(u64 stream) {
-    return _capscControlCmdInU8NoOut(2405, stream);
+    return _capscControlCmdInU64NoOut(2405, stream);
 }
 
-Result capscCommitAlbumMovieWriteStreamEx(u64 stream, CapsAlbumCommitOutput *out) {
+Result capscCommitAlbumMovieWriteStreamEx(u64 stream, CapsAlbumEntry *entry) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-
     if (!serviceIsActive(&g_capscControl))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-
-    return serviceDispatchInOut(&g_capscControl, 2406, stream, *out);
+    return serviceDispatchInOut(&g_capscControl, 2406, stream, *entry);
 }
 
 Result capscStartAlbumMovieWriteStreamDataSection(u64 stream) {
-    return _capscControlCmdInU8NoOut(2411, stream);
+    return _capscControlCmdInU64NoOut(2411, stream);
 }
 
 Result capscEndAlbumMovieWriteStreamDataSection(u64 stream) {
-    return _capscControlCmdInU8NoOut(2412, stream);
+    return _capscControlCmdInU64NoOut(2412, stream);
 }
 
 Result capscStartAlbumMovieWriteStreamMetaSection(u64 stream) {
-    return _capscControlCmdInU8NoOut(2413, stream);
+    return _capscControlCmdInU64NoOut(2413, stream);
 }
 
 Result capscEndAlbumMovieWriteStreamMetaSection(u64 stream) {
-    return _capscControlCmdInU8NoOut(2414, stream);
+    return _capscControlCmdInU64NoOut(2414, stream);
 }
 
 Result capscReadDataFromAlbumMovieWriteStream(u64 stream, u64 offset, void* buffer, u64 size, u64 *actual_size) {
@@ -321,7 +319,7 @@ Result capscWriteMetaToAlbumMovieWriteStream(u64 stream, u64 offset, void* buffe
 }
 
 Result capscGetAlbumMovieWriteStreamBrokenReason(u64 stream) {
-    return _capscControlCmdInU8NoOut(2431, stream);
+    return _capscControlCmdInU64NoOut(2431, stream);
 }
 
 Result capscGetAlbumMovieWriteStreamDataSize(u64 stream, u64 *size) {

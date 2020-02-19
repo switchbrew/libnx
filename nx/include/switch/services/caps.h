@@ -200,11 +200,6 @@ typedef struct {
     u64 unk_x8;                                           ///< Unknown
 } CapsAlbumCache;
 
-/// AlbumCommitOutput
-typedef struct {
-    u64 unk[4];                                           ///< Unknown. Official sw sets this to 0.
-} CapsAlbumCommitOutput;
-
 /// Gets the ShimLibraryVersion.
 u64 capsGetShimLibraryVersion(void);
 
