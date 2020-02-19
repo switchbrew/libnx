@@ -293,20 +293,20 @@ Result capscReadDataFromAlbumMovieWriteStream(u64 stream, u64 offset, void* buff
  * @note Only available on [4.0.0+].
  * @param[in] stream Stream handle.
  * @param[in] offset Offset.
- * @param[out] buffer Input data buffer.
+ * @param[in] buffer Input data buffer.
  * @param[in] size Data buffer size.
  */
-Result capscWriteDataToAlbumMovieWriteStream(u64 stream, u64 offset, void* buffer, u64 size);
+Result capscWriteDataToAlbumMovieWriteStream(u64 stream, u64 offset, const void* buffer, u64 size);
 
 /**
  * @brief Write meta data to an AlbumMovieWriteStream.
  * @note Only available on [4.0.0+].
  * @param[in] stream Stream handle.
  * @param[in] offset Offset.
- * @param[out] buffer Input data buffer.
+ * @param[in] buffer Input data buffer.
  * @param[in] size Data buffer size.
  */
-Result capscWriteMetaToAlbumMovieWriteStream(u64 stream, u64 offset, void* buffer, u64 size);
+Result capscWriteMetaToAlbumMovieWriteStream(u64 stream, u64 offset, const void* buffer, u64 size);
 
 /**
  * @brief Gets the BrokenReason for an AlbumMovieWriteStream.

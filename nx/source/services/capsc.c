@@ -293,7 +293,7 @@ Result capscReadDataFromAlbumMovieWriteStream(u64 stream, u64 offset, void* buff
     return _capscControlReadDataFromAlbumMovieStream(stream, offset, buffer, size, actual_size ,2421);
 }
 
-static Result _capscWriteToAlbumMovieWriteStream(u64 stream, u64 offset, void* buffer, u64 size, u32 cmd_id) {
+static Result _capscWriteToAlbumMovieWriteStream(u64 stream, u64 offset, const void* buffer, u64 size, u32 cmd_id) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     if (!serviceIsActive(&g_capscControl))
@@ -308,11 +308,11 @@ static Result _capscWriteToAlbumMovieWriteStream(u64 stream, u64 offset, void* b
     );
 }
 
-Result capscWriteDataToAlbumMovieWriteStream(u64 stream, u64 offset, void* buffer, u64 size) {
+Result capscWriteDataToAlbumMovieWriteStream(u64 stream, u64 offset, const void* buffer, u64 size) {
     return _capscWriteToAlbumMovieWriteStream(stream, offset, buffer, size, 2422);
 }
 
-Result capscWriteMetaToAlbumMovieWriteStream(u64 stream, u64 offset, void* buffer, u64 size) {
+Result capscWriteMetaToAlbumMovieWriteStream(u64 stream, u64 offset, const void* buffer, u64 size) {
     return _capscWriteToAlbumMovieWriteStream(stream, offset, buffer, size, 2424);
 }
 
