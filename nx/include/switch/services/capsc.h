@@ -212,7 +212,7 @@ Result capscOpenAlbumMovieWriteStream(u64 *stream, const CapsAlbumFileId *file_i
 
 /**
  * @brief Finish write to AlbumMovieWriteStream.
- * @note Writes copies file from save to destination storage and deletes the temporary file.
+ * @note Copies file from save to destination storage and deletes the temporary file.
  * @note Only available on [4.0.0+].
  * @param[in] stream Stream handle.
  */
