@@ -149,7 +149,7 @@ Result capscGetAlbumMovieStreamSize(u64 stream, u64 *size);
 /**
  * @brief Reads data from an AlbumMovieReadStream.
  * @note offset(+size) must not be negative. offset and size must be aligned to 0x40000-bytes.
- * @note When offset(+size) goes beyond the size from \ref capsaGetAlbumMovieStreamSize, the regions of the buffer which goes beyond that are cleared to 0, and actual_size is still set to the input size.
+ * @note When offset(+size) goes beyond the size from \ref capscGetAlbumMovieStreamSize, the regions of the buffer which goes beyond that are cleared to 0, and actual_size is still set to the input size.
  * @note Only available on [4.0.0+].
  * @param[in] stream Stream handle.
  * @param[in] offset Offset.
@@ -180,7 +180,7 @@ Result capscGetAlbumMovieReadStreamImageDataSize(u64 stream, u64 *size);
  * @note Only available on [4.0.0+].
  * @param[in] stream Stream handle.
  * @param[in] offset Offset.
- * @param[out] Output data buffer.
+ * @param[out] buffer Output data buffer.
  * @param[in] size Data buffer size.
  * @param[out] actual_size Actual read size.
  */
@@ -203,18 +203,125 @@ Result capscReadFileAttributeFromAlbumMovieReadStream(u64 stream, CapsScreenShot
  * @param[in] entry \ref CapsAlbumFileId
  */
 Result capscOpenAlbumMovieWriteStream(u64 *stream, const CapsAlbumFileId *file_id);
+
+/**
+ * @brief Finish write to AlbumMovieWriteStream.
+ * @note Writes copies file from save to destination storage and deletes the temporary file.
+ * @note Only available on [4.0.0+].
+ * @param[in] stream Stream handle.
+ */
 Result capscFinishAlbumMovieWriteStream(u64 stream);
+
+/**
+ * @brief Closes a finished AlbumMovieWriteStream.
+ * @note Only available on [4.0.0+].
+ * @param[in] stream Stream handle.
+ */
 Result capscCommitAlbumMovieWriteStream(u64 stream);
+
+/**
+ * @brief Closes an AlbumMovieWriteStream in any state.
+ * @note Only available on [4.0.0+].
+ * @param[in] stream Stream handle.
+ */
 Result capscDiscardAlbumMovieWriteStream(u64 stream);
+
+/**
+ * @brief Closes an AlbumMovieWriteStream in any state without deleting the temporary file.
+ * @note Only available on [4.0.0+].
+ * @param[in] stream Stream handle.
+ */
 Result capscDiscardAlbumMovieWriteStreamNoDelete(u64 stream);
-Result capscCommitAlbumMovieWriteStreamEx(u64 stream, CapsAlbumCommitOutput *out);
+
+/**
+ * @brief Closes a finished AlbumMovieWriteStream.
+ * @note Only available on [4.0.0+].
+ * @param[in] stream Stream handle.
+ * @param[out] entry \ref CapsAlbumEntry
+ */
+Result capscCommitAlbumMovieWriteStreamEx(u64 stream, CapsAlbumEntry *entry);
+
+/**
+ * @brief Start AlbumMovieWriteStream data section.
+ * @note Only available on [4.0.0+].
+ * @param[in] stream Stream handle.
+ */
 Result capscStartAlbumMovieWriteStreamDataSection(u64 stream);
+
+/**
+ * @brief End AlbumMovieWriteStream data section.
+ * @note Only available on [4.0.0+].
+ * @param[in] stream Stream handle.
+ */
 Result capscEndAlbumMovieWriteStreamDataSection(u64 stream);
+
+/**
+ * @brief Start AlbumMovieWriteStream meta section.
+ * @note Only available on [4.0.0+].
+ * @param[in] stream Stream handle.
+ */
 Result capscStartAlbumMovieWriteStreamMetaSection(u64 stream);
+
+/**
+ * @brief End AlbumMovieWriteStream meta section.
+ * @note Only available on [4.0.0+].
+ * @param[in] stream Stream handle.
+ */
 Result capscEndAlbumMovieWriteStreamMetaSection(u64 stream);
+
+/**
+ * @brief Reads data from an AlbumMovieWriteStream.
+ * @note offset(+size) must not be negative. offset and size must be aligned to 0x40000-bytes.
+ * @note When offset(+size) goes beyond the size from \ref capscGetAlbumMovieStreamSize, the regions of the buffer which goes beyond that are cleared to 0, and actual_size is still set to the input size.
+ * @note Only available on [4.0.0+].
+ * @param[in] stream Stream handle.
+ * @param[in] offset Offset.
+ * @param[out] buffer Output data buffer.
+ * @param[in] size Data buffer size.
+ * @param[out] actual_size Actual read size.
+ */
 Result capscReadDataFromAlbumMovieWriteStream(u64 stream, u64 offset, void* buffer, u64 size, u64 *actual_size);
+
+/**
+ * @brief Write data to an AlbumMovieWriteStream.
+ * @note Only available on [4.0.0+].
+ * @param[in] stream Stream handle.
+ * @param[in] offset Offset.
+ * @param[out] buffer Input data buffer.
+ * @param[in] size Data buffer size.
+ */
 Result capscWriteDataToAlbumMovieWriteStream(u64 stream, u64 offset, void* buffer, u64 size);
+
+/**
+ * @brief Write meta data to an AlbumMovieWriteStream.
+ * @note Only available on [4.0.0+].
+ * @param[in] stream Stream handle.
+ * @param[in] offset Offset.
+ * @param[out] buffer Input data buffer.
+ * @param[in] size Data buffer size.
+ */
 Result capscWriteMetaToAlbumMovieWriteStream(u64 stream, u64 offset, void* buffer, u64 size);
+
+/**
+ * @brief Gets the BrokenReason for an AlbumMovieWriteStream.
+ * @note Only available on [4.0.0+].
+ * @param[in] stream Stream handle.
+ */
 Result capscGetAlbumMovieWriteStreamBrokenReason(u64 stream);
+
+/**
+ * @brief Gets the data size of an AlbumMovieWriteStream.
+ * @note Only available on [4.0.0+].
+ * @param[in] stream Stream handle.
+ * @param[out] size Size of the data section.
+ */
 Result capscGetAlbumMovieWriteStreamDataSize(u64 stream, u64 *size);
+
+/**
+ * @brief Sets the data size of an AlbumMovieWriteStream.
+ * @note Must not be bigger than 2GiB.
+ * @note Only available on [4.0.0+].
+ * @param[in] stream Stream handle.
+ * @param[out] size Size of the data section.
+ */
 Result capscSetAlbumMovieWriteStreamDataSize(u64 stream, u64 size);
