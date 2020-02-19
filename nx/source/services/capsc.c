@@ -47,13 +47,11 @@ static Result _capscCmdInU8NoOut(Service *srv, u32 cmd_id, u64 inval) {
 }
 
 Result capscNotifyAlbumStorageIsAvailable(CapsAlbumStorage storage) {
-    u8 inval = storage;
-    return _capscCmdInU8NoOut(&g_capscSrv, 2001, inval);
+    return _capscCmdInU8NoOut(&g_capscSrv, 2001, storage);
 }
 
 Result capscNotifyAlbumStorageIsUnAvailable(CapsAlbumStorage storage) {
-    u8 inval = storage;
-    return _capscCmdInU8NoOut(&g_capscSrv, 2002, inval);
+    return _capscCmdInU8NoOut(&g_capscSrv, 2002, storage);
 }
 
 Result capscRegisterAppletResourceUserId(u64 appletResourceUserId, u64 application_id) {

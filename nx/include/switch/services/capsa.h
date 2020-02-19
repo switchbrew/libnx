@@ -333,13 +333,13 @@ Result capsaGetAlbumCache(CapsAlbumStorage storage, CapsAlbumCache *cache);
 Result capsaGetAlbumCacheEx(CapsAlbumStorage storage, CapsAlbumFileContents contents, CapsAlbumCache *cache);
 
 /**
- * @brief Load an \ref CapsAlbumEntry from a \ref CapsApplicationAlbumEntry and an Applet Resource User Id.
+ * @brief Load an \ref CapsAlbumEntry from a \ref CapsApplicationAlbumEntry and an AppletResourceUserId.
  * @note Only available on [2.0.0+].
  * @param[out] entry \ref CapsAlbumEntry
  * @param[in] application_entry \ref CapsApplicationAlbumEntry
- * @param[in] appletResourceUserId Application Resouce User Id
+ * @param[in] appletResourceUserId AppletResourceUserId
  */
-Result capsaGetAlbumEntryFromApplicationAlbumEntryAruid(CapsAlbumEntry *entry, const CapsApplicationAlbumEntry *application_entry, u64 appletResourceUserId);
+Result capsaGetAlbumEntryFromApplicationAlbumEntryAruid(CapsAlbumEntry *entry, const CapsApplicationAlbumEntry *application_entry);
 
 /**
  * @brief Opens an AlbumMovieStream.

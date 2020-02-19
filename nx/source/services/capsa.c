@@ -350,13 +350,13 @@ Result capsaGetAlbumCacheEx(CapsAlbumStorage storage, CapsAlbumFileContents cont
     return serviceDispatchInOut(&g_capsaSrv, 8013, in, *cache);
 }
 
-Result capsaGetAlbumEntryFromApplicationAlbumEntryAruid(CapsAlbumEntry *entry, const CapsApplicationAlbumEntry *application_entry, u64 appletResourceUserId) {
+Result capsaGetAlbumEntryFromApplicationAlbumEntryAruid(CapsAlbumEntry *entry, const CapsApplicationAlbumEntry *application_entry) {
     if (hosversionBefore(2,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     const struct {
         CapsApplicationAlbumEntry application_entry;
         u64 aruid;
-    } in = { *application_entry, appletResourceUserId };
+    } in = { *application_entry, appletGetAppletResourceUserId() };
     return serviceDispatchInOut(&g_capsaSrv, 8021, in, *entry, .in_send_pid = true);
 }
 

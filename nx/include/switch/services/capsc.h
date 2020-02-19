@@ -34,49 +34,55 @@ Result capscNotifyAlbumStorageIsUnAvailable(CapsAlbumStorage storage);
 
 /**
  * @brief Register an applet for later usage.
- * @note Called at application launch.
+ * @note Called at application launch by the system.
  * @note Will generate a random AES-256 key for this application for use on Shim-Version 0.
- * @param[in] appletResourceUserId Session unique applet identifier.
- * @param[in] application_id Title unique identifier.
+ * @note Only available on [2.0.0+].
+ * @param[in] appletResourceUserId AppletResourceUserId.
+ * @param[in] application_id ApplicationId.
  */
 Result capscRegisterAppletResourceUserId(u64 appletResourceUserId, u64 application_id);
 
 /**
  * @brief Unregister an applet.
- * @note Called at application exit.
- * @param[in] appletResourceUserId Session unique applet identifier.
- * @param[in] application_id Title unique identifier.
+ * @note Called at application exit by the system.
+ * @note Only available on [2.0.0+].
+ * @param[in] appletResourceUserId AppletResourceUserId.
+ * @param[in] application_id ApplicationId.
  */
 Result capscUnregisterAppletResourceUserId(u64 appletResourceUserId, u64 application_id);
 
 /**
- * @brief Get an Application ID that corresponse to an Application Resource User ID.
+ * @brief Get an ApplicationId that corresponse to an AppletResourceUserId.
  * @note Returns value set by \ref capscRegisterAppletResourceUserId.
- * @param[out] application_id Title unique identifier.
- * @param[in] appletResourceUserId Session unique applet identifier.
+ * @note Only available on [2.0.0+].
+ * @param[out] application_id ApplicationId.
+ * @param[in] appletResourceUserId AppletResourceUserId.
  */
 Result capscGetApplicationIdFromAruid(u64 *application_id, u64 aruid);
 
 /**
- * @brief Checks whether an Application ID is registered.
- * @param[in] application_id Title unique identifier.
+ * @brief Checks whether an ApplicationId is registered.
+ * @note Only available on [2.0.0+].
+ * @param[in] application_id ApplicationId.
  */
 Result capscCheckApplicationIdRegistered(u64 application_id);
 
 /**
- * @brief Generate an Album File ID based of parameters and current time.
- * @param[in] application_id Title unique identifier.
+ * @brief Generate an AlbumFileId based of parameters and current time.
+ * @param[in] application_id ApplicationId.
+ * @note Only available on [2.0.0+].
  * @param[in] contents \ref CapsAlbumFileContents
  * @param[out] file_id \ref CapsAlbumFileId
  */
 Result capscGenerateCurrentAlbumFileId(u64 application_id, CapsAlbumFileContents contents, CapsAlbumFileId *file_id);
 
 /**
- * @brief Generate an Application Album Entry based of parameters.
+ * @brief Generate an ApplicationAlbumEntry based of parameters.
  * @note Output will be different between Shim Version 0 and 1.
+ * @note Only available on [2.0.0+].
  * @param[out] appEntry \ref CapsApplicationAlbumEntry
  * @param[in] entry \ref CapsAlbumEntry
- * @param[in] application_id Title unique identifier.
+ * @param[in] application_id ApplicationId.
  */
 Result capscGenerateApplicationAlbumEntry(CapsApplicationAlbumEntry *appEntry, const CapsAlbumEntry *entry, u64 application_id);
 
@@ -104,7 +110,7 @@ Result capscSaveAlbumScreenShotFileEx(const CapsAlbumFileId *file_id, u64 versio
 
 /**
  * @brief Sets thumbnail data for the last taken screenshot.
- * @note 96×54x4 Image will get saved.
+ * @note 96×54 Image will get saved.
  * @param[in] file_id \ref CapsAlbumFileId
  * @param[in] image RGBA8 image buffer.
  * @param[in] image_size size of the RGBA8 image buffer.
@@ -114,7 +120,7 @@ Result capscSetOverlayScreenShotThumbnailData(const CapsAlbumFileId *file_id, co
 /**
  * @brief Sets thumbnail data for the last recorded movie.
  * @note Only availabe on [4.0.0+].
- * @note 96×54x4 Image will get saved.
+ * @note 96×54 Image will get saved.
  * @param[in] file_id \ref CapsAlbumFileId
  * @param[in] image RGBA8 image buffer.
  * @param[in] image_size size of the RGBA8 image buffer.
@@ -123,7 +129,7 @@ Result capscSetOverlayMovieThumbnailData(const CapsAlbumFileId *file_id, const v
 
 /**
  * @brief Opens an AlbumMovieReadStream.
- * @note This opens IAlbumControlSession if not previously opened, it's closed during \ref capsaExit.
+ * @note This opens IAlbumControlSession if not previously opened, it's closed during \ref capscExit.
  * @note Up to 4 streams can be open at the same time. Multiple streams can be open at the same time for the same \ref CapsAlbumFileId.
  * @note Only available on [4.0.0+].
  * @param[out] stream Stream handle.
