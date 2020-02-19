@@ -85,10 +85,10 @@ void pmshellExit(void);
 Service* pmshellGetServiceSession(void);
 
 /// Initialize pm:bm.
-Result pmbmInitialize();
+Result pmbmInitialize(void);
 
 /// Exit pm:bm.
-void pmbmExit();
+void pmbmExit(void);
 
 /// Gets the Service object for the actual pm:bm service session.
 Service* pmbmGetServiceSession(void);

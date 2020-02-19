@@ -28,6 +28,11 @@ typedef enum {
     NifmInternetConnectionStatus_Connected              = 4, ///< Internet is connected.
 } NifmInternetConnectionStatus;
 
+/// ClientId
+typedef struct {
+    u32 id;           ///< ClientId
+} NifmClientId;
+
 /// Initialize nifm. This is used automatically by gethostid().
 Result nifmInitialize(NifmServiceType service_type);
 
@@ -39,6 +44,11 @@ Service* nifmGetServiceSession_StaticService(void);
 
 /// Gets the Service object for IGeneralService.
 Service* nifmGetServiceSession_GeneralService(void);
+
+/**
+ * @brief GetClientId
+ */
+NifmClientId nifmGetClientId(void);
 
 Result nifmGetCurrentIpAddress(u32* out);
 
@@ -56,6 +66,13 @@ Result nifmIsWirelessCommunicationEnabled(bool* out);
 Result nifmGetInternetConnectionStatus(NifmInternetConnectionType* connectionType, u32* wifiStrength, NifmInternetConnectionStatus* connectionStatus);
 
 Result nifmIsEthernetCommunicationEnabled(bool* out);
+
+/**
+ * @brief IsAnyInternetRequestAccepted
+ * @param[in] id \ref NifmClientId
+ */
+bool nifmIsAnyInternetRequestAccepted(NifmClientId id);
+
 Result nifmIsAnyForegroundRequestAccepted(bool* out);
 Result nifmPutToSleep(void);
 Result nifmWakeUp(void);

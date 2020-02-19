@@ -271,27 +271,35 @@ typedef struct {
 } SetCalAccelerometerScale;
 
 typedef struct {
+    u32 size;
     u8 cert[0x70];
 } SetCalAmiiboEcdsaCertificate;
 
 typedef struct {
+    u32 size;
     u8 cert[0x20];
 } SetCalAmiiboEcqvBlsCertificate;
 
 typedef struct {
-    u8 key[0x44];
+    u32 size;
+    u8 key[0x40];
+    u32 generation;
 } SetCalAmiiboEcqvBlsKey;
 
 typedef struct {
+    u32 size;
     u8 cert[0x90];
 } SetCalAmiiboEcqvBlsRootCertificate;
 
 typedef struct {
+    u32 size;
     u8 cert[0x14];
 } SetCalAmiiboEcqvCertificate;
 
 typedef struct {
-    u8 key[0x54];
+    u32 size;
+    u8 key[0x50];
+    u32 generation;
 } SetCalAmiiboKey;
 
 typedef struct {
@@ -319,16 +327,17 @@ typedef struct {
 } SetCalConsoleSixAxisSensorHorizontalOffset;
 
 typedef struct {
-    u32 code[0x4];          ///< Country code.
+    char code[0x3];          ///< Country code.
 } SetCalCountryCode;
 
 typedef struct {
-    u32 offset;             ///< Relative to current position.
-    u8 cert[0x17C];
+    u8 cert[0x180];
 } SetCalEccB233DeviceCertificate;
 
 typedef struct {
-    u8 key[0x58];
+    u32 size;
+    u8 key[0x50];
+    u32 generation;
 } SetCalEccB233DeviceKey;
 
 typedef struct {
@@ -338,6 +347,7 @@ typedef struct {
 typedef struct {
     u32 size;               ///< Size of the entire key.
     u8 key[0x130];
+    u32 generation;
 } SetCalGameCardKey;
 
 typedef struct {
@@ -353,17 +363,17 @@ typedef struct {
 } SetCalMacAddress;
 
 typedef struct {
-    u32 offset;             ///< Relative to current position.
-    u8 cert[0x23C];
+    u8 cert[0x240];
 } SetCalRsa2048DeviceCertificate;
 
 typedef struct {
     u32 size;               ///< Size of the entire key.
     u8 key[0x240];
+    u32 generation;
 } SetCalRsa2048DeviceKey;
 
 typedef struct {
-    u8 number[0x18];
+    char number[0x18];
 } SetCalSerialNumber;
 
 typedef struct {
@@ -378,6 +388,7 @@ typedef struct {
 typedef struct {
     u32 size;               ///< Size of the entire key.
     u8 key[0x130];
+    u32 generation;
 } SetCalSslKey;
 
 typedef struct {
@@ -1017,23 +1028,269 @@ void setcalExit(void);
 /// Gets the Service object for the actual setcal service session.
 Service* setcalGetServiceSession(void);
 
-/// Gets the \ref SetCalEccB233DeviceCertificate.
+/**
+ * @brief Gets the \ref SetCalBdAddress.
+ * @param[out] out \ref SetCalBdAddress
+ */
+Result setcalGetBdAddress(SetCalBdAddress *out);
+
+/**
+ * @brief Gets the \ref SetCalConfigurationId1.
+ * @param[out] out \ref SetCalConfigurationId1
+ */
+Result setcalGetConfigurationId1(SetCalConfigurationId1 *out);
+
+/**
+ * @brief Gets the \ref SetCalAccelerometerOffset.
+ * @param[out] out \ref SetCalAccelerometerOffset
+ */
+Result setcalGetAccelerometerOffset(SetCalAccelerometerOffset *out);
+
+/**
+ * @brief Gets the \ref SetCalAccelerometerScale.
+ * @param[out] out \ref SetCalAccelerometerScale
+ */
+Result setcalGetAccelerometerScale(SetCalAccelerometerScale *out);
+
+/**
+ * @brief Gets the \ref SetCalAccelerometerOffset.
+ * @param[out] out \ref SetCalAccelerometerOffset
+ */
+Result setcalGetGyroscopeOffset(SetCalAccelerometerOffset *out);
+
+/**
+ * @brief Gets the \ref SetCalGyroscopeScale.
+ * @param[out] out \ref SetCalGyroscopeScale
+ */
+Result setcalGetGyroscopeScale(SetCalGyroscopeScale *out);
+
+/**
+ * @brief Gets the \ref SetCalMacAddress.
+ * @param[out] out \ref SetCalMacAddress
+ */
+Result setcalGetWirelessLanMacAddress(SetCalMacAddress *out);
+
+/**
+ * @brief GetWirelessLanCountryCodeCount
+ * @param[out] out_count Output count
+ */
+Result setcalGetWirelessLanCountryCodeCount(s32 *out_count);
+
+/**
+ * @brief GetWirelessLanCountryCodes
+ * @param[out] total_out Total output entries.
+ * @param[out] codes Output array of \ref SetCalCountryCode.
+ * @param[in] count Size of the versions array in entries.
+ */
+Result setcalGetWirelessLanCountryCodes(s32 *total_out, SetCalCountryCode *codes, s32 count);
+
+/**
+ * @brief Gets the \ref SetCalSerialNumber.
+ * @param[out] out \ref SetCalSerialNumber
+ */
+Result setcalGetSerialNumber(SetCalSerialNumber *out);
+
+/**
+ * @brief SetInitialSystemAppletProgramId
+ * @param[in] program_id input ProgramId.
+ */
+Result setcalSetInitialSystemAppletProgramId(u64 program_id);
+
+/**
+ * @brief SetOverlayDispProgramId
+ * @param[in] program_id input ProgramId.
+ */
+Result setcalSetOverlayDispProgramId(u64 program_id);
+
+/**
+ * @brief Gets the \ref SetBatteryLot.
+ * @param[out] out \ref SetBatteryLot
+ */
+Result setcalGetBatteryLot(SetBatteryLot *out);
+
+/**
+ * @brief Gets the \ref SetCalEccB233DeviceCertificate.
+ * @param[out] out \ref SetCalEccB233DeviceCertificate
+ */
 Result setcalGetEciDeviceCertificate(SetCalEccB233DeviceCertificate *out);
 
-/// Gets the \ref SetCalRsa2048DeviceCertificate.
+/**
+ * @brief Gets the \ref SetCalRsa2048DeviceCertificate.
+ * @param[out] out \ref SetCalRsa2048DeviceCertificate
+ */
 Result setcalGetEticketDeviceCertificate(SetCalRsa2048DeviceCertificate *out);
 
-/// Gets the \ref SetCalSslKey.
+/**
+ * @brief Gets the \ref SetCalSslKey.
+ * @param[out] out \ref SetCalSslKey
+ */
 Result setcalGetSslKey(SetCalSslKey *out);
 
-/// Gets the \ref SetCalSslCertificate.
+/**
+ * @brief Gets the \ref SetCalSslCertificate.
+ * @param[out] out \ref SetCalSslCertificate
+ */
 Result setcalGetSslCertificate(SetCalSslCertificate *out);
 
-/// Gets the \ref SetCalGameCardKey.
+/**
+ * @brief Gets the \ref SetCalGameCardKey.
+ * @param[out] out \ref SetCalGameCardKey
+ */
 Result setcalGetGameCardKey(SetCalGameCardKey *out);
 
-/// Gets the \ref SetCalGameCardCertificate.
+/**
+ * @brief Gets the \ref SetCalGameCardCertificate.
+ * @param[out] out \ref SetCalGameCardCertificate
+ */
 Result setcalGetGameCardCertificate(SetCalGameCardCertificate *out);
 
-/// Gets the \ref SetCalRsa2048DeviceKey.
+/**
+ * @brief Gets the \ref SetCalEccB233DeviceKey.
+ * @param[out] out \ref SetCalEccB233DeviceKey
+ */
+Result setcalGetEciDeviceKey(SetCalEccB233DeviceKey *out);
+
+/**
+ * @brief Gets the \ref SetCalRsa2048DeviceKey.
+ * @param[out] out \ref SetCalRsa2048DeviceKey
+ */
 Result setcalGetEticketDeviceKey(SetCalRsa2048DeviceKey *out);
+
+/**
+ * @brief Gets the \ref SetCalSpeakerParameter.
+ * @param[out] out \ref SetCalSpeakerParameter
+ */
+Result setcalGetSpeakerParameter(SetCalSpeakerParameter *out);
+
+/**
+ * @brief GetLcdVendorId
+ * @note Only available on [4.0.0+].
+ * @param[out] out_vendor_id Output LcdVendorId.
+ */
+Result setcalGetLcdVendorId(u32 *out_vendor_id);
+
+/**
+ * @brief Gets the \ref SetCalRsa2048DeviceCertificate.
+ * @note Only available on [5.0.0+].
+ * @param[out] out \ref SetCalRsa2048DeviceCertificate
+ */
+Result setcalGetEciDeviceCertificate2(SetCalRsa2048DeviceCertificate *out);
+
+/**
+ * @brief Gets the \ref SetCalRsa2048DeviceKey.
+ * @note Only available on [5.0.0+].
+ * @param[out] out \ref SetCalRsa2048DeviceKey
+ */
+Result setcalGetEciDeviceKey2(SetCalRsa2048DeviceKey *out);
+
+/**
+ * @brief Gets the \ref SetCalAmiiboKey.
+ * @note Only available on [5.0.0+].
+ * @param[out] out \ref SetCalAmiiboKey
+ */
+Result setcalGetAmiiboKey(SetCalAmiiboKey *out);
+
+/**
+ * @brief Gets the \ref SetCalAmiiboEcqvCertificate.
+ * @note Only available on [5.0.0+].
+ * @param[out] out \ref SetCalAmiiboEcqvCertificate
+ */
+Result setcalGetAmiiboEcqvCertificate(SetCalAmiiboEcqvCertificate *out);
+
+/**
+ * @brief Gets the \ref SetCalAmiiboEcdsaCertificate.
+ * @note Only available on [5.0.0+].
+ * @param[out] out \ref SetCalAmiiboEcdsaCertificate
+ */
+Result setcalGetAmiiboEcdsaCertificate(SetCalAmiiboEcdsaCertificate *out);
+
+/**
+ * @brief Gets the \ref SetCalAmiiboEcqvBlsKey.
+ * @note Only available on [5.0.0+].
+ * @param[out] out \ref SetCalAmiiboEcqvBlsKey
+ */
+Result setcalGetAmiiboEcqvBlsKey(SetCalAmiiboEcqvBlsKey *out);
+
+/**
+ * @brief Gets the \ref SetCalAmiiboEcqvBlsCertificate.
+ * @note Only available on [5.0.0+].
+ * @param[out] out \ref SetCalAmiiboEcqvBlsCertificate
+ */
+Result setcalGetAmiiboEcqvBlsCertificate(SetCalAmiiboEcqvBlsCertificate *out);
+
+/**
+ * @brief Gets the \ref SetCalAmiiboEcqvBlsRootCertificate.
+ * @note Only available on [5.0.0+].
+ * @param[out] out \ref SetCalAmiiboEcqvBlsRootCertificate
+ */
+Result setcalGetAmiiboEcqvBlsRootCertificate(SetCalAmiiboEcqvBlsRootCertificate *out);
+
+/**
+ * @brief GetUsbTypeCPowerSourceCircuitVersion
+ * @note Only available on [5.0.0+].
+ * @param[out] out_version Output UsbTypeCPowerSourceCircuitVersion.
+ */
+Result setcalGetUsbTypeCPowerSourceCircuitVersion(u8 *out_version);
+
+/**
+ * @brief GetAnalogStickModuleTypeL
+ * @note Only available on [8.1.1+].
+ * @param[out] out_version Output AnalogStickModuleType.
+ */
+Result setcalGetAnalogStickModuleTypeL(u8 *out_type);
+
+/**
+ * @brief Gets the \ref SetCalAnalogStickModelParameter.
+ * @note Only available on [8.1.1+].
+ * @param[out] out \ref SetCalAnalogStickModelParameter
+ */
+Result setcalGetAnalogStickModelParameterL(SetCalAnalogStickModelParameter *out);
+
+/**
+ * @brief Gets the \ref SetCalAnalogStickFactoryCalibration.
+ * @note Only available on [8.1.1+].
+ * @param[out] out \ref SetCalAnalogStickFactoryCalibration
+ */
+Result setcalGetAnalogStickFactoryCalibrationL(SetCalAnalogStickFactoryCalibration *out);
+
+/**
+ * @brief GetAnalogStickModuleTypeR
+ * @note Only available on [8.1.1+].
+ * @param[out] out_version Output AnalogStickModuleType.
+ */
+Result setcalGetAnalogStickModuleTypeR(u8 *out_type);
+
+/**
+ * @brief Gets the \ref SetCalAnalogStickModelParameter.
+ * @note Only available on [8.1.1+].
+ * @param[out] out \ref SetCalAnalogStickModelParameter
+ */
+Result setcalGetAnalogStickModelParameterR(SetCalAnalogStickModelParameter *out);
+
+/**
+ * @brief Gets the \ref SetCalAnalogStickFactoryCalibration.
+ * @note Only available on [8.1.1+].
+ * @param[out] out \ref SetCalAnalogStickFactoryCalibration
+ */
+Result setcalGetAnalogStickFactoryCalibrationR(SetCalAnalogStickFactoryCalibration *out);
+
+/**
+ * @brief GetConsoleSixAxisSensorModuleType
+ * @note Only available on [8.1.1+].
+ * @param[out] out_version Output ConsoleSixAxisSensorModuleType.
+ */
+Result setcalGetConsoleSixAxisSensorModuleType(u8 *out_type);
+
+/**
+ * @brief Gets the \ref SetCalConsoleSixAxisSensorHorizontalOffset.
+ * @note Only available on [8.1.1+].
+ * @param[out] out \ref SetCalConsoleSixAxisSensorHorizontalOffset
+ */
+Result setcalGetConsoleSixAxisSensorHorizontalOffset(SetCalConsoleSixAxisSensorHorizontalOffset *out);
+
+/**
+ * @brief GetBatteryVersion
+ * @note Only available on [6.0.0+].
+ * @param[out] out_version Output BatteryVersion.
+ */
+Result setcalGetBatteryVersion(u8 *out_version);

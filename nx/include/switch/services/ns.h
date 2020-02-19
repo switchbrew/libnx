@@ -10,6 +10,9 @@
 #include "../sf/service.h"
 #include "../services/ncm_types.h"
 #include "../services/async.h"
+#include "../services/acc.h"
+#include "../services/fs.h"
+#include "../applets/error.h"
 #include "../kernel/event.h"
 #include "../kernel/tmem.h"
 
@@ -43,6 +46,11 @@ typedef enum {
     NsLatestSystemUpdate_Unknown2 = 2,                ///< Unknown.
 } NsLatestSystemUpdate;
 
+/// RequestServerStopper
+typedef struct {
+    Service s;                     ///< IRequestServerStopper
+} NsRequestServerStopper;
+
 /// SystemUpdateControl
 typedef struct {
     Service s;                     ///< ISystemUpdateControl
@@ -74,6 +82,53 @@ typedef struct {
     u8 unk_x10;                    ///< Unknown.
     u8 unk_x11[7];                 ///< Unknown.
 } NsApplicationRecord;
+
+/// ApplicationViewDeprecated. The below comments are for the \ref NsApplicationView to NsApplicationViewDeprecated conversion done by \ref nsGetApplicationViewDeprecated on newer system-versions.
+typedef struct {
+    u64 application_id;                    ///< Same as NsApplicationView::application_id.
+    u8 unk_x8[0x4];                        ///< Same as NsApplicationView::unk_x8.
+    u32 flags;                             ///< Same as NsApplicationView::flags.
+    u8 unk_x10[0x10];                      ///< Same as NsApplicationView::unk_x10.
+    u32 unk_x20;                           ///< Same as NsApplicationView::unk_x20.
+    u16 unk_x24;                           ///< Same as NsApplicationView::unk_x24.
+    u8 unk_x26[0x2];                       ///< Cleared to zero.
+    u8 unk_x28[0x10];                      ///< Same as NsApplicationView::unk_x30.
+    u32 unk_x38;                           ///< Same as NsApplicationView::unk_x40.
+    u8 unk_x3c;                            ///< Same as NsApplicationView::unk_x44.
+    u8 unk_x3d[3];                         ///< Cleared to zero.
+} NsApplicationViewDeprecated;
+
+/// ApplicationView
+typedef struct {
+    u64 application_id;                    ///< ApplicationId.
+    u8 unk_x8[0x4];                        ///< Unknown.
+    u32 flags;                             ///< Flags.
+    u8 unk_x10[0x10];                      ///< Unknown.
+    u32 unk_x20;                           ///< Unknown.
+    u16 unk_x24;                           ///< Unknown.
+    u8 unk_x26[0x2];                       ///< Unknown.
+    u8 unk_x28[0x8];                       ///< Unknown.
+    u8 unk_x30[0x10];                      ///< Unknown.
+    u32 unk_x40;                           ///< Unknown.
+    u8 unk_x44;                            ///< Unknown.
+    u8 unk_x45[0xb];                       ///< Unknown.
+} NsApplicationView;
+
+/// NsPromotionInfo
+typedef struct {
+    u64 start_timestamp;                   ///< POSIX timestamp for the promotion start.
+    u64 end_timestamp;                     ///< POSIX timestamp for the promotion end.
+    s64 remaining_time;                    ///< Remaining time until the promotion ends, in nanoseconds ({end_timestamp - current_time} converted to nanoseconds).
+    u8 unk_x18[0x4];                       ///< Not set, left at zero.
+    u8 flags;                              ///< Flags. Bit0: whether the PromotionInfo is valid (including bit1). Bit1 clear: remaining_time is set. 
+    u8 pad[3];                             ///< Padding.
+} NsPromotionInfo;
+
+/// NsApplicationViewWithPromotionInfo
+typedef struct {
+    NsApplicationView view;                ///< \ref NsApplicationView
+    NsPromotionInfo promotion;             ///< \ref NsPromotionInfo
+} NsApplicationViewWithPromotionInfo;
 
 /// LaunchProperties
 typedef struct {
@@ -136,6 +191,15 @@ typedef struct {
     u8 hmac[0x20];                                  ///< HMAC-SHA256 over the above data.
 } NsApplicationDeliveryInfo;
 
+/// NsApplicationRightsOnClient
+typedef struct {
+    u64 application_id;                             ///< ApplicationId.
+    AccountUid uid;                                 ///< \ref AccountUid
+    u8 flags_x18;                                   ///< qlaunch uses bit0-bit4 and bit7 from here.
+    u8 flags_x19;                                   ///< qlaunch uses bit0 from here.
+    u8 unk_x1a[0x6];                                ///< Unknown.
+} NsApplicationRightsOnClient;
+
 /// Default size for \ref nssuControlSetupCardUpdate / \ref nssuControlSetupCardUpdateViaSystemUpdater. This is the size used by qlaunch for SetupCardUpdate.
 #define NSSU_CARDUPDATE_TMEM_SIZE_DEFAULT 0x100000
 
@@ -164,14 +228,231 @@ Service* nsGetServiceSession_ApplicationManagerInterface(void);
 Result nsListApplicationRecord(NsApplicationRecord* records, s32 count, s32 entry_offset, s32* out_entrycount);
 
 /**
- * @brief Gets an listing of \ref NsApplicationContentMetaStatus.
- * @param[in] application_id ApplicationId.
- * @param[in] index Starting entry index.
- * @param[out] list Output array of \ref NsApplicationContentMetaStatus.
- * @param[in] count Size of the list array in entries.
- * @param[out] out_entrycount Total output entries.
+ * @brief GetApplicationRecordUpdateSystemEvent
+ * @note The Event must be closed by the user once finished with it.
+ * @param[out] out_event Output Event with autoclear=true.
  */
-Result nsListApplicationContentMetaStatus(u64 application_id, s32 index, NsApplicationContentMetaStatus* list, s32 count, s32* out_entrycount);
+Result nsGetApplicationRecordUpdateSystemEvent(Event* out_event);
+
+/**
+ * @brief GetApplicationViewDeprecated
+ * @note On [3.0.0+] you should generally use \ref nsGetApplicationView instead.
+ * @param[out] out Output array of \ref NsApplicationViewDeprecated.
+ * @param[in] application_ids Input array of ApplicationIds.
+ * @param[in] count Size of the input/output arrays in entries.
+ */
+Result nsGetApplicationViewDeprecated(NsApplicationViewDeprecated *views, const u64 *application_ids, s32 count);
+
+/**
+ * @brief DeleteApplicationEntity
+ * @param[in] application_id ApplicationId.
+ */
+Result nsDeleteApplicationEntity(u64 application_id);
+
+/**
+ * @brief DeleteApplicationCompletely
+ * @param[in] application_id ApplicationId.
+ */
+Result nsDeleteApplicationCompletely(u64 application_id);
+
+/**
+ * @brief DeleteRedundantApplicationEntity
+ */
+Result nsDeleteRedundantApplicationEntity(void);
+
+/**
+ * @brief IsApplicationEntityMovable
+ * @param[in] application_id ApplicationId.
+ * @param[in] storage_id \ref NcmStorageId
+ * @param[out] out Output flag.
+ */
+Result nsIsApplicationEntityMovable(u64 application_id, NcmStorageId storage_id, bool *out);
+
+/**
+ * @brief MoveApplicationEntity
+ * @param[in] application_id ApplicationId.
+ * @param[in] storage_id \ref NcmStorageId
+ */
+Result nsMoveApplicationEntity(u64 application_id, NcmStorageId storage_id);
+
+/**
+ * @brief RequestApplicationUpdateInfo
+ * @note \ref nifmInitialize must be used prior to this. Before using the cmd, this calls \ref nifmIsAnyInternetRequestAccepted with the output from \ref nifmGetClientId, an error is returned when that returns false.
+ * @param[out] a \ref AsyncValue. The data that can be read from this is u8 ApplicationUpdateInfo. qlaunch just checks whether this is 0.
+ * @param application_id ApplicationId.
+ */
+Result nsRequestApplicationUpdateInfo(AsyncValue *a, u64 application_id);
+
+/**
+ * @brief CancelApplicationDownload
+ * @param[in] application_id ApplicationId.
+ */
+Result nsCancelApplicationDownload(u64 application_id);
+
+/**
+ * @brief ResumeApplicationDownload
+ * @param[in] application_id ApplicationId.
+ */
+Result nsResumeApplicationDownload(u64 application_id);
+
+/**
+ * @brief CheckApplicationLaunchVersion
+ * @param[in] application_id ApplicationId.
+ */
+Result nsCheckApplicationLaunchVersion(u64 application_id);
+
+/**
+ * @brief CalculateApplicationApplyDeltaRequiredSize
+ * @param[in] application_id ApplicationId.
+ * @param[out] storage_id Output \ref NcmStorageId.
+ * @param[out] size Output size.
+ */
+Result nsCalculateApplicationDownloadRequiredSize(u64 application_id, NcmStorageId *storage_id, s64 *size);
+
+/**
+ * @brief CleanupSdCard
+ */
+Result nsCleanupSdCard(void);
+
+/**
+ * @brief GetSdCardMountStatusChangedEvent
+ * @note The Event must be closed by the user once finished with it.
+ * @param[out] out_event Output Event with autoclear=false.
+ */
+Result nsGetSdCardMountStatusChangedEvent(Event* out_event);
+
+/**
+ * @brief Returns the total storage capacity (used + free) from content manager services.
+ * @param[in] storage_id \ref NcmStorageId. Must be ::NcmStorageId_SdCard.
+ * @param[out] size Pointer to output the total storage size to.
+ */
+Result nsGetTotalSpaceSize(NcmStorageId storage_id, s64 *size);
+
+/**
+ * @brief Returns the available storage capacity from content manager services.
+ * @param[in] storage_id \ref NcmStorageId. Must be ::NcmStorageId_SdCard.
+ * @param[out] size Pointer to output the free storage size to.
+ */
+Result nsGetFreeSpaceSize(NcmStorageId storage_id, s64 *size);
+
+/**
+ * @brief GetGameCardUpdateDetectionEvent
+ * @note The Event must be closed by the user once finished with it.
+ * @param[out] out_event Output Event with autoclear=false.
+ */
+Result nsGetGameCardUpdateDetectionEvent(Event* out_event);
+
+/**
+ * @brief DisableApplicationAutoDelete
+ * @param[in] application_id ApplicationId.
+ */
+Result nsDisableApplicationAutoDelete(u64 application_id);
+
+/**
+ * @brief EnableApplicationAutoDelete
+ * @param[in] application_id ApplicationId.
+ */
+Result nsEnableApplicationAutoDelete(u64 application_id);
+
+/**
+ * @brief SetApplicationTerminateResult
+ * @param[in] application_id ApplicationId.
+ * @param[in] res Result.
+ */
+Result nsSetApplicationTerminateResult(u64 application_id, Result res);
+
+/**
+ * @brief ClearApplicationTerminateResult
+ * @param[in] application_id ApplicationId.
+ */
+Result nsClearApplicationTerminateResult(u64 application_id);
+
+/**
+ * @brief GetLastSdCardMountUnexpectedResult
+ */
+Result nsGetLastSdCardMountUnexpectedResult(void);
+
+/**
+ * @brief Opens a \ref NsRequestServerStopper.
+ * @note Only available on [2.0.0+].
+ * @param[out] r \ref NsRequestServerStopper
+ */
+Result nsGetRequestServerStopper(NsRequestServerStopper *r);
+
+/**
+ * @brief CancelApplicationApplyDelta
+ * @note Only available on [3.0.0+].
+ * @param[in] application_id ApplicationId.
+ */
+Result nsCancelApplicationApplyDelta(u64 application_id);
+
+/**
+ * @brief ResumeApplicationApplyDelta
+ * @note Only available on [3.0.0+].
+ * @param[in] application_id ApplicationId.
+ */
+Result nsResumeApplicationApplyDelta(u64 application_id);
+
+/**
+ * @brief CalculateApplicationApplyDeltaRequiredSize
+ * @note Only available on [3.0.0+].
+ * @param[in] application_id ApplicationId.
+ * @param[out] storage_id Output \ref NcmStorageId.
+ * @param[out] size Output size.
+ */
+Result nsCalculateApplicationApplyDeltaRequiredSize(u64 application_id, NcmStorageId *storage_id, s64 *size);
+
+/**
+ * @brief ResumeAll
+ * @note Only available on [3.0.0+].
+ */
+Result nsResumeAll(void);
+
+/**
+ * @brief Temporarily mounts the specified fs ContentStorage, then uses fs GetTotalSpaceSize/GetFreeSpaceSize with that mounted ContentStorage.
+ * @note Only available on [3.0.0+].
+ * @param[in] storage_id \ref NcmStorageId, must be ::NcmStorageId_BuiltInUser or ::NcmStorageId_SdCard.
+ * @param[out] total_space_size Output from GetTotalSpaceSize.
+ * @param[out] free_space_size Output from GetFreeSpaceSize.
+ */
+Result nsGetStorageSize(NcmStorageId storage_id, s64 *total_space_size, s64 *free_space_size);
+
+/**
+ * @brief RequestUpdateApplication2
+ * @note \ref nifmInitialize must be used prior to this. Before using the cmd, this calls \ref nifmIsAnyInternetRequestAccepted with the output from \ref nifmGetClientId, an error is returned when that returns false.
+ * @note Only available on [4.0.0+].
+ * @param[out] a \ref AsyncResult
+ * @param[in] application_id ApplicationId.
+ */
+Result nsRequestUpdateApplication2(AsyncResult *a, u64 application_id);
+
+/**
+ * @brief DeleteUserSystemSaveData
+ * @param[in] uid \ref AccountUid
+ * @param[in] system_save_data_id SystemSaveDataId
+ */
+Result nsDeleteUserSystemSaveData(AccountUid uid, u64 system_save_data_id);
+
+/**
+ * @brief DeleteSaveData
+ * @note Only available on [6.0.0+].
+ * @param[in] save_data_space_id \ref FsSaveDataSpaceId
+ * @param[in] save_data_id SaveDataId
+ */
+Result nsDeleteSaveData(FsSaveDataSpaceId save_data_space_id, u64 save_data_id);
+
+/**
+ * @brief UnregisterNetworkServiceAccount
+ * @param[in] uid \ref AccountUid
+ */
+Result nsUnregisterNetworkServiceAccount(AccountUid uid);
+
+/**
+ * @brief UnregisterNetworkServiceAccountWithUserSaveDataDeletion
+ * @note Only available on [6.0.0+].
+ * @param[in] uid \ref AccountUid
+ */
+Result nsUnregisterNetworkServiceAccountWithUserSaveDataDeletion(AccountUid uid);
 
 /**
  * @brief Gets the \ref NsApplicationControlData for the specified application.
@@ -184,18 +465,182 @@ Result nsListApplicationContentMetaStatus(u64 application_id, s32 index, NsAppli
 Result nsGetApplicationControlData(NsApplicationControlSource source, u64 application_id, NsApplicationControlData* buffer, size_t size, u64* actual_size);
 
 /**
- * @brief Returns the total storage capacity (used + free) from content manager services.
- * @param[in] storage_id \ref NcmStorageId. Must be ::NcmStorageId_SdCard.
- * @param[out] size Pointer to output the total storage size to.
+ * @brief RequestDownloadApplicationControlData
+ * @note \ref nifmInitialize must be used prior to this. Before using the cmd, this calls \ref nifmIsAnyInternetRequestAccepted with the output from \ref nifmGetClientId, an error is returned when that returns false.
+ * @param[out] a \ref AsyncResult
+ * @param[in] application_id ApplicationId.
  */
-Result nsGetTotalSpaceSize(NcmStorageId storage_id, u64 *size);
+Result nsRequestDownloadApplicationControlData(AsyncResult *a, u64 application_id);
 
 /**
- * @brief Returns the available storage capacity from content manager services.
- * @param[in] storage_id \ref NcmStorageId. Must be ::NcmStorageId_SdCard.
- * @param[out] size Pointer to output the free storage size to.
+ * @brief RequestCheckGameCardRegistration
+ * @note \ref nifmInitialize must be used prior to this. Before using the cmd, this calls \ref nifmIsAnyInternetRequestAccepted with the output from \ref nifmGetClientId, an error is returned when that returns false.
+ * @note Only available on [2.0.0+].
+ * @param[out] a \ref AsyncResult
+ * @param[in] application_id ApplicationId.
  */
-Result nsGetFreeSpaceSize(NcmStorageId storage_id, u64 *size);
+Result nsRequestCheckGameCardRegistration(AsyncResult *a, u64 application_id);
+
+/**
+ * @brief RequestGameCardRegistrationGoldPoint
+ * @note \ref nifmInitialize must be used prior to this. Before using the cmd, this calls \ref nifmIsAnyInternetRequestAccepted with the output from \ref nifmGetClientId, an error is returned when that returns false.
+ * @note Only available on [2.0.0+].
+ * @param[out] a \ref AsyncValue. The data that can be read from this is 4-bytes.
+ * @param[in] uid \ref AccountUid
+ * @param[in] application_id ApplicationId.
+ */
+Result nsRequestGameCardRegistrationGoldPoint(AsyncValue *a, AccountUid uid, u64 application_id);
+
+/**
+ * @brief RequestRegisterGameCard
+ * @note \ref nifmInitialize must be used prior to this. Before using the cmd, this calls \ref nifmIsAnyInternetRequestAccepted with the output from \ref nifmGetClientId, an error is returned when that returns false.
+ * @note Only available on [2.0.0+].
+ * @param[out] a \ref AsyncResult
+ * @param[in] uid \ref AccountUid
+ * @param[in] application_id ApplicationId.
+ * @param[in] inval Input value.
+ */
+Result nsRequestRegisterGameCard(AsyncResult *a, AccountUid uid, u64 application_id, s32 inval);
+
+/**
+ * @brief GetGameCardMountFailureEvent
+ * @note The Event must be closed by the user once finished with it.
+ * @note Only available on [3.0.0+].
+ * @param[out] out_event Output Event with autoclear=false.
+ */
+Result nsGetGameCardMountFailureEvent(Event* out_event);
+
+/**
+ * @brief IsGameCardInserted
+ * @note Only available on [3.0.0+].
+ * @param[out] out Output flag.
+ */
+Result nsIsGameCardInserted(bool *out);
+
+/**
+ * @brief EnsureGameCardAccess
+ * @note Only available on [3.0.0+].
+ */
+Result nsEnsureGameCardAccess(void);
+
+/**
+ * @brief GetLastGameCardMountFailureResult
+ * @note Only available on [3.0.0+].
+ */
+Result nsGetLastGameCardMountFailureResult(void);
+
+/**
+ * @brief ListApplicationIdOnGameCard
+ * @note Only available on [5.0.0+].
+ * @param[out] application_ids Output array of ApplicationIds.
+ * @param[in] count Size of the application_ids array in entries.
+ * @param[out] total_out Total output entries.
+ */
+Result nsListApplicationIdOnGameCard(u64 *application_ids, s32 count, s32 *total_out);
+
+/**
+ * @brief Gets an listing of \ref NsApplicationContentMetaStatus.
+ * @note Only available on [2.0.0+].
+ * @param[in] application_id ApplicationId.
+ * @param[in] index Starting entry index.
+ * @param[out] list Output array of \ref NsApplicationContentMetaStatus.
+ * @param[in] count Size of the list array in entries.
+ * @param[out] out_entrycount Total output entries.
+ */
+Result nsListApplicationContentMetaStatus(u64 application_id, s32 index, NsApplicationContentMetaStatus* list, s32 count, s32* out_entrycount);
+
+/**
+ * @brief TouchApplication
+ * @note Only available on [2.0.0+].
+ * @param[in] application_id ApplicationId.
+ */
+Result nsTouchApplication(u64 application_id);
+
+/**
+ * @brief IsApplicationUpdateRequested
+ * @note Only available on [2.0.0+].
+ * @param[in] application_id ApplicationId.
+ * @param[out] flag Output flag, indicating whether out is valid.
+ * @param[out] out Output value.
+ */
+Result nsIsApplicationUpdateRequested(u64 application_id, bool *flag, u32 *out);
+
+/**
+ * @brief WithdrawApplicationUpdateRequest
+ * @note Only available on [2.0.0+].
+ * @param[in] application_id ApplicationId.
+ */
+Result nsWithdrawApplicationUpdateRequest(u64 application_id);
+
+/**
+ * @brief IsAnyApplicationEntityInstalled
+ * @note Only available on [2.0.0+].
+ * @param[in] application_id ApplicationId.
+ * @param[out] out Output flag.
+ */
+Result nsIsAnyApplicationEntityInstalled(u64 application_id, bool *out);
+
+/**
+ * @brief CleanupUnavailableAddOnContents
+ * @note Only available on [6.0.0+].
+ * @param[in] application_id ApplicationId.
+ * @param[in] uid \ref AccountUid
+ */
+Result nsCleanupUnavailableAddOnContents(u64 application_id, AccountUid uid);
+
+/**
+ * @brief FormatSdCard
+ * @note Only available on [2.0.0+].
+ */
+Result nsFormatSdCard(void);
+
+/**
+ * @brief NeedsSystemUpdateToFormatSdCard
+ * @note Only available on [2.0.0+].
+ * @param[out] out Output flag.
+ */
+Result nsNeedsSystemUpdateToFormatSdCard(bool *out);
+
+/**
+ * @brief GetLastSdCardFormatUnexpectedResult
+ * @note Only available on [2.0.0+].
+ */
+Result nsGetLastSdCardFormatUnexpectedResult(void);
+
+/**
+ * @brief GetApplicationView
+ * @note Only available on [3.0.0+], on prior system-versions use \ref nsGetApplicationViewDeprecated instead.
+ * @param[out] out Output array of \ref NsApplicationView.
+ * @param[in] application_ids Input array of ApplicationIds.
+ * @param[in] count Size of the input/output arrays in entries.
+ */
+Result nsGetApplicationView(NsApplicationView *views, const u64 *application_ids, s32 count);
+
+/**
+ * @brief GetApplicationViewDownloadErrorContext
+ * @note Only available on [4.0.0+].
+ * @param[in] application_id ApplicationId
+ * @param[out] context \ref ErrorContext
+ */
+Result nsGetApplicationViewDownloadErrorContext(u64 application_id, ErrorContext *context);
+
+/**
+ * @brief GetApplicationViewWithPromotionInfo
+ * @note Only available on [8.0.0+].
+ * @param[out] out Output array of \ref NsApplicationViewWithPromotionInfo.
+ * @param[in] application_ids Input array of ApplicationIds.
+ * @param[in] count Size of the input/output arrays in entries.
+ */
+Result nsGetApplicationViewWithPromotionInfo(NsApplicationViewWithPromotionInfo *out, const u64 *application_ids, s32 count);
+
+/**
+ * @brief RequestDownloadApplicationPrepurchasedRights
+ * @note \ref nifmInitialize must be used prior to this. Before using the cmd, this calls \ref nifmIsAnyInternetRequestAccepted with the output from \ref nifmGetClientId, an error is returned when that returns false.
+ * @note Only available on [4.0.0+].
+ * @param[out] a \ref AsyncResult
+ * @param[in] application_id ApplicationId.
+ */
+Result nsRequestDownloadApplicationPrepurchasedRights(AsyncResult *a, u64 application_id);
 
 /**
  * @brief Generates a \ref NsSystemDeliveryInfo using the currently installed SystemUpdate meta.
@@ -375,6 +820,64 @@ Result nsListNotCommittedContentMeta(NcmContentMetaKey *meta, s32 count, u64 app
  * @param[out] out_hash Output 0x20-byte SHA256 hash.
  */
 Result nsGetApplicationDeliveryInfoHash(const NsApplicationDeliveryInfo *info, s32 count, u8 *out_hash);
+
+/**
+ * @brief GetApplicationTerminateResult
+ * @note Only available on [6.0.0+].
+ * @param[in] application_id ApplicationId.
+ * @param[out] res Output Result.
+ */
+Result nsGetApplicationTerminateResult(u64 application_id, Result *res);
+
+/**
+ * @brief GetApplicationRightsOnClient
+ * @note Only available on [6.0.0+].
+ * @param[out] rights Output array of \ref NsApplicationRightsOnClient.
+ * @param[in] count Size of the rights array in entries. qlaunch uses value 3 for this.
+ * @param[in] application_id ApplicationId
+ * @param[in] uid \ref AccountUid, can optionally be all-zero.
+ * @param[in] flags Flags. Official sw hard-codes this to value 0x3.
+ * @param[out] total_out Total output entries.
+ */
+Result nsGetApplicationRightsOnClient(NsApplicationRightsOnClient *rights, s32 count, u64 application_id, AccountUid uid, u32 flags, s32 *total_out);
+
+/**
+ * @brief RequestNoDownloadRightsErrorResolution
+ * @note \ref nifmInitialize must be used prior to this. Before using the cmd, this calls \ref nifmIsAnyInternetRequestAccepted with the output from \ref nifmGetClientId, an error is returned when that returns false.
+ * @note Only available on [9.0.0+].
+ * @param[out] a \ref AsyncValue. The data that can be read from this is u8 NoDownloadRightsErrorResolution.
+ * @param application_id ApplicationId.
+ */
+Result nsRequestNoDownloadRightsErrorResolution(AsyncValue *a, u64 application_id);
+
+/**
+ * @brief RequestResolveNoDownloadRightsError
+ * @note \ref nifmInitialize must be used prior to this. Before using the cmd, this calls \ref nifmIsAnyInternetRequestAccepted with the output from \ref nifmGetClientId, an error is returned when that returns false.
+ * @note Only available on [9.0.0+].
+ * @param[out] a \ref AsyncValue. The data that can be read from this is u8 NoDownloadRightsErrorResolution.
+ * @param application_id ApplicationId.
+ */
+Result nsRequestResolveNoDownloadRightsError(AsyncValue *a, u64 application_id);
+
+/**
+ * @brief GetPromotionInfo
+ * @note Only available on [8.0.0+].
+ * @param[out] promotion \ref NsPromotionInfo
+ * @param application_id ApplicationId.
+ * @param[in] uid \ref AccountUid
+ */
+Result nsGetPromotionInfo(NsPromotionInfo *promotion, u64 application_id, AccountUid uid);
+
+///@}
+
+///@name IRequestServerStopper
+///@{
+
+/**
+ * @brief Close a \ref NsRequestServerStopper.
+ * @param r \ref NsRequestServerStopper
+ */
+void nsRequestServerStopperClose(NsRequestServerStopper *r);
 
 ///@}
 
