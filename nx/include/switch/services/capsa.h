@@ -117,6 +117,15 @@ Result capsaLoadAlbumScreenShotImage(u64 *width, u64 *height, const CapsAlbumFil
 Result capsaLoadAlbumScreenShotThumbnailImage(u64 *width, u64 *height, const CapsAlbumFileId *file_id, void* image, u64 image_size, void* workbuf, u64 workbuf_size);
 
 /**
+ * @brief Load an \ref CapsAlbumEntry from a \ref CapsApplicationAlbumEntry and an ApplicationId.
+ * @note Only available on [2.0.0+].
+ * @param[out] entry \ref CapsAlbumEntry
+ * @param[in] application_entry \ref CapsApplicationAlbumEntry
+ * @param[in] application_id ApplicationId
+ */
+Result capsaGetAlbumEntryFromApplicationAlbumEntry(CapsAlbumEntry *entry, const CapsApplicationAlbumEntry *application_entry, u64 application_id);
+
+/**
  * @brief Load the ScreenShotImage for the specified AlbumFile.
  * @note Only available on [3.0.0+].
  * @param[out] width Output image width. Optional, can be NULL.
@@ -178,9 +187,10 @@ Result capsaGetAlbumMountResult(CapsAlbumStorage storage);
  * @brief Returns the AlbumUsage for a specified \ref CapsAlbumStorage.
  * @note Only available on [4.0.0+].
  * @param[in] storage \ref CapsAlbumStorage
+ * @param[in] flags \ref CapsAlbumFileContentsFlag
  * @param[out] out \ref CapsAlbumUsage16
  */
-Result capsaGetAlbumUsage16(CapsAlbumStorage storage, CapsAlbumUsage16 *out);
+Result capsaGetAlbumUsage16(CapsAlbumStorage storage, u8 flags, CapsAlbumUsage16 *out);
 
 /**
  * @brief Returns the start and end of the Applet Id range.
@@ -213,20 +223,22 @@ Result capsaGetAlbumFileListEx0(CapsAlbumStorage storage, u8 flags, u64 *out, Ca
 
 /**
  * @brief Returns the image from the last shown ScreenShot Overlay.
- * @param[out] data \ref CapsOverlayThumbnailData
+ * @param[out] file_id \ref CapsAlbumFileId
+ * @param[out] out_size Size of the thumbnail image. Always 0x5100.
  * @param[out] image RGBA8 image output buffer.
  * @param[in] image_size Image buffer size, should be at least large enough for RGBA8 96×54.
  */
-Result capsaGetLastOverlayScreenShotThumbnail(CapsOverlayThumbnailData *data, void* image, u64 image_size);
+Result capsaGetLastOverlayScreenShotThumbnail(CapsAlbumFileId *file_id, u64 *out_size, void* image, u64 image_size);
 
 /**
  * @brief Returns the image from the last shown Movie Overlay.
  * @note Only available on [4.0.0+].
- * @param[out] data \ref CapsOverlayThumbnailData
+ * @param[out] file_id \ref CapsAlbumFileId
+ * @param[out] out_size Size of the thumbnail image. Always 0x5100.
  * @param[out] image RGBA8 image output buffer.
  * @param[in] image_size Image buffer size, should be at least large enough for RGBA8 96×54.
  */
-Result capsaGetLastOverlayMovieThumbnail(CapsOverlayThumbnailData *data, void* image, u64 image_size);
+Result capsaGetLastOverlayMovieThumbnail(CapsAlbumFileId *file_id, u64 *out_size, void* image, u64 image_size);
 
 /**
  * @brief Gets the currently set autosaving storage.
@@ -305,6 +317,7 @@ Result capsaRefreshAlbumCache(CapsAlbumStorage storage);
 
 /**
  * @brief Gets the AlbumCache of the specified AlbumStorage.
+ * @note Stubbed on [4.0.0+].
  * @note use \ref capsaGetAlbumCacheEx instead.
  * @param[in] storage \ref CapsAlbumStorage
  * @param[out] cache \ref CapsAlbumCache
@@ -313,12 +326,19 @@ Result capsaGetAlbumCache(CapsAlbumStorage storage, CapsAlbumCache *cache);
 
 /**
  * @brief Gets the AlbumCache for the specified type of the specified AlbumStorage.
- * @note Stubbed on [4.0.0+].
  * @param[in] storage \ref CapsAlbumStorage
  * @param[in] contents \ref CapsAlbumFileContents
  * @param[out] cache \ref CapsAlbumCache
  */
 Result capsaGetAlbumCacheEx(CapsAlbumStorage storage, CapsAlbumFileContents contents, CapsAlbumCache *cache);
+
+/**
+ * @brief Load an \ref CapsAlbumEntry from a \ref CapsApplicationAlbumEntry and an AppletResourceUserId.
+ * @note Only available on [2.0.0+].
+ * @param[out] entry \ref CapsAlbumEntry
+ * @param[in] application_entry \ref CapsApplicationAlbumEntry
+ */
+Result capsaGetAlbumEntryFromApplicationAlbumEntryAruid(CapsAlbumEntry *entry, const CapsApplicationAlbumEntry *application_entry);
 
 /**
  * @brief Opens an AlbumMovieStream.
