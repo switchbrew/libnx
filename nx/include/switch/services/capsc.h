@@ -52,7 +52,7 @@ Result capscRegisterAppletResourceUserId(u64 appletResourceUserId, u64 applicati
 Result capscUnregisterAppletResourceUserId(u64 appletResourceUserId, u64 application_id);
 
 /**
- * @brief Get an ApplicationId that corresponse to an AppletResourceUserId.
+ * @brief Get an ApplicationId that corresponds to an AppletResourceUserId.
  * @note Returns value set by \ref capscRegisterAppletResourceUserId.
  * @note Only available on [2.0.0+].
  * @param[out] application_id ApplicationId.
@@ -68,7 +68,7 @@ Result capscGetApplicationIdFromAruid(u64 *application_id, u64 aruid);
 Result capscCheckApplicationIdRegistered(u64 application_id);
 
 /**
- * @brief Generate an AlbumFileId based of parameters and current time.
+ * @brief Generate an AlbumFileId based on parameters and current time.
  * @param[in] application_id ApplicationId.
  * @note Only available on [2.0.0+].
  * @param[in] contents \ref CapsAlbumFileContents
@@ -77,7 +77,7 @@ Result capscCheckApplicationIdRegistered(u64 application_id);
 Result capscGenerateCurrentAlbumFileId(u64 application_id, CapsAlbumFileContents contents, CapsAlbumFileId *file_id);
 
 /**
- * @brief Generate an ApplicationAlbumEntry based of parameters.
+ * @brief Generate an ApplicationAlbumEntry based on parameters.
  * @note Output will be different between Shim Version 0 and 1.
  * @note Only available on [2.0.0+].
  * @param[out] appEntry \ref CapsApplicationAlbumEntry

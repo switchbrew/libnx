@@ -337,7 +337,6 @@ Result capsaGetAlbumCacheEx(CapsAlbumStorage storage, CapsAlbumFileContents cont
  * @note Only available on [2.0.0+].
  * @param[out] entry \ref CapsAlbumEntry
  * @param[in] application_entry \ref CapsApplicationAlbumEntry
- * @param[in] appletResourceUserId AppletResourceUserId
  */
 Result capsaGetAlbumEntryFromApplicationAlbumEntryAruid(CapsAlbumEntry *entry, const CapsApplicationAlbumEntry *application_entry);
 
