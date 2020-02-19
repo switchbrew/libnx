@@ -117,11 +117,11 @@ Result capsaLoadAlbumScreenShotImage(u64 *width, u64 *height, const CapsAlbumFil
 Result capsaLoadAlbumScreenShotThumbnailImage(u64 *width, u64 *height, const CapsAlbumFileId *file_id, void* image, u64 image_size, void* workbuf, u64 workbuf_size);
 
 /**
- * @brief Load an \ref CapsAlbumEntry from a \ref CapsApplicationAlbumEntry and an Application Id.
+ * @brief Load an \ref CapsAlbumEntry from a \ref CapsApplicationAlbumEntry and an ApplicationId.
  * @note Only available on [2.0.0+].
  * @param[out] entry \ref CapsAlbumEntry
  * @param[in] application_entry \ref CapsApplicationAlbumEntry
- * @param[in] application_id Application Id
+ * @param[in] application_id ApplicationId
  */
 Result capsaGetAlbumEntryFromApplicationAlbumEntry(CapsAlbumEntry *entry, const CapsApplicationAlbumEntry *application_entry, u64 application_id);
 
