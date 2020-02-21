@@ -19,6 +19,7 @@ Result _fanInitialize(void) {
 
 void _fanCleanup(void) {
     serviceClose(&g_fanSrv);
+    serviceClose(&g_fanCtl);
 }
 
 Result _fanOpenController(void) {
