@@ -39,7 +39,7 @@ Service* fanGetServiceSession_Controller(void) {
 }
 
 Result fanSetRotationSpeedLevel(float level) {
-    return serviceDispatchOut(&g_fanCtl, 0, level);
+    return serviceDispatchIn(&g_fanCtl, 0, level);
 }
 
 Result fanGetRotationSpeedLevel(float *level) {
