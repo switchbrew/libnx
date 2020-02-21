@@ -622,6 +622,86 @@ Result nsWithdrawApplicationUpdateRequest(u64 application_id) {
     return _nsCmdInU64(&g_nsAppManSrv, application_id, 907);
 }
 
+static Result _nsRequestVerifyApplicationDeprecated(NsProgressAsyncResult *a, u64 application_id, TransferMemory *tmem) {
+    const struct {
+        u64 application_id;
+        u64 size;
+    } in = { application_id, tmem->size };
+
+    memset(a, 0, sizeof(*a));
+    Handle event = INVALID_HANDLE;
+    Result rc = serviceDispatchIn(&g_nsAppManSrv, 1000, in,
+        .in_num_handles = 1,
+        .in_handles = { tmem->handle },
+        .out_num_objects = 1,
+        .out_objects = &a->s,
+        .out_handle_attrs = { SfOutHandleAttr_HipcCopy },
+        .out_handles = &event,
+    );
+
+    if (R_SUCCEEDED(rc))
+        eventLoadRemote(&a->event, event, false);
+    return rc;
+}
+
+static Result _nsRequestVerifyApplication(NsProgressAsyncResult *a, u64 application_id, u32 unk, TransferMemory *tmem) { // [5.0.0+]
+    const struct {
+        u32 unk;
+        u32 pad;
+        u64 application_id;
+        u64 size;
+    } in = { unk, 0, application_id, tmem->size };
+
+    memset(a, 0, sizeof(*a));
+    Handle event = INVALID_HANDLE;
+    Result rc = serviceDispatchIn(&g_nsAppManSrv, 1003, in,
+        .in_num_handles = 1,
+        .in_handles = { tmem->handle },
+        .out_num_objects = 1,
+        .out_objects = &a->s,
+        .out_handle_attrs = { SfOutHandleAttr_HipcCopy },
+        .out_handles = &event,
+    );
+
+    if (R_SUCCEEDED(rc))
+        eventLoadRemote(&a->event, event, false);
+    return rc;
+}
+
+Result nsRequestVerifyAddOnContentsRights(NsProgressAsyncResult *a, u64 application_id) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    memset(a, 0, sizeof(*a));
+    Handle event = INVALID_HANDLE;
+    Result rc = serviceDispatchIn(&g_nsAppManSrv, 1002, application_id,
+        .out_num_objects = 1,
+        .out_objects = &a->s,
+        .out_handle_attrs = { SfOutHandleAttr_HipcCopy },
+        .out_handles = &event,
+    );
+
+    if (R_SUCCEEDED(rc))
+        eventLoadRemote(&a->event, event, false);
+    return rc;
+}
+
+Result nsRequestVerifyApplication(NsProgressAsyncResult *a, u64 application_id, u32 unk, void* buffer, size_t size) {
+    Result rc=0;
+    TransferMemory tmem={0};
+
+    rc = tmemCreateFromMemory(&tmem, buffer, size, Perm_None);
+    if (R_SUCCEEDED(rc)) {
+        if (hosversionBefore(5,0,0))
+            rc = _nsRequestVerifyApplicationDeprecated(a, application_id, &tmem);
+        else
+            rc = _nsRequestVerifyApplication(a, application_id, unk, &tmem);
+    }
+    tmemClose(&tmem);
+
+    return rc;
+}
+
 Result nsIsAnyApplicationEntityInstalled(u64 application_id, bool *out) {
     if (hosversionBefore(2,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
@@ -1056,6 +1136,70 @@ Result nsGetPromotionInfo(NsPromotionInfo *promotion, u64 application_id, Accoun
 
 void nsRequestServerStopperClose(NsRequestServerStopper *r) {
     serviceClose(&r->s);
+}
+
+// IProgressAsyncResult
+
+void nsProgressAsyncResultClose(NsProgressAsyncResult *a) {
+    if (serviceIsActive(&a->s)) {
+        nsProgressAsyncResultCancel(a); // Official sw ignores rc from this prior to waiting on the event.
+        nsProgressAsyncResultWait(a, U64_MAX);
+    }
+
+    serviceClose(&a->s);
+    eventClose(&a->event);
+}
+
+Result nsProgressAsyncResultWait(NsProgressAsyncResult *a, u64 timeout) {
+    if (!serviceIsActive(&a->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return eventWait(&a->event, timeout);
+}
+
+Result nsProgressAsyncResultGet(NsProgressAsyncResult *a) {
+    if (!serviceIsActive(&a->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    Result rc = nsProgressAsyncResultWait(a, U64_MAX);
+    if (R_SUCCEEDED(rc)) rc = _nsCmdNoIO(&a->s, 0);
+    return rc;
+}
+
+Result nsProgressAsyncResultCancel(NsProgressAsyncResult *a) {
+    if (!serviceIsActive(&a->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _nsCmdNoIO(&a->s, 1);
+}
+
+Result nsProgressAsyncResultGetProgress(NsProgressAsyncResult *a, void* buffer, size_t size) {
+    if (!serviceIsActive(&a->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return serviceDispatch(&a->s, 2,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { buffer, size } },
+    );
+}
+
+Result nsProgressAsyncResultGetDetailResult(NsProgressAsyncResult *a) {
+    if (!serviceIsActive(&a->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _nsCmdNoIO(&a->s, 3);
+}
+
+Result nsProgressAsyncResultGetErrorContext(NsProgressAsyncResult *a, ErrorContext *context) {
+    if (!serviceIsActive(&a->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatch(&a->s, 4,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { context, sizeof(*context) } },
+    );
 }
 
 // ns:vm

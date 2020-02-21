@@ -51,6 +51,12 @@ typedef struct {
     Service s;                     ///< IRequestServerStopper
 } NsRequestServerStopper;
 
+/// ProgressAsyncResult
+typedef struct {
+    Service s;                     ///< IProgressAsyncResult
+    Event event;                   ///< Event with autoclear=false.
+} NsProgressAsyncResult;
+
 /// SystemUpdateControl
 typedef struct {
     Service s;                     ///< ISystemUpdateControl
@@ -120,7 +126,7 @@ typedef struct {
     u64 end_timestamp;                     ///< POSIX timestamp for the promotion end.
     s64 remaining_time;                    ///< Remaining time until the promotion ends, in nanoseconds ({end_timestamp - current_time} converted to nanoseconds).
     u8 unk_x18[0x4];                       ///< Not set, left at zero.
-    u8 flags;                              ///< Flags. Bit0: whether the PromotionInfo is valid (including bit1). Bit1 clear: remaining_time is set. 
+    u8 flags;                              ///< Flags. Bit0: whether the PromotionInfo is valid (including bit1). Bit1 clear: remaining_time is set.
     u8 pad[3];                             ///< Padding.
 } NsPromotionInfo;
 
@@ -573,6 +579,25 @@ Result nsIsApplicationUpdateRequested(u64 application_id, bool *flag, u32 *out);
 Result nsWithdrawApplicationUpdateRequest(u64 application_id);
 
 /**
+ * @brief RequestVerifyAddOnContentsRights
+ * @note Only available on [3.0.0+].
+ * @param[out] a \ref NsProgressAsyncResult
+ * @param[in] application_id ApplicationId.
+ */
+Result nsRequestVerifyAddOnContentsRights(NsProgressAsyncResult *a, u64 application_id);
+
+/**
+ * @brief RequestVerifyApplication
+ * @note On pre-5.0.0 this uses cmd RequestVerifyApplicationDeprecated, otherwise cmd RequestVerifyApplication is used.
+ * @param[out] a \ref NsProgressAsyncResult. The data available with \ref nsProgressAsyncResultGetProgress is basically the same as \ref NsSystemUpdateProgress.
+ * @param[in] application_id ApplicationId.
+ * @param[in] unk Unknown. A default value of 0x7 can be used (which is what qlaunch uses). Only used on [5.0.0+].
+ * @param buffer 0x1000-byte aligned buffer for TransferMemory. This buffer must not be accessed until the async operation finishes.
+ * @param[in] size 0x1000-byte aligned buffer size for TransferMemory. qlaunch uses size 0x100000.
+ */
+Result nsRequestVerifyApplication(NsProgressAsyncResult *a, u64 application_id, u32 unk, void* buffer, size_t size);
+
+/**
  * @brief IsAnyApplicationEntityInstalled
  * @note Only available on [2.0.0+].
  * @param[in] application_id ApplicationId.
@@ -878,6 +903,61 @@ Result nsGetPromotionInfo(NsPromotionInfo *promotion, u64 application_id, Accoun
  * @param r \ref NsRequestServerStopper
  */
 void nsRequestServerStopperClose(NsRequestServerStopper *r);
+
+///@}
+
+///@name IProgressAsyncResult
+///@{
+
+/**
+ * @brief Close a \ref NsProgressAsyncResult.
+ * @note When the object is initialized, this uses \ref nsProgressAsyncResultCancel then \ref nsProgressAsyncResultWait with timeout=U64_MAX.
+ * @param a \ref NsProgressAsyncResult
+ */
+void nsProgressAsyncResultClose(NsProgressAsyncResult *a);
+
+/**
+ * @brief Waits for the async operation to finish using the specified timeout.
+ * @param a \ref NsProgressAsyncResult
+ * @param[in] timeout Timeout in nanoseconds. U64_MAX for no timeout.
+ */
+Result nsProgressAsyncResultWait(NsProgressAsyncResult *a, u64 timeout);
+
+/**
+ * @brief Gets the Result.
+ * @note Prior to using the cmd, this uses \ref nsProgressAsyncResultWait with timeout=U64_MAX.
+ * @param a \ref NsProgressAsyncResult
+ */
+Result nsProgressAsyncResultGet(NsProgressAsyncResult *a);
+
+/**
+ * @brief Cancels the async operation.
+ * @note Used automatically by \ref nsProgressAsyncResultClose.
+ * @param a \ref NsProgressAsyncResult
+ */
+Result nsProgressAsyncResultCancel(NsProgressAsyncResult *a);
+
+/**
+ * @brief Gets the progress.
+ * @param a \ref NsProgressAsyncResult
+ * @param[out] buffer Output buffer.
+ * @param[in] size Output buffer size.
+ */
+Result nsProgressAsyncResultGetProgress(NsProgressAsyncResult *a, void* buffer, size_t size);
+
+/**
+ * @brief GetDetailResult
+ * @param a \ref NsProgressAsyncResult
+ */
+Result nsProgressAsyncResultGetDetailResult(NsProgressAsyncResult *a);
+
+/**
+ * @brief Gets the \ref ErrorContext.
+ * @note Only available on [4.0.0+].
+ * @param a \ref NsProgressAsyncResult
+ * @param[out] context \ref ErrorContext
+ */
+Result nsProgressAsyncResultGetErrorContext(NsProgressAsyncResult *a, ErrorContext *context);
 
 ///@}
 

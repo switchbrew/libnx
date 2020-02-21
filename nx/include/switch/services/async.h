@@ -64,6 +64,7 @@ Result asyncValueCancel(AsyncValue *a);
 
 /**
  * @brief Gets the \ref ErrorContext.
+ * @note Only available on [4.0.0+].
  * @param a \ref AsyncValue
  * @param[out] context \ref ErrorContext
  */
@@ -104,6 +105,7 @@ Result asyncResultCancel(AsyncResult *a);
 
 /**
  * @brief Gets the \ref ErrorContext.
+ * @note Only available on [4.0.0+].
  * @param a \ref AsyncResult
  * @param[out] context \ref ErrorContext
  */
