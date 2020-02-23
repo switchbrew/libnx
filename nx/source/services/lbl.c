@@ -39,10 +39,7 @@ static Result _lblCmdNoInOutBool(bool *out, u32 cmd_id) {
 }
 
 static Result _lblCmdNoInOutFloat(float *out, u32 cmd_id) {
-    float tmpout=0;
-    Result rc = serviceDispatchOut(&g_lblSrv, cmd_id, tmpout);
-    if (R_SUCCEEDED(rc) && out) *out = tmpout;
-    return rc;
+    return serviceDispatchOut(&g_lblSrv, cmd_id, *out);
 }
 
 Result lblSaveCurrentSetting(void) {
@@ -77,11 +74,8 @@ Result lblSwitchBacklightOff(u64 fade_time) {
     return _lblCmdInU64NoOut(fade_time, 7);
 }
 
-Result lblGetBacklightSwitchStatus(bool *out_value) {
-    u32 tmpout=0;
-    Result rc = serviceDispatchOut(&g_lblSrv, 8, tmpout);
-    if (R_SUCCEEDED(rc) && out_value) *out_value = tmpout & 0xff;
-    return rc;
+Result lblGetBacklightSwitchStatus(LblBacklightSwitchStatus *out_value) {
+    return serviceDispatchOut(&g_lblSrv, 8, *out_value);
 }
 
 Result lblEnableDimming(void) {
@@ -95,7 +89,6 @@ Result lblDisableDimming(void) {
 Result lblIsDimmingEnabled(bool *out_value) {
     return _lblCmdNoInOutBool(out_value, 11);
 }
-
 
 Result lblEnableAutoBrightnessControl(void) {
     return _lblCmdNoIO(12);
@@ -121,7 +114,7 @@ Result lblGetAmbientLightSensorValue(bool *over_limit, float *lux) {
 
     Result rc = serviceDispatchOut(&g_lblSrv, 16, out);
     if (R_SUCCEEDED(rc)) {
-        if (over_limit) *over_limit = out.over_limit & 0xff;
+        if (over_limit) *over_limit = out.over_limit & 1;
         if (lux) *lux = out.lux;
     }
     return rc;
@@ -130,7 +123,7 @@ Result lblGetAmbientLightSensorValue(bool *over_limit, float *lux) {
 Result lblIsAmbientLightSensorAvailable(bool *out_value) {
     if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    return _lblCmdNoIO(23);
+    return _lblCmdNoInOutBool(out_value, 23);
 }
 Result lblSetCurrentBrightnessSettingForVrMode(float brightness) {
     if (hosversionBefore(3,0,0))

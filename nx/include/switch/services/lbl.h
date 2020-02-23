@@ -8,6 +8,13 @@
 #include "../types.h"
 #include "../sf/service.h"
 
+typedef enum {
+    LblBacklightSwitchStatus_Disabled = 0,
+    LblBacklightSwitchStatus_Enabled = 1,
+    LblBacklightSwitchStatus_Enabling = 2,
+    LblBacklightSwitchStatus_Disabling = 3
+} LblBacklightSwitchStatus;
+
 /// Initialize lbl.
 Result lblInitialize(void);
 
@@ -31,7 +38,7 @@ Result lblGetBrightnessSettingAppliedToBacklight(float *out_value);
 
 Result lblSwitchBacklightOn(u64 fade_time);
 Result lblSwitchBacklightOff(u64 fade_time);
-Result lblGetBacklightSwitchStatus(bool *out_value);
+Result lblGetBacklightSwitchStatus(LblBacklightSwitchStatus *out_value);
 
 Result lblEnableDimming(void);
 Result lblDisableDimming(void);
@@ -44,10 +51,35 @@ Result lblIsAutoBrightnessControlEnabled(bool *out_value);
 Result lblSetAmbientLightSensorValue(float value);
 Result lblGetAmbientLightSensorValue(bool *over_limit, float *lux);
 
-/* Only available on [3.0.0+] */
+/**
+ * @note Only available on [3.0.0+].
+ */
 Result lblIsAmbientLightSensorAvailable(bool *out_value);
+
+/**
+ * @note Only available on [3.0.0+].
+ */
 Result lblSetCurrentBrightnessSettingForVrMode(float brightness);
+
+/**
+ * @note Only available on [3.0.0+].
+ */
 Result lblGetCurrentBrightnessSettingForVrMode(float *out_value);
+
+/**
+ * @note Only available on [3.0.0+].
+ * @note Used internally by am SetVrModeEnabled.
+ */
 Result lblEnableVrMode(void);
+
+/**
+ * @note Only available on [3.0.0+].
+ * @note Used internally by am SetVrModeEnabled.
+ */
 Result lblDisableVrMode(void);
+
+/**
+ * @note Only available on [3.0.0+].
+ * @note Used internally by am IsVrModeEnabled.
+ */
 Result lblIsVrModeEnabled(bool *out_value);
