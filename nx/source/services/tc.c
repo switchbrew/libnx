@@ -35,7 +35,7 @@ Result tcDisableFanControl(void) {
 Result tcIsFanControlEnabled(bool *status) {
     u8 tmp=0;
     Result rc = serviceDispatchOut(&g_tcSrv, 8, tmp);
-    if (R_SUCCEEDED(rc)) *status = tmp & 1;
+    if (R_SUCCEEDED(rc) && status) *status = out & 1;
     return rc;
 }
 
