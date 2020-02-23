@@ -20,5 +20,6 @@ Service* fanGetServiceSession(void);
 /// Gets the Service object for the actual fan controller service session.
 Service* fanGetServiceSession_Controller(void);
 
+/// @warning Disabling your fan can damage your system.
 Result fanSetRotationSpeedLevel(float level);
 Result fanGetRotationSpeedLevel(float *level);
