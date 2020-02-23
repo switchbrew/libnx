@@ -33,12 +33,9 @@ Result tcDisableFanControl(void) {
 }
 
 Result tcIsFanControlEnabled(bool *status) {
-    struct {
-        u8 status;
-    } out;
-
-    Result rc = serviceDispatchOut(&g_tcSrv, 8, out);
-    if (R_SUCCEEDED(rc)) *status = out.status;
+    u8 tmp=0;
+    Result rc = serviceDispatchOut(&g_tcSrv, 8, tmp);
+    if (R_SUCCEEDED(rc)) *status = tmp & 1;
     return rc;
 }
 
@@ -46,11 +43,5 @@ Result tcGetSkinTemperatureMilliC(s32 *skinTemp) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    struct {
-        s32 skinTemp;
-    } out;
-
-    Result rc = serviceDispatchOut(&g_tcSrv, 9, out);
-    if (R_SUCCEEDED(rc)) *skinTemp = out.skinTemp;
-    return rc;
+    return serviceDispatchOut(&g_tcSrv, 9, *skinTemp);
 }

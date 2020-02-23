@@ -1,7 +1,7 @@
 /**
  * @file tc.h
  * @brief Temperature control (tc) service IPC wrapper.
- * @author yellows8
+ * @author Behemoth
  * @copyright libnx Authors
  */
 #pragma once
@@ -18,8 +18,9 @@ void tcExit(void);
 Service* tcGetServiceSession(void);
 
 Result tcEnableFanControl(void);
+/// @warning Disabling your fan can damage your system.
 Result tcDisableFanControl(void);
 Result tcIsFanControlEnabled(bool *status);
-/// Only available on [5.0.0+]
+/// Only available on [5.0.0+].
 Result tcGetSkinTemperatureMilliC(s32 *skinTemp);
 
