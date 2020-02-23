@@ -14,7 +14,7 @@ Result tcInitialize(void);
 /// Exit tc.
 void tcExit(void);
 
-/// Getc the Service for tc.
+/// Gets the Service for tc.
 Service* tcGetServiceSession(void);
 
 Result tcEnableFanControl(void);
