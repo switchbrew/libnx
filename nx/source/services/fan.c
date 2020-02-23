@@ -1,6 +1,7 @@
 #define NX_SERVICE_ASSUME_NON_DOMAIN
 #include "service_guard.h"
 #include "services/fan.h"
+#include "runtime/hosversion.h"
 
 static Service g_fanSrv;
 static Service g_fanCtl;
