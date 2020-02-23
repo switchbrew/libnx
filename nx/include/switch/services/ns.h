@@ -479,6 +479,32 @@ Result nsGetApplicationControlData(NsApplicationControlSource source, u64 applic
 Result nsRequestDownloadApplicationControlData(AsyncResult *a, u64 application_id);
 
 /**
+ * @brief ListApplicationTitle
+ * @note The data available with \ref asyncValueGet is a s32 for the offset within the buffer where the output data is located, \ref asyncValueGetSize returns the total byte-size of the data located here. The data located here is the \ref NacpLanguageEntry for each specified ApplicationId.
+ * @note Only available on [8.0.0+].
+ * @param[out] a \ref AsyncValue
+ * @param[in] source Source, qlaunch uses ::NsApplicationControlSource_Storage.
+ * @param[in] application_ids Input array of ApplicationIds.
+ * @param[in] count Size of the application_ids array in entries.
+ * @param buffer 0x1000-byte aligned buffer for TransferMemory. This buffer must not be accessed until the async operation finishes.
+ * @param[in] size 0x1000-byte aligned buffer size for TransferMemory. This must be at least: count*sizeof(\ref NacpLanguageEntry) + count*sizeof(u64) + count*sizeof(\ref NsApplicationControlData).
+ */
+Result nsListApplicationTitle(AsyncValue *a, NsApplicationControlSource source, const u64 *application_ids, s32 count, void* buffer, size_t size);
+
+/**
+ * @brief ListApplicationIcon
+ * @note The data available with \ref asyncValueGet is a s32 for the offset within the buffer where the output data is located, \ref asyncValueGetSize returns the total byte-size of the data located here. This data is: an u64 for total entries, an array of u64s for each icon size, then the icon JPEGs for the specified ApplicationIds.
+ * @note Only available on [8.0.0+].
+ * @param[out] a \ref AsyncValue
+ * @param[in] source Source.
+ * @param[in] application_ids Input array of ApplicationIds.
+ * @param[in] count Size of the application_ids array in entries.
+ * @param buffer 0x1000-byte aligned buffer for TransferMemory. This buffer must not be accessed until the async operation finishes.
+ * @param[in] size 0x1000-byte aligned buffer size for TransferMemory. This must be at least: 0x4 + count*sizeof(u64) + count*sizeof(\ref NsApplicationControlData::icon) + count*sizeof(u64) + sizeof(\ref NsApplicationControlData).
+ */
+Result nsListApplicationIcon(AsyncValue *a, NsApplicationControlSource source, const u64 *application_ids, s32 count, void* buffer, size_t size);
+
+/**
  * @brief RequestCheckGameCardRegistration
  * @note \ref nifmInitialize must be used prior to this. Before using the cmd, this calls \ref nifmIsAnyInternetRequestAccepted with the output from \ref nifmGetClientId, an error is returned when that returns false.
  * @note Only available on [2.0.0+].
