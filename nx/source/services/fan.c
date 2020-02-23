@@ -23,7 +23,7 @@ void _fanCleanup(void) {
 }
 
 Result _fanOpenController(void) {
-    u32 in = 0x3d000001;
+    u32 in = hosversionBefore(7,0,0) ? 1 : 0x3d000001;
     return serviceDispatchIn(&g_fanSrv, 0, in,
         .out_num_objects = 1,
         .out_objects = &g_fanCtl
