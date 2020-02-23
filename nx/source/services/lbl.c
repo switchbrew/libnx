@@ -42,6 +42,10 @@ static Result _lblCmdNoInOutFloat(float *out, u32 cmd_id) {
     return serviceDispatchOut(&g_lblSrv, cmd_id, *out);
 }
 
+static Result _lblCmdInFloatNoOut(float in, u32 cmd_id) {
+    return serviceDispatchIn(&g_lblSrv, cmd_id, in);
+}
+
 Result lblSaveCurrentSetting(void) {
     return _lblCmdNoIO(0);
 }
@@ -51,7 +55,7 @@ Result lblLoadCurrentSetting(void) {
 }
 
 Result lblSetCurrentBrightnessSetting(float brightness) {
-    return serviceDispatchIn(&g_lblSrv, 2, brightness);
+    return _lblCmdInFloatNoOut(brightness, 2);
 }
 
 Result lblGetCurrentBrightnessSetting(float *out_value) {
@@ -103,7 +107,7 @@ Result lblIsAutoBrightnessControlEnabled(bool *out_value){
 }
 
 Result lblSetAmbientLightSensorValue(float value) {
-    return serviceDispatchIn(&g_lblSrv, 15, value);
+    return _lblCmdInFloatNoOut(value, 15);
 }
 
 Result lblGetAmbientLightSensorValue(bool *over_limit, float *lux) {
@@ -128,7 +132,7 @@ Result lblIsAmbientLightSensorAvailable(bool *out_value) {
 Result lblSetCurrentBrightnessSettingForVrMode(float brightness) {
     if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    return serviceDispatchIn(&g_lblSrv, 24, brightness);
+    return _lblCmdInFloatNoOut(brightness, 24);
 }
 Result lblGetCurrentBrightnessSettingForVrMode(float *out_value) {
     if (hosversionBefore(3,0,0))
