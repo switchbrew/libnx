@@ -419,6 +419,13 @@ Result nsRequestUpdateApplication2(AsyncResult *a, u64 application_id) {
     return _nsCmdInU64OutAsyncResult(&g_nsAppManSrv, a, application_id, 85);
 }
 
+Result nsDeleteUserSaveDataAll(NsProgressMonitorForDeleteUserSaveDataAll *p, AccountUid uid) {
+    return serviceDispatchIn(&g_nsAppManSrv, 201, uid,
+        .out_num_objects = 1,
+        .out_objects = &p->s,
+    );
+}
+
 Result nsDeleteUserSystemSaveData(AccountUid uid, u64 system_save_data_id) {
     const struct {
         AccountUid uid;
@@ -1189,6 +1196,49 @@ Result nsGetPromotionInfo(NsPromotionInfo *promotion, u64 application_id, Accoun
 
 void nsRequestServerStopperClose(NsRequestServerStopper *r) {
     serviceClose(&r->s);
+}
+
+// IProgressMonitorForDeleteUserSaveDataAll
+
+Result nsProgressMonitorForDeleteUserSaveDataAllClose(NsProgressMonitorForDeleteUserSaveDataAll *p) {
+    Result rc=0;
+
+    if (serviceIsActive(&p->s)) {
+        bool finished=0;
+        rc = nsProgressMonitorForDeleteUserSaveDataAllIsFinished(p, &finished);
+        if (R_SUCCEEDED(rc) && !finished) rc = MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen);
+    }
+
+    if (R_SUCCEEDED(rc)) serviceClose(&p->s);
+    return rc;
+}
+
+Result nsProgressMonitorForDeleteUserSaveDataAllGetSystemEvent(NsProgressMonitorForDeleteUserSaveDataAll *p, Event* out_event) {
+    if (!serviceIsActive(&p->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _nsCmdGetEvent(&p->s, out_event, false, 0);
+}
+
+Result nsProgressMonitorForDeleteUserSaveDataAllIsFinished(NsProgressMonitorForDeleteUserSaveDataAll *p, bool *out) {
+    if (!serviceIsActive(&p->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _nsCmdNoInOutBool(&p->s, out, 1);
+}
+
+Result nsProgressMonitorForDeleteUserSaveDataAllGetResult(NsProgressMonitorForDeleteUserSaveDataAll *p) {
+    if (!serviceIsActive(&p->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _nsCmdNoIO(&p->s, 2);
+}
+
+Result nsProgressMonitorForDeleteUserSaveDataAllGetProgress(NsProgressMonitorForDeleteUserSaveDataAll *p, NsProgressForDeleteUserSaveDataAll *progress) {
+    if (!serviceIsActive(&p->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return serviceDispatchOut(&p->s, 10, *progress);
 }
 
 // IProgressAsyncResult

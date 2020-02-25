@@ -51,6 +51,11 @@ typedef struct {
     Service s;                     ///< IRequestServerStopper
 } NsRequestServerStopper;
 
+/// ProgressMonitorForDeleteUserSaveDataAll
+typedef struct {
+    Service s;                     ///< IProgressMonitorForDeleteUserSaveDataAll
+} NsProgressMonitorForDeleteUserSaveDataAll;
+
 /// ProgressAsyncResult
 typedef struct {
     Service s;                     ///< IProgressAsyncResult
@@ -88,6 +93,11 @@ typedef struct {
     u8 unk_x10;                    ///< Unknown.
     u8 unk_x11[7];                 ///< Unknown.
 } NsApplicationRecord;
+
+/// ProgressForDeleteUserSaveDataAll
+typedef struct {
+    u8 unk_x0[0x28];                       ///< Unknown.
+} NsProgressForDeleteUserSaveDataAll;
 
 /// ApplicationViewDeprecated. The below comments are for the \ref NsApplicationView to NsApplicationViewDeprecated conversion done by \ref nsGetApplicationViewDeprecated on newer system-versions.
 typedef struct {
@@ -431,6 +441,13 @@ Result nsGetStorageSize(NcmStorageId storage_id, s64 *total_space_size, s64 *fre
  * @param[in] application_id ApplicationId.
  */
 Result nsRequestUpdateApplication2(AsyncResult *a, u64 application_id);
+
+/**
+ * @brief DeleteUserSaveDataAll
+ * @param[in] p \ref NsProgressMonitorForDeleteUserSaveDataAll
+ * @param[in] uid \ref AccountUid
+ */
+Result nsDeleteUserSaveDataAll(NsProgressMonitorForDeleteUserSaveDataAll *p, AccountUid uid);
 
 /**
  * @brief DeleteUserSystemSaveData
@@ -929,6 +946,45 @@ Result nsGetPromotionInfo(NsPromotionInfo *promotion, u64 application_id, Accoun
  * @param r \ref NsRequestServerStopper
  */
 void nsRequestServerStopperClose(NsRequestServerStopper *r);
+
+///@}
+
+///@name IProgressMonitorForDeleteUserSaveDataAll
+///@{
+
+/**
+ * @brief Close a \ref NsProgressMonitorForDeleteUserSaveDataAll. When initialized this will use \ref nsProgressMonitorForDeleteUserSaveDataAllIsFinished, throwing errors on failure / when the operation isn't finished (without closing the object).
+ * @note Cancelling the operation before it's finished is not supported by \ref NsProgressMonitorForDeleteUserSaveDataAll.
+ * @param p \ref NsProgressMonitorForDeleteUserSaveDataAll
+ */
+Result nsProgressMonitorForDeleteUserSaveDataAllClose(NsProgressMonitorForDeleteUserSaveDataAll *p);
+
+/**
+ * @brief GetSystemEvent
+ * @note The Event must be closed by the user once finished with it.
+ * @param[out] out_event Output Event with autoclear=false.
+ */
+Result nsProgressMonitorForDeleteUserSaveDataAllGetSystemEvent(NsProgressMonitorForDeleteUserSaveDataAll *p, Event* out_event);
+
+/**
+ * @brief IsFinished
+ * @param p \ref NsProgressMonitorForDeleteUserSaveDataAll
+ * @param[out] out Whether the operation finished.
+ */
+Result nsProgressMonitorForDeleteUserSaveDataAllIsFinished(NsProgressMonitorForDeleteUserSaveDataAll *p, bool *out);
+
+/**
+ * @brief GetResult
+ * @param p \ref NsProgressMonitorForDeleteUserSaveDataAll
+ */
+Result nsProgressMonitorForDeleteUserSaveDataAllGetResult(NsProgressMonitorForDeleteUserSaveDataAll *p);
+
+/**
+ * @brief GetProgress
+ * @param p \ref NsProgressMonitorForDeleteUserSaveDataAll
+ * @param[out] progress Output \ref NsProgressForDeleteUserSaveDataAll.
+ */
+Result nsProgressMonitorForDeleteUserSaveDataAllGetProgress(NsProgressMonitorForDeleteUserSaveDataAll *p, NsProgressForDeleteUserSaveDataAll *progress);
 
 ///@}
 
