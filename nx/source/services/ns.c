@@ -46,6 +46,10 @@ Service* nsGetServiceSession_ApplicationManagerInterface(void) {
     return &g_nsAppManSrv;
 }
 
+Result nsGetFactoryResetInterface(Service* srv_out) {
+    return _nsGetSession(&g_nsGetterSrv, srv_out, 7994);
+}
+
 static Result _nsGetSession(Service* srv, Service* srv_out, u32 cmd_id) {
     return serviceDispatch(srv, cmd_id,
         .out_num_objects = 1,
@@ -233,6 +237,81 @@ static Result _nsCmdInU64OutAsyncResult(Service* srv, AsyncResult *a, u64 inval,
 static Result _nsCheckNifm(void) {
     return nifmIsAnyInternetRequestAccepted(nifmGetClientId()) ? 0 : MAKERESULT(16, 340);
 }
+
+// IFactoryResetInterface
+
+Result nsResetToFactorySettings(void) {
+    Service srv={0}, *srv_ptr = &srv;
+    Result rc=0;
+    if (hosversionAtLeast(3,0,0))
+        rc = nsGetFactoryResetInterface(&srv);
+    else
+        srv_ptr = &g_nsAppManSrv;
+
+    if (R_SUCCEEDED(rc)) rc = _nsCmdNoIO(srv_ptr, 100);
+
+    serviceClose(&srv);
+    return rc;
+}
+
+Result nsResetToFactorySettingsWithoutUserSaveData(void) {
+    Service srv={0}, *srv_ptr = &srv;
+    Result rc=0;
+    if (hosversionAtLeast(3,0,0))
+        rc = nsGetFactoryResetInterface(&srv);
+    else
+        srv_ptr = &g_nsAppManSrv;
+
+    if (R_SUCCEEDED(rc)) rc = _nsCmdNoIO(srv_ptr, 101);
+
+    serviceClose(&srv);
+    return rc;
+}
+
+Result nsResetToFactorySettingsForRefurbishment(void) {
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    Service srv={0}, *srv_ptr = &srv;
+    Result rc=0;
+    if (hosversionAtLeast(3,0,0))
+        rc = nsGetFactoryResetInterface(&srv);
+    else
+        srv_ptr = &g_nsAppManSrv;
+
+    if (R_SUCCEEDED(rc)) rc = _nsCmdNoIO(srv_ptr, 102);
+
+    serviceClose(&srv);
+    return rc;
+}
+
+Result nsResetToFactorySettingsWithPlatformRegion(void) {
+    if (hosversionBefore(9,1,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    Service srv={0};
+    Result rc = nsGetFactoryResetInterface(&srv);
+
+    if (R_SUCCEEDED(rc)) rc = _nsCmdNoIO(&srv, 103);
+
+    serviceClose(&srv);
+    return rc;
+}
+
+Result nsResetToFactorySettingsWithPlatformRegionAuthentication(void) {
+    if (hosversionBefore(9,1,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    Service srv={0};
+    Result rc = nsGetFactoryResetInterface(&srv);
+
+    if (R_SUCCEEDED(rc)) rc = _nsCmdNoIO(&srv, 104);
+
+    serviceClose(&srv);
+    return rc;
+}
+
+// IApplicationManagerInterface
 
 Result nsListApplicationRecord(NsApplicationRecord* records, s32 count, s32 entry_offset, s32* out_entrycount) {
     return serviceDispatchInOut(&g_nsAppManSrv, 0, entry_offset, *out_entrycount,

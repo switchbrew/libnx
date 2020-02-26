@@ -234,6 +234,50 @@ Service* nsGetServiceSession_GetterInterface(void);
 /// Gets the Service object for IApplicationManagerInterface.
 Service* nsGetServiceSession_ApplicationManagerInterface(void);
 
+/// Gets the Service object for IFactoryResetInterface via the cmd for that.
+Result nsGetFactoryResetInterface(Service* srv_out);
+
+///@}
+
+///@name IFactoryResetInterface
+///@{
+
+/**
+ * @brief ResetToFactorySettings
+ * @note Uses \ref nsGetFactoryResetInterface on [3.0.0+], otherwise IApplicationManagerInterface is used.
+ */
+Result nsResetToFactorySettings(void);
+
+/**
+ * @brief ResetToFactorySettingsWithoutUserSaveData
+ * @note Uses \ref nsGetFactoryResetInterface on [3.0.0+], otherwise IApplicationManagerInterface is used.
+ */
+Result nsResetToFactorySettingsWithoutUserSaveData(void);
+
+/**
+ * @brief ResetToFactorySettingsForRefurbishment
+ * @note Uses \ref nsGetFactoryResetInterface on [3.0.0+], otherwise IApplicationManagerInterface is used.
+ * @note Only available on [2.0.0+].
+ */
+Result nsResetToFactorySettingsForRefurbishment(void);
+
+/**
+ * @brief ResetToFactorySettingsWithPlatformRegion
+ * @note Only available on [9.1.0+].
+ */
+Result nsResetToFactorySettingsWithPlatformRegion(void);
+
+/**
+ * @brief ResetToFactorySettingsWithPlatformRegionAuthentication
+ * @note Only available on [9.1.0+].
+ */
+Result nsResetToFactorySettingsWithPlatformRegionAuthentication(void);
+
+///@}
+
+///@name IApplicationManagerInterface
+///@{
+
 /**
  * @brief Gets an listing of \ref NsApplicationRecord.
  * @param[out] records Output array of \ref NsApplicationRecord.
