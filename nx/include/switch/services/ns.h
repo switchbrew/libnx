@@ -74,6 +74,11 @@ typedef struct {
     u8 icon[0x20000];              ///< JPEG
 } NsApplicationControlData;
 
+/// ApplicationOccupiedSize
+typedef struct {
+    u8 unk_x0[0x80];               ///< Unknown.
+} NsApplicationOccupiedSize;
+
 /// NsApplicationContentMetaStatus
 typedef struct {
     u8 meta_type;                  ///< \ref NcmContentMetaType
@@ -235,7 +240,12 @@ Service* nsGetServiceSession_GetterInterface(void);
 Service* nsGetServiceSession_ApplicationManagerInterface(void);
 
 /// Gets the Service object for IFactoryResetInterface via the cmd for that.
+/// Only available on [3.0.0+].
 Result nsGetFactoryResetInterface(Service* srv_out);
+
+/// Gets the Service object for IContentManagementInterface via the cmd for that.
+/// Only available on [3.0.0+].
+Result nsGetContentManagementInterface(Service* srv_out);
 
 ///@}
 
@@ -380,20 +390,6 @@ Result nsCleanupSdCard(void);
  * @param[out] out_event Output Event with autoclear=false.
  */
 Result nsGetSdCardMountStatusChangedEvent(Event* out_event);
-
-/**
- * @brief Returns the total storage capacity (used + free) from content manager services.
- * @param[in] storage_id \ref NcmStorageId. Must be ::NcmStorageId_SdCard.
- * @param[out] size Pointer to output the total storage size to.
- */
-Result nsGetTotalSpaceSize(NcmStorageId storage_id, s64 *size);
-
-/**
- * @brief Returns the available storage capacity from content manager services.
- * @param[in] storage_id \ref NcmStorageId. Must be ::NcmStorageId_SdCard.
- * @param[out] size Pointer to output the free storage size to.
- */
-Result nsGetFreeSpaceSize(NcmStorageId storage_id, s64 *size);
 
 /**
  * @brief GetGameCardUpdateDetectionEvent
@@ -630,17 +626,6 @@ Result nsGetLastGameCardMountFailureResult(void);
  * @param[out] total_out Total output entries.
  */
 Result nsListApplicationIdOnGameCard(u64 *application_ids, s32 count, s32 *total_out);
-
-/**
- * @brief Gets an listing of \ref NsApplicationContentMetaStatus.
- * @note Only available on [2.0.0+].
- * @param[in] application_id ApplicationId.
- * @param[in] index Starting entry index.
- * @param[out] list Output array of \ref NsApplicationContentMetaStatus.
- * @param[in] count Size of the list array in entries.
- * @param[out] out_entrycount Total output entries.
- */
-Result nsListApplicationContentMetaStatus(u64 application_id, s32 index, NsApplicationContentMetaStatus* list, s32 count, s32* out_entrycount);
 
 /**
  * @brief TouchApplication
@@ -979,6 +964,69 @@ Result nsRequestResolveNoDownloadRightsError(AsyncValue *a, u64 application_id);
  * @param[in] uid \ref AccountUid
  */
 Result nsGetPromotionInfo(NsPromotionInfo *promotion, u64 application_id, AccountUid uid);
+
+///@}
+
+///@name IContentManagementInterface
+///@{
+
+/**
+ * @brief CalculateApplicationOccupiedSize
+ * @note Uses \ref nsGetContentManagementInterface on [3.0.0+], otherwise IApplicationManagerInterface is used.
+ * @param[in] application_id ApplicationId.
+ * @param[out] out \ref NsApplicationOccupiedSize
+ */
+Result nsCalculateApplicationOccupiedSize(u64 application_id, NsApplicationOccupiedSize *out);
+
+/**
+ * @brief CheckSdCardMountStatus
+ * @note Uses \ref nsGetContentManagementInterface on [3.0.0+], otherwise IApplicationManagerInterface is used.
+ */
+Result nsCheckSdCardMountStatus(void);
+
+/**
+ * @brief Returns the total storage capacity (used + free) from content manager services.
+ * @note Uses \ref nsGetContentManagementInterface on [3.0.0+], otherwise IApplicationManagerInterface is used.
+ * @param[in] storage_id \ref NcmStorageId. Must be ::NcmStorageId_SdCard.
+ * @param[out] size Pointer to output the total storage size to.
+ */
+Result nsGetTotalSpaceSize(NcmStorageId storage_id, s64 *size);
+
+/**
+ * @brief Returns the available storage capacity from content manager services.
+ * @note Uses \ref nsGetContentManagementInterface on [3.0.0+], otherwise IApplicationManagerInterface is used.
+ * @param[in] storage_id \ref NcmStorageId. Must be ::NcmStorageId_SdCard.
+ * @param[out] size Pointer to output the free storage size to.
+ */
+Result nsGetFreeSpaceSize(NcmStorageId storage_id, s64 *size);
+
+/**
+ * @brief CountApplicationContentMeta
+ * @note Uses \ref nsGetContentManagementInterface on [3.0.0+], otherwise IApplicationManagerInterface is used.
+ * @note Only available on [2.0.0+].
+ * @param[in] application_id ApplicationId.
+ * @param[out] out Output count.
+ */
+Result nsCountApplicationContentMeta(u64 application_id, s32 *out);
+
+/**
+ * @brief Gets an listing of \ref NsApplicationContentMetaStatus.
+ * @note Uses \ref nsGetContentManagementInterface on [3.0.0+], otherwise IApplicationManagerInterface is used.
+ * @note Only available on [2.0.0+].
+ * @param[in] application_id ApplicationId.
+ * @param[in] index Starting entry index.
+ * @param[out] list Output array of \ref NsApplicationContentMetaStatus.
+ * @param[in] count Size of the list array in entries.
+ * @param[out] out_entrycount Total output entries.
+ */
+Result nsListApplicationContentMetaStatus(u64 application_id, s32 index, NsApplicationContentMetaStatus* list, s32 count, s32* out_entrycount);
+
+/**
+ * @brief IsAnyApplicationRunning
+ * @note Only available on [3.0.0+].
+ * @param[out] out Output flag.
+ */
+Result nsIsAnyApplicationRunning(bool *out);
 
 ///@}
 

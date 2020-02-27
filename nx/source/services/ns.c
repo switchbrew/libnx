@@ -47,7 +47,17 @@ Service* nsGetServiceSession_ApplicationManagerInterface(void) {
 }
 
 Result nsGetFactoryResetInterface(Service* srv_out) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     return _nsGetSession(&g_nsGetterSrv, srv_out, 7994);
+}
+
+Result nsGetContentManagementInterface(Service* srv_out) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _nsGetSession(&g_nsGetterSrv, srv_out, 7998);
 }
 
 static Result _nsGetSession(Service* srv, Service* srv_out, u32 cmd_id) {
@@ -397,14 +407,6 @@ Result nsGetSdCardMountStatusChangedEvent(Event* out_event) {
     return _nsCmdGetEvent(&g_nsAppManSrv, out_event, false, 44);
 }
 
-Result nsGetTotalSpaceSize(NcmStorageId storage_id, s64 *size) {
-    return _nsCmdInU64OutU64(&g_nsAppManSrv, storage_id, (u64*)size, 47);
-}
-
-Result nsGetFreeSpaceSize(NcmStorageId storage_id, s64 *size) {
-    return _nsCmdInU64OutU64(&g_nsAppManSrv, storage_id, (u64*)size, 48);
-}
-
 Result nsGetGameCardUpdateDetectionEvent(Event* out_event) {
     return _nsCmdGetEvent(&g_nsAppManSrv, out_event, false, 52);
 }
@@ -710,22 +712,6 @@ Result nsListApplicationIdOnGameCard(u64 *application_ids, s32 count, s32 *total
     return serviceDispatchOut(&g_nsAppManSrv, 509, *total_out,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
         .buffers = { { application_ids, count*sizeof(u64) } },
-    );
-}
-
-Result nsListApplicationContentMetaStatus(u64 application_id, s32 index, NsApplicationContentMetaStatus* list, s32 count, s32* out_entrycount) {
-    if (hosversionBefore(2,0,0))
-        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-
-    const struct {
-        s32 index;
-        u32 pad;
-        u64 application_id;
-    } in = { index, 0, application_id };
-
-    return serviceDispatchInOut(&g_nsAppManSrv, 601, in, *out_entrycount,
-        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
-        .buffers = { { list, count*sizeof(NsApplicationContentMetaStatus) } },
     );
 }
 
@@ -1269,6 +1255,120 @@ Result nsGetPromotionInfo(NsPromotionInfo *promotion, u64 application_id, Accoun
             { &uid, sizeof(AccountUid) },
         },
     );
+}
+
+// IContentManagementInterface
+
+Result nsCalculateApplicationOccupiedSize(u64 application_id, NsApplicationOccupiedSize *out) {
+    Service srv={0}, *srv_ptr = &srv;
+    Result rc=0;
+    if (hosversionAtLeast(3,0,0))
+        rc = nsGetContentManagementInterface(&srv);
+    else
+        srv_ptr = &g_nsAppManSrv;
+
+    if (R_SUCCEEDED(rc)) rc = serviceDispatchInOut(srv_ptr, 11, application_id, *out);
+
+    serviceClose(&srv);
+    return rc;
+}
+
+Result nsCheckSdCardMountStatus(void) {
+    Service srv={0}, *srv_ptr = &srv;
+    Result rc=0;
+    if (hosversionAtLeast(3,0,0))
+        rc = nsGetContentManagementInterface(&srv);
+    else
+        srv_ptr = &g_nsAppManSrv;
+
+    if (R_SUCCEEDED(rc)) rc = _nsCmdNoIO(srv_ptr, 43);
+
+    serviceClose(&srv);
+    return rc;
+}
+
+Result nsGetTotalSpaceSize(NcmStorageId storage_id, s64 *size) {
+    Service srv={0}, *srv_ptr = &srv;
+    Result rc=0;
+    if (hosversionAtLeast(3,0,0))
+        rc = nsGetContentManagementInterface(&srv);
+    else
+        srv_ptr = &g_nsAppManSrv;
+
+    if (R_SUCCEEDED(rc)) rc = _nsCmdInU64OutU64(srv_ptr, storage_id, (u64*)size, 47);
+
+    serviceClose(&srv);
+    return rc;
+}
+
+Result nsGetFreeSpaceSize(NcmStorageId storage_id, s64 *size) {
+    Service srv={0}, *srv_ptr = &srv;
+    Result rc=0;
+    if (hosversionAtLeast(3,0,0))
+        rc = nsGetContentManagementInterface(&srv);
+    else
+        srv_ptr = &g_nsAppManSrv;
+
+    if (R_SUCCEEDED(rc)) rc = _nsCmdInU64OutU64(srv_ptr, storage_id, (u64*)size, 48);
+
+    serviceClose(&srv);
+    return rc;
+}
+
+Result nsCountApplicationContentMeta(u64 application_id, s32 *out) {
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    Service srv={0}, *srv_ptr = &srv;
+    Result rc=0;
+    if (hosversionAtLeast(3,0,0))
+        rc = nsGetContentManagementInterface(&srv);
+    else
+        srv_ptr = &g_nsAppManSrv;
+
+    if (R_SUCCEEDED(rc)) rc = serviceDispatchInOut(srv_ptr, 600, application_id, *out);
+
+    serviceClose(&srv);
+    return rc;
+}
+
+Result nsListApplicationContentMetaStatus(u64 application_id, s32 index, NsApplicationContentMetaStatus* list, s32 count, s32* out_entrycount) {
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    Service srv={0}, *srv_ptr = &srv;
+    Result rc=0;
+    if (hosversionAtLeast(3,0,0))
+        rc = nsGetContentManagementInterface(&srv);
+    else
+        srv_ptr = &g_nsAppManSrv;
+
+    const struct {
+        s32 index;
+        u32 pad;
+        u64 application_id;
+    } in = { index, 0, application_id };
+
+    if (R_SUCCEEDED(rc)) rc = serviceDispatchInOut(srv_ptr, 601, in, *out_entrycount,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { list, count*sizeof(NsApplicationContentMetaStatus) } },
+    );
+
+    serviceClose(&srv);
+    return rc;
+}
+
+Result nsIsAnyApplicationRunning(bool *out) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    Service srv={0};
+    Result rc = nsGetContentManagementInterface(&srv);
+
+    if (R_SUCCEEDED(rc)) rc = _nsCmdNoInOutBool(&srv, out, 607);
+
+    serviceClose(&srv);
+    return rc;
 }
 
 // IRequestServerStopper
