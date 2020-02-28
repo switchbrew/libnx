@@ -53,6 +53,13 @@ Result nsGetFactoryResetInterface(Service* srv_out) {
     return _nsGetSession(&g_nsGetterSrv, srv_out, 7994);
 }
 
+Result nsGetDownloadTaskInterface(Service* srv_out) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _nsGetSession(&g_nsGetterSrv, srv_out, 7997);
+}
+
 Result nsGetContentManagementInterface(Service* srv_out) {
     if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
@@ -1255,6 +1262,149 @@ Result nsGetPromotionInfo(NsPromotionInfo *promotion, u64 application_id, Accoun
             { &uid, sizeof(AccountUid) },
         },
     );
+}
+
+// IDownloadTaskInterface
+
+Result nsClearTaskStatusList(void) {
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    Service srv={0}, *srv_ptr = &srv;
+    Result rc=0;
+    if (hosversionAtLeast(3,0,0))
+        rc = nsGetDownloadTaskInterface(&srv);
+    else
+        srv_ptr = &g_nsAppManSrv;
+
+    if (R_SUCCEEDED(rc)) rc = _nsCmdNoIO(srv_ptr, 701);
+
+    serviceClose(&srv);
+    return rc;
+}
+
+Result nsRequestDownloadTaskList(void) {
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    Service srv={0}, *srv_ptr = &srv;
+    Result rc=0;
+    if (hosversionAtLeast(3,0,0))
+        rc = nsGetDownloadTaskInterface(&srv);
+    else
+        srv_ptr = &g_nsAppManSrv;
+
+    if (R_SUCCEEDED(rc)) rc = _nsCmdNoIO(srv_ptr, 702);
+
+    serviceClose(&srv);
+    return rc;
+}
+
+Result nsRequestEnsureDownloadTask(AsyncResult *a) {
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    Service srv={0}, *srv_ptr = &srv;
+    Result rc=0;
+    if (hosversionAtLeast(3,0,0))
+        rc = nsGetDownloadTaskInterface(&srv);
+    else
+        srv_ptr = &g_nsAppManSrv;
+
+    if (R_SUCCEEDED(rc)) rc =_nsCmdNoInOutAsyncResult(srv_ptr, a, 703);
+
+    serviceClose(&srv);
+    return rc;
+}
+
+Result nsListDownloadTaskStatus(NsDownloadTaskStatus* tasks, s32 count, s32 *total_out) {
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    Service srv={0}, *srv_ptr = &srv;
+    Result rc=0;
+    if (hosversionAtLeast(3,0,0))
+        rc = nsGetDownloadTaskInterface(&srv);
+    else
+        srv_ptr = &g_nsAppManSrv;
+
+    if (R_SUCCEEDED(rc)) rc = serviceDispatchOut(srv_ptr, 704, *total_out,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { tasks, count*sizeof(NsDownloadTaskStatus) } },
+    );
+
+
+    serviceClose(&srv);
+    return rc;
+}
+
+Result nsRequestDownloadTaskListData(AsyncValue *a) {
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    Service srv={0}, *srv_ptr = &srv;
+    Result rc=0;
+    if (hosversionAtLeast(3,0,0))
+        rc = nsGetDownloadTaskInterface(&srv);
+    else
+        srv_ptr = &g_nsAppManSrv;
+
+    if (R_SUCCEEDED(rc)) rc =_nsCmdNoInOutAsyncValue(srv_ptr, a, 705);
+
+    serviceClose(&srv);
+    return rc;
+}
+
+Result nsTryCommitCurrentApplicationDownloadTask(void) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    Service srv={0};
+    Result rc = nsGetDownloadTaskInterface(&srv);
+
+    if (R_SUCCEEDED(rc)) rc = _nsCmdNoIO(&srv, 706);
+
+    serviceClose(&srv);
+    return rc;
+}
+
+Result nsEnableAutoCommit(void) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    Service srv={0};
+    Result rc = nsGetDownloadTaskInterface(&srv);
+
+    if (R_SUCCEEDED(rc)) rc = _nsCmdNoIO(&srv, 707);
+
+    serviceClose(&srv);
+    return rc;
+}
+
+Result nsDisableAutoCommit(void) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    Service srv={0};
+    Result rc = nsGetDownloadTaskInterface(&srv);
+
+    if (R_SUCCEEDED(rc)) rc = _nsCmdNoIO(&srv, 708);
+
+    serviceClose(&srv);
+    return rc;
+}
+
+Result nsTriggerDynamicCommitEvent(void) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    Service srv={0};
+    Result rc = nsGetDownloadTaskInterface(&srv);
+
+    if (R_SUCCEEDED(rc)) rc = _nsCmdNoIO(&srv, 709);
+
+    serviceClose(&srv);
+    return rc;
 }
 
 // IContentManagementInterface

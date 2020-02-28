@@ -221,6 +221,11 @@ typedef struct {
     u8 unk_x1a[0x6];                                ///< Unknown.
 } NsApplicationRightsOnClient;
 
+/// DownloadTaskStatus
+typedef struct {
+    u8 unk_x0[0x20];                                ///< Unknown.
+} NsDownloadTaskStatus;
+
 /// Default size for \ref nssuControlSetupCardUpdate / \ref nssuControlSetupCardUpdateViaSystemUpdater. This is the size used by qlaunch for SetupCardUpdate.
 #define NSSU_CARDUPDATE_TMEM_SIZE_DEFAULT 0x100000
 
@@ -242,6 +247,10 @@ Service* nsGetServiceSession_ApplicationManagerInterface(void);
 /// Gets the Service object for IFactoryResetInterface via the cmd for that.
 /// Only available on [3.0.0+].
 Result nsGetFactoryResetInterface(Service* srv_out);
+
+/// Gets the Service object for IDownloadTaskInterface via the cmd for that.
+/// Only available on [3.0.0+].
+Result nsGetDownloadTaskInterface(Service* srv_out);
 
 /// Gets the Service object for IContentManagementInterface via the cmd for that.
 /// Only available on [3.0.0+].
@@ -964,6 +973,75 @@ Result nsRequestResolveNoDownloadRightsError(AsyncValue *a, u64 application_id);
  * @param[in] uid \ref AccountUid
  */
 Result nsGetPromotionInfo(NsPromotionInfo *promotion, u64 application_id, AccountUid uid);
+
+///@}
+
+///@name IDownloadTaskInterface
+///@{
+
+/**
+ * @brief ClearTaskStatusList
+ * @note Uses \ref nsGetDownloadTaskInterface on [3.0.0+], otherwise IApplicationManagerInterface is used.
+ * @note Only available on [2.0.0+].
+ */
+Result nsClearTaskStatusList(void);
+
+/**
+ * @brief RequestDownloadTaskList
+ * @note Uses \ref nsGetDownloadTaskInterface on [3.0.0+], otherwise IApplicationManagerInterface is used.
+ * @note Only available on [2.0.0+].
+ */
+Result nsRequestDownloadTaskList(void);
+
+/**
+ * @brief RequestEnsureDownloadTask
+ * @note Uses \ref nsGetDownloadTaskInterface on [3.0.0+], otherwise IApplicationManagerInterface is used.
+ * @note Only available on [2.0.0+].
+ * @param[out] a \ref AsyncResult
+ */
+Result nsRequestEnsureDownloadTask(AsyncResult *a);
+
+/**
+ * @brief ListDownloadTaskStatus
+ * @note Uses \ref nsGetDownloadTaskInterface on [3.0.0+], otherwise IApplicationManagerInterface is used.
+ * @note Only available on [2.0.0+].
+ * @param[out] tasks Output array of \ref NsDownloadTaskStatus.
+ * @param[in] count Size of the tasks array in entries. A maximum of 0x100 tasks can be stored in state.
+ * @param[out] total_out Total output entries.
+ */
+Result nsListDownloadTaskStatus(NsDownloadTaskStatus* tasks, s32 count, s32 *total_out);
+
+/**
+ * @brief RequestDownloadTaskListData
+ * @note Uses \ref nsGetDownloadTaskInterface on [3.0.0+], otherwise IApplicationManagerInterface is used.
+ * @note Only available on [2.0.0+].
+ * @param[out] a \ref AsyncValue
+ */
+Result nsRequestDownloadTaskListData(AsyncValue *a);
+
+/**
+ * @brief TryCommitCurrentApplicationDownloadTask
+ * @note Only available on [4.0.0+].
+ */
+Result nsTryCommitCurrentApplicationDownloadTask(void);
+
+/**
+ * @brief EnableAutoCommit
+ * @note Only available on [4.0.0+].
+ */
+Result nsEnableAutoCommit(void);
+
+/**
+ * @brief DisableAutoCommit
+ * @note Only available on [4.0.0+].
+ */
+Result nsDisableAutoCommit(void);
+
+/**
+ * @brief TriggerDynamicCommitEvent
+ * @note Only available on [4.0.0+].
+ */
+Result nsTriggerDynamicCommitEvent(void);
 
 ///@}
 
