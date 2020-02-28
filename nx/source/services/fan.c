@@ -4,30 +4,21 @@
 #include "runtime/hosversion.h"
 
 static Service g_fanSrv;
-static Service g_fanCtl;
-
-static Result _fanOpenController(void);
 
 NX_GENERATE_SERVICE_GUARD(fan);
 
 Result _fanInitialize(void) {
-    Result rc = smGetService(&g_fanSrv, "fan");
-    
-    if (R_SUCCEEDED(rc)) rc = _fanOpenController();
-
-    return rc;
+    return smGetService(&g_fanSrv, "fan");
 }
 
 void _fanCleanup(void) {
-    serviceClose(&g_fanCtl);
     serviceClose(&g_fanSrv);
 }
 
-Result _fanOpenController(void) {
-    u32 in = hosversionBefore(7,0,0) ? 1 : 0x3d000001;
-    return serviceDispatchIn(&g_fanSrv, 0, in,
+Result fanOpenController(FanController *out, u32 device_code) {
+    return serviceDispatchIn(&g_fanSrv, 0, device_code,
         .out_num_objects = 1,
-        .out_objects = &g_fanCtl
+        .out_objects = &out->s,
     );
 }
 
@@ -35,14 +26,10 @@ Service* fanGetServiceSession(void) {
     return &g_fanSrv;
 }
 
-Service* fanGetServiceSession_Controller(void) {
-    return &g_fanCtl;
+Result fanSetRotationSpeedLevel(FanController *controller, float level) {
+    return serviceDispatchIn(&controller->s, 0, level);
 }
 
-Result fanSetRotationSpeedLevel(float level) {
-    return serviceDispatchIn(&g_fanCtl, 0, level);
-}
-
-Result fanGetRotationSpeedLevel(float *level) {
-    return serviceDispatchOut(&g_fanCtl, 2, *level);
+Result fanGetRotationSpeedLevel(FanController *controller, float *level) {
+    return serviceDispatchOut(&controller->s, 2, *level);
 }
