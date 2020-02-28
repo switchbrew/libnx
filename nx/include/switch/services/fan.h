@@ -24,6 +24,9 @@ Service* fanGetServiceSession(void);
 /// Opens IController session.
 Result fanOpenController(FanController *out, u32 device_code);
 
+/// Close IController session.
+void fanControllerClose(FanController *controller);
+
 /// @warning Disabling your fan can damage your system.
-Result fanSetRotationSpeedLevel(FanController *controller, float level);
-Result fanGetRotationSpeedLevel(FanController *controller, float *level);
+Result fanControllerSetRotationSpeedLevel(FanController *controller, float level);
+Result fanControllerGetRotationSpeedLevel(FanController *controller, float *level);

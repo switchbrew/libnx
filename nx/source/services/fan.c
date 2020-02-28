@@ -26,10 +26,14 @@ Service* fanGetServiceSession(void) {
     return &g_fanSrv;
 }
 
-Result fanSetRotationSpeedLevel(FanController *controller, float level) {
+void fanControllerClose(FanController *controller) {
+    serviceClose(&controller->s);
+}
+
+Result fanControllerSetRotationSpeedLevel(FanController *controller, float level) {
     return serviceDispatchIn(&controller->s, 0, level);
 }
 
-Result fanGetRotationSpeedLevel(FanController *controller, float *level) {
+Result fanControllerGetRotationSpeedLevel(FanController *controller, float *level) {
     return serviceDispatchOut(&controller->s, 2, *level);
 }
