@@ -12,7 +12,7 @@ typedef enum {
     LblBacklightSwitchStatus_Disabled  = 0,
     LblBacklightSwitchStatus_Enabled   = 1,
     LblBacklightSwitchStatus_Enabling  = 2,
-    LblBacklightSwitchStatus_Disabling = 3
+    LblBacklightSwitchStatus_Disabling = 3,
 } LblBacklightSwitchStatus;
 
 /// Initialize lbl.
