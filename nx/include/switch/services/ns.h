@@ -244,6 +244,10 @@ Service* nsGetServiceSession_GetterInterface(void);
 /// Gets the Service object for IApplicationManagerInterface.
 Service* nsGetServiceSession_ApplicationManagerInterface(void);
 
+/// Gets the Service object for IECommerceInterface via the cmd for that.
+/// Only available on [4.0.0+].
+Result nsGetECommerceInterface(Service* srv_out);
+
 /// Gets the Service object for IFactoryResetInterface via the cmd for that.
 /// Only available on [3.0.0+].
 Result nsGetFactoryResetInterface(Service* srv_out);
@@ -255,6 +259,36 @@ Result nsGetDownloadTaskInterface(Service* srv_out);
 /// Gets the Service object for IContentManagementInterface via the cmd for that.
 /// Only available on [3.0.0+].
 Result nsGetContentManagementInterface(Service* srv_out);
+
+///@}
+
+///@name IECommerceInterface
+///@{
+
+/**
+ * @brief RequestLinkDevice
+ * @note \ref nifmInitialize must be used prior to this. Before using the cmd, this calls \ref nifmIsAnyInternetRequestAccepted with the output from \ref nifmGetClientId, an error is returned when that returns false.
+ * @note Only available on [4.0.0+].
+ * @param[out] a \ref AsyncResult
+ * @param[in] uid \ref AccountUid
+ */
+Result nsRequestLinkDevice(AsyncResult *a, AccountUid uid);
+
+/**
+ * @brief RequestSyncRights
+ * @note Only available on [6.0.0+].
+ * @param[out] a \ref AsyncResult
+ */
+Result nsRequestSyncRights(AsyncResult *a);
+
+/**
+ * @brief RequestUnlinkDevice
+ * @note \ref nifmInitialize must be used prior to this. Before using the cmd, this calls \ref nifmIsAnyInternetRequestAccepted with the output from \ref nifmGetClientId, an error is returned when that returns false.
+ * @note Only available on [6.0.0+].
+ * @param[out] a \ref AsyncResult
+ * @param[in] uid \ref AccountUid
+ */
+Result nsRequestUnlinkDevice(AsyncResult *a, AccountUid uid);
 
 ///@}
 

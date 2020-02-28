@@ -46,6 +46,13 @@ Service* nsGetServiceSession_ApplicationManagerInterface(void) {
     return &g_nsAppManSrv;
 }
 
+Result nsGetECommerceInterface(Service* srv_out) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _nsGetSession(&g_nsGetterSrv, srv_out, 7992);
+}
+
 Result nsGetFactoryResetInterface(Service* srv_out) {
     if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
@@ -251,8 +258,71 @@ static Result _nsCmdInU64OutAsyncResult(Service* srv, AsyncResult *a, u64 inval,
     return rc;
 }
 
+static Result _nsCmdInUidOutAsyncResult(Service* srv, AsyncResult *a, AccountUid uid, u32 cmd_id) {
+    memset(a, 0, sizeof(*a));
+    Handle event = INVALID_HANDLE;
+    Result rc = serviceDispatchIn(srv, cmd_id, uid,
+        .out_num_objects = 1,
+        .out_objects = &a->s,
+        .out_handle_attrs = { SfOutHandleAttr_HipcCopy },
+        .out_handles = &event,
+    );
+
+    if (R_SUCCEEDED(rc))
+        eventLoadRemote(&a->event, event, false);
+
+    return rc;
+}
+
 static Result _nsCheckNifm(void) {
     return nifmIsAnyInternetRequestAccepted(nifmGetClientId()) ? 0 : MAKERESULT(16, 340);
+}
+
+// IECommerceInterface
+
+Result nsRequestLinkDevice(AsyncResult *a, AccountUid uid) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    Result rc = _nsCheckNifm();
+    if (R_FAILED(rc)) return rc;
+
+    Service srv={0};
+    rc = nsGetECommerceInterface(&srv);
+
+    if (R_SUCCEEDED(rc)) rc = _nsCmdInUidOutAsyncResult(&srv, a, uid, 0);
+
+    serviceClose(&srv);
+    return rc;
+}
+
+Result nsRequestSyncRights(AsyncResult *a) {
+    if (hosversionBefore(6,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    Service srv={0};
+    Result rc = nsGetECommerceInterface(&srv);
+
+    if (R_SUCCEEDED(rc)) rc = _nsCmdNoInOutAsyncResult(&srv, a, 3);
+
+    serviceClose(&srv);
+    return rc;
+}
+
+Result nsRequestUnlinkDevice(AsyncResult *a, AccountUid uid) {
+    if (hosversionBefore(6,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    Result rc = _nsCheckNifm();
+    if (R_FAILED(rc)) return rc;
+
+    Service srv={0};
+    rc = nsGetECommerceInterface(&srv);
+
+    if (R_SUCCEEDED(rc)) rc = _nsCmdInUidOutAsyncResult(&srv, a, uid, 4);
+
+    serviceClose(&srv);
+    return rc;
 }
 
 // IFactoryResetInterface
@@ -1311,7 +1381,7 @@ Result nsRequestEnsureDownloadTask(AsyncResult *a) {
     else
         srv_ptr = &g_nsAppManSrv;
 
-    if (R_SUCCEEDED(rc)) rc =_nsCmdNoInOutAsyncResult(srv_ptr, a, 703);
+    if (R_SUCCEEDED(rc)) rc = _nsCmdNoInOutAsyncResult(srv_ptr, a, 703);
 
     serviceClose(&srv);
     return rc;
@@ -1349,7 +1419,7 @@ Result nsRequestDownloadTaskListData(AsyncValue *a) {
     else
         srv_ptr = &g_nsAppManSrv;
 
-    if (R_SUCCEEDED(rc)) rc =_nsCmdNoInOutAsyncValue(srv_ptr, a, 705);
+    if (R_SUCCEEDED(rc)) rc = _nsCmdNoInOutAsyncValue(srv_ptr, a, 705);
 
     serviceClose(&srv);
     return rc;
