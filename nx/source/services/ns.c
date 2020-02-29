@@ -46,6 +46,13 @@ Service* nsGetServiceSession_ApplicationManagerInterface(void) {
     return &g_nsAppManSrv;
 }
 
+Result nsGetReadOnlyApplicationControlDataInterface(Service* srv_out) {
+    if (hosversionBefore(5,1,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _nsGetSession(&g_nsGetterSrv, srv_out, 7989);
+}
+
 Result nsGetECommerceInterface(Service* srv_out) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
@@ -276,6 +283,37 @@ static Result _nsCmdInUidOutAsyncResult(Service* srv, AsyncResult *a, AccountUid
 
 static Result _nsCheckNifm(void) {
     return nifmIsAnyInternetRequestAccepted(nifmGetClientId()) ? 0 : MAKERESULT(16, 340);
+}
+
+// IReadOnlyApplicationControlDataInterface
+
+Result nsGetApplicationControlData(NsApplicationControlSource source, u64 application_id, NsApplicationControlData* buffer, size_t size, u64* actual_size) {
+    Service srv={0}, *srv_ptr = &srv;
+    Result rc=0;
+    u32 cmd_id = 400;
+    if (hosversionAtLeast(5,1,0)) {
+        rc = nsGetReadOnlyApplicationControlDataInterface(&srv);
+        cmd_id = 0;
+    }
+    else
+        srv_ptr = &g_nsAppManSrv;
+
+    const struct {
+        u8 source;
+        u8 pad[7];
+        u64 application_id;
+    } in = { source, {0}, application_id };
+
+    u32 tmp=0;
+
+    if (R_SUCCEEDED(rc)) rc = serviceDispatchInOut(srv_ptr, cmd_id, in, tmp,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { buffer, size } },
+    );
+    if (R_SUCCEEDED(rc) && actual_size) *actual_size = tmp;
+
+    serviceClose(&srv);
+    return rc;
 }
 
 // IECommerceInterface
@@ -609,23 +647,6 @@ Result nsUnregisterNetworkServiceAccountWithUserSaveDataDeletion(AccountUid uid)
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return _nsCmdInUidNoOut(&g_nsAppManSrv, uid, 221);
-}
-
-Result nsGetApplicationControlData(NsApplicationControlSource source, u64 application_id, NsApplicationControlData* buffer, size_t size, u64* actual_size) {
-    const struct {
-        u8 source;
-        u8 pad[7];
-        u64 application_id;
-    } in = { source, {0}, application_id };
-
-    u32 tmp=0;
-
-    Result rc = serviceDispatchInOut(&g_nsAppManSrv, 400, in, tmp,
-        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
-        .buffers = { { buffer, size } },
-    );
-    if (R_SUCCEEDED(rc) && actual_size) *actual_size = tmp;
-    return rc;
 }
 
 Result nsRequestDownloadApplicationControlData(AsyncResult *a, u64 application_id) {

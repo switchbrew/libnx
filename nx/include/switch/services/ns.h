@@ -244,6 +244,10 @@ Service* nsGetServiceSession_GetterInterface(void);
 /// Gets the Service object for IApplicationManagerInterface.
 Service* nsGetServiceSession_ApplicationManagerInterface(void);
 
+/// Gets the Service object for IReadOnlyApplicationControlDataInterface via the cmd for that.
+/// Only available on [5.1.0+].
+Result nsGetReadOnlyApplicationControlDataInterface(Service* srv_out);
+
 /// Gets the Service object for IECommerceInterface via the cmd for that.
 /// Only available on [4.0.0+].
 Result nsGetECommerceInterface(Service* srv_out);
@@ -259,6 +263,22 @@ Result nsGetDownloadTaskInterface(Service* srv_out);
 /// Gets the Service object for IContentManagementInterface via the cmd for that.
 /// Only available on [3.0.0+].
 Result nsGetContentManagementInterface(Service* srv_out);
+
+///@}
+
+///@name IReadOnlyApplicationControlDataInterface
+///@{
+
+/**
+ * @brief Gets the \ref NsApplicationControlData for the specified application.
+ * @note Uses \ref nsGetReadOnlyApplicationControlDataInterface on [5.1.0+], otherwise IApplicationManagerInterface is used.
+ * @param[in] source Source, official sw uses ::NsApplicationControlSource_Storage.
+ * @param[in] application_id ApplicationId.
+ * @param[out] buffer \ref NsApplicationControlData
+ * @param[in] size Size of the buffer.
+ * @param[out] actual_size Actual output size.
+ */
+Result nsGetApplicationControlData(NsApplicationControlSource source, u64 application_id, NsApplicationControlData* buffer, size_t size, u64* actual_size);
 
 ///@}
 
@@ -559,16 +579,6 @@ Result nsUnregisterNetworkServiceAccount(AccountUid uid);
  * @param[in] uid \ref AccountUid
  */
 Result nsUnregisterNetworkServiceAccountWithUserSaveDataDeletion(AccountUid uid);
-
-/**
- * @brief Gets the \ref NsApplicationControlData for the specified application.
- * @param[in] source Source, official sw uses ::NsApplicationControlSource_Storage.
- * @param[in] application_id ApplicationId.
- * @param[out] buffer \ref NsApplicationControlData
- * @param[in] size Size of the buffer.
- * @param[out] actual_size Actual output size.
- */
-Result nsGetApplicationControlData(NsApplicationControlSource source, u64 application_id, NsApplicationControlData* buffer, size_t size, u64* actual_size);
 
 /**
  * @brief RequestDownloadApplicationControlData
