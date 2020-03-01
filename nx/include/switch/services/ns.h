@@ -241,7 +241,7 @@ void nsExit(void);
 /// Gets the Service object for the actual ns:* service session. Only initialized on [3.0.0+], on pre-3.0.0 see \ref nsGetServiceSession_ApplicationManagerInterface.
 Service* nsGetServiceSession_GetterInterface(void);
 
-/// Gets the Service object for IApplicationManagerInterface.
+/// Gets the Service object for IApplicationManagerInterface. Only initialized on pre-3.0.0, on [3.0.0+] use \ref nsGetApplicationManagerInterface.
 Service* nsGetServiceSession_ApplicationManagerInterface(void);
 
 /// Gets the Service object for IReadOnlyApplicationControlDataInterface via the cmd for that.
@@ -255,6 +255,10 @@ Result nsGetECommerceInterface(Service* srv_out);
 /// Gets the Service object for IFactoryResetInterface via the cmd for that.
 /// Only available on [3.0.0+].
 Result nsGetFactoryResetInterface(Service* srv_out);
+
+/// Gets the Service object for IApplicationManagerInterface via the cmd for that.
+/// Only available on [3.0.0+], on prior sysvers use \ref nsGetServiceSession_ApplicationManagerInterface.
+Result nsGetApplicationManagerInterface(Service* srv_out);
 
 /// Gets the Service object for IDownloadTaskInterface via the cmd for that.
 /// Only available on [3.0.0+].
