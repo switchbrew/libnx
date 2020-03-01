@@ -316,6 +316,49 @@ Result nsGetApplicationControlData(NsApplicationControlSource source, u64 applic
     return rc;
 }
 
+Result nsGetApplicationDesiredLanguage(NacpStruct *nacp, NacpLanguageEntry **langentry) {
+    if (nacp==NULL || langentry==NULL)
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+
+    *langentry = NULL;
+
+    NacpLanguageEntry *entry = NULL;
+    Service srv={0}, *srv_ptr = &srv;
+    Result rc=0;
+    u32 cmd_id = 55;
+    if (hosversionAtLeast(5,1,0)) {
+        rc = nsGetReadOnlyApplicationControlDataInterface(&srv);
+        cmd_id = 1;
+    }
+    else
+        srv_ptr = &g_nsAppManSrv;
+
+    u8 lang_bitmask=0, out=0;
+
+    if (R_SUCCEEDED(rc)) {
+        for (u32 i=0; i<16; i++) {
+            entry = &nacp->lang[i];
+            if (entry->name[0] || entry->author[0]) lang_bitmask |= BIT(i);
+        }
+        if (!lang_bitmask) {
+            *langentry = &nacp->lang[0];
+            return 0;
+        }
+    }
+
+    if (R_SUCCEEDED(rc)) rc = serviceDispatchInOut(srv_ptr, cmd_id, lang_bitmask, out);
+    if (R_SUCCEEDED(rc)) {
+        if (out > 16) out = 0;
+        if (lang_bitmask & BIT(out))
+            *langentry = &nacp->lang[out];
+        else
+            rc = MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen);
+    }
+
+    serviceClose(&srv);
+    return rc;
+}
+
 // IECommerceInterface
 
 Result nsRequestLinkDevice(AsyncResult *a, AccountUid uid) {

@@ -77,5 +77,6 @@ typedef struct {
 } NacpStruct;
 
 /// Get the NacpLanguageEntry from the input nacp corresponding to the current system language (this may fallback to other languages when needed). Output langentry is NULL if none found / content of entry is empty.
+/// If you're using ns you may want to use \ref nsGetApplicationDesiredLanguage instead.
 Result nacpGetLanguageEntry(NacpStruct* nacp, NacpLanguageEntry** langentry);
 

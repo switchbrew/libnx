@@ -280,6 +280,14 @@ Result nsGetContentManagementInterface(Service* srv_out);
  */
 Result nsGetApplicationControlData(NsApplicationControlSource source, u64 application_id, NsApplicationControlData* buffer, size_t size, u64* actual_size);
 
+/**
+ * @brief GetApplicationDesiredLanguage. Selects a \ref NacpLanguageEntry to use from the specified \ref NacpStruct.
+ * @note Uses \ref nsGetReadOnlyApplicationControlDataInterface on [5.1.0+], otherwise IApplicationManagerInterface is used.
+ * @param[in] nacp \ref NacpStruct
+ * @param[out] langentry \ref NacpLanguageEntry
+ */
+Result nsGetApplicationDesiredLanguage(NacpStruct *nacp, NacpLanguageEntry **langentry);
+
 ///@}
 
 ///@name IECommerceInterface
