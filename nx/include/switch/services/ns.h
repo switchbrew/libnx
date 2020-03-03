@@ -244,17 +244,33 @@ Service* nsGetServiceSession_GetterInterface(void);
 /// Gets the Service object for IApplicationManagerInterface. Only initialized on pre-3.0.0, on [3.0.0+] use \ref nsGetApplicationManagerInterface.
 Service* nsGetServiceSession_ApplicationManagerInterface(void);
 
+/// Gets the Service object for IDynamicRightsInterface via the cmd for that.
+/// Only available on [6.0.0+].
+Result nsGetDynamicRightsInterface(Service* srv_out);
+
 /// Gets the Service object for IReadOnlyApplicationControlDataInterface via the cmd for that.
 /// Only available on [5.1.0+].
 Result nsGetReadOnlyApplicationControlDataInterface(Service* srv_out);
+
+/// Gets the Service object for IReadOnlyApplicationRecordInterface via the cmd for that.
+/// Only available on [5.0.0+].
+Result nsGetReadOnlyApplicationRecordInterface(Service* srv_out);
 
 /// Gets the Service object for IECommerceInterface via the cmd for that.
 /// Only available on [4.0.0+].
 Result nsGetECommerceInterface(Service* srv_out);
 
+/// Gets the Service object for IApplicationVersionInterface via the cmd for that.
+/// Only available on [4.0.0+].
+Result nsGetApplicationVersionInterface(Service* srv_out);
+
 /// Gets the Service object for IFactoryResetInterface via the cmd for that.
 /// Only available on [3.0.0+].
 Result nsGetFactoryResetInterface(Service* srv_out);
+
+/// Gets the Service object for IAccountProxyInterface via the cmd for that.
+/// Only available on [3.0.0+].
+Result nsGetAccountProxyInterface(Service* srv_out);
 
 /// Gets the Service object for IApplicationManagerInterface via the cmd for that.
 /// Only available on [3.0.0+], on prior sysvers use \ref nsGetServiceSession_ApplicationManagerInterface.
@@ -267,6 +283,10 @@ Result nsGetDownloadTaskInterface(Service* srv_out);
 /// Gets the Service object for IContentManagementInterface via the cmd for that.
 /// Only available on [3.0.0+].
 Result nsGetContentManagementInterface(Service* srv_out);
+
+/// Gets the Service object for IDocumentInterface via the cmd for that.
+/// Only available on [3.0.0+].
+Result nsGetDocumentInterface(Service* srv_out);
 
 ///@}
 
