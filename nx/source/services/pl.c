@@ -29,8 +29,6 @@ Result _plInitialize(void) {
         }
     }
 
-    if (R_FAILED(rc)) plExit();
-
     return rc;
 }
 
