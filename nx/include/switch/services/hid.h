@@ -381,6 +381,14 @@ typedef enum {
     NpadInterfaceType_Unknown4  = 4,    ///< Unknown.
 } HidNpadInterfaceType;
 
+/// XcdInterfaceType
+typedef enum {
+    XcdInterfaceType_Bluetooth  = BIT(0),
+    XcdInterfaceType_Uart       = BIT(1),
+    XcdInterfaceType_Usb        = BIT(2),
+    XcdInterfaceType_FieldSet   = BIT(7),
+} XcdInterfaceType;
+
 /// touchPosition
 typedef struct touchPosition {
     u32 id;
