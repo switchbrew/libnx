@@ -402,6 +402,13 @@ Result fsOpenSdCardDetectionEventNotifier(FsEventNotifier* out) {
     return _fsCmdGetSession(&g_fsSrv, &out->s, 500);
 }
 
+Result fsIsSignedSystemPartitionOnSdCardValid(bool *out) {
+    if (hosversionBefore(4,0,0) || hosversionAtLeast(8,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _fsCmdNoInOutBool(&g_fsSrv, out, 640);
+}
+
 Result fsGetRightsIdByPath(const char* path, FsRightsId* out_rights_id) {
     if (hosversionBefore(2,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
