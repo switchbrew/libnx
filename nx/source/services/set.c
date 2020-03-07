@@ -1428,58 +1428,58 @@ Result setsysSetTouchScreenMode(SetSysTouchScreenMode mode) {
 }
 
 Result setcalGetBdAddress(SetCalBdAddress *out) {
-    return serviceDispatchOut(&g_setsysSrv, 0, *out);
+    return serviceDispatchOut(&g_setcalSrv, 0, *out);
 }
 
 Result setcalGetConfigurationId1(SetCalConfigurationId1 *out) {
-    return serviceDispatchOut(&g_setsysSrv, 1, *out);
+    return serviceDispatchOut(&g_setcalSrv, 1, *out);
 }
 
 Result setcalGetAccelerometerOffset(SetCalAccelerometerOffset *out) {
-    return serviceDispatchOut(&g_setsysSrv, 2, *out);
+    return serviceDispatchOut(&g_setcalSrv, 2, *out);
 }
 
 Result setcalGetAccelerometerScale(SetCalAccelerometerScale *out) {
-    return serviceDispatchOut(&g_setsysSrv, 3, *out);
+    return serviceDispatchOut(&g_setcalSrv, 3, *out);
 }
 
 Result setcalGetGyroscopeOffset(SetCalAccelerometerOffset *out) {
-    return serviceDispatchOut(&g_setsysSrv, 4, *out);
+    return serviceDispatchOut(&g_setcalSrv, 4, *out);
 }
 
 Result setcalGetGyroscopeScale(SetCalGyroscopeScale *out) {
-    return serviceDispatchOut(&g_setsysSrv, 5, *out);
+    return serviceDispatchOut(&g_setcalSrv, 5, *out);
 }
 
 Result setcalGetWirelessLanMacAddress(SetCalMacAddress *out) {
-    return serviceDispatchOut(&g_setsysSrv, 6, *out);
+    return serviceDispatchOut(&g_setcalSrv, 6, *out);
 }
 
 Result setcalGetWirelessLanCountryCodeCount(s32 *out_count) {
-    return _setCmdNoInOutU32(&g_setsysSrv, (u32*)out_count, 7);
+    return _setCmdNoInOutU32(&g_setcalSrv, (u32*)out_count, 7);
 }
 
 Result setcalGetWirelessLanCountryCodes(s32 *total_out, SetCalCountryCode *codes, s32 count) {
-    return serviceDispatchOut(&g_setsysSrv, 8, *total_out,
+    return serviceDispatchOut(&g_setcalSrv, 8, *total_out,
         .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_Out },
         .buffers = { { codes, count*sizeof(SetCalCountryCode) } },
     );
 }
 
 Result setcalGetSerialNumber(SetCalSerialNumber *out) {
-    return serviceDispatchOut(&g_setsysSrv, 9, *out);
+    return serviceDispatchOut(&g_setcalSrv, 9, *out);
 }
 
 Result setcalSetInitialSystemAppletProgramId(u64 program_id) {
-    return _setCmdInU64NoOut(&g_setsysSrv, program_id, 10);
+    return _setCmdInU64NoOut(&g_setcalSrv, program_id, 10);
 }
 
 Result setcalSetOverlayDispProgramId(u64 program_id) {
-    return _setCmdInU64NoOut(&g_setsysSrv, program_id, 11);
+    return _setCmdInU64NoOut(&g_setcalSrv, program_id, 11);
 }
 
 Result setcalGetBatteryLot(SetBatteryLot *out) {
-    return serviceDispatchOut(&g_setsysSrv, 12, *out);
+    return serviceDispatchOut(&g_setcalSrv, 12, *out);
 }
 
 Result setcalGetEciDeviceCertificate(SetCalEccB233DeviceCertificate *out) {

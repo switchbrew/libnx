@@ -761,10 +761,6 @@ typedef struct {
 } SetCalAnalogStickModelParameter;
 
 typedef struct {
-    u8 battery_lot[0x18];
-} SetCalBatteryLot;
-
-typedef struct {
     u8 bd_addr[0x6];
 } SetCalBdAddress;
 
