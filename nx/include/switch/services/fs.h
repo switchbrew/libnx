@@ -345,6 +345,8 @@ Result fsOpenDataStorageByDataId(FsStorage* out, u64 dataId, NcmStorageId storag
 Result fsOpenDeviceOperator(FsDeviceOperator* out);
 Result fsOpenSdCardDetectionEventNotifier(FsEventNotifier* out);
 
+Result fsIsSignedSystemPartitionOnSdCardValid(bool *out);
+
 /// Retrieves the rights id corresponding to the content path. Only available on [2.0.0+].
 Result fsGetRightsIdByPath(const char* path, FsRightsId* out_rights_id);
 
