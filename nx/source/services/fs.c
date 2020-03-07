@@ -403,7 +403,7 @@ Result fsOpenSdCardDetectionEventNotifier(FsEventNotifier* out) {
 }
 
 Result fsIsSignedSystemPartitionOnSdCardValid(bool *out) {
-    if (hosversionBefore(4,0,0) || hosversionAtLeast(8,0,0))
+    if (!hosversionBetween(4, 8))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return _fsCmdNoInOutBool(&g_fsSrv, out, 640);
