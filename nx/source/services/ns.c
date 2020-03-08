@@ -19,7 +19,7 @@ NX_GENERATE_SERVICE_GUARD(ns);
 
 Result _nsInitialize(void) {
     Result rc=0;
-    const char *servarray[5] = {"ns:ec", "ns:web", "ns:rid", "ns:rt", "ns:am2"}; // This is the order used used by official sw, however the below loop uses this in reverse since ns:am2 is last in the list.
+    static const char* const servarray[5] = {"ns:ec", "ns:web", "ns:rid", "ns:rt", "ns:am2"}; // This is the order used used by official sw, however the below loop uses this in reverse since ns:am2 is last in the list.
 
     if(hosversionBefore(3,0,0))
         return smGetService(&g_nsAppManSrv, "ns:am");
