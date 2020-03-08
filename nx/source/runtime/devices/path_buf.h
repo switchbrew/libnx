@@ -1,4 +1,11 @@
 #pragma once
 #include <limits.h>
 
-extern char __thread __nx_dev_path_buf[PATH_MAX+1];
+#include "services/fs.h"
+
+typedef union {
+    char   unix_path[PATH_MAX+1];
+    FsPath nx_path;
+} PathBuf;
+
+extern __thread PathBuf __nx_dev_path_buf;

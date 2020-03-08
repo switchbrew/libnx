@@ -205,18 +205,18 @@ fsdev_fixpath(struct _reent *r,
   }
 
   if(path[0] == '/')
-    strncpy(__nx_dev_path_buf, path, PATH_MAX);
+    strncpy(__nx_dev_path_buf.unix_path, path, PATH_MAX);
   else
   {
     const char* cwd = dev->cwd ? dev->cwd : "/";
-    strncpy(__nx_dev_path_buf, cwd, PATH_MAX);
-    __nx_dev_path_buf[PATH_MAX] = '\0';
-    strncat(__nx_dev_path_buf, path, PATH_MAX - strlen(cwd));
+    strncpy(__nx_dev_path_buf.unix_path, cwd, PATH_MAX);
+    __nx_dev_path_buf.unix_path[PATH_MAX] = '\0';
+    strncat(__nx_dev_path_buf.unix_path, path, PATH_MAX - strlen(cwd));
   }
 
-  if(__nx_dev_path_buf[PATH_MAX] != 0)
+  if(__nx_dev_path_buf.unix_path[PATH_MAX] != 0)
   {
-    __nx_dev_path_buf[PATH_MAX] = 0;
+    __nx_dev_path_buf.unix_path[PATH_MAX] = 0;
     r->_errno = ENAMETOOLONG;
     return NULL;
   }
@@ -224,29 +224,30 @@ fsdev_fixpath(struct _reent *r,
   if(device)
     *device = dev;
 
-  return __nx_dev_path_buf;
+  return __nx_dev_path_buf.unix_path;
 }
 
 static int
 fsdev_getfspath(struct _reent *r,
                const char     *path,
                fsdev_fsdevice **device,
-               char           *outpath)
+               FsPath          *outpath)
 {
   if(fsdev_fixpath(r, path, device) == NULL)
     return -1;
 
-  if(outpath != __nx_dev_path_buf)
-    memcpy(outpath, __nx_dev_path_buf, FS_MAX_PATH-1);
-  outpath[FS_MAX_PATH-1] = '\0';
+  if(outpath != &__nx_dev_path_buf.nx_path)
+    memcpy(outpath, &__nx_dev_path_buf.nx_path, FS_MAX_PATH-1);
+
+  outpath->path[FS_MAX_PATH-1] = '\0';
 
   return 0;
 }
 
-static ssize_t fsdev_convertfromfspath(uint8_t *out, uint8_t *in, size_t len)
+static ssize_t fsdev_convertfromfspath(uint8_t *out, FsPath* in, size_t len)
 {
-  ssize_t inlen = strnlen((char*)in, len);
-  memcpy(out, in, inlen);
+  ssize_t inlen = strnlen((char*)in->path, len);
+  memcpy(out, in->path, inlen);
   if (inlen < len)
     out[inlen+1] = 0;
   return inlen;
@@ -398,7 +399,7 @@ Result fsdevCommitDevice(const char *name)
 }
 
 Result fsdevSetConcatenationFileAttribute(const char *path) {
-  char           *fs_path = __nx_dev_path_buf;
+  FsPath         *fs_path = &__nx_dev_path_buf.nx_path;
   fsdev_fsdevice *device = NULL;
 
   if(fsdev_getfspath(_REENT, path, &device, fs_path)==-1)
@@ -418,7 +419,7 @@ Result fsdevIsValidSignedSystemPartitionOnSdCard(const char *name, bool *out) {
 }
 
 Result fsdevCreateFile(const char* path, size_t size, u32 flags) {
-  char           *fs_path = __nx_dev_path_buf;
+  FsPath         *fs_path = &__nx_dev_path_buf.nx_path;
   fsdev_fsdevice *device = NULL;
 
   if(fsdev_getfspath(_REENT, path, &device, fs_path)==-1)
@@ -428,7 +429,7 @@ Result fsdevCreateFile(const char* path, size_t size, u32 flags) {
 }
 
 Result fsdevDeleteDirectoryRecursively(const char *path) {
-  char           *fs_path = __nx_dev_path_buf;
+  FsPath         *fs_path = &__nx_dev_path_buf.nx_path;
   fsdev_fsdevice *device = NULL;
 
   if(fsdev_getfspath(_REENT, path, &device, fs_path)==-1)
@@ -539,7 +540,7 @@ FsFileSystem* fsdevGetDeviceFileSystem(const char *name)
   return &device->fs;
 }
 
-int fsdevTranslatePath(const char *path, FsFileSystem** device, char *outpath)
+int fsdevTranslatePath(const char *path, FsFileSystem** device, FsPath* outpath)
 {
   fsdev_fsdevice *tmpdev = NULL;
 
@@ -572,7 +573,7 @@ fsdev_open(struct _reent *r,
   Result        rc;
   u32           fsdev_flags = 0;
   u32           attributes = 0;
-  char         *fs_path = __nx_dev_path_buf;
+  FsPath         *fs_path = &__nx_dev_path_buf.nx_path;
   fsdev_fsdevice *device = r->deviceData;
 
   if(fsdev_getfspath(r, path, &device, fs_path)==-1)
@@ -1026,7 +1027,7 @@ fsdev_stat(struct _reent *r,
   FsDir   fdir;
   Result  rc;
   int     ret=0;
-  char   *fs_path = __nx_dev_path_buf;
+  FsPath *fs_path = &__nx_dev_path_buf.nx_path;
   fsdev_fsdevice *device = r->deviceData;
   FsTimeStampRaw timestamps = {0};
   FsDirEntryType type;
@@ -1112,7 +1113,7 @@ fsdev_unlink(struct _reent *r,
             const char    *name)
 {
   Result  rc;
-  char   *fs_path = __nx_dev_path_buf;
+  FsPath *fs_path = &__nx_dev_path_buf.nx_path;
   fsdev_fsdevice *device = r->deviceData;
 
   if(fsdev_getfspath(r, name, &device, fs_path)==-1)
@@ -1140,7 +1141,7 @@ fsdev_chdir(struct _reent *r,
 {
   FsDir   fd;
   Result  rc;
-  char   *fs_path = __nx_dev_path_buf;
+  FsPath *fs_path = &__nx_dev_path_buf.nx_path;
   fsdev_fsdevice *device = r->deviceData;
 
   if(device->cwd==NULL)
@@ -1158,7 +1159,7 @@ fsdev_chdir(struct _reent *r,
     fsDirClose(&fd);
     memcpy(device->cwd, fs_path, FS_MAX_PATH);
 
-    size_t cwdlen = strlen(fs_path);
+    size_t cwdlen = strlen(fs_path->path);
     if (device->cwd[cwdlen-1] != '/' && cwdlen < FS_MAX_PATH-1)
     {
       device->cwd[cwdlen] = '/';
@@ -1190,27 +1191,27 @@ fsdev_rename(struct _reent *r,
   Result  rc;
   FsDirEntryType type;
   fsdev_fsdevice *device = r->deviceData;
-  char fs_path_old[FS_MAX_PATH];
-  char*fs_path_new = __nx_dev_path_buf;
+  FsPath  fs_path_old;
+  FsPath* fs_path_new = &__nx_dev_path_buf.nx_path;
 
-  if(fsdev_getfspath(r, oldName, &device, fs_path_old)==-1)
+  if(fsdev_getfspath(r, oldName, &device, &fs_path_old)==-1)
     return -1;
 
   if(fsdev_getfspath(r, newName, &device, fs_path_new)==-1)
     return -1;
 
-  rc = fsFsGetEntryType(&device->fs, fs_path_old, &type);
+  rc = fsFsGetEntryType(&device->fs, &fs_path_old, &type);
   if(R_SUCCEEDED(rc))
   {
     if(type == FsDirEntryType_Dir)
     {
-      rc = fsFsRenameDirectory(&device->fs, fs_path_old, fs_path_new);
+      rc = fsFsRenameDirectory(&device->fs, &fs_path_old, fs_path_new);
       if(R_SUCCEEDED(rc))
       return 0;
     }
     else if(type == FsDirEntryType_File)
     {
-      rc = fsFsRenameFile(&device->fs, fs_path_old, fs_path_new);
+      rc = fsFsRenameFile(&device->fs, &fs_path_old, fs_path_new);
       if(R_SUCCEEDED(rc))
       return 0;
     }
@@ -1240,7 +1241,7 @@ fsdev_mkdir(struct _reent *r,
            int           mode)
 {
   Result  rc;
-  char   *fs_path = __nx_dev_path_buf;
+  FsPath *fs_path = &__nx_dev_path_buf.nx_path;
   fsdev_fsdevice *device = r->deviceData;
 
   if(fsdev_getfspath(r, path, &device, fs_path)==-1)
@@ -1270,7 +1271,7 @@ fsdev_diropen(struct _reent *r,
 {
   FsDir   fd;
   Result  rc;
-  char   *fs_path = __nx_dev_path_buf;
+  FsPath *fs_path = &__nx_dev_path_buf.nx_path;
   fsdev_fsdevice *device = r->deviceData;
 
   if(fsdev_getfspath(r, path, &device, fs_path)==-1)
@@ -1387,7 +1388,7 @@ fsdev_dirnext(struct _reent *r,
 
     /* convert name from fs-path to UTF-8 */
     memset(filename, 0, NAME_MAX);
-    units = fsdev_convertfromfspath((uint8_t*)filename, (uint8_t*)entry->name, NAME_MAX);
+    units = fsdev_convertfromfspath((uint8_t*)filename, &entry->name, NAME_MAX);
     if(units < 0)
     {
       r->_errno = EILSEQ;
@@ -1448,7 +1449,7 @@ fsdev_statvfs(struct _reent  *r,
              struct statvfs *buf)
 {
   Result rc=0;
-  char  *fs_path = __nx_dev_path_buf;
+  FsPath *fs_path = &__nx_dev_path_buf.nx_path;
   fsdev_fsdevice *device = r->deviceData;
   s64 freespace = 0, total_space = 0;
 
@@ -1590,7 +1591,7 @@ fsdev_rmdir(struct _reent *r,
            const char    *name)
 {
   Result  rc;
-  char   *fs_path = __nx_dev_path_buf;
+  FsPath *fs_path = &__nx_dev_path_buf.nx_path;
   fsdev_fsdevice *device = r->deviceData;
 
   if(fsdev_getfspath(r, name, &device, fs_path)==-1)

@@ -13,12 +13,48 @@
 #include "../services/acc.h"
 #include "../sf/service.h"
 
-// We use wrapped handles for type safety.
-
 #define FS_MAX_PATH 0x301
 
 /// For use with \ref FsSaveDataAttribute.
 #define FS_SAVEDATA_CURRENT_APPLICATIONID 0
+
+typedef struct {
+    char path[FS_MAX_PATH];
+} FsPath;
+
+/**
+ * @brief For file paths, a statically sized buffer of 0x301 bytes is sent over
+ *        IPC. For string literals, less than 0x301 bytes are allocated. When
+ *        the linker/compiler allocates a string literal next to an unmapped
+ *        4K page this causes correct code to fail. To get around this, all
+ *        literal paths (and otherwise) have to be padded in order to be safely
+ *        transferred.
+ * @param literal String to convert
+ * @return Path object
+ */
+static inline FsPath fsPathFromLiteralSafe(const char* literal) {
+    FsPath ret;
+    size_t i = 0;
+
+    while (1)
+    {
+        ret.path[i] = literal[i];
+
+        if (literal[i] == 0)
+            break;
+
+        if (i == FS_MAX_PATH-1) {
+            ret.path[i] = 0;
+            break;
+        }
+
+        i++;
+    }
+
+    return ret;
+}
+
+// We use wrapped handles for type safety.
 
 typedef struct {
     u8 c[0x10];
@@ -54,7 +90,7 @@ typedef struct {
 
 /// Directory entry.
 typedef struct {
-    char name[FS_MAX_PATH];         ///< Entry name.
+    FsPath name;                    ///< Entry name.
     u8 pad[3];
     s8 type;                        ///< See FsDirEntryType.
     u8 pad2[3];                     ///< ?
@@ -307,11 +343,11 @@ Service* fsGetServiceSession(void);
 void fsSetPriority(FsPriority prio);
 
 /// Mount requested filesystem type from content file
-Result fsOpenFileSystem(FsFileSystem* out, FsFileSystemType fsType, const char* contentPath); ///< same as calling fsOpenFileSystemWithId with 0 as id
+Result fsOpenFileSystem(FsFileSystem* out, FsFileSystemType fsType, FsPath* contentPath); ///< same as calling fsOpenFileSystemWithId with 0 as id
 Result fsOpenFileSystemWithPatch(FsFileSystem* out, u64 id, FsFileSystemType fsType); ///< [2.0.0+], like OpenFileSystemWithId but without content path.
-Result fsOpenFileSystemWithId(FsFileSystem* out, u64 id, FsFileSystemType fsType, const char* contentPath); ///< works on all firmwares, id is ignored on [1.0.0]
+Result fsOpenFileSystemWithId(FsFileSystem* out, u64 id, FsFileSystemType fsType, FsPath* contentPath); ///< works on all firmwares, id is ignored on [1.0.0]
 
-Result fsOpenBisFileSystem(FsFileSystem* out, FsBisPartitionId partitionId, const char* string);
+Result fsOpenBisFileSystem(FsFileSystem* out, FsBisPartitionId partitionId, FsPath* string);
 Result fsOpenBisStorage(FsStorage* out, FsBisPartitionId partitionId);
 
 /// Do not call this directly, see fs_dev.h.
@@ -348,10 +384,10 @@ Result fsOpenSdCardDetectionEventNotifier(FsEventNotifier* out);
 Result fsIsSignedSystemPartitionOnSdCardValid(bool *out);
 
 /// Retrieves the rights id corresponding to the content path. Only available on [2.0.0+].
-Result fsGetRightsIdByPath(const char* path, FsRightsId* out_rights_id);
+Result fsGetRightsIdByPath(FsPath* path, FsRightsId* out_rights_id);
 
 /// Retrieves the rights id and key generation corresponding to the content path. Only available on [3.0.0+].
-Result fsGetRightsIdAndKeyGenerationByPath(const char* path, u8* out_key_generation, FsRightsId* out_rights_id);
+Result fsGetRightsIdAndKeyGenerationByPath(FsPath* path, u8* out_key_generation, FsRightsId* out_rights_id);
 
 Result fsDisableAutoSaveDataCreation(void);
 
@@ -371,27 +407,27 @@ Result fsOpen_SaveData(FsFileSystem* out, u64 application_id, AccountUid uid);
 Result fsOpen_SystemSaveData(FsFileSystem* out, FsSaveDataSpaceId save_data_space_id, u64 system_save_data_id, AccountUid uid);
 
 // IFileSystem
-Result fsFsCreateFile(FsFileSystem* fs, const char* path, s64 size, u32 option);
-Result fsFsDeleteFile(FsFileSystem* fs, const char* path);
-Result fsFsCreateDirectory(FsFileSystem* fs, const char* path);
-Result fsFsDeleteDirectory(FsFileSystem* fs, const char* path);
-Result fsFsDeleteDirectoryRecursively(FsFileSystem* fs, const char* path);
-Result fsFsRenameFile(FsFileSystem* fs, const char* cur_path, const char* new_path);
-Result fsFsRenameDirectory(FsFileSystem* fs, const char* cur_path, const char* new_path);
-Result fsFsGetEntryType(FsFileSystem* fs, const char* path, FsDirEntryType* out);
-Result fsFsOpenFile(FsFileSystem* fs, const char* path, u32 mode, FsFile* out);
-Result fsFsOpenDirectory(FsFileSystem* fs, const char* path, u32 mode, FsDir* out);
+Result fsFsCreateFile(FsFileSystem* fs, FsPath* path, s64 size, u32 option);
+Result fsFsDeleteFile(FsFileSystem* fs, FsPath* path);
+Result fsFsCreateDirectory(FsFileSystem* fs, FsPath* path);
+Result fsFsDeleteDirectory(FsFileSystem* fs, FsPath* path);
+Result fsFsDeleteDirectoryRecursively(FsFileSystem* fs, FsPath* path);
+Result fsFsRenameFile(FsFileSystem* fs, FsPath* cur_path, FsPath* new_path);
+Result fsFsRenameDirectory(FsFileSystem* fs, FsPath* cur_path, FsPath* new_path);
+Result fsFsGetEntryType(FsFileSystem* fs, FsPath* path, FsDirEntryType* out);
+Result fsFsOpenFile(FsFileSystem* fs, FsPath* path, u32 mode, FsFile* out);
+Result fsFsOpenDirectory(FsFileSystem* fs, FsPath* path, u32 mode, FsDir* out);
 Result fsFsCommit(FsFileSystem* fs);
-Result fsFsGetFreeSpace(FsFileSystem* fs, const char* path, s64* out);
-Result fsFsGetTotalSpace(FsFileSystem* fs, const char* path, s64* out);
-Result fsFsGetFileTimeStampRaw(FsFileSystem* fs, const char* path, FsTimeStampRaw *out); ///< [3.0.0+]
-Result fsFsCleanDirectoryRecursively(FsFileSystem* fs, const char* path); ///< [3.0.0+]
-Result fsFsQueryEntry(FsFileSystem* fs, void *out, size_t out_size, const void *in, size_t in_size, const char* path, FsFileSystemQueryId query_id); ///< [4.0.0+]
+Result fsFsGetFreeSpace(FsFileSystem* fs, FsPath* path, s64* out);
+Result fsFsGetTotalSpace(FsFileSystem* fs, FsPath* path, s64* out);
+Result fsFsGetFileTimeStampRaw(FsFileSystem* fs, FsPath* path, FsTimeStampRaw *out); ///< [3.0.0+]
+Result fsFsCleanDirectoryRecursively(FsFileSystem* fs, FsPath* path); ///< [3.0.0+]
+Result fsFsQueryEntry(FsFileSystem* fs, void *out, size_t out_size, const void *in, size_t in_size, FsPath* path, FsFileSystemQueryId query_id); ///< [4.0.0+]
 void fsFsClose(FsFileSystem* fs);
 
 /// Uses \ref fsFsQueryEntry to set the archive bit on the specified absolute directory path.
 /// This will cause HOS to treat the directory as if it were a file containing the directory's concatenated contents.
-Result fsFsSetConcatenationFileAttribute(FsFileSystem* fs, const char *path);
+Result fsFsSetConcatenationFileAttribute(FsFileSystem* fs, FsPath* path);
 
 /// Wrapper for fsFsQueryEntry with FsFileSystemQueryId_IsValidSignedSystemPartitionOnSdCard.
 /// Only available on [8.0.0+].

@@ -32,17 +32,14 @@ Service* fsldrGetServiceSession(void) {
     return &g_fsldrSrv;
 }
 
-Result fsldrOpenCodeFileSystem(u64 tid, const char *path, FsFileSystem* out) {
-    char send_path[FS_MAX_PATH]={0};
-    strncpy(send_path, path, FS_MAX_PATH-1);
-
+Result fsldrOpenCodeFileSystem(u64 tid, FsPath* path, FsFileSystem* out) {
     serviceAssumeDomain(&g_fsldrSrv);
     return serviceDispatchIn(&g_fsldrSrv, 0, tid,
         .buffer_attrs = {
             SfBufferAttr_HipcPointer | SfBufferAttr_In,
         },
         .buffers = {
-            { send_path,  FS_MAX_PATH },
+            { path, sizeof(*path) },
         },
         .out_num_objects = 1,
         .out_objects = &out->s,

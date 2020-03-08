@@ -132,15 +132,15 @@ static Result _fsCmdNoInOutBool(Service* srv, bool *out, u32 cmd_id) {
 // IFileSystemProxy
 //-----------------------------------------------------------------------------
 
-Result fsOpenFileSystem(FsFileSystem* out, FsFileSystemType fsType, const char* contentPath) {
+Result fsOpenFileSystem(FsFileSystem* out, FsFileSystemType fsType, FsPath* contentPath) {
     return fsOpenFileSystemWithId(out, 0, fsType, contentPath);
 }
 
-static Result _fsOpenFileSystem(FsFileSystem* out, FsFileSystemType fsType, const char* contentPath) {
+static Result _fsOpenFileSystem(FsFileSystem* out, FsFileSystemType fsType, FsPath* contentPath) {
     u32 tmp=fsType;
     return _fsObjectDispatchIn(&g_fsSrv, 0, tmp,
         .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_In },
-        .buffers = { { contentPath, FS_MAX_PATH } },
+        .buffers = { { contentPath, sizeof(*contentPath) } },
         .out_num_objects = 1,
         .out_objects = &out->s,
     );
@@ -161,7 +161,7 @@ Result fsOpenFileSystemWithPatch(FsFileSystem* out, u64 id, FsFileSystemType fsT
     );
 }
 
-static Result _fsOpenFileSystemWithId(FsFileSystem* out, u64 id, FsFileSystemType fsType, const char* contentPath) {
+static Result _fsOpenFileSystemWithId(FsFileSystem* out, u64 id, FsFileSystemType fsType, FsPath* contentPath) {
     const struct {
         u32 fsType;
         u64 id;
@@ -169,30 +169,24 @@ static Result _fsOpenFileSystemWithId(FsFileSystem* out, u64 id, FsFileSystemTyp
 
     return _fsObjectDispatchIn(&g_fsSrv, 8, in,
         .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_In },
-        .buffers = { { contentPath, FS_MAX_PATH } },
+        .buffers = { { contentPath, sizeof(*contentPath) } },
         .out_num_objects = 1,
         .out_objects = &out->s,
     );
 }
 
-Result fsOpenFileSystemWithId(FsFileSystem* out, u64 id, FsFileSystemType fsType, const char* contentPath) {
-    char sendStr[FS_MAX_PATH] = {0};
-    strncpy(sendStr, contentPath, sizeof(sendStr)-1);
-
+Result fsOpenFileSystemWithId(FsFileSystem* out, u64 id, FsFileSystemType fsType, FsPath* contentPath) {
     if (hosversionAtLeast(2,0,0))
-        return _fsOpenFileSystemWithId(out, id, fsType, sendStr);
+        return _fsOpenFileSystemWithId(out, id, fsType, contentPath);
     else
-        return _fsOpenFileSystem(out, fsType, sendStr);
+        return _fsOpenFileSystem(out, fsType, contentPath);
 }
 
-Result fsOpenBisFileSystem(FsFileSystem* out, FsBisPartitionId partitionId, const char* string) {
-    char tmpstr[FS_MAX_PATH] = {0};
-    strncpy(tmpstr, string, sizeof(tmpstr)-1);
-
+Result fsOpenBisFileSystem(FsFileSystem* out, FsBisPartitionId partitionId, FsPath* path) {
     u32 tmp=partitionId;
     return _fsObjectDispatchIn(&g_fsSrv, 11, tmp,
         .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_In },
-        .buffers = { { tmpstr, sizeof(tmpstr) } },
+        .buffers = { { path, sizeof(*path) } },
         .out_num_objects = 1,
         .out_objects = &out->s,
     );
@@ -409,25 +403,19 @@ Result fsIsSignedSystemPartitionOnSdCardValid(bool *out) {
     return _fsCmdNoInOutBool(&g_fsSrv, out, 640);
 }
 
-Result fsGetRightsIdByPath(const char* path, FsRightsId* out_rights_id) {
+Result fsGetRightsIdByPath(FsPath* path, FsRightsId* out_rights_id) {
     if (hosversionBefore(2,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    char send_path[FS_MAX_PATH] = {0};
-    strncpy(send_path, path, FS_MAX_PATH-1);
-
     return _fsObjectDispatchOut(&g_fsSrv, 609, *out_rights_id,
         .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_In },
-        .buffers = { { send_path, sizeof(send_path) } },
+        .buffers = { { path, sizeof(*path) } },
     );
 }
 
-Result fsGetRightsIdAndKeyGenerationByPath(const char* path, u8* out_key_generation, FsRightsId* out_rights_id) {
+Result fsGetRightsIdAndKeyGenerationByPath(FsPath* path, u8* out_key_generation, FsRightsId* out_rights_id) {
     if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-
-    char send_path[FS_MAX_PATH] = {0};
-    strncpy(send_path, path, FS_MAX_PATH-1);
 
     struct {
         u8 key_generation;
@@ -437,7 +425,7 @@ Result fsGetRightsIdAndKeyGenerationByPath(const char* path, u8* out_key_generat
 
     Result rc = _fsObjectDispatchOut(&g_fsSrv, 610, out,
         .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_In },
-        .buffers = { { send_path, sizeof(send_path) } },
+        .buffers = { { path, sizeof(*path) } },
     );
 
     if (R_SUCCEEDED(rc)) {
@@ -509,7 +497,7 @@ Result fsOpen_SystemSaveData(FsFileSystem* out, FsSaveDataSpaceId save_data_spac
 // IFileSystem
 //-----------------------------------------------------------------------------
 
-Result fsFsCreateFile(FsFileSystem* fs, const char* path, s64 size, u32 option) {
+Result fsFsCreateFile(FsFileSystem* fs, FsPath* path, s64 size, u32 option) {
     const struct {
         u32 option;
         u64 size;
@@ -517,75 +505,75 @@ Result fsFsCreateFile(FsFileSystem* fs, const char* path, s64 size, u32 option) 
 
     return _fsObjectDispatchIn(&fs->s, 0, in,
         .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_In },
-        .buffers = { { path, FS_MAX_PATH } },
+        .buffers = { { path, sizeof(*path) } },
     );
 }
 
-static Result _fsFsCmdWithInPath(FsFileSystem* fs, const char* path, u32 cmd_id) {
+static Result _fsFsCmdWithInPath(FsFileSystem* fs, FsPath* path, u32 cmd_id) {
     return _fsObjectDispatch(&fs->s, cmd_id,
         .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_In },
-        .buffers = { { path, FS_MAX_PATH } },
+        .buffers = { { path, sizeof(*path) } },
     );
 }
 
-Result fsFsDeleteFile(FsFileSystem* fs, const char* path) {
+Result fsFsDeleteFile(FsFileSystem* fs, FsPath* path) {
     return _fsFsCmdWithInPath(fs, path, 1);
 }
 
-Result fsFsCreateDirectory(FsFileSystem* fs, const char* path) {
+Result fsFsCreateDirectory(FsFileSystem* fs, FsPath* path) {
     return _fsFsCmdWithInPath(fs, path, 2);
 }
 
-Result fsFsDeleteDirectory(FsFileSystem* fs, const char* path) {
+Result fsFsDeleteDirectory(FsFileSystem* fs, FsPath* path) {
     return _fsFsCmdWithInPath(fs, path, 3);
 }
 
-Result fsFsDeleteDirectoryRecursively(FsFileSystem* fs, const char* path) {
+Result fsFsDeleteDirectoryRecursively(FsFileSystem* fs, FsPath* path) {
     return _fsFsCmdWithInPath(fs, path, 4);
 }
 
-static Result _fsFsCmdWithTwoInPaths(FsFileSystem* fs, const char* cur_path, const char* new_path, u32 cmd_id) {
+static Result _fsFsCmdWithTwoInPaths(FsFileSystem* fs, FsPath* cur_path, FsPath* new_path, u32 cmd_id) {
     return _fsObjectDispatch(&fs->s, cmd_id,
         .buffer_attrs = {
             SfBufferAttr_HipcPointer | SfBufferAttr_In,
             SfBufferAttr_HipcPointer | SfBufferAttr_In,
         },
         .buffers = {
-            { cur_path, FS_MAX_PATH },
-            { new_path, FS_MAX_PATH },
+            { cur_path, sizeof(*cur_path) },
+            { new_path, sizeof(*new_path) },
         },
     );
 }
 
-Result fsFsRenameFile(FsFileSystem* fs, const char* cur_path, const char* new_path) {
+Result fsFsRenameFile(FsFileSystem* fs, FsPath* cur_path, FsPath* new_path) {
     return _fsFsCmdWithTwoInPaths(fs, cur_path, new_path, 5);
 }
 
-Result fsFsRenameDirectory(FsFileSystem* fs, const char* cur_path, const char* new_path) {
+Result fsFsRenameDirectory(FsFileSystem* fs, FsPath* cur_path, FsPath* new_path) {
     return _fsFsCmdWithTwoInPaths(fs, cur_path, new_path, 6);
 }
 
-Result fsFsGetEntryType(FsFileSystem* fs, const char* path, FsDirEntryType* out) {
+Result fsFsGetEntryType(FsFileSystem* fs, FsPath* path, FsDirEntryType* out) {
     return _fsObjectDispatchOut(&fs->s, 7, *out,
         .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_In },
-        .buffers = { { path, FS_MAX_PATH } },
+        .buffers = { { path, sizeof(*path) } },
     );
 }
 
-static Result _fsFsOpenCommon(FsFileSystem* fs, const char* path, u32 flags, Service* out, u32 cmd_id) {
+static Result _fsFsOpenCommon(FsFileSystem* fs, FsPath* path, u32 flags, Service* out, u32 cmd_id) {
     return _fsObjectDispatchIn(&fs->s, cmd_id, flags,
         .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_In },
-        .buffers = { { path, FS_MAX_PATH } },
+        .buffers = { { path, sizeof(*path) } },
         .out_num_objects = 1,
         .out_objects = out,
     );
 }
 
-Result fsFsOpenFile(FsFileSystem* fs, const char* path, u32 mode, FsFile* out) {
+Result fsFsOpenFile(FsFileSystem* fs, FsPath* path, u32 mode, FsFile* out) {
     return _fsFsOpenCommon(fs, path, mode, &out->s, 8);
 }
 
-Result fsFsOpenDirectory(FsFileSystem* fs, const char* path, u32 mode, FsDir* out) {
+Result fsFsOpenDirectory(FsFileSystem* fs, FsPath* path, u32 mode, FsDir* out) {
     return _fsFsOpenCommon(fs, path, mode, &out->s, 9);
 }
 
@@ -593,44 +581,41 @@ Result fsFsCommit(FsFileSystem* fs) {
     return _fsCmdNoIO(&fs->s, 10);
 }
 
-static Result _fsFsCmdWithInPathAndOutU64(FsFileSystem* fs, const char* path, u64* out, u32 cmd_id) {
+static Result _fsFsCmdWithInPathAndOutU64(FsFileSystem* fs, FsPath* path, u64* out, u32 cmd_id) {
     return _fsObjectDispatchOut(&fs->s, cmd_id, *out,
         .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_In },
-        .buffers = { { path, FS_MAX_PATH } },
+        .buffers = { { path, sizeof(*path) } },
     );
 }
 
-Result fsFsGetFreeSpace(FsFileSystem* fs, const char* path, s64* out) {
+Result fsFsGetFreeSpace(FsFileSystem* fs, FsPath* path, s64* out) {
     return _fsFsCmdWithInPathAndOutU64(fs, path, (u64*)out, 11);
 }
 
-Result fsFsGetTotalSpace(FsFileSystem* fs, const char* path, s64* out) {
+Result fsFsGetTotalSpace(FsFileSystem* fs, FsPath* path, s64* out) {
     return _fsFsCmdWithInPathAndOutU64(fs, path, (u64*)out, 12);
 }
 
-Result fsFsCleanDirectoryRecursively(FsFileSystem* fs, const char* path) {
+Result fsFsCleanDirectoryRecursively(FsFileSystem* fs, FsPath* path) {
     if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return _fsFsCmdWithInPath(fs, path, 13);
 }
 
-Result fsFsGetFileTimeStampRaw(FsFileSystem* fs, const char* path, FsTimeStampRaw *out) {
+Result fsFsGetFileTimeStampRaw(FsFileSystem* fs, FsPath* path, FsTimeStampRaw *out) {
     if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return _fsObjectDispatchOut(&fs->s, 14, *out,
         .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_In },
-        .buffers = { { path, FS_MAX_PATH } },
+        .buffers = { { path, sizeof(*path) } },
     );
 }
 
-Result fsFsQueryEntry(FsFileSystem* fs, void *out, size_t out_size, const void *in, size_t in_size, const char* path, FsFileSystemQueryId query_id) {
+Result fsFsQueryEntry(FsFileSystem* fs, void *out, size_t out_size, const void *in, size_t in_size, FsPath* path, FsFileSystemQueryId query_id) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-
-    char send_path[FS_MAX_PATH] = {0};
-    strncpy(send_path, path, sizeof(send_path)-1);
 
     return _fsObjectDispatchIn(&fs->s, 15, query_id,
         .buffer_attrs = {
@@ -639,14 +624,14 @@ Result fsFsQueryEntry(FsFileSystem* fs, void *out, size_t out_size, const void *
             SfBufferAttr_HipcMapAlias | SfBufferAttr_Out | SfBufferAttr_HipcMapTransferAllowsNonSecure,
         },
         .buffers = {
-            { send_path, sizeof(send_path) },
-            { in,        in_size           },
-            { out,       out_size          },
+            { path, sizeof(*path) },
+            { in,   in_size       },
+            { out,  out_size      },
         },
     );
 }
 
-Result fsFsSetConcatenationFileAttribute(FsFileSystem* fs, const char *path) {
+Result fsFsSetConcatenationFileAttribute(FsFileSystem* fs, FsPath* path) {
     return fsFsQueryEntry(fs, NULL, 0, NULL, 0, path, FsFileSystemQueryId_SetConcatenationFileAttribute);
 }
 
@@ -654,8 +639,10 @@ Result fsFsIsValidSignedSystemPartitionOnSdCard(FsFileSystem* fs, bool *out) {
     if (hosversionBefore(8,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
+    FsPath root_path = fsPathFromLiteralSafe("/");
+
     u8 tmp=0;
-    Result rc = fsFsQueryEntry(fs, &tmp, sizeof(tmp), NULL, 0, "/", FsFileSystemQueryId_IsValidSignedSystemPartitionOnSdCard);
+    Result rc = fsFsQueryEntry(fs, &tmp, sizeof(tmp), NULL, 0, &root_path, FsFileSystemQueryId_IsValidSignedSystemPartitionOnSdCard);
     if (R_SUCCEEDED(rc) && out) *out = tmp & 1;
     return rc;
 }

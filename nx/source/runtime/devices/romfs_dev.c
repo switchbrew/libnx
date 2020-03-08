@@ -268,7 +268,7 @@ Result romfsMountSelf(const char *name)
 
     // Retrieve IFileSystem object + fixed path for our NRO
     FsFileSystem *tmpfs = NULL;
-    char* path_buf = __nx_dev_path_buf;
+    FsPath* path_buf = &__nx_dev_path_buf.nx_path;
     if(fsdevTranslatePath(filename, &tmpfs, path_buf)==-1)
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
@@ -343,7 +343,7 @@ Result romfsMountFromCurrentProcess(const char *name) {
 Result romfsMountFromFsdev(const char *path, u64 offset, const char *name)
 {
     FsFileSystem *tmpfs = NULL;
-    if(fsdevTranslatePath(path, &tmpfs, __nx_dev_path_buf)==-1)
+    if(fsdevTranslatePath(path, &tmpfs, &__nx_dev_path_buf.nx_path)==-1)
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
     romfs_mount *mount = romfs_alloc();
@@ -353,7 +353,7 @@ Result romfsMountFromFsdev(const char *path, u64 offset, const char *name)
     mount->fd_type = RomfsSource_FsFile;
     mount->offset = offset;
 
-    Result rc = fsFsOpenFile(tmpfs, __nx_dev_path_buf, FsOpenMode_Read, &mount->fd);
+    Result rc = fsFsOpenFile(tmpfs, &__nx_dev_path_buf.nx_path, FsOpenMode_Read, &mount->fd);
     if (R_FAILED(rc))
     {
         romfs_free(mount);
@@ -521,7 +521,7 @@ static int navigateToDir(romfs_mount *mount, romfs_dir** ppDir, const char** pPa
     while (**pPath)
     {
         char* slashPos = strchr(*pPath, '/');
-        char* component = __nx_dev_path_buf;
+        char* component = __nx_dev_path_buf.unix_path;
 
         if (slashPos)
         {

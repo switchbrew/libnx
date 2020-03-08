@@ -52,7 +52,7 @@ Result fsdevCommitDevice(const char *name);
 FsFileSystem* fsdevGetDeviceFileSystem(const char *name);
 
 /// Writes the FS-path to outpath (which has buffer size FS_MAX_PATH), for the input path (as used in stdio). The FsFileSystem is also written to device when not NULL.
-int fsdevTranslatePath(const char *path, FsFileSystem** device, char *outpath);
+int fsdevTranslatePath(const char *path, FsFileSystem** device, FsPath* outpath);
 
 /// This calls fsFsSetConcatenationFileAttribute on the filesystem specified by the input path (as used in stdio).
 Result fsdevSetConcatenationFileAttribute(const char *path);
