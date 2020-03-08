@@ -244,10 +244,10 @@ fsdev_getfspath(struct _reent *r,
   return 0;
 }
 
-static ssize_t fsdev_convertfromfspath(uint8_t *out, FsPath* in, size_t len)
+static ssize_t fsdev_convertfromfspath(uint8_t *out, uint8_t* in, size_t len)
 {
-  ssize_t inlen = strnlen((char*)in->path, len);
-  memcpy(out, in->path, inlen);
+  ssize_t inlen = strnlen((char*)in, len);
+  memcpy(out, in, inlen);
   if (inlen < len)
     out[inlen+1] = 0;
   return inlen;
@@ -1388,7 +1388,7 @@ fsdev_dirnext(struct _reent *r,
 
     /* convert name from fs-path to UTF-8 */
     memset(filename, 0, NAME_MAX);
-    units = fsdev_convertfromfspath((uint8_t*)filename, &entry->name, NAME_MAX);
+    units = fsdev_convertfromfspath((uint8_t*)filename, (uint8_t*)entry->name, NAME_MAX);
     if(units < 0)
     {
       r->_errno = EILSEQ;

@@ -32,7 +32,7 @@ Service* fsldrGetServiceSession(void) {
     return &g_fsldrSrv;
 }
 
-Result fsldrOpenCodeFileSystem(u64 tid, FsPath* path, FsFileSystem* out) {
+Result fsldrOpenCodeFileSystem(u64 tid, const FsPath* path, FsFileSystem* out) {
     serviceAssumeDomain(&g_fsldrSrv);
     return serviceDispatchIn(&g_fsldrSrv, 0, tid,
         .buffer_attrs = {
