@@ -541,6 +541,8 @@ Result appletSetFocusHandlingMode(AppletFocusHandlingMode mode) {
     Result rc;
     bool invals[4];
 
+    if (__nx_applet_type != AppletType_Application)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     if (mode >= AppletFocusHandlingMode_Max)
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
