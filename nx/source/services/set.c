@@ -1066,7 +1066,7 @@ Result setsysGetRequiresRunRepairTimeReviser(bool *out) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return _setCmdNoInOutBool(&g_setsysSrv, *out, 141);
+    return _setCmdNoInOutBool(&g_setsysSrv, out, 141);
 }
 
 Result setsysSetRequiresRunRepairTimeReviser(bool flag) {
@@ -1107,7 +1107,7 @@ Result setsysSetConsoleSixAxisSensorAngularVelocityTimeBias(const SetSysConsoleS
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return serviceDispatchOut(&g_setsysSrv, 146, *bias);
+    return serviceDispatchIn(&g_setsysSrv, 146, *bias);
 }
 
 Result setsysGetConsoleSixAxisSensorAngularAcceleration(SetSysConsoleSixAxisSensorAngularAcceleration *out) {
@@ -1121,7 +1121,7 @@ Result setsysSetConsoleSixAxisSensorAngularAcceleration(const SetSysConsoleSixAx
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return serviceDispatchOut(&g_setsysSrv, 148, *acceleration);
+    return serviceDispatchIn(&g_setsysSrv, 148, *acceleration);
 }
 
 Result setsysGetRebootlessSystemUpdateVersion(SetSysRebootlessSystemUpdateVersion *out) {
