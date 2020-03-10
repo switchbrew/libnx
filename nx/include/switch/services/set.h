@@ -565,8 +565,8 @@ typedef struct {
     u16 qresidual10;
     u16 qresidual20;
     u16 qresidual30;
-    u16 cycles;
-    u32 padding;                ///> Normally contains the cycles reg. Unused and contains stack garbage.
+    u16 cycles;         ///< Normally keeps the cycles reg. Unused and contains stack garbage.
+    u32 cycles_actual;  ///< Keeps track of cycles. The fuel gauge cycles reg is reset if > 2.00 cycles and added here.
 } SetSysPtmFuelGaugeParameter;
 
 /// Actually nn::util::Color4u8Type.
