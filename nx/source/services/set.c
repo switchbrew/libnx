@@ -114,6 +114,10 @@ static Result _setCmdInU64NoOut(Service* srv, u64 inval, u32 cmd_id) {
     return serviceDispatchIn(srv, cmd_id, inval);
 }
 
+static Result _setCmdInUuidNoOut(Service* srv, const Uuid *inval, u32 cmd_id) {
+    return serviceDispatchIn(srv, cmd_id, *inval);
+}
+
 static Result setInitializeLanguageCodesCache(void) {
     if (g_setLanguageCodesInitialized) return 0;
     Result rc = 0;
@@ -213,6 +217,20 @@ Result setsysSetLanguageCode(u64 LanguageCode) {
     return _setCmdInU64NoOut(&g_setsysSrv, LanguageCode, 0);
 }
 
+Result setsysSetNetworkSettings(const SetSysNetworkSettings *settings, s32 count) {
+    return serviceDispatch(&g_setsysSrv, 1,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
+        .buffers = { { settings, count*sizeof(SetSysNetworkSettings) } },
+    );
+}
+
+Result setsysGetNetworkSettings(s32 *total_out, SetSysNetworkSettings *settings, s32 count) {
+    return serviceDispatchOut(&g_setsysSrv, 2, *total_out,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { settings, count*sizeof(SetSysNetworkSettings) } },
+    );
+}
+
 static Result _setsysGetFirmwareVersionImpl(SetSysFirmwareVersion *out, u32 cmd_id) {
     return serviceDispatch(&g_setsysSrv, cmd_id,
         .buffer_attrs = { SfBufferAttr_FixedSize | SfBufferAttr_HipcPointer | SfBufferAttr_Out },
@@ -229,6 +247,10 @@ Result setsysGetFirmwareVersion(SetSysFirmwareVersion *out) {
     }
 }
 
+Result setsysGetFirmwareVersionDigest(SetSysFirmwareVersionDigest *out) {
+    return serviceDispatchOut(&g_setsysSrv, 5, *out);
+}
+
 Result setsysGetLockScreenFlag(bool *out) {
     return _setCmdNoInOutBool(&g_setsysSrv, out, 7);
 }
@@ -237,12 +259,63 @@ Result setsysSetLockScreenFlag(bool flag) {
     return _setCmdInBoolNoOut(&g_setsysSrv, flag, 8);
 }
 
+Result setsysGetBacklightSettings(SetSysBacklightSettings *out) {
+    return serviceDispatchOut(&g_setsysSrv, 9, *out);
+}
+
+Result setsysSetBacklightSettings(const SetSysBacklightSettings *settings) {
+    return serviceDispatchIn(&g_setsysSrv, 10, *settings);
+}
+
+Result setsysSetBluetoothDevicesSettings(const SetSysBluetoothDevicesSettings *settings, s32 count) {
+    return serviceDispatch(&g_setsysSrv, 11,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
+        .buffers = { { settings, count*sizeof(SetSysBluetoothDevicesSettings) } },
+    );
+}
+
+Result setsysGetBluetoothDevicesSettings(s32 *total_out, SetSysBluetoothDevicesSettings *settings, s32 count) {
+    return serviceDispatchOut(&g_setsysSrv, 12, *total_out,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { settings, count*sizeof(SetSysBluetoothDevicesSettings) } },
+    );
+}
+
+Result setsysGetExternalSteadyClockSourceId(Uuid *out) {
+    return _setCmdNoInOutUuid(&g_setsysSrv, out, 13);
+}
+
+Result setsysSetExternalSteadyClockSourceId(const Uuid *uuid) {
+    return _setCmdInUuidNoOut(&g_setsysSrv, uuid, 14);
+}
+
+Result setsysGetUserSystemClockContext(TimeSystemClockContext *out) {
+    return serviceDispatchOut(&g_setsysSrv, 15, *out);
+}
+
+Result setsysSetUserSystemClockContext(const TimeSystemClockContext *context) {
+    return serviceDispatchIn(&g_setsysSrv, 16, *context);
+}
+
 Result setsysGetAccountSettings(SetSysAccountSettings *out) {
     return serviceDispatchOut(&g_setsysSrv, 17, *out);
 }
 
 Result setsysSetAccountSettings(SetSysAccountSettings settings) {
     return serviceDispatchIn(&g_setsysSrv, 18, settings);
+}
+
+Result setsysGetAudioVolume(SetSysAudioDevice device, SetSysAudioVolume *out) {
+    return serviceDispatchInOut(&g_setsysSrv, 19, device, *out);
+}
+
+Result setsysSetAudioVolume(SetSysAudioDevice device, const SetSysAudioVolume *volume) {
+    const struct {
+        SetSysAudioVolume volume;
+        u32 device;
+    } in = { *volume, device };
+
+    return serviceDispatchIn(&g_setsysSrv, 20, in);
 }
 
 Result setsysGetEulaVersions(s32 *total_out, SetSysEulaVersion *versions, s32 count) {
@@ -308,6 +381,14 @@ Result setsysSetAccountNotificationSettings(const SetSysAccountNotificationSetti
     );
 }
 
+Result setsysGetVibrationMasterVolume(float *out) {
+    return serviceDispatchOut(&g_setsysSrv, 35, *out);
+}
+
+Result setsysSetVibrationMasterVolume(float volume) {
+    return serviceDispatchIn(&g_setsysSrv, 36, volume);
+}
+
 Result setsysGetSettingsItemValueSize(const char *name, const char *item_key, u64 *size_out) {
     char send_name[SET_MAX_NAME_SIZE];
     char send_item_key[SET_MAX_NAME_SIZE];
@@ -360,6 +441,44 @@ Result setsysSetTvSettings(const SetSysTvSettings *settings) {
     return serviceDispatchIn(&g_setsysSrv, 40, *settings);
 }
 
+Result setsysGetEdid(SetSysEdid *out) {
+    return serviceDispatch(&g_setsysSrv, 41,
+        .buffer_attrs = { SfBufferAttr_FixedSize | SfBufferAttr_HipcPointer | SfBufferAttr_Out },
+        .buffers = { { out, sizeof(*out) } },
+    );
+}
+
+Result setsysSetEdid(const SetSysEdid *edid) {
+    return serviceDispatch(&g_setsysSrv, 42,
+        .buffer_attrs = { SfBufferAttr_FixedSize | SfBufferAttr_HipcPointer | SfBufferAttr_In },
+        .buffers = { { edid, sizeof(*edid) } },
+    );
+}
+
+Result setsysGetAudioOutputMode(SetSysAudioOutputModeTarget target, SetSysAudioOutputMode *out) {
+    u32 tmp=0;
+    Result rc = serviceDispatchInOut(&g_setsysSrv, 43, target, tmp);
+    if (R_SUCCEEDED(rc) && out) *out = tmp;
+    return rc;
+}
+
+Result setsysSetAudioOutputMode(SetSysAudioOutputModeTarget target, SetSysAudioOutputMode mode) {
+    const struct {
+        u32 target;
+        u32 mode;
+    } in = { target, mode };
+
+    return serviceDispatchIn(&g_setsysSrv, 44, in);
+}
+
+Result setsysIsForceMuteOnHeadphoneRemoved(bool *out) {
+    return _setCmdNoInOutBool(&g_setsysSrv, out, 45);
+}
+
+Result setsysSetForceMuteOnHeadphoneRemoved(bool flag) {
+    return _setCmdInBoolNoOut(&g_setsysSrv, flag, 46);
+}
+
 Result setsysGetQuestFlag(bool *out) {
     return _setCmdNoInOutBool(&g_setsysSrv, out, 47);
 }
@@ -374,6 +493,22 @@ Result setsysGetDataDeletionSettings(SetSysDataDeletionSettings *out) {
 
 Result setsysSetDataDeletionSettings(const SetSysDataDeletionSettings *settings) {
     return serviceDispatchIn(&g_setsysSrv, 50, *settings);
+}
+
+Result setsysGetInitialSystemAppletProgramId(u64 *out) {
+    return _setCmdNoInOut64(&g_setsysSrv, out, 51);
+}
+
+Result setsysGetOverlayDispProgramId(u64 *out) {
+    return _setCmdNoInOut64(&g_setsysSrv, out, 52);
+}
+
+Result setsysGetDeviceTimeZoneLocationName(TimeLocationName *out) {
+    return serviceDispatchOut(&g_setsysSrv, 53, *out);
+}
+
+Result setsysSetDeviceTimeZoneLocationName(const TimeLocationName *name) {
+    return serviceDispatchIn(&g_setsysSrv, 54, *name);
 }
 
 Result setsysGetWirelessCertificationFileSize(u64 *out_size) {
@@ -391,12 +526,24 @@ Result setsysSetRegionCode(SetRegion region) {
     return _setCmdInU32NoOut(&g_setsysSrv, region, 57);
 }
 
+Result setsysGetNetworkSystemClockContext(TimeSystemClockContext *out) {
+    return serviceDispatchOut(&g_setsysSrv, 58, *out);
+}
+
+Result setsysSetNetworkSystemClockContext(const TimeSystemClockContext *context) {
+    return serviceDispatchIn(&g_setsysSrv, 59, *context);
+}
+
 Result setsysIsUserSystemClockAutomaticCorrectionEnabled(bool *out) {
     return _setCmdNoInOutBool(&g_setsysSrv, out, 60);
 }
 
 Result setsysSetUserSystemClockAutomaticCorrectionEnabled(bool flag) {
     return _setCmdInBoolNoOut(&g_setsysSrv, flag, 61);
+}
+
+Result setsysGetDebugModeFlag(bool *out) {
+    return _setCmdNoInOutBool(&g_setsysSrv, out, 62);
 }
 
 Result setsysGetPrimaryAlbumStorage(SetSysPrimaryAlbumStorage *out) {
@@ -486,6 +633,46 @@ Result setsysGetProductModel(s32 *out) {
     return _setCmdNoInOutU32(&g_setsysSrv, (u32*)out, 79);
 }
 
+Result setsysGetLdnChannel(s32 *out) {
+    return _setCmdNoInOutU32(&g_setsysSrv, (u32*)out, 80);
+}
+
+Result setsysSetLdnChannel(s32 channel) {
+    return _setCmdInU32NoOut(&g_setsysSrv, (u32)channel, 81);
+}
+
+Result setsysAcquireTelemetryDirtyFlagEventHandle(Event *out_event) {
+    return _setCmdGetEvent(&g_setsysSrv, out_event, false, 82);
+}
+
+Result setsysGetTelemetryDirtyFlags(u64 *flags_0, u64 *flags_1) {
+    struct {
+        u64 flags_0;
+        u64 flags_1;
+    } out;
+
+    Result rc = serviceDispatchOut(&g_setsysSrv, 83, out);
+    if (R_SUCCEEDED(rc) && flags_0) *flags_0 = out.flags_0;
+    if (R_SUCCEEDED(rc) && flags_1) *flags_1 = out.flags_1;
+    return rc;
+}
+
+Result setsysGetPtmBatteryLot(SetBatteryLot *out) {
+    return serviceDispatchOut(&g_setsysSrv, 84, *out);
+}
+
+Result setsysSetPtmBatteryLot(const SetBatteryLot *lot) {
+    return serviceDispatchIn(&g_setsysSrv, 85, *lot);
+}
+
+Result setsysGetPtmFuelGaugeParameter(SetSysPtmFuelGaugeParameter *out) {
+    return serviceDispatchOut(&g_setsysSrv, 86, *out);
+}
+
+Result setsysSetPtmFuelGaugeParameter(const SetSysPtmFuelGaugeParameter *parameter) {
+    return serviceDispatchIn(&g_setsysSrv, 87, *parameter);
+}
+
 Result setsysGetBluetoothEnableFlag(bool *out) {
     return _setCmdNoInOutBool(&g_setsysSrv, out, 88);
 }
@@ -498,7 +685,15 @@ Result setsysGetMiiAuthorId(Uuid *out) {
     return _setCmdNoInOutUuid(&g_setsysSrv, out, 90);
 }
 
-Result setsysBindFatalDirtyFlagEvent(Event *out_event) {
+Result setsysSetShutdownRtcValue(u64 value) {
+    return _setCmdInU64NoOut(&g_setsysSrv, value, 91);
+}
+
+Result setsysGetShutdownRtcValue(u64 *out) {
+    return _setCmdNoInOut64(&g_setsysSrv, out, 92);
+}
+
+Result setsysAcquireFatalDirtyFlagEventHandle(Event *out_event) {
     return _setCmdGetEvent(&g_setsysSrv, out_event, false, 93);
 }
 
@@ -526,6 +721,26 @@ Result setsysSetAutoUpdateEnableFlag(bool flag) {
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return _setCmdInBoolNoOut(&g_setsysSrv, flag, 96);
+}
+
+Result setsysGetNxControllerSettings(s32 *total_out, SetSysNxControllerSettings *settings, s32 count) {
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchOut(&g_setsysSrv, 97, *total_out,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { settings, count*sizeof(SetSysNxControllerSettings) } },
+    );
+}
+
+Result setsysSetNxControllerSettings(const SetSysNxControllerSettings *settings, s32 count) {
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatch(&g_setsysSrv, 98,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
+        .buffers = { { settings, count*sizeof(SetSysNxControllerSettings) } },
+    );
 }
 
 Result setsysGetBatteryPercentageFlag(bool *out) {
@@ -568,6 +783,48 @@ Result setsysSetUsbFullKeyEnableFlag(bool flag) {
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return _setCmdInBoolNoOut(&g_setsysSrv, flag, 104);
+}
+
+Result setsysSetExternalSteadyClockInternalOffset(u64 offset) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdInU64NoOut(&g_setsysSrv, offset, 105);
+}
+
+Result setsysGetExternalSteadyClockInternalOffset(u64 *out) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdNoInOut64(&g_setsysSrv, out, 106);
+}
+
+Result setsysGetBacklightSettingsEx(SetSysBacklightSettingsEx *out) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchOut(&g_setsysSrv, 107, *out);
+}
+
+Result setsysSetBacklightSettingsEx(const SetSysBacklightSettingsEx *settings) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchIn(&g_setsysSrv, 108, *settings);
+}
+
+Result setsysGetHeadphoneVolumeWarningCount(u32 *out) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdNoInOutU32(&g_setsysSrv, out, 109);
+}
+
+Result setsysSetHeadphoneVolumeWarningCount(u32 count) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdInU32NoOut(&g_setsysSrv, count, 110);
 }
 
 Result setsysGetBluetoothAfhEnableFlag(bool *out) {
@@ -626,6 +883,54 @@ Result setsysSetHeadphoneVolumeUpdateFlag(bool flag) {
     return _setCmdInBoolNoOut(&g_setsysSrv, flag, 118);
 }
 
+Result setsysNeedsToUpdateHeadphoneVolume(u8 *a0, u8 *a1, u8 *a2, bool flag) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    struct {
+        u8 a0;
+        u8 a1;
+        u8 a2;
+    } out;
+
+    Result rc = serviceDispatchInOut(&g_setsysSrv, 119, flag, out);
+    if (R_SUCCEEDED(rc) && a0) *a0 = out.a0;
+    if (R_SUCCEEDED(rc) && a1) *a1 = out.a1;
+    if (R_SUCCEEDED(rc) && a2) *a2 = out.a2;
+    return rc;
+}
+
+Result setsysGetPushNotificationActivityModeOnSleep(u32 *out) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdNoInOutU32(&g_setsysSrv, out, 120);
+}
+
+Result setsysSetPushNotificationActivityModeOnSleep(u32 mode) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdInU32NoOut(&g_setsysSrv, mode, 121);
+}
+
+Result setsysGetServiceDiscoveryControlSettings(SetSysServiceDiscoveryControlSettings *out) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    u32 tmp=0;
+    Result rc = _setCmdNoInOutU32(&g_setsysSrv, &tmp, 122);
+    if (R_SUCCEEDED(rc) && out) *out = tmp;
+    return rc;
+}
+
+Result setsysSetServiceDiscoveryControlSettings(SetSysServiceDiscoveryControlSettings settings) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdInU32NoOut(&g_setsysSrv, settings, 123);
+}
+
 Result setsysGetErrorReportSharePermission(SetSysErrorReportSharePermission *out) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
@@ -657,6 +962,62 @@ Result setsysSetAppletLaunchFlags(u32 flags) {
     return _setCmdInU32NoOut(&g_setsysSrv, flags, 127);
 }
 
+Result setsysGetConsoleSixAxisSensorAccelerationBias(SetSysConsoleSixAxisSensorAccelerationBias *out) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchOut(&g_setsysSrv, 128, *out);
+}
+
+Result setsysSetConsoleSixAxisSensorAccelerationBias(const SetSysConsoleSixAxisSensorAccelerationBias *bias) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchIn(&g_setsysSrv, 129, *bias);
+}
+
+Result setsysGetConsoleSixAxisSensorAngularVelocityBias(SetSysConsoleSixAxisSensorAngularVelocityBias *out) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchOut(&g_setsysSrv, 130, *out);
+}
+
+Result setsysSetConsoleSixAxisSensorAngularVelocityBias(const SetSysConsoleSixAxisSensorAngularVelocityBias *bias) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchIn(&g_setsysSrv, 131, *bias);
+}
+
+Result setsysGetConsoleSixAxisSensorAccelerationGain(SetSysConsoleSixAxisSensorAccelerationGain *out) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchOut(&g_setsysSrv, 132, *out);
+}
+
+Result setsysSetConsoleSixAxisSensorAccelerationGain(const SetSysConsoleSixAxisSensorAccelerationGain *gain) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchIn(&g_setsysSrv, 133, *gain);
+}
+
+Result setsysGetConsoleSixAxisSensorAngularVelocityGain(SetSysConsoleSixAxisSensorAngularVelocityGain *out) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchOut(&g_setsysSrv, 134, *out);
+}
+
+Result setsysSetConsoleSixAxisSensorAngularVelocityGain(const SetSysConsoleSixAxisSensorAngularVelocityGain *gain) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchIn(&g_setsysSrv, 135, *gain);
+}
+
 Result setsysGetKeyboardLayout(SetKeyboardLayout *out) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
@@ -674,11 +1035,93 @@ Result setsysSetKeyboardLayout(SetKeyboardLayout layout) {
     return _setCmdInU32NoOut(&g_setsysSrv, layout, 137);
 }
 
+Result setsysGetWebInspectorFlag(bool *out) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdNoInOutBool(&g_setsysSrv, out, 138);
+}
+
+Result setsysGetAllowedSslHosts(s32 *total_out, SetSysAllowedSslHosts *out, s32 count) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchOut(&g_setsysSrv, 139, *total_out,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { out, count*sizeof(SetSysAllowedSslHosts) } },
+    );
+}
+
+Result setsysGetHostFsMountPoint(SetSysHostFsMountPoint *out) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatch(&g_setsysSrv, 140,
+        .buffer_attrs = { SfBufferAttr_FixedSize | SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { out, sizeof(SetSysHostFsMountPoint) } },
+    );
+}
+
 Result setsysGetRequiresRunRepairTimeReviser(bool *out) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return _setCmdNoInOutBool(&g_setsysSrv, out, 141);
+}
+
+Result setsysSetRequiresRunRepairTimeReviser(bool flag) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdInBoolNoOut(&g_setsysSrv, flag, 142);
+}
+
+Result setsysSetBlePairingSettings(const SetSysBlePairingSettings *settings, s32 count) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatch(&g_setsysSrv, 143,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
+        .buffers = { { settings, count*sizeof(SetSysBlePairingSettings) } },
+    );
+}
+
+Result setsysGetBlePairingSettings(s32 *total_out, SetSysBlePairingSettings *settings, s32 count) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchOut(&g_setsysSrv, 144, *total_out,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { settings, count*sizeof(SetSysBlePairingSettings) } },
+    );
+}
+
+Result setsysGetConsoleSixAxisSensorAngularVelocityTimeBias(SetSysConsoleSixAxisSensorAngularVelocityTimeBias *out) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchOut(&g_setsysSrv, 145, *out);
+}
+
+Result setsysSetConsoleSixAxisSensorAngularVelocityTimeBias(const SetSysConsoleSixAxisSensorAngularVelocityTimeBias *bias) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchIn(&g_setsysSrv, 146, *bias);
+}
+
+Result setsysGetConsoleSixAxisSensorAngularAcceleration(SetSysConsoleSixAxisSensorAngularAcceleration *out) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchOut(&g_setsysSrv, 147, *out);
+}
+
+Result setsysSetConsoleSixAxisSensorAngularAcceleration(const SetSysConsoleSixAxisSensorAngularAcceleration *acceleration) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchIn(&g_setsysSrv, 148, *acceleration);
 }
 
 Result setsysGetRebootlessSystemUpdateVersion(SetSysRebootlessSystemUpdateVersion *out) {
@@ -688,11 +1131,52 @@ Result setsysGetRebootlessSystemUpdateVersion(SetSysRebootlessSystemUpdateVersio
     return serviceDispatchOut(&g_setsysSrv, 149, *out);
 }
 
-Result setsysSetRequiresRunRepairTimeReviser(bool flag) {
+Result setsysGetDeviceTimeZoneLocationUpdatedTime(TimeSteadyClockTimePoint *out) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return _setCmdInBoolNoOut(&g_setsysSrv, flag, 142);
+    return serviceDispatchOut(&g_setsysSrv, 150, *out);
+}
+
+Result setsysSetDeviceTimeZoneLocationUpdatedTime(const TimeSteadyClockTimePoint *time_point) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchIn(&g_setsysSrv, 151, *time_point);
+}
+
+Result setsysGetUserSystemClockAutomaticCorrectionUpdatedTime(TimeSteadyClockTimePoint *out) {
+    if (hosversionBefore(6,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchOut(&g_setsysSrv, 152, *out);
+}
+
+Result setsysSetUserSystemClockAutomaticCorrectionUpdatedTime(const TimeSteadyClockTimePoint *time_point) {
+    if (hosversionBefore(6,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchIn(&g_setsysSrv, 153, *time_point);
+}
+
+Result setsysGetAccountOnlineStorageSettings(s32 *total_out, SetSysAccountOnlineStorageSettings *settings, s32 count) {
+    if (hosversionBefore(6,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchOut(&g_setsysSrv, 154, *total_out,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { settings, count*sizeof(SetSysAccountOnlineStorageSettings) } },
+    );
+}
+
+Result setsysSetAccountOnlineStorageSettings(const SetSysAccountOnlineStorageSettings *settings, s32 count) {
+    if (hosversionBefore(6,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatch(&g_setsysSrv, 155,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
+        .buffers = { { settings, count*sizeof(SetSysAccountOnlineStorageSettings) } },
+    );
 }
 
 Result setsysGetPctlReadyFlag(bool *out) {
@@ -707,6 +1191,95 @@ Result setsysSetPctlReadyFlag(bool flag) {
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return _setCmdInBoolNoOut(&g_setsysSrv, flag, 157);
+}
+
+Result setsysGetAnalogStickUserCalibrationL(SetSysAnalogStickUserCalibration *out) {
+    if (hosversionBefore(8,1,1))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchOut(&g_setsysSrv, 158, *out);
+}
+
+Result setsysSetAnalogStickUserCalibrationL(const SetSysAnalogStickUserCalibration *calibration) {
+    if (hosversionBefore(8,1,1))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchIn(&g_setsysSrv, 159, *calibration);
+}
+
+Result setsysGetAnalogStickUserCalibrationR(SetSysAnalogStickUserCalibration *out) {
+    if (hosversionBefore(8,1,1))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchOut(&g_setsysSrv, 160, *out);
+}
+
+Result setsysSetAnalogStickUserCalibrationR(const SetSysAnalogStickUserCalibration *calibration) {
+    if (hosversionBefore(8,1,1))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchIn(&g_setsysSrv, 161, *calibration);
+}
+
+Result setsysGetPtmBatteryVersion(u8 *out) {
+    if (hosversionBefore(6,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdNoInOutU8(&g_setsysSrv, out, 162);
+}
+
+Result setsysSetPtmBatteryVersion(u8 version) {
+    if (hosversionBefore(6,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdInU8NoOut(&g_setsysSrv, version, 163);
+}
+
+Result setsysGetUsb30HostEnableFlag(bool *out) {
+    if (hosversionBefore(6,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdNoInOutBool(&g_setsysSrv, out, 164);
+}
+
+Result setsysSetUsb30HostEnableFlag(bool flag) {
+    if (hosversionBefore(6,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdInBoolNoOut(&g_setsysSrv, flag, 165);
+}
+
+Result setsysGetUsb30DeviceEnableFlag(bool *out) {
+    if (hosversionBefore(6,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdNoInOutBool(&g_setsysSrv, out, 166);
+}
+
+Result setsysSetUsb30DeviceEnableFlag(bool flag) {
+    if (hosversionBefore(6,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdInBoolNoOut(&g_setsysSrv, flag, 167);
+}
+
+Result setsysGetThemeId(s32 type, SetSysThemeId *out) {
+    if (hosversionBefore(7,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchInOut(&g_setsysSrv, 168, type, *out);
+}
+
+Result setsysSetThemeId(s32 type, const SetSysThemeId *theme_id) {
+    if (hosversionBefore(7,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    const struct {
+        s32 type;
+        SetSysThemeId theme_id;
+    } in = { type, *theme_id };
+
+    return serviceDispatchIn(&g_setsysSrv, 169, in);
 }
 
 Result setsysGetChineseTraditionalInputMethod(SetChineseTraditionalInputMethod *out) {
@@ -726,11 +1299,84 @@ Result setsysSetChineseTraditionalInputMethod(SetChineseTraditionalInputMethod m
     return _setCmdInU32NoOut(&g_setsysSrv, method, 171);
 }
 
+Result setsysGetPtmCycleCountReliability(SetSysPtmCycleCountReliability *out) {
+    if (hosversionBefore(7,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    u32 tmp=0;
+    Result rc = _setCmdNoInOutU32(&g_setsysSrv, &tmp, 172);
+    if (R_SUCCEEDED(rc) && out) *out = tmp;
+    return rc;
+}
+
+Result setsysSetPtmCycleCountReliability(SetSysPtmCycleCountReliability reliability) {
+    if (hosversionBefore(7,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdInU32NoOut(&g_setsysSrv, reliability, 173);
+}
+
 Result setsysGetHomeMenuScheme(SetSysHomeMenuScheme *out) {
     if (hosversionBefore(8,1,1))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return serviceDispatchOut(&g_setsysSrv, 174, *out);
+}
+
+Result setsysGetThemeSettings(SetSysThemeSettings *out) {
+    if (hosversionBefore(7,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchOut(&g_setsysSrv, 175, *out);
+}
+
+Result setsysSetThemeSettings(const SetSysThemeSettings *settings) {
+    if (hosversionBefore(7,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchIn(&g_setsysSrv, 176, *settings);
+}
+
+Result setsysGetThemeKey(FsArchiveMacKey *out) {
+    if (hosversionBefore(7,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchOut(&g_setsysSrv, 177, *out);
+}
+
+Result setsysSetThemeKey(const FsArchiveMacKey *key) {
+    if (hosversionBefore(7,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchIn(&g_setsysSrv, 178, *key);
+}
+
+Result setsysGetZoomFlag(bool *out) {
+    if (hosversionBefore(8,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdNoInOutBool(&g_setsysSrv, out, 179);
+}
+
+Result setsysSetZoomFlag(bool flag) {
+    if (hosversionBefore(8,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdInBoolNoOut(&g_setsysSrv, flag, 180);
+}
+
+Result setsysGetT(bool *out) {
+    if (hosversionBefore(8,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdNoInOutBool(&g_setsysSrv, out, 181);
+}
+
+Result setsysSetT(bool flag) {
+    if (hosversionBefore(8,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdInBoolNoOut(&g_setsysSrv, flag, 182);
 }
 
 Result setsysGetPlatformRegion(SetSysPlatformRegion *out) {
@@ -782,58 +1428,58 @@ Result setsysSetTouchScreenMode(SetSysTouchScreenMode mode) {
 }
 
 Result setcalGetBdAddress(SetCalBdAddress *out) {
-    return serviceDispatchOut(&g_setsysSrv, 0, *out);
+    return serviceDispatchOut(&g_setcalSrv, 0, *out);
 }
 
 Result setcalGetConfigurationId1(SetCalConfigurationId1 *out) {
-    return serviceDispatchOut(&g_setsysSrv, 1, *out);
+    return serviceDispatchOut(&g_setcalSrv, 1, *out);
 }
 
 Result setcalGetAccelerometerOffset(SetCalAccelerometerOffset *out) {
-    return serviceDispatchOut(&g_setsysSrv, 2, *out);
+    return serviceDispatchOut(&g_setcalSrv, 2, *out);
 }
 
 Result setcalGetAccelerometerScale(SetCalAccelerometerScale *out) {
-    return serviceDispatchOut(&g_setsysSrv, 3, *out);
+    return serviceDispatchOut(&g_setcalSrv, 3, *out);
 }
 
 Result setcalGetGyroscopeOffset(SetCalAccelerometerOffset *out) {
-    return serviceDispatchOut(&g_setsysSrv, 4, *out);
+    return serviceDispatchOut(&g_setcalSrv, 4, *out);
 }
 
 Result setcalGetGyroscopeScale(SetCalGyroscopeScale *out) {
-    return serviceDispatchOut(&g_setsysSrv, 5, *out);
+    return serviceDispatchOut(&g_setcalSrv, 5, *out);
 }
 
 Result setcalGetWirelessLanMacAddress(SetCalMacAddress *out) {
-    return serviceDispatchOut(&g_setsysSrv, 6, *out);
+    return serviceDispatchOut(&g_setcalSrv, 6, *out);
 }
 
 Result setcalGetWirelessLanCountryCodeCount(s32 *out_count) {
-    return _setCmdNoInOutU32(&g_setsysSrv, (u32*)out_count, 7);
+    return _setCmdNoInOutU32(&g_setcalSrv, (u32*)out_count, 7);
 }
 
 Result setcalGetWirelessLanCountryCodes(s32 *total_out, SetCalCountryCode *codes, s32 count) {
-    return serviceDispatchOut(&g_setsysSrv, 8, *total_out,
+    return serviceDispatchOut(&g_setcalSrv, 8, *total_out,
         .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_Out },
         .buffers = { { codes, count*sizeof(SetCalCountryCode) } },
     );
 }
 
 Result setcalGetSerialNumber(SetCalSerialNumber *out) {
-    return serviceDispatchOut(&g_setsysSrv, 9, *out);
+    return serviceDispatchOut(&g_setcalSrv, 9, *out);
 }
 
 Result setcalSetInitialSystemAppletProgramId(u64 program_id) {
-    return _setCmdInU64NoOut(&g_setsysSrv, program_id, 10);
+    return _setCmdInU64NoOut(&g_setcalSrv, program_id, 10);
 }
 
 Result setcalSetOverlayDispProgramId(u64 program_id) {
-    return _setCmdInU64NoOut(&g_setsysSrv, program_id, 11);
+    return _setCmdInU64NoOut(&g_setcalSrv, program_id, 11);
 }
 
 Result setcalGetBatteryLot(SetBatteryLot *out) {
-    return serviceDispatchOut(&g_setsysSrv, 12, *out);
+    return serviceDispatchOut(&g_setcalSrv, 12, *out);
 }
 
 Result setcalGetEciDeviceCertificate(SetCalEccB233DeviceCertificate *out) {

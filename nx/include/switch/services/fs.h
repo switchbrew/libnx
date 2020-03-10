@@ -123,6 +123,11 @@ typedef struct {
     u8 padding[7];
 } FsTimeStampRaw;
 
+/// This is nn::fssystem::ArchiveMacKey. Used by \ref setsysGetThemeKey and \ref setsysSetThemeKey. Does not appear to be in use elsewhere.
+typedef struct {
+    u8 key[0x10];
+} FsArchiveMacKey;
+
 /// Returned by fsFsGetEntryType.
 typedef enum {
     FsDirEntryType_Dir  = 0, ///< Entry is a directory.
