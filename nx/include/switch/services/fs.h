@@ -123,7 +123,7 @@ typedef struct {
     u8 padding[7];
 } FsTimeStampRaw;
 
-/// This is nn::fssystem::ArchiveMacKey. Returned by setsysGetThemeKey. Does not appear to be in use elsewhere.
+/// This is nn::fssystem::ArchiveMacKey. Returned by \ref setsysGetThemeKey. Does not appear to be in use elsewhere.
 typedef struct {
     u8 key[0x10];
 } FsArchiveMacKey;

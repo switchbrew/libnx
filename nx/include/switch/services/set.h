@@ -115,6 +115,7 @@ typedef enum {
     SetSysFriendPresenceOverlayPermission_Friends         = 3,
 } SetSysFriendPresenceOverlayPermission;
 
+/// AudioDevice
 typedef enum {
     SetSysAudioDevice_Console   = 0,
     SetSysAudioDevice_Headphone = 1,
@@ -215,6 +216,7 @@ typedef enum {
     SetSysTouchScreenMode_Standard = 1,   ///< Standard, the default.
 } SetSysTouchScreenMode;
 
+/// BlockType
 typedef enum {
     SetSysBlockType_Audio           = 1,
     SetSysBlockType_Video           = 2,
@@ -222,6 +224,7 @@ typedef enum {
     SetSysBlockType_Speaker         = 4,
 } SetSysBlockType;
 
+/// ControllerType
 typedef enum {
     SetSysControllerType_JoyConR    = 1,
     SetSysControllerType_JoyConL    = 2,
@@ -244,8 +247,8 @@ typedef struct {
     u32 access_point_ssid_len;
     u32 access_point_security_type;     ///< Bitmask with \ref SetSysAccessPointSecurityType.
     u32 access_point_security_standard; ///< Bitmask with \ref SetSysAccessPointSecurityStandard.
-    char access_point_password[0x40];
-    u32 access_point_password_len;
+    char access_point_passphrase[0x40];
+    u32 access_point_passphrase_len;
     u32 auto_settings;                  ///< Bitmask with \ref SetSysAutoSettings.
     u32 manual_ip_address;
     u32 manual_subnet_mask;
@@ -266,7 +269,7 @@ typedef struct {
 typedef struct {
     float brightness_applied_to_backlight;
     float ambient_light_sensor_value;
-    float float8;
+    float unk_x8;
 } SetSysLcdBacklightBrightnessMapping;
 
 /// BacklightSettings
@@ -274,11 +277,11 @@ typedef struct {
     u32 auto_brightness_flags;
     float screen_brightness;
     SetSysLcdBacklightBrightnessMapping brightness_mapping;
-    float float14;
-    float float18;
-    float float1C;
-    float float20;
-    float float24;
+    float unk_x14;
+    float unk_x18;
+    float unk_x1C;
+    float unk_x20;
+    float unk_x24;
 } SetSysBacklightSettings;
 
 /// BacklightSettingsEx
@@ -287,11 +290,11 @@ typedef struct {
     float screen_brightness;
     float current_brightness_for_vr_mode;
     SetSysLcdBacklightBrightnessMapping brightness_mapping;
-    float float18;
-    float float1C;
-    float float20;
-    float float24;
-    float float28;
+    float unk_x18;
+    float unk_x1C;
+    float unk_x20;
+    float unk_x24;
+    float unk_x28;
 } SetSysBacklightSettingsEx;
 
 /// BluetoothDevicesSettings
@@ -944,7 +947,7 @@ Result setsysSetBacklightSettings(const SetSysBacklightSettings *settings);
 /**
  * @brief SetBluetoothDevicesSettings
  * @param[in] settings Input array of \ref SetSysBluetoothDevicesSettings.
- * @param[in] count Size of the versions array in entries.
+ * @param[in] count Size of the settings array in entries.
  */
 Result setsysSetBluetoothDevicesSettings(const SetSysBluetoothDevicesSettings *settings, s32 count);
 
@@ -952,7 +955,7 @@ Result setsysSetBluetoothDevicesSettings(const SetSysBluetoothDevicesSettings *s
  * @brief GetBluetoothDevicesSettings
  * @param[out] total_out Total output entries.
  * @param[out] settings Output array of \ref SetSysBluetoothDevicesSettings.
- * @param[in] count Size of the versions array in entries.
+ * @param[in] count Size of the settings array in entries.
  */
 Result setsysGetBluetoothDevicesSettings(s32 *total_out, SetSysBluetoothDevicesSettings *settings, s32 count);
 
@@ -964,7 +967,7 @@ Result setsysGetExternalSteadyClockSourceId(Uuid *out);
 
 /**
  * @brief SetExternalSteadyClockSourceId
- * @param[in] settings \ref Uuid
+ * @param[in] uuid \ref Uuid
  */
 Result setsysSetExternalSteadyClockSourceId(const Uuid *uuid);
 
@@ -976,7 +979,7 @@ Result setsysGetUserSystemClockContext(TimeSystemClockContext *out);
 
 /**
  * @brief SetUserSystemClockContext
- * @param[in] settings \ref TimeSystemClockContext
+ * @param[in] context \ref TimeSystemClockContext
  */
 Result setsysSetUserSystemClockContext(const TimeSystemClockContext *context);
 
@@ -994,7 +997,7 @@ Result setsysSetAccountSettings(SetSysAccountSettings settings);
 
 /**
  * @brief GetAudioVolume
- * @param[out] device \ref SetSysAudioDevice
+ * @param[in] device \ref SetSysAudioDevice
  * @param[out] out \ref SetSysAudioVolume
  */
 Result setsysGetAudioVolume(SetSysAudioDevice device, SetSysAudioVolume *out);
@@ -1002,7 +1005,7 @@ Result setsysGetAudioVolume(SetSysAudioDevice device, SetSysAudioVolume *out);
 /**
  * @brief SetAudioVolume
  * @param[in] device \ref SetSysAudioDevice
- * @param[in] settings \ref SetSysAudioVolume
+ * @param[in] volume \ref SetSysAudioVolume
  */
 Result setsysSetAudioVolume(SetSysAudioDevice device, const SetSysAudioVolume *volume);
 
@@ -1234,7 +1237,7 @@ Result setsysGetNetworkSystemClockContext(TimeSystemClockContext *out);
 
 /**
  * @brief SetNetworkSystemClockContext
- * @param[in] settings \ref TimeSystemClockContext
+ * @param[in] context \ref TimeSystemClockContext
  */
 Result setsysSetNetworkSystemClockContext(const TimeSystemClockContext *context);
 
@@ -1387,7 +1390,7 @@ Result setsysGetTelemetryDirtyFlags(u64 *flags_0, u64 *flags_1);
  * @brief GetPtmBatteryLot
  * @param[out] out \ref SetBatteryLot
  */
-Result setsysGetPtmBatteryLot(SetBatteryLot *out) ;
+Result setsysGetPtmBatteryLot(SetBatteryLot *out);
 
 /**
  * @brief SetPtmBatteryLot
@@ -1630,7 +1633,7 @@ Result setsysSetHeadphoneVolumeUpdateFlag(bool flag);
 Result setsysNeedsToUpdateHeadphoneVolume(u8 *a0, u8 *a1, u8 *a2, bool flag);
 
 /**
- * @brief HetPushNotificationActivityModeOnSleep
+ * @brief GetPushNotificationActivityModeOnSleep
  * @note Only available on [3.0.0+].
  * @param[out] out Output mode.
  */
@@ -1879,7 +1882,7 @@ Result setsysSetUserSystemClockAutomaticCorrectionUpdatedTime(const TimeSteadyCl
  * @param[out] settings Output array of \ref SetSysAccountOnlineStorageSettings.
  * @param[in] count Size of the settings array in entries.
  */
-Result setsysGetAccountOnlineStorageSettings(s32 *total_out, SetSysAccountOnlineStorageSettings *out, s32 count);
+Result setsysGetAccountOnlineStorageSettings(s32 *total_out, SetSysAccountOnlineStorageSettings *settings, s32 count);
 
 /**
  * @brief SetAccountOnlineStorageSettings
@@ -1929,7 +1932,7 @@ Result setsysGetAnalogStickUserCalibrationR(SetSysAnalogStickUserCalibration *ou
  * @note Only available on [8.1.1+].
  * @param[in] calibration \ref SetSysAnalogStickUserCalibration
  */
-Result setsysSetAnalogStickUserCalibrationR(const SetSysAnalogStickUserCalibration *calibration) ;
+Result setsysSetAnalogStickUserCalibrationR(const SetSysAnalogStickUserCalibration *calibration);
 
 /**
  * @brief GetPtmBatteryVersion
@@ -1987,7 +1990,7 @@ Result setsysGetThemeId(s32 type, SetSysThemeId *out);
  * @param[in] type Input theme id type.
  * @param[in] theme_id \ref SetSysThemeId
  */
-Result setsysSetThemeId(s32 type, const SetSysThemeId *theme_id) ;
+Result setsysSetThemeId(s32 type, const SetSysThemeId *theme_id);
 
 /**
  * @brief GetChineseTraditionalInputMethod
@@ -2067,14 +2070,16 @@ Result setsysGetZoomFlag(bool *out);
 Result setsysSetZoomFlag(bool flag);
 
 /**
- * @brief On 9.0.0, this is a wrapper for \ref setsysGetPlatFormRegion() == 2.
+ * @brief Returns Terra platform type flag.
+ * @note On [9.0.0+], this is a wrapper for \ref setsysGetPlatFormRegion() == 2.
  * @note Only available on [8.0.0+].
  * @param[out] out Output flag.
  */
 Result setsysGetT(bool *out);
 
 /**
- * @brief On 9.0.0, this is a wrapper for \ref setsysSetPlatFormRegion(1 + (IsT & 1)).
+ * @brief Sets Terra platform type flag.
+ * @note On [9.0.0+], this is a wrapper for \ref setsysSetPlatFormRegion(1 + (IsT & 1)).
  * @note Only available on [8.0.0+].
  * @param[in] flag Input flag.
  */
