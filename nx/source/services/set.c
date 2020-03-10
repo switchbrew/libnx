@@ -966,56 +966,56 @@ Result setsysGetConsoleSixAxisSensorAccelerationBias(SetSysConsoleSixAxisSensorA
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return serviceDispatchOut(&g_setsysSrv, 128, out);
+    return serviceDispatchOut(&g_setsysSrv, 128, *out);
 }
 
 Result setsysSetConsoleSixAxisSensorAccelerationBias(const SetSysConsoleSixAxisSensorAccelerationBias *bias) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return serviceDispatchIn(&g_setsysSrv, 129, bias);
+    return serviceDispatchIn(&g_setsysSrv, 129, *bias);
 }
 
 Result setsysGetConsoleSixAxisSensorAngularVelocityBias(SetSysConsoleSixAxisSensorAngularVelocityBias *out) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return serviceDispatchOut(&g_setsysSrv, 130, out);
+    return serviceDispatchOut(&g_setsysSrv, 130, *out);
 }
 
 Result setsysSetConsoleSixAxisSensorAngularVelocityBias(const SetSysConsoleSixAxisSensorAngularVelocityBias *bias) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return serviceDispatchIn(&g_setsysSrv, 131, bias);
+    return serviceDispatchIn(&g_setsysSrv, 131, *bias);
 }
 
 Result setsysGetConsoleSixAxisSensorAccelerationGain(SetSysConsoleSixAxisSensorAccelerationGain *out) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return serviceDispatchOut(&g_setsysSrv, 132, out);
+    return serviceDispatchOut(&g_setsysSrv, 132, *out);
 }
 
 Result setsysSetConsoleSixAxisSensorAccelerationGain(const SetSysConsoleSixAxisSensorAccelerationGain *gain) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return serviceDispatchIn(&g_setsysSrv, 133, gain);
+    return serviceDispatchIn(&g_setsysSrv, 133, *gain);
 }
 
 Result setsysGetConsoleSixAxisSensorAngularVelocityGain(SetSysConsoleSixAxisSensorAngularVelocityGain *out) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return serviceDispatchOut(&g_setsysSrv, 134, out);
+    return serviceDispatchOut(&g_setsysSrv, 134, *out);
 }
 
 Result setsysSetConsoleSixAxisSensorAngularVelocityGain(const SetSysConsoleSixAxisSensorAngularVelocityGain *gain) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return serviceDispatchIn(&g_setsysSrv, 135, gain);
+    return serviceDispatchIn(&g_setsysSrv, 135, *gain);
 }
 
 Result setsysGetKeyboardLayout(SetKeyboardLayout *out) {
@@ -1066,7 +1066,7 @@ Result setsysGetRequiresRunRepairTimeReviser(bool *out) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return _setCmdNoInOutBool(&g_setsysSrv, out, 141);
+    return _setCmdNoInOutBool(&g_setsysSrv, *out, 141);
 }
 
 Result setsysSetRequiresRunRepairTimeReviser(bool flag) {
@@ -1107,7 +1107,7 @@ Result setsysSetConsoleSixAxisSensorAngularVelocityTimeBias(const SetSysConsoleS
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return serviceDispatchOut(&g_setsysSrv, 146, bias);
+    return serviceDispatchOut(&g_setsysSrv, 146, *bias);
 }
 
 Result setsysGetConsoleSixAxisSensorAngularAcceleration(SetSysConsoleSixAxisSensorAngularAcceleration *out) {
@@ -1121,7 +1121,7 @@ Result setsysSetConsoleSixAxisSensorAngularAcceleration(const SetSysConsoleSixAx
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return serviceDispatchOut(&g_setsysSrv, 148, acceleration);
+    return serviceDispatchOut(&g_setsysSrv, 148, *acceleration);
 }
 
 Result setsysGetRebootlessSystemUpdateVersion(SetSysRebootlessSystemUpdateVersion *out) {
