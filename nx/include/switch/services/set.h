@@ -556,17 +556,17 @@ typedef struct {
 
 /// PtmFuelGaugeParameter
 typedef struct {
-    u16 unk_x0;
-    u16 unk_x2;
-    u16 unk_x4;
-    u16 unk_x6;
-    u16 unk_x8;
-    u16 unk_xA;
-    u16 unk_xC;
-    u16 unk_xE;
-    u16 unk_x10;
-    u16 unk_x12;
-    u32 cycles;
+    u16 rcomp0;
+    u16 tempc0;
+    u16 fullcap;
+    u16 fullcapnom;
+    u16 lavgempty;
+    u16 qresidual00;
+    u16 qresidual10;
+    u16 qresidual20;
+    u16 qresidual30;
+    u16 cycles;
+    u32 padding;                ///> Normally contains the cycles reg. Unused and contains stack garbage.
 } SetSysPtmFuelGaugeParameter;
 
 /// Actually nn::util::Color4u8Type.
