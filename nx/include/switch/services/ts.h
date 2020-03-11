@@ -10,8 +10,8 @@
 
 /// Location
 typedef enum {
-    TsLocation_Internal = 0,    ///< Internal
-    TsLocation_External = 1,    ///< External
+    TsLocation_Internal = 0,    ///< TMP451 Internal: PCB
+    TsLocation_External = 1,    ///< TMP451 External: SoC
 } TsLocation;
 
 /// Initialize ts.
