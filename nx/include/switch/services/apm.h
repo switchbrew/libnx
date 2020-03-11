@@ -34,6 +34,12 @@ Service* apmGetServiceSession(void);
 Service* apmGetServiceSession_Session(void);
 
 /**
+ * @brief Gets the current ApmPerformanceMode.
+ * @param[out] out_performanceMode ApmPerformanceMode
+ */
+Result apmGetPerformanceMode(ApmPerformanceMode* out_performanceMode);
+
+/**
  * @brief Sets the PerformanceConfiguration for the specified PerformanceMode.
  * @param[in] PerformanceMode \ref ApmPerformanceMode
  * @param[in] PerformanceConfiguration PerformanceConfiguration

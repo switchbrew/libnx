@@ -2468,6 +2468,10 @@ AppletOperationMode appletGetOperationMode(void);
 ApmPerformanceMode appletGetPerformanceMode(void);
 AppletFocusState appletGetFocusState(void);
 
+/**
+ * @brief Sets the current \ref AppletFocusHandlingMode.
+ * @note Should only be called with AppletType_Application.
+ */
 Result appletSetFocusHandlingMode(AppletFocusHandlingMode mode);
 
 ///@}

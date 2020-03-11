@@ -324,13 +324,8 @@ Result nwindowReleaseBuffers(NWindow* nw)
 
     if (nw->cur_slot >= 0)
         rc = MAKERESULT(Module_Libnx, LibnxError_BadInput);
-    else if (nw->is_connected && nw->slots_configured) {
-        for (u32 i = 0; i < 64; i ++)
-            if (nw->slots_configured & (1UL << i))
-                bqDetachBuffer(&nw->bq, i);
-
+    else if (nw->is_connected && nw->slots_configured)
         rc = _nwindowDisconnect(nw);
-    }
 
     mutexUnlock(&nw->mutex);
     return rc;

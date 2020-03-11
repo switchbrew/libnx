@@ -402,6 +402,13 @@ Result fsOpenSdCardDetectionEventNotifier(FsEventNotifier* out) {
     return _fsCmdGetSession(&g_fsSrv, &out->s, 500);
 }
 
+Result fsIsSignedSystemPartitionOnSdCardValid(bool *out) {
+    if (!hosversionBetween(4, 8))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _fsCmdNoInOutBool(&g_fsSrv, out, 640);
+}
+
 Result fsGetRightsIdByPath(const char* path, FsRightsId* out_rights_id) {
     if (hosversionBefore(2,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
@@ -622,9 +629,6 @@ Result fsFsQueryEntry(FsFileSystem* fs, void *out, size_t out_size, const void *
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    char send_path[FS_MAX_PATH] = {0};
-    strncpy(send_path, path, sizeof(send_path)-1);
-
     return _fsObjectDispatchIn(&fs->s, 15, query_id,
         .buffer_attrs = {
             SfBufferAttr_HipcPointer  | SfBufferAttr_In,
@@ -632,9 +636,9 @@ Result fsFsQueryEntry(FsFileSystem* fs, void *out, size_t out_size, const void *
             SfBufferAttr_HipcMapAlias | SfBufferAttr_Out | SfBufferAttr_HipcMapTransferAllowsNonSecure,
         },
         .buffers = {
-            { send_path, sizeof(send_path) },
-            { in,        in_size           },
-            { out,       out_size          },
+            { path, FS_MAX_PATH },
+            { in,   in_size     },
+            { out,  out_size    },
         },
     );
 }
@@ -648,7 +652,8 @@ Result fsFsIsValidSignedSystemPartitionOnSdCard(FsFileSystem* fs, bool *out) {
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     u8 tmp=0;
-    Result rc = fsFsQueryEntry(fs, &tmp, sizeof(tmp), NULL, 0, "/", FsFileSystemQueryId_IsValidSignedSystemPartitionOnSdCard);
+    char send_path[FS_MAX_PATH] = "/";
+    Result rc = fsFsQueryEntry(fs, &tmp, sizeof(tmp), NULL, 0, send_path, FsFileSystemQueryId_IsValidSignedSystemPartitionOnSdCard);
     if (R_SUCCEEDED(rc) && out) *out = tmp & 1;
     return rc;
 }

@@ -64,6 +64,7 @@ extern "C" {
 #include "switch/services/bpc.h"
 #include "switch/services/pcv.h"
 #include "switch/services/clkrst.h"
+#include "switch/services/fan.h"
 #include "switch/services/psm.h"
 #include "switch/services/spsm.h"
 //#include "switch/services/bsd.h" Use <sys/socket.h> instead
@@ -84,6 +85,7 @@ extern "C" {
 #include "switch/services/ns.h"
 #include "switch/services/ldr.h"
 #include "switch/services/ro.h"
+#include "switch/services/tc.h"
 #include "switch/services/ts.h"
 #include "switch/services/pm.h"
 #include "switch/services/set.h"

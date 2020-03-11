@@ -74,6 +74,11 @@ typedef struct {
     u8 icon[0x20000];              ///< JPEG
 } NsApplicationControlData;
 
+/// ApplicationOccupiedSize
+typedef struct {
+    u8 unk_x0[0x80];               ///< Unknown.
+} NsApplicationOccupiedSize;
+
 /// NsApplicationContentMetaStatus
 typedef struct {
     u8 meta_type;                  ///< \ref NcmContentMetaType
@@ -216,6 +221,11 @@ typedef struct {
     u8 unk_x1a[0x6];                                ///< Unknown.
 } NsApplicationRightsOnClient;
 
+/// DownloadTaskStatus
+typedef struct {
+    u8 unk_x0[0x20];                                ///< Unknown.
+} NsDownloadTaskStatus;
+
 /// Default size for \ref nssuControlSetupCardUpdate / \ref nssuControlSetupCardUpdateViaSystemUpdater. This is the size used by qlaunch for SetupCardUpdate.
 #define NSSU_CARDUPDATE_TMEM_SIZE_DEFAULT 0x100000
 
@@ -231,8 +241,147 @@ void nsExit(void);
 /// Gets the Service object for the actual ns:* service session. Only initialized on [3.0.0+], on pre-3.0.0 see \ref nsGetServiceSession_ApplicationManagerInterface.
 Service* nsGetServiceSession_GetterInterface(void);
 
-/// Gets the Service object for IApplicationManagerInterface.
+/// Gets the Service object for IApplicationManagerInterface. Only initialized on pre-3.0.0, on [3.0.0+] use \ref nsGetApplicationManagerInterface.
 Service* nsGetServiceSession_ApplicationManagerInterface(void);
+
+/// Gets the Service object for IDynamicRightsInterface via the cmd for that.
+/// Only available on [6.0.0+].
+Result nsGetDynamicRightsInterface(Service* srv_out);
+
+/// Gets the Service object for IReadOnlyApplicationControlDataInterface via the cmd for that.
+/// Only available on [5.1.0+].
+Result nsGetReadOnlyApplicationControlDataInterface(Service* srv_out);
+
+/// Gets the Service object for IReadOnlyApplicationRecordInterface via the cmd for that.
+/// Only available on [5.0.0+].
+Result nsGetReadOnlyApplicationRecordInterface(Service* srv_out);
+
+/// Gets the Service object for IECommerceInterface via the cmd for that.
+/// Only available on [4.0.0+].
+Result nsGetECommerceInterface(Service* srv_out);
+
+/// Gets the Service object for IApplicationVersionInterface via the cmd for that.
+/// Only available on [4.0.0+].
+Result nsGetApplicationVersionInterface(Service* srv_out);
+
+/// Gets the Service object for IFactoryResetInterface via the cmd for that.
+/// Only available on [3.0.0+].
+Result nsGetFactoryResetInterface(Service* srv_out);
+
+/// Gets the Service object for IAccountProxyInterface via the cmd for that.
+/// Only available on [3.0.0+].
+Result nsGetAccountProxyInterface(Service* srv_out);
+
+/// Gets the Service object for IApplicationManagerInterface via the cmd for that.
+/// Only available on [3.0.0+], on prior sysvers use \ref nsGetServiceSession_ApplicationManagerInterface.
+Result nsGetApplicationManagerInterface(Service* srv_out);
+
+/// Gets the Service object for IDownloadTaskInterface via the cmd for that.
+/// Only available on [3.0.0+].
+Result nsGetDownloadTaskInterface(Service* srv_out);
+
+/// Gets the Service object for IContentManagementInterface via the cmd for that.
+/// Only available on [3.0.0+].
+Result nsGetContentManagementInterface(Service* srv_out);
+
+/// Gets the Service object for IDocumentInterface via the cmd for that.
+/// Only available on [3.0.0+].
+Result nsGetDocumentInterface(Service* srv_out);
+
+///@}
+
+///@name IReadOnlyApplicationControlDataInterface
+///@{
+
+/**
+ * @brief Gets the \ref NsApplicationControlData for the specified application.
+ * @note Uses \ref nsGetReadOnlyApplicationControlDataInterface on [5.1.0+], otherwise IApplicationManagerInterface is used.
+ * @param[in] source Source, official sw uses ::NsApplicationControlSource_Storage.
+ * @param[in] application_id ApplicationId.
+ * @param[out] buffer \ref NsApplicationControlData
+ * @param[in] size Size of the buffer.
+ * @param[out] actual_size Actual output size.
+ */
+Result nsGetApplicationControlData(NsApplicationControlSource source, u64 application_id, NsApplicationControlData* buffer, size_t size, u64* actual_size);
+
+/**
+ * @brief GetApplicationDesiredLanguage. Selects a \ref NacpLanguageEntry to use from the specified \ref NacpStruct.
+ * @note Uses \ref nsGetReadOnlyApplicationControlDataInterface on [5.1.0+], otherwise IApplicationManagerInterface is used.
+ * @param[in] nacp \ref NacpStruct
+ * @param[out] langentry \ref NacpLanguageEntry
+ */
+Result nsGetApplicationDesiredLanguage(NacpStruct *nacp, NacpLanguageEntry **langentry);
+
+///@}
+
+///@name IECommerceInterface
+///@{
+
+/**
+ * @brief RequestLinkDevice
+ * @note \ref nifmInitialize must be used prior to this. Before using the cmd, this calls \ref nifmIsAnyInternetRequestAccepted with the output from \ref nifmGetClientId, an error is returned when that returns false.
+ * @note Only available on [4.0.0+].
+ * @param[out] a \ref AsyncResult
+ * @param[in] uid \ref AccountUid
+ */
+Result nsRequestLinkDevice(AsyncResult *a, AccountUid uid);
+
+/**
+ * @brief RequestSyncRights
+ * @note Only available on [6.0.0+].
+ * @param[out] a \ref AsyncResult
+ */
+Result nsRequestSyncRights(AsyncResult *a);
+
+/**
+ * @brief RequestUnlinkDevice
+ * @note \ref nifmInitialize must be used prior to this. Before using the cmd, this calls \ref nifmIsAnyInternetRequestAccepted with the output from \ref nifmGetClientId, an error is returned when that returns false.
+ * @note Only available on [6.0.0+].
+ * @param[out] a \ref AsyncResult
+ * @param[in] uid \ref AccountUid
+ */
+Result nsRequestUnlinkDevice(AsyncResult *a, AccountUid uid);
+
+///@}
+
+///@name IFactoryResetInterface
+///@{
+
+/**
+ * @brief ResetToFactorySettings
+ * @note Uses \ref nsGetFactoryResetInterface on [3.0.0+], otherwise IApplicationManagerInterface is used.
+ */
+Result nsResetToFactorySettings(void);
+
+/**
+ * @brief ResetToFactorySettingsWithoutUserSaveData
+ * @note Uses \ref nsGetFactoryResetInterface on [3.0.0+], otherwise IApplicationManagerInterface is used.
+ */
+Result nsResetToFactorySettingsWithoutUserSaveData(void);
+
+/**
+ * @brief ResetToFactorySettingsForRefurbishment
+ * @note Uses \ref nsGetFactoryResetInterface on [3.0.0+], otherwise IApplicationManagerInterface is used.
+ * @note Only available on [2.0.0+].
+ */
+Result nsResetToFactorySettingsForRefurbishment(void);
+
+/**
+ * @brief ResetToFactorySettingsWithPlatformRegion
+ * @note Only available on [9.1.0+].
+ */
+Result nsResetToFactorySettingsWithPlatformRegion(void);
+
+/**
+ * @brief ResetToFactorySettingsWithPlatformRegionAuthentication
+ * @note Only available on [9.1.0+].
+ */
+Result nsResetToFactorySettingsWithPlatformRegionAuthentication(void);
+
+///@}
+
+///@name IApplicationManagerInterface
+///@{
 
 /**
  * @brief Gets an listing of \ref NsApplicationRecord.
@@ -336,20 +485,6 @@ Result nsCleanupSdCard(void);
  * @param[out] out_event Output Event with autoclear=false.
  */
 Result nsGetSdCardMountStatusChangedEvent(Event* out_event);
-
-/**
- * @brief Returns the total storage capacity (used + free) from content manager services.
- * @param[in] storage_id \ref NcmStorageId. Must be ::NcmStorageId_SdCard.
- * @param[out] size Pointer to output the total storage size to.
- */
-Result nsGetTotalSpaceSize(NcmStorageId storage_id, s64 *size);
-
-/**
- * @brief Returns the available storage capacity from content manager services.
- * @param[in] storage_id \ref NcmStorageId. Must be ::NcmStorageId_SdCard.
- * @param[out] size Pointer to output the free storage size to.
- */
-Result nsGetFreeSpaceSize(NcmStorageId storage_id, s64 *size);
 
 /**
  * @brief GetGameCardUpdateDetectionEvent
@@ -478,16 +613,6 @@ Result nsUnregisterNetworkServiceAccount(AccountUid uid);
 Result nsUnregisterNetworkServiceAccountWithUserSaveDataDeletion(AccountUid uid);
 
 /**
- * @brief Gets the \ref NsApplicationControlData for the specified application.
- * @param[in] source Source, official sw uses ::NsApplicationControlSource_Storage.
- * @param[in] application_id ApplicationId.
- * @param[out] buffer \ref NsApplicationControlData
- * @param[in] size Size of the buffer.
- * @param[out] actual_size Actual output size.
- */
-Result nsGetApplicationControlData(NsApplicationControlSource source, u64 application_id, NsApplicationControlData* buffer, size_t size, u64* actual_size);
-
-/**
  * @brief RequestDownloadApplicationControlData
  * @note \ref nifmInitialize must be used prior to this. Before using the cmd, this calls \ref nifmIsAnyInternetRequestAccepted with the output from \ref nifmGetClientId, an error is returned when that returns false.
  * @param[out] a \ref AsyncResult
@@ -586,17 +711,6 @@ Result nsGetLastGameCardMountFailureResult(void);
  * @param[out] total_out Total output entries.
  */
 Result nsListApplicationIdOnGameCard(u64 *application_ids, s32 count, s32 *total_out);
-
-/**
- * @brief Gets an listing of \ref NsApplicationContentMetaStatus.
- * @note Only available on [2.0.0+].
- * @param[in] application_id ApplicationId.
- * @param[in] index Starting entry index.
- * @param[out] list Output array of \ref NsApplicationContentMetaStatus.
- * @param[in] count Size of the list array in entries.
- * @param[out] out_entrycount Total output entries.
- */
-Result nsListApplicationContentMetaStatus(u64 application_id, s32 index, NsApplicationContentMetaStatus* list, s32 count, s32* out_entrycount);
 
 /**
  * @brief TouchApplication
@@ -935,6 +1049,138 @@ Result nsRequestResolveNoDownloadRightsError(AsyncValue *a, u64 application_id);
  * @param[in] uid \ref AccountUid
  */
 Result nsGetPromotionInfo(NsPromotionInfo *promotion, u64 application_id, AccountUid uid);
+
+///@}
+
+///@name IDownloadTaskInterface
+///@{
+
+/**
+ * @brief ClearTaskStatusList
+ * @note Uses \ref nsGetDownloadTaskInterface on [3.0.0+], otherwise IApplicationManagerInterface is used.
+ * @note Only available on [2.0.0+].
+ */
+Result nsClearTaskStatusList(void);
+
+/**
+ * @brief RequestDownloadTaskList
+ * @note Uses \ref nsGetDownloadTaskInterface on [3.0.0+], otherwise IApplicationManagerInterface is used.
+ * @note Only available on [2.0.0+].
+ */
+Result nsRequestDownloadTaskList(void);
+
+/**
+ * @brief RequestEnsureDownloadTask
+ * @note Uses \ref nsGetDownloadTaskInterface on [3.0.0+], otherwise IApplicationManagerInterface is used.
+ * @note Only available on [2.0.0+].
+ * @param[out] a \ref AsyncResult
+ */
+Result nsRequestEnsureDownloadTask(AsyncResult *a);
+
+/**
+ * @brief ListDownloadTaskStatus
+ * @note Uses \ref nsGetDownloadTaskInterface on [3.0.0+], otherwise IApplicationManagerInterface is used.
+ * @note Only available on [2.0.0+].
+ * @param[out] tasks Output array of \ref NsDownloadTaskStatus.
+ * @param[in] count Size of the tasks array in entries. A maximum of 0x100 tasks can be stored in state.
+ * @param[out] total_out Total output entries.
+ */
+Result nsListDownloadTaskStatus(NsDownloadTaskStatus* tasks, s32 count, s32 *total_out);
+
+/**
+ * @brief RequestDownloadTaskListData
+ * @note Uses \ref nsGetDownloadTaskInterface on [3.0.0+], otherwise IApplicationManagerInterface is used.
+ * @note Only available on [2.0.0+].
+ * @param[out] a \ref AsyncValue
+ */
+Result nsRequestDownloadTaskListData(AsyncValue *a);
+
+/**
+ * @brief TryCommitCurrentApplicationDownloadTask
+ * @note Only available on [4.0.0+].
+ */
+Result nsTryCommitCurrentApplicationDownloadTask(void);
+
+/**
+ * @brief EnableAutoCommit
+ * @note Only available on [4.0.0+].
+ */
+Result nsEnableAutoCommit(void);
+
+/**
+ * @brief DisableAutoCommit
+ * @note Only available on [4.0.0+].
+ */
+Result nsDisableAutoCommit(void);
+
+/**
+ * @brief TriggerDynamicCommitEvent
+ * @note Only available on [4.0.0+].
+ */
+Result nsTriggerDynamicCommitEvent(void);
+
+///@}
+
+///@name IContentManagementInterface
+///@{
+
+/**
+ * @brief CalculateApplicationOccupiedSize
+ * @note Uses \ref nsGetContentManagementInterface on [3.0.0+], otherwise IApplicationManagerInterface is used.
+ * @param[in] application_id ApplicationId.
+ * @param[out] out \ref NsApplicationOccupiedSize
+ */
+Result nsCalculateApplicationOccupiedSize(u64 application_id, NsApplicationOccupiedSize *out);
+
+/**
+ * @brief CheckSdCardMountStatus
+ * @note Uses \ref nsGetContentManagementInterface on [3.0.0+], otherwise IApplicationManagerInterface is used.
+ */
+Result nsCheckSdCardMountStatus(void);
+
+/**
+ * @brief Returns the total storage capacity (used + free) from content manager services.
+ * @note Uses \ref nsGetContentManagementInterface on [3.0.0+], otherwise IApplicationManagerInterface is used.
+ * @param[in] storage_id \ref NcmStorageId. Must be ::NcmStorageId_SdCard.
+ * @param[out] size Pointer to output the total storage size to.
+ */
+Result nsGetTotalSpaceSize(NcmStorageId storage_id, s64 *size);
+
+/**
+ * @brief Returns the available storage capacity from content manager services.
+ * @note Uses \ref nsGetContentManagementInterface on [3.0.0+], otherwise IApplicationManagerInterface is used.
+ * @param[in] storage_id \ref NcmStorageId. Must be ::NcmStorageId_SdCard.
+ * @param[out] size Pointer to output the free storage size to.
+ */
+Result nsGetFreeSpaceSize(NcmStorageId storage_id, s64 *size);
+
+/**
+ * @brief CountApplicationContentMeta
+ * @note Uses \ref nsGetContentManagementInterface on [3.0.0+], otherwise IApplicationManagerInterface is used.
+ * @note Only available on [2.0.0+].
+ * @param[in] application_id ApplicationId.
+ * @param[out] out Output count.
+ */
+Result nsCountApplicationContentMeta(u64 application_id, s32 *out);
+
+/**
+ * @brief Gets an listing of \ref NsApplicationContentMetaStatus.
+ * @note Uses \ref nsGetContentManagementInterface on [3.0.0+], otherwise IApplicationManagerInterface is used.
+ * @note Only available on [2.0.0+].
+ * @param[in] application_id ApplicationId.
+ * @param[in] index Starting entry index.
+ * @param[out] list Output array of \ref NsApplicationContentMetaStatus.
+ * @param[in] count Size of the list array in entries.
+ * @param[out] out_entrycount Total output entries.
+ */
+Result nsListApplicationContentMetaStatus(u64 application_id, s32 index, NsApplicationContentMetaStatus* list, s32 count, s32* out_entrycount);
+
+/**
+ * @brief IsAnyApplicationRunning
+ * @note Only available on [3.0.0+].
+ * @param[out] out Output flag.
+ */
+Result nsIsAnyApplicationRunning(bool *out);
 
 ///@}
 

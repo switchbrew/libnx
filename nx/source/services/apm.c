@@ -39,6 +39,10 @@ static Result _apmCmdGetSession(Service* srv, Service* srv_out, u32 cmd_id) {
     );
 }
 
+Result apmGetPerformanceMode(ApmPerformanceMode* out_performanceMode) {
+    return serviceDispatchOut(&g_apmSrv, 1, *out_performanceMode);
+}
+
 Result apmSetPerformanceConfiguration(ApmPerformanceMode PerformanceMode, u32 PerformanceConfiguration) {
     const struct {
         u32 PerformanceMode;
