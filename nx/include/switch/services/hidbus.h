@@ -12,9 +12,9 @@
 
 /// BusType
 typedef enum {
-    HidbusBusType_Unknown0 = 0,          ///< Unknown.
-    HidbusBusType_Unknown1 = 1,          ///< Unknown.
-    HidbusBusType_Unknown2 = 2,          ///< [6.0.0+] Unknown.
+    HidbusBusType_JoyLeftRail   = 0,          ///< JoyLeftRail
+    HidbusBusType_JoyRightRail  = 1,          ///< JoyRightRail
+    HidbusBusType_LarkRightRail = 2,          ///< [6.0.0+] LarkRightRail (for microphone).
 } HidbusBusType;
 
 /// JoyPollingMode
