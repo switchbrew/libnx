@@ -1,7 +1,6 @@
 #include <malloc.h>
 #include "types.h"
 #include "result.h"
-#include "arm/atomics.h"
 #include "kernel/svc.h"
 #include "runtime/hosversion.h"
 #include "services/nv.h"
