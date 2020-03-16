@@ -165,7 +165,7 @@ Result hiddbgReadSerialFlash(u32 offset, void* buffer, size_t size, u64 UniquePa
 
     rc = hiddbgAcquireOperationEventHandle(&tmpevent, true, UniquePadId); // *Must* be used before _hiddbgReadSerialFlash.
     if (R_SUCCEEDED(rc)) rc = _hiddbgReadSerialFlash(&tmem, offset, size, UniquePadId);
-    if (R_SUCCEEDED(rc)) rc = eventWait(&tmpevent, U64_MAX);
+    if (R_SUCCEEDED(rc)) rc = eventWait(&tmpevent, UINT64_MAX);
     if (R_SUCCEEDED(rc)) rc = hiddbgGetOperationResult(UniquePadId);
     if (R_SUCCEEDED(rc)) memcpy(buffer, tmem.src_addr, size);
     eventClose(&tmpevent);
@@ -186,7 +186,7 @@ Result hiddbgWriteSerialFlash(u32 offset, void* buffer, size_t tmem_size, size_t
 
     rc = hiddbgAcquireOperationEventHandle(&tmpevent, true, UniquePadId); // *Must* be used before _hiddbgWriteSerialFlash.
     if (R_SUCCEEDED(rc)) rc = _hiddbgWriteSerialFlash(&tmem, offset, tmem_size, size, UniquePadId);
-    if (R_SUCCEEDED(rc)) rc = eventWait(&tmpevent, U64_MAX);
+    if (R_SUCCEEDED(rc)) rc = eventWait(&tmpevent, UINT64_MAX);
     if (R_SUCCEEDED(rc)) rc = hiddbgGetOperationResult(UniquePadId);
     eventClose(&tmpevent);
     tmemClose(&tmem);

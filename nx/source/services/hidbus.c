@@ -365,7 +365,7 @@ Result hidbusSendAndReceive(HidbusBusHandle handle, const void* inbuf, size_t in
         rc = _hidbusSendCommandAsync(&srv, handle, inbuf, inbuf_size);
     }
     if (R_SUCCEEDED(rc)) {
-        eventWait(&entry->event, U64_MAX);
+        eventWait(&entry->event, UINT64_MAX);
         eventClear(&entry->event);
         u32 tmpout=0;
         rc = _hidbusGetSendCommandAsynceResult(&srv, handle, outbuf, outbuf_size, &tmpout);

@@ -136,7 +136,7 @@ static Result _audrenCmdNoInOutU32(Service* srv, u32 *out, u32 cmd_id) {
 }
 
 void audrenWaitFrame(void) {
-    eventWait(&g_audrenEvent, U64_MAX);
+    eventWait(&g_audrenEvent, UINT64_MAX);
 }
 
 Result _audrenOpenAudioRenderer(Service* srv, Service* srv_out, const AudioRendererParameter* param) {

@@ -40,7 +40,7 @@ Result condvarWaitTimeout(CondVar* c, Mutex* m, u64 timeout);
  */
 static inline Result condvarWait(CondVar* c, Mutex* m)
 {
-    return condvarWaitTimeout(c, m, U64_MAX);
+    return condvarWaitTimeout(c, m, UINT64_MAX);
 }
 
 /**

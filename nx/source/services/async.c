@@ -22,7 +22,7 @@ static Result _asyncCmdNoInOutBuf(Service* srv, void* buffer, size_t size, u32 c
 void asyncValueClose(AsyncValue *a) {
     if (serviceIsActive(&a->s)) {
         asyncValueCancel(a); // Official sw ignores rc from this prior to waiting on the event.
-        asyncValueWait(a, U64_MAX);
+        asyncValueWait(a, UINT64_MAX);
     }
 
     serviceClose(&a->s);
@@ -47,7 +47,7 @@ Result asyncValueGet(AsyncValue *a, void* buffer, size_t size) {
     if (!serviceIsActive(&a->s))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    Result rc = asyncValueWait(a, U64_MAX);
+    Result rc = asyncValueWait(a, UINT64_MAX);
     if (R_SUCCEEDED(rc)) rc = _asyncCmdNoInOutBuf(&a->s, buffer, size, 1);
     return rc;
 }
@@ -73,7 +73,7 @@ Result asyncValueGetErrorContext(AsyncValue *a, ErrorContext *context) {
 void asyncResultClose(AsyncResult *a) {
     if (serviceIsActive(&a->s)) {
         asyncResultCancel(a); // Official sw ignores rc from this prior to waiting on the event.
-        asyncResultWait(a, U64_MAX);
+        asyncResultWait(a, UINT64_MAX);
     }
 
     serviceClose(&a->s);
@@ -91,7 +91,7 @@ Result asyncResultGet(AsyncResult *a) {
     if (!serviceIsActive(&a->s))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    Result rc = asyncResultWait(a, U64_MAX);
+    Result rc = asyncResultWait(a, UINT64_MAX);
     if (R_SUCCEEDED(rc)) rc = _asyncCmdNoIO(&a->s, 0);
     return rc;
 }

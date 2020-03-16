@@ -10,9 +10,6 @@
 #include <stddef.h>
 #include <stdalign.h>
 
-/// The maximum value of a u64.
-#define U64_MAX	UINT64_MAX
-
 #ifndef SSIZE_MAX
 #ifdef SIZE_MAX
 #define SSIZE_MAX ((SIZE_MAX) >> 1)

@@ -307,7 +307,7 @@ Result usbHsIfCtrlXfer(UsbHsClientIfSession* s, u8 bmRequestType, u8 bRequest, u
     rc = _usbHsIfCtrlXferAsync(s, bmRequestType, bRequest, wValue, wIndex, wLength, buffer);
     if (R_FAILED(rc)) return rc;
 
-    rc = eventWait(&s->eventCtrlXfer, U64_MAX);
+    rc = eventWait(&s->eventCtrlXfer, UINT64_MAX);
     if (R_FAILED(rc)) return rc;
     eventClear(&s->eventCtrlXfer);
 
@@ -429,7 +429,7 @@ Result usbHsEpPostBuffer(UsbHsClientEpSession* s, void* buffer, u32 size, u32* t
     rc = _usbHsEpPostBufferAsync(s, buffer, size, 0, &xferId);
     if (R_FAILED(rc)) return rc;
 
-    rc = eventWait(&s->eventXfer, U64_MAX);
+    rc = eventWait(&s->eventXfer, UINT64_MAX);
     if (R_FAILED(rc)) return rc;
     eventClear(&s->eventXfer);
 

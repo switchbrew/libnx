@@ -188,7 +188,7 @@ typedef enum {
     TickCountInfo_Core2 = 2,       ///< Tick count on core 2.
     TickCountInfo_Core3 = 3,       ///< Tick count on core 3.
 
-    TickCountInfo_Total = U64_MAX, ///< Tick count on all cores.
+    TickCountInfo_Total = UINT64_MAX, ///< Tick count on all cores.
 } TickCountInfo;
 
 /// GetInfo InitialProcessIdRange Sub IDs.

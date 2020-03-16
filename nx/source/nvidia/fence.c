@@ -84,7 +84,7 @@ void _nvFenceCleanup(void)
 
 static Result _nvFenceEventWaitCommon(Event* event, u32 event_id, s32 timeout_us)
 {
-    u64 timeout_ns = U64_MAX;
+    u64 timeout_ns = UINT64_MAX;
     if (timeout_us >= 0)
         timeout_ns = (u64)1000*timeout_us;
     Result rc = eventWait(event, timeout_ns);

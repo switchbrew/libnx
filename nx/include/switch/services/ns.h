@@ -906,7 +906,7 @@ Result nsCanDeliverApplication(const NsApplicationDeliveryInfo *info0, s32 count
 Result nsListContentMetaKeyToDeliverApplication(NcmContentMetaKey *meta, s32 meta_count, s32 meta_index, const NsApplicationDeliveryInfo *info, s32 info_count, s32 *total_out);
 
 /**
- * @brief After validation etc, this sets the output bool by comparing system-version fields in the \ref NsSystemDeliveryInfo / info-array and with a state field. 
+ * @brief After validation etc, this sets the output bool by comparing system-version fields in the \ref NsSystemDeliveryInfo / info-array and with a state field.
  * @note Only available on [4.0.0+].
  * @param[in] info Input array of \ref NsApplicationDeliveryInfo.
  * @param[in] count Size of the info array in entries. Must be value 1.
@@ -1239,7 +1239,7 @@ Result nsProgressMonitorForDeleteUserSaveDataAllGetProgress(NsProgressMonitorFor
 
 /**
  * @brief Close a \ref NsProgressAsyncResult.
- * @note When the object is initialized, this uses \ref nsProgressAsyncResultCancel then \ref nsProgressAsyncResultWait with timeout=U64_MAX.
+ * @note When the object is initialized, this uses \ref nsProgressAsyncResultCancel then \ref nsProgressAsyncResultWait with timeout=UINT64_MAX.
  * @param a \ref NsProgressAsyncResult
  */
 void nsProgressAsyncResultClose(NsProgressAsyncResult *a);
@@ -1247,13 +1247,13 @@ void nsProgressAsyncResultClose(NsProgressAsyncResult *a);
 /**
  * @brief Waits for the async operation to finish using the specified timeout.
  * @param a \ref NsProgressAsyncResult
- * @param[in] timeout Timeout in nanoseconds. U64_MAX for no timeout.
+ * @param[in] timeout Timeout in nanoseconds. UINT64_MAX for no timeout.
  */
 Result nsProgressAsyncResultWait(NsProgressAsyncResult *a, u64 timeout);
 
 /**
  * @brief Gets the Result.
- * @note Prior to using the cmd, this uses \ref nsProgressAsyncResultWait with timeout=U64_MAX.
+ * @note Prior to using the cmd, this uses \ref nsProgressAsyncResultWait with timeout=UINT64_MAX.
  * @param a \ref NsProgressAsyncResult
  */
 Result nsProgressAsyncResultGet(NsProgressAsyncResult *a);

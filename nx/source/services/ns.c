@@ -2150,7 +2150,7 @@ Result nsProgressMonitorForDeleteUserSaveDataAllGetProgress(NsProgressMonitorFor
 void nsProgressAsyncResultClose(NsProgressAsyncResult *a) {
     if (serviceIsActive(&a->s)) {
         nsProgressAsyncResultCancel(a); // Official sw ignores rc from this prior to waiting on the event.
-        nsProgressAsyncResultWait(a, U64_MAX);
+        nsProgressAsyncResultWait(a, UINT64_MAX);
     }
 
     serviceClose(&a->s);
@@ -2168,7 +2168,7 @@ Result nsProgressAsyncResultGet(NsProgressAsyncResult *a) {
     if (!serviceIsActive(&a->s))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    Result rc = nsProgressAsyncResultWait(a, U64_MAX);
+    Result rc = nsProgressAsyncResultWait(a, UINT64_MAX);
     if (R_SUCCEEDED(rc)) rc = _nsCmdNoIO(&a->s, 0);
     return rc;
 }
