@@ -1,7 +1,5 @@
 #include <string.h>
-#include "types.h"
-#include "result.h"
-#include "arm/atomics.h"
+#include "../services/service_guard.h"
 #include "kernel/svc.h"
 #include "services/nv.h"
 #include "nvidia/ioctl.h"
@@ -11,24 +9,20 @@
 #define NUM_TPC_MASKS 1
 
 static u32 g_ctrlgpu_fd = -1;
-static u64 g_refCnt;
 
 static nvioctl_gpu_characteristics g_gpu_characteristics;
 static u32 g_zcull_ctx_size;
 static nvioctl_zcull_info g_zcull_info;
 static u32 g_tpc_masks[NUM_TPC_MASKS];
 
-Result nvGpuInit(void)
+#define nvGpuInitialize nvGpuInit
+NX_GENERATE_SERVICE_GUARD(nvGpu);
+
+Result _nvGpuInitialize(void)
 {
     Result rc;
 
-    if (atomicIncrement64(&g_refCnt) > 0)
-        return 0;
-
     rc = nvOpen(&g_ctrlgpu_fd, "/dev/nvhost-ctrl-gpu");
-
-    if (R_FAILED(rc))
-        g_ctrlgpu_fd = -1;
 
     if (R_SUCCEEDED(rc))
         rc = nvioctlNvhostCtrlGpu_GetCharacteristics(g_ctrlgpu_fd, &g_gpu_characteristics);
@@ -42,18 +36,13 @@ Result nvGpuInit(void)
     if (R_SUCCEEDED(rc))
         rc = nvioctlNvhostCtrlGpu_GetTpcMasks(g_ctrlgpu_fd, g_tpc_masks, sizeof(g_tpc_masks));
 
-    if (R_FAILED(rc))
-        nvGpuExit();
-
     return rc;
 }
 
-void nvGpuExit(void)
+void _nvGpuCleanup(void)
 {
-    if (atomicDecrement64(&g_refCnt) == 0) {
-        if (g_ctrlgpu_fd != -1)
-            nvClose(g_ctrlgpu_fd);
-
+    if (g_ctrlgpu_fd != -1) {
+        nvClose(g_ctrlgpu_fd);
         g_ctrlgpu_fd = -1;
     }
 }
