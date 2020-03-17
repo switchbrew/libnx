@@ -1,6 +1,4 @@
-#include "types.h"
-#include "result.h"
-#include "arm/atomics.h"
+#include "../services/service_guard.h"
 #include "kernel/svc.h"
 #include "kernel/event.h"
 #include "runtime/hosversion.h"
@@ -8,10 +6,12 @@
 #include "nvidia/fence.h"
 
 static u32 g_ctrl_fd = -1;
-static u64 g_refCnt;
 
 static u64 g_NvEventUsedMask;
 static Event g_NvEvents[64];
+
+#define nvFenceInitialize nvFenceInit
+NX_GENERATE_SERVICE_GUARD(nvFence);
 
 static int _nvGetEventSlot(void)
 {
@@ -66,35 +66,25 @@ static void _nvFreeEvent(int event_id)
     nvioctlNvhostCtrl_EventUnregister(g_ctrl_fd, event_id);
 }
 
-Result nvFenceInit(void)
+Result _nvFenceInitialize(void)
 {
-    Result rc;
-
-    if (atomicIncrement64(&g_refCnt) > 0)
-        return 0;
-
-    rc = nvOpen(&g_ctrl_fd, "/dev/nvhost-ctrl");
-
-    if (R_FAILED(rc))
-        g_ctrl_fd = -1;
-
-    return rc;
+    return nvOpen(&g_ctrl_fd, "/dev/nvhost-ctrl");
 }
 
-void nvFenceExit(void)
+void _nvFenceCleanup(void)
 {
-    if (atomicDecrement64(&g_refCnt) == 0) {
-        for (int i = 0; i < 64; i ++)
-            _nvFreeEvent(i);
-        if (g_ctrl_fd != -1)
-            nvClose(g_ctrl_fd);
+    for (int i = 0; i < 64; i ++)
+        _nvFreeEvent(i);
+
+    if (g_ctrl_fd != -1) {
+        nvClose(g_ctrl_fd);
         g_ctrl_fd = -1;
     }
 }
 
 static Result _nvFenceEventWaitCommon(Event* event, u32 event_id, s32 timeout_us)
 {
-    u64 timeout_ns = U64_MAX;
+    u64 timeout_ns = UINT64_MAX;
     if (timeout_us >= 0)
         timeout_ns = (u64)1000*timeout_us;
     Result rc = eventWait(event, timeout_ns);

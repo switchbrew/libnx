@@ -409,7 +409,7 @@ static Result _usbCommsRead(usbCommsInterface *interface, void* buffer, size_t s
     UsbDsReportData reportdata;
 
     //Makes sure endpoints are ready for data-transfer / wait for init if needed.
-    rc = usbDsWaitReady(U64_MAX);
+    rc = usbDsWaitReady(UINT64_MAX);
     if (R_FAILED(rc)) return rc;
 
     while(size)
@@ -438,7 +438,7 @@ static Result _usbCommsRead(usbCommsInterface *interface, void* buffer, size_t s
         if (R_FAILED(rc)) return rc;
 
         //Wait for the transfer to finish.
-        eventWait(&interface->endpoint_out->CompletionEvent, U64_MAX);
+        eventWait(&interface->endpoint_out->CompletionEvent, UINT64_MAX);
         eventClear(&interface->endpoint_out->CompletionEvent);
 
         rc = usbDsEndpoint_GetReportData(interface->endpoint_out, &reportdata);
@@ -474,7 +474,7 @@ static Result _usbCommsWrite(usbCommsInterface *interface, const void* buffer, s
     UsbDsReportData reportdata;
 
     //Makes sure endpoints are ready for data-transfer / wait for init if needed.
-    rc = usbDsWaitReady(U64_MAX);
+    rc = usbDsWaitReady(UINT64_MAX);
     if (R_FAILED(rc)) return rc;
 
     while(size)
@@ -501,7 +501,7 @@ static Result _usbCommsWrite(usbCommsInterface *interface, const void* buffer, s
         if(R_FAILED(rc))return rc;
 
         //Wait for the transfer to finish.
-        eventWait(&interface->endpoint_in->CompletionEvent, U64_MAX);
+        eventWait(&interface->endpoint_in->CompletionEvent, UINT64_MAX);
         eventClear(&interface->endpoint_in->CompletionEvent);
 
         rc = usbDsEndpoint_GetReportData(interface->endpoint_in, &reportdata);

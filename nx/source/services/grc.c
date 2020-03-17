@@ -142,7 +142,7 @@ Result grcTrimGameMovie(GrcGameMovieId *dst_movieid, const GrcGameMovieId *src_m
 
         if (R_SUCCEEDED(rc)) rc = _grcGameMovieTrimmerBeginTrim(&trimmer, src_movieid, start, end);
 
-        if (R_SUCCEEDED(rc)) rc = eventWait(&trimevent, U64_MAX);
+        if (R_SUCCEEDED(rc)) rc = eventWait(&trimevent, UINT64_MAX);
 
         if (R_SUCCEEDED(rc)) rc = _grcGameMovieTrimmerEndTrim(&trimmer, dst_movieid);
 
@@ -308,7 +308,7 @@ Result grcMovieMakerFinish(GrcMovieMaker *m, s32 width, s32 height, const void* 
 
     rc = _grcCmdInU64NoOut(&m->s, m->layer_handle, 22); // RequestOffscreenRecordingFinishReady
 
-    if (R_SUCCEEDED(rc)) rc = eventWait(&m->recording_event, U64_MAX);
+    if (R_SUCCEEDED(rc)) rc = eventWait(&m->recording_event, UINT64_MAX);
 
     if (hosversionAtLeast(7,0,0))
         rc = _grcMovieMakerCompleteOffscreenRecordingFinishEx1(m, width, height, userdata, userdata_size, thumbnail, thumbnail_size, entry);
@@ -342,7 +342,7 @@ Result grcMovieMakerEncodeAudioSample(GrcMovieMaker *m, const void* buffer, size
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     for (u64 pos=0; size!=0; pos+=out_size, size-=out_size) {
-        rc = eventWait(&m->audio_event, U64_MAX);
+        rc = eventWait(&m->audio_event, UINT64_MAX);
         if (R_FAILED(rc)) break;
 
         rc = _grcMovieMakerEncodeOffscreenLayerAudioSample(m, &bufptr[pos], size, &out_size);

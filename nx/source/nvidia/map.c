@@ -1,7 +1,5 @@
 #include <string.h>
-#include "types.h"
-#include "result.h"
-#include "arm/atomics.h"
+#include "../services/service_guard.h"
 #include "arm/cache.h"
 #include "kernel/svc.h"
 #include "services/nv.h"
@@ -9,30 +7,19 @@
 #include "nvidia/map.h"
 
 static u32 g_nvmap_fd = -1;
-static u64 g_refCnt;
 
-Result nvMapInit(void)
+#define nvMapInitialize nvMapInit
+NX_GENERATE_SERVICE_GUARD(nvMap);
+
+Result _nvMapInitialize(void)
 {
-    Result rc;
-
-    if (atomicIncrement64(&g_refCnt) > 0)
-        return 0;
-
-    rc = nvOpen(&g_nvmap_fd, "/dev/nvmap");
-
-    if (R_FAILED(rc))
-        atomicDecrement64(&g_refCnt);
-
-    return rc;
+    return nvOpen(&g_nvmap_fd, "/dev/nvmap");
 }
 
-void nvMapExit(void)
+void _nvMapCleanup(void)
 {
-    if (atomicDecrement64(&g_refCnt) == 0)
-    {
-        if (g_nvmap_fd != -1)
-            nvClose(g_nvmap_fd);
-
+    if (g_nvmap_fd != -1) {
+        nvClose(g_nvmap_fd);
         g_nvmap_fd = -1;
     }
 }

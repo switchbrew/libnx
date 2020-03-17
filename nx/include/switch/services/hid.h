@@ -431,7 +431,7 @@ typedef struct SixAxisSensorValues {
 } SixAxisSensorValues;
 
 #define JOYSTICK_MAX (0x7FFF)
-#define JOYSTICK_MIN (-0x8000)
+#define JOYSTICK_MIN (-0x7FFF)
 
 // End enums and output structs
 

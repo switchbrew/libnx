@@ -17,7 +17,6 @@ extern "C" {
 
 #include "switch/arm/tls.h"
 #include "switch/arm/cache.h"
-#include "switch/arm/atomics.h"
 #include "switch/arm/counter.h"
 
 #include "switch/kernel/svc.h"
@@ -75,6 +74,7 @@ extern "C" {
 #include "switch/services/usbds.h"
 #include "switch/services/usbhs.h"
 #include "switch/services/hid.h"
+#include "switch/services/hidbus.h"
 #include "switch/services/hiddbg.h"
 #include "switch/services/hidsys.h"
 #include "switch/services/irs.h"

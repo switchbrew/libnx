@@ -254,7 +254,7 @@ Result _appletInitialize(void) {
         //Don't enter this msg-loop when g_appletFocusState is already 1, it will hang when applet was previously initialized in the context of the current process for AppletType_Application.
         if (R_SUCCEEDED(rc) && g_appletFocusState != AppletFocusState_Focused) {
             do {
-                eventWait(&g_appletMessageEvent, U64_MAX);
+                eventWait(&g_appletMessageEvent, UINT64_MAX);
 
                 u32 msg;
                 rc = _appletReceiveMessage(&msg);
@@ -873,7 +873,7 @@ static Result _appletWaitAcquiredSleepLockEvent(void) {
     Event tmpevent={0};
 
     rc = _appletGetAcquiredSleepLockEvent(&tmpevent);
-    if (R_SUCCEEDED(rc)) rc = eventWait(&tmpevent, U64_MAX);
+    if (R_SUCCEEDED(rc)) rc = eventWait(&tmpevent, UINT64_MAX);
     eventClose(&tmpevent);
     return rc;
 }
@@ -1027,7 +1027,7 @@ static Result _appletWaitLibraryAppletLaunchableEvent(void) {
     if (!eventActive(&g_appletLibraryAppletLaunchableEvent))
         rc = _appletCmdGetEvent(&g_appletISelfController, &g_appletLibraryAppletLaunchableEvent, false, 9);
 
-    if (R_SUCCEEDED(rc)) rc = eventWait(&g_appletLibraryAppletLaunchableEvent, U64_MAX);
+    if (R_SUCCEEDED(rc)) rc = eventWait(&g_appletLibraryAppletLaunchableEvent, UINT64_MAX);
 
     return rc;
 }
@@ -1404,7 +1404,7 @@ Result appletLockAccessorLock(AppletLockAccessor *a) {
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     do {
-        rc = eventWait(&a->event, U64_MAX);
+        rc = eventWait(&a->event, UINT64_MAX);
         if (R_SUCCEEDED(rc)) rc = _appletLockAccessorTryLock(a, false, NULL, &flag);
         if (R_FAILED(rc)) break;
     } while(!flag);
@@ -1602,7 +1602,7 @@ void appletHolderJoin(AppletHolder *h) {
     LibAppletExitReason res = LibAppletExitReason_Normal;
     u32 desc=0;
 
-    eventWait(&h->StateChangedEvent, U64_MAX);
+    eventWait(&h->StateChangedEvent, UINT64_MAX);
     rc = _appletCmdNoIO(&h->s, 30);//GetResult
 
     if (R_FAILED(rc)) {
@@ -1642,7 +1642,7 @@ bool appletHolderWaitInteractiveOut(AppletHolder *h) {
     rc = _appletHolderGetPopInteractiveOutDataEvent(h);
     if (R_FAILED(rc)) return false;
 
-    rc = waitMulti(&idx, U64_MAX, waiterForEvent(&h->PopInteractiveOutDataEvent), waiterForEvent(&h->StateChangedEvent));
+    rc = waitMulti(&idx, UINT64_MAX, waiterForEvent(&h->PopInteractiveOutDataEvent), waiterForEvent(&h->StateChangedEvent));
     if (R_FAILED(rc)) return false;
 
     return idx==0;
@@ -2387,7 +2387,7 @@ void appletApplicationJoin(AppletApplication *a) {
     AppletApplicationExitReason res = AppletApplicationExitReason_Normal;
     u32 desc=0;
 
-    eventWait(&a->StateChangedEvent, U64_MAX);
+    eventWait(&a->StateChangedEvent, UINT64_MAX);
     rc = _appletCmdNoIO(&a->s, 30);//GetResult
 
     if (R_FAILED(rc)) {

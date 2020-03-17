@@ -222,7 +222,7 @@ Result nwindowDequeueBuffer(NWindow* nw, s32* out_slot, NvMultiFence* out_fence)
 
     if (eventActive(&nw->event)) {
         do {
-            eventWait(&nw->event, U64_MAX);
+            eventWait(&nw->event, UINT64_MAX);
             rc = bqDequeueBuffer(&nw->bq, true, nw->width, nw->height, nw->format, nw->usage, &slot, &fence);
         } while (rc == MAKERESULT(Module_LibnxBinder, LibnxBinderError_WouldBlock));
     }

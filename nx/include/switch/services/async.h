@@ -27,7 +27,7 @@ typedef struct {
 
 /**
  * @brief Close a \ref AsyncValue.
- * @note When the object is initialized, this uses \ref asyncValueCancel then \ref asyncValueWait with timeout=U64_MAX.
+ * @note When the object is initialized, this uses \ref asyncValueCancel then \ref asyncValueWait with timeout=UINT64_MAX.
  * @param a \ref AsyncValue
  */
 void asyncValueClose(AsyncValue *a);
@@ -35,7 +35,7 @@ void asyncValueClose(AsyncValue *a);
 /**
  * @brief Waits for the async operation to finish using the specified timeout.
  * @param a \ref AsyncValue
- * @param[in] timeout Timeout in nanoseconds. U64_MAX for no timeout.
+ * @param[in] timeout Timeout in nanoseconds. UINT64_MAX for no timeout.
  */
 Result asyncValueWait(AsyncValue *a, u64 timeout);
 
@@ -48,7 +48,7 @@ Result asyncValueGetSize(AsyncValue *a, u64 *size);
 
 /**
  * @brief Gets the value.
- * @note Prior to using the cmd, this uses \ref asyncResultWait with timeout=U64_MAX.
+ * @note Prior to using the cmd, this uses \ref asyncResultWait with timeout=UINT64_MAX.
  * @param a \ref AsyncValue
  * @param[out] buffer Output buffer.
  * @param[in] size Output buffer size.
@@ -77,7 +77,7 @@ Result asyncValueGetErrorContext(AsyncValue *a, ErrorContext *context);
 
 /**
  * @brief Close a \ref AsyncResult.
- * @note When the object is initialized, this uses \ref asyncResultCancel then \ref asyncResultWait with timeout=U64_MAX.
+ * @note When the object is initialized, this uses \ref asyncResultCancel then \ref asyncResultWait with timeout=UINT64_MAX.
  * @param a \ref AsyncResult
  */
 void asyncResultClose(AsyncResult *a);
@@ -85,13 +85,13 @@ void asyncResultClose(AsyncResult *a);
 /**
  * @brief Waits for the async operation to finish using the specified timeout.
  * @param a \ref AsyncResult
- * @param[in] timeout Timeout in nanoseconds. U64_MAX for no timeout.
+ * @param[in] timeout Timeout in nanoseconds. UINT64_MAX for no timeout.
  */
 Result asyncResultWait(AsyncResult *a, u64 timeout);
 
 /**
  * @brief Gets the Result.
- * @note Prior to using the cmd, this uses \ref asyncResultWait with timeout=U64_MAX.
+ * @note Prior to using the cmd, this uses \ref asyncResultWait with timeout=UINT64_MAX.
  * @param a \ref AsyncResult
  */
 Result asyncResultGet(AsyncResult *a);
