@@ -33,6 +33,9 @@ Result fsdevMountSdmc(void);
 /// Mounts the specified save data.
 Result fsdevMountSaveData(const char *name, u64 application_id, AccountUid uid);
 
+/// Mounts the specified DeviceSaveData.
+Result fsdevMountDeviceSaveData(const char *name, u64 application_id);
+
 /// Mounts the specified system save data.
 Result fsdevMountSystemSaveData(const char *name, FsSaveDataSpaceId save_data_space_id, u64 system_save_data_id, AccountUid uid);
 

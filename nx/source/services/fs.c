@@ -483,6 +483,10 @@ Result fsCreate_SystemSaveData(FsSaveDataSpaceId save_data_space_id, u64 system_
 }
 
 // Wrapper(s) for fsOpenSaveDataFileSystem.
+static Result _fsOpen_SaveDataFs(FsFileSystem* out, FsSaveDataAttribute *attr) {
+    return fsOpenSaveDataFileSystem(out, FsSaveDataSpaceId_User, attr);
+}
+
 Result fsOpen_SaveData(FsFileSystem* out, u64 application_id, AccountUid uid) {
     FsSaveDataAttribute attr;
 
@@ -491,7 +495,17 @@ Result fsOpen_SaveData(FsFileSystem* out, u64 application_id, AccountUid uid) {
     attr.uid = uid;
     attr.save_data_type = FsSaveDataType_Account;
 
-    return fsOpenSaveDataFileSystem(out, FsSaveDataSpaceId_User, &attr);
+    return _fsOpen_SaveDataFs(out, &attr);
+}
+
+Result fsOpen_DeviceSaveData(FsFileSystem* out, u64 application_id) {
+    FsSaveDataAttribute attr;
+
+    memset(&attr, 0, sizeof(attr));
+    attr.application_id = application_id;
+    attr.save_data_type = FsSaveDataType_Device;
+
+    return _fsOpen_SaveDataFs(out, &attr);
 }
 
 Result fsOpen_SystemSaveData(FsFileSystem* out, FsSaveDataSpaceId save_data_space_id, u64 system_save_data_id, AccountUid uid) {
