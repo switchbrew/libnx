@@ -24,7 +24,7 @@ typedef enum {
     SwkbdType_Unkown    = 3,  ///< The same as SwkbdType_Normal keyboard.
     SwkbdType_Latin     = 4,  ///< Latin like languages keyboard only.
     SwkbdType_CHS       = 5,  ///< Chinese Simplifid keyboard only.
-    SwkbdType_CHT       = 6,  ///< Chinese Simplifid keyboard only.
+    SwkbdType_CHT       = 6,  ///< Chinese Traditional keyboard only.
     SwkbdType_Korean    = 7,  ///< Korean keyboard only.
     SwkbdType_All       = 8,  ///< All language keyboards.
 } SwkbdType;
