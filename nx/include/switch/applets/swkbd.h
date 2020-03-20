@@ -18,9 +18,15 @@ typedef enum {
 
 /// Type of keyboard.
 typedef enum {
-    SwkbdType_Normal = 0,  ///< Normal keyboard.
-    SwkbdType_NumPad = 1,  ///< Number pad. The buttons at the bottom left/right are only available when they're set by \ref swkbdConfigSetLeftOptionalSymbolKey / \ref swkbdConfigSetRightOptionalSymbolKey.
-    SwkbdType_QWERTY = 2,  ///< QWERTY (and variants) keyboard only.
+    SwkbdType_Normal    = 0,  ///< Normal keyboard.
+    SwkbdType_NumPad    = 1,  ///< Number pad. The buttons at the bottom left/right are only available when they're set by \ref swkbdConfigSetLeftOptionalSymbolKey / \ref swkbdConfigSetRightOptionalSymbolKey.
+    SwkbdType_QWERTY    = 2,  ///< QWERTY (and variants) keyboard only.
+    SwkbdType_Unknown3  = 3,  ///< The same as SwkbdType_Normal keyboard.
+    SwkbdType_Latin     = 4,  ///< All Latin like languages keyboard only (without CJK keyboard).
+    SwkbdType_ZhHans    = 5,  ///< Chinese Simplified keyboard only.
+    SwkbdType_ZhHant    = 6,  ///< Chinese Traditional keyboard only.
+    SwkbdType_Korean    = 7,  ///< Korean keyboard only.
+    SwkbdType_All       = 8,  ///< All language keyboards.
 } SwkbdType;
 
 /// Bitmask for SwkbdArgCommon::keySetDisableBitmask. This disables keys on the keyboard when the corresponding bit(s) are set.
