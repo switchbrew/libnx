@@ -367,9 +367,13 @@ Result fsGetGlobalAccessLogMode(u32* out_mode);
 Result fsCreate_SystemSaveDataWithOwner(FsSaveDataSpaceId save_data_space_id, u64 system_save_data_id, AccountUid uid, u64 owner_id, s64 size, s64 journal_size, u32 flags);
 Result fsCreate_SystemSaveData(FsSaveDataSpaceId save_data_space_id, u64 system_save_data_id, s64 size, s64 journal_size, u32 flags);
 
-/// Wrapper(s) for fsOpenSaveDataFileSystem.
-/// See FsSave for program_id and uid.
+/// Wrapper for fsOpenSaveDataFileSystem.
+/// See \ref FsSaveDataAttribute for application_id and uid.
 Result fsOpen_SaveData(FsFileSystem* out, u64 application_id, AccountUid uid);
+
+/// Wrapper for fsOpenSaveDataFileSystem, for opening DeviceSaveData.
+/// See \ref FsSaveDataAttribute for application_id.
+Result fsOpen_DeviceSaveData(FsFileSystem* out, u64 application_id);
 
 /// Wrapper for fsOpenSaveDataFileSystemBySystemSaveDataId.
 /// WARNING: You can brick when writing to SystemSaveData, if the data is corrupted etc.
