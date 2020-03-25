@@ -8,7 +8,7 @@
 #include "../types.h"
 #include "../services/hidbus.h"
 
-#define RINGCON_CAL_MAGIC 0xCAFE
+#define RINGCON_CAL_MAGIC -0x3502 // 0xCAFE
 
 /// Whether the output data is valid.
 typedef enum {
@@ -149,6 +149,7 @@ NX_CONSTEXPR void ringconGetManuCal(RingCon *c, RingConManuCal *out) {
 
 /**
  * @brief Gets the \ref RingConUserCal previously loaded by \ref ringconCreate.
+ * @note The Ring-Con UserCal doesn't seem to be calibrated normally?
  * @param c \ref RingCon
  * @param[out] out \ref RingConUserCal
  */
@@ -159,6 +160,7 @@ NX_CONSTEXPR void ringconGetUserCal(RingCon *c, RingConUserCal *out) {
 /**
  * @brief Updates the \ref RingConUserCal.
  * @note The input \ref RingConUserCal is used with \ref ringconWriteUserCal, and the output from \ref ringconReadUserCal is verified with the input \ref RingConUserCal. This does not update the \ref RingConUserCal returned by \ref ringconGetUserCal.
+ * @note The Ring-Con UserCal doesn't seem to be calibrated normally?
  * @param c \ref RingCon
  * @param[in] cal \ref RingConUserCal
  */
@@ -223,15 +225,15 @@ Result ringconReadUnkCal(RingCon *c, s16 *out);
 Result ringconReadUserCal(RingCon *c, RingConUserCal *out);
 
 /**
- * @brief Uses cmd 0x00023104.
+ * @brief Reads the rep-count for Multitask Mode.
  * @param c \ref RingCon
  * @param[out] out Output value. Official sw using this clamps the output to range 0-500.
  * @param[out] data_valid \ref RingConDataValid
  */
-Result ringconCmdx00023104(RingCon *c, s32 *out, RingConDataValid *data_valid);
+Result ringconReadRepCount(RingCon *c, s32 *out, RingConDataValid *data_valid);
 
 /**
- * @brief Gets the total-push-count.
+ * @brief Reads the total-push-count, for Multitask Mode.
  * @note Used internally by \ref ringconCreate. Normally \ref ringconGetTotalPushCount should be used instead.
  * @param c \ref RingCon
  * @param[out] out Output value.
@@ -240,10 +242,10 @@ Result ringconCmdx00023104(RingCon *c, s32 *out, RingConDataValid *data_valid);
 Result ringconReadTotalPushCount(RingCon *c, s32 *out, RingConDataValid *data_valid);
 
 /**
- * @brief Uses cmd 0x04013104.
+ * @brief This resets the value returned by \ref ringconReadRepCount to 0.
  * @param c \ref RingCon
  */
-Result ringconCmdx04013104(RingCon *c);
+Result ringconResetRepCount(RingCon *c);
 
 /**
  * @brief Writes the \ref RingConUserCal.

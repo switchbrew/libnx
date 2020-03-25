@@ -71,7 +71,7 @@ Result ringconCreate(RingCon *c, HidControllerID id) {
     if (R_SUCCEEDED(rc)) {
         if (type & TYPE_JOYCON_LEFT)
             bus_type = HidbusBusType_JoyLeftRail;
-        else if (type & TYPE_JOYCON_RIGHT)
+        else if (type & (TYPE_JOYCON_RIGHT | TYPE_JOYCON_PAIR))
             bus_type = HidbusBusType_JoyRightRail;
         else
             rc = MAKERESULT(Module_Libnx, LibnxError_BadInput);
@@ -101,7 +101,7 @@ void ringconClose(RingCon *c) {
     }
 
     free(c->workbuf);
-    memset(c, 0, sizeof(*c));
+    c->workbuf = 0;
 }
 
 static Result _ringconSetup(RingCon *c) {
@@ -491,6 +491,7 @@ Result ringconReadUserCal(RingCon *c, RingConUserCal *out) {
 static Result _ringconGet3ByteOut(RingCon *c, u32 cmd, s32 *out, RingConDataValid *data_valid) {
     Result rc=0;
     u64 out_size=0;
+    u8 data[0x4]={0};
 
     struct {
         u8 status;
@@ -502,17 +503,18 @@ static Result _ringconGet3ByteOut(RingCon *c, u32 cmd, s32 *out, RingConDataVali
     rc = hidbusSendAndReceive(c->handle, &cmd, sizeof(cmd), &reply, sizeof(reply), &out_size);
     if (R_SUCCEEDED(rc) && (out_size != sizeof(reply) || reply.status != 0)) rc = MAKERESULT(218, 7);
     if (R_SUCCEEDED(rc)) {
-        if (crc_update(0, &reply.data, sizeof(reply.data)) != reply.crc) *data_valid = RingConDataValid_CRC; // Official sw has this field value inverted with this func, but whatever.
+        memcpy(data, reply.data, sizeof(reply.data));
+        if (crc_update(0, data, sizeof(data)) != reply.crc) *data_valid = RingConDataValid_CRC; // Official sw has this field value inverted with this func, but whatever.
         else {
             *data_valid = RingConDataValid_Ok;
-            *out = reply.data[0x0] | (reply.data[0x1]<<8) | (reply.data[0x2]<<16);
+            *out = data[0x0] | (data[0x1]<<8) | (data[0x2]<<16);
         }
     }
 
     return rc;
 }
 
-Result ringconCmdx00023104(RingCon *c, s32 *out, RingConDataValid *data_valid) {
+Result ringconReadRepCount(RingCon *c, s32 *out, RingConDataValid *data_valid) {
     return _ringconGet3ByteOut(c, 0x00023104, out, data_valid);
 }
 
@@ -520,7 +522,7 @@ Result ringconReadTotalPushCount(RingCon *c, s32 *out, RingConDataValid *data_va
     return _ringconGet3ByteOut(c, 0x00023204, out, data_valid);
 }
 
-Result ringconCmdx04013104(RingCon *c) {
+Result ringconResetRepCount(RingCon *c) {
     Result rc=0;
     u64 cmd = 0x04013104;
     u64 out_size=0;
