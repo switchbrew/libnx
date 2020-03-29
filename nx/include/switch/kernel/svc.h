@@ -96,6 +96,13 @@ typedef struct {
     u32 padding;         ///< Padding.
 } MemoryInfo;
 
+/// Physical memory information structure.
+typedef struct {
+    u64 physical_address; ///< Physical address.
+    u64 virtual_address;  ///< Virtual address.
+    u64 size;             ///< Size.
+} PhysicalMemoryInfo;
+
 /// Secure monitor arguments.
 typedef struct {
     u64 X[8]; ///< Values of X0 through X7.
@@ -118,6 +125,12 @@ typedef enum {
     LimitableResource_Sessions=4,         ///<How many sessions can a process own.
 } LimitableResource;
 
+/// Thread Activity.
+typedef enum {
+    ThreadActivity_Runnable = 0, ///< Thread can run.
+    ThreadActivity_Paused   = 1, ///< Thread is paused.
+} ThreadActivity;
+
 /// Process Information.
 typedef enum {
     ProcessInfoType_ProcessState=0,       ///<What state is a process in.
@@ -134,6 +147,12 @@ typedef enum {
     ProcessState_Exited=6,              ///<Process has finished exiting.
     ProcessState_DebugSuspended=7,      ///<Process execution suspended by debugger.
 } ProcessState;
+
+/// Process Activity.
+typedef enum {
+    ProcessActivity_Runnable = 0, ///< Process can run.
+    ProcessActivity_Paused   = 1, ///< Process is paused.
+} ProcessActivity;
 
 /// Debug Thread Parameters.
 typedef enum {
@@ -199,11 +218,11 @@ typedef enum {
 
 /// GetSystemInfo PhysicalMemory Sub IDs.
 typedef enum {
-    PhysicalMemoryInfo_Application  = 0, ///< Memory allocated for application usage.
-    PhysicalMemoryInfo_Applet       = 1, ///< Memory allocated for applet usage.
-    PhysicalMemoryInfo_System       = 2, ///< Memory allocated for system usage.
-    PhysicalMemoryInfo_SystemUnsafe = 3, ///< Memory allocated for unsafe system usage (accessible to devices).
-} PhysicalMemoryInfo;
+    PhysicalMemorySystemInfo_Application  = 0, ///< Memory allocated for application usage.
+    PhysicalMemorySystemInfo_Applet       = 1, ///< Memory allocated for applet usage.
+    PhysicalMemorySystemInfo_System       = 2, ///< Memory allocated for system usage.
+    PhysicalMemorySystemInfo_SystemUnsafe = 3, ///< Memory allocated for unsafe system usage (accessible to devices).
+} PhysicalMemorySystemInfo;
 
 /// SleepThread yield types.
 typedef enum {
@@ -345,7 +364,7 @@ void svcSleepThread(s64 nano);
  * @return Result code.
  * @note Syscall number 0x0C.
  */
-Result svcGetThreadPriority(u32* priority, Handle handle);
+Result svcGetThreadPriority(s32* priority, Handle handle);
 
 /**
  * @brief Sets a thread's priority.
@@ -359,7 +378,7 @@ Result svcSetThreadPriority(Handle handle, u32 priority);
  * @return Result code.
  * @note Syscall number 0x0E.
  */
-Result svcGetThreadCoreMask(s32* preferred_core, u32* affinity_mask, Handle handle);
+Result svcGetThreadCoreMask(s32* preferred_core, u64* affinity_mask, Handle handle);
 
 /**
  * @brief Sets a thread's core mask.
@@ -710,7 +729,7 @@ Result svcGetLastThreadInfo(LastThreadContext *out_context, u64 *out_tls_address
  * @note Syscall number 0x30.
  * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
  */
-Result svcGetResourceLimitLimitValue(u64 *out, Handle reslimit_h, LimitableResource which);
+Result svcGetResourceLimitLimitValue(s64 *out, Handle reslimit_h, LimitableResource which);
 
 /**
  * @brief Gets the maximum value a LimitableResource can have, for a Resource Limit handle.
@@ -718,7 +737,7 @@ Result svcGetResourceLimitLimitValue(u64 *out, Handle reslimit_h, LimitableResou
  * @note Syscall number 0x31.
  * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
  */
-Result svcGetResourceLimitCurrentValue(u64 *out, Handle reslimit_h, LimitableResource which);
+Result svcGetResourceLimitCurrentValue(s64 *out, Handle reslimit_h, LimitableResource which);
 
 ///@}
 
@@ -730,7 +749,7 @@ Result svcGetResourceLimitCurrentValue(u64 *out, Handle reslimit_h, LimitableRes
  * @return Result code.
  * @note Syscall number 0x32.
  */
-Result svcSetThreadActivity(Handle thread, bool paused);
+Result svcSetThreadActivity(Handle thread, ThreadActivity paused);
 
 /**
  * @brief Dumps the registers of a thread paused by @ref svcSetThreadActivity (register groups: all).
@@ -958,7 +977,7 @@ Result svcReadWriteRegister(u32* outVal, u64 regAddr, u32 rwMask, u32 inVal);
  * @note Syscall number 0x4F.
  * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
  */
-Result svcSetProcessActivity(Handle process, bool paused);
+Result svcSetProcessActivity(Handle process, ProcessActivity paused);
 
 ///@}
 
@@ -1008,7 +1027,7 @@ Result svcCreateInterruptEvent(Handle* handle, u64 irqNum, u32 flag);
  * @note Syscall number 0x54.
  * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
  */
-Result svcQueryPhysicalAddress(u64 out[3], u64 virtaddr);
+Result svcQueryPhysicalAddress(PhysicalMemoryInfo *out, u64 virtaddr);
 
 /**
  * @brief Returns a virtual address mapped to a given IO range.
@@ -1149,7 +1168,7 @@ Result svcTerminateDebugProcess(Handle debug);
  * @note Syscall number 0x63.
  * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
  */
-Result svcGetDebugEvent(u8* event_out, Handle debug);
+Result svcGetDebugEvent(void* event_out, Handle debug);
 
 /**
  * @brief Continues a debugging session.
@@ -1206,7 +1225,7 @@ Result svcSetDebugThreadContext(Handle debug, u64 threadID, const ThreadContext*
  * @note Syscall number 0x65.
  * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
  */
-Result svcGetProcessList(u32 *num_out, u64 *pids_out, u32 max_pids);
+Result svcGetProcessList(s32 *num_out, u64 *pids_out, u32 max_pids);
 
 /**
  * @brief Retrieves a list of all threads for a debug handle (or zero).
@@ -1214,7 +1233,7 @@ Result svcGetProcessList(u32 *num_out, u64 *pids_out, u32 max_pids);
  * @note Syscall number 0x66.
  * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
  */
-Result svcGetThreadList(u32 *num_out, u64 *tids_out, u32 max_tids, Handle debug);
+Result svcGetThreadList(s32 *num_out, u64 *tids_out, u32 max_tids, Handle debug);
 
 ///@}
 
@@ -1423,7 +1442,7 @@ Result svcTerminateProcess(Handle proc);
  * @note Syscall number 0x7C.
  * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
  */
-Result svcGetProcessInfo(u64 *out, Handle proc, ProcessInfoType which);
+Result svcGetProcessInfo(s64 *out, Handle proc, ProcessInfoType which);
 
 ///@}
 
