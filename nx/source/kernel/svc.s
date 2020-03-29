@@ -93,7 +93,7 @@ SVC_BEGIN svcGetThreadCoreMask
 	svc 0xE
 	ldp x3, x4, [sp], #16
 	str w1, [x3]
-	str w2, [x4]
+	str x2, [x4]
 	ret
 SVC_END
 
