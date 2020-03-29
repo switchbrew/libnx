@@ -219,11 +219,11 @@ Result threadClose(Thread* t) {
 }
 
 Result threadPause(Thread* t) {
-    return svcSetThreadActivity(t->handle, 1);
+    return svcSetThreadActivity(t->handle, ThreadActivity_Paused);
 }
 
 Result threadResume(Thread* t) {
-    return svcSetThreadActivity(t->handle, 0);
+    return svcSetThreadActivity(t->handle, ThreadActivity_Runnable);
 }
 
 Result threadDumpContext(ThreadContext* ctx, Thread* t) {
