@@ -4,7 +4,6 @@
 
 #include "runtime/hosversion.h"
 
-
 static Service g_nimSrv;
 
 NX_GENERATE_SERVICE_GUARD(nim);
