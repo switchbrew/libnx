@@ -82,6 +82,7 @@ extern "C" {
 #include "switch/services/vi.h"
 #include "switch/services/nv.h"
 #include "switch/services/nifm.h"
+#include "switch/services/nim.h"
 #include "switch/services/ns.h"
 #include "switch/services/ldr.h"
 #include "switch/services/ro.h"
