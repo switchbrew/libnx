@@ -371,13 +371,20 @@ Result fsCreate_SystemSaveData(FsSaveDataSpaceId save_data_space_id, u64 system_
 /// See \ref FsSaveDataAttribute for application_id and uid.
 Result fsOpen_SaveData(FsFileSystem* out, u64 application_id, AccountUid uid);
 
+/// Wrapper for fsOpenSaveDataFileSystem, for opening BcatSaveData.
+Result fsOpen_BcatSaveData(FsFileSystem* out, u64 application_id);
+
 /// Wrapper for fsOpenSaveDataFileSystem, for opening DeviceSaveData.
 /// See \ref FsSaveDataAttribute for application_id.
 Result fsOpen_DeviceSaveData(FsFileSystem* out, u64 application_id);
 
-/// Wrapper for fsOpenSaveDataFileSystemBySystemSaveDataId.
+/// Wrapper for fsOpenSaveDataFileSystemBySystemSaveDataId, for opening SystemSaveData.
 /// WARNING: You can brick when writing to SystemSaveData, if the data is corrupted etc.
 Result fsOpen_SystemSaveData(FsFileSystem* out, FsSaveDataSpaceId save_data_space_id, u64 system_save_data_id, AccountUid uid);
+
+/// Wrapper for fsOpenSaveDataFileSystemBySystemSaveDataId, for opening SystemBcatSaveData.
+/// Only available on [4.0.0+].
+Result fsOpen_SystemBcatSaveData(FsFileSystem* out, u64 system_save_data_id);
 
 // IFileSystem
 Result fsFsCreateFile(FsFileSystem* fs, const char* path, s64 size, u32 option);

@@ -498,6 +498,16 @@ Result fsOpen_SaveData(FsFileSystem* out, u64 application_id, AccountUid uid) {
     return _fsOpen_SaveDataFs(out, &attr);
 }
 
+Result fsOpen_BcatSaveData(FsFileSystem* out, u64 application_id) {
+    FsSaveDataAttribute attr;
+
+    memset(&attr, 0, sizeof(attr));
+    attr.application_id = application_id;
+    attr.save_data_type = FsSaveDataType_Bcat;
+
+    return _fsOpen_SaveDataFs(out, &attr);
+}
+
 Result fsOpen_DeviceSaveData(FsFileSystem* out, u64 application_id) {
     FsSaveDataAttribute attr;
 
@@ -517,6 +527,19 @@ Result fsOpen_SystemSaveData(FsFileSystem* out, FsSaveDataSpaceId save_data_spac
     attr.save_data_type = FsSaveDataType_System;
 
     return fsOpenSaveDataFileSystemBySystemSaveDataId(out, save_data_space_id, &attr);
+}
+
+Result fsOpen_SystemBcatSaveData(FsFileSystem* out, u64 system_save_data_id) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    FsSaveDataAttribute attr;
+
+    memset(&attr, 0, sizeof(attr));
+    attr.system_save_data_id = system_save_data_id;
+    attr.save_data_type = FsSaveDataType_SystemBcat;
+
+    return fsOpenSaveDataFileSystemBySystemSaveDataId(out, FsSaveDataSpaceId_System, &attr);
 }
 
 //-----------------------------------------------------------------------------

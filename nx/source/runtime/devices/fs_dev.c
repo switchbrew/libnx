@@ -465,6 +465,19 @@ Result fsdevMountSaveData(const char *name, u64 application_id, AccountUid uid)
   return rc;
 }
 
+Result fsdevMountBcatSaveData(const char *name, u64 application_id)
+{
+  FsFileSystem fs;
+  Result rc = fsOpen_BcatSaveData(&fs, application_id);
+  if(R_SUCCEEDED(rc))
+  {
+    int ret = fsdevMountDevice(name, fs);
+    if(ret==-1)
+      rc = MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
+  }
+  return rc;
+}
+
 Result fsdevMountDeviceSaveData(const char *name, u64 application_id)
 {
   FsFileSystem fs;
@@ -482,6 +495,19 @@ Result fsdevMountSystemSaveData(const char *name, FsSaveDataSpaceId save_data_sp
 {
   FsFileSystem fs;
   Result rc = fsOpen_SystemSaveData(&fs, save_data_space_id, system_save_data_id, uid);
+  if(R_SUCCEEDED(rc))
+  {
+    int ret = fsdevMountDevice(name, fs);
+    if(ret==-1)
+      rc = MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
+  }
+  return rc;
+}
+
+Result fsdevMountSystemBcatSaveData(const char *name, u64 system_save_data_id)
+{
+  FsFileSystem fs;
+  Result rc = fsOpen_SystemBcatSaveData(&fs, system_save_data_id);
   if(R_SUCCEEDED(rc))
   {
     int ret = fsdevMountDevice(name, fs);
