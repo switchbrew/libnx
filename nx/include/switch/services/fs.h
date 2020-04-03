@@ -323,16 +323,17 @@ Result fsOpenBisStorage(FsStorage* out, FsBisPartitionId partitionId);
 Result fsOpenSdCardFileSystem(FsFileSystem* out);
 
 Result fsCreateSaveDataFileSystemBySystemSaveDataId(const FsSaveDataAttribute* attr, const FsSaveDataCreationInfo* creation_info);
-Result fsDeleteSaveDataFileSystemBySaveDataSpaceId(FsSaveDataSpaceId save_data_space_id, u64 saveID); /// [2.0.0+]
+Result fsDeleteSaveDataFileSystemBySaveDataSpaceId(FsSaveDataSpaceId save_data_space_id, u64 saveID); ///< [2.0.0+]
 
 Result fsIsExFatSupported(bool* out);
 
 Result fsOpenGameCardFileSystem(FsFileSystem* out, const FsGameCardHandle* handle, FsGameCardPartition partition);
 
-Result fsExtendSaveDataFileSystem(FsSaveDataSpaceId save_data_space_id, u64 saveID, s64 dataSize, s64 journalSize); /// [3.0.0+]
+Result fsExtendSaveDataFileSystem(FsSaveDataSpaceId save_data_space_id, u64 saveID, s64 dataSize, s64 journalSize); ///< [3.0.0+]
 
 Result fsOpenSaveDataFileSystem(FsFileSystem* out, FsSaveDataSpaceId save_data_space_id, const FsSaveDataAttribute *attr);
 Result fsOpenSaveDataFileSystemBySystemSaveDataId(FsFileSystem* out, FsSaveDataSpaceId save_data_space_id, const FsSaveDataAttribute *attr);
+Result fsOpenReadOnlySaveDataFileSystem(FsFileSystem* out, FsSaveDataSpaceId save_data_space_id, const FsSaveDataAttribute *attr); ///< [2.0.0+].
 
 Result fsReadSaveDataFileSystemExtraDataBySaveDataSpaceId(void* buf, size_t len, FsSaveDataSpaceId save_data_space_id, u64 saveID);
 Result fsReadSaveDataFileSystemExtraData(void* buf, size_t len, u64 saveID);
@@ -342,7 +343,7 @@ Result fsOpenSaveDataInfoReader(FsSaveDataInfoReader* out, FsSaveDataSpaceId sav
 
 Result fsOpenImageDirectoryFileSystem(FsFileSystem* out, FsImageDirectoryId image_directory_id);
 Result fsOpenContentStorageFileSystem(FsFileSystem* out, FsContentStorageId content_storage_id);
-Result fsOpenCustomStorageFileSystem(FsFileSystem* out, FsCustomStorageId custom_storage_id); /// [7.0.0+]
+Result fsOpenCustomStorageFileSystem(FsFileSystem* out, FsCustomStorageId custom_storage_id); ///< [7.0.0+]
 
 Result fsOpenDataStorageByCurrentProcess(FsStorage* out);
 Result fsOpenDataStorageByDataId(FsStorage* out, u64 dataId, NcmStorageId storageId);
@@ -370,6 +371,11 @@ Result fsCreate_SystemSaveData(FsSaveDataSpaceId save_data_space_id, u64 system_
 /// Wrapper for fsOpenSaveDataFileSystem.
 /// See \ref FsSaveDataAttribute for application_id and uid.
 Result fsOpen_SaveData(FsFileSystem* out, u64 application_id, AccountUid uid);
+
+/// Wrapper for fsOpenReadOnlySaveDataFileSystem.
+/// Only available on [2.0.0+].
+/// See \ref FsSaveDataAttribute for application_id and uid.
+Result fsOpen_SaveDataReadOnly(FsFileSystem* out, u64 application_id, AccountUid uid);
 
 /// Wrapper for fsOpenSaveDataFileSystem, for opening BcatSaveData.
 Result fsOpen_BcatSaveData(FsFileSystem* out, u64 application_id);

@@ -465,6 +465,19 @@ Result fsdevMountSaveData(const char *name, u64 application_id, AccountUid uid)
   return rc;
 }
 
+Result fsdevMountSaveDataReadOnly(const char *name, u64 application_id, AccountUid uid)
+{
+  FsFileSystem fs;
+  Result rc = fsOpen_SaveDataReadOnly(&fs, application_id, uid);
+  if(R_SUCCEEDED(rc))
+  {
+    int ret = fsdevMountDevice(name, fs);
+    if(ret==-1)
+      rc = MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
+  }
+  return rc;
+}
+
 Result fsdevMountBcatSaveData(const char *name, u64 application_id)
 {
   FsFileSystem fs;

@@ -33,6 +33,10 @@ Result fsdevMountSdmc(void);
 /// Mounts the specified SaveData.
 Result fsdevMountSaveData(const char *name, u64 application_id, AccountUid uid);
 
+/// Mounts the specified SaveData as ReadOnly.
+/// Only available on [2.0.0+].
+Result fsdevMountSaveDataReadOnly(const char *name, u64 application_id, AccountUid uid);
+
 /// Mounts the specified BcatSaveData.
 Result fsdevMountBcatSaveData(const char *name, u64 application_id);
 
