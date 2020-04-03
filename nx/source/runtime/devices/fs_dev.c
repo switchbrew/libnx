@@ -491,6 +491,32 @@ Result fsdevMountDeviceSaveData(const char *name, u64 application_id)
   return rc;
 }
 
+Result fsdevMountTemporaryStorage(const char *name)
+{
+  FsFileSystem fs;
+  Result rc = fsOpen_TemporaryStorage(&fs);
+  if(R_SUCCEEDED(rc))
+  {
+    int ret = fsdevMountDevice(name, fs);
+    if(ret==-1)
+      rc = MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
+  }
+  return rc;
+}
+
+Result fsdevMountCacheStorage(const char *name, u64 application_id, u16 save_data_index)
+{
+  FsFileSystem fs;
+  Result rc = fsOpen_CacheStorage(&fs, application_id, save_data_index);
+  if(R_SUCCEEDED(rc))
+  {
+    int ret = fsdevMountDevice(name, fs);
+    if(ret==-1)
+      rc = MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
+  }
+  return rc;
+}
+
 Result fsdevMountSystemSaveData(const char *name, FsSaveDataSpaceId save_data_space_id, u64 system_save_data_id, AccountUid uid)
 {
   FsFileSystem fs;

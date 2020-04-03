@@ -378,6 +378,15 @@ Result fsOpen_BcatSaveData(FsFileSystem* out, u64 application_id);
 /// See \ref FsSaveDataAttribute for application_id.
 Result fsOpen_DeviceSaveData(FsFileSystem* out, u64 application_id);
 
+/// Wrapper for fsOpenSaveDataFileSystem, for opening TemporaryStorage.
+/// Only available on [3.0.0+].
+Result fsOpen_TemporaryStorage(FsFileSystem* out);
+
+/// Wrapper for fsOpenSaveDataFileSystem, for opening CacheStorage.
+/// Only available on [3.0.0+].
+/// See \ref FsSaveDataAttribute for application_id.
+Result fsOpen_CacheStorage(FsFileSystem* out, u64 application_id, u16 save_data_index);
+
 /// Wrapper for fsOpenSaveDataFileSystemBySystemSaveDataId, for opening SystemSaveData.
 /// WARNING: You can brick when writing to SystemSaveData, if the data is corrupted etc.
 Result fsOpen_SystemSaveData(FsFileSystem* out, FsSaveDataSpaceId save_data_space_id, u64 system_save_data_id, AccountUid uid);

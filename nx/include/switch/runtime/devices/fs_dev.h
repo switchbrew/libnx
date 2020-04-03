@@ -39,6 +39,14 @@ Result fsdevMountBcatSaveData(const char *name, u64 application_id);
 /// Mounts the specified DeviceSaveData.
 Result fsdevMountDeviceSaveData(const char *name, u64 application_id);
 
+/// Mounts the TemporaryStorage for the current process.
+/// Only available on [3.0.0+].
+Result fsdevMountTemporaryStorage(const char *name);
+
+/// Mounts the specified CacheStorage.
+/// Only available on [3.0.0+].
+Result fsdevMountCacheStorage(const char *name, u64 application_id, u16 save_data_index);
+
 /// Mounts the specified SystemSaveData.
 Result fsdevMountSystemSaveData(const char *name, FsSaveDataSpaceId save_data_space_id, u64 system_save_data_id, AccountUid uid);
 
