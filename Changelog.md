@@ -1,5 +1,67 @@
 # Changelog
 
+## Version 3.1.0
+
+#### system
+* **Deleted the old and deprecated IPC system**.
+* **Added wrappers for all missing system calls**.
+* Corrected signatures of many system calls.
+* Removed `arm/atomics.h` (use C `<stdatomic.h>` or C++ `<atomic>` instead).
+* Removed `U64_MAX` define (use `UINT64_MAX` instead).
+* Added UtilFloat3 struct.
+
+#### applet
+* Fixed `__nx_applet_exit_mode` handling.
+* `apm` is now only used/initialized for `AppletType_Application`.
+* Simplified `appletGetAppletResourceUserId` to return the aruid directly, or 0 on "failure" (which is not really a failure condition).
+* Changed `appletSetFocusHandlingMode` to return error if the applet type is not `AppletType_Application`.
+* Added more fields to `SwkbdType` enum.
+
+#### filesystem
+* RomFS code now properly supports reading to uncached buffers.
+* Added fsdev commands: fsdevMountDeviceSaveData, fsdevMountBcatSaveData, fsdevMountSystemBcatSaveData, fsdevMountTemporaryStorage, fsdevMountCacheStorage, fsdevMountSaveDataReadOnly.
+* Added commands: fsOpenImageDirectoryFileSystem, fsOpenReadOnlySaveDataFileSystem, fsIsSignedSystemPartitionOnSdCardValid, fsOpen_DeviceSaveData, fsOpen_BcatSaveData, fsOpen_SystemBcatSaveData, fsOpen_TemporaryStorage, fsOpen_CacheStorage, fsOpen_SaveDataReadOnly.
+* Added enum: FsImageDirectoryId.
+* Removed path stack copy logic from fsFsQueryEntry.
+
+#### graphics
+* Removed bqDetachBuffer calls from nwindowReleaseBuffers as it does nothing in the place it's called.
+* Fixed nvFence/nvGpu/nvMap to use service guard instead of unsafe reference counting.
+
+#### hid
+* **Fixed vibration handling**.
+* **Added Ring-Con™ support**.
+* Added hidbus service wrappers.
+* Added commands: hidSetSixAxisSensorFusionParameters, hidGetSixAxisSensorFusionParameters, hidResetSixAxisSensorFusionParameters, hidSetGyroscopeZeroDriftMode, hidGetGyroscopeZeroDriftMode, hidResetGyroscopeZeroDriftMode.
+* Majorly overhauled irs service support (infrared camera), with support for features introduced in later system versions.
+* Added enum: HidGyroscopeZeroDriftMode.
+* Corrected internal console six-axis sensor initialization function to actually use the right command.
+* Corrected values of `JOYSTICK_MIN` and `JOYSTICK_MAX`.
+
+#### other services
+* Added apm command: apmGetPerformanceMode.
+* Added caps:a service wrappers.
+* Added caps:c service wrappers.
+* Added caps:dc service wrappers.
+* Added fan service wrappers.
+* Added many missing lbl commands.
+* Added nifm commands: nifmGetClientId (with corresponding NifmClientId struct), nifmIsAnyInternetRequestAccepted.
+* Added nim service wrappers (only nimListSystemUpdateTask/nimDestroySystemUpdateTask for now).
+* Majorly overhauled ns service support, with countless commands and structures.
+* Added set:cal service wrappers.
+* Completed and corrected all set:sys commands.
+* Added tc service wrappers.
+* Actually expose ldrShellFlushArguments, ldrDmntFlushArguments, spl\*GetServiceSession.
+* Corrected minimum sysver for setsysGetHomeMenuScheme.
+* Corrected minimum sysver for nsListApplicationContentMetaStatus.
+* Fixed splSslLoadSecureExpModKey/splEsLoadSecureExpModKey/splRsaDecryptPrivateKey/splSslLoadSecureExpModKey/splEsLoadRsaOaepKey/splEsLoadSecureExpModKey/splFsLoadSecureExpModKey on 5.0+.
+* Fixed plInitialize failure handling.
+* Removed non-existent fsldrSetCurrentProcess.
+
+#### miscellaneous
+* Changed timezone support code to always report `NX` as the timezone name, fixing certain issues.
+* Further improvements to overall system stability and other minor adjustments have been made to enhance the user experience.
+
 ## Version 3.0.0
 
 #### system
