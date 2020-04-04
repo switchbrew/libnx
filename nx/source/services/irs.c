@@ -1062,20 +1062,12 @@ Result irsGetPointingProcessorStates(IrsIrCameraHandle handle, IrsPointingProces
             states[i].sampling_number = tmp_states[i].sampling_number;
             states[i].timestamp = tmp_states[i].timestamp;
 
-            if (tmp_states[i].pointing_status0) {
-                pos_x+= tmp_states[i].position0_x;
-                pos_y+= tmp_states[i].position0_y;
-                poscount++;
-            }
-            if (tmp_states[i].pointing_status1) {
-                pos_x+= tmp_states[i].position1_x;
-                pos_y+= tmp_states[i].position1_y;
-                poscount++;
-            }
-            if (tmp_states[i].pointing_status2) {
-                pos_x+= tmp_states[i].position2_x;
-                pos_y+= tmp_states[i].position2_y;
-                poscount++;
+            for (u32 pointi=0; pointi<3; pointi++) {
+                if (tmp_states[i].data[pointi].pointing_status) {
+                    pos_x+= tmp_states[i].data[pointi].position_x;
+                    pos_y+= tmp_states[i].data[pointi].position_y;
+                    poscount++;
+                }
             }
 
             states[i].pointing_status = poscount < 3;

@@ -315,23 +315,16 @@ typedef struct {
     s64 sampling_number;                  ///< SamplingNumber
     u64 timestamp;                        ///< TimeStamp
 
-    u8 pointing_status0;                  ///< PointingStatus
-    u8 reserved0[0xb];                    ///< Reserved
-    float position0_x;                    ///< PositionX
-    float position0_y;                    ///< PositionY
-    u8 reserved1[0xc];                    ///< Reserved
-
-    u8 pointing_status1;                  ///< PointingStatus
-    u8 reserved2[0xb];                    ///< Reserved
-    float position1_x;                    ///< PositionX
-    float position1_y;                    ///< PositionY
-    u8 reserved3[0xc];                    ///< Reserved
-
-    u8 pointing_status2;                  ///< PointingStatus
-    u8 reserved4[0xb];                    ///< Reserved
-    float position2_x;                    ///< PositionX
-    float position2_y;                    ///< PositionY
-    u8 reserved5[0xc];                    ///< Reserved
+    struct {
+        u8 pointing_status;               ///< PointingStatus
+        u8 reserved[0x3];                 ///< Reserved
+        u8 unk_x4[0x4];                   ///< Unknown
+        float unk_x8;                     ///< Unknown
+        float position_x;                 ///< PositionX
+        float position_y;                 ///< PositionY
+        float unk_x14;                    ///< Unknown
+        IrsRect window_of_interest;       ///< WindowOfInterest
+    } data[3];
 } IrsPointingProcessorMarkerState;
 
 /// PointingProcessorState
