@@ -175,7 +175,7 @@ Result nfpMount(const NfcDeviceHandle *handle, NfpDeviceType device_type, NfpMou
 Result nfpUnmount(const NfcDeviceHandle *handle);
 
 /// Not available with ::NfpServiceType_System.
-Result nfpOpenApplicationArea(const NfcDeviceHandle *handle, u32 app_id, u32 *npad_id);
+Result nfpOpenApplicationArea(const NfcDeviceHandle *handle, u32 app_id);
 
 /// Not available with ::NfpServiceType_System.
 Result nfpGetApplicationArea(const NfcDeviceHandle *handle, void* buf, size_t buf_size);
