@@ -236,7 +236,7 @@ Result nfpUnmount(const NfcDeviceHandle *handle) {
     return _nfcCmdInDevhandleNoOut(&g_nfpInterface, handle, 6);
 }
 
-Result nfpOpenApplicationArea(const NfcDeviceHandle *handle, u32 app_id, u32 *npad_id) {
+Result nfpOpenApplicationArea(const NfcDeviceHandle *handle, u32 app_id) {
     if (g_nfpServiceType == NfpServiceType_System)
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
@@ -246,7 +246,7 @@ Result nfpOpenApplicationArea(const NfcDeviceHandle *handle, u32 app_id, u32 *np
     } in = { *handle, app_id };
 
     serviceAssumeDomain(&g_nfpInterface);
-    return serviceDispatchInOut(&g_nfpInterface, 7, in, *npad_id);
+    return serviceDispatchIn(&g_nfpInterface, 7, in);
 }
 
 Result nfpGetApplicationArea(const NfcDeviceHandle *handle, void* buf, size_t buf_size) {
