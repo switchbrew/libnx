@@ -51,6 +51,17 @@ Result audoutAppendAudioOutBuffer(AudioOutBuffer *Buffer);
 Result audoutGetReleasedAudioOutBuffer(AudioOutBuffer **Buffer, u32 *ReleasedBuffersCount);
 Result audoutContainsAudioOutBuffer(AudioOutBuffer *Buffer, bool *ContainsBuffer);
 
+/// Only available with [4.0.0+].
+Result audoutGetAudioOutBufferCount(u32 *count);
+/// Only available with [4.0.0+].
+Result audoutGetAudioOutPlayedSampleCount(u64 *count);
+/// Only available with [4.0.0+].
+Result audoutFlushAudioOutBuffers(bool *flushed);
+/// Only available with [6.0.0+].
+Result audoutSetAudioOutVolume(float volume);
+/// Only available with [6.0.0+].
+Result audoutGetAudioOutVolume(float *volume);
+
 /**
  * @brief Submits an audio sample data buffer for playing and waits for it to finish playing.
  * @brief Uses \ref audoutAppendAudioOutBuffer and \ref audoutWaitPlayFinish internally.
