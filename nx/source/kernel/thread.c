@@ -9,6 +9,7 @@
 #include "kernel/thread.h"
 #include "kernel/wait.h"
 #include "services/fatal.h"
+#include "runtime/env.h"
 #include "../internal.h"
 
 #define USER_TLS_BEGIN 0x108
@@ -22,6 +23,8 @@ extern u8 __tls_end[];
 
 static Mutex g_threadMutex;
 static Thread* g_threadList;
+
+static Thread g_mainThread;
 
 static u64 g_tlsUsageMask;
 static void (* g_tlsDestructors[NUM_TLS_SLOTS])(void*);
@@ -58,6 +61,33 @@ static void _EntryWrap(ThreadEntryArgs* args) {
     // Launch thread entrypoint
     args->entry(args->arg);
     threadExit();
+}
+
+void __libnx_init_thread(void) {
+    g_mainThread.handle         = envGetMainThreadHandle();
+
+    MemoryInfo mem_info = {0};
+    u32 page_info;
+    svcQueryMemory(&mem_info, &page_info, (u64)(&mem_info));
+
+    // Set stack.
+    g_mainThread.owns_stack_mem = false;
+    g_mainThread.stack_mem      = NULL;
+    g_mainThread.stack_mirror   = (void*)mem_info.addr;
+    g_mainThread.stack_sz       = mem_info.size;
+
+    // Set the TLS array.
+    mutexLock(&g_threadMutex);
+    g_mainThread.tls_array = (void**)((u8*)armGetTls() + USER_TLS_BEGIN);
+    g_mainThread.prev_next = &g_threadList;
+    g_mainThread.next = g_threadList;
+    if (g_threadList)
+        g_threadList->prev_next = &g_mainThread.next;
+    g_threadList = &g_mainThread;
+    mutexUnlock(&g_threadMutex);
+
+    // Set thread_ptr.
+    getThreadVars()->thread_ptr = &g_mainThread;
 }
 
 Result threadCreate(
@@ -228,6 +258,10 @@ Result threadResume(Thread* t) {
 
 Result threadDumpContext(ThreadContext* ctx, Thread* t) {
     return svcGetThreadContext3(ctx, t->handle);
+}
+
+Thread *threadGetSelf(void) {
+    return getThreadVars()->thread_ptr;
 }
 
 Handle threadGetCurHandle(void) {

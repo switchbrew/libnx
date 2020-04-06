@@ -92,6 +92,12 @@ Result threadResume(Thread* t);
 Result threadDumpContext(ThreadContext* ctx, Thread* t);
 
 /**
+ * @brief Gets a pointer to the current thread structure.
+ * @return Thread information structure.
+ */
+Thread *threadGetSelf(void);
+
+/**
  * @brief Gets the raw handle to the current thread.
  * @return The current thread's handle.
  */
