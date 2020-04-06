@@ -220,3 +220,26 @@ Result audoutContainsAudioOutBuffer(AudioOutBuffer *Buffer, bool *ContainsBuffer
     if (R_SUCCEEDED(rc) && ContainsBuffer) *ContainsBuffer = out & 1;
     return rc;
 }
+
+Result audoutGetAudioOutBufferCount(u32 *count) {
+    return serviceDispatchOut(&g_audoutIAudioOut, 9, *count);
+}
+
+Result audoutGetAudioOutPlayedSampleCount(u64 *count) {
+    return serviceDispatchOut(&g_audoutIAudioOut, 10, *count);
+}
+
+Result audoutFlushAudioOutBuffers(bool *flushed) {
+    u8 out=0;
+    Result rc = serviceDispatchOut(&g_audoutIAudioOut, 11, out);
+    if (R_SUCCEEDED(rc) && flushed) *flushed = out & 1;
+    return rc;
+}
+
+Result audoutSetAudioOutVolume(float volume) {
+    return serviceDispatchIn(&g_audoutIAudioOut, 12, volume);
+}
+
+Result audoutGetAudioOutVolume(float *volume) {
+    return serviceDispatchOut(&g_audoutIAudioOut, 13, *volume);
+}

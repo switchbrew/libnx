@@ -50,6 +50,11 @@ Result audoutAppendAudioOutBuffer(AudioOutBuffer *Buffer);
 
 Result audoutGetReleasedAudioOutBuffer(AudioOutBuffer **Buffer, u32 *ReleasedBuffersCount);
 Result audoutContainsAudioOutBuffer(AudioOutBuffer *Buffer, bool *ContainsBuffer);
+Result audoutGetAudioOutBufferCount(u32 *count);
+Result audoutGetAudioOutPlayedSampleCount(u64 *count);
+Result audoutFlushAudioOutBuffers(bool *flushed);
+Result audoutSetAudioOutVolume(float volume);
+Result audoutGetAudioOutVolume(float *volume);
 
 /**
  * @brief Submits an audio sample data buffer for playing and waits for it to finish playing.
