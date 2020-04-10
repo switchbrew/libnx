@@ -97,6 +97,13 @@ void* timeGetSharedmemAddr(void);
 Result timeGetStandardSteadyClockTimePoint(TimeSteadyClockTimePoint *out);
 
 /**
+ * @brief [3.0.0+] Gets the internal offset for the standard steady clock.
+ * @param[out] out Output internal offset.
+ * @return Result code.
+ */
+Result timeGetStandardSteadyClockInternalOffset(s64 *out);
+
+/**
  * @brief Gets the time for the specified clock.
  * @param[in] type Clock to use.
  * @param[out] timestamp POSIX UTC timestamp.

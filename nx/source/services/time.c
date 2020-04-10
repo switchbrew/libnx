@@ -170,6 +170,13 @@ Result timeGetStandardSteadyClockTimePoint(TimeSteadyClockTimePoint *out) {
     return 0;
 }
 
+Result timeGetStandardSteadyClockInternalOffset(s64 *out) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchOut(&g_timeSteadyClock, 200, *out);
+}
+
 Result timeGetCurrentTime(TimeType type, u64 *timestamp) {
     Service *srv = timeGetServiceSession_SystemClock(type);
 
