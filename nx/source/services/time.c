@@ -177,13 +177,34 @@ Result timeGetStandardSteadyClockInternalOffset(s64 *out) {
     return serviceDispatchOut(&g_timeSteadyClock, 200, *out);
 }
 
+static Result _timeReadClockFromSharedMem(size_t offset, u64 *out) {
+    TimeStandardSteadyClockTimePointType steady;
+    _timeReadSharedmemObj(&steady, 0x00, sizeof(steady));
+
+    TimeSystemClockContext context;
+    _timeReadSharedmemObj(&context, offset, sizeof(context));
+
+    if (memcmp(&context.timestamp.source_id, &steady.source_id, sizeof(Uuid)) != 0)
+        return MAKERESULT(116,102);
+
+    *out = context.offset + (steady.base_time + armTicksToNs(armGetSystemTick())) / 1000000000UL;
+    return 0;
+}
+
 Result timeGetCurrentTime(TimeType type, u64 *timestamp) {
-    Service *srv = timeGetServiceSession_SystemClock(type);
+    if (!shmemGetAddr(&g_timeSharedmem)) {
+        Service *srv = timeGetServiceSession_SystemClock(type);
 
-    if (srv==NULL)
-        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+        if (srv==NULL)
+            return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
-    return _timeCmdNoInOutU64(srv, timestamp, 0);
+        return _timeCmdNoInOutU64(srv, timestamp, 0);
+    }
+
+    if (type != TimeType_NetworkSystemClock)
+        return _timeReadClockFromSharedMem(0x38, timestamp);
+    else
+        return _timeReadClockFromSharedMem(0x80, timestamp);
 }
 
 Result timeSetCurrentTime(TimeType type, u64 timestamp) {
