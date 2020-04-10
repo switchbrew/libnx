@@ -163,13 +163,9 @@ Result timeGetStandardSteadyClockTimePoint(TimeSteadyClockTimePoint *out) {
         return serviceDispatchOut(&g_timeSteadyClock, 0, *out);
     }
 
-    struct { // SteadyClockContext
-        u64 internal_offset;
-        Uuid source_id;
-    } context;
-
+    TimeStandardSteadyClockTimePointType context;
     _timeReadSharedmemObj(&context, 0x00, sizeof(context));
-    out->time_point = (context.internal_offset + armTicksToNs(armGetSystemTick())) / 1000000000UL;
+    out->time_point = (context.base_time + armTicksToNs(armGetSystemTick())) / 1000000000UL;
     out->source_id = context.source_id;
     return 0;
 }

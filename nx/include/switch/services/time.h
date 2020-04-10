@@ -58,8 +58,13 @@ typedef struct {
 } TimeSteadyClockTimePoint;
 
 typedef struct {
-    s64 time_point;
-    TimeSteadyClockTimePoint steady_clock_time_point;
+    s64 base_time;
+    Uuid source_id;
+} TimeStandardSteadyClockTimePointType;
+
+typedef struct {
+    s64 offset;
+    TimeSteadyClockTimePoint timestamp;
 } TimeSystemClockContext;
 
 /// Initialize time. Used automatically during app startup.
