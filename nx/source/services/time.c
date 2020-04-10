@@ -1,5 +1,8 @@
 #define NX_SERVICE_ASSUME_NON_DOMAIN
+#include <string.h>
+#include <stdatomic.h>
 #include "service_guard.h"
+#include "arm/counter.h"
 #include "kernel/shmem.h"
 #include "services/time.h"
 #include "runtime/hosversion.h"
@@ -9,6 +12,7 @@ __attribute__((weak)) TimeServiceType __nx_time_service_type = TimeServiceType_U
 static Service g_timeSrv;
 static Service g_timeUserSystemClock;
 static Service g_timeNetworkSystemClock;
+static Service g_timeSteadyClock;
 static Service g_timeTimeZoneService;
 static Service g_timeLocalSystemClock;
 
@@ -16,6 +20,7 @@ static SharedMemory g_timeSharedmem;
 
 static Result _timeCmdGetSession(Service* srv, Service* srv_out, u32 cmd_id);
 static Result _timeGetSharedMemoryNativeHandle(Service* srv, Handle* out);
+static void _timeReadSharedmemObj(void* out, size_t offset, size_t size);
 
 NX_GENERATE_SERVICE_GUARD(time);
 
@@ -52,6 +57,9 @@ Result _timeInitialize(void) {
         rc = _timeCmdGetSession(&g_timeSrv, &g_timeNetworkSystemClock, 1);
 
     if (R_SUCCEEDED(rc))
+        rc = _timeCmdGetSession(&g_timeSrv, &g_timeSteadyClock, 2);
+
+    if (R_SUCCEEDED(rc))
         rc = _timeCmdGetSession(&g_timeSrv, &g_timeTimeZoneService, 3);
 
     if (R_SUCCEEDED(rc))
@@ -73,6 +81,7 @@ void _timeCleanup(void) {
     shmemClose(&g_timeSharedmem);
     serviceClose(&g_timeLocalSystemClock);
     serviceClose(&g_timeTimeZoneService);
+    serviceClose(&g_timeSteadyClock);
     serviceClose(&g_timeNetworkSystemClock);
     serviceClose(&g_timeUserSystemClock);
     serviceClose(&g_timeSrv);
@@ -97,12 +106,30 @@ Service* timeGetServiceSession_SystemClock(TimeType type) {
     }
 }
 
+Service* timeGetServiceSession_SteadyClock(void) {
+    return &g_timeSteadyClock;
+}
+
 Service* timeGetServiceSession_TimeZoneService(void) {
     return &g_timeTimeZoneService;
 }
 
 void* timeGetSharedmemAddr(void) {
     return shmemGetAddr(&g_timeSharedmem);
+}
+
+void _timeReadSharedmemObj(void* out, size_t offset, size_t size) {
+    void* addr = (u8*)shmemGetAddr(&g_timeSharedmem) + offset;
+
+    vu32* counter = (vu32*)addr;
+    void* data = (u8*)addr + 8;
+
+    u32 cur_counter;
+    do {
+        cur_counter = *counter;
+        memcpy(out, (u8*)data + (cur_counter&1)*size, size);
+        atomic_thread_fence(memory_order_consume);
+    } while (cur_counter != *counter);
 }
 
 static Result _timeCmdGetSession(Service* srv, Service* srv_out, u32 cmd_id) {
@@ -129,6 +156,22 @@ static Result _timeCmdNoInOutU64(Service* srv, u64 *out, u32 cmd_id) {
 
 static Result _appletCmdNoInOutU32(Service* srv, u32 *out, u32 cmd_id) {
     return serviceDispatchOut(srv, cmd_id, *out);
+}
+
+Result timeGetStandardSteadyClockTimePoint(TimeSteadyClockTimePoint *out) {
+    if (!shmemGetAddr(&g_timeSharedmem)) {
+        return serviceDispatchOut(&g_timeSteadyClock, 0, *out);
+    }
+
+    struct { // SteadyClockContext
+        u64 internal_offset;
+        Uuid source_id;
+    } context;
+
+    _timeReadSharedmemObj(&context, 0x00, sizeof(context));
+    out->time_point = (context.internal_offset + armTicksToNs(armGetSystemTick())) / 1000000000UL;
+    out->source_id = context.source_id;
+    return 0;
 }
 
 Result timeGetCurrentTime(TimeType type, u64 *timestamp) {
