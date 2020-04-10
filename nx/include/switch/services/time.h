@@ -77,6 +77,9 @@ Service* timeGetServiceSession_SystemClock(TimeType type);
 /// Gets the Service object for ITimeZoneService.
 Service* timeGetServiceSession_TimeZoneService(void);
 
+/// [6.0.0+] Gets the address of the SharedMemory.
+void* timeGetSharedmemAddr(void);
+
 /**
  * @brief Gets the time for the specified clock.
  * @param[in] type Clock to use.

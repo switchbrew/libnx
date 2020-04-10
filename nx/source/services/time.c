@@ -1,5 +1,6 @@
 #define NX_SERVICE_ASSUME_NON_DOMAIN
 #include "service_guard.h"
+#include "kernel/shmem.h"
 #include "services/time.h"
 #include "runtime/hosversion.h"
 
@@ -11,7 +12,10 @@ static Service g_timeNetworkSystemClock;
 static Service g_timeTimeZoneService;
 static Service g_timeLocalSystemClock;
 
+static SharedMemory g_timeSharedmem;
+
 static Result _timeCmdGetSession(Service* srv, Service* srv_out, u32 cmd_id);
+static Result _timeGetSharedMemoryNativeHandle(Service* srv, Handle* out);
 
 NX_GENERATE_SERVICE_GUARD(time);
 
@@ -41,10 +45,8 @@ Result _timeInitialize(void) {
             break;
     }
 
-    if (R_FAILED(rc))
-        return rc;
-
-    rc = _timeCmdGetSession(&g_timeSrv, &g_timeUserSystemClock, 0);
+    if (R_SUCCEEDED(rc))
+        rc = _timeCmdGetSession(&g_timeSrv, &g_timeUserSystemClock, 0);
 
     if (R_SUCCEEDED(rc))
         rc = _timeCmdGetSession(&g_timeSrv, &g_timeNetworkSystemClock, 1);
@@ -55,10 +57,20 @@ Result _timeInitialize(void) {
     if (R_SUCCEEDED(rc))
         rc = _timeCmdGetSession(&g_timeSrv, &g_timeLocalSystemClock, 4);
 
+    if (R_SUCCEEDED(rc) && hosversionAtLeast(6,0,0)) {
+        Handle shmem;
+        rc = _timeGetSharedMemoryNativeHandle(&g_timeSrv, &shmem);
+        if (R_SUCCEEDED(rc)) {
+            shmemLoadRemote(&g_timeSharedmem, shmem, 0x1000, Perm_R);
+            rc = shmemMap(&g_timeSharedmem);
+        }
+    }
+
     return rc;
 }
 
 void _timeCleanup(void) {
+    shmemClose(&g_timeSharedmem);
     serviceClose(&g_timeLocalSystemClock);
     serviceClose(&g_timeTimeZoneService);
     serviceClose(&g_timeNetworkSystemClock);
@@ -89,10 +101,21 @@ Service* timeGetServiceSession_TimeZoneService(void) {
     return &g_timeTimeZoneService;
 }
 
+void* timeGetSharedmemAddr(void) {
+    return shmemGetAddr(&g_timeSharedmem);
+}
+
 static Result _timeCmdGetSession(Service* srv, Service* srv_out, u32 cmd_id) {
     return serviceDispatch(srv, cmd_id,
         .out_num_objects = 1,
         .out_objects = srv_out,
+    );
+}
+
+static Result _timeGetSharedMemoryNativeHandle(Service* srv, Handle* out) {
+    return serviceDispatch(srv, 20,
+        .out_handle_attrs = { SfOutHandleAttr_HipcCopy },
+        .out_handles = out,
     );
 }
 
