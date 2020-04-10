@@ -158,6 +158,10 @@ static Result _appletCmdNoInOutU32(Service* srv, u32 *out, u32 cmd_id) {
     return serviceDispatchOut(srv, cmd_id, *out);
 }
 
+static s64 _timeComputeSteadyClockTimePoint(const TimeStandardSteadyClockTimePointType *context) {
+    return (context->base_time + armTicksToNs(armGetSystemTick())) / 1000000000L;
+}
+
 Result timeGetStandardSteadyClockTimePoint(TimeSteadyClockTimePoint *out) {
     if (!shmemGetAddr(&g_timeSharedmem)) {
         return serviceDispatchOut(&g_timeSteadyClock, 0, *out);
@@ -165,7 +169,7 @@ Result timeGetStandardSteadyClockTimePoint(TimeSteadyClockTimePoint *out) {
 
     TimeStandardSteadyClockTimePointType context;
     _timeReadSharedmemObj(&context, 0x00, sizeof(context));
-    out->time_point = (context.base_time + armTicksToNs(armGetSystemTick())) / 1000000000UL;
+    out->time_point = _timeComputeSteadyClockTimePoint(&context);
     out->source_id = context.source_id;
     return 0;
 }
@@ -187,7 +191,7 @@ static Result _timeReadClockFromSharedMem(size_t offset, u64 *out) {
     if (memcmp(&context.timestamp.source_id, &steady.source_id, sizeof(Uuid)) != 0)
         return MAKERESULT(116,102);
 
-    *out = context.offset + (steady.base_time + armTicksToNs(armGetSystemTick())) / 1000000000UL;
+    *out = context.offset + _timeComputeSteadyClockTimePoint(&steady);
     return 0;
 }
 
