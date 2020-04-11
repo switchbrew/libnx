@@ -261,7 +261,7 @@ typedef struct {
  * @param[out] out_addr Variable to which write the address of the heap (which is randomized and fixed by the kernel)
  * @param[in] size Size of the heap, must be a multiple of 0x2000000 and [2.0.0+] less than 0x18000000.
  * @return Result code.
- * @note Syscall number 0x00.
+ * @note Syscall number 0x01.
  */
 Result svcSetHeapSize(void** out_addr, u64 size);
 
@@ -273,7 +273,7 @@ Result svcSetHeapSize(void** out_addr, u64 size);
  * @return Result code.
  * @remark Perm_X is not allowed. Setting write-only is not allowed either (Perm_W).
  *         This can be used to move back and forth between Perm_None, Perm_R and Perm_Rw.
- * @note Syscall number 0x01.
+ * @note Syscall number 0x02.
  */
 Result svcSetMemoryPermission(void* addr, u64 size, u32 perm);
 
@@ -285,7 +285,7 @@ Result svcSetMemoryPermission(void* addr, u64 size, u32 perm);
  * @param[in] val1 State1
  * @return Result code.
  * @remark See <a href="https://switchbrew.org/wiki/SVC#svcSetMemoryAttribute">switchbrew.org Wiki</a> for more details.
- * @note Syscall number 0x02.
+ * @note Syscall number 0x03.
  */
 Result svcSetMemoryAttribute(void* addr, u64 size, u32 val0, u32 val1);
 
