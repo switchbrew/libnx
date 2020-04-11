@@ -825,9 +825,7 @@ typedef struct {
     u32 generation;
 } SetCalRsa2048DeviceKey;
 
-typedef struct {
-    char number[0x18];
-} SetCalSerialNumber;
+typedef SetSysSerialNumber SetCalSerialNumber;
 
 typedef struct {
     u8 parameter[0x5A];
