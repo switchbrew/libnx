@@ -1,3 +1,4 @@
+#include <string.h>
 #include "service_guard.h"
 #include "services/nifm.h"
 #include "runtime/hosversion.h"
@@ -65,10 +66,10 @@ static Result _nifmCmdGetSession(Service* srv, Service* srv_out, u32 cmd_id) {
     );
 }
 
-static Result _nifmCmdNoInOutU32(Service* srv, u32 *out, u32 cmd_id) {
+/*static Result _nifmCmdNoInOutU32(Service* srv, u32 *out, u32 cmd_id) {
     serviceAssumeDomain(srv);
     return serviceDispatchOut(srv, cmd_id, *out);
-}
+}*/
 
 static Result _nifmCmdNoInOutU8(Service* srv, u8 *out, u32 cmd_id) {
     serviceAssumeDomain(srv);
@@ -105,8 +106,54 @@ static Result _nifmCreateGeneralService(Service* srv_out) {
     );
 }
 
+static void _nifmConvertSfToNetworkProfileData(const NifmSfNetworkProfileData *in, NifmNetworkProfileData *out) {
+    memset(out, 0, sizeof(*out));
+
+    out->uuid = in->uuid;
+    strncpy(out->network_name, in->network_name, sizeof(in->network_name));
+    out->network_name[sizeof(out->network_name)-1] = 0;
+
+    out->unk_x50 = in->unk_x112;
+    out->unk_x54 = in->unk_x113;
+    out->unk_x58 = in->unk_x114;
+    out->unk_x59 = in->unk_x115;
+
+    out->wireless_setting_data.ssid_len = in->wireless_setting_data.ssid_len;
+    if (out->wireless_setting_data.ssid_len > sizeof(out->wireless_setting_data.ssid)-1) out->wireless_setting_data.ssid_len = sizeof(out->wireless_setting_data.ssid)-1;
+    if (out->wireless_setting_data.ssid_len) memcpy(out->wireless_setting_data.ssid, in->wireless_setting_data.ssid, out->wireless_setting_data.ssid_len);
+    out->wireless_setting_data.unk_x22 = in->wireless_setting_data.unk_x21;
+    out->wireless_setting_data.unk_x24 = in->wireless_setting_data.unk_x22;
+    out->wireless_setting_data.unk_x28 = in->wireless_setting_data.unk_x23;
+    memcpy(out->wireless_setting_data.passphrase, in->wireless_setting_data.passphrase, sizeof(out->wireless_setting_data.passphrase));
+
+    memcpy(&out->ip_setting_data, &in->ip_setting_data, sizeof(out->ip_setting_data));
+}
+
+static void _nifmConvertSfFromNetworkProfileData(const NifmNetworkProfileData *in, NifmSfNetworkProfileData *out) {
+    memset(out, 0, sizeof(*out));
+
+    out->uuid = in->uuid;
+    strncpy(out->network_name, in->network_name, sizeof(out->network_name));
+    out->network_name[sizeof(out->network_name)-1] = 0;
+
+    out->unk_x112 = in->unk_x50;
+    out->unk_x113 = in->unk_x54;
+    out->unk_x114 = in->unk_x58;
+    out->unk_x115 = in->unk_x59;
+
+    out->wireless_setting_data.ssid_len = in->wireless_setting_data.ssid_len;
+    memcpy(out->wireless_setting_data.ssid, in->wireless_setting_data.ssid, sizeof(out->wireless_setting_data.ssid)-1);
+    out->wireless_setting_data.unk_x21 = in->wireless_setting_data.unk_x22;
+    out->wireless_setting_data.unk_x22 = in->wireless_setting_data.unk_x24;
+    out->wireless_setting_data.unk_x23 = in->wireless_setting_data.unk_x28;
+    memcpy(out->wireless_setting_data.passphrase, in->wireless_setting_data.passphrase, sizeof(out->wireless_setting_data.passphrase));
+
+    memcpy(&out->ip_setting_data, &in->ip_setting_data, sizeof(out->ip_setting_data));
+}
+
 NifmClientId nifmGetClientId(void) {
     NifmClientId id={0};
+    serviceAssumeDomain(&g_nifmIGS);
     Result rc = serviceDispatch(&g_nifmIGS, 1,
         .buffer_attrs = { SfBufferAttr_FixedSize | SfBufferAttr_HipcPointer | SfBufferAttr_Out },
         .buffers = { { &id, sizeof(id) } },
@@ -115,8 +162,63 @@ NifmClientId nifmGetClientId(void) {
     return id;
 }
 
+Result nifmGetCurrentNetworkProfile(NifmNetworkProfileData *profile) {
+    NifmSfNetworkProfileData tmp={0};
+    serviceAssumeDomain(&g_nifmIGS);
+    Result rc = serviceDispatch(&g_nifmIGS, 5,
+        .buffer_attrs = { SfBufferAttr_FixedSize | SfBufferAttr_HipcPointer | SfBufferAttr_Out },
+        .buffers = { { &tmp, sizeof(tmp) } },
+    );
+    if (R_SUCCEEDED(rc)) _nifmConvertSfToNetworkProfileData(&tmp, profile);
+    return rc;
+}
+
+Result nifmGetNetworkProfile(Uuid uuid, NifmNetworkProfileData *profile) {
+    NifmSfNetworkProfileData tmp={0};
+    serviceAssumeDomain(&g_nifmIGS);
+    Result rc = serviceDispatchIn(&g_nifmIGS, 8, uuid,
+        .buffer_attrs = { SfBufferAttr_FixedSize | SfBufferAttr_HipcPointer | SfBufferAttr_Out },
+        .buffers = { { &tmp, sizeof(tmp) } },
+    );
+    if (R_SUCCEEDED(rc)) _nifmConvertSfToNetworkProfileData(&tmp, profile);
+    return rc;
+}
+
+Result nifmSetNetworkProfile(const NifmNetworkProfileData *profile, Uuid *uuid) {
+    NifmSfNetworkProfileData tmp={0};
+    _nifmConvertSfFromNetworkProfileData(profile, &tmp);
+    serviceAssumeDomain(&g_nifmIGS);
+    Result rc = serviceDispatchOut(&g_nifmIGS, 9, *uuid,
+        .buffer_attrs = { SfBufferAttr_FixedSize | SfBufferAttr_HipcPointer | SfBufferAttr_In },
+        .buffers = { { &tmp, sizeof(tmp) } },
+    );
+    return rc;
+}
+
 Result nifmGetCurrentIpAddress(u32* out) {
-    return _nifmCmdNoInOutU32(&g_nifmIGS, out, 12);
+    NifmIpV4Address tmp={0};
+    serviceAssumeDomain(&g_nifmIGS);
+    Result rc = serviceDispatchOut(&g_nifmIGS, 12, tmp);
+    if (R_SUCCEEDED(rc) && out) *out = *((u32*)tmp.addr);
+    return rc;
+}
+
+Result nifmGetCurrentIpConfigInfo(u32 *current_addr, u32 *subnet_mask, u32 *gateway, u32 *primary_dns_server, u32 *secondary_dns_server) {
+    struct {
+        NifmIpAddressSetting ip_setting;
+        NifmDnsSetting dns_setting;
+    } out;
+
+    serviceAssumeDomain(&g_nifmIGS);
+    Result rc = serviceDispatchOut(&g_nifmIGS, 15, out);
+    if (R_SUCCEEDED(rc)) {
+        if (current_addr) *current_addr = *((u32*)out.ip_setting.current_addr.addr);
+        if (subnet_mask) *subnet_mask = *((u32*)out.ip_setting.subnet_mask.addr);
+        if (gateway) *gateway = *((u32*)out.ip_setting.gateway.addr);
+        if (primary_dns_server) *primary_dns_server = *((u32*)out.dns_setting.primary_dns_server.addr);
+        if (secondary_dns_server) *secondary_dns_server = *((u32*)out.dns_setting.secondary_dns_server.addr);
+    }
+    return rc;
 }
 
 Result nifmSetWirelessCommunicationEnabled(bool enable) {
@@ -153,6 +255,7 @@ Result nifmIsEthernetCommunicationEnabled(bool* out) {
 
 bool nifmIsAnyInternetRequestAccepted(NifmClientId id) {
     u8 tmp=0;
+    serviceAssumeDomain(&g_nifmIGS);
     Result rc = serviceDispatchOut(&g_nifmIGS, 21, tmp,
         .buffer_attrs = { SfBufferAttr_FixedSize | SfBufferAttr_HipcPointer | SfBufferAttr_In },
         .buffers = { { &id, sizeof(id) } },
