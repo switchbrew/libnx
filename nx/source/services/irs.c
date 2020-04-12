@@ -68,26 +68,22 @@ Result _irsInitialize(void) {
 
     g_irsRequiredMcuVersion = (IrsPackedMcuVersion){.major_version = 0x3, .minor_version = 0xB};
 
-    if (hosversionAtLeast(4,0,0)) {
+    if (hosversionAtLeast(4,0,0))
         g_irsRequiredMcuVersion = (IrsPackedMcuVersion){.major_version = 0x4, .minor_version = 0x12};
-    }
-    else if (hosversionAtLeast(5,0,0)) {
+    if (hosversionAtLeast(5,0,0))
         g_irsRequiredMcuVersion = (IrsPackedMcuVersion){.major_version = 0x5, .minor_version = 0x18};
-    }
-    else if (hosversionAtLeast(6,0,0)) {
+    if (hosversionAtLeast(6,0,0))
         g_irsRequiredMcuVersion = (IrsPackedMcuVersion){.major_version = 0x6, .minor_version = 0x1A};
-    }
-    else if (hosversionAtLeast(8,0,0)) {
+    if (hosversionAtLeast(8,0,0))
         g_irsRequiredMcuVersion = (IrsPackedMcuVersion){.major_version = 0x8, .minor_version = 0x1B};
-    }
 
     g_irsFunctionLevel.ir_sensor_function_level = 0x0;
 
     if (hosversionAtLeast(4,0,0))
         g_irsFunctionLevel.ir_sensor_function_level = 0x1;
-    else if (hosversionAtLeast(5,0,0))
+    if (hosversionAtLeast(5,0,0))
         g_irsFunctionLevel.ir_sensor_function_level = 0x2;
-    else if (hosversionAtLeast(6,0,0))
+    if (hosversionAtLeast(6,0,0))
         g_irsFunctionLevel.ir_sensor_function_level = 0x3;
 
     rc = smGetService(&g_irsSrv, "irs");
