@@ -51,9 +51,8 @@ typedef enum {
     SetRegion_USA = 1, ///< The Americas
     SetRegion_EUR = 2, ///< Europe
     SetRegion_AUS = 3, ///< Australia/New Zealand
-    SetRegion_CHN = 4, ///< China
-    SetRegion_KOR = 5, ///< Korea
-    SetRegion_TWN = 6, ///< Taiwan
+    SetRegion_HTK = 4, ///< Hong Kong/Taiwan/Korea
+    SetRegion_CHN = 5, ///< China
 } SetRegion;
 
 /// ConnectionFlag
@@ -340,6 +339,11 @@ typedef struct {
 typedef struct {
     char digest[0x40];
 } SetSysFirmwareVersionDigest;
+
+/// Structure returned by \ref setsysGetSerialNumber.
+typedef struct {
+    char number[0x18];
+} SetSysSerialNumber;
 
 /// UserSelectorSettings
 typedef struct {
@@ -821,9 +825,7 @@ typedef struct {
     u32 generation;
 } SetCalRsa2048DeviceKey;
 
-typedef struct {
-    char number[0x18];
-} SetCalSerialNumber;
+typedef SetSysSerialNumber SetCalSerialNumber;
 
 typedef struct {
     u8 parameter[0x5A];
@@ -1291,9 +1293,9 @@ Result setsysGetBatteryLot(SetBatteryLot *out);
 
 /**
  * @brief Gets the system's serial number.
- * @param serial Pointer to output the serial to. (The buffer size needs to be at least 0x19 bytes)
+ * @param[out] out \ref SetSysSerialNumber
  */
-Result setsysGetSerialNumber(char *serial);
+Result setsysGetSerialNumber(SetSysSerialNumber *out);
 
 /**
  * @brief GetNfcEnableFlag
