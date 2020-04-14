@@ -481,6 +481,15 @@ SVC_BEGIN svcQueryPhysicalAddress
 SVC_END
 
 SVC_BEGIN svcQueryIoMapping
+	stp x0, x1, [sp, #-16]!
+	svc 0x55
+	ldp x3, x4, [sp], #16
+	str x1, [x3]
+	str x2, [x4]
+	ret
+SVC_END
+
+SVC_BEGIN svcLegacyQueryIoMapping
 	str x0, [sp, #-16]!
 	svc 0x55
 	ldr x2, [sp], #16
