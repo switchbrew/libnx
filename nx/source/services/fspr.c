@@ -78,6 +78,9 @@ Result fsprSetCurrentProcess(void) {
 }
 
 Result fsprSetEnabledProgramVerification(bool enabled) {
+    if(hosversionAtLeast(10,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     const u8 in = enabled != 0;
     serviceAssumeDomain(&g_fsprSrv);
     return serviceDispatchIn(&g_fsprSrv, 256, in);
