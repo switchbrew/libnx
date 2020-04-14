@@ -1034,8 +1034,18 @@ Result svcQueryPhysicalAddress(PhysicalMemoryInfo *out, u64 virtaddr);
  * @return Result code.
  * @note Syscall number 0x55.
  * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
+ * @warning Only exists on [10.0.0+]. For older versions use \ref svcLegacyQueryIoMapping.
  */
-Result svcQueryIoMapping(u64* virtaddr, u64 physaddr, u64 size);
+Result svcQueryIoMapping(u64* virtaddr, u64* size, u64 physaddr);
+
+/**
+ * @brief Returns a virtual address mapped to a given IO range.
+ * @return Result code.
+ * @note Syscall number 0x55.
+ * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
+ * @warning Only exists on [1.0.0-9.2.0]. For newer versions use \ref svcQueryIoMapping.
+ */
+Result svcLegacyQueryIoMapping(u64* virtaddr, u64 physaddr, u64 size);
 
 ///@}
 
