@@ -32,21 +32,40 @@ Service* fsldrGetServiceSession(void) {
     return &g_fsldrSrv;
 }
 
-Result fsldrOpenCodeFileSystem(u64 tid, const char *path, FsFileSystem* out) {
+Result fsldrOpenCodeFileSystem(FsCodeInfo* out_code_info, u64 tid, const char *path, FsFileSystem* out) {
+    memset(out_code_info, 0, sizeof(*out_code_info));
+
     char send_path[FS_MAX_PATH]={0};
     strncpy(send_path, path, FS_MAX_PATH-1);
 
-    serviceAssumeDomain(&g_fsldrSrv);
-    return serviceDispatchIn(&g_fsldrSrv, 0, tid,
-        .buffer_attrs = {
-            SfBufferAttr_HipcPointer | SfBufferAttr_In,
-        },
-        .buffers = {
-            { send_path,  FS_MAX_PATH },
-        },
-        .out_num_objects = 1,
-        .out_objects = &out->s,
-    );
+    if (hosversionAtLeast(10,0,0)) {
+        serviceAssumeDomain(&g_fsldrSrv);
+        return serviceDispatchIn(&g_fsldrSrv, 0, tid,
+            .buffer_attrs = {
+                SfBufferAttr_FixedSize | SfBufferAttr_HipcPointer | SfBufferAttr_Out,
+                SfBufferAttr_FixedSize | SfBufferAttr_HipcPointer | SfBufferAttr_In,
+            },
+            .buffers = {
+                { out_code_info,  sizeof(*out_code_info) },
+                { send_path,  FS_MAX_PATH },
+            },
+            .out_num_objects = 1,
+            .out_objects = &out->s,
+        );
+    } else {
+        serviceAssumeDomain(&g_fsldrSrv);
+        return serviceDispatchIn(&g_fsldrSrv, 0, tid,
+            .buffer_attrs = {
+                SfBufferAttr_FixedSize | SfBufferAttr_HipcPointer | SfBufferAttr_In,
+            },
+            .buffers = {
+                { send_path,  FS_MAX_PATH },
+            },
+            .out_num_objects = 1,
+            .out_objects = &out->s,
+        );
+    }
+
 }
 
 Result fsldrIsArchivedProgram(u64 pid, bool *out) {
