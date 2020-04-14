@@ -94,7 +94,7 @@ Result ldrPmUnpinProgram(u64 pin_id) {
 }
 
 Result ldrPmSetEnabledProgramVerification(bool enabled) {
-    if(hosversionBefore(10,0,0))
+    if (hosversionBefore(10,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     const u8 in = enabled != 0;
