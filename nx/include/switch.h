@@ -91,6 +91,7 @@ extern "C" {
 #include "switch/services/ts.h"
 #include "switch/services/pm.h"
 #include "switch/services/set.h"
+#include "switch/services/ssl.h"
 #include "switch/services/lr.h"
 #include "switch/services/spl.h"
 #include "switch/services/ncm.h"
