@@ -8,6 +8,11 @@
 #include "../types.h"
 #include "../sf/service.h"
 
+typedef enum {
+    PlServiceType_User   = 0,  ///< Initializes pl:u.
+    PlServiceType_System = 1,  ///< Initializes pl:s.
+} PlServiceType;
+
 /// SharedFontType
 typedef enum {
     PlSharedFontType_Standard             = 0,  ///< Japan, US and Europe
@@ -28,7 +33,7 @@ typedef struct {
 } PlFontData;
 
 /// Initialize pl.
-Result plInitialize(void);
+Result plInitialize(PlServiceType service_type);
 
 /// Exit pl.
 void plExit(void);
