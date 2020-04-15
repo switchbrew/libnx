@@ -6,18 +6,27 @@
 
 #define SHAREDMEMFONT_SIZE 0x1100000
 
+static PlServiceType g_plServiceType;
 static Service g_plSrv;
 static SharedMemory g_plSharedmem;
 
 static Result _plGetSharedMemoryNativeHandle(Handle* handle_out);
 
-NX_GENERATE_SERVICE_GUARD(pl);
+NX_GENERATE_SERVICE_GUARD_PARAMS(pl, (PlServiceType service_type), (service_type));
 
-Result _plInitialize(void) {
-    Result rc=0;
+Result _plInitialize(PlServiceType service_type) {
+    Result rc = MAKERESULT(Module_Libnx, LibnxError_BadInput);
     Handle sharedmem_handle=0;
 
-    rc = smGetService(&g_plSrv, "pl:u");
+    g_plServiceType = service_type;
+    switch (g_plServiceType) {
+        case PlServiceType_User:
+            rc = smGetService(&g_plSrv, "pl:u");
+            break;
+        case PlServiceType_System:
+            rc = smGetService(&g_plSrv, "pl:s");
+            break;
+    }
 
     if (R_SUCCEEDED(rc)) {
         rc = _plGetSharedMemoryNativeHandle(&sharedmem_handle);
