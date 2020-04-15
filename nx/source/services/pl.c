@@ -15,7 +15,7 @@ static Result _plGetSharedMemoryNativeHandle(Handle* handle_out);
 NX_GENERATE_SERVICE_GUARD_PARAMS(pl, (PlServiceType service_type), (service_type));
 
 Result _plInitialize(PlServiceType service_type) {
-    Result rc=0;
+    Result rc = MAKERESULT(Module_Libnx, LibnxError_BadInput);
     Handle sharedmem_handle=0;
 
     g_plServiceType = service_type;
