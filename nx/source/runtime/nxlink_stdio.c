@@ -9,7 +9,7 @@
 
 static int sock = -1;
 
-int nxlinkStdio(void)
+int nxlinkConnectToHost(bool redirStdout, bool redirStderr)
 {
     int ret = -1;
     struct sockaddr_in srv_addr;
@@ -30,12 +30,17 @@ int nxlinkStdio(void)
         return -1;
     }
 
-    // redirect stdout
-    fflush(stdout);
-    dup2(sock, STDOUT_FILENO);
-    // redirect stderr
-    fflush(stderr);
-    dup2(sock, STDERR_FILENO);
+    if (redirStdout) {
+        // redirect stdout
+        fflush(stdout);
+        dup2(sock, STDOUT_FILENO);
+    }
+
+    if (redirStderr) {
+        // redirect stderr
+        fflush(stderr);
+        dup2(sock, STDERR_FILENO);
+    }
 
     return sock;
 }
