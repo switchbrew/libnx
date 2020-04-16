@@ -135,6 +135,13 @@ Result lrLrRefresh(LrLocationResolver* lr) {
     return serviceDispatch(&lr->s, 9);
 }
 
+Result lrLrEraseProgramRedirection(LrLocationResolver* lr, u64 tid) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchIn(&lr->s, 12, tid);
+}
+
 Result lrRegLrResolveProgramPath(LrRegisteredLocationResolver* reg, u64 tid, char *out) {
     return _lrResolvePath(&reg->s, tid, out, 0);
 }
