@@ -5,6 +5,8 @@
  * @copyright libnx Authors
  */
 #pragma once
+#include "../types.h"
+#include "../sf/service.h"
 #include "../services/mii.h"
 
 /// Image ID.

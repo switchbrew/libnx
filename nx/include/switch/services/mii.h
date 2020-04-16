@@ -140,7 +140,7 @@ Result miiDatabaseIsUpdated(MiiDatabase *db, bool *out_updated, MiiSourceFlag fl
 /**
  * @brief Returns whether the mii database is full.
  * @param[in] db Database.
- * @param[out] out_full Whether the mii database is updated.
+ * @param[out] out_full Whether the mii database is full.
  */
 Result miiDatabaseIsFull(MiiDatabase *db, bool *out_full);
 
