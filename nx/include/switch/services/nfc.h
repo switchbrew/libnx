@@ -6,7 +6,9 @@
  */
 
 #pragma once
-#include "mii.h"
+#include "../types.h"
+#include "../sf/service.h"
+#include "../services/mii.h"
 
 /// NfpServiceType
 typedef enum {

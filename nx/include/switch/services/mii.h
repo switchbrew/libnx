@@ -113,7 +113,7 @@ typedef struct {
     u8 unk_x57;
 } MiiCharInfo;
 
-/// Initialize mii (mii:e).
+/// Initialize mii.
 Result miiInitialize(MiiServiceType service_type);
 
 /// Exit mii.
@@ -133,25 +133,25 @@ Result miiOpenDatabase(MiiDatabase *out, MiiSpecialKeyCode key_code);
  * @brief Returns whether the mii database is updated.
  * @param[in] db Database.
  * @param[in] flag Source flag.
- * @param[out] out Out boolean.
+ * @param[out] out_updated Whether the mii database is updated.
  */
-Result miiDatabaseIsUpdated(MiiDatabase *db, u8 *out, MiiSourceFlag flag);
+Result miiDatabaseIsUpdated(MiiDatabase *db, bool *out_updated, MiiSourceFlag flag);
 
 /**
  * @brief Returns whether the mii database is full.
  * @param[in] db Database.
  * @param[in] flag Source flag.
- * @param[out] out Out boolean.
+ * @param[out] out_full Whether the mii database is updated.
  */
-Result miiDatabaseIsFull(MiiDatabase *db, u8 *out);
+Result miiDatabaseIsFull(MiiDatabase *db, bool *out_full);
 
 /**
  * @brief Returns number of miis in the database with the specified source flag.
  * @param[in] db Database.
  * @param[in] flag Source flag.
- * @param[out] out Out count.
+ * @param[out] out_count Out mii count.
  */
-Result miiDatabaseGetCount(MiiDatabase *db, u32 *out, MiiSourceFlag flag);
+Result miiDatabaseGetCount(MiiDatabase *db, s32 *out_count, MiiSourceFlag flag);
 
 /**
  * @brief Reads mii charinfo data from the specified source flag.
@@ -161,7 +161,7 @@ Result miiDatabaseGetCount(MiiDatabase *db, u32 *out, MiiSourceFlag flag);
  * @param[in] out_infos_count Amount of mii chainfos to read.
  * @param[out] out_count Number of mii charinfos which were read.
  */
-Result miiDatabaseGetCharInfo(MiiDatabase *db, MiiSourceFlag flag, MiiCharInfo *out_infos, size_t out_infos_count, u32 *out_count);
+Result miiDatabaseGet1(MiiDatabase *db, MiiSourceFlag flag, MiiCharInfo *out_infos, s32 count, s32 *total_out);
 
 /**
  * @brief Generates a random mii charinfo (doesn't register it in the console database).

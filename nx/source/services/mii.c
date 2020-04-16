@@ -39,24 +39,30 @@ Result miiOpenDatabase(MiiDatabase *out, MiiSpecialKeyCode key_code) {
     );
 }
 
-Result miiDatabaseIsUpdated(MiiDatabase *db, u8 *out, MiiSourceFlag flag) {
+Result miiDatabaseIsUpdated(MiiDatabase *db, bool *out_updated, MiiSourceFlag flag) {
     u32 in = (u32)flag;
-    return serviceDispatchInOut(&db->s, 0, in, *out);
+    u8 tmp = 0;
+    Result rc = serviceDispatchInOut(&db->s, 0, in, tmp);
+    if (R_SUCCEEDED(rc) && out_updated) *out_updated = tmp & 1;
+    return rc;
 }
 
-Result miiDatabaseIsFull(MiiDatabase *db, u8 *out) {
-    return serviceDispatchOut(&db->s, 1, *out);
+Result miiDatabaseIsFull(MiiDatabase *db, bool *out_full) {
+    u8 tmp = 0;
+    Result rc = serviceDispatchOut(&db->s, 1, tmp);
+    if (R_SUCCEEDED(rc) && out_full) *out_full = tmp & 1;
+    return rc;
 }
-Result miiDatabaseGetCount(MiiDatabase *db, u32 *out, MiiSourceFlag flag) {
+Result miiDatabaseGetCount(MiiDatabase *db, s32 *out_count, MiiSourceFlag flag) {
     u32 in = (u32)flag;
-    return serviceDispatchInOut(&db->s, 2, in, *out);
+    return serviceDispatchInOut(&db->s, 2, in, *out_count);
 }
 
-Result miiDatabaseGetCharInfo(MiiDatabase *db, MiiSourceFlag flag, MiiCharInfo *out_infos, size_t out_infos_count, u32 *out_count) {
+Result miiDatabaseGet1(MiiDatabase *db, MiiSourceFlag flag, MiiCharInfo *out_infos, s32 count, s32 *total_out) {
     u32 in = (u32)flag;
-    return serviceDispatchInOut(&db->s, 4, in, *out_count,
+    return serviceDispatchInOut(&db->s, 4, in, *total_out,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
-        .buffers = { { out_infos, out_infos_count * sizeof(MiiCharInfo) } },
+        .buffers = { { out_infos, count * sizeof(MiiCharInfo) } },
     );
 }
 
