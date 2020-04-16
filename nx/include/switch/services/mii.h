@@ -1,6 +1,6 @@
 /**
  * @file mii.h
- * @brief Mii services IPC wrapper.
+ * @brief Mii services (mii:*) IPC wrapper.
  * @author XorTroll
  * @copyright libnx Authors
  */
@@ -9,49 +9,56 @@
 #include "../sf/service.h"
 
 typedef enum {
-    MiiServiceType_System,
-    MiiServiceType_User
+    MiiServiceType_System  = 0,  ///< Initializes mii:e.
+    MiiServiceType_User    = 1,  ///< Initializes mii:u.
 } MiiServiceType;
 
+/// Mii age.
 typedef enum {
-    MiiAge_Young,
-    MiiAge_Normal,
-    MiiAge_Old,
-    MiiAge_All
+    MiiAge_Young   = 0,  ///< Young
+    MiiAge_Normal  = 1,  ///< Normal
+    MiiAge_Old     = 2,  ///< Old
+    MiiAge_All     = 3,  ///< All of them
 } MiiAge;
 
+/// Mii gender.
 typedef enum {
-    MiiGender_Male,
-    MiiGender_Female,
-    MiiGender_All
+    MiiGender_Male    = 0,  ///< Male
+    MiiGender_Female  = 1,  ///< Female
+    MiiGender_All     = 2,  ///< Both of them
 } MiiGender;
 
+/// Mii race.
 typedef enum {
-    MiiRace_Black,
-    MiiRace_White,
-    MiiRace_Asian,
-    MiiRace_All
+    MiiRace_Black  = 0,  ///< Black
+    MiiRace_White  = 1,  ///< White
+    MiiRace_Asian  = 2,  ///< Asian
+    MiiRace_All    = 3,  ///< All of them
 } MiiRace;
 
+// Mii source flag.
 typedef enum {
-    MiiSourceFlag_Database = BIT(0),
-    MiiSourceFlag_Default = BIT(1),
-    MiiSourceFlag_All = MiiSourceFlag_Database | MiiSourceFlag_Default
+    MiiSourceFlag_Database  = BIT(0),                                          ///< Miis created by the user
+    MiiSourceFlag_Default   = BIT(1),                                          ///< Default console miis
+    MiiSourceFlag_All       = MiiSourceFlag_Database | MiiSourceFlag_Default,  ///< All of them
 } MiiSourceFlag;
 
+// Mii special key code
 typedef enum {
-    MiiSpecialKeyCode_Normal,
-    MiiSpecialKeyCode_Special = 0xA523B78F
+    MiiSpecialKeyCode_Normal   = 0,           ///< Normal miis
+    MiiSpecialKeyCode_Special  = 0xA523B78F,  ///< Special miis
 } MiiSpecialKeyCode;
 
 typedef struct {
     Service s;
 } MiiDatabase;
 
+// Mii create ID.
 typedef struct {
     Uuid uuid;
 } MiiCreateId;
 
+// Mii data structure.
 typedef struct {
     MiiCreateId create_id;
     u16 mii_name[10+1]; ///< utf-16be, null-terminated
@@ -115,12 +122,56 @@ void miiExit(void);
 /// Gets the Service object for the actual mii service session.
 Service* miiGetServiceSession(void);
 
+/**
+ * @brief Opens a mii database.
+ * @param[in] key_code Mii key code filter.
+ * @param[out] out Database.
+ */
 Result miiOpenDatabase(MiiDatabase *out, MiiSpecialKeyCode key_code);
 
+/**
+ * @brief Returns whether the mii database is updated.
+ * @param[in] db Database.
+ * @param[in] flag Source flag.
+ * @param[out] out Out boolean.
+ */
 Result miiDatabaseIsUpdated(MiiDatabase *db, u8 *out, MiiSourceFlag flag);
+
+/**
+ * @brief Returns whether the mii database is full.
+ * @param[in] db Database.
+ * @param[in] flag Source flag.
+ * @param[out] out Out boolean.
+ */
 Result miiDatabaseIsFull(MiiDatabase *db, u8 *out);
+
+/**
+ * @brief Returns number of miis in the database with the specified source flag.
+ * @param[in] db Database.
+ * @param[in] flag Source flag.
+ * @param[out] out Out count.
+ */
 Result miiDatabaseGetCount(MiiDatabase *db, u32 *out, MiiSourceFlag flag);
+
+/**
+ * @brief Reads mii charinfo data from the specified source flag.
+ * @param[in] db Database.
+ * @param[in] flag Source flag.
+ * @param[out] out_infos Output mii charinfo array.
+ * @param[in] out_infos_count Amount of mii chainfos to read.
+ * @param[out] out_count Number of mii charinfos which were read.
+ */
 Result miiDatabaseGetCharInfo(MiiDatabase *db, MiiSourceFlag flag, MiiCharInfo *out_infos, size_t out_infos_count, u32 *out_count);
+
+/**
+ * @brief Generates a random mii charinfo (doesn't register it in the console database).
+ * @param[in] db Database.
+ * @param[in] age Mii's age.
+ * @param[in] gender Mii's gender.
+ * @param[in] race Mii's race.
+ * @param[out] out_info Out mii charinfo data.
+ */
 Result miiDatabaseBuildRandom(MiiDatabase *db, MiiAge age, MiiGender gender, MiiRace race, MiiCharInfo *out_info);
 
+/// Closes a mii database.
 void miiDatabaseClose(MiiDatabase *db);
