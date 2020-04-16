@@ -162,7 +162,7 @@ Result pmshellBoostSystemMemoryResourceLimit(u64 boost_size) {
     return serviceDispatchIn(&g_pmshellSrv, cmd_id, boost_size);
 }
 
-Result pmshellBoostSystemThreadResourceLimit(void) {
+Result pmshellEnableApplicationExtraThread(void) {
     if (hosversionBefore(7,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     return serviceDispatch(&g_pmshellSrv, 8);
 }
