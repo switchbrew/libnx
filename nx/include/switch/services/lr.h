@@ -42,6 +42,9 @@ Result lrLrResolveApplicationLegalInformationPath(LrLocationResolver* lr, u64 ti
 Result lrLrRedirectApplicationLegalInformationPath(LrLocationResolver* lr, u64 tid, u64 tid2, const char *path);
 Result lrLrRefresh(LrLocationResolver* lr);
 
+/// Only available on [5.0.0+].
+Result lrLrEraseProgramRedirection(LrLocationResolver* lr, u64 tid);
+
 // IRegisteredLocationResolver
 Result lrRegLrResolveProgramPath(LrRegisteredLocationResolver* reg, u64 tid, char *out);
 // TODO: Other IRegisteredLocationResolver commands
