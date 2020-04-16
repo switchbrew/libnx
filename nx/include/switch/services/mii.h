@@ -157,8 +157,8 @@ Result miiDatabaseGetCount(MiiDatabase *db, s32 *out_count, MiiSourceFlag flag);
  * @param[in] db Database.
  * @param[in] flag Source flag.
  * @param[out] out_infos Output mii charinfo array.
- * @param[in] out_infos_count Amount of mii chainfos to read.
- * @param[out] out_count Number of mii charinfos which were read.
+ * @param[in] count Number of mii chainfos to read.
+ * @param[out] total_out Number of mii charinfos which were actually read.
  */
 Result miiDatabaseGet1(MiiDatabase *db, MiiSourceFlag flag, MiiCharInfo *out_infos, s32 count, s32 *total_out);
 
