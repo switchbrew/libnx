@@ -32,6 +32,9 @@ Result bpcRebootSystem(void) {
 }
 
 Result bpcGetSleepButtonState(BpcSleepButtonState *out) {
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     u8 tmp = 0;
     Result rc = serviceDispatchOut(&g_bpcSrv, 6, tmp);
 
