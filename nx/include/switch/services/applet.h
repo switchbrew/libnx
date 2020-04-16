@@ -2284,6 +2284,7 @@ Result appletGetHomeButtonDoubleClickEnabled(bool *out);
 /**
  * @brief Open an \ref AppletApplication for the currently running Application.
  * @note Should not be used when no Application is running.
+ * @note Only available on [1.0.0-9.2.0].
  * @param[out] a \ref AppletApplication
  */
 Result appletOpenMainApplication(AppletApplication *a);
