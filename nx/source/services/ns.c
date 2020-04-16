@@ -729,6 +729,9 @@ Result nsIsApplicationEntityMovable(u64 application_id, NcmStorageId storage_id,
 }
 
 Result nsMoveApplicationEntity(u64 application_id, NcmStorageId storage_id) {
+    if (hosversionAtLeast(10,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     return _nsManCmdInU8U64NoOut(storage_id, application_id, 9);
 }
 
@@ -1226,7 +1229,7 @@ static Result _nsRequestVerifyApplication(NsProgressAsyncResult *a, u64 applicat
 }
 
 Result nsRequestVerifyAddOnContentsRights(NsProgressAsyncResult *a, u64 application_id) {
-    if (hosversionBefore(3,0,0))
+    if (!hosversionBetween(3,10))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     Service srv={0};
@@ -2262,6 +2265,9 @@ Service* nsdevGetServiceSession(void) {
 }
 
 Result nsdevLaunchProgram(u64* out_pid, const NsLaunchProperties* properties, u32 flags) {
+    if (hosversionAtLeast(10,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     const struct {
         u32 flags;
         u32 pad;
@@ -2276,14 +2282,23 @@ Result nsdevTerminateProcess(u64 pid) {
 }
 
 Result nsdevTerminateProgram(u64 tid) {
+    if (hosversionAtLeast(10,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     return _nsCmdInU64(&g_nsdevSrv, tid, 2);
 }
 
 Result nsdevGetShellEvent(Event* out_event) {
+    if (hosversionAtLeast(10,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     return _nsCmdGetEvent(&g_nsdevSrv, out_event, true, 4);
 }
 
 Result nsdevGetShellEventInfo(NsShellEventInfo* out) {
+    if (hosversionAtLeast(10,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     struct {
         u32 event;
         u64 process_id;
@@ -2302,6 +2317,9 @@ Result nsdevTerminateApplication(void) {
 }
 
 Result nsdevPrepareLaunchProgramFromHost(NsLaunchProperties* out, const char* path, size_t path_len) {
+    if (hosversionAtLeast(10,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     return serviceDispatchOut(&g_nsdevSrv, 7, *out,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
         .buffers = { { path, path_len } },
@@ -2309,12 +2327,25 @@ Result nsdevPrepareLaunchProgramFromHost(NsLaunchProperties* out, const char* pa
 }
 
 Result nsdevLaunchApplicationForDevelop(u64* out_pid, u64 application_id, u32 flags) {
+    if (hosversionAtLeast(10,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     const struct {
         u32 flags;
         u64 application_id;
     } in = { .flags = flags, .application_id = application_id};
 
     return serviceDispatchInOut(&g_nsdevSrv, 8, in, *out_pid);
+}
+
+Result nsdevLaunchApplicationFromHost(u64* out_pid, const char* path, size_t path_len, u32 flags) {
+    if (hosversionBefore(10,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchInOut(&g_nsdevSrv, 8, flags, *out_pid,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
+        .buffers = { { path, path_len } },
+    );
 }
 
 Result nsdevLaunchApplicationWithStorageIdForDevelop(u64* out_pid, u64 application_id, u32 flags, u8 app_storage_id, u8 patch_storage_id) {

@@ -435,6 +435,7 @@ Result nsIsApplicationEntityMovable(u64 application_id, NcmStorageId storage_id,
 
 /**
  * @brief MoveApplicationEntity
+ * @note Only available on [1.0.0-9.2.0].
  * @param[in] application_id ApplicationId.
  * @param[in] storage_id \ref NcmStorageId
  */
@@ -737,7 +738,7 @@ Result nsWithdrawApplicationUpdateRequest(u64 application_id);
 
 /**
  * @brief RequestVerifyAddOnContentsRights
- * @note Only available on [3.0.0+].
+ * @note Only available on [3.0.0-9.2.0].
  * @param[out] a \ref NsProgressAsyncResult
  * @param[in] application_id ApplicationId.
  */
@@ -1318,14 +1319,15 @@ void nsdevExit(void);
 /// Gets the Service object for ns:dev.
 Service* nsdevGetServiceSession(void);
 
-Result nsdevLaunchProgram(u64* out_pid, const NsLaunchProperties* properties, u32 flags);
+Result nsdevLaunchProgram(u64* out_pid, const NsLaunchProperties* properties, u32 flags); ///< [1.0.0-9.2.0]
 Result nsdevTerminateProcess(u64 pid);
-Result nsdevTerminateProgram(u64 tid);
-Result nsdevGetShellEvent(Event* out_event); ///< Autoclear for nsdevShellEvent is always true.
-Result nsdevGetShellEventInfo(NsShellEventInfo* out);
+Result nsdevTerminateProgram(u64 tid); ///< [1.0.0-9.2.0]
+Result nsdevGetShellEvent(Event* out_event); ///< Autoclear for nsdevShellEvent is always true. [1.0.0-9.2.0]
+Result nsdevGetShellEventInfo(NsShellEventInfo* out); ///< [1.0.0-9.2.0]
 Result nsdevTerminateApplication(void);
-Result nsdevPrepareLaunchProgramFromHost(NsLaunchProperties* out, const char* path, size_t path_len);
-Result nsdevLaunchApplicationForDevelop(u64* out_pid, u64 application_id, u32 flags);
+Result nsdevPrepareLaunchProgramFromHost(NsLaunchProperties* out, const char* path, size_t path_len); ///< [1.0.0-9.2.0]
+Result nsdevLaunchApplicationForDevelop(u64* out_pid, u64 application_id, u32 flags); ///< [1.0.0-9.2.0]
+Result nsdevLaunchApplicationFromHost(u64* out_pid, const char* path, size_t path_len, u32 flags); ///< [10.0.0+]
 Result nsdevLaunchApplicationWithStorageIdForDevelop(u64* out_pid, u64 application_id, u32 flags, u8 app_storage_id, u8 patch_storage_id);
 Result nsdevIsSystemMemoryResourceLimitBoosted(bool* out); ///< [6.0.0-8.1.0]
 Result nsdevGetRunningApplicationProcessIdForDevelop(u64* out_pid); ///< [6.0.0+]
