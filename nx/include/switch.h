@@ -109,6 +109,8 @@ extern "C" {
 #include "switch/services/grc.h"
 #include "switch/services/friends.h"
 #include "switch/services/notif.h"
+#include "switch/services/mii.h"
+#include "switch/services/miiimg.h"
 
 #include "switch/display/binder.h"
 #include "switch/display/parcel.h"

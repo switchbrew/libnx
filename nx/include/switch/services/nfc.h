@@ -8,6 +8,7 @@
 #pragma once
 #include "../types.h"
 #include "../sf/service.h"
+#include "../services/mii.h"
 
 /// NfpServiceType
 typedef enum {
@@ -72,61 +73,7 @@ typedef struct {
 } PACKED NfpModelInfo;
 
 typedef struct {
-    u8 unk_x0[0x10]; // Hash?
-    u16 mii_name[10+1]; ///< utf-16be, null-terminated
-    u8 unk_x26;
-    u8 mii_color;
-    u8 mii_sex;
-    u8 mii_height;
-    u8 mii_width;
-    u8 unk_x2b[2];
-    u8 mii_face_shape;
-    u8 mii_face_color;
-    u8 mii_wrinkles_style;
-    u8 mii_makeup_style;
-    u8 mii_hair_style;
-    u8 mii_hair_color;
-    u8 mii_has_hair_flipped;
-    u8 mii_eye_style;
-    u8 mii_eye_color;
-    u8 mii_eye_size;
-    u8 mii_eye_thickness;
-    u8 mii_eye_angle;
-    u8 mii_eye_pos_x;
-    u8 mii_eye_pos_y;
-    u8 mii_eyebrow_style;
-    u8 mii_eyebrow_color;
-    u8 mii_eyebrow_size;
-    u8 mii_eyebrow_thickness;
-    u8 mii_eyebrow_angle;
-    u8 mii_eyebrow_pos_x;
-    u8 mii_eyebrow_pos_y;
-    u8 mii_nose_style;
-    u8 mii_nose_size;
-    u8 mii_nose_pos;
-    u8 mii_mouth_style;
-    u8 mii_mouth_color;
-    u8 mii_mouth_size;
-    u8 mii_mouth_thickness;
-    u8 mii_mouth_pos;
-    u8 mii_facial_hair_color;
-    u8 mii_beard_style;
-    u8 mii_mustache_style;
-    u8 mii_mustache_size;
-    u8 mii_mustache_pos;
-    u8 mii_glasses_style;
-    u8 mii_glasses_color;
-    u8 mii_glasses_size;
-    u8 mii_glasses_pos;
-    u8 mii_has_mole;
-    u8 mii_mole_size;
-    u8 mii_mole_pos_x;
-    u8 mii_mole_pos_y;
-    u8 unk_x57;
-} PACKED NfpMiiCharInfo;
-
-typedef struct {
-    NfpMiiCharInfo mii;
+    MiiCharInfo mii;
     u16 first_write_year;
     u8 first_write_month;
     u8 first_write_day;
