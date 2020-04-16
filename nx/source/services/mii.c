@@ -66,12 +66,12 @@ Result miiDatabaseGet1(MiiDatabase *db, MiiSourceFlag flag, MiiCharInfo *out_inf
     );
 }
 
-Result miiDatabaseBuildRandom(MiiDatabase *db, MiiAge age, MiiGender gender, MiiRace race, MiiCharInfo *out_info) {
+Result miiDatabaseBuildRandom(MiiDatabase *db, MiiAge age, MiiGender gender, MiiFaceColor face_color, MiiCharInfo *out_info) {
     const struct {
         u32 age;
         u32 gender;
-        u32 race;
-    } in = { age, gender, race };
+        u32 face_color;
+    } in = { age, gender, face_color };
     return serviceDispatchInOut(&db->s, 6, in, *out_info);
 }
 

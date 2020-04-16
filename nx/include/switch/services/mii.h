@@ -28,13 +28,13 @@ typedef enum {
     MiiGender_All     = 2,  ///< Both of them
 } MiiGender;
 
-/// Mii race.
+/// Mii face color.
 typedef enum {
-    MiiRace_Black  = 0,  ///< Black
-    MiiRace_White  = 1,  ///< White
-    MiiRace_Asian  = 2,  ///< Asian
-    MiiRace_All    = 3,  ///< All of them
-} MiiRace;
+    MiiFaceColor_Black  = 0,  ///< Black
+    MiiFaceColor_White  = 1,  ///< White
+    MiiFaceColor_Asian  = 2,  ///< Asian
+    MiiFaceColor_All    = 3,  ///< All of them
+} MiiFaceColor;
 
 // Mii source flag.
 typedef enum {
@@ -167,10 +167,10 @@ Result miiDatabaseGet1(MiiDatabase *db, MiiSourceFlag flag, MiiCharInfo *out_inf
  * @param[in] db Database.
  * @param[in] age Mii's age.
  * @param[in] gender Mii's gender.
- * @param[in] race Mii's race.
+ * @param[in] face_color Mii's face color.
  * @param[out] out_info Out mii charinfo data.
  */
-Result miiDatabaseBuildRandom(MiiDatabase *db, MiiAge age, MiiGender gender, MiiRace race, MiiCharInfo *out_info);
+Result miiDatabaseBuildRandom(MiiDatabase *db, MiiAge age, MiiGender gender, MiiFaceColor face_color, MiiCharInfo *out_info);
 
 /// Closes a mii database.
 void miiDatabaseClose(MiiDatabase *db);
