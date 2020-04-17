@@ -40,25 +40,76 @@ static Result _pdmqryQueryEvent(s32 entry_index, void* events, size_t entrysize,
     );
 }
 
-Result pdmqryQueryAppletEvent(s32 entry_index, PdmAppletEvent *events, s32 count, s32 *total_out) {
-    return _pdmqryQueryEvent(entry_index, events, sizeof(PdmAppletEvent), count, total_out, 0);
-}
+Result pdmqryQueryAppletEvent(s32 entry_index, bool flag, PdmAppletEvent *events, s32 count, s32 *total_out) {
+    if (hosversionBefore(10,0,0)) {
+        return serviceDispatchInOut(&g_pdmqrySrv, 0, entry_index, *total_out,
+            .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+            .buffers = { { events, count*sizeof(PdmAppletEvent) } },
+        );
+    }
 
-Result pdmqryQueryPlayStatisticsByApplicationId(u64 application_id, PdmPlayStatistics *stats) {
-    return serviceDispatchInOut(&g_pdmqrySrv, 4, application_id, *stats);
-}
-
-Result pdmqryQueryPlayStatisticsByApplicationIdAndUserAccountId(u64 application_id, AccountUid uid, PdmPlayStatistics *stats) {
     const struct {
+        u8 flag;
+        u8 pad[3];
+        s32 entry_index;
+    } in = { flag!=0, {0}, entry_index };
+
+    return serviceDispatchInOut(&g_pdmqrySrv, 0, in, *total_out,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { events, count*sizeof(PdmAppletEvent) } },
+    );
+}
+
+Result pdmqryQueryPlayStatisticsByApplicationId(u64 application_id, bool flag, PdmPlayStatistics *stats) {
+    if (hosversionBefore(10,0,0)) {
+        return serviceDispatchInOut(&g_pdmqrySrv, 4, application_id, *stats);
+    }
+
+    const struct {
+        u8 flag;
+        u8 pad[7];
+        u64 application_id;
+    } in = { flag!=0, {0}, application_id };
+
+    return serviceDispatchInOut(&g_pdmqrySrv, 4, in, *stats);
+}
+
+Result pdmqryQueryPlayStatisticsByApplicationIdAndUserAccountId(u64 application_id, AccountUid uid, bool flag, PdmPlayStatistics *stats) {
+    if (hosversionBefore(10,0,0)) {
+        const struct {
+            u64 application_id;
+            AccountUid uid;
+        } in = { application_id, uid };
+
+        return serviceDispatchInOut(&g_pdmqrySrv, 5, in, *stats);
+    }
+
+    const struct {
+        u8 flag;
+        u8 pad[7];
         u64 application_id;
         AccountUid uid;
-    } in = { application_id, uid };
+    } in = { flag!=0, {0}, application_id, uid };
 
     return serviceDispatchInOut(&g_pdmqrySrv, 5, in, *stats);
 }
 
-Result pdmqryQueryLastPlayTime(PdmLastPlayTime *playtimes, const u64 *application_ids, s32 count, s32 *total_out) {
-    return serviceDispatchOut(&g_pdmqrySrv, 7, *total_out,
+Result pdmqryQueryLastPlayTime(bool flag, PdmLastPlayTime *playtimes, const u64 *application_ids, s32 count, s32 *total_out) {
+    if (hosversionBefore(10,0,0)) {
+        return serviceDispatchOut(&g_pdmqrySrv, 7, *total_out,
+            .buffer_attrs = {
+                SfBufferAttr_HipcMapAlias | SfBufferAttr_Out,
+                SfBufferAttr_HipcMapAlias | SfBufferAttr_In,
+            },
+            .buffers = {
+                { playtimes, count*sizeof(PdmLastPlayTime) },
+                { application_ids, count*sizeof(u64) },
+            },
+        );
+    }
+
+    const u8 in = flag!=0;
+    return serviceDispatchInOut(&g_pdmqrySrv, 17, in, *total_out,
         .buffer_attrs = {
             SfBufferAttr_HipcMapAlias | SfBufferAttr_Out,
             SfBufferAttr_HipcMapAlias | SfBufferAttr_In,
@@ -129,11 +180,24 @@ Result pdmqryGetAvailableAccountPlayEventRange(AccountUid uid, s32 *total_entrie
     return rc;
 }
 
-Result pdmqryQueryRecentlyPlayedApplication(AccountUid uid, u64 *application_ids, s32 count, s32 *total_out) {
+Result pdmqryQueryRecentlyPlayedApplication(AccountUid uid, bool flag, u64 *application_ids, s32 count, s32 *total_out) {
     if (hosversionBefore(6,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return serviceDispatchInOut(&g_pdmqrySrv, 14, uid, *total_out,
+    if (hosversionBefore(10,0,0)) {
+        return serviceDispatchInOut(&g_pdmqrySrv, 14, uid, *total_out,
+            .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+            .buffers = { { application_ids, count*sizeof(u64) } },
+        );
+    }
+
+    const struct {
+        u8 flag;
+        u8 pad[7];
+        AccountUid uid;
+    } in = { flag!=0, {0}, uid };
+
+    return serviceDispatchInOut(&g_pdmqrySrv, 14, in, *total_out,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
         .buffers = { { application_ids, count*sizeof(u64) } },
     );

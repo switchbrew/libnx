@@ -32,9 +32,10 @@ typedef enum {
 
 /// PlayLogPolicy
 typedef enum {
-    PdmPlayLogPolicy_All     = 0,        ///< All pdm:qry commands which require ::PdmPlayEventType_Applet and AppletId = Application will only return the entry when PlayLogPolicy matches this value.
-    PdmPlayLogPolicy_LogOnly = 1,        ///< The above commands will filter out the entry with this.
-    PdmPlayLogPolicy_None    = 2,        ///< The pdm:ntfy commands which handle ::PdmPlayEventType_Applet logging will immediately return 0 when the input param matches this value.
+    PdmPlayLogPolicy_All        = 0,        ///< All pdm:qry commands which require ::PdmPlayEventType_Applet and AppletId = Application will only return the entry when PlayLogPolicy matches this value.
+    PdmPlayLogPolicy_LogOnly    = 1,        ///< The above commands will filter out the entry with this.
+    PdmPlayLogPolicy_None       = 2,        ///< The pdm:ntfy commands which handle ::PdmPlayEventType_Applet logging will immediately return 0 when the input param matches this value.
+    PdmPlayLogPolicy_Unknown3   = 3,        ///< [10.0.0+] The cmds which require ::PdmPlayLogPolicy_All, now also allow value 3 if the cmd input flag is set.
 } PdmPlayLogPolicy;
 
 /// AppletEvent.
@@ -172,35 +173,39 @@ Service* pdmqryGetServiceSession(void);
 /**
  * @brief Gets a list of \ref PdmAppletEvent.
  * @param[in] entry_index Start entry index.
+ * @param[in] flag [10.0.0+] Whether to additionally allow using entries with ::PdmPlayLogPolicy_Unknown3.
  * @param[out] events Output \ref PdmAppletEvent array.
  * @param[in] count Max entries in the output array.
  * @param[out] total_out Total output entries.
  */
-Result pdmqryQueryAppletEvent(s32 entry_index, PdmAppletEvent *events, s32 count, s32 *total_out);
+Result pdmqryQueryAppletEvent(s32 entry_index, bool flag, PdmAppletEvent *events, s32 count, s32 *total_out);
 
 /**
  * @brief Gets \ref PdmPlayStatistics for the specified ApplicationId.
  * @param[in] application_id ApplicationId
+ * @param[in] flag [10.0.0+] Whether to additionally allow using entries with ::PdmPlayLogPolicy_Unknown3.
  * @param[out] stats \ref PdmPlayStatistics
  */
-Result pdmqryQueryPlayStatisticsByApplicationId(u64 application_id, PdmPlayStatistics *stats);
+Result pdmqryQueryPlayStatisticsByApplicationId(u64 application_id, bool flag, PdmPlayStatistics *stats);
 
 /**
  * @brief Gets \ref PdmPlayStatistics for the specified ApplicationId and account userId.
  * @param[in] application_id ApplicationId
  * @param[in] uid \ref AccountUid
+ * @param[in] flag [10.0.0+] Whether to additionally allow using entries with ::PdmPlayLogPolicy_Unknown3.
  * @param[out] stats \ref PdmPlayStatistics
  */
-Result pdmqryQueryPlayStatisticsByApplicationIdAndUserAccountId(u64 application_id, AccountUid uid, PdmPlayStatistics *stats);
+Result pdmqryQueryPlayStatisticsByApplicationIdAndUserAccountId(u64 application_id, AccountUid uid, bool flag, PdmPlayStatistics *stats);
 
 /**
  * @brief Gets \ref PdmLastPlayTime for the specified applications.
+ * @param[in] flag [10.0.0+] Whether to additionally allow using entries with ::PdmPlayLogPolicy_Unknown3.
  * @param[out] playtimes Output \ref PdmLastPlayTime array.
  * @param[in] application_ids Input ApplicationIds array.
  * @param[in] count Total entries in the input/output arrays.
  * @param[out] total_out Total output entries.
  */
-Result pdmqryQueryLastPlayTime(PdmLastPlayTime *playtimes, const u64 *application_ids, s32 count, s32 *total_out);
+Result pdmqryQueryLastPlayTime(bool flag, PdmLastPlayTime *playtimes, const u64 *application_ids, s32 count, s32 *total_out);
 
 /**
  * @brief Gets a list of \ref PdmPlayEvent.
@@ -252,11 +257,12 @@ Result pdmqryGetAvailableAccountPlayEventRange(AccountUid uid, s32 *total_entrie
  * @brief Gets a list of applications played by the specified user.
  * @note Only available with [6.0.0+].
  * @param[in] uid \ref AccountUid
+ * @param[in] flag [10.0.0+] Whether to additionally allow using entries with ::PdmPlayLogPolicy_Unknown3.
  * @param[out] application_ids Output ApplicationIds array.
  * @param[in] count Max entries in the output array.
  * @param[out] total_out Total output entries.
  */
-Result pdmqryQueryRecentlyPlayedApplication(AccountUid uid, u64 *application_ids, s32 count, s32 *total_out);
+Result pdmqryQueryRecentlyPlayedApplication(AccountUid uid, bool flag, u64 *application_ids, s32 count, s32 *total_out);
 
 /**
  * @brief Gets an Event which is signaled when logging a new \ref PdmPlayEvent which would be available via \ref pdmqryQueryAccountEvent, where PdmPlayEvent::eventData::account::type is 0.
