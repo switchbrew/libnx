@@ -66,3 +66,4 @@ Result ldrPmCreateProcess(u64 pin_id, u32 flags, Handle reslimit_h, Handle *out_
 Result ldrPmGetProgramInfo(const NcmProgramLocation *loc, LoaderProgramInfo *out_program_info);
 Result ldrPmPinProgram(const NcmProgramLocation *loc, u64 *out_pin_id);
 Result ldrPmUnpinProgram(u64 pin_id);
+Result ldrPmSetEnabledProgramVerification(bool enabled); ///< [10.0.0+]

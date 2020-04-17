@@ -392,7 +392,7 @@ Result setsysSetVibrationMasterVolume(float volume) {
 Result setsysGetSettingsItemValueSize(const char *name, const char *item_key, u64 *size_out) {
     char send_name[SET_MAX_NAME_SIZE];
     char send_item_key[SET_MAX_NAME_SIZE];
-    
+
     memset(send_name, 0, SET_MAX_NAME_SIZE);
     memset(send_item_key, 0, SET_MAX_NAME_SIZE);
     strncpy(send_name, name, SET_MAX_NAME_SIZE-1);
@@ -413,7 +413,7 @@ Result setsysGetSettingsItemValueSize(const char *name, const char *item_key, u6
 Result setsysGetSettingsItemValue(const char *name, const char *item_key, void *value_out, size_t value_out_size, u64 *size_out) {
     char send_name[SET_MAX_NAME_SIZE];
     char send_item_key[SET_MAX_NAME_SIZE];
-    
+
     memset(send_name, 0, SET_MAX_NAME_SIZE);
     memset(send_item_key, 0, SET_MAX_NAME_SIZE);
     strncpy(send_name, name, SET_MAX_NAME_SIZE-1);
@@ -569,15 +569,8 @@ Result setsysGetBatteryLot(SetBatteryLot *out) {
     return serviceDispatchOut(&g_setsysSrv, 67, *out);
 }
 
-Result setsysGetSerialNumber(char *serial) {
-    char out[0x18]={0};
-
-    Result rc = serviceDispatchOut(&g_setsysSrv, 68, out);
-    if (R_SUCCEEDED(rc) && serial) {
-        memcpy(serial, out, 0x18);
-        serial[0x18]=0;
-    }
-    return rc;
+Result setsysGetSerialNumber(SetSysSerialNumber *out) {
+    return serviceDispatchOut(&g_setsysSrv, 68, *out);
 }
 
 Result setsysGetNfcEnableFlag(bool *out) {

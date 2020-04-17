@@ -30,14 +30,33 @@ NX_CONSTEXPR FsDirectoryEntry* fsdevDirGetEntries(fsdev_dir_t *dir)
 /// Initializes and mounts the sdmc device if accessible.
 Result fsdevMountSdmc(void);
 
-/// Mounts the specified save data.
+/// Mounts the specified SaveData.
 Result fsdevMountSaveData(const char *name, u64 application_id, AccountUid uid);
+
+/// Mounts the specified SaveData as ReadOnly.
+/// Only available on [2.0.0+].
+Result fsdevMountSaveDataReadOnly(const char *name, u64 application_id, AccountUid uid);
+
+/// Mounts the specified BcatSaveData.
+Result fsdevMountBcatSaveData(const char *name, u64 application_id);
 
 /// Mounts the specified DeviceSaveData.
 Result fsdevMountDeviceSaveData(const char *name, u64 application_id);
 
-/// Mounts the specified system save data.
+/// Mounts the TemporaryStorage for the current process.
+/// Only available on [3.0.0+].
+Result fsdevMountTemporaryStorage(const char *name);
+
+/// Mounts the specified CacheStorage.
+/// Only available on [3.0.0+].
+Result fsdevMountCacheStorage(const char *name, u64 application_id, u16 save_data_index);
+
+/// Mounts the specified SystemSaveData.
 Result fsdevMountSystemSaveData(const char *name, FsSaveDataSpaceId save_data_space_id, u64 system_save_data_id, AccountUid uid);
+
+/// Mounts the specified SystemBcatSaveData.
+/// Only available on [4.0.0+].
+Result fsdevMountSystemBcatSaveData(const char *name, u64 system_save_data_id);
 
 /// Mounts the input fs with the specified device name. fsdev will handle closing the fs when required, including when fsdevMountDevice() fails.
 /// Returns -1 when any errors occur.

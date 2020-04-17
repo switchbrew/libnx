@@ -1,5 +1,9 @@
 #define NX_SERVICE_ASSUME_NON_DOMAIN
+#include <string.h>
+#include <stdatomic.h>
 #include "service_guard.h"
+#include "arm/counter.h"
+#include "kernel/shmem.h"
 #include "services/time.h"
 #include "runtime/hosversion.h"
 
@@ -8,10 +12,15 @@ __attribute__((weak)) TimeServiceType __nx_time_service_type = TimeServiceType_U
 static Service g_timeSrv;
 static Service g_timeUserSystemClock;
 static Service g_timeNetworkSystemClock;
+static Service g_timeSteadyClock;
 static Service g_timeTimeZoneService;
 static Service g_timeLocalSystemClock;
 
+static SharedMemory g_timeSharedmem;
+
 static Result _timeCmdGetSession(Service* srv, Service* srv_out, u32 cmd_id);
+static Result _timeGetSharedMemoryNativeHandle(Service* srv, Handle* out);
+static void _timeReadSharedmemObj(void* out, size_t offset, size_t size);
 
 NX_GENERATE_SERVICE_GUARD(time);
 
@@ -41,13 +50,14 @@ Result _timeInitialize(void) {
             break;
     }
 
-    if (R_FAILED(rc))
-        return rc;
-
-    rc = _timeCmdGetSession(&g_timeSrv, &g_timeUserSystemClock, 0);
+    if (R_SUCCEEDED(rc))
+        rc = _timeCmdGetSession(&g_timeSrv, &g_timeUserSystemClock, 0);
 
     if (R_SUCCEEDED(rc))
         rc = _timeCmdGetSession(&g_timeSrv, &g_timeNetworkSystemClock, 1);
+
+    if (R_SUCCEEDED(rc))
+        rc = _timeCmdGetSession(&g_timeSrv, &g_timeSteadyClock, 2);
 
     if (R_SUCCEEDED(rc))
         rc = _timeCmdGetSession(&g_timeSrv, &g_timeTimeZoneService, 3);
@@ -55,12 +65,23 @@ Result _timeInitialize(void) {
     if (R_SUCCEEDED(rc))
         rc = _timeCmdGetSession(&g_timeSrv, &g_timeLocalSystemClock, 4);
 
+    if (R_SUCCEEDED(rc) && hosversionAtLeast(6,0,0)) {
+        Handle shmem;
+        rc = _timeGetSharedMemoryNativeHandle(&g_timeSrv, &shmem);
+        if (R_SUCCEEDED(rc)) {
+            shmemLoadRemote(&g_timeSharedmem, shmem, 0x1000, Perm_R);
+            rc = shmemMap(&g_timeSharedmem);
+        }
+    }
+
     return rc;
 }
 
 void _timeCleanup(void) {
+    shmemClose(&g_timeSharedmem);
     serviceClose(&g_timeLocalSystemClock);
     serviceClose(&g_timeTimeZoneService);
+    serviceClose(&g_timeSteadyClock);
     serviceClose(&g_timeNetworkSystemClock);
     serviceClose(&g_timeUserSystemClock);
     serviceClose(&g_timeSrv);
@@ -85,14 +106,43 @@ Service* timeGetServiceSession_SystemClock(TimeType type) {
     }
 }
 
+Service* timeGetServiceSession_SteadyClock(void) {
+    return &g_timeSteadyClock;
+}
+
 Service* timeGetServiceSession_TimeZoneService(void) {
     return &g_timeTimeZoneService;
+}
+
+void* timeGetSharedmemAddr(void) {
+    return shmemGetAddr(&g_timeSharedmem);
+}
+
+void _timeReadSharedmemObj(void* out, size_t offset, size_t size) {
+    void* addr = (u8*)shmemGetAddr(&g_timeSharedmem) + offset;
+
+    vu32* counter = (vu32*)addr;
+    void* data = (u8*)addr + 8;
+
+    u32 cur_counter;
+    do {
+        cur_counter = *counter;
+        memcpy(out, (u8*)data + (cur_counter&1)*size, size);
+        atomic_thread_fence(memory_order_consume);
+    } while (cur_counter != *counter);
 }
 
 static Result _timeCmdGetSession(Service* srv, Service* srv_out, u32 cmd_id) {
     return serviceDispatch(srv, cmd_id,
         .out_num_objects = 1,
         .out_objects = srv_out,
+    );
+}
+
+static Result _timeGetSharedMemoryNativeHandle(Service* srv, Handle* out) {
+    return serviceDispatch(srv, 20,
+        .out_handle_attrs = { SfOutHandleAttr_HipcCopy },
+        .out_handles = out,
     );
 }
 
@@ -108,13 +158,57 @@ static Result _appletCmdNoInOutU32(Service* srv, u32 *out, u32 cmd_id) {
     return serviceDispatchOut(srv, cmd_id, *out);
 }
 
+static s64 _timeComputeSteadyClockTimePoint(const TimeStandardSteadyClockTimePointType *context) {
+    return (context->base_time + armTicksToNs(armGetSystemTick())) / 1000000000L;
+}
+
+Result timeGetStandardSteadyClockTimePoint(TimeSteadyClockTimePoint *out) {
+    if (!shmemGetAddr(&g_timeSharedmem)) {
+        return serviceDispatchOut(&g_timeSteadyClock, 0, *out);
+    }
+
+    TimeStandardSteadyClockTimePointType context;
+    _timeReadSharedmemObj(&context, 0x00, sizeof(context));
+    out->time_point = _timeComputeSteadyClockTimePoint(&context);
+    out->source_id = context.source_id;
+    return 0;
+}
+
+Result timeGetStandardSteadyClockInternalOffset(s64 *out) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchOut(&g_timeSteadyClock, 200, *out);
+}
+
+static Result _timeReadClockFromSharedMem(size_t offset, u64 *out) {
+    TimeStandardSteadyClockTimePointType steady;
+    _timeReadSharedmemObj(&steady, 0x00, sizeof(steady));
+
+    TimeSystemClockContext context;
+    _timeReadSharedmemObj(&context, offset, sizeof(context));
+
+    if (memcmp(&context.timestamp.source_id, &steady.source_id, sizeof(Uuid)) != 0)
+        return MAKERESULT(116,102);
+
+    *out = context.offset + _timeComputeSteadyClockTimePoint(&steady);
+    return 0;
+}
+
 Result timeGetCurrentTime(TimeType type, u64 *timestamp) {
-    Service *srv = timeGetServiceSession_SystemClock(type);
+    if (!shmemGetAddr(&g_timeSharedmem)) {
+        Service *srv = timeGetServiceSession_SystemClock(type);
 
-    if (srv==NULL)
-        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+        if (srv==NULL)
+            return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
-    return _timeCmdNoInOutU64(srv, timestamp, 0);
+        return _timeCmdNoInOutU64(srv, timestamp, 0);
+    }
+
+    if (type != TimeType_NetworkSystemClock)
+        return _timeReadClockFromSharedMem(0x38, timestamp);
+    else
+        return _timeReadClockFromSharedMem(0x80, timestamp);
 }
 
 Result timeSetCurrentTime(TimeType type, u64 timestamp) {

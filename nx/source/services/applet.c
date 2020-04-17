@@ -2726,7 +2726,13 @@ IPC_MAKE_CMD_IMPL_HOSVER(Result appletGetHomeButtonDoubleClickEnabled(bool *out)
 
 // IDebugFunctions
 
-IPC_MAKE_CMD_IMPL(Result appletOpenMainApplication(AppletApplication *a),                &g_appletIDebugFunctions, 1,  _appletApplicationCreate, a)
+Result appletOpenMainApplication(AppletApplication *a) {
+    if (hosversionAtLeast(10,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletApplicationCreate(&g_appletIDebugFunctions, a, 1);
+}
+
 IPC_MAKE_CMD_IMPL(Result appletPerformSystemButtonPressing(AppletSystemButtonType type), &g_appletIDebugFunctions, 10, _appletCmdInU32NoOut,     type)
 IPC_MAKE_CMD_IMPL(Result appletInvalidateTransitionLayer(void),                          &g_appletIDebugFunctions, 20, _appletCmdNoIO)
 

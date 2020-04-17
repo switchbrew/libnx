@@ -4,6 +4,7 @@
 #include <errno.h>
 #include <alloca.h>
 #include <sys/iosupport.h>
+#include <malloc.h>
 
 #include <fcntl.h>
 #include <poll.h>
@@ -16,6 +17,7 @@
 #include "result.h"
 #include "services/bsd.h"
 #include "runtime/devices/socket.h"
+#include "runtime/hosversion.h"
 
 __attribute__((weak)) size_t __nx_pollfd_sb_max_fds = 64;
 
@@ -669,39 +671,338 @@ int socketpair(int domain, int type, int protocol, int sv[2]) {
 
 ssize_t recvmsg(int sockfd, struct msghdr *msg, int flags) {
     if(msg == NULL) {
-        errno = EFAULT;
+        errno = EINVAL;
         return -1;
     }
 
     struct mmsghdr msgvec = {
         .msg_hdr = *msg,
-        .msg_len = 1,
+        .msg_len = 0,
     };
 
-    return recvmmsg(sockfd, &msgvec, 1, flags, NULL);
+    ssize_t ret = recvmmsg(sockfd, &msgvec, 1, flags, NULL);
+    if (ret >= 0) {
+        *msg = msgvec.msg_hdr;
+        ret = msgvec.msg_len;
+    }
+
+    return ret;
 }
 
 ssize_t sendmsg(int sockfd, const struct msghdr *msg, int flags) {
     if(msg == NULL) {
-        errno = EFAULT;
+        errno = EINVAL;
         return -1;
     }
 
     struct mmsghdr msgvec = {
         .msg_hdr = *msg,
-        .msg_len = 1,
+        .msg_len = 0,
     };
 
-    return sendmmsg(sockfd, &msgvec, 1, flags);
+    ssize_t ret = sendmmsg(sockfd, &msgvec, 1, flags);
+    if (ret > 0) ret = msgvec.msg_len;
+
+    return ret;
+}
+
+static int _serializeMmsg(u8 *outbuf, size_t outbuf_size, struct mmsghdr *msgvec, unsigned int vlen, bool is_send) {
+    void* tmp_ptr = NULL;
+    u8 *dataptr = outbuf;
+    *dataptr++ = 0x8;
+
+    for (unsigned int i=0; i<vlen; i++) {
+        socklen_t msg_controllen = msgvec[i].msg_hdr.msg_controllen;
+
+        if (msg_controllen >= sizeof(struct cmsghdr)) {
+            struct cmsghdr *cmsg = msgvec[i].msg_hdr.msg_control;
+            if (cmsg) {
+                if (cmsg->cmsg_level == 0xffff && cmsg->cmsg_type == 1) {
+                    errno = EOPNOTSUPP;
+                    return -1;
+                }
+            }
+        }
+
+        socklen_t msg_namelen = msgvec[i].msg_hdr.msg_namelen;
+        *((socklen_t*)dataptr) = msg_namelen;
+        dataptr+= sizeof(socklen_t);
+
+        if (is_send && (tmp_ptr = msgvec[i].msg_hdr.msg_name)) memcpy(dataptr, tmp_ptr, msg_namelen);
+        dataptr+= msg_namelen;
+
+        int msg_iovlen = msgvec[i].msg_hdr.msg_iovlen;
+        *((int*)dataptr) = msg_iovlen;
+        dataptr+= sizeof(int);
+
+        for (int veci=0; veci<msg_iovlen; veci++) {
+            struct iovec *vec = &msgvec[i].msg_hdr.msg_iov[veci];
+
+            u64 iov_len = vec->iov_len;
+            *((u64*)dataptr) = iov_len;
+            dataptr+= sizeof(u64);
+
+            if (is_send) memcpy(dataptr, vec->iov_base, iov_len);
+            dataptr+= iov_len;
+        }
+
+        *((socklen_t*)dataptr) = msg_controllen;
+        dataptr+= sizeof(socklen_t);
+
+        if (is_send && (tmp_ptr = msgvec[i].msg_hdr.msg_control)) memcpy(dataptr, tmp_ptr, msg_controllen);
+        dataptr+= msg_controllen;
+
+        *((int*)dataptr) = msgvec[i].msg_hdr.msg_flags;
+        dataptr+= sizeof(int);
+
+        *((int*)dataptr) = msgvec[i].msg_len;
+        dataptr+= sizeof(int);
+    }
+
+    // sdknso would verify that dataptr isn't larger than outbuf+outbuf_size (Abort otherwise), but that can't happen anyway since the caller allocates enough space.
+    return (uintptr_t)dataptr-(uintptr_t)outbuf;
+}
+
+static int _deserializeMmsg(struct mmsghdr *msgvec, unsigned int vlen, u8 *inbuf, size_t inbuf_size, bool is_recv) {
+    bool bounds_flag=0;
+    void* tmp_ptr = NULL;
+    u8 *dataptr = &inbuf[0x1];
+    uintptr_t inbuf_end = (uintptr_t)&inbuf[inbuf_size];
+
+    // sdknso verifies that dataptr isn't larger than outbuf+outbuf_size at the end prior to returning (Abort otherwise). We'll also verify it during the loop, and also verify that sizes from the buffer are not larger than the original msgvec values.
+
+    for (unsigned int i=0; i<vlen; i++) {
+        if ((uintptr_t)dataptr > (uintptr_t)inbuf_end || (uintptr_t)dataptr+sizeof(socklen_t) > inbuf_end) {
+            bounds_flag = 1;
+            break;
+        }
+
+        socklen_t msg_namelen = *((socklen_t*)dataptr);
+        dataptr+= sizeof(socklen_t);
+
+        if ((uintptr_t)dataptr+msg_namelen > inbuf_end || msg_namelen > msgvec[i].msg_hdr.msg_namelen) {
+            bounds_flag = 1;
+            break;
+        }
+        msgvec[i].msg_hdr.msg_namelen = msg_namelen;
+
+        if (is_recv && (tmp_ptr = msgvec[i].msg_hdr.msg_name)) {
+            memcpy(tmp_ptr, dataptr, msg_namelen);
+        }
+        dataptr+= msg_namelen;
+
+        if ((uintptr_t)dataptr+sizeof(int) > inbuf_end) {
+            bounds_flag = 1;
+            break;
+        }
+
+        int msg_iovlen = *((int*)dataptr);
+        dataptr+= sizeof(int);
+
+        if (msg_iovlen > msgvec[i].msg_hdr.msg_iovlen) {
+            bounds_flag = 1;
+            break;
+        }
+
+        msgvec[i].msg_hdr.msg_iovlen = msg_iovlen;
+
+        for (int veci=0; veci<msg_iovlen; veci++) {
+            struct iovec *vec = &msgvec[i].msg_hdr.msg_iov[veci];
+
+            if ((uintptr_t)dataptr+sizeof(u64) > inbuf_end) {
+                bounds_flag = 1;
+                break;
+            }
+
+            u64 iov_len = *((u64*)dataptr);
+            dataptr+= sizeof(u64);
+            if (iov_len > inbuf_size || (uintptr_t)dataptr+iov_len > inbuf_end || iov_len > vec->iov_len) {
+                bounds_flag = 1;
+                break;
+            }
+
+            vec->iov_len = iov_len;
+            if (is_recv) memcpy(vec->iov_base, dataptr, iov_len);
+            dataptr+= iov_len;
+        }
+
+        if (bounds_flag) break;
+
+        if ((uintptr_t)dataptr+sizeof(socklen_t) > inbuf_end) {
+            bounds_flag = 1;
+            break;
+        }
+
+        socklen_t msg_controllen = *((socklen_t*)dataptr);
+        dataptr+= sizeof(socklen_t);
+
+        if ((uintptr_t)dataptr+msg_controllen > inbuf_end || msg_controllen > msgvec[i].msg_hdr.msg_controllen) {
+            bounds_flag = 1;
+            break;
+        }
+
+        msgvec[i].msg_hdr.msg_controllen = msg_controllen;
+
+        if (is_recv && (tmp_ptr = msgvec[i].msg_hdr.msg_control)) {
+            memcpy(tmp_ptr, dataptr, msg_controllen);
+        }
+        dataptr+= msg_controllen;
+
+        if ((uintptr_t)dataptr+sizeof(int) > inbuf_end) {
+            bounds_flag = 1;
+            break;
+        }
+
+        msgvec[i].msg_hdr.msg_flags = *((int*)dataptr);
+        dataptr+= sizeof(int);
+
+        if ((uintptr_t)dataptr+sizeof(int) > inbuf_end) {
+            bounds_flag = 1;
+            break;
+        }
+
+        msgvec[i].msg_len = *((int*)dataptr);
+        dataptr+= sizeof(int);
+
+        if (msg_controllen >= sizeof(struct cmsghdr)) {
+            struct cmsghdr *cmsg = msgvec[i].msg_hdr.msg_control;
+            if (cmsg) {
+                if (cmsg->cmsg_level == 0xffff && cmsg->cmsg_type == 1) {
+                    errno = EOPNOTSUPP;
+                    return -1;
+                }
+            }
+        }
+    }
+
+    if (bounds_flag || (uintptr_t)dataptr > inbuf_end) {
+        errno = EFAULT;
+        return -1;
+    }
+
+    return (uintptr_t)dataptr-(uintptr_t)inbuf;
+}
+
+static int _mmsgInitCommon(u8 **buf, size_t *alignsize, struct mmsghdr *msgvec, unsigned int vlen) {
+    size_t msgdatasize_total = 0;
+    size_t bufsize = 1;
+
+    for (unsigned int i=0; i<vlen; i++) {
+        bufsize+= sizeof(socklen_t) + msgvec[i].msg_hdr.msg_namelen + sizeof(int);
+
+        int msg_iovlen = msgvec[i].msg_hdr.msg_iovlen;
+
+        for (int veci=0; veci<msg_iovlen; veci++) {
+            size_t iov_len = msgvec[i].msg_hdr.msg_iov[veci].iov_len;
+            bufsize += sizeof(u64) + iov_len;
+            msgdatasize_total += iov_len;
+        }
+
+        bufsize+= sizeof(socklen_t) + msgvec[i].msg_hdr.msg_controllen + sizeof(int) + sizeof(int);
+    }
+
+    if (msgdatasize_total > 0x80000) {
+        errno = EMSGSIZE;
+        return -1;
+    }
+
+    *alignsize = (bufsize+0xfff) & ~0xfff;
+    *buf = (u8*)memalign(0x1000, *alignsize);
+    if (*buf == NULL) {
+        errno = ENOMEM;
+        return -1;
+    }
+    memset(*buf, 0, *alignsize);
+
+    return 0;
 }
 
 int sendmmsg(int sockfd, struct mmsghdr *msgvec, unsigned int vlen, int flags) {
-    //TODO: do the necessary RE & implement it
-    errno = ENOSYS;
-    return -1;
+    if (hosversionBefore(7,0,0)) { // This cmd was added with [3.0.0+], but we'll only support the updated [7.0.0+] version of it.
+        errno = ENOSYS;
+        return -1;
+    }
+
+    if(msgvec == NULL) {
+        errno = EINVAL;
+        return -1;
+    }
+
+    if(vlen < 1 || vlen > 0x20) {
+        errno = EMSGSIZE;
+        return -1;
+    }
+
+    sockfd = _socketGetFd(sockfd);
+    if(sockfd == -1)
+        return -1;
+
+    int ret=0, ret2=0;
+    u8 *buf = NULL;
+    size_t alignsize=0;
+
+    ret = _mmsgInitCommon(&buf, &alignsize, msgvec, vlen);
+    if (ret==-1) return ret;
+
+    ret = _serializeMmsg(buf, alignsize, msgvec, vlen, 1);
+
+    if (ret>=0) ret = _socketParseBsdResult(NULL, bsdSendMMsg(sockfd, buf, alignsize, vlen, flags));
+
+    if (ret>=0 && ret>vlen) { // sdknso doesn't check this, but we will.
+        errno = EFAULT;
+        ret = -1;
+    }
+
+    if (ret>=0) {
+        ret2 = _deserializeMmsg(msgvec, ret, buf, alignsize, 0);
+        if (ret2==-1) ret = ret2;
+    }
+
+    free(buf);
+
+    return ret;
 }
+
 int recvmmsg(int sockfd, struct mmsghdr *msgvec, unsigned int vlen, int flags, struct timespec *timeout) {
-    //TODO: do the necessary RE & implement it
-    errno = ENOSYS;
-    return -1;
+    if (hosversionBefore(7,0,0)) { // This cmd was added with [3.0.0+], but we'll only support the updated [7.0.0+] version of it.
+        errno = ENOSYS;
+        return -1;
+    }
+
+    if(msgvec == NULL || (vlen < 1 || vlen > 0x20)) {
+        errno = EINVAL;
+        return -1;
+    }
+
+    sockfd = _socketGetFd(sockfd);
+    if(sockfd == -1)
+        return -1;
+
+    int ret=0, ret2=0;
+    u8 *buf = NULL;
+    size_t alignsize=0;
+
+    ret = _mmsgInitCommon(&buf, &alignsize, msgvec, vlen);
+    if (ret==-1) return ret;
+
+    struct timespec tmp_timeout={0};
+    if (timeout) tmp_timeout = *timeout;
+
+    ret = _serializeMmsg(buf, alignsize, msgvec, vlen, 0);
+
+    if (ret>=0) ret = _socketParseBsdResult(NULL, bsdRecvMMsg(sockfd, buf, alignsize, vlen, flags, &tmp_timeout));
+
+    if (ret>=0 && ret>vlen) { // sdknso doesn't check this, but we will.
+        errno = EFAULT;
+        ret = -1;
+    }
+
+    if (ret>=0) {
+        ret2 = _deserializeMmsg(msgvec, ret, buf, alignsize, 1);
+        if (ret2==-1) ret = ret2;
+    }
+
+    free(buf);
+
+    return ret;
 }

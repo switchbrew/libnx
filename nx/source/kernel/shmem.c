@@ -46,7 +46,7 @@ Result shmemMap(SharedMemory* s)
         }
     }
     else {
-        rc = LibnxError_AlreadyMapped;
+        rc = MAKERESULT(Module_Libnx, LibnxError_AlreadyMapped);
     }
 
     return rc;

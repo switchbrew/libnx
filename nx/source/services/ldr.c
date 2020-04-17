@@ -92,3 +92,11 @@ Result ldrPmPinProgram(const NcmProgramLocation *loc, u64 *out_pin_id) {
 Result ldrPmUnpinProgram(u64 pin_id) {
     return serviceDispatchIn(&g_ldrPmSrv, 3, pin_id);
 }
+
+Result ldrPmSetEnabledProgramVerification(bool enabled) {
+    if (hosversionBefore(10,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    const u8 in = enabled != 0;
+    return serviceDispatchIn(&g_ldrPmSrv, 4, in);
+}

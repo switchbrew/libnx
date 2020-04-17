@@ -2,7 +2,6 @@
 #include <string.h>
 #include <sys/iosupport.h>
 #include "runtime/devices/console.h"
-#include "kernel/svc.h"
 
 #include "default_font_bin.h"
 
@@ -450,45 +449,13 @@ static ssize_t con_write(struct _reent *r,void *fd,const char *ptr, size_t len) 
 }
 
 static const devoptab_t dotab_stdout = {
-	"con",
-	0,
-	NULL,
-	NULL,
-	con_write,
-	NULL,
-	NULL,
-	NULL
+	.name    = "con",
+	.write_r = con_write,
 };
 
-//---------------------------------------------------------------------------------
-static ssize_t debug_write(struct _reent *r, void *fd, const char *ptr, size_t len) {
-//---------------------------------------------------------------------------------
-	svcOutputDebugString(ptr,len);
-	return len;
+const devoptab_t* __nx_get_console_dotab(void) {
+	return &dotab_stdout;
 }
-
-static const devoptab_t dotab_svc = {
-	"svc",
-	0,
-	NULL,
-	NULL,
-	debug_write,
-	NULL,
-	NULL,
-	NULL
-};
-
-
-static const devoptab_t dotab_null = {
-	"null",
-	0,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
-};
 
 ConsoleRenderer* getDefaultConsoleRenderer(void);
 
@@ -496,16 +463,12 @@ ConsoleRenderer* getDefaultConsoleRenderer(void);
 PrintConsole* consoleInit(PrintConsole* console) {
 //---------------------------------------------------------------------------------
 
-	static bool firstConsoleInit = true;
+	static bool didFirstConsoleInit = false;
 
-	if(firstConsoleInit) {
+	if(!didFirstConsoleInit) {
 		devoptab_list[STD_OUT] = &dotab_stdout;
-		devoptab_list[STD_ERR] = &dotab_stdout;
-
-		setvbuf(stdout, NULL , _IONBF, 0);
-		setvbuf(stderr, NULL , _IONBF, 0);
-
-		firstConsoleInit = false;
+		setvbuf(stdout, NULL, _IONBF, 0);
+		didFirstConsoleInit = true;
 	}
 
 	if(console) {
@@ -549,29 +512,6 @@ void consoleUpdate(PrintConsole* console) {
 	if (console->consoleInitialised) {
 		console->renderer->flushAndSwap(console);
 	}
-}
-
-//---------------------------------------------------------------------------------
-void consoleDebugInit(debugDevice device) {
-//---------------------------------------------------------------------------------
-
-	int buffertype = _IONBF;
-
-	switch(device) {
-
-	case debugDevice_SVC:
-		devoptab_list[STD_ERR] = &dotab_svc;
-		buffertype = _IOLBF;
-		break;
-	case debugDevice_CONSOLE:
-		devoptab_list[STD_ERR] = &dotab_stdout;
-		break;
-	case debugDevice_NULL:
-		devoptab_list[STD_ERR] = &dotab_null;
-		break;
-	}
-	setvbuf(stderr, NULL , buffertype, 0);
-
 }
 
 //---------------------------------------------------------------------------------

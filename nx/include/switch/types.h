@@ -47,6 +47,8 @@ typedef void (*VoidFn)(void);       ///< Function without arguments nor return v
 
 typedef struct { u8 uuid[0x10]; } Uuid;   ///< Unique identifier.
 
+typedef struct { float value[3]; } UtilFloat3;   ///< 3 floats.
+
 /// Creates a bitmask from a bit number.
 #ifndef BIT
 #define BIT(n) (1U<<(n))

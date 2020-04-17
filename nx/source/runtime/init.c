@@ -16,6 +16,7 @@ void NORETURN __nx_exit(Result rc, LoaderReturnFn retaddr);
 void virtmemSetup(void);
 void newlibSetup(void);
 void argvSetup(void);
+void __libnx_init_thread(void);
 void __libnx_init_time(void);
 void __libnx_init_cwd(void);
 
@@ -174,6 +175,7 @@ void __attribute__((weak)) __libnx_init(void* ctx, Handle main_thread, void* sav
     newlibSetup();
     virtmemSetup();
     __libnx_initheap();
+    __libnx_init_thread();
 
     // Build argc/argv if present
     argvSetup();

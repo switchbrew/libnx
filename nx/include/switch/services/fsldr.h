@@ -8,6 +8,14 @@
 #include "../types.h"
 #include "../sf/service.h"
 #include "../services/fs.h"
+#include "../crypto/sha256.h"
+
+typedef struct {
+    u8 signature[0x100];
+    u8 hash[SHA256_HASH_SIZE];
+    bool is_signed;
+    u8 reserved[3];
+} FsCodeInfo;
 
 /// Initialize fsp-ldr.
 Result fsldrInitialize(void);
@@ -18,5 +26,5 @@ void fsldrExit(void);
 /// Gets the Service object for the actual fsp-ldr service session.
 Service* fsldrGetServiceSession(void);
 
-Result fsldrOpenCodeFileSystem(u64 tid, const char *path, FsFileSystem* out);
+Result fsldrOpenCodeFileSystem(FsCodeInfo* out_code_info, u64 tid, const char *path, FsFileSystem* out);
 Result fsldrIsArchivedProgram(u64 pid, bool *out);

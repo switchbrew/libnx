@@ -293,6 +293,22 @@ Result fsOpenSaveDataFileSystemBySystemSaveDataId(FsFileSystem* out, FsSaveDataS
     );
 }
 
+Result fsOpenReadOnlySaveDataFileSystem(FsFileSystem* out, FsSaveDataSpaceId save_data_space_id, const FsSaveDataAttribute *attr) {
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    const struct {
+        u8 save_data_space_id;
+        u8 pad[7];
+        FsSaveDataAttribute attr;
+    } in = { (u8)save_data_space_id, {0}, *attr };
+
+    return _fsObjectDispatchIn(&g_fsSrv, 53, in,
+        .out_num_objects = 1,
+        .out_objects = &out->s,
+    );
+}
+
 Result fsReadSaveDataFileSystemExtraDataBySaveDataSpaceId(void* buf, size_t len, FsSaveDataSpaceId save_data_space_id, u64 saveID) {
     if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
@@ -483,10 +499,6 @@ Result fsCreate_SystemSaveData(FsSaveDataSpaceId save_data_space_id, u64 system_
 }
 
 // Wrapper(s) for fsOpenSaveDataFileSystem.
-static Result _fsOpen_SaveDataFs(FsFileSystem* out, FsSaveDataAttribute *attr) {
-    return fsOpenSaveDataFileSystem(out, FsSaveDataSpaceId_User, attr);
-}
-
 Result fsOpen_SaveData(FsFileSystem* out, u64 application_id, AccountUid uid) {
     FsSaveDataAttribute attr;
 
@@ -495,7 +507,28 @@ Result fsOpen_SaveData(FsFileSystem* out, u64 application_id, AccountUid uid) {
     attr.uid = uid;
     attr.save_data_type = FsSaveDataType_Account;
 
-    return _fsOpen_SaveDataFs(out, &attr);
+    return fsOpenSaveDataFileSystem(out, FsSaveDataSpaceId_User, &attr);
+}
+
+Result fsOpen_SaveDataReadOnly(FsFileSystem* out, u64 application_id, AccountUid uid) {
+    FsSaveDataAttribute attr;
+
+    memset(&attr, 0, sizeof(attr));
+    attr.application_id = application_id;
+    attr.uid = uid;
+    attr.save_data_type = FsSaveDataType_Account;
+
+    return fsOpenReadOnlySaveDataFileSystem(out, FsSaveDataSpaceId_User, &attr);
+}
+
+Result fsOpen_BcatSaveData(FsFileSystem* out, u64 application_id) {
+    FsSaveDataAttribute attr;
+
+    memset(&attr, 0, sizeof(attr));
+    attr.application_id = application_id;
+    attr.save_data_type = FsSaveDataType_Bcat;
+
+    return fsOpenSaveDataFileSystem(out, FsSaveDataSpaceId_User, &attr);
 }
 
 Result fsOpen_DeviceSaveData(FsFileSystem* out, u64 application_id) {
@@ -505,7 +538,33 @@ Result fsOpen_DeviceSaveData(FsFileSystem* out, u64 application_id) {
     attr.application_id = application_id;
     attr.save_data_type = FsSaveDataType_Device;
 
-    return _fsOpen_SaveDataFs(out, &attr);
+    return fsOpenSaveDataFileSystem(out, FsSaveDataSpaceId_User, &attr);
+}
+
+Result fsOpen_TemporaryStorage(FsFileSystem* out) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    FsSaveDataAttribute attr;
+
+    memset(&attr, 0, sizeof(attr));
+    attr.save_data_type = FsSaveDataType_Temporary;
+
+    return fsOpenSaveDataFileSystem(out, FsSaveDataType_Temporary, &attr);
+}
+
+Result fsOpen_CacheStorage(FsFileSystem* out, u64 application_id, u16 save_data_index) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    FsSaveDataAttribute attr;
+
+    memset(&attr, 0, sizeof(attr));
+    attr.application_id = application_id;
+    attr.save_data_type = FsSaveDataType_Cache;
+    attr.save_data_index = save_data_index;
+
+    return fsOpenSaveDataFileSystem(out, FsSaveDataSpaceId_User, &attr);
 }
 
 Result fsOpen_SystemSaveData(FsFileSystem* out, FsSaveDataSpaceId save_data_space_id, u64 system_save_data_id, AccountUid uid) {
@@ -517,6 +576,19 @@ Result fsOpen_SystemSaveData(FsFileSystem* out, FsSaveDataSpaceId save_data_spac
     attr.save_data_type = FsSaveDataType_System;
 
     return fsOpenSaveDataFileSystemBySystemSaveDataId(out, save_data_space_id, &attr);
+}
+
+Result fsOpen_SystemBcatSaveData(FsFileSystem* out, u64 system_save_data_id) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    FsSaveDataAttribute attr;
+
+    memset(&attr, 0, sizeof(attr));
+    attr.system_save_data_id = system_save_data_id;
+    attr.save_data_type = FsSaveDataType_SystemBcat;
+
+    return fsOpenSaveDataFileSystemBySystemSaveDataId(out, FsSaveDataSpaceId_System, &attr);
 }
 
 //-----------------------------------------------------------------------------

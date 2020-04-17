@@ -53,13 +53,18 @@ typedef struct {
 } TimeLocationName;
 
 typedef struct {
-    s64 time_point;        ///< A point in time.
+    s64 time_point;        ///< Monotonic count in seconds.
     Uuid source_id;        ///< An ID representing the clock source.
 } TimeSteadyClockTimePoint;
 
 typedef struct {
-    s64 time_point;
-    TimeSteadyClockTimePoint steady_clock_time_point;
+    s64 base_time;
+    Uuid source_id;
+} TimeStandardSteadyClockTimePointType;
+
+typedef struct {
+    s64 offset;
+    TimeSteadyClockTimePoint timestamp;
 } TimeSystemClockContext;
 
 /// Initialize time. Used automatically during app startup.
@@ -74,8 +79,29 @@ Service* timeGetServiceSession(void);
 /// Gets the Service object for ISystemClock with the specified \ref TimeType. This will return NULL when the type is invalid.
 Service* timeGetServiceSession_SystemClock(TimeType type);
 
+/// Gets the Service object for ISteadyClock.
+Service* timeGetServiceSession_SteadyClock(void);
+
 /// Gets the Service object for ITimeZoneService.
 Service* timeGetServiceSession_TimeZoneService(void);
+
+/// [6.0.0+] Gets the address of the SharedMemory.
+void* timeGetSharedmemAddr(void);
+
+/**
+ * @brief Gets the timepoint for the standard steady clock.
+ * @param[out] out Output timepoint (see \ref TimeSteadyClockTimePoint)
+ * @remark The standard steady clock counts time since the RTC was configured (usually this happens during manufacturing).
+ * @return Result code.
+ */
+Result timeGetStandardSteadyClockTimePoint(TimeSteadyClockTimePoint *out);
+
+/**
+ * @brief [3.0.0+] Gets the internal offset for the standard steady clock.
+ * @param[out] out Output internal offset.
+ * @return Result code.
+ */
+Result timeGetStandardSteadyClockInternalOffset(s64 *out);
 
 /**
  * @brief Gets the time for the specified clock.

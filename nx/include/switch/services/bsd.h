@@ -75,5 +75,7 @@ ssize_t bsdRead(int fd, void *buf, size_t count);
 int bsdClose(int fd);
 /// Duplicate a socket (bsd:s).
 int bsdDuplicateSocket(int sockfd);
+int bsdRecvMMsg(int sockfd, void *buf, size_t size, unsigned int vlen, int flags, struct timespec *timeout);
+int bsdSendMMsg(int sockfd, void *buf, size_t size, unsigned int vlen, int flags);
 
-// TODO: Reverse-engineer GetResourceStatistics. Implement sendmmsg/recvmmsg (custom (un)serialization)
+// TODO: Reverse-engineer GetResourceStatistics.

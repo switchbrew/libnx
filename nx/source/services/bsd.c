@@ -17,6 +17,7 @@
 #include "kernel/rwlock.h"
 #include "sf/sessionmgr.h"
 #include "services/bsd.h"
+#include "runtime/hosversion.h"
 
 typedef struct BsdSelectTimeval {
     struct timeval tv;
@@ -574,4 +575,38 @@ int bsdDuplicateSocket(int sockfd) {
     } in = { sockfd, 0, 0 };
 
     return _bsdDispatchIn(27, in);
+}
+
+int bsdRecvMMsg(int sockfd, void *buf, size_t size, unsigned int vlen, int flags, struct timespec *timeout) {
+    if (hosversionBefore(7,0,0)) // This cmd was added with [3.0.0+], but we'll only support the updated [7.0.0+] version of it.
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    const struct {
+        int sockfd;
+        int vlen;
+        int flags;
+        u32 _padding;
+        struct timespec timeout;
+    } in = { sockfd, vlen, flags, 0, *timeout };
+
+    return _bsdDispatchIn(29, in,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { buf, size } },
+    );
+}
+
+int bsdSendMMsg(int sockfd, void *buf, size_t size, unsigned int vlen, int flags) {
+    if (hosversionBefore(7,0,0)) // This cmd was added with [3.0.0+], but we'll only support the updated [7.0.0+] version of it.
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    const struct {
+        int sockfd;
+        int vlen;
+        int flags;
+    } in = { sockfd, vlen, flags };
+
+    return _bsdDispatchIn(30, in,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { buf, size } },
+    );
 }

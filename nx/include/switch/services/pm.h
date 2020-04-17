@@ -124,4 +124,4 @@ Result pmshellClearJitDebugOccured(u64 pid);
 Result pmshellNotifyBootFinished(void);
 Result pmshellGetApplicationProcessIdForShell(u64* pid_out);
 Result pmshellBoostSystemMemoryResourceLimit(u64 boost_size);
-Result pmshellBoostSystemThreadResourceLimit(void);
+Result pmshellEnableApplicationExtraThread(void);
