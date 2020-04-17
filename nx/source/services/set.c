@@ -1420,6 +1420,126 @@ Result setsysSetTouchScreenMode(SetSysTouchScreenMode mode) {
     return _setCmdInU32NoOut(&g_setsysSrv, mode, 188);
 }
 
+Result setsysGetButtonConfigSettingsFull(s32 *total_out, SetSysButtonConfigSettings *settings, s32 count) {
+    if (hosversionBefore(10,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchOut(&g_setsysSrv, 189, *total_out,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { settings, count*sizeof(SetSysButtonConfigSettings) } },
+    );
+}
+
+Result setsysSetButtonConfigSettingsFull(const SetSysButtonConfigSettings *settings, s32 count) {
+    if (hosversionBefore(10,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatch(&g_setsysSrv, 190,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
+        .buffers = { { settings, count*sizeof(SetSysButtonConfigSettings) } },
+    );
+}
+
+Result setsysGetButtonConfigSettingsEmbedded(s32 *total_out, SetSysButtonConfigSettings *settings, s32 count) {
+    if (hosversionBefore(10,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchOut(&g_setsysSrv, 191, *total_out,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { settings, count*sizeof(SetSysButtonConfigSettings) } },
+    );
+}
+
+Result setsysSetButtonConfigSettingsEmbedded(const SetSysButtonConfigSettings *settings, s32 count) {
+    if (hosversionBefore(10,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatch(&g_setsysSrv, 192,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
+        .buffers = { { settings, count*sizeof(SetSysButtonConfigSettings) } },
+    );
+}
+
+Result setsysGetButtonConfigSettingsLeft(s32 *total_out, SetSysButtonConfigSettings *settings, s32 count) {
+    if (hosversionBefore(10,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchOut(&g_setsysSrv, 193, *total_out,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { settings, count*sizeof(SetSysButtonConfigSettings) } },
+    );
+}
+
+Result setsysSetButtonConfigSettingsLeft(const SetSysButtonConfigSettings *settings, s32 count) {
+    if (hosversionBefore(10,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatch(&g_setsysSrv, 194,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
+        .buffers = { { settings, count*sizeof(SetSysButtonConfigSettings) } },
+    );
+}
+
+Result setsysGetButtonConfigSettingsRight(s32 *total_out, SetSysButtonConfigSettings *settings, s32 count) {
+    if (hosversionBefore(10,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchOut(&g_setsysSrv, 195, *total_out,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { settings, count*sizeof(SetSysButtonConfigSettings) } },
+    );
+}
+
+Result setsysSetButtonConfigSettingsRight(const SetSysButtonConfigSettings *settings, s32 count) {
+    if (hosversionBefore(10,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatch(&g_setsysSrv, 196,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
+        .buffers = { { settings, count*sizeof(SetSysButtonConfigSettings) } },
+    );
+}
+
+Result setsysGetButtonConfigRegisteredSettingsEmbedded(SetSysButtonConfigRegisteredSettings *settings) {
+    if (hosversionBefore(10,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatch(&g_setsysSrv, 197,
+        .buffer_attrs = { SfBufferAttr_FixedSize | SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { settings, sizeof(SetSysButtonConfigRegisteredSettings) } },
+    );
+}
+
+Result setsysSetButtonConfigRegisteredSettingsEmbedded(const SetSysButtonConfigRegisteredSettings *settings) {
+    if (hosversionBefore(10,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatch(&g_setsysSrv, 198,
+        .buffer_attrs = { SfBufferAttr_FixedSize | SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
+        .buffers = { { settings, sizeof(SetSysButtonConfigRegisteredSettings) } },
+    );
+}
+
+Result setsysGetButtonConfigRegisteredSettings(s32 *total_out, SetSysButtonConfigRegisteredSettings *settings, s32 count) {
+    if (hosversionBefore(10,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchOut(&g_setsysSrv, 199, *total_out,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { settings, count*sizeof(SetSysButtonConfigRegisteredSettings) } },
+    );
+}
+
+Result setsysSetButtonConfigRegisteredSettings(const SetSysButtonConfigRegisteredSettings *settings, s32 count) {
+    if (hosversionBefore(10,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatch(&g_setsysSrv, 200,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
+        .buffers = { { settings, count*sizeof(SetSysButtonConfigRegisteredSettings) } },
+    );
+}
+
 Result setcalGetBdAddress(SetCalBdAddress *out) {
     return serviceDispatchOut(&g_setcalSrv, 0, *out);
 }
@@ -1669,4 +1789,18 @@ Result setcalGetBatteryVersion(u8 *out_version) {
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return _setCmdNoInOutU8(&g_setcalSrv, out_version, 41);
+}
+
+Result setcalGetDeviceId(u64 *out_device_id) {
+    if (hosversionBefore(10,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdNoInOut64(&g_setcalSrv, out_device_id, 42);
+}
+
+Result setcalGetConsoleSixAxisSensorMountType(u8 *out_type) {
+    if (hosversionBefore(10,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdNoInOutU8(&g_setcalSrv, out_type, 43);
 }
