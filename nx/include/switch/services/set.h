@@ -719,6 +719,16 @@ typedef struct {
     u32 extra_color;      ///< Extra Color.
 } SetSysHomeMenuScheme;
 
+/// ButtonConfigSettings
+typedef struct {
+    u8 settings[0x5A8];
+} SetSysButtonConfigSettings;
+
+/// ButtonConfigRegisteredSettings
+typedef struct {
+    u8 settings[0x5C8];
+} SetSysButtonConfigRegisteredSettings;
+
 typedef struct {
     u8 offset[0x6];
 } SetCalAccelerometerOffset;
@@ -2131,6 +2141,102 @@ Result setsysGetTouchScreenMode(SetSysTouchScreenMode *out);
  */
 Result setsysSetTouchScreenMode(SetSysTouchScreenMode mode);
 
+/**
+ * @brief GetButtonConfigSettingsFull
+ * @note Only available on [10.0.0+].
+ * @param[out] total_out Total output entries.
+ * @param[out] settings Output array of \ref SetSysButtonConfigSettings.
+ * @param[in] count Size of the settings array in entries.
+ */
+Result setsysGetButtonConfigSettingsFull(s32 *total_out, SetSysButtonConfigSettings *settings, s32 count);
+
+/**
+ * @brief SetButtonConfigSettingsFull
+ * @note Only available on [10.0.0+].
+ * @param[in] settings Input array of \ref SetSysButtonConfigSettings.
+ * @param[in] count Size of the settings array in entries.
+ */
+Result setsysSetButtonConfigSettingsFull(const SetSysButtonConfigSettings *settings, s32 count);
+
+/**
+ * @brief GetButtonConfigSettingsEmbedded
+ * @note Only available on [10.0.0+].
+ * @param[out] total_out Total output entries.
+ * @param[out] settings Output array of \ref SetSysButtonConfigSettings.
+ * @param[in] count Size of the settings array in entries.
+ */
+Result setsysGetButtonConfigSettingsEmbedded(s32 *total_out, SetSysButtonConfigSettings *settings, s32 count);
+
+/**
+ * @brief SetButtonConfigSettingsEmbedded
+ * @note Only available on [10.0.0+].
+ * @param[in] settings Input array of \ref SetSysButtonConfigSettings.
+ * @param[in] count Size of the settings array in entries.
+ */
+Result setsysSetButtonConfigSettingsEmbedded(const SetSysButtonConfigSettings *settings, s32 count);
+
+/**
+ * @brief GetButtonConfigSettingsLeft
+ * @note Only available on [10.0.0+].
+ * @param[out] total_out Total output entries.
+ * @param[out] settings Output array of \ref SetSysButtonConfigSettings.
+ * @param[in] count Size of the settings array in entries.
+ */
+Result setsysGetButtonConfigSettingsLeft(s32 *total_out, SetSysButtonConfigSettings *settings, s32 count);
+
+/**
+ * @brief SetButtonConfigSettingsLeft
+ * @note Only available on [10.0.0+].
+ * @param[in] settings Input array of \ref SetSysButtonConfigSettings.
+ * @param[in] count Size of the settings array in entries.
+ */
+Result setsysSetButtonConfigSettingsLeft(const SetSysButtonConfigSettings *settings, s32 count);
+
+/**
+ * @brief GetButtonConfigSettingsRight
+ * @note Only available on [10.0.0+].
+ * @param[out] total_out Total output entries.
+ * @param[out] settings Output array of \ref SetSysButtonConfigSettings.
+ * @param[in] count Size of the settings array in entries.
+ */
+Result setsysGetButtonConfigSettingsRight(s32 *total_out, SetSysButtonConfigSettings *settings, s32 count);
+
+/**
+ * @brief SetButtonConfigSettingsRight
+ * @note Only available on [10.0.0+].
+ * @param[in] settings Input array of \ref SetSysButtonConfigSettings.
+ * @param[in] count Size of the settings array in entries.
+ */
+Result setsysSetButtonConfigSettingsRight(const SetSysButtonConfigSettings *settings, s32 count);
+
+/**
+ * @brief GetButtonConfigRegisteredSettingsEmbedded
+ * @note Only available on [10.0.0+].
+ * @param[out] settings \ref SetSysButtonConfigRegisteredSettings
+ */
+Result setsysGetButtonConfigRegisteredSettingsEmbedded(SetSysButtonConfigRegisteredSettings *settings);
+
+/**
+ * @brief SetButtonConfigRegisteredSettingsEmbedded
+ * @note Only available on [10.0.0+].
+ * @param[in] settings \ref SetSysButtonConfigRegisteredSettings
+ */
+Result setsysSetButtonConfigRegisteredSettingsEmbedded(const SetSysButtonConfigRegisteredSettings *settings);
+
+/**
+ * @brief GetButtonConfigRegisteredSettings
+ * @note Only available on [10.0.0+].
+ * @param[out] settings \ref SetSysButtonConfigRegisteredSettings
+ */
+Result setsysGetButtonConfigRegisteredSettings(s32 *total_out, SetSysButtonConfigRegisteredSettings *settings, s32 count);
+
+/**
+ * @brief SetButtonConfigRegisteredSettings
+ * @note Only available on [10.0.0+].
+ * @param[in] settings \ref SetSysButtonConfigRegisteredSettings
+ */
+Result setsysSetButtonConfigRegisteredSettings(const SetSysButtonConfigRegisteredSettings *settings, s32 count);
+
 /// Initialize setcal.
 Result setcalInitialize(void);
 
@@ -2406,3 +2512,17 @@ Result setcalGetConsoleSixAxisSensorHorizontalOffset(SetCalConsoleSixAxisSensorH
  * @param[out] out_version Output BatteryVersion.
  */
 Result setcalGetBatteryVersion(u8 *out_version);
+
+/**
+ * @brief GetDeviceId
+ * @note Only available on [10.0.0+].
+ * @param[out] out_type Output DeviceId.
+ */
+Result setcalGetDeviceId(u64 *out_device_id);
+
+/**
+ * @brief GetConsoleSixAxisSensorMountType
+ * @note Only available on [10.0.0+].
+ * @param[out] out_type Output ConsoleSixAxisSensorMountType.
+ */
+Result setcalGetConsoleSixAxisSensorMountType(u8 *out_type);
