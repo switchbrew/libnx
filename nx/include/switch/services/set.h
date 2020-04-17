@@ -2512,3 +2512,17 @@ Result setcalGetConsoleSixAxisSensorHorizontalOffset(SetCalConsoleSixAxisSensorH
  * @param[out] out_version Output BatteryVersion.
  */
 Result setcalGetBatteryVersion(u8 *out_version);
+
+/**
+ * @brief GetDeviceId
+ * @note Only available on [10.0.0+].
+ * @param[out] out_type Output DeviceId.
+ */
+Result setcalGetDeviceId(u64 *out_device_id);
+
+/**
+ * @brief GetConsoleSixAxisSensorMountType
+ * @note Only available on [10.0.0+].
+ * @param[out] out_type Output ConsoleSixAxisSensorMountType.
+ */
+Result setcalGetConsoleSixAxisSensorMountType(u8 *out_type);
