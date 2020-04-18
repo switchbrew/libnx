@@ -493,13 +493,18 @@ static Result _swkbdInlineLaunch(SwkbdInline* s, SwkbdInitializeArg *initArg) {
     rc = appletCreateLibraryApplet(&s->holder, AppletId_swkbd, s->calcArg.initArg.mode!=SwkbdInlineMode_UserDisplay ? LibAppletMode_Background : LibAppletMode_BackgroundIndirect);
     if (R_FAILED(rc)) return rc;
 
+    if (hosversionAtLeast(10,0,0))
+        rc = appletHolderPresetLibraryAppletGpuTimeSliceZero(&s->holder);
+
     LibAppletArgs commonargs;
     libappletArgsCreate(&commonargs, s->version);
-    rc = libappletArgsPush(&commonargs, &s->holder);
+    if (R_SUCCEEDED(rc)) rc = libappletArgsPush(&commonargs, &s->holder);
 
     if (R_SUCCEEDED(rc)) rc = libappletPushInData(&s->holder, &s->calcArg.initArg, sizeof(s->calcArg.initArg));
 
     if (R_SUCCEEDED(rc)) rc = appletHolderStart(&s->holder);
+
+    if (R_FAILED(rc)) appletHolderClose(&s->holder);
 
     return rc;
 }
