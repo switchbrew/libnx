@@ -536,6 +536,12 @@ Result appletGetApplicationIdByContentActionName(u64 *application_id, const char
 Result appletSetCpuBoostMode(ApmCpuBoostMode mode);
 
 /**
+ * @brief CancelCpuBoostMode
+ * @note Only available with [10.0.0+].
+ */
+Result appletCancelCpuBoostMode(void);
+
+/**
  * @brief Perform SystemButtonPressing with the specified \ref AppletSystemButtonType. Internally this cmd checks a state field, verifies that the type is allowed, then runs the same func as \ref appletPerformSystemButtonPressing internally.
  * @note Only available with [6.0.0+].
  * @param[in] type \ref AppletSystemButtonType
@@ -569,6 +575,18 @@ Result appletGetOperationModeSystemInfo(u32 *info);
  * @param[out] out \ref SetSysPlatformRegion
  */
 Result appletGetSettingsPlatformRegion(SetSysPlatformRegion *out);
+
+/**
+ * @brief ActivateMigrationService
+ * @note Only available with [10.0.0+].
+ */
+Result appletActivateMigrationService(void);
+
+/**
+ * @brief DeactivateMigrationService
+ * @note Only available with [10.0.0+].
+ */
+Result appletDeactivateMigrationService(void);
 
 ///@}
 
@@ -666,6 +684,21 @@ Result appletGetSystemSharedLayerHandle(u64 *SharedBufferHandle, u64 *SharedLaye
  * @param[out] SharedBufferHandle Output System SharedBufferHandle.
  */
 Result appletGetSystemSharedBufferHandle(u64 *SharedBufferHandle);
+
+/**
+ * @brief CreateManagedDisplaySeparableLayer
+ * @note Only available with [10.0.0+].
+ * @param[out] display_layer Output display_layer.
+ * @param[out] recording_layer Output recording_layer.
+ */
+Result appletCreateManagedDisplaySeparableLayer(u64 *display_layer, u64 *recording_layer);
+
+/**
+ * @brief SetManagedDisplayLayerSeparationMode
+ * @note Only available with [10.0.0+].
+ * @param[in] mode Mode. Must be 0-1.
+ */
+Result appletSetManagedDisplayLayerSeparationMode(u32 mode);
 
 /**
  * @brief Sets whether ::AppletMessage_RequestToDisplay is enabled.
@@ -1126,6 +1159,13 @@ LibAppletExitReason appletHolderGetExitReason(AppletHolder *h);
 Result appletHolderSetOutOfFocusApplicationSuspendingEnabled(AppletHolder *h, bool flag);
 
 /**
+ * @brief PresetLibraryAppletGpuTimeSliceZero
+ * @note Only available with [10.0.0+].
+ * @param h AppletHolder object.
+ */
+Result appletHolderPresetLibraryAppletGpuTimeSliceZero(AppletHolder *h);
+
+/**
  * @brief Waits for the PopInteractiveOutDataEvent and StateChangedEvent.
  * @return false for error / when StateChangedEvent was signaled, and true when PopInteractiveOutDataEvent was signaled. The latter is signaled when a new storage is available with \ref appletHolderPopInteractiveOutData where previously no storage was available (this willl not clear the event), this event is automatically cleared by the system once the last storage is popped.
  * @param h AppletHolder object.
@@ -1385,6 +1425,12 @@ Result appletRequestToShutdown(void);
  * @note Only available with AppletType_*Application on [3.0.0+].
  */
 Result appletRequestToReboot(void);
+
+/**
+ * @brief RequestToSleep
+ * @note Only available with AppletType_*Application on [10.0.0+].
+ */
+Result appletRequestToSleep(void);
 
 /**
  * @brief Exit the application and return to the kiosk demo menu. This terminates the current process. This will enter an infinite-sleep-loop on success.
@@ -1918,6 +1964,20 @@ Result appletApplicationPushToFriendInvitationStorageChannel(AppletApplication *
  */
 Result appletApplicationPushToNotificationStorageChannel(AppletApplication *a, const void* buffer, u64 size);
 
+/**
+ * @brief RequestApplicationSoftReset
+ * @note Only available on [10.0.0+].
+ * @param a \ref AppletApplication
+ */
+Result appletApplicationRequestApplicationSoftReset(AppletApplication *a);
+
+/**
+ * @brief RestartApplicationTimer
+ * @note Only available on [10.0.0+].
+ * @param a \ref AppletApplication
+ */
+Result appletApplicationRestartApplicationTimer(AppletApplication *a);
+
 ///@}
 
 ///@name ILibraryAppletSelfAccessor
@@ -2123,6 +2183,21 @@ Result appletUnreserveResourceForMovieOperation(void);
  */
 Result appletGetMainAppletAvailableUsers(AccountUid *uids, s32 count, bool *flag, s32 *total_out);
 
+/**
+ * @brief SetApplicationMemoryReservation
+ * @note Only available with AppletType_LibraryApplet on [10.0.0+].
+ * @note An Application must be currently running.
+ * @param[in] val Input value.
+ */
+Result appletSetApplicationMemoryReservation(u64 val);
+
+/**
+ * @brief ShouldSetGpuTimeSliceManually
+ * @note Only available with AppletType_LibraryApplet on [10.0.0+].
+ * @param[out] out Output flag.
+ */
+Result appletShouldSetGpuTimeSliceManually(bool *out);
+
 ///@}
 
 ///@name IOverlayFunctions: IFunctions for AppletType_OverlayApplet.
@@ -2195,6 +2270,13 @@ Result appletStartRebootSequenceForOverlay(void);
  * @param[in] flag Flag
  */
 Result appletSetHealthWarningShowingState(bool flag);
+
+/**
+ * @brief IsHealthWarningRequired
+ * @note Only available with AppletType_OverlayApplet on [10.0.0+].
+ * @param[out] out Output flag.
+ */
+Result appletIsHealthWarningRequired(bool *out);
 
 /**
  * @brief Enables HID input for the OverlayApplet, without disabling input for the foreground applet. Generally \ref appletBeginToWatchShortHomeButtonMessage / appletEndToWatchShortHomeButtonMessage should be used instead.
@@ -2275,6 +2357,13 @@ Result appletSetHomeButtonDoubleClickEnabled(bool flag);
  * @param[out] out Output flag.
  */
 Result appletGetHomeButtonDoubleClickEnabled(bool *out);
+
+/**
+ * @brief IsHomeButtonShortPressedBlocked
+ * @note Only available with AppletType_SystemApplet, AppletType_LibraryApplet, or AppletType_OverlayApplet, on [10.0.0+].
+ * @param[out] out Output flag.
+ */
+Result appletIsHomeButtonShortPressedBlocked(bool *out);
 
 ///@}
 

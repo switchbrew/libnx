@@ -998,6 +998,8 @@ Result appletSetCpuBoostMode(ApmCpuBoostMode mode) {
     return rc;
 }
 
+IPC_MAKE_CMD_IMPL_HOSVER(Result appletCancelCpuBoostMode(void),                                          &g_appletICommonStateGetter, 67,  _appletCmdNoIO,        (10,0,0))
+
 IPC_MAKE_CMD_IMPL_HOSVER(Result appletPerformSystemButtonPressingIfInFocus(AppletSystemButtonType type), &g_appletICommonStateGetter, 80,  _appletCmdInU32NoOut,  (6,0,0), type)
 IPC_MAKE_CMD_IMPL_HOSVER(Result appletSetPerformanceConfigurationChangedNotification(bool flag),         &g_appletICommonStateGetter, 90,  _appletCmdInBoolNoOut, (7,0,0), flag)
 IPC_MAKE_CMD_IMPL_HOSVER(Result appletGetCurrentPerformanceConfiguration(u32 *PerformanceConfiguration), &g_appletICommonStateGetter, 91,  _appletCmdNoInOutU32,  (7,0,0), PerformanceConfiguration)
@@ -1012,6 +1014,9 @@ Result appletGetSettingsPlatformRegion(SetSysPlatformRegion *out) {
     if (R_SUCCEEDED(rc) && out) *out = tmp;
     return rc;
 }
+
+IPC_MAKE_CMD_IMPL_HOSVER(Result appletActivateMigrationService(void),                                    &g_appletICommonStateGetter, 400,  _appletCmdNoIO,        (10,0,0))
+IPC_MAKE_CMD_IMPL_HOSVER(Result appletDeactivateMigrationService(void),                                  &g_appletICommonStateGetter, 401,  _appletCmdNoIO,        (10,0,0))
 
 // ISelfController
 
@@ -1082,6 +1087,25 @@ Result appletGetSystemSharedLayerHandle(u64 *SharedBufferHandle, u64 *SharedLaye
 }
 
 IPC_MAKE_CMD_IMPL_HOSVER(Result appletGetSystemSharedBufferHandle(u64 *SharedBufferHandle) , &g_appletISelfController, 43, _appletCmdNoInOutU64,  (5,0,0), SharedBufferHandle)
+
+Result appletCreateManagedDisplaySeparableLayer(u64 *display_layer, u64 *recording_layer) {
+    if (hosversionBefore(10,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    struct {
+        u64 display_layer;
+        u64 recording_layer;
+    } out;
+
+    serviceAssumeDomain(&g_appletISelfController);
+    Result rc = serviceDispatchOut(&g_appletISelfController, 44, out);
+    if (R_SUCCEEDED(rc) && display_layer) *display_layer = out.display_layer;
+    if (R_SUCCEEDED(rc) && recording_layer) *recording_layer = out.recording_layer;
+    return rc;
+}
+
+IPC_MAKE_CMD_IMPL_HOSVER(Result appletSetManagedDisplayLayerSeparationMode(u32 mode),        &g_appletISelfController, 45, _appletCmdInU32NoOut, (10,0,0), mode)
+
 IPC_MAKE_CMD_IMPL(       Result appletSetHandlesRequestToDisplay(bool flag),                 &g_appletISelfController, 50, _appletCmdInBoolNoOut,          flag)
 IPC_MAKE_CMD_IMPL(       Result appletApproveToDisplay(void),                                &g_appletISelfController, 51, _appletCmdNoIO)
 
@@ -1628,6 +1652,7 @@ u32 appletHolderGetExitReason(AppletHolder *h) {
 }
 
 IPC_MAKE_CMD_IMPL_INITEXPR(Result appletHolderSetOutOfFocusApplicationSuspendingEnabled(AppletHolder *h, bool flag), &h->s, 50, _appletCmdInBoolNoOut, !_appletIsApplication(), flag)
+IPC_MAKE_CMD_IMPL_HOSVER(Result appletHolderPresetLibraryAppletGpuTimeSliceZero(AppletHolder *h), &h->s, 60, _appletCmdNoIO, (10,0,0))
 
 static Result _appletHolderGetPopInteractiveOutDataEvent(AppletHolder *h) {
     if (eventActive(&h->PopInteractiveOutDataEvent)) return 0;
@@ -2082,6 +2107,8 @@ Result appletRequestToReboot(void) {
     if (R_SUCCEEDED(rc)) _appletInfiniteSleepLoop();
     return rc;
 }
+
+IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletRequestToSleep(void), &g_appletIFunctions, 72, _appletCmdNoIO, !_appletIsApplication(), (10,0,0))
 
 Result appletExitAndRequestToShowThanksMessage(void) {
     Result rc=0;
@@ -2547,6 +2574,9 @@ Result appletApplicationPushToNotificationStorageChannel(AppletApplication *a, c
     return _appletPushToNotificationStorageChannel(&a->s, buffer, size, 190);
 }
 
+IPC_MAKE_CMD_IMPL_HOSVER(Result appletApplicationRequestApplicationSoftReset(AppletApplication *a),       &a->s, 200, _appletCmdNoIO, (10,0,0))
+IPC_MAKE_CMD_IMPL_HOSVER(Result appletApplicationRestartApplicationTimer(AppletApplication *a),           &a->s, 201, _appletCmdNoIO, (10,0,0))
+
 // ILibraryAppletSelfAccessor
 
 IPC_MAKE_CMD_IMPL_INITEXPR(       Result appletPopInData(AppletStorage *s),                               &g_appletILibraryAppletSelfAccessor, 0,  _appletCmdNoInOutStorage,    __nx_applet_type != AppletType_LibraryApplet,          s)
@@ -2636,6 +2666,9 @@ Result appletGetMainAppletAvailableUsers(AccountUid *uids, s32 count, bool *flag
     return rc;
 }
 
+IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletSetApplicationMemoryReservation(u64 val),                             &g_appletILibraryAppletSelfAccessor, 140, _appletCmdInU64NoOut,        __nx_applet_type != AppletType_LibraryApplet, (10,0,0), val)
+IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletShouldSetGpuTimeSliceManually(bool *out),                             &g_appletILibraryAppletSelfAccessor, 150, _appletCmdNoInOutBool,       __nx_applet_type != AppletType_LibraryApplet, (10,0,0), out)
+
 // IOverlayFunctions
 
 IPC_MAKE_CMD_IMPL_INITEXPR(       Result appletBeginToWatchShortHomeButtonMessage(void),         &g_appletIFunctions, 0, _appletCmdNoIO,        __nx_applet_type != AppletType_OverlayApplet)
@@ -2673,6 +2706,7 @@ Result appletStartRebootSequenceForOverlay(void) {
 }
 
 IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletSetHealthWarningShowingState(bool flag),             &g_appletIFunctions, 30,  _appletCmdInBoolNoOut, __nx_applet_type != AppletType_OverlayApplet, (9,0,0), flag)
+IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletIsHealthWarningRequired(bool *out),                  &g_appletIFunctions, 31, _appletCmdNoInOutBool,  __nx_applet_type != AppletType_OverlayApplet, (10,0,0), out)
 IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletBeginToObserveHidInputForDevelop(void),              &g_appletIFunctions, 101, _appletCmdNoIO,        __nx_applet_type != AppletType_OverlayApplet, (5,0,0))
 
 // IAppletCommonFunctions
@@ -2723,6 +2757,7 @@ Result appletSetDisplayMagnification(float x, float y, float width, float height
 
 IPC_MAKE_CMD_IMPL_HOSVER(Result appletSetHomeButtonDoubleClickEnabled(bool flag), &g_appletIAppletCommonFunctions, 50, _appletCmdInBoolNoOut, (8,0,0), flag)
 IPC_MAKE_CMD_IMPL_HOSVER(Result appletGetHomeButtonDoubleClickEnabled(bool *out), &g_appletIAppletCommonFunctions, 51, _appletCmdNoInOutBool, (8,0,0), out)
+IPC_MAKE_CMD_IMPL_HOSVER(Result appletIsHomeButtonShortPressedBlocked(bool *out), &g_appletIAppletCommonFunctions, 52, _appletCmdNoInOutBool, (10,0,0), out)
 
 // IDebugFunctions
 
