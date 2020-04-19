@@ -14,7 +14,6 @@ Result nvChannelCreate(NvChannel* c, const char* dev)
     c->has_init = true;
 
     rc = nvOpen(&c->fd, dev);
-
     if (R_FAILED(rc))
         c->fd = -1;
 
@@ -32,10 +31,12 @@ void nvChannelClose(NvChannel* c)
     if (!c->has_init)
         return;
 
-    if (c->fd != -1)
+    if (c->fd != -1) {
         nvClose(c->fd);
+        c->fd = -1;
+    }
 
-    c->fd = -1;
+    c->has_init = false;
 }
 
 Result nvChannelSetPriority(NvChannel* c, NvChannelPriority prio) {
