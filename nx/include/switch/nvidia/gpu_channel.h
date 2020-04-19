@@ -24,7 +24,8 @@ void   nvGpuChannelClose(NvGpuChannel* c);
 Result nvGpuChannelZcullBind(NvGpuChannel* c, iova_t iova);
 Result nvGpuChannelAppendEntry(NvGpuChannel* c, iova_t start, size_t num_cmds, u32 flags, u32 flush_threshold);
 Result nvGpuChannelKickoff(NvGpuChannel* c);
-Result nvGpuChannelGetErrorNotification(NvGpuChannel* c, NvError* error);
+Result nvGpuChannelGetErrorNotification(NvGpuChannel* c, NvNotification* notif);
+Result nvGpuChannelGetErrorInfo(NvGpuChannel* c, NvError* error);
 
 static inline u32 nvGpuChannelGetSyncpointId(NvGpuChannel* c)
 {

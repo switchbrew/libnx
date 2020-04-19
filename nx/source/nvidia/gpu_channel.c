@@ -120,10 +120,15 @@ Result nvGpuChannelKickoff(NvGpuChannel* c)
     return res;
 }
 
-Result nvGpuChannelGetErrorNotification(NvGpuChannel* c, NvError* error)
+Result nvGpuChannelGetErrorNotification(NvGpuChannel* c, NvNotification* notif)
 {
     Result res = eventWait(&c->error_event, 0);
     if (R_SUCCEEDED(res))
-        res = nvioctlChannel_GetErrorNotification(c->base.fd, error);
+        res = nvioctlChannel_GetErrorNotification(c->base.fd, notif);
     return res;
+}
+
+Result nvGpuChannelGetErrorInfo(NvGpuChannel* c, NvError* error)
+{
+    return nvioctlChannel_GetErrorInfo(c->base.fd, error);
 }

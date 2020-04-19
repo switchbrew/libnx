@@ -125,7 +125,11 @@ Result nvioctlChannel_SetErrorNotifier(u32 fd, u32 enable) {
     return nvIoctl(fd, _NV_IOWR(0x48, 0x0C, data), &data);
 }
 
-Result nvioctlChannel_GetErrorNotification(u32 fd, NvError* out) {
+Result nvioctlChannel_GetErrorInfo(u32 fd, NvError* out) {
+    return nvIoctl(fd, _NV_IOR(0x48, 0x16, *out), out);
+}
+
+Result nvioctlChannel_GetErrorNotification(u32 fd, NvNotification* out) {
     return nvIoctl(fd, _NV_IOWR(0x48, 0x17, *out), out);
 }
 
