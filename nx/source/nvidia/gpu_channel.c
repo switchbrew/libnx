@@ -10,7 +10,7 @@
 #include "nvidia/fence.h"
 #include "nvidia/gpu_channel.h"
 
-Result nvGpuChannelCreate(NvGpuChannel* c, struct NvAddressSpace* as)
+Result nvGpuChannelCreate(NvGpuChannel* c, struct NvAddressSpace* as, NvChannelPriority prio)
 {
     Result res;
 
@@ -36,7 +36,7 @@ Result nvGpuChannelCreate(NvGpuChannel* c, struct NvAddressSpace* as)
         res = nvioctlChannel_SetErrorNotifier(c->base.fd, 1);
 
     if (R_SUCCEEDED(res))
-        res = nvChannelSetPriority(&c->base, NvChannelPriority_Medium);
+        res = nvChannelSetPriority(&c->base, prio);
 
     if (R_FAILED(res))
         nvGpuChannelClose(c);

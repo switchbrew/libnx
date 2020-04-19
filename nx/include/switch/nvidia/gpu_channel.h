@@ -18,7 +18,7 @@ typedef struct NvGpuChannel
     u32 num_entries;
 } NvGpuChannel;
 
-Result nvGpuChannelCreate(NvGpuChannel* c, struct NvAddressSpace* as);
+Result nvGpuChannelCreate(NvGpuChannel* c, struct NvAddressSpace* as, NvChannelPriority prio);
 void   nvGpuChannelClose(NvGpuChannel* c);
 
 Result nvGpuChannelZcullBind(NvGpuChannel* c, iova_t iova);
