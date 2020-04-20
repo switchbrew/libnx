@@ -72,7 +72,7 @@ typedef enum {
 
 /// ScreenShotDecodeOption
 typedef struct {
-    u64 flags;          ///< Bitflags, see \ref CapsScreenShotDecoderFlag
+    u64 flags;          ///< Bitflags, see \ref CapsScreenShotDecoderFlag.
     u64 reserved[0x3];  ///< Reserved. Unused by official sw.
 } CapsScreenShotDecodeOption;
 
