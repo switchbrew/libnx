@@ -65,9 +65,9 @@ typedef struct {
 
 /// ScreenShotDecoderFlag
 typedef enum {
-    CapsScreenShotDecoderFlag_None                  = 0,
-    CapsScreenShotDecoderFlag_EnableFancyUpsampling = BIT(0),
-    CapsScreenShotDecoderFlag_EnableBlockSmoothing  = BIT(1),
+    CapsScreenShotDecoderFlag_None                  = 0,      ///< No special processing.
+    CapsScreenShotDecoderFlag_EnableFancyUpsampling = BIT(0), ///< See libjpeg-turbo do_fancy_upsampling.
+    CapsScreenShotDecoderFlag_EnableBlockSmoothing  = BIT(1), ///< See libjpeg-turbo do_block_smoothing.
 } CapsScreenShotDecoderFlag;
 
 /// ScreenShotDecodeOption
