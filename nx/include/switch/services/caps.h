@@ -63,12 +63,17 @@ typedef struct {
     u8 reserved[0x18];                          ///< Always zero.
 } CapsScreenShotAttributeForApplication;
 
+/// ScreenShotDecoderFlag
+typedef enum {
+    CapsScreenShotDecoderFlag_None                  = 0,      ///< No special processing.
+    CapsScreenShotDecoderFlag_EnableFancyUpsampling = BIT(0), ///< See libjpeg-turbo do_fancy_upsampling.
+    CapsScreenShotDecoderFlag_EnableBlockSmoothing  = BIT(1), ///< See libjpeg-turbo do_block_smoothing.
+} CapsScreenShotDecoderFlag;
+
 /// ScreenShotDecodeOption
 typedef struct {
-    u8 fancy_upsampling;    ///< See libjpeg-turbo do_fancy_upsampling.
-    u8 block_smoothing;     ///< See libjpeg-turbo do_block_smoothing.
-    u8 pad_x2[0x6];         ///< Padding.
-    u64 unk_x8[0x3];        ///< Unknown. Ignored by official sw.
+    u64 flags;          ///< Bitflags, see \ref CapsScreenShotDecoderFlag.
+    u64 reserved[0x3];  ///< Reserved. Unused by official sw.
 } CapsScreenShotDecodeOption;
 
 /// AlbumFileDateTime. This corresponds to each field in the Album entry filename, prior to the "-": "YYYYMMDDHHMMSSII".
