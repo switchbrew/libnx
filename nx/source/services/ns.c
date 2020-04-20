@@ -463,6 +463,8 @@ Result nsGetApplicationControlData(NsApplicationControlSource source, u64 applic
     if (hosversionAtLeast(5,1,0)) {
         rc = nsGetReadOnlyApplicationControlDataInterface(&srv);
         cmd_id = 0;
+    } else if (hosversionAtLeast(3,0,0)) {
+        rc = nsGetApplicationManagerInterface(&srv);
     }
     else
         srv_ptr = &g_nsAppManSrv;
@@ -498,6 +500,8 @@ Result nsGetApplicationDesiredLanguage(NacpStruct *nacp, NacpLanguageEntry **lan
     if (hosversionAtLeast(5,1,0)) {
         rc = nsGetReadOnlyApplicationControlDataInterface(&srv);
         cmd_id = 1;
+    } else if (hosversionAtLeast(3,0,0)) {
+        rc = nsGetApplicationManagerInterface(&srv);
     }
     else
         srv_ptr = &g_nsAppManSrv;
