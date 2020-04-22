@@ -56,6 +56,18 @@ typedef enum {
     ViPowerState_On_Deprecated = 1, ///< [1.0.0 - 2.3.0] Screen is on.
 } ViPowerState;
 
+/// Used as argument to many capture functions.
+typedef enum {
+    ViLayerStack_Default             = 0,  ///< Default layer stack, includes all layers.
+    ViLayerStack_Lcd                 = 1,  ///< Includes only layers for the LCD.
+    ViLayerStack_Screenshot          = 2,  ///< Includes only layers for user screenshots.
+    ViLayerStack_Recording           = 3,  ///< Includes only layers for recording videos.
+    ViLayerStack_LastFrame           = 4,  ///< Includes only layers for the last applet-transition frame.
+    ViLayerStack_Arbitrary           = 5,  ///< Captures some arbitrary layer. This is normally only for am.
+    ViLayerStack_ApplicationForDebug = 6,  ///< Captures layers for the current application. This is normally used by creport/debugging tools.
+    ViLayerStack_Null                = 10, ///< Layer stack for the empty display.
+} ViLayerStack;
+
 Result viInitialize(ViServiceType service_type);
 void viExit(void);
 
