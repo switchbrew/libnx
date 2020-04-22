@@ -26,7 +26,7 @@ Service* capsscGetServiceSession(void);
  * @note buffer_index and buffer_count correspond to buffers with size 0x384000(1280*720*4). These must not be negative.
  * @param buf Output buffer containing the RGBA8 image.
  * @param size Size of buf, should be 0x384000(1280*720*4) * buffer_count.
- * @param layer_stack \ref ViLayerStack.
+ * @param layer_stack \ref ViLayerStack
  * @param width Image width, must be 1280.
  * @param height Image height, must be 720.
  * @param buffer_count Total number of output image buffers.
@@ -41,7 +41,7 @@ Result capsscCaptureRawImageWithTimeout(void* buf, size_t size, ViLayerStack lay
  * @param out_jpeg_size Pointer to write the size of the captured jpeg to.
  * @param jpeg_buf Output buffer containing the JPEG image.
  * @param jpeg_buf_size Size of jpeg_buf, official software uses 0x80000.
- * @param layer_stack \ref ViLayerStack.
+ * @param layer_stack \ref ViLayerStack
  * @param timeout Timeout in nanoseconds.
  */
 Result capsscCaptureJpegScreenShot(u64* out_jpeg_size, void* jpeg_buf, size_t jpeg_buf_size, ViLayerStack layer_stack, s64 timeout);
