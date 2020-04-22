@@ -10,7 +10,7 @@
 
 /// CaCertificateId
 typedef enum {
-    SslCaCertificateId_All                                                    =   -1,            ///< All
+    SslCaCertificateId_All                                                    =   -1,            ///< [3.0.0+] All
 
     SslCaCertificateId_NintendoCAG3                                           =    1,            ///< NintendoCAG3
     SslCaCertificateId_NintendoClass2CAG3                                     =    2,            ///< NintendoClass2CAG3
@@ -32,10 +32,10 @@ typedef enum {
     SslCaCertificateId_EntrustnetCertificationAuthority2048                   = 1014,            ///< EntrustnetCertificationAuthority2048
     SslCaCertificateId_EntrustRootCertificationAuthority                      = 1015,            ///< EntrustRootCertificationAuthority
     SslCaCertificateId_EntrustRootCertificationAuthorityG2                    = 1016,            ///< EntrustRootCertificationAuthorityG2
-    SslCaCertificateId_GeoTrustGlobalCA2                                      = 1017,            ///< GeoTrustGlobalCA2
-    SslCaCertificateId_GeoTrustGlobalCA                                       = 1018,            ///< GeoTrustGlobalCA
-    SslCaCertificateId_GeoTrustPrimaryCertificationAuthorityG3                = 1019,            ///< GeoTrustPrimaryCertificationAuthorityG3
-    SslCaCertificateId_GeoTrustPrimaryCertificationAuthority                  = 1020,            ///< GeoTrustPrimaryCertificationAuthority
+    SslCaCertificateId_GeoTrustGlobalCA2                                      = 1017,            ///< GeoTrustGlobalCA2 ([8.0.0+] ::SslTrustedCertStatus is ::SslTrustedCertStatus_EnabledNotTrusted)
+    SslCaCertificateId_GeoTrustGlobalCA                                       = 1018,            ///< GeoTrustGlobalCA ([8.0.0+] ::SslTrustedCertStatus is ::SslTrustedCertStatus_EnabledNotTrusted)
+    SslCaCertificateId_GeoTrustPrimaryCertificationAuthorityG3                = 1019,            ///< GeoTrustPrimaryCertificationAuthorityG3 ([8.0.0+] ::SslTrustedCertStatus is ::SslTrustedCertStatus_EnabledNotTrusted)
+    SslCaCertificateId_GeoTrustPrimaryCertificationAuthority                  = 1020,            ///< GeoTrustPrimaryCertificationAuthority ([8.0.0+] ::SslTrustedCertStatus is ::SslTrustedCertStatus_EnabledNotTrusted)
     SslCaCertificateId_GlobalSignRootCA                                       = 1021,            ///< GlobalSignRootCA
     SslCaCertificateId_GlobalSignRootCAR2                                     = 1022,            ///< GlobalSignRootCAR2
     SslCaCertificateId_GlobalSignRootCAR3                                     = 1023,            ///< GlobalSignRootCAR3
@@ -43,12 +43,12 @@ typedef enum {
     SslCaCertificateId_GoDaddyRootCertificateAuthorityG2                      = 1025,            ///< GoDaddyRootCertificateAuthorityG2
     SslCaCertificateId_StarfieldClass2CertificationAuthority                  = 1026,            ///< StarfieldClass2CertificationAuthority
     SslCaCertificateId_StarfieldRootCertificateAuthorityG2                    = 1027,            ///< StarfieldRootCertificateAuthorityG2
-    SslCaCertificateId_thawtePrimaryRootCAG3                                  = 1028,            ///< thawtePrimaryRootCAG3
-    SslCaCertificateId_thawtePrimaryRootCA                                    = 1029,            ///< thawtePrimaryRootCA
-    SslCaCertificateId_VeriSignClass3PublicPrimaryCertificationAuthorityG3    = 1030,            ///< VeriSignClass3PublicPrimaryCertificationAuthorityG3
-    SslCaCertificateId_VeriSignClass3PublicPrimaryCertificationAuthorityG5    = 1031,            ///< VeriSignClass3PublicPrimaryCertificationAuthorityG5
-    SslCaCertificateId_VeriSignUniversalRootCertificationAuthority            = 1032,            ///< VeriSignUniversalRootCertificationAuthority
-    SslCaCertificateId_DSTRootCAX3                                            = 1033,            ///< DSTRootCAX3
+    SslCaCertificateId_thawtePrimaryRootCAG3                                  = 1028,            ///< thawtePrimaryRootCAG3 ([8.0.0+] ::SslTrustedCertStatus is ::SslTrustedCertStatus_EnabledNotTrusted)
+    SslCaCertificateId_thawtePrimaryRootCA                                    = 1029,            ///< thawtePrimaryRootCA ([8.0.0+] ::SslTrustedCertStatus is ::SslTrustedCertStatus_EnabledNotTrusted)
+    SslCaCertificateId_VeriSignClass3PublicPrimaryCertificationAuthorityG3    = 1030,            ///< VeriSignClass3PublicPrimaryCertificationAuthorityG3 ([8.0.0+] ::SslTrustedCertStatus is ::SslTrustedCertStatus_EnabledNotTrusted)
+    SslCaCertificateId_VeriSignClass3PublicPrimaryCertificationAuthorityG5    = 1031,            ///< VeriSignClass3PublicPrimaryCertificationAuthorityG5 ([8.0.0+] ::SslTrustedCertStatus is ::SslTrustedCertStatus_EnabledNotTrusted)
+    SslCaCertificateId_VeriSignUniversalRootCertificationAuthority            = 1032,            ///< VeriSignUniversalRootCertificationAuthority ([8.0.0+] ::SslTrustedCertStatus is ::SslTrustedCertStatus_EnabledNotTrusted)
+    SslCaCertificateId_DSTRootCAX3                                            = 1033,            ///< [6.0.0+] DSTRootCAX3
 } SslCaCertificateId;
 
 /// TrustedCertStatus
@@ -92,10 +92,12 @@ typedef enum {
 
 /// ContextOption
 typedef enum {
-    SslContextOption_CrlImportDateCheckEnable                                 = 1,               ///< CrlImportDateCheckEnable
+    SslContextOption_CrlImportDateCheckEnable                                 = 1,               ///< CrlImportDateCheckEnable. The default value at the time of \ref sslCreateContext is value 1.
 } SslContextOption;
 
-/// VerifyOption
+/// VerifyOption. The default bitmask value at the time of \ref sslContextCreateConnection is ::SslVerifyOption_PeerCa | ::SslVerifyOption_HostName.
+/// [5.0.0+] \ref sslConnectionSetVerifyOption: (::SslVerifyOption_PeerCa | ::SslVerifyOption_HostName) must be set, unless: ::SslOptionType_SkipDefaultVerify is set, or [9.0.0+] ::SslDebugOptionType_AllowDisableVerifyOption is set.
+/// [6.0.0+] \ref sslConnectionSetVerifyOption: Following that, if ::SslVerifyOption_EvPolicyOid is set, then the following options must be set (besides the previously mentioned one): ::SslVerifyOption_PeerCa and ::SslVerifyOption_DateCheck.
 typedef enum {
     SslVerifyOption_PeerCa                                                    = BIT(0),          ///< PeerCa
     SslVerifyOption_HostName                                                  = BIT(1),          ///< HostName
@@ -105,7 +107,7 @@ typedef enum {
     SslVerifyOption_EvCertFingerprint                                         = BIT(5),          ///< [6.0.0+] EvCertFingerprint
 } SslVerifyOption;
 
-/// IoMode
+/// IoMode. The default value at the time of \ref sslContextCreateConnection is ::SslIoMode_Blocking.
 typedef enum {
     SslIoMode_Blocking                                                        = 1,               ///< Blocking
     SslIoMode_NonBlocking                                                     = 2,               ///< NonBlocking
@@ -131,12 +133,12 @@ typedef enum {
     SslRenegotiationMode_Secure                                               = 1,               ///< Secure
 } SslRenegotiationMode;
 
-/// OptionType
+/// OptionType. The default bool flags value for these at the time of \ref sslContextCreateConnection is cleared.
 typedef enum {
-    SslOptionType_DoNotCloseSocket                                            = 0,               ///< DoNotCloseSocket
+    SslOptionType_DoNotCloseSocket                                            = 0,               ///< DoNotCloseSocket. See \ref sslConnectionClose. This is only available if \ref sslConnectionSetSocketDescriptor wasn't used yet.
     SslOptionType_GetServerCertChain                                          = 1,               ///< [3.0.0+] GetServerCertChain
-    SslOptionType_SkipDefaultVerify                                           = 2,               ///< [5.0.0+] SkipDefaultVerify
-    SslOptionType_EnableAlpn                                                  = 3,               ///< [9.0.0+] EnableAlpn
+    SslOptionType_SkipDefaultVerify                                           = 2,               ///< [5.0.0+] SkipDefaultVerify. Checked by \ref sslConnectionSetVerifyOption, see \ref SslVerifyOption.
+    SslOptionType_EnableAlpn                                                  = 3,               ///< [9.0.0+] EnableAlpn. Only available with \ref sslConnectionSetOption. \ref sslConnectionSetSocketDescriptor should have been used prior to this - this will optionally use state setup by that, without throwing an error if that cmd wasn't used.
 } SslOptionType;
 
 /// AlpnProtoState
@@ -161,11 +163,17 @@ typedef struct {
 
 /// BuiltInCertificateInfo
 typedef struct {
-    u32 cert_id;                                ///< CaCertificateId
+    u32 cert_id;                                ///< \ref SslCaCertificateId
     u32 status;                                 ///< \ref SslTrustedCertStatus
     u64 cert_size;                              ///< CertificateSize
     u8 *cert_data;                              ///< CertificateData (converted from an offset to a ptr), in DER format.
 } SslBuiltInCertificateInfo;
+
+/// CipherInfo
+typedef struct {
+    char cipher[0x40];                          ///< Cipher string.
+    char protocol_version[0x8];                 ///< Protocol version string.
+} SslCipherInfo;
 
 /// Initialize ssl. A default value of 0x3 can be used for num_sessions. This must be 0x1-0x4.
 Result sslInitialize(u32 num_sessions);
@@ -196,8 +204,9 @@ Result sslGetContextCount(u32 *out);
  * @param[in] size Output buffer size, this should be the size from \ref sslGetCertificateBufSize.
  * @param[in] ca_cert_ids Input array of \ref SslCaCertificateId.
  * @param[in] count Size of the ca_cert_ids array in entries.
+ * @param[out] total_out [3.0.0+] Total output entries. Will always match count on pre-3.0.0. This will differ from count when ::SslCaCertificateId_All is used.
  */
-Result sslGetCertificates(void* buffer, u32 size, u32 *ca_cert_ids, u32 count);
+Result sslGetCertificates(void* buffer, u32 size, u32 *ca_cert_ids, u32 count, u32 *total_out);
 
 /**
  * @brief GetCertificateBufSize
@@ -272,7 +281,7 @@ Result sslContextCreateConnection(SslContext *c, SslConnection *conn);
 
 /**
  * @brief GetConnectionCount
- * @note Not used by official sw.
+ * @note Not exposed by official sw.
  * @param c \ref SslContext
  * @param[out] out Output value.
  */
@@ -318,7 +327,7 @@ Result sslContextRegisterInternalPki(SslContext *c, SslInternalPki internal_pki,
  * @brief AddPolicyOid
  * @param c \ref SslContext
  * @param[in] str Input string.
- * @param[in] str_bufsize String buffer size, excluding NUL-terminator. Hence, this should be actual_bufsize-1. This must not be >0xff.
+ * @param[in] str_bufsize String buffer size, excluding NUL-terminator (must not match the string length). Hence, this should be actual_bufsize-1. This must not be >0xff.
  */
 Result sslContextAddPolicyOid(SslContext *c, const char* str, u32 str_bufsize);
 
@@ -339,13 +348,14 @@ Result sslContextImportCrl(SslContext *c, const void* buffer, u32 size, u64 *id)
 
 /**
  * @brief Closes a Connection object.
- * @note This will use close() with the sockfd previously set by \ref sslConnectionSetSocketDescriptor if needed, hence sockets must have been initialized prior to using this.
+ * @note This will use close() with the sockfd previously set by \ref sslConnectionSetSocketDescriptor if needed, hence sockets must have been initialized prior to using this. This can essentially be disabled via ::SslOptionType_DoNotCloseSocket.
  * @param c \ref SslConnection
  */
 void sslConnectionClose(SslConnection *c);
 
 /**
  * @brief SetSocketDescriptor
+ * @note An error is thrown if this was used previously.
  * @param c \ref SslConnection
  * @param[in] sockfd sockfd
  */
@@ -368,6 +378,7 @@ Result sslConnectionSetVerifyOption(SslConnection *c, u32 verify_option);
 
 /**
  * @brief SetIoMode
+ * @note \ref sslConnectionSetSocketDescriptor must have been used prior to this successfully.
  * @param c \ref SslConnection
  * @param[in] mode \ref SslIoMode
  */
@@ -375,6 +386,7 @@ Result sslConnectionSetIoMode(SslConnection *c, SslIoMode mode);
 
 /**
  * @brief GetSocketDescriptor
+ * @note \ref sslConnectionSetSocketDescriptor must have been used prior to this successfully.
  * @param c \ref SslConnection
  * @param[out] sockfd Output sockfd.
  */
@@ -390,18 +402,189 @@ Result sslConnectionGetSocketDescriptor(SslConnection *c, int *sockfd);
 Result sslConnectionGetHostName(SslConnection *c, char* str, u32 str_bufsize, u32 *out);
 
 /**
+ * @brief GetVerifyOption
+ * @param c \ref SslConnection
+ * @param[out] out Output bitmask of \ref SslVerifyOption.
+ */
+Result sslConnectionGetVerifyOption(SslConnection *c, u32 *out);
+
+/**
+ * @brief GetIoMode
+ * @param c \ref SslConnection
+ * @param[out] out \ref SslIoMode
+ */
+Result sslConnectionGetIoMode(SslConnection *c, SslIoMode *out);
+
+/**
+ * @brief DoHandshake
+ * @note \ref sslConnectionSetSocketDescriptor must have been used prior to this successfully.
+ * @note \ref sslConnectionSetHostName must have been used previously with a non-empty string when ::SslVerifyOption_HostName is set.
+ * @note The DoHandshakeGetServerCert cmd is only used if both server_certbuf/server_certbuf_size are set, otherwise the DoHandshake cmd is used (in which case out0/out1 will be left at value 0).
+ * @param c \ref SslConnection
+ * @param[out] out0 Optional first output value, can be NULL.
+ * @param[out] out1 Optional second output value, can be NULL.
+ * @param[out] server_certbuf Optional output server cert buffer, can be NULL.
+ * @param[in] server_certbuf_size Optional output server cert buffer size, can be 0.
+ */
+Result sslConnectionDoHandshake(SslConnection *c, u32 *out0, u32 *out1, void* server_certbuf, u32 server_certbuf_size);
+
+/**
+ * @brief Read
+ * @note \ref sslConnectionSetSocketDescriptor must have been used prior to this successfully.
+ * @param c \ref SslConnection
+ * @param[out] buffer Output buffer, must not be NULL.
+ * @param[in] size Output buffer size, must not be 0.
+ * @param[out] out Output value.
+ */
+Result sslConnectionRead(SslConnection *c, void* buffer, u32 size, u32 *out);
+
+/**
+ * @brief Write
+ * @note \ref sslConnectionSetSocketDescriptor must have been used prior to this successfully.
+ * @param c \ref SslConnection
+ * @param[in] buffer Input buffer, must not be NULL.
+ * @param[in] size Input buffer size, must not be 0.
+ * @param[out] out Output value.
+ */
+Result sslConnectionWrite(SslConnection *c, const void* buffer, u32 size, u32 *out);
+
+/**
+ * @brief Pending
+ * @note \ref sslConnectionSetSocketDescriptor must have been used prior to this successfully.
+ * @param c \ref SslConnection
+ * @param[out] out Output value.
+ */
+Result sslConnectionPending(SslConnection *c, s32 *out);
+
+/**
+ * @brief Peek
+ * @note \ref sslConnectionSetSocketDescriptor must have been used prior to this successfully.
+ * @param c \ref SslConnection
+ * @param[out] buffer Output buffer, must not be NULL.
+ * @param[in] size Output buffer size, must not be 0.
+ * @param[out] out Output value.
+ */
+Result sslConnectionPeek(SslConnection *c, void* buffer, u32 size, u32 *out);
+
+/**
+ * @brief Poll
+ * @note \ref sslConnectionSetSocketDescriptor must have been used prior to this successfully.
+ * @param c \ref SslConnection
+ * @param[in] in_pollevent Input bitmask of \ref SslPollEvent.
+ * @param[out] out_pollevent Output bitmask of \ref SslPollEvent.
+ * @param[in] timeout Timeout in milliseconds.
+ */
+Result sslConnectionPoll(SslConnection *c, u32 in_pollevent, u32 *out_pollevent, u32 timeout);
+
+/**
+ * @brief GetVerifyCertError
+ * @note The value in state is cleared after loading it.
+ * @param c \ref SslConnection
+ */
+Result sslConnectionGetVerifyCertError(SslConnection *c);
+
+/**
+ * @brief GetNeededServerCertBufferSize
+ * @param c \ref SslConnection
+ * @param[out] out Output value.
+ */
+Result sslConnectionGetNeededServerCertBufferSize(SslConnection *c, u32 *out);
+
+/**
  * @brief SetSessionCacheMode
+ * @note \ref sslConnectionSetSocketDescriptor must have been used prior to this successfully.
  * @param c \ref SslConnection
  * @param[in] mode \ref SslSessionCacheMode
  */
 Result sslConnectionSetSessionCacheMode(SslConnection *c, SslSessionCacheMode mode);
 
 /**
+ * @brief GetSessionCacheMode
+ * @note \ref sslConnectionSetSocketDescriptor must have been used prior to this successfully.
+ * @param c \ref SslConnection
+ * @param[out] out \ref SslSessionCacheMode
+ */
+Result sslConnectionGetSessionCacheMode(SslConnection *c, SslSessionCacheMode *out);
+
+/**
+ * @brief GetSessionCacheMode
+ * @note \ref sslConnectionSetSocketDescriptor must have been used prior to this successfully.
+ * @param c \ref SslConnection
+ */
+Result sslConnectionFlushSessionCache(SslConnection *c);
+
+/**
  * @brief SetRenegotiationMode
+ * @note \ref sslConnectionSetSocketDescriptor must have been used prior to this successfully.
  * @param c \ref SslConnection
  * @param[in] mode \ref SslRenegotiationMode
  */
 Result sslConnectionSetRenegotiationMode(SslConnection *c, SslRenegotiationMode mode);
+
+/**
+ * @brief GetRenegotiationMode
+ * @note \ref sslConnectionSetSocketDescriptor must have been used prior to this successfully.
+ * @param c \ref SslConnection
+ * @param[out] out \ref SslRenegotiationMode
+ */
+Result sslConnectionGetRenegotiationMode(SslConnection *c, SslRenegotiationMode *out);
+
+/**
+ * @brief SetOption
+ * @param c \ref SslConnection
+ * @param[in] option \ref SslOptionType
+ * @param[in] flag Input flag value.
+ */
+Result sslConnectionSetOption(SslConnection *c, SslOptionType option, bool flag);
+
+/**
+ * @brief GetOption
+ * @param c \ref SslConnection
+ * @param[in] option \ref SslOptionType
+ * @param[out] out Output flag value.
+ */
+Result sslConnectionGetOption(SslConnection *c, SslOptionType option, bool *out);
+
+/**
+ * @brief GetVerifyCertErrors
+ * @note An error is thrown when the cmd is successful, if the two output u32s match.
+ * @param[out] out0 First output value, must not be NULL.
+ * @param[out] out1 Second output value.
+ * @param[out] errors Output array of Result, must not be NULL.
+ * @param[in] count Size of the errors array in entries.
+ */
+Result sslConnectionGetVerifyCertErrors(SslConnection *c, u32 *out0, u32 *out1, Result *errors, u32 count);
+
+/**
+ * @brief GetCipherInfo
+ * @note Only available on [4.0.0+].
+ * @note \ref sslConnectionSetSocketDescriptor must have been used prior to this successfully.
+ * @param c \ref SslConnection
+ * @param[out] out \ref SslCipherInfo
+ */
+Result sslConnectionGetCipherInfo(SslConnection *c, SslCipherInfo *out);
+
+/**
+ * @brief SetNextAlpnProto
+ * @note Only available on [9.0.0+].
+ * @note \ref sslConnectionSetSocketDescriptor must have been used prior to this successfully.
+ * @param c \ref SslConnection
+ * @param[in] buffer Input buffer, must not be NULL.
+ * @param[in] size Input buffer size, must not be 0. Must be at least 0x2.
+ */
+Result sslConnectionSetNextAlpnProto(SslConnection *c, const u8* buffer, u32 size);
+
+/**
+ * @brief GetNextAlpnProto
+ * @note Only available on [9.0.0+].
+ * @note \ref sslConnectionSetSocketDescriptor must have been used prior to this successfully.
+ * @param c \ref SslConnection
+ * @param[out] state \ref SslAlpnProtoState
+ * @param[out] out Output value.
+ * @param[out] buffer Output buffer, must not be NULL.
+ * @param[in] size Output buffer size, must not be 0.
+ */
+Result sslConnectionGetNextAlpnProto(SslConnection *c, SslAlpnProtoState *state, u32 *out, u8 *buffer, u32 size);
 
 ///@}
 
