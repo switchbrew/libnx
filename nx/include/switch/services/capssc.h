@@ -9,6 +9,8 @@
 #include "../sf/service.h"
 #include "vi.h"
 
+#define CAPSSC_JPEG_BUFFER_SIZE 0x80000
+
 /// Initialize caps:sc. Only available on [2.0.0+].
 Result capsscInitialize(void);
 
@@ -34,7 +36,7 @@ Service* capsscGetServiceSession(void);
 Result capsscCaptureRawImageWithTimeout(void* buf, size_t size, ViLayerStack layer_stack, u64 width, u64 height, s64 buffer_count, s64 buffer_index, s64 timeout);
 
 /**
- * @brief This takes a screenshot, with the screenshot being written as jpeg into the ouput buffer.
+ * @brief This takes a screenshot, with the screenshot being written as jpeg into the output buffer.
  * @note Only available on [9.0.0+]. Requires debug mode before [10.0.0].
  * @param out_jpeg_size Pointer to write the size of the captured jpeg to.
  * @param jpeg_buf Output buffer containing the JPEG image.
