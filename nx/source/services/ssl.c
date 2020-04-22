@@ -105,12 +105,54 @@ Service* sslGetServiceSession(void) {
     return &g_sslSrv;
 }
 
+static Result _sslCmdNoIO(Service* srv, u32 cmd_id) {
+    return _sslObjectDispatch(srv, cmd_id);
+}
+
 static Result _sslCmdInU32NoOut(Service* srv, u32 inval, u32 cmd_id) {
     return _sslObjectDispatchIn(srv, cmd_id, inval);
 }
 
 static Result _sslCmdNoInOutU32(Service* srv, u32 *out, u32 cmd_id) {
     return _sslObjectDispatchOut(srv, cmd_id, *out);
+}
+
+static Result _sslCmdInBufNoOut(Service* srv, const void* buffer, size_t size, u32 cmd_id) {
+    return _sslObjectDispatch(srv, cmd_id,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
+        .buffers = { { buffer, size } },
+    );
+}
+
+static Result _sslCmdNoInOutBufTwoOutU32s(Service* srv, u32 *out0, u32 *out1, void* buffer, size_t size, u32 cmd_id) {
+    struct {
+        u32 out0;
+        u32 out1;
+    } out;
+
+    Result rc = _sslObjectDispatchOut(srv, cmd_id, out,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { buffer, size } },
+    );
+    if (R_SUCCEEDED(rc)) {
+        if (out0) *out0 = out.out0;
+        if (out1) *out1 = out.out1;
+    }
+    return rc;
+}
+
+static Result _sslCmdInBufOutU32(Service* srv, const void* buffer, size_t size, u32 *out, u32 cmd_id) {
+    return _sslObjectDispatchOut(srv, cmd_id, *out,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
+        .buffers = { { buffer, size } },
+    );
+}
+
+static Result _sslCmdOutBufOutU32(Service* srv, void* buffer, size_t size, u32 *out, u32 cmd_id) {
+    return _sslObjectDispatchOut(srv, cmd_id, *out,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { buffer, size } },
+    );
 }
 
 Result sslCreateContext(SslContext *c, SslVersion ssl_version) {
@@ -168,7 +210,7 @@ static Result _sslGetCertificates(void* buffer, u32 size, u32 *ca_cert_ids, u32 
     );
 }
 
-Result sslGetCertificates(void* buffer, u32 size, u32 *ca_cert_ids, u32 count) {
+Result sslGetCertificates(void* buffer, u32 size, u32 *ca_cert_ids, u32 count, u32 *total_out) {
     if (buffer==NULL || !size || ca_cert_ids==NULL || !count)
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
@@ -185,6 +227,8 @@ Result sslGetCertificates(void* buffer, u32 size, u32 *ca_cert_ids, u32 count) {
             certs[i].cert_data+= (uintptr_t)buffer;
         }
     }
+
+    if (R_SUCCEEDED(rc) && total_out) *total_out = out_count;
 
     return rc;
 }
@@ -279,6 +323,7 @@ Result sslGetDebugOption(void* buffer, size_t size, SslDebugOptionType type) {
 // ISslContext
 
 void sslContextClose(SslContext *c) {
+    // sdknso uses sslContextGetConnectionCount here, returning the error from there on fail / throwing an error if the output count is non-zero. We won't do that.
     _sslObjectClose(&c->s);
 }
 
@@ -394,10 +439,7 @@ Result sslContextAddPolicyOid(SslContext *c, const char* str, u32 str_bufsize) {
     if (str==NULL || str_bufsize > 0xff)
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
-    return _sslObjectDispatch(&c->s, 9,
-        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
-        .buffers = { { str, str_bufsize } },
-    );
+    return _sslCmdInBufNoOut(&c->s, str, str_bufsize, 9);
 }
 
 Result sslContextImportCrl(SslContext *c, const void* buffer, u32 size, u64 *id) {
@@ -440,10 +482,7 @@ Result sslConnectionSetHostName(SslConnection *c, const char* str, u32 str_bufsi
     if (str==NULL)
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
-    return _sslObjectDispatch(&c->s, 1,
-        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
-        .buffers = { { str, str_bufsize } },
-    );
+    return _sslCmdInBufNoOut(&c->s, str, str_bufsize, 1);
 }
 
 Result sslConnectionSetVerifyOption(SslConnection *c, u32 verify_option) {
@@ -474,10 +513,100 @@ Result sslConnectionGetHostName(SslConnection *c, char* str, u32 str_bufsize, u3
     if (str==NULL)
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
-    return _sslObjectDispatchOut(&c->s, 5, *out,
-        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
-        .buffers = { { str, str_bufsize } },
-    );
+    return _sslCmdOutBufOutU32(&c->s, str, str_bufsize, out, 5);
+}
+
+Result sslConnectionGetVerifyOption(SslConnection *c, u32 *out) {
+    if (!serviceIsActive(&c->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _sslCmdNoInOutU32(&c->s, out, 6);
+}
+
+Result sslConnectionGetIoMode(SslConnection *c, SslIoMode *out) {
+    if (!serviceIsActive(&c->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    u32 tmp=0;
+    Result rc = _sslCmdNoInOutU32(&c->s, &tmp, 7);
+    if (R_SUCCEEDED(rc) && out) *out = tmp;
+    return rc;
+}
+
+Result sslConnectionDoHandshake(SslConnection *c, u32 *out0, u32 *out1, void* server_certbuf, u32 server_certbuf_size) {
+    if (!serviceIsActive(&c->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    if (out0) *out0 = 0;
+    if (out1) *out1 = 0;
+
+    if (server_certbuf==NULL || !server_certbuf_size)
+        return _sslCmdNoIO(&c->s, 8); // DoHandshake
+
+    return _sslCmdNoInOutBufTwoOutU32s(&c->s, out0, out1, server_certbuf, server_certbuf_size, 9); // DoHandshakeGetServerCert
+}
+
+Result sslConnectionRead(SslConnection *c, void* buffer, u32 size, u32 *out) {
+    if (!serviceIsActive(&c->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    if (buffer==NULL || !size)
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+
+    return _sslCmdOutBufOutU32(&c->s, buffer, size, out, 10);
+}
+
+Result sslConnectionWrite(SslConnection *c, const void* buffer, u32 size, u32 *out) {
+    if (!serviceIsActive(&c->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    if (buffer==NULL || !size)
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+
+    return _sslCmdInBufOutU32(&c->s, buffer, size, out, 11);
+}
+
+Result sslConnectionPending(SslConnection *c, s32 *out) {
+    if (!serviceIsActive(&c->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _sslCmdNoInOutU32(&c->s, (u32*)out, 12);
+}
+
+Result sslConnectionPeek(SslConnection *c, void* buffer, u32 size, u32 *out) {
+    if (!serviceIsActive(&c->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    if (buffer==NULL || !size)
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+
+    return _sslCmdOutBufOutU32(&c->s, buffer, size, out, 13);
+}
+
+Result sslConnectionPoll(SslConnection *c, u32 in_pollevent, u32 *out_pollevent, u32 timeout) {
+    if (!serviceIsActive(&c->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    const struct {
+        u32 in_pollevent;
+        u32 timeout;
+    } in = { in_pollevent, timeout };
+
+    return _sslObjectDispatchInOut(&c->s, 14, in, *out_pollevent);
+}
+
+Result sslConnectionGetVerifyCertError(SslConnection *c) {
+    if (!serviceIsActive(&c->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _sslCmdNoIO(&c->s, 15);
+}
+
+Result sslConnectionGetNeededServerCertBufferSize(SslConnection *c, u32 *out) {
+    if (!serviceIsActive(&c->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _sslCmdNoInOutU32(&c->s, out, 16);
 }
 
 Result sslConnectionSetSessionCacheMode(SslConnection *c, SslSessionCacheMode mode) {
@@ -487,10 +616,124 @@ Result sslConnectionSetSessionCacheMode(SslConnection *c, SslSessionCacheMode mo
     return _sslCmdInU32NoOut(&c->s, mode, 17);
 }
 
+Result sslConnectionGetSessionCacheMode(SslConnection *c, SslSessionCacheMode *out) {
+    if (!serviceIsActive(&c->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    u32 tmp=0;
+    Result rc = _sslCmdNoInOutU32(&c->s, &tmp, 18);
+    if (R_SUCCEEDED(rc) && out) *out = tmp;
+    return rc;
+}
+
+Result sslConnectionFlushSessionCache(SslConnection *c) {
+    if (!serviceIsActive(&c->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _sslCmdNoIO(&c->s, 19);
+}
+
 Result sslConnectionSetRenegotiationMode(SslConnection *c, SslRenegotiationMode mode) {
     if (!serviceIsActive(&c->s))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     return _sslCmdInU32NoOut(&c->s, mode, 20);
+}
+
+Result sslConnectionGetRenegotiationMode(SslConnection *c, SslRenegotiationMode *out) {
+    if (!serviceIsActive(&c->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    u32 tmp=0;
+    Result rc = _sslCmdNoInOutU32(&c->s, &tmp, 21);
+    if (R_SUCCEEDED(rc) && out) *out = tmp;
+    return rc;
+}
+
+Result sslConnectionSetOption(SslConnection *c, SslOptionType option, bool flag) {
+    if (!serviceIsActive(&c->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    const struct {
+        u8 flag;
+        u8 pad[3];
+        u32 option;
+    } in = { flag!=0, {0}, option };
+
+    return _sslObjectDispatchIn(&c->s, 22, in);
+}
+
+Result sslConnectionGetOption(SslConnection *c, SslOptionType option, bool *out) {
+    if (!serviceIsActive(&c->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    u32 tmp=option;
+    u8 tmpout=0;
+    Result rc = _sslObjectDispatchInOut(&c->s, 23, tmp, tmpout);
+    if (R_SUCCEEDED(rc) && out) *out = tmpout & 1;
+    return rc;
+}
+
+Result sslConnectionGetVerifyCertErrors(SslConnection *c, u32 *out0, u32 *out1, Result *errors, u32 count) {
+    if (!serviceIsActive(&c->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    if (out0==NULL || errors==NULL)
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+
+    if (out1) *out1 = 0;
+
+    u32 tmp=0;
+    Result rc = _sslCmdNoInOutBufTwoOutU32s(&c->s, out0, &tmp, errors, count*sizeof(Result), 24);
+    if (R_SUCCEEDED(rc) && out1) *out1 = tmp;
+    if (R_SUCCEEDED(rc) && *out0 != tmp) rc = MAKERESULT(123, 112);
+    return rc;
+}
+
+Result sslConnectionGetCipherInfo(SslConnection *c, SslCipherInfo *out) {
+    if (!serviceIsActive(&c->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    u32 tmp=1;
+    return _sslObjectDispatchIn(&c->s, 25, tmp,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { out, sizeof(*out) } },
+    );
+}
+
+Result sslConnectionSetNextAlpnProto(SslConnection *c, const u8* buffer, u32 size) {
+    if (!serviceIsActive(&c->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    if (hosversionBefore(9,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    if (buffer==NULL || !size)
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+
+    return _sslCmdInBufNoOut(&c->s, buffer, size, 26);
+}
+
+Result sslConnectionGetNextAlpnProto(SslConnection *c, SslAlpnProtoState *state, u32 *out, u8 *buffer, u32 size) {
+    if (!serviceIsActive(&c->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    if (hosversionBefore(9,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    if (buffer==NULL || !size)
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+
+    if (state) *state = SslAlpnProtoState_NoSupport;
+    if (out) *out = 0;
+    buffer[0] = 0;
+
+    u32 tmp=0;
+    Result rc = _sslCmdNoInOutBufTwoOutU32s(&c->s, &tmp, out, buffer, size, 27);
+    if (R_SUCCEEDED(rc) && state) *state = tmp;
+    return rc;
 }
 
