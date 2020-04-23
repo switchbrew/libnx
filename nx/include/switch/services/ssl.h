@@ -135,7 +135,7 @@ typedef enum {
 
 /// OptionType. The default bool flags value for these at the time of \ref sslContextCreateConnection is cleared.
 typedef enum {
-    SslOptionType_DoNotCloseSocket                                            = 0,               ///< DoNotCloseSocket. See \ref sslConnectionClose. This is only available if \ref sslConnectionSetSocketDescriptor wasn't used yet.
+    SslOptionType_DoNotCloseSocket                                            = 0,               ///< DoNotCloseSocket. See \ref sslConnectionSetSocketDescriptor. This is only available if \ref sslConnectionSetSocketDescriptor wasn't used yet.
     SslOptionType_GetServerCertChain                                          = 1,               ///< [3.0.0+] GetServerCertChain
     SslOptionType_SkipDefaultVerify                                           = 2,               ///< [5.0.0+] SkipDefaultVerify. Checked by \ref sslConnectionSetVerifyOption, see \ref SslVerifyOption.
     SslOptionType_EnableAlpn                                                  = 3,               ///< [9.0.0+] EnableAlpn. Only available with \ref sslConnectionSetOption. \ref sslConnectionSetSocketDescriptor should have been used prior to this - this will optionally use state setup by that, without throwing an error if that cmd wasn't used.
@@ -158,7 +158,6 @@ typedef struct {
 /// SslConnection
 typedef struct {
     Service s;                                  ///< ISslConnection
-    int sockfd;                                 ///< sockfd returned by the SetSocketDescriptor cmd.
 } SslConnection;
 
 /// BuiltInCertificateInfo
@@ -348,18 +347,18 @@ Result sslContextImportCrl(SslContext *c, const void* buffer, u32 size, u64 *id)
 
 /**
  * @brief Closes a Connection object.
- * @note This will use close() with the sockfd previously set by \ref sslConnectionSetSocketDescriptor if needed, hence sockets must have been initialized prior to using this. This can essentially be disabled via ::SslOptionType_DoNotCloseSocket.
  * @param c \ref SslConnection
  */
 void sslConnectionClose(SslConnection *c);
 
 /**
- * @brief SetSocketDescriptor
+ * @brief SetSocketDescriptor. Do not use directly, use \ref socketSslConnectionSetSocketDescriptor instead.
  * @note An error is thrown if this was used previously.
  * @param c \ref SslConnection
  * @param[in] sockfd sockfd
+ * @param[out] out_sockfd sockfd. Prior to using \ref sslConnectionClose, this must be closed if it's not negative (it will be -1 if ::SslOptionType_DoNotCloseSocket is set).
  */
-Result sslConnectionSetSocketDescriptor(SslConnection *c, int sockfd);
+Result sslConnectionSetSocketDescriptor(SslConnection *c, int sockfd, int *out_sockfd);
 
 /**
  * @brief SetHostName
@@ -385,7 +384,8 @@ Result sslConnectionSetVerifyOption(SslConnection *c, u32 verify_option);
 Result sslConnectionSetIoMode(SslConnection *c, SslIoMode mode);
 
 /**
- * @brief GetSocketDescriptor
+ * @brief GetSocketDescriptor. Do not use directly, use \ref socketSslConnectionGetSocketDescriptor instead.
+ * @note This gets the input sockfd which was previously saved in state by \ref sslConnectionSetSocketDescriptor.
  * @note \ref sslConnectionSetSocketDescriptor must have been used prior to this successfully.
  * @param c \ref SslConnection
  * @param[out] sockfd Output sockfd.
