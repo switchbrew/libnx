@@ -16,6 +16,7 @@
 
 #include "result.h"
 #include "services/bsd.h"
+#include "services/ssl.h"
 #include "runtime/devices/socket.h"
 #include "runtime/hosversion.h"
 
@@ -27,6 +28,8 @@ static int _socketOpen(struct _reent *r, void *fdptr, const char *path, int flag
 static int _socketClose(struct _reent *r, void *fdptr);
 static ssize_t _socketWrite(struct _reent *r, void *fdptr, const char *buf, size_t count);
 static ssize_t _socketRead(struct _reent *r, void *fdptr, char *buf, size_t count);
+
+static int _socketGetFd(int fd);
 
 static const devoptab_t g_socketDevoptab = {
     .name = "soc",
@@ -136,6 +139,58 @@ void socketExit(void) {
 
 Result socketGetLastResult(void) {
     return g_bsdResult;
+}
+
+int socketSslConnectionSetSocketDescriptor(SslConnection *c, int sockfd) {
+    int dev;
+    int fd = _socketGetFd(sockfd);
+
+    if (fd==-1)
+        return -1;
+
+    int tmpfd=0;
+    Result rc = sslConnectionSetSocketDescriptor(c, fd, &tmpfd);
+    if (R_FAILED(rc)) {
+        g_bsdResult = rc;
+        errno = EIO;
+        return -1;
+    }
+
+    dev = FindDevice("soc:");
+    if(dev == -1)
+        return -1;
+
+    fd = __alloc_handle(dev);
+    if(fd == -1)
+        return -1;
+
+    *(int *)__get_handle(fd)->fileStruct = tmpfd;
+
+    return fd;
+}
+
+int socketSslConnectionGetSocketDescriptor(SslConnection *c) {
+    int fd, dev;
+    int tmpfd=0;
+
+    Result rc = sslConnectionGetSocketDescriptor(c, &tmpfd);
+    if (R_FAILED(rc)) {
+        g_bsdResult = rc;
+        errno = EIO;
+        return -1;
+    }
+
+    dev = FindDevice("soc:");
+    if(dev == -1)
+        return -1;
+
+    fd = __alloc_handle(dev);
+    if(fd == -1)
+        return -1;
+
+    *(int *)__get_handle(fd)->fileStruct = tmpfd;
+
+    return fd;
 }
 
 /***********************************************************************************************************************/

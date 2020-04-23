@@ -351,9 +351,6 @@ Result sslContextCreateConnection(SslContext *c, SslConnection *conn) {
     if (!serviceIsActive(&c->s))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    memset(conn, 0, sizeof(*conn));
-    conn->sockfd = -1;
-
     return _sslObjectDispatch(&c->s, 2,
         .out_num_objects = 1,
         .out_objects = &conn->s,
@@ -461,18 +458,14 @@ Result sslContextImportCrl(SslContext *c, const void* buffer, u32 size, u64 *id)
 // ISslConnection
 
 void sslConnectionClose(SslConnection *c) {
-    if (c->sockfd >= 0) close(c->sockfd);
     _sslObjectClose(&c->s);
-
-    memset(c, 0, sizeof(*c));
-    c->sockfd = -1;
 }
 
-Result sslConnectionSetSocketDescriptor(SslConnection *c, int sockfd) {
+Result sslConnectionSetSocketDescriptor(SslConnection *c, int sockfd, int *out_sockfd) {
     if (!serviceIsActive(&c->s))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    return _sslObjectDispatchInOut(&c->s, 0, sockfd, c->sockfd);
+    return _sslObjectDispatchInOut(&c->s, 0, sockfd, *out_sockfd);
 }
 
 Result sslConnectionSetHostName(SslConnection *c, const char* str, u32 str_bufsize) {

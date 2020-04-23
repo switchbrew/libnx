@@ -39,3 +39,10 @@ void socketExit(void);
 NX_INLINE Result socketInitializeDefault(void) {
     return socketInitialize(NULL);
 }
+
+/// Wrapper for \ref sslConnectionSetSocketDescriptor. Returns the output sockfd on success.
+int socketSslConnectionSetSocketDescriptor(SslConnection *c, int sockfd);
+
+/// Wrapper for \ref sslConnectionGetSocketDescriptor. Returns the output sockfd on success.
+int socketSslConnectionGetSocketDescriptor(SslConnection *c);
+
