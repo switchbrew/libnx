@@ -1,6 +1,6 @@
 /**
  * @file fs.h
- * @brief SSL service IPC wrapper.
+ * @brief SSL service IPC wrapper, for using client-mode TLS. See also: https://switchbrew.org/wiki/SSL_services
  * @author yellows8
  * @copyright libnx Authors
  */
@@ -87,7 +87,7 @@ typedef enum {
 
 /// InternalPki
 typedef enum {
-    SslInternalPki_DeviceClientCertDefault                                    = 1,               ///< DeviceClientCertDefault
+    SslInternalPki_DeviceClientCertDefault                                    = 1,               ///< DeviceClientCertDefault. Enables using the DeviceCert and the CertStore.
 } SslInternalPki;
 
 /// ContextOption
@@ -136,7 +136,7 @@ typedef enum {
 /// OptionType. The default bool flags value for these at the time of \ref sslContextCreateConnection is cleared.
 typedef enum {
     SslOptionType_DoNotCloseSocket                                            = 0,               ///< DoNotCloseSocket. See \ref sslConnectionSetSocketDescriptor. This is only available if \ref sslConnectionSetSocketDescriptor wasn't used yet.
-    SslOptionType_GetServerCertChain                                          = 1,               ///< [3.0.0+] GetServerCertChain
+    SslOptionType_GetServerCertChain                                          = 1,               ///< [3.0.0+] GetServerCertChain. See \ref sslConnectionDoHandshake.
     SslOptionType_SkipDefaultVerify                                           = 2,               ///< [5.0.0+] SkipDefaultVerify. Checked by \ref sslConnectionSetVerifyOption, see \ref SslVerifyOption.
     SslOptionType_EnableAlpn                                                  = 3,               ///< [9.0.0+] EnableAlpn. Only available with \ref sslConnectionSetOption. \ref sslConnectionSetSocketDescriptor should have been used prior to this - this will optionally use state setup by that, without throwing an error if that cmd wasn't used.
 } SslOptionType;
@@ -167,6 +167,19 @@ typedef struct {
     u64 cert_size;                              ///< CertificateSize
     u8 *cert_data;                              ///< CertificateData (converted from an offset to a ptr), in DER format.
 } SslBuiltInCertificateInfo;
+
+/// SslServerCertDetailHeader
+typedef struct {
+    u64 magicnum;                               ///< Magicnum.
+    u32 cert_total;                             ///< Total certs.
+    u32 pad;                                    ///< Padding.
+} SslServerCertDetailHeader;
+
+/// SslServerCertDetailEntry
+typedef struct {
+    u32 size;                                   ///< Size.
+    u32 offset;                                 ///< Offset.
+} SslServerCertDetailEntry;
 
 /// CipherInfo
 typedef struct {
@@ -292,20 +305,20 @@ Result sslContextGetConnectionCount(SslContext *c, u32 *out);
  * @param[in] buffer Input buffer, must not be NULL.
  * @param[in] size Input buffer size.
  * @param[in] format \ref SslCertificateFormat
- * @param[out] id Output Id.
+ * @param[out] id Output Id. Optional, can be NULL.
  */
 Result sslContextImportServerPki(SslContext *c, const void* buffer, u32 size, SslCertificateFormat format, u64 *id);
 
 /**
  * @brief ImportClientPki
  * @param c \ref SslContext
- * @param[in] buf0 First input buffer, must not be NULL.
- * @param[in] size0 First input buffer size.
- * @param[in] buf1 Second input buffer, this can only be NULL if size1 is 0.
- * @param[in] size1 Second input buffer size, this can only be 0 if buf1 is NULL.
- * @param[out] id Output Id.
+ * @param[in] pkcs12 PKCS#12 input buffer, must not be NULL.
+ * @param[in] pkcs12_size pkcs12 buffer size.
+ * @param[in] pw ASCII password string buffer, this can only be NULL if pw_size is 0. This will be internally copied to another buffer which was allocated with size=pw_size+1, for NUL-termination.
+ * @param[in] pw_size Password buffer size, this can only be 0 if pw is NULL.
+ * @param[out] id Output Id. Optional, can be NULL.
  */
-Result sslContextImportClientPki(SslContext *c, const void* buf0, u32 size0, const void* buf1, u32 size1, u64 *id);
+Result sslContextImportClientPki(SslContext *c, const void* pkcs12, u32 pkcs12_size, const char *pw, u32 pw_size, u64 *id);
 
 /**
  * @brief Remove the specified *Pki, or on [3.0.0+] Crl.
@@ -318,7 +331,7 @@ Result sslContextRemovePki(SslContext *c, u64 id);
  * @brief RegisterInternalPki
  * @param c \ref SslContext
  * @param[in] internal_pki \ref SslInternalPki
- * @param[out] id Output Id.
+ * @param[out] id Output Id. Optional, can be NULL.
  */
 Result sslContextRegisterInternalPki(SslContext *c, SslInternalPki internal_pki, u64 *id);
 
@@ -328,7 +341,7 @@ Result sslContextRegisterInternalPki(SslContext *c, SslInternalPki internal_pki,
  * @param[in] str Input string.
  * @param[in] str_bufsize String buffer size, excluding NUL-terminator (must not match the string length). Hence, this should be actual_bufsize-1. This must not be >0xff.
  */
-Result sslContextAddPolicyOid(SslContext *c, const char* str, u32 str_bufsize);
+Result sslContextAddPolicyOid(SslContext *c, const char *str, u32 str_bufsize);
 
 /**
  * @brief ImportCrl
@@ -336,7 +349,7 @@ Result sslContextAddPolicyOid(SslContext *c, const char* str, u32 str_bufsize);
  * @param c \ref SslContext
  * @param[in] buffer Input buffer, must not be NULL.
  * @param[in] size Input buffer size.
- * @param[out] id Output Id.
+ * @param[out] id Output Id. Optional, can be NULL.
  */
 Result sslContextImportCrl(SslContext *c, const void* buffer, u32 size, u64 *id);
 
@@ -399,7 +412,7 @@ Result sslConnectionGetSocketDescriptor(SslConnection *c, int *sockfd);
  * @param[in] str_bufsize String buffer size, must be large enough for the entire output string.
  * @param[out] out Output string length.
  */
-Result sslConnectionGetHostName(SslConnection *c, char* str, u32 str_bufsize, u32 *out);
+Result sslConnectionGetHostName(SslConnection *c, char *str, u32 str_bufsize, u32 *out);
 
 /**
  * @brief GetVerifyOption
@@ -421,12 +434,22 @@ Result sslConnectionGetIoMode(SslConnection *c, SslIoMode *out);
  * @note \ref sslConnectionSetHostName must have been used previously with a non-empty string when ::SslVerifyOption_HostName is set.
  * @note The DoHandshakeGetServerCert cmd is only used if both server_certbuf/server_certbuf_size are set, otherwise the DoHandshake cmd is used (in which case out0/out1 will be left at value 0).
  * @param c \ref SslConnection
- * @param[out] out0 Optional first output value, can be NULL.
- * @param[out] out1 Optional second output value, can be NULL.
- * @param[out] server_certbuf Optional output server cert buffer, can be NULL.
+ * @param[out] out_size Total data size which was written to server_certbuf. Optional, can be NULL.
+ * @param[out] total_certs Total certs which were written to server_certbuf, can be NULL.
+ * @param[out] server_certbuf Optional output server cert buffer, can be NULL. Normally this just contains the server cert DER, however with ::SslOptionType_GetServerCertChain set this will contain the full chain (\ref sslConnectionGetServerCertDetail can be used to parse that).
  * @param[in] server_certbuf_size Optional output server cert buffer size, can be 0.
  */
-Result sslConnectionDoHandshake(SslConnection *c, u32 *out0, u32 *out1, void* server_certbuf, u32 server_certbuf_size);
+Result sslConnectionDoHandshake(SslConnection *c, u32 *out_size, u32 *total_certs, void* server_certbuf, u32 server_certbuf_size);
+
+/**
+ * @brief Parses the output server_certbuf from \ref sslConnectionDoHandshake where ::SslOptionType_GetServerCertChain is set.
+ * @param[in] certbuf server_certbuf from \ref sslConnectionDoHandshake, must not be NULL.
+ * @param[in] certbuf_size out_size from \ref sslConnectionDoHandshake.
+ * @param[in] cert_index Cert index, must be within the range of certs stored in certbuf.
+ * @param[out] cert Ptr for the ouput DER cert, must not be NULL.
+ * @param[out] cert_size Size for the ouput cert, must not be NULL.
+ */
+Result sslConnectionGetServerCertDetail(const void* certbuf, u32 certbuf_size, u32 cert_index, void** cert, u32 *cert_size);
 
 /**
  * @brief Read
@@ -434,9 +457,9 @@ Result sslConnectionDoHandshake(SslConnection *c, u32 *out0, u32 *out1, void* se
  * @param c \ref SslConnection
  * @param[out] buffer Output buffer, must not be NULL.
  * @param[in] size Output buffer size, must not be 0.
- * @param[out] out Output value.
+ * @param[out] out_size Actual transferred size.
  */
-Result sslConnectionRead(SslConnection *c, void* buffer, u32 size, u32 *out);
+Result sslConnectionRead(SslConnection *c, void* buffer, u32 size, u32 *out_size);
 
 /**
  * @brief Write
@@ -444,9 +467,9 @@ Result sslConnectionRead(SslConnection *c, void* buffer, u32 size, u32 *out);
  * @param c \ref SslConnection
  * @param[in] buffer Input buffer, must not be NULL.
  * @param[in] size Input buffer size, must not be 0.
- * @param[out] out Output value.
+ * @param[out] out_size Actual transferred size.
  */
-Result sslConnectionWrite(SslConnection *c, const void* buffer, u32 size, u32 *out);
+Result sslConnectionWrite(SslConnection *c, const void* buffer, u32 size, u32 *out_size);
 
 /**
  * @brief Pending
@@ -462,9 +485,9 @@ Result sslConnectionPending(SslConnection *c, s32 *out);
  * @param c \ref SslConnection
  * @param[out] buffer Output buffer, must not be NULL.
  * @param[in] size Output buffer size, must not be 0.
- * @param[out] out Output value.
+ * @param[out] out_size Output size.
  */
-Result sslConnectionPeek(SslConnection *c, void* buffer, u32 size, u32 *out);
+Result sslConnectionPeek(SslConnection *c, void* buffer, u32 size, u32 *out_size);
 
 /**
  * @brief Poll
@@ -568,19 +591,21 @@ Result sslConnectionGetCipherInfo(SslConnection *c, SslCipherInfo *out);
  * @brief SetNextAlpnProto
  * @note Only available on [9.0.0+].
  * @note \ref sslConnectionSetSocketDescriptor must have been used prior to this successfully.
+ * @note ::SslOptionType_EnableAlpn should be set at the time of using \ref sslConnectionDoHandshake, otherwise using this cmd will have no affect.
  * @param c \ref SslConnection
  * @param[in] buffer Input buffer, must not be NULL.
  * @param[in] size Input buffer size, must not be 0. Must be at least 0x2.
  */
-Result sslConnectionSetNextAlpnProto(SslConnection *c, const u8* buffer, u32 size);
+Result sslConnectionSetNextAlpnProto(SslConnection *c, const u8 *buffer, u32 size);
 
 /**
  * @brief GetNextAlpnProto
  * @note Only available on [9.0.0+].
  * @note \ref sslConnectionSetSocketDescriptor must have been used prior to this successfully.
+ * @note The output will be all-zero/empty if not available - such as when this was used before \ref sslConnectionDoHandshake.
  * @param c \ref SslConnection
  * @param[out] state \ref SslAlpnProtoState
- * @param[out] out Output value.
+ * @param[out] out Output string length.
  * @param[out] buffer Output buffer, must not be NULL.
  * @param[in] size Output buffer size, must not be 0.
  */
