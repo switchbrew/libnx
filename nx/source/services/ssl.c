@@ -378,11 +378,11 @@ Result sslContextImportServerPki(SslContext *c, const void* buffer, u32 size, Ss
     );
 }
 
-Result sslContextImportClientPki(SslContext *c, const void* buf0, u32 size0, const void* buf1, u32 size1, u64 *id) {
+Result sslContextImportClientPki(SslContext *c, const void* pkcs12, u32 pkcs12_size, const char *pw, u32 pw_size, u64 *id) {
     if (!serviceIsActive(&c->s))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    if (buf0==NULL || (buf1==NULL && size1) || (buf1!=NULL && !size1))
+    if (pkcs12==NULL || (pw==NULL && pw_size) || (pw!=NULL && !pw_size))
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
     return _sslObjectDispatchOut(&c->s, 5, *id,
@@ -391,8 +391,8 @@ Result sslContextImportClientPki(SslContext *c, const void* buf0, u32 size0, con
             SfBufferAttr_HipcMapAlias | SfBufferAttr_In,
         },
         .buffers = {
-            { buf0, size0 },
-            { buf1, size1 },
+            { pkcs12, pkcs12_size },
+            { pw, pw_size },
         },
     );
 }
@@ -429,7 +429,7 @@ Result sslContextRegisterInternalPki(SslContext *c, SslInternalPki internal_pki,
     return _sslObjectDispatchInOut(&c->s, 8, tmp, *id);
 }
 
-Result sslContextAddPolicyOid(SslContext *c, const char* str, u32 str_bufsize) {
+Result sslContextAddPolicyOid(SslContext *c, const char *str, u32 str_bufsize) {
     if (!serviceIsActive(&c->s))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
@@ -468,7 +468,7 @@ Result sslConnectionSetSocketDescriptor(SslConnection *c, int sockfd, int *out_s
     return _sslObjectDispatchInOut(&c->s, 0, sockfd, *out_sockfd);
 }
 
-Result sslConnectionSetHostName(SslConnection *c, const char* str, u32 str_bufsize) {
+Result sslConnectionSetHostName(SslConnection *c, const char *str, u32 str_bufsize) {
     if (!serviceIsActive(&c->s))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
@@ -499,7 +499,7 @@ Result sslConnectionGetSocketDescriptor(SslConnection *c, int *sockfd) {
     return _sslCmdNoInOutU32(&c->s, (u32*)sockfd, 4);
 }
 
-Result sslConnectionGetHostName(SslConnection *c, char* str, u32 str_bufsize, u32 *out) {
+Result sslConnectionGetHostName(SslConnection *c, char *str, u32 str_bufsize, u32 *out) {
     if (!serviceIsActive(&c->s))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
@@ -526,37 +526,59 @@ Result sslConnectionGetIoMode(SslConnection *c, SslIoMode *out) {
     return rc;
 }
 
-Result sslConnectionDoHandshake(SslConnection *c, u32 *out0, u32 *out1, void* server_certbuf, u32 server_certbuf_size) {
+Result sslConnectionDoHandshake(SslConnection *c, u32 *out_size, u32 *total_certs, void* server_certbuf, u32 server_certbuf_size) {
     if (!serviceIsActive(&c->s))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    if (out0) *out0 = 0;
-    if (out1) *out1 = 0;
+    if (out_size) *out_size = 0;
+    if (total_certs) *total_certs = 0;
 
     if (server_certbuf==NULL || !server_certbuf_size)
         return _sslCmdNoIO(&c->s, 8); // DoHandshake
 
-    return _sslCmdNoInOutBufTwoOutU32s(&c->s, out0, out1, server_certbuf, server_certbuf_size, 9); // DoHandshakeGetServerCert
+    return _sslCmdNoInOutBufTwoOutU32s(&c->s, out_size, total_certs, server_certbuf, server_certbuf_size, 9); // DoHandshakeGetServerCert
 }
 
-Result sslConnectionRead(SslConnection *c, void* buffer, u32 size, u32 *out) {
+Result sslConnectionGetServerCertDetail(const void* certbuf, u32 certbuf_size, u32 cert_index, void** cert, u32 *cert_size) {
+    if (certbuf==NULL || cert==NULL || cert_size==NULL || certbuf_size < sizeof(SslServerCertDetailHeader) + cert_index*sizeof(SslServerCertDetailEntry))
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+
+    // sdknso doesn't have a certbuf_size param for this. sdknso also uses a struct for output, but that just contains a size/addr anyway.
+
+    SslServerCertDetailHeader *hdr = (SslServerCertDetailHeader*)certbuf;
+    if (hdr->magicnum != 0x4E4D684374726543 || hdr->cert_total <= cert_index) // "CertChMN"
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+
+    SslServerCertDetailEntry *entry = (SslServerCertDetailEntry*)(++hdr);
+    entry+= cert_index;
+
+    if (certbuf_size <= entry->offset || certbuf_size < entry->size || certbuf_size < entry->offset + entry->size)
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+
+    *cert = (void*)certbuf + entry->offset;
+    *cert_size = entry->size;
+
+    return 0;
+}
+
+Result sslConnectionRead(SslConnection *c, void* buffer, u32 size, u32 *out_size) {
     if (!serviceIsActive(&c->s))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     if (buffer==NULL || !size)
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
-    return _sslCmdOutBufOutU32(&c->s, buffer, size, out, 10);
+    return _sslCmdOutBufOutU32(&c->s, buffer, size, out_size, 10);
 }
 
-Result sslConnectionWrite(SslConnection *c, const void* buffer, u32 size, u32 *out) {
+Result sslConnectionWrite(SslConnection *c, const void* buffer, u32 size, u32 *out_size) {
     if (!serviceIsActive(&c->s))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     if (buffer==NULL || !size)
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
-    return _sslCmdInBufOutU32(&c->s, buffer, size, out, 11);
+    return _sslCmdInBufOutU32(&c->s, buffer, size, out_size, 11);
 }
 
 Result sslConnectionPending(SslConnection *c, s32 *out) {
@@ -566,14 +588,14 @@ Result sslConnectionPending(SslConnection *c, s32 *out) {
     return _sslCmdNoInOutU32(&c->s, (u32*)out, 12);
 }
 
-Result sslConnectionPeek(SslConnection *c, void* buffer, u32 size, u32 *out) {
+Result sslConnectionPeek(SslConnection *c, void* buffer, u32 size, u32 *out_size) {
     if (!serviceIsActive(&c->s))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     if (buffer==NULL || !size)
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
-    return _sslCmdOutBufOutU32(&c->s, buffer, size, out, 13);
+    return _sslCmdOutBufOutU32(&c->s, buffer, size, out_size, 13);
 }
 
 Result sslConnectionPoll(SslConnection *c, u32 in_pollevent, u32 *out_pollevent, u32 timeout) {
@@ -697,7 +719,7 @@ Result sslConnectionGetCipherInfo(SslConnection *c, SslCipherInfo *out) {
     );
 }
 
-Result sslConnectionSetNextAlpnProto(SslConnection *c, const u8* buffer, u32 size) {
+Result sslConnectionSetNextAlpnProto(SslConnection *c, const u8 *buffer, u32 size) {
     if (!serviceIsActive(&c->s))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
