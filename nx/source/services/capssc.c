@@ -76,7 +76,7 @@ Result capsscCloseRawScreenShotReadStream(void) {
     return serviceDispatch(&g_capsscSrv, 1202);
 }
 
-Result capsscReadRawScreenShotReadStream(u64 *bytes_read, void *buf, size_t size, u64 offset) {
+Result capsscReadRawScreenShotReadStream(u64 *bytes_read, void* buf, size_t size, u64 offset) {
     if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
