@@ -48,9 +48,9 @@ Result capsscOpenRawScreenShotReadStream(u64 *out_size, u64 *out_width, u64 *out
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     const struct {
-        ViLayerStack layer_stack;
-        u64 timeout;
-    } in = {layer_stack, timeout};
+        s32 layer_stack;
+        u32 pad;
+    } in = {layer_stack, 0, timeout};
 
     struct {
         u64 size;
@@ -68,7 +68,7 @@ Result capsscOpenRawScreenShotReadStream(u64 *out_size, u64 *out_width, u64 *out
     return rc;
 }
 
-Result capsscCloseRawScreenShotReadStream() {
+Result capsscCloseRawScreenShotReadStream(void) {
     if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 

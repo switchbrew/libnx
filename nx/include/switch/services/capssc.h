@@ -50,7 +50,7 @@ Result capsscOpenRawScreenShotReadStream(u64 *out_size, u64 *out_width, u64 *out
  * @brief Discards a stream opened by \ref capsscOpenRawScreenShotReadStream.
  * @note Only available on [3.0.0+]. Requires debug mode.
  */
-Result capsscCloseRawScreenShotReadStream();
+Result capsscCloseRawScreenShotReadStream(void);
 
 /**
  * @brief Reads from a stream opened by \ref capsscOpenRawScreenShotReadStream.
@@ -60,7 +60,7 @@ Result capsscCloseRawScreenShotReadStream();
  * @param size Size of buf.
  * @param offset Offset in image where read should start.
  */
-Result capsscReadRawScreenShotReadStream(u64 *bytes_read, void *buf, size_t size, u64 offset);
+Result capsscReadRawScreenShotReadStream(u64 *bytes_read, void* buf, size_t size, u64 offset);
 
 /**
  * @brief This takes a screenshot, with the screenshot being written as jpeg into the output buffer.
