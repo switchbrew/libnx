@@ -156,6 +156,11 @@ int socketSslConnectionSetSocketDescriptor(SslConnection *c, int sockfd) {
         return -1;
     }
 
+    if (tmpfd==-1) { // The cmd didn't return a sockfd. This error must be ignored.
+        errno = ENOENT;
+        return -1;
+    }
+
     dev = FindDevice("soc:");
     if(dev == -1)
         return -1;
