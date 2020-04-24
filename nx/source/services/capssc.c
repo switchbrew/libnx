@@ -43,6 +43,49 @@ Result capsscCaptureRawImageWithTimeout(void* buf, size_t size, ViLayerStack lay
     );
 }
 
+Result capsscOpenRawScreenShotReadStream(u64 *out_size, u64 *out_width, u64 *out_height, ViLayerStack layer_stack, s64 timeout) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    const struct {
+        s32 layer_stack;
+        u32 pad;
+        u64 timeout;
+    } in = {layer_stack, 0, timeout};
+
+    struct {
+        u64 size;
+        u64 width;
+        u64 height;
+    } out;
+
+    Result rc = serviceDispatchInOut(&g_capsscSrv, 1201, in, out);
+
+    if (R_SUCCEEDED(rc)) {
+        if (out_size) *out_size = out.size;
+        if (out_width) *out_width = out.width;
+        if (out_height) *out_height = out.height;
+    }
+    return rc;
+}
+
+Result capsscCloseRawScreenShotReadStream(void) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatch(&g_capsscSrv, 1202);
+}
+
+Result capsscReadRawScreenShotReadStream(u64 *bytes_read, void* buf, size_t size, u64 offset) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchInOut(&g_capsscSrv, 1203, offset, *bytes_read,
+        .buffer_attrs = { SfBufferAttr_Out | SfBufferAttr_HipcMapAlias },
+        .buffers = { { buf, size } },
+    );
+}
+
 Result capsscCaptureJpegScreenShot(u64* out_jpeg_size, void* jpeg_buf, size_t jpeg_buf_size, ViLayerStack layer_stack, s64 timeout) {
     if (hosversionBefore(9,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);

@@ -36,6 +36,33 @@ Service* capsscGetServiceSession(void);
 Result capsscCaptureRawImageWithTimeout(void* buf, size_t size, ViLayerStack layer_stack, u64 width, u64 height, s64 buffer_count, s64 buffer_index, s64 timeout);
 
 /**
+ * @brief This takes a raw screenshot, with the screenshot being held until \ref capsscCloseRawScreenShotReadStream is called.
+ * @note Only available on [3.0.0+]. Requires debug mode.
+ * @param out_size Pointer to write the size of the captured raw image to. Always 0x384000(1280*720*4).
+ * @param out_width Pointer to write the width of the captured raw image to. Always 1280.
+ * @param out_height Pointer to write the height of the captured raw image to. Always 720.
+ * @param layer_stack \ref ViLayerStack
+ * @param timeout Timeout in nanoseconds.
+ */
+Result capsscOpenRawScreenShotReadStream(u64 *out_size, u64 *out_width, u64 *out_height, ViLayerStack layer_stack, s64 timeout);
+
+/**
+ * @brief Discards a stream opened by \ref capsscOpenRawScreenShotReadStream.
+ * @note Only available on [3.0.0+]. Requires debug mode.
+ */
+Result capsscCloseRawScreenShotReadStream(void);
+
+/**
+ * @brief Reads from a stream opened by \ref capsscOpenRawScreenShotReadStream.
+ * @note Only available on [3.0.0+]. Requires debug mode.
+ * @param bytes_read Pointer to write the amounts of bytes written to buffer.
+ * @param buf Output buffer containing the RGBA8 image.
+ * @param size Size of buf.
+ * @param offset Offset in image where read should start.
+ */
+Result capsscReadRawScreenShotReadStream(u64 *bytes_read, void* buf, size_t size, u64 offset);
+
+/**
  * @brief This takes a screenshot, with the screenshot being written as jpeg into the output buffer.
  * @note Only available on [9.0.0+]. Requires debug mode before [10.0.0].
  * @param out_jpeg_size Pointer to write the size of the captured jpeg to.
