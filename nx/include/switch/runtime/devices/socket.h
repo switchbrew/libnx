@@ -40,9 +40,9 @@ NX_INLINE Result socketInitializeDefault(void) {
     return socketInitialize(NULL);
 }
 
-/// Wrapper for \ref sslConnectionSetSocketDescriptor. Returns the output sockfd on success.
+/// Wrapper for \ref sslConnectionSetSocketDescriptor. Returns the output sockfd on success and -1 on error. errno==ENOENT indicates that no sockfd was returned, this error must be ignored.
 int socketSslConnectionSetSocketDescriptor(SslConnection *c, int sockfd);
 
-/// Wrapper for \ref sslConnectionGetSocketDescriptor. Returns the output sockfd on success.
+/// Wrapper for \ref sslConnectionGetSocketDescriptor. Returns the output sockfd on success and -1 on error.
 int socketSslConnectionGetSocketDescriptor(SslConnection *c);
 
