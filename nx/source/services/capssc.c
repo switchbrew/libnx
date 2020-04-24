@@ -44,6 +44,9 @@ Result capsscCaptureRawImageWithTimeout(void* buf, size_t size, ViLayerStack lay
 }
 
 Result capsscOpenRawScreenShotReadStream(u64 *out_size, u64 *out_width, u64 *out_height, ViLayerStack layer_stack, s64 timeout) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     const struct {
         ViLayerStack layer_stack;
         u64 timeout;
@@ -66,10 +69,16 @@ Result capsscOpenRawScreenShotReadStream(u64 *out_size, u64 *out_width, u64 *out
 }
 
 Result capsscCloseRawScreenShotReadStream() {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     return serviceDispatch(&g_capsscSrv, 1202);
 }
 
 Result capsscReadRawScreenShotReadStream(u64 *bytes_read, void *buf, size_t size, u64 offset) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     return serviceDispatchInOut(&g_capsscSrv, 1203, offset, *bytes_read,
         .buffer_attrs = { SfBufferAttr_Out | SfBufferAttr_HipcMapAlias },
         .buffers = { { buf, size } },
