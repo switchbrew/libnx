@@ -50,6 +50,7 @@ Result capsscOpenRawScreenShotReadStream(u64 *out_size, u64 *out_width, u64 *out
     const struct {
         s32 layer_stack;
         u32 pad;
+        u64 timeout;
     } in = {layer_stack, 0, timeout};
 
     struct {
