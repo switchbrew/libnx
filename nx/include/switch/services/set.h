@@ -2271,10 +2271,10 @@ Result setcalGetAccelerometerOffset(SetCalAccelerometerOffset *out);
 Result setcalGetAccelerometerScale(SetCalAccelerometerScale *out);
 
 /**
- * @brief Gets the \ref SetCalAccelerometerOffset.
- * @param[out] out \ref SetCalAccelerometerOffset
+ * @brief Gets the \ref SetCalGyroscopeOffset.
+ * @param[out] out \ref SetCalGyroscopeOffset
  */
-Result setcalGetGyroscopeOffset(SetCalAccelerometerOffset *out);
+Result setcalGetGyroscopeOffset(SetCalGyroscopeOffset *out);
 
 /**
  * @brief Gets the \ref SetCalGyroscopeScale.
