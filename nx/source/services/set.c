@@ -1556,7 +1556,7 @@ Result setcalGetAccelerometerScale(SetCalAccelerometerScale *out) {
     return serviceDispatchOut(&g_setcalSrv, 3, *out);
 }
 
-Result setcalGetGyroscopeOffset(SetCalAccelerometerOffset *out) {
+Result setcalGetGyroscopeOffset(SetCalGyroscopeOffset *out) {
     return serviceDispatchOut(&g_setcalSrv, 4, *out);
 }
 
