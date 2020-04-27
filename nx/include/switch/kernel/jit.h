@@ -9,8 +9,8 @@
 
 /// JIT implementation type.
 typedef enum {
-    JitType_CodeMemory, ///< JIT supported using svcSetProcessMemoryPermission
-    JitType_JitMemory,  ///< JIT supported using [4.0.0+] code-memory syscalls (this isn't usable on [5.0.0+] so JitType_CodeMemory is used instead).
+    JitType_SetProcessMemoryPermission, ///< JIT supported using svcSetProcessMemoryPermission
+    JitType_CodeMemory,                 ///< JIT supported using [4.0.0+] CodeMemory syscalls
 } JitType;
 
 /// JIT buffer object.
@@ -58,11 +58,15 @@ Result jitClose(Jit* j);
  * @param j JIT buffer.
  * @return Pointer to alias of the JIT buffer that can be written to.
  */
-void* jitGetRwAddr(Jit* j);
+NX_CONSTEXPR void* jitGetRwAddr(Jit* j) {
+    return j->rw_addr;
+}
 
 /**
  * @brief Gets the address of the executable memory alias of a JIT buffer.
  * @param j JIT buffer.
  * @return Pointer to alias of the JIT buffer that can be executed.
  */
-void* jitGetRxAddr(Jit* j);
+NX_CONSTEXPR void* jitGetRxAddr(Jit* j) {
+    return j->rx_addr;
+}

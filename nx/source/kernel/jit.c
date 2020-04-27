@@ -13,16 +13,16 @@ Result jitCreate(Jit* j, size_t size)
 {
     JitType type;
 
-    // Use new jit primitive introduced in [4.0.0+], if available.
-    // Not usable with [5.0.0+] since svcMapJitMemory doesn't allow using that SVC under the same process which owns that object.
+    // Use new CodeMemory object introduced in [4.0.0+], if available.
+    // On [5.0.0+] this is only usable with a kernel patch, as svcControlCodeMemory now errors if it's used under the same process which owns the object.
     if (kernelAbove400() && envIsSyscallHinted(0x4B) && envIsSyscallHinted(0x4C)
         && (!kernelAbove500() || detectJitKernelPatch())) {
-	type = JitType_JitMemory;
+	type = JitType_CodeMemory;
     }
-    // Fall back to MapProcessCodeMemory if available.
+    // Fall back to JitType_SetProcessMemoryPermission if available.
     else if (envIsSyscallHinted(0x73) && envIsSyscallHinted(0x77) && envIsSyscallHinted(0x78)
              && (envGetOwnProcessHandle() != INVALID_HANDLE)) {
-        type = JitType_CodeMemory;
+        type = JitType_SetProcessMemoryPermission;
     }
     else {
         // Jit is unavailable. :(
@@ -47,11 +47,11 @@ Result jitCreate(Jit* j, size_t size)
 
     switch (j->type)
     {
-    case JitType_CodeMemory:
+    case JitType_SetProcessMemoryPermission:
         j->rw_addr = j->src_addr;
         break;
 
-    case JitType_JitMemory:
+    case JitType_CodeMemory:
         j->rw_addr = virtmemReserve(j->size);
 
         rc = svcCreateCodeMemory(&j->handle, j->src_addr, j->size);
@@ -95,11 +95,11 @@ Result jitTransitionToWritable(Jit* j)
     Result rc = 0;
 
     switch (j->type) {
-    case JitType_CodeMemory:
+    case JitType_SetProcessMemoryPermission:
         if (j->is_executable) rc = svcUnmapProcessCodeMemory(envGetOwnProcessHandle(), (u64) j->rx_addr, (u64) j->src_addr, j->size);
         break;
 
-    case JitType_JitMemory:
+    case JitType_CodeMemory:
         // No need to do anything.
         break;
     }
@@ -114,7 +114,7 @@ Result jitTransitionToExecutable(Jit* j)
     Result rc = 0;
 
     switch (j->type) {
-    case JitType_CodeMemory:
+    case JitType_SetProcessMemoryPermission:
         if (!j->is_executable) {
             rc = svcMapProcessCodeMemory(envGetOwnProcessHandle(), (u64) j->rx_addr, (u64) j->src_addr, j->size);
 
@@ -128,7 +128,7 @@ Result jitTransitionToExecutable(Jit* j)
         }
         break;
 
-    case JitType_JitMemory:
+    case JitType_CodeMemory:
         armDCacheFlush(j->rw_addr, j->size);
         armICacheInvalidate(j->rx_addr, j->size);
         break;
@@ -145,7 +145,7 @@ Result jitClose(Jit* j)
 
     switch (j->type)
     {
-    case JitType_CodeMemory:
+    case JitType_SetProcessMemoryPermission:
         rc = jitTransitionToWritable(j);
 
         if (R_SUCCEEDED(rc)) {
@@ -153,7 +153,7 @@ Result jitClose(Jit* j)
         }
         break;
 
-    case JitType_JitMemory:
+    case JitType_CodeMemory:
         rc = svcControlCodeMemory(j->handle, CodeMapOperation_UnmapOwner, j->rw_addr, j->size, 0);
 
         if (R_SUCCEEDED(rc)) {
@@ -176,12 +176,4 @@ Result jitClose(Jit* j)
         }
     }
     return rc;
-}
-
-void* jitGetRwAddr(Jit* j) {
-    return j->rw_addr;
-}
-
-void* jitGetRxAddr(Jit* j) {
-    return j->rx_addr;
 }
