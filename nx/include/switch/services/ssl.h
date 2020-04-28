@@ -432,7 +432,7 @@ Result sslConnectionGetIoMode(SslConnection *c, SslIoMode *out);
  * @brief DoHandshake
  * @note \ref sslConnectionSetSocketDescriptor must have been used prior to this successfully.
  * @note \ref sslConnectionSetHostName must have been used previously with a non-empty string when ::SslVerifyOption_HostName is set.
- * @note The DoHandshakeGetServerCert cmd is only used if both server_certbuf/server_certbuf_size are set, otherwise the DoHandshake cmd is used (in which case out0/out1 will be left at value 0).
+ * @note The DoHandshakeGetServerCert cmd is only used if both server_certbuf/server_certbuf_size are set, otherwise the DoHandshake cmd is used (in which case out_size/total_certs will be left at value 0).
  * @param c \ref SslConnection
  * @param[out] out_size Total data size which was written to server_certbuf. Optional, can be NULL.
  * @param[out] total_certs Total certs which were written to server_certbuf, can be NULL.
