@@ -155,7 +155,7 @@ static Result _sslCmdOutBufOutU32(Service* srv, void* buffer, size_t size, u32 *
     );
 }
 
-Result sslCreateContext(SslContext *c, SslVersion ssl_version) {
+Result sslCreateContext(SslContext *c, u32 ssl_version) {
     if (!serviceIsActive(&g_sslSrv))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 

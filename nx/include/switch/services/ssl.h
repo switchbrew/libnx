@@ -71,12 +71,12 @@ typedef enum {
     SslDebugOptionType_AllowDisableVerifyOption                               =    0,            ///< AllowDisableVerifyOption
 } SslDebugOptionType;
 
-/// SslVersion
+/// SslVersion. This is a bitmask which controls the min/max TLS versions to use, depending on which lowest/highest bits are set (if Auto isn't set).
 typedef enum {
-    SslVersion_Auto                                                           =  0x1,            ///< Auto
-    SslVersion_TlsV10                                                         =  0x8,            ///< TlsV10
-    SslVersion_TlsV11                                                         = 0x10,            ///< TlsV11
-    SslVersion_TlsV12                                                         = 0x20,            ///< TlsV12
+    SslVersion_Auto                                                           =  BIT(0),            ///< TLS version min = 1.0, max = 1.2.
+    SslVersion_TlsV10                                                         =  BIT(3),            ///< TLS 1.0.
+    SslVersion_TlsV11                                                         =  BIT(4),            ///< TLS 1.1.
+    SslVersion_TlsV12                                                         =  BIT(5),            ///< TLS 1.2.
 } SslVersion;
 
 /// CertificateFormat
@@ -201,7 +201,7 @@ Service* sslGetServiceSession(void);
  * @param[out] c \ref SslContext
  * @param[in] ssl_version \ref SslVersion
  */
-Result sslCreateContext(SslContext *c, SslVersion ssl_version);
+Result sslCreateContext(SslContext *c, u32 ssl_version);
 
 /**
  * @brief GetContextCount
