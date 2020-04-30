@@ -108,9 +108,10 @@ typedef enum {
 } SslVerifyOption;
 
 /// IoMode. The default value at the time of \ref sslContextCreateConnection is ::SslIoMode_Blocking.
+/// The socket non-blocking flag is always set regardless of this field, this is only used internally for calculating the timeout used by various cmds.
 typedef enum {
-    SslIoMode_Blocking                                                        = 1,               ///< Blocking
-    SslIoMode_NonBlocking                                                     = 2,               ///< NonBlocking
+    SslIoMode_Blocking                                                        = 1,               ///< Blocking. Timeout = 5 minutes.
+    SslIoMode_NonBlocking                                                     = 2,               ///< NonBlocking. Timeout = 0.
 } SslIoMode;
 
 /// PollEvent
@@ -593,7 +594,7 @@ Result sslConnectionGetCipherInfo(SslConnection *c, SslCipherInfo *out);
  * @note \ref sslConnectionSetSocketDescriptor must have been used prior to this successfully.
  * @note ::SslOptionType_EnableAlpn should be set at the time of using \ref sslConnectionDoHandshake, otherwise using this cmd will have no affect.
  * @param c \ref SslConnection
- * @param[in] buffer Input buffer, must not be NULL.
+ * @param[in] buffer Input buffer, must not be NULL. This contains an array of {u8 size, {data with the specified size}}, which must be within the buffer-size bounds.
  * @param[in] size Input buffer size, must not be 0. Must be at least 0x2.
  */
 Result sslConnectionSetNextAlpnProto(SslConnection *c, const u8 *buffer, u32 size);
@@ -606,7 +607,7 @@ Result sslConnectionSetNextAlpnProto(SslConnection *c, const u8 *buffer, u32 siz
  * @param c \ref SslConnection
  * @param[out] state \ref SslAlpnProtoState
  * @param[out] out Output string length.
- * @param[out] buffer Output buffer, must not be NULL.
+ * @param[out] buffer Output string buffer, must not be NULL.
  * @param[in] size Output buffer size, must not be 0.
  */
 Result sslConnectionGetNextAlpnProto(SslConnection *c, SslAlpnProtoState *state, u32 *out, u8 *buffer, u32 size);
