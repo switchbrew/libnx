@@ -110,7 +110,7 @@ static void _nifmConvertSfToNetworkProfileData(const NifmSfNetworkProfileData *i
     memset(out, 0, sizeof(*out));
 
     out->uuid = in->uuid;
-    strncpy(out->network_name, in->network_name, sizeof(in->network_name));
+    memcpy(out->network_name, in->network_name, sizeof(in->network_name));
     out->network_name[sizeof(out->network_name)-1] = 0;
 
     out->unk_x50 = in->unk_x112;
@@ -133,7 +133,7 @@ static void _nifmConvertSfFromNetworkProfileData(const NifmNetworkProfileData *i
     memset(out, 0, sizeof(*out));
 
     out->uuid = in->uuid;
-    strncpy(out->network_name, in->network_name, sizeof(out->network_name));
+    memcpy(out->network_name, in->network_name, sizeof(out->network_name));
     out->network_name[sizeof(out->network_name)-1] = 0;
 
     out->unk_x112 = in->unk_x50;
