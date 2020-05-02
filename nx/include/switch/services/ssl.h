@@ -302,8 +302,9 @@ Result sslContextGetConnectionCount(SslContext *c, u32 *out);
 
 /**
  * @brief ImportServerPki
+ * @note A maximum of 71 ServerPki objects (associated with the output Id) can be imported.
  * @param c \ref SslContext
- * @param[in] buffer Input buffer, must not be NULL.
+ * @param[in] buffer Input buffer containing the cert data, must not be NULL. This can contain multiple certs.
  * @param[in] size Input buffer size.
  * @param[in] format \ref SslCertificateFormat
  * @param[out] id Output Id. Optional, can be NULL.
@@ -312,6 +313,7 @@ Result sslContextImportServerPki(SslContext *c, const void* buffer, u32 size, Ss
 
 /**
  * @brief ImportClientPki
+ * @note An error is thrown internally if this cmd or \ref sslContextRegisterInternalPki was already used previously.
  * @param c \ref SslContext
  * @param[in] pkcs12 PKCS#12 input buffer, must not be NULL.
  * @param[in] pkcs12_size pkcs12 buffer size.
@@ -330,6 +332,7 @@ Result sslContextRemovePki(SslContext *c, u64 id);
 
 /**
  * @brief RegisterInternalPki
+ * @note An error is thrown internally if this cmd or \ref sslContextImportClientPki was already used previously.
  * @param c \ref SslContext
  * @param[in] internal_pki \ref SslInternalPki
  * @param[out] id Output Id. Optional, can be NULL.
