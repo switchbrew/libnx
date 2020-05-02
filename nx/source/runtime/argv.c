@@ -10,7 +10,6 @@
 // System globals we define here
 int __system_argc;
 char** __system_argv;
-struct in_addr __nxlink_host;
 
 extern char* fake_heap_start;
 extern char* fake_heap_end;
