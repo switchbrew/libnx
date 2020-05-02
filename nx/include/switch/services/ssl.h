@@ -434,10 +434,11 @@ Result sslConnectionGetIoMode(SslConnection *c, SslIoMode *out);
  * @note \ref sslConnectionSetSocketDescriptor must have been used prior to this successfully.
  * @note \ref sslConnectionSetHostName must have been used previously with a non-empty string when ::SslVerifyOption_HostName is set.
  * @note The DoHandshakeGetServerCert cmd is only used if both server_certbuf/server_certbuf_size are set, otherwise the DoHandshake cmd is used (in which case out_size/total_certs will be left at value 0).
+ * @note No certs are returned when ::SslVerifyOption_PeerCa is not set.
  * @param c \ref SslConnection
  * @param[out] out_size Total data size which was written to server_certbuf. Optional, can be NULL.
  * @param[out] total_certs Total certs which were written to server_certbuf, can be NULL.
- * @param[out] server_certbuf Optional output server cert buffer, can be NULL. Normally this just contains the server cert DER, however with ::SslOptionType_GetServerCertChain set this will contain the full chain (\ref sslConnectionGetServerCertDetail can be used to parse that).
+ * @param[out] server_certbuf Optional output server cert buffer, can be NULL. Normally this just contains the server cert DER, however with ::SslOptionType_GetServerCertChain set this will contain the full chain (\ref sslConnectionGetServerCertDetail can be used to parse that). With ::SslIoMode_NonBlocking this buffer will be only filled in once - when this cmd returns successfully the buffer will generally be empty.
  * @param[in] server_certbuf_size Optional output server cert buffer size, can be 0.
  */
 Result sslConnectionDoHandshake(SslConnection *c, u32 *out_size, u32 *total_certs, void* server_certbuf, u32 server_certbuf_size);
