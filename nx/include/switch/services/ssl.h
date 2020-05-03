@@ -304,7 +304,7 @@ Result sslContextGetConnectionCount(SslContext *c, u32 *out);
  * @brief ImportServerPki
  * @note A maximum of 71 ServerPki objects (associated with the output Id) can be imported.
  * @param c \ref SslContext
- * @param[in] buffer Input buffer containing the cert data, must not be NULL. This can contain multiple certs.
+ * @param[in] buffer Input buffer containing the cert data, must not be NULL. This can contain multiple certs. The certs can be CAs or server certs (no pubkeys).
  * @param[in] size Input buffer size.
  * @param[in] format \ref SslCertificateFormat
  * @param[out] id Output Id. Optional, can be NULL.
