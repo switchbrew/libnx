@@ -351,7 +351,7 @@ Result sslContextAddPolicyOid(SslContext *c, const char *str, u32 str_bufsize);
  * @brief ImportCrl
  * @note Only available on [3.0.0+].
  * @param c \ref SslContext
- * @param[in] buffer Input buffer, must not be NULL.
+ * @param[in] buffer Input buffer, must not be NULL. This contains the DER CRL.
  * @param[in] size Input buffer size.
  * @param[out] id Output Id. Optional, can be NULL.
  */
