@@ -112,6 +112,7 @@ extern "C" {
 #include "switch/services/notif.h"
 #include "switch/services/mii.h"
 #include "switch/services/miiimg.h"
+#include "switch/services/lm.h"
 
 #include "switch/display/binder.h"
 #include "switch/display/parcel.h"
@@ -145,6 +146,7 @@ extern "C" {
 #include "switch/runtime/nxlink.h"
 #include "switch/runtime/resolver.h"
 #include "switch/runtime/ringcon.h"
+#include "switch/runtime/diag.h"
 
 #include "switch/runtime/util/utf.h"
 
