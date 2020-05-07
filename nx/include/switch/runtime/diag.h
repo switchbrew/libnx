@@ -390,13 +390,13 @@ NX_INLINE void diagLogImpl(const DiagLogMetadata *metadata) {
 
 #define DIAG_DETAILED_LOGF(log_severity, log_verbosity, fmt, ...) ({ \
     char msg[0x400] = {}; \
-    sprintf(msg, fmt, ##__VA_ARGS__); \
+    snprintf(msg, 0x400, fmt, ##__VA_ARGS__); \
     DIAG_DETAILED_LOG(log_severity, log_verbosity, msg); \
 })
 
 #define DIAG_DETAILED_VLOG(log_severity, log_verbosity, fmt, args) ({ \
     char msg[0x400] = {}; \
-    vsprintf(msg, fmt, args); \
+    vsnprintf(msg, 0x400, fmt, args); \
     DIAG_DETAILED_LOG(log_severity, log_verbosity, msg); \
 })
 
