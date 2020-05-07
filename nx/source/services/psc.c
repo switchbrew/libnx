@@ -83,7 +83,7 @@ Result pscPmModuleGetRequest(PscPmModule *module, PscPmState *out_state, u32 *ou
 Result pscPmModuleAcknowledge(PscPmModule *module, PscPmState state) {
     serviceAssumeDomain(&module->srv);
 
-    if (hosversionAtLeast(6,0,0)) {
+    if (hosversionAtLeast(5,1,0)) {
         _Static_assert(sizeof(state) == sizeof(u32), "PscPmState size");
         return serviceDispatchIn(&module->srv, 4, state);
     } else {
