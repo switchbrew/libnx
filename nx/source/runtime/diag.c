@@ -8,40 +8,40 @@ static Mutex g_logMutex;
 
 /// DiagLogPacketFlags
 typedef enum {
-    DiagLogPacketFlags_Head = BIT(0),           ///< First packet.
-    DiagLogPacketFlags_Tail = BIT(1)            ///< Last packet.
+    DiagLogPacketFlags_Head = BIT(0),  ///< First packet.
+    DiagLogPacketFlags_Tail = BIT(1),  ///< Last packet.
 } DiagLogPacketFlags;
 
 /// DiagLogPacketHeader
 typedef struct {
-    u64 process_id;                             ///< Process ID.
-    u64 thread_id;                              ///< Thread ID.
-    u8 flags;                                   ///< \ref DiagLogPacketFlags
-    u8 pad;                                     ///< Padding
-    u8 severity;                                ///< \ref DiagLogSeverity
-    u8 verbosity;                               ///< Verbosity.
-    u32 payload_size;                           ///< Total packet size after this header.
+    u64 process_id;      ///< Process ID.
+    u64 thread_id;       ///< Thread ID.
+    u8 flags;            ///< \ref DiagLogPacketFlags
+    u8 pad;              ///< Padding
+    u8 severity;         ///< \ref DiagLogSeverity
+    u8 verbosity;        ///< Verbosity.
+    u32 payload_size;    ///< Total packet size after this header.
 } DiagLogPacketHeader;
 
 /// DiagLogDataChunkKey
 typedef enum {
-    DiagLogDataChunkKey_LogSessionBegin = 0,    ///< Log session begin (unknown)
-    DiagLogDataChunkKey_LogSessionEnd = 1,      ///< Log session end (unknown)
-    DiagLogDataChunkKey_TextLog = 2,            ///< Text to be logged.
-    DiagLogDataChunkKey_LineNumber = 3,         ///< Source line number.
-    DiagLogDataChunkKey_FileName = 4,           ///< Source file name.
-    DiagLogDataChunkKey_FunctionName = 5,       ///< Source function name.
-    DiagLogDataChunkKey_ModuleName = 6,         ///< Process module name.
-    DiagLogDataChunkKey_ThreadName = 7,         ///< Process thread name.
-    DiagLogDataChunkKey_LogPacketDropCount = 8, ///< Log packet drop count (unknown)
-    DiagLogDataChunkKey_UserSystemClock = 9,    ///< User system clock (unknown)
-    DiagLogDataChunkKey_ProcessName = 10        ///< Process name.
+    DiagLogDataChunkKey_LogSessionBegin    = 0,  ///< Log session begin (unknown)
+    DiagLogDataChunkKey_LogSessionEnd      = 1,  ///< Log session end (unknown)
+    DiagLogDataChunkKey_TextLog            = 2,  ///< Text to be logged.
+    DiagLogDataChunkKey_LineNumber         = 3,  ///< Source line number.
+    DiagLogDataChunkKey_FileName           = 4,  ///< Source file name.
+    DiagLogDataChunkKey_FunctionName       = 5,  ///< Source function name.
+    DiagLogDataChunkKey_ModuleName         = 6,  ///< Process module name.
+    DiagLogDataChunkKey_ThreadName         = 7,  ///< Process thread name.
+    DiagLogDataChunkKey_LogPacketDropCount = 8,  ///< Log packet drop count (unknown)
+    DiagLogDataChunkKey_UserSystemClock    = 9,  ///< User system clock (unknown)
+    DiagLogDataChunkKey_ProcessName        = 10, ///< Process name.
 } DiagLogDataChunkKey;
 
 /// DiagLogDataChunkTypeHeader (see specific types below)
 typedef struct {
-    u8 chunk_key;                               ///< \ref DiagLogDataChunkKey
-    u8 chunk_len;                               ///< Value length.
+    u8 chunk_key;    ///< \ref DiagLogDataChunkKey
+    u8 chunk_len;    ///< Value length.
 } DiagLogDataChunkTypeHeader;
 
 // Specific chunk types.
@@ -277,8 +277,8 @@ void diagLogImpl(const DiagLogMetadata *metadata) {
                 remaining_len -= cur_len;
             }
 
-            size_t i = 0;
-            for(; i < packet_count; i++) {
+            size_t i;
+            for(i = 0; i < packet_count; i++) {
                 DiagLogPacket *cur_packet = &packets[i];
                 cur_packet->header.severity = (u8)metadata->severity;
                 cur_packet->header.verbosity = (u8)metadata->verbosity;

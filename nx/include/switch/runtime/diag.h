@@ -11,10 +11,10 @@
 /// DiagLogSeverity
 typedef enum {
     DiagLogSeverity_Trace = 0,
-    DiagLogSeverity_Info = 1,
-    DiagLogSeverity_Warn = 2,
+    DiagLogSeverity_Info  = 1,
+    DiagLogSeverity_Warn  = 2,
     DiagLogSeverity_Error = 3,
-    DiagLogSeverity_Fatal = 4
+    DiagLogSeverity_Fatal = 4,
 } DiagLogSeverity;
 
 /// DiagSourceInfo
@@ -57,13 +57,13 @@ void diagLogImpl(const DiagLogMetadata *metadata);
 
 #define DIAG_DETAILED_LOGF(log_severity, log_verbosity, fmt, ...) ({ \
     char msg[0x400] = {}; \
-    snprintf(msg, 0x400, fmt, ##__VA_ARGS__); \
+    snprintf(msg, sizeof(msg), fmt, ##__VA_ARGS__); \
     DIAG_DETAILED_LOG(log_severity, log_verbosity, msg); \
 })
 
 #define DIAG_DETAILED_VLOG(log_severity, log_verbosity, fmt, args) ({ \
     char msg[0x400] = {}; \
-    vsnprintf(msg, 0x400, fmt, args); \
+    vsnprintf(msg, sizeof(msg), fmt, args); \
     DIAG_DETAILED_LOG(log_severity, log_verbosity, msg); \
 })
 
