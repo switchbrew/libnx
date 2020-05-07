@@ -39,6 +39,7 @@ Result lmLog(const void *buf, size_t buf_size);
 
 /**
  * @brief Sets the log destination.
+ * @note Only available on [3.0.0+]
  * @param[in] destination Log destination.
  */
 Result lmSetDestination(LmLogDestination destination);
