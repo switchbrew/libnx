@@ -11,10 +11,10 @@
 
 /// LmLogDestination
 typedef enum {
-    LmLogDestination_TMA = BIT(0),           ///< Logs to TMA.
-    LmLogDestination_UART = BIT(1),          ///< Logs to UART.
+    LmLogDestination_TMA          = BIT(0),  ///< Logs to TMA.
+    LmLogDestination_UART         = BIT(1),  ///< Logs to UART.
     LmLogDestination_UARTSleeping = BIT(2),  ///< Logs to UART (when sleeping).
-    LmLogDestination_All = 0xFFFF,           ///< Logs to all locations.
+    LmLogDestination_All          = 0xFFFF,  ///< Logs to all locations.
 } LmLogDestination;
 
 /// Initialize lm. This is stubbed on retail LogManager, always succeeding. This service is automatically initialized and exited by diag.

@@ -148,12 +148,12 @@ NX_INLINE DiagLogPacket *diagAllocateLogPackets(const size_t msg_len, size_t *ou
     }
 
     // Always send at least 2 packets, a head and a tail.
-    if(packet_count < 2) {
+    if (packet_count < 2) {
         packet_count = 2;
     }
 
     DiagLogPacket *packets = (DiagLogPacket*)calloc(packet_count, sizeof(DiagLogPacket));
-    if(packets == NULL) {
+    if (packets == NULL) {
         return 0;
     }
     *out_packet_count = packet_count;
@@ -171,7 +171,7 @@ NX_CONSTEXPR bool diagIsChunkTypeEmpty(const DiagLogDataChunkTypeHeader *chunk_h
 }
 
 NX_CONSTEXPR size_t diagComputeChunkKeySize(const DiagLogDataChunkTypeHeader *chunk_header) {
-    if(diagIsChunkTypeEmpty(chunk_header)) {
+    if (diagIsChunkTypeEmpty(chunk_header)) {
         return 0;
     }
     return sizeof(DiagLogDataChunkTypeHeader) + chunk_header->chunk_len;
@@ -194,7 +194,7 @@ NX_CONSTEXPR size_t diagComputeLogPacketPayloadSize(const DiagLogPacket *packet)
 // Log payload encoding helpers
 
 NX_CONSTEXPR u8 *diagLogPayloadEncode(u8 *payload_buf, const void *data, size_t size) {
-    if(size > 0) {
+    if (size > 0) {
         __builtin_memcpy(payload_buf, data, size);
         return payload_buf + size;
     }
@@ -202,7 +202,7 @@ NX_CONSTEXPR u8 *diagLogPayloadEncode(u8 *payload_buf, const void *data, size_t 
 }
 
 NX_CONSTEXPR u8 *diagLogPayloadEncodeU8ChunkType(u8 *payload_buf, DiagU8ChunkType *chunk_type) {
-    if(diagIsChunkTypeEmpty(&chunk_type->header)) {
+    if (diagIsChunkTypeEmpty(&chunk_type->header)) {
         return payload_buf;
     }
     u8 *buf = diagLogPayloadEncode(payload_buf, &chunk_type->header, sizeof(DiagLogDataChunkTypeHeader));
@@ -211,7 +211,7 @@ NX_CONSTEXPR u8 *diagLogPayloadEncodeU8ChunkType(u8 *payload_buf, DiagU8ChunkTyp
 }
 
 NX_CONSTEXPR u8 *diagLogPayloadEncodeU32ChunkType(u8 *payload_buf, DiagU32ChunkType *chunk_type) {
-    if(diagIsChunkTypeEmpty(&chunk_type->header)) {
+    if (diagIsChunkTypeEmpty(&chunk_type->header)) {
         return payload_buf;
     }
     u8 *buf = diagLogPayloadEncode(payload_buf, &chunk_type->header, sizeof(DiagLogDataChunkTypeHeader));
@@ -220,7 +220,7 @@ NX_CONSTEXPR u8 *diagLogPayloadEncodeU32ChunkType(u8 *payload_buf, DiagU32ChunkT
 }
 
 NX_CONSTEXPR u8 *diagLogPayloadEncodeU64ChunkType(u8 *payload_buf, DiagU64ChunkType *chunk_type) {
-    if(diagIsChunkTypeEmpty(&chunk_type->header)) {
+    if (diagIsChunkTypeEmpty(&chunk_type->header)) {
         return payload_buf;
     }
     u8 *buf = diagLogPayloadEncode(payload_buf, &chunk_type->header, sizeof(DiagLogDataChunkTypeHeader));
@@ -229,7 +229,7 @@ NX_CONSTEXPR u8 *diagLogPayloadEncodeU64ChunkType(u8 *payload_buf, DiagU64ChunkT
 }
 
 NX_CONSTEXPR u8 *diagLogPayloadEncodeStringChunkType(u8 *payload_buf, DiagStringChunkType *chunk_type) {
-    if(diagIsChunkTypeEmpty(&chunk_type->header)) {
+    if (diagIsChunkTypeEmpty(&chunk_type->header)) {
         return payload_buf;
     }
     u8 *buf = diagLogPayloadEncode(payload_buf, &chunk_type->header, sizeof(DiagLogDataChunkTypeHeader));
@@ -240,15 +240,15 @@ NX_CONSTEXPR u8 *diagLogPayloadEncodeStringChunkType(u8 *payload_buf, DiagString
 void diagLogImpl(const DiagLogMetadata *metadata) {
     mutexLock(&g_logMutex);
     Result rc = smInitialize();
-    if(R_SUCCEEDED(rc)) {
+    if (R_SUCCEEDED(rc)) {
         rc = lmInitialize();
         smExit();
     }
-    if(R_SUCCEEDED(rc)) {
+    if (R_SUCCEEDED(rc)) {
         size_t packet_count = 0;
         const size_t text_log_len = __builtin_strlen(metadata->text_log);
         DiagLogPacket *packets = diagAllocateLogPackets(text_log_len, &packet_count);
-        if(packet_count > 0 && packets != NULL) {
+        if (packet_count > 0 && packets != NULL) {
             DiagLogPacket *head_packet = &packets[0];
             head_packet->header.flags = DiagLogPacketFlags_Head;
             DiagLogPacket *tail_packet = &packets[packet_count - 1];
@@ -277,8 +277,7 @@ void diagLogImpl(const DiagLogMetadata *metadata) {
                 remaining_len -= cur_len;
             }
 
-            size_t i;
-            for(i = 0; i < packet_count; i++) {
+            for(size_t i = 0; i < packet_count; i++) {
                 DiagLogPacket *cur_packet = &packets[i];
                 cur_packet->header.severity = (u8)metadata->severity;
                 cur_packet->header.verbosity = (u8)metadata->verbosity;
@@ -287,48 +286,48 @@ void diagLogImpl(const DiagLogMetadata *metadata) {
                 const size_t log_buf_size = cur_packet->header.payload_size + sizeof(DiagLogPacketHeader);
 
                 void *log_buf = calloc(1, log_buf_size);
-                if(log_buf != NULL) {
+                if (log_buf != NULL) {
                     // Write the packet's header.
                     u8 *payload_buf = diagLogPayloadEncode((u8*)log_buf, &cur_packet->header, sizeof(DiagLogPacketHeader));
                     
                     // Write non-empty packets to the payload.
-                    if(!diagIsChunkTypeEmpty(&cur_packet->payload.log_session_begin.header)) {
+                    if (!diagIsChunkTypeEmpty(&cur_packet->payload.log_session_begin.header)) {
                         payload_buf = diagLogPayloadEncodeU8ChunkType(payload_buf, &cur_packet->payload.log_session_begin);
                     }
-                    if(!diagIsChunkTypeEmpty(&cur_packet->payload.log_session_end.header)) {
+                    if (!diagIsChunkTypeEmpty(&cur_packet->payload.log_session_end.header)) {
                         payload_buf = diagLogPayloadEncodeU8ChunkType(payload_buf, &cur_packet->payload.log_session_end);
                     }
-                    if(!diagIsChunkTypeEmpty(&cur_packet->payload.text_log.header)) {
+                    if (!diagIsChunkTypeEmpty(&cur_packet->payload.text_log.header)) {
                         payload_buf = diagLogPayloadEncodeStringChunkType(payload_buf, &cur_packet->payload.text_log);
                     }
-                    if(!diagIsChunkTypeEmpty(&cur_packet->payload.line_number.header)) {
+                    if (!diagIsChunkTypeEmpty(&cur_packet->payload.line_number.header)) {
                         payload_buf = diagLogPayloadEncodeU32ChunkType(payload_buf, &cur_packet->payload.line_number);
                     }
-                    if(!diagIsChunkTypeEmpty(&cur_packet->payload.file_name.header)) {
+                    if (!diagIsChunkTypeEmpty(&cur_packet->payload.file_name.header)) {
                         payload_buf = diagLogPayloadEncodeStringChunkType(payload_buf, &cur_packet->payload.file_name);
                     }
-                    if(!diagIsChunkTypeEmpty(&cur_packet->payload.function_name.header)) {
+                    if (!diagIsChunkTypeEmpty(&cur_packet->payload.function_name.header)) {
                         payload_buf = diagLogPayloadEncodeStringChunkType(payload_buf, &cur_packet->payload.function_name);
                     }
-                    if(!diagIsChunkTypeEmpty(&cur_packet->payload.module_name.header)) {
+                    if (!diagIsChunkTypeEmpty(&cur_packet->payload.module_name.header)) {
                         payload_buf = diagLogPayloadEncodeStringChunkType(payload_buf, &cur_packet->payload.module_name);
                     }
-                    if(!diagIsChunkTypeEmpty(&cur_packet->payload.thread_name.header)) {
+                    if (!diagIsChunkTypeEmpty(&cur_packet->payload.thread_name.header)) {
                         payload_buf = diagLogPayloadEncodeStringChunkType(payload_buf, &cur_packet->payload.thread_name);
                     }
-                    if(!diagIsChunkTypeEmpty(&cur_packet->payload.log_packet_drop_count.header)) {
+                    if (!diagIsChunkTypeEmpty(&cur_packet->payload.log_packet_drop_count.header)) {
                         payload_buf = diagLogPayloadEncodeU64ChunkType(payload_buf, &cur_packet->payload.log_packet_drop_count);
                     }
-                    if(!diagIsChunkTypeEmpty(&cur_packet->payload.user_system_clock.header)) {
+                    if (!diagIsChunkTypeEmpty(&cur_packet->payload.user_system_clock.header)) {
                         payload_buf = diagLogPayloadEncodeU64ChunkType(payload_buf, &cur_packet->payload.user_system_clock);
                     }
-                    if(!diagIsChunkTypeEmpty(&cur_packet->payload.process_name.header)) {
+                    if (!diagIsChunkTypeEmpty(&cur_packet->payload.process_name.header)) {
                         payload_buf = diagLogPayloadEncodeStringChunkType(payload_buf, &cur_packet->payload.process_name);
                     }
 
                     rc = lmLog(log_buf, log_buf_size);
                     free(log_buf);
-                    if(R_FAILED(rc)) {
+                    if (R_FAILED(rc)) {
                         break;
                     }
                 }

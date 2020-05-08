@@ -51,7 +51,7 @@ Result lmLog(const void *buf, size_t buf_size) {
 }
 
 Result lmSetDestination(LmLogDestination destination) {
-    if(hosversionBefore(3,0,0))
+    if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     u32 in = (u32)destination;
     return serviceDispatchIn(&g_lmLoggerSrv, 1, in);
