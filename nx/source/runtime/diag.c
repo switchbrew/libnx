@@ -145,7 +145,6 @@ typedef struct {
 NX_INLINE DiagLogPacket *diagAllocateLogPackets(const size_t msg_len, size_t *out_packet_count) {
     size_t remaining_len = msg_len;
     size_t packet_count = 1;
-    // N allows a max length of 0x7F here instead of 0xFF, but we'll use 0xFF.
     while(remaining_len > DIAG_MAX_STRING_LEN) {
         packet_count++;
         remaining_len -= DIAG_MAX_STRING_LEN;
