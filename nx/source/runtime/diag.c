@@ -2,14 +2,16 @@
 #include "services/sm.h"
 #include "services/lm.h"
 #include "kernel/mutex.h"
+#include "arm/counter.h"
 #include <stdlib.h>
 
 static Mutex g_logMutex;
 
 /// DiagLogPacketFlags
 typedef enum {
-    DiagLogPacketFlags_Head = BIT(0),  ///< First packet.
-    DiagLogPacketFlags_Tail = BIT(1),  ///< Last packet.
+    DiagLogPacketFlags_Head = BIT(0),          ///< First packet.
+    DiagLogPacketFlags_Tail = BIT(1),          ///< Last packet.
+    DiagLogPacketFlags_LittleEndian = BIT(2),  ///< Whether the packet is little-endian.
 } DiagLogPacketFlags;
 
 /// DiagLogPacketHeader
@@ -97,7 +99,8 @@ NX_CONSTEXPR void diagU64ChunkTypeSetValue(DiagU64ChunkType *chunk_type, DiagLog
     chunk_type->value = value;
 }
 
-#define DIAG_MAX_STRING_LEN 0xFF
+// Despite the max length is technically 0xFF (length is stored as a byte), N uses this value as the max length strings can have.
+#define DIAG_MAX_STRING_LEN 0x7F
 
 typedef struct {
     DiagLogDataChunkTypeHeader header;
@@ -142,14 +145,10 @@ typedef struct {
 NX_INLINE DiagLogPacket *diagAllocateLogPackets(const size_t msg_len, size_t *out_packet_count) {
     size_t remaining_len = msg_len;
     size_t packet_count = 1;
+    // N allows a max length of 0x7F here instead of 0xFF, but we'll use 0xFF.
     while(remaining_len > DIAG_MAX_STRING_LEN) {
         packet_count++;
         remaining_len -= DIAG_MAX_STRING_LEN;
-    }
-
-    // Always send at least 2 packets, a head and a tail.
-    if (packet_count < 2) {
-        packet_count = 2;
     }
 
     DiagLogPacket *packets = (DiagLogPacket*)calloc(packet_count, sizeof(DiagLogPacket));
@@ -237,6 +236,8 @@ NX_CONSTEXPR u8 *diagLogPayloadEncodeStringChunkType(u8 *payload_buf, DiagString
     return diagLogPayloadEncode(buf, chunk_type->value, chunk_type->header.chunk_len);
 }
 
+#include <stdio.h>
+
 void diagLogImpl(const DiagLogMetadata *metadata) {
     mutexLock(&g_logMutex);
     Result rc = smInitialize();
@@ -250,9 +251,10 @@ void diagLogImpl(const DiagLogMetadata *metadata) {
         DiagLogPacket *packets = diagAllocateLogPackets(text_log_len, &packet_count);
         if (packet_count > 0 && packets != NULL) {
             DiagLogPacket *head_packet = &packets[0];
-            head_packet->header.flags = DiagLogPacketFlags_Head;
+            head_packet->header.flags |= DiagLogPacketFlags_Head;
+            // If we're sending a single packet, these two packets will be the same.
             DiagLogPacket *tail_packet = &packets[packet_count - 1];
-            tail_packet->header.flags = DiagLogPacketFlags_Tail;
+            tail_packet->header.flags |= DiagLogPacketFlags_Tail;
 
             const size_t file_name_len = __builtin_strlen(metadata->source_info.file_name);
             diagStringChunkTypeSetValue(&head_packet->payload.file_name, DiagLogDataChunkKey_FileName, metadata->source_info.file_name, file_name_len);
@@ -265,6 +267,12 @@ void diagLogImpl(const DiagLogMetadata *metadata) {
             // Set libnx as module name.
             const char *module = "libnx";
             diagStringChunkTypeSetValue(&head_packet->payload.module_name, DiagLogDataChunkKey_ModuleName, module, __builtin_strlen(module));
+
+            /* TODO: what conversions does N apply to get the UserSystemClock value? it's not just system tick -> seconds
+            const u64 tick = armGetSystemTick();
+            const u64 seconds = armTicksToNs(tick) / 1000000000ul;
+            diagU64ChunkTypeSetValue(&head_packet->payload.user_system_clock, DiagLogDataChunkKey_UserSystemClock, seconds);
+            */
 
             size_t remaining_len = text_log_len;
             DiagLogPacket *cur_packet = head_packet;
@@ -279,6 +287,8 @@ void diagLogImpl(const DiagLogMetadata *metadata) {
 
             for(size_t i = 0; i < packet_count; i++) {
                 DiagLogPacket *cur_packet = &packets[i];
+                // We're sending all packets as little-endian.
+                cur_packet->header.flags |= DiagLogPacketFlags_LittleEndian;
                 cur_packet->header.severity = (u8)metadata->severity;
                 cur_packet->header.verbosity = (u8)metadata->verbosity;
                 
@@ -325,7 +335,14 @@ void diagLogImpl(const DiagLogMetadata *metadata) {
                         payload_buf = diagLogPayloadEncodeStringChunkType(payload_buf, &cur_packet->payload.process_name);
                     }
 
-                    rc = lmLog(log_buf, log_buf_size);
+                    // rc = lmLog(log_buf, log_buf_size);
+                    char path[0x301] = {};
+                    sprintf(path, "sdmc:/%ld-diag.bin", i);
+                    FILE *f = fopen(path, "wb");
+                    if(f) {
+                        fwrite(log_buf, log_buf_size, 1, f);
+                        fclose(f);
+                    }
                     free(log_buf);
                     if (R_FAILED(rc)) {
                         break;
