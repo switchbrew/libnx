@@ -236,8 +236,6 @@ NX_CONSTEXPR u8 *diagLogPayloadEncodeStringChunkType(u8 *payload_buf, DiagString
     return diagLogPayloadEncode(buf, chunk_type->value, chunk_type->header.chunk_len);
 }
 
-#include <stdio.h>
-
 void diagLogImpl(const DiagLogMetadata *metadata) {
     mutexLock(&g_logMutex);
     Result rc = smInitialize();
@@ -335,14 +333,7 @@ void diagLogImpl(const DiagLogMetadata *metadata) {
                         payload_buf = diagLogPayloadEncodeStringChunkType(payload_buf, &cur_packet->payload.process_name);
                     }
 
-                    // rc = lmLog(log_buf, log_buf_size);
-                    char path[0x301] = {};
-                    sprintf(path, "sdmc:/%ld-diag.bin", i);
-                    FILE *f = fopen(path, "wb");
-                    if(f) {
-                        fwrite(log_buf, log_buf_size, 1, f);
-                        fclose(f);
-                    }
+                    rc = lmLog(log_buf, log_buf_size);
                     free(log_buf);
                     if (R_FAILED(rc)) {
                         break;
