@@ -1,5 +1,72 @@
 # Changelog
 
+## Version 3.2.0
+
+#### system
+* Added threadGetSelf.
+* Added a Thread struct for the main thread.
+* Corrected error code in shmemMap.
+* Updated svcQueryIoMapping to match new 10.0.0+ ABI change. Old version still available as svcLegacyQueryIoMapping.
+* Minor fixes in jit wrapper object.
+
+#### network
+* **Added support for the ssl service**.
+  * Added socketSslConnectionSetSocketDescriptor and socketSslConnectionGetSocketDescriptor (for usage with SSL).
+* Added support for recvmsg/sendmsg and sendmmsg/recvmmsg [7.0.0+].
+* Added nifmGetCurrentNetworkProfile, nifmGetNetworkProfile, nifmSetNetworkProfile, nifmGetCurrentIpConfigInfo.
+* Added structs: NifmIpV4Address, NifmIpAddressSetting, NifmDnsSetting, NifmProxySetting, NifmIpSettingData, NifmWirelessSettingData, NifmSfWirelessSettingData, NifmSfNetworkProfileData, NifmNetworkProfileData.
+
+#### devices
+* Changed libnx console to only hook stdout. If stderr is necessary, use `consoleDebugInit(debugDevice_CONSOLE)` explicitly.
+* Added nxlinkConnectToHost with separate flags for redirecting stdout/err.
+* Added nxlinkStdioForDebug, which only redirects stderr and not stdout.
+
+#### graphics
+* Added priority parameter to nvGpuChannelCreate.
+* Fixed cleanup logic in nvChannelClose.
+* Added nvGpuChannelGetErrorInfo.
+* Renamed NvError struct & NvErrorType enum to NvNotification/NvNotificationType.
+
+#### other services
+* applet: Support changes for 10.0.0+, including new command support.
+  * swkbd: appletHolderPresetLibraryAppletGpuTimeSliceZero is now called on 10.0.0+.
+* audout: Added all remaining IAudioOut commands.
+* bpc: Added hosversion check to bpcGetSleepButtonState.
+* caps: Correct CapsScreenShotDecodeOption.
+* capssc:
+  * Added capsscCaptureJpegScreenShot, capsscOpenRawScreenShotReadStream, capsscCloseRawScreenShotReadStream, capsscReadRawScreenShotReadStream.
+  * Changed capsscCaptureRawImageWithTimeout to use ViLayerStack enum.
+* fsldr: Support changes for 10.0.0+, including new command support.
+* fsp-pr + ldr: Support changes for 10.0.0+ (SetEnabledProgramVerification changed places).
+* hidsys: Support changes for 10.0.0+, including new command support.
+* irs: Corrected bug on initialization caused by invalid system version logic.
+* lr: Added lrLrEraseProgramRedirection [5.0.0+].
+* mii: Added service wrappers.
+* miiimg: Added service wrappers.
+* nfp: Corrected definition of nfpOpenApplicationArea.
+* ns: Support changes for 10.0.0+, including new command support (also some other misc fixes).
+* pdm: Support changes for 10.0.0+, including new command support.
+* pgl: Added service wrappers [10.0.0+].
+* pl: Added support for changing the service type (PlServiceType).
+* pmshell: Renamed pmshellBoostSystemThreadResourceLimit to pmshellEnableApplicationExtraThread.
+* psc: Corrected hosversion check in pscPmModuleAcknowledge.
+* set:
+  * Added new 10.0.0+ commands.
+  * Corrected definition of SetRegion to match actual usage.
+  * Corrected setsysGetSerialNumber.
+  * Corrected setcalGetGyroscopeOffset to use the right struct.
+* time:
+  * Added support for time shared memory [6.0.0+].
+  * Added timeGetStandardSteadyClockTimePoint.
+  * Added timeGetStandardSteadyClockInternalOffset [3.0.0+].
+  * Added TimeStandardSteadyClockTimePointType struct.
+  * Changed timeGetCurrentTime to use shared memory on 6.0.0+.
+* vi: Added ViLayerStack enum.
+
+#### miscellaneous
+* Corrected and updated nacp structs.
+* Further improvements to overall system stability and other minor adjustments have been made to enhance the user experience.
+
 ## Version 3.1.0
 
 #### system
