@@ -11,6 +11,8 @@ static Service g_nifmIGS;
 static Result _nifmCreateGeneralService(Service* srv_out);
 static Result _nifmCreateGeneralServiceOld(Service* srv_out);
 
+static Result _nifmRequestGetSystemEventReadableHandles(NifmRequest* r, bool autoclear);
+
 NX_GENERATE_SERVICE_GUARD_PARAMS(nifm, (NifmServiceType service_type), (service_type));
 
 Result _nifmInitialize(NifmServiceType service_type) {
@@ -81,6 +83,11 @@ static Result _nifmCmdNoInOutBool(Service* srv, bool *out, u32 cmd_id) {
     Result rc = _nifmCmdNoInOutU8(srv, &tmp, cmd_id);
     if (R_SUCCEEDED(rc) && out) *out = tmp & 1;
     return rc;
+}
+
+static Result _nifmCmdNoInOutU32(Service* srv, u32 *out, u32 cmd_id) {
+    serviceAssumeDomain(srv);
+    return serviceDispatchOut(srv, cmd_id, *out);
 }
 
 static Result _nifmCmdInU8NoOut(Service* srv, u8 inval, u64 cmd_id) {
@@ -160,6 +167,38 @@ NifmClientId nifmGetClientId(void) {
     );
     if (R_FAILED(rc)) id.id = 0;
     return id;
+}
+
+static Result _nifmCreateRequest(Service* srv_out, s32 inval) {
+    serviceAssumeDomain(&g_nifmIGS);
+    return serviceDispatchIn(&g_nifmIGS, 4, inval,
+        .out_num_objects = 1,
+        .out_objects = srv_out,
+    );
+}
+
+Result nifmCreateRequest(NifmRequest* r, bool autoclear) {
+    Result rc=0;
+
+    memset(r, 0, sizeof(*r));
+
+    rc = _nifmCreateRequest(&r->s, 0x2);
+
+    if (R_SUCCEEDED(rc)) {
+        rc = _nifmRequestGetSystemEventReadableHandles(r, autoclear);
+
+        if (R_FAILED(rc)) {
+            serviceAssumeDomain(&r->s);
+            serviceClose(&r->s);
+        }
+    }
+
+    if (R_SUCCEEDED(rc)) {
+        r->request_state = NifmRequestState_Unknown1;
+        r->res = MAKERESULT(110, 311);
+    }
+
+    return rc;
 }
 
 Result nifmGetCurrentNetworkProfile(NifmNetworkProfileData *profile) {
@@ -274,3 +313,119 @@ Result nifmPutToSleep(void) {
 Result nifmWakeUp(void) {
     return _nifmCmdNoIO(&g_nifmIGS, 24);
 }
+
+// IRequest
+
+void nifmRequestClose(NifmRequest* r) {
+    eventClose(&r->event1);
+    eventClose(&r->event_request_state);
+
+    serviceAssumeDomain(&r->s);
+    serviceClose(&r->s);
+}
+
+static Result _nifmRequestGetSystemEventReadableHandles(NifmRequest* r, bool autoclear) {
+    Result rc=0;
+    Handle tmp_handles[2] = {INVALID_HANDLE, INVALID_HANDLE};
+
+    serviceAssumeDomain(&r->s);
+    rc = serviceDispatch(&r->s, 2,
+        .out_handle_attrs = { SfOutHandleAttr_HipcCopy, SfOutHandleAttr_HipcCopy },
+        .out_handles = tmp_handles,
+    );
+
+    if (R_SUCCEEDED(rc)) {
+        eventLoadRemote(&r->event_request_state, tmp_handles[0], true);
+        eventLoadRemote(&r->event1, tmp_handles[1], autoclear);
+    }
+
+    return rc;
+}
+
+static void _nifmUpdateState(NifmRequest* r) {
+    Result rc=0;
+    u32 tmp=0;
+
+    rc = _nifmCmdNoInOutU32(&r->s, &tmp, 0); // GetRequestState
+    r->request_state = R_SUCCEEDED(rc) ? tmp : 0; // sdknso ignores error other than this.
+
+    rc = _nifmCmdNoIO(&r->s, 1); // GetResult
+    r->res = rc;
+}
+
+Result nifmGetRequestState(NifmRequest* r, NifmRequestState *out) {
+    if (!serviceIsActive(&r->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    if (R_FAILED(eventWait(&r->event_request_state, 0))) {
+        if (out) *out = r->request_state;
+        return 0;
+    }
+
+    // sdknso would clear the event here, but it's autoclear anyway.
+
+    _nifmUpdateState(r);
+    if (out) *out = r->request_state;
+
+    return 0;
+}
+
+Result nifmGetResult(NifmRequest* r) {
+    if (!serviceIsActive(&r->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    if (R_FAILED(eventWait(&r->event_request_state, 0))) return r->res;
+
+    // sdknso would clear the event here, but it's autoclear anyway.
+
+    _nifmUpdateState(r);
+    return r->res;
+}
+
+Result nifmRequestCancel(NifmRequest* r) {
+    if (!serviceIsActive(&r->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _nifmCmdNoIO(&r->s, 3);
+}
+
+Result nifmRequestSubmit(NifmRequest* r) {
+    Result rc=0;
+    NifmRequestState tmp;
+
+    if (!serviceIsActive(&r->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    rc = nifmGetRequestState(r, &tmp);
+
+    if (R_SUCCEEDED(rc) && (tmp == NifmRequestState_Unknown1 || tmp == NifmRequestState_OnHold || tmp == NifmRequestState_Available || tmp == NifmRequestState_Unknown5)) {
+        _nifmCmdNoIO(&r->s, 4); // Submit (sdknso ignores error)
+        _nifmUpdateState(r);
+    }
+
+    return rc;
+}
+
+Result nifmRequestSubmitAndWait(NifmRequest* r) {
+    Result rc=0;
+    NifmRequestState tmp;
+
+    rc = nifmRequestSubmit(r);
+    if (R_FAILED(rc)) return rc;
+
+    while(1) {
+        rc = nifmGetRequestState(r, &tmp);
+        if (R_FAILED(rc)) return rc;
+
+        if (tmp != NifmRequestState_OnHold) return rc;
+
+        if (R_SUCCEEDED(eventWait(&r->event_request_state, 10000000000ULL))) break;
+    }
+
+    // sdknso would clear the event here, but it's autoclear anyway.
+
+    _nifmUpdateState(r);
+
+    return rc;
+}
+

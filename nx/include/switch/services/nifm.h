@@ -8,6 +8,7 @@
 #pragma once
 #include "../types.h"
 #include "../sf/service.h"
+#include "../kernel/event.h"
 
 typedef enum {
     NifmServiceType_User           = 0, ///< Initializes nifm:u.
@@ -27,6 +28,25 @@ typedef enum {
     NifmInternetConnectionStatus_ConnectingUnknown4     = 3, ///< Unknown internet connection status 4.
     NifmInternetConnectionStatus_Connected              = 4, ///< Internet is connected.
 } NifmInternetConnectionStatus;
+
+typedef enum {
+    NifmRequestState_Invalid                            = 0, ///< Error.
+    NifmRequestState_Unknown1                           = 1, ///< Not yet submitted or error.
+    NifmRequestState_OnHold                             = 2, ///< OnHold
+    NifmRequestState_Available                          = 3, ///< Available
+    NifmRequestState_Unknown4                           = 4, ///< Unknown
+    NifmRequestState_Unknown5                           = 5, ///< Unknown
+} NifmRequestState;
+
+/// Request
+typedef struct {
+    Service s;                                           ///< IRequest
+    Event event_request_state;                           ///< First Event from cmd GetSystemEventReadableHandles, autoclear=true. Signaled when the RequestState changes.
+    Event event1;                                        ///< Second Event from cmd GetSystemEventReadableHandles.
+
+    NifmRequestState request_state;                      ///< \ref NifmRequestState from the GetRequestState cmd.
+    Result res;                                          ///< Result from the GetResult cmd.
+} NifmRequest;
 
 /// ClientId
 typedef struct {
@@ -141,6 +161,13 @@ Service* nifmGetServiceSession_GeneralService(void);
 NifmClientId nifmGetClientId(void);
 
 /**
+ * @brief CreateRequest
+ * @param[out] r \ref NifmRequest
+ * @param[in] autoclear Event autoclear to use for NifmRequest::event1, a default of true can be used for this.
+ */
+Result nifmCreateRequest(NifmRequest* r, bool autoclear);
+
+/**
  * @brief GetCurrentNetworkProfile
  * @param[out] profile \ref NifmNetworkProfileData
  */
@@ -201,3 +228,46 @@ bool nifmIsAnyInternetRequestAccepted(NifmClientId id);
 Result nifmIsAnyForegroundRequestAccepted(bool* out);
 Result nifmPutToSleep(void);
 Result nifmWakeUp(void);
+
+///@name IRequest
+///@{
+
+/**
+ * @brief Close a \ref NifmRequest.
+ * @param r \ref NifmRequest
+ */
+void nifmRequestClose(NifmRequest* r);
+
+/**
+ * @brief GetRequestState
+ * @param r \ref NifmRequest
+ * @param[out] out \ref NifmRequestState
+ */
+Result nifmGetRequestState(NifmRequest* r, NifmRequestState *out);
+
+/**
+ * @brief GetResult
+ * @param r \ref NifmRequest
+ */
+Result nifmGetResult(NifmRequest* r);
+
+/**
+ * @brief Cancel
+ * @param r \ref NifmRequest
+ */
+Result nifmRequestCancel(NifmRequest* r);
+
+/**
+ * @brief Submit
+ * @param r \ref NifmRequest
+ */
+Result nifmRequestSubmit(NifmRequest* r);
+
+/**
+ * @brief SubmitAndWait
+ * @param r \ref NifmRequest
+ */
+Result nifmRequestSubmitAndWait(NifmRequest* r);
+
+///@}
+
