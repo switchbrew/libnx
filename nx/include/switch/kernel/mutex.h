@@ -20,7 +20,7 @@ typedef _LOCK_RECURSIVE_T RMutex;
  */
 static inline void mutexInit(Mutex* m)
 {
-    *m = 0;
+    *m = INVALID_HANDLE;
 }
 
 /**
@@ -41,6 +41,13 @@ bool mutexTryLock(Mutex* m);
  * @param m Mutex object.
  */
 void mutexUnlock(Mutex* m);
+
+/**
+ * @brief Gets whether the current thread owns the mutex.
+ * @param m Mutex object.
+ * @return 1 if the mutex is locked by the current thread, and 0 otherwise.
+ */
+bool mutexIsLockedByCurrentThread(const Mutex* m);
 
 /**
  * @brief Initializes a recursive mutex.
