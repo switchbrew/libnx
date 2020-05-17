@@ -112,6 +112,7 @@ extern "C" {
 #include "switch/services/notif.h"
 #include "switch/services/mii.h"
 #include "switch/services/miiimg.h"
+#include "switch/services/ldn.h"
 
 #include "switch/display/binder.h"
 #include "switch/display/parcel.h"
