@@ -108,9 +108,9 @@ typedef struct {
     s8 id;                             ///< ID / index
     u8 is_connected;                   ///< IsConnected flag
     char nickname[0x20];               ///< LdnUserConfig::nickname
-    u8 unk_x2C[0x2];                   ///< Unknown
+    u8 reserved_x2C[0x2];              ///< Reserved
     s16 local_communication_version;   ///< LocalCommunicationVersion
-    u8 unk_x30[0x10];                  ///< Unknown
+    u8 reserved_x30[0x10];             ///< Reserved
 } LdnNodeInfo;
 
 /// UserConfig. The input struct is copied to a tmp struct, which is then used with the cmd.
@@ -130,18 +130,19 @@ typedef struct {
     LdnSsid ssid;                      ///< \ref LdnSsid
     s16 network_channel;               ///< NetworkChannel
     s8 link_level;                     ///< LinkLevel
-    u8 unk_x4B;                        ///< Unknown
-    u8 unk_x4C[0x4];                   ///< Unknown
+    u8 unk_x4B;                        ///< Unknown. Set to hard-coded value 0x2 with output structs, except with \ref ldnScan / \ref ldnScanPrivate which can also set value 0x1 in certain cases.
+    u8 pad_x4C[0x4];                   ///< Padding
     u8 unk_x50[0x10];                  ///< First 0x10-bytes of LdnSecurityParameter::data.
     u16 sec_type;                      ///< LdnSecurityConfig::type
-    u8 unk_x62[0x4];                   ///< Unknown
+    u8 unk_x62;                        ///< Unknown
+    u8 pad_x63[0x3];                   ///< Padding
     s8 unk_x66;                        ///< Unknown
     u8 participant_num;                ///< ParticipantNum, number of set entries in nodes. If unk_x4B is not 0x2, ParticipantNum should be handled as if it's 0.
     LdnNodeInfo nodes[8];              ///< Array of \ref LdnNodeInfo, starting with the AccessPoint node.
-    u8 unk_x268[0x2];                  ///< Unknown
+    u8 reserved_x268[0x2];             ///< Reserved
     u16 advertise_data_size;           ///< AdvertiseData size (\ref ldnSetAdvertiseData)
     u8 advertise_data[0x180];          ///< AdvertiseData (\ref ldnSetAdvertiseData)
-    u8 unk_x3EC[0x8C];                 ///< Unknown
+    u8 reserved_x3EC[0x8C];            ///< Reserved
     u64 unk_x478;                      ///< Unknown
 } LdnNetworkInfo;
 
@@ -180,7 +181,7 @@ typedef struct {
     s16 network_channel;               ///< LdnNetworkInfo::network_channel. Channel, can be zero. Overwritten internally by \ref ldnCreateNetwork.
     s8 unk_x12;                        ///< LdnNetworkInfo::unk_x66. \ref ldnCreateNetwork / \ref ldnCreateNetworkPrivate: Must be 0x1-0x8.
     u8 reserved_x13;                   ///< Cleared to zero for the tmp struct.
-    s16 local_communication_version;   ///< LdnNetworkInfo::local_communication_version. Must not be negative.
+    s16 local_communication_version;   ///< LdnNodeInfo::local_communication_version, for the first entry in LdnNetworkInfo::nodes. Must not be negative.
     u8 reserved_x16[0xA];              ///< Cleared to zero for the tmp struct.
 } LdnNetworkConfig;
 
