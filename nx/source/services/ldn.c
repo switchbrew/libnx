@@ -222,7 +222,7 @@ static void _ldnCopyNetworkConfig(const LdnNetworkConfig *in, LdnNetworkConfig *
     out->local_communication_id = in->local_communication_id;
     out->unk_xA = in->unk_xA;
     out->network_channel = in->network_channel;
-    out->unk_x12 = in->unk_x12;
+    out->participant_max = in->participant_max;
     out->local_communication_version = in->local_communication_version;
 }
 

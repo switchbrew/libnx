@@ -136,7 +136,7 @@ typedef struct {
     u16 sec_type;                      ///< LdnSecurityConfig::type
     u8 unk_x62;                        ///< Unknown
     u8 pad_x63[0x3];                   ///< Padding
-    s8 unk_x66;                        ///< Unknown
+    s8 participant_max;                ///< Maximum participants, for nodes.
     u8 participant_num;                ///< ParticipantNum, number of set entries in nodes. If unk_x4B is not 0x2, ParticipantNum should be handled as if it's 0.
     LdnNodeInfo nodes[8];              ///< Array of \ref LdnNodeInfo, starting with the AccessPoint node.
     u8 reserved_x268[0x2];             ///< Reserved
@@ -180,7 +180,7 @@ typedef struct {
     u16 unk_xA;                        ///< LdnNetworkInfo::unk_xA
     u8 reserved_xC[4];                 ///< Cleared to zero for the tmp struct.
     s16 network_channel;               ///< LdnNetworkInfo::network_channel. Channel, can be zero. Overwritten internally by \ref ldnCreateNetwork.
-    s8 unk_x12;                        ///< LdnNetworkInfo::unk_x66. \ref ldnCreateNetwork / \ref ldnCreateNetworkPrivate: Must be 0x1-0x8.
+    s8 participant_max;                ///< LdnNetworkInfo::participant_max. \ref ldnCreateNetwork / \ref ldnCreateNetworkPrivate: Must be 0x1-0x8.
     u8 reserved_x13;                   ///< Cleared to zero for the tmp struct.
     s16 local_communication_version;   ///< LdnNodeInfo::local_communication_version, for the first entry in LdnNetworkInfo::nodes. Must not be negative.
     u8 reserved_x16[0xA];              ///< Cleared to zero for the tmp struct.
