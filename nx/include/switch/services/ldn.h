@@ -90,7 +90,7 @@ typedef struct {
 
 /// NodeLatestUpdate
 typedef struct {
-    u8 flag;                           ///< Flag, the field in state is reset to zero by \ref ldnGetNetworkInfoLatestUpdate after loading it.
+    u8 val;                            ///< The field in state is reset to zero by \ref ldnGetNetworkInfoLatestUpdate after loading it.
     u8 reserved[0x7];                  ///< Not initialized with \ref ldnGetNetworkInfoLatestUpdate.
 } LdnNodeLatestUpdate;
 
@@ -125,14 +125,14 @@ typedef struct {
     u8 unk_x8[0x2];                    ///< Unknown
     u16 unk_xA;                        ///< Unknown
     u8 unk_xC[0x4];                    ///< Unknown
-    u8 network_id[0x10];               ///< Last 0x10-bytes of LdnSecurityParameter::data. NetworkId which is used to generate/overwrite the ssid. With \ref ldnScan / \ref ldnScanPrivate, this is only done after filtering when unk_x4B is value 0x2.
+    u8 network_id[0x10];               ///< LdnSecurityParameter::network_id. NetworkId which is used to generate/overwrite the ssid. With \ref ldnScan / \ref ldnScanPrivate, this is only done after filtering when unk_x4B is value 0x2.
     LdnMacAddress mac_addr;            ///< \ref LdnMacAddress
     LdnSsid ssid;                      ///< \ref LdnSsid
     s16 network_channel;               ///< NetworkChannel
     s8 link_level;                     ///< LinkLevel
     u8 unk_x4B;                        ///< Unknown. Set to hard-coded value 0x2 with output structs, except with \ref ldnScan / \ref ldnScanPrivate which can also set value 0x1 in certain cases.
     u8 pad_x4C[0x4];                   ///< Padding
-    u8 unk_x50[0x10];                  ///< First 0x10-bytes of LdnSecurityParameter::data.
+    u8 unk_x50[0x10];                  ///< LdnSecurityParameter::data
     u16 sec_type;                      ///< LdnSecurityConfig::type
     u8 unk_x62;                        ///< Unknown
     u8 pad_x63[0x3];                   ///< Padding
@@ -167,9 +167,10 @@ typedef struct {
     u8 data[0x40];                     ///< Data, used with key derivation.
 } LdnSecurityConfig;
 
-/// SecurityParameter
+/// SecurityParameter. The struct used by \ref ldnCreateNetwork internally is randomly-generated.
 typedef struct {
-    u8 data[0x20];                     ///< Data. The data used by \ref ldnCreateNetwork internally is randomly-generated.
+    u8 data[0x10];                     ///< Data, used with the same key derivation as \ref LdnSecurityConfig.
+    u8 network_id[0x10];               ///< LdnNetworkInfo::network_id
 } LdnSecurityParameter;
 
 /// NetworkConfig. The input struct is copied to a tmp struct, which is then used with the cmd (\ref ldnCreateNetwork, \ref ldnCreateNetworkPrivate, \ref ldnConnectPrivate).
@@ -284,6 +285,7 @@ Result ldnGetNetworkConfig(LdnNetworkConfig *out);
 /**
  * @brief AttachStateChangeEvent
  * @note The Event must be closed by the user once finished with it.
+ * @note This is signaled when the data returned by \ref ldnGetNetworkInfo / \ref ldnGetNetworkInfoLatestUpdate is updated.
  * @param[out] out_event Output Event with autoclear=true.
  */
 Result ldnAttachStateChangeEvent(Event* out_event);
