@@ -49,10 +49,10 @@ typedef enum {
 
 /// AcceptPolicy
 typedef enum {
-    LdnAcceptPolicy_Unknown0      = 0, ///< Unknown
-    LdnAcceptPolicy_Unknown1      = 1, ///< Unknown
-    LdnAcceptPolicy_Unknown2      = 2, ///< Unknown
-    LdnAcceptPolicy_Unknown3      = 3, ///< Unknown
+    LdnAcceptPolicy_AllowAll       = 0, ///< Allow all.
+    LdnAcceptPolicy_DenyAll        = 1, ///< Deny all.
+    LdnAcceptPolicy_Blacklist      = 2, ///< Blacklist, addresses in the list (\ref ldnAddAcceptFilterEntry) are not allowed.
+    LdnAcceptPolicy_Whitelist      = 3, ///< Whitelist, only addresses in the list (\ref ldnAddAcceptFilterEntry) are allowed.
 } LdnAcceptPolicy;
 
 /// OperationMode
@@ -132,9 +132,9 @@ typedef struct {
     s8 link_level;                     ///< LinkLevel
     u8 unk_x4B;                        ///< Unknown. Set to hard-coded value 0x2 with output structs, except with \ref ldnScan / \ref ldnScanPrivate which can also set value 0x1 in certain cases.
     u8 pad_x4C[0x4];                   ///< Padding
-    u8 unk_x50[0x10];                  ///< LdnSecurityParameter::data
+    u8 sec_param_data[0x10];           ///< LdnSecurityParameter::data
     u16 sec_type;                      ///< LdnSecurityConfig::type
-    u8 unk_x62;                        ///< Unknown
+    u8 accept_policy;                  ///< \ref LdnAcceptPolicy
     u8 pad_x63[0x3];                   ///< Padding
     s8 participant_max;                ///< Maximum participants, for nodes.
     u8 participant_num;                ///< ParticipantNum, number of set entries in nodes. If unk_x4B is not 0x2, ParticipantNum should be handled as if it's 0.
@@ -397,6 +397,7 @@ Result ldnSetStationAcceptPolicy(LdnAcceptPolicy policy);
 /**
  * @brief AddAcceptFilterEntry
  * @note \ref LdnState must be ::LdnState_AccessPointOpened or ::LdnState_AccessPointCreated.
+ * @note See \ref LdnAcceptPolicy.
  * @param[in] addr \ref LdnMacAddress. If you want, you can also pass LdnNodeInfo::mac_addr for this.
  */
 Result ldnAddAcceptFilterEntry(LdnMacAddress addr);
