@@ -135,7 +135,8 @@ typedef struct {
     u8 sec_param_data[0x10];           ///< LdnSecurityParameter::data
     u16 sec_type;                      ///< LdnSecurityConfig::type
     u8 accept_policy;                  ///< \ref LdnAcceptPolicy
-    u8 pad_x63[0x3];                   ///< Padding
+    u8 unk_x63;                        ///< Only set with \ref ldnScan / \ref ldnScanPrivate, when unk_x4B is value 0x2.
+    u8 pad_x64[0x2];                   ///< Padding
     s8 participant_max;                ///< Maximum participants, for nodes.
     u8 participant_num;                ///< ParticipantNum, number of set entries in nodes. If unk_x4B is not 0x2, ParticipantNum should be handled as if it's 0.
     LdnNodeInfo nodes[8];              ///< Array of \ref LdnNodeInfo, starting with the AccessPoint node.
