@@ -44,7 +44,7 @@ typedef enum {
     LdnScanFilterFlags_Unknown2                  = BIT(2),  ///< When set, enables using LdnScanFilter::unk_x20.
     LdnScanFilterFlags_MacAddr                   = BIT(3),  ///< When set, enables using LdnScanFilter::mac_addr. Only available with \ref ldnScanPrivate.
     LdnScanFilterFlags_Ssid                      = BIT(4),  ///< When set, enables using the LdnScanFilter::ssid.
-    LdnScanFilterFlags_Unknown5                  = BIT(5),  ///< When set, enables using LdnScanFilter::unk_xA.
+    LdnScanFilterFlags_UserData                  = BIT(5),  ///< When set, enables using LdnScanFilter::userdata_filter.
 } LdnScanFilterFlags;
 
 /// AcceptPolicy
@@ -122,9 +122,9 @@ typedef struct {
 /// NetworkInfo
 typedef struct {
     u64 local_communication_id;        ///< LocalCommunicationId
-    u8 unk_x8[0x2];                    ///< Unknown
-    u16 unk_xA;                        ///< Unknown
-    u8 unk_xC[0x4];                    ///< Unknown
+    u8 reserved_x8[0x2];               ///< Reserved
+    u16 userdata_filter;               ///< Arbitrary user data which can be used for filtering with \ref LdnScanFilter.
+    u8 reserved_xC[0x4];               ///< Reserved
     u8 network_id[0x10];               ///< LdnSecurityParameter::network_id. NetworkId which is used to generate/overwrite the ssid. With \ref ldnScan / \ref ldnScanPrivate, this is only done after filtering when unk_x4B is value 0x2.
     LdnMacAddress mac_addr;            ///< \ref LdnMacAddress
     LdnSsid ssid;                      ///< \ref LdnSsid
@@ -151,7 +151,7 @@ typedef struct {
 typedef struct {
     s64 local_communication_id;        ///< See ::LdnScanFilterFlags_LocalCommunicationId. When enabled, this will be overwritten if it's -1 (written data is from the user-process control.nacp, with value 0 used instead if loading fails). During filtering if enabled, LdnNetworkInfo::unk_x4B must match 0x2, and this ScanFilter field must match LdnNetworkInfo::local_communication_id.
     u8 pad_x8[0x2];                    ///< Padding
-    u16 unk_xA;                        ///< See ::LdnScanFilterFlags_Unknown5. During filtering if enabled, LdnNetworkInfo::unk_x4B must match 0x2, and this ScanFilter field must match LdnNetworkInfo::unk_xA.
+    u16 userdata_filter;               ///< See ::LdnScanFilterFlags_UserData. During filtering if enabled, LdnNetworkInfo::unk_x4B must match 0x2, and this ScanFilter field must match LdnNetworkInfo::userdata_filter.
     u8 pad_xC[0x4];                    ///< Padding
     u8 network_id[0x10];               ///< See ::LdnScanFilterFlags_NetworkId. During filtering if enabled, LdnNetworkInfo::unk_x4B must match 0x2, and this ScanFilter data must match LdnNetworkInfo::network_id.
     u32 unk_x20;                       ///< See ::LdnScanFilterFlags_Unknown2. When enabled, this must be <=0x3, and during filtering must match LdnNetworkInfo::unk_x4B.
