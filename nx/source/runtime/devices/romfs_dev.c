@@ -168,6 +168,8 @@ static const devoptab_t romFS_devoptab =
     .dirreset_r   = romfs_dirreset,
     .dirnext_r    = romfs_dirnext,
     .dirclose_r   = romfs_dirclose,
+    // symlinks aren't supported so alias lstat to stat
+    .lstat_r      = romfs_stat,
 };
 
 static bool romfs_initialised = false;

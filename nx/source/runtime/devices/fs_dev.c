@@ -90,6 +90,8 @@ fsdev_devoptab =
   .chmod_r      = fsdev_chmod,
   .fchmod_r     = fsdev_fchmod,
   .rmdir_r      = fsdev_rmdir,
+  // symlinks aren't supported so alias lstat to stat
+  .lstat_r      = fsdev_stat,
 };
 
 typedef struct
