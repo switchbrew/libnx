@@ -144,7 +144,7 @@ typedef struct {
     u16 advertise_data_size;           ///< AdvertiseData size (\ref ldnSetAdvertiseData)
     u8 advertise_data[0x180];          ///< AdvertiseData (\ref ldnSetAdvertiseData)
     u8 reserved_x3EC[0x8C];            ///< Reserved
-    u64 unk_x478;                      ///< Unknown
+    u64 auth_id;                       ///< Random AuthenticationId.
 } LdnNetworkInfo;
 
 /// ScanFilter. The input struct is copied to a tmp struct, which is then used with the cmd (\ref ldnScan and \ref ldnScanPrivate).
@@ -178,7 +178,7 @@ typedef struct {
 typedef struct {
     s64 local_communication_id;        ///< LdnNetworkInfo::local_communication_id. \ref ldnCreateNetwork, \ref ldnCreateNetworkPrivate, \ref ldnConnect, \ref ldnConnectPrivate: When -1, this is overwritten with the first LocalCommunicationId from the user-process control.nacp, if loading fails value 0 is written instead. Otherwise when not -1, if control.nacp loading is successful, this field must match one of the LocalCommunicationIds from there.
     u8 reserved_x8[2];                 ///< Cleared to zero for the tmp struct.
-    u16 unk_xA;                        ///< LdnNetworkInfo::unk_xA
+    u16 userdata_filter;               ///< LdnNetworkInfo::userdata_filter
     u8 reserved_xC[4];                 ///< Cleared to zero for the tmp struct.
     s16 network_channel;               ///< LdnNetworkInfo::network_channel. Channel, can be zero. Overwritten internally by \ref ldnCreateNetwork.
     s8 participant_max;                ///< LdnNetworkInfo::participant_max. \ref ldnCreateNetwork / \ref ldnCreateNetworkPrivate: Must be 0x1-0x8.
