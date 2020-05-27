@@ -1,5 +1,18 @@
 # Changelog
 
+## Version 3.3.0
+
+#### system
+* Mutex implementation has been rewritten/optimized to more closely match official software.
+
+#### filesystem
+* Added lstat support to both fsdev and romfsdev (does the same thing as regular stat, as symlinks don't exist on HOS).
+* Fixed stat for romfs directories.
+
+#### other services
+* **ldn: Added service wrappers.**
+* nifm: Added IRequest support.
+
 ## Version 3.2.0
 
 #### system
