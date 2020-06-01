@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <malloc.h>
+#include <stdatomic.h>
 #include "kernel/shmem.h"
 #include "kernel/rwlock.h"
 #include "services/applet.h"
@@ -1150,8 +1151,10 @@ Result hidInitializeSevenSixAxisSensor(void) {
     if (g_sevenSixAxisSensorBuffer != NULL)
         return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
 
-    rc = _hidActivateConsoleSixAxisSensor();
-    if (R_FAILED(rc)) return rc;
+    if (hosversionBefore(10,0,0)) { // No longer used by sdknso on [10.0.0+].
+        rc = _hidActivateConsoleSixAxisSensor();
+        if (R_FAILED(rc)) return rc;
+    }
 
     g_sevenSixAxisSensorBuffer = (u8*)memalign(0x1000, bufsize);
     if (g_sevenSixAxisSensorBuffer == NULL)
@@ -1223,6 +1226,74 @@ Result hidResetSevenSixAxisSensorTimestamp(void) {
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return _hidCmdWithNoInput(310);
+}
+
+Result hidGetSevenSixAxisSensorStates(HidSevenSixAxisSensorState *states, size_t count, size_t *total_out) {
+    if (g_sevenSixAxisSensorBuffer == NULL)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    if (states == NULL)
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+
+    HidSevenSixAxisSensorStates *states_buf = (HidSevenSixAxisSensorStates*)g_sevenSixAxisSensorBuffer;
+
+    s32 total_entries = (s32)atomic_load_explicit(&states_buf->header.total_entries, memory_order_acquire);
+    if (total_entries < 0) total_entries = 0;
+    if (total_entries > count) total_entries = count;
+    s32 latest_entry = (s32)atomic_load_explicit(&states_buf->header.latest_entry, memory_order_acquire);
+
+    for (s32 i=0; i<total_entries; i++) {
+        s32 entrypos = (((latest_entry + 0x22) - total_entries) + i) % 0x21;
+
+        u64 timestamp0=0, timestamp1=0;
+
+        timestamp0 = atomic_load_explicit(&states_buf->entries[entrypos].timestamp, memory_order_acquire);
+        memcpy(&states[total_entries-i-1], &states_buf->entries[entrypos].state, sizeof(HidSevenSixAxisSensorState));
+        timestamp1 = atomic_load_explicit(&states_buf->entries[entrypos].timestamp, memory_order_acquire);
+
+        if (timestamp0 != timestamp1 || (i>0 && states[total_entries-i-1].timestamp1 - states[total_entries-i].timestamp1 != 1)) {
+            s32 tmpcount = (s32)atomic_load_explicit(&states_buf->header.total_entries, memory_order_acquire);
+            tmpcount = total_entries < tmpcount ? tmpcount : total_entries;
+            total_entries = tmpcount < count ? tmpcount : count;
+            latest_entry = (s32)atomic_load_explicit(&states_buf->header.latest_entry, memory_order_acquire);
+
+            i=-1;
+        }
+    }
+
+    *total_out = total_entries;
+
+    return 0;
+}
+
+Result hidIsSevenSixAxisSensorAtRest(bool *out) {
+    if (g_sevenSixAxisSensorBuffer == NULL)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    HidSharedMemory *shared_mem = (HidSharedMemory*)hidGetSharedmemAddr();
+    *out = shared_mem->console_six_axis_sensor.is_at_rest & 1;
+
+    return 0;
+}
+
+Result hidGetSensorFusionError(float *out) {
+    if (g_sevenSixAxisSensorBuffer == NULL)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    HidSharedMemory *shared_mem = (HidSharedMemory*)hidGetSharedmemAddr();
+    *out = shared_mem->console_six_axis_sensor.verticalization_error;
+
+    return 0;
+}
+
+Result hidGetGyroBias(UtilFloat3 *out) {
+    if (g_sevenSixAxisSensorBuffer == NULL)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    HidSharedMemory *shared_mem = (HidSharedMemory*)hidGetSharedmemAddr();
+    *out = shared_mem->console_six_axis_sensor.gyro_bias;
+
+    return 0;
 }
 
 Result hidGetNpadInterfaceType(HidControllerID id, u8 *out) {

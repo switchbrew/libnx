@@ -670,6 +670,16 @@ typedef struct HidController {
 
 // End HidController
 
+/// HidConsoleSixAxisSensor
+typedef struct {
+    u64 timestamp;                   ///< Timestamp in samples
+    u8 is_at_rest;                   ///< IsSevenSixAxisSensorAtRest
+    u8 pad[0x3];
+    float verticalization_error;     ///< VerticalizationError
+    UtilFloat3 gyro_bias;            ///< GyroBias
+    u8 pad2[0x4];
+} HidConsoleSixAxisSensor;
+
 /// HidSharedMemory
 typedef struct HidSharedMemory {
     u8 header[0x400];
@@ -686,8 +696,39 @@ typedef struct HidSharedMemory {
     u8 unkSection8[0x800];
     u8 controllerSerials[0x4000];
     HidController controllers[10];
-    u8 unkSection9[0x4600];
+    u8 gesture[0x800];
+    HidConsoleSixAxisSensor console_six_axis_sensor;    ///< [5.0.0+]
+    u8 unk_x3C220[0x3DE0];
 } HidSharedMemory;
+
+typedef struct {
+    u64 unk_x0;
+    u64 unk_x8;
+    u64 latest_entry;
+    u64 total_entries;
+} HidSevenSixAxisSensorStatesHeader;
+
+/// HidSevenSixAxisSensorState
+typedef struct {
+    u64 timestamp0;
+    u64 timestamp1;
+
+    u64 unk_x10;
+    float unk_x18[10];
+} HidSevenSixAxisSensorState;
+
+/// HidSevenSixAxisSensorStateEntry
+typedef struct {
+    u64 timestamp;
+    u64 unused;
+    HidSevenSixAxisSensorState state;
+} HidSevenSixAxisSensorStateEntry;
+
+/// HidSevenSixAxisSensorStates
+typedef struct {
+    HidSevenSixAxisSensorStatesHeader header;
+    HidSevenSixAxisSensorStateEntry entries[0x21];
+} HidSevenSixAxisSensorStates;
 
 /// HidVibrationDeviceInfo
 typedef struct HidVibrationDeviceInfo {
@@ -882,6 +923,18 @@ Result hidGetSevenSixAxisSensorFusionStrength(float *strength);
 
 /// Resets the timestamp for the SevenSixAxisSensor. Only available on [6.0.0+].
 Result hidResetSevenSixAxisSensorTimestamp(void);
+
+/// GetSevenSixAxisSensorStates. Only available when \ref hidInitializeSevenSixAxisSensor was previously used.
+Result hidGetSevenSixAxisSensorStates(HidSevenSixAxisSensorState *states, size_t count, size_t *total_out);
+
+/// IsSevenSixAxisSensorAtRest. Only available when \ref hidInitializeSevenSixAxisSensor was previously used.
+Result hidIsSevenSixAxisSensorAtRest(bool *out);
+
+/// GetSensorFusionError. Only available when \ref hidInitializeSevenSixAxisSensor was previously used.
+Result hidGetSensorFusionError(float *out);
+
+/// GetGyroBias. Only available when \ref hidInitializeSevenSixAxisSensor was previously used.
+Result hidGetGyroBias(UtilFloat3 *out);
 
 /// Gets the \ref HidNpadInterfaceType for the specified controller.
 /// Only available on [4.0.0+].
