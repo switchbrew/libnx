@@ -342,7 +342,7 @@ Result romfsMountFromCurrentProcess(const char *name) {
     return romfsMountFromStorage(storage, 0, name);
 }
 
-Result romfsMountProgram(u64 program_id, const char *name) {
+Result romfsMountDataStorageFromProgram(u64 program_id, const char *name) {
     FsStorage storage;
 
     Result rc = fsOpenDataStorageByProgramId(&storage, program_id);

@@ -88,7 +88,7 @@ Result romfsMountFromCurrentProcess(const char *name);
  * @param program_id ProgramId to mount.
  * @param name Device mount name.
  */
-Result romfsMountProgram(u64 program_id, const char *name);
+Result romfsMountDataStorageFromProgram(u64 program_id, const char *name);
 
 /**
  * @brief Mounts RomFS from a file path in a mounted fsdev device.
