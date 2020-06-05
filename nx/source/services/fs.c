@@ -180,6 +180,9 @@ static Result _fsOpenFileSystemWithId(FsFileSystem* out, u64 id, FsFileSystemTyp
 }
 
 Result fsOpenDataFileSystemByProgramId(FsFileSystem *out, u64 program_id) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     return _fsObjectDispatchIn(&g_fsSrv, 9, program_id,
         .out_num_objects = 1,
         .out_objects     = &out->s,
@@ -410,6 +413,9 @@ Result fsOpenDataStorageByCurrentProcess(FsStorage* out) {
 }
 
 Result fsOpenDataStorageByProgramId(FsStorage *out, u64 program_id) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     return _fsObjectDispatchIn(&g_fsSrv, 201, program_id,
         .out_num_objects = 1,
         .out_objects = &out->s,

@@ -316,7 +316,7 @@ Result fsOpenFileSystem(FsFileSystem* out, FsFileSystemType fsType, const char* 
 Result fsOpenDataFileSystemByCurrentProcess(FsFileSystem *out);
 Result fsOpenFileSystemWithPatch(FsFileSystem* out, u64 id, FsFileSystemType fsType); ///< [2.0.0+], like OpenFileSystemWithId but without content path.
 Result fsOpenFileSystemWithId(FsFileSystem* out, u64 id, FsFileSystemType fsType, const char* contentPath); ///< works on all firmwares, id is ignored on [1.0.0]
-Result fsOpenDataFileSystemByProgramId(FsFileSystem *out, u64 program_id);
+Result fsOpenDataFileSystemByProgramId(FsFileSystem *out, u64 program_id); ///< [3.0.0+]
 Result fsOpenBisFileSystem(FsFileSystem* out, FsBisPartitionId partitionId, const char* string);
 Result fsOpenBisStorage(FsStorage* out, FsBisPartitionId partitionId);
 
@@ -347,7 +347,7 @@ Result fsOpenContentStorageFileSystem(FsFileSystem* out, FsContentStorageId cont
 Result fsOpenCustomStorageFileSystem(FsFileSystem* out, FsCustomStorageId custom_storage_id); ///< [7.0.0+]
 
 Result fsOpenDataStorageByCurrentProcess(FsStorage* out);
-Result fsOpenDataStorageByProgramId(FsStorage *out, u64 program_id);
+Result fsOpenDataStorageByProgramId(FsStorage *out, u64 program_id); /// <[3.0.0+]
 Result fsOpenDataStorageByDataId(FsStorage* out, u64 dataId, NcmStorageId storageId);
 Result fsOpenPatchDataStorageByCurrentProcess(FsStorage* out);
 
