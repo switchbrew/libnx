@@ -83,6 +83,14 @@ Result romfsMountFromStorage(FsStorage storage, u64 offset, const char *name);
 Result romfsMountFromCurrentProcess(const char *name);
 
 /**
+ * @brief Mounts RomFS of a running program.
+ * @note Permission needs to be set in the NPDM.
+ * @param program_id ProgramId to mount.
+ * @param name Device mount name.
+ */
+Result romfsMountDataStorageFromProgram(u64 program_id, const char *name);
+
+/**
  * @brief Mounts RomFS from a file path in a mounted fsdev device.
  * @param path File path.
  * @param offset Offset of the RomFS within the file.

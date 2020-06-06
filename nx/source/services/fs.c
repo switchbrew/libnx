@@ -146,6 +146,10 @@ static Result _fsOpenFileSystem(FsFileSystem* out, FsFileSystemType fsType, cons
     );
 }
 
+Result fsOpenDataFileSystemByCurrentProcess(FsFileSystem *out) {
+    return _fsCmdGetSession(&g_fsSrv, &out->s, 2);
+}
+
 Result fsOpenFileSystemWithPatch(FsFileSystem* out, u64 id, FsFileSystemType fsType) {
     if (hosversionBefore(2,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
@@ -172,6 +176,16 @@ static Result _fsOpenFileSystemWithId(FsFileSystem* out, u64 id, FsFileSystemTyp
         .buffers = { { contentPath, FS_MAX_PATH } },
         .out_num_objects = 1,
         .out_objects = &out->s,
+    );
+}
+
+Result fsOpenDataFileSystemByProgramId(FsFileSystem *out, u64 program_id) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _fsObjectDispatchIn(&g_fsSrv, 9, program_id,
+        .out_num_objects = 1,
+        .out_objects     = &out->s,
     );
 }
 
@@ -398,6 +412,16 @@ Result fsOpenDataStorageByCurrentProcess(FsStorage* out) {
     return _fsCmdGetSession(&g_fsSrv, &out->s, 200);
 }
 
+Result fsOpenDataStorageByProgramId(FsStorage *out, u64 program_id) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _fsObjectDispatchIn(&g_fsSrv, 201, program_id,
+        .out_num_objects = 1,
+        .out_objects = &out->s,
+    );
+}
+
 Result fsOpenDataStorageByDataId(FsStorage* out, u64 dataId, NcmStorageId storageId) {
     const struct {
         u8 storage_id;
@@ -408,6 +432,10 @@ Result fsOpenDataStorageByDataId(FsStorage* out, u64 dataId, NcmStorageId storag
         .out_num_objects = 1,
         .out_objects = &out->s,
     );
+}
+
+Result fsOpenPatchDataStorageByCurrentProcess(FsStorage* out) {
+    return _fsCmdGetSession(&g_fsSrv, &out->s, 203);
 }
 
 Result fsOpenDeviceOperator(FsDeviceOperator* out) {

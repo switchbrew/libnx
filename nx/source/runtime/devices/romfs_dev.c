@@ -342,6 +342,16 @@ Result romfsMountFromCurrentProcess(const char *name) {
     return romfsMountFromStorage(storage, 0, name);
 }
 
+Result romfsMountDataStorageFromProgram(u64 program_id, const char *name) {
+    FsStorage storage;
+
+    Result rc = fsOpenDataStorageByProgramId(&storage, program_id);
+    if (R_FAILED(rc))
+        return rc;
+
+    return romfsMountFromStorage(storage, 0, name);
+}
+
 Result romfsMountFromFsdev(const char *path, u64 offset, const char *name)
 {
     FsFileSystem *tmpfs = NULL;
