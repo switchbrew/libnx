@@ -29,7 +29,7 @@ typedef struct {
 /// AppletOutput
 typedef struct {
     u32 res;                   ///< Result: 0 = Success, 1 = Cancel.
-    s32 index;                 ///< s32 Index. Only set when Result is Success, where \ref MiiLaAppletMode isn't ::NfpLaMiiLaAppletMode_ShowMiiEdit.
+    s32 index;                 ///< Index. Only set when Result is Success, where \ref MiiLaAppletMode isn't ::NfpLaMiiLaAppletMode_ShowMiiEdit.
     u8 unk_x8[0x18];           ///< Unused
 } MiiLaAppletOutput;
 
