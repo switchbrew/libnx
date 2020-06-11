@@ -429,3 +429,26 @@ Result nifmRequestSubmitAndWait(NifmRequest* r) {
     return rc;
 }
 
+Result nifmRequestGetAppletInfo(NifmRequest* r, u32 theme_color, void* buffer, size_t size, u32 *applet_id, u32 *mode, u32 *out_size) {
+    if (!serviceIsActive(&r->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    struct {
+        u32 applet_id;
+        u32 mode;
+        u32 out_size;
+    } out;
+
+    serviceAssumeDomain(&r->s);
+    Result rc = serviceDispatchInOut(&r->s, 21, theme_color, out,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { buffer, size } },
+    );
+    if (R_SUCCEEDED(rc)) {
+        if (applet_id) *applet_id = out.applet_id;
+        if (mode) *mode = out.mode;
+        if (out_size) *out_size = out.out_size;
+    }
+    return rc;
+}
+

@@ -269,5 +269,18 @@ Result nifmRequestSubmit(NifmRequest* r);
  */
 Result nifmRequestSubmitAndWait(NifmRequest* r);
 
+/**
+ * @brief GetAppletInfo
+ * @note This is used by \ref nifmLaHandleNetworkRequestResult.
+ * @param r \ref NifmRequest
+ * @param[in] theme_color ThemeColor
+ * @param[out] buffer Output buffer for storage data.
+ * @param[in] size Output buffer size.
+ * @param[out] applet_id \ref AppletId
+ * @param[out] mode \ref LibAppletMode
+ * @param[out] out_size Total data size written to the output buffer.
+ */
+Result nifmRequestGetAppletInfo(NifmRequest* r, u32 theme_color, void* buffer, size_t size, u32 *applet_id, u32 *mode, u32 *out_size);
+
 ///@}
 

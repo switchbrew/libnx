@@ -137,6 +137,7 @@ extern "C" {
 #include "switch/applets/hid_la.h"
 #include "switch/applets/mii_la.h"
 #include "switch/applets/nfp_la.h"
+#include "switch/applets/nifm_la.h"
 #include "switch/applets/pctlauth.h"
 #include "switch/applets/psel.h"
 #include "switch/applets/error.h"
