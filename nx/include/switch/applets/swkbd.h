@@ -598,6 +598,14 @@ Result swkbdInlineClose(SwkbdInline* s);
 Result swkbdInlineLaunch(SwkbdInline* s);
 
 /**
+ * @brief Same as \ref swkbdInlineLaunch, except mode and unk_x5 for \ref SwkbdInitializeArg are set to the input params.
+ * @param s SwkbdInline object.
+ * @param mode Value for SwkbdInitializeArg::mode.
+ * @param unk_x5 Value for SwkbdInitializeArg::unk_x5.
+ */
+Result swkbdInlineLaunchForLibraryApplet(SwkbdInline* s, u8 mode, u8 unk_x5);
+
+/**
  * @brief GetWindowSize
  * @param[out] width Output width.
  * @param[out] height Output height.
@@ -625,14 +633,6 @@ Result swkbdInlineGetImageMemoryRequirement(u64 *out_size, u64 *out_alignment);
  * @param[out] data_available Whether data is available.
  */
 Result swkbdInlineGetImage(SwkbdInline* s, void* buffer, u64 size, bool *data_available);
-
-/**
- * @brief Same as \ref swkbdInlineLaunch, except mode and unk_x5 for \ref SwkbdInitializeArg are set to the input params.
- * @param s SwkbdInline object.
- * @param mode Value for SwkbdInitializeArg::mode.
- * @param unk_x5 Value for SwkbdInitializeArg::unk_x5.
- */
-Result swkbdInlineLaunchForLibraryApplet(SwkbdInline* s, u8 mode, u8 unk_x5);
 
 /**
  * @brief Handles updating SwkbdInline state, this should be called periodically.
