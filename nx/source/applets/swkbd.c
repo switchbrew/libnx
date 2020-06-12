@@ -3,6 +3,7 @@
 #include <math.h>
 #include "libapplet_internal.h"
 #include "applets/swkbd.h"
+#include "services/vi.h"
 #include "runtime/hosversion.h"
 #include "runtime/util/utf.h"
 
@@ -484,6 +485,17 @@ Result swkbdInlineClose(SwkbdInline* s) {
     return rc;
 }
 
+static bool _swkbdInlineHandleFinished(SwkbdInline* s) {
+    bool ret = appletHolderCheckFinished(&s->holder);
+    if (ret) {
+        appletHolderJoin(&s->holder);
+        appletHolderClose(&s->holder);
+
+        s->state = SwkbdState_Inactive;
+    }
+    return ret;
+}
+
 static Result _swkbdInlineLaunch(SwkbdInline* s, SwkbdInitializeArg *initArg) {
     Result rc=0;
 
@@ -524,6 +536,44 @@ Result swkbdInlineLaunchForLibraryApplet(SwkbdInline* s, u8 mode, u8 unk_x5) {
     initArg.unk_x5 = unk_x5;
 
     return _swkbdInlineLaunch(s, &initArg);
+}
+
+Result swkbdInlineGetImageMemoryRequirement(u64 *out_size, u64 *out_alignment) {
+    s32 width=0, height=0;
+    swkbdInlineGetWindowSize(&width, &height);
+    return viGetIndirectLayerImageRequiredMemoryInfo(width, height, out_size, out_alignment);
+}
+
+Result swkbdInlineGetImage(SwkbdInline* s, void* buffer, u64 size, bool *data_available) {
+    Result rc=0;
+    u64 out_size=0, out_alignment=0;
+    s32 width=0, height=0;
+    u64 handle=0;
+
+    if (!buffer || !size) return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+
+    if (_swkbdInlineHandleFinished(s)) {
+        data_available = false;
+        return 0;
+    }
+
+    rc = swkbdInlineGetImageMemoryRequirement(&out_size, &out_alignment);
+    if (R_SUCCEEDED(rc)) {
+        if (out_size != size || (uintptr_t)buffer & (out_alignment-1))
+            rc = MAKERESULT(Module_Libnx, LibnxError_BadInput);
+    }
+
+    swkbdInlineGetWindowSize(&width, &height);
+    if (R_SUCCEEDED(rc)) rc = appletHolderGetIndirectLayerConsumerHandle(&s->holder, &handle);
+    if (R_SUCCEEDED(rc)) rc = viGetIndirectLayerImageMap(buffer, size, width, height, handle, NULL, NULL);
+
+    if (R_SUCCEEDED(rc)) *data_available = true;
+    else if (R_VALUE(rc) == MAKERESULT(114, 11)) {
+        *data_available = false;
+        rc = 0;
+    }
+
+    return rc;
 }
 
 static void _swkbdProcessReply(SwkbdInline* s, SwkbdReplyType ReplyType, size_t size) {
@@ -664,11 +714,7 @@ Result swkbdInlineUpdate(SwkbdInline* s, SwkbdState* out_state) {
     }
     swkbdInlineSetInputModeFadeType(s, fadetype);
 
-    if (appletHolderCheckFinished(&s->holder)) {
-        appletHolderJoin(&s->holder);
-        appletHolderClose(&s->holder);
-
-        s->state = SwkbdState_Inactive;
+    if (_swkbdInlineHandleFinished(s)) {
         if (out_state) *out_state = s->state;
         return 0;
     }
