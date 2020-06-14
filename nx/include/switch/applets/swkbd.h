@@ -27,6 +27,7 @@ typedef enum {
     SwkbdType_ZhHant    = 6,  ///< Chinese Traditional keyboard only.
     SwkbdType_Korean    = 7,  ///< Korean keyboard only.
     SwkbdType_All       = 8,  ///< All language keyboards.
+    SwkbdType_Unknown9  = 9,  ///< Unknown
 } SwkbdType;
 
 /// Bitmask for SwkbdArgCommon::keySetDisableBitmask. This disables keys on the keyboard when the corresponding bit(s) are set.
@@ -88,6 +89,7 @@ typedef enum {
     SwkbdState_TextAvailable  = 0x3,  ///< Text is available since a ChangedString* reply was received.
     SwkbdState_Submitted      = 0x4,  ///< The user pressed the ok-button, submitting the text and closing the applet.
     SwkbdState_Unknown5       = 0x5,
+    SwkbdState_Unknown6       = 0x6,
 } SwkbdState;
 
 /// Value for \ref SwkbdInitializeArg mode. Controls the LibAppletMode when launching the applet.
@@ -184,6 +186,14 @@ typedef struct {
     u32 version;
 } SwkbdConfig;
 
+/// Rect
+typedef struct {
+    s16 x;             ///< X
+    s16 y;             ///< Y
+    s16 width;         ///< Width
+    s16 height;        ///< Height
+} SwkbdRect;
+
 /// InitializeArg for SwkbdInline.
 typedef struct {
     u32 unk_x0;
@@ -203,7 +213,7 @@ typedef struct {
     s32 unk_x20;
     s32 unk_x24;
     u8 returnButtonFlag;             ///< Controls whether the Return button is enabled, for newlines input. 0 = disabled, non-zero = enabled.
-    u8 unk_x29;
+    u8 unk_x29;                      ///< [10.0.0+] When value 1-2, \ref swkbdInlineAppear / \ref swkbdInlineAppearEx will set keytopAsFloating=0 and footerScalable=1.
     u8 unk_x2a;
     u8 unk_x2b;
     u32 flags;                       ///< Bitmask 0x4: unknown.
@@ -231,7 +241,7 @@ typedef struct {
     u8 alphaEnabledInInputMode;  ///< Flags bitmask 0x100.
     u8 inputModeFadeType;        ///< Flags bitmask 0x100.
     u8 disableTouch;             ///< Flags bitmask 0x200.
-    u8 disableUSBKeyboard;       ///< Flags bitmask 0x800.
+    u8 disableHardwareKeyboard;  ///< Flags bitmask 0x800.
     u8 unk_x468[5];
     u8 unk_x46d;
     u8 unk_x46e;
@@ -635,6 +645,28 @@ Result swkbdInlineGetImageMemoryRequirement(u64 *out_size, u64 *out_alignment);
 Result swkbdInlineGetImage(SwkbdInline* s, void* buffer, u64 size, bool *data_available);
 
 /**
+ * @brief Gets the image max height, relative to the bottom of the screen.
+ * @param s SwkbdInline object.
+ */
+s32 swkbdInlineGetMaxHeight(SwkbdInline* s);
+
+/**
+ * @brief GetTouchRectangles. Returns number of valid Rects: 1 for only keytop, 2 for keytop/footer.
+ * @param s SwkbdInline object.
+ * @param[out] keytop \ref SwkbdRect for keytop. Optional, can be NULL.
+ * @param[out] footer \ref SwkbdRect for footer. Optional, can be NULL.
+ */
+s32 swkbdInlineGetTouchRectangles(SwkbdInline* s, SwkbdRect *keytop, SwkbdRect *footer);
+
+/**
+ * @brief Gets whether the input x/y are within the output from \ref swkbdInlineGetTouchRectangles.
+ * @param s SwkbdInline object.
+ * @param[out] x X
+ * @param[out] y Y
+ */
+bool swkbdInlineIsUsedTouchPointByKeyboard(SwkbdInline* s, s32 x, s32 y);
+
+/**
  * @brief Handles updating SwkbdInline state, this should be called periodically.
  * @note Handles applet exit if needed, and also sends the \ref SwkbdInlineCalcArg to the applet if needed. Hence, this should be called at some point after writing to \ref SwkbdInlineCalcArg.
  * @note Handles applet Interactive storage output when needed.
@@ -893,6 +925,7 @@ void swkbdInlineSetFooterBgAlpha(SwkbdInline* s, float alpha);
 /**
  * @brief Sets gfx scaling. Configures KeytopScale* and BalloonScale based on the input value.
  * @note \ref swkbdInlineUpdate must be called at some point afterwards for this to take affect.
+ * @note The BalloonScale is not updated when \ref SwkbdState is above ::SwkbdState_Initialized.
  * @param s SwkbdInline object.
  * @param scale Scale
  */
@@ -910,6 +943,7 @@ void swkbdInlineSetKeytopTranslate(SwkbdInline* s, float x, float y);
 /**
  * @brief Sets KeytopAsFloating.
  * @note \ref swkbdInlineUpdate must be called at some point afterwards for this to take affect.
+ * @note Not avilable when \ref SwkbdState is above ::SwkbdState_Initialized.
  * @param s SwkbdInline object.
  * @param flag Flag
  */
@@ -932,12 +966,12 @@ void swkbdInlineSetFooterScalable(SwkbdInline* s, bool flag);
 void swkbdInlineSetTouchFlag(SwkbdInline* s, bool flag);
 
 /**
- * @brief Sets whether USB-keyboard is enabled. The default is enabled.
+ * @brief Sets whether Hardware-keyboard is enabled. The default is enabled.
  * @note \ref swkbdInlineUpdate must be called at some point afterwards for this to take affect.
  * @param s SwkbdInline object.
  * @param flag Flag
  */
-void swkbdInlineSetUSBKeyboardFlag(SwkbdInline* s, bool flag);
+void swkbdInlineSetHardwareKeyboardFlag(SwkbdInline* s, bool flag);
 
 /**
  * @brief Sets whether DirectionalButtonAssign is enabled. The default is disabled.

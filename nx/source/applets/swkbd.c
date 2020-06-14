@@ -576,6 +576,71 @@ Result swkbdInlineGetImage(SwkbdInline* s, void* buffer, u64 size, bool *data_av
     return rc;
 }
 
+s32 swkbdInlineGetMaxHeight(SwkbdInline* s) {
+    bool flag=0;
+    if (s->calcArg.appearArg.dicFlag || s->wordInfoInitialized || s->dicCustomInitialized) flag = 1;
+    if (s->calcArg.appearArg.type >= SwkbdType_ZhHans && s->calcArg.appearArg.type <= SwkbdType_Unknown9) flag = 1;
+    else
+        flag = flag && !s->calcArg.appearArg.keySetDisableBitmask && (s->calcArg.appearArg.type != SwkbdType_NumPad && s->calcArg.appearArg.type != SwkbdType_QWERTY);
+    s32 extra_height = flag ? 50 : 0;
+    s32 height0 = s->calcArg.appearArg.type == SwkbdType_NumPad ? 350 : 400;
+    height0+= extra_height;
+    s32 height1 = flag ? 132 : 72;
+    return s->state == SwkbdState_Unknown6 ? height1 : height0;
+}
+
+s32 swkbdInlineGetTouchRectangles(SwkbdInline* s, SwkbdRect *keytop, SwkbdRect *footer) {
+    float keytop_max_height = (float)swkbdInlineGetMaxHeight(s);
+    float footer_max_height = keytop_max_height;
+
+    if (!s->calcArg.footerScalable) {
+        footer_max_height-= 72.0f;
+        if (s->calcArg.keytopAsFloating) footer_max_height+= 1.4f;
+    }
+
+    if (keytop) {
+        float image_width = 1280.0f;
+        float width = s->calcArg.keytopScaleX*image_width;
+        float scale_y = s->calcArg.keytopScaleY;
+        float tmp_y = (keytop_max_height - 360.0f)*scale_y;
+        keytop->x = lroundf(((width*-5.0f)+640.0f) + (s->calcArg.keytopTranslateX*image_width)); // This results in a negative value with the default keytopTranslateX. sdknso uses 5.0f, but 0.5f was likely (?) intended - we do the same as sdknso anyway though.
+        keytop->y = lroundf((360.0f - tmp_y) - (s->calcArg.keytopTranslateY * 720.0f));
+        keytop->width = lroundf(width);
+        keytop->height = lroundf(footer_max_height*scale_y);
+    }
+
+    if (footer) {
+        footer->x = 0;
+        if (s->calcArg.footerScalable) {
+            footer->y = 0;
+            footer->width = 0;
+            footer->height = 0;
+        }
+        else {
+            footer->y = 648;
+            footer->width = 1280;
+            footer->height = 72;
+        }
+    }
+
+    return s->calcArg.footerScalable ? 1 : 2;
+}
+
+bool swkbdInlineIsUsedTouchPointByKeyboard(SwkbdInline* s, s32 x, s32 y) {
+    SwkbdRect keytop={0};
+    SwkbdRect footer={0};
+
+    s32 ret = swkbdInlineGetTouchRectangles(s, &keytop, &footer);
+
+    if (keytop.x <= x && keytop.x + keytop.width >= x && keytop.y <= y && keytop.y + keytop.height >= y)
+        return true;
+    if (ret >= 2) {
+        if (footer.x <= x && footer.x + footer.width >= x && footer.y <= y && footer.y + footer.height >= y)
+        return true;
+    }
+    return false;
+}
+
 static void _swkbdProcessReply(SwkbdInline* s, SwkbdReplyType ReplyType, size_t size) {
     size_t stringendoff_utf8 = 0x7D4;
     size_t stringendoff_utf16 = 0x3EC;
@@ -802,6 +867,11 @@ void swkbdInlineAppearEx(SwkbdInline* s, const SwkbdAppearArg* arg, u8 trigger) 
     if (s->version < 0x6000B) trigger=0; // [6.0.0+]
     s->calcArg.trigger = trigger;
     s->calcArg.triggerFlag = s->calcArg.trigger!=0;
+    if (hosversionAtLeast(10,0,0) && (arg->unk_x29 == 1 || arg->unk_x29 == 2)) {
+        s->calcArg.keytopAsFloating = false;
+        s->calcArg.footerScalable = true;
+        s->calcArg.flags |= 0x200;
+    }
     _swkbdInlineUpdateAppearFlags(s);
     s->calcArg.flags = (s->calcArg.flags & ~0x80) | 0x4;
 }
@@ -996,6 +1066,7 @@ void swkbdInlineSetFooterBgAlpha(SwkbdInline* s, float alpha) {
 }
 
 void swkbdInlineSetKeytopAsFloating(SwkbdInline* s, bool flag) {
+    if (s->state > SwkbdState_Initialized) return;
     _swkbdInlineSetBoolFlag(s, &s->calcArg.keytopAsFloating, flag, 0x200);
 }
 
@@ -1015,7 +1086,7 @@ static void _swkbdInlineSetKeytopScale(SwkbdInline* s, float x, float y) {
 }
 
 static void _swkbdInlineSetBalloonScale(SwkbdInline* s, float scale) {
-    if (s->calcArg.balloonScale == scale) return;
+    if (s->state > SwkbdState_Initialized || s->calcArg.balloonScale == scale) return;
     s->calcArg.balloonScale = scale;
     s->calcArg.flags |= 0x200;
 }
@@ -1034,8 +1105,8 @@ void swkbdInlineSetKeytopTranslate(SwkbdInline* s, float x, float y) {
     s->calcArg.flags |= 0x200;
 }
 
-void swkbdInlineSetUSBKeyboardFlag(SwkbdInline* s, bool flag) {
-    _swkbdInlineSetBoolDisableFlag(s, &s->calcArg.disableUSBKeyboard, flag, 0x800);
+void swkbdInlineSetHardwareKeyboardFlag(SwkbdInline* s, bool flag) {
+    _swkbdInlineSetBoolDisableFlag(s, &s->calcArg.disableHardwareKeyboard, flag, 0x800);
 }
 
 void swkbdInlineSetDirectionalButtonAssignFlag(SwkbdInline* s, bool flag) {
