@@ -28,6 +28,7 @@ typedef enum {
     WebExitReason_Requested   = 0x2,  ///< The applet exited since \ref webConfigRequestExit was used.
     WebExitReason_LastUrl     = 0x3,  ///< The applet exited due to LastUrl handling, see \ref webReplyGetLastUrl.
     WebExitReason_ErrorDialog = 0x7,  ///< The applet exited after displaying an error dialog.
+    WebExitReason_UnknownE    = 0xE,  ///< Unknown
 } WebExitReason;
 
 /// Button values for \ref webConfigSetBootFooterButtonVisible.

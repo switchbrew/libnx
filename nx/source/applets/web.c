@@ -692,6 +692,7 @@ Result webConfigSetMediaPlayerUi(WebCommonConfig* config, bool flag) {
 }
 
 Result webConfigShow(WebCommonConfig* config, WebCommonReply *out) {
+    Result rc=0;
     void* reply = NULL;
     size_t size = 0;
     WebShimKind shimKind = _webGetShimKind(config);
@@ -715,7 +716,13 @@ Result webConfigShow(WebCommonConfig* config, WebCommonReply *out) {
         }
     }
 
-    return _webShow(&config->holder, config->appletid, config->version, &config->arg, sizeof(config->arg), reply, size);
+    rc = _webShow(&config->holder, config->appletid, config->version, &config->arg, sizeof(config->arg), reply, size);
+    if (R_SUCCEEDED(rc) && hosversionAtLeast(10,0,0) && (shimKind == WebShimKind_Web || shimKind == WebShimKind_Offline)) {
+        WebExitReason reason;
+        rc = webReplyGetExitReason(out, &reason);
+        if (R_SUCCEEDED(rc) && reason == WebExitReason_UnknownE) rc = MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen);
+    }
+    return rc;
 }
 
 Result webConfigRequestExit(WebCommonConfig* config) {
