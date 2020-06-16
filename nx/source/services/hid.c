@@ -615,6 +615,59 @@ u32 hidSixAxisSensorValuesRead(SixAxisSensorValues *values, HidControllerID id, 
     return i;
 }
 
+u32 hidSixAxisSensorValuesWrite(SixAxisSensorValues *values, HidControllerID id, u32 num_entries) {
+    int entry;
+    int i;
+    
+//kept this from last one, p sure it makes sure the motion aka values isnt a u32 or something stupid
+    if (!values || !num_entries) return 0;
+
+    //makes the second arg be reentered, but only does it if it was originally the same? does nothing overall
+    if (id == CONTROLLER_P1_AUTO) return hidSixAxisSensorValuesRead(values, g_controllerP1AutoID, num_entries);
+
+    //p sure this makes sure the id isnt something stupid
+    if (id < 0 || id > 9) return 0;
+
+    //lock = read (and hopefully write) switch mem
+    rwlockReadLock(&g_hidLock);
+    if (!g_sixaxisEnabled[id]) {
+        //if the motion is disabled, aka usb procon, or something that doesnt have motion controls, then it stops the program
+        rwlockReadUnlock(&g_hidLock);
+        return 0;
+    }
+
+    //lowers the num_entries based on how many entries there actually is probably, p sure i got that wrong though
+    if (num_entries > g_sixaxisLayouts[id].header.maxEntryIndex + 1)
+        num_entries = g_sixaxisLayouts[id].header.maxEntryIndex + 1;
+
+    //gives entry a number that isnt stupid, even though the unset number COULD be anything, which this doesnt check
+    entry = g_sixaxisLayouts[id].header.latestEntry + 1 - num_entries;
+    if (entry < 0)
+        entry += g_sixaxisLayouts[id].header.maxEntryIndex + 1;
+
+    u64 timestamp = 0;
+    
+    for (i = 0; i < num_entries; i++) {
+        //exit for when everything has been written to
+        if (timestamp && g_sixaxisLayouts[id].entries[entry].timestamp - timestamp != 1)
+            break;
+        //copies the motion from the controller, to our first arg aka our variable
+        memcpy(&g_sixaxisLayouts[id].entries[entry].values, &values[i], sizeof(SixAxisSensorValues));
+        //updates timestamp, even though to me it should exit the second time around
+        timestamp = g_sixaxisLayouts[id].entries[entry].timestamp;
+
+        entry++;
+        //if entry is going to be a number that will make memcpy copy unintended memory, then set it to 0
+        if (entry > g_sixaxisLayouts[id].header.maxEntryIndex)
+            entry = 0;
+    }
+    //unlock, aka make it locked to us lol
+    rwlockReadUnlock(&g_hidLock);
+    
+    //weird, as it returns the amount of times it went around in that loop, but whatever
+    return i;
+}
+
 bool hidGetHandheldMode(void) {
     return g_controllerP1AutoID == CONTROLLER_HANDHELD;
 }
