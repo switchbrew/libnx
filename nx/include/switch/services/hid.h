@@ -811,6 +811,7 @@ void hidTouchRead(touchPosition *pos, u32 point_id);
 
 void hidJoystickRead(JoystickPosition *pos, HidControllerID id, HidControllerJoystick stick);
 u32 hidSixAxisSensorValuesRead(SixAxisSensorValues *values, HidControllerID id, u32 num_entries);
+u32 hidSixAxisSensorValuesWrite(SixAxisSensorValues *values, HidControllerID id, u32 num_entries);
 
 /// This can be used to check what CONTROLLER_P1_AUTO uses.
 /// Returns 0 when CONTROLLER_PLAYER_1 is connected, otherwise returns 1 for handheld-mode.
