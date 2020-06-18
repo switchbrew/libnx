@@ -804,7 +804,7 @@ int romfs_stat(struct _reent *r, const char *path, struct stat *st)
     }
 
     r->_errno = ENOENT;
-    return 1;
+    return -1;
 }
 
 int romfs_chdir(struct _reent *r, const char *path)
