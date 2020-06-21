@@ -265,11 +265,10 @@ void diagLogImpl(const DiagLogMetadata *metadata) {
             const char *module = "libnx";
             diagStringChunkTypeSetValue(&head_packet->payload.module_name, DiagLogDataChunkKey_ModuleName, module, __builtin_strlen(module));
 
-            /* TODO: what conversions does N apply to get the UserSystemClock value? it's not just system tick -> seconds
+            // User system clock = system tick converted to seconds.
             const u64 tick = armGetSystemTick();
             const u64 seconds = armTicksToNs(tick) / 1000000000ul;
             diagU64ChunkTypeSetValue(&head_packet->payload.user_system_clock, DiagLogDataChunkKey_UserSystemClock, seconds);
-            */
 
             size_t remaining_len = text_log_len;
             DiagLogPacket *cur_packet = head_packet;
