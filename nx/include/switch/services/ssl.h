@@ -87,7 +87,7 @@ typedef enum {
 
 /// InternalPki
 typedef enum {
-    SslInternalPki_DeviceClientCertDefault                                    = 1,               ///< DeviceClientCertDefault. Enables using the DeviceCert and the CertStore.
+    SslInternalPki_DeviceClientCertDefault                                    = 1,               ///< DeviceClientCertDefault. Enables using the DeviceCert.
 } SslInternalPki;
 
 /// ContextOption
@@ -199,6 +199,7 @@ Service* sslGetServiceSession(void);
 
 /**
  * @brief CreateContext
+ * @note The CertStore is used automatically, regardless of what cmds are used.
  * @param[out] c \ref SslContext
  * @param[in] ssl_version \ref SslVersion
  */
