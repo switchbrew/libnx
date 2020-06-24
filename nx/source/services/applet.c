@@ -1654,20 +1654,23 @@ u32 appletHolderGetExitReason(AppletHolder *h) {
 IPC_MAKE_CMD_IMPL_INITEXPR(Result appletHolderSetOutOfFocusApplicationSuspendingEnabled(AppletHolder *h, bool flag), &h->s, 50, _appletCmdInBoolNoOut, !_appletIsApplication(), flag)
 IPC_MAKE_CMD_IMPL_HOSVER(Result appletHolderPresetLibraryAppletGpuTimeSliceZero(AppletHolder *h), &h->s, 60, _appletCmdNoIO, (10,0,0))
 
-static Result _appletHolderGetPopInteractiveOutDataEvent(AppletHolder *h) {
-    if (eventActive(&h->PopInteractiveOutDataEvent)) return 0;
+Result appletHolderGetPopInteractiveOutDataEvent(AppletHolder *h, Event **out_event) {
+    Result rc=0;
 
-    return _appletCmdGetEvent(&h->s, &h->PopInteractiveOutDataEvent, false, 106);
+    if (!eventActive(&h->PopInteractiveOutDataEvent)) rc = _appletCmdGetEvent(&h->s, &h->PopInteractiveOutDataEvent, false, 106);
+    if (R_SUCCEEDED(rc) && out_event) *out_event = &h->PopInteractiveOutDataEvent;
+    return rc;
 }
 
 bool appletHolderWaitInteractiveOut(AppletHolder *h) {
     Result rc=0;
     s32 idx = 0;
+    Event *event = NULL;
 
-    rc = _appletHolderGetPopInteractiveOutDataEvent(h);
+    rc = appletHolderGetPopInteractiveOutDataEvent(h, &event);
     if (R_FAILED(rc)) return false;
 
-    rc = waitMulti(&idx, UINT64_MAX, waiterForEvent(&h->PopInteractiveOutDataEvent), waiterForEvent(&h->StateChangedEvent));
+    rc = waitMulti(&idx, UINT64_MAX, waiterForEvent(event), waiterForEvent(&h->StateChangedEvent));
     if (R_FAILED(rc)) return false;
 
     return idx==0;

@@ -1139,6 +1139,14 @@ Result appletHolderRequestExitOrTerminate(AppletHolder *h, u64 timeout);
 void appletHolderJoin(AppletHolder *h);
 
 /**
+ * @brief Gets the LibraryApplet StateChangedEvent.
+ * @param h AppletHolder object.
+ */
+NX_CONSTEXPR Event *appletHolderGetExitEvent(AppletHolder *h) {
+    return &h->StateChangedEvent;
+}
+
+/**
  * @brief Waits on the LibraryApplet StateChangedEvent with timeout=0, and returns whether it was successful.
  * @param h AppletHolder object.
  */
@@ -1164,6 +1172,13 @@ Result appletHolderSetOutOfFocusApplicationSuspendingEnabled(AppletHolder *h, bo
  * @param h AppletHolder object.
  */
 Result appletHolderPresetLibraryAppletGpuTimeSliceZero(AppletHolder *h);
+
+/**
+ * @brief Gets the PopInteractiveOutDataEvent.
+ * @param h AppletHolder object.
+ * @param[out] out_event Output Event.
+ */
+Result appletHolderGetPopInteractiveOutDataEvent(AppletHolder *h, Event **out_event);
 
 /**
  * @brief Waits for the PopInteractiveOutDataEvent and StateChangedEvent.
