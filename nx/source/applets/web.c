@@ -4,10 +4,10 @@
 #include "applets/web.h"
 #include "runtime/hosversion.h"
 
-static Result _webLaunch(AppletHolder* holder, AppletId id, u32 version, void* arg, size_t arg_size) {
+static Result _webLaunch(AppletHolder* holder, AppletId id, LibAppletMode mode, u32 version, void* arg, size_t arg_size) {
     Result rc=0;
 
-    rc = appletCreateLibraryApplet(holder, id, LibAppletMode_AllForeground);
+    rc = appletCreateLibraryApplet(holder, id, mode);
     if (R_FAILED(rc)) return rc;
 
     LibAppletArgs commonargs;
@@ -43,7 +43,7 @@ static Result _webHandleExit(AppletHolder* holder, void* reply_buffer, size_t re
 static Result _webShow(AppletHolder *holder, AppletId id, u32 version, void* arg, size_t arg_size, void* reply_buffer, size_t reply_size) {
     Result rc = 0;
 
-    rc = _webLaunch(holder, id, version, arg, arg_size);
+    rc = _webLaunch(holder, id, LibAppletMode_AllForeground, version, arg, arg_size);
 
     if (R_SUCCEEDED(rc)) rc = _webHandleExit(holder, reply_buffer, reply_size);
 
@@ -262,6 +262,10 @@ static Result _webConfigGetFlag(WebCommonConfig* config, u16 type, bool *arg) {
     Result rc = _webConfigGetU8(config, type, &tmpdata);
     *arg = tmpdata!=0;
     return rc;
+}
+
+static Result _webConfigGetU32(WebCommonConfig* config, u16 type, u32 *arg) {
+    return _webConfigGet(config, type, arg, sizeof(*arg));
 }
 
 Result webPageCreate(WebCommonConfig* config, const char* url) {
@@ -685,10 +689,39 @@ Result webConfigSetOverrideMediaAudioVolume(WebCommonConfig* config, float value
     return _webConfigSetFloat(config, WebArgType_OverrideMediaAudioVolume, value);
 }
 
+Result webConfigSetBootMode(WebCommonConfig* config, WebSessionBootMode mode) {
+    WebShimKind shim = _webGetShimKind(config);
+    if (shim != WebShimKind_Offline && shim != WebShimKind_Web) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(7,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    return _webConfigSetU32(config, WebArgType_SessionBootMode, mode);
+}
+
 Result webConfigSetMediaPlayerUi(WebCommonConfig* config, bool flag) {
     if (_webGetShimKind(config) != WebShimKind_Offline) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     if (hosversionBefore(8,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     return _webConfigSetFlag(config, WebArgType_MediaPlayerUi, flag);
+}
+
+static void _webConfigInitReply(WebCommonConfig* config, WebCommonReply *out, void** reply, size_t *reply_size) {
+    if (out) {
+        // ShareApplet on [3.0.0+] uses TLV storage for the reply, while older versions + everything else uses *ReturnValue.
+        // Web also uses TLV storage for the reply on [8.0.0+].
+        WebShimKind shimKind = _webGetShimKind(config);
+        memset(out, 0, sizeof(*out));
+        out->shimKind = shimKind;
+
+        if (config->version >= 0x30000 && shimKind == WebShimKind_Share) out->type = true;
+        if (config->version >= 0x80000 && shimKind == WebShimKind_Web) out->type = true;
+
+        if (!out->type) {
+            *reply = &out->ret;
+            *reply_size = sizeof(out->ret);
+        }
+        else {
+            *reply = &out->storage;
+            *reply_size = sizeof(out->storage);
+        }
+    }
 }
 
 Result webConfigShow(WebCommonConfig* config, WebCommonReply *out) {
@@ -697,27 +730,10 @@ Result webConfigShow(WebCommonConfig* config, WebCommonReply *out) {
     size_t size = 0;
     WebShimKind shimKind = _webGetShimKind(config);
 
-    if (out) {
-        // ShareApplet on [3.0.0+] uses TLV storage for the reply, while older versions + everything else uses *ReturnValue.
-        // Web also uses TLV storage for the reply on [8.0.0+].
-        memset(out, 0, sizeof(*out));
-        out->shimKind = shimKind;
-
-        if (config->version >= 0x30000 && shimKind == WebShimKind_Share) out->type = true;
-        if (config->version >= 0x80000 && shimKind == WebShimKind_Web) out->type = true;
-
-        if (!out->type) {
-            reply = &out->ret;
-            size = sizeof(out->ret);
-        }
-        else {
-            reply = &out->storage;
-            size = sizeof(out->storage);
-        }
-    }
+    _webConfigInitReply(config, out, &reply, &size);
 
     rc = _webShow(&config->holder, config->appletid, config->version, &config->arg, sizeof(config->arg), reply, size);
-    if (R_SUCCEEDED(rc) && hosversionAtLeast(10,0,0) && (shimKind == WebShimKind_Web || shimKind == WebShimKind_Offline)) {
+    if (R_SUCCEEDED(rc) && hosversionAtLeast(10,0,0) && out && (shimKind == WebShimKind_Web || shimKind == WebShimKind_Offline)) {
         WebExitReason reason;
         rc = webReplyGetExitReason(out, &reason);
         if (R_SUCCEEDED(rc) && reason == WebExitReason_UnknownE) rc = MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen);
@@ -804,6 +820,298 @@ Result webReplyGetMediaPlayerAutoClosedByCompletion(WebCommonReply *reply, bool 
 
     rc = _webTLVRead(&reply->storage, WebReplyType_MediaPlayerAutoClosedByCompletion, &tmpflag, sizeof(tmpflag));
     if (R_SUCCEEDED(rc) && flag) *flag = tmpflag!=0;
+    return rc;
+}
+
+static s32 _webSessionStorageHandleQueueGetCount(WebSessionStorageHandleQueue *s) {
+    if (s->is_full) return s->max_storages;
+    return (s->write_pos + s->max_storages - s->read_pos) % s->max_storages;
+}
+
+static AppletStorage *_webSessionStorageAt(WebSessionStorageHandleQueue *s, s32 pos) {
+    return &s->storages[(s->read_pos + pos) % s->max_storages];
+}
+
+static void _webSessionStorageHandleQueueCreate(WebSessionStorageHandleQueue *s) {
+    memset(s, 0, sizeof(*s));
+    s->max_storages = 0x10;
+}
+
+static void _webSessionStorageHandleQueueClear(WebSessionStorageHandleQueue *s) {
+    while (_webSessionStorageHandleQueueGetCount(s) >= 1) {
+        s->is_full = false;
+        appletStorageClose(_webSessionStorageAt(s, 0));
+        s->read_pos = (s->read_pos + 1) % s->max_storages;
+    }
+    s->read_pos = 0;
+    s->write_pos = 0;
+}
+
+static void _webSessionStorageEnqueue(WebSessionStorageHandleQueue *s, AppletStorage *storage) {
+    s->write_pos = (s->write_pos + 1) % s->max_storages;
+    s->is_full = s->read_pos==s->write_pos;
+    AppletStorage *storageptr = _webSessionStorageAt(s, _webSessionStorageHandleQueueGetCount(s)-1);
+    appletStorageClose(storageptr); // sdknso doesn't do this - we will though, since otherwise the overwritten storage will not get closed, when the storage queue is full.
+    *storageptr = *storage;
+}
+
+static AppletStorage *_webSessionStorageDequeue(WebSessionStorageHandleQueue *s) {
+    s->is_full = false;
+    AppletStorage *storage = _webSessionStorageAt(s, 0);
+    s->read_pos = (s->read_pos+1) % s->max_storages;
+    return storage;
+}
+
+void webSessionCreate(WebSession *s, WebCommonConfig* config) {
+    mutexInit(&s->mutex);
+    memset(s->queue, 0, sizeof(s->queue));
+    s->config = config;
+    _webSessionStorageHandleQueueCreate(&s->storage_queue);
+}
+
+void webSessionClose(WebSession *s) {
+    _webSessionStorageHandleQueueClear(&s->storage_queue);
+    s->config = NULL;
+    memset(s->queue, 0, sizeof(s->queue));
+}
+
+Result webSessionStart(WebSession *s, Event **out_event) {
+    Result rc=0;
+    WebShimKind shim = _webGetShimKind(s->config);
+
+    if (shim != WebShimKind_Offline && shim != WebShimKind_Web) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(7,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    u32 tmp=0;
+    _webConfigGetU32(s->config, WebArgType_SessionBootMode, &tmp);
+    LibAppletMode mode = tmp == WebSessionBootMode_AllForegroundInitiallyHidden ? LibAppletMode_AllForegroundInitiallyHidden : LibAppletMode_AllForeground;
+
+    rc = _webConfigSetFlag(s->config, WebArgType_SessionFlag, true);
+
+    if (R_SUCCEEDED(rc)) rc = _webLaunch(&s->config->holder, s->config->appletid, mode, s->config->version, &s->config->arg, sizeof(s->config->arg));
+
+    if (R_SUCCEEDED(rc) && out_event) *out_event = appletHolderGetExitEvent(&s->config->holder);
+
+    if (R_FAILED(rc)) appletHolderClose(&s->config->holder);
+
+    return rc;
+}
+
+Result webSessionWaitForExit(WebSession *s, WebCommonReply *out) {
+    Result rc=0;
+    void* reply = NULL;
+    size_t size = 0;
+
+    _webConfigInitReply(s->config, out, &reply, &size);
+
+    rc = _webHandleExit(&s->config->holder, reply, size);
+    appletHolderClose(&s->config->holder);
+    _webSessionStorageHandleQueueClear(&s->storage_queue);
+    if (R_SUCCEEDED(rc) && hosversionAtLeast(10,0,0) && out) {
+        WebExitReason reason;
+        rc = webReplyGetExitReason(out, &reason);
+        if (R_SUCCEEDED(rc) && reason == WebExitReason_UnknownE) rc = MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen);
+    }
+    return rc;
+}
+
+Result webSessionRequestExit(WebSession *s) {
+    mutexLock(&s->mutex);
+    Result rc = appletHolderRequestExit(&s->config->holder);
+    mutexUnlock(&s->mutex);
+    return rc;
+}
+
+static Result _webSessionReceiveStorageHandles(WebSession *s) {
+    Result rc=0;
+    AppletStorage storage;
+    Event *event = NULL;
+    WebSessionMessageHeader tmphdr={0};
+    u8 data[0x20]={0};
+    WebSessionMessageHeader *datahdr = (WebSessionMessageHeader*)data;
+
+    rc = appletHolderGetPopInteractiveOutDataEvent(&s->config->holder, &event);
+    if (R_FAILED(rc)) return rc;
+
+    while (appletHolderActive(&s->config->holder)) {
+        if (appletHolderCheckFinished(&s->config->holder)) return 0;
+        if (R_FAILED(eventWait(event, 0))) return 0;
+        if (R_FAILED(appletHolderPopInteractiveOutData(&s->config->holder, &storage))) return 0;
+
+        rc = appletStorageRead(&storage, 0, &tmphdr, sizeof(tmphdr));
+
+        if (R_SUCCEEDED(rc)) {
+            if (tmphdr.kind == WebSessionReceiveMessageKind_AckBrowserEngine || tmphdr.kind == WebSessionReceiveMessageKind_AckSystemMessage) {
+                u32 msgi = tmphdr.kind != WebSessionReceiveMessageKind_AckBrowserEngine;
+                if (!s->queue[msgi].count) rc = MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen);
+                if (R_SUCCEEDED(rc)) {
+                    s->queue[msgi].count--;
+                    rc = appletStorageRead(&storage, 0, data, sizeof(data));
+                }
+                if (R_SUCCEEDED(rc)) s->queue[msgi].cur_size -= *((u32*)(datahdr+1));
+                appletStorageClose(&storage);
+            }
+            else _webSessionStorageEnqueue(&s->storage_queue, &storage);
+        }
+        if (R_FAILED(rc)) break;
+    }
+
+    return rc;
+}
+
+static Result _webSessionSendAck(WebSession *s, u32 size) {
+    Result rc=0;
+    AppletStorage storage;
+    u8 data[0x20]={0};
+    WebSessionMessageHeader *hdr = (WebSessionMessageHeader*)data;
+
+    hdr->kind = WebSessionSendMessageKind_Ack;
+    hdr->size = 0xC;
+    *((u32*)(hdr+1)) = size;
+
+    rc = libappletCreateWriteStorage(&storage, data, sizeof(data));
+    if (R_SUCCEEDED(rc)) rc = appletHolderPushInteractiveInData(&s->config->holder, &storage);
+    if (R_FAILED(rc)) appletStorageClose(&storage);
+    return rc;
+}
+
+static bool _webSessionCanSend(WebSession *s, const WebSessionMessageHeader *hdr, u64 storage_size) {
+    u32 msgi = hdr->kind!=WebSessionSendMessageKind_BrowserEngineContent;
+
+    if (s->queue[msgi].count == 0x10) return false;
+    if (s->queue[msgi].cur_size + storage_size > (msgi ? 0x1000 : 0x8000)) return false;
+    return true;
+}
+
+static Result _webSessionTrySend(WebSession *s, const WebSessionMessageHeader *hdr, const void* content, bool *flag) {
+    Result rc=0;
+    AppletStorage storage;
+    mutexLock(&s->mutex);
+    if (appletHolderCheckFinished(&s->config->holder)) {
+        *flag = false;
+        mutexUnlock(&s->mutex);
+        return 0;
+    }
+    rc = _webSessionReceiveStorageHandles(s);
+    if (R_FAILED(rc)) {
+        mutexUnlock(&s->mutex);
+        return rc;
+    }
+    u32 msgi = hdr->kind!=WebSessionSendMessageKind_BrowserEngineContent;
+
+    u64 storage_size = hdr->size+sizeof(*hdr);
+    if (!_webSessionCanSend(s, hdr, storage_size)) {
+        *flag = false;
+        mutexUnlock(&s->mutex);
+        return 0;
+    }
+
+    rc = appletCreateStorage(&storage, storage_size);
+    if (R_SUCCEEDED(rc)) rc = appletStorageWrite(&storage, 0, hdr, sizeof(*hdr));
+    if (R_SUCCEEDED(rc) && content && hdr->size) rc = appletStorageWrite(&storage, sizeof(*hdr), content, hdr->size);
+    if (R_FAILED(rc)) appletStorageClose(&storage);
+    if (R_SUCCEEDED(rc)) rc = appletHolderPushInteractiveInData(&s->config->holder, &storage);
+
+    if (R_SUCCEEDED(rc)) {
+        s->queue[msgi].count++;
+        s->queue[msgi].cur_size+= storage_size;
+        *flag = true;
+    }
+
+    mutexUnlock(&s->mutex);
+    return rc;
+}
+
+static Result _webSessionTryReceive(WebSession *s, WebSessionMessageHeader *hdr, void* content, u64 size, WebSessionReceiveMessageKind kind, bool *flag) {
+    Result rc=0;
+    s64 tmpsize=0;
+    WebSessionMessageHeader tmphdr={0};
+    AppletStorage *storage = NULL;
+
+    if (hdr==NULL || content==NULL) return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+    mutexLock(&s->mutex);
+    rc = _webSessionReceiveStorageHandles(s);
+    if (R_FAILED(rc)) {
+        mutexUnlock(&s->mutex);
+        return rc;
+    }
+
+    while(1) {
+        if (_webSessionStorageHandleQueueGetCount(&s->storage_queue) < 1) {
+            *flag = false;
+            mutexUnlock(&s->mutex);
+            return 0;
+        }
+
+        storage = _webSessionStorageDequeue(&s->storage_queue);
+        rc = appletStorageRead(storage, 0, &tmphdr, sizeof(tmphdr));
+
+        if (R_SUCCEEDED(rc)) {
+            rc = appletStorageGetSize(storage, &tmpsize);
+            if (R_SUCCEEDED(rc) && tmphdr.size+sizeof(tmphdr) != tmpsize) rc = MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen);
+        }
+
+        if (R_SUCCEEDED(rc)) {
+            if (tmphdr.kind == kind) break;
+            else rc = _webSessionSendAck(s, tmpsize);
+        }
+        if (R_FAILED(rc)) break;
+        appletStorageClose(storage);
+    }
+
+    if (R_SUCCEEDED(rc)) {
+        *hdr = tmphdr;
+        if (tmphdr.size) rc = appletStorageRead(storage, sizeof(tmphdr), content, tmphdr.size < size ? tmphdr.size : size);
+    }
+
+    if (R_SUCCEEDED(rc)) rc = _webSessionSendAck(s, tmpsize);
+    appletStorageClose(storage);
+    if (R_SUCCEEDED(rc)) *flag = true;
+    mutexUnlock(&s->mutex);
+    return rc;
+}
+
+Result webSessionAppear(WebSession *s, bool *flag) {
+    Result rc=0;
+    bool tmpflag=0;
+    WebSessionMessageHeader hdr = {.kind = WebSessionSendMessageKind_SystemMessageAppear, .size = 0};
+    do {
+        rc = _webSessionTrySend(s, &hdr, NULL, &tmpflag);
+        if (R_SUCCEEDED(rc) && tmpflag) {
+            *flag = true;
+            return rc;
+        }
+        if (R_FAILED(rc)) return rc;
+    } while (appletHolderWaitInteractiveOut(&s->config->holder));
+    *flag = false;
+    return 0;
+}
+
+Result webSessionTrySendContentMessage(WebSession *s, const char *content, u32 size, bool *flag) {
+    WebSessionMessageHeader hdr = {.kind = WebSessionSendMessageKind_BrowserEngineContent, .size = size};
+    return _webSessionTrySend(s, &hdr, content, flag);
+}
+
+Result webSessionTryReceiveContentMessage(WebSession *s, char *content, u64 size, u64 *out_size, bool *flag) {
+    Result rc=0;
+    bool tmpflag=0;
+    WebSessionMessageHeader hdr={0};
+    if (content==NULL || out_size==NULL) return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+
+    do {
+        rc = _webSessionTryReceive(s, &hdr, content, size, WebSessionReceiveMessageKind_BrowserEngineContent, &tmpflag);
+        if (R_FAILED(rc) || !tmpflag) {
+            *flag = false;
+            return rc;
+        }
+    } while(hdr.kind!=WebSessionReceiveMessageKind_BrowserEngineContent);
+
+    u64 tmp_size = hdr.size;
+    *out_size = tmp_size;
+    if (tmp_size > size) tmp_size = size;
+    if (tmp_size) content[tmp_size-1] = 0; // sdknso doesn't check tmp_size here.
+
+    *flag = true;
     return rc;
 }
 

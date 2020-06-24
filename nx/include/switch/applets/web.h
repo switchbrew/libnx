@@ -9,6 +9,7 @@
 #include "../services/applet.h"
 #include "../services/caps.h"
 #include "../services/acc.h"
+#include "../kernel/mutex.h"
 
 /// This indicates the type of web-applet.
 typedef enum {
@@ -42,6 +43,26 @@ typedef enum {
     WebFooterButtonId_Type6 = 6,  ///< Unknown button Id 6.
     WebFooterButtonId_Max,        ///< Values starting with this are invalid.
 } WebFooterButtonId;
+
+/// WebSessionBootMode
+typedef enum {
+    WebSessionBootMode_AllForeground                = 0,  ///< AllForeground. This is the default.
+    WebSessionBootMode_AllForegroundInitiallyHidden = 1,  ///< AllForegroundInitiallyHidden
+} WebSessionBootMode;
+
+/// WebSessionSendMessageKind
+typedef enum {
+    WebSessionSendMessageKind_BrowserEngineContent  = 0x0,     ///< BrowserEngine Content
+    WebSessionSendMessageKind_SystemMessageAppear   = 0x100,   ///< SystemMessage Appear
+    WebSessionSendMessageKind_Ack                   = 0x1000,  ///< Ack
+} WebSessionSendMessageKind;
+
+/// WebSessionReceiveMessageKind
+typedef enum {
+    WebSessionReceiveMessageKind_BrowserEngineContent  = 0x0,     ///< BrowserEngine Content
+    WebSessionReceiveMessageKind_AckBrowserEngine      = 0x1000,  ///< Ack BrowserEngine
+    WebSessionReceiveMessageKind_AckSystemMessage      = 0x1001,  ///< Ack SystemMessage
+} WebSessionReceiveMessageKind;
 
 /// Struct for the WebWifi applet input storage.
 typedef struct {
@@ -114,6 +135,33 @@ typedef struct {
     u8 unk_x7;
 } PACKED WebBootFooterButtonEntry;
 
+/// StorageHandleQueue
+typedef struct {
+    s32 read_pos;
+    s32 write_pos;
+    s32 max_storages;
+    bool is_full;
+    AppletStorage storages[0x10];
+} WebSessionStorageHandleQueue;
+
+/// WebSession
+typedef struct {
+    Mutex mutex;
+    WebCommonConfig *config;
+    struct {
+        u32 count;
+        u32 cur_size;
+    } queue[2];
+    WebSessionStorageHandleQueue storage_queue;
+} WebSession;
+
+/// SessionMessageHeader
+typedef struct {
+    u32 kind;                      ///< Message Kind (\ref WebSessionSendMessageKind / \ref WebSessionReceiveMessageKind)
+    u32 size;                      ///< Data size following the header.
+    u8 reserved[0x8];              ///< Unused
+} WebSessionMessageHeader;
+
 /// Types for \ref WebArgTLV, input storage.
 typedef enum {
     WebArgType_Url                                      = 0x1,    ///< [1.0.0+] String, size 0xC00. Initial URL.
@@ -176,7 +224,7 @@ typedef enum {
     WebArgType_BootFooterButton                         = 0x3E,   ///< [6.0.0+] Array of \ref WebBootFooterButtonEntry with 0x10 entries.
     WebArgType_OverrideWebAudioVolume                   = 0x3F,   ///< [6.0.0+] float
     WebArgType_OverrideMediaAudioVolume                 = 0x40,   ///< [6.0.0+] float
-    WebArgType_SessionBootMode                          = 0x41,   ///< [7.0.0+] u32 enum WebSessionBootMode
+    WebArgType_SessionBootMode                          = 0x41,   ///< [7.0.0+] u32 enum \ref WebSessionBootMode
     WebArgType_SessionFlag                              = 0x42,   ///< [7.0.0+] u8 bool, enables using WebSession when set.
     WebArgType_MediaPlayerUi                            = 0x43,   ///< [8.0.0+] u8 bool
 } WebArgType;
@@ -650,6 +698,14 @@ Result webConfigSetOverrideWebAudioVolume(WebCommonConfig* config, float value);
 Result webConfigSetOverrideMediaAudioVolume(WebCommonConfig* config, float value);
 
 /**
+ * @brief Sets \ref WebSessionBootMode.
+ * @note Only available with config created by \ref webOfflineCreate or \ref webPageCreate, on [7.0.0+].
+ * @param config WebCommonConfig object.
+ * @param mode \ref WebSessionBootMode
+ */
+Result webConfigSetBootMode(WebCommonConfig* config, WebSessionBootMode mode);
+
+/**
  * @brief Sets whether MediaPlayerUi is enabled.
  * @note Only available with config created by \ref webOfflineCreate on [8.0.0+].
  * @param config WebCommonConfig object.
@@ -725,4 +781,73 @@ Result webReplyGetPostId(WebCommonReply *reply, char *outstr, size_t outstr_maxs
  * @param flag Output flag
  */
 Result webReplyGetMediaPlayerAutoClosedByCompletion(WebCommonReply *reply, bool *flag);
+
+/**
+ * @brief Creates a \ref WebSession object.
+ * @param s \ref WebSession
+ * @param config WebCommonConfig object.
+ */
+void webSessionCreate(WebSession *s, WebCommonConfig* config);
+
+/**
+ * @brief Closes a \ref WebSession object.
+ * @param s \ref WebSession
+ */
+void webSessionClose(WebSession *s);
+
+/**
+ * @brief Launches the applet for \ref WebSession.
+ * @note Only available with config created by \ref webOfflineCreate or \ref webPageCreate, on [7.0.0+].
+ * @note Do not use \ref webConfigShow when using WebSession.
+ * @param s \ref WebSession
+ * @param[out] out_event Output Event with autoclear=false, from \ref appletHolderGetExitEvent. Optional, can be NULL.
+ */
+Result webSessionStart(WebSession *s, Event **out_event);
+
+/**
+ * @brief Waits for the applet to exit.
+ * @note This must be used before \ref webSessionClose, when \ref webSessionStart was used successfully.
+ * @param s \ref WebSession
+ * @param out Optional output applet reply data, can be NULL.
+ */
+Result webSessionWaitForExit(WebSession *s, WebCommonReply *out);
+
+/**
+ * @brief Request the applet to exit.
+ * @note Use this instead of \ref webConfigRequestExit, when using WebSession.
+ * @param s \ref WebSession
+ */
+Result webSessionRequestExit(WebSession *s);
+
+/**
+ * @brief Request the applet to Appear, this is only needed with ::WebSessionBootMode_AllForegroundInitiallyHidden.
+ * @note This should not be used before \ref webSessionStart.
+ * @param s \ref WebSession
+ * @param[out] flag Whether the message was sent successfully.
+ */
+Result webSessionAppear(WebSession *s, bool *flag);
+
+/**
+ * @brief TrySendContentMessage
+ * @note This should not be used before \ref webSessionStart.
+ * @note The JS-side for this is only available when JsExtension is enabled via \ref webConfigSetJsExtension.
+ * @note The JS-side may ignore this if it's sent too soon after the applet launches.
+ * @param s \ref WebSession
+ * @param[in] content Input content NUL-terminated string.
+ * @param[in] size Size of content.
+ * @param[out] flag Whether the message was sent successfully.
+ */
+Result webSessionTrySendContentMessage(WebSession *s, const char *content, u32 size, bool *flag);
+
+/**
+ * @brief TryReceiveContentMessage
+ * @note This should not be used before \ref webSessionStart.
+ * @note The JS-side for this is only available when JsExtension is enabled via \ref webConfigSetJsExtension.
+ * @param s \ref WebSession
+ * @param[out] content Output content string, always NUL-terminated.
+ * @param[in] size Max size of content.
+ * @param[out] out_size Original content size, prior to being clamped to the specified size param.
+ * @param[out] flag Whether the message was received successfully.
+ */
+Result webSessionTryReceiveContentMessage(WebSession *s, char *content, u64 size, u64 *out_size, bool *flag);
 
