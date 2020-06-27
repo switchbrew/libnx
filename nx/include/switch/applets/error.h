@@ -25,9 +25,18 @@ typedef struct {
     u32 desc;            ///< The error description.
 } ErrorCode;
 
+/// Error type for ErrorContext.type
+typedef enum {
+    ErrorContextType_None              = 0, ///< None
+    ErrorContextType_Http              = 1, ///< Http
+    ErrorContextType_FileSystem        = 2, ///< FileSystem
+    ErrorContextType_WebMediaPlayer    = 3, ///< WebMediaPlayer
+    ErrorContextType_LocalContentShare = 4, ///< LocalContentShare
+} ErrorContextType;
+
 /// Error context.
 typedef struct {
-    u8 type;             ///< Type
+    u8 type;             ///< Type, see \ref ErrorContextType.
     u8 pad[7];           ///< Padding
     u8 data[0x1f4];      ///< Data
     Result res;          ///< Result
