@@ -366,6 +366,10 @@ Result fsDisableAutoSaveDataCreation(void);
 
 Result fsSetGlobalAccessLogMode(u32 mode);
 Result fsGetGlobalAccessLogMode(u32* out_mode);
+Result fsOutputAccessLogToSdCard(const char *log, size_t size);
+
+/// Only available on [7.0.0+].
+Result fsGetProgramIndexForAccessLog(u32 *out_program_index, u32 *out_program_count);
 
 // Wrapper(s) for fsCreateSaveDataFileSystemBySystemSaveDataId.
 Result fsCreate_SystemSaveDataWithOwner(FsSaveDataSpaceId save_data_space_id, u64 system_save_data_id, AccountUid uid, u64 owner_id, s64 size, s64 journal_size, u32 flags);

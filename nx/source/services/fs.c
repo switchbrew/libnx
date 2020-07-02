@@ -504,6 +504,30 @@ Result fsGetGlobalAccessLogMode(u32* out_mode) {
     return _fsObjectDispatchOut(&g_fsSrv, 1005, *out_mode);
 }
 
+Result fsOutputAccessLogToSdCard(const char *log, size_t size) {
+    return _fsObjectDispatch(&g_fsSrv, 1006,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
+        .buffers = { { log, size } },
+    );
+}
+
+Result fsGetProgramIndexForAccessLog(u32 *out_program_index, u32 *out_program_count) {
+    if (hosversionBefore(7,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    struct {
+        u32 index;
+        u32 count;
+    } out;
+
+    Result rc = _fsObjectDispatchOut(&g_fsSrv, 1007, out);
+    if (R_SUCCEEDED(rc)) {
+        if (out_program_index) *out_program_index = out.index;
+        if (out_program_count) *out_program_count = out.count;
+    }
+    return rc;
+}
+
 // Wrapper(s) for fsCreateSaveDataFileSystemBySystemSaveDataId.
 Result fsCreate_SystemSaveDataWithOwner(FsSaveDataSpaceId save_data_space_id, u64 system_save_data_id, AccountUid uid, u64 owner_id, s64 size, s64 journal_size, u32 flags) {
     FsSaveDataAttribute attr = {
