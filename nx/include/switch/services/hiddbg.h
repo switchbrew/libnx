@@ -121,6 +121,9 @@ void hiddbgExit(void);
 /// Gets the Service object for the actual hiddbg service session.
 Service* hiddbgGetServiceSession(void);
 
+/// Ignores subsequent home button presses.
+Result hiddbgDeactivateHomeButton(void);
+
 /// Writes the input RGB colors to the spi-flash for the specified controller (offset 0x6050 size 0x6). See hidsys.h for UniquePadId. Only available with [3.0.0+].
 Result hiddbgUpdateControllerColor(u32 colorBody, u32 colorButtons, u64 UniquePadId);
 
