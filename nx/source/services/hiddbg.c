@@ -76,6 +76,10 @@ static Result _hiddbgCmdInTmemNoOut(TransferMemory *tmem, u32 cmd_id) {
     return _hiddbgCmdInHandle64NoOut(tmem->handle, tmem->size, cmd_id);
 }
 
+Result hiddbgDeactivateHomeButton(void) {
+    return _hiddbgCmdNoIO(110);
+}
+
 Result hiddbgUpdateControllerColor(u32 colorBody, u32 colorButtons, u64 UniquePadId) {
     if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
