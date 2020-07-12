@@ -113,6 +113,7 @@ extern "C" {
 #include "switch/services/mii.h"
 #include "switch/services/miiimg.h"
 #include "switch/services/ldn.h"
+#include "switch/services/news.h"
 
 #include "switch/display/binder.h"
 #include "switch/display/parcel.h"
