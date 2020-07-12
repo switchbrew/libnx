@@ -148,8 +148,8 @@ Result newsGetSavedataUsage(u64 *current, u64 *total) {
     Result rc = serviceDispatchOut(&g_newsSrv, 30110, out);
 
     if (R_SUCCEEDED(rc)) {
-        *current = out.current;
-        *total = out.total;
+        if (current) *current = out.current;
+        if (total) *total = out.total;
     }
 
     return rc;
@@ -158,7 +158,7 @@ Result newsGetSavedataUsage(u64 *current, u64 *total) {
 Result newsIsSystemUpdateRequired(bool *out) {
     u8 tmp=0;
     Result rc = serviceDispatchOut(&g_newsSrv, 30200, tmp);
-    if (R_SUCCEEDED(rc)) *out = tmp;
+    if (R_SUCCEEDED(rc) && out) *out = tmp & 1;
     return rc;
 }
 
