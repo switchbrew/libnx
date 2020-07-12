@@ -99,6 +99,9 @@ Result newsCreateNewsDatabaseService(NewsDatabaseService *out) {
 }
 
 Result newsCreateOverwriteEventHolder(NewsOverwriteEventHolder *out) {
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     return _newsSrvOut(&g_newsCreatorSrv, &out->s, 4);
 }
 
@@ -124,6 +127,9 @@ Result newsGetSubscriptionStatus(const char *filter, u32 *status) {
 }
 
 Result newsGetTopicList(u32 unk, u32 *out_count, NewsTopicName *out, u32 max_count) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     return serviceDispatchInOut(&g_newsSrv, 30101, unk, *out_count,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
         .buffers = { { out, max_count * sizeof(*out) }, },
@@ -131,6 +137,9 @@ Result newsGetTopicList(u32 unk, u32 *out_count, NewsTopicName *out, u32 max_cou
 }
 
 Result newsGetSavedataUsage(u64 *current, u64 *total) {
+    if (hosversionBefore(6,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     struct {
         u64 current;
         u64 total;
@@ -154,6 +163,9 @@ Result newsIsSystemUpdateRequired(bool *out) {
 }
 
 Result newsGetDatabaseVersion(u32 *version) {
+    if (hosversionBefore(10,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     return serviceDispatchOut(&g_newsSrv, 30210, *version);
 }
 
@@ -229,6 +241,9 @@ Result newsDataGetSize(NewsDataService *srv, u64 *size) {
 }
 
 Result newsDataOpenWithNewsRecord(NewsDataService *srv, NewsRecord *record) {
+    if (hosversionBefore(6,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     return serviceDispatchIn(&srv->s, 1001, *record);
 }
 
@@ -259,6 +274,9 @@ Result newsDatabaseCount(NewsDatabaseService *srv, const char *filter, u32 *coun
 }
 
 Result newsDatabaseGetList(NewsDatabaseService *srv, NewsRecord *out, u32 max_count, const char *where, const char *order, u32 *count, u32 offset) {
+    if (hosversionBefore(6,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     return serviceDispatchInOut(&srv->s, 1000, offset, *count,
         .buffer_attrs = {
             SfBufferAttr_HipcAutoSelect | SfBufferAttr_Out,
