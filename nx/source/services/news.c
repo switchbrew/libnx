@@ -18,7 +18,7 @@ Result _newsInitialize(NewsServiceType service_type) {
     if (service_type >= NewsServiceType_Count)
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
-    const char *service_names[] = {
+    static const char* const service_names[] = {
         "news:a",
         "news:c",
         "news:m",
