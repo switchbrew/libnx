@@ -15,7 +15,7 @@ NX_GENERATE_SERVICE_GUARD_PARAMS(news, (NewsServiceType service_type), (service_
 Result _newsInitialize(NewsServiceType service_type) {
     Result rc;
 
-    if (service_type > NewsServiceType_v)
+    if (service_type >= NewsServiceType_Count)
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
     const char *service_names[] = {

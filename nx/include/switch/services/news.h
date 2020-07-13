@@ -13,11 +13,13 @@
 #include "../types.h"
 
 typedef enum {
-    NewsServiceType_Application,
-    NewsServiceType_Starter,
-    NewsServiceType_Menu,
-    NewsServiceType_DataErase,
-    NewsServiceType_v,
+    NewsServiceType_Administrator = 0, ///< Initializes news:a
+    NewsServiceType_Configuration = 1, ///< Initializes news:c
+    NewsServiceType_Manager       = 2, ///< Initializes news:m
+    NewsServiceType_Post          = 3, ///< Initializes news:p
+    NewsServiceType_Viewer        = 4, ///< Initializes news:v
+
+    NewsServiceType_Count
 } NewsServiceType;
 
 typedef struct {
