@@ -6,10 +6,16 @@
 
 static Service g_btdrvSrv;
 
+static Result _btdrvCmdNoIO(u32 cmd_id);
+
 NX_GENERATE_SERVICE_GUARD(btdrv);
 
 Result _btdrvInitialize(void) {
-    return smGetService(&g_btdrvSrv, "btdrv");
+    Result rc=0;
+
+    rc = smGetService(&g_btdrvSrv, "btdrv");
+    if (R_SUCCEEDED(rc)) rc = _btdrvCmdNoIO(0); // InitializeBluetoothDriver
+    return rc;
 }
 
 void _btdrvCleanup(void) {
@@ -18,6 +24,10 @@ void _btdrvCleanup(void) {
 
 Service* btdrvGetServiceSession(void) {
     return &g_btdrvSrv;
+}
+
+static Result _btdrvCmdNoIO(u32 cmd_id) {
+    return serviceDispatch(&g_btdrvSrv, cmd_id);
 }
 
 Result btdrvReadGattCharacteristic(bool flag, u8 unk, u32 unk2, const BtdrvGattId *id0, const BtdrvGattId *id1) {
