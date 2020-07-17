@@ -52,7 +52,7 @@ Result btLeClientReadDescriptor(bool flag, u8 unk, u32 unk2, const BtdrvGattId *
  * @param[in] id0 \ref BtdrvGattId
  * @param[in] id1 \ref BtdrvGattId
  * @param[in] buffer Input buffer.
- * @param[in] size Input buffer size.
+ * @param[in] size Input buffer size, must be <=0x258.
  */
 Result btLeClientWriteCharacteristic(bool flag, u8 unk, bool flag2, u32 unk2, const BtdrvGattId *id0, const BtdrvGattId *id1, const void* buffer, size_t size);
 
@@ -66,7 +66,7 @@ Result btLeClientWriteCharacteristic(bool flag, u8 unk, bool flag2, u32 unk2, co
  * @param[in] id1 \ref BtdrvGattId
  * @param[in] id2 \ref BtdrvGattId
  * @param[in] buffer Input buffer.
- * @param[in] size Input buffer size.
+ * @param[in] size Input buffer size, must be <=0x258.
  */
 Result btLeClientWriteDescriptor(bool flag, u8 unk, u32 unk2, const BtdrvGattId *id0, const BtdrvGattId *id1, const BtdrvGattId *id2, const void* buffer, size_t size);
 
@@ -96,7 +96,7 @@ Result btLeClientDeregisterNotification(bool flag, u32 unk, const BtdrvGattId *i
  * @param[in] uuid0 \ref BtdrvGattAttributeUuid
  * @param[in] uuid1 \ref BtdrvGattAttributeUuid
  * @param[in] buffer Input buffer.
- * @param[in] size Input buffer size.
+ * @param[in] size Input buffer size, must be <=0x258.
  */
 Result btSetLeResponse(u8 unk, const BtdrvGattAttributeUuid *uuid0, const BtdrvGattAttributeUuid *uuid1, const void* buffer, size_t size);
 
@@ -107,7 +107,7 @@ Result btSetLeResponse(u8 unk, const BtdrvGattAttributeUuid *uuid0, const BtdrvG
  * @param[in] uuid0 \ref BtdrvGattAttributeUuid
  * @param[in] uuid1 \ref BtdrvGattAttributeUuid
  * @param[in] buffer Input buffer.
- * @param[in] size Input buffer size.
+ * @param[in] size Input buffer size, clamped to max size 0x258.
  */
 Result btLeSendIndication(u8 unk, bool flag, const BtdrvGattAttributeUuid *uuid0, const BtdrvGattAttributeUuid *uuid1, const void* buffer, size_t size);
 

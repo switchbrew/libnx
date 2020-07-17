@@ -9,6 +9,15 @@
 #include "../kernel/event.h"
 #include "../sf/service.h"
 
+/// BluetoothPropertyType
+typedef enum {
+    BtdrvBluetoothPropertyType_Name         =    1,    ///< Name. String, max length 0xF8 excluding NUL-terminator.
+    BtdrvBluetoothPropertyType_Address      =    2,    ///< \ref BtdrvAddress
+    BtdrvBluetoothPropertyType_Unknown3     =    3,    ///< Only available with \ref btdrvSetAdapterProperty. Unknown. 3-bytes.
+    BtdrvBluetoothPropertyType_Unknown5     =    5,    ///< Unknown. 3-bytes.
+    BtdrvBluetoothPropertyType_Unknown6     =    6,    ///< Unknown. 1-byte. The default is value 0x68.
+} BtdrvBluetoothPropertyType;
+
 /// Address
 typedef struct {
     u8 address[0x6];           ///< Address
@@ -16,7 +25,10 @@ typedef struct {
 
 /// AdapterProperty
 typedef struct {
-    u8 unk_x0[0x103];          ///< Unknown
+    BtdrvAddress addr;         ///< Same as the data for ::BtdrvBluetoothPropertyType_Address.
+    u8 type5[0x3];             ///< Same as the data for ::BtdrvBluetoothPropertyType_Unknown5.
+    char name[0xF9];           ///< Same as the data for ::BtdrvBluetoothPropertyType_Name (last byte is not initialized).
+    u8 type6;                  ///< Set to hard-coded value 0x68 (same as the data for ::BtdrvBluetoothPropertyType_Unknown6).
 } BtdrvAdapterProperty;
 
 /// BluetoothPinCode
@@ -91,6 +103,59 @@ void btdrvExit(void);
 Service* btdrvGetServiceSession(void);
 
 /**
+ * @brief GetAdapterProperties
+ * @param[out] property \ref BtdrvAdapterProperty
+ */
+Result btdrvGetAdapterProperties(BtdrvAdapterProperty *property);
+
+/**
+ * @brief GetAdapterProperty
+ * @param[in] type \ref BtdrvBluetoothPropertyType
+ * @param[out] buffer Output buffer, see \ref BtdrvBluetoothPropertyType for the contents.
+ * @param[in] size Output buffer size.
+ */
+Result btdrvGetAdapterProperty(BtdrvBluetoothPropertyType type, void* buffer, size_t size);
+
+/**
+ * @brief SetAdapterProperty
+ * @param[in] type \ref BtdrvBluetoothPropertyType
+ * @param[in] buffer Input buffer, see \ref BtdrvBluetoothPropertyType for the contents.
+ * @param[in] size Input buffer size.
+ */
+Result btdrvSetAdapterProperty(BtdrvBluetoothPropertyType type, const void* buffer, size_t size);
+
+/**
+ * @brief WriteHidData
+ * @param[in] addr \ref BtdrvAddress
+ * @param[in] buffer Input \ref BtdrvHidReport, on pre-9.0.0 this is \ref BtdrvHidData.
+ */
+Result btdrvWriteHidData(BtdrvAddress addr, BtdrvHidReport *buffer);
+
+/**
+ * @brief WriteHidData2
+ * @param[in] addr \ref BtdrvAddress
+ * @param[in] buffer Input buffer, same as the buffer for \ref btdrvWriteHidData.
+ * @param[in] size Input buffer size.
+ */
+Result btdrvWriteHidData2(BtdrvAddress addr, const void* buffer, size_t size);
+
+/**
+ * @brief SetHidReport
+ * @param[in] addr \ref BtdrvAddress
+ * @param[in] type BluetoothHhReportType
+ * @param[in] buffer Input \ref BtdrvHidReport, on pre-9.0.0 this is \ref BtdrvHidData.
+ */
+Result btdrvSetHidReport(BtdrvAddress addr, u32 type, BtdrvHidReport *buffer);
+
+/**
+ * @brief GetHidReport
+ * @param[in] addr \ref BtdrvAddress
+ * @param[in] unk Unknown
+ * @param[in] type BluetoothHhReportType
+ */
+Result btdrvGetHidReport(BtdrvAddress addr, u8 unk, u32 type);
+
+/**
  * @brief ReadGattCharacteristic
  * @note Only available on [5.0.0+].
  * @param[in] flag Flag
@@ -123,7 +188,7 @@ Result btdrvReadGattDescriptor(bool flag, u8 unk, u32 unk2, const BtdrvGattId *i
  * @param[in] id0 \ref BtdrvGattId
  * @param[in] id1 \ref BtdrvGattId
  * @param[in] buffer Input buffer.
- * @param[in] size Input buffer size.
+ * @param[in] size Input buffer size, must be <=0x258.
  */
 Result btdrvWriteGattCharacteristic(bool flag, u8 unk, bool flag2, u32 unk2, const BtdrvGattId *id0, const BtdrvGattId *id1, const void* buffer, size_t size);
 
@@ -137,7 +202,7 @@ Result btdrvWriteGattCharacteristic(bool flag, u8 unk, bool flag2, u32 unk2, con
  * @param[in] id1 \ref BtdrvGattId
  * @param[in] id2 \ref BtdrvGattId
  * @param[in] buffer Input buffer.
- * @param[in] size Input buffer size.
+ * @param[in] size Input buffer size, must be <=0x258.
  */
 Result btdrvWriteGattDescriptor(bool flag, u8 unk, u32 unk2, const BtdrvGattId *id0, const BtdrvGattId *id1, const BtdrvGattId *id2, const void* buffer, size_t size);
 
