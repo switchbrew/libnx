@@ -30,6 +30,69 @@ static Result _btdrvCmdNoIO(u32 cmd_id) {
     return serviceDispatch(&g_btdrvSrv, cmd_id);
 }
 
+Result btdrvGetAdapterProperties(BtdrvAdapterProperty *property) {
+    return serviceDispatch(&g_btdrvSrv, 5,
+        .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_Out | SfBufferAttr_FixedSize },
+        .buffers = { { property, sizeof(*property) } },
+    );
+}
+
+Result btdrvGetAdapterProperty(BtdrvBluetoothPropertyType type, void* buffer, size_t size) {
+    u32 tmp=type;
+    return serviceDispatchIn(&g_btdrvSrv, 6, tmp,
+        .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_Out },
+        .buffers = { { buffer, size } },
+    );
+}
+
+Result btdrvSetAdapterProperty(BtdrvBluetoothPropertyType type, const void* buffer, size_t size) {
+    u32 tmp=type;
+    return serviceDispatchIn(&g_btdrvSrv, 7, tmp,
+        .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_In },
+        .buffers = { { buffer, size } },
+    );
+}
+
+Result btdrvWriteHidData(BtdrvAddress addr, BtdrvHidReport *buffer) {
+    size_t size = hosversionBefore(9,0,0) ? sizeof(BtdrvHidData) : sizeof(BtdrvHidReport);
+    return serviceDispatchIn(&g_btdrvSrv, 19, addr,
+        .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_In | SfBufferAttr_FixedSize },
+        .buffers = { { buffer, size } },
+    );
+}
+
+Result btdrvWriteHidData2(BtdrvAddress addr, const void* buffer, size_t size) {
+    return serviceDispatchIn(&g_btdrvSrv, 20, addr,
+        .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_In },
+        .buffers = { { buffer, size } },
+    );
+}
+
+Result btdrvSetHidReport(BtdrvAddress addr, u32 type, BtdrvHidReport *buffer) {
+    size_t size = hosversionBefore(9,0,0) ? sizeof(BtdrvHidData) : sizeof(BtdrvHidReport);
+
+    const struct {
+        BtdrvAddress addr;
+        u32 type;
+    } in = { addr, type };
+
+    return serviceDispatchIn(&g_btdrvSrv, 21, in,
+        .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_In | SfBufferAttr_FixedSize },
+        .buffers = { { buffer, size } },
+    );
+}
+
+Result btdrvGetHidReport(BtdrvAddress addr, u8 unk, u32 type) {
+    const struct {
+        BtdrvAddress addr;
+        u8 unk;
+        u8 pad[3];
+        u32 type;
+    } in = { addr, unk, {0}, type };
+
+    return serviceDispatchIn(&g_btdrvSrv, 22, in);
+}
+
 Result btdrvReadGattCharacteristic(bool flag, u8 unk, u32 unk2, const BtdrvGattId *id0, const BtdrvGattId *id1) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
