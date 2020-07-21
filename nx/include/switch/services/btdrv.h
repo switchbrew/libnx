@@ -18,6 +18,13 @@ typedef enum {
     BtdrvBluetoothPropertyType_Unknown6     =    6,    ///< Unknown. 1-byte. The default is value 0x68.
 } BtdrvBluetoothPropertyType;
 
+/// HidEventType
+typedef enum {
+    BtdrvHidEventType_Unknown4              =    4,    ///< Unknown.
+    BtdrvHidEventType_Unknown8              =    8,    ///< Unknown.
+    BtdrvHidEventType_Unknown9              =    9,    ///< Unknown.
+} BtdrvHidEventType;
+
 /// Address
 typedef struct {
     u8 address[0x6];           ///< Address
@@ -47,6 +54,106 @@ typedef struct {
     u16 size;                  ///< Size of data.
     u8 data[0x2BC];            ///< Data
 } BtdrvHidReport;
+
+/// Data for \ref btdrvGetHidReportEventInfo. The data stored here depends on the \ref BtdrvHidEventType.
+typedef struct {
+    union {
+        u8 data[0x480];                  ///< Raw data.
+
+        struct {
+            u32 unk_x0;                  ///< Always 0.
+            u8 unk_x4;                   ///< Always 0.
+            BtdrvAddress addr;           ///< \ref BtdrvAddress
+            u8 pad;                      ///< Padding
+            u16 size;                    ///< Size of the below data.
+            u8 data[];                   ///< Data.
+        } type4;                         ///< ::BtdrvHidEventType_Unknown4
+
+        struct {
+            union {
+                u8 data[0xC];                ///< Raw data.
+
+                struct {
+                    u32 res;                 ///< 0 = success, non-zero = error.
+                    BtdrvAddress addr;       ///< \ref BtdrvAddress
+                    u8 pad[2];               ///< Padding
+                };
+            };
+        } type8;                             ///< ::BtdrvHidEventType_Unknown8
+
+        struct {
+            union {
+                union {
+                    u8 rawdata[0x290];           ///< Raw data.
+
+                    struct {
+                        BtdrvAddress addr;       ///< \ref BtdrvAddress
+                        u8 pad[2];               ///< Padding
+                        u32 unk_x0;              ///< Unknown. hid-sysmodule only uses the below data when this field is 0.
+                        BtdrvHidData data;       ///< \ref BtdrvHidData
+                        u8 pad2[2];              ///< Padding
+                    };
+                } hid_data;                      ///< Pre-9.0.0
+
+                union {
+                    u8 rawdata[0x2C8];           ///< Raw data.
+
+                    struct {
+                        u32 unk_x0;              ///< Unknown. hid-sysmodule only uses the below report when this field is 0.
+                        BtdrvAddress addr;       ///< \ref BtdrvAddress
+                        BtdrvHidReport report;   ///< \ref BtdrvHidReport
+                    };
+                } hid_report;                    ///< [9.0.0+]
+            };
+        } type9;                                 ///< ::BtdrvHidEventType_Unknown9
+    };
+} BtdrvHidReportEventInfo;
+
+/// The raw sharedmem data for HidReportEventInfo.
+typedef struct {
+    struct {
+        u8 type;                                 ///< \ref BtdrvHidEventType
+        u8 pad[7];
+        u64 tick;
+        u64 size;
+    } hdr;
+
+    union {
+        struct {
+            struct {
+                u8 unused[0x3];                  ///< Unused
+                BtdrvAddress addr;               ///< \ref BtdrvAddress
+                u8 unused2[0x3];                 ///< Unused
+                u16 size;                        ///< Size of the below data.
+                u8 data[];                       ///< Data.
+            } v1;                                ///< Pre-9.0.0
+
+            struct {
+                u8 unused[0x5];                  ///< Unused
+                BtdrvAddress addr;               ///< \ref BtdrvAddress
+                u8 pad;                          ///< Padding
+                u16 size;                        ///< Size of the below data.
+                u8 data[];                       ///< Data.
+            } v9;                                ///< [9.0.0+]
+        } type4;                                 ///< ::BtdrvHidEventType_Unknown4
+
+        struct {
+            u8 data[0xC];                        ///< Raw data.
+        } type8;                                 ///< ::BtdrvHidEventType_Unknown8
+
+        struct {
+            union {
+                struct {
+                    u8 rawdata[0x290];           ///< Raw data.
+                } hid_data;                      ///< Pre-9.0.0
+
+                struct {
+                    u8 rawdata[0x2C8];           ///< Raw data.
+                } hid_report;                    ///< [9.0.0+]
+            };
+        } type9;                                 ///< ::BtdrvHidEventType_Unknown9
+    } data;
+} BtdrvHidReportEventInfoBufferData;
 
 /// PlrStatistics
 typedef struct {
@@ -92,6 +199,18 @@ typedef struct {
 typedef struct {
     u8 unk_x0[0x18];           ///< Unknown
 } BtdrvGattId;
+
+/// CircularBuffer
+typedef struct {
+    Mutex mutex;
+    void* event_type;          ///< Not set with sharedmem.
+    u8 data[0x2710];
+    s32 write_offset;
+    s32 read_offset;
+    u64 utilization;
+    char name[0x11];
+    u8 initialized;
+} BtdrvCircularBuffer;
 
 /// Initialize btdrv.
 Result btdrvInitialize(void);
@@ -154,6 +273,28 @@ Result btdrvSetHidReport(BtdrvAddress addr, u32 type, BtdrvHidReport *buffer);
  * @param[in] type BluetoothHhReportType
  */
 Result btdrvGetHidReport(BtdrvAddress addr, u8 unk, u32 type);
+
+/**
+ * @brief RegisterHidReportEvent
+ * @note This also does sharedmem init/handling if needed, on [7.0.0+].
+ * @note The Event must be closed by the user once finished with it.
+ * @param[out] out_event Output Event with autoclear=true.
+ */
+Result btdrvRegisterHidReportEvent(Event* out_event);
+
+/**
+ * @brief GetHidReportEventInfo
+ * @note \ref btdrvRegisterHidReportEvent must be used before this, on [7.0.0+].
+ * @note This is used by hid-sysmodule. When used by other processes, hid/user-process will conflict. No events will be received by that user-process, or it will be corrupted, etc.
+ * @note [7.0.0+] When data isn't available, the type is set to ::BtdrvHidEventType_Unknown4, with the buffer cleared to all-zero.
+ * @param[out] buffer Output buffer, see \ref BtdrvHidReportEventInfo.
+ * @param[in] size Output buffer size.
+ * @oaram[out] type \ref BtdrvHidEventType
+ */
+Result btdrvGetHidReportEventInfo(void* buffer, size_t size, BtdrvHidEventType *type);
+
+/// Gets the SharedMemory addr for HidReportEventInfo (\ref BtdrvCircularBuffer), only valid when \ref btdrvRegisterHidReportEvent was previously used, on [7.0.0+].
+void* btdrvGetHidReportEventInfoSharedmemAddr(void);
 
 /**
  * @brief ReadGattCharacteristic
@@ -230,7 +371,7 @@ Result btdrvUnregisterGattNotification(bool flag, u32 unk, const BtdrvGattId *id
  * @brief GetLeEventInfo
  * @note Only available on [5.0.0+].
  * @note The state used by this is reset after writing the data to output.
- * @param[in] buffer Output buffer. 0x400-bytes from state is written here.
+ * @param[out] buffer Output buffer. 0x400-bytes from state is written here.
  * @param[in] size Output buffer size.
  * @oaram[out] type Output BleEventType.
  */
@@ -243,4 +384,23 @@ Result btdrvGetLeEventInfo(void* buffer, size_t size, u32 *type);
  * @param[out] out_event Output Event with autoclear=true.
  */
 Result btdrvRegisterBleHidEvent(Event* out_event);
+
+///@name CircularBuffer
+///@{
+
+/**
+ * @brief Read
+ * @note Used by \ref btdrvGetHidReportEventInfo on [7.0.0+].
+ * @param c \ref BtdrvCircularBuffer
+ */
+void* btdrvCircularBufferRead(BtdrvCircularBuffer *c);
+
+/**
+ * @brief Free
+ * @note Used by \ref btdrvGetHidReportEventInfo on [7.0.0+].
+ * @param c \ref BtdrvCircularBuffer
+ */
+bool btdrvCircularBufferFree(BtdrvCircularBuffer *c);
+
+///@}
 
