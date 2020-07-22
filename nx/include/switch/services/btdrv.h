@@ -25,6 +25,13 @@ typedef enum {
     BtdrvHidEventType_Unknown9              =    9,    ///< Unknown.
 } BtdrvHidEventType;
 
+/// This determines the u16 data to write into the CircularBuffer (name "BLE CORE").
+typedef enum {
+    BtdrvFatalReason_Unknown1               =    1,    ///< u16 data = 0x850.
+    BtdrvFatalReason_Unknown2               =    2,    ///< u16 data = 0x851.
+    BtdrvFatalReason_Unknown3               =    3,    ///< Reason values which aren't 1/2: u16 data = 0x852.
+} BtdrvFatalReason;
+
 /// Address
 typedef struct {
     u8 address[0x6];           ///< Address
@@ -297,6 +304,46 @@ Result btdrvGetHidReportEventInfo(void* buffer, size_t size, BtdrvHidEventType *
 void* btdrvGetHidReportEventInfoSharedmemAddr(void);
 
 /**
+ * @brief GetLatestPlr
+ * @param[out] out Output \ref BtdrvPlrList, on pre-9.0.0 this is \ref BtdrvPlrStatistics.
+ */
+Result btdrvGetLatestPlr(BtdrvPlrList *out);
+
+/**
+ * @brief EnableTxPowerBoostSetting
+ * @note Only available on [3.0.0+].
+ * @param[in] flag Input flag.
+ */
+Result btdrvEnableTxPowerBoostSetting(bool flag);
+
+/**
+ * @brief IsTxPowerBoostSettingEnabled
+ * @note Only available on [3.0.0+].
+ * @param[out] out Output flag.
+ */
+Result btdrvIsTxPowerBoostSettingEnabled(bool *out);
+
+/**
+ * @brief EnableAfhSetting
+ * @note Only available on [3.0.0+].
+ * @param[in] flag Input flag.
+ */
+Result btdrvEnableAfhSetting(bool flag);
+
+/**
+ * @brief IsAfhSettingEnabled
+ * @param[out] out Output flag.
+ */
+Result btdrvIsAfhSettingEnabled(bool *out);
+
+/**
+ * @brief GetChannelMap
+ * @note Only available on [3.0.0+].
+ * @param[out] out \ref BtdrvChannelMapList
+ */
+Result btdrvGetChannelMap(BtdrvChannelMapList *out);
+
+/**
  * @brief ReadGattCharacteristic
  * @note Only available on [5.0.0+].
  * @param[in] flag Flag
@@ -384,6 +431,34 @@ Result btdrvGetLeEventInfo(void* buffer, size_t size, u32 *type);
  * @param[out] out_event Output Event with autoclear=true.
  */
 Result btdrvRegisterBleHidEvent(Event* out_event);
+
+/**
+ * @brief MoveToSecondaryPiconet
+ * @note Only available on [10.0.0+].
+ * @param[in] addr \ref BtdrvAddress
+ */
+Result btdrvMoveToSecondaryPiconet(BtdrvAddress addr);
+
+/**
+ * @brief IsManufacturingMode
+ * @note Only available on [5.0.0+].
+ * @param[out] out Output flag.
+ */
+Result btdrvIsManufacturingMode(bool *out);
+
+/**
+ * @brief EmulateBluetoothCrash
+ * @note Only available on [7.0.0+].
+ * @param[in] reason \ref BtdrvFatalReason
+ */
+Result btdrvEmulateBluetoothCrash(BtdrvFatalReason reason);
+
+/**
+ * @brief GetBleChannelMap
+ * @note Only available on [9.0.0+].
+ * @param[out] out \ref BtdrvChannelMapList
+ */
+Result btdrvGetBleChannelMap(BtdrvChannelMapList *out);
 
 ///@name CircularBuffer
 ///@{

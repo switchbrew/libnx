@@ -46,6 +46,33 @@ static Result _btdrvCmdGetHandle(Handle* handle_out, u32 cmd_id) {
     );
 }
 
+static Result _btdrvCmdInU8NoOut(u8 inval, u64 cmd_id) {
+    return serviceDispatchIn(&g_btdrvSrv, cmd_id, inval);
+}
+
+static Result _btdrvCmdInBoolNoOut(bool inval, u32 cmd_id) {
+    return _btdrvCmdInU8NoOut(inval!=0, cmd_id);
+}
+
+static Result _btdrvCmdInU32NoOut(u32 inval, u32 cmd_id) {
+    return serviceDispatchIn(&g_btdrvSrv, cmd_id, inval);
+}
+
+static Result _btdrvCmdInAddrNoOut(BtdrvAddress addr, u32 cmd_id) {
+    return serviceDispatchIn(&g_btdrvSrv, cmd_id, addr);
+}
+
+static Result _btdrvCmdNoInOutU8(u8 *out, u32 cmd_id) {
+    return serviceDispatchOut(&g_btdrvSrv, cmd_id, *out);
+}
+
+static Result _btdrvCmdNoInOutBool(bool *out, u32 cmd_id) {
+    u8 tmp=0;
+    Result rc = _btdrvCmdNoInOutU8(&tmp, cmd_id);
+    if (R_SUCCEEDED(rc) && out) *out = tmp & 1;
+    return rc;
+}
+
 static Result _btdrvCmdGetEvent(Event* out_event, bool autoclear, u32 cmd_id) {
     Handle tmp_handle = INVALID_HANDLE;
     Result rc = 0;
@@ -53,6 +80,13 @@ static Result _btdrvCmdGetEvent(Event* out_event, bool autoclear, u32 cmd_id) {
     rc = _btdrvCmdGetHandle(&tmp_handle, cmd_id);
     if (R_SUCCEEDED(rc)) eventLoadRemote(out_event, tmp_handle, autoclear);
     return rc;
+}
+
+static Result _btdrvCmdOutBufAliasFixed(void* buffer, size_t size, u32 cmd_id) {
+    return serviceDispatch(&g_btdrvSrv, cmd_id,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out | SfBufferAttr_FixedSize },
+        .buffers = { { buffer, size } },
+    );
 }
 
 static Result _btdrvCmdOutU32OutBuf(void* buffer, size_t size, u32 *out, u32 cmd_id) {
@@ -203,6 +237,44 @@ void* btdrvGetHidReportEventInfoSharedmemAddr(void) {
     return g_btdrvCircularBuffer;
 }
 
+Result btdrvGetLatestPlr(BtdrvPlrList *out) {
+    size_t size = hosversionBefore(9,0,0) ? sizeof(BtdrvPlrStatistics) : sizeof(BtdrvPlrList);
+
+    return _btdrvCmdOutBufAliasFixed(out, size, 39);
+}
+
+Result btdrvEnableTxPowerBoostSetting(bool flag) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _btdrvCmdInBoolNoOut(flag, 42);
+}
+
+Result btdrvIsTxPowerBoostSettingEnabled(bool *out) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _btdrvCmdNoInOutBool(out, 43);
+}
+
+Result btdrvEnableAfhSetting(bool flag) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _btdrvCmdInBoolNoOut(flag, 44);
+}
+
+Result btdrvIsAfhSettingEnabled(bool *out) {
+    return _btdrvCmdNoInOutBool(out, 45);
+}
+
+Result btdrvGetChannelMap(BtdrvChannelMapList *out) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _btdrvCmdOutBufAliasFixed(out, sizeof(*out), 41);
+}
+
 Result btdrvReadGattCharacteristic(bool flag, u8 unk, u32 unk2, const BtdrvGattId *id0, const BtdrvGattId *id1) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
@@ -321,6 +393,35 @@ Result btdrvRegisterBleHidEvent(Event* out_event) {
     u32 cmd_id = hosversionBefore(6,0,0) ? 96 : 97;
 
     return _btdrvCmdGetEvent(out_event, true, cmd_id);
+}
+
+Result btdrvMoveToSecondaryPiconet(BtdrvAddress addr) {
+    if (hosversionBefore(10,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _btdrvCmdInAddrNoOut(addr, 99);
+}
+
+Result btdrvIsManufacturingMode(bool *out) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _btdrvCmdNoInOutBool(out, 256);
+}
+
+Result btdrvEmulateBluetoothCrash(BtdrvFatalReason reason) {
+    if (hosversionBefore(7,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    u32 inval = reason;
+    return _btdrvCmdInU32NoOut(inval, 257);
+}
+
+Result btdrvGetBleChannelMap(BtdrvChannelMapList *out) {
+    if (hosversionBefore(9,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _btdrvCmdOutBufAliasFixed(out, sizeof(*out), 258);
 }
 
 // CircularBuffer
