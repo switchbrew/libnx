@@ -113,7 +113,7 @@ Result btLeSendIndication(u8 unk, bool flag, const BtdrvGattAttributeUuid *uuid0
 
 /**
  * @brief GetLeEventInfo
- * @note This is identical to \ref btdrvGetLeEventInfo except different state is used.
+ * @note This is identical to \ref btdrvGetLeHidEventInfo except different state is used.
  * @note The state used by this is reset after writing the data to output.
  * @param[in] buffer Output buffer. 0x400-bytes from state is written here.
  * @param[in] size Output buffer size.
