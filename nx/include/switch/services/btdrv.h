@@ -415,14 +415,14 @@ Result btdrvRegisterGattNotification(bool flag, u32 unk, const BtdrvGattId *id0,
 Result btdrvUnregisterGattNotification(bool flag, u32 unk, const BtdrvGattId *id0, const BtdrvGattId *id1);
 
 /**
- * @brief GetLeEventInfo
+ * @brief GetLeHidEventInfo
  * @note Only available on [5.0.0+].
  * @note The state used by this is reset after writing the data to output.
  * @param[out] buffer Output buffer. 0x400-bytes from state is written here.
  * @param[in] size Output buffer size.
  * @oaram[out] type Output BleEventType.
  */
-Result btdrvGetLeEventInfo(void* buffer, size_t size, u32 *type);
+Result btdrvGetLeHidEventInfo(void* buffer, size_t size, u32 *type);
 
 /**
  * @brief RegisterBleHidEvent

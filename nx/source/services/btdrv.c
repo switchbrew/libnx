@@ -379,7 +379,7 @@ Result btdrvUnregisterGattNotification(bool flag, u32 unk, const BtdrvGattId *id
     return _btdrvGattNotification(flag, unk, id0, id1, cmd_id);
 }
 
-Result btdrvGetLeEventInfo(void* buffer, size_t size, u32 *type) {
+Result btdrvGetLeHidEventInfo(void* buffer, size_t size, u32 *type) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     u32 cmd_id = hosversionBefore(6,0,0) ? 95 : 96;
