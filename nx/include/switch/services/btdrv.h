@@ -20,7 +20,9 @@ typedef enum {
 
 /// HidEventType
 typedef enum {
+    BtdrvHidEventType_Unknown0              =    0,    ///< Unknown. Only used with \ref btdrvGetHidEventInfo.
     BtdrvHidEventType_Unknown4              =    4,    ///< Unknown.
+    BtdrvHidEventType_Unknown7              =    7,    ///< Unknown. Only used with \ref btdrvGetHidEventInfo.
     BtdrvHidEventType_Unknown8              =    8,    ///< Unknown.
     BtdrvHidEventType_Unknown9              =    9,    ///< Unknown.
 } BtdrvHidEventType;
@@ -251,6 +253,15 @@ Result btdrvGetAdapterProperty(BtdrvBluetoothPropertyType type, void* buffer, si
 Result btdrvSetAdapterProperty(BtdrvBluetoothPropertyType type, const void* buffer, size_t size);
 
 /**
+ * @brief GetEventInfo
+ * @note This is used by btm-sysmodule.
+ * @param[out] buffer Output buffer. 0x400-bytes from state is written here.
+ * @param[in] size Output buffer size.
+ * @oaram[out] type Output EventType.
+ */
+Result btdrvGetEventInfo(void* buffer, size_t size, u32 *type);
+
+/**
  * @brief WriteHidData
  * @param[in] addr \ref BtdrvAddress
  * @param[in] buffer Input \ref BtdrvHidReport, on pre-9.0.0 this is \ref BtdrvHidData.
@@ -280,6 +291,15 @@ Result btdrvSetHidReport(BtdrvAddress addr, u32 type, BtdrvHidReport *buffer);
  * @param[in] type BluetoothHhReportType
  */
 Result btdrvGetHidReport(BtdrvAddress addr, u8 unk, u32 type);
+
+/**
+ * @brief GetHidEventInfo
+ * @note This is used by btm-sysmodule.
+ * @param[out] buffer Output buffer. 0x480-bytes from state is written here.
+ * @param[in] size Output buffer size.
+ * @oaram[out] type \ref BtdrvHidEventType, always ::BtdrvHidEventType_Unknown0 or ::BtdrvHidEventType_Unknown7.
+ */
+Result btdrvGetHidEventInfo(void* buffer, size_t size, BtdrvHidEventType *type);
 
 /**
  * @brief RegisterHidReportEvent

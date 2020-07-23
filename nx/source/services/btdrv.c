@@ -119,6 +119,10 @@ Result btdrvSetAdapterProperty(BtdrvBluetoothPropertyType type, const void* buff
     );
 }
 
+Result btdrvGetEventInfo(void* buffer, size_t size, u32 *type) {
+    return _btdrvCmdOutU32OutBuf(buffer, size, type, 15);
+}
+
 Result btdrvWriteHidData(BtdrvAddress addr, BtdrvHidReport *buffer) {
     size_t size = hosversionBefore(9,0,0) ? sizeof(BtdrvHidData) : sizeof(BtdrvHidReport);
     return serviceDispatchIn(&g_btdrvSrv, 19, addr,
@@ -157,6 +161,13 @@ Result btdrvGetHidReport(BtdrvAddress addr, u8 unk, u32 type) {
     } in = { addr, unk, {0}, type };
 
     return serviceDispatchIn(&g_btdrvSrv, 22, in);
+}
+
+Result btdrvGetHidEventInfo(void* buffer, size_t size, BtdrvHidEventType *type) {
+    u32 tmp=0;
+    Result rc = _btdrvCmdOutU32OutBuf(buffer, size, &tmp, 27);
+    if (R_SUCCEEDED(rc) && type) *type = tmp;
+    return rc;
 }
 
 Result btdrvRegisterHidReportEvent(Event* out_event) {
