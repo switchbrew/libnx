@@ -113,33 +113,17 @@ SECTIONS
 	.init_array ALIGN(8) :
 	{
 		PROVIDE (__init_array_start = .);
-		KEEP (*(SORT(.init_array.*)))
-		KEEP (*(.init_array))
+		KEEP( *(SORT_BY_INIT_PRIORITY(.init_array.*) SORT_BY_INIT_PRIORITY(.ctors.*)) )
+		KEEP( *(.init_array .ctors) )
 		PROVIDE (__init_array_end = .);
 	} :data
 
 	.fini_array ALIGN(8) :
 	{
 		PROVIDE (__fini_array_start = .);
-		KEEP (*(.fini_array))
-		KEEP (*(SORT(.fini_array.*)))
+		KEEP( *(SORT_BY_INIT_PRIORITY(.fini_array.*) SORT_BY_INIT_PRIORITY(.dtors.*)) )
+		KEEP( *(.fini_array .dtors) )
 		PROVIDE (__fini_array_end = .);
-	} :data
-
-	.ctors ALIGN(8) :
-	{
-		KEEP (*crtbegin.o(.ctors)) /* MUST be first -- GCC requires it */
-		KEEP (*(EXCLUDE_FILE (*crtend.o) .ctors))
-		KEEP (*(SORT(.ctors.*)))
-		KEEP (*(.ctors))
-	} :data
-
-	.dtors ALIGN(8) :
-	{
-		KEEP (*crtbegin.o(.dtors))
-		KEEP (*(EXCLUDE_FILE (*crtend.o) .dtors))
-		KEEP (*(SORT(.dtors.*)))
-		KEEP (*(.dtors))
 	} :data
 
 	__got_start__ = .;
