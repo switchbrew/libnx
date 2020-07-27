@@ -189,9 +189,30 @@ typedef struct {
     u8 unk_x0[0xC];           ///< Unknown
 } BtdrvBleConnectionParameter;
 
+/// BtdrvBleAdvertisePacketDataEntry
+typedef struct {
+    u16 unk_x0;                                      ///< Unknown
+    u8 unused[0x12];                                 ///< Unused
+} BtdrvBleAdvertisePacketDataEntry;
+
 /// BleAdvertisePacketData
 typedef struct {
-    u8 unk_x0[0xCC];           ///< Unknown
+    u32 unk_x0;                                      ///< Unknown
+    u8 unk_x4;                                       ///< Unknown
+    u8 size0;                                        ///< Size of the data at unk_x6.
+    u8 unk_x6[0x1F];                                 ///< Unknown, see size0.
+    u8 pad[3];                                       ///< Padding
+    u8 count;                                        ///< Total array entries, see entries.
+    u8 pad2[7];                                      ///< Padding
+    BtdrvBleAdvertisePacketDataEntry entries[0x5];   ///< \ref BtdrvBleAdvertisePacketDataEntry
+    u8 pad3[0x10];                                   ///< Padding
+    u8 size2;                                        ///< Size of the data at unk_xA8.
+    u8 unk_xA5;                                      ///< Unknown
+    u8 pad4[2];                                      ///< Padding
+    u8 unk_xA8[0x1F];                                ///< Unknown, see size2.
+    u8 unk_xC7;                                      ///< Unknown
+    u8 unk_xC8;                                      ///< Unknown
+    u8 pad5[3];                                      ///< Padding
 } BtdrvBleAdvertisePacketData;
 
 /// BleAdvertiseFilter
