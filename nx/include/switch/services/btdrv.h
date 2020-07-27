@@ -314,11 +314,19 @@ Result btdrvSetHidReport(BtdrvAddress addr, u32 type, BtdrvHidReport *buffer);
 Result btdrvGetHidReport(BtdrvAddress addr, u8 unk, u32 type);
 
 /**
+ * @brief TriggerConnection
+ * @note This is used by btm-sysmodule.
+ * @param[in] addr \ref BtdrvAddress
+ * @param[in] unk [9.0.0+] Unknown
+ */
+Result btdrvTriggerConnection(BtdrvAddress addr, u16 unk);
+
+/**
  * @brief GetHidEventInfo
  * @note This is used by btm-sysmodule.
  * @param[out] buffer Output buffer. 0x480-bytes from state is written here.
  * @param[in] size Output buffer size.
- * @oaram[out] type \ref BtdrvHidEventType, always ::BtdrvHidEventType_Unknown0 or ::BtdrvHidEventType_Unknown7.
+ * @param[out] type \ref BtdrvHidEventType, always ::BtdrvHidEventType_Unknown0 or ::BtdrvHidEventType_Unknown7.
  */
 Result btdrvGetHidEventInfo(void* buffer, size_t size, BtdrvHidEventType *type);
 

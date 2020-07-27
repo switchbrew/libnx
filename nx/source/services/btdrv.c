@@ -174,6 +174,17 @@ Result btdrvGetHidReport(BtdrvAddress addr, u8 unk, u32 type) {
     return serviceDispatchIn(&g_btdrvSrv, 22, in);
 }
 
+Result btdrvTriggerConnection(BtdrvAddress addr, u16 unk) {
+    if (hosversionBefore(9,0,0)) return _btdrvCmdInAddrNoOut(addr, 23);
+
+    const struct {
+        BtdrvAddress addr;
+        u16 unk;
+    } in = { addr, unk };
+
+    return serviceDispatchIn(&g_btdrvSrv, 23, in);
+}
+
 Result btdrvGetHidEventInfo(void* buffer, size_t size, BtdrvHidEventType *type) {
     u32 tmp=0;
     Result rc = _btdrvCmdOutU32OutBuf(buffer, size, &tmp, 27);
