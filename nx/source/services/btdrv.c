@@ -149,7 +149,7 @@ Result btdrvWriteHidData2(BtdrvAddress addr, const void* buffer, size_t size) {
     );
 }
 
-Result btdrvSetHidReport(BtdrvAddress addr, u32 type, BtdrvHidReport *buffer) {
+Result btdrvSetHidReport(BtdrvAddress addr, BtdrvBluetoothHhReportType type, BtdrvHidReport *buffer) {
     size_t size = hosversionBefore(9,0,0) ? sizeof(BtdrvHidData) : sizeof(BtdrvHidReport);
 
     const struct {
@@ -163,13 +163,13 @@ Result btdrvSetHidReport(BtdrvAddress addr, u32 type, BtdrvHidReport *buffer) {
     );
 }
 
-Result btdrvGetHidReport(BtdrvAddress addr, u8 unk, u32 type) {
+Result btdrvGetHidReport(BtdrvAddress addr, u8 report_id, BtdrvBluetoothHhReportType type) {
     const struct {
         BtdrvAddress addr;
-        u8 unk;
-        u8 pad[3];
+        u8 report_id;
+        u8 pad;
         u32 type;
-    } in = { addr, unk, {0}, type };
+    } in = { addr, report_id, 0, type };
 
     return serviceDispatchIn(&g_btdrvSrv, 22, in);
 }

@@ -18,6 +18,16 @@ typedef enum {
     BtdrvBluetoothPropertyType_Unknown6     =    6,    ///< Unknown. 1-byte. The default is value 0x68.
 } BtdrvBluetoothPropertyType;
 
+/// BluetoothHhReportType
+/// Bit0-1 directly control the HID bluetooth transaction report-type value.
+/// Bit2-3: these directly control the Parameter Reserved field for SetReport, for GetReport these control the Parameter Reserved and Size bits.
+typedef enum {
+    BtdrvBluetoothHhReportType_Other        =    0,    ///< Other
+    BtdrvBluetoothHhReportType_Input        =    1,    ///< Input
+    BtdrvBluetoothHhReportType_Output       =    2,    ///< Output
+    BtdrvBluetoothHhReportType_Feature      =    3,    ///< Feature
+} BtdrvBluetoothHhReportType;
+
 /// HidEventType
 typedef enum {
     BtdrvHidEventType_Unknown0              =    0,    ///< Unknown. Only used with \ref btdrvGetHidEventInfo.
@@ -283,7 +293,7 @@ Result btdrvSetAdapterProperty(BtdrvBluetoothPropertyType type, const void* buff
 Result btdrvGetEventInfo(void* buffer, size_t size, u32 *type);
 
 /**
- * @brief WriteHidData
+ * @brief This sends a HID DATA transaction packet with report-type Output.
  * @param[in] addr \ref BtdrvAddress
  * @param[in] buffer Input \ref BtdrvHidReport, on pre-9.0.0 this is \ref BtdrvHidData.
  */
@@ -298,20 +308,20 @@ Result btdrvWriteHidData(BtdrvAddress addr, BtdrvHidReport *buffer);
 Result btdrvWriteHidData2(BtdrvAddress addr, const void* buffer, size_t size);
 
 /**
- * @brief SetHidReport
+ * @brief This sends a HID SET_REPORT transaction packet.
  * @param[in] addr \ref BtdrvAddress
- * @param[in] type BluetoothHhReportType
+ * @param[in] type \ref BtdrvBluetoothHhReportType
  * @param[in] buffer Input \ref BtdrvHidReport, on pre-9.0.0 this is \ref BtdrvHidData.
  */
-Result btdrvSetHidReport(BtdrvAddress addr, u32 type, BtdrvHidReport *buffer);
+Result btdrvSetHidReport(BtdrvAddress addr, BtdrvBluetoothHhReportType type, BtdrvHidReport *buffer);
 
 /**
- * @brief GetHidReport
+ * @brief This sends a HID GET_REPORT transaction packet.
  * @param[in] addr \ref BtdrvAddress
- * @param[in] unk Unknown
- * @param[in] type BluetoothHhReportType
+ * @param[in] report_id This is sent in the packet for the Report Id, when non-zero.
+ * @param[in] type \ref BtdrvBluetoothHhReportType
  */
-Result btdrvGetHidReport(BtdrvAddress addr, u8 unk, u32 type);
+Result btdrvGetHidReport(BtdrvAddress addr, u8 report_id, BtdrvBluetoothHhReportType type);
 
 /**
  * @brief TriggerConnection
