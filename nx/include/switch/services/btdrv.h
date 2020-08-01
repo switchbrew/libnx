@@ -230,6 +230,21 @@ typedef struct {
     u8 unk_x0[0x3E];           ///< Unknown
 } BtdrvBleAdvertiseFilter;
 
+/// BleAdvertisePacketParameter
+typedef struct {
+    u8 data[0x8];              ///< Unknown
+} BtdrvBleAdvertisePacketParameter;
+
+/// BleScanResult
+typedef struct {
+    u8 unk_x0[0x148];          ///< Unknown
+} BtdrvBleScanResult;
+
+/// BleConnectionInfo
+typedef struct {
+    u8 unk_x0[0xC];            ///< Unknown
+} BtdrvBleConnectionInfo;
+
 /// GattAttributeUuid
 typedef struct {
     u8 unk_x0[0x14];           ///< Unknown

@@ -95,6 +95,7 @@ extern "C" {
 #include "switch/services/lr.h"
 #include "switch/services/bt.h"
 #include "switch/services/btdrv.h"
+#include "switch/services/btmu.h"
 #include "switch/services/spl.h"
 #include "switch/services/ncm.h"
 #include "switch/services/psc.h"
