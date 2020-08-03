@@ -85,22 +85,22 @@ static Result _btmuGetBleScanResults(BtdrvBleScanResult *results, u8 count, u8 *
     );
 }
 
-static Result _btmuBlePairDevice(BtdrvBleAdvertisePacketParameter param, u32 unk, u32 cmd_id) {
+static Result _btmuBlePairDevice(BtdrvBleAdvertisePacketParameter param, u32 id, u32 cmd_id) {
     const struct {
         BtdrvBleAdvertisePacketParameter param;
-        u32 unk;
-    } in = { param, unk };
+        u32 id;
+    } in = { param, id };
 
     return serviceDispatchIn(&g_btdrvIBtmUserCore, cmd_id, in);
 }
 
-static Result _btmuGetGattServiceData(u32 unk0, u16 unk1, void* buffer, size_t entrysize, u8 count, u8 *out, u32 cmd_id) {
+static Result _btmuGetGattServiceData(u32 id, u16 unk1, void* buffer, size_t entrysize, u8 count, u8 *out, u32 cmd_id) {
     const struct {
         u16 unk1;
         u16 pad;
         u32 unk0;
         u64 AppletResourceUserId;
-    } in = { unk1, 0, unk0, appletGetAppletResourceUserId() };
+    } in = { unk1, 0, id, appletGetAppletResourceUserId() };
 
     return serviceDispatchInOut(&g_btdrvIBtmUserCore, cmd_id, in, *out,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
@@ -188,8 +188,8 @@ Result btmuBleConnect(BtdrvAddress addr) {
     );
 }
 
-Result btmuBleDisconnect(u32 unk) {
-    return _btmuCmdInU32NoOut(unk, 19);
+Result btmuBleDisconnect(u32 id) {
+    return _btmuCmdInU32NoOut(id, 19);
 }
 
 Result btmuBleGetConnectionState(BtdrvBleConnectionInfo *info, u8 count, u8 *total_out) {
@@ -205,12 +205,12 @@ Result btmuAcquireBlePairingEvent(Event* out_event) {
     return _btmuCmdGetEventOutFlag(out_event, true, 21);
 }
 
-Result btmuBlePairDevice(BtdrvBleAdvertisePacketParameter param, u32 unk) {
-    return _btmuBlePairDevice(param, unk, 22);
+Result btmuBlePairDevice(BtdrvBleAdvertisePacketParameter param, u32 id) {
+    return _btmuBlePairDevice(param, id, 22);
 }
 
-Result btmuBleUnPairDevice(BtdrvBleAdvertisePacketParameter param, u32 unk) {
-    return _btmuBlePairDevice(param, unk, 23);
+Result btmuBleUnPairDevice(BtdrvBleAdvertisePacketParameter param, u32 id) {
+    return _btmuBlePairDevice(param, id, 23);
 }
 
 Result btmuBleUnPairDevice2(BtdrvAddress addr, BtdrvBleAdvertisePacketParameter param) {
@@ -233,12 +233,12 @@ Result btmuAcquireBleServiceDiscoveryEvent(Event* out_event) {
     return _btmuCmdGetEventOutFlag(out_event, true, 26);
 }
 
-Result btmuGetGattServices(u32 unk, BtmuGattService *services, u8 count, u8 *total_out) {
+Result btmuGetGattServices(u32 id, BtmuGattService *services, u8 count, u8 *total_out) {
     const struct {
-        u32 unk;
+        u32 id;
         u32 pad;
         u64 AppletResourceUserId;
-    } in = { unk, 0, appletGetAppletResourceUserId() };
+    } in = { id, 0, appletGetAppletResourceUserId() };
 
     return serviceDispatchInOut(&g_btdrvIBtmUserCore, 27, in, *total_out,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
@@ -247,12 +247,12 @@ Result btmuGetGattServices(u32 unk, BtmuGattService *services, u8 count, u8 *tot
     );
 }
 
-Result btmuGetGattService(u32 unk, const BtdrvGattAttributeUuid *uuid, BtmuGattService *service, u8 *total_out) {
+Result btmuGetGattService(u32 id, const BtdrvGattAttributeUuid *uuid, BtmuGattService *service, u8 *total_out) {
     const struct {
-        u32 unk;
+        u32 id;
         BtdrvGattAttributeUuid uuid;
         u64 AppletResourceUserId;
-    } in = { unk, *uuid, appletGetAppletResourceUserId() };
+    } in = { id, *uuid, appletGetAppletResourceUserId() };
 
     return serviceDispatchInOut(&g_btdrvIBtmUserCore, 28, in, *total_out,
         .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_Out | SfBufferAttr_FixedSize },
@@ -261,17 +261,17 @@ Result btmuGetGattService(u32 unk, const BtdrvGattAttributeUuid *uuid, BtmuGattS
     );
 }
 
-Result btmuGetGattIncludedServices(u32 unk0, u16 unk1, BtmuGattService *services, u8 count, u8 *out) {
-    return _btmuGetGattServiceData(unk0, unk1, services, sizeof(BtmuGattService), count, out, 29);
+Result btmuGetGattIncludedServices(u32 id, u16 unk1, BtmuGattService *services, u8 count, u8 *out) {
+    return _btmuGetGattServiceData(id, unk1, services, sizeof(BtmuGattService), count, out, 29);
 }
 
-Result btmuGetBelongingGattService(u32 unk0, u16 unk1, BtmuGattService *service, u8 *total_out) {
+Result btmuGetBelongingGattService(u32 id, u16 unk1, BtmuGattService *service, u8 *total_out) {
     const struct {
         u16 unk1;
         u16 pad;
-        u32 unk0;
+        u32 id;
         u64 AppletResourceUserId;
-    } in = { unk1, 0, unk0, appletGetAppletResourceUserId() };
+    } in = { unk1, 0, id, appletGetAppletResourceUserId() };
 
     return serviceDispatchInOut(&g_btdrvIBtmUserCore, 30, in, *total_out,
         .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_Out | SfBufferAttr_FixedSize },
@@ -280,37 +280,37 @@ Result btmuGetBelongingGattService(u32 unk0, u16 unk1, BtmuGattService *service,
     );
 }
 
-Result btmuGetGattCharacteristics(u32 unk0, u16 unk1, BtmuGattCharacteristic *characteristics, u8 count, u8 *total_out) {
-    return _btmuGetGattServiceData(unk0, unk1, characteristics, sizeof(BtmuGattCharacteristic), count, total_out, 31);
+Result btmuGetGattCharacteristics(u32 id, u16 unk1, BtmuGattCharacteristic *characteristics, u8 count, u8 *total_out) {
+    return _btmuGetGattServiceData(id, unk1, characteristics, sizeof(BtmuGattCharacteristic), count, total_out, 31);
 }
 
-Result btmuGetGattDescriptors(u32 unk0, u16 unk1, BtmuGattDescriptor *descriptors, u8 count, u8 *total_out) {
-    return _btmuGetGattServiceData(unk0, unk1, descriptors, sizeof(BtmuGattDescriptor), count, total_out, 32);
+Result btmuGetGattDescriptors(u32 id, u16 unk1, BtmuGattDescriptor *descriptors, u8 count, u8 *total_out) {
+    return _btmuGetGattServiceData(id, unk1, descriptors, sizeof(BtmuGattDescriptor), count, total_out, 32);
 }
 
 Result btmuAcquireBleMtuConfigEvent(Event* out_event) {
     return _btmuCmdGetEventOutFlag(out_event, true, 33);
 }
 
-Result btmuConfigureBleMtu(u32 unk, u16 mtu) {
+Result btmuConfigureBleMtu(u32 id, u16 mtu) {
     const struct {
         u16 mtu;
         u16 pad;
-        u32 unk;
+        u32 id;
         u64 AppletResourceUserId;
-    } in = { mtu, 0, unk, appletGetAppletResourceUserId() };
+    } in = { mtu, 0, id, appletGetAppletResourceUserId() };
 
     return serviceDispatchIn(&g_btdrvIBtmUserCore, 34, in,
         .in_send_pid = true,
     );
 }
 
-Result btmuGetBleMtu(u32 unk, u16 *out) {
+Result btmuGetBleMtu(u32 id, u16 *out) {
     const struct {
-        u32 unk;
+        u32 id;
         u32 pad;
         u64 AppletResourceUserId;
-    } in = { unk, 0, appletGetAppletResourceUserId() };
+    } in = { id, 0, appletGetAppletResourceUserId() };
 
     return serviceDispatchInOut(&g_btdrvIBtmUserCore, 35, in, *out,
         .in_send_pid = true,
