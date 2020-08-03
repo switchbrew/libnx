@@ -12,7 +12,13 @@
 
 /// GattService
 typedef struct {
-    u8 unk_x0[0x24];              ///< Unknown
+    u8 unk_x0[0x4];               ///< Unknown
+    BtdrvGattAttributeUuid uuid;  ///< \ref BtdrvGattAttributeUuid
+    u16 unk_x18;                  ///< Unknown
+    u8 unk_x1A[0x4];              ///< Unknown
+    u16 unk_x1E;                  ///< Unknown
+    u8 unk_x20;                   ///< Unknown
+    u8 pad[3];                    ///< Padding
 } BtmuGattService;
 
 /// GattCharacteristic
@@ -51,15 +57,15 @@ Result btmuAcquireBleScanEvent(Event* out_event);
 
 /**
  * @brief GetBleScanFilterParameter
- * @param[in] unk Unknown
+ * @param[in] unk Must be value 0x1 or 0xFFFF.
  * @param[out] out \ref BtdrvBleAdvertisePacketParameter
  */
 Result btmuGetBleScanFilterParameter(u16 unk, BtdrvBleAdvertisePacketParameter *out);
 
 /**
  * @brief GetBleScanFilterParameter2
- * @param[in] unk Unknown
- * @param[out] out \ref BtdrvGattAttributeUuid
+ * @param[in] unk Must be value 0x2.
+ * @param[out] out \ref BtdrvGattAttributeUuid. The first 4-bytes is always 0.
  */
 Result btmuGetBleScanFilterParameter2(u16 unk, BtdrvGattAttributeUuid *out);
 
@@ -77,7 +83,7 @@ Result btmuStopBleScanForGeneral(void);
 /**
  * @brief GetBleScanResultsForGeneral
  * @param[out] results Output array of \ref BtdrvBleScanResult.
- * @param[in] count Size of the results array in entries.
+ * @param[in] count Size of the results array in entries. The max is 10.
  * @param[out] total_out Total output entries.
  */
 Result btmuGetBleScanResultsForGeneral(BtdrvBleScanResult *results, u8 count, u8 *total_out);
@@ -107,7 +113,7 @@ Result btmuStopBleScanForSmartDevice(void);
 /**
  * @brief GetBleScanResultsForSmartDevice
  * @param[out] results Output array of \ref BtdrvBleScanResult.
- * @param[in] count Size of the results array in entries.
+ * @param[in] count Size of the results array in entries. The max is 10.
  * @param[out] total_out Total output entries.
  */
 Result btmuGetBleScanResultsForSmartDevice(BtdrvBleScanResult *results, u8 count, u8 *total_out);
@@ -121,20 +127,21 @@ Result btmuAcquireBleConnectionEvent(Event* out_event);
 
 /**
  * @brief BleConnect
+ * @note The \ref BtdrvAddress must not be already connected. A maximum of 4 devices can be connected.
  * @param[in] addr \ref BtdrvAddress
  */
 Result btmuBleConnect(BtdrvAddress addr);
 
 /**
  * @brief BleDisconnect
- * @param[in] unk Unknown
+ * @param[in] id This must match the first BtdrvBleConnectionInfo::id from \ref btmuBleGetConnectionState (0xFFFFFFFF is invalid).
  */
-Result btmuBleDisconnect(u32 unk);
+Result btmuBleDisconnect(u32 id);
 
 /**
  * @brief BleGetConnectionState
  * @param[out] info Output array of \ref BtdrvBleConnectionInfo.
- * @param[in] count Size of the info array in entries.
+ * @param[in] count Size of the info array in entries. Other cmds which use this internally use count=4.
  * @param[out] total_out Total output entries.
  */
 Result btmuBleGetConnectionState(BtdrvBleConnectionInfo *info, u8 count, u8 *total_out);
@@ -149,16 +156,16 @@ Result btmuAcquireBlePairingEvent(Event* out_event);
 /**
  * @brief BlePairDevice
  * @param[in] param \ref BtdrvBleAdvertisePacketParameter
- * @param[in] unk Unknown
+ * @param[in] id Same as \ref btmuBleDisconnect.
  */
-Result btmuBlePairDevice(BtdrvBleAdvertisePacketParameter param, u32 unk);
+Result btmuBlePairDevice(BtdrvBleAdvertisePacketParameter param, u32 id);
 
 /**
  * @brief BleUnPairDevice
  * @param[in] param \ref BtdrvBleAdvertisePacketParameter
- * @param[in] unk Unknown
+ * @param[in] id Same as \ref btmuBleDisconnect.
  */
-Result btmuBleUnPairDevice(BtdrvBleAdvertisePacketParameter param, u32 unk);
+Result btmuBleUnPairDevice(BtdrvBleAdvertisePacketParameter param, u32 id);
 
 /**
  * @brief BleUnPairDevice2
@@ -172,7 +179,7 @@ Result btmuBleUnPairDevice2(BtdrvAddress addr, BtdrvBleAdvertisePacketParameter 
  * @param[in] param \ref BtdrvBleAdvertisePacketParameter
  * @param[out] addrs Output array of \ref BtdrvAddress.
  * @param[in] count Size of the addrs array in entries.
- * @param[out] total_out Total output entries.
+ * @param[out] total_out Total output entries. The max is 10.
  */
 Result btmuBleGetPairedDevices(BtdrvBleAdvertisePacketParameter param, BtdrvAddress *addrs, u8 count, u8 *total_out);
 
@@ -185,60 +192,60 @@ Result btmuAcquireBleServiceDiscoveryEvent(Event* out_event);
 
 /**
  * @brief GetGattServices
- * @param[in] unk Unknown
+ * @param[in] id Same as \ref btmuBleDisconnect.
  * @param[out] services Output array of \ref BtmuGattService.
- * @param[in] count Size of the services array in entries.
+ * @param[in] count Size of the services array in entries. The max is 100.
  * @param[out] total_out Total output entries.
  */
-Result btmuGetGattServices(u32 unk, BtmuGattService *services, u8 count, u8 *total_out);
+Result btmuGetGattServices(u32 id, BtmuGattService *services, u8 count, u8 *total_out);
 
 /**
- * @brief GetGattService
- * @param[in] unk Unknown
+ * @brief Same as \ref btmuGetGattServices except this only returns the \ref BtmuGattService which matches the input \ref BtdrvGattAttributeUuid.
+ * @param[in] id Same as \ref btmuBleDisconnect.
  * @param[in] uuid \ref BtdrvGattAttributeUuid
  * @param[out] service \ref BtmuGattService
  * @param[out] total_out Total output entries.
  */
-Result btmuGetGattService(u32 unk, const BtdrvGattAttributeUuid *uuid, BtmuGattService *service, u8 *total_out);
+Result btmuGetGattService(u32 id, const BtdrvGattAttributeUuid *uuid, BtmuGattService *service, u8 *total_out);
 
 /**
- * @brief GetGattIncludedServices
- * @param[in] unk0 Unknown
+ * @brief Same as \ref btmuGetGattServices except this only returns \ref BtmuGattService entries where various checks pass with u16 fields.
+ * @param[in] id Same as \ref btmuBleDisconnect.
  * @param[in] unk1 Unknown
  * @param[out] services \ref BtmuGattService
- * @param[in] count Size of the services array in entries.
+ * @param[in] count Size of the services array in entries. The max is 100.
  * @param[out] out Output value.
  */
-Result btmuGetGattIncludedServices(u32 unk0, u16 unk1, BtmuGattService *services, u8 count, u8 *out);
+Result btmuGetGattIncludedServices(u32 id, u16 unk1, BtmuGattService *services, u8 count, u8 *out);
 
 /**
- * @brief GetBelongingGattService
- * @param[in] unk0 Unknown
+ * @brief This is similar to \ref btmuGetGattIncludedServices except this only returns 1 \ref BtmuGattService.
+ * @param[in] id Same as \ref btmuBleDisconnect.
  * @param[in] unk1 Unknown
  * @param[out] service \ref BtmuGattService
  * @param[out] total_out Total output entries.
  */
-Result btmuGetBelongingGattService(u32 unk0, u16 unk1, BtmuGattService *service, u8 *total_out);
+Result btmuGetBelongingGattService(u32 id, u16 unk1, BtmuGattService *service, u8 *total_out);
 
 /**
  * @brief GetGattCharacteristics
- * @param[in] unk0 Unknown
- * @param[in] unk1 Unknown
+ * @param[in] id Same as \ref btmuBleDisconnect.
+ * @param[in] unk1 This controls which \ref BtmuGattCharacteristic entries to return.
  * @param[out] characteristics \ref BtmuGattCharacteristic
- * @param[in] count Size of the characteristics array in entries.
+ * @param[in] count Size of the characteristics array in entries. The max is 100.
  * @param[out] total_out Total output entries.
  */
-Result btmuGetGattCharacteristics(u32 unk0, u16 unk1, BtmuGattCharacteristic *characteristics, u8 count, u8 *total_out);
+Result btmuGetGattCharacteristics(u32 id, u16 unk1, BtmuGattCharacteristic *characteristics, u8 count, u8 *total_out);
 
 /**
  * @brief GetGattDescriptors
- * @param[in] unk0 Unknown
- * @param[in] unk1 Unknown
+ * @param[in] id Same as \ref btmuBleDisconnect.
+ * @param[in] unk1 This controls which \ref BtmuGattDescriptor entries to return.
  * @param[out] descriptors \ref BtmuGattDescriptor
- * @param[in] count Size of the descriptors array in entries.
+ * @param[in] count Size of the descriptors array in entries. The max is 100.
  * @param[out] total_out Total output entries.
  */
-Result btmuGetGattDescriptors(u32 unk0, u16 unk1, BtmuGattDescriptor *descriptors, u8 count, u8 *total_out);
+Result btmuGetGattDescriptors(u32 id, u16 unk1, BtmuGattDescriptor *descriptors, u8 count, u8 *total_out);
 
 /**
  * @brief AcquireBleMtuConfigEvent
@@ -249,17 +256,17 @@ Result btmuAcquireBleMtuConfigEvent(Event* out_event);
 
 /**
  * @brief ConfigureBleMtu
- * @param[in] unk Unknown
+ * @param[in] id Same as \ref btmuBleDisconnect.
  * @param[in] mtu MTU
  */
-Result btmuConfigureBleMtu(u32 unk, u16 mtu);
+Result btmuConfigureBleMtu(u32 id, u16 mtu);
 
 /**
  * @brief GetBleMtu
- * @param[in] unk Unknown
+ * @param[in] id Same as \ref btmuBleDisconnect.
  * @param[out] out Output MTU.
  */
-Result btmuGetBleMtu(u32 unk, u16 *out);
+Result btmuGetBleMtu(u32 id, u16 *out);
 
 /**
  * @brief RegisterBleGattDataPath
