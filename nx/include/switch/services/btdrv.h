@@ -249,7 +249,8 @@ typedef struct {
 
 /// GattAttributeUuid
 typedef struct {
-    u8 unk_x0[0x14];           ///< Unknown
+    u32 size;                  ///< UUID size, must be 0x2, 0x4, or 0x10.
+    u8 uuid[0x10];             ///< UUID with the above size.
 } BtdrvGattAttributeUuid;
 
 /// GattId

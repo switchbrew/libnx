@@ -33,7 +33,9 @@ typedef struct {
 
 /// BleDataPath
 typedef struct {
-    u8 unk_x0[0x18];              ///< Unknown
+    u8 unk_x0;                    ///< Unknown
+    u8 pad[3];                    ///< Padding
+    BtdrvGattAttributeUuid uuid;  ///< \ref BtdrvGattAttributeUuid
 } BtmuBleDataPath;
 
 /// Initialize btm:u.
