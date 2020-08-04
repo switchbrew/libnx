@@ -136,7 +136,7 @@ Result btmuBleConnect(BtdrvAddress addr);
 
 /**
  * @brief BleDisconnect
- * @param[in] id This must match the first BtdrvBleConnectionInfo::id from \ref btmuBleGetConnectionState (0xFFFFFFFF is invalid).
+ * @param[in] id This must match a BtdrvBleConnectionInfo::id from \ref btmuBleGetConnectionState (0xFFFFFFFF is invalid).
  */
 Result btmuBleDisconnect(u32 id);
 
