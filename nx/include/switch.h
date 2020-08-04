@@ -25,6 +25,7 @@ extern "C" {
 #include "switch/kernel/shmem.h"
 #include "switch/kernel/mutex.h"
 #include "switch/kernel/event.h"
+#include "switch/kernel/levent.h"
 #include "switch/kernel/uevent.h"
 #include "switch/kernel/utimer.h"
 #include "switch/kernel/rwlock.h"
