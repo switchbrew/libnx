@@ -5,7 +5,6 @@
 #include "runtime/env.h"
 #include "arm/cache.h"
 #include "kernel/svc.h"
-#include "kernel/detect.h"
 #include "kernel/virtmem.h"
 #include "kernel/jit.h"
 
