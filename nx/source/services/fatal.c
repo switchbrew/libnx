@@ -14,7 +14,7 @@ static void _fatalCmd(Result err, FatalPolicy type, FatalCpuContext *ctx, u32 cm
     if (type == FatalPolicy_ErrorScreen && !kernelAbove300()) type = FatalPolicy_ErrorReportAndErrorScreen;
 
     if (detectDebugger()) {
-        svcBreak(0x80000000, err, 0);
+        svcBreak(BreakReason_Panic | BreakReason_NotificationOnlyFlag, (uintptr_t)&err, sizeof(err));
     }
 
     Handle session;

@@ -83,7 +83,7 @@ static bool _leventWait(u32* counter, bool clear, u64 timeout_ns) {
                 if (R_VALUE(res) == KERNELRESULT(TimedOut))
                     return false; // whoops, timed out
                 if (R_VALUE(res) != KERNELRESULT(InvalidState))
-                    svcBreak(0, 0, 0); // should not happen
+                    svcBreak(BreakReason_Assert, 0, 0); // should not happen
             }
 
             if (clear) {
@@ -104,7 +104,7 @@ static bool _leventWait(u32* counter, bool clear, u64 timeout_ns) {
         }
         else {
             // Invalid state - should not happen
-            svcBreak(0, 0, 0);
+            svcBreak(BreakReason_Assert, 0, 0);
         }
     }
 
@@ -155,7 +155,7 @@ static void _leventSignal(u32* counter, bool autoclear) {
     }
 
     if (R_FAILED(res))
-        svcBreak(0, 0, 0); // should not happen
+        svcBreak(BreakReason_Assert, 0, 0); // should not happen
 }
 
 static void _leventClear(u32* counter) {

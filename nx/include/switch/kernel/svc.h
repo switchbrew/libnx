@@ -108,6 +108,20 @@ typedef struct {
     u64 X[8]; ///< Values of X0 through X7.
 } PACKED SecmonArgs;
 
+/// Break reasons
+typedef enum {
+    BreakReason_Panic         = 0,
+    BreakReason_Assert        = 1,
+    BreakReason_User          = 2,
+    BreakReason_PreLoadDll    = 3,
+    BreakReason_PostLoadDll   = 4,
+    BreakReason_PreUnloadDll  = 5,
+    BreakReason_PostUnloadDll = 6,
+    BreakReason_CppException  = 7,
+
+    BreakReason_NotificationOnlyFlag = 0x80000000,
+} BreakReason;
+
 /// Code memory mapping operations
 typedef enum {
     CodeMapOperation_MapOwner=0,   ///< Map owner.
@@ -603,14 +617,14 @@ Result svcGetThreadId(u64 *threadID, Handle handle);
 ///@{
 
 /**
- * @brief Breaks execution. Panic.
- * @param[in] breakReason Break reason.
- * @param[in] inval1 First break parameter.
- * @param[in] inval2 Second break parameter.
+ * @brief Breaks execution.
+ * @param[in] breakReason Break reason (see \ref BreakReason).
+ * @param[in] address Address of the buffer to pass to the debugger.
+ * @param[in] size Size of the buffer to pass to the debugger.
  * @return Result code.
  * @note Syscall number 0x26.
  */
-Result svcBreak(u32 breakReason, u64 inval1, u64 inval2);
+Result svcBreak(u32 breakReason, uintptr_t address, uintptr_t size);
 
 ///@}
 
