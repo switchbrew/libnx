@@ -1,68 +1,66 @@
-.section ".crt0","ax"
+.section .crt0, "ax", %progbits
 .global _start
+.align 2
 
 _start:
-    b startup
+    b 1f
     .word __nx_mod0 - _start
     .ascii "HOMEBREW"
 
-.org _start+0x80
-startup:
-    // save lr
-    mov  x7, x30
+.org _start+0x80; 1:
+    // Arguments on NSO entry:
+    //   x0=zero                  | x1=main thread handle
+    // Arguments on NRO entry (homebrew ABI):
+    //   x0=ptr to env context    | x1=UINT64_MAX (-1 aka 0xFFFFFFFFFFFFFFFF)
+    // Arguments on user-mode exception entry:
+    //   x0=excpt type (non-zero) | x1=ptr to excpt context
 
-    // get aslr base
-    bl   +4
-    sub  x6, x30, #0x88
+    // Detect and handle user-mode exceptions first:
+    // if (x0 != 0 && x1 != UINT64_MAX) __libnx_exception_entry(<inargs>);
+    cmp  x0, #0
+    ccmn x1, #1, #4, ne // 4 = Z
+    beq  .Lcrt0_main_entry
+    b    __libnx_exception_entry
 
-    // context ptr and main thread handle
-    mov  x5, x0
-    mov  x4, x1
+.Lcrt0_main_entry:
+    // Get pointer to MOD0 struct (contains offsets to important places)
+    adr x28, __nx_mod0
 
-    // Handle the exception if needed.
-    // if (ctx != NULL && main_thread != -1)__libnx_exception_entry(<inargs>);
-    cmp x5, #0
-    ccmn x4, #1, #4, ne // 4 = Z
-    beq bssclr_start
-    b __libnx_exception_entry
+    // Calculate BSS address/size
+    ldp  w8, w9, [x28, #8] // load BSS start/end offset from MOD0
+    sub  w9, w9, w8        // calculate BSS size
+    add  w9, w9, #7        // round up to 8
+    bic  w9, w9, #7        // ^
+    add  x8, x28, x8       // fixup the start pointer
 
-bssclr_start:
-    mov x27, x7
-    mov x25, x5
-    mov x26, x4
+    // Clear the BSS in 8-byte units
+1:  subs w9, w9, #8
+    str  xzr, [x8], #8
+    bne  1b
 
-    // clear .bss
-    adrp x0, __bss_start__
-    adrp x1, __bss_end__
-    add  x0, x0, #:lo12:__bss_start__
-    add  x1, x1, #:lo12:__bss_end__
-    sub  x1, x1, x0  // calculate size
-    add  x1, x1, #7  // round up to 8
-    bic  x1, x1, #7
+    // Preserve registers across function calls
+    mov x25, x0  // entrypoint argument 0
+    mov x26, x1  // entrypoint argument 1
+    mov x27, x30 // loader return address
 
-bss_loop:
-    str  xzr, [x0], #8
-    subs x1, x1, #8
-    bne  bss_loop
+    // Save initial stack pointer
+    mov  x8, sp
+    adrp x9, __stack_top
+    str  x8, [x9, #:lo12:__stack_top]
 
-    // store stack pointer
-    mov  x1, sp
-    adrp x0, __stack_top
-    str  x1, [x0, #:lo12:__stack_top]
-
-    // process .dynamic section
-    mov  x0, x6
-    adrp x1, _DYNAMIC
-    add  x1, x1, #:lo12:_DYNAMIC
+    // Parse ELF .dynamic section (which applies relocations to our module)
+    adr  x0, _start    // get aslr base
+    ldr  w1, [x28, #4] // pointer to .dynamic section
+    add  x1, x28, x1
     bl   __nx_dynamic
 
-    // initialize system
+    // Perform system initialization
     mov  x0, x25
     mov  x1, x26
     mov  x2, x27
     bl   __libnx_init
 
-    // call entrypoint
+    // Jump to the main function
     adrp x0, __system_argc // argc
     ldr  w0, [x0, #:lo12:__system_argc]
     adrp x1, __system_argv // argv
@@ -74,12 +72,12 @@ bss_loop:
 .global __nx_exit
 .type   __nx_exit, %function
 __nx_exit:
-    // restore stack pointer
+    // Restore stack pointer
     adrp x8, __stack_top
     ldr  x8, [x8, #:lo12:__stack_top]
     mov  sp, x8
 
-    // jump back to loader
+    // Jump back to loader
     br   x1
 
 .global __nx_mod0
@@ -96,3 +94,10 @@ __nx_mod0:
     .ascii "LNY0"
     .word  __got_start__        - __nx_mod0
     .word  __got_end__          - __nx_mod0
+
+.section .bss.__stack_top, "aw", %nobits
+.global __stack_top
+.align 3
+
+__stack_top:
+    .space 8

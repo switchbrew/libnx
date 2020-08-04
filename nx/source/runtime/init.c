@@ -10,7 +10,6 @@
 #include "services/set.h"
 #include "runtime/devices/fs_dev.h"
 
-void* __stack_top;
 void NORETURN __nx_exit(Result rc, LoaderReturnFn retaddr);
 
 void virtmemSetup(void);

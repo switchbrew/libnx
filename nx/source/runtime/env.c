@@ -30,28 +30,21 @@ extern __attribute__((weak)) u32 __nx_applet_type;
 
 void envSetup(void* ctx, Handle main_thread, LoaderReturnFn saved_lr)
 {
-    // If we're running under NSO, we should just call svcExitProcess.
-    // Otherwise we should return to loader via LR.
-    if (saved_lr == NULL) {
-        g_loaderRetAddr = (LoaderReturnFn) &svcExitProcess;
-    }
-    else {
-        g_loaderRetAddr = saved_lr;
-    }
-
-    // Detect NSO environment.
-    if (main_thread != -1)
+    // Detect and set up NSO environment.
+    if (ctx == NULL)
     {
-        g_mainThreadHandle = main_thread;
+        // Under NSO, we use svcExitProcess as the return address and hint all syscalls as available.
         g_isNso = true;
-
-        // For NSO we assume kernelhax thus access to all syscalls.
-        g_syscallHints[0] = g_syscallHints[1] = -1ull;
-
+        g_mainThreadHandle = main_thread;
+        g_loaderRetAddr = (LoaderReturnFn) &svcExitProcess;
+        g_syscallHints[0] = g_syscallHints[1] = UINT64_MAX;
         return;
     }
 
-    // Parse NRO config entries.
+    // Save the loader return address.
+    g_loaderRetAddr = saved_lr;
+
+    // Parse homebrew ABI config entries.
     ConfigEntry* ent = ctx;
 
     while (ent->Key != EntryType_EndOfList)
