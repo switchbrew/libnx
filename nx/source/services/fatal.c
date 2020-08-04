@@ -6,12 +6,13 @@
 #include "sf/service.h"
 #include "services/fatal.h"
 #include "services/sm.h"
+#include "runtime/hosversion.h"
 
 static void _fatalCmd(Result err, FatalPolicy type, FatalCpuContext *ctx, u32 cmd_id) {
     Result rc = 0;
 
     //Only [3.0.0+] supports FatalPolicy_ErrorScreen, when specified on pre-3.0.0 use FatalPolicy_ErrorReportAndErrorScreen instead.
-    if (type == FatalPolicy_ErrorScreen && !kernelAbove300()) type = FatalPolicy_ErrorReportAndErrorScreen;
+    if (type == FatalPolicy_ErrorScreen && hosversionBefore(3,0,0)) type = FatalPolicy_ErrorReportAndErrorScreen;
 
     if (detectDebugger()) {
         svcBreak(BreakReason_Panic | BreakReason_NotificationOnlyFlag, (uintptr_t)&err, sizeof(err));
@@ -66,5 +67,3 @@ void fatalThrowWithPolicy(Result err, FatalPolicy type) {
 void fatalThrowWithContext(Result err, FatalPolicy type, FatalCpuContext *ctx) {
     _fatalCmd(err, type, ctx, 2);
 }
-
-void NORETURN fatalSimple(Result) __attribute__((alias("fatalThrow")));
