@@ -5,7 +5,7 @@
 #include "services/btmu.h"
 #include "services/applet.h"
 
-static Service g_btdrvIBtmUserCore;
+static Service g_btmuIBtmUserCore;
 
 static Result _btmuGetSession(Service* srv, Service* srv_out, u32 cmd_id);
 
@@ -16,13 +16,13 @@ Result _btmuInitialize(void) {
     Service srv={0};
 
     rc = btmuGetServiceSession(&srv);
-    if (R_SUCCEEDED(rc)) rc = _btmuGetSession(&srv, &g_btdrvIBtmUserCore, 0); // GetCore
+    if (R_SUCCEEDED(rc)) rc = _btmuGetSession(&srv, &g_btmuIBtmUserCore, 0); // GetCore
     serviceClose(&srv);
     return rc;
 }
 
 void _btmuCleanup(void) {
-    serviceClose(&g_btdrvIBtmUserCore);
+    serviceClose(&g_btmuIBtmUserCore);
 }
 
 Result btmuGetServiceSession(Service* srv_out) {
@@ -33,7 +33,7 @@ Result btmuGetServiceSession(Service* srv_out) {
 }
 
 Service* btmuGetServiceSession_IBtmUserCore(void) {
-    return &g_btdrvIBtmUserCore;
+    return &g_btmuIBtmUserCore;
 }
 
 static Result _btmuGetSession(Service* srv, Service* srv_out, u32 cmd_id) {
@@ -44,7 +44,7 @@ static Result _btmuGetSession(Service* srv, Service* srv_out, u32 cmd_id) {
 }
 
 static Result _btmuCmdNoIO(u32 cmd_id) {
-    return serviceDispatch(&g_btdrvIBtmUserCore, cmd_id);
+    return serviceDispatch(&g_btmuIBtmUserCore, cmd_id);
 }
 
 static Result _btmuCmdGetEventOutFlag(Event* out_event, bool autoclear, u32 cmd_id) {
@@ -52,7 +52,7 @@ static Result _btmuCmdGetEventOutFlag(Event* out_event, bool autoclear, u32 cmd_
     Result rc = 0;
     u8 out=0;
 
-    rc = serviceDispatchOut(&g_btdrvIBtmUserCore, cmd_id, out,
+    rc = serviceDispatchOut(&g_btmuIBtmUserCore, cmd_id, out,
         .out_handle_attrs = { SfOutHandleAttr_HipcCopy },
         .out_handles = &tmp_handle,
     );
@@ -62,7 +62,7 @@ static Result _btmuCmdGetEventOutFlag(Event* out_event, bool autoclear, u32 cmd_
 }
 
 static Result _btmuCmdInU32NoOut(u32 inval, u32 cmd_id) {
-    return serviceDispatchIn(&g_btdrvIBtmUserCore, cmd_id, inval);
+    return serviceDispatchIn(&g_btmuIBtmUserCore, cmd_id, inval);
 }
 
 static Result _btmuCmdInBleAdvertisePacketParameterAruidNoOutput(BtdrvBleAdvertisePacketParameter param, u32 cmd_id) {
@@ -71,14 +71,14 @@ static Result _btmuCmdInBleAdvertisePacketParameterAruidNoOutput(BtdrvBleAdverti
         u64 AppletResourceUserId;
     } in = { param, appletGetAppletResourceUserId() };
 
-    return serviceDispatchIn(&g_btdrvIBtmUserCore, cmd_id, in,
+    return serviceDispatchIn(&g_btmuIBtmUserCore, cmd_id, in,
         .in_send_pid = true,
     );
 }
 
 static Result _btmuGetBleScanResults(BtdrvBleScanResult *results, u8 count, u8 *total_out, u32 cmd_id) {
     u64 AppletResourceUserId = appletGetAppletResourceUserId();
-    return serviceDispatchInOut(&g_btdrvIBtmUserCore, cmd_id, AppletResourceUserId, *total_out,
+    return serviceDispatchInOut(&g_btmuIBtmUserCore, cmd_id, AppletResourceUserId, *total_out,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
         .buffers = { { results, sizeof(BtdrvBleScanResult)*count } },
         .in_send_pid = true,
@@ -91,7 +91,7 @@ static Result _btmuBlePairDevice(BtdrvBleAdvertisePacketParameter param, u32 id,
         u32 id;
     } in = { param, id };
 
-    return serviceDispatchIn(&g_btdrvIBtmUserCore, cmd_id, in);
+    return serviceDispatchIn(&g_btmuIBtmUserCore, cmd_id, in);
 }
 
 static Result _btmuGetGattServiceData(u32 id, u16 unk1, void* buffer, size_t entrysize, u8 count, u8 *out, u32 cmd_id) {
@@ -102,7 +102,7 @@ static Result _btmuGetGattServiceData(u32 id, u16 unk1, void* buffer, size_t ent
         u64 AppletResourceUserId;
     } in = { unk1, 0, id, appletGetAppletResourceUserId() };
 
-    return serviceDispatchInOut(&g_btdrvIBtmUserCore, cmd_id, in, *out,
+    return serviceDispatchInOut(&g_btmuIBtmUserCore, cmd_id, in, *out,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
         .buffers = { { buffer, entrysize*count } },
         .in_send_pid = true,
@@ -115,7 +115,7 @@ static Result _btmuRegisterBleGattDataPath(const BtmuBleDataPath *path, u32 cmd_
         u64 AppletResourceUserId;
     } in = { *path, appletGetAppletResourceUserId() };
 
-    return serviceDispatchIn(&g_btdrvIBtmUserCore, cmd_id, in,
+    return serviceDispatchIn(&g_btmuIBtmUserCore, cmd_id, in,
         .in_send_pid = true,
     );
 }
@@ -125,11 +125,11 @@ Result btmuAcquireBleScanEvent(Event* out_event) {
 }
 
 Result btmuGetBleScanFilterParameter(u16 unk, BtdrvBleAdvertisePacketParameter *out) {
-    return serviceDispatchInOut(&g_btdrvIBtmUserCore, 1, unk, *out);
+    return serviceDispatchInOut(&g_btmuIBtmUserCore, 1, unk, *out);
 }
 
 Result btmuGetBleScanFilterParameter2(u16 unk, BtdrvGattAttributeUuid *out) {
-    return serviceDispatchInOut(&g_btdrvIBtmUserCore, 2, unk, *out);
+    return serviceDispatchInOut(&g_btmuIBtmUserCore, 2, unk, *out);
 }
 
 Result btmuStartBleScanForGeneral(BtdrvBleAdvertisePacketParameter param) {
@@ -159,7 +159,7 @@ Result btmuStartBleScanForSmartDevice(const BtdrvGattAttributeUuid *uuid) {
         u64 AppletResourceUserId;
     } in = { *uuid, 0, appletGetAppletResourceUserId() };
 
-    return serviceDispatchIn(&g_btdrvIBtmUserCore, 8, in,
+    return serviceDispatchIn(&g_btmuIBtmUserCore, 8, in,
         .in_send_pid = true,
     );
 }
@@ -183,7 +183,7 @@ Result btmuBleConnect(BtdrvAddress addr) {
         u64 AppletResourceUserId;
     } in = { addr, {0}, appletGetAppletResourceUserId() };
 
-    return serviceDispatchIn(&g_btdrvIBtmUserCore, 18, in,
+    return serviceDispatchIn(&g_btmuIBtmUserCore, 18, in,
         .in_send_pid = true,
     );
 }
@@ -194,7 +194,7 @@ Result btmuBleDisconnect(u32 id) {
 
 Result btmuBleGetConnectionState(BtdrvBleConnectionInfo *info, u8 count, u8 *total_out) {
     u64 AppletResourceUserId = appletGetAppletResourceUserId();
-    return serviceDispatchInOut(&g_btdrvIBtmUserCore, 20, AppletResourceUserId, *total_out,
+    return serviceDispatchInOut(&g_btmuIBtmUserCore, 20, AppletResourceUserId, *total_out,
         .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_Out },
         .buffers = { { info, sizeof(BtdrvBleConnectionInfo)*count } },
         .in_send_pid = true,
@@ -219,11 +219,11 @@ Result btmuBleUnPairDevice2(BtdrvAddress addr, BtdrvBleAdvertisePacketParameter 
         BtdrvBleAdvertisePacketParameter param;
     } in = { addr, param };
 
-    return serviceDispatchIn(&g_btdrvIBtmUserCore, 24, in);
+    return serviceDispatchIn(&g_btmuIBtmUserCore, 24, in);
 }
 
 Result btmuBleGetPairedDevices(BtdrvBleAdvertisePacketParameter param, BtdrvAddress *addrs, u8 count, u8 *total_out) {
-    return serviceDispatchInOut(&g_btdrvIBtmUserCore, 25, param, *total_out,
+    return serviceDispatchInOut(&g_btmuIBtmUserCore, 25, param, *total_out,
         .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_Out },
         .buffers = { { addrs, sizeof(BtdrvAddress)*count } },
     );
@@ -240,7 +240,7 @@ Result btmuGetGattServices(u32 id, BtmuGattService *services, u8 count, u8 *tota
         u64 AppletResourceUserId;
     } in = { id, 0, appletGetAppletResourceUserId() };
 
-    return serviceDispatchInOut(&g_btdrvIBtmUserCore, 27, in, *total_out,
+    return serviceDispatchInOut(&g_btmuIBtmUserCore, 27, in, *total_out,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
         .buffers = { { services, sizeof(BtmuGattService)*count } },
         .in_send_pid = true,
@@ -254,7 +254,7 @@ Result btmuGetGattService(u32 id, const BtdrvGattAttributeUuid *uuid, BtmuGattSe
         u64 AppletResourceUserId;
     } in = { id, *uuid, appletGetAppletResourceUserId() };
 
-    return serviceDispatchInOut(&g_btdrvIBtmUserCore, 28, in, *total_out,
+    return serviceDispatchInOut(&g_btmuIBtmUserCore, 28, in, *total_out,
         .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_Out | SfBufferAttr_FixedSize },
         .buffers = { { service, sizeof(*service) } },
         .in_send_pid = true,
@@ -273,7 +273,7 @@ Result btmuGetBelongingGattService(u32 id, u16 unk1, BtmuGattService *service, u
         u64 AppletResourceUserId;
     } in = { unk1, 0, id, appletGetAppletResourceUserId() };
 
-    return serviceDispatchInOut(&g_btdrvIBtmUserCore, 30, in, *total_out,
+    return serviceDispatchInOut(&g_btmuIBtmUserCore, 30, in, *total_out,
         .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_Out | SfBufferAttr_FixedSize },
         .buffers = { { service, sizeof(*service) } },
         .in_send_pid = true,
@@ -300,7 +300,7 @@ Result btmuConfigureBleMtu(u32 id, u16 mtu) {
         u64 AppletResourceUserId;
     } in = { mtu, 0, id, appletGetAppletResourceUserId() };
 
-    return serviceDispatchIn(&g_btdrvIBtmUserCore, 34, in,
+    return serviceDispatchIn(&g_btmuIBtmUserCore, 34, in,
         .in_send_pid = true,
     );
 }
@@ -312,7 +312,7 @@ Result btmuGetBleMtu(u32 id, u16 *out) {
         u64 AppletResourceUserId;
     } in = { id, 0, appletGetAppletResourceUserId() };
 
-    return serviceDispatchInOut(&g_btdrvIBtmUserCore, 35, in, *out,
+    return serviceDispatchInOut(&g_btmuIBtmUserCore, 35, in, *out,
         .in_send_pid = true,
     );
 }
