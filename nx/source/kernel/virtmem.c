@@ -4,26 +4,26 @@
 #include "kernel/mutex.h"
 #include "kernel/svc.h"
 #include "kernel/virtmem.h"
+#include "kernel/random.h"
+
+#define SEQUENTIAL_GUARD_REGION_SIZE 0x1000
+#define RANDOM_MAX_ATTEMPTS 0x200
 
 typedef struct {
-    u64  start;
-    u64  end;
-} VirtualRegion;
+    uintptr_t start;
+    uintptr_t end;
+} MemRegion;
 
-enum {
-    REGION_STACK=0,
-    REGION_HEAP=1,
-    REGION_LEGACY_ALIAS=2,
-    REGION_MAX
-};
+static Mutex g_VirtmemMutex;
 
-static VirtualRegion g_AddressSpace;
-static VirtualRegion g_Region[REGION_MAX];
-static u64 g_CurrentAddr;
-static u64 g_CurrentMapAddr;
-static Mutex g_VirtMemMutex;
+static MemRegion g_AliasRegion;
+static MemRegion g_HeapRegion;
+static MemRegion g_AslrRegion;
+static MemRegion g_StackRegion;
 
-static Result _GetRegionFromInfo(VirtualRegion* r, u64 id0_addr, u32 id0_sz) {
+static uintptr_t g_SequentialAddr;
+
+static Result _memregionInitWithInfo(MemRegion* r, InfoType id0_addr, InfoType id0_sz) {
     u64 base;
     Result rc = svcGetInfo(&base, id0_addr, CUR_PROCESS_HANDLE, 0);
 
@@ -40,172 +40,191 @@ static Result _GetRegionFromInfo(VirtualRegion* r, u64 id0_addr, u32 id0_sz) {
     return rc;
 }
 
-static inline bool _InRegion(VirtualRegion* r, u64 addr) {
-    return (addr >= r->start) && (addr < r->end);
+static void _memregionInitHardcoded(MemRegion* r, uintptr_t start, uintptr_t end) {
+    r->start = start;
+    r->end   = end;
+}
+
+NX_INLINE bool _memregionIsInside(MemRegion* r, uintptr_t start, uintptr_t end) {
+    return start >= r->start && end <= r->end;
+}
+
+NX_INLINE bool _memregionOverlaps(MemRegion* r, uintptr_t start, uintptr_t end) {
+    return start < r->end && r->start < end;
+}
+
+NX_INLINE bool _memregionIsUnmapped(uintptr_t start, uintptr_t end, uintptr_t guard, uintptr_t* out_end) {
+    // Adjust start/end by the desired guard size.
+    start -= guard;
+    end += guard;
+
+    // Query memory properties.
+    MemoryInfo meminfo;
+    u32 pageinfo;
+    Result rc = svcQueryMemory(&meminfo, &pageinfo, start);
+    if (R_FAILED(rc))
+        fatalThrow(MAKERESULT(Module_Libnx, LibnxError_BadQueryMemory));
+
+    // Return error if there's anything mapped.
+    uintptr_t memend = meminfo.addr + meminfo.size;
+    if (meminfo.type != MemType_Unmapped || end > memend) {
+        if (out_end) *out_end = memend + guard;
+        return false;
+    }
+
+    return true;
+}
+
+static void* _memregionFindRandom(MemRegion* r, size_t size, size_t guard_size) {
+    // Page align the sizes.
+    size = (size + 0xFFF) &~ 0xFFF;
+    guard_size = (guard_size + 0xFFF) &~ 0xFFF;
+
+    // Ensure the requested size isn't greater than the memory region itself...
+    uintptr_t region_size = r->end - r->start;
+    if (size > region_size)
+        return NULL;
+
+    // Main allocation loop.
+    uintptr_t aslr_max_page_offset = (region_size - size) >> 12;
+    for (unsigned i = 0; i < RANDOM_MAX_ATTEMPTS; i ++) {
+        // Calculate a random memory range outside reserved areas.
+        uintptr_t cur_addr;
+        for (;;) {
+            uintptr_t page_offset = (uintptr_t)randomGet64() % (aslr_max_page_offset + 1);
+            cur_addr = (uintptr_t)r->start + (page_offset << 12);
+
+            // Avoid mapping within the alias region.
+            if (_memregionOverlaps(&g_AliasRegion, cur_addr, cur_addr + size))
+                continue;
+
+            // Avoid mapping within the heap region.
+            if (_memregionOverlaps(&g_HeapRegion, cur_addr, cur_addr + size))
+                continue;
+
+            // Found it.
+            break;
+        }
+
+        // Check that the desired memory range is unmapped.
+        if (_memregionIsUnmapped(cur_addr, cur_addr + size, guard_size, NULL))
+            return (void*)cur_addr; // we found a suitable address!
+    }
+
+    return NULL;
 }
 
 void virtmemSetup(void) {
-    if (R_FAILED(_GetRegionFromInfo(&g_AddressSpace, InfoType_AslrRegionAddress, InfoType_AslrRegionSize))) {
-        // [1.0.0] doesn't expose address space size so we have to do this dirty hack to detect it.
+    Result rc;
+
+    // Retrieve memory region information for the reserved alias region.
+    rc = _memregionInitWithInfo(&g_AliasRegion, InfoType_AliasRegionAddress, InfoType_AliasRegionSize);
+    if (R_FAILED(rc)) {
+        // Wat.
+        fatalThrow(MAKERESULT(Module_Libnx, LibnxError_WeirdKernel));
+    }
+
+    // Retrieve memory region information for the reserved heap region.
+    rc = _memregionInitWithInfo(&g_HeapRegion, InfoType_HeapRegionAddress, InfoType_HeapRegionSize);
+    if (R_FAILED(rc)) {
+        // Wat.
+        fatalThrow(MAKERESULT(Module_Libnx, LibnxError_BadGetInfo_Heap));
+    }
+
+    // Retrieve memory region information for the aslr/stack regions if available [2.0.0+]
+    rc = _memregionInitWithInfo(&g_AslrRegion, InfoType_AslrRegionAddress, InfoType_AslrRegionSize);
+    if (R_SUCCEEDED(rc)) {
+        rc = _memregionInitWithInfo(&g_StackRegion, InfoType_StackRegionAddress, InfoType_StackRegionSize);
+        if (R_FAILED(rc))
+            fatalThrow(MAKERESULT(Module_Libnx, LibnxError_BadGetInfo_Stack));
+    }
+    else {
+        // [1.0.0] doesn't expose aslr/stack region information so we have to do this dirty hack to detect it.
         // Forgive me.
-
-        Result rc = svcUnmapMemory((void*) 0xFFFFFFFFFFFFE000ULL, (void*) 0xFFFFFE000ull, 0x1000);
-
-        if (rc == 0xD401) {
+        rc = svcUnmapMemory((void*)0xFFFFFFFFFFFFE000UL, (void*)0xFFFFFE000UL, 0x1000);
+        if (rc == KERNELRESULT(InvalidMemoryState)) {
             // Invalid src-address error means that a valid 36-bit address was rejected.
             // Thus we are 32-bit.
-            g_AddressSpace.start = 0x200000ull;
-            g_AddressSpace.end   = 0x100000000ull;
-
-            g_Region[REGION_STACK].start = 0x200000ull;
-            g_Region[REGION_STACK].end = 0x40000000ull;
+            _memregionInitHardcoded(&g_AslrRegion, 0x200000ull, 0x100000000ull);
+            _memregionInitHardcoded(&g_StackRegion, 0x200000ull, 0x40000000ull);
         }
-        else if (rc == 0xDC01) {
+        else if (rc == KERNELRESULT(InvalidMemoryRange)) {
             // Invalid dst-address error means our 36-bit src-address was valid.
             // Thus we are 36-bit.
-            g_AddressSpace.start = 0x8000000ull;
-            g_AddressSpace.end   = 0x1000000000ull;
-
-            g_Region[REGION_STACK].start = 0x8000000ull;
-            g_Region[REGION_STACK].end = 0x80000000ull;
+            _memregionInitHardcoded(&g_AslrRegion, 0x8000000ull, 0x1000000000ull);
+            _memregionInitHardcoded(&g_StackRegion, 0x8000000ull, 0x80000000ull);
         }
         else {
             // Wat.
             fatalThrow(MAKERESULT(Module_Libnx, LibnxError_WeirdKernel));
         }
-    } else {
-        if (R_FAILED(_GetRegionFromInfo(&g_Region[REGION_STACK], InfoType_StackRegionAddress, InfoType_StackRegionSize))) {
-            fatalThrow(MAKERESULT(Module_Libnx, LibnxError_BadGetInfo_Stack));
-        }
     }
-
-    if (R_FAILED(_GetRegionFromInfo(&g_Region[REGION_HEAP], InfoType_HeapRegionAddress, InfoType_HeapRegionSize))) {
-        fatalThrow(MAKERESULT(Module_Libnx, LibnxError_BadGetInfo_Heap));
-    }
-
-    _GetRegionFromInfo(&g_Region[REGION_LEGACY_ALIAS], InfoType_AliasRegionAddress, InfoType_AliasRegionSize);
 }
 
 void* virtmemReserve(size_t size) {
-    Result rc;
-    MemoryInfo meminfo;
-    u32 pageinfo;
-    size_t i;
-
+    // Page align the size
     size = (size + 0xFFF) &~ 0xFFF;
 
-    mutexLock(&g_VirtMemMutex);
-    u64 addr = g_CurrentAddr;
+    // Main allocation loop
+    mutexLock(&g_VirtmemMutex);
+    uintptr_t cur_addr = g_SequentialAddr;
+    void* ret = NULL;
+    for (;;) {
+        // Roll over if we reached the end.
+        if (!_memregionIsInside(&g_AslrRegion, cur_addr, cur_addr + size))
+            cur_addr = g_AslrRegion.start;
 
-    while (1)
-    {
-        // Add a guard page.
-        addr += 0x1000;
-
-        // If we go outside address space, let's go back to start.
-        if (!_InRegion(&g_AddressSpace, addr)) {
-            addr = g_AddressSpace.start;
-        }
-        // Query information about address.
-        rc = svcQueryMemory(&meminfo, &pageinfo, addr);
-
-        if (R_FAILED(rc)) {
-            fatalThrow(MAKERESULT(Module_Libnx, LibnxError_BadQueryMemory));
-        }
-
-        if (meminfo.type != 0) {
-            // Address is already taken, let's move past it.
-            addr = meminfo.addr + meminfo.size;
+        // Avoid mapping within the alias region.
+        if (_memregionOverlaps(&g_AliasRegion, cur_addr, cur_addr + size)) {
+            cur_addr = g_AliasRegion.end;
             continue;
         }
 
-        if (addr + size > meminfo.addr + meminfo.size) {
-            // We can't fit in this region, let's move past it.
-            addr = meminfo.addr + meminfo.size;
+        // Avoid mapping within the heap region.
+        if (_memregionOverlaps(&g_HeapRegion, cur_addr, cur_addr + size)) {
+            cur_addr = g_HeapRegion.end;
             continue;
         }
 
-        // Check if we end up in a reserved region.
-        for(i=0; i<REGION_MAX; i++)
-        {
-            u64 end = addr + size - 1;
-
-            if (_InRegion(&g_Region[i], addr) || _InRegion(&g_Region[i], end)) {
-                break;
-            }
-        }
-
-        // Did we?
-        if (i != REGION_MAX) {
-            addr = g_Region[i].end;
+        // Avoid mapping within the stack region.
+        if (_memregionOverlaps(&g_StackRegion, cur_addr, cur_addr + size)) {
+            cur_addr = g_StackRegion.end;
             continue;
         }
 
-        // Not in a reserved region, we're good to go!
+        // Avoid mapping in areas that are already used.
+        if (!_memregionIsUnmapped(cur_addr, cur_addr + size, SEQUENTIAL_GUARD_REGION_SIZE, &cur_addr))
+            continue;
+
+        // We found a suitable address for the block.
+        g_SequentialAddr = cur_addr + size + SEQUENTIAL_GUARD_REGION_SIZE;
+        ret = (void*)cur_addr;
         break;
     }
+    mutexUnlock(&g_VirtmemMutex);
 
-    g_CurrentAddr = addr + size;
-
-    mutexUnlock(&g_VirtMemMutex);
-    return (void*) addr;
+    return ret;
 }
 
-void  virtmemFree(void* addr, size_t size) {
+void virtmemFree(void* addr, size_t size) {
     IGNORE_ARG(addr);
     IGNORE_ARG(size);
 }
 
-void* virtmemReserveStack(size_t size)
-{
-    Result rc;
-    MemoryInfo meminfo;
-    u32 pageinfo;
-
-    size = (size + 0xFFF) &~ 0xFFF;
-
-    mutexLock(&g_VirtMemMutex);
-    u64 addr = g_CurrentMapAddr;
-
-    while (1)
-    {
-        // Add a guard page.
-        addr += 0x1000;
-
-        // Make sure we stay inside the reserved map region.
-        if (!_InRegion(&g_Region[REGION_STACK], addr)) {
-            addr = g_Region[REGION_STACK].start;
-        }
-
-        // Query information about address.
-        rc = svcQueryMemory(&meminfo, &pageinfo, addr);
-
-        if (R_FAILED(rc)) {
-            fatalThrow(MAKERESULT(Module_Libnx, LibnxError_BadQueryMemory));
-        }
-
-        if (meminfo.type != 0) {
-            // Address is already taken, let's move past it.
-            addr = meminfo.addr + meminfo.size;
-            continue;
-        }
-
-        if (addr + size > meminfo.addr + meminfo.size) {
-            // We can't fit in this region, let's move past it.
-            addr = meminfo.addr + meminfo.size;
-            continue;
-        }
-
-        break;
-    }
-
-    g_CurrentMapAddr = addr + size;
-
-    mutexUnlock(&g_VirtMemMutex);
-    return (void*) addr;
+void virtmemLock(void) {
+    mutexLock(&g_VirtmemMutex);
 }
 
-void virtmemFreeStack(void* addr, size_t size) {
-    IGNORE_ARG(addr);
-    IGNORE_ARG(size);
+void virtmemUnlock(void) {
+    mutexUnlock(&g_VirtmemMutex);
+}
+
+void* virtmemFindAslr(size_t size, size_t guard_size) {
+    if (!mutexIsLockedByCurrentThread(&g_VirtmemMutex)) return NULL;
+    return _memregionFindRandom(&g_AslrRegion, size, guard_size);
+}
+
+void* virtmemFindStack(size_t size, size_t guard_size) {
+    if (!mutexIsLockedByCurrentThread(&g_VirtmemMutex)) return NULL;
+    return _memregionFindRandom(&g_StackRegion, size, guard_size);
 }

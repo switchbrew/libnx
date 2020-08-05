@@ -71,15 +71,13 @@ Result tmemMap(TransferMemory* t)
 
     if (t->map_addr == NULL)
     {
-        void* addr = virtmemReserve(t->size);
-
+        virtmemLock();
+        void* addr = virtmemFindAslr(t->size, 0x1000);
         rc = svcMapTransferMemory(t->handle, addr, t->size, t->perm);
+        virtmemUnlock();
 
         if (R_SUCCEEDED(rc)) {
             t->map_addr = addr;
-        }
-        else {
-            virtmemFree(addr, t->size);
         }
     }
     else {
@@ -96,7 +94,6 @@ Result tmemUnmap(TransferMemory* t)
     rc = svcUnmapTransferMemory(t->handle, t->map_addr, t->size);
 
     if (R_SUCCEEDED(rc)) {
-        virtmemFree(t->map_addr, t->size);
         t->map_addr = NULL;
     }
 

@@ -124,9 +124,11 @@ Result threadCreate(
     }
 
     // Stack size may be unaligned in either case.
+    virtmemLock();
     const size_t aligned_stack_sz = (stack_sz + tls_sz + reent_sz +0xFFF) & ~0xFFF;
-    void* stack_mirror = virtmemReserveStack(aligned_stack_sz);
+    void* stack_mirror = virtmemFindStack(aligned_stack_sz, 0x4000);
     Result rc = svcMapMemory(stack_mirror, stack_mem, aligned_stack_sz);
+    virtmemUnlock();
 
     if (R_SUCCEEDED(rc))
     {
@@ -179,7 +181,6 @@ Result threadCreate(
     }
 
     if (R_FAILED(rc)) {
-        virtmemFreeStack(stack_mirror, aligned_stack_sz);
         if (owns_stack_mem) {
             free(stack_mem);
         }
@@ -238,7 +239,6 @@ Result threadClose(Thread* t) {
     rc = svcUnmapMemory(t->stack_mirror, t->stack_mem, aligned_stack_sz);
 
     if (R_SUCCEEDED(rc)) {
-        virtmemFreeStack(t->stack_mirror, aligned_stack_sz);
         if (t->owns_stack_mem) {
             free(t->stack_mem);
         }
