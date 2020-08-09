@@ -242,7 +242,7 @@ typedef struct {
 
 /// BleConnectionInfo
 typedef struct {
-    u32 id;                    ///< Id, 0xFFFFFFFF is invalid.
+    u32 id;                    ///< Id, 0xFFFFFFFF ([5.0.0-5.0.2] 0xFFFF) is invalid.
     BtdrvAddress addr;         ///< \ref BtdrvAddress
     u8 pad[2];                 ///< Padding
 } BtdrvBleConnectionInfo;

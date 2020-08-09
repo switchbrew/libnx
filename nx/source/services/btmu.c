@@ -247,25 +247,28 @@ Result btmuGetGattServices(u32 id, BtmuGattService *services, u8 count, u8 *tota
     );
 }
 
-Result btmuGetGattService(u32 id, const BtdrvGattAttributeUuid *uuid, BtmuGattService *service, u8 *total_out) {
+Result btmuGetGattService(u32 id, const BtdrvGattAttributeUuid *uuid, BtmuGattService *service, bool *flag) {
     const struct {
         u32 id;
         BtdrvGattAttributeUuid uuid;
         u64 AppletResourceUserId;
     } in = { id, *uuid, appletGetAppletResourceUserId() };
 
-    return serviceDispatchInOut(&g_btmuIBtmUserCore, 28, in, *total_out,
+    u8 tmp=0;
+    Result rc = serviceDispatchInOut(&g_btmuIBtmUserCore, 28, in, tmp,
         .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_Out | SfBufferAttr_FixedSize },
         .buffers = { { service, sizeof(*service) } },
         .in_send_pid = true,
     );
+    if (R_SUCCEEDED(rc) && flag) *flag = tmp & 1;
+    return rc;
 }
 
 Result btmuGetGattIncludedServices(u32 id, u16 unk1, BtmuGattService *services, u8 count, u8 *out) {
     return _btmuGetGattServiceData(id, unk1, services, sizeof(BtmuGattService), count, out, 29);
 }
 
-Result btmuGetBelongingGattService(u32 id, u16 unk1, BtmuGattService *service, u8 *total_out) {
+Result btmuGetBelongingGattService(u32 id, u16 unk1, BtmuGattService *service, bool *flag) {
     const struct {
         u16 unk1;
         u16 pad;
@@ -273,11 +276,14 @@ Result btmuGetBelongingGattService(u32 id, u16 unk1, BtmuGattService *service, u
         u64 AppletResourceUserId;
     } in = { unk1, 0, id, appletGetAppletResourceUserId() };
 
-    return serviceDispatchInOut(&g_btmuIBtmUserCore, 30, in, *total_out,
+    u8 tmp=0;
+    Result rc = serviceDispatchInOut(&g_btmuIBtmUserCore, 30, in, tmp,
         .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_Out | SfBufferAttr_FixedSize },
         .buffers = { { service, sizeof(*service) } },
         .in_send_pid = true,
     );
+    if (R_SUCCEEDED(rc) && flag) *flag = tmp & 1;
+    return rc;
 }
 
 Result btmuGetGattCharacteristics(u32 id, u16 unk1, BtmuGattCharacteristic *characteristics, u8 count, u8 *total_out) {

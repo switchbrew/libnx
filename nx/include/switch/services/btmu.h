@@ -136,7 +136,7 @@ Result btmuBleConnect(BtdrvAddress addr);
 
 /**
  * @brief BleDisconnect
- * @param[in] id This must match a BtdrvBleConnectionInfo::id from \ref btmuBleGetConnectionState (0xFFFFFFFF is invalid).
+ * @param[in] id This must match a BtdrvBleConnectionInfo::id from \ref btmuBleGetConnectionState. [5.1.0+] 0xFFFFFFFF is invalid.
  */
 Result btmuBleDisconnect(u32 id);
 
@@ -206,9 +206,9 @@ Result btmuGetGattServices(u32 id, BtmuGattService *services, u8 count, u8 *tota
  * @param[in] id Same as \ref btmuBleDisconnect.
  * @param[in] uuid \ref BtdrvGattAttributeUuid
  * @param[out] service \ref BtmuGattService
- * @param[out] total_out Total output entries.
+ * @param[out] flag Whether a \ref BtmuGattService was returned.
  */
-Result btmuGetGattService(u32 id, const BtdrvGattAttributeUuid *uuid, BtmuGattService *service, u8 *total_out);
+Result btmuGetGattService(u32 id, const BtdrvGattAttributeUuid *uuid, BtmuGattService *service, bool *flag);
 
 /**
  * @brief Same as \ref btmuGetGattServices except this only returns \ref BtmuGattService entries where various checks pass with u16 fields.
@@ -225,9 +225,9 @@ Result btmuGetGattIncludedServices(u32 id, u16 unk1, BtmuGattService *services, 
  * @param[in] id Same as \ref btmuBleDisconnect.
  * @param[in] unk1 Unknown
  * @param[out] service \ref BtmuGattService
- * @param[out] total_out Total output entries.
+ * @param[out] flag Whether a \ref BtmuGattService was returned.
  */
-Result btmuGetBelongingGattService(u32 id, u16 unk1, BtmuGattService *service, u8 *total_out);
+Result btmuGetBelongingGattService(u32 id, u16 unk1, BtmuGattService *service, bool *flag);
 
 /**
  * @brief GetGattCharacteristics
