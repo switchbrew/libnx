@@ -109,9 +109,9 @@ static Result _btmuGetGattServiceData(u32 id, u16 unk1, void* buffer, size_t ent
     );
 }
 
-static Result _btmuRegisterBleGattDataPath(const BtmuBleDataPath *path, u32 cmd_id) {
+static Result _btmuRegisterBleGattDataPath(const BtmBleDataPath *path, u32 cmd_id) {
     const struct {
-        BtmuBleDataPath path;
+        BtmBleDataPath path;
         u64 AppletResourceUserId;
     } in = { *path, appletGetAppletResourceUserId() };
 
@@ -233,7 +233,7 @@ Result btmuAcquireBleServiceDiscoveryEvent(Event* out_event) {
     return _btmuCmdGetEventOutFlag(out_event, true, 26);
 }
 
-Result btmuGetGattServices(u32 id, BtmuGattService *services, u8 count, u8 *total_out) {
+Result btmuGetGattServices(u32 id, BtmGattService *services, u8 count, u8 *total_out) {
     const struct {
         u32 id;
         u32 pad;
@@ -242,12 +242,12 @@ Result btmuGetGattServices(u32 id, BtmuGattService *services, u8 count, u8 *tota
 
     return serviceDispatchInOut(&g_btmuIBtmUserCore, 27, in, *total_out,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
-        .buffers = { { services, sizeof(BtmuGattService)*count } },
+        .buffers = { { services, sizeof(BtmGattService)*count } },
         .in_send_pid = true,
     );
 }
 
-Result btmuGetGattService(u32 id, const BtdrvGattAttributeUuid *uuid, BtmuGattService *service, bool *flag) {
+Result btmuGetGattService(u32 id, const BtdrvGattAttributeUuid *uuid, BtmGattService *service, bool *flag) {
     const struct {
         u32 id;
         BtdrvGattAttributeUuid uuid;
@@ -264,11 +264,11 @@ Result btmuGetGattService(u32 id, const BtdrvGattAttributeUuid *uuid, BtmuGattSe
     return rc;
 }
 
-Result btmuGetGattIncludedServices(u32 id, u16 unk1, BtmuGattService *services, u8 count, u8 *out) {
-    return _btmuGetGattServiceData(id, unk1, services, sizeof(BtmuGattService), count, out, 29);
+Result btmuGetGattIncludedServices(u32 id, u16 unk1, BtmGattService *services, u8 count, u8 *out) {
+    return _btmuGetGattServiceData(id, unk1, services, sizeof(BtmGattService), count, out, 29);
 }
 
-Result btmuGetBelongingGattService(u32 id, u16 unk1, BtmuGattService *service, bool *flag) {
+Result btmuGetBelongingGattService(u32 id, u16 unk1, BtmGattService *service, bool *flag) {
     const struct {
         u16 unk1;
         u16 pad;
@@ -286,12 +286,12 @@ Result btmuGetBelongingGattService(u32 id, u16 unk1, BtmuGattService *service, b
     return rc;
 }
 
-Result btmuGetGattCharacteristics(u32 id, u16 unk1, BtmuGattCharacteristic *characteristics, u8 count, u8 *total_out) {
-    return _btmuGetGattServiceData(id, unk1, characteristics, sizeof(BtmuGattCharacteristic), count, total_out, 31);
+Result btmuGetGattCharacteristics(u32 id, u16 unk1, BtmGattCharacteristic *characteristics, u8 count, u8 *total_out) {
+    return _btmuGetGattServiceData(id, unk1, characteristics, sizeof(BtmGattCharacteristic), count, total_out, 31);
 }
 
-Result btmuGetGattDescriptors(u32 id, u16 unk1, BtmuGattDescriptor *descriptors, u8 count, u8 *total_out) {
-    return _btmuGetGattServiceData(id, unk1, descriptors, sizeof(BtmuGattDescriptor), count, total_out, 32);
+Result btmuGetGattDescriptors(u32 id, u16 unk1, BtmGattDescriptor *descriptors, u8 count, u8 *total_out) {
+    return _btmuGetGattServiceData(id, unk1, descriptors, sizeof(BtmGattDescriptor), count, total_out, 32);
 }
 
 Result btmuAcquireBleMtuConfigEvent(Event* out_event) {
@@ -323,11 +323,11 @@ Result btmuGetBleMtu(u32 id, u16 *out) {
     );
 }
 
-Result btmuRegisterBleGattDataPath(const BtmuBleDataPath *path) {
+Result btmuRegisterBleGattDataPath(const BtmBleDataPath *path) {
     return _btmuRegisterBleGattDataPath(path, 36);
 }
 
-Result btmuUnregisterBleGattDataPath(const BtmuBleDataPath *path) {
+Result btmuUnregisterBleGattDataPath(const BtmBleDataPath *path) {
     return _btmuRegisterBleGattDataPath(path, 37);
 }
 
