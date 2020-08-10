@@ -46,12 +46,62 @@ static Result _btmCmdGetEventOutFlag(Event* out_event, bool autoclear, u32 cmd_i
     return rc;
 }
 
+static Result _btmCmdInU8NoOut(u8 inval, u64 cmd_id) {
+    return serviceDispatchIn(&g_btmSrv, cmd_id, inval);
+}
+
+static Result _btmCmdInBoolNoOut(bool inval, u32 cmd_id) {
+    return _btmCmdInU8NoOut(inval!=0, cmd_id);
+}
+
 static Result _btmCmdInU32NoOut(u32 inval, u32 cmd_id) {
     return serviceDispatchIn(&g_btmSrv, cmd_id, inval);
 }
 
+static Result _btmCmdNoInOutU8(u8 *out, u32 cmd_id) {
+    return serviceDispatchOut(&g_btmSrv, cmd_id, *out);
+}
+
+static Result _btmCmdNoInOutBool(bool *out, u32 cmd_id) {
+    u8 tmp=0;
+    Result rc = _btmCmdNoInOutU8(&tmp, cmd_id);
+    if (R_SUCCEEDED(rc) && out) *out = tmp & 1;
+    return rc;
+}
+
+static Result _btmCmdNoInOutU32(u32 *out, u32 cmd_id) {
+    return serviceDispatchOut(&g_btmSrv, cmd_id, *out);
+}
+
+static Result _btmCmdInAddrNoOut(BtdrvAddress addr, u32 cmd_id) {
+    return serviceDispatchIn(&g_btmSrv, cmd_id, addr);
+}
+
+static Result _btmCmdInAddrBoolNoOut(BtdrvAddress addr, bool flag, u32 cmd_id) {
+    const struct {
+        BtdrvAddress addr;
+        u8 flag;
+    } in = { addr, flag!=0 };
+
+    return serviceDispatchIn(&g_btmSrv, cmd_id, in);
+}
+
 static Result _btmCmdInBleAdvertisePacketParameterNoOut(BtdrvBleAdvertisePacketParameter param, u32 cmd_id) {
     return serviceDispatchIn(&g_btmSrv, cmd_id, param);
+}
+
+static Result _btmCmdInBufPtrFixed(const void* buffer, size_t size, u32 cmd_id) {
+    return serviceDispatch(&g_btmSrv, cmd_id,
+        .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_In | SfBufferAttr_FixedSize },
+        .buffers = { { buffer, size } },
+    );
+}
+
+static Result _btmCmdOutBufPtrFixed(void* buffer, size_t size, u32 cmd_id) {
+    return serviceDispatch(&g_btmSrv, cmd_id,
+        .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_Out | SfBufferAttr_FixedSize },
+        .buffers = { { buffer, size } },
+    );
 }
 
 static Result _btmGetBleScanResults(BtdrvBleScanResult *results, u8 count, u8 *total_out, u32 cmd_id) {
@@ -85,6 +135,128 @@ static Result _btmGetGattServiceData(u32 id, u16 unk1, void* buffer, size_t entr
 
 static Result _btmRegisterBleGattDataPath(const BtmBleDataPath *path, u32 cmd_id) {
     return serviceDispatchIn(&g_btmSrv, cmd_id, *path);
+}
+
+Result btmGetState(u32 *out) {
+    return _btmCmdNoInOutU32(out, 0);
+}
+
+Result btmGetHostDeviceProperty(BtmHostDeviceProperty *out) {
+    return serviceDispatchOut(&g_btmSrv, 1, *out);
+}
+
+Result btmAcquireDeviceConditionEvent(Event* out_event) {
+    return _btmCmdGetEventOutFlag(out_event, true, 2);
+}
+
+Result btmGetDeviceCondition(BtmDeviceCondition *out) {
+    return _btmCmdOutBufPtrFixed(out, sizeof(*out), 3);
+}
+
+Result btmSetBurstMode(BtdrvAddress addr, bool flag) {
+    return _btmCmdInAddrBoolNoOut(addr, flag, 4);
+}
+
+Result btmSetSlotMode(const BtmDeviceSlotModeList *list) {
+    return _btmCmdInBufPtrFixed(list, sizeof(*list), 5);
+}
+
+Result btmSetBluetoothMode(u32 mode) {
+    if (hosversionAtLeast(9,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _btmCmdInU32NoOut(mode, 6);
+}
+
+Result btmSetWlanMode(u32 mode) {
+    return _btmCmdInU32NoOut(mode, 7);
+}
+
+Result btmAcquireDeviceInfoEvent(Event* out_event) {
+    return _btmCmdGetEventOutFlag(out_event, true, 8);
+}
+
+Result btmGetDeviceInfo(BtmDeviceInfoList *out) {
+    return _btmCmdOutBufPtrFixed(out, sizeof(*out), 9);
+}
+
+Result btmAddDeviceInfo(const BtmDeviceInfo *info) {
+    return serviceDispatchIn(&g_btmSrv, 10, *info);
+}
+
+Result btmRemoveDeviceInfo(BtdrvAddress addr) {
+    return _btmCmdInAddrNoOut(addr, 11);
+}
+
+Result btmIncreaseDeviceInfoOrder(BtdrvAddress addr) {
+    return _btmCmdInAddrNoOut(addr, 12);
+}
+
+Result btmLlrNotify(BtdrvAddress addr, s32 unk) {
+    if (hosversionBefore(9,0,0))
+        return _btmCmdInAddrNoOut(addr, 13);
+
+    const struct {
+        BtdrvAddress addr;
+        u8 pad[2];
+        s32 unk;
+    } in = { addr, {0}, unk };
+
+    return serviceDispatchIn(&g_btmSrv, 13, in);
+}
+
+Result btmEnableRadio(void) {
+    return _btmCmdNoIO(14);
+}
+
+Result btmDisableRadio(void) {
+    return _btmCmdNoIO(15);
+}
+
+Result btmHidDisconnect(BtdrvAddress addr) {
+    return _btmCmdInAddrNoOut(addr, 16);
+}
+
+Result btmHidSetRetransmissionMode(BtdrvAddress addr, const BtmZeroRetransmissionList *list) {
+    return serviceDispatchIn(&g_btmSrv, 17, addr,
+        .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_In | SfBufferAttr_FixedSize },
+        .buffers = { { list, sizeof(*list) } },
+    );
+}
+
+Result btmAcquireAwakeReqEvent(Event* out_event) {
+    if (hosversionBefore(2,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _btmCmdGetEventOutFlag(out_event, true, 18);
+}
+
+Result btmAcquireLlrStateEvent(Event* out_event) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _btmCmdGetEventOutFlag(out_event, true, 19);
+}
+
+Result btmIsLlrStarted(bool *out) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _btmCmdNoInOutBool(out, 20);
+}
+
+Result btmEnableSlotSaving(bool flag) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _btmCmdInBoolNoOut(flag, 21);
+}
+
+Result btmProtectDeviceInfo(BtdrvAddress addr, bool flag) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _btmCmdInAddrBoolNoOut(addr, flag, 22);
 }
 
 Result btmAcquireBleScanEvent(Event* out_event) {

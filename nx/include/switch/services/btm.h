@@ -9,6 +9,41 @@
 #include "../services/btdrv.h"
 #include "../sf/service.h"
 
+/// HostDeviceProperty
+typedef struct {
+    u8 unk_x0[0x2A];              ///< Unknown
+} BtmHostDeviceProperty;
+
+/// DeviceCondition
+typedef struct {
+    u8 unk_x0[0x368];             ///< Unknown
+} BtmDeviceCondition;
+
+/// DeviceSlotModeList
+typedef struct {
+    u8 unk_x0[0x64];              ///< Unknown
+} BtmDeviceSlotModeList;
+
+/// DeviceInfoList
+typedef struct {
+    u8 unk_x0[0x3C4];             ///< Unknown
+} BtmDeviceInfoList;
+
+/// DeviceInfo
+typedef struct {
+    u8 unk_x0[0x60];              ///< Unknown
+} BtmDeviceInfo;
+
+/// DevicePropertyList
+typedef struct {
+    u8 unk_x0[0x268];             ///< Unknown
+} BtmDevicePropertyList;
+
+/// ZeroRetransmissionList
+typedef struct {
+    u8 unk_x0[0x11];              ///< Unknown
+} BtmZeroRetransmissionList;
+
 /// GattClientConditionList
 typedef struct {
     u8 unk_x0[0x74];              ///< Unknown
@@ -50,6 +85,157 @@ void btmExit(void);
 
 /// Gets the Service object for the actual btm service session.
 Service* btmGetServiceSession(void);
+
+/**
+ * @brief GetState
+ * @param[out] out Output BtmState.
+ */
+Result btmGetState(u32 *out);
+
+/**
+ * @brief GetHostDeviceProperty
+ * @param[out] out \ref BtmHostDeviceProperty
+ */
+Result btmGetHostDeviceProperty(BtmHostDeviceProperty *out);
+
+/**
+ * @brief AcquireDeviceConditionEvent
+ * @note The Event must be closed by the user once finished with it.
+ * @param[out] out_event Output Event with autoclear=true.
+ */
+Result btmAcquireDeviceConditionEvent(Event* out_event);
+
+/**
+ * @brief GetDeviceCondition
+ * @param[out] out \ref BtmDeviceCondition
+ */
+Result btmGetDeviceCondition(BtmDeviceCondition *out);
+
+/**
+ * @brief SetBurstMode
+ * @param[in] addr \ref BtdrvAddress
+ * @param[in] flag Flag
+ */
+Result btmSetBurstMode(BtdrvAddress addr, bool flag);
+
+/**
+ * @brief SetSlotMode
+ * @param[in] list \ref BtmDeviceSlotModeList
+ */
+Result btmSetSlotMode(const BtmDeviceSlotModeList *list);
+
+/**
+ * @brief SetBluetoothMode
+ * @note Only available on pre-9.0.0.
+ * @param[in] mode BluetoothMode
+ */
+Result btmSetBluetoothMode(u32 mode);
+
+/**
+ * @brief SetWlanMode
+ * @param[in] mode WlanMode
+ */
+Result btmSetWlanMode(u32 mode);
+
+/**
+ * @brief AcquireDeviceInfoEvent
+ * @note The Event must be closed by the user once finished with it.
+ * @param[out] out_event Output Event with autoclear=true.
+ */
+Result btmAcquireDeviceInfoEvent(Event* out_event);
+
+/**
+ * @brief GetDeviceInfo
+ * @param[out] out \ref BtmDeviceInfoList
+ */
+Result btmGetDeviceInfo(BtmDeviceInfoList *out);
+
+/**
+ * @brief AddDeviceInfo
+ * @param[in] info \ref BtmDeviceInfo
+ */
+Result btmAddDeviceInfo(const BtmDeviceInfo *info);
+
+/**
+ * @brief RemoveDeviceInfo
+ * @param[in] addr \ref BtdrvAddress
+ */
+Result btmRemoveDeviceInfo(BtdrvAddress addr);
+
+/**
+ * @brief IncreaseDeviceInfoOrder
+ * @param[in] addr \ref BtdrvAddress
+ */
+Result btmIncreaseDeviceInfoOrder(BtdrvAddress addr);
+
+/**
+ * @brief LlrNotify
+ * @param[in] addr \ref BtdrvAddress
+ * @param[in] unk [9.0.0+] Unknown
+ */
+Result btmLlrNotify(BtdrvAddress addr, s32 unk);
+
+/**
+ * @brief EnableRadio
+ */
+Result btmEnableRadio(void);
+
+/**
+ * @brief DisableRadio
+ */
+Result btmDisableRadio(void);
+
+/**
+ * @brief HidDisconnect
+ * @param[in] addr \ref BtdrvAddress
+ */
+Result btmHidDisconnect(BtdrvAddress addr);
+
+/**
+ * @brief HidSetRetransmissionMode
+ * @param[in] addr \ref BtdrvAddress
+ * @param[in] list \ref BtmZeroRetransmissionList
+ */
+Result btmHidSetRetransmissionMode(BtdrvAddress addr, const BtmZeroRetransmissionList *list);
+
+/**
+ * @brief AcquireAwakeReqEvent
+ * @note Only available on [2.0.0+].
+ * @note The Event must be closed by the user once finished with it.
+ * @param[out] out_event Output Event with autoclear=true.
+ */
+Result btmAcquireAwakeReqEvent(Event* out_event);
+
+
+/**
+ * @brief AcquireLlrStateEvent
+ * @note Only available on [4.0.0+].
+ * @note The Event must be closed by the user once finished with it.
+ * @param[out] out_event Output Event with autoclear=true.
+ */
+Result btmAcquireLlrStateEvent(Event* out_event);
+
+/**
+ * @brief IsLlrStarted
+ * @note Only available on [4.0.0+].
+ * @param[out] out Output flag.
+ */
+Result btmIsLlrStarted(bool *out);
+
+/**
+ * @brief EnableSlotSaving
+ * @note Only available on [4.0.0+].
+ * @param[in] flag Flag
+ */
+Result btmEnableSlotSaving(bool flag);
+
+/**
+ * @brief ProtectDeviceInfo
+ * @note Only available on [5.0.0+].
+ * @param[in] addr \ref BtdrvAddress
+ * @param[in] flag Flag
+ */
+Result btmProtectDeviceInfo(BtdrvAddress addr, bool flag);
 
 /**
  * @brief AcquireBleScanEvent
