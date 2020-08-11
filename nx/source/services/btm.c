@@ -58,6 +58,10 @@ static Result _btmCmdInU32NoOut(u32 inval, u32 cmd_id) {
     return serviceDispatchIn(&g_btmSrv, cmd_id, inval);
 }
 
+static Result _btmCmdInU64NoOut(u64 inval, u32 cmd_id) {
+    return serviceDispatchIn(&g_btmSrv, cmd_id, inval);
+}
+
 static Result _btmCmdNoInOutU8(u8 *out, u32 cmd_id) {
     return serviceDispatchOut(&g_btmSrv, cmd_id, *out);
 }
@@ -557,5 +561,34 @@ Result btmUnregisterBleGattDataPath(const BtmBleDataPath *path) {
     u32 cmd_id = hosversionBefore(5,1,0) ? 39 : 56;
 
     return _btmRegisterBleGattDataPath(path, cmd_id);
+}
+
+Result btmRegisterAppletResourceUserId(u64 AppletResourceUserId, u32 unk) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    u32 cmd_id = hosversionBefore(5,1,0) ? 40 : 57;
+
+    const struct {
+        u32 unk;
+        u64 AppletResourceUserId;
+    } in = { unk, AppletResourceUserId };
+
+    return serviceDispatchIn(&g_btmSrv, cmd_id, in);
+}
+
+Result btmUnregisterAppletResourceUserId(u64 AppletResourceUserId) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    u32 cmd_id = hosversionBefore(5,1,0) ? 41 : 58;
+
+    return _btmCmdInU64NoOut(AppletResourceUserId, cmd_id);
+}
+
+Result btmSetAppletResourceUserId(u64 AppletResourceUserId) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    u32 cmd_id = hosversionBefore(5,1,0) ? 42 : 59;
+
+    return _btmCmdInU64NoOut(AppletResourceUserId, cmd_id);
 }
 

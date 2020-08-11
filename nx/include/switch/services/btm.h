@@ -515,3 +515,25 @@ Result btmRegisterBleGattDataPath(const BtmBleDataPath *path);
  */
 Result btmUnregisterBleGattDataPath(const BtmBleDataPath *path);
 
+/**
+ * @brief RegisterAppletResourceUserId
+ * @note Only available on [5.0.0+].
+ * @param[in] AppletResourceUserId AppletResourceUserId
+ * @param[in] unk Unknown
+ */
+Result btmRegisterAppletResourceUserId(u64 AppletResourceUserId, u32 unk);
+
+/**
+ * @brief UnregisterAppletResourceUserId
+ * @note Only available on [5.0.0+].
+ * @param[in] AppletResourceUserId AppletResourceUserId
+ */
+Result btmUnregisterAppletResourceUserId(u64 AppletResourceUserId);
+
+/**
+ * @brief SetAppletResourceUserId
+ * @note Only available on [5.0.0+].
+ * @param[in] AppletResourceUserId AppletResourceUserId
+ */
+Result btmSetAppletResourceUserId(u64 AppletResourceUserId);
+
