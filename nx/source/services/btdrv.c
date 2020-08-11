@@ -217,7 +217,8 @@ Result btdrvRegisterHidReportEvent(Event* out_event) {
         }
     }
 
-    if (R_SUCCEEDED(rc)) rc = _btdrvCmdGetEvent(out_event, true, 37); // RegisterHidReportEvent
+    u32 cmd_id = hosversionBefore(4,0,0) ? 36 : 37;
+    if (R_SUCCEEDED(rc)) rc = _btdrvCmdGetEvent(out_event, true, cmd_id); // RegisterHidReportEvent
     return rc;
 }
 
@@ -261,7 +262,8 @@ Result btdrvGetHidReportEventInfo(void* buffer, size_t size, BtdrvHidEventType *
     }
 
     u32 tmp_type=0;
-    Result rc = _btdrvCmdOutU32OutBuf(buffer, size, &tmp_type, 38);
+    u32 cmd_id = hosversionBefore(4,0,0) ? 37 : 38;
+    Result rc = _btdrvCmdOutU32OutBuf(buffer, size, &tmp_type, cmd_id);
     if (R_SUCCEEDED(rc) && type) *type = tmp_type;
     return rc;
 }
@@ -271,41 +273,50 @@ void* btdrvGetHidReportEventInfoSharedmemAddr(void) {
 }
 
 Result btdrvGetLatestPlr(BtdrvPlrList *out) {
+    u32 cmd_id = hosversionBefore(4,0,0) ? 38 : 39;
     size_t size = hosversionBefore(9,0,0) ? sizeof(BtdrvPlrStatistics) : sizeof(BtdrvPlrList);
 
-    return _btdrvCmdOutBufAliasFixed(out, size, 39);
-}
-
-Result btdrvEnableTxPowerBoostSetting(bool flag) {
-    if (hosversionBefore(3,0,0))
-        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-
-    return _btdrvCmdInBoolNoOut(flag, 42);
-}
-
-Result btdrvIsTxPowerBoostSettingEnabled(bool *out) {
-    if (hosversionBefore(3,0,0))
-        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-
-    return _btdrvCmdNoInOutBool(out, 43);
-}
-
-Result btdrvEnableAfhSetting(bool flag) {
-    if (hosversionBefore(3,0,0))
-        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-
-    return _btdrvCmdInBoolNoOut(flag, 44);
-}
-
-Result btdrvIsAfhSettingEnabled(bool *out) {
-    return _btdrvCmdNoInOutBool(out, 45);
+    return _btdrvCmdOutBufAliasFixed(out, size, cmd_id);
 }
 
 Result btdrvGetChannelMap(BtdrvChannelMapList *out) {
     if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    u32 cmd_id = hosversionBefore(4,0,0) ? 40 : 41;
 
-    return _btdrvCmdOutBufAliasFixed(out, sizeof(*out), 41);
+    return _btdrvCmdOutBufAliasFixed(out, sizeof(*out), cmd_id);
+}
+
+Result btdrvEnableTxPowerBoostSetting(bool flag) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    u32 cmd_id = hosversionBefore(4,0,0) ? 41 : 42;
+
+    return _btdrvCmdInBoolNoOut(flag, cmd_id);
+}
+
+Result btdrvIsTxPowerBoostSettingEnabled(bool *out) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    u32 cmd_id = hosversionBefore(4,0,0) ? 42 : 43;
+
+    return _btdrvCmdNoInOutBool(out, cmd_id);
+}
+
+Result btdrvEnableAfhSetting(bool flag) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    u32 cmd_id = hosversionBefore(4,0,0) ? 43 : 44;
+
+    return _btdrvCmdInBoolNoOut(flag, cmd_id);
+}
+
+Result btdrvIsAfhSettingEnabled(bool *out) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    u32 cmd_id = hosversionBefore(4,0,0) ? 44 : 45;
+
+    return _btdrvCmdNoInOutBool(out, cmd_id);
 }
 
 Result btdrvSetBleVisibility(bool flag0, bool flag1) {

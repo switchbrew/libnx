@@ -387,6 +387,13 @@ void* btdrvGetHidReportEventInfoSharedmemAddr(void);
 Result btdrvGetLatestPlr(BtdrvPlrList *out);
 
 /**
+ * @brief GetChannelMap
+ * @note Only available on [3.0.0+].
+ * @param[out] out \ref BtdrvChannelMapList
+ */
+Result btdrvGetChannelMap(BtdrvChannelMapList *out);
+
+/**
  * @brief EnableTxPowerBoostSetting
  * @note Only available on [3.0.0+].
  * @param[in] flag Input flag.
@@ -409,16 +416,10 @@ Result btdrvEnableAfhSetting(bool flag);
 
 /**
  * @brief IsAfhSettingEnabled
+ * @note Only available on [3.0.0+].
  * @param[out] out Output flag.
  */
 Result btdrvIsAfhSettingEnabled(bool *out);
-
-/**
- * @brief GetChannelMap
- * @note Only available on [3.0.0+].
- * @param[out] out \ref BtdrvChannelMapList
- */
-Result btdrvGetChannelMap(BtdrvChannelMapList *out);
 
 /**
  * @brief SetBleVisibility
