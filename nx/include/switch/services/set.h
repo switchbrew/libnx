@@ -12,6 +12,7 @@
 #include "../services/time.h"
 #include "../services/acc.h"
 #include "../services/fs.h"
+#include "../services/btdrv_types.h"
 #include "../sf/service.h"
 
 #define SET_MAX_NAME_SIZE 0x48
@@ -298,7 +299,7 @@ typedef struct {
 
 /// BluetoothDevicesSettings
 typedef struct {
-    u8 address[6];                      ///< nn::bluetooth::Address
+    BtdrvAddress address;
     char name[0x20];
     u16 unk_x26;
     u8 unk_x28;
@@ -580,7 +581,7 @@ typedef struct {
 
 /// NxControllerSettings
 typedef struct {
-    u8 address[6];                      ///< nn::bluetooth::Address
+    BtdrvAddress address;
     u8 type;                            ///< \ref SetSysControllerType.
     char serial[0x10];
     SetSysColor4u8Type body_color;
@@ -642,7 +643,7 @@ typedef struct {
 
 /// BlePairingSettings
 typedef struct {
-    u8 address[6];          ///< nn::bluetooth::Address
+    BtdrvAddress address;
     u16 unk_x6;
     u16 unk_x8;
     u8 unk_xA;
