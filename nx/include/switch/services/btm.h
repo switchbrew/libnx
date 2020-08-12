@@ -6,7 +6,7 @@
 #pragma once
 #include "../types.h"
 #include "../kernel/event.h"
-#include "../services/btdrv.h"
+#include "../services/btdrv_types.h"
 #include "../sf/service.h"
 
 /// HostDeviceProperty
