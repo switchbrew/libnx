@@ -135,7 +135,8 @@ typedef struct {
 
 /// BleScanResult
 typedef struct {
-    u8 unk_x0[0x148];          ///< Unknown
+    u8 unk_x0[0x144];          ///< Unknown
+    s32 unk_x144;              ///< Unknown
 } BtdrvBleScanResult;
 
 /// BleConnectionInfo
@@ -153,6 +154,35 @@ typedef struct {
 
 /// GattId
 typedef struct {
-    u8 unk_x0[0x18];           ///< Unknown
+    u8 instance_id;                        ///< InstanceId
+    u8 pad[3];                             ///< Padding
+    BtdrvGattAttributeUuid uuid;           ///< \ref BtdrvGattAttributeUuid
 } BtdrvGattId;
+
+/// LeEventInfo
+typedef struct {
+    u32 unk_x0;                            ///< Unknown
+    u32 unk_x4;                            ///< Unknown
+    u8 unk_x8;                             ///< Unknown
+    u8 pad[3];                             ///< Padding
+    BtdrvGattAttributeUuid uuid0;          ///< \ref BtdrvGattAttributeUuid
+    BtdrvGattAttributeUuid uuid1;          ///< \ref BtdrvGattAttributeUuid
+    BtdrvGattAttributeUuid uuid2;          ///< \ref BtdrvGattAttributeUuid
+    u16 size;                              ///< Size of the below data.
+    u8 data[0x3B6];                        ///< Data.
+} BtdrvLeEventInfo;
+
+/// BleClientGattOperationInfo
+typedef struct {
+    u8 unk_x0;                              ///< Converted from BtdrvLeEventInfo::unk_x0.
+    u8 pad[3];                              ///< Padding
+    u32 unk_x4;                             ///< BtdrvLeEventInfo::unk_x4
+    u8 unk_x8;                              ///< BtdrvLeEventInfo::unk_x8
+    u8 pad2[3];                             ///< Padding
+    BtdrvGattAttributeUuid uuid0;           ///< BtdrvLeEventInfo::uuid0
+    BtdrvGattAttributeUuid uuid1;           ///< BtdrvLeEventInfo::uuid1
+    BtdrvGattAttributeUuid uuid2;           ///< BtdrvLeEventInfo::uuid2
+    u64 size;                               ///< BtdrvLeEventInfo::size
+    u8 data[0x200];                         ///< BtdrvLeEventInfo::data
+} BtdrvBleClientGattOperationInfo;
 

@@ -53,21 +53,31 @@ typedef struct {
 typedef struct {
     u8 unk_x0[0x4];               ///< Unknown
     BtdrvGattAttributeUuid uuid;  ///< \ref BtdrvGattAttributeUuid
-    u16 unk_x18;                  ///< Unknown
-    u8 unk_x1A[0x4];              ///< Unknown
-    u16 unk_x1E;                  ///< Unknown
-    u8 unk_x20;                   ///< Unknown
+    u16 handle;                   ///< Handle
+    u8 unk_x1A[0x2];              ///< Unknown
+    u16 instance_id;              ///< InstanceId
+    u16 end_group_handle;         ///< EndGroupHandle
+    u8 primary_service;           ///< PrimaryService
     u8 pad[3];                    ///< Padding
 } BtmGattService;
 
 /// GattCharacteristic
 typedef struct {
-    u8 unk_x0[0x24];              ///< Unknown
+    u8 unk_x0[0x4];               ///< Unknown
+    BtdrvGattAttributeUuid uuid;  ///< \ref BtdrvGattAttributeUuid
+    u16 handle;                   ///< Handle
+    u8 unk_x1A[0x2];              ///< Unknown
+    u16 instance_id;              ///< InstanceId
+    u8 properties;                ///< Properties
+    u8 unk_x1F[0x5];              ///< Unknown
 } BtmGattCharacteristic;
 
 /// GattDescriptor
 typedef struct {
-    u8 unk_x0[0x20];              ///< Unknown
+    u8 unk_x0[0x4];               ///< Unknown
+    BtdrvGattAttributeUuid uuid;  ///< \ref BtdrvGattAttributeUuid
+    u16 handle;                   ///< Handle
+    u8 unk_x1A[0x6];              ///< Unknown
 } BtmGattDescriptor;
 
 /// BleDataPath
