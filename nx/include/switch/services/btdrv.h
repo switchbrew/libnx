@@ -860,73 +860,73 @@ Result btdrvUnregisterGattDataPath(const BtdrvGattAttributeUuid *uuid);
 /**
  * @brief ReadGattCharacteristic
  * @note Only available on [5.0.0+].
- * @param[in] flag Flag
- * @param[in] unk Unknown
- * @param[in] unk2 Unknown
+ * @param[in] connection_handle ConnectionHandle
+ * @param[in] primary_service PrimaryService
  * @param[in] id0 \ref BtdrvGattId
  * @param[in] id1 \ref BtdrvGattId
+ * @param[in] unk Unknown
  */
-Result btdrvReadGattCharacteristic(bool flag, u8 unk, u32 unk2, const BtdrvGattId *id0, const BtdrvGattId *id1);
+Result btdrvReadGattCharacteristic(u32 connection_handle, bool primary_service, const BtdrvGattId *id0, const BtdrvGattId *id1, u8 unk);
 
 /**
  * @brief ReadGattDescriptor
  * @note Only available on [5.0.0+].
- * @param[in] flag Flag
- * @param[in] unk Unknown
- * @param[in] unk2 Unknown
+ * @param[in] connection_handle ConnectionHandle
+ * @param[in] primary_service PrimaryService
  * @param[in] id0 \ref BtdrvGattId
  * @param[in] id1 \ref BtdrvGattId
  * @param[in] id2 \ref BtdrvGattId
+ * @param[in] unk Unknown
  */
-Result btdrvReadGattDescriptor(bool flag, u8 unk, u32 unk2, const BtdrvGattId *id0, const BtdrvGattId *id1, const BtdrvGattId *id2);
+Result btdrvReadGattDescriptor(u32 connection_handle, bool primary_service, const BtdrvGattId *id0, const BtdrvGattId *id1, const BtdrvGattId *id2, u8 unk);
 
 /**
  * @brief WriteGattCharacteristic
  * @note Only available on [5.0.0+].
- * @param[in] flag Flag
- * @param[in] unk Unknown
- * @param[in] flag2 Flag
- * @param[in] unk2 Unknown
+ * @param[in] connection_handle ConnectionHandle
+ * @param[in] primary_service PrimaryService
  * @param[in] id0 \ref BtdrvGattId
  * @param[in] id1 \ref BtdrvGattId
  * @param[in] buffer Input buffer.
  * @param[in] size Input buffer size, must be <=0x258.
+ * @param[in] unk Unknown
+ * @param[in] flag Flag
  */
-Result btdrvWriteGattCharacteristic(bool flag, u8 unk, bool flag2, u32 unk2, const BtdrvGattId *id0, const BtdrvGattId *id1, const void* buffer, size_t size);
+Result btdrvWriteGattCharacteristic(u32 connection_handle, bool primary_service, const BtdrvGattId *id0, const BtdrvGattId *id1, const void* buffer, size_t size, u8 unk, bool flag);
 
 /**
  * @brief WriteGattDescriptor
  * @note Only available on [5.0.0+].
- * @param[in] flag Flag
- * @param[in] unk Unknown
- * @param[in] unk2 Unknown
+ * @param[in] connection_handle ConnectionHandle
+ * @param[in] primary_service PrimaryService
  * @param[in] id0 \ref BtdrvGattId
  * @param[in] id1 \ref BtdrvGattId
  * @param[in] id2 \ref BtdrvGattId
  * @param[in] buffer Input buffer.
  * @param[in] size Input buffer size, must be <=0x258.
+ * @param[in] unk Unknown
  */
-Result btdrvWriteGattDescriptor(bool flag, u8 unk, u32 unk2, const BtdrvGattId *id0, const BtdrvGattId *id1, const BtdrvGattId *id2, const void* buffer, size_t size);
+Result btdrvWriteGattDescriptor(u32 connection_handle, bool primary_service, const BtdrvGattId *id0, const BtdrvGattId *id1, const BtdrvGattId *id2, const void* buffer, size_t size, u8 unk);
 
 /**
  * @brief RegisterGattNotification
  * @note Only available on [5.0.0+].
- * @param[in] flag Flag
- * @param[in] unk Unknown
+ * @param[in] connection_handle ConnectionHandle
+ * @param[in] primary_service PrimaryService
  * @param[in] id0 \ref BtdrvGattId
  * @param[in] id1 \ref BtdrvGattId
  */
-Result btdrvRegisterGattNotification(bool flag, u32 unk, const BtdrvGattId *id0, const BtdrvGattId *id1);
+Result btdrvRegisterGattNotification(u32 connection_handle, bool primary_service, const BtdrvGattId *id0, const BtdrvGattId *id1);
 
 /**
  * @brief UnregisterGattNotification
  * @note Only available on [5.0.0+].
- * @param[in] flag Flag
- * @param[in] unk Unknown
+ * @param[in] connection_handle ConnectionHandle
+ * @param[in] primary_service PrimaryService
  * @param[in] id0 \ref BtdrvGattId
  * @param[in] id1 \ref BtdrvGattId
  */
-Result btdrvUnregisterGattNotification(bool flag, u32 unk, const BtdrvGattId *id0, const BtdrvGattId *id1);
+Result btdrvUnregisterGattNotification(u32 connection_handle, bool primary_service, const BtdrvGattId *id0, const BtdrvGattId *id1);
 
 /**
  * @brief GetLeHidEventInfo

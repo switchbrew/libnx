@@ -156,12 +156,12 @@ Result btdevAcquireBlePairingEvent(Event* out_event) {
     return btmuAcquireBlePairingEvent(out_event);
 }
 
-Result btdevPairGattServer(BtdrvBleAdvertisePacketParameter param, u32 id) {
-    return btmuBlePairDevice(param, id);
+Result btdevPairGattServer(u32 connection_handle, BtdrvBleAdvertisePacketParameter param) {
+    return btmuBlePairDevice(connection_handle, param);
 }
 
-Result btdevUnpairGattServer(BtdrvBleAdvertisePacketParameter param, u32 id) {
-    return btmuBleUnPairDevice(param, id);
+Result btdevUnpairGattServer(u32 connection_handle, BtdrvBleAdvertisePacketParameter param) {
+    return btmuBleUnPairDevice(connection_handle, param);
 }
 
 Result btdevUnpairGattServer2(BtdrvAddress addr, BtdrvBleAdvertisePacketParameter param) {
@@ -176,13 +176,13 @@ Result btdevAcquireBleMtuConfigEvent(Event* out_event) {
     return btmuAcquireBleMtuConfigEvent(out_event);
 }
 
-Result btdevConfigureBleMtu(u32 id, u16 mtu) {
+Result btdevConfigureBleMtu(u32 connection_handle, u16 mtu) {
     if (mtu < 0x18 || mtu > 0x200) return MAKERESULT(Module_Libnx, LibnxError_BadInput); // sdknso would Abort here, sdknso impls the same thing in the btmu func as well (but we don't).
-    return btmuConfigureBleMtu(id, mtu);
+    return btmuConfigureBleMtu(connection_handle, mtu);
 }
 
-Result btdevGetBleMtu(u32 id, u16 *out) {
-    return btmuGetBleMtu(id, out);
+Result btdevGetBleMtu(u32 connection_handle, u16 *out) {
+    return btmuGetBleMtu(connection_handle, out);
 }
 
 Result btdevAcquireBleGattOperationEvent(Event* out_event) {
@@ -292,7 +292,7 @@ Result btdevReadGattCharacteristic(BtdevGattCharacteristic *c) {
         btdevGattAttributeGetUuid(&tmpservice.attr, &gattid0.uuid);
         gattid1.instance_id = btdevGattCharacteristicGetInstanceId(c);
         btdevGattAttributeGetUuid(&c->attr, &gattid1.uuid);
-        rc = btLeClientReadCharacteristic(btdevGattServiceIsPrimaryService(&tmpservice), 0, btdevGattAttributeGetConnectionHandle(&c->attr), &gattid0, &gattid1);
+        rc = btLeClientReadCharacteristic(btdevGattAttributeGetConnectionHandle(&c->attr), btdevGattServiceIsPrimaryService(&tmpservice), &gattid0, &gattid1, 0);
     }
 
     return rc;
@@ -319,7 +319,7 @@ Result btdevWriteGattCharacteristic(BtdevGattCharacteristic *c) {
         btdevGattAttributeGetUuid(&tmpservice.attr, &gattid0.uuid);
         gattid1.instance_id = btdevGattCharacteristicGetInstanceId(c);
         btdevGattAttributeGetUuid(&c->attr, &gattid1.uuid);
-        rc = btLeClientWriteCharacteristic(btdevGattServiceIsPrimaryService(&tmpservice), 0, (prop & BIT(3)) != 0, btdevGattAttributeGetConnectionHandle(&c->attr), &gattid0, &gattid1, value, value_size);
+        rc = btLeClientWriteCharacteristic(btdevGattAttributeGetConnectionHandle(&c->attr), btdevGattServiceIsPrimaryService(&tmpservice), &gattid0, &gattid1, value, value_size, 0, (prop & BIT(3)) != 0);
     }
 
     return rc;
@@ -342,11 +342,11 @@ Result btdevEnableGattCharacteristicNotification(BtdevGattCharacteristic *c, boo
         btdevGattAttributeGetUuid(&tmpservice.attr, &gattid0.uuid);
         gattid1.instance_id = btdevGattCharacteristicGetInstanceId(c);
         btdevGattAttributeGetUuid(&c->attr, &gattid1.uuid);
-        bool is_primary = btdevGattServiceIsPrimaryService(&tmpservice);
+        bool primary_service = btdevGattServiceIsPrimaryService(&tmpservice);
         if (flag)
-            rc = btLeClientRegisterNotification(is_primary, connection_handle, &gattid0, &gattid1);
+            rc = btLeClientRegisterNotification(connection_handle, primary_service, &gattid0, &gattid1);
         else
-            rc = btLeClientDeregisterNotification(is_primary, connection_handle, &gattid0, &gattid1);
+            rc = btLeClientDeregisterNotification(connection_handle, primary_service, &gattid0, &gattid1);
     }
 
     return rc;
@@ -369,7 +369,7 @@ Result btdevReadGattDescriptor(BtdevGattDescriptor *d) {
         gattid1.instance_id = btdevGattCharacteristicGetInstanceId(&tmpcharacteristic);
         btdevGattAttributeGetUuid(&tmpcharacteristic.attr, &gattid1.uuid);
         btdevGattAttributeGetUuid(&d->attr, &gattid2.uuid);
-        rc = btLeClientReadDescriptor(btdevGattServiceIsPrimaryService(&tmpservice), 0, btdevGattAttributeGetConnectionHandle(&d->attr), &gattid0, &gattid1, &gattid2);
+        rc = btLeClientReadDescriptor(btdevGattAttributeGetConnectionHandle(&d->attr), btdevGattServiceIsPrimaryService(&tmpservice), &gattid0, &gattid1, &gattid2, 0);
     }
 
     return rc;
@@ -396,7 +396,7 @@ Result btdevWriteGattDescriptor(BtdevGattDescriptor *d) {
         gattid1.instance_id = btdevGattCharacteristicGetInstanceId(&tmpcharacteristic);
         btdevGattAttributeGetUuid(&tmpcharacteristic.attr, &gattid1.uuid);
         btdevGattAttributeGetUuid(&d->attr, &gattid2.uuid);
-        rc = btLeClientWriteDescriptor(btdevGattServiceIsPrimaryService(&tmpservice), 0, btdevGattAttributeGetConnectionHandle(&d->attr), &gattid0, &gattid1, &gattid2, value, value_size);
+        rc = btLeClientWriteDescriptor(btdevGattAttributeGetConnectionHandle(&d->attr), btdevGattServiceIsPrimaryService(&tmpservice), &gattid0, &gattid1, &gattid2, value, value_size, 0);
     }
 
     return rc;
@@ -441,7 +441,7 @@ Result btdevGattServiceGetIncludedServices(BtdevGattService *s, BtdevGattService
     return rc;
 }
 
-Result btdevGattServiceGetCharacteristics(BtdevGattService *s, BtdevGattCharacteristic *characteristic, u8 count, u8 *total_out) {
+Result btdevGattServiceGetCharacteristics(BtdevGattService *s, BtdevGattCharacteristic *characteristics, u8 count, u8 *total_out) {
     Result rc=0;
     BtmGattCharacteristic tmpcharacteristics[100]={0};
     u8 tmp_total_out=0;
@@ -450,7 +450,7 @@ Result btdevGattServiceGetCharacteristics(BtdevGattService *s, BtdevGattCharacte
     if (R_SUCCEEDED(rc)) {
         if (tmp_total_out > count) tmp_total_out = count;
         for (u8 i=0; i<tmp_total_out; i++) {
-            btdevGattCharacteristicCreate(characteristic, &tmpcharacteristics[i].uuid, tmpcharacteristics[i].handle, s->attr.connection_handle, tmpcharacteristics[i].instance_id, tmpcharacteristics[i].properties);
+            btdevGattCharacteristicCreate(&characteristics[i], &tmpcharacteristics[i].uuid, tmpcharacteristics[i].handle, s->attr.connection_handle, tmpcharacteristics[i].instance_id, tmpcharacteristics[i].properties);
         }
         if (total_out) *total_out = tmp_total_out;
     }

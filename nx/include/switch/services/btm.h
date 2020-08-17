@@ -1,6 +1,7 @@
 /**
  * @file btm.h
  * @brief btm service IPC wrapper.
+ * @note See also: https://switchbrew.org/wiki/BTM_services
  * @author yellows8
  */
 #pragma once
@@ -354,9 +355,9 @@ Result btmBleOverrideConnection(u32 id);
 /**
  * @brief BleDisconnect
  * @note Only available on [5.0.0+].
- * @param[in] id This must match a BtdrvBleConnectionInfo::id from \ref btmBleGetConnectionState. [5.1.0+] 0xFFFFFFFF is invalid.
+ * @param[in] connection_handle This must match a BtdrvBleConnectionInfo::id from \ref btmBleGetConnectionState. [5.1.0+] 0xFFFFFFFF is invalid.
  */
-Result btmBleDisconnect(u32 id);
+Result btmBleDisconnect(u32 connection_handle);
 
 /**
  * @brief BleGetConnectionState
@@ -385,18 +386,18 @@ Result btmAcquireBlePairingEvent(Event* out_event);
 /**
  * @brief BlePairDevice
  * @note Only available on [5.1.0+].
+ * @param[in] connection_handle Same as \ref btmBleDisconnect.
  * @param[in] param \ref BtdrvBleAdvertisePacketParameter
- * @param[in] id Same as \ref btmBleDisconnect.
  */
-Result btmBlePairDevice(BtdrvBleAdvertisePacketParameter param, u32 id);
+Result btmBlePairDevice(u32 connection_handle, BtdrvBleAdvertisePacketParameter param);
 
 /**
  * @brief BleUnpairDeviceOnBoth
  * @note Only available on [5.1.0+].
+ * @param[in] connection_handle Same as \ref btmBleDisconnect.
  * @param[in] param \ref BtdrvBleAdvertisePacketParameter
- * @param[in] id Same as \ref btmBleDisconnect.
  */
-Result btmBleUnpairDeviceOnBoth(BtdrvBleAdvertisePacketParameter param, u32 id);
+Result btmBleUnpairDeviceOnBoth(u32 connection_handle, BtdrvBleAdvertisePacketParameter param);
 
 /**
  * @brief BleUnPairDevice
@@ -427,65 +428,65 @@ Result btmAcquireBleServiceDiscoveryEvent(Event* out_event);
 /**
  * @brief GetGattServices
  * @note Only available on [5.0.0+].
- * @param[in] id Same as \ref btmBleDisconnect.
+ * @param[in] connection_handle Same as \ref btmBleDisconnect.
  * @param[out] services Output array of \ref BtmGattService.
  * @param[in] count Size of the services array in entries. The max is 100.
  * @param[out] total_out Total output entries.
  */
-Result btmGetGattServices(u32 id, BtmGattService *services, u8 count, u8 *total_out);
+Result btmGetGattServices(u32 connection_handle, BtmGattService *services, u8 count, u8 *total_out);
 
 /**
  * @brief Same as \ref btmGetGattServices except this only returns the \ref BtmGattService which matches the input \ref BtdrvGattAttributeUuid.
  * @note Only available on [5.0.0+].
- * @param[in] id Same as \ref btmBleDisconnect.
+ * @param[in] connection_handle Same as \ref btmBleDisconnect.
  * @param[in] uuid \ref BtdrvGattAttributeUuid
  * @param[out] service \ref BtmGattService
  * @param[out] flag Whether a \ref BtmGattService was returned.
  */
-Result btmGetGattService(u32 id, const BtdrvGattAttributeUuid *uuid, BtmGattService *service, bool *flag);
+Result btmGetGattService(u32 connection_handle, const BtdrvGattAttributeUuid *uuid, BtmGattService *service, bool *flag);
 
 /**
  * @brief Same as \ref btmGetGattServices except this only returns \ref BtmGattService entries where various checks pass with u16 fields.
  * @note Only available on [5.0.0+].
- * @param[in] id Same as \ref btmBleDisconnect.
- * @param[in] unk1 Unknown
+ * @param[in] connection_handle Same as \ref btmBleDisconnect.
+ * @param[in] handle Handle
  * @param[out] services \ref BtmGattService
  * @param[in] count Size of the services array in entries. The max is 100.
  * @param[out] out Output value.
  */
-Result btmGetGattIncludedServices(u32 id, u16 unk1, BtmGattService *services, u8 count, u8 *out);
+Result btmGetGattIncludedServices(u32 connection_handle, u16 handle, BtmGattService *services, u8 count, u8 *out);
 
 /**
  * @brief This is similar to \ref btmGetGattIncludedServices except this only returns 1 \ref BtmGattService.
  * @note Only available on [5.0.0+].
- * @param[in] id Same as \ref btmBleDisconnect.
- * @param[in] unk1 Unknown
+ * @param[in] connection_handle Same as \ref btmBleDisconnect.
+ * @param[in] handle Handle
  * @param[out] service \ref BtmGattService
  * @param[out] flag Whether a \ref BtmGattService was returned.
  */
-Result btmGetBelongingService(u32 id, u16 unk1, BtmGattService *service, bool *flag);
+Result btmGetBelongingService(u32 connection_handle, u16 handle, BtmGattService *service, bool *flag);
 
 /**
  * @brief GetGattCharacteristics
  * @note Only available on [5.0.0+].
- * @param[in] id Same as \ref btmBleDisconnect.
- * @param[in] unk1 This controls which \ref BtmGattCharacteristic entries to return.
+ * @param[in] connection_handle Same as \ref btmBleDisconnect.
+ * @param[in] handle This controls which \ref BtmGattCharacteristic entries to return.
  * @param[out] characteristics \ref BtmGattCharacteristic
  * @param[in] count Size of the characteristics array in entries. The max is 100.
  * @param[out] total_out Total output entries.
  */
-Result btmGetGattCharacteristics(u32 id, u16 unk1, BtmGattCharacteristic *characteristics, u8 count, u8 *total_out);
+Result btmGetGattCharacteristics(u32 connection_handle, u16 handle, BtmGattCharacteristic *characteristics, u8 count, u8 *total_out);
 
 /**
  * @brief GetGattDescriptors
  * @note Only available on [5.0.0+].
- * @param[in] id Same as \ref btmBleDisconnect.
- * @param[in] unk1 This controls which \ref BtmGattDescriptor entries to return.
+ * @param[in] connection_handle Same as \ref btmBleDisconnect.
+ * @param[in] handle This controls which \ref BtmGattDescriptor entries to return.
  * @param[out] descriptors \ref BtmGattDescriptor
  * @param[in] count Size of the descriptors array in entries. The max is 100.
  * @param[out] total_out Total output entries.
  */
-Result btmGetGattDescriptors(u32 id, u16 unk1, BtmGattDescriptor *descriptors, u8 count, u8 *total_out);
+Result btmGetGattDescriptors(u32 connection_handle, u16 handle, BtmGattDescriptor *descriptors, u8 count, u8 *total_out);
 
 /**
  * @brief AcquireBleMtuConfigEvent
@@ -498,18 +499,18 @@ Result btmAcquireBleMtuConfigEvent(Event* out_event);
 /**
  * @brief ConfigureBleMtu
  * @note Only available on [5.0.0+].
- * @param[in] id Same as \ref btmBleDisconnect.
+ * @param[in] connection_handle Same as \ref btmBleDisconnect.
  * @param[in] mtu MTU
  */
-Result btmConfigureBleMtu(u32 id, u16 mtu);
+Result btmConfigureBleMtu(u32 connection_handle, u16 mtu);
 
 /**
  * @brief GetBleMtu
  * @note Only available on [5.0.0+].
- * @param[in] id Same as \ref btmBleDisconnect.
+ * @param[in] connection_handle Same as \ref btmBleDisconnect.
  * @param[out] out Output MTU.
  */
-Result btmGetBleMtu(u32 id, u16 *out);
+Result btmGetBleMtu(u32 connection_handle, u16 *out);
 
 /**
  * @brief RegisterBleGattDataPath
