@@ -269,7 +269,7 @@ Result btdrvCloseHidConnection(BtdrvAddress addr);
  * @param[in] addr \ref BtdrvAddress
  * @param[in] buffer Input \ref BtdrvHidReport, on pre-9.0.0 this is \ref BtdrvHidData.
  */
-Result btdrvWriteHidData(BtdrvAddress addr, BtdrvHidReport *buffer);
+Result btdrvWriteHidData(BtdrvAddress addr, const BtdrvHidReport *buffer);
 
 /**
  * @brief WriteHidData2
@@ -285,7 +285,7 @@ Result btdrvWriteHidData2(BtdrvAddress addr, const void* buffer, size_t size);
  * @param[in] type \ref BtdrvBluetoothHhReportType
  * @param[in] buffer Input \ref BtdrvHidReport, on pre-9.0.0 this is \ref BtdrvHidData.
  */
-Result btdrvSetHidReport(BtdrvAddress addr, BtdrvBluetoothHhReportType type, BtdrvHidReport *buffer);
+Result btdrvSetHidReport(BtdrvAddress addr, BtdrvBluetoothHhReportType type, const BtdrvHidReport *buffer);
 
 /**
  * @brief This sends a HID GET_REPORT transaction packet.
