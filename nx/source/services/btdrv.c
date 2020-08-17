@@ -797,7 +797,7 @@ Result btdrvDisconnectGattClient(u8 unk, BtdrvAddress addr) {
     return serviceDispatchIn(&g_btdrvSrv, cmd_id, unk);
 }
 
-Result btdrvAddGattService(u8 unk0, u8 unk1, bool flag, const BtdrvGattAttributeUuid *uuid) {
+Result btdrvAddGattService(u8 unk0, const BtdrvGattAttributeUuid *uuid, u8 unk1, bool flag) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
@@ -826,7 +826,7 @@ Result btdrvEnableGattService(u8 unk, const BtdrvGattAttributeUuid *uuid) {
     return serviceDispatchIn(&g_btdrvSrv, cmd_id, in);
 }
 
-Result btdrvAddGattCharacteristic(u8 unk0, u8 unk1, u16 unk2, const BtdrvGattAttributeUuid *uuid0, const BtdrvGattAttributeUuid *uuid1) {
+Result btdrvAddGattCharacteristic(u8 unk0, const BtdrvGattAttributeUuid *uuid0, const BtdrvGattAttributeUuid *uuid1, u8 unk1, u16 unk2) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
@@ -841,7 +841,7 @@ Result btdrvAddGattCharacteristic(u8 unk0, u8 unk1, u16 unk2, const BtdrvGattAtt
     return serviceDispatchIn(&g_btdrvSrv, 77, in);
 }
 
-Result btdrvAddGattDescriptor(u8 unk0, u16 unk1, const BtdrvGattAttributeUuid *uuid0, const BtdrvGattAttributeUuid *uuid1) {
+Result btdrvAddGattDescriptor(u8 unk0, const BtdrvGattAttributeUuid *uuid0, const BtdrvGattAttributeUuid *uuid1, u16 unk1) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     u32 cmd_id = hosversionBefore(5,1,0) ? 76 : 78;
@@ -865,7 +865,7 @@ Result btdrvGetBleManagedEventInfo(void* buffer, size_t size, u32 *type) {
     return _btdrvCmdOutU32OutBuf(buffer, size, type, cmd_id);
 }
 
-Result btdrvGetGattFirstCharacteristic(bool flag, u32 unk, const BtdrvGattId *id, const BtdrvGattAttributeUuid *uuid, u8 *unk_out, BtdrvGattId *id_out) {
+Result btdrvGetGattFirstCharacteristic(u32 unk, const BtdrvGattId *id, bool flag, const BtdrvGattAttributeUuid *uuid, u8 *unk_out, BtdrvGattId *id_out) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     u32 cmd_id = hosversionBefore(5,1,0) ? 79 : 80;
@@ -892,7 +892,7 @@ Result btdrvGetGattFirstCharacteristic(bool flag, u32 unk, const BtdrvGattId *id
     return rc;
 }
 
-Result btdrvGetGattNextCharacteristic(bool flag, u32 unk, const BtdrvGattId *id0, const BtdrvGattId *id1, const BtdrvGattAttributeUuid *uuid, u8 *unk_out, BtdrvGattId *id_out) {
+Result btdrvGetGattNextCharacteristic(u32 unk, const BtdrvGattId *id0, bool flag, const BtdrvGattId *id1, const BtdrvGattAttributeUuid *uuid, u8 *unk_out, BtdrvGattId *id_out) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     u32 cmd_id = hosversionBefore(5,1,0) ? 80 : 81;
@@ -920,7 +920,7 @@ Result btdrvGetGattNextCharacteristic(bool flag, u32 unk, const BtdrvGattId *id0
     return rc;
 }
 
-Result btdrvGetGattFirstDescriptor(bool flag, u32 unk, const BtdrvGattId *id0, const BtdrvGattId *id1, const BtdrvGattAttributeUuid *uuid, BtdrvGattId *id_out) {
+Result btdrvGetGattFirstDescriptor(u32 unk, const BtdrvGattId *id0, bool flag, const BtdrvGattId *id1, const BtdrvGattAttributeUuid *uuid, BtdrvGattId *id_out) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     u32 cmd_id = hosversionBefore(5,1,0) ? 81 : 82;
@@ -937,7 +937,7 @@ Result btdrvGetGattFirstDescriptor(bool flag, u32 unk, const BtdrvGattId *id0, c
     return serviceDispatchInOut(&g_btdrvSrv, cmd_id, in, *id_out);
 }
 
-Result btdrvGetGattNextDescriptor(bool flag, u32 unk, const BtdrvGattId *id0, const BtdrvGattId *id1, const BtdrvGattId *id2, const BtdrvGattAttributeUuid *uuid, BtdrvGattId *id_out) {
+Result btdrvGetGattNextDescriptor(u32 unk, const BtdrvGattId *id0, bool flag, const BtdrvGattId *id1, const BtdrvGattId *id2, const BtdrvGattAttributeUuid *uuid, BtdrvGattId *id_out) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     u32 cmd_id = hosversionBefore(5,1,0) ? 82 : 83;

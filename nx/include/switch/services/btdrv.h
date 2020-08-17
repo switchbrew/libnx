@@ -715,11 +715,11 @@ Result btdrvDisconnectGattClient(u8 unk, BtdrvAddress addr);
  * @brief AddGattService
  * @note Only available on [5.0.0+].
  * @param[in] unk0 Unknown
+ * @param[in] uuid \ref BtdrvGattAttributeUuid
  * @param[in] unk1 Unknown
  * @param[in] flag Flag
- * @param[in] uuid \ref BtdrvGattAttributeUuid
  */
-Result btdrvAddGattService(u8 unk0, u8 unk1, bool flag, const BtdrvGattAttributeUuid *uuid);
+Result btdrvAddGattService(u8 unk0, const BtdrvGattAttributeUuid *uuid, u8 unk1, bool flag);
 
 /**
  * @brief EnableGattService
@@ -733,22 +733,22 @@ Result btdrvEnableGattService(u8 unk, const BtdrvGattAttributeUuid *uuid);
  * @brief AddGattCharacteristic
  * @note Only available on [5.0.0+].
  * @param[in] unk0 Unknown
- * @param[in] unk1 Unknown
- * @param[in] unk2 Unknown
  * @param[in] uuid0 \ref BtdrvGattAttributeUuid
  * @param[in] uuid1 \ref BtdrvGattAttributeUuid
+ * @param[in] unk1 Unknown
+ * @param[in] unk2 Unknown
  */
-Result btdrvAddGattCharacteristic(u8 unk0, u8 unk1, u16 unk2, const BtdrvGattAttributeUuid *uuid0, const BtdrvGattAttributeUuid *uuid1);
+Result btdrvAddGattCharacteristic(u8 unk0, const BtdrvGattAttributeUuid *uuid0, const BtdrvGattAttributeUuid *uuid1, u8 unk1, u16 unk2);
 
 /**
  * @brief AddGattDescriptor
  * @note Only available on [5.0.0+].
  * @param[in] unk0 Unknown
- * @param[in] unk1 Unknown
  * @param[in] uuid0 \ref BtdrvGattAttributeUuid
  * @param[in] uuid1 \ref BtdrvGattAttributeUuid
+ * @param[in] unk1 Unknown
  */
-Result btdrvAddGattDescriptor(u8 unk0, u16 unk1, const BtdrvGattAttributeUuid *uuid0, const BtdrvGattAttributeUuid *uuid1);
+Result btdrvAddGattDescriptor(u8 unk0, const BtdrvGattAttributeUuid *uuid0, const BtdrvGattAttributeUuid *uuid1, u16 unk1);
 
 /**
  * @brief GetBleManagedEventInfo
@@ -763,52 +763,52 @@ Result btdrvGetBleManagedEventInfo(void* buffer, size_t size, u32 *type);
 /**
  * @brief GetGattFirstCharacteristic
  * @note Only available on [5.0.0+].
- * @param[in] flag Flag
  * @param[in] unk Unknown
  * @param[in] id \ref BtdrvGattId
+ * @param[in] flag Flag
  * @param[in] uuid \ref BtdrvGattAttributeUuid
  * @param[out] unk_out Unknown
  * @param[out] id_out \ref BtdrvGattId
  */
-Result btdrvGetGattFirstCharacteristic(bool flag, u32 unk, const BtdrvGattId *id, const BtdrvGattAttributeUuid *uuid, u8 *unk_out, BtdrvGattId *id_out);
+Result btdrvGetGattFirstCharacteristic(u32 unk, const BtdrvGattId *id, bool flag, const BtdrvGattAttributeUuid *uuid, u8 *unk_out, BtdrvGattId *id_out);
 
 /**
  * @brief GetGattNextCharacteristic
  * @note Only available on [5.0.0+].
- * @param[in] flag Flag
  * @param[in] unk Unknown
  * @param[in] id0 \ref BtdrvGattId
+ * @param[in] flag Flag
  * @param[in] id1 \ref BtdrvGattId
  * @param[in] uuid \ref BtdrvGattAttributeUuid
  * @param[out] unk_out Unknown
  * @param[out] id_out \ref BtdrvGattId
  */
-Result btdrvGetGattNextCharacteristic(bool flag, u32 unk, const BtdrvGattId *id0, const BtdrvGattId *id1, const BtdrvGattAttributeUuid *uuid, u8 *unk_out, BtdrvGattId *id_out);
+Result btdrvGetGattNextCharacteristic(u32 unk, const BtdrvGattId *id0, bool flag, const BtdrvGattId *id1, const BtdrvGattAttributeUuid *uuid, u8 *unk_out, BtdrvGattId *id_out);
 
 /**
  * @brief GetGattFirstDescriptor
  * @note Only available on [5.0.0+].
- * @param[in] flag Flag
  * @param[in] unk Unknown
  * @param[in] id0 \ref BtdrvGattId
+ * @param[in] flag Flag
  * @param[in] id1 \ref BtdrvGattId
  * @param[in] uuid \ref BtdrvGattAttributeUuid
  * @param[out] id_out \ref BtdrvGattId
  */
-Result btdrvGetGattFirstDescriptor(bool flag, u32 unk, const BtdrvGattId *id0, const BtdrvGattId *id1, const BtdrvGattAttributeUuid *uuid, BtdrvGattId *id_out);
+Result btdrvGetGattFirstDescriptor(u32 unk, const BtdrvGattId *id0, bool flag, const BtdrvGattId *id1, const BtdrvGattAttributeUuid *uuid, BtdrvGattId *id_out);
 
 /**
  * @brief GetGattNextDescriptor
  * @note Only available on [5.0.0+].
- * @param[in] flag Flag
  * @param[in] unk Unknown
  * @param[in] id0 \ref BtdrvGattId
+ * @param[in] flag Flag
  * @param[in] id1 \ref BtdrvGattId
  * @param[in] id2 \ref BtdrvGattId
  * @param[in] uuid \ref BtdrvGattAttributeUuid
  * @param[out] id_out \ref BtdrvGattId
  */
-Result btdrvGetGattNextDescriptor(bool flag, u32 unk, const BtdrvGattId *id0, const BtdrvGattId *id1, const BtdrvGattId *id2, const BtdrvGattAttributeUuid *uuid, BtdrvGattId *id_out);
+Result btdrvGetGattNextDescriptor(u32 unk, const BtdrvGattId *id0, bool flag, const BtdrvGattId *id1, const BtdrvGattId *id2, const BtdrvGattAttributeUuid *uuid, BtdrvGattId *id_out);
 
 /**
  * @brief RegisterGattManagedDataPath
