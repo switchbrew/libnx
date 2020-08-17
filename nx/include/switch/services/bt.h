@@ -1,6 +1,7 @@
 /**
  * @file bt.h
  * @brief Bluetooth user (bt) service IPC wrapper.
+ * @note See also btdev.
  * @author yellows8
  * @copyright libnx Authors
  */
@@ -22,73 +23,73 @@ Service* btGetServiceSession(void);
 /**
  * @brief LeClientReadCharacteristic
  * @note This is essentially the same as \ref btdrvReadGattCharacteristic.
- * @param[in] flag Flag
- * @param[in] unk Unknown
- * @param[in] unk2 Unknown
+ * @param[in] connection_handle ConnectionHandle
+ * @param[in] primary_service PrimaryService
  * @param[in] id0 \ref BtdrvGattId
  * @param[in] id1 \ref BtdrvGattId
+ * @param[in] unk Unknown
  */
-Result btLeClientReadCharacteristic(bool flag, u8 unk, u32 unk2, const BtdrvGattId *id0, const BtdrvGattId *id1);
+Result btLeClientReadCharacteristic(u32 connection_handle, bool primary_service, const BtdrvGattId *id0, const BtdrvGattId *id1, u8 unk);
 
 /**
  * @brief LeClientReadDescriptor
  * @note This is essentially the same as \ref btdrvReadGattDescriptor.
- * @param[in] flag Flag
- * @param[in] unk Unknown
- * @param[in] unk2 Unknown
+ * @param[in] connection_handle ConnectionHandle
+ * @param[in] primary_service PrimaryService
  * @param[in] id0 \ref BtdrvGattId
  * @param[in] id1 \ref BtdrvGattId
  * @param[in] id2 \ref BtdrvGattId
+ * @param[in] unk Unknown
  */
-Result btLeClientReadDescriptor(bool flag, u8 unk, u32 unk2, const BtdrvGattId *id0, const BtdrvGattId *id1, const BtdrvGattId *id2);
+Result btLeClientReadDescriptor(u32 connection_handle, bool primary_service, const BtdrvGattId *id0, const BtdrvGattId *id1, const BtdrvGattId *id2, u8 unk);
 
 /**
  * @brief LeClientWriteCharacteristic
  * @note This is essentially the same as \ref btdrvWriteGattCharacteristic.
- * @param[in] flag Flag
- * @param[in] unk Unknown
- * @param[in] flag2 Flag
- * @param[in] unk2 Unknown
+ * @param[in] connection_handle ConnectionHandle
+ * @param[in] primary_service PrimaryService
  * @param[in] id0 \ref BtdrvGattId
  * @param[in] id1 \ref BtdrvGattId
  * @param[in] buffer Input buffer.
  * @param[in] size Input buffer size, must be <=0x258.
+ * @param[in] unk Unknown
+ * @param[in] flag Flag
  */
-Result btLeClientWriteCharacteristic(bool flag, u8 unk, bool flag2, u32 unk2, const BtdrvGattId *id0, const BtdrvGattId *id1, const void* buffer, size_t size);
+Result btLeClientWriteCharacteristic(u32 connection_handle, bool primary_service, const BtdrvGattId *id0, const BtdrvGattId *id1, const void* buffer, size_t size, u8 unk, bool flag);
 
 /**
  * @brief LeClientWriteDescriptor
  * @note This is essentially the same as \ref btdrvWriteGattDescriptor.
- * @param[in] flag Flag
- * @param[in] unk Unknown
- * @param[in] unk2 Unknown
+ * @param[in] connection_handle ConnectionHandle
+ * @param[in] primary_service PrimaryService
  * @param[in] id0 \ref BtdrvGattId
  * @param[in] id1 \ref BtdrvGattId
  * @param[in] id2 \ref BtdrvGattId
  * @param[in] buffer Input buffer.
  * @param[in] size Input buffer size, must be <=0x258.
+ * @param[in] unk Unknown
  */
-Result btLeClientWriteDescriptor(bool flag, u8 unk, u32 unk2, const BtdrvGattId *id0, const BtdrvGattId *id1, const BtdrvGattId *id2, const void* buffer, size_t size);
+Result btLeClientWriteDescriptor(u32 connection_handle, bool primary_service, const BtdrvGattId *id0, const BtdrvGattId *id1, const BtdrvGattId *id2, const void* buffer, size_t size, u8 unk);
 
 /**
  * @brief LeClientRegisterNotification
  * @note This is essentially the same as \ref btdrvRegisterGattNotification.
- * @param[in] flag Flag
- * @param[in] unk Unknown
+ * @param[in] connection_handle ConnectionHandle
+ * @param[in] primary_service PrimaryService
  * @param[in] id0 \ref BtdrvGattId
  * @param[in] id1 \ref BtdrvGattId
  */
-Result btLeClientRegisterNotification(bool flag, u32 unk, const BtdrvGattId *id0, const BtdrvGattId *id1);
+Result btLeClientRegisterNotification(u32 connection_handle, bool primary_service, const BtdrvGattId *id0, const BtdrvGattId *id1);
 
 /**
  * @brief LeClientDeregisterNotification
  * @note This is essentially the same as \ref btdrvUnregisterGattNotification.
- * @param[in] flag Flag
- * @param[in] unk Unknown
+ * @param[in] connection_handle ConnectionHandle
+ * @param[in] primary_service PrimaryService
  * @param[in] id0 \ref BtdrvGattId
  * @param[in] id1 \ref BtdrvGattId
  */
-Result btLeClientDeregisterNotification(bool flag, u32 unk, const BtdrvGattId *id0, const BtdrvGattId *id1);
+Result btLeClientDeregisterNotification(u32 connection_handle, bool primary_service, const BtdrvGattId *id0, const BtdrvGattId *id1);
 
 /**
  * @brief SetLeResponse
@@ -103,13 +104,13 @@ Result btSetLeResponse(u8 unk, const BtdrvGattAttributeUuid *uuid0, const BtdrvG
 /**
  * @brief LeSendIndication
  * @param[in] unk Unknown
- * @param[in] flag Flag
  * @param[in] uuid0 \ref BtdrvGattAttributeUuid
  * @param[in] uuid1 \ref BtdrvGattAttributeUuid
  * @param[in] buffer Input buffer.
  * @param[in] size Input buffer size, clamped to max size 0x258.
+ * @param[in] flag Flag
  */
-Result btLeSendIndication(u8 unk, bool flag, const BtdrvGattAttributeUuid *uuid0, const BtdrvGattAttributeUuid *uuid1, const void* buffer, size_t size);
+Result btLeSendIndication(u8 unk, const BtdrvGattAttributeUuid *uuid0, const BtdrvGattAttributeUuid *uuid1, const void* buffer, size_t size, bool flag);
 
 /**
  * @brief GetLeEventInfo
@@ -117,7 +118,7 @@ Result btLeSendIndication(u8 unk, bool flag, const BtdrvGattAttributeUuid *uuid0
  * @note The state used by this is reset after writing the data to output.
  * @param[in] buffer Output buffer. 0x400-bytes from state is written here. See \ref BtdrvLeEventInfo.
  * @param[in] size Output buffer size.
- * @oaram[out] type Output BleEventType.
+ * @param[out] type Output BleEventType.
  */
 Result btGetLeEventInfo(void* buffer, size_t size, u32 *type);
 

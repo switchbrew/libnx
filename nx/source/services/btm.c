@@ -115,21 +115,21 @@ static Result _btmGetBleScanResults(BtdrvBleScanResult *results, u8 count, u8 *t
     );
 }
 
-static Result _btmBlePairDevice(BtdrvBleAdvertisePacketParameter param, u32 id, u32 cmd_id) {
+static Result _btmBlePairDevice(u32 connection_handle, BtdrvBleAdvertisePacketParameter param, u32 cmd_id) {
     const struct {
         BtdrvBleAdvertisePacketParameter param;
-        u32 id;
-    } in = { param, id };
+        u32 connection_handle;
+    } in = { param, connection_handle };
 
     return serviceDispatchIn(&g_btmSrv, cmd_id, in);
 }
 
-static Result _btmGetGattServiceData(u32 id, u16 unk1, void* buffer, size_t entrysize, u8 count, u8 *out, u32 cmd_id) {
+static Result _btmGetGattServiceData(u32 connection_handle, u16 handle, void* buffer, size_t entrysize, u8 count, u8 *out, u32 cmd_id) {
     const struct {
-        u16 unk1;
+        u16 handle;
         u16 pad;
-        u32 unk0;
-    } in = { unk1, 0, id };
+        u32 connection_handle;
+    } in = { handle, 0, connection_handle };
 
     return serviceDispatchInOut(&g_btmSrv, cmd_id, in, *out,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
@@ -362,12 +362,12 @@ Result btmBleOverrideConnection(u32 id) {
     return _btmCmdInU32NoOut(id, 36);
 }
 
-Result btmBleDisconnect(u32 id) {
+Result btmBleDisconnect(u32 connection_handle) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     u32 cmd_id = hosversionBefore(5,1,0) ? 25 : 37;
 
-    return _btmCmdInU32NoOut(id, cmd_id);
+    return _btmCmdInU32NoOut(connection_handle, cmd_id);
 }
 
 Result btmBleGetConnectionState(BtdrvBleConnectionInfo *info, u8 count, u8 *total_out) {
@@ -400,18 +400,18 @@ Result btmAcquireBlePairingEvent(Event* out_event) {
     return _btmCmdGetEventOutFlag(out_event, true, cmd_id);
 }
 
-Result btmBlePairDevice(BtdrvBleAdvertisePacketParameter param, u32 id) {
+Result btmBlePairDevice(u32 connection_handle, BtdrvBleAdvertisePacketParameter param) {
     if (hosversionBefore(5,1,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return _btmBlePairDevice(param, id, 41);
+    return _btmBlePairDevice(connection_handle, param, 41);
 }
 
-Result btmBleUnpairDeviceOnBoth(BtdrvBleAdvertisePacketParameter param, u32 id) {
+Result btmBleUnpairDeviceOnBoth(u32 connection_handle, BtdrvBleAdvertisePacketParameter param) {
     if (hosversionBefore(5,1,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return _btmBlePairDevice(param, id, 42);
+    return _btmBlePairDevice(connection_handle, param, 42);
 }
 
 Result btmBleUnPairDevice(BtdrvAddress addr, BtdrvBleAdvertisePacketParameter param) {
@@ -443,26 +443,26 @@ Result btmAcquireBleServiceDiscoveryEvent(Event* out_event) {
     return _btmCmdGetEventOutFlag(out_event, true, 45);
 }
 
-Result btmGetGattServices(u32 id, BtmGattService *services, u8 count, u8 *total_out) {
+Result btmGetGattServices(u32 connection_handle, BtmGattService *services, u8 count, u8 *total_out) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     u32 cmd_id = hosversionBefore(5,1,0) ? 29 : 46;
 
-    return serviceDispatchInOut(&g_btmSrv, cmd_id, id, *total_out,
+    return serviceDispatchInOut(&g_btmSrv, cmd_id, connection_handle, *total_out,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
         .buffers = { { services, sizeof(BtmGattService)*count } },
     );
 }
 
-Result btmGetGattService(u32 id, const BtdrvGattAttributeUuid *uuid, BtmGattService *service, bool *flag) {
+Result btmGetGattService(u32 connection_handle, const BtdrvGattAttributeUuid *uuid, BtmGattService *service, bool *flag) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     u32 cmd_id = hosversionBefore(5,1,0) ? 30 : 47;
 
     const struct {
-        u32 id;
+        u32 connection_handle;
         BtdrvGattAttributeUuid uuid;
-    } in = { id, *uuid };
+    } in = { connection_handle, *uuid };
 
     u8 tmp=0;
     Result rc = serviceDispatchInOut(&g_btmSrv, cmd_id, in, tmp,
@@ -473,24 +473,24 @@ Result btmGetGattService(u32 id, const BtdrvGattAttributeUuid *uuid, BtmGattServ
     return rc;
 }
 
-Result btmGetGattIncludedServices(u32 id, u16 unk1, BtmGattService *services, u8 count, u8 *out) {
+Result btmGetGattIncludedServices(u32 connection_handle, u16 handle, BtmGattService *services, u8 count, u8 *out) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     u32 cmd_id = hosversionBefore(5,1,0) ? 31 : 48;
 
-    return _btmGetGattServiceData(id, unk1, services, sizeof(BtmGattService), count, out, cmd_id);
+    return _btmGetGattServiceData(connection_handle, handle, services, sizeof(BtmGattService), count, out, cmd_id);
 }
 
-Result btmGetBelongingService(u32 id, u16 unk1, BtmGattService *service, bool *flag) {
+Result btmGetBelongingService(u32 connection_handle, u16 handle, BtmGattService *service, bool *flag) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     u32 cmd_id = hosversionBefore(5,1,0) ? 32 : 49;
 
     const struct {
-        u16 unk1;
+        u16 handle;
         u16 pad;
-        u32 id;
-    } in = { unk1, 0, id };
+        u32 connection_handle;
+    } in = { handle, 0, connection_handle };
 
     u8 tmp=0;
     Result rc = serviceDispatchInOut(&g_btmSrv, cmd_id, in, tmp,
@@ -501,20 +501,20 @@ Result btmGetBelongingService(u32 id, u16 unk1, BtmGattService *service, bool *f
     return rc;
 }
 
-Result btmGetGattCharacteristics(u32 id, u16 unk1, BtmGattCharacteristic *characteristics, u8 count, u8 *total_out) {
+Result btmGetGattCharacteristics(u32 connection_handle, u16 handle, BtmGattCharacteristic *characteristics, u8 count, u8 *total_out) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     u32 cmd_id = hosversionBefore(5,1,0) ? 33 : 50;
 
-    return _btmGetGattServiceData(id, unk1, characteristics, sizeof(BtmGattCharacteristic), count, total_out, cmd_id);
+    return _btmGetGattServiceData(connection_handle, handle, characteristics, sizeof(BtmGattCharacteristic), count, total_out, cmd_id);
 }
 
-Result btmGetGattDescriptors(u32 id, u16 unk1, BtmGattDescriptor *descriptors, u8 count, u8 *total_out) {
+Result btmGetGattDescriptors(u32 connection_handle, u16 handle, BtmGattDescriptor *descriptors, u8 count, u8 *total_out) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     u32 cmd_id = hosversionBefore(5,1,0) ? 34 : 51;
 
-    return _btmGetGattServiceData(id, unk1, descriptors, sizeof(BtmGattDescriptor), count, total_out, cmd_id);
+    return _btmGetGattServiceData(connection_handle, handle, descriptors, sizeof(BtmGattDescriptor), count, total_out, cmd_id);
 }
 
 Result btmAcquireBleMtuConfigEvent(Event* out_event) {
@@ -525,7 +525,7 @@ Result btmAcquireBleMtuConfigEvent(Event* out_event) {
     return _btmCmdGetEventOutFlag(out_event, true, cmd_id);
 }
 
-Result btmConfigureBleMtu(u32 id, u16 mtu) {
+Result btmConfigureBleMtu(u32 connection_handle, u16 mtu) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     u32 cmd_id = hosversionBefore(5,1,0) ? 36 : 53;
@@ -533,18 +533,18 @@ Result btmConfigureBleMtu(u32 id, u16 mtu) {
     const struct {
         u16 mtu;
         u16 pad;
-        u32 id;
-    } in = { mtu, 0, id };
+        u32 connection_handle;
+    } in = { mtu, 0, connection_handle };
 
     return serviceDispatchIn(&g_btmSrv, cmd_id, in);
 }
 
-Result btmGetBleMtu(u32 id, u16 *out) {
+Result btmGetBleMtu(u32 connection_handle, u16 *out) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     u32 cmd_id = hosversionBefore(5,1,0) ? 37 : 54;
 
-    return serviceDispatchInOut(&g_btmSrv, cmd_id, id, *out);
+    return serviceDispatchInOut(&g_btmSrv, cmd_id, connection_handle, *out);
 }
 
 Result btmRegisterBleGattDataPath(const BtmBleDataPath *path) {

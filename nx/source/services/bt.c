@@ -24,50 +24,50 @@ Service* btGetServiceSession(void) {
     return &g_btSrv;
 }
 
-Result btLeClientReadCharacteristic(bool flag, u8 unk, u32 unk2, const BtdrvGattId *id0, const BtdrvGattId *id1) {
+Result btLeClientReadCharacteristic(u32 connection_handle, bool primary_service, const BtdrvGattId *id0, const BtdrvGattId *id1, u8 unk) {
     const struct {
-        u8 flag;
+        u8 primary_service;
         u8 unk;
         u8 pad[2];
-        u32 unk2;
+        u32 connection_handle;
         BtdrvGattId id0;
         BtdrvGattId id1;
         u64 AppletResourceUserId;
-    } in = { flag!=0, unk, {0}, unk2, *id0, *id1, appletGetAppletResourceUserId() };
+    } in = { primary_service!=0, unk, {0}, connection_handle, *id0, *id1, appletGetAppletResourceUserId() };
 
     return serviceDispatchIn(&g_btSrv, 0, in,
         .in_send_pid = true,
     );
 }
 
-Result btLeClientReadDescriptor(bool flag, u8 unk, u32 unk2, const BtdrvGattId *id0, const BtdrvGattId *id1, const BtdrvGattId *id2) {
+Result btLeClientReadDescriptor(u32 connection_handle, bool primary_service, const BtdrvGattId *id0, const BtdrvGattId *id1, const BtdrvGattId *id2, u8 unk) {
     const struct {
-        u8 flag;
+        u8 primary_service;
         u8 unk;
         u8 pad[2];
-        u32 unk2;
+        u32 connection_handle;
         BtdrvGattId id0;
         BtdrvGattId id1;
         BtdrvGattId id2;
         u64 AppletResourceUserId;
-    } in = { flag!=0, unk, {0}, unk2, *id0, *id1, *id2, appletGetAppletResourceUserId() };
+    } in = { primary_service!=0, unk, {0}, connection_handle, *id0, *id1, *id2, appletGetAppletResourceUserId() };
 
     return serviceDispatchIn(&g_btSrv, 1, in,
         .in_send_pid = true,
     );
 }
 
-Result btLeClientWriteCharacteristic(bool flag, u8 unk, bool flag2, u32 unk2, const BtdrvGattId *id0, const BtdrvGattId *id1, const void* buffer, size_t size) {
+Result btLeClientWriteCharacteristic(u32 connection_handle, bool primary_service, const BtdrvGattId *id0, const BtdrvGattId *id1, const void* buffer, size_t size, u8 unk, bool flag) {
     const struct {
-        u8 flag;
+        u8 primary_service;
         u8 unk;
-        u8 flag2;
+        u8 flag;
         u8 pad;
-        u32 unk2;
+        u32 connection_handle;
         BtdrvGattId id0;
         BtdrvGattId id1;
         u64 AppletResourceUserId;
-    } in = { flag!=0, unk, flag2!=0, 0, unk2, *id0, *id1, appletGetAppletResourceUserId() };
+    } in = { primary_service!=0, unk, flag!=0, 0, connection_handle, *id0, *id1, appletGetAppletResourceUserId() };
 
     return serviceDispatchIn(&g_btSrv, 2, in,
         .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_In },
@@ -76,17 +76,17 @@ Result btLeClientWriteCharacteristic(bool flag, u8 unk, bool flag2, u32 unk2, co
     );
 }
 
-Result btLeClientWriteDescriptor(bool flag, u8 unk, u32 unk2, const BtdrvGattId *id0, const BtdrvGattId *id1, const BtdrvGattId *id2, const void* buffer, size_t size) {
+Result btLeClientWriteDescriptor(u32 connection_handle, bool primary_service, const BtdrvGattId *id0, const BtdrvGattId *id1, const BtdrvGattId *id2, const void* buffer, size_t size, u8 unk) {
     const struct {
-        u8 flag;
+        u8 primary_service;
         u8 unk;
         u8 pad[2];
-        u32 unk2;
+        u32 connection_handle;
         BtdrvGattId id0;
         BtdrvGattId id1;
         BtdrvGattId id2;
         u64 AppletResourceUserId;
-    } in = { flag!=0, unk, {0}, unk2, *id0, *id1, *id2, appletGetAppletResourceUserId() };
+    } in = { primary_service!=0, unk, {0}, connection_handle, *id0, *id1, *id2, appletGetAppletResourceUserId() };
 
     return serviceDispatchIn(&g_btSrv, 3, in,
         .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_In },
@@ -95,27 +95,27 @@ Result btLeClientWriteDescriptor(bool flag, u8 unk, u32 unk2, const BtdrvGattId 
     );
 }
 
-static Result _btLeClientNotification(bool flag, u32 unk, const BtdrvGattId *id0, const BtdrvGattId *id1, u32 cmd_id) {
+static Result _btLeClientNotification(u32 connection_handle, bool primary_service, const BtdrvGattId *id0, const BtdrvGattId *id1, u32 cmd_id) {
     const struct {
-        u8 flag;
+        u8 primary_service;
         u8 pad[3];
-        u32 unk;
+        u32 connection_handle;
         BtdrvGattId id0;
         BtdrvGattId id1;
         u64 AppletResourceUserId;
-    } in = { flag!=0, {0}, unk, *id0, *id1, appletGetAppletResourceUserId() };
+    } in = { primary_service!=0, {0}, connection_handle, *id0, *id1, appletGetAppletResourceUserId() };
 
     return serviceDispatchIn(&g_btSrv, cmd_id, in,
         .in_send_pid = true,
     );
 }
 
-Result btLeClientRegisterNotification(bool flag, u32 unk, const BtdrvGattId *id0, const BtdrvGattId *id1) {
-    return _btLeClientNotification(flag, unk, id0, id1, 4);
+Result btLeClientRegisterNotification(u32 connection_handle, bool primary_service, const BtdrvGattId *id0, const BtdrvGattId *id1) {
+    return _btLeClientNotification(connection_handle, primary_service, id0, id1, 4);
 }
 
-Result btLeClientDeregisterNotification(bool flag, u32 unk, const BtdrvGattId *id0, const BtdrvGattId *id1) {
-    return _btLeClientNotification(flag, unk, id0, id1, 5);
+Result btLeClientDeregisterNotification(u32 connection_handle, bool primary_service, const BtdrvGattId *id0, const BtdrvGattId *id1) {
+    return _btLeClientNotification(connection_handle, primary_service, id0, id1, 5);
 }
 
 Result btSetLeResponse(u8 unk, const BtdrvGattAttributeUuid *uuid0, const BtdrvGattAttributeUuid *uuid1, const void* buffer, size_t size) {
@@ -135,7 +135,7 @@ Result btSetLeResponse(u8 unk, const BtdrvGattAttributeUuid *uuid0, const BtdrvG
     );
 }
 
-Result btLeSendIndication(u8 unk, bool flag, const BtdrvGattAttributeUuid *uuid0, const BtdrvGattAttributeUuid *uuid1, const void* buffer, size_t size) {
+Result btLeSendIndication(u8 unk, const BtdrvGattAttributeUuid *uuid0, const BtdrvGattAttributeUuid *uuid1, const void* buffer, size_t size, bool flag) {
     const struct {
         u8 unk;
         u8 flag;
