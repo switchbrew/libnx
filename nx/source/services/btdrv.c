@@ -262,7 +262,7 @@ Result btdrvCloseHidConnection(BtdrvAddress addr) {
     return _btdrvCmdInAddrNoOut(addr, 18);
 }
 
-Result btdrvWriteHidData(BtdrvAddress addr, BtdrvHidReport *buffer) {
+Result btdrvWriteHidData(BtdrvAddress addr, const BtdrvHidReport *buffer) {
     size_t size = hosversionBefore(9,0,0) ? sizeof(BtdrvHidData) : sizeof(BtdrvHidReport);
     return serviceDispatchIn(&g_btdrvSrv, 19, addr,
         .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_In | SfBufferAttr_FixedSize },
@@ -277,7 +277,7 @@ Result btdrvWriteHidData2(BtdrvAddress addr, const void* buffer, size_t size) {
     );
 }
 
-Result btdrvSetHidReport(BtdrvAddress addr, BtdrvBluetoothHhReportType type, BtdrvHidReport *buffer) {
+Result btdrvSetHidReport(BtdrvAddress addr, BtdrvBluetoothHhReportType type, const BtdrvHidReport *buffer) {
     size_t size = hosversionBefore(9,0,0) ? sizeof(BtdrvHidData) : sizeof(BtdrvHidReport);
 
     const struct {
