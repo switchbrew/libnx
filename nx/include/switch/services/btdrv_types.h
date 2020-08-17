@@ -135,7 +135,10 @@ typedef struct {
 
 /// BleScanResult
 typedef struct {
-    u8 unk_x0[0x144];          ///< Unknown
+    u8 unk_x0;                 ///< Unknown
+    BtdrvAddress addr;         ///< \ref BtdrvAddress
+    u8 unk_x7[0x139];          ///< Unknown
+    s32 unk_x140;              ///< Unknown
     s32 unk_x144;              ///< Unknown
 } BtdrvBleScanResult;
 
