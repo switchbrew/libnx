@@ -95,6 +95,7 @@ Result ringconCreate(RingCon *c, HidControllerID id) {
 
 void ringconClose(RingCon *c) {
     if (c->bus_initialized) {
+        c->bus_initialized = false;
         // Official sw uses hidbusDisableJoyPollingReceiveMode here, but that's redundant since hidbusEnableExternalDevice with flag=false uses that automatically.
         hidbusEnableExternalDevice(c->handle, false, 0x20);
         hidbusFinalize(c->handle);

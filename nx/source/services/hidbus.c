@@ -279,6 +279,7 @@ Result hidbusFinalize(HidbusBusHandle handle) {
 
         if (R_SUCCEEDED(rc)) rc = _hidbusInBusHandleResIdNoOut(&srv, handle, 4); // Finalize
         eventClose(&entry->event);
+        memset(&entry->handle, 0, sizeof(entry->handle));
 
         _hidbusSharedmemExit();
     }
