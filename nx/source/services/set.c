@@ -118,6 +118,13 @@ static Result _setCmdInUuidNoOut(Service* srv, const Uuid *inval, u32 cmd_id) {
     return serviceDispatchIn(srv, cmd_id, *inval);
 }
 
+static Result _setCmdOutBufAliasFixed(Service* srv, void* buffer, size_t size, u32 cmd_id) {
+    return serviceDispatch(srv, cmd_id,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out | SfBufferAttr_FixedSize },
+        .buffers = { { buffer, size } },
+    );
+}
+
 static Result setInitializeLanguageCodesCache(void) {
     if (g_setLanguageCodesInitialized) return 0;
     Result rc = 0;
@@ -211,6 +218,20 @@ Result setGetRegionCode(SetRegion *out) {
     Result rc = _setCmdNoInOutU32(&g_setSrv, (u32*)&code, 4);
     if (R_SUCCEEDED(rc) && out) *out = code;
     return rc;
+}
+
+Result setGetQuestFlag(bool *out) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdNoInOutBool(&g_setSrv, out, 8);
+}
+
+Result setGetDeviceNickname(SetSysDeviceNickName *nickname) {
+    if (hosversionBefore(10,1,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdOutBufAliasFixed(&g_setSrv, nickname, sizeof(*nickname), 11);
 }
 
 Result setsysSetLanguageCode(u64 LanguageCode) {
@@ -605,20 +626,14 @@ Result setsysSetInitialLaunchSettings(const SetSysInitialLaunchSettings *setting
     return serviceDispatchIn(&g_setsysSrv, 76, *settings);
 }
 
-Result setsysGetDeviceNickname(char* nickname) {
-    return serviceDispatch(&g_setsysSrv, 77,
-        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
-        .buffers = { { nickname, SET_MAX_NICKNAME_SIZE } },
-    );
+Result setsysGetDeviceNickname(SetSysDeviceNickName *nickname) {
+    return _setCmdOutBufAliasFixed(&g_setsysSrv, nickname, sizeof(*nickname), 77);
 }
 
-Result setsysSetDeviceNickname(const char* nickname) {
-    char send_nickname[SET_MAX_NICKNAME_SIZE] = {0};
-    strncpy(send_nickname, nickname, SET_MAX_NICKNAME_SIZE-1);
-
+Result setsysSetDeviceNickname(const SetSysDeviceNickName *nickname) {
     return serviceDispatch(&g_setsysSrv, 78,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
-        .buffers = { { send_nickname, SET_MAX_NICKNAME_SIZE } },
+        .buffers = { { nickname, sizeof(*nickname) } },
     );
 }
 
@@ -1049,10 +1064,7 @@ Result setsysGetHostFsMountPoint(SetSysHostFsMountPoint *out) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return serviceDispatch(&g_setsysSrv, 140,
-        .buffer_attrs = { SfBufferAttr_FixedSize | SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
-        .buffers = { { out, sizeof(SetSysHostFsMountPoint) } },
-    );
+    return _setCmdOutBufAliasFixed(&g_setsysSrv, out, sizeof(*out), 140);
 }
 
 Result setsysGetRequiresRunRepairTimeReviser(bool *out) {
@@ -1504,10 +1516,7 @@ Result setsysGetButtonConfigRegisteredSettingsEmbedded(SetSysButtonConfigRegiste
     if (hosversionBefore(10,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return serviceDispatch(&g_setsysSrv, 197,
-        .buffer_attrs = { SfBufferAttr_FixedSize | SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
-        .buffers = { { settings, sizeof(SetSysButtonConfigRegisteredSettings) } },
-    );
+    return _setCmdOutBufAliasFixed(&g_setsysSrv, settings, sizeof(*settings), 197);
 }
 
 Result setsysSetButtonConfigRegisteredSettingsEmbedded(const SetSysButtonConfigRegisteredSettings *settings) {
@@ -1538,6 +1547,20 @@ Result setsysSetButtonConfigRegisteredSettings(const SetSysButtonConfigRegistere
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
         .buffers = { { settings, count*sizeof(SetSysButtonConfigRegisteredSettings) } },
     );
+}
+
+Result setsysGetFieldTestingFlag(bool *out) {
+    if (hosversionBefore(10,1,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdNoInOutBool(&g_setsysSrv, out, 201);
+}
+
+Result setsysSetFieldTestingFlag(bool flag) {
+    if (hosversionBefore(10,1,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _setCmdInBoolNoOut(&g_setsysSrv, flag, 202);
 }
 
 Result setcalGetBdAddress(SetCalBdAddress *out) {
@@ -1596,45 +1619,27 @@ Result setcalGetBatteryLot(SetBatteryLot *out) {
 }
 
 Result setcalGetEciDeviceCertificate(SetCalEccB233DeviceCertificate *out) {
-    return serviceDispatch(&g_setcalSrv, 14,
-        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
-        .buffers = { { out, sizeof(SetCalEccB233DeviceCertificate) } },
-    );
+    return _setCmdOutBufAliasFixed(&g_setcalSrv, out, sizeof(*out), 14);
 }
 
 Result setcalGetEticketDeviceCertificate(SetCalRsa2048DeviceCertificate *out) {
-    return serviceDispatch(&g_setcalSrv, 15,
-        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
-        .buffers = { { out, sizeof(SetCalRsa2048DeviceCertificate) } },
-    );
+    return _setCmdOutBufAliasFixed(&g_setcalSrv, out, sizeof(*out), 15);
 }
 
 Result setcalGetSslKey(SetCalSslKey *out) {
-    return serviceDispatch(&g_setcalSrv, 16,
-        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
-        .buffers = { { out, sizeof(SetCalSslKey) } },
-    );
+    return _setCmdOutBufAliasFixed(&g_setcalSrv, out, sizeof(*out), 16);
 }
 
 Result setcalGetSslCertificate(SetCalSslCertificate *out) {
-    return serviceDispatch(&g_setcalSrv, 17,
-        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
-        .buffers = { { out, sizeof(SetCalSslCertificate) } },
-    );
+    return _setCmdOutBufAliasFixed(&g_setcalSrv, out, sizeof(*out), 17);
 }
 
 Result setcalGetGameCardKey(SetCalGameCardKey *out) {
-    return serviceDispatch(&g_setcalSrv, 18,
-        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
-        .buffers = { { out, sizeof(SetCalGameCardKey) } },
-    );
+    return _setCmdOutBufAliasFixed(&g_setcalSrv, out, sizeof(*out), 18);
 }
 
 Result setcalGetGameCardCertificate(SetCalGameCardCertificate *out) {
-    return serviceDispatch(&g_setcalSrv, 19,
-        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
-        .buffers = { { out, sizeof(SetCalGameCardCertificate) } },
-    );
+    return _setCmdOutBufAliasFixed(&g_setcalSrv, out, sizeof(*out), 19);
 }
 
 Result setcalGetEciDeviceKey(SetCalEccB233DeviceKey *out) {
@@ -1642,10 +1647,7 @@ Result setcalGetEciDeviceKey(SetCalEccB233DeviceKey *out) {
 }
 
 Result setcalGetEticketDeviceKey(SetCalRsa2048DeviceKey *out) {
-    return serviceDispatch(&g_setcalSrv, 21,
-        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
-        .buffers = { { out, sizeof(SetCalRsa2048DeviceKey) } },
-    );
+    return _setCmdOutBufAliasFixed(&g_setcalSrv, out, sizeof(*out), 21);
 }
 
 Result setcalGetSpeakerParameter(SetCalSpeakerParameter *out) {
@@ -1663,20 +1665,14 @@ Result setcalGetEciDeviceCertificate2(SetCalRsa2048DeviceCertificate *out) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return serviceDispatch(&g_setcalSrv, 24,
-        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
-        .buffers = { { out, sizeof(SetCalRsa2048DeviceCertificate) } },
-    );
+    return _setCmdOutBufAliasFixed(&g_setcalSrv, out, sizeof(*out), 24);
 }
 
 Result setcalGetEciDeviceKey2(SetCalRsa2048DeviceKey *out) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return serviceDispatch(&g_setcalSrv, 25,
-        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
-        .buffers = { { out, sizeof(SetCalRsa2048DeviceKey) } },
-    );
+    return _setCmdOutBufAliasFixed(&g_setcalSrv, out, sizeof(*out), 25);
 }
 
 Result setcalGetAmiiboKey(SetCalAmiiboKey *out) {
