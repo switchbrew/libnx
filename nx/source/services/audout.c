@@ -2,6 +2,7 @@
 #include "service_guard.h"
 #include "kernel/event.h"
 #include "services/audout.h"
+#include "services/applet.h"
 #include "runtime/hosversion.h"
 
 #define DEVICE_NAME_LENGTH 0x100
@@ -142,8 +143,8 @@ Result audoutOpenAudioOut(const char *DeviceNameIn, char *DeviceNameOut, u32 Sam
     const struct {
         u32 sample_rate;
         u32 channel_count;
-        u64 client_pid;
-    } in = { SampleRateIn, ChannelCountIn, 0 };
+        u64 AppletResourceUserId;
+    } in = { SampleRateIn, ChannelCountIn, appletGetAppletResourceUserId() };
 
     struct {
         u32 sample_rate;
