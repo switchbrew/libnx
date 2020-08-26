@@ -28,21 +28,21 @@ typedef struct {
     u8 unk_x0[0x64];              ///< Unknown
 } BtmDeviceSlotModeList;
 
-/// DeviceInfoList
-typedef struct {
-    u8 unk_x0[0x3C4];             ///< Unknown
-} BtmDeviceInfoList;
-
 /// DeviceInfo
 typedef struct {
     u8 unk_x0[0x60];              ///< Unknown
 } BtmDeviceInfo;
 
-/// DevicePropertyList
+/// DeviceInfoList
 typedef struct {
     u8 total_entries;             ///< Total entries.
     u8 pad[3];                    ///< Padding
     BtmDeviceInfo devices[10];    ///< Array of \ref BtmDeviceInfo with the above entry total.
+} BtmDeviceInfoList;
+
+/// DevicePropertyList
+typedef struct {
+    u8 unk_x0[0x268];             ///< Unknown
 } BtmDevicePropertyList;
 
 /// ZeroRetransmissionList
