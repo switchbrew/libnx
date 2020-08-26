@@ -12,7 +12,10 @@
 
 /// HostDeviceProperty
 typedef struct {
-    u8 unk_x0[0x2A];              ///< Unknown
+    BtdrvAddress addr;         ///< Same as BtdrvAdapterProperty::addr.
+    u8 type5[0x3];             ///< Same as BtdrvAdapterProperty::type5.
+    char name[0x20];           ///< Same as BtdrvAdapterProperty::name (except the last byte which is always zero).
+    u8 type6;                  ///< Same as BtdrvAdapterProperty::type6.
 } BtmHostDeviceProperty;
 
 /// DeviceCondition
