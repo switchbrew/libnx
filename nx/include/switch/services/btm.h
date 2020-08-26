@@ -40,7 +40,9 @@ typedef struct {
 
 /// DevicePropertyList
 typedef struct {
-    u8 unk_x0[0x268];             ///< Unknown
+    u8 total_entries;             ///< Total entries.
+    u8 pad[3];                    ///< Padding
+    BtmDeviceInfo devices[10];    ///< Array of \ref BtmDeviceInfo with the above entry total.
 } BtmDevicePropertyList;
 
 /// ZeroRetransmissionList
