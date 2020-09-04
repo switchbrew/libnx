@@ -11,7 +11,7 @@
 typedef enum {
     BtdrvBluetoothPropertyType_Name         =    1,    ///< Name. String, max length 0xF8 excluding NUL-terminator.
     BtdrvBluetoothPropertyType_Address      =    2,    ///< \ref BtdrvAddress
-    BtdrvBluetoothPropertyType_Unknown3     =    3,    ///< Only available with \ref btdrvSetAdapterProperty. Unknown. 3-bytes.
+    BtdrvBluetoothPropertyType_Unknown3     =    3,    ///< Only available with \ref btdrvSetAdapterProperty. Unknown, \ref BtdrvAddress.
     BtdrvBluetoothPropertyType_Unknown5     =    5,    ///< Unknown. 3-bytes.
     BtdrvBluetoothPropertyType_Unknown6     =    6,    ///< Unknown. 1-byte. The default is value 0x68.
 } BtdrvBluetoothPropertyType;
