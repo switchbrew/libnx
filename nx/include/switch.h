@@ -60,6 +60,7 @@ extern "C" {
 #include "switch/services/lbl.h"
 #include "switch/services/i2c.h"
 #include "switch/services/gpio.h"
+#include "switch/services/uart.h"
 #include "switch/services/bpc.h"
 #include "switch/services/pcv.h"
 #include "switch/services/clkrst.h"
