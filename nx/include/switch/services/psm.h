@@ -40,6 +40,9 @@ Service* psmGetServiceSession(void);
 Result psmGetBatteryChargePercentage(u32 *out);
 Result psmGetChargerType(ChargerType *out);
 Result psmGetBatteryVoltageState(PsmBatteryVoltageState *out);
+Result psmGetRawBatteryChargePercentage(double *out);
+Result psmIsEnoughPowerSupplied(bool *out);
+Result psmGetBatteryAgePercentage(double *out);
 
 /**
  * @brief Wrapper func which opens a PsmSession and handles event setup.
