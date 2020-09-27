@@ -50,7 +50,20 @@ static Result _psmCmdInBoolNoOut(Service* srv, bool inval, u32 cmd_id) {
     return _psmCmdInU8NoOut(srv, inval!=0, cmd_id);
 }
 
+static Result _psmCmdNoInOutBool(Service* srv, bool *out, u32 cmd_id) {
+    u8 outval = 0;
+    Result rc = serviceDispatchOut(srv, cmd_id, outval);
+    if (R_SUCCEEDED(rc)) {
+        if (out) *out = outval & 1;
+    }
+    return rc;
+}
+
 static Result _psmCmdNoInOutU32(Service* srv, u32 *out, u32 cmd_id) {
+    return serviceDispatchOut(srv, cmd_id, *out);
+}
+
+static Result _psmCmdNoInOutDouble(Service* srv, double *out, u32 cmd_id) {
     return serviceDispatchOut(srv, cmd_id, *out);
 }
 
@@ -67,6 +80,18 @@ Result psmGetBatteryVoltageState(PsmBatteryVoltageState *out) {
     Result rc = _psmCmdNoInOutU32(&g_psmSrv, &state, 12);
     if (R_SUCCEEDED(rc) && out) *out = state;
     return rc;
+}
+
+Result psmGetRawBatteryChargePercentage(double *out) {
+    return _psmCmdNoInOutDouble(&g_psmSrv, out, 13);
+}
+
+Result psmIsEnoughPowerSupplied(bool *out) {
+    return _psmCmdNoInOutBool(&g_psmSrv, out, 14);
+}
+
+Result psmGetBatteryAgePercentage(double *out) {
+    return _psmCmdNoInOutDouble(&g_psmSrv, out, 15);
 }
 
 static Result _psmOpenSession(Service* srv_out) {
