@@ -286,7 +286,10 @@ Result splCryptoGetSecurityEngineEvent(Event *out_event) {
     }
 
     Handle event = INVALID_HANDLE;
-    Result rc = serviceDispatch(_splGetCryptoSrv(), 23);
+    Result rc = serviceDispatch(_splGetCryptoSrv(), 23,
+        .out_handle_attrs = { SfOutHandleAttr_HipcCopy },
+        .out_handles = &event,
+    );
     if (R_SUCCEEDED(rc))
         eventLoadRemote(out_event, event, true);
     return rc;
