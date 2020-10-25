@@ -196,22 +196,24 @@ Result lp2pSetAdvertiseData(const void* buffer, size_t size);
 /**
  * @brief This sends an Action frame to the specified \ref Lp2pGroupId, with the specified destination \ref Lp2pMacAddress.
  * @note The role (\ref lp2pGetRole) must be non-zero.
+ * @note The error from \ref lp2pGetNetworkInterfaceLastError will be returned if it's set.
  * @param[in] buffer Input buffer containing arbitrary user data.
  * @param[in] size Input buffer size, must be <=0x400.
- * @param[in] addr \ref Lp2pMacAddress, this can be a broadcast address.
+ * @param[in] addr \ref Lp2pMacAddress, this can be a broadcast address. This must be non-zero.
  * @param[in] group_id \ref Lp2pGroupId
  * @param[in] frequency Must be >=1. See Lp2pGroupInfo::frequency.
  * @param[in] channel Must be >=1. See Lp2pGroupInfo::channel.
- * @param[in] flags This is only used for selecting which func to call internally, via bit0.
+ * @param[in] flags Only bit0 is used: clear = block until the data can be sent, set = return error when the data can't be sent.
  */
 Result lp2pSendToOtherGroup(const void* buffer, size_t size, Lp2pMacAddress addr, Lp2pGroupId group_id, s16 frequency, s16 channel, u32 flags);
 
 /**
- * @brief This receives an Action frame. This will block until data is available (?).
+ * @brief This receives an Action frame.
  * @note The role (\ref lp2pGetRole) must be non-zero.
+ * @note When data is not available, the error from \ref lp2pGetNetworkInterfaceLastError will be returned if it's set.
  * @param[out] buffer Output buffer containing arbitrary user data.
  * @param[in] size Output buffer size.
- * @param[in] flags This is only used for selecting which func to call internally, via bit0.
+ * @param[in] flags Only bit0 is used: clear = block until data is available, set = return error when data is not available.
  * @param[in] addr \ref Lp2pMacAddress
  * @param[in] unk0 Unknown
  * @param[in] unk1 Unknown
