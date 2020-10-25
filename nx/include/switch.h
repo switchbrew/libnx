@@ -119,6 +119,7 @@ extern "C" {
 #include "switch/services/mii.h"
 #include "switch/services/miiimg.h"
 #include "switch/services/ldn.h"
+#include "switch/services/lp2p.h"
 #include "switch/services/news.h"
 
 #include "switch/display/binder.h"
