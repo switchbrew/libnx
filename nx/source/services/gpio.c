@@ -55,10 +55,6 @@ static Result _gpioCmdInU32OutBool(Service *srv, bool *out_value, u32 inval, u32
 }
 
 Result gpioOpenSession(GpioPadSession *out, GpioPadName name) {
-    if (hosversionAtLeast(7,0,0)) {
-        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    }
-
     _Static_assert(sizeof(name) == sizeof(u32), "GpioPadName size");
     return serviceDispatchIn(&g_gpioSrv, 1, name,
         .out_num_objects = 1,
