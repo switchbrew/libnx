@@ -9,11 +9,11 @@
 #include <string.h>
 #include "types.h"
 #include "result.h"
-#include "services/fatal.h"
 #include "kernel/mutex.h"
 #include "kernel/svc.h"
 #include "kernel/random.h"
 #include "runtime/env.h"
+#include "runtime/diag.h"
 
 #define ROTL32(x, n) (((x) << (n)) | ((x) >> (32-(n))))
 
@@ -137,7 +137,7 @@ static void _randomInit(void)
     {
         // Get process TRNG seeds from kernel.
         if (R_FAILED(svcGetInfo(&seed[i], InfoType_RandomEntropy, INVALID_HANDLE, i)))
-            fatalThrow(MAKERESULT(Module_Libnx, LibnxError_BadGetInfo_Rng));
+            diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_BadGetInfo_Rng));
     }
 
     if (envHasRandomSeed())

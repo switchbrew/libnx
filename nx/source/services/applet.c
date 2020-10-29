@@ -1,10 +1,10 @@
 #include <string.h>
 #include "service_guard.h"
 #include "arm/counter.h"
-#include "services/fatal.h"
 #include "services/applet.h"
 #include "runtime/env.h"
 #include "runtime/hosversion.h"
+#include "runtime/diag.h"
 
 __attribute__((weak)) u32 __nx_applet_type = AppletType_Default;
 __attribute__((weak)) bool __nx_applet_auto_notifyrunning = true;
@@ -162,7 +162,7 @@ Result _appletInitialize(void) {
                 case AppletType_OverlayApplet:     cmd_id = 300; break;
                 case AppletType_SystemApplication: cmd_id = 350; break;
                 // TODO: Replace error code
-                default: fatalThrow(MAKERESULT(Module_Libnx, LibnxError_AppletCmdidNotFound));
+                default: diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_AppletCmdidNotFound));
             }
 
             if (__nx_applet_type == AppletType_LibraryApplet && hosversionAtLeast(3,0,0)) {
@@ -2027,7 +2027,7 @@ void appletNotifyRunning(bool *out) {
 
     Result rc = _appletCmdNoInOutBool(&g_appletIFunctions, out, 40);
 
-    if (R_FAILED(rc)) fatalThrow(MAKERESULT(Module_Libnx, LibnxError_BadAppletNotifyRunning));
+    if (R_FAILED(rc)) diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_BadAppletNotifyRunning));
 }
 
 Result appletGetPseudoDeviceId(Uuid *out) {
@@ -2921,7 +2921,7 @@ Result appletGetMessage(u32 *msg) {
         if (R_VALUE(rc) == MAKERESULT(128, 3))
             return rc;
 
-        fatalThrow(MAKERESULT(Module_Libnx, LibnxError_BadAppletReceiveMessage));
+        diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_BadAppletReceiveMessage));
     }
 
     return 0;
@@ -2939,7 +2939,7 @@ bool appletProcessMessage(u32 msg) {
         case AppletMessage_FocusStateChanged:
             rc = _appletGetCurrentFocusState(&g_appletFocusState);
             if (R_FAILED(rc))
-                fatalThrow(MAKERESULT(Module_Libnx, LibnxError_BadAppletGetCurrentFocusState));
+                diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_BadAppletGetCurrentFocusState));
 
             appletCallHook(AppletHookType_OnFocusState);
         break;
@@ -2951,7 +2951,7 @@ bool appletProcessMessage(u32 msg) {
         case AppletMessage_OperationModeChanged:
             rc = _appletGetOperationMode(&g_appletOperationMode);
             if (R_FAILED(rc))
-                fatalThrow(MAKERESULT(Module_Libnx, LibnxError_BadAppletGetOperationMode));
+                diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_BadAppletGetOperationMode));
 
             appletCallHook(AppletHookType_OnOperationMode);
         break;
@@ -2959,7 +2959,7 @@ bool appletProcessMessage(u32 msg) {
         case AppletMessage_PerformanceModeChanged:
             rc = _appletGetPerformanceMode(&g_appletPerformanceMode);
             if (R_FAILED(rc))
-                fatalThrow(MAKERESULT(Module_Libnx, LibnxError_BadAppletGetPerformanceMode));
+                diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_BadAppletGetPerformanceMode));
 
             appletCallHook(AppletHookType_OnPerformanceMode);
         break;

@@ -3,9 +3,9 @@
 #include "runtime/env.h"
 #include "runtime/hosversion.h"
 #include "services/sm.h"
-#include "services/fatal.h"
 #include "services/applet.h"
 #include "services/acc.h"
+#include "runtime/diag.h"
 
 void NORETURN __nx_exit(Result rc, LoaderReturnFn retaddr);
 
@@ -138,7 +138,7 @@ Handle envGetMainThreadHandle(void) {
         return g_mainThreadHandle;
     }
 
-    fatalThrow(MAKERESULT(Module_Libnx, LibnxError_HandleTooEarly));
+    diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_HandleTooEarly));
 }
 
 bool envIsNso(void) {

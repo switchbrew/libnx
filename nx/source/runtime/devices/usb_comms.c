@@ -3,9 +3,9 @@
 #include "types.h"
 #include "result.h"
 #include "kernel/rwlock.h"
-#include "services/fatal.h"
 #include "services/usbds.h"
 #include "runtime/hosversion.h"
+#include "runtime/diag.h"
 #include "runtime/devices/usb_comms.h"
 
 #define TOTAL_INTERFACES 4
@@ -552,7 +552,7 @@ size_t usbCommsReadEx(void* buffer, size_t size, u32 interface)
                 rwlockWriteUnlock(&inter->lock_out);
             }
         }
-        if (R_FAILED(rc) && g_usbCommsErrorHandling) fatalThrow(MAKERESULT(Module_Libnx, LibnxError_BadUsbCommsRead));
+        if (R_FAILED(rc) && g_usbCommsErrorHandling) diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_BadUsbCommsRead));
     }
     return transferredSize;
 }
@@ -589,7 +589,7 @@ size_t usbCommsWriteEx(const void* buffer, size_t size, u32 interface)
                 rwlockWriteUnlock(&inter->lock_in);
             }
         }
-        if (R_FAILED(rc) && g_usbCommsErrorHandling) fatalThrow(MAKERESULT(Module_Libnx, LibnxError_BadUsbCommsWrite));
+        if (R_FAILED(rc) && g_usbCommsErrorHandling) diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_BadUsbCommsWrite));
     }
     return transferredSize;
 }

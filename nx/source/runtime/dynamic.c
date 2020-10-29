@@ -1,5 +1,5 @@
 #include "result.h"
-#include "services/fatal.h"
+#include "runtime/diag.h"
 #include <elf.h>
 
 void __nx_dynamic(uintptr_t base, const Elf64_Dyn* dyn)
@@ -21,7 +21,7 @@ void __nx_dynamic(uintptr_t base, const Elf64_Dyn* dyn)
 	}
 
 	if (rela == NULL)
-		fatalThrow(MAKERESULT(Module_Libnx, LibnxError_BadReloc));
+		diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_BadReloc));
 
 	for (; relasz--; rela++)
 	{

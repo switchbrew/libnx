@@ -1,10 +1,10 @@
 #include "types.h"
 #include "result.h"
-#include "services/fatal.h"
 #include "kernel/mutex.h"
 #include "kernel/svc.h"
 #include "kernel/virtmem.h"
 #include "kernel/random.h"
+#include "runtime/diag.h"
 
 #define SEQUENTIAL_GUARD_REGION_SIZE 0x1000
 #define RANDOM_MAX_ATTEMPTS 0x200
@@ -63,7 +63,7 @@ NX_INLINE bool _memregionIsUnmapped(uintptr_t start, uintptr_t end, uintptr_t gu
     u32 pageinfo;
     Result rc = svcQueryMemory(&meminfo, &pageinfo, start);
     if (R_FAILED(rc))
-        fatalThrow(MAKERESULT(Module_Libnx, LibnxError_BadQueryMemory));
+        diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_BadQueryMemory));
 
     // Return error if there's anything mapped.
     uintptr_t memend = meminfo.addr + meminfo.size;
@@ -121,14 +121,14 @@ void virtmemSetup(void) {
     rc = _memregionInitWithInfo(&g_AliasRegion, InfoType_AliasRegionAddress, InfoType_AliasRegionSize);
     if (R_FAILED(rc)) {
         // Wat.
-        fatalThrow(MAKERESULT(Module_Libnx, LibnxError_WeirdKernel));
+        diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_WeirdKernel));
     }
 
     // Retrieve memory region information for the reserved heap region.
     rc = _memregionInitWithInfo(&g_HeapRegion, InfoType_HeapRegionAddress, InfoType_HeapRegionSize);
     if (R_FAILED(rc)) {
         // Wat.
-        fatalThrow(MAKERESULT(Module_Libnx, LibnxError_BadGetInfo_Heap));
+        diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_BadGetInfo_Heap));
     }
 
     // Retrieve memory region information for the aslr/stack regions if available [2.0.0+]
@@ -136,7 +136,7 @@ void virtmemSetup(void) {
     if (R_SUCCEEDED(rc)) {
         rc = _memregionInitWithInfo(&g_StackRegion, InfoType_StackRegionAddress, InfoType_StackRegionSize);
         if (R_FAILED(rc))
-            fatalThrow(MAKERESULT(Module_Libnx, LibnxError_BadGetInfo_Stack));
+            diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_BadGetInfo_Stack));
     }
     else {
         // [1.0.0] doesn't expose aslr/stack region information so we have to do this dirty hack to detect it.
@@ -156,7 +156,7 @@ void virtmemSetup(void) {
         }
         else {
             // Wat.
-            fatalThrow(MAKERESULT(Module_Libnx, LibnxError_WeirdKernel));
+            diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_WeirdKernel));
         }
     }
 }

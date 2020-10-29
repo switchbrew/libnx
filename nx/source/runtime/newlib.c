@@ -15,8 +15,8 @@
 #include "kernel/condvar.h"
 #include "kernel/thread.h"
 #include "kernel/svc.h"
-#include "services/fatal.h"
 #include "services/time.h"
+#include "runtime/diag.h"
 #include "result.h"
 
 #define THRD_MAIN_HANDLE ((struct __pthread_t*)~(uintptr_t)0)
@@ -59,7 +59,7 @@ struct _reent* __syscall_getreent(void)
 {
     ThreadVars* tv = getThreadVars();
     if (tv->magic != THREADVARS_MAGIC)
-        fatalThrow(MAKERESULT(Module_Libnx, LibnxError_BadReent));
+        diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_BadReent));
     return tv->reent;
 }
 

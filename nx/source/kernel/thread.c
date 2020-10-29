@@ -8,8 +8,8 @@
 #include "kernel/mutex.h"
 #include "kernel/thread.h"
 #include "kernel/wait.h"
-#include "services/fatal.h"
 #include "runtime/env.h"
+#include "runtime/diag.h"
 #include "../internal.h"
 
 #define USER_TLS_BEGIN 0x108
@@ -192,7 +192,7 @@ Result threadCreate(
 void threadExit(void) {
     Thread* t = getThreadVars()->thread_ptr;
     if (!t)
-        fatalThrow(MAKERESULT(Module_Libnx, LibnxError_NotInitialized));
+        diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_NotInitialized));
 
     u64 tls_mask = __atomic_load_n(&g_tlsUsageMask, __ATOMIC_SEQ_CST);
     for (s32 i = 0; i < NUM_TLS_SLOTS; i ++) {

@@ -1,6 +1,6 @@
 #define NX_SERVICE_ASSUME_NON_DOMAIN
 #include "service_guard.h"
-#include "services/fatal.h"
+#include "runtime/diag.h"
 
 static Service g_smSrv;
 
@@ -15,7 +15,7 @@ static size_t g_smOverridesNum = 0;
 
 void smAddOverrideHandle(SmServiceName name, Handle handle) {
     if (g_smOverridesNum == MAX_OVERRIDES)
-        fatalThrow(MAKERESULT(Module_Libnx, LibnxError_TooManyOverrides));
+        diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_TooManyOverrides));
 
     size_t i = g_smOverridesNum;
 

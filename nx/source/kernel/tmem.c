@@ -6,7 +6,7 @@
 #include "kernel/svc.h"
 #include "kernel/tmem.h"
 #include "kernel/virtmem.h"
-#include "services/fatal.h"
+#include "runtime/diag.h"
 
 Result tmemCreate(TransferMemory* t, size_t size, Permission perm)
 {

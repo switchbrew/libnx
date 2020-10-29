@@ -3,9 +3,9 @@
 #include "types.h"
 #include "result.h"
 #include "arm/cache.h"
-#include "services/fatal.h"
 #include "services/nv.h"
 #include "services/vi.h"
+#include "runtime/diag.h"
 #include "display/binder.h"
 #include "display/buffer_producer.h"
 #include "display/native_window.h"
@@ -154,7 +154,7 @@ void* framebufferBegin(Framebuffer* fb, u32* out_stride)
     s32 slot;
     Result rc = nwindowDequeueBuffer(fb->win, &slot, NULL);
     if (R_FAILED(rc))
-        fatalThrow(MAKERESULT(Module_Libnx, LibnxError_BadGfxDequeueBuffer));
+        diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_BadGfxDequeueBuffer));
 
     if (out_stride)
         *out_stride = fb->stride;
@@ -223,5 +223,5 @@ void framebufferEnd(Framebuffer* fb)
 
     Result rc = nwindowQueueBuffer(fb->win, fb->win->cur_slot, NULL);
     if (R_FAILED(rc))
-        fatalThrow(MAKERESULT(Module_Libnx, LibnxError_BadGfxQueueBuffer));
+        diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_BadGfxQueueBuffer));
 }

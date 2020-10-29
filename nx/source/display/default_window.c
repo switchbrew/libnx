@@ -2,7 +2,7 @@
 #include "types.h"
 #include "result.h"
 #include "services/vi.h"
-#include "services/fatal.h"
+#include "runtime/diag.h"
 #include "display/binder.h"
 #include "display/buffer_producer.h"
 #include "display/native_window.h"
@@ -42,7 +42,7 @@ void __nx_win_init(void)
             viExit();
     }
     if (R_FAILED(rc))
-        fatalThrow(MAKERESULT(Module_Libnx, LibnxError_BadGfxInit));
+        diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_BadGfxInit));
 }
 
 void __nx_win_exit(void)
