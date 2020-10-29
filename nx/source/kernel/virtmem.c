@@ -22,6 +22,7 @@ static MemRegion g_AslrRegion;
 static MemRegion g_StackRegion;
 
 static uintptr_t g_SequentialAddr;
+static bool g_IsLegacyKernel;
 
 static Result _memregionInitWithInfo(MemRegion* r, InfoType id0_addr, InfoType id0_sz) {
     u64 base;
@@ -141,6 +142,7 @@ void virtmemSetup(void) {
     else {
         // [1.0.0] doesn't expose aslr/stack region information so we have to do this dirty hack to detect it.
         // Forgive me.
+        g_IsLegacyKernel = true;
         rc = svcUnmapMemory((void*)0xFFFFFFFFFFFFE000UL, (void*)0xFFFFFE000UL, 0x1000);
         if (rc == KERNELRESULT(InvalidMemoryState)) {
             // Invalid src-address error means that a valid 36-bit address was rejected.
@@ -227,4 +229,10 @@ void* virtmemFindAslr(size_t size, size_t guard_size) {
 void* virtmemFindStack(size_t size, size_t guard_size) {
     if (!mutexIsLockedByCurrentThread(&g_VirtmemMutex)) return NULL;
     return _memregionFindRandom(&g_StackRegion, size, guard_size);
+}
+
+void* virtmemFindCodeMemory(size_t size, size_t guard_size) {
+    if (!mutexIsLockedByCurrentThread(&g_VirtmemMutex)) return NULL;
+    // [1.0.0] requires CodeMemory to be mapped within the stack region.
+    return _memregionFindRandom(g_IsLegacyKernel ? &g_StackRegion : &g_AslrRegion, size, guard_size);
 }
