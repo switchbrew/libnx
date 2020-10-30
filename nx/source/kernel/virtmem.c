@@ -5,6 +5,7 @@
 #include "kernel/virtmem.h"
 #include "kernel/random.h"
 #include "runtime/diag.h"
+#include <stdlib.h>
 
 #define SEQUENTIAL_GUARD_REGION_SIZE 0x1000
 #define RANDOM_MAX_ATTEMPTS 0x200
@@ -14,12 +15,20 @@ typedef struct {
     uintptr_t end;
 } MemRegion;
 
+struct VirtmemReservation {
+    VirtmemReservation *next;
+    VirtmemReservation *prev;
+    MemRegion region;
+};
+
 static Mutex g_VirtmemMutex;
 
 static MemRegion g_AliasRegion;
 static MemRegion g_HeapRegion;
 static MemRegion g_AslrRegion;
 static MemRegion g_StackRegion;
+
+static VirtmemReservation *g_Reservations;
 
 static uintptr_t g_SequentialAddr;
 static bool g_IsLegacyKernel;
@@ -54,7 +63,7 @@ NX_INLINE bool _memregionOverlaps(MemRegion* r, uintptr_t start, uintptr_t end) 
     return start < r->end && r->start < end;
 }
 
-NX_INLINE bool _memregionIsUnmapped(uintptr_t start, uintptr_t end, uintptr_t guard, uintptr_t* out_end) {
+NX_INLINE bool _memregionIsMapped(uintptr_t start, uintptr_t end, uintptr_t guard, uintptr_t* out_end) {
     // Adjust start/end by the desired guard size.
     start -= guard;
     end += guard;
@@ -66,14 +75,30 @@ NX_INLINE bool _memregionIsUnmapped(uintptr_t start, uintptr_t end, uintptr_t gu
     if (R_FAILED(rc))
         diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_BadQueryMemory));
 
-    // Return error if there's anything mapped.
+    // Return true if there's anything mapped.
     uintptr_t memend = meminfo.addr + meminfo.size;
     if (meminfo.type != MemType_Unmapped || end > memend) {
         if (out_end) *out_end = memend + guard;
-        return false;
+        return true;
     }
 
-    return true;
+    return false;
+}
+
+NX_INLINE bool _memregionIsReserved(uintptr_t start, uintptr_t end, uintptr_t guard, uintptr_t* out_end) {
+    // Adjust start/end by the desired guard size.
+    start -= guard;
+    end += guard;
+
+    // Go through each reservation and check if any of them overlap the desired address range.
+    for (VirtmemReservation *rv = g_Reservations; rv; rv = rv->next) {
+        if (_memregionOverlaps(&rv->region, start, end)) {
+            if (out_end) *out_end = rv->region.end + guard;
+            return true;
+        }
+    }
+
+    return false;
 }
 
 static void* _memregionFindRandom(MemRegion* r, size_t size, size_t guard_size) {
@@ -107,9 +132,16 @@ static void* _memregionFindRandom(MemRegion* r, size_t size, size_t guard_size) 
             break;
         }
 
-        // Check that the desired memory range is unmapped.
-        if (_memregionIsUnmapped(cur_addr, cur_addr + size, guard_size, NULL))
-            return (void*)cur_addr; // we found a suitable address!
+        // Check that there isn't anything mapped at the desired memory range.
+        if (_memregionIsMapped(cur_addr, cur_addr + size, guard_size, NULL))
+            continue;
+
+        // Check that the desired memory range doesn't overlap any reservations.
+        if (_memregionIsReserved(cur_addr, cur_addr + size, guard_size, NULL))
+            continue;
+
+        // We found a suitable address!
+        return (void*)cur_addr;
     }
 
     return NULL;
@@ -195,7 +227,11 @@ void* virtmemReserve(size_t size) {
         }
 
         // Avoid mapping in areas that are already used.
-        if (!_memregionIsUnmapped(cur_addr, cur_addr + size, SEQUENTIAL_GUARD_REGION_SIZE, &cur_addr))
+        if (_memregionIsMapped(cur_addr, cur_addr + size, SEQUENTIAL_GUARD_REGION_SIZE, &cur_addr))
+            continue;
+
+        // Avoid mapping in areas that are reserved.
+        if (_memregionIsReserved(cur_addr, cur_addr + size, SEQUENTIAL_GUARD_REGION_SIZE, &cur_addr))
             continue;
 
         // We found a suitable address for the block.
@@ -235,4 +271,29 @@ void* virtmemFindCodeMemory(size_t size, size_t guard_size) {
     if (!mutexIsLockedByCurrentThread(&g_VirtmemMutex)) return NULL;
     // [1.0.0] requires CodeMemory to be mapped within the stack region.
     return _memregionFindRandom(g_IsLegacyKernel ? &g_StackRegion : &g_AslrRegion, size, guard_size);
+}
+
+VirtmemReservation* virtmemAddReservation(void* mem, size_t size) {
+    if (!mutexIsLockedByCurrentThread(&g_VirtmemMutex)) return NULL;
+    VirtmemReservation* rv = (VirtmemReservation*)malloc(sizeof(VirtmemReservation));
+    if (rv) {
+        rv->region.start = (uintptr_t)mem;
+        rv->region.end   = rv->region.start + size;
+        rv->next         = g_Reservations;
+        rv->prev         = NULL;
+        g_Reservations   = rv;
+        if (rv->next)
+            rv->next->prev = rv;
+    }
+    return rv;
+}
+
+void virtmemRemoveReservation(VirtmemReservation* rv) {
+    if (!mutexIsLockedByCurrentThread(&g_VirtmemMutex)) return;
+    if (rv->next)
+        rv->next->prev = rv->prev;
+    if (rv->prev)
+        rv->prev->next = rv->next;
+    else
+        g_Reservations = rv->next;
 }

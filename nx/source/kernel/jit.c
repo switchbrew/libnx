@@ -46,8 +46,15 @@ Result jitCreate(Jit* j, size_t size)
     switch (j->type)
     {
     case JitType_SetProcessMemoryPermission:
-        j->rx_addr = virtmemReserve(j->size);
+        virtmemLock();
+        j->rx_addr = virtmemFindCodeMemory(j->size, 0x1000);
         j->rw_addr = j->src_addr;
+        j->rv      = virtmemAddReservation(j->rx_addr, j->size);
+        virtmemUnlock();
+
+        if (!j->rv) {
+            rc = MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
+        }
         break;
 
     case JitType_CodeMemory:
@@ -55,14 +62,14 @@ Result jitCreate(Jit* j, size_t size)
         if (R_SUCCEEDED(rc))
         {
             virtmemLock();
-            j->rw_addr = virtmemFindAslr(j->size, 0x1000);
+            j->rw_addr = virtmemFindCodeMemory(j->size, 0x1000);
             rc = svcControlCodeMemory(j->handle, CodeMapOperation_MapOwner, j->rw_addr, j->size, Perm_Rw);
             virtmemUnlock();
 
             if (R_SUCCEEDED(rc))
             {
                 virtmemLock();
-                j->rx_addr = virtmemFindAslr(j->size, 0x1000);
+                j->rx_addr = virtmemFindCodeMemory(j->size, 0x1000);
                 rc = svcControlCodeMemory(j->handle, CodeMapOperation_MapSlave, j->rx_addr, j->size, Perm_Rx);
                 virtmemUnlock();
 
@@ -151,7 +158,9 @@ Result jitClose(Jit* j)
         rc = jitTransitionToWritable(j);
 
         if (R_SUCCEEDED(rc)) {
-            virtmemFree(j->rx_addr, j->size);
+            virtmemLock();
+            virtmemRemoveReservation(j->rv);
+            virtmemUnlock();
         }
         break;
 

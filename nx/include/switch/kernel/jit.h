@@ -6,6 +6,7 @@
  */
 #pragma once
 #include "../types.h"
+#include "virtmem.h"
 
 /// JIT implementation type.
 typedef enum {
@@ -21,7 +22,10 @@ typedef struct {
     void*   rx_addr;
     void*   rw_addr;
     bool    is_executable;
-    Handle  handle;
+    union {
+        Handle              handle;
+        VirtmemReservation* rv;
+    };
 } Jit;
 
 /**
