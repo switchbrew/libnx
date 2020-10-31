@@ -72,5 +72,6 @@ VirtmemReservation* virtmemAddReservation(void* mem, size_t size);
 /**
  * @brief Releases a memory address space reservation.
  * @param rv Reservation to release.
+ * @note The virtual memory manager mutex must be held before calling this function (see \ref virtmemLock and \ref virtmemUnlock).
  */
 void virtmemRemoveReservation(VirtmemReservation* rv);
