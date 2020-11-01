@@ -273,6 +273,11 @@ void* virtmemFindCodeMemory(size_t size, size_t guard_size) {
     return _memregionFindRandom(g_IsLegacyKernel ? &g_StackRegion : &g_AslrRegion, size, guard_size);
 }
 
+void* virtmemFindAlias(size_t size, size_t guard_size) {
+    if (!mutexIsLockedByCurrentThread(&g_VirtmemMutex)) return NULL;
+    return _memregionFindRandom(&g_AliasRegion, size, guard_size);
+}
+
 VirtmemReservation* virtmemAddReservation(void* mem, size_t size) {
     if (!mutexIsLockedByCurrentThread(&g_VirtmemMutex)) return NULL;
     VirtmemReservation* rv = (VirtmemReservation*)malloc(sizeof(VirtmemReservation));

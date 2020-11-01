@@ -60,6 +60,15 @@ void* virtmemFindStack(size_t size, size_t guard_size);
 void* virtmemFindCodeMemory(size_t size, size_t guard_size);
 
 /**
+ * @brief Finds a random slice of free alias address space.
+ * @param size Desired size of the slice (rounded up to page alignment).
+ * @param guard_size Desired size of the unmapped guard areas surrounding the slice  (rounded up to page alignment).
+ * @return Pointer to the slice of address space, or NULL on failure.
+ * @note The virtual memory manager mutex must be held during the find-and-map process (see \ref virtmemLock and \ref virtmemUnlock).
+ */
+void* virtmemFindAlias(size_t size, size_t guard_size);
+
+/**
  * @brief Reserves a range of memory address space.
  * @param mem Pointer to the address space slice.
  * @param size Size of the slice.
