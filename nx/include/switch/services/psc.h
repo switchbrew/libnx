@@ -101,3 +101,45 @@ Result pscPmModuleAcknowledge(PscPmModule *module, PscPmState state);
 Result pscPmModuleFinalize(PscPmModule *module);
 
 void   pscPmModuleClose(PscPmModule *module);
+
+/// Initialize ins:r.
+Result insrInitialize(void);
+
+/// Exit ins:r.
+void insrExit(void);
+
+/// Gets the Service object for the actual ins:r service session.
+Service* insrGetServiceSession(void);
+
+/**
+ * @brief Retrieves the last system tick the event corresponding to the ID was signaled at.
+ * @param[in] id Ins request ID (should be 0..4).
+ * @param[out] tick.
+ * @return Result code.
+ */
+Result insrGetLastTick(u32 id, u64 *tick);
+
+/**
+ * @brief Retrieves the event corresponding to the ID.
+ * @param[in] id Ins request ID (should be 0..4).
+ * @param[out] out.
+ * @return Result code.
+ */
+Result insrGetReadableEvent(u32 id, Event *out);
+
+/// Initialize ins:s.
+Result inssInitialize(void);
+
+/// Exit ins:s.
+void inssExit(void);
+
+/// Gets the Service object for the actual ins:s service session.
+Service* inssGetServiceSession(void);
+
+/**
+ * @brief Retrieves the event corresponding to the ID.
+ * @param[in] id Ins send ID (should be 0..11).
+ * @param[out] out.
+ * @return Result code.
+ */
+Result inssGetWritableEvent(u32 id, Event *out);
