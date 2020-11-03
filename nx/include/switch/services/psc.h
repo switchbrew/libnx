@@ -116,6 +116,7 @@ Service* insrGetServiceSession(void);
  * @param[in] id Ins request ID (should be 0..4).
  * @param[out] tick.
  * @return Result code.
+ * @note The tick is only updated once per second at minimum.
  */
 Result insrGetLastTick(u32 id, u64 *tick);
 
@@ -124,6 +125,7 @@ Result insrGetLastTick(u32 id, u64 *tick);
  * @param[in] id Ins request ID (should be 0..4).
  * @param[out] out.
  * @return Result code.
+ * @note The event is only signaled once per second at minimum.
  */
 Result insrGetReadableEvent(u32 id, Event *out);
 
@@ -141,5 +143,6 @@ Service* inssGetServiceSession(void);
  * @param[in] id Ins send ID (should be 0..11).
  * @param[out] out.
  * @return Result code.
+ * @note The returned event cannot be waited on, only signaled. Clearing is handled by the service.
  */
 Result inssGetWritableEvent(u32 id, Event *out);
