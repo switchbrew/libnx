@@ -545,8 +545,8 @@ typedef struct HidControllerMAC {
     u64 timestamp_2;
 } HidControllerMAC;
 
-/// HidControllerHeader
-typedef struct HidControllerHeader {
+/// HidNpadStateHeader
+typedef struct HidNpadStateHeader {
     u32 type;
     u32 isHalf;
     u32 singleColorsDescriptor;
@@ -557,9 +557,9 @@ typedef struct HidControllerHeader {
     u32 leftColorButtons;
     u32 rightColorBody;
     u32 rightColorButtons;
-} HidControllerHeader;
+} HidNpadStateHeader;
 
-/// Info struct extracted from HidControllerHeader.
+/// Info struct extracted from HidNpadStateHeader.
 /// Color fields are zero when not set. This can happen even when the *Set fields are set to true.
 typedef struct HidControllerColors
 {
@@ -576,19 +576,30 @@ typedef struct HidControllerColors
 
 /// HidControllerLayoutHeader
 typedef struct HidControllerLayoutHeader {
-    u64 timestampTicks;
-    u64 numEntries;
-    u64 latestEntry;
-    u64 maxEntryIndex;
+    u64 timestamp_ticks;
+    u64 total_entries;
+    u64 latest_entry;
+    u64 max_entry;
 } HidControllerLayoutHeader;
+
+/// HidNpadStateEntry
+typedef struct HidNpadStateEntry {
+    u64 timestamp;
+    u64 buttons;
+    JoystickPosition joysticks[JOYSTICK_NUM_STICKS];
+    u64 connectionState;
+} HidNpadStateEntry;
+
+typedef HidNpadStateEntry HidNpadFullKeyState;
+typedef HidNpadStateEntry HidNpadHandheldState;
+typedef HidNpadStateEntry HidNpadJoyDualState;
+typedef HidNpadStateEntry HidNpadJoyLeftState;
+typedef HidNpadStateEntry HidNpadJoyRightState;
 
 /// HidControllerInputEntry
 typedef struct HidControllerInputEntry {
     u64 timestamp;
-    u64 timestamp_2;
-    u64 buttons;
-    JoystickPosition joysticks[JOYSTICK_NUM_STICKS];
-    u64 connectionState;
+    HidNpadStateEntry state;
 } HidControllerInputEntry;
 
 /// HidControllerLayout
@@ -661,7 +672,7 @@ typedef struct {
 
 /// HidController
 typedef struct HidController {
-    HidControllerHeader header;
+    HidNpadStateHeader header;
     HidControllerLayout layouts[7];
     HidControllerSixAxisLayout sixaxis[6];
     HidControllerMisc misc;
@@ -787,6 +798,12 @@ void hidGetControllerFlags(HidControllerID id, HidFlags *flags);
 void hidGetControllerPowerInfo(HidControllerID id, HidPowerInfo *info, size_t total_info);
 
 void hidScanInput(void);
+
+void hidGetNpadStatesFullKey(u32 id, HidNpadFullKeyState *states, size_t count, size_t *total_out);
+void hidGetNpadStatesHandheld(u32 id, HidNpadHandheldState *states, size_t count, size_t *total_out);
+void hidGetNpadStatesJoyDual(u32 id, HidNpadJoyDualState *states, size_t count, size_t *total_out);
+void hidGetNpadStatesJoyLeft(u32 id, HidNpadJoyLeftState *states, size_t count, size_t *total_out);
+void hidGetNpadStatesJoyRight(u32 id, HidNpadJoyRightState *states, size_t count, size_t *total_out);
 
 u64 hidKeysHeld(HidControllerID id);
 u64 hidKeysDown(HidControllerID id);

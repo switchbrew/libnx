@@ -9,6 +9,7 @@
 #include "services/applet.h"
 #include "services/hid.h"
 #include "runtime/hosversion.h"
+#include "runtime/diag.h"
 
 static Service g_hidSrv;
 static Service g_hidIAppletResource;
@@ -19,7 +20,7 @@ static HidTouchScreenEntry g_touchEntry;
 static HidMouseEntry *g_mouseEntry;
 static HidMouse g_mouse;
 static HidKeyboardEntry g_keyboardEntry;
-static HidControllerHeader g_controllerHeaders[10];
+static HidNpadStateHeader g_controllerHeaders[10];
 static HidControllerInputEntry g_controllerEntries[10];
 static HidControllerSixAxisLayout g_sixaxisLayouts[10];
 static HidControllerMisc g_controllerMisc[10];
@@ -238,14 +239,14 @@ void hidScanInput(void) {
 
     for (int i = 0; i < 10; i++) {
         HidControllerLayout *currentLayout = &sharedMem->controllers[i].layouts[g_controllerLayout[i]];
-        memcpy(&g_controllerHeaders[i], &sharedMem->controllers[i].header, sizeof(HidControllerHeader));
-        u64 latestControllerEntry = currentLayout->header.latestEntry;
+        memcpy(&g_controllerHeaders[i], &sharedMem->controllers[i].header, sizeof(HidNpadStateHeader));
+        u64 latestControllerEntry = currentLayout->header.latest_entry;
         HidControllerInputEntry *newInputEntry = &currentLayout->entries[latestControllerEntry];
         if ((s64)(newInputEntry->timestamp - g_controllerTimestamps[i]) >= 0) {
             memcpy(&g_controllerEntries[i], newInputEntry, sizeof(HidControllerInputEntry));
             g_controllerTimestamps[i] = newInputEntry->timestamp;
 
-            g_controllerHeld[i] |= g_controllerEntries[i].buttons;
+            g_controllerHeld[i] |= g_controllerEntries[i].state.buttons;
         }
 
         g_controllerDown[i] = (~g_controllerOld[i]) & g_controllerHeld[i];
@@ -283,7 +284,7 @@ void hidScanInput(void) {
     }
 
     g_controllerP1AutoID = CONTROLLER_HANDHELD;
-    if (g_controllerEntries[CONTROLLER_PLAYER_1].connectionState & CONTROLLER_STATE_CONNECTED)
+    if (g_controllerEntries[CONTROLLER_PLAYER_1].state.connectionState & CONTROLLER_STATE_CONNECTED)
        g_controllerP1AutoID = CONTROLLER_PLAYER_1;
 
     rwlockWriteUnlock(&g_hidLock);
@@ -308,7 +309,7 @@ void hidGetControllerColors(HidControllerID id, HidControllerColors *colors) {
     if (id < 0 || id > 9) return;
     if (colors == NULL) return;
 
-    HidControllerHeader *hdr = &g_controllerHeaders[id];
+    HidNpadStateHeader *hdr = &g_controllerHeaders[id];
 
     memset(colors, 0, sizeof(HidControllerColors));
 
@@ -338,7 +339,7 @@ bool hidIsControllerConnected(HidControllerID id) {
     if (id < 0 || id > 9) return 0;
 
     rwlockReadLock(&g_hidLock);
-    bool flag = (g_controllerEntries[id].connectionState & CONTROLLER_STATE_CONNECTED) != 0;
+    bool flag = (g_controllerEntries[id].state.connectionState & CONTROLLER_STATE_CONNECTED) != 0;
     rwlockReadUnlock(&g_hidLock);
     return flag;
 }
@@ -392,6 +393,82 @@ void hidGetControllerPowerInfo(HidControllerID id, HidPowerInfo *info, size_t to
         rwlockReadUnlock(&g_hidLock);
         if (info[i].batteryCharge > 4) info->batteryCharge = 4;
     }
+}
+
+static HidController *_hidNpadSharedmemGetInternalState(u32 id) {
+    if (id >= 0x8) id = id==0x10 ? 0x9 : 0x8;
+
+    HidSharedMemory *sharedmem = (HidSharedMemory*)hidGetSharedmemAddr();
+    if (sharedmem == NULL) return NULL;
+    return &sharedmem->controllers[id];
+}
+
+static Result _hidGetNpadStates(u32 id, u32 layout, HidNpadStateEntry *states, size_t count, size_t *total_out) {
+    if (total_out) *total_out = 0;
+
+    if (id >= 0x8 && (id!=0x10 && id!=0x20))
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+
+    HidController *npad = _hidNpadSharedmemGetInternalState(id);
+    if (npad == NULL)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    HidControllerLayout *states_buf = &npad->layouts[layout];
+
+    s32 total_entries = (s32)atomic_load_explicit(&states_buf->header.max_entry, memory_order_acquire);
+    if (total_entries < 0) total_entries = 0;
+    if (total_entries > count) total_entries = count;
+    s32 latest_entry = (s32)atomic_load_explicit(&states_buf->header.latest_entry, memory_order_acquire);
+
+    for (s32 i=0; i<total_entries; i++) {
+        s32 entrypos = (((latest_entry + 0x12) - total_entries) + i) % 0x11;
+
+        u64 timestamp0=0, timestamp1=0;
+
+        timestamp0 = atomic_load_explicit(&states_buf->entries[entrypos].timestamp, memory_order_acquire);
+        memcpy(&states[total_entries-i-1], &states_buf->entries[entrypos].state, sizeof(HidNpadStateEntry));
+        timestamp1 = atomic_load_explicit(&states_buf->entries[entrypos].timestamp, memory_order_acquire);
+
+        if (timestamp0 != timestamp1 || (i>0 && states[total_entries-i-1].timestamp - states[total_entries-i].timestamp != 1)) {
+            s32 tmpcount = (s32)atomic_load_explicit(&states_buf->header.max_entry, memory_order_acquire);
+            tmpcount = total_entries < tmpcount ? tmpcount : total_entries;
+            total_entries = tmpcount < count ? tmpcount : count;
+            latest_entry = (s32)atomic_load_explicit(&states_buf->header.latest_entry, memory_order_acquire);
+
+            i=-1;
+        }
+    }
+
+    if (total_out) *total_out = total_entries;
+
+    // sdknso would handle button-bitmasking with ControlPadRestriction here.
+
+    return 0;
+}
+
+void hidGetNpadStatesFullKey(u32 id, HidNpadFullKeyState *states, size_t count, size_t *total_out) {
+    Result rc = _hidGetNpadStates(id, 0, states, count, total_out);
+    if (R_FAILED(rc)) diagAbortWithResult(rc);
+}
+
+void hidGetNpadStatesHandheld(u32 id, HidNpadHandheldState *states, size_t count, size_t *total_out) {
+    Result rc = _hidGetNpadStates(id, 1, states, count, total_out);
+    if (R_FAILED(rc)) diagAbortWithResult(rc);
+}
+
+void hidGetNpadStatesJoyDual(u32 id, HidNpadJoyDualState *states, size_t count, size_t *total_out) {
+    Result rc = _hidGetNpadStates(id, 2, states, count, total_out);
+    if (R_FAILED(rc)) diagAbortWithResult(rc);
+}
+
+void hidGetNpadStatesJoyLeft(u32 id, HidNpadJoyLeftState *states, size_t count, size_t *total_out) {
+    Result rc = _hidGetNpadStates(id, 3, states, count, total_out);
+    if (R_FAILED(rc)) diagAbortWithResult(rc);
+}
+
+void hidGetNpadStatesJoyRight(u32 id, HidNpadJoyRightState *states, size_t count, size_t *total_out) {
+    Result rc = _hidGetNpadStates(id, 4, states, count, total_out);
+    if (R_FAILED(rc)) diagAbortWithResult(rc);
 }
 
 u64 hidKeysHeld(HidControllerID id) {
@@ -569,8 +646,8 @@ void hidJoystickRead(JoystickPosition *pos, HidControllerID id, HidControllerJoy
         }
 
         rwlockReadLock(&g_hidLock);
-        pos->dx = g_controllerEntries[id].joysticks[stick].dx;
-        pos->dy = g_controllerEntries[id].joysticks[stick].dy;
+        pos->dx = g_controllerEntries[id].state.joysticks[stick].dx;
+        pos->dy = g_controllerEntries[id].state.joysticks[stick].dy;
         rwlockReadUnlock(&g_hidLock);
     }
 }
