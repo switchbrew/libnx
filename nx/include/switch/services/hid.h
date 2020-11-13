@@ -375,10 +375,10 @@ typedef enum {
 
 /// NpadInterfaceType
 typedef enum {
-    NpadInterfaceType_Bluetooth = 1,    ///< Bluetooth.
-    NpadInterfaceType_Rail      = 2,    ///< Rail.
-    NpadInterfaceType_USB       = 3,    ///< USB.
-    NpadInterfaceType_Unknown4  = 4,    ///< Unknown.
+    HidNpadInterfaceType_Bluetooth = 1,    ///< Bluetooth.
+    HidNpadInterfaceType_Rail      = 2,    ///< Rail.
+    HidNpadInterfaceType_USB       = 3,    ///< USB.
+    HidNpadInterfaceType_Unknown4  = 4,    ///< Unknown.
 } HidNpadInterfaceType;
 
 /// XcdInterfaceType
