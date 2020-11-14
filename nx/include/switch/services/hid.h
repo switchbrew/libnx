@@ -700,22 +700,19 @@ typedef struct {
 
 /// HidSharedMemory
 typedef struct HidSharedMemory {
-    u8 header[0x400];
+    u8 debug_pad[0x400];
     HidTouchScreen touchscreen;
     HidMouse mouse;
     HidKeyboard keyboard;
-    u8 unkSection1[0x400];
-    u8 unkSection2[0x400];
-    u8 unkSection3[0x400];
-    u8 unkSection4[0x400];
-    u8 unkSection5[0x200];
-    u8 unkSection6[0x200];
-    u8 unkSection7[0x200];
-    u8 unkSection8[0x800];
-    u8 controllerSerials[0x4000];
+    u8 digitizer[0x1000];                               ///< [10.0.0+] Digitizer [1.0.0-9.2.0] BasicXpad
+    u8 home_button[0x200];
+    u8 sleep_button[0x200];
+    u8 capture_button[0x200];
+    u8 input_detector[0x800];
+    u8 unique_pad[0x4000];                              ///< [1.0.0-4.1.0] UniquePad
     HidController controllers[10];
     u8 gesture[0x800];
-    HidConsoleSixAxisSensor console_six_axis_sensor;    ///< [5.0.0+]
+    HidConsoleSixAxisSensor console_six_axis_sensor;    ///< [5.0.0+] ConsoleSixAxisSensor
     u8 unk_x3C220[0x3DE0];
 } HidSharedMemory;
 
