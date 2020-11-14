@@ -284,6 +284,8 @@ typedef enum {
     // Pseudo-key for at least one finger on the touch screen
     KEY_TOUCH       = BIT(28),
 
+    KEY_NES_HANDHELD_LEFT_B = BIT(30),   ///< Left B button on NES controllers in Handheld mode.
+
     // Buttons by orientation (for single Joy-Con), also works with Joy-Con pairs, Pro Controller
     KEY_JOYCON_RIGHT = BIT(0),
     KEY_JOYCON_DOWN  = BIT(1),
