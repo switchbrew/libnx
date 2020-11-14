@@ -56,7 +56,7 @@ Result ringconCreate(RingCon *c, HidControllerID id) {
     Result rc=0;
     bool handleflag=0;
     HidbusBusType bus_type;
-    u32 type = hidGetControllerType(id);
+    u32 style_set = hidGetNpadStyleSet(hidControllerIDToOfficial(id));
     u32 cmd = 0x00020101;
 
     memset(c, 0, sizeof(*c));
@@ -69,9 +69,9 @@ Result ringconCreate(RingCon *c, HidControllerID id) {
         memset(c->workbuf, 0, c->workbuf_size);
 
     if (R_SUCCEEDED(rc)) {
-        if (type & TYPE_JOYCON_LEFT)
+        if (style_set & HidNpadStyleTag_NpadJoyLeft)
             bus_type = HidbusBusType_JoyLeftRail;
-        else if (type & (TYPE_JOYCON_RIGHT | TYPE_JOYCON_PAIR))
+        else if (style_set & (HidNpadStyleTag_NpadJoyRight | HidNpadStyleTag_NpadJoyDual))
             bus_type = HidbusBusType_JoyRightRail;
         else
             rc = MAKERESULT(Module_Libnx, LibnxError_BadInput);

@@ -158,9 +158,9 @@ Result hidsysActivateCaptureButton(void);
 /**
  * @brief Gets the SupportedNpadStyleSet for the CallerApplet. applet must be initialized in order to use this (uses \ref appletGetAppletResourceUserIdOfCallerApplet).
  * @note Only available on [6.0.0+].
- * @param[out] out \ref HidControllerType
+ * @param[out] out Bitmask of \ref HidNpadStyleTag.
  */
-Result hidsysGetSupportedNpadStyleSetOfCallerApplet(HidControllerType *out);
+Result hidsysGetSupportedNpadStyleSetOfCallerApplet(u32 *out);
 
 /**
  * @brief Gets the UniquePadIds for the specified controller.

@@ -161,7 +161,7 @@ Result hidsysActivateCaptureButton(void) {
     return _hidsysCmdWithResIdAndPid(151);
 }
 
-static Result _hidsysGetMaskedSupportedNpadStyleSet(u64 AppletResourceUserId, HidControllerType *out) {
+static Result _hidsysGetMaskedSupportedNpadStyleSet(u64 AppletResourceUserId, u32 *out) {
     if (hosversionBefore(6,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
@@ -171,7 +171,7 @@ static Result _hidsysGetMaskedSupportedNpadStyleSet(u64 AppletResourceUserId, Hi
     return rc;
 }
 
-Result hidsysGetSupportedNpadStyleSetOfCallerApplet(HidControllerType *out) {
+Result hidsysGetSupportedNpadStyleSetOfCallerApplet(u32 *out) {
     u64 AppletResourceUserId=0;
     Result rc=0;
 

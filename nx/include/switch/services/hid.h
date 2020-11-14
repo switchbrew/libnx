@@ -214,17 +214,22 @@ typedef enum {
     KBD_MEDIA_CALC = 0xfb
 } HidKeyboardScancode;
 
-/// HID controller type
+/// HID controller styles
 typedef enum {
-    TYPE_PROCONTROLLER = BIT(0),
-    TYPE_HANDHELD      = BIT(1),
-    TYPE_JOYCON_PAIR   = BIT(2),
-    TYPE_JOYCON_LEFT   = BIT(3),
-    TYPE_JOYCON_RIGHT  = BIT(4),
-
-    TYPE_SYSTEM_EXT    = BIT(29),
-    TYPE_SYSTEM        = BIT(30),
-} HidControllerType;
+    HidNpadStyleTag_NpadFullKey       = BIT(0),       ///< Pro Controller
+    HidNpadStyleTag_NpadHandheld      = BIT(1),       ///< Joy-Con controller in handheld mode
+    HidNpadStyleTag_NpadJoyDual       = BIT(2),       ///< Joy-Con controller in dual mode
+    HidNpadStyleTag_NpadJoyLeft       = BIT(3),       ///< Joy-Con left controller in single mode
+    HidNpadStyleTag_NpadJoyRight      = BIT(4),       ///< Joy-Con right controller in single mode
+    HidNpadStyleTag_NpadGc            = BIT(5),       ///< GameCube controller
+    HidNpadStyleTag_NpadPalma         = BIT(6),       ///< Poké Ball Plus controller
+    HidNpadStyleTag_NpadLark          = BIT(7),       ///< NES/Famicom controller
+    HidNpadStyleTag_NpadHandheldLark  = BIT(8),       ///< NES/Famicom controller in handheld mode
+    HidNpadStyleTag_NpadLucia         = BIT(9),       ///< SNES controller
+    HidNpadStyleTag_Npad10            = BIT(10),
+    HidNpadStyleTag_NpadSystemExt     = BIT(29),      ///< Generic external controller
+    HidNpadStyleTag_NpadSystem        = BIT(30),      ///< Generic controller
+} HidNpadStyleTag;
 
 /// HidControllerLayoutType
 typedef enum {
@@ -320,7 +325,7 @@ typedef enum {
     CONTROLLER_PLAYER_8 = 7,
     CONTROLLER_HANDHELD = 8,
     CONTROLLER_UNKNOWN  = 9,
-    CONTROLLER_P1_AUTO = 10, ///< Not an actual HID-sysmodule ID. Only for hidKeys*()/hidJoystickRead()/hidSixAxisSensorValuesRead()/hidGetControllerType()/hidGetControllerColors()/hidIsControllerConnected(). Automatically uses CONTROLLER_PLAYER_1 when connected, otherwise uses CONTROLLER_HANDHELD.
+    CONTROLLER_P1_AUTO = 10, ///< Not an actual HID-sysmodule ID. Only for hidKeys*()/hidJoystickRead()/hidSixAxisSensorValuesRead()/hidGetControllerColors()/hidIsControllerConnected(). Automatically uses CONTROLLER_PLAYER_1 when connected, otherwise uses CONTROLLER_HANDHELD.
 } HidControllerID;
 
 /// GyroscopeZeroDriftMode
@@ -368,9 +373,9 @@ typedef enum {
     HidDeviceType_Palma           = 12,  ///< [9.0.0+] ::HidDeviceTypeBits_Palma
     HidDeviceType_FullKey13       = 13,  ///< ::HidDeviceTypeBits_FullKey
     HidDeviceType_FullKey15       = 15,  ///< ::HidDeviceTypeBits_FullKey
-    HidDeviceType_System19        = 19,  ///< ::HidDeviceTypeBits_System with HidControllerType |= TYPE_PROCONTROLLER.
-    HidDeviceType_System20        = 20,  ///< ::HidDeviceTypeBits_System with HidControllerType |= TYPE_JOYCON_PAIR.
-    HidDeviceType_System21        = 21,  ///< ::HidDeviceTypeBits_System with HidControllerType |= TYPE_JOYCON_PAIR.
+    HidDeviceType_System19        = 19,  ///< ::HidDeviceTypeBits_System with \ref HidNpadStyleTag |= ::HidNpadStyleTag_NpadFullKey.
+    HidDeviceType_System20        = 20,  ///< ::HidDeviceTypeBits_System with \ref HidNpadStyleTag |= ::HidNpadStyleTag_NpadJoyDual.
+    HidDeviceType_System21        = 21,  ///< ::HidDeviceTypeBits_System with \ref HidNpadStyleTag |= ::HidNpadStyleTag_NpadJoyDual.
 } HidDeviceType;
 
 /// NpadInterfaceType
@@ -547,7 +552,7 @@ typedef struct HidControllerMAC {
 
 /// HidNpadStateHeader
 typedef struct HidNpadStateHeader {
-    u32 type;
+    u32 style_set;
     u32 isHalf;
     u32 singleColorsDescriptor;
     u32 singleColorBody;
@@ -783,8 +788,10 @@ void* hidGetSharedmemAddr(void);
 
 void hidSetControllerLayout(HidControllerID id, HidControllerLayoutType layoutType);
 HidControllerLayoutType hidGetControllerLayout(HidControllerID id);
-/// Gets the \ref HidControllerType for the specified controller.
-HidControllerType hidGetControllerType(HidControllerID id);
+
+/// Gets a bitmask of \ref HidNpadStyleTag for the specified controller.
+u32 hidGetNpadStyleSet(u32 id);
+
 void hidGetControllerColors(HidControllerID id, HidControllerColors *colors);
 bool hidIsControllerConnected(HidControllerID id);
 
@@ -851,11 +858,11 @@ Result hidGetGyroscopeZeroDriftMode(u32 SixAxisSensorHandle, HidGyroscopeZeroDri
 /// Resets the ::HidGyroscopeZeroDriftMode for the specified SixAxisSensorHandle to ::HidGyroscopeZeroDriftMode_Standard.
 Result hidResetGyroscopeZeroDriftMode(u32 SixAxisSensorHandle);
 
-/// Sets which controller types are supported. This is automatically called with all types in \ref hidInitialize.
-Result hidSetSupportedNpadStyleSet(HidControllerType type);
+/// Sets which controller styles are supported, bitmask of \ref HidNpadStyleTag. This is automatically called with all styles in \ref hidInitialize.
+Result hidSetSupportedNpadStyleSet(u32 style_set);
 
-/// Gets which controller types are supported.
-Result hidGetSupportedNpadStyleSet(HidControllerType *type);
+/// Gets which controller styles are supported, bitmask of \ref HidNpadStyleTag.
+Result hidGetSupportedNpadStyleSet(u32 *style_set);
 
 /// This is automatically called with CONTROLLER_PLAYER_{1-8} and CONTROLLER_HANDHELD in \ref hidInitialize.
 /// count must be <=10. Each entry in buf must be CONTROLLER_PLAYER_{1-8} or CONTROLLER_HANDHELD.
@@ -888,7 +895,7 @@ Result hidSetNpadJoyAssignmentModeDual(HidControllerID id);
 /// If successful, the id of the resulting dual controller is set to id0.
 Result hidMergeSingleJoyAsDualJoy(HidControllerID id0, HidControllerID id1);
 
-Result hidInitializeVibrationDevices(u32 *VibrationDeviceHandles, s32 total_handles, HidControllerID id, HidControllerType type);
+Result hidInitializeVibrationDevices(u32 *VibrationDeviceHandles, s32 total_handles, HidControllerID id, HidNpadStyleTag style);
 
 /// Gets HidVibrationDeviceInfo for the specified VibrationDeviceHandle.
 Result hidGetVibrationDeviceInfo(const u32 *VibrationDeviceHandle, HidVibrationDeviceInfo *VibrationDeviceInfo);
@@ -911,8 +918,8 @@ Result hidSendVibrationValues(const u32 *VibrationDeviceHandles, HidVibrationVal
 /// Gets whether vibration is available with the specified device. Only available on [7.0.0+].
 Result hidIsVibrationDeviceMounted(const u32 *VibrationDeviceHandle, bool *flag);
 
-/// Gets SixAxisSensorHandles. total_handles==2 can only be used with TYPE_JOYCON_PAIR.
-Result hidGetSixAxisSensorHandles(u32 *SixAxisSensorHandles, s32 total_handles, HidControllerID id, HidControllerType type);
+/// Gets SixAxisSensorHandles. total_handles==2 can only be used with ::HidNpadStyleTag_NpadJoyDual.
+Result hidGetSixAxisSensorHandles(u32 *SixAxisSensorHandles, s32 total_handles, HidControllerID id, HidNpadStyleTag style);
 
 /// Starts the SixAxisSensor for the specified handle.
 Result hidStartSixAxisSensor(u32 SixAxisSensorHandle);

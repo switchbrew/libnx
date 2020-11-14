@@ -92,14 +92,14 @@ static Result _hidLaShowControllerFirmwareUpdateCore(const HidLaControllerFirmwa
 
 static Result _hidLaSetupControllerSupportArgPrivate(HidLaControllerSupportArgPrivate *private_arg) {
     Result rc=0;
-    HidControllerType type;
+    u32 style_set;
     HidJoyHoldType hold_type;
 
-    rc = hidGetSupportedNpadStyleSet(&type);
+    rc = hidGetSupportedNpadStyleSet(&style_set);
     if (R_SUCCEEDED(rc)) rc = hidGetNpadJoyHoldType(&hold_type);
 
     if (R_SUCCEEDED(rc)) {
-        private_arg->npad_style_set = type;
+        private_arg->npad_style_set = style_set;
         private_arg->npad_joy_hold_type = hold_type;
     }
 
