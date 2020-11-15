@@ -542,7 +542,7 @@ typedef struct HidKeyboard {
 
 // End HidKeyboard
 
-// Begin HidController
+// Begin HidNpad
 
 /// HidControllerMAC
 typedef struct HidControllerMAC {
@@ -568,7 +568,7 @@ typedef struct HidNpadStateHeader {
 
 /// Info struct extracted from HidNpadStateHeader.
 /// Color fields are zero when not set. This can happen even when the *Set fields are set to true.
-typedef struct HidControllerColors
+typedef struct HidNpadControllerColor
 {
     bool singleSet;         ///< Set to true when the below fields are valid.
     u32 singleColorBody;    ///< RGBA Single Body Color
@@ -579,7 +579,7 @@ typedef struct HidControllerColors
     u32 leftColorButtons;   ///< RGBA Left Buttons Color
     u32 rightColorBody;     ///< RGBA Right Body Color
     u32 rightColorButtons;  ///< RGBA Right Buttons Color
-} HidControllerColors;
+} HidNpadControllerColor;
 
 /// HidControllerLayoutHeader
 typedef struct HidControllerLayoutHeader {
@@ -615,27 +615,27 @@ typedef struct HidControllerLayout {
     HidControllerInputEntry entries[17];
 } HidControllerLayout;
 
-/// HidControllerSixAxisHeader
-typedef struct HidControllerSixAxisHeader {
+/// HidNpadSixAxisSensorHeader
+typedef struct HidNpadSixAxisSensorHeader {
     u64 timestamp;
     u64 numEntries;
     u64 latestEntry;
     u64 maxEntryIndex;
-} HidControllerSixAxisHeader;
+} HidNpadSixAxisSensorHeader;
 
-/// HidControllerSixAxisEntry
-typedef struct HidControllerSixAxisEntry {
+/// HidNpadSixAxisSensorState
+typedef struct HidNpadSixAxisSensorState {
     u64 timestamp;
     u64 unk_1;
     u64 timestamp_2;
     SixAxisSensorValues values;
     u64 unk_3;
-} HidControllerSixAxisEntry;
+} HidNpadSixAxisSensorState;
 
 /// HidControllerSixAxisLayout
 typedef struct HidControllerSixAxisLayout {
-    HidControllerSixAxisHeader header;
-    HidControllerSixAxisEntry entries[17];
+    HidNpadSixAxisSensorHeader header;
+    HidNpadSixAxisSensorState entries[17];
 } HidControllerSixAxisLayout;
 
 /// Controller flags.
@@ -677,16 +677,16 @@ typedef struct {
     u32 batteryCharge;    ///< Battery charge, always 0-4.
 } HidPowerInfo;
 
-/// HidController
-typedef struct HidController {
+/// HidNpad
+typedef struct HidNpad {
     HidNpadStateHeader header;
     HidControllerLayout layouts[7];
     HidControllerSixAxisLayout sixaxis[6];
     HidControllerMisc misc;
     u8 unk_2[0xDF8];
-} HidController;
+} HidNpad;
 
-// End HidController
+// End HidNpad
 
 /// HidConsoleSixAxisSensor
 typedef struct {
@@ -710,7 +710,7 @@ typedef struct HidSharedMemory {
     u8 capture_button[0x200];
     u8 input_detector[0x800];
     u8 unique_pad[0x4000];                              ///< [1.0.0-4.1.0] UniquePad
-    HidController controllers[10];
+    HidNpad npad[10];
     u8 gesture[0x800];
     HidConsoleSixAxisSensor console_six_axis_sensor;    ///< [5.0.0+] ConsoleSixAxisSensor
     u8 unk_x3C220[0x3DE0];
@@ -791,7 +791,7 @@ HidControllerLayoutType hidGetControllerLayout(HidControllerID id);
 /// Gets a bitmask of \ref HidNpadStyleTag for the specified controller.
 u32 hidGetNpadStyleSet(u32 id);
 
-void hidGetControllerColors(HidControllerID id, HidControllerColors *colors);
+void hidGetControllerColors(HidControllerID id, HidNpadControllerColor *colors);
 bool hidIsControllerConnected(HidControllerID id);
 
 /// Gets the \ref HidDeviceTypeBits for the specified controller.

@@ -238,8 +238,8 @@ void hidScanInput(void) {
     }
 
     for (int i = 0; i < 10; i++) {
-        HidControllerLayout *currentLayout = &sharedMem->controllers[i].layouts[g_controllerLayout[i]];
-        memcpy(&g_controllerHeaders[i], &sharedMem->controllers[i].header, sizeof(HidNpadStateHeader));
+        HidControllerLayout *currentLayout = &sharedMem->npad[i].layouts[g_controllerLayout[i]];
+        memcpy(&g_controllerHeaders[i], &sharedMem->npad[i].header, sizeof(HidNpadStateHeader));
         u64 latestControllerEntry = currentLayout->header.latest_entry;
         HidControllerInputEntry *newInputEntry = &currentLayout->entries[latestControllerEntry];
         if ((s64)(newInputEntry->timestamp - g_controllerTimestamps[i]) >= 0) {
@@ -252,30 +252,30 @@ void hidScanInput(void) {
         g_controllerDown[i] = (~g_controllerOld[i]) & g_controllerHeld[i];
         g_controllerUp[i] = g_controllerOld[i] & (~g_controllerHeld[i]);
 
-        memcpy(&g_controllerMisc[i], &sharedMem->controllers[i].misc, sizeof(HidControllerMisc));
+        memcpy(&g_controllerMisc[i], &sharedMem->npad[i].misc, sizeof(HidControllerMisc));
 
         if (g_sixaxisEnabled[i]) {
             u32 style_set = g_controllerHeaders[i].style_set;
             HidControllerSixAxisLayout *sixaxis = NULL;
             if (style_set & HidNpadStyleTag_NpadFullKey) {
-                sixaxis = &sharedMem->controllers[i].sixaxis[0];
+                sixaxis = &sharedMem->npad[i].sixaxis[0];
             }
             else if (style_set & HidNpadStyleTag_NpadHandheld) {
-                sixaxis = &sharedMem->controllers[i].sixaxis[1];
+                sixaxis = &sharedMem->npad[i].sixaxis[1];
             }
             else if (style_set & HidNpadStyleTag_NpadJoyDual) {
                 if (style_set & HidNpadStyleTag_NpadJoyLeft) {
-                    sixaxis = &sharedMem->controllers[i].sixaxis[2];
+                    sixaxis = &sharedMem->npad[i].sixaxis[2];
                 }
                 else {
-                    sixaxis = &sharedMem->controllers[i].sixaxis[3];
+                    sixaxis = &sharedMem->npad[i].sixaxis[3];
                 }
             }
             else if (style_set & HidNpadStyleTag_NpadJoyLeft) {
-                sixaxis = &sharedMem->controllers[i].sixaxis[4];
+                sixaxis = &sharedMem->npad[i].sixaxis[4];
             }
             else if (style_set & HidNpadStyleTag_NpadJoyRight) {
-                sixaxis = &sharedMem->controllers[i].sixaxis[5];
+                sixaxis = &sharedMem->npad[i].sixaxis[5];
             }
             if (sixaxis) {
                 memcpy(&g_sixaxisLayouts[i], sixaxis, sizeof(*sixaxis));
@@ -297,12 +297,12 @@ static Result _hidVerifyNpadIdType(u32 id) {
     return 0;
 }
 
-static HidController *_hidNpadSharedmemGetInternalState(u32 id) {
+static HidNpad *_hidNpadSharedmemGetInternalState(u32 id) {
     if (id >= 0x8) id = id==0x10 ? 0x9 : 0x8;
 
     HidSharedMemory *sharedmem = (HidSharedMemory*)hidGetSharedmemAddr();
     if (sharedmem == NULL) return NULL;
-    return &sharedmem->controllers[id];
+    return &sharedmem->npad[id];
 }
 
 u32 hidGetNpadStyleSet(u32 id) {
@@ -310,7 +310,7 @@ u32 hidGetNpadStyleSet(u32 id) {
     u32 tmp=0;
 
     if (R_SUCCEEDED(rc)) {
-        HidController *npad = _hidNpadSharedmemGetInternalState(id);
+        HidNpad *npad = _hidNpadSharedmemGetInternalState(id);
         if (npad == NULL)
             rc = MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
         else
@@ -321,7 +321,7 @@ u32 hidGetNpadStyleSet(u32 id) {
     return tmp;
 }
 
-void hidGetControllerColors(HidControllerID id, HidControllerColors *colors) {
+void hidGetControllerColors(HidControllerID id, HidNpadControllerColor *colors) {
     if (id==CONTROLLER_P1_AUTO) {
         hidGetControllerColors(g_controllerP1AutoID, colors);
         return;
@@ -331,7 +331,7 @@ void hidGetControllerColors(HidControllerID id, HidControllerColors *colors) {
 
     HidNpadStateHeader *hdr = &g_controllerHeaders[id];
 
-    memset(colors, 0, sizeof(HidControllerColors));
+    memset(colors, 0, sizeof(HidNpadControllerColor));
 
     rwlockReadLock(&g_hidLock);
 
@@ -421,7 +421,7 @@ static Result _hidGetNpadStates(u32 id, u32 layout, HidNpadStateEntry *states, s
     Result rc = _hidVerifyNpadIdType(id);
     if (R_FAILED(rc)) return rc;
 
-    HidController *npad = _hidNpadSharedmemGetInternalState(id);
+    HidNpad *npad = _hidNpadSharedmemGetInternalState(id);
     if (npad == NULL)
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
