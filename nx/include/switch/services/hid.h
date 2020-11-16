@@ -231,17 +231,6 @@ typedef enum {
     HidNpadStyleTag_NpadSystem        = BIT(30),      ///< Generic controller
 } HidNpadStyleTag;
 
-/// HidControllerLayoutType
-typedef enum {
-    LAYOUT_PROCONTROLLER   = 0, ///< Pro Controller or Hid gamepad.
-    LAYOUT_HANDHELD        = 1, ///< Two Joy-Con docked to rails.
-    LAYOUT_SINGLE          = 2, ///< Single Joy-Con or pair of Joy-Con, only available in dual-mode with no orientation adjustment.
-    LAYOUT_LEFT            = 3, ///< Only single-mode raw left Joy-Con state, no orientation adjustment.
-    LAYOUT_RIGHT           = 4, ///< Only single-mode raw right Joy-Con state, no orientation adjustment.
-    LAYOUT_DEFAULT_DIGITAL = 5, ///< Same as next, but sticks have 8-direction values only.
-    LAYOUT_DEFAULT         = 6, ///< Safe default. Single-mode and ::HidJoyHoldType_Horizontal: Joy-Con have buttons/sticks rotated for orientation, where physical Z(L/R) are unavailable and S(L/R) are mapped to L/R (with physical L/R unavailable).
-} HidControllerLayoutType;
-
 /// HidControllerColorDescription
 typedef enum {
     COLORS_NONEXISTENT = BIT(1),
@@ -340,8 +329,14 @@ typedef enum {
 /// JoyHoldType
 typedef enum {
     HidJoyHoldType_Default    = 0, ///< Default / Joy-Con held vertically.
-    HidJoyHoldType_Horizontal = 1, ///< Joy-Con held horizontally with HID state orientation adjustment, see \ref HidControllerLayoutType.
+    HidJoyHoldType_Horizontal = 1, ///< Joy-Con held horizontally with HID state orientation adjustment.
 } HidJoyHoldType;
+
+/// NpadJoyAssignmentMode
+typedef enum {
+    HidNpadJoyAssignmentMode_Dual   = 0,       ///< Dual (Set by \ref hidSetNpadJoyAssignmentModeDual)
+    HidNpadJoyAssignmentMode_Single = 1,       ///< Single (Set by hidSetNpadJoyAssignmentModeSingle*())
+} HidNpadJoyAssignmentMode;
 
 /// DeviceType
 typedef enum {
@@ -442,6 +437,14 @@ typedef struct SixAxisSensorValues {
 
 // End enums and output structs
 
+/// HidCommonStateHeader
+typedef struct HidCommonStateHeader {
+    u64 timestamp_ticks;
+    u64 total_entries;
+    u64 latest_entry;
+    u64 max_entry;
+} HidCommonStateHeader;
+
 // Begin HidTouchScreen
 
 /// HidTouchScreenHeader
@@ -490,14 +493,6 @@ typedef struct HidTouchScreen {
 
 // Begin HidMouse
 
-/// HidMouseHeader
-typedef struct HidMouseHeader {
-    u64 timestampTicks;
-    u64 numEntries;
-    u64 latestEntry;
-    u64 maxEntryIndex;
-} HidMouseHeader;
-
 /// HidMouseEntry
 typedef struct HidMouseEntry {
     u64 timestamp;
@@ -508,7 +503,7 @@ typedef struct HidMouseEntry {
 
 /// HidMouse
 typedef struct HidMouse {
-    HidMouseHeader header;
+    HidCommonStateHeader header;
     HidMouseEntry entries[17];
     u8 padding[0xB0];
 } HidMouse;
@@ -516,14 +511,6 @@ typedef struct HidMouse {
 // End HidMouse
 
 // Begin HidKeyboard
-
-/// HidKeyboardHeader
-typedef struct HidKeyboardHeader {
-    u64 timestampTicks;
-    u64 numEntries;
-    u64 latestEntry;
-    u64 maxEntryIndex;
-} HidKeyboardHeader;
 
 /// HidKeyboardEntry
 typedef struct HidKeyboardEntry {
@@ -535,7 +522,7 @@ typedef struct HidKeyboardEntry {
 
 /// HidKeyboard
 typedef struct HidKeyboard {
-    HidKeyboardHeader header;
+    HidCommonStateHeader header;
     HidKeyboardEntry entries[17];
     u8 padding[0x28];
 } HidKeyboard;
@@ -544,50 +531,24 @@ typedef struct HidKeyboard {
 
 // Begin HidNpad
 
-/// HidControllerMAC
-typedef struct HidControllerMAC {
-    u64 timestamp;
-    u8 mac[0x8];
-    u64 unk;
-    u64 timestamp_2;
-} HidControllerMAC;
+/// Npad colors.
+/// Color fields are zero when not set.
+typedef struct HidNpadControllerColor
+{
+    u32 color_body;    ///< RGBA Body Color
+    u32 color_buttons; ///< RGBA Buttons Color
+} HidNpadControllerColor;
 
 /// HidNpadStateHeader
 typedef struct HidNpadStateHeader {
     u32 style_set;
-    u32 isHalf;
-    u32 singleColorsDescriptor;
-    u32 singleColorBody;
-    u32 singleColorButtons;
-    u32 splitColorsDescriptor;
-    u32 leftColorBody;
-    u32 leftColorButtons;
-    u32 rightColorBody;
-    u32 rightColorButtons;
+    u32 npad_joy_assignment_mode;
+    u32 single_colors_descriptor;
+    HidNpadControllerColor single_colors;
+    u32 split_colors_descriptor;
+    HidNpadControllerColor left_colors;
+    HidNpadControllerColor right_colors;
 } HidNpadStateHeader;
-
-/// Info struct extracted from HidNpadStateHeader.
-/// Color fields are zero when not set. This can happen even when the *Set fields are set to true.
-typedef struct HidNpadControllerColor
-{
-    bool singleSet;         ///< Set to true when the below fields are valid.
-    u32 singleColorBody;    ///< RGBA Single Body Color
-    u32 singleColorButtons; ///< RGBA Single Buttons Color
-
-    bool splitSet;          ///< Set to true when the below fields are valid.
-    u32 leftColorBody;      ///< RGBA Left Body Color
-    u32 leftColorButtons;   ///< RGBA Left Buttons Color
-    u32 rightColorBody;     ///< RGBA Right Body Color
-    u32 rightColorButtons;  ///< RGBA Right Buttons Color
-} HidNpadControllerColor;
-
-/// HidControllerLayoutHeader
-typedef struct HidControllerLayoutHeader {
-    u64 timestamp_ticks;
-    u64 total_entries;
-    u64 latest_entry;
-    u64 max_entry;
-} HidControllerLayoutHeader;
 
 /// HidNpadStateEntry
 typedef struct HidNpadStateEntry {
@@ -611,17 +572,9 @@ typedef struct HidControllerInputEntry {
 
 /// HidControllerLayout
 typedef struct HidControllerLayout {
-    HidControllerLayoutHeader header;
+    HidCommonStateHeader header;
     HidControllerInputEntry entries[17];
 } HidControllerLayout;
-
-/// HidNpadSixAxisSensorHeader
-typedef struct HidNpadSixAxisSensorHeader {
-    u64 timestamp;
-    u64 numEntries;
-    u64 latestEntry;
-    u64 maxEntryIndex;
-} HidNpadSixAxisSensorHeader;
 
 /// HidNpadSixAxisSensorState
 typedef struct HidNpadSixAxisSensorState {
@@ -634,11 +587,11 @@ typedef struct HidNpadSixAxisSensorState {
 
 /// HidControllerSixAxisLayout
 typedef struct HidControllerSixAxisLayout {
-    HidNpadSixAxisSensorHeader header;
+    HidCommonStateHeader header;
     HidNpadSixAxisSensorState entries[17];
 } HidControllerSixAxisLayout;
 
-/// Controller flags.
+/// NpadSystemProperties
 typedef struct {
     u32 powerInfo : 6;                                    ///< Use \ref hidGetControllerPowerInfo instead of accessing this directly.
 
@@ -655,20 +608,12 @@ typedef struct {
     u32 directionalButtonsSupported : 1;                  ///< [8.0.0+]
 
     u32 unused;
+} HidNpadSystemProperties;
 
-    u32 unintendedHomeButtonInputProtectionDisabled : 1;
-} HidFlags;
-
-/// HidControllerMisc
+/// NpadSystemButtonProperties
 typedef struct {
-    u32 deviceType;
-    u32 pad;
-    HidFlags flags;
-    u32 batteryCharge[3];
-    u8 unk_1[0x20];
-    HidControllerMAC macLeft;
-    HidControllerMAC macRight;
-} HidControllerMisc;
+    u32 unintendedHomeButtonInputProtectionDisabled : 1;
+} HidNpadSystemButtonProperties;
 
 /// HidPowerInfo
 typedef struct {
@@ -677,12 +622,43 @@ typedef struct {
     u32 batteryCharge;    ///< Battery charge, always 0-4.
 } HidPowerInfo;
 
+/// HidNfcXcdDeviceHandleState
+typedef struct HidNfcXcdDeviceHandleState {
+    u64 handle;
+    u8 flag0;
+    u8 flag1;
+    u8 pad[6];
+    u64 timestamp;
+} HidNfcXcdDeviceHandleState;
+
+/// HidNfcXcdDeviceHandleStateEntry
+typedef struct HidNfcXcdDeviceHandleStateEntry {
+    u64 timestamp;
+    HidNfcXcdDeviceHandleState state;
+} HidNfcXcdDeviceHandleStateEntry;
+
 /// HidNpad
 typedef struct HidNpad {
     HidNpadStateHeader header;
     HidControllerLayout layouts[7];
     HidControllerSixAxisLayout sixaxis[6];
-    HidControllerMisc misc;
+    u32 deviceType;
+    u32 pad;
+    HidNpadSystemProperties system_properties;
+    HidNpadSystemButtonProperties system_button_properties;
+    u32 batteryCharge[3];
+    union {
+        struct { // [1.0.0-3.0.2]
+            u8 nfc_xcd_device_handle_header[0x20];
+            HidNfcXcdDeviceHandleStateEntry nfc_xcd_device_handle_state[2];
+        };
+
+        struct {
+            u32 applet_footer_ui_attribute;
+            u8 applet_footer_ui_type;
+            u8 unk_x41AD[0x5B];
+        };
+    };
     u8 unk_2[0xDF8];
 } HidNpad;
 
@@ -785,31 +761,44 @@ Service* hidGetServiceSession(void);
 /// Gets the address of the SharedMemory.
 void* hidGetSharedmemAddr(void);
 
-void hidSetControllerLayout(HidControllerID id, HidControllerLayoutType layoutType);
-HidControllerLayoutType hidGetControllerLayout(HidControllerID id);
+void hidScanInput(void);
 
-/// Gets a bitmask of \ref HidNpadStyleTag for the specified controller.
+/// Gets a bitfield of \ref HidNpadStyleTag for the specified controller.
 u32 hidGetNpadStyleSet(u32 id);
 
-void hidGetControllerColors(HidControllerID id, HidNpadControllerColor *colors);
-bool hidIsControllerConnected(HidControllerID id);
+/// Gets the \ref HidNpadJoyAssignmentMode for the specified controller.
+HidNpadJoyAssignmentMode hidGetNpadJoyAssignment(u32 id);
+
+/// Gets the \ref HidNpadControllerColor for the specified controller. colors is the output array, where count is the number of entries. count must be 1 or 2: former for the main colors, latter for reading left/right colors.
+Result hidGetNpadControllerColor(u32 id, HidNpadControllerColor *colors, size_t count);
 
 /// Gets the \ref HidDeviceTypeBits for the specified controller.
-u32 hidGetControllerDeviceType(HidControllerID id);
+u32 hidGetNpadDeviceType(u32 id);
 
-/// Gets the flags for the specified controller.
-void hidGetControllerFlags(HidControllerID id, HidFlags *flags);
+/// Gets the \ref HidNpadSystemProperties for the specified controller.
+void hidGetNpadSystemProperties(u32 id, HidNpadSystemProperties *out);
 
-/// Gets the \ref HidPowerInfo for the specified controller. info is the output array, where total_info is the number of entries. total_info must be 1 or 2: former for the main battery info, latter for reading left/right Joy-Con PowerInfo.
-void hidGetControllerPowerInfo(HidControllerID id, HidPowerInfo *info, size_t total_info);
+/// Gets the \ref HidNpadSystemButtonProperties for the specified controller.
+void hidGetNpadSystemButtonProperties(u32 id, HidNpadSystemButtonProperties *out);
 
-void hidScanInput(void);
+/// Gets the \ref HidPowerInfo for the specified controller. info is the output array, where count is the number of entries. count must be 1 or 2: former for the main battery info, latter for reading left/right Joy-Con PowerInfo.
+void hidGetNpadPowerInfo(u32 id, HidPowerInfo *info, size_t count);
+
+/// Gets a bitfield of AppletFooterUiAttributes for the specified Npad.
+/// Only available on [9.0.0+].
+u32 hidGetAppletFooterUiAttributesSet(u32 id);
+
+/// Gets AppletFooterUiTypes for the specified Npad.
+/// Only available on [9.0.0+].
+u8 hidGetAppletFooterUiTypes(u32 id);
 
 void hidGetNpadStatesFullKey(u32 id, HidNpadFullKeyState *states, size_t count, size_t *total_out);
 void hidGetNpadStatesHandheld(u32 id, HidNpadHandheldState *states, size_t count, size_t *total_out);
 void hidGetNpadStatesJoyDual(u32 id, HidNpadJoyDualState *states, size_t count, size_t *total_out);
 void hidGetNpadStatesJoyLeft(u32 id, HidNpadJoyLeftState *states, size_t count, size_t *total_out);
 void hidGetNpadStatesJoyRight(u32 id, HidNpadJoyRightState *states, size_t count, size_t *total_out);
+
+bool hidIsControllerConnected(HidControllerID id);
 
 u64 hidKeysHeld(HidControllerID id);
 u64 hidKeysDown(HidControllerID id);
@@ -857,10 +846,10 @@ Result hidGetGyroscopeZeroDriftMode(u32 SixAxisSensorHandle, HidGyroscopeZeroDri
 /// Resets the ::HidGyroscopeZeroDriftMode for the specified SixAxisSensorHandle to ::HidGyroscopeZeroDriftMode_Standard.
 Result hidResetGyroscopeZeroDriftMode(u32 SixAxisSensorHandle);
 
-/// Sets which controller styles are supported, bitmask of \ref HidNpadStyleTag. This is automatically called with all styles in \ref hidInitialize.
+/// Sets which controller styles are supported, bitfield of \ref HidNpadStyleTag. This is automatically called with all styles in \ref hidInitialize.
 Result hidSetSupportedNpadStyleSet(u32 style_set);
 
-/// Gets which controller styles are supported, bitmask of \ref HidNpadStyleTag.
+/// Gets which controller styles are supported, bitfield of \ref HidNpadStyleTag.
 Result hidGetSupportedNpadStyleSet(u32 *style_set);
 
 /// This is automatically called with CONTROLLER_PLAYER_{1-8} and CONTROLLER_HANDHELD in \ref hidInitialize.

@@ -20,10 +20,8 @@ static HidTouchScreenEntry g_touchEntry;
 static HidMouseEntry *g_mouseEntry;
 static HidMouse g_mouse;
 static HidKeyboardEntry g_keyboardEntry;
-static HidNpadStateHeader g_controllerHeaders[10];
-static HidControllerInputEntry g_controllerEntries[10];
+static HidNpadStateEntry g_controllerEntries[10];
 static HidControllerSixAxisLayout g_sixaxisLayouts[10];
-static HidControllerMisc g_controllerMisc[10];
 
 static u64 g_mouseOld, g_mouseHeld, g_mouseDown, g_mouseUp;
 static u64 g_keyboardModOld, g_keyboardModHeld, g_keyboardModDown, g_keyboardModUp;
@@ -31,8 +29,7 @@ static u32 g_keyboardOld[8], g_keyboardHeld[8], g_keyboardDown[8], g_keyboardUp[
 static u64 g_controllerOld[10], g_controllerHeld[10], g_controllerDown[10], g_controllerUp[10];
 static bool g_sixaxisEnabled[10];
 
-static HidControllerLayoutType g_controllerLayout[10];
-static u64 g_touchTimestamp, g_mouseTimestamp, g_keyboardTimestamp, g_controllerTimestamps[10];
+static u64 g_touchTimestamp, g_mouseTimestamp, g_keyboardTimestamp;
 
 static HidControllerID g_controllerP1AutoID;
 
@@ -124,9 +121,7 @@ void hidReset(void) {
     memset(&g_touchEntry, 0, sizeof(HidTouchScreenEntry));
     memset(&g_mouse, 0, sizeof(HidMouse));
     memset(&g_keyboardEntry, 0, sizeof(HidKeyboardEntry));
-    memset(g_controllerHeaders, 0, sizeof(g_controllerHeaders));
     memset(g_controllerEntries, 0, sizeof(g_controllerEntries));
-    memset(g_controllerMisc, 0, sizeof(g_controllerMisc));
     memset(g_sixaxisLayouts, 0, sizeof(g_sixaxisLayouts));
     memset(g_sixaxisEnabled, 0, sizeof(g_sixaxisEnabled));
 
@@ -138,12 +133,7 @@ void hidReset(void) {
     for (int i = 0; i < 10; i++)
         g_controllerOld[i] = g_controllerHeld[i] = g_controllerDown[i] = g_controllerUp[i] = 0;
 
-    for (int i = 0; i < 10; i++)
-        g_controllerLayout[i] = LAYOUT_DEFAULT;
-
     g_touchTimestamp = g_mouseTimestamp = g_keyboardTimestamp = 0;
-    for (int i = 0; i < 10; i++)
-        g_controllerTimestamps[i] = 0;
 
     g_controllerP1AutoID = CONTROLLER_HANDHELD;
 
@@ -156,24 +146,6 @@ Service* hidGetServiceSession(void) {
 
 void* hidGetSharedmemAddr(void) {
     return shmemGetAddr(&g_hidSharedmem);
-}
-
-void hidSetControllerLayout(HidControllerID id, HidControllerLayoutType layoutType) {
-    if (id < 0 || id > 9) return;
-
-    rwlockWriteLock(&g_hidLock);
-    g_controllerLayout[id] = layoutType;
-    rwlockWriteUnlock(&g_hidLock);
-}
-
-HidControllerLayoutType hidGetControllerLayout(HidControllerID id) {
-    if (id < 0 || id > 9) return LAYOUT_DEFAULT;
-
-    rwlockReadLock(&g_hidLock);
-    HidControllerLayoutType tmp = g_controllerLayout[id];
-    rwlockReadUnlock(&g_hidLock);
-
-    return tmp;
 }
 
 void hidScanInput(void) {
@@ -194,7 +166,6 @@ void hidScanInput(void) {
     memset(&g_mouse, 0, sizeof(HidMouse));
     memset(&g_keyboardEntry, 0, sizeof(HidKeyboardEntry));
     memset(g_controllerEntries, 0, sizeof(g_controllerEntries));
-    memset(g_controllerMisc, 0, sizeof(g_controllerMisc));
     memset(g_sixaxisLayouts, 0, sizeof(g_sixaxisLayouts));
 
     u64 latestTouchEntry = sharedMem->touchscreen.header.latestEntry;
@@ -207,7 +178,7 @@ void hidScanInput(void) {
             g_controllerHeld[CONTROLLER_HANDHELD] |= KEY_TOUCH;
     }
 
-    u64 latestMouseEntry = sharedMem->mouse.header.latestEntry;
+    u64 latestMouseEntry = sharedMem->mouse.header.latest_entry;
     HidMouseEntry *newMouseEntry = &sharedMem->mouse.entries[latestMouseEntry];
     memcpy(&g_mouse, &sharedMem->mouse, sizeof(HidMouse));
     if ((s64)(newMouseEntry->timestamp - g_mouseTimestamp) >= 0) {
@@ -219,43 +190,74 @@ void hidScanInput(void) {
     g_mouseDown = (~g_mouseOld) & g_mouseHeld;
     g_mouseUp = g_mouseOld & (~g_mouseHeld);
 
-    u64 latestKeyboardEntry = sharedMem->keyboard.header.latestEntry;
+    u64 latestKeyboardEntry = sharedMem->keyboard.header.latest_entry;
     HidKeyboardEntry *newKeyboardEntry = &sharedMem->keyboard.entries[latestKeyboardEntry];
     if ((s64)(newKeyboardEntry->timestamp - g_keyboardTimestamp) >= 0) {
         memcpy(&g_keyboardEntry, newKeyboardEntry, sizeof(HidKeyboardEntry));
         g_keyboardTimestamp = newKeyboardEntry->timestamp;
 
         g_keyboardModHeld = g_keyboardEntry.modifier;
-        for (int i = 0; i < 8; i++) {
+        for (u32 i = 0; i < 8; i++) {
             g_keyboardHeld[i] = g_keyboardEntry.keys[i];
         }
     }
     g_keyboardModDown = (~g_keyboardModOld) & g_keyboardModHeld;
     g_keyboardModUp = g_keyboardModOld & (~g_keyboardModHeld);
-    for (int i = 0; i < 8; i++) {
+    for (u32 i = 0; i < 8; i++) {
         g_keyboardDown[i] = (~g_keyboardOld[i]) & g_keyboardHeld[i];
         g_keyboardUp[i] = g_keyboardOld[i] & (~g_keyboardHeld[i]);
     }
 
-    for (int i = 0; i < 10; i++) {
-        HidControllerLayout *currentLayout = &sharedMem->npad[i].layouts[g_controllerLayout[i]];
-        memcpy(&g_controllerHeaders[i], &sharedMem->npad[i].header, sizeof(HidNpadStateHeader));
-        u64 latestControllerEntry = currentLayout->header.latest_entry;
-        HidControllerInputEntry *newInputEntry = &currentLayout->entries[latestControllerEntry];
-        if ((s64)(newInputEntry->timestamp - g_controllerTimestamps[i]) >= 0) {
-            memcpy(&g_controllerEntries[i], newInputEntry, sizeof(HidControllerInputEntry));
-            g_controllerTimestamps[i] = newInputEntry->timestamp;
+    for (u32 i = 0; i < 10; i++) {
+        u32 id = hidControllerIDToOfficial(i);
+        u32 style_set = hidGetNpadStyleSet(id);
+        size_t total_out=0;
 
-            g_controllerHeld[i] |= g_controllerEntries[i].state.buttons;
+        if (style_set & HidNpadStyleTag_NpadFullKey) {
+            HidNpadFullKeyState state={0};
+            hidGetNpadStatesFullKey(id, &state, 1, &total_out);
+            if (total_out) {
+                g_controllerHeld[i] |= state.buttons;
+                memcpy(&g_controllerEntries[i], &state, sizeof(state));
+            }
+        }
+        else if (style_set & HidNpadStyleTag_NpadHandheld) {
+            HidNpadHandheldState state={0};
+            hidGetNpadStatesHandheld(id, &state, 1, &total_out);
+            if (total_out) {
+                g_controllerHeld[i] |= state.buttons;
+                memcpy(&g_controllerEntries[i], &state, sizeof(state));
+            }
+        }
+        else if (style_set & HidNpadStyleTag_NpadJoyDual) {
+            HidNpadJoyDualState state={0};
+            hidGetNpadStatesJoyDual(id, &state, 1, &total_out);
+            if (total_out) {
+                g_controllerHeld[i] |= state.buttons;
+                memcpy(&g_controllerEntries[i], &state, sizeof(state));
+            }
+        }
+        else if (style_set & HidNpadStyleTag_NpadJoyLeft) {
+            HidNpadJoyLeftState state={0};
+            hidGetNpadStatesJoyLeft(id, &state, 1, &total_out);
+            if (total_out) {
+                g_controllerHeld[i] |= state.buttons;
+                memcpy(&g_controllerEntries[i], &state, sizeof(state));
+            }
+        }
+        else if (style_set & HidNpadStyleTag_NpadJoyRight) {
+            HidNpadJoyRightState state={0};
+            hidGetNpadStatesJoyRight(id, &state, 1, &total_out);
+            if (total_out) {
+                g_controllerHeld[i] |= state.buttons;
+                memcpy(&g_controllerEntries[i], &state, sizeof(state));
+            }
         }
 
         g_controllerDown[i] = (~g_controllerOld[i]) & g_controllerHeld[i];
         g_controllerUp[i] = g_controllerOld[i] & (~g_controllerHeld[i]);
 
-        memcpy(&g_controllerMisc[i], &sharedMem->npad[i].misc, sizeof(HidControllerMisc));
-
         if (g_sixaxisEnabled[i]) {
-            u32 style_set = g_controllerHeaders[i].style_set;
             HidControllerSixAxisLayout *sixaxis = NULL;
             if (style_set & HidNpadStyleTag_NpadFullKey) {
                 sixaxis = &sharedMem->npad[i].sixaxis[0];
@@ -284,7 +286,7 @@ void hidScanInput(void) {
     }
 
     g_controllerP1AutoID = CONTROLLER_HANDHELD;
-    if (g_controllerEntries[CONTROLLER_PLAYER_1].state.connectionState & CONTROLLER_STATE_CONNECTED)
+    if (g_controllerEntries[CONTROLLER_PLAYER_1].connectionState & CONTROLLER_STATE_CONNECTED)
        g_controllerP1AutoID = CONTROLLER_PLAYER_1;
 
     rwlockWriteUnlock(&g_hidLock);
@@ -321,98 +323,158 @@ u32 hidGetNpadStyleSet(u32 id) {
     return tmp;
 }
 
-void hidGetControllerColors(HidControllerID id, HidNpadControllerColor *colors) {
-    if (id==CONTROLLER_P1_AUTO) {
-        hidGetControllerColors(g_controllerP1AutoID, colors);
-        return;
-    }
-    if (id < 0 || id > 9) return;
-    if (colors == NULL) return;
+HidNpadJoyAssignmentMode hidGetNpadJoyAssignment(u32 id) {
+    Result rc = _hidVerifyNpadIdType(id);
+    HidNpadJoyAssignmentMode tmp=0;
 
-    HidNpadStateHeader *hdr = &g_controllerHeaders[id];
-
-    memset(colors, 0, sizeof(HidNpadControllerColor));
-
-    rwlockReadLock(&g_hidLock);
-
-    colors->singleSet = (hdr->singleColorsDescriptor & BIT(1)) == 0;
-    colors->splitSet = (hdr->splitColorsDescriptor & BIT(1)) == 0;
-
-    if (colors->singleSet) {
-        colors->singleColorBody = hdr->singleColorBody;
-        colors->singleColorButtons = hdr->singleColorButtons;
+    if (R_SUCCEEDED(rc)) {
+        HidNpad *npad = _hidNpadSharedmemGetInternalState(id);
+        if (npad == NULL)
+            rc = MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+        else {
+            tmp = atomic_load_explicit(&npad->header.npad_joy_assignment_mode, memory_order_acquire);
+            if (tmp != HidNpadJoyAssignmentMode_Dual && tmp != HidNpadJoyAssignmentMode_Single)
+                rc = MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen);
+        }
     }
 
-    if (colors->splitSet) {
-        colors->leftColorBody = hdr->leftColorBody;
-        colors->leftColorButtons = hdr->leftColorButtons;
-        colors->rightColorBody = hdr->rightColorBody;
-        colors->rightColorButtons = hdr->rightColorButtons;
+    if (R_FAILED(rc)) diagAbortWithResult(rc);
+    return tmp;
+}
+
+Result hidGetNpadControllerColor(u32 id, HidNpadControllerColor *colors, size_t count) {
+    Result rc = _hidVerifyNpadIdType(id);
+    u32 tmp=0;
+
+    if (count==0) return rc;
+
+    if (R_SUCCEEDED(rc)) {
+        HidNpad *npad = _hidNpadSharedmemGetInternalState(id);
+        if (npad == NULL)
+            rc = MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+        else {
+            tmp = count==1 ? npad->header.single_colors_descriptor : npad->header.split_colors_descriptor;
+            if (tmp==2) rc = MAKERESULT(202, 604);
+            else if (tmp==1) rc = MAKERESULT(202, 603);
+            else if (tmp!=0) diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen));
+
+            if (R_SUCCEEDED(rc)) {
+                if (count==1) colors[0] = npad->header.single_colors;
+                else {
+                    colors[0] = npad->header.left_colors;
+                    colors[1] = npad->header.right_colors;
+                }
+            }
+        }
     }
 
-    rwlockReadUnlock(&g_hidLock);
+    return rc;
 }
 
-bool hidIsControllerConnected(HidControllerID id) {
-    if (id==CONTROLLER_P1_AUTO)
-        return hidIsControllerConnected(g_controllerP1AutoID);
-    if (id < 0 || id > 9) return 0;
+u32 hidGetNpadDeviceType(u32 id) {
+    Result rc = _hidVerifyNpadIdType(id);
+    u32 tmp=0;
 
-    rwlockReadLock(&g_hidLock);
-    bool flag = (g_controllerEntries[id].state.connectionState & CONTROLLER_STATE_CONNECTED) != 0;
-    rwlockReadUnlock(&g_hidLock);
-    return flag;
-}
-
-u32 hidGetControllerDeviceType(HidControllerID id) {
-    if (id==CONTROLLER_P1_AUTO)
-        return hidGetControllerDeviceType(g_controllerP1AutoID);
-    if (id < 0 || id > 9) return 0;
-
-    rwlockReadLock(&g_hidLock);
-    u32 type = g_controllerMisc[id].deviceType;
-    rwlockReadUnlock(&g_hidLock);
-    return type;
-}
-
-void hidGetControllerFlags(HidControllerID id, HidFlags *flags) {
-    if (id==CONTROLLER_P1_AUTO) {
-        hidGetControllerFlags(g_controllerP1AutoID, flags);
-        return;
+    if (R_SUCCEEDED(rc)) {
+        HidNpad *npad = _hidNpadSharedmemGetInternalState(id);
+        if (npad == NULL)
+            rc = MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+        else
+            tmp = atomic_load_explicit(&npad->deviceType, memory_order_acquire);
     }
-    if (id < 0 || id > 9) return;
 
-    rwlockReadLock(&g_hidLock);
-    *flags = g_controllerMisc[id].flags;
-    rwlockReadUnlock(&g_hidLock);
+    if (R_FAILED(rc)) diagAbortWithResult(rc);
+    return tmp;
 }
 
-void hidGetControllerPowerInfo(HidControllerID id, HidPowerInfo *info, size_t total_info) {
+void hidGetNpadSystemProperties(u32 id, HidNpadSystemProperties *out) {
+    Result rc = _hidVerifyNpadIdType(id);
+
+    if (R_SUCCEEDED(rc)) {
+        HidNpad *npad = _hidNpadSharedmemGetInternalState(id);
+        if (npad == NULL)
+            rc = MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+        else
+            *out = atomic_load_explicit(&npad->system_properties, memory_order_acquire);
+    }
+
+    if (R_FAILED(rc)) diagAbortWithResult(rc);
+}
+
+void hidGetNpadSystemButtonProperties(u32 id, HidNpadSystemButtonProperties *out) {
+    Result rc = _hidVerifyNpadIdType(id);
+
+    if (R_SUCCEEDED(rc)) {
+        HidNpad *npad = _hidNpadSharedmemGetInternalState(id);
+        if (npad == NULL)
+            rc = MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+        else
+            *out = atomic_load_explicit(&npad->system_button_properties, memory_order_acquire);
+    }
+
+    if (R_FAILED(rc)) diagAbortWithResult(rc);
+}
+
+void hidGetNpadPowerInfo(u32 id, HidPowerInfo *info, size_t count) {
+    Result rc = _hidVerifyNpadIdType(id);
     size_t i;
     size_t indexbase;
-    HidFlags flags;
+    HidNpadSystemProperties properties;
 
-    if (id==CONTROLLER_P1_AUTO) {
-        hidGetControllerPowerInfo(g_controllerP1AutoID, info, total_info);
-        return;
+    if (count == 0) return;
+    if (count > 2) count = 2;
+    indexbase = count-1;
+
+    hidGetNpadSystemProperties(id, &properties);
+
+    if (R_SUCCEEDED(rc)) {
+        HidNpad *npad = _hidNpadSharedmemGetInternalState(id);
+        if (npad == NULL)
+            rc = MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+        else {
+            for (i=0; i<count; i++) {
+                info[i].batteryCharge = atomic_load_explicit(&npad->batteryCharge[indexbase+i], memory_order_acquire);
+                if (info[i].batteryCharge > 4) info->batteryCharge = 4; // sdknso would Abort when this occurs.
+
+                info[i].isCharging = (properties.powerInfo & BIT(indexbase+i)) != 0;
+                info[i].powerConnected = (properties.powerInfo & BIT(indexbase+i+3)) != 0;
+            }
+        }
     }
-    if (id < 0 || id > 9) return;
 
-    if (total_info == 0) return;
-    if (total_info > 2) total_info = 2;
-    indexbase = total_info-1;
+    if (R_FAILED(rc)) diagAbortWithResult(rc);
+}
 
-    hidGetControllerFlags(id, &flags);
+u32 hidGetAppletFooterUiAttributesSet(u32 id) {
+    Result rc = _hidVerifyNpadIdType(id);
+    u32 tmp=0;
 
-    for (i=0; i<total_info; i++) {
-        info[i].isCharging = (flags.powerInfo & BIT(indexbase+i)) != 0;
-        info[i].powerConnected = (flags.powerInfo & BIT(indexbase+i+3)) != 0;
-
-        rwlockReadLock(&g_hidLock);
-        info[i].batteryCharge = g_controllerMisc[id].batteryCharge[indexbase+i];
-        rwlockReadUnlock(&g_hidLock);
-        if (info[i].batteryCharge > 4) info->batteryCharge = 4;
+    if (R_SUCCEEDED(rc)) {
+        HidNpad *npad = _hidNpadSharedmemGetInternalState(id);
+        if (npad == NULL)
+            rc = MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+        else
+            tmp = atomic_load_explicit(&npad->applet_footer_ui_attribute, memory_order_acquire);
     }
+
+    if (R_FAILED(rc)) diagAbortWithResult(rc);
+    return tmp;
+}
+
+u8 hidGetAppletFooterUiTypes(u32 id) {
+    Result rc = _hidVerifyNpadIdType(id);
+    u32 tmp=0;
+
+    if (R_SUCCEEDED(rc)) {
+        HidNpad *npad = _hidNpadSharedmemGetInternalState(id);
+        if (npad == NULL)
+            rc = MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+        else
+            tmp = atomic_load_explicit(&npad->applet_footer_ui_type, memory_order_acquire);
+    }
+
+    if (R_FAILED(rc)) diagAbortWithResult(rc);
+    return tmp;
 }
 
 static Result _hidGetNpadStates(u32 id, u32 layout, HidNpadStateEntry *states, size_t count, size_t *total_out) {
@@ -481,6 +543,17 @@ void hidGetNpadStatesJoyLeft(u32 id, HidNpadJoyLeftState *states, size_t count, 
 void hidGetNpadStatesJoyRight(u32 id, HidNpadJoyRightState *states, size_t count, size_t *total_out) {
     Result rc = _hidGetNpadStates(id, 4, states, count, total_out);
     if (R_FAILED(rc)) diagAbortWithResult(rc);
+}
+
+bool hidIsControllerConnected(HidControllerID id) {
+    if (id==CONTROLLER_P1_AUTO)
+        return hidIsControllerConnected(g_controllerP1AutoID);
+    if (id < 0 || id > 9) return 0;
+
+    rwlockReadLock(&g_hidLock);
+    bool flag = (g_controllerEntries[id].connectionState & CONTROLLER_STATE_CONNECTED) != 0;
+    rwlockReadUnlock(&g_hidLock);
+    return flag;
 }
 
 u64 hidKeysHeld(HidControllerID id) {
@@ -556,12 +629,12 @@ u32 hidMouseMultiRead(MousePosition *entries, u32 num_entries) {
 
     rwlockReadLock(&g_hidLock);
 
-    if (num_entries > g_mouse.header.maxEntryIndex + 1)
-        num_entries = g_mouse.header.maxEntryIndex + 1;
+    if (num_entries > g_mouse.header.max_entry + 1)
+        num_entries = g_mouse.header.max_entry + 1;
 
-    entry = g_mouse.header.latestEntry + 1 - num_entries;
+    entry = g_mouse.header.latest_entry + 1 - num_entries;
     if (entry < 0)
-        entry += g_mouse.header.maxEntryIndex + 1;
+        entry += g_mouse.header.max_entry + 1;
 
     u64 timestamp = 0;
     for (i = 0; i < num_entries; i++) {
@@ -571,7 +644,7 @@ u32 hidMouseMultiRead(MousePosition *entries, u32 num_entries) {
         timestamp = g_mouse.entries[entry].timestamp;
 
         entry++;
-        if (entry > g_mouse.header.maxEntryIndex)
+        if (entry > g_mouse.header.max_entry)
             entry = 0;
     }
 
@@ -658,8 +731,7 @@ void hidJoystickRead(JoystickPosition *pos, HidControllerID id, HidControllerJoy
         }
 
         rwlockReadLock(&g_hidLock);
-        pos->dx = g_controllerEntries[id].state.joysticks[stick].dx;
-        pos->dy = g_controllerEntries[id].state.joysticks[stick].dy;
+        *pos = g_controllerEntries[id].joysticks[stick];
         rwlockReadUnlock(&g_hidLock);
     }
 }
@@ -681,12 +753,12 @@ u32 hidSixAxisSensorValuesRead(SixAxisSensorValues *values, HidControllerID id, 
         return 0;
     }
 
-    if (num_entries > g_sixaxisLayouts[id].header.maxEntryIndex + 1)
-        num_entries = g_sixaxisLayouts[id].header.maxEntryIndex + 1;
+    if (num_entries > g_sixaxisLayouts[id].header.max_entry + 1)
+        num_entries = g_sixaxisLayouts[id].header.max_entry + 1;
 
-    entry = g_sixaxisLayouts[id].header.latestEntry + 1 - num_entries;
+    entry = g_sixaxisLayouts[id].header.latest_entry + 1 - num_entries;
     if (entry < 0)
-        entry += g_sixaxisLayouts[id].header.maxEntryIndex + 1;
+        entry += g_sixaxisLayouts[id].header.max_entry + 1;
 
     u64 timestamp = 0;
     for (i = 0; i < num_entries; i++) {
@@ -696,7 +768,7 @@ u32 hidSixAxisSensorValuesRead(SixAxisSensorValues *values, HidControllerID id, 
         timestamp = g_sixaxisLayouts[id].entries[entry].timestamp;
 
         entry++;
-        if (entry > g_sixaxisLayouts[id].header.maxEntryIndex)
+        if (entry > g_sixaxisLayouts[id].header.max_entry)
             entry = 0;
     }
     rwlockReadUnlock(&g_hidLock);
