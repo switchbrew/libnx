@@ -253,6 +253,22 @@ void hidScanInput(void) {
                 memcpy(&g_controllerEntries[i], &state, sizeof(state));
             }
         }
+        else if (style_set & HidNpadStyleTag_NpadSystemExt) {
+            HidNpadSystemExtState state={0};
+            hidGetNpadStatesSystemExt(id, &state, 1, &total_out);
+            if (total_out) {
+                g_controllerHeld[i] |= state.buttons;
+                memcpy(&g_controllerEntries[i], &state, sizeof(state));
+            }
+        }
+        else if (style_set & HidNpadStyleTag_NpadSystem) {
+            HidNpadSystemState state={0};
+            hidGetNpadStatesSystem(id, &state, 1, &total_out);
+            if (total_out) {
+                g_controllerHeld[i] |= state.buttons;
+                memcpy(&g_controllerEntries[i], &state, sizeof(state));
+            }
+        }
 
         g_controllerDown[i] = (~g_controllerOld[i]) & g_controllerHeld[i];
         g_controllerUp[i] = g_controllerOld[i] & (~g_controllerHeld[i]);
@@ -543,6 +559,35 @@ void hidGetNpadStatesJoyLeft(u32 id, HidNpadJoyLeftState *states, size_t count, 
 void hidGetNpadStatesJoyRight(u32 id, HidNpadJoyRightState *states, size_t count, size_t *total_out) {
     Result rc = _hidGetNpadStates(id, 4, states, count, total_out);
     if (R_FAILED(rc)) diagAbortWithResult(rc);
+}
+
+void hidGetNpadStatesSystemExt(u32 id, HidNpadSystemExtState *states, size_t count, size_t *total_out) {
+    Result rc = _hidGetNpadStates(id, 6, states, count, total_out);
+    if (R_FAILED(rc)) diagAbortWithResult(rc);
+}
+
+void hidGetNpadStatesSystem(u32 id, HidNpadSystemState *states, size_t count, size_t *total_out) {
+    Result rc = _hidGetNpadStates(id, 6, states, count, total_out);
+    if (R_FAILED(rc)) diagAbortWithResult(rc);
+
+    for (size_t i=0; i<*total_out; i++) {
+        u64 buttons = states[i].buttons;
+        u64 new_buttons = 0;
+
+        if (buttons & KEY_LEFT) new_buttons |= KEY_DLEFT;
+        if (buttons & KEY_UP) new_buttons |= KEY_DUP;
+        if (buttons & KEY_RIGHT) new_buttons |= KEY_DRIGHT;
+        if (buttons & KEY_DOWN) new_buttons |= KEY_DDOWN;
+        if (buttons & (KEY_L|KEY_ZL)) new_buttons |= KEY_L; // sdknso would mask out this button on the else condition for both of these, but it was already clear anyway.
+        if (buttons & (KEY_R|KEY_ZR)) new_buttons |= KEY_R;
+        buttons = new_buttons | (buttons & (KEY_A|KEY_B|KEY_X|KEY_Y));
+
+        // sdknso would handle button-bitmasking with ControlPadRestriction here.
+
+        states[i].buttons = buttons;
+
+        memset(states[i].joysticks, 0, sizeof(states[i].joysticks));
+    }
 }
 
 bool hidIsControllerConnected(HidControllerID id) {
