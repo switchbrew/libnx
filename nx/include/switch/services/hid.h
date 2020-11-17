@@ -658,7 +658,7 @@ typedef struct HidControllerSixAxisLayout {
 
 /// NpadSystemProperties
 typedef struct {
-    u32 powerInfo : 6;                                    ///< Use \ref hidGetControllerPowerInfo instead of accessing this directly.
+    u32 powerInfo : 6;                                    ///< Use \ref hidGetNpadPowerInfo instead of accessing this directly.
 
     u32 bit6 : 1;                                         ///< Unused
     u32 bit7 : 1;                                         ///< Unused
