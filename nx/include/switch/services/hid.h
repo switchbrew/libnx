@@ -565,6 +565,36 @@ typedef HidNpadStateEntry HidNpadJoyDualState;
 typedef HidNpadStateEntry HidNpadJoyLeftState;
 typedef HidNpadStateEntry HidNpadJoyRightState;
 typedef HidNpadStateEntry HidNpadPalmaState;
+
+/// HidNpadLarkState
+typedef struct HidNpadLarkState {
+    u64 timestamp;
+    u64 buttons;
+    JoystickPosition joysticks[JOYSTICK_NUM_STICKS];    ///< Joysticks state are always zero.
+    u32 connectionState;
+    u32 unk;
+} HidNpadLarkState;
+
+/// HidNpadHandheldLarkState
+typedef struct HidNpadHandheldLarkState {
+    u64 timestamp;
+    u64 buttons;
+    JoystickPosition joysticks[JOYSTICK_NUM_STICKS];
+    u32 connectionState;
+    u32 unk;
+    u32 unk2;
+    u32 pad;
+} HidNpadHandheldLarkState;
+
+/// HidNpadLuciaState
+typedef struct HidNpadLuciaState {
+    u64 timestamp;
+    u64 buttons;
+    JoystickPosition joysticks[JOYSTICK_NUM_STICKS];    ///< Joysticks state are always zero.
+    u32 connectionState;
+    u32 unk;
+} HidNpadLuciaState;
+
 typedef HidNpadStateEntry HidNpadSystemExtState;
 typedef HidNpadStateEntry HidNpadSystemState; ///< Joysticks state are always zero. Only the following button bits are available: KEY_A, KEY_B, KEY_X, KEY_Y, KEY_DLEFT, KEY_DUP, KEY_DRIGHT, KEY_DDOWN, KEY_L, KEY_R.
 
@@ -660,10 +690,18 @@ typedef struct HidNpad {
         struct {
             u32 applet_footer_ui_attribute;
             u8 applet_footer_ui_type;
-            u8 unk_x41AD[0x5B];
+            u8 pad2[3];
+            u8 unk_x41B0[0x58];
         };
     };
-    u8 unk_2[0xDF8];
+    u8 mutex[0x8];
+    u8 unk_x4210[0x18];
+    u8 npad_gc_trigger_header[0x20];
+    u8 npad_gc_trigger_state[0x198];
+    u32 unk_x43E0;
+    u32 unk_x43E4;
+    u32 unk_x43E8;
+    u8 unk_x43EC[0xC14];
 } HidNpad;
 
 // End HidNpad
@@ -802,6 +840,9 @@ void hidGetNpadStatesJoyDual(u32 id, HidNpadJoyDualState *states, size_t count, 
 void hidGetNpadStatesJoyLeft(u32 id, HidNpadJoyLeftState *states, size_t count, size_t *total_out);
 void hidGetNpadStatesJoyRight(u32 id, HidNpadJoyRightState *states, size_t count, size_t *total_out);
 void hidGetNpadStatesPalma(u32 id, HidNpadPalmaState *states, size_t count, size_t *total_out);
+void hidGetNpadStatesLark(u32 id, HidNpadLarkState *states, size_t count, size_t *total_out);
+void hidGetNpadStatesHandheldLark(u32 id, HidNpadHandheldLarkState *states, size_t count, size_t *total_out);
+void hidGetNpadStatesLucia(u32 id, HidNpadLuciaState *states, size_t count, size_t *total_out);
 void hidGetNpadStatesSystemExt(u32 id, HidNpadSystemExtState *states, size_t count, size_t *total_out);
 void hidGetNpadStatesSystem(u32 id, HidNpadSystemState *states, size_t count, size_t *total_out);
 

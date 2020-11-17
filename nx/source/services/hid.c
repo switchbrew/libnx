@@ -568,6 +568,99 @@ void hidGetNpadStatesPalma(u32 id, HidNpadPalmaState *states, size_t count, size
     // sdknso doesn't handle ControlPadRestriction with this.
 }
 
+void hidGetNpadStatesLark(u32 id, HidNpadLarkState *states, size_t count, size_t *total_out) {
+    HidNpadStateEntry tmp_entries[17]={0};
+
+    if (count > 17) count = 17;
+    Result rc = _hidGetNpadStates(id, 0, tmp_entries, count, total_out);
+    if (R_FAILED(rc)) diagAbortWithResult(rc);
+
+    memset(states, 0, sizeof(HidNpadLarkState) * (*total_out));
+
+    HidNpad *npad = _hidNpadSharedmemGetInternalState(id);
+    if (npad == NULL)
+        diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_NotInitialized));
+
+    u32 unk = atomic_load_explicit(&npad->unk_x43E0, memory_order_acquire);
+    if (!(unk>=1 && unk<=4)) unk = 0;
+
+    for (size_t i=0; i<*total_out; i++) {
+        states[i].timestamp = tmp_entries[i].timestamp;
+
+        // sdknso would handle button-bitmasking with ControlPadRestriction here.
+
+        states[i].buttons = tmp_entries[i].buttons;
+
+        // Leave joysticks state at zeros.
+
+        states[i].connectionState = tmp_entries[i].connectionState;
+        states[i].unk = unk;
+    }
+}
+
+void hidGetNpadStatesHandheldLark(u32 id, HidNpadHandheldLarkState *states, size_t count, size_t *total_out) {
+    HidNpadStateEntry tmp_entries[17]={0};
+
+    if (count > 17) count = 17;
+    Result rc = _hidGetNpadStates(id, 1, tmp_entries, count, total_out);
+    if (R_FAILED(rc)) diagAbortWithResult(rc);
+
+    memset(states, 0, sizeof(HidNpadHandheldLarkState) * (*total_out));
+
+    HidNpad *npad = _hidNpadSharedmemGetInternalState(id);
+    if (npad == NULL)
+        diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_NotInitialized));
+
+    u32 unk = atomic_load_explicit(&npad->unk_x43E0, memory_order_acquire);
+    if (!(unk>=1 && unk<=4)) unk = 0;
+
+    u32 unk2 = atomic_load_explicit(&npad->unk_x43E4, memory_order_acquire);
+    if (!(unk2>=1 && unk2<=4)) unk2 = 0;
+
+    for (size_t i=0; i<*total_out; i++) {
+        states[i].timestamp = tmp_entries[i].timestamp;
+
+        // sdknso would handle button-bitmasking with ControlPadRestriction here.
+
+        states[i].buttons = tmp_entries[i].buttons;
+
+        memcpy(states[i].joysticks, tmp_entries[i].joysticks, sizeof(tmp_entries[i].joysticks)); // sdknso uses index 0 for the src here.
+        states[i].connectionState = tmp_entries[i].connectionState;
+        states[i].unk = unk;
+        states[i].unk2 = unk2;
+    }
+}
+
+void hidGetNpadStatesLucia(u32 id, HidNpadLuciaState *states, size_t count, size_t *total_out) {
+    HidNpadStateEntry tmp_entries[17]={0};
+
+    if (count > 17) count = 17;
+    Result rc = _hidGetNpadStates(id, 0, tmp_entries, count, total_out);
+    if (R_FAILED(rc)) diagAbortWithResult(rc);
+
+    memset(states, 0, sizeof(HidNpadLuciaState) * (*total_out));
+
+    HidNpad *npad = _hidNpadSharedmemGetInternalState(id);
+    if (npad == NULL)
+        diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_NotInitialized));
+
+    u32 unk = atomic_load_explicit(&npad->unk_x43E8, memory_order_acquire);
+    if (!(unk>=1 && unk<=3)) unk = 0;
+
+    for (size_t i=0; i<*total_out; i++) {
+        states[i].timestamp = tmp_entries[i].timestamp;
+
+        // sdknso would handle button-bitmasking with ControlPadRestriction here.
+
+        states[i].buttons = tmp_entries[i].buttons;
+
+        // Leave joysticks state at zeros.
+
+        states[i].connectionState = tmp_entries[i].connectionState;
+        states[i].unk = unk;
+    }
+}
+
 void hidGetNpadStatesSystemExt(u32 id, HidNpadSystemExtState *states, size_t count, size_t *total_out) {
     Result rc = _hidGetNpadStates(id, 6, states, count, total_out);
     if (R_FAILED(rc)) diagAbortWithResult(rc);
