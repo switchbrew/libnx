@@ -561,6 +561,13 @@ void hidGetNpadStatesJoyRight(u32 id, HidNpadJoyRightState *states, size_t count
     if (R_FAILED(rc)) diagAbortWithResult(rc);
 }
 
+void hidGetNpadStatesPalma(u32 id, HidNpadPalmaState *states, size_t count, size_t *total_out) {
+    Result rc = _hidGetNpadStates(id, 5, states, count, total_out);
+    if (R_FAILED(rc)) diagAbortWithResult(rc);
+
+    // sdknso doesn't handle ControlPadRestriction with this.
+}
+
 void hidGetNpadStatesSystemExt(u32 id, HidNpadSystemExtState *states, size_t count, size_t *total_out) {
     Result rc = _hidGetNpadStates(id, 6, states, count, total_out);
     if (R_FAILED(rc)) diagAbortWithResult(rc);

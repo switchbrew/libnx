@@ -564,6 +564,7 @@ typedef HidNpadStateEntry HidNpadHandheldState;
 typedef HidNpadStateEntry HidNpadJoyDualState;
 typedef HidNpadStateEntry HidNpadJoyLeftState;
 typedef HidNpadStateEntry HidNpadJoyRightState;
+typedef HidNpadStateEntry HidNpadPalmaState;
 typedef HidNpadStateEntry HidNpadSystemExtState;
 typedef HidNpadStateEntry HidNpadSystemState; ///< Joysticks state are always zero. Only the following button bits are available: KEY_A, KEY_B, KEY_X, KEY_Y, KEY_DLEFT, KEY_DUP, KEY_DRIGHT, KEY_DDOWN, KEY_L, KEY_R.
 
@@ -800,6 +801,7 @@ void hidGetNpadStatesHandheld(u32 id, HidNpadHandheldState *states, size_t count
 void hidGetNpadStatesJoyDual(u32 id, HidNpadJoyDualState *states, size_t count, size_t *total_out);
 void hidGetNpadStatesJoyLeft(u32 id, HidNpadJoyLeftState *states, size_t count, size_t *total_out);
 void hidGetNpadStatesJoyRight(u32 id, HidNpadJoyRightState *states, size_t count, size_t *total_out);
+void hidGetNpadStatesPalma(u32 id, HidNpadPalmaState *states, size_t count, size_t *total_out);
 void hidGetNpadStatesSystemExt(u32 id, HidNpadSystemExtState *states, size_t count, size_t *total_out);
 void hidGetNpadStatesSystem(u32 id, HidNpadSystemState *states, size_t count, size_t *total_out);
 
