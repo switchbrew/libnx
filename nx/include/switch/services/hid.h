@@ -934,7 +934,7 @@ Result hidGetSupportedNpadStyleSet(u32 *style_set);
 
 /// This is automatically called with CONTROLLER_PLAYER_{1-8} and CONTROLLER_HANDHELD in \ref hidInitialize.
 /// count must be <=10. Each entry in buf must be CONTROLLER_PLAYER_{1-8} or CONTROLLER_HANDHELD.
-Result hidSetSupportedNpadIdType(HidControllerID *buf, size_t count);
+Result hidSetSupportedNpadIdType(const HidControllerID *buf, size_t count);
 
 /// Gets an event with the specified autoclear for the input controller.
 /// The user *must* close the event when finished with it / before the app exits.

@@ -582,8 +582,10 @@ void hidGetNpadStatesGc(u32 id, HidNpadGcState *states, size_t count, size_t *to
     HidNpadStateEntry tmp_entries[17]={0};
     HidNpadGcTriggerState tmp_entries_trigger[17]={0};
 
+    if (total_out) *total_out = 0;
     if (count > 17) count = 17;
-    Result rc = _hidGetNpadStates(id, 0, tmp_entries, count, total_out);
+    size_t tmp_out=0;
+    Result rc = _hidGetNpadStates(id, 0, tmp_entries, count, &tmp_out);
     if (R_FAILED(rc)) diagAbortWithResult(rc);
 
     rc = _hidVerifyNpadIdType(id);
@@ -593,14 +595,15 @@ void hidGetNpadStatesGc(u32 id, HidNpadGcState *states, size_t count, size_t *to
     if (npad == NULL)
         diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_NotInitialized));
 
-    size_t tmp_out=0;
-    rc = _hidGetStates(&npad->npad_gc_trigger_header, npad->npad_gc_trigger_state, tmp_entries_trigger, sizeof(HidNpadGcTriggerState), count, &tmp_out);
+    size_t tmp_out2=0;
+    rc = _hidGetStates(&npad->npad_gc_trigger_header, npad->npad_gc_trigger_state, tmp_entries_trigger, sizeof(HidNpadGcTriggerState), count, &tmp_out2);
     if (R_FAILED(rc)) diagAbortWithResult(rc);
-    if (tmp_out < *total_out) *total_out = tmp_out;
+    if (tmp_out2 < tmp_out) tmp_out = tmp_out2;
+    if (total_out) *total_out = tmp_out;
 
-    memset(states, 0, sizeof(HidNpadGcState) * (*total_out));
+    memset(states, 0, sizeof(HidNpadGcState) * tmp_out);
 
-    for (size_t i=0; i<*total_out; i++) {
+    for (size_t i=0; i<tmp_out; i++) {
         states[i].timestamp = tmp_entries[i].timestamp;
 
         // sdknso would handle button-bitmasking with ControlPadRestriction here.
@@ -625,11 +628,13 @@ void hidGetNpadStatesPalma(u32 id, HidNpadPalmaState *states, size_t count, size
 void hidGetNpadStatesLark(u32 id, HidNpadLarkState *states, size_t count, size_t *total_out) {
     HidNpadStateEntry tmp_entries[17]={0};
 
+    if (total_out) *total_out = 0;
     if (count > 17) count = 17;
-    Result rc = _hidGetNpadStates(id, 0, tmp_entries, count, total_out);
+    size_t tmp_out=0;
+    Result rc = _hidGetNpadStates(id, 0, tmp_entries, count, &tmp_out);
     if (R_FAILED(rc)) diagAbortWithResult(rc);
 
-    memset(states, 0, sizeof(HidNpadLarkState) * (*total_out));
+    memset(states, 0, sizeof(HidNpadLarkState) * tmp_out);
 
     HidNpad *npad = _hidNpadSharedmemGetInternalState(id);
     if (npad == NULL)
@@ -638,7 +643,9 @@ void hidGetNpadStatesLark(u32 id, HidNpadLarkState *states, size_t count, size_t
     u32 unk = atomic_load_explicit(&npad->unk_x43E0, memory_order_acquire);
     if (!(unk>=1 && unk<=4)) unk = 0;
 
-    for (size_t i=0; i<*total_out; i++) {
+    if (total_out) *total_out = tmp_out;
+
+    for (size_t i=0; i<tmp_out; i++) {
         states[i].timestamp = tmp_entries[i].timestamp;
 
         // sdknso would handle button-bitmasking with ControlPadRestriction here.
@@ -655,11 +662,13 @@ void hidGetNpadStatesLark(u32 id, HidNpadLarkState *states, size_t count, size_t
 void hidGetNpadStatesHandheldLark(u32 id, HidNpadHandheldLarkState *states, size_t count, size_t *total_out) {
     HidNpadStateEntry tmp_entries[17]={0};
 
+    if (total_out) *total_out = 0;
     if (count > 17) count = 17;
-    Result rc = _hidGetNpadStates(id, 1, tmp_entries, count, total_out);
+    size_t tmp_out=0;
+    Result rc = _hidGetNpadStates(id, 1, tmp_entries, count, &tmp_out);
     if (R_FAILED(rc)) diagAbortWithResult(rc);
 
-    memset(states, 0, sizeof(HidNpadHandheldLarkState) * (*total_out));
+    memset(states, 0, sizeof(HidNpadHandheldLarkState) * tmp_out);
 
     HidNpad *npad = _hidNpadSharedmemGetInternalState(id);
     if (npad == NULL)
@@ -671,7 +680,9 @@ void hidGetNpadStatesHandheldLark(u32 id, HidNpadHandheldLarkState *states, size
     u32 unk1 = atomic_load_explicit(&npad->unk_x43E4, memory_order_acquire);
     if (!(unk1>=1 && unk1<=4)) unk1 = 0;
 
-    for (size_t i=0; i<*total_out; i++) {
+    if (total_out) *total_out = tmp_out;
+
+    for (size_t i=0; i<tmp_out; i++) {
         states[i].timestamp = tmp_entries[i].timestamp;
 
         // sdknso would handle button-bitmasking with ControlPadRestriction here.
@@ -688,11 +699,13 @@ void hidGetNpadStatesHandheldLark(u32 id, HidNpadHandheldLarkState *states, size
 void hidGetNpadStatesLucia(u32 id, HidNpadLuciaState *states, size_t count, size_t *total_out) {
     HidNpadStateEntry tmp_entries[17]={0};
 
+    if (total_out) *total_out = 0;
     if (count > 17) count = 17;
-    Result rc = _hidGetNpadStates(id, 0, tmp_entries, count, total_out);
+    size_t tmp_out=0;
+    Result rc = _hidGetNpadStates(id, 0, tmp_entries, count, &tmp_out);
     if (R_FAILED(rc)) diagAbortWithResult(rc);
 
-    memset(states, 0, sizeof(HidNpadLuciaState) * (*total_out));
+    memset(states, 0, sizeof(HidNpadLuciaState) * tmp_out);
 
     HidNpad *npad = _hidNpadSharedmemGetInternalState(id);
     if (npad == NULL)
@@ -701,7 +714,9 @@ void hidGetNpadStatesLucia(u32 id, HidNpadLuciaState *states, size_t count, size
     u32 unk = atomic_load_explicit(&npad->unk_x43E8, memory_order_acquire);
     if (!(unk>=1 && unk<=3)) unk = 0;
 
-    for (size_t i=0; i<*total_out; i++) {
+    if (total_out) *total_out = tmp_out;
+
+    for (size_t i=0; i<tmp_out; i++) {
         states[i].timestamp = tmp_entries[i].timestamp;
 
         // sdknso would handle button-bitmasking with ControlPadRestriction here.
@@ -723,10 +738,14 @@ void hidGetNpadStatesSystemExt(u32 id, HidNpadSystemExtState *states, size_t cou
 }
 
 void hidGetNpadStatesSystem(u32 id, HidNpadSystemState *states, size_t count, size_t *total_out) {
-    Result rc = _hidGetNpadStates(id, 6, states, count, total_out);
+    if (total_out) *total_out = 0;
+    size_t tmp_out=0;
+    Result rc = _hidGetNpadStates(id, 6, states, count, &tmp_out);
     if (R_FAILED(rc)) diagAbortWithResult(rc);
 
-    for (size_t i=0; i<*total_out; i++) {
+    if (total_out) *total_out = tmp_out;
+
+    for (size_t i=0; i<tmp_out; i++) {
         u64 buttons = states[i].buttons;
         u64 new_buttons = 0;
 
@@ -1177,7 +1196,7 @@ Result hidGetSupportedNpadStyleSet(u32 *style_set) {
     return rc;
 }
 
-Result hidSetSupportedNpadIdType(HidControllerID *buf, size_t count) {
+Result hidSetSupportedNpadIdType(const HidControllerID *buf, size_t count) {
     u64 AppletResourceUserId = appletGetAppletResourceUserId();
     size_t i;
     u32 tmpval=0;
