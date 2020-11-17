@@ -570,6 +570,18 @@ typedef HidNpadStateEntry HidNpadHandheldState;
 typedef HidNpadStateEntry HidNpadJoyDualState;
 typedef HidNpadStateEntry HidNpadJoyLeftState;
 typedef HidNpadStateEntry HidNpadJoyRightState;
+
+/// HidNpadGcState
+typedef struct HidNpadGcState {
+    u64 timestamp;
+    u64 buttons;
+    JoystickPosition joysticks[JOYSTICK_NUM_STICKS];
+    u32 connectionState;
+    u32 unk0;
+    u32 unk1;
+    u32 pad;
+} HidNpadGcState;
+
 typedef HidNpadStateEntry HidNpadPalmaState;
 
 /// HidNpadLarkState
@@ -587,8 +599,8 @@ typedef struct HidNpadHandheldLarkState {
     u64 buttons;
     JoystickPosition joysticks[JOYSTICK_NUM_STICKS];
     u32 connectionState;
-    u32 unk;
-    u32 unk2;
+    u32 unk0;
+    u32 unk1;
     u32 pad;
 } HidNpadHandheldLarkState;
 
@@ -858,6 +870,7 @@ void hidGetNpadStatesHandheld(u32 id, HidNpadHandheldState *states, size_t count
 void hidGetNpadStatesJoyDual(u32 id, HidNpadJoyDualState *states, size_t count, size_t *total_out);
 void hidGetNpadStatesJoyLeft(u32 id, HidNpadJoyLeftState *states, size_t count, size_t *total_out);
 void hidGetNpadStatesJoyRight(u32 id, HidNpadJoyRightState *states, size_t count, size_t *total_out);
+void hidGetNpadStatesGc(u32 id, HidNpadGcState *states, size_t count, size_t *total_out);
 void hidGetNpadStatesPalma(u32 id, HidNpadPalmaState *states, size_t count, size_t *total_out);
 void hidGetNpadStatesLark(u32 id, HidNpadLarkState *states, size_t count, size_t *total_out);
 void hidGetNpadStatesHandheldLark(u32 id, HidNpadHandheldLarkState *states, size_t count, size_t *total_out);

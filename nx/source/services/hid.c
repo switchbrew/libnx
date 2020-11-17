@@ -578,6 +578,43 @@ void hidGetNpadStatesJoyRight(u32 id, HidNpadJoyRightState *states, size_t count
     // sdknso would handle button-bitmasking with ControlPadRestriction here.
 }
 
+void hidGetNpadStatesGc(u32 id, HidNpadGcState *states, size_t count, size_t *total_out) {
+    HidNpadStateEntry tmp_entries[17]={0};
+    HidNpadGcTriggerState tmp_entries_trigger[17]={0};
+
+    if (count > 17) count = 17;
+    Result rc = _hidGetNpadStates(id, 0, tmp_entries, count, total_out);
+    if (R_FAILED(rc)) diagAbortWithResult(rc);
+
+    rc = _hidVerifyNpadIdType(id);
+    if (R_FAILED(rc)) diagAbortWithResult(rc);
+
+    HidNpad *npad = _hidNpadSharedmemGetInternalState(id);
+    if (npad == NULL)
+        diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_NotInitialized));
+
+    size_t tmp_out=0;
+    rc = _hidGetStates(&npad->npad_gc_trigger_header, npad->npad_gc_trigger_state, tmp_entries_trigger, sizeof(HidNpadGcTriggerState), count, &tmp_out);
+    if (R_FAILED(rc)) diagAbortWithResult(rc);
+    if (tmp_out < *total_out) *total_out = tmp_out;
+
+    memset(states, 0, sizeof(HidNpadGcState) * (*total_out));
+
+    for (size_t i=0; i<*total_out; i++) {
+        states[i].timestamp = tmp_entries[i].timestamp;
+
+        // sdknso would handle button-bitmasking with ControlPadRestriction here.
+
+        states[i].buttons = tmp_entries[i].buttons;
+
+        memcpy(states[i].joysticks, tmp_entries[i].joysticks, sizeof(tmp_entries[i].joysticks)); // sdknso uses index 0 for the src here.
+        states[i].connectionState = tmp_entries[i].connectionState;
+
+        states[i].unk0 = tmp_entries_trigger[i].unk0;
+        states[i].unk1 = tmp_entries_trigger[i].unk1;
+    }
+}
+
 void hidGetNpadStatesPalma(u32 id, HidNpadPalmaState *states, size_t count, size_t *total_out) {
     Result rc = _hidGetNpadStates(id, 5, states, count, total_out);
     if (R_FAILED(rc)) diagAbortWithResult(rc);
@@ -628,11 +665,11 @@ void hidGetNpadStatesHandheldLark(u32 id, HidNpadHandheldLarkState *states, size
     if (npad == NULL)
         diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_NotInitialized));
 
-    u32 unk = atomic_load_explicit(&npad->unk_x43E0, memory_order_acquire);
-    if (!(unk>=1 && unk<=4)) unk = 0;
+    u32 unk0 = atomic_load_explicit(&npad->unk_x43E0, memory_order_acquire);
+    if (!(unk0>=1 && unk0<=4)) unk0 = 0;
 
-    u32 unk2 = atomic_load_explicit(&npad->unk_x43E4, memory_order_acquire);
-    if (!(unk2>=1 && unk2<=4)) unk2 = 0;
+    u32 unk1 = atomic_load_explicit(&npad->unk_x43E4, memory_order_acquire);
+    if (!(unk1>=1 && unk1<=4)) unk1 = 0;
 
     for (size_t i=0; i<*total_out; i++) {
         states[i].timestamp = tmp_entries[i].timestamp;
@@ -643,8 +680,8 @@ void hidGetNpadStatesHandheldLark(u32 id, HidNpadHandheldLarkState *states, size
 
         memcpy(states[i].joysticks, tmp_entries[i].joysticks, sizeof(tmp_entries[i].joysticks)); // sdknso uses index 0 for the src here.
         states[i].connectionState = tmp_entries[i].connectionState;
-        states[i].unk = unk;
-        states[i].unk2 = unk2;
+        states[i].unk0 = unk0;
+        states[i].unk1 = unk1;
     }
 }
 
