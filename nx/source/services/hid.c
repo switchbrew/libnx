@@ -610,8 +610,8 @@ void hidGetNpadStatesGc(u32 id, HidNpadGcState *states, size_t count, size_t *to
         memcpy(states[i].joysticks, tmp_entries[i].joysticks, sizeof(tmp_entries[i].joysticks)); // sdknso uses index 0 for the src here.
         states[i].connectionState = tmp_entries[i].connectionState;
 
-        states[i].unk0 = tmp_entries_trigger[i].unk0;
-        states[i].unk1 = tmp_entries_trigger[i].unk1;
+        states[i].l_trigger = tmp_entries_trigger[i].l_trigger;
+        states[i].r_trigger = tmp_entries_trigger[i].r_trigger;
     }
 }
 

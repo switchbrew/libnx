@@ -577,8 +577,8 @@ typedef struct HidNpadGcState {
     u64 buttons;
     JoystickPosition joysticks[JOYSTICK_NUM_STICKS];
     u32 connectionState;
-    u32 unk0;
-    u32 unk1;
+    u32 l_trigger;                                       ///< L analog trigger. Valid range: 0x0-0x7FFF.
+    u32 r_trigger;                                       ///< R analog trigger. Valid range: 0x0-0x7FFF.
     u32 pad;
 } HidNpadGcState;
 
@@ -631,8 +631,8 @@ typedef struct HidControllerLayout {
 /// HidNpadGcTriggerState
 typedef struct HidNpadGcTriggerState {
     u64 timestamp;
-    u32 unk0;
-    u32 unk1;
+    u32 l_trigger;
+    u32 r_trigger;
 } HidNpadGcTriggerState;
 
 /// HidNpadGcTriggerStateEntry
