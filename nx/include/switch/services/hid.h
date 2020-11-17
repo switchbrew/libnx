@@ -445,6 +445,12 @@ typedef struct HidCommonStateHeader {
     u64 max_entry;
 } HidCommonStateHeader;
 
+/// HidCommonStateEntry
+typedef struct HidCommonStateEntry {
+    u64 timestamp;
+    u8 state[];
+} HidCommonStateEntry;
+
 // Begin HidTouchScreen
 
 /// HidTouchScreenHeader
@@ -610,6 +616,19 @@ typedef struct HidControllerLayout {
     HidControllerInputEntry entries[17];
 } HidControllerLayout;
 
+/// HidNpadGcTriggerState
+typedef struct HidNpadGcTriggerState {
+    u64 timestamp;
+    u32 unk0;
+    u32 unk1;
+} HidNpadGcTriggerState;
+
+/// HidNpadGcTriggerStateEntry
+typedef struct HidNpadGcTriggerStateEntry {
+    u64 timestamp;
+    HidNpadGcTriggerState state;
+} HidNpadGcTriggerStateEntry;
+
 /// HidNpadSixAxisSensorState
 typedef struct HidNpadSixAxisSensorState {
     u64 timestamp;
@@ -696,8 +715,8 @@ typedef struct HidNpad {
     };
     u8 mutex[0x8];
     u8 unk_x4210[0x18];
-    u8 npad_gc_trigger_header[0x20];
-    u8 npad_gc_trigger_state[0x198];
+    HidCommonStateHeader npad_gc_trigger_header;
+    HidNpadGcTriggerStateEntry npad_gc_trigger_state[17];
     u32 unk_x43E0;
     u32 unk_x43E4;
     u32 unk_x43E8;

@@ -493,6 +493,41 @@ u8 hidGetAppletFooterUiTypes(u32 id) {
     return tmp;
 }
 
+static Result _hidGetStates(HidCommonStateHeader *header, void* in_states, void* states, size_t entrysize, size_t count, size_t *total_out) {
+    if (total_out) *total_out = 0;
+
+    s32 total_entries = (s32)atomic_load_explicit(&header->max_entry, memory_order_acquire);
+    if (total_entries < 0) total_entries = 0;
+    if (total_entries > count) total_entries = count;
+    s32 latest_entry = (s32)atomic_load_explicit(&header->latest_entry, memory_order_acquire);
+
+    for (s32 i=0; i<total_entries; i++) {
+        s32 entrypos = (((latest_entry + 0x12) - total_entries) + i) % 0x11;
+        HidCommonStateEntry *state_entry = (HidCommonStateEntry*)((uintptr_t)in_states + entrypos*(entrysize+sizeof(u64)));
+        void* out_state = (void*)((uintptr_t)states + (total_entries-i-1)*entrysize);
+        void* out_state_prev = (void*)((uintptr_t)states + (total_entries-i)*entrysize);
+
+        u64 timestamp0=0, timestamp1=0;
+
+        timestamp0 = atomic_load_explicit(&state_entry->timestamp, memory_order_acquire);
+        memcpy(out_state, &state_entry->state, entrysize);
+        timestamp1 = atomic_load_explicit(&state_entry->timestamp, memory_order_acquire);
+
+        if (timestamp0 != timestamp1 || (i>0 && *((u64*)out_state) - *((u64*)out_state_prev) != 1)) {
+            s32 tmpcount = (s32)atomic_load_explicit(&header->max_entry, memory_order_acquire);
+            tmpcount = total_entries < tmpcount ? tmpcount : total_entries;
+            total_entries = tmpcount < count ? tmpcount : count;
+            latest_entry = (s32)atomic_load_explicit(&header->latest_entry, memory_order_acquire);
+
+            i=-1;
+        }
+    }
+
+    if (total_out) *total_out = total_entries;
+
+    return 0;
+}
+
 static Result _hidGetNpadStates(u32 id, u32 layout, HidNpadStateEntry *states, size_t count, size_t *total_out) {
     if (total_out) *total_out = 0;
 
@@ -505,60 +540,42 @@ static Result _hidGetNpadStates(u32 id, u32 layout, HidNpadStateEntry *states, s
 
     HidControllerLayout *states_buf = &npad->layouts[layout];
 
-    s32 total_entries = (s32)atomic_load_explicit(&states_buf->header.max_entry, memory_order_acquire);
-    if (total_entries < 0) total_entries = 0;
-    if (total_entries > count) total_entries = count;
-    s32 latest_entry = (s32)atomic_load_explicit(&states_buf->header.latest_entry, memory_order_acquire);
-
-    for (s32 i=0; i<total_entries; i++) {
-        s32 entrypos = (((latest_entry + 0x12) - total_entries) + i) % 0x11;
-
-        u64 timestamp0=0, timestamp1=0;
-
-        timestamp0 = atomic_load_explicit(&states_buf->entries[entrypos].timestamp, memory_order_acquire);
-        memcpy(&states[total_entries-i-1], &states_buf->entries[entrypos].state, sizeof(HidNpadStateEntry));
-        timestamp1 = atomic_load_explicit(&states_buf->entries[entrypos].timestamp, memory_order_acquire);
-
-        if (timestamp0 != timestamp1 || (i>0 && states[total_entries-i-1].timestamp - states[total_entries-i].timestamp != 1)) {
-            s32 tmpcount = (s32)atomic_load_explicit(&states_buf->header.max_entry, memory_order_acquire);
-            tmpcount = total_entries < tmpcount ? tmpcount : total_entries;
-            total_entries = tmpcount < count ? tmpcount : count;
-            latest_entry = (s32)atomic_load_explicit(&states_buf->header.latest_entry, memory_order_acquire);
-
-            i=-1;
-        }
-    }
-
-    if (total_out) *total_out = total_entries;
-
-    // sdknso would handle button-bitmasking with ControlPadRestriction here.
-
-    return 0;
+    return _hidGetStates(&states_buf->header, states_buf->entries, states, sizeof(HidNpadStateEntry), count, total_out);
 }
 
 void hidGetNpadStatesFullKey(u32 id, HidNpadFullKeyState *states, size_t count, size_t *total_out) {
     Result rc = _hidGetNpadStates(id, 0, states, count, total_out);
     if (R_FAILED(rc)) diagAbortWithResult(rc);
+
+    // sdknso would handle button-bitmasking with ControlPadRestriction here.
 }
 
 void hidGetNpadStatesHandheld(u32 id, HidNpadHandheldState *states, size_t count, size_t *total_out) {
     Result rc = _hidGetNpadStates(id, 1, states, count, total_out);
     if (R_FAILED(rc)) diagAbortWithResult(rc);
+
+    // sdknso would handle button-bitmasking with ControlPadRestriction here.
 }
 
 void hidGetNpadStatesJoyDual(u32 id, HidNpadJoyDualState *states, size_t count, size_t *total_out) {
     Result rc = _hidGetNpadStates(id, 2, states, count, total_out);
     if (R_FAILED(rc)) diagAbortWithResult(rc);
+
+    // sdknso would handle button-bitmasking with ControlPadRestriction here.
 }
 
 void hidGetNpadStatesJoyLeft(u32 id, HidNpadJoyLeftState *states, size_t count, size_t *total_out) {
     Result rc = _hidGetNpadStates(id, 3, states, count, total_out);
     if (R_FAILED(rc)) diagAbortWithResult(rc);
+
+    // sdknso would handle button-bitmasking with ControlPadRestriction here.
 }
 
 void hidGetNpadStatesJoyRight(u32 id, HidNpadJoyRightState *states, size_t count, size_t *total_out) {
     Result rc = _hidGetNpadStates(id, 4, states, count, total_out);
     if (R_FAILED(rc)) diagAbortWithResult(rc);
+
+    // sdknso would handle button-bitmasking with ControlPadRestriction here.
 }
 
 void hidGetNpadStatesPalma(u32 id, HidNpadPalmaState *states, size_t count, size_t *total_out) {
@@ -664,6 +681,8 @@ void hidGetNpadStatesLucia(u32 id, HidNpadLuciaState *states, size_t count, size
 void hidGetNpadStatesSystemExt(u32 id, HidNpadSystemExtState *states, size_t count, size_t *total_out) {
     Result rc = _hidGetNpadStates(id, 6, states, count, total_out);
     if (R_FAILED(rc)) diagAbortWithResult(rc);
+
+    // sdknso would handle button-bitmasking with ControlPadRestriction here.
 }
 
 void hidGetNpadStatesSystem(u32 id, HidNpadSystemState *states, size_t count, size_t *total_out) {
