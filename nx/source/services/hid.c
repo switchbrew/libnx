@@ -358,28 +358,43 @@ HidNpadJoyAssignmentMode hidGetNpadJoyAssignment(u32 id) {
     return tmp;
 }
 
-Result hidGetNpadControllerColor(u32 id, HidNpadControllerColor *colors, size_t count) {
+Result hidGetNpadControllerColorSingle(u32 id, HidNpadControllerColor *color) {
     Result rc = _hidVerifyNpadIdType(id);
-    u32 tmp=0;
-
-    if (count==0) return rc;
 
     if (R_SUCCEEDED(rc)) {
         HidNpad *npad = _hidNpadSharedmemGetInternalState(id);
         if (npad == NULL)
             rc = MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
         else {
-            tmp = count==1 ? npad->header.single_colors_descriptor : npad->header.split_colors_descriptor;
+            u32 tmp = npad->header.single_colors_descriptor;
+            if (tmp==2) rc = MAKERESULT(202, 604);
+            else if (tmp==1) rc = MAKERESULT(202, 603);
+            else if (tmp!=0) diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen));
+
+            if (R_SUCCEEDED(rc))
+                *color = npad->header.single_colors;
+        }
+    }
+
+    return rc;
+}
+
+Result hidGetNpadControllerColorSplit(u32 id, HidNpadControllerColor *color_left, HidNpadControllerColor *color_right) {
+    Result rc = _hidVerifyNpadIdType(id);
+
+    if (R_SUCCEEDED(rc)) {
+        HidNpad *npad = _hidNpadSharedmemGetInternalState(id);
+        if (npad == NULL)
+            rc = MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+        else {
+            u32 tmp = npad->header.split_colors_descriptor;
             if (tmp==2) rc = MAKERESULT(202, 604);
             else if (tmp==1) rc = MAKERESULT(202, 603);
             else if (tmp!=0) diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen));
 
             if (R_SUCCEEDED(rc)) {
-                if (count==1) colors[0] = npad->header.single_colors;
-                else {
-                    colors[0] = npad->header.left_colors;
-                    colors[1] = npad->header.right_colors;
-                }
+                *color_left  = npad->header.left_colors;
+                *color_right = npad->header.right_colors;
             }
         }
     }
@@ -431,30 +446,45 @@ void hidGetNpadSystemButtonProperties(u32 id, HidNpadSystemButtonProperties *out
     if (R_FAILED(rc)) diagAbortWithResult(rc);
 }
 
-void hidGetNpadPowerInfo(u32 id, HidPowerInfo *info, size_t count) {
+static void _hidGetNpadPowerInfo(HidNpad *npad, HidPowerInfo *info, u32 powerInfo, u32 i) {
+    info->batteryCharge = atomic_load_explicit(&npad->batteryCharge[i], memory_order_acquire);
+    if (info->batteryCharge > 4) info->batteryCharge = 4; // sdknso would Abort when this occurs.
+
+    info->isCharging = (powerInfo & BIT(i)) != 0;
+    info->powerConnected = (powerInfo & BIT(i+3)) != 0;
+}
+
+void hidGetNpadPowerInfoSingle(u32 id, HidPowerInfo *info) {
     Result rc = _hidVerifyNpadIdType(id);
-    size_t i;
-    size_t indexbase;
-    HidNpadSystemProperties properties;
-
-    if (count == 0) return;
-    if (count > 2) count = 2;
-    indexbase = count-1;
-
-    hidGetNpadSystemProperties(id, &properties);
 
     if (R_SUCCEEDED(rc)) {
         HidNpad *npad = _hidNpadSharedmemGetInternalState(id);
         if (npad == NULL)
             rc = MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
         else {
-            for (i=0; i<count; i++) {
-                info[i].batteryCharge = atomic_load_explicit(&npad->batteryCharge[indexbase+i], memory_order_acquire);
-                if (info[i].batteryCharge > 4) info->batteryCharge = 4; // sdknso would Abort when this occurs.
+            HidNpadSystemProperties properties;
+            properties = atomic_load_explicit(&npad->system_properties, memory_order_acquire);
 
-                info[i].isCharging = (properties.powerInfo & BIT(indexbase+i)) != 0;
-                info[i].powerConnected = (properties.powerInfo & BIT(indexbase+i+3)) != 0;
-            }
+            _hidGetNpadPowerInfo(npad, info, properties.powerInfo, 0);
+        }
+    }
+
+    if (R_FAILED(rc)) diagAbortWithResult(rc);
+}
+
+void hidGetNpadPowerInfoSplit(u32 id, HidPowerInfo *info_left, HidPowerInfo *info_right) {
+    Result rc = _hidVerifyNpadIdType(id);
+
+    if (R_SUCCEEDED(rc)) {
+        HidNpad *npad = _hidNpadSharedmemGetInternalState(id);
+        if (npad == NULL)
+            rc = MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+        else {
+            HidNpadSystemProperties properties;
+            properties = atomic_load_explicit(&npad->system_properties, memory_order_acquire);
+
+            _hidGetNpadPowerInfo(npad, info_left,  properties.powerInfo, 1);
+            _hidGetNpadPowerInfo(npad, info_right, properties.powerInfo, 2);
         }
     }
 

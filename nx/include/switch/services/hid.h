@@ -842,8 +842,11 @@ u32 hidGetNpadStyleSet(u32 id);
 /// Gets the \ref HidNpadJoyAssignmentMode for the specified controller.
 HidNpadJoyAssignmentMode hidGetNpadJoyAssignment(u32 id);
 
-/// Gets the \ref HidNpadControllerColor for the specified controller. colors is the output array, where count is the number of entries. count must be 1 or 2: former for the main colors, latter for reading left/right colors.
-Result hidGetNpadControllerColor(u32 id, HidNpadControllerColor *colors, size_t count);
+/// Gets the main \ref HidNpadControllerColor for the specified controller.
+Result hidGetNpadControllerColorSingle(u32 id, HidNpadControllerColor *color);
+
+/// Gets the left/right \ref HidNpadControllerColor for the specified controller (Joy-Con pair in dual mode).
+Result hidGetNpadControllerColorSplit(u32 id, HidNpadControllerColor *color_left, HidNpadControllerColor *color_right);
 
 /// Gets the \ref HidDeviceTypeBits for the specified controller.
 u32 hidGetNpadDeviceType(u32 id);
@@ -854,8 +857,11 @@ void hidGetNpadSystemProperties(u32 id, HidNpadSystemProperties *out);
 /// Gets the \ref HidNpadSystemButtonProperties for the specified controller.
 void hidGetNpadSystemButtonProperties(u32 id, HidNpadSystemButtonProperties *out);
 
-/// Gets the \ref HidPowerInfo for the specified controller. info is the output array, where count is the number of entries. count must be 1 or 2: former for the main battery info, latter for reading left/right Joy-Con PowerInfo.
-void hidGetNpadPowerInfo(u32 id, HidPowerInfo *info, size_t count);
+/// Gets the main \ref HidPowerInfo for the specified controller.
+void hidGetNpadPowerInfoSingle(u32 id, HidPowerInfo *info);
+
+/// Gets the left/right \ref HidPowerInfo for the specified controller (Joy-Con pair in dual mode).
+void hidGetNpadPowerInfoSplit(u32 id, HidPowerInfo *info_left, HidPowerInfo *info_right);
 
 /// Gets a bitfield of AppletFooterUiAttributes for the specified Npad.
 /// Only available on [9.0.0+].
