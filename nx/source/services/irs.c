@@ -277,8 +277,8 @@ static Result _irsCheckInternalStatus(IrsIrCameraHandle handle) {
     return rc;
 }
 
-Result irsGetIrCameraHandle(IrsIrCameraHandle *handle, HidControllerID id) {
-    u32 tmp = hidControllerIDToOfficial(id);
+Result irsGetIrCameraHandle(IrsIrCameraHandle *handle, HidNpadIdType id) {
+    u32 tmp = id;
     return serviceDispatchInOut(&g_irsSrv, 311, tmp, *handle);
 }
 

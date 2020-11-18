@@ -52,11 +52,11 @@ static void _ringconSetErrorFlag(RingCon *c, RingConErrorFlag flag, bool value) 
         c->error_flags &= ~BIT(flag);
 }
 
-Result ringconCreate(RingCon *c, HidControllerID id) {
+Result ringconCreate(RingCon *c, HidNpadIdType id) {
     Result rc=0;
     bool handleflag=0;
     HidbusBusType bus_type;
-    u32 style_set = hidGetNpadStyleSet(hidControllerIDToOfficial(id));
+    u32 style_set = hidGetNpadStyleSet(id);
     u32 cmd = 0x00020101;
 
     memset(c, 0, sizeof(*c));

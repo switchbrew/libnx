@@ -50,16 +50,17 @@ static Result _hidSetDualModeAll(void);
 NX_GENERATE_SERVICE_GUARD(hid);
 
 Result _hidInitialize(void) {
-    HidControllerID idbuf[9] = {
-        CONTROLLER_PLAYER_1,
-        CONTROLLER_PLAYER_2,
-        CONTROLLER_PLAYER_3,
-        CONTROLLER_PLAYER_4,
-        CONTROLLER_PLAYER_5,
-        CONTROLLER_PLAYER_6,
-        CONTROLLER_PLAYER_7,
-        CONTROLLER_PLAYER_8,
-        CONTROLLER_HANDHELD};
+    static const HidNpadIdType idbuf[9] = {
+        HidNpadIdType_No1,
+        HidNpadIdType_No2,
+        HidNpadIdType_No3,
+        HidNpadIdType_No4,
+        HidNpadIdType_No5,
+        HidNpadIdType_No6,
+        HidNpadIdType_No7,
+        HidNpadIdType_No8,
+        HidNpadIdType_Handheld,
+    };
 
     Result rc=0;
     Handle sharedmem_handle;
@@ -86,7 +87,7 @@ Result _hidInitialize(void) {
         rc = hidSetSupportedNpadStyleSet(HidNpadStyleTag_NpadFullKey | HidNpadStyleTag_NpadHandheld | HidNpadStyleTag_NpadJoyDual | HidNpadStyleTag_NpadJoyLeft | HidNpadStyleTag_NpadJoyRight | HidNpadStyleTag_NpadSystemExt | HidNpadStyleTag_NpadSystem);
 
     if (R_SUCCEEDED(rc))
-        rc = hidSetSupportedNpadIdType(idbuf, 9);
+        rc = hidSetSupportedNpadIdType(idbuf, sizeof(idbuf)/sizeof(*idbuf));
 
     if (R_SUCCEEDED(rc))
         rc = _hidSetDualModeAll();
@@ -209,7 +210,7 @@ void hidScanInput(void) {
     }
 
     for (u32 i = 0; i < 10; i++) {
-        u32 id = hidControllerIDToOfficial(i);
+        HidNpadIdType id = hidControllerIDToNpadIdType(i);
         u32 style_set = hidGetNpadStyleSet(id);
         size_t total_out=0;
 
@@ -308,142 +309,112 @@ void hidScanInput(void) {
     rwlockWriteUnlock(&g_hidLock);
 }
 
-static Result _hidVerifyNpadIdType(u32 id) {
-    if (id >= 0x8 && (id!=0x10 && id!=0x20))
-        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
-
-    return 0;
-}
-
-static HidNpad *_hidNpadSharedmemGetInternalState(u32 id) {
-    if (id >= 0x8) id = id==0x10 ? 0x9 : 0x8;
-
+static Result _hidGetNpadInternalState(HidNpadIdType id, HidNpad **npad) {
     HidSharedMemory *sharedmem = (HidSharedMemory*)hidGetSharedmemAddr();
-    if (sharedmem == NULL) return NULL;
-    return &sharedmem->npad[id];
-}
+    if (sharedmem == NULL)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-u32 hidGetNpadStyleSet(u32 id) {
-    Result rc = _hidVerifyNpadIdType(id);
-    u32 tmp=0;
-
-    if (R_SUCCEEDED(rc)) {
-        HidNpad *npad = _hidNpadSharedmemGetInternalState(id);
-        if (npad == NULL)
-            rc = MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-        else
-            tmp = atomic_load_explicit(&npad->header.style_set, memory_order_acquire);
+    if (id <= HidNpadIdType_No8) {
+        *npad = &sharedmem->npad[id];
+        return 0;
     }
-
-    if (R_FAILED(rc)) diagAbortWithResult(rc);
-    return tmp;
+    else if (id == HidNpadIdType_Handheld) {
+        *npad = &sharedmem->npad[8];
+        return 0;
+    }
+    else if (id == HidNpadIdType_Other) {
+        *npad = &sharedmem->npad[9];
+        return 0;
+    }
+    else
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 }
 
-HidNpadJoyAssignmentMode hidGetNpadJoyAssignment(u32 id) {
-    Result rc = _hidVerifyNpadIdType(id);
+u32 hidGetNpadStyleSet(HidNpadIdType id) {
+    HidNpad *npad = NULL;
+    Result rc = _hidGetNpadInternalState(id, &npad);
+    if (R_FAILED(rc))
+        diagAbortWithResult(rc);
+
+    return atomic_load_explicit(&npad->header.style_set, memory_order_acquire);
+}
+
+HidNpadJoyAssignmentMode hidGetNpadJoyAssignment(HidNpadIdType id) {
+    HidNpad *npad = NULL;
+    Result rc = _hidGetNpadInternalState(id, &npad);
     HidNpadJoyAssignmentMode tmp=0;
 
     if (R_SUCCEEDED(rc)) {
-        HidNpad *npad = _hidNpadSharedmemGetInternalState(id);
-        if (npad == NULL)
-            rc = MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-        else {
-            tmp = atomic_load_explicit(&npad->header.npad_joy_assignment_mode, memory_order_acquire);
-            if (tmp != HidNpadJoyAssignmentMode_Dual && tmp != HidNpadJoyAssignmentMode_Single)
-                rc = MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen);
-        }
+        tmp = atomic_load_explicit(&npad->header.npad_joy_assignment_mode, memory_order_acquire);
+        if (tmp != HidNpadJoyAssignmentMode_Dual && tmp != HidNpadJoyAssignmentMode_Single)
+            rc = MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen);
     }
 
     if (R_FAILED(rc)) diagAbortWithResult(rc);
     return tmp;
 }
 
-Result hidGetNpadControllerColorSingle(u32 id, HidNpadControllerColor *color) {
-    Result rc = _hidVerifyNpadIdType(id);
+Result hidGetNpadControllerColorSingle(HidNpadIdType id, HidNpadControllerColor *color) {
+    HidNpad *npad = NULL;
+    Result rc = _hidGetNpadInternalState(id, &npad);
 
     if (R_SUCCEEDED(rc)) {
-        HidNpad *npad = _hidNpadSharedmemGetInternalState(id);
-        if (npad == NULL)
-            rc = MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-        else {
-            u32 tmp = npad->header.single_colors_descriptor;
-            if (tmp==2) rc = MAKERESULT(202, 604);
-            else if (tmp==1) rc = MAKERESULT(202, 603);
-            else if (tmp!=0) diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen));
+        u32 tmp = npad->header.single_colors_descriptor;
+        if (tmp==2) rc = MAKERESULT(202, 604);
+        else if (tmp==1) rc = MAKERESULT(202, 603);
+        else if (tmp!=0) diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen));
 
-            if (R_SUCCEEDED(rc))
-                *color = npad->header.single_colors;
+        if (R_SUCCEEDED(rc))
+            *color = npad->header.single_colors;
+    }
+
+    return rc;
+}
+
+Result hidGetNpadControllerColorSplit(HidNpadIdType id, HidNpadControllerColor *color_left, HidNpadControllerColor *color_right) {
+    HidNpad *npad = NULL;
+    Result rc = _hidGetNpadInternalState(id, &npad);
+
+    if (R_SUCCEEDED(rc)) {
+        u32 tmp = npad->header.split_colors_descriptor;
+        if (tmp==2) rc = MAKERESULT(202, 604);
+        else if (tmp==1) rc = MAKERESULT(202, 603);
+        else if (tmp!=0) diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen));
+
+        if (R_SUCCEEDED(rc)) {
+            *color_left  = npad->header.left_colors;
+            *color_right = npad->header.right_colors;
         }
     }
 
     return rc;
 }
 
-Result hidGetNpadControllerColorSplit(u32 id, HidNpadControllerColor *color_left, HidNpadControllerColor *color_right) {
-    Result rc = _hidVerifyNpadIdType(id);
+u32 hidGetNpadDeviceType(HidNpadIdType id) {
+    HidNpad *npad = NULL;
+    Result rc = _hidGetNpadInternalState(id, &npad);
+    if (R_FAILED(rc))
+        diagAbortWithResult(rc);
 
-    if (R_SUCCEEDED(rc)) {
-        HidNpad *npad = _hidNpadSharedmemGetInternalState(id);
-        if (npad == NULL)
-            rc = MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-        else {
-            u32 tmp = npad->header.split_colors_descriptor;
-            if (tmp==2) rc = MAKERESULT(202, 604);
-            else if (tmp==1) rc = MAKERESULT(202, 603);
-            else if (tmp!=0) diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen));
-
-            if (R_SUCCEEDED(rc)) {
-                *color_left  = npad->header.left_colors;
-                *color_right = npad->header.right_colors;
-            }
-        }
-    }
-
-    return rc;
+    return atomic_load_explicit(&npad->deviceType, memory_order_acquire);
 }
 
-u32 hidGetNpadDeviceType(u32 id) {
-    Result rc = _hidVerifyNpadIdType(id);
-    u32 tmp=0;
+void hidGetNpadSystemProperties(HidNpadIdType id, HidNpadSystemProperties *out) {
+    HidNpad *npad = NULL;
+    Result rc = _hidGetNpadInternalState(id, &npad);
+    if (R_FAILED(rc))
+        diagAbortWithResult(rc);
 
-    if (R_SUCCEEDED(rc)) {
-        HidNpad *npad = _hidNpadSharedmemGetInternalState(id);
-        if (npad == NULL)
-            rc = MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-        else
-            tmp = atomic_load_explicit(&npad->deviceType, memory_order_acquire);
-    }
-
-    if (R_FAILED(rc)) diagAbortWithResult(rc);
-    return tmp;
+    *out = atomic_load_explicit(&npad->system_properties, memory_order_acquire);
 }
 
-void hidGetNpadSystemProperties(u32 id, HidNpadSystemProperties *out) {
-    Result rc = _hidVerifyNpadIdType(id);
+void hidGetNpadSystemButtonProperties(HidNpadIdType id, HidNpadSystemButtonProperties *out) {
+    HidNpad *npad = NULL;
+    Result rc = _hidGetNpadInternalState(id, &npad);
+    if (R_FAILED(rc))
+        diagAbortWithResult(rc);
 
-    if (R_SUCCEEDED(rc)) {
-        HidNpad *npad = _hidNpadSharedmemGetInternalState(id);
-        if (npad == NULL)
-            rc = MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-        else
-            *out = atomic_load_explicit(&npad->system_properties, memory_order_acquire);
-    }
-
-    if (R_FAILED(rc)) diagAbortWithResult(rc);
-}
-
-void hidGetNpadSystemButtonProperties(u32 id, HidNpadSystemButtonProperties *out) {
-    Result rc = _hidVerifyNpadIdType(id);
-
-    if (R_SUCCEEDED(rc)) {
-        HidNpad *npad = _hidNpadSharedmemGetInternalState(id);
-        if (npad == NULL)
-            rc = MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-        else
-            *out = atomic_load_explicit(&npad->system_button_properties, memory_order_acquire);
-    }
-
-    if (R_FAILED(rc)) diagAbortWithResult(rc);
+    *out = atomic_load_explicit(&npad->system_button_properties, memory_order_acquire);
 }
 
 static void _hidGetNpadPowerInfo(HidNpad *npad, HidPowerInfo *info, u32 powerInfo, u32 i) {
@@ -454,73 +425,47 @@ static void _hidGetNpadPowerInfo(HidNpad *npad, HidPowerInfo *info, u32 powerInf
     info->powerConnected = (powerInfo & BIT(i+3)) != 0;
 }
 
-void hidGetNpadPowerInfoSingle(u32 id, HidPowerInfo *info) {
-    Result rc = _hidVerifyNpadIdType(id);
+void hidGetNpadPowerInfoSingle(HidNpadIdType id, HidPowerInfo *info) {
+    HidNpad *npad = NULL;
+    Result rc = _hidGetNpadInternalState(id, &npad);
+    if (R_FAILED(rc))
+        diagAbortWithResult(rc);
 
-    if (R_SUCCEEDED(rc)) {
-        HidNpad *npad = _hidNpadSharedmemGetInternalState(id);
-        if (npad == NULL)
-            rc = MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-        else {
-            HidNpadSystemProperties properties;
-            properties = atomic_load_explicit(&npad->system_properties, memory_order_acquire);
+    HidNpadSystemProperties properties;
+    properties = atomic_load_explicit(&npad->system_properties, memory_order_acquire);
 
-            _hidGetNpadPowerInfo(npad, info, properties.powerInfo, 0);
-        }
-    }
-
-    if (R_FAILED(rc)) diagAbortWithResult(rc);
+    _hidGetNpadPowerInfo(npad, info, properties.powerInfo, 0);
 }
 
-void hidGetNpadPowerInfoSplit(u32 id, HidPowerInfo *info_left, HidPowerInfo *info_right) {
-    Result rc = _hidVerifyNpadIdType(id);
+void hidGetNpadPowerInfoSplit(HidNpadIdType id, HidPowerInfo *info_left, HidPowerInfo *info_right) {
+    HidNpad *npad = NULL;
+    Result rc = _hidGetNpadInternalState(id, &npad);
+    if (R_FAILED(rc))
+        diagAbortWithResult(rc);
 
-    if (R_SUCCEEDED(rc)) {
-        HidNpad *npad = _hidNpadSharedmemGetInternalState(id);
-        if (npad == NULL)
-            rc = MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-        else {
-            HidNpadSystemProperties properties;
-            properties = atomic_load_explicit(&npad->system_properties, memory_order_acquire);
+    HidNpadSystemProperties properties;
+    properties = atomic_load_explicit(&npad->system_properties, memory_order_acquire);
 
-            _hidGetNpadPowerInfo(npad, info_left,  properties.powerInfo, 1);
-            _hidGetNpadPowerInfo(npad, info_right, properties.powerInfo, 2);
-        }
-    }
-
-    if (R_FAILED(rc)) diagAbortWithResult(rc);
+    _hidGetNpadPowerInfo(npad, info_left,  properties.powerInfo, 1);
+    _hidGetNpadPowerInfo(npad, info_right, properties.powerInfo, 2);
 }
 
-u32 hidGetAppletFooterUiAttributesSet(u32 id) {
-    Result rc = _hidVerifyNpadIdType(id);
-    u32 tmp=0;
+u32 hidGetAppletFooterUiAttributesSet(HidNpadIdType id) {
+    HidNpad *npad = NULL;
+    Result rc = _hidGetNpadInternalState(id, &npad);
+    if (R_FAILED(rc))
+        diagAbortWithResult(rc);
 
-    if (R_SUCCEEDED(rc)) {
-        HidNpad *npad = _hidNpadSharedmemGetInternalState(id);
-        if (npad == NULL)
-            rc = MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-        else
-            tmp = atomic_load_explicit(&npad->applet_footer_ui_attribute, memory_order_acquire);
-    }
-
-    if (R_FAILED(rc)) diagAbortWithResult(rc);
-    return tmp;
+    return atomic_load_explicit(&npad->applet_footer_ui_attribute, memory_order_acquire);
 }
 
-u8 hidGetAppletFooterUiTypes(u32 id) {
-    Result rc = _hidVerifyNpadIdType(id);
-    u32 tmp=0;
+u8 hidGetAppletFooterUiTypes(HidNpadIdType id) {
+    HidNpad *npad = NULL;
+    Result rc = _hidGetNpadInternalState(id, &npad);
+    if (R_FAILED(rc))
+        diagAbortWithResult(rc);
 
-    if (R_SUCCEEDED(rc)) {
-        HidNpad *npad = _hidNpadSharedmemGetInternalState(id);
-        if (npad == NULL)
-            rc = MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-        else
-            tmp = atomic_load_explicit(&npad->applet_footer_ui_type, memory_order_acquire);
-    }
-
-    if (R_FAILED(rc)) diagAbortWithResult(rc);
-    return tmp;
+    return atomic_load_explicit(&npad->applet_footer_ui_type, memory_order_acquire);
 }
 
 static Result _hidGetStates(HidCommonStateHeader *header, void* in_states, void* states, size_t entrysize, size_t count, size_t *total_out) {
@@ -558,57 +503,54 @@ static Result _hidGetStates(HidCommonStateHeader *header, void* in_states, void*
     return 0;
 }
 
-static Result _hidGetNpadStates(u32 id, u32 layout, HidNpadStateEntry *states, size_t count, size_t *total_out) {
+static Result _hidGetNpadStates(HidNpadIdType id, u32 layout, HidNpadStateEntry *states, size_t count, size_t *total_out) {
     if (total_out) *total_out = 0;
 
-    Result rc = _hidVerifyNpadIdType(id);
-    if (R_FAILED(rc)) return rc;
-
-    HidNpad *npad = _hidNpadSharedmemGetInternalState(id);
-    if (npad == NULL)
-        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    HidNpad *npad = NULL;
+    Result rc = _hidGetNpadInternalState(id, &npad);
+    if (R_FAILED(rc))
+        return rc;
 
     HidControllerLayout *states_buf = &npad->layouts[layout];
-
     return _hidGetStates(&states_buf->header, states_buf->entries, states, sizeof(HidNpadStateEntry), count, total_out);
 }
 
-void hidGetNpadStatesFullKey(u32 id, HidNpadFullKeyState *states, size_t count, size_t *total_out) {
+void hidGetNpadStatesFullKey(HidNpadIdType id, HidNpadFullKeyState *states, size_t count, size_t *total_out) {
     Result rc = _hidGetNpadStates(id, 0, states, count, total_out);
     if (R_FAILED(rc)) diagAbortWithResult(rc);
 
     // sdknso would handle button-bitmasking with ControlPadRestriction here.
 }
 
-void hidGetNpadStatesHandheld(u32 id, HidNpadHandheldState *states, size_t count, size_t *total_out) {
+void hidGetNpadStatesHandheld(HidNpadIdType id, HidNpadHandheldState *states, size_t count, size_t *total_out) {
     Result rc = _hidGetNpadStates(id, 1, states, count, total_out);
     if (R_FAILED(rc)) diagAbortWithResult(rc);
 
     // sdknso would handle button-bitmasking with ControlPadRestriction here.
 }
 
-void hidGetNpadStatesJoyDual(u32 id, HidNpadJoyDualState *states, size_t count, size_t *total_out) {
+void hidGetNpadStatesJoyDual(HidNpadIdType id, HidNpadJoyDualState *states, size_t count, size_t *total_out) {
     Result rc = _hidGetNpadStates(id, 2, states, count, total_out);
     if (R_FAILED(rc)) diagAbortWithResult(rc);
 
     // sdknso would handle button-bitmasking with ControlPadRestriction here.
 }
 
-void hidGetNpadStatesJoyLeft(u32 id, HidNpadJoyLeftState *states, size_t count, size_t *total_out) {
+void hidGetNpadStatesJoyLeft(HidNpadIdType id, HidNpadJoyLeftState *states, size_t count, size_t *total_out) {
     Result rc = _hidGetNpadStates(id, 3, states, count, total_out);
     if (R_FAILED(rc)) diagAbortWithResult(rc);
 
     // sdknso would handle button-bitmasking with ControlPadRestriction here.
 }
 
-void hidGetNpadStatesJoyRight(u32 id, HidNpadJoyRightState *states, size_t count, size_t *total_out) {
+void hidGetNpadStatesJoyRight(HidNpadIdType id, HidNpadJoyRightState *states, size_t count, size_t *total_out) {
     Result rc = _hidGetNpadStates(id, 4, states, count, total_out);
     if (R_FAILED(rc)) diagAbortWithResult(rc);
 
     // sdknso would handle button-bitmasking with ControlPadRestriction here.
 }
 
-void hidGetNpadStatesGc(u32 id, HidNpadGcState *states, size_t count, size_t *total_out) {
+void hidGetNpadStatesGc(HidNpadIdType id, HidNpadGcState *states, size_t count, size_t *total_out) {
     HidNpadStateEntry tmp_entries[17]={0};
     HidNpadGcTriggerState tmp_entries_trigger[17]={0};
 
@@ -618,12 +560,9 @@ void hidGetNpadStatesGc(u32 id, HidNpadGcState *states, size_t count, size_t *to
     Result rc = _hidGetNpadStates(id, 0, tmp_entries, count, &tmp_out);
     if (R_FAILED(rc)) diagAbortWithResult(rc);
 
-    rc = _hidVerifyNpadIdType(id);
+    HidNpad *npad = NULL;
+    rc = _hidGetNpadInternalState(id, &npad);
     if (R_FAILED(rc)) diagAbortWithResult(rc);
-
-    HidNpad *npad = _hidNpadSharedmemGetInternalState(id);
-    if (npad == NULL)
-        diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_NotInitialized));
 
     size_t tmp_out2=0;
     rc = _hidGetStates(&npad->npad_gc_trigger_header, npad->npad_gc_trigger_state, tmp_entries_trigger, sizeof(HidNpadGcTriggerState), count, &tmp_out2);
@@ -648,14 +587,14 @@ void hidGetNpadStatesGc(u32 id, HidNpadGcState *states, size_t count, size_t *to
     }
 }
 
-void hidGetNpadStatesPalma(u32 id, HidNpadPalmaState *states, size_t count, size_t *total_out) {
+void hidGetNpadStatesPalma(HidNpadIdType id, HidNpadPalmaState *states, size_t count, size_t *total_out) {
     Result rc = _hidGetNpadStates(id, 5, states, count, total_out);
     if (R_FAILED(rc)) diagAbortWithResult(rc);
 
     // sdknso doesn't handle ControlPadRestriction with this.
 }
 
-void hidGetNpadStatesLark(u32 id, HidNpadLarkState *states, size_t count, size_t *total_out) {
+void hidGetNpadStatesLark(HidNpadIdType id, HidNpadLarkState *states, size_t count, size_t *total_out) {
     HidNpadStateEntry tmp_entries[17]={0};
 
     if (total_out) *total_out = 0;
@@ -666,9 +605,9 @@ void hidGetNpadStatesLark(u32 id, HidNpadLarkState *states, size_t count, size_t
 
     memset(states, 0, sizeof(HidNpadLarkState) * tmp_out);
 
-    HidNpad *npad = _hidNpadSharedmemGetInternalState(id);
-    if (npad == NULL)
-        diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_NotInitialized));
+    HidNpad *npad = NULL;
+    rc = _hidGetNpadInternalState(id, &npad);
+    if (R_FAILED(rc)) diagAbortWithResult(rc);
 
     u32 unk = atomic_load_explicit(&npad->unk_x43E0, memory_order_acquire);
     if (!(unk>=1 && unk<=4)) unk = 0;
@@ -689,7 +628,7 @@ void hidGetNpadStatesLark(u32 id, HidNpadLarkState *states, size_t count, size_t
     }
 }
 
-void hidGetNpadStatesHandheldLark(u32 id, HidNpadHandheldLarkState *states, size_t count, size_t *total_out) {
+void hidGetNpadStatesHandheldLark(HidNpadIdType id, HidNpadHandheldLarkState *states, size_t count, size_t *total_out) {
     HidNpadStateEntry tmp_entries[17]={0};
 
     if (total_out) *total_out = 0;
@@ -700,9 +639,9 @@ void hidGetNpadStatesHandheldLark(u32 id, HidNpadHandheldLarkState *states, size
 
     memset(states, 0, sizeof(HidNpadHandheldLarkState) * tmp_out);
 
-    HidNpad *npad = _hidNpadSharedmemGetInternalState(id);
-    if (npad == NULL)
-        diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_NotInitialized));
+    HidNpad *npad = NULL;
+    rc = _hidGetNpadInternalState(id, &npad);
+    if (R_FAILED(rc)) diagAbortWithResult(rc);
 
     u32 unk0 = atomic_load_explicit(&npad->unk_x43E0, memory_order_acquire);
     if (!(unk0>=1 && unk0<=4)) unk0 = 0;
@@ -726,7 +665,7 @@ void hidGetNpadStatesHandheldLark(u32 id, HidNpadHandheldLarkState *states, size
     }
 }
 
-void hidGetNpadStatesLucia(u32 id, HidNpadLuciaState *states, size_t count, size_t *total_out) {
+void hidGetNpadStatesLucia(HidNpadIdType id, HidNpadLuciaState *states, size_t count, size_t *total_out) {
     HidNpadStateEntry tmp_entries[17]={0};
 
     if (total_out) *total_out = 0;
@@ -737,9 +676,9 @@ void hidGetNpadStatesLucia(u32 id, HidNpadLuciaState *states, size_t count, size
 
     memset(states, 0, sizeof(HidNpadLuciaState) * tmp_out);
 
-    HidNpad *npad = _hidNpadSharedmemGetInternalState(id);
-    if (npad == NULL)
-        diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_NotInitialized));
+    HidNpad *npad = NULL;
+    rc = _hidGetNpadInternalState(id, &npad);
+    if (R_FAILED(rc)) diagAbortWithResult(rc);
 
     u32 unk = atomic_load_explicit(&npad->unk_x43E8, memory_order_acquire);
     if (!(unk>=1 && unk<=3)) unk = 0;
@@ -760,14 +699,14 @@ void hidGetNpadStatesLucia(u32 id, HidNpadLuciaState *states, size_t count, size
     }
 }
 
-void hidGetNpadStatesSystemExt(u32 id, HidNpadSystemExtState *states, size_t count, size_t *total_out) {
+void hidGetNpadStatesSystemExt(HidNpadIdType id, HidNpadSystemExtState *states, size_t count, size_t *total_out) {
     Result rc = _hidGetNpadStates(id, 6, states, count, total_out);
     if (R_FAILED(rc)) diagAbortWithResult(rc);
 
     // sdknso would handle button-bitmasking with ControlPadRestriction here.
 }
 
-void hidGetNpadStatesSystem(u32 id, HidNpadSystemState *states, size_t count, size_t *total_out) {
+void hidGetNpadStatesSystem(HidNpadIdType id, HidNpadSystemState *states, size_t count, size_t *total_out) {
     if (total_out) *total_out = 0;
     size_t tmp_out=0;
     Result rc = _hidGetNpadStates(id, 6, states, count, &tmp_out);
@@ -1226,31 +1165,12 @@ Result hidGetSupportedNpadStyleSet(u32 *style_set) {
     return rc;
 }
 
-Result hidSetSupportedNpadIdType(const HidControllerID *buf, size_t count) {
+Result hidSetSupportedNpadIdType(const HidNpadIdType *buf, size_t count) {
     u64 AppletResourceUserId = appletGetAppletResourceUserId();
-    size_t i;
-    u32 tmpval=0;
-    u32 tmpbuf[10];
-
-    if (count > 10)
-        return MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
-
-    memset(tmpbuf, 0, sizeof(tmpbuf));
-    for (i=0; i<count; i++) {
-        tmpval = buf[i];
-        if (tmpval == CONTROLLER_HANDHELD) {
-            tmpval = 0x20;
-        }
-        else if (tmpval >= CONTROLLER_UNKNOWN) {
-            return MAKERESULT(Module_Libnx, LibnxError_BadInput);
-        }
-
-        tmpbuf[i] = tmpval;
-    }
 
     return serviceDispatchIn(&g_hidSrv, 102, AppletResourceUserId,
         .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_In },
-        .buffers = { { tmpbuf, count*sizeof(u32) } },
+        .buffers = { { buf, count*sizeof(HidNpadIdType) } },
         .in_send_pid = true,
     );
 }
@@ -1274,7 +1194,7 @@ static Result _hidDeactivateNpad(void) {
     return _hidCmdWithNoInput(104);
 }
 
-Result hidAcquireNpadStyleSetUpdateEventHandle(HidControllerID id, Event* out_event, bool autoclear) {
+Result hidAcquireNpadStyleSetUpdateEventHandle(HidNpadIdType id, Event* out_event, bool autoclear) {
     Result rc;
     Handle tmp_handle = INVALID_HANDLE;
 
@@ -1283,7 +1203,7 @@ Result hidAcquireNpadStyleSetUpdateEventHandle(HidControllerID id, Event* out_ev
         u32 pad;
         u64 AppletResourceUserId;
         u64 event_ptr; // Official sw sets this to a ptr, which the sysmodule doesn't seem to use.
-    } in = { hidControllerIDToOfficial(id), 0, appletGetAppletResourceUserId(), 0 };
+    } in = { id, 0, appletGetAppletResourceUserId(), 0 };
 
     rc = serviceDispatchIn(&g_hidSrv, 106, in,
         .in_send_pid = true,
@@ -1305,19 +1225,19 @@ Result hidGetNpadJoyHoldType(HidJoyHoldType *type) {
     return rc;
 }
 
-Result hidSetNpadJoyAssignmentModeSingleByDefault(HidControllerID id) {
-    return _hidCmdWithInputU32(hidControllerIDToOfficial(id), 122);
+Result hidSetNpadJoyAssignmentModeSingleByDefault(HidNpadIdType id) {
+    return _hidCmdWithInputU32(id, 122);
 }
 
-Result hidSetNpadJoyAssignmentModeDual(HidControllerID id) {
-    return _hidCmdWithInputU32(hidControllerIDToOfficial(id), 124);
+Result hidSetNpadJoyAssignmentModeDual(HidNpadIdType id) {
+    return _hidCmdWithInputU32(id, 124);
 }
 
-Result hidMergeSingleJoyAsDualJoy(HidControllerID id0, HidControllerID id1) {
+Result hidMergeSingleJoyAsDualJoy(HidNpadIdType id0, HidNpadIdType id1) {
     const struct {
         u32 id0, id1;
         u64 AppletResourceUserId;
-    } in = { hidControllerIDToOfficial(id0), hidControllerIDToOfficial(id1), appletGetAppletResourceUserId() };
+    } in = { id0, id1, appletGetAppletResourceUserId() };
 
     return serviceDispatchIn(&g_hidSrv, 125, in,
         .in_send_pid = true,
@@ -1402,15 +1322,12 @@ Result hidIsVibrationDeviceMounted(const u32 *VibrationDeviceHandle, bool *flag)
     return rc;
 }
 
-static Result _hidGetDeviceHandles(u32 devicetype, u32 *DeviceHandles, s32 total_handles, HidControllerID id, HidNpadStyleTag style) {
+static Result _hidGetDeviceHandles(u32 devicetype, u32 *DeviceHandles, s32 total_handles, HidNpadIdType id, HidNpadStyleTag style) {
     Result rc=0;
     u32 tmp_type=0;
-    u32 tmp_id=0;
 
     if (total_handles <= 0 || total_handles > 2 || devicetype > 1)
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
-
-    tmp_id = hidControllerIDToOfficial(id);
 
     if (style & HidNpadStyleTag_NpadFullKey) {
         tmp_type = 3;
@@ -1462,7 +1379,7 @@ static Result _hidGetDeviceHandles(u32 devicetype, u32 *DeviceHandles, s32 total
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
     }
 
-    DeviceHandles[0] = tmp_type | (tmp_id & 0xff)<<8;
+    DeviceHandles[0] = tmp_type | (id & 0xff)<<8;
 
     if (devicetype==1 && (tmp_type==3 || tmp_type==4))
         DeviceHandles[0] |= 0x020000;
@@ -1483,7 +1400,7 @@ static Result _hidGetDeviceHandles(u32 devicetype, u32 *DeviceHandles, s32 total
     return rc;
 }
 
-Result hidInitializeVibrationDevices(u32 *VibrationDeviceHandles, s32 total_handles, HidControllerID id, HidNpadStyleTag style) {
+Result hidInitializeVibrationDevices(u32 *VibrationDeviceHandles, s32 total_handles, HidNpadIdType id, HidNpadStyleTag style) {
     Result rc=0;
     s32 i;
 
@@ -1507,7 +1424,7 @@ Result hidInitializeVibrationDevices(u32 *VibrationDeviceHandles, s32 total_hand
     return rc;
 }
 
-Result hidGetSixAxisSensorHandles(u32 *SixAxisSensorHandles, s32 total_handles, HidControllerID id, HidNpadStyleTag style) {
+Result hidGetSixAxisSensorHandles(u32 *SixAxisSensorHandles, s32 total_handles, HidNpadIdType id, HidNpadStyleTag style) {
     return _hidGetDeviceHandles(1, SixAxisSensorHandles, total_handles, id, style);
 }
 
@@ -1730,11 +1647,11 @@ Result hidGetGyroBias(UtilFloat3 *out) {
     return 0;
 }
 
-Result hidGetNpadInterfaceType(HidControllerID id, u8 *out) {
+Result hidGetNpadInterfaceType(HidNpadIdType id, u8 *out) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    u32 tmp = hidControllerIDToOfficial(id);
+    u32 tmp = id;
     return serviceDispatchInOut(&g_hidSrv, 405, tmp, *out);
 }
 

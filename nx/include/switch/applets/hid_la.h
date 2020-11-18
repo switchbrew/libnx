@@ -79,7 +79,7 @@ typedef struct {
 typedef struct {
     s8 player_count;                                                   ///< playerCount.
     u8 pad[3];                                                         ///< Padding.
-    u32 selected_id;                                                   ///< \ref HidControllerID, selectedId.
+    u32 selected_id;                                                   ///< \ref HidNpadIdType, selectedId.
 } HidLaControllerSupportResultInfo;
 
 /// Struct for the applet output storage.
@@ -111,7 +111,7 @@ void hidLaCreateControllerFirmwareUpdateArg(HidLaControllerFirmwareUpdateArg *ar
  * @param[in] str Input ExplainText UTF-8 string, max length is 0x80 excluding NUL-terminator.
  + @oaram[in] id Player controller, must be <8.
  */
-Result hidLaSetExplainText(HidLaControllerSupportArg *arg, const char *str, HidControllerID id);
+Result hidLaSetExplainText(HidLaControllerSupportArg *arg, const char *str, HidNpadIdType id);
 
 /**
  * @brief Launches the applet for ControllerSupport.

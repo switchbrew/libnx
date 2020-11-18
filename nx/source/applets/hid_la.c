@@ -60,7 +60,7 @@ static Result _hidLaShowControllerSupportCore(HidLaControllerSupportResultInfo *
     if (R_SUCCEEDED(rc)) {
         if (result_info) {
             *result_info = res.info;
-            result_info->selected_id = hidControllerIDFromOfficial(result_info->selected_id);
+            result_info->selected_id = result_info->selected_id;
         }
 
         if (res.res != 0) {
@@ -119,7 +119,7 @@ void hidLaCreateControllerFirmwareUpdateArg(HidLaControllerFirmwareUpdateArg *ar
     memset(arg, 0, sizeof(*arg));
 }
 
-Result hidLaSetExplainText(HidLaControllerSupportArg *arg, const char *str, HidControllerID id) {
+Result hidLaSetExplainText(HidLaControllerSupportArg *arg, const char *str, HidNpadIdType id) {
     if (id >= 8)
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 

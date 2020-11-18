@@ -170,7 +170,7 @@ Result hidsysGetSupportedNpadStyleSetOfCallerApplet(u32 *out);
  * @param Max number of entries for the UniquePadIds array.
  * @param total_entries Total output array entries. Optional, can be NULL.
  */
-Result hidsysGetUniquePadsFromNpad(HidControllerID id, u64 *UniquePadIds, s32 count, s32 *total_entries);
+Result hidsysGetUniquePadsFromNpad(HidNpadIdType id, u64 *UniquePadIds, s32 count, s32 *total_entries);
 
 /**
  * @brief EnableAppletToGetInput

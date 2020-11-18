@@ -154,10 +154,10 @@ void* hidbusGetSharedmemAddr(void);
  * @brief GetBusHandle
  * @param[out] handle \ref HidbusBusHandle
  * @param[out] flag Output flag indicating whether the handle is valid.
- * @param[in] id \ref HidControllerID
+ * @param[in] id \ref HidNpadIdType
  * @param[in] bus_type \ref HidbusBusType
  */
-Result hidbusGetBusHandle(HidbusBusHandle *handle, bool *flag, HidControllerID id, HidbusBusType bus_type);
+Result hidbusGetBusHandle(HidbusBusHandle *handle, bool *flag, HidNpadIdType id, HidbusBusType bus_type);
 
 /**
  * @brief Initialize

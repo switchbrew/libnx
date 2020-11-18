@@ -214,6 +214,20 @@ typedef enum {
     KBD_MEDIA_CALC = 0xfb
 } HidKeyboardScancode;
 
+/// HID controller IDs
+typedef enum {
+    HidNpadIdType_No1      = 0,    ///< Player 1 controller
+    HidNpadIdType_No2      = 1,    ///< Player 2 controller
+    HidNpadIdType_No3      = 2,    ///< Player 3 controller
+    HidNpadIdType_No4      = 3,    ///< Player 4 controller
+    HidNpadIdType_No5      = 4,    ///< Player 5 controller
+    HidNpadIdType_No6      = 5,    ///< Player 6 controller
+    HidNpadIdType_No7      = 6,    ///< Player 7 controller
+    HidNpadIdType_No8      = 7,    ///< Player 8 controller
+    HidNpadIdType_Other    = 0x10, ///< Other controller
+    HidNpadIdType_Handheld = 0x20, ///< Handheld mode controls
+} HidNpadIdType;
+
 /// HID controller styles
 typedef enum {
     HidNpadStyleTag_NpadFullKey       = BIT(0),       ///< Pro Controller
@@ -808,15 +822,15 @@ typedef struct HidVibrationValue {
     float freq_high; ///< High Band frequency in Hz.
 } HidVibrationValue;
 
-static inline u32 hidControllerIDToOfficial(HidControllerID id) {
-    if (id < CONTROLLER_HANDHELD) return id;
-    if (id == CONTROLLER_HANDHELD) return 0x20;
-    return 0x10;//For CONTROLLER_UNKNOWN and invalid values return this.
+static inline HidNpadIdType hidControllerIDToNpadIdType(HidControllerID id) {
+    if (id <= CONTROLLER_PLAYER_8) return (HidNpadIdType)id;
+    if (id == CONTROLLER_HANDHELD) return HidNpadIdType_Handheld;
+    return HidNpadIdType_Other;//For CONTROLLER_UNKNOWN and invalid values return this.
 }
 
-static inline HidControllerID hidControllerIDFromOfficial(u32 id) {
-    if (id < 8) return (HidControllerID)id;
-    if (id == 0x20) return CONTROLLER_HANDHELD;
+static inline HidControllerID hidControllerIDFromNpadIdType(HidNpadIdType id) {
+    if (id <= HidNpadIdType_No8) return (HidControllerID)id;
+    if (id == HidNpadIdType_Handheld) return CONTROLLER_HANDHELD;
     return CONTROLLER_UNKNOWN;
 }
 
@@ -837,52 +851,52 @@ void* hidGetSharedmemAddr(void);
 void hidScanInput(void);
 
 /// Gets a bitfield of \ref HidNpadStyleTag for the specified controller.
-u32 hidGetNpadStyleSet(u32 id);
+u32 hidGetNpadStyleSet(HidNpadIdType id);
 
 /// Gets the \ref HidNpadJoyAssignmentMode for the specified controller.
-HidNpadJoyAssignmentMode hidGetNpadJoyAssignment(u32 id);
+HidNpadJoyAssignmentMode hidGetNpadJoyAssignment(HidNpadIdType id);
 
 /// Gets the main \ref HidNpadControllerColor for the specified controller.
-Result hidGetNpadControllerColorSingle(u32 id, HidNpadControllerColor *color);
+Result hidGetNpadControllerColorSingle(HidNpadIdType id, HidNpadControllerColor *color);
 
 /// Gets the left/right \ref HidNpadControllerColor for the specified controller (Joy-Con pair in dual mode).
-Result hidGetNpadControllerColorSplit(u32 id, HidNpadControllerColor *color_left, HidNpadControllerColor *color_right);
+Result hidGetNpadControllerColorSplit(HidNpadIdType id, HidNpadControllerColor *color_left, HidNpadControllerColor *color_right);
 
 /// Gets the \ref HidDeviceTypeBits for the specified controller.
-u32 hidGetNpadDeviceType(u32 id);
+u32 hidGetNpadDeviceType(HidNpadIdType id);
 
 /// Gets the \ref HidNpadSystemProperties for the specified controller.
-void hidGetNpadSystemProperties(u32 id, HidNpadSystemProperties *out);
+void hidGetNpadSystemProperties(HidNpadIdType id, HidNpadSystemProperties *out);
 
 /// Gets the \ref HidNpadSystemButtonProperties for the specified controller.
-void hidGetNpadSystemButtonProperties(u32 id, HidNpadSystemButtonProperties *out);
+void hidGetNpadSystemButtonProperties(HidNpadIdType id, HidNpadSystemButtonProperties *out);
 
 /// Gets the main \ref HidPowerInfo for the specified controller.
-void hidGetNpadPowerInfoSingle(u32 id, HidPowerInfo *info);
+void hidGetNpadPowerInfoSingle(HidNpadIdType id, HidPowerInfo *info);
 
 /// Gets the left/right \ref HidPowerInfo for the specified controller (Joy-Con pair in dual mode).
-void hidGetNpadPowerInfoSplit(u32 id, HidPowerInfo *info_left, HidPowerInfo *info_right);
+void hidGetNpadPowerInfoSplit(HidNpadIdType id, HidPowerInfo *info_left, HidPowerInfo *info_right);
 
 /// Gets a bitfield of AppletFooterUiAttributes for the specified Npad.
 /// Only available on [9.0.0+].
-u32 hidGetAppletFooterUiAttributesSet(u32 id);
+u32 hidGetAppletFooterUiAttributesSet(HidNpadIdType id);
 
 /// Gets AppletFooterUiTypes for the specified Npad.
 /// Only available on [9.0.0+].
-u8 hidGetAppletFooterUiTypes(u32 id);
+u8 hidGetAppletFooterUiTypes(HidNpadIdType id);
 
-void hidGetNpadStatesFullKey(u32 id, HidNpadFullKeyState *states, size_t count, size_t *total_out);
-void hidGetNpadStatesHandheld(u32 id, HidNpadHandheldState *states, size_t count, size_t *total_out);
-void hidGetNpadStatesJoyDual(u32 id, HidNpadJoyDualState *states, size_t count, size_t *total_out);
-void hidGetNpadStatesJoyLeft(u32 id, HidNpadJoyLeftState *states, size_t count, size_t *total_out);
-void hidGetNpadStatesJoyRight(u32 id, HidNpadJoyRightState *states, size_t count, size_t *total_out);
-void hidGetNpadStatesGc(u32 id, HidNpadGcState *states, size_t count, size_t *total_out);
-void hidGetNpadStatesPalma(u32 id, HidNpadPalmaState *states, size_t count, size_t *total_out);
-void hidGetNpadStatesLark(u32 id, HidNpadLarkState *states, size_t count, size_t *total_out);
-void hidGetNpadStatesHandheldLark(u32 id, HidNpadHandheldLarkState *states, size_t count, size_t *total_out);
-void hidGetNpadStatesLucia(u32 id, HidNpadLuciaState *states, size_t count, size_t *total_out);
-void hidGetNpadStatesSystemExt(u32 id, HidNpadSystemExtState *states, size_t count, size_t *total_out);
-void hidGetNpadStatesSystem(u32 id, HidNpadSystemState *states, size_t count, size_t *total_out);
+void hidGetNpadStatesFullKey(HidNpadIdType id, HidNpadFullKeyState *states, size_t count, size_t *total_out);
+void hidGetNpadStatesHandheld(HidNpadIdType id, HidNpadHandheldState *states, size_t count, size_t *total_out);
+void hidGetNpadStatesJoyDual(HidNpadIdType id, HidNpadJoyDualState *states, size_t count, size_t *total_out);
+void hidGetNpadStatesJoyLeft(HidNpadIdType id, HidNpadJoyLeftState *states, size_t count, size_t *total_out);
+void hidGetNpadStatesJoyRight(HidNpadIdType id, HidNpadJoyRightState *states, size_t count, size_t *total_out);
+void hidGetNpadStatesGc(HidNpadIdType id, HidNpadGcState *states, size_t count, size_t *total_out);
+void hidGetNpadStatesPalma(HidNpadIdType id, HidNpadPalmaState *states, size_t count, size_t *total_out);
+void hidGetNpadStatesLark(HidNpadIdType id, HidNpadLarkState *states, size_t count, size_t *total_out);
+void hidGetNpadStatesHandheldLark(HidNpadIdType id, HidNpadHandheldLarkState *states, size_t count, size_t *total_out);
+void hidGetNpadStatesLucia(HidNpadIdType id, HidNpadLuciaState *states, size_t count, size_t *total_out);
+void hidGetNpadStatesSystemExt(HidNpadIdType id, HidNpadSystemExtState *states, size_t count, size_t *total_out);
+void hidGetNpadStatesSystem(HidNpadIdType id, HidNpadSystemState *states, size_t count, size_t *total_out);
 
 bool hidIsControllerConnected(HidControllerID id);
 
@@ -938,14 +952,14 @@ Result hidSetSupportedNpadStyleSet(u32 style_set);
 /// Gets which controller styles are supported, bitfield of \ref HidNpadStyleTag.
 Result hidGetSupportedNpadStyleSet(u32 *style_set);
 
-/// This is automatically called with CONTROLLER_PLAYER_{1-8} and CONTROLLER_HANDHELD in \ref hidInitialize.
-/// count must be <=10. Each entry in buf must be CONTROLLER_PLAYER_{1-8} or CONTROLLER_HANDHELD.
-Result hidSetSupportedNpadIdType(const HidControllerID *buf, size_t count);
+/// This is automatically called with HidNpadIdType_No{1-8} and HidNpadIdType_Handheld in \ref hidInitialize.
+/// count must be <=10. Each entry in buf must be HidNpadIdType_No{1-8} or HidNpadIdType_Handheld.
+Result hidSetSupportedNpadIdType(const HidNpadIdType *buf, size_t count);
 
 /// Gets an event with the specified autoclear for the input controller.
 /// The user *must* close the event when finished with it / before the app exits.
-/// This is signaled when the \ref hidGetControllerType output is updated for the controller.
-Result hidAcquireNpadStyleSetUpdateEventHandle(HidControllerID id, Event* out_event, bool autoclear);
+/// This is signaled when the \ref hidGetNpadStyleSet output is updated for the controller.
+Result hidAcquireNpadStyleSetUpdateEventHandle(HidNpadIdType id, Event* out_event, bool autoclear);
 
 /// Sets the hold-type, see \ref HidJoyHoldType.
 Result hidSetNpadJoyHoldType(HidJoyHoldType type);
@@ -953,23 +967,23 @@ Result hidSetNpadJoyHoldType(HidJoyHoldType type);
 /// Gets the hold-type, see \ref HidJoyHoldType.
 Result hidGetNpadJoyHoldType(HidJoyHoldType *type);
 
-/// Use this if you want to use a single joy-con as a dedicated CONTROLLER_PLAYER_*.
-/// When used, both joy-cons in a pair should be used with this (CONTROLLER_PLAYER_1 and CONTROLLER_PLAYER_2 for example).
-/// id must be CONTROLLER_PLAYER_*.
-Result hidSetNpadJoyAssignmentModeSingleByDefault(HidControllerID id);
+/// Use this if you want to use a single joy-con as a dedicated HidNpadIdType_No*.
+/// When used, both joy-cons in a pair should be used with this (HidNpadIdType_No1 and HidNpadIdType_No2 for example).
+/// id must be HidNpadIdType_No*.
+Result hidSetNpadJoyAssignmentModeSingleByDefault(HidNpadIdType id);
 
-/// Use this if you want to use a pair of joy-cons as a single CONTROLLER_PLAYER_*. Only necessary if you want to use this mode in your application after \ref hidSetNpadJoyAssignmentModeSingleByDefault was used with this pair of joy-cons.
+/// Use this if you want to use a pair of joy-cons as a single HidNpadIdType_No*. Only necessary if you want to use this mode in your application after \ref hidSetNpadJoyAssignmentModeSingleByDefault was used with this pair of joy-cons.
 /// Used automatically during app startup/exit for all controllers.
-/// When used, both joy-cons in a pair should be used with this (CONTROLLER_PLAYER_1 and CONTROLLER_PLAYER_2 for example).
-/// id must be CONTROLLER_PLAYER_*.
-Result hidSetNpadJoyAssignmentModeDual(HidControllerID id);
+/// When used, both joy-cons in a pair should be used with this (HidNpadIdType_No1 and HidNpadIdType_No2 for example).
+/// id must be HidNpadIdType_No*.
+Result hidSetNpadJoyAssignmentModeDual(HidNpadIdType id);
 
 /// Merge two single joy-cons into a dual-mode controller. Use this after \ref hidSetNpadJoyAssignmentModeDual, when \ref hidSetNpadJoyAssignmentModeSingleByDefault was previously used (this includes using this manually at application exit).
-/// To be successful, id0/id1 must correspond to controller types TYPE_JOYCON_LEFT/TYPE_JOYCON_RIGHT, or TYPE_JOYCON_RIGHT/TYPE_JOYCON_LEFT.
+/// To be successful, id0/id1 must correspond to controllers supporting styles HidNpadStyleTag_NpadJoyLeft/Right, or HidNpadStyleTag_NpadJoyRight/Left.
 /// If successful, the id of the resulting dual controller is set to id0.
-Result hidMergeSingleJoyAsDualJoy(HidControllerID id0, HidControllerID id1);
+Result hidMergeSingleJoyAsDualJoy(HidNpadIdType id0, HidNpadIdType id1);
 
-Result hidInitializeVibrationDevices(u32 *VibrationDeviceHandles, s32 total_handles, HidControllerID id, HidNpadStyleTag style);
+Result hidInitializeVibrationDevices(u32 *VibrationDeviceHandles, s32 total_handles, HidNpadIdType id, HidNpadStyleTag style);
 
 /// Gets HidVibrationDeviceInfo for the specified VibrationDeviceHandle.
 Result hidGetVibrationDeviceInfo(const u32 *VibrationDeviceHandle, HidVibrationDeviceInfo *VibrationDeviceInfo);
@@ -993,7 +1007,7 @@ Result hidSendVibrationValues(const u32 *VibrationDeviceHandles, HidVibrationVal
 Result hidIsVibrationDeviceMounted(const u32 *VibrationDeviceHandle, bool *flag);
 
 /// Gets SixAxisSensorHandles. total_handles==2 can only be used with ::HidNpadStyleTag_NpadJoyDual.
-Result hidGetSixAxisSensorHandles(u32 *SixAxisSensorHandles, s32 total_handles, HidControllerID id, HidNpadStyleTag style);
+Result hidGetSixAxisSensorHandles(u32 *SixAxisSensorHandles, s32 total_handles, HidNpadIdType id, HidNpadStyleTag style);
 
 /// Starts the SixAxisSensor for the specified handle.
 Result hidStartSixAxisSensor(u32 SixAxisSensorHandle);
@@ -1036,5 +1050,5 @@ Result hidGetGyroBias(UtilFloat3 *out);
 
 /// Gets the \ref HidNpadInterfaceType for the specified controller.
 /// Only available on [4.0.0+].
-Result hidGetNpadInterfaceType(HidControllerID id, u8 *out);
+Result hidGetNpadInterfaceType(HidNpadIdType id, u8 *out);
 

@@ -42,7 +42,7 @@ static Result _hidbusCmdGetHandle(Service* srv, Handle* handle_out, u32 cmd_id) 
     );
 }
 
-static Result _hidbusGetBusHandle(Service* srv, u32 id, u64 bus_type, bool *flag, HidbusBusHandle *handle) {
+static Result _hidbusGetBusHandle(Service* srv, HidNpadIdType id, u64 bus_type, bool *flag, HidbusBusHandle *handle) {
     const struct {
         u32 id;
         u32 pad;
@@ -204,7 +204,7 @@ static HidbusJoyPollingMode _hidbusGetStatusManagerEntryPollingMode(u8 internal_
     return atomic_load_explicit(&_hidbusGetStatusManagerEntryCommon(internal_index)->polling_mode, memory_order_acquire);
 }
 
-Result hidbusGetBusHandle(HidbusBusHandle *handle, bool *flag, HidControllerID id, HidbusBusType bus_type) {
+Result hidbusGetBusHandle(HidbusBusHandle *handle, bool *flag, HidNpadIdType id, HidbusBusType bus_type) {
     Service srv={0};
     Result rc = hidbusGetServiceSession(&srv);
     *flag = 0;
@@ -212,7 +212,7 @@ Result hidbusGetBusHandle(HidbusBusHandle *handle, bool *flag, HidControllerID i
 
     HidbusBusHandle tmphandle={0};
     bool tmpflag=0;
-    rc = _hidbusGetBusHandle(&srv, hidControllerIDToOfficial(id), bus_type, &tmpflag, &tmphandle);
+    rc = _hidbusGetBusHandle(&srv, id, bus_type, &tmpflag, &tmphandle);
     if (R_SUCCEEDED(rc)) {
         if (!tmpflag) *flag = tmpflag;
         else {

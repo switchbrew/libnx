@@ -181,11 +181,11 @@ Result hidsysGetSupportedNpadStyleSetOfCallerApplet(u32 *out) {
     return _hidsysGetMaskedSupportedNpadStyleSet(AppletResourceUserId, out);
 }
 
-Result hidsysGetUniquePadsFromNpad(HidControllerID id, u64 *UniquePadIds, s32 count, s32 *total_entries) {
+Result hidsysGetUniquePadsFromNpad(HidNpadIdType id, u64 *UniquePadIds, s32 count, s32 *total_entries) {
     if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    u32 tmp=hidControllerIDToOfficial(id);
+    u32 tmp=id;
     s64 out=0;
     Result rc = serviceDispatchInOut(&g_hidsysSrv, 321, tmp, out,
         .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_Out },

@@ -391,7 +391,7 @@ Service* irsGetServiceSession(void);
 void* irsGetSharedmemAddr(void);
 
 /// Gets the \ref IrsIrCameraHandle for the specified controller.
-Result irsGetIrCameraHandle(IrsIrCameraHandle *handle, HidControllerID id);
+Result irsGetIrCameraHandle(IrsIrCameraHandle *handle, HidNpadIdType id);
 
 /// GetIrCameraStatus
 Result irsGetIrCameraStatus(IrsIrCameraHandle handle, IrsIrCameraStatus *out);
