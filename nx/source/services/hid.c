@@ -216,7 +216,7 @@ void hidScanInput(void) {
 
         if (style_set & HidNpadStyleTag_NpadFullKey) {
             HidNpadFullKeyState state={0};
-            hidGetNpadStatesFullKey(id, &state, 1, &total_out);
+            total_out = hidGetNpadStatesFullKey(id, &state, 1);
             if (total_out) {
                 g_controllerHeld[i] |= state.buttons;
                 memcpy(&g_controllerEntries[i], &state, sizeof(state));
@@ -224,7 +224,7 @@ void hidScanInput(void) {
         }
         else if (style_set & HidNpadStyleTag_NpadHandheld) {
             HidNpadHandheldState state={0};
-            hidGetNpadStatesHandheld(id, &state, 1, &total_out);
+            total_out = hidGetNpadStatesHandheld(id, &state, 1);
             if (total_out) {
                 g_controllerHeld[i] |= state.buttons;
                 memcpy(&g_controllerEntries[i], &state, sizeof(state));
@@ -232,7 +232,7 @@ void hidScanInput(void) {
         }
         else if (style_set & HidNpadStyleTag_NpadJoyDual) {
             HidNpadJoyDualState state={0};
-            hidGetNpadStatesJoyDual(id, &state, 1, &total_out);
+            total_out = hidGetNpadStatesJoyDual(id, &state, 1);
             if (total_out) {
                 g_controllerHeld[i] |= state.buttons;
                 memcpy(&g_controllerEntries[i], &state, sizeof(state));
@@ -240,7 +240,7 @@ void hidScanInput(void) {
         }
         else if (style_set & HidNpadStyleTag_NpadJoyLeft) {
             HidNpadJoyLeftState state={0};
-            hidGetNpadStatesJoyLeft(id, &state, 1, &total_out);
+            total_out = hidGetNpadStatesJoyLeft(id, &state, 1);
             if (total_out) {
                 g_controllerHeld[i] |= state.buttons;
                 memcpy(&g_controllerEntries[i], &state, sizeof(state));
@@ -248,7 +248,7 @@ void hidScanInput(void) {
         }
         else if (style_set & HidNpadStyleTag_NpadJoyRight) {
             HidNpadJoyRightState state={0};
-            hidGetNpadStatesJoyRight(id, &state, 1, &total_out);
+            total_out = hidGetNpadStatesJoyRight(id, &state, 1);
             if (total_out) {
                 g_controllerHeld[i] |= state.buttons;
                 memcpy(&g_controllerEntries[i], &state, sizeof(state));
@@ -256,7 +256,7 @@ void hidScanInput(void) {
         }
         else if (style_set & HidNpadStyleTag_NpadSystemExt) {
             HidNpadSystemExtState state={0};
-            hidGetNpadStatesSystemExt(id, &state, 1, &total_out);
+            total_out = hidGetNpadStatesSystemExt(id, &state, 1);
             if (total_out) {
                 g_controllerHeld[i] |= state.buttons;
                 memcpy(&g_controllerEntries[i], &state, sizeof(state));
@@ -264,7 +264,7 @@ void hidScanInput(void) {
         }
         else if (style_set & HidNpadStyleTag_NpadSystem) {
             HidNpadSystemState state={0};
-            hidGetNpadStatesSystem(id, &state, 1, &total_out);
+            total_out = hidGetNpadStatesSystem(id, &state, 1);
             if (total_out) {
                 g_controllerHeld[i] |= state.buttons;
                 memcpy(&g_controllerEntries[i], &state, sizeof(state));
@@ -309,112 +309,77 @@ void hidScanInput(void) {
     rwlockWriteUnlock(&g_hidLock);
 }
 
-static Result _hidGetNpadInternalState(HidNpadIdType id, HidNpad **npad) {
+static HidNpad* _hidGetNpadInternalState(HidNpadIdType id) {
     HidSharedMemory *sharedmem = (HidSharedMemory*)hidGetSharedmemAddr();
     if (sharedmem == NULL)
-        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+        diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_NotInitialized));
 
-    if (id <= HidNpadIdType_No8) {
-        *npad = &sharedmem->npad[id];
-        return 0;
-    }
-    else if (id == HidNpadIdType_Handheld) {
-        *npad = &sharedmem->npad[8];
-        return 0;
-    }
-    else if (id == HidNpadIdType_Other) {
-        *npad = &sharedmem->npad[9];
-        return 0;
-    }
+    if (id <= HidNpadIdType_No8)
+        return &sharedmem->npad[id];
+    else if (id == HidNpadIdType_Handheld)
+        return &sharedmem->npad[8];
+    else if (id == HidNpadIdType_Other)
+        return &sharedmem->npad[9];
     else
-        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+        diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_BadInput));
 }
 
 u32 hidGetNpadStyleSet(HidNpadIdType id) {
-    HidNpad *npad = NULL;
-    Result rc = _hidGetNpadInternalState(id, &npad);
-    if (R_FAILED(rc))
-        diagAbortWithResult(rc);
-
-    return atomic_load_explicit(&npad->header.style_set, memory_order_acquire);
+    return atomic_load_explicit(&_hidGetNpadInternalState(id)->header.style_set, memory_order_acquire);
 }
 
 HidNpadJoyAssignmentMode hidGetNpadJoyAssignment(HidNpadIdType id) {
-    HidNpad *npad = NULL;
-    Result rc = _hidGetNpadInternalState(id, &npad);
-    HidNpadJoyAssignmentMode tmp=0;
+    HidNpad *npad = _hidGetNpadInternalState(id);
 
-    if (R_SUCCEEDED(rc)) {
-        tmp = atomic_load_explicit(&npad->header.npad_joy_assignment_mode, memory_order_acquire);
-        if (tmp != HidNpadJoyAssignmentMode_Dual && tmp != HidNpadJoyAssignmentMode_Single)
-            rc = MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen);
-    }
+    HidNpadJoyAssignmentMode tmp = atomic_load_explicit(&npad->header.npad_joy_assignment_mode, memory_order_acquire);
+    if (tmp != HidNpadJoyAssignmentMode_Dual && tmp != HidNpadJoyAssignmentMode_Single)
+        diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen));
 
-    if (R_FAILED(rc)) diagAbortWithResult(rc);
     return tmp;
 }
 
 Result hidGetNpadControllerColorSingle(HidNpadIdType id, HidNpadControllerColor *color) {
-    HidNpad *npad = NULL;
-    Result rc = _hidGetNpadInternalState(id, &npad);
+    Result rc = 0;
+    HidNpad *npad = _hidGetNpadInternalState(id);
 
-    if (R_SUCCEEDED(rc)) {
-        u32 tmp = npad->header.single_colors_descriptor;
-        if (tmp==2) rc = MAKERESULT(202, 604);
-        else if (tmp==1) rc = MAKERESULT(202, 603);
-        else if (tmp!=0) diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen));
+    u32 tmp = npad->header.single_colors_descriptor;
+    if (tmp==2) rc = MAKERESULT(202, 604);
+    else if (tmp==1) rc = MAKERESULT(202, 603);
+    else if (tmp!=0) diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen));
 
-        if (R_SUCCEEDED(rc))
-            *color = npad->header.single_colors;
-    }
+    if (R_SUCCEEDED(rc))
+        *color = npad->header.single_colors;
 
     return rc;
 }
 
 Result hidGetNpadControllerColorSplit(HidNpadIdType id, HidNpadControllerColor *color_left, HidNpadControllerColor *color_right) {
-    HidNpad *npad = NULL;
-    Result rc = _hidGetNpadInternalState(id, &npad);
+    Result rc = 0;
+    HidNpad *npad = _hidGetNpadInternalState(id);
+
+    u32 tmp = npad->header.split_colors_descriptor;
+    if (tmp==2) rc = MAKERESULT(202, 604);
+    else if (tmp==1) rc = MAKERESULT(202, 603);
+    else if (tmp!=0) diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen));
 
     if (R_SUCCEEDED(rc)) {
-        u32 tmp = npad->header.split_colors_descriptor;
-        if (tmp==2) rc = MAKERESULT(202, 604);
-        else if (tmp==1) rc = MAKERESULT(202, 603);
-        else if (tmp!=0) diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen));
-
-        if (R_SUCCEEDED(rc)) {
-            *color_left  = npad->header.left_colors;
-            *color_right = npad->header.right_colors;
-        }
+        *color_left  = npad->header.left_colors;
+        *color_right = npad->header.right_colors;
     }
 
     return rc;
 }
 
 u32 hidGetNpadDeviceType(HidNpadIdType id) {
-    HidNpad *npad = NULL;
-    Result rc = _hidGetNpadInternalState(id, &npad);
-    if (R_FAILED(rc))
-        diagAbortWithResult(rc);
-
-    return atomic_load_explicit(&npad->deviceType, memory_order_acquire);
+    return atomic_load_explicit(&_hidGetNpadInternalState(id)->deviceType, memory_order_acquire);
 }
 
 void hidGetNpadSystemProperties(HidNpadIdType id, HidNpadSystemProperties *out) {
-    HidNpad *npad = NULL;
-    Result rc = _hidGetNpadInternalState(id, &npad);
-    if (R_FAILED(rc))
-        diagAbortWithResult(rc);
-
-    *out = atomic_load_explicit(&npad->system_properties, memory_order_acquire);
+    *out = atomic_load_explicit(&_hidGetNpadInternalState(id)->system_properties, memory_order_acquire);
 }
 
 void hidGetNpadSystemButtonProperties(HidNpadIdType id, HidNpadSystemButtonProperties *out) {
-    HidNpad *npad = NULL;
-    Result rc = _hidGetNpadInternalState(id, &npad);
-    if (R_FAILED(rc))
-        diagAbortWithResult(rc);
-
-    *out = atomic_load_explicit(&npad->system_button_properties, memory_order_acquire);
+    *out = atomic_load_explicit(&_hidGetNpadInternalState(id)->system_button_properties, memory_order_acquire);
 }
 
 static void _hidGetNpadPowerInfo(HidNpad *npad, HidPowerInfo *info, u32 powerInfo, u32 i) {
@@ -426,10 +391,7 @@ static void _hidGetNpadPowerInfo(HidNpad *npad, HidPowerInfo *info, u32 powerInf
 }
 
 void hidGetNpadPowerInfoSingle(HidNpadIdType id, HidPowerInfo *info) {
-    HidNpad *npad = NULL;
-    Result rc = _hidGetNpadInternalState(id, &npad);
-    if (R_FAILED(rc))
-        diagAbortWithResult(rc);
+    HidNpad *npad = _hidGetNpadInternalState(id);
 
     HidNpadSystemProperties properties;
     properties = atomic_load_explicit(&npad->system_properties, memory_order_acquire);
@@ -438,10 +400,7 @@ void hidGetNpadPowerInfoSingle(HidNpadIdType id, HidPowerInfo *info) {
 }
 
 void hidGetNpadPowerInfoSplit(HidNpadIdType id, HidPowerInfo *info_left, HidPowerInfo *info_right) {
-    HidNpad *npad = NULL;
-    Result rc = _hidGetNpadInternalState(id, &npad);
-    if (R_FAILED(rc))
-        diagAbortWithResult(rc);
+    HidNpad *npad = _hidGetNpadInternalState(id);
 
     HidNpadSystemProperties properties;
     properties = atomic_load_explicit(&npad->system_properties, memory_order_acquire);
@@ -451,26 +410,14 @@ void hidGetNpadPowerInfoSplit(HidNpadIdType id, HidPowerInfo *info_left, HidPowe
 }
 
 u32 hidGetAppletFooterUiAttributesSet(HidNpadIdType id) {
-    HidNpad *npad = NULL;
-    Result rc = _hidGetNpadInternalState(id, &npad);
-    if (R_FAILED(rc))
-        diagAbortWithResult(rc);
-
-    return atomic_load_explicit(&npad->applet_footer_ui_attribute, memory_order_acquire);
+    return atomic_load_explicit(&_hidGetNpadInternalState(id)->applet_footer_ui_attribute, memory_order_acquire);
 }
 
 u8 hidGetAppletFooterUiTypes(HidNpadIdType id) {
-    HidNpad *npad = NULL;
-    Result rc = _hidGetNpadInternalState(id, &npad);
-    if (R_FAILED(rc))
-        diagAbortWithResult(rc);
-
-    return atomic_load_explicit(&npad->applet_footer_ui_type, memory_order_acquire);
+    return atomic_load_explicit(&_hidGetNpadInternalState(id)->applet_footer_ui_type, memory_order_acquire);
 }
 
-static Result _hidGetStates(HidCommonStateHeader *header, void* in_states, void* states, size_t entrysize, size_t count, size_t *total_out) {
-    if (total_out) *total_out = 0;
-
+static size_t _hidGetStates(HidCommonStateHeader *header, void* in_states, void* states, size_t entrysize, size_t count) {
     s32 total_entries = (s32)atomic_load_explicit(&header->max_entry, memory_order_acquire);
     if (total_entries < 0) total_entries = 0;
     if (total_entries > count) total_entries = count;
@@ -498,81 +445,72 @@ static Result _hidGetStates(HidCommonStateHeader *header, void* in_states, void*
         }
     }
 
-    if (total_out) *total_out = total_entries;
-
-    return 0;
+    return total_entries;
 }
 
-static Result _hidGetNpadStates(HidNpadIdType id, u32 layout, HidNpadStateEntry *states, size_t count, size_t *total_out) {
-    if (total_out) *total_out = 0;
-
-    HidNpad *npad = NULL;
-    Result rc = _hidGetNpadInternalState(id, &npad);
-    if (R_FAILED(rc))
-        return rc;
-
+static size_t _hidGetNpadStates(HidNpad *npad, u32 layout, HidNpadStateEntry *states, size_t count) {
     HidControllerLayout *states_buf = &npad->layouts[layout];
-    return _hidGetStates(&states_buf->header, states_buf->entries, states, sizeof(HidNpadStateEntry), count, total_out);
-}
-
-void hidGetNpadStatesFullKey(HidNpadIdType id, HidNpadFullKeyState *states, size_t count, size_t *total_out) {
-    Result rc = _hidGetNpadStates(id, 0, states, count, total_out);
-    if (R_FAILED(rc)) diagAbortWithResult(rc);
-
-    // sdknso would handle button-bitmasking with ControlPadRestriction here.
-}
-
-void hidGetNpadStatesHandheld(HidNpadIdType id, HidNpadHandheldState *states, size_t count, size_t *total_out) {
-    Result rc = _hidGetNpadStates(id, 1, states, count, total_out);
-    if (R_FAILED(rc)) diagAbortWithResult(rc);
-
-    // sdknso would handle button-bitmasking with ControlPadRestriction here.
-}
-
-void hidGetNpadStatesJoyDual(HidNpadIdType id, HidNpadJoyDualState *states, size_t count, size_t *total_out) {
-    Result rc = _hidGetNpadStates(id, 2, states, count, total_out);
-    if (R_FAILED(rc)) diagAbortWithResult(rc);
-
-    // sdknso would handle button-bitmasking with ControlPadRestriction here.
-}
-
-void hidGetNpadStatesJoyLeft(HidNpadIdType id, HidNpadJoyLeftState *states, size_t count, size_t *total_out) {
-    Result rc = _hidGetNpadStates(id, 3, states, count, total_out);
-    if (R_FAILED(rc)) diagAbortWithResult(rc);
-
-    // sdknso would handle button-bitmasking with ControlPadRestriction here.
-}
-
-void hidGetNpadStatesJoyRight(HidNpadIdType id, HidNpadJoyRightState *states, size_t count, size_t *total_out) {
-    Result rc = _hidGetNpadStates(id, 4, states, count, total_out);
-    if (R_FAILED(rc)) diagAbortWithResult(rc);
-
-    // sdknso would handle button-bitmasking with ControlPadRestriction here.
-}
-
-void hidGetNpadStatesGc(HidNpadIdType id, HidNpadGcState *states, size_t count, size_t *total_out) {
-    HidNpadStateEntry tmp_entries[17]={0};
-    HidNpadGcTriggerState tmp_entries_trigger[17]={0};
-
-    if (total_out) *total_out = 0;
     if (count > 17) count = 17;
-    size_t tmp_out=0;
-    Result rc = _hidGetNpadStates(id, 0, tmp_entries, count, &tmp_out);
-    if (R_FAILED(rc)) diagAbortWithResult(rc);
+    return _hidGetStates(&states_buf->header, states_buf->entries, states, sizeof(HidNpadStateEntry), count);
+}
 
-    HidNpad *npad = NULL;
-    rc = _hidGetNpadInternalState(id, &npad);
-    if (R_FAILED(rc)) diagAbortWithResult(rc);
+size_t hidGetNpadStatesFullKey(HidNpadIdType id, HidNpadFullKeyState *states, size_t count) {
+    HidNpad *npad = _hidGetNpadInternalState(id);
+    size_t total = _hidGetNpadStates(npad, 0, states, count);
 
-    size_t tmp_out2=0;
-    rc = _hidGetStates(&npad->npad_gc_trigger_header, npad->npad_gc_trigger_state, tmp_entries_trigger, sizeof(HidNpadGcTriggerState), count, &tmp_out2);
-    if (R_FAILED(rc)) diagAbortWithResult(rc);
-    if (tmp_out2 < tmp_out) tmp_out = tmp_out2;
-    if (total_out) *total_out = tmp_out;
+    // sdknso would handle button-bitmasking with ControlPadRestriction here.
 
-    memset(states, 0, sizeof(HidNpadGcState) * tmp_out);
+    return total;
+}
 
-    for (size_t i=0; i<tmp_out; i++) {
+size_t hidGetNpadStatesHandheld(HidNpadIdType id, HidNpadHandheldState *states, size_t count) {
+    HidNpad *npad = _hidGetNpadInternalState(id);
+    size_t total = _hidGetNpadStates(npad, 1, states, count);
+
+    // sdknso would handle button-bitmasking with ControlPadRestriction here.
+
+    return total;
+}
+
+size_t hidGetNpadStatesJoyDual(HidNpadIdType id, HidNpadJoyDualState *states, size_t count) {
+    HidNpad *npad = _hidGetNpadInternalState(id);
+    size_t total = _hidGetNpadStates(npad, 2, states, count);
+
+    // sdknso would handle button-bitmasking with ControlPadRestriction here.
+
+    return total;
+}
+
+size_t hidGetNpadStatesJoyLeft(HidNpadIdType id, HidNpadJoyLeftState *states, size_t count) {
+    HidNpad *npad = _hidGetNpadInternalState(id);
+    size_t total = _hidGetNpadStates(npad, 3, states, count);
+
+    // sdknso would handle button-bitmasking with ControlPadRestriction here.
+
+    return total;
+}
+
+size_t hidGetNpadStatesJoyRight(HidNpadIdType id, HidNpadJoyRightState *states, size_t count) {
+    HidNpad *npad = _hidGetNpadInternalState(id);
+    size_t total = _hidGetNpadStates(npad, 4, states, count);
+
+    // sdknso would handle button-bitmasking with ControlPadRestriction here.
+
+    return total;
+}
+
+size_t hidGetNpadStatesGc(HidNpadIdType id, HidNpadGcState *states, size_t count) {
+    HidNpadStateEntry tmp_entries[17];
+    HidNpadGcTriggerState tmp_entries_trigger[17];
+
+    HidNpad *npad = _hidGetNpadInternalState(id);
+    size_t total = _hidGetNpadStates(npad, 0, tmp_entries, count);
+    size_t total2 = _hidGetStates(&npad->npad_gc_trigger_header, npad->npad_gc_trigger_state, tmp_entries_trigger, sizeof(HidNpadGcTriggerState), total);
+    if (total2 < total) total = total2;
+
+    memset(states, 0, sizeof(HidNpadGcState) * total);
+
+    for (size_t i=0; i<total; i++) {
         states[i].timestamp = tmp_entries[i].timestamp;
 
         // sdknso would handle button-bitmasking with ControlPadRestriction here.
@@ -585,36 +523,31 @@ void hidGetNpadStatesGc(HidNpadIdType id, HidNpadGcState *states, size_t count, 
         states[i].l_trigger = tmp_entries_trigger[i].l_trigger;
         states[i].r_trigger = tmp_entries_trigger[i].r_trigger;
     }
+
+    return total;
 }
 
-void hidGetNpadStatesPalma(HidNpadIdType id, HidNpadPalmaState *states, size_t count, size_t *total_out) {
-    Result rc = _hidGetNpadStates(id, 5, states, count, total_out);
-    if (R_FAILED(rc)) diagAbortWithResult(rc);
+size_t hidGetNpadStatesPalma(HidNpadIdType id, HidNpadPalmaState *states, size_t count) {
+    HidNpad *npad = _hidGetNpadInternalState(id);
+    size_t total = _hidGetNpadStates(npad, 5, states, count);
 
     // sdknso doesn't handle ControlPadRestriction with this.
+
+    return total;
 }
 
-void hidGetNpadStatesLark(HidNpadIdType id, HidNpadLarkState *states, size_t count, size_t *total_out) {
-    HidNpadStateEntry tmp_entries[17]={0};
+size_t hidGetNpadStatesLark(HidNpadIdType id, HidNpadLarkState *states, size_t count) {
+    HidNpadStateEntry tmp_entries[17];
 
-    if (total_out) *total_out = 0;
-    if (count > 17) count = 17;
-    size_t tmp_out=0;
-    Result rc = _hidGetNpadStates(id, 0, tmp_entries, count, &tmp_out);
-    if (R_FAILED(rc)) diagAbortWithResult(rc);
+    HidNpad *npad = _hidGetNpadInternalState(id);
+    size_t total = _hidGetNpadStates(npad, 0, tmp_entries, count);
 
-    memset(states, 0, sizeof(HidNpadLarkState) * tmp_out);
-
-    HidNpad *npad = NULL;
-    rc = _hidGetNpadInternalState(id, &npad);
-    if (R_FAILED(rc)) diagAbortWithResult(rc);
+    memset(states, 0, sizeof(HidNpadLarkState) * total);
 
     u32 unk = atomic_load_explicit(&npad->unk_x43E0, memory_order_acquire);
     if (!(unk>=1 && unk<=4)) unk = 0;
 
-    if (total_out) *total_out = tmp_out;
-
-    for (size_t i=0; i<tmp_out; i++) {
+    for (size_t i=0; i<total; i++) {
         states[i].timestamp = tmp_entries[i].timestamp;
 
         // sdknso would handle button-bitmasking with ControlPadRestriction here.
@@ -626,22 +559,17 @@ void hidGetNpadStatesLark(HidNpadIdType id, HidNpadLarkState *states, size_t cou
         states[i].connectionState = tmp_entries[i].connectionState;
         states[i].unk = unk;
     }
+
+    return total;
 }
 
-void hidGetNpadStatesHandheldLark(HidNpadIdType id, HidNpadHandheldLarkState *states, size_t count, size_t *total_out) {
-    HidNpadStateEntry tmp_entries[17]={0};
+size_t hidGetNpadStatesHandheldLark(HidNpadIdType id, HidNpadHandheldLarkState *states, size_t count) {
+    HidNpadStateEntry tmp_entries[17];
 
-    if (total_out) *total_out = 0;
-    if (count > 17) count = 17;
-    size_t tmp_out=0;
-    Result rc = _hidGetNpadStates(id, 1, tmp_entries, count, &tmp_out);
-    if (R_FAILED(rc)) diagAbortWithResult(rc);
+    HidNpad *npad = _hidGetNpadInternalState(id);
+    size_t total = _hidGetNpadStates(npad, 1, tmp_entries, count);
 
-    memset(states, 0, sizeof(HidNpadHandheldLarkState) * tmp_out);
-
-    HidNpad *npad = NULL;
-    rc = _hidGetNpadInternalState(id, &npad);
-    if (R_FAILED(rc)) diagAbortWithResult(rc);
+    memset(states, 0, sizeof(HidNpadHandheldLarkState) * total);
 
     u32 unk0 = atomic_load_explicit(&npad->unk_x43E0, memory_order_acquire);
     if (!(unk0>=1 && unk0<=4)) unk0 = 0;
@@ -649,9 +577,7 @@ void hidGetNpadStatesHandheldLark(HidNpadIdType id, HidNpadHandheldLarkState *st
     u32 unk1 = atomic_load_explicit(&npad->unk_x43E4, memory_order_acquire);
     if (!(unk1>=1 && unk1<=4)) unk1 = 0;
 
-    if (total_out) *total_out = tmp_out;
-
-    for (size_t i=0; i<tmp_out; i++) {
+    for (size_t i=0; i<total; i++) {
         states[i].timestamp = tmp_entries[i].timestamp;
 
         // sdknso would handle button-bitmasking with ControlPadRestriction here.
@@ -663,29 +589,22 @@ void hidGetNpadStatesHandheldLark(HidNpadIdType id, HidNpadHandheldLarkState *st
         states[i].unk0 = unk0;
         states[i].unk1 = unk1;
     }
+
+    return total;
 }
 
-void hidGetNpadStatesLucia(HidNpadIdType id, HidNpadLuciaState *states, size_t count, size_t *total_out) {
-    HidNpadStateEntry tmp_entries[17]={0};
+size_t hidGetNpadStatesLucia(HidNpadIdType id, HidNpadLuciaState *states, size_t count) {
+    HidNpadStateEntry tmp_entries[17];
 
-    if (total_out) *total_out = 0;
-    if (count > 17) count = 17;
-    size_t tmp_out=0;
-    Result rc = _hidGetNpadStates(id, 0, tmp_entries, count, &tmp_out);
-    if (R_FAILED(rc)) diagAbortWithResult(rc);
+    HidNpad *npad = _hidGetNpadInternalState(id);
+    size_t total = _hidGetNpadStates(npad, 0, tmp_entries, count);
 
-    memset(states, 0, sizeof(HidNpadLuciaState) * tmp_out);
-
-    HidNpad *npad = NULL;
-    rc = _hidGetNpadInternalState(id, &npad);
-    if (R_FAILED(rc)) diagAbortWithResult(rc);
+    memset(states, 0, sizeof(HidNpadLuciaState) * total);
 
     u32 unk = atomic_load_explicit(&npad->unk_x43E8, memory_order_acquire);
     if (!(unk>=1 && unk<=3)) unk = 0;
 
-    if (total_out) *total_out = tmp_out;
-
-    for (size_t i=0; i<tmp_out; i++) {
+    for (size_t i=0; i<total; i++) {
         states[i].timestamp = tmp_entries[i].timestamp;
 
         // sdknso would handle button-bitmasking with ControlPadRestriction here.
@@ -697,24 +616,24 @@ void hidGetNpadStatesLucia(HidNpadIdType id, HidNpadLuciaState *states, size_t c
         states[i].connectionState = tmp_entries[i].connectionState;
         states[i].unk = unk;
     }
+
+    return total;
 }
 
-void hidGetNpadStatesSystemExt(HidNpadIdType id, HidNpadSystemExtState *states, size_t count, size_t *total_out) {
-    Result rc = _hidGetNpadStates(id, 6, states, count, total_out);
-    if (R_FAILED(rc)) diagAbortWithResult(rc);
+size_t hidGetNpadStatesSystemExt(HidNpadIdType id, HidNpadSystemExtState *states, size_t count) {
+    HidNpad *npad = _hidGetNpadInternalState(id);
+    size_t total = _hidGetNpadStates(npad, 6, states, count);
 
     // sdknso would handle button-bitmasking with ControlPadRestriction here.
+
+    return total;
 }
 
-void hidGetNpadStatesSystem(HidNpadIdType id, HidNpadSystemState *states, size_t count, size_t *total_out) {
-    if (total_out) *total_out = 0;
-    size_t tmp_out=0;
-    Result rc = _hidGetNpadStates(id, 6, states, count, &tmp_out);
-    if (R_FAILED(rc)) diagAbortWithResult(rc);
+size_t hidGetNpadStatesSystem(HidNpadIdType id, HidNpadSystemState *states, size_t count) {
+    HidNpad *npad = _hidGetNpadInternalState(id);
+    size_t total = _hidGetNpadStates(npad, 6, states, count);
 
-    if (total_out) *total_out = tmp_out;
-
-    for (size_t i=0; i<tmp_out; i++) {
+    for (size_t i=0; i<total; i++) {
         u64 buttons = states[i].buttons;
         u64 new_buttons = 0;
 
@@ -732,6 +651,8 @@ void hidGetNpadStatesSystem(HidNpadIdType id, HidNpadSystemState *states, size_t
 
         memset(states[i].joysticks, 0, sizeof(states[i].joysticks));
     }
+
+    return total;
 }
 
 bool hidIsControllerConnected(HidControllerID id) {

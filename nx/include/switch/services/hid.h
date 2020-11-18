@@ -885,18 +885,18 @@ u32 hidGetAppletFooterUiAttributesSet(HidNpadIdType id);
 /// Only available on [9.0.0+].
 u8 hidGetAppletFooterUiTypes(HidNpadIdType id);
 
-void hidGetNpadStatesFullKey(HidNpadIdType id, HidNpadFullKeyState *states, size_t count, size_t *total_out);
-void hidGetNpadStatesHandheld(HidNpadIdType id, HidNpadHandheldState *states, size_t count, size_t *total_out);
-void hidGetNpadStatesJoyDual(HidNpadIdType id, HidNpadJoyDualState *states, size_t count, size_t *total_out);
-void hidGetNpadStatesJoyLeft(HidNpadIdType id, HidNpadJoyLeftState *states, size_t count, size_t *total_out);
-void hidGetNpadStatesJoyRight(HidNpadIdType id, HidNpadJoyRightState *states, size_t count, size_t *total_out);
-void hidGetNpadStatesGc(HidNpadIdType id, HidNpadGcState *states, size_t count, size_t *total_out);
-void hidGetNpadStatesPalma(HidNpadIdType id, HidNpadPalmaState *states, size_t count, size_t *total_out);
-void hidGetNpadStatesLark(HidNpadIdType id, HidNpadLarkState *states, size_t count, size_t *total_out);
-void hidGetNpadStatesHandheldLark(HidNpadIdType id, HidNpadHandheldLarkState *states, size_t count, size_t *total_out);
-void hidGetNpadStatesLucia(HidNpadIdType id, HidNpadLuciaState *states, size_t count, size_t *total_out);
-void hidGetNpadStatesSystemExt(HidNpadIdType id, HidNpadSystemExtState *states, size_t count, size_t *total_out);
-void hidGetNpadStatesSystem(HidNpadIdType id, HidNpadSystemState *states, size_t count, size_t *total_out);
+size_t hidGetNpadStatesFullKey(HidNpadIdType id, HidNpadFullKeyState *states, size_t count);
+size_t hidGetNpadStatesHandheld(HidNpadIdType id, HidNpadHandheldState *states, size_t count);
+size_t hidGetNpadStatesJoyDual(HidNpadIdType id, HidNpadJoyDualState *states, size_t count);
+size_t hidGetNpadStatesJoyLeft(HidNpadIdType id, HidNpadJoyLeftState *states, size_t count);
+size_t hidGetNpadStatesJoyRight(HidNpadIdType id, HidNpadJoyRightState *states, size_t count);
+size_t hidGetNpadStatesGc(HidNpadIdType id, HidNpadGcState *states, size_t count);
+size_t hidGetNpadStatesPalma(HidNpadIdType id, HidNpadPalmaState *states, size_t count);
+size_t hidGetNpadStatesLark(HidNpadIdType id, HidNpadLarkState *states, size_t count);
+size_t hidGetNpadStatesHandheldLark(HidNpadIdType id, HidNpadHandheldLarkState *states, size_t count);
+size_t hidGetNpadStatesLucia(HidNpadIdType id, HidNpadLuciaState *states, size_t count);
+size_t hidGetNpadStatesSystemExt(HidNpadIdType id, HidNpadSystemExtState *states, size_t count);
+size_t hidGetNpadStatesSystem(HidNpadIdType id, HidNpadSystemState *states, size_t count);
 
 bool hidIsControllerConnected(HidControllerID id);
 
