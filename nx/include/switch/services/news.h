@@ -43,32 +43,28 @@ typedef struct {
 } NewsOverwriteEventHolder;
 
 typedef struct {
-    char news_id[0x20];
-    AccountUid user_id;
-    s32 received_at;
-    s32 padding;
-    s32 received_at_2;
+    char news_id[0x18];
+    char user_id[0x18];
+    s64 received_at;
     s32 read;
     s32 newly;
     s32 displayed;
 } NewsRecordV1;
 
 typedef struct {
-    char news_id[0x20];
-    AccountUid user_id;
+    char news_id[0x18];
+    char user_id[0x18];
     NewsTopicName topic_id;
-    s32 received_at;
-    s32 pad_0;
+    s64 received_at;
+    s64 pad_0;
     s32 decoration_type;
-    s32 pad_1;
-    s32 pad_2;
     s32 read;
     s32 newly;
     s32 displayed;
     s32 feedback;
+    s32 pad_1;
     s32 extra_1;
     s32 extra_2;
-    s32 pad_3;
 } NewsRecord;
 
 Result newsInitialize(NewsServiceType service_type);
