@@ -808,6 +808,28 @@ typedef struct {
     HidSevenSixAxisSensorStateEntry entries[0x21];
 } HidSevenSixAxisSensorStates;
 
+/// HidSixAxisSensorHandle
+typedef union HidSixAxisSensorHandle {
+    u32 type_value;                                   ///< TypeValue
+    struct {
+        u32 npad_style_index : 8;                     ///< NpadStyleIndex
+        u32 npad_id_type : 8;                         ///< PlayerNumber / NpadIdType
+        u32 idx : 8;                                  ///< Idx
+        u32 pad : 8;                                  ///< Padding
+    };
+} HidSixAxisSensorHandle;
+
+/// HidVibrationDeviceHandle
+typedef union HidVibrationDeviceHandle {
+    u32 type_value;                                   ///< TypeValue
+    struct {
+        u32 npad_style_index : 8;                     ///< NpadStyleIndex
+        u32 player_number : 8;                        ///< PlayerNumber
+        u32 device_idx : 8;                           ///< DeviceIdx
+        u32 pad : 8;                                  ///< Padding
+    };
+} HidVibrationDeviceHandle;
+
 /// HidVibrationDeviceInfo
 typedef struct HidVibrationDeviceInfo {
     u32 unk_x0;
@@ -929,22 +951,22 @@ u32 hidSixAxisSensorValuesRead(SixAxisSensorValues *values, HidControllerID id, 
 bool hidGetHandheldMode(void);
 
 /// SetSixAxisSensorFusionParameters. unk0 must be 0.0f-1.0f.
-Result hidSetSixAxisSensorFusionParameters(u32 SixAxisSensorHandle, float unk0, float unk1);
+Result hidSetSixAxisSensorFusionParameters(HidSixAxisSensorHandle handle, float unk0, float unk1);
 
 /// GetSixAxisSensorFusionParameters
-Result hidGetSixAxisSensorFusionParameters(u32 SixAxisSensorHandle, float *unk0, float *unk1);
+Result hidGetSixAxisSensorFusionParameters(HidSixAxisSensorHandle handle, float *unk0, float *unk1);
 
 /// ResetSixAxisSensorFusionParameters
-Result hidResetSixAxisSensorFusionParameters(u32 SixAxisSensorHandle);
+Result hidResetSixAxisSensorFusionParameters(HidSixAxisSensorHandle handle);
 
 /// Sets the ::HidGyroscopeZeroDriftMode for the specified SixAxisSensorHandle.
-Result hidSetGyroscopeZeroDriftMode(u32 SixAxisSensorHandle, HidGyroscopeZeroDriftMode mode);
+Result hidSetGyroscopeZeroDriftMode(HidSixAxisSensorHandle handle, HidGyroscopeZeroDriftMode mode);
 
 /// Gets the ::HidGyroscopeZeroDriftMode for the specified SixAxisSensorHandle.
-Result hidGetGyroscopeZeroDriftMode(u32 SixAxisSensorHandle, HidGyroscopeZeroDriftMode *mode);
+Result hidGetGyroscopeZeroDriftMode(HidSixAxisSensorHandle handle, HidGyroscopeZeroDriftMode *mode);
 
 /// Resets the ::HidGyroscopeZeroDriftMode for the specified SixAxisSensorHandle to ::HidGyroscopeZeroDriftMode_Standard.
-Result hidResetGyroscopeZeroDriftMode(u32 SixAxisSensorHandle);
+Result hidResetGyroscopeZeroDriftMode(HidSixAxisSensorHandle handle);
 
 /// Sets which controller styles are supported, bitfield of \ref HidNpadStyleTag. This is automatically called with all styles in \ref hidInitialize.
 Result hidSetSupportedNpadStyleSet(u32 style_set);
@@ -983,16 +1005,16 @@ Result hidSetNpadJoyAssignmentModeDual(HidNpadIdType id);
 /// If successful, the id of the resulting dual controller is set to id0.
 Result hidMergeSingleJoyAsDualJoy(HidNpadIdType id0, HidNpadIdType id1);
 
-Result hidInitializeVibrationDevices(u32 *VibrationDeviceHandles, s32 total_handles, HidNpadIdType id, HidNpadStyleTag style);
+Result hidInitializeVibrationDevices(HidVibrationDeviceHandle *handles, s32 total_handles, HidNpadIdType id, HidNpadStyleTag style);
 
-/// Gets HidVibrationDeviceInfo for the specified VibrationDeviceHandle.
-Result hidGetVibrationDeviceInfo(const u32 *VibrationDeviceHandle, HidVibrationDeviceInfo *VibrationDeviceInfo);
+/// Gets HidVibrationDeviceInfo for the specified device.
+Result hidGetVibrationDeviceInfo(HidVibrationDeviceHandle handle, HidVibrationDeviceInfo *VibrationDeviceInfo);
 
-/// Send the VibrationValue to the specified VibrationDeviceHandle.
-Result hidSendVibrationValue(const u32 *VibrationDeviceHandle, HidVibrationValue *VibrationValue);
+/// Send the VibrationValue to the specified device.
+Result hidSendVibrationValue(HidVibrationDeviceHandle handle, HidVibrationValue *VibrationValue);
 
-/// Gets the current HidVibrationValue for the specified VibrationDeviceHandle.
-Result hidGetActualVibrationValue(const u32 *VibrationDeviceHandle, HidVibrationValue *VibrationValue);
+/// Gets the current HidVibrationValue for the specified device.
+Result hidGetActualVibrationValue(HidVibrationDeviceHandle handle, HidVibrationValue *VibrationValue);
 
 /// Sets whether vibration is allowed, this also affects the config displayed by System Settings.
 Result hidPermitVibration(bool flag);
@@ -1000,20 +1022,20 @@ Result hidPermitVibration(bool flag);
 /// Gets whether vibration is allowed.
 Result hidIsVibrationPermitted(bool *flag);
 
-/// Send VibrationValues[index] to VibrationDeviceHandles[index], where count is the number of entries in the VibrationDeviceHandles/VibrationValues arrays.
-Result hidSendVibrationValues(const u32 *VibrationDeviceHandles, HidVibrationValue *VibrationValues, s32 count);
+/// Send VibrationValues[index] to handles[index], where count is the number of entries in the handles/VibrationValues arrays.
+Result hidSendVibrationValues(const HidVibrationDeviceHandle *handles, HidVibrationValue *VibrationValues, s32 count);
 
 /// Gets whether vibration is available with the specified device. Only available on [7.0.0+].
-Result hidIsVibrationDeviceMounted(const u32 *VibrationDeviceHandle, bool *flag);
+Result hidIsVibrationDeviceMounted(HidVibrationDeviceHandle handle, bool *flag);
 
 /// Gets SixAxisSensorHandles. total_handles==2 can only be used with ::HidNpadStyleTag_NpadJoyDual.
-Result hidGetSixAxisSensorHandles(u32 *SixAxisSensorHandles, s32 total_handles, HidNpadIdType id, HidNpadStyleTag style);
+Result hidGetSixAxisSensorHandles(HidSixAxisSensorHandle *handles, s32 total_handles, HidNpadIdType id, HidNpadStyleTag style);
 
 /// Starts the SixAxisSensor for the specified handle.
-Result hidStartSixAxisSensor(u32 SixAxisSensorHandle);
+Result hidStartSixAxisSensor(HidSixAxisSensorHandle handle);
 
 /// Stops the SixAxisSensor for the specified handle.
-Result hidStopSixAxisSensor(u32 SixAxisSensorHandle);
+Result hidStopSixAxisSensor(HidSixAxisSensorHandle handle);
 
 /// Starts the SevenSixAxisSensor. Only available on [5.0.0+].
 Result hidStartSevenSixAxisSensor(void);

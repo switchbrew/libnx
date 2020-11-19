@@ -999,31 +999,31 @@ static Result _hidGetSharedMemoryHandle(Service* srv, Handle* handle_out) {
     return _hidCmdGetHandle(srv, handle_out, 0);
 }
 
-Result hidSetSixAxisSensorFusionParameters(u32 SixAxisSensorHandle, float unk0, float unk1) {
+Result hidSetSixAxisSensorFusionParameters(HidSixAxisSensorHandle handle, float unk0, float unk1) {
     if (unk0 < 0.0f || unk0 > 1.0f)
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
     const struct {
-        u32 SixAxisSensorHandle;
+        HidSixAxisSensorHandle handle;
         float unk0;
         float unk1;
         u32 pad;
         u64 AppletResourceUserId;
-    } in = { SixAxisSensorHandle, unk0, unk1, 0, appletGetAppletResourceUserId() };
+    } in = { handle, unk0, unk1, 0, appletGetAppletResourceUserId() };
 
     return serviceDispatchIn(&g_hidSrv, 70, in,
         .in_send_pid = true,
     );
 }
 
-Result hidGetSixAxisSensorFusionParameters(u32 SixAxisSensorHandle, float *unk0, float *unk1) {
+Result hidGetSixAxisSensorFusionParameters(HidSixAxisSensorHandle handle, float *unk0, float *unk1) {
     Result rc;
 
     const struct {
-        u32 SixAxisSensorHandle;
+        HidSixAxisSensorHandle handle;
         u32 pad;
         u64 AppletResourceUserId;
-    } in = { SixAxisSensorHandle, 0, appletGetAppletResourceUserId() };
+    } in = { handle, 0, appletGetAppletResourceUserId() };
 
     struct {
         float unk0;
@@ -1038,30 +1038,30 @@ Result hidGetSixAxisSensorFusionParameters(u32 SixAxisSensorHandle, float *unk0,
     return rc;
 }
 
-Result hidResetSixAxisSensorFusionParameters(u32 SixAxisSensorHandle) {
-    return _hidCmdWithInputU32(SixAxisSensorHandle, 72);
+Result hidResetSixAxisSensorFusionParameters(HidSixAxisSensorHandle handle) {
+    return _hidCmdWithInputU32(handle.type_value, 72);
 }
 
-Result hidSetGyroscopeZeroDriftMode(u32 SixAxisSensorHandle, HidGyroscopeZeroDriftMode mode) {
+Result hidSetGyroscopeZeroDriftMode(HidSixAxisSensorHandle handle, HidGyroscopeZeroDriftMode mode) {
     const struct {
-        u32 SixAxisSensorHandle;
+        HidSixAxisSensorHandle handle;
         u32 mode;
         u64 AppletResourceUserId;
-    } in = { SixAxisSensorHandle, mode, appletGetAppletResourceUserId() };
+    } in = { handle, mode, appletGetAppletResourceUserId() };
 
     return serviceDispatchIn(&g_hidSrv, 79, in,
         .in_send_pid = true,
     );
 }
 
-Result hidGetGyroscopeZeroDriftMode(u32 SixAxisSensorHandle, HidGyroscopeZeroDriftMode *mode) {
+Result hidGetGyroscopeZeroDriftMode(HidSixAxisSensorHandle handle, HidGyroscopeZeroDriftMode *mode) {
     Result rc;
 
     const struct {
-        u32 SixAxisSensorHandle;
+        HidSixAxisSensorHandle handle;
         u32 pad;
         u64 AppletResourceUserId;
-    } in = { SixAxisSensorHandle, 0, appletGetAppletResourceUserId() };
+    } in = { handle, 0, appletGetAppletResourceUserId() };
 
     u32 tmp=0;
     rc = serviceDispatchInOut(&g_hidSrv, 80, in, tmp,
@@ -1071,8 +1071,8 @@ Result hidGetGyroscopeZeroDriftMode(u32 SixAxisSensorHandle, HidGyroscopeZeroDri
     return rc;
 }
 
-Result hidResetGyroscopeZeroDriftMode(u32 SixAxisSensorHandle) {
-    return _hidCmdWithInputU32(SixAxisSensorHandle, 81);
+Result hidResetGyroscopeZeroDriftMode(HidSixAxisSensorHandle handle) {
+    return _hidCmdWithInputU32(handle.type_value, 81);
 }
 
 Result hidSetSupportedNpadStyleSet(u32 style_set) {
@@ -1169,32 +1169,32 @@ static Result _hidCreateActiveVibrationDeviceList(Service* srv_out) {
     return _hidCmdGetSession(srv_out, 203);
 }
 
-static Result _hidActivateVibrationDevice(Service* srv, u32 VibrationDeviceHandle) {
-    return _hidCmdInU32NoOut(srv, VibrationDeviceHandle, 0);
+static Result _hidActivateVibrationDevice(Service* srv, HidVibrationDeviceHandle handle) {
+    return _hidCmdInU32NoOut(srv, handle.type_value, 0);
 }
 
-Result hidGetVibrationDeviceInfo(const u32 *VibrationDeviceHandle, HidVibrationDeviceInfo *VibrationDeviceInfo) {
-    return serviceDispatchInOut(&g_hidSrv, 200, *VibrationDeviceHandle, *VibrationDeviceInfo);
+Result hidGetVibrationDeviceInfo(HidVibrationDeviceHandle handle, HidVibrationDeviceInfo *VibrationDeviceInfo) {
+    return serviceDispatchInOut(&g_hidSrv, 200, handle, *VibrationDeviceInfo);
 }
 
-Result hidSendVibrationValue(const u32 *VibrationDeviceHandle, HidVibrationValue *VibrationValue) {
+Result hidSendVibrationValue(HidVibrationDeviceHandle handle, HidVibrationValue *VibrationValue) {
     const struct {
-        u32 VibrationDeviceHandle;
+        HidVibrationDeviceHandle handle;
         HidVibrationValue VibrationValue;
         u32 pad;
         u64 AppletResourceUserId;
-    } in = { *VibrationDeviceHandle, *VibrationValue, 0, appletGetAppletResourceUserId() };
+    } in = { handle, *VibrationValue, 0, appletGetAppletResourceUserId() };
 
     return serviceDispatchIn(&g_hidSrv, 201, in,
         .in_send_pid = true,
     );
 }
 
-Result hidGetActualVibrationValue(const u32 *VibrationDeviceHandle, HidVibrationValue *VibrationValue) {
+Result hidGetActualVibrationValue(HidVibrationDeviceHandle handle, HidVibrationValue *VibrationValue) {
     const struct {
-        u32 VibrationDeviceHandle;
+        HidVibrationDeviceHandle handle;
         u64 AppletResourceUserId;
-    } in = { *VibrationDeviceHandle, appletGetAppletResourceUserId() };
+    } in = { handle, appletGetAppletResourceUserId() };
 
     return serviceDispatchInOut(&g_hidSrv, 202, in, *VibrationValue,
         .in_send_pid = true,
@@ -1209,7 +1209,7 @@ Result hidIsVibrationPermitted(bool *flag) {
     return _hidCmdNoInOutBool(flag, 205);
 }
 
-Result hidSendVibrationValues(const u32 *VibrationDeviceHandles, HidVibrationValue *VibrationValues, s32 count) {
+Result hidSendVibrationValues(const HidVibrationDeviceHandle *handles, HidVibrationValue *VibrationValues, s32 count) {
     u64 AppletResourceUserId = appletGetAppletResourceUserId();
 
     return serviceDispatchIn(&g_hidSrv, 206, AppletResourceUserId,
@@ -1218,22 +1218,22 @@ Result hidSendVibrationValues(const u32 *VibrationDeviceHandles, HidVibrationVal
             SfBufferAttr_HipcPointer | SfBufferAttr_In,
         },
         .buffers = {
-            { VibrationDeviceHandles, count*sizeof(u32) },
+            { handles, count*sizeof(HidVibrationDeviceHandle) },
             { VibrationValues, count*sizeof(HidVibrationValue) },
         },
     );
 }
 
-Result hidIsVibrationDeviceMounted(const u32 *VibrationDeviceHandle, bool *flag) {
+Result hidIsVibrationDeviceMounted(HidVibrationDeviceHandle handle, bool *flag) {
     if (hosversionBefore(7,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     Result rc;
 
     const struct {
-        u32 VibrationDeviceHandle;
+        HidVibrationDeviceHandle handle;
         u64 AppletResourceUserId;
-    } in = { *VibrationDeviceHandle, appletGetAppletResourceUserId() };
+    } in = { handle, appletGetAppletResourceUserId() };
 
     u8 tmp=0;
     rc = serviceDispatchInOut(&g_hidSrv, 211, in, tmp,
@@ -1243,75 +1243,75 @@ Result hidIsVibrationDeviceMounted(const u32 *VibrationDeviceHandle, bool *flag)
     return rc;
 }
 
-static Result _hidGetDeviceHandles(u32 devicetype, u32 *DeviceHandles, s32 total_handles, HidNpadIdType id, HidNpadStyleTag style) {
-    Result rc=0;
-    u32 tmp_type=0;
+static HidVibrationDeviceHandle _hidMakeVibrationDeviceHandle(u8 npad_style_index, u8 npad_id_type, u8 device_idx) {
+    return (HidVibrationDeviceHandle){.npad_style_index = npad_style_index, .player_number = npad_id_type, .device_idx = device_idx, .pad = 0};
+}
 
-    if (total_handles <= 0 || total_handles > 2 || devicetype > 1)
+static HidSixAxisSensorHandle _hidMakeSixAxisSensorHandle(u8 npad_style_index, u8 npad_id_type, u8 idx) {
+    return (HidSixAxisSensorHandle){.npad_style_index = npad_style_index, .npad_id_type = npad_id_type, .idx = idx, .pad = 0};
+}
+
+static Result _hidGetVibrationDeviceHandles(HidVibrationDeviceHandle *handles, s32 total_handles, HidNpadIdType id, HidNpadStyleTag style) {
+    Result rc=0;
+    s32 max_handles=1;
+    u32 style_index=0;
+    u8 idx=0;
+
+    if (total_handles <= 0 || total_handles > 2)
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
     if (style & HidNpadStyleTag_NpadFullKey) {
-        tmp_type = 3;
+        style_index = 3;
+        max_handles = 2;
     }
     else if (style & HidNpadStyleTag_NpadHandheld) {
-        tmp_type = 4;
+        style_index = 4;
+        max_handles = 2;
     }
     else if (style & HidNpadStyleTag_NpadJoyDual) {
-        tmp_type = 5;
+        style_index = 5;
+        max_handles = 2;
     }
     else if (style & HidNpadStyleTag_NpadJoyLeft) {
-        tmp_type = 6;
+        style_index = 6;
     }
     else if (style & HidNpadStyleTag_NpadJoyRight) {
-        tmp_type = 7;
-        tmp_type |= 0x010000;
+        style_index = 7;
+        idx = 0x1;
     }
     else if (style & HidNpadStyleTag_NpadGc) {
-        if (devicetype==0)
-            tmp_type = 8;
-        else
-            tmp_type = 3;
+        style_index = 8;
     }
     else if (style & HidNpadStyleTag_Npad10) {
-        if (devicetype==0)
-            tmp_type = 0xd;
-        else
-            return MAKERESULT(Module_Libnx, LibnxError_BadInput); // sdknso would return 0, and return no handles.
+        style_index = 0xd;
     }
     else if (style & (HidNpadStyleTag_NpadLark | HidNpadStyleTag_NpadLucia)) {
         return MAKERESULT(Module_Libnx, LibnxError_BadInput); // sdknso would return 0, and return no handles.
     }
     else if (style & HidNpadStyleTag_NpadHandheldLark) {
-        tmp_type = 4;
+        style_index = 4;
+        max_handles = 2;
     }
     else if (style & HidNpadStyleTag_NpadSystem) {
-        if (devicetype==1) return MAKERESULT(Module_Libnx, LibnxError_BadInput); // sdknso would return 0, and return no handles.
-        tmp_type = 0x21;
+        style_index = 0x21;
+        max_handles = 2;
     }
     else if (style & HidNpadStyleTag_NpadSystemExt) {
-        if (devicetype==1) return MAKERESULT(Module_Libnx, LibnxError_BadInput); // sdknso would return 0, and return no handles.
-        tmp_type = 0x20;
+        style_index = 0x20;
+        max_handles = 2;
     }
     else if (style & HidNpadStyleTag_NpadPalma) {
-        if (devicetype==0) return MAKERESULT(Module_Libnx, LibnxError_BadInput); // sdknso would return 0, and return no handles.
-        tmp_type = 3;
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput); // sdknso would return 0, and return no handles.
     }
     else {
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
     }
 
-    DeviceHandles[0] = tmp_type | (id & 0xff)<<8;
-
-    if (devicetype==1 && (tmp_type==3 || tmp_type==4))
-        DeviceHandles[0] |= 0x020000;
+    handles[0] = _hidMakeVibrationDeviceHandle(style_index, id, idx);
 
     if (total_handles > 1) {
-        tmp_type &= 0xff;
-        if (devicetype==0 && (tmp_type!=6 && tmp_type!=7 && tmp_type!=8 && tmp_type!=0xd)) {
-            DeviceHandles[1] = DeviceHandles[0] | 0x010000;
-        }
-        else if (devicetype==1 && tmp_type==5) {
-            DeviceHandles[1] = DeviceHandles[0] | 0x010000;
+        if (max_handles > 1) {
+            handles[1] = _hidMakeVibrationDeviceHandle(style_index, id, 0x1);
         }
         else {
             return MAKERESULT(Module_Libnx, LibnxError_BadInput); // sdknso would just return 0 here.
@@ -1321,11 +1321,81 @@ static Result _hidGetDeviceHandles(u32 devicetype, u32 *DeviceHandles, s32 total
     return rc;
 }
 
-Result hidInitializeVibrationDevices(u32 *VibrationDeviceHandles, s32 total_handles, HidNpadIdType id, HidNpadStyleTag style) {
+static Result _hidGetSixAxisSensorHandles(HidSixAxisSensorHandle *handles, s32 total_handles, HidNpadIdType id, HidNpadStyleTag style) {
+    Result rc=0;
+    s32 max_handles=1;
+    u32 style_index=0;
+    u8 idx=0;
+
+    if (total_handles <= 0 || total_handles > 2)
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+
+    if (style & HidNpadStyleTag_NpadFullKey) {
+        style_index = 3;
+        idx = 0x2;
+    }
+    else if (style & HidNpadStyleTag_NpadHandheld) {
+        style_index = 4;
+        idx = 0x2;
+    }
+    else if (style & HidNpadStyleTag_NpadJoyDual) {
+        style_index = 5;
+        max_handles = 2;
+    }
+    else if (style & HidNpadStyleTag_NpadJoyLeft) {
+        style_index = 6;
+    }
+    else if (style & HidNpadStyleTag_NpadJoyRight) {
+        style_index = 7;
+        idx = 0x1;
+    }
+    else if (style & HidNpadStyleTag_NpadGc) {
+        style_index = 3;
+        idx = 0x2;
+    }
+    else if (style & HidNpadStyleTag_Npad10) {
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput); // sdknso would return 0, and return no handles.
+    }
+    else if (style & (HidNpadStyleTag_NpadLark | HidNpadStyleTag_NpadLucia)) {
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput); // sdknso would return 0, and return no handles.
+    }
+    else if (style & HidNpadStyleTag_NpadHandheldLark) {
+        style_index = 4;
+        idx = 0x2;
+    }
+    else if (style & HidNpadStyleTag_NpadSystem) {
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput); // sdknso would return 0, and return no handles.
+    }
+    else if (style & HidNpadStyleTag_NpadSystemExt) {
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput); // sdknso would return 0, and return no handles.
+    }
+    else if (style & HidNpadStyleTag_NpadPalma) {
+        style_index = 3;
+        idx = 0x2;
+    }
+    else {
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput); // sdknso would return 0, and return no handles.
+    }
+
+    handles[0] = _hidMakeSixAxisSensorHandle(style_index, id, idx);
+
+    if (total_handles > 1) {
+        if (max_handles > 1) {
+            handles[1] = _hidMakeSixAxisSensorHandle(style_index, id, 0x1);
+        }
+        else {
+            return MAKERESULT(Module_Libnx, LibnxError_BadInput); // sdknso would just return 0 here.
+        }
+    }
+
+    return rc;
+}
+
+Result hidInitializeVibrationDevices(HidVibrationDeviceHandle *handles, s32 total_handles, HidNpadIdType id, HidNpadStyleTag style) {
     Result rc=0;
     s32 i;
 
-    rc = _hidGetDeviceHandles(0, VibrationDeviceHandles, total_handles, id, style);
+    rc = _hidGetVibrationDeviceHandles(handles, total_handles, id, style);
     if (R_FAILED(rc)) return rc;
 
     rwlockWriteLock(&g_hidLock);
@@ -1336,7 +1406,7 @@ Result hidInitializeVibrationDevices(u32 *VibrationDeviceHandles, s32 total_hand
     rwlockWriteUnlock(&g_hidLock);
 
     for (i=0; i<total_handles; i++) {
-        rc = _hidActivateVibrationDevice(&g_hidIActiveVibrationDeviceList, VibrationDeviceHandles[i]);
+        rc = _hidActivateVibrationDevice(&g_hidIActiveVibrationDeviceList, handles[i]);
 
         if (R_FAILED(rc))
             break;
@@ -1345,36 +1415,28 @@ Result hidInitializeVibrationDevices(u32 *VibrationDeviceHandles, s32 total_hand
     return rc;
 }
 
-Result hidGetSixAxisSensorHandles(u32 *SixAxisSensorHandles, s32 total_handles, HidNpadIdType id, HidNpadStyleTag style) {
-    return _hidGetDeviceHandles(1, SixAxisSensorHandles, total_handles, id, style);
+Result hidGetSixAxisSensorHandles(HidSixAxisSensorHandle *handles, s32 total_handles, HidNpadIdType id, HidNpadStyleTag style) {
+    return _hidGetSixAxisSensorHandles(handles, total_handles, id, style);
 }
 
-Result hidStartSixAxisSensor(u32 SixAxisSensorHandle) {
-    u32 rc = _hidCmdWithInputU32(SixAxisSensorHandle, 66);
+Result hidStartSixAxisSensor(HidSixAxisSensorHandle handle) {
+    Result rc = _hidCmdWithInputU32(handle.type_value, 66);
     if (R_SUCCEEDED(rc)) {
-        int controller = (SixAxisSensorHandle >> 8) & 0xff;
-        if (controller == 0x20)
-            controller = CONTROLLER_HANDHELD;
-        if (controller < 10) {
-            rwlockWriteLock(&g_hidLock);
-            g_sixaxisEnabled[controller] = true;
-            rwlockWriteUnlock(&g_hidLock);
-        }
+        HidControllerID controller = hidControllerIDFromNpadIdType(handle.npad_id_type);
+        rwlockWriteLock(&g_hidLock);
+        g_sixaxisEnabled[controller] = true;
+        rwlockWriteUnlock(&g_hidLock);
     }
     return rc;
 }
 
-Result hidStopSixAxisSensor(u32 SixAxisSensorHandle) {
-    u32 rc = _hidCmdWithInputU32(SixAxisSensorHandle, 67);
+Result hidStopSixAxisSensor(HidSixAxisSensorHandle handle) {
+    Result rc = _hidCmdWithInputU32(handle.type_value, 67);
     if (R_SUCCEEDED(rc)) {
-        int controller = (SixAxisSensorHandle >> 8) & 0xff;
-        if (controller == 0x20)
-            controller = CONTROLLER_HANDHELD;
-        if (controller < 10) {
-            rwlockWriteLock(&g_hidLock);
-            g_sixaxisEnabled[controller] = false;
-            rwlockWriteUnlock(&g_hidLock);
-        }
+        HidControllerID controller = hidControllerIDFromNpadIdType(handle.npad_id_type);
+        rwlockWriteLock(&g_hidLock);
+        g_sixaxisEnabled[controller] = false;
+        rwlockWriteUnlock(&g_hidLock);
     }
     return rc;
 }
