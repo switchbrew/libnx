@@ -18,15 +18,13 @@ static SharedMemory g_hidSharedmem;
 
 static HidTouchScreenState g_touchScreenState;
 static HidMouseState g_mouseState;
-static HidKeyboardEntry g_keyboardEntry;
+static HidKeyboardState g_keyboardState;
 static HidNpadStateEntry g_controllerEntries[10];
 
 static u64 g_mouseOld, g_mouseHeld, g_mouseDown, g_mouseUp;
 static u64 g_keyboardModOld, g_keyboardModHeld, g_keyboardModDown, g_keyboardModUp;
 static u32 g_keyboardOld[8], g_keyboardHeld[8], g_keyboardDown[8], g_keyboardUp[8];
 static u64 g_controllerOld[10], g_controllerHeld[10], g_controllerDown[10], g_controllerUp[10];
-
-static u64 g_keyboardTimestamp;
 
 static HidControllerID g_controllerP1AutoID;
 
@@ -120,7 +118,7 @@ void hidReset(void) {
     // Reset internal state
     memset(&g_touchScreenState, 0, sizeof(HidTouchScreenState));
     memset(&g_mouseState, 0, sizeof(HidMouseState));
-    memset(&g_keyboardEntry, 0, sizeof(HidKeyboardEntry));
+    memset(&g_keyboardState, 0, sizeof(HidKeyboardState));
     memset(g_controllerEntries, 0, sizeof(g_controllerEntries));
 
     g_mouseOld = g_mouseHeld = g_mouseDown = g_mouseUp = 0;
@@ -146,8 +144,6 @@ void* hidGetSharedmemAddr(void) {
 void hidScanInput(void) {
     rwlockWriteLock(&g_hidLock);
 
-    HidSharedMemory *sharedMem = (HidSharedMemory*)hidGetSharedmemAddr();
-
     g_mouseOld = g_mouseHeld;
     g_keyboardModOld = g_keyboardModHeld;
     memcpy(g_keyboardOld, g_keyboardHeld, sizeof(g_keyboardOld));
@@ -159,7 +155,7 @@ void hidScanInput(void) {
     memset(g_controllerHeld, 0, sizeof(g_controllerHeld));
     memset(&g_touchScreenState, 0, sizeof(HidTouchScreenState));
     memset(&g_mouseState, 0, sizeof(HidMouseState));
-    memset(&g_keyboardEntry, 0, sizeof(HidKeyboardEntry));
+    memset(&g_keyboardState, 0, sizeof(HidKeyboardState));
     memset(g_controllerEntries, 0, sizeof(g_controllerEntries));
 
     if (hidGetTouchScreenStates(&g_touchScreenState, 1)) {
@@ -173,22 +169,17 @@ void hidScanInput(void) {
         g_mouseUp = g_mouseOld & (~g_mouseHeld);
     }
 
-    u64 latestKeyboardEntry = sharedMem->keyboard.header.latest_entry;
-    HidKeyboardEntry *newKeyboardEntry = &sharedMem->keyboard.entries[latestKeyboardEntry];
-    if ((s64)(newKeyboardEntry->timestamp - g_keyboardTimestamp) >= 0) {
-        memcpy(&g_keyboardEntry, newKeyboardEntry, sizeof(HidKeyboardEntry));
-        g_keyboardTimestamp = newKeyboardEntry->timestamp;
-
-        g_keyboardModHeld = g_keyboardEntry.modifier;
+    if (hidGetKeyboardStates(&g_keyboardState, 1)) {
+        g_keyboardModHeld = g_keyboardState.modifier;
         for (u32 i = 0; i < 8; i++) {
-            g_keyboardHeld[i] = g_keyboardEntry.keys[i];
+            g_keyboardHeld[i] = g_keyboardState.keys[i];
         }
-    }
-    g_keyboardModDown = (~g_keyboardModOld) & g_keyboardModHeld;
-    g_keyboardModUp = g_keyboardModOld & (~g_keyboardModHeld);
-    for (u32 i = 0; i < 8; i++) {
-        g_keyboardDown[i] = (~g_keyboardOld[i]) & g_keyboardHeld[i];
-        g_keyboardUp[i] = g_keyboardOld[i] & (~g_keyboardHeld[i]);
+        g_keyboardModDown = (~g_keyboardModOld) & g_keyboardModHeld;
+        g_keyboardModUp = g_keyboardModOld & (~g_keyboardModHeld);
+        for (u32 i = 0; i < 8; i++) {
+            g_keyboardDown[i] = (~g_keyboardOld[i]) & g_keyboardHeld[i];
+            g_keyboardUp[i] = g_keyboardOld[i] & (~g_keyboardHeld[i]);
+        }
     }
 
     for (u32 i = 0; i < 10; i++) {
@@ -422,6 +413,15 @@ size_t hidGetMouseStates(HidMouseState *states, size_t count) {
         diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_NotInitialized));
 
     size_t total = _hidGetStates(&sharedmem->mouse.header, sharedmem->mouse.entries, offsetof(HidMouseState,timestamp), states, sizeof(HidMouseState), count);
+    return total;
+}
+
+size_t hidGetKeyboardStates(HidKeyboardState *states, size_t count) {
+    HidSharedMemory *sharedmem = (HidSharedMemory*)hidGetSharedmemAddr();
+    if (sharedmem == NULL)
+        diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_NotInitialized));
+
+    size_t total = _hidGetStates(&sharedmem->keyboard.header, sharedmem->keyboard.entries, offsetof(HidKeyboardState,timestamp), states, sizeof(HidKeyboardState), count);
     return total;
 }
 

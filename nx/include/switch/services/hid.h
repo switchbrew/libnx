@@ -530,20 +530,25 @@ typedef struct HidMouseLifo {
 
 // Begin HidKeyboard
 
-/// HidKeyboardEntry
-typedef struct HidKeyboardEntry {
+/// HidKeyboardState
+typedef struct HidKeyboardState {
     u64 timestamp;
-    u64 timestamp_2;
     u64 modifier;
     u32 keys[8];
-} HidKeyboardEntry;
+} HidKeyboardState;
 
-/// HidKeyboard
-typedef struct HidKeyboard {
+/// HidKeyboardStateAtomicStorage
+typedef struct HidKeyboardStateAtomicStorage {
+    u64 timestamp;
+    HidKeyboardState state;
+} HidKeyboardStateAtomicStorage;
+
+/// HidKeyboardLifo
+typedef struct HidKeyboardLifo {
     HidCommonStateHeader header;
-    HidKeyboardEntry entries[17];
+    HidKeyboardStateAtomicStorage entries[17];
     u8 padding[0x28];
-} HidKeyboard;
+} HidKeyboardLifo;
 
 // End HidKeyboard
 
@@ -769,7 +774,7 @@ typedef struct HidSharedMemory {
     u8 debug_pad[0x400];
     HidTouchScreenLifo touchscreen;
     HidMouseLifo mouse;
-    HidKeyboard keyboard;
+    HidKeyboardLifo keyboard;
     u8 digitizer[0x1000];                               ///< [10.0.0+] Digitizer [1.0.0-9.2.0] BasicXpad
     u8 home_button[0x200];
     u8 sleep_button[0x200];
@@ -878,6 +883,8 @@ void hidScanInput(void);
 size_t hidGetTouchScreenStates(HidTouchScreenState *states, size_t count);
 
 size_t hidGetMouseStates(HidMouseState *states, size_t count);
+
+size_t hidGetKeyboardStates(HidKeyboardState *states, size_t count);
 
 /// Gets a bitfield of \ref HidNpadStyleTag for the specified controller.
 u32 hidGetNpadStyleSet(HidNpadIdType id);
