@@ -787,13 +787,6 @@ typedef struct HidSharedMemory {
     u8 unk_x3C220[0x3DE0];
 } HidSharedMemory;
 
-typedef struct {
-    u64 unk_x0;
-    u64 unk_x8;
-    u64 latest_entry;
-    u64 total_entries;
-} HidSevenSixAxisSensorStatesHeader;
-
 /// HidSevenSixAxisSensorState
 typedef struct {
     u64 timestamp0;
@@ -812,7 +805,7 @@ typedef struct {
 
 /// HidSevenSixAxisSensorStates
 typedef struct {
-    HidSevenSixAxisSensorStatesHeader header;
+    HidCommonStateHeader header;
     HidSevenSixAxisSensorStateEntry entries[0x21];
 } HidSevenSixAxisSensorStates;
 

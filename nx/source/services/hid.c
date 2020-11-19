@@ -363,22 +363,22 @@ u8 hidGetAppletFooterUiTypes(HidNpadIdType id) {
     return atomic_load_explicit(&_hidGetNpadInternalState(id)->applet_footer_ui_type, memory_order_acquire);
 }
 
-static size_t _hidGetStates(HidCommonStateHeader *header, void* in_states, size_t sampling_number_offset, void* states, size_t entrysize, size_t count) {
+static size_t _hidGetStates(HidCommonStateHeader *header, void* in_states, size_t max_states, size_t state_offset, size_t sampling_number_offset, void* states, size_t entrysize, size_t count) {
     s32 total_entries = (s32)atomic_load_explicit(&header->max_entry, memory_order_acquire);
     if (total_entries < 0) total_entries = 0;
     if (total_entries > count) total_entries = count;
     s32 latest_entry = (s32)atomic_load_explicit(&header->latest_entry, memory_order_acquire);
 
     for (s32 i=0; i<total_entries; i++) {
-        s32 entrypos = (((latest_entry + 0x12) - total_entries) + i) % 0x11;
-        HidCommonStateEntry *state_entry = (HidCommonStateEntry*)((uintptr_t)in_states + entrypos*(entrysize+sizeof(u64)));
+        s32 entrypos = (((latest_entry + (max_states+1)) - total_entries) + i) % max_states;
+        HidCommonStateEntry *state_entry = (HidCommonStateEntry*)((uintptr_t)in_states + entrypos*(state_offset+entrysize));
         void* out_state = (void*)((uintptr_t)states + (total_entries-i-1)*entrysize);
         void* out_state_prev = (void*)((uintptr_t)states + (total_entries-i)*entrysize);
 
         u64 timestamp0=0, timestamp1=0;
 
         timestamp0 = atomic_load_explicit(&state_entry->timestamp, memory_order_acquire);
-        memcpy(out_state, &state_entry->state, entrysize);
+        memcpy(out_state, (void*)((uintptr_t)state_entry + state_offset), entrysize);
         timestamp1 = atomic_load_explicit(&state_entry->timestamp, memory_order_acquire);
 
         if (timestamp0 != timestamp1 || (i>0 && *((u64*)((uintptr_t)out_state+sampling_number_offset)) - *((u64*)((uintptr_t)out_state_prev+sampling_number_offset)) != 1)) {
@@ -399,7 +399,7 @@ size_t hidGetTouchScreenStates(HidTouchScreenState *states, size_t count) {
     if (sharedmem == NULL)
         diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_NotInitialized));
 
-    size_t total = _hidGetStates(&sharedmem->touchscreen.header, sharedmem->touchscreen.entries, offsetof(HidTouchScreenState,timestamp), states, sizeof(HidTouchScreenState), count);
+    size_t total = _hidGetStates(&sharedmem->touchscreen.header, sharedmem->touchscreen.entries, 17, offsetof(HidTouchScreenStateAtomicStorage,state), offsetof(HidTouchScreenState,timestamp), states, sizeof(HidTouchScreenState), count);
     size_t max_touches = sizeof(states[0].touches)/sizeof(states[0].touches[0]);
     for (size_t i=0; i<total; i++) {
         if (states[i].count > max_touches) states[i].count = max_touches;
@@ -412,7 +412,7 @@ size_t hidGetMouseStates(HidMouseState *states, size_t count) {
     if (sharedmem == NULL)
         diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_NotInitialized));
 
-    size_t total = _hidGetStates(&sharedmem->mouse.header, sharedmem->mouse.entries, offsetof(HidMouseState,timestamp), states, sizeof(HidMouseState), count);
+    size_t total = _hidGetStates(&sharedmem->mouse.header, sharedmem->mouse.entries, 17, offsetof(HidMouseStateAtomicStorage,state), offsetof(HidMouseState,timestamp), states, sizeof(HidMouseState), count);
     return total;
 }
 
@@ -421,14 +421,14 @@ size_t hidGetKeyboardStates(HidKeyboardState *states, size_t count) {
     if (sharedmem == NULL)
         diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_NotInitialized));
 
-    size_t total = _hidGetStates(&sharedmem->keyboard.header, sharedmem->keyboard.entries, offsetof(HidKeyboardState,timestamp), states, sizeof(HidKeyboardState), count);
+    size_t total = _hidGetStates(&sharedmem->keyboard.header, sharedmem->keyboard.entries, 17, offsetof(HidKeyboardStateAtomicStorage,state), offsetof(HidKeyboardState,timestamp), states, sizeof(HidKeyboardState), count);
     return total;
 }
 
 static size_t _hidGetNpadStates(HidNpad *npad, u32 layout, HidNpadStateEntry *states, size_t count) {
     HidControllerLayout *states_buf = &npad->layouts[layout];
     if (count > 17) count = 17;
-    return _hidGetStates(&states_buf->header, states_buf->entries, offsetof(HidNpadStateEntry,timestamp), states, sizeof(HidNpadStateEntry), count);
+    return _hidGetStates(&states_buf->header, states_buf->entries, 17, offsetof(HidControllerInputEntry,state), offsetof(HidNpadStateEntry,timestamp), states, sizeof(HidNpadStateEntry), count);
 }
 
 size_t hidGetNpadStatesFullKey(HidNpadIdType id, HidNpadFullKeyState *states, size_t count) {
@@ -482,7 +482,7 @@ size_t hidGetNpadStatesGc(HidNpadIdType id, HidNpadGcState *states, size_t count
 
     HidNpad *npad = _hidGetNpadInternalState(id);
     size_t total = _hidGetNpadStates(npad, 0, tmp_entries, count);
-    size_t total2 = _hidGetStates(&npad->npad_gc_trigger_header, npad->npad_gc_trigger_state, offsetof(HidNpadGcTriggerState,timestamp), tmp_entries_trigger, sizeof(HidNpadGcTriggerState), total);
+    size_t total2 = _hidGetStates(&npad->npad_gc_trigger_header, npad->npad_gc_trigger_state, 17, offsetof(HidNpadGcTriggerStateEntry,state), offsetof(HidNpadGcTriggerState,timestamp), tmp_entries_trigger, sizeof(HidNpadGcTriggerState), total);
     if (total2 < total) total = total2;
 
     memset(states, 0, sizeof(HidNpadGcState) * total);
@@ -667,7 +667,7 @@ size_t hidGetSixAxisSensorStates(HidSixAxisSensorHandle handle, HidSixAxisSensor
     }
 
     HidNpad *npad = _hidGetNpadInternalState(handle.npad_id_type);
-    size_t total = _hidGetStates(&npad->sixaxis[index].header, npad->sixaxis[index].entries, offsetof(HidSixAxisSensorState,timestamp), states, sizeof(HidSixAxisSensorState), count);
+    size_t total = _hidGetStates(&npad->sixaxis[index].header, npad->sixaxis[index].entries, 17, offsetof(HidNpadSixAxisSensorState,state), offsetof(HidSixAxisSensorState,timestamp), states, sizeof(HidSixAxisSensorState), count);
     return total;
 }
 
@@ -1565,31 +1565,8 @@ Result hidGetSevenSixAxisSensorStates(HidSevenSixAxisSensorState *states, size_t
 
     HidSevenSixAxisSensorStates *states_buf = (HidSevenSixAxisSensorStates*)g_sevenSixAxisSensorBuffer;
 
-    s32 total_entries = (s32)atomic_load_explicit(&states_buf->header.total_entries, memory_order_acquire);
-    if (total_entries < 0) total_entries = 0;
-    if (total_entries > count) total_entries = count;
-    s32 latest_entry = (s32)atomic_load_explicit(&states_buf->header.latest_entry, memory_order_acquire);
-
-    for (s32 i=0; i<total_entries; i++) {
-        s32 entrypos = (((latest_entry + 0x22) - total_entries) + i) % 0x21;
-
-        u64 timestamp0=0, timestamp1=0;
-
-        timestamp0 = atomic_load_explicit(&states_buf->entries[entrypos].timestamp, memory_order_acquire);
-        memcpy(&states[total_entries-i-1], &states_buf->entries[entrypos].state, sizeof(HidSevenSixAxisSensorState));
-        timestamp1 = atomic_load_explicit(&states_buf->entries[entrypos].timestamp, memory_order_acquire);
-
-        if (timestamp0 != timestamp1 || (i>0 && states[total_entries-i-1].timestamp1 - states[total_entries-i].timestamp1 != 1)) {
-            s32 tmpcount = (s32)atomic_load_explicit(&states_buf->header.total_entries, memory_order_acquire);
-            tmpcount = total_entries < tmpcount ? tmpcount : total_entries;
-            total_entries = tmpcount < count ? tmpcount : count;
-            latest_entry = (s32)atomic_load_explicit(&states_buf->header.latest_entry, memory_order_acquire);
-
-            i=-1;
-        }
-    }
-
-    *total_out = total_entries;
+    size_t total = _hidGetStates(&states_buf->header, states_buf->entries, 0x21, offsetof(HidSevenSixAxisSensorStateEntry,state), offsetof(HidSevenSixAxisSensorState,timestamp1), states, sizeof(HidSevenSixAxisSensorState), count);
+    if (total_out) *total_out = total;
 
     return 0;
 }
