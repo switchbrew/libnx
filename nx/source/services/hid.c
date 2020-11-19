@@ -17,8 +17,7 @@ static Service g_hidIActiveVibrationDeviceList;
 static SharedMemory g_hidSharedmem;
 
 static HidTouchScreenState g_touchScreenState;
-static HidMouseEntry *g_mouseEntry;
-static HidMouse g_mouse;
+static HidMouseState g_mouseState;
 static HidKeyboardEntry g_keyboardEntry;
 static HidNpadStateEntry g_controllerEntries[10];
 
@@ -27,7 +26,7 @@ static u64 g_keyboardModOld, g_keyboardModHeld, g_keyboardModDown, g_keyboardMod
 static u32 g_keyboardOld[8], g_keyboardHeld[8], g_keyboardDown[8], g_keyboardUp[8];
 static u64 g_controllerOld[10], g_controllerHeld[10], g_controllerDown[10], g_controllerUp[10];
 
-static u64 g_mouseTimestamp, g_keyboardTimestamp;
+static u64 g_keyboardTimestamp;
 
 static HidControllerID g_controllerP1AutoID;
 
@@ -120,19 +119,16 @@ void hidReset(void) {
 
     // Reset internal state
     memset(&g_touchScreenState, 0, sizeof(HidTouchScreenState));
-    memset(&g_mouse, 0, sizeof(HidMouse));
+    memset(&g_mouseState, 0, sizeof(HidMouseState));
     memset(&g_keyboardEntry, 0, sizeof(HidKeyboardEntry));
     memset(g_controllerEntries, 0, sizeof(g_controllerEntries));
 
-    g_mouseEntry = &g_mouse.entries[0];
     g_mouseOld = g_mouseHeld = g_mouseDown = g_mouseUp = 0;
     g_keyboardModOld = g_keyboardModHeld = g_keyboardModDown = g_keyboardModUp = 0;
     for (int i = 0; i < 8; i++)
         g_keyboardOld[i] = g_keyboardHeld[i] = g_keyboardDown[i] = g_keyboardUp[i] = 0;
     for (int i = 0; i < 10; i++)
         g_controllerOld[i] = g_controllerHeld[i] = g_controllerDown[i] = g_controllerUp[i] = 0;
-
-    g_mouseTimestamp = g_keyboardTimestamp = 0;
 
     g_controllerP1AutoID = CONTROLLER_HANDHELD;
 
@@ -162,7 +158,7 @@ void hidScanInput(void) {
     memset(g_keyboardHeld, 0, sizeof(g_keyboardHeld));
     memset(g_controllerHeld, 0, sizeof(g_controllerHeld));
     memset(&g_touchScreenState, 0, sizeof(HidTouchScreenState));
-    memset(&g_mouse, 0, sizeof(HidMouse));
+    memset(&g_mouseState, 0, sizeof(HidMouseState));
     memset(&g_keyboardEntry, 0, sizeof(HidKeyboardEntry));
     memset(g_controllerEntries, 0, sizeof(g_controllerEntries));
 
@@ -171,17 +167,11 @@ void hidScanInput(void) {
             g_controllerHeld[CONTROLLER_HANDHELD] |= KEY_TOUCH;
     }
 
-    u64 latestMouseEntry = sharedMem->mouse.header.latest_entry;
-    HidMouseEntry *newMouseEntry = &sharedMem->mouse.entries[latestMouseEntry];
-    memcpy(&g_mouse, &sharedMem->mouse, sizeof(HidMouse));
-    if ((s64)(newMouseEntry->timestamp - g_mouseTimestamp) >= 0) {
-        g_mouseEntry = &g_mouse.entries[latestMouseEntry];
-        g_mouseTimestamp = newMouseEntry->timestamp;
-
-        g_mouseHeld = g_mouseEntry->buttons;
+    if (hidGetMouseStates(&g_mouseState, 1)) {
+        g_mouseHeld = g_mouseState.buttons;
+        g_mouseDown = (~g_mouseOld) & g_mouseHeld;
+        g_mouseUp = g_mouseOld & (~g_mouseHeld);
     }
-    g_mouseDown = (~g_mouseOld) & g_mouseHeld;
-    g_mouseUp = g_mouseOld & (~g_mouseHeld);
 
     u64 latestKeyboardEntry = sharedMem->keyboard.header.latest_entry;
     HidKeyboardEntry *newKeyboardEntry = &sharedMem->keyboard.entries[latestKeyboardEntry];
@@ -423,6 +413,15 @@ size_t hidGetTouchScreenStates(HidTouchScreenState *states, size_t count) {
     for (size_t i=0; i<total; i++) {
         if (states[i].count > max_touches) states[i].count = max_touches;
     }
+    return total;
+}
+
+size_t hidGetMouseStates(HidMouseState *states, size_t count) {
+    HidSharedMemory *sharedmem = (HidSharedMemory*)hidGetSharedmemAddr();
+    if (sharedmem == NULL)
+        diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_NotInitialized));
+
+    size_t total = _hidGetStates(&sharedmem->mouse.header, sharedmem->mouse.entries, offsetof(HidMouseState,timestamp), states, sizeof(HidMouseState), count);
     return total;
 }
 
@@ -742,42 +741,25 @@ u64 hidMouseButtonsUp(void) {
 
 void hidMouseRead(MousePosition *pos) {
     rwlockReadLock(&g_hidLock);
-    *pos = g_mouseEntry->position;
+    *pos = g_mouseState.position;
     rwlockReadUnlock(&g_hidLock);
 }
 
 u32 hidMouseMultiRead(MousePosition *entries, u32 num_entries) {
-    int entry;
-    int i;
+    HidMouseState temp_states[17];
 
     if (!entries || !num_entries) return 0;
+    if (num_entries > 17) num_entries = 17;
 
     memset(entries, 0, sizeof(MousePosition) * num_entries);
 
-    rwlockReadLock(&g_hidLock);
+    size_t total = hidGetMouseStates(temp_states, num_entries);
 
-    if (num_entries > g_mouse.header.max_entry + 1)
-        num_entries = g_mouse.header.max_entry + 1;
-
-    entry = g_mouse.header.latest_entry + 1 - num_entries;
-    if (entry < 0)
-        entry += g_mouse.header.max_entry + 1;
-
-    u64 timestamp = 0;
-    for (i = 0; i < num_entries; i++) {
-        if (timestamp && g_mouse.entries[entry].timestamp - timestamp != 1)
-            break;
-        memcpy(&entries[i], &g_mouse.entries[entry].position, sizeof(MousePosition));
-        timestamp = g_mouse.entries[entry].timestamp;
-
-        entry++;
-        if (entry > g_mouse.header.max_entry)
-            entry = 0;
+    for (size_t i=0; i<total; i++) {
+        entries[i] = temp_states[i].position;
     }
 
-    rwlockReadUnlock(&g_hidLock);
-
-    return i;
+    return total;
 }
 
 bool hidKeyboardModifierHeld(HidKeyboardModifier modifier) {
