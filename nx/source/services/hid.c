@@ -21,13 +21,11 @@ static HidMouseEntry *g_mouseEntry;
 static HidMouse g_mouse;
 static HidKeyboardEntry g_keyboardEntry;
 static HidNpadStateEntry g_controllerEntries[10];
-static HidControllerSixAxisLayout g_sixaxisLayouts[10];
 
 static u64 g_mouseOld, g_mouseHeld, g_mouseDown, g_mouseUp;
 static u64 g_keyboardModOld, g_keyboardModHeld, g_keyboardModDown, g_keyboardModUp;
 static u32 g_keyboardOld[8], g_keyboardHeld[8], g_keyboardDown[8], g_keyboardUp[8];
 static u64 g_controllerOld[10], g_controllerHeld[10], g_controllerDown[10], g_controllerUp[10];
-static bool g_sixaxisEnabled[10];
 
 static u64 g_touchTimestamp, g_mouseTimestamp, g_keyboardTimestamp;
 
@@ -125,8 +123,6 @@ void hidReset(void) {
     memset(&g_mouse, 0, sizeof(HidMouse));
     memset(&g_keyboardEntry, 0, sizeof(HidKeyboardEntry));
     memset(g_controllerEntries, 0, sizeof(g_controllerEntries));
-    memset(g_sixaxisLayouts, 0, sizeof(g_sixaxisLayouts));
-    memset(g_sixaxisEnabled, 0, sizeof(g_sixaxisEnabled));
 
     g_mouseEntry = &g_mouse.entries[0];
     g_mouseOld = g_mouseHeld = g_mouseDown = g_mouseUp = 0;
@@ -169,7 +165,6 @@ void hidScanInput(void) {
     memset(&g_mouse, 0, sizeof(HidMouse));
     memset(&g_keyboardEntry, 0, sizeof(HidKeyboardEntry));
     memset(g_controllerEntries, 0, sizeof(g_controllerEntries));
-    memset(g_sixaxisLayouts, 0, sizeof(g_sixaxisLayouts));
 
     u64 latestTouchEntry = sharedMem->touchscreen.header.latestEntry;
     HidTouchScreenEntry *newTouchEntry = &sharedMem->touchscreen.entries[latestTouchEntry];
@@ -275,33 +270,6 @@ void hidScanInput(void) {
 
         g_controllerDown[i] = (~g_controllerOld[i]) & g_controllerHeld[i];
         g_controllerUp[i] = g_controllerOld[i] & (~g_controllerHeld[i]);
-
-        if (g_sixaxisEnabled[i]) {
-            HidControllerSixAxisLayout *sixaxis = NULL;
-            if (style_set & HidNpadStyleTag_NpadFullKey) {
-                sixaxis = &sharedMem->npad[i].sixaxis[0];
-            }
-            else if (style_set & HidNpadStyleTag_NpadHandheld) {
-                sixaxis = &sharedMem->npad[i].sixaxis[1];
-            }
-            else if (style_set & HidNpadStyleTag_NpadJoyDual) {
-                if (style_set & HidNpadStyleTag_NpadJoyLeft) {
-                    sixaxis = &sharedMem->npad[i].sixaxis[2];
-                }
-                else {
-                    sixaxis = &sharedMem->npad[i].sixaxis[3];
-                }
-            }
-            else if (style_set & HidNpadStyleTag_NpadJoyLeft) {
-                sixaxis = &sharedMem->npad[i].sixaxis[4];
-            }
-            else if (style_set & HidNpadStyleTag_NpadJoyRight) {
-                sixaxis = &sharedMem->npad[i].sixaxis[5];
-            }
-            if (sixaxis) {
-                memcpy(&g_sixaxisLayouts[i], sixaxis, sizeof(*sixaxis));
-            }
-        }
     }
 
     g_controllerP1AutoID = CONTROLLER_HANDHELD;
@@ -453,7 +421,7 @@ static size_t _hidGetStates(HidCommonStateHeader *header, void* in_states, size_
 static size_t _hidGetNpadStates(HidNpad *npad, u32 layout, HidNpadStateEntry *states, size_t count) {
     HidControllerLayout *states_buf = &npad->layouts[layout];
     if (count > 17) count = 17;
-    return _hidGetStates(&states_buf->header, states_buf->entries, 0, states, sizeof(HidNpadStateEntry), count);
+    return _hidGetStates(&states_buf->header, states_buf->entries, offsetof(HidNpadStateEntry,timestamp), states, sizeof(HidNpadStateEntry), count);
 }
 
 size_t hidGetNpadStatesFullKey(HidNpadIdType id, HidNpadFullKeyState *states, size_t count) {
@@ -507,7 +475,7 @@ size_t hidGetNpadStatesGc(HidNpadIdType id, HidNpadGcState *states, size_t count
 
     HidNpad *npad = _hidGetNpadInternalState(id);
     size_t total = _hidGetNpadStates(npad, 0, tmp_entries, count);
-    size_t total2 = _hidGetStates(&npad->npad_gc_trigger_header, npad->npad_gc_trigger_state, 0, tmp_entries_trigger, sizeof(HidNpadGcTriggerState), total);
+    size_t total2 = _hidGetStates(&npad->npad_gc_trigger_header, npad->npad_gc_trigger_state, offsetof(HidNpadGcTriggerState,timestamp), tmp_entries_trigger, sizeof(HidNpadGcTriggerState), total);
     if (total2 < total) total = total2;
 
     memset(states, 0, sizeof(HidNpadGcState) * total);
@@ -692,7 +660,7 @@ size_t hidGetSixAxisSensorStates(HidSixAxisSensorHandle handle, HidSixAxisSensor
     }
 
     HidNpad *npad = _hidGetNpadInternalState(handle.npad_id_type);
-    size_t total = _hidGetStates(&npad->sixaxis[index].header, npad->sixaxis[index].entries, sizeof(u64), states, sizeof(HidSixAxisSensorState), count);
+    size_t total = _hidGetStates(&npad->sixaxis[index].header, npad->sixaxis[index].entries, offsetof(HidSixAxisSensorState,timestamp), states, sizeof(HidSixAxisSensorState), count);
     return total;
 }
 
@@ -888,43 +856,45 @@ void hidJoystickRead(JoystickPosition *pos, HidControllerID id, HidControllerJoy
 }
 
 u32 hidSixAxisSensorValuesRead(SixAxisSensorValues *values, HidControllerID id, u32 num_entries) {
-    int entry;
-    int i;
+    HidSixAxisSensorState temp_states[17];
 
     if (!values || !num_entries) return 0;
 
-    if (id == CONTROLLER_P1_AUTO) return hidSixAxisSensorValuesRead(values, g_controllerP1AutoID, num_entries);
+    if (id == CONTROLLER_P1_AUTO) id = g_controllerP1AutoID;
 
     memset(values, 0, sizeof(SixAxisSensorValues) * num_entries);
     if (id < 0 || id > 9) return 0;
+    if (num_entries > 17) num_entries = 17;
 
-    rwlockReadLock(&g_hidLock);
-    if (!g_sixaxisEnabled[id]) {
-        rwlockReadUnlock(&g_hidLock);
+    HidNpadIdType npad_id = hidControllerIDToNpadIdType(id);
+    u32 style_set = hidGetNpadStyleSet(npad_id);
+    size_t num_handles = 1;
+    size_t handle_idx = 0;
+    style_set &= -style_set; // retrieve least significant set bit
+
+    if (style_set == HidNpadStyleTag_NpadJoyDual) {
+        u32 device_type = hidGetNpadDeviceType(npad_id);
+        num_handles = 2;
+        if (device_type & HidDeviceTypeBits_JoyLeft)
+            handle_idx = 0;
+        else if (device_type & HidDeviceTypeBits_JoyRight)
+            handle_idx = 1;
+        else
+            return 0;
+    }
+
+    HidSixAxisSensorHandle handles[2];
+    Result rc = hidGetSixAxisSensorHandles(handles, num_handles, npad_id, style_set);
+    if (R_FAILED(rc))
         return 0;
+
+    size_t total = hidGetSixAxisSensorStates(handles[handle_idx], temp_states, num_entries);
+
+    for (size_t i=0; i<total; i++) {
+        values[i] = temp_states[i].values;
     }
 
-    if (num_entries > g_sixaxisLayouts[id].header.max_entry + 1)
-        num_entries = g_sixaxisLayouts[id].header.max_entry + 1;
-
-    entry = g_sixaxisLayouts[id].header.latest_entry + 1 - num_entries;
-    if (entry < 0)
-        entry += g_sixaxisLayouts[id].header.max_entry + 1;
-
-    u64 timestamp = 0;
-    for (i = 0; i < num_entries; i++) {
-        if (timestamp && g_sixaxisLayouts[id].entries[entry].state.timestamp - timestamp != 1)
-            break;
-        memcpy(&values[i], &g_sixaxisLayouts[id].entries[entry].state.values, sizeof(SixAxisSensorValues));
-        timestamp = g_sixaxisLayouts[id].entries[entry].state.timestamp;
-
-        entry++;
-        if (entry > g_sixaxisLayouts[id].header.max_entry)
-            entry = 0;
-    }
-    rwlockReadUnlock(&g_hidLock);
-
-    return i;
+    return total;
 }
 
 bool hidGetHandheldMode(void) {
@@ -1440,6 +1410,8 @@ Result hidInitializeVibrationDevices(HidVibrationDeviceHandle *handles, s32 tota
     Result rc=0;
     s32 i;
 
+    if (id == (HidNpadIdType)CONTROLLER_HANDHELD) id = HidNpadIdType_Handheld; // Correct enum value for old users passing HidControllerID instead (avoids a hid sysmodule fatal later on)
+
     rc = _hidGetVibrationDeviceHandles(handles, total_handles, id, style);
     if (R_FAILED(rc)) return rc;
 
@@ -1461,29 +1433,16 @@ Result hidInitializeVibrationDevices(HidVibrationDeviceHandle *handles, s32 tota
 }
 
 Result hidGetSixAxisSensorHandles(HidSixAxisSensorHandle *handles, s32 total_handles, HidNpadIdType id, HidNpadStyleTag style) {
+    if (id == (HidNpadIdType)CONTROLLER_HANDHELD) id = HidNpadIdType_Handheld; // Correct enum value for old users passing HidControllerID instead (avoids a hid sysmodule fatal later on)
     return _hidGetSixAxisSensorHandles(handles, total_handles, id, style);
 }
 
 Result hidStartSixAxisSensor(HidSixAxisSensorHandle handle) {
-    Result rc = _hidCmdWithInputU32(handle.type_value, 66);
-    if (R_SUCCEEDED(rc)) {
-        HidControllerID controller = hidControllerIDFromNpadIdType(handle.npad_id_type);
-        rwlockWriteLock(&g_hidLock);
-        g_sixaxisEnabled[controller] = true;
-        rwlockWriteUnlock(&g_hidLock);
-    }
-    return rc;
+    return _hidCmdWithInputU32(handle.type_value, 66);
 }
 
 Result hidStopSixAxisSensor(HidSixAxisSensorHandle handle) {
-    Result rc = _hidCmdWithInputU32(handle.type_value, 67);
-    if (R_SUCCEEDED(rc)) {
-        HidControllerID controller = hidControllerIDFromNpadIdType(handle.npad_id_type);
-        rwlockWriteLock(&g_hidLock);
-        g_sixaxisEnabled[controller] = false;
-        rwlockWriteUnlock(&g_hidLock);
-    }
-    return rc;
+    return _hidCmdWithInputU32(handle.type_value, 67);
 }
 
 static Result _hidActivateConsoleSixAxisSensor(void) {
