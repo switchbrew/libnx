@@ -467,47 +467,39 @@ typedef struct HidCommonStateEntry {
 
 // Begin HidTouchScreen
 
-/// HidTouchScreenHeader
-typedef struct HidTouchScreenHeader {
-    u64 timestampTicks;
-    u64 numEntries;
-    u64 latestEntry;
-    u64 maxEntryIndex;
-    u64 timestamp;
-} HidTouchScreenHeader;
-
-/// HidTouchScreenEntryHeader
-typedef struct HidTouchScreenEntryHeader {
-    u64 timestamp;
-    u64 numTouches;
-} HidTouchScreenEntryHeader;
-
-/// HidTouchScreenEntryTouch
-typedef struct HidTouchScreenEntryTouch {
-    u64 timestamp;
-    u32 padding;
-    u32 touchIndex;
+/// HidTouchState
+typedef struct HidTouchState {
+    u64 delta_time;
+    u32 attributes;
+    u32 finger_id;
     u32 x;
     u32 y;
-    u32 diameterX;
-    u32 diameterY;
-    u32 angle;
-    u32 padding_2;
-} HidTouchScreenEntryTouch;
+    u32 diameter_x;
+    u32 diameter_y;
+    u32 rotation_angle;
+    u32 reserved;
+} HidTouchState;
 
-/// HidTouchScreenEntry
-typedef struct HidTouchScreenEntry {
-    HidTouchScreenEntryHeader header;
-    HidTouchScreenEntryTouch touches[16];
-    u64 unk;
-} HidTouchScreenEntry;
+/// HidTouchScreenState
+typedef struct HidTouchScreenState {
+    u64 timestamp;
+    s32 count;
+    u32 reserved;
+    HidTouchState touches[16];
+} HidTouchScreenState;
 
-/// HidTouchScreen
-typedef struct HidTouchScreen {
-    HidTouchScreenHeader header;
-    HidTouchScreenEntry entries[17];
-    u8 padding[0x3c0];
-} HidTouchScreen;
+/// HidTouchScreenStateAtomicStorage
+typedef struct HidTouchScreenStateAtomicStorage {
+    u64 timestamp;
+    HidTouchScreenState state;
+} HidTouchScreenStateAtomicStorage;
+
+/// HidTouchScreenLifo
+typedef struct HidTouchScreenLifo {
+    HidCommonStateHeader header;
+    HidTouchScreenStateAtomicStorage entries[17];
+    u8 padding[0x3c8];
+} HidTouchScreenLifo;
 
 // End HidTouchScreen
 
@@ -769,7 +761,7 @@ typedef struct {
 /// HidSharedMemory
 typedef struct HidSharedMemory {
     u8 debug_pad[0x400];
-    HidTouchScreen touchscreen;
+    HidTouchScreenLifo touchscreen;
     HidMouse mouse;
     HidKeyboard keyboard;
     u8 digitizer[0x1000];                               ///< [10.0.0+] Digitizer [1.0.0-9.2.0] BasicXpad
@@ -876,6 +868,8 @@ Service* hidGetServiceSession(void);
 void* hidGetSharedmemAddr(void);
 
 void hidScanInput(void);
+
+size_t hidGetTouchScreenStates(HidTouchScreenState *states, size_t count);
 
 /// Gets a bitfield of \ref HidNpadStyleTag for the specified controller.
 u32 hidGetNpadStyleSet(HidNpadIdType id);

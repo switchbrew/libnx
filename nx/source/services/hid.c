@@ -16,7 +16,7 @@ static Service g_hidIAppletResource;
 static Service g_hidIActiveVibrationDeviceList;
 static SharedMemory g_hidSharedmem;
 
-static HidTouchScreenEntry g_touchEntry;
+static HidTouchScreenState g_touchScreenState;
 static HidMouseEntry *g_mouseEntry;
 static HidMouse g_mouse;
 static HidKeyboardEntry g_keyboardEntry;
@@ -27,7 +27,7 @@ static u64 g_keyboardModOld, g_keyboardModHeld, g_keyboardModDown, g_keyboardMod
 static u32 g_keyboardOld[8], g_keyboardHeld[8], g_keyboardDown[8], g_keyboardUp[8];
 static u64 g_controllerOld[10], g_controllerHeld[10], g_controllerDown[10], g_controllerUp[10];
 
-static u64 g_touchTimestamp, g_mouseTimestamp, g_keyboardTimestamp;
+static u64 g_mouseTimestamp, g_keyboardTimestamp;
 
 static HidControllerID g_controllerP1AutoID;
 
@@ -119,7 +119,7 @@ void hidReset(void) {
     rwlockWriteLock(&g_hidLock);
 
     // Reset internal state
-    memset(&g_touchEntry, 0, sizeof(HidTouchScreenEntry));
+    memset(&g_touchScreenState, 0, sizeof(HidTouchScreenState));
     memset(&g_mouse, 0, sizeof(HidMouse));
     memset(&g_keyboardEntry, 0, sizeof(HidKeyboardEntry));
     memset(g_controllerEntries, 0, sizeof(g_controllerEntries));
@@ -132,7 +132,7 @@ void hidReset(void) {
     for (int i = 0; i < 10; i++)
         g_controllerOld[i] = g_controllerHeld[i] = g_controllerDown[i] = g_controllerUp[i] = 0;
 
-    g_touchTimestamp = g_mouseTimestamp = g_keyboardTimestamp = 0;
+    g_mouseTimestamp = g_keyboardTimestamp = 0;
 
     g_controllerP1AutoID = CONTROLLER_HANDHELD;
 
@@ -161,18 +161,13 @@ void hidScanInput(void) {
     g_keyboardModHeld = 0;
     memset(g_keyboardHeld, 0, sizeof(g_keyboardHeld));
     memset(g_controllerHeld, 0, sizeof(g_controllerHeld));
-    memset(&g_touchEntry, 0, sizeof(HidTouchScreenEntry));
+    memset(&g_touchScreenState, 0, sizeof(HidTouchScreenState));
     memset(&g_mouse, 0, sizeof(HidMouse));
     memset(&g_keyboardEntry, 0, sizeof(HidKeyboardEntry));
     memset(g_controllerEntries, 0, sizeof(g_controllerEntries));
 
-    u64 latestTouchEntry = sharedMem->touchscreen.header.latestEntry;
-    HidTouchScreenEntry *newTouchEntry = &sharedMem->touchscreen.entries[latestTouchEntry];
-    if ((s64)(newTouchEntry->header.timestamp - g_touchTimestamp) >= 0) {
-        memcpy(&g_touchEntry, newTouchEntry, sizeof(HidTouchScreenEntry));
-        g_touchTimestamp = newTouchEntry->header.timestamp;
-
-        if (hidTouchCount())
+    if (hidGetTouchScreenStates(&g_touchScreenState, 1)) {
+        if (g_touchScreenState.count >= 1)
             g_controllerHeld[CONTROLLER_HANDHELD] |= KEY_TOUCH;
     }
 
@@ -416,6 +411,19 @@ static size_t _hidGetStates(HidCommonStateHeader *header, void* in_states, size_
     }
 
     return total_entries;
+}
+
+size_t hidGetTouchScreenStates(HidTouchScreenState *states, size_t count) {
+    HidSharedMemory *sharedmem = (HidSharedMemory*)hidGetSharedmemAddr();
+    if (sharedmem == NULL)
+        diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_NotInitialized));
+
+    size_t total = _hidGetStates(&sharedmem->touchscreen.header, sharedmem->touchscreen.entries, offsetof(HidTouchScreenState,timestamp), states, sizeof(HidTouchScreenState), count);
+    size_t max_touches = sizeof(states[0].touches)/sizeof(states[0].touches[0]);
+    for (size_t i=0; i<total; i++) {
+        if (states[i].count > max_touches) states[i].count = max_touches;
+    }
+    return total;
 }
 
 static size_t _hidGetNpadStates(HidNpad *npad, u32 layout, HidNpadStateEntry *states, size_t count) {
@@ -821,22 +829,22 @@ bool hidKeyboardUp(HidKeyboardScancode key) {
 }
 
 u32 hidTouchCount(void) {
-    return g_touchEntry.header.numTouches;
+    return g_touchScreenState.count;
 }
 
 void hidTouchRead(touchPosition *pos, u32 point_id) {
     if (pos) {
-        if (point_id >= g_touchEntry.header.numTouches) {
+        if (point_id >= g_touchScreenState.count) {
             memset(pos, 0, sizeof(touchPosition));
             return;
         }
 
-        pos->id = g_touchEntry.touches[point_id].touchIndex;
-        pos->px = g_touchEntry.touches[point_id].x;
-        pos->py = g_touchEntry.touches[point_id].y;
-        pos->dx = g_touchEntry.touches[point_id].diameterX;
-        pos->dy = g_touchEntry.touches[point_id].diameterY;
-        pos->angle = g_touchEntry.touches[point_id].angle;
+        pos->id = g_touchScreenState.touches[point_id].finger_id;
+        pos->px = g_touchScreenState.touches[point_id].x;
+        pos->py = g_touchScreenState.touches[point_id].y;
+        pos->dx = g_touchScreenState.touches[point_id].diameter_x;
+        pos->dy = g_touchScreenState.touches[point_id].diameter_y;
+        pos->angle = g_touchScreenState.touches[point_id].rotation_angle;
     }
 }
 
