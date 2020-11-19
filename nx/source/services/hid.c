@@ -47,6 +47,8 @@ static Result _hidDeactivateNpad(void);
 
 static Result _hidSetDualModeAll(void);
 
+static u8 _hidGetSixAxisSensorHandleNpadStyleIndex(HidSixAxisSensorHandle handle);
+
 NX_GENERATE_SERVICE_GUARD(hid);
 
 Result _hidInitialize(void) {
@@ -417,7 +419,7 @@ u8 hidGetAppletFooterUiTypes(HidNpadIdType id) {
     return atomic_load_explicit(&_hidGetNpadInternalState(id)->applet_footer_ui_type, memory_order_acquire);
 }
 
-static size_t _hidGetStates(HidCommonStateHeader *header, void* in_states, void* states, size_t entrysize, size_t count) {
+static size_t _hidGetStates(HidCommonStateHeader *header, void* in_states, size_t sampling_number_offset, void* states, size_t entrysize, size_t count) {
     s32 total_entries = (s32)atomic_load_explicit(&header->max_entry, memory_order_acquire);
     if (total_entries < 0) total_entries = 0;
     if (total_entries > count) total_entries = count;
@@ -435,7 +437,7 @@ static size_t _hidGetStates(HidCommonStateHeader *header, void* in_states, void*
         memcpy(out_state, &state_entry->state, entrysize);
         timestamp1 = atomic_load_explicit(&state_entry->timestamp, memory_order_acquire);
 
-        if (timestamp0 != timestamp1 || (i>0 && *((u64*)out_state) - *((u64*)out_state_prev) != 1)) {
+        if (timestamp0 != timestamp1 || (i>0 && *((u64*)((uintptr_t)out_state+sampling_number_offset)) - *((u64*)((uintptr_t)out_state_prev+sampling_number_offset)) != 1)) {
             s32 tmpcount = (s32)atomic_load_explicit(&header->max_entry, memory_order_acquire);
             tmpcount = total_entries < tmpcount ? tmpcount : total_entries;
             total_entries = tmpcount < count ? tmpcount : count;
@@ -451,7 +453,7 @@ static size_t _hidGetStates(HidCommonStateHeader *header, void* in_states, void*
 static size_t _hidGetNpadStates(HidNpad *npad, u32 layout, HidNpadStateEntry *states, size_t count) {
     HidControllerLayout *states_buf = &npad->layouts[layout];
     if (count > 17) count = 17;
-    return _hidGetStates(&states_buf->header, states_buf->entries, states, sizeof(HidNpadStateEntry), count);
+    return _hidGetStates(&states_buf->header, states_buf->entries, 0, states, sizeof(HidNpadStateEntry), count);
 }
 
 size_t hidGetNpadStatesFullKey(HidNpadIdType id, HidNpadFullKeyState *states, size_t count) {
@@ -505,7 +507,7 @@ size_t hidGetNpadStatesGc(HidNpadIdType id, HidNpadGcState *states, size_t count
 
     HidNpad *npad = _hidGetNpadInternalState(id);
     size_t total = _hidGetNpadStates(npad, 0, tmp_entries, count);
-    size_t total2 = _hidGetStates(&npad->npad_gc_trigger_header, npad->npad_gc_trigger_state, tmp_entries_trigger, sizeof(HidNpadGcTriggerState), total);
+    size_t total2 = _hidGetStates(&npad->npad_gc_trigger_header, npad->npad_gc_trigger_state, 0, tmp_entries_trigger, sizeof(HidNpadGcTriggerState), total);
     if (total2 < total) total = total2;
 
     memset(states, 0, sizeof(HidNpadGcState) * total);
@@ -652,6 +654,45 @@ size_t hidGetNpadStatesSystem(HidNpadIdType id, HidNpadSystemState *states, size
         memset(states[i].joysticks, 0, sizeof(states[i].joysticks));
     }
 
+    return total;
+}
+
+size_t hidGetSixAxisSensorStates(HidSixAxisSensorHandle handle, HidSixAxisSensorState *states, size_t count) {
+    u32 index=0;
+    switch(_hidGetSixAxisSensorHandleNpadStyleIndex(handle)) {
+        default:
+        diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen));
+
+        case 0: // NpadFullKey/NpadPalma
+        case 5: // NpadGc (not actually returned by GetHandles, NpadFullKey is used instead)
+            index = 0;
+        break;
+
+        case 1: // NpadHandheld/NpadHandheldLark
+            index = 1;
+        break;
+
+        case 2: // NpadJoyDual
+            if (handle.idx==0) index = 2;
+            else if (handle.idx==1) index = 3;
+            else diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen));
+        break;
+
+        case 3: // NpadJoyLeft
+            index = 4;
+        break;
+
+        case 4: // NpadJoyRight
+            index = 5;
+        break;
+
+        case 29: // System(Ext) (not actually returned by GetHandles)
+        case 30:
+        return 0;
+    }
+
+    HidNpad *npad = _hidGetNpadInternalState(handle.npad_id_type);
+    size_t total = _hidGetStates(&npad->sixaxis[index].header, npad->sixaxis[index].entries, sizeof(u64), states, sizeof(HidSixAxisSensorState), count);
     return total;
 }
 
@@ -872,10 +913,10 @@ u32 hidSixAxisSensorValuesRead(SixAxisSensorValues *values, HidControllerID id, 
 
     u64 timestamp = 0;
     for (i = 0; i < num_entries; i++) {
-        if (timestamp && g_sixaxisLayouts[id].entries[entry].timestamp - timestamp != 1)
+        if (timestamp && g_sixaxisLayouts[id].entries[entry].state.timestamp - timestamp != 1)
             break;
-        memcpy(&values[i], &g_sixaxisLayouts[id].entries[entry].values, sizeof(SixAxisSensorValues));
-        timestamp = g_sixaxisLayouts[id].entries[entry].timestamp;
+        memcpy(&values[i], &g_sixaxisLayouts[id].entries[entry].state.values, sizeof(SixAxisSensorValues));
+        timestamp = g_sixaxisLayouts[id].entries[entry].state.timestamp;
 
         entry++;
         if (entry > g_sixaxisLayouts[id].header.max_entry)
@@ -1249,6 +1290,10 @@ static HidVibrationDeviceHandle _hidMakeVibrationDeviceHandle(u8 npad_style_inde
 
 static HidSixAxisSensorHandle _hidMakeSixAxisSensorHandle(u8 npad_style_index, u8 npad_id_type, u8 idx) {
     return (HidSixAxisSensorHandle){.npad_style_index = npad_style_index, .npad_id_type = npad_id_type, .idx = idx, .pad = 0};
+}
+
+static u8 _hidGetSixAxisSensorHandleNpadStyleIndex(HidSixAxisSensorHandle handle) {
+    return handle.npad_style_index - 3;
 }
 
 static Result _hidGetVibrationDeviceHandles(HidVibrationDeviceHandle *handles, s32 total_handles, HidNpadIdType id, HidNpadStyleTag style) {

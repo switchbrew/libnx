@@ -655,13 +655,18 @@ typedef struct HidNpadGcTriggerStateEntry {
     HidNpadGcTriggerState state;
 } HidNpadGcTriggerStateEntry;
 
+/// HidSixAxisSensorState
+typedef struct HidSixAxisSensorState {
+    u64 unk_1;
+    u64 timestamp;
+    SixAxisSensorValues values;
+    u64 unk_3;
+} HidSixAxisSensorState;
+
 /// HidNpadSixAxisSensorState
 typedef struct HidNpadSixAxisSensorState {
     u64 timestamp;
-    u64 unk_1;
-    u64 timestamp_2;
-    SixAxisSensorValues values;
-    u64 unk_3;
+    HidSixAxisSensorState state;
 } HidNpadSixAxisSensorState;
 
 /// HidControllerSixAxisLayout
@@ -919,6 +924,8 @@ size_t hidGetNpadStatesHandheldLark(HidNpadIdType id, HidNpadHandheldLarkState *
 size_t hidGetNpadStatesLucia(HidNpadIdType id, HidNpadLuciaState *states, size_t count);
 size_t hidGetNpadStatesSystemExt(HidNpadIdType id, HidNpadSystemExtState *states, size_t count);
 size_t hidGetNpadStatesSystem(HidNpadIdType id, HidNpadSystemState *states, size_t count);
+
+size_t hidGetSixAxisSensorStates(HidSixAxisSensorHandle handle, HidSixAxisSensorState *states, size_t count);
 
 bool hidIsControllerConnected(HidControllerID id);
 
