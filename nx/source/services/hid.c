@@ -853,7 +853,7 @@ void hidJoystickRead(JoystickPosition *pos, HidControllerID id, HidControllerJoy
 
     if (pos) {
         if (id < 0 || id > 9 || stick >= JOYSTICK_NUM_STICKS) {
-            memset(pos, 0, sizeof(touchPosition));
+            memset(pos, 0, sizeof(*pos));
             return;
         }
 
