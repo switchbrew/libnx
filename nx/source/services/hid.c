@@ -5,6 +5,7 @@
 #include <malloc.h>
 #include <stdatomic.h>
 #include "kernel/shmem.h"
+#include "kernel/mutex.h"
 #include "kernel/rwlock.h"
 #include "services/applet.h"
 #include "services/hid.h"
@@ -15,6 +16,14 @@ static Service g_hidSrv;
 static Service g_hidIAppletResource;
 static Service g_hidIActiveVibrationDeviceList;
 static SharedMemory g_hidSharedmem;
+static Mutex g_hidVibrationMutex;
+
+static u8* g_sevenSixAxisSensorBuffer;
+static TransferMemory g_sevenSixAxisSensorTmem0;
+static TransferMemory g_sevenSixAxisSensorTmem1;
+
+static bool g_scanInputInitialized;
+static RwLock g_hidLock;
 
 static HidTouchScreenState g_touchScreenState;
 static HidMouseState g_mouseState;
@@ -28,17 +37,13 @@ static u64 g_controllerOld[10], g_controllerHeld[10], g_controllerDown[10], g_co
 
 static HidControllerID g_controllerP1AutoID;
 
-static u8* g_sevenSixAxisSensorBuffer;
-static TransferMemory g_sevenSixAxisSensorTmem0;
-static TransferMemory g_sevenSixAxisSensorTmem1;
-
-static RwLock g_hidLock;
-
 static Result _hidCreateAppletResource(Service* srv, Service* srv_out);
 static Result _hidGetSharedMemoryHandle(Service* srv, Handle* handle_out);
 
+static Result _hidActivateTouchScreen(void);
+static Result _hidActivateMouse(void);
+static Result _hidActivateKeyboard(void);
 static Result _hidActivateNpad(void);
-static Result _hidDeactivateNpad(void);
 
 static Result _hidSetDualModeAll(void);
 
@@ -47,18 +52,6 @@ static u8 _hidGetSixAxisSensorHandleNpadStyleIndex(HidSixAxisSensorHandle handle
 NX_GENERATE_SERVICE_GUARD(hid);
 
 Result _hidInitialize(void) {
-    static const HidNpadIdType idbuf[9] = {
-        HidNpadIdType_No1,
-        HidNpadIdType_No2,
-        HidNpadIdType_No3,
-        HidNpadIdType_No4,
-        HidNpadIdType_No5,
-        HidNpadIdType_No6,
-        HidNpadIdType_No7,
-        HidNpadIdType_No8,
-        HidNpadIdType_Handheld,
-    };
-
     Result rc=0;
     Handle sharedmem_handle;
 
@@ -73,48 +66,24 @@ Result _hidInitialize(void) {
 
     if (R_SUCCEEDED(rc)) {
         shmemLoadRemote(&g_hidSharedmem, sharedmem_handle, 0x40000, Perm_R);
-
         rc = shmemMap(&g_hidSharedmem);
     }
 
-    if (R_SUCCEEDED(rc))
-        rc = _hidActivateNpad();
-
-    if (R_SUCCEEDED(rc))
-        rc = hidSetSupportedNpadStyleSet(HidNpadStyleTag_NpadFullKey | HidNpadStyleTag_NpadHandheld | HidNpadStyleTag_NpadJoyDual | HidNpadStyleTag_NpadJoyLeft | HidNpadStyleTag_NpadJoyRight | HidNpadStyleTag_NpadSystemExt | HidNpadStyleTag_NpadSystem);
-
-    if (R_SUCCEEDED(rc))
-        rc = hidSetSupportedNpadIdType(idbuf, sizeof(idbuf)/sizeof(*idbuf));
-
-    if (R_SUCCEEDED(rc))
-        rc = _hidSetDualModeAll();
-
-    if (R_SUCCEEDED(rc))
-        rc = hidSetNpadJoyHoldType(HidJoyHoldType_Default);
-
-    hidReset();
     return rc;
 }
 
 void _hidCleanup(void) {
+    if (g_sevenSixAxisSensorBuffer != NULL)
+        diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen));
+
+    g_scanInputInitialized = false;
     serviceClose(&g_hidIActiveVibrationDeviceList);
-
-    hidFinalizeSevenSixAxisSensor();
-
-    hidSetNpadJoyHoldType(HidJoyHoldType_Default);
-
-    _hidSetDualModeAll();
-
-    _hidDeactivateNpad();
-
+    shmemClose(&g_hidSharedmem);
     serviceClose(&g_hidIAppletResource);
     serviceClose(&g_hidSrv);
-    shmemClose(&g_hidSharedmem);
 }
 
-void hidReset(void) {
-    rwlockWriteLock(&g_hidLock);
-
+static void _hidReset(void) {
     // Reset internal state
     memset(&g_touchScreenState, 0, sizeof(HidTouchScreenState));
     memset(&g_mouseState, 0, sizeof(HidMouseState));
@@ -129,7 +98,11 @@ void hidReset(void) {
         g_controllerOld[i] = g_controllerHeld[i] = g_controllerDown[i] = g_controllerUp[i] = 0;
 
     g_controllerP1AutoID = CONTROLLER_HANDHELD;
+}
 
+void hidReset(void) {
+    rwlockWriteLock(&g_hidLock);
+    _hidReset();
     rwlockWriteUnlock(&g_hidLock);
 }
 
@@ -143,6 +116,42 @@ void* hidGetSharedmemAddr(void) {
 
 void hidScanInput(void) {
     rwlockWriteLock(&g_hidLock);
+
+    if (!g_scanInputInitialized) {
+        Result rc;
+
+        hidInitializeNpad();
+        hidInitializeTouchScreen();
+        hidInitializeKeyboard();
+        hidInitializeMouse();
+        _hidReset();
+
+        rc = hidSetSupportedNpadStyleSet(HidNpadStyleTag_NpadFullKey | HidNpadStyleTag_NpadHandheld | HidNpadStyleTag_NpadJoyDual | HidNpadStyleTag_NpadJoyLeft | HidNpadStyleTag_NpadJoyRight | HidNpadStyleTag_NpadSystemExt | HidNpadStyleTag_NpadSystem);
+        if (R_FAILED(rc)) diagAbortWithResult(rc);
+
+        static const HidNpadIdType idbuf[] = {
+            HidNpadIdType_No1,
+            HidNpadIdType_No2,
+            HidNpadIdType_No3,
+            HidNpadIdType_No4,
+            HidNpadIdType_No5,
+            HidNpadIdType_No6,
+            HidNpadIdType_No7,
+            HidNpadIdType_No8,
+            HidNpadIdType_Handheld,
+        };
+
+        rc = hidSetSupportedNpadIdType(idbuf, sizeof(idbuf)/sizeof(*idbuf));
+        if (R_FAILED(rc)) diagAbortWithResult(rc);
+
+        rc = _hidSetDualModeAll();
+        if (R_FAILED(rc)) diagAbortWithResult(rc);
+
+        rc = hidSetNpadJoyHoldType(HidJoyHoldType_Default);
+        if (R_FAILED(rc)) diagAbortWithResult(rc);
+
+        g_scanInputInitialized = true;
+    }
 
     g_mouseOld = g_mouseHeld;
     g_keyboardModOld = g_keyboardModHeld;
@@ -394,6 +403,11 @@ static size_t _hidGetStates(HidCommonStateHeader *header, void* in_states, size_
     return total_entries;
 }
 
+void hidInitializeTouchScreen(void) {
+    Result rc = _hidActivateTouchScreen();
+    if (R_FAILED(rc)) diagAbortWithResult(rc);
+}
+
 size_t hidGetTouchScreenStates(HidTouchScreenState *states, size_t count) {
     HidSharedMemory *sharedmem = (HidSharedMemory*)hidGetSharedmemAddr();
     if (sharedmem == NULL)
@@ -407,6 +421,11 @@ size_t hidGetTouchScreenStates(HidTouchScreenState *states, size_t count) {
     return total;
 }
 
+void hidInitializeMouse(void) {
+    Result rc = _hidActivateMouse();
+    if (R_FAILED(rc)) diagAbortWithResult(rc);
+}
+
 size_t hidGetMouseStates(HidMouseState *states, size_t count) {
     HidSharedMemory *sharedmem = (HidSharedMemory*)hidGetSharedmemAddr();
     if (sharedmem == NULL)
@@ -416,6 +435,11 @@ size_t hidGetMouseStates(HidMouseState *states, size_t count) {
     return total;
 }
 
+void hidInitializeKeyboard(void) {
+    Result rc = _hidActivateKeyboard();
+    if (R_FAILED(rc)) diagAbortWithResult(rc);
+}
+
 size_t hidGetKeyboardStates(HidKeyboardState *states, size_t count) {
     HidSharedMemory *sharedmem = (HidSharedMemory*)hidGetSharedmemAddr();
     if (sharedmem == NULL)
@@ -423,6 +447,11 @@ size_t hidGetKeyboardStates(HidKeyboardState *states, size_t count) {
 
     size_t total = _hidGetStates(&sharedmem->keyboard.header, sharedmem->keyboard.entries, 17, offsetof(HidKeyboardStateAtomicStorage,state), offsetof(HidKeyboardState,timestamp), states, sizeof(HidKeyboardState), count);
     return total;
+}
+
+void hidInitializeNpad(void) {
+    Result rc = _hidActivateNpad();
+    if (R_FAILED(rc)) diagAbortWithResult(rc);
 }
 
 static size_t _hidGetNpadStates(HidNpad *npad, u32 layout, HidNpadStateEntry *states, size_t count) {
@@ -892,7 +921,7 @@ bool hidGetHandheldMode(void) {
 }
 
 static Result _hidSetDualModeAll(void) {
-    Result rc;
+    Result rc = 0;
     int i;
 
     for (i=0; i<8; i++) {
@@ -917,7 +946,7 @@ static Result _hidCmdGetSession(Service* srv_out, u32 cmd_id) {
     );
 }
 
-static Result _hidCmdWithNoInput(u32 cmd_id) {
+static Result _hidCmdInAruidNoOut(u32 cmd_id) {
     u64 AppletResourceUserId = appletGetAppletResourceUserId();
 
     return serviceDispatchIn(&g_hidSrv, cmd_id, AppletResourceUserId,
@@ -937,7 +966,7 @@ static Result _hidCmdInU32NoOut(Service* srv, u32 inval, u32 cmd_id) {
     return serviceDispatchIn(srv, cmd_id, inval);
 }
 
-static Result _hidCmdWithInputU32(u32 inval, u32 cmd_id) {
+static Result _hidCmdInU32AruidNoOut(u32 inval, u32 cmd_id) {
     const struct {
         u32 inval;
         u64 AppletResourceUserId;
@@ -1000,6 +1029,18 @@ static Result _hidGetSharedMemoryHandle(Service* srv, Handle* handle_out) {
     return _hidCmdGetHandle(srv, handle_out, 0);
 }
 
+static Result _hidActivateTouchScreen(void) {
+    return _hidCmdInAruidNoOut(11);
+}
+
+static Result _hidActivateMouse(void) {
+    return _hidCmdInAruidNoOut(21);
+}
+
+static Result _hidActivateKeyboard(void) {
+    return _hidCmdInAruidNoOut(31);
+}
+
 Result hidSetSixAxisSensorFusionParameters(HidSixAxisSensorHandle handle, float unk0, float unk1) {
     if (unk0 < 0.0f || unk0 > 1.0f)
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
@@ -1040,7 +1081,7 @@ Result hidGetSixAxisSensorFusionParameters(HidSixAxisSensorHandle handle, float 
 }
 
 Result hidResetSixAxisSensorFusionParameters(HidSixAxisSensorHandle handle) {
-    return _hidCmdWithInputU32(handle.type_value, 72);
+    return _hidCmdInU32AruidNoOut(handle.type_value, 72);
 }
 
 Result hidSetGyroscopeZeroDriftMode(HidSixAxisSensorHandle handle, HidGyroscopeZeroDriftMode mode) {
@@ -1073,11 +1114,11 @@ Result hidGetGyroscopeZeroDriftMode(HidSixAxisSensorHandle handle, HidGyroscopeZ
 }
 
 Result hidResetGyroscopeZeroDriftMode(HidSixAxisSensorHandle handle) {
-    return _hidCmdWithInputU32(handle.type_value, 81);
+    return _hidCmdInU32AruidNoOut(handle.type_value, 81);
 }
 
 Result hidSetSupportedNpadStyleSet(u32 style_set) {
-    return _hidCmdWithInputU32(style_set, 100);
+    return _hidCmdInU32AruidNoOut(style_set, 100);
 }
 
 Result hidGetSupportedNpadStyleSet(u32 *style_set) {
@@ -1101,7 +1142,7 @@ static Result _hidActivateNpad(void) {
     u32 revision=0x0;
 
     if (hosversionBefore(5,0,0))
-        return _hidCmdWithNoInput(103); // ActivateNpad
+        return _hidCmdInAruidNoOut(103); // ActivateNpad
 
     revision = 0x1; // [5.0.0+]
     if (hosversionAtLeast(6,0,0))
@@ -1109,11 +1150,7 @@ static Result _hidActivateNpad(void) {
     if (hosversionAtLeast(8,0,0))
         revision = 0x3; // [8.0.0+]
 
-    return _hidCmdWithInputU32(revision, 109); // ActivateNpadWithRevision
-}
-
-static Result _hidDeactivateNpad(void) {
-    return _hidCmdWithNoInput(104);
+    return _hidCmdInU32AruidNoOut(revision, 109); // ActivateNpadWithRevision
 }
 
 Result hidAcquireNpadStyleSetUpdateEventHandle(HidNpadIdType id, Event* out_event, bool autoclear) {
@@ -1148,11 +1185,11 @@ Result hidGetNpadJoyHoldType(HidJoyHoldType *type) {
 }
 
 Result hidSetNpadJoyAssignmentModeSingleByDefault(HidNpadIdType id) {
-    return _hidCmdWithInputU32(id, 122);
+    return _hidCmdInU32AruidNoOut(id, 122);
 }
 
 Result hidSetNpadJoyAssignmentModeDual(HidNpadIdType id) {
-    return _hidCmdWithInputU32(id, 124);
+    return _hidCmdInU32AruidNoOut(id, 124);
 }
 
 Result hidMergeSingleJoyAsDualJoy(HidNpadIdType id0, HidNpadIdType id1) {
@@ -1405,12 +1442,12 @@ Result hidInitializeVibrationDevices(HidVibrationDeviceHandle *handles, s32 tota
     rc = _hidGetVibrationDeviceHandles(handles, total_handles, id, style);
     if (R_FAILED(rc)) return rc;
 
-    rwlockWriteLock(&g_hidLock);
+    mutexLock(&g_hidVibrationMutex);
     if (!serviceIsActive(&g_hidIActiveVibrationDeviceList)) {
         rc = _hidCreateActiveVibrationDeviceList(&g_hidIActiveVibrationDeviceList);
-        if (R_FAILED(rc)) return rc;
     }
-    rwlockWriteUnlock(&g_hidLock);
+    mutexUnlock(&g_hidVibrationMutex);
+    if (R_FAILED(rc)) return rc;
 
     for (i=0; i<total_handles; i++) {
         rc = _hidActivateVibrationDevice(&g_hidIActiveVibrationDeviceList, handles[i]);
@@ -1428,32 +1465,32 @@ Result hidGetSixAxisSensorHandles(HidSixAxisSensorHandle *handles, s32 total_han
 }
 
 Result hidStartSixAxisSensor(HidSixAxisSensorHandle handle) {
-    return _hidCmdWithInputU32(handle.type_value, 66);
+    return _hidCmdInU32AruidNoOut(handle.type_value, 66);
 }
 
 Result hidStopSixAxisSensor(HidSixAxisSensorHandle handle) {
-    return _hidCmdWithInputU32(handle.type_value, 67);
+    return _hidCmdInU32AruidNoOut(handle.type_value, 67);
 }
 
 static Result _hidActivateConsoleSixAxisSensor(void) {
     if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return _hidCmdWithNoInput(300);
+    return _hidCmdInAruidNoOut(300);
 }
 
 Result hidStartSevenSixAxisSensor(void) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return _hidCmdWithNoInput(304);
+    return _hidCmdInAruidNoOut(304);
 }
 
 Result hidStopSevenSixAxisSensor(void) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return _hidCmdWithNoInput(305);
+    return _hidCmdInAruidNoOut(305);
 }
 
 static Result _hidInitializeSevenSixAxisSensor(TransferMemory *tmem0, TransferMemory *tmem1) {
@@ -1513,7 +1550,7 @@ Result hidFinalizeSevenSixAxisSensor(void) {
     if (g_sevenSixAxisSensorBuffer == NULL)
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    rc = _hidCmdWithNoInput(307);
+    rc = _hidCmdInAruidNoOut(307);
 
     tmemClose(&g_sevenSixAxisSensorTmem0);
     tmemClose(&g_sevenSixAxisSensorTmem1);
@@ -1553,7 +1590,7 @@ Result hidResetSevenSixAxisSensorTimestamp(void) {
     if (hosversionBefore(6,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return _hidCmdWithNoInput(310);
+    return _hidCmdInAruidNoOut(310);
 }
 
 Result hidGetSevenSixAxisSensorStates(HidSevenSixAxisSensorState *states, size_t count, size_t *total_out) {

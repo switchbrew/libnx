@@ -873,11 +873,16 @@ void* hidGetSharedmemAddr(void);
 
 void hidScanInput(void);
 
+void hidInitializeTouchScreen(void);
 size_t hidGetTouchScreenStates(HidTouchScreenState *states, size_t count);
 
+void hidInitializeMouse(void);
 size_t hidGetMouseStates(HidMouseState *states, size_t count);
 
+void hidInitializeKeyboard(void);
 size_t hidGetKeyboardStates(HidKeyboardState *states, size_t count);
+
+void hidInitializeNpad(void);
 
 /// Gets a bitfield of \ref HidNpadStyleTag for the specified controller.
 u32 hidGetNpadStyleSet(HidNpadIdType id);
