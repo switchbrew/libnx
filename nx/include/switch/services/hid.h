@@ -451,19 +451,13 @@ typedef struct SixAxisSensorValues {
 
 // End enums and output structs
 
-/// HidCommonStateHeader
-typedef struct HidCommonStateHeader {
-    u64 timestamp_ticks;
-    u64 total_entries;
-    u64 latest_entry;
-    u64 max_entry;
-} HidCommonStateHeader;
-
-/// HidCommonStateEntry
-typedef struct HidCommonStateEntry {
-    u64 timestamp;
-    u8 state[];
-} HidCommonStateEntry;
+/// HidCommonLifoHeader
+typedef struct HidCommonLifoHeader {
+    u64 sampling_number;
+    u64 buffer_count;
+    u64 tail;
+    u64 count;
+} HidCommonLifoHeader;
 
 // Begin HidTouchScreen
 
@@ -482,7 +476,7 @@ typedef struct HidTouchState {
 
 /// HidTouchScreenState
 typedef struct HidTouchScreenState {
-    u64 timestamp;
+    u64 sampling_number;
     s32 count;
     u32 reserved;
     HidTouchState touches[16];
@@ -490,16 +484,21 @@ typedef struct HidTouchScreenState {
 
 /// HidTouchScreenStateAtomicStorage
 typedef struct HidTouchScreenStateAtomicStorage {
-    u64 timestamp;
+    u64 sampling_number;
     HidTouchScreenState state;
 } HidTouchScreenStateAtomicStorage;
 
 /// HidTouchScreenLifo
 typedef struct HidTouchScreenLifo {
-    HidCommonStateHeader header;
-    HidTouchScreenStateAtomicStorage entries[17];
-    u8 padding[0x3c8];
+    HidCommonLifoHeader header;
+    HidTouchScreenStateAtomicStorage storage[17];
 } HidTouchScreenLifo;
+
+/// HidTouchScreenSharedMemoryFormat
+typedef struct HidTouchScreenSharedMemoryFormat {
+    HidTouchScreenLifo lifo;
+    u8 padding[0x3c8];
+} HidTouchScreenSharedMemoryFormat;
 
 // End HidTouchScreen
 
@@ -507,7 +506,7 @@ typedef struct HidTouchScreenLifo {
 
 /// HidMouseState
 typedef struct HidMouseState {
-    u64 timestamp;
+    u64 sampling_number;
     MousePosition position;
     u32 buttons;
     u32 attributes;
@@ -515,16 +514,21 @@ typedef struct HidMouseState {
 
 /// HidMouseStateAtomicStorage
 typedef struct HidMouseStateAtomicStorage {
-    u64 timestamp;
+    u64 sampling_number;
     HidMouseState state;
 } HidMouseStateAtomicStorage;
 
 /// HidMouseLifo
 typedef struct HidMouseLifo {
-    HidCommonStateHeader header;
-    HidMouseStateAtomicStorage entries[17];
-    u8 padding[0xB0];
+    HidCommonLifoHeader header;
+    HidMouseStateAtomicStorage storage[17];
 } HidMouseLifo;
+
+/// HidMouseSharedMemoryFormat
+typedef struct HidMouseSharedMemoryFormat {
+    HidMouseLifo lifo;
+    u8 padding[0xB0];
+} HidMouseSharedMemoryFormat;
 
 // End HidMouse
 
@@ -532,23 +536,28 @@ typedef struct HidMouseLifo {
 
 /// HidKeyboardState
 typedef struct HidKeyboardState {
-    u64 timestamp;
+    u64 sampling_number;
     u64 modifier;
     u32 keys[8];
 } HidKeyboardState;
 
 /// HidKeyboardStateAtomicStorage
 typedef struct HidKeyboardStateAtomicStorage {
-    u64 timestamp;
+    u64 sampling_number;
     HidKeyboardState state;
 } HidKeyboardStateAtomicStorage;
 
 /// HidKeyboardLifo
 typedef struct HidKeyboardLifo {
-    HidCommonStateHeader header;
-    HidKeyboardStateAtomicStorage entries[17];
-    u8 padding[0x28];
+    HidCommonLifoHeader header;
+    HidKeyboardStateAtomicStorage storage[17];
 } HidKeyboardLifo;
+
+/// HidKeyboardSharedMemoryFormat
+typedef struct HidKeyboardSharedMemoryFormat {
+    HidKeyboardLifo lifo;
+    u8 padding[0x28];
+} HidKeyboardSharedMemoryFormat;
 
 // End HidKeyboard
 
@@ -556,8 +565,7 @@ typedef struct HidKeyboardLifo {
 
 /// Npad colors.
 /// Color fields are zero when not set.
-typedef struct HidNpadControllerColor
-{
+typedef struct HidNpadControllerColor {
     u32 color_body;    ///< RGBA Body Color
     u32 color_buttons; ///< RGBA Buttons Color
 } HidNpadControllerColor;
@@ -573,110 +581,117 @@ typedef struct HidNpadStateHeader {
     HidNpadControllerColor right_colors;
 } HidNpadStateHeader;
 
-/// HidNpadStateEntry
-typedef struct HidNpadStateEntry {
-    u64 timestamp;
+/// HidNpadCommonState
+typedef struct HidNpadCommonState {
+    u64 sampling_number;
     u64 buttons;
     JoystickPosition joysticks[JOYSTICK_NUM_STICKS];
-    u32 connectionState;
-    u32 pad;
-} HidNpadStateEntry;
+    u32 attributes;
+    u32 reserved;
+} HidNpadCommonState;
 
-typedef HidNpadStateEntry HidNpadFullKeyState;
-typedef HidNpadStateEntry HidNpadHandheldState;
-typedef HidNpadStateEntry HidNpadJoyDualState;
-typedef HidNpadStateEntry HidNpadJoyLeftState;
-typedef HidNpadStateEntry HidNpadJoyRightState;
+typedef HidNpadCommonState HidNpadFullKeyState;
+typedef HidNpadCommonState HidNpadHandheldState;
+typedef HidNpadCommonState HidNpadJoyDualState;
+typedef HidNpadCommonState HidNpadJoyLeftState;
+typedef HidNpadCommonState HidNpadJoyRightState;
 
 /// HidNpadGcState
 typedef struct HidNpadGcState {
-    u64 timestamp;
+    u64 sampling_number;
     u64 buttons;
     JoystickPosition joysticks[JOYSTICK_NUM_STICKS];
-    u32 connectionState;
+    u32 attributes;
     u32 l_trigger;                                       ///< L analog trigger. Valid range: 0x0-0x7FFF.
     u32 r_trigger;                                       ///< R analog trigger. Valid range: 0x0-0x7FFF.
     u32 pad;
 } HidNpadGcState;
 
-typedef HidNpadStateEntry HidNpadPalmaState;
+typedef HidNpadCommonState HidNpadPalmaState;
 
 /// HidNpadLarkState
 typedef struct HidNpadLarkState {
-    u64 timestamp;
+    u64 sampling_number;
     u64 buttons;
     JoystickPosition joysticks[JOYSTICK_NUM_STICKS];    ///< Joysticks state are always zero.
-    u32 connectionState;
-    u32 unk;
+    u32 attributes;
+    u32 lark_type_l_and_main;                           ///< LarkTypeLAndMain
 } HidNpadLarkState;
 
 /// HidNpadHandheldLarkState
 typedef struct HidNpadHandheldLarkState {
-    u64 timestamp;
+    u64 sampling_number;
     u64 buttons;
     JoystickPosition joysticks[JOYSTICK_NUM_STICKS];
-    u32 connectionState;
-    u32 unk0;
-    u32 unk1;
+    u32 attributes;
+    u32 lark_type_l_and_main;                           ///< LarkTypeLAndMain
+    u32 lark_type_r;                                    ///< LarkTypeR
     u32 pad;
 } HidNpadHandheldLarkState;
 
 /// HidNpadLuciaState
 typedef struct HidNpadLuciaState {
-    u64 timestamp;
+    u64 sampling_number;
     u64 buttons;
     JoystickPosition joysticks[JOYSTICK_NUM_STICKS];    ///< Joysticks state are always zero.
-    u32 connectionState;
-    u32 unk;
+    u32 attributes;
+    u32 lucia_type;                                     ///< LuciaType
 } HidNpadLuciaState;
 
-typedef HidNpadStateEntry HidNpadSystemExtState;
-typedef HidNpadStateEntry HidNpadSystemState; ///< Joysticks state are always zero. Only the following button bits are available: KEY_A, KEY_B, KEY_X, KEY_Y, KEY_DLEFT, KEY_DUP, KEY_DRIGHT, KEY_DDOWN, KEY_L, KEY_R.
+typedef HidNpadCommonState HidNpadSystemExtState;
+typedef HidNpadCommonState HidNpadSystemState; ///< Joysticks state are always zero. Only the following button bits are available: KEY_A, KEY_B, KEY_X, KEY_Y, KEY_DLEFT, KEY_DUP, KEY_DRIGHT, KEY_DDOWN, KEY_L, KEY_R.
 
-/// HidControllerInputEntry
-typedef struct HidControllerInputEntry {
-    u64 timestamp;
-    HidNpadStateEntry state;
-} HidControllerInputEntry;
+/// HidNpadCommonStateAtomicStorage
+typedef struct HidNpadCommonStateAtomicStorage {
+    u64 sampling_number;
+    HidNpadCommonState state;
+} HidNpadCommonStateAtomicStorage;
 
-/// HidControllerLayout
-typedef struct HidControllerLayout {
-    HidCommonStateHeader header;
-    HidControllerInputEntry entries[17];
-} HidControllerLayout;
+/// HidNpadCommonLifo
+typedef struct HidNpadCommonLifo {
+    HidCommonLifoHeader header;
+    HidNpadCommonStateAtomicStorage storage[17];
+} HidNpadCommonLifo;
 
 /// HidNpadGcTriggerState
 typedef struct HidNpadGcTriggerState {
-    u64 timestamp;
+    u64 sampling_number;
     u32 l_trigger;
     u32 r_trigger;
 } HidNpadGcTriggerState;
 
-/// HidNpadGcTriggerStateEntry
-typedef struct HidNpadGcTriggerStateEntry {
-    u64 timestamp;
+/// HidNpadGcTriggerStateAtomicStorage
+typedef struct HidNpadGcTriggerStateAtomicStorage {
+    u64 sampling_number;
     HidNpadGcTriggerState state;
-} HidNpadGcTriggerStateEntry;
+} HidNpadGcTriggerStateAtomicStorage;
+
+/// HidNpadGcTriggerLifo
+typedef struct HidNpadGcTriggerLifo {
+    HidCommonLifoHeader header;
+    HidNpadGcTriggerStateAtomicStorage storage[17];
+} HidNpadGcTriggerLifo;
 
 /// HidSixAxisSensorState
 typedef struct HidSixAxisSensorState {
-    u64 unk_1;
-    u64 timestamp;
+    u64 delta_time;
+    u64 sampling_number;
     SixAxisSensorValues values;
-    u64 unk_3;
+    u32 attributes;
+    u32 reserved;
 } HidSixAxisSensorState;
 
-/// HidNpadSixAxisSensorState
-typedef struct HidNpadSixAxisSensorState {
-    u64 timestamp;
+/// HidSixAxisSensorStateAtomicStorage
+typedef struct HidSixAxisSensorStateAtomicStorage {
+    u64 sampling_number;
     HidSixAxisSensorState state;
-} HidNpadSixAxisSensorState;
+} HidSixAxisSensorStateAtomicStorage;
 
-/// HidControllerSixAxisLayout
-typedef struct HidControllerSixAxisLayout {
-    HidCommonStateHeader header;
-    HidNpadSixAxisSensorState entries[17];
-} HidControllerSixAxisLayout;
+/// HidNpadSixAxisSensorLifo
+typedef struct HidNpadSixAxisSensorLifo {
+    HidCommonLifoHeader header;
+    HidSixAxisSensorStateAtomicStorage storage[17];
+} HidNpadSixAxisSensorLifo;
 
 /// NpadSystemProperties
 typedef struct {
@@ -712,28 +727,28 @@ typedef struct {
 /// HidNfcXcdDeviceHandleState
 typedef struct HidNfcXcdDeviceHandleState {
     u64 handle;
-    u8 flag0;
-    u8 flag1;
-    u8 pad[6];
-    u64 timestamp;
+    u8 is_available;
+    u8 is_activated;
+    u8 reserved[6];
+    u64 sampling_number;
 } HidNfcXcdDeviceHandleState;
 
 /// HidNfcXcdDeviceHandleStateEntry
 typedef struct HidNfcXcdDeviceHandleStateEntry {
-    u64 timestamp;
+    u64 sampling_number;
     HidNfcXcdDeviceHandleState state;
 } HidNfcXcdDeviceHandleStateEntry;
 
 /// HidNpad
 typedef struct HidNpad {
     HidNpadStateHeader header;
-    HidControllerLayout layouts[7];
-    HidControllerSixAxisLayout sixaxis[6];
-    u32 deviceType;
-    u32 pad;
+    HidNpadCommonLifo layouts[7];
+    HidNpadSixAxisSensorLifo sixaxis[6];
+    u32 device_type;
+    u32 reserved;
     HidNpadSystemProperties system_properties;
     HidNpadSystemButtonProperties system_button_properties;
-    u32 batteryCharge[3];
+    u32 battery_level[3];
     union {
         struct { // [1.0.0-3.0.2]
             u8 nfc_xcd_device_handle_header[0x20];
@@ -749,19 +764,19 @@ typedef struct HidNpad {
     };
     u8 mutex[0x8];
     u8 unk_x4210[0x18];
-    HidCommonStateHeader npad_gc_trigger_header;
-    HidNpadGcTriggerStateEntry npad_gc_trigger_state[17];
-    u32 unk_x43E0;
-    u32 unk_x43E4;
-    u32 unk_x43E8;
-    u8 unk_x43EC[0xC14];
+    HidNpadGcTriggerLifo gc_trigger_lifo;
+    u32 lark_type_l_and_main;                                                       ///< LarkTypeLAndMain
+    u32 lark_type_r;                                                                ///< LarkTypeR
+    u32 lucia_type;                                                                 ///< LuciaType
+    u32 unk_x43EC;
+    u8 unk_x43F0[0xC10];
 } HidNpad;
 
 // End HidNpad
 
 /// HidConsoleSixAxisSensor
 typedef struct {
-    u64 timestamp;                   ///< Timestamp in samples
+    u64 sampling_number;             ///< Timestamp in samples
     u8 is_at_rest;                   ///< IsSevenSixAxisSensorAtRest
     u8 pad[0x3];
     float verticalization_error;     ///< VerticalizationError
@@ -772,9 +787,9 @@ typedef struct {
 /// HidSharedMemory
 typedef struct HidSharedMemory {
     u8 debug_pad[0x400];
-    HidTouchScreenLifo touchscreen;
-    HidMouseLifo mouse;
-    HidKeyboardLifo keyboard;
+    HidTouchScreenSharedMemoryFormat touchscreen;
+    HidMouseSharedMemoryFormat mouse;
+    HidKeyboardSharedMemoryFormat keyboard;
     u8 digitizer[0x1000];                               ///< [10.0.0+] Digitizer [1.0.0-9.2.0] BasicXpad
     u8 home_button[0x200];
     u8 sleep_button[0x200];
@@ -790,7 +805,7 @@ typedef struct HidSharedMemory {
 /// HidSevenSixAxisSensorState
 typedef struct {
     u64 timestamp0;
-    u64 timestamp1;
+    u64 sampling_number;
 
     u64 unk_x10;
     float unk_x18[10];
@@ -798,15 +813,15 @@ typedef struct {
 
 /// HidSevenSixAxisSensorStateEntry
 typedef struct {
-    u64 timestamp;
+    u64 sampling_number;
     u64 unused;
     HidSevenSixAxisSensorState state;
 } HidSevenSixAxisSensorStateEntry;
 
 /// HidSevenSixAxisSensorStates
 typedef struct {
-    HidCommonStateHeader header;
-    HidSevenSixAxisSensorStateEntry entries[0x21];
+    HidCommonLifoHeader header;
+    HidSevenSixAxisSensorStateEntry storage[0x21];
 } HidSevenSixAxisSensorStates;
 
 /// HidSixAxisSensorHandle

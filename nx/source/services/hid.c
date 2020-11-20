@@ -28,7 +28,7 @@ static RwLock g_hidLock;
 static HidTouchScreenState g_touchScreenState;
 static HidMouseState g_mouseState;
 static HidKeyboardState g_keyboardState;
-static HidNpadStateEntry g_controllerEntries[10];
+static HidNpadCommonState g_controllerEntries[10];
 
 static u64 g_mouseOld, g_mouseHeld, g_mouseDown, g_mouseUp;
 static u64 g_keyboardModOld, g_keyboardModHeld, g_keyboardModDown, g_keyboardModUp;
@@ -258,7 +258,7 @@ void hidScanInput(void) {
     }
 
     g_controllerP1AutoID = CONTROLLER_HANDHELD;
-    if (g_controllerEntries[CONTROLLER_PLAYER_1].connectionState & CONTROLLER_STATE_CONNECTED)
+    if (g_controllerEntries[CONTROLLER_PLAYER_1].attributes & CONTROLLER_STATE_CONNECTED)
        g_controllerP1AutoID = CONTROLLER_PLAYER_1;
 
     rwlockWriteUnlock(&g_hidLock);
@@ -326,7 +326,7 @@ Result hidGetNpadControllerColorSplit(HidNpadIdType id, HidNpadControllerColor *
 }
 
 u32 hidGetNpadDeviceType(HidNpadIdType id) {
-    return atomic_load_explicit(&_hidGetNpadInternalState(id)->deviceType, memory_order_acquire);
+    return atomic_load_explicit(&_hidGetNpadInternalState(id)->device_type, memory_order_acquire);
 }
 
 void hidGetNpadSystemProperties(HidNpadIdType id, HidNpadSystemProperties *out) {
@@ -338,7 +338,7 @@ void hidGetNpadSystemButtonProperties(HidNpadIdType id, HidNpadSystemButtonPrope
 }
 
 static void _hidGetNpadPowerInfo(HidNpad *npad, HidPowerInfo *info, u32 powerInfo, u32 i) {
-    info->batteryCharge = atomic_load_explicit(&npad->batteryCharge[i], memory_order_acquire);
+    info->batteryCharge = atomic_load_explicit(&npad->battery_level[i], memory_order_acquire);
     if (info->batteryCharge > 4) info->batteryCharge = 4; // sdknso would Abort when this occurs.
 
     info->isCharging = (powerInfo & BIT(i)) != 0;
@@ -372,29 +372,29 @@ u8 hidGetAppletFooterUiTypes(HidNpadIdType id) {
     return atomic_load_explicit(&_hidGetNpadInternalState(id)->applet_footer_ui_type, memory_order_acquire);
 }
 
-static size_t _hidGetStates(HidCommonStateHeader *header, void* in_states, size_t max_states, size_t state_offset, size_t sampling_number_offset, void* states, size_t entrysize, size_t count) {
-    s32 total_entries = (s32)atomic_load_explicit(&header->max_entry, memory_order_acquire);
+static size_t _hidGetStates(HidCommonLifoHeader *header, void* in_states, size_t max_states, size_t state_offset, size_t sampling_number_offset, void* states, size_t entrysize, size_t count) {
+    s32 total_entries = (s32)atomic_load_explicit(&header->count, memory_order_acquire);
     if (total_entries < 0) total_entries = 0;
     if (total_entries > count) total_entries = count;
-    s32 latest_entry = (s32)atomic_load_explicit(&header->latest_entry, memory_order_acquire);
+    s32 tail = (s32)atomic_load_explicit(&header->tail, memory_order_acquire);
 
     for (s32 i=0; i<total_entries; i++) {
-        s32 entrypos = (((latest_entry + (max_states+1)) - total_entries) + i) % max_states;
-        HidCommonStateEntry *state_entry = (HidCommonStateEntry*)((uintptr_t)in_states + entrypos*(state_offset+entrysize));
+        s32 entrypos = (((tail + (max_states+1)) - total_entries) + i) % max_states;
+        void* state_entry = (void*)((uintptr_t)in_states + entrypos*(state_offset+entrysize));
         void* out_state = (void*)((uintptr_t)states + (total_entries-i-1)*entrysize);
         void* out_state_prev = (void*)((uintptr_t)states + (total_entries-i)*entrysize);
 
-        u64 timestamp0=0, timestamp1=0;
+        u64 sampling_number0=0, sampling_number1=0;
 
-        timestamp0 = atomic_load_explicit(&state_entry->timestamp, memory_order_acquire);
+        sampling_number0 = atomic_load_explicit((u64*)state_entry, memory_order_acquire);
         memcpy(out_state, (void*)((uintptr_t)state_entry + state_offset), entrysize);
-        timestamp1 = atomic_load_explicit(&state_entry->timestamp, memory_order_acquire);
+        sampling_number1 = atomic_load_explicit((u64*)state_entry, memory_order_acquire);
 
-        if (timestamp0 != timestamp1 || (i>0 && *((u64*)((uintptr_t)out_state+sampling_number_offset)) - *((u64*)((uintptr_t)out_state_prev+sampling_number_offset)) != 1)) {
-            s32 tmpcount = (s32)atomic_load_explicit(&header->max_entry, memory_order_acquire);
+        if (sampling_number0 != sampling_number1 || (i>0 && *((u64*)((uintptr_t)out_state+sampling_number_offset)) - *((u64*)((uintptr_t)out_state_prev+sampling_number_offset)) != 1)) {
+            s32 tmpcount = (s32)atomic_load_explicit(&header->count, memory_order_acquire);
             tmpcount = total_entries < tmpcount ? tmpcount : total_entries;
             total_entries = tmpcount < count ? tmpcount : count;
-            latest_entry = (s32)atomic_load_explicit(&header->latest_entry, memory_order_acquire);
+            tail = (s32)atomic_load_explicit(&header->tail, memory_order_acquire);
 
             i=-1;
         }
@@ -413,7 +413,7 @@ size_t hidGetTouchScreenStates(HidTouchScreenState *states, size_t count) {
     if (sharedmem == NULL)
         diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_NotInitialized));
 
-    size_t total = _hidGetStates(&sharedmem->touchscreen.header, sharedmem->touchscreen.entries, 17, offsetof(HidTouchScreenStateAtomicStorage,state), offsetof(HidTouchScreenState,timestamp), states, sizeof(HidTouchScreenState), count);
+    size_t total = _hidGetStates(&sharedmem->touchscreen.lifo.header, sharedmem->touchscreen.lifo.storage, 17, offsetof(HidTouchScreenStateAtomicStorage,state), offsetof(HidTouchScreenState,sampling_number), states, sizeof(HidTouchScreenState), count);
     size_t max_touches = sizeof(states[0].touches)/sizeof(states[0].touches[0]);
     for (size_t i=0; i<total; i++) {
         if (states[i].count > max_touches) states[i].count = max_touches;
@@ -431,7 +431,7 @@ size_t hidGetMouseStates(HidMouseState *states, size_t count) {
     if (sharedmem == NULL)
         diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_NotInitialized));
 
-    size_t total = _hidGetStates(&sharedmem->mouse.header, sharedmem->mouse.entries, 17, offsetof(HidMouseStateAtomicStorage,state), offsetof(HidMouseState,timestamp), states, sizeof(HidMouseState), count);
+    size_t total = _hidGetStates(&sharedmem->mouse.lifo.header, sharedmem->mouse.lifo.storage, 17, offsetof(HidMouseStateAtomicStorage,state), offsetof(HidMouseState,sampling_number), states, sizeof(HidMouseState), count);
     return total;
 }
 
@@ -445,7 +445,7 @@ size_t hidGetKeyboardStates(HidKeyboardState *states, size_t count) {
     if (sharedmem == NULL)
         diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_NotInitialized));
 
-    size_t total = _hidGetStates(&sharedmem->keyboard.header, sharedmem->keyboard.entries, 17, offsetof(HidKeyboardStateAtomicStorage,state), offsetof(HidKeyboardState,timestamp), states, sizeof(HidKeyboardState), count);
+    size_t total = _hidGetStates(&sharedmem->keyboard.lifo.header, sharedmem->keyboard.lifo.storage, 17, offsetof(HidKeyboardStateAtomicStorage,state), offsetof(HidKeyboardState,sampling_number), states, sizeof(HidKeyboardState), count);
     return total;
 }
 
@@ -454,10 +454,10 @@ void hidInitializeNpad(void) {
     if (R_FAILED(rc)) diagAbortWithResult(rc);
 }
 
-static size_t _hidGetNpadStates(HidNpad *npad, u32 layout, HidNpadStateEntry *states, size_t count) {
-    HidControllerLayout *states_buf = &npad->layouts[layout];
+static size_t _hidGetNpadStates(HidNpad *npad, u32 layout, HidNpadCommonState *states, size_t count) {
+    HidNpadCommonLifo *states_buf = &npad->layouts[layout];
     if (count > 17) count = 17;
-    return _hidGetStates(&states_buf->header, states_buf->entries, 17, offsetof(HidControllerInputEntry,state), offsetof(HidNpadStateEntry,timestamp), states, sizeof(HidNpadStateEntry), count);
+    return _hidGetStates(&states_buf->header, states_buf->storage, 17, offsetof(HidNpadCommonStateAtomicStorage,state), offsetof(HidNpadCommonState,sampling_number), states, sizeof(HidNpadCommonState), count);
 }
 
 size_t hidGetNpadStatesFullKey(HidNpadIdType id, HidNpadFullKeyState *states, size_t count) {
@@ -506,25 +506,25 @@ size_t hidGetNpadStatesJoyRight(HidNpadIdType id, HidNpadJoyRightState *states, 
 }
 
 size_t hidGetNpadStatesGc(HidNpadIdType id, HidNpadGcState *states, size_t count) {
-    HidNpadStateEntry tmp_entries[17];
+    HidNpadCommonState tmp_entries[17];
     HidNpadGcTriggerState tmp_entries_trigger[17];
 
     HidNpad *npad = _hidGetNpadInternalState(id);
     size_t total = _hidGetNpadStates(npad, 0, tmp_entries, count);
-    size_t total2 = _hidGetStates(&npad->npad_gc_trigger_header, npad->npad_gc_trigger_state, 17, offsetof(HidNpadGcTriggerStateEntry,state), offsetof(HidNpadGcTriggerState,timestamp), tmp_entries_trigger, sizeof(HidNpadGcTriggerState), total);
+    size_t total2 = _hidGetStates(&npad->gc_trigger_lifo.header, npad->gc_trigger_lifo.storage, 17, offsetof(HidNpadGcTriggerStateAtomicStorage,state), offsetof(HidNpadGcTriggerState,sampling_number), tmp_entries_trigger, sizeof(HidNpadGcTriggerState), total);
     if (total2 < total) total = total2;
 
     memset(states, 0, sizeof(HidNpadGcState) * total);
 
     for (size_t i=0; i<total; i++) {
-        states[i].timestamp = tmp_entries[i].timestamp;
+        states[i].sampling_number = tmp_entries[i].sampling_number;
 
         // sdknso would handle button-bitmasking with ControlPadRestriction here.
 
         states[i].buttons = tmp_entries[i].buttons;
 
         memcpy(states[i].joysticks, tmp_entries[i].joysticks, sizeof(tmp_entries[i].joysticks)); // sdknso uses index 0 for the src here.
-        states[i].connectionState = tmp_entries[i].connectionState;
+        states[i].attributes = tmp_entries[i].attributes;
 
         states[i].l_trigger = tmp_entries_trigger[i].l_trigger;
         states[i].r_trigger = tmp_entries_trigger[i].r_trigger;
@@ -543,18 +543,18 @@ size_t hidGetNpadStatesPalma(HidNpadIdType id, HidNpadPalmaState *states, size_t
 }
 
 size_t hidGetNpadStatesLark(HidNpadIdType id, HidNpadLarkState *states, size_t count) {
-    HidNpadStateEntry tmp_entries[17];
+    HidNpadCommonState tmp_entries[17];
 
     HidNpad *npad = _hidGetNpadInternalState(id);
     size_t total = _hidGetNpadStates(npad, 0, tmp_entries, count);
 
     memset(states, 0, sizeof(HidNpadLarkState) * total);
 
-    u32 unk = atomic_load_explicit(&npad->unk_x43E0, memory_order_acquire);
-    if (!(unk>=1 && unk<=4)) unk = 0;
+    u32 lark_type_l_and_main = atomic_load_explicit(&npad->lark_type_l_and_main, memory_order_acquire);
+    if (!(lark_type_l_and_main>=1 && lark_type_l_and_main<=4)) lark_type_l_and_main = 0;
 
     for (size_t i=0; i<total; i++) {
-        states[i].timestamp = tmp_entries[i].timestamp;
+        states[i].sampling_number = tmp_entries[i].sampling_number;
 
         // sdknso would handle button-bitmasking with ControlPadRestriction here.
 
@@ -562,56 +562,56 @@ size_t hidGetNpadStatesLark(HidNpadIdType id, HidNpadLarkState *states, size_t c
 
         // Leave joysticks state at zeros.
 
-        states[i].connectionState = tmp_entries[i].connectionState;
-        states[i].unk = unk;
+        states[i].attributes = tmp_entries[i].attributes;
+        states[i].lark_type_l_and_main = lark_type_l_and_main;
     }
 
     return total;
 }
 
 size_t hidGetNpadStatesHandheldLark(HidNpadIdType id, HidNpadHandheldLarkState *states, size_t count) {
-    HidNpadStateEntry tmp_entries[17];
+    HidNpadCommonState tmp_entries[17];
 
     HidNpad *npad = _hidGetNpadInternalState(id);
     size_t total = _hidGetNpadStates(npad, 1, tmp_entries, count);
 
     memset(states, 0, sizeof(HidNpadHandheldLarkState) * total);
 
-    u32 unk0 = atomic_load_explicit(&npad->unk_x43E0, memory_order_acquire);
-    if (!(unk0>=1 && unk0<=4)) unk0 = 0;
+    u32 lark_type_l_and_main = atomic_load_explicit(&npad->lark_type_l_and_main, memory_order_acquire);
+    if (!(lark_type_l_and_main>=1 && lark_type_l_and_main<=4)) lark_type_l_and_main = 0;
 
-    u32 unk1 = atomic_load_explicit(&npad->unk_x43E4, memory_order_acquire);
-    if (!(unk1>=1 && unk1<=4)) unk1 = 0;
+    u32 lark_type_r = atomic_load_explicit(&npad->lark_type_r, memory_order_acquire);
+    if (!(lark_type_r>=1 && lark_type_r<=4)) lark_type_r = 0;
 
     for (size_t i=0; i<total; i++) {
-        states[i].timestamp = tmp_entries[i].timestamp;
+        states[i].sampling_number = tmp_entries[i].sampling_number;
 
         // sdknso would handle button-bitmasking with ControlPadRestriction here.
 
         states[i].buttons = tmp_entries[i].buttons;
 
         memcpy(states[i].joysticks, tmp_entries[i].joysticks, sizeof(tmp_entries[i].joysticks)); // sdknso uses index 0 for the src here.
-        states[i].connectionState = tmp_entries[i].connectionState;
-        states[i].unk0 = unk0;
-        states[i].unk1 = unk1;
+        states[i].attributes = tmp_entries[i].attributes;
+        states[i].lark_type_l_and_main = lark_type_l_and_main;
+        states[i].lark_type_r = lark_type_r;
     }
 
     return total;
 }
 
 size_t hidGetNpadStatesLucia(HidNpadIdType id, HidNpadLuciaState *states, size_t count) {
-    HidNpadStateEntry tmp_entries[17];
+    HidNpadCommonState tmp_entries[17];
 
     HidNpad *npad = _hidGetNpadInternalState(id);
     size_t total = _hidGetNpadStates(npad, 0, tmp_entries, count);
 
     memset(states, 0, sizeof(HidNpadLuciaState) * total);
 
-    u32 unk = atomic_load_explicit(&npad->unk_x43E8, memory_order_acquire);
-    if (!(unk>=1 && unk<=3)) unk = 0;
+    u32 lucia_type = atomic_load_explicit(&npad->lucia_type, memory_order_acquire);
+    if (!(lucia_type>=1 && lucia_type<=3)) lucia_type = 0;
 
     for (size_t i=0; i<total; i++) {
-        states[i].timestamp = tmp_entries[i].timestamp;
+        states[i].sampling_number = tmp_entries[i].sampling_number;
 
         // sdknso would handle button-bitmasking with ControlPadRestriction here.
 
@@ -619,8 +619,8 @@ size_t hidGetNpadStatesLucia(HidNpadIdType id, HidNpadLuciaState *states, size_t
 
         // Leave joysticks state at zeros.
 
-        states[i].connectionState = tmp_entries[i].connectionState;
-        states[i].unk = unk;
+        states[i].attributes = tmp_entries[i].attributes;
+        states[i].lucia_type = lucia_type;
     }
 
     return total;
@@ -696,7 +696,7 @@ size_t hidGetSixAxisSensorStates(HidSixAxisSensorHandle handle, HidSixAxisSensor
     }
 
     HidNpad *npad = _hidGetNpadInternalState(handle.npad_id_type);
-    size_t total = _hidGetStates(&npad->sixaxis[index].header, npad->sixaxis[index].entries, 17, offsetof(HidNpadSixAxisSensorState,state), offsetof(HidSixAxisSensorState,timestamp), states, sizeof(HidSixAxisSensorState), count);
+    size_t total = _hidGetStates(&npad->sixaxis[index].header, npad->sixaxis[index].storage, 17, offsetof(HidSixAxisSensorStateAtomicStorage,state), offsetof(HidSixAxisSensorState,sampling_number), states, sizeof(HidSixAxisSensorState), count);
     return total;
 }
 
@@ -706,7 +706,7 @@ bool hidIsControllerConnected(HidControllerID id) {
     if (id < 0 || id > 9) return 0;
 
     rwlockReadLock(&g_hidLock);
-    bool flag = (g_controllerEntries[id].connectionState & CONTROLLER_STATE_CONNECTED) != 0;
+    bool flag = (g_controllerEntries[id].attributes & CONTROLLER_STATE_CONNECTED) != 0;
     rwlockReadUnlock(&g_hidLock);
     return flag;
 }
@@ -1602,7 +1602,7 @@ Result hidGetSevenSixAxisSensorStates(HidSevenSixAxisSensorState *states, size_t
 
     HidSevenSixAxisSensorStates *states_buf = (HidSevenSixAxisSensorStates*)g_sevenSixAxisSensorBuffer;
 
-    size_t total = _hidGetStates(&states_buf->header, states_buf->entries, 0x21, offsetof(HidSevenSixAxisSensorStateEntry,state), offsetof(HidSevenSixAxisSensorState,timestamp1), states, sizeof(HidSevenSixAxisSensorState), count);
+    size_t total = _hidGetStates(&states_buf->header, states_buf->storage, 0x21, offsetof(HidSevenSixAxisSensorStateEntry,state), offsetof(HidSevenSixAxisSensorState,sampling_number), states, sizeof(HidSevenSixAxisSensorState), count);
     if (total_out) *total_out = total;
 
     return 0;
