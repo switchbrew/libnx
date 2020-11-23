@@ -821,9 +821,14 @@ typedef struct {
     u32 battery_level;    ///< BatteryLevel, always 0-4.
 } HidPowerInfo;
 
+/// XcdDeviceHandle
+typedef struct XcdDeviceHandle {
+    u64 handle;
+} XcdDeviceHandle;
+
 /// HidNfcXcdDeviceHandleStateImpl
 typedef struct HidNfcXcdDeviceHandleStateImpl {
-    u64 handle;
+    XcdDeviceHandle handle;
     u8 is_available;
     u8 is_activated;
     u8 reserved[6];
