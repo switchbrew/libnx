@@ -247,9 +247,9 @@ typedef enum {
 
 /// HidColorAttribute
 typedef enum {
-    HidColorAttribute_Ok = 0,                         ///< Ok
-    HidColorAttribute_ReadError = 1,                  ///< ReadError
-    HidColorAttribute_NoController = 2,               ///< NoController
+    HidColorAttribute_Ok              = 0,            ///< Ok
+    HidColorAttribute_ReadError       = 1,            ///< ReadError
+    HidColorAttribute_NoController    = 2,            ///< NoController
 } HidColorAttribute;
 
 /// HidControllerKeys
@@ -328,12 +328,12 @@ typedef enum {
 
 /// HidNpadAttribute
 typedef enum {
-    NpadAttribute_IsConnected          = BIT(0),    ///< IsConnected
-    NpadAttribute_IsWired              = BIT(1),    ///< IsWired
-    NpadAttribute_IsLeftConnected      = BIT(2),    ///< IsLeftConnected
-    NpadAttribute_IsLeftWired          = BIT(3),    ///< IsLeftWired
-    NpadAttribute_IsRightConnected     = BIT(4),    ///< IsRightConnected
-    NpadAttribute_IsRightWired         = BIT(5),    ///< IsRightWired
+    HidNpadAttribute_IsConnected          = BIT(0),    ///< IsConnected
+    HidNpadAttribute_IsWired              = BIT(1),    ///< IsWired
+    HidNpadAttribute_IsLeftConnected      = BIT(2),    ///< IsLeftConnected
+    HidNpadAttribute_IsLeftWired          = BIT(3),    ///< IsLeftWired
+    HidNpadAttribute_IsRightConnected     = BIT(4),    ///< IsRightConnected
+    HidNpadAttribute_IsRightWired         = BIT(5),    ///< IsRightWired
 } HidNpadAttribute;
 
 /// HidSixAxisSensorAttribute
@@ -464,7 +464,7 @@ typedef enum {
     HidAppletFooterUiType_LarkNesLeft                      = 17,    ///< LarkNesLeft
     HidAppletFooterUiType_LarkNesRight                     = 18,    ///< LarkNesRight
     HidAppletFooterUiType_Lucia                            = 19,    ///< Lucia
-    HidAppletFooterUiType_Verification                     = 20 ,   ///< Verification
+    HidAppletFooterUiType_Verification                     = 20,    ///< Verification
 } HidAppletFooterUiType;
 
 /// NpadInterfaceType
@@ -722,7 +722,7 @@ typedef struct HidNpadHandheldLarkState {
     JoystickPosition joysticks[JOYSTICK_NUM_STICKS];
     u32 attributes;                                     ///< Bitfield of \ref HidNpadAttribute.
     HidNpadLarkType lark_type_l_and_main;               ///< \ref HidNpadLarkType LarkTypeLAndMain
-    u32 lark_type_r;                                    ///< \ref HidNpadLarkType LarkTypeR
+    HidNpadLarkType lark_type_r;                        ///< \ref HidNpadLarkType LarkTypeR
     u32 pad;
 } HidNpadHandheldLarkState;
 

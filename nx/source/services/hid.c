@@ -258,7 +258,7 @@ void hidScanInput(void) {
     }
 
     g_controllerP1AutoID = CONTROLLER_HANDHELD;
-    if (g_controllerEntries[CONTROLLER_PLAYER_1].attributes & NpadAttribute_IsConnected)
+    if (g_controllerEntries[CONTROLLER_PLAYER_1].attributes & HidNpadAttribute_IsConnected)
        g_controllerP1AutoID = CONTROLLER_PLAYER_1;
 
     rwlockWriteUnlock(&g_hidLock);
@@ -706,7 +706,7 @@ bool hidIsControllerConnected(HidControllerID id) {
     if (id < 0 || id > 9) return 0;
 
     rwlockReadLock(&g_hidLock);
-    bool flag = (g_controllerEntries[id].attributes & NpadAttribute_IsConnected) != 0;
+    bool flag = (g_controllerEntries[id].attributes & HidNpadAttribute_IsConnected) != 0;
     rwlockReadUnlock(&g_hidLock);
     return flag;
 }
