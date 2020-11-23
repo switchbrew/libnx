@@ -1139,7 +1139,7 @@ Result hidSetSupportedNpadStyleSet(u32 style_set) {
 static Result _hidActivateGesture(void) {
     u32 val=1;
 
-    return _hidCmdInU32AruidNoOut(val, 91); // ActivateNpadWithRevision
+    return _hidCmdInU32AruidNoOut(val, 91); // ActivateGesture
 }
 
 Result hidGetSupportedNpadStyleSet(u32 *style_set) {
