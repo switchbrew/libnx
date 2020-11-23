@@ -44,6 +44,7 @@ static Result _hidActivateTouchScreen(void);
 static Result _hidActivateMouse(void);
 static Result _hidActivateKeyboard(void);
 static Result _hidActivateNpad(void);
+static Result _hidActivateGesture(void);
 
 static Result _hidSetDualModeAll(void);
 
@@ -700,6 +701,20 @@ size_t hidGetSixAxisSensorStates(HidSixAxisSensorHandle handle, HidSixAxisSensor
     return total;
 }
 
+void hidInitializeGesture(void) {
+    Result rc = _hidActivateGesture();
+    if (R_FAILED(rc)) diagAbortWithResult(rc);
+}
+
+size_t hidGetGestureStates(HidGestureState *states, size_t count) {
+    HidSharedMemory *sharedmem = (HidSharedMemory*)hidGetSharedmemAddr();
+    if (sharedmem == NULL)
+        diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_NotInitialized));
+
+    size_t total = _hidGetStates(&sharedmem->gesture.lifo.header, sharedmem->gesture.lifo.storage, 17, offsetof(HidGestureDummyStateAtomicStorage,state), offsetof(HidGestureState,sampling_number), states, sizeof(HidGestureState), count);
+    return total;
+}
+
 bool hidIsControllerConnected(HidControllerID id) {
     if (id==CONTROLLER_P1_AUTO)
         return hidIsControllerConnected(g_controllerP1AutoID);
@@ -1119,6 +1134,12 @@ Result hidResetGyroscopeZeroDriftMode(HidSixAxisSensorHandle handle) {
 
 Result hidSetSupportedNpadStyleSet(u32 style_set) {
     return _hidCmdInU32AruidNoOut(style_set, 100);
+}
+
+static Result _hidActivateGesture(void) {
+    u32 val=1;
+
+    return _hidCmdInU32AruidNoOut(val, 91); // ActivateNpadWithRevision
 }
 
 Result hidGetSupportedNpadStyleSet(u32 *style_set) {

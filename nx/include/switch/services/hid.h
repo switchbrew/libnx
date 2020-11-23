@@ -797,8 +797,8 @@ typedef struct {
     u64 bit6 : 1;                                                    ///< Unused
     u64 bit7 : 1;                                                    ///< Unused
     u64 bit8 : 1;                                                    ///< Unused
-    u64 is_unsuported_button_pressed_on_npad_system : 1;             ///< IsUnsuportedButtonPressedOnNpadSystem
-    u64 is_unsuported_button_pressed_on_npad_system_ext : 1;         ///< IsUnsuportedButtonPressedOnNpadSystemExt
+    u64 is_unsupported_button_pressed_on_npad_system : 1;            ///< IsUnsupportedButtonPressedOnNpadSystem
+    u64 is_unsupported_button_pressed_on_npad_system_ext : 1;        ///< IsUnsupportedButtonPressedOnNpadSystemExt
 
     u64 is_abxy_button_oriented : 1;                                 ///< IsAbxyButtonOriented
     u64 is_sl_sr_button_oriented : 1;                                ///< IsSlSrButtonOriented
@@ -878,6 +878,53 @@ typedef struct HidNpad {
 
 // End HidNpad
 
+// Begin HidGesture
+
+/// HidGesturePoint
+typedef struct HidGesturePoint {
+    u32 x;                                              ///< X
+    u32 y;                                              ///< Y
+} HidGesturePoint;
+
+/// HidGestureState
+typedef struct HidGestureState {
+    u64 sampling_number;                                ///< SamplingNumber
+    u64 context_number;                                 ///< ContextNumber
+    u32 type;                                           ///< \ref HidGestureType
+    u32 direction;                                      ///< \ref HidGestureDirection
+    u32 x;                                              ///< X
+    u32 y;                                              ///< Y
+    s32 delta_x;                                        ///< DeltaX
+    s32 delta_y;                                        ///< DeltaY
+    float velocity_x;                                   ///< VelocityX
+    float velocity_y;                                   ///< VelocityY
+    u32 attributes;                                     ///< Bitfield of \ref HidGestureAttribute.
+    u32 scale;                                          ///< Scale
+    u32 rotation_angle;                                 ///< RotationAngle
+    s32 point_count;                                    ///< Number of entries in the points array.
+    HidGesturePoint points[4];                          ///< Array of \ref HidGesturePoint with the above count.
+} HidGestureState;
+
+/// HidGestureDummyStateAtomicStorage
+typedef struct HidGestureDummyStateAtomicStorage {
+    u64 sampling_number;                                ///< SamplingNumber
+    HidGestureState state;
+} HidGestureDummyStateAtomicStorage;
+
+/// HidGestureLifo
+typedef struct HidGestureLifo {
+    HidCommonLifoHeader header;
+    HidGestureDummyStateAtomicStorage storage[17];
+} HidGestureLifo;
+
+/// HidGestureSharedMemoryFormat
+typedef struct HidGestureSharedMemoryFormat {
+    HidGestureLifo lifo;
+    u8 pad[0xF8];
+} HidGestureSharedMemoryFormat;
+
+// End HidGesture
+
 /// HidConsoleSixAxisSensor
 typedef struct {
     u64 sampling_number;                                ///< SamplingNumber
@@ -901,7 +948,7 @@ typedef struct HidSharedMemory {
     u8 input_detector[0x800];
     u8 unique_pad[0x4000];                              ///< [1.0.0-4.1.0] UniquePad
     HidNpad npad[10];
-    u8 gesture[0x800];
+    HidGestureSharedMemoryFormat gesture;
     HidConsoleSixAxisSensor console_six_axis_sensor;    ///< [5.0.0+] ConsoleSixAxisSensor
     u8 unk_x3C220[0x3DE0];
 } HidSharedMemory;
@@ -1052,6 +1099,9 @@ size_t hidGetNpadStatesSystemExt(HidNpadIdType id, HidNpadSystemExtState *states
 size_t hidGetNpadStatesSystem(HidNpadIdType id, HidNpadSystemState *states, size_t count);
 
 size_t hidGetSixAxisSensorStates(HidSixAxisSensorHandle handle, HidSixAxisSensorState *states, size_t count);
+
+void hidInitializeGesture(void);
+size_t hidGetGestureStates(HidGestureState *states, size_t count);
 
 bool hidIsControllerConnected(HidControllerID id);
 
