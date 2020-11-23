@@ -339,11 +339,12 @@ void hidGetNpadSystemButtonProperties(HidNpadIdType id, HidNpadSystemButtonPrope
 }
 
 static void _hidGetNpadPowerInfo(HidNpadInternalState *npad, HidPowerInfo *info, u64 is_charging, u64 is_powered, u32 i) {
-    info->battery_level = atomic_load_explicit(&npad->battery_level[i], memory_order_acquire);
+    *info = (HidPowerInfo){
+        .battery_level = atomic_load_explicit(&npad->battery_level[i], memory_order_acquire),
+        .is_charging = (is_charging & BIT(i)) != 0,
+        .is_powered = (is_powered & BIT(i)) != 0,
+    };
     if (info->battery_level > 4) info->battery_level = 4; // sdknso would Abort when this occurs.
-
-    info->is_charging = (is_charging & BIT(i)) != 0;
-    info->is_powered = (is_powered & BIT(i)) != 0;
 }
 
 void hidGetNpadPowerInfoSingle(HidNpadIdType id, HidPowerInfo *info) {
