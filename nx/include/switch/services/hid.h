@@ -891,8 +891,22 @@ typedef struct HidNpadInternalState {
     u32 joy_assignment_mode;                     ///< \ref HidNpadJoyAssignmentMode
     HidNpadFullKeyColorState full_key_color;     ///< \ref HidNpadFullKeyColorState
     HidNpadJoyColorState joy_color;              ///< \ref HidNpadJoyColorState
-    HidNpadCommonLifo layouts[7];
-    HidNpadSixAxisSensorLifo sixaxis[6];
+
+    HidNpadCommonLifo full_key_lifo;             ///< FullKeyLifo
+    HidNpadCommonLifo handheld_lifo;             ///< HandheldLifo
+    HidNpadCommonLifo joy_dual_lifo;             ///< JoyDualLifo
+    HidNpadCommonLifo joy_left_lifo;             ///< JoyLeftLifo
+    HidNpadCommonLifo joy_right_lifo;            ///< JoyRightLifo
+    HidNpadCommonLifo palma_lifo;                ///< PalmaLifo
+    HidNpadCommonLifo system_ext_lifo;           ///< SystemExtLifo
+
+    HidNpadSixAxisSensorLifo full_key_six_axis_sensor_lifo;                         ///< FullKeySixAxisSensorLifo
+    HidNpadSixAxisSensorLifo handheld_six_axis_sensor_lifo;                         ///< HandheldSixAxisSensorLifo
+    HidNpadSixAxisSensorLifo joy_dual_left_six_axis_sensor_lifo;                    ///< JoyDualLeftSixAxisSensorLifo
+    HidNpadSixAxisSensorLifo joy_dual_right_six_axis_sensor_lifo;                   ///< JoyDualRightSixAxisSensorLifo
+    HidNpadSixAxisSensorLifo joy_left_six_axis_sensor_lifo;                         ///< JoyLeftSixAxisSensorLifo
+    HidNpadSixAxisSensorLifo joy_right_six_axis_sensor_lifo;                        ///< JoyRightSixAxisSensorLifo
+
     u32 device_type;                             ///< Bitfield of \ref HidDeviceTypeBits.
     u32 reserved;                                ///< Reserved
     HidNpadSystemProperties system_properties;
