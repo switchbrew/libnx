@@ -32,7 +32,7 @@ static HidNpadCommonState g_controllerEntries[10];
 
 static u64 g_mouseOld, g_mouseHeld, g_mouseDown, g_mouseUp;
 static u64 g_keyboardModOld, g_keyboardModHeld, g_keyboardModDown, g_keyboardModUp;
-static u32 g_keyboardOld[8], g_keyboardHeld[8], g_keyboardDown[8], g_keyboardUp[8];
+static u64 g_keyboardOld[4], g_keyboardHeld[4], g_keyboardDown[4], g_keyboardUp[4];
 static u64 g_controllerOld[10], g_controllerHeld[10], g_controllerDown[10], g_controllerUp[10];
 
 static HidControllerID g_controllerP1AutoID;
@@ -92,9 +92,9 @@ static void _hidReset(void) {
 
     g_mouseOld = g_mouseHeld = g_mouseDown = g_mouseUp = 0;
     g_keyboardModOld = g_keyboardModHeld = g_keyboardModDown = g_keyboardModUp = 0;
-    for (int i = 0; i < 8; i++)
+    for (u32 i = 0; i < 4; i++)
         g_keyboardOld[i] = g_keyboardHeld[i] = g_keyboardDown[i] = g_keyboardUp[i] = 0;
-    for (int i = 0; i < 10; i++)
+    for (u32 i = 0; i < 10; i++)
         g_controllerOld[i] = g_controllerHeld[i] = g_controllerDown[i] = g_controllerUp[i] = 0;
 
     g_controllerP1AutoID = CONTROLLER_HANDHELD;
@@ -179,13 +179,13 @@ void hidScanInput(void) {
     }
 
     if (hidGetKeyboardStates(&g_keyboardState, 1)) {
-        g_keyboardModHeld = g_keyboardState.modifier;
-        for (u32 i = 0; i < 8; i++) {
+        g_keyboardModHeld = g_keyboardState.modifiers;
+        for (u32 i = 0; i < 4; i++) {
             g_keyboardHeld[i] = g_keyboardState.keys[i];
         }
         g_keyboardModDown = (~g_keyboardModOld) & g_keyboardModHeld;
         g_keyboardModUp = g_keyboardModOld & (~g_keyboardModHeld);
-        for (u32 i = 0; i < 8; i++) {
+        for (u32 i = 0; i < 4; i++) {
             g_keyboardDown[i] = (~g_keyboardOld[i]) & g_keyboardHeld[i];
             g_keyboardUp[i] = g_keyboardOld[i] & (~g_keyboardHeld[i]);
         }
@@ -258,7 +258,7 @@ void hidScanInput(void) {
     }
 
     g_controllerP1AutoID = CONTROLLER_HANDHELD;
-    if (g_controllerEntries[CONTROLLER_PLAYER_1].attributes & CONTROLLER_STATE_CONNECTED)
+    if (g_controllerEntries[CONTROLLER_PLAYER_1].attributes & NpadAttribute_IsConnected)
        g_controllerP1AutoID = CONTROLLER_PLAYER_1;
 
     rwlockWriteUnlock(&g_hidLock);
@@ -280,13 +280,13 @@ static HidNpad* _hidGetNpadInternalState(HidNpadIdType id) {
 }
 
 u32 hidGetNpadStyleSet(HidNpadIdType id) {
-    return atomic_load_explicit(&_hidGetNpadInternalState(id)->header.style_set, memory_order_acquire);
+    return atomic_load_explicit(&_hidGetNpadInternalState(id)->style_set, memory_order_acquire);
 }
 
 HidNpadJoyAssignmentMode hidGetNpadJoyAssignment(HidNpadIdType id) {
     HidNpad *npad = _hidGetNpadInternalState(id);
 
-    HidNpadJoyAssignmentMode tmp = atomic_load_explicit(&npad->header.npad_joy_assignment_mode, memory_order_acquire);
+    HidNpadJoyAssignmentMode tmp = atomic_load_explicit(&npad->joy_assignment_mode, memory_order_acquire);
     if (tmp != HidNpadJoyAssignmentMode_Dual && tmp != HidNpadJoyAssignmentMode_Single)
         diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen));
 
@@ -297,13 +297,13 @@ Result hidGetNpadControllerColorSingle(HidNpadIdType id, HidNpadControllerColor 
     Result rc = 0;
     HidNpad *npad = _hidGetNpadInternalState(id);
 
-    u32 tmp = npad->header.single_colors_descriptor;
-    if (tmp==2) rc = MAKERESULT(202, 604);
-    else if (tmp==1) rc = MAKERESULT(202, 603);
-    else if (tmp!=0) diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen));
+    HidColorAttribute attribute = npad->full_key_color.attribute;
+    if (attribute==HidColorAttribute_NoController) rc = MAKERESULT(202, 604);
+    else if (attribute==HidColorAttribute_ReadError) rc = MAKERESULT(202, 603);
+    else if (attribute!=HidColorAttribute_Ok) diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen));
 
     if (R_SUCCEEDED(rc))
-        *color = npad->header.single_colors;
+        *color = npad->full_key_color.full_key;
 
     return rc;
 }
@@ -312,14 +312,14 @@ Result hidGetNpadControllerColorSplit(HidNpadIdType id, HidNpadControllerColor *
     Result rc = 0;
     HidNpad *npad = _hidGetNpadInternalState(id);
 
-    u32 tmp = npad->header.split_colors_descriptor;
-    if (tmp==2) rc = MAKERESULT(202, 604);
-    else if (tmp==1) rc = MAKERESULT(202, 603);
-    else if (tmp!=0) diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen));
+    HidColorAttribute attribute = npad->joy_color.attribute;
+    if (attribute==HidColorAttribute_NoController) rc = MAKERESULT(202, 604);
+    else if (attribute==HidColorAttribute_ReadError) rc = MAKERESULT(202, 603);
+    else if (attribute!=HidColorAttribute_Ok) diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen));
 
     if (R_SUCCEEDED(rc)) {
-        *color_left  = npad->header.left_colors;
-        *color_right = npad->header.right_colors;
+        *color_left  = npad->joy_color.left;
+        *color_right = npad->joy_color.right;
     }
 
     return rc;
@@ -338,11 +338,11 @@ void hidGetNpadSystemButtonProperties(HidNpadIdType id, HidNpadSystemButtonPrope
 }
 
 static void _hidGetNpadPowerInfo(HidNpad *npad, HidPowerInfo *info, u32 powerInfo, u32 i) {
-    info->batteryCharge = atomic_load_explicit(&npad->battery_level[i], memory_order_acquire);
-    if (info->batteryCharge > 4) info->batteryCharge = 4; // sdknso would Abort when this occurs.
+    info->battery_level = atomic_load_explicit(&npad->battery_level[i], memory_order_acquire);
+    if (info->battery_level > 4) info->battery_level = 4; // sdknso would Abort when this occurs.
 
-    info->isCharging = (powerInfo & BIT(i)) != 0;
-    info->powerConnected = (powerInfo & BIT(i+3)) != 0;
+    info->is_charging = (powerInfo & BIT(i)) != 0;
+    info->is_powered = (powerInfo & BIT(i+3)) != 0;
 }
 
 void hidGetNpadPowerInfoSingle(HidNpadIdType id, HidPowerInfo *info) {
@@ -368,7 +368,7 @@ u32 hidGetAppletFooterUiAttributesSet(HidNpadIdType id) {
     return atomic_load_explicit(&_hidGetNpadInternalState(id)->applet_footer_ui_attribute, memory_order_acquire);
 }
 
-u8 hidGetAppletFooterUiTypes(HidNpadIdType id) {
+HidAppletFooterUiType hidGetAppletFooterUiTypes(HidNpadIdType id) {
     return atomic_load_explicit(&_hidGetNpadInternalState(id)->applet_footer_ui_type, memory_order_acquire);
 }
 
@@ -526,8 +526,8 @@ size_t hidGetNpadStatesGc(HidNpadIdType id, HidNpadGcState *states, size_t count
         memcpy(states[i].joysticks, tmp_entries[i].joysticks, sizeof(tmp_entries[i].joysticks)); // sdknso uses index 0 for the src here.
         states[i].attributes = tmp_entries[i].attributes;
 
-        states[i].l_trigger = tmp_entries_trigger[i].l_trigger;
-        states[i].r_trigger = tmp_entries_trigger[i].r_trigger;
+        states[i].trigger_l = tmp_entries_trigger[i].trigger_l;
+        states[i].trigger_r = tmp_entries_trigger[i].trigger_r;
     }
 
     return total;
@@ -706,7 +706,7 @@ bool hidIsControllerConnected(HidControllerID id) {
     if (id < 0 || id > 9) return 0;
 
     rwlockReadLock(&g_hidLock);
-    bool flag = (g_controllerEntries[id].attributes & CONTROLLER_STATE_CONNECTED) != 0;
+    bool flag = (g_controllerEntries[id].attributes & NpadAttribute_IsConnected) != 0;
     rwlockReadUnlock(&g_hidLock);
     return flag;
 }
@@ -817,7 +817,7 @@ bool hidKeyboardModifierUp(HidKeyboardModifier modifier) {
 
 bool hidKeyboardHeld(HidKeyboardScancode key) {
     rwlockReadLock(&g_hidLock);
-    u32 tmp = g_keyboardHeld[key / 32] & (1 << (key % 32));
+    u32 tmp = g_keyboardHeld[key / 64] & (1 << (key % 64));
     rwlockReadUnlock(&g_hidLock);
 
     return !!tmp;
@@ -825,7 +825,7 @@ bool hidKeyboardHeld(HidKeyboardScancode key) {
 
 bool hidKeyboardDown(HidKeyboardScancode key) {
     rwlockReadLock(&g_hidLock);
-    u32 tmp = g_keyboardDown[key / 32] & (1 << (key % 32));
+    u32 tmp = g_keyboardDown[key / 64] & (1 << (key % 64));
     rwlockReadUnlock(&g_hidLock);
 
     return !!tmp;
@@ -833,7 +833,7 @@ bool hidKeyboardDown(HidKeyboardScancode key) {
 
 bool hidKeyboardUp(HidKeyboardScancode key) {
     rwlockReadLock(&g_hidLock);
-    u32 tmp = g_keyboardUp[key / 32] & (1 << (key % 32));
+    u32 tmp = g_keyboardUp[key / 64] & (1 << (key % 64));
     rwlockReadUnlock(&g_hidLock);
 
     return !!tmp;
@@ -1613,7 +1613,7 @@ Result hidIsSevenSixAxisSensorAtRest(bool *out) {
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     HidSharedMemory *shared_mem = (HidSharedMemory*)hidGetSharedmemAddr();
-    *out = shared_mem->console_six_axis_sensor.is_at_rest & 1;
+    *out = shared_mem->console_six_axis_sensor.is_seven_six_axis_sensor_at_rest & 1;
 
     return 0;
 }

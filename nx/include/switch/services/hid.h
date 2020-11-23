@@ -245,10 +245,12 @@ typedef enum {
     HidNpadStyleTag_NpadSystem        = BIT(30),      ///< Generic controller
 } HidNpadStyleTag;
 
-/// HidControllerColorDescription
+/// HidColorAttribute
 typedef enum {
-    COLORS_NONEXISTENT = BIT(1),
-} HidControllerColorDescription;
+    HidColorAttribute_Ok = 0,                         ///< Ok
+    HidColorAttribute_ReadError = 1,                  ///< ReadError
+    HidColorAttribute_NoController = 2,               ///< NoController
+} HidColorAttribute;
 
 /// HidControllerKeys
 typedef enum {
@@ -312,11 +314,62 @@ typedef enum {
     JOYSTICK_NUM_STICKS = 2,
 } HidControllerJoystick;
 
-/// HidControllerConnectionState
+/// HidTouchAttribute
 typedef enum {
-    CONTROLLER_STATE_CONNECTED = BIT(0),
-    CONTROLLER_STATE_WIRED     = BIT(1),
-} HidControllerConnectionState;
+    HidTouchAttribute_Start            = BIT(0),    ///< Start
+    HidTouchAttribute_End              = BIT(1),    ///< End
+} HidTouchAttribute;
+
+/// HidMouseAttribute
+typedef enum {
+    HidMouseAttribute_Transferable     = BIT(0),    ///< Transferable
+    HidMouseAttribute_IsConnected      = BIT(1),    ///< IsConnected
+} HidMouseAttribute;
+
+/// HidNpadAttribute
+typedef enum {
+    NpadAttribute_IsConnected          = BIT(0),    ///< IsConnected
+    NpadAttribute_IsWired              = BIT(1),    ///< IsWired
+    NpadAttribute_IsLeftConnected      = BIT(2),    ///< IsLeftConnected
+    NpadAttribute_IsLeftWired          = BIT(3),    ///< IsLeftWired
+    NpadAttribute_IsRightConnected     = BIT(4),    ///< IsRightConnected
+    NpadAttribute_IsRightWired         = BIT(5),    ///< IsRightWired
+} HidNpadAttribute;
+
+/// HidSixAxisSensorAttribute
+typedef enum {
+    HidSixAxisSensorAttribute_IsConnected     = BIT(0),    ///< IsConnected
+    HidSixAxisSensorAttribute_IsInterpolated  = BIT(1),    ///< IsInterpolated
+} HidSixAxisSensorAttribute;
+
+/// HidGestureAttribute
+typedef enum {
+    HidGestureAttribute_IsNewTouch            = BIT(0),    ///< IsNewTouch
+    HidGestureAttribute_IsDoubleTap           = BIT(1),    ///< IsDoubleTap
+} HidGestureAttribute;
+
+/// HidGestureDirection
+typedef enum {
+    HidGestureDirection_None           = 0,    ///< None
+    HidGestureDirection_Left           = 1,    ///< Left
+    HidGestureDirection_Up             = 2,    ///< Up
+    HidGestureDirection_Right          = 3,    ///< Right
+    HidGestureDirection_Down           = 4,    ///< Down
+} HidGestureDirection;
+
+/// HidGestureType
+typedef enum {
+    HidGestureType_Idle                = 0,    ///< Idle
+    HidGestureType_Complete            = 1,    ///< Complete
+    HidGestureType_Cancel              = 2,    ///< Cancel
+    HidGestureType_Touch               = 3,    ///< Touch
+    HidGestureType_Press               = 4,    ///< Press
+    HidGestureType_Tap                 = 5,    ///< Tap
+    HidGestureType_Pan                 = 6,    ///< Pan
+    HidGestureType_Swipe               = 7,    ///< Swipe
+    HidGestureType_Pinch               = 8,    ///< Pinch
+    HidGestureType_Rotate              = 9,    ///< Rotate
+} HidGestureType;
 
 /// HidControllerID
 typedef enum {
@@ -389,6 +442,31 @@ typedef enum {
     HidDeviceType_System21        = 21,  ///< ::HidDeviceTypeBits_System with \ref HidNpadStyleTag |= ::HidNpadStyleTag_NpadJoyDual.
 } HidDeviceType;
 
+/// AppletFooterUiType
+typedef enum {
+    HidAppletFooterUiType_None                             = 0,     ///< None
+    HidAppletFooterUiType_HandheldNone                     = 1,     ///< HandheldNone
+    HidAppletFooterUiType_HandheldJoyConLeftOnly           = 2,     ///< HandheldJoyConLeftOnly
+    HidAppletFooterUiType_HandheldJoyConRightOnly          = 3,     ///< HandheldJoyConRightOnly
+    HidAppletFooterUiType_HandheldJoyConLeftJoyConRight    = 4,     ///< HandheldJoyConLeftJoyConRight
+    HidAppletFooterUiType_JoyDual                          = 5,     ///< JoyDual
+    HidAppletFooterUiType_JoyDualLeftOnly                  = 6,     ///< JoyDualLeftOnly
+    HidAppletFooterUiType_JoyDualRightOnly                 = 7,     ///< JoyDualRightOnly
+    HidAppletFooterUiType_JoyLeftHorizontal                = 8,     ///< JoyLeftHorizontal
+    HidAppletFooterUiType_JoyLeftVertical                  = 9,     ///< JoyLeftVertical
+    HidAppletFooterUiType_JoyRightHorizontal               = 10,    ///< JoyRightHorizontal
+    HidAppletFooterUiType_JoyRightVertical                 = 11,    ///< JoyRightVertical
+    HidAppletFooterUiType_SwitchProController              = 12,    ///< SwitchProController
+    HidAppletFooterUiType_CompatibleProController          = 13,    ///< CompatibleProController
+    HidAppletFooterUiType_CompatibleJoyCon                 = 14,    ///< CompatibleJoyCon
+    HidAppletFooterUiType_LarkHvc1                         = 15,    ///< LarkHvc1
+    HidAppletFooterUiType_LarkHvc2                         = 16,    ///< LarkHvc2
+    HidAppletFooterUiType_LarkNesLeft                      = 17,    ///< LarkNesLeft
+    HidAppletFooterUiType_LarkNesRight                     = 18,    ///< LarkNesRight
+    HidAppletFooterUiType_Lucia                            = 19,    ///< Lucia
+    HidAppletFooterUiType_Verification                     = 20 ,   ///< Verification
+} HidAppletFooterUiType;
+
 /// NpadInterfaceType
 typedef enum {
     HidNpadInterfaceType_Bluetooth = 1,    ///< Bluetooth.
@@ -404,6 +482,23 @@ typedef enum {
     XcdInterfaceType_Usb        = BIT(2),
     XcdInterfaceType_FieldSet   = BIT(7),
 } XcdInterfaceType;
+
+/// NpadLarkType
+typedef enum {
+    HidNpadLarkType_Invalid     = 0,    ///< Invalid
+    HidNpadLarkType_H1          = 1,    ///< H1
+    HidNpadLarkType_H2          = 2,    ///< H2
+    HidNpadLarkType_NL          = 3,    ///< NL
+    HidNpadLarkType_NR          = 4,    ///< NR
+} HidNpadLarkType;
+
+/// NpadLuciaType
+typedef enum {
+    HidNpadLuciaType_Invalid    = 0,    ///< Invalid
+    HidNpadLuciaType_J          = 1,    ///< J
+    HidNpadLuciaType_E          = 2,    ///< E
+    HidNpadLuciaType_U          = 3,    ///< U
+} HidNpadLuciaType;
 
 /// touchPosition
 typedef struct touchPosition {
@@ -453,45 +548,45 @@ typedef struct SixAxisSensorValues {
 
 /// HidCommonLifoHeader
 typedef struct HidCommonLifoHeader {
-    u64 sampling_number;
-    u64 buffer_count;
-    u64 tail;
-    u64 count;
+    u64 sampling_number;                        ///< SamplingNumber
+    u64 buffer_count;                           ///< BufferCount
+    u64 tail;                                   ///< Tail
+    u64 count;                                  ///< Count
 } HidCommonLifoHeader;
 
 // Begin HidTouchScreen
 
 /// HidTouchState
 typedef struct HidTouchState {
-    u64 delta_time;
-    u32 attributes;
-    u32 finger_id;
-    u32 x;
-    u32 y;
-    u32 diameter_x;
-    u32 diameter_y;
-    u32 rotation_angle;
-    u32 reserved;
+    u64 delta_time;                             ///< DeltaTime
+    u32 attributes;                             ///< Bitfield of \ref HidTouchAttribute.
+    u32 finger_id;                              ///< FingerId
+    u32 x;                                      ///< X
+    u32 y;                                      ///< Y
+    u32 diameter_x;                             ///< DiameterX
+    u32 diameter_y;                             ///< DiameterY
+    u32 rotation_angle;                         ///< RotationAngle
+    u32 reserved;                               ///< Reserved
 } HidTouchState;
 
 /// HidTouchScreenState
 typedef struct HidTouchScreenState {
-    u64 sampling_number;
-    s32 count;
-    u32 reserved;
-    HidTouchState touches[16];
+    u64 sampling_number;                        ///< SamplingNumber
+    s32 count;                                  ///< Number of entries in the touches array.
+    u32 reserved;                               ///< Reserved
+    HidTouchState touches[16];                  ///< Array of \ref HidTouchState, with the above count.
 } HidTouchScreenState;
 
 /// HidTouchScreenStateAtomicStorage
 typedef struct HidTouchScreenStateAtomicStorage {
-    u64 sampling_number;
-    HidTouchScreenState state;
+    u64 sampling_number;                             ///< SamplingNumber
+    HidTouchScreenState state;                       ///< \ref HidTouchScreenState
 } HidTouchScreenStateAtomicStorage;
 
 /// HidTouchScreenLifo
 typedef struct HidTouchScreenLifo {
-    HidCommonLifoHeader header;
-    HidTouchScreenStateAtomicStorage storage[17];
+    HidCommonLifoHeader header;                      ///< \ref HidCommonLifoHeader
+    HidTouchScreenStateAtomicStorage storage[17];    ///< \ref HidTouchScreenStateAtomicStorage
 } HidTouchScreenLifo;
 
 /// HidTouchScreenSharedMemoryFormat
@@ -506,15 +601,15 @@ typedef struct HidTouchScreenSharedMemoryFormat {
 
 /// HidMouseState
 typedef struct HidMouseState {
-    u64 sampling_number;
-    MousePosition position;
-    u32 buttons;
-    u32 attributes;
+    u64 sampling_number;                        ///< SamplingNumber
+    MousePosition position;                     ///< \ref MousePosition
+    u32 buttons;                                ///< Bitfield of \ref HidMouseButton.
+    u32 attributes;                             ///< Bitfield of \ref HidMouseAttribute.
 } HidMouseState;
 
 /// HidMouseStateAtomicStorage
 typedef struct HidMouseStateAtomicStorage {
-    u64 sampling_number;
+    u64 sampling_number;                        ///< SamplingNumber
     HidMouseState state;
 } HidMouseStateAtomicStorage;
 
@@ -536,14 +631,14 @@ typedef struct HidMouseSharedMemoryFormat {
 
 /// HidKeyboardState
 typedef struct HidKeyboardState {
-    u64 sampling_number;
-    u64 modifier;
-    u32 keys[8];
+    u64 sampling_number;                        ///< SamplingNumber
+    u64 modifiers;                              ///< Bitfield of \ref HidKeyboardModifier.
+    u64 keys[4];
 } HidKeyboardState;
 
 /// HidKeyboardStateAtomicStorage
 typedef struct HidKeyboardStateAtomicStorage {
-    u64 sampling_number;
+    u64 sampling_number;                        ///< SamplingNumber
     HidKeyboardState state;
 } HidKeyboardStateAtomicStorage;
 
@@ -566,27 +661,29 @@ typedef struct HidKeyboardSharedMemoryFormat {
 /// Npad colors.
 /// Color fields are zero when not set.
 typedef struct HidNpadControllerColor {
-    u32 color_body;    ///< RGBA Body Color
-    u32 color_buttons; ///< RGBA Buttons Color
+    u32 main;    ///< RGBA Body Color
+    u32 sub;     ///< RGBA Buttons Color
 } HidNpadControllerColor;
 
-/// HidNpadStateHeader
-typedef struct HidNpadStateHeader {
-    u32 style_set;
-    u32 npad_joy_assignment_mode;
-    u32 single_colors_descriptor;
-    HidNpadControllerColor single_colors;
-    u32 split_colors_descriptor;
-    HidNpadControllerColor left_colors;
-    HidNpadControllerColor right_colors;
-} HidNpadStateHeader;
+/// HidNpadFullKeyColorState
+typedef struct HidNpadFullKeyColorState {
+    u32 attribute;                               ///< \ref HidColorAttribute
+    HidNpadControllerColor full_key;             ///< \ref HidNpadControllerColor FullKey
+} HidNpadFullKeyColorState;
+
+/// HidNpadJoyColorState
+typedef struct HidNpadJoyColorState {
+    u32 attribute;                               ///< \ref HidColorAttribute
+    HidNpadControllerColor left;                 ///< \ref HidNpadControllerColor Left
+    HidNpadControllerColor right;                ///< \ref HidNpadControllerColor Right
+} HidNpadJoyColorState;
 
 /// HidNpadCommonState
 typedef struct HidNpadCommonState {
-    u64 sampling_number;
-    u64 buttons;
+    u64 sampling_number;                                ///< SamplingNumber
+    u64 buttons;                                        ///< Bitfield of \ref HidControllerKeys.
     JoystickPosition joysticks[JOYSTICK_NUM_STICKS];
-    u32 attributes;
+    u32 attributes;                                     ///< Bitfield of \ref HidNpadAttribute.
     u32 reserved;
 } HidNpadCommonState;
 
@@ -598,12 +695,12 @@ typedef HidNpadCommonState HidNpadJoyRightState;
 
 /// HidNpadGcState
 typedef struct HidNpadGcState {
-    u64 sampling_number;
-    u64 buttons;
+    u64 sampling_number;                                ///< SamplingNumber
+    u64 buttons;                                        ///< Bitfield of \ref HidControllerKeys.
     JoystickPosition joysticks[JOYSTICK_NUM_STICKS];
-    u32 attributes;
-    u32 l_trigger;                                       ///< L analog trigger. Valid range: 0x0-0x7FFF.
-    u32 r_trigger;                                       ///< R analog trigger. Valid range: 0x0-0x7FFF.
+    u32 attributes;                                     ///< Bitfield of \ref HidNpadAttribute.
+    u32 trigger_l;                                      ///< L analog trigger. Valid range: 0x0-0x7FFF.
+    u32 trigger_r;                                      ///< R analog trigger. Valid range: 0x0-0x7FFF.
     u32 pad;
 } HidNpadGcState;
 
@@ -611,31 +708,31 @@ typedef HidNpadCommonState HidNpadPalmaState;
 
 /// HidNpadLarkState
 typedef struct HidNpadLarkState {
-    u64 sampling_number;
-    u64 buttons;
+    u64 sampling_number;                                ///< SamplingNumber
+    u64 buttons;                                        ///< Bitfield of \ref HidControllerKeys.
     JoystickPosition joysticks[JOYSTICK_NUM_STICKS];    ///< Joysticks state are always zero.
-    u32 attributes;
-    u32 lark_type_l_and_main;                           ///< LarkTypeLAndMain
+    u32 attributes;                                     ///< Bitfield of \ref HidNpadAttribute.
+    HidNpadLarkType lark_type_l_and_main;               ///< \ref HidNpadLarkType LarkTypeLAndMain
 } HidNpadLarkState;
 
 /// HidNpadHandheldLarkState
 typedef struct HidNpadHandheldLarkState {
-    u64 sampling_number;
-    u64 buttons;
+    u64 sampling_number;                                ///< SamplingNumber
+    u64 buttons;                                        ///< Bitfield of \ref HidControllerKeys.
     JoystickPosition joysticks[JOYSTICK_NUM_STICKS];
-    u32 attributes;
-    u32 lark_type_l_and_main;                           ///< LarkTypeLAndMain
-    u32 lark_type_r;                                    ///< LarkTypeR
+    u32 attributes;                                     ///< Bitfield of \ref HidNpadAttribute.
+    HidNpadLarkType lark_type_l_and_main;               ///< \ref HidNpadLarkType LarkTypeLAndMain
+    u32 lark_type_r;                                    ///< \ref HidNpadLarkType LarkTypeR
     u32 pad;
 } HidNpadHandheldLarkState;
 
 /// HidNpadLuciaState
 typedef struct HidNpadLuciaState {
-    u64 sampling_number;
-    u64 buttons;
+    u64 sampling_number;                                ///< SamplingNumber
+    u64 buttons;                                        ///< Bitfield of \ref HidControllerKeys.
     JoystickPosition joysticks[JOYSTICK_NUM_STICKS];    ///< Joysticks state are always zero.
-    u32 attributes;
-    u32 lucia_type;                                     ///< LuciaType
+    u32 attributes;                                     ///< Bitfield of \ref HidNpadAttribute.
+    HidNpadLuciaType lucia_type;                        ///< \ref HidNpadLuciaType
 } HidNpadLuciaState;
 
 typedef HidNpadCommonState HidNpadSystemExtState;
@@ -643,7 +740,7 @@ typedef HidNpadCommonState HidNpadSystemState; ///< Joysticks state are always z
 
 /// HidNpadCommonStateAtomicStorage
 typedef struct HidNpadCommonStateAtomicStorage {
-    u64 sampling_number;
+    u64 sampling_number;                                ///< SamplingNumber
     HidNpadCommonState state;
 } HidNpadCommonStateAtomicStorage;
 
@@ -655,14 +752,14 @@ typedef struct HidNpadCommonLifo {
 
 /// HidNpadGcTriggerState
 typedef struct HidNpadGcTriggerState {
-    u64 sampling_number;
-    u32 l_trigger;
-    u32 r_trigger;
+    u64 sampling_number;                                ///< SamplingNumber
+    u32 trigger_l;
+    u32 trigger_r;
 } HidNpadGcTriggerState;
 
 /// HidNpadGcTriggerStateAtomicStorage
 typedef struct HidNpadGcTriggerStateAtomicStorage {
-    u64 sampling_number;
+    u64 sampling_number;                                ///< SamplingNumber
     HidNpadGcTriggerState state;
 } HidNpadGcTriggerStateAtomicStorage;
 
@@ -674,16 +771,16 @@ typedef struct HidNpadGcTriggerLifo {
 
 /// HidSixAxisSensorState
 typedef struct HidSixAxisSensorState {
-    u64 delta_time;
-    u64 sampling_number;
+    u64 delta_time;                                     ///< DeltaTime
+    u64 sampling_number;                                ///< SamplingNumber
     SixAxisSensorValues values;
-    u32 attributes;
-    u32 reserved;
+    u32 attributes;                                     ///< Bitfield of \ref HidSixAxisSensorAttribute.
+    u32 reserved;                                       ///< Reserved
 } HidSixAxisSensorState;
 
 /// HidSixAxisSensorStateAtomicStorage
 typedef struct HidSixAxisSensorStateAtomicStorage {
-    u64 sampling_number;
+    u64 sampling_number;                                ///< SamplingNumber
     HidSixAxisSensorState state;
 } HidSixAxisSensorStateAtomicStorage;
 
@@ -695,79 +792,86 @@ typedef struct HidNpadSixAxisSensorLifo {
 
 /// NpadSystemProperties
 typedef struct {
-    u32 powerInfo : 6;                                    ///< Use \ref hidGetNpadPowerInfo instead of accessing this directly.
+    u64 powerInfo : 6;                                               ///< Use \ref hidGetNpadPowerInfo instead of accessing this directly.
 
-    u32 bit6 : 1;                                         ///< Unused
-    u32 bit7 : 1;                                         ///< Unused
-    u32 bit8 : 1;                                         ///< Unused
-    u32 unsupportedButtonPressed_NpadSystem : 1;          ///< Unsupported button pressed with controller NpadSystem.
-    u32 unsupportedButtonPressed_NpadSystemExt : 1;       ///< Unsupported button pressed with controller NpadSystemExt.
+    u64 bit6 : 1;                                                    ///< Unused
+    u64 bit7 : 1;                                                    ///< Unused
+    u64 bit8 : 1;                                                    ///< Unused
+    u64 is_unsuported_button_pressed_on_npad_system : 1;             ///< IsUnsuportedButtonPressedOnNpadSystem
+    u64 is_unsuported_button_pressed_on_npad_system_ext : 1;         ///< IsUnsuportedButtonPressedOnNpadSystemExt
 
-    u32 abxyButtonOriented : 1;
-    u32 slSrButtonOriented : 1;
-    u32 plusButtonCapability : 1;                         ///< [4.0.0+]
-    u32 minusButtonCapability : 1;                        ///< [4.0.0+]
-    u32 directionalButtonsSupported : 1;                  ///< [8.0.0+]
+    u64 is_abxy_button_oriented : 1;                                 ///< IsAbxyButtonOriented
+    u64 is_sl_sr_button_oriented : 1;                                ///< IsSlSrButtonOriented
+    u64 is_plus_available : 1;                                       ///< [4.0.0+] IsPlusAvailable
+    u64 is_minus_available : 1;                                      ///< [4.0.0+] IsMinusAvailable
+    u64 is_directional_buttons_available : 1;                        ///< [8.0.0+] IsDirectionalButtonsAvailable
 
-    u32 unused;
+    u64 unused : 48;                                                 ///< Unused
 } HidNpadSystemProperties;
 
 /// NpadSystemButtonProperties
 typedef struct {
-    u32 unintendedHomeButtonInputProtectionDisabled : 1;
+    u32 is_unintended_home_button_input_protection_enabled : 1;      ///< IsUnintendedHomeButtonInputProtectionEnabled
 } HidNpadSystemButtonProperties;
 
 /// HidPowerInfo
 typedef struct {
-    bool powerConnected;
-    bool isCharging;
-    u32 batteryCharge;    ///< Battery charge, always 0-4.
+    bool is_powered;      ///< IsPowered
+    bool is_charging;     ///< IsCharging
+    u8 reserved[6];       ///< Reserved
+    u32 battery_level;    ///< BatteryLevel, always 0-4.
 } HidPowerInfo;
 
-/// HidNfcXcdDeviceHandleState
-typedef struct HidNfcXcdDeviceHandleState {
+/// HidNfcXcdDeviceHandleStateImpl
+typedef struct HidNfcXcdDeviceHandleStateImpl {
     u64 handle;
     u8 is_available;
     u8 is_activated;
     u8 reserved[6];
-    u64 sampling_number;
-} HidNfcXcdDeviceHandleState;
+    u64 sampling_number;                                ///< SamplingNumber
+} HidNfcXcdDeviceHandleStateImpl;
 
-/// HidNfcXcdDeviceHandleStateEntry
-typedef struct HidNfcXcdDeviceHandleStateEntry {
-    u64 sampling_number;
-    HidNfcXcdDeviceHandleState state;
-} HidNfcXcdDeviceHandleStateEntry;
+/// HidNfcXcdDeviceHandleStateImplAtomicStorage
+typedef struct HidNfcXcdDeviceHandleStateImplAtomicStorage {
+    u64 sampling_number;                                ///< SamplingNumber
+    HidNfcXcdDeviceHandleStateImpl state;               ///< \ref HidNfcXcdDeviceHandleStateImpl
+} HidNfcXcdDeviceHandleStateImplAtomicStorage;
+
+/// HidNfcXcdDeviceHandleState
+typedef struct HidNfcXcdDeviceHandleState {
+    HidCommonLifoHeader header;
+    HidNfcXcdDeviceHandleStateImplAtomicStorage storage[2];
+} HidNfcXcdDeviceHandleState;
 
 /// HidNpad
 typedef struct HidNpad {
-    HidNpadStateHeader header;
+    u32 style_set;                               ///< Bitfield of \ref HidNpadStyleTag.
+    u32 joy_assignment_mode;                     ///< \ref HidNpadJoyAssignmentMode
+    HidNpadFullKeyColorState full_key_color;     ///< \ref HidNpadFullKeyColorState
+    HidNpadJoyColorState joy_color;              ///< \ref HidNpadJoyColorState
     HidNpadCommonLifo layouts[7];
     HidNpadSixAxisSensorLifo sixaxis[6];
-    u32 device_type;
-    u32 reserved;
+    u32 device_type;                             ///< Bitfield of \ref HidDeviceTypeBits.
+    u32 reserved;                                ///< Reserved
     HidNpadSystemProperties system_properties;
     HidNpadSystemButtonProperties system_button_properties;
     u32 battery_level[3];
     union {
         struct { // [1.0.0-3.0.2]
-            u8 nfc_xcd_device_handle_header[0x20];
-            HidNfcXcdDeviceHandleStateEntry nfc_xcd_device_handle_state[2];
+            HidNfcXcdDeviceHandleState nfc_xcd_device_handle;
         };
 
         struct {
-            u32 applet_footer_ui_attribute;
-            u8 applet_footer_ui_type;
-            u8 pad2[3];
-            u8 unk_x41B0[0x58];
+            u32 applet_footer_ui_attribute;                                         ///< Bitfield of AppletFooterUiAttribute.
+            u8 applet_footer_ui_type;                                               ///< \ref HidAppletFooterUiType
+            u8 unk_x41AD[0x5B];
         };
     };
-    u8 mutex[0x8];
-    u8 unk_x4210[0x18];
+    u8 unk_x4208[0x20];
     HidNpadGcTriggerLifo gc_trigger_lifo;
-    u32 lark_type_l_and_main;                                                       ///< LarkTypeLAndMain
-    u32 lark_type_r;                                                                ///< LarkTypeR
-    u32 lucia_type;                                                                 ///< LuciaType
+    u32 lark_type_l_and_main;                                                       ///< \ref HidNpadLarkType
+    u32 lark_type_r;                                                                ///< \ref HidNpadLarkType
+    u32 lucia_type;                                                                 ///< \ref HidNpadLuciaType
     u32 unk_x43EC;
     u8 unk_x43F0[0xC10];
 } HidNpad;
@@ -776,12 +880,12 @@ typedef struct HidNpad {
 
 /// HidConsoleSixAxisSensor
 typedef struct {
-    u64 sampling_number;             ///< Timestamp in samples
-    u8 is_at_rest;                   ///< IsSevenSixAxisSensorAtRest
-    u8 pad[0x3];
-    float verticalization_error;     ///< VerticalizationError
-    UtilFloat3 gyro_bias;            ///< GyroBias
-    u8 pad2[0x4];
+    u64 sampling_number;                                ///< SamplingNumber
+    u8 is_seven_six_axis_sensor_at_rest;                ///< IsSevenSixAxisSensorAtRest
+    u8 pad[0x3];                                        ///< Padding
+    float verticalization_error;                        ///< VerticalizationError
+    UtilFloat3 gyro_bias;                               ///< GyroBias
+    u8 pad2[0x4];                                       ///< Padding
 } HidConsoleSixAxisSensor;
 
 /// HidSharedMemory
@@ -911,7 +1015,7 @@ Result hidGetNpadControllerColorSingle(HidNpadIdType id, HidNpadControllerColor 
 /// Gets the left/right \ref HidNpadControllerColor for the specified controller (Joy-Con pair in dual mode).
 Result hidGetNpadControllerColorSplit(HidNpadIdType id, HidNpadControllerColor *color_left, HidNpadControllerColor *color_right);
 
-/// Gets the \ref HidDeviceTypeBits for the specified controller.
+/// Gets the bitfield of \ref HidDeviceTypeBits for the specified controller.
 u32 hidGetNpadDeviceType(HidNpadIdType id);
 
 /// Gets the \ref HidNpadSystemProperties for the specified controller.
@@ -926,13 +1030,13 @@ void hidGetNpadPowerInfoSingle(HidNpadIdType id, HidPowerInfo *info);
 /// Gets the left/right \ref HidPowerInfo for the specified controller (Joy-Con pair in dual mode).
 void hidGetNpadPowerInfoSplit(HidNpadIdType id, HidPowerInfo *info_left, HidPowerInfo *info_right);
 
-/// Gets a bitfield of AppletFooterUiAttributes for the specified Npad.
+/// Gets a bitfield of AppletFooterUiAttribute for the specified Npad.
 /// Only available on [9.0.0+].
 u32 hidGetAppletFooterUiAttributesSet(HidNpadIdType id);
 
-/// Gets AppletFooterUiTypes for the specified Npad.
+/// Gets \ref HidAppletFooterUiType for the specified Npad.
 /// Only available on [9.0.0+].
-u8 hidGetAppletFooterUiTypes(HidNpadIdType id);
+HidAppletFooterUiType hidGetAppletFooterUiTypes(HidNpadIdType id);
 
 size_t hidGetNpadStatesFullKey(HidNpadIdType id, HidNpadFullKeyState *states, size_t count);
 size_t hidGetNpadStatesHandheld(HidNpadIdType id, HidNpadHandheldState *states, size_t count);
