@@ -14,26 +14,25 @@
 
 /// HidMouseButton
 typedef enum {
-    MOUSE_LEFT    = BIT(0),
-    MOUSE_RIGHT   = BIT(1),
-    MOUSE_MIDDLE  = BIT(2),
-    MOUSE_FORWARD = BIT(3),
-    MOUSE_BACK    = BIT(4),
+    HidMouseButton_Left    = BIT(0),
+    HidMouseButton_Right   = BIT(1),
+    HidMouseButton_Middle  = BIT(2),
+    HidMouseButton_Forward = BIT(3),
+    HidMouseButton_Back    = BIT(4),
 } HidMouseButton;
 
 /// HidKeyboardModifier
 typedef enum {
-    KBD_MOD_LCTRL      = BIT(0),
-    KBD_MOD_LSHIFT     = BIT(1),
-    KBD_MOD_LALT       = BIT(2),
-    KBD_MOD_LMETA      = BIT(3),
-    KBD_MOD_RCTRL      = BIT(4),
-    KBD_MOD_RSHIFT     = BIT(5),
-    KBD_MOD_RALT       = BIT(6),
-    KBD_MOD_RMETA      = BIT(7),
-    KBD_MOD_CAPSLOCK   = BIT(8),
-    KBD_MOD_SCROLLLOCK = BIT(9),
-    KBD_MOD_NUMLOCK    = BIT(10),
+    HidKeyboardModifier_Control       = BIT(0),
+    HidKeyboardModifier_Shift         = BIT(1),
+    HidKeyboardModifier_LeftAlt       = BIT(2),
+    HidKeyboardModifier_RightAlt      = BIT(3),
+    HidKeyboardModifier_Gui           = BIT(4),
+    HidKeyboardModifier_CapsLock      = BIT(8),
+    HidKeyboardModifier_ScrollLock    = BIT(9),
+    HidKeyboardModifier_NumLock       = BIT(10),
+    HidKeyboardModifier_Katakana      = BIT(11),
+    HidKeyboardModifier_Hiragana      = BIT(12),
 } HidKeyboardModifier;
 
 /// HidKeyboardScancode
