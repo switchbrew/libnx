@@ -265,17 +265,17 @@ void hidScanInput(void) {
     rwlockWriteUnlock(&g_hidLock);
 }
 
-static HidNpad* _hidGetNpadInternalState(HidNpadIdType id) {
+static HidNpadInternalState* _hidGetNpadInternalState(HidNpadIdType id) {
     HidSharedMemory *sharedmem = (HidSharedMemory*)hidGetSharedmemAddr();
     if (sharedmem == NULL)
         diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_NotInitialized));
 
     if (id <= HidNpadIdType_No8)
-        return &sharedmem->npad[id];
+        return &sharedmem->npad.entries[id].internal_state;
     else if (id == HidNpadIdType_Handheld)
-        return &sharedmem->npad[8];
+        return &sharedmem->npad.entries[8].internal_state;
     else if (id == HidNpadIdType_Other)
-        return &sharedmem->npad[9];
+        return &sharedmem->npad.entries[9].internal_state;
     else
         diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_BadInput));
 }
@@ -285,7 +285,7 @@ u32 hidGetNpadStyleSet(HidNpadIdType id) {
 }
 
 HidNpadJoyAssignmentMode hidGetNpadJoyAssignment(HidNpadIdType id) {
-    HidNpad *npad = _hidGetNpadInternalState(id);
+    HidNpadInternalState *npad = _hidGetNpadInternalState(id);
 
     HidNpadJoyAssignmentMode tmp = atomic_load_explicit(&npad->joy_assignment_mode, memory_order_acquire);
     if (tmp != HidNpadJoyAssignmentMode_Dual && tmp != HidNpadJoyAssignmentMode_Single)
@@ -296,7 +296,7 @@ HidNpadJoyAssignmentMode hidGetNpadJoyAssignment(HidNpadIdType id) {
 
 Result hidGetNpadControllerColorSingle(HidNpadIdType id, HidNpadControllerColor *color) {
     Result rc = 0;
-    HidNpad *npad = _hidGetNpadInternalState(id);
+    HidNpadInternalState *npad = _hidGetNpadInternalState(id);
 
     HidColorAttribute attribute = npad->full_key_color.attribute;
     if (attribute==HidColorAttribute_NoController) rc = MAKERESULT(202, 604);
@@ -311,7 +311,7 @@ Result hidGetNpadControllerColorSingle(HidNpadIdType id, HidNpadControllerColor 
 
 Result hidGetNpadControllerColorSplit(HidNpadIdType id, HidNpadControllerColor *color_left, HidNpadControllerColor *color_right) {
     Result rc = 0;
-    HidNpad *npad = _hidGetNpadInternalState(id);
+    HidNpadInternalState *npad = _hidGetNpadInternalState(id);
 
     HidColorAttribute attribute = npad->joy_color.attribute;
     if (attribute==HidColorAttribute_NoController) rc = MAKERESULT(202, 604);
@@ -338,7 +338,7 @@ void hidGetNpadSystemButtonProperties(HidNpadIdType id, HidNpadSystemButtonPrope
     *out = atomic_load_explicit(&_hidGetNpadInternalState(id)->system_button_properties, memory_order_acquire);
 }
 
-static void _hidGetNpadPowerInfo(HidNpad *npad, HidPowerInfo *info, u32 powerInfo, u32 i) {
+static void _hidGetNpadPowerInfo(HidNpadInternalState *npad, HidPowerInfo *info, u32 powerInfo, u32 i) {
     info->battery_level = atomic_load_explicit(&npad->battery_level[i], memory_order_acquire);
     if (info->battery_level > 4) info->battery_level = 4; // sdknso would Abort when this occurs.
 
@@ -347,7 +347,7 @@ static void _hidGetNpadPowerInfo(HidNpad *npad, HidPowerInfo *info, u32 powerInf
 }
 
 void hidGetNpadPowerInfoSingle(HidNpadIdType id, HidPowerInfo *info) {
-    HidNpad *npad = _hidGetNpadInternalState(id);
+    HidNpadInternalState *npad = _hidGetNpadInternalState(id);
 
     HidNpadSystemProperties properties;
     properties = atomic_load_explicit(&npad->system_properties, memory_order_acquire);
@@ -356,7 +356,7 @@ void hidGetNpadPowerInfoSingle(HidNpadIdType id, HidPowerInfo *info) {
 }
 
 void hidGetNpadPowerInfoSplit(HidNpadIdType id, HidPowerInfo *info_left, HidPowerInfo *info_right) {
-    HidNpad *npad = _hidGetNpadInternalState(id);
+    HidNpadInternalState *npad = _hidGetNpadInternalState(id);
 
     HidNpadSystemProperties properties;
     properties = atomic_load_explicit(&npad->system_properties, memory_order_acquire);
@@ -455,14 +455,14 @@ void hidInitializeNpad(void) {
     if (R_FAILED(rc)) diagAbortWithResult(rc);
 }
 
-static size_t _hidGetNpadStates(HidNpad *npad, u32 layout, HidNpadCommonState *states, size_t count) {
+static size_t _hidGetNpadStates(HidNpadInternalState *npad, u32 layout, HidNpadCommonState *states, size_t count) {
     HidNpadCommonLifo *states_buf = &npad->layouts[layout];
     if (count > 17) count = 17;
     return _hidGetStates(&states_buf->header, states_buf->storage, 17, offsetof(HidNpadCommonStateAtomicStorage,state), offsetof(HidNpadCommonState,sampling_number), states, sizeof(HidNpadCommonState), count);
 }
 
 size_t hidGetNpadStatesFullKey(HidNpadIdType id, HidNpadFullKeyState *states, size_t count) {
-    HidNpad *npad = _hidGetNpadInternalState(id);
+    HidNpadInternalState *npad = _hidGetNpadInternalState(id);
     size_t total = _hidGetNpadStates(npad, 0, states, count);
 
     // sdknso would handle button-bitmasking with ControlPadRestriction here.
@@ -471,7 +471,7 @@ size_t hidGetNpadStatesFullKey(HidNpadIdType id, HidNpadFullKeyState *states, si
 }
 
 size_t hidGetNpadStatesHandheld(HidNpadIdType id, HidNpadHandheldState *states, size_t count) {
-    HidNpad *npad = _hidGetNpadInternalState(id);
+    HidNpadInternalState *npad = _hidGetNpadInternalState(id);
     size_t total = _hidGetNpadStates(npad, 1, states, count);
 
     // sdknso would handle button-bitmasking with ControlPadRestriction here.
@@ -480,7 +480,7 @@ size_t hidGetNpadStatesHandheld(HidNpadIdType id, HidNpadHandheldState *states, 
 }
 
 size_t hidGetNpadStatesJoyDual(HidNpadIdType id, HidNpadJoyDualState *states, size_t count) {
-    HidNpad *npad = _hidGetNpadInternalState(id);
+    HidNpadInternalState *npad = _hidGetNpadInternalState(id);
     size_t total = _hidGetNpadStates(npad, 2, states, count);
 
     // sdknso would handle button-bitmasking with ControlPadRestriction here.
@@ -489,7 +489,7 @@ size_t hidGetNpadStatesJoyDual(HidNpadIdType id, HidNpadJoyDualState *states, si
 }
 
 size_t hidGetNpadStatesJoyLeft(HidNpadIdType id, HidNpadJoyLeftState *states, size_t count) {
-    HidNpad *npad = _hidGetNpadInternalState(id);
+    HidNpadInternalState *npad = _hidGetNpadInternalState(id);
     size_t total = _hidGetNpadStates(npad, 3, states, count);
 
     // sdknso would handle button-bitmasking with ControlPadRestriction here.
@@ -498,7 +498,7 @@ size_t hidGetNpadStatesJoyLeft(HidNpadIdType id, HidNpadJoyLeftState *states, si
 }
 
 size_t hidGetNpadStatesJoyRight(HidNpadIdType id, HidNpadJoyRightState *states, size_t count) {
-    HidNpad *npad = _hidGetNpadInternalState(id);
+    HidNpadInternalState *npad = _hidGetNpadInternalState(id);
     size_t total = _hidGetNpadStates(npad, 4, states, count);
 
     // sdknso would handle button-bitmasking with ControlPadRestriction here.
@@ -510,7 +510,7 @@ size_t hidGetNpadStatesGc(HidNpadIdType id, HidNpadGcState *states, size_t count
     HidNpadCommonState tmp_entries[17];
     HidNpadGcTriggerState tmp_entries_trigger[17];
 
-    HidNpad *npad = _hidGetNpadInternalState(id);
+    HidNpadInternalState *npad = _hidGetNpadInternalState(id);
     size_t total = _hidGetNpadStates(npad, 0, tmp_entries, count);
     size_t total2 = _hidGetStates(&npad->gc_trigger_lifo.header, npad->gc_trigger_lifo.storage, 17, offsetof(HidNpadGcTriggerStateAtomicStorage,state), offsetof(HidNpadGcTriggerState,sampling_number), tmp_entries_trigger, sizeof(HidNpadGcTriggerState), total);
     if (total2 < total) total = total2;
@@ -535,7 +535,7 @@ size_t hidGetNpadStatesGc(HidNpadIdType id, HidNpadGcState *states, size_t count
 }
 
 size_t hidGetNpadStatesPalma(HidNpadIdType id, HidNpadPalmaState *states, size_t count) {
-    HidNpad *npad = _hidGetNpadInternalState(id);
+    HidNpadInternalState *npad = _hidGetNpadInternalState(id);
     size_t total = _hidGetNpadStates(npad, 5, states, count);
 
     // sdknso doesn't handle ControlPadRestriction with this.
@@ -546,7 +546,7 @@ size_t hidGetNpadStatesPalma(HidNpadIdType id, HidNpadPalmaState *states, size_t
 size_t hidGetNpadStatesLark(HidNpadIdType id, HidNpadLarkState *states, size_t count) {
     HidNpadCommonState tmp_entries[17];
 
-    HidNpad *npad = _hidGetNpadInternalState(id);
+    HidNpadInternalState *npad = _hidGetNpadInternalState(id);
     size_t total = _hidGetNpadStates(npad, 0, tmp_entries, count);
 
     memset(states, 0, sizeof(HidNpadLarkState) * total);
@@ -573,7 +573,7 @@ size_t hidGetNpadStatesLark(HidNpadIdType id, HidNpadLarkState *states, size_t c
 size_t hidGetNpadStatesHandheldLark(HidNpadIdType id, HidNpadHandheldLarkState *states, size_t count) {
     HidNpadCommonState tmp_entries[17];
 
-    HidNpad *npad = _hidGetNpadInternalState(id);
+    HidNpadInternalState *npad = _hidGetNpadInternalState(id);
     size_t total = _hidGetNpadStates(npad, 1, tmp_entries, count);
 
     memset(states, 0, sizeof(HidNpadHandheldLarkState) * total);
@@ -603,7 +603,7 @@ size_t hidGetNpadStatesHandheldLark(HidNpadIdType id, HidNpadHandheldLarkState *
 size_t hidGetNpadStatesLucia(HidNpadIdType id, HidNpadLuciaState *states, size_t count) {
     HidNpadCommonState tmp_entries[17];
 
-    HidNpad *npad = _hidGetNpadInternalState(id);
+    HidNpadInternalState *npad = _hidGetNpadInternalState(id);
     size_t total = _hidGetNpadStates(npad, 0, tmp_entries, count);
 
     memset(states, 0, sizeof(HidNpadLuciaState) * total);
@@ -628,7 +628,7 @@ size_t hidGetNpadStatesLucia(HidNpadIdType id, HidNpadLuciaState *states, size_t
 }
 
 size_t hidGetNpadStatesSystemExt(HidNpadIdType id, HidNpadSystemExtState *states, size_t count) {
-    HidNpad *npad = _hidGetNpadInternalState(id);
+    HidNpadInternalState *npad = _hidGetNpadInternalState(id);
     size_t total = _hidGetNpadStates(npad, 6, states, count);
 
     // sdknso would handle button-bitmasking with ControlPadRestriction here.
@@ -637,7 +637,7 @@ size_t hidGetNpadStatesSystemExt(HidNpadIdType id, HidNpadSystemExtState *states
 }
 
 size_t hidGetNpadStatesSystem(HidNpadIdType id, HidNpadSystemState *states, size_t count) {
-    HidNpad *npad = _hidGetNpadInternalState(id);
+    HidNpadInternalState *npad = _hidGetNpadInternalState(id);
     size_t total = _hidGetNpadStates(npad, 6, states, count);
 
     for (size_t i=0; i<total; i++) {
@@ -696,7 +696,7 @@ size_t hidGetSixAxisSensorStates(HidSixAxisSensorHandle handle, HidSixAxisSensor
         return 0;
     }
 
-    HidNpad *npad = _hidGetNpadInternalState(handle.npad_id_type);
+    HidNpadInternalState *npad = _hidGetNpadInternalState(handle.npad_id_type);
     size_t total = _hidGetStates(&npad->sixaxis[index].header, npad->sixaxis[index].storage, 17, offsetof(HidSixAxisSensorStateAtomicStorage,state), offsetof(HidSixAxisSensorState,sampling_number), states, sizeof(HidSixAxisSensorState), count);
     return total;
 }

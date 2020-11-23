@@ -842,8 +842,8 @@ typedef struct HidNfcXcdDeviceHandleState {
     HidNfcXcdDeviceHandleStateImplAtomicStorage storage[2];
 } HidNfcXcdDeviceHandleState;
 
-/// HidNpad
-typedef struct HidNpad {
+/// HidNpadInternalState
+typedef struct HidNpadInternalState {
     u32 style_set;                               ///< Bitfield of \ref HidNpadStyleTag.
     u32 joy_assignment_mode;                     ///< \ref HidNpadJoyAssignmentMode
     HidNpadFullKeyColorState full_key_color;     ///< \ref HidNpadFullKeyColorState
@@ -863,17 +863,27 @@ typedef struct HidNpad {
         struct {
             u32 applet_footer_ui_attribute;                                         ///< Bitfield of AppletFooterUiAttribute.
             u8 applet_footer_ui_type;                                               ///< \ref HidAppletFooterUiType
-            u8 unk_x41AD[0x5B];
+            u8 reserved_x41AD[0x5B];
         };
     };
-    u8 unk_x4208[0x20];
+    u8 reserved_x4208[0x20];                                                        ///< Mutex on pre-10.0.0.
     HidNpadGcTriggerLifo gc_trigger_lifo;
     u32 lark_type_l_and_main;                                                       ///< \ref HidNpadLarkType
     u32 lark_type_r;                                                                ///< \ref HidNpadLarkType
     u32 lucia_type;                                                                 ///< \ref HidNpadLuciaType
     u32 unk_x43EC;
-    u8 unk_x43F0[0xC10];
-} HidNpad;
+} HidNpadInternalState;
+
+/// HidNpadSharedMemoryEntry
+typedef struct HidNpadSharedMemoryEntry {
+    HidNpadInternalState internal_state;
+    u8 pad[0xC10];
+} HidNpadSharedMemoryEntry;
+
+/// HidNpadSharedMemoryFormat
+typedef struct HidNpadSharedMemoryFormat {
+    HidNpadSharedMemoryEntry entries[10];
+} HidNpadSharedMemoryFormat;
 
 // End HidNpad
 
@@ -946,7 +956,7 @@ typedef struct HidSharedMemory {
     u8 capture_button[0x200];
     u8 input_detector[0x800];
     u8 unique_pad[0x4000];                              ///< [1.0.0-4.1.0] UniquePad
-    HidNpad npad[10];
+    HidNpadSharedMemoryFormat npad;
     HidGestureSharedMemoryFormat gesture;
     HidConsoleSixAxisSensor console_six_axis_sensor;    ///< [5.0.0+] ConsoleSixAxisSensor
     u8 unk_x3C220[0x3DE0];
