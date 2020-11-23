@@ -791,7 +791,8 @@ typedef struct HidNpadSixAxisSensorLifo {
 
 /// NpadSystemProperties
 typedef struct {
-    u64 powerInfo : 6;                                               ///< Use \ref hidGetNpadPowerInfo instead of accessing this directly.
+    u64 is_charging : 3;                                             ///< Use \ref hidGetNpadPowerInfo instead of accessing this directly.
+    u64 is_powered : 3;                                              ///< Use \ref hidGetNpadPowerInfo instead of accessing this directly.
 
     u64 bit6 : 1;                                                    ///< Unused
     u64 bit7 : 1;                                                    ///< Unused

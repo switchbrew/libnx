@@ -338,12 +338,12 @@ void hidGetNpadSystemButtonProperties(HidNpadIdType id, HidNpadSystemButtonPrope
     *out = atomic_load_explicit(&_hidGetNpadInternalState(id)->system_button_properties, memory_order_acquire);
 }
 
-static void _hidGetNpadPowerInfo(HidNpadInternalState *npad, HidPowerInfo *info, u32 powerInfo, u32 i) {
+static void _hidGetNpadPowerInfo(HidNpadInternalState *npad, HidPowerInfo *info, u64 is_charging, u64 is_powered, u32 i) {
     info->battery_level = atomic_load_explicit(&npad->battery_level[i], memory_order_acquire);
     if (info->battery_level > 4) info->battery_level = 4; // sdknso would Abort when this occurs.
 
-    info->is_charging = (powerInfo & BIT(i)) != 0;
-    info->is_powered = (powerInfo & BIT(i+3)) != 0;
+    info->is_charging = (is_charging & BIT(i)) != 0;
+    info->is_powered = (is_powered & BIT(i)) != 0;
 }
 
 void hidGetNpadPowerInfoSingle(HidNpadIdType id, HidPowerInfo *info) {
@@ -352,7 +352,7 @@ void hidGetNpadPowerInfoSingle(HidNpadIdType id, HidPowerInfo *info) {
     HidNpadSystemProperties properties;
     properties = atomic_load_explicit(&npad->system_properties, memory_order_acquire);
 
-    _hidGetNpadPowerInfo(npad, info, properties.powerInfo, 0);
+    _hidGetNpadPowerInfo(npad, info, properties.is_charging, properties.is_powered, 0);
 }
 
 void hidGetNpadPowerInfoSplit(HidNpadIdType id, HidPowerInfo *info_left, HidPowerInfo *info_right) {
@@ -361,8 +361,8 @@ void hidGetNpadPowerInfoSplit(HidNpadIdType id, HidPowerInfo *info_left, HidPowe
     HidNpadSystemProperties properties;
     properties = atomic_load_explicit(&npad->system_properties, memory_order_acquire);
 
-    _hidGetNpadPowerInfo(npad, info_left,  properties.powerInfo, 1);
-    _hidGetNpadPowerInfo(npad, info_right, properties.powerInfo, 2);
+    _hidGetNpadPowerInfo(npad, info_left,  properties.is_charging, properties.is_powered, 1);
+    _hidGetNpadPowerInfo(npad, info_right, properties.is_charging, properties.is_powered, 2);
 }
 
 u32 hidGetAppletFooterUiAttributesSet(HidNpadIdType id) {
