@@ -777,7 +777,12 @@ u64 hidMouseButtonsUp(void) {
 
 void hidMouseRead(MousePosition *pos) {
     rwlockReadLock(&g_hidLock);
-    *pos = g_mouseState.position;
+    pos->x = g_mouseState.x;
+    pos->y = g_mouseState.y;
+    pos->velocityX = g_mouseState.delta_x;
+    pos->velocityY = g_mouseState.delta_y;
+    pos->scrollVelocityX = g_mouseState.wheel_delta_x;
+    pos->scrollVelocityY = g_mouseState.wheel_delta_y;
     rwlockReadUnlock(&g_hidLock);
 }
 
@@ -792,7 +797,12 @@ u32 hidMouseMultiRead(MousePosition *entries, u32 num_entries) {
     size_t total = hidGetMouseStates(temp_states, num_entries);
 
     for (size_t i=0; i<total; i++) {
-        entries[i] = temp_states[i].position;
+        entries[i].x = temp_states[i].x;
+        entries[i].y = temp_states[i].y;
+        entries[i].velocityX = temp_states[i].delta_x;
+        entries[i].velocityY = temp_states[i].delta_y;
+        entries[i].scrollVelocityX = temp_states[i].wheel_delta_x;
+        entries[i].scrollVelocityY = temp_states[i].wheel_delta_y;
     }
 
     return total;
@@ -917,7 +927,10 @@ u32 hidSixAxisSensorValuesRead(SixAxisSensorValues *values, HidControllerID id, 
     size_t total = hidGetSixAxisSensorStates(handles[handle_idx], temp_states, num_entries);
 
     for (size_t i=0; i<total; i++) {
-        values[i] = temp_states[i].values;
+        values[i].accelerometer = temp_states[i].acceleration;
+        values[i].gyroscope = temp_states[i].angular_velocity;
+        values[i].unk = temp_states[i].angle;
+        memcpy(values[i].orientation, &temp_states[i].direction, sizeof(temp_states[i].direction));
     }
 
     return total;

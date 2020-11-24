@@ -569,6 +569,11 @@ typedef struct HidVector {
     float z;
 } HidVector;
 
+/// HidDirectionState
+typedef struct HidDirectionState {
+    float direction[3][3];                      ///< 3x3 matrix
+} HidDirectionState;
+
 /// SixAxisSensorValues
 typedef struct SixAxisSensorValues {
     HidVector accelerometer;
@@ -638,7 +643,12 @@ typedef struct HidTouchScreenSharedMemoryFormat {
 /// HidMouseState
 typedef struct HidMouseState {
     u64 sampling_number;                        ///< SamplingNumber
-    MousePosition position;                     ///< \ref MousePosition
+    s32 x;                                      ///< X
+    s32 y;                                      ///< Y
+    s32 delta_x;                                ///< DeltaX
+    s32 delta_y;                                ///< DeltaY
+    s32 wheel_delta_x;                          ///< WheelDeltaX
+    s32 wheel_delta_y;                          ///< WheelDeltaY
     u32 buttons;                                ///< Bitfield of \ref HidMouseButton.
     u32 attributes;                             ///< Bitfield of \ref HidMouseAttribute.
 } HidMouseState;
@@ -809,7 +819,10 @@ typedef struct HidNpadGcTriggerLifo {
 typedef struct HidSixAxisSensorState {
     u64 delta_time;                                     ///< DeltaTime
     u64 sampling_number;                                ///< SamplingNumber
-    SixAxisSensorValues values;
+    HidVector acceleration;                             ///< Acceleration
+    HidVector angular_velocity;                         ///< AngularVelocity
+    HidVector angle;                                    ///< Angle
+    HidDirectionState direction;                        ///< Direction
     u32 attributes;                                     ///< Bitfield of \ref HidSixAxisSensorAttribute.
     u32 reserved;                                       ///< Reserved
 } HidSixAxisSensorState;
