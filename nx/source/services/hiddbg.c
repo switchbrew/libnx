@@ -80,20 +80,20 @@ Result hiddbgDeactivateHomeButton(void) {
     return _hiddbgCmdNoIO(110);
 }
 
-Result hiddbgUpdateControllerColor(u32 colorBody, u32 colorButtons, u64 UniquePadId) {
+Result hiddbgUpdateControllerColor(u32 colorBody, u32 colorButtons, HidsysUniquePadId unique_pad_id) {
     if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     const struct {
         u32 colorBody;
         u32 colorButtons;
-        u64 UniquePadId;
-    } in = { colorBody, colorButtons, UniquePadId };
+        HidsysUniquePadId unique_pad_id;
+    } in = { colorBody, colorButtons, unique_pad_id };
 
     return serviceDispatchIn(&g_hiddbgSrv, 221, in);
 }
 
-Result hiddbgUpdateDesignInfo(u32 colorBody, u32 colorButtons, u32 colorLeftGrip, u32 colorRightGrip, u8 inval, u64 UniquePadId) {
+Result hiddbgUpdateDesignInfo(u32 colorBody, u32 colorButtons, u32 colorLeftGrip, u32 colorRightGrip, u8 inval, HidsysUniquePadId unique_pad_id) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
@@ -104,20 +104,20 @@ Result hiddbgUpdateDesignInfo(u32 colorBody, u32 colorButtons, u32 colorLeftGrip
         u32 colorRightGrip;
         u8 inval;
         u8 pad[7];
-        u64 UniquePadId;
-    } in = { colorBody, colorButtons, colorLeftGrip, colorRightGrip, inval, {0}, UniquePadId };
+        HidsysUniquePadId unique_pad_id;
+    } in = { colorBody, colorButtons, colorLeftGrip, colorRightGrip, inval, {0}, unique_pad_id };
 
     return serviceDispatchIn(&g_hiddbgSrv, 224, in);
 }
 
-Result hiddbgAcquireOperationEventHandle(Event* out_event, bool autoclear, u64 UniquePadId) {
+Result hiddbgAcquireOperationEventHandle(Event* out_event, bool autoclear, HidsysUniquePadId unique_pad_id) {
     if (hosversionBefore(6,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     Handle tmp_handle = INVALID_HANDLE;
     Result rc = 0;
 
-    rc = serviceDispatchIn(&g_hiddbgSrv, 228, UniquePadId,
+    rc = serviceDispatchIn(&g_hiddbgSrv, 228, unique_pad_id,
         .out_handle_attrs = { SfOutHandleAttr_HipcCopy },
         .out_handles = &tmp_handle,
     );
@@ -125,13 +125,13 @@ Result hiddbgAcquireOperationEventHandle(Event* out_event, bool autoclear, u64 U
     return rc;
 }
 
-static Result _hiddbgReadSerialFlash(TransferMemory *tmem, u32 offset, u64 size, u64 UniquePadId) {
+static Result _hiddbgReadSerialFlash(TransferMemory *tmem, u32 offset, u64 size, HidsysUniquePadId unique_pad_id) {
     const struct {
         u32 offset;
         u32 pad;
         u64 size;
-        u64 UniquePadId;
-    } in = { offset, 0, size, UniquePadId };
+        HidsysUniquePadId unique_pad_id;
+    } in = { offset, 0, size, unique_pad_id };
 
     return serviceDispatchIn(&g_hiddbgSrv, 229, in,
         .in_num_handles = 1,
@@ -139,14 +139,14 @@ static Result _hiddbgReadSerialFlash(TransferMemory *tmem, u32 offset, u64 size,
     );
 }
 
-static Result _hiddbgWriteSerialFlash(TransferMemory *tmem, u32 offset, u64 tmem_size, u64 size, u64 UniquePadId) {
+static Result _hiddbgWriteSerialFlash(TransferMemory *tmem, u32 offset, u64 tmem_size, u64 size, HidsysUniquePadId unique_pad_id) {
     const struct {
         u32 offset;
         u32 pad;
         u64 tmem_size;
         u64 size;
-        u64 UniquePadId;
-    } in = { offset, 0, tmem_size, size, UniquePadId };
+        HidsysUniquePadId unique_pad_id;
+    } in = { offset, 0, tmem_size, size, unique_pad_id };
 
     return serviceDispatchIn(&g_hiddbgSrv, 230, in,
         .in_num_handles = 1,
@@ -155,7 +155,7 @@ static Result _hiddbgWriteSerialFlash(TransferMemory *tmem, u32 offset, u64 tmem
 }
 
 // sdk-nso doesn't use hiddbgAcquireOperationEventHandle/hiddbgGetOperationResult in the *SerialFlash impl, those are used seperately by the user. [9.0.0+] sdk-nso no longer exposes *SerialFlash and related functionality.
-Result hiddbgReadSerialFlash(u32 offset, void* buffer, size_t size, u64 UniquePadId) {
+Result hiddbgReadSerialFlash(u32 offset, void* buffer, size_t size, HidsysUniquePadId unique_pad_id) {
     Result rc=0;
     Event tmpevent={0};
     TransferMemory tmem;
@@ -167,17 +167,17 @@ Result hiddbgReadSerialFlash(u32 offset, void* buffer, size_t size, u64 UniquePa
     rc = tmemCreate(&tmem, sizealign, Perm_Rw);
     if (R_FAILED(rc)) return rc;
 
-    rc = hiddbgAcquireOperationEventHandle(&tmpevent, true, UniquePadId); // *Must* be used before _hiddbgReadSerialFlash.
-    if (R_SUCCEEDED(rc)) rc = _hiddbgReadSerialFlash(&tmem, offset, size, UniquePadId);
+    rc = hiddbgAcquireOperationEventHandle(&tmpevent, true, unique_pad_id); // *Must* be used before _hiddbgReadSerialFlash.
+    if (R_SUCCEEDED(rc)) rc = _hiddbgReadSerialFlash(&tmem, offset, size, unique_pad_id);
     if (R_SUCCEEDED(rc)) rc = eventWait(&tmpevent, UINT64_MAX);
-    if (R_SUCCEEDED(rc)) rc = hiddbgGetOperationResult(UniquePadId);
+    if (R_SUCCEEDED(rc)) rc = hiddbgGetOperationResult(unique_pad_id);
     if (R_SUCCEEDED(rc)) memcpy(buffer, tmem.src_addr, size);
     eventClose(&tmpevent);
     tmemClose(&tmem);
     return rc;
 }
 
-Result hiddbgWriteSerialFlash(u32 offset, void* buffer, size_t tmem_size, size_t size, u64 UniquePadId) {
+Result hiddbgWriteSerialFlash(u32 offset, void* buffer, size_t tmem_size, size_t size, HidsysUniquePadId unique_pad_id) {
     Result rc=0;
     Event tmpevent={0};
     TransferMemory tmem;
@@ -188,27 +188,27 @@ Result hiddbgWriteSerialFlash(u32 offset, void* buffer, size_t tmem_size, size_t
     rc = tmemCreateFromMemory(&tmem, buffer, tmem_size, Perm_R);
     if (R_FAILED(rc)) return rc;
 
-    rc = hiddbgAcquireOperationEventHandle(&tmpevent, true, UniquePadId); // *Must* be used before _hiddbgWriteSerialFlash.
-    if (R_SUCCEEDED(rc)) rc = _hiddbgWriteSerialFlash(&tmem, offset, tmem_size, size, UniquePadId);
+    rc = hiddbgAcquireOperationEventHandle(&tmpevent, true, unique_pad_id); // *Must* be used before _hiddbgWriteSerialFlash.
+    if (R_SUCCEEDED(rc)) rc = _hiddbgWriteSerialFlash(&tmem, offset, tmem_size, size, unique_pad_id);
     if (R_SUCCEEDED(rc)) rc = eventWait(&tmpevent, UINT64_MAX);
-    if (R_SUCCEEDED(rc)) rc = hiddbgGetOperationResult(UniquePadId);
+    if (R_SUCCEEDED(rc)) rc = hiddbgGetOperationResult(unique_pad_id);
     eventClose(&tmpevent);
     tmemClose(&tmem);
     return rc;
 }
 
-Result hiddbgGetOperationResult(u64 UniquePadId) {
+Result hiddbgGetOperationResult(HidsysUniquePadId unique_pad_id) {
     if (hosversionBefore(6,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    return _hiddbgCmdInU64NoOut(UniquePadId, 231);
+    return _hiddbgCmdInU64NoOut(unique_pad_id.id, 231);
 }
 
-Result hiddbgGetUniquePadDeviceTypeSetInternal(u64 UniquePadId, u32 *out) {
+Result hiddbgGetUniquePadDeviceTypeSetInternal(HidsysUniquePadId unique_pad_id, u32 *out) {
     if (hosversionBefore(6,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     u32 tmp=0;
-    Result rc = serviceDispatchInOut(&g_hiddbgSrv, 234, UniquePadId, tmp);
+    Result rc = serviceDispatchInOut(&g_hiddbgSrv, 234, unique_pad_id, tmp);
     if (R_SUCCEEDED(rc) && out) { // Pre-9.0.0 output is an u32, with [9.0.0+] it's an u8.
         if (hosversionBefore(9,0,0))
             *out = tmp;

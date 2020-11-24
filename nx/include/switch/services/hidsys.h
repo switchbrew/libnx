@@ -36,6 +36,16 @@ typedef enum {
     HidcfgButtonConfig_Disabled = 22,         ///< Disabled
 } HidcfgButtonConfig;
 
+/// UniquePadId for a controller.
+typedef struct {
+    u64 id;                                   ///< UniquePadId
+} HidsysUniquePadId;
+
+/// UniquePadSerialNumber
+typedef struct {
+    char serial_number[0x10];                 ///< SerialNumber
+} HidsysUniquePadSerialNumber;
+
 /// Mini Cycle struct for \ref HidsysNotificationLedPattern.
 typedef struct {
     u8 ledIntensity;        ///< Mini Cycle X LED Intensity.
@@ -165,12 +175,12 @@ Result hidsysGetSupportedNpadStyleSetOfCallerApplet(u32 *out);
 /**
  * @brief Gets the UniquePadIds for the specified controller.
  * @note Only available on [3.0.0+].
- * @param id Controller ID. Must not be CONTROLLER_P1_AUTO.
- * @param UniquePadIds Output array of UniquePadIds.
- * @param Max number of entries for the UniquePadIds array.
- * @param total_entries Total output array entries. Optional, can be NULL.
+ * @param[in] id \ref HidNpadIdType
+ * @param[out] unique_pad_ids Output array of \ref HidsysUniquePadId.
+ * @param[in] count Max number of entries for the unique_pad_ids array.
+ * @param[out] total_out Total output array entries. Optional, can be NULL.
  */
-Result hidsysGetUniquePadsFromNpad(HidNpadIdType id, u64 *UniquePadIds, s32 count, s32 *total_entries);
+Result hidsysGetUniquePadsFromNpad(HidNpadIdType id, HidsysUniquePadId *unique_pad_ids, s32 count, s32 *total_out);
 
 /**
  * @brief EnableAppletToGetInput
@@ -180,140 +190,140 @@ Result hidsysEnableAppletToGetInput(bool enable);
 
 /**
  * @brief Gets a list of all UniquePadIds.
- * @param UniquePadIds Output array of UniquePadIds.
- * @param Max number of entries for the UniquePadIds array.
- * @param total_entries Total output array entries. Optional, can be NULL.
+ * @param[out] unique_pad_ids Output array of \ref HidsysUniquePadId.
+ * @param[in] count Max number of entries for the unique_pad_ids array.
+ * @param[out] total_out Total output array entries. Optional, can be NULL.
  */
-Result hidsysGetUniquePadIds(u64 *UniquePadIds, s32 count, s32 *total_entries);
+Result hidsysGetUniquePadIds(HidsysUniquePadId *unique_pad_ids, s32 count, s32 *total_out);
 
 /**
- * @brief Gets the unique pad's serial number.
+ * @brief Gets the \ref HidsysUniquePadSerialNumber.
  * @note Only available on [5.0.0+].
- * @param UniquePadId UniquePadId for the controller.
- * @param serial Pointer to output the serial to. (The buffer size needs to be at least 0x11 bytes)
+ * @param[in] unique_pad_id \ref HidsysUniquePadId
+ * @param[out] serial \ref HidsysUniquePadSerialNumber
  */
-Result hidsysGetUniquePadSerialNumber(u64 UniquePadId, char *serial);
+Result hidsysGetUniquePadSerialNumber(HidsysUniquePadId unique_pad_id, HidsysUniquePadSerialNumber *serial);
 
 /**
  * @brief Sets the HOME-button notification LED pattern, for the specified controller.
  * @note Generally this should only be used if \ref hidsysSetNotificationLedPatternWithTimeout is not usable.
  * @note Only available on [7.0.0+].
- * @param pattern \ref HidsysNotificationLedPattern
- * @param UniquePadId UniquePadId for the controller.
+ * @param[in] pattern \ref HidsysNotificationLedPattern
+ * @param[in] unique_pad_id \ref HidsysUniquePadId
  */
-Result hidsysSetNotificationLedPattern(const HidsysNotificationLedPattern *pattern, u64 UniquePadId);
+Result hidsysSetNotificationLedPattern(const HidsysNotificationLedPattern *pattern, HidsysUniquePadId unique_pad_id);
 
 /**
  * @brief Sets the HOME-button notification LED pattern, for the specified controller. The LED will automatically be disabled once the specified timeout occurs.
  * @note Only available on [9.0.0+], and with controllers which have the [9.0.0+] firmware installed.
  * @param[in] pattern \ref HidsysNotificationLedPattern
- * @param[in] UniquePadId UniquePadId for the controller.
+ * @param[in] unique_pad_id \ref HidsysUniquePadId
  * @param[in] timeout Timeout in nanoseconds.
  */
-Result hidsysSetNotificationLedPatternWithTimeout(const HidsysNotificationLedPattern *pattern, u64 UniquePadId, u64 timeout);
+Result hidsysSetNotificationLedPatternWithTimeout(const HidsysNotificationLedPattern *pattern, HidsysUniquePadId unique_pad_id, u64 timeout);
 
 /**
  * @brief IsButtonConfigSupported
  * @note Only available on [10.0.0+].
- * @param[in] unique_pad_id UniquePadId for the controller.
+ * @param[in] unique_pad_id \ref HidsysUniquePadId
  * @param[out] out Output bool flag.
  */
-Result hidsysIsButtonConfigSupported(u64 unique_pad_id, bool *out);
+Result hidsysIsButtonConfigSupported(HidsysUniquePadId unique_pad_id, bool *out);
 
 /**
  * @brief DeleteButtonConfig
  * @note Only available on [10.0.0+].
- * @param[in] unique_pad_id UniquePadId for the controller.
+ * @param[in] unique_pad_id \ref HidsysUniquePadId
  */
-Result hidsysDeleteButtonConfig(u64 unique_pad_id);
+Result hidsysDeleteButtonConfig(HidsysUniquePadId unique_pad_id);
 
 /**
  * @brief SetButtonConfigEnabled
  * @note Only available on [10.0.0+].
- * @param[in] unique_pad_id UniquePadId for the controller.
+ * @param[in] unique_pad_id \ref HidsysUniquePadId
  * @param[in] flag Input flag.
  */
-Result hidsysSetButtonConfigEnabled(u64 unique_pad_id, bool flag);
+Result hidsysSetButtonConfigEnabled(HidsysUniquePadId unique_pad_id, bool flag);
 
 /**
  * @brief IsButtonConfigEnabled
  * @note Only available on [10.0.0+].
- * @param[in] unique_pad_id UniquePadId for the controller.
+ * @param[in] unique_pad_id \ref HidsysUniquePadId
  * @param[out] out Output bool flag.
  */
-Result hidsysIsButtonConfigEnabled(u64 unique_pad_id, bool *out);
+Result hidsysIsButtonConfigEnabled(HidsysUniquePadId unique_pad_id, bool *out);
 
 /**
  * @brief SetButtonConfigEmbedded
  * @note Only available on [10.0.0+].
- * @param[in] unique_pad_id UniquePadId for the controller.
+ * @param[in] unique_pad_id \ref HidsysUniquePadId
  * @param[in] config \ref HidsysButtonConfigEmbedded
  */
-Result hidsysSetButtonConfigEmbedded(u64 unique_pad_id, const HidsysButtonConfigEmbedded *config);
+Result hidsysSetButtonConfigEmbedded(HidsysUniquePadId unique_pad_id, const HidsysButtonConfigEmbedded *config);
 
 /**
  * @brief SetButtonConfigFull
  * @note Only available on [10.0.0+].
- * @param[in] unique_pad_id UniquePadId for the controller.
+ * @param[in] unique_pad_id \ref HidsysUniquePadId
  * @param[in] config \ref HidsysButtonConfigFull
  */
-Result hidsysSetButtonConfigFull(u64 unique_pad_id, const HidsysButtonConfigFull *config);
+Result hidsysSetButtonConfigFull(HidsysUniquePadId unique_pad_id, const HidsysButtonConfigFull *config);
 
 /**
  * @brief SetButtonConfigLeft
  * @note Only available on [10.0.0+].
- * @param[in] unique_pad_id UniquePadId for the controller.
+ * @param[in] unique_pad_id \ref HidsysUniquePadId
  * @param[in] config \ref HidsysButtonConfigLeft
  */
-Result hidsysSetButtonConfigLeft(u64 unique_pad_id, const HidsysButtonConfigLeft *config);
+Result hidsysSetButtonConfigLeft(HidsysUniquePadId unique_pad_id, const HidsysButtonConfigLeft *config);
 
 /**
  * @brief SetButtonConfigRight
  * @note Only available on [10.0.0+].
- * @param[in] unique_pad_id UniquePadId for the controller.
+ * @param[in] unique_pad_id \ref HidsysUniquePadId
  * @param[in] config \ref HidsysButtonConfigRight
  */
-Result hidsysSetButtonConfigRight(u64 unique_pad_id, const HidsysButtonConfigRight *config);
+Result hidsysSetButtonConfigRight(HidsysUniquePadId unique_pad_id, const HidsysButtonConfigRight *config);
 
 /**
  * @brief GetButtonConfigEmbedded
  * @note Only available on [10.0.0+].
- * @param[in] unique_pad_id UniquePadId for the controller.
+ * @param[in] unique_pad_id \ref HidsysUniquePadId
  * @param[out] config \ref HidsysButtonConfigEmbedded
  */
-Result hidsysGetButtonConfigEmbedded(u64 unique_pad_id, HidsysButtonConfigEmbedded *config);
+Result hidsysGetButtonConfigEmbedded(HidsysUniquePadId unique_pad_id, HidsysButtonConfigEmbedded *config);
 
 /**
  * @brief GetButtonConfigFull
  * @note Only available on [10.0.0+].
- * @param[in] unique_pad_id UniquePadId for the controller.
+ * @param[in] unique_pad_id \ref HidsysUniquePadId
  * @param[out] config \ref HidsysButtonConfigFull
  */
-Result hidsysGetButtonConfigFull(u64 unique_pad_id, HidsysButtonConfigFull *config);
+Result hidsysGetButtonConfigFull(HidsysUniquePadId unique_pad_id, HidsysButtonConfigFull *config);
 
 /**
  * @brief GetButtonConfigLeft
  * @note Only available on [10.0.0+].
- * @param[in] unique_pad_id UniquePadId for the controller.
+ * @param[in] unique_pad_id \ref HidsysUniquePadId
  * @param[out] config \ref HidsysButtonConfigLeft
  */
-Result hidsysGetButtonConfigLeft(u64 unique_pad_id, HidsysButtonConfigLeft *config);
+Result hidsysGetButtonConfigLeft(HidsysUniquePadId unique_pad_id, HidsysButtonConfigLeft *config);
 
 /**
  * @brief GetButtonConfigRight
  * @note Only available on [10.0.0+].
- * @param[in] unique_pad_id UniquePadId for the controller.
+ * @param[in] unique_pad_id \ref HidsysUniquePadId
  * @param[out] config \ref HidsysButtonConfigRight
  */
-Result hidsysGetButtonConfigRight(u64 unique_pad_id, HidsysButtonConfigRight *config);
+Result hidsysGetButtonConfigRight(HidsysUniquePadId unique_pad_id, HidsysButtonConfigRight *config);
 
 /**
  * @brief IsCustomButtonConfigSupported
  * @note Only available on [10.0.0+].
- * @param[in] unique_pad_id UniquePadId for the controller.
+ * @param[in] unique_pad_id \ref HidsysUniquePadId
  * @param[out] out Output bool flag.
  */
-Result hidsysIsCustomButtonConfigSupported(u64 unique_pad_id, bool *out);
+Result hidsysIsCustomButtonConfigSupported(HidsysUniquePadId unique_pad_id, bool *out);
 
 /**
  * @brief IsDefaultButtonConfigEmbedded
@@ -474,18 +484,18 @@ Result hidsysDeleteButtonConfigStorageRight(s32 index);
 /**
  * @brief IsUsingCustomButtonConfig
  * @note Only available on [10.0.0+].
- * @param[in] unique_pad_id UniquePadId for the controller.
+ * @param[in] unique_pad_id \ref HidsysUniquePadId
  * @param[out] out Output bool flag.
  */
-Result hidsysIsUsingCustomButtonConfig(u64 unique_pad_id, bool *out);
+Result hidsysIsUsingCustomButtonConfig(HidsysUniquePadId unique_pad_id, bool *out);
 
 /**
  * @brief IsAnyCustomButtonConfigEnabled
  * @note Only available on [10.0.0+].
- * @param[in] unique_pad_id UniquePadId for the controller.
+ * @param[in] unique_pad_id \ref HidsysUniquePadId
  * @param[out] out Output bool flag.
  */
-Result hidsysIsAnyCustomButtonConfigEnabled(u64 unique_pad_id, bool *out);
+Result hidsysIsAnyCustomButtonConfigEnabled(HidsysUniquePadId unique_pad_id, bool *out);
 
 /**
  * @brief SetAllCustomButtonConfigEnabled
@@ -504,64 +514,64 @@ Result hidsysSetAllDefaultButtonConfig(void);
 /**
  * @brief SetHidButtonConfigEmbedded
  * @note Only available on [10.0.0+].
- * @param[in] unique_pad_id UniquePadId for the controller.
+ * @param[in] unique_pad_id \ref HidsysUniquePadId
  * @param[in] config \ref HidcfgButtonConfigEmbedded
  */
-Result hidsysSetHidButtonConfigEmbedded(u64 unique_pad_id, const HidcfgButtonConfigEmbedded *config);
+Result hidsysSetHidButtonConfigEmbedded(HidsysUniquePadId unique_pad_id, const HidcfgButtonConfigEmbedded *config);
 
 /**
  * @brief SetHidButtonConfigFull
  * @note Only available on [10.0.0+].
- * @param[in] unique_pad_id UniquePadId for the controller.
+ * @param[in] unique_pad_id \ref HidsysUniquePadId
  * @param[in] config \ref HidcfgButtonConfigFull
  */
-Result hidsysSetHidButtonConfigFull(u64 unique_pad_id, const HidcfgButtonConfigFull *config);
+Result hidsysSetHidButtonConfigFull(HidsysUniquePadId unique_pad_id, const HidcfgButtonConfigFull *config);
 
 /**
  * @brief SetHidButtonConfigLeft
  * @note Only available on [10.0.0+].
- * @param[in] unique_pad_id UniquePadId for the controller.
+ * @param[in] unique_pad_id \ref HidsysUniquePadId
  * @param[in] config \ref HidcfgButtonConfigLeft
  */
-Result hidsysSetHidButtonConfigLeft(u64 unique_pad_id, const HidcfgButtonConfigLeft *config);
+Result hidsysSetHidButtonConfigLeft(HidsysUniquePadId unique_pad_id, const HidcfgButtonConfigLeft *config);
 
 /**
  * @brief SetHidButtonConfigRight
  * @note Only available on [10.0.0+].
- * @param[in] unique_pad_id UniquePadId for the controller.
+ * @param[in] unique_pad_id \ref HidsysUniquePadId
  * @param[in] config \ref HidcfgButtonConfigRight
  */
-Result hidsysSetHidButtonConfigRight(u64 unique_pad_id, const HidcfgButtonConfigRight *config);
+Result hidsysSetHidButtonConfigRight(HidsysUniquePadId unique_pad_id, const HidcfgButtonConfigRight *config);
 
 /**
  * @brief GetHidButtonConfigEmbedded
  * @note Only available on [10.0.0+].
- * @param[in] unique_pad_id UniquePadId for the controller.
+ * @param[in] unique_pad_id \ref HidsysUniquePadId
  * @param[out] config \ref HidcfgButtonConfigEmbedded
  */
-Result hidsysGetHidButtonConfigEmbedded(u64 unique_pad_id, HidcfgButtonConfigEmbedded *config);
+Result hidsysGetHidButtonConfigEmbedded(HidsysUniquePadId unique_pad_id, HidcfgButtonConfigEmbedded *config);
 
 /**
  * @brief GetHidButtonConfigFull
  * @note Only available on [10.0.0+].
- * @param[in] unique_pad_id UniquePadId for the controller.
+ * @param[in] unique_pad_id \ref HidsysUniquePadId
  * @param[out] config \ref HidcfgButtonConfigFull
  */
-Result hidsysGetHidButtonConfigFull(u64 unique_pad_id, HidcfgButtonConfigFull *config);
+Result hidsysGetHidButtonConfigFull(HidsysUniquePadId unique_pad_id, HidcfgButtonConfigFull *config);
 
 /**
  * @brief GetHidButtonConfigLeft
  * @note Only available on [10.0.0+].
- * @param[in] unique_pad_id UniquePadId for the controller.
+ * @param[in] unique_pad_id \ref HidsysUniquePadId
  * @param[out] config \ref HidcfgButtonConfigLeft
  */
-Result hidsysGetHidButtonConfigLeft(u64 unique_pad_id, HidcfgButtonConfigLeft *config);
+Result hidsysGetHidButtonConfigLeft(HidsysUniquePadId unique_pad_id, HidcfgButtonConfigLeft *config);
 
 /**
  * @brief GetHidButtonConfigRight
  * @note Only available on [10.0.0+].
- * @param[in] unique_pad_id UniquePadId for the controller.
+ * @param[in] unique_pad_id \ref HidsysUniquePadId
  * @param[out] config \ref HidcfgButtonConfigRight
  */
-Result hidsysGetHidButtonConfigRight(u64 unique_pad_id, HidcfgButtonConfigRight *config);
+Result hidsysGetHidButtonConfigRight(HidsysUniquePadId unique_pad_id, HidcfgButtonConfigRight *config);
 

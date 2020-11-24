@@ -6,6 +6,7 @@
 #pragma once
 #include "../types.h"
 #include "../services/hid.h"
+#include "../services/hidsys.h"
 #include "../sf/service.h"
 
 /// HdlsDeviceInfo, for [7.0.0-8.1.0].
@@ -124,36 +125,36 @@ Service* hiddbgGetServiceSession(void);
 /// Ignores subsequent home button presses.
 Result hiddbgDeactivateHomeButton(void);
 
-/// Writes the input RGB colors to the spi-flash for the specified controller (offset 0x6050 size 0x6). See hidsys.h for UniquePadId. Only available with [3.0.0+].
-Result hiddbgUpdateControllerColor(u32 colorBody, u32 colorButtons, u64 UniquePadId);
+/// Writes the input RGB colors to the spi-flash for the specified controller (offset 0x6050 size 0x6). Only available with [3.0.0+].
+Result hiddbgUpdateControllerColor(u32 colorBody, u32 colorButtons, HidsysUniquePadId unique_pad_id);
 
-/// Writes the input RGB colors followed by inval to the spi-flash for the specified controller (offset 0x6050 size 0xD). See hidsys.h for UniquePadId. Only available with [5.0.0+].
-Result hiddbgUpdateDesignInfo(u32 colorBody, u32 colorButtons, u32 colorLeftGrip, u32 colorRightGrip, u8 inval, u64 UniquePadId);
+/// Writes the input RGB colors followed by inval to the spi-flash for the specified controller (offset 0x6050 size 0xD). Only available with [5.0.0+].
+Result hiddbgUpdateDesignInfo(u32 colorBody, u32 colorButtons, u32 colorLeftGrip, u32 colorRightGrip, u8 inval, HidsysUniquePadId unique_pad_id);
 
-/// Get the OperationEvent for the specified controller. See hidsys.h for UniquePadId.
+/// Get the OperationEvent for the specified controller.
 /// The Event must be closed by the user once finished with it.
 /// Only available with [6.0.0+].
-Result hiddbgAcquireOperationEventHandle(Event* out_event, bool autoclear, u64 UniquePadId);
+Result hiddbgAcquireOperationEventHandle(Event* out_event, bool autoclear, HidsysUniquePadId unique_pad_id);
 
-/// Reads spi-flash for the specified controller. See hidsys.h for UniquePadId.
+/// Reads spi-flash for the specified controller.
 /// This also uses \ref hiddbgAcquireOperationEventHandle to wait for the operation to finish, then \ref hiddbgGetOperationResult is used.
 /// Only available with [6.0.0+].
-Result hiddbgReadSerialFlash(u32 offset, void* buffer, size_t size, u64 UniquePadId);
+Result hiddbgReadSerialFlash(u32 offset, void* buffer, size_t size, HidsysUniquePadId unique_pad_id);
 
-/// Writes spi-flash for the specified controller. See hidsys.h for UniquePadId.
+/// Writes spi-flash for the specified controller.
 /// buffer and tmem_size must be page-aligned. size is the actual transfer size.
 /// This also uses \ref hiddbgAcquireOperationEventHandle to wait for the operation to finish, then \ref hiddbgGetOperationResult is used.
 /// Only available with [6.0.0+].
-Result hiddbgWriteSerialFlash(u32 offset, void* buffer, size_t tmem_size, size_t size, u64 UniquePadId);
+Result hiddbgWriteSerialFlash(u32 offset, void* buffer, size_t tmem_size, size_t size, HidsysUniquePadId unique_pad_id);
 
-/// Get the Result for the Operation and handles cleanup, for the specified controller. See hidsys.h for UniquePadId.
+/// Get the Result for the Operation and handles cleanup, for the specified controller.
 /// Only available with [6.0.0+].
-Result hiddbgGetOperationResult(u64 UniquePadId);
+Result hiddbgGetOperationResult(HidsysUniquePadId unique_pad_id);
 
-/// Gets the internal DeviceType for the specified controller. See hidsys.h for UniquePadId.
+/// Gets the internal DeviceType for the specified controller.
 /// Only available with [6.0.0+].
 /// Pre-9.0.0 the output is an u32, with [9.0.0+] it's an u8.
-Result hiddbgGetUniquePadDeviceTypeSetInternal(u64 UniquePadId, u32 *out);
+Result hiddbgGetUniquePadDeviceTypeSetInternal(HidsysUniquePadId unique_pad_id, u32 *out);
 
 /// Gets a list of AbstractedPadHandles, where AbstractedPadHandles is the output array with max entries = count. total_entries is total entries written to the output array.
 /// Only available with [5.0.0-8.1.0].
