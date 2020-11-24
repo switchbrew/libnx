@@ -1141,12 +1141,12 @@ Result hidGetSupportedNpadStyleSet(u32 *style_set) {
     return rc;
 }
 
-Result hidSetSupportedNpadIdType(const HidNpadIdType *buf, size_t count) {
+Result hidSetSupportedNpadIdType(const HidNpadIdType *ids, size_t count) {
     u64 AppletResourceUserId = appletGetAppletResourceUserId();
 
     return serviceDispatchIn(&g_hidSrv, 102, AppletResourceUserId,
         .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_In },
-        .buffers = { { buf, count*sizeof(HidNpadIdType) } },
+        .buffers = { { ids, count*sizeof(HidNpadIdType) } },
         .in_send_pid = true,
     );
 }
@@ -1224,30 +1224,30 @@ static Result _hidActivateVibrationDevice(Service* srv, HidVibrationDeviceHandle
     return _hidCmdInU32NoOut(srv, handle.type_value, 0);
 }
 
-Result hidGetVibrationDeviceInfo(HidVibrationDeviceHandle handle, HidVibrationDeviceInfo *VibrationDeviceInfo) {
-    return serviceDispatchInOut(&g_hidSrv, 200, handle, *VibrationDeviceInfo);
+Result hidGetVibrationDeviceInfo(HidVibrationDeviceHandle handle, HidVibrationDeviceInfo *out) {
+    return serviceDispatchInOut(&g_hidSrv, 200, handle, *out);
 }
 
-Result hidSendVibrationValue(HidVibrationDeviceHandle handle, HidVibrationValue *VibrationValue) {
+Result hidSendVibrationValue(HidVibrationDeviceHandle handle, const HidVibrationValue *value) {
     const struct {
         HidVibrationDeviceHandle handle;
-        HidVibrationValue VibrationValue;
+        HidVibrationValue value;
         u32 pad;
         u64 AppletResourceUserId;
-    } in = { handle, *VibrationValue, 0, appletGetAppletResourceUserId() };
+    } in = { handle, *value, 0, appletGetAppletResourceUserId() };
 
     return serviceDispatchIn(&g_hidSrv, 201, in,
         .in_send_pid = true,
     );
 }
 
-Result hidGetActualVibrationValue(HidVibrationDeviceHandle handle, HidVibrationValue *VibrationValue) {
+Result hidGetActualVibrationValue(HidVibrationDeviceHandle handle, HidVibrationValue *out) {
     const struct {
         HidVibrationDeviceHandle handle;
         u64 AppletResourceUserId;
     } in = { handle, appletGetAppletResourceUserId() };
 
-    return serviceDispatchInOut(&g_hidSrv, 202, in, *VibrationValue,
+    return serviceDispatchInOut(&g_hidSrv, 202, in, *out,
         .in_send_pid = true,
     );
 }
@@ -1260,7 +1260,7 @@ Result hidIsVibrationPermitted(bool *flag) {
     return _hidCmdNoInOutBool(flag, 205);
 }
 
-Result hidSendVibrationValues(const HidVibrationDeviceHandle *handles, HidVibrationValue *VibrationValues, s32 count) {
+Result hidSendVibrationValues(const HidVibrationDeviceHandle *handles, const HidVibrationValue *values, s32 count) {
     u64 AppletResourceUserId = appletGetAppletResourceUserId();
 
     return serviceDispatchIn(&g_hidSrv, 206, AppletResourceUserId,
@@ -1270,7 +1270,7 @@ Result hidSendVibrationValues(const HidVibrationDeviceHandle *handles, HidVibrat
         },
         .buffers = {
             { handles, count*sizeof(HidVibrationDeviceHandle) },
-            { VibrationValues, count*sizeof(HidVibrationValue) },
+            { values, count*sizeof(HidVibrationValue) },
         },
     );
 }

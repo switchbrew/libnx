@@ -1116,39 +1116,85 @@ size_t hidGetKeyboardStates(HidKeyboardState *states, size_t count);
 
 void hidInitializeNpad(void);
 
-/// Gets a bitfield of \ref HidNpadStyleTag for the specified controller.
+/**
+ * @brief Gets the StyleSet for the specified Npad.
+ * @param[in] id \ref HidNpadIdType
+ * @return Bitfield of \ref HidNpadStyleTag.
+ */
 u32 hidGetNpadStyleSet(HidNpadIdType id);
 
-/// Gets the \ref HidNpadJoyAssignmentMode for the specified controller.
+/**
+ * @brief Gets the \ref HidNpadJoyAssignmentMode for the specified Npad.
+ * @param[in] id \ref HidNpadIdType
+ * @return \ref HidNpadJoyAssignmentMode
+ */
 HidNpadJoyAssignmentMode hidGetNpadJoyAssignment(HidNpadIdType id);
 
-/// Gets the main \ref HidNpadControllerColor for the specified controller.
+/**
+ * @brief Gets the main \ref HidNpadControllerColor for the specified Npad.
+ * @param[in] id \ref HidNpadIdType
+ * @param[out] color \ref HidNpadControllerColor
+ */
 Result hidGetNpadControllerColorSingle(HidNpadIdType id, HidNpadControllerColor *color);
 
-/// Gets the left/right \ref HidNpadControllerColor for the specified controller (Joy-Con pair in dual mode).
+/**
+ * @brief Gets the left/right \ref HidNpadControllerColor for the specified Npad (Joy-Con pair in dual mode).
+ * @param[in] id \ref HidNpadIdType
+ * @param[out] color_left \ref HidNpadControllerColor
+ * @param[out] color_right \ref HidNpadControllerColor
+ */
 Result hidGetNpadControllerColorSplit(HidNpadIdType id, HidNpadControllerColor *color_left, HidNpadControllerColor *color_right);
 
-/// Gets the bitfield of \ref HidDeviceTypeBits for the specified controller.
+/**
+ * @brief Gets the DeviceType for the specified Npad.
+ * @param[in] id \ref HidNpadIdType
+ * @return Bitfield of \ref HidDeviceTypeBits.
+ */
 u32 hidGetNpadDeviceType(HidNpadIdType id);
 
-/// Gets the \ref HidNpadSystemProperties for the specified controller.
+/**
+ * @brief Gets the \ref HidNpadSystemProperties for the specified Npad.
+ * @param[in] id \ref HidNpadIdType
+ * @param[out] out \ref HidNpadSystemProperties
+ */
 void hidGetNpadSystemProperties(HidNpadIdType id, HidNpadSystemProperties *out);
 
-/// Gets the \ref HidNpadSystemButtonProperties for the specified controller.
+/**
+ * @brief Gets the \ref HidNpadSystemButtonProperties for the specified Npad.
+ * @param[in] id \ref HidNpadIdType
+ * @param[out] out \ref HidNpadSystemButtonProperties
+ */
 void hidGetNpadSystemButtonProperties(HidNpadIdType id, HidNpadSystemButtonProperties *out);
 
-/// Gets the main \ref HidPowerInfo for the specified controller.
+/**
+ * @brief Gets the main \ref HidPowerInfo for the specified Npad.
+ * @param[in] id \ref HidNpadIdType
+ * @param[out] info \ref HidPowerInfo
+ */
 void hidGetNpadPowerInfoSingle(HidNpadIdType id, HidPowerInfo *info);
 
-/// Gets the left/right \ref HidPowerInfo for the specified controller (Joy-Con pair in dual mode).
+/**
+ * @brief Gets the left/right \ref HidPowerInfo for the specified Npad (Joy-Con pair in dual mode).
+ * @param[in] id \ref HidNpadIdType
+ * @param[out] info_left \ref HidPowerInfo
+ * @param[out] info_right \ref HidPowerInfo
+ */
 void hidGetNpadPowerInfoSplit(HidNpadIdType id, HidPowerInfo *info_left, HidPowerInfo *info_right);
 
-/// Gets a bitfield of AppletFooterUiAttribute for the specified Npad.
-/// Only available on [9.0.0+].
+/**
+ * @brief Gets the AppletFooterUiAttributesSet for the specified Npad.
+ * @note Only available on [9.0.0+].
+ * @param[in] id \ref HidNpadIdType
+ * @return Bitfield of AppletFooterUiAttribute.
+ */
 u32 hidGetAppletFooterUiAttributesSet(HidNpadIdType id);
 
-/// Gets \ref HidAppletFooterUiType for the specified Npad.
-/// Only available on [9.0.0+].
+/**
+ * @brief Gets \ref HidAppletFooterUiType for the specified Npad.
+ * @note Only available on [9.0.0+].
+ * @param[in] id \ref HidNpadIdType
+ * @return \ref HidAppletFooterUiType
+ */
 HidAppletFooterUiType hidGetAppletFooterUiTypes(HidNpadIdType id);
 
 size_t hidGetNpadStatesFullKey(HidNpadIdType id, HidNpadFullKeyState *states, size_t count);
@@ -1195,131 +1241,279 @@ void hidTouchRead(touchPosition *pos, u32 point_id);
 void hidJoystickRead(JoystickPosition *pos, HidControllerID id, HidControllerJoystick stick);
 u32 hidSixAxisSensorValuesRead(SixAxisSensorValues *values, HidControllerID id, u32 num_entries);
 
-/// This can be used to check what CONTROLLER_P1_AUTO uses.
-/// Returns 0 when CONTROLLER_PLAYER_1 is connected, otherwise returns 1 for handheld-mode.
+/**
+ * @brief This can be used to check what CONTROLLER_P1_AUTO uses.
+ * @return 0 when CONTROLLER_PLAYER_1 is connected, otherwise returns 1 for handheld-mode.
+ */
 bool hidGetHandheldMode(void);
 
-/// SetSixAxisSensorFusionParameters. unk0 must be 0.0f-1.0f.
+/**
+ * @brief SetSixAxisSensorFusionParameters
+ * @param[in] handle \ref HidSixAxisSensorHandle
+ * @param[in] unk0 Must be 0.0f-1.0f.
+ * @param[in] unk1 Unknown
+ */
 Result hidSetSixAxisSensorFusionParameters(HidSixAxisSensorHandle handle, float unk0, float unk1);
 
-/// GetSixAxisSensorFusionParameters
+/**
+ * @brief GetSixAxisSensorFusionParameters
+ * @param[in] handle \ref HidSixAxisSensorHandle
+ * @param[out] unk0 Unknown
+ * @param[out] unk1 Unknown
+ */
 Result hidGetSixAxisSensorFusionParameters(HidSixAxisSensorHandle handle, float *unk0, float *unk1);
 
-/// ResetSixAxisSensorFusionParameters
+/**
+ * @brief ResetSixAxisSensorFusionParameters
+ * @param[in] handle \ref HidSixAxisSensorHandle
+ */
 Result hidResetSixAxisSensorFusionParameters(HidSixAxisSensorHandle handle);
 
-/// Sets the ::HidGyroscopeZeroDriftMode for the specified SixAxisSensorHandle.
+/**
+ * @brief Sets the ::HidGyroscopeZeroDriftMode for the specified SixAxisSensorHandle.
+ * @param[in] handle \ref HidSixAxisSensorHandle
+ * @param[in] mode \ref HidGyroscopeZeroDriftMode
+ */
 Result hidSetGyroscopeZeroDriftMode(HidSixAxisSensorHandle handle, HidGyroscopeZeroDriftMode mode);
 
-/// Gets the ::HidGyroscopeZeroDriftMode for the specified SixAxisSensorHandle.
+/**
+ * @brief Gets the ::HidGyroscopeZeroDriftMode for the specified SixAxisSensorHandle.
+ * @param[in] handle \ref HidSixAxisSensorHandle
+ * @param[out] mode \ref HidGyroscopeZeroDriftMode
+ */
 Result hidGetGyroscopeZeroDriftMode(HidSixAxisSensorHandle handle, HidGyroscopeZeroDriftMode *mode);
 
-/// Resets the ::HidGyroscopeZeroDriftMode for the specified SixAxisSensorHandle to ::HidGyroscopeZeroDriftMode_Standard.
+/**
+ * @brief Resets the ::HidGyroscopeZeroDriftMode for the specified SixAxisSensorHandle to ::HidGyroscopeZeroDriftMode_Standard.
+ * @param[in] handle \ref HidSixAxisSensorHandle
+ */
 Result hidResetGyroscopeZeroDriftMode(HidSixAxisSensorHandle handle);
 
-/// Sets which controller styles are supported, bitfield of \ref HidNpadStyleTag. This is automatically called with all styles in \ref hidInitialize.
+/**
+ * @brief Sets which controller styles are supported.
+ * @note This is automatically called with the needed styles in \ref hidScanInput when required.
+ * @param[in] style_set Bitfield of \ref HidNpadStyleTag.
+ */
 Result hidSetSupportedNpadStyleSet(u32 style_set);
 
-/// Gets which controller styles are supported, bitfield of \ref HidNpadStyleTag.
+/**
+ * @brief Gets which controller styles are supported.
+ * @param[out] style_set Bitfield of \ref HidNpadStyleTag.
+ */
 Result hidGetSupportedNpadStyleSet(u32 *style_set);
 
-/// This is automatically called with HidNpadIdType_No{1-8} and HidNpadIdType_Handheld in \ref hidInitialize.
-/// count must be <=10. Each entry in buf must be HidNpadIdType_No{1-8} or HidNpadIdType_Handheld.
-Result hidSetSupportedNpadIdType(const HidNpadIdType *buf, size_t count);
+/**
+ * @brief Sets which \ref HidNpadIdType are supported.
+ * @note This is automatically called with HidNpadIdType_No{1-8} and HidNpadIdType_Handheld when required in \ref hidScanInput.
+ * @param[in] ids Input array of \ref HidNpadIdType.
+ * @param[in] count Total entries in the ids array. Must be <=10.
+ */
+Result hidSetSupportedNpadIdType(const HidNpadIdType *ids, size_t count);
 
-/// Gets an event with the specified autoclear for the input controller.
-/// The user *must* close the event when finished with it / before the app exits.
-/// This is signaled when the \ref hidGetNpadStyleSet output is updated for the controller.
+/**
+ * @brief Gets an Event which is signaled when the \ref hidGetNpadStyleSet output is updated for the specified controller.
+ * @note The Event must be closed by the user once finished with it.
+ * @param[in] id \ref HidNpadIdType
+ * @param[out] out_event Output Event.
+ * @param[in] autoclear The autoclear for the Event.
+**/
 Result hidAcquireNpadStyleSetUpdateEventHandle(HidNpadIdType id, Event* out_event, bool autoclear);
 
-/// Sets the hold-type, see \ref HidJoyHoldType.
+/**
+ * @brief Sets the \ref HidJoyHoldType.
+ * @note Used automatically by \ref hidScanInput when required.
+ * @param[in] type \ref HidJoyHoldType
+ */
 Result hidSetNpadJoyHoldType(HidJoyHoldType type);
 
-/// Gets the hold-type, see \ref HidJoyHoldType.
+/**
+ * @brief Gets the \ref HidJoyHoldType.
+ * @param[out] type \ref HidJoyHoldType
+ */
 Result hidGetNpadJoyHoldType(HidJoyHoldType *type);
 
-/// Use this if you want to use a single joy-con as a dedicated HidNpadIdType_No*.
-/// When used, both joy-cons in a pair should be used with this (HidNpadIdType_No1 and HidNpadIdType_No2 for example).
-/// id must be HidNpadIdType_No*.
+/**
+ * @brief Use this if you want to use a single joy-con as a dedicated HidNpadIdType_No*. When used, both joy-cons in a pair should be used with this (HidNpadIdType_No1 and HidNpadIdType_No2 for example).
+ * @param[in] id \ref HidNpadIdType, must be HidNpadIdType_No*.
+ */
 Result hidSetNpadJoyAssignmentModeSingleByDefault(HidNpadIdType id);
 
-/// Use this if you want to use a pair of joy-cons as a single HidNpadIdType_No*. Only necessary if you want to use this mode in your application after \ref hidSetNpadJoyAssignmentModeSingleByDefault was used with this pair of joy-cons.
-/// Used automatically during app startup/exit for all controllers.
-/// When used, both joy-cons in a pair should be used with this (HidNpadIdType_No1 and HidNpadIdType_No2 for example).
-/// id must be HidNpadIdType_No*.
+/**
+ * @brief Use this if you want to use a pair of joy-cons as a single HidNpadIdType_No*. When used, both joy-cons in a pair should be used with this (HidNpadIdType_No1 and HidNpadIdType_No2 for example).
+ * @note Used automatically by \ref hidScanInput when required.
+ * @param[in] id \ref HidNpadIdType, must be HidNpadIdType_No*.
+ */
 Result hidSetNpadJoyAssignmentModeDual(HidNpadIdType id);
 
-/// Merge two single joy-cons into a dual-mode controller. Use this after \ref hidSetNpadJoyAssignmentModeDual, when \ref hidSetNpadJoyAssignmentModeSingleByDefault was previously used (this includes using this manually at application exit).
-/// To be successful, id0/id1 must correspond to controllers supporting styles HidNpadStyleTag_NpadJoyLeft/Right, or HidNpadStyleTag_NpadJoyRight/Left.
-/// If successful, the id of the resulting dual controller is set to id0.
+/**
+ * @brief Merge two single joy-cons into a dual-mode controller. Use this after \ref hidSetNpadJoyAssignmentModeDual, when \ref hidSetNpadJoyAssignmentModeSingleByDefault was previously used (this includes using this manually at application exit).
+ * @brief To be successful, id0/id1 must correspond to controllers supporting styles HidNpadStyleTag_NpadJoyLeft/Right, or HidNpadStyleTag_NpadJoyRight/Left.
+ * @brief If successful, the id of the resulting dual controller is set to id0.
+ * @param[in] id0 \ref HidNpadIdType
+ * @param[in] id1 \ref HidNpadIdType
+ */
 Result hidMergeSingleJoyAsDualJoy(HidNpadIdType id0, HidNpadIdType id1);
 
+/**
+ * @brief Gets and initializes vibration handles.
+ * @note Only the following styles support total_handles 2: ::HidNpadStyleTag_NpadFullKey, ::HidNpadStyleTag_NpadHandheld, ::HidNpadStyleTag_NpadJoyDual, ::HidNpadStyleTag_NpadHandheldLark, ::HidNpadStyleTag_NpadSystem, ::HidNpadStyleTag_NpadSystemExt.
+ * @param[out] handles Output array of \ref HidVibrationDeviceHandle.
+ * @param[in] total_handles Total handles for the handles array. Must be 1 or 2, if 2 handles aren't supported by the specified style an error is thrown.
+ * @param[in] id \ref HidNpadIdType
+ * @param[in] style \ref HidNpadStyleTag
+ */
 Result hidInitializeVibrationDevices(HidVibrationDeviceHandle *handles, s32 total_handles, HidNpadIdType id, HidNpadStyleTag style);
 
-/// Gets HidVibrationDeviceInfo for the specified device.
-Result hidGetVibrationDeviceInfo(HidVibrationDeviceHandle handle, HidVibrationDeviceInfo *VibrationDeviceInfo);
+/**
+ * @brief Gets \ref HidVibrationDeviceInfo for the specified device.
+ * @param[in] handle \ref HidVibrationDeviceHandle
+ * @param[out] out \ref HidVibrationDeviceInfo
+ */
+Result hidGetVibrationDeviceInfo(HidVibrationDeviceHandle handle, HidVibrationDeviceInfo *out);
 
-/// Send the VibrationValue to the specified device.
-Result hidSendVibrationValue(HidVibrationDeviceHandle handle, HidVibrationValue *VibrationValue);
+/**
+ * @brief Sends the \ref HidVibrationDeviceHandle to the specified device.
+ * @param[in] handle \ref HidVibrationDeviceHandle
+ * @param[in] value \ref HidVibrationValue
+ */
+Result hidSendVibrationValue(HidVibrationDeviceHandle handle, const HidVibrationValue *value);
 
-/// Gets the current HidVibrationValue for the specified device.
-Result hidGetActualVibrationValue(HidVibrationDeviceHandle handle, HidVibrationValue *VibrationValue);
+/**
+ * @brief Gets the current \ref HidVibrationValue for the specified device.
+ * @param[in] handle \ref HidVibrationDeviceHandle
+ * @param[out] out \ref HidVibrationValue
+ */
+Result hidGetActualVibrationValue(HidVibrationDeviceHandle handle, HidVibrationValue *out);
 
-/// Sets whether vibration is allowed, this also affects the config displayed by System Settings.
+/**
+ * @brief Sets whether vibration is allowed, this also affects the config displayed by System Settings.
+ * @param[in] flag Flag
+ */
 Result hidPermitVibration(bool flag);
 
-/// Gets whether vibration is allowed.
+/**
+ * @brief Gets whether vibration is allowed.
+ * @param[out] flag Flag
+ */
 Result hidIsVibrationPermitted(bool *flag);
 
-/// Send VibrationValues[index] to handles[index], where count is the number of entries in the handles/VibrationValues arrays.
-Result hidSendVibrationValues(const HidVibrationDeviceHandle *handles, HidVibrationValue *VibrationValues, s32 count);
+/**
+ * @brief Send vibration values[index] to handles[index].
+ * @param[in] handles Input array of \ref HidVibrationDeviceHandle.
+ * @param[in] values Input array of \ref HidVibrationValue.
+ * @param[in] count Total entries in the handles/values arrays.
+ */
+Result hidSendVibrationValues(const HidVibrationDeviceHandle *handles, const HidVibrationValue *values, s32 count);
 
-/// Gets whether vibration is available with the specified device. Only available on [7.0.0+].
+/**
+ * @brief Gets whether vibration is available with the specified device.
+ * @note Only available on [7.0.0+].
+ * @param[in] handle \ref HidVibrationDeviceHandle
+ * @param[out] flag Flag
+ */
 Result hidIsVibrationDeviceMounted(HidVibrationDeviceHandle handle, bool *flag);
 
-/// Gets SixAxisSensorHandles. total_handles==2 can only be used with ::HidNpadStyleTag_NpadJoyDual.
+/**
+ * @brief Gets SixAxisSensorHandles.
+ * @note Only ::HidNpadStyleTag_NpadJoyDual supports total_handles==2.
+ * @param[out] handles Output array of \ref HidSixAxisSensorHandle.
+ * @param[in] total_handles Total handles for the handles array. Must be 1 or 2, if 2 handles aren't supported by the specified style an error is thrown.
+ * @param[in] id \ref HidNpadIdType
+ * @param[in] style \ref HidNpadStyleTag
+ */
 Result hidGetSixAxisSensorHandles(HidSixAxisSensorHandle *handles, s32 total_handles, HidNpadIdType id, HidNpadStyleTag style);
 
-/// Starts the SixAxisSensor for the specified handle.
+/**
+ * @brief Starts the SixAxisSensor for the specified handle.
+ * @param[in] handle \ref HidSixAxisSensorHandle
+ */
 Result hidStartSixAxisSensor(HidSixAxisSensorHandle handle);
 
-/// Stops the SixAxisSensor for the specified handle.
+/**
+ * @brief Stops the SixAxisSensor for the specified handle.
+ * @param[in] handle \ref HidSixAxisSensorHandle
+ */
 Result hidStopSixAxisSensor(HidSixAxisSensorHandle handle);
 
-/// Starts the SevenSixAxisSensor. Only available on [5.0.0+].
+/**
+ * @brief Starts the SevenSixAxisSensor.
+ * @note Only available on [5.0.0+].
+ */
 Result hidStartSevenSixAxisSensor(void);
 
-/// Stops the SevenSixAxisSensor. Only available on [5.0.0+].
+/**
+ * @brief Stops the SevenSixAxisSensor.
+ * @note Only available on [5.0.0+].
+ */
 Result hidStopSevenSixAxisSensor(void);
 
-/// Initializes the SevenSixAxisSensor. Only available on [5.0.0+].
+/**
+ * @brief Initializes the SevenSixAxisSensor.
+ * @note Only available on [5.0.0+].
+ */
 Result hidInitializeSevenSixAxisSensor(void);
 
-/// Finalizes the SevenSixAxisSensor. Also used automatically by \ref hidExit. Only available on [5.0.0+].
+/**
+ * @brief Finalizes the SevenSixAxisSensor.
+ * @note This must be called before \ref hidExit.
+ * @note Only available on [5.0.0+].
+ */
 Result hidFinalizeSevenSixAxisSensor(void);
 
-/// Sets the SevenSixAxisSensor FusionStrength. Only available on [5.0.0+].
+/**
+ * @brief Sets the SevenSixAxisSensor FusionStrength.
+ * @note Only available on [5.0.0+].
+ * @param[in] strength Strength
+ */
 Result hidSetSevenSixAxisSensorFusionStrength(float strength);
 
-/// Gets the SevenSixAxisSensor FusionStrength. Only available on [5.0.0+].
+/**
+ * @brief Gets the SevenSixAxisSensor FusionStrength.
+ * @note Only available on [5.0.0+].
+ * @param[out] strength Strength
+ */
 Result hidGetSevenSixAxisSensorFusionStrength(float *strength);
 
-/// Resets the timestamp for the SevenSixAxisSensor. Only available on [6.0.0+].
+/**
+ * @brief Resets the timestamp for the SevenSixAxisSensor.
+ * @note Only available on [6.0.0+].
+ */
 Result hidResetSevenSixAxisSensorTimestamp(void);
 
-/// GetSevenSixAxisSensorStates. Only available when \ref hidInitializeSevenSixAxisSensor was previously used.
+/**
+ * @brief GetSevenSixAxisSensorStates
+ * @note Only available when \ref hidInitializeSevenSixAxisSensor was previously used.
+ * @param[out] states Output array of \ref HidSevenSixAxisSensorState.
+ * @param[in] count Size of the states array in entries.
+ * @param[out] total_out Total output entries.
+ */
 Result hidGetSevenSixAxisSensorStates(HidSevenSixAxisSensorState *states, size_t count, size_t *total_out);
 
-/// IsSevenSixAxisSensorAtRest. Only available when \ref hidInitializeSevenSixAxisSensor was previously used.
+/**
+ * @brief IsSevenSixAxisSensorAtRest
+ * @note Only available when \ref hidInitializeSevenSixAxisSensor was previously used.
+ * @param[out] out Output flag.
+ */
 Result hidIsSevenSixAxisSensorAtRest(bool *out);
 
-/// GetSensorFusionError. Only available when \ref hidInitializeSevenSixAxisSensor was previously used.
+/**
+ * @brief GetSensorFusionError
+ * @note Only available when \ref hidInitializeSevenSixAxisSensor was previously used.
+ * @param[out] out Output data.
+ */
 Result hidGetSensorFusionError(float *out);
 
-/// GetGyroBias. Only available when \ref hidInitializeSevenSixAxisSensor was previously used.
+/**
+ * @brief GetGyroBias
+ * @note Only available when \ref hidInitializeSevenSixAxisSensor was previously used.
+ * @param[out] out \ref UtilFloat3
+ */
 Result hidGetGyroBias(UtilFloat3 *out);
 
-/// Gets the \ref HidNpadInterfaceType for the specified controller.
-/// Only available on [4.0.0+].
+/**
+ * @brief Gets the \ref HidNpadInterfaceType for the specified controller.
+ * @note Only available on [4.0.0+].
+ * @param[out] out \ref HidNpadInterfaceType
+ */
 Result hidGetNpadInterfaceType(HidNpadIdType id, u8 *out);
 
