@@ -519,7 +519,8 @@ size_t hidGetNpadStatesGc(HidNpadIdType id, HidNpadGcState *states, size_t count
 
         states[i].buttons = tmp_entries[i].buttons;
 
-        memcpy(states[i].joysticks, tmp_entries[i].joysticks, sizeof(tmp_entries[i].joysticks)); // sdknso uses index 0 for the src here.
+        memcpy(&states[i].analog_stick_l, &tmp_entries[i].analog_stick_l, sizeof(tmp_entries[i].analog_stick_l)); // sdknso uses index 0 for the src here.
+        memcpy(&states[i].analog_stick_r, &tmp_entries[i].analog_stick_r, sizeof(tmp_entries[i].analog_stick_r)); // sdknso uses index 0 for the src here.
         states[i].attributes = tmp_entries[i].attributes;
 
         states[i].trigger_l = tmp_entries_trigger[i].trigger_l;
@@ -555,7 +556,7 @@ size_t hidGetNpadStatesLark(HidNpadIdType id, HidNpadLarkState *states, size_t c
 
         states[i].buttons = tmp_entries[i].buttons;
 
-        // Leave joysticks state at zeros.
+        // Leave analog-sticks state at zeros.
 
         states[i].attributes = tmp_entries[i].attributes;
         states[i].lark_type_l_and_main = lark_type_l_and_main;
@@ -585,7 +586,8 @@ size_t hidGetNpadStatesHandheldLark(HidNpadIdType id, HidNpadHandheldLarkState *
 
         states[i].buttons = tmp_entries[i].buttons;
 
-        memcpy(states[i].joysticks, tmp_entries[i].joysticks, sizeof(tmp_entries[i].joysticks)); // sdknso uses index 0 for the src here.
+        memcpy(&states[i].analog_stick_l, &tmp_entries[i].analog_stick_l, sizeof(tmp_entries[i].analog_stick_l)); // sdknso uses index 0 for the src here.
+        memcpy(&states[i].analog_stick_r, &tmp_entries[i].analog_stick_r, sizeof(tmp_entries[i].analog_stick_r)); // sdknso uses index 0 for the src here.
         states[i].attributes = tmp_entries[i].attributes;
         states[i].lark_type_l_and_main = lark_type_l_and_main;
         states[i].lark_type_r = lark_type_r;
@@ -612,7 +614,7 @@ size_t hidGetNpadStatesLucia(HidNpadIdType id, HidNpadLuciaState *states, size_t
 
         states[i].buttons = tmp_entries[i].buttons;
 
-        // Leave joysticks state at zeros.
+        // Leave analog-sticks state at zeros.
 
         states[i].attributes = tmp_entries[i].attributes;
         states[i].lucia_type = lucia_type;
@@ -648,7 +650,8 @@ size_t hidGetNpadStatesSystem(HidNpadIdType id, HidNpadSystemState *states, size
 
         states[i].buttons = buttons;
 
-        memset(states[i].joysticks, 0, sizeof(states[i].joysticks));
+        memset(&states[i].analog_stick_l, 0, sizeof(states[i].analog_stick_l));
+        memset(&states[i].analog_stick_r, 0, sizeof(states[i].analog_stick_r));
     }
 
     return total;
@@ -886,7 +889,7 @@ void hidJoystickRead(JoystickPosition *pos, HidControllerID id, HidControllerJoy
         }
 
         rwlockReadLock(&g_hidLock);
-        *pos = g_controllerEntries[id].joysticks[stick];
+        memcpy(pos, stick==JOYSTICK_LEFT ? &g_controllerEntries[id].analog_stick_l : &g_controllerEntries[id].analog_stick_r, sizeof(HidAnalogStickState));
         rwlockReadUnlock(&g_hidLock);
     }
 }

@@ -316,7 +316,8 @@ static void _hiddbgConvertHiddbgHdlsStateToV7(HiddbgHdlsStateV7 *out, const Hidd
     out->flags = (in->flags & BIT(1)) != 0;
     out->battery_level = in->battery_level;
     out->buttons = in->buttons;
-    memcpy(out->joysticks, in->joysticks, sizeof(in->joysticks));
+    memcpy(&out->analog_stick_l, &in->analog_stick_l, sizeof(in->analog_stick_l));
+    memcpy(&out->analog_stick_r, &in->analog_stick_r, sizeof(in->analog_stick_r));
     out->unk_x20 = in->unk_x20;
 }
 
@@ -326,7 +327,8 @@ static void _hiddbgConvertHiddbgHdlsStateFromV7(HiddbgHdlsState *out, const Hidd
     out->battery_level = in->battery_level;
     out->flags = (in->is_powered & 1) | ((in->flags & 1)<<1);
     out->buttons = in->buttons;
-    memcpy(out->joysticks, in->joysticks, sizeof(in->joysticks));
+    memcpy(&out->analog_stick_l, &in->analog_stick_l, sizeof(in->analog_stick_l));
+    memcpy(&out->analog_stick_r, &in->analog_stick_r, sizeof(in->analog_stick_r));
     out->unk_x20 = in->unk_x20;
 }
 

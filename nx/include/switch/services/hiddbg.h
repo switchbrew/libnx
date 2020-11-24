@@ -41,7 +41,8 @@ typedef struct {
     u8 unk_x2[0x6];                                       ///< Unknown
     u32 battery_level;                                    ///< BatteryLevel for the main PowerInfo, see \ref HidPowerInfo.
     u32 buttons;                                          ///< See \ref HidControllerKeys.
-    JoystickPosition joysticks[JOYSTICK_NUM_STICKS];      ///< \ref JoystickPosition
+    HidAnalogStickState analog_stick_l;                   ///< AnalogStickL
+    HidAnalogStickState analog_stick_r;                   ///< AnalogStickR
     u8 unk_x20;                                           ///< Unused for input. Set with output from \ref hiddbgDumpHdlsStates. Not set by \ref hiddbgGetAbstractedPadsState.
     u8 padding[0x3];                                      ///< Padding
 } HiddbgHdlsStateV7;
@@ -51,7 +52,8 @@ typedef struct {
     u32 battery_level;                                    ///< BatteryLevel for the main PowerInfo, see \ref HidPowerInfo.
     u32 flags;                                            ///< Used to set the main PowerInfo for \ref HidNpadSystemProperties. BIT(0) -> IsPowered, BIT(1) -> IsCharging.
     u64 buttons;                                          ///< See \ref HidControllerKeys. [9.0.0+] Masked with 0xfffffffff00fffff.
-    JoystickPosition joysticks[JOYSTICK_NUM_STICKS];      ///< \ref JoystickPosition
+    HidAnalogStickState analog_stick_l;                   ///< AnalogStickL
+    HidAnalogStickState analog_stick_r;                   ///< AnalogStickR
     u8 unk_x20;                                           ///< Unused for input. Set with output from \ref hiddbgDumpHdlsStates.
     u8 padding[0x3];                                      ///< Padding
 } HiddbgHdlsState;

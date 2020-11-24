@@ -546,6 +546,12 @@ typedef struct touchPosition {
     u32 angle;
 } touchPosition;
 
+/// HidAnalogStickState
+typedef struct HidAnalogStickState {
+    s32 x;                                    ///< X
+    s32 y;                                    ///< Y
+} HidAnalogStickState;
+
 /// JoystickPosition
 typedef struct JoystickPosition {
     s32 dx;
@@ -728,7 +734,8 @@ typedef struct HidNpadJoyColorState {
 typedef struct HidNpadCommonState {
     u64 sampling_number;                                ///< SamplingNumber
     u64 buttons;                                        ///< Bitfield of \ref HidNpadButton.
-    JoystickPosition joysticks[JOYSTICK_NUM_STICKS];
+    HidAnalogStickState analog_stick_l;                 ///< AnalogStickL
+    HidAnalogStickState analog_stick_r;                 ///< AnalogStickR
     u32 attributes;                                     ///< Bitfield of \ref HidNpadAttribute.
     u32 reserved;
 } HidNpadCommonState;
@@ -743,7 +750,8 @@ typedef HidNpadCommonState HidNpadJoyRightState;
 typedef struct HidNpadGcState {
     u64 sampling_number;                                ///< SamplingNumber
     u64 buttons;                                        ///< Bitfield of \ref HidNpadButton.
-    JoystickPosition joysticks[JOYSTICK_NUM_STICKS];
+    HidAnalogStickState analog_stick_l;                 ///< AnalogStickL
+    HidAnalogStickState analog_stick_r;                 ///< AnalogStickR
     u32 attributes;                                     ///< Bitfield of \ref HidNpadAttribute.
     u32 trigger_l;                                      ///< L analog trigger. Valid range: 0x0-0x7FFF.
     u32 trigger_r;                                      ///< R analog trigger. Valid range: 0x0-0x7FFF.
@@ -756,7 +764,8 @@ typedef HidNpadCommonState HidNpadPalmaState;
 typedef struct HidNpadLarkState {
     u64 sampling_number;                                ///< SamplingNumber
     u64 buttons;                                        ///< Bitfield of \ref HidNpadButton.
-    JoystickPosition joysticks[JOYSTICK_NUM_STICKS];    ///< Joysticks state are always zero.
+    HidAnalogStickState analog_stick_l;                 ///< This is always zero.
+    HidAnalogStickState analog_stick_r;                 ///< This is always zero.
     u32 attributes;                                     ///< Bitfield of \ref HidNpadAttribute.
     HidNpadLarkType lark_type_l_and_main;               ///< \ref HidNpadLarkType LarkTypeLAndMain
 } HidNpadLarkState;
@@ -765,7 +774,8 @@ typedef struct HidNpadLarkState {
 typedef struct HidNpadHandheldLarkState {
     u64 sampling_number;                                ///< SamplingNumber
     u64 buttons;                                        ///< Bitfield of \ref HidNpadButton.
-    JoystickPosition joysticks[JOYSTICK_NUM_STICKS];
+    HidAnalogStickState analog_stick_l;                 ///< AnalogStickL
+    HidAnalogStickState analog_stick_r;                 ///< AnalogStickR
     u32 attributes;                                     ///< Bitfield of \ref HidNpadAttribute.
     HidNpadLarkType lark_type_l_and_main;               ///< \ref HidNpadLarkType LarkTypeLAndMain
     HidNpadLarkType lark_type_r;                        ///< \ref HidNpadLarkType LarkTypeR
@@ -776,7 +786,8 @@ typedef struct HidNpadHandheldLarkState {
 typedef struct HidNpadLuciaState {
     u64 sampling_number;                                ///< SamplingNumber
     u64 buttons;                                        ///< Bitfield of \ref HidNpadButton.
-    JoystickPosition joysticks[JOYSTICK_NUM_STICKS];    ///< Joysticks state are always zero.
+    HidAnalogStickState analog_stick_l;                 ///< This is always zero.
+    HidAnalogStickState analog_stick_r;                 ///< This is always zero.
     u32 attributes;                                     ///< Bitfield of \ref HidNpadAttribute.
     HidNpadLuciaType lucia_type;                        ///< \ref HidNpadLuciaType
 } HidNpadLuciaState;
