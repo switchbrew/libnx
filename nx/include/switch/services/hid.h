@@ -441,7 +441,7 @@ typedef enum {
     HidNpadJoyAssignmentMode_Single = 1,       ///< Single (Set by hidSetNpadJoyAssignmentModeSingle*())
 } HidNpadJoyAssignmentMode;
 
-/// DeviceType
+/// DeviceType (system)
 typedef enum {
     HidDeviceTypeBits_FullKey       = BIT(0),  ///< Pro Controller and Gc controller.
     HidDeviceTypeBits_Unknown1      = BIT(1),  ///< Unknown.
@@ -478,7 +478,7 @@ typedef enum {
     HidDeviceType_System21        = 21,  ///< ::HidDeviceTypeBits_System with \ref HidNpadStyleTag |= ::HidNpadStyleTag_NpadJoyDual.
 } HidDeviceType;
 
-/// AppletFooterUiType
+/// AppletFooterUiType (system)
 typedef enum {
     HidAppletFooterUiType_None                             = 0,     ///< None
     HidAppletFooterUiType_HandheldNone                     = 1,     ///< HandheldNone
@@ -503,7 +503,7 @@ typedef enum {
     HidAppletFooterUiType_Verification                     = 20,    ///< Verification
 } HidAppletFooterUiType;
 
-/// NpadInterfaceType
+/// NpadInterfaceType (system)
 typedef enum {
     HidNpadInterfaceType_Bluetooth = 1,    ///< Bluetooth.
     HidNpadInterfaceType_Rail      = 2,    ///< Rail.
@@ -584,7 +584,7 @@ typedef struct SixAxisSensorValues {
 
 /// HidCommonLifoHeader
 typedef struct HidCommonLifoHeader {
-    u64 sampling_number;                        ///< SamplingNumber
+    u64 unused;                                 ///< Unused
     u64 buffer_count;                           ///< BufferCount
     u64 tail;                                   ///< Tail
     u64 count;                                  ///< Count
@@ -851,7 +851,7 @@ typedef struct {
     u32 is_unintended_home_button_input_protection_enabled : 1;      ///< IsUnintendedHomeButtonInputProtectionEnabled
 } HidNpadSystemButtonProperties;
 
-/// HidPowerInfo
+/// HidPowerInfo (system)
 typedef struct {
     bool is_powered;      ///< IsPowered
     bool is_charging;     ///< IsCharging
@@ -1105,14 +1105,32 @@ void* hidGetSharedmemAddr(void);
 
 void hidScanInput(void);
 
+///@name TouchScreen
+///@{
+
 void hidInitializeTouchScreen(void);
 size_t hidGetTouchScreenStates(HidTouchScreenState *states, size_t count);
+
+///@}
+
+///@name Mouse
+///@{
 
 void hidInitializeMouse(void);
 size_t hidGetMouseStates(HidMouseState *states, size_t count);
 
+///@}
+
+///@name Keyboard
+///@{
+
 void hidInitializeKeyboard(void);
 size_t hidGetKeyboardStates(HidKeyboardState *states, size_t count);
+
+///@}
+
+///@name Npad
+///@{
 
 void hidInitializeNpad(void);
 
@@ -1185,7 +1203,7 @@ void hidGetNpadPowerInfoSplit(HidNpadIdType id, HidPowerInfo *info_left, HidPowe
  * @brief Gets the AppletFooterUiAttributesSet for the specified Npad.
  * @note Only available on [9.0.0+].
  * @param[in] id \ref HidNpadIdType
- * @return Bitfield of AppletFooterUiAttribute.
+ * @return Bitfield of AppletFooterUiAttribute (system).
  */
 u32 hidGetAppletFooterUiAttributesSet(HidNpadIdType id);
 
@@ -1212,8 +1230,15 @@ size_t hidGetNpadStatesSystem(HidNpadIdType id, HidNpadSystemState *states, size
 
 size_t hidGetSixAxisSensorStates(HidSixAxisSensorHandle handle, HidSixAxisSensorState *states, size_t count);
 
+///@}
+
+///@name Gesture
+///@{
+
 void hidInitializeGesture(void);
 size_t hidGetGestureStates(HidGestureState *states, size_t count);
+
+///@}
 
 bool hidIsControllerConnected(HidControllerID id);
 
