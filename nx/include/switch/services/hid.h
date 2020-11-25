@@ -1562,6 +1562,7 @@ Result hidGetGyroBias(UtilFloat3 *out);
 /**
  * @brief Gets the \ref HidNpadInterfaceType for the specified controller.
  * @note Only available on [4.0.0+].
+ * @param[in] id \ref HidNpadIdType
  * @param[out] out \ref HidNpadInterfaceType
  */
 Result hidGetNpadInterfaceType(HidNpadIdType id, u8 *out);

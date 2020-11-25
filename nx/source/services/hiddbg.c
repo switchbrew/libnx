@@ -235,11 +235,11 @@ Result hiddbgGetAbstractedPadState(HiddbgAbstractedPadHandle handle, HiddbgAbstr
     return serviceDispatchInOut(&g_hiddbgSrv, 302, handle, *state);
 }
 
-Result hiddbgGetAbstractedPadsState(HiddbgAbstractedPadHandle *handles, HiddbgAbstractedPadState *states, s32 count, s32 *total_entries) {
+Result hiddbgGetAbstractedPadsState(HiddbgAbstractedPadHandle *handles, HiddbgAbstractedPadState *states, s32 count, s32 *total_out) {
     if (hosversionBefore(5,0,0) || hosversionAtLeast(9,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return serviceDispatchOut(&g_hiddbgSrv, 303, *total_entries,
+    return serviceDispatchOut(&g_hiddbgSrv, 303, *total_out,
         .buffer_attrs = {
             SfBufferAttr_HipcPointer | SfBufferAttr_Out,
             SfBufferAttr_HipcAutoSelect | SfBufferAttr_Out,

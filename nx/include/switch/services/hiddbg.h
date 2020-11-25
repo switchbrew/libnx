@@ -112,7 +112,7 @@ typedef struct {
 /// AbstractedPadState
 typedef struct {
     u32 type;                 ///< Type. Converted to HiddbgHdlsDeviceInfoV7::type internally by \ref hiddbgSetAutoPilotVirtualPadState. BIT(0) -> BIT(0), BIT(1) -> BIT(15), BIT(2-3) -> BIT(1-2), BIT(4-5) -> BIT(1-2), BIT(6) -> BIT(3). BIT(7-11) -> BIT(11-15), BIT(12-14) -> BIT(12-14), BIT(15) -> BIT(17), BIT(31) -> BIT(21).
-    u8 flags;                ///< Flags. Only bit0 is used by \ref hiddbgSetAutoPilotVirtualPadState: when clear it will skip using the rest of the input and run \ref hiddbgUnsetAutoPilotVirtualPadState internally.
+    u8 flags;                ///< Flags. Only bit0 is used by \ref hiddbgSetAutoPilotVirtualPadState, when clear it will skip using the rest of the input and run \ref hiddbgUnsetAutoPilotVirtualPadState internally.
     u8 pad[0x3];              ///< Padding
 
     u32 singleColorBody;      ///< RGBA Single Body Color
@@ -134,92 +134,211 @@ void hiddbgExit(void);
 /// Gets the Service object for the actual hiddbg service session.
 Service* hiddbgGetServiceSession(void);
 
-/// Ignores subsequent home button presses.
+/**
+ * @brief Deactivates the HomeButton.
+ */
 Result hiddbgDeactivateHomeButton(void);
 
-/// Writes the input RGB colors to the spi-flash for the specified controller (offset 0x6050 size 0x6). Only available with [3.0.0+].
+/**
+ * @brief Writes the input RGB colors to the spi-flash for the specified UniquePad (offset 0x6050 size 0x6).
+ * @note Only available with [3.0.0+].
+ * @param[in] colorBody RGB body color.
+ * @param[in] colorButtons RGB buttons color.
+ * @param[in] unique_pad_id \ref HidsysUniquePadId
+ */
 Result hiddbgUpdateControllerColor(u32 colorBody, u32 colorButtons, HidsysUniquePadId unique_pad_id);
 
-/// Writes the input RGB colors followed by inval to the spi-flash for the specified controller (offset 0x6050 size 0xD). Only available with [5.0.0+].
+/**
+ * @brief Writes the input RGB colors followed by inval to the spi-flash for the specified UniquePad (offset 0x6050 size 0xD).
+ * @note Only available with [5.0.0+].
+ * @param[in] colorBody RGB body color.
+ * @param[in] colorButtons RGB buttons color.
+ * @param[in] colorLeftGrip RGB left grip color.
+ * @param[in] colorRightGrip RGB right grip color.
+ * @param[in] inval Input value.
+ * @param[in] unique_pad_id \ref HidsysUniquePadId
+ */
 Result hiddbgUpdateDesignInfo(u32 colorBody, u32 colorButtons, u32 colorLeftGrip, u32 colorRightGrip, u8 inval, HidsysUniquePadId unique_pad_id);
 
-/// Get the OperationEvent for the specified controller.
-/// The Event must be closed by the user once finished with it.
-/// Only available with [6.0.0+].
+/**
+ * @brief Get the OperationEvent for the specified UniquePad.
+ * @note The Event must be closed by the user once finished with it.
+ * @note Only available with [6.0.0+].
+ * @param[out] out_event Output Event.
+ * @param[in] autoclear The autoclear for the Event.
+ * @param[in] unique_pad_id \ref HidsysUniquePadId
+**/
 Result hiddbgAcquireOperationEventHandle(Event* out_event, bool autoclear, HidsysUniquePadId unique_pad_id);
 
-/// Reads spi-flash for the specified controller.
-/// This also uses \ref hiddbgAcquireOperationEventHandle to wait for the operation to finish, then \ref hiddbgGetOperationResult is used.
-/// Only available with [6.0.0+].
+/**
+ * @brief Reads spi-flash for the specified UniquePad.
+ * @note This also uses \ref hiddbgAcquireOperationEventHandle to wait for the operation to finish, then \ref hiddbgGetOperationResult is used.
+ * @note Only available with [6.0.0+].
+ * @param[in] offset Offset in spi-flash.
+ * @param[out] buffer Output buffer.
+ * @param[in] size Output buffer size.
+ * @param[in] unique_pad_id \ref HidsysUniquePadId
+**/
 Result hiddbgReadSerialFlash(u32 offset, void* buffer, size_t size, HidsysUniquePadId unique_pad_id);
 
-/// Writes spi-flash for the specified controller.
-/// buffer and tmem_size must be page-aligned. size is the actual transfer size.
-/// This also uses \ref hiddbgAcquireOperationEventHandle to wait for the operation to finish, then \ref hiddbgGetOperationResult is used.
-/// Only available with [6.0.0+].
+/**
+ * @brief Writes spi-flash for the specified UniquePad.
+ * @note This also uses \ref hiddbgAcquireOperationEventHandle to wait for the operation to finish, then \ref hiddbgGetOperationResult is used.
+ * @note Only available with [6.0.0+].
+ * @param[in] offset Offset in spi-flash.
+ * @param[in] buffer Input buffer, must be 0x1000-byte aligned.
+ * @param[in] tmem_size Size of the buffer, must be 0x1000-byte aligned.
+ * @param[in] size Actual transfer size.
+ * @param[in] unique_pad_id \ref HidsysUniquePadId
+**/
 Result hiddbgWriteSerialFlash(u32 offset, void* buffer, size_t tmem_size, size_t size, HidsysUniquePadId unique_pad_id);
 
-/// Get the Result for the Operation and handles cleanup, for the specified controller.
-/// Only available with [6.0.0+].
+/**
+ * @brief Get the Result for the Operation and handles cleanup, for the specified UniquePad.
+ * @note Only available with [6.0.0+].
+ * @param[in] unique_pad_id \ref HidsysUniquePadId
+**/
 Result hiddbgGetOperationResult(HidsysUniquePadId unique_pad_id);
 
-/// Gets the internal DeviceType for the specified controller.
-/// Only available with [6.0.0+].
-/// Pre-9.0.0 the output is an u32, with [9.0.0+] it's an u8.
+/**
+ * @brief Gets the internal DeviceType for the specified controller.
+ * @note Only available with [6.0.0+].
+ * @param[in] unique_pad_id \ref HidsysUniquePadId
+ * @param[out] out Pre-9.0.0 this is an u32, with [9.0.0+] it's an u8.
+**/
 Result hiddbgGetUniquePadDeviceTypeSetInternal(HidsysUniquePadId unique_pad_id, u32 *out);
 
-/// Gets a list of \ref HiddbgAbstractedPadHandle, where handles is the output array with max entries = count. total_out is total entries written to the output array.
-/// Only available with [5.0.0-8.1.0].
+/** @name AbstractedPad
+ *  This is for virtual HID controllers. Only use this on pre-7.0.0, Hdls should be used otherwise.
+ */
+///@{
+
+/**
+ * @brief Gets a list of \ref HiddbgAbstractedPadHandle.
+ * @note Only available with [5.0.0-8.1.0].
+ * @param[out] handles Output array of \ref HiddbgAbstractedPadHandle.
+ * @param[in] count Max number of entries for the handles array.
+ * @param[out] total_out Total output entries.
+ */
 Result hiddbgGetAbstractedPadHandles(HiddbgAbstractedPadHandle *handles, s32 count, s32 *total_out);
 
-/// Gets the state for the specified \ref HiddbgAbstractedPadHandle.
-/// Only available with [5.0.0-8.1.0].
+/**
+ * @brief Gets the state for the specified \ref HiddbgAbstractedPadHandle.
+ * @note Only available with [5.0.0-8.1.0].
+ * @param[in] handle \ref HiddbgAbstractedPadHandle
+ * @param[out] state \ref HiddbgAbstractedPadState
+ */
 Result hiddbgGetAbstractedPadState(HiddbgAbstractedPadHandle handle, HiddbgAbstractedPadState *state);
 
-/// Similar to \ref hiddbgGetAbstractedPadHandles except this also returns the state for each pad in output array states.
-/// Only available with [5.0.0-8.1.0].
-Result hiddbgGetAbstractedPadsState(HiddbgAbstractedPadHandle *handles, HiddbgAbstractedPadState *states, s32 count, s32 *total_entries);
+/**
+ * @brief Similar to \ref hiddbgGetAbstractedPadHandles except this also returns the state for each pad in output array states.
+ * @note Only available with [5.0.0-8.1.0].
+ * @param[out] handles Output array of \ref HiddbgAbstractedPadHandle.
+ * @param[out] states Output array of \ref HiddbgAbstractedPadState.
+ * @param[in] count Max number of entries for the handles/states arrays.
+ * @param[out] total_out Total output entries.
+ */
+Result hiddbgGetAbstractedPadsState(HiddbgAbstractedPadHandle *handles, HiddbgAbstractedPadState *states, s32 count, s32 *total_out);
 
-/// Sets AutoPilot state for the specified pad.
-/// AbstractedVirtualPadId can be any unique value as long as it's within bounds. For example, 0-7 is usable.
-/// Only available with [5.0.0-8.1.0].
+/**
+ * @brief Sets AutoPilot state for the specified pad.
+ * @note Only available with [5.0.0-8.1.0].
+ * @param[in] AbstractedVirtualPadId This can be any unique value as long as it's within bounds. For example, 0-7 is usable.
+ * @param[in] state \ref HiddbgAbstractedPadState
+ */
 Result hiddbgSetAutoPilotVirtualPadState(s8 AbstractedVirtualPadId, const HiddbgAbstractedPadState *state);
 
-/// Clears AutoPilot state for the specified pad set by \ref hiddbgSetAutoPilotVirtualPadState.
-/// Only available with [5.0.0-8.1.0].
+/**
+ * @brief Clears AutoPilot state for the specified pad set by \ref hiddbgSetAutoPilotVirtualPadState.
+ * @note Only available with [5.0.0-8.1.0].
+ * @param[in] AbstractedVirtualPadId Id from \ref hiddbgSetAutoPilotVirtualPadState.
+ */
 Result hiddbgUnsetAutoPilotVirtualPadState(s8 AbstractedVirtualPadId);
 
-/// Clears AutoPilot state for all pads set by \ref hiddbgSetAutoPilotVirtualPadState.
+/**
+ * @brief Clears AutoPilot state for all pads set by \ref hiddbgSetAutoPilotVirtualPadState.
+ */
 Result hiddbgUnsetAllAutoPilotVirtualPadState(void);
 
-/// Initialize Hdls. Hdls is for virtual HID controllers. Only available with [7.0.0+].
+///@}
+
+/** @name Hdls
+ *  This is for virtual HID controllers.
+ */
+///@{
+
+/**
+ * @brief Initialize Hdls.
+ * @note Only available with [7.0.0+].
+ */
 Result hiddbgAttachHdlsWorkBuffer(void);
 
-/// Exit Hdls, must be called at some point prior to hiddbgExit. Only available with [7.0.0+].
+/**
+ * @brief Exit Hdls, must be called at some point prior to \ref hiddbgExit.
+ * @note Only available with [7.0.0+].
+ */
 Result hiddbgReleaseHdlsWorkBuffer(void);
 
-/// Checks if the given device is still attached, where the result is written to out. Only available with [7.0.0+].
+/**
+ * @brief Checks if the given device is still attached.
+ * @note Only available with [7.0.0+].
+ * @param[in] handle \ref HiddbgHdlsHandle
+ * @param[out] out Whether the device is attached.
+ */
 Result hiddbgIsHdlsVirtualDeviceAttached(HiddbgHdlsHandle handle, bool *out);
 
-/// Gets state for \ref HiddbgHdlsNpadAssignment. Only available with [7.0.0+].
+/**
+ * @brief Gets state for \ref HiddbgHdlsNpadAssignment.
+ * @note Only available with [7.0.0+].
+ * @param[out] state \ref HiddbgHdlsNpadAssignment
+ */
 Result hiddbgDumpHdlsNpadAssignmentState(HiddbgHdlsNpadAssignment *state);
 
-/// Gets state for \ref HiddbgHdlsStateList. Only available with [7.0.0+].
+/**
+ * @brief Gets state for \ref HiddbgHdlsStateList.
+ * @note Only available with [7.0.0+].
+ * @param[out] state \ref HiddbgHdlsStateList
+ */
 Result hiddbgDumpHdlsStates(HiddbgHdlsStateList *state);
 
-/// Sets state for \ref HiddbgHdlsNpadAssignment. Only available with [7.0.0+].
+/**
+ * @brief Sets state for \ref HiddbgHdlsNpadAssignment.
+ * @note Only available with [7.0.0+].
+ * @param[in] state \ref HiddbgHdlsNpadAssignment
+ * @param[in] flag Flag
+ */
 Result hiddbgApplyHdlsNpadAssignmentState(const HiddbgHdlsNpadAssignment *state, bool flag);
 
-/// Sets state for \ref HiddbgHdlsStateList. Only available with [7.0.0+].
-/// The HiddbgHdlsState will be applied for each \ref HiddbgHdlsHandle. If a \ref HiddbgHdlsHandle is not found, code similar to \ref hiddbgAttachHdlsVirtualDevice will run with the \ref HiddbgHdlsDeviceInfo, then it will continue with applying state with the new device.
+/**
+ * @brief Sets state for \ref HiddbgHdlsStateList.
+ * @note The \ref HiddbgHdlsState will be applied for each \ref HiddbgHdlsHandle. If a \ref HiddbgHdlsHandle is not found, code similar to \ref hiddbgAttachHdlsVirtualDevice will run with the \ref HiddbgHdlsDeviceInfo, then it will continue with applying state with the new device.
+ * @note Only available with [7.0.0+].
+ * @param[in] state \ref HiddbgHdlsStateList
+ */
 Result hiddbgApplyHdlsStateList(const HiddbgHdlsStateList *state);
 
-/// Attach a device with the input info, where the output handle is written to handle. Only available with [7.0.0+].
+/**
+ * @brief Attach a device with the input info.
+ * @note Only available with [7.0.0+].
+ * @param[out] handle \ref HiddbgHdlsHandle
+ * @param[in] info \ref HiddbgHdlsDeviceInfo
+ */
 Result hiddbgAttachHdlsVirtualDevice(HiddbgHdlsHandle *handle, const HiddbgHdlsDeviceInfo *info);
 
-/// Detach the specified device. Only available with [7.0.0+].
+/**
+ * @brief Detach the specified device.
+ * @note Only available with [7.0.0+].
+ * @param[in] handle \ref HiddbgHdlsHandle
+ */
 Result hiddbgDetachHdlsVirtualDevice(HiddbgHdlsHandle handle);
 
-/// Sets state for the specified device. Only available with [7.0.0+].
+/**
+ * @brief Sets state for the specified device.
+ * @note Only available with [7.0.0+].
+ * @param[in] handle \ref HiddbgHdlsHandle
+ * @param[in] state \ref HiddbgHdlsState
+ */
 Result hiddbgSetHdlsState(HiddbgHdlsHandle handle, const HiddbgHdlsState *state);
+
+///@}
 
