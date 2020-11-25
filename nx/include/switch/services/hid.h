@@ -737,16 +737,16 @@ typedef struct HidNpadCommonState {
     HidAnalogStickState analog_stick_l;                 ///< AnalogStickL
     HidAnalogStickState analog_stick_r;                 ///< AnalogStickR
     u32 attributes;                                     ///< Bitfield of \ref HidNpadAttribute.
-    u32 reserved;
+    u32 reserved;                                       ///< Reserved
 } HidNpadCommonState;
 
-typedef HidNpadCommonState HidNpadFullKeyState;
-typedef HidNpadCommonState HidNpadHandheldState;
-typedef HidNpadCommonState HidNpadJoyDualState;
-typedef HidNpadCommonState HidNpadJoyLeftState;
-typedef HidNpadCommonState HidNpadJoyRightState;
+typedef HidNpadCommonState HidNpadFullKeyState;         ///< State for ::HidNpadStyleTag_NpadFullKey.
+typedef HidNpadCommonState HidNpadHandheldState;        ///< State for ::HidNpadStyleTag_NpadHandheld.
+typedef HidNpadCommonState HidNpadJoyDualState;         ///< State for ::HidNpadStyleTag_NpadJoyDual.
+typedef HidNpadCommonState HidNpadJoyLeftState;         ///< State for ::HidNpadStyleTag_NpadJoyLeft.
+typedef HidNpadCommonState HidNpadJoyRightState;        ///< State for ::HidNpadStyleTag_NpadJoyRight.
 
-/// HidNpadGcState
+/// State for ::HidNpadStyleTag_NpadGc. Loaded from the same lifo as \ref HidNpadFullKeyState, with the additional trigger_l/trigger_r loaded from elsewhere.
 typedef struct HidNpadGcState {
     u64 sampling_number;                                ///< SamplingNumber
     u64 buttons;                                        ///< Bitfield of \ref HidNpadButton.
@@ -758,9 +758,9 @@ typedef struct HidNpadGcState {
     u32 pad;
 } HidNpadGcState;
 
-typedef HidNpadCommonState HidNpadPalmaState;
+typedef HidNpadCommonState HidNpadPalmaState;           ///< State for ::HidNpadStyleTag_NpadPalma.
 
-/// HidNpadLarkState
+/// State for ::HidNpadStyleTag_NpadLark. The base state is loaded from the same lifo as \ref HidNpadFullKeyState.
 typedef struct HidNpadLarkState {
     u64 sampling_number;                                ///< SamplingNumber
     u64 buttons;                                        ///< Bitfield of \ref HidNpadButton.
@@ -770,7 +770,7 @@ typedef struct HidNpadLarkState {
     HidNpadLarkType lark_type_l_and_main;               ///< \ref HidNpadLarkType LarkTypeLAndMain
 } HidNpadLarkState;
 
-/// HidNpadHandheldLarkState
+/// State for ::HidNpadStyleTag_NpadHandheldLark. The base state is loaded from the same lifo as \ref HidNpadHandheldState.
 typedef struct HidNpadHandheldLarkState {
     u64 sampling_number;                                ///< SamplingNumber
     u64 buttons;                                        ///< Bitfield of \ref HidNpadButton.
@@ -782,7 +782,7 @@ typedef struct HidNpadHandheldLarkState {
     u32 pad;
 } HidNpadHandheldLarkState;
 
-/// HidNpadLuciaState
+/// State for ::HidNpadStyleTag_NpadLucia. The base state is loaded from the same lifo as \ref HidNpadFullKeyState.
 typedef struct HidNpadLuciaState {
     u64 sampling_number;                                ///< SamplingNumber
     u64 buttons;                                        ///< Bitfield of \ref HidNpadButton.
@@ -792,8 +792,8 @@ typedef struct HidNpadLuciaState {
     HidNpadLuciaType lucia_type;                        ///< \ref HidNpadLuciaType
 } HidNpadLuciaState;
 
-typedef HidNpadCommonState HidNpadSystemExtState;
-typedef HidNpadCommonState HidNpadSystemState; ///< Joysticks state are always zero. Only the following button bits are available: KEY_A, KEY_B, KEY_X, KEY_Y, KEY_DLEFT, KEY_DUP, KEY_DRIGHT, KEY_DDOWN, KEY_L, KEY_R.
+typedef HidNpadCommonState HidNpadSystemExtState;       ///< State for ::HidNpadStyleTag_NpadSystemExt.
+typedef HidNpadCommonState HidNpadSystemState;          ///< State for ::HidNpadStyleTag_NpadSystem. Analog-sticks state are always zero. Only the following button bits are available: HidNpadButton_A, HidNpadButton_B, HidNpadButton_X, HidNpadButton_Y, HidNpadButton_Left, HidNpadButton_Up, HidNpadButton_Right, HidNpadButton_Down, HidNpadButton_L, HidNpadButton_R.
 
 /// HidNpadCommonStateAtomicStorage
 typedef struct HidNpadCommonStateAtomicStorage {
@@ -1132,7 +1132,15 @@ void hidScanInput(void);
 ///@name TouchScreen
 ///@{
 
+/// Initialize TouchScreen. Must be called when TouchScreen is being used. Used automatically by \ref hidScanInput when required.
 void hidInitializeTouchScreen(void);
+
+/**
+ * @brief Gets \ref HidTouchScreenState.
+ * @param[out] states Output array of \ref HidTouchScreenState.
+ * @param[in] count Size of the states array in entries.
+ * @return Total output entries.
+ */
 size_t hidGetTouchScreenStates(HidTouchScreenState *states, size_t count);
 
 ///@}
@@ -1140,7 +1148,15 @@ size_t hidGetTouchScreenStates(HidTouchScreenState *states, size_t count);
 ///@name Mouse
 ///@{
 
+/// Initialize Mouse. Must be called when Mouse is being used. Used automatically by \ref hidScanInput when required.
 void hidInitializeMouse(void);
+
+/**
+ * @brief Gets \ref HidMouseState.
+ * @param[out] states Output array of \ref HidMouseState.
+ * @param[in] count Size of the states array in entries.
+ * @return Total output entries.
+ */
 size_t hidGetMouseStates(HidMouseState *states, size_t count);
 
 ///@}
@@ -1148,7 +1164,15 @@ size_t hidGetMouseStates(HidMouseState *states, size_t count);
 ///@name Keyboard
 ///@{
 
+/// Initialize Keyboard. Must be called when Keyboard is being used. Used automatically by \ref hidScanInput when required.
 void hidInitializeKeyboard(void);
+
+/**
+ * @brief Gets \ref HidKeyboardState.
+ * @param[out] states Output array of \ref HidKeyboardState.
+ * @param[in] count Size of the states array in entries.
+ * @return Total output entries.
+ */
 size_t hidGetKeyboardStates(HidKeyboardState *states, size_t count);
 
 ///@}
@@ -1156,6 +1180,7 @@ size_t hidGetKeyboardStates(HidKeyboardState *states, size_t count);
 ///@name Npad
 ///@{
 
+/// Initialize Npad. Must be called when Npad is being used. Used automatically by \ref hidScanInput when required.
 void hidInitializeNpad(void);
 
 /**
@@ -1239,19 +1264,109 @@ u32 hidGetAppletFooterUiAttributesSet(HidNpadIdType id);
  */
 HidAppletFooterUiType hidGetAppletFooterUiTypes(HidNpadIdType id);
 
+/**
+ * @brief Gets \ref HidNpadFullKeyState.
+ * @param[out] states Output array of \ref HidNpadFullKeyState.
+ * @param[in] count Size of the states array in entries.
+ * @return Total output entries.
+ */
 size_t hidGetNpadStatesFullKey(HidNpadIdType id, HidNpadFullKeyState *states, size_t count);
+
+/**
+ * @brief Gets \ref HidNpadHandheldState.
+ * @param[out] states Output array of \ref HidNpadHandheldState.
+ * @param[in] count Size of the states array in entries.
+ * @return Total output entries.
+ */
 size_t hidGetNpadStatesHandheld(HidNpadIdType id, HidNpadHandheldState *states, size_t count);
+
+/**
+ * @brief Gets \ref HidNpadJoyDualState.
+ * @param[out] states Output array of \ref HidNpadJoyDualState.
+ * @param[in] count Size of the states array in entries.
+ * @return Total output entries.
+ */
 size_t hidGetNpadStatesJoyDual(HidNpadIdType id, HidNpadJoyDualState *states, size_t count);
+
+/**
+ * @brief Gets \ref HidNpadJoyLeftState.
+ * @param[out] states Output array of \ref HidNpadJoyLeftState.
+ * @param[in] count Size of the states array in entries.
+ * @return Total output entries.
+ */
 size_t hidGetNpadStatesJoyLeft(HidNpadIdType id, HidNpadJoyLeftState *states, size_t count);
+
+/**
+ * @brief Gets \ref HidNpadJoyRightState.
+ * @param[out] states Output array of \ref HidNpadJoyRightState.
+ * @param[in] count Size of the states array in entries.
+ * @return Total output entries.
+ */
 size_t hidGetNpadStatesJoyRight(HidNpadIdType id, HidNpadJoyRightState *states, size_t count);
+
+/**
+ * @brief Gets \ref HidNpadGcState.
+ * @param[out] states Output array of \ref HidNpadGcState.
+ * @param[in] count Size of the states array in entries.
+ * @return Total output entries.
+ */
 size_t hidGetNpadStatesGc(HidNpadIdType id, HidNpadGcState *states, size_t count);
+
+/**
+ * @brief Gets \ref HidNpadPalmaState.
+ * @param[out] states Output array of \ref HidNpadPalmaState.
+ * @param[in] count Size of the states array in entries.
+ * @return Total output entries.
+ */
 size_t hidGetNpadStatesPalma(HidNpadIdType id, HidNpadPalmaState *states, size_t count);
+
+/**
+ * @brief Gets \ref HidNpadLarkState.
+ * @param[out] states Output array of \ref HidNpadLarkState.
+ * @param[in] count Size of the states array in entries.
+ * @return Total output entries.
+ */
 size_t hidGetNpadStatesLark(HidNpadIdType id, HidNpadLarkState *states, size_t count);
+
+/**
+ * @brief Gets \ref HidNpadHandheldLarkState.
+ * @param[out] states Output array of \ref HidNpadHandheldLarkState.
+ * @param[in] count Size of the states array in entries.
+ * @return Total output entries.
+ */
 size_t hidGetNpadStatesHandheldLark(HidNpadIdType id, HidNpadHandheldLarkState *states, size_t count);
+
+/**
+ * @brief Gets \ref HidNpadLuciaState.
+ * @param[out] states Output array of \ref HidNpadLuciaState.
+ * @param[in] count Size of the states array in entries.
+ * @return Total output entries.
+ */
 size_t hidGetNpadStatesLucia(HidNpadIdType id, HidNpadLuciaState *states, size_t count);
+
+/**
+ * @brief Gets \ref HidNpadSystemExtState.
+ * @param[out] states Output array of \ref HidNpadSystemExtState.
+ * @param[in] count Size of the states array in entries.
+ * @return Total output entries.
+ */
 size_t hidGetNpadStatesSystemExt(HidNpadIdType id, HidNpadSystemExtState *states, size_t count);
+
+/**
+ * @brief Gets \ref HidNpadSystemState.
+ * @param[out] states Output array of \ref HidNpadSystemState.
+ * @param[in] count Size of the states array in entries.
+ * @return Total output entries.
+ */
 size_t hidGetNpadStatesSystem(HidNpadIdType id, HidNpadSystemState *states, size_t count);
 
+/**
+ * @brief Gets \ref HidSixAxisSensorState for the specified handle.
+ * @param[in] handle \ref HidSixAxisSensorHandle
+ * @param[out] states Output array of \ref HidSixAxisSensorState.
+ * @param[in] count Size of the states array in entries.
+ * @return Total output entries.
+ */
 size_t hidGetSixAxisSensorStates(HidSixAxisSensorHandle handle, HidSixAxisSensorState *states, size_t count);
 
 ///@}
@@ -1259,7 +1374,15 @@ size_t hidGetSixAxisSensorStates(HidSixAxisSensorHandle handle, HidSixAxisSensor
 ///@name Gesture
 ///@{
 
+/// Initialize Gesture. Must be called when Gesture is being used.
 void hidInitializeGesture(void);
+
+/**
+ * @brief Gets \ref HidGestureState.
+ * @param[out] states Output array of \ref HidGestureState.
+ * @param[in] count Size of the states array in entries.
+ * @return Total output entries.
+ */
 size_t hidGetGestureStates(HidGestureState *states, size_t count);
 
 ///@}
