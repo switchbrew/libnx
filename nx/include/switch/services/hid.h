@@ -552,10 +552,11 @@ typedef enum {
     HidNpadLuciaType_U          = 3,    ///< U
 } HidNpadLuciaType;
 
-/// HidVibrationDeviceType
+/// Type values for HidVibrationDeviceInfo::type.
 typedef enum {
     HidVibrationDeviceType_Unknown                          = 0,     ///< Unknown
     HidVibrationDeviceType_LinearResonantActuator           = 1,     ///< LinearResonantActuator
+    HidVibrationDeviceType_GcErm                            = 2,     ///< GcErm (::HidNpadStyleTag_NpadGc)
 } HidVibrationDeviceType;
 
 /// VibrationDevicePosition
@@ -1581,6 +1582,7 @@ Result hidGetVibrationDeviceInfo(HidVibrationDeviceHandle handle, HidVibrationDe
 
 /**
  * @brief Sends the \ref HidVibrationDeviceHandle to the specified device.
+ * @note With ::HidVibrationDeviceType_GcErm, use \ref hidSendVibrationGcErmCommand instead.
  * @param[in] handle \ref HidVibrationDeviceHandle
  * @param[in] value \ref HidVibrationValue
  */
@@ -1588,6 +1590,7 @@ Result hidSendVibrationValue(HidVibrationDeviceHandle handle, const HidVibration
 
 /**
  * @brief Gets the current \ref HidVibrationValue for the specified device.
+ * @note With ::HidVibrationDeviceType_GcErm, use \ref hidGetActualVibrationGcErmCommand instead.
  * @param[in] handle \ref HidVibrationDeviceHandle
  * @param[out] out \ref HidVibrationValue
  */
@@ -1607,11 +1610,28 @@ Result hidIsVibrationPermitted(bool *flag);
 
 /**
  * @brief Send vibration values[index] to handles[index].
+ * @note With ::HidVibrationDeviceType_GcErm, use \ref hidSendVibrationGcErmCommand instead.
  * @param[in] handles Input array of \ref HidVibrationDeviceHandle.
  * @param[in] values Input array of \ref HidVibrationValue.
  * @param[in] count Total entries in the handles/values arrays.
  */
 Result hidSendVibrationValues(const HidVibrationDeviceHandle *handles, const HidVibrationValue *values, s32 count);
+
+/**
+ * @brief Send \ref HidVibrationGcErmCommand to the specified device, for ::HidVibrationDeviceType_GcErm.
+ * @note Only available on [4.0.0+].
+ * @param[in] handle \ref HidVibrationDeviceHandle
+ * @param[in] cmd \ref HidVibrationGcErmCommand
+ */
+Result hidSendVibrationGcErmCommand(HidVibrationDeviceHandle handle, HidVibrationGcErmCommand cmd);
+
+/**
+ * @brief Get \ref HidVibrationGcErmCommand for the specified device, for ::HidVibrationDeviceType_GcErm.
+ * @note Only available on [4.0.0+].
+ * @param[in] handle \ref HidVibrationDeviceHandle
+ * @param[out] out \ref HidVibrationGcErmCommand
+ */
+Result hidGetActualVibrationGcErmCommand(HidVibrationDeviceHandle handle, HidVibrationGcErmCommand *out);
 
 /**
  * @brief Gets whether vibration is available with the specified device.

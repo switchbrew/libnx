@@ -1260,8 +1260,9 @@ Result hidSendVibrationValue(HidVibrationDeviceHandle handle, const HidVibration
 Result hidGetActualVibrationValue(HidVibrationDeviceHandle handle, HidVibrationValue *out) {
     const struct {
         HidVibrationDeviceHandle handle;
+        u32 pad;
         u64 AppletResourceUserId;
-    } in = { handle, appletGetAppletResourceUserId() };
+    } in = { handle, 0, appletGetAppletResourceUserId() };
 
     return serviceDispatchInOut(&g_hidSrv, 202, in, *out,
         .in_send_pid = true,
@@ -1291,6 +1292,40 @@ Result hidSendVibrationValues(const HidVibrationDeviceHandle *handles, const Hid
     );
 }
 
+Result hidSendVibrationGcErmCommand(HidVibrationDeviceHandle handle, HidVibrationGcErmCommand cmd) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    const struct {
+        HidVibrationDeviceHandle handle;
+        u32 pad;
+        u64 AppletResourceUserId;
+        u64 cmd;
+    } in = { handle, 0, appletGetAppletResourceUserId(), cmd };
+
+    return serviceDispatchIn(&g_hidSrv, 207, in,
+        .in_send_pid = true,
+    );
+}
+
+Result hidGetActualVibrationGcErmCommand(HidVibrationDeviceHandle handle, HidVibrationGcErmCommand *out) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    const struct {
+        HidVibrationDeviceHandle handle;
+        u32 pad;
+        u64 AppletResourceUserId;
+    } in = { handle, 0, appletGetAppletResourceUserId() };
+
+    u64 tmp=0;
+    Result rc = serviceDispatchInOut(&g_hidSrv, 208, in, tmp,
+        .in_send_pid = true,
+    );
+    if (R_SUCCEEDED(rc) && out) *out = tmp;
+    return rc;
+}
+
 Result hidIsVibrationDeviceMounted(HidVibrationDeviceHandle handle, bool *flag) {
     if (hosversionBefore(7,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
@@ -1299,8 +1334,9 @@ Result hidIsVibrationDeviceMounted(HidVibrationDeviceHandle handle, bool *flag) 
 
     const struct {
         HidVibrationDeviceHandle handle;
+        u32 pad;
         u64 AppletResourceUserId;
-    } in = { handle, appletGetAppletResourceUserId() };
+    } in = { handle, 0, appletGetAppletResourceUserId() };
 
     u8 tmp=0;
     rc = serviceDispatchInOut(&g_hidSrv, 211, in, tmp,
