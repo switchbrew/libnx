@@ -242,6 +242,9 @@ typedef enum {
     HidNpadStyleTag_Npad10            = BIT(10),
     HidNpadStyleTag_NpadSystemExt     = BIT(29),      ///< Generic external controller
     HidNpadStyleTag_NpadSystem        = BIT(30),      ///< Generic controller
+
+    HidNpadStyleSet_NpadFullCtrl = HidNpadStyleTag_NpadFullKey  | HidNpadStyleTag_NpadHandheld | HidNpadStyleTag_NpadJoyDual,  ///< Style set comprising Npad styles containing the full set of controls {FullKey, Handheld, JoyDual}
+    HidNpadStyleSet_NpadStandard = HidNpadStyleSet_NpadFullCtrl | HidNpadStyleTag_NpadJoyLeft  | HidNpadStyleTag_NpadJoyRight, ///< Style set comprising all standard Npad styles {FullKey, Handheld, JoyDual, JoyLeft, JoyRight}
 } HidNpadStyleTag;
 
 /// HidColorAttribute

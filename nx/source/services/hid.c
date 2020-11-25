@@ -127,7 +127,7 @@ void hidScanInput(void) {
         hidInitializeMouse();
         _hidReset();
 
-        rc = hidSetSupportedNpadStyleSet(HidNpadStyleTag_NpadFullKey | HidNpadStyleTag_NpadHandheld | HidNpadStyleTag_NpadJoyDual | HidNpadStyleTag_NpadJoyLeft | HidNpadStyleTag_NpadJoyRight | HidNpadStyleTag_NpadSystemExt | HidNpadStyleTag_NpadSystem);
+        rc = hidSetSupportedNpadStyleSet(HidNpadStyleSet_NpadStandard | HidNpadStyleTag_NpadSystemExt | HidNpadStyleTag_NpadSystem);
         if (R_FAILED(rc)) diagAbortWithResult(rc);
 
         static const HidNpadIdType idbuf[] = {
