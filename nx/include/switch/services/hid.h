@@ -1634,6 +1634,18 @@ Result hidSendVibrationGcErmCommand(HidVibrationDeviceHandle handle, HidVibratio
 Result hidGetActualVibrationGcErmCommand(HidVibrationDeviceHandle handle, HidVibrationGcErmCommand *out);
 
 /**
+ * @brief Begins a forced-permitted vibration session.
+ * @note Only available on [4.0.0+].
+ */
+Result hidBeginPermitVibrationSession(void);
+
+/**
+ * @brief Ends the session started by \ref hidBeginPermitVibrationSession.
+ * @note Only available on [4.0.0+].
+ */
+Result hidEndPermitVibrationSession(void);
+
+/**
  * @brief Gets whether vibration is available with the specified device.
  * @note Only available on [7.0.0+].
  * @param[in] handle \ref HidVibrationDeviceHandle

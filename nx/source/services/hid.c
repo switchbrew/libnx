@@ -955,6 +955,10 @@ static Result _hidSetDualModeAll(void) {
     return rc;
 }
 
+static Result _hidCmdNoIO(Service* srv, u32 cmd_id) {
+    return serviceDispatch(srv, cmd_id);
+}
+
 static Result _hidCmdGetHandle(Service* srv, Handle* handle_out, u32 cmd_id) {
     return serviceDispatch(srv, cmd_id,
         .out_handle_attrs = { SfOutHandleAttr_HipcCopy },
@@ -986,6 +990,10 @@ static Result _hidCmdInBoolNoOut(bool inval, u32 cmd_id) {
 }
 
 static Result _hidCmdInU32NoOut(Service* srv, u32 inval, u32 cmd_id) {
+    return serviceDispatchIn(srv, cmd_id, inval);
+}
+
+static Result _hidCmdInU64NoOut(Service* srv, u64 inval, u32 cmd_id) {
     return serviceDispatchIn(srv, cmd_id, inval);
 }
 
@@ -1324,6 +1332,20 @@ Result hidGetActualVibrationGcErmCommand(HidVibrationDeviceHandle handle, HidVib
     );
     if (R_SUCCEEDED(rc) && out) *out = tmp;
     return rc;
+}
+
+Result hidBeginPermitVibrationSession(void) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _hidCmdInU64NoOut(&g_hidSrv, appletGetAppletResourceUserId(), 209);
+}
+
+Result hidEndPermitVibrationSession(void) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _hidCmdNoIO(&g_hidSrv, 210);
 }
 
 Result hidIsVibrationDeviceMounted(HidVibrationDeviceHandle handle, bool *flag) {
