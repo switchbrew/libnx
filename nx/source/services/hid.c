@@ -148,7 +148,7 @@ void hidScanInput(void) {
         rc = _hidSetDualModeAll();
         if (R_FAILED(rc)) diagAbortWithResult(rc);
 
-        rc = hidSetNpadJoyHoldType(HidJoyHoldType_Default);
+        rc = hidSetNpadJoyHoldType(HidNpadJoyHoldType_Vertical);
         if (R_FAILED(rc)) diagAbortWithResult(rc);
 
         g_scanInputInitialized = true;
@@ -1202,11 +1202,11 @@ Result hidAcquireNpadStyleSetUpdateEventHandle(HidNpadIdType id, Event* out_even
     return rc;
 }
 
-Result hidSetNpadJoyHoldType(HidJoyHoldType type) {
+Result hidSetNpadJoyHoldType(HidNpadJoyHoldType type) {
     return _hidCmdWithInputU64(type, 120);
 }
 
-Result hidGetNpadJoyHoldType(HidJoyHoldType *type) {
+Result hidGetNpadJoyHoldType(HidNpadJoyHoldType *type) {
     u64 tmp=0;
     Result rc = _hidCmdOutU64(&tmp, 121);
     if (R_SUCCEEDED(rc) && type) *type = tmp;

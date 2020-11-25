@@ -93,7 +93,7 @@ static Result _hidLaShowControllerFirmwareUpdateCore(const HidLaControllerFirmwa
 static Result _hidLaSetupControllerSupportArgPrivate(HidLaControllerSupportArgPrivate *private_arg) {
     Result rc=0;
     u32 style_set;
-    HidJoyHoldType hold_type;
+    HidNpadJoyHoldType hold_type;
 
     rc = hidGetSupportedNpadStyleSet(&style_set);
     if (R_SUCCEEDED(rc)) rc = hidGetNpadJoyHoldType(&hold_type);
@@ -185,7 +185,7 @@ Result hidLaShowControllerSupportForSystem(HidLaControllerSupportResultInfo *res
     }
     else {
         private_arg.npad_style_set = 0;
-        private_arg.npad_joy_hold_type = HidJoyHoldType_Horizontal;
+        private_arg.npad_joy_hold_type = HidNpadJoyHoldType_Horizontal;
     }
 
     if (R_SUCCEEDED(rc)) rc = _hidLaShowControllerSupportCore(result_info, arg, &private_arg);

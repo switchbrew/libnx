@@ -432,16 +432,29 @@ typedef enum {
     HidGyroscopeZeroDriftMode_Tight    = 2,   ///< Tight
 } HidGyroscopeZeroDriftMode;
 
-/// JoyHoldType
+/// NpadJoyHoldType
 typedef enum {
-    HidJoyHoldType_Default    = 0, ///< Default / Joy-Con held vertically.
-    HidJoyHoldType_Horizontal = 1, ///< Joy-Con held horizontally with HID state orientation adjustment.
-} HidJoyHoldType;
+    HidNpadJoyHoldType_Vertical          = 0,       ///< Default / Joy-Con held vertically.
+    HidNpadJoyHoldType_Horizontal        = 1,       ///< Joy-Con held horizontally.
+} HidNpadJoyHoldType;
+
+/// NpadJoyDeviceType
+typedef enum {
+    HidNpadJoyDeviceType_Left            = 0,       ///< Left
+    HidNpadJoyDeviceType_Right           = 1,       ///< Right
+} HidNpadJoyDeviceType;
+
+/// NpadHandheldActivationMode
+typedef enum {
+    HidNpadHandheldActivationMode_Dual     = 0,     ///< Dual
+    HidNpadHandheldActivationMode_Single   = 1,     ///< Single
+    HidNpadHandheldActivationMode_Unknown2 = 2,     ///< Unknown
+} HidNpadHandheldActivationMode;
 
 /// NpadJoyAssignmentMode
 typedef enum {
-    HidNpadJoyAssignmentMode_Dual   = 0,       ///< Dual (Set by \ref hidSetNpadJoyAssignmentModeDual)
-    HidNpadJoyAssignmentMode_Single = 1,       ///< Single (Set by hidSetNpadJoyAssignmentModeSingle*())
+    HidNpadJoyAssignmentMode_Dual   = 0,            ///< Dual (Set by \ref hidSetNpadJoyAssignmentModeDual)
+    HidNpadJoyAssignmentMode_Single = 1,            ///< Single (Set by hidSetNpadJoyAssignmentModeSingle*())
 } HidNpadJoyAssignmentMode;
 
 /// DeviceType (system)
@@ -538,6 +551,26 @@ typedef enum {
     HidNpadLuciaType_E          = 2,    ///< E
     HidNpadLuciaType_U          = 3,    ///< U
 } HidNpadLuciaType;
+
+/// HidVibrationDeviceType
+typedef enum {
+    HidVibrationDeviceType_Unknown                          = 0,     ///< Unknown
+    HidVibrationDeviceType_LinearResonantActuator           = 1,     ///< LinearResonantActuator
+} HidVibrationDeviceType;
+
+/// VibrationDevicePosition
+typedef enum {
+    HidVibrationDevicePosition_None                         = 0,     ///< None
+    HidVibrationDevicePosition_Left                         = 1,     ///< Left
+    HidVibrationDevicePosition_Right                        = 2,     ///< Right
+} HidVibrationDevicePosition;
+
+/// VibrationGcErmCommand
+typedef enum {
+    HidVibrationGcErmCommand_Stop                           = 0,     ///< Stop
+    HidVibrationGcErmCommand_Start                          = 1,     ///< Start
+    HidVibrationGcErmCommand_Unknown2                       = 2,     ///< Unknown
+} HidVibrationGcErmCommand;
 
 /// touchPosition
 typedef struct touchPosition {
@@ -1092,8 +1125,8 @@ typedef union HidVibrationDeviceHandle {
 
 /// HidVibrationDeviceInfo
 typedef struct HidVibrationDeviceInfo {
-    u32 unk_x0;
-    u32 unk_x4; ///< 0x1 for left-joycon, 0x2 for right-joycon.
+    u32 type;                                         ///< \ref HidVibrationDeviceType
+    u32 position;                                     ///< \ref HidVibrationDevicePosition
 } HidVibrationDeviceInfo;
 
 /// HidVibrationValue
@@ -1495,17 +1528,17 @@ Result hidSetSupportedNpadIdType(const HidNpadIdType *ids, size_t count);
 Result hidAcquireNpadStyleSetUpdateEventHandle(HidNpadIdType id, Event* out_event, bool autoclear);
 
 /**
- * @brief Sets the \ref HidJoyHoldType.
+ * @brief Sets the \ref HidNpadJoyHoldType.
  * @note Used automatically by \ref hidScanInput when required.
- * @param[in] type \ref HidJoyHoldType
+ * @param[in] type \ref HidNpadJoyHoldType
  */
-Result hidSetNpadJoyHoldType(HidJoyHoldType type);
+Result hidSetNpadJoyHoldType(HidNpadJoyHoldType type);
 
 /**
- * @brief Gets the \ref HidJoyHoldType.
- * @param[out] type \ref HidJoyHoldType
+ * @brief Gets the \ref HidNpadJoyHoldType.
+ * @param[out] type \ref HidNpadJoyHoldType
  */
-Result hidGetNpadJoyHoldType(HidJoyHoldType *type);
+Result hidGetNpadJoyHoldType(HidNpadJoyHoldType *type);
 
 /**
  * @brief Use this if you want to use a single joy-con as a dedicated HidNpadIdType_No*. When used, both joy-cons in a pair should be used with this (HidNpadIdType_No1 and HidNpadIdType_No2 for example).
