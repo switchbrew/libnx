@@ -9,32 +9,39 @@
 #include "../services/hid.h"
 #include "../sf/service.h"
 
-/// ButtonConfig. Selects what button to map to.
+/// Selects what button to map to.
 typedef enum {
-    HidcfgButtonConfig_A        = 0,          ///< A
-    HidcfgButtonConfig_B        = 1,          ///< B
-    HidcfgButtonConfig_X        = 2,          ///< X
-    HidcfgButtonConfig_Y        = 3,          ///< Y
-    HidcfgButtonConfig_LStick   = 4,          ///< Left Stick Button
-    HidcfgButtonConfig_RStick   = 5,          ///< Right Stick Button
-    HidcfgButtonConfig_L        = 6,          ///< L
-    HidcfgButtonConfig_R        = 7,          ///< R
-    HidcfgButtonConfig_ZL       = 8,          ///< ZL
-    HidcfgButtonConfig_ZR       = 9,          ///< ZR
-    HidcfgButtonConfig_Minus    = 10,         ///< Minus
-    HidcfgButtonConfig_Plus     = 11,         ///< Plus
-    HidcfgButtonConfig_DLeft    = 12,         ///< DLeft
-    HidcfgButtonConfig_DUp      = 13,         ///< DUp
-    HidcfgButtonConfig_DRight   = 14,         ///< DRight
-    HidcfgButtonConfig_DDown    = 15,         ///< DDown
-    HidcfgButtonConfig_SL_Left  = 16,         ///< SL on Left controller.
-    HidcfgButtonConfig_SR_Left  = 17,         ///< SR on Left controller.
-    HidcfgButtonConfig_SL_Right = 18,         ///< SL on Right controller.
-    HidcfgButtonConfig_SR_Right = 19,         ///< SR on Right controller.
-    HidcfgButtonConfig_HOME     = 20,         ///< HOME
-    HidcfgButtonConfig_Capture  = 21,         ///< Capture
-    HidcfgButtonConfig_Disabled = 22,         ///< Disabled
-} HidcfgButtonConfig;
+    HidcfgDigitalButtonAssignment_A              = 0,          ///< A
+    HidcfgDigitalButtonAssignment_B              = 1,          ///< B
+    HidcfgDigitalButtonAssignment_X              = 2,          ///< X
+    HidcfgDigitalButtonAssignment_Y              = 3,          ///< Y
+    HidcfgDigitalButtonAssignment_StickL         = 4,          ///< Left Stick Button
+    HidcfgDigitalButtonAssignment_StickR         = 5,          ///< Right Stick Button
+    HidcfgDigitalButtonAssignment_L              = 6,          ///< L
+    HidcfgDigitalButtonAssignment_R              = 7,          ///< R
+    HidcfgDigitalButtonAssignment_ZL             = 8,          ///< ZL
+    HidcfgDigitalButtonAssignment_ZR             = 9,          ///< ZR
+    HidcfgDigitalButtonAssignment_Select         = 10,         ///< Select / Minus
+    HidcfgDigitalButtonAssignment_Start          = 11,         ///< Start / Plus
+    HidcfgDigitalButtonAssignment_Left           = 12,         ///< Left
+    HidcfgDigitalButtonAssignment_Up             = 13,         ///< Up
+    HidcfgDigitalButtonAssignment_Right          = 14,         ///< Right
+    HidcfgDigitalButtonAssignment_Down           = 15,         ///< Down
+    HidcfgDigitalButtonAssignment_LeftSL         = 16,         ///< SL on Left controller.
+    HidcfgDigitalButtonAssignment_LeftSR         = 17,         ///< SR on Left controller.
+    HidcfgDigitalButtonAssignment_RightSL        = 18,         ///< SL on Right controller.
+    HidcfgDigitalButtonAssignment_RightSR        = 19,         ///< SR on Right controller.
+    HidcfgDigitalButtonAssignment_HomeButton     = 20,         ///< HomeButton
+    HidcfgDigitalButtonAssignment_CaptureButton  = 21,         ///< CaptureButton
+    HidcfgDigitalButtonAssignment_Invalid        = 22,         ///< Invalid / Disabled
+} HidcfgDigitalButtonAssignment;
+
+/// AnalogStickRotation
+typedef enum {
+    HidcfgAnalogStickRotation_None               = 0,          ///< None
+    HidcfgAnalogStickRotation_Clockwise90        = 1,          ///< Clockwise90
+    HidcfgAnalogStickRotation_Anticlockwise90    = 2,          ///< Anticlockwise90
+} HidcfgAnalogStickRotation;
 
 /// UniquePadId for a controller.
 typedef struct {
@@ -89,35 +96,88 @@ typedef struct {
     u8 unk_x0[0x1A0];
 } HidsysButtonConfigRight;
 
-/// JoystickConfig
+/// AnalogStickAssignment
 typedef struct {
-    u32 unk_x0;                                        ///< Orientation. 0 = default, 1 = enabled for Left, 2 = enabled for Right.
-    u8 stick_change;                                   ///< StickChange
+    u32 rotation;                                      ///< \ref HidcfgAnalogStickRotation
+    u8 is_paired_stick_assigned;                       ///< IsPairedStickAssigned
     u8 pad[3];                                         ///< Padding
-} HidcfgJoystickConfig;
+} HidcfgAnalogStickAssignment;
 
 /// ButtonConfigEmbedded
 typedef struct {
-    u32 button_config[17];                             ///< \ref HidcfgButtonConfig, for the following buttons: DLeft, DUp, DRight, DDown, A, B, X, Y, LStick, RStick, L, R, ZL, ZR, Minus, Plus, Capture.
-    HidcfgJoystickConfig joystick_config[2];           ///< \ref HidcfgJoystickConfig, for the left and right stick.
+    u32 hardware_button_left;                          ///< \ref HidcfgDigitalButtonAssignment HardwareButtonLeft
+    u32 hardware_button_up;                            ///< \ref HidcfgDigitalButtonAssignment HardwareButtonUp
+    u32 hardware_button_right;                         ///< \ref HidcfgDigitalButtonAssignment HardwareButtonRight
+    u32 hardware_button_down;                          ///< \ref HidcfgDigitalButtonAssignment HardwareButtonDown
+    u32 hardware_button_a;                             ///< \ref HidcfgDigitalButtonAssignment HardwareButtonA
+    u32 hardware_button_b;                             ///< \ref HidcfgDigitalButtonAssignment HardwareButtonB
+    u32 hardware_button_x;                             ///< \ref HidcfgDigitalButtonAssignment HardwareButtonX
+    u32 hardware_button_y;                             ///< \ref HidcfgDigitalButtonAssignment HardwareButtonY
+    u32 hardware_button_stick_l;                       ///< \ref HidcfgDigitalButtonAssignment HardwareButtonStickL
+    u32 hardware_button_stick_r;                       ///< \ref HidcfgDigitalButtonAssignment HardwareButtonStickR
+    u32 hardware_button_l;                             ///< \ref HidcfgDigitalButtonAssignment HardwareButtonL
+    u32 hardware_button_r;                             ///< \ref HidcfgDigitalButtonAssignment HardwareButtonR
+    u32 hardware_button_zl;                            ///< \ref HidcfgDigitalButtonAssignment HardwareButtonZL
+    u32 hardware_button_zr;                            ///< \ref HidcfgDigitalButtonAssignment HardwareButtonZR
+    u32 hardware_button_select;                        ///< \ref HidcfgDigitalButtonAssignment HardwareButtonSelect
+    u32 hardware_button_start;                         ///< \ref HidcfgDigitalButtonAssignment HardwareButtonStart
+    u32 hardware_button_capture;                       ///< \ref HidcfgDigitalButtonAssignment HardwareButtonCapture
+    HidcfgAnalogStickAssignment hardware_stick_l;      ///< HardwareStickL
+    HidcfgAnalogStickAssignment hardware_stick_r;      ///< HardwareStickR
 } HidcfgButtonConfigEmbedded;
 
 /// ButtonConfigFull
 typedef struct {
-    u32 button_config[17];                             ///< \ref HidcfgButtonConfig, for the following buttons: DLeft, DUp, DRight, DDown, A, B, X, Y, LStick, RStick, L, R, ZL, ZR, Minus, Plus, Capture.
-    HidcfgJoystickConfig joystick_config[2];           ///< \ref HidcfgJoystickConfig, for the left and right stick.
+    u32 hardware_button_left;                          ///< \ref HidcfgDigitalButtonAssignment HardwareButtonLeft
+    u32 hardware_button_up;                            ///< \ref HidcfgDigitalButtonAssignment HardwareButtonUp
+    u32 hardware_button_right;                         ///< \ref HidcfgDigitalButtonAssignment HardwareButtonRight
+    u32 hardware_button_down;                          ///< \ref HidcfgDigitalButtonAssignment HardwareButtonDown
+    u32 hardware_button_a;                             ///< \ref HidcfgDigitalButtonAssignment HardwareButtonA
+    u32 hardware_button_b;                             ///< \ref HidcfgDigitalButtonAssignment HardwareButtonB
+    u32 hardware_button_x;                             ///< \ref HidcfgDigitalButtonAssignment HardwareButtonX
+    u32 hardware_button_y;                             ///< \ref HidcfgDigitalButtonAssignment HardwareButtonY
+    u32 hardware_button_stick_l;                       ///< \ref HidcfgDigitalButtonAssignment HardwareButtonStickL
+    u32 hardware_button_stick_r;                       ///< \ref HidcfgDigitalButtonAssignment HardwareButtonStickR
+    u32 hardware_button_l;                             ///< \ref HidcfgDigitalButtonAssignment HardwareButtonL
+    u32 hardware_button_r;                             ///< \ref HidcfgDigitalButtonAssignment HardwareButtonR
+    u32 hardware_button_zl;                            ///< \ref HidcfgDigitalButtonAssignment HardwareButtonZL
+    u32 hardware_button_zr;                            ///< \ref HidcfgDigitalButtonAssignment HardwareButtonZR
+    u32 hardware_button_select;                        ///< \ref HidcfgDigitalButtonAssignment HardwareButtonSelect
+    u32 hardware_button_start;                         ///< \ref HidcfgDigitalButtonAssignment HardwareButtonStart
+    u32 hardware_button_capture;                       ///< \ref HidcfgDigitalButtonAssignment HardwareButtonCapture
+    HidcfgAnalogStickAssignment hardware_stick_l;      ///< HardwareStickL
+    HidcfgAnalogStickAssignment hardware_stick_r;      ///< HardwareStickR
 } HidcfgButtonConfigFull;
 
 /// ButtonConfigLeft
 typedef struct {
-    u32 button_config[11];                             ///< \ref HidcfgButtonConfig, for the following buttons: DLeft, DUp, DRight, DDown, LStick, L, ZL, Minus, SL_Left, SR_Left, Capture.
-    HidcfgJoystickConfig joystick_config;              ///< \ref HidcfgJoystickConfig
+    u32 hardware_button_left;                          ///< \ref HidcfgDigitalButtonAssignment HardwareButtonLeft
+    u32 hardware_button_up;                            ///< \ref HidcfgDigitalButtonAssignment HardwareButtonUp
+    u32 hardware_button_right;                         ///< \ref HidcfgDigitalButtonAssignment HardwareButtonRight
+    u32 hardware_button_down;                          ///< \ref HidcfgDigitalButtonAssignment HardwareButtonDown
+    u32 hardware_button_stick_l;                       ///< \ref HidcfgDigitalButtonAssignment HardwareButtonStickL
+    u32 hardware_button_l;                             ///< \ref HidcfgDigitalButtonAssignment HardwareButtonL
+    u32 hardware_button_zl;                            ///< \ref HidcfgDigitalButtonAssignment HardwareButtonZL
+    u32 hardware_button_select;                        ///< \ref HidcfgDigitalButtonAssignment HardwareButtonSelect
+    u32 hardware_button_left_sl;                       ///< \ref HidcfgDigitalButtonAssignment HardwareButtonLeftSL
+    u32 hardware_button_left_sr;                       ///< \ref HidcfgDigitalButtonAssignment HardwareButtonLeftSR
+    u32 hardware_button_capture;                       ///< \ref HidcfgDigitalButtonAssignment HardwareButtonCapture
+    HidcfgAnalogStickAssignment hardware_stick_l;      ///< HardwareStickL
 } HidcfgButtonConfigLeft;
 
 /// ButtonConfigRight
 typedef struct {
-    u32 button_config[10];                             ///< \ref HidcfgButtonConfig, for the following buttons: A, B, X, Y, RStick, R, ZR, Plus, SL_Right, SR_Right.
-    HidcfgJoystickConfig joystick_config;              ///< \ref HidcfgJoystickConfig
+    u32 hardware_button_a;                             ///< \ref HidcfgDigitalButtonAssignment HardwareButtonA
+    u32 hardware_button_b;                             ///< \ref HidcfgDigitalButtonAssignment HardwareButtonB
+    u32 hardware_button_x;                             ///< \ref HidcfgDigitalButtonAssignment HardwareButtonX
+    u32 hardware_button_y;                             ///< \ref HidcfgDigitalButtonAssignment HardwareButtonY
+    u32 hardware_button_stick_r;                       ///< \ref HidcfgDigitalButtonAssignment HardwareButtonStickR
+    u32 hardware_button_r;                             ///< \ref HidcfgDigitalButtonAssignment HardwareButtonR
+    u32 hardware_button_zr;                            ///< \ref HidcfgDigitalButtonAssignment HardwareButtonZR
+    u32 hardware_button_start;                         ///< \ref HidcfgDigitalButtonAssignment HardwareButtonStart
+    u32 hardware_button_right_sl;                      ///< \ref HidcfgDigitalButtonAssignment HardwareButtonRightSL
+    u32 hardware_button_right_sr;                      ///< \ref HidcfgDigitalButtonAssignment HardwareButtonRightSR
+    HidcfgAnalogStickAssignment hardware_stick_r;      ///< HardwareStickR
 } HidcfgButtonConfigRight;
 
 /// Initialize hidsys.
