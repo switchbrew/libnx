@@ -444,11 +444,11 @@ typedef enum {
     HidNpadJoyDeviceType_Right           = 1,       ///< Right
 } HidNpadJoyDeviceType;
 
-/// NpadHandheldActivationMode
+/// This controls how many Joy-Cons must be attached for handheld-mode to be activated.
 typedef enum {
-    HidNpadHandheldActivationMode_Dual     = 0,     ///< Dual
-    HidNpadHandheldActivationMode_Single   = 1,     ///< Single
-    HidNpadHandheldActivationMode_Unknown2 = 2,     ///< Unknown
+    HidNpadHandheldActivationMode_Dual     = 0,     ///< Dual (2 Joy-Cons)
+    HidNpadHandheldActivationMode_Single   = 1,     ///< Single (1 Joy-Con)
+    HidNpadHandheldActivationMode_None     = 2,     ///< None (0 Joy-Cons)
 } HidNpadHandheldActivationMode;
 
 /// NpadJoyAssignmentMode
@@ -570,7 +570,7 @@ typedef enum {
 typedef enum {
     HidVibrationGcErmCommand_Stop                           = 0,     ///< Stop
     HidVibrationGcErmCommand_Start                          = 1,     ///< Start
-    HidVibrationGcErmCommand_Unknown2                       = 2,     ///< Unknown
+    HidVibrationGcErmCommand_StopHard                       = 2,     ///< StopHard
 } HidVibrationGcErmCommand;
 
 /// touchPosition
