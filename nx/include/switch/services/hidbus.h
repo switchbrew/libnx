@@ -19,9 +19,9 @@ typedef enum {
 
 /// JoyPollingMode
 typedef enum {
-    HidbusJoyPollingMode_JoyDisableSixAxisPollingData = 0,    ///< JoyDisableSixAxisPollingData
-    HidbusJoyPollingMode_JoyEnableSixAxisPollingData  = 1,    ///< JoyEnableSixAxisPollingData
-    HidbusJoyPollingMode_JoyButtonOnlyPollingData     = 2,    ///< [6.0.0+] JoyButtonOnlyPollingData
+    HidbusJoyPollingMode_SixAxisSensorDisable = 0,    ///< SixAxisSensorDisable
+    HidbusJoyPollingMode_SixAxisSensorEnable  = 1,    ///< JoyEnableSixAxisPollingData
+    HidbusJoyPollingMode_ButtonOnly           = 2,    ///< [6.0.0+] ButtonOnly
 } HidbusJoyPollingMode;
 
 /// BusHandle

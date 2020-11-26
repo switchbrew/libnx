@@ -84,7 +84,7 @@ Result ringconCreate(RingCon *c, HidNpadIdType id) {
     if (R_SUCCEEDED(rc)) c->bus_initialized = true;
 
     if (R_SUCCEEDED(rc)) rc = hidbusEnableExternalDevice(c->handle, true, 0x20);
-    if (R_SUCCEEDED(rc)) rc = hidbusEnableJoyPollingReceiveMode(c->handle, &cmd, sizeof(cmd), c->workbuf, c->workbuf_size, HidbusJoyPollingMode_JoyEnableSixAxisPollingData);
+    if (R_SUCCEEDED(rc)) rc = hidbusEnableJoyPollingReceiveMode(c->handle, &cmd, sizeof(cmd), c->workbuf, c->workbuf_size, HidbusJoyPollingMode_SixAxisSensorEnable);
 
     if (R_SUCCEEDED(rc)) rc = _ringconSetup(c);
 

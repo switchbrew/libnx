@@ -453,13 +453,13 @@ Result hidbusGetJoyPollingReceivedData(HidbusBusHandle handle, HidbusJoyPollingR
     HidbusDataAccessorHeader *accessor_header;
 
     HidbusJoyPollingMode polling_mode = _hidbusGetStatusManagerEntryPollingMode(index);
-    if (polling_mode == HidbusJoyPollingMode_JoyDisableSixAxisPollingData) {
+    if (polling_mode == HidbusJoyPollingMode_SixAxisSensorDisable) {
         accessor_header = &joydisable_accessor->hdr;
     }
-    else if (polling_mode == HidbusJoyPollingMode_JoyEnableSixAxisPollingData) {
+    else if (polling_mode == HidbusJoyPollingMode_SixAxisSensorEnable) {
         accessor_header = &joyenable_accessor->hdr;
     }
-    else if (hosversionAtLeast(6,0,0) && polling_mode == HidbusJoyPollingMode_JoyButtonOnlyPollingData) {
+    else if (hosversionAtLeast(6,0,0) && polling_mode == HidbusJoyPollingMode_ButtonOnly) {
         accessor_header = &joybutton_accessor->hdr;
     }
     else {
@@ -477,13 +477,13 @@ Result hidbusGetJoyPollingReceivedData(HidbusBusHandle handle, HidbusJoyPollingR
         HidbusJoyButtonOnlyPollingDataAccessorEntryData joybutton[0xa];
     } tmp_entries;
 
-    if (polling_mode == HidbusJoyPollingMode_JoyDisableSixAxisPollingData) {
+    if (polling_mode == HidbusJoyPollingMode_SixAxisSensorDisable) {
         memset(tmp_entries.joydisable, 0, sizeof(tmp_entries.joydisable));
     }
-    else if (polling_mode == HidbusJoyPollingMode_JoyEnableSixAxisPollingData) {
+    else if (polling_mode == HidbusJoyPollingMode_SixAxisSensorEnable) {
         memset(tmp_entries.joyenable, 0, sizeof(tmp_entries.joyenable));
     }
-    else if (hosversionAtLeast(6,0,0) && polling_mode == HidbusJoyPollingMode_JoyButtonOnlyPollingData) {
+    else if (hosversionAtLeast(6,0,0) && polling_mode == HidbusJoyPollingMode_ButtonOnly) {
         memset(tmp_entries.joybutton, 0, sizeof(tmp_entries.joybutton));
     }
 
@@ -492,7 +492,7 @@ Result hidbusGetJoyPollingReceivedData(HidbusBusHandle handle, HidbusJoyPollingR
 
         u64 timestamp0=0, timestamp1=0;
         bool retry=false;
-        if (polling_mode == HidbusJoyPollingMode_JoyDisableSixAxisPollingData) {
+        if (polling_mode == HidbusJoyPollingMode_SixAxisSensorDisable) {
             timestamp0 = atomic_load_explicit(&joydisable_accessor->entries[entrypos].timestamp, memory_order_acquire);
             memcpy(&tmp_entries.joydisable[newcount-i-1], &joydisable_accessor->entries[entrypos].data, sizeof(HidbusJoyDisableSixAxisPollingDataAccessorEntryData));
             timestamp1 = atomic_load_explicit(&joydisable_accessor->entries[entrypos].timestamp, memory_order_acquire);
@@ -500,7 +500,7 @@ Result hidbusGetJoyPollingReceivedData(HidbusBusHandle handle, HidbusJoyPollingR
             if (timestamp0 != timestamp1 || (i>0 && joydisable_accessor->entries[entrypos].data.timestamp - tmp_entries.joydisable[newcount-i].timestamp != 1))
                 retry=true;
         }
-        else if (polling_mode == HidbusJoyPollingMode_JoyEnableSixAxisPollingData) {
+        else if (polling_mode == HidbusJoyPollingMode_SixAxisSensorEnable) {
             timestamp0 = atomic_load_explicit(&joyenable_accessor->entries[entrypos].timestamp, memory_order_acquire);
             memcpy(&tmp_entries.joyenable[newcount-i-1], &joyenable_accessor->entries[entrypos].data, sizeof(HidbusJoyEnableSixAxisPollingDataAccessorEntryData));
             timestamp1 = atomic_load_explicit(&joyenable_accessor->entries[entrypos].timestamp, memory_order_acquire);
@@ -508,7 +508,7 @@ Result hidbusGetJoyPollingReceivedData(HidbusBusHandle handle, HidbusJoyPollingR
             if (timestamp0 != timestamp1 || (i>0 && joyenable_accessor->entries[entrypos].data.timestamp - tmp_entries.joyenable[newcount-i].timestamp != 1))
                 retry=true;
         }
-        else if (hosversionAtLeast(6,0,0) && polling_mode == HidbusJoyPollingMode_JoyButtonOnlyPollingData) {
+        else if (hosversionAtLeast(6,0,0) && polling_mode == HidbusJoyPollingMode_ButtonOnly) {
             timestamp0 = atomic_load_explicit(&joybutton_accessor->entries[entrypos].timestamp, memory_order_acquire);
             memcpy(&tmp_entries.joybutton[newcount-i-1], &joybutton_accessor->entries[entrypos].data, sizeof(HidbusJoyButtonOnlyPollingDataAccessorEntryData));
             timestamp1 = atomic_load_explicit(&joybutton_accessor->entries[entrypos].timestamp, memory_order_acquire);
@@ -528,13 +528,13 @@ Result hidbusGetJoyPollingReceivedData(HidbusBusHandle handle, HidbusJoyPollingR
     }
 
     bool dataready=false;
-    if (polling_mode == HidbusJoyPollingMode_JoyDisableSixAxisPollingData) {
+    if (polling_mode == HidbusJoyPollingMode_SixAxisSensorDisable) {
         dataready = tmp_entries.joydisable[count-1].timestamp != 0;
     }
-    else if (polling_mode == HidbusJoyPollingMode_JoyEnableSixAxisPollingData) {
+    else if (polling_mode == HidbusJoyPollingMode_SixAxisSensorEnable) {
         dataready = tmp_entries.joyenable[count-1].timestamp != 0;
     }
-    else if (hosversionAtLeast(6,0,0) && polling_mode == HidbusJoyPollingMode_JoyButtonOnlyPollingData) {
+    else if (hosversionAtLeast(6,0,0) && polling_mode == HidbusJoyPollingMode_ButtonOnly) {
         dataready = tmp_entries.joybutton[count-1].timestamp != 0;
     }
     if (!dataready) rc = MAKERESULT(218, 7);
@@ -544,21 +544,21 @@ Result hidbusGetJoyPollingReceivedData(HidbusBusHandle handle, HidbusJoyPollingR
     for (s32 i=0; i<count; i++) {
         u8 size=0;
 
-        if (polling_mode == HidbusJoyPollingMode_JoyDisableSixAxisPollingData) {
+        if (polling_mode == HidbusJoyPollingMode_SixAxisSensorDisable) {
             size = tmp_entries.joydisable[i].size;
             if (size > sizeof(tmp_entries.joydisable[i].data)) return MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen);
             memcpy(recv_data[i].data, tmp_entries.joydisable[i].data, size);
             recv_data[i].size = size;
             recv_data[i].timestamp = tmp_entries.joydisable[i].timestamp;
         }
-        else if (polling_mode == HidbusJoyPollingMode_JoyEnableSixAxisPollingData) {
+        else if (polling_mode == HidbusJoyPollingMode_SixAxisSensorEnable) {
             size = tmp_entries.joyenable[i].size;
             if (size > sizeof(tmp_entries.joyenable[i].data)) return MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen);
             memcpy(recv_data[i].data, tmp_entries.joyenable[i].data, size);
             recv_data[i].size = size;
             recv_data[i].timestamp = tmp_entries.joyenable[i].timestamp;
         }
-        else if (hosversionAtLeast(6,0,0) && polling_mode == HidbusJoyPollingMode_JoyButtonOnlyPollingData) {
+        else if (hosversionAtLeast(6,0,0) && polling_mode == HidbusJoyPollingMode_ButtonOnly) {
             size = tmp_entries.joybutton[i].size;
             if (size > sizeof(tmp_entries.joybutton[i].data)) return MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen);
             memcpy(recv_data[i].data, tmp_entries.joybutton[i].data, size);
