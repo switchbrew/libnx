@@ -1000,8 +1000,9 @@ static Result _hidCmdInU64NoOut(Service* srv, u64 inval, u32 cmd_id) {
 static Result _hidCmdInU32AruidNoOut(u32 inval, u32 cmd_id) {
     const struct {
         u32 inval;
+        u32 pad;
         u64 AppletResourceUserId;
-    } in = { inval, appletGetAppletResourceUserId() };
+    } in = { inval, 0, appletGetAppletResourceUserId() };
 
     return serviceDispatchIn(&g_hidSrv, cmd_id, in,
         .in_send_pid = true,
@@ -1017,6 +1018,42 @@ static Result _hidCmdInU64AruidNoOut(u64 inval, u32 cmd_id) {
     return serviceDispatchIn(&g_hidSrv, cmd_id, in,
         .in_send_pid = true,
     );
+}
+
+static Result _hidCmdInU8U32AruidNoOut(u8 in8, u32 in32, u32 cmd_id) {
+    const struct {
+        u8 in8;
+        u8 pad[3];
+        u32 in32;
+        u64 AppletResourceUserId;
+    } in = { in8, {0}, in32, appletGetAppletResourceUserId() };
+
+    return serviceDispatchIn(&g_hidSrv, cmd_id, in,
+        .in_send_pid = true,
+    );
+}
+
+static Result _hidCmdInBoolU32AruidNoOut(bool flag, u32 in32, u32 cmd_id) {
+    return _hidCmdInU8U32AruidNoOut(flag!=0, in32, cmd_id);
+}
+
+static Result _hidCmdInU32AruidOutU8(u32 inval, u8 *out, u32 cmd_id) {
+    const struct {
+        u32 inval;
+        u32 pad;
+        u64 AppletResourceUserId;
+    } in = { inval, 0, appletGetAppletResourceUserId() };
+
+    return serviceDispatchInOut(&g_hidSrv, cmd_id, in, *out,
+        .in_send_pid = true,
+    );
+}
+
+static Result _hidCmdInU32AruidOutBool(u32 inval, bool *out, u32 cmd_id) {
+    u8 tmp=0;
+    Result rc = _hidCmdInU32AruidOutU8(inval, &tmp, cmd_id);
+    if (R_SUCCEEDED(rc) && out) *out = tmp & 1;
+    return rc;
 }
 
 static Result _hidCmdInAruidOutU32(u32 *out, u32 cmd_id) {
@@ -1070,6 +1107,14 @@ static Result _hidActivateMouse(void) {
 
 static Result _hidActivateKeyboard(void) {
     return _hidCmdInAruidNoOut(31);
+}
+
+Result hidIsSixAxisSensorFusionEnabled(HidSixAxisSensorHandle handle, bool *out) {
+    return _hidCmdInU32AruidOutBool(handle.type_value, out, 68);
+}
+
+Result hidEnableSixAxisSensorFusion(HidSixAxisSensorHandle handle, bool flag) {
+    return _hidCmdInBoolU32AruidNoOut(flag, handle.type_value, 69);
 }
 
 Result hidSetSixAxisSensorFusionParameters(HidSixAxisSensorHandle handle, float unk0, float unk1) {
@@ -1146,6 +1191,17 @@ Result hidGetGyroscopeZeroDriftMode(HidSixAxisSensorHandle handle, HidGyroscopeZ
 
 Result hidResetGyroscopeZeroDriftMode(HidSixAxisSensorHandle handle) {
     return _hidCmdInU32AruidNoOut(handle.type_value, 81);
+}
+
+Result hidIsSixAxisSensorAtRest(HidSixAxisSensorHandle handle, bool *out) {
+    return _hidCmdInU32AruidOutBool(handle.type_value, out, 82);
+}
+
+Result hidIsFirmwareUpdateAvailableForSixAxisSensor(HidSixAxisSensorHandle handle, bool *out) {
+    if (hosversionBefore(6,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _hidCmdInU32AruidOutBool(handle.type_value, out, 83);
 }
 
 Result hidSetSupportedNpadStyleSet(u32 style_set) {

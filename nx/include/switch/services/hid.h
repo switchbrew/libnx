@@ -1457,6 +1457,20 @@ u32 hidSixAxisSensorValuesRead(SixAxisSensorValues *values, HidControllerID id, 
 bool hidGetHandheldMode(void);
 
 /**
+ * @brief IsSixAxisSensorFusionEnabled
+ * @param[in] handle \ref HidSixAxisSensorHandle
+ * @param[out] out Output flag.
+ */
+Result hidIsSixAxisSensorFusionEnabled(HidSixAxisSensorHandle handle, bool *out);
+
+/**
+ * @brief EnableSixAxisSensorFusion
+ * @param[in] handle \ref HidSixAxisSensorHandle
+ * @param[in] flag Flag
+ */
+Result hidEnableSixAxisSensorFusion(HidSixAxisSensorHandle handle, bool flag);
+
+/**
  * @brief SetSixAxisSensorFusionParameters
  * @param[in] handle \ref HidSixAxisSensorHandle
  * @param[in] unk0 Must be 0.0f-1.0f.
@@ -1497,6 +1511,21 @@ Result hidGetGyroscopeZeroDriftMode(HidSixAxisSensorHandle handle, HidGyroscopeZ
  * @param[in] handle \ref HidSixAxisSensorHandle
  */
 Result hidResetGyroscopeZeroDriftMode(HidSixAxisSensorHandle handle);
+
+/**
+ * @brief IsSixAxisSensorAtRest
+ * @param[in] handle \ref HidSixAxisSensorHandle
+ * @param[out] out Output flag.
+ */
+Result hidIsSixAxisSensorAtRest(HidSixAxisSensorHandle handle, bool *out);
+
+/**
+ * @brief IsFirmwareUpdateAvailableForSixAxisSensor
+ * @note Only available on [6.0.0+].
+ * @param[in] handle \ref HidSixAxisSensorHandle
+ * @param[out] out Output flag.
+ */
+Result hidIsFirmwareUpdateAvailableForSixAxisSensor(HidSixAxisSensorHandle handle, bool *out);
 
 /**
  * @brief Sets which controller styles are supported.
