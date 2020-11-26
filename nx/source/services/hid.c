@@ -49,6 +49,7 @@ static Result _hidActivateGesture(void);
 static Result _hidSetDualModeAll(void);
 
 static u8 _hidGetSixAxisSensorHandleNpadStyleIndex(HidSixAxisSensorHandle handle);
+static Result _hidGetSixAxisSensorHandles(HidSixAxisSensorHandle *handles, s32 total_handles, HidNpadIdType id, HidNpadStyleTag style);
 
 NX_GENERATE_SERVICE_GUARD(hid);
 
@@ -1109,6 +1110,19 @@ static Result _hidActivateKeyboard(void) {
     return _hidCmdInAruidNoOut(31);
 }
 
+Result hidGetSixAxisSensorHandles(HidSixAxisSensorHandle *handles, s32 total_handles, HidNpadIdType id, HidNpadStyleTag style) {
+    if (id == (HidNpadIdType)CONTROLLER_HANDHELD) id = HidNpadIdType_Handheld; // Correct enum value for old users passing HidControllerID instead (avoids a hid sysmodule fatal later on)
+    return _hidGetSixAxisSensorHandles(handles, total_handles, id, style);
+}
+
+Result hidStartSixAxisSensor(HidSixAxisSensorHandle handle) {
+    return _hidCmdInU32AruidNoOut(handle.type_value, 66);
+}
+
+Result hidStopSixAxisSensor(HidSixAxisSensorHandle handle) {
+    return _hidCmdInU32AruidNoOut(handle.type_value, 67);
+}
+
 Result hidIsSixAxisSensorFusionEnabled(HidSixAxisSensorHandle handle, bool *out) {
     return _hidCmdInU32AruidOutBool(handle.type_value, out, 68);
 }
@@ -1204,14 +1218,14 @@ Result hidIsFirmwareUpdateAvailableForSixAxisSensor(HidSixAxisSensorHandle handl
     return _hidCmdInU32AruidOutBool(handle.type_value, out, 83);
 }
 
-Result hidSetSupportedNpadStyleSet(u32 style_set) {
-    return _hidCmdInU32AruidNoOut(style_set, 100);
-}
-
 static Result _hidActivateGesture(void) {
     u32 val=1;
 
     return _hidCmdInU32AruidNoOut(val, 91); // ActivateGesture
+}
+
+Result hidSetSupportedNpadStyleSet(u32 style_set) {
+    return _hidCmdInU32AruidNoOut(style_set, 100);
 }
 
 Result hidGetSupportedNpadStyleSet(u32 *style_set) {
@@ -1611,19 +1625,6 @@ Result hidInitializeVibrationDevices(HidVibrationDeviceHandle *handles, s32 tota
     }
 
     return rc;
-}
-
-Result hidGetSixAxisSensorHandles(HidSixAxisSensorHandle *handles, s32 total_handles, HidNpadIdType id, HidNpadStyleTag style) {
-    if (id == (HidNpadIdType)CONTROLLER_HANDHELD) id = HidNpadIdType_Handheld; // Correct enum value for old users passing HidControllerID instead (avoids a hid sysmodule fatal later on)
-    return _hidGetSixAxisSensorHandles(handles, total_handles, id, style);
-}
-
-Result hidStartSixAxisSensor(HidSixAxisSensorHandle handle) {
-    return _hidCmdInU32AruidNoOut(handle.type_value, 66);
-}
-
-Result hidStopSixAxisSensor(HidSixAxisSensorHandle handle) {
-    return _hidCmdInU32AruidNoOut(handle.type_value, 67);
 }
 
 static Result _hidActivateConsoleSixAxisSensor(void) {

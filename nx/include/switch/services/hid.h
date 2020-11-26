@@ -1457,6 +1457,28 @@ u32 hidSixAxisSensorValuesRead(SixAxisSensorValues *values, HidControllerID id, 
 bool hidGetHandheldMode(void);
 
 /**
+ * @brief Gets SixAxisSensorHandles.
+ * @note Only ::HidNpadStyleTag_NpadJoyDual supports total_handles==2.
+ * @param[out] handles Output array of \ref HidSixAxisSensorHandle.
+ * @param[in] total_handles Total handles for the handles array. Must be 1 or 2, if 2 handles aren't supported by the specified style an error is thrown.
+ * @param[in] id \ref HidNpadIdType
+ * @param[in] style \ref HidNpadStyleTag
+ */
+Result hidGetSixAxisSensorHandles(HidSixAxisSensorHandle *handles, s32 total_handles, HidNpadIdType id, HidNpadStyleTag style);
+
+/**
+ * @brief Starts the SixAxisSensor for the specified handle.
+ * @param[in] handle \ref HidSixAxisSensorHandle
+ */
+Result hidStartSixAxisSensor(HidSixAxisSensorHandle handle);
+
+/**
+ * @brief Stops the SixAxisSensor for the specified handle.
+ * @param[in] handle \ref HidSixAxisSensorHandle
+ */
+Result hidStopSixAxisSensor(HidSixAxisSensorHandle handle);
+
+/**
  * @brief IsSixAxisSensorFusionEnabled
  * @param[in] handle \ref HidSixAxisSensorHandle
  * @param[out] out Output flag.
@@ -1693,28 +1715,6 @@ Result hidEndPermitVibrationSession(void);
  * @param[out] flag Flag
  */
 Result hidIsVibrationDeviceMounted(HidVibrationDeviceHandle handle, bool *flag);
-
-/**
- * @brief Gets SixAxisSensorHandles.
- * @note Only ::HidNpadStyleTag_NpadJoyDual supports total_handles==2.
- * @param[out] handles Output array of \ref HidSixAxisSensorHandle.
- * @param[in] total_handles Total handles for the handles array. Must be 1 or 2, if 2 handles aren't supported by the specified style an error is thrown.
- * @param[in] id \ref HidNpadIdType
- * @param[in] style \ref HidNpadStyleTag
- */
-Result hidGetSixAxisSensorHandles(HidSixAxisSensorHandle *handles, s32 total_handles, HidNpadIdType id, HidNpadStyleTag style);
-
-/**
- * @brief Starts the SixAxisSensor for the specified handle.
- * @param[in] handle \ref HidSixAxisSensorHandle
- */
-Result hidStartSixAxisSensor(HidSixAxisSensorHandle handle);
-
-/**
- * @brief Stops the SixAxisSensor for the specified handle.
- * @param[in] handle \ref HidSixAxisSensorHandle
- */
-Result hidStopSixAxisSensor(HidSixAxisSensorHandle handle);
 
 /**
  * @brief Starts the SevenSixAxisSensor.
