@@ -568,9 +568,9 @@ typedef enum {
 
 /// VibrationGcErmCommand
 typedef enum {
-    HidVibrationGcErmCommand_Stop                           = 0,     ///< Stop
-    HidVibrationGcErmCommand_Start                          = 1,     ///< Start
-    HidVibrationGcErmCommand_StopHard                       = 2,     ///< StopHard
+    HidVibrationGcErmCommand_Stop                           = 0,     ///< Stops the vibration with a decay phase.
+    HidVibrationGcErmCommand_Start                          = 1,     ///< Starts the vibration.
+    HidVibrationGcErmCommand_StopHard                       = 2,     ///< Stops the vibration immediately, with no decay phase.
 } HidVibrationGcErmCommand;
 
 /// touchPosition
