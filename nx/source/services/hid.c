@@ -1008,7 +1008,7 @@ static Result _hidCmdInU32AruidNoOut(u32 inval, u32 cmd_id) {
     );
 }
 
-static Result _hidCmdWithInputU64(u64 inval, u32 cmd_id) {
+static Result _hidCmdInU64AruidNoOut(u64 inval, u32 cmd_id) {
     const struct {
         u64 AppletResourceUserId;
         u64 inval;
@@ -1019,7 +1019,7 @@ static Result _hidCmdWithInputU64(u64 inval, u32 cmd_id) {
     );
 }
 
-static Result _hidCmdOutU32(u32 *out, u32 cmd_id) {
+static Result _hidCmdInAruidOutU32(u32 *out, u32 cmd_id) {
     u64 AppletResourceUserId = appletGetAppletResourceUserId();
 
     return serviceDispatchInOut(&g_hidSrv, cmd_id, AppletResourceUserId, *out,
@@ -1027,7 +1027,7 @@ static Result _hidCmdOutU32(u32 *out, u32 cmd_id) {
     );
 }
 
-static Result _hidCmdOutU64(u64 *out, u32 cmd_id) {
+static Result _hidCmdInAruidOutU64(u64 *out, u32 cmd_id) {
     u64 AppletResourceUserId = appletGetAppletResourceUserId();
 
     return serviceDispatchInOut(&g_hidSrv, cmd_id, AppletResourceUserId, *out,
@@ -1160,7 +1160,7 @@ static Result _hidActivateGesture(void) {
 
 Result hidGetSupportedNpadStyleSet(u32 *style_set) {
     u32 tmp=0;
-    Result rc = _hidCmdOutU32(&tmp, 101);
+    Result rc = _hidCmdInAruidOutU32(&tmp, 101);
     if (R_SUCCEEDED(rc) && style_set) *style_set = tmp;
     return rc;
 }
@@ -1211,12 +1211,12 @@ Result hidAcquireNpadStyleSetUpdateEventHandle(HidNpadIdType id, Event* out_even
 }
 
 Result hidSetNpadJoyHoldType(HidNpadJoyHoldType type) {
-    return _hidCmdWithInputU64(type, 120);
+    return _hidCmdInU64AruidNoOut(type, 120);
 }
 
 Result hidGetNpadJoyHoldType(HidNpadJoyHoldType *type) {
     u64 tmp=0;
-    Result rc = _hidCmdOutU64(&tmp, 121);
+    Result rc = _hidCmdInAruidOutU64(&tmp, 121);
     if (R_SUCCEEDED(rc) && type) *type = tmp;
     return rc;
 }
@@ -1238,6 +1238,17 @@ Result hidMergeSingleJoyAsDualJoy(HidNpadIdType id0, HidNpadIdType id1) {
     return serviceDispatchIn(&g_hidSrv, 125, in,
         .in_send_pid = true,
     );
+}
+
+Result hidSetNpadHandheldActivationMode(HidNpadHandheldActivationMode mode) {
+    return _hidCmdInU64AruidNoOut(mode, 128);
+}
+
+Result hidGetNpadHandheldActivationMode(HidNpadHandheldActivationMode *out) {
+    u64 tmp=0;
+    Result rc = _hidCmdInAruidOutU64(&tmp, 129);
+    if (R_SUCCEEDED(rc) && out) *out = tmp; // Official sw would abort if tmp isn't 0-2.
+    return rc;
 }
 
 static Result _hidCreateActiveVibrationDeviceList(Service* srv_out) {

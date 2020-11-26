@@ -1564,6 +1564,18 @@ Result hidSetNpadJoyAssignmentModeDual(HidNpadIdType id);
 Result hidMergeSingleJoyAsDualJoy(HidNpadIdType id0, HidNpadIdType id1);
 
 /**
+ * @brief Sets the \ref HidNpadHandheldActivationMode.
+ * @param[in] mode \ref HidNpadHandheldActivationMode
+ */
+Result hidSetNpadHandheldActivationMode(HidNpadHandheldActivationMode mode);
+
+/**
+ * @brief Gets the \ref HidNpadHandheldActivationMode.
+ * @param[out] out \ref HidNpadHandheldActivationMode
+ */
+Result hidGetNpadHandheldActivationMode(HidNpadHandheldActivationMode *out);
+
+/**
  * @brief Gets and initializes vibration handles.
  * @note Only the following styles support total_handles 2: ::HidNpadStyleTag_NpadFullKey, ::HidNpadStyleTag_NpadHandheld, ::HidNpadStyleTag_NpadJoyDual, ::HidNpadStyleTag_NpadHandheldLark, ::HidNpadStyleTag_NpadSystem, ::HidNpadStyleTag_NpadSystemExt.
  * @param[out] handles Output array of \ref HidVibrationDeviceHandle.
