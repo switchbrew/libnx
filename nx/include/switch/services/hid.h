@@ -1709,10 +1709,10 @@ Result hidSetNpadJoyAssignmentModeSingleWithDestination(HidNpadIdType id, HidNpa
 Result hidSetNpadAnalogStickUseCenterClamp(bool flag);
 
 /**
- * @brief SetNpadCaptureButtonAssignment
+ * @brief Assigns the button(s) which trigger the CaptureButton.
  * @note Only available on [8.0.0+].
  * @param[in] style_set Bitfield of \ref HidNpadStyleTag, exactly 1 bit must be set.
- * @param[in] buttons Bitfield of \ref HidNpadButton.
+ * @param[in] buttons Bitfield of \ref HidNpadButton, multiple bits can be set.
  */
 Result hidSetNpadCaptureButtonAssignment(u32 style_set, u64 buttons);
 
