@@ -1437,11 +1437,11 @@ Result hidSetNpadAnalogStickUseCenterClamp(bool flag) {
     return _hidCmdInBoolAruidNoOut(flag, 134);
 }
 
-Result hidSetNpadCaptureButtonAssignment(u32 style_set, u64 buttons) {
+Result hidSetNpadCaptureButtonAssignment(HidNpadStyleTag style, u64 buttons) {
     if (hosversionBefore(8,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return _hidCmdInU32AruidU64NoOut(style_set, buttons, 135);
+    return _hidCmdInU32AruidU64NoOut(style, buttons, 135);
 }
 
 Result hidClearNpadCaptureButtonAssignment(void) {
