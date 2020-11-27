@@ -457,6 +457,14 @@ typedef enum {
     HidNpadJoyAssignmentMode_Single = 1,            ///< Single (Set by hidSetNpadJoyAssignmentModeSingle*())
 } HidNpadJoyAssignmentMode;
 
+/// NpadCommunicationMode
+typedef enum {
+    HidNpadCommunicationMode_Unknown0   = 0,        ///< Unknown
+    HidNpadCommunicationMode_Unknown1   = 1,        ///< Unknown
+    HidNpadCommunicationMode_Unknown2   = 2,        ///< Unknown
+    HidNpadCommunicationMode_Unknown3   = 3,        ///< Unknown
+} HidNpadCommunicationMode;
+
 /// DeviceType (system)
 typedef enum {
     HidDeviceTypeBits_FullKey       = BIT(0),  ///< Pro Controller and Gc controller.
@@ -678,6 +686,11 @@ typedef struct HidTouchScreenSharedMemoryFormat {
     HidTouchScreenLifo lifo;
     u8 padding[0x3c8];
 } HidTouchScreenSharedMemoryFormat;
+
+/// HidTouchScreenConfigurationForNx
+typedef struct {
+    u8 config[0x10];                                 ///< Unknown
+} HidTouchScreenConfigurationForNx;
 
 // End HidTouchScreen
 
@@ -1457,6 +1470,13 @@ u32 hidSixAxisSensorValuesRead(SixAxisSensorValues *values, HidControllerID id, 
 bool hidGetHandheldMode(void);
 
 /**
+ * @brief SendKeyboardLockKeyEvent
+ * @note Only available on [6.0.0+].
+ * @param[in] events Bitfield of KeyboardLockKeyEvent.
+ */
+Result hidSendKeyboardLockKeyEvent(u32 events);
+
+/**
  * @brief Gets SixAxisSensorHandles.
  * @note Only ::HidNpadStyleTag_NpadJoyDual supports total_handles==2.
  * @param[out] handles Output array of \ref HidSixAxisSensorHandle.
@@ -1580,6 +1600,19 @@ Result hidSetSupportedNpadIdType(const HidNpadIdType *ids, size_t count);
 Result hidAcquireNpadStyleSetUpdateEventHandle(HidNpadIdType id, Event* out_event, bool autoclear);
 
 /**
+ * @brief DisconnectNpad
+ * @param[in] id \ref HidNpadIdType
+ */
+Result hidDisconnectNpad(HidNpadIdType id);
+
+/**
+ * @brief GetPlayerLedPattern
+ * @param[in] id \ref HidNpadIdType
+ * @param[out] out Output value.
+ */
+Result hidGetPlayerLedPattern(HidNpadIdType id, u8 *out);
+
+/**
  * @brief Sets the \ref HidNpadJoyHoldType.
  * @note Used automatically by \ref hidScanInput when required.
  * @param[in] type \ref HidNpadJoyHoldType
@@ -1593,10 +1626,17 @@ Result hidSetNpadJoyHoldType(HidNpadJoyHoldType type);
 Result hidGetNpadJoyHoldType(HidNpadJoyHoldType *type);
 
 /**
- * @brief Use this if you want to use a single joy-con as a dedicated HidNpadIdType_No*. When used, both joy-cons in a pair should be used with this (HidNpadIdType_No1 and HidNpadIdType_No2 for example).
+ * @brief This is the same as \ref hidSetNpadJoyAssignmentModeSingle, except ::HidNpadJoyDeviceType_Left is used for the type.
  * @param[in] id \ref HidNpadIdType, must be HidNpadIdType_No*.
  */
 Result hidSetNpadJoyAssignmentModeSingleByDefault(HidNpadIdType id);
+
+/**
+ * @brief This is the same as \ref hidSetNpadJoyAssignmentModeSingleWithDestination, except without the output params.
+ * @param[in] id \ref HidNpadIdType, must be HidNpadIdType_No*.
+ * @param[in] type \ref HidNpadJoyDeviceType
+ */
+Result hidSetNpadJoyAssignmentModeSingle(HidNpadIdType id, HidNpadJoyDeviceType type);
 
 /**
  * @brief Use this if you want to use a pair of joy-cons as a single HidNpadIdType_No*. When used, both joy-cons in a pair should be used with this (HidNpadIdType_No1 and HidNpadIdType_No2 for example).
@@ -1615,6 +1655,16 @@ Result hidSetNpadJoyAssignmentModeDual(HidNpadIdType id);
 Result hidMergeSingleJoyAsDualJoy(HidNpadIdType id0, HidNpadIdType id1);
 
 /**
+ * @brief StartLrAssignmentMode
+ */
+Result hidStartLrAssignmentMode(void);
+
+/**
+ * @brief StopLrAssignmentMode
+ */
+Result hidStopLrAssignmentMode(void);
+
+/**
  * @brief Sets the \ref HidNpadHandheldActivationMode.
  * @param[in] mode \ref HidNpadHandheldActivationMode
  */
@@ -1625,6 +1675,52 @@ Result hidSetNpadHandheldActivationMode(HidNpadHandheldActivationMode mode);
  * @param[out] out \ref HidNpadHandheldActivationMode
  */
 Result hidGetNpadHandheldActivationMode(HidNpadHandheldActivationMode *out);
+
+/**
+ * @brief SwapNpadAssignment
+ * @param[in] id0 \ref HidNpadIdType
+ * @param[in] id1 \ref HidNpadIdType
+ */
+Result hidSwapNpadAssignment(HidNpadIdType id0, HidNpadIdType id1);
+
+/**
+ * @brief EnableUnintendedHomeButtonInputProtection
+ * @note To get the state of this, use \ref hidGetNpadSystemButtonProperties to access HidNpadSystemButtonProperties::is_unintended_home_button_input_protection_enabled.
+ * @param[in] id \ref HidNpadIdType
+ * @param[in] flag Whether UnintendedHomeButtonInputProtection is enabled.
+ */
+Result hidEnableUnintendedHomeButtonInputProtection(HidNpadIdType id, bool flag);
+
+/**
+ * @brief Use this if you want to use a single joy-con as a dedicated HidNpadIdType_No*. When used, both joy-cons in a pair should be used with this (HidNpadIdType_No1 and HidNpadIdType_No2 for example).
+ * @note Only available on [5.0.0+].
+ * @param[in] id \ref HidNpadIdType, must be HidNpadIdType_No*.
+ * @param[in] type \ref HidNpadJoyDeviceType
+ * @param[out] flag Whether the dest output is set.
+ * @param[out] dest \ref HidNpadIdType
+ */
+Result hidSetNpadJoyAssignmentModeSingleWithDestination(HidNpadIdType id, HidNpadJoyDeviceType type, bool *flag, HidNpadIdType *dest);
+
+/**
+ * @brief SetNpadAnalogStickUseCenterClamp
+ * @note Only available on [6.1.0+].
+ * @param[in] flag Flag
+ */
+Result hidSetNpadAnalogStickUseCenterClamp(bool flag);
+
+/**
+ * @brief SetNpadCaptureButtonAssignment
+ * @note Only available on [8.0.0+].
+ * @param[in] style_set Bitfield of \ref HidNpadStyleTag, exactly 1 bit must be set.
+ * @param[in] buttons Bitfield of \ref HidNpadButton.
+ */
+Result hidSetNpadCaptureButtonAssignment(u32 style_set, u64 buttons);
+
+/**
+ * @brief ClearNpadCaptureButtonAssignment
+ * @note Only available on [8.0.0+].
+ */
+Result hidClearNpadCaptureButtonAssignment(void);
 
 /**
  * @brief Gets and initializes vibration handles.
@@ -1792,10 +1888,67 @@ Result hidGetSensorFusionError(float *out);
 Result hidGetGyroBias(UtilFloat3 *out);
 
 /**
+ * @brief IsUsbFullKeyControllerEnabled
+ * @note Only available on [3.0.0+].
+ * @param[out] out Output flag.
+ */
+Result hidIsUsbFullKeyControllerEnabled(bool *out);
+
+/**
+ * @brief EnableUsbFullKeyController
+ * @note Only available on [3.0.0+].
+ * @param[in] flag Flag
+ */
+Result hidEnableUsbFullKeyController(bool flag);
+
+/**
+ * @brief IsUsbFullKeyControllerConnected
+ * @note Only available on [3.0.0+].
+ * @param[in] id \ref HidNpadIdType
+ * @param[out] out Output flag.
+ */
+Result hidIsUsbFullKeyControllerConnected(HidNpadIdType id, bool *out);
+
+/**
  * @brief Gets the \ref HidNpadInterfaceType for the specified controller.
  * @note Only available on [4.0.0+].
  * @param[in] id \ref HidNpadIdType
  * @param[out] out \ref HidNpadInterfaceType
  */
 Result hidGetNpadInterfaceType(HidNpadIdType id, u8 *out);
+
+/**
+ * @brief GetNpadOfHighestBatteryLevel
+ * @note Only available on [10.0.0+].
+ * @param[in] ids Input array of \ref HidNpadIdType, ::HidNpadIdType_Handheld is ignored.
+ * @param[in] count Total entries in the ids array.
+ * @param[out] out \ref HidNpadIdType
+ */
+Result hidGetNpadOfHighestBatteryLevel(const HidNpadIdType *ids, size_t count, HidNpadIdType *out);
+
+/**
+ * @brief SetNpadCommunicationMode
+ * @param[in] mode \ref HidNpadCommunicationMode
+ */
+Result hidSetNpadCommunicationMode(HidNpadCommunicationMode mode);
+
+/**
+ * @brief GetNpadCommunicationMode
+ * @param[out] out \ref HidNpadCommunicationMode
+ */
+Result hidGetNpadCommunicationMode(HidNpadCommunicationMode *out);
+
+/**
+ * @brief SetTouchScreenConfiguration
+ * @note Only available on [9.0.0+].
+ * @param[in] config \ref HidTouchScreenConfigurationForNx
+ */
+Result hidSetTouchScreenConfiguration(const HidTouchScreenConfigurationForNx *config);
+
+/**
+ * @brief IsFirmwareUpdateNeededForNotification
+ * @note Only available on [9.0.0+].
+ * @param[out] out Output flag.
+ */
+Result hidIsFirmwareUpdateNeededForNotification(bool *out);
 

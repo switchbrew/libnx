@@ -48,6 +48,12 @@ static Result _hidActivateGesture(void);
 
 static Result _hidSetDualModeAll(void);
 
+static Result _hidGetVibrationDeviceHandles(HidVibrationDeviceHandle *handles, s32 total_handles, HidNpadIdType id, HidNpadStyleTag style);
+
+static Result _hidCreateActiveVibrationDeviceList(Service* srv_out);
+
+static Result _hidActivateVibrationDevice(Service* srv, HidVibrationDeviceHandle handle);
+
 static u8 _hidGetSixAxisSensorHandleNpadStyleIndex(HidSixAxisSensorHandle handle);
 static Result _hidGetSixAxisSensorHandles(HidSixAxisSensorHandle *handles, s32 total_handles, HidNpadIdType id, HidNpadStyleTag style);
 
@@ -998,6 +1004,22 @@ static Result _hidCmdInU64NoOut(Service* srv, u64 inval, u32 cmd_id) {
     return serviceDispatchIn(srv, cmd_id, inval);
 }
 
+static Result _hidCmdInU8AruidNoOut(u8 inval, u32 cmd_id) {
+    const struct {
+        u8 inval;
+        u8 pad[7];
+        u64 AppletResourceUserId;
+    } in = { inval, {0}, appletGetAppletResourceUserId() };
+
+    return serviceDispatchIn(&g_hidSrv, cmd_id, in,
+        .in_send_pid = true,
+    );
+}
+
+static Result _hidCmdInBoolAruidNoOut(bool flag, u32 cmd_id) {
+    return _hidCmdInU8AruidNoOut(flag!=0, cmd_id);
+}
+
 static Result _hidCmdInU32AruidNoOut(u32 inval, u32 cmd_id) {
     const struct {
         u32 inval;
@@ -1021,6 +1043,19 @@ static Result _hidCmdInU64AruidNoOut(u64 inval, u32 cmd_id) {
     );
 }
 
+static Result _hidCmdInU32AruidU64NoOut(u32 in32, u64 in64, u32 cmd_id) {
+    const struct {
+        u32 in32;
+        u32 pad;
+        u64 AppletResourceUserId;
+        u64 in64;
+    } in = { in32, 0, appletGetAppletResourceUserId(), in64 };
+
+    return serviceDispatchIn(&g_hidSrv, cmd_id, in,
+        .in_send_pid = true,
+    );
+}
+
 static Result _hidCmdInU8U32AruidNoOut(u8 in8, u32 in32, u32 cmd_id) {
     const struct {
         u8 in8;
@@ -1036,6 +1071,17 @@ static Result _hidCmdInU8U32AruidNoOut(u8 in8, u32 in32, u32 cmd_id) {
 
 static Result _hidCmdInBoolU32AruidNoOut(bool flag, u32 in32, u32 cmd_id) {
     return _hidCmdInU8U32AruidNoOut(flag!=0, in32, cmd_id);
+}
+
+static Result _hidCmdInU32U32AruidNoOut(u32 val0, u32 val1, u32 cmd_id) {
+    const struct {
+        u32 val0, val1;
+        u64 AppletResourceUserId;
+    } in = { val0, val1, appletGetAppletResourceUserId() };
+
+    return serviceDispatchIn(&g_hidSrv, cmd_id, in,
+        .in_send_pid = true,
+    );
 }
 
 static Result _hidCmdInU32AruidOutU8(u32 inval, u8 *out, u32 cmd_id) {
@@ -1084,6 +1130,10 @@ static Result _hidCmdNoInOutBool(bool *out, u32 cmd_id) {
     return rc;
 }
 
+static Result _hidCmdNoInOutU64(u64 *out, u32 cmd_id) {
+    return serviceDispatchOut(&g_hidSrv, cmd_id, *out);
+}
+
 static Result _hidCreateAppletResource(Service* srv, Service* srv_out) {
     u64 AppletResourceUserId = appletGetAppletResourceUserId();
 
@@ -1108,6 +1158,13 @@ static Result _hidActivateMouse(void) {
 
 static Result _hidActivateKeyboard(void) {
     return _hidCmdInAruidNoOut(31);
+}
+
+Result hidSendKeyboardLockKeyEvent(u32 events) {
+    if (hosversionBefore(6,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _hidCmdInU32AruidNoOut(events, 32);
 }
 
 Result hidGetSixAxisSensorHandles(HidSixAxisSensorHandle *handles, s32 total_handles, HidNpadIdType id, HidNpadStyleTag style) {
@@ -1280,6 +1337,18 @@ Result hidAcquireNpadStyleSetUpdateEventHandle(HidNpadIdType id, Event* out_even
     return rc;
 }
 
+Result hidDisconnectNpad(HidNpadIdType id) {
+    return _hidCmdInU32AruidNoOut(id, 107);
+}
+
+Result hidGetPlayerLedPattern(HidNpadIdType id, u8 *out) {
+    u32 in=id;
+    u64 tmp=0;
+    Result rc = serviceDispatchIn(&g_hidSrv, 108, in, tmp);
+    if (R_SUCCEEDED(rc) && out) *out = tmp;
+    return rc;
+}
+
 Result hidSetNpadJoyHoldType(HidNpadJoyHoldType type) {
     return _hidCmdInU64AruidNoOut(type, 120);
 }
@@ -1295,19 +1364,24 @@ Result hidSetNpadJoyAssignmentModeSingleByDefault(HidNpadIdType id) {
     return _hidCmdInU32AruidNoOut(id, 122);
 }
 
+Result hidSetNpadJoyAssignmentModeSingle(HidNpadIdType id, HidNpadJoyDeviceType type) {
+    return _hidCmdInU32AruidU64NoOut(id, type, 123);
+}
+
 Result hidSetNpadJoyAssignmentModeDual(HidNpadIdType id) {
     return _hidCmdInU32AruidNoOut(id, 124);
 }
 
 Result hidMergeSingleJoyAsDualJoy(HidNpadIdType id0, HidNpadIdType id1) {
-    const struct {
-        u32 id0, id1;
-        u64 AppletResourceUserId;
-    } in = { id0, id1, appletGetAppletResourceUserId() };
+    return _hidCmdInU32U32AruidNoOut(id0, id1, 125);
+}
 
-    return serviceDispatchIn(&g_hidSrv, 125, in,
-        .in_send_pid = true,
-    );
+Result hidStartLrAssignmentMode(void) {
+    return _hidCmdInAruidNoOut(126);
+}
+
+Result hidStopLrAssignmentMode(void) {
+    return _hidCmdInAruidNoOut(127);
 }
 
 Result hidSetNpadHandheldActivationMode(HidNpadHandheldActivationMode mode) {
@@ -1321,12 +1395,86 @@ Result hidGetNpadHandheldActivationMode(HidNpadHandheldActivationMode *out) {
     return rc;
 }
 
-static Result _hidCreateActiveVibrationDeviceList(Service* srv_out) {
-    return _hidCmdGetSession(srv_out, 203);
+Result hidSwapNpadAssignment(HidNpadIdType id0, HidNpadIdType id1) {
+    return _hidCmdInU32U32AruidNoOut(id0, id1, 130);
 }
 
-static Result _hidActivateVibrationDevice(Service* srv, HidVibrationDeviceHandle handle) {
-    return _hidCmdInU32NoOut(srv, handle.type_value, 0);
+Result hidEnableUnintendedHomeButtonInputProtection(HidNpadIdType id, bool flag) {
+    return _hidCmdInBoolU32AruidNoOut(flag, id, 132);
+}
+
+Result hidSetNpadJoyAssignmentModeSingleWithDestination(HidNpadIdType id, HidNpadJoyDeviceType type, bool *flag, HidNpadIdType *dest) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    const struct {
+        u32 id;
+        u32 pad;
+        u64 AppletResourceUserId;
+        s64 type;
+    } in = { id, 0, appletGetAppletResourceUserId(), type };
+
+    struct {
+        u8 flag;
+        u8 pad[3];
+        u32 id;
+    } out;
+
+    Result rc = serviceDispatchInOut(&g_hidSrv, 133, in, out,
+        .in_send_pid = true,
+    );
+    if (R_SUCCEEDED(rc)) {
+        if (flag) *flag = out.flag & 1;
+        if (dest) *dest = out.id;
+    }
+    return rc;
+}
+
+Result hidSetNpadAnalogStickUseCenterClamp(bool flag) {
+    if (hosversionBefore(6,1,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _hidCmdInBoolAruidNoOut(flag, 134);
+}
+
+Result hidSetNpadCaptureButtonAssignment(u32 style_set, u64 buttons) {
+    if (hosversionBefore(8,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _hidCmdInU32AruidU64NoOut(style_set, buttons, 135);
+}
+
+Result hidClearNpadCaptureButtonAssignment(void) {
+    if (hosversionBefore(8,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _hidCmdInAruidNoOut(136);
+}
+
+Result hidInitializeVibrationDevices(HidVibrationDeviceHandle *handles, s32 total_handles, HidNpadIdType id, HidNpadStyleTag style) {
+    Result rc=0;
+    s32 i;
+
+    if (id == (HidNpadIdType)CONTROLLER_HANDHELD) id = HidNpadIdType_Handheld; // Correct enum value for old users passing HidControllerID instead (avoids a hid sysmodule fatal later on)
+
+    rc = _hidGetVibrationDeviceHandles(handles, total_handles, id, style);
+    if (R_FAILED(rc)) return rc;
+
+    mutexLock(&g_hidVibrationMutex);
+    if (!serviceIsActive(&g_hidIActiveVibrationDeviceList)) {
+        rc = _hidCreateActiveVibrationDeviceList(&g_hidIActiveVibrationDeviceList);
+    }
+    mutexUnlock(&g_hidVibrationMutex);
+    if (R_FAILED(rc)) return rc;
+
+    for (i=0; i<total_handles; i++) {
+        rc = _hidActivateVibrationDevice(&g_hidIActiveVibrationDeviceList, handles[i]);
+
+        if (R_FAILED(rc))
+            break;
+    }
+
+    return rc;
 }
 
 Result hidGetVibrationDeviceInfo(HidVibrationDeviceHandle handle, HidVibrationDeviceInfo *out) {
@@ -1356,6 +1504,14 @@ Result hidGetActualVibrationValue(HidVibrationDeviceHandle handle, HidVibrationV
     return serviceDispatchInOut(&g_hidSrv, 202, in, *out,
         .in_send_pid = true,
     );
+}
+
+static Result _hidCreateActiveVibrationDeviceList(Service* srv_out) {
+    return _hidCmdGetSession(srv_out, 203);
+}
+
+static Result _hidActivateVibrationDevice(Service* srv, HidVibrationDeviceHandle handle) {
+    return _hidCmdInU32NoOut(srv, handle.type_value, 0);
 }
 
 Result hidPermitVibration(bool flag) {
@@ -1601,32 +1757,6 @@ static Result _hidGetSixAxisSensorHandles(HidSixAxisSensorHandle *handles, s32 t
     return rc;
 }
 
-Result hidInitializeVibrationDevices(HidVibrationDeviceHandle *handles, s32 total_handles, HidNpadIdType id, HidNpadStyleTag style) {
-    Result rc=0;
-    s32 i;
-
-    if (id == (HidNpadIdType)CONTROLLER_HANDHELD) id = HidNpadIdType_Handheld; // Correct enum value for old users passing HidControllerID instead (avoids a hid sysmodule fatal later on)
-
-    rc = _hidGetVibrationDeviceHandles(handles, total_handles, id, style);
-    if (R_FAILED(rc)) return rc;
-
-    mutexLock(&g_hidVibrationMutex);
-    if (!serviceIsActive(&g_hidIActiveVibrationDeviceList)) {
-        rc = _hidCreateActiveVibrationDeviceList(&g_hidIActiveVibrationDeviceList);
-    }
-    mutexUnlock(&g_hidVibrationMutex);
-    if (R_FAILED(rc)) return rc;
-
-    for (i=0; i<total_handles; i++) {
-        rc = _hidActivateVibrationDevice(&g_hidIActiveVibrationDeviceList, handles[i]);
-
-        if (R_FAILED(rc))
-            break;
-    }
-
-    return rc;
-}
-
 static Result _hidActivateConsoleSixAxisSensor(void) {
     if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
@@ -1793,11 +1923,96 @@ Result hidGetGyroBias(UtilFloat3 *out) {
     return 0;
 }
 
+Result hidIsUsbFullKeyControllerEnabled(bool *out) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _hidCmdNoInOutBool(out, 400);
+}
+
+Result hidEnableUsbFullKeyController(bool flag) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _hidCmdInBoolNoOut(flag, 401);
+}
+
+Result hidIsUsbFullKeyControllerConnected(HidNpadIdType id, bool *out) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    u8 tmp=0;
+    Result rc = serviceDispatchInOut(&g_hidSrv, 402, id, tmp);
+    if (R_SUCCEEDED(rc) && out) *out = tmp & 1;
+    return rc;
+}
+
 Result hidGetNpadInterfaceType(HidNpadIdType id, u8 *out) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     u32 tmp = id;
     return serviceDispatchInOut(&g_hidSrv, 405, tmp, *out);
+}
+
+Result hidGetNpadOfHighestBatteryLevel(const HidNpadIdType *ids, size_t count, HidNpadIdType *out) {
+    if (hosversionBefore(10,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    u64 AppletResourceUserId = appletGetAppletResourceUserId();
+
+    u32 tmp=0;
+    Result rc = serviceDispatchInOut(&g_hidSrv, 407, AppletResourceUserId, tmp,
+        .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_In },
+        .buffers = { { ids, count*sizeof(HidNpadIdType) } },
+        .in_send_pid = true,
+    );
+    if (R_SUCCEEDED(rc) && out) *out = tmp;
+    return rc;
+}
+
+Result hidSetNpadCommunicationMode(HidNpadCommunicationMode mode) {
+    return _hidCmdInU64AruidNoOut(mode, 1000);
+}
+
+Result hidGetNpadCommunicationMode(HidNpadCommunicationMode *out) {
+    u64 tmp=0;
+    Result rc = _hidCmdNoInOutU64(&tmp, 1001);
+    if (R_SUCCEEDED(rc) && out) *out = tmp; // sdknso would Abort when tmp is not 0-3.
+    return rc;
+}
+
+Result hidSetTouchScreenConfiguration(const HidTouchScreenConfigurationForNx *config) {
+    if (hosversionBefore(9,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    const struct {
+        HidTouchScreenConfigurationForNx config;
+        u64 AppletResourceUserId;
+    } in = { *config, appletGetAppletResourceUserId() };
+
+    return serviceDispatchIn(&g_hidSrv, 1002, in,
+        .in_send_pid = true,
+    );
+}
+
+Result hidIsFirmwareUpdateNeededForNotification(bool *out) {
+    if (hosversionBefore(9,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    s32 val=1;
+
+    const struct {
+        s32 val;
+        u32 pad;
+        u64 AppletResourceUserId;
+    } in = { val, 0, appletGetAppletResourceUserId() };
+
+    u8 tmp=0;
+    Result rc = serviceDispatchInOut(&g_hidSrv, 1003, in, tmp,
+        .in_send_pid = true,
+    );
+    if (R_SUCCEEDED(rc) && out) *out = tmp & 1;
+    return rc;
 }
 
