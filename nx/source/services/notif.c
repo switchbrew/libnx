@@ -1,6 +1,8 @@
 #include <string.h>
 #include "service_guard.h"
+#include "services/hid.h"
 #include "services/notif.h"
+#include "applets/hid_la.h"
 
 #include "runtime/hosversion.h"
 
@@ -108,6 +110,12 @@ Result notifAlarmSettingDisable(NotifAlarmSetting *alarm_setting, u32 day_of_wee
 }
 
 Result notifRegisterAlarmSetting(u16 *alarm_setting_id, const NotifAlarmSetting *alarm_setting, const void* buffer, size_t size) {
+    Result rc=0;
+    bool flag=0;
+    HidLaControllerFirmwareUpdateArg arg={.enable_force_update = 1};
+    rc = hidIsFirmwareUpdateNeededForNotification(&flag);
+    if (R_SUCCEEDED(rc) && flag) hidLaShowControllerFirmwareUpdate(&arg);
+
     serviceAssumeDomain(&g_notifSrv);
     return serviceDispatchOut(&g_notifSrv, 500, *alarm_setting_id,
         .buffer_attrs = {

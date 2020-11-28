@@ -44,7 +44,7 @@ typedef struct {
 /// Maximum alarms that can be registered at the same time by the host Application.
 #define NOTIF_MAX_ALARMS 8
 
-/// Initialize notif. Only available on [9.0.0+]. Note that using Alarms also requires the [9.0.0+] firmware update for controllers to be installed.
+/// Initialize notif. Only available on [9.0.0+].
 Result notifInitialize(NotifServiceType service_type);
 
 /// Exit notif.
@@ -116,6 +116,7 @@ Result notifAlarmSettingDisable(NotifAlarmSetting *alarm_setting, u32 day_of_wee
 /**
  * @brief Registers the specified AlarmSetting.
  * @note See \ref NOTIF_MAX_ALARMS for the maximum alarms.
+ * @note When indicated by the output from \ref hidIsFirmwareUpdateNeededForNotification, this will use \ref hidLaShowControllerFirmwareUpdate.
  * @param[out] alarm_setting_id AlarmSettingId
  * @param[in] alarm_setting \ref NotifAlarmSetting
  * @param[in] buffer Input buffer containing the ApplicationParameter. Optional, can be NULL.
