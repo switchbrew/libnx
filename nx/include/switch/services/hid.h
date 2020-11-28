@@ -1471,6 +1471,7 @@ bool hidGetHandheldMode(void);
 
 /**
  * @brief SendKeyboardLockKeyEvent
+ * @note Same as \ref hidsysSendKeyboardLockKeyEvent.
  * @note Only available on [6.0.0+].
  * @param[in] events Bitfield of KeyboardLockKeyEvent.
  */
@@ -1911,6 +1912,7 @@ Result hidIsUsbFullKeyControllerConnected(HidNpadIdType id, bool *out);
 
 /**
  * @brief Gets the \ref HidNpadInterfaceType for the specified controller.
+ * @note When available, \ref hidsysGetNpadInterfaceType should be used instead.
  * @note Only available on [4.0.0+].
  * @param[in] id \ref HidNpadIdType
  * @param[out] out \ref HidNpadInterfaceType

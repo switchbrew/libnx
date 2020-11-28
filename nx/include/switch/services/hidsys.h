@@ -190,6 +190,12 @@ void hidsysExit(void);
 Service* hidsysGetServiceSession(void);
 
 /**
+ * @brief SendKeyboardLockKeyEvent
+ * @param[in] events Bitfield of KeyboardLockKeyEvent.
+ */
+Result hidsysSendKeyboardLockKeyEvent(u32 events);
+
+/**
  * @brief Returns an event that fires when the home button is pressed, this will prevent the home menu from opening when the button is pressed.
  * @note The Event must be closed by the user once finished with it.
  * @param[out] out_event Output Event with autoclear=false.
@@ -231,6 +237,40 @@ Result hidsysActivateCaptureButton(void);
  * @param[out] out Bitmask of \ref HidNpadStyleTag.
  */
 Result hidsysGetSupportedNpadStyleSetOfCallerApplet(u32 *out);
+
+/**
+ * @brief Gets the \ref HidNpadInterfaceType for the specified controller.
+ * @note Only available on [10.0.0+].
+ * @param[in] id \ref HidNpadIdType
+ * @param[out] out \ref HidNpadInterfaceType
+ */
+Result hidsysGetNpadInterfaceType(HidNpadIdType id, u8 *out);
+
+/**
+ * @brief GetNpadLeftRightInterfaceType
+ * @note Only available on [10.0.0+].
+ * @param[in] id \ref HidNpadIdType
+ * @param[out] out0 \ref HidNpadInterfaceType
+ * @param[out] out1 \ref HidNpadInterfaceType
+ */
+Result hidsysGetNpadLeftRightInterfaceType(HidNpadIdType id, u8 *out0, u8 *out1);
+
+/**
+ * @brief HasBattery
+ * @note Only available on [10.0.0+].
+ * @param[in] id \ref HidNpadIdType
+ * @param[out] out Output flag.
+ */
+Result hidsysHasBattery(HidNpadIdType id, bool *out);
+
+/**
+ * @brief HasLeftRightBattery
+ * @note Only available on [10.0.0+].
+ * @param[in] id \ref HidNpadIdType
+ * @param[out] out0 Output flag.
+ * @param[out] out1 Output flag.
+ */
+Result hidsysHasLeftRightBattery(HidNpadIdType id, bool *out0, bool *out1);
 
 /**
  * @brief Gets the UniquePadIds for the specified controller.
@@ -281,6 +321,36 @@ Result hidsysSetNotificationLedPattern(const HidsysNotificationLedPattern *patte
  * @param[in] timeout Timeout in nanoseconds.
  */
 Result hidsysSetNotificationLedPatternWithTimeout(const HidsysNotificationLedPattern *pattern, HidsysUniquePadId unique_pad_id, u64 timeout);
+
+/**
+ * @brief IsUsbFullKeyControllerEnabled
+ * @note Only available on [3.0.0+].
+ * @param[out] out Output flag.
+ */
+Result hidsysIsUsbFullKeyControllerEnabled(bool *out);
+
+/**
+ * @brief EnableUsbFullKeyController
+ * @note Only available on [3.0.0+].
+ * @param[in] flag Flag
+ */
+Result hidsysEnableUsbFullKeyController(bool flag);
+
+/**
+ * @brief IsUsbConnected
+ * @note Only available on [3.0.0+].
+ * @param[in] unique_pad_id \ref HidsysUniquePadId
+ * @param[out] out Output flag.
+ */
+Result hidsysIsUsbConnected(HidsysUniquePadId unique_pad_id, bool *out);
+
+/**
+ * @brief IsFirmwareUpdateNeededForNotification
+ * @note Only available on [9.0.0+].
+ * @param[in] unique_pad_id \ref HidsysUniquePadId
+ * @param[out] out Output flag.
+ */
+Result hidsysIsFirmwareUpdateNeededForNotification(HidsysUniquePadId unique_pad_id, bool *out);
 
 /**
  * @brief IsButtonConfigSupported

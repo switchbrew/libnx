@@ -38,6 +38,14 @@ static Result _hidsysCmdNoIO(u32 cmd_id) {
     return serviceDispatch(&g_hidsysSrv, cmd_id);
 }
 
+static Result _hidsysCmdInU8NoOut(u8 inval, u32 cmd_id) {
+    return serviceDispatchIn(&g_hidsysSrv, cmd_id, inval);
+}
+
+static Result _hidsysCmdInBoolNoOut(bool flag, u32 cmd_id) {
+    return _hidsysCmdInU8NoOut(flag!=0, cmd_id);
+}
+
 static Result _hidsysCmdInU32NoOut(u32 inval, u32 cmd_id) {
     return serviceDispatchIn(&g_hidsysSrv, cmd_id, inval);
 }
@@ -67,10 +75,29 @@ static Result _hidsysCmdNoInOutBool(bool *out, u32 cmd_id) {
     return rc;
 }
 
+static Result _hidsysCmdInU32OutU8(u32 inval, u8 *out, u32 cmd_id) {
+    return serviceDispatchInOut(&g_hidsysSrv, cmd_id, inval, *out);
+}
+
 static Result _hidsysCmdInU32OutBool(u32 inval, bool *out, u32 cmd_id) {
     u8 tmp=0;
-    Result rc = serviceDispatchInOut(&g_hidsysSrv, cmd_id, inval, tmp);
+    Result rc = _hidsysCmdInU32OutU8(inval, &tmp, cmd_id);
     if (R_SUCCEEDED(rc) && out) *out = tmp & 1;
+    return rc;
+}
+
+static Result _hidsysCmdInU32OutU8U8(u32 inval, u8 *out0, u8 *out1, u32 cmd_id) {
+    struct {
+        u8 out0;
+        u8 out1;
+        u8 pad[2];
+    } out;
+
+    Result rc = serviceDispatchInOut(&g_hidsysSrv, cmd_id, inval, out);
+    if (R_SUCCEEDED(rc)) {
+        if (out0) *out0 = out.out0;
+        if (out0) *out1 = out.out1;
+    }
     return rc;
 }
 
@@ -136,6 +163,10 @@ static Result _hidsysCmdInU64OutBuf(u64 inval, void* buf, size_t size, u32 cmd_i
     );
 }
 
+Result hidsysSendKeyboardLockKeyEvent(u32 events) {
+    return _hidsysCmdInU32NoOut(events, 31);
+}
+
 Result hidsysAcquireHomeButtonEventHandle(Event* out_event) {
     return _hidsysCmdGetEvent(out_event, false, 101);
 }
@@ -179,6 +210,40 @@ Result hidsysGetSupportedNpadStyleSetOfCallerApplet(u32 *out) {
     if (R_FAILED(rc) && rc != MAKERESULT(128, 82)) return rc;
 
     return _hidsysGetMaskedSupportedNpadStyleSet(AppletResourceUserId, out);
+}
+
+Result hidsysGetNpadInterfaceType(HidNpadIdType id, u8 *out) {
+    if (hosversionBefore(10,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _hidsysCmdInU32OutU8(id, out, 316);
+}
+
+Result hidsysGetNpadLeftRightInterfaceType(HidNpadIdType id, u8 *out0, u8 *out1) {
+    if (hosversionBefore(10,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _hidsysCmdInU32OutU8U8(id, out0, out1, 317);
+}
+
+Result hidsysHasBattery(HidNpadIdType id, bool *out) {
+    if (hosversionBefore(10,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _hidsysCmdInU32OutBool(id, out, 318);
+}
+
+Result hidsysHasLeftRightBattery(HidNpadIdType id, bool *out0, bool *out1) {
+    if (hosversionBefore(10,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    u8 tmp0=0, tmp1=0;
+    Result rc = _hidsysCmdInU32OutU8U8(id, &tmp0, &tmp1, 319);
+    if (R_SUCCEEDED(rc)) {
+        if (out0) *out0 = tmp0 & 1;
+        if (out1) *out1 = tmp1 & 1;
+    }
+    return rc;
 }
 
 Result hidsysGetUniquePadsFromNpad(HidNpadIdType id, HidsysUniquePadId *unique_pad_ids, s32 count, s32 *total_out) {
@@ -244,6 +309,48 @@ Result hidsysSetNotificationLedPatternWithTimeout(const HidsysNotificationLedPat
     } in = { *pattern, unique_pad_id, timeout };
 
     return serviceDispatchIn(&g_hidsysSrv, 831, in);
+}
+
+Result hidsysIsUsbFullKeyControllerEnabled(bool *out) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _hidsysCmdNoInOutBool(out, 850);
+}
+
+Result hidsysEnableUsbFullKeyController(bool flag) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _hidsysCmdInBoolNoOut(flag, 851);
+}
+
+Result hidsysIsUsbConnected(HidsysUniquePadId unique_pad_id, bool *out) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _hidsysCmdInU64OutBool(unique_pad_id.id, out, 852);
+}
+
+Result hidsysIsFirmwareUpdateNeededForNotification(HidsysUniquePadId unique_pad_id, bool *out) {
+    if (hosversionBefore(9,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    s32 val=1;
+
+    const struct {
+        s32 val;
+        u32 pad;
+        HidsysUniquePadId unique_pad_id;
+        u64 AppletResourceUserId;
+    } in = { val, 0, unique_pad_id, appletGetAppletResourceUserId() };
+
+    u8 tmp=0;
+    Result rc = serviceDispatchInOut(&g_hidsysSrv, 1154, in, tmp,
+        .in_send_pid = true,
+    );
+    if (R_SUCCEEDED(rc) && out) *out = tmp & 1;
+    return rc;
 }
 
 Result hidsysIsButtonConfigSupported(HidsysUniquePadId unique_pad_id, bool *out) {
