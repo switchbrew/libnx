@@ -9,6 +9,31 @@
 #include "../services/hidsys.h"
 #include "../sf/service.h"
 
+/// State for overriding \ref HidDebugPadState.
+typedef struct {
+    u32 attributes;                             ///< Bitfield of \ref HidDebugPadAttribute.
+    u32 buttons;                                ///< Bitfield of \ref HidDebugPadButton.
+    HidAnalogStickState analog_stick_l;         ///< AnalogStickL
+    HidAnalogStickState analog_stick_r;         ///< AnalogStickR
+} HiddbgDebugPadAutoPilotState;
+
+/// State for overriding \ref HidMouseState.
+typedef struct {
+    s32 x;                                      ///< X
+    s32 y;                                      ///< Y
+    s32 unk0;                                   ///< Unknown
+    s32 unk1;                                   ///< Unknown
+    s32 unk2;                                   ///< Unknown
+    u32 buttons;                                ///< Bitfield of \ref HidMouseButton.
+    u32 attributes;                             ///< Bitfield of \ref HidMouseAttribute.
+} HiddbgMouseAutoPilotState;
+
+/// State for overriding \ref HidKeyboardState.
+typedef struct {
+    u64 modifiers;                              ///< Bitfield of \ref HidKeyboardModifier.
+    u64 keys[4];
+} HiddbgKeyboardAutoPilotState;
+
 /// HdlsHandle
 typedef struct {
     u64 handle;               ///< Handle
@@ -133,6 +158,51 @@ void hiddbgExit(void);
 
 /// Gets the Service object for the actual hiddbg service session.
 Service* hiddbgGetServiceSession(void);
+
+/**
+ * @brief SetDebugPadAutoPilotState
+ * @param[in] state \ref HiddbgDebugPadAutoPilotState
+ */
+Result hiddbgSetDebugPadAutoPilotState(const HiddbgDebugPadAutoPilotState *state);
+
+/**
+ * @brief UnsetDebugPadAutoPilotState
+ */
+Result hiddbgUnsetDebugPadAutoPilotState(void);
+
+/**
+ * @brief SetTouchScreenAutoPilotState
+ * @param[in] states Input array of \ref HiddbgMouseAutoPilotState.
+ * @param[in] count Total entries in the states array. Max is 16.
+ */
+Result hiddbgSetTouchScreenAutoPilotState(const HidTouchState *states, s32 count);
+
+/**
+ * @brief UnsetTouchScreenAutoPilotState
+ */
+Result hiddbgUnsetTouchScreenAutoPilotState(void);
+
+/**
+ * @brief SetMouseAutoPilotState
+ * @param[in] state \ref HiddbgMouseAutoPilotState
+ */
+Result hiddbgSetMouseAutoPilotState(const HiddbgMouseAutoPilotState *state);
+
+/**
+ * @brief UnsetMouseAutoPilotState
+ */
+Result hiddbgUnsetMouseAutoPilotState(void);
+
+/**
+ * @brief SetKeyboardAutoPilotState
+ * @param[in] state \ref HiddbgKeyboardAutoPilotState
+ */
+Result hiddbgSetKeyboardAutoPilotState(const HiddbgKeyboardAutoPilotState *state);
+
+/**
+ * @brief UnsetKeyboardAutoPilotState
+ */
+Result hiddbgUnsetKeyboardAutoPilotState(void);
 
 /**
  * @brief Deactivates the HomeButton.

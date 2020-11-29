@@ -76,6 +76,41 @@ static Result _hiddbgCmdInTmemNoOut(TransferMemory *tmem, u32 cmd_id) {
     return _hiddbgCmdInHandle64NoOut(tmem->handle, tmem->size, cmd_id);
 }
 
+Result hiddbgSetDebugPadAutoPilotState(const HiddbgDebugPadAutoPilotState *state) {
+    return serviceDispatchIn(&g_hiddbgSrv, 1, *state);
+}
+
+Result hiddbgUnsetDebugPadAutoPilotState(void) {
+    return _hiddbgCmdNoIO(2);
+}
+
+Result hiddbgSetTouchScreenAutoPilotState(const HidTouchState *states, s32 count) {
+    return serviceDispatch(&g_hiddbgSrv, 11,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
+        .buffers = { { states, count*sizeof(HidTouchState) } },
+    );
+}
+
+Result hiddbgUnsetTouchScreenAutoPilotState(void) {
+    return _hiddbgCmdNoIO(12);
+}
+
+Result hiddbgSetMouseAutoPilotState(const HiddbgMouseAutoPilotState *state) {
+    return serviceDispatchIn(&g_hiddbgSrv, 21, *state);
+}
+
+Result hiddbgUnsetMouseAutoPilotState(void) {
+    return _hiddbgCmdNoIO(22);
+}
+
+Result hiddbgSetKeyboardAutoPilotState(const HiddbgKeyboardAutoPilotState *state) {
+    return serviceDispatchIn(&g_hiddbgSrv, 31, *state);
+}
+
+Result hiddbgUnsetKeyboardAutoPilotState(void) {
+    return _hiddbgCmdNoIO(32);
+}
+
 Result hiddbgDeactivateHomeButton(void) {
     return _hiddbgCmdNoIO(110);
 }
