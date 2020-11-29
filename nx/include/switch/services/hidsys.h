@@ -196,38 +196,47 @@ Service* hidsysGetServiceSession(void);
 Result hidsysSendKeyboardLockKeyEvent(u32 events);
 
 /**
- * @brief Returns an event that fires when the home button is pressed, this will prevent the home menu from opening when the button is pressed.
+ * @brief Gets an Event which is signaled when HidHomeButtonState is updated.
  * @note The Event must be closed by the user once finished with it.
- * @param[out] out_event Output Event with autoclear=false.
+ * @note This generally shouldn't be used, since AM-sysmodule uses it internally.
+ * @param[out] out_event Output Event.
+ * @param[in] Event autoclear.
 **/
-Result hidsysAcquireHomeButtonEventHandle(Event* out_event);
+Result hidsysAcquireHomeButtonEventHandle(Event* out_event, bool autoclear);
 
 /**
- * @brief Returns an event that fires when the sleep button is pressed.
- * @note The Event must be closed by the user once finished with it.
- * @param[out] out_event Output Event with autoclear=false.
-**/
-Result hidsysAcquireSleepButtonEventHandle(Event* out_event);
-
-/**
- * @brief Returns an event that fires when the capture button is pressed.
- * @note The Event must be closed by the user once finished with it.
- * @param[out] out_event Output Event with autoclear=false.
-**/
-Result hidsysAcquireCaptureButtonEventHandle(Event* out_event);
-
-/**
- * @brief ActivateHomeButton
+ * @brief Activates the HomeButton sharedmem.
+ * @note This generally shouldn't be used, since AM-sysmodule uses it internally.
 **/
 Result hidsysActivateHomeButton(void);
 
 /**
- * @brief ActivateSleepButton
+ * @brief Gets an Event which is signaled when HidSleepButtonState is updated.
+ * @note The Event must be closed by the user once finished with it.
+ * @note This generally shouldn't be used, since AM-sysmodule uses it internally.
+ * @param[out] out_event Output Event.
+ * @param[in] Event autoclear.
+**/
+Result hidsysAcquireSleepButtonEventHandle(Event* out_event, bool autoclear);
+
+/**
+ * @brief Activates the SleepButton sharedmem.
+ * @note This generally shouldn't be used, since AM-sysmodule uses it internally.
 **/
 Result hidsysActivateSleepButton(void);
 
 /**
- * @brief ActivateCaptureButton
+ * @brief Gets an Event which is signaled when HidCaptureButtonState is updated.
+ * @note The Event must be closed by the user once finished with it.
+ * @note This generally shouldn't be used, since AM-sysmodule uses it internally.
+ * @param[out] out_event Output Event.
+ * @param[in] Event autoclear.
+**/
+Result hidsysAcquireCaptureButtonEventHandle(Event* out_event, bool autoclear);
+
+/**
+ * @brief Activates the CaptureButton sharedmem.
+ * @note This generally shouldn't be used, since AM-sysmodule uses it internally.
 **/
 Result hidsysActivateCaptureButton(void);
 

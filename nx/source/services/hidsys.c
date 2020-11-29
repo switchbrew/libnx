@@ -108,7 +108,7 @@ static Result _hidsysCmdInU64OutBool(u64 inval, bool *out, u32 cmd_id) {
     return rc;
 }
 
-static Result _hidsysCmdGetHandle(Handle* handle_out, u32 cmd_id) {
+static Result _hidsysCmdInPidAruidOutHandle(Handle* handle_out, u32 cmd_id) {
     return serviceDispatchIn(&g_hidsysSrv, cmd_id, g_hidsysAppletResourceUserId,
         .in_send_pid = true,
         .out_handle_attrs = { SfOutHandleAttr_HipcCopy },
@@ -116,11 +116,11 @@ static Result _hidsysCmdGetHandle(Handle* handle_out, u32 cmd_id) {
     );
 }
 
-static Result _hidsysCmdGetEvent(Event* out_event, bool autoclear, u32 cmd_id) {
+static Result _hidsysCmdInPidAruidOutEvent(Event* out_event, bool autoclear, u32 cmd_id) {
     Handle tmp_handle = INVALID_HANDLE;
     Result rc = 0;
 
-    rc = _hidsysCmdGetHandle(&tmp_handle, cmd_id);
+    rc = _hidsysCmdInPidAruidOutHandle(&tmp_handle, cmd_id);
     if (R_SUCCEEDED(rc)) eventLoadRemote(out_event, tmp_handle, autoclear);
     return rc;
 }
@@ -167,25 +167,24 @@ Result hidsysSendKeyboardLockKeyEvent(u32 events) {
     return _hidsysCmdInU32NoOut(events, 31);
 }
 
-Result hidsysAcquireHomeButtonEventHandle(Event* out_event) {
-    return _hidsysCmdGetEvent(out_event, false, 101);
-}
-
-//These functions don't seem to work in the overlaydisp applet context
-Result hidsysAcquireSleepButtonEventHandle(Event* out_event) {
-    return _hidsysCmdGetEvent(out_event, false, 121);
-}
-
-Result hidsysAcquireCaptureButtonEventHandle(Event* out_event) {
-    return _hidsysCmdGetEvent(out_event, false, 141);
+Result hidsysAcquireHomeButtonEventHandle(Event* out_event, bool autoclear) {
+    return _hidsysCmdInPidAruidOutEvent(out_event, autoclear, 101);
 }
 
 Result hidsysActivateHomeButton(void) {
     return _hidsysCmdWithResIdAndPid(111);
 }
 
+Result hidsysAcquireSleepButtonEventHandle(Event* out_event, bool autoclear) {
+    return _hidsysCmdInPidAruidOutEvent(out_event, autoclear, 121);
+}
+
 Result hidsysActivateSleepButton(void) {
     return _hidsysCmdWithResIdAndPid(131);
+}
+
+Result hidsysAcquireCaptureButtonEventHandle(Event* out_event, bool autoclear) {
+    return _hidsysCmdInPidAruidOutEvent(out_event, autoclear, 141);
 }
 
 Result hidsysActivateCaptureButton(void) {
