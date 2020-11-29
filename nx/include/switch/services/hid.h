@@ -12,6 +12,24 @@
 
 // Begin enums and output structs
 
+/// HidDebugPadButton
+typedef enum {
+    HidDebugPadButton_A             = BIT(0),  ///< A button
+    HidDebugPadButton_B             = BIT(1),  ///< B button
+    HidDebugPadButton_X             = BIT(2),  ///< X button
+    HidDebugPadButton_Y             = BIT(3),  ///< Y button
+    HidDebugPadButton_L             = BIT(4),  ///< L button
+    HidDebugPadButton_R             = BIT(5),  ///< R button
+    HidDebugPadButton_ZL            = BIT(6),  ///< ZL button
+    HidDebugPadButton_ZR            = BIT(7),  ///< ZR button
+    HidDebugPadButton_Start         = BIT(8),  ///< Start button
+    HidDebugPadButton_Select        = BIT(9),  ///< Select button
+    HidDebugPadButton_Left          = BIT(10), ///< D-Pad Left button
+    HidDebugPadButton_Up            = BIT(11), ///< D-Pad Up button
+    HidDebugPadButton_Right         = BIT(12), ///< D-Pad Right button
+    HidDebugPadButton_Down          = BIT(13), ///< D-Pad Down button
+} HidDebugPadButton;
+
 /// HidMouseButton
 typedef enum {
     HidMouseButton_Left    = BIT(0),
@@ -353,6 +371,11 @@ typedef enum {
     JOYSTICK_NUM_STICKS = 2,
 } HidControllerJoystick;
 
+/// HidDebugPadAttribute
+typedef enum {
+    HidDebugPadAttribute_IsConnected   = BIT(0),    ///< IsConnected
+} HidDebugPadAttribute;
+
 /// HidTouchAttribute
 typedef enum {
     HidTouchAttribute_Start            = BIT(0),    ///< Start
@@ -645,6 +668,37 @@ typedef struct HidCommonLifoHeader {
     u64 tail;                                   ///< Tail
     u64 count;                                  ///< Count
 } HidCommonLifoHeader;
+
+// Begin HidDebugPad
+
+/// HidDebugPadState
+typedef struct HidDebugPadState {
+    u64 sampling_number;                        ///< SamplingNumber
+    u32 attributes;                             ///< Bitfield of \ref HidDebugPadAttribute.
+    u32 buttons;                                ///< Bitfield of \ref HidDebugPadButton.
+    HidAnalogStickState analog_stick_r;         ///< AnalogStickR
+    HidAnalogStickState analog_stick_l;         ///< AnalogStickL
+} HidDebugPadState;
+
+/// HidDebugPadStateAtomicStorage
+typedef struct HidDebugPadStateAtomicStorage {
+    u64 sampling_number;                        ///< SamplingNumber
+    HidDebugPadState state;                     ///< \ref HidDebugPadState
+} HidDebugPadStateAtomicStorage;
+
+/// HidDebugPadLifo
+typedef struct HidDebugPadLifo {
+    HidCommonLifoHeader header;                 ///< \ref HidCommonLifoHeader
+    HidDebugPadStateAtomicStorage storage[17];  ///< \ref HidDebugPadStateAtomicStorage
+} HidDebugPadLifo;
+
+/// HidDebugPadSharedMemoryFormat
+typedef struct HidDebugPadSharedMemoryFormat {
+    HidDebugPadLifo lifo;
+    u8 padding[0x138];
+} HidDebugPadSharedMemoryFormat;
+
+// End HidDebugPad
 
 // Begin HidTouchScreen
 
@@ -1077,7 +1131,7 @@ typedef struct {
 
 /// HidSharedMemory
 typedef struct HidSharedMemory {
-    u8 debug_pad[0x400];
+    HidDebugPadSharedMemoryFormat debug_pad;
     HidTouchScreenSharedMemoryFormat touchscreen;
     HidMouseSharedMemoryFormat mouse;
     HidKeyboardSharedMemoryFormat keyboard;
