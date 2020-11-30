@@ -625,6 +625,51 @@ typedef enum {
     HidVibrationGcErmCommand_StopHard                       = 2,     ///< Stops the vibration immediately, with no decay phase.
 } HidVibrationGcErmCommand;
 
+/// PalmaOperationType
+typedef enum {
+    HidPalmaOperationType_PlayActivity                                 = 0,     ///< PlayActivity
+    HidPalmaOperationType_SetFrModeType                                = 1,     ///< SetFrModeType
+    HidPalmaOperationType_ReadStep                                     = 2,     ///< ReadStep
+    HidPalmaOperationType_EnableStep                                   = 3,     ///< EnableStep
+    HidPalmaOperationType_ResetStep                                    = 4,     ///< ResetStep
+    HidPalmaOperationType_ReadApplicationSection                       = 5,     ///< ReadApplicationSection
+    HidPalmaOperationType_WriteApplicationSection                      = 6,     ///< WriteApplicationSection
+    HidPalmaOperationType_ReadUniqueCode                               = 7,     ///< ReadUniqueCode
+    HidPalmaOperationType_SetUniqueCodeInvalid                         = 8,     ///< SetUniqueCodeInvalid
+    HidPalmaOperationType_WriteActivityEntry                           = 9,     ///< WriteActivityEntry
+    HidPalmaOperationType_WriteRgbLedPatternEntry                      = 10,    ///< WriteRgbLedPatternEntry
+    HidPalmaOperationType_WriteWaveEntry                               = 11,    ///< WriteWaveEntry
+    HidPalmaOperationType_ReadDataBaseIdentificationVersion            = 12,    ///< ReadDataBaseIdentificationVersion
+    HidPalmaOperationType_WriteDataBaseIdentificationVersion           = 13,    ///< WriteDataBaseIdentificationVersion
+    HidPalmaOperationType_SuspendFeature                               = 14,    ///< SuspendFeature
+    HidPalmaOperationType_ReadPlayLog                                  = 15,    ///< [5.1.0+] ReadPlayLog
+    HidPalmaOperationType_ResetPlayLog                                 = 16,    ///< [5.1.0+] ResetPlayLog
+} HidPalmaOperationType;
+
+/// PalmaFrModeType
+typedef enum {
+    HidPalmaFrModeType_Off                                  = 0,     ///< Off
+    HidPalmaFrModeType_B01                                  = 1,     ///< B01
+    HidPalmaFrModeType_B02                                  = 2,     ///< B02
+    HidPalmaFrModeType_B03                                  = 3,     ///< B03
+    HidPalmaFrModeType_Downloaded                           = 4,     ///< Downloaded
+} HidPalmaFrModeType;
+
+/// PalmaWaveSet
+typedef enum {
+    HidPalmaWaveSet_Small                                   = 0,     ///< Small
+    HidPalmaWaveSet_Medium                                  = 1,     ///< Medium
+    HidPalmaWaveSet_Large                                   = 2,     ///< Large
+} HidPalmaWaveSet;
+
+/// PalmaFeature
+typedef enum {
+    HidPalmaFeature_FrMode                                  = BIT(0),     ///< FrMode
+    HidPalmaFeature_RumbleFeedback                          = BIT(1),     ///< RumbleFeedback
+    HidPalmaFeature_Step                                    = BIT(2),     ///< Step
+    HidPalmaFeature_MuteSwitch                              = BIT(3),     ///< MuteSwitch
+} HidPalmaFeature;
+
 /// touchPosition
 typedef struct touchPosition {
     u32 id;
@@ -1234,7 +1279,7 @@ typedef struct HidPalmaConnectionHandle {
 
 /// PalmaOperationInfo
 typedef struct HidPalmaOperationInfo {
-    u32 type;                    ///< Type
+    u32 type;                    ///< \ref HidPalmaOperationType
     Result res;                  ///< Result
     u8 data[0x140];              ///< Data
 } HidPalmaOperationInfo;
@@ -1246,10 +1291,10 @@ typedef struct HidPalmaApplicationSectionAccessBuffer {
 
 /// PalmaActivityEntry
 typedef struct HidPalmaActivityEntry {
-    u16 unk0;                               ///< Unknown
+    u16 rgb_led_pattern_index;              ///< RgbLedPatternIndex
     u16 pad;                                ///< Padding
-    u32 unk1;                               ///< Unknown
-    u16 unk2;                               ///< Unknown
+    u32 wave_set;                           ///< \ref HidPalmaWaveSet
+    u16 wave_index;                         ///< WaveIndex
 } HidPalmaActivityEntry;
 
 static inline HidNpadIdType hidControllerIDToNpadIdType(HidControllerID id) {
@@ -2077,9 +2122,9 @@ Result hidPlayPalmaActivity(HidPalmaConnectionHandle handle, u16 val);
  * @brief SetPalmaFrModeType
  * @note Only available on [5.0.0+].
  * @param[in] handle \ref HidPalmaConnectionHandle
- * @param[in] type PalmaFrModeType
+ * @param[in] type \ref HidPalmaFrModeType
  */
-Result hidSetPalmaFrModeType(HidPalmaConnectionHandle handle, u32 type);
+Result hidSetPalmaFrModeType(HidPalmaConnectionHandle handle, HidPalmaFrModeType type);
 
 /**
  * @brief ReadPalmaStep
@@ -2159,13 +2204,13 @@ Result hidWritePalmaRgbLedPatternEntry(HidPalmaConnectionHandle handle, u16 unk,
  * @brief WritePalmaWaveEntry
  * @note Only available on [5.0.0+].
  * @param[in] handle \ref HidPalmaConnectionHandle
- * @param[in] wave_set HidPalmaWaveSet
+ * @param[in] wave_set \ref HidPalmaWaveSet
  * @param[in] unk Unknown
  * @param[in] buffer TransferMemory buffer, must be 0x1000-byte aligned.
  * @param[in] tmem_size TransferMemory buffer size, must be 0x1000-byte aligned.
  * @param[in] size Actual size of the data in the buffer.
  */
-Result hidWritePalmaWaveEntry(HidPalmaConnectionHandle handle, u32 wave_set, u16 unk, const void* buffer, size_t tmem_size, size_t size);
+Result hidWritePalmaWaveEntry(HidPalmaConnectionHandle handle, HidPalmaWaveSet wave_set, u16 unk, const void* buffer, size_t tmem_size, size_t size);
 
 /**
  * @brief SetPalmaDataBaseIdentificationVersion
@@ -2186,7 +2231,7 @@ Result hidGetPalmaDataBaseIdentificationVersion(HidPalmaConnectionHandle handle)
  * @brief SuspendPalmaFeature
  * @note Only available on [5.0.0+].
  * @param[in] handle \ref HidPalmaConnectionHandle
- * @param[in] features Bitfield of HidPalmaFeature.
+ * @param[in] features Bitfield of \ref HidPalmaFeature.
  */
 Result hidSuspendPalmaFeature(HidPalmaConnectionHandle handle, u32 features);
 

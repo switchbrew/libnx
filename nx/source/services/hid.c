@@ -2070,7 +2070,7 @@ Result hidGetPalmaOperationInfo(HidPalmaConnectionHandle handle, HidPalmaOperati
         if (old_ver) rc2 = rc;
         else rc2 = _hidGetPalmaOperationResult(handle);
         out->res = rc2;
-        if (tmp > (old_ver ? 0xE : 0x10)) rc = MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen); // sdknso would Abort here.
+        if (tmp > (old_ver ? HidPalmaOperationType_SuspendFeature : HidPalmaOperationType_ResetPlayLog)) rc = MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen); // sdknso would Abort here.
         else out->type = tmp;
     }
 
@@ -2084,7 +2084,7 @@ Result hidPlayPalmaActivity(HidPalmaConnectionHandle handle, u16 val) {
     return _hidCmdInU64U64NoOut(&g_hidSrv, handle.handle, val, 504);
 }
 
-Result hidSetPalmaFrModeType(HidPalmaConnectionHandle handle, u32 type) {
+Result hidSetPalmaFrModeType(HidPalmaConnectionHandle handle, HidPalmaFrModeType type) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
@@ -2171,10 +2171,10 @@ Result hidWritePalmaActivityEntry(HidPalmaConnectionHandle handle, u16 unk, cons
     const struct {
         HidPalmaConnectionHandle handle;
         u64 unk;
-        u64 entry0;
-        u64 entry1;
-        u64 entry2;
-    } in = { handle, unk, entry->unk0, entry->unk1, entry->unk2 };
+        u64 rgb_led_pattern_index;
+        u64 wave_set;
+        u64 wave_index;
+    } in = { handle, unk, entry->rgb_led_pattern_index, entry->wave_set, entry->wave_index };
 
     return serviceDispatchIn(&g_hidSrv, 513, in);
 }
@@ -2194,7 +2194,7 @@ Result hidWritePalmaRgbLedPatternEntry(HidPalmaConnectionHandle handle, u16 unk,
     );
 }
 
-static Result _hidWritePalmaWaveEntry(HidPalmaConnectionHandle handle, u32 wave_set, u16 unk, TransferMemory *tmem, size_t size) {
+static Result _hidWritePalmaWaveEntry(HidPalmaConnectionHandle handle, HidPalmaWaveSet wave_set, u16 unk, TransferMemory *tmem, size_t size) {
     const struct {
         HidPalmaConnectionHandle handle;
         u64 wave_set;
@@ -2209,7 +2209,7 @@ static Result _hidWritePalmaWaveEntry(HidPalmaConnectionHandle handle, u32 wave_
     );
 }
 
-Result hidWritePalmaWaveEntry(HidPalmaConnectionHandle handle, u32 wave_set, u16 unk, const void* buffer, size_t tmem_size, size_t size) {
+Result hidWritePalmaWaveEntry(HidPalmaConnectionHandle handle, HidPalmaWaveSet wave_set, u16 unk, const void* buffer, size_t tmem_size, size_t size) {
     Result rc=0;
     TransferMemory tmem={0};
 
