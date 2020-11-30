@@ -31,6 +31,13 @@ typedef enum {
     HidDebugPadButton_Down          = BIT(13), ///< D-Pad Down button
 } HidDebugPadButton;
 
+/// HidTouchScreenModeForNx
+typedef enum {
+    HidTouchScreenModeForNx_UseSystemSetting     = 0,     ///< UseSystemSetting
+    HidTouchScreenModeForNx_Finger               = 1,     ///< Finger
+    HidTouchScreenModeForNx_Heat2                = 2,     ///< Heat2
+} HidTouchScreenModeForNx;
+
 /// HidMouseButton
 typedef enum {
     HidMouseButton_Left    = BIT(0),
@@ -231,6 +238,19 @@ typedef enum {
     KBD_MEDIA_REFRESH = 0xfa,
     KBD_MEDIA_CALC = 0xfb
 } HidKeyboardScancode;
+
+/// KeyboardLockKeyEvent
+typedef enum {
+    HidKeyboardLockKeyEvent_NumLockOn         = BIT(0),         ///< NumLockOn
+    HidKeyboardLockKeyEvent_NumLockOff        = BIT(1),         ///< NumLockOff
+    HidKeyboardLockKeyEvent_NumLockToggle     = BIT(2),         ///< NumLockToggle
+    HidKeyboardLockKeyEvent_CapsLockOn        = BIT(3),         ///< CapsLockOn
+    HidKeyboardLockKeyEvent_CapsLockOff       = BIT(4),         ///< CapsLockOff
+    HidKeyboardLockKeyEvent_CapsLockToggle    = BIT(5),         ///< CapsLockToggle
+    HidKeyboardLockKeyEvent_ScrollLockOn      = BIT(6),         ///< ScrollLockOn
+    HidKeyboardLockKeyEvent_ScrollLockOff     = BIT(7),         ///< ScrollLockOff
+    HidKeyboardLockKeyEvent_ScrollLockToggle  = BIT(8),         ///< ScrollLockToggle
+} HidKeyboardLockKeyEvent;
 
 /// HID controller IDs
 typedef enum {
@@ -483,10 +503,10 @@ typedef enum {
 
 /// NpadCommunicationMode
 typedef enum {
-    HidNpadCommunicationMode_Unknown0   = 0,        ///< Unknown
-    HidNpadCommunicationMode_Unknown1   = 1,        ///< Unknown
-    HidNpadCommunicationMode_Unknown2   = 2,        ///< Unknown
-    HidNpadCommunicationMode_Unknown3   = 3,        ///< Unknown
+    HidNpadCommunicationMode_5ms       = 0,         ///< 5ms
+    HidNpadCommunicationMode_10ms      = 1,         ///< 10ms
+    HidNpadCommunicationMode_15ms      = 2,         ///< 15ms
+    HidNpadCommunicationMode_Default   = 3,         ///< Default
 } HidNpadCommunicationMode;
 
 /// DeviceType (system)
@@ -744,7 +764,8 @@ typedef struct HidTouchScreenSharedMemoryFormat {
 
 /// HidTouchScreenConfigurationForNx
 typedef struct {
-    u8 config[0x10];                                 ///< Unknown
+    u8 mode;                                         ///< \ref HidTouchScreenModeForNx
+    u8 reserved[0xF];                                ///< Reserved
 } HidTouchScreenConfigurationForNx;
 
 // End HidTouchScreen
@@ -1175,8 +1196,8 @@ typedef union HidSixAxisSensorHandle {
     u32 type_value;                                   ///< TypeValue
     struct {
         u32 npad_style_index : 8;                     ///< NpadStyleIndex
-        u32 npad_id_type : 8;                         ///< PlayerNumber / NpadIdType
-        u32 idx : 8;                                  ///< Idx
+        u32 player_number : 8;                        ///< PlayerNumber
+        u32 device_idx : 8;                           ///< DeviceIdx
         u32 pad : 8;                                  ///< Padding
     };
 } HidSixAxisSensorHandle;
@@ -1553,7 +1574,7 @@ bool hidGetHandheldMode(void);
  * @brief SendKeyboardLockKeyEvent
  * @note Same as \ref hidsysSendKeyboardLockKeyEvent.
  * @note Only available on [6.0.0+].
- * @param[in] events Bitfield of KeyboardLockKeyEvent.
+ * @param[in] events Bitfield of \ref HidKeyboardLockKeyEvent.
  */
 Result hidSendKeyboardLockKeyEvent(u32 events);
 

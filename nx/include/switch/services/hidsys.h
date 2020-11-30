@@ -191,7 +191,7 @@ Service* hidsysGetServiceSession(void);
 
 /**
  * @brief SendKeyboardLockKeyEvent
- * @param[in] events Bitfield of KeyboardLockKeyEvent.
+ * @param[in] events Bitfield of \ref HidKeyboardLockKeyEvent.
  */
 Result hidsysSendKeyboardLockKeyEvent(u32 events);
 
