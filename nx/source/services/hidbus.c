@@ -180,24 +180,24 @@ static HidbusStatusManagerEntryCommon* _hidbusGetStatusManagerEntryCommon(u8 int
         return &((HidbusStatusManager*)hidbusGetSharedmemAddr())->entries[internal_index].common;
 }
 
-static bool _hidbusGetStatusManagerEntryFlag_x0(u8 internal_index) {
-    return atomic_load_explicit(&_hidbusGetStatusManagerEntryCommon(internal_index)->flag_x0, memory_order_acquire) & 1;
+static bool _hidbusGetStatusManagerEntryIsConnected(u8 internal_index) {
+    return atomic_load_explicit(&_hidbusGetStatusManagerEntryCommon(internal_index)->is_connected, memory_order_acquire) & 1;
 }
 
-static Result _hidbusGetStatusManagerEntryRes(u8 internal_index) {
-    return _hidbusGetStatusManagerEntryCommon(internal_index)->res;
+static Result _hidbusGetStatusManagerEntryIsConnectedResult(u8 internal_index) {
+    return _hidbusGetStatusManagerEntryCommon(internal_index)->is_connected_result;
 }
 
-static bool _hidbusGetStatusManagerEntryDeviceEnabled(u8 internal_index) {
-    return atomic_load_explicit(&_hidbusGetStatusManagerEntryCommon(internal_index)->device_enabled, memory_order_acquire) & 1;
+static bool _hidbusGetStatusManagerEntryDeviceIsEnabled(u8 internal_index) {
+    return atomic_load_explicit(&_hidbusGetStatusManagerEntryCommon(internal_index)->is_enabled, memory_order_acquire) & 1;
 }
 
-static bool _hidbusGetStatusManagerEntryIsValid(u8 internal_index) {
-    return atomic_load_explicit(&_hidbusGetStatusManagerEntryCommon(internal_index)->is_valid, memory_order_acquire) & 1;
+static bool _hidbusGetStatusManagerEntryIsInFocus(u8 internal_index) {
+    return atomic_load_explicit(&_hidbusGetStatusManagerEntryCommon(internal_index)->is_in_focus, memory_order_acquire) & 1;
 }
 
-static bool _hidbusGetStatusManagerEntryPollingEnabled(u8 internal_index) {
-    return atomic_load_explicit(&_hidbusGetStatusManagerEntryCommon(internal_index)->polling_enabled, memory_order_acquire) & 1;
+static bool _hidbusGetStatusManagerEntryIsPollingMode(u8 internal_index) {
+    return atomic_load_explicit(&_hidbusGetStatusManagerEntryCommon(internal_index)->is_polling_mode, memory_order_acquire) & 1;
 }
 
 static HidbusJoyPollingMode _hidbusGetStatusManagerEntryPollingMode(u8 internal_index) {
@@ -299,10 +299,10 @@ Result hidbusEnableExternalDevice(HidbusBusHandle handle, bool flag, u32 device_
     mutexLock(&entry->mutex);
     if (memcmp(&entry->handle, &handle, sizeof(handle))!=0) rc = MAKERESULT(218, 4);
 
-    if (R_SUCCEEDED(rc) && !_hidbusGetStatusManagerEntryIsValid(index)) rc = MAKERESULT(218, 2);
-    if (R_SUCCEEDED(rc)) rc = _hidbusGetStatusManagerEntryRes(index);
+    if (R_SUCCEEDED(rc) && !_hidbusGetStatusManagerEntryIsInFocus(index)) rc = MAKERESULT(218, 2);
+    if (R_SUCCEEDED(rc)) rc = _hidbusGetStatusManagerEntryIsConnectedResult(index);
     if (R_SUCCEEDED(rc)) {
-        if (!_hidbusGetStatusManagerEntryFlag_x0(index) && !flag) rc = MAKERESULT(218, 5);
+        if (!_hidbusGetStatusManagerEntryIsConnected(index) && !flag) rc = MAKERESULT(218, 5);
     }
 
     if (R_SUCCEEDED(rc)) rc = hidbusGetServiceSession(&srv);
@@ -357,7 +357,7 @@ Result hidbusSendAndReceive(HidbusBusHandle handle, const void* inbuf, size_t in
     mutexLock(&entry->mutex);
     if (memcmp(&entry->handle, &handle, sizeof(handle))!=0) rc = MAKERESULT(218, 4);
 
-    if (R_SUCCEEDED(rc) && !_hidbusGetStatusManagerEntryDeviceEnabled(index)) rc = MAKERESULT(218, 8);
+    if (R_SUCCEEDED(rc) && !_hidbusGetStatusManagerEntryDeviceIsEnabled(index)) rc = MAKERESULT(218, 8);
 
     if (R_SUCCEEDED(rc)) rc = hidbusGetServiceSession(&srv);
 
@@ -388,9 +388,9 @@ Result hidbusEnableJoyPollingReceiveMode(HidbusBusHandle handle, const void* inb
     mutexLock(&entry->mutex);
     if (memcmp(&entry->handle, &handle, sizeof(handle))!=0) rc = MAKERESULT(218, 4);
 
-    if (R_SUCCEEDED(rc) && !_hidbusGetStatusManagerEntryDeviceEnabled(index)) rc = MAKERESULT(218, 8);
+    if (R_SUCCEEDED(rc) && !_hidbusGetStatusManagerEntryDeviceIsEnabled(index)) rc = MAKERESULT(218, 8);
 
-    if (R_SUCCEEDED(rc) && !_hidbusGetStatusManagerEntryPollingEnabled(index)) {
+    if (R_SUCCEEDED(rc) && !_hidbusGetStatusManagerEntryIsPollingMode(index)) {
         rc = hidbusGetServiceSession(&srv);
 
         if (R_SUCCEEDED(rc)) {
@@ -416,7 +416,7 @@ Result hidbusDisableJoyPollingReceiveMode(HidbusBusHandle handle) {
     mutexLock(&entry->mutex);
     if (memcmp(&entry->handle, &handle, sizeof(handle))!=0) rc = MAKERESULT(218, 4);
 
-    if (R_SUCCEEDED(rc) && !_hidbusGetStatusManagerEntryDeviceEnabled(index)) rc = MAKERESULT(218, 8);
+    if (R_SUCCEEDED(rc) && !_hidbusGetStatusManagerEntryDeviceIsEnabled(index)) rc = MAKERESULT(218, 8);
 
     if (R_SUCCEEDED(rc)) rc = hidbusGetServiceSession(&srv);
 
@@ -434,13 +434,13 @@ Result hidbusGetJoyPollingReceivedData(HidbusBusHandle handle, HidbusJoyPollingR
     HidBusDeviceEntry *entry = &g_hidbusDevices[index];
     if (memcmp(&entry->handle, &handle, sizeof(handle))!=0) rc = MAKERESULT(218, 4);
 
-    if (R_SUCCEEDED(rc) && !_hidbusGetStatusManagerEntryDeviceEnabled(index)) rc = MAKERESULT(218, 8);
+    if (R_SUCCEEDED(rc) && !_hidbusGetStatusManagerEntryDeviceIsEnabled(index)) rc = MAKERESULT(218, 8);
 
-    if (R_SUCCEEDED(rc)) rc = _hidbusGetStatusManagerEntryRes(index);
-    if (R_SUCCEEDED(rc) && !_hidbusGetStatusManagerEntryFlag_x0(index))  rc = MAKERESULT(218, 8);
+    if (R_SUCCEEDED(rc)) rc = _hidbusGetStatusManagerEntryIsConnectedResult(index);
+    if (R_SUCCEEDED(rc) && !_hidbusGetStatusManagerEntryIsConnected(index))  rc = MAKERESULT(218, 8);
 
     if (R_SUCCEEDED(rc) && count >= 1) memset(recv_data, 0, sizeof(HidbusJoyPollingReceivedData)*count);
-    if (R_SUCCEEDED(rc) && !_hidbusGetStatusManagerEntryPollingEnabled(index)) {
+    if (R_SUCCEEDED(rc) && !_hidbusGetStatusManagerEntryIsPollingMode(index)) {
         return 0;
     }
     if (R_FAILED(rc)) return rc;
@@ -490,30 +490,30 @@ Result hidbusGetJoyPollingReceivedData(HidbusBusHandle handle, HidbusJoyPollingR
     for (s32 i=0; i<newcount; i++) {
         s32 entrypos = (((latest_entry + 0xc) - newcount) + i) % 0xb;
 
-        u64 timestamp0=0, timestamp1=0;
+        u64 sampling_number0=0, sampling_number1=0;
         bool retry=false;
         if (polling_mode == HidbusJoyPollingMode_SixAxisSensorDisable) {
-            timestamp0 = atomic_load_explicit(&joydisable_accessor->entries[entrypos].timestamp, memory_order_acquire);
+            sampling_number0 = atomic_load_explicit(&joydisable_accessor->entries[entrypos].sampling_number, memory_order_acquire);
             memcpy(&tmp_entries.joydisable[newcount-i-1], &joydisable_accessor->entries[entrypos].data, sizeof(HidbusJoyDisableSixAxisPollingDataAccessorEntryData));
-            timestamp1 = atomic_load_explicit(&joydisable_accessor->entries[entrypos].timestamp, memory_order_acquire);
+            sampling_number1 = atomic_load_explicit(&joydisable_accessor->entries[entrypos].sampling_number, memory_order_acquire);
 
-            if (timestamp0 != timestamp1 || (i>0 && joydisable_accessor->entries[entrypos].data.timestamp - tmp_entries.joydisable[newcount-i].timestamp != 1))
+            if (sampling_number0 != sampling_number1 || (i>0 && joydisable_accessor->entries[entrypos].data.sampling_number - tmp_entries.joydisable[newcount-i].sampling_number != 1))
                 retry=true;
         }
         else if (polling_mode == HidbusJoyPollingMode_SixAxisSensorEnable) {
-            timestamp0 = atomic_load_explicit(&joyenable_accessor->entries[entrypos].timestamp, memory_order_acquire);
+            sampling_number0 = atomic_load_explicit(&joyenable_accessor->entries[entrypos].sampling_number, memory_order_acquire);
             memcpy(&tmp_entries.joyenable[newcount-i-1], &joyenable_accessor->entries[entrypos].data, sizeof(HidbusJoyEnableSixAxisPollingDataAccessorEntryData));
-            timestamp1 = atomic_load_explicit(&joyenable_accessor->entries[entrypos].timestamp, memory_order_acquire);
+            sampling_number1 = atomic_load_explicit(&joyenable_accessor->entries[entrypos].sampling_number, memory_order_acquire);
 
-            if (timestamp0 != timestamp1 || (i>0 && joyenable_accessor->entries[entrypos].data.timestamp - tmp_entries.joyenable[newcount-i].timestamp != 1))
+            if (sampling_number0 != sampling_number1 || (i>0 && joyenable_accessor->entries[entrypos].data.sampling_number - tmp_entries.joyenable[newcount-i].sampling_number != 1))
                 retry=true;
         }
         else if (hosversionAtLeast(6,0,0) && polling_mode == HidbusJoyPollingMode_ButtonOnly) {
-            timestamp0 = atomic_load_explicit(&joybutton_accessor->entries[entrypos].timestamp, memory_order_acquire);
+            sampling_number0 = atomic_load_explicit(&joybutton_accessor->entries[entrypos].sampling_number, memory_order_acquire);
             memcpy(&tmp_entries.joybutton[newcount-i-1], &joybutton_accessor->entries[entrypos].data, sizeof(HidbusJoyButtonOnlyPollingDataAccessorEntryData));
-            timestamp1 = atomic_load_explicit(&joybutton_accessor->entries[entrypos].timestamp, memory_order_acquire);
+            sampling_number1 = atomic_load_explicit(&joybutton_accessor->entries[entrypos].sampling_number, memory_order_acquire);
 
-            if (timestamp0 != timestamp1 || (i>0 && joybutton_accessor->entries[entrypos].data.timestamp - tmp_entries.joybutton[newcount-i].timestamp != 1))
+            if (sampling_number0 != sampling_number1 || (i>0 && joybutton_accessor->entries[entrypos].data.sampling_number - tmp_entries.joybutton[newcount-i].sampling_number != 1))
                 retry=true;
         }
 
@@ -529,13 +529,13 @@ Result hidbusGetJoyPollingReceivedData(HidbusBusHandle handle, HidbusJoyPollingR
 
     bool dataready=false;
     if (polling_mode == HidbusJoyPollingMode_SixAxisSensorDisable) {
-        dataready = tmp_entries.joydisable[count-1].timestamp != 0;
+        dataready = tmp_entries.joydisable[count-1].sampling_number != 0;
     }
     else if (polling_mode == HidbusJoyPollingMode_SixAxisSensorEnable) {
-        dataready = tmp_entries.joyenable[count-1].timestamp != 0;
+        dataready = tmp_entries.joyenable[count-1].sampling_number != 0;
     }
     else if (hosversionAtLeast(6,0,0) && polling_mode == HidbusJoyPollingMode_ButtonOnly) {
-        dataready = tmp_entries.joybutton[count-1].timestamp != 0;
+        dataready = tmp_entries.joybutton[count-1].sampling_number != 0;
     }
     if (!dataready) rc = MAKERESULT(218, 7);
     if (R_SUCCEEDED(rc)) rc = accessor_header->res;
@@ -545,25 +545,25 @@ Result hidbusGetJoyPollingReceivedData(HidbusBusHandle handle, HidbusJoyPollingR
         u8 size=0;
 
         if (polling_mode == HidbusJoyPollingMode_SixAxisSensorDisable) {
-            size = tmp_entries.joydisable[i].size;
+            size = tmp_entries.joydisable[i].out_size;
             if (size > sizeof(tmp_entries.joydisable[i].data)) return MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen);
             memcpy(recv_data[i].data, tmp_entries.joydisable[i].data, size);
-            recv_data[i].size = size;
-            recv_data[i].timestamp = tmp_entries.joydisable[i].timestamp;
+            recv_data[i].out_size = size;
+            recv_data[i].sampling_number = tmp_entries.joydisable[i].sampling_number;
         }
         else if (polling_mode == HidbusJoyPollingMode_SixAxisSensorEnable) {
-            size = tmp_entries.joyenable[i].size;
+            size = tmp_entries.joyenable[i].out_size;
             if (size > sizeof(tmp_entries.joyenable[i].data)) return MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen);
             memcpy(recv_data[i].data, tmp_entries.joyenable[i].data, size);
-            recv_data[i].size = size;
-            recv_data[i].timestamp = tmp_entries.joyenable[i].timestamp;
+            recv_data[i].out_size = size;
+            recv_data[i].sampling_number = tmp_entries.joyenable[i].sampling_number;
         }
         else if (hosversionAtLeast(6,0,0) && polling_mode == HidbusJoyPollingMode_ButtonOnly) {
-            size = tmp_entries.joybutton[i].size;
+            size = tmp_entries.joybutton[i].out_size;
             if (size > sizeof(tmp_entries.joybutton[i].data)) return MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen);
             memcpy(recv_data[i].data, tmp_entries.joybutton[i].data, size);
-            recv_data[i].size = size;
-            recv_data[i].timestamp = tmp_entries.joybutton[i].timestamp;
+            recv_data[i].out_size = size;
+            recv_data[i].sampling_number = tmp_entries.joybutton[i].sampling_number;
         }
     }
 

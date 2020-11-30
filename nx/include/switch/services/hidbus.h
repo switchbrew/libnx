@@ -12,9 +12,9 @@
 
 /// BusType
 typedef enum {
-    HidbusBusType_JoyLeftRail   = 0,          ///< JoyLeftRail
-    HidbusBusType_JoyRightRail  = 1,          ///< JoyRightRail
-    HidbusBusType_LarkRightRail = 2,          ///< [6.0.0+] LarkRightRail (for microphone).
+    HidbusBusType_LeftJoyRail   = 0,          ///< LeftJoyRail
+    HidbusBusType_RightJoyRail  = 1,          ///< RightJoyRail
+    HidbusBusType_RightLarkRail = 2,          ///< [6.0.0+] RightLarkRail (for microphone).
 } HidbusBusType;
 
 /// JoyPollingMode
@@ -36,8 +36,8 @@ typedef struct {
 /// JoyPollingReceivedData
 typedef struct {
     u8 data[0x30];                 ///< Data.
-    u64 size;                      ///< Size of data.
-    u64 timestamp;                 ///< Timestamp.
+    u64 out_size;                  ///< Size of data.
+    u64 sampling_number;           ///< SamplingNumber
 } HidbusJoyPollingReceivedData;
 
 /// HidbusDataAccessorHeader
@@ -52,42 +52,42 @@ typedef struct {
 /// HidbusJoyDisableSixAxisPollingDataAccessorEntryData
 typedef struct {
     u8 data[0x26];                             ///< Data.
-    u8 size;                                   ///< Size of data.
+    u8 out_size;                               ///< Size of data.
     u8 pad;                                    ///< Padding.
-    u64 timestamp;                             ///< Timestamp.
+    u64 sampling_number;                       ///< SamplingNumber
 } HidbusJoyDisableSixAxisPollingDataAccessorEntryData;
 
 /// HidbusJoyDisableSixAxisPollingDataAccessorEntry
 typedef struct {
-    u64 timestamp;                                               ///< Timestamp.
+    u64 sampling_number;                                         ///< SamplingNumber
     HidbusJoyDisableSixAxisPollingDataAccessorEntryData data;    ///< \ref HidbusJoyDisableSixAxisPollingDataAccessorEntryData
 } HidbusJoyDisableSixAxisPollingDataAccessorEntry;
 
 /// HidbusJoyEnableSixAxisPollingDataAccessorEntryData
 typedef struct {
     u8 data[0x8];                              ///< Data.
-    u8 size;                                   ///< Size of data.
+    u8 out_size;                               ///< Size of data.
     u8 pad[7];                                 ///< Padding.
-    u64 timestamp;                             ///< Timestamp.
+    u64 sampling_number;                       ///< SamplingNumber
 } HidbusJoyEnableSixAxisPollingDataAccessorEntryData;
 
 /// HidbusJoyEnableSixAxisPollingDataAccessorEntry
 typedef struct {
-    u64 timestamp;                                               ///< Timestamp.
+    u64 sampling_number;                                         ///< SamplingNumber
     HidbusJoyEnableSixAxisPollingDataAccessorEntryData data;     ///< \ref HidbusJoyEnableSixAxisPollingDataAccessorEntryData
 } HidbusJoyEnableSixAxisPollingDataAccessorEntry;
 
 /// HidbusJoyButtonOnlyPollingDataAccessorEntryData
 typedef struct {
     u8 data[0x2c];                             ///< Data.
-    u8 size;                                   ///< Size of data.
+    u8 out_size;                               ///< Size of data.
     u8 pad[3];                                 ///< Padding.
-    u64 timestamp;                             ///< Timestamp.
+    u64 sampling_number;                       ///< SamplingNumber
 } HidbusJoyButtonOnlyPollingDataAccessorEntryData;
 
 /// HidbusJoyButtonOnlyPollingDataAccessorEntry
 typedef struct {
-    u64 timestamp;                                               ///< Timestamp.
+    u64 sampling_number;                                         ///< SamplingNumber
     HidbusJoyButtonOnlyPollingDataAccessorEntryData data;        ///< \ref HidbusJoyEnableSixAxisPollingDataAccessorEntryData
 } HidbusJoyButtonOnlyPollingDataAccessorEntry;
 
@@ -111,13 +111,13 @@ typedef struct {
 
 /// Common data for HidbusStatusManagerEntry*.
 typedef struct {
-    u8 flag_x0;                    ///< Flag.
+    u8 is_connected;               ///< IsConnected
     u8 pad[3];                     ///< Padding.
-    Result res;                    ///< Result.
-    u8 device_enabled;             ///< Flag indicating whether a device is enabled (\ref hidbusEnableExternalDevice).
-    u8 is_valid;                   ///< Flag indicating whether this entry is valid.
-    u8 polling_enabled;            ///< Flag indicating whether polling is enabled (\ref hidbusEnableJoyPollingReceiveMode).
-    u8 unk_xb;                     ///< Unknown / padding?
+    Result is_connected_result;    ///< IsConnectedResult
+    u8 is_enabled;                 ///< Flag indicating whether a device is enabled (\ref hidbusEnableExternalDevice).
+    u8 is_in_focus;                ///< Flag indicating whether this entry is valid.
+    u8 is_polling_mode;            ///< Flag indicating whether polling is enabled (\ref hidbusEnableJoyPollingReceiveMode).
+    u8 reserved;                   ///< Reserved
     u32 polling_mode;              ///< \ref HidbusJoyPollingMode
 } HidbusStatusManagerEntryCommon;
 

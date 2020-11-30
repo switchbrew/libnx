@@ -49,7 +49,7 @@ typedef struct {
 /// Polling data extracted from \ref HidbusJoyPollingReceivedData.
 typedef struct {
     s16 data;                                     ///< Sensor state data.
-    u64 timestamp;                                ///< Sample timestamp.
+    u64 sampling_number;                          ///< SamplingNumber
 } RingConPollingData;
 
 /// Ring-Con state object.
@@ -58,7 +58,7 @@ typedef struct {
     HidbusBusHandle handle;
     void* workbuf;
     size_t workbuf_size;
-    u64 polling_last_timestamp;
+    u64 polling_last_sampling_number;
     u32 error_flags;
 
     u64 id_l, id_h;

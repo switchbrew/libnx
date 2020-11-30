@@ -70,9 +70,9 @@ Result ringconCreate(RingCon *c, HidNpadIdType id) {
 
     if (R_SUCCEEDED(rc)) {
         if (style_set & HidNpadStyleTag_NpadJoyLeft)
-            bus_type = HidbusBusType_JoyLeftRail;
+            bus_type = HidbusBusType_LeftJoyRail;
         else if (style_set & (HidNpadStyleTag_NpadJoyRight | HidNpadStyleTag_NpadJoyDual))
-            bus_type = HidbusBusType_JoyRightRail;
+            bus_type = HidbusBusType_RightJoyRail;
         else
             rc = MAKERESULT(Module_Libnx, LibnxError_BadInput);
     }
@@ -265,10 +265,10 @@ Result ringconGetPollingData(RingCon *c, RingConPollingData *out, s32 count, s32
 
     rc = hidbusGetJoyPollingReceivedData(c->handle, recv_data, 0x9);
     if (R_SUCCEEDED(rc)) {
-        u64 tmp = recv_data[0].timestamp - c->polling_last_timestamp;
+        u64 tmp = recv_data[0].sampling_number - c->polling_last_sampling_number;
         if (tmp > 0x9) tmp = 0x9;
         if (count > tmp) count = tmp;
-        c->polling_last_timestamp = recv_data[0].timestamp;
+        c->polling_last_sampling_number = recv_data[0].sampling_number;
 
         for (s32 i=0; i<count; i++) {
             struct {
@@ -278,10 +278,10 @@ Result ringconGetPollingData(RingCon *c, RingConPollingData *out, s32 count, s32
                 u8 pad2[0x2];
             } *reply = (void*)recv_data[i].data;
 
-            if (recv_data[i].size != sizeof(*reply) || reply->status != 0) return MAKERESULT(218, 7);
+            if (recv_data[i].out_size != sizeof(*reply) || reply->status != 0) return MAKERESULT(218, 7);
 
             out[i].data = reply->data;
-            out[i].timestamp = recv_data[i].timestamp;
+            out[i].sampling_number = recv_data[i].sampling_number;
         }
     }
 
