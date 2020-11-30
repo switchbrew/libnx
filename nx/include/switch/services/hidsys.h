@@ -100,7 +100,7 @@ typedef struct {
 typedef struct {
     u32 rotation;                                      ///< \ref HidcfgAnalogStickRotation
     u8 is_paired_stick_assigned;                       ///< IsPairedStickAssigned
-    u8 pad[3];                                         ///< Padding
+    u8 reserved[3];                                    ///< Reserved
 } HidcfgAnalogStickAssignment;
 
 /// ButtonConfigEmbedded

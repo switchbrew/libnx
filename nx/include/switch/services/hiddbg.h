@@ -21,9 +21,9 @@ typedef struct {
 typedef struct {
     s32 x;                                      ///< X
     s32 y;                                      ///< Y
-    s32 unk0;                                   ///< Unknown
-    s32 unk1;                                   ///< Unknown
-    s32 unk2;                                   ///< Unknown
+    s32 delta_x;                                ///< DeltaX
+    s32 delta_y;                                ///< DeltaY
+    s32 wheel_delta;                            ///< WheelDelta
     u32 buttons;                                ///< Bitfield of \ref HidMouseButton.
     u32 attributes;                             ///< Bitfield of \ref HidMouseAttribute.
 } HiddbgMouseAutoPilotState;
