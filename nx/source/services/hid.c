@@ -57,6 +57,8 @@ static Result _hidActivateVibrationDevice(Service* srv, HidVibrationDeviceHandle
 static u8 _hidGetSixAxisSensorHandleNpadStyleIndex(HidSixAxisSensorHandle handle);
 static Result _hidGetSixAxisSensorHandles(HidSixAxisSensorHandle *handles, s32 total_handles, HidNpadIdType id, HidNpadStyleTag style);
 
+static Result _hidGetPalmaOperationResult(HidPalmaConnectionHandle handle);
+
 NX_GENERATE_SERVICE_GUARD(hid);
 
 Result _hidInitialize(void) {
@@ -1004,6 +1006,35 @@ static Result _hidCmdInU64NoOut(Service* srv, u64 inval, u32 cmd_id) {
     return serviceDispatchIn(srv, cmd_id, inval);
 }
 
+static Result _hidCmdInU16U64NoOut(Service* srv, u16 inval0, u64 inval1, u32 cmd_id) {
+    const struct {
+        u16 inval0;
+        u8 pad[6];
+        u64 inval1;
+    } in = { inval0, {0}, inval1 };
+
+    return serviceDispatchIn(srv, cmd_id, in);
+}
+
+static Result _hidCmdInU32U64NoOut(Service* srv, u32 inval0, u64 inval1, u32 cmd_id) {
+    const struct {
+        u32 inval0;
+        u32 pad;
+        u64 inval1;
+    } in = { inval0, 0, inval1 };
+
+    return serviceDispatchIn(srv, cmd_id, in);
+}
+
+static Result _hidCmdInU64U64NoOut(Service* srv, u64 inval0, u64 inval1, u32 cmd_id) {
+    const struct {
+        u64 inval0;
+        u64 inval1;
+    } in = { inval0, inval1 };
+
+    return serviceDispatchIn(srv, cmd_id, in);
+}
+
 static Result _hidCmdInU8AruidNoOut(u8 inval, u32 cmd_id) {
     const struct {
         u8 inval;
@@ -1101,6 +1132,18 @@ static Result _hidCmdInU32AruidOutBool(u32 inval, bool *out, u32 cmd_id) {
     Result rc = _hidCmdInU32AruidOutU8(inval, &tmp, cmd_id);
     if (R_SUCCEEDED(rc) && out) *out = tmp & 1;
     return rc;
+}
+
+static Result _hidCmdInU32AruidOutU64(u32 inval, u64 *out, u32 cmd_id) {
+    const struct {
+        u32 inval;
+        u32 pad;
+        u64 AppletResourceUserId;
+    } in = { inval, 0, appletGetAppletResourceUserId() };
+
+    return serviceDispatchInOut(&g_hidSrv, cmd_id, in, *out,
+        .in_send_pid = true,
+    );
 }
 
 static Result _hidCmdInAruidOutU32(u32 *out, u32 cmd_id) {
@@ -1969,6 +2012,316 @@ Result hidGetNpadOfHighestBatteryLevel(const HidNpadIdType *ids, size_t count, H
     );
     if (R_SUCCEEDED(rc) && out) *out = tmp;
     return rc;
+}
+
+Result hidGetPalmaConnectionHandle(HidNpadIdType id, HidPalmaConnectionHandle *out) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    u64 tmp=0;
+    Result rc = _hidCmdInU32AruidOutU64(id, &tmp, 500);
+    if (R_SUCCEEDED(rc) && out) out->handle = tmp;
+    return rc;
+}
+
+Result hidInitializePalma(HidPalmaConnectionHandle handle) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _hidCmdInU64NoOut(&g_hidSrv, handle.handle, 501);
+}
+
+Result hidAcquirePalmaOperationCompleteEvent(HidPalmaConnectionHandle handle, Event* out_event, bool autoclear) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    Result rc;
+    Handle tmp_handle = INVALID_HANDLE;
+
+    rc = serviceDispatchIn(&g_hidSrv, 502, handle,
+        .out_handle_attrs = { SfOutHandleAttr_HipcCopy },
+        .out_handles = &tmp_handle,
+    );
+    if (R_SUCCEEDED(rc)) eventLoadRemote(out_event, tmp_handle, autoclear);
+    return rc;
+}
+
+static Result _hidGetPalmaOperationInfo(HidPalmaConnectionHandle handle, void* buffer, size_t size, u64 *out) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchInOut(&g_hidSrv, 503, handle, *out,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { buffer, size } },
+    );
+}
+
+Result hidGetPalmaOperationInfo(HidPalmaConnectionHandle handle, HidPalmaOperationInfo *out) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    Result rc=0;
+    Result rc2=0;
+    u64 tmp=0;
+    bool old_ver = hosversionBefore(5,1,0);
+
+    rc = _hidGetPalmaOperationInfo(handle, out->data, sizeof(out->data), &tmp);
+    if (R_SUCCEEDED(rc) || old_ver) {
+        if (old_ver) rc2 = rc;
+        else rc2 = _hidGetPalmaOperationResult(handle);
+        out->res = rc2;
+        if (tmp > (old_ver ? 0xE : 0x10)) rc = MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen); // sdknso would Abort here.
+        else out->type = tmp;
+    }
+
+    return rc;
+}
+
+Result hidPlayPalmaActivity(HidPalmaConnectionHandle handle, u16 val) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _hidCmdInU64U64NoOut(&g_hidSrv, handle.handle, val, 504);
+}
+
+Result hidSetPalmaFrModeType(HidPalmaConnectionHandle handle, u32 type) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _hidCmdInU64U64NoOut(&g_hidSrv, handle.handle, type, 505);
+}
+
+Result hidReadPalmaStep(HidPalmaConnectionHandle handle) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _hidCmdInU64NoOut(&g_hidSrv, handle.handle, 506);
+}
+
+Result hidEnablePalmaStep(HidPalmaConnectionHandle handle, bool flag) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    const struct {
+        u8 flag;
+        u8 pad[7];
+        HidPalmaConnectionHandle handle;
+    } in = { flag!=0, {0}, handle };
+
+    return serviceDispatchIn(&g_hidSrv, 507, in);
+}
+
+Result hidResetPalmaStep(HidPalmaConnectionHandle handle) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _hidCmdInU64NoOut(&g_hidSrv, handle.handle, 508);
+}
+
+Result hidReadPalmaApplicationSection(HidPalmaConnectionHandle handle, s32 inval0, u64 inval1) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    if (inval0 > sizeof(HidPalmaApplicationSectionAccessBuffer))
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+
+    const struct {
+        HidPalmaConnectionHandle handle;
+        u64 inval0;
+        u64 inval1;
+    } in = { handle, inval0, inval1 };
+
+    return serviceDispatchIn(&g_hidSrv, 509, in);
+}
+
+Result hidWritePalmaApplicationSection(HidPalmaConnectionHandle handle, s32 inval0, u64 size, const HidPalmaApplicationSectionAccessBuffer *buf) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    const struct {
+        HidPalmaConnectionHandle handle;
+        u64 inval0;
+        u64 size;
+    } in = { handle, inval0, size };
+
+    return serviceDispatchIn(&g_hidSrv, 510, in,
+        .buffer_attrs = { SfBufferAttr_FixedSize | SfBufferAttr_HipcPointer | SfBufferAttr_In },
+        .buffers = { { buf, sizeof(*buf) } },
+    );
+}
+
+Result hidReadPalmaUniqueCode(HidPalmaConnectionHandle handle) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _hidCmdInU64NoOut(&g_hidSrv, handle.handle, 511);
+}
+
+Result hidSetPalmaUniqueCodeInvalid(HidPalmaConnectionHandle handle) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _hidCmdInU64NoOut(&g_hidSrv, handle.handle, 512);
+}
+
+Result hidWritePalmaActivityEntry(HidPalmaConnectionHandle handle, u16 unk, const HidPalmaActivityEntry *entry) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    const struct {
+        HidPalmaConnectionHandle handle;
+        u64 unk;
+        u64 entry0;
+        u64 entry1;
+        u64 entry2;
+    } in = { handle, unk, entry->unk0, entry->unk1, entry->unk2 };
+
+    return serviceDispatchIn(&g_hidSrv, 513, in);
+}
+
+Result hidWritePalmaRgbLedPatternEntry(HidPalmaConnectionHandle handle, u16 unk, const void* buffer, size_t size) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    const struct {
+        HidPalmaConnectionHandle handle;
+        u64 unk;
+    } in = { handle, unk };
+
+    return serviceDispatchIn(&g_hidSrv, 514, in,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
+        .buffers = { { buffer, size } },
+    );
+}
+
+static Result _hidWritePalmaWaveEntry(HidPalmaConnectionHandle handle, u32 wave_set, u16 unk, TransferMemory *tmem, size_t size) {
+    const struct {
+        HidPalmaConnectionHandle handle;
+        u64 wave_set;
+        u64 unk;
+        u64 tmem_size;
+        u64 size;
+    } in = { handle, wave_set, unk, tmem->size, size };
+
+    return serviceDispatchIn(&g_hidSrv, 515, in,
+        .in_num_handles = 1,
+        .in_handles = { tmem->handle },
+    );
+}
+
+Result hidWritePalmaWaveEntry(HidPalmaConnectionHandle handle, u32 wave_set, u16 unk, const void* buffer, size_t tmem_size, size_t size) {
+    Result rc=0;
+    TransferMemory tmem={0};
+
+    rc = tmemCreateFromMemory(&tmem, (void*)buffer, tmem_size, Perm_R);
+    if (R_SUCCEEDED(rc)) rc = _hidWritePalmaWaveEntry(handle, wave_set, unk, &tmem, size);
+    tmemClose(&tmem);
+
+    return rc;
+}
+
+Result hidSetPalmaDataBaseIdentificationVersion(HidPalmaConnectionHandle handle, s32 version) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _hidCmdInU32U64NoOut(&g_hidSrv, version, handle.handle, 516);
+}
+
+Result hidGetPalmaDataBaseIdentificationVersion(HidPalmaConnectionHandle handle) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _hidCmdInU64NoOut(&g_hidSrv, handle.handle, 517);
+}
+
+Result hidSuspendPalmaFeature(HidPalmaConnectionHandle handle, u32 features) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _hidCmdInU32U64NoOut(&g_hidSrv, features, handle.handle, 518);
+}
+
+static Result _hidGetPalmaOperationResult(HidPalmaConnectionHandle handle) {
+    if (hosversionBefore(5,1,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _hidCmdInU64NoOut(&g_hidSrv, handle.handle, 519);
+}
+
+Result hidReadPalmaPlayLog(HidPalmaConnectionHandle handle, u16 unk) {
+    if (hosversionBefore(5,1,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _hidCmdInU16U64NoOut(&g_hidSrv, unk, handle.handle, 520);
+}
+
+Result hidResetPalmaPlayLog(HidPalmaConnectionHandle handle, u16 unk) {
+    if (hosversionBefore(5,1,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _hidCmdInU16U64NoOut(&g_hidSrv, unk, handle.handle, 521);
+}
+
+Result hidSetIsPalmaAllConnectable(bool flag) {
+    if (hosversionBefore(5,1,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _hidCmdInBoolAruidNoOut(flag, 522);
+}
+
+Result hidSetIsPalmaPairedConnectable(bool flag) {
+    if (hosversionBefore(5,1,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _hidCmdInBoolAruidNoOut(flag, 523);
+}
+
+Result hidPairPalma(HidPalmaConnectionHandle handle) {
+    if (hosversionBefore(5,1,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _hidCmdInU64NoOut(&g_hidSrv, handle.handle, 524);
+}
+
+static Result _hidSetPalmaBoostMode(bool flag) {
+    if (hosversionBefore(5,1,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _hidCmdInBoolNoOut(flag, 525);
+}
+
+Result hidCancelWritePalmaWaveEntry(HidPalmaConnectionHandle handle) {
+    if (hosversionBefore(7,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _hidCmdInU64NoOut(&g_hidSrv, handle.handle, 526);
+}
+
+Result hidEnablePalmaBoostMode(bool flag) {
+    if (hosversionBefore(8,0,0))
+        return _hidSetPalmaBoostMode(flag);
+
+    return _hidCmdInBoolAruidNoOut(flag, 527);
+}
+
+Result hidGetPalmaBluetoothAddress(HidPalmaConnectionHandle handle, BtdrvAddress *out) {
+    if (hosversionBefore(8,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchInOut(&g_hidSrv, 528, handle, *out);
+}
+
+Result hidSetDisallowedPalmaConnection(const BtdrvAddress *addrs, s32 count) {
+    if (hosversionBefore(8,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    u64 AppletResourceUserId = appletGetAppletResourceUserId();
+
+    return serviceDispatchIn(&g_hidSrv, 529, AppletResourceUserId,
+        .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_In },
+        .buffers = { { addrs, count*sizeof(BtdrvAddress) } },
+        .in_send_pid = true,
+    );
 }
 
 Result hidSetNpadCommunicationMode(HidNpadCommunicationMode mode) {

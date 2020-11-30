@@ -8,6 +8,7 @@
 #pragma once
 #include "../types.h"
 #include "../kernel/event.h"
+#include "../services/btdrv_types.h"
 #include "../sf/service.h"
 
 // Begin enums and output structs
@@ -1205,6 +1206,31 @@ typedef struct HidVibrationValue {
     float freq_high; ///< High Band frequency in Hz.
 } HidVibrationValue;
 
+/// PalmaConnectionHandle
+typedef struct HidPalmaConnectionHandle {
+    u64 handle;                  ///< Handle
+} HidPalmaConnectionHandle;
+
+/// PalmaOperationInfo
+typedef struct HidPalmaOperationInfo {
+    u32 type;                    ///< Type
+    Result res;                  ///< Result
+    u8 data[0x140];              ///< Data
+} HidPalmaOperationInfo;
+
+/// PalmaApplicationSectionAccessBuffer
+typedef struct HidPalmaApplicationSectionAccessBuffer {
+    u8 data[0x100];              ///< Application data.
+} HidPalmaApplicationSectionAccessBuffer;
+
+/// PalmaActivityEntry
+typedef struct HidPalmaActivityEntry {
+    u16 unk0;                               ///< Unknown
+    u16 pad;                                ///< Padding
+    u32 unk1;                               ///< Unknown
+    u16 unk2;                               ///< Unknown
+} HidPalmaActivityEntry;
+
 static inline HidNpadIdType hidControllerIDToNpadIdType(HidControllerID id) {
     if (id <= CONTROLLER_PLAYER_8) return (HidNpadIdType)id;
     if (id == CONTROLLER_HANDHELD) return HidNpadIdType_Handheld;
@@ -1981,6 +2007,236 @@ Result hidGetNpadInterfaceType(HidNpadIdType id, u8 *out);
  * @param[out] out \ref HidNpadIdType
  */
 Result hidGetNpadOfHighestBatteryLevel(const HidNpadIdType *ids, size_t count, HidNpadIdType *out);
+
+///@name Palma, see ::HidNpadStyleTag_NpadPalma.
+///@{
+
+/**
+ * @brief GetPalmaConnectionHandle
+ * @note Only available on [5.0.0+].
+ * @param[in] id \ref HidNpadIdType
+ * @param[out] out \ref HidPalmaConnectionHandle
+ */
+Result hidGetPalmaConnectionHandle(HidNpadIdType id, HidPalmaConnectionHandle *out);
+
+/**
+ * @brief InitializePalma
+ * @note Only available on [5.0.0+].
+ * @param[in] handle \ref HidPalmaConnectionHandle
+ */
+Result hidInitializePalma(HidPalmaConnectionHandle handle);
+
+/**
+ * @brief AcquirePalmaOperationCompleteEvent
+ * @note The Event must be closed by the user once finished with it.
+ * @note Only available on [5.0.0+].
+ * @param[in] handle \ref HidPalmaConnectionHandle
+ * @param[out] out_event Output Event.
+ * @param[in] autoclear The autoclear for the Event.
+**/
+Result hidAcquirePalmaOperationCompleteEvent(HidPalmaConnectionHandle handle, Event* out_event, bool autoclear);
+
+/**
+ * @brief GetPalmaOperationInfo
+ * @note Only available on [5.0.0+].
+ * @param[in] handle \ref HidPalmaConnectionHandle
+ * @param[out] out \ref HidPalmaOperationInfo
+ */
+Result hidGetPalmaOperationInfo(HidPalmaConnectionHandle handle, HidPalmaOperationInfo *out);
+
+/**
+ * @brief PlayPalmaActivity
+ * @note Only available on [5.0.0+].
+ * @param[in] handle \ref HidPalmaConnectionHandle
+ * @param[in] val Input value.
+ */
+Result hidPlayPalmaActivity(HidPalmaConnectionHandle handle, u16 val);
+
+/**
+ * @brief SetPalmaFrModeType
+ * @note Only available on [5.0.0+].
+ * @param[in] handle \ref HidPalmaConnectionHandle
+ * @param[in] type PalmaFrModeType
+ */
+Result hidSetPalmaFrModeType(HidPalmaConnectionHandle handle, u32 type);
+
+/**
+ * @brief ReadPalmaStep
+ * @note Only available on [5.0.0+].
+ * @param[in] handle \ref HidPalmaConnectionHandle
+ */
+Result hidReadPalmaStep(HidPalmaConnectionHandle handle);
+
+/**
+ * @brief EnablePalmaStep
+ * @note Only available on [5.0.0+].
+ * @param[in] handle \ref HidPalmaConnectionHandle
+ * @param[in] flag Flag
+ */
+Result hidEnablePalmaStep(HidPalmaConnectionHandle handle, bool flag);
+
+/**
+ * @brief ResetPalmaStep
+ * @note Only available on [5.0.0+].
+ * @param[in] handle \ref HidPalmaConnectionHandle
+ */
+Result hidResetPalmaStep(HidPalmaConnectionHandle handle);
+
+/**
+ * @brief ReadPalmaApplicationSection
+ * @note Only available on [5.0.0+].
+ * @param[in] handle \ref HidPalmaConnectionHandle
+ * @param[in] inval0 First input value. This must be within the size of \ref HidPalmaApplicationSectionAccessBuffer.
+ * @param[in] inval1 Second input value.
+ */
+Result hidReadPalmaApplicationSection(HidPalmaConnectionHandle handle, s32 inval0, u64 inval1);
+
+/**
+ * @brief WritePalmaApplicationSection
+ * @note Only available on [5.0.0+].
+ * @param[in] handle \ref HidPalmaConnectionHandle
+ * @param[in] inval0 First input value.
+ * @param[in] size Size of the data in \ref HidPalmaApplicationSectionAccessBuffer.
+ * @param[in] buf \ref HidPalmaApplicationSectionAccessBuffer
+ */
+Result hidWritePalmaApplicationSection(HidPalmaConnectionHandle handle, s32 inval0, u64 inval1, const HidPalmaApplicationSectionAccessBuffer *buf);
+
+/**
+ * @brief ReadPalmaUniqueCode
+ * @note Only available on [5.0.0+].
+ * @param[in] handle \ref HidPalmaConnectionHandle
+ */
+Result hidReadPalmaUniqueCode(HidPalmaConnectionHandle handle);
+
+/**
+ * @brief SetPalmaUniqueCodeInvalid
+ * @note Only available on [5.0.0+].
+ * @param[in] handle \ref HidPalmaConnectionHandle
+ */
+Result hidSetPalmaUniqueCodeInvalid(HidPalmaConnectionHandle handle);
+
+/**
+ * @brief WritePalmaActivityEntry
+ * @note Only available on [5.0.0+].
+ * @param[in] handle \ref HidPalmaConnectionHandle
+ * @param[in] unk Unknown
+ * @param[in] entry \ref HidPalmaActivityEntry
+ */
+Result hidWritePalmaActivityEntry(HidPalmaConnectionHandle handle, u16 unk, const HidPalmaActivityEntry *entry);
+
+/**
+ * @brief WritePalmaRgbLedPatternEntry
+ * @note Only available on [5.0.0+].
+ * @param[in] handle \ref HidPalmaConnectionHandle
+ * @param[in] unk Unknown
+ * @param[in] buffer Input buffer.
+ * @param[in] size Input buffer size.
+ */
+Result hidWritePalmaRgbLedPatternEntry(HidPalmaConnectionHandle handle, u16 unk, const void* buffer, size_t size);
+
+/**
+ * @brief WritePalmaWaveEntry
+ * @note Only available on [5.0.0+].
+ * @param[in] handle \ref HidPalmaConnectionHandle
+ * @param[in] wave_set HidPalmaWaveSet
+ * @param[in] unk Unknown
+ * @param[in] buffer TransferMemory buffer, must be 0x1000-byte aligned.
+ * @param[in] tmem_size TransferMemory buffer size, must be 0x1000-byte aligned.
+ * @param[in] size Actual size of the data in the buffer.
+ */
+Result hidWritePalmaWaveEntry(HidPalmaConnectionHandle handle, u32 wave_set, u16 unk, const void* buffer, size_t tmem_size, size_t size);
+
+/**
+ * @brief SetPalmaDataBaseIdentificationVersion
+ * @note Only available on [5.0.0+].
+ * @param[in] handle \ref HidPalmaConnectionHandle
+ * @param[in] version Version
+ */
+Result hidSetPalmaDataBaseIdentificationVersion(HidPalmaConnectionHandle handle, s32 version);
+
+/**
+ * @brief GetPalmaDataBaseIdentificationVersion
+ * @note Only available on [5.0.0+].
+ * @param[in] handle \ref HidPalmaConnectionHandle
+ */
+Result hidGetPalmaDataBaseIdentificationVersion(HidPalmaConnectionHandle handle);
+
+/**
+ * @brief SuspendPalmaFeature
+ * @note Only available on [5.0.0+].
+ * @param[in] handle \ref HidPalmaConnectionHandle
+ * @param[in] features Bitfield of HidPalmaFeature.
+ */
+Result hidSuspendPalmaFeature(HidPalmaConnectionHandle handle, u32 features);
+
+/**
+ * @brief ReadPalmaPlayLog
+ * @note Only available on [5.1.0+].
+ * @param[in] handle \ref HidPalmaConnectionHandle
+ * @param[in] unk Unknown
+ */
+Result hidReadPalmaPlayLog(HidPalmaConnectionHandle handle, u16 unk);
+
+/**
+ * @brief ResetPalmaPlayLog
+ * @note Only available on [5.1.0+].
+ * @param[in] handle \ref HidPalmaConnectionHandle
+ * @param[in] unk Unknown
+ */
+Result hidResetPalmaPlayLog(HidPalmaConnectionHandle handle, u16 unk);
+
+/**
+ * @brief Sets whether any Palma can connect.
+ * @note Only available on [5.1.0+].
+ * @param[in] flag Flag
+ */
+Result hidSetIsPalmaAllConnectable(bool flag);
+
+/**
+ * @brief Sets whether paired Palma can connect.
+ * @note Only available on [5.1.0+].
+ * @param[in] flag Flag
+ */
+Result hidSetIsPalmaPairedConnectable(bool flag);
+
+/**
+ * @brief PairPalma
+ * @note Only available on [5.1.0+].
+ * @param[in] handle \ref HidPalmaConnectionHandle
+ */
+Result hidPairPalma(HidPalmaConnectionHandle handle);
+
+/**
+ * @brief CancelWritePalmaWaveEntry
+ * @note Only available on [7.0.0+].
+ * @param[in] handle \ref HidPalmaConnectionHandle
+ */
+Result hidCancelWritePalmaWaveEntry(HidPalmaConnectionHandle handle);
+
+/**
+ * @brief EnablePalmaBoostMode
+ * @note Only available on [5.1.0+]. Uses cmd EnablePalmaBoostMode on [8.0.0+], otherwise cmd SetPalmaBoostMode is used.
+ * @param[in] flag Flag
+ */
+Result hidEnablePalmaBoostMode(bool flag);
+
+/**
+ * @brief GetPalmaBluetoothAddress
+ * @note Only available on [8.0.0+].
+ * @param[in] handle \ref HidPalmaConnectionHandle
+ * @param[out] out \ref BtdrvAddress
+ */
+Result hidGetPalmaBluetoothAddress(HidPalmaConnectionHandle handle, BtdrvAddress *out);
+
+///@}
+
+/**
+ * @brief SetDisallowedPalmaConnection
+ * @note Only available on [8.0.0+].
+ * @param[in] addrs Input array of \ref BtdrvAddress.
+ * @param[in] count Total entries in the addrs array.
+ */
+Result hidSetDisallowedPalmaConnection(const BtdrvAddress *addrs, s32 count);
 
 /**
  * @brief SetNpadCommunicationMode
