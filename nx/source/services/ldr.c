@@ -65,7 +65,7 @@ Result ldrShellFlushArguments(void) {
 }
 
 Result ldrDmntSetProgramArguments(u64 program_id, const void *args, size_t args_size) {
-    return _ldrSetProgramArguments(&g_ldrShellSrv, program_id, args, args_size);
+    return _ldrSetProgramArguments(&g_ldrDmntSrv, program_id, args, args_size);
 }
 
 Result ldrDmntFlushArguments(void) {
