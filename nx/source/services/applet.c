@@ -175,11 +175,11 @@ Result _appletInitialize(void) {
             else
                 rc = _appletOpenLibraryAppletProxy(&g_appletProxySession, CUR_PROCESS_HANDLE, attr);
 
-            if (rc == AM_BUSY_ERROR) {
+            if (R_VALUE(rc) == AM_BUSY_ERROR) {
                 svcSleepThread(10000000);
             }
 
-        } while (rc == AM_BUSY_ERROR);
+        } while (R_VALUE(rc) == AM_BUSY_ERROR);
     }
 
     // [7.0.0+] GetAppletCommonFunctions

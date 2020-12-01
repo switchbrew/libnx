@@ -802,7 +802,7 @@ fsdev_write(struct _reent *r,
   }
 
   rc = fsFileWrite(&file->fd, file->offset, ptr, len, FsWriteOption_None);
-  if(rc == 0xD401)
+  if(R_VALUE(rc) == 0xD401)
     return fsdev_write_safe(r, fd, ptr, len);
   if(R_FAILED(rc))
   {
@@ -911,7 +911,7 @@ fsdev_read(struct _reent *r,
 
   /* read the data */
   rc = fsFileRead(&file->fd, file->offset, ptr, len, FsReadOption_None, &bytes);
-  if(rc == 0xD401)
+  if(R_VALUE(rc) == 0xD401)
     return fsdev_read_safe(r, fd, ptr, len);
   if(R_SUCCEEDED(rc))
   {
@@ -1707,7 +1707,7 @@ fsdev_getmtime(const char *name,
   if(fs_path.data == NULL)
     return -1;*/
 
-  /*if(rc == 0)
+  /*if(R_SUCCEEDED(rc))
   {*/
     /* convert from milliseconds to seconds */
     //*mtime /= 1000;

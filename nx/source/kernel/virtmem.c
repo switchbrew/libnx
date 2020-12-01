@@ -176,13 +176,13 @@ void virtmemSetup(void) {
         // Forgive me.
         g_IsLegacyKernel = true;
         rc = svcUnmapMemory((void*)0xFFFFFFFFFFFFE000UL, (void*)0xFFFFFE000UL, 0x1000);
-        if (rc == KERNELRESULT(InvalidMemoryState)) {
+        if (R_VALUE(rc) == KERNELRESULT(InvalidMemoryState)) {
             // Invalid src-address error means that a valid 36-bit address was rejected.
             // Thus we are 32-bit.
             _memregionInitHardcoded(&g_AslrRegion, 0x200000ull, 0x100000000ull);
             _memregionInitHardcoded(&g_StackRegion, 0x200000ull, 0x40000000ull);
         }
-        else if (rc == KERNELRESULT(InvalidMemoryRange)) {
+        else if (R_VALUE(rc) == KERNELRESULT(InvalidMemoryRange)) {
             // Invalid dst-address error means our 36-bit src-address was valid.
             // Thus we are 36-bit.
             _memregionInitHardcoded(&g_AslrRegion, 0x8000000ull, 0x1000000000ull);

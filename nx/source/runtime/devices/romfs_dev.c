@@ -113,7 +113,7 @@ static ssize_t _romfs_read(romfs_mount *mount, u64 offset, void* buffer, u64 siz
         rc = fsStorageRead(&mount->fd_storage, pos, buffer, size);
         read = size;
     }
-    if (rc == 0xD401) return _romfs_read_safe(mount, pos, buffer, size);
+    if (R_VALUE(rc) == 0xD401) return _romfs_read_safe(mount, pos, buffer, size);
     if (R_FAILED(rc)) return -1;
     return read;
 }

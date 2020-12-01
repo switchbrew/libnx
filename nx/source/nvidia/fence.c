@@ -88,7 +88,7 @@ static Result _nvFenceEventWaitCommon(Event* event, u32 event_id, s32 timeout_us
     if (timeout_us >= 0)
         timeout_ns = (u64)1000*timeout_us;
     Result rc = eventWait(event, timeout_ns);
-    if ((rc & 0x3FFFFF) == 0xEA01) { // timeout
+    if (R_VALUE(rc) == 0xEA01) { // timeout
         nvioctlNvhostCtrl_EventSignal(g_ctrl_fd, event_id);
         rc = MAKERESULT(Module_LibnxNvidia, LibnxNvidiaError_Timeout);
     }
@@ -103,7 +103,7 @@ static Result _nvFenceWait_200(NvFence* f, s32 timeout_us)
         Event* event = _nvGetEvent(event_id);
         if (event) {
             rc = nvioctlNvhostCtrl_EventWaitAsync(g_ctrl_fd, f->id, f->value, timeout_us, event_id);
-            if (rc == MAKERESULT(Module_LibnxNvidia, LibnxNvidiaError_Timeout))
+            if (R_VALUE(rc) == MAKERESULT(Module_LibnxNvidia, LibnxNvidiaError_Timeout))
                 rc = _nvFenceEventWaitCommon(event, 0x10000000 | event_id, timeout_us);
         }
         _nvFreeEventSlot(event_id);
@@ -115,7 +115,7 @@ static Result _nvFenceWait_100(NvFence* f, s32 timeout_us)
 {
     u32 event_id;
     Result rc = nvioctlNvhostCtrl_EventWait(g_ctrl_fd, f->id, f->value, timeout_us, 0, &event_id);
-    if (rc == MAKERESULT(Module_LibnxNvidia, LibnxNvidiaError_Timeout) && timeout_us) {
+    if (R_VALUE(rc) == MAKERESULT(Module_LibnxNvidia, LibnxNvidiaError_Timeout) && timeout_us) {
         Event event;
         rc = nvQueryEvent(g_ctrl_fd, event_id, &event);
         if (R_SUCCEEDED(rc)) {

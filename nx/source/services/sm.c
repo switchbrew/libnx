@@ -48,7 +48,7 @@ Result _smInitialize(void) {
     }
 
     Handle tmp;
-    if (R_SUCCEEDED(rc) && smGetServiceOriginal(&tmp, (SmServiceName){}) == 0x415) {
+    if (R_SUCCEEDED(rc) && R_VALUE(smGetServiceOriginal(&tmp, (SmServiceName){})) == 0x415) {
         u64 pid_placeholder = 0;
         rc = serviceDispatchIn(&g_smSrv, 0, pid_placeholder, .in_send_pid = true);
     }
