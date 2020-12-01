@@ -206,7 +206,23 @@ void hidScanInput(void) {
         u32 style_set = hidGetNpadStyleSet(id);
         size_t total_out=0;
 
-        if (style_set & HidNpadStyleTag_NpadFullKey) {
+        if (style_set & HidNpadStyleTag_NpadSystemExt) {
+            HidNpadSystemExtState state={0};
+            total_out = hidGetNpadStatesSystemExt(id, &state, 1);
+            if (total_out) {
+                g_controllerHeld[i] |= state.buttons;
+                memcpy(&g_controllerEntries[i], &state, sizeof(state));
+            }
+        }
+        else if (style_set & HidNpadStyleTag_NpadSystem) {
+            HidNpadSystemState state={0};
+            total_out = hidGetNpadStatesSystem(id, &state, 1);
+            if (total_out) {
+                g_controllerHeld[i] |= state.buttons;
+                memcpy(&g_controllerEntries[i], &state, sizeof(state));
+            }
+        }
+        else if (style_set & HidNpadStyleTag_NpadFullKey) {
             HidNpadFullKeyState state={0};
             total_out = hidGetNpadStatesFullKey(id, &state, 1);
             if (total_out) {
@@ -241,22 +257,6 @@ void hidScanInput(void) {
         else if (style_set & HidNpadStyleTag_NpadJoyRight) {
             HidNpadJoyRightState state={0};
             total_out = hidGetNpadStatesJoyRight(id, &state, 1);
-            if (total_out) {
-                g_controllerHeld[i] |= state.buttons;
-                memcpy(&g_controllerEntries[i], &state, sizeof(state));
-            }
-        }
-        else if (style_set & HidNpadStyleTag_NpadSystemExt) {
-            HidNpadSystemExtState state={0};
-            total_out = hidGetNpadStatesSystemExt(id, &state, 1);
-            if (total_out) {
-                g_controllerHeld[i] |= state.buttons;
-                memcpy(&g_controllerEntries[i], &state, sizeof(state));
-            }
-        }
-        else if (style_set & HidNpadStyleTag_NpadSystem) {
-            HidNpadSystemState state={0};
-            total_out = hidGetNpadStatesSystem(id, &state, 1);
             if (total_out) {
                 g_controllerHeld[i] |= state.buttons;
                 memcpy(&g_controllerEntries[i], &state, sizeof(state));
