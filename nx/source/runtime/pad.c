@@ -3,7 +3,7 @@
 #include "runtime/pad.h"
 
 NX_CONSTEXPR bool _isStickMoving(const HidAnalogStickState* stick) {
-    return stick->x != 0 && stick->y != 0;
+    return stick->x != 0 || stick->y != 0;
 }
 
 void padConfigureInput(u32 max_players, u32 style_set) {
