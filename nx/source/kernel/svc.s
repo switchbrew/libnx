@@ -337,6 +337,14 @@ SVC_BEGIN svcSynchronizePreemptionState
 	ret
 SVC_END
 
+SVC_BEGIN svcGetResourceLimitPeakValue
+	str x0, [sp, #-16]!
+	svc 0x37
+	ldr x2, [sp], #16
+	str x1, [x2]
+	ret
+SVC_END
+
 SVC_BEGIN svcDumpInfo
 	svc 0x3C
 	ret

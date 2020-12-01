@@ -815,6 +815,19 @@ void svcSynchronizePreemptionState(void);
 
 ///@}
 
+///@name Resource Limit Management
+///@{
+
+/**
+ * @brief Gets the peak value a LimitableResource has had, for a Resource Limit handle. [11.0.0+]
+ * @return Result code.
+ * @note Syscall number 0x37.
+ * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
+ */
+Result svcGetResourceLimitPeakValue(s64 *out, Handle reslimit_h, LimitableResource which);
+
+///@}
+
 ///@name Debugging
 ///@{
 /**
