@@ -159,6 +159,7 @@ extern "C" {
 #include "switch/runtime/diag.h"
 #include "switch/runtime/nxlink.h"
 #include "switch/runtime/resolver.h"
+#include "switch/runtime/pad.h"
 #include "switch/runtime/ringcon.h"
 #include "switch/runtime/btdev.h"
 
