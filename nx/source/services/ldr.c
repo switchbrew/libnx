@@ -24,7 +24,7 @@ LDR_GENERATE_SERVICE_INIT(Shell, shel);
 LDR_GENERATE_SERVICE_INIT(Dmnt,  dmnt);
 LDR_GENERATE_SERVICE_INIT(Pm,    pm);
 
-static Result _ldrSetProgramArguments(Service* srv, u64 program_id, const void *args, size_t args_size) {
+static Result _ldrSetProgramArgumentsDeprecated(Service* srv, u64 program_id, const void *args, size_t args_size) {
     const struct {
         u32 args_size;
         u32 pad;
@@ -35,6 +35,21 @@ static Result _ldrSetProgramArguments(Service* srv, u64 program_id, const void *
         .buffer_attrs = { SfBufferAttr_In | SfBufferAttr_HipcPointer },
         .buffers = { { args,  args_size } },
     );
+}
+
+static Result _ldrSetProgramArgumentsModern(Service* srv, u64 program_id, const void *args, size_t args_size) {
+    return serviceDispatchIn(srv, 0, program_id,
+        .buffer_attrs = { SfBufferAttr_In | SfBufferAttr_HipcPointer },
+        .buffers = { { args,  args_size } },
+    );
+}
+
+static Result _ldrSetProgramArguments(Service* srv, u64 program_id, const void *args, size_t args_size) {
+    if (hosversionAtLeast(11,0,0)) {
+        return _ldrSetProgramArgumentsModern(srv, program_id, args, args_size);
+    } else {
+        return _ldrSetProgramArgumentsDeprecated(srv, program_id, args, args_size);
+    }
 }
 
 static Result _ldrFlushArguments(Service* srv) {
