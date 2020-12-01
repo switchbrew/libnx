@@ -11,7 +11,7 @@ Result condvarWaitTimeout(CondVar* c, Mutex* m, u64 timeout) {
     rc = svcWaitProcessWideKeyAtomic((u32*)m, c, getThreadVars()->handle, timeout);
 
     // On timeout, we need to acquire it manually.
-    if (rc == 0xEA01)
+    if (R_VALUE(rc) == 0xEA01)
         mutexLock(m);
 
     return rc;

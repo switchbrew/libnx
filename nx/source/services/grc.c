@@ -68,7 +68,7 @@ static Result _grcCreateGameMovieTrimmer(GrcGameMovieTrimmer *t, size_t size) {
     if (R_SUCCEEDED(rc)) {
         rc = appletCreateGameMovieTrimmer(&t->s, &t->tmem);
 
-        while(rc == retryrc) {
+        while(R_VALUE(rc) == retryrc) {
             svcSleepThread(100000000);
             rc = appletCreateGameMovieTrimmer(&t->s, &t->tmem);
         }
@@ -184,7 +184,7 @@ Result grcCreateMovieMaker(GrcMovieMaker *m, size_t size) {
     if (R_SUCCEEDED(rc)) {
         rc = appletCreateMovieMaker(&m->a, &m->tmem);
 
-        while(rc == retryrc) {
+        while(R_VALUE(rc) == retryrc) {
             svcSleepThread(100000000);
             rc = appletCreateMovieMaker(&m->a, &m->tmem);
         }
