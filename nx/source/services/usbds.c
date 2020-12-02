@@ -37,7 +37,7 @@ Result _usbDsInitialize(void) {
 
     // GetStateChangeEvent
     if (R_SUCCEEDED(rc))
-        rc = _usbDsGetEvent(&g_usbDsSrv, &g_usbDsStateChangeEvent, false, hosversionAtLeast(11, 0, 0) ? 2 : 3);
+        rc = _usbDsGetEvent(&g_usbDsSrv, &g_usbDsStateChangeEvent, false, hosversionAtLeast(11,0,0) ? 2 : 3);
 
     // Result code doesn't matter here, users can call themselves later, too. This prevents foot shooting.
     if (R_SUCCEEDED(rc) && hosversionAtLeast(5,0,0))
@@ -210,7 +210,7 @@ static Result _usbDsBindDevice(UsbComplexId complexId, Handle prochandle) {
 }
 
 Result usbDsGetState(u32 *out) {
-    return _usbDsCmdNoInOutU32(&g_usbDsSrv, out, hosversionAtLeast(11, 0, 0) ? 3 : 4);
+    return _usbDsCmdNoInOutU32(&g_usbDsSrv, out, hosversionAtLeast(11,0,0) ? 3 : 4);
 }
 
 Result usbDsWaitReady(u64 timeout) {
@@ -296,7 +296,7 @@ static Result _usbDsGetReport(Service* srv, UsbDsReportData *out, u32 cmd_id) {
 
 static Result _usbDsGetDsInterface(Service* srv, Service* srv_out, const void* buf0, size_t buf0size, const void* buf1, size_t buf1size, u8 *out) {
     serviceAssumeDomain(srv);
-    return serviceDispatchOut(srv, hosversionAtLeast(11, 0, 0) ? 1 : 2, *out,
+    return serviceDispatchOut(srv, hosversionAtLeast(11,0,0) ? 1 : 2, *out,
         .buffer_attrs = {
             SfBufferAttr_HipcMapAlias | SfBufferAttr_In,
             SfBufferAttr_HipcMapAlias | SfBufferAttr_In,
@@ -362,7 +362,7 @@ static Result _usbDsRegisterInterface(Service* srv_out, u8 intf_num) {
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     serviceAssumeDomain(&g_usbDsSrv);
-    return serviceDispatchIn(&g_usbDsSrv, hosversionAtLeast(11, 0, 0) ? 1 : 2, intf_num,
+    return serviceDispatchIn(&g_usbDsSrv, hosversionAtLeast(11,0,0) ? 1 : 2, intf_num,
         .out_num_objects = 1,
         .out_objects = srv_out,
     );
@@ -395,10 +395,10 @@ Result usbDsRegisterInterface(UsbDsInterface** interface) {
         rc = _usbDsGetEvent(&ptr->s, &ptr->SetupEvent, false, 1);
     // GetCtrlInCompletionEvent
     if (R_SUCCEEDED(rc))
-        rc = _usbDsGetEvent(&ptr->s, &ptr->CtrlInCompletionEvent, false, hosversionAtLeast(11, 0, 0) ? 5 : 7);
+        rc = _usbDsGetEvent(&ptr->s, &ptr->CtrlInCompletionEvent, false, hosversionAtLeast(11,0,0) ? 5 : 7);
     // GetCtrlOutCompletionEvent
     if (R_SUCCEEDED(rc))
-        rc = _usbDsGetEvent(&ptr->s, &ptr->CtrlOutCompletionEvent, false, hosversionAtLeast(11, 0, 0) ? 7 : 9);
+        rc = _usbDsGetEvent(&ptr->s, &ptr->CtrlOutCompletionEvent, false, hosversionAtLeast(11,0,0) ? 7 : 9);
 
     if (R_FAILED(rc))
         _usbDsFreeInterface(ptr);
@@ -422,10 +422,10 @@ Result usbDsRegisterInterfaceEx(UsbDsInterface** interface, u8 intf_num) {
         rc = _usbDsGetEvent(&ptr->s, &ptr->SetupEvent, false, 1);
     // GetCtrlInCompletionEvent
     if (R_SUCCEEDED(rc))
-        rc = _usbDsGetEvent(&ptr->s, &ptr->CtrlInCompletionEvent, false, hosversionAtLeast(11, 0, 0) ? 5 : 7);
+        rc = _usbDsGetEvent(&ptr->s, &ptr->CtrlInCompletionEvent, false, hosversionAtLeast(11,0,0) ? 5 : 7);
     // GetCtrlOutCompletionEvent
     if (R_SUCCEEDED(rc))
-        rc = _usbDsGetEvent(&ptr->s, &ptr->CtrlOutCompletionEvent, false, hosversionAtLeast(11, 0, 0) ? 7 : 9);
+        rc = _usbDsGetEvent(&ptr->s, &ptr->CtrlOutCompletionEvent, false, hosversionAtLeast(11,0,0) ? 7 : 9);
 
     if (R_FAILED(rc))
         _usbDsFreeInterface(ptr);
@@ -440,7 +440,7 @@ Result usbDsClearDeviceData(void) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return _usbDsCmdNoIO(&g_usbDsSrv, hosversionAtLeast(11, 0, 0) ? 4 : 5);
+    return _usbDsCmdNoIO(&g_usbDsSrv, hosversionAtLeast(11,0,0) ? 4 : 5);
 }
 
 static Result _usbDsAddUsbStringDescriptorRaw(u8 *out_index, struct usb_string_descriptor *descriptor) {
@@ -448,7 +448,7 @@ static Result _usbDsAddUsbStringDescriptorRaw(u8 *out_index, struct usb_string_d
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     serviceAssumeDomain(&g_usbDsSrv);
-    return serviceDispatchOut(&g_usbDsSrv, hosversionAtLeast(11, 0, 0) ? 5 : 6, *out_index,
+    return serviceDispatchOut(&g_usbDsSrv, hosversionAtLeast(11,0,0) ? 5 : 6, *out_index,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
         .buffers = { { descriptor, sizeof(*descriptor) } },
     );
@@ -490,7 +490,7 @@ Result usbDsDeleteUsbStringDescriptor(u8 index) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return _usbDsCmdInU8NoOut(&g_usbDsSrv, index, hosversionAtLeast(11, 0, 0) ? 6 : 7);
+    return _usbDsCmdInU8NoOut(&g_usbDsSrv, index, hosversionAtLeast(11,0,0) ? 6 : 7);
 }
 
 
@@ -500,7 +500,7 @@ Result usbDsSetUsbDeviceDescriptor(UsbDeviceSpeed speed, struct usb_device_descr
 
     u32 tmp=speed;
     serviceAssumeDomain(&g_usbDsSrv);
-    return serviceDispatchIn(&g_usbDsSrv, hosversionAtLeast(11, 0, 0) ? 7 : 8, tmp,
+    return serviceDispatchIn(&g_usbDsSrv, hosversionAtLeast(11,0,0) ? 7 : 8, tmp,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
         .buffers = { { descriptor, USB_DT_DEVICE_SIZE } },
     );
@@ -510,21 +510,21 @@ Result usbDsSetBinaryObjectStore(const void* bos, size_t bos_size) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return _usbDsCmdSendBufNoOut(&g_usbDsSrv, bos, bos_size, hosversionAtLeast(11, 0, 0) ? 8 : 9);
+    return _usbDsCmdSendBufNoOut(&g_usbDsSrv, bos, bos_size, hosversionAtLeast(11,0,0) ? 8 : 9);
 }
 
 Result usbDsEnable(void) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return _usbDsCmdNoIO(&g_usbDsSrv, hosversionAtLeast(11, 0, 0) ? 9 : 10);
+    return _usbDsCmdNoIO(&g_usbDsSrv, hosversionAtLeast(11,0,0) ? 9 : 10);
 }
 
 Result usbDsDisable(void) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return _usbDsCmdNoIO(&g_usbDsSrv, hosversionAtLeast(11, 0, 0) ? 10 : 11);
+    return _usbDsCmdNoIO(&g_usbDsSrv, hosversionAtLeast(11,0,0) ? 10 : 11);
 }
 
 
@@ -589,31 +589,31 @@ Result usbDsInterface_DisableInterface(UsbDsInterface* interface) {
 Result usbDsInterface_CtrlInPostBufferAsync(UsbDsInterface* interface, void* buffer, size_t size, u32 *urbId) {
     if (!interface->initialized) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    return _usbDsPostBuffer(&interface->s, buffer, size, urbId, hosversionAtLeast(11, 0, 0) ? 3 : 5);
+    return _usbDsPostBuffer(&interface->s, buffer, size, urbId, hosversionAtLeast(11,0,0) ? 3 : 5);
 }
 
 Result usbDsInterface_CtrlOutPostBufferAsync(UsbDsInterface* interface, void* buffer, size_t size, u32 *urbId) {
     if (!interface->initialized) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    return _usbDsPostBuffer(&interface->s, buffer, size, urbId, hosversionAtLeast(11, 0, 0) ? 4 : 6);
+    return _usbDsPostBuffer(&interface->s, buffer, size, urbId, hosversionAtLeast(11,0,0) ? 4 : 6);
 }
 
 Result usbDsInterface_GetCtrlInReportData(UsbDsInterface* interface, UsbDsReportData *out) {
     if (!interface->initialized) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    return _usbDsGetReport(&interface->s, out, hosversionAtLeast(11, 0, 0) ? 6 : 8);
+    return _usbDsGetReport(&interface->s, out, hosversionAtLeast(11,0,0) ? 6 : 8);
 }
 
 Result usbDsInterface_GetCtrlOutReportData(UsbDsInterface* interface, UsbDsReportData *out) {
     if (!interface->initialized) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    return _usbDsGetReport(&interface->s, out, hosversionAtLeast(11, 0, 0) ? 8 : 10);
+    return _usbDsGetReport(&interface->s, out, hosversionAtLeast(11,0,0) ? 8 : 10);
 }
 
 Result usbDsInterface_StallCtrl(UsbDsInterface* interface) {
     if (!interface->initialized) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    return _usbDsCmdNoIO(&interface->s, hosversionAtLeast(11, 0, 0) ? 9 : 11);
+    return _usbDsCmdNoIO(&interface->s, hosversionAtLeast(11,0,0) ? 9 : 11);
 }
 
 Result usbDsInterface_RegisterEndpoint(UsbDsInterface* interface, UsbDsEndpoint** endpoint, u8 endpoint_address) {
@@ -648,7 +648,7 @@ Result usbDsInterface_AppendConfigurationData(UsbDsInterface* interface, UsbDevi
         u32 speed;
     } in = { interface->interface_index, speed };
 
-    return serviceDispatchIn(&interface->s, hosversionAtLeast(11, 0, 0) ? 10 : 12, in,
+    return serviceDispatchIn(&interface->s, hosversionAtLeast(11,0,0) ? 10 : 12, in,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
         .buffers = { { buffer, size } },
     );
