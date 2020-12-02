@@ -1,5 +1,6 @@
 #define NX_SERVICE_ASSUME_NON_DOMAIN
 #include "service_guard.h"
+#include "runtime/hosversion.h"
 #include "runtime/diag.h"
 
 static Service g_smSrv;
@@ -35,6 +36,11 @@ Handle smGetServiceOverride(SmServiceName name) {
 
 NX_GENERATE_SERVICE_GUARD(sm);
 
+static Result _smCmdInPid(u32 cmd_id) {
+    u64 pid_placeholder = 0;
+    return serviceDispatchIn(&g_smSrv, cmd_id, pid_placeholder, .in_send_pid = true);
+}
+
 Result _smInitialize(void) {
     Handle sm_handle;
     Result rc = svcConnectToNamedPort(&sm_handle, "sm:");
@@ -49,8 +55,7 @@ Result _smInitialize(void) {
 
     Handle tmp;
     if (R_SUCCEEDED(rc) && R_VALUE(smGetServiceOriginal(&tmp, (SmServiceName){})) == 0x415) {
-        u64 pid_placeholder = 0;
-        rc = serviceDispatchIn(&g_smSrv, 0, pid_placeholder, .in_send_pid = true);
+        rc = _smCmdInPid(0);
     }
 
     return rc;
@@ -104,4 +109,9 @@ Result smRegisterService(Handle* handle_out, SmServiceName name, bool is_light, 
 
 Result smUnregisterService(SmServiceName name) {
     return serviceDispatchIn(&g_smSrv, 3, name);
+}
+
+Result smDetachClient(void) {
+    if (hosversionBefore(11,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    return _smCmdInPid(4);
 }
