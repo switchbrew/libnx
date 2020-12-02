@@ -127,6 +127,7 @@ Result smUnregisterService(SmServiceName name);
 /**
  * @brief Detaches the current SM session.
  * @note After this function is called, the rest of the SM API cannot be used.
+ * @note Only available on [11.0.0+].
  */
 Result smDetachClient(void);
 
