@@ -1,5 +1,6 @@
 #define NX_SERVICE_ASSUME_NON_DOMAIN
 #include "service_guard.h"
+#include "runtime/hosversion.h"
 #include "runtime/diag.h"
 
 static Service g_smSrv;
@@ -104,4 +105,9 @@ Result smRegisterService(Handle* handle_out, SmServiceName name, bool is_light, 
 
 Result smUnregisterService(SmServiceName name) {
     return serviceDispatchIn(&g_smSrv, 3, name);
+}
+
+Result smDetachClient(void) {
+    if (hosversionBefore(11,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    return serviceDispatch(&g_smSrv, 4);
 }

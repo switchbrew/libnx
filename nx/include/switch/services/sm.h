@@ -125,6 +125,12 @@ Result smRegisterService(Handle* handle_out, SmServiceName name, bool is_light, 
 Result smUnregisterService(SmServiceName name);
 
 /**
+ * @brief Detaches the current SM session.
+ * @note After this function is called, the rest of the SM API cannot be used.
+ */
+Result smDetachClient(void);
+
+/**
  * @brief Gets the Service session used to communicate with SM.
  * @return Pointer to service session used to communicate with SM.
  */
