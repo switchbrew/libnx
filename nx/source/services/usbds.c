@@ -10,6 +10,7 @@
 #define TOTAL_ENDPOINTS_OUT 16
 #define TOTAL_ENDPOINTS (TOTAL_ENDPOINTS_IN+TOTAL_ENDPOINTS_OUT)
 
+static Service g_usbDsRootSrv;
 static Service g_usbDsSrv;
 static Event g_usbDsStateChangeEvent = {0};
 
@@ -26,10 +27,21 @@ NX_GENERATE_SERVICE_GUARD(usbDs);
 Result _usbDsInitialize(void) {
     Result rc = 0;
 
-    rc = smGetService(&g_usbDsSrv, "usb:ds");
+    rc = smGetService(&g_usbDsRootSrv, "usb:ds");
 
-    if (R_SUCCEEDED(rc)) {
-        rc = serviceConvertToDomain(&g_usbDsSrv);
+    if (R_SUCCEEDED(rc))
+        rc = serviceConvertToDomain(&g_usbDsRootSrv);
+
+    if (hosversionAtLeast(11,0,0)) {
+        if (R_SUCCEEDED(rc)) {
+            serviceAssumeDomain(&g_usbDsRootSrv);
+            rc = serviceDispatch(&g_usbDsRootSrv, 0,
+                .out_num_objects = 1,
+                .out_objects = &g_usbDsSrv,
+            );
+        }
+    } else {
+        g_usbDsSrv = g_usbDsRootSrv;
     }
 
     if (R_SUCCEEDED(rc))
@@ -54,7 +66,9 @@ void _usbDsCleanup(void) {
     _usbDsFreeTables();
 
     eventClose(&g_usbDsStateChangeEvent);
-    serviceClose(&g_usbDsSrv);
+    if (hosversionAtLeast(11,0,0))
+        serviceClose(&g_usbDsSrv);
+    serviceClose(&g_usbDsRootSrv);
 }
 
 Service* usbDsGetServiceSession(void) {
