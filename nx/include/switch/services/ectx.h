@@ -1,6 +1,6 @@
 /**
  * @file ectx.h
- * @brief Error Context services IPC wrapper.
+ * @brief [11.0.0+] Error Context services IPC wrapper.
  * @author SciresM
  * @copyright libnx Authors
  */
@@ -9,7 +9,7 @@
 #include "../kernel/event.h"
 #include "../sf/service.h"
 
-/// [11.0.0+] Initialize ectx:r.
+/// Initialize ectx:r.
 Result ectxrInitialize(void);
 
 /// Exit ectx:r.
@@ -19,7 +19,7 @@ void ectxrExit(void);
 Service* ectxrGetServiceSession(void);
 
 /**
- * @brief [11.0.0+] Retrieves the error context associated with an error descriptor and result.
+ * @brief Retrieves the error context associated with an error descriptor and result.
  * @return Result code.
  */
 Result ectxrPullContext(s32 *out0, u32 *out_total_size, u32 *out_size, void *dst, size_t dst_size, u32 descriptor, Result result);
