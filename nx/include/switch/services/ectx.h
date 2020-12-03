@@ -20,6 +20,13 @@ Service* ectxrGetServiceSession(void);
 
 /**
  * @brief Retrieves the error context associated with an error descriptor and result.
+ * @param[out] out0 Output value.
+ * @param[out] out_total_size Total error context size.
+ * @param[out] out_size Error context size.
+ * @param[out] dst Buffer for output error context.
+ * @param[in] dst_size Buffer size for output error context.
+ * @param[in] descriptor Error descriptor.
+ * @param[in] result Error results.
  * @return Result code.
  */
 Result ectxrPullContext(s32 *out0, u32 *out_total_size, u32 *out_size, void *dst, size_t dst_size, u32 descriptor, Result result);
