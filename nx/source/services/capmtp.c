@@ -74,10 +74,6 @@ static Result _capmtpOpenSession(Service *srv) {
     );
 }
 
-static Result _capmtpClose(void) {
-    return _capmtpNoIO(1);
-}
-
 static Result _capmtpOpen(u32 max_folders, u32 max_img, u32 max_vid, const uint_least16_t *other_name) {
     size_t len=0;
     const uint_least16_t *tmp =other_name;
@@ -95,6 +91,10 @@ static Result _capmtpOpen(u32 max_folders, u32 max_img, u32 max_vid, const uint_
         .in_num_handles = 1,
         .in_handles = { g_tmem.handle },
     );
+}
+
+static Result _capmtpClose(void) {
+    return _capmtpNoIO(1);
 }
 
 Result capmtpStartCommandHandler(void) {
