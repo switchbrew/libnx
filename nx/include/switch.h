@@ -123,6 +123,7 @@ extern "C" {
 #include "switch/services/lp2p.h"
 #include "switch/services/news.h"
 #include "switch/services/ins.h"
+#include "switch/services/ectx.h"
 
 #include "switch/display/binder.h"
 #include "switch/display/parcel.h"
