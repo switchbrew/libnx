@@ -9,7 +9,7 @@
 #include "../kernel/event.h"
 #include "../sf/service.h"
 
-/// Initialize ectx:r.
+/// [11.0.0+] Initialize ectx:r.
 Result ectxrInitialize(void);
 
 /// Exit ectx:r.
@@ -19,7 +19,7 @@ void ectxrExit(void);
 Service* ectxrGetServiceSession(void);
 
 /**
- * @brief Retrieves the error context associated with an error descriptor and result.
+ * @brief [11.0.0+] Retrieves the error context associated with an error descriptor and result.
  * @return Result code.
  */
 Result ectxrPullContext(s32 *out0, u32 *out_total_size, u32 *out_size, void *dst, size_t dst_size, u32 descriptor, Result result);

@@ -1,5 +1,6 @@
 #define NX_SERVICE_ASSUME_NON_DOMAIN
 #include "service_guard.h"
+#include "runtime/hosversion.h"
 #include "services/ectx.h"
 
 static Service g_ectxrSrv;
@@ -7,6 +8,8 @@ static Service g_ectxrSrv;
 NX_GENERATE_SERVICE_GUARD(ectxr);
 
 Result _ectxrInitialize(void) {
+    if (hosversionBefore(11,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     return smGetService(&g_ectxrSrv, "ectx:r");
 }
 
