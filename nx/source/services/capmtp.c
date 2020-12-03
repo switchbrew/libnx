@@ -19,6 +19,9 @@ NX_GENERATE_SERVICE_GUARD_PARAMS(capmtp, (void* mem, size_t size, u32 max_folder
 Result _capmtpInitialize(void* mem, size_t size, u32 max_folders, u32 max_img, u32 max_vid, const uint_least16_t *other_name) {
     Result rc=0;
 
+    if (hosversionBefore(11,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     rc = tmemCreateFromMemory(&g_tmem, mem, size, Perm_None);
 
     if (R_SUCCEEDED(rc)) rc = smGetService(&g_capmtpRoot, "capmtp");
