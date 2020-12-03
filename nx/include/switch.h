@@ -110,6 +110,7 @@ extern "C" {
 #include "switch/services/capsu.h"
 #include "switch/services/capssc.h"
 #include "switch/services/capssu.h"
+#include "switch/services/capmtp.h"
 #include "switch/services/nfc.h"
 #include "switch/services/wlaninf.h"
 #include "switch/services/pctl.h"

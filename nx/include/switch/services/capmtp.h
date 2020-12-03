@@ -9,13 +9,13 @@
 #include "../kernel/event.h"
 #include "../sf/service.h"
 
-Result capmtpInitialize(void* mem, size_t size, u32 app_count, u32 max_img, u32 max_vid, const char *other_name);
+Result capmtpInitialize(void* mem, size_t size, u32 app_count, u32 max_img, u32 max_vid, const uint_least16_t *other_name);
 void capmtpExit(void);
 
 Result capmtpStartCommandHandler(void);
 Result capmtpStopCommandHandler(void);
-Event *capmtpGetEvent1(void);
-Event *capmtpGetEvent2(void);
-Result capmtpIsRunning(bool *out);
-Result capmtpUnkBool(bool *out);
-Result capmtpGetResult(void);
+bool capmtpIsRunning(void);
+Event *capmtpGetConnectionEvent(void);
+bool capmtpIsConnected(void);
+Event *capmtpGetScanErrorEvent(void);
+Result capmtpGetScanError(void);
