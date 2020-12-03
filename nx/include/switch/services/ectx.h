@@ -26,7 +26,7 @@ Service* ectxrGetServiceSession(void);
  * @param[out] dst Buffer for output error context.
  * @param[in] dst_size Buffer size for output error context.
  * @param[in] descriptor Error descriptor.
- * @param[in] result Error results.
+ * @param[in] result Error result.
  * @return Result code.
  */
 Result ectxrPullContext(s32 *out0, u32 *out_total_size, u32 *out_size, void *dst, size_t dst_size, u32 descriptor, Result result);
