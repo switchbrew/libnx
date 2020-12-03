@@ -9,8 +9,11 @@
 #include "../kernel/event.h"
 #include "../sf/service.h"
 
-Result capmtpInitialize(void* mem, size_t size, u32 app_count, u32 max_img, u32 max_vid, const uint_least16_t *other_name);
+Result capmtpInitialize(void* mem, size_t size, u32 app_count, u32 max_img, u32 max_vid, const char *other_name);
 void capmtpExit(void);
+
+Service* capmtpGetRootServiceSession(void);
+Service* capmtpGetServiceSession(void);
 
 Result capmtpStartCommandHandler(void);
 Result capmtpStopCommandHandler(void);

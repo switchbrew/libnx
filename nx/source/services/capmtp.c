@@ -1,6 +1,7 @@
 #include "service_guard.h"
 #include "kernel/tmem.h"
 #include "runtime/hosversion.h"
+#include "runtime/util/utf.h"
 #include "services/capmtp.h"
 #include "services/sm.h"
 
@@ -10,13 +11,13 @@ static TransferMemory g_tmem;
 static Event g_connectEvent, g_scanErrorEvent;
 
 static Result _capmtpOpenSession(Service *srv);
-static Result _capmtpOpen(u32 max_folders, u32 max_img, u32 max_vid, const uint_least16_t *other_name);
+static Result _capmtpOpen(u32 max_folders, u32 max_img, u32 max_vid, const char *other_name);
 static Result _capmtpClose(void);
 static Result _capmtpNoInEventOut(u32 id, Event* event, bool autoclear);
 
-NX_GENERATE_SERVICE_GUARD_PARAMS(capmtp, (void* mem, size_t size, u32 max_folders, u32 max_img, u32 max_vid, const uint_least16_t *other_name), (mem, size, max_folders, max_img, max_vid, other_name));
+NX_GENERATE_SERVICE_GUARD_PARAMS(capmtp, (void* mem, size_t size, u32 max_folders, u32 max_img, u32 max_vid, const char *other_name), (mem, size, max_folders, max_img, max_vid, other_name));
 
-Result _capmtpInitialize(void* mem, size_t size, u32 max_folders, u32 max_img, u32 max_vid, const uint_least16_t *other_name) {
+Result _capmtpInitialize(void* mem, size_t size, u32 max_folders, u32 max_img, u32 max_vid, const char *other_name) {
     Result rc=0;
 
     if (hosversionBefore(11,0,0))
@@ -33,8 +34,6 @@ Result _capmtpInitialize(void* mem, size_t size, u32 max_folders, u32 max_img, u
     if (R_SUCCEEDED(rc)) rc = _capmtpNoInEventOut(5, &g_connectEvent, false);
     if (R_SUCCEEDED(rc)) rc = _capmtpNoInEventOut(7, &g_scanErrorEvent, false);
 
-    if (R_FAILED(rc)) capmtpExit();
-
     return rc;
 }
 
@@ -45,6 +44,14 @@ void _capmtpCleanup(void) {
     serviceClose(&g_capmtp);
     serviceClose(&g_capmtpRoot);
     tmemClose(&g_tmem);
+}
+
+Service* capmtpGetRootServiceSession(void) {
+    return &g_capmtpRoot;
+}
+
+Service* capmtpGetServiceSession(void) {
+    return &g_capmtp;
 }
 
 static Result _capmtpNoIO(u32 id) {
@@ -77,10 +84,9 @@ static Result _capmtpOpenSession(Service *srv) {
     );
 }
 
-static Result _capmtpOpen(u32 max_folders, u32 max_img, u32 max_vid, const uint_least16_t *other_name) {
-    size_t len=0;
-    const uint_least16_t *tmp =other_name;
-    while(*tmp++) ++len;
+static Result _capmtpOpen(u32 max_folders, u32 max_img, u32 max_vid, const char *other_name) {
+    u16 buffer[0x100];
+    size_t len = utf8_to_utf16(buffer, (const u8*)other_name, sizeof(buffer)/sizeof(u16));
     const struct {
         u32 tmem_size;
         u32 folder_count;
@@ -90,7 +96,7 @@ static Result _capmtpOpen(u32 max_folders, u32 max_img, u32 max_vid, const uint_
 
     return serviceDispatchIn(&g_capmtp, 0, in,
         .buffer_attrs = { SfBufferAttr_In | SfBufferAttr_HipcMapAlias },
-        .buffers = { { other_name, 2*len + 1 } },
+        .buffers = { { buffer, 2*len } },
         .in_num_handles = 1,
         .in_handles = { g_tmem.handle },
     );
