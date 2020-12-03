@@ -188,9 +188,22 @@ void lp2pGroupInfoSetFlags(Lp2pGroupInfo *info, s8 *flags, size_t count) {
 }
 
 void lp2pGroupInfoSetPresharedKey(Lp2pGroupInfo *info, const void* key, size_t size) {
-    info->preshared_key_binary_size = sizeof(info->preshared_key);
+    info->preshared_key_binary_size = 0x20;
     if (size > info->preshared_key_binary_size) size = info->preshared_key_binary_size;
     memcpy(info->preshared_key, key, size);
+}
+
+Result lp2pGroupInfoSetPassphrase(Lp2pGroupInfo *info, const char *passphrase) {
+    if (hosversionBefore(11,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    info->preshared_key_binary_size = 1;
+    size_t len = strlen(passphrase);
+    if (len > sizeof(info->preshared_key)) len = sizeof(info->preshared_key);
+    memset(info->preshared_key, 0, sizeof(info->preshared_key));
+    memcpy(info->preshared_key, passphrase, len);
+
+    return 0;
 }
 
 // INetworkService

@@ -43,16 +43,15 @@ typedef struct {
     s16 channel;                       ///< Wifi channel number. 0 = use default, otherwise this must be one of the following depending on the frequency field. 24: 1, 6, 11. 50: 36, 40, 44, 48.
     u8 network_mode;                   ///< NetworkMode
     u8 performance_requirement;        ///< PerformanceRequirement
-    u8 security_type;                  ///< Security type, used during key derivation. 0 = use defaults, 1 = plaintext, 2 = encrypted.
+    u8 security_type;                  ///< Security type, used during key derivation. 0 = use defaults, 1 = plaintext, 2 = encrypted. [11.0.0+] 3: Standard WPA2-PSK.
     s8 static_aes_key_index;           ///< StaticAesKeyIndex. Used as the array-index for selecting the KeySource used with GenerateAesKek during key derivation. Should be 1-2, otherwise GenerateAesKek is skipped and zeros are used for the AccessKey instead.
     u8 unk_x8C;                        ///< Unknown
     u8 priority;                       ///< Priority. Must match one of the following, depending on the used service (doesn't apply to \ref lp2pJoin): 55 = SystemPriority (lp2p:sys), 90 = ApplicationPriority (lp2p:app and lp2p:sys).
     u8 stealth_enabled;                ///< StealthEnabled. Bool flag, controls whether the SSID is hidden.
     u8 unk_x8F;                        ///< If zero, a default value of 0x20 is used.
     u8 unk_x90[0x130];                 ///< Unknown
-    u8 preshared_key_binary_size;      ///< PresharedKeyBinarySize. Must be 0x20 during key derivation.
-    u8 preshared_key[0x20];            ///< PresharedKey. Used during key derivation.
-    u8 unk_x1E1[0x1F];                 ///< Unknown
+    u8 preshared_key_binary_size;      ///< PresharedKeyBinarySize
+    u8 preshared_key[0x3F];            ///< PresharedKey. Used during key derivation.
 } Lp2pGroupInfo;
 
 /// ScanResult
@@ -115,6 +114,7 @@ void lp2pGroupInfoSetServiceName(Lp2pGroupInfo *info, const char *name);
 
 /**
  * @brief Sets Lp2pGroupInfo::flags_count and Lp2pGroupInfo::flags.
+ * @note The default is count=1 flags[0]=1, which is used by \ref lp2pCreateGroupInfo. [11.0.0+] To use standard WPA2-PSK, you can use flags[0]=0.
  * @param info \ref Lp2pGroupInfo
  * @param[in] flags Lp2pGroupInfo::flags
  * @param[in] count Lp2pGroupInfo::flags_count
@@ -153,11 +153,21 @@ NX_CONSTEXPR void lp2pGroupInfoSetStealthEnabled(Lp2pGroupInfo *info, bool flag)
 /**
  * @brief Sets the PresharedKey for the specified \ref Lp2pGroupInfo.
  * @note Using this is required before using the \ref Lp2pGroupInfo as input for any cmds, so that Lp2pGroupInfo::preshared_key_binary_size gets initialized.
+ * @note If standard WPA2-PSK is being used, use \ref lp2pGroupInfoSetPassphrase instead.
  * @param info \ref Lp2pGroupInfo
  * @param[in] key Data for the PresharedKey.
  * @param[in] size Size to copy into the PresharedKey, max is 0x20.
  */
 void lp2pGroupInfoSetPresharedKey(Lp2pGroupInfo *info, const void* key, size_t size);
+
+/**
+ * @brief Sets the passphrase, for when standard WPA2-PSK is being used.
+ * @note Configure standard WPA2-PSK usage via \ref lp2pGroupInfoSetFlags / Lp2pGroupInfo::security_type.
+ * @note Only available on [11.0.0+].
+ * @param info \ref Lp2pGroupInfo
+ * @param[in] passphrase Passphrase string, max length is 0x3F.
+ */
+Result lp2pGroupInfoSetPassphrase(Lp2pGroupInfo *info, const char *passphrase);
 
 ///@name INetworkService
 ///@{
@@ -197,6 +207,7 @@ Result lp2pSetAdvertiseData(const void* buffer, size_t size);
  * @brief This sends an Action frame to the specified \ref Lp2pGroupId, with the specified destination \ref Lp2pMacAddress.
  * @note The role (\ref lp2pGetRole) must be non-zero.
  * @note The error from \ref lp2pGetNetworkInterfaceLastError will be returned if it's set.
+ * @note [11.0.0+] Lp2pGroupInfo::security_type must be value 2 (default encryption), otherwise an error is returned.
  * @param[in] buffer Input buffer containing arbitrary user data.
  * @param[in] size Input buffer size, must be <=0x400.
  * @param[in] addr \ref Lp2pMacAddress, this can be a broadcast address. This must be non-zero.
