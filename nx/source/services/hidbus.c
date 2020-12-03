@@ -546,21 +546,21 @@ Result hidbusGetJoyPollingReceivedData(HidbusBusHandle handle, HidbusJoyPollingR
 
         if (polling_mode == HidbusJoyPollingMode_SixAxisSensorDisable) {
             size = tmp_entries.joydisable[i].out_size;
-            if (size > sizeof(tmp_entries.joydisable[i].data)) return MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen);
+            if (size > sizeof(tmp_entries.joydisable[i].data)) size = sizeof(tmp_entries.joydisable[i].data);
             memcpy(recv_data[i].data, tmp_entries.joydisable[i].data, size);
             recv_data[i].out_size = size;
             recv_data[i].sampling_number = tmp_entries.joydisable[i].sampling_number;
         }
         else if (polling_mode == HidbusJoyPollingMode_SixAxisSensorEnable) {
             size = tmp_entries.joyenable[i].out_size;
-            if (size > sizeof(tmp_entries.joyenable[i].data)) return MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen);
+            if (size > sizeof(tmp_entries.joyenable[i].data)) size = sizeof(tmp_entries.joyenable[i].data);
             memcpy(recv_data[i].data, tmp_entries.joyenable[i].data, size);
             recv_data[i].out_size = size;
             recv_data[i].sampling_number = tmp_entries.joyenable[i].sampling_number;
         }
         else if (hosversionAtLeast(6,0,0) && polling_mode == HidbusJoyPollingMode_ButtonOnly) {
             size = tmp_entries.joybutton[i].out_size;
-            if (size > sizeof(tmp_entries.joybutton[i].data)) return MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen);
+            if (size > sizeof(tmp_entries.joybutton[i].data)) size = sizeof(tmp_entries.joybutton[i].data);
             memcpy(recv_data[i].data, tmp_entries.joybutton[i].data, size);
             recv_data[i].out_size = size;
             recv_data[i].sampling_number = tmp_entries.joybutton[i].sampling_number;
