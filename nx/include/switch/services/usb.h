@@ -207,3 +207,14 @@ enum usb_iso_usage_type {
     USB_ISO_USAGE_TYPE_IMPLICIT = 2,
 };
 
+/// USB Device States, per USB 2.0 spec
+typedef enum {
+    UsbState_Detached   = 0, ///< Device is not attached to USB.
+    UsbState_Attached   = 1, ///< Device is attached, but is not powered.
+    UsbState_Powered    = 2, ///< Device is attached and powered, but has not been reset.
+    UsbState_Default    = 3, ///< Device is attached, powered, and has been reset, but does not have an address.
+    UsbState_Address    = 4, ///< Device is attached, powered, has been reset, has an address, but is not configured.
+    UsbState_Configured = 5, ///< Device is attached, powered, has been reset, has an address, configured, and may be used.
+    UsbState_Suspended  = 6, ///< Device is attached and powered, but has not seen bus activity for 3ms. Device is suspended and cannot be used.
+} UsbState;
+

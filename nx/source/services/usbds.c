@@ -223,18 +223,19 @@ static Result _usbDsBindDevice(UsbComplexId complexId, Handle prochandle) {
     return rc;
 }
 
-Result usbDsGetState(u32 *out) {
-    return _usbDsCmdNoInOutU32(&g_usbDsSrv, out, hosversionAtLeast(11,0,0) ? 3 : 4);
+Result usbDsGetState(UsbState *out) {
+    _Static_assert(sizeof(*out) == sizeof(u32));
+    return _usbDsCmdNoInOutU32(&g_usbDsSrv, (u32 *)out, hosversionAtLeast(11,0,0) ? 3 : 4);
 }
 
 Result usbDsWaitReady(u64 timeout) {
     Result rc;
-    u32 state = 0;
+    UsbState state = UsbState_Detached;
 
     rc = usbDsGetState(&state);
     if (R_FAILED(rc)) return rc;
 
-    while (R_SUCCEEDED(rc) && state != 5) {
+    while (R_SUCCEEDED(rc) && state != UsbState_Configured) {
         eventWait(&g_usbDsStateChangeEvent, timeout);
         eventClear(&g_usbDsStateChangeEvent);
         rc = usbDsGetState(&state);
