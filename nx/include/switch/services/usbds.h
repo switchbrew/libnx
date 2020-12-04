@@ -80,7 +80,7 @@ Result usbDsParseReportData(UsbDsReportData *reportdata, u32 urbId, u32 *request
 
 Event* usbDsGetStateChangeEvent(void);
 
-// Gets the device state. See \ref UsbState.
+/// Gets the device state. See \ref UsbState.
 Result usbDsGetState(UsbState* out);
 
 /// Removed in [5.0.0+].
