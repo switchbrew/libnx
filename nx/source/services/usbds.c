@@ -657,12 +657,21 @@ Result usbDsInterface_AppendConfigurationData(UsbDsInterface* interface, UsbDevi
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    const struct {
-        u8 intf_num;
-        u32 speed;
-    } in = { interface->interface_index, speed };
+    if (hosversionBefore(11,0,0)) {
+        const struct {
+            u8 intf_num;
+            u8 pad[3];
+            u32 speed;
+        } in = { interface->interface_index, {0}, speed };
 
-    return serviceDispatchIn(&interface->s, hosversionAtLeast(11,0,0) ? 10 : 12, in,
+        return serviceDispatchIn(&interface->s, 12, in,
+            .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
+            .buffers = { { buffer, size } },
+        );
+    }
+
+    u32 in = speed;
+    return serviceDispatchIn(&interface->s, 10, in,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
         .buffers = { { buffer, size } },
     );
