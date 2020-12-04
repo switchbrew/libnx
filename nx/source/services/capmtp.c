@@ -86,7 +86,8 @@ static Result _capmtpOpenSession(Service *srv) {
 
 static Result _capmtpOpen(u32 max_folders, u32 max_img, u32 max_vid, const char *other_name) {
     u16 buffer[0x100];
-    size_t len = utf8_to_utf16(buffer, (const u8*)other_name, sizeof(buffer)/sizeof(u16));
+    size_t len = utf8_to_utf16(buffer, (const u8*)other_name, sizeof(buffer)/sizeof(u16) - 1);
+    buffer[len] = 0;
     const struct {
         u32 tmem_size;
         u32 folder_count;
@@ -96,7 +97,7 @@ static Result _capmtpOpen(u32 max_folders, u32 max_img, u32 max_vid, const char 
 
     return serviceDispatchIn(&g_capmtp, 0, in,
         .buffer_attrs = { SfBufferAttr_In | SfBufferAttr_HipcMapAlias },
-        .buffers = { { buffer, 2*len } },
+        .buffers = { { buffer, 2*(len+1) } },
         .in_num_handles = 1,
         .in_handles = { g_tmem.handle },
     );
