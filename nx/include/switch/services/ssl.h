@@ -71,12 +71,14 @@ typedef enum {
     SslDebugOptionType_AllowDisableVerifyOption                               =    0,            ///< AllowDisableVerifyOption
 } SslDebugOptionType;
 
-/// SslVersion. This is a bitmask which controls the min/max TLS versions to use, depending on which lowest/highest bits are set (if Auto isn't set).
+/// SslVersion. This is a bitmask which controls the min/max TLS versions to use, depending on which lowest/highest bits are set (if Auto* isn't set).
 typedef enum {
     SslVersion_Auto                                                           =  BIT(0),            ///< TLS version min = 1.0, max = 1.2.
     SslVersion_TlsV10                                                         =  BIT(3),            ///< TLS 1.0.
     SslVersion_TlsV11                                                         =  BIT(4),            ///< TLS 1.1.
     SslVersion_TlsV12                                                         =  BIT(5),            ///< TLS 1.2.
+    SslVersion_TlsV13                                                         =  BIT(6),            ///< [11.0.0+] TLS 1.3.
+    SslVersion_Auto24                                                         =  BIT(24),           ///< [11.0.0+] Same as Auto.
 } SslVersion;
 
 /// CertificateFormat
