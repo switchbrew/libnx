@@ -2097,7 +2097,7 @@ Result hidGetPalmaConnectionHandle(HidNpadIdType id, HidPalmaConnectionHandle *o
 Result hidInitializePalma(HidPalmaConnectionHandle handle);
 
 /**
- * @brief AcquirePalmaOperationCompleteEvent
+ * @brief Gets an Event which is signaled when data is available with \ref hidGetPalmaOperationInfo.
  * @note The Event must be closed by the user once finished with it.
  * @note Only available on [5.0.0+].
  * @param[in] handle \ref HidPalmaConnectionHandle
@@ -2107,7 +2107,8 @@ Result hidInitializePalma(HidPalmaConnectionHandle handle);
 Result hidAcquirePalmaOperationCompleteEvent(HidPalmaConnectionHandle handle, Event* out_event, bool autoclear);
 
 /**
- * @brief GetPalmaOperationInfo
+ * @brief Gets \ref HidPalmaOperationInfo for a completed operation.
+ * @note This must be used at some point following using any of the other Palma cmds which trigger an Operation, once the Event from \ref hidAcquirePalmaOperationCompleteEvent is signaled. Up to 4 Operations can be queued at once, the other cmds will throw an error once there's too many operations.
  * @note Only available on [5.0.0+].
  * @param[in] handle \ref HidPalmaConnectionHandle
  * @param[out] out \ref HidPalmaOperationInfo
@@ -2116,6 +2117,7 @@ Result hidGetPalmaOperationInfo(HidPalmaConnectionHandle handle, HidPalmaOperati
 
 /**
  * @brief PlayPalmaActivity
+ * @note See \ref hidGetPalmaOperationInfo.
  * @note Only available on [5.0.0+].
  * @param[in] handle \ref HidPalmaConnectionHandle
  * @param[in] val Input value.
@@ -2124,6 +2126,7 @@ Result hidPlayPalmaActivity(HidPalmaConnectionHandle handle, u16 val);
 
 /**
  * @brief SetPalmaFrModeType
+ * @note See \ref hidGetPalmaOperationInfo.
  * @note Only available on [5.0.0+].
  * @param[in] handle \ref HidPalmaConnectionHandle
  * @param[in] type \ref HidPalmaFrModeType
@@ -2132,6 +2135,8 @@ Result hidSetPalmaFrModeType(HidPalmaConnectionHandle handle, HidPalmaFrModeType
 
 /**
  * @brief ReadPalmaStep
+ * @note See \ref hidGetPalmaOperationInfo.
+ * @note \ref hidEnablePalmaStep should be used before this.
  * @note Only available on [5.0.0+].
  * @param[in] handle \ref HidPalmaConnectionHandle
  */
@@ -2139,6 +2144,7 @@ Result hidReadPalmaStep(HidPalmaConnectionHandle handle);
 
 /**
  * @brief EnablePalmaStep
+ * @note See \ref hidGetPalmaOperationInfo.
  * @note Only available on [5.0.0+].
  * @param[in] handle \ref HidPalmaConnectionHandle
  * @param[in] flag Flag
@@ -2147,6 +2153,7 @@ Result hidEnablePalmaStep(HidPalmaConnectionHandle handle, bool flag);
 
 /**
  * @brief ResetPalmaStep
+ * @note See \ref hidGetPalmaOperationInfo.
  * @note Only available on [5.0.0+].
  * @param[in] handle \ref HidPalmaConnectionHandle
  */
@@ -2154,6 +2161,7 @@ Result hidResetPalmaStep(HidPalmaConnectionHandle handle);
 
 /**
  * @brief ReadPalmaApplicationSection
+ * @note See \ref hidGetPalmaOperationInfo.
  * @note Only available on [5.0.0+].
  * @param[in] handle \ref HidPalmaConnectionHandle
  * @param[in] inval0 First input value. This must be within the size of \ref HidPalmaApplicationSectionAccessBuffer.
@@ -2163,6 +2171,7 @@ Result hidReadPalmaApplicationSection(HidPalmaConnectionHandle handle, s32 inval
 
 /**
  * @brief WritePalmaApplicationSection
+ * @note See \ref hidGetPalmaOperationInfo.
  * @note Only available on [5.0.0+].
  * @param[in] handle \ref HidPalmaConnectionHandle
  * @param[in] inval0 First input value.
@@ -2173,6 +2182,7 @@ Result hidWritePalmaApplicationSection(HidPalmaConnectionHandle handle, s32 inva
 
 /**
  * @brief ReadPalmaUniqueCode
+ * @note See \ref hidGetPalmaOperationInfo.
  * @note Only available on [5.0.0+].
  * @param[in] handle \ref HidPalmaConnectionHandle
  */
@@ -2180,6 +2190,7 @@ Result hidReadPalmaUniqueCode(HidPalmaConnectionHandle handle);
 
 /**
  * @brief SetPalmaUniqueCodeInvalid
+ * @note See \ref hidGetPalmaOperationInfo.
  * @note Only available on [5.0.0+].
  * @param[in] handle \ref HidPalmaConnectionHandle
  */
@@ -2187,6 +2198,7 @@ Result hidSetPalmaUniqueCodeInvalid(HidPalmaConnectionHandle handle);
 
 /**
  * @brief WritePalmaActivityEntry
+ * @note See \ref hidGetPalmaOperationInfo.
  * @note Only available on [5.0.0+].
  * @param[in] handle \ref HidPalmaConnectionHandle
  * @param[in] unk Unknown
@@ -2196,6 +2208,7 @@ Result hidWritePalmaActivityEntry(HidPalmaConnectionHandle handle, u16 unk, cons
 
 /**
  * @brief WritePalmaRgbLedPatternEntry
+ * @note See \ref hidGetPalmaOperationInfo.
  * @note Only available on [5.0.0+].
  * @param[in] handle \ref HidPalmaConnectionHandle
  * @param[in] unk Unknown
@@ -2206,6 +2219,7 @@ Result hidWritePalmaRgbLedPatternEntry(HidPalmaConnectionHandle handle, u16 unk,
 
 /**
  * @brief WritePalmaWaveEntry
+ * @note See \ref hidGetPalmaOperationInfo.
  * @note Only available on [5.0.0+].
  * @param[in] handle \ref HidPalmaConnectionHandle
  * @param[in] wave_set \ref HidPalmaWaveSet
@@ -2218,6 +2232,7 @@ Result hidWritePalmaWaveEntry(HidPalmaConnectionHandle handle, HidPalmaWaveSet w
 
 /**
  * @brief SetPalmaDataBaseIdentificationVersion
+ * @note See \ref hidGetPalmaOperationInfo.
  * @note Only available on [5.0.0+].
  * @param[in] handle \ref HidPalmaConnectionHandle
  * @param[in] version Version
@@ -2226,6 +2241,7 @@ Result hidSetPalmaDataBaseIdentificationVersion(HidPalmaConnectionHandle handle,
 
 /**
  * @brief GetPalmaDataBaseIdentificationVersion
+ * @note See \ref hidGetPalmaOperationInfo.
  * @note Only available on [5.0.0+].
  * @param[in] handle \ref HidPalmaConnectionHandle
  */
@@ -2233,6 +2249,7 @@ Result hidGetPalmaDataBaseIdentificationVersion(HidPalmaConnectionHandle handle)
 
 /**
  * @brief SuspendPalmaFeature
+ * @note See \ref hidGetPalmaOperationInfo.
  * @note Only available on [5.0.0+].
  * @param[in] handle \ref HidPalmaConnectionHandle
  * @param[in] features Bitfield of \ref HidPalmaFeature.
@@ -2241,6 +2258,7 @@ Result hidSuspendPalmaFeature(HidPalmaConnectionHandle handle, u32 features);
 
 /**
  * @brief ReadPalmaPlayLog
+ * @note See \ref hidGetPalmaOperationInfo.
  * @note Only available on [5.1.0+].
  * @param[in] handle \ref HidPalmaConnectionHandle
  * @param[in] unk Unknown
@@ -2249,6 +2267,7 @@ Result hidReadPalmaPlayLog(HidPalmaConnectionHandle handle, u16 unk);
 
 /**
  * @brief ResetPalmaPlayLog
+ * @note See \ref hidGetPalmaOperationInfo.
  * @note Only available on [5.1.0+].
  * @param[in] handle \ref HidPalmaConnectionHandle
  * @param[in] unk Unknown
@@ -2298,8 +2317,6 @@ Result hidEnablePalmaBoostMode(bool flag);
  */
 Result hidGetPalmaBluetoothAddress(HidPalmaConnectionHandle handle, BtdrvAddress *out);
 
-///@}
-
 /**
  * @brief SetDisallowedPalmaConnection
  * @note Only available on [8.0.0+].
@@ -2307,6 +2324,8 @@ Result hidGetPalmaBluetoothAddress(HidPalmaConnectionHandle handle, BtdrvAddress
  * @param[in] count Total entries in the addrs array.
  */
 Result hidSetDisallowedPalmaConnection(const BtdrvAddress *addrs, s32 count);
+
+///@}
 
 /**
  * @brief SetNpadCommunicationMode
