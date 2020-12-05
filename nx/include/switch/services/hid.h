@@ -2329,12 +2329,14 @@ Result hidSetDisallowedPalmaConnection(const BtdrvAddress *addrs, s32 count);
 
 /**
  * @brief SetNpadCommunicationMode
+ * @note [2.0.0+] Stubbed, just returns 0.
  * @param[in] mode \ref HidNpadCommunicationMode
  */
 Result hidSetNpadCommunicationMode(HidNpadCommunicationMode mode);
 
 /**
  * @brief GetNpadCommunicationMode
+ * @note [2.0.0+] Stubbed, always returns output mode ::HidNpadCommunicationMode_Default.
  * @param[out] out \ref HidNpadCommunicationMode
  */
 Result hidGetNpadCommunicationMode(HidNpadCommunicationMode *out);
