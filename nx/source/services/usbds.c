@@ -4,6 +4,7 @@
 #include "services/usbds.h"
 #include "runtime/hosversion.h"
 #include "runtime/util/utf.h"
+#include "switch/arm/counter.h"
 
 #define TOTAL_INTERFACES 4
 #define TOTAL_ENDPOINTS_IN 16
@@ -234,12 +235,27 @@ Result usbDsWaitReady(u64 timeout) {
 
     rc = usbDsGetState(&state);
     if (R_FAILED(rc)) return rc;
+    if (state == UsbState_Configured) return 0;
 
-    while (R_SUCCEEDED(rc) && state != UsbState_Configured) {
+    bool has_timeout = timeout != UINT64_MAX;
+    u64 deadline = 0;
+
+    if (has_timeout)
+        deadline = armGetSystemTick() + armNsToTicks(timeout);
+
+    do {
+        if (has_timeout) {
+            s64 remaining = deadline - armGetSystemTick();
+            timeout = remaining > 0 ? armTicksToNs(remaining) : 0;
+        }
+
         eventWait(&g_usbDsStateChangeEvent, timeout);
         eventClear(&g_usbDsStateChangeEvent);
         rc = usbDsGetState(&state);
-    }
+    } while (R_SUCCEEDED(rc) && state != UsbState_Configured && timeout > 0);
+
+    if (R_SUCCEEDED(rc) && state != UsbState_Configured && timeout == 0)
+        return KERNELRESULT(TimedOut);
 
     return rc;
 }
@@ -259,7 +275,7 @@ Result usbDsParseReportData(UsbDsReportData *reportdata, u32 urbId, u32 *request
     if (pos == count) return MAKERESULT(Module_Libnx, LibnxError_NotFound);
 
     switch(entry->urb_status) {
-	case 0x3:
+        case 0x3:
             rc = 0;
         break;
 
