@@ -274,7 +274,7 @@ typedef struct {
 /**
  * @brief Set the process heap to a given size. It can both extend and shrink the heap.
  * @param[out] out_addr Variable to which write the address of the heap (which is randomized and fixed by the kernel)
- * @param[in] size Size of the heap, must be a multiple of 0x2000000 and [2.0.0+] less than 0x18000000.
+ * @param[in] size Size of the heap, must be a multiple of 0x200000 and [2.0.0+] less than 0x18000000.
  * @return Result code.
  * @note Syscall number 0x01.
  */
