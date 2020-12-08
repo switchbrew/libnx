@@ -9,6 +9,12 @@
 #include "../services/hidsys.h"
 #include "../sf/service.h"
 
+/// HiddbgNpadButton. For the remaining buttons, see \ref HidNpadButton.
+typedef enum {
+    HiddbgNpadButton_Home    = BIT(18),         ///< HOME button
+    HiddbgNpadButton_Capture = BIT(19),         ///< Capture button
+} HiddbgNpadButton;
+
 /// State for overriding \ref HidDebugPadState.
 typedef struct {
     u32 attributes;                             ///< Bitfield of \ref HidDebugPadAttribute.
@@ -65,7 +71,7 @@ typedef struct {
     u8 flags;                                             ///< ORRed with IsPowered to set the value of the first byte for \ref HidNpadSystemProperties. For example, value 1 here will set IsCharging for the main PowerInfo.
     u8 unk_x2[0x6];                                       ///< Unknown
     u32 battery_level;                                    ///< BatteryLevel for the main PowerInfo, see \ref HidPowerInfo.
-    u32 buttons;                                          ///< See \ref HidControllerKeys.
+    u32 buttons;                                          ///< See \ref HiddbgNpadButton.
     HidAnalogStickState analog_stick_l;                   ///< AnalogStickL
     HidAnalogStickState analog_stick_r;                   ///< AnalogStickR
     u8 unk_x20;                                           ///< Unused for input. Set with output from \ref hiddbgDumpHdlsStates. Not set by \ref hiddbgGetAbstractedPadsState.
@@ -76,7 +82,7 @@ typedef struct {
 typedef struct {
     u32 battery_level;                                    ///< BatteryLevel for the main PowerInfo, see \ref HidPowerInfo.
     u32 flags;                                            ///< Used to set the main PowerInfo for \ref HidNpadSystemProperties. BIT(0) -> IsPowered, BIT(1) -> IsCharging.
-    u64 buttons;                                          ///< See \ref HidControllerKeys. [9.0.0+] Masked with 0xfffffffff00fffff.
+    u64 buttons;                                          ///< See \ref HiddbgNpadButton. [9.0.0+] Masked with 0xfffffffff00fffff.
     HidAnalogStickState analog_stick_l;                   ///< AnalogStickL
     HidAnalogStickState analog_stick_r;                   ///< AnalogStickR
     u8 unk_x20;                                           ///< Unused for input. Set with output from \ref hiddbgDumpHdlsStates.
