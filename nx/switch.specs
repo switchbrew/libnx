@@ -1,7 +1,7 @@
 %rename link                old_link
 
 *link:
-%(old_link) -T %:getenv(DEVKITPRO /libnx/switch.ld) -pie --gc-sections -z text -z nodynamic-undefined-weak --build-id=sha1 --nx-module-name
+%(old_link) -T %:getenv(DEVKITPRO /libnx/switch.ld) -pie --no-dynamic-linker --spare-dynamic-tags=0 --gc-sections -z text -z nodynamic-undefined-weak --build-id=sha1 --nx-module-name
 
 *startfile:
 crti%O%s crtbegin%O%s
