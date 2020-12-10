@@ -13,7 +13,7 @@ typedef struct  {
     u32 bsdsockets_version;                     ///< Observed 1 on 2.0 LibAppletWeb, 2 on 3.0.
 
     u32 tcp_tx_buf_size;                        ///< Size of the TCP transfer (send) buffer (initial or fixed).
-    u32 tcp_rx_buf_size;                        ///< Size of the TCP recieve buffer (initial or fixed).
+    u32 tcp_rx_buf_size;                        ///< Size of the TCP receive buffer (initial or fixed).
     u32 tcp_tx_buf_max_size;                    ///< Maximum size of the TCP transfer (send) buffer. If it is 0, the size of the buffer is fixed to its initial value.
     u32 tcp_rx_buf_max_size;                    ///< Maximum size of the TCP receive buffer. If it is 0, the size of the buffer is fixed to its initial value.
 
