@@ -165,7 +165,7 @@ void lp2pGroupInfoSetPresharedKey(Lp2pGroupInfo *info, const void* key, size_t s
  * @note Configure standard WPA2-PSK usage via \ref lp2pGroupInfoSetFlags / Lp2pGroupInfo::security_type.
  * @note Only available on [11.0.0+].
  * @param info \ref Lp2pGroupInfo
- * @param[in] passphrase Passphrase string, max length is 0x3F.
+ * @param[in] passphrase Passphrase string, the required length is 0x8-0x3F.
  */
 Result lp2pGroupInfoSetPassphrase(Lp2pGroupInfo *info, const char *passphrase);
 
