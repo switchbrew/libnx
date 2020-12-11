@@ -32,7 +32,7 @@ typedef struct {
     u8 unk_x0[0x10];                   ///< When zero, this is set to randomly-generated data. Used during key derivation.
     u64 local_communication_id;        ///< LocalCommunicationId. When zero, the value from the user-process control.nacp is loaded. This is later validated by \ref lp2pJoin / \ref lp2pCreateGroup the same way as LdnNetworkConfig::local_communication_id. Used during key derivation.
     Lp2pGroupId group_id;              ///< Should be all-zero for the input struct so that the default is used.
-    char service_name[0x21];           ///< ServiceName. NUL-terminated string for the SSID. If the SSID is invalid, a new SSID is generated, however in this case the original SSID must contain a '-' character.
+    char service_name[0x21];           ///< ServiceName. NUL-terminated string for the SSID. These characters must be '-' or alphanumeric (lowercase/uppercase). '_' must not be used, unless you generate valid data for that. The data for '_' will be automatically generated if it's not present.
     s8 flags_count;                    ///< Must be <=0x3F.
     s8 flags[0x40];                    ///< Array of s8 with the above count. Each entry value must be <=0x3F. Each entry is an array index used to load a set of flags from a global array with the specified index.
     u8 supported_platform;             ///< SupportedPlatform. Must match value 1. 0 is PlatformIdNX, 1 is PlatformIdFuji.
