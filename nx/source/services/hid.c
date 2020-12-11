@@ -846,7 +846,7 @@ bool hidKeyboardModifierUp(HidKeyboardModifier modifier) {
 
 bool hidKeyboardHeld(HidKeyboardScancode key) {
     rwlockReadLock(&g_hidLock);
-    u32 tmp = g_keyboardHeld[key / 64] & (1 << (key % 64));
+    u64 tmp = g_keyboardHeld[key / 64] & (1ULL << (key % 64));
     rwlockReadUnlock(&g_hidLock);
 
     return !!tmp;
@@ -854,7 +854,7 @@ bool hidKeyboardHeld(HidKeyboardScancode key) {
 
 bool hidKeyboardDown(HidKeyboardScancode key) {
     rwlockReadLock(&g_hidLock);
-    u32 tmp = g_keyboardDown[key / 64] & (1 << (key % 64));
+    u64 tmp = g_keyboardDown[key / 64] & (1ULL << (key % 64));
     rwlockReadUnlock(&g_hidLock);
 
     return !!tmp;
@@ -862,7 +862,7 @@ bool hidKeyboardDown(HidKeyboardScancode key) {
 
 bool hidKeyboardUp(HidKeyboardScancode key) {
     rwlockReadLock(&g_hidLock);
-    u32 tmp = g_keyboardUp[key / 64] & (1 << (key % 64));
+    u64 tmp = g_keyboardUp[key / 64] & (1ULL << (key % 64));
     rwlockReadUnlock(&g_hidLock);
 
     return !!tmp;
