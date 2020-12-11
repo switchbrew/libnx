@@ -846,26 +846,26 @@ bool hidKeyboardModifierUp(HidKeyboardModifier modifier) {
 
 bool hidKeyboardHeld(HidKeyboardScancode key) {
     rwlockReadLock(&g_hidLock);
-    u64 tmp = g_keyboardHeld[key / 64] & (1ULL << (key % 64));
+    bool tmp = g_keyboardHeld[key / 64] & (UINT64_C(1) << (key % 64));
     rwlockReadUnlock(&g_hidLock);
 
-    return !!tmp;
+    return tmp;
 }
 
 bool hidKeyboardDown(HidKeyboardScancode key) {
     rwlockReadLock(&g_hidLock);
-    u64 tmp = g_keyboardDown[key / 64] & (1ULL << (key % 64));
+    bool tmp = g_keyboardDown[key / 64] & (UINT64_C(1) << (key % 64));
     rwlockReadUnlock(&g_hidLock);
 
-    return !!tmp;
+    return tmp;
 }
 
 bool hidKeyboardUp(HidKeyboardScancode key) {
     rwlockReadLock(&g_hidLock);
-    u64 tmp = g_keyboardUp[key / 64] & (1ULL << (key % 64));
+    bool tmp = g_keyboardUp[key / 64] & (UINT64_C(1) << (key % 64));
     rwlockReadUnlock(&g_hidLock);
 
-    return !!tmp;
+    return tmp;
 }
 
 u32 hidTouchCount(void) {
