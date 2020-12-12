@@ -7,6 +7,7 @@
 #include "../types.h"
 #include "../kernel/event.h"
 #include "../services/hid.h"
+#include "../services/btdrv_types.h"
 #include "../sf/service.h"
 
 /// Selects what button to map to.
@@ -179,6 +180,11 @@ typedef struct {
     u32 hardware_button_right_sr;                      ///< \ref HidcfgDigitalButtonAssignment HardwareButtonRightSR
     HidcfgAnalogStickAssignment hardware_stick_r;      ///< HardwareStickR
 } HidcfgButtonConfigRight;
+
+/// StorageName
+typedef struct {
+    u8 name[0x81];                                     ///< UTF-8 NUL-terminated name string.
+} HidcfgStorageName;
 
 /// Initialize hidsys.
 Result hidsysInitialize(void);
@@ -362,99 +368,219 @@ Result hidsysIsUsbConnected(HidsysUniquePadId unique_pad_id, bool *out);
 Result hidsysIsFirmwareUpdateNeededForNotification(HidsysUniquePadId unique_pad_id, bool *out);
 
 /**
- * @brief IsButtonConfigSupported
- * @note Only available on [10.0.0+].
+ * @brief Legacy IsButtonConfigSupported.
+ * @note Only available on [10.0.0-10.2.0]. On [11.0.0+], use \ref hidsysIsButtonConfigSupported instead.
  * @param[in] unique_pad_id \ref HidsysUniquePadId
  * @param[out] out Output bool flag.
  */
-Result hidsysIsButtonConfigSupported(HidsysUniquePadId unique_pad_id, bool *out);
+Result hidsysLegacyIsButtonConfigSupported(HidsysUniquePadId unique_pad_id, bool *out);
+
+/**
+ * @brief IsButtonConfigSupported
+ * @note Only available on [11.0.0+]. On [10.0.0-10.2.0], use \ref hidsysLegacyIsButtonConfigSupported instead.
+ * @param[in] addr \ref BtdrvAddress
+ * @param[out] out Output bool flag.
+ */
+Result hidsysIsButtonConfigSupported(BtdrvAddress addr, bool *out);
+
+/**
+ * @brief IsButtonConfigEmbeddedSupported
+ * @note Only available on [11.0.0+].
+ * @param[out] out Output bool flag.
+ */
+Result hidsysIsButtonConfigEmbeddedSupported(bool *out);
+
+/**
+ * @brief Legacy DeleteButtonConfig.
+ * @note Only available on [10.0.0-10.2.0]. On [11.0.0+], use \ref hidsysDeleteButtonConfig instead.
+ * @param[in] unique_pad_id \ref HidsysUniquePadId
+ */
+Result hidsysLegacyDeleteButtonConfig(HidsysUniquePadId unique_pad_id);
 
 /**
  * @brief DeleteButtonConfig
- * @note Only available on [10.0.0+].
- * @param[in] unique_pad_id \ref HidsysUniquePadId
+ * @note Only available on [11.0.0+]. On [10.0.0-10.2.0], use \ref hidsysLegacyDeleteButtonConfig instead.
+ * @param[in] addr \ref BtdrvAddress
  */
-Result hidsysDeleteButtonConfig(HidsysUniquePadId unique_pad_id);
+Result hidsysDeleteButtonConfig(BtdrvAddress addr);
 
 /**
- * @brief SetButtonConfigEnabled
- * @note Only available on [10.0.0+].
+ * @brief DeleteButtonConfigEmbedded
+ * @note Only available on [11.0.0+].
+ */
+Result hidsysDeleteButtonConfigEmbedded(void);
+
+/**
+ * @brief Legacy SetButtonConfigEnabled.
+ * @note Only available on [10.0.0-10.2.0]. On [11.0.0+], use \ref hidsysSetButtonConfigEnabled instead.
  * @param[in] unique_pad_id \ref HidsysUniquePadId
  * @param[in] flag Input flag.
  */
-Result hidsysSetButtonConfigEnabled(HidsysUniquePadId unique_pad_id, bool flag);
+Result hidsysLegacySetButtonConfigEnabled(HidsysUniquePadId unique_pad_id, bool flag);
 
 /**
- * @brief IsButtonConfigEnabled
- * @note Only available on [10.0.0+].
+ * @brief SetButtonConfigEnabled
+ * @note Only available on [11.0.0+]. On [10.0.0-10.2.0], use \ref hidsysLegacySetButtonConfigEnabled instead.
+ * @param[in] addr \ref BtdrvAddress
+ * @param[in] flag Input flag.
+ */
+Result hidsysSetButtonConfigEnabled(BtdrvAddress addr, bool flag);
+
+/**
+ * @brief SetButtonConfigEmbeddedEnabled
+ * @note Only available on [11.0.0+].
+ * @param[in] flag Input flag.
+ */
+Result hidsysSetButtonConfigEmbeddedEnabled(bool flag);
+
+/**
+ * @brief Legacy IsButtonConfigEnabled.
+ * @note Only available on [10.0.0-10.2.0]. On [11.0.0+], use \ref hidsysIsButtonConfigEnabled instead.
  * @param[in] unique_pad_id \ref HidsysUniquePadId
  * @param[out] out Output bool flag.
  */
-Result hidsysIsButtonConfigEnabled(HidsysUniquePadId unique_pad_id, bool *out);
+Result hidsysLegacyIsButtonConfigEnabled(HidsysUniquePadId unique_pad_id, bool *out);
 
 /**
- * @brief SetButtonConfigEmbedded
- * @note Only available on [10.0.0+].
+ * @brief IsButtonConfigEnabled
+ * @note Only available on [11.0.0+]. On [10.0.0-10.2.0], use \ref hidsysLegacyIsButtonConfigEnabled instead.
+ * @param[in] addr \ref BtdrvAddress
+ * @param[in] out Output bool flag.
+ */
+Result hidsysIsButtonConfigEnabled(BtdrvAddress addr, bool *out);
+
+/**
+ * @brief IsButtonConfigEmbeddedEnabled
+ * @note Only available on [11.0.0+].
+ * @param[out] out Output bool flag.
+ */
+Result hidsysIsButtonConfigEmbeddedEnabled(bool *out);
+
+/**
+ * @brief Legacy SetButtonConfigEmbedded.
+ * @note Only available on [10.0.0-10.2.0]. On [11.0.0+], use \ref hidsysSetButtonConfigEmbedded instead.
  * @param[in] unique_pad_id \ref HidsysUniquePadId
  * @param[in] config \ref HidsysButtonConfigEmbedded
  */
-Result hidsysSetButtonConfigEmbedded(HidsysUniquePadId unique_pad_id, const HidsysButtonConfigEmbedded *config);
+Result hidsysLegacySetButtonConfigEmbedded(HidsysUniquePadId unique_pad_id, const HidsysButtonConfigEmbedded *config);
 
 /**
- * @brief SetButtonConfigFull
- * @note Only available on [10.0.0+].
+ * @brief SetButtonConfigEmbedded
+ * @note Only available on [11.0.0+]. On [10.0.0-10.2.0], use \ref hidsysLegacySetButtonConfigEmbedded instead.
+ * @param[in] config \ref HidsysButtonConfigEmbedded
+ */
+Result hidsysSetButtonConfigEmbedded(const HidsysButtonConfigEmbedded *config);
+
+/**
+ * @brief Legacy SetButtonConfigFull.
+ * @note Only available on [10.0.0-10.2.0]. On [11.0.0+], use \ref hidsysSetButtonConfigFull instead.
  * @param[in] unique_pad_id \ref HidsysUniquePadId
  * @param[in] config \ref HidsysButtonConfigFull
  */
-Result hidsysSetButtonConfigFull(HidsysUniquePadId unique_pad_id, const HidsysButtonConfigFull *config);
+Result hidsysLegacySetButtonConfigFull(HidsysUniquePadId unique_pad_id, const HidsysButtonConfigFull *config);
 
 /**
- * @brief SetButtonConfigLeft
- * @note Only available on [10.0.0+].
+ * @brief SetButtonConfigFull
+ * @note Only available on [11.0.0+]. On [10.0.0-10.2.0], use \ref hidsysLegacySetButtonConfigFull instead.
+ * @param[in] addr \ref BtdrvAddress
+ * @param[in] config \ref HidsysButtonConfigFull
+ */
+Result hidsysSetButtonConfigFull(BtdrvAddress addr, const HidsysButtonConfigFull *config);
+
+/**
+ * @brief Legacy SetButtonConfigLeft.
+ * @note Only available on [10.0.0-10.2.0]. On [11.0.0+], use \ref hidsysSetButtonConfigLeft instead.
  * @param[in] unique_pad_id \ref HidsysUniquePadId
  * @param[in] config \ref HidsysButtonConfigLeft
  */
-Result hidsysSetButtonConfigLeft(HidsysUniquePadId unique_pad_id, const HidsysButtonConfigLeft *config);
+Result hidsysLegacySetButtonConfigLeft(HidsysUniquePadId unique_pad_id, const HidsysButtonConfigLeft *config);
 
 /**
- * @brief SetButtonConfigRight
- * @note Only available on [10.0.0+].
+ * @brief SetButtonConfigLeft
+ * @note Only available on [11.0.0+]. On [10.0.0-10.2.0], use \ref hidsysLegacySetButtonConfigLeft instead.
+ * @param[in] addr \ref BtdrvAddress
+ * @param[in] config \ref HidsysButtonConfigLeft
+ */
+Result hidsysSetButtonConfigLeft(BtdrvAddress addr, const HidsysButtonConfigLeft *config);
+
+/**
+ * @brief Legacy SetButtonConfigRight.
+ * @note Only available on [10.0.0-10.2.0]. On [11.0.0+], use \ref hidsysSetButtonConfigRight instead.
  * @param[in] unique_pad_id \ref HidsysUniquePadId
  * @param[in] config \ref HidsysButtonConfigRight
  */
-Result hidsysSetButtonConfigRight(HidsysUniquePadId unique_pad_id, const HidsysButtonConfigRight *config);
+Result hidsysLegacySetButtonConfigRight(HidsysUniquePadId unique_pad_id, const HidsysButtonConfigRight *config);
 
 /**
- * @brief GetButtonConfigEmbedded
- * @note Only available on [10.0.0+].
+ * @brief SetButtonConfigRight
+ * @note Only available on [11.0.0+]. On [10.0.0-10.2.0], use \ref hidsysLegacySetButtonConfigRight instead.
+ * @param[in] addr \ref BtdrvAddress
+ * @param[in] config \ref HidsysButtonConfigRight
+ */
+Result hidsysSetButtonConfigRight(BtdrvAddress addr, const HidsysButtonConfigRight *config);
+
+/**
+ * @brief Legacy GetButtonConfigEmbedded.
+ * @note Only available on [10.0.0-10.2.0]. On [11.0.0+], use \ref hidsysGetButtonConfigEmbedded instead.
  * @param[in] unique_pad_id \ref HidsysUniquePadId
  * @param[out] config \ref HidsysButtonConfigEmbedded
  */
-Result hidsysGetButtonConfigEmbedded(HidsysUniquePadId unique_pad_id, HidsysButtonConfigEmbedded *config);
+Result hidsysLegacyGetButtonConfigEmbedded(HidsysUniquePadId unique_pad_id, HidsysButtonConfigEmbedded *config);
 
 /**
- * @brief GetButtonConfigFull
- * @note Only available on [10.0.0+].
+ * @brief GetButtonConfigEmbedded
+ * @note Only available on [11.0.0+]. On [10.0.0-10.2.0], use \ref hidsysLegacyGetButtonConfigEmbedded instead.
+ * @param[out] config \ref HidsysButtonConfigEmbedded
+ */
+Result hidsysGetButtonConfigEmbedded(HidsysButtonConfigEmbedded *config);
+
+/**
+ * @brief Legacy GetButtonConfigFull.
+ * @note Only available on [10.0.0-10.2.0]. On [11.0.0+], use \ref hidsysGetButtonConfigFull instead.
  * @param[in] unique_pad_id \ref HidsysUniquePadId
  * @param[out] config \ref HidsysButtonConfigFull
  */
-Result hidsysGetButtonConfigFull(HidsysUniquePadId unique_pad_id, HidsysButtonConfigFull *config);
+Result hidsysLegacyGetButtonConfigFull(HidsysUniquePadId unique_pad_id, HidsysButtonConfigFull *config);
 
 /**
- * @brief GetButtonConfigLeft
- * @note Only available on [10.0.0+].
+ * @brief GetButtonConfigFull
+ * @note Only available on [11.0.0+]. On [10.0.0-10.2.0], use \ref hidsysLegacyGetButtonConfigFull instead.
+ * @param[in] addr \ref BtdrvAddress
+ * @param[out] config \ref HidsysButtonConfigFull
+ */
+Result hidsysGetButtonConfigFull(BtdrvAddress addr, HidsysButtonConfigFull *config);
+
+/**
+ * @brief Legacy GetButtonConfigLeft.
+ * @note Only available on [10.0.0-10.2.0]. On [11.0.0+], use \ref hidsysGetButtonConfigLeft instead.
  * @param[in] unique_pad_id \ref HidsysUniquePadId
  * @param[out] config \ref HidsysButtonConfigLeft
  */
-Result hidsysGetButtonConfigLeft(HidsysUniquePadId unique_pad_id, HidsysButtonConfigLeft *config);
+Result hidsysLegacyGetButtonConfigLeft(HidsysUniquePadId unique_pad_id, HidsysButtonConfigLeft *config);
 
 /**
- * @brief GetButtonConfigRight
- * @note Only available on [10.0.0+].
+ * @brief GetButtonConfigLeft
+ * @note Only available on [11.0.0+]. On [10.0.0-10.2.0], use \ref hidsysLegacyGetButtonConfigLeft instead.
+ * @param[in] addr \ref BtdrvAddress
+ * @param[out] config \ref HidsysButtonConfigLeft
+ */
+Result hidsysGetButtonConfigLeft(BtdrvAddress addr, HidsysButtonConfigLeft *config);
+
+/**
+ * @brief Legacy GetButtonConfigRight.
+ * @note Only available on [10.0.0-10.2.0]. On [11.0.0+], use \ref hidsysGetButtonConfigRight instead.
  * @param[in] unique_pad_id \ref HidsysUniquePadId
  * @param[out] config \ref HidsysButtonConfigRight
  */
-Result hidsysGetButtonConfigRight(HidsysUniquePadId unique_pad_id, HidsysButtonConfigRight *config);
+Result hidsysLegacyGetButtonConfigRight(HidsysUniquePadId unique_pad_id, HidsysButtonConfigRight *config);
+
+/**
+ * @brief GetButtonConfigRight
+ * @note Only available on [11.0.0+]. On [10.0.0-10.2.0], use \ref hidsysLegacyGetButtonConfigRight instead.
+ * @param[in] addr \ref BtdrvAddress
+ * @param[out] config \ref HidsysButtonConfigRight
+ */
+Result hidsysGetButtonConfigRight(BtdrvAddress addr, HidsysButtonConfigRight *config);
 
 /**
  * @brief IsCustomButtonConfigSupported
@@ -499,7 +625,7 @@ Result hidsysIsDefaultButtonConfigRight(const HidcfgButtonConfigRight *config, b
 /**
  * @brief IsButtonConfigStorageEmbeddedEmpty
  * @note Only available on [10.0.0+].
- * @param[in] index Array index for an array which contains a total of 5 entries.
+ * @param[in] index Array index, should be 0-4.
  * @param[out] out Output bool flag.
  */
 Result hidsysIsButtonConfigStorageEmbeddedEmpty(s32 index, bool *out);
@@ -507,7 +633,7 @@ Result hidsysIsButtonConfigStorageEmbeddedEmpty(s32 index, bool *out);
 /**
  * @brief IsButtonConfigStorageFullEmpty
  * @note Only available on [10.0.0+].
- * @param[in] index Array index for an array which contains a total of 5 entries.
+ * @param[in] index Array index, should be 0-4.
  * @param[out] out Output bool flag.
  */
 Result hidsysIsButtonConfigStorageFullEmpty(s32 index, bool *out);
@@ -515,7 +641,7 @@ Result hidsysIsButtonConfigStorageFullEmpty(s32 index, bool *out);
 /**
  * @brief IsButtonConfigStorageLeftEmpty
  * @note Only available on [10.0.0+].
- * @param[in] index Array index for an array which contains a total of 5 entries.
+ * @param[in] index Array index, should be 0-4.
  * @param[out] out Output bool flag.
  */
 Result hidsysIsButtonConfigStorageLeftEmpty(s32 index, bool *out);
@@ -523,100 +649,100 @@ Result hidsysIsButtonConfigStorageLeftEmpty(s32 index, bool *out);
 /**
  * @brief IsButtonConfigStorageRightEmpty
  * @note Only available on [10.0.0+].
- * @param[in] index Array index for an array which contains a total of 5 entries.
+ * @param[in] index Array index, should be 0-4.
  * @param[out] out Output bool flag.
  */
 Result hidsysIsButtonConfigStorageRightEmpty(s32 index, bool *out);
 
 /**
- * @brief GetButtonConfigStorageEmbedded
+ * @brief GetButtonConfigStorageEmbeddedDeprecated
  * @note Only available on [10.0.0+].
- * @param[in] index Array index for an array which contains a total of 5 entries.
+ * @param[in] index Array index, should be 0-4.
  * @param[out] config \ref HidcfgButtonConfigEmbedded
  */
-Result hidsysGetButtonConfigStorageEmbedded(s32 index, HidcfgButtonConfigEmbedded *config);
+Result hidsysGetButtonConfigStorageEmbeddedDeprecated(s32 index, HidcfgButtonConfigEmbedded *config);
 
 /**
- * @brief GetButtonConfigStorageFull
+ * @brief GetButtonConfigStorageFullDeprecated
  * @note Only available on [10.0.0+].
- * @param[in] index Array index for an array which contains a total of 5 entries.
+ * @param[in] index Array index, should be 0-4.
  * @param[out] config \ref HidcfgButtonConfigFull
  */
-Result hidsysGetButtonConfigStorageFull(s32 index, HidcfgButtonConfigFull *config);
+Result hidsysGetButtonConfigStorageFullDeprecated(s32 index, HidcfgButtonConfigFull *config);
 
 /**
- * @brief GetButtonConfigStorageLeft
+ * @brief GetButtonConfigStorageLeftDeprecated
  * @note Only available on [10.0.0+].
- * @param[in] index Array index for an array which contains a total of 5 entries.
+ * @param[in] index Array index, should be 0-4.
  * @param[out] config \ref HidcfgButtonConfigLeft
  */
-Result hidsysGetButtonConfigStorageLeft(s32 index, HidcfgButtonConfigLeft *config);
+Result hidsysGetButtonConfigStorageLeftDeprecated(s32 index, HidcfgButtonConfigLeft *config);
 
 /**
- * @brief GetButtonConfigStorageRight
+ * @brief GetButtonConfigStorageRightDeprecated
  * @note Only available on [10.0.0+].
- * @param[in] index Array index for an array which contains a total of 5 entries.
+ * @param[in] index Array index, should be 0-4.
  * @param[out] config \ref HidcfgButtonConfigRight
  */
-Result hidsysGetButtonConfigStorageRight(s32 index, HidcfgButtonConfigRight *config);
+Result hidsysGetButtonConfigStorageRightDeprecated(s32 index, HidcfgButtonConfigRight *config);
 
 /**
- * @brief SetButtonConfigStorageEmbedded
+ * @brief SetButtonConfigStorageEmbeddedDeprecated
  * @note Only available on [10.0.0+].
- * @param[in] index Array index for an array which contains a total of 5 entries.
+ * @param[in] index Array index, should be 0-4.
  * @param[in] config \ref HidcfgButtonConfigEmbedded
  */
-Result hidsysSetButtonConfigStorageEmbedded(s32 index, const HidcfgButtonConfigEmbedded *config);
+Result hidsysSetButtonConfigStorageEmbeddedDeprecated(s32 index, const HidcfgButtonConfigEmbedded *config);
 
 /**
- * @brief SetButtonConfigStorageFull
+ * @brief SetButtonConfigStorageFullDeprecated
  * @note Only available on [10.0.0+].
- * @param[in] index Array index for an array which contains a total of 5 entries.
+ * @param[in] index Array index, should be 0-4.
  * @param[in] config \ref HidcfgButtonConfigFull
  */
-Result hidsysSetButtonConfigStorageFull(s32 index, const HidcfgButtonConfigFull *config);
+Result hidsysSetButtonConfigStorageFullDeprecated(s32 index, const HidcfgButtonConfigFull *config);
 
 /**
- * @brief SetButtonConfigStorageLeft
+ * @brief SetButtonConfigStorageLeftDeprecated
  * @note Only available on [10.0.0+].
- * @param[in] index Array index for an array which contains a total of 5 entries.
+ * @param[in] index Array index, should be 0-4.
  * @param[in] config \ref HidcfgButtonConfigLeft
  */
-Result hidsysSetButtonConfigStorageLeft(s32 index, const HidcfgButtonConfigLeft *config);
+Result hidsysSetButtonConfigStorageLeftDeprecated(s32 index, const HidcfgButtonConfigLeft *config);
 
 /**
- * @brief SetButtonConfigStorageRight
+ * @brief SetButtonConfigStorageRightDeprecated
  * @note Only available on [10.0.0+].
- * @param[in] index Array index for an array which contains a total of 5 entries.
+ * @param[in] index Array index, should be 0-4.
  * @param[in] config \ref HidcfgButtonConfigRight
  */
-Result hidsysSetButtonConfigStorageRight(s32 index, const HidcfgButtonConfigRight *config);
+Result hidsysSetButtonConfigStorageRightDeprecated(s32 index, const HidcfgButtonConfigRight *config);
 
 /**
  * @brief DeleteButtonConfigStorageEmbedded
  * @note Only available on [10.0.0+].
- * @param[in] index Array index for an array which contains a total of 5 entries.
+ * @param[in] index Array index, should be 0-4.
  */
 Result hidsysDeleteButtonConfigStorageEmbedded(s32 index);
 
 /**
  * @brief DeleteButtonConfigStorageFull
  * @note Only available on [10.0.0+].
- * @param[in] index Array index for an array which contains a total of 5 entries.
+ * @param[in] index Array index, should be 0-4.
  */
 Result hidsysDeleteButtonConfigStorageFull(s32 index);
 
 /**
  * @brief DeleteButtonConfigStorageLeft
  * @note Only available on [10.0.0+].
- * @param[in] index Array index for an array which contains a total of 5 entries.
+ * @param[in] index Array index, should be 0-4.
  */
 Result hidsysDeleteButtonConfigStorageLeft(s32 index);
 
 /**
  * @brief DeleteButtonConfigStorageRight
  * @note Only available on [10.0.0+].
- * @param[in] index Array index for an array which contains a total of 5 entries.
+ * @param[in] index Array index, should be 0-4.
  */
 Result hidsysDeleteButtonConfigStorageRight(s32 index);
 
@@ -631,10 +757,9 @@ Result hidsysIsUsingCustomButtonConfig(HidsysUniquePadId unique_pad_id, bool *ou
 /**
  * @brief IsAnyCustomButtonConfigEnabled
  * @note Only available on [10.0.0+].
- * @param[in] unique_pad_id \ref HidsysUniquePadId
  * @param[out] out Output bool flag.
  */
-Result hidsysIsAnyCustomButtonConfigEnabled(HidsysUniquePadId unique_pad_id, bool *out);
+Result hidsysIsAnyCustomButtonConfigEnabled(bool *out);
 
 /**
  * @brief SetAllCustomButtonConfigEnabled
@@ -713,4 +838,76 @@ Result hidsysGetHidButtonConfigLeft(HidsysUniquePadId unique_pad_id, HidcfgButto
  * @param[out] config \ref HidcfgButtonConfigRight
  */
 Result hidsysGetHidButtonConfigRight(HidsysUniquePadId unique_pad_id, HidcfgButtonConfigRight *config);
+
+/**
+ * @brief GetButtonConfigStorageEmbedded
+ * @note Only available on [11.0.0+].
+ * @param[in] index Array index, should be 0-4.
+ * @param[out] config \ref HidcfgButtonConfigEmbedded
+ * @param[out] name \ref HidcfgStorageName
+ */
+Result hidsysGetButtonConfigStorageEmbedded(s32 index, HidcfgButtonConfigEmbedded *config, HidcfgStorageName *name);
+
+/**
+ * @brief GetButtonConfigStorageFull
+ * @note Only available on [11.0.0+].
+ * @param[in] index Array index, should be 0-4.
+ * @param[out] config \ref HidcfgButtonConfigFull
+ * @param[out] name \ref HidcfgStorageName
+ */
+Result hidsysGetButtonConfigStorageFull(s32 index, HidcfgButtonConfigFull *config, HidcfgStorageName *name);
+
+/**
+ * @brief GetButtonConfigStorageLeft
+ * @note Only available on [11.0.0+].
+ * @param[in] index Array index, should be 0-4.
+ * @param[out] config \ref HidcfgButtonConfigLeft
+ * @param[out] name \ref HidcfgStorageName
+ */
+Result hidsysGetButtonConfigStorageLeft(s32 index, HidcfgButtonConfigLeft *config, HidcfgStorageName *name);
+
+/**
+ * @brief GetButtonConfigStorageRight
+ * @note Only available on [11.0.0+].
+ * @param[in] index Array index, should be 0-4.
+ * @param[out] config \ref HidcfgButtonConfigRight
+ * @param[out] name \ref HidcfgStorageName
+ */
+Result hidsysGetButtonConfigStorageRight(s32 index, HidcfgButtonConfigRight *config, HidcfgStorageName *name);
+
+/**
+ * @brief SetButtonConfigStorageEmbedded
+ * @note Only available on [11.0.0+].
+ * @param[in] index Array index, should be 0-4.
+ * @param[in] config \ref HidcfgButtonConfigEmbedded
+ * @param[in] name \ref HidcfgStorageName
+ */
+Result hidsysSetButtonConfigStorageEmbedded(s32 index, const HidcfgButtonConfigEmbedded *config, const HidcfgStorageName *name);
+
+/**
+ * @brief SetButtonConfigStorageFull
+ * @note Only available on [11.0.0+].
+ * @param[in] index Array index, should be 0-4.
+ * @param[in] config \ref HidcfgButtonConfigFull
+ * @param[in] name \ref HidcfgStorageName
+ */
+Result hidsysSetButtonConfigStorageFull(s32 index, const HidcfgButtonConfigFull *config, const HidcfgStorageName *name);
+
+/**
+ * @brief SetButtonConfigStorageLeft
+ * @note Only available on [11.0.0+].
+ * @param[in] index Array index, should be 0-4.
+ * @param[in] config \ref HidcfgButtonConfigLeft
+ * @param[in] name \ref HidcfgStorageName
+ */
+Result hidsysSetButtonConfigStorageLeft(s32 index, const HidcfgButtonConfigLeft *config, const HidcfgStorageName *name);
+
+/**
+ * @brief SetButtonConfigStorageRight
+ * @note Only available on [11.0.0+].
+ * @param[in] index Array index, should be 0-4.
+ * @param[in] config \ref HidcfgButtonConfigRight
+ * @param[in] name \ref HidcfgStorageName
+ */
+Result hidsysSetButtonConfigStorageRight(s32 index, const HidcfgButtonConfigRight *config, const HidcfgStorageName *name);
 
