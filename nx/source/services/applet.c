@@ -892,6 +892,8 @@ Result appletReleaseSleepLockTransiently(void) {
     return rc;
 }
 
+IPC_MAKE_CMD_IMPL_HOSVER(Result appletGetWakeupCount(u64 *out),        &g_appletICommonStateGetter, 14, _appletCmdNoInOutU64, (11,0,0), out)
+
 IPC_MAKE_CMD_IMPL(Result appletPushToGeneralChannel(AppletStorage *s), &g_appletICommonStateGetter, 20, _appletCmdInStorage, s)
 
 static Result _appletGetHomeButtonRwLockAccessor(Service* srv, AppletLockAccessor *a, u32 cmd_id) {
@@ -971,6 +973,22 @@ Result appletSetVrModeEnabled(bool flag) {
 
 IPC_MAKE_CMD_IMPL_HOSVER(Result appletSetLcdBacklightOffEnabled(bool flag),                             &g_appletICommonStateGetter, 52, _appletCmdInBoolNoOut, (4,0,0), flag)
 IPC_MAKE_CMD_IMPL_HOSVER(Result appletIsInControllerFirmwareUpdateSection(bool *out),                   &g_appletICommonStateGetter, 55, _appletCmdNoInOutBool, (3,0,0), out)
+
+Result appletSetVrPositionForDebug(s32 x, s32 y, s32 width, s32 height) {
+    if (hosversionBefore(11,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    const struct {
+        s32 x;
+        s32 y;
+        s32 width;
+        s32 height;
+    } in = { x, y, width, height };
+
+    serviceAssumeDomain(&g_appletICommonStateGetter);
+    return serviceDispatchIn(&g_appletICommonStateGetter, 59, in);
+}
+
 IPC_MAKE_CMD_IMPL_HOSVER(Result appletGetDefaultDisplayResolution(s32 *width, s32 *height),             &g_appletICommonStateGetter, 60, _appletGetResolution,  (3,0,0), width, height)
 IPC_MAKE_CMD_IMPL_HOSVER(Result appletGetDefaultDisplayResolutionChangeEvent(Event *out_event),         &g_appletICommonStateGetter, 61, _appletCmdGetEvent,    (3,0,0), out_event, true)
 IPC_MAKE_CMD_IMPL_HOSVER(Result appletGetHdcpAuthenticationState(s32 *state),                           &g_appletICommonStateGetter, 62, _appletCmdNoInOutU32,  (4,0,0), (u32*)state)
@@ -999,10 +1017,18 @@ Result appletSetCpuBoostMode(ApmCpuBoostMode mode) {
 }
 
 IPC_MAKE_CMD_IMPL_HOSVER(Result appletCancelCpuBoostMode(void),                                          &g_appletICommonStateGetter, 67,  _appletCmdNoIO,        (10,0,0))
-
+IPC_MAKE_CMD_IMPL_HOSVER(Result appletGetBuiltInDisplayType(s32 *out),                                   &g_appletICommonStateGetter, 68,  _appletCmdNoInOutU32,  (11,0,0), (u32*)out)
 IPC_MAKE_CMD_IMPL_HOSVER(Result appletPerformSystemButtonPressingIfInFocus(AppletSystemButtonType type), &g_appletICommonStateGetter, 80,  _appletCmdInU32NoOut,  (6,0,0), type)
 IPC_MAKE_CMD_IMPL_HOSVER(Result appletSetPerformanceConfigurationChangedNotification(bool flag),         &g_appletICommonStateGetter, 90,  _appletCmdInBoolNoOut, (7,0,0), flag)
 IPC_MAKE_CMD_IMPL_HOSVER(Result appletGetCurrentPerformanceConfiguration(u32 *PerformanceConfiguration), &g_appletICommonStateGetter, 91,  _appletCmdNoInOutU32,  (7,0,0), PerformanceConfiguration)
+
+Result appletOpenMyGpuErrorHandler(AppletGpuErrorHandler *g) {
+    if (hosversionBefore(11,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _appletCmdGetSession(&g_appletICommonStateGetter, &g->s, 110);
+}
+
 IPC_MAKE_CMD_IMPL_HOSVER(Result appletGetOperationModeSystemInfo(u32 *info),                             &g_appletICommonStateGetter, 200, _appletCmdNoInOutU32,  (7,0,0), info)
 
 Result appletGetSettingsPlatformRegion(SetSysPlatformRegion *out) {
@@ -1017,6 +1043,31 @@ Result appletGetSettingsPlatformRegion(SetSysPlatformRegion *out) {
 
 IPC_MAKE_CMD_IMPL_HOSVER(Result appletActivateMigrationService(void),                                    &g_appletICommonStateGetter, 400,  _appletCmdNoIO,        (10,0,0))
 IPC_MAKE_CMD_IMPL_HOSVER(Result appletDeactivateMigrationService(void),                                  &g_appletICommonStateGetter, 401,  _appletCmdNoIO,        (10,0,0))
+IPC_MAKE_CMD_IMPL_HOSVER(Result appletDisableSleepTillShutdown(void),                                    &g_appletICommonStateGetter, 500,  _appletCmdNoIO,        (11,0,0))
+IPC_MAKE_CMD_IMPL_HOSVER(Result appletSuppressDisablingSleepTemporarily(u64 val),                        &g_appletICommonStateGetter, 501,  _appletCmdInU64NoOut,  (11,0,0), val)
+IPC_MAKE_CMD_IMPL_HOSVER(Result appletSetRequestExitToLibraryAppletAtExecuteNextProgramEnabled(void),    &g_appletICommonStateGetter, 900,  _appletCmdNoIO,        (11,0,0))
+
+// IGpuErrorHandler
+void appletGpuErrorHandlerClose(AppletGpuErrorHandler *g) {
+    serviceAssumeDomain(&g->s);
+    serviceClose(&g->s);
+}
+
+IPC_MAKE_CMD_IMPL(Result appletGpuErrorHandlerGetManualGpuErrorInfoSize(AppletGpuErrorHandler *g, u64 *out),                     &g->s, 100, _appletCmdNoInOutU64, out)
+
+Result appletGpuErrorHandlerGetManualGpuErrorInfo(AppletGpuErrorHandler *g, void* buffer, size_t size, u64 *out) {
+    if (!serviceIsActive(&g->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    serviceAssumeDomain(&g->s);
+    return serviceDispatchOut(&g->s, 101, *out,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { buffer, size } },
+    );
+}
+
+IPC_MAKE_CMD_IMPL(Result appletGpuErrorHandlerGetManualGpuErrorDetectionSystemEvent(AppletGpuErrorHandler *g, Event *out_event), &g->s, 102,  _appletCmdGetEvent,   out_event, false)
+IPC_MAKE_CMD_IMPL(Result appletGpuErrorHandlerFinishManualGpuErrorHandling(AppletGpuErrorHandler *g),                            &g->s, 103, _appletCmdNoIO)
 
 // ISelfController
 
@@ -1190,6 +1241,8 @@ Result appletSetApplicationAlbumUserData(const void* buffer, size_t size) {
         .buffers = { { buffer, size } },
     );
 }
+
+IPC_MAKE_CMD_IMPL_HOSVER(       Result appletSaveCurrentScreenshot(AlbumReportOption option),            &g_appletISelfController, 120,  _appletCmdInU32NoOut, (11,0,0), option)
 
 // IWindowController
 
@@ -2293,12 +2346,14 @@ Result appletRestartProgram(const void* buffer, size_t size) {
 }
 
 IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletGetPreviousProgramIndex(s32 *programIndex),                 &g_appletIFunctions, 123,  _appletCmdNoInOutU32,       !_appletIsApplication(), (5,0,0), (u32*)programIndex)
+IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletSetDelayTimeToAbortOnGpuError(u64 val),                     &g_appletIFunctions, 131,  _appletCmdInU64NoOut,       !_appletIsApplication(), (11,0,0), val)
 IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletGetFriendInvitationStorageChannelEvent(Event *out_event),   &g_appletIFunctions, 140,  _appletCmdGetEvent,         !_appletIsApplication(), (9,0,0), out_event, false)
 IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletTryPopFromFriendInvitationStorageChannel(AppletStorage *s), &g_appletIFunctions, 141,  _appletCmdNoInOutStorage,   !_appletIsApplication(), (9,0,0), s)
 IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletGetNotificationStorageChannelEvent(Event *out_event),       &g_appletIFunctions, 150,  _appletCmdGetEvent,         !_appletIsApplication(), (9,0,0), out_event, false)
 IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletTryPopFromNotificationStorageChannel(AppletStorage *s),     &g_appletIFunctions, 151,  _appletCmdNoInOutStorage,   !_appletIsApplication(), (9,0,0), s)
 IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletGetHealthWarningDisappearedSystemEvent(Event *out_event),   &g_appletIFunctions, 160,  _appletCmdGetEvent,         !_appletIsApplication(), (9,0,0), out_event, false)
 IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletSetHdcpAuthenticationActivated(bool flag),                  &g_appletIFunctions, 170,  _appletCmdInBoolNoOut,      !_appletIsApplication(), (9,0,0), flag)
+IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletGetLastApplicationExitReason(s32 *out),                     &g_appletIFunctions, 200,  _appletCmdNoInOutU32,       !_appletIsApplication(), (11,0,0), (u32*)out)
 IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletCreateMovieMaker(Service* srv_out, TransferMemory *tmem),   &g_appletIFunctions, 1000, _appletCmdInTmemOutSession, !_appletIsApplication(), (5,0,0), srv_out, tmem)
 IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletPrepareForJit(void),                                        &g_appletIFunctions, 1001, _appletCmdNoIO,             !_appletIsApplication(), (5,0,0))
 
@@ -2310,6 +2365,7 @@ IPC_MAKE_CMD_IMPL_INITEXPR(Result appletUnlockForeground(void),                 
 IPC_MAKE_CMD_IMPL_INITEXPR(Result appletPopFromGeneralChannel(AppletStorage *s),                &g_appletIFunctions, 20, _appletCmdNoInOutStorage,           __nx_applet_type != AppletType_SystemApplet, s)
 IPC_MAKE_CMD_IMPL_INITEXPR(Result appletGetPopFromGeneralChannelEvent(Event *out_event),        &g_appletIFunctions, 21, _appletCmdGetEvent,                 __nx_applet_type != AppletType_SystemApplet, out_event, false)
 IPC_MAKE_CMD_IMPL_INITEXPR(Result appletGetHomeButtonWriterLockAccessor(AppletLockAccessor *a), &g_appletIFunctions, 30, _appletGetHomeButtonRwLockAccessor, __nx_applet_type != AppletType_SystemApplet, a)
+IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletIsSleepEnabled(bool *out),                       &g_appletIFunctions, 40,  _appletCmdNoInOutBool, __nx_applet_type != AppletType_SystemApplet, (11,0,0), out)
 
 Result appletPopRequestLaunchApplicationForDebug(AccountUid *uids, s32 count, u64 *application_id, s32 *total_out) {
     if (__nx_applet_type != AppletType_SystemApplet)
@@ -2333,6 +2389,7 @@ Result appletPopRequestLaunchApplicationForDebug(AccountUid *uids, s32 count, u6
 }
 
 IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletIsForceTerminateApplicationDisabledForDebug(bool *out), &g_appletIFunctions, 110,  _appletCmdNoInOutBool, __nx_applet_type != AppletType_SystemApplet, (9,0,0), out)
+IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletSetLastApplicationExitReason(s32 reason),               &g_appletIFunctions, 1000, _appletCmdInU32NoOut,  __nx_applet_type != AppletType_SystemApplet, (11,0,0), reason)
 
 Result appletLaunchDevMenu(void) {
     Result rc=0;
@@ -2761,6 +2818,8 @@ Result appletSetDisplayMagnification(float x, float y, float width, float height
 IPC_MAKE_CMD_IMPL_HOSVER(Result appletSetHomeButtonDoubleClickEnabled(bool flag), &g_appletIAppletCommonFunctions, 50, _appletCmdInBoolNoOut, (8,0,0), flag)
 IPC_MAKE_CMD_IMPL_HOSVER(Result appletGetHomeButtonDoubleClickEnabled(bool *out), &g_appletIAppletCommonFunctions, 51, _appletCmdNoInOutBool, (8,0,0), out)
 IPC_MAKE_CMD_IMPL_HOSVER(Result appletIsHomeButtonShortPressedBlocked(bool *out), &g_appletIAppletCommonFunctions, 52, _appletCmdNoInOutBool, (10,0,0), out)
+IPC_MAKE_CMD_IMPL_HOSVER(Result appletIsVrModeCurtainRequired(bool *out),         &g_appletIAppletCommonFunctions, 60, _appletCmdNoInOutBool, (11,0,0), out)
+IPC_MAKE_CMD_IMPL_HOSVER(Result appletSetCpuBoostRequestPriority(s32 priority),   &g_appletIAppletCommonFunctions, 70, _appletCmdInU32NoOut,  (11,0,0), priority)
 
 // IDebugFunctions
 

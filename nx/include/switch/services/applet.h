@@ -247,6 +247,11 @@ typedef struct {
     AppletApplicationExitReason exitreason;    ///< Set by \ref appletApplicationJoin using the output from cmd GetResult, see \ref AppletApplicationExitReason.
 } AppletApplication;
 
+/// GpuErrorHandler
+typedef struct {
+    Service s;                                 ///< IGpuErrorHandler
+} AppletGpuErrorHandler;
+
 /// Used by \ref appletInitialize with __nx_applet_AppletAttribute for cmd OpenLibraryAppletProxy (AppletType_LibraryApplet), on [3.0.0+]. The default for this struct is all-zero.
 typedef struct {
     u8 flag;                           ///< Flag. When non-zero, two state fields are set to 1.
@@ -412,6 +417,13 @@ Result appletReleaseSleepLock(void);
 Result appletReleaseSleepLockTransiently(void);
 
 /**
+ * @brief GetWakeupCount
+ * @note Only available with [11.0.0+].
+ * @param[out] out Output value.
+ */
+Result appletGetWakeupCount(u64 *out);
+
+/**
  * @brief Pushes a storage to the general channel. Used for sending requests to SystemApplet.
  * @note  This is not usable under an Application, however it is usable under a LibraryApplet.
  * @note  This uses \ref appletStorageClose automatically.
@@ -483,6 +495,17 @@ Result appletSetLcdBacklightOffEnabled(bool flag);
 Result appletIsInControllerFirmwareUpdateSection(bool *out);
 
 /**
+ * @brief SetVrPositionForDebug
+ * @note The cached value loaded from \ref setsysGetDebugModeFlag must be 1, otherwise an error is returned.
+ * @note Only available with [11.0.0+].
+ * @param[in] x X, must not be negative. x+width must be <=1280.
+ * @param[in] y Y, must not be negative. y+height must be <=720.
+ * @param[in] width Width, must be 1-1280.
+ * @param[in] height Height, must be 1-720.
+ */
+Result appletSetVrPositionForDebug(s32 x, s32 y, s32 width, s32 height);
+
+/**
  * @brief Gets the DefaultDisplayResolution.
  * @note Only available with [3.0.0+].
  * @param[out] width Output width.
@@ -542,6 +565,13 @@ Result appletSetCpuBoostMode(ApmCpuBoostMode mode);
 Result appletCancelCpuBoostMode(void);
 
 /**
+ * @brief GetBuiltInDisplayType
+ * @note Only available with [11.0.0+].
+ * @param[out] out Output value.
+ */
+Result appletGetBuiltInDisplayType(s32 *out);
+
+/**
  * @brief Perform SystemButtonPressing with the specified \ref AppletSystemButtonType. Internally this cmd checks a state field, verifies that the type is allowed, then runs the same func as \ref appletPerformSystemButtonPressing internally.
  * @note Only available with [6.0.0+].
  * @param[in] type \ref AppletSystemButtonType
@@ -561,6 +591,14 @@ Result appletSetPerformanceConfigurationChangedNotification(bool flag);
  * @param PerformanceConfiguration Output PerformanceConfiguration.
  */
 Result appletGetCurrentPerformanceConfiguration(u32 *PerformanceConfiguration);
+
+/**
+ * @brief Opens an \ref AppletGpuErrorHandler.
+ * @note The cached value loaded from \ref setsysGetDebugModeFlag must be 1, otherwise an error is returned.
+ * @note Only available with [11.0.0+].
+ * @param[out] g \ref AppletGpuErrorHandler
+ */
+Result appletOpenMyGpuErrorHandler(AppletGpuErrorHandler *g);
 
 /**
  * @brief Gets the OperationModeSystemInfo.
@@ -587,6 +625,66 @@ Result appletActivateMigrationService(void);
  * @note Only available with [10.0.0+].
  */
 Result appletDeactivateMigrationService(void);
+
+/**
+ * @brief DisableSleepTillShutdown
+ * @note Only available with [11.0.0+].
+ */
+Result appletDisableSleepTillShutdown(void);
+
+/**
+ * @brief SuppressDisablingSleepTemporarily
+ * @param[in] val Nanoseconds value.
+ * @note Only available with [11.0.0+].
+ */
+Result appletSuppressDisablingSleepTemporarily(u64 val);
+
+/**
+ * @brief SetRequestExitToLibraryAppletAtExecuteNextProgramEnabled
+ * @note Only available with [11.0.0+].
+ */
+Result appletSetRequestExitToLibraryAppletAtExecuteNextProgramEnabled(void);
+
+///@}
+
+///@name IGpuErrorHandler
+///@{
+
+/**
+ * @brief Close an \ref AppletGpuErrorHandler.
+ * @param g \ref AppletGpuErrorHandler
+ */
+void appletGpuErrorHandlerClose(AppletGpuErrorHandler *g);
+
+/**
+ * @brief Gets the size of the info available with \ref appletGpuErrorHandlerGetManualGpuErrorInfo.
+ * @param g \ref AppletGpuErrorHandler
+ * @param[out] out Output size.
+ */
+Result appletGpuErrorHandlerGetManualGpuErrorInfoSize(AppletGpuErrorHandler *g, u64 *out);
+
+/**
+ * @brief GetManualGpuErrorInfo
+ * @param g \ref AppletGpuErrorHandler
+ * @param[out] buffer Output buffer.
+ * @param[in] size Output buffer size, must be >= the output size from \ref appletGpuErrorHandlerGetManualGpuErrorInfoSize.
+ * @param[out] out Output value.
+ */
+Result appletGpuErrorHandlerGetManualGpuErrorInfo(AppletGpuErrorHandler *g, void* buffer, size_t size, u64 *out);
+
+/**
+ * @brief GetManualGpuErrorDetectionSystemEvent
+ * @param g \ref AppletGpuErrorHandler
+ * @note The Event must be closed by the user once finished with it.
+ * @param[out] out_event Output Event with autoclear=false.
+ */
+Result appletGpuErrorHandlerGetManualGpuErrorDetectionSystemEvent(AppletGpuErrorHandler *g, Event *out_event);
+
+/**
+ * @brief FinishManualGpuErrorHandling
+ * @param g \ref AppletGpuErrorHandler
+ */
+Result appletGpuErrorHandlerFinishManualGpuErrorHandling(AppletGpuErrorHandler *g);
 
 ///@}
 
@@ -816,6 +914,13 @@ Result appletSetAlbumImageTakenNotificationEnabled(bool flag);
  * @param[in] size Buffer size, must be <=0x400.
  */
 Result appletSetApplicationAlbumUserData(const void* buffer, size_t size);
+
+/**
+ * @brief SaveCurrentScreenshot
+ * @note Only available with [11.0.0+].
+ * @param[in] option \ref AlbumReportOption
+ */
+Result appletSaveCurrentScreenshot(AlbumReportOption option);
 
 ///@}
 
@@ -1540,6 +1645,13 @@ Result appletRestartProgram(const void* buffer, size_t size);
 Result appletGetPreviousProgramIndex(s32 *programIndex);
 
 /**
+ * @brief SetDelayTimeToAbortOnGpuError
+ * @note Only available with AppletType_*Application on [11.0.0+].
+ * @param[in] val Input nanoseconds value.
+ */
+Result appletSetDelayTimeToAbortOnGpuError(u64 val);
+
+/**
  * @brief Gets an Event which is signaled when a new storage is available with \ref appletTryPopFromFriendInvitationStorageChannel where previously no storage was available, this event is automatically cleared by the system once the last storage is popped.
  * @note This is used by \ref friendsGetFriendInvitationNotificationEvent.
  * @note Only available with AppletType_*Application on [9.0.0+].
@@ -1587,6 +1699,13 @@ Result appletGetHealthWarningDisappearedSystemEvent(Event *out_event);
  * @param[in] flag Whether HdcpAuthentication is activated.
  */
 Result appletSetHdcpAuthenticationActivated(bool flag);
+
+/**
+ * @brief GetLastApplicationExitReason
+ * @note Only available with AppletType_*Application on [11.0.0+].
+ * @param[out] out Output value.
+ */
+Result appletGetLastApplicationExitReason(s32 *out);
 
 /**
  * @brief CreateMovieMaker. Do not use this directly, use \ref grcCreateMovieMaker instead.
@@ -1650,6 +1769,13 @@ Result appletGetPopFromGeneralChannelEvent(Event *out_event);
 Result appletGetHomeButtonWriterLockAccessor(AppletLockAccessor *a);
 
 /**
+ * @brief IsSleepEnabled
+ * @note Only available with AppletType_SystemApplet on [11.0.0+].
+ * @param[out] out Output flag.
+ */
+Result appletIsSleepEnabled(bool *out);
+
+/**
  * @brief PopRequestLaunchApplicationForDebug
  * @note Only available with AppletType_SystemApplet on [6.0.0+].
  * @param[out] uids Output array of \ref AccountUid.
@@ -1672,6 +1798,13 @@ Result appletIsForceTerminateApplicationDisabledForDebug(bool *out);
  * @note This verifies that DebugMode is enabled, then uses a ns cmd. That cmd then loads the system-settings for these two ProgramIds (which normally only exist on devunits), and verifies that these programs are installed + launches them.
  */
 Result appletLaunchDevMenu(void);
+
+/**
+ * @brief SetLastApplicationExitReason
+ * @note Only available with AppletType_SystemApplet on [11.0.0+].
+ * @param[in] reason Reason
+ */
+Result appletSetLastApplicationExitReason(s32 reason);
 
 ///@}
 
@@ -2379,6 +2512,20 @@ Result appletGetHomeButtonDoubleClickEnabled(bool *out);
  * @param[out] out Output flag.
  */
 Result appletIsHomeButtonShortPressedBlocked(bool *out);
+
+/**
+ * @brief IsVrModeCurtainRequired
+ * @note Only available with AppletType_SystemApplet, AppletType_LibraryApplet, or AppletType_OverlayApplet, on [11.0.0+].
+ * @param[out] out Output flag.
+ */
+Result appletIsVrModeCurtainRequired(bool *out);
+
+/**
+ * @brief SetCpuBoostRequestPriority
+ * @note Only available with AppletType_SystemApplet, AppletType_LibraryApplet, or AppletType_OverlayApplet, on [11.0.0+].
+ * @param[in] priority Priority
+ */
+Result appletSetCpuBoostRequestPriority(s32 priority);
 
 ///@}
 
