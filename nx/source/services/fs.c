@@ -225,11 +225,7 @@ Result fsOpenSdCardFileSystem(FsFileSystem* out) {
 }
 
 Result fsDeleteSaveDataFileSystem(u64 application_id) {
-    const struct {
-        u64 application_id;
-    } in = { application_id };
-
-    return _fsObjectDispatchIn(&g_fsSrv, 21, in);
+    return _fsObjectDispatchIn(&g_fsSrv, 21, application_id);
 }
 
 Result fsCreateSaveDataFileSystem(const FsSaveDataAttribute* attr, const FsSaveDataCreationInfo* creation_info, const FsSaveMeta* meta) {
