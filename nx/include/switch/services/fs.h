@@ -88,6 +88,13 @@ typedef struct {
     u8 unused[0x190];               ///< Uninitialized.
 } FsSaveDataExtraData;
 
+/// FsSaveMeta
+typedef struct {
+    u32 meta_file_size;
+    u8 meta_index;
+    u8 unk[0x0B];
+} FsSaveMeta;
+
 /// SaveDataCreationInfo
 typedef struct {
     s64 save_data_size;    ///< Size of the save data.
@@ -323,6 +330,8 @@ Result fsOpenBisStorage(FsStorage* out, FsBisPartitionId partitionId);
 /// Do not call this directly, see fs_dev.h.
 Result fsOpenSdCardFileSystem(FsFileSystem* out);
 
+Result fsDeleteSaveDataFileSystem(u64 application_id);
+Result fsCreateSaveDataFileSystem(const FsSaveDataAttribute* attr, const FsSaveDataCreationInfo* creation_info, const FsSaveMeta* meta);
 Result fsCreateSaveDataFileSystemBySystemSaveDataId(const FsSaveDataAttribute* attr, const FsSaveDataCreationInfo* creation_info);
 Result fsDeleteSaveDataFileSystemBySaveDataSpaceId(FsSaveDataSpaceId save_data_space_id, u64 saveID); ///< [2.0.0+]
 

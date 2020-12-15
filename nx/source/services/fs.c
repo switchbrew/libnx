@@ -224,6 +224,24 @@ Result fsOpenSdCardFileSystem(FsFileSystem* out) {
     return _fsCmdGetSession(&g_fsSrv, &out->s, 18);
 }
 
+Result fsDeleteSaveDataFileSystem(u64 application_id) {
+    const struct {
+        u64 application_id;
+    } in = { application_id };
+
+    return _fsObjectDispatchIn(&g_fsSrv, 21, in);
+}
+
+Result fsCreateSaveDataFileSystem(const FsSaveDataAttribute* attr, const FsSaveDataCreationInfo* creation_info, const FsSaveMeta* meta) {
+    const struct {
+        FsSaveDataAttribute attr;
+        FsSaveDataCreationInfo creation_info;
+		FsSaveMeta meta;
+    } in = { *attr, *creation_info, *meta };
+
+    return _fsObjectDispatchIn(&g_fsSrv, 22, in);
+}
+
 Result fsCreateSaveDataFileSystemBySystemSaveDataId(const FsSaveDataAttribute* attr, const FsSaveDataCreationInfo* creation_info) {
     const struct {
         FsSaveDataAttribute attr;
