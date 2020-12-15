@@ -236,7 +236,7 @@ Result fsCreateSaveDataFileSystem(const FsSaveDataAttribute* attr, const FsSaveD
     const struct {
         FsSaveDataAttribute attr;
         FsSaveDataCreationInfo creation_info;
-		FsSaveMeta meta;
+        FsSaveMeta meta;
     } in = { *attr, *creation_info, *meta };
 
     return _fsObjectDispatchIn(&g_fsSrv, 22, in);
