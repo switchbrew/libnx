@@ -259,6 +259,18 @@ Result fsDeleteSaveDataFileSystemBySaveDataSpaceId(FsSaveDataSpaceId save_data_s
     return _fsObjectDispatchIn(&g_fsSrv, 25, in);
 }
 
+Result fsDeleteSaveDataFileSystemBySaveDataAttribute(FsSaveDataSpaceId save_data_space_id, const FsSaveDataAttribute* attr) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    const struct {
+        u8 save_data_space_id;
+        FsSaveDataAttribute attr;
+    } in = { (u8)save_data_space_id, *attr };
+
+    return _fsObjectDispatchIn(&g_fsSrv, 28, in);
+}
+
 Result fsIsExFatSupported(bool* out) {
     if (hosversionBefore(2,0,0)) {
         *out = false;
