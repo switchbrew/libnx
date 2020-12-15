@@ -9,7 +9,7 @@ static Result _albumLaShow(u8 arg, bool playStartupSound) {
     libappletArgsCreate(&commonargs, 0x10000);
     libappletArgsSetPlayStartupSound(&commonargs, playStartupSound);
 
-    rc = libappletLaunch(AppletId_photoViewer, &commonargs, &arg, sizeof(arg), NULL, 0, NULL);
+    rc = libappletLaunch(AppletId_LibraryAppletPhotoViewer, &commonargs, &arg, sizeof(arg), NULL, 0, NULL);
 
     return rc;
 }

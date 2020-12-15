@@ -7,7 +7,7 @@ static Result _miiLaShow(const MiiLaAppletInput *in, MiiLaAppletOutput *out) {
     AppletHolder holder;
     AppletStorage storage;
 
-    rc = appletCreateLibraryApplet(&holder, AppletId_miiEdit, LibAppletMode_AllForeground);
+    rc = appletCreateLibraryApplet(&holder, AppletId_LibraryAppletMiiEdit, LibAppletMode_AllForeground);
     if (R_FAILED(rc)) return rc;
 
     if (R_SUCCEEDED(rc)) rc = libappletPushInData(&holder, in, sizeof(*in));

@@ -13,7 +13,7 @@ static Result _pctlauthShow(PctlAuthArg* arg) {
     if (hosversionAtLeast(4,0,0)) ver=2;
     libappletArgsCreate(&commonargs, ver);
 
-    rc = libappletLaunch(AppletId_auth, &commonargs, arg, sizeof(*arg), &tmpres, sizeof(tmpres), &out_reply_size);
+    rc = libappletLaunch(AppletId_LibraryAppletAuth, &commonargs, arg, sizeof(*arg), &tmpres, sizeof(tmpres), &out_reply_size);
     if (R_SUCCEEDED(rc)) {
         if (out_reply_size != sizeof(tmpres)) rc = MAKERESULT(Module_Libnx, LibnxError_LibAppletBadExit);
         if (R_SUCCEEDED(rc)) rc = tmpres;

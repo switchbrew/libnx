@@ -65,7 +65,7 @@ static Event g_appletLibraryAppletLaunchableEvent;
 
 static AppletThemeColorType g_appletThemeColorType = AppletThemeColorType_Default;
 
-static ApmCpuBoostMode g_appletCpuBoostMode = ApmCpuBoostMode_Disabled;
+static ApmCpuBoostMode g_appletCpuBoostMode = ApmCpuBoostMode_Normal;
 
 static AppletInfo g_appletInfo;
 static bool g_appletInfoInitialized;
@@ -252,7 +252,7 @@ Result _appletInitialize(void) {
         rc = _appletGetCurrentFocusState(&g_appletFocusState);
 
         //Don't enter this msg-loop when g_appletFocusState is already 1, it will hang when applet was previously initialized in the context of the current process for AppletType_Application.
-        if (R_SUCCEEDED(rc) && g_appletFocusState != AppletFocusState_Focused) {
+        if (R_SUCCEEDED(rc) && g_appletFocusState != AppletFocusState_InFocus) {
             do {
                 eventWait(&g_appletMessageEvent, UINT64_MAX);
 
@@ -275,7 +275,7 @@ Result _appletInitialize(void) {
                 if (R_FAILED(rc))
                     break;
 
-            } while(g_appletFocusState != AppletFocusState_Focused);
+            } while(g_appletFocusState != AppletFocusState_InFocus);
         }
 
         if (R_SUCCEEDED(rc))
@@ -361,7 +361,7 @@ void _appletCleanup(void) {
 
         if (__nx_applet_type == AppletType_Application) appletSetFocusHandlingMode(AppletFocusHandlingMode_NoSuspend);
 
-        if (g_appletCpuBoostMode != ApmCpuBoostMode_Disabled) appletSetCpuBoostMode(ApmCpuBoostMode_Disabled);
+        if (g_appletCpuBoostMode != ApmCpuBoostMode_Normal) appletSetCpuBoostMode(ApmCpuBoostMode_Normal);
     }
 
     if ((envIsNso() && __nx_applet_exit_mode==0) || __nx_applet_exit_mode==1) {
@@ -2220,7 +2220,7 @@ Result appletInitializeApplicationCopyrightFrameBuffer(void) {
     return rc;
 }
 
-Result appletSetApplicationCopyrightImage(const void* buffer, size_t size, s32 x, s32 y, s32 width, s32 height, s32 mode) {
+Result appletSetApplicationCopyrightImage(const void* buffer, size_t size, s32 x, s32 y, s32 width, s32 height, AppletWindowOriginMode mode) {
     if (!serviceIsActive(&g_appletSrv) || !_appletIsApplication())
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     if (hosversionBefore(5,0,0))
@@ -2990,7 +2990,7 @@ bool appletProcessMessage(u32 msg) {
     Result rc=0;
 
     switch(msg) {
-        case AppletMessage_ExitRequested:
+        case AppletMessage_ExitRequest:
             appletCallHook(AppletHookType_OnExitRequest);
             return false;
         break;
@@ -3003,8 +3003,8 @@ bool appletProcessMessage(u32 msg) {
             appletCallHook(AppletHookType_OnFocusState);
         break;
 
-        case AppletMessage_Restart:
-            appletCallHook(AppletHookType_OnRestart);
+        case AppletMessage_Resume:
+            appletCallHook(AppletHookType_OnResume);
         break;
 
         case AppletMessage_OperationModeChanged:
@@ -3031,8 +3031,8 @@ bool appletProcessMessage(u32 msg) {
             appletCallHook(AppletHookType_OnCaptureButtonShortPressed);
         break;
 
-        case AppletMessage_AlbumImageTaken:
-            appletCallHook(AppletHookType_OnAlbumImageTaken);
+        case AppletMessage_AlbumScreenShotTaken:
+            appletCallHook(AppletHookType_OnAlbumScreenShotTaken);
         break;
     }
 

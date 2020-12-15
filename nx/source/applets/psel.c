@@ -42,7 +42,7 @@ Result pselUiShow(PselUiSettings *ui, AccountUid *out_user) {
         arg_size = sizeof(ui->settings);
     }
 
-    rc = libappletLaunch(AppletId_playerSelect, &args, arg_ptr, arg_size, &ret, sizeof(ret), &reply_size);
+    rc = libappletLaunch(AppletId_LibraryAppletPlayerSelect, &args, arg_ptr, arg_size, &ret, sizeof(ret), &reply_size);
     
     if (R_SUCCEEDED(rc)) {
         rc = ret.res; // Official sw returns this directly.

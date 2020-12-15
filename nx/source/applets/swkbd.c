@@ -284,7 +284,7 @@ Result swkbdShow(SwkbdConfig* c, char* out_string, size_t out_string_size) {
     if (strbuf) memset(strbuf, 0, strbuf_size+2);
     if (R_FAILED(rc)) return rc;
 
-    rc = appletCreateLibraryApplet(&holder, AppletId_swkbd, LibAppletMode_AllForeground);
+    rc = appletCreateLibraryApplet(&holder, AppletId_LibraryAppletSwkbd, LibAppletMode_AllForeground);
     if (R_FAILED(rc)) {
         free(strbuf);
         return rc;
@@ -502,7 +502,7 @@ static Result _swkbdInlineLaunch(SwkbdInline* s, SwkbdInitializeArg *initArg) {
     memcpy(&s->calcArg.initArg, initArg, sizeof(*initArg));
     s->calcArg.flags |= 0x1;
 
-    rc = appletCreateLibraryApplet(&s->holder, AppletId_swkbd, s->calcArg.initArg.mode!=SwkbdInlineMode_UserDisplay ? LibAppletMode_Background : LibAppletMode_BackgroundIndirect);
+    rc = appletCreateLibraryApplet(&s->holder, AppletId_LibraryAppletSwkbd, s->calcArg.initArg.mode!=SwkbdInlineMode_UserDisplay ? LibAppletMode_Background : LibAppletMode_BackgroundIndirect);
     if (R_FAILED(rc)) return rc;
 
     if (hosversionAtLeast(10,0,0))

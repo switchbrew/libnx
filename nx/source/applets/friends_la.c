@@ -28,9 +28,9 @@ static Result _friendsLaShow(const FriendsLaArg *arg, bool playStartupSound) {
     libappletArgsSetPlayStartupSound(&commonargs, playStartupSound);
 
     if (arg->hdr.type != FriendsLaArgType_StartSendingFriendRequest && arg->hdr.type != FriendsLaArgType_StartFriendInvitation && arg->hdr.type != FriendsLaArgType_StartSendingFriendInvitation)
-        rc = libappletLaunch(AppletId_myPage, &commonargs, arg_ptr, arg_size, NULL, 0, NULL);
+        rc = libappletLaunch(AppletId_LibraryAppletMyPage, &commonargs, arg_ptr, arg_size, NULL, 0, NULL);
     else {
-        rc = libappletLaunch(AppletId_myPage, &commonargs, arg_ptr, arg_size, &rc2, sizeof(rc2), &readsize);
+        rc = libappletLaunch(AppletId_LibraryAppletMyPage, &commonargs, arg_ptr, arg_size, &rc2, sizeof(rc2), &readsize);
         if (R_SUCCEEDED(rc) && readsize!=sizeof(rc2)) rc = MAKERESULT(Module_Libnx, LibnxError_BadInput);
         if (R_SUCCEEDED(rc)) rc = rc2;
     }

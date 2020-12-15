@@ -32,8 +32,8 @@ typedef enum {
 
 /// OperationMode
 typedef enum {
-    AppletOperationMode_Handheld = 0,
-    AppletOperationMode_Docked = 1,
+    AppletOperationMode_Handheld = 0,                  ///< Handheld
+    AppletOperationMode_Console  = 1,                  ///< Console (Docked / TV-mode)
 } AppletOperationMode;
 
 /// applet hook types.
@@ -42,9 +42,9 @@ typedef enum {
     AppletHookType_OnOperationMode,                     ///< ::AppletMessage_OperationModeChanged
     AppletHookType_OnPerformanceMode,                   ///< ::AppletMessage_PerformanceModeChanged
     AppletHookType_OnExitRequest,                       ///< ::AppletMessage_ExitRequested
-    AppletHookType_OnRestart,                           ///< ::AppletMessage_Restart
+    AppletHookType_OnResume,                            ///< ::AppletMessage_Resume
     AppletHookType_OnCaptureButtonShortPressed,         ///< ::AppletMessage_CaptureButtonShortPressed
-    AppletHookType_OnAlbumImageTaken,                   ///< ::AppletMessage_AlbumImageTaken
+    AppletHookType_OnAlbumScreenShotTaken,              ///< ::AppletMessage_AlbumScreenShotTaken
     AppletHookType_RequestToDisplay,                    ///< ::AppletMessage_RequestToDisplay
 
     AppletHookType_Max,                                 ///< Number of applet hook types.
@@ -52,31 +52,32 @@ typedef enum {
 
 /// AppletMessage, for \ref appletGetMessage. See also \ref AppletHookType.
 typedef enum {
-    AppletMessage_ExitRequested             = 0x4,    ///< Exit requested.
-    AppletMessage_FocusStateChanged         = 0xF,    ///< FocusState changed.
-    AppletMessage_Restart                   = 0x10,   ///< Current applet execution was resumed.
-    AppletMessage_OperationModeChanged      = 0x1E,   ///< OperationMode changed.
-    AppletMessage_PerformanceModeChanged    = 0x1F,   ///< PerformanceMode changed.
-    AppletMessage_RequestToDisplay          = 0x33,   ///< Display requested, see \ref appletApproveToDisplay.
-    AppletMessage_CaptureButtonShortPressed = 0x5A,   ///< Capture button was short-pressed.
-    AppletMessage_AlbumImageTaken           = 0x5C,   ///< Screenshot was taken.
+    AppletMessage_ExitRequest               = 4,    ///< Exit request.
+    AppletMessage_FocusStateChanged         = 15,   ///< FocusState changed.
+    AppletMessage_Resume                    = 16,   ///< Current applet execution was resumed.
+    AppletMessage_OperationModeChanged      = 30,   ///< OperationMode changed.
+    AppletMessage_PerformanceModeChanged    = 31,   ///< PerformanceMode changed.
+    AppletMessage_RequestToDisplay          = 51,   ///< Display requested, see \ref appletApproveToDisplay.
+    AppletMessage_CaptureButtonShortPressed = 90,   ///< Capture button was short-pressed.
+    AppletMessage_AlbumScreenShotTaken      = 92,   ///< Screenshot was taken.
+    AppletMessage_AlbumRecordingSaved       = 93,   ///< AlbumRecordingSaved
 } AppletMessage;
 
 /// FocusState
 typedef enum {
-    AppletFocusState_Focused = 1,                   ///< Applet is focused.
-    AppletFocusState_NotFocusedLibraryApplet = 2,   ///< Out of focus - LibraryApplet open.
-    AppletFocusState_NotFocusedHomeSleep = 3        ///< Out of focus - HOME menu open / console is sleeping.
+    AppletFocusState_InFocus    = 1,                  ///< Applet is focused.
+    AppletFocusState_OutOfFocus = 2,                  ///< Out of focus - LibraryApplet open.
+    AppletFocusState_Background = 3                   ///< Out of focus - HOME menu open / console is sleeping.
 } AppletFocusState;
 
 /// FocusHandlingMode
 typedef enum {
-  AppletFocusHandlingMode_SuspendHomeSleep = 0,       ///< Suspend only when HOME menu is open / console is sleeping (default).
-  AppletFocusHandlingMode_NoSuspend,                  ///< Don't suspend when out of focus.
-  AppletFocusHandlingMode_SuspendHomeSleepNotify,     ///< Suspend only when HOME menu is open / console is sleeping but still receive OnFocusState hook.
-  AppletFocusHandlingMode_AlwaysSuspend,              ///< Always suspend when out of focus, regardless of the reason.
+    AppletFocusHandlingMode_SuspendHomeSleep = 0,       ///< Suspend only when HOME menu is open / console is sleeping (default).
+    AppletFocusHandlingMode_NoSuspend,                  ///< Don't suspend when out of focus.
+    AppletFocusHandlingMode_SuspendHomeSleepNotify,     ///< Suspend only when HOME menu is open / console is sleeping but still receive OnFocusState hook.
+    AppletFocusHandlingMode_AlwaysSuspend,              ///< Always suspend when out of focus, regardless of the reason.
 
-  AppletFocusHandlingMode_Max,                        ///< Number of focus handling modes.
+    AppletFocusHandlingMode_Max,                        ///< Number of focus handling modes.
 } AppletFocusHandlingMode;
 
 /// LaunchParameterKind
@@ -88,27 +89,28 @@ typedef enum {
 
 /// AppletId
 typedef enum {
-    AppletId_application = 0x01,    ///<                  Application. Not valid for use with LibraryApplets.
-    AppletId_overlayDisp = 0x02,    ///< 010000000000100C "overlayDisp"
-    AppletId_qlaunch = 0x03,        ///< 0100000000001000 "qlaunch" (SystemAppletMenu)
-    AppletId_starter = 0x04,        ///< 0100000000001012 "starter" SystemApplication.
-    AppletId_auth = 0x0A,           ///< 0100000000001001 "auth"
-    AppletId_cabinet = 0x0B,        ///< 0100000000001002 "cabinet"
-    AppletId_controller = 0x0C,     ///< 0100000000001003 "controller"
-    AppletId_dataErase = 0x0D,      ///< 0100000000001004 "dataErase"
-    AppletId_error = 0x0E,          ///< 0100000000001005 "error"
-    AppletId_netConnect = 0x0F,     ///< 0100000000001006 "netConnect"
-    AppletId_playerSelect = 0x10,   ///< 0100000000001007 "playerSelect"
-    AppletId_swkbd = 0x11,          ///< 0100000000001008 "swkbd"
-    AppletId_miiEdit = 0x12,        ///< 0100000000001009 "miiEdit"
-    AppletId_web = 0x13,            ///< 010000000000100A "LibAppletWeb" WebApplet applet
-    AppletId_shop = 0x14,           ///< 010000000000100B "LibAppletShop" ShopN applet
-    AppletId_photoViewer = 0x15,    ///< 010000000000100D "photoViewer"
-    AppletId_set = 0x16,            ///< 010000000000100E "set" (This applet is currently not present on retail devices.)
-    AppletId_offlineWeb = 0x17,     ///< 010000000000100F "LibAppletOff" Offline web-applet
-    AppletId_loginShare = 0x18,     ///< 0100000000001010 "LibAppletLns" Whitelisted web-applet
-    AppletId_wifiWebAuth = 0x19,    ///< 0100000000001011 "LibAppletAuth" WifiWebAuth applet
-    AppletId_myPage = 0x1A,         ///< 0100000000001013 "myPage"
+    AppletId_None                      = 0x00,        ///<                  None
+    AppletId_application               = 0x01,        ///<                  Application. Not valid for use with LibraryApplets.
+    AppletId_OverlayApplet             = 0x02,        ///< 010000000000100C "overlayDisp"
+    AppletId_SystemAppletMenu          = 0x03,        ///< 0100000000001000 "qlaunch" (SystemAppletMenu)
+    AppletId_SystemApplication         = 0x04,        ///< 0100000000001012 "starter" SystemApplication.
+    AppletId_LibraryAppletAuth         = 0x0A,        ///< 0100000000001001 "auth"
+    AppletId_LibraryAppletCabinet      = 0x0B,        ///< 0100000000001002 "cabinet"
+    AppletId_LibraryAppletController   = 0x0C,        ///< 0100000000001003 "controller"
+    AppletId_LibraryAppletDataErase    = 0x0D,        ///< 0100000000001004 "dataErase"
+    AppletId_LibraryAppletError        = 0x0E,        ///< 0100000000001005 "error"
+    AppletId_LibraryAppletNetConnect   = 0x0F,        ///< 0100000000001006 "netConnect"
+    AppletId_LibraryAppletPlayerSelect = 0x10,        ///< 0100000000001007 "playerSelect"
+    AppletId_LibraryAppletSwkbd        = 0x11,        ///< 0100000000001008 "swkbd"
+    AppletId_LibraryAppletMiiEdit      = 0x12,        ///< 0100000000001009 "miiEdit"
+    AppletId_LibraryAppletWeb          = 0x13,        ///< 010000000000100A "LibAppletWeb" WebApplet applet
+    AppletId_LibraryAppletShop         = 0x14,        ///< 010000000000100B "LibAppletShop" ShopN applet
+    AppletId_LibraryAppletPhotoViewer  = 0x15,        ///< 010000000000100D "photoViewer"
+    AppletId_LibraryAppletSet          = 0x16,        ///< 010000000000100E "set" (This applet is currently not present on retail devices.)
+    AppletId_LibraryAppletOfflineWeb   = 0x17,        ///< 010000000000100F "LibAppletOff" offlineWeb applet
+    AppletId_LibraryAppletLoginShare   = 0x18,        ///< 0100000000001010 "LibAppletLns" loginShare web-applet
+    AppletId_LibraryAppletWifiWebAuth  = 0x19,        ///< 0100000000001011 "LibAppletAuth" wifiWebAuth applet
+    AppletId_LibraryAppletMyPage       = 0x1A,        ///< 0100000000001013 "myPage"
 } AppletId;
 
 /// LibraryAppletMode
@@ -186,8 +188,8 @@ typedef enum {
 
 /// Input mode values for \ref appletSetWirelessPriorityMode.
 typedef enum {
-    AppletWirelessPriorityMode_Unknown1 = 1,       ///< Unknown.
-    AppletWirelessPriorityMode_Unknown2 = 2,       ///< Unknown.
+    AppletWirelessPriorityMode_Default          = 1,       ///< Default
+    AppletWirelessPriorityMode_OptimizedForWlan = 2,       ///< OptimizedForWlan
 } AppletWirelessPriorityMode;
 
 /// CaptureSharedBuffer for the IDisplayController commands.
@@ -196,6 +198,12 @@ typedef enum {
     AppletCaptureSharedBuffer_LastForeground  = 1,                     ///< LastForeground
     AppletCaptureSharedBuffer_CallerApplet    = 2,                     ///< CallerApplet
 } AppletCaptureSharedBuffer;
+
+/// WindowOriginMode
+typedef enum {
+    AppletWindowOriginMode_LowerLeft          = 0,                     ///< LowerLeft
+    AppletWindowOriginMode_UpperLeft          = 1,                     ///< UpperLeft
+} AppletWindowOriginMode;
 
 /// ProgramSpecifyKind for the ExecuteProgram cmd. Controls the type of the u64 passed to the ExecuteProgram cmd.
 typedef enum {
@@ -719,7 +727,7 @@ Result appletLeaveFatalSection(void);
 Result appletSetScreenShotPermission(AppletScreenShotPermission permission);
 
 /**
- * @brief Sets whether ::AppletMessage_Restart is enabled.
+ * @brief Sets whether ::AppletMessage_Resume is enabled.
  * @param[in] flag Whether to enable the notification.
  */
 Result appletSetRestartMessageEnabled(bool flag);
@@ -901,7 +909,7 @@ Result appletSetWirelessPriorityMode(AppletWirelessPriorityMode mode);
 Result appletGetProgramTotalActiveTime(u64 *activeTime);
 
 /**
- * @brief Sets whether ::AppletMessage_AlbumImageTaken is enabled.
+ * @brief Sets whether ::AppletMessage_AlbumScreenShotTaken is enabled.
  * @note Only available with [7.0.0+].
  * @param[in] flag Whether to enable the notification.
  */
@@ -1575,9 +1583,9 @@ Result appletInitializeApplicationCopyrightFrameBuffer(void);
  * @param[in] y Y coordinate. Must not be negative.
  * @param[in] width Image width. Must be >=1.
  * @param[in] height Image height. Must be >=1.
- * @param[in] mode WindowOriginMode. Should be at least 1.
+ * @param[in] mode \ref AppletWindowOriginMode
  */
-Result appletSetApplicationCopyrightImage(const void* buffer, size_t size, s32 x, s32 y, s32 width, s32 height, s32 mode);
+Result appletSetApplicationCopyrightImage(const void* buffer, size_t size, s32 x, s32 y, s32 width, s32 height, AppletWindowOriginMode mode);
 
 /**
  * @brief Sets the visibility for the image set by \ref appletSetApplicationCopyrightImage, in screenshots.

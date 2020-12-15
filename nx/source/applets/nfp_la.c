@@ -10,7 +10,7 @@ static Result _nfpLaShow(const NfpLaStartParamForAmiiboSettings *param, NfpLaRet
 
     libappletArgsCreate(&commonargs, ver);
 
-    rc = libappletLaunch(AppletId_cabinet, &commonargs, param, sizeof(*param), reply, sizeof(*reply), &out_reply_size);
+    rc = libappletLaunch(AppletId_LibraryAppletCabinet, &commonargs, param, sizeof(*param), reply, sizeof(*reply), &out_reply_size);
     if (R_SUCCEEDED(rc)) { // sdknso doesn't validate out_reply_size.
         if (!reply->flags) rc = MAKERESULT(Module_Libnx, LibnxError_LibAppletBadExit);
     }

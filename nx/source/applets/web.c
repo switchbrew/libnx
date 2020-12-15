@@ -64,7 +64,7 @@ void webWifiCreate(WebWifiConfig* config, const char* conntest_url, const char* 
 
 Result webWifiShow(WebWifiConfig* config, WebWifiReturnValue *out) {
     AppletHolder holder;
-    return _webShow(&holder, AppletId_wifiWebAuth, 0, &config->arg, sizeof(config->arg), out, sizeof(*out));
+    return _webShow(&holder, AppletId_LibraryAppletWifiWebAuth, 0, &config->arg, sizeof(config->arg), out, sizeof(*out));
 }
 
 static void _webArgInitialize(WebCommonConfig* config, AppletId appletid, WebShimKind shimKind) {
@@ -270,7 +270,7 @@ static Result _webConfigGetU32(WebCommonConfig* config, u16 type, u32 *arg) {
 
 Result webPageCreate(WebCommonConfig* config, const char* url) {
     Result rc=0;
-    _webArgInitialize(config, AppletId_web, WebShimKind_Web);
+    _webArgInitialize(config, AppletId_LibraryAppletWeb, WebShimKind_Web);
 
     rc = _webConfigSetU8(config, WebArgType_UnknownD, 1);
     if (R_SUCCEEDED(rc) && config->version < 0x30000) rc = _webConfigSetU8(config, WebArgType_Unknown12, 1); // Removed from user-process init with [3.0.0+].
@@ -282,7 +282,7 @@ Result webPageCreate(WebCommonConfig* config, const char* url) {
 
 Result webNewsCreate(WebCommonConfig* config, const char* url) {
     Result rc=0;
-    _webArgInitialize(config, AppletId_web, WebShimKind_Web);
+    _webArgInitialize(config, AppletId_LibraryAppletWeb, WebShimKind_Web);
 
     rc = _webConfigSetU8(config, WebArgType_UnknownD, 1);
     if (R_SUCCEEDED(rc)) rc = _webConfigSetFlag(config, WebArgType_NewsFlag, true);
@@ -298,7 +298,7 @@ Result webYouTubeVideoCreate(WebCommonConfig* config, const char* url) {
     Result rc=0;
     if (hosversionBefore(5,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    _webArgInitialize(config, AppletId_web, WebShimKind_Web);
+    _webArgInitialize(config, AppletId_LibraryAppletWeb, WebShimKind_Web);
 
     rc = _webConfigSetU8(config, WebArgType_UnknownD, 1);
     if (R_SUCCEEDED(rc)) rc = _webConfigSetFlag(config, WebArgType_YouTubeVideoFlag, true);
@@ -315,7 +315,7 @@ Result webOfflineCreate(WebCommonConfig* config, WebDocumentKind docKind, u64 id
     if (docKind < WebDocumentKind_OfflineHtmlPage || docKind > WebDocumentKind_SystemDataPage)
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
-    _webArgInitialize(config, AppletId_offlineWeb, WebShimKind_Offline);
+    _webArgInitialize(config, AppletId_LibraryAppletOfflineWeb, WebShimKind_Offline);
 
     rc = webConfigSetLeftStickMode(config, WebLeftStickMode_Cursor);
     if (R_SUCCEEDED(rc)) rc = _webConfigSetFlag(config, WebArgType_BootAsMediaPlayerInverted, false);
@@ -352,7 +352,7 @@ Result webShareCreate(WebCommonConfig* config, WebShareStartPage page) {
     Result rc=0;
     AccountUid uid={0};
 
-    _webArgInitialize(config, AppletId_loginShare, WebShimKind_Share);
+    _webArgInitialize(config, AppletId_LibraryAppletLoginShare, WebShimKind_Share);
 
     rc = webConfigSetLeftStickMode(config, WebLeftStickMode_Cursor);
     if (R_SUCCEEDED(rc)) rc = webConfigSetUid(config, uid);
@@ -372,7 +372,7 @@ Result webLobbyCreate(WebCommonConfig* config) {
     AccountUid uid={0};
     if (hosversionBefore(2,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    _webArgInitialize(config, AppletId_loginShare, WebShimKind_Lobby);
+    _webArgInitialize(config, AppletId_LibraryAppletLoginShare, WebShimKind_Lobby);
 
     rc = webConfigSetLeftStickMode(config, WebLeftStickMode_Cursor);
     if (R_SUCCEEDED(rc) && config->version >= 0x30000) rc = webConfigSetPointer(config, false); // Added to user-process init with [3.0.0+].

@@ -7,7 +7,7 @@ static Result _errorAppletCreate(AppletHolder* holder, const void* indata, size_
     Result rc=0;
     LibAppletArgs commonargs;
 
-    rc = appletCreateLibraryApplet(holder, AppletId_error, LibAppletMode_AllForeground);
+    rc = appletCreateLibraryApplet(holder, AppletId_LibraryAppletError, LibAppletMode_AllForeground);
     if (R_FAILED(rc)) return rc;
 
     libappletArgsCreate(&commonargs, 0);

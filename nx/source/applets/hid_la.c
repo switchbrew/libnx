@@ -16,7 +16,7 @@ static Result _hidLaShow(const HidLaControllerSupportArgPrivate *private_arg, co
     else if (hosversionAtLeast(3,0,0))
         version = 0x4;
 
-    rc = appletCreateLibraryApplet(&holder, AppletId_controller, LibAppletMode_AllForeground);
+    rc = appletCreateLibraryApplet(&holder, AppletId_LibraryAppletController, LibAppletMode_AllForeground);
     if (R_FAILED(rc)) return rc;
 
     libappletArgsCreate(&commonargs, version);
