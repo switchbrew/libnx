@@ -228,11 +228,11 @@ Result fsDeleteSaveDataFileSystem(u64 application_id) {
     return _fsObjectDispatchIn(&g_fsSrv, 21, application_id);
 }
 
-Result fsCreateSaveDataFileSystem(const FsSaveDataAttribute* attr, const FsSaveDataCreationInfo* creation_info, const FsSaveMeta* meta) {
+Result fsCreateSaveDataFileSystem(const FsSaveDataAttribute* attr, const FsSaveDataCreationInfo* creation_info, const FsSaveDataMetaInfo* meta) {
     const struct {
         FsSaveDataAttribute attr;
         FsSaveDataCreationInfo creation_info;
-        FsSaveMeta meta;
+        FsSaveDataMetaInfo meta;
     } in = { *attr, *creation_info, *meta };
 
     return _fsObjectDispatchIn(&g_fsSrv, 22, in);
