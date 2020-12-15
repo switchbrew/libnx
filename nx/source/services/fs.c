@@ -224,6 +224,20 @@ Result fsOpenSdCardFileSystem(FsFileSystem* out) {
     return _fsCmdGetSession(&g_fsSrv, &out->s, 18);
 }
 
+Result fsDeleteSaveDataFileSystem(u64 application_id) {
+    return _fsObjectDispatchIn(&g_fsSrv, 21, application_id);
+}
+
+Result fsCreateSaveDataFileSystem(const FsSaveDataAttribute* attr, const FsSaveDataCreationInfo* creation_info, const FsSaveDataMetaInfo* meta) {
+    const struct {
+        FsSaveDataAttribute attr;
+        FsSaveDataCreationInfo creation_info;
+        FsSaveDataMetaInfo meta;
+    } in = { *attr, *creation_info, *meta };
+
+    return _fsObjectDispatchIn(&g_fsSrv, 22, in);
+}
+
 Result fsCreateSaveDataFileSystemBySystemSaveDataId(const FsSaveDataAttribute* attr, const FsSaveDataCreationInfo* creation_info) {
     const struct {
         FsSaveDataAttribute attr;
@@ -243,6 +257,18 @@ Result fsDeleteSaveDataFileSystemBySaveDataSpaceId(FsSaveDataSpaceId save_data_s
     } in = { (u8)save_data_space_id, saveID };
 
     return _fsObjectDispatchIn(&g_fsSrv, 25, in);
+}
+
+Result fsDeleteSaveDataFileSystemBySaveDataAttribute(FsSaveDataSpaceId save_data_space_id, const FsSaveDataAttribute* attr) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    const struct {
+        u8 save_data_space_id;
+        FsSaveDataAttribute attr;
+    } in = { (u8)save_data_space_id, *attr };
+
+    return _fsObjectDispatchIn(&g_fsSrv, 28, in);
 }
 
 Result fsIsExFatSupported(bool* out) {

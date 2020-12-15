@@ -88,6 +88,13 @@ typedef struct {
     u8 unused[0x190];               ///< Uninitialized.
 } FsSaveDataExtraData;
 
+/// SaveDataMetaInfo
+typedef struct {
+    u32 size;
+    u8 type;                        ///< \ref FsSaveDataMetaType
+    u8 reserved[0x0B];
+} FsSaveDataMetaInfo;
+
 /// SaveDataCreationInfo
 typedef struct {
     s64 save_data_size;    ///< Size of the save data.
@@ -219,6 +226,13 @@ typedef enum {
     FsSaveDataFlags_NeedsSecureDelete                                   = BIT(3),
 } FsSaveDataFlags;
 
+/// SaveDataMetaType
+typedef enum {
+    FsSaveDataMetaType_None             = 0,
+    FsSaveDataMetaType_Thumbnail        = 1,
+    FsSaveDataMetaType_ExtensionContext = 2,
+} FsSaveDataMetaType;
+
 typedef enum {
     FsGameCardAttribute_AutoBootFlag                          = BIT(0), ///< Causes the cartridge to automatically start on bootup
     FsGameCardAttribute_HistoryEraseFlag                      = BIT(1), ///< Causes NS to throw an error on attempt to load the cartridge
@@ -323,8 +337,11 @@ Result fsOpenBisStorage(FsStorage* out, FsBisPartitionId partitionId);
 /// Do not call this directly, see fs_dev.h.
 Result fsOpenSdCardFileSystem(FsFileSystem* out);
 
+Result fsDeleteSaveDataFileSystem(u64 application_id);
+Result fsCreateSaveDataFileSystem(const FsSaveDataAttribute* attr, const FsSaveDataCreationInfo* creation_info, const FsSaveDataMetaInfo* meta);
 Result fsCreateSaveDataFileSystemBySystemSaveDataId(const FsSaveDataAttribute* attr, const FsSaveDataCreationInfo* creation_info);
 Result fsDeleteSaveDataFileSystemBySaveDataSpaceId(FsSaveDataSpaceId save_data_space_id, u64 saveID); ///< [2.0.0+]
+Result fsDeleteSaveDataFileSystemBySaveDataAttribute(FsSaveDataSpaceId save_data_space_id, const FsSaveDataAttribute* attr); ///< [4.0.0+]
 
 Result fsIsExFatSupported(bool* out);
 
