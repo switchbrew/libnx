@@ -9,7 +9,9 @@ static Result _hidLaShow(const HidLaControllerSupportArgPrivate *private_arg, co
     AppletHolder holder;
     u32 version=0x3; // [1.0.0+]
 
-    if (hosversionAtLeast(8,0,0))
+    if (hosversionAtLeast(11,0,0))
+        version = 0x8;
+    else if (hosversionAtLeast(8,0,0))
         version = 0x7;
     else if (hosversionAtLeast(6,0,0))
         version = 0x5;
@@ -32,12 +34,19 @@ static Result _hidLaShow(const HidLaControllerSupportArgPrivate *private_arg, co
     return rc;
 }
 
+static size_t _hidLaGetControllerSupportArgSize(void) {
+    size_t arg_size = sizeof(HidLaControllerSupportArg);
+    if (hosversionBefore(8,0,0)) arg_size = sizeof(HidLaControllerSupportArgV3);
+
+    return arg_size;
+}
+
 static Result _hidLaShowControllerSupportCore(HidLaControllerSupportResultInfo *result_info, const HidLaControllerSupportArg *arg, const HidLaControllerSupportArgPrivate *private_arg) {
     Result rc=0;
     HidLaControllerSupportResultInfoInternal res={0};
     HidLaControllerSupportArgV3 arg_v3;
     const void* arg_ptr = arg;
-    size_t arg_size = sizeof(*arg);
+    size_t arg_size = _hidLaGetControllerSupportArgSize();
 
     if (private_arg->mode == HidLaControllerSupportMode_ShowControllerFirmwareUpdate)
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
@@ -45,7 +54,6 @@ static Result _hidLaShowControllerSupportCore(HidLaControllerSupportResultInfo *
     if (hosversionBefore(8,0,0)) {
         memset(&arg_v3, 0, sizeof(arg_v3));
         arg_ptr = &arg_v3;
-        arg_size = sizeof(arg_v3);
 
         memcpy(&arg_v3.hdr, &arg->hdr, sizeof(arg->hdr));
         memcpy(arg_v3.identification_color, arg->identification_color, sizeof(arg_v3.identification_color));
@@ -90,6 +98,25 @@ static Result _hidLaShowControllerFirmwareUpdateCore(const HidLaControllerFirmwa
     return rc;
 }
 
+static Result _hidLaShowControllerKeyRemappingCore(const HidLaControllerKeyRemappingArg *arg, const HidLaControllerSupportArgPrivate *private_arg) {
+    Result rc=0;
+    HidLaControllerSupportResultInfoInternal res={0};
+
+    if (hosversionBefore(11,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    if (private_arg->mode != HidLaControllerSupportMode_ShowControllerKeyRemappingForSystem)
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+
+    rc = _hidLaShow(private_arg, arg, sizeof(*arg), &res, sizeof(res));
+    if (R_SUCCEEDED(rc)) {
+        if (res.res != 0) {
+            rc = MAKERESULT(Module_Libnx, LibnxError_LibAppletBadExit);
+        }
+    }
+
+    return rc;
+}
+
 static Result _hidLaSetupControllerSupportArgPrivate(HidLaControllerSupportArgPrivate *private_arg) {
     Result rc=0;
     u32 style_set;
@@ -119,6 +146,10 @@ void hidLaCreateControllerFirmwareUpdateArg(HidLaControllerFirmwareUpdateArg *ar
     memset(arg, 0, sizeof(*arg));
 }
 
+void hidLaCreateControllerKeyRemappingArg(HidLaControllerKeyRemappingArg *arg) {
+    memset(arg, 0, sizeof(*arg));
+}
+
 Result hidLaSetExplainText(HidLaControllerSupportArg *arg, const char *str, HidNpadIdType id) {
     if (id >= 8)
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
@@ -132,7 +163,7 @@ Result hidLaSetExplainText(HidLaControllerSupportArg *arg, const char *str, HidN
 Result hidLaShowControllerSupport(HidLaControllerSupportResultInfo *result_info, const HidLaControllerSupportArg *arg) {
     Result rc=0;
     HidLaControllerSupportArgPrivate private_arg = {
-        .private_size = sizeof(private_arg), .arg_size = sizeof(*arg), .mode = HidLaControllerSupportMode_ShowControllerSupport
+        .private_size = sizeof(private_arg), .arg_size = _hidLaGetControllerSupportArgSize(), .mode = HidLaControllerSupportMode_ShowControllerSupport
     };
 
     rc = _hidLaSetupControllerSupportArgPrivate(&private_arg);
@@ -146,7 +177,7 @@ Result hidLaShowControllerStrapGuide(void) {
     Result rc=0;
     HidLaControllerSupportArg arg;
     HidLaControllerSupportArgPrivate private_arg = {
-        .private_size = sizeof(private_arg), .arg_size = sizeof(arg), .mode = HidLaControllerSupportMode_ShowControllerStrapGuide
+        .private_size = sizeof(private_arg), .arg_size = _hidLaGetControllerSupportArgSize(), .mode = HidLaControllerSupportMode_ShowControllerStrapGuide
     };
 
     if (hosversionBefore(3,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
@@ -163,7 +194,7 @@ Result hidLaShowControllerStrapGuide(void) {
 Result hidLaShowControllerFirmwareUpdate(const HidLaControllerFirmwareUpdateArg *arg) {
     Result rc=0;
     HidLaControllerSupportArgPrivate private_arg = {
-        .private_size = sizeof(private_arg), .arg_size = sizeof(*arg), .mode = HidLaControllerSupportMode_ShowControllerFirmwareUpdate
+        .private_size = sizeof(private_arg), .arg_size = _hidLaGetControllerSupportArgSize(), .mode = HidLaControllerSupportMode_ShowControllerFirmwareUpdate
     };
 
     rc = _hidLaSetupControllerSupportArgPrivate(&private_arg);
@@ -176,7 +207,7 @@ Result hidLaShowControllerFirmwareUpdate(const HidLaControllerFirmwareUpdateArg 
 Result hidLaShowControllerSupportForSystem(HidLaControllerSupportResultInfo *result_info, const HidLaControllerSupportArg *arg, bool flag) {
     Result rc=0;
     HidLaControllerSupportArgPrivate private_arg = {
-        .private_size = sizeof(private_arg), .arg_size = sizeof(*arg),
+        .private_size = sizeof(private_arg), .arg_size = _hidLaGetControllerSupportArgSize(),
         .flag0 = flag!=0, .flag1 = 1, .mode = HidLaControllerSupportMode_ShowControllerSupport
     };
 
@@ -196,13 +227,27 @@ Result hidLaShowControllerSupportForSystem(HidLaControllerSupportResultInfo *res
 Result hidLaShowControllerFirmwareUpdateForSystem(const HidLaControllerFirmwareUpdateArg *arg, HidLaControllerSupportCaller caller) {
     Result rc=0;
     HidLaControllerSupportArgPrivate private_arg = {
-        .private_size = sizeof(private_arg), .arg_size = sizeof(*arg),
+        .private_size = sizeof(private_arg), .arg_size = _hidLaGetControllerSupportArgSize(),
         .flag1 = 1, .mode = HidLaControllerSupportMode_ShowControllerFirmwareUpdate, .controller_support_caller = caller
     };
 
     rc = _hidLaSetupControllerSupportArgPrivate(&private_arg);
 
     if (R_SUCCEEDED(rc)) rc = _hidLaShowControllerFirmwareUpdateCore(arg, &private_arg);
+
+    return rc;
+}
+
+Result hidLaShowControllerKeyRemappingForSystem(const HidLaControllerKeyRemappingArg *arg, HidLaControllerSupportCaller caller) {
+    Result rc=0;
+    HidLaControllerSupportArgPrivate private_arg = {
+        .private_size = sizeof(private_arg), .arg_size = _hidLaGetControllerSupportArgSize(),
+        .flag1 = 1, .mode = HidLaControllerSupportMode_ShowControllerKeyRemappingForSystem, .controller_support_caller = caller
+    };
+
+    rc = _hidLaSetupControllerSupportArgPrivate(&private_arg);
+
+    if (R_SUCCEEDED(rc)) rc = _hidLaShowControllerKeyRemappingCore(arg, &private_arg);
 
     return rc;
 }

@@ -10,9 +10,10 @@
 
 /// Mode values for HidLaControllerSupportArgPrivate::mode.
 typedef enum {
-    HidLaControllerSupportMode_ShowControllerSupport           = 0,    ///< ShowControllerSupport
-    HidLaControllerSupportMode_ShowControllerStrapGuide        = 1,    ///< [3.0.0+] ShowControllerStrapGuide
-    HidLaControllerSupportMode_ShowControllerFirmwareUpdate    = 2,    ///< [3.0.0+] ShowControllerFirmwareUpdate
+    HidLaControllerSupportMode_ShowControllerSupport                = 0,    ///< ShowControllerSupport
+    HidLaControllerSupportMode_ShowControllerStrapGuide             = 1,    ///< [3.0.0+] ShowControllerStrapGuide
+    HidLaControllerSupportMode_ShowControllerFirmwareUpdate         = 2,    ///< [3.0.0+] ShowControllerFirmwareUpdate
+    HidLaControllerSupportMode_ShowControllerKeyRemappingForSystem  = 4,    ///< [11.0.0+] ShowControllerKeyRemappingForSystem
 } HidLaControllerSupportMode;
 
 /// ControllerSupportCaller
@@ -75,6 +76,13 @@ typedef struct {
     u8 pad[3];                                                         ///< Padding.
 } HidLaControllerFirmwareUpdateArg;
 
+/// ControllerKeyRemappingArg
+typedef struct {
+    u64 unk_x0;                                                        ///< Unknown
+    u32 unk_x8;                                                        ///< Unknown
+    u8 pad[0x4];                                                       ///< Padding
+} HidLaControllerKeyRemappingArg;
+
 /// ControllerSupportResultInfo. First 8-bytes from the applet output storage.
 typedef struct {
     s8 player_count;                                                   ///< playerCount.
@@ -102,6 +110,13 @@ void hidLaCreateControllerSupportArg(HidLaControllerSupportArg *arg);
  * @param[out] arg \ref HidLaControllerFirmwareUpdateArg
  */
 void hidLaCreateControllerFirmwareUpdateArg(HidLaControllerFirmwareUpdateArg *arg);
+
+/**
+ * @brief Initializes a \ref HidLaControllerKeyRemappingArg with the defaults.
+ * @note This just uses memset() with the arg.
+ * @param[out] arg \ref HidLaControllerKeyRemappingArg
+ */
+void hidLaCreateControllerKeyRemappingArg(HidLaControllerKeyRemappingArg *arg);
 
 /**
  * @brief Sets the ExplainText for the specified player and \ref HidLaControllerSupportArg.
@@ -149,4 +164,12 @@ Result hidLaShowControllerSupportForSystem(HidLaControllerSupportResultInfo *res
  * @param[in] caller \ref HidLaControllerSupportCaller
  */
 Result hidLaShowControllerFirmwareUpdateForSystem(const HidLaControllerFirmwareUpdateArg *arg, HidLaControllerSupportCaller caller);
+
+/**
+ * @brief Launches the applet for ControllerKeyRemappingForSystem.
+ * @note Only available on [11.0.0+].
+ * @param[in] arg \ref HidLaControllerKeyRemappingArg
+ * @param[in] caller \ref HidLaControllerSupportCaller
+ */
+Result hidLaShowControllerKeyRemappingForSystem(const HidLaControllerKeyRemappingArg *arg, HidLaControllerSupportCaller caller);
 
