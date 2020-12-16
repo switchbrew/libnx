@@ -1,6 +1,7 @@
 #include <string.h>
 #include "libapplet_internal.h"
 #include "arm/counter.h"
+#include "runtime/hosversion.h"
 
 static bool g_libappletJumpFlag;
 
@@ -168,6 +169,41 @@ Result libappletRequestHomeMenu(void) {
 
 Result libappletRequestJumpToSystemUpdate(void) {
     u8 storagedata[0x10] = {0x53, 0x41, 0x4d, 0x53, 0x01, 0x00, 0x00, 0x00, 0x0b, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00};//RequestJumpToSystemUpdate
+    return _libappletQlaunchRequest(storagedata, sizeof(storagedata));
+}
+
+Result libappletRequestToLaunchApplication(u64 application_id, AccountUid uid, const void* buffer, size_t size, u32 sender) {
+    if (hosversionBefore(11,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    Result rc=0;
+    u32 tmp=size;
+    AppletStorage s={0};
+    u8 storagedata[0x10] = {0x53, 0x41, 0x4d, 0x53, 0x01, 0x00, 0x00, 0x00, 0x20, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00};
+
+    rc = appletCreateStorage(&s, 0x800);
+    if (R_FAILED(rc)) return rc;
+
+    rc = appletStorageWrite(&s, 0, &storagedata, sizeof(storagedata));
+    if (R_SUCCEEDED(rc)) rc = appletStorageWrite(&s, sizeof(storagedata), &sender, sizeof(sender));
+    if (R_SUCCEEDED(rc)) rc = appletStorageWrite(&s, sizeof(storagedata)+sizeof(u32), &application_id, sizeof(application_id));
+    if (R_SUCCEEDED(rc)) rc = appletStorageWrite(&s, sizeof(storagedata)+sizeof(u32)+sizeof(u64), &uid, sizeof(AccountUid));
+    if (R_SUCCEEDED(rc)) rc = appletStorageWrite(&s, sizeof(storagedata)+sizeof(u32)+sizeof(u64)+sizeof(AccountUid), &tmp, sizeof(tmp));
+    if (R_SUCCEEDED(rc)) rc = appletStorageWrite(&s, sizeof(storagedata)+sizeof(u32)+sizeof(u64)+sizeof(AccountUid)+sizeof(tmp), buffer, tmp);
+    if (R_FAILED(rc)) {
+        appletStorageClose(&s);
+        return rc;
+    }
+    return appletPushToGeneralChannel(&s);
+}
+
+Result libappletRequestJumpToStory(AccountUid uid, u64 application_id) {
+    if (hosversionBefore(11,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    u8 storagedata[0x28] = {0x53, 0x41, 0x4d, 0x53, 0x01, 0x00, 0x00, 0x00, 0x21, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00};
+    memcpy(&storagedata[0x10], &uid, sizeof(uid));
+    memcpy(&storagedata[0x20], &application_id, sizeof(application_id));
     return _libappletQlaunchRequest(storagedata, sizeof(storagedata));
 }
 

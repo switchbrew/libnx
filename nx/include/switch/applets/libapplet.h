@@ -7,6 +7,7 @@
 #pragma once
 #include "../types.h"
 #include "../services/applet.h"
+#include "../services/acc.h"
 
 /// CommonArguments
 typedef struct {
@@ -113,4 +114,23 @@ Result libappletRequestHomeMenu(void);
 /// Wrapper for \ref appletPushToGeneralChannel, see appletPushToGeneralChannel regarding the requirements for using this.
 /// Equivalent to entering "System Update" under System Settings. When leaving this, it returns to the main Home Menu.
 Result libappletRequestJumpToSystemUpdate(void);
+
+/**
+ * @brief Wrapper for \ref appletPushToGeneralChannel, see appletPushToGeneralChannel regarding the requirements for using this.
+ * @note Only available on [11.0.0+].
+ * @param[in] application_id ApplicationId
+ * @param[in] uid \ref AccountUid
+ * @param[in] buffer Input buffer.
+ * @param[in] size Input buffer size.
+ * @param[in] sender LaunchApplicationRequestSender
+ */
+Result libappletRequestToLaunchApplication(u64 application_id, AccountUid uid, const void* buffer, size_t size, u32 sender);
+
+/**
+ * @brief Wrapper for \ref appletPushToGeneralChannel, see appletPushToGeneralChannel regarding the requirements for using this.
+ * @note Only available on [11.0.0+].
+ * @param[in] uid \ref AccountUid
+ * @param[in] application_id Optional ApplicationId, can be 0.
+ */
+Result libappletRequestJumpToStory(AccountUid uid, u64 application_id);
 
