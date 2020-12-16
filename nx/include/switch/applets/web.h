@@ -227,6 +227,7 @@ typedef enum {
     WebArgType_SessionBootMode                          = 0x41,   ///< [7.0.0+] u32 enum \ref WebSessionBootMode
     WebArgType_SessionFlag                              = 0x42,   ///< [7.0.0+] u8 bool, enables using WebSession when set.
     WebArgType_MediaPlayerUi                            = 0x43,   ///< [8.0.0+] u8 bool
+    WebArgType_TransferMemory                           = 0x44,   ///< [11.0.0+] u8 bool
 } WebArgType;
 
 /// Types for \ref WebArgTLV, output storage.
@@ -712,6 +713,14 @@ Result webConfigSetBootMode(WebCommonConfig* config, WebSessionBootMode mode);
  * @param flag Flag
  */
 Result webConfigSetMediaPlayerUi(WebCommonConfig* config, bool flag);
+
+/**
+ * @brief Sets whether TransferMemory is enabled.
+ * @note Only available with config created by \ref webPageCreate on [11.0.0+].
+ * @param config WebCommonConfig object.
+ * @param flag Flag
+ */
+Result webConfigSetTransferMemory(WebCommonConfig* config, bool flag);
 
 /**
  * @brief Launches the {web applet} with the specified config and waits for it to exit.

@@ -702,6 +702,12 @@ Result webConfigSetMediaPlayerUi(WebCommonConfig* config, bool flag) {
     return _webConfigSetFlag(config, WebArgType_MediaPlayerUi, flag);
 }
 
+Result webConfigSetTransferMemory(WebCommonConfig* config, bool flag) {
+    if (_webGetShimKind(config) != WebShimKind_Web) return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(11,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    return _webConfigSetFlag(config, WebArgType_TransferMemory, flag);
+}
+
 static void _webConfigInitReply(WebCommonConfig* config, WebCommonReply *out, void** reply, size_t *reply_size) {
     if (out) {
         // ShareApplet on [3.0.0+] uses TLV storage for the reply, while older versions + everything else uses *ReturnValue.
