@@ -589,6 +589,15 @@ s32 swkbdInlineGetMaxHeight(SwkbdInline* s) {
     return s->state == SwkbdState_Unknown6 ? height1 : height0;
 }
 
+s32 swkbdInlineGetMiniaturizedHeight(SwkbdInline* s) {
+    bool flag=0;
+    if (s->calcArg.appearArg.type >= SwkbdType_ZhHans && s->calcArg.appearArg.type <= SwkbdType_Unknown9) flag = 1;
+    else if (!(s->calcArg.appearArg.dicFlag && s->wordInfoInitialized && s->dicCustomInitialized)) {
+        flag = !s->calcArg.appearArg.keySetDisableBitmask && (s->calcArg.appearArg.type != SwkbdType_NumPad && s->calcArg.appearArg.type != SwkbdType_QWERTY);
+    }
+    return flag ? 132 : 72;
+}
+
 s32 swkbdInlineGetTouchRectangles(SwkbdInline* s, SwkbdRect *keytop, SwkbdRect *footer) {
     float keytop_max_height = (float)swkbdInlineGetMaxHeight(s);
     float footer_max_height = keytop_max_height;

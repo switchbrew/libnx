@@ -651,6 +651,12 @@ Result swkbdInlineGetImage(SwkbdInline* s, void* buffer, u64 size, bool *data_av
 s32 swkbdInlineGetMaxHeight(SwkbdInline* s);
 
 /**
+ * @brief Gets the MiniaturizedHeight, relative to the bottom of the screen.
+ * @param s SwkbdInline object.
+ */
+s32 swkbdInlineGetMiniaturizedHeight(SwkbdInline* s);
+
+/**
  * @brief GetTouchRectangles. Returns number of valid Rects: 1 for only keytop, 2 for keytop/footer.
  * @param s SwkbdInline object.
  * @param[out] keytop \ref SwkbdRect for keytop. Optional, can be NULL.
