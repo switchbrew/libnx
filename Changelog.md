@@ -1,5 +1,99 @@
 # Changelog
 
+## Version 4.0.0
+
+#### system
+* **Added support for the light event synchronization primitive** (needs [4.0.0+] or mesosphère).
+* **The virtmem API was completely redesigned** to support ASLR and increase thread safety.
+* **Added diagAbortWithResult**, an overridable user panic function which is intended to replace fatalThrow in order to stop homebrew from treating application errors as fatal system errors that bring the entire OS down.
+  * The default implementation uses svcBreak.
+  * Replaced calls to fatalThrow with diagAbortWithResult throughout libnx.
+* Added detectMesosphere.
+* Added svcGetResourceLimitPeakValue [11.0.0+].
+* Added InfoType_FreeThreadCount [11.0.0+].
+* Corrected svcBreak definition and added BreakReason enum.
+* Removed obsolete kernel version detection code.
+  * fatal service wrapper now checks hosversion.
+  * Jit object wrapper now checks syscall hinting provided by the homebrew environment (requires nx-hbloader 2.4.0+).
+* Miscellaneous crt0/linkscript fixes and optimizations.
+
+#### input
+* **Major refactor of the HID service**, including a redesigned API that follows official usage more accurately, allowing more flexibility and improved future maintainability. Summary of changes:
+  * Introduced HidNpadIdType, HidNpadStyleTag, HidNpadButton enums and others.
+  * Enums and structs were updated to more accurately reflect official names; this also affects all other hid related services.
+  * Everything which formerly took HidControllerID parameters now takes HidNpadIdType instead; this also affects all other hid related services.
+  * Handle types (such as vibration and sixaxis sensor handles) are now structs instead of bare integer values; this also affects all other hid related services.
+  * Introduced explicit initialization functions for Npad, TouchScreen, Mouse, Keyboard.
+  * Introduced (or renamed) functions for configuring or retrieving Npad input style and other associated behavior.
+  * Introduced the hidGetNpadStates{X} family of functions, which read the current state of a Npad in the given style.
+  * Likewise introduced hidGetTouchScreenStates, hidGetMouseStates, hidGetKeyboardStates, hidGetSixAxisSensorStates.
+  * Added support for most other miscellaneous hid service commands.
+  * Deprecated the entirety of the old API, including but not limited to: hidScanInput, hidGetKeysDown/Held/Up, hidTouchCount, hidTouchRead, etc.
+    * Removed hidSetControllerLayout/hidGetControllerLayout together with HidControllerLayoutType.
+  * Introduced a new wrapper Pad API that replaces the old API for application usage.
+  * Introduced PadRepeater API.
+* **Added full support for GameCube, Palma (Poké Ball Plus), Lark (NES) and Lucia (SNES) controllers.**
+* **Added support for gestures.**
+* **Improved support for SevenSixAxisSensor.**
+* Added hiddbg AutoPilot support for DebugPad, TouchScreen, Mouse, Keyboard.
+* Added hiddbgDeactivateHomeButton.
+* Added HiddbgNpadButton enum with Home/Capture buttons (exclusive to hiddbg pad state).
+* Updated hidsys service wrapper for [11.0.0+], including new functionality.
+* Added hidsysSendKeyboardLockKeyEvent, hidsysGetNpadInterfaceType, hidsysGetNpadLeftRightInterfaceType, hidsysHasBattery, hidsysHasLeftRightBattery, hidsysIsUsbFullKeyControllerEnabled, hidsysEnableUsbFullKeyController, hidsysIsUsbConnected, hidsysIsFirmwareUpdateNeededForNotification.
+* Improved support for hidsys' Home/Sleep/Capture button commands.
+* Added HidsysUniquePadSerialNumber struct.
+* Fixed bug in hidbus/Ring-Con code that could cause a crash following cleanup.
+
+#### applets
+* Updated applet service wrapper for [11.0.0+], including new functionality.
+* Renamed several members in the following enums to more accurately reflect official names: AppletOperationMode, AppletHookType, AppletMessage, AppletFocusState, AppletFocusHandlingMode, AppletId, AppletWirelessPriorityMode, AppletWindowOriginMode.
+* Added appletHolderGetExitEvent, appletHolderGetPopInteractiveOutDataEvent.
+* Added libappletRequestToLaunchApplication, libappletRequestJumpToStory [11.0.0+].
+* Added webConfigSetTransferMemory.
+* Added swkbdInlineGetMaxHeight, swkbdInlineGetTouchRectangles, swkbdInlineIsUsedTouchPointByKeyboard, swkbdInlineGetMiniaturizedHeight.
+* Added nfpLa wrapper (amiibo).
+* Added miiLa wrapper (Mii editor).
+* Added nifmLa wrapper.
+* Updated swkbd for [10.0.0+].
+* Updated web for [10.0.0+].
+* Updated hidLa for [11.0.0] + misc fixes.
+* Implemented support for WebSession in web.
+* Implemented support for UserDisplay mode in swkbd.
+
+#### filesystem
+* Added fsCreateSaveDataFileSystem, fsDeleteSaveDataFileSystem, fsDeleteSaveDataFileSystemBySaveDataAttribute.
+* Added fsOpenDataFileSystemByCurrentProcess, fsOpenDataFileSystemByProgramId, fsOpenDataStorageByProgramId, fsOpenPatchDataStorageByCurrentProcess.
+* Added fsOutputAccessLogToSdCard, fsGetProgramIndexForAccessLog.
+* Added romfsMountDataStorageFromProgram.
+* Fixed stat on romfs devices to report failure properly for non-existent files/directories.
+
+#### other services
+* Added Bluetooth (bt, btdrv, btm, btm:u, btm:sys) service wrappers.
+  * Added btdev wrapper API.
+* Added ins:r and ins:s service wrappers.
+* Added uart service wrapper.
+* Added news service wrapper.
+* Added lp2p service wrapper.
+* Added ectx:r service wrapper [11.0.0+].
+* Added capmtp service wrapper [11.0.0+].
+* Added smDetachClient [11.0.0+].
+* Added ErrorContextType enum.
+* Updated gpio service wrapper to add most missing functionality.
+* Updated psm service wrapper to add more battery functions.
+* Updated loader service wrapper for [11.0.0+].
+* Updated usb:ds service wrapper for [11.0.0+].
+* Updated set service wrapper for [10.1.0+], including new functionality.
+* Updated ns service wrapper to consider ns:ro if available [11.0.0+].
+* Updated ssl service enum SslVersion for [11.0.0+].
+* Renamed several members in the following enums to more accurately reflect official names: ApmPerformanceMode, ApmCpuBoostMode.
+* Fixed bug in splCryptoGetSecurityEngineEvent service wrapper.
+* Fixed audoutOpenAudioOut to properly pass aruid, making the service usable once again (and restoring compatibility with [1.0.0]).
+* Reliability and usability fixes in usb:ds:
+  * Added UsbState enum (now returned by usbDsGetState).
+  * Fixed usbDsWaitReady to properly respect the given timeout.
+
+**Several issues were fixed, and usability and stability were improved.**
+
 ## Version 3.3.0
 
 #### system
