@@ -30,7 +30,6 @@ static MemRegion g_StackRegion;
 
 static VirtmemReservation *g_Reservations;
 
-static uintptr_t g_SequentialAddr;
 static bool g_IsLegacyKernel;
 
 static Result _memregionInitWithInfo(MemRegion* r, InfoType id0_addr, InfoType id0_sz) {
@@ -193,60 +192,6 @@ void virtmemSetup(void) {
             diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_WeirdKernel));
         }
     }
-}
-
-void* virtmemReserve(size_t size) {
-    // Page align the size
-    size = (size + 0xFFF) &~ 0xFFF;
-
-    // Main allocation loop
-    mutexLock(&g_VirtmemMutex);
-    uintptr_t cur_addr = g_SequentialAddr;
-    void* ret = NULL;
-    for (;;) {
-        // Roll over if we reached the end.
-        if (!_memregionIsInside(&g_AslrRegion, cur_addr, cur_addr + size))
-            cur_addr = g_AslrRegion.start;
-
-        // Avoid mapping within the alias region.
-        if (_memregionOverlaps(&g_AliasRegion, cur_addr, cur_addr + size)) {
-            cur_addr = g_AliasRegion.end;
-            continue;
-        }
-
-        // Avoid mapping within the heap region.
-        if (_memregionOverlaps(&g_HeapRegion, cur_addr, cur_addr + size)) {
-            cur_addr = g_HeapRegion.end;
-            continue;
-        }
-
-        // Avoid mapping within the stack region.
-        if (_memregionOverlaps(&g_StackRegion, cur_addr, cur_addr + size)) {
-            cur_addr = g_StackRegion.end;
-            continue;
-        }
-
-        // Avoid mapping in areas that are already used.
-        if (_memregionIsMapped(cur_addr, cur_addr + size, SEQUENTIAL_GUARD_REGION_SIZE, &cur_addr))
-            continue;
-
-        // Avoid mapping in areas that are reserved.
-        if (_memregionIsReserved(cur_addr, cur_addr + size, SEQUENTIAL_GUARD_REGION_SIZE, &cur_addr))
-            continue;
-
-        // We found a suitable address for the block.
-        g_SequentialAddr = cur_addr + size + SEQUENTIAL_GUARD_REGION_SIZE;
-        ret = (void*)cur_addr;
-        break;
-    }
-    mutexUnlock(&g_VirtmemMutex);
-
-    return ret;
-}
-
-void virtmemFree(void* addr, size_t size) {
-    IGNORE_ARG(addr);
-    IGNORE_ARG(size);
 }
 
 void virtmemLock(void) {

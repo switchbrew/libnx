@@ -10,22 +10,6 @@
 /// Address space reservation type (see \ref virtmemAddReservation)
 typedef struct VirtmemReservation VirtmemReservation;
 
-/**
- * @brief Reserves a slice of general purpose address space sequentially.
- * @param size Desired size of the slice (rounded up to page alignment).
- * @return Pointer to the slice of address space.
- * @deprecated This function is prone to race conditions, please use \ref virtmemFindAslr or \ref virtmemFindCodeMemory (and, if necessary, \ref virtmemAddReservation) instead.
- */
-void* DEPRECATED virtmemReserve(size_t size);
-
-/**
- * @brief Relinquishes a slice of address space reserved with virtmemReserve (currently no-op).
- * @param addr Pointer to the slice.
- * @param size Size of the slice.
- * @deprecated This function is a companion of \ref virtmemReserve which is deprecated.
- */
-void DEPRECATED virtmemFree(void* addr, size_t size);
-
 /// Locks the virtual memory manager mutex.
 void virtmemLock(void);
 
