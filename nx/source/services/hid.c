@@ -2118,18 +2118,18 @@ Result hidResetPalmaStep(HidPalmaConnectionHandle handle) {
     return _hidCmdInU64NoOut(&g_hidSrv, handle.handle, 508);
 }
 
-Result hidReadPalmaApplicationSection(HidPalmaConnectionHandle handle, s32 inval0, u64 inval1) {
+Result hidReadPalmaApplicationSection(HidPalmaConnectionHandle handle, s32 inval0, u64 size) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    if (inval0 > sizeof(HidPalmaApplicationSectionAccessBuffer))
+    if (size > sizeof(HidPalmaApplicationSectionAccessBuffer))
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
     const struct {
         HidPalmaConnectionHandle handle;
         u64 inval0;
-        u64 inval1;
-    } in = { handle, inval0, inval1 };
+        u64 size;
+    } in = { handle, inval0, size };
 
     return serviceDispatchIn(&g_hidSrv, 509, in);
 }

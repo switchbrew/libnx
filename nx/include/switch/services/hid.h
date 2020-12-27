@@ -2164,10 +2164,10 @@ Result hidResetPalmaStep(HidPalmaConnectionHandle handle);
  * @note See \ref hidGetPalmaOperationInfo.
  * @note Only available on [5.0.0+].
  * @param[in] handle \ref HidPalmaConnectionHandle
- * @param[in] inval0 First input value. This must be within the size of \ref HidPalmaApplicationSectionAccessBuffer.
- * @param[in] inval1 Second input value.
+ * @param[in] inval0 First input value.
+ * @param[in] size This must be within the size of \ref HidPalmaApplicationSectionAccessBuffer.
  */
-Result hidReadPalmaApplicationSection(HidPalmaConnectionHandle handle, s32 inval0, u64 inval1);
+Result hidReadPalmaApplicationSection(HidPalmaConnectionHandle handle, s32 inval0, u64 size);
 
 /**
  * @brief WritePalmaApplicationSection
@@ -2178,7 +2178,7 @@ Result hidReadPalmaApplicationSection(HidPalmaConnectionHandle handle, s32 inval
  * @param[in] size Size of the data in \ref HidPalmaApplicationSectionAccessBuffer.
  * @param[in] buf \ref HidPalmaApplicationSectionAccessBuffer
  */
-Result hidWritePalmaApplicationSection(HidPalmaConnectionHandle handle, s32 inval0, u64 inval1, const HidPalmaApplicationSectionAccessBuffer *buf);
+Result hidWritePalmaApplicationSection(HidPalmaConnectionHandle handle, s32 inval0, u64 size, const HidPalmaApplicationSectionAccessBuffer *buf);
 
 /**
  * @brief ReadPalmaUniqueCode
