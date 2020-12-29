@@ -264,18 +264,18 @@ Result btmAcquireBleScanEvent(Event* out_event);
 /**
  * @brief GetBleScanParameterGeneral
  * @note Only available on [5.1.0+].
- * @param[in] unk Must be value 0x1 or 0xFFFF.
+ * @param[in] parameter_id Must be value 0x1 or 0xFFFF.
  * @param[out] out \ref BtdrvBleAdvertisePacketParameter
  */
-Result btmGetBleScanParameterGeneral(u16 unk, BtdrvBleAdvertisePacketParameter *out);
+Result btmGetBleScanParameterGeneral(u16 parameter_id, BtdrvBleAdvertisePacketParameter *out);
 
 /**
  * @brief GetBleScanParameterSmartDevice
  * @note Only available on [5.1.0+].
- * @param[in] unk Must be value 0x2.
+ * @param[in] parameter_id Must be value 0x2.
  * @param[out] out \ref BtdrvGattAttributeUuid. The first 4-bytes is always 0.
  */
-Result btmGetBleScanParameterSmartDevice(u16 unk, BtdrvGattAttributeUuid *out);
+Result btmGetBleScanParameterSmartDevice(u16 parameter_id, BtdrvGattAttributeUuid *out);
 
 /**
  * @brief StartBleScanForGeneral
@@ -454,44 +454,44 @@ Result btmGetGattService(u32 connection_handle, const BtdrvGattAttributeUuid *uu
  * @brief Same as \ref btmGetGattServices except this only returns \ref BtmGattService entries where various checks pass with u16 fields.
  * @note Only available on [5.0.0+].
  * @param[in] connection_handle Same as \ref btmBleDisconnect.
- * @param[in] handle Handle
+ * @param[in] service_handle ServiceHandle
  * @param[out] services \ref BtmGattService
  * @param[in] count Size of the services array in entries. The max is 100.
  * @param[out] out Output value.
  */
-Result btmGetGattIncludedServices(u32 connection_handle, u16 handle, BtmGattService *services, u8 count, u8 *out);
+Result btmGetGattIncludedServices(u32 connection_handle, u16 service_handle, BtmGattService *services, u8 count, u8 *out);
 
 /**
  * @brief This is similar to \ref btmGetGattIncludedServices except this only returns 1 \ref BtmGattService.
  * @note Only available on [5.0.0+].
  * @param[in] connection_handle Same as \ref btmBleDisconnect.
- * @param[in] handle Handle
+ * @param[in] attribute_handle AttributeHandle
  * @param[out] service \ref BtmGattService
  * @param[out] flag Whether a \ref BtmGattService was returned.
  */
-Result btmGetBelongingService(u32 connection_handle, u16 handle, BtmGattService *service, bool *flag);
+Result btmGetBelongingService(u32 connection_handle, u16 attribute_handle, BtmGattService *service, bool *flag);
 
 /**
  * @brief GetGattCharacteristics
  * @note Only available on [5.0.0+].
  * @param[in] connection_handle Same as \ref btmBleDisconnect.
- * @param[in] handle This controls which \ref BtmGattCharacteristic entries to return.
+ * @param[in] service_handle This controls which \ref BtmGattCharacteristic entries to return.
  * @param[out] characteristics \ref BtmGattCharacteristic
  * @param[in] count Size of the characteristics array in entries. The max is 100.
  * @param[out] total_out Total output entries.
  */
-Result btmGetGattCharacteristics(u32 connection_handle, u16 handle, BtmGattCharacteristic *characteristics, u8 count, u8 *total_out);
+Result btmGetGattCharacteristics(u32 connection_handle, u16 service_handle, BtmGattCharacteristic *characteristics, u8 count, u8 *total_out);
 
 /**
  * @brief GetGattDescriptors
  * @note Only available on [5.0.0+].
  * @param[in] connection_handle Same as \ref btmBleDisconnect.
- * @param[in] handle This controls which \ref BtmGattDescriptor entries to return.
+ * @param[in] char_handle Characteristic handle. This controls which \ref BtmGattDescriptor entries to return.
  * @param[out] descriptors \ref BtmGattDescriptor
  * @param[in] count Size of the descriptors array in entries. The max is 100.
  * @param[out] total_out Total output entries.
  */
-Result btmGetGattDescriptors(u32 connection_handle, u16 handle, BtmGattDescriptor *descriptors, u8 count, u8 *total_out);
+Result btmGetGattDescriptors(u32 connection_handle, u16 char_handle, BtmGattDescriptor *descriptors, u8 count, u8 *total_out);
 
 /**
  * @brief AcquireBleMtuConfigEvent

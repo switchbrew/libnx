@@ -124,12 +124,12 @@ Result btmuAcquireBleScanEvent(Event* out_event) {
     return _btmuCmdGetEventOutFlag(out_event, true, 0);
 }
 
-Result btmuGetBleScanFilterParameter(u16 unk, BtdrvBleAdvertisePacketParameter *out) {
-    return serviceDispatchInOut(&g_btmuIBtmUserCore, 1, unk, *out);
+Result btmuGetBleScanFilterParameter(u16 parameter_id, BtdrvBleAdvertisePacketParameter *out) {
+    return serviceDispatchInOut(&g_btmuIBtmUserCore, 1, parameter_id, *out);
 }
 
-Result btmuGetBleScanFilterParameter2(u16 unk, BtdrvGattAttributeUuid *out) {
-    return serviceDispatchInOut(&g_btmuIBtmUserCore, 2, unk, *out);
+Result btmuGetBleScanFilterParameter2(u16 parameter_id, BtdrvGattAttributeUuid *out) {
+    return serviceDispatchInOut(&g_btmuIBtmUserCore, 2, parameter_id, *out);
 }
 
 Result btmuStartBleScanForGeneral(BtdrvBleAdvertisePacketParameter param) {
@@ -264,17 +264,17 @@ Result btmuGetGattService(u32 connection_handle, const BtdrvGattAttributeUuid *u
     return rc;
 }
 
-Result btmuGetGattIncludedServices(u32 connection_handle, u16 handle, BtmGattService *services, u8 count, u8 *out) {
-    return _btmuGetGattServiceData(connection_handle, handle, services, sizeof(BtmGattService), count, out, 29);
+Result btmuGetGattIncludedServices(u32 connection_handle, u16 service_handle, BtmGattService *services, u8 count, u8 *out) {
+    return _btmuGetGattServiceData(connection_handle, service_handle, services, sizeof(BtmGattService), count, out, 29);
 }
 
-Result btmuGetBelongingGattService(u32 connection_handle, u16 handle, BtmGattService *service, bool *flag) {
+Result btmuGetBelongingGattService(u32 connection_handle, u16 attribute_handle, BtmGattService *service, bool *flag) {
     const struct {
-        u16 handle;
+        u16 attribute_handle;
         u16 pad;
         u32 connection_handle;
         u64 AppletResourceUserId;
-    } in = { handle, 0, connection_handle, appletGetAppletResourceUserId() };
+    } in = { attribute_handle, 0, connection_handle, appletGetAppletResourceUserId() };
 
     u8 tmp=0;
     Result rc = serviceDispatchInOut(&g_btmuIBtmUserCore, 30, in, tmp,
@@ -286,12 +286,12 @@ Result btmuGetBelongingGattService(u32 connection_handle, u16 handle, BtmGattSer
     return rc;
 }
 
-Result btmuGetGattCharacteristics(u32 connection_handle, u16 handle, BtmGattCharacteristic *characteristics, u8 count, u8 *total_out) {
-    return _btmuGetGattServiceData(connection_handle, handle, characteristics, sizeof(BtmGattCharacteristic), count, total_out, 31);
+Result btmuGetGattCharacteristics(u32 connection_handle, u16 service_handle, BtmGattCharacteristic *characteristics, u8 count, u8 *total_out) {
+    return _btmuGetGattServiceData(connection_handle, service_handle, characteristics, sizeof(BtmGattCharacteristic), count, total_out, 31);
 }
 
-Result btmuGetGattDescriptors(u32 connection_handle, u16 handle, BtmGattDescriptor *descriptors, u8 count, u8 *total_out) {
-    return _btmuGetGattServiceData(connection_handle, handle, descriptors, sizeof(BtmGattDescriptor), count, total_out, 32);
+Result btmuGetGattDescriptors(u32 connection_handle, u16 char_handle, BtmGattDescriptor *descriptors, u8 count, u8 *total_out) {
+    return _btmuGetGattServiceData(connection_handle, char_handle, descriptors, sizeof(BtmGattDescriptor), count, total_out, 32);
 }
 
 Result btmuAcquireBleMtuConfigEvent(Event* out_event) {

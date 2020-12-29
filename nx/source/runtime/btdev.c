@@ -31,12 +31,12 @@ Result btdevAcquireBleScanEvent(Event* out_event) {
     return btmuAcquireBleScanEvent(out_event);
 }
 
-Result btdevGetBleScanParameter(u16 unk, BtdrvBleAdvertisePacketParameter *out) {
-    return btmuGetBleScanFilterParameter(unk, out);
+Result btdevGetBleScanParameter(u16 parameter_id, BtdrvBleAdvertisePacketParameter *out) {
+    return btmuGetBleScanFilterParameter(parameter_id, out);
 }
 
-Result btdevGetBleScanParameter2(u16 unk, BtdrvGattAttributeUuid *out) {
-    return btmuGetBleScanFilterParameter2(unk, out);
+Result btdevGetBleScanParameter2(u16 parameter_id, BtdrvGattAttributeUuid *out) {
+    return btmuGetBleScanFilterParameter2(parameter_id, out);
 }
 
 Result btdevStartBleScanGeneral(BtdrvBleAdvertisePacketParameter param) {
@@ -107,8 +107,8 @@ Result btdevConnectToGattServer(BtdrvAddress addr) {
     return btmuBleConnect(addr);
 }
 
-Result btdevDisconnectFromGattServer(u32 id) {
-    return btmuBleDisconnect(id);
+Result btdevDisconnectFromGattServer(u32 connection_handle) {
+    return btmuBleDisconnect(connection_handle);
 }
 
 Result btdevGetBleConnectionInfoList(BtdrvBleConnectionInfo *info, u8 count, u8 *total_out) {

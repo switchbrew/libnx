@@ -56,10 +56,10 @@ bool btdevGattAttributeUuidIsSame(const BtdrvGattAttributeUuid *a, const BtdrvGa
 Result btdevAcquireBleScanEvent(Event* out_event);
 
 /// Wrapper for \ref btmuGetBleScanFilterParameter.
-Result btdevGetBleScanParameter(u16 unk, BtdrvBleAdvertisePacketParameter *out);
+Result btdevGetBleScanParameter(u16 parameter_id, BtdrvBleAdvertisePacketParameter *out);
 
 /// Wrapper for \ref btmuGetBleScanFilterParameter2.
-Result btdevGetBleScanParameter2(u16 unk, BtdrvGattAttributeUuid *out);
+Result btdevGetBleScanParameter2(u16 parameter_id, BtdrvGattAttributeUuid *out);
 
 /// Wrapper for \ref btdevStartBleScanGeneral.
 Result btdevStartBleScanGeneral(BtdrvBleAdvertisePacketParameter param);
@@ -94,7 +94,7 @@ Result btdevAcquireBleConnectionStateChangedEvent(Event* out_event);
 Result btdevConnectToGattServer(BtdrvAddress addr);
 
 /// Wrapper for \ref btmuBleDisconnect.
-Result btdevDisconnectFromGattServer(u32 id);
+Result btdevDisconnectFromGattServer(u32 connection_handle);
 
 /// Wrapper for \ref btmuBleGetConnectionState.
 Result btdevGetBleConnectionInfoList(BtdrvBleConnectionInfo *info, u8 count, u8 *total_out);

@@ -36,18 +36,18 @@ Result btmuAcquireBleScanEvent(Event* out_event);
 /**
  * @brief GetBleScanFilterParameter
  * @note This is the same as \ref btmGetBleScanParameterGeneral.
- * @param[in] unk Must be value 0x1 or 0xFFFF.
+ * @param[in] parameter_id Must be value 0x1 or 0xFFFF.
  * @param[out] out \ref BtdrvBleAdvertisePacketParameter
  */
-Result btmuGetBleScanFilterParameter(u16 unk, BtdrvBleAdvertisePacketParameter *out);
+Result btmuGetBleScanFilterParameter(u16 parameter_id, BtdrvBleAdvertisePacketParameter *out);
 
 /**
  * @brief GetBleScanFilterParameter2
  * @note This is the same as \ref btmGetBleScanParameterSmartDevice.
- * @param[in] unk Must be value 0x2.
+ * @param[in] parameter_id Must be value 0x2.
  * @param[out] out \ref BtdrvGattAttributeUuid. The first 4-bytes is always 0.
  */
-Result btmuGetBleScanFilterParameter2(u16 unk, BtdrvGattAttributeUuid *out);
+Result btmuGetBleScanFilterParameter2(u16 parameter_id, BtdrvGattAttributeUuid *out);
 
 /**
  * @brief StartBleScanForGeneral
@@ -211,44 +211,44 @@ Result btmuGetGattService(u32 connection_handle, const BtdrvGattAttributeUuid *u
  * @brief Same as \ref btmuGetGattServices except this only returns \ref BtmGattService entries where various checks pass with u16 fields.
  * @note This is similar to \ref btmGetGattIncludedServices.
  * @param[in] connection_handle Same as \ref btmuBleDisconnect.
- * @param[in] handle Handle
+ * @param[in] service_handle ServiceHandle
  * @param[out] services \ref BtmGattService
  * @param[in] count Size of the services array in entries. The max is 100.
  * @param[out] out Output value.
  */
-Result btmuGetGattIncludedServices(u32 connection_handle, u16 handle, BtmGattService *services, u8 count, u8 *out);
+Result btmuGetGattIncludedServices(u32 connection_handle, u16 service_handle, BtmGattService *services, u8 count, u8 *out);
 
 /**
  * @brief This is similar to \ref btmuGetGattIncludedServices except this only returns 1 \ref BtmGattService.
  * @note This is similar to \ref btmGetBelongingService.
  * @param[in] connection_handle Same as \ref btmuBleDisconnect.
- * @param[in] handle Handle
+ * @param[in] attribute_handle AttributeHandle
  * @param[out] service \ref BtmGattService
  * @param[out] flag Whether a \ref BtmGattService was returned.
  */
-Result btmuGetBelongingGattService(u32 connection_handle, u16 handle, BtmGattService *service, bool *flag);
+Result btmuGetBelongingGattService(u32 connection_handle, u16 attribute_handle, BtmGattService *service, bool *flag);
 
 /**
  * @brief GetGattCharacteristics
  * @note This is similar to \ref btmGetGattCharacteristics.
  * @param[in] connection_handle Same as \ref btmuBleDisconnect.
- * @param[in] handle This controls which \ref BtmGattCharacteristic entries to return.
+ * @param[in] service_handle This controls which \ref BtmGattCharacteristic entries to return.
  * @param[out] characteristics \ref BtmGattCharacteristic
  * @param[in] count Size of the characteristics array in entries. The max is 100.
  * @param[out] total_out Total output entries.
  */
-Result btmuGetGattCharacteristics(u32 connection_handle, u16 handle, BtmGattCharacteristic *characteristics, u8 count, u8 *total_out);
+Result btmuGetGattCharacteristics(u32 connection_handle, u16 service_handle, BtmGattCharacteristic *characteristics, u8 count, u8 *total_out);
 
 /**
  * @brief GetGattDescriptors
  * @note This is similar to \ref btmGetGattDescriptors.
  * @param[in] connection_handle Same as \ref btmuBleDisconnect.
- * @param[in] handle This controls which \ref BtmGattDescriptor entries to return.
+ * @param[in] char_handle Characteristic handle. This controls which \ref BtmGattDescriptor entries to return.
  * @param[out] descriptors \ref BtmGattDescriptor
  * @param[in] count Size of the descriptors array in entries. The max is 100.
  * @param[out] total_out Total output entries.
  */
-Result btmuGetGattDescriptors(u32 connection_handle, u16 handle, BtmGattDescriptor *descriptors, u8 count, u8 *total_out);
+Result btmuGetGattDescriptors(u32 connection_handle, u16 char_handle, BtmGattDescriptor *descriptors, u8 count, u8 *total_out);
 
 /**
  * @brief AcquireBleMtuConfigEvent
