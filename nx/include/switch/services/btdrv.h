@@ -353,10 +353,10 @@ Result btdrvEnableBurstMode(BtdrvAddress addr, bool flag);
  * @brief SetZeroRetransmission
  * @note This is used by btm-sysmodule.
  * @param[in] addr \ref BtdrvAddress
- * @param[in] buf Input buffer containing an array of u8s.
+ * @param[in] report_ids Input buffer containing an array of u8s.
  * @param[in] count Total u8s in the input buffer. This can be 0, the max is 5.
  */
-Result btdrvSetZeroRetransmission(BtdrvAddress addr, u8 *buf, u8 count);
+Result btdrvSetZeroRetransmission(BtdrvAddress addr, u8 *report_ids, u8 count);
 
 /**
  * @brief EnableMcMode
@@ -767,10 +767,10 @@ Result btdrvGetBleManagedEventInfo(void* buffer, size_t size, u32 *type);
  * @param[in] id \ref BtdrvGattId
  * @param[in] flag Flag
  * @param[in] uuid \ref BtdrvGattAttributeUuid
- * @param[out] unk_out Unknown
- * @param[out] id_out \ref BtdrvGattId
+ * @param[out] out_property Output Property.
+ * @param[out] out_char_id Output CharacteristicId \ref BtdrvGattId
  */
-Result btdrvGetGattFirstCharacteristic(u32 unk, const BtdrvGattId *id, bool flag, const BtdrvGattAttributeUuid *uuid, u8 *unk_out, BtdrvGattId *id_out);
+Result btdrvGetGattFirstCharacteristic(u32 unk, const BtdrvGattId *id, bool flag, const BtdrvGattAttributeUuid *uuid, u8 *out_property, BtdrvGattId *out_char_id);
 
 /**
  * @brief GetGattNextCharacteristic
@@ -780,10 +780,10 @@ Result btdrvGetGattFirstCharacteristic(u32 unk, const BtdrvGattId *id, bool flag
  * @param[in] flag Flag
  * @param[in] id1 \ref BtdrvGattId
  * @param[in] uuid \ref BtdrvGattAttributeUuid
- * @param[out] unk_out Unknown
- * @param[out] id_out \ref BtdrvGattId
+ * @param[out] out_property Output Property.
+ * @param[out] out_char_id Output CharacteristicId \ref BtdrvGattId
  */
-Result btdrvGetGattNextCharacteristic(u32 unk, const BtdrvGattId *id0, bool flag, const BtdrvGattId *id1, const BtdrvGattAttributeUuid *uuid, u8 *unk_out, BtdrvGattId *id_out);
+Result btdrvGetGattNextCharacteristic(u32 unk, const BtdrvGattId *id0, bool flag, const BtdrvGattId *id1, const BtdrvGattAttributeUuid *uuid, u8 *out_property, BtdrvGattId *out_char_id);
 
 /**
  * @brief GetGattFirstDescriptor
@@ -793,9 +793,9 @@ Result btdrvGetGattNextCharacteristic(u32 unk, const BtdrvGattId *id0, bool flag
  * @param[in] flag Flag
  * @param[in] id1 \ref BtdrvGattId
  * @param[in] uuid \ref BtdrvGattAttributeUuid
- * @param[out] id_out \ref BtdrvGattId
+ * @param[out] out_desc_id Output DescriptorId \ref BtdrvGattId
  */
-Result btdrvGetGattFirstDescriptor(u32 unk, const BtdrvGattId *id0, bool flag, const BtdrvGattId *id1, const BtdrvGattAttributeUuid *uuid, BtdrvGattId *id_out);
+Result btdrvGetGattFirstDescriptor(u32 unk, const BtdrvGattId *id0, bool flag, const BtdrvGattId *id1, const BtdrvGattAttributeUuid *uuid, BtdrvGattId *out_desc_id);
 
 /**
  * @brief GetGattNextDescriptor
@@ -806,9 +806,9 @@ Result btdrvGetGattFirstDescriptor(u32 unk, const BtdrvGattId *id0, bool flag, c
  * @param[in] id1 \ref BtdrvGattId
  * @param[in] id2 \ref BtdrvGattId
  * @param[in] uuid \ref BtdrvGattAttributeUuid
- * @param[out] id_out \ref BtdrvGattId
+ * @param[out] out_desc_id Output DescriptorId \ref BtdrvGattId
  */
-Result btdrvGetGattNextDescriptor(u32 unk, const BtdrvGattId *id0, bool flag, const BtdrvGattId *id1, const BtdrvGattId *id2, const BtdrvGattAttributeUuid *uuid, BtdrvGattId *id_out);
+Result btdrvGetGattNextDescriptor(u32 unk, const BtdrvGattId *id0, bool flag, const BtdrvGattId *id1, const BtdrvGattId *id2, const BtdrvGattAttributeUuid *uuid, BtdrvGattId *out_desc_id);
 
 /**
  * @brief RegisterGattManagedDataPath

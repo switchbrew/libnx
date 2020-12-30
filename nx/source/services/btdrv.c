@@ -344,10 +344,10 @@ Result btdrvEnableBurstMode(BtdrvAddress addr, bool flag) {
     return _btmCmdInAddrU8NoOut(addr, flag!=0, 29);
 }
 
-Result btdrvSetZeroRetransmission(BtdrvAddress addr, u8 *buf, u8 count) {
+Result btdrvSetZeroRetransmission(BtdrvAddress addr, u8 *report_ids, u8 count) {
     return serviceDispatchIn(&g_btdrvSrv, 30, addr,
         .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_In },
-        .buffers = { { buf, count } },
+        .buffers = { { report_ids, count } },
     );
 }
 
@@ -865,7 +865,7 @@ Result btdrvGetBleManagedEventInfo(void* buffer, size_t size, u32 *type) {
     return _btdrvCmdOutU32OutBuf(buffer, size, type, cmd_id);
 }
 
-Result btdrvGetGattFirstCharacteristic(u32 unk, const BtdrvGattId *id, bool flag, const BtdrvGattAttributeUuid *uuid, u8 *unk_out, BtdrvGattId *id_out) {
+Result btdrvGetGattFirstCharacteristic(u32 unk, const BtdrvGattId *id, bool flag, const BtdrvGattAttributeUuid *uuid, u8 *out_property, BtdrvGattId *out_char_id) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     u32 cmd_id = hosversionBefore(5,1,0) ? 79 : 80;
@@ -879,20 +879,20 @@ Result btdrvGetGattFirstCharacteristic(u32 unk, const BtdrvGattId *id, bool flag
     } in = { flag!=0, {0}, unk, *id, *uuid };
 
     struct {
-        u8 unk;
+        u8 property;
         u8 pad[3];
         BtdrvGattId id;
     } out;
 
     Result rc = serviceDispatchInOut(&g_btdrvSrv, cmd_id, in, out);
     if (R_SUCCEEDED(rc)) {
-        if (unk_out) *unk_out = out.unk;
-        if (id_out) *id_out = out.id;
+        if (out_property) *out_property = out.property;
+        if (out_char_id) *out_char_id = out.id;
     }
     return rc;
 }
 
-Result btdrvGetGattNextCharacteristic(u32 unk, const BtdrvGattId *id0, bool flag, const BtdrvGattId *id1, const BtdrvGattAttributeUuid *uuid, u8 *unk_out, BtdrvGattId *id_out) {
+Result btdrvGetGattNextCharacteristic(u32 unk, const BtdrvGattId *id0, bool flag, const BtdrvGattId *id1, const BtdrvGattAttributeUuid *uuid, u8 *out_property, BtdrvGattId *out_char_id) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     u32 cmd_id = hosversionBefore(5,1,0) ? 80 : 81;
@@ -907,20 +907,20 @@ Result btdrvGetGattNextCharacteristic(u32 unk, const BtdrvGattId *id0, bool flag
     } in = { flag!=0, {0}, unk, *id0, *id1, *uuid };
 
     struct {
-        u8 unk;
+        u8 property;
         u8 pad[3];
         BtdrvGattId id;
     } out;
 
     Result rc = serviceDispatchInOut(&g_btdrvSrv, cmd_id, in, out);
     if (R_SUCCEEDED(rc)) {
-        if (unk_out) *unk_out = out.unk;
-        if (id_out) *id_out = out.id;
+        if (out_property) *out_property = out.property;
+        if (out_char_id) *out_char_id = out.id;
     }
     return rc;
 }
 
-Result btdrvGetGattFirstDescriptor(u32 unk, const BtdrvGattId *id0, bool flag, const BtdrvGattId *id1, const BtdrvGattAttributeUuid *uuid, BtdrvGattId *id_out) {
+Result btdrvGetGattFirstDescriptor(u32 unk, const BtdrvGattId *id0, bool flag, const BtdrvGattId *id1, const BtdrvGattAttributeUuid *uuid, BtdrvGattId *out_desc_id) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     u32 cmd_id = hosversionBefore(5,1,0) ? 81 : 82;
@@ -934,10 +934,10 @@ Result btdrvGetGattFirstDescriptor(u32 unk, const BtdrvGattId *id0, bool flag, c
         BtdrvGattAttributeUuid uuid;
     } in = { flag!=0, {0}, unk, *id0, *id1, *uuid };
 
-    return serviceDispatchInOut(&g_btdrvSrv, cmd_id, in, *id_out);
+    return serviceDispatchInOut(&g_btdrvSrv, cmd_id, in, *out_desc_id);
 }
 
-Result btdrvGetGattNextDescriptor(u32 unk, const BtdrvGattId *id0, bool flag, const BtdrvGattId *id1, const BtdrvGattId *id2, const BtdrvGattAttributeUuid *uuid, BtdrvGattId *id_out) {
+Result btdrvGetGattNextDescriptor(u32 unk, const BtdrvGattId *id0, bool flag, const BtdrvGattId *id1, const BtdrvGattId *id2, const BtdrvGattAttributeUuid *uuid, BtdrvGattId *out_desc_id) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     u32 cmd_id = hosversionBefore(5,1,0) ? 82 : 83;
@@ -952,7 +952,7 @@ Result btdrvGetGattNextDescriptor(u32 unk, const BtdrvGattId *id0, bool flag, co
         BtdrvGattAttributeUuid uuid;
     } in = { flag!=0, {0}, unk, *id0, *id1, *id2, *uuid };
 
-    return serviceDispatchInOut(&g_btdrvSrv, cmd_id, in, *id_out);
+    return serviceDispatchInOut(&g_btdrvSrv, cmd_id, in, *out_desc_id);
 }
 
 Result btdrvRegisterGattManagedDataPath(const BtdrvGattAttributeUuid *uuid) {
