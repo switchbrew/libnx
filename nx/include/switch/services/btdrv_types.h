@@ -29,10 +29,10 @@ typedef enum {
 /// HidEventType
 typedef enum {
     BtdrvHidEventType_Unknown0              =    0,    ///< Unknown. Only used with \ref btdrvGetHidEventInfo.
-    BtdrvHidEventType_Unknown4              =    4,    ///< Unknown.
+    BtdrvHidEventType_Data                  =    4,    ///< DATA report on the Interrupt channel.
     BtdrvHidEventType_Unknown7              =    7,    ///< Unknown. Only used with \ref btdrvGetHidEventInfo.
-    BtdrvHidEventType_Unknown8              =    8,    ///< Unknown.
-    BtdrvHidEventType_Unknown9              =    9,    ///< Unknown.
+    BtdrvHidEventType_SetReport             =    8,    ///< Response to SET_REPORT.
+    BtdrvHidEventType_GetReport             =    9,    ///< Response to GET_REPORT.
 } BtdrvHidEventType;
 
 /// This determines the u16 data to write into the CircularBuffer (name "BLE CORE").

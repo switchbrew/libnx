@@ -23,7 +23,7 @@ typedef struct {
             u8 pad;                      ///< Padding
             u16 size;                    ///< Size of the below data.
             u8 data[];                   ///< Data.
-        } type4;                         ///< ::BtdrvHidEventType_Unknown4
+        } data_report;                   ///< ::BtdrvHidEventType_Data
 
         struct {
             union {
@@ -35,7 +35,7 @@ typedef struct {
                     u8 pad[2];               ///< Padding
                 };
             };
-        } type8;                             ///< ::BtdrvHidEventType_Unknown8
+        } set_report;                        ///< ::BtdrvHidEventType_SetReport
 
         struct {
             union {
@@ -45,7 +45,7 @@ typedef struct {
                     struct {
                         BtdrvAddress addr;       ///< \ref BtdrvAddress
                         u8 pad[2];               ///< Padding
-                        u32 unk_x0;              ///< Unknown. hid-sysmodule only uses the below data when this field is 0.
+                        u32 res;                 ///< 0 = success, non-zero = error. hid-sysmodule only uses the below data when this field is 0.
                         BtdrvHidData data;       ///< \ref BtdrvHidData
                         u8 pad2[2];              ///< Padding
                     };
@@ -55,13 +55,13 @@ typedef struct {
                     u8 rawdata[0x2C8];           ///< Raw data.
 
                     struct {
-                        u32 unk_x0;              ///< Unknown. hid-sysmodule only uses the below report when this field is 0.
+                        u32 res;                 ///< 0 = success, non-zero = error. hid-sysmodule only uses the below report when this field is 0.
                         BtdrvAddress addr;       ///< \ref BtdrvAddress
                         BtdrvHidReport report;   ///< \ref BtdrvHidReport
                     };
                 } hid_report;                    ///< [9.0.0+]
             };
-        } type9;                                 ///< ::BtdrvHidEventType_Unknown9
+        } get_report;                            ///< ::BtdrvHidEventType_GetReport
     };
 } BtdrvHidReportEventInfo;
 
@@ -85,17 +85,18 @@ typedef struct {
             } v1;                                ///< Pre-9.0.0
 
             struct {
-                u8 unused[0x5];                  ///< Unused
+                u8 unused[0x4];                  ///< Unused
+                u8 unused_x4;                    ///< Unused
                 BtdrvAddress addr;               ///< \ref BtdrvAddress
                 u8 pad;                          ///< Padding
                 u16 size;                        ///< Size of the below data.
                 u8 data[];                       ///< Data.
             } v9;                                ///< [9.0.0+]
-        } type4;                                 ///< ::BtdrvHidEventType_Unknown4
+        } data_report;                           ///< ::BtdrvHidEventType_Data
 
         struct {
             u8 data[0xC];                        ///< Raw data.
-        } type8;                                 ///< ::BtdrvHidEventType_Unknown8
+        } set_report;                            ///< ::BtdrvHidEventType_SetReport
 
         struct {
             union {
@@ -107,7 +108,7 @@ typedef struct {
                     u8 rawdata[0x2C8];           ///< Raw data.
                 } hid_report;                    ///< [9.0.0+]
             };
-        } type9;                                 ///< ::BtdrvHidEventType_Unknown9
+        } get_report;                            ///< ::BtdrvHidEventType_GetReport
     } data;
 } BtdrvHidReportEventInfoBufferData;
 
@@ -412,7 +413,7 @@ Result btdrvRegisterHidReportEvent(Event* out_event);
  * @brief GetHidReportEventInfo
  * @note \ref btdrvRegisterHidReportEvent must be used before this, on [7.0.0+].
  * @note This is used by hid-sysmodule. When used by other processes, hid/user-process will conflict. No events will be received by that user-process, or it will be corrupted, etc.
- * @note [7.0.0+] When data isn't available, the type is set to ::BtdrvHidEventType_Unknown4, with the buffer cleared to all-zero.
+ * @note [7.0.0+] When data isn't available, the type is set to ::BtdrvHidEventType_Data, with the buffer cleared to all-zero.
  * @param[out] buffer Output buffer, see \ref BtdrvHidReportEventInfo.
  * @param[in] size Output buffer size.
  * @oaram[out] type \ref BtdrvHidEventType
