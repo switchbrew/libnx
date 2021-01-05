@@ -405,7 +405,7 @@ Result btdrvEnableTbfcScan(bool flag);
  * @brief RegisterHidReportEvent
  * @note This also does sharedmem init/handling if needed, on [7.0.0+].
  * @note The Event must be closed by the user once finished with it.
- * @param[out] out_event Output Event with autoclear=true.
+ * @param[out] out_event Output Event with autoclear=true. This is signaled when data is available with \ref btdrvGetHidReportEventInfo.
  */
 Result btdrvRegisterHidReportEvent(Event* out_event);
 
