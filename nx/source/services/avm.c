@@ -27,7 +27,7 @@ Service *avmGetServiceSession(void) {
     return &g_AvmSrv;
 }
 
-static Result _avmGetVersion(u32 cmd_id, u64 id_1, u64 id_2, u32 *version) {
+static Result _avmGetVersion(u64 id_1, u64 id_2, u32 *version, u32 cmd_id) {
     const struct {
         u64 a, b;
     } in = { id_1, id_2 };
@@ -36,11 +36,11 @@ static Result _avmGetVersion(u32 cmd_id, u64 id_1, u64 id_2, u32 *version) {
 }
 
 Result avmGetHighestAvailableVersion(u64 id_1, u64 id_2, u32 *version) {
-    return _avmGetVersion(100, id_1, id_2, version);
+    return _avmGetVersion(id_1, id_2, version, 100);
 }
 
 Result avmGetHighestRequiredVersion(u64 id_1, u64 id_2, u32 *version) {
-    return _avmGetVersion(101, id_1, id_2, version);
+    return _avmGetVersion(id_1, id_2, version, 101);
 }
 
 Result avmGetVersionListEntry(u64 application_id, AvmVersionListEntry *entry) {
@@ -58,21 +58,21 @@ Result avmGetLaunchRequiredVersion(u64 application_id, u32 *version) {
     return serviceDispatchInOut(&g_AvmSrv, 200, application_id, *version);
 }
 
-static Result _avmPushVersion(u32 cmd_id, u64 application_id, u32 version) {
+static Result _avmPushVersion(u64 application_id, u32 version, u32 cmd_id) {
     const struct {
-        u64 application_id;
         u32 version;
-    } in = { application_id, version };
+        u64 application_id;
+    } in = { version, application_id };
 
     return serviceDispatchIn(&g_AvmSrv, cmd_id, in);
 }
 
 Result avmUpgradeLaunchRequiredVersion(u64 application_id, u32 version) {
-    return _avmPushVersion(202, application_id, version);
+    return _avmPushVersion(application_id, version, 202);
 }
 
 Result avmPushLaunchVersion(u64 application_id, u32 version) {
-    return _avmPushVersion(100, application_id, version);
+    return _avmPushVersion(application_id, version, 100);
 }
 
 Result avmListVersionList(AvmVersionListEntry *buffer, size_t count, u32 *out) {

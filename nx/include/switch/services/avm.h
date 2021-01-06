@@ -10,13 +10,13 @@
 #include "../sf/service.h"
 
 typedef struct {
-    u64 app_id;
+    u64 application_id;
     u32 version;
     u32 required;
 } AvmVersionListEntry;
 
 typedef struct {
-    u64 app_id;
+    u64 application_id;
     u32 version;
 } AvmRequiredVersionEntry;
 
