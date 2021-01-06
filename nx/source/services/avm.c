@@ -32,7 +32,7 @@ static Result _avmGetVersion(u64 id_1, u64 id_2, u32 *version, u32 cmd_id) {
         u64 a, b;
     } in = { id_1, id_2 };
 
-    return serviceDispatchInOut(&g_AvmSrv, 100, in, *version);
+    return serviceDispatchInOut(&g_AvmSrv, cmd_id, in, *version);
 }
 
 Result avmGetHighestAvailableVersion(u64 id_1, u64 id_2, u32 *version) {
@@ -72,7 +72,7 @@ Result avmUpgradeLaunchRequiredVersion(u64 application_id, u32 version) {
 }
 
 Result avmPushLaunchVersion(u64 application_id, u32 version) {
-    return _avmPushVersion(application_id, version, 100);
+    return _avmPushVersion(application_id, version, 1000);
 }
 
 Result avmListVersionList(AvmVersionListEntry *buffer, size_t count, u32 *out) {
