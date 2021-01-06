@@ -100,7 +100,7 @@ Result avmVersionListImporterSetTimestamp(AvmVersionListImporter *srv, u64 times
 Result avmVersionListImporterSetData(AvmVersionListImporter *srv, const AvmVersionListEntry *entries, u32 count) {
     return serviceDispatch(&srv->s, 1,
         .buffer_attrs = { SfBufferAttr_In | SfBufferAttr_HipcMapAlias },
-        .buffers = { { entries, count * sizeof(entries) } },
+        .buffers = { { entries, count * sizeof(*entries) } },
     );
 }
 
