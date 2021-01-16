@@ -16,6 +16,24 @@ typedef enum {
     BtdrvBluetoothPropertyType_Unknown6     =    6,    ///< Unknown. 1-byte. The default is value 0x68.
 } BtdrvBluetoothPropertyType;
 
+/// EventType
+typedef enum {
+    BtdrvEventType_Unknown0                 =    0,    ///< Unused
+    BtdrvEventType_InquiryDevice            =    3,    ///< Device found during Inquiry.
+    BtdrvEventType_InquiryStatus            =    4,    ///< Inquiry status changed.
+    BtdrvEventType_PairingPinCodeRequest    =    5,    ///< Pairing PIN code request.
+    BtdrvEventType_SspRequest               =    6,    ///< SSP confirm request / SSP passkey notification.
+    BtdrvEventType_Connection               =    7,    ///< Connection
+    BtdrvEventType_BluetoothCrash           =    13,   ///< BluetoothCrash
+} BtdrvEventType;
+
+/// ConnectionEventType
+typedef enum {
+    BtdrvConnectionEventType_Status              =     0,   ///< BtdrvEventInfo::connection::status
+    BtdrvConnectionEventType_SspConfirmRequest   =     1,   ///< SSP confirm request.
+    BtdrvConnectionEventType_Suspended           =     2,   ///< ACL Link is now Suspended.
+} BtdrvConnectionEventType;
+
 /// BluetoothHhReportType
 /// Bit0-1 directly control the HID bluetooth transaction report-type value.
 /// Bit2-3: these directly control the Parameter Reserved field for SetReport, for GetReport these control the Parameter Reserved and Size bits.
@@ -28,18 +46,20 @@ typedef enum {
 
 /// HidEventType
 typedef enum {
-    BtdrvHidEventType_Unknown0              =    0,    ///< Unknown. Only used with \ref btdrvGetHidEventInfo.
+    BtdrvHidEventType_Connection            =    0,    ///< Connection. Only used with \ref btdrvGetHidEventInfo.
     BtdrvHidEventType_Data                  =    4,    ///< DATA report on the Interrupt channel.
     BtdrvHidEventType_Unknown7              =    7,    ///< Unknown. Only used with \ref btdrvGetHidEventInfo.
     BtdrvHidEventType_SetReport             =    8,    ///< Response to SET_REPORT.
     BtdrvHidEventType_GetReport             =    9,    ///< Response to GET_REPORT.
 } BtdrvHidEventType;
 
-/// This determines the u16 data to write into the CircularBuffer (name "BLE CORE").
+/// This determines the u16 data to write into a CircularBuffer.
 typedef enum {
+    BtdrvFatalReason_Invalid                =    0,    ///< Only for \ref BtdrvEventInfo: invalid.
     BtdrvFatalReason_Unknown1               =    1,    ///< u16 data = 0x850.
     BtdrvFatalReason_Unknown2               =    2,    ///< u16 data = 0x851.
     BtdrvFatalReason_Unknown3               =    3,    ///< Reason values which aren't 1/2: u16 data = 0x852.
+    BtdrvFatalReason_Enable                 =    7,    ///< Only for \ref BtdrvEventInfo: triggered after enabling bluetooth, depending on the value of a global state field.
 } BtdrvFatalReason;
 
 /// Address

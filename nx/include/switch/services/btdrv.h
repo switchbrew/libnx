@@ -11,10 +11,71 @@
 #include "../services/set.h"
 #include "../sf/service.h"
 
-/// Data for \ref btdrvGetHidReportEventInfo. The data stored here depends on the \ref BtdrvHidEventType.
+/// Data for \ref btdrvGetEventInfo. The data stored here depends on the \ref BtdrvEventType.
+typedef struct {
+    union {
+        u8 data[0x400];                  ///< Raw data.
+
+        struct {
+            u32 val;                     ///< Value
+        } type0;                         ///< ::BtdrvEventType_Unknown0
+
+        struct {
+            u8 name[0xF9];               ///< Device name, NUL-terminated string.
+            BtdrvAddress addr;           ///< Device address.
+            u8 unk_xFF[0x10];            ///< Unknown
+            u8 device_class[0x3];        ///< Device class.
+            u8 unk_x112[0x4];            ///< Set to fixed value u32 0x1.
+            u8 unk_x116[0xFA];           ///< Unknown
+            u8 reserved_x210[0x5C];      ///< Reserved
+            u8 name2[0xF9];              ///< Device name, NUL-terminated string. Same as name above, except starting at index 1.
+            u8 rssi[0x4];                ///< s32 RSSI
+            u8 name3[0x4];               ///< Two bytes which are the same as name[11-12].
+            u8 reserved_x36D[0x10];      ///< Reserved
+        } inquiry_device;                ///< ::BtdrvEventType_InquiryDevice
+
+        struct {
+            u32 status;                  ///< Status: 0 = stopped, 1 = started.
+        } inquiry_status;                ///< ::BtdrvEventType_InquiryStatus
+
+        struct {
+            BtdrvAddress addr;           ///< Device address.
+            u8 name[0xF9];               ///< Device name, NUL-terminated string.
+            u8 device_class[0x3];        ///< Device class.
+        } pairing_pin_code_request;      ///< ::BtdrvEventType_PairingPinCodeRequest
+
+        struct {
+            BtdrvAddress addr;           ///< Device address.
+            u8 name[0xF9];               ///< Device name, NUL-terminated string.
+            u8 device_class[0x3];        ///< Device class.
+            u8 pad[2];                   ///< Padding
+            u32 type;                    ///< 0 = SSP confirm request, 3 = SSP passkey notification.
+            s32 passkey;                 ///< Passkey, only set when the above field is value 3.
+        } ssp_request;                   ///< ::BtdrvEventType_SspRequest
+
+        struct {
+            u32 status;                  ///< Status, always 0 except with ::BtdrvConnectionEventType_Status: 2 = ACL Link is now Resumed, 9 = connection failed (pairing/authentication failed, or opening the hid connection failed).
+            BtdrvAddress addr;           ///< Device address.
+            u8 pad[2];                   ///< Padding
+            u32 type;                    ///< \ref BtdrvConnectionEventType
+        } connection;                    ///< ::BtdrvEventType_Connection
+
+        struct {
+            u16 reason;                  ///< \ref BtdrvFatalReason
+        } bluetooth_crash;               ///< ::BtdrvEventType_BluetoothCrash
+    };
+} BtdrvEventInfo;
+
+/// Data for \ref btdrvGetHidReportEventInfo / \ref btdrvGetHidEventInfo. The data stored here depends on the \ref BtdrvHidEventType.
 typedef struct {
     union {
         u8 data[0x480];                  ///< Raw data.
+
+        struct {
+            BtdrvAddress addr;           ///< Device address.
+            u8 pad[2];                   ///< Padding
+            u32 status;                  ///< Status: 0 = hid connection opened, 2 = hid connection closed, 8 = failed to open hid connection.
+        } connection;                    ///< ::BtdrvHidEventType_Connection
 
         struct {
             u32 unk_x0;                  ///< Always 0.
@@ -24,6 +85,51 @@ typedef struct {
             u16 size;                    ///< Size of the below data.
             u8 data[];                   ///< Data.
         } data_report;                   ///< ::BtdrvHidEventType_Data
+
+        struct {
+            u32 type;
+
+            union {
+                struct {
+                    u32 status;              ///< 0 for success, non-zero for error.
+                    BtdrvAddress addr;       ///< Device address.
+                } type0;
+
+                struct {
+                    u32 status;              ///< 0 for success, non-zero for error.
+                    BtdrvAddress addr;       ///< Device address.
+                } type1;
+
+                struct {
+                    u32 status;              ///< 0 for success, non-zero for error.
+                    BtdrvAddress addr;       ///< Device address.
+                } type2;
+
+                struct {
+                    u32 status;              ///< 0 for success, non-zero for error.
+                    BtdrvAddress addr;       ///< Device address.
+                } type3;
+
+                struct {
+                    u32 status;              ///< 0 for success, non-zero for error.
+                    BtdrvAddress addr;       ///< Device address.
+                    u8 pad[2];               ///< Padding
+                    u8 flag;                 ///< Flag
+                } type4;
+
+                struct {
+                    u32 status;              ///< 0 for success, non-zero for error.
+                    BtdrvAddress addr;       ///< Unused
+                    u8 pad[2];               ///< Padding
+                    u32 count;               ///< Count value.
+                } pending_connections;       ///< type5
+
+                struct {
+                    u32 status;              ///< 0 for success, non-zero for error.
+                    BtdrvAddress addr;       ///< Device address.
+                } type6;
+            };
+        } type7;                             ///< ::BtdrvHidEventType_Unknown7
 
         struct {
             union {
@@ -182,13 +288,13 @@ Result btdrvGetAdapterProperty(BtdrvBluetoothPropertyType type, void* buffer, si
 Result btdrvSetAdapterProperty(BtdrvBluetoothPropertyType type, const void* buffer, size_t size);
 
 /**
- * @brief StartInquiry
+ * @brief This starts Inquiry, the output data will be available via \ref btdrvGetEventInfo. Inquiry will automatically stop in 10.24 seconds.
  * @note This is used by btm-sysmodule.
  */
 Result btdrvStartInquiry(void);
 
 /**
- * @brief StopInquiry
+ * @brief This stops Inquiry which was started by \ref btdrvStartInquiry, if it's still active.
  * @note This is used by btm-sysmodule.
  */
 Result btdrvStopInquiry(void);
@@ -237,7 +343,7 @@ Result btdrvRespondToSspRequest(BtdrvAddress addr, u8 variant, bool flag, u32 un
 /**
  * @brief GetEventInfo
  * @note This is used by btm-sysmodule.
- * @param[out] buffer Output buffer. 0x400-bytes from state is written here.
+ * @param[out] buffer Output buffer, see \ref BtdrvEventInfo.
  * @param[in] size Output buffer size.
  * @oaram[out] type Output EventType.
  */
@@ -328,9 +434,9 @@ Result btdrvFinalizeHid(void);
 /**
  * @brief GetHidEventInfo
  * @note This is used by btm-sysmodule.
- * @param[out] buffer Output buffer. 0x480-bytes from state is written here.
+ * @param[out] buffer Output buffer, see \ref BtdrvHidReportEventInfo.
  * @param[in] size Output buffer size.
- * @param[out] type \ref BtdrvHidEventType, always ::BtdrvHidEventType_Unknown0 or ::BtdrvHidEventType_Unknown7.
+ * @param[out] type \ref BtdrvHidEventType, always ::BtdrvHidEventType_Connection or ::BtdrvHidEventType_Unknown7.
  */
 Result btdrvGetHidEventInfo(void* buffer, size_t size, BtdrvHidEventType *type);
 
@@ -431,6 +537,7 @@ Result btdrvGetLatestPlr(BtdrvPlrList *out);
 
 /**
  * @brief GetPendingConnections
+ * @note The output data will be available via \ref btdrvGetHidEventInfo.
  * @note This is used by btm-sysmodule.
  * @note Only available on [3.0.0+].
  */
