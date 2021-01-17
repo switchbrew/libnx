@@ -90,6 +90,14 @@ void __libnx_init_thread(void) {
     getThreadVars()->thread_ptr = &g_mainThread;
 }
 
+void* __attribute__((weak)) __libnx_thread_alloc(size_t size) {
+    return memalign(0x1000, size);
+}
+
+void __attribute__((weak)) __libnx_thread_free(void* mem) {
+    free(mem);
+}
+
 Result threadCreate(
     Thread* t, ThreadFunc entry, void* arg, void* stack_mem, size_t stack_sz,
     int prio, int cpuid)
@@ -101,7 +109,7 @@ Result threadCreate(
     bool owns_stack_mem;
     if (stack_mem == NULL) {
         // Allocate new memory, stack then reent then tls.
-        stack_mem = memalign(0x1000, ((stack_sz + reent_sz + tls_sz) + 0xFFF) & ~0xFFF);
+        stack_mem = __libnx_thread_alloc(((stack_sz + reent_sz + tls_sz) + 0xFFF) & ~0xFFF);
 
         owns_stack_mem = true;
     } else {
@@ -182,7 +190,7 @@ Result threadCreate(
 
     if (R_FAILED(rc)) {
         if (owns_stack_mem) {
-            free(stack_mem);
+            __libnx_thread_free(stack_mem);
         }
     }
 
@@ -240,7 +248,7 @@ Result threadClose(Thread* t) {
 
     if (R_SUCCEEDED(rc)) {
         if (t->owns_stack_mem) {
-            free(t->stack_mem);
+            __libnx_thread_free(t->stack_mem);
         }
         svcCloseHandle(t->handle);
     }
