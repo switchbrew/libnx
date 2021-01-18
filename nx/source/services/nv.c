@@ -11,11 +11,15 @@ __attribute__((weak)) u32 __nx_nv_transfermem_size = 0x800000;
 static Service g_nvSrv;
 static Service g_nvSrvClone;
 
-static size_t g_nvIpcBufferSize = 0;
 static TransferMemory g_nvTransfermem;
 
 static Result _nvCmdInitialize(Handle proc, Handle sharedmem, u32 transfermem_size);
 static Result _nvSetClientPID(u64 AppletResourceUserId);
+
+Result __attribute__((weak)) __nx_nv_create_tmem(TransferMemory *t, u32 *out_size, Permission perm) {
+    *out_size = __nx_nv_transfermem_size;
+    return tmemCreate(t, *out_size, perm);
+}
 
 NX_GENERATE_SERVICE_GUARD(nv);
 
@@ -42,13 +46,13 @@ Result _nvInitialize(void) {
     }
 
     if (R_SUCCEEDED(rc)) {
-        g_nvIpcBufferSize = g_nvSrv.pointer_buffer_size;
+        u32 tmem_size = 0;
 
         if (R_SUCCEEDED(rc))
-            rc = tmemCreate(&g_nvTransfermem, __nx_nv_transfermem_size, Perm_None);
+            rc = __nx_nv_create_tmem(&g_nvTransfermem, &tmem_size, Perm_None);
 
         if (R_SUCCEEDED(rc))
-            rc = _nvCmdInitialize(CUR_PROCESS_HANDLE, g_nvTransfermem.handle, __nx_nv_transfermem_size);
+            rc = _nvCmdInitialize(CUR_PROCESS_HANDLE, g_nvTransfermem.handle, tmem_size);
 
         // Clone the session handle - the cloned session is used to execute certain commands in parallel
         if (R_SUCCEEDED(rc))
