@@ -8,6 +8,14 @@
 #include "kernel/virtmem.h"
 #include "runtime/diag.h"
 
+void* __attribute__((weak)) __libnx_tmem_alloc(size_t size) {
+    return memalign(0x1000, size);
+}
+
+void __attribute__((weak)) __libnx_tmem_free(void* mem) {
+    free(mem);
+}
+
 Result tmemCreate(TransferMemory* t, size_t size, Permission perm)
 {
     Result rc = 0;
@@ -16,7 +24,7 @@ Result tmemCreate(TransferMemory* t, size_t size, Permission perm)
     t->size = size;
     t->perm = perm;
     t->map_addr = NULL;
-    t->src_addr = memalign(0x1000, size);
+    t->src_addr = __libnx_tmem_alloc(size);
 
     if (t->src_addr == NULL) {
         rc = MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
@@ -30,7 +38,7 @@ Result tmemCreate(TransferMemory* t, size_t size, Permission perm)
     }
 
     if (R_FAILED(rc)) {
-        free(t->src_addr);
+        __libnx_tmem_free(t->src_addr);
         t->src_addr = NULL;
     }
 
@@ -114,7 +122,7 @@ Result tmemClose(TransferMemory* t)
         }
 
         if (t->src_addr != NULL) {
-            free(t->src_addr);
+            __libnx_tmem_free(t->src_addr);
         }
 
         t->src_addr = NULL;
