@@ -22,6 +22,22 @@ static const NvColorFormat g_nvColorFmtTable[] = {
     NvColorFormat_A4B4G4R4, // PIXEL_FORMAT_RGBA_4444
 };
 
+void* __attribute__((weak)) __libnx_framebuffer_alloc(size_t size) {
+    return aligned_alloc(0x1000, size);
+}
+
+void __attribute__((weak)) __libnx_framebuffer_free(void* mem) {
+    free(mem);
+}
+
+void* __attribute__((weak)) __libnx_framebuffer_linear_alloc(size_t size) {
+    return calloc(1, size);
+}
+
+void __attribute__((weak)) __libnx_framebuffer_linear_free(void* mem) {
+    free(mem);
+}
+
 Result framebufferCreate(Framebuffer* fb, NWindow *win, u32 width, u32 height, u32 format, u32 num_fbs)
 {
     Result rc = 0;
@@ -76,7 +92,7 @@ Result framebufferCreate(Framebuffer* fb, NWindow *win, u32 width, u32 height, u
     const u32 fb_size = width_aligned_bytes*height_aligned;
     const u32 buf_size = (num_fbs*fb_size + 0xFFF) &~ 0xFFF; // needs to be page aligned
 
-    fb->buf = aligned_alloc(0x1000, buf_size);
+    fb->buf = __libnx_framebuffer_alloc(buf_size);
     if (!fb->buf)
         rc = MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
 
@@ -119,7 +135,7 @@ Result framebufferMakeLinear(Framebuffer* fb)
         return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
 
     u32 height = (fb->win->height + 7) &~ 7; // GOBs are 8 rows tall
-    fb->buf_linear = calloc(1, fb->stride*height);
+    fb->buf_linear = __libnx_framebuffer_linear_alloc(fb->stride*height);
     if (!fb->buf_linear)
         return MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
 
@@ -132,12 +148,12 @@ void framebufferClose(Framebuffer* fb)
         return;
 
     if (fb->buf_linear)
-        free(fb->buf_linear);
+        __libnx_framebuffer_linear_free(fb->buf_linear);
 
     if (fb->buf) {
         nwindowReleaseBuffers(fb->win);
         nvMapClose(&fb->map);
-        free(fb->buf);
+        __libnx_framebuffer_free(fb->buf);
     }
 
     memset(fb, 0, sizeof(*fb));
