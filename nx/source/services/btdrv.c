@@ -336,8 +336,8 @@ Result btdrvGetHidEventInfo(void* buffer, size_t size, BtdrvHidEventType *type) 
     return rc;
 }
 
-Result btdrvSetTsi(BtdrvAddress addr, u8 unk) {
-    return _btmCmdInAddrU8NoOut(addr, unk, 28);
+Result btdrvSetTsi(BtdrvAddress addr, u8 tsi) {
+    return _btmCmdInAddrU8NoOut(addr, tsi, 28);
 }
 
 Result btdrvEnableBurstMode(BtdrvAddress addr, bool flag) {

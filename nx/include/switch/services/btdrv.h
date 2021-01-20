@@ -66,7 +66,7 @@ typedef struct {
     };
 } BtdrvEventInfo;
 
-/// Data for \ref btdrvGetHidReportEventInfo / \ref btdrvGetHidEventInfo. The data stored here depends on the \ref BtdrvHidEventType.
+/// Data for \ref btdrvGetHidEventInfo. The data stored here depends on the \ref BtdrvHidEventType.
 typedef struct {
     union {
         u8 data[0x480];                  ///< Raw data.
@@ -78,6 +78,58 @@ typedef struct {
         } connection;                    ///< ::BtdrvHidEventType_Connection
 
         struct {
+            u32 type;                             ///< \ref BtdrvExtEventType, controls which data is stored below.
+
+            union {
+                struct {
+                    u32 status;                   ///< 0 for success, non-zero for error.
+                    BtdrvAddress addr;            ///< Device address.
+                } set_tsi;                        ///< ::BtdrvExtEventType_SetTsi
+
+                struct {
+                    u32 status;                   ///< 0 for success, non-zero for error.
+                    BtdrvAddress addr;            ///< Device address.
+                } exit_tsi;                       ///< ::BtdrvExtEventType_ExitTsi
+
+                struct {
+                    u32 status;                   ///< 0 for success, non-zero for error.
+                    BtdrvAddress addr;            ///< Device address.
+                } set_burst_mode;                 ///< ::BtdrvExtEventType_SetBurstMode
+
+                struct {
+                    u32 status;                   ///< 0 for success, non-zero for error.
+                    BtdrvAddress addr;            ///< Device address.
+                } exit_burst_mode;                ///< ::BtdrvExtEventType_ExitBurstMode
+
+                struct {
+                    u32 status;                   ///< 0 for success, non-zero for error.
+                    BtdrvAddress addr;            ///< Device address.
+                    u8 pad[2];                    ///< Padding
+                    u8 flag;                      ///< Flag
+                } set_zero_retransmission;        ///< ::BtdrvExtEventType_SetZeroRetransmission
+
+                struct {
+                    u32 status;                   ///< 0 for success, non-zero for error.
+                    BtdrvAddress addr;            ///< Unused
+                    u8 pad[2];                    ///< Padding
+                    u32 count;                    ///< Count value.
+                } pending_connections;            ///< ::BtdrvExtEventType_PendingConnections
+
+                struct {
+                    u32 status;                   ///< 0 for success, non-zero for error.
+                    BtdrvAddress addr;            ///< Device address.
+                } move_to_secondary_piconet;      ///< ::BtdrvExtEventType_MoveToSecondaryPiconet
+            };
+        } ext;                                    ///< ::BtdrvHidEventType_Ext
+    };
+} BtdrvHidEventInfo;
+
+/// Data for \ref btdrvGetHidReportEventInfo. The data stored here depends on the \ref BtdrvHidEventType.
+typedef struct {
+    union {
+        u8 data[0x480];                  ///< Raw data.
+
+        struct {
             u32 unk_x0;                  ///< Always 0.
             u8 unk_x4;                   ///< Always 0.
             BtdrvAddress addr;           ///< \ref BtdrvAddress
@@ -85,51 +137,6 @@ typedef struct {
             u16 size;                    ///< Size of the below data.
             u8 data[];                   ///< Data.
         } data_report;                   ///< ::BtdrvHidEventType_Data
-
-        struct {
-            u32 type;
-
-            union {
-                struct {
-                    u32 status;              ///< 0 for success, non-zero for error.
-                    BtdrvAddress addr;       ///< Device address.
-                } type0;
-
-                struct {
-                    u32 status;              ///< 0 for success, non-zero for error.
-                    BtdrvAddress addr;       ///< Device address.
-                } type1;
-
-                struct {
-                    u32 status;              ///< 0 for success, non-zero for error.
-                    BtdrvAddress addr;       ///< Device address.
-                } type2;
-
-                struct {
-                    u32 status;              ///< 0 for success, non-zero for error.
-                    BtdrvAddress addr;       ///< Device address.
-                } type3;
-
-                struct {
-                    u32 status;              ///< 0 for success, non-zero for error.
-                    BtdrvAddress addr;       ///< Device address.
-                    u8 pad[2];               ///< Padding
-                    u8 flag;                 ///< Flag
-                } type4;
-
-                struct {
-                    u32 status;              ///< 0 for success, non-zero for error.
-                    BtdrvAddress addr;       ///< Unused
-                    u8 pad[2];               ///< Padding
-                    u32 count;               ///< Count value.
-                } pending_connections;       ///< type5
-
-                struct {
-                    u32 status;              ///< 0 for success, non-zero for error.
-                    BtdrvAddress addr;       ///< Device address.
-                } type6;
-            };
-        } type7;                             ///< ::BtdrvHidEventType_Unknown7
 
         struct {
             union {
@@ -434,30 +441,33 @@ Result btdrvFinalizeHid(void);
 /**
  * @brief GetHidEventInfo
  * @note This is used by btm-sysmodule.
- * @param[out] buffer Output buffer, see \ref BtdrvHidReportEventInfo.
+ * @param[out] buffer Output buffer, see \ref BtdrvHidEventInfo.
  * @param[in] size Output buffer size.
- * @param[out] type \ref BtdrvHidEventType, always ::BtdrvHidEventType_Connection or ::BtdrvHidEventType_Unknown7.
+ * @param[out] type \ref BtdrvHidEventType, always ::BtdrvHidEventType_Connection or ::BtdrvHidEventType_Ext.
  */
 Result btdrvGetHidEventInfo(void* buffer, size_t size, BtdrvHidEventType *type);
 
 /**
  * @brief SetTsi
+ * @note The response will be available via \ref btdrvGetHidEventInfo.
  * @note This is used by btm-sysmodule.
  * @param[in] addr \ref BtdrvAddress
- * @param[in] unk Unknown
+ * @param[in] tsi Tsi: non-value-0xFF to Set, value 0xFF to Exit.
  */
-Result btdrvSetTsi(BtdrvAddress addr, u8 unk);
+Result btdrvSetTsi(BtdrvAddress addr, u8 tsi);
 
 /**
  * @brief EnableBurstMode
+ * @note The response will be available via \ref btdrvGetHidEventInfo.
  * @note This is used by btm-sysmodule.
  * @param[in] addr \ref BtdrvAddress
- * @param[in] flag Flag
+ * @param[in] flag Flag: true = Set, false = Exit.
  */
 Result btdrvEnableBurstMode(BtdrvAddress addr, bool flag);
 
 /**
  * @brief SetZeroRetransmission
+ * @note The response will be available via \ref btdrvGetHidEventInfo.
  * @note This is used by btm-sysmodule.
  * @param[in] addr \ref BtdrvAddress
  * @param[in] report_ids Input buffer containing an array of u8s.
@@ -1065,6 +1075,7 @@ Result btdrvSetBleScanParameter(u16 unk0, u16 unk1);
 
 /**
  * @brief MoveToSecondaryPiconet
+ * @note The response will be available via \ref btdrvGetHidEventInfo.
  * @note Only available on [10.0.0+].
  * @param[in] addr \ref BtdrvAddress
  */

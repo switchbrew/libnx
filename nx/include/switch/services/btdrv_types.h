@@ -34,6 +34,17 @@ typedef enum {
     BtdrvConnectionEventType_Suspended           =     2,   ///< ACL Link is now Suspended.
 } BtdrvConnectionEventType;
 
+/// ExtEventType
+typedef enum {
+    BtdrvExtEventType_SetTsi                     =     0,   ///< SetTsi (\ref btdrvSetTsi)
+    BtdrvExtEventType_ExitTsi                    =     1,   ///< ExitTsi (\ref btdrvSetTsi)
+    BtdrvExtEventType_SetBurstMode               =     2,   ///< SetBurstMode (\ref btdrvEnableBurstMode)
+    BtdrvExtEventType_ExitBurstMode              =     3,   ///< ExitBurstMode (\ref btdrvEnableBurstMode)
+    BtdrvExtEventType_SetZeroRetransmission      =     4,   ///< \ref btdrvSetZeroRetransmission
+    BtdrvExtEventType_PendingConnections         =     5,   ///< \ref btdrvGetPendingConnections
+    BtdrvExtEventType_MoveToSecondaryPiconet     =     6,   ///< \ref btdrvMoveToSecondaryPiconet
+} BtdrvExtEventType;
+
 /// BluetoothHhReportType
 /// Bit0-1 directly control the HID bluetooth transaction report-type value.
 /// Bit2-3: these directly control the Parameter Reserved field for SetReport, for GetReport these control the Parameter Reserved and Size bits.
@@ -48,7 +59,7 @@ typedef enum {
 typedef enum {
     BtdrvHidEventType_Connection            =    0,    ///< Connection. Only used with \ref btdrvGetHidEventInfo.
     BtdrvHidEventType_Data                  =    4,    ///< DATA report on the Interrupt channel.
-    BtdrvHidEventType_Unknown7              =    7,    ///< Unknown. Only used with \ref btdrvGetHidEventInfo.
+    BtdrvHidEventType_Ext                   =    7,    ///< Response for extensions. Only used with \ref btdrvGetHidEventInfo.
     BtdrvHidEventType_SetReport             =    8,    ///< Response to SET_REPORT.
     BtdrvHidEventType_GetReport             =    9,    ///< Response to GET_REPORT.
 } BtdrvHidEventType;
