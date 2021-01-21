@@ -14,6 +14,7 @@
 #include "runtime/env.h"
 #include "services/time.h"
 
+#include "../alloc.h"
 #include "path_buf.h"
 
 /*! @internal
@@ -324,7 +325,7 @@ static int _fsdevMountDevice(const char *name, FsFileSystem fs, fsdev_fsdevice *
     goto _fail;
 
   device->setup = 1;
-  device->cwd = __nx_fsdev_support_cwd ? malloc(FS_MAX_PATH) : NULL;
+  device->cwd = __nx_fsdev_support_cwd ? __libnx_alloc(FS_MAX_PATH) : NULL;
   if(device->cwd!=NULL)
   {
     device->cwd[0] = '/';
@@ -365,7 +366,7 @@ static int _fsdevUnmountDeviceStruct(fsdev_fsdevice *device)
   strncat(name, ":", sizeof(name)-strlen(name)-1);
 
   RemoveDevice(name);
-  free(device->cwd);
+  __libnx_free(device->cwd);
   fsFsClose(&device->fs);
 
   if(device->id == fsdev_fsdevice_cwd)

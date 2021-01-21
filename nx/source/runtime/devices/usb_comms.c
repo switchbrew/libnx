@@ -1,5 +1,4 @@
 #include <string.h>
-#include <malloc.h>
 #include "types.h"
 #include "result.h"
 #include "kernel/rwlock.h"
@@ -7,6 +6,7 @@
 #include "runtime/hosversion.h"
 #include "runtime/diag.h"
 #include "runtime/devices/usb_comms.h"
+#include "../alloc.h"
 
 #define TOTAL_INTERFACES 4
 
@@ -177,8 +177,8 @@ static void _usbCommsInterfaceFree(usbCommsInterface *interface)
     interface->endpoint_out = NULL;
     interface->interface = NULL;
 
-    free(interface->endpoint_in_buffer);
-    free(interface->endpoint_out_buffer);
+    __libnx_free(interface->endpoint_in_buffer);
+    __libnx_free(interface->endpoint_out_buffer);
     interface->endpoint_in_buffer = NULL;
     interface->endpoint_out_buffer = NULL;
 
@@ -258,11 +258,11 @@ static Result _usbCommsInterfaceInit5x(u32 intf_ind, const UsbCommsInterfaceInfo
     interface->initialized = 1;
 
     //The buffer for PostBufferAsync commands must be 0x1000-byte aligned.
-    interface->endpoint_in_buffer = memalign(0x1000, 0x1000);
+    interface->endpoint_in_buffer = __libnx_aligned_alloc(0x1000, 0x1000);
     if (interface->endpoint_in_buffer==NULL) rc = MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
 
     if (R_SUCCEEDED(rc)) {
-        interface->endpoint_out_buffer = memalign(0x1000, 0x1000);
+        interface->endpoint_out_buffer = __libnx_aligned_alloc(0x1000, 0x1000);
         if (interface->endpoint_out_buffer==NULL) rc = MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
     }
 
@@ -360,11 +360,11 @@ static Result _usbCommsInterfaceInit1x(u32 intf_ind, const UsbCommsInterfaceInfo
     interface->initialized = 1;
 
     //The buffer for PostBufferAsync commands must be 0x1000-byte aligned.
-    interface->endpoint_in_buffer = memalign(0x1000, 0x1000);
+    interface->endpoint_in_buffer = __libnx_aligned_alloc(0x1000, 0x1000);
     if (interface->endpoint_in_buffer==NULL) rc = MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
 
     if (R_SUCCEEDED(rc)) {
-        interface->endpoint_out_buffer = memalign(0x1000, 0x1000);
+        interface->endpoint_out_buffer = __libnx_aligned_alloc(0x1000, 0x1000);
         if (interface->endpoint_out_buffer==NULL) rc = MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
     }
 

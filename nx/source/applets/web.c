@@ -1,5 +1,4 @@
 #include <string.h>
-#include <malloc.h>
 #include "libapplet_internal.h"
 #include "applets/web.h"
 #include "runtime/hosversion.h"

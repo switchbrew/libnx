@@ -1,10 +1,10 @@
 #pragma once
-#include <malloc.h>
 #include <string.h>
 #include "types.h"
 #include "result.h"
 #include "services/audren.h"
 #include "audio/driver.h"
+#include "../runtime/alloc.h"
 
 typedef struct {
     int next_free;

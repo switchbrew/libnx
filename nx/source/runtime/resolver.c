@@ -14,6 +14,7 @@
 #include "services/nifm.h"
 #include "runtime/hosversion.h"
 #include "runtime/resolver.h"
+#include "alloc.h"
 
 __thread int h_errno;
 
@@ -126,7 +127,7 @@ static struct hostent *_resolverDeserializeHostent(const void *out_he_serialized
     pos_addresses = pos;
     pos += addrlen * nb_addresses;
 
-    he = malloc(
+    he = __libnx_alloc(
         sizeof(struct hostent)
         + name_size
         + 8 * (nb_aliases + 1 + nb_addresses + 1)
@@ -244,7 +245,7 @@ static struct addrinfo_serialized_hdr *_resolverSerializeAddrInfoList(size_t *ou
     if (reqsize > g_resolverAddrInfoHintsBufferSize)
         return NULL;
 
-    struct addrinfo_serialized_hdr *out = malloc(reqsize);
+    struct addrinfo_serialized_hdr *out = __libnx_alloc(reqsize);
     if (!out)
         return NULL;
 
@@ -268,7 +269,7 @@ static struct addrinfo *_resolverDeserializeAddrInfo(size_t *out_len, const stru
 
     size_t subsize1 = hdr->ai_addrlen ? ntohl(hdr->ai_addrlen) : 4;
     size_t subsize2 = strlen((const char *)hdr + sizeof(struct addrinfo_serialized_hdr) + subsize1) + 1;
-    struct addrinfo_node *node = malloc(sizeof(struct addrinfo_node) + subsize2);
+    struct addrinfo_node *node = __libnx_alloc(sizeof(struct addrinfo_node) + subsize2);
 
     *out_len = sizeof(struct addrinfo_serialized_hdr) + subsize1 + subsize2;
     if (!node)
@@ -348,13 +349,13 @@ static struct addrinfo *_resolverDeserializeAddrInfoList(struct addrinfo_seriali
 }
 
 void freehostent(struct hostent *he) {
-    free(he);
+    __libnx_free(he);
 }
 
 void freeaddrinfo(struct addrinfo *ai) {
     for (struct addrinfo *node = ai, *next; node; node = next) {
         next = node->ai_next;
-        free(node);
+        __libnx_free(node);
     }
 }
 
@@ -371,7 +372,7 @@ struct hostent *gethostbyname(const char *name) {
         return NULL;
     }
 
-    void *out_serialized = malloc(g_resolverHostByNameBufferSize);
+    void *out_serialized = __libnx_alloc(g_resolverHostByNameBufferSize);
     if (!out_serialized) {
         h_errno = NETDB_INTERNAL;
         errno = ENOMEM;
@@ -403,7 +404,7 @@ struct hostent *gethostbyname(const char *name) {
     if (h_errno == NETDB_SUCCESS)
         ret = _resolverDeserializeHostent(out_serialized);
 
-    free(out_serialized);
+    __libnx_free(out_serialized);
     return ret;
 }
 
@@ -426,7 +427,7 @@ struct hostent *gethostbyaddr(const void *addr, socklen_t len, int type) {
         return NULL;
     }
 
-    void *out_serialized = malloc(g_resolverHostByAddrBufferSize);
+    void *out_serialized = __libnx_alloc(g_resolverHostByAddrBufferSize);
     if (!out_serialized) {
         h_errno = NETDB_INTERNAL;
         errno = ENOMEM;
@@ -458,7 +459,7 @@ struct hostent *gethostbyaddr(const void *addr, socklen_t len, int type) {
     if (h_errno == NETDB_SUCCESS)
         ret = _resolverDeserializeHostent(out_serialized);
 
-    free(out_serialized);
+    __libnx_free(out_serialized);
     return ret;
 }
 
@@ -508,9 +509,9 @@ int getaddrinfo(const char *node, const char *service, const struct addrinfo *hi
         }
     }
 
-    struct addrinfo_serialized_hdr *out_serialized = malloc(g_resolverAddrInfoBufferSize);
+    struct addrinfo_serialized_hdr *out_serialized = __libnx_alloc(g_resolverAddrInfoBufferSize);
     if (!out_serialized) {
-        free(hints_serialized);
+        __libnx_free(hints_serialized);
         errno = ENOMEM;
         return EAI_FAIL;
     }
@@ -528,7 +529,7 @@ int getaddrinfo(const char *node, const char *service, const struct addrinfo *hi
         NULL);
     g_resolverResult = rc;
     g_resolverCancelHandle = 0;
-    free(hints_serialized);
+    __libnx_free(hints_serialized);
 
     if (R_FAILED(rc)) {
         if (R_MODULE(rc) == 21) // SM
@@ -548,7 +549,7 @@ int getaddrinfo(const char *node, const char *service, const struct addrinfo *hi
         }
     }
 
-    free(out_serialized);
+    __libnx_free(out_serialized);
     return ret;
 }
 

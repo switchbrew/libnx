@@ -1,5 +1,4 @@
 // Copyright 2017 plutoo
-#include <malloc.h>
 #include "types.h"
 #include "result.h"
 #include "kernel/svc.h"

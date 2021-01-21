@@ -14,6 +14,7 @@
 #include "runtime/env.h"
 #include "nro.h"
 
+#include "../alloc.h"
 #include "path_buf.h"
 
 typedef enum {
@@ -240,10 +241,10 @@ static romfs_mount* romfs_alloc(void)
 
 static void romfs_free(romfs_mount *mount)
 {
-    free(mount->fileTable);
-    free(mount->fileHashTable);
-    free(mount->dirTable);
-    free(mount->dirHashTable);
+    __libnx_free(mount->fileTable);
+    __libnx_free(mount->fileHashTable);
+    __libnx_free(mount->dirTable);
+    __libnx_free(mount->dirHashTable);
     _romfsResetMount(mount, mount->id);
 }
 
@@ -395,25 +396,25 @@ Result romfsMountCommon(const char *name, romfs_mount *mount)
     if (_romfs_read(mount, 0, &mount->header, sizeof(mount->header)) != sizeof(mount->header))
         goto fail_io;
 
-    mount->dirHashTable = (u32*)malloc(mount->header.dirHashTableSize);
+    mount->dirHashTable = (u32*)__libnx_alloc(mount->header.dirHashTableSize);
     if (!mount->dirHashTable)
         goto fail_oom;
     if (!_romfs_read_chk(mount, mount->header.dirHashTableOff, mount->dirHashTable, mount->header.dirHashTableSize))
         goto fail_io;
 
-    mount->dirTable = malloc(mount->header.dirTableSize);
+    mount->dirTable = __libnx_alloc(mount->header.dirTableSize);
     if (!mount->dirTable)
         goto fail_oom;
     if (!_romfs_read_chk(mount, mount->header.dirTableOff, mount->dirTable, mount->header.dirTableSize))
         goto fail_io;
 
-    mount->fileHashTable = (u32*)malloc(mount->header.fileHashTableSize);
+    mount->fileHashTable = (u32*)__libnx_alloc(mount->header.fileHashTableSize);
     if (!mount->fileHashTable)
         goto fail_oom;
     if (!_romfs_read_chk(mount, mount->header.fileHashTableOff, mount->fileHashTable, mount->header.fileHashTableSize))
         goto fail_io;
 
-    mount->fileTable = malloc(mount->header.fileTableSize);
+    mount->fileTable = __libnx_alloc(mount->header.fileTableSize);
     if (!mount->fileTable)
         goto fail_oom;
     if (!_romfs_read_chk(mount, mount->header.fileTableOff, mount->fileTable, mount->header.fileTableSize))

@@ -1,5 +1,4 @@
 // Copyright 2018 plutoo
-#include <malloc.h>
 #include "types.h"
 #include "result.h"
 #include "runtime/env.h"
@@ -7,6 +6,7 @@
 #include "kernel/svc.h"
 #include "kernel/virtmem.h"
 #include "kernel/jit.h"
+#include "../runtime/alloc.h"
 
 Result jitCreate(Jit* j, size_t size)
 {
@@ -29,8 +29,7 @@ Result jitCreate(Jit* j, size_t size)
     }
 
     size = (size + 0xFFF) &~ 0xFFF;
-
-    void* src_addr = memalign(0x1000, size);
+    void* src_addr = __libnx_aligned_alloc(0x1000, size);
 
     if (src_addr == NULL)
         return MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
@@ -92,7 +91,7 @@ Result jitCreate(Jit* j, size_t size)
     }
 
     if (R_FAILED(rc)) {
-        free(j->src_addr);
+        __libnx_free(j->src_addr);
         j->src_addr = NULL;
     }
 
@@ -179,7 +178,7 @@ Result jitClose(Jit* j)
 
     if (R_SUCCEEDED(rc)) {
         if (j->src_addr != NULL) {
-            free(j->src_addr);
+            __libnx_free(j->src_addr);
             j->src_addr = NULL;
         }
     }

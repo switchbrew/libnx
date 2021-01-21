@@ -5,7 +5,7 @@
 #include "kernel/virtmem.h"
 #include "kernel/random.h"
 #include "runtime/diag.h"
-#include <stdlib.h>
+#include "../runtime/alloc.h"
 
 #define SEQUENTIAL_GUARD_REGION_SIZE 0x1000
 #define RANDOM_MAX_ATTEMPTS 0x200
@@ -220,7 +220,7 @@ void* virtmemFindCodeMemory(size_t size, size_t guard_size) {
 
 VirtmemReservation* virtmemAddReservation(void* mem, size_t size) {
     if (!mutexIsLockedByCurrentThread(&g_VirtmemMutex)) return NULL;
-    VirtmemReservation* rv = (VirtmemReservation*)malloc(sizeof(VirtmemReservation));
+    VirtmemReservation* rv = (VirtmemReservation*)__libnx_alloc(sizeof(VirtmemReservation));
     if (rv) {
         rv->region.start = (uintptr_t)mem;
         rv->region.end   = rv->region.start + size;
@@ -241,4 +241,5 @@ void virtmemRemoveReservation(VirtmemReservation* rv) {
         rv->prev->next = rv->next;
     else
         g_Reservations = rv->next;
+    __libnx_free(rv);
 }

@@ -18,6 +18,7 @@
 #include "services/time.h"
 #include "runtime/diag.h"
 #include "result.h"
+#include "alloc.h"
 
 #define THRD_MAIN_HANDLE ((struct __pthread_t*)~(uintptr_t)0)
 
@@ -183,7 +184,7 @@ int __syscall_thread_create(struct __pthread_t **thread, void* (*func)(void*), v
     if (R_FAILED(rc))
         return EPERM;
 
-    struct __pthread_t* t = (struct __pthread_t*)malloc(sizeof(struct __pthread_t));
+    struct __pthread_t* t = (struct __pthread_t*)__libnx_alloc(sizeof(struct __pthread_t));
     if (!t)
         return ENOMEM;
 
@@ -217,7 +218,7 @@ int __syscall_thread_create(struct __pthread_t **thread, void* (*func)(void*), v
 _error2:
     threadClose(&t->thr);
 _error1:
-    free(t);
+    __libnx_free(t);
     return ENOMEM;
 }
 
@@ -232,7 +233,7 @@ void* __syscall_thread_join(struct __pthread_t *thread)
 
     void* ret = thread->rc;
     threadClose(&thread->thr);
-    free(thread);
+    __libnx_free(thread);
 
     return ret;
 }

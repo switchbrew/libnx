@@ -11,6 +11,7 @@
 #include "display/native_window.h"
 #include "display/framebuffer.h"
 #include "nvidia/graphic_buffer.h"
+#include "../runtime/alloc.h"
 
 static const NvColorFormat g_nvColorFmtTable[] = {
     NvColorFormat_A8B8G8R8, // PIXEL_FORMAT_RGBA_8888
@@ -76,7 +77,7 @@ Result framebufferCreate(Framebuffer* fb, NWindow *win, u32 width, u32 height, u
     const u32 fb_size = width_aligned_bytes*height_aligned;
     const u32 buf_size = (num_fbs*fb_size + 0xFFF) &~ 0xFFF; // needs to be page aligned
 
-    fb->buf = aligned_alloc(0x1000, buf_size);
+    fb->buf = __libnx_aligned_alloc(0x1000, buf_size);
     if (!fb->buf)
         rc = MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
 
@@ -119,10 +120,11 @@ Result framebufferMakeLinear(Framebuffer* fb)
         return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
 
     u32 height = (fb->win->height + 7) &~ 7; // GOBs are 8 rows tall
-    fb->buf_linear = calloc(1, fb->stride*height);
+    fb->buf_linear = __libnx_alloc(fb->stride*height);
     if (!fb->buf_linear)
         return MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
 
+    memset(fb->buf_linear, 0, fb->stride*height);
     return 0;
 }
 
@@ -132,12 +134,12 @@ void framebufferClose(Framebuffer* fb)
         return;
 
     if (fb->buf_linear)
-        free(fb->buf_linear);
+        __libnx_free(fb->buf_linear);
 
     if (fb->buf) {
         nwindowReleaseBuffers(fb->win);
         nvMapClose(&fb->map);
-        free(fb->buf);
+        __libnx_free(fb->buf);
     }
 
     memset(fb, 0, sizeof(*fb));

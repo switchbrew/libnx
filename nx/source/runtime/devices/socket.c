@@ -4,7 +4,6 @@
 #include <errno.h>
 #include <alloca.h>
 #include <sys/iosupport.h>
-#include <malloc.h>
 
 #include <fcntl.h>
 #include <poll.h>
@@ -19,6 +18,7 @@
 #include "services/ssl.h"
 #include "runtime/devices/socket.h"
 #include "runtime/hosversion.h"
+#include "../alloc.h"
 
 __attribute__((weak)) size_t __nx_pollfd_sb_max_fds = 64;
 
@@ -308,7 +308,7 @@ int select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struc
     if(numfds <= __nx_pollfd_sb_max_fds)
         pollinfo = (struct pollfd *)alloca(numfds * sizeof(struct pollfd));
     else
-        pollinfo = (struct pollfd *)malloc(numfds * sizeof(struct pollfd));
+        pollinfo = (struct pollfd *)__libnx_alloc(numfds * sizeof(struct pollfd));
     if(pollinfo == NULL) {
         errno = ENOMEM;
         return -1;
@@ -379,7 +379,7 @@ int select(int nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, struc
 
 cleanup:
     if(numfds > __nx_pollfd_sb_max_fds)
-        free(pollinfo);
+        __libnx_free(pollinfo);
     return rc;
 }
 
@@ -396,7 +396,7 @@ int poll(struct pollfd *fds, nfds_t nfds, int timeout) {
     if(nfds <= __nx_pollfd_sb_max_fds)
         fds2 = (struct pollfd *)alloca(nfds * sizeof(struct pollfd));
     else
-        fds2 = (struct pollfd *)malloc(nfds * sizeof(struct pollfd));
+        fds2 = (struct pollfd *)__libnx_alloc(nfds * sizeof(struct pollfd));
     if(fds2 == NULL) {
         errno = ENOMEM;
         return -1;
@@ -426,7 +426,7 @@ int poll(struct pollfd *fds, nfds_t nfds, int timeout) {
     }
 
     if(nfds > __nx_pollfd_sb_max_fds)
-        free(fds2);
+        __libnx_free(fds2);
     return ret;
 }
 
@@ -629,7 +629,7 @@ int ioctl(int fd, int request, ...) {
                 return -1;
             }
 
-            struct bpf_program_serialized *prog_ser = (struct bpf_program_serialized *)malloc(sizeof(struct bpf_program_serialized));
+            struct bpf_program_serialized *prog_ser = (struct bpf_program_serialized *)__libnx_alloc(sizeof(struct bpf_program_serialized));
             if(prog_ser == NULL) {
                 errno = ENOMEM;
                 return -1;
@@ -640,7 +640,7 @@ int ioctl(int fd, int request, ...) {
 
             request = _IOC(request & IOC_DIRMASK, IOCGROUP(request), IOCBASECMD(request), sizeof(struct bpf_program_serialized));
             ret = bsdIoctl(fd, request, prog_ser);
-            free(prog_ser);
+            __libnx_free(prog_ser);
             return _socketParseBsdResult(NULL, ret);
         }
         default:
@@ -967,7 +967,7 @@ static int _mmsgInitCommon(u8 **buf, size_t *alignsize, struct mmsghdr *msgvec, 
     }
 
     *alignsize = (bufsize+0xfff) & ~0xfff;
-    *buf = (u8*)memalign(0x1000, *alignsize);
+    *buf = (u8*)__libnx_aligned_alloc(0x1000, *alignsize);
     if (*buf == NULL) {
         errno = ENOMEM;
         return -1;
@@ -1018,7 +1018,7 @@ int sendmmsg(int sockfd, struct mmsghdr *msgvec, unsigned int vlen, int flags) {
         if (ret2==-1) ret = ret2;
     }
 
-    free(buf);
+    __libnx_free(buf);
 
     return ret;
 }
@@ -1062,7 +1062,7 @@ int recvmmsg(int sockfd, struct mmsghdr *msgvec, unsigned int vlen, int flags, s
         if (ret2==-1) ret = ret2;
     }
 
-    free(buf);
+    __libnx_free(buf);
 
     return ret;
 }

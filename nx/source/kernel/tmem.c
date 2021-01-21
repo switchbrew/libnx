@@ -1,12 +1,12 @@
 // Copyright 2017 plutoo
 #include <string.h>
-#include <malloc.h>
 #include "types.h"
 #include "result.h"
 #include "kernel/svc.h"
 #include "kernel/tmem.h"
 #include "kernel/virtmem.h"
 #include "runtime/diag.h"
+#include "../runtime/alloc.h"
 
 Result tmemCreate(TransferMemory* t, size_t size, Permission perm)
 {
@@ -16,7 +16,7 @@ Result tmemCreate(TransferMemory* t, size_t size, Permission perm)
     t->size = size;
     t->perm = perm;
     t->map_addr = NULL;
-    t->src_addr = memalign(0x1000, size);
+    t->src_addr = __libnx_aligned_alloc(0x1000, size);
 
     if (t->src_addr == NULL) {
         rc = MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
@@ -30,7 +30,7 @@ Result tmemCreate(TransferMemory* t, size_t size, Permission perm)
     }
 
     if (R_FAILED(rc)) {
-        free(t->src_addr);
+        __libnx_free(t->src_addr);
         t->src_addr = NULL;
     }
 
@@ -114,7 +114,7 @@ Result tmemClose(TransferMemory* t)
         }
 
         if (t->src_addr != NULL) {
-            free(t->src_addr);
+            __libnx_free(t->src_addr);
         }
 
         t->src_addr = NULL;

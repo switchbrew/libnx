@@ -1,7 +1,7 @@
 #include <string.h>
-#include <malloc.h>
 #include "runtime/ringcon.h"
 #include "arm/counter.h"
+#include "alloc.h"
 
 static Result _ringconSetup(RingCon *c);
 
@@ -62,7 +62,7 @@ Result ringconCreate(RingCon *c, HidNpadIdType id) {
     memset(c, 0, sizeof(*c));
 
     c->workbuf_size = 0x1000;
-    c->workbuf = memalign(0x1000, c->workbuf_size);
+    c->workbuf = __libnx_aligned_alloc(0x1000, c->workbuf_size);
     if (c->workbuf == NULL)
         rc = MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
     else
@@ -101,7 +101,7 @@ void ringconClose(RingCon *c) {
         hidbusFinalize(c->handle);
     }
 
-    free(c->workbuf);
+    __libnx_free(c->workbuf);
     c->workbuf = 0;
 }
 

@@ -64,7 +64,7 @@ Result audrvCreate(AudioDriver* d, const AudioRendererConfig* config, int num_fi
     size_t etc_size = _audrvGetEtcSize(config);
     memset(d, 0, sizeof(AudioDriver));
 
-    d->etc = (AudioDriverEtc*)malloc(etc_size);
+    d->etc = (AudioDriverEtc*)__libnx_alloc(etc_size);
     if (!d->etc)
         goto _error0;
 
@@ -80,12 +80,12 @@ Result audrvCreate(AudioDriver* d, const AudioRendererConfig* config, int num_fi
     d->etc->sinks = (AudioDriverEtcSink*)(d->etc->mixes+config->num_mix_objs);
 
     d->etc->out_buf_size = audrenGetOutputParamSize(config);
-    d->etc->out_buf = memalign(AUDREN_OUTPUT_PARAM_ALIGNMENT, d->etc->out_buf_size);
+    d->etc->out_buf = __libnx_aligned_alloc(AUDREN_OUTPUT_PARAM_ALIGNMENT, d->etc->out_buf_size);
     if (!d->etc->out_buf)
         goto _error1;
 
     d->etc->in_buf_size = audrenGetInputParamSize(config);
-    d->etc->in_buf = memalign(AUDREN_INPUT_PARAM_ALIGNMENT, d->etc->in_buf_size);
+    d->etc->in_buf = __libnx_aligned_alloc(AUDREN_INPUT_PARAM_ALIGNMENT, d->etc->in_buf_size);
     if (!d->etc->in_buf)
         goto _error2;
 
@@ -93,9 +93,9 @@ Result audrvCreate(AudioDriver* d, const AudioRendererConfig* config, int num_fi
     return 0;
 
 _error2:
-    free(d->etc->out_buf);
+    __libnx_free(d->etc->out_buf);
 _error1:
-    free(d->etc);
+    __libnx_free(d->etc);
     d->etc = NULL;
 _error0:
     return MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
@@ -136,8 +136,8 @@ Result audrvUpdate(AudioDriver* d)
 
 void audrvClose(AudioDriver* d)
 {
-    free(d->etc->in_buf);
-    free(d->etc->out_buf);
-    free(d->etc);
+    __libnx_free(d->etc->in_buf);
+    __libnx_free(d->etc->out_buf);
+    __libnx_free(d->etc);
     memset(d, 0, sizeof(AudioDriver));
 }

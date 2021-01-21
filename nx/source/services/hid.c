@@ -2,7 +2,6 @@
 #include "service_guard.h"
 #include <string.h>
 #include <stdlib.h>
-#include <malloc.h>
 #include <stdatomic.h>
 #include "kernel/shmem.h"
 #include "kernel/mutex.h"
@@ -11,6 +10,7 @@
 #include "services/hid.h"
 #include "runtime/hosversion.h"
 #include "runtime/diag.h"
+#include "../runtime/alloc.h"
 
 static Service g_hidSrv;
 static Service g_hidIAppletResource;
@@ -1410,7 +1410,7 @@ Result hidInitializeSevenSixAxisSensor(void) {
         if (R_FAILED(rc)) return rc;
     }
 
-    g_sevenSixAxisSensorBuffer = (u8*)memalign(0x1000, bufsize);
+    g_sevenSixAxisSensorBuffer = (u8*)__libnx_aligned_alloc(0x1000, bufsize);
     if (g_sevenSixAxisSensorBuffer == NULL)
         return MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
     memset(g_sevenSixAxisSensorBuffer, 0, bufsize);
@@ -1424,7 +1424,7 @@ Result hidInitializeSevenSixAxisSensor(void) {
         tmemClose(&g_sevenSixAxisSensorTmem0);
         tmemClose(&g_sevenSixAxisSensorTmem1);
 
-        free(g_sevenSixAxisSensorBuffer);
+        __libnx_free(g_sevenSixAxisSensorBuffer);
         g_sevenSixAxisSensorBuffer = NULL;
     }
 
@@ -1444,7 +1444,7 @@ Result hidFinalizeSevenSixAxisSensor(void) {
     tmemClose(&g_sevenSixAxisSensorTmem0);
     tmemClose(&g_sevenSixAxisSensorTmem1);
 
-    free(g_sevenSixAxisSensorBuffer);
+    __libnx_free(g_sevenSixAxisSensorBuffer);
     g_sevenSixAxisSensorBuffer = NULL;
 
     return rc;

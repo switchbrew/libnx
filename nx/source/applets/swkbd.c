@@ -1,11 +1,11 @@
 #include <string.h>
-#include <malloc.h>
 #include <math.h>
 #include "libapplet_internal.h"
 #include "applets/swkbd.h"
 #include "services/vi.h"
 #include "runtime/hosversion.h"
 #include "runtime/util/utf.h"
+#include "../runtime/alloc.h"
 
 static Result _swkbdGetReplies(SwkbdInline* s);
 
@@ -85,7 +85,7 @@ Result swkbdCreate(SwkbdConfig* c, s32 max_dictwords) {
         c->workbuf_size = (c->workbuf_size + 0xfff) & ~0xfff;
     }
 
-    c->workbuf = (u8*)memalign(0x1000, c->workbuf_size);
+    c->workbuf = (u8*)__libnx_aligned_alloc(0x1000, c->workbuf_size);
     if (c->workbuf==NULL) rc = MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
     if (R_SUCCEEDED(rc)) memset(c->workbuf, 0, c->workbuf_size);
 
@@ -93,7 +93,7 @@ Result swkbdCreate(SwkbdConfig* c, s32 max_dictwords) {
 }
 
 void swkbdClose(SwkbdConfig* c) {
-    free(c->workbuf);
+    __libnx_free(c->workbuf);
     memset(c, 0, sizeof(SwkbdConfig));
 }
 
@@ -279,14 +279,14 @@ Result swkbdShow(SwkbdConfig* c, char* out_string, size_t out_string_size) {
     memset(&storage, 0, sizeof(AppletStorage));
     memset(&customizedDictionarySet_storage, 0, sizeof(customizedDictionarySet_storage));
 
-    strbuf = (u16*)malloc(strbuf_size+2);
+    strbuf = (u16*)__libnx_alloc(strbuf_size+2);
     if (strbuf==NULL) rc = MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
     if (strbuf) memset(strbuf, 0, strbuf_size+2);
     if (R_FAILED(rc)) return rc;
 
     rc = appletCreateLibraryApplet(&holder, AppletId_LibraryAppletSwkbd, LibAppletMode_AllForeground);
     if (R_FAILED(rc)) {
-        free(strbuf);
+        __libnx_free(strbuf);
         return rc;
     }
 
@@ -354,7 +354,7 @@ Result swkbdShow(SwkbdConfig* c, char* out_string, size_t out_string_size) {
     appletStorageCloseTmem(&storage);
     appletStorageCloseTmem(&customizedDictionarySet_storage);
 
-    free(strbuf);
+    __libnx_free(strbuf);
 
     return rc;
 }
@@ -412,18 +412,18 @@ Result swkbdInlineCreate(SwkbdInline* s) {
     swkbdInlineSetUtf8Mode(s, true);
 
     s->interactive_tmpbuf_size = 0x1000;
-    s->interactive_tmpbuf = (u8*)malloc(s->interactive_tmpbuf_size);
+    s->interactive_tmpbuf = (u8*)__libnx_alloc(s->interactive_tmpbuf_size);
     if (s->interactive_tmpbuf==NULL) rc = MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
     if (R_SUCCEEDED(rc)) memset(s->interactive_tmpbuf, 0, s->interactive_tmpbuf_size);
 
     if (R_SUCCEEDED(rc)) {
         s->interactive_strbuf_size = 0x1001;
-        s->interactive_strbuf = (char*)malloc(s->interactive_strbuf_size);
+        s->interactive_strbuf = (char*)__libnx_alloc(s->interactive_strbuf_size);
         if (s->interactive_strbuf==NULL) rc = MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
         if (R_SUCCEEDED(rc)) memset(s->interactive_strbuf, 0, s->interactive_strbuf_size);
 
         if (R_FAILED(rc)) {
-            free(s->interactive_tmpbuf);
+            __libnx_free(s->interactive_tmpbuf);
             s->interactive_tmpbuf = NULL;
         }
     }
@@ -470,10 +470,10 @@ Result swkbdInlineClose(SwkbdInline* s) {
         appletHolderClose(&s->holder);
     }
 
-    free(s->interactive_tmpbuf);
+    __libnx_free(s->interactive_tmpbuf);
     s->interactive_tmpbuf = NULL;
     s->interactive_tmpbuf_size = 0;
-    free(s->interactive_strbuf);
+    __libnx_free(s->interactive_strbuf);
     s->interactive_strbuf = NULL;
     s->interactive_strbuf_size = 0;
 
