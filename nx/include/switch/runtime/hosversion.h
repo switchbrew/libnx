@@ -25,6 +25,9 @@ u32 hosversionGet(void);
 /// Sets or overrides the current HOS version. This function is normally called automatically by libnx on startup with the version info obtained with \ref setsysGetFirmwareVersion.
 void hosversionSet(u32 version);
 
+/// Returns whether the current HOS version is augmented by running the Atmosphère custom firmware.
+bool hosversionIsAtmosphere(void);
+
 /// Returns true if the current HOS version is equal to or above the specified major/minor/micro version.
 static inline bool hosversionAtLeast(u8 major, u8 minor, u8 micro) {
     return hosversionGet() >= MAKEHOSVERSION(major,minor,micro);

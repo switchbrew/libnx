@@ -112,6 +112,6 @@ Result smUnregisterService(SmServiceName name) {
 }
 
 Result smDetachClient(void) {
-    if (hosversionBefore(11,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    if (!hosversionIsAtmosphere() && hosversionBefore(11,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     return _smCmdInPid(4);
 }

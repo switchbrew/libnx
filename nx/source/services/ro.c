@@ -49,7 +49,7 @@ Service* ro1GetServiceSession(void) {
 }
 
 Result _roDmntInitialize(void) {
-    if (hosversionBefore(3,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    if (!hosversionIsAtmosphere() && hosversionBefore(3,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     return smGetService(&g_dmntSrv, "ro:dmnt");
 }
 
