@@ -14,5 +14,5 @@ void hosversionSet(u32 version)
 
 bool hosversionIsAtmosphere(void)
 {
-    return __atomic_load_n(&g_hosIsAms, __ATOMIC_SEQ_CST) & (BIT(31));
+    return __atomic_load_n(&g_hosVersion, __ATOMIC_SEQ_CST) & (BIT(31));
 }
