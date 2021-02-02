@@ -367,8 +367,8 @@ Result btdrvEnableRadio(bool flag) {
     return _btdrvCmdInBoolNoOut(flag, 34);
 }
 
-Result btdrvSetVisibility(bool flag0, bool flag1) {
-    return _btdrvCmdTwoInBoolsNoOut(flag0, flag1, 35);
+Result btdrvSetVisibility(bool inquiry_scan, bool page_scan) {
+    return _btdrvCmdTwoInBoolsNoOut(inquiry_scan, page_scan, 35);
 }
 
 Result btdrvEnableTbfcScan(bool flag) {

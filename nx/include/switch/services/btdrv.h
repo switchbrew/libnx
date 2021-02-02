@@ -504,10 +504,10 @@ Result btdrvEnableRadio(bool flag);
 /**
  * @brief SetVisibility
  * @note This is used by btm-sysmodule.
- * @param[in] flag0 Unknown flag.
- * @param[in] flag1 Unknown flag.
+ * @param[in] inquiry_scan Controls Inquiry Scan, whether the device can be discovered during Inquiry.
+ * @param[in] page_scan Controls Page Scan, whether the device accepts connections.
  */
-Result btdrvSetVisibility(bool flag0, bool flag1);
+Result btdrvSetVisibility(bool inquiry_scan, bool page_scan);
 
 /**
  * @brief EnableTbfcScan
