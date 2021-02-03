@@ -141,8 +141,11 @@ static Result _btmRegisterBleGattDataPath(const BtmBleDataPath *path, u32 cmd_id
     return serviceDispatchIn(&g_btmSrv, cmd_id, *path);
 }
 
-Result btmGetState(u32 *out) {
-    return _btmCmdNoInOutU32(out, 0);
+Result btmGetState(BtmState *out) {
+    u32 tmp=0;
+    Result rc = _btmCmdNoInOutU32(&tmp, 0);
+    if (R_SUCCEEDED(rc) && out) *out = tmp;
+    return rc;
 }
 
 Result btmGetHostDeviceProperty(BtmHostDeviceProperty *out) {
@@ -165,14 +168,14 @@ Result btmSetSlotMode(const BtmDeviceSlotModeList *list) {
     return _btmCmdInBufPtrFixed(list, sizeof(*list), 5);
 }
 
-Result btmSetBluetoothMode(u32 mode) {
+Result btmSetBluetoothMode(BtmBluetoothMode mode) {
     if (hosversionAtLeast(9,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return _btmCmdInU32NoOut(mode, 6);
 }
 
-Result btmSetWlanMode(u32 mode) {
+Result btmSetWlanMode(BtmWlanMode mode) {
     return _btmCmdInU32NoOut(mode, 7);
 }
 

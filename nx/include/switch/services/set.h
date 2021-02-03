@@ -13,6 +13,7 @@
 #include "../services/acc.h"
 #include "../services/fs.h"
 #include "../services/btdrv_types.h"
+#include "../services/btm_types.h"
 #include "../sf/service.h"
 
 #define SET_MAX_NAME_SIZE 0x48
@@ -299,25 +300,24 @@ typedef struct {
 
 /// BluetoothDevicesSettings
 typedef struct {
-    BtdrvAddress address;
-    char name[0x20];
-    u16 unk_x26;
-    u8 unk_x28;
-    Uuid uuid;
-    u8 unk_x39;
-    u16 unk_x3A;
-    u32 unk_x3C;
-    u16 unk_x40;
-    u16 unk_x42;
-    u16 unk_x44;
-    u8 unk_x46[0x80];
-    u16 unk_xC6;
-    u8 unk_xC8;
-    u8 unk_xC9;
-    u16 unk_xCA;
-    u8 unk_xCC[8];
-    u8 unk_xD4;
-    u8 unk_xD5[0x12B];
+    BtdrvAddress addr;                    ///< \ref BtdrvAddress
+    BtmBdName name;                       ///< BdName
+    BtmClassOfDevice class_of_device;     ///< ClassOfDevice
+    u8 link_key[0x10];                    ///< LinkKey
+    u8 link_key_present;                  ///< LinkKeyPresent
+    u16 version;                          ///< Version
+    u32 trusted_services;                 ///< TrustedServices
+    u16 vid;                              ///< Vid
+    u16 pid;                              ///< Pid
+    u8 sub_class;                         ///< SubClass
+    u8 attribute_mask;                    ///< AttributeMask
+    u16 descriptor_length;                ///< DescriptorLength
+    u8 descriptor[0x80];                  ///< Descriptor
+    u8 key_type;                          ///< KeyType
+    u8 device_type;                       ///< DeviceType
+    u16 brr_size;                         ///< BrrSize
+    u8 brr[0x9];                          ///< Brr
+    u8 reserved[0x12B];                   ///< Reserved
 } SetSysBluetoothDevicesSettings;
 
 /// Structure returned by \ref setsysGetFirmwareVersion.

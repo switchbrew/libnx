@@ -8,90 +8,8 @@
 #include "../types.h"
 #include "../kernel/event.h"
 #include "../services/btdrv_types.h"
+#include "../services/btm_types.h"
 #include "../sf/service.h"
-
-/// HostDeviceProperty
-typedef struct {
-    BtdrvAddress addr;         ///< Same as BtdrvAdapterProperty::addr.
-    u8 type5[0x3];             ///< Same as BtdrvAdapterProperty::type5.
-    char name[0x20];           ///< Same as BtdrvAdapterProperty::name (except the last byte which is always zero).
-    u8 type6;                  ///< Same as BtdrvAdapterProperty::type6.
-} BtmHostDeviceProperty;
-
-/// DeviceCondition
-typedef struct {
-    u8 unk_x0[0x368];             ///< Unknown
-} BtmDeviceCondition;
-
-/// DeviceSlotModeList
-typedef struct {
-    u8 unk_x0[0x64];              ///< Unknown
-} BtmDeviceSlotModeList;
-
-/// DeviceInfo
-typedef struct {
-    u8 unk_x0[0x60];              ///< Unknown
-} BtmDeviceInfo;
-
-/// DeviceInfoList
-typedef struct {
-    u8 total_entries;             ///< Total entries.
-    u8 pad[3];                    ///< Padding
-    BtmDeviceInfo devices[10];    ///< Array of \ref BtmDeviceInfo with the above entry total.
-} BtmDeviceInfoList;
-
-/// DevicePropertyList
-typedef struct {
-    u8 unk_x0[0x268];             ///< Unknown
-} BtmDevicePropertyList;
-
-/// ZeroRetransmissionList
-typedef struct {
-    u8 unk_x0[0x11];              ///< Unknown
-} BtmZeroRetransmissionList;
-
-/// GattClientConditionList
-typedef struct {
-    u8 unk_x0[0x74];              ///< Unknown
-} BtmGattClientConditionList;
-
-/// GattService
-typedef struct {
-    u8 unk_x0[0x4];               ///< Unknown
-    BtdrvGattAttributeUuid uuid;  ///< \ref BtdrvGattAttributeUuid
-    u16 handle;                   ///< Handle
-    u8 unk_x1A[0x2];              ///< Unknown
-    u16 instance_id;              ///< InstanceId
-    u16 end_group_handle;         ///< EndGroupHandle
-    u8 primary_service;           ///< PrimaryService
-    u8 pad[3];                    ///< Padding
-} BtmGattService;
-
-/// GattCharacteristic
-typedef struct {
-    u8 unk_x0[0x4];               ///< Unknown
-    BtdrvGattAttributeUuid uuid;  ///< \ref BtdrvGattAttributeUuid
-    u16 handle;                   ///< Handle
-    u8 unk_x1A[0x2];              ///< Unknown
-    u16 instance_id;              ///< InstanceId
-    u8 properties;                ///< Properties
-    u8 unk_x1F[0x5];              ///< Unknown
-} BtmGattCharacteristic;
-
-/// GattDescriptor
-typedef struct {
-    u8 unk_x0[0x4];               ///< Unknown
-    BtdrvGattAttributeUuid uuid;  ///< \ref BtdrvGattAttributeUuid
-    u16 handle;                   ///< Handle
-    u8 unk_x1A[0x6];              ///< Unknown
-} BtmGattDescriptor;
-
-/// BleDataPath
-typedef struct {
-    u8 unk_x0;                    ///< Unknown
-    u8 pad[3];                    ///< Padding
-    BtdrvGattAttributeUuid uuid;  ///< \ref BtdrvGattAttributeUuid
-} BtmBleDataPath;
 
 /// Initialize btm.
 Result btmInitialize(void);
@@ -104,9 +22,9 @@ Service* btmGetServiceSession(void);
 
 /**
  * @brief GetState
- * @param[out] out Output BtmState.
+ * @param[out] out \ref BtmState
  */
-Result btmGetState(u32 *out);
+Result btmGetState(BtmState *out);
 
 /**
  * @brief GetHostDeviceProperty
@@ -143,15 +61,15 @@ Result btmSetSlotMode(const BtmDeviceSlotModeList *list);
 /**
  * @brief SetBluetoothMode
  * @note Only available on pre-9.0.0.
- * @param[in] mode BluetoothMode
+ * @param[in] mode \ref BtmBluetoothMode
  */
-Result btmSetBluetoothMode(u32 mode);
+Result btmSetBluetoothMode(BtmBluetoothMode mode);
 
 /**
  * @brief SetWlanMode
- * @param[in] mode WlanMode
+ * @param[in] mode \ref BtmWlanMode
  */
-Result btmSetWlanMode(u32 mode);
+Result btmSetWlanMode(BtmWlanMode mode);
 
 /**
  * @brief AcquireDeviceInfoEvent

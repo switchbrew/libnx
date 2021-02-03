@@ -9,11 +9,11 @@
 
 /// BluetoothPropertyType
 typedef enum {
-    BtdrvBluetoothPropertyType_Name         =    1,    ///< Name. String, max length 0xF8 excluding NUL-terminator.
-    BtdrvBluetoothPropertyType_Address      =    2,    ///< \ref BtdrvAddress
-    BtdrvBluetoothPropertyType_Unknown3     =    3,    ///< Only available with \ref btdrvSetAdapterProperty. Unknown, \ref BtdrvAddress.
-    BtdrvBluetoothPropertyType_Unknown5     =    5,    ///< Unknown. 3-bytes.
-    BtdrvBluetoothPropertyType_Unknown6     =    6,    ///< Unknown. 1-byte. The default is value 0x68.
+    BtdrvBluetoothPropertyType_Name           =    1,    ///< Name. String, max length 0xF8 excluding NUL-terminator.
+    BtdrvBluetoothPropertyType_Address        =    2,    ///< \ref BtdrvAddress
+    BtdrvBluetoothPropertyType_Unknown3       =    3,    ///< Only available with \ref btdrvSetAdapterProperty. Unknown, \ref BtdrvAddress.
+    BtdrvBluetoothPropertyType_ClassOfDevice  =    5,    ///< 3-bytes, Class of Device.
+    BtdrvBluetoothPropertyType_FeatureSet     =    6,    ///< 1-byte, FeatureSet. The default is value 0x68.
 } BtdrvBluetoothPropertyType;
 
 /// EventType
@@ -81,9 +81,9 @@ typedef struct {
 /// AdapterProperty
 typedef struct {
     BtdrvAddress addr;         ///< Same as the data for ::BtdrvBluetoothPropertyType_Address.
-    u8 type5[0x3];             ///< Same as the data for ::BtdrvBluetoothPropertyType_Unknown5.
+    u8 class_of_device[0x3];   ///< Same as the data for ::BtdrvBluetoothPropertyType_ClassOfDevice.
     char name[0xF9];           ///< Same as the data for ::BtdrvBluetoothPropertyType_Name (last byte is not initialized).
-    u8 type6;                  ///< Set to hard-coded value 0x68 (same as the data for ::BtdrvBluetoothPropertyType_Unknown6).
+    u8 feature_set;            ///< Set to hard-coded value 0x68 (same as the data for ::BtdrvBluetoothPropertyType_FeatureSet).
 } BtdrvAdapterProperty;
 
 /// BluetoothPinCode

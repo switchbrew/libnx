@@ -23,10 +23,10 @@ typedef struct {
         struct {
             u8 name[0xF9];               ///< Device name, NUL-terminated string.
             BtdrvAddress addr;           ///< Device address.
-            u8 unk_xFF[0x10];            ///< Unknown
-            u8 device_class[0x3];        ///< Device class.
+            u8 reserved_xFF[0x10];       ///< Reserved
+            u8 class_of_device[0x3];     ///< Class of Device.
             u8 unk_x112[0x4];            ///< Set to fixed value u32 0x1.
-            u8 unk_x116[0xFA];           ///< Unknown
+            u8 reserved_x116[0xFA];      ///< Reserved
             u8 reserved_x210[0x5C];      ///< Reserved
             u8 name2[0xF9];              ///< Device name, NUL-terminated string. Same as name above, except starting at index 1.
             u8 rssi[0x4];                ///< s32 RSSI
@@ -41,13 +41,13 @@ typedef struct {
         struct {
             BtdrvAddress addr;           ///< Device address.
             u8 name[0xF9];               ///< Device name, NUL-terminated string.
-            u8 device_class[0x3];        ///< Device class.
+            u8 class_of_device[0x3];     ///< Class of Device.
         } pairing_pin_code_request;      ///< ::BtdrvEventType_PairingPinCodeRequest
 
         struct {
             BtdrvAddress addr;           ///< Device address.
             u8 name[0xF9];               ///< Device name, NUL-terminated string.
-            u8 device_class[0x3];        ///< Device class.
+            u8 class_of_device[0x3];     ///< Class of Device.
             u8 pad[2];                   ///< Padding
             u32 type;                    ///< 0 = SSP confirm request, 3 = SSP passkey notification.
             s32 passkey;                 ///< Passkey, only set when the above field is value 3.
@@ -330,6 +330,7 @@ Result btdrvCancelBond(BtdrvAddress addr);
 
 /**
  * @brief RespondToPinRequest
+ * @note The official sysmodule only uses the input \ref BtdrvAddress.
  * @param[in] addr \ref BtdrvAddress
  * @param[in] flag Flag
  * @param[in] pin_code \ref BtdrvBluetoothPinCode
@@ -339,10 +340,11 @@ Result btdrvRespondToPinRequest(BtdrvAddress addr, bool flag, const BtdrvBluetoo
 
 /**
  * @brief RespondToSspRequest
+ * @note The official sysmodule only uses the input \ref BtdrvAddress and the flag.
  * @note This is used by btm-sysmodule.
  * @param[in] addr \ref BtdrvAddress
  * @param[in] variant BluetoothSspVariant
- * @param[in] flag Flag
+ * @param[in] flag Whether the request is accepted.
  * @param[in] unk Unknown
  */
 Result btdrvRespondToSspRequest(BtdrvAddress addr, u8 variant, bool flag, u32 unk);
@@ -452,7 +454,7 @@ Result btdrvGetHidEventInfo(void* buffer, size_t size, BtdrvHidEventType *type);
  * @note The response will be available via \ref btdrvGetHidEventInfo.
  * @note This is used by btm-sysmodule.
  * @param[in] addr \ref BtdrvAddress
- * @param[in] tsi Tsi: non-value-0xFF to Set, value 0xFF to Exit.
+ * @param[in] tsi Tsi: non-value-0xFF to Set, value 0xFF to Exit. See also \ref BtmTsiMode.
  */
 Result btdrvSetTsi(BtdrvAddress addr, u8 tsi);
 
