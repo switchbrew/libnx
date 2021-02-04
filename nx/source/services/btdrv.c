@@ -541,11 +541,11 @@ Result btdrvFinalizeBle(void) {
     return _btdrvCmdNoIO(49);
 }
 
-Result btdrvSetBleVisibility(bool flag0, bool flag1) {
+Result btdrvSetBleVisibility(bool discoverable, bool connectable) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return _btdrvCmdTwoInBoolsNoOut(flag0, flag1, 50);
+    return _btdrvCmdTwoInBoolsNoOut(discoverable, connectable, 50);
 }
 
 Result btdrvSetLeConnectionParameter(const BtdrvLeConnectionParams *param) {

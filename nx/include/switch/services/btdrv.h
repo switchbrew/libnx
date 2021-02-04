@@ -622,10 +622,10 @@ Result btdrvFinalizeBle(void);
 /**
  * @brief SetBleVisibility
  * @note Only available on [5.0.0+].
- * @param[in] flag0 Unknown flag.
- * @param[in] flag1 Unknown flag.
+ * @param[in] discoverable Whether the BLE device is discoverable.
+ * @param[in] connectable Whether the BLE device is connectable.
  */
-Result btdrvSetBleVisibility(bool flag0, bool flag1);
+Result btdrvSetBleVisibility(bool discoverable, bool connectable);
 
 /**
  * @brief SetLeConnectionParameter
