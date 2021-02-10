@@ -25,9 +25,9 @@ Service* pscmGetServiceSession(void) {
 }
 
 
-NX_INLINE Result _pscPmModuleInitialize(PscPmModule *module, PscPmModuleId module_id, const u16 *dependencies, size_t dependency_count, bool autoclear);
+NX_INLINE Result _pscPmModuleInitialize(PscPmModule *module, PscPmModuleId module_id, const u32 *dependencies, size_t dependency_count, bool autoclear);
 
-Result pscmGetPmModule(PscPmModule *out, PscPmModuleId module_id, const u16 *dependencies, size_t dependency_count, bool autoclear) {
+Result pscmGetPmModule(PscPmModule *out, PscPmModuleId module_id, const u32 *dependencies, size_t dependency_count, bool autoclear) {
     serviceAssumeDomain(&g_pscmSrv);
     Result rc = serviceDispatch(&g_pscmSrv, 0,
         .out_num_objects = 1,
@@ -43,7 +43,7 @@ Result pscmGetPmModule(PscPmModule *out, PscPmModuleId module_id, const u16 *dep
     return rc;
 }
 
-Result _pscPmModuleInitialize(PscPmModule *module, PscPmModuleId module_id, const u16 *dependencies, size_t dependency_count, bool autoclear) {
+Result _pscPmModuleInitialize(PscPmModule *module, PscPmModuleId module_id, const u32 *dependencies, size_t dependency_count, bool autoclear) {
     _Static_assert(sizeof(module_id) == sizeof(u32), "PscPmModuleId size");
 
     Handle evt_handle = INVALID_HANDLE;
