@@ -67,9 +67,9 @@ typedef enum {
 /// This determines the u16 data to write into a CircularBuffer.
 typedef enum {
     BtdrvFatalReason_Invalid                =    0,    ///< Only for \ref BtdrvEventInfo: invalid.
-    BtdrvFatalReason_Unknown1               =    1,    ///< u16 data = 0x850.
-    BtdrvFatalReason_Unknown2               =    2,    ///< u16 data = 0x851.
-    BtdrvFatalReason_Unknown3               =    3,    ///< Reason values which aren't 1/2: u16 data = 0x852.
+    BtdrvFatalReason_Unknown1               =    1,    ///< Can only be triggered by \ref btdrvEmulateBluetoothCrash, not triggered by the sysmodule otherwise.
+    BtdrvFatalReason_CommandTimeout         =    2,    ///< HCI command timeout.
+    BtdrvFatalReason_HardwareError          =    3,    ///< HCI event HCI_Hardware_Error occurred.
     BtdrvFatalReason_Enable                 =    7,    ///< Only for \ref BtdrvEventInfo: triggered after enabling bluetooth, depending on the value of a global state field.
 } BtdrvFatalReason;
 
