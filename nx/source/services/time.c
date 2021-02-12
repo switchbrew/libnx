@@ -159,7 +159,7 @@ static Result _appletCmdNoInOutU32(Service* srv, u32 *out, u32 cmd_id) {
 }
 
 static s64 _timeComputeSteadyClockTimePoint(const TimeStandardSteadyClockTimePointType *context) {
-    return (context->base_time + armTicksToNs(armGetSystemTick())) / 1000000000L;
+    return (context->base_time + (s64)armTicksToNs(armGetSystemTick())) / 1000000000L;
 }
 
 Result timeGetStandardSteadyClockTimePoint(TimeSteadyClockTimePoint *out) {
