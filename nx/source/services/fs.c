@@ -224,6 +224,33 @@ Result fsOpenSdCardFileSystem(FsFileSystem* out) {
     return _fsCmdGetSession(&g_fsSrv, &out->s, 18);
 }
 
+Result fsOpenHostFileSystem(FsFileSystem* out, const char *path) {
+    char tmpstr[FS_MAX_PATH] = {0};
+    strncpy(tmpstr, path, sizeof(tmpstr)-1);
+
+    return _fsObjectDispatch(&g_fsSrv, 17,
+        .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_In },
+        .buffers = { { tmpstr, sizeof(tmpstr) } },
+        .out_num_objects = 1,
+        .out_objects = &out->s,
+    );
+}
+
+Result fsOpenHostFileSystemWithOption(FsFileSystem* out, const char *path, u32 flags) {
+    if (hosversionBefore(9,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    char tmpstr[FS_MAX_PATH] = {0};
+    strncpy(tmpstr, path, sizeof(tmpstr)-1);
+
+    return _fsObjectDispatchIn(&g_fsSrv, 36, flags,
+        .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_In },
+        .buffers = { { tmpstr, sizeof(tmpstr) } },
+        .out_num_objects = 1,
+        .out_objects = &out->s,
+    );
+}
+
 Result fsDeleteSaveDataFileSystem(u64 application_id) {
     return _fsObjectDispatchIn(&g_fsSrv, 21, application_id);
 }
