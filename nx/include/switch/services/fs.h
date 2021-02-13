@@ -313,6 +313,12 @@ typedef enum {
     FsPriority_Background = 3,
 } FsPriority;
 
+/// For use with fsOpenHostFileSystemWithOption
+typedef enum {
+    FsMountHostOptionFlag_None                = 0,      ///< Host filesystem will be case insensitive.
+    FsMountHostOptionFlag_PseudoCaseSensitive = BIT(0), ///< Host filesystem will be pseudo case sensitive.
+} FsMountHostOption;
+
 /// Initialize fsp-srv. Used automatically during app startup.
 Result fsInitialize(void);
 
@@ -336,6 +342,9 @@ Result fsOpenBisStorage(FsStorage* out, FsBisPartitionId partitionId);
 
 /// Do not call this directly, see fs_dev.h.
 Result fsOpenSdCardFileSystem(FsFileSystem* out);
+
+Result fsOpenHostFileSystem(FsFileSystem* out, const char *path);
+Result fsOpenHostFileSystemWithOption(FsFileSystem* out, const char *path, u32 flags); ///< [9.0.0+]
 
 Result fsDeleteSaveDataFileSystem(u64 application_id);
 Result fsCreateSaveDataFileSystem(const FsSaveDataAttribute* attr, const FsSaveDataCreationInfo* creation_info, const FsSaveDataMetaInfo* meta);
