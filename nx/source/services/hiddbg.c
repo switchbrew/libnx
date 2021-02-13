@@ -115,6 +115,14 @@ Result hiddbgDeactivateHomeButton(void) {
     return _hiddbgCmdNoIO(110);
 }
 
+Result hiddbgSetSleepButtonAutoPilotState(const HiddbgSleepButtonAutoPilotState *state) {
+    return serviceDispatchIn(&g_hiddbgSrv, 121, *state);
+}
+
+Result hiddbgUnsetSleepButtonAutoPilotState(void) {
+    return _hiddbgCmdNoIO(122);
+}
+
 Result hiddbgUpdateControllerColor(u32 colorBody, u32 colorButtons, HidsysUniquePadId unique_pad_id) {
     if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);

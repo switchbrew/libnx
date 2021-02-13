@@ -40,6 +40,11 @@ typedef struct {
     u64 keys[4];
 } HiddbgKeyboardAutoPilotState;
 
+/// State for overriding SleepButtonState.
+typedef struct {
+    u64 buttons;                                ///< Bitfield of buttons, only bit0 is used.
+} HiddbgSleepButtonAutoPilotState;
+
 /// HdlsHandle
 typedef struct {
     u64 handle;               ///< Handle
@@ -214,6 +219,17 @@ Result hiddbgUnsetKeyboardAutoPilotState(void);
  * @brief Deactivates the HomeButton.
  */
 Result hiddbgDeactivateHomeButton(void);
+
+/**
+ * @brief SetSleepButtonAutoPilotState
+ * @param[in] state \ref HiddbgSleepButtonAutoPilotState
+ */
+Result hiddbgSetSleepButtonAutoPilotState(const HiddbgSleepButtonAutoPilotState *state);
+
+/**
+ * @brief UnsetSleepButtonAutoPilotState
+ */
+Result hiddbgUnsetSleepButtonAutoPilotState(void);
 
 /**
  * @brief Writes the input RGB colors to the spi-flash for the specified UniquePad (offset 0x6050 size 0x6).
