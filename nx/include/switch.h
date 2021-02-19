@@ -71,6 +71,7 @@ extern "C" {
 #include "switch/services/spsm.h"
 //#include "switch/services/bsd.h" Use <sys/socket.h> instead
 //#include "switch/services/sfdnsres.h" Use <netdb.h> instead
+//#include "switch/services/htcs.h"
 #include "switch/services/fatal.h"
 #include "switch/services/time.h"
 #include "switch/services/usb.h"
