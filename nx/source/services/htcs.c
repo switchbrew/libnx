@@ -194,6 +194,19 @@ static Result _htcsSocketCmdInS32(HtcsSocket *s, s32 *out_err, s32 *out_res, s32
     return rc;
 }
 
+static Result _htcsSocketCmdInU32OutErrSize(HtcsSocket *s, s32 *out_err, s64 *out_size, u32 value, u32 cmd_id) {
+    struct {
+        s32 err;
+        s64 size;
+    } out;
+    Result rc = _htcsObjectDispatchInOut(&s->s, cmd_id, value, out);
+    if (R_SUCCEEDED(rc)) {
+        if (out_err) *out_err = out.err;
+        if (out_size) *out_size = out.size;
+    }
+    return rc;
+}
+
 Result htcsSocketClose(HtcsSocket *s, s32 *out_err, s32 *out_res) {
     struct {
         s32 err;
@@ -300,16 +313,7 @@ Result htcsSocketSendStart(HtcsSocket *s, u32 *out_task_id, Handle *out_event_ha
 }
 
 Result htcsSocketSendResults(HtcsSocket *s, s32 *out_err, s64 *out_size, u32 task_id) {
-    struct {
-        s32 err;
-        s64 size;
-    } out;
-    Result rc = _htcsObjectDispatchInOut(&s->s, 16, task_id, out);
-    if (R_SUCCEEDED(rc)) {
-        if (out_err) *out_err = out.err;
-        if (out_size) *out_size = out.size;
-    }
-    return rc;
+    return _htcsSocketCmdInU32OutErrSize(s, out_err, out_size, task_id, 16);
 }
 
 Result htcsSocketStartSend(HtcsSocket *s, u32 *out_task_id, Handle *out_event_handle, s64 *out_max_size, s64 size, s32 flags) {
@@ -349,16 +353,7 @@ Result htcsSocketContinueSend(HtcsSocket *s, s64 *out_size, bool *out_wait, cons
 }
 
 Result htcsSocketEndSend(HtcsSocket *s, s32 *out_err, s64 *out_size, u32 task_id) {
-    struct {
-        s32 err;
-        s64 size;
-    } out;
-    Result rc = _htcsObjectDispatchInOut(&s->s, 19, task_id, out);
-    if (R_SUCCEEDED(rc)) {
-        if (out_err) *out_err = out.err;
-        if (out_size) *out_size = out.size;
-    }
-    return rc;
+    return _htcsSocketCmdInU32OutErrSize(s, out_err, out_size, task_id, 19);
 }
 
 Result htcsSocketStartRecv(HtcsSocket *s, u32 *out_task_id, Handle *out_event_handle, s64 size, s32 flags) {
