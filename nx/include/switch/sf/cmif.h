@@ -225,25 +225,25 @@ NX_CONSTEXPR void cmifRequestOutPointer(CmifRequest* req, void* buffer, size_t s
     *req->out_pointer_sizes++ = size;
 }
 
-NX_CONSTEXPR void cmifRequestInAutoBuffer(CmifRequest* req, const void* buffer, size_t size)
+NX_CONSTEXPR void cmifRequestInAutoBuffer(CmifRequest* req, const void* buffer, size_t size, HipcBufferMode mode)
 {
     if (req->server_pointer_size && size <= req->server_pointer_size) {
         cmifRequestInPointer(req, buffer, size);
-        cmifRequestInBuffer(req, NULL, 0, HipcBufferMode_Normal);
+        cmifRequestInBuffer(req, NULL, 0, mode);
     } else {
         cmifRequestInPointer(req, NULL, 0);
-        cmifRequestInBuffer(req, buffer, size, HipcBufferMode_Normal);
+        cmifRequestInBuffer(req, buffer, size, mode);
     }
 }
 
-NX_CONSTEXPR void cmifRequestOutAutoBuffer(CmifRequest* req, void* buffer, size_t size)
+NX_CONSTEXPR void cmifRequestOutAutoBuffer(CmifRequest* req, void* buffer, size_t size, HipcBufferMode mode)
 {
     if (req->server_pointer_size && size <= req->server_pointer_size) {
         cmifRequestOutPointer(req, buffer, size);
-        cmifRequestOutBuffer(req, NULL, 0, HipcBufferMode_Normal);
+        cmifRequestOutBuffer(req, NULL, 0, mode);
     } else {
         cmifRequestOutPointer(req, NULL, 0);
-        cmifRequestOutBuffer(req, buffer, size, HipcBufferMode_Normal);
+        cmifRequestOutBuffer(req, buffer, size, mode);
     }
 }
 

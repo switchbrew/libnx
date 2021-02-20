@@ -150,10 +150,14 @@ NX_INLINE void serviceCreate(Service* s, Handle h)
  */
 NX_INLINE void serviceCreateNonDomainSubservice(Service* s, Service* parent, Handle h)
 {
-    s->session = h;
-    s->own_handle = 1;
-    s->object_id = 0;
-    s->pointer_buffer_size = parent->pointer_buffer_size;
+    if (h != INVALID_HANDLE) {
+        s->session = h;
+        s->own_handle = 1;
+        s->object_id = 0;
+        s->pointer_buffer_size = parent->pointer_buffer_size;
+    } else {
+        *s = (Service){};
+    }
 }
 
 /**
@@ -164,10 +168,14 @@ NX_INLINE void serviceCreateNonDomainSubservice(Service* s, Service* parent, Han
  */
 NX_CONSTEXPR void serviceCreateDomainSubservice(Service* s, Service* parent, u32 object_id)
 {
-    s->session = parent->session;
-    s->own_handle = 0;
-    s->object_id = object_id;
-    s->pointer_buffer_size = parent->pointer_buffer_size;
+    if (object_id != 0) {
+        s->session = parent->session;
+        s->own_handle = 0;
+        s->object_id = object_id;
+        s->pointer_buffer_size = parent->pointer_buffer_size;
+    } else {
+        *s = (Service){};
+    }
 }
 
 /**
@@ -293,10 +301,15 @@ NX_CONSTEXPR void _serviceRequestProcessBuffer(CmifRequest* req, const SfBuffer*
     const bool is_out = (attr & SfBufferAttr_Out);
 
     if (attr & SfBufferAttr_HipcAutoSelect) {
+        HipcBufferMode mode = HipcBufferMode_Normal;
+        if (attr & SfBufferAttr_HipcMapTransferAllowsNonSecure)
+            mode = HipcBufferMode_NonSecure;
+        if (attr & SfBufferAttr_HipcMapTransferAllowsNonDevice)
+            mode = HipcBufferMode_NonDevice;
         if (is_in)
-            cmifRequestInAutoBuffer(req, buf->ptr, buf->size);
+            cmifRequestInAutoBuffer(req, buf->ptr, buf->size, mode);
         if (is_out)
-            cmifRequestOutAutoBuffer(req, (void*)buf->ptr, buf->size);
+            cmifRequestOutAutoBuffer(req, (void*)buf->ptr, buf->size, mode);
     } else if (attr & SfBufferAttr_HipcPointer) {
         if (is_in)
             cmifRequestInPointer(req, buf->ptr, buf->size);
