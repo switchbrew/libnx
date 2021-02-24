@@ -37,6 +37,9 @@ static TransferMemory g_bsdTmem;
 static const BsdInitConfig g_defaultBsdInitConfig = {
     .version = 1,
 
+    .tmem_buffer            = NULL,
+    .tmem_buffer_size       = 0,
+
     .tcp_tx_buf_size        = 0x8000,
     .tcp_rx_buf_size        = 0x10000,
     .tcp_tx_buf_max_size    = 0x40000,
@@ -213,8 +216,14 @@ Result _bsdInitialize(const BsdInitConfig *config, u32 num_sessions, u32 service
     if (R_SUCCEEDED(rc))
         rc = smGetServiceWrapper(&g_bsdMonitor, bsd_srv);
 
-    if (R_SUCCEEDED(rc))
-        rc = tmemCreate(&g_bsdTmem, _bsdGetTransferMemSizeForConfig(config), 0);
+    if (R_SUCCEEDED(rc)) {
+        const size_t min_tmem_size = _bsdGetTransferMemSizeForConfig(config);
+
+        if (config->tmem_buffer != NULL && config->tmem_buffer_size >= min_tmem_size)
+            rc = tmemCreateFromMemory(&g_bsdTmem, config->tmem_buffer, config->tmem_buffer_size, 0);
+        else
+            rc = tmemCreate(&g_bsdTmem, min_tmem_size, 0);
+    }
 
     if (R_SUCCEEDED(rc))
         rc = _bsdRegisterClient(&g_bsdTmem, config, &g_bsdClientPid);
