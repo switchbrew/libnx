@@ -34,6 +34,20 @@ static u64 g_bsdClientPid = -1;
 
 static TransferMemory g_bsdTmem;
 
+typedef struct {
+    u32 version;
+
+    u32 tcp_tx_buf_size;
+    u32 tcp_rx_buf_size;
+    u32 tcp_tx_buf_max_size;
+    u32 tcp_rx_buf_max_size;
+
+    u32 udp_tx_buf_size;
+    u32 udp_rx_buf_size;
+
+    u32 sb_efficiency;
+} BsdServiceConfig;
+
 static const BsdInitConfig g_defaultBsdInitConfig = {
     .version = 1,
 
@@ -74,9 +88,9 @@ NX_CONSTEXPR BsdSelectTimeval _bsdCreateSelectTimeval(struct timeval *timeval) {
     return ret;
 }
 
-static Result _bsdRegisterClient(TransferMemory* tmem, const BsdInitConfig *config, u64* pid_out) {
+static Result _bsdRegisterClient(TransferMemory* tmem, const BsdServiceConfig *config, u64* pid_out) {
     const struct {
-        BsdInitConfig config;
+        BsdServiceConfig config;
         u64 pid_placeholder;
         u64 tmem_sz;
     } in = { *config, 0, tmem->size };
@@ -225,8 +239,22 @@ Result _bsdInitialize(const BsdInitConfig *config, u32 num_sessions, u32 service
             rc = tmemCreate(&g_bsdTmem, min_tmem_size, 0);
     }
 
-    if (R_SUCCEEDED(rc))
-        rc = _bsdRegisterClient(&g_bsdTmem, config, &g_bsdClientPid);
+    if (R_SUCCEEDED(rc)){
+        const BsdServiceConfig srv_config = {
+            .version             = config->version,
+
+            .tcp_tx_buf_size     = config->tcp_tx_buf_size,
+            .tcp_rx_buf_size     = config->tcp_rx_buf_size,
+            .tcp_tx_buf_max_size = config->tcp_tx_buf_max_size,
+            .tcp_rx_buf_max_size = config->tcp_rx_buf_max_size,
+
+            .udp_tx_buf_size     = config->udp_tx_buf_size,
+            .udp_rx_buf_size     = config->udp_rx_buf_size,
+
+            .sb_efficiency       = config->sb_efficiency,
+        };
+        rc = _bsdRegisterClient(&g_bsdTmem, &srv_config, &g_bsdClientPid);
+    }
 
     if (R_SUCCEEDED(rc))
         rc = _bsdStartMonitoring(g_bsdClientPid);
