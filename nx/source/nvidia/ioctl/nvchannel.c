@@ -197,8 +197,8 @@ Result nvioctlChannel_SetUserData(u32 fd, void* addr) {
     return nvIoctl(fd, _NV_IOW(0x47, 0x14, data), &data);
 }
 
-Result nvioctlChannel_Submit(u32 fd, nvioctl_cmdbuf *cmdbufs, u32 num_cmdbufs, nvioctl_reloc *relocs, nvioctl_reloc_shift *reloc_shifts, u32 num_relocs,
-        nvioctl_syncpt_incr *syncpt_incrs, u32 num_syncpt_incrs, nvioctl_fence *fences, u32 num_fences) {
+Result nvioctlChannel_Submit(u32 fd, const nvioctl_cmdbuf *cmdbufs, u32 num_cmdbufs, const nvioctl_reloc *relocs, const nvioctl_reloc_shift *reloc_shifts, u32 num_relocs,
+        const nvioctl_syncpt_incr *syncpt_incrs, u32 num_syncpt_incrs, nvioctl_fence *fences, u32 num_fences) {
     // Make sure stack data doesn't get very large
     if (num_cmdbufs + num_relocs + num_syncpt_incrs + num_fences > 0x200)
         return MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);

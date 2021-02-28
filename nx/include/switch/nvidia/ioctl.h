@@ -274,8 +274,8 @@ Result nvioctlChannel_SetPriority(u32 fd, u32 priority);
 Result nvioctlChannel_SetTimeout(u32 fd, u32 timeout);
 Result nvioctlChannel_AllocGpfifoEx2(u32 fd, u32 num_entries, u32 flags, u32 unk0, u32 unk1, u32 unk2, u32 unk3, nvioctl_fence *fence_out);
 Result nvioctlChannel_SetUserData(u32 fd, void* addr);
-Result nvioctlChannel_Submit(u32 fd, nvioctl_cmdbuf *cmdbufs, u32 num_cmdbufs, nvioctl_reloc *relocs, nvioctl_reloc_shift *reloc_shifts, u32 num_relocs,
-    nvioctl_syncpt_incr *syncpt_incrs, u32 num_syncpt_incrs, nvioctl_fence *fences, u32 num_fences);
+Result nvioctlChannel_Submit(u32 fd, const nvioctl_cmdbuf *cmdbufs, u32 num_cmdbufs, const nvioctl_reloc *relocs, const nvioctl_reloc_shift *reloc_shifts, u32 num_relocs,
+    const nvioctl_syncpt_incr *syncpt_incrs, u32 num_syncpt_incrs, nvioctl_fence *fences, u32 num_fences);
 Result nvioctlChannel_GetSyncpt(u32 fd, u32 module_id, u32 *syncpt);
 Result nvioctlChannel_GetModuleClockRate(u32 fd, u32 module_id, u32 *freq);
 Result nvioctlChannel_MapCommandBuffer(u32 fd, nvioctl_command_buffer_map *maps, u32 num_maps, bool compressed);
