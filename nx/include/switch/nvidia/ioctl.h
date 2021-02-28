@@ -129,6 +129,33 @@ typedef struct {
     };
 } nvioctl_gpfifo_entry;
 
+typedef struct {
+    u32 mem;
+    u32 offset;
+    u32 words;
+} nvioctl_cmdbuf;
+
+typedef struct {
+    u32 cmdbuf_mem;
+    u32 cmdbuf_offset;
+    u32 target;
+    u32 target_offset;
+} nvioctl_reloc;
+
+typedef struct {
+    u32 shift;
+} nvioctl_reloc_shift;
+
+typedef struct {
+    u32 syncpt_id;
+    u32 syncpt_incrs;
+} nvioctl_syncpt_incr;
+
+typedef struct {
+    u32 handle;
+    u32 iova;
+} nvioctl_command_buffer_map;
+
 #define NVGPU_ZBC_TYPE_INVALID     0
 #define NVGPU_ZBC_TYPE_COLOR       1
 #define NVGPU_ZBC_TYPE_DEPTH       2
@@ -247,3 +274,9 @@ Result nvioctlChannel_SetPriority(u32 fd, u32 priority);
 Result nvioctlChannel_SetTimeout(u32 fd, u32 timeout);
 Result nvioctlChannel_AllocGpfifoEx2(u32 fd, u32 num_entries, u32 flags, u32 unk0, u32 unk1, u32 unk2, u32 unk3, nvioctl_fence *fence_out);
 Result nvioctlChannel_SetUserData(u32 fd, void* addr);
+Result nvioctlChannel_Submit(u32 fd, const nvioctl_cmdbuf *cmdbufs, u32 num_cmdbufs, const nvioctl_reloc *relocs, const nvioctl_reloc_shift *reloc_shifts, u32 num_relocs,
+    const nvioctl_syncpt_incr *syncpt_incrs, u32 num_syncpt_incrs, nvioctl_fence *fences, u32 num_fences);
+Result nvioctlChannel_GetSyncpt(u32 fd, u32 module_id, u32 *syncpt);
+Result nvioctlChannel_GetModuleClockRate(u32 fd, u32 module_id, u32 *freq);
+Result nvioctlChannel_MapCommandBuffer(u32 fd, nvioctl_command_buffer_map *maps, u32 num_maps, bool compressed);
+Result nvioctlChannel_UnmapCommandBuffer(u32 fd, const nvioctl_command_buffer_map *maps, u32 num_maps, bool compressed);

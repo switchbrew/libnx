@@ -3,6 +3,7 @@
 #include "result.h"
 #include "services/nv.h"
 #include "nvidia/ioctl.h"
+#include "runtime/hosversion.h"
 
 Result nvioctlChannel_SetNvmapFd(u32 fd, u32 nvmap_fd) {
     struct {
@@ -194,4 +195,120 @@ Result nvioctlChannel_SetUserData(u32 fd, void* addr) {
     data.addr = (u64)addr;
 
     return nvIoctl(fd, _NV_IOW(0x47, 0x14, data), &data);
+}
+
+Result nvioctlChannel_Submit(u32 fd, const nvioctl_cmdbuf *cmdbufs, u32 num_cmdbufs, const nvioctl_reloc *relocs, const nvioctl_reloc_shift *reloc_shifts, u32 num_relocs,
+        const nvioctl_syncpt_incr *syncpt_incrs, u32 num_syncpt_incrs, nvioctl_fence *fences, u32 num_fences) {
+    // Make sure stack data doesn't get very large
+    if (num_cmdbufs + num_relocs + num_syncpt_incrs + num_fences > 0x200)
+        return MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
+
+    struct {
+        __nv_in  u32                 num_cmdbufs;
+        __nv_in  u32                 num_relocs;
+        __nv_in  u32                 num_syncpt_incrs;
+        __nv_in  u32                 num_fences;
+        __nv_in  nvioctl_cmdbuf      cmdbufs     [num_cmdbufs];
+        __nv_in  nvioctl_reloc       relocs      [num_relocs];
+        __nv_in  nvioctl_reloc_shift reloc_shifts[num_relocs];
+        __nv_in  nvioctl_syncpt_incr syncpt_incrs[num_syncpt_incrs];
+        __nv_in  nvioctl_syncpt_incr wait_checks [num_syncpt_incrs];
+        __nv_out nvioctl_fence       fences      [num_fences];
+    } data;
+
+    memset(&data, 0, sizeof(data));
+    data.num_cmdbufs      = num_cmdbufs;
+    data.num_relocs       = num_relocs;
+    data.num_syncpt_incrs = num_syncpt_incrs;
+    data.num_fences       = num_fences;
+    memcpy(data.cmdbufs,      cmdbufs,      sizeof(data.cmdbufs));
+    memcpy(data.relocs,       relocs,       sizeof(data.relocs));
+    memcpy(data.reloc_shifts, reloc_shifts, sizeof(data.reloc_shifts));
+    memcpy(data.syncpt_incrs, syncpt_incrs, sizeof(data.syncpt_incrs));
+
+    Result rc = nvIoctl(fd, _NV_IOWR(0, 0x01, data), &data);
+
+    if (R_SUCCEEDED(rc)) {
+        memcpy(fences, data.fences, num_fences * sizeof(nvioctl_fence));
+        for (int i = 0; i < num_fences; ++i)
+            data.fences[i].id = data.syncpt_incrs[i].syncpt_id;
+    }
+
+    return rc;
+}
+
+Result nvioctlChannel_GetSyncpt(u32 fd, u32 id, u32 *syncpt) {
+    struct {
+        __nv_in  u32 id;
+        __nv_out u32 syncpt;
+    } data = {
+        .id = id,
+    };
+
+    Result rc = nvIoctl(fd, _NV_IOWR(0, 0x02, data), &data);
+
+    if (R_SUCCEEDED(rc) && syncpt)
+        *syncpt = data.syncpt;
+
+    return rc;
+}
+
+Result nvioctlChannel_GetModuleClockRate(u32 fd, u32 module_id, u32 *freq) {
+    struct {
+        __nv_out u32 rate;
+        __nv_in  u32 module;
+    } data = {
+        .module = module_id,
+    };
+
+    u32 ioctl = _NV_IOWR(0, hosversionAtLeast(8,0,0) ? 0x14 : 0x23, data);
+    Result rc = nvIoctl(fd, ioctl, &data);
+
+    if (R_SUCCEEDED(rc) && freq)
+        *freq = data.rate;
+
+    return rc;
+}
+
+Result nvioctlChannel_MapCommandBuffer(u32 fd, nvioctl_command_buffer_map *maps, u32 num_maps, bool compressed) {
+    if (num_maps > 0x200)
+        return MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
+
+    struct {
+        __nv_in    u32                        num_maps;
+        __nv_in    u32                        reserved;
+        __nv_in    u8                         is_compressed;
+        __nv_inout nvioctl_command_buffer_map maps[num_maps];
+    } data;
+
+    memset(&data, 0, sizeof(data));
+    data.num_maps      = num_maps;
+    data.is_compressed = compressed;
+    memcpy(data.maps, maps, sizeof(data.maps));
+
+    Result rc = nvIoctl(fd, _NV_IOWR(0, 0x09, data), &data);
+
+    if (R_SUCCEEDED(rc))
+        memcpy(maps, data.maps, num_maps * sizeof(nvioctl_command_buffer_map));
+
+    return rc;
+}
+
+Result nvioctlChannel_UnmapCommandBuffer(u32 fd, const nvioctl_command_buffer_map *maps, u32 num_maps, bool compressed) {
+    if (num_maps > 0x200)
+        return MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
+
+    struct {
+        __nv_in    u32                        num_maps;
+        __nv_in    u32                        reserved;
+        __nv_in    u8                         is_compressed;
+        __nv_inout nvioctl_command_buffer_map maps[num_maps];
+    } data;
+
+    memset(&data, 0, sizeof(data));
+    data.num_maps      = num_maps;
+    data.is_compressed = compressed;
+    memcpy(data.maps, maps, sizeof(data.maps));
+
+    return nvIoctl(fd, _NV_IOWR(0, 0x0a, data), &data);
 }
