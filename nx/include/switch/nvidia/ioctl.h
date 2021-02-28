@@ -279,4 +279,4 @@ Result nvioctlChannel_Submit(u32 fd, const nvioctl_cmdbuf *cmdbufs, u32 num_cmdb
 Result nvioctlChannel_GetSyncpt(u32 fd, u32 module_id, u32 *syncpt);
 Result nvioctlChannel_GetModuleClockRate(u32 fd, u32 module_id, u32 *freq);
 Result nvioctlChannel_MapCommandBuffer(u32 fd, nvioctl_command_buffer_map *maps, u32 num_maps, bool compressed);
-Result nvioctlChannel_UnmapCommandBuffer(u32 fd, nvioctl_command_buffer_map *maps, u32 num_maps, bool compressed);
+Result nvioctlChannel_UnmapCommandBuffer(u32 fd, const nvioctl_command_buffer_map *maps, u32 num_maps, bool compressed);

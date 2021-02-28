@@ -294,7 +294,7 @@ Result nvioctlChannel_MapCommandBuffer(u32 fd, nvioctl_command_buffer_map *maps,
     return rc;
 }
 
-Result nvioctlChannel_UnmapCommandBuffer(u32 fd, nvioctl_command_buffer_map *maps, u32 num_maps, bool compressed) {
+Result nvioctlChannel_UnmapCommandBuffer(u32 fd, const nvioctl_command_buffer_map *maps, u32 num_maps, bool compressed) {
     if (num_maps > 0x200)
         return MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
 
