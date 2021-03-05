@@ -22,6 +22,21 @@ static u8* g_sevenSixAxisSensorBuffer;
 static TransferMemory g_sevenSixAxisSensorTmem0;
 static TransferMemory g_sevenSixAxisSensorTmem1;
 
+static bool g_scanInputInitialized;
+static RwLock g_hidLock;
+
+static HidTouchScreenState g_touchScreenState;
+static HidMouseState g_mouseState;
+static HidKeyboardState g_keyboardState;
+static HidNpadCommonState g_controllerEntries[10];
+
+static u64 g_mouseOld, g_mouseHeld, g_mouseDown, g_mouseUp;
+static u64 g_keyboardModOld, g_keyboardModHeld, g_keyboardModDown, g_keyboardModUp;
+static u64 g_keyboardOld[4], g_keyboardHeld[4], g_keyboardDown[4], g_keyboardUp[4];
+static u64 g_controllerOld[10], g_controllerHeld[10], g_controllerDown[10], g_controllerUp[10];
+
+static HidControllerID g_controllerP1AutoID;
+
 static Result _hidCreateAppletResource(Service* srv, Service* srv_out);
 static Result _hidGetSharedMemoryHandle(Service* srv, Handle* handle_out);
 
@@ -30,6 +45,8 @@ static Result _hidActivateMouse(void);
 static Result _hidActivateKeyboard(void);
 static Result _hidActivateNpad(void);
 static Result _hidActivateGesture(void);
+
+static Result _hidSetDualModeAll(void);
 
 static Result _hidGetVibrationDeviceHandles(HidVibrationDeviceHandle *handles, s32 total_handles, HidNpadIdType id, HidNpadStyleTag style);
 
@@ -69,10 +86,34 @@ void _hidCleanup(void) {
     if (g_sevenSixAxisSensorBuffer != NULL)
         diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen));
 
+    g_scanInputInitialized = false;
     serviceClose(&g_hidIActiveVibrationDeviceList);
     shmemClose(&g_hidSharedmem);
     serviceClose(&g_hidIAppletResource);
     serviceClose(&g_hidSrv);
+}
+
+static void _hidReset(void) {
+    // Reset internal state
+    memset(&g_touchScreenState, 0, sizeof(HidTouchScreenState));
+    memset(&g_mouseState, 0, sizeof(HidMouseState));
+    memset(&g_keyboardState, 0, sizeof(HidKeyboardState));
+    memset(g_controllerEntries, 0, sizeof(g_controllerEntries));
+
+    g_mouseOld = g_mouseHeld = g_mouseDown = g_mouseUp = 0;
+    g_keyboardModOld = g_keyboardModHeld = g_keyboardModDown = g_keyboardModUp = 0;
+    for (u32 i = 0; i < 4; i++)
+        g_keyboardOld[i] = g_keyboardHeld[i] = g_keyboardDown[i] = g_keyboardUp[i] = 0;
+    for (u32 i = 0; i < 10; i++)
+        g_controllerOld[i] = g_controllerHeld[i] = g_controllerDown[i] = g_controllerUp[i] = 0;
+
+    g_controllerP1AutoID = CONTROLLER_HANDHELD;
+}
+
+void hidReset(void) {
+    rwlockWriteLock(&g_hidLock);
+    _hidReset();
+    rwlockWriteUnlock(&g_hidLock);
 }
 
 Service* hidGetServiceSession(void) {
@@ -81,6 +122,156 @@ Service* hidGetServiceSession(void) {
 
 void* hidGetSharedmemAddr(void) {
     return shmemGetAddr(&g_hidSharedmem);
+}
+
+void hidScanInput(void) {
+    rwlockWriteLock(&g_hidLock);
+
+    if (!g_scanInputInitialized) {
+        Result rc;
+
+        hidInitializeNpad();
+        hidInitializeTouchScreen();
+        hidInitializeKeyboard();
+        hidInitializeMouse();
+        _hidReset();
+
+        rc = hidSetSupportedNpadStyleSet(HidNpadStyleSet_NpadStandard | HidNpadStyleTag_NpadSystemExt | HidNpadStyleTag_NpadSystem);
+        if (R_FAILED(rc)) diagAbortWithResult(rc);
+
+        static const HidNpadIdType idbuf[] = {
+            HidNpadIdType_No1,
+            HidNpadIdType_No2,
+            HidNpadIdType_No3,
+            HidNpadIdType_No4,
+            HidNpadIdType_No5,
+            HidNpadIdType_No6,
+            HidNpadIdType_No7,
+            HidNpadIdType_No8,
+            HidNpadIdType_Handheld,
+        };
+
+        rc = hidSetSupportedNpadIdType(idbuf, sizeof(idbuf)/sizeof(*idbuf));
+        if (R_FAILED(rc)) diagAbortWithResult(rc);
+
+        rc = _hidSetDualModeAll();
+        if (R_FAILED(rc)) diagAbortWithResult(rc);
+
+        rc = hidSetNpadJoyHoldType(HidNpadJoyHoldType_Vertical);
+        if (R_FAILED(rc)) diagAbortWithResult(rc);
+
+        g_scanInputInitialized = true;
+    }
+
+    g_mouseOld = g_mouseHeld;
+    g_keyboardModOld = g_keyboardModHeld;
+    memcpy(g_keyboardOld, g_keyboardHeld, sizeof(g_keyboardOld));
+    memcpy(g_controllerOld, g_controllerHeld, sizeof(g_controllerOld));
+
+    g_mouseHeld = 0;
+    g_keyboardModHeld = 0;
+    memset(g_keyboardHeld, 0, sizeof(g_keyboardHeld));
+    memset(g_controllerHeld, 0, sizeof(g_controllerHeld));
+    memset(&g_touchScreenState, 0, sizeof(HidTouchScreenState));
+    memset(&g_mouseState, 0, sizeof(HidMouseState));
+    memset(&g_keyboardState, 0, sizeof(HidKeyboardState));
+    memset(g_controllerEntries, 0, sizeof(g_controllerEntries));
+
+    if (hidGetTouchScreenStates(&g_touchScreenState, 1)) {
+        if (g_touchScreenState.count >= 1)
+            g_controllerHeld[CONTROLLER_HANDHELD] |= KEY_TOUCH;
+    }
+
+    if (hidGetMouseStates(&g_mouseState, 1)) {
+        g_mouseHeld = g_mouseState.buttons;
+        g_mouseDown = (~g_mouseOld) & g_mouseHeld;
+        g_mouseUp = g_mouseOld & (~g_mouseHeld);
+    }
+
+    if (hidGetKeyboardStates(&g_keyboardState, 1)) {
+        g_keyboardModHeld = g_keyboardState.modifiers;
+        for (u32 i = 0; i < 4; i++) {
+            g_keyboardHeld[i] = g_keyboardState.keys[i];
+        }
+        g_keyboardModDown = (~g_keyboardModOld) & g_keyboardModHeld;
+        g_keyboardModUp = g_keyboardModOld & (~g_keyboardModHeld);
+        for (u32 i = 0; i < 4; i++) {
+            g_keyboardDown[i] = (~g_keyboardOld[i]) & g_keyboardHeld[i];
+            g_keyboardUp[i] = g_keyboardOld[i] & (~g_keyboardHeld[i]);
+        }
+    }
+
+    for (u32 i = 0; i < 10; i++) {
+        HidNpadIdType id = hidControllerIDToNpadIdType(i);
+        u32 style_set = hidGetNpadStyleSet(id);
+        size_t total_out=0;
+
+        if (style_set & HidNpadStyleTag_NpadSystemExt) {
+            HidNpadSystemExtState state={0};
+            total_out = hidGetNpadStatesSystemExt(id, &state, 1);
+            if (total_out) {
+                g_controllerHeld[i] |= state.buttons;
+                memcpy(&g_controllerEntries[i], &state, sizeof(state));
+            }
+        }
+        else if (style_set & HidNpadStyleTag_NpadSystem) {
+            HidNpadSystemState state={0};
+            total_out = hidGetNpadStatesSystem(id, &state, 1);
+            if (total_out) {
+                g_controllerHeld[i] |= state.buttons;
+                memcpy(&g_controllerEntries[i], &state, sizeof(state));
+            }
+        }
+        else if (style_set & HidNpadStyleTag_NpadFullKey) {
+            HidNpadFullKeyState state={0};
+            total_out = hidGetNpadStatesFullKey(id, &state, 1);
+            if (total_out) {
+                g_controllerHeld[i] |= state.buttons;
+                memcpy(&g_controllerEntries[i], &state, sizeof(state));
+            }
+        }
+        else if (style_set & HidNpadStyleTag_NpadHandheld) {
+            HidNpadHandheldState state={0};
+            total_out = hidGetNpadStatesHandheld(id, &state, 1);
+            if (total_out) {
+                g_controllerHeld[i] |= state.buttons;
+                memcpy(&g_controllerEntries[i], &state, sizeof(state));
+            }
+        }
+        else if (style_set & HidNpadStyleTag_NpadJoyDual) {
+            HidNpadJoyDualState state={0};
+            total_out = hidGetNpadStatesJoyDual(id, &state, 1);
+            if (total_out) {
+                g_controllerHeld[i] |= state.buttons;
+                memcpy(&g_controllerEntries[i], &state, sizeof(state));
+            }
+        }
+        else if (style_set & HidNpadStyleTag_NpadJoyLeft) {
+            HidNpadJoyLeftState state={0};
+            total_out = hidGetNpadStatesJoyLeft(id, &state, 1);
+            if (total_out) {
+                g_controllerHeld[i] |= state.buttons;
+                memcpy(&g_controllerEntries[i], &state, sizeof(state));
+            }
+        }
+        else if (style_set & HidNpadStyleTag_NpadJoyRight) {
+            HidNpadJoyRightState state={0};
+            total_out = hidGetNpadStatesJoyRight(id, &state, 1);
+            if (total_out) {
+                g_controllerHeld[i] |= state.buttons;
+                memcpy(&g_controllerEntries[i], &state, sizeof(state));
+            }
+        }
+
+        g_controllerDown[i] = (~g_controllerOld[i]) & g_controllerHeld[i];
+        g_controllerUp[i] = g_controllerOld[i] & (~g_controllerHeld[i]);
+    }
+
+    g_controllerP1AutoID = CONTROLLER_HANDHELD;
+    if (g_controllerEntries[CONTROLLER_PLAYER_1].attributes & HidNpadAttribute_IsConnected)
+       g_controllerP1AutoID = CONTROLLER_PLAYER_1;
+
+    rwlockWriteUnlock(&g_hidLock);
 }
 
 static HidNpadInternalState* _hidGetNpadInternalState(HidNpadIdType id) {
@@ -456,13 +647,13 @@ size_t hidGetNpadStatesSystem(HidNpadIdType id, HidNpadSystemState *states, size
         u64 buttons = states[i].buttons;
         u64 new_buttons = 0;
 
-        if (buttons & HidNpadButton_AnyLeft) new_buttons |= HidNpadButton_Left;
-        if (buttons & HidNpadButton_AnyUp) new_buttons |= HidNpadButton_Up;
-        if (buttons & HidNpadButton_AnyRight) new_buttons |= HidNpadButton_Right;
-        if (buttons & HidNpadButton_AnyDown) new_buttons |= HidNpadButton_Down;
-        if (buttons & (HidNpadButton_L|HidNpadButton_ZL)) new_buttons |= HidNpadButton_L; // sdknso would mask out this button on the else condition for both of these, but it was already clear anyway.
-        if (buttons & (HidNpadButton_R|HidNpadButton_ZR)) new_buttons |= HidNpadButton_R;
-        buttons = new_buttons | (buttons & (HidNpadButton_A|HidNpadButton_B|HidNpadButton_X|HidNpadButton_Y));
+        if (buttons & KEY_LEFT) new_buttons |= KEY_DLEFT;
+        if (buttons & KEY_UP) new_buttons |= KEY_DUP;
+        if (buttons & KEY_RIGHT) new_buttons |= KEY_DRIGHT;
+        if (buttons & KEY_DOWN) new_buttons |= KEY_DDOWN;
+        if (buttons & (KEY_L|KEY_ZL)) new_buttons |= KEY_L; // sdknso would mask out this button on the else condition for both of these, but it was already clear anyway.
+        if (buttons & (KEY_R|KEY_ZR)) new_buttons |= KEY_R;
+        buttons = new_buttons | (buttons & (KEY_A|KEY_B|KEY_X|KEY_Y));
 
         // sdknso would handle button-bitmasking with ControlPadRestriction here.
 
@@ -526,6 +717,251 @@ size_t hidGetGestureStates(HidGestureState *states, size_t count) {
 
     size_t total = _hidGetStates(&sharedmem->gesture.lifo.header, sharedmem->gesture.lifo.storage, 17, offsetof(HidGestureDummyStateAtomicStorage,state), offsetof(HidGestureState,sampling_number), states, sizeof(HidGestureState), count);
     return total;
+}
+
+bool hidIsControllerConnected(HidControllerID id) {
+    if (id==CONTROLLER_P1_AUTO)
+        return hidIsControllerConnected(g_controllerP1AutoID);
+    if (id < 0 || id > 9) return 0;
+
+    rwlockReadLock(&g_hidLock);
+    bool flag = (g_controllerEntries[id].attributes & HidNpadAttribute_IsConnected) != 0;
+    rwlockReadUnlock(&g_hidLock);
+    return flag;
+}
+
+u64 hidKeysHeld(HidControllerID id) {
+    if (id==CONTROLLER_P1_AUTO) return hidKeysHeld(g_controllerP1AutoID);
+    if (id < 0 || id > 9) return 0;
+
+    rwlockReadLock(&g_hidLock);
+    u64 tmp = g_controllerHeld[id];
+    rwlockReadUnlock(&g_hidLock);
+
+    return tmp;
+}
+
+u64 hidKeysDown(HidControllerID id) {
+    if (id==CONTROLLER_P1_AUTO) return hidKeysDown(g_controllerP1AutoID);
+    if (id < 0 || id > 9) return 0;
+
+    rwlockReadLock(&g_hidLock);
+    u64 tmp = g_controllerDown[id];
+    rwlockReadUnlock(&g_hidLock);
+
+    return tmp;
+}
+
+u64 hidKeysUp(HidControllerID id) {
+    if (id==CONTROLLER_P1_AUTO) return hidKeysUp(g_controllerP1AutoID);
+    if (id < 0 || id > 9) return 0;
+
+    rwlockReadLock(&g_hidLock);
+    u64 tmp = g_controllerUp[id];
+    rwlockReadUnlock(&g_hidLock);
+
+    return tmp;
+}
+
+u64 hidMouseButtonsHeld(void) {
+    rwlockReadLock(&g_hidLock);
+    u64 tmp = g_mouseHeld;
+    rwlockReadUnlock(&g_hidLock);
+
+    return tmp;
+}
+
+u64 hidMouseButtonsDown(void) {
+    rwlockReadLock(&g_hidLock);
+    u64 tmp = g_mouseDown;
+    rwlockReadUnlock(&g_hidLock);
+
+    return tmp;
+}
+
+u64 hidMouseButtonsUp(void) {
+    rwlockReadLock(&g_hidLock);
+    u64 tmp = g_mouseUp;
+    rwlockReadUnlock(&g_hidLock);
+
+    return tmp;
+}
+
+void hidMouseRead(MousePosition *pos) {
+    rwlockReadLock(&g_hidLock);
+    pos->x = g_mouseState.x;
+    pos->y = g_mouseState.y;
+    pos->velocityX = g_mouseState.delta_x;
+    pos->velocityY = g_mouseState.delta_y;
+    pos->scrollVelocityX = g_mouseState.wheel_delta_x;
+    pos->scrollVelocityY = g_mouseState.wheel_delta_y;
+    rwlockReadUnlock(&g_hidLock);
+}
+
+u32 hidMouseMultiRead(MousePosition *entries, u32 num_entries) {
+    HidMouseState temp_states[17];
+
+    if (!entries || !num_entries) return 0;
+    if (num_entries > 17) num_entries = 17;
+
+    memset(entries, 0, sizeof(MousePosition) * num_entries);
+
+    size_t total = hidGetMouseStates(temp_states, num_entries);
+
+    for (size_t i=0; i<total; i++) {
+        entries[i].x = temp_states[i].x;
+        entries[i].y = temp_states[i].y;
+        entries[i].velocityX = temp_states[i].delta_x;
+        entries[i].velocityY = temp_states[i].delta_y;
+        entries[i].scrollVelocityX = temp_states[i].wheel_delta_x;
+        entries[i].scrollVelocityY = temp_states[i].wheel_delta_y;
+    }
+
+    return total;
+}
+
+bool hidKeyboardModifierHeld(HidKeyboardModifier modifier) {
+    rwlockReadLock(&g_hidLock);
+    bool tmp = g_keyboardModHeld & modifier;
+    rwlockReadUnlock(&g_hidLock);
+
+    return tmp;
+}
+
+bool hidKeyboardModifierDown(HidKeyboardModifier modifier) {
+    rwlockReadLock(&g_hidLock);
+    bool tmp = g_keyboardModDown & modifier;
+    rwlockReadUnlock(&g_hidLock);
+
+    return tmp;
+}
+
+bool hidKeyboardModifierUp(HidKeyboardModifier modifier) {
+    rwlockReadLock(&g_hidLock);
+    bool tmp = g_keyboardModUp & modifier;
+    rwlockReadUnlock(&g_hidLock);
+
+    return tmp;
+}
+
+bool hidKeyboardHeld(HidKeyboardScancode key) {
+    rwlockReadLock(&g_hidLock);
+    bool tmp = g_keyboardHeld[key / 64] & (UINT64_C(1) << (key % 64));
+    rwlockReadUnlock(&g_hidLock);
+
+    return tmp;
+}
+
+bool hidKeyboardDown(HidKeyboardScancode key) {
+    rwlockReadLock(&g_hidLock);
+    bool tmp = g_keyboardDown[key / 64] & (UINT64_C(1) << (key % 64));
+    rwlockReadUnlock(&g_hidLock);
+
+    return tmp;
+}
+
+bool hidKeyboardUp(HidKeyboardScancode key) {
+    rwlockReadLock(&g_hidLock);
+    bool tmp = g_keyboardUp[key / 64] & (UINT64_C(1) << (key % 64));
+    rwlockReadUnlock(&g_hidLock);
+
+    return tmp;
+}
+
+u32 hidTouchCount(void) {
+    return g_touchScreenState.count;
+}
+
+void hidTouchRead(touchPosition *pos, u32 point_id) {
+    if (pos) {
+        if (point_id >= g_touchScreenState.count) {
+            memset(pos, 0, sizeof(touchPosition));
+            return;
+        }
+
+        pos->id = g_touchScreenState.touches[point_id].finger_id;
+        pos->px = g_touchScreenState.touches[point_id].x;
+        pos->py = g_touchScreenState.touches[point_id].y;
+        pos->dx = g_touchScreenState.touches[point_id].diameter_x;
+        pos->dy = g_touchScreenState.touches[point_id].diameter_y;
+        pos->angle = g_touchScreenState.touches[point_id].rotation_angle;
+    }
+}
+
+void hidJoystickRead(JoystickPosition *pos, HidControllerID id, HidControllerJoystick stick) {
+    if (id == CONTROLLER_P1_AUTO) return hidJoystickRead(pos, g_controllerP1AutoID, stick);
+
+    if (pos) {
+        if (id < 0 || id > 9 || stick >= JOYSTICK_NUM_STICKS) {
+            memset(pos, 0, sizeof(*pos));
+            return;
+        }
+
+        rwlockReadLock(&g_hidLock);
+        memcpy(pos, stick==JOYSTICK_LEFT ? &g_controllerEntries[id].analog_stick_l : &g_controllerEntries[id].analog_stick_r, sizeof(HidAnalogStickState));
+        rwlockReadUnlock(&g_hidLock);
+    }
+}
+
+u32 hidSixAxisSensorValuesRead(SixAxisSensorValues *values, HidControllerID id, u32 num_entries) {
+    HidSixAxisSensorState temp_states[17];
+
+    if (!values || !num_entries) return 0;
+
+    if (id == CONTROLLER_P1_AUTO) id = g_controllerP1AutoID;
+
+    memset(values, 0, sizeof(SixAxisSensorValues) * num_entries);
+    if (id < 0 || id > 9) return 0;
+    if (num_entries > 17) num_entries = 17;
+
+    HidNpadIdType npad_id = hidControllerIDToNpadIdType(id);
+    u32 style_set = hidGetNpadStyleSet(npad_id);
+    size_t num_handles = 1;
+    size_t handle_idx = 0;
+    style_set &= -style_set; // retrieve least significant set bit
+
+    if (style_set == HidNpadStyleTag_NpadJoyDual) {
+        u32 device_type = hidGetNpadDeviceType(npad_id);
+        num_handles = 2;
+        if (device_type & HidDeviceTypeBits_JoyLeft)
+            handle_idx = 0;
+        else if (device_type & HidDeviceTypeBits_JoyRight)
+            handle_idx = 1;
+        else
+            return 0;
+    }
+
+    HidSixAxisSensorHandle handles[2];
+    Result rc = hidGetSixAxisSensorHandles(handles, num_handles, npad_id, style_set);
+    if (R_FAILED(rc))
+        return 0;
+
+    size_t total = hidGetSixAxisSensorStates(handles[handle_idx], temp_states, num_entries);
+
+    for (size_t i=0; i<total; i++) {
+        values[i].accelerometer = temp_states[i].acceleration;
+        values[i].gyroscope = temp_states[i].angular_velocity;
+        values[i].unk = temp_states[i].angle;
+        memcpy(values[i].orientation, &temp_states[i].direction, sizeof(temp_states[i].direction));
+    }
+
+    return total;
+}
+
+bool hidGetHandheldMode(void) {
+    return g_controllerP1AutoID == CONTROLLER_HANDHELD;
+}
+
+static Result _hidSetDualModeAll(void) {
+    Result rc = 0;
+    int i;
+
+    for (i=0; i<8; i++) {
+        rc = hidSetNpadJoyAssignmentModeDual(i);
+        if (R_FAILED(rc)) break;
+    }
+
+    return rc;
 }
 
 static Result _hidCmdNoIO(Service* srv, u32 cmd_id) {
@@ -775,6 +1211,7 @@ Result hidSendKeyboardLockKeyEvent(u32 events) {
 }
 
 Result hidGetSixAxisSensorHandles(HidSixAxisSensorHandle *handles, s32 total_handles, HidNpadIdType id, HidNpadStyleTag style) {
+    if (id == (HidNpadIdType)CONTROLLER_HANDHELD) id = HidNpadIdType_Handheld; // Correct enum value for old users passing HidControllerID instead (avoids a hid sysmodule fatal later on)
     return _hidGetSixAxisSensorHandles(handles, total_handles, id, style);
 }
 
@@ -1060,6 +1497,8 @@ Result hidClearNpadCaptureButtonAssignment(void) {
 Result hidInitializeVibrationDevices(HidVibrationDeviceHandle *handles, s32 total_handles, HidNpadIdType id, HidNpadStyleTag style) {
     Result rc=0;
     s32 i;
+
+    if (id == (HidNpadIdType)CONTROLLER_HANDHELD) id = HidNpadIdType_Handheld; // Correct enum value for old users passing HidControllerID instead (avoids a hid sysmodule fatal later on)
 
     rc = _hidGetVibrationDeviceHandles(handles, total_handles, id, style);
     if (R_FAILED(rc)) return rc;
