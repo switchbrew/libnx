@@ -231,7 +231,7 @@ Result nvioctlChannel_Submit(u32 fd, const nvioctl_cmdbuf *cmdbufs, u32 num_cmdb
     if (R_SUCCEEDED(rc)) {
         memcpy(fences, data.fences, num_fences * sizeof(nvioctl_fence));
         for (int i = 0; i < num_fences; ++i)
-            data.fences[i].id = data.syncpt_incrs[i].syncpt_id;
+            fences[i].id = data.syncpt_incrs[i].syncpt_id;
     }
 
     return rc;
