@@ -25,6 +25,6 @@ Result mmuInitialize(void);
 void mmuExit(void);
 
 Result mmuRequestInitialize(MmuRequest *request, MmuModuleId module, u32 unk, bool autoclear); ///< unk is ignored by official software
-Result mmuRequestFinalize(MmuRequest *request);
-Result mmuRequestGet(MmuRequest *request, u32 *out_freq_hz);
-Result mmuRequestSetAndWait(MmuRequest *request, u32 freq_hz, s32 timeout);
+Result mmuRequestFinalize(const MmuRequest *request);
+Result mmuRequestGet(const MmuRequest *request, u32 *out_freq_hz);
+Result mmuRequestSetAndWait(const MmuRequest *request, u32 freq_hz, s32 timeout);
