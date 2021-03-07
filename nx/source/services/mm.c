@@ -32,11 +32,11 @@ Result mmuRequestInitialize(MmuRequest *request, MmuModuleId module, u32 unk, bo
     return rc;
 }
 
-Result mmuRequestFinalize(MmuRequest *request) {
+Result mmuRequestFinalize(const MmuRequest *request) {
     return serviceDispatchIn(&g_mmuSrv, 5, request->id);
 }
 
-Result mmuRequestSetAndWait(MmuRequest *request, u32 freq_hz, s32 timeout) {
+Result mmuRequestSetAndWait(const MmuRequest *request, u32 freq_hz, s32 timeout) {
     struct {
         u32 id;
         u32 freq;
@@ -45,7 +45,7 @@ Result mmuRequestSetAndWait(MmuRequest *request, u32 freq_hz, s32 timeout) {
     return serviceDispatchIn(&g_mmuSrv, 6, data);
 }
 
-Result mmuRequestGet(MmuRequest *request, u32 *out_freq_hz) {
+Result mmuRequestGet(const MmuRequest *request, u32 *out_freq_hz) {
     u32 freq = 0;
     Result rc = serviceDispatchInOut(&g_mmuSrv, 7, request->id, freq);
 
