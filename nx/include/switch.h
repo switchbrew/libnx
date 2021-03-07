@@ -126,6 +126,7 @@ extern "C" {
 #include "switch/services/ins.h"
 #include "switch/services/ectx.h"
 #include "switch/services/avm.h"
+#include "switch/services/mm.h"
 
 #include "switch/display/binder.h"
 #include "switch/display/parcel.h"
