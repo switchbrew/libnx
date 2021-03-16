@@ -168,7 +168,7 @@ Result htcsEndSelect(s32 *out_err, s32 *out_count, s32 *read, size_t num_read, s
     return rc;
 }
 
-static Result _htcsSocketCmdInAddress(HtcsSocket *s, s32 *out_err, s32 *out_res, const SockAddrHtcs *address, u32 cmd_id) {
+static Result _htcsSocketCmdInAddress(HtcsSocket *s, s32 *out_err, s32 *out_res, const HtcsSockAddr *address, u32 cmd_id) {
     struct {
         s32 err;
         s32 res;
@@ -220,11 +220,11 @@ Result htcsSocketClose(HtcsSocket *s, s32 *out_err, s32 *out_res) {
     return rc;
 }
 
-Result htcsSocketConnect(HtcsSocket *s, s32 *out_err, s32 *out_res, const SockAddrHtcs *address) {
+Result htcsSocketConnect(HtcsSocket *s, s32 *out_err, s32 *out_res, const HtcsSockAddr *address) {
     return _htcsSocketCmdInAddress(s, out_err, out_res, address, 1);
 }
 
-Result htcsSocketBind(HtcsSocket *s, s32 *out_err, s32 *out_res, const SockAddrHtcs *address) {
+Result htcsSocketBind(HtcsSocket *s, s32 *out_err, s32 *out_res, const HtcsSockAddr *address) {
     return _htcsSocketCmdInAddress(s, out_err, out_res, address, 2);
 }
 
@@ -260,9 +260,9 @@ Result htcsSocketAcceptStart(HtcsSocket *s, u32 *out_task_id, Handle *out_event_
     );
 }
 
-Result htcsSocketAcceptResults(HtcsSocket *s, s32 *out_err, HtcsSocket *out_socket, SockAddrHtcs *out_address, u32 task_id) {
+Result htcsSocketAcceptResults(HtcsSocket *s, s32 *out_err, HtcsSocket *out_socket, HtcsSockAddr *out_address, u32 task_id) {
     struct {
-        SockAddrHtcs address;
+        HtcsSockAddr address;
         s32 err;
     } out;
     Result rc = _htcsObjectDispatchInOut(&s->s, 10, task_id, out,

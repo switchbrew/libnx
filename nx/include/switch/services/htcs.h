@@ -30,7 +30,7 @@ typedef struct {
     HtcsAddressFamilyType family;
     HtcsPeerName peer_name;
     HtcsPortName port_name;
-} SockAddrHtcs;
+} HtcsSockAddr;
 
 typedef struct {
     s64 tv_sec;
@@ -123,14 +123,14 @@ Result htcsEndSelect(s32 *out_err, s32 *out_count, s32 *read, size_t num_read, s
 
 /// Socket functionality.
 Result htcsSocketClose(HtcsSocket *s, s32 *out_err, s32 *out_res);
-Result htcsSocketConnect(HtcsSocket *s, s32 *out_err, s32 *out_res, const SockAddrHtcs *address);
-Result htcsSocketBind(HtcsSocket *s, s32 *out_err, s32 *out_res, const SockAddrHtcs *address);
+Result htcsSocketConnect(HtcsSocket *s, s32 *out_err, s32 *out_res, const HtcsSockAddr *address);
+Result htcsSocketBind(HtcsSocket *s, s32 *out_err, s32 *out_res, const HtcsSockAddr *address);
 Result htcsSocketListen(HtcsSocket *s, s32 *out_err, s32 *out_res, s32 backlog_count);
 Result htcsSocketShutdown(HtcsSocket *s, s32 *out_err, s32 *out_res, s32 how);
 Result htcsSocketFcntl(HtcsSocket *s, s32 *out_err, s32 *out_res, s32 command, s32 value);
 
 Result htcsSocketAcceptStart(HtcsSocket *s, u32 *out_task_id, Handle *out_event_handle);
-Result htcsSocketAcceptResults(HtcsSocket *s, s32 *out_err, HtcsSocket *out_socket, SockAddrHtcs *out_address, u32 task_id);
+Result htcsSocketAcceptResults(HtcsSocket *s, s32 *out_err, HtcsSocket *out_socket, HtcsSockAddr *out_address, u32 task_id);
 
 Result htcsSocketRecvStart(HtcsSocket *s, u32 *out_task_id, Handle *out_event_handle, s32 mem_size, s32 flags);
 Result htcsSocketRecvResults(HtcsSocket *s, s32 *out_err, s64 *out_size, void *buffer, size_t buffer_size, u32 task_id);
