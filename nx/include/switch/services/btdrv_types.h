@@ -27,6 +27,12 @@ typedef enum {
     BtdrvEventType_BluetoothCrash           =    13,   ///< BluetoothCrash
 } BtdrvEventType;
 
+/// BtdrvInquiryStatus
+typedef enum {
+    BtdrvInquiryStatus_Stopped    =    0,   ///< Inquiry started.
+    BtdrvInquiryStatus_Started    =    1,   ///< Inquiry stopped.
+} BtdrvInquiryStatus;
+
 /// ConnectionEventType
 typedef enum {
     BtdrvConnectionEventType_Status              =     0,   ///< BtdrvEventInfo::connection::status
@@ -64,6 +70,13 @@ typedef enum {
     BtdrvHidEventType_GetReport             =    9,    ///< Response to GET_REPORT.
 } BtdrvHidEventType;
 
+/// HidConnectionStatus
+typedef enum {
+    BtdrvHidConnectionStatus_Connected      =    0,
+    BtdrvHidConnectionStatus_Disconnected   =    2,
+    BtdrvHidConnectionStatus_FailedGeneric  =    8,
+} BtdrvHidConnectionStatus;
+
 /// This determines the u16 data to write into a CircularBuffer.
 typedef enum {
     BtdrvFatalReason_Invalid                =    0,    ///< Only for \ref BtdrvEventInfo: invalid.
@@ -73,34 +86,40 @@ typedef enum {
     BtdrvFatalReason_Enable                 =    7,    ///< Only for \ref BtdrvEventInfo: triggered after enabling bluetooth, depending on the value of a global state field.
 } BtdrvFatalReason;
 
-/// AudioEventType
+/// BleEventType
 typedef enum {
-    BtdrvAudioEventType_None                =     0,   ///< None
-    BtdrvAudioEventType_Connection          =     1,   ///< Connection
-} BtdrvAudioEventType;
-
-/// AudioOutState
-typedef enum {
-    BtdrvAudioOutState_Stopped              =     0,   ///< Stopped
-    BtdrvAudioOutState_Started              =     1,   ///< Started
-} BtdrvAudioOutState;
-
-/// AudioCodec
-typedef enum {
-    BtdrvAudioCodec_Pcm                     =     0,   ///< Raw PCM
-} BtdrvAudioCodec;
+    BtdrvBleEventType_Unknown0              =    0,    ///< Unknown.
+    BtdrvBleEventType_Unknown1              =    1,    ///< Unknown.
+    BtdrvBleEventType_Unknown2              =    2,    ///< Unknown.
+    BtdrvBleEventType_Unknown3              =    3,    ///< Unknown.
+    BtdrvBleEventType_Unknown4              =    4,    ///< Unknown.
+    BtdrvBleEventType_Unknown5              =    5,    ///< Unknown.
+    BtdrvBleEventType_Unknown6              =    6,    ///< Unknown.
+    BtdrvBleEventType_Unknown7              =    7,    ///< Unknown.
+    BtdrvBleEventType_Unknown8              =    8,    ///< Unknown.
+    BtdrvBleEventType_Unknown9              =    9,    ///< Unknown.
+    BtdrvBleEventType_Unknown10             =   10,    ///< Unknown.
+    BtdrvBleEventType_Unknown11             =   11,    ///< Unknown.
+    BtdrvBleEventType_Unknown12             =   12,    ///< Unknown.
+    BtdrvBleEventType_Unknown13             =   13,    ///< Unknown.
+} BtdrvBleEventType;
 
 /// Address
 typedef struct {
     u8 address[0x6];           ///< Address
 } BtdrvAddress;
 
+/// ClassOfDevice
+typedef struct {
+    u8 class_of_device[0x3];   ///< ClassOfDevice
+} BtdrvClassOfDevice;
+
 /// AdapterProperty
 typedef struct {
-    BtdrvAddress addr;         ///< Same as the data for ::BtdrvBluetoothPropertyType_Address.
-    u8 class_of_device[0x3];   ///< Same as the data for ::BtdrvBluetoothPropertyType_ClassOfDevice.
-    char name[0xF9];           ///< Same as the data for ::BtdrvBluetoothPropertyType_Name (last byte is not initialized).
-    u8 feature_set;            ///< Set to hard-coded value 0x68 (same as the data for ::BtdrvBluetoothPropertyType_FeatureSet).
+    BtdrvAddress addr;                      ///< Same as the data for ::BtdrvBluetoothPropertyType_Address.
+    BtdrvClassOfDevice class_of_device;     ///< Same as the data for ::BtdrvBluetoothPropertyType_ClassOfDevice.
+    char name[0xF9];                        ///< Same as the data for ::BtdrvBluetoothPropertyType_Name (last byte is not initialized).
+    u8 feature_set;                         ///< Set to hard-coded value 0x68 (same as the data for ::BtdrvBluetoothPropertyType_FeatureSet).
 } BtdrvAdapterProperty;
 
 /// BluetoothPinCode
@@ -170,6 +189,12 @@ typedef struct {
     u8 unk_xC8;                                      ///< Unknown
     u8 pad5[3];                                      ///< Padding
 } BtdrvBleAdvertisePacketData;
+
+typedef struct {
+    u8 length;
+    u8 type;
+    u8 value[0x1d];
+} BtdrvBleAdvertisementData;
 
 /// BleAdvertiseFilter
 typedef struct {
