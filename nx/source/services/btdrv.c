@@ -235,7 +235,7 @@ Result btdrvRespondToSspRequest(BtdrvAddress addr, u8 variant, bool flag, u32 un
     return serviceDispatchIn(&g_btdrvSrv, 14, in);
 }
 
-Result btdrvGetEventInfo(void* buffer, size_t size, u32 *type) {
+Result btdrvGetEventInfo(void* buffer, size_t size, BtdrvEventType *type) {
     return _btdrvCmdOutU32OutBuf(buffer, size, type, 15);
 }
 
@@ -426,21 +426,24 @@ Result btdrvGetHidReportEventInfo(void* buffer, size_t size, BtdrvHidEventType *
             return 0;
         }
         if (*type == BtdrvHidEventType_GetReport) {
-            if (hosversionBefore(9,0,0)) memcpy(info->get_report.hid_data.rawdata, data_ptr->data.get_report.hid_data.rawdata, sizeof(info->get_report.hid_data.rawdata));
-            else memcpy(info->get_report.hid_report.rawdata, data_ptr->data.get_report.hid_report.rawdata, sizeof(info->get_report.hid_report.rawdata));
+            if (hosversionBefore(9,0,0)) memcpy(info->get_report.v1.rawdata, data_ptr->data.get_report.v1.rawdata, sizeof(info->get_report.v1.rawdata));
+            else memcpy(info->get_report.v9.rawdata, data_ptr->data.get_report.v9.rawdata, sizeof(info->get_report.v9.rawdata));
         }
-        else if (*type == BtdrvHidEventType_SetReport) memcpy(info->set_report.data, data_ptr->data.set_report.data, sizeof(info->set_report.data));
+        else if (*type == BtdrvHidEventType_SetReport) memcpy(info->set_report.rawdata, data_ptr->data.set_report.rawdata, sizeof(info->set_report.rawdata));
         else if (*type == BtdrvHidEventType_Data) {
-            u16 tmpsize = hosversionBefore(9,0,0) ? data_ptr->data.data_report.v1.size : data_ptr->data.data_report.v9.size;
+            u16 tmpsize = hosversionBefore(9,0,0) ? data_ptr->data.data_report.v7.report.size : data_ptr->data.data_report.v9.report.size;
             if (size < 0xE) return MAKERESULT(Module_Libnx, LibnxError_BadInput);
             if (tmpsize > size-0xE) tmpsize = size-0xE;
-            info->data_report.unk_x0 = 0;
-            info->data_report.size = tmpsize;
-            if (hosversionBefore(9,0,0)) memcpy(info->data_report.data, data_ptr->data.data_report.v1.data, tmpsize);
-            else memcpy(info->data_report.data, data_ptr->data.data_report.v9.data, tmpsize);
+            if (hosversionBefore(9,0,0)) info->data_report.v7.report.size = tmpsize;
+            else {
+                info->data_report.v9.res = 0;
+                info->data_report.v9.report.size = tmpsize;
+            }
+            if (hosversionBefore(9,0,0)) memcpy(info->data_report.v7.report.data, data_ptr->data.data_report.v7.report.data, tmpsize);
+            else memcpy(info->data_report.v9.report.data, data_ptr->data.data_report.v9.report.data, tmpsize);
 
-            if (hosversionBefore(9,0,0)) memcpy(&info->data_report.addr, &data_ptr->data.data_report.v1.addr, sizeof(BtdrvAddress));
-            else memcpy(&info->data_report.addr, &data_ptr->data.data_report.v9.addr, sizeof(BtdrvAddress));
+            if (hosversionBefore(9,0,0)) memcpy(&info->data_report.v7.addr, &data_ptr->data.data_report.v7.addr, sizeof(BtdrvAddress));
+            else memcpy(&info->data_report.v9.addr, &data_ptr->data.data_report.v9.addr, sizeof(BtdrvAddress));
         }
         else return MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen); // sdknso would Abort here.
         btdrvCircularBufferFree(g_btdrvCircularBuffer);
@@ -857,7 +860,7 @@ Result btdrvAddGattDescriptor(u8 unk0, const BtdrvGattAttributeUuid *uuid0, cons
     return serviceDispatchIn(&g_btdrvSrv, cmd_id, in);
 }
 
-Result btdrvGetBleManagedEventInfo(void* buffer, size_t size, u32 *type) {
+Result btdrvGetBleManagedEventInfo(void* buffer, size_t size, BtdrvBleEventType *type) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     u32 cmd_id = hosversionBefore(5,1,0) ? 78 : 79;
@@ -1090,7 +1093,7 @@ Result btdrvUnregisterGattNotification(u32 connection_handle, bool primary_servi
     return _btdrvGattNotification(connection_handle, primary_service, id0, id1, cmd_id);
 }
 
-Result btdrvGetLeHidEventInfo(void* buffer, size_t size, u32 *type) {
+Result btdrvGetLeHidEventInfo(void* buffer, size_t size, BtdrvBleEventType *type) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     u32 cmd_id = hosversionBefore(5,1,0) ? 95 : 96;
