@@ -64,7 +64,7 @@ typedef enum {
 
 /// BdName
 typedef struct {
-    u8 name[0x20];             ///< Name string.
+    char name[0x20];           ///< Name string.
 } BtmBdName;
 
 /// ClassOfDevice
@@ -91,9 +91,68 @@ typedef struct {
     u8 feature_set;                       ///< Same as BtdrvAdapterProperty::feature_set.
 } BtmHostDeviceProperty;
 
-/// DeviceCondition
+/// BtmConnectedDevice
 typedef struct {
-    u8 unk_x0[0x368];             ///< Unknown
+    BtdrvAddress address;
+    u8 pad[2];
+    u32 unk_x8;
+    char name[0x20];
+    u8 unk_x2C[0x1C];
+    u16 vid;
+    u16 pid;
+    u8 unk_x4C[0x20];
+} BtmConnectedDevice;
+
+/// DeviceCondition [1.0.0-5.0.2]
+typedef struct {
+    u32 unk_x0;
+    u32 unk_x4;
+    u8 unk_x8;
+    u8 unk_x9;
+    u8 max_count;
+    u8 connected_count;
+    BtmConnectedDevice devices[8];
+} BtmDeviceConditionV100;
+
+/// DeviceCondition [5.1.0-7.0.1]
+typedef struct {
+    u32 unk_x0;
+    u32 unk_x4;
+    u8 unk_x8;
+    u8 unk_x9[2];
+    u8 max_count;
+    u8 connected_count;
+    u8 pad[3];
+    BtmConnectedDevice devices[8];
+} BtmDeviceConditionV510;
+
+/// DeviceCondition [8.0.0-8.1.1]
+typedef struct {
+    u32 unk_x0;
+    u32 unk_x4;
+    u8 unk_x8;
+    u8 unk_x9;
+    u8 max_count;
+    u8 connected_count;
+    BtmConnectedDevice devices[8];
+} BtmDeviceConditionV800;
+
+/// DeviceCondition [9.0.0+]
+typedef struct {
+    u32 unk_x0;
+    u8 unk_x4;
+    u8 unk_x5;
+    u8 max_count;
+    u8 connected_count;
+    BtmConnectedDevice devices[8];
+} BtmDeviceConditionV900;
+
+/// DeviceCondition
+typedef union {
+    BtmDeviceConditionV100 v100;
+    BtmDeviceConditionV510 v510;
+    BtmDeviceConditionV800 v800;
+    BtmDeviceConditionV900 v900;
 } BtmDeviceCondition;
 
 /// DeviceSlotMode

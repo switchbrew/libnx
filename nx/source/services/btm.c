@@ -157,7 +157,12 @@ Result btmAcquireDeviceConditionEvent(Event* out_event) {
 }
 
 Result btmGetDeviceCondition(BtmDeviceCondition *out) {
-    return _btmCmdOutBufPtrFixed(out, sizeof(*out), 3);
+    size_t buff_size;
+    if (hosversionAtLeast(9,0,0)) buff_size = sizeof(BtmDeviceConditionV900);
+    else if (hosversionAtLeast(8,0,0)) buff_size = sizeof(BtmDeviceConditionV800);
+    else if (hosversionAtLeast(5,1,0)) buff_size = sizeof(BtmDeviceConditionV510);
+    else buff_size = sizeof(BtmDeviceConditionV100);
+    return _btmCmdOutBufPtrFixed(out, buff_size, 3);
 }
 
 Result btmSetBurstMode(BtdrvAddress addr, bool flag) {
