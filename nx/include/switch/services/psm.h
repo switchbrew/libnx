@@ -10,10 +10,11 @@
 #include "../kernel/event.h"
 
 typedef enum {
-    ChargerType_None = 0,    ///< No charger
-    ChargerType_Charger = 1, ///< Official charger or dock
-    ChargerType_Usb = 2      ///< Other USB-C chargers
-} ChargerType;
+    PsmChargerType_Unconnected = 0,  ///< No charger
+    PsmChargerType_EnoughPower = 1,  ///< Full supported power
+    PsmChargerType_LowPower = 2,     ///< Lower power supported USB-PD mode
+    PsmChargerType_NotSupported = 3, ///< No common supported USB-PD modes
+} PsmChargerType;
 
 typedef enum {
     PsmBatteryVoltageState_NeedsShutdown = 0,      ///< Power state should transition to shutdown
@@ -38,7 +39,7 @@ void psmExit(void);
 Service* psmGetServiceSession(void);
 
 Result psmGetBatteryChargePercentage(u32 *out);
-Result psmGetChargerType(ChargerType *out);
+Result psmGetChargerType(PsmChargerType *out);
 Result psmGetBatteryVoltageState(PsmBatteryVoltageState *out);
 Result psmGetRawBatteryChargePercentage(double *out);
 Result psmIsEnoughPowerSupplied(bool *out);
