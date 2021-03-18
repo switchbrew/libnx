@@ -71,7 +71,7 @@ Result psmGetBatteryChargePercentage(u32 *out) {
     return _psmCmdNoInOutU32(&g_psmSrv, out, 0);
 }
 
-Result psmGetChargerType(ChargerType *out) {
+Result psmGetChargerType(PsmChargerType *out) {
     return _psmCmdNoInOutU32(&g_psmSrv, out, 1);
 }
 
