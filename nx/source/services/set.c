@@ -637,7 +637,7 @@ Result setsysSetDeviceNickname(const SetSysDeviceNickName *nickname) {
     );
 }
 
-Result setsysGetProductModel(ProductModel *model) {
+Result setsysGetProductModel(SetSysProductModel *model) {
     u32 product_model = 0;
     Result rc = _setCmdNoInOutU32(&g_setsysSrv, &product_model, 79);
     if (R_SUCCEEDED(rc) && model) *model = product_model;
