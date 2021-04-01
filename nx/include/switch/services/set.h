@@ -23,6 +23,17 @@ typedef enum {
     ColorSetId_Dark  = 1,
 } ColorSetId;
 
+/// Console Product Models
+typedef enum {
+    MODEL_INVALID = 0, ///< Invalid Model
+    MODEL_NX = 1,      ///< Erista Model
+    MODEL_COPPER = 2,  ///< Erista "Simulation" Model
+    MODEL_IOWA = 3,    ///< Mariko Model
+    MODEL_HOAG = 4,    ///< Mariko Lite Model
+    MODEL_CALCIO = 5,  ///< Mariko "Simulation" Model
+    MODEL_AULA = 6,    ///< Mariko Pro Model(?)
+} ProductModel;
+
 /// IDs for Language.
 typedef enum
 {
