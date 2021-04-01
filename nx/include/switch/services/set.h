@@ -26,12 +26,12 @@ typedef enum {
 /// Console Product Models
 typedef enum {
     MODEL_INVALID = 0, ///< Invalid Model
-    MODEL_NX = 1,      ///< Erista Model
-    MODEL_COPPER = 2,  ///< Erista "Simulation" Model
-    MODEL_IOWA = 3,    ///< Mariko Model
-    MODEL_HOAG = 4,    ///< Mariko Lite Model
-    MODEL_CALCIO = 5,  ///< Mariko "Simulation" Model
-    MODEL_AULA = 6,    ///< Mariko Pro Model(?)
+    MODEL_NX      = 1, ///< Erista Model
+    MODEL_COPPER  = 2, ///< Erista "Simulation" Model
+    MODEL_IOWA    = 3, ///< Mariko Model
+    MODEL_HOAG    = 4, ///< Mariko Lite Model
+    MODEL_CALCIO  = 5, ///< Mariko "Simulation" Model
+    MODEL_AULA    = 6, ///< Mariko Pro Model(?)
 } ProductModel;
 
 /// IDs for Language.
@@ -1403,7 +1403,7 @@ Result setsysSetDeviceNickname(const SetSysDeviceNickName *nickname);
  * @brief GetProductModel
  * @param[out] out Output ProductModel.
  */
-Result setsysGetProductModel(s32 *out);
+Result setsysGetProductModel(ProductModel *model);
 
 /**
  * @brief GetLdnChannel
