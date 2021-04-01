@@ -637,8 +637,11 @@ Result setsysSetDeviceNickname(const SetSysDeviceNickName *nickname) {
     );
 }
 
-Result setsysGetProductModel(s32 *out) {
-    return _setCmdNoInOutU32(&g_setsysSrv, (u32*)out, 79);
+Result setsysGetProductModel(ProductModel *out) {
+    u32 product_model = 0;
+    Result rc = _setCmdNoInOutU32(&g_setsysSrv, &product_model, 79);
+    if (R_SUCCEEDED(rc) && out) *out = product_model;
+    return rc;
 }
 
 Result setsysGetLdnChannel(s32 *out) {

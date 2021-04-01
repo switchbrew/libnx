@@ -25,13 +25,13 @@ typedef enum {
 
 /// Console Product Models
 typedef enum {
-    MODEL_INVALID = 0, ///< Invalid Model
-    MODEL_NX      = 1, ///< Erista Model
-    MODEL_COPPER  = 2, ///< Erista "Simulation" Model
-    MODEL_IOWA    = 3, ///< Mariko Model
-    MODEL_HOAG    = 4, ///< Mariko Lite Model
-    MODEL_CALCIO  = 5, ///< Mariko "Simulation" Model
-    MODEL_AULA    = 6, ///< Mariko Pro Model(?)
+    ProductModel_INVALID = 0, ///< Invalid Model
+    ProductModel_NX      = 1, ///< Erista Model
+    ProductModel_COPPER  = 2, ///< Erista "Simulation" Model
+    ProductModel_IOWA    = 3, ///< Mariko Model
+    ProductModel_HOAG    = 4, ///< Mariko Lite Model
+    ProductModel_CALCIO  = 5, ///< Mariko "Simulation" Model
+    ProductModel_AULA    = 6, ///< Mariko Pro Model(?)
 } ProductModel;
 
 /// IDs for Language.
