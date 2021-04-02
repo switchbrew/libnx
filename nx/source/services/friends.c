@@ -1,52 +1,6 @@
 #include "service_guard.h"
 #include "services/friends.h"
 
-static FriendServiceType g_friendsServiceType;
-static Service g_friendsSrv;
-
-NX_GENERATE_SERVICE_GUARD_PARAMS(friends, (FriendServiceType service_type), (service_type));
-
-Result _friendsInitialize(FriendServiceType service_type) {
-    Result rc = MAKERESULT(Module_Libnx, LibnxError_BadInput);
-
-    g_friendsServiceType = service_type;
-
-    switch (g_friendsServiceType) {
-        case FriendServiceType_User:
-            rc = smGetService(&g_friendsSrv, "friend:u");
-            break;
-        case FriendServiceType_Application:
-            rc = smGetService(&g_friendsSrv, "friend:a");
-            break;
-        case FriendServiceType_M:
-            rc = smGetService(&g_friendsSrv, "friend:m");
-            break;
-        case FriendServiceType_V:
-            rc = smGetService(&g_friendsSrv, "friend:v");
-            break;
-        case FriendServiceType_S:
-            rc = smGetService(&g_friendsSrv, "friend:s");
-            break;
-    }
-
-    return rc;
-}
-
-void _friendsCleanup(void) {
-    serviceClose(&g_friendsSrv);
-}
-
-Service* friendsGetServiceSession(void) {
-    return &g_friendsSrv;
-}
-
-Result friendsGetUserSetting(AccountUid uid, FriendUserSetting * user_setting) {
-    return serviceDispatchIn(&g_friendsSrv, 20800, uid,
-        .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_Out | SfBufferAttr_FixedSize },
-        .buffers = { { &(*user_setting), sizeof(FriendUserSetting) } }
-    );
-}
-
 Result friendsTryPopFriendInvitationNotificationInfo(AccountUid *uid, void* buffer, u64 size, u64 *out_size) {
     Result rc=0;
     AppletStorage storage;
@@ -73,3 +27,4 @@ Result friendsTryPopFriendInvitationNotificationInfo(AccountUid *uid, void* buff
     appletStorageClose(&storage);
     return rc;
 }
+
