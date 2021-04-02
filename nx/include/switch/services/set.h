@@ -23,6 +23,17 @@ typedef enum {
     ColorSetId_Dark  = 1,
 } ColorSetId;
 
+/// Console Product Models
+typedef enum {
+    SetSysProductModel_Invalid = 0, ///< Invalid Model
+    SetSysProductModel_Nx      = 1, ///< Erista Model
+    SetSysProductModel_Copper  = 2, ///< Erista "Simulation" Model
+    SetSysProductModel_Iowa    = 3, ///< Mariko Model
+    SetSysProductModel_Hoag    = 4, ///< Mariko Lite Model
+    SetSysProductModel_Calcio  = 5, ///< Mariko "Simulation" Model
+    SetSysProductModel_Aula    = 6, ///< Mariko Pro Model(?)
+} SetSysProductModel;
+
 /// IDs for Language.
 typedef enum
 {
@@ -1390,9 +1401,9 @@ Result setsysSetDeviceNickname(const SetSysDeviceNickName *nickname);
 
 /**
  * @brief GetProductModel
- * @param[out] out Output ProductModel.
+ * @param[out] model Output SetSysProductModel.
  */
-Result setsysGetProductModel(s32 *out);
+Result setsysGetProductModel(SetSysProductModel *model);
 
 /**
  * @brief GetLdnChannel
