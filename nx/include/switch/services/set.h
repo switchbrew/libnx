@@ -1400,7 +1400,7 @@ Result setsysGetDeviceNickname(SetSysDeviceNickName *nickname);
 Result setsysSetDeviceNickname(const SetSysDeviceNickName *nickname);
 
 /**
- * @brief setsysGetProductModel
+ * @brief GetProductModel
  * @param[out] model Output SetSysProductModel.
  */
 Result setsysGetProductModel(SetSysProductModel *model);
