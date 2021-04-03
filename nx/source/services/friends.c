@@ -17,16 +17,16 @@ Result _friendsInitialize(FriendServiceType service_type) {
         case FriendServiceType_User:
             rc = smGetService(&g_friendSrv, "friend:u");
             break;
-        case FriendServiceType_Application:
+        case FriendServiceType_Administrator:
             rc = smGetService(&g_friendSrv, "friend:a");
             break;
-        case FriendServiceType_M:
+        case FriendServiceType_Manager:
             rc = smGetService(&g_friendSrv, "friend:m");
             break;
-        case FriendServiceType_V:
+        case FriendServiceType_Viewer:
             rc = smGetService(&g_friendSrv, "friend:v");
             break;
-        case FriendServiceType_S:
+        case FriendServiceType_System:
             rc = smGetService(&g_friendSrv, "friend:s");
             break;
     }

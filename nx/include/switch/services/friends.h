@@ -12,11 +12,11 @@
 #include "../sf/service.h"
 
 typedef enum {
-    FriendServiceType_User        = 0, ///< Initializes friend:u
-    FriendServiceType_V           = 1, ///< Initializes friend:v
-    FriendServiceType_M           = 2, ///< Initializes friend:m
-    FriendServiceType_S           = 3, ///< Initializes friend:s
-    FriendServiceType_Application = 4  ///< Initializes friend:a
+    FriendServiceType_User          = 0, ///< Initializes friend:u
+    FriendServiceType_Viewer        = 1, ///< Initializes friend:v
+    FriendServiceType_Manager       = 2, ///< Initializes friend:m
+    FriendServiceType_System        = 3, ///< Initializes friend:s
+    FriendServiceType_Administrator = 4  ///< Initializes friend:a
 } FriendServiceType;
 
 /// InAppScreenName
