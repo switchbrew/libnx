@@ -58,7 +58,7 @@ Result friendsInitialize(FriendServiceType service_type);
 void friendsExit(void);
 
 /// Gets the Service object for the friends service session.
-Service * friendsGetServiceSession(void);
+Service* friendsGetServiceSession(void);
 
 /// Gets the Service object for the actual IFriendsService service session.
 Service* friendsGetServiceSession_IFriendsService(void);
@@ -68,7 +68,7 @@ Service* friendsGetServiceSession_IFriendsService(void);
  * @param[in] uid \ref User AccountUid.
  * @param[out] user_setting \ref FriendUserSetting
  */
-Result friendsGetUserSetting(AccountUid uid, FriendUserSetting * user_setting);
+Result friendsGetUserSetting(AccountUid uid, FriendUserSetting *user_setting);
 
 /**
  * @brief Gets an Event which is signaled when data is available with \ref friendsTryPopFriendInvitationNotificationInfo.
