@@ -53,7 +53,7 @@ Service* friendsGetServiceSession_IFriendsService(void)
     return &g_friendsIFriendService;
 }
 
-Result friendsGetUserSetting(AccountUid uid, FriendUserSetting * user_setting) {
+Result friendsGetUserSetting(AccountUid uid, FriendUserSetting *user_setting) {
     return serviceDispatchIn(&g_friendsIFriendService, 20800, uid,
         .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_Out | SfBufferAttr_FixedSize },
         .buffers = { { user_setting, sizeof(FriendUserSetting) } }
