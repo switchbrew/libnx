@@ -12,12 +12,12 @@
 #include "../sf/service.h"
 
 typedef enum {
-    FriendServiceType_User          = 0, ///< Initializes friend:u
-    FriendServiceType_Viewer        = 1, ///< Initializes friend:v
-    FriendServiceType_Manager       = 2, ///< Initializes friend:m
-    FriendServiceType_System        = 3, ///< Initializes friend:s
-    FriendServiceType_Administrator = 4  ///< Initializes friend:a
-} FriendServiceType;
+    FriendsServiceType_User          = 0, ///< Initializes friend:u
+    FriendsServiceType_Viewer        = 1, ///< Initializes friend:v
+    FriendsServiceType_Manager       = 2, ///< Initializes friend:m
+    FriendsServiceType_System        = 3, ///< Initializes friend:s
+    FriendsServiceType_Administrator = 4  ///< Initializes friend:a
+} FriendsServiceType;
 
 /// InAppScreenName
 typedef struct {
@@ -49,10 +49,10 @@ typedef struct {
     char friend_code[0x20];             ///< Friend Code
     u64 friend_code_next_issuable_time; ///< Unknown
     char extra[0x7C8];                  ///< Extra
-} FriendUserSetting;
+} FriendsUserSetting;
 
 /// Initialize friends
-Result friendsInitialize(FriendServiceType service_type);
+Result friendsInitialize(FriendsServiceType service_type);
 
 /// Exit friends
 void friendsExit(void);
@@ -64,11 +64,11 @@ Service* friendsGetServiceSession(void);
 Service* friendsGetServiceSession_IFriendsService(void);
 
 /**
- * @brief Gets the \ref FriendUserSetting details
+ * @brief Gets the \ref FriendsUserSetting details
  * @param[in] uid \ref User AccountUid.
- * @param[out] user_setting \ref FriendUserSetting
+ * @param[out] user_setting \ref FriendsUserSetting
  */
-Result friendsGetUserSetting(AccountUid uid, FriendUserSetting *user_setting);
+Result friendsGetUserSetting(AccountUid uid, FriendsUserSetting *user_setting);
 
 /**
  * @brief Gets an Event which is signaled when data is available with \ref friendsTryPopFriendInvitationNotificationInfo.
