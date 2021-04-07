@@ -48,7 +48,7 @@ typedef struct {
     u64 friend_request_reception;       ///< Unknown
     char friend_code[0x20];             ///< Friend Code
     u64 friend_code_next_issuable_time; ///< Unknown
-    u8 unknown[0x7C8];                  ///< Unknown, 'extra' data?
+    u8 unk_x48[0x7C8];                  ///< Unknown
 } FriendsUserSetting;
 
 /// Initialize friends
