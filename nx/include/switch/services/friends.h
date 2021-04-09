@@ -16,7 +16,7 @@ typedef enum {
     FriendsServiceType_Viewer        = 1, ///< Initializes friend:v
     FriendsServiceType_Manager       = 2, ///< Initializes friend:m
     FriendsServiceType_System        = 3, ///< Initializes friend:s
-    FriendsServiceType_Administrator = 4  ///< Initializes friend:a
+    FriendsServiceType_Administrator = 4, ///< Initializes friend:a
 } FriendsServiceType;
 
 /// InAppScreenName
