@@ -9,6 +9,7 @@
 #include "../types.h"
 #include "../kernel/svc.h"
 #include "../sf/service.h"
+#include "../sf/tipc.h"
 
 /// Structure representing a service name (null terminated, remaining characters set to zero).
 typedef struct SmServiceName {
@@ -117,6 +118,12 @@ Handle smGetServiceOverride(SmServiceName name);
  */
 Result smRegisterService(Handle* handle_out, SmServiceName name, bool is_light, s32 max_sessions);
 
+/// Same as \ref smRegisterService, but always using cmif serialization.
+Result smRegisterServiceCmif(Handle* handle_out, SmServiceName name, bool is_light, s32 max_sessions);
+
+/// Same as \ref smRegisterService, but always using cmif serialization.
+Result smRegisterServiceTipc(Handle* handle_out, SmServiceName name, bool is_light, s32 max_sessions);
+
 /**
  * @brief Unregisters a previously registered service in SM.
  * @param[in] name Name of the service.
@@ -124,18 +131,37 @@ Result smRegisterService(Handle* handle_out, SmServiceName name, bool is_light, 
  */
 Result smUnregisterService(SmServiceName name);
 
+/// Same as \ref smUnregisterService, but always using cmif serialization.
+Result smUnregisterServiceCmif(SmServiceName name);
+
+/// Same as \ref smUnregisterService, but always using cmif serialization.
+Result smUnregisterServiceTipc(SmServiceName name);
+
 /**
  * @brief Detaches the current SM session.
  * @note After this function is called, the rest of the SM API cannot be used.
- * @note Only available on [11.0.0+].
+ * @note Only available on [11.0.0-11.0.1], or Atmosphère.
  */
 Result smDetachClient(void);
+
+/// Same as \ref smDetachClient, but always using cmif serialization.
+Result smDetachClientCmif(void);
+
+/// Same as \ref smDetachClient, but always using tipc serialization.
+Result smDetachClientTipc(void);
 
 /**
  * @brief Gets the Service session used to communicate with SM.
  * @return Pointer to service session used to communicate with SM.
  */
 Service *smGetServiceSession(void);
+
+/**
+ * @brief Gets the TipcService session used to communicate with SM.
+ * @return Pointer to tipc service session used to communicate with SM.
+ * @note Only available on [12.0.0+], or Atmosphère.
+ */
+TipcService *smGetServiceSessionTipc(void);
 
 /**
  * @brief Overrides a service with a custom IPC service handle.
