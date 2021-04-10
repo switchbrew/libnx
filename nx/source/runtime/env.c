@@ -101,9 +101,14 @@ void envSetup(void* ctx, Handle main_thread, LoaderReturnFn saved_lr)
             g_userIdStorage = (AccountUid*)(uintptr_t)ent->Value[0];
             break;
 
-        case EntryType_HosVersion:
-            hosversionSet(ent->Value[0]);
+        case EntryType_HosVersion: {
+            u32 version = ent->Value[0];
+            if (ent->Value[1] == 0x41544d4f53504852UL) { // 'ATMOSPHR'
+                version |= BIT(31);
+            }
+            hosversionSet(version);
             break;
+        }
 
         default:
             if (ent->Flags & EntryFlag_IsMandatory)
