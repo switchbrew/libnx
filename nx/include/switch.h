@@ -42,6 +42,7 @@ extern "C" {
 #include "switch/sf/cmif.h"
 #include "switch/sf/service.h"
 #include "switch/sf/sessionmgr.h"
+#include "switch/sf/tipc.h"
 
 #include "switch/services/sm.h"
 #include "switch/services/smm.h"
