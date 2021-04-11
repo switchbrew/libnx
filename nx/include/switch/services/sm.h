@@ -121,7 +121,7 @@ Result smRegisterService(Handle* handle_out, SmServiceName name, bool is_light, 
 /// Same as \ref smRegisterService, but always using cmif serialization.
 Result smRegisterServiceCmif(Handle* handle_out, SmServiceName name, bool is_light, s32 max_sessions);
 
-/// Same as \ref smRegisterService, but always using cmif serialization.
+/// Same as \ref smRegisterService, but always using tipc serialization.
 Result smRegisterServiceTipc(Handle* handle_out, SmServiceName name, bool is_light, s32 max_sessions);
 
 /**
@@ -134,7 +134,7 @@ Result smUnregisterService(SmServiceName name);
 /// Same as \ref smUnregisterService, but always using cmif serialization.
 Result smUnregisterServiceCmif(SmServiceName name);
 
-/// Same as \ref smUnregisterService, but always using cmif serialization.
+/// Same as \ref smUnregisterService, but always using tipc serialization.
 Result smUnregisterServiceTipc(SmServiceName name);
 
 /**
