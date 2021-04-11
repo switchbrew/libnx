@@ -7,6 +7,7 @@
 #pragma once
 #include "../types.h"
 #include "../sf/service.h"
+#include "../sf/tipc.h"
 #include "../services/ncm_types.h"
 #include "../services/pm.h"
 
@@ -33,8 +34,9 @@ typedef struct {
     u8 reserved_0E[2]; ///< Padding
 } PglContentMetaInfo;
 
-typedef struct {
-    Service  s;
+typedef union {
+    Service s;
+    TipcService t;
 } PglEventObserver;
 
 /// Initialize pgl.
@@ -43,8 +45,11 @@ Result pglInitialize(void);
 /// Exit pgl.
 void pglExit(void);
 
-/// Gets the Service object for the actual pgl service session.
-Service* pglGetServiceSession(void);
+/// Gets the Service object for the actual pgl service session. Requires < 12.0.0
+Service* pglGetServiceSessionCmif(void);
+
+/// Gets the TipcService object for the actual pgl service session. Requires 12.0.0+
+TipcService* pglGetServiceSessionTipc(void);
 
 Result pglLaunchProgram(u64 *out_pid, const NcmProgramLocation *loc, u32 pm_launch_flags, u8 pgl_launch_flags);
 Result pglTerminateProcess(u64 pid);
