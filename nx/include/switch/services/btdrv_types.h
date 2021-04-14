@@ -16,7 +16,7 @@ typedef enum {
     BtdrvBluetoothPropertyType_FeatureSet     =    6,    ///< 1-byte, FeatureSet. The default is value 0x68.
 } BtdrvBluetoothPropertyType;
 
-/// EventType
+/// EventType [1.0.0-11.0.1]
 typedef enum {
     BtdrvEventType_Unknown0                 =    0,    ///< Unused
     BtdrvEventType_InquiryDevice            =    3,    ///< Device found during Inquiry.
@@ -27,7 +27,22 @@ typedef enum {
     BtdrvEventType_BluetoothCrash           =    13,   ///< BluetoothCrash
 } BtdrvEventType;
 
-/// BtdrvInquiryStatus
+/// EventType [12.0.0]
+typedef enum {
+    BtdrvEventTypeV12_InquiryDevice             =     0,   ///< Device found during Inquiry.
+    BtdrvEventTypeV12_InquiryStatus             =     1,   ///< Inquiry status changed.
+    BtdrvEventTypeV12_PairingPinCodeRequest     =     2,   ///< Pairing PIN code request.
+    BtdrvEventTypeV12_SspRequest                =     3,   ///< SSP confirm request / SSP passkey notification.
+    BtdrvEventTypeV12_Connection                =     4,   ///< Connection
+    BtdrvEventTypeV12_Tsi                       =     5,   ///< SetTsi (\ref btdrvSetTsi)
+    BtdrvEventTypeV12_BurstMode                 =     6,   ///< SetBurstMode (\ref btdrvEnableBurstMode)
+    BtdrvEventTypeV12_SetZeroRetransmission     =     7,   ///< \ref btdrvSetZeroRetransmission
+    BtdrvEventTypeV12_PendingConnections        =     8,   ///< \ref btdrvGetPendingConnections
+    BtdrvEventTypeV12_MoveToSecondaryPiconet    =     9,   ///< \ref btdrvMoveToSecondaryPiconet
+    BtdrvEventTypeV12_BluetoothCrash            =    10,   ///< BluetoothCrash
+} BtdrvEventTypeV12;
+
+/// BtdrvInquiryStatus 
 typedef enum {
     BtdrvInquiryStatus_Stopped    =    0,   ///< Inquiry started.
     BtdrvInquiryStatus_Started    =    1,   ///< Inquiry stopped.
@@ -40,7 +55,7 @@ typedef enum {
     BtdrvConnectionEventType_Suspended           =     2,   ///< ACL Link is now Suspended.
 } BtdrvConnectionEventType;
 
-/// ExtEventType
+/// ExtEventType [1.0.0-11.0.1]
 typedef enum {
     BtdrvExtEventType_SetTsi                     =     0,   ///< SetTsi (\ref btdrvSetTsi)
     BtdrvExtEventType_ExitTsi                    =     1,   ///< ExitTsi (\ref btdrvSetTsi)
@@ -61,7 +76,7 @@ typedef enum {
     BtdrvBluetoothHhReportType_Feature      =    3,    ///< Feature
 } BtdrvBluetoothHhReportType;
 
-/// HidEventType
+/// HidEventType [1.0.0-11.0.1]
 typedef enum {
     BtdrvHidEventType_Connection            =    0,    ///< Connection. Only used with \ref btdrvGetHidEventInfo.
     BtdrvHidEventType_Data                  =    4,    ///< DATA report on the Interrupt channel.
@@ -70,12 +85,26 @@ typedef enum {
     BtdrvHidEventType_GetReport             =    9,    ///< Response to GET_REPORT.
 } BtdrvHidEventType;
 
+/// HidEventType [12.0.0]
+typedef enum {
+    BtdrvHidEventTypeV12_Connection         =    0,    ///< Connection. Only used with \ref btdrvGetHidEventInfo.
+    BtdrvHidEventTypeV12_Data               =    1,    ///< DATA report on the Interrupt channel.
+    BtdrvHidEventTypeV12_SetReport          =    2,    ///< Response to SET_REPORT.
+    BtdrvHidEventTypeV12_GetReport          =    3,    ///< Response to GET_REPORT.
+} BtdrvHidEventTypeV12;
+
 /// HidConnectionStatus
 typedef enum {
     BtdrvHidConnectionStatus_Connected      =    0,
     BtdrvHidConnectionStatus_Disconnected   =    2,
     BtdrvHidConnectionStatus_FailedGeneric  =    8,
 } BtdrvHidConnectionStatus;
+
+/// HidConnectionStatusV12
+typedef enum {
+    BtdrvHidConnectionStatusV12_Disconnected   =    0,
+    BtdrvHidConnectionStatusV12_Connected      =    1,
+} BtdrvHidConnectionStatusV12;
 
 /// This determines the u16 data to write into a CircularBuffer.
 typedef enum {
@@ -126,6 +155,12 @@ typedef struct {
 typedef struct {
     char code[0x10];           ///< PinCode
 } BtdrvBluetoothPinCode;
+
+/// BtdrvPinCode
+typedef struct {
+    char code[0x10];           ///< PinCode
+    u8 length;                 ///< Length 
+} BtdrvPinCode;
 
 /// HidData, for pre-9.0.0.
 typedef struct {

@@ -229,15 +229,26 @@ Result btdrvCancelBond(BtdrvAddress addr) {
     return _btdrvCmdInAddrNoOut(addr, 12);
 }
 
-Result btdrvRespondToPinRequest(BtdrvAddress addr, bool flag, const BtdrvBluetoothPinCode *pin_code, u8 unk) {
-    const struct {
-        BtdrvAddress addr;
-        u8 flag;
-        u8 unk;
-        BtdrvBluetoothPinCode pin_code;
-    } in = { addr, flag!=0, unk, *pin_code };
+Result btdrvRespondToPinRequest(BtdrvAddress addr, bool flag, const BtdrvBluetoothPinCode *pin_code, u8 length) {
+    if (hosversionBefore(12,0,0)) {
+        const struct {
+            BtdrvAddress addr;
+            u8 flag;
+            u8 length;
+            BtdrvBluetoothPinCode pin_code;
+        } in = { addr, flag!=0, length, *pin_code };
 
-    return serviceDispatchIn(&g_btdrvSrv, 13, in);
+        return serviceDispatchIn(&g_btdrvSrv, 13, in);
+    }
+    else {
+        const struct {
+            BtdrvAddress addr;
+            BtdrvBluetoothPinCode pin_code;
+            uint8_t length;
+        } in = { addr, *pin_code, length };
+
+        return serviceDispatchIn(&g_btdrvSrv, 13, in);
+    }
 }
 
 Result btdrvRespondToSspRequest(BtdrvAddress addr, u8 variant, bool flag, u32 unk) {

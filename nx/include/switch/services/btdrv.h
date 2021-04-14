@@ -21,22 +21,43 @@ typedef struct {
         } type0;                         ///< ::BtdrvEventType_Unknown0
 
         struct {
-            char name[0xF9];                        ///< Device name, NUL-terminated string.
-            BtdrvAddress addr;                      ///< Device address.
-            u8 reserved_xFF[0x10];                  ///< Reserved
-            BtdrvClassOfDevice class_of_device;     ///< Class of Device.
-            u8 unk_x112[0x4];                       ///< Set to fixed value u32 0x1.
-            u8 reserved_x116[0xFA];                 ///< Reserved
-            u8 reserved_x210[0x5C];                 ///< Reserved
-            char name2[0xF9];                       ///< Device name, NUL-terminated string. Same as name above, except starting at index 1.
-            u8 rssi[0x4];                           ///< s32 RSSI
-            u8 name3[0x4];                          ///< Two bytes which are the same as name[11-12].
-            u8 reserved_x36D[0x10];                 ///< Reserved
-        } inquiry_device;                           ///< ::BtdrvEventType_InquiryDevice
+            union {
+                struct {
+                    char name[0xF9];                        ///< Device name, NUL-terminated string.
+                    BtdrvAddress addr;                      ///< Device address.
+                    u8 reserved_xFF[0x10];                  ///< Reserved
+                    BtdrvClassOfDevice class_of_device;     ///< Class of Device.
+                    u8 unk_x112[0x4];                       ///< Set to fixed value u32 0x1.
+                    u8 reserved_x116[0xFA];                 ///< Reserved
+                    u8 reserved_x210[0x5C];                 ///< Reserved
+                    char name2[0xF9];                       ///< Device name, NUL-terminated string. Same as name above, except starting at index 1.
+                    u8 rssi[0x4];                           ///< s32 RSSI
+                    u8 name3[0x4];                          ///< Two bytes which are the same as name[11-12].
+                    u8 reserved_x36D[0x10];                 ///< Reserved
+                } v1;
+
+                struct {
+                    BtdrvAddress addr;                      ///< Device address.
+                    char name[0xF9];                        ///< Device name, NUL-terminated string.
+                    BtdrvClassOfDevice class_of_device;     ///< Class of Device.
+                    u8 reserved[0x6];
+                } v12;
+            };
+        } inquiry_device;                                   ///< ::BtdrvEventType_InquiryDevice
 
         struct {
-            BtdrvInquiryStatus status;   ///< Status: 0 = stopped, 1 = started.
-        } inquiry_status;                ///< ::BtdrvEventType_InquiryStatus
+            union {
+                struct {
+                    BtdrvInquiryStatus status;      ///< Status: 0 = stopped, 1 = started.
+                } v1;
+
+                struct {
+                    BtdrvInquiryStatus status;      ///< Status: 0 = stopped, 1 = started.
+                    u8 pad[3];                      ///< Padding
+                    u32 service_mask;
+                } v12;
+            };
+        } inquiry_status;                           ///< ::BtdrvEventType_InquiryStatus
 
         struct {
             BtdrvAddress addr;                      ///< Device address.
@@ -45,19 +66,43 @@ typedef struct {
         } pairing_pin_code_request;                 ///< ::BtdrvEventType_PairingPinCodeRequest
 
         struct {
-            BtdrvAddress addr;                      ///< Device address.
-            char name[0xF9];                        ///< Device name, NUL-terminated string.
-            BtdrvClassOfDevice class_of_device;     ///< Class of Device.
-            u8 pad[2];                              ///< Padding
-            u32 type;                               ///< 0 = SSP confirm request, 3 = SSP passkey notification.
-            s32 passkey;                            ///< Passkey, only set when the above field is value 3.
+            union {
+                struct {
+                    BtdrvAddress addr;                      ///< Device address.
+                    char name[0xF9];                        ///< Device name, NUL-terminated string.
+                    BtdrvClassOfDevice class_of_device;     ///< Class of Device.
+                    u8 pad[2];                              ///< Padding
+                    u32 type;                               ///< 0 = SSP confirm request, 3 = SSP passkey notification.
+                    s32 passkey;                            ///< Passkey, only set when the above field is value 3.
+                } v1;
+
+                struct {
+                    BtdrvAddress addr;                      ///< Device address.
+                    char name[0xF9];                        ///< Device name, NUL-terminated string.
+                    BtdrvClassOfDevice class_of_device;     ///< Class of Device.
+                    u32 type;                               ///< 0 = SSP confirm request, 3 = SSP passkey notification.
+                    u8 pad;                                 ///< Padding
+                    s32 passkey;                            ///< Passkey, only set when the above field is value 3.
+                } v12;
+            };
+            
         } ssp_request;                              ///< ::BtdrvEventType_SspRequest
 
         struct {
-            u32 status;                  ///< Status, always 0 except with ::BtdrvConnectionEventType_Status: 2 = ACL Link is now Resumed, 9 = connection failed (pairing/authentication failed, or opening the hid connection failed).
-            BtdrvAddress addr;           ///< Device address.
-            u8 pad[2];                   ///< Padding
-            u32 type;                    ///< \ref BtdrvConnectionEventType
+            union {
+                struct {
+                    u32 status;                  ///< Status, always 0 except with ::BtdrvConnectionEventType_Status: 2 = ACL Link is now Resumed, 9 = connection failed (pairing/authentication failed, or opening the hid connection failed).
+                    BtdrvAddress addr;           ///< Device address.
+                    u8 pad[2];                   ///< Padding
+                    u32 type;                    ///< \ref BtdrvConnectionEventType
+                } v1;
+
+                struct {
+                    u32 type;                    ///< \ref BtdrvConnectionEventType
+                    BtdrvAddress addr;           ///< Device address.
+                    u8 reserved[0xfe];
+                } v12;
+            };
         } connection;                    ///< ::BtdrvEventType_Connection
 
         struct {
@@ -72,9 +117,18 @@ typedef struct {
         u8 data[0x480];                  ///< Raw data.
 
         struct {
-            BtdrvAddress addr;                    ///< Device address.
-            u8 pad[2];                            ///< Padding
-            BtdrvHidConnectionStatus status;      ///< Status: 0 = hid connection opened, 2 = hid connection closed, 8 = failed to open hid connection.
+            union {
+                struct {
+                    BtdrvAddress addr;                    ///< Device address.
+                    u8 pad[2];                            ///< Padding
+                    BtdrvHidConnectionStatus status;      ///< Status: 0 = hid connection opened, 2 = hid connection closed, 8 = failed to open hid connection.
+                } v1;
+
+                struct {
+                    BtdrvHidConnectionStatusV12 status;      ///< Status: 0 = hid connection opened, 2 = hid connection closed, 8 = failed to open hid connection.
+                    BtdrvAddress addr;                    ///< Device address.
+                } v12;
+            };
         } connection;                             ///< ::BtdrvHidEventType_Connection
 
         struct {
@@ -424,9 +478,9 @@ Result btdrvCancelBond(BtdrvAddress addr);
  * @param[in] addr \ref BtdrvAddress
  * @param[in] flag Flag
  * @param[in] pin_code \ref BtdrvBluetoothPinCode
- * @param[in] unk Unknown
+ * @param[in] length Length of pin_code
  */
-Result btdrvRespondToPinRequest(BtdrvAddress addr, bool flag, const BtdrvBluetoothPinCode *pin_code, u8 unk);
+Result btdrvRespondToPinRequest(BtdrvAddress addr, bool flag, const BtdrvBluetoothPinCode *pin_code, u8 length);
 
 /**
  * @brief RespondToSspRequest
