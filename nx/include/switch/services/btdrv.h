@@ -80,12 +80,11 @@ typedef struct {
                     BtdrvAddress addr;                      ///< Device address.
                     char name[0xF9];                        ///< Device name, NUL-terminated string.
                     BtdrvClassOfDevice class_of_device;     ///< Class of Device.
-                    u32 type;                               ///< 0 = SSP confirm request, 3 = SSP passkey notification.
+                    u8 flag;                                ///< bool flag for Just Works. With SSP passkey notification this is always 0
                     u8 pad;                                 ///< Padding
                     s32 passkey;                            ///< Passkey, only set when the above field is value 3.
                 } v12;  ///< [12.0.0+]
             };  
-            
         } ssp_request;                              ///< ::BtdrvEventType_SspRequest
 
         struct {
