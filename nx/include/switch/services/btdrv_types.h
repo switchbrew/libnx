@@ -138,6 +138,23 @@ typedef enum {
     BtdrvBleEventType_Unknown13             =   13,    ///< Unknown.
 } BtdrvBleEventType;
 
+/// AudioEventType
+typedef enum {
+    BtdrvAudioEventType_None                =     0,   ///< None
+    BtdrvAudioEventType_Connection          =     1,   ///< Connection
+} BtdrvAudioEventType;
+
+/// AudioOutState
+typedef enum {
+    BtdrvAudioOutState_Stopped              =     0,   ///< Stopped
+    BtdrvAudioOutState_Started              =     1,   ///< Started
+} BtdrvAudioOutState;
+
+/// AudioCodec
+typedef enum {
+    BtdrvAudioCodec_Pcm                     =     0,   ///< Raw PCM
+} BtdrvAudioCodec;
+
 /// Address
 typedef struct {
     u8 address[0x6];           ///< Address
