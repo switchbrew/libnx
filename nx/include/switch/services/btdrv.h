@@ -14,11 +14,11 @@
 /// Data for \ref btdrvGetEventInfo. The data stored here depends on the \ref BtdrvEventType.
 typedef struct {
     union {
-        u8 data[0x400];                  ///< Raw data.
+        u8 data[0x400];                                     ///< Raw data.
 
         struct {
-            u32 val;                     ///< Value
-        } type0;                         ///< ::BtdrvEventType_Unknown0
+            u32 val;                                        ///< Value
+        } type0;                                            ///< ::BtdrvEventType_Unknown0
 
         struct {
             union {
@@ -34,36 +34,36 @@ typedef struct {
                     u8 rssi[0x4];                           ///< s32 RSSI
                     u8 name3[0x4];                          ///< Two bytes which are the same as name[11-12].
                     u8 reserved_x36D[0x10];                 ///< Reserved
-                } v1;   ///< [1.0.0-11.0.1]
+                } v1;                                       ///< [1.0.0-11.0.1]
 
                 struct {
                     BtdrvAddress addr;                      ///< Device address.
                     char name[0xF9];                        ///< Device name, NUL-terminated string.
                     BtdrvClassOfDevice class_of_device;     ///< Class of Device.
                     u8 reserved[0x6];                       ///< Reserved
-                } v12;  ///< [12.0.0+]
+                } v12;                                      ///< [12.0.0+]
             };
         } inquiry_device;                                   ///< ::BtdrvEventType_InquiryDevice
 
         struct {
             union {
                 struct {
-                    BtdrvInquiryStatus status;      ///< Status: 0 = stopped, 1 = started.
-                } v1;   ///< [1.0.0-11.0.1]
+                    BtdrvInquiryStatus status;              ///< Status: 0 = stopped, 1 = started.
+                } v1;                                       ///< [1.0.0-11.0.1]
 
                 struct {
-                    BtdrvInquiryStatus status;      ///< Status: 0 = stopped, 1 = started.
-                    u8 pad[3];                      ///< Padding
-                    u32 service_mask;               ///< Services value from /ref btdrvStartInquiry when starting, otherwise this is value 0
-                } v12;  ///< [12.0.0+]
+                    BtdrvInquiryStatus status;              ///< Status: 0 = stopped, 1 = started.
+                    u8 pad[3];                              ///< Padding
+                    u32 service_mask;                       ///< Services value from /ref btdrvStartInquiry when starting, otherwise this is value 0
+                } v12;                                      ///< [12.0.0+]
             };
-        } inquiry_status;                           ///< ::BtdrvEventType_InquiryStatus
+        } inquiry_status;                                   ///< ::BtdrvEventType_InquiryStatus
 
         struct {
-            BtdrvAddress addr;                      ///< Device address.
-            char name[0xF9];                        ///< Device name, NUL-terminated string.
-            BtdrvClassOfDevice class_of_device;     ///< Class of Device.
-        } pairing_pin_code_request;                 ///< ::BtdrvEventType_PairingPinCodeRequest
+            BtdrvAddress addr;                              ///< Device address.
+            char name[0xF9];                                ///< Device name, NUL-terminated string.
+            BtdrvClassOfDevice class_of_device;             ///< Class of Device.
+        } pairing_pin_code_request;                         ///< ::BtdrvEventType_PairingPinCodeRequest
 
         struct {
             union {
@@ -74,7 +74,7 @@ typedef struct {
                     u8 pad[2];                              ///< Padding
                     u32 type;                               ///< 0 = SSP confirm request, 3 = SSP passkey notification.
                     s32 passkey;                            ///< Passkey, only set when the above field is value 3.
-                } v1;   ///< [1.0.0-11.0.1]
+                } v1;                                       ///< [1.0.0-11.0.1]
 
                 struct {
                     BtdrvAddress addr;                      ///< Device address.
@@ -83,133 +83,133 @@ typedef struct {
                     u8 flag;                                ///< bool flag for Just Works. With SSP passkey notification this is always 0
                     u8 pad;                                 ///< Padding
                     s32 passkey;                            ///< Passkey, only set when the above field is value 3.
-                } v12;  ///< [12.0.0+]
+                } v12;                                      ///< [12.0.0+]
             };  
-        } ssp_request;                              ///< ::BtdrvEventType_SspRequest
+        } ssp_request;                                      ///< ::BtdrvEventType_SspRequest
 
         struct {
             union {
                 struct {
-                    u32 status;                  ///< Status, always 0 except with ::BtdrvConnectionEventType_Status: 2 = ACL Link is now Resumed, 9 = connection failed (pairing/authentication failed, or opening the hid connection failed).
-                    BtdrvAddress addr;           ///< Device address.
-                    u8 pad[2];                   ///< Padding
-                    u32 type;                    ///< \ref BtdrvConnectionEventType
-                } v1;   ///< [1.0.0-11.0.1]
+                    u32 status;                             ///< Status, always 0 except with ::BtdrvConnectionEventType_Status: 2 = ACL Link is now Resumed, 9 = connection failed (pairing/authentication failed, or opening the hid connection failed).
+                    BtdrvAddress addr;                      ///< Device address.
+                    u8 pad[2];                              ///< Padding
+                    u32 type;                               ///< \ref BtdrvConnectionEventType
+                } v1;                                       ///< [1.0.0-11.0.1]
 
                 struct {
-                    u32 type;                   ///< \ref BtdrvConnectionEventType
-                    BtdrvAddress addr;          ///< Device address.
-                    u8 reserved[0xfe];          ///< Reserved
-                } v12;  ///< [12.0.0+]
+                    u32 type;                               ///< \ref BtdrvConnectionEventType
+                    BtdrvAddress addr;                      ///< Device address.
+                    u8 reserved[0xfe];                      ///< Reserved
+                } v12;                                      ///< [12.0.0+]
             };
-        } connection;                    ///< ::BtdrvEventType_Connection
+        } connection;                                       ///< ::BtdrvEventType_Connection
 
         struct {
-            BtdrvAddress addr;           ///< Device address.
-            u8 status;                   ///< Status flag: 1 = success, 0 = failure.
-            u8 value;                    ///< Tsi value, when the above indicates success.
-        } tsi;                           ///< ::BtdrvEventType_Tsi
+            BtdrvAddress addr;                              ///< Device address.
+            u8 status;                                      ///< Status flag: 1 = success, 0 = failure.
+            u8 value;                                       ///< Tsi value, when the above indicates success.
+        } tsi;                                              ///< ::BtdrvEventType_Tsi
 
         struct {
-            BtdrvAddress addr;           ///< Device address.
-            u8 status;                   ///< Status flag: 1 = success, 0 = failure.
-            u8 value;                    ///< Input bool value from \ref btdrvEnableBurstMode, when the above indicates success.
-        } burst_mode;                    ///< ::BtdrvEventType_BurstMode
+            BtdrvAddress addr;                              ///< Device address.
+            u8 status;                                      ///< Status flag: 1 = success, 0 = failure.
+            u8 value;                                       ///< Input bool value from \ref btdrvEnableBurstMode, when the above indicates success.
+        } burst_mode;                                       ///< ::BtdrvEventType_BurstMode
 
         struct {
-            BtdrvAddress addr;           ///< Device address.
-            u8 status;                   ///< Status flag: 1 = success, 0 = failure.
-            u8 flag;                     ///< Bool flag, when the above indicates success.
-        } set_zero_retransmission;       ///< ::BtdrvEventType_SetZeroRetransmission
+            BtdrvAddress addr;                              ///< Device address.
+            u8 status;                                      ///< Status flag: 1 = success, 0 = failure.
+            u8 flag;                                        ///< Bool flag, when the above indicates success.
+        } set_zero_retransmission;                          ///< ::BtdrvEventType_SetZeroRetransmission
 
         struct {
-            u8 status;                   ///< Status flag: 1 = success, 0 = failure.
-            u8 pad[0x3];                 ///< Padding
-            u32 count;                   ///< Count value.
-        } pending_connections;           ///< ::BtdrvEventType_PendingConnections
+            u8 status;                                      ///< Status flag: 1 = success, 0 = failure.
+            u8 pad[0x3];                                    ///< Padding
+            u32 count;                                      ///< Count value.
+        } pending_connections;                              ///< ::BtdrvEventType_PendingConnections
 
         struct {
-            BtdrvAddress addr;           ///< Device address.
-            u8 status;                   ///< Status flag: 1 = success, 0 = failure.
-        } move_to_secondary_piconet;     ///< ::BtdrvEventType_MoveToSecondaryPiconet
+            BtdrvAddress addr;                              ///< Device address.
+            u8 status;                                      ///< Status flag: 1 = success, 0 = failure.
+        } move_to_secondary_piconet;                        ///< ::BtdrvEventType_MoveToSecondaryPiconet
 
         struct {
-            u16 reason;                  ///< \ref BtdrvFatalReason
-        } bluetooth_crash;               ///< ::BtdrvEventType_BluetoothCrash
+            u16 reason;                                     ///< \ref BtdrvFatalReason
+        } bluetooth_crash;                                  ///< ::BtdrvEventType_BluetoothCrash
     };
 } BtdrvEventInfo;
 
 /// Data for \ref btdrvGetHidEventInfo. The data stored here depends on the \ref BtdrvHidEventType.
 typedef struct {
     union {
-        u8 data[0x480];                  ///< Raw data.
+        u8 data[0x480];                                 ///< Raw data.
 
         struct {
             union {
                 struct {
-                    BtdrvAddress addr;                    ///< Device address.
-                    u8 pad[2];                            ///< Padding
-                    BtdrvHidConnectionStatus status;      ///< \ref BtdrvHidConnectionStatus
+                    BtdrvAddress addr;                  ///< Device address.
+                    u8 pad[2];                          ///< Padding
+                    BtdrvHidConnectionStatus status;    ///< \ref BtdrvHidConnectionStatus
                 } v1;   ///< [1.0.0-11.0.1]
 
                 struct {
-                    BtdrvHidConnectionStatus status;      ///< \ref BtdrvHidConnectionStatus
-                    BtdrvAddress addr;                    ///< Device address.
+                    BtdrvHidConnectionStatus status;    ///< \ref BtdrvHidConnectionStatus
+                    BtdrvAddress addr;                  ///< Device address.
                 } v12;  ///< [12.0.0+]
             };
-        } connection;                             ///< ::BtdrvHidEventType_Connection
+        } connection;                                   ///< ::BtdrvHidEventType_Connection
 
         struct {
-            u32 type;                             ///< \ref BtdrvExtEventType, controls which data is stored below.
+            u32 type;                                   ///< \ref BtdrvExtEventType, controls which data is stored below.
 
             union {
                 struct {
-                    u32 status;                   ///< 0 for success, non-zero for error.
-                    BtdrvAddress addr;            ///< Device address.
-                } set_tsi;                        ///< ::BtdrvExtEventType_SetTsi
+                    u32 status;                         ///< 0 for success, non-zero for error.
+                    BtdrvAddress addr;                  ///< Device address.
+                } set_tsi;                              ///< ::BtdrvExtEventType_SetTsi
 
                 struct {
-                    u32 status;                   ///< 0 for success, non-zero for error.
-                    BtdrvAddress addr;            ///< Device address.
-                } exit_tsi;                       ///< ::BtdrvExtEventType_ExitTsi
+                    u32 status;                         ///< 0 for success, non-zero for error.
+                    BtdrvAddress addr;                  ///< Device address.
+                } exit_tsi;                             ///< ::BtdrvExtEventType_ExitTsi
 
                 struct {
-                    u32 status;                   ///< 0 for success, non-zero for error.
-                    BtdrvAddress addr;            ///< Device address.
-                } set_burst_mode;                 ///< ::BtdrvExtEventType_SetBurstMode
+                    u32 status;                         ///< 0 for success, non-zero for error.
+                    BtdrvAddress addr;                  ///< Device address.
+                } set_burst_mode;                       ///< ::BtdrvExtEventType_SetBurstMode
 
                 struct {
-                    u32 status;                   ///< 0 for success, non-zero for error.
-                    BtdrvAddress addr;            ///< Device address.
-                } exit_burst_mode;                ///< ::BtdrvExtEventType_ExitBurstMode
+                    u32 status;                         ///< 0 for success, non-zero for error.
+                    BtdrvAddress addr;                  ///< Device address.
+                } exit_burst_mode;                      ///< ::BtdrvExtEventType_ExitBurstMode
 
                 struct {
-                    u32 status;                   ///< 0 for success, non-zero for error.
-                    BtdrvAddress addr;            ///< Device address.
-                    u8 pad[2];                    ///< Padding
-                    u8 flag;                      ///< Flag
-                } set_zero_retransmission;        ///< ::BtdrvExtEventType_SetZeroRetransmission
+                    u32 status;                         ///< 0 for success, non-zero for error.
+                    BtdrvAddress addr;                  ///< Device address.
+                    u8 pad[2];                          ///< Padding
+                    u8 flag;                            ///< Flag
+                } set_zero_retransmission;              ///< ::BtdrvExtEventType_SetZeroRetransmission
 
                 struct {
-                    u32 status;                   ///< 0 for success, non-zero for error.
-                    BtdrvAddress addr;            ///< Unused
-                    u8 pad[2];                    ///< Padding
-                    u32 count;                    ///< Count value.
-                } pending_connections;            ///< ::BtdrvExtEventType_PendingConnections
+                    u32 status;                         ///< 0 for success, non-zero for error.
+                    BtdrvAddress addr;                  ///< Unused
+                    u8 pad[2];                          ///< Padding
+                    u32 count;                          ///< Count value.
+                } pending_connections;                  ///< ::BtdrvExtEventType_PendingConnections
 
                 struct {
-                    u32 status;                   ///< 0 for success, non-zero for error.
-                    BtdrvAddress addr;            ///< Device address.
-                } move_to_secondary_piconet;      ///< ::BtdrvExtEventType_MoveToSecondaryPiconet
+                    u32 status;                         ///< 0 for success, non-zero for error.
+                    BtdrvAddress addr;                  ///< Device address.
+                } move_to_secondary_piconet;            ///< ::BtdrvExtEventType_MoveToSecondaryPiconet
             };
-        } ext;                                    ///< ::BtdrvHidEventType_Ext [1.0.0-11.0.1]
+        } ext;                                          ///< ::BtdrvHidEventType_Ext [1.0.0-11.0.1]
     };
 } BtdrvHidEventInfo;
 
 /// Data for \ref btdrvGetHidReportEventInfo. The data stored here depends on the \ref BtdrvHidEventType.
 typedef struct {
     union {
-        u8 data[0x480];                  ///< Raw data.
+        u8 data[0x480];                         ///< Raw data.
 
         struct {
             union {
@@ -220,73 +220,73 @@ typedef struct {
                         u32 res;
                         u32 size;
                     } hdr;
-                    u8 unused[0x3];                  ///< Unused
-                    BtdrvAddress addr;               ///< \ref BtdrvAddress
-                    u8 unused2[0x3];                 ///< Unused
+                    u8 unused[0x3];             ///< Unused
+                    BtdrvAddress addr;          ///< \ref BtdrvAddress
+                    u8 unused2[0x3];            ///< Unused
                     BtdrvHidData report;
-                } v1;                                ///< [1.0.0-6.2.0]
+                } v1;                           ///< [1.0.0-6.2.0]
 
                 struct {
-                    u8 unused[0x3];                  ///< Unused
-                    BtdrvAddress addr;               ///< \ref BtdrvAddress
-                    u8 unused2[0x3];                 ///< Unused
+                    u8 unused[0x3];             ///< Unused
+                    BtdrvAddress addr;          ///< \ref BtdrvAddress
+                    u8 unused2[0x3];            ///< Unused
                     BtdrvHidData report;
-                } v7;                                ///< [7.0.0-8.1.1]
+                } v7;                           ///< [7.0.0-8.1.1]
 
                 struct {
-                    u32 res;                         ///< Always 0.
-                    u8 unk_x4;                       ///< Always 0.
-                    BtdrvAddress addr;               ///< \ref BtdrvAddress
-                    u8 pad;                          ///< Padding
+                    u32 res;                    ///< Always 0.
+                    u8 unk_x4;                  ///< Always 0.
+                    BtdrvAddress addr;          ///< \ref BtdrvAddress
+                    u8 pad;                     ///< Padding
                     BtdrvHidReport report;
-                } v9;                                ///< [9.0.0+]
+                } v9;                           ///< [9.0.0+]
             };
-        } data_report;                           ///< ::BtdrvHidEventType_DataReport
+        } data_report;                          ///< ::BtdrvHidEventType_DataReport
 
         struct {
             union {
-                u8 rawdata[0xC];                 ///< Raw data.
+                u8 rawdata[0xC];                ///< Raw data.
 
                 struct {
-                    u32 res;                     ///< 0 = success, non-zero = error.
-                    BtdrvAddress addr;           ///< \ref BtdrvAddress
-                    u8 pad[2];                   ///< Padding
+                    u32 res;                    ///< 0 = success, non-zero = error.
+                    BtdrvAddress addr;          ///< \ref BtdrvAddress
+                    u8 pad[2];                  ///< Padding
                 };
             };
-        } set_report;                            ///< ::BtdrvHidEventType_SetReport
+        } set_report;                           ///< ::BtdrvHidEventType_SetReport
 
         struct {
             union {
                 union {
-                    u8 rawdata[0x290];           ///< Raw data.
+                    u8 rawdata[0x290];          ///< Raw data.
 
                     struct {
-                        BtdrvAddress addr;       ///< \ref BtdrvAddress
-                        u8 pad[2];               ///< Padding
-                        u32 res;                 ///< Unknown. hid-sysmodule only uses the below data when this field is 0.
-                        BtdrvHidData report;     ///< \ref BtdrvHidData
-                        u8 pad2[2];              ///< Padding
+                        BtdrvAddress addr;      ///< \ref BtdrvAddress
+                        u8 pad[2];              ///< Padding
+                        u32 res;                ///< Unknown. hid-sysmodule only uses the below data when this field is 0.
+                        BtdrvHidData report;    ///< \ref BtdrvHidData
+                        u8 pad2[2];             ///< Padding
                     };
-                } v1;                            ///< [1.0.0-8.1.1]
+                } v1;                           ///< [1.0.0-8.1.1]
 
                 union {
-                    u8 rawdata[0x2C8];           ///< Raw data.
+                    u8 rawdata[0x2C8];          ///< Raw data.
 
                     struct {
-                        u32 res;                 ///< Unknown. hid-sysmodule only uses the below report when this field is 0.
-                        BtdrvAddress addr;       ///< \ref BtdrvAddress
-                        BtdrvHidReport report;   ///< \ref BtdrvHidReport
+                        u32 res;                ///< Unknown. hid-sysmodule only uses the below report when this field is 0.
+                        BtdrvAddress addr;      ///< \ref BtdrvAddress
+                        BtdrvHidReport report;  ///< \ref BtdrvHidReport
                     };
-                } v9;                            ///< [9.0.0+]
+                } v9;                           ///< [9.0.0+]
             };
-        } get_report;                            ///< ::BtdrvHidEventType_GetReport
+        } get_report;                           ///< ::BtdrvHidEventType_GetReport
     };
 } BtdrvHidReportEventInfo;
 
 /// The raw sharedmem data for HidReportEventInfo.
 typedef struct {
     struct {
-        u8 type;                                 ///< \ref BtdrvHidEventType
+        u8 type;        ///< \ref BtdrvHidEventType
         u8 pad[7];
         u64 tick;
         u64 size;
@@ -298,7 +298,7 @@ typedef struct {
 /// CircularBuffer
 typedef struct {
     Mutex mutex;
-    void* event_type;          ///< Not set with sharedmem.
+    void* event_type;   ///< Not set with sharedmem.
     u8 data[0x2710];
     s32 write_offset;
     s32 read_offset;
