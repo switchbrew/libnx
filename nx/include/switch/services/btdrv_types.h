@@ -91,7 +91,7 @@ typedef enum {
     BtdrvHidEventTypeOld_GetReport       =    9,    ///< Response to GET_REPORT.
 } BtdrvHidEventType;
 
-/// HidConnectionStatus [12.0.0]
+/// HidConnectionStatus [12.0.0+]
 typedef enum {
     ///< BtdrvHidConnectionStatus_* should be used on [12.0.0+]
     BtdrvHidConnectionStatus_Disconnected       =    0,
@@ -148,7 +148,7 @@ typedef struct {
     u8 feature_set;                         ///< Set to hard-coded value 0x68 (same as the data for ::BtdrvBluetoothPropertyType_FeatureSet).
 } BtdrvAdapterProperty;
 
-/// BluetoothPinCode
+/// BluetoothPinCode [1.0.0-11.0.1]
 typedef struct {
     char code[0x10];           ///< PinCode
 } BtdrvBluetoothPinCode;
@@ -159,13 +159,13 @@ typedef struct {
     u8 length;                 ///< Length 
 } BtdrvPinCode;
 
-/// HidData, for pre-9.0.0.
+/// HidData [1.0.0-8.1.1]
 typedef struct {
     u16 size;                  ///< Size of data.
     u8 data[0x280];            ///< Data
 } BtdrvHidData;
 
-/// HidReport, for [9.0.0+].
+/// HidReport [9.0.0+].
 typedef struct {
     u16 size;                  ///< Size of data.
     u8 data[0x2BC];            ///< Data
