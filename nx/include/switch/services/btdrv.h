@@ -150,11 +150,11 @@ typedef struct {
                 struct {
                     BtdrvAddress addr;                    ///< Device address.
                     u8 pad[2];                            ///< Padding
-                    BtdrvHidConnectionStatus status;      ///< Status: 0 = hid connection opened, 2 = hid connection closed, 8 = failed to open hid connection.
+                    BtdrvHidConnectionStatus status;      ///< \ref BtdrvHidConnectionStatus
                 } v1;   ///< [1.0.0-11.0.1]
 
                 struct {
-                    BtdrvHidConnectionStatus status;      ///< Status: 1 = hid connection opened, 0 = hid connection closed
+                    BtdrvHidConnectionStatus status;      ///< \ref BtdrvHidConnectionStatus
                     BtdrvAddress addr;                    ///< Device address.
                 } v12;  ///< [12.0.0+]
             };
