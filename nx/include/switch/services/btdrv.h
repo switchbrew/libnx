@@ -48,11 +48,11 @@ typedef struct {
         struct {
             union {
                 struct {
-                    BtdrvInquiryStatus status;              ///< Status: 0 = stopped, 1 = started.
+                    BtdrvInquiryStatus status;              ///< \ref BtdrvInquiryStatus
                 } v1;                                       ///< [1.0.0-11.0.1]
 
                 struct {
-                    BtdrvInquiryStatus status;              ///< Status: 0 = stopped, 1 = started.
+                    BtdrvInquiryStatus status;              ///< \ref BtdrvInquiryStatus
                     u8 pad[3];                              ///< Padding
                     u32 service_mask;                       ///< Services value from /ref btdrvStartInquiry when starting, otherwise this is value 0
                 } v12;                                      ///< [12.0.0+]
