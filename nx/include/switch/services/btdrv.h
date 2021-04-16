@@ -325,7 +325,7 @@ typedef struct {
         struct {
             u32 status;
             u8 handle;
-            bool registered;
+            u8 registered;
         } type0;
 
         struct {
