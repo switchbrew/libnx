@@ -9,42 +9,42 @@
 
 /// BluetoothPropertyType
 typedef enum {
-    BtdrvBluetoothPropertyType_Name           =    1,    ///< Name. String, max length 0xF8 excluding NUL-terminator.
-    BtdrvBluetoothPropertyType_Address        =    2,    ///< \ref BtdrvAddress
-    BtdrvBluetoothPropertyType_Unknown3       =    3,    ///< Only available with \ref btdrvSetAdapterProperty. Unknown, \ref BtdrvAddress.
-    BtdrvBluetoothPropertyType_ClassOfDevice  =    5,    ///< 3-bytes, Class of Device.
-    BtdrvBluetoothPropertyType_FeatureSet     =    6,    ///< 1-byte, FeatureSet. The default is value 0x68.
+    BtdrvBluetoothPropertyType_Name              =     1,    ///< Name. String, max length 0xF8 excluding NUL-terminator.
+    BtdrvBluetoothPropertyType_Address           =     2,    ///< \ref BtdrvAddress
+    BtdrvBluetoothPropertyType_Unknown3          =     3,    ///< Only available with \ref btdrvSetAdapterProperty. Unknown, \ref BtdrvAddress.
+    BtdrvBluetoothPropertyType_ClassOfDevice     =     5,    ///< 3-bytes, Class of Device.
+    BtdrvBluetoothPropertyType_FeatureSet        =     6,    ///< 1-byte, FeatureSet. The default is value 0x68.
 } BtdrvBluetoothPropertyType;
 
 /// EventType
 typedef enum {
     ///< BtdrvEventType_* should be used on [12.0.0+]
-    BtdrvEventType_InquiryDevice             =     0,   ///< Device found during Inquiry.
-    BtdrvEventType_InquiryStatus             =     1,   ///< Inquiry status changed.
-    BtdrvEventType_PairingPinCodeRequest     =     2,   ///< Pairing PIN code request.
-    BtdrvEventType_SspRequest                =     3,   ///< SSP confirm request / SSP passkey notification.
-    BtdrvEventType_Connection                =     4,   ///< Connection
-    BtdrvEventType_Tsi                       =     5,   ///< SetTsi (\ref btdrvSetTsi)
-    BtdrvEventType_BurstMode                 =     6,   ///< SetBurstMode (\ref btdrvEnableBurstMode)
-    BtdrvEventType_SetZeroRetransmission     =     7,   ///< \ref btdrvSetZeroRetransmission
-    BtdrvEventType_PendingConnections        =     8,   ///< \ref btdrvGetPendingConnections
-    BtdrvEventType_MoveToSecondaryPiconet    =     9,   ///< \ref btdrvMoveToSecondaryPiconet
-    BtdrvEventType_BluetoothCrash            =    10,   ///< BluetoothCrash
+    BtdrvEventType_InquiryDevice                 =     0,    ///< Device found during Inquiry.
+    BtdrvEventType_InquiryStatus                 =     1,    ///< Inquiry status changed.
+    BtdrvEventType_PairingPinCodeRequest         =     2,    ///< Pairing PIN code request.
+    BtdrvEventType_SspRequest                    =     3,    ///< SSP confirm request / SSP passkey notification.
+    BtdrvEventType_Connection                    =     4,    ///< Connection
+    BtdrvEventType_Tsi                           =     5,    ///< SetTsi (\ref btdrvSetTsi)
+    BtdrvEventType_BurstMode                     =     6,    ///< SetBurstMode (\ref btdrvEnableBurstMode)
+    BtdrvEventType_SetZeroRetransmission         =     7,    ///< \ref btdrvSetZeroRetransmission
+    BtdrvEventType_PendingConnections            =     8,    ///< \ref btdrvGetPendingConnections
+    BtdrvEventType_MoveToSecondaryPiconet        =     9,    ///< \ref btdrvMoveToSecondaryPiconet
+    BtdrvEventType_BluetoothCrash                =    10,    ///< BluetoothCrash
 
     ///< BtdrvEventTypeOld_* should be used on [1.0.0-11.0.1]
-    BtdrvEventTypeOld_Unknown0                 =    0,    ///< Unused
-    BtdrvEventTypeOld_InquiryDevice            =    3,    ///< Device found during Inquiry.
-    BtdrvEventTypeOld_InquiryStatus            =    4,    ///< Inquiry status changed.
-    BtdrvEventTypeOld_PairingPinCodeRequest    =    5,    ///< Pairing PIN code request.
-    BtdrvEventTypeOld_SspRequest               =    6,    ///< SSP confirm request / SSP passkey notification.
-    BtdrvEventTypeOld_Connection               =    7,    ///< Connection
-    BtdrvEventTypeOld_BluetoothCrash           =    13,   ///< BluetoothCrash
+    BtdrvEventTypeOld_Unknown0                   =     0,    ///< Unused
+    BtdrvEventTypeOld_InquiryDevice              =     3,    ///< Device found during Inquiry.
+    BtdrvEventTypeOld_InquiryStatus              =     4,    ///< Inquiry status changed.
+    BtdrvEventTypeOld_PairingPinCodeRequest      =     5,    ///< Pairing PIN code request.
+    BtdrvEventTypeOld_SspRequest                 =     6,    ///< SSP confirm request / SSP passkey notification.
+    BtdrvEventTypeOld_Connection                 =     7,    ///< Connection
+    BtdrvEventTypeOld_BluetoothCrash             =    13,    ///< BluetoothCrash
 } BtdrvEventType;
 
 /// BtdrvInquiryStatus 
 typedef enum {
-    BtdrvInquiryStatus_Stopped    =    0,   ///< Inquiry started.
-    BtdrvInquiryStatus_Started    =    1,   ///< Inquiry stopped.
+    BtdrvInquiryStatus_Stopped                   =     0,    ///< Inquiry started.
+    BtdrvInquiryStatus_Started                   =     1,    ///< Inquiry stopped.
 } BtdrvInquiryStatus;
 
 /// ConnectionEventType
@@ -69,10 +69,10 @@ typedef enum {
 /// Bit0-1 directly control the HID bluetooth transaction report-type value.
 /// Bit2-3: these directly control the Parameter Reserved field for SetReport, for GetReport these control the Parameter Reserved and Size bits.
 typedef enum {
-    BtdrvBluetoothHhReportType_Other        =    0,    ///< Other
-    BtdrvBluetoothHhReportType_Input        =    1,    ///< Input
-    BtdrvBluetoothHhReportType_Output       =    2,    ///< Output
-    BtdrvBluetoothHhReportType_Feature      =    3,    ///< Feature
+    BtdrvBluetoothHhReportType_Other             =    0,    ///< Other
+    BtdrvBluetoothHhReportType_Input             =    1,    ///< Input
+    BtdrvBluetoothHhReportType_Output            =    2,    ///< Output
+    BtdrvBluetoothHhReportType_Feature           =    3,    ///< Feature
 } BtdrvBluetoothHhReportType;
 
 /// HidEventType
