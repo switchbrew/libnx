@@ -340,7 +340,7 @@ typedef struct {
             u16 max_interval;
             u16 slave_latency;
             u16 timeout_multiplier;
-        } type3; // Connection params
+        } type3;                                ///< Connection params?
 
         struct {
             u32 status;
@@ -351,7 +351,7 @@ typedef struct {
             u32 conn_id;
             BtdrvAddress address;
             u16 unk_x12;
-        } type4; // Connection status
+        } type4;                                ///< Connection status?
 
         struct {
             u32 status;
@@ -362,7 +362,7 @@ typedef struct {
             BtdrvBleAdvertisementData adv[10];
             u8 count;
             u32 unk_x144;
-        } type6; // Scan result
+        } type6;                                ///< Scan result?
 
         struct {
             u32 status;
@@ -380,7 +380,7 @@ typedef struct {
             BtdrvGattAttributeUuid descr_uuid;
             u16 size;
             u8 data[0x202];
-        } type8; // Notification
+        } type8;                                ///< Notification?
 
         struct {
             u32 status;
