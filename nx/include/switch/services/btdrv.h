@@ -225,6 +225,15 @@ typedef struct {
     } data;
 } BtdrvHidReportEventInfoBufferData;
 
+/// Data for \ref btdrvGetAudioEventInfo. The data stored here depends on the \ref BtdrvAudioEventType.
+typedef union {
+    struct {
+        u32 status;                  ///< Status: 0 = AV connection closed, 1 = AV connection opened, 2 = failed to open AV connection.
+        BtdrvAddress addr;           ///< Device address.
+        u8 pad[2];                   ///< Padding
+    } connection;                    ///< ::BtdrvAudioEventType_Connection
+} BtdrvAudioEventInfo;
+
 /// CircularBuffer
 typedef struct {
     Mutex mutex;
@@ -1082,6 +1091,163 @@ Result btdrvSetBleScanParameter(u16 unk0, u16 unk1);
  * @param[in] addr \ref BtdrvAddress
  */
 Result btdrvMoveToSecondaryPiconet(BtdrvAddress addr);
+
+/**
+ * @brief IsBluetoothEnabled
+ * @note Only available on [12.0.0+].
+ * @param[out] out Output flag.
+ */
+Result btdrvIsBluetoothEnabled(bool *out);
+
+/**
+ * @brief AcquireAudioEvent
+ * @note Only available on [12.0.0+].
+ * @param[out] out_event Output Event.
+ * @param[in] autoclear Event autoclear.
+ */
+Result btdrvAcquireAudioEvent(Event* out_event, bool autoclear);
+
+/**
+ * @brief GetAudioEventInfo
+ * @note Only available on [12.0.0+].
+ * @param[out] buffer Output buffer, see \ref BtdrvAudioEventInfo.
+ * @param[in] size Output buffer size.
+ * @param[out] type \ref BtdrvAudioEventType.
+ */
+Result btdrvGetAudioEventInfo(void* buffer, size_t size, BtdrvAudioEventType *type);
+
+/**
+ * @brief OpenAudioConnection
+ * @note Only available on [12.0.0+].
+ * @param[in] addr \ref BtdrvAddress
+ */
+Result btdrvOpenAudioConnection(BtdrvAddress addr);
+
+/**
+ * @brief CloseAudioConnection
+ * @note Only available on [12.0.0+].
+ * @param[in] addr \ref BtdrvAddress
+ */
+Result btdrvCloseAudioConnection(BtdrvAddress addr);
+
+/**
+ * @brief OpenAudioOut
+ * @note Only available on [12.0.0+].
+ * @param[in] addr \ref BtdrvAddress
+ * @param[out] audio_handle Audio handle.
+ */
+Result btdrvOpenAudioOut(BtdrvAddress addr, u32 *audio_handle);
+
+/**
+ * @brief CloseAudioOut
+ * @note Only available on [12.0.0+].
+ * @param[in] audio_handle Audio handle from \ref btdrvOpenAudioOut.
+ */
+Result btdrvCloseAudioOut(u32 audio_handle);
+
+/**
+ * @brief StartAudioOut
+ * @note Only available on [12.0.0+].
+ * @param[in] audio_handle Audio handle from \ref btdrvOpenAudioOut.
+ * @param[in] pcm_param \ref BtdrvPcmParameter
+ * @param[in] in_latency Input latency in nanoseconds.
+ * @param[out] out_latency Output latency in nanoseconds.
+ * @param[out] out1 Unknown output.
+ */
+Result btdrvStartAudioOut(u32 audio_handle, const BtdrvPcmParameter *pcm_param, s64 in_latency, s64 *out_latency, u64 *out1);
+
+/**
+ * @brief StopAudioOut
+ * @note Only available on [12.0.0+].
+ * @param[in] audio_handle Audio handle from \ref btdrvOpenAudioOut.
+ */
+Result btdrvStopAudioOut(u32 audio_handle);
+
+/**
+ * @brief GetAudioOutState
+ * @note Only available on [12.0.0+].
+ * @param[in] audio_handle Audio handle from \ref btdrvOpenAudioOut.
+ * @param[out] out \ref BtdrvAudioOutState
+ */
+Result btdrvGetAudioOutState(u32 audio_handle, BtdrvAudioOutState *out);
+
+/**
+ * @brief GetAudioOutFeedingCodec
+ * @note Only available on [12.0.0+].
+ * @param[in] audio_handle Audio handle from \ref btdrvOpenAudioOut.
+ * @param[out] out \ref BtdrvAudioCodec
+ */
+Result btdrvGetAudioOutFeedingCodec(u32 audio_handle, BtdrvAudioCodec *out);
+
+/**
+ * @brief GetAudioOutFeedingParameter
+ * @note Only available on [12.0.0+].
+ * @param[in] audio_handle Audio handle from \ref btdrvOpenAudioOut.
+ * @param[out] out \ref BtdrvPcmParameter
+ */
+Result btdrvGetAudioOutFeedingParameter(u32 audio_handle, BtdrvPcmParameter *out);
+
+/**
+ * @brief AcquireAudioOutStateChangedEvent
+ * @note Only available on [12.0.0+].
+ * @param[in] audio_handle Audio handle from \ref btdrvOpenAudioOut.
+ * @param[out] out_event Output Event.
+ * @param[in] autoclear Event autoclear.
+ */
+Result btdrvAcquireAudioOutStateChangedEvent(u32 audio_handle, Event* out_event, bool autoclear);
+
+/**
+ * @brief AcquireAudioOutBufferAvailableEvent
+ * @note Only available on [12.0.0+].
+ * @param[in] audio_handle Audio handle from \ref btdrvOpenAudioOut.
+ * @param[out] out_event Output Event.
+ * @param[in] autoclear Event autoclear.
+ */
+Result btdrvAcquireAudioOutBufferAvailableEvent(u32 audio_handle, Event* out_event, bool autoclear);
+
+/**
+ * @brief SendAudioData
+ * @note Only available on [12.0.0+].
+ * @param[in] audio_handle Audio handle from \ref btdrvOpenAudioOut.
+ * @param[in] buffer Input buffer.
+ * @param[in] size Input buffer size.
+ * @param[out] Output transferred size. This is always either 0 (error occured) or the buffer size.
+ */
+Result btdrvSendAudioData(u32 audio_handle, const void* buffer, size_t size, u64 *transferred_size);
+
+/**
+ * @brief AcquireAudioControlInputStateChangedEvent
+ * @note Only available on [12.0.0+].
+ * @param[out] out_event Output Event.
+ * @param[in] autoclear Event autoclear.
+ */
+Result btdrvAcquireAudioControlInputStateChangedEvent(Event* out_event, bool autoclear);
+
+/**
+ * @brief GetAudioControlInputState
+ * @note Only available on [12.0.0+].
+ * @param[out] states Output array of \ref BtdrvAudioControlButtonState.
+ * @param[in] count Size of the states array in entries, the maximum is 0xF.
+ * @param[out] total_out Total output entries.
+ */
+Result btdrvGetAudioControlInputState(BtdrvAudioControlButtonState *states, s32 count, s32 *total_out);
+
+/**
+ * @brief AcquireAudioConnectionStateChangedEvent
+ * @note Only available on [12.0.0+].
+ * @param[out] out_event Output Event.
+ * @param[in] autoclear Event autoclear.
+ */
+Result btdrvAcquireAudioConnectionStateChangedEvent(Event* out_event, bool autoclear);
+
+/**
+ * @brief GetConnectedAudioDevice
+ * @note Only available on [12.0.0+].
+ * @param[out] addrs Output array of \ref BtdrvAddress.
+ * @param[in] count Size of the addrs array in entries, the maximum is 0x8.
+ * @param[out] total_out Total output entries.
+ */
+Result btdrvGetConnectedAudioDevice(BtdrvAddress *addrs, s32 count, s32 *total_out);
 
 /**
  * @brief IsManufacturingMode

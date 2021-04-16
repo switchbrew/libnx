@@ -99,11 +99,27 @@ static Result _btdrvCmdNoInOutBool(bool *out, u32 cmd_id) {
     return rc;
 }
 
+static Result _btdrvCmdInU32OutU32(u32 inval, u32 *out, u32 cmd_id) {
+    return serviceDispatchInOut(&g_btdrvSrv, cmd_id, inval, *out);
+}
+
 static Result _btdrvCmdGetEvent(Event* out_event, bool autoclear, u32 cmd_id) {
     Handle tmp_handle = INVALID_HANDLE;
     Result rc = 0;
 
     rc = _btdrvCmdGetHandle(&tmp_handle, cmd_id);
+    if (R_SUCCEEDED(rc)) eventLoadRemote(out_event, tmp_handle, autoclear);
+    return rc;
+}
+
+static Result _btdrvCmdInU32OutEvent(u32 inval, Event* out_event, bool autoclear, u32 cmd_id) {
+    Handle tmp_handle = INVALID_HANDLE;
+
+    Result rc = serviceDispatchIn(&g_btdrvSrv, cmd_id, inval,
+        .out_handle_attrs = { SfOutHandleAttr_HipcCopy },
+        .out_handles = &tmp_handle,
+    );
+
     if (R_SUCCEEDED(rc)) eventLoadRemote(out_event, tmp_handle, autoclear);
     return rc;
 }
@@ -1123,6 +1139,167 @@ Result btdrvMoveToSecondaryPiconet(BtdrvAddress addr) {
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return _btdrvCmdInAddrNoOut(addr, 99);
+}
+
+Result btdrvIsBluetoothEnabled(bool *out) {
+    if (hosversionBefore(12,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _btdrvCmdNoInOutBool(out, 100);
+}
+
+Result btdrvAcquireAudioEvent(Event* out_event, bool autoclear) {
+    if (hosversionBefore(12,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _btdrvCmdGetEvent(out_event, autoclear, 128);
+}
+
+Result btdrvGetAudioEventInfo(void* buffer, size_t size, BtdrvAudioEventType *type) {
+    if (hosversionBefore(12,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    u32 tmp=0;
+    Result rc = _btdrvCmdOutU32OutBuf(buffer, size, &tmp, 129);
+    if (R_SUCCEEDED(rc) && type) *type = tmp;
+    return rc;
+}
+
+Result btdrvOpenAudioConnection(BtdrvAddress addr) {
+    if (hosversionBefore(12,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _btdrvCmdInAddrNoOut(addr, 130);
+}
+
+Result btdrvCloseAudioConnection(BtdrvAddress addr) {
+    if (hosversionBefore(12,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _btdrvCmdInAddrNoOut(addr, 131);
+}
+
+Result btdrvOpenAudioOut(BtdrvAddress addr, u32 *audio_handle) {
+    if (hosversionBefore(12,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchInOut(&g_btdrvSrv, 132, addr, *audio_handle);
+}
+
+Result btdrvCloseAudioOut(u32 audio_handle) {
+    if (hosversionBefore(12,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _btdrvCmdInU32NoOut(audio_handle, 133);
+}
+
+Result btdrvAcquireAudioOutStateChangedEvent(u32 audio_handle, Event* out_event, bool autoclear) {
+    if (hosversionBefore(12,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _btdrvCmdInU32OutEvent(audio_handle, out_event, autoclear, 134);
+}
+
+Result btdrvStartAudioOut(u32 audio_handle, const BtdrvPcmParameter *pcm_param, s64 in_latency, s64 *out_latency, u64 *out1) {
+    if (hosversionBefore(12,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    const struct {
+        u32 audio_handle;
+        BtdrvPcmParameter pcm_param;
+        s64 latency;
+    } in = { audio_handle, *pcm_param, in_latency };
+
+    struct {
+        s64 latency;
+        u64 out1;
+    } out;
+
+    Result rc = serviceDispatchInOut(&g_btdrvSrv, 135, in, out);
+    if (R_SUCCEEDED(rc)) {
+        if (out_latency) *out_latency = out.latency;
+        if (out1) *out1 = out.out1;
+    }
+    return rc;
+}
+
+Result btdrvStopAudioOut(u32 audio_handle) {
+    if (hosversionBefore(12,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _btdrvCmdInU32NoOut(audio_handle, 136);
+}
+
+Result btdrvGetAudioOutState(u32 audio_handle, BtdrvAudioOutState *out) {
+    if (hosversionBefore(12,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    u32 tmp=0;
+    Result rc = _btdrvCmdInU32OutU32(audio_handle, &tmp, 137);
+    if (R_SUCCEEDED(rc) && out) *out = tmp;
+    return rc;
+}
+
+Result btdrvGetAudioOutFeedingCodec(u32 audio_handle, BtdrvAudioCodec *out) {
+    if (hosversionBefore(12,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    u32 tmp=0;
+    Result rc = _btdrvCmdInU32OutU32(audio_handle, &tmp, 138);
+    if (R_SUCCEEDED(rc) && out) *out = tmp;
+    return rc;
+}
+
+Result btdrvGetAudioOutFeedingParameter(u32 audio_handle, BtdrvPcmParameter *out) {
+    if (hosversionBefore(12,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchInOut(&g_btdrvSrv, 139, audio_handle, *out);
+}
+
+Result btdrvAcquireAudioOutBufferAvailableEvent(u32 audio_handle, Event* out_event, bool autoclear) {
+    if (hosversionBefore(12,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _btdrvCmdInU32OutEvent(audio_handle, out_event, autoclear, 140);
+}
+
+Result btdrvSendAudioData(u32 audio_handle, const void* buffer, size_t size, u64 *transferred_size) {
+    if (hosversionBefore(12,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchInOut(&g_btdrvSrv, 141, audio_handle, *transferred_size,
+        .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_In },
+        .buffers = { { buffer, size } },
+    );
+}
+
+Result btdrvAcquireAudioControlInputStateChangedEvent(Event* out_event, bool autoclear) {
+    if (hosversionBefore(12,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _btdrvCmdGetEvent(out_event, autoclear, 142);
+}
+
+Result btdrvGetAudioControlInputState(BtdrvAudioControlButtonState *states, s32 count, s32 *total_out) {
+    if (hosversionBefore(12,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _btdrvCmdOutU32OutBuf(states, count*sizeof(BtdrvAudioControlButtonState), (u32*)total_out, 143);
+}
+
+Result btdrvAcquireAudioConnectionStateChangedEvent(Event* out_event, bool autoclear) {
+    if (hosversionBefore(12,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _btdrvCmdGetEvent(out_event, autoclear, 144);
+}
+
+Result btdrvGetConnectedAudioDevice(BtdrvAddress *addrs, s32 count, s32 *total_out) {
+    if (hosversionBefore(12,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _btdrvCmdOutU32OutBuf(addrs, count*sizeof(BtdrvAddress), (u32*)total_out, 145);
 }
 
 Result btdrvIsManufacturingMode(bool *out) {

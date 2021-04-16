@@ -73,6 +73,23 @@ typedef enum {
     BtdrvFatalReason_Enable                 =    7,    ///< Only for \ref BtdrvEventInfo: triggered after enabling bluetooth, depending on the value of a global state field.
 } BtdrvFatalReason;
 
+/// AudioEventType
+typedef enum {
+    BtdrvAudioEventType_None                =     0,   ///< None
+    BtdrvAudioEventType_Connection          =     1,   ///< Connection
+} BtdrvAudioEventType;
+
+/// AudioOutState
+typedef enum {
+    BtdrvAudioOutState_Stopped              =     0,   ///< Stopped
+    BtdrvAudioOutState_Started              =     1,   ///< Started
+} BtdrvAudioOutState;
+
+/// AudioCodec
+typedef enum {
+    BtdrvAudioCodec_Pcm                     =     0,   ///< Raw PCM
+} BtdrvAudioCodec;
+
 /// Address
 typedef struct {
     u8 address[0x6];           ///< Address
@@ -219,4 +236,16 @@ typedef struct {
     u64 size;                               ///< BtdrvLeEventInfo::size
     u8 data[0x200];                         ///< BtdrvLeEventInfo::data
 } BtdrvBleClientGattOperationInfo;
+
+/// PcmParameter
+typedef struct {
+    u32 unk_x0;                             ///< Must be 0-3. Controls number of channels: 0 = mono, non-zero = stereo.
+    s32 sample_rate;                        ///< Sample rate. Must be one of the following: 16000, 32000, 44100, 48000.
+    u32 bits_per_sample;                    ///< Bits per sample. Must be 8 or 16.
+} BtdrvPcmParameter;
+
+/// AudioControlButtonState
+typedef struct {
+    u8 unk_x0[0x10];                        ///< Unknown
+} BtdrvAudioControlButtonState;
 
