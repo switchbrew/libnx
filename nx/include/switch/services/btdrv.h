@@ -106,6 +106,35 @@ typedef struct {
         } connection;                    ///< ::BtdrvEventType_Connection
 
         struct {
+            BtdrvAddress addr;           ///< Device address.
+            u8 status;                   ///< Status flag: 1 = success, 0 = failure.
+            u8 value;                    ///< Tsi value, when the above indicates success.
+        } tsi;                           ///< ::BtdrvEventType_Tsi
+
+        struct {
+            BtdrvAddress addr;           ///< Device address.
+            u8 status;                   ///< Status flag: 1 = success, 0 = failure.
+            u8 value;                    ///< Input bool value from \ref btdrvEnableBurstMode, when the above indicates success.
+        } burst_mode;                    ///< ::BtdrvEventType_BurstMode
+
+        struct {
+            BtdrvAddress addr;           ///< Device address.
+            u8 status;                   ///< Status flag: 1 = success, 0 = failure.
+            u8 flag;                     ///< Bool flag, when the above indicates success.
+        } set_zero_retransmission;       ///< ::BtdrvEventType_SetZeroRetransmission
+
+        struct {
+            u8 status;                   ///< Status flag: 1 = success, 0 = failure.
+            u8 pad[0x3];                 ///< Padding
+            u32 count;                   ///< Count value.
+        } pending_connections;           ///< ::BtdrvEventType_PendingConnections
+
+        struct {
+            BtdrvAddress addr;           ///< Device address.
+            u8 status;                   ///< Status flag: 1 = success, 0 = failure.
+        } move_to_secondary_piconet;     ///< ::BtdrvEventType_MoveToSecondaryPiconet
+
+        struct {
             u16 reason;                  ///< \ref BtdrvFatalReason
         } bluetooth_crash;               ///< ::BtdrvEventType_BluetoothCrash
     };
