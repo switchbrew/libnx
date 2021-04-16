@@ -82,7 +82,7 @@ typedef struct {
                     BtdrvClassOfDevice class_of_device;     ///< Class of Device.
                     u8 flag;                                ///< bool flag for Just Works. With SSP passkey notification this is always 0
                     u8 pad;                                 ///< Padding
-                    s32 passkey;                            ///< Passkey, only set when the above field is value 3.
+                    s32 passkey;                            ///< Passkey
                 } v12;                                      ///< [12.0.0+]
             };  
         } ssp_request;                                      ///< ::BtdrvEventType_SspRequest
