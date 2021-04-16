@@ -1,7 +1,7 @@
 /**
  * @file btdrv.h
  * @brief Bluetooth driver (btdrv) service IPC wrapper.
- * @author yellows8
+ * @author yellows8, ndeadly
  * @copyright libnx Authors
  */
 #pragma once
@@ -40,7 +40,7 @@ typedef struct {
                     BtdrvAddress addr;                      ///< Device address.
                     char name[0xF9];                        ///< Device name, NUL-terminated string.
                     BtdrvClassOfDevice class_of_device;     ///< Class of Device.
-                    u8 reserved[0x6];
+                    u8 reserved[0x6];                       ///< Reserved
                 } v12;
             };
         } inquiry_device;                                   ///< ::BtdrvEventType_InquiryDevice
@@ -54,7 +54,7 @@ typedef struct {
                 struct {
                     BtdrvInquiryStatus status;      ///< Status: 0 = stopped, 1 = started.
                     u8 pad[3];                      ///< Padding
-                    u32 service_mask;
+                    u32 service_mask;               ///< Services value from /ref btdrvStartInquiry when starting, otherwise this is value 0
                 } v12;
             };
         } inquiry_status;                           ///< ::BtdrvEventType_InquiryStatus
@@ -98,9 +98,9 @@ typedef struct {
                 } v1;
 
                 struct {
-                    u32 type;                    ///< \ref BtdrvConnectionEventType
-                    BtdrvAddress addr;           ///< Device address.
-                    u8 reserved[0xfe];
+                    u32 type;                   ///< \ref BtdrvConnectionEventType
+                    BtdrvAddress addr;          ///< Device address.
+                    u8 reserved[0xfe];          ///< Reserved
                 } v12;
             };
         } connection;                    ///< ::BtdrvEventType_Connection
@@ -154,7 +154,7 @@ typedef struct {
                 } v1;
 
                 struct {
-                    BtdrvHidConnectionStatusV12 status;      ///< Status: 0 = hid connection opened, 2 = hid connection closed, 8 = failed to open hid connection.
+                    BtdrvHidConnectionStatus status;      ///< Status: 1 = hid connection opened, 0 = hid connection closed
                     BtdrvAddress addr;                    ///< Device address.
                 } v12;
             };
@@ -203,7 +203,7 @@ typedef struct {
                     BtdrvAddress addr;            ///< Device address.
                 } move_to_secondary_piconet;      ///< ::BtdrvExtEventType_MoveToSecondaryPiconet
             };
-        } ext;                                    ///< ::BtdrvHidEventType_Ext
+        } ext;                                    ///< ::BtdrvHidEventType_Ext [1.0.0-11.0.1]
     };
 } BtdrvHidEventInfo;
 
@@ -217,7 +217,7 @@ typedef struct {
                 struct {
                     struct {
                         BtdrvAddress addr;
-                        u8 pad[2]; // Todo: check if padding used here
+                        u8 pad[2];
                         u32 res;
                         u32 size;
                     } hdr;
@@ -235,7 +235,7 @@ typedef struct {
                 } v7;                                ///< Pre-9.0.0
 
                 struct {
-                    u32 res;                         //< Always 0.
+                    u32 res;                         ///< Always 0.
                     u8 unk_x4;                       ///< Always 0.
                     BtdrvAddress addr;               ///< \ref BtdrvAddress
                     u8 pad;                          ///< Padding
