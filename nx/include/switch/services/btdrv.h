@@ -54,7 +54,7 @@ typedef struct {
                 struct {
                     BtdrvInquiryStatus status;              ///< \ref BtdrvInquiryStatus
                     u8 pad[3];                              ///< Padding
-                    u32 service_mask;                       ///< Services value from /ref btdrvStartInquiry when starting, otherwise this is value 0
+                    u32 service_mask;                       ///< Services value from \ref btdrvStartInquiry when starting, otherwise this is value 0
                 } v12;                                      ///< [12.0.0+]
             };
         } inquiry_status;                                   ///< ::BtdrvEventType_InquiryStatus
