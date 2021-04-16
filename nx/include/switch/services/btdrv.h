@@ -34,14 +34,14 @@ typedef struct {
                     u8 rssi[0x4];                           ///< s32 RSSI
                     u8 name3[0x4];                          ///< Two bytes which are the same as name[11-12].
                     u8 reserved_x36D[0x10];                 ///< Reserved
-                } v1;
+                } v1;   ///< [1.0.0-11.0.1]
 
                 struct {
                     BtdrvAddress addr;                      ///< Device address.
                     char name[0xF9];                        ///< Device name, NUL-terminated string.
                     BtdrvClassOfDevice class_of_device;     ///< Class of Device.
                     u8 reserved[0x6];                       ///< Reserved
-                } v12;
+                } v12;  ///< [12.0.0+]
             };
         } inquiry_device;                                   ///< ::BtdrvEventType_InquiryDevice
 
@@ -49,13 +49,13 @@ typedef struct {
             union {
                 struct {
                     BtdrvInquiryStatus status;      ///< Status: 0 = stopped, 1 = started.
-                } v1;
+                } v1;   ///< [1.0.0-11.0.1]
 
                 struct {
                     BtdrvInquiryStatus status;      ///< Status: 0 = stopped, 1 = started.
                     u8 pad[3];                      ///< Padding
                     u32 service_mask;               ///< Services value from /ref btdrvStartInquiry when starting, otherwise this is value 0
-                } v12;
+                } v12;  ///< [12.0.0+]
             };
         } inquiry_status;                           ///< ::BtdrvEventType_InquiryStatus
 
@@ -74,7 +74,7 @@ typedef struct {
                     u8 pad[2];                              ///< Padding
                     u32 type;                               ///< 0 = SSP confirm request, 3 = SSP passkey notification.
                     s32 passkey;                            ///< Passkey, only set when the above field is value 3.
-                } v1;
+                } v1;   ///< [1.0.0-11.0.1]
 
                 struct {
                     BtdrvAddress addr;                      ///< Device address.
@@ -83,8 +83,8 @@ typedef struct {
                     u32 type;                               ///< 0 = SSP confirm request, 3 = SSP passkey notification.
                     u8 pad;                                 ///< Padding
                     s32 passkey;                            ///< Passkey, only set when the above field is value 3.
-                } v12;
-            };
+                } v12;  ///< [12.0.0+]
+            };  
             
         } ssp_request;                              ///< ::BtdrvEventType_SspRequest
 
@@ -95,13 +95,13 @@ typedef struct {
                     BtdrvAddress addr;           ///< Device address.
                     u8 pad[2];                   ///< Padding
                     u32 type;                    ///< \ref BtdrvConnectionEventType
-                } v1;
+                } v1;   ///< [1.0.0-11.0.1]
 
                 struct {
                     u32 type;                   ///< \ref BtdrvConnectionEventType
                     BtdrvAddress addr;          ///< Device address.
                     u8 reserved[0xfe];          ///< Reserved
-                } v12;
+                } v12;  ///< [12.0.0+]
             };
         } connection;                    ///< ::BtdrvEventType_Connection
 
@@ -151,12 +151,12 @@ typedef struct {
                     BtdrvAddress addr;                    ///< Device address.
                     u8 pad[2];                            ///< Padding
                     BtdrvHidConnectionStatus status;      ///< Status: 0 = hid connection opened, 2 = hid connection closed, 8 = failed to open hid connection.
-                } v1;
+                } v1;   ///< [1.0.0-11.0.1]
 
                 struct {
                     BtdrvHidConnectionStatus status;      ///< Status: 1 = hid connection opened, 0 = hid connection closed
                     BtdrvAddress addr;                    ///< Device address.
-                } v12;
+                } v12;  ///< [12.0.0+]
             };
         } connection;                             ///< ::BtdrvHidEventType_Connection
 
@@ -225,14 +225,14 @@ typedef struct {
                     BtdrvAddress addr;               ///< \ref BtdrvAddress
                     u8 unused2[0x3];                 ///< Unused
                     BtdrvHidData report;
-                } v1;                                ///< Pre-7.0.0
+                } v1;                                ///< [1.0.0-6.2.0]
 
                 struct {
                     u8 unused[0x3];                  ///< Unused
                     BtdrvAddress addr;               ///< \ref BtdrvAddress
                     u8 unused2[0x3];                 ///< Unused
                     BtdrvHidData report;
-                } v7;                                ///< Pre-9.0.0
+                } v7;                                ///< [7.0.0-8.1.1]
 
                 struct {
                     u32 res;                         ///< Always 0.
@@ -268,7 +268,7 @@ typedef struct {
                         BtdrvHidData report;     ///< \ref BtdrvHidData
                         u8 pad2[2];              ///< Padding
                     };
-                } v1;                            ///< Pre-9.0.0
+                } v1;                            ///< [1.0.0-8.1.1]
 
                 union {
                     u8 rawdata[0x2C8];           ///< Raw data.
