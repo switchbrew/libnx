@@ -94,13 +94,13 @@ typedef enum {
 /// HidConnectionStatus [12.0.0+]
 typedef enum {
     ///< BtdrvHidConnectionStatus_* should be used on [12.0.0+]
-    BtdrvHidConnectionStatus_Disconnected       =    0,
-    BtdrvHidConnectionStatus_Connected          =    1,
+    BtdrvHidConnectionStatus_Closed      =    0,
+    BtdrvHidConnectionStatus_Opened      =    1,
 
     ///< BtdrvHidConnectionStatusOld_* should be used on [1.0.0-11.0.1]
-    BtdrvHidConnectionStatusOld_Connected       =    0,
-    BtdrvHidConnectionStatusOld_Disconnected    =    2,
-    BtdrvHidConnectionStatusOld_FailedGeneric   =    8,
+    BtdrvHidConnectionStatusOld_Opened   =    0,
+    BtdrvHidConnectionStatusOld_Closed   =    2,
+    BtdrvHidConnectionStatusOld_Failed   =    8,
 } BtdrvHidConnectionStatus;
 
 /// This determines the u16 data to write into a CircularBuffer.
