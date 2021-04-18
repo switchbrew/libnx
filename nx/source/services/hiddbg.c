@@ -361,7 +361,18 @@ static void _hiddbgConvertHiddbgHdlsStateToV7(HiddbgHdlsStateV7 *out, const Hidd
     out->buttons = in->buttons;
     memcpy(&out->analog_stick_l, &in->analog_stick_l, sizeof(in->analog_stick_l));
     memcpy(&out->analog_stick_r, &in->analog_stick_r, sizeof(in->analog_stick_r));
-    out->unk_x20 = in->unk_x20;
+    out->indicator = in->indicator;
+}
+
+static void _hiddbgConvertHiddbgHdlsStateToV9(HiddbgHdlsStateV9 *out, const HiddbgHdlsState *in) {
+    memset(out, 0, sizeof(*out));
+
+    out->battery_level = in->battery_level;
+    out->flags = in->flags;
+    out->buttons = in->buttons;
+    memcpy(&out->analog_stick_l, &in->analog_stick_l, sizeof(in->analog_stick_l));
+    memcpy(&out->analog_stick_r, &in->analog_stick_r, sizeof(in->analog_stick_r));
+    out->indicator = in->indicator;
 }
 
 static void _hiddbgConvertHiddbgHdlsStateFromV7(HiddbgHdlsState *out, const HiddbgHdlsStateV7 *in) {
@@ -372,7 +383,18 @@ static void _hiddbgConvertHiddbgHdlsStateFromV7(HiddbgHdlsState *out, const Hidd
     out->buttons = in->buttons;
     memcpy(&out->analog_stick_l, &in->analog_stick_l, sizeof(in->analog_stick_l));
     memcpy(&out->analog_stick_r, &in->analog_stick_r, sizeof(in->analog_stick_r));
-    out->unk_x20 = in->unk_x20;
+    out->indicator = in->indicator;
+}
+
+static void _hiddbgConvertHiddbgHdlsStateFromV9(HiddbgHdlsState *out, const HiddbgHdlsStateV9 *in) {
+    memset(out, 0, sizeof(*out));
+
+    out->battery_level = in->battery_level;
+    out->flags = in->flags;
+    out->buttons = in->buttons;
+    memcpy(&out->analog_stick_l, &in->analog_stick_l, sizeof(in->analog_stick_l));
+    memcpy(&out->analog_stick_r, &in->analog_stick_r, sizeof(in->analog_stick_r));
+    out->indicator = in->indicator;
 }
 
 static void _hiddbgConvertHdlsStateListToV7(HiddbgHdlsStateListV7 *out, const HiddbgHdlsStateList *in) {
@@ -388,6 +410,19 @@ static void _hiddbgConvertHdlsStateListToV7(HiddbgHdlsStateListV7 *out, const Hi
     }
 }
 
+static void _hiddbgConvertHdlsStateListToV9(HiddbgHdlsStateListV9 *out, const HiddbgHdlsStateList *in) {
+    s32 count;
+    memset(out, 0, sizeof(*out));
+    out->total_entries = in->total_entries;
+    count = out->total_entries > 0x10 ? 0x10 : out->total_entries;
+
+    for (s32 i=0; i<count; i++) {
+        out->entries[i].handle = in->entries[i].handle;
+        memcpy(&out->entries[i].device, &in->entries[i].device, sizeof(in->entries[i].device));
+        _hiddbgConvertHiddbgHdlsStateToV9(&out->entries[i].state, &in->entries[i].state);
+    }
+}
+
 static void _hiddbgConvertHdlsStateListFromV7(HiddbgHdlsStateList *out, const HiddbgHdlsStateListV7 *in) {
     s32 count;
     memset(out, 0, sizeof(*out));
@@ -398,6 +433,19 @@ static void _hiddbgConvertHdlsStateListFromV7(HiddbgHdlsStateList *out, const Hi
         out->entries[i].handle = in->entries[i].handle;
         _hiddbgConvertHdlsDeviceInfoFromV7(&out->entries[i].device, &in->entries[i].device);
         _hiddbgConvertHiddbgHdlsStateFromV7(&out->entries[i].state, &in->entries[i].state);
+    }
+}
+
+static void _hiddbgConvertHdlsStateListFromV9(HiddbgHdlsStateList *out, const HiddbgHdlsStateListV9 *in) {
+    s32 count;
+    memset(out, 0, sizeof(*out));
+    out->total_entries = in->total_entries;
+    count = out->total_entries > 0x10 ? 0x10 : out->total_entries;
+
+    for (s32 i=0; i<count; i++) {
+        out->entries[i].handle = in->entries[i].handle;
+        memcpy(&out->entries[i].device, &in->entries[i].device, sizeof(in->entries[i].device));
+        _hiddbgConvertHiddbgHdlsStateFromV9(&out->entries[i].state, &in->entries[i].state);
     }
 }
 
@@ -462,6 +510,15 @@ Result hiddbgIsHdlsVirtualDeviceAttached(HiddbgHdlsHandle handle, bool *out) {
                 }
             }
         }
+        else if (hosversionBefore(12,0,0)) {
+            HiddbgHdlsStateListV9 *stateList = (HiddbgHdlsStateListV9*)(g_hiddbgHdlsTmem.src_addr);
+            for (s32 i=0; i<stateList->total_entries; i++) {
+                if (stateList->entries[i].handle.handle == handle.handle) {
+                    *out = true;
+                    break;
+                }
+            }
+        }
         else {
             HiddbgHdlsStateList *stateList = (HiddbgHdlsStateList*)(g_hiddbgHdlsTmem.src_addr);
             for (s32 i=0; i<stateList->total_entries; i++) {
@@ -507,6 +564,11 @@ Result hiddbgDumpHdlsStates(HiddbgHdlsStateList *state) {
             memcpy(&statev7, g_hiddbgHdlsTmem.src_addr, sizeof(statev7));
             _hiddbgConvertHdlsStateListFromV7(state, &statev7);
         }
+        else if (hosversionBefore(12,0,0)) {
+            HiddbgHdlsStateListV9 statev9;
+            memcpy(&statev9, g_hiddbgHdlsTmem.src_addr, sizeof(statev9));
+            _hiddbgConvertHdlsStateListFromV9(state, &statev9);
+        }
         else
             memcpy(state, g_hiddbgHdlsTmem.src_addr, sizeof(*state));
     }
@@ -541,6 +603,11 @@ Result hiddbgApplyHdlsStateList(const HiddbgHdlsStateList *state) {
         HiddbgHdlsStateListV7 statev7;
         _hiddbgConvertHdlsStateListToV7(&statev7, state);
         memcpy(g_hiddbgHdlsTmem.src_addr, &statev7, sizeof(statev7));
+    }
+    else if (hosversionBefore(12,0,0)) {
+        HiddbgHdlsStateListV9 statev9;
+        _hiddbgConvertHdlsStateListToV9(&statev9, state);
+        memcpy(g_hiddbgHdlsTmem.src_addr, &statev9, sizeof(statev9));
     }
     else
         memcpy(g_hiddbgHdlsTmem.src_addr, state, sizeof(*state));
@@ -592,6 +659,16 @@ static Result _hiddbgSetHdlsStateV7(HiddbgHdlsHandle handle, const HiddbgHdlsSta
     return serviceDispatchIn(&g_hiddbgSrv, 332, in);
 }
 
+static Result _hiddbgSetHdlsStateV9(HiddbgHdlsHandle handle, const HiddbgHdlsState *state) {
+    struct {
+        HiddbgHdlsStateV9 state;
+        HiddbgHdlsHandle handle;
+    } in = { .handle = handle };
+    _hiddbgConvertHiddbgHdlsStateToV9(&in.state, state);
+
+    return serviceDispatchIn(&g_hiddbgSrv, 332, in);
+}
+
 static Result _hiddbgSetHdlsState(HiddbgHdlsHandle handle, const HiddbgHdlsState *state) {
     const struct {
         HiddbgHdlsHandle handle;
@@ -610,6 +687,8 @@ Result hiddbgSetHdlsState(HiddbgHdlsHandle handle, const HiddbgHdlsState *state)
 
     if (hosversionBefore(9,0,0))
         return _hiddbgSetHdlsStateV7(handle, state);
+    else if (hosversionBefore(12,0,0))
+        return _hiddbgSetHdlsStateV9(handle, state);
     else
         return _hiddbgSetHdlsState(handle, state);
 }
