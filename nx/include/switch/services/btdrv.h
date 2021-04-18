@@ -492,14 +492,21 @@ Result btdrvRemoveBond(BtdrvAddress addr);
 Result btdrvCancelBond(BtdrvAddress addr);
 
 /**
- * @brief RespondToPinRequest
+ * @brief RespondToPinRequest [1.0.0-11.0.1]
  * @note The official sysmodule only uses the input \ref BtdrvAddress.
  * @param[in] addr \ref BtdrvAddress
  * @param[in] flag Flag
  * @param[in] pin_code \ref BtdrvBluetoothPinCode
  * @param[in] length Length of pin_code
  */
-Result btdrvRespondToPinRequest(BtdrvAddress addr, bool flag, const BtdrvBluetoothPinCode *pin_code, u8 length);
+Result btdrvLegacyRespondToPinRequest(BtdrvAddress addr, bool flag, const BtdrvBluetoothPinCode *pin_code, u8 length);
+
+/**
+ * @brief RespondToPinRequest [12.0.0+]
+ * @param[in] addr \ref BtdrvAddress
+ * @param[in] pin_code \ref BtdrvPinCode
+ */
+Result btdrvRespondToPinRequest(BtdrvAddress addr, const BtdrvPinCode *pin_code);
 
 /**
  * @brief RespondToSspRequest
