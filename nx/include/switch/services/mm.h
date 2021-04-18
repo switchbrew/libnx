@@ -23,6 +23,7 @@ typedef struct {
 
 Result mmuInitialize(void);
 void mmuExit(void);
+Service* mmuGetServiceSession(void);
 
 Result mmuRequestInitialize(MmuRequest *request, MmuModuleId module, u32 unk, bool autoclear); ///< unk is ignored by official software
 Result mmuRequestFinalize(const MmuRequest *request);
