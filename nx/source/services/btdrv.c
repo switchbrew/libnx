@@ -173,14 +173,21 @@ Result btdrvFinalizeBluetooth(void) {
     return _btdrvCmdNoIO(4);
 }
 
-Result btdrvGetAdapterProperties(BtdrvAdapterProperty *property) {
+Result btdrvLegacyGetAdapterProperties(BtdrvAdapterPropertyOld *properties) {
     return serviceDispatch(&g_btdrvSrv, 5,
         .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_Out | SfBufferAttr_FixedSize },
-        .buffers = { { property, sizeof(*property) } },
+        .buffers = { { properties, sizeof(*properties) } },
     );
 }
 
-Result btdrvGetAdapterProperty(BtdrvBluetoothPropertyType type, void* buffer, size_t size) {
+Result btdrvGetAdapterProperties(BtdrvAdapterPropertySet *properties) {
+    return serviceDispatch(&g_btdrvSrv, 5,
+        .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_Out | SfBufferAttr_FixedSize },
+        .buffers = { { properties, sizeof(*properties) } },
+    );
+}
+
+Result btdrvLegacyGetAdapterProperty(BtdrvBluetoothPropertyType type, void* buffer, size_t size) {
     u32 tmp=type;
     return serviceDispatchIn(&g_btdrvSrv, 6, tmp,
         .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_Out },
@@ -188,11 +195,27 @@ Result btdrvGetAdapterProperty(BtdrvBluetoothPropertyType type, void* buffer, si
     );
 }
 
-Result btdrvSetAdapterProperty(BtdrvBluetoothPropertyType type, const void* buffer, size_t size) {
+Result btdrvGetAdapterProperty(BtdrvAdapterPropertyType type, BtdrvAdapterProperty *property) {
+    u32 tmp=type;
+    return serviceDispatchIn(&g_btdrvSrv, 6, tmp,
+        .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_Out | SfBufferAttr_FixedSize },
+        .buffers = { { property, sizeof(*property) } },
+    );
+}
+
+Result btdrvLegacySetAdapterProperty(BtdrvBluetoothPropertyType type, const void* buffer, size_t size) {
     u32 tmp=type;
     return serviceDispatchIn(&g_btdrvSrv, 7, tmp,
         .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_In },
         .buffers = { { buffer, size } },
+    );
+}
+
+Result btdrvSetAdapterProperty(BtdrvAdapterPropertyType type, const BtdrvAdapterProperty *property) {
+    u32 tmp=type;
+    return serviceDispatchIn(&g_btdrvSrv, 7, tmp,
+        .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_In | SfBufferAttr_FixedSize },
+        .buffers = { { property, sizeof(*property) } },
     );
 }
 
