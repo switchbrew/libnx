@@ -128,6 +128,8 @@ NX_INLINE void* tipcMakeRequest(
     const TipcService *s, u32 request_id, u32 data_size, bool send_pid,
     const SfBufferAttrs buffer_attrs, const SfBuffer* buffers,
     u32 num_handles, const Handle* handles) {
+    (void)s;
+
     TipcRequestFormat fmt = {};
     fmt.request_id = request_id + 16;
     fmt.data_size = data_size;
@@ -201,6 +203,7 @@ NX_INLINE Result tipcParseResponse(
     u32 num_out_objects, TipcService* out_objects,
     const SfOutHandleAttrs out_handle_attrs, Handle* out_handles
 ) {
+    (void)s;
 
     HipcResponse res = hipcParseResponse(armGetTls());
 
