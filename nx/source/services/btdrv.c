@@ -180,8 +180,17 @@ Result btdrvSetAdapterProperty(BtdrvBluetoothPropertyType type, const void* buff
     );
 }
 
-Result btdrvStartInquiry(void) {
+Result btdrvLegacyStartInquiry(void) {
     return _btdrvCmdNoIO(8);
+}
+
+Result btdrvStartInquiry(u32 services, s64 duration) {
+    const struct {
+        u32 services;
+        s64 duration;
+    } in = { services, duration };
+    
+    return serviceDispatchIn(&g_btdrvSrv, 8, in);
 }
 
 Result btdrvStopInquiry(void) {
@@ -239,15 +248,27 @@ Result btdrvRespondToPinRequest(BtdrvAddress addr, const BtdrvPinCode *pin_code)
     return serviceDispatchIn(&g_btdrvSrv, 13, in);
 }
 
-Result btdrvRespondToSspRequest(BtdrvAddress addr, u8 variant, bool flag, u32 unk) {
-    const struct {
-        BtdrvAddress addr;
-        u8 variant;
-        u8 flag;
-        u32 unk;
-    } in = { addr, variant, flag!=0, unk };
+Result btdrvRespondToSspRequest(BtdrvAddress addr, u8 variant, bool accept, u32 passkey) {
+    if (hosversionBefore(12,0,0)) {
+        const struct {
+            BtdrvAddress addr;
+            u8 variant;
+            u8 accept;
+            u32 passkey;
+        } in = { addr, variant, accept!=0, passkey };
 
-    return serviceDispatchIn(&g_btdrvSrv, 14, in);
+        return serviceDispatchIn(&g_btdrvSrv, 14, in);
+    }
+    else {
+        const struct {
+            BtdrvAddress addr;
+            u8 accept;
+            u8 variant;
+            u32 passkey;
+        } in = { addr, accept!=0, variant, passkey };
+
+        return serviceDispatchIn(&g_btdrvSrv, 14, in);
+    }
 }
 
 Result btdrvGetEventInfo(void* buffer, size_t size, BtdrvEventType *type) {

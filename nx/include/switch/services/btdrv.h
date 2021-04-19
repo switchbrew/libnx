@@ -436,32 +436,60 @@ Result btdrvDisableBluetooth(void);
 Result btdrvFinalizeBluetooth(void);
 
 /**
- * @brief GetAdapterProperties
- * @param[out] property \ref BtdrvAdapterProperty
+ * @brief GetAdapterProperties [1.0.0-11.0.1]
+ * @param[out] properties \ref BtdrvAdapterProperty
  */
-Result btdrvGetAdapterProperties(BtdrvAdapterProperty *property);
+Result btdrvLegacyGetAdapterProperties(BtdrvAdapterPropertyOld *properties);
 
 /**
- * @brief GetAdapterProperty
+ * @brief GetAdapterProperties [12.0.0+]
+ * @param[out] properties \ref BtdrvAdapterPropertySet
+ */
+Result btdrvGetAdapterProperties(BtdrvAdapterPropertySet *properties);
+
+/**
+ * @brief GetAdapterProperty [1.0.0-11.0.1]
  * @param[in] type \ref BtdrvBluetoothPropertyType
  * @param[out] buffer Output buffer, see \ref BtdrvBluetoothPropertyType for the contents.
  * @param[in] size Output buffer size.
  */
-Result btdrvGetAdapterProperty(BtdrvBluetoothPropertyType type, void* buffer, size_t size);
+Result btdrvLegacyGetAdapterProperty(BtdrvBluetoothPropertyType type, void* buffer, size_t size);
 
 /**
- * @brief SetAdapterProperty
+ * @brief GetAdapterProperty [12.0.0+]
+ * @param[in] type \ref BtdrvAdapterPropertyType
+ * @param[in] property \ref BtdrvAdapterProperty
+ */
+Result btdrvGetAdapterProperty(BtdrvAdapterPropertyType type, BtdrvAdapterProperty *property);
+
+/**
+ * @brief SetAdapterProperty [1.0.0-11.0.1]
  * @param[in] type \ref BtdrvBluetoothPropertyType
  * @param[in] buffer Input buffer, see \ref BtdrvBluetoothPropertyType for the contents.
  * @param[in] size Input buffer size.
  */
-Result btdrvSetAdapterProperty(BtdrvBluetoothPropertyType type, const void* buffer, size_t size);
+Result btdrvLegacySetAdapterProperty(BtdrvBluetoothPropertyType type, const void* buffer, size_t size);
 
 /**
- * @brief This starts Inquiry, the output data will be available via \ref btdrvGetEventInfo. Inquiry will automatically stop in 10.24 seconds.
+ * @brief SetAdapterProperty [12.0.0+]
+ * @param[in] type \ref BtdrvAdapterPropertyType
+ * @param[in] property \ref BtdrvAdapterProperty
+ */
+Result btdrvSetAdapterProperty(BtdrvAdapterPropertyType type, const BtdrvAdapterProperty *property);
+
+/**
+ * @brief StartInquiry [1.0.0-11.0.1] This starts Inquiry, the output data will be available via \ref btdrvGetEventInfo. Inquiry will automatically stop in 10.24 seconds.
  * @note This is used by btm-sysmodule.
  */
-Result btdrvStartInquiry(void);
+Result btdrvLegacyStartInquiry(void);
+
+/**
+ * @brief [12.0.0+] This starts Inquiry, the output data will be available via \ref btdrvGetEventInfo.
+ * @param[in] services Bitmask of allowed services. When -1 the original defaults from pre-12.0.0 are used.
+ * @param[in] duration Inquiry duration in nanoseconds.
+ * @note This is used by btm-sysmodule.
+ */
+Result btdrvStartInquiry(u32 services, s64 duration);
 
 /**
  * @brief This stops Inquiry which was started by \ref btdrvStartInquiry, if it's still active.
@@ -514,17 +542,17 @@ Result btdrvRespondToPinRequest(BtdrvAddress addr, const BtdrvPinCode *pin_code)
  * @note This is used by btm-sysmodule.
  * @param[in] addr \ref BtdrvAddress
  * @param[in] variant BluetoothSspVariant
- * @param[in] flag Whether the request is accepted.
- * @param[in] unk Unknown
+ * @param[in] accept Whether the request is accepted.
+ * @param[in] passkey Passkey.
  */
-Result btdrvRespondToSspRequest(BtdrvAddress addr, u8 variant, bool flag, u32 unk);
+Result btdrvRespondToSspRequest(BtdrvAddress addr, u8 variant, bool accept, u32 passkey);
 
 /**
  * @brief GetEventInfo
  * @note This is used by btm-sysmodule.
  * @param[out] buffer Output buffer, see \ref BtdrvEventInfo.
  * @param[in] size Output buffer size.
- * @oaram[out] type Output BtdrvEventType.
+ * @param[out] type Output BtdrvEventType.
  */
 Result btdrvGetEventInfo(void* buffer, size_t size, BtdrvEventType *type);
 
