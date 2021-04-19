@@ -484,7 +484,7 @@ Result btdrvSetAdapterProperty(BtdrvAdapterPropertyType type, const BtdrvAdapter
 Result btdrvLegacyStartInquiry(void);
 
 /**
- * @brief [12.0.0+] This starts Inquiry, the output data will be available via \ref btdrvGetEventInfo.
+ * @brief StartInquiry [12.0.0+] This starts Inquiry, the output data will be available via \ref btdrvGetEventInfo.
  * @param[in] services Bitmask of allowed services. When -1 the original defaults from pre-12.0.0 are used.
  * @param[in] duration Inquiry duration in nanoseconds.
  * @note This is used by btm-sysmodule.

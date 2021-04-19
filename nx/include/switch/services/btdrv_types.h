@@ -7,7 +7,7 @@
 #pragma once
 #include "../types.h"
 
-/// BluetoothPropertyType
+/// BluetoothPropertyType [1.0.0-11.0.1]
 typedef enum {
     BtdrvBluetoothPropertyType_Name              =     1,    ///< Name. String, max length 0xF8 excluding NUL-terminator.
     BtdrvBluetoothPropertyType_Address           =     2,    ///< \ref BtdrvAddress
@@ -15,6 +15,14 @@ typedef enum {
     BtdrvBluetoothPropertyType_ClassOfDevice     =     5,    ///< 3-bytes, Class of Device.
     BtdrvBluetoothPropertyType_FeatureSet        =     6,    ///< 1-byte, FeatureSet. The default is value 0x68.
 } BtdrvBluetoothPropertyType;
+
+/// AdapterPropertyType [12.0.0+]
+typedef enum {
+    BtdrvAdapterPropertyType_Address             =     0,    ///< \ref BtdrvAddress
+    BtdrvAdapterPropertyType_Name                =     1,    ///< Name. String, max length 0xF8 excluding NUL-terminator.
+    BtdrvAdapterPropertyType_ClassOfDevice       =     2,    ///< 3-bytes, Class of Device.
+    BtdrvAdapterPropertyType_Unknown3            =     3,    ///< Only available with \ref btdrvSetAdapterProperty. Unknown, \ref BtdrvAddress.
+} BtdrvAdapterPropertyType;
 
 /// EventType
 typedef enum {
@@ -140,13 +148,27 @@ typedef struct {
     u8 class_of_device[0x3];   ///< ClassOfDevice
 } BtdrvClassOfDevice;
 
-/// AdapterProperty
+/// AdapterProperty [1.0.0-11.0.1]
 typedef struct {
     BtdrvAddress addr;                      ///< Same as the data for ::BtdrvBluetoothPropertyType_Address.
     BtdrvClassOfDevice class_of_device;     ///< Same as the data for ::BtdrvBluetoothPropertyType_ClassOfDevice.
     char name[0xF9];                        ///< Same as the data for ::BtdrvBluetoothPropertyType_Name (last byte is not initialized).
     u8 feature_set;                         ///< Set to hard-coded value 0x68 (same as the data for ::BtdrvBluetoothPropertyType_FeatureSet).
+} BtdrvAdapterPropertyOld;
+
+/// AdapterProperty [12.0.0+]
+typedef struct {
+    u8 type;                                ///< \ref BtdrvAdapterPropertyType
+    u8 size;                                ///< Data size.
+    u8 data[0x100];                         ///< Data (Above size), as specified by the type.
 } BtdrvAdapterProperty;
+
+/// AdapterPropertySet [12.0.0+]
+typedef struct {
+    BtdrvAddress addr;                      ///< Same as the data for ::BtdrvBluetoothPropertyType_Address.
+    BtdrvClassOfDevice class_of_device;     ///< Same as the data for ::BtdrvBluetoothPropertyType_ClassOfDevice.
+    char name[0xF9];                        ///< Same as the data for ::BtdrvBluetoothPropertyType_Name (last byte is not initialized).
+} BtdrvAdapterPropertySet;
 
 /// BluetoothPinCode [1.0.0-11.0.1]
 typedef struct {
