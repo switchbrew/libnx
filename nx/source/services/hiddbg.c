@@ -661,8 +661,8 @@ static Result _hiddbgSetHdlsStateV7(HiddbgHdlsHandle handle, const HiddbgHdlsSta
 
 static Result _hiddbgSetHdlsStateV9(HiddbgHdlsHandle handle, const HiddbgHdlsState *state) {
     struct {
-        HiddbgHdlsStateV9 state;
         HiddbgHdlsHandle handle;
+        HiddbgHdlsStateV9 state;
     } in = { .handle = handle };
     _hiddbgConvertHiddbgHdlsStateToV9(&in.state, state);
 
