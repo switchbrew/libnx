@@ -83,15 +83,21 @@ static Result _pglCmdInU64(u64 inval, u32 cmd_id) {
 }
 
 Result pglLaunchProgram(u64 *out_pid, const NcmProgramLocation *loc, u32 pm_launch_flags, u8 pgl_launch_flags) {
-    const struct {
-        u8 pgl_flags;
-        u32 pm_flags;
-        NcmProgramLocation loc;
-    } in = { pgl_launch_flags, pm_launch_flags, *loc };
-
     if (_pglShouldUseTipc()) {
+        const struct {
+            NcmProgramLocation loc;
+            u32 pm_flags;
+            u8 pgl_flags;
+        } in = { *loc, pm_launch_flags, pgl_launch_flags };
+
         return tipcDispatchInOut(&g_pglSrv.tipc, 0, in, *out_pid);
     } else {
+        const struct {
+            u8 pgl_flags;
+            u32 pm_flags;
+            NcmProgramLocation loc;
+        } in = { pgl_launch_flags, pm_launch_flags, *loc };
+
         return serviceDispatchInOut(&g_pglSrv.cmif, 0, in, *out_pid);
     }
 }
