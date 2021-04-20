@@ -125,7 +125,7 @@ NX_CONSTEXPR void _tipcRequestProcessBuffer(HipcRequest* req, const SfBuffer* bu
 }
 
 NX_INLINE void* tipcMakeRequest(
-    const TipcService *s, u32 request_id, u32 data_size, bool send_pid,
+    u32 request_id, u32 data_size, bool send_pid,
     const SfBufferAttrs buffer_attrs, const SfBuffer* buffers,
     u32 num_handles, const Handle* handles) {
     TipcRequestFormat fmt = {};
@@ -197,7 +197,7 @@ NX_CONSTEXPR void _tipcResponseGetHandle(HipcResponse* res, SfOutHandleAttr type
 }
 
 NX_INLINE Result tipcParseResponse(
-    const TipcService* s, u32 out_size, void** out_data,
+    u32 out_size, void** out_data,
     u32 num_out_objects, TipcService* out_objects,
     const SfOutHandleAttrs out_handle_attrs, Handle* out_handles
 ) {
@@ -234,10 +234,7 @@ NX_INLINE Result tipcDispatchImpl(
     TipcDispatchParams disp
 )
 {
-    // Make a copy of the service struct, so that the compiler can assume that it won't be modified by function calls.
-    const TipcService srv = *s;
-
-    void* in = tipcMakeRequest(&srv, request_id,
+    void* in = tipcMakeRequest(request_id,
         in_data_size, disp.in_send_pid,
         disp.buffer_attrs, disp.buffers,
         disp.in_num_handles, disp.in_handles);
@@ -248,8 +245,7 @@ NX_INLINE Result tipcDispatchImpl(
     Result rc = svcSendSyncRequest(s->session);
     if (R_SUCCEEDED(rc)) {
         void* out = NULL;
-        rc = tipcParseResponse(&srv,
-            out_data_size, &out,
+        rc = tipcParseResponse(out_data_size, &out,
             disp.out_num_objects, disp.out_objects,
             disp.out_handle_attrs, disp.out_handles);
 
