@@ -62,6 +62,7 @@ struct AudioDriverWaveBuf {
 bool audrvVoiceInit(AudioDriver* d, int id, int num_channels, PcmFormat format, int sample_rate);
 void audrvVoiceDrop(AudioDriver* d, int id);
 void audrvVoiceStop(AudioDriver* d, int id);
+bool audrvVoiceIsPaused(AudioDriver* d, int id);
 bool audrvVoiceIsPlaying(AudioDriver* d, int id);
 bool audrvVoiceAddWaveBuf(AudioDriver* d, int id, AudioDriverWaveBuf* wavebuf);
 u32 audrvVoiceGetWaveBufSeq(AudioDriver* d, int id);
