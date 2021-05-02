@@ -32,6 +32,10 @@ static VirtmemReservation *g_Reservations;
 
 static bool g_IsLegacyKernel;
 
+uintptr_t __attribute__((weak)) __libnx_virtmem_rng(void) {
+    return (uintptr_t)randomGet64();
+}
+
 static Result _memregionInitWithInfo(MemRegion* r, InfoType id0_addr, InfoType id0_sz) {
     u64 base;
     Result rc = svcGetInfo(&base, id0_addr, CUR_PROCESS_HANDLE, 0);
@@ -116,7 +120,7 @@ static void* _memregionFindRandom(MemRegion* r, size_t size, size_t guard_size) 
         // Calculate a random memory range outside reserved areas.
         uintptr_t cur_addr;
         for (;;) {
-            uintptr_t page_offset = (uintptr_t)randomGet64() % (aslr_max_page_offset + 1);
+            uintptr_t page_offset = __libnx_virtmem_rng() % (aslr_max_page_offset + 1);
             cur_addr = (uintptr_t)r->start + (page_offset << 12);
 
             // Avoid mapping within the alias region.
