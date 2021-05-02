@@ -20,7 +20,7 @@ static char* g_argv_empty = NULL;
 
 void nxlinkSetup(void);
 
-void argvSetup(void)
+void __attribute__((weak)) argvSetup(void)
 {
     Result rc=0;
     MemoryInfo meminfo;
