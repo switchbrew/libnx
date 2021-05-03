@@ -328,8 +328,8 @@ typedef enum {
 
 /// HidGestureAttribute
 typedef enum {
-    HidGestureAttribute_IsNewTouch            = BIT(0),    ///< IsNewTouch
-    HidGestureAttribute_IsDoubleTap           = BIT(1),    ///< IsDoubleTap
+    HidGestureAttribute_IsNewTouch            = BIT(4),    ///< IsNewTouch
+    HidGestureAttribute_IsDoubleTap           = BIT(8),    ///< IsDoubleTap
 } HidGestureAttribute;
 
 /// HidGestureDirection
@@ -1012,8 +1012,8 @@ typedef struct HidGestureState {
     float velocity_x;                                   ///< VelocityX
     float velocity_y;                                   ///< VelocityY
     u32 attributes;                                     ///< Bitfield of \ref HidGestureAttribute.
-    u32 scale;                                          ///< Scale
-    u32 rotation_angle;                                 ///< RotationAngle
+    float scale;                                        ///< Scale
+    float rotation_angle;                               ///< RotationAngle
     s32 point_count;                                    ///< Number of entries in the points array.
     HidGesturePoint points[4];                          ///< Array of \ref HidGesturePoint with the above count.
 } HidGestureState;
