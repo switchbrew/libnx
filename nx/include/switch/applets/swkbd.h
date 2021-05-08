@@ -210,8 +210,8 @@ typedef struct {
     u8 dicFlag;                      ///< Enables dictionary usage when non-zero (including the system dictionary).
     u8 unk_x1b;
     u32 keySetDisableBitmask;        ///< See SwkbdKeyDisableBitmask_*.
-    s32 unk_x20;
-    s32 unk_x24;
+    s32 stringLenMax;                ///< When non-negative and non-zero, specifies the max string length. When the input is too long, swkbd will stop accepting more input until text is deleted via the B button (Backspace).
+    s32 stringLenMin;                ///< When non-negative and non-zero, specifies the min string length. When the input is too short, swkbd will display an icon and disable the ok-button.
     u8 returnButtonFlag;             ///< Controls whether the Return button is enabled, for newlines input. 0 = disabled, non-zero = enabled.
     u8 unk_x29;                      ///< [10.0.0+] When value 1-2, \ref swkbdInlineAppear / \ref swkbdInlineAppearEx will set keytopAsFloating=0 and footerScalable=1.
     u8 unk_x2a;
@@ -804,6 +804,24 @@ void swkbdInlineAppearArgSetLeftButtonText(SwkbdAppearArg* arg, const char* str)
  * @param str UTF-8 input string.
  */
 void swkbdInlineAppearArgSetRightButtonText(SwkbdAppearArg* arg, const char* str);
+
+/**
+ * @brief Sets the stringLenMax for the specified SwkbdAppearArg, which was previously initialized with \ref swkbdInlineMakeAppearArg.
+ * @param arg \ref SwkbdAppearArg
+ * @param stringLenMax Max string length
+ */
+static inline void swkbdInlineAppearArgSetStringLenMax(SwkbdAppearArg* arg, s32 stringLenMax) {
+    arg->stringLenMax = stringLenMax;
+}
+
+/**
+ * @brief Sets the stringLenMin for the specified SwkbdAppearArg, which was previously initialized with \ref swkbdInlineMakeAppearArg.
+ * @param arg \ref SwkbdAppearArg
+ * @param stringLenMin Min string length
+ */
+static inline void swkbdInlineAppearArgSetStringLenMin(SwkbdAppearArg* arg, s32 stringLenMin) {
+    arg->stringLenMin = stringLenMin;
+}
 
 /**
  * @brief Sets the audio volume.
