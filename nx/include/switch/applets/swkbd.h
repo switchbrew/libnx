@@ -84,10 +84,10 @@ typedef enum {
 /// SwkbdInline State
 typedef enum {
     SwkbdState_Inactive       = 0x0,  ///< Default state from \ref swkbdInlineCreate, before a state is set by \ref swkbdInlineUpdate when a reply is received. Also indicates that the applet is no longer running.
-    SwkbdState_Initialized    = 0x1,  ///< Applet is initialized.
-    SwkbdState_Unknown2       = 0x2,
-    SwkbdState_TextAvailable  = 0x3,  ///< Text is available since a ChangedString* reply was received.
-    SwkbdState_Submitted      = 0x4,  ///< The user pressed the ok-button, submitting the text and closing the applet.
+    SwkbdState_Initialized    = 0x1,  ///< Applet is initialized but hidden.
+    SwkbdState_Appearing      = 0x2,  ///< Applet is appearing.
+    SwkbdState_Shown          = 0x3,  ///< Applet is fully shown and ready to accept text input.
+    SwkbdState_Disappearing   = 0x4,  ///< The user pressed the ok or cancel button, causing the applet to disappear.
     SwkbdState_Unknown5       = 0x5,
     SwkbdState_Unknown6       = 0x6,
 } SwkbdState;
