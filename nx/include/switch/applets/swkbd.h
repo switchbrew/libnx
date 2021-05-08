@@ -133,7 +133,7 @@ typedef struct {
     u16 guideText[514/2];
     u16 pad_x3aa;
     u32 stringLenMax;                ///< When non-zero, specifies the max string length. When the input is too long, swkbd will stop accepting more input until text is deleted via the B button (Backspace). See also \ref SwkbdTextDrawType.
-    u32 stringLenMaxExt;             ///< When non-zero, specifies the max string length. When the input is too long, swkbd will display an icon and disable the ok-button.
+    u32 stringLenMin;                ///< When non-zero, specifies the min string length. When the input is too short, swkbd will display an icon and disable the ok-button.
     u32 passwordFlag;                ///< Use password: 0 = disable, 1 = enable.
     SwkbdTextDrawType textDrawType;  ///< See \ref SwkbdTextDrawType.
     u16 returnButtonFlag;            ///< Controls whether the Return button is enabled, for newlines input. 0 = disabled, non-zero = enabled.
@@ -381,7 +381,7 @@ void swkbdConfigMakePresetUserName(SwkbdConfig* c);
 /**
  * @brief Clears the args in the SwkbdConfig struct and initializes it with the DownloadCode Preset.
  * @note Do not use this before \ref swkbdCreate.
- * @note Uses the following: swkbdConfigSetType() with \ref SwkbdType_Normal (\ref SwkbdType_QWERTY on [5.0.0+]), swkbdConfigSetKeySetDisableBitmask() with SwkbdKeyDisableBitmask_DownloadCode, swkbdConfigSetInitialCursorPos() with value 1, and swkbdConfigSetBlurBackground() with value 1. [5.0.0+]: swkbdConfigSetStringLenMax() with value 16, swkbdConfigSetStringLenMaxExt() with value 1, and swkbdConfigSetTextDrawType() with SwkbdTextDrawType_DownloadCode. Uses swkbdConfigSetTextGrouping() for [0-2] with: 0x3, 0x7, and 0xb.
+ * @note Uses the following: swkbdConfigSetType() with \ref SwkbdType_Normal (\ref SwkbdType_QWERTY on [5.0.0+]), swkbdConfigSetKeySetDisableBitmask() with SwkbdKeyDisableBitmask_DownloadCode, swkbdConfigSetInitialCursorPos() with value 1, and swkbdConfigSetBlurBackground() with value 1. [5.0.0+]: swkbdConfigSetStringLenMax() with value 16, swkbdConfigSetStringLenMin() with value 1, and swkbdConfigSetTextDrawType() with SwkbdTextDrawType_DownloadCode. Uses swkbdConfigSetTextGrouping() for [0-2] with: 0x3, 0x7, and 0xb.
  * @param c SwkbdConfig struct.
  */
 void swkbdConfigMakePresetDownloadCode(SwkbdConfig* c);
@@ -507,12 +507,12 @@ static inline void swkbdConfigSetStringLenMax(SwkbdConfig* c, u32 stringLenMax) 
 }
 
 /**
- * @brief Sets SwkbdArgCommon::stringLenMaxExt.
+ * @brief Sets SwkbdArgCommon::stringLenMin.
  * @param c SwkbdConfig struct.
- * @param stringLenMaxExt stringLenMaxExt
+ * @param stringLenMin stringLenMin
  */
-static inline void swkbdConfigSetStringLenMaxExt(SwkbdConfig* c, u32 stringLenMaxExt) {
-    c->arg.arg.arg.stringLenMaxExt = stringLenMaxExt;
+static inline void swkbdConfigSetStringLenMin(SwkbdConfig* c, u32 stringLenMin) {
+    c->arg.arg.arg.stringLenMin = stringLenMin;
 }
 
 /**

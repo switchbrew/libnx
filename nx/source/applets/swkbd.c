@@ -136,7 +136,7 @@ void swkbdConfigMakePresetDownloadCode(SwkbdConfig* c) {
         swkbdConfigSetType(c, SwkbdType_QWERTY);
 
         swkbdConfigSetStringLenMax(c, 16);
-        swkbdConfigSetStringLenMaxExt(c, 1);
+        swkbdConfigSetStringLenMin(c, 1);
         swkbdConfigSetTextDrawType(c, SwkbdTextDrawType_DownloadCode);
     }
 
