@@ -136,7 +136,7 @@ void swkbdConfigMakePresetDownloadCode(SwkbdConfig* c) {
         swkbdConfigSetType(c, SwkbdType_QWERTY);
 
         swkbdConfigSetStringLenMax(c, 16);
-        swkbdConfigSetStringLenMaxExt(c, 1);
+        swkbdConfigSetStringLenMin(c, 1);
         swkbdConfigSetTextDrawType(c, SwkbdTextDrawType_DownloadCode);
     }
 
@@ -393,8 +393,8 @@ Result swkbdInlineCreate(SwkbdInline* s) {
     s->calcArg.appearArg.type = SwkbdType_QWERTY;
     s->calcArg.unk_x6 = 1;
     s->calcArg.unk_x7 = 1;
-    s->calcArg.appearArg.unk_x20 = -1;
-    s->calcArg.appearArg.unk_x24 = -1;
+    s->calcArg.appearArg.stringLenMax = -1;
+    s->calcArg.appearArg.stringLenMin = -1;
     s->calcArg.appearArg.unk_x30 = 1;
 
     s->calcArg.enableBackspace = 1;
@@ -896,8 +896,8 @@ void swkbdInlineDisappear(SwkbdInline* s) {
 void swkbdInlineMakeAppearArg(SwkbdAppearArg* arg, SwkbdType type) {
     memset(arg, 0, sizeof(SwkbdAppearArg));
 
-    arg->unk_x20 = -1;
-    arg->unk_x24 = -1;
+    arg->stringLenMax = -1;
+    arg->stringLenMin = -1;
     arg->unk_x30 = 1;
     arg->type = type;
 }

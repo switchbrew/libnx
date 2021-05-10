@@ -84,10 +84,10 @@ typedef enum {
 /// SwkbdInline State
 typedef enum {
     SwkbdState_Inactive       = 0x0,  ///< Default state from \ref swkbdInlineCreate, before a state is set by \ref swkbdInlineUpdate when a reply is received. Also indicates that the applet is no longer running.
-    SwkbdState_Initialized    = 0x1,  ///< Applet is initialized.
-    SwkbdState_Unknown2       = 0x2,
-    SwkbdState_TextAvailable  = 0x3,  ///< Text is available since a ChangedString* reply was received.
-    SwkbdState_Submitted      = 0x4,  ///< The user pressed the ok-button, submitting the text and closing the applet.
+    SwkbdState_Initialized    = 0x1,  ///< Applet is initialized but hidden.
+    SwkbdState_Appearing      = 0x2,  ///< Applet is appearing.
+    SwkbdState_Shown          = 0x3,  ///< Applet is fully shown and ready to accept text input.
+    SwkbdState_Disappearing   = 0x4,  ///< The user pressed the ok or cancel button, causing the applet to disappear.
     SwkbdState_Unknown5       = 0x5,
     SwkbdState_Unknown6       = 0x6,
 } SwkbdState;
@@ -133,7 +133,7 @@ typedef struct {
     u16 guideText[514/2];
     u16 pad_x3aa;
     u32 stringLenMax;                ///< When non-zero, specifies the max string length. When the input is too long, swkbd will stop accepting more input until text is deleted via the B button (Backspace). See also \ref SwkbdTextDrawType.
-    u32 stringLenMaxExt;             ///< When non-zero, specifies the max string length. When the input is too long, swkbd will display an icon and disable the ok-button.
+    u32 stringLenMin;                ///< When non-zero, specifies the min string length. When the input is too short, swkbd will display an icon and disable the ok-button.
     u32 passwordFlag;                ///< Use password: 0 = disable, 1 = enable.
     SwkbdTextDrawType textDrawType;  ///< See \ref SwkbdTextDrawType.
     u16 returnButtonFlag;            ///< Controls whether the Return button is enabled, for newlines input. 0 = disabled, non-zero = enabled.
@@ -210,8 +210,8 @@ typedef struct {
     u8 dicFlag;                      ///< Enables dictionary usage when non-zero (including the system dictionary).
     u8 unk_x1b;
     u32 keySetDisableBitmask;        ///< See SwkbdKeyDisableBitmask_*.
-    s32 unk_x20;
-    s32 unk_x24;
+    s32 stringLenMax;                ///< When non-negative and non-zero, specifies the max string length. When the input is too long, swkbd will stop accepting more input until text is deleted via the B button (Backspace).
+    s32 stringLenMin;                ///< When non-negative and non-zero, specifies the min string length. When the input is too short, swkbd will display an icon and disable the ok-button.
     u8 returnButtonFlag;             ///< Controls whether the Return button is enabled, for newlines input. 0 = disabled, non-zero = enabled.
     u8 unk_x29;                      ///< [10.0.0+] When value 1-2, \ref swkbdInlineAppear / \ref swkbdInlineAppearEx will set keytopAsFloating=0 and footerScalable=1.
     u8 unk_x2a;
@@ -381,7 +381,7 @@ void swkbdConfigMakePresetUserName(SwkbdConfig* c);
 /**
  * @brief Clears the args in the SwkbdConfig struct and initializes it with the DownloadCode Preset.
  * @note Do not use this before \ref swkbdCreate.
- * @note Uses the following: swkbdConfigSetType() with \ref SwkbdType_Normal (\ref SwkbdType_QWERTY on [5.0.0+]), swkbdConfigSetKeySetDisableBitmask() with SwkbdKeyDisableBitmask_DownloadCode, swkbdConfigSetInitialCursorPos() with value 1, and swkbdConfigSetBlurBackground() with value 1. [5.0.0+]: swkbdConfigSetStringLenMax() with value 16, swkbdConfigSetStringLenMaxExt() with value 1, and swkbdConfigSetTextDrawType() with SwkbdTextDrawType_DownloadCode. Uses swkbdConfigSetTextGrouping() for [0-2] with: 0x3, 0x7, and 0xb.
+ * @note Uses the following: swkbdConfigSetType() with \ref SwkbdType_Normal (\ref SwkbdType_QWERTY on [5.0.0+]), swkbdConfigSetKeySetDisableBitmask() with SwkbdKeyDisableBitmask_DownloadCode, swkbdConfigSetInitialCursorPos() with value 1, and swkbdConfigSetBlurBackground() with value 1. [5.0.0+]: swkbdConfigSetStringLenMax() with value 16, swkbdConfigSetStringLenMin() with value 1, and swkbdConfigSetTextDrawType() with SwkbdTextDrawType_DownloadCode. Uses swkbdConfigSetTextGrouping() for [0-2] with: 0x3, 0x7, and 0xb.
  * @param c SwkbdConfig struct.
  */
 void swkbdConfigMakePresetDownloadCode(SwkbdConfig* c);
@@ -507,12 +507,12 @@ static inline void swkbdConfigSetStringLenMax(SwkbdConfig* c, u32 stringLenMax) 
 }
 
 /**
- * @brief Sets SwkbdArgCommon::stringLenMaxExt.
+ * @brief Sets SwkbdArgCommon::stringLenMin.
  * @param c SwkbdConfig struct.
- * @param stringLenMaxExt stringLenMaxExt
+ * @param stringLenMin stringLenMin
  */
-static inline void swkbdConfigSetStringLenMaxExt(SwkbdConfig* c, u32 stringLenMaxExt) {
-    c->arg.arg.arg.stringLenMaxExt = stringLenMaxExt;
+static inline void swkbdConfigSetStringLenMin(SwkbdConfig* c, u32 stringLenMin) {
+    c->arg.arg.arg.stringLenMin = stringLenMin;
 }
 
 /**
@@ -804,6 +804,24 @@ void swkbdInlineAppearArgSetLeftButtonText(SwkbdAppearArg* arg, const char* str)
  * @param str UTF-8 input string.
  */
 void swkbdInlineAppearArgSetRightButtonText(SwkbdAppearArg* arg, const char* str);
+
+/**
+ * @brief Sets the stringLenMax for the specified SwkbdAppearArg, which was previously initialized with \ref swkbdInlineMakeAppearArg.
+ * @param arg \ref SwkbdAppearArg
+ * @param stringLenMax Max string length
+ */
+static inline void swkbdInlineAppearArgSetStringLenMax(SwkbdAppearArg* arg, s32 stringLenMax) {
+    arg->stringLenMax = stringLenMax;
+}
+
+/**
+ * @brief Sets the stringLenMin for the specified SwkbdAppearArg, which was previously initialized with \ref swkbdInlineMakeAppearArg.
+ * @param arg \ref SwkbdAppearArg
+ * @param stringLenMin Min string length
+ */
+static inline void swkbdInlineAppearArgSetStringLenMin(SwkbdAppearArg* arg, s32 stringLenMin) {
+    arg->stringLenMin = stringLenMin;
+}
 
 /**
  * @brief Sets the audio volume.
