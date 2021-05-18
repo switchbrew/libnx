@@ -90,11 +90,18 @@ typedef struct {
         struct {
             union {
                 struct {
+                    BtdrvAddress addr;                      ///< Device address.
+                    u8 pad[2];                              ///< Padding
+                    u32 status;                             ///< Status, always 0 except with ::BtdrvConnectionEventType_Status: 2 = ACL Link is now Resumed, 9 = connection failed (pairing/authentication failed, or opening the hid connection failed).
+                    u32 type;                               ///< \ref BtdrvConnectionEventType
+                } v1;                                       ///< [1.0.0-8.1.1]
+
+                struct {
                     u32 status;                             ///< Status, always 0 except with ::BtdrvConnectionEventType_Status: 2 = ACL Link is now Resumed, 9 = connection failed (pairing/authentication failed, or opening the hid connection failed).
                     BtdrvAddress addr;                      ///< Device address.
                     u8 pad[2];                              ///< Padding
                     u32 type;                               ///< \ref BtdrvConnectionEventType
-                } v1;                                       ///< [1.0.0-11.0.1]
+                } v9;                                       ///< [9.0.0-11.0.1]
 
                 struct {
                     u32 type;                               ///< \ref BtdrvConnectionEventType
