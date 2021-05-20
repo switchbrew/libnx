@@ -7,7 +7,6 @@
 *.npdm
 *.pfs0
 Thumbs.db
-.*/
 debug/
 release/
 lib/

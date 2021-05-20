@@ -1,0 +1,21 @@
+name: Build libnx
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+
+jobs:
+  build:
+    name: Test build
+    runs-on: ubuntu-latest
+    container:
+      image: 'devkitpro/devkita64'
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+
+      - name: build
+        run: make -C nx
