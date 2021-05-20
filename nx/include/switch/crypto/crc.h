@@ -24,11 +24,12 @@ do { \
     } \
 } while (0)
 
-/// Calculate a CRC32 over data.
-static inline u32 crc32Calculate(const void *src, size_t size) {
+/// Calculate a CRC32 over data using a seed.
+/// Can be used to calculate a CRC32 in chunks using an initial seed of zero for the first chunk.
+static inline u32 crc32CalculateWithSeed(u32 seed, const void *src, size_t size) {
     const u8 *src_u8 = (const u8 *)src;
 
-    u32 crc = 0xFFFFFFFF;
+    u32 crc = ~seed;
     s64 len = size;
 
     _CRC_ALIGN(u8,  b);
@@ -44,14 +45,20 @@ static inline u32 crc32Calculate(const void *src, size_t size) {
     _CRC_REMAINDER(u16, h);
     _CRC_REMAINDER(u8,  b);
 
-    return crc ^ 0xFFFFFFFF;
+    return ~crc;
 }
 
-/// Calculate a CRC32C over data.
-static inline u32 crc32cCalculate(const void *src, size_t size) {
+/// Calculate a CRC32 over data.
+static inline u32 crc32Calculate(const void *src, size_t size) {
+    return crc32CalculateWithSeed(0, src, size);
+}
+
+/// Calculate a CRC32C over data using a seed.
+/// Can be used to calculate a CRC32C in chunks using an initial seed of zero for the first chunk.
+static inline u32 crc32cCalculateWithSeed(u32 seed, const void *src, size_t size) {
     const u8 *src_u8 = (const u8 *)src;
 
-    u32 crc = 0xFFFFFFFF;
+    u32 crc = ~seed;
     s64 len = size;
 
     _CRC_ALIGN(u8,  cb);
@@ -67,7 +74,12 @@ static inline u32 crc32cCalculate(const void *src, size_t size) {
     _CRC_REMAINDER(u16, ch);
     _CRC_REMAINDER(u8,  cb);
 
-    return crc ^ 0xFFFFFFFF;
+    return ~crc;
+}
+
+/// Calculate a CRC32C over data.
+static inline u32 crc32cCalculate(const void *src, size_t size) {
+    return crc32cCalculateWithSeed(0, src, size);
 }
 
 #undef _CRC_REMAINDER
