@@ -125,7 +125,6 @@ typedef enum {
 	debugDevice_NULL,    ///< Swallows prints to stderr
 	debugDevice_SVC,     ///< Outputs stderr debug statements using svcOutputDebugString, which can then be captured by interactive debuggers
 	debugDevice_CONSOLE, ///< Directs stderr debug statements to Switch console window
-	debugDevice_3DMOO = debugDevice_SVC,
 } debugDevice;
 
 /**
