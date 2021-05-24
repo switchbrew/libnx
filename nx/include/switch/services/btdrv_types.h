@@ -51,8 +51,8 @@ typedef enum {
 
 /// BtdrvInquiryStatus 
 typedef enum {
-    BtdrvInquiryStatus_Stopped                   =     0,    ///< Inquiry started.
-    BtdrvInquiryStatus_Started                   =     1,    ///< Inquiry stopped.
+    BtdrvInquiryStatus_Stopped                   =     0,    ///< Inquiry stopped.
+    BtdrvInquiryStatus_Started                   =     1,    ///< Inquiry started.
 } BtdrvInquiryStatus;
 
 /// ConnectionEventType
@@ -104,6 +104,7 @@ typedef enum {
     ///< BtdrvHidConnectionStatus_* should be used on [12.0.0+]
     BtdrvHidConnectionStatus_Closed      =    0,
     BtdrvHidConnectionStatus_Opened      =    1,
+    BtdrvHidConnectionStatus_Failed      =    2,
 
     ///< BtdrvHidConnectionStatusOld_* should be used on [1.0.0-11.0.1]
     BtdrvHidConnectionStatusOld_Opened   =    0,
@@ -118,6 +119,7 @@ typedef enum {
     BtdrvFatalReason_CommandTimeout         =    2,    ///< HCI command timeout.
     BtdrvFatalReason_HardwareError          =    3,    ///< HCI event HCI_Hardware_Error occurred.
     BtdrvFatalReason_Enable                 =    7,    ///< Only for \ref BtdrvEventInfo: triggered after enabling bluetooth, depending on the value of a global state field.
+    BtdrvFatalReason_Audio                  =    9,    ///< [12.0.0+] Only for \ref BtdrvEventInfo: triggered by Audio cmds in some cases.
 } BtdrvFatalReason;
 
 /// BleEventType
@@ -177,14 +179,14 @@ typedef struct {
 typedef struct {
     u8 type;                                ///< \ref BtdrvAdapterPropertyType
     u8 size;                                ///< Data size.
-    u8 data[0x100];                         ///< Data (Above size), as specified by the type.
+    u8 data[0x100];                         ///< Data (above size), as specified by the type.
 } BtdrvAdapterProperty;
 
 /// AdapterPropertySet [12.0.0+]
 typedef struct {
     BtdrvAddress addr;                      ///< Same as the data for ::BtdrvBluetoothPropertyType_Address.
     BtdrvClassOfDevice class_of_device;     ///< Same as the data for ::BtdrvBluetoothPropertyType_ClassOfDevice.
-    char name[0xF9];                        ///< Same as the data for ::BtdrvBluetoothPropertyType_Name (last byte is not initialized).
+    char name[0xF9];                        ///< Same as the data for ::BtdrvBluetoothPropertyType_Name.
 } BtdrvAdapterPropertySet;
 
 /// BluetoothPinCode [1.0.0-11.0.1]

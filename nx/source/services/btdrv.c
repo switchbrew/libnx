@@ -174,6 +174,9 @@ Result btdrvFinalizeBluetooth(void) {
 }
 
 Result btdrvLegacyGetAdapterProperties(BtdrvAdapterPropertyOld *properties) {
+    if (hosversionAtLeast(12,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     return serviceDispatch(&g_btdrvSrv, 5,
         .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_Out | SfBufferAttr_FixedSize },
         .buffers = { { properties, sizeof(*properties) } },
@@ -181,6 +184,9 @@ Result btdrvLegacyGetAdapterProperties(BtdrvAdapterPropertyOld *properties) {
 }
 
 Result btdrvGetAdapterProperties(BtdrvAdapterPropertySet *properties) {
+    if (hosversionBefore(12,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     return serviceDispatch(&g_btdrvSrv, 5,
         .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_Out | SfBufferAttr_FixedSize },
         .buffers = { { properties, sizeof(*properties) } },
@@ -188,6 +194,9 @@ Result btdrvGetAdapterProperties(BtdrvAdapterPropertySet *properties) {
 }
 
 Result btdrvLegacyGetAdapterProperty(BtdrvBluetoothPropertyType type, void* buffer, size_t size) {
+    if (hosversionAtLeast(12,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     u32 tmp=type;
     return serviceDispatchIn(&g_btdrvSrv, 6, tmp,
         .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_Out },
@@ -196,6 +205,9 @@ Result btdrvLegacyGetAdapterProperty(BtdrvBluetoothPropertyType type, void* buff
 }
 
 Result btdrvGetAdapterProperty(BtdrvAdapterPropertyType type, BtdrvAdapterProperty *property) {
+    if (hosversionBefore(12,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     u32 tmp=type;
     return serviceDispatchIn(&g_btdrvSrv, 6, tmp,
         .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_Out | SfBufferAttr_FixedSize },
@@ -204,6 +216,9 @@ Result btdrvGetAdapterProperty(BtdrvAdapterPropertyType type, BtdrvAdapterProper
 }
 
 Result btdrvLegacySetAdapterProperty(BtdrvBluetoothPropertyType type, const void* buffer, size_t size) {
+    if (hosversionAtLeast(12,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     u32 tmp=type;
     return serviceDispatchIn(&g_btdrvSrv, 7, tmp,
         .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_In },
@@ -212,6 +227,9 @@ Result btdrvLegacySetAdapterProperty(BtdrvBluetoothPropertyType type, const void
 }
 
 Result btdrvSetAdapterProperty(BtdrvAdapterPropertyType type, const BtdrvAdapterProperty *property) {
+    if (hosversionBefore(12,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     u32 tmp=type;
     return serviceDispatchIn(&g_btdrvSrv, 7, tmp,
         .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_In | SfBufferAttr_FixedSize },
@@ -220,10 +238,16 @@ Result btdrvSetAdapterProperty(BtdrvAdapterPropertyType type, const BtdrvAdapter
 }
 
 Result btdrvLegacyStartInquiry(void) {
+    if (hosversionAtLeast(12,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     return _btdrvCmdNoIO(8);
 }
 
 Result btdrvStartInquiry(u32 services, s64 duration) {
+    if (hosversionBefore(12,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     const struct {
         u32 services;
         s64 duration;
@@ -500,12 +524,13 @@ Result btdrvGetHidReportEventInfo(void* buffer, size_t size, BtdrvHidEventType *
             *type = BtdrvHidEventType_Data;
             return 0;
         }
-        if (*type == BtdrvHidEventType_GetReport) {
+        bool is_old = hosversionBefore(12,0,0);
+        if ((is_old && *type == BtdrvHidEventTypeOld_GetReport) || (!is_old && *type == BtdrvHidEventType_GetReport)) {
             if (hosversionBefore(9,0,0)) memcpy(info->get_report.v1.rawdata, data_ptr->data.get_report.v1.rawdata, sizeof(info->get_report.v1.rawdata));
             else memcpy(info->get_report.v9.rawdata, data_ptr->data.get_report.v9.rawdata, sizeof(info->get_report.v9.rawdata));
         }
-        else if (*type == BtdrvHidEventType_SetReport) memcpy(info->set_report.rawdata, data_ptr->data.set_report.rawdata, sizeof(info->set_report.rawdata));
-        else if (*type == BtdrvHidEventType_Data) {
+        else if ((is_old && *type == BtdrvHidEventTypeOld_SetReport) || (!is_old && *type == BtdrvHidEventType_SetReport)) memcpy(info->set_report.rawdata, data_ptr->data.set_report.rawdata, sizeof(info->set_report.rawdata));
+        else if ((is_old && *type == BtdrvHidEventTypeOld_Data) || (!is_old && *type == BtdrvHidEventType_Data)) {
             u16 tmpsize = hosversionBefore(9,0,0) ? data_ptr->data.data_report.v7.report.size : data_ptr->data.data_report.v9.report.size;
             if (size < 0xE) return MAKERESULT(Module_Libnx, LibnxError_BadInput);
             if (tmpsize > size-0xE) tmpsize = size-0xE;

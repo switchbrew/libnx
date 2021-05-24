@@ -18,7 +18,7 @@ typedef struct {
 
         struct {
             u32 val;                                        ///< Value
-        } type0;                                            ///< ::BtdrvEventType_Unknown0
+        } type0;                                            ///< ::BtdrvEventTypeOld_Unknown0
 
         struct {
             union {
@@ -54,7 +54,7 @@ typedef struct {
                 struct {
                     u8 status;                              ///< \ref BtdrvInquiryStatus
                     u8 pad[3];                              ///< Padding
-                    u32 service_mask;                       ///< Services value from \ref btdrvStartInquiry when starting, otherwise this is value 0
+                    u32 service_mask;                       ///< Services value from \ref btdrvStartInquiry when starting, otherwise this is value 0.
                 } v12;                                      ///< [12.0.0+]
             };
         } inquiry_status;                                   ///< ::BtdrvEventType_InquiryStatus
@@ -80,7 +80,7 @@ typedef struct {
                     BtdrvAddress addr;                      ///< Device address.
                     char name[0xF9];                        ///< Device name, NUL-terminated string.
                     BtdrvClassOfDevice class_of_device;     ///< Class of Device.
-                    u8 flag;                                ///< bool flag for Just Works. With SSP passkey notification this is always 0
+                    u8 flag;                                ///< bool flag for Just Works. With SSP passkey notification this is always 0.
                     u8 pad;                                 ///< Padding
                     s32 passkey;                            ///< Passkey
                 } v12;                                      ///< [12.0.0+]
@@ -145,18 +145,9 @@ typedef struct {
         u8 data[0x480];                                 ///< Raw data.
 
         struct {
-            union {
-                struct {
-                    BtdrvAddress addr;                  ///< Device address.
-                    u8 pad[2];                          ///< Padding
-                    BtdrvHidConnectionStatus status;    ///< \ref BtdrvHidConnectionStatus
-                } v1;                                   ///< [1.0.0-11.0.1]
-
-                struct {
-                    BtdrvHidConnectionStatus status;    ///< \ref BtdrvHidConnectionStatus
-                    BtdrvAddress addr;                  ///< Device address.
-                } v12;                                  ///< [12.0.0+]
-            };
+            BtdrvAddress addr;                          ///< Device address.
+            u8 pad[2];                                  ///< Padding
+            BtdrvHidConnectionStatus status;            ///< \ref BtdrvHidConnectionStatus
         } connection;                                   ///< ::BtdrvHidEventType_Connection
 
         struct {
@@ -446,7 +437,7 @@ Result btdrvFinalizeBluetooth(void);
 
 /**
  * @brief GetAdapterProperties [1.0.0-11.0.1]
- * @param[out] properties \ref BtdrvAdapterProperty
+ * @param[out] properties \ref BtdrvAdapterPropertyOld
  */
 Result btdrvLegacyGetAdapterProperties(BtdrvAdapterPropertyOld *properties);
 
@@ -487,14 +478,14 @@ Result btdrvLegacySetAdapterProperty(BtdrvBluetoothPropertyType type, const void
 Result btdrvSetAdapterProperty(BtdrvAdapterPropertyType type, const BtdrvAdapterProperty *property);
 
 /**
- * @brief StartInquiry [1.0.0-11.0.1] This starts Inquiry, the output data will be available via \ref btdrvGetEventInfo. Inquiry will automatically stop in 10.24 seconds.
+ * @brief StartInquiry [1.0.0-11.0.1]. This starts Inquiry, the output data will be available via \ref btdrvGetEventInfo. Inquiry will automatically stop in 10.24 seconds.
  * @note This is used by btm-sysmodule.
  */
 Result btdrvLegacyStartInquiry(void);
 
 /**
- * @brief StartInquiry [12.0.0+] This starts Inquiry, the output data will be available via \ref btdrvGetEventInfo.
- * @param[in] services Bitmask of allowed services. When -1 the original defaults from pre-12.0.0 are used.
+ * @brief StartInquiry [12.0.0+]. This starts Inquiry, the output data will be available via \ref btdrvGetEventInfo.
+ * @param[in] services Bitfield of allowed services. When -1 the original defaults from pre-12.0.0 are used.
  * @param[in] duration Inquiry duration in nanoseconds.
  * @note This is used by btm-sysmodule.
  */
@@ -658,7 +649,7 @@ Result btdrvGetHidEventInfo(void* buffer, size_t size, BtdrvHidEventType *type);
 
 /**
  * @brief SetTsi
- * @note The response will be available via \ref btdrvGetHidEventInfo.
+ * @note The response will be available via \ref btdrvGetHidEventInfo ([12.0.0+] \ref btdrvGetEventInfo).
  * @note This is used by btm-sysmodule.
  * @param[in] addr \ref BtdrvAddress
  * @param[in] tsi Tsi: non-value-0xFF to Set, value 0xFF to Exit. See also \ref BtmTsiMode.
@@ -667,7 +658,7 @@ Result btdrvSetTsi(BtdrvAddress addr, u8 tsi);
 
 /**
  * @brief EnableBurstMode
- * @note The response will be available via \ref btdrvGetHidEventInfo.
+ * @note The response will be available via \ref btdrvGetHidEventInfo ([12.0.0+] \ref btdrvGetEventInfo).
  * @note This is used by btm-sysmodule.
  * @param[in] addr \ref BtdrvAddress
  * @param[in] flag Flag: true = Set, false = Exit.
@@ -676,7 +667,7 @@ Result btdrvEnableBurstMode(BtdrvAddress addr, bool flag);
 
 /**
  * @brief SetZeroRetransmission
- * @note The response will be available via \ref btdrvGetHidEventInfo.
+ * @note The response will be available via \ref btdrvGetHidEventInfo ([12.0.0+] \ref btdrvGetEventInfo).
  * @note This is used by btm-sysmodule.
  * @param[in] addr \ref BtdrvAddress
  * @param[in] report_ids Input buffer containing an array of u8s.
@@ -756,7 +747,7 @@ Result btdrvGetLatestPlr(BtdrvPlrList *out);
 
 /**
  * @brief GetPendingConnections
- * @note The output data will be available via \ref btdrvGetHidEventInfo.
+ * @note The output data will be available via \ref btdrvGetHidEventInfo ([12.0.0+] \ref btdrvGetEventInfo).
  * @note This is used by btm-sysmodule.
  * @note Only available on [3.0.0+].
  */
@@ -1284,7 +1275,7 @@ Result btdrvSetBleScanParameter(u16 unk0, u16 unk1);
 
 /**
  * @brief MoveToSecondaryPiconet
- * @note The response will be available via \ref btdrvGetHidEventInfo.
+ * @note The response will be available via \ref btdrvGetHidEventInfo ([12.0.0+] \ref btdrvGetEventInfo).
  * @note Only available on [10.0.0+].
  * @param[in] addr \ref BtdrvAddress
  */
