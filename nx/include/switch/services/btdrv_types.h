@@ -1,31 +1,59 @@
 /**
  * @file btdrv_types.h
  * @brief Bluetooth driver (btdrv) service types (see btdrv.h for the rest).
- * @author yellows8
+ * @author yellows8, ndeadly
  * @copyright libnx Authors
  */
 #pragma once
 #include "../types.h"
 
-/// BluetoothPropertyType
+/// BluetoothPropertyType [1.0.0-11.0.1]
 typedef enum {
-    BtdrvBluetoothPropertyType_Name           =    1,    ///< Name. String, max length 0xF8 excluding NUL-terminator.
-    BtdrvBluetoothPropertyType_Address        =    2,    ///< \ref BtdrvAddress
-    BtdrvBluetoothPropertyType_Unknown3       =    3,    ///< Only available with \ref btdrvSetAdapterProperty. Unknown, \ref BtdrvAddress.
-    BtdrvBluetoothPropertyType_ClassOfDevice  =    5,    ///< 3-bytes, Class of Device.
-    BtdrvBluetoothPropertyType_FeatureSet     =    6,    ///< 1-byte, FeatureSet. The default is value 0x68.
+    BtdrvBluetoothPropertyType_Name              =     1,    ///< Name. String, max length 0xF8 excluding NUL-terminator.
+    BtdrvBluetoothPropertyType_Address           =     2,    ///< \ref BtdrvAddress
+    BtdrvBluetoothPropertyType_Unknown3          =     3,    ///< Only available with \ref btdrvSetAdapterProperty. Unknown, \ref BtdrvAddress.
+    BtdrvBluetoothPropertyType_ClassOfDevice     =     5,    ///< 3-bytes, Class of Device.
+    BtdrvBluetoothPropertyType_FeatureSet        =     6,    ///< 1-byte, FeatureSet. The default is value 0x68.
 } BtdrvBluetoothPropertyType;
+
+/// AdapterPropertyType [12.0.0+]
+typedef enum {
+    BtdrvAdapterPropertyType_Address             =     0,    ///< \ref BtdrvAddress
+    BtdrvAdapterPropertyType_Name                =     1,    ///< Name. String, max length 0xF8 excluding NUL-terminator.
+    BtdrvAdapterPropertyType_ClassOfDevice       =     2,    ///< 3-bytes, Class of Device.
+    BtdrvAdapterPropertyType_Unknown3            =     3,    ///< Only available with \ref btdrvSetAdapterProperty. Unknown, \ref BtdrvAddress.
+} BtdrvAdapterPropertyType;
 
 /// EventType
 typedef enum {
-    BtdrvEventType_Unknown0                 =    0,    ///< Unused
-    BtdrvEventType_InquiryDevice            =    3,    ///< Device found during Inquiry.
-    BtdrvEventType_InquiryStatus            =    4,    ///< Inquiry status changed.
-    BtdrvEventType_PairingPinCodeRequest    =    5,    ///< Pairing PIN code request.
-    BtdrvEventType_SspRequest               =    6,    ///< SSP confirm request / SSP passkey notification.
-    BtdrvEventType_Connection               =    7,    ///< Connection
-    BtdrvEventType_BluetoothCrash           =    13,   ///< BluetoothCrash
+    ///< BtdrvEventType_* should be used on [12.0.0+]
+    BtdrvEventType_InquiryDevice                 =     0,    ///< Device found during Inquiry.
+    BtdrvEventType_InquiryStatus                 =     1,    ///< Inquiry status changed.
+    BtdrvEventType_PairingPinCodeRequest         =     2,    ///< Pairing PIN code request.
+    BtdrvEventType_SspRequest                    =     3,    ///< SSP confirm request / SSP passkey notification.
+    BtdrvEventType_Connection                    =     4,    ///< Connection
+    BtdrvEventType_Tsi                           =     5,    ///< SetTsi (\ref btdrvSetTsi)
+    BtdrvEventType_BurstMode                     =     6,    ///< SetBurstMode (\ref btdrvEnableBurstMode)
+    BtdrvEventType_SetZeroRetransmission         =     7,    ///< \ref btdrvSetZeroRetransmission
+    BtdrvEventType_PendingConnections            =     8,    ///< \ref btdrvGetPendingConnections
+    BtdrvEventType_MoveToSecondaryPiconet        =     9,    ///< \ref btdrvMoveToSecondaryPiconet
+    BtdrvEventType_BluetoothCrash                =    10,    ///< BluetoothCrash
+
+    ///< BtdrvEventTypeOld_* should be used on [1.0.0-11.0.1]
+    BtdrvEventTypeOld_Unknown0                   =     0,    ///< Unused
+    BtdrvEventTypeOld_InquiryDevice              =     3,    ///< Device found during Inquiry.
+    BtdrvEventTypeOld_InquiryStatus              =     4,    ///< Inquiry status changed.
+    BtdrvEventTypeOld_PairingPinCodeRequest      =     5,    ///< Pairing PIN code request.
+    BtdrvEventTypeOld_SspRequest                 =     6,    ///< SSP confirm request / SSP passkey notification.
+    BtdrvEventTypeOld_Connection                 =     7,    ///< Connection
+    BtdrvEventTypeOld_BluetoothCrash             =    13,    ///< BluetoothCrash
 } BtdrvEventType;
+
+/// BtdrvInquiryStatus 
+typedef enum {
+    BtdrvInquiryStatus_Stopped                   =     0,    ///< Inquiry stopped.
+    BtdrvInquiryStatus_Started                   =     1,    ///< Inquiry started.
+} BtdrvInquiryStatus;
 
 /// ConnectionEventType
 typedef enum {
@@ -34,7 +62,7 @@ typedef enum {
     BtdrvConnectionEventType_Suspended           =     2,   ///< ACL Link is now Suspended.
 } BtdrvConnectionEventType;
 
-/// ExtEventType
+/// ExtEventType [1.0.0-11.0.1]
 typedef enum {
     BtdrvExtEventType_SetTsi                     =     0,   ///< SetTsi (\ref btdrvSetTsi)
     BtdrvExtEventType_ExitTsi                    =     1,   ///< ExitTsi (\ref btdrvSetTsi)
@@ -49,20 +77,40 @@ typedef enum {
 /// Bit0-1 directly control the HID bluetooth transaction report-type value.
 /// Bit2-3: these directly control the Parameter Reserved field for SetReport, for GetReport these control the Parameter Reserved and Size bits.
 typedef enum {
-    BtdrvBluetoothHhReportType_Other        =    0,    ///< Other
-    BtdrvBluetoothHhReportType_Input        =    1,    ///< Input
-    BtdrvBluetoothHhReportType_Output       =    2,    ///< Output
-    BtdrvBluetoothHhReportType_Feature      =    3,    ///< Feature
+    BtdrvBluetoothHhReportType_Other             =    0,    ///< Other
+    BtdrvBluetoothHhReportType_Input             =    1,    ///< Input
+    BtdrvBluetoothHhReportType_Output            =    2,    ///< Output
+    BtdrvBluetoothHhReportType_Feature           =    3,    ///< Feature
 } BtdrvBluetoothHhReportType;
 
 /// HidEventType
 typedef enum {
-    BtdrvHidEventType_Connection            =    0,    ///< Connection. Only used with \ref btdrvGetHidEventInfo.
-    BtdrvHidEventType_Data                  =    4,    ///< DATA report on the Interrupt channel.
-    BtdrvHidEventType_Ext                   =    7,    ///< Response for extensions. Only used with \ref btdrvGetHidEventInfo.
-    BtdrvHidEventType_SetReport             =    8,    ///< Response to SET_REPORT.
-    BtdrvHidEventType_GetReport             =    9,    ///< Response to GET_REPORT.
+    ///< BtdrvHidEventType_* should be used on [12.0.0+]
+    BtdrvHidEventType_Connection         =    0,    ///< Connection. Only used with \ref btdrvGetHidEventInfo.
+    BtdrvHidEventType_Data               =    1,    ///< DATA report on the Interrupt channel.
+    BtdrvHidEventType_SetReport          =    2,    ///< Response to SET_REPORT.
+    BtdrvHidEventType_GetReport          =    3,    ///< Response to GET_REPORT.
+
+    ///< BtdrvHidEventTypeOld_* should be used on [1.0.0-11.0.1]
+    BtdrvHidEventTypeOld_Connection      =    0,    ///< Connection. Only used with \ref btdrvGetHidEventInfo.
+    BtdrvHidEventTypeOld_Data            =    4,    ///< DATA report on the Interrupt channel.
+    BtdrvHidEventTypeOld_Ext             =    7,    ///< Response for extensions. Only used with \ref btdrvGetHidEventInfo.
+    BtdrvHidEventTypeOld_SetReport       =    8,    ///< Response to SET_REPORT.
+    BtdrvHidEventTypeOld_GetReport       =    9,    ///< Response to GET_REPORT.
 } BtdrvHidEventType;
+
+/// HidConnectionStatus [12.0.0+]
+typedef enum {
+    ///< BtdrvHidConnectionStatus_* should be used on [12.0.0+]
+    BtdrvHidConnectionStatus_Closed      =    0,
+    BtdrvHidConnectionStatus_Opened      =    1,
+    BtdrvHidConnectionStatus_Failed      =    2,
+
+    ///< BtdrvHidConnectionStatusOld_* should be used on [1.0.0-11.0.1]
+    BtdrvHidConnectionStatusOld_Opened   =    0,
+    BtdrvHidConnectionStatusOld_Closed   =    2,
+    BtdrvHidConnectionStatusOld_Failed   =    8,
+} BtdrvHidConnectionStatus;
 
 /// This determines the u16 data to write into a CircularBuffer.
 typedef enum {
@@ -71,7 +119,26 @@ typedef enum {
     BtdrvFatalReason_CommandTimeout         =    2,    ///< HCI command timeout.
     BtdrvFatalReason_HardwareError          =    3,    ///< HCI event HCI_Hardware_Error occurred.
     BtdrvFatalReason_Enable                 =    7,    ///< Only for \ref BtdrvEventInfo: triggered after enabling bluetooth, depending on the value of a global state field.
+    BtdrvFatalReason_Audio                  =    9,    ///< [12.0.0+] Only for \ref BtdrvEventInfo: triggered by Audio cmds in some cases.
 } BtdrvFatalReason;
+
+/// BleEventType
+typedef enum {
+    BtdrvBleEventType_Unknown0              =    0,    ///< Unknown.
+    BtdrvBleEventType_Unknown1              =    1,    ///< Unknown.
+    BtdrvBleEventType_Unknown2              =    2,    ///< Unknown.
+    BtdrvBleEventType_Unknown3              =    3,    ///< Unknown.
+    BtdrvBleEventType_Unknown4              =    4,    ///< Unknown.
+    BtdrvBleEventType_Unknown5              =    5,    ///< Unknown.
+    BtdrvBleEventType_Unknown6              =    6,    ///< Unknown.
+    BtdrvBleEventType_Unknown7              =    7,    ///< Unknown.
+    BtdrvBleEventType_Unknown8              =    8,    ///< Unknown.
+    BtdrvBleEventType_Unknown9              =    9,    ///< Unknown.
+    BtdrvBleEventType_Unknown10             =   10,    ///< Unknown.
+    BtdrvBleEventType_Unknown11             =   11,    ///< Unknown.
+    BtdrvBleEventType_Unknown12             =   12,    ///< Unknown.
+    BtdrvBleEventType_Unknown13             =   13,    ///< Unknown.
+} BtdrvBleEventType;
 
 /// AudioEventType
 typedef enum {
@@ -95,26 +162,51 @@ typedef struct {
     u8 address[0x6];           ///< Address
 } BtdrvAddress;
 
-/// AdapterProperty
+/// ClassOfDevice
 typedef struct {
-    BtdrvAddress addr;         ///< Same as the data for ::BtdrvBluetoothPropertyType_Address.
-    u8 class_of_device[0x3];   ///< Same as the data for ::BtdrvBluetoothPropertyType_ClassOfDevice.
-    char name[0xF9];           ///< Same as the data for ::BtdrvBluetoothPropertyType_Name (last byte is not initialized).
-    u8 feature_set;            ///< Set to hard-coded value 0x68 (same as the data for ::BtdrvBluetoothPropertyType_FeatureSet).
+    u8 class_of_device[0x3];   ///< ClassOfDevice
+} BtdrvClassOfDevice;
+
+/// AdapterProperty [1.0.0-11.0.1]
+typedef struct {
+    BtdrvAddress addr;                      ///< Same as the data for ::BtdrvBluetoothPropertyType_Address.
+    BtdrvClassOfDevice class_of_device;     ///< Same as the data for ::BtdrvBluetoothPropertyType_ClassOfDevice.
+    char name[0xF9];                        ///< Same as the data for ::BtdrvBluetoothPropertyType_Name (last byte is not initialized).
+    u8 feature_set;                         ///< Set to hard-coded value 0x68 (same as the data for ::BtdrvBluetoothPropertyType_FeatureSet).
+} BtdrvAdapterPropertyOld;
+
+/// AdapterProperty [12.0.0+]
+typedef struct {
+    u8 type;                                ///< \ref BtdrvAdapterPropertyType
+    u8 size;                                ///< Data size.
+    u8 data[0x100];                         ///< Data (above size), as specified by the type.
 } BtdrvAdapterProperty;
 
-/// BluetoothPinCode
+/// AdapterPropertySet [12.0.0+]
+typedef struct {
+    BtdrvAddress addr;                      ///< Same as the data for ::BtdrvBluetoothPropertyType_Address.
+    BtdrvClassOfDevice class_of_device;     ///< Same as the data for ::BtdrvBluetoothPropertyType_ClassOfDevice.
+    char name[0xF9];                        ///< Same as the data for ::BtdrvBluetoothPropertyType_Name.
+} BtdrvAdapterPropertySet;
+
+/// BluetoothPinCode [1.0.0-11.0.1]
 typedef struct {
     char code[0x10];           ///< PinCode
 } BtdrvBluetoothPinCode;
 
-/// HidData, for pre-9.0.0.
+/// BtdrvPinCode [12.0.0+]
+typedef struct {
+    char code[0x10];           ///< PinCode
+    u8 length;                 ///< Length 
+} BtdrvPinCode;
+
+/// HidData [1.0.0-8.1.1]
 typedef struct {
     u16 size;                  ///< Size of data.
     u8 data[0x280];            ///< Data
 } BtdrvHidData;
 
-/// HidReport, for [9.0.0+].
+/// HidReport [9.0.0+].
 typedef struct {
     u16 size;                  ///< Size of data.
     u8 data[0x2BC];            ///< Data
@@ -170,6 +262,12 @@ typedef struct {
     u8 unk_xC8;                                      ///< Unknown
     u8 pad5[3];                                      ///< Padding
 } BtdrvBleAdvertisePacketData;
+
+typedef struct {
+    u8 length;
+    u8 type;
+    u8 value[0x1d];
+} BtdrvBleAdvertisementData;
 
 /// BleAdvertiseFilter
 typedef struct {
