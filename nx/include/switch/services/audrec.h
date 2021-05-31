@@ -1,5 +1,5 @@
 /**
- * @file audctl.h
+ * @file audrec.h
  * @brief Audio Recorder IPC wrapper.
  * @author plutoo
  * @copyright libnx Authors
