@@ -1,3 +1,9 @@
+/**
+ * @file audctl.h
+ * @brief Audio Recorder IPC wrapper.
+ * @author plutoo
+ * @copyright libnx Authors
+ */
 #pragma once
 
 #ifdef __cplusplus

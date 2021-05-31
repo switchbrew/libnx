@@ -1,3 +1,9 @@
+/**
+ * @file audctl.h
+ * @brief Audio Control IPC wrapper.
+ * @author plutoo
+ * @copyright libnx Authors
+ */
 #pragma once
 
 #ifdef __cplusplus
@@ -51,14 +57,14 @@ Result audctlGetOutputModeSetting(AudioOutputMode* mode_out, AudioTarget target)
 Result audctlSetOutputModeSetting(AudioTarget target, AudioOutputMode mode);
 Result audctlSetOutputTarget(AudioTarget target);
 Result audctlSetInputTargetForceEnabled(bool enable);
-Result audctlSetHeadphoneOutputLevelMode(AudioHeadphoneOutputLevelMode mode);
-Result audctlGetHeadphoneOutputLevelMode(AudioHeadphoneOutputLevelMode* mode_out);
-Result audctlAcquireAudioVolumeUpdateEventForPlayReport(Event* event_out);
-Result audctlAcquireAudioOutputDeviceUpdateEventForPlayReport(Event* event_out);
-Result audctlGetAudioOutputTargetForPlayReport(AudioTarget* target_out);
-Result audctlNotifyHeadphoneVolumeWarningDisplayedEvent(void);
-Result audctlSetSystemOutputMasterVolume(float volume);
-Result audctlGetSystemOutputMasterVolume(float* volume_out);
+Result audctlSetHeadphoneOutputLevelMode(AudioHeadphoneOutputLevelMode mode); ///< [3.0.0+]
+Result audctlGetHeadphoneOutputLevelMode(AudioHeadphoneOutputLevelMode* mode_out); ///< [3.0.0+]
+Result audctlAcquireAudioVolumeUpdateEventForPlayReport(Event* event_out); ///< [3.0.0+]
+Result audctlAcquireAudioOutputDeviceUpdateEventForPlayReport(Event* event_out); ///< [3.0.0+]
+Result audctlGetAudioOutputTargetForPlayReport(AudioTarget* target_out); ///< [3.0.0+]
+Result audctlNotifyHeadphoneVolumeWarningDisplayedEvent(void); ///< [3.0.0+]
+Result audctlSetSystemOutputMasterVolume(float volume); ///< [4.0.0+]
+Result audctlGetSystemOutputMasterVolume(float* volume_out); ///< [4.0.0+]
 
 #ifdef __cplusplus
 };
