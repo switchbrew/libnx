@@ -26,9 +26,9 @@ typedef enum {
 } AudioForceMutePolicy;
 
 typedef enum {
-    HeadphoneOutputLevelMode_Normal = 0,
-    HeadphoneOutputLevelMode_HighPower = 1,
-} HeadphoneOutputLevelMode;
+    AudioHeadphoneOutputLevelMode_Normal = 0,
+    AudioHeadphoneOutputLevelMode_HighPower = 1,
+} AudioHeadphoneOutputLevelMode;
 
 Result audctlInitialize(void);
 void audctlExit(void);
@@ -51,8 +51,8 @@ Result audctlGetOutputModeSetting(AudioOutputMode* mode_out, AudioTarget target)
 Result audctlSetOutputModeSetting(AudioTarget target, AudioOutputMode mode);
 Result audctlSetOutputTarget(AudioTarget target);
 Result audctlSetInputTargetForceEnabled(bool enable);
-Result audctlSetHeadphoneOutputLevelMode(HeadphoneOutputLevelMode mode);
-Result audctlGetHeadphoneOutputLevelMode(HeadphoneOutputLevelMode* mode_out);
+Result audctlSetHeadphoneOutputLevelMode(AudioHeadphoneOutputLevelMode mode);
+Result audctlGetHeadphoneOutputLevelMode(AudioHeadphoneOutputLevelMode* mode_out);
 Result audctlAcquireAudioVolumeUpdateEventForPlayReport(Event* event_out);
 Result audctlAcquireAudioOutputDeviceUpdateEventForPlayReport(Event* event_out);
 Result audctlGetAudioOutputTargetForPlayReport(AudioTarget* target_out);

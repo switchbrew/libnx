@@ -228,7 +228,7 @@ Result audctlSetInputTargetForceEnabled(bool enable) {
     return serviceDispatchIn(&g_audctlSrv, 16, in);
 }
 
-Result audctlSetHeadphoneOutputLevelMode(HeadphoneOutputLevelMode mode) {
+Result audctlSetHeadphoneOutputLevelMode(AudioHeadphoneOutputLevelMode mode) {
     if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
@@ -239,7 +239,7 @@ Result audctlSetHeadphoneOutputLevelMode(HeadphoneOutputLevelMode mode) {
     return serviceDispatchIn(&g_audctlSrv, 17, in);
 }
 
-Result audctlGetHeadphoneOutputLevelMode(HeadphoneOutputLevelMode* mode_out) {
+Result audctlGetHeadphoneOutputLevelMode(AudioHeadphoneOutputLevelMode* mode_out) {
     if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
