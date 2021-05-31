@@ -6,9 +6,10 @@
  */
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "../types.h"
+#include "../audio/audio.h"
+#include "../sf/service.h"
+#include "../kernel/event.h"
 
 typedef enum {
     AudioTarget_Invalid = 0,
@@ -65,7 +66,3 @@ Result audctlGetAudioOutputTargetForPlayReport(AudioTarget* target_out); ///< [3
 Result audctlNotifyHeadphoneVolumeWarningDisplayedEvent(void); ///< [3.0.0+]
 Result audctlSetSystemOutputMasterVolume(float volume); ///< [4.0.0+]
 Result audctlGetSystemOutputMasterVolume(float* volume_out); ///< [4.0.0+]
-
-#ifdef __cplusplus
-};
-#endif

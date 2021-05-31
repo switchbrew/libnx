@@ -6,9 +6,10 @@
  */
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "../types.h"
+#include "../audio/audio.h"
+#include "../sf/service.h"
+#include "../kernel/event.h"
 
 typedef struct {
     u64 released_ns;
@@ -47,7 +48,3 @@ Result audrecRecorderRegisterBufferEvent(AudrecRecorder* recorder, Event* out_ev
 Result audrecRecorderAppendFinalOutputRecorderBuffer(AudrecRecorder* recorder, u64 buffer_client_ptr, FinalOutputRecorderBuffer* param);
 Result audrecRecorderGetReleasedFinalOutputRecorderBuffers(AudrecRecorder* recorder, u64* out_buffers, u64* inout_count, u64* out_released);
 void audrecRecorderClose(AudrecRecorder* recorder);
-
-#ifdef __cplusplus
-};
-#endif
