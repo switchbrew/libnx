@@ -152,9 +152,18 @@ typedef struct {
         u8 data[0x480];                                 ///< Raw data.
 
         struct {
-            BtdrvAddress addr;                          ///< Device address.
-            u8 pad[2];                                  ///< Padding
-            BtdrvHidConnectionStatus status;            ///< \ref BtdrvHidConnectionStatus
+            union {
+                struct {
+                    BtdrvAddress addr;                  ///< Device address.
+                    u8 pad[2];                          ///< Padding
+                    BtdrvHidConnectionStatus status;    ///< \ref BtdrvHidConnectionStatus
+                } v1;                                   ///< [1.0.0-11.0.1]
+
+                struct {
+                    BtdrvHidConnectionStatus status;    ///< \ref BtdrvHidConnectionStatus
+                    BtdrvAddress addr;                  ///< Device address.
+                } v12;                                  ///< [12.0.0+]
+            };
         } connection;                                   ///< ::BtdrvHidEventType_Connection
 
         struct {
