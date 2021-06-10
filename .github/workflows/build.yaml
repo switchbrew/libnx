@@ -4,7 +4,6 @@ on:
   push:
     branches:
      - master
-     - workflow-badge
   pull_request:
 
 jobs:
