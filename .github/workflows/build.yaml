@@ -2,7 +2,8 @@ name: Build libnx
 
 on:
   push:
-    branches: [ master ]
+    branches:
+     - master
   pull_request:
 
 jobs:
@@ -18,4 +19,4 @@ jobs:
           persist-credentials: false
 
       - name: build
-        run: make -C nx
+        run: make -C nx -j2
