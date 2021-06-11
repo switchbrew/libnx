@@ -7,6 +7,8 @@
 *.npdm
 *.pfs0
 Thumbs.db
+.*/
+!.github/
 debug/
 release/
 lib/
