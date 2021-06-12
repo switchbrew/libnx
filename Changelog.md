@@ -1,5 +1,50 @@
 # Changelog
 
+## Version 4.1.0
+
+#### system
+* **Removed old virtmem API**.
+* Added mechanism for overriding libnx's dynamic memory allocation behavior.
+  * This also added specific mechanisms for NV and BSD transfer memory handling.
+* Added hosversionIsAtmosphere, together with support for receiving this information through HBABI.
+* Added tipc (Tiny IPC) serialization support, introduced in [12.0.0+].
+  * Updated sm, sm:m and pgl wrappers for tipc support.
+* Fixed certain serialization bug in cmif handling code.
+* argv setup code can now be overriden.
+* virtmem RNG algorithm can now be overriden.
+* Added support for incremental CRC calculations.
+
+#### fs
+* Added fsOpenHostFileSystem(WithOption).
+
+#### input
+* Added HidKeyboardKey enum.
+* Added hidKeyboardStateGetKey helper function.
+* Added support for SleepButton AutoPilot in hiddbg.
+* Updated hdls service wrapper for [12.0.0+].
+* Corrected HidGestureAttribute, HidGestureState.
+* Corrected several swkbd enums and structs.
+* Minor Palma documentation improvements.
+
+#### other services
+* **Updated btdrv service wrapper for [12.0.0+]**, along with fixes and improved support.
+* Added audctl service wrapper.
+* Added audrec service wrapper.
+* Added avm service wrapper.
+* Added friends service wrapper (minimal functionality needed for retrieving the user's friend code).
+* Added htcs service wrapper.
+* Added mm:u service wrapper.
+* Added new nvioctlChannel_\* wrappers: Submit, GetSyncpt, GetModuleClockRate, MapCommandBuffer, UnmapCommandBuffer.
+* Added SetSysProductModel enum, now used by setsysGetProductModel.
+* Added audrvVoiceIsPaused.
+* Updated BtmDeviceCondition struct, including compatibility with all system versions.
+* Corrected pscmGetPmModule prototype.
+* Renamed ChargerType to PsmChargerType, corrected enum names.
+* Fixed bug in time offset handling.
+* Fixed bug in BSD (sockets) initialization.
+
+**Several issues were fixed, and usability and stability were improved.**
+
 ## Version 4.0.0
 
 #### system
