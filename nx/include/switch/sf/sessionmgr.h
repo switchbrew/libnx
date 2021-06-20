@@ -12,7 +12,7 @@ typedef struct SessionMgr
     u32 free_mask;
     Mutex mutex;
     CondVar condvar;
-    bool is_waiting;
+    u32 num_waiters;
 } SessionMgr;
 
 Result sessionmgrCreate(SessionMgr* mgr, Handle root_session, u32 num_sessions);
