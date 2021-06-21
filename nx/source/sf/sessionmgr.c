@@ -43,8 +43,9 @@ int sessionmgrAttachClient(SessionMgr* mgr) {
     for (;;) {
         slot = __builtin_ffs(mgr->free_mask)-1;
         if (slot >= 0) break;
-        mgr->is_waiting = true;
+        mgr->num_waiters ++;
         condvarWait(&mgr->condvar, &mgr->mutex);
+        mgr->num_waiters --;
     }
     mgr->free_mask &= ~(1U << slot);
     mutexUnlock(&mgr->mutex);
@@ -54,9 +55,7 @@ int sessionmgrAttachClient(SessionMgr* mgr) {
 void sessionmgrDetachClient(SessionMgr* mgr, int slot) {
     mutexLock(&mgr->mutex);
     mgr->free_mask |= 1U << slot;
-    if (mgr->is_waiting) {
-        mgr->is_waiting = false;
+    if (mgr->num_waiters)
         condvarWakeOne(&mgr->condvar);
-    }
     mutexUnlock(&mgr->mutex);
 }
