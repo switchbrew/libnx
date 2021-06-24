@@ -10,7 +10,7 @@ const struct in6_addr in6addr_any = {0};
 const struct in6_addr in6addr_loopback = {.__u6_addr32 = {0, 0, 0, __builtin_bswap32(1)}};
 
 // Adapted from libctru
-static int _inetAtonDetail(int *outBase, size_t *outNumBytes, const char *cp, struct in_addr *inp) {
+static int _inetAtonDetail(int inBase, size_t *outNumBytes, const char *cp, struct in_addr *inp) {
     int      base;
     uint32_t val;
     int      c;
@@ -22,14 +22,17 @@ static int _inetAtonDetail(int *outBase, size_t *outNumBytes, const char *cp, st
         if(!isdigit(c)) return 0;
 
         val = 0;
-        base = 10;
-        if(c == '0') {
-            c = *++cp;
-            if(c == 'x' || c == 'X') {
-                base = 16;
+        base = inBase;
+        if(!base) {
+            base = 10;
+            if(c == '0') {
                 c = *++cp;
+                if(c == 'x' || c == 'X') {
+                    base = 16;
+                    c = *++cp;
+                }
+                else base = 8;
             }
-            else base = 8;
         }
 
         for(;;) {
@@ -58,7 +61,6 @@ static int _inetAtonDetail(int *outBase, size_t *outNumBytes, const char *cp, st
 
     if(c != 0) {
         *outNumBytes = num_bytes;
-        *outBase = base;
         return 0;
     }
 
@@ -89,7 +91,6 @@ static int _inetAtonDetail(int *outBase, size_t *outNumBytes, const char *cp, st
         inp->s_addr = htonl(val);
 
     *outNumBytes = num_bytes;
-    *outBase = base;
 
     return 1;
 }
@@ -127,11 +128,10 @@ static const char *inet_ntop4(const void *src, char *dst, socklen_t size) {
 }
 
 static int inet_pton4(const char *src, void *dst) {
-    int base;
     size_t numBytes;
 
-    int ret = _inetAtonDetail(&base, &numBytes, src, (struct in_addr *)dst);
-    return (ret == 1 && base == 10 && numBytes == 3) ? 1 : 0;
+    int ret = _inetAtonDetail(10, &numBytes, src, (struct in_addr *)dst);
+    return (ret == 1 && numBytes == 3) ? 1 : 0;
 }
 
 /* Copyright (c) 1996 by Internet Software Consortium.
@@ -392,9 +392,8 @@ char *inet_ntoa(struct in_addr in) {
 }
 
 int inet_aton(const char *cp, struct in_addr *inp) {
-    int base;
     size_t numBytes;
-    return _inetAtonDetail(&base, &numBytes, cp, inp);
+    return _inetAtonDetail(0, &numBytes, cp, inp);
 }
 
 in_addr_t inet_addr(const char *cp) {
