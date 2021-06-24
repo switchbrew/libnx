@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 #include <errno.h>
 #include <ctype.h>
@@ -10,7 +11,7 @@ const struct in6_addr in6addr_any = {0};
 const struct in6_addr in6addr_loopback = {.__u6_addr32 = {0, 0, 0, __builtin_bswap32(1)}};
 
 // Adapted from libctru
-static int _inetAtonDetail(int *outBase, size_t *outNumBytes, const char *cp, struct in_addr *inp) {
+static int _inetAtonDetail(const char *cp, struct in_addr *inp) {
     int      base;
     uint32_t val;
     int      c;
@@ -56,11 +57,7 @@ static int _inetAtonDetail(int *outBase, size_t *outNumBytes, const char *cp, st
         else break;
     }
 
-    if(c != 0) {
-        *outNumBytes = num_bytes;
-        *outBase = base;
-        return 0;
-    }
+    if(c != 0) return 0;
 
     switch(num_bytes) {
     case 0:
@@ -87,9 +84,6 @@ static int _inetAtonDetail(int *outBase, size_t *outNumBytes, const char *cp, st
 
     if(inp)
         inp->s_addr = htonl(val);
-
-    *outNumBytes = num_bytes;
-    *outBase = base;
 
     return 1;
 }
@@ -126,12 +120,13 @@ static const char *inet_ntop4(const void *src, char *dst, socklen_t size) {
     return dst;
 }
 
+// Adapted from libctru
 static int inet_pton4(const char *src, void *dst) {
-    int base;
-    size_t numBytes;
+    char ip[4];
+    if(sscanf(src,"%hhu.%hhu.%hhu.%hhu",&ip[0], &ip[1], &ip[2], &ip[3]) != 4) return 0;
 
-    int ret = _inetAtonDetail(&base, &numBytes, src, (struct in_addr *)dst);
-    return (ret == 1 && base == 10 && numBytes == 3) ? 1 : 0;
+    memcpy(dst,ip,4);
+    return 1;
 }
 
 /* Copyright (c) 1996 by Internet Software Consortium.
@@ -392,9 +387,7 @@ char *inet_ntoa(struct in_addr in) {
 }
 
 int inet_aton(const char *cp, struct in_addr *inp) {
-    int base;
-    size_t numBytes;
-    return _inetAtonDetail(&base, &numBytes, cp, inp);
+    return _inetAtonDetail(cp, inp);
 }
 
 in_addr_t inet_addr(const char *cp) {
