@@ -10,7 +10,7 @@ include $(DEVKITPRO)/devkitA64/base_rules
 
 export LIBNX_MAJOR	:= 4
 export LIBNX_MINOR	:= 1
-export LIBNX_PATCH	:= 0
+export LIBNX_PATCH	:= 3
 
 
 VERSION	:=	$(LIBNX_MAJOR).$(LIBNX_MINOR).$(LIBNX_PATCH)

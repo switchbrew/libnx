@@ -1,5 +1,26 @@
 # Changelog
 
+## Version 4.1.3
+
+#### input
+* **Removed old deprecated HID API**.
+
+#### network
+* Fixed inet_pton implementation.
+
+Several issues were fixed, and usability and stability were improved.
+
+## Version 4.1.2
+
+Several issues were fixed, and usability and stability were improved.
+
+## Version 4.1.1
+
+#### system
+* Fixed deadlock issue when multi-threaded services (e.g. filesystem, sockets) are starved of free sessions.
+
+Several issues were fixed, and usability and stability were improved.
+
 ## Version 4.1.0
 
 #### system
