@@ -138,6 +138,21 @@ Result threadCreate(
         void *tls = (void*)((uintptr_t)reent + reent_sz);
         Handle handle;
 
+        t->handle = INVALID_HANDLE;
+        t->owns_stack_mem = owns_stack_mem;
+        t->stack_mem = stack_mem;
+        t->stack_mirror = stack_mirror;
+        t->stack_sz = stack_sz - sizeof(ThreadEntryArgs);
+        t->tls_array = NULL;
+        t->next = NULL;
+        t->prev_next = NULL;
+
+        args->t = t;
+        args->entry = entry;
+        args->arg = arg;
+        args->reent = reent;
+        args->tls = tls;
+
         rc = svcCreateThread(
             &handle, (ThreadFunc) &_EntryWrap, args, (void*)stack_top,
             prio, cpuid);
@@ -145,19 +160,6 @@ Result threadCreate(
         if (R_SUCCEEDED(rc))
         {
             t->handle = handle;
-            t->owns_stack_mem = owns_stack_mem;
-            t->stack_mem = stack_mem;
-            t->stack_mirror = stack_mirror;
-            t->stack_sz = stack_sz - sizeof(ThreadEntryArgs);
-            t->tls_array = NULL;
-            t->next = NULL;
-            t->prev_next = NULL;
-
-            args->t = t;
-            args->entry = entry;
-            args->arg = arg;
-            args->reent = reent;
-            args->tls = tls;
 
             // Set up child thread's reent struct, inheriting standard file handles
             _REENT_INIT_PTR(args->reent);
