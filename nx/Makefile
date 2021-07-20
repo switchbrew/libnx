@@ -36,6 +36,7 @@ ARCH	:=	-march=armv8-a+crc+crypto -mtune=cortex-a57 -mtp=soft -fPIC -ftls-model=
 CFLAGS	:=	-g -Wall -Werror \
 			-ffunction-sections \
 			-fdata-sections \
+			-gdwarf-4 \
 			$(ARCH) \
 			$(BUILD_CFLAGS)
 
@@ -43,7 +44,7 @@ CFLAGS	+=	$(INCLUDE) -D__SWITCH__ -DLIBNX_NO_DEPRECATION
 
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions -std=gnu++11
 
-ASFLAGS	:=	-g $(ARCH)
+ASFLAGS	:=	-g -gdwarf-4 $(ARCH)
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing
