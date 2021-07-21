@@ -11,6 +11,10 @@ static int sock = -1;
 
 int nxlinkConnectToHost(bool redirStdout, bool redirStderr)
 {
+    if ((!redirStdout && !redirStderr) || __nxlink_host.s_addr == INADDR_NONE) {
+        return -1;
+    }
+
     int ret = -1;
     struct sockaddr_in srv_addr;
 

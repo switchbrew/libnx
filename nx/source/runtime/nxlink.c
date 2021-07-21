@@ -7,8 +7,7 @@
 extern int __system_argc;
 extern char** __system_argv;
 
-struct in_addr __nxlink_host;
-
+struct in_addr __nxlink_host = { .s_addr = INADDR_NONE };
 
 void nxlinkSetup(void)
 {
