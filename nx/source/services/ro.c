@@ -62,7 +62,9 @@ Service* roDmntGetServiceSession(void) {
 }
 
 Result _rosrvInitialize(Service* srv) {
-    return serviceDispatch(srv, 4,
+    u64 pid_placeholder = 0;
+    return serviceDispatchIn(srv, 4, pid_placeholder,
+        .in_send_pid = true,
         .in_num_handles = 1,
         .in_handles = { CUR_PROCESS_HANDLE },
     );
