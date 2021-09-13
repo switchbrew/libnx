@@ -29,6 +29,10 @@ Result framebufferCreate(Framebuffer* fb, NWindow *win, u32 width, u32 height, u
     if (!fb || !nwindowIsValid(win) || !width || !height || format < PIXEL_FORMAT_RGBA_8888 || format > PIXEL_FORMAT_RGBA_4444 || num_fbs < 1 || num_fbs > 3)
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
+    rc = nwindowSetDimensions(win, width, height);
+    if (R_FAILED(rc))
+        return rc;
+
     rc = nvInitialize();
     if (R_SUCCEEDED(rc)) {
         rc = nvMapInit();
