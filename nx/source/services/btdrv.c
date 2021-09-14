@@ -311,7 +311,7 @@ Result btdrvRespondToPinRequest(BtdrvAddress addr, const BtdrvPinCode *pin_code)
     return serviceDispatchIn(&g_btdrvSrv, 13, in);
 }
 
-Result btdrvRespondToSspRequest(BtdrvAddress addr, u8 variant, bool accept, u32 passkey) {
+Result btdrvRespondToSspRequest(BtdrvAddress addr, u32 variant, bool accept, u32 passkey) {
     if (hosversionBefore(12,0,0)) {
         const struct {
             BtdrvAddress addr;
@@ -326,7 +326,7 @@ Result btdrvRespondToSspRequest(BtdrvAddress addr, u8 variant, bool accept, u32 
         const struct {
             BtdrvAddress addr;
             u8 accept;
-            u8 variant;
+            u32 variant;
             u32 passkey;
         } in = { addr, accept!=0, variant, passkey };
 

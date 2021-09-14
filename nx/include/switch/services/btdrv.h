@@ -561,7 +561,7 @@ Result btdrvRespondToPinRequest(BtdrvAddress addr, const BtdrvPinCode *pin_code)
  * @param[in] accept Whether the request is accepted.
  * @param[in] passkey Passkey.
  */
-Result btdrvRespondToSspRequest(BtdrvAddress addr, u8 variant, bool accept, u32 passkey);
+Result btdrvRespondToSspRequest(BtdrvAddress addr, u32 variant, bool accept, u32 passkey);
 
 /**
  * @brief GetEventInfo
