@@ -56,6 +56,11 @@ typedef struct {
     u64 handle;               ///< Handle
 } HiddbgHdlsHandle;
 
+/// HdlsSessionId, returned by \ref hiddbgAttachHdlsWorkBuffer.
+typedef struct {
+    u64 id;                   ///< Id
+} HiddbgHdlsSessionId;
+
 /// HdlsDeviceInfo, for [7.0.0-8.1.0].
 typedef struct {
     u32 deviceTypeInternal;   ///< Only one bit can be set. BIT(N*4+0) = Pro-Controller, BIT(N*4+1) = Joy-Con Left, BIT(N*4+2) = Joy-Con Right, BIT(N*4+3) = invalid. Where N is 0-1. BIT(8-10) = Pro-Controller, BIT(11) = Famicom-Controller, BIT(12) = Famicom-Controller II with microphone, BIT(13) = NES-Controller(DeviceType=0x200), BIT(14) = NES-Controller(DeviceType=0x400), BIT(15-16) = invalid, BIT(17) = unknown(DeviceType=0x8000), BIT(18-20) = invalid, BIT(21-23) = unknown(DeviceType=0x80000000).
@@ -396,14 +401,16 @@ Result hiddbgUnsetAllAutoPilotVirtualPadState(void);
 /**
  * @brief Initialize Hdls.
  * @note Only available with [7.0.0+].
+ * @param[out] session_id [13.0.0+] \ref HiddbgHdlsSessionId
  */
-Result hiddbgAttachHdlsWorkBuffer(void);
+Result hiddbgAttachHdlsWorkBuffer(HiddbgHdlsSessionId *session_id);
 
 /**
  * @brief Exit Hdls, must be called at some point prior to \ref hiddbgExit.
  * @note Only available with [7.0.0+].
+ * @param[in] session_id [13.0.0+] \ref HiddbgHdlsSessionId
  */
-Result hiddbgReleaseHdlsWorkBuffer(void);
+Result hiddbgReleaseHdlsWorkBuffer(HiddbgHdlsSessionId session_id);
 
 /**
  * @brief Checks if the given device is still attached.
@@ -416,32 +423,36 @@ Result hiddbgIsHdlsVirtualDeviceAttached(HiddbgHdlsHandle handle, bool *out);
 /**
  * @brief Gets state for \ref HiddbgHdlsNpadAssignment.
  * @note Only available with [7.0.0+].
+ * @param[in] session_id [13.0.0+] \ref HiddbgHdlsSessionId
  * @param[out] state \ref HiddbgHdlsNpadAssignment
  */
-Result hiddbgDumpHdlsNpadAssignmentState(HiddbgHdlsNpadAssignment *state);
+Result hiddbgDumpHdlsNpadAssignmentState(HiddbgHdlsSessionId session_id, HiddbgHdlsNpadAssignment *state);
 
 /**
  * @brief Gets state for \ref HiddbgHdlsStateList.
  * @note Only available with [7.0.0+].
+ * @param[in] session_id [13.0.0+] \ref HiddbgHdlsSessionId
  * @param[out] state \ref HiddbgHdlsStateList
  */
-Result hiddbgDumpHdlsStates(HiddbgHdlsStateList *state);
+Result hiddbgDumpHdlsStates(HiddbgHdlsSessionId session_id, HiddbgHdlsStateList *state);
 
 /**
  * @brief Sets state for \ref HiddbgHdlsNpadAssignment.
  * @note Only available with [7.0.0+].
+ * @param[in] session_id [13.0.0+] \ref HiddbgHdlsSessionId
  * @param[in] state \ref HiddbgHdlsNpadAssignment
  * @param[in] flag Flag
  */
-Result hiddbgApplyHdlsNpadAssignmentState(const HiddbgHdlsNpadAssignment *state, bool flag);
+Result hiddbgApplyHdlsNpadAssignmentState(HiddbgHdlsSessionId session_id, const HiddbgHdlsNpadAssignment *state, bool flag);
 
 /**
  * @brief Sets state for \ref HiddbgHdlsStateList.
  * @note The \ref HiddbgHdlsState will be applied for each \ref HiddbgHdlsHandle. If a \ref HiddbgHdlsHandle is not found, code similar to \ref hiddbgAttachHdlsVirtualDevice will run with the \ref HiddbgHdlsDeviceInfo, then it will continue with applying state with the new device.
  * @note Only available with [7.0.0+].
+ * @param[in] session_id [13.0.0+] \ref HiddbgHdlsSessionId
  * @param[in] state \ref HiddbgHdlsStateList
  */
-Result hiddbgApplyHdlsStateList(const HiddbgHdlsStateList *state);
+Result hiddbgApplyHdlsStateList(HiddbgHdlsSessionId session_id, const HiddbgHdlsStateList *state);
 
 /**
  * @brief Attach a device with the input info.
