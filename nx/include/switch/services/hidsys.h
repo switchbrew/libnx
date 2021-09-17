@@ -656,7 +656,7 @@ Result hidsysIsButtonConfigStorageRightEmpty(s32 index, bool *out);
 
 /**
  * @brief GetButtonConfigStorageEmbeddedDeprecated
- * @note Only available on [10.0.0+].
+ * @note Only available on [10.0.0-12.1.0].
  * @param[in] index Array index, should be 0-4.
  * @param[out] config \ref HidcfgButtonConfigEmbedded
  */
@@ -664,7 +664,7 @@ Result hidsysGetButtonConfigStorageEmbeddedDeprecated(s32 index, HidcfgButtonCon
 
 /**
  * @brief GetButtonConfigStorageFullDeprecated
- * @note Only available on [10.0.0+].
+ * @note Only available on [10.0.0-12.1.0].
  * @param[in] index Array index, should be 0-4.
  * @param[out] config \ref HidcfgButtonConfigFull
  */
@@ -672,7 +672,7 @@ Result hidsysGetButtonConfigStorageFullDeprecated(s32 index, HidcfgButtonConfigF
 
 /**
  * @brief GetButtonConfigStorageLeftDeprecated
- * @note Only available on [10.0.0+].
+ * @note Only available on [10.0.0-12.1.0].
  * @param[in] index Array index, should be 0-4.
  * @param[out] config \ref HidcfgButtonConfigLeft
  */
@@ -680,7 +680,7 @@ Result hidsysGetButtonConfigStorageLeftDeprecated(s32 index, HidcfgButtonConfigL
 
 /**
  * @brief GetButtonConfigStorageRightDeprecated
- * @note Only available on [10.0.0+].
+ * @note Only available on [10.0.0-12.1.0].
  * @param[in] index Array index, should be 0-4.
  * @param[out] config \ref HidcfgButtonConfigRight
  */
@@ -688,7 +688,7 @@ Result hidsysGetButtonConfigStorageRightDeprecated(s32 index, HidcfgButtonConfig
 
 /**
  * @brief SetButtonConfigStorageEmbeddedDeprecated
- * @note Only available on [10.0.0+].
+ * @note Only available on [10.0.0-12.1.0].
  * @param[in] index Array index, should be 0-4.
  * @param[in] config \ref HidcfgButtonConfigEmbedded
  */
@@ -696,7 +696,7 @@ Result hidsysSetButtonConfigStorageEmbeddedDeprecated(s32 index, const HidcfgBut
 
 /**
  * @brief SetButtonConfigStorageFullDeprecated
- * @note Only available on [10.0.0+].
+ * @note Only available on [10.0.0-12.1.0].
  * @param[in] index Array index, should be 0-4.
  * @param[in] config \ref HidcfgButtonConfigFull
  */
@@ -704,7 +704,7 @@ Result hidsysSetButtonConfigStorageFullDeprecated(s32 index, const HidcfgButtonC
 
 /**
  * @brief SetButtonConfigStorageLeftDeprecated
- * @note Only available on [10.0.0+].
+ * @note Only available on [10.0.0-12.1.0].
  * @param[in] index Array index, should be 0-4.
  * @param[in] config \ref HidcfgButtonConfigLeft
  */
@@ -712,7 +712,7 @@ Result hidsysSetButtonConfigStorageLeftDeprecated(s32 index, const HidcfgButtonC
 
 /**
  * @brief SetButtonConfigStorageRightDeprecated
- * @note Only available on [10.0.0+].
+ * @note Only available on [10.0.0-12.1.0].
  * @param[in] index Array index, should be 0-4.
  * @param[in] config \ref HidcfgButtonConfigRight
  */

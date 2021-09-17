@@ -678,56 +678,56 @@ Result hidsysIsButtonConfigStorageRightEmpty(s32 index, bool *out) {
 }
 
 Result hidsysGetButtonConfigStorageEmbeddedDeprecated(s32 index, HidcfgButtonConfigEmbedded *config) {
-    if (hosversionBefore(10,0,0))
+    if (hosversionBefore(10,0,0) || hosversionAtLeast(13,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return _hidsysCmdInU32OutBufFixed((u32)index, config, sizeof(*config), 1259);
 }
 
 Result hidsysGetButtonConfigStorageFullDeprecated(s32 index, HidcfgButtonConfigFull *config) {
-    if (hosversionBefore(10,0,0))
+    if (hosversionBefore(10,0,0) || hosversionAtLeast(13,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return _hidsysCmdInU32OutBufFixed((u32)index, config, sizeof(*config), 1260);
 }
 
 Result hidsysGetButtonConfigStorageLeftDeprecated(s32 index, HidcfgButtonConfigLeft *config) {
-    if (hosversionBefore(10,0,0))
+    if (hosversionBefore(10,0,0) || hosversionAtLeast(13,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return _hidsysCmdInU32OutBufFixed((u32)index, config, sizeof(*config), 1261);
 }
 
 Result hidsysGetButtonConfigStorageRightDeprecated(s32 index, HidcfgButtonConfigRight *config) {
-    if (hosversionBefore(10,0,0))
+    if (hosversionBefore(10,0,0) || hosversionAtLeast(13,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return _hidsysCmdInU32OutBufFixed((u32)index, config, sizeof(*config), 1262);
 }
 
 Result hidsysSetButtonConfigStorageEmbeddedDeprecated(s32 index, const HidcfgButtonConfigEmbedded *config) {
-    if (hosversionBefore(10,0,0))
+    if (hosversionBefore(10,0,0) || hosversionAtLeast(13,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return _hidsysCmdInU32InBufFixedNoOut((u32)index, config, sizeof(*config), 1263);
 }
 
 Result hidsysSetButtonConfigStorageFullDeprecated(s32 index, const HidcfgButtonConfigFull *config) {
-    if (hosversionBefore(10,0,0))
+    if (hosversionBefore(10,0,0) || hosversionAtLeast(13,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return _hidsysCmdInU32InBufFixedNoOut((u32)index, config, sizeof(*config), 1264);
 }
 
 Result hidsysSetButtonConfigStorageLeftDeprecated(s32 index, const HidcfgButtonConfigLeft *config) {
-    if (hosversionBefore(10,0,0))
+    if (hosversionBefore(10,0,0) || hosversionAtLeast(13,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return _hidsysCmdInU32InBufFixedNoOut((u32)index, config, sizeof(*config), 1265);
 }
 
 Result hidsysSetButtonConfigStorageRightDeprecated(s32 index, const HidcfgButtonConfigRight *config) {
-    if (hosversionBefore(10,0,0))
+    if (hosversionBefore(10,0,0) || hosversionAtLeast(13,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return _hidsysCmdInU32InBufFixedNoOut((u32)index, config, sizeof(*config), 1266);
