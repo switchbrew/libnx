@@ -492,11 +492,11 @@ Result setsysSetAudioOutputMode(SetSysAudioOutputModeTarget target, SetSysAudioO
     return serviceDispatchIn(&g_setsysSrv, 44, in);
 }
 
-Result setsysIsForceMuteOnHeadphoneRemoved(bool *out) {
+Result setsysGetSpeakerAutoMuteFlag(bool *out) {
     return _setCmdNoInOutBool(&g_setsysSrv, out, 45);
 }
 
-Result setsysSetForceMuteOnHeadphoneRemoved(bool flag) {
+Result setsysSetSpeakerAutoMuteFlag(bool flag) {
     return _setCmdInBoolNoOut(&g_setsysSrv, flag, 46);
 }
 
@@ -734,23 +734,23 @@ Result setsysSetAutoUpdateEnableFlag(bool flag) {
     return _setCmdInBoolNoOut(&g_setsysSrv, flag, 96);
 }
 
-Result setsysGetNxControllerSettings(s32 *total_out, SetSysNxControllerSettings *settings, s32 count) {
+Result setsysGetNxControllerSettings(s32 *total_out, SetSysNxControllerLegacySettings *settings, s32 count) {
     if (hosversionBefore(2,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return serviceDispatchOut(&g_setsysSrv, 97, *total_out,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
-        .buffers = { { settings, count*sizeof(SetSysNxControllerSettings) } },
+        .buffers = { { settings, count*sizeof(SetSysNxControllerLegacySettings) } },
     );
 }
 
-Result setsysSetNxControllerSettings(const SetSysNxControllerSettings *settings, s32 count) {
+Result setsysSetNxControllerSettings(const SetSysNxControllerLegacySettings *settings, s32 count) {
     if (hosversionBefore(2,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return serviceDispatch(&g_setsysSrv, 98,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
-        .buffers = { { settings, count*sizeof(SetSysNxControllerSettings) } },
+        .buffers = { { settings, count*sizeof(SetSysNxControllerLegacySettings) } },
     );
 }
 
@@ -1564,6 +1564,26 @@ Result setsysSetFieldTestingFlag(bool flag) {
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return _setCmdInBoolNoOut(&g_setsysSrv, flag, 202);
+}
+
+Result setsysGetNxControllerSettingsEx(s32 *total_out, SetSysNxControllerSettings *settings, s32 count) {
+    if (hosversionBefore(13,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchOut(&g_setsysSrv, 205, *total_out,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { settings, count*sizeof(SetSysNxControllerSettings) } },
+    );
+}
+
+Result setsysSetNxControllerSettingsEx(const SetSysNxControllerSettings *settings, s32 count) {
+    if (hosversionBefore(13,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatch(&g_setsysSrv, 206,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
+        .buffers = { { settings, count*sizeof(SetSysNxControllerSettings) } },
+    );
 }
 
 Result setcalGetBdAddress(SetCalBdAddress *out) {
