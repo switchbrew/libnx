@@ -80,6 +80,8 @@ Result ncmContentStorageFlushPlaceHolder(NcmContentStorage* cs); ///< [3.0.0+]
 Result ncmContentStorageGetSizeFromPlaceHolderId(NcmContentStorage* cs, s64* out_size, const NcmPlaceHolderId* placeholder_id); ///< [4.0.0+]
 Result ncmContentStorageRepairInvalidFileAttribute(NcmContentStorage* cs); ///< [4.0.0+]
 Result ncmContentStorageGetRightsIdFromPlaceHolderIdWithCache(NcmContentStorage* cs, NcmRightsId* out_rights_id, const NcmPlaceHolderId* placeholder_id, const NcmContentId* cache_content_id); ///< [8.0.0+]
+Result ncmContentStorageRegisterPath(NcmContentStorage* cs, const NcmContentId* content_id, const char *path);  ///< [13.0.0+]
+Result ncmContentStorageClearRegisteredPath(NcmContentStorage* cs);  ///< [13.0.0+]
 
 void ncmContentMetaDatabaseClose(NcmContentMetaDatabase* db);
 Result ncmContentMetaDatabaseSet(NcmContentMetaDatabase* db, const NcmContentMetaKey* key, const void* data, u64 data_size);
