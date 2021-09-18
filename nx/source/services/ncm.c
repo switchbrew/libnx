@@ -155,7 +155,7 @@ Result ncmContentStorageWritePlaceHolder(NcmContentStorage* cs, const NcmPlaceHo
         NcmPlaceHolderId placeholder_id;
         u64 offset;
     } in = { *placeholder_id, offset };
-    return serviceDispatchIn(&cs->s, 4, in, 
+    return serviceDispatchIn(&cs->s, 4, in,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
         .buffers = { { data, data_size } },
     );
@@ -222,7 +222,7 @@ Result ncmContentStorageGetContentCount(NcmContentStorage* cs, s32* out_count) {
 }
 
 Result ncmContentStorageListContentId(NcmContentStorage* cs, NcmContentId* out_ids, s32 count, s32* out_count, s32 start_offset) {
-    return serviceDispatchInOut(&cs->s, 13, start_offset, *out_count, 
+    return serviceDispatchInOut(&cs->s, 13, start_offset, *out_count,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
         .buffers = { { out_ids, count*sizeof(NcmContentId) } },
     );
@@ -290,7 +290,7 @@ Result ncmContentStorageWriteContentForDebug(NcmContentStorage* cs, const NcmCon
         NcmContentId content_id;
         s64 offset;
     } in = { *content_id, offset };
-    return serviceDispatchIn(&cs->s, 21, in, 
+    return serviceDispatchIn(&cs->s, 21, in,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
         .buffers = { { data, data_size } },
     );
@@ -334,6 +334,24 @@ Result ncmContentStorageGetRightsIdFromPlaceHolderIdWithCache(NcmContentStorage*
         return serviceDispatchInOut(&cs->s, 27, in, *out_rights_id);
 }
 
+Result ncmContentStorageRegisterPath(NcmContentStorage* cs, const NcmContentId* content_id, const char *path) {
+    if (hosversionBefore(13,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    char send_path[FS_MAX_PATH] = {0};
+    strncpy(send_path, path, FS_MAX_PATH-1);
+    send_path[FS_MAX_PATH-1] = 0;
+
+    return serviceDispatchIn(&cs->s, 28, *content_id,
+        .buffer_attrs = { SfBufferAttr_In | SfBufferAttr_HipcPointer },
+        .buffers = { { send_path, FS_MAX_PATH } },
+    );
+}
+
+Result ncmContentStorageClearRegisteredPath(NcmContentStorage* cs) {
+    if (hosversionBefore(13,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    return _ncmCmdNoIO(&cs->s, 29);
+}
+
 void ncmContentMetaDatabaseClose(NcmContentMetaDatabase* db) {
     serviceClose(&db->s);
 }
@@ -346,7 +364,7 @@ Result ncmContentMetaDatabaseSet(NcmContentMetaDatabase* db, const NcmContentMet
 }
 
 Result ncmContentMetaDatabaseGet(NcmContentMetaDatabase* db, const NcmContentMetaKey* key, u64* out_size, void* out_data, u64 out_data_size) {
-    return serviceDispatchInOut(&db->s, 1, *key, *out_size, 
+    return serviceDispatchInOut(&db->s, 1, *key, *out_size,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
         .buffers = { { out_data, out_data_size } },
     );
@@ -455,12 +473,12 @@ Result ncmContentMetaDatabaseDisableForcibly(NcmContentMetaDatabase* db) {
 }
 
 Result ncmContentMetaDatabaseLookupOrphanContent(NcmContentMetaDatabase* db, bool* out_orphaned, const NcmContentId* content_ids, s32 count) {
-    return serviceDispatch(&db->s, 14, 
+    return serviceDispatch(&db->s, 14,
         .buffer_attrs = {
             SfBufferAttr_HipcMapAlias | SfBufferAttr_Out,
             SfBufferAttr_HipcMapAlias | SfBufferAttr_In,
         },
-        .buffers = { 
+        .buffers = {
             { out_orphaned, count },
             { content_ids, count*sizeof(NcmContentId) },
         },
