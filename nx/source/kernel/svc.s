@@ -345,6 +345,22 @@ SVC_BEGIN svcGetResourceLimitPeakValue
 	ret
 SVC_END
 
+SVC_BEGIN svcCreateIoPool
+	str x0, [sp, #-16]!
+	svc 0x39
+	ldr x2, [sp], #16
+	str w1, [x2]
+	ret
+SVC_END
+
+SVC_BEGIN svcCreateIoRegion
+	str x0, [sp, #-16]!
+	svc 0x3A
+	ldr x2, [sp], #16
+	str w1, [x2]
+	ret
+SVC_END
+
 SVC_BEGIN svcDumpInfo
 	svc 0x3C
 	ret
@@ -404,6 +420,16 @@ SVC_BEGIN svcCreateEvent
 	ldp x3, x4, [sp], #16
 	str w1, [x3]
 	str w2, [x4]
+	ret
+SVC_END
+
+SVC_BEGIN svcMapIoRegion
+	svc 0x48
+	ret
+SVC_END
+
+SVC_BEGIN svcUnmapIoRegion
+	svc 0x49
 	ret
 SVC_END
 

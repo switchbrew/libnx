@@ -204,8 +204,9 @@ typedef enum {
     InfoType_UsedNonSystemMemorySize        = 22, ///< [6.0.0+] Amount of memory used by process, excluding that for process memory management.
     InfoType_IsApplication                  = 23, ///< [9.0.0+] Whether the specified process is an Application.
     InfoType_FreeThreadCount                = 24, ///< [11.0.0+] The number of free threads available to the process's resource limit.
+    InfoType_ThreadTickCount                = 25, ///< [13.0.0+] Number of ticks spent on thread.
 
-    InfoType_ThreadTickCount                = 0xF0000002, ///< Number of ticks spent on thread.
+    InfoType_ThreadTickCountDeprecated      = 0xF0000002, ///< [1.0.0-12.1.0] Number of ticks spent on thread.
 } InfoType;
 
 /// GetSystemInfo IDs.
@@ -267,6 +268,18 @@ typedef struct {
     u64 lr; ///< Link Register for the thread.
     u64 pc; ///< Program Counter for the thread.
 } LastThreadContext;
+
+/// Memory mapping type.
+typedef enum {
+    MemoryMapping_IoRegister = 0, ///< Mapping IO registers.
+    MemoryMapping_Uncached   = 1, ///< Mapping normal memory without cache.
+    MemoryMapping_Memory     = 2, ///< Mapping normal memory.
+} MemoryMapping;
+
+/// Io Pools.
+typedef enum {
+    IoPoolType_PcieA2 = 0, ///< Physical address range 0x12000000-0x1FFFFFFF
+} IoPoolType;
 
 ///@name Memory management
 ///@{
@@ -829,6 +842,27 @@ Result svcGetResourceLimitPeakValue(s64 *out, Handle reslimit_h, LimitableResour
 
 ///@}
 
+///@name Memory Management
+///@{
+
+/**
+ * @brief Creates an IO Pool. [13.0.0+]
+ * @return Result code.
+ * @note Syscall number 0x39.
+ * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
+ */
+Result svcCreateIoPool(Handle *out_handle, u32 pool_type);
+
+/**
+ * @brief Creates an IO Region. [13.0.0+]
+ * @return Result code.
+ * @note Syscall number 0x3A.
+ * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
+ */
+Result svcCreateIoRegion(Handle *out_handle, Handle io_pool_h, u64 physical_address, u64 size, u32 memory_mapping, u32 perm);
+
+///@}
+
 ///@name Debugging
 ///@{
 /**
@@ -922,6 +956,22 @@ Result svcCreateEvent(Handle* server_handle, Handle* client_handle);
 
 ///@name Memory management
 ///@{
+
+/**
+ * @brief Maps an IO Region. [13.0.0+]
+ * @return Result code.
+ * @note Syscall number 0x46.
+ * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
+ */
+Result svcMapIoRegion(Handle io_region_h, void *address, u64 size, u32 perm);
+
+/**
+ * @brief Undoes the effects of \ref svcMapIoRegion. [13.0.0+]
+ * @return Result code.
+ * @note Syscall number 0x47.
+ * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
+ */
+Result svcUnmapIoRegion(Handle io_region_h, void *address, u64 size);
 
 /**
  * @brief Maps unsafe memory (usable for GPU DMA) for a system module at the desired address. [5.0.0+]
@@ -1123,7 +1173,7 @@ Result svcMapDeviceAddressSpaceByForce(Handle handle, Handle proc_handle, u64 ma
 Result svcMapDeviceAddressSpaceAligned(Handle handle, Handle proc_handle, u64 map_addr, u64 dev_size, u64 dev_addr, u32 perm);
 
 /**
- * @brief Maps an attached device address space to an userspace address.
+ * @brief Maps an attached device address space to an userspace address. [1.0.0-12.1.0]
  * @return Result code.
  * @remark The userspace destination address must have the \ref MemState_MapDeviceAlignedAllowed bit set.
  * @note Syscall number 0x5B.
