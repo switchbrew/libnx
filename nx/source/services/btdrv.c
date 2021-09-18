@@ -71,11 +71,32 @@ static Result _btdrvCmdInAddrNoOut(BtdrvAddress addr, u32 cmd_id) {
     return serviceDispatchIn(&g_btdrvSrv, cmd_id, addr);
 }
 
-static Result _btmCmdInAddrU8NoOut(BtdrvAddress addr, u8 inval, u32 cmd_id) {
+static Result _btdrvCmdInAddrU8NoOut(BtdrvAddress addr, u8 inval, u32 cmd_id) {
     const struct {
         BtdrvAddress addr;
         u8 inval;
     } in = { addr, inval };
+
+    return serviceDispatchIn(&g_btdrvSrv, cmd_id, in);
+}
+
+static Result _btdrvCmdInAddrU32NoOut(BtdrvAddress addr, u32 inval, u32 cmd_id) {
+    const struct {
+        BtdrvAddress addr;
+        u8 pad[2];
+        u32 inval;
+    } in = { addr, {0}, inval };
+
+    return serviceDispatchIn(&g_btdrvSrv, cmd_id, in);
+}
+
+static Result _btdrvCmdInAddrU32U32NoOut(BtdrvAddress addr, u32 inval0, u32 inval1, u32 cmd_id) {
+    const struct {
+        BtdrvAddress addr;
+        u8 pad[2];
+        u32 inval0;
+        u32 inval1;
+    } in = { addr, {0}, inval0, inval1 };
 
     return serviceDispatchIn(&g_btdrvSrv, cmd_id, in);
 }
@@ -268,13 +289,7 @@ Result btdrvCreateBond(BtdrvAddress addr, u32 type) {
         );
     }
 
-    const struct {
-        BtdrvAddress addr;
-        u8 pad[2];
-        u32 type;
-    } in = { addr, {0}, type };
-
-    return serviceDispatchIn(&g_btdrvSrv, 10, in);
+    return _btdrvCmdInAddrU32NoOut(addr, type, 10);
 }
 
 Result btdrvRemoveBond(BtdrvAddress addr) {
@@ -436,11 +451,11 @@ Result btdrvGetHidEventInfo(void* buffer, size_t size, BtdrvHidEventType *type) 
 }
 
 Result btdrvSetTsi(BtdrvAddress addr, u8 tsi) {
-    return _btmCmdInAddrU8NoOut(addr, tsi, 28);
+    return _btdrvCmdInAddrU8NoOut(addr, tsi, 28);
 }
 
 Result btdrvEnableBurstMode(BtdrvAddress addr, bool flag) {
-    return _btmCmdInAddrU8NoOut(addr, flag!=0, 29);
+    return _btdrvCmdInAddrU8NoOut(addr, flag!=0, 29);
 }
 
 Result btdrvSetZeroRetransmission(BtdrvAddress addr, u8 *report_ids, u8 count) {
@@ -1387,6 +1402,34 @@ Result btdrvGetConnectedAudioDevice(BtdrvAddress *addrs, s32 count, s32 *total_o
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return _btdrvCmdOutU32OutBuf(addrs, count*sizeof(BtdrvAddress), (u32*)total_out, 145);
+}
+
+Result btdrvCloseAudioControlInput(BtdrvAddress addr) {
+    if (hosversionBefore(13,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _btdrvCmdInAddrNoOut(addr, 146);
+}
+
+Result btdrvRegisterAudioControlNotification(BtdrvAddress addr, u32 event_type) {
+    if (hosversionBefore(13,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _btdrvCmdInAddrU32NoOut(addr, event_type, 147);
+}
+
+Result btdrvSendAudioControlPassthroughCommand(BtdrvAddress addr, u32 op_id, u32 state_type) {
+    if (hosversionBefore(13,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _btdrvCmdInAddrU32U32NoOut(addr, op_id, state_type, 148);
+}
+
+Result btdrvSendAudioControlSetAbsoluteVolumeCommand(BtdrvAddress addr, s32 val) {
+    if (hosversionBefore(13,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _btdrvCmdInAddrU32NoOut(addr, (u32)val, 149);
 }
 
 Result btdrvIsManufacturingMode(bool *out) {

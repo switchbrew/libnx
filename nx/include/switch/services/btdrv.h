@@ -1455,6 +1455,38 @@ Result btdrvAcquireAudioConnectionStateChangedEvent(Event* out_event, bool autoc
 Result btdrvGetConnectedAudioDevice(BtdrvAddress *addrs, s32 count, s32 *total_out);
 
 /**
+ * @brief CloseAudioControlInput
+ * @note Only available on [13.0.0+].
+ * @param[in] addr \ref BtdrvAddress
+ */
+Result btdrvCloseAudioControlInput(BtdrvAddress addr);
+
+/**
+ * @brief RegisterAudioControlNotification
+ * @note Only available on [13.0.0+].
+ * @param[in] addr \ref BtdrvAddress
+ * @param[in] event_type AvrcEventType
+ */
+Result btdrvRegisterAudioControlNotification(BtdrvAddress addr, u32 event_type);
+
+/**
+ * @brief SendAudioControlPassthroughCommand
+ * @note Only available on [13.0.0+].
+ * @param[in] addr \ref BtdrvAddress
+ * @param[in] op_id AvrcOperationId
+ * @param[in] state_type AvrcStateType
+ */
+Result btdrvSendAudioControlPassthroughCommand(BtdrvAddress addr, u32 op_id, u32 state_type);
+
+/**
+ * @brief SendAudioControlSetAbsoluteVolumeCommand
+ * @note Only available on [13.0.0+].
+ * @param[in] addr \ref BtdrvAddress
+ * @param[in] val Input value
+ */
+Result btdrvSendAudioControlSetAbsoluteVolumeCommand(BtdrvAddress addr, s32 val);
+
+/**
  * @brief IsManufacturingMode
  * @note Only available on [5.0.0+].
  * @param[out] out Output flag.
