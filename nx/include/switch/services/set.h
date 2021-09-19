@@ -609,7 +609,15 @@ typedef struct {
 
 /// NxControllerSettings
 typedef struct {
-    u8 unk_x0[0x42C];                   ///< Unknown
+    BtdrvAddress address;
+    u8 type;                            ///< \ref SetSysControllerType.
+    char serial[0x10];
+    SetSysColor4u8Type body_color;
+    SetSysColor4u8Type button_color;
+    u8 unk_x1F[8];
+    u8 unk_x27;
+    u8 interface_type;                  ///< Bitmask with \ref XcdInterfaceType.
+    u8 unk_x29[0x403];                  ///< Unknown
 } SetSysNxControllerSettings;
 
 /// ConsoleSixAxisSensorAccelerationBias
