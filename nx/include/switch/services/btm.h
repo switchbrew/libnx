@@ -40,10 +40,19 @@ Result btmGetHostDeviceProperty(BtmHostDeviceProperty *out);
 Result btmAcquireDeviceConditionEvent(Event* out_event);
 
 /**
- * @brief GetDeviceCondition
+ * @brief GetDeviceCondition [1.0.0-12.1.0]
  * @param[out] out \ref BtmDeviceCondition
  */
-Result btmGetDeviceCondition(BtmDeviceCondition *out);
+Result btmLegacyGetDeviceCondition(BtmDeviceCondition *out);
+
+/**
+ * @brief GetDeviceCondition [13.0.0+]
+ * @param[in] id Id
+ * @param[out] out \ref BtmConnectedDeviceV13
+ * @param[in] count Size of the out array in entries.
+ * @param[out] total_out Total output entries.
+ */
+Result btmGetDeviceCondition(u32 id, BtmConnectedDeviceV13 *out, size_t count, s32 *total_out);
 
 /**
  * @brief SetBurstMode
@@ -79,10 +88,19 @@ Result btmSetWlanMode(BtmWlanMode mode);
 Result btmAcquireDeviceInfoEvent(Event* out_event);
 
 /**
- * @brief GetDeviceInfo
+ * @brief GetDeviceInfo [1.0.0-12.1.0]
  * @param[out] out \ref BtmDeviceInfoList
  */
-Result btmGetDeviceInfo(BtmDeviceInfoList *out);
+Result btmLegacyGetDeviceInfo(BtmDeviceInfoList *out);
+
+/**
+ * @brief GetDeviceInfo [13.0.0+]
+ * @param[in] id Id
+ * @param[out] out \ref BtmDeviceInfo
+ * @param[in] count Size of the out array in entries.
+ * @param[out] total_out Total output entries.
+ */
+Result btmGetDeviceInfo(u32 id, BtmDeviceInfo *out, size_t count, s32 *total_out);
 
 /**
  * @brief AddDeviceInfo

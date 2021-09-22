@@ -108,6 +108,13 @@ static Result _btmCmdOutBufPtrFixed(void* buffer, size_t size, u32 cmd_id) {
     );
 }
 
+static Result _btmCmdInIdOutBufPtr(u32 id, void* buffer, size_t size, s32 *total_out, u32 cmd_id) {
+    return serviceDispatchInOut(&g_btmSrv, cmd_id, id, *total_out,
+        .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_Out },
+        .buffers = { {buffer, size} },
+    );
+}
+
 static Result _btmGetBleScanResults(BtdrvBleScanResult *results, u8 count, u8 *total_out, u32 cmd_id) {
     return serviceDispatchOut(&g_btmSrv, cmd_id, *total_out,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
@@ -156,13 +163,23 @@ Result btmAcquireDeviceConditionEvent(Event* out_event) {
     return _btmCmdGetEventOutFlag(out_event, true, 2);
 }
 
-Result btmGetDeviceCondition(BtmDeviceCondition *out) {
+Result btmLegacyGetDeviceCondition(BtmDeviceCondition *out) {
+    if (hosversionAtLeast(13,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     size_t buff_size;
     if (hosversionAtLeast(9,0,0)) buff_size = sizeof(BtmDeviceConditionV900);
     else if (hosversionAtLeast(8,0,0)) buff_size = sizeof(BtmDeviceConditionV800);
     else if (hosversionAtLeast(5,1,0)) buff_size = sizeof(BtmDeviceConditionV510);
     else buff_size = sizeof(BtmDeviceConditionV100);
     return _btmCmdOutBufPtrFixed(out, buff_size, 3);
+}
+
+Result btmGetDeviceCondition(u32 id, BtmConnectedDeviceV13 *out, size_t count, s32 *total_out) {
+    if (hosversionBefore(13,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _btmCmdInIdOutBufPtr(id, out, sizeof(BtmConnectedDeviceV13)*count, total_out, 3);
 }
 
 Result btmSetBurstMode(BtdrvAddress addr, bool flag) {
@@ -188,8 +205,18 @@ Result btmAcquireDeviceInfoEvent(Event* out_event) {
     return _btmCmdGetEventOutFlag(out_event, true, 8);
 }
 
-Result btmGetDeviceInfo(BtmDeviceInfoList *out) {
+Result btmLegacyGetDeviceInfo(BtmDeviceInfoList *out) {
+    if (hosversionAtLeast(13,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     return _btmCmdOutBufPtrFixed(out, sizeof(*out), 9);
+}
+
+Result btmGetDeviceInfo(u32 id, BtmDeviceInfo *out, size_t count, s32 *total_out) {
+    if (hosversionBefore(13,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _btmCmdInIdOutBufPtr(id, out, sizeof(BtmDeviceInfo)*count, total_out, 9);
 }
 
 Result btmAddDeviceInfo(const BtmDeviceInfo *info) {
