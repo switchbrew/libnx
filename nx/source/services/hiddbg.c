@@ -508,7 +508,7 @@ Result hiddbgReleaseHdlsWorkBuffer(HiddbgHdlsSessionId session_id) {
     return rc;
 }
 
-Result hiddbgIsHdlsVirtualDeviceAttached(HiddbgHdlsHandle handle, bool *out) {
+Result hiddbgIsHdlsVirtualDeviceAttached(HiddbgHdlsSessionId session_id, HiddbgHdlsHandle handle, bool *out) {
     Result rc = 0;
 
     if (hosversionBefore(7,0,0))
@@ -517,7 +517,11 @@ Result hiddbgIsHdlsVirtualDeviceAttached(HiddbgHdlsHandle handle, bool *out) {
     if (!g_hiddbgHdlsInitialized)
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    rc = _hiddbgCmdNoIO(327);
+    if (hosversionBefore(13,0,0))
+        rc = _hiddbgCmdNoIO(327);
+    else
+        rc = _hiddbgCmdInU64NoOut(session_id.id, 327);
+
     if (R_FAILED(rc)) return rc;
     if (out) {
         *out = false;

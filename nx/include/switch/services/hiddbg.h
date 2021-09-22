@@ -415,10 +415,11 @@ Result hiddbgReleaseHdlsWorkBuffer(HiddbgHdlsSessionId session_id);
 /**
  * @brief Checks if the given device is still attached.
  * @note Only available with [7.0.0+].
+ * @param[in] session_id [13.0.0+] \ref HiddbgHdlsSessionId
  * @param[in] handle \ref HiddbgHdlsHandle
  * @param[out] out Whether the device is attached.
  */
-Result hiddbgIsHdlsVirtualDeviceAttached(HiddbgHdlsHandle handle, bool *out);
+Result hiddbgIsHdlsVirtualDeviceAttached(HiddbgHdlsSessionId session_id, HiddbgHdlsHandle handle, bool *out);
 
 /**
  * @brief Gets state for \ref HiddbgHdlsNpadAssignment.
