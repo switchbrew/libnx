@@ -190,7 +190,7 @@ typedef struct {
     BtmDeviceSlotMode devices[8]; ///< Array of \ref BtmDeviceSlotMode with the above count.
 } BtmDeviceSlotModeList;
 
-/// DeviceInfo
+/// DeviceInfo [1.0.0-12.1.0]
 typedef struct {
     BtdrvAddress addr;                    ///< \ref BtdrvAddress
     BtmClassOfDevice class_of_device;     ///< ClassOfDevice
@@ -203,13 +203,34 @@ typedef struct {
         BtmHidDeviceInfo hid_device_info; ///< \ref BtmHidDeviceInfo (Profile = Hid)
     } profile_info;
     u8 reserved2[0x1C];                   ///< Reserved
+} BtmDeviceInfoV1;
+
+/// DeviceInfo [13.0.0+]
+typedef struct {
+    BtdrvAddress addr;                    ///< \ref BtdrvAddress
+    BtmClassOfDevice class_of_device;     ///< ClassOfDevice
+    BtmLinkKey link_key;                  ///< LinkKey
+    u8 reserved[3];                       ///< Reserved
+    u32 profile;                          ///< \ref BtmProfile
+    union {
+        u8 data[0x4];                     ///< Empty (Profile = None)
+        BtmHidDeviceInfo hid_device_info; ///< \ref BtmHidDeviceInfo (Profile = Hid)
+    } profile_info;
+    u8 reserved2[0x1C];                   ///< Reserved
+    char name[0xFC];                      ///< Name  
+} BtmDeviceInfoV13;
+
+/// DeviceInfo [1.0.0-13.0.0]
+typedef union {
+    BtmDeviceInfoV1 v1;
+    BtmDeviceInfoV13 v13;
 } BtmDeviceInfo;
 
 /// DeviceInfoList
 typedef struct {
     u8 device_count;              ///< DeviceCount
     u8 reserved[3];               ///< Reserved
-    BtmDeviceInfo devices[10];    ///< Array of \ref BtmDeviceInfo with the above count.
+    BtmDeviceInfoV1 devices[10];  ///< Array of \ref BtmDeviceInfoV1 with the above count.
 } BtmDeviceInfoList;
 
 /// DeviceProperty

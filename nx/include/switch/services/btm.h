@@ -96,11 +96,11 @@ Result btmLegacyGetDeviceInfo(BtmDeviceInfoList *out);
 /**
  * @brief GetDeviceInfo [13.0.0+]
  * @param[in] id Id
- * @param[out] out \ref BtmDeviceInfo
+ * @param[out] out \ref BtmDeviceInfoV13
  * @param[in] count Size of the out array in entries.
  * @param[out] total_out Total output entries.
  */
-Result btmGetDeviceInfo(u32 id, BtmDeviceInfo *out, size_t count, s32 *total_out);
+Result btmGetDeviceInfo(u32 id, BtmDeviceInfoV13 *out, size_t count, s32 *total_out);
 
 /**
  * @brief AddDeviceInfo

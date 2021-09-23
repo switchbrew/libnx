@@ -215,11 +215,11 @@ Result btmLegacyGetDeviceInfo(BtmDeviceInfoList *out) {
     return _btmCmdOutBufPtrFixed(out, sizeof(*out), 9);
 }
 
-Result btmGetDeviceInfo(u32 id, BtmDeviceInfo *out, size_t count, s32 *total_out) {
+Result btmGetDeviceInfo(u32 id, BtmDeviceInfoV13 *out, size_t count, s32 *total_out) {
     if (hosversionBefore(13,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return _btmCmdInIdOutBufPtr(id, out, sizeof(BtmDeviceInfo)*count, total_out, 9);
+    return _btmCmdInIdOutBufPtr(id, out, sizeof(BtmDeviceInfoV13)*count, total_out, 9);
 }
 
 Result btmAddDeviceInfo(const BtmDeviceInfo *info) {
