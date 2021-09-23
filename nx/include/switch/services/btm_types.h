@@ -85,10 +85,21 @@ typedef struct {
 
 /// HostDeviceProperty
 typedef struct {
-    BtdrvAddress addr;                    ///< Same as BtdrvAdapterProperty::addr.
-    BtmClassOfDevice class_of_device;     ///< Same as BtdrvAdapterProperty::class_of_device.
-    BtmBdName name;                       ///< Same as BtdrvAdapterProperty::name (except the last byte which is always zero).
-    u8 feature_set;                       ///< Same as BtdrvAdapterProperty::feature_set.
+    union {
+        struct {
+            BtdrvAddress addr;                    ///< Same as BtdrvAdapterProperty::addr.
+            BtmClassOfDevice class_of_device;     ///< Same as BtdrvAdapterProperty::class_of_device.
+            BtmBdName name;                       ///< Same as BtdrvAdapterProperty::name (except the last byte which is always zero).
+            u8 feature_set;                       ///< Same as BtdrvAdapterProperty::feature_set.
+        } v1;                                     ///< [1.0.0-12.1.0]
+
+        struct {
+            BtdrvAddress addr;                    ///< Same as BtdrvAdapterProperty::addr.
+            BtmClassOfDevice class_of_device;     ///< Same as BtdrvAdapterProperty::class_of_device.
+            char name[0xF9];                      ///< Same as BtdrvAdapterProperty::name (except the last byte which is always zero).
+            u8 feature_set;                       ///< Same as BtdrvAdapterProperty::feature_set.
+        } v13;                                    ///< [13.0.0+]
+    };
 } BtmHostDeviceProperty;
 
 /// BtmConnectedDevice [1.0.0-12.1.0]

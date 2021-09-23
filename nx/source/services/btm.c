@@ -156,7 +156,10 @@ Result btmGetState(BtmState *out) {
 }
 
 Result btmGetHostDeviceProperty(BtmHostDeviceProperty *out) {
-    return serviceDispatchOut(&g_btmSrv, 1, *out);
+    if (hosversionBefore(13,0,0))
+        return serviceDispatchOut(&g_btmSrv, 1, (*out).v1);
+
+    return _btmCmdOutBufPtrFixed(out, sizeof((*out).v13), 1);
 }
 
 Result btmAcquireDeviceConditionEvent(Event* out_event) {
