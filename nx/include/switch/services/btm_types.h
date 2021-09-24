@@ -85,13 +85,24 @@ typedef struct {
 
 /// HostDeviceProperty
 typedef struct {
-    BtdrvAddress addr;                    ///< Same as BtdrvAdapterProperty::addr.
-    BtmClassOfDevice class_of_device;     ///< Same as BtdrvAdapterProperty::class_of_device.
-    BtmBdName name;                       ///< Same as BtdrvAdapterProperty::name (except the last byte which is always zero).
-    u8 feature_set;                       ///< Same as BtdrvAdapterProperty::feature_set.
+    union {
+        struct {
+            BtdrvAddress addr;                    ///< Same as BtdrvAdapterProperty::addr.
+            BtmClassOfDevice class_of_device;     ///< Same as BtdrvAdapterProperty::class_of_device.
+            BtmBdName name;                       ///< Same as BtdrvAdapterProperty::name (except the last byte which is always zero).
+            u8 feature_set;                       ///< Same as BtdrvAdapterProperty::feature_set.
+        } v1;                                     ///< [1.0.0-12.1.0]
+
+        struct {
+            BtdrvAddress addr;                    ///< Same as BtdrvAdapterProperty::addr.
+            BtmClassOfDevice class_of_device;     ///< Same as BtdrvAdapterProperty::class_of_device.
+            char name[0xF9];                      ///< Same as BtdrvAdapterProperty::name (except the last byte which is always zero).
+            u8 feature_set;                       ///< Same as BtdrvAdapterProperty::feature_set.
+        } v13;                                    ///< [13.0.0+]
+    };
 } BtmHostDeviceProperty;
 
-/// BtmConnectedDevice
+/// BtmConnectedDevice [1.0.0-12.1.0]
 typedef struct {
     BtdrvAddress address;
     u8 pad[2];
@@ -101,7 +112,17 @@ typedef struct {
     u16 vid;
     u16 pid;
     u8 unk_x4C[0x20];
-} BtmConnectedDevice;
+} BtmConnectedDeviceV1;
+
+/// BtmConnectedDevice [13.0.0+]
+typedef struct {
+    BtdrvAddress address;
+    u8 pad[2];
+    u32 unk_x8;
+    u8 unk_xC[0x40];
+    char name[0x20];
+    u8 unk_x6C[0xdc];
+} BtmConnectedDeviceV13;
 
 /// DeviceCondition [1.0.0-5.0.2]
 typedef struct {
@@ -111,7 +132,7 @@ typedef struct {
     u8 unk_x9;
     u8 max_count;
     u8 connected_count;
-    BtmConnectedDevice devices[8];
+    BtmConnectedDeviceV1 devices[8];
 } BtmDeviceConditionV100;
 
 /// DeviceCondition [5.1.0-7.0.1]
@@ -123,7 +144,7 @@ typedef struct {
     u8 max_count;
     u8 connected_count;
     u8 pad[3];
-    BtmConnectedDevice devices[8];
+    BtmConnectedDeviceV1 devices[8];
 } BtmDeviceConditionV510;
 
 /// DeviceCondition [8.0.0-8.1.1]
@@ -134,20 +155,20 @@ typedef struct {
     u8 unk_x9;
     u8 max_count;
     u8 connected_count;
-    BtmConnectedDevice devices[8];
+    BtmConnectedDeviceV1 devices[8];
 } BtmDeviceConditionV800;
 
-/// DeviceCondition [9.0.0+]
+/// DeviceCondition [9.0.0-12.1.0]
 typedef struct {
     u32 unk_x0;
     u8 unk_x4;
     u8 unk_x5;
     u8 max_count;
     u8 connected_count;
-    BtmConnectedDevice devices[8];
+    BtmConnectedDeviceV1 devices[8];
 } BtmDeviceConditionV900;
 
-/// DeviceCondition
+/// DeviceCondition [1.0.0-12.1.0]
 typedef union {
     BtmDeviceConditionV100 v100;
     BtmDeviceConditionV510 v510;
@@ -169,7 +190,7 @@ typedef struct {
     BtmDeviceSlotMode devices[8]; ///< Array of \ref BtmDeviceSlotMode with the above count.
 } BtmDeviceSlotModeList;
 
-/// DeviceInfo
+/// DeviceInfo [1.0.0-12.1.0]
 typedef struct {
     BtdrvAddress addr;                    ///< \ref BtdrvAddress
     BtmClassOfDevice class_of_device;     ///< ClassOfDevice
@@ -182,13 +203,34 @@ typedef struct {
         BtmHidDeviceInfo hid_device_info; ///< \ref BtmHidDeviceInfo (Profile = Hid)
     } profile_info;
     u8 reserved2[0x1C];                   ///< Reserved
+} BtmDeviceInfoV1;
+
+/// DeviceInfo [13.0.0+]
+typedef struct {
+    BtdrvAddress addr;                    ///< \ref BtdrvAddress
+    BtmClassOfDevice class_of_device;     ///< ClassOfDevice
+    BtmLinkKey link_key;                  ///< LinkKey
+    u8 reserved[3];                       ///< Reserved
+    u32 profile;                          ///< \ref BtmProfile
+    union {
+        u8 data[0x4];                     ///< Empty (Profile = None)
+        BtmHidDeviceInfo hid_device_info; ///< \ref BtmHidDeviceInfo (Profile = Hid)
+    } profile_info;
+    u8 reserved2[0x1C];                   ///< Reserved
+    char name[0xFC];                      ///< Name  
+} BtmDeviceInfoV13;
+
+/// DeviceInfo [1.0.0-13.0.0]
+typedef union {
+    BtmDeviceInfoV1 v1;
+    BtmDeviceInfoV13 v13;
 } BtmDeviceInfo;
 
 /// DeviceInfoList
 typedef struct {
     u8 device_count;              ///< DeviceCount
     u8 reserved[3];               ///< Reserved
-    BtmDeviceInfo devices[10];    ///< Array of \ref BtmDeviceInfo with the above count.
+    BtmDeviceInfoV1 devices[10];  ///< Array of \ref BtmDeviceInfoV1 with the above count.
 } BtmDeviceInfoList;
 
 /// DeviceProperty
