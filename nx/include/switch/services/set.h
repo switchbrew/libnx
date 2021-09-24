@@ -312,7 +312,7 @@ typedef struct {
 /// BluetoothDevicesSettings
 typedef struct {
     BtdrvAddress addr;                    ///< \ref BtdrvAddress
-    BtmBdName name;                       ///< BdName
+    BtmBdName name;                       ///< BdName. Unused on 13.0.0+
     BtmClassOfDevice class_of_device;     ///< ClassOfDevice
     u8 link_key[0x10];                    ///< LinkKey
     u8 link_key_present;                  ///< LinkKeyPresent
@@ -328,7 +328,14 @@ typedef struct {
     u8 device_type;                       ///< DeviceType
     u16 brr_size;                         ///< BrrSize
     u8 brr[0x9];                          ///< Brr
-    u8 reserved[0x12B];                   ///< Reserved
+    union {
+        u8 reserved[0x12B];               ///< Reserved [1.0.0-12.1.0]
+
+        struct {
+            u8 pad;                       ///< Padding
+            char name2[0xF9];             ///< Name
+        };                                ///< [13.0.0+]
+    };
 } SetSysBluetoothDevicesSettings;
 
 /// Structure returned by \ref setsysGetFirmwareVersion.
