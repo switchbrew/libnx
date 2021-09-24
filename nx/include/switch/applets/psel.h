@@ -23,6 +23,7 @@ typedef enum {
     PselUiMode_LicenseRequirementsForNetworkService                    = 10, ///< [6.0.0+] LicenseRequirementsForNetworkService
     PselUiMode_LicenseRequirementsForNetworkServiceWithUserContextImpl = 11, ///< [7.0.0+] LicenseRequirementsForNetworkServiceWithUserContextImpl
     PselUiMode_UserCreatorForImmediateNaLoginTest                      = 12, ///< [7.0.0+] UserCreatorForImmediateNaLoginTest
+    PselUiMode_UserQualificationPromoter                               = 13, ///< [13.0.0+] UserQualificationPromoter
 } PselUiMode;
 
 /// UI message text to display with ::PselUiMode_UserSelector. Invalid values are handled as ::PselUserSelectionPurpose_General.
@@ -200,3 +201,10 @@ Result pselShowUserCreatorForStarter(void);
  * @param[in] user Input user ID.
  */
 Result pselShowNintendoAccountNnidLinker(AccountUid user);
+
+/**
+ * @brief Shows the applet for UserQualificationPromoter.
+ * @note Only available on [13.0.0+].
+ * @param[in] user Input user ID.
+ */
+Result pselShowUserQualificationPromoter(AccountUid user);

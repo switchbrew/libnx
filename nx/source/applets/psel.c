@@ -191,3 +191,16 @@ Result pselShowNintendoAccountNnidLinker(AccountUid user) {
     }
     return rc;
 }
+
+Result pselShowUserQualificationPromoter(AccountUid user) {
+    if (hosversionBefore(13,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    PselUiSettings ui;
+    Result rc = pselUiCreate(&ui, PselUiMode_UserQualificationPromoter);
+    if(R_SUCCEEDED(rc)) {
+        pselUiAddUser(&ui, user);
+        rc = pselUiShow(&ui, NULL);
+    }
+    return rc;
+}
