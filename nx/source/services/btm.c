@@ -223,7 +223,10 @@ Result btmGetDeviceInfo(u32 id, BtmDeviceInfoV13 *out, size_t count, s32 *total_
 }
 
 Result btmAddDeviceInfo(const BtmDeviceInfo *info) {
-    return serviceDispatchIn(&g_btmSrv, 10, *info);
+    if (hosversionBefore(13,0,0))
+        return serviceDispatchIn(&g_btmSrv, 10, (*info).v1);
+
+    return _btmCmdInBufPtrFixed(info, sizeof((*info).v13), 10);
 }
 
 Result btmRemoveDeviceInfo(BtdrvAddress addr) {
