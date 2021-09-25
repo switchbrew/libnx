@@ -47,12 +47,12 @@ Result btmLegacyGetDeviceCondition(BtmDeviceCondition *out);
 
 /**
  * @brief GetDeviceCondition [13.0.0+]
- * @param[in] id Id
+ * @param[in] profile \ref BtmProfile, when not ::BtmProfile_None entries are only returned which match this profile.
  * @param[out] out \ref BtmConnectedDeviceV13
  * @param[in] count Size of the out array in entries.
  * @param[out] total_out Total output entries.
  */
-Result btmGetDeviceCondition(u32 id, BtmConnectedDeviceV13 *out, size_t count, s32 *total_out);
+Result btmGetDeviceCondition(BtmProfile profile, BtmConnectedDeviceV13 *out, size_t count, s32 *total_out);
 
 /**
  * @brief SetBurstMode
@@ -95,12 +95,12 @@ Result btmLegacyGetDeviceInfo(BtmDeviceInfoList *out);
 
 /**
  * @brief GetDeviceInfo [13.0.0+]
- * @param[in] id Id
+ * @param[in] profile \ref BtmProfile, when not ::BtmProfile_None entries are only returned which match this profile.
  * @param[out] out \ref BtmDeviceInfoV13
  * @param[in] count Size of the out array in entries.
  * @param[out] total_out Total output entries.
  */
-Result btmGetDeviceInfo(u32 id, BtmDeviceInfoV13 *out, size_t count, s32 *total_out);
+Result btmGetDeviceInfo(BtmProfile profile, BtmDeviceInfoV13 *out, size_t count, s32 *total_out);
 
 /**
  * @brief AddDeviceInfo

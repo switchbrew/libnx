@@ -118,10 +118,11 @@ typedef struct {
 typedef struct {
     BtdrvAddress address;
     u8 pad[2];
-    u32 unk_x8;
+    u32 profile;                                  ///< \ref BtmProfile
     u8 unk_xC[0x40];
     char name[0x20];
-    u8 unk_x6C[0xdc];
+    u8 unk_x6C[0xD9];
+    u8 pad2[3];
 } BtmConnectedDeviceV13;
 
 /// DeviceCondition [1.0.0-5.0.2]
@@ -217,7 +218,8 @@ typedef struct {
         BtmHidDeviceInfo hid_device_info; ///< \ref BtmHidDeviceInfo (Profile = Hid)
     } profile_info;
     u8 reserved2[0x1C];                   ///< Reserved
-    char name[0xFC];                      ///< Name  
+    char name[0xF9];                      ///< Name
+    u8 pad[3];                            ///< Padding
 } BtmDeviceInfoV13;
 
 /// DeviceInfo [1.0.0-13.0.0]
