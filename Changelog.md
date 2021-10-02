@@ -1,5 +1,30 @@
 # Changelog
 
+## Version 4.2.0
+
+#### system
+* Added new SVCs introduced in [13.0.0+].
+* Thread structures are now pre-populated with information prior to creation.
+
+#### input
+* hidsys: Added support for [13.0.0+].
+* hiddbg: Added support for [13.0.0+].
+
+#### graphics
+* Fixed crashes caused by arbitrary sizes in linear framebuffers.
+
+#### other
+* ncm: Added support for [13.0.0+].
+* setsys: Added support for [13.0.0+].
+  * Filled in SetSysNxControllerSettings structure definition (which was previously unpopulated).
+* btm: Added support for [13.0.0+].
+* btdrv: Added support for [13.0.0+].
+  * Fixed btdrvRespondToSspRequest for [12.0.0+].
+* psel: Added support for [13.0.0+] (pselShowUserQualificationPromoter).
+* Corrected ldr:ro/ro:1 initialization.
+
+Several issues were fixed, and usability and stability were improved.
+
 ## Version 4.1.3
 
 #### input
