@@ -328,6 +328,18 @@ Result hidsysEnableAppletToGetInput(bool enable) {
     return serviceDispatchIn(&g_hidsysSrv, 503, in);
 }
 
+Result hidsysAcquireUniquePadConnectionEventHandle(Event *out_event) {
+    Handle tmp_handle = INVALID_HANDLE;
+
+    Result rc = serviceDispatch(&g_hidsysSrv, 702,
+        .out_handle_attrs = { SfOutHandleAttr_HipcCopy },
+        .out_handles = &tmp_handle,
+    );
+
+    if (R_SUCCEEDED(rc)) eventLoadRemote(out_event, tmp_handle, true);
+    return rc;
+}
+
 Result hidsysGetUniquePadIds(HidsysUniquePadId *unique_pad_ids, s32 count, s32 *total_out) {
     s64 out=0;
     Result rc = serviceDispatchOut(&g_hidsysSrv, 703, out,
@@ -338,11 +350,53 @@ Result hidsysGetUniquePadIds(HidsysUniquePadId *unique_pad_ids, s32 count, s32 *
     return rc;
 }
 
+Result hidsysGetUniquePadBluetoothAddress(HidsysUniquePadId unique_pad_id, BtdrvAddress *address) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchInOut(&g_hidsysSrv, 805, unique_pad_id, *address);
+}
+
+Result hidsysDisconnectUniquePad(HidsysUniquePadId unique_pad_id) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchIn(&g_hidsysSrv, 806, unique_pad_id);
+}
+
+Result hidsysGetUniquePadType(HidsysUniquePadId unique_pad_id, HidsysUniquePadType *pad_type) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    u64 tmp = 0;
+    Result rc = serviceDispatchInOut(&g_hidsysSrv, 807, unique_pad_id, tmp);
+    if (R_SUCCEEDED(rc)) *pad_type = (HidsysUniquePadType)tmp;
+    return rc;
+}
+
+Result hidsysGetUniquePadInterface(HidsysUniquePadId unique_pad_id, HidNpadInterfaceType *interface) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    u64 tmp = 0;
+    Result rc = serviceDispatchInOut(&g_hidsysSrv, 808, unique_pad_id, tmp);
+    if (R_SUCCEEDED(rc)) *interface = (HidNpadInterfaceType)tmp;
+    return rc;
+}
+
+
 Result hidsysGetUniquePadSerialNumber(HidsysUniquePadId unique_pad_id, HidsysUniquePadSerialNumber *serial) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return serviceDispatchInOut(&g_hidsysSrv, 809, unique_pad_id, *serial);
+}
+
+Result hidsysGetUniquePadControllerNumber(HidsysUniquePadId unique_pad_id, u64 *number) {
+    if (hosversionBefore(5,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchInOut(&g_hidsysSrv, 810, unique_pad_id, *number);
 }
 
 Result hidsysSetNotificationLedPattern(const HidsysNotificationLedPattern *pattern, HidsysUniquePadId unique_pad_id) {

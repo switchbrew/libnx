@@ -1,7 +1,7 @@
 /**
  * @file hidsys.h
  * @brief hid:sys service IPC wrapper.
- * @author exelix, yellows8
+ * @author exelix, yellows8, ndeadly
  */
 #pragma once
 #include "../types.h"
@@ -43,6 +43,15 @@ typedef enum {
     HidcfgAnalogStickRotation_Clockwise90        = 1,          ///< Clockwise90
     HidcfgAnalogStickRotation_Anticlockwise90    = 2,          ///< Anticlockwise90
 } HidcfgAnalogStickRotation;
+
+/// UniquePadType
+typedef enum {
+    HidsysUniquePadType_Embedded                 = 0,          ///< Embedded
+    HidsysUniquePadType_FullKeyController        = 1,          ///< FullKeyController
+    HidsysUniquePadType_RightController          = 2,          ///< RightController
+    HidsysUniquePadType_LeftController           = 3,          ///< LeftController
+    HidsysUniquePadType_DebugPadController       = 4,          ///< DebugPadController
+} HidsysUniquePadType;
 
 /// UniquePadId for a controller.
 typedef struct {
@@ -304,6 +313,12 @@ Result hidsysGetUniquePadsFromNpad(HidNpadIdType id, HidsysUniquePadId *unique_p
 Result hidsysEnableAppletToGetInput(bool enable);
 
 /**
+ * @brief AcquireUniquePadConnectionEventHandle
+ * @param[out] out_event Output Event.
+ */
+Result hidsysAcquireUniquePadConnectionEventHandle(Event *out_event);
+
+/**
  * @brief Gets a list of all UniquePadIds.
  * @param[out] unique_pad_ids Output array of \ref HidsysUniquePadId.
  * @param[in] count Max number of entries for the unique_pad_ids array.
@@ -312,12 +327,51 @@ Result hidsysEnableAppletToGetInput(bool enable);
 Result hidsysGetUniquePadIds(HidsysUniquePadId *unique_pad_ids, s32 count, s32 *total_out);
 
 /**
+ * @brief GetUniquePadBluetoothAddress
+ * @note Only available on [3.0.0+].
+ * @param[in] unique_pad_id \ref HidsysUniquePadId
+ * @param[out] address \ref BtdrvAddress
+ */
+Result hidsysGetUniquePadBluetoothAddress(HidsysUniquePadId unique_pad_id, BtdrvAddress *address);
+
+/**
+ * @brief DisconnectUniquePad
+ * @note Only available on [3.0.0+].
+ * @param[in] unique_pad_id \ref HidsysUniquePadId
+ */
+Result hidsysDisconnectUniquePad(HidsysUniquePadId unique_pad_id);
+
+/**
+ * @brief GetUniquePadType
+ * @note Only available on [5.0.0+].
+ * @param[in] unique_pad_id \ref HidsysUniquePadId
+ * @param[out] pad_type \ref HidsysUniquePadType
+ */
+Result hidsysGetUniquePadType(HidsysUniquePadId unique_pad_id, HidsysUniquePadType *pad_type);
+
+/**
+ * @brief GetUniquePadInterface
+ * @note Only available on [5.0.0+].
+ * @param[in] unique_pad_id \ref HidsysUniquePadId
+ * @param[out] interface \ref HidNpadInterfaceType
+ */
+Result hidsysGetUniquePadInterface(HidsysUniquePadId unique_pad_id, HidNpadInterfaceType *interface);
+
+/**
  * @brief Gets the \ref HidsysUniquePadSerialNumber.
  * @note Only available on [5.0.0+].
  * @param[in] unique_pad_id \ref HidsysUniquePadId
  * @param[out] serial \ref HidsysUniquePadSerialNumber
  */
 Result hidsysGetUniquePadSerialNumber(HidsysUniquePadId unique_pad_id, HidsysUniquePadSerialNumber *serial);
+
+/**
+ * @brief GetUniquePadControllerNumber
+ * @note Only available on [5.0.0+].
+ * @param[in] unique_pad_id \ref HidsysUniquePadId
+ * @param[out] number Controller number.
+ */
+Result hidsysGetUniquePadControllerNumber(HidsysUniquePadId unique_pad_id, u64 *number);
 
 /**
  * @brief Sets the HOME-button notification LED pattern, for the specified controller.
