@@ -54,6 +54,10 @@ typedef struct { float value[3]; } UtilFloat3;   ///< 3 floats.
 #define BIT(n) (1U<<(n))
 #endif
 
+#ifndef BITL
+#define BITL(n) (1UL<<(n))
+#endif
+
 /// Packs a struct so that it won't include padding bytes.
 #ifndef PACKED
 #define PACKED     __attribute__((packed))
