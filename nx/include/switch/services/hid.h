@@ -236,7 +236,8 @@ typedef enum {
     HidNpadStyleTag_NpadLark          = BIT(7),       ///< NES/Famicom controller
     HidNpadStyleTag_NpadHandheldLark  = BIT(8),       ///< NES/Famicom controller in handheld mode
     HidNpadStyleTag_NpadLucia         = BIT(9),       ///< SNES controller
-    HidNpadStyleTag_Npad10            = BIT(10),
+    HidNpadStyleTag_NpadLagon         = BIT(10),      ///< N64 controller
+    HidNpadStyleTag_NpadLager         = BIT(11),      ///< Sega Genesis controller
     HidNpadStyleTag_NpadSystemExt     = BIT(29),      ///< Generic external controller
     HidNpadStyleTag_NpadSystem        = BIT(30),      ///< Generic controller
 
@@ -253,37 +254,41 @@ typedef enum {
 
 /// HidNpadButton
 typedef enum {
-    HidNpadButton_A             = BIT(0),  ///< A button / Right face button
-    HidNpadButton_B             = BIT(1),  ///< B button / Down face button
-    HidNpadButton_X             = BIT(2),  ///< X button / Up face button
-    HidNpadButton_Y             = BIT(3),  ///< Y button / Left face button
-    HidNpadButton_StickL        = BIT(4),  ///< Left Stick button
-    HidNpadButton_StickR        = BIT(5),  ///< Right Stick button
-    HidNpadButton_L             = BIT(6),  ///< L button
-    HidNpadButton_R             = BIT(7),  ///< R button
-    HidNpadButton_ZL            = BIT(8),  ///< ZL button
-    HidNpadButton_ZR            = BIT(9),  ///< ZR button
-    HidNpadButton_Plus          = BIT(10), ///< Plus button
-    HidNpadButton_Minus         = BIT(11), ///< Minus button
-    HidNpadButton_Left          = BIT(12), ///< D-Pad Left button
-    HidNpadButton_Up            = BIT(13), ///< D-Pad Up button
-    HidNpadButton_Right         = BIT(14), ///< D-Pad Right button
-    HidNpadButton_Down          = BIT(15), ///< D-Pad Down button
-    HidNpadButton_StickLLeft    = BIT(16), ///< Left Stick pseudo-button when moved Left
-    HidNpadButton_StickLUp      = BIT(17), ///< Left Stick pseudo-button when moved Up
-    HidNpadButton_StickLRight   = BIT(18), ///< Left Stick pseudo-button when moved Right
-    HidNpadButton_StickLDown    = BIT(19), ///< Left Stick pseudo-button when moved Down
-    HidNpadButton_StickRLeft    = BIT(20), ///< Right Stick pseudo-button when moved Left
-    HidNpadButton_StickRUp      = BIT(21), ///< Right Stick pseudo-button when moved Up
-    HidNpadButton_StickRRight   = BIT(22), ///< Right Stick pseudo-button when moved Right
-    HidNpadButton_StickRDown    = BIT(23), ///< Right Stick pseudo-button when moved Left
-    HidNpadButton_LeftSL        = BIT(24), ///< SL button on Left Joy-Con
-    HidNpadButton_LeftSR        = BIT(25), ///< SR button on Left Joy-Con
-    HidNpadButton_RightSL       = BIT(26), ///< SL button on Right Joy-Con
-    HidNpadButton_RightSR       = BIT(27), ///< SR button on Right Joy-Con
-    HidNpadButton_Palma         = BIT(28), ///< Top button on Poké Ball Plus (Palma) controller
-    HidNpadButton_29            = BIT(29),
-    HidNpadButton_HandheldLeftB = BIT(30), ///< B button on Left NES/HVC controller in Handheld mode
+    HidNpadButton_A             = BITL(0),  ///< A button / Right face button
+    HidNpadButton_B             = BITL(1),  ///< B button / Down face button
+    HidNpadButton_X             = BITL(2),  ///< X button / Up face button
+    HidNpadButton_Y             = BITL(3),  ///< Y button / Left face button
+    HidNpadButton_StickL        = BITL(4),  ///< Left Stick button
+    HidNpadButton_StickR        = BITL(5),  ///< Right Stick button
+    HidNpadButton_L             = BITL(6),  ///< L button
+    HidNpadButton_R             = BITL(7),  ///< R button
+    HidNpadButton_ZL            = BITL(8),  ///< ZL button
+    HidNpadButton_ZR            = BITL(9),  ///< ZR button
+    HidNpadButton_Plus          = BITL(10), ///< Plus button
+    HidNpadButton_Minus         = BITL(11), ///< Minus button
+    HidNpadButton_Left          = BITL(12), ///< D-Pad Left button
+    HidNpadButton_Up            = BITL(13), ///< D-Pad Up button
+    HidNpadButton_Right         = BITL(14), ///< D-Pad Right button
+    HidNpadButton_Down          = BITL(15), ///< D-Pad Down button
+    HidNpadButton_StickLLeft    = BITL(16), ///< Left Stick pseudo-button when moved Left
+    HidNpadButton_StickLUp      = BITL(17), ///< Left Stick pseudo-button when moved Up
+    HidNpadButton_StickLRight   = BITL(18), ///< Left Stick pseudo-button when moved Right
+    HidNpadButton_StickLDown    = BITL(19), ///< Left Stick pseudo-button when moved Down
+    HidNpadButton_StickRLeft    = BITL(20), ///< Right Stick pseudo-button when moved Left
+    HidNpadButton_StickRUp      = BITL(21), ///< Right Stick pseudo-button when moved Up
+    HidNpadButton_StickRRight   = BITL(22), ///< Right Stick pseudo-button when moved Right
+    HidNpadButton_StickRDown    = BITL(23), ///< Right Stick pseudo-button when moved Left
+    HidNpadButton_LeftSL        = BITL(24), ///< SL button on Left Joy-Con
+    HidNpadButton_LeftSR        = BITL(25), ///< SR button on Left Joy-Con
+    HidNpadButton_RightSL       = BITL(26), ///< SL button on Right Joy-Con
+    HidNpadButton_RightSR       = BITL(27), ///< SR button on Right Joy-Con
+    HidNpadButton_Palma         = BITL(28), ///< Top button on Poké Ball Plus (Palma) controller
+    HidNpadButton_Verification  = BITL(29), ///< Verification
+    HidNpadButton_HandheldLeftB = BITL(30), ///< B button on Left NES/HVC controller in Handheld mode
+    HidNpadButton_LagonCLeft    = BITL(31), ///< Left C button in N64 controller
+    HidNpadButton_LagonCUp      = BITL(32), ///< Up C button in N64 controller
+    HidNpadButton_LagonCRight   = BITL(33), ///< Right C button in N64 controller
+    HidNpadButton_LagonCDown    = BITL(34), ///< Down C button in N64 controller
 
     HidNpadButton_AnyLeft  = HidNpadButton_Left   | HidNpadButton_StickLLeft  | HidNpadButton_StickRLeft,  ///< Bitmask containing all buttons that are considered Left (D-Pad, Sticks)
     HidNpadButton_AnyUp    = HidNpadButton_Up     | HidNpadButton_StickLUp    | HidNpadButton_StickRUp,    ///< Bitmask containing all buttons that are considered Up (D-Pad, Sticks)
@@ -397,19 +402,25 @@ typedef enum {
 
 /// DeviceType (system)
 typedef enum {
-    HidDeviceTypeBits_FullKey       = BIT(0),  ///< Pro Controller and Gc controller.
-    HidDeviceTypeBits_Unknown1      = BIT(1),  ///< Unknown.
-    HidDeviceTypeBits_HandheldLeft  = BIT(2),  ///< Joy-Con/Famicom/NES left controller in handheld mode.
-    HidDeviceTypeBits_HandheldRight = BIT(3),  ///< Joy-Con/Famicom/NES right controller in handheld mode.
-    HidDeviceTypeBits_JoyLeft       = BIT(4),  ///< Joy-Con left controller.
-    HidDeviceTypeBits_JoyRight      = BIT(5),  ///< Joy-Con right controller.
-    HidDeviceTypeBits_Palma         = BIT(6),  ///< Poké Ball Plus controller.
-    HidDeviceTypeBits_LarkLeftHVC   = BIT(7),  ///< Famicom left controller.
-    HidDeviceTypeBits_LarkRightHVC  = BIT(8),  ///< Famicom right controller (with microphone).
-    HidDeviceTypeBits_LarkLeftNES   = BIT(9),  ///< NES left controller.
-    HidDeviceTypeBits_LarkRightNES  = BIT(10), ///< NES right controller.
-    HidDeviceTypeBits_SystemExt     = BIT(15), ///< Generic external controller.
-    HidDeviceTypeBits_System        = BIT(31), ///< Generic controller.
+    HidDeviceTypeBits_FullKey               = BIT(0),  ///< Pro Controller and Gc controller.
+    HidDeviceTypeBits_DebugPad              = BIT(1),  ///< DebugPad
+    HidDeviceTypeBits_HandheldLeft          = BIT(2),  ///< Joy-Con/Famicom/NES left controller in handheld mode.
+    HidDeviceTypeBits_HandheldRight         = BIT(3),  ///< Joy-Con/Famicom/NES right controller in handheld mode.
+    HidDeviceTypeBits_JoyLeft               = BIT(4),  ///< Joy-Con left controller.
+    HidDeviceTypeBits_JoyRight              = BIT(5),  ///< Joy-Con right controller.
+    HidDeviceTypeBits_Palma                 = BIT(6),  ///< Poké Ball Plus controller.
+    HidDeviceTypeBits_LarkHvcLeft           = BIT(7),  ///< Famicom left controller.
+    HidDeviceTypeBits_LarkHvcRight          = BIT(8),  ///< Famicom right controller (with microphone).
+    HidDeviceTypeBits_LarkNesLeft           = BIT(9),  ///< NES left controller.
+    HidDeviceTypeBits_LarkNesRight          = BIT(10), ///< NES right controller.
+    HidDeviceTypeBits_HandheldLarkHvcLeft   = BIT(11), ///< Famicom left controller in handheld mode.
+    HidDeviceTypeBits_HandheldLarkHvcRight  = BIT(12), ///< Famicom right controller (with microphone) in handheld mode.
+    HidDeviceTypeBits_HandheldLarkNesLeft   = BIT(13), ///< NES left controller in handheld mode.
+    HidDeviceTypeBits_HandheldLarkNesRight  = BIT(14), ///< NES right controller in handheld mode.
+    HidDeviceTypeBits_Lucia                 = BIT(15), ///< SNES controller
+    HidDeviceTypeBits_Lagon                 = BIT(16), ///< N64 controller
+    HidDeviceTypeBits_Lager                 = BIT(17), ///< Sega Genesis controller
+    HidDeviceTypeBits_System                = BIT(31), ///< Generic controller.
 } HidDeviceTypeBits;
 
 /// Internal DeviceType for [9.0.0+]. Converted to/from the pre-9.0.0 version of this by the hiddbg funcs.
@@ -420,13 +431,15 @@ typedef enum {
     HidDeviceType_JoyLeft4        = 4,   ///< ::HidDeviceTypeBits_JoyLeft
     HidDeviceType_JoyRight5       = 5,   ///< ::HidDeviceTypeBits_JoyRight
     HidDeviceType_FullKey6        = 6,   ///< ::HidDeviceTypeBits_FullKey
-    HidDeviceType_LarkLeftHVC     = 7,   ///< ::HidDeviceTypeBits_LarkLeftHVC
-    HidDeviceType_LarkRightHVC    = 8,   ///< ::HidDeviceTypeBits_LarkRightHVC
-    HidDeviceType_LarkLeftNES     = 9,   ///< ::HidDeviceTypeBits_LarkLeftNES
-    HidDeviceType_LarkRightNES    = 10,  ///< ::HidDeviceTypeBits_LarkRightNES
+    HidDeviceType_LarkHvcLeft     = 7,   ///< ::HidDeviceTypeBits_LarkHvcLeft, ::HidDeviceTypeBits_HandheldLarkHvcLeft
+    HidDeviceType_LarkHvcRight    = 8,   ///< ::HidDeviceTypeBits_LarkHvcRight, ::HidDeviceTypeBits_HandheldLarkHvcRight
+    HidDeviceType_LarkNesLeft     = 9,   ///< ::HidDeviceTypeBits_LarkNesLeft, ::HidDeviceTypeBits_HandheldLarkNesLeft
+    HidDeviceType_LarkNesRight    = 10,  ///< ::HidDeviceTypeBits_LarkNesRight, ::HidDeviceTypeBits_HandheldLarkNesRight
+    HidDeviceType_Lucia           = 11,  ///< ::HidDeviceTypeBits_Lucia
     HidDeviceType_Palma           = 12,  ///< [9.0.0+] ::HidDeviceTypeBits_Palma
     HidDeviceType_FullKey13       = 13,  ///< ::HidDeviceTypeBits_FullKey
     HidDeviceType_FullKey15       = 15,  ///< ::HidDeviceTypeBits_FullKey
+    HidDeviceType_DebugPad        = 17,  ///< ::HidDeviceTypeBits_DebugPad
     HidDeviceType_System19        = 19,  ///< ::HidDeviceTypeBits_System with \ref HidNpadStyleTag |= ::HidNpadStyleTag_NpadFullKey.
     HidDeviceType_System20        = 20,  ///< ::HidDeviceTypeBits_System with \ref HidNpadStyleTag |= ::HidNpadStyleTag_NpadJoyDual.
     HidDeviceType_System21        = 21,  ///< ::HidDeviceTypeBits_System with \ref HidNpadStyleTag |= ::HidNpadStyleTag_NpadJoyDual.
@@ -455,6 +468,7 @@ typedef enum {
     HidAppletFooterUiType_LarkNesRight                     = 18,    ///< LarkNesRight
     HidAppletFooterUiType_Lucia                            = 19,    ///< Lucia
     HidAppletFooterUiType_Verification                     = 20,    ///< Verification
+    HidAppletFooterUiType_Lagon                            = 21,    ///< [13.0.0+] Lagon
 } HidAppletFooterUiType;
 
 /// NpadInterfaceType (system)
@@ -489,6 +503,14 @@ typedef enum {
     HidNpadLuciaType_E          = 2,    ///< E
     HidNpadLuciaType_U          = 3,    ///< U
 } HidNpadLuciaType;
+
+/// NpadLagerType
+typedef enum {
+    HidNpadLagerType_Invalid    = 0,    ///< Invalid
+    HidNpadLagerType_J          = 1,    ///< J
+    HidNpadLagerType_E          = 2,    ///< E
+    HidNpadLagerType_U          = 3,    ///< U
+} HidNpadLagerType;
 
 /// Type values for HidVibrationDeviceInfo::type.
 typedef enum {
@@ -815,6 +837,8 @@ typedef struct HidNpadLuciaState {
     HidNpadLuciaType lucia_type;                        ///< \ref HidNpadLuciaType
 } HidNpadLuciaState;
 
+typedef HidNpadCommonState HidNpadLagerState;           ///< State for ::HidNpadStyleTag_NpadLager. Analog-sticks state are always zero.
+
 typedef HidNpadCommonState HidNpadSystemExtState;       ///< State for ::HidNpadStyleTag_NpadSystemExt.
 typedef HidNpadCommonState HidNpadSystemState;          ///< State for ::HidNpadStyleTag_NpadSystem. Analog-sticks state are always zero. Only the following button bits are available: HidNpadButton_A, HidNpadButton_B, HidNpadButton_X, HidNpadButton_Y, HidNpadButton_Left, HidNpadButton_Up, HidNpadButton_Right, HidNpadButton_Down, HidNpadButton_L, HidNpadButton_R.
 
@@ -975,7 +999,7 @@ typedef struct HidNpadInternalState {
     u32 lark_type_l_and_main;                                                       ///< \ref HidNpadLarkType
     u32 lark_type_r;                                                                ///< \ref HidNpadLarkType
     u32 lucia_type;                                                                 ///< \ref HidNpadLuciaType
-    u32 unk_x43EC;
+    u32 lager_type;                                                                 ///< \ref HidNpadLagerType
 } HidNpadInternalState;
 
 /// HidNpadSharedMemoryEntry
@@ -1307,6 +1331,13 @@ u32 hidGetAppletFooterUiAttributesSet(HidNpadIdType id);
 HidAppletFooterUiType hidGetAppletFooterUiTypes(HidNpadIdType id);
 
 /**
+ * @brief Gets \ref HidNpadLagerType for the specified Npad.
+ * @param[in] id \ref HidNpadIdType
+ * @return \ref HidNpadLagerType
+ */
+HidNpadLagerType hidGetNpadLagerType(HidNpadIdType id);
+
+/**
  * @brief Gets \ref HidNpadFullKeyState.
  * @param[out] states Output array of \ref HidNpadFullKeyState.
  * @param[in] count Size of the states array in entries.
@@ -1385,6 +1416,14 @@ size_t hidGetNpadStatesHandheldLark(HidNpadIdType id, HidNpadHandheldLarkState *
  * @return Total output entries.
  */
 size_t hidGetNpadStatesLucia(HidNpadIdType id, HidNpadLuciaState *states, size_t count);
+
+/**
+ * @brief Gets \ref HidNpadLagerState.
+ * @param[out] states Output array of \ref HidNpadLagerState.
+ * @param[in] count Size of the states array in entries.
+ * @return Total output entries.
+ */
+size_t hidGetNpadStatesLager(HidNpadIdType id, HidNpadLagerState *states, size_t count);
 
 /**
  * @brief Gets \ref HidNpadSystemExtState.

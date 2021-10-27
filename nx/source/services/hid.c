@@ -192,6 +192,12 @@ HidAppletFooterUiType hidGetAppletFooterUiTypes(HidNpadIdType id) {
     return atomic_load_explicit(&_hidGetNpadInternalState(id)->applet_footer_ui_type, memory_order_acquire);
 }
 
+HidNpadLagerType hidGetNpadLagerType(HidNpadIdType id) {
+    HidNpadLagerType lager_type = atomic_load_explicit(&_hidGetNpadInternalState(id)->lager_type, memory_order_acquire);
+    if (!(lager_type>=HidNpadLagerType_J && lager_type<=HidNpadLagerType_U)) lager_type = HidNpadLagerType_Invalid;
+    return lager_type;
+}
+
 static size_t _hidGetStates(HidCommonLifoHeader *header, void* in_states, size_t max_states, size_t state_offset, size_t sampling_number_offset, void* states, size_t entrysize, size_t count) {
     s32 total_entries = (s32)atomic_load_explicit(&header->count, memory_order_acquire);
     if (total_entries < 0) total_entries = 0;
@@ -436,6 +442,29 @@ size_t hidGetNpadStatesLucia(HidNpadIdType id, HidNpadLuciaState *states, size_t
 
         states[i].attributes = tmp_entries[i].attributes;
         states[i].lucia_type = lucia_type;
+    }
+
+    return total;
+}
+
+size_t hidGetNpadStatesLager(HidNpadIdType id, HidNpadLagerState *states, size_t count) {
+    HidNpadCommonState tmp_entries[17];
+
+    HidNpadInternalState *npad = _hidGetNpadInternalState(id);
+    size_t total = _hidGetNpadStates(&npad->full_key_lifo, tmp_entries, count);
+
+    memset(states, 0, sizeof(HidNpadLagerState) * total);
+
+    for (size_t i=0; i<total; i++) {
+        states[i].sampling_number = tmp_entries[i].sampling_number;
+
+        // sdknso would handle button-bitmasking with ControlPadRestriction here.
+
+        states[i].buttons = tmp_entries[i].buttons;
+
+        // Leave analog-sticks state at zeros.
+
+        states[i].attributes = tmp_entries[i].attributes;
     }
 
     return total;
@@ -1252,7 +1281,7 @@ static Result _hidGetVibrationDeviceHandles(HidVibrationDeviceHandle *handles, s
     else if (style & HidNpadStyleTag_NpadGc) {
         style_index = 8;
     }
-    else if (style & HidNpadStyleTag_Npad10) {
+    else if (style & HidNpadStyleTag_NpadLagon) {
         style_index = 0xd;
     }
     else if (style & (HidNpadStyleTag_NpadLark | HidNpadStyleTag_NpadLucia)) {
@@ -1323,7 +1352,7 @@ static Result _hidGetSixAxisSensorHandles(HidSixAxisSensorHandle *handles, s32 t
         style_index = 3;
         device_idx = 0x2;
     }
-    else if (style & HidNpadStyleTag_Npad10) {
+    else if (style & HidNpadStyleTag_NpadLagon) {
         return MAKERESULT(Module_Libnx, LibnxError_BadInput); // sdknso would return 0, and return no handles.
     }
     else if (style & (HidNpadStyleTag_NpadLark | HidNpadStyleTag_NpadLucia)) {
