@@ -443,6 +443,8 @@ typedef enum {
     HidDeviceType_System19        = 19,  ///< ::HidDeviceTypeBits_System with \ref HidNpadStyleTag |= ::HidNpadStyleTag_NpadFullKey.
     HidDeviceType_System20        = 20,  ///< ::HidDeviceTypeBits_System with \ref HidNpadStyleTag |= ::HidNpadStyleTag_NpadJoyDual.
     HidDeviceType_System21        = 21,  ///< ::HidDeviceTypeBits_System with \ref HidNpadStyleTag |= ::HidNpadStyleTag_NpadJoyDual.
+    HidDeviceType_Lagon           = 22,  ///< ::HidDeviceTypeBits_Lagon
+    HidDeviceType_Lager           = 28,  ///< ::HidDeviceTypeBits_Lager
 } HidDeviceType;
 
 /// AppletFooterUiType (system)
