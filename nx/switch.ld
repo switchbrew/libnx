@@ -16,9 +16,14 @@ SECTIONS
 	. = __start__;
 	__code_start = . ;
 
-	.crt0 :
+	.text :
 	{
 		KEEP (*(.crt0))
+		*(.text.unlikely .text.*_unlikely .text.unlikely.*)
+		*(.text.exit .text.exit.*)
+		*(.text.startup .text.startup.*)
+		*(.text.hot .text.hot.*)
+		*(.text .stub .text.* .gnu.linkonce.t.*)
 		. = ALIGN(8);
 	} :code
 
@@ -32,16 +37,6 @@ SECTIONS
 	{
 		*(.plt)
 		*(.iplt)
-		. = ALIGN(8);
-	} :code
-
-	.text :
-	{
-		*(.text.unlikely .text.*_unlikely .text.unlikely.*)
-		*(.text.exit .text.exit.*)
-		*(.text.startup .text.startup.*)
-		*(.text.hot .text.hot.*)
-		*(.text .stub .text.* .gnu.linkonce.t.*)
 		. = ALIGN(8);
 	} :code
 
