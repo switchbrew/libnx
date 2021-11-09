@@ -109,23 +109,34 @@ static void ConsoleSwRenderer_drawChar(PrintConsole* con, int x, int y, int c)
     u16* frameBuffer = _getFrameBuffer(sw, &stride);
     const u16 *fontdata = (const u16*)con->font.gfx + (16 * c);
 
-    int writingColor = con->fg;
-    int screenColor = con->bg;
+    u16 fg = con->fg;
+    u16 bg = con->bg;
 
-    if (con->flags & CONSOLE_COLOR_BOLD) {
-        writingColor += 8;
-    } else if (con->flags & CONSOLE_COLOR_FAINT) {
-        writingColor += 16;
+    if (!(con->flags & CONSOLE_FG_CUSTOM)) {
+        if (con->flags & CONSOLE_COLOR_BOLD) {
+            fg = colorTable[fg + 8];
+        } else if (con->flags & CONSOLE_COLOR_FAINT) {
+            fg = colorTable[fg + 16];
+        } else {
+            fg = colorTable[fg];
+        }
+    }
+
+    if (!(con->flags & CONSOLE_BG_CUSTOM)) {
+        if (con->flags & CONSOLE_COLOR_BOLD) {
+            bg = colorTable[bg + 8];
+        } else if (con->flags & CONSOLE_COLOR_FAINT) {
+            bg = colorTable[bg + 16];
+        } else {
+            bg = colorTable[bg];
+        }
     }
 
     if (con->flags & CONSOLE_COLOR_REVERSE) {
-        int tmp = writingColor;
-        writingColor = screenColor;
-        screenColor = tmp;
+        u16 tmp = fg;
+        fg = bg;
+        bg = tmp;
     }
-
-    u16 bg = colorTable[screenColor];
-    u16 fg = colorTable[writingColor];
 
     u128 *tmp = (u128*)fontdata;
 
