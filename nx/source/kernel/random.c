@@ -18,10 +18,17 @@
 #define ROTL32(x, n) (((x) << (n)) | ((x) >> (32-(n))))
 
 #define U32TO8_LITTLE(p, v) \
-    (*(u32*)(p) = (v))
+    ({ \
+        u32 __temp = (v); \
+        __builtin_memcpy((void*)(p), &__temp, 4); \
+    })
 
 #define U8TO32_LITTLE(p) \
-    (*(const u32*)(p))
+    ({ \
+        u32 __temp; \
+        __builtin_memcpy(&__temp, (const void*)(p), 4); \
+        __temp; \
+    })
 
 #define ROTATE(v,c) (ROTL32(v,c))
 #define XOR(v,w) ((v) ^ (w))
