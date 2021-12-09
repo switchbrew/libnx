@@ -28,7 +28,7 @@ static Result _btmCmdGetEventOutFlag(Event* out_event, bool autoclear, u32 cmd_i
     Handle tmp_handle = INVALID_HANDLE;
     Result rc = 0;
 
-    if (hosversionBefore(3,0,0)) {
+    if (hosversionAtLeast(3,0,0)) {
         u8 out=0;
         rc = serviceDispatchOut(&g_btmSrv, cmd_id, out,
             .out_handle_attrs = { SfOutHandleAttr_HipcCopy },
