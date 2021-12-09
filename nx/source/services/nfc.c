@@ -69,7 +69,7 @@ void _nfpCleanup(void) {
 NX_GENERATE_SERVICE_GUARD_PARAMS(nfc, (NfcServiceType service_type), (service_type));
 
 Result _nfcInitialize(NfcServiceType service_type) {
-    Result rc=0;
+    Result rc = MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
     g_nfcServiceType = service_type;
     switch (g_nfcServiceType) {
@@ -347,3 +347,43 @@ Result nfpAttachAvailabilityChangeEvent(Event *out_event) {
 Result nfcIsNfcEnabled(bool *out) {
     return _nfcCmdNoInOutBool(&g_nfcInterface, out, hosversionBefore(4,0,0) ? 3 : 403);
 }
+
+Result nfcSendCommandByPassThrough(const NfcDeviceHandle *handle, u64 timeout, const void* cmd_buf, size_t cmd_buf_size, void* reply_buf, size_t reply_buf_size, u64 *out_size) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    const struct {
+        NfcDeviceHandle handle;
+        u64 timeout;
+    } in = { *handle, timeout };
+
+    serviceAssumeDomain(&g_nfcInterface);
+    u32 tmp_out=0;
+    Result rc = serviceDispatchInOut(&g_nfcInterface, 1300, in, tmp_out,
+        .buffer_attrs = {
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_Out,
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_In,
+        },
+        .buffers = {
+            { reply_buf, reply_buf_size },
+            { cmd_buf, cmd_buf_size },
+        },
+    );
+    if (R_SUCCEEDED(rc) && out_size) *out_size = tmp_out;
+    return rc;
+}
+
+Result nfcKeepPassThroughSession(const NfcDeviceHandle *handle) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _nfcCmdInDevhandleNoOut(&g_nfcInterface, handle, 1301);
+}
+
+Result nfcReleasePassThroughSession(const NfcDeviceHandle *handle) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _nfcCmdInDevhandleNoOut(&g_nfcInterface, handle, 1302);
+}
+

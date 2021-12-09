@@ -155,3 +155,7 @@ Result nfpAttachAvailabilityChangeEvent(Event *out_event);
 
 /// This uses nfc:*.
 Result nfcIsNfcEnabled(bool *out);
+
+Result nfcSendCommandByPassThrough(const NfcDeviceHandle *handle, u64 timeout, const void* cmd_buf, size_t cmd_buf_size, void* reply_buf, size_t reply_buf_size, u64 *out_size);
+Result nfcKeepPassThroughSession(const NfcDeviceHandle *handle);
+Result nfcReleasePassThroughSession(const NfcDeviceHandle *handle);
