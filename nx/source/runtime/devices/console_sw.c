@@ -123,13 +123,7 @@ static void ConsoleSwRenderer_drawChar(PrintConsole* con, int x, int y, int c)
     }
 
     if (!(con->flags & CONSOLE_BG_CUSTOM)) {
-        if (con->flags & CONSOLE_COLOR_BOLD) {
-            bg = colorTable[bg + 8];
-        } else if (con->flags & CONSOLE_COLOR_FAINT) {
-            bg = colorTable[bg + 16];
-        } else {
-            bg = colorTable[bg];
-        }
+        bg = colorTable[bg];
     }
 
     if (con->flags & CONSOLE_COLOR_REVERSE) {
