@@ -529,14 +529,6 @@ static ssize_t con_write(struct _reent *r,void *fd,const char *ptr, size_t len) 
 									else
 										currentConsole->flags &= ~CONSOLE_BG_CUSTOM;
 
-									if (!custom && currentConsole->bg < 16) {
-										currentConsole->flags &= ~CONSOLE_COLOR_FAINT;
-										if (currentConsole->bg < 8)
-											currentConsole->flags &= ~CONSOLE_COLOR_BOLD;
-										else
-											currentConsole->flags |= CONSOLE_COLOR_BOLD;
-									}
-
 									// consume next ; or m
 									++escapeseq;
 									--escapelen;
