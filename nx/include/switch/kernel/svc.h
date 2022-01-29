@@ -91,8 +91,8 @@ typedef struct {
     u32 type;            ///< Memory type (see lower 8 bits of \ref MemoryState).
     u32 attr;            ///< Memory attributes (see \ref MemoryAttribute).
     u32 perm;            ///< Memory permissions (see \ref Permission).
-    u32 device_refcount; ///< Device reference count.
     u32 ipc_refcount;    ///< IPC reference count.
+    u32 device_refcount; ///< Device reference count.
     u32 padding;         ///< Padding.
 } MemoryInfo;
 
