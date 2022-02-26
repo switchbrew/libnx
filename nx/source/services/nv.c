@@ -3,6 +3,7 @@
 #include "service_guard.h"
 #include "kernel/tmem.h"
 #include "services/applet.h"
+#include "runtime/hosversion.h"
 #include "services/nv.h"
 #include "nvidia/ioctl.h"
 
@@ -112,11 +113,19 @@ Result nvOpen(u32 *fd, const char *devicepath) {
 
 // Get the appropriate session for the specified request (same logic as official sw)
 static inline Service* _nvGetSessionForRequest(u32 request) {
+    u32 tmp = request & 0xC000FFFF;
     if (
-        (request & 0xC000FFFF) == 0xC0004808 || // NVGPU_IOCTL_CHANNEL_SUBMIT_GPFIFO
+        tmp     == 0xC0004402 ||                // NVGPU_DBG_GPU_IOCTL_REG_OPS
+        tmp     == 0xC000471C ||                // NVGPU_GPU_IOCTL_GET_GPU_TIME
+        tmp     == 0xC0004808 ||                // NVGPU_IOCTL_CHANNEL_SUBMIT_GPFIFO
+        tmp     == 0xC0000024 ||                // NVHOST_IOCTL_CHANNEL_SUBMIT_EX
+        tmp     == 0xC0000025 ||                // NVHOST_IOCTL_CHANNEL_MAP_CMD_BUFFER_EX
+        tmp     == 0xC0000026 ||                // NVHOST_IOCTL_CHANNEL_UNMAP_CMD_BUFFER_EX
         request == 0xC018481B ||                // NVGPU_IOCTL_CHANNEL_KICKOFF_PB
         request == 0xC004001C ||                // NVHOST_IOCTL_CTRL_EVENT_SIGNAL
-        request == 0xC010001E                   // NVHOST_IOCTL_CTRL_EVENT_WAIT_ASYNC
+        request == 0xC010001E ||                // NVHOST_IOCTL_CTRL_EVENT_WAIT_ASYNC
+        request == 0xC4C80203 ||                // NVDISP_FLIP
+        request == 0x400C060E                   // NVSCHED_CTRL_PUT_CONDUCTOR_FLIP_FENCE
         )
         return &g_nvSrvClone;
     return &g_nvSrv;
@@ -163,6 +172,9 @@ Result nvIoctl(u32 fd, u32 request, void* argp) {
 }
 
 Result nvIoctl2(u32 fd, u32 request, void* argp, const void* inbuf, size_t inbuf_size) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     size_t bufsize = _NV_IOC_SIZE(request);
     u32 dir = _NV_IOC_DIR(request);
 
@@ -195,6 +207,51 @@ Result nvIoctl2(u32 fd, u32 request, void* argp, const void* inbuf, size_t inbuf
             { buf_send, buf_send_size },
             { inbuf,    inbuf_size    },
             { buf_recv, buf_recv_size },
+        },
+    );
+
+    if (R_SUCCEEDED(rc))
+        rc = nvConvertError(error);
+
+    return rc;
+}
+
+Result nvIoctl3(u32 fd, u32 request, void* argp, void* outbuf, size_t outbuf_size) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    size_t bufsize = _NV_IOC_SIZE(request);
+    u32 dir = _NV_IOC_DIR(request);
+
+    void *buf_send = NULL, *buf_recv = NULL;
+    size_t buf_send_size = 0, buf_recv_size = 0;
+
+    if (dir & _NV_IOC_WRITE) {
+        buf_send = argp;
+        buf_send_size = bufsize;
+    }
+
+    if (dir & _NV_IOC_READ) {
+        buf_recv = argp;
+        buf_recv_size = bufsize;
+    }
+
+    const struct {
+        u32 fd;
+        u32 request;
+    } in = { fd, request };
+
+    u32 error = 0;
+    Result rc = serviceDispatchInOut(_nvGetSessionForRequest(request), 12, in, error,
+        .buffer_attrs = {
+            SfBufferAttr_HipcAutoSelect | SfBufferAttr_In,
+            SfBufferAttr_HipcAutoSelect | SfBufferAttr_Out,
+            SfBufferAttr_HipcAutoSelect | SfBufferAttr_Out,
+        },
+        .buffers = {
+            { buf_send, buf_send_size },
+            { buf_recv, buf_recv_size },
+            { outbuf,   outbuf_size   },
         },
     );
 
