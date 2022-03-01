@@ -434,6 +434,19 @@ Result fsOpenSaveDataInfoReader(FsSaveDataInfoReader* out, FsSaveDataSpaceId sav
     }
 }
 
+Result fsOpenSaveDataInfoReaderWithFilter(FsSaveDataInfoReader* out, FsSaveDataSpaceId save_data_space_id, const FsSaveDataFilter *save_data_filter) {
+    const struct {
+        u8 save_data_space_id;
+        u8 pad[7];
+        FsSaveDataFilter save_data_filter;
+    } in = { (u8)save_data_space_id, {0}, *save_data_filter };
+
+    return _fsObjectDispatchIn(&g_fsSrv, 68, in,
+        .out_num_objects = 1,
+        .out_objects = &out->s,
+    );
+}
+
 Result fsOpenImageDirectoryFileSystem(FsFileSystem* out, FsImageDirectoryId image_directory_id) {
     u32 tmp=image_directory_id;
     return _fsObjectDispatchIn(&g_fsSrv, 100, tmp,
