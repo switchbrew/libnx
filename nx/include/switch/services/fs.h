@@ -122,6 +122,18 @@ typedef struct {
     u8 unk_x3b[0x25];         ///< Unknown. Usually zeros?
 } FsSaveDataInfo;
 
+/// SaveDataFilter
+typedef struct {
+    bool filter_by_application_id;       ///< Filter by \ref FsSaveDataAttribute::application_id
+    bool filter_by_save_data_type;       ///< Filter by \ref FsSaveDataAttribute::save_data_type
+    bool filter_by_user_id;              ///< Filter by \ref FsSaveDataAttribute::uid
+    bool filter_by_system_save_data_id;  ///< Filter by \ref FsSaveDataAttribute::system_save_data_id
+    bool filter_by_index;                ///< Filter by \ref FsSaveDataAttribute::save_data_index
+    u8 save_data_rank;                   ///< \ref FsSaveDataRank
+    u8 padding[0x2];                     ///< Padding
+    FsSaveDataAttribute attr;            ///< \ref FsSaveDataAttribute
+} FsSaveDataFilter;
+
 typedef struct {
     u64 created;  ///< POSIX timestamp.
     u64 modified; ///< POSIX timestamp.
@@ -367,6 +379,8 @@ Result fsReadSaveDataFileSystemExtraData(void* buf, size_t len, u64 saveID);
 Result fsWriteSaveDataFileSystemExtraData(const void* buf, size_t len, FsSaveDataSpaceId save_data_space_id, u64 saveID);
 
 Result fsOpenSaveDataInfoReader(FsSaveDataInfoReader* out, FsSaveDataSpaceId save_data_space_id);
+
+Result fsOpenSaveDataInfoReaderWithFilter(FsSaveDataInfoReader* out, FsSaveDataSpaceId save_data_space_id, const FsSaveDataFilter *save_data_filter); ///< [6.0.0+]
 
 Result fsOpenImageDirectoryFileSystem(FsFileSystem* out, FsImageDirectoryId image_directory_id);
 Result fsOpenContentStorageFileSystem(FsFileSystem* out, FsContentStorageId content_storage_id);
