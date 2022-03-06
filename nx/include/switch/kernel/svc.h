@@ -1561,10 +1561,9 @@ Result svcSetResourceLimitLimitValue(Handle reslimit, LimitableResource which, u
 /**
  * @brief Calls a secure monitor function (TrustZone, EL3).
  * @param regs Arguments to pass to the secure monitor.
- * @return Return value from the secure monitor.
  * @note Syscall number 0x7F.
  * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
  */
-u64 svcCallSecureMonitor(SecmonArgs* regs);
+void svcCallSecureMonitor(SecmonArgs* regs);
 
 ///@}
