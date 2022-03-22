@@ -22,6 +22,10 @@ CODE_BEGIN armDCacheFlush
 	bic x8, x0, x10
 	mov x10, x1
 
+	mov w1, #1
+	mrs x0, tpidrro_el0
+	strb w1, [x0, #0x104]
+
 armDCacheFlush_L0:
 	dc  civac, x8
 	add x8, x8, x9
@@ -29,6 +33,9 @@ armDCacheFlush_L0:
 	bcc armDCacheFlush_L0
 
 	dsb sy
+
+	strb wzr, [x0, #0x104]
+
 	ret
 CODE_END
 
@@ -43,6 +50,10 @@ CODE_BEGIN armDCacheClean
 	bic x8, x0, x10
 	mov x10, x1
 
+	mov w1, #1
+	mrs x0, tpidrro_el0
+	strb w1, [x0, #0x104]
+
 armDCacheClean_L0:
 	dc  cvac, x8
 	add x8, x8, x9
@@ -50,6 +61,9 @@ armDCacheClean_L0:
 	bcc armDCacheClean_L0
 
 	dsb sy
+
+	strb wzr, [x0, #0x104]
+
 	ret
 CODE_END
 
@@ -63,6 +77,10 @@ CODE_BEGIN armICacheInvalidate
 	bic x8, x0, x10
 	mov x10, x1
 
+	mov w1, #1
+	mrs x0, tpidrro_el0
+	strb w1, [x0, #0x104]
+
 armICacheInvalidate_L0:
 	ic  ivau, x8
 	add x8, x8, x9
@@ -70,6 +88,9 @@ armICacheInvalidate_L0:
 	bcc armICacheInvalidate_L0
 
 	dsb sy
+
+	strb wzr, [x0, #0x104]
+
 	ret
 CODE_END
 
@@ -84,6 +105,10 @@ CODE_BEGIN armDCacheZero
 	bic x8, x0, x10
 	mov x10, x1
 
+	mov w1, #1
+	mrs x0, tpidrro_el0
+	strb w1, [x0, #0x104]
+
 armDCacheZero_L0:
 	dc  zva, x8
 	add x8, x8, x9
@@ -91,5 +116,8 @@ armDCacheZero_L0:
 	bcc armDCacheZero_L0
 
 	dsb sy
+
+	strb wzr, [x0, #0x104]
+
 	ret
 CODE_END
