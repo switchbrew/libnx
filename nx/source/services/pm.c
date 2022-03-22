@@ -37,6 +37,22 @@ Result pmbmSetMaintenanceBoot(void) {
     return serviceDispatch(&g_pmbmSrv, 1);
 }
 
+static Result _pmCmdInU64OutU64(u64* out, u64 in, Service* srv, u32 cmd_id) {
+    return serviceDispatchInOut(srv, cmd_id, in, *out);
+}
+
+static Result _pmCmdInU64(u64 in, Service* srv, u32 cmd_id) {
+    return serviceDispatchIn(srv, cmd_id, in);
+}
+
+static Result _pmCmdVoid(Service* srv, u32 cmd_id) {
+    return serviceDispatch(srv, cmd_id);
+}
+
+static Result _pmCmdOutResourceLimitValues(PmResourceLimitValues* out, Service* srv, u32 cmd_id) {
+    return serviceDispatchOut(srv, cmd_id, *out);
+}
+
 // pmdmnt
 
 Result pmdmntGetJitDebugProcessIdList(u32* out_count, u64* out_pids, size_t max_pids) {
@@ -52,13 +68,11 @@ Result pmdmntGetJitDebugProcessIdList(u32* out_count, u64* out_pids, size_t max_
 }
 
 Result pmdmntStartProcess(u64 pid) {
-    const u64 cmd_id = hosversionAtLeast(5,0,0) ? 1 : 2;
-    return serviceDispatchIn(&g_pmdmntSrv, cmd_id, pid);
+    return _pmCmdInU64(pid, &g_pmdmntSrv, hosversionAtLeast(5,0,0) ? 1 : 2);
 }
 
 Result pmdmntGetProcessId(u64* pid_out, u64 program_id) {
-    const u64 cmd_id = hosversionAtLeast(5,0,0) ? 2 : 3;
-    return serviceDispatchInOut(&g_pmdmntSrv, cmd_id, program_id, *pid_out);
+    return _pmCmdInU64OutU64(pid_out, program_id, &g_pmdmntSrv, hosversionAtLeast(5,0,0) ? 2 : 3);
 }
 
 Result pmdmntHookToCreateProcess(Event* out_event, u64 program_id) {
@@ -95,10 +109,25 @@ Result pmdmntClearHook(u32 which) {
     return serviceDispatchIn(&g_pmdmntSrv, 6, which);
 }
 
+Result pmdmntGetProgramId(u64* program_id_out, u64 pid) {
+    if (!hosversionIsAtmosphere() && hosversionBefore(14,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    return _pmCmdInU64OutU64(program_id_out, pid, &g_pmdmntSrv, 7);
+}
+
 // pminfo
 
 Result pminfoGetProgramId(u64* program_id_out, u64 pid) {
-    return serviceDispatchInOut(&g_pminfoSrv, 0, pid, *program_id_out);
+    return _pmCmdInU64OutU64(program_id_out, pid, &g_pminfoSrv, 0);
+}
+
+Result pminfoGetAppletCurrentResourceLimitValues(PmResourceLimitValues* out) {
+    if (!hosversionIsAtmosphere() && hosversionBefore(14,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    return _pmCmdOutResourceLimitValues(out, &g_pminfoSrv, 1);
+}
+
+Result pminfoGetAppletPeakResourceLimitValues(PmResourceLimitValues* out) {
+    if (!hosversionIsAtmosphere() && hosversionBefore(14,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    return _pmCmdOutResourceLimitValues(out, &g_pminfoSrv, 2);
 }
 
 // pmshell
@@ -113,11 +142,11 @@ Result pmshellLaunchProgram(u32 launch_flags, const NcmProgramLocation *location
 }
 
 Result pmshellTerminateProcess(u64 processID) {
-    return serviceDispatchIn(&g_pmshellSrv, 1, processID);
+    return _pmCmdInU64(processID, &g_pmshellSrv, 1);
 }
 
 Result pmshellTerminateProgram(u64 program_id) {
-    return serviceDispatchIn(&g_pmshellSrv, 2, program_id);
+    return _pmCmdInU64(program_id, &g_pmshellSrv, 2);
 }
 
 Result pmshellGetProcessEventHandle(Event* out_event) {
@@ -138,12 +167,12 @@ Result pmshellGetProcessEventInfo(PmProcessEventInfo* out) {
 
 Result pmshellCleanupProcess(u64 pid) {
     if (hosversionAtLeast(5,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    return serviceDispatchIn(&g_pmshellSrv, 5, pid);
+    return _pmCmdInU64(pid, &g_pmshellSrv, 5);
 }
 
 Result pmshellClearJitDebugOccured(u64 pid) {
     if (hosversionAtLeast(5,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    return serviceDispatchIn(&g_pmshellSrv, 6, pid);
+    return _pmCmdInU64(pid, &g_pmshellSrv, 6);
 }
 
 Result pmshellNotifyBootFinished(void) {
@@ -158,11 +187,15 @@ Result pmshellGetApplicationProcessIdForShell(u64* pid_out) {
 
 Result pmshellBoostSystemMemoryResourceLimit(u64 boost_size) {
     if (hosversionBefore(4,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    const u64 cmd_id = hosversionAtLeast(5,0,0) ? 7 : 9;
-    return serviceDispatchIn(&g_pmshellSrv, cmd_id, boost_size);
+    return _pmCmdInU64(boost_size, &g_pmshellSrv, hosversionAtLeast(5,0,0) ? 7 : 9);
 }
 
-Result pmshellEnableApplicationExtraThread(void) {
-    if (hosversionBefore(7,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    return serviceDispatch(&g_pmshellSrv, 8);
+Result pmshellBoostApplicationThreadResourceLimit(void) {
+    if (!hosversionIsAtmosphere() && hosversionBefore(7,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    return _pmCmdVoid(&g_pmshellSrv, 8);
+}
+
+Result pmshellBoostSystemThreadResourceLimit(void) {
+    if (!hosversionIsAtmosphere() && hosversionBefore(14,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    return _pmCmdVoid(&g_pmshellSrv, 10);
 }

@@ -57,6 +57,15 @@ typedef enum {
     PmBootMode_SafeMode    = 2,    ///< SafeMode
 } PmBootMode;
 
+/// ResourceLimitValues
+typedef struct {
+    u64 physical_memory;
+    u32 thread_count;
+    u32 event_count;
+    u32 transfer_memory_count;
+    u32 session_count;
+} PmResourceLimitValues;
+
 /// Initialize pm:dmnt.
 Result pmdmntInitialize(void);
 
@@ -111,8 +120,11 @@ Result pmdmntHookToCreateProcess(Event* out, u64 program_id);
 Result pmdmntGetApplicationProcessId(u64* pid_out);
 Result pmdmntHookToCreateApplicationProcess(Event* out);
 Result pmdmntClearHook(u32 which);
+Result pmdmntGetProgramId(u64* program_id_out, u64 pid);
 
 Result pminfoGetProgramId(u64* program_id_out, u64 pid);
+Result pminfoGetAppletCurrentResourceLimitValues(PmResourceLimitValues* out);
+Result pminfoGetAppletPeakResourceLimitValues(PmResourceLimitValues* out);
 
 Result pmshellLaunchProgram(u32 launch_flags, const NcmProgramLocation *location, u64 *pid);
 Result pmshellTerminateProcess(u64 processID);
@@ -124,4 +136,5 @@ Result pmshellClearJitDebugOccured(u64 pid);
 Result pmshellNotifyBootFinished(void);
 Result pmshellGetApplicationProcessIdForShell(u64* pid_out);
 Result pmshellBoostSystemMemoryResourceLimit(u64 boost_size);
-Result pmshellEnableApplicationExtraThread(void);
+Result pmshellBoostApplicationThreadResourceLimit(void);
+Result pmshellBoostSystemThreadResourceLimit(void);
