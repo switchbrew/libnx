@@ -205,6 +205,7 @@ typedef enum {
     InfoType_IsApplication                  = 23, ///< [9.0.0+] Whether the specified process is an Application.
     InfoType_FreeThreadCount                = 24, ///< [11.0.0+] The number of free threads available to the process's resource limit.
     InfoType_ThreadTickCount                = 25, ///< [13.0.0+] Number of ticks spent on thread.
+    InfoType_IsSvcPermitted                 = 26, ///< [14.0.0+] Does process have access to SVC (only usable with \ref svcSynchronizePreemptionState at present).
 
     InfoType_ThreadTickCountDeprecated      = 0xF0000002, ///< [1.0.0-12.1.0] Number of ticks spent on thread.
 } InfoType;
