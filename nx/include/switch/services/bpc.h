@@ -24,4 +24,5 @@ Service* bpcGetServiceSession(void);
 
 Result bpcShutdownSystem(void);
 Result bpcRebootSystem(void);
-Result bpcGetSleepButtonState(BpcSleepButtonState *out); ///< [2.0.0+]
+Result bpcGetSleepButtonState(BpcSleepButtonState *out); ///< [2.0.0-13.2.1]
+Result bpcGetPowerButton(bool* out_is_pushed); ///< [6.0.0+]
