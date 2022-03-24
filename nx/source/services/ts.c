@@ -43,6 +43,8 @@ Result tsGetTemperature(TsLocation location, s32 *temperature) {
 }
 
 Result tsGetTemperatureMilliC(TsLocation location, s32 *temperature) {
+    if (hosversionAtLeast(14,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     return _tsCmdInU8Out32(location, (u32*)temperature, 3);
 }
 
