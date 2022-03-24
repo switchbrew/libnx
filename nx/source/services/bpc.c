@@ -23,6 +23,10 @@ static Result _bpcCmdNoIO(Service *srv, u32 cmd_id) {
     return serviceDispatch(srv, cmd_id);
 }
 
+static Result _bpcCmdOutU8(Service* srv, u32 cmd_id, u8* out) {
+    return serviceDispatchOut(&g_bpcSrv, cmd_id, out);
+}
+
 Result bpcShutdownSystem(void) {
     return _bpcCmdNoIO(&g_bpcSrv, 0);
 }
@@ -32,13 +36,25 @@ Result bpcRebootSystem(void) {
 }
 
 Result bpcGetSleepButtonState(BpcSleepButtonState *out) {
-    if (hosversionBefore(2,0,0))
+    if (!hosversionBetween(2, 14))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     u8 tmp = 0;
-    Result rc = serviceDispatchOut(&g_bpcSrv, 6, tmp);
+    Result rc = _bpcCmdOutU8(&g_bpcSrv, 6, &tmp);
 
     if (R_SUCCEEDED(rc) && out) *out = tmp;
+
+    return rc;
+}
+
+Result bpcGetPowerButton(bool* out_is_pushed) {
+    if (hosversionBefore(6,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    u8 tmp = 0;
+    Result rc = _bpcCmdOutU8(&g_bpcSrv, 14, &tmp);
+
+    if (out_is_pushed) *out_is_pushed = R_SUCCEEDED(rc) && tmp != 0;
 
     return rc;
 }
