@@ -39,7 +39,7 @@ Result tsGetTemperatureRange(TsLocation location, s32 *min_temperature, s32 *max
 Result tsGetTemperature(TsLocation location, s32 *temperature);
 
 /**
- * @brief Gets the temperature for the specified \ref TsLocation, in MilliC.
+ * @brief Gets the temperature for the specified \ref TsLocation, in MilliC. [1.0.0-13.2.1]
  * @param[in] location \ref TsLocation
  * @param[out] temperature Output temperature in MilliC.
  */
