@@ -1439,7 +1439,7 @@ Result btdrvGetAudioControlInputState(BtdrvAudioControlButtonState *states, s32 
 
 /**
  * @brief AcquireAudioConnectionStateChangedEvent
- * @note Only available on [12.0.0+].
+ * @note Only available on [12.0.0-13.2.1].
  * @param[out] out_event Output Event.
  * @param[in] autoclear Event autoclear.
  */
@@ -1447,7 +1447,7 @@ Result btdrvAcquireAudioConnectionStateChangedEvent(Event* out_event, bool autoc
 
 /**
  * @brief GetConnectedAudioDevice
- * @note Only available on [12.0.0+].
+ * @note Only available on [12.0.0-13.2.1].
  * @param[out] addrs Output array of \ref BtdrvAddress.
  * @param[in] count Size of the addrs array in entries, the maximum is 0x8.
  * @param[out] total_out Total output entries.

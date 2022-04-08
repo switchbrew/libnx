@@ -1391,14 +1391,14 @@ Result btdrvGetAudioControlInputState(BtdrvAudioControlButtonState *states, s32 
 }
 
 Result btdrvAcquireAudioConnectionStateChangedEvent(Event* out_event, bool autoclear) {
-    if (hosversionBefore(12,0,0))
+    if (!hosversionBetween(12, 14))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return _btdrvCmdGetEvent(out_event, autoclear, 144);
 }
 
 Result btdrvGetConnectedAudioDevice(BtdrvAddress *addrs, s32 count, s32 *total_out) {
-    if (hosversionBefore(12,0,0))
+    if (!hosversionBetween(12, 14))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return _btdrvCmdOutU32OutBuf(addrs, count*sizeof(BtdrvAddress), (u32*)total_out, 145);
