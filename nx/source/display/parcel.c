@@ -38,8 +38,7 @@ Result parcelTransact(Binder *session, u32 code, Parcel *in_parcel, Parcel *out_
     in_hdr->objects_size = in_parcel->objects_size;
     in_hdr->objects_off  = sizeof(ParcelHeader) + in_parcel->payload_size;
 
-    if (in_parcel->payload != NULL)
-        memcpy(&in[in_hdr->payload_off], in_parcel->payload, in_parcel->payload_size);
+    memcpy(&in[in_hdr->payload_off], in_parcel->payload, in_parcel->payload_size);
 
     if (in_parcel->objects != NULL)
         memcpy(&in[in_hdr->objects_off], in_parcel->objects, in_parcel->objects_size);
