@@ -433,7 +433,10 @@ void newlibSetup(void)
     tv->magic      = THREADVARS_MAGIC;
     tv->thread_ptr = NULL;
     tv->reent      = _impure_ptr;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Warray-bounds"
     tv->tls_tp     = __tls_start-2*sizeof(void*); // subtract size of Thread Control Block (TCB)
+#pragma GCC diagnostic pop
     tv->handle     = envGetMainThreadHandle();
 
     u32 tls_size = __tdata_lma_end - __tdata_lma;
