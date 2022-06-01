@@ -16,6 +16,7 @@
 #include "result.h"
 #include "services/bsd.h"
 #include "services/ssl.h"
+#include "services/nifm.h"
 #include "runtime/devices/socket.h"
 #include "runtime/hosversion.h"
 #include "../alloc.h"
@@ -196,6 +197,38 @@ int socketSslConnectionGetSocketDescriptor(SslConnection *c) {
     *(int *)__get_handle(fd)->fileStruct = tmpfd;
 
     return fd;
+}
+
+int socketNifmRequestRegisterSocketDescriptor(NifmRequest* r, int sockfd) {
+    int fd = _socketGetFd(sockfd);
+
+    if (fd==-1)
+        return -1;
+
+    Result rc = nifmRequestRegisterSocketDescriptor(r, fd);
+    if (R_FAILED(rc)) {
+        g_bsdResult = rc;
+        errno = EIO;
+        return -1;
+    }
+
+    return 0;
+}
+
+int socketNifmRequestUnregisterSocketDescriptor(NifmRequest* r, int sockfd) {
+    int fd = _socketGetFd(sockfd);
+
+    if (fd==-1)
+        return -1;
+
+    Result rc = nifmRequestUnregisterSocketDescriptor(r, fd);
+    if (R_FAILED(rc)) {
+        g_bsdResult = rc;
+        errno = EIO;
+        return -1;
+    }
+
+    return 0;
 }
 
 /***********************************************************************************************************************/

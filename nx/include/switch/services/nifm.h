@@ -282,5 +282,32 @@ Result nifmRequestSubmitAndWait(NifmRequest* r);
  */
 Result nifmRequestGetAppletInfo(NifmRequest* r, u32 theme_color, void* buffer, size_t size, u32 *applet_id, u32 *mode, u32 *out_size);
 
+/**
+ * @brief SetKeptInSleep
+ * @note Only available on [3.0.0+].
+ * @note ::NifmRequestState must be ::NifmRequestState_Unknown1.
+ * @param r \ref NifmRequest
+ * @param[in] flag Flag
+ */
+Result nifmRequestSetKeptInSleep(NifmRequest* r, bool flag);
+
+/**
+ * @brief RegisterSocketDescriptor. Only 1 socket can be registered at a time with a NifmRequest. Do not use directly, use \ref socketNifmRequestRegisterSocketDescriptor instead.
+ * @note Only available on [3.0.0+].
+ * @note ::NifmRequestState must be ::NifmRequestState_Available.
+ * @param r \ref NifmRequest
+ * @param[in] sockfd Socket fd
+ */
+Result nifmRequestRegisterSocketDescriptor(NifmRequest* r, int sockfd);
+
+/**
+ * @brief UnregisterSocketDescriptor. Do not use directly, use \ref socketNifmRequestUnregisterSocketDescriptor instead.
+ * @note Only available on [3.0.0+].
+ * @note ::NifmRequestState must be ::NifmRequestState_Available.
+ * @param r \ref NifmRequest
+ * @param[in] sockfd Socket fd, must match the fd previously registered with \ref nifmRequestRegisterSocketDescriptor.
+ */
+Result nifmRequestUnregisterSocketDescriptor(NifmRequest* r, int sockfd);
+
 ///@}
 

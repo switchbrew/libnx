@@ -46,3 +46,9 @@ int socketSslConnectionSetSocketDescriptor(SslConnection *c, int sockfd);
 /// Wrapper for \ref sslConnectionGetSocketDescriptor. Returns the output sockfd on success and -1 on error.
 int socketSslConnectionGetSocketDescriptor(SslConnection *c);
 
+/// Wrapper for \ref nifmRequestRegisterSocketDescriptor. Returns 0 on success and -1 on error.
+int socketNifmRequestRegisterSocketDescriptor(NifmRequest* r, int sockfd);
+
+/// Wrapper for \ref nifmRequestUnregisterSocketDescriptor. Returns 0 on success and -1 on error.
+int socketNifmRequestUnregisterSocketDescriptor(NifmRequest* r, int sockfd);
+

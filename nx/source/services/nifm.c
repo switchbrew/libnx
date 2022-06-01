@@ -99,6 +99,11 @@ static Result _nifmCmdInBoolNoOut(Service* srv, bool inval, u32 cmd_id) {
     return _nifmCmdInU8NoOut(srv, inval!=0, cmd_id);
 }
 
+static Result _nifmCmdInU32NoOut(Service* srv, u32 inval, u64 cmd_id) {
+    serviceAssumeDomain(srv);
+    return serviceDispatchIn(srv, cmd_id, inval);
+}
+
 static Result _nifmCreateGeneralServiceOld(Service* srv_out) {
     return _nifmCmdGetSession(&g_nifmSrv, srv_out, 4);
 }
@@ -450,5 +455,32 @@ Result nifmRequestGetAppletInfo(NifmRequest* r, u32 theme_color, void* buffer, s
         if (out_size) *out_size = out.out_size;
     }
     return rc;
+}
+
+Result nifmRequestSetKeptInSleep(NifmRequest* r, bool flag) {
+    if (!serviceIsActive(&r->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _nifmCmdInBoolNoOut(&r->s, flag, 23);
+}
+
+Result nifmRequestRegisterSocketDescriptor(NifmRequest* r, int sockfd) {
+    if (!serviceIsActive(&r->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _nifmCmdInU32NoOut(&r->s, (u32)sockfd, 24);
+}
+
+Result nifmRequestUnregisterSocketDescriptor(NifmRequest* r, int sockfd) {
+    if (!serviceIsActive(&r->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _nifmCmdInU32NoOut(&r->s, (u32)sockfd, 25);
 }
 
