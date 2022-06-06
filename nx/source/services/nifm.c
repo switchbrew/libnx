@@ -319,6 +319,13 @@ Result nifmWakeUp(void) {
     return _nifmCmdNoIO(&g_nifmIGS, 24);
 }
 
+Result nifmSetWowlDelayedWakeTime(s32 val) {
+    if (hosversionBefore(9,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _nifmCmdInU32NoOut(&g_nifmIGS, (u32)val, 43);
+}
+
 // IRequest
 
 void nifmRequestClose(NifmRequest* r) {

@@ -229,6 +229,14 @@ Result nifmIsAnyForegroundRequestAccepted(bool* out);
 Result nifmPutToSleep(void);
 Result nifmWakeUp(void);
 
+/**
+ * @brief SetWowlDelayedWakeTime
+ * @note Only available with ::NifmServiceType_System or ::NifmServiceType_Admin.
+ * @note Only available on [9.0.0+].
+ * @param[in] val Input value.
+ */
+Result nifmSetWowlDelayedWakeTime(s32 val);
+
 ///@name IRequest
 ///@{
 
