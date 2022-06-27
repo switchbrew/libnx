@@ -424,12 +424,12 @@ SVC_BEGIN svcCreateEvent
 SVC_END
 
 SVC_BEGIN svcMapIoRegion
-	svc 0x48
+	svc 0x46
 	ret
 SVC_END
 
 SVC_BEGIN svcUnmapIoRegion
-	svc 0x49
+	svc 0x47
 	ret
 SVC_END
 
