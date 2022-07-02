@@ -144,3 +144,21 @@ Result nvioctlNvhostCtrlGpu_ZbcGetActiveSlotMask(u32 fd, nvioctl_zbc_slot_mask *
 
     return rc;
 }
+
+Result nvioctlNvhostCtrlGpu_GetGpuTime(u32 fd, nvioctl_gpu_time *out) {
+    Result rc = 0;
+
+    struct {
+        __nv_out nvioctl_gpu_time out;
+    } data;
+
+    memset(&data, 0, sizeof(data));
+
+    rc = nvIoctl(fd, _NV_IOWR(0x47, 0x1C, data), &data);
+
+    if (R_SUCCEEDED(rc)) {
+        memcpy(out, &data.out, sizeof(data.out));
+    }
+
+    return rc;
+}

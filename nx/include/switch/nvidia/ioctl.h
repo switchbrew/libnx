@@ -118,6 +118,11 @@ typedef struct {
 } nvioctl_zbc_slot_mask;
 
 typedef struct {
+    u64 timestamp;
+    u64 reserved;
+} nvioctl_gpu_time;
+
+typedef struct {
     u32 id;
     u32 value;
 } nvioctl_fence;
@@ -246,6 +251,7 @@ Result nvioctlNvhostCtrlGpu_ZbcQueryTable(u32 fd, u32 index, nvioctl_zbc_entry *
 Result nvioctlNvhostCtrlGpu_GetCharacteristics(u32 fd, nvioctl_gpu_characteristics *out);
 Result nvioctlNvhostCtrlGpu_GetTpcMasks(u32 fd, void *buffer, size_t size);
 Result nvioctlNvhostCtrlGpu_ZbcGetActiveSlotMask(u32 fd, nvioctl_zbc_slot_mask *out);
+Result nvioctlNvhostCtrlGpu_GetGpuTime(u32 fd, nvioctl_gpu_time *out);
 
 Result nvioctlNvhostAsGpu_BindChannel(u32 fd, u32 channel_fd);
 Result nvioctlNvhostAsGpu_AllocSpace(u32 fd, u32 pages, u32 page_size, u32 flags, u64 align_or_offset, u64 *offset);
