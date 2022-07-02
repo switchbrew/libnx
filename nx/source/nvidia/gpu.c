@@ -90,3 +90,11 @@ Result nvGpuZbcAddDepth(float depth)
     memcpy(&depth_int, &depth, sizeof(float));
     return nvioctlNvhostCtrlGpu_ZbcSetTable(g_ctrlgpu_fd, NULL, NULL, depth_int, 1, NVGPU_ZBC_TYPE_DEPTH);
 }
+
+Result nvGpuGetTimestamp(u64 *ts) {
+    nvioctl_gpu_time data;
+    Result rc = nvioctlNvhostCtrlGpu_GetGpuTime(g_ctrlgpu_fd, &data);
+    if (R_SUCCEEDED(rc) && ts)
+        *ts = data.timestamp;
+    return rc;
+}
