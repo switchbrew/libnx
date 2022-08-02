@@ -88,6 +88,7 @@ armICacheInvalidate_L0:
 	bcc armICacheInvalidate_L0
 
 	dsb sy
+	isb
 
 	strb wzr, [x0, #0x104]
 
