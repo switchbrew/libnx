@@ -103,8 +103,9 @@ typedef struct {
     u8 pad;                                              ///< Padding
     u32 unk_x24;                                         ///< NifmSfWirelessSettingData::unk_x22
     u32 unk_x28;                                         ///< NifmSfWirelessSettingData::unk_x23
+    u8 passphrase_len;                                   ///< Passphrase length
     u8 passphrase[0x41];                                 ///< NifmSfWirelessSettingData::passphrase
-    u8 pad2[0x3];                                        ///< Padding
+    u8 pad2[0x2];                                        ///< Padding
 } NifmWirelessSettingData;
 
 /// SfWirelessSettingData
