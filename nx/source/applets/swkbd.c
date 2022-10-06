@@ -612,7 +612,7 @@ s32 swkbdInlineGetTouchRectangles(SwkbdInline* s, SwkbdRect *keytop, SwkbdRect *
         float width = s->calcArg.keytopScaleX*image_width;
         float scale_y = s->calcArg.keytopScaleY;
         float tmp_y = (keytop_max_height - 360.0f)*scale_y;
-        keytop->x = lroundf(((width*-5.0f)+640.0f) + (s->calcArg.keytopTranslateX*image_width)); // This results in a negative value with the default keytopTranslateX. sdknso uses 5.0f, but 0.5f was likely (?) intended - we do the same as sdknso anyway though.
+        keytop->x = lroundf(((width*-0.5f)+640.0f) + (s->calcArg.keytopTranslateX*image_width));
         keytop->y = lroundf((360.0f - tmp_y) - (s->calcArg.keytopTranslateY * 720.0f));
         keytop->width = lroundf(width);
         keytop->height = lroundf(footer_max_height*scale_y);
