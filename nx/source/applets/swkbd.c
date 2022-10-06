@@ -604,7 +604,7 @@ s32 swkbdInlineGetTouchRectangles(SwkbdInline* s, SwkbdRect *keytop, SwkbdRect *
 
     if (!s->calcArg.footerScalable) {
         footer_max_height-= 72.0f;
-        if (s->calcArg.keytopAsFloating) footer_max_height+= 1.4f;
+        if (s->calcArg.keytopAsFloating) footer_max_height+= 14.0f;
     }
 
     if (keytop) {
