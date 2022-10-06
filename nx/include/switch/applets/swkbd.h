@@ -850,7 +850,7 @@ void swkbdInlineSetCursorPos(SwkbdInline* s, s32 pos);
 
 /**
  * @brief Sets the UserWordInfo.
- * @note Not avilable when \ref SwkbdState is above ::SwkbdState_Initialized. Can't be used if this was already used previously.
+ * @note Not available when \ref SwkbdState is above ::SwkbdState_Initialized. Can't be used if this was already used previously.
  * @note The specified buffer must not be used after this, until \ref swkbdInlineClose is used.
  * @note \ref swkbdInlineUpdate must be called at some point afterwards.
  * @note If input==NULL or total_entries==0, this will just call \ref swkbdInlineUnsetUserWordInfo internally.
@@ -863,7 +863,7 @@ Result swkbdInlineSetUserWordInfo(SwkbdInline* s, const SwkbdDictWord *input, s3
 /**
  * @brief Request UnsetUserWordInfo.
  * @note \ref swkbdInlineUpdate must be called at some point afterwards for this to take affect.
- * @note Not avilable when \ref SwkbdState is above ::SwkbdState_Initialized.
+ * @note Not available when \ref SwkbdState is above ::SwkbdState_Initialized.
  * @param s SwkbdInline object.
  */
 Result swkbdInlineUnsetUserWordInfo(SwkbdInline* s);
@@ -879,7 +879,7 @@ void swkbdInlineSetUtf8Mode(SwkbdInline* s, bool flag);
 
 /**
  * @brief Sets the CustomizeDic.
- * @note Not avilable when \ref SwkbdState is above ::SwkbdState_Initialized. Can't be used if this or \ref swkbdInlineSetCustomizedDictionaries was already used previously.
+ * @note Not available when \ref SwkbdState is above ::SwkbdState_Initialized. Can't be used if this or \ref swkbdInlineSetCustomizedDictionaries was already used previously.
  * @note The specified buffer must not be used after this, until \ref swkbdInlineClose is used. However, it will also become available once \ref swkbdInlineUpdate handles SwkbdReplyType_UnsetCustomizeDic internally.
  * @param s SwkbdInline object.
  * @param buffer 0x1000-byte aligned buffer.
@@ -891,14 +891,14 @@ Result swkbdInlineSetCustomizeDic(SwkbdInline* s, void* buffer, size_t size, Swk
 /**
  * @brief Request UnsetCustomizeDic.
  * @note \ref swkbdInlineUpdate must be called at some point afterwards for this to take affect.
- * @note Not avilable when \ref SwkbdState is above ::SwkbdState_Initialized.
+ * @note Not available when \ref SwkbdState is above ::SwkbdState_Initialized.
  * @param s SwkbdInline object.
  */
 void swkbdInlineUnsetCustomizeDic(SwkbdInline* s);
 
 /**
  * @brief Sets the CustomizedDictionaries.
- * @note Not avilable when \ref SwkbdState is above ::SwkbdState_Initialized. Can't be used if this or \ref swkbdInlineSetCustomizeDic was already used previously.
+ * @note Not available when \ref SwkbdState is above ::SwkbdState_Initialized. Can't be used if this or \ref swkbdInlineSetCustomizeDic was already used previously.
  * @note The specified buffer in dic must not be used after this, until \ref swkbdInlineClose is used. However, it will also become available once \ref swkbdInlineUpdate handles SwkbdReplyType_UnsetCustomizedDictionaries internally.
  * @note Only available on [6.0.0+].
  * @param s SwkbdInline object.
@@ -908,7 +908,7 @@ Result swkbdInlineSetCustomizedDictionaries(SwkbdInline* s, const SwkbdCustomize
 
 /**
  * @brief Request UnsetCustomizedDictionaries.
- * @note Not avilable when \ref SwkbdState is above ::SwkbdState_Initialized.
+ * @note Not available when \ref SwkbdState is above ::SwkbdState_Initialized.
  * @note Only available on [6.0.0+].
  * @param s SwkbdInline object.
  */
@@ -967,7 +967,7 @@ void swkbdInlineSetKeytopTranslate(SwkbdInline* s, float x, float y);
 /**
  * @brief Sets KeytopAsFloating.
  * @note \ref swkbdInlineUpdate must be called at some point afterwards for this to take affect.
- * @note Not avilable when \ref SwkbdState is above ::SwkbdState_Initialized.
+ * @note Not available when \ref SwkbdState is above ::SwkbdState_Initialized.
  * @param s SwkbdInline object.
  * @param flag Flag
  */
