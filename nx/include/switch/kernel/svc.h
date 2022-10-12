@@ -40,6 +40,8 @@ typedef enum {
     MemType_KernelStack=0x13,         ///< Mapped in kernel during \ref svcCreateThread.
     MemType_CodeReadOnly=0x14,        ///< Mapped in kernel during \ref svcControlCodeMemory.
     MemType_CodeWritable=0x15,        ///< Mapped in kernel during \ref svcControlCodeMemory.
+    MemType_Coverage=0x16,            ///< Not available.
+    MemType_Insecure=0x17,            ///< Mapped in kernel during \ref svcMapInsecureMemory.
 } MemoryType;
 
 /// Memory state bitmasks.
@@ -1566,5 +1568,24 @@ Result svcSetResourceLimitLimitValue(Handle reslimit, LimitableResource which, u
  * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
  */
 void svcCallSecureMonitor(SecmonArgs* regs);
+
+///@}
+
+///@name Memory management
+///@{
+
+/**
+ * @brief Maps new insecure memory at the desired address. [15.0.0+]
+ * @return Result code.
+ * @note Syscall number 0x90.
+ */
+Result svcMapInsecureMemory(void *address, u64 size);
+
+/**
+ * @brief Undoes the effects of \ref svcMapInsecureMemory. [15.0.0+]
+ * @return Result code.
+ * @note Syscall number 0x91.
+ */
+Result svcUnmapInsecureMemory(void *address, u64 size);
 
 ///@}
