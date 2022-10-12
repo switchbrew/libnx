@@ -28,7 +28,7 @@ enum {
     EntryType_OverrideHeap=3,         ///< Provides heap override information.
     EntryType_OverrideService=4,      ///< Provides service override information.
     EntryType_Argv=5,                 ///< Provides argv.
-    EntryType_SyscallAvailableHint=6, ///< Provides syscall availability hints.
+    EntryType_SyscallAvailableHint=6, ///< Provides syscall availability hints (SVCs 0x00..0x7F).
     EntryType_AppletType=7,           ///< Provides APT applet type.
     EntryType_AppletWorkaround=8,     ///< Indicates that APT is broken and should not be used.
     EntryType_Reserved9=9,            ///< Unused/reserved entry type, formerly used by StdioSockets.
@@ -37,6 +37,7 @@ enum {
     EntryType_RandomSeed=14,          ///< Provides random data used to seed the pseudo-random number generator.
     EntryType_UserIdStorage=15,       ///< Provides persistent storage for the preselected user id.
     EntryType_HosVersion=16,          ///< Provides the currently running Horizon OS version.
+    EntryType_SyscallAvailableHint2=17, ///< Provides syscall availability hints (SVCs 0x80..0xBF).
 };
 
 enum {
@@ -81,7 +82,7 @@ void* envGetArgv(void);
  * @param svc Syscall number to test.
  * @returns true if the syscall is available.
  */
-bool envIsSyscallHinted(u8 svc);
+bool envIsSyscallHinted(unsigned svc);
 
 /// Returns the handle to the running homebrew process.
 Handle envGetOwnProcessHandle(void);

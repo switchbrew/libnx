@@ -17,7 +17,7 @@ static LoaderReturnFn g_loaderRetAddr = NULL;
 static void*  g_overrideHeapAddr = NULL;
 static u64    g_overrideHeapSize = 0;
 static void*  g_overrideArgv = NULL;
-static u64    g_syscallHints[2];
+static u64    g_syscallHints[3];
 static Handle g_processHandle = INVALID_HANDLE;
 static char*  g_nextLoadPath = NULL;
 static char*  g_nextLoadArgv = NULL;
@@ -37,7 +37,7 @@ void envSetup(void* ctx, Handle main_thread, LoaderReturnFn saved_lr)
         g_isNso = true;
         g_mainThreadHandle = main_thread;
         g_loaderRetAddr = (LoaderReturnFn) &svcExitProcess;
-        g_syscallHints[0] = g_syscallHints[1] = UINT64_MAX;
+        g_syscallHints[0] = g_syscallHints[1] = g_syscallHints[2] = UINT64_MAX;
         return;
     }
 
@@ -110,6 +110,10 @@ void envSetup(void* ctx, Handle main_thread, LoaderReturnFn saved_lr)
             break;
         }
 
+        case EntryType_SyscallAvailableHint2:
+            g_syscallHints[2] = ent->Value[0];
+            break;
+
         default:
             if (ent->Flags & EntryFlag_IsMandatory)
             {
@@ -170,7 +174,8 @@ void* envGetArgv(void) {
     return g_overrideArgv;
 }
 
-bool envIsSyscallHinted(u8 svc) {
+bool envIsSyscallHinted(unsigned svc) {
+    if (svc >= 0xC0) return false;
     return !!(g_syscallHints[svc/64] & (1ull << (svc%64)));
 }
 
