@@ -1164,7 +1164,7 @@ Result svcDetachDeviceAddressSpace(u64 device, Handle handle);
  * @note Syscall number 0x59.
  * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
  */
-Result svcMapDeviceAddressSpaceByForce(Handle handle, Handle proc_handle, u64 map_addr, u64 dev_size, u64 dev_addr, u32 perm);
+Result svcMapDeviceAddressSpaceByForce(Handle handle, Handle proc_handle, u64 map_addr, u64 dev_size, u64 dev_addr, u32 option);
 
 /**
  * @brief Maps an attached device address space to an userspace address.
@@ -1173,7 +1173,7 @@ Result svcMapDeviceAddressSpaceByForce(Handle handle, Handle proc_handle, u64 ma
  * @note Syscall number 0x5A.
  * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
  */
-Result svcMapDeviceAddressSpaceAligned(Handle handle, Handle proc_handle, u64 map_addr, u64 dev_size, u64 dev_addr, u32 perm);
+Result svcMapDeviceAddressSpaceAligned(Handle handle, Handle proc_handle, u64 map_addr, u64 dev_size, u64 dev_addr, u32 option);
 
 /**
  * @brief Maps an attached device address space to an userspace address. [1.0.0-12.1.0]
