@@ -895,7 +895,7 @@ Result setsysSetHeadphoneVolumeUpdateFlag(bool flag) {
 }
 
 Result setsysNeedsToUpdateHeadphoneVolume(u8 *a0, u8 *a1, u8 *a2, bool flag) {
-    if (hosversionBefore(3,0,0))
+    if (!hosversionBetween(3,15))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     struct {

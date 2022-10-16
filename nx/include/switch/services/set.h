@@ -1690,7 +1690,7 @@ Result setsysSetHeadphoneVolumeUpdateFlag(bool flag);
 
 /**
  * @brief NeedsToUpdateHeadphoneVolume
- * @note Only available on [3.0.0+].
+ * @note Only available on [3.0.0-14.1.2].
  * @param[out] a0 Output arg.
  * @param[out] a1 Output arg.
  * @param[out] a2 Output arg.
