@@ -255,7 +255,7 @@ Result pdmqryGetAvailableAccountPlayEventRange(AccountUid uid, s32 *total_entrie
 
 /**
  * @brief Gets a list of applications played by the specified user.
- * @note Only available with [6.0.0+].
+ * @note Only available with [6.0.0-14.1.2].
  * @param[in] uid \ref AccountUid
  * @param[in] flag [10.0.0+] Whether to additionally allow using entries with ::PdmPlayLogPolicy_Unknown3.
  * @param[out] application_ids Output ApplicationIds array.
@@ -266,7 +266,7 @@ Result pdmqryQueryRecentlyPlayedApplication(AccountUid uid, bool flag, u64 *appl
 
 /**
  * @brief Gets an Event which is signaled when logging a new \ref PdmPlayEvent which would be available via \ref pdmqryQueryAccountEvent, where PdmPlayEvent::eventData::account::type is 0.
- * @note Only available with [6.0.0+].
+ * @note Only available with [6.0.0-14.1.2].
  * @note The Event must be closed by the user once finished with it.
  * @param[out] out_event Output Event with autoclear=false.
  */

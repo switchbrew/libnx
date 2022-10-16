@@ -181,7 +181,7 @@ Result pdmqryGetAvailableAccountPlayEventRange(AccountUid uid, s32 *total_entrie
 }
 
 Result pdmqryQueryRecentlyPlayedApplication(AccountUid uid, bool flag, u64 *application_ids, s32 count, s32 *total_out) {
-    if (hosversionBefore(6,0,0))
+    if (!hosversionBetween(6,15))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     if (hosversionBefore(10,0,0)) {
@@ -204,7 +204,7 @@ Result pdmqryQueryRecentlyPlayedApplication(AccountUid uid, bool flag, u64 *appl
 }
 
 Result pdmqryGetRecentlyPlayedApplicationUpdateEvent(Event* out_event) {
-    if (hosversionBefore(6,0,0))
+    if (!hosversionBetween(6,15))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return _pdmCmdGetEvent(&g_pdmqrySrv, out_event, false, 15);
