@@ -1,5 +1,30 @@
 # Changelog
 
+## Version 4.2.2
+
+#### system
+* svc: Added svcMapInsecureMemory, svcUnmapInsecureMemory [15.0.0+].
+* svc: Renamed perm parameter of svcMapDeviceAddressSpaceByForce and svcMapDeviceAddressSpaceAligned to option [15.0.0+].
+* svc: Corrected svcMapIoRegion, svcUnmapIoRegion.
+* env: Added HBABI support for hinting SVCs in the extended range 0x80..0xBF.
+* cache: Added instruction barrier to armICacheInvalidate.
+
+#### graphics
+* Added nvGpuGetTimestamp, nvioctlNvhostCtrlGpu_GetGpuTime.
+
+#### applets
+* swkbd: Corrected several typos and incorrect floating point values.
+
+#### network
+* socket: Added socketNifmRequestRegisterSocketDescriptor, socketNifmRequestUnregisterSocketDescriptor.
+* nifm: nifmRequestSetKeptInSleep, nifmRequestRegisterSocketDescriptor, nifmRequestUnregisterSocketDescriptor, nifmSetWowlDelayedWakeTime.
+
+#### other services
+* set:sys: setsysNeedsToUpdateHeadphoneVolume removed in [15.0.0].
+* pdm:qry: pdmqryQueryRecentlyPlayedApplication, pdmqryGetRecentlyPlayedApplicationUpdateEvent removed in [15.0.0].
+
+Several issues were fixed, and usability and stability were improved.
+
 ## Version 4.2.1
 
 #### system
