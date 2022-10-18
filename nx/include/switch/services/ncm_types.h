@@ -138,7 +138,7 @@ typedef struct {
 typedef struct {
     u64 application_id;                  ///< ApplicationId of this add-on-content's corresponding application.
     u32 required_application_version;    ///< Version of the application required by this add-on-content.
-    u8 content_accessibility_individual; ///< ContentAccessibilityIndividual.
+    u8 content_accessibilities;          ///< Content accessibilities.
     u8 padding[3];                       ///< Padding.
     u64 data_patch_id;                   ///< DataPatchId of this add-on-content's corresponding data patch.
 } NcmAddOnContentMetaExtendedHeader;
