@@ -176,7 +176,7 @@ typedef struct {
  * @param[in] info Pointer to \ref NcmContentInfo object.
  * @param[out] out Output size.
  */
-NX_INLINE void ncmContentInfoSizeToU64(const NcmContentInfo *info, u64 *out) {
+NX_CONSTEXPR void ncmContentInfoSizeToU64(const NcmContentInfo *info, u64 *out) {
     *out = ((u64)info->size_high << 32) | info->size_low;
 }
 
@@ -185,7 +185,7 @@ NX_INLINE void ncmContentInfoSizeToU64(const NcmContentInfo *info, u64 *out) {
  * @param[in] size Input size.
  * @param[out] out Pointer to \ref NcmContentInfo object to be updated.
  */
-NX_INLINE void ncmU64ToContentInfoSize(const u64 size, NcmContentInfo *info) {
+NX_CONSTEXPR void ncmU64ToContentInfoSize(const u64 size, NcmContentInfo *info) {
     info->size_low = size & 0xFFFFFFFF;
     info->size_high = (u8)(size >> 32);
 }
