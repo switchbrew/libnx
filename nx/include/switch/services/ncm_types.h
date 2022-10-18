@@ -172,8 +172,8 @@ typedef struct {
 } NcmProgramLocation;
 
 /**
- * @brief Converts the size fields from an input \ref NcmContentInfo into a usable 64-bit integer.
- * @param[in] info Pointer to \ref NcmContentInfo object.
+ * @brief Retrieves the content size from a \ref NcmContentInfo struct.
+ * @param[in] info Pointer to \ref NcmContentInfo struct.
  * @param[out] out Output size.
  */
 NX_CONSTEXPR void ncmContentInfoSizeToU64(const NcmContentInfo *info, u64 *out) {
@@ -181,9 +181,9 @@ NX_CONSTEXPR void ncmContentInfoSizeToU64(const NcmContentInfo *info, u64 *out) 
 }
 
 /**
- * @brief Updates the size fields from a \ref NcmContentInfo using an input 64-bit integer.
+ * @brief Updates the content size from a \ref NcmContentInfo struct.
  * @param[in] size Input size.
- * @param[out] out Pointer to \ref NcmContentInfo object to be updated.
+ * @param[out] out Pointer to \ref NcmContentInfo struct.
  */
 NX_CONSTEXPR void ncmU64ToContentInfoSize(const u64 size, NcmContentInfo *info) {
     info->size_low = size & 0xFFFFFFFF;
