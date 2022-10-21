@@ -24,7 +24,7 @@ static Result _bpcCmdNoIO(Service *srv, u32 cmd_id) {
 }
 
 static Result _bpcCmdOutU8(Service* srv, u32 cmd_id, u8* out) {
-    return serviceDispatchOut(&g_bpcSrv, cmd_id, out);
+    return serviceDispatchOut(&g_bpcSrv, cmd_id, *out);
 }
 
 Result bpcShutdownSystem(void) {
