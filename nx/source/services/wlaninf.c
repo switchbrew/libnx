@@ -1,4 +1,5 @@
 #define NX_SERVICE_ASSUME_NON_DOMAIN
+#include "runtime/hosversion.h"
 #include "service_guard.h"
 #include "services/wlaninf.h"
 
@@ -7,6 +8,9 @@ static Service g_wlaninfSrv;
 NX_GENERATE_SERVICE_GUARD(wlaninf);
 
 Result _wlaninfInitialize(void) {
+    if (hosversionAtLeast(15,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     return smGetService(&g_wlaninfSrv, "wlan:inf");
 }
 

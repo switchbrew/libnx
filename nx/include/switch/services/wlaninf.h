@@ -16,7 +16,7 @@ typedef enum {
     WlanInfState_Connected,        ///< WLAN is connected.
 } WlanInfState;
 
-/// Initialize wlan:inf.
+/// [1.0.0-14.1.2] Initialize wlan:inf.
 Result wlaninfInitialize(void);
 
 /// Exit wlan:inf.
