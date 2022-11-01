@@ -344,10 +344,10 @@ Service* appletGetServiceSession_Proxy(void);
 /// Gets the Service object for IAppletCommonFunctions. Only initialized with AppletType_SystemApplet, AppletType_LibraryApplet, or AppletType_OverlayApplet, on [7.0.0+].
 Service* appletGetServiceSession_AppletCommonFunctions(void);
 
-/// Gets the Service object for I*Functions, specific to each AppletType (IApplicationFunctions for AppletType_*Application). Not initialized with AppletType_LibraryApplet.
+/// Gets the Service object for I*Functions, specific to each AppletType (IApplicationFunctions for AppletType_*Application). Not initialized with AppletType_LibraryApplet pre-15.0.0. On [15.0.0+] with AppletType_LibraryApplet this returns the object for IHomeMenuFunctions.
 Service* appletGetServiceSession_Functions(void);
 
-/// Gets the Service object for IGlobalStateController. Only initialized with AppletType_SystemApplet.
+/// Gets the Service object for IGlobalStateController. Only initialized with AppletType_SystemApplet, or on [15.0.0+] with AppletType_LibraryApplet/AppletType_OverlayApplet.
 Service* appletGetServiceSession_GlobalStateController(void);
 
 /// Gets the Service object for IApplicationCreator. Only initialized with AppletType_SystemApplet.
@@ -1732,37 +1732,37 @@ Result appletPrepareForJit(void);
 
 ///@}
 
-///@name IHomeMenuFunctions: IFunctions for AppletType_SystemApplet.
+///@name IHomeMenuFunctions: IFunctions for AppletType_SystemApplet and on [15.0.0+] for AppletType_LibraryApplet.
 ///@{
 
 /**
  * @brief RequestToGetForeground
- * @note Only available with AppletType_SystemApplet.
+ * @note Only available with AppletType_SystemApplet, or on [15.0.0+] with AppletType_LibraryApplet.
  */
 Result appletRequestToGetForeground(void);
 
 /**
  * @brief LockForeground
- * @note Only available with AppletType_SystemApplet.
+ * @note Only available with AppletType_SystemApplet, or on [15.0.0+] with AppletType_LibraryApplet.
  */
 Result appletLockForeground(void);
 
 /**
  * @brief UnlockForeground
- * @note Only available with AppletType_SystemApplet.
+ * @note Only available with AppletType_SystemApplet, or on [15.0.0+] with AppletType_LibraryApplet.
  */
 Result appletUnlockForeground(void);
 
 /**
  * @brief Pops a storage from the general channel.
- * @note Only available with AppletType_SystemApplet.
+ * @note Only available with AppletType_SystemApplet, or on [15.0.0+] with AppletType_LibraryApplet.
  * @param[out] s Storage object.
  */
 Result appletPopFromGeneralChannel(AppletStorage *s);
 
 /**
  * @brief Gets an Event which is signaled when a new storage is available with \ref appletPopFromGeneralChannel where previously no storage was available, this event is automatically cleared by the system once the last storage is popped.
- * @note Only available with AppletType_SystemApplet.
+ * @note Only available with AppletType_SystemApplet, or on [15.0.0+] with AppletType_LibraryApplet.
  * @note The Event must be closed by the user once finished with it.
  * @param[out] out_event Output Event with autoclear=false.
  */
@@ -1770,7 +1770,7 @@ Result appletGetPopFromGeneralChannelEvent(Event *out_event);
 
 /**
  * @brief Gets a \ref AppletLockAccessor for HomeButtonWriter.
- * @note Only available with AppletType_SystemApplet.
+ * @note Only available with AppletType_SystemApplet, or on [15.0.0+] with AppletType_LibraryApplet.
  * @note Similar to using \ref appletGetWriterLockAccessorEx with inval=0.
  * @param a LockAccessor object.
  */
@@ -1778,14 +1778,14 @@ Result appletGetHomeButtonWriterLockAccessor(AppletLockAccessor *a);
 
 /**
  * @brief IsSleepEnabled
- * @note Only available with AppletType_SystemApplet on [11.0.0+].
+ * @note Only available with AppletType_SystemApplet on [11.0.0+], or on [15.0.0+] with AppletType_LibraryApplet.
  * @param[out] out Output flag.
  */
 Result appletIsSleepEnabled(bool *out);
 
 /**
  * @brief PopRequestLaunchApplicationForDebug
- * @note Only available with AppletType_SystemApplet on [6.0.0+].
+ * @note Only available with AppletType_SystemApplet on [6.0.0+], or on [15.0.0+] with AppletType_LibraryApplet.
  * @param[out] uids Output array of \ref AccountUid.
  * @param[in] count Size of the uids array in entries, must be at least the size stored in state.
  * @param[out] application_id Output ApplicationId.
@@ -1795,21 +1795,21 @@ Result appletPopRequestLaunchApplicationForDebug(AccountUid *uids, s32 count, u6
 
 /**
  * @brief IsForceTerminateApplicationDisabledForDebug
- * @note Only available with AppletType_SystemApplet on [9.0.0+].
+ * @note Only available with AppletType_SystemApplet on [9.0.0+], or on [15.0.0+] with AppletType_LibraryApplet.
  * @param[out] out Output flag. 0 when DebugMode is not enabled, otherwise this is loaded from a system-setting.
  */
 Result appletIsForceTerminateApplicationDisabledForDebug(bool *out);
 
 /**
  * @brief Launches DevMenu and the dev Overlay-applet. This will enter an infinite-sleep-loop on success.
- * @note Only available with AppletType_SystemApplet on [8.0.0+].
+ * @note Only available with AppletType_SystemApplet on [8.0.0+], or on [15.0.0+] with AppletType_LibraryApplet.
  * @note This verifies that DebugMode is enabled, then uses a ns cmd. That cmd then loads the system-settings for these two ProgramIds (which normally only exist on devunits), and verifies that these programs are installed + launches them.
  */
 Result appletLaunchDevMenu(void);
 
 /**
  * @brief SetLastApplicationExitReason
- * @note Only available with AppletType_SystemApplet on [11.0.0+].
+ * @note Only available with AppletType_SystemApplet on [11.0.0+], or on [15.0.0+] with AppletType_LibraryApplet.
  * @param[in] reason Reason
  */
 Result appletSetLastApplicationExitReason(s32 reason);
@@ -1821,65 +1821,65 @@ Result appletSetLastApplicationExitReason(s32 reason);
 
 /**
  * @brief Start the sequence for entering sleep-mode.
- * @note Only available with AppletType_SystemApplet.
+ * @note Only available with AppletType_SystemApplet, or on [15.0.0+] with AppletType_LibraryApplet/AppletType_OverlayApplet.
  * @param[in] flag Flag, official sw uses hard-coded value = true.
  */
 Result appletStartSleepSequence(bool flag);
 
 /**
  * @brief Start the system-shutdown sequence.
- * @note Only available with AppletType_SystemApplet.
+ * @note Only available with AppletType_SystemApplet, or on [15.0.0+] with AppletType_LibraryApplet/AppletType_OverlayApplet.
  */
 Result appletStartShutdownSequence(void);
 
 /**
  * @brief Start the system-reboot sequence.
- * @note Only available with AppletType_SystemApplet.
+ * @note Only available with AppletType_SystemApplet, or on [15.0.0+] with AppletType_LibraryApplet/AppletType_OverlayApplet.
  */
 Result appletStartRebootSequence(void);
 
 /**
  * @brief IsAutoPowerDownRequested. Uses an idle:sys cmd internally.
- * @note Only available with AppletType_SystemApplet on [7.0.0+].
+ * @note Only available with AppletType_SystemApplet on [7.0.0+], or on [15.0.0+] with AppletType_LibraryApplet/AppletType_OverlayApplet.
  * @param[out] out Output flag.
  */
 Result appletIsAutoPowerDownRequested(bool *out);
 
 /**
  * @brief LoadAndApplyIdlePolicySettings. Uses an idle:sys cmd internally.
- * @note Only available with AppletType_SystemApplet.
+ * @note Only available with AppletType_SystemApplet, or on [15.0.0+] with AppletType_LibraryApplet/AppletType_OverlayApplet.
  */
 Result appletLoadAndApplyIdlePolicySettings(void);
 
 /**
  * @brief NotifyCecSettingsChanged. Uses an omm cmd internally.
- * @note Only available with AppletType_SystemApplet on [2.0.0+].
+ * @note Only available with AppletType_SystemApplet on [2.0.0+], or on [15.0.0+] with AppletType_LibraryApplet/AppletType_OverlayApplet.
  */
 Result appletNotifyCecSettingsChanged(void);
 
 /**
  * @brief Sets the DefaultHomeButtonLongPressTime.
- * @note Only available with AppletType_SystemApplet on [3.0.0+].
+ * @note Only available with AppletType_SystemApplet on [3.0.0+], or on [15.0.0+] with AppletType_LibraryApplet/AppletType_OverlayApplet.
  * @param[in] val Input value.
  */
 Result appletSetDefaultHomeButtonLongPressTime(s64 val);
 
 /**
  * @brief UpdateDefaultDisplayResolution. Uses an omm cmd internally.
- * @note Only available with AppletType_SystemApplet on [3.0.0+].
+ * @note Only available with AppletType_SystemApplet on [3.0.0+], or on [15.0.0+] with AppletType_LibraryApplet/AppletType_OverlayApplet.
  */
 Result appletUpdateDefaultDisplayResolution(void);
 
 /**
  * @brief ShouldSleepOnBoot. Uses an omm cmd internally.
- * @note Only available with AppletType_SystemApplet on [3.0.0+].
+ * @note Only available with AppletType_SystemApplet on [3.0.0+], or on [15.0.0+] with AppletType_LibraryApplet/AppletType_OverlayApplet.
  * @param[out] out Output flag.
  */
 Result appletShouldSleepOnBoot(bool *out);
 
 /**
  * @brief Gets an Event which is signaled for HdcpAuthenticationFailed.
- * @note Only available with AppletType_SystemApplet on [4.0.0+].
+ * @note Only available with AppletType_SystemApplet on [4.0.0+], or on [15.0.0+] with AppletType_LibraryApplet/AppletType_OverlayApplet.
  * @note The Event must be closed by the user once finished with it.
  * @param[out] out_event Output Event with autoclear=false.
  */

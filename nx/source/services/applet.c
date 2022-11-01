@@ -13,6 +13,8 @@ __attribute__((weak)) AppletAttribute __nx_applet_AppletAttribute;
 __attribute__((weak)) u32 __nx_applet_PerformanceConfiguration[2] = {/*0x92220008*//*0x20004*//*0x92220007*/0, 0};
 //// Controls whether to use applet exit cmds during \ref appletExit.  0 (default): Only run exit cmds when running under a NSO. 1: Use exit cmds regardless. >1: Skip exit cmds.
 __attribute__((weak)) u32 __nx_applet_exit_mode = 0;
+/// Controls the timeout in nanoseconds to use during LibraryApplet initialization in appletInitialize, with diagAbortWithResult being used if the timeout is reached.
+__attribute__((weak)) u64 __nx_applet_init_timeout = 864000000000000000ULL;
 
 static Service g_appletSrv;
 static Service g_appletProxySession;
@@ -152,6 +154,11 @@ Result _appletInitialize(void) {
     if (R_SUCCEEDED(rc)) {
         #define AM_BUSY_ERROR 0x19280
 
+        u64 start_tick = 0;
+        u64 timeout = __nx_applet_init_timeout;
+        if (__nx_applet_type == AppletType_LibraryApplet)
+            start_tick = armGetSystemTick();
+
         do {
             u32 cmd_id;
 
@@ -176,7 +183,12 @@ Result _appletInitialize(void) {
                 rc = _appletOpenLibraryAppletProxy(&g_appletProxySession, CUR_PROCESS_HANDLE, attr);
 
             if (R_VALUE(rc) == AM_BUSY_ERROR) {
-                svcSleepThread(10000000);
+                svcSleepThread(100000000);
+
+                if (__nx_applet_type == AppletType_LibraryApplet && armTicksToNs(armGetSystemTick() - start_tick) >= timeout)
+                    diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_Timeout));
+
+                // Official sw also has code for calling a funcptr on the first AM_BUSY_ERROR (instead of sleep) where the elapsed time since start_tick is >=1 second, but we don't impl that.
             }
 
         } while (R_VALUE(rc) == AM_BUSY_ERROR);
@@ -209,6 +221,16 @@ Result _appletInitialize(void) {
         //GetProcessWindingController
         if (R_SUCCEEDED(rc))
             rc = _appletCmdGetSession(&g_appletProxySession, &g_appletIProcessWindingController, 10);
+    }
+
+    if (R_SUCCEEDED(rc) && hosversionAtLeast(15,0,0)) { // [15.0.0+]
+        // GetHomeMenuFunctions
+        if (__nx_applet_type == AppletType_LibraryApplet)
+            rc = _appletCmdGetSession(&g_appletProxySession, &g_appletIFunctions, 22);
+
+        // GetGlobalStateController
+        if (R_SUCCEEDED(rc) && (__nx_applet_type == AppletType_LibraryApplet || __nx_applet_type == AppletType_OverlayApplet))
+            rc = _appletCmdGetSession(&g_appletProxySession, &g_appletIGlobalStateController, 23);
     }
 
     // GetLibraryAppletCreator
@@ -267,7 +289,7 @@ Result _appletInitialize(void) {
                     break;
                 }
 
-                if (msg != 0xF)
+                if (msg != AppletMessage_FocusStateChanged)
                     continue;
 
                 rc = _appletGetCurrentFocusState(&g_appletFocusState);
@@ -301,7 +323,7 @@ Result _appletInitialize(void) {
         rc = _appletSetPerformanceModeChangedNotification(1);
 
     // Official apps aren't known to use apmSetPerformanceConfiguration with mode=1.
-    if (R_SUCCEEDED(rc)) {
+    if (R_SUCCEEDED(rc) && __nx_applet_type == AppletType_Application) {
         u32 i;
         for (i=0; i<2; i++)
         {
@@ -405,18 +427,18 @@ void _appletCleanup(void) {
     serviceClose(&g_appletICommonStateGetter);
     serviceClose(&g_appletILibraryAppletCreator);
 
-    if (__nx_applet_type == AppletType_SystemApplet) {
+    if (__nx_applet_type == AppletType_SystemApplet)
         serviceClose(&g_appletIApplicationCreator);
-        serviceClose(&g_appletIGlobalStateController);
-    }
-
-    if (__nx_applet_type != AppletType_LibraryApplet)
-        serviceClose(&g_appletIFunctions);
 
     if (__nx_applet_type == AppletType_LibraryApplet) {
         serviceClose(&g_appletIProcessWindingController);
         serviceClose(&g_appletILibraryAppletSelfAccessor);
     }
+
+    if (__nx_applet_type == AppletType_SystemApplet || __nx_applet_type == AppletType_LibraryApplet || __nx_applet_type == AppletType_OverlayApplet)
+        serviceClose(&g_appletIGlobalStateController);
+
+    serviceClose(&g_appletIFunctions);
 
     serviceClose(&g_appletIAppletCommonFunctions);
 
@@ -599,14 +621,14 @@ proto { \
 
 #define IPC_MAKE_CMD_IMPL_INITEXPR(proto,_s,_rid,func,initexpr,...) \
 proto { \
-    if (!serviceIsActive((_s)) || initexpr) \
+    if (!serviceIsActive((_s)) || (initexpr)) \
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized); \
     return func((_s), ##__VA_ARGS__, (_rid)); \
 }
 
 #define IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(proto,_s,_rid,func,initexpr,_hosver,...) \
 proto { \
-    if (!serviceIsActive((_s)) || initexpr) \
+    if (!serviceIsActive((_s)) || (initexpr)) \
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized); \
     if (hosversionBefore _hosver) \
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer); \
@@ -2359,16 +2381,16 @@ IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletPrepareForJit(void),             
 
 // IHomeMenuFunctions
 
-IPC_MAKE_CMD_IMPL_INITEXPR(Result appletRequestToGetForeground(void),                           &g_appletIFunctions, 10, _appletCmdNoIO,                     __nx_applet_type != AppletType_SystemApplet)
-IPC_MAKE_CMD_IMPL_INITEXPR(Result appletLockForeground(void),                                   &g_appletIFunctions, 11, _appletCmdNoIO,                     __nx_applet_type != AppletType_SystemApplet)
-IPC_MAKE_CMD_IMPL_INITEXPR(Result appletUnlockForeground(void),                                 &g_appletIFunctions, 12, _appletCmdNoIO,                     __nx_applet_type != AppletType_SystemApplet)
-IPC_MAKE_CMD_IMPL_INITEXPR(Result appletPopFromGeneralChannel(AppletStorage *s),                &g_appletIFunctions, 20, _appletCmdNoInOutStorage,           __nx_applet_type != AppletType_SystemApplet, s)
-IPC_MAKE_CMD_IMPL_INITEXPR(Result appletGetPopFromGeneralChannelEvent(Event *out_event),        &g_appletIFunctions, 21, _appletCmdGetEvent,                 __nx_applet_type != AppletType_SystemApplet, out_event, false)
-IPC_MAKE_CMD_IMPL_INITEXPR(Result appletGetHomeButtonWriterLockAccessor(AppletLockAccessor *a), &g_appletIFunctions, 30, _appletGetHomeButtonRwLockAccessor, __nx_applet_type != AppletType_SystemApplet, a)
-IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletIsSleepEnabled(bool *out),                       &g_appletIFunctions, 40,  _appletCmdNoInOutBool, __nx_applet_type != AppletType_SystemApplet, (11,0,0), out)
+IPC_MAKE_CMD_IMPL_INITEXPR(Result appletRequestToGetForeground(void),                           &g_appletIFunctions, 10, _appletCmdNoIO,                     __nx_applet_type != AppletType_SystemApplet && __nx_applet_type != AppletType_LibraryApplet)
+IPC_MAKE_CMD_IMPL_INITEXPR(Result appletLockForeground(void),                                   &g_appletIFunctions, 11, _appletCmdNoIO,                     __nx_applet_type != AppletType_SystemApplet && __nx_applet_type != AppletType_LibraryApplet)
+IPC_MAKE_CMD_IMPL_INITEXPR(Result appletUnlockForeground(void),                                 &g_appletIFunctions, 12, _appletCmdNoIO,                     __nx_applet_type != AppletType_SystemApplet && __nx_applet_type != AppletType_LibraryApplet)
+IPC_MAKE_CMD_IMPL_INITEXPR(Result appletPopFromGeneralChannel(AppletStorage *s),                &g_appletIFunctions, 20, _appletCmdNoInOutStorage,           __nx_applet_type != AppletType_SystemApplet && __nx_applet_type != AppletType_LibraryApplet, s)
+IPC_MAKE_CMD_IMPL_INITEXPR(Result appletGetPopFromGeneralChannelEvent(Event *out_event),        &g_appletIFunctions, 21, _appletCmdGetEvent,                 __nx_applet_type != AppletType_SystemApplet && __nx_applet_type != AppletType_LibraryApplet, out_event, false)
+IPC_MAKE_CMD_IMPL_INITEXPR(Result appletGetHomeButtonWriterLockAccessor(AppletLockAccessor *a), &g_appletIFunctions, 30, _appletGetHomeButtonRwLockAccessor, __nx_applet_type != AppletType_SystemApplet && __nx_applet_type != AppletType_LibraryApplet, a)
+IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletIsSleepEnabled(bool *out),                       &g_appletIFunctions, 40,  _appletCmdNoInOutBool, __nx_applet_type != AppletType_SystemApplet && __nx_applet_type != AppletType_LibraryApplet, (11,0,0), out)
 
 Result appletPopRequestLaunchApplicationForDebug(AccountUid *uids, s32 count, u64 *application_id, s32 *total_out) {
-    if (__nx_applet_type != AppletType_SystemApplet)
+    if (__nx_applet_type != AppletType_SystemApplet && __nx_applet_type != AppletType_LibraryApplet)
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     if (hosversionBefore(6,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
@@ -2388,13 +2410,13 @@ Result appletPopRequestLaunchApplicationForDebug(AccountUid *uids, s32 count, u6
     return rc;
 }
 
-IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletIsForceTerminateApplicationDisabledForDebug(bool *out), &g_appletIFunctions, 110,  _appletCmdNoInOutBool, __nx_applet_type != AppletType_SystemApplet, (9,0,0), out)
-IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletSetLastApplicationExitReason(s32 reason),               &g_appletIFunctions, 1000, _appletCmdInU32NoOut,  __nx_applet_type != AppletType_SystemApplet, (11,0,0), reason)
+IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletIsForceTerminateApplicationDisabledForDebug(bool *out), &g_appletIFunctions, 110,  _appletCmdNoInOutBool, __nx_applet_type != AppletType_SystemApplet && __nx_applet_type != AppletType_LibraryApplet, (9,0,0), out)
+IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletSetLastApplicationExitReason(s32 reason),               &g_appletIFunctions, 1000, _appletCmdInU32NoOut,  __nx_applet_type != AppletType_SystemApplet && __nx_applet_type != AppletType_LibraryApplet, (11,0,0), reason)
 
 Result appletLaunchDevMenu(void) {
     Result rc=0;
 
-    if (__nx_applet_type != AppletType_SystemApplet)
+    if (__nx_applet_type != AppletType_SystemApplet && __nx_applet_type != AppletType_LibraryApplet)
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     if (hosversionBefore(8,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
@@ -2406,16 +2428,16 @@ Result appletLaunchDevMenu(void) {
 
 // IGlobalStateController
 
-IPC_MAKE_CMD_IMPL_INITEXPR(       Result appletStartSleepSequence(bool flag),                      &g_appletIGlobalStateController, 2,  _appletCmdInBoolNoOut, __nx_applet_type != AppletType_SystemApplet,          flag)
-IPC_MAKE_CMD_IMPL_INITEXPR(       Result appletStartShutdownSequence(void),                        &g_appletIGlobalStateController, 3,  _appletCmdNoIO,        __nx_applet_type != AppletType_SystemApplet)
-IPC_MAKE_CMD_IMPL_INITEXPR(       Result appletStartRebootSequence(void),                          &g_appletIGlobalStateController, 4,  _appletCmdNoIO,        __nx_applet_type != AppletType_SystemApplet)
-IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletIsAutoPowerDownRequested(bool *out),                &g_appletIGlobalStateController, 9,  _appletCmdNoInOutBool, __nx_applet_type != AppletType_SystemApplet, (7,0,0), out)
-IPC_MAKE_CMD_IMPL_INITEXPR(       Result appletLoadAndApplyIdlePolicySettings(void),               &g_appletIGlobalStateController, 10, _appletCmdNoIO,        __nx_applet_type != AppletType_SystemApplet)
-IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletNotifyCecSettingsChanged(void),                     &g_appletIGlobalStateController, 11, _appletCmdNoIO,        __nx_applet_type != AppletType_SystemApplet, (2,0,0))
-IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletSetDefaultHomeButtonLongPressTime(s64 val),         &g_appletIGlobalStateController, 12, _appletCmdInU64NoOut,  __nx_applet_type != AppletType_SystemApplet, (3,0,0), val)
-IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletUpdateDefaultDisplayResolution(void),               &g_appletIGlobalStateController, 13, _appletCmdNoIO,        __nx_applet_type != AppletType_SystemApplet, (3,0,0))
-IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletShouldSleepOnBoot(bool *out),                       &g_appletIGlobalStateController, 14, _appletCmdNoInOutBool, __nx_applet_type != AppletType_SystemApplet, (3,0,0), out)
-IPC_MAKE_CMD_IMPL_INITEXPR_HOSVER(Result appletGetHdcpAuthenticationFailedEvent(Event *out_event), &g_appletIGlobalStateController, 15, _appletCmdGetEvent,    __nx_applet_type != AppletType_SystemApplet, (4,0,0), out_event, false)
+IPC_MAKE_CMD_IMPL(       Result appletStartSleepSequence(bool flag),                      &g_appletIGlobalStateController, 2,  _appletCmdInBoolNoOut, flag)
+IPC_MAKE_CMD_IMPL(       Result appletStartShutdownSequence(void),                        &g_appletIGlobalStateController, 3,  _appletCmdNoIO         )
+IPC_MAKE_CMD_IMPL(       Result appletStartRebootSequence(void),                          &g_appletIGlobalStateController, 4,  _appletCmdNoIO         )
+IPC_MAKE_CMD_IMPL_HOSVER(Result appletIsAutoPowerDownRequested(bool *out),                &g_appletIGlobalStateController, 9,  _appletCmdNoInOutBool, (7,0,0), out)
+IPC_MAKE_CMD_IMPL(       Result appletLoadAndApplyIdlePolicySettings(void),               &g_appletIGlobalStateController, 10, _appletCmdNoIO         )
+IPC_MAKE_CMD_IMPL_HOSVER(Result appletNotifyCecSettingsChanged(void),                     &g_appletIGlobalStateController, 11, _appletCmdNoIO,        (2,0,0))
+IPC_MAKE_CMD_IMPL_HOSVER(Result appletSetDefaultHomeButtonLongPressTime(s64 val),         &g_appletIGlobalStateController, 12, _appletCmdInU64NoOut,  (3,0,0), val)
+IPC_MAKE_CMD_IMPL_HOSVER(Result appletUpdateDefaultDisplayResolution(void),               &g_appletIGlobalStateController, 13, _appletCmdNoIO,        (3,0,0))
+IPC_MAKE_CMD_IMPL_HOSVER(Result appletShouldSleepOnBoot(bool *out),                       &g_appletIGlobalStateController, 14, _appletCmdNoInOutBool, (3,0,0), out)
+IPC_MAKE_CMD_IMPL_HOSVER(Result appletGetHdcpAuthenticationFailedEvent(Event *out_event), &g_appletIGlobalStateController, 15, _appletCmdGetEvent,    (4,0,0), out_event, false)
 
 // IApplicationCreator
 
