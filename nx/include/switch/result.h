@@ -125,6 +125,7 @@ enum {
     LibnxError_LibAppletBadExit,
     LibnxError_InvalidCmifOutHeader,
     LibnxError_ShouldNotHappen,
+    LibnxError_Timeout,
 };
 
 /// libnx binder error codes
