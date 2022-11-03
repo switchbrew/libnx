@@ -590,9 +590,9 @@ PrintConsole* consoleInit(PrintConsole* console) {
 		currentConsole = console;
 	} else {
 		console = currentConsole;
+		*currentConsole = defaultConsole;
 	}
-
-	*currentConsole = defaultConsole;
+	
 	if (!console->renderer) {
 		console->renderer = getDefaultConsoleRenderer();
 	}
