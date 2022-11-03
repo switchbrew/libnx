@@ -283,6 +283,7 @@ void errorSystemSetContext(ErrorSystemConfig* c, const ErrorContext* ctx);
  * @param fullscreen_message UTF-8 fullscreen message, displayed when the user clicks on "Details". Optional, can be NULL (which disables displaying Details).
  * @note Sets the following fields: jumpFlag=1, {strings}, and uses ::ErrorType_Application. The rest are cleared.
  * @note On pre-5.0.0 this will initialize languageCode by using: setInitialize(), setMakeLanguageCode(SetLanguage_ENUS, ...), and setExit(). This is needed since an empty languageCode wasn't supported until [5.0.0+] (which would also use SetLanguage_ENUS).
+ * @note With [10.0.0+] this must only be used when running under an Application, since otherwise the applet will trigger a fatalerr.
  * @warning This applet creates an error report that is logged in the system. Proceed at your own risk!
  */
 Result errorApplicationCreate(ErrorApplicationConfig* c, const char* dialog_message, const char* fullscreen_message);
