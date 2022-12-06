@@ -42,6 +42,7 @@ typedef enum {
     NcmContentMetaType_Patch                = 0x81, ///< Patch
     NcmContentMetaType_AddOnContent         = 0x82, ///< AddOnContent
     NcmContentMetaType_Delta                = 0x83, ///< Delta
+    NcmContentMetaType_DataPatch            = 0x84, ///< DataPatch
 } NcmContentMetaType;
 
 /// ContentMetaAttribute
@@ -49,6 +50,7 @@ typedef enum {
     NcmContentMetaAttribute_None                = 0,      ///< None
     NcmContentMetaAttribute_IncludesExFatDriver = BIT(0), ///< IncludesExFatDriver
     NcmContentMetaAttribute_Rebootless          = BIT(1), ///< Rebootless
+    NcmContentMetaAttribute_Compacted           = BIT(2), ///< Compacted
 } NcmContentMetaAttribute;
 
 /// ContentInstallType
@@ -86,7 +88,9 @@ typedef struct {
 /// ContentInfo
 typedef struct {
     NcmContentId content_id;     ///< \ref NcmContentId
-    u8 size[0x6];                ///< Content size.
+    u32 size_low;                ///< Content size (low).
+    u8 size_high;                ///< Content size (high).
+    u8 attr;                     ///< Content attributes.
     u8 content_type;             ///< \ref NcmContentType.
     u8 id_offset;                ///< Offset of this content. Unused by most applications.
 } NcmContentInfo;
@@ -130,12 +134,30 @@ typedef struct {
     u8 reserved[0x8];            ///< Unused.
 } NcmPatchMetaExtendedHeader;
 
-/// AddOnContentMetaExtendedHeader
+/// AddOnContentMetaExtendedHeader [15.0.0+]
+typedef struct {
+    u64 application_id;                  ///< ApplicationId of this add-on-content's corresponding application.
+    u32 required_application_version;    ///< Version of the application required by this add-on-content.
+    u8 content_accessibilities;          ///< Content accessibilities.
+    u8 padding[3];                       ///< Padding.
+    u64 data_patch_id;                   ///< DataPatchId of this add-on-content's corresponding data patch.
+} NcmAddOnContentMetaExtendedHeader;
+
+/// LegacyAddOnContentMetaExtendedHeader [1.0.0-14.1.2]
 typedef struct {
     u64 application_id;               ///< ApplicationId of this add-on-content's corresponding application.
     u32 required_application_version; ///< Version of the application required by this add-on-content.
     u32 padding;                      ///< Padding.
-} NcmAddOnContentMetaExtendedHeader;
+} NcmLegacyAddOnContentMetaExtendedHeader;
+
+/// DataPatchMetaExtendedHeader
+typedef struct {
+    u64 data_id;                      ///< DataId of this data patch's corresponding add-on-content.
+    u64 application_id;               ///< ApplicationId of this data patch's add-on-content's corresponding application.
+    u32 required_application_version; ///< Version of the application required by this data patch.
+    u32 extended_data_size;           ///< Size of the extended data following the NcmContentInfos.
+    u64 padding;                      ///< Padding.
+} NcmDataPatchMetaExtendedHeader;
 
 /// SystemUpdateMetaExtendedHeader
 typedef struct {
@@ -148,3 +170,22 @@ typedef struct {
     u8 storageID;           ///< \ref NcmStorageId
     u8 pad[7];              ///< Padding
 } NcmProgramLocation;
+
+/**
+ * @brief Retrieves the content size from a \ref NcmContentInfo struct.
+ * @param[in] info Pointer to \ref NcmContentInfo struct.
+ * @param[out] out Output size.
+ */
+NX_CONSTEXPR void ncmContentInfoSizeToU64(const NcmContentInfo *info, u64 *out) {
+    *out = ((u64)info->size_high << 32) | info->size_low;
+}
+
+/**
+ * @brief Updates the content size from a \ref NcmContentInfo struct.
+ * @param[in] size Input size.
+ * @param[out] out Pointer to \ref NcmContentInfo struct.
+ */
+NX_CONSTEXPR void ncmU64ToContentInfoSize(const u64 size, NcmContentInfo *info) {
+    info->size_low = size & 0xFFFFFFFF;
+    info->size_high = (u8)(size >> 32);
+}
