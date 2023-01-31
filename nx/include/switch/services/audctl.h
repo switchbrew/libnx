@@ -41,10 +41,10 @@ Result audctlInitialize(void);
 void audctlExit(void);
 Service* audctlGetServiceSession(void);
 
-Result audctlGetTargetVolume(float* volume_out, AudioTarget target);
-Result audctlSetTargetVolume(AudioTarget target, float volume);
-Result audctlGetTargetVolumeMin(float* volume_out);
-Result audctlGetTargetVolumeMax(float* volume_out);
+Result audctlGetTargetVolume(s32* volume_out, AudioTarget target);
+Result audctlSetTargetVolume(AudioTarget target, s32 volume);
+Result audctlGetTargetVolumeMin(s32* volume_out);
+Result audctlGetTargetVolumeMax(s32* volume_out);
 Result audctlIsTargetMute(bool* mute_out, AudioTarget target);
 Result audctlSetTargetMute(AudioTarget target, bool mute);
 Result audctlIsTargetConnected(bool* connected_out, AudioTarget target);
