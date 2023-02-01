@@ -9,6 +9,7 @@
 #include "../sf/service.h"
 #include "../services/usb.h"
 #include "../kernel/event.h"
+#include "../kernel/tmem.h"
 
 typedef enum {
     ///< These use \ref usb_device_descriptor. Bit2..6 require [6.0.0+], these are ignored on eariler versions.
@@ -84,6 +85,11 @@ typedef struct {
     u64 unk_x10;
 } UsbHsXferReport;
 
+typedef struct {
+    vu64 write_index;
+    vu64 read_index;
+} UsbHsRingHeader;
+
 /// The interface service object. These Events have autoclear=false.
 typedef struct {
     Service s;
@@ -97,6 +103,10 @@ typedef struct {
 typedef struct {
     Service s;
     Event eventXfer;                      ///< [2.0.0+] Signaled when PostBufferAsync finishes.
+    TransferMemory tmem;
+    u32 maxUrbCount;
+    u64 max_reports;
+    bool tmem_initialized;
 
     struct usb_endpoint_descriptor desc;
 } UsbHsClientEpSession;
@@ -226,6 +236,67 @@ Result usbHsIfResetDevice(UsbHsClientIfSession* s);
 /// Closes the specified endpoint session.
 void usbHsEpClose(UsbHsClientEpSession* s);
 
-/// Uses a data transfer with the specified endpoint, this will block until the transfer finishes. The buffer address and size should be aligned to 0x1000-bytes, where the input size is the original size.
+/// Gets the Xfer Event which is signaled when PostBufferAsync finishes. This is only valid for [2.0.0+]. If using \ref eventWait with this, then \ref eventClear should be used if the event was signaled (since the autoclear is false).
+static inline Event* usbHsEpGetXferEvent(UsbHsClientEpSession* s) {
+    return &s->eventXfer;
+}
+
+/**
+ * @brief Starts an async data transfer with the specified endpoint. The Event from \ref usbHsEpGetXferEvent can be used to determine when the transfer finished. If you don't need async, \ref usbHsEpPostBuffer can be used instead.
+ * @note Only available on [2.0.0+].
+ * @param[in] s The endpoint object.
+ * @param buffer Data buffer. The buffer address and size should be aligned to 0x1000-bytes.
+ * @param[in] size The actual data size.
+ * @param[out] xferId Output xferId.
+ */
+Result usbHsEpPostBufferAsync(UsbHsClientEpSession* s, void* buffer, u32 size, u32* xferId);
+
+/**
+ * @brief Gets an array of \ref UsbHsXferReport for the specified endpoint. This should be used after waiting on the Event from \ref usbHsEpGetXferEvent.
+ * @note Only available on [2.0.0+].
+ * @param[in] s The endpoint object.
+ * @param[out] reports Output array of \ref UsbHsXferReport.
+ * @param[in] max_reports Size of the reports array in entries.
+ * @param[out] count Number of entries written to the array.
+ */
+Result usbHsEpGetXferReport(UsbHsClientEpSession* s, UsbHsXferReport* reports, u32 max_reports, u32* count);
+
+/**
+ * @brief Uses a data transfer with the specified endpoint, this will block until the transfer finishes. This wraps \ref usbHsEpPostBufferAsync and \ref usbHsEpGetXferReport, and also handles the Event (on pre-2.0.0 this handles using the relevant cmds instead). If async is needed, use \ref usbHsEpPostBufferAsync instead.
+ * @param[in] s The endpoint object.
+ * @param buffer Data buffer. The buffer address and size should be aligned to 0x1000-bytes.
+ * @param[in] size The actual data size.
+ * @param[out] transferredSize Output transferred size.
+ */
 Result usbHsEpPostBuffer(UsbHsClientEpSession* s, void* buffer, u32 size, u32* transferredSize);
+
+/**
+ * @brief This uses the same functionality internally as \ref usbHsEpPostBufferAsync except the urbs array and unk1/unk2 are specified by the user instead.
+ * @note Only available on [2.0.0+].
+ * @param[in] s The endpoint object.
+ * @param buffer Data buffer. The buffer address and size should be aligned to 0x1000-bytes.
+ * @param[in] urbs Input array of u32s for the size of each urb.
+ * @param[in] urbCount Total entries in the urbs array.
+ * @param[in] unk1 \ref usbHsEpPostBufferAsync would internally pass value 0 here.
+ * @param[in] unk2 \ref usbHsEpPostBufferAsync would internally pass value 0 here.
+ * @param[out] xferId Output xferId.
+ */
+Result usbHsEpBatchBufferAsync(UsbHsClientEpSession* s, void* buffer, u32* urbs, u32 urbCount, u32 unk1, u32 unk2, u32* xferId);
+
+/**
+ * @brief This can be used to map the specified buffer as devicemem, which can then be used with \ref usbHsEpPostBufferAsync / \ref usbHsEpPostBuffer / \ref usbHsEpBatchBufferAsync. If the buffer address passed to those funcs is within this SmmuSpace, the specified buffer must be within the bounds of the SmmuSpace buffer.
+ * @note Only available on [4.0.0+].
+ * @note A buffer from usbHsEpCreateSmmuSpace can't be reused by another endpoint with the aforementioned funcs.
+ * @note This can only be used once per UsbHsClientEpSession object.
+ * @param[in] s The endpoint object.
+ * @param buffer Buffer address, this must be aligned to 0x1000-bytes.
+ * @param[in] size Buffer size, this must be aligned to 0x1000-bytes.
+ */
+Result usbHsEpCreateSmmuSpace(UsbHsClientEpSession* s, void* buffer, u32 size);
+
+/**
+ * @brief This creates TransferMemory which is used to read \ref UsbHsXferReport when \ref usbHsEpGetXferReport is used, instead of using the service cmd.
+ * @note Only available on [4.0.0+].
+ */
+Result usbHsEpShareReportRing(UsbHsClientEpSession* s);
 
