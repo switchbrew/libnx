@@ -103,10 +103,9 @@ typedef struct {
 typedef struct {
     Service s;
     Event eventXfer;                      ///< [2.0.0+] Signaled when PostBufferAsync finishes.
-    TransferMemory tmem;
     u32 maxUrbCount;
     u64 max_reports;
-    bool tmem_initialized;
+    void* ringbuf;
 
     struct usb_endpoint_descriptor desc;
 } UsbHsClientEpSession;
@@ -237,8 +236,16 @@ Result usbHsIfResetDevice(UsbHsClientIfSession* s);
 void usbHsEpClose(UsbHsClientEpSession* s);
 
 /// Gets the Xfer Event which is signaled when PostBufferAsync finishes. This is only valid for [2.0.0+]. If using \ref eventWait with this, then \ref eventClear should be used if the event was signaled (since the autoclear is false).
-static inline Event* usbHsEpGetXferEvent(UsbHsClientEpSession* s) {
+NX_CONSTEXPR Event* usbHsEpGetXferEvent(UsbHsClientEpSession* s) {
     return &s->eventXfer;
+}
+
+/// Gets the buffer size to use with \ref usbHsEpShareReportRing.
+NX_CONSTEXPR u32 usbHsEpGetReportRingSize(UsbHsClientEpSession* s) {
+    u64 max_reports = s->maxUrbCount * 0x21;
+    u32 size = sizeof(UsbHsRingHeader) + max_reports*sizeof(UsbHsXferReport);
+    size = (size+0xFFF) & ~0xFFF;
+    return size;
 }
 
 /**
@@ -299,6 +306,8 @@ Result usbHsEpCreateSmmuSpace(UsbHsClientEpSession* s, void* buffer, u32 size);
 /**
  * @brief This creates TransferMemory which is used to read \ref UsbHsXferReport when \ref usbHsEpGetXferReport is used, instead of using the service cmd.
  * @note Only available on [4.0.0+].
+ * @param buffer Buffer, must be 0x1000-byte aligned.
+ * @param[in] size Buffer size, \ref usbHsEpGetReportRingSize can be used to calculate this.
  */
-Result usbHsEpShareReportRing(UsbHsClientEpSession* s);
+Result usbHsEpShareReportRing(UsbHsClientEpSession* s, void* buffer, size_t size);
 

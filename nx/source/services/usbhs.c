@@ -377,7 +377,6 @@ void usbHsEpClose(UsbHsClientEpSession* s) {
     serviceAssumeDomain(&s->s);
     serviceClose(&s->s);
     eventClose(&s->eventXfer);
-    tmemClose(&s->tmem);
     memset(s, 0, sizeof(UsbHsClientEpSession));
 }
 
@@ -420,7 +419,7 @@ Result usbHsEpGetXferReport(UsbHsClientEpSession* s, UsbHsXferReport* reports, u
     if (hosversionBefore(2,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    if (!s->tmem_initialized) {
+    if (s->ringbuf == NULL) {
         serviceAssumeDomain(&s->s);
         return serviceDispatchInOut(&s->s, 5, max_reports, *count,
         .buffer_attrs = { (hosversionBefore(3,0,0) ? SfBufferAttr_HipcMapAlias : SfBufferAttr_HipcAutoSelect) | SfBufferAttr_Out },
@@ -430,7 +429,7 @@ Result usbHsEpGetXferReport(UsbHsClientEpSession* s, UsbHsXferReport* reports, u
 
     u32 total=0;
 
-    UsbHsRingHeader *hdr = (UsbHsRingHeader*)s->tmem.src_addr;
+    UsbHsRingHeader *hdr = (UsbHsRingHeader*)s->ringbuf;
     UsbHsXferReport *ring_reports = (UsbHsXferReport*)(hdr+1);
 
     memset(reports, 0, max_reports*sizeof(UsbHsXferReport));
@@ -515,26 +514,25 @@ Result usbHsEpCreateSmmuSpace(UsbHsClientEpSession* s, void* buffer, u32 size) {
     return serviceDispatchIn(&s->s, 7, in);
 }
 
-Result usbHsEpShareReportRing(UsbHsClientEpSession* s) {
+Result usbHsEpShareReportRing(UsbHsClientEpSession* s, void* buffer, size_t size) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    if (s->tmem_initialized)
+    if (s->ringbuf)
         return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
 
     s->max_reports = s->maxUrbCount * 0x21;
-    u32 size = sizeof(UsbHsRingHeader) + s->max_reports*sizeof(UsbHsXferReport);
-    size = (size+0xFFF) & ~0xFFF;
 
-    Result rc = tmemCreate(&s->tmem, size, Perm_Rw);
+    TransferMemory tmem={};
+    Result rc = tmemCreateFromMemory(&tmem, buffer, size, Perm_Rw);
     if (R_FAILED(rc)) return rc;
 
     serviceAssumeDomain(&s->s);
     rc = serviceDispatchIn(&s->s, 8, size,
         .in_num_handles = 1,
-        .in_handles = { s->tmem.handle },
+        .in_handles = { tmem.handle },
     );
-    if (R_FAILED(rc)) tmemClose(&s->tmem);
-    else s->tmem_initialized = true;
+    tmemClose(&tmem);
+    if (R_SUCCEEDED(rc)) s->ringbuf = buffer;
     return rc;
 }
 
