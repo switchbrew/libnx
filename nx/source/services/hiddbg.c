@@ -467,7 +467,7 @@ static Result _hiddbgAttachHdlsWorkBuffer(HiddbgHdlsSessionId *session_id, Trans
         return _hiddbgCmdInTmemOutU64(tmem, &session_id->id, 324);
 }
 
-Result hiddbgAttachHdlsWorkBuffer(HiddbgHdlsSessionId *session_id) {
+Result hiddbgAttachHdlsWorkBuffer(HiddbgHdlsSessionId *session_id, void *buffer, size_t size) {
     Result rc=0;
 
     if (session_id) session_id->id = 0;
@@ -478,8 +478,7 @@ Result hiddbgAttachHdlsWorkBuffer(HiddbgHdlsSessionId *session_id) {
     if (g_hiddbgHdlsInitialized)
         return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
 
-
-    rc = tmemCreate(&g_hiddbgHdlsTmem, 0x1000, Perm_Rw);
+    rc = tmemCreateFromMemory(&g_hiddbgHdlsTmem, buffer, size, Perm_Rw);
     if (R_FAILED(rc)) return rc;
 
     rc = _hiddbgAttachHdlsWorkBuffer(session_id, &g_hiddbgHdlsTmem);

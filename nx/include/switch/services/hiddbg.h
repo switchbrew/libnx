@@ -402,8 +402,10 @@ Result hiddbgUnsetAllAutoPilotVirtualPadState(void);
  * @brief Initialize Hdls.
  * @note Only available with [7.0.0+].
  * @param[out] session_id [13.0.0+] \ref HiddbgHdlsSessionId
+ * @param[in] buffer An existing buffer to be used as transfer memory.
+ * @param[in] size Size of the supplied buffer.
  */
-Result hiddbgAttachHdlsWorkBuffer(HiddbgHdlsSessionId *session_id);
+Result hiddbgAttachHdlsWorkBuffer(HiddbgHdlsSessionId *session_id, void *buffer, size_t size);
 
 /**
  * @brief Exit Hdls, must be called at some point prior to \ref hiddbgExit.
