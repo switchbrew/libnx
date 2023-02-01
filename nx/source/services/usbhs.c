@@ -401,7 +401,7 @@ static Result _usbHsEpSubmitRequest(UsbHsClientEpSession* s, void* buffer, u32 s
     return rc;
 }
 
-Result usbHsEpPostBufferAsync(UsbHsClientEpSession* s, void* buffer, u32 size, u32* xferId) {
+Result usbHsEpPostBufferAsync(UsbHsClientEpSession* s, void* buffer, u32 size, u64 id, u32* xferId) {
     if (hosversionBefore(2,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
@@ -409,8 +409,8 @@ Result usbHsEpPostBufferAsync(UsbHsClientEpSession* s, void* buffer, u32 size, u
         u32 size;
         u32 pad;
         u64 buffer;
-        u64 unk;
-    } in = { size, 0, (u64)buffer, 0 };
+        u64 id;
+    } in = { size, 0, (u64)buffer, id };
 
     serviceAssumeDomain(&s->s);
     return serviceDispatchInOut(&s->s, 4, in, *xferId);
@@ -462,7 +462,7 @@ Result usbHsEpPostBuffer(UsbHsClientEpSession* s, void* buffer, u32 size, u32* t
 
     if (hosversionBefore(2,0,0)) return _usbHsEpSubmitRequest(s, buffer, size, 0, transferredSize);
 
-    rc = usbHsEpPostBufferAsync(s, buffer, size, &xferId);
+    rc = usbHsEpPostBufferAsync(s, buffer, size, 0, &xferId);
     if (R_FAILED(rc)) return rc;
 
     rc = eventWait(&s->eventXfer, UINT64_MAX);
@@ -481,7 +481,7 @@ Result usbHsEpPostBuffer(UsbHsClientEpSession* s, void* buffer, u32 size, u32* t
     return rc;
 }
 
-Result usbHsEpBatchBufferAsync(UsbHsClientEpSession* s, void* buffer, u32* urbs, u32 urbCount, u32 unk1, u32 unk2, u32* xferId) {
+Result usbHsEpBatchBufferAsync(UsbHsClientEpSession* s, void* buffer, u32* urbs, u32 urbCount, u64 id, u32 unk1, u32 unk2, u32* xferId) {
     if (hosversionBefore(2,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
@@ -491,8 +491,8 @@ Result usbHsEpBatchBufferAsync(UsbHsClientEpSession* s, void* buffer, u32* urbs,
         u32 unk2;
         u32 pad;
         u64 buffer;
-        u64 unk;
-    } in = { urbCount, unk1, unk2, 0, (u64)buffer, 0 };
+        u64 id;
+    } in = { urbCount, unk1, unk2, 0, (u64)buffer, id };
 
     serviceAssumeDomain(&s->s);
     return serviceDispatchInOut(&s->s, 6, in, *xferId,

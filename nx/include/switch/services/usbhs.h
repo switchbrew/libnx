@@ -82,7 +82,7 @@ typedef struct {
     Result res;
     u32 requestedSize;
     u32 transferredSize;
-    u64 unk_x10;
+    u64 id;                  ///< id from \ref usbHsEpPostBufferAsync.
 } UsbHsXferReport;
 
 typedef struct {
@@ -247,9 +247,10 @@ static inline Event* usbHsEpGetXferEvent(UsbHsClientEpSession* s) {
  * @param[in] s The endpoint object.
  * @param buffer Data buffer. The buffer address and size should be aligned to 0x1000-bytes.
  * @param[in] size The actual data size.
+ * @param[in] id This is an arbitrary value which will be later returned in \ref UsbHsXferReport. For example a value starting at 0 can be used, then if sending multiple requests at once this value can be incremented each time (with 0 for the first request in this set of requests).
  * @param[out] xferId Output xferId.
  */
-Result usbHsEpPostBufferAsync(UsbHsClientEpSession* s, void* buffer, u32 size, u32* xferId);
+Result usbHsEpPostBufferAsync(UsbHsClientEpSession* s, void* buffer, u32 size, u64 id, u32* xferId);
 
 /**
  * @brief Gets an array of \ref UsbHsXferReport for the specified endpoint. This should be used after waiting on the Event from \ref usbHsEpGetXferEvent.
@@ -277,11 +278,12 @@ Result usbHsEpPostBuffer(UsbHsClientEpSession* s, void* buffer, u32 size, u32* t
  * @param buffer Data buffer. The buffer address and size should be aligned to 0x1000-bytes.
  * @param[in] urbs Input array of u32s for the size of each urb.
  * @param[in] urbCount Total entries in the urbs array.
+ * @param[in] id Same as \ref usbHsEpPostBufferAsync.
  * @param[in] unk1 \ref usbHsEpPostBufferAsync would internally pass value 0 here.
  * @param[in] unk2 \ref usbHsEpPostBufferAsync would internally pass value 0 here.
  * @param[out] xferId Output xferId.
  */
-Result usbHsEpBatchBufferAsync(UsbHsClientEpSession* s, void* buffer, u32* urbs, u32 urbCount, u32 unk1, u32 unk2, u32* xferId);
+Result usbHsEpBatchBufferAsync(UsbHsClientEpSession* s, void* buffer, u32* urbs, u32 urbCount, u64 id, u32 unk1, u32 unk2, u32* xferId);
 
 /**
  * @brief This can be used to map the specified buffer as devicemem, which can then be used with \ref usbHsEpPostBufferAsync / \ref usbHsEpPostBuffer / \ref usbHsEpBatchBufferAsync. If the buffer address passed to those funcs is within this SmmuSpace, the specified buffer must be within the bounds of the SmmuSpace buffer.
