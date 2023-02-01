@@ -478,10 +478,7 @@ Result hiddbgAttachHdlsWorkBuffer(HiddbgHdlsSessionId *session_id, void *buffer,
     if (g_hiddbgHdlsInitialized)
         return MAKERESULT(Module_Libnx, LibnxError_AlreadyInitialized);
 
-    if (buffer==NULL)
-        rc = tmemCreate(&g_hiddbgHdlsTmem, 0x1000, Perm_Rw);
-    else
-        rc = tmemCreateFromMemory(&g_hiddbgHdlsTmem, buffer, size, Perm_Rw);
+    rc = tmemCreateFromMemory(&g_hiddbgHdlsTmem, buffer, size, Perm_Rw);
     if (R_FAILED(rc)) return rc;
 
     rc = _hiddbgAttachHdlsWorkBuffer(session_id, &g_hiddbgHdlsTmem);
