@@ -6,6 +6,7 @@
  */
 #pragma once
 #include "../types.h"
+#include "btdrv_ids.h"
 
 /// BluetoothPropertyType [1.0.0-11.0.1]
 typedef enum {
@@ -124,21 +125,73 @@ typedef enum {
 
 /// BleEventType
 typedef enum {
-    BtdrvBleEventType_Unknown0              =    0,    ///< Unknown.
-    BtdrvBleEventType_Unknown1              =    1,    ///< Unknown.
-    BtdrvBleEventType_Unknown2              =    2,    ///< Unknown.
-    BtdrvBleEventType_Unknown3              =    3,    ///< Unknown.
-    BtdrvBleEventType_Unknown4              =    4,    ///< Unknown.
-    BtdrvBleEventType_Unknown5              =    5,    ///< Unknown.
-    BtdrvBleEventType_Unknown6              =    6,    ///< Unknown.
-    BtdrvBleEventType_Unknown7              =    7,    ///< Unknown.
-    BtdrvBleEventType_Unknown8              =    8,    ///< Unknown.
-    BtdrvBleEventType_Unknown9              =    9,    ///< Unknown.
-    BtdrvBleEventType_Unknown10             =   10,    ///< Unknown.
-    BtdrvBleEventType_Unknown11             =   11,    ///< Unknown.
-    BtdrvBleEventType_Unknown12             =   12,    ///< Unknown.
-    BtdrvBleEventType_Unknown13             =   13,    ///< Unknown.
+    BtdrvBleEventType_ClientRegistration            =    0,    ///< GATT client registration.
+    BtdrvBleEventType_ServerRegistration            =    1,    ///< GATT server registration.
+    BtdrvBleEventType_ConnectionUpdate              =    2,    ///< Connection update.
+    BtdrvBleEventType_PreferredConnectionParameters =    3,    ///< Preferred connection parameters.
+    BtdrvBleEventType_ClientConnection              =    4,    ///< GATT client connection.
+    BtdrvBleEventType_ServerConnection              =    5,    ///< GATT server connection.
+    BtdrvBleEventType_ScanResult                    =    6,    ///< Scan result.
+    BtdrvBleEventType_ScanFilter                    =    7,    ///< Scan filter status.
+    BtdrvBleEventType_ClientNotify                  =    8,    ///< GATT client notify.
+    BtdrvBleEventType_ClientCacheSave               =    9,    ///< GATT client cache save.
+    BtdrvBleEventType_ClientCacheLoad               =   10,    ///< GATT client cache load.
+    BtdrvBleEventType_ClientConfigureMtu            =   11,    ///< GATT client configure MTU.
+    BtdrvBleEventType_ServerAddCharacteristic       =   12,    ///< GATT server add characteristic.
+    BtdrvBleEventType_ServerWrite                   =   13,    ///< GATT server write.
 } BtdrvBleEventType;
+
+/// GattAttributeType
+typedef enum {
+    BtdrvGattAttributeType_IncludedService  =    0,    ///< Included service
+    BtdrvGattAttributeType_Characteristic   =    1,    ///< Characteristic
+    BtdrvGattAttributeType_Descriptor       =    2,    ///< Descriptor
+    BtdrvGattAttributeType_Service          =    3,    ///< Service
+} BtdrvGattAttributeType;
+
+/// GattAttributePermission
+typedef enum {
+    BtdrvGattAttributePermission_Read                    = BIT(0),
+    BtdrvGattAttributePermission_ReadEncrypted           = BIT(1),
+    BtdrvGattAttributePermission_ReadEncryptedMitm       = BIT(2),
+    BtdrvGattAttributePermission_Write                   = BIT(4),
+    BtdrvGattAttributePermission_WriteEncrypted          = BIT(5),
+    BtdrvGattAttributePermission_WriteEncryptedMitm      = BIT(6),
+    BtdrvGattAttributePermission_WriteSigned             = BIT(7),
+    BtdrvGattAttributePermission_WriteSignedMitm         = BIT(8),
+
+    BtdrvGattAttributePermission_ReadAllowed             = BtdrvGattAttributePermission_Read | BtdrvGattAttributePermission_ReadEncrypted | BtdrvGattAttributePermission_ReadEncryptedMitm,
+    BtdrvGattAttributePermission_ReadAuthRequired        = BtdrvGattAttributePermission_ReadEncrypted,
+    BtdrvGattAttributePermission_ReadMitmRequired        = BtdrvGattAttributePermission_ReadEncryptedMitm,
+    BtdrvGattAttributePermission_ReadEncryptedRequired   = BtdrvGattAttributePermission_ReadEncrypted | BtdrvGattAttributePermission_ReadEncryptedMitm,
+
+    BtdrvGattAttributePermission_WriteAllowed            = BtdrvGattAttributePermission_Write | BtdrvGattAttributePermission_WriteEncrypted | BtdrvGattAttributePermission_WriteEncryptedMitm | BtdrvGattAttributePermission_WriteSigned | BtdrvGattAttributePermission_WriteSignedMitm,
+    BtdrvGattAttributePermission_WriteAuthRequired       = BtdrvGattAttributePermission_WriteEncrypted | BtdrvGattAttributePermission_WriteSigned,
+    BtdrvGattAttributePermission_WriteMitmRequired       = BtdrvGattAttributePermission_WriteEncryptedMitm | BtdrvGattAttributePermission_WriteSignedMitm,
+    BtdrvGattAttributePermission_WriteEncryptedRequired  = BtdrvGattAttributePermission_WriteEncrypted | BtdrvGattAttributePermission_WriteEncryptedMitm,
+    BtdrvGattAttributePermission_WriteSignedRequired     = BtdrvGattAttributePermission_WriteSigned | BtdrvGattAttributePermission_WriteSignedMitm,
+} BtdrvGattAttributePermission;
+
+/// GattCharacteristicProperty
+typedef enum {
+    BtdrvGattCharacteristicProperty_Broadcast            = BIT(0),
+    BtdrvGattCharacteristicProperty_Read                 = BIT(1),
+    BtdrvGattCharacteristicProperty_WriteNoResponse      = BIT(2),
+    BtdrvGattCharacteristicProperty_Write                = BIT(3),
+    BtdrvGattCharacteristicProperty_Notify               = BIT(4),
+    BtdrvGattCharacteristicProperty_Indicate             = BIT(5),
+    BtdrvGattCharacteristicProperty_Authentication       = BIT(6),
+    BtdrvGattCharacteristicProperty_ExtendedProperties   = BIT(7),
+} BtdrvGattCharacteristicProperty;
+
+/// GattAuthReqType
+typedef enum {
+    BtdrvGattAuthReqType_None           =    0,
+    BtdrvGattAuthReqType_NoMitm         =    1,
+    BtdrvGattAuthReqType_Mitm           =    2,
+    BtdrvGattAuthReqType_SignedNoMitm   =    3,
+    BtdrvGattAuthReqType_SignedMitm     =    4,
+} BtdrvGattAuthReqType;
 
 /// AudioEventType
 typedef enum {
@@ -227,14 +280,27 @@ typedef struct {
     u8 unk_x0[0x88];           ///< Unknown
 } BtdrvChannelMapList;
 
-/// LeConnectionParams
+/// LeConnectionParams [5.0.0-8.1.1]
 typedef struct {
-    u8 unk_x0[0x14];           ///< Unknown
+    BtdrvAddress addr;         ///< \ref BtdrvAddress
+    u16 min_conn_interval;     ///< Minimum connection interval
+    u16 max_conn_interval;     ///< Maximum connection interval
+    u16 scan_interval;         ///< Scan interval
+    u16 scan_window;           ///< Scan window
+    u16 slave_latency;         ///< Slave latency
+    u16 supervision_tout;      ///< Connection supervision timeout multiplier
+    u8 preference;             ///< Unused
+    u8 pad;                    ///< Padding
 } BtdrvLeConnectionParams;
 
-/// BleConnectionParameter
+/// BleConnectionParameter [9.0.0+]
 typedef struct {
-    u8 unk_x0[0xC];           ///< Unknown
+    u16 min_conn_interval;     ///< Minimum connection interval
+    u16 max_conn_interval;     ///< Maximum connection interval
+    u16 scan_interval;         ///< Scan interval
+    u16 scan_window;           ///< Scan window
+    u16 slave_latency;         ///< Slave latency
+    u16 supervision_tout;      ///< Connection supervision timeout multiplier
 } BtdrvBleConnectionParameter;
 
 /// BtdrvBleAdvertisePacketDataEntry
@@ -263,20 +329,25 @@ typedef struct {
     u8 pad5[3];                                      ///< Padding
 } BtdrvBleAdvertisePacketData;
 
+/// BleAdvertisement
 typedef struct {
-    u8 length;
-    u8 type;
-    u8 value[0x1d];
-} BtdrvBleAdvertisementData;
+    u8 size;                    ///< Size of data below.
+    u8 type;                    ///< \ref BtdrvAdType
+    u8 data[0x1D];              ///< Advertisement data
+} BtdrvBleAdvertisement;
 
 /// BleAdvertiseFilter
 typedef struct {
-    u8 unk_x0[0x3E];           ///< Unknown
+    u8 index;                   ///< Filter index
+    BtdrvBleAdvertisement adv;  ///< \ref BtdrvBleAdvertisement
+    u8 mask[0x1D];              ///< Mask for advertisement data above
+    u8 mask_size;               ///< Size of mask above.
 } BtdrvBleAdvertiseFilter;
 
 /// BleAdvertisePacketParameter
 typedef struct {
-    u8 data[0x8];              ///< Unknown
+    u16 company_id;
+    u8 pattern_data[6];
 } BtdrvBleAdvertisePacketParameter;
 
 /// BleScanResult
@@ -284,7 +355,7 @@ typedef struct {
     u8 unk_x0;                 ///< Unknown
     BtdrvAddress addr;         ///< \ref BtdrvAddress
     u8 unk_x7[0x139];          ///< Unknown
-    s32 unk_x140;              ///< Unknown
+    s32 count;                 ///< Unknown
     s32 unk_x144;              ///< Unknown
 } BtdrvBleScanResult;
 
@@ -307,6 +378,16 @@ typedef struct {
     u8 pad[3];                             ///< Padding
     BtdrvGattAttributeUuid uuid;           ///< \ref BtdrvGattAttributeUuid
 } BtdrvGattId;
+
+/// GattAttribute
+typedef struct {
+    BtdrvGattId id;                        ///< \ref BtdrvGattId
+    u16 type;                              ///< \ref BtdrvGattAttributeType
+    u16 handle;
+    u16 group_end_handle;
+    u8 property;                           ///< Only used when type is characteristic. \ref BtdrvGattCharacteristicProperty
+    bool is_primary;                       ///< Only used when type is service
+} BtdrvGattAttribute;
 
 /// LeEventInfo
 typedef struct {

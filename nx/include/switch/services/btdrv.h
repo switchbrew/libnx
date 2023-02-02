@@ -323,96 +323,137 @@ typedef struct {
     u8 initialized;
 } BtdrvCircularBuffer;
 
-/// Data for \ref btdrvGetBleManagedEventInfo. The data stored here depends on the \ref BtdrvBleEventType.
+/// Data for \ref btdrvGetBleManagedEventInfo and \ref btdrvGetLeHidEventInfo. The data stored here depends on the \ref BtdrvBleEventType.
 typedef struct {
     union {
         u8 data[0x400];
 
         struct {
-            u32 status;
-            u8 handle;
-            u8 registered;
-        } type0;
+            u32 result;                         ///< 0 for success, non-zero for error.
+            u8 client_if;                       ///< Client interface handle
+            u8 status;                          ///< Registration status. 0 = Unregistered, 1 = Registered
+            u8 pad[2];                          ///< Padding
+        } client_registration;                  ///< ::BtdrvBleEventType_ClientRegistration
 
         struct {
-            u32 status;
-            u32 conn_id;
-            u32 unk_x8;
-            u32 unk_xC;
-        } type2;
+            u32 result;                         ///< 0 for success, non-zero for error.
+            u8 server_if;                       ///< Server interface handle. Unused
+            u8 status;                          ///< Registration status. 0 = Unregistered, 1 = Registered
+            u8 pad[2];                          ///< Padding
+        } server_registration;                  ///< ::BtdrvBleEventType_ServerRegistration
 
         struct {
-            u32 conn_id;
-            u16 min_interval;
-            u16 max_interval;
-            u16 slave_latency;
-            u16 timeout_multiplier;
-        } type3;                                ///< Connection params?
+            u32 result;                         ///< 0 for success, non-zero for error.
+            u32 conn_id;                        ///< Connection ID
+            u16 conn_interval;                  ///< Connection interval
+            u16 conn_latency;                   ///< Connection latency
+            u16 supervision_tout;               ///< Connection supervision timeout multiplier
+            u8 pad[2];                          ///< Padding
+        } connection_update;                    ///< ::BtdrvBleEventType_ConnectionUpdate
 
         struct {
-            u32 status;
-            u8 unk_x4;
-            u8 unk_x5;
-            u8 unk_x6;
-            u8 unk_x7;
-            u32 conn_id;
-            BtdrvAddress address;
-            u16 unk_x12;
-        } type4;                                ///< Connection status?
+            u32 conn_id;                        ///< Connection ID
+            u16 min_conn_interval;              ///< Minimum connection interval
+            u16 max_conn_interval;              ///< Maximum connection interval
+            u16 slave_latency;                  ///< Slave latency
+            u16 supervision_tout;               ///< Connection supervision timeout multiplier
+        } preferred_connection_parameters;      ///< ::BtdrvBleEventType_PreferredConnectionParameters
 
         struct {
-            u32 status;
-            u8 unk_x4;
-            u8 unk_x5;
-            u8 unk_x6;
-            BtdrvAddress address;
-            BtdrvBleAdvertisementData adv[10];
-            u8 count;
-            u32 unk_x144;
-        } type6;                                ///< Scan result?
+            u32 result;                         ///< 0 for success, non-zero for error.
+            u8 status;                          ///< Connection status. 0 = Connected, 2 = Disconnected
+            u8 client_if;                       ///< Client interface handle
+            u8 pad[2];                          ///< Padding
+            u32 conn_id;                        ///< Connection ID
+            BtdrvAddress address;               ///< Device address
+            u16 reason;                         ///< Disconnection reason
+        } client_connection;                    ///< ::BtdrvBleEventType_ClientConnection
 
         struct {
-            u32 status;
-            u32 conn_id;
-        } type7;
+            u32 result;                         ///< 0 for success, non-zero for error.
+            u8 status;                          ///< Connection status. 0 = Connected, 2 = Disconnected
+            u16 server_if;                      ///< Server interface handle
+            u8 pad;                             ///< Padding
+            u32 conn_id;                        ///< Connection ID
+            BtdrvAddress address;               ///< Device address
+            u16 reason;                         ///< Disconnection reason
+        } server_connection;                    ///< ::BtdrvBleEventType_ServerConnection
 
         struct {
-            u32 status;
-            u8 interface;
-            u8 unk_x5;
-            u16 unk_x6;
-            u32 unk_x8;
-            BtdrvGattAttributeUuid svc_uuid;
-            BtdrvGattAttributeUuid char_uuid;
-            BtdrvGattAttributeUuid descr_uuid;
-            u16 size;
-            u8 data[0x202];
-        } type8;                                ///< Notification?
+            u32 result;                         ///< 0 for success, non-zero for error.
+            u8 status;                          ///< BLE scan status. 1 = Scan complete, 2 = New device found, 0xFF = Scan started
+            u8 device_type;                     ///< Device type. 0 = BD/EDR, 1 = BLE, 2 = Dual Mode
+            u8 ble_addr_type;                   ///< BLE address type. 0 = Public, 1 = Random, 2 = Public ID, 3 = Random ID
+            BtdrvAddress address;               ///< Device address
+            BtdrvBleAdvertisement ad_list[10];  ///< BLE Advertisement list \ref BtdrvBleAdvertisement
+            u8 count;                           ///< Number of entries above
+            s32 rssi;                           ///< RSSI value
+        } scan_result;                          ///< ::BtdrvBleEventType_ScanResult
 
         struct {
-            u32 status;
-            u32 conn_id;
-            u32 unk_x8;
-            u8 unk_xC[0x140];
-        } type9;
+            u32 result;                         ///< 0 for success, non-zero for error.
+            u32 action;                         ///< Scan filter action. 0 = Add, 1 = Delete, 2 = Clear, 3 = Enable, 4 = Disable
+        } scan_filter;                          ///< ::BtdrvBleEventType_ScanFilter
 
         struct {
-            u32 status;
-            u32 conn_id;
-            u8 unk_x8[0x24];
-            u32 unk_x2C;
-            u8 unk_x30[0x11c];
-        } type10;
+            u32 result;                         ///< 0 for success, non-zero for error.
+            u32 conn_id;                        ///< Connection ID
+            u8 type;                            ///< Notification type. 4 = Notification, 5 = Indication.
+            u8 pad[3];                          ///< Padding
+            BtdrvGattAttributeUuid serv_uuid;   ///< GATT Service UUID \ref BtdrvGattAttributeUuid
+            BtdrvGattAttributeUuid char_uuid;   ///< GATT Characteristic UUID \ref BtdrvGattAttributeUuid
+            BtdrvGattAttributeUuid desc_uuid;   ///< GATT Descriptor UUID \ref BtdrvGattAttributeUuid
+            u16 size;                           ///< Size of the below data
+            u8 data[0x200];                     ///< Notification data.
+            u8 pad2[2];                         ///< Padding
+        } client_notify;                        ///< ::BtdrvBleEventType_ClientNotify
 
         struct {
-            u32 status;
-            u32 conn_id;
-            u16 unk_x8;
-        } type11;
+            u32 result;                         ///< 0 for success, non-zero for error.
+            u32 conn_id;                        ///< Connection ID
+            u32 count;                          ///< Number of attributes below.
+            BtdrvGattAttribute attr_list[10];   ///< List of Gatt attributes \ref BtdrvGattAttribute
+        } client_cache_save;                    ///< ::BtdrvBleEventType_ClientCacheSave
 
         struct {
-            u8 unk_x0[0x218];
-        } type13;
+            u32 result;                         ///< 0 for success, non-zero for error.
+            u32 conn_id;                        ///< Connection ID
+            u16 unk_x8;                         ///< Unknown. Always 0
+            u8 unused[0x142];                   ///< Unused
+        } client_cache_load;                    ///< ::BtdrvBleEventType_ClientCacheLoad
+
+        struct {
+            u32 result;                         ///< 0 for success, non-zero for error.
+            u32 conn_id;                        ///< Connection ID
+            u16 mtu;                            ///< MTU value
+            u8 pad[2];                          ///< Padding
+        } client_configure_mtu;                 ///< ::BtdrvBleEventType_ClientConfigureMtu
+
+        struct {
+            u32 result;                         ///< 0 for success, non-zero for error.
+            u32 server_if;                      ///< Server interface handle
+            BtdrvGattAttributeUuid uuid;        ///< \ref BtdrvGattAttributeUuid
+            u16 service_id;                     ///< Service ID
+            u16 attr_id;                        ///< Attribute ID
+            u8 attr_type;                       ///< Attribute type \ref BtdrvGattAttributeType
+            u8 property;                        ///< Characteristic properties. Only set if attr_type is 1 \ref BtdrvGattCharacteristicProperty
+            u8 is_primary;                      ///< Is a primary service or not
+            u8 pad;                             ///< Padding
+        } server_add_characteristic;            ///< ::BtdrvBleEventType_ServerAddCharacteristic
+
+        struct {
+            u32 result;                         ///< 0 for success, non-zero for error.
+            u16 conn_id;                        ///< Connection ID
+            u8 unk_x6;                          ///< Unknown. Always 1
+            u8 pad;                             ///< Padding
+            u16 service_id;                     ///< Service ID
+            u16 attr_id;                        ///< Attribute ID
+            u8 attr_type;                       ///< Attribute type \ref BtdrvGattAttributeType
+            u8 data[0x200];                     ///< Data
+            u16 size;                           ///< Size of the above data
+            u16 offset;                         ///< Offset
+            u8 pad2[2];                         ///< Padding
+        } server_write;                         ///< ::BtdrvBleEventType_ServerWrite
     };
 } BtdrvBleEventInfo;
 
@@ -748,7 +789,7 @@ Result btdrvRegisterHidReportEvent(Event* out_event);
  * @note [7.0.0+] When data isn't available, the type is set to ::BtdrvHidEventType_Data, with the buffer cleared to all-zero.
  * @param[out] buffer Output buffer, see \ref BtdrvHidReportEventInfo.
  * @param[in] size Output buffer size.
- * @oaram[out] type \ref BtdrvHidEventType
+ * @param[out] type \ref BtdrvHidEventType
  */
 Result btdrvGetHidReportEventInfo(void* buffer, size_t size, BtdrvHidEventType *type);
 
@@ -853,9 +894,9 @@ Result btdrvSetLeConnectionParameter(const BtdrvLeConnectionParams *param);
  * @note Only available on [9.0.0+]. This is the newer version of \ref btdrvSetLeConnectionParameter.
  * @param[in] addr \ref BtdrvAddress
  * @param[in] param \ref BtdrvBleConnectionParameter
- * @param[in] flag Flag
+ * @param[in] preference Unused
  */
-Result btdrvSetBleConnectionParameter(BtdrvAddress addr, const BtdrvBleConnectionParameter *param, bool flag);
+Result btdrvSetBleConnectionParameter(BtdrvAddress addr, const BtdrvBleConnectionParameter *param, bool preference);
 
 /**
  * @brief SetLeDefaultConnectionParameter
@@ -882,10 +923,10 @@ Result btdrvSetBleAdvertiseData(const BtdrvBleAdvertisePacketData *data);
  * @brief SetBleAdvertiseParameter
  * @note Only available on [5.0.0+].
  * @param[in] addr \ref BtdrvAddress
- * @param[in] unk0 Unknown
- * @param[in] unk1 Unknown
+ * @param[in] min_interval Minimum advertisement interval
+ * @param[in] max_interval Maximum advertisement interval
  */
-Result btdrvSetBleAdvertiseParameter(BtdrvAddress addr, u16 unk0, u16 unk1);
+Result btdrvSetBleAdvertiseParameter(BtdrvAddress addr, u16 min_interval, u16 max_interval);
 
 /**
  * @brief StartBleScan
@@ -920,9 +961,9 @@ Result btdrvDeleteBleScanFilterCondition(const BtdrvBleAdvertiseFilter *filter);
 /**
  * @brief DeleteBleScanFilter
  * @note Only available on [5.0.0+].
- * @param[in] unk Unknown
+ * @param[in] index Filter index
  */
-Result btdrvDeleteBleScanFilter(u8 unk);
+Result btdrvDeleteBleScanFilter(u8 index);
 
 /**
  * @brief ClearBleScanFilters
@@ -950,9 +991,9 @@ Result btdrvRegisterGattClient(const BtdrvGattAttributeUuid *uuid);
 /**
  * @brief UnregisterGattClient
  * @note Only available on [5.0.0+].
- * @param[in] unk Unknown
+ * @param[in] client_if Client interface ID
  */
-Result btdrvUnregisterGattClient(u8 unk);
+Result btdrvUnregisterGattClient(u8 client_if);
 
 /**
  * @brief UnregisterAllGattClients
@@ -964,55 +1005,55 @@ Result btdrvUnregisterAllGattClients(void);
  * @brief ConnectGattServer
  * @note Only available on [5.0.0+].
  * @note This is used by btm-sysmodule.
- * @param[in] unk Unknown
+ * @param[in] client_if Client interface ID
  * @param[in] addr \ref BtdrvAddress
- * @param[in] flag Flag
+ * @param[in] is_direct Whether a direct connection or a background auto connection
  * @param[in] AppletResourceUserId AppletResourceUserId
  */
-Result btdrvConnectGattServer(u8 unk, BtdrvAddress addr, bool flag, u64 AppletResourceUserId);
+Result btdrvConnectGattServer(u8 client_if, BtdrvAddress addr, bool is_direct, u64 AppletResourceUserId);
 
 /**
  * @brief CancelConnectGattServer
  * @note Only available on [5.1.0+].
  * @note This is used by btm-sysmodule.
- * @param[in] unk Unknown
+ * @param[in] client_if Client interface ID
  * @param[in] addr \ref BtdrvAddress
- * @param[in] flag Flag
+ * @param[in] is_direct Whether a direct connection or a background auto connection
  */
-Result btdrvCancelConnectGattServer(u8 unk, BtdrvAddress addr, bool flag);
+Result btdrvCancelConnectGattServer(u8 client_if, BtdrvAddress addr, bool is_direct);
 
 /**
  * @brief DisconnectGattServer
  * @note Only available on [5.0.0+].
  * @note This is used by btm-sysmodule.
- * @param[in] unk Unknown
+ * @param[in] conn_id Connection ID
  */
-Result btdrvDisconnectGattServer(u32 unk);
+Result btdrvDisconnectGattServer(u32 conn_id);
 
 /**
  * @brief GetGattAttribute
  * @note Only available on [5.0.0+].
  * @param[in] addr \ref BtdrvAddress, only used on pre-9.0.0.
- * @param[in] unk Unknown
+ * @param[in] conn_id Connection ID
  */
-Result btdrvGetGattAttribute(BtdrvAddress addr, u32 unk);
+Result btdrvGetGattAttribute(BtdrvAddress addr, u32 conn_id);
 
 /**
  * @brief GetGattService
  * @note Only available on [5.0.0+].
- * @param[in] unk Unknown
+ * @param[in] conn_id Connection ID
  * @param[in] uuid \ref BtdrvGattAttributeUuid
  */
-Result btdrvGetGattService(u32 unk, const BtdrvGattAttributeUuid *uuid);
+Result btdrvGetGattService(u32 conn_id, const BtdrvGattAttributeUuid *uuid);
 
 /**
  * @brief ConfigureAttMtu
  * @note Only available on [5.0.0+].
  * @note This is used by btm-sysmodule.
- * @param[in] unk Unknown
+ * @param[in] conn_id Connection ID
  * @param[in] mtu MTU
  */
-Result btdrvConfigureAttMtu(u32 unk, u16 mtu);
+Result btdrvConfigureAttMtu(u32 conn_id, u16 mtu);
 
 /**
  * @brief RegisterGattServer
@@ -1024,125 +1065,125 @@ Result btdrvRegisterGattServer(const BtdrvGattAttributeUuid *uuid);
 /**
  * @brief UnregisterGattServer
  * @note Only available on [5.0.0+].
- * @param[in] unk Unknown
+ * @param[in] server_if Server interface ID
  */
-Result btdrvUnregisterGattServer(u8 unk);
+Result btdrvUnregisterGattServer(u8 server_if);
 
 /**
  * @brief ConnectGattClient
  * @note Only available on [5.0.0+].
- * @param[in] unk Unknown
+ * @param[in] server_if Server interface ID
  * @param[in] addr \ref BtdrvAddress
- * @param[in] flag Flag
+ * @param[in] is_direct Whether a direct connection or a background auto connection
  */
-Result btdrvConnectGattClient(u8 unk, BtdrvAddress addr, bool flag);
+Result btdrvConnectGattClient(u8 server_if, BtdrvAddress addr, bool is_direct);
 
 /**
  * @brief DisconnectGattClient
  * @note Only available on [5.0.0+].
- * @param[in] unk Unknown
+ * @param[in] conn_id Connection ID
  * @param[in] addr \ref BtdrvAddress, only used on pre-9.0.0.
  */
-Result btdrvDisconnectGattClient(u8 unk, BtdrvAddress addr);
+Result btdrvDisconnectGattClient(u8 conn_id, BtdrvAddress addr);
 
 /**
  * @brief AddGattService
  * @note Only available on [5.0.0+].
- * @param[in] unk0 Unknown
+ * @param[in] server_if Server interface ID
  * @param[in] uuid \ref BtdrvGattAttributeUuid
- * @param[in] unk1 Unknown
- * @param[in] flag Flag
+ * @param[in] num_handle Number of handles
+ * @param[in] is_primary Is a primary service or not
  */
-Result btdrvAddGattService(u8 unk0, const BtdrvGattAttributeUuid *uuid, u8 unk1, bool flag);
+Result btdrvAddGattService(u8 server_if, const BtdrvGattAttributeUuid *uuid, u8 num_handle, bool is_primary);
 
 /**
  * @brief EnableGattService
  * @note Only available on [5.0.0+].
- * @param[in] unk Unknown
+ * @param[in] service_id Service ID
  * @param[in] uuid \ref BtdrvGattAttributeUuid
  */
-Result btdrvEnableGattService(u8 unk, const BtdrvGattAttributeUuid *uuid);
+Result btdrvEnableGattService(u8 service_id, const BtdrvGattAttributeUuid *uuid);
 
 /**
  * @brief AddGattCharacteristic
  * @note Only available on [5.0.0+].
- * @param[in] unk0 Unknown
- * @param[in] uuid0 \ref BtdrvGattAttributeUuid
- * @param[in] uuid1 \ref BtdrvGattAttributeUuid
- * @param[in] unk1 Unknown
- * @param[in] unk2 Unknown
+ * @param[in] service_id Service ID
+ * @param[in] serv_uuid Service UUID \ref BtdrvGattAttributeUuid
+ * @param[in] char_uuid Characteristic UUID \ref BtdrvGattAttributeUuid
+ * @param[in] permissions \ref BtdrvGattAttributePermission
+ * @param[in] property \ref BtdrvGattCharacteristicProperty
  */
-Result btdrvAddGattCharacteristic(u8 unk0, const BtdrvGattAttributeUuid *uuid0, const BtdrvGattAttributeUuid *uuid1, u8 unk1, u16 unk2);
+Result btdrvAddGattCharacteristic(u8 service_id, const BtdrvGattAttributeUuid *serv_uuid, const BtdrvGattAttributeUuid *char_uuid, u8 permissions, u16 property);
 
 /**
  * @brief AddGattDescriptor
  * @note Only available on [5.0.0+].
- * @param[in] unk0 Unknown
- * @param[in] uuid0 \ref BtdrvGattAttributeUuid
- * @param[in] uuid1 \ref BtdrvGattAttributeUuid
- * @param[in] unk1 Unknown
+ * @param[in] service_id Service ID
+ * @param[in] serv_uuid Service UUID \ref BtdrvGattAttributeUuid
+ * @param[in] desc_uuid Descriptor UUID \ref BtdrvGattAttributeUuid
+ * @param[in] permissions \ref BtdrvGattAttributePermission
  */
-Result btdrvAddGattDescriptor(u8 unk0, const BtdrvGattAttributeUuid *uuid0, const BtdrvGattAttributeUuid *uuid1, u16 unk1);
+Result btdrvAddGattDescriptor(u8 service_id, const BtdrvGattAttributeUuid *serv_uuid, const BtdrvGattAttributeUuid *desc_uuid, u16 permissions);
 
 /**
  * @brief GetBleManagedEventInfo
  * @note Only available on [5.0.0+].
  * @note This is used by btm-sysmodule.
- * @param[out] buffer Output buffer. 0x400-bytes from state is written here.
+ * @param[out] buffer Output buffer. 0x400-bytes from state is written here. See \ref BtdrvBleEventInfo.
  * @param[in] size Output buffer size.
- * @oaram[out] type Output BtdrvBleEventType.
+ * @param[out] type Output BtdrvBleEventType.
  */
 Result btdrvGetBleManagedEventInfo(void* buffer, size_t size, BtdrvBleEventType *type);
 
 /**
  * @brief GetGattFirstCharacteristic
  * @note Only available on [5.0.0+].
- * @param[in] unk Unknown
- * @param[in] id \ref BtdrvGattId
- * @param[in] flag Flag
- * @param[in] uuid \ref BtdrvGattAttributeUuid
- * @param[out] out_property Output Property.
- * @param[out] out_char_id Output CharacteristicId \ref BtdrvGattId
+ * @param[in] conn_id Connection ID
+ * @param[in] serv_id Service GATT ID \ref BtdrvGattId
+ * @param[in] is_primary Is a primary service or not
+ * @param[in] filter_uuid Characteristic filter UUID \ref BtdrvGattAttributeUuid
+ * @param[out] out_property Output property \ref BtdrvGattCharacteristicProperty
+ * @param[out] out_char_id Output characteristic GATT ID \ref BtdrvGattId
  */
-Result btdrvGetGattFirstCharacteristic(u32 unk, const BtdrvGattId *id, bool flag, const BtdrvGattAttributeUuid *uuid, u8 *out_property, BtdrvGattId *out_char_id);
+Result btdrvGetGattFirstCharacteristic(u32 conn_id, const BtdrvGattId *serv_id, bool is_primary, const BtdrvGattAttributeUuid *filter_uuid, u8 *out_property, BtdrvGattId *out_char_id);
 
 /**
  * @brief GetGattNextCharacteristic
  * @note Only available on [5.0.0+].
- * @param[in] unk Unknown
- * @param[in] id0 \ref BtdrvGattId
- * @param[in] flag Flag
- * @param[in] id1 \ref BtdrvGattId
- * @param[in] uuid \ref BtdrvGattAttributeUuid
- * @param[out] out_property Output Property.
- * @param[out] out_char_id Output CharacteristicId \ref BtdrvGattId
+ * @param[in] conn_id Connection ID
+ * @param[in] serv_id Service ID \ref BtdrvGattId
+ * @param[in] is_primary Is a primary service or not
+ * @param[in] char_id Previous characteristic GATT ID \ref BtdrvGattId
+ * @param[in] filter_uuid Characteristic filter UUID \ref BtdrvGattAttributeUuid
+ * @param[out] out_property Output property \ref BtdrvGattCharacteristicProperty
+ * @param[out] out_char_id Output characteristic GATT ID \ref BtdrvGattId
  */
-Result btdrvGetGattNextCharacteristic(u32 unk, const BtdrvGattId *id0, bool flag, const BtdrvGattId *id1, const BtdrvGattAttributeUuid *uuid, u8 *out_property, BtdrvGattId *out_char_id);
+Result btdrvGetGattNextCharacteristic(u32 conn_id, const BtdrvGattId *serv_id, bool is_primary, const BtdrvGattId *char_id, const BtdrvGattAttributeUuid *filter_uuid, u8 *out_property, BtdrvGattId *out_char_id);
 
 /**
  * @brief GetGattFirstDescriptor
  * @note Only available on [5.0.0+].
- * @param[in] unk Unknown
- * @param[in] id0 \ref BtdrvGattId
- * @param[in] flag Flag
- * @param[in] id1 \ref BtdrvGattId
- * @param[in] uuid \ref BtdrvGattAttributeUuid
- * @param[out] out_desc_id Output DescriptorId \ref BtdrvGattId
+ * @param[in] conn_id Connection ID
+ * @param[in] serv_id Service GATT ID \ref BtdrvGattId
+ * @param[in] is_primary Is a primary service or not
+ * @param[in] char_id Characteristic GATT ID \ref BtdrvGattId
+ * @param[in] filter_uuid Descriptor filter UUID \ref BtdrvGattAttributeUuid
+ * @param[out] out_desc_id Output descriptor GATT ID \ref BtdrvGattId
  */
-Result btdrvGetGattFirstDescriptor(u32 unk, const BtdrvGattId *id0, bool flag, const BtdrvGattId *id1, const BtdrvGattAttributeUuid *uuid, BtdrvGattId *out_desc_id);
+Result btdrvGetGattFirstDescriptor(u32 conn_id, const BtdrvGattId *serv_id, bool is_primary, const BtdrvGattId *char_id, const BtdrvGattAttributeUuid *filter_uuid, BtdrvGattId *out_desc_id);
 
 /**
  * @brief GetGattNextDescriptor
  * @note Only available on [5.0.0+].
- * @param[in] unk Unknown
- * @param[in] id0 \ref BtdrvGattId
- * @param[in] flag Flag
- * @param[in] id1 \ref BtdrvGattId
- * @param[in] id2 \ref BtdrvGattId
- * @param[in] uuid \ref BtdrvGattAttributeUuid
- * @param[out] out_desc_id Output DescriptorId \ref BtdrvGattId
+ * @param[in] conn_id Connection ID
+ * @param[in] serv_id Service GATT ID \ref BtdrvGattId
+ * @param[in] is_primary Is a primary service or not
+ * @param[in] char_id Characteristic GATT ID \ref BtdrvGattId
+ * @param[in] desc_id Previous descriptor GATT ID \ref BtdrvGattId
+ * @param[in] filter_uuid Descriptor filter UUID \ref BtdrvGattAttributeUuid
+ * @param[out] out_desc_id Output descriptor GATT ID \ref BtdrvGattId
  */
-Result btdrvGetGattNextDescriptor(u32 unk, const BtdrvGattId *id0, bool flag, const BtdrvGattId *id1, const BtdrvGattId *id2, const BtdrvGattAttributeUuid *uuid, BtdrvGattId *out_desc_id);
+Result btdrvGetGattNextDescriptor(u32 conn_id, const BtdrvGattId *serv_id, bool is_primary, const BtdrvGattId *char_id, const BtdrvGattId *desc_id, const BtdrvGattAttributeUuid *filter_uuid, BtdrvGattId *out_desc_id);
 
 /**
  * @brief RegisterGattManagedDataPath
@@ -1195,80 +1236,80 @@ Result btdrvUnregisterGattDataPath(const BtdrvGattAttributeUuid *uuid);
  * @brief ReadGattCharacteristic
  * @note Only available on [5.0.0+].
  * @param[in] connection_handle ConnectionHandle
- * @param[in] primary_service PrimaryService
- * @param[in] id0 \ref BtdrvGattId
- * @param[in] id1 \ref BtdrvGattId
- * @param[in] unk Unknown
+ * @param[in] is_primary Is a primary service or not
+ * @param[in] serv_id Service GATT ID \ref BtdrvGattId
+ * @param[in] char_id Characteristic GATT ID \ref BtdrvGattId
+ * @param[in] auth_req \ref BtdrvGattAuthReqType
  */
-Result btdrvReadGattCharacteristic(u32 connection_handle, bool primary_service, const BtdrvGattId *id0, const BtdrvGattId *id1, u8 unk);
+Result btdrvReadGattCharacteristic(u32 connection_handle, bool is_primary, const BtdrvGattId *serv_id, const BtdrvGattId *char_id, u8 auth_req);
 
 /**
  * @brief ReadGattDescriptor
  * @note Only available on [5.0.0+].
  * @param[in] connection_handle ConnectionHandle
- * @param[in] primary_service PrimaryService
- * @param[in] id0 \ref BtdrvGattId
- * @param[in] id1 \ref BtdrvGattId
- * @param[in] id2 \ref BtdrvGattId
- * @param[in] unk Unknown
+ * @param[in] is_primary Is a primary service or not
+ * @param[in] serv_id Service GATT ID \ref BtdrvGattId
+ * @param[in] char_id Characteristic GATT ID \ref BtdrvGattId
+ * @param[in] desc_id Descriptor GATT ID \ref BtdrvGattId
+ * @param[in] auth_req \ref BtdrvGattAuthReqType
  */
-Result btdrvReadGattDescriptor(u32 connection_handle, bool primary_service, const BtdrvGattId *id0, const BtdrvGattId *id1, const BtdrvGattId *id2, u8 unk);
+Result btdrvReadGattDescriptor(u32 connection_handle, bool is_primary, const BtdrvGattId *serv_id, const BtdrvGattId *char_id, const BtdrvGattId *desc_id, u8 auth_req);
 
 /**
  * @brief WriteGattCharacteristic
  * @note Only available on [5.0.0+].
  * @param[in] connection_handle ConnectionHandle
- * @param[in] primary_service PrimaryService
- * @param[in] id0 \ref BtdrvGattId
- * @param[in] id1 \ref BtdrvGattId
+ * @param[in] is_primary Is a primary service or not
+ * @param[in] serv_id Service GATT ID \ref BtdrvGattId
+ * @param[in] char_id Characteristic GATT ID \ref BtdrvGattId
  * @param[in] buffer Input buffer.
  * @param[in] size Input buffer size, must be <=0x258.
- * @param[in] unk Unknown
- * @param[in] flag Flag
+ * @param[in] auth_req \ref BtdrvGattAuthReqType
+ * @param[in] with_response Whether to use Write-With-Response write type or not
  */
-Result btdrvWriteGattCharacteristic(u32 connection_handle, bool primary_service, const BtdrvGattId *id0, const BtdrvGattId *id1, const void* buffer, size_t size, u8 unk, bool flag);
+Result btdrvWriteGattCharacteristic(u32 connection_handle, bool is_primary, const BtdrvGattId *serv_id, const BtdrvGattId *char_id, const void* buffer, size_t size, u8 auth_req, bool with_response);
 
 /**
  * @brief WriteGattDescriptor
  * @note Only available on [5.0.0+].
  * @param[in] connection_handle ConnectionHandle
- * @param[in] primary_service PrimaryService
- * @param[in] id0 \ref BtdrvGattId
- * @param[in] id1 \ref BtdrvGattId
- * @param[in] id2 \ref BtdrvGattId
+ * @param[in] is_primary Is a primary service or not
+ * @param[in] serv_id Service GATT ID \ref BtdrvGattId
+ * @param[in] char_id Characteristic GATT ID \ref BtdrvGattId
+ * @param[in] desc_id Descriptor GATT ID \ref BtdrvGattId
  * @param[in] buffer Input buffer.
  * @param[in] size Input buffer size, must be <=0x258.
- * @param[in] unk Unknown
+ * @param[in] auth_req \ref BtdrvGattAuthReqType
  */
-Result btdrvWriteGattDescriptor(u32 connection_handle, bool primary_service, const BtdrvGattId *id0, const BtdrvGattId *id1, const BtdrvGattId *id2, const void* buffer, size_t size, u8 unk);
+Result btdrvWriteGattDescriptor(u32 connection_handle, bool is_primary, const BtdrvGattId *serv_id, const BtdrvGattId *char_id, const BtdrvGattId *desc_id, const void* buffer, size_t size, u8 auth_req);
 
 /**
  * @brief RegisterGattNotification
  * @note Only available on [5.0.0+].
  * @param[in] connection_handle ConnectionHandle
- * @param[in] primary_service PrimaryService
- * @param[in] id0 \ref BtdrvGattId
- * @param[in] id1 \ref BtdrvGattId
+ * @param[in] is_primary Is a primary service or not
+ * @param[in] serv_id Service GATT ID \ref BtdrvGattId
+ * @param[in] char_id Characteristic GATT ID \ref BtdrvGattId
  */
-Result btdrvRegisterGattNotification(u32 connection_handle, bool primary_service, const BtdrvGattId *id0, const BtdrvGattId *id1);
+Result btdrvRegisterGattNotification(u32 connection_handle, bool is_primary, const BtdrvGattId *serv_id, const BtdrvGattId *char_id);
 
 /**
  * @brief UnregisterGattNotification
  * @note Only available on [5.0.0+].
  * @param[in] connection_handle ConnectionHandle
- * @param[in] primary_service PrimaryService
- * @param[in] id0 \ref BtdrvGattId
- * @param[in] id1 \ref BtdrvGattId
+ * @param[in] is_primary Is a primary service or not
+ * @param[in] serv_id Service GATT ID \ref BtdrvGattId
+ * @param[in] char_id Characteristic GATT ID \ref BtdrvGattId
  */
-Result btdrvUnregisterGattNotification(u32 connection_handle, bool primary_service, const BtdrvGattId *id0, const BtdrvGattId *id1);
+Result btdrvUnregisterGattNotification(u32 connection_handle, bool is_primary, const BtdrvGattId *serv_id, const BtdrvGattId *char_id);
 
 /**
  * @brief GetLeHidEventInfo
  * @note Only available on [5.0.0+].
  * @note The state used by this is reset after writing the data to output.
- * @param[out] buffer Output buffer. 0x400-bytes from state is written here. See \ref BtdrvLeEventInfo.
+ * @param[out] buffer Output buffer. 0x400-bytes from state is written here. See \ref BtdrvBleEventInfo.
  * @param[in] size Output buffer size.
- * @oaram[out] type Output BleEventType.
+ * @param[out] type \ref BtdrvBleEventType.
  */
 Result btdrvGetLeHidEventInfo(void* buffer, size_t size, BtdrvBleEventType *type);
 
@@ -1284,10 +1325,10 @@ Result btdrvRegisterBleHidEvent(Event* out_event);
  * @brief SetBleScanParameter
  * @note Only available on [5.1.0+].
  * @note This is used by btm-sysmodule.
- * @param[in] unk0 Unknown
- * @param[in] unk1 Unknown
+ * @param[in] scan_interval Scan interval
+ * @param[in] scan_window Scan window
  */
-Result btdrvSetBleScanParameter(u16 unk0, u16 unk1);
+Result btdrvSetBleScanParameter(u16 scan_interval, u16 scan_window);
 
 /**
  * @brief MoveToSecondaryPiconet
