@@ -62,3 +62,11 @@ Result auddevGetAudioDeviceOutputVolume(const AudioDeviceName *DeviceName, float
         .buffers = { { DeviceName, sizeof(AudioDeviceName) } },
     );
 }
+
+Result auddevGetActiveAudioDeviceName(AudioDeviceName *DeviceName) {
+    bool new_cmd = hosversionAtLeast(3,0,0);
+    return serviceDispatch(&g_auddevIAudioDevice, new_cmd==0 ? 3 : 10,
+        .buffer_attrs = { (new_cmd==0 ? SfBufferAttr_HipcMapAlias : SfBufferAttr_HipcAutoSelect) | SfBufferAttr_Out },
+        .buffers = { { DeviceName, sizeof(AudioDeviceName) } },
+    );
+}

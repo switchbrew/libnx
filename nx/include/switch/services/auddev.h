@@ -22,4 +22,4 @@ Service* auddevGetServiceSession(void);
 Result auddevListAudioDeviceName(AudioDeviceName *DeviceNames, s32 max_names, s32 *total_names);
 Result auddevSetAudioDeviceOutputVolume(const AudioDeviceName *DeviceName, float volume);
 Result auddevGetAudioDeviceOutputVolume(const AudioDeviceName *DeviceName, float *volume);
-
+Result auddevGetActiveAudioDeviceName(AudioDeviceName *DeviceName);
