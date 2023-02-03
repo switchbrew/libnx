@@ -340,3 +340,19 @@ Result audctlGetSystemOutputMasterVolume(float* volume_out) {
     }
     return rc;
 }
+
+Result audctlGetActiveOutputTarget(AudioTarget* target) {
+    if (hosversionBefore(13,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    struct {
+        u32 target;
+    } out;
+
+    Result rc = serviceDispatchOut(&g_audctlSrv, 32, out);
+
+    if (R_SUCCEEDED(rc)) {
+        *target = out.target;
+    }
+    return rc;
+}
