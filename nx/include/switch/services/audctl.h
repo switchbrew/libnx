@@ -17,6 +17,7 @@ typedef enum {
     AudioTarget_Headphone = 2,
     AudioTarget_Tv = 3,
     AudioTarget_UsbOutputDevice = 4,
+    AudioTarget_Bluetooth = 5,
 } AudioTarget;
 
 typedef enum {
@@ -66,3 +67,4 @@ Result audctlGetAudioOutputTargetForPlayReport(AudioTarget* target_out); ///< [3
 Result audctlNotifyHeadphoneVolumeWarningDisplayedEvent(void); ///< [3.0.0+]
 Result audctlSetSystemOutputMasterVolume(float volume); ///< [4.0.0+]
 Result audctlGetSystemOutputMasterVolume(float* volume_out); ///< [4.0.0+]
+Result audctlGetActiveOutputTarget(AudioTarget* target);
