@@ -184,9 +184,10 @@ typedef enum {
 } FsWriteOption;
 
 typedef enum {
-    FsContentStorageId_System = 0,
-    FsContentStorageId_User   = 1,
-    FsContentStorageId_SdCard = 2,
+    FsContentStorageId_System  = 0, ///< System
+    FsContentStorageId_User    = 1, ///< User
+    FsContentStorageId_SdCard  = 2, ///< SdCard
+    FsContentStorageId_System0 = 3, ///< [16.0.0+] System0
 } FsContentStorageId;
 
 typedef enum {
@@ -298,6 +299,8 @@ typedef enum {
     FsBisPartitionId_SystemProperEncryption          = 32,
     FsBisPartitionId_SystemProperPartition           = 33,
     FsBisPartitionId_SignedSystemPartitionOnSafeMode = 34,
+    FsBisPartitionId_DeviceTreeBlob                  = 35,
+    FsBisPartitionId_System0                         = 36,
 } FsBisPartitionId;
 
 /// FileSystemType
