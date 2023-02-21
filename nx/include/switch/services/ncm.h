@@ -50,6 +50,7 @@ Result ncmInactivateContentStorage(NcmStorageId storage_id); ///< [2.0.0+]
 Result ncmActivateContentMetaDatabase(NcmStorageId storage_id); ///< [2.0.0+]
 Result ncmInactivateContentMetaDatabase(NcmStorageId storage_id); ///< [2.0.0+]
 Result ncmInvalidateRightsIdCache(void); ///< [9.0.0+]
+Result ncmActivateFsContentStorage(FsContentStorageId fs_storage_id); ///< [16.0.0+]
 
 void ncmContentStorageClose(NcmContentStorage* cs);
 Result ncmContentStorageGeneratePlaceHolderId(NcmContentStorage* cs, NcmPlaceHolderId* out_id);
@@ -71,15 +72,15 @@ Result ncmContentStorageDisableForcibly(NcmContentStorage* cs);
 Result ncmContentStorageRevertToPlaceHolder(NcmContentStorage* cs, const NcmPlaceHolderId* placeholder_id, const NcmContentId* old_content_id, const NcmContentId* new_content_id); ///< [2.0.0+]
 Result ncmContentStorageSetPlaceHolderSize(NcmContentStorage* cs, const NcmPlaceHolderId* placeholder_id, s64 size); ///< [2.0.0+]
 Result ncmContentStorageReadContentIdFile(NcmContentStorage* cs, void* out_data, size_t out_data_size, const NcmContentId* content_id, s64 offset); ///< [2.0.0+]
-Result ncmContentStorageGetRightsIdFromPlaceHolderId(NcmContentStorage* cs, NcmRightsId* out_rights_id, const NcmPlaceHolderId* placeholder_id); ///< [2.0.0+]
-Result ncmContentStorageGetRightsIdFromContentId(NcmContentStorage* cs, NcmRightsId* out_rights_id, const NcmContentId* content_id); ///< [2.0.0+]
+Result ncmContentStorageGetRightsIdFromPlaceHolderId(NcmContentStorage* cs, NcmRightsId* out_rights_id, const NcmPlaceHolderId* placeholder_id, FsContentAttributes attr); ///< [2.0.0+]
+Result ncmContentStorageGetRightsIdFromContentId(NcmContentStorage* cs, NcmRightsId* out_rights_id, const NcmContentId* content_id, FsContentAttributes attr); ///< [2.0.0+]
 Result ncmContentStorageWriteContentForDebug(NcmContentStorage* cs, const NcmContentId* content_id, s64 offset, const void* data, size_t data_size); ///< [2.0.0+]
 Result ncmContentStorageGetFreeSpaceSize(NcmContentStorage* cs, s64* out_size); ///< [2.0.0+]
 Result ncmContentStorageGetTotalSpaceSize(NcmContentStorage* cs, s64* out_size); ///< [2.0.0+]
 Result ncmContentStorageFlushPlaceHolder(NcmContentStorage* cs); ///< [3.0.0+]
 Result ncmContentStorageGetSizeFromPlaceHolderId(NcmContentStorage* cs, s64* out_size, const NcmPlaceHolderId* placeholder_id); ///< [4.0.0+]
 Result ncmContentStorageRepairInvalidFileAttribute(NcmContentStorage* cs); ///< [4.0.0+]
-Result ncmContentStorageGetRightsIdFromPlaceHolderIdWithCache(NcmContentStorage* cs, NcmRightsId* out_rights_id, const NcmPlaceHolderId* placeholder_id, const NcmContentId* cache_content_id); ///< [8.0.0+]
+Result ncmContentStorageGetRightsIdFromPlaceHolderIdWithCache(NcmContentStorage* cs, NcmRightsId* out_rights_id, const NcmPlaceHolderId* placeholder_id, const NcmContentId* cache_content_id, FsContentAttributes attr); ///< [8.0.0+]
 Result ncmContentStorageRegisterPath(NcmContentStorage* cs, const NcmContentId* content_id, const char *path);  ///< [13.0.0+]
 Result ncmContentStorageClearRegisteredPath(NcmContentStorage* cs);  ///< [13.0.0+]
 
@@ -96,7 +97,7 @@ Result ncmContentMetaDatabaseHas(NcmContentMetaDatabase* db, bool* out, const Nc
 Result ncmContentMetaDatabaseHasAll(NcmContentMetaDatabase* db, bool* out, const NcmContentMetaKey* keys, s32 count);
 Result ncmContentMetaDatabaseGetSize(NcmContentMetaDatabase* db, u64* out_size, const NcmContentMetaKey* key);
 Result ncmContentMetaDatabaseGetRequiredSystemVersion(NcmContentMetaDatabase* db, u32* out_version, const NcmContentMetaKey* key);
-Result ncmContentMetaDatabaseGetPatchId(NcmContentMetaDatabase* db, u64* out_patch_id, const NcmContentMetaKey* key);
+Result ncmContentMetaDatabaseGetPatchContentMetaId(NcmContentMetaDatabase* db, u64* out_patch_id, const NcmContentMetaKey* key);
 Result ncmContentMetaDatabaseDisableForcibly(NcmContentMetaDatabase* db);
 Result ncmContentMetaDatabaseLookupOrphanContent(NcmContentMetaDatabase* db, bool* out_orphaned, const NcmContentId* content_ids, s32 count);
 Result ncmContentMetaDatabaseCommit(NcmContentMetaDatabase* db);

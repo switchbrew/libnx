@@ -62,12 +62,12 @@ typedef enum {
 
 /// ContentId
 typedef struct {
-    alignas(4) u8 c[0x10]; ///< Id
+    u8 c[0x10]; ///< Id
 } NcmContentId;
 
 /// PlaceHolderId
 typedef struct {
-    alignas(8) Uuid uuid;  ///< UUID
+    Uuid uuid;  ///< UUID
 } NcmPlaceHolderId;
 
 /// ContentMetaKey
