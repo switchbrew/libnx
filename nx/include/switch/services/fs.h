@@ -328,6 +328,12 @@ typedef enum {
     FsPriority_Background = 3,
 } FsPriority;
 
+/// FsContentAttributes
+typedef enum {
+    FsContentAttributes_None = 0x0,
+    FsContentAttributes_All  = 0xF,
+} FsContentAttributes;
+
 /// For use with fsOpenHostFileSystemWithOption
 typedef enum {
     FsMountHostOptionFlag_None                = 0,      ///< Host filesystem will be case insensitive.
@@ -350,7 +356,7 @@ void fsSetPriority(FsPriority prio);
 Result fsOpenFileSystem(FsFileSystem* out, FsFileSystemType fsType, const char* contentPath); ///< same as calling fsOpenFileSystemWithId with 0 as id
 Result fsOpenDataFileSystemByCurrentProcess(FsFileSystem *out);
 Result fsOpenFileSystemWithPatch(FsFileSystem* out, u64 id, FsFileSystemType fsType); ///< [2.0.0+], like OpenFileSystemWithId but without content path.
-Result fsOpenFileSystemWithId(FsFileSystem* out, u64 id, FsFileSystemType fsType, const char* contentPath); ///< works on all firmwares, id is ignored on [1.0.0]
+Result fsOpenFileSystemWithId(FsFileSystem* out, u64 id, FsFileSystemType fsType, const char* contentPath, FsContentAttributes attr); ///< works on all firmwares, id is ignored on [1.0.0], attr is ignored before [16.0.0]
 Result fsOpenDataFileSystemByProgramId(FsFileSystem *out, u64 program_id); ///< [3.0.0+]
 Result fsOpenBisFileSystem(FsFileSystem* out, FsBisPartitionId partitionId, const char* string);
 Result fsOpenBisStorage(FsStorage* out, FsBisPartitionId partitionId);
@@ -399,11 +405,11 @@ Result fsOpenSdCardDetectionEventNotifier(FsEventNotifier* out);
 
 Result fsIsSignedSystemPartitionOnSdCardValid(bool *out);
 
-/// Retrieves the rights id corresponding to the content path. Only available on [2.0.0+].
+/// Retrieves the rights id corresponding to the content path. Only available on [2.0.0-15.0.1].
 Result fsGetRightsIdByPath(const char* path, FsRightsId* out_rights_id);
 
-/// Retrieves the rights id and key generation corresponding to the content path. Only available on [3.0.0+].
-Result fsGetRightsIdAndKeyGenerationByPath(const char* path, u8* out_key_generation, FsRightsId* out_rights_id);
+/// Retrieves the rights id and key generation corresponding to the content path. Only available on [3.0.0+], attr is ignored before [16.0.0].
+Result fsGetRightsIdAndKeyGenerationByPath(const char* path, FsContentAttributes attr, u8* out_key_generation, FsRightsId* out_rights_id);
 
 Result fsDisableAutoSaveDataCreation(void);
 
