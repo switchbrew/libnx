@@ -26,5 +26,5 @@ void fsldrExit(void);
 /// Gets the Service object for the actual fsp-ldr service session.
 Service* fsldrGetServiceSession(void);
 
-Result fsldrOpenCodeFileSystem(FsCodeInfo* out_code_info, u64 tid, const char *path, FsFileSystem* out);
+Result fsldrOpenCodeFileSystem(FsCodeInfo* out_code_info, u64 tid, const char *path, FsContentAttributes attr, FsFileSystem* out);
 Result fsldrIsArchivedProgram(u64 pid, bool *out);
