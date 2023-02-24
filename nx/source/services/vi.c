@@ -11,6 +11,7 @@ __attribute__((weak)) ViLayerFlags __nx_vi_stray_layer_flags = ViLayerFlags_Defa
 
 static ViServiceType g_viServiceType = ViServiceType_Default;
 
+static Service g_viRootService;
 static Service g_viIApplicationDisplayService;
 static Service g_viIHOSBinderDriverRelay;
 static Service g_viISystemDisplayService;
@@ -55,7 +56,12 @@ Result _viInitialize(ViServiceType service_type) {
     if (R_SUCCEEDED(rc)) {
         const u32 inval = (g_viServiceType == ViServiceType_Manager || g_viServiceType == ViServiceType_System) ? 1 : 0;
         rc = _viCmdGetSession(&root_srv, &g_viIApplicationDisplayService, inval, g_viServiceType);
-        serviceClose(&root_srv);
+
+        if (!(hosversionAtLeast(16,0,0) && g_viServiceType == ViServiceType_Manager)) {
+            serviceClose(&root_srv);
+        } else {
+            g_viRootService = root_srv;
+        }
     }
 
     if (R_SUCCEEDED(rc)) {
@@ -83,6 +89,9 @@ void _viCleanup(void) {
     serviceClose(&g_viISystemDisplayService);
     serviceClose(&g_viIHOSBinderDriverRelay);
     serviceClose(&g_viIApplicationDisplayService);
+    if (hosversionAtLeast(16,0,0) && g_viServiceType == ViServiceType_Manager) {
+        serviceClose(&g_viRootService);
+    }
     g_viServiceType = ViServiceType_Default;
 }
 
@@ -512,4 +521,61 @@ Result viGetIndirectLayerImageRequiredMemoryInfo(s32 width, s32 height, u64 *out
     }
 
     return rc;
+}
+
+Result viManagerPrepareFatal(void) {
+    if (g_viServiceType != ViServiceType_Manager)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(16,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatch(&g_viRootService, 100);
+}
+
+Result viManagerShowFatal(void) {
+    if (g_viServiceType != ViServiceType_Manager)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(16,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatch(&g_viRootService, 101);
+}
+
+Result viManagerDrawFatalRectangle(s32 x, s32 y, s32 end_x, s32 end_y, ViColorRgba4444 color) {
+    if (g_viServiceType != ViServiceType_Manager)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(16,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    const struct {
+        u16 color;
+        s32 x;
+        s32 y;
+        s32 end_x;
+        s32 end_y;
+    } in = { color, x, y, end_x, end_y };
+    return serviceDispatchIn(&g_viRootService, 102, in);
+}
+
+Result viManagerDrawFatalText32(s32 *out_advance, s32 x, s32 y, const u32 *utf32_codepoints, size_t num_codepoints, float scale_x, float scale_y, PlSharedFontType font_type, ViColorRgba8888 bg_color, ViColorRgba8888 fg_color, s32 initial_advance) {
+    if (g_viServiceType != ViServiceType_Manager)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(16,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    const struct {
+        s32 x;
+        s32 y;
+        float scale_x;
+        float scale_y;
+        u32 font_type;
+        u32 bg_color;
+        u32 fg_color;
+        s32 initial_advance;
+    } in = { x, y, scale_x, scale_y, font_type, bg_color, fg_color, initial_advance };
+
+    return serviceDispatchInOut(&g_viRootService, 103, in, *out_advance,
+        .buffer_attrs = { SfBufferAttr_In | SfBufferAttr_HipcMapAlias },
+        .buffers = { { utf32_codepoints, num_codepoints * sizeof(*utf32_codepoints) } },
+    );
 }
