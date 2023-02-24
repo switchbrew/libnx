@@ -8,6 +8,7 @@
 #include "../types.h"
 #include "../kernel/event.h"
 #include "../sf/service.h"
+#include "pl.h"
 
 typedef struct {
     char data[0x40];
@@ -68,6 +69,10 @@ typedef enum {
     ViLayerStack_Null                = 10, ///< Layer stack for the empty display.
 } ViLayerStack;
 
+/// Used as argument for certain drawing commands.
+typedef u16 ViColorRgba4444;
+typedef u32 ViColorRgba8888;
+
 Result viInitialize(ViServiceType service_type);
 void viExit(void);
 
@@ -116,3 +121,9 @@ Result viSetLayerScalingMode(ViLayer *layer, ViScalingMode scaling_mode);
 
 Result viGetIndirectLayerImageMap(void* buffer, size_t size, s32 width, s32 height, u64 IndirectLayerConsumerHandle, u64 *out_size, u64 *out_stride);
 Result viGetIndirectLayerImageRequiredMemoryInfo(s32 width, s32 height, u64 *out_size, u64 *out_alignment);
+
+// Manager functions
+Result viManagerPrepareFatal(void); ///< [16.0.0+]
+Result viManagerShowFatal(void); ///< [16.0.0+]
+Result viManagerDrawFatalRectangle(s32 x, s32 y, s32 end_x, s32 end_y, ViColorRgba4444 color); ///< [16.0.0+]
+Result viManagerDrawFatalText32(s32 *out_advance, s32 x, s32 y, const u32 *utf32_codepoints, size_t num_codepoints, float scale_x, float scale_y, PlSharedFontType font_type, ViColorRgba8888 bg_color, ViColorRgba8888 fg_color, s32 initial_advance); ///< [16.0.0+]
