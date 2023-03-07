@@ -2,6 +2,7 @@
 #include "service_guard.h"
 #include <string.h>
 #include "kernel/shmem.h"
+#include "runtime/hosversion.h"
 #include "services/pl.h"
 
 #define SHAREDMEMFONT_SIZE 0x1100000
@@ -28,11 +29,11 @@ Result _plInitialize(PlServiceType service_type) {
             break;
     }
 
-    if (R_SUCCEEDED(rc)) {
+    if (R_SUCCEEDED(rc) && !(hosversionAtLeast(16,0,0) && g_plServiceType == PlServiceType_System)) {
         rc = _plGetSharedMemoryNativeHandle(&sharedmem_handle);
 
         if (R_SUCCEEDED(rc)) {
-            shmemLoadRemote(&g_plSharedmem, sharedmem_handle, 0x1100000, Perm_R);
+            shmemLoadRemote(&g_plSharedmem, sharedmem_handle, SHAREDMEMFONT_SIZE, Perm_R);
 
             rc = shmemMap(&g_plSharedmem);
         }
@@ -43,7 +44,8 @@ Result _plInitialize(PlServiceType service_type) {
 
 void _plCleanup(void) {
     serviceClose(&g_plSrv);
-    shmemClose(&g_plSharedmem);
+    if (!(hosversionAtLeast(16,0,0) && g_plServiceType == PlServiceType_System))
+        shmemClose(&g_plSharedmem);
 }
 
 Service* plGetServiceSession(void) {
@@ -70,22 +72,37 @@ static Result _plCmdInU32OutU32(Service* srv, u32 inval, u32 *out, u32 cmd_id) {
 }
 
 static Result _plRequestLoad(u32 SharedFontType) {
+    if (hosversionAtLeast(16,0,0) && g_plServiceType == PlServiceType_System)
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     return _plCmdInU32NoOut(&g_plSrv, SharedFontType, 0);
 }
 
 static Result _plGetLoadState(u32 SharedFontType, u32* LoadState) {
+    if (hosversionAtLeast(16,0,0) && g_plServiceType == PlServiceType_System)
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     return _plCmdInU32OutU32(&g_plSrv, SharedFontType, LoadState, 1);
 }
 
 static Result _plGetSize(u32 SharedFontType, u32* size) {
+    if (hosversionAtLeast(16,0,0) && g_plServiceType == PlServiceType_System)
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     return _plCmdInU32OutU32(&g_plSrv, SharedFontType, size, 2);
 }
 
 static Result _plGetSharedMemoryAddressOffset(u32 SharedFontType, u32* offset) {
+    if (hosversionAtLeast(16,0,0) && g_plServiceType == PlServiceType_System)
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     return _plCmdInU32OutU32(&g_plSrv, SharedFontType, offset, 3);
 }
 
 static Result _plGetSharedMemoryNativeHandle(Handle* handle_out) {
+    if (hosversionAtLeast(16,0,0) && g_plServiceType == PlServiceType_System)
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     return _plCmdGetHandle(&g_plSrv, handle_out, 4);
 }
 
@@ -142,6 +159,9 @@ Result plGetSharedFontByType(PlFontData* font, PlSharedFontType SharedFontType) 
 }
 
 Result plGetSharedFont(u64 LanguageCode, PlFontData* fonts, s32 max_fonts, s32* total_fonts) {
+    if (hosversionAtLeast(16,0,0) && g_plServiceType == PlServiceType_System)
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     Result rc=0;
     u32 types[PlSharedFontType_Total]={0};
     u32 offsets[PlSharedFontType_Total]={0};

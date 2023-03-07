@@ -10,7 +10,7 @@
 
 typedef enum {
     PlServiceType_User   = 0,  ///< Initializes pl:u.
-    PlServiceType_System = 1,  ///< Initializes pl:s.
+    PlServiceType_System = 1,  ///< Initializes pl:s. With [16.0.0+] SharedFont is no longer available with this, pl:u must be used for that.
 } PlServiceType;
 
 /// SharedFontType
