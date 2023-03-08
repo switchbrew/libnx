@@ -20,6 +20,60 @@ Service* pdmqryGetServiceSession(void) {
     return &g_pdmqrySrv;
 }
 
+static void _pdmConvertAppletEventFromV1(const PdmAppletEventV1 *in, PdmAppletEvent *out) {
+    memset(out, 0, sizeof(*out));
+
+    out->program_id = in->program_id;
+
+    out->entry_index = in->entry_index;
+    out->timestamp_user = pdmPlayTimestampToPosix(in->timestamp_user);
+    out->timestamp_network = pdmPlayTimestampToPosix(in->timestamp_network);
+
+    out->event_type = in->event_type;
+}
+
+static void _pdmConvertPlayStatisticsFromV1(const PdmPlayStatisticsV1 *in, PdmPlayStatistics *out) {
+    memset(out, 0, sizeof(*out));
+
+    out->program_id = in->program_id;
+
+    out->first_entry_index = in->first_entry_index;
+    out->first_timestamp_user = pdmPlayTimestampToPosix(in->first_timestamp_user);
+    out->first_timestamp_network = pdmPlayTimestampToPosix(in->first_timestamp_network);
+
+    out->last_entry_index = in->last_entry_index;
+    out->last_timestamp_user = pdmPlayTimestampToPosix(in->last_timestamp_user);
+    out->last_timestamp_network = pdmPlayTimestampToPosix(in->last_timestamp_network);
+
+    out->playtime = ((u64)in->playtime_minutes) * 60 * 1000000000UL;
+    out->total_launches = in->total_launches;
+}
+
+static void _pdmConvertAccountEventFromV3(const PdmAccountEventV3 *in, PdmAccountEvent *out) {
+    memset(out, 0, sizeof(*out));
+
+    out->uid = in->uid;
+
+    out->entry_index = in->entry_index;
+    out->timestamp_user = in->timestamp_user;
+    out->timestamp_network = in->timestamp_network;
+
+    out->type = in->type;
+}
+
+static void _pdmConvertAccountEventFromV10(const PdmAccountEventV10 *in, PdmAccountEvent *out) {
+    memset(out, 0, sizeof(*out));
+
+    out->uid = in->uid;
+    out->program_id = in->program_id;
+
+    out->entry_index = in->entry_index;
+    out->timestamp_user = in->timestamp_user;
+    out->timestamp_network = in->timestamp_network;
+
+    out->type = in->type;
+}
+
 static Result _pdmCmdGetEvent(Service* srv, Event* out_event, bool autoclear, u32 cmd_id) {
     Handle event = INVALID_HANDLE;
     Result rc = serviceDispatch(srv, cmd_id,
@@ -41,28 +95,49 @@ static Result _pdmqryQueryEvent(s32 entry_index, void* events, size_t entrysize,
 }
 
 Result pdmqryQueryAppletEvent(s32 entry_index, bool flag, PdmAppletEvent *events, s32 count, s32 *total_out) {
+    Result rc=0;
+
     if (hosversionBefore(10,0,0)) {
-        return serviceDispatchInOut(&g_pdmqrySrv, 0, entry_index, *total_out,
+        rc = serviceDispatchInOut(&g_pdmqrySrv, 0, entry_index, *total_out,
             .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
             .buffers = { { events, count*sizeof(PdmAppletEvent) } },
         );
     }
+    else {
+        const struct {
+            u8 flag;
+            u8 pad[3];
+            s32 entry_index;
+        } in = { flag!=0, {0}, entry_index };
 
-    const struct {
-        u8 flag;
-        u8 pad[3];
-        s32 entry_index;
-    } in = { flag!=0, {0}, entry_index };
+        size_t entrysize = hosversionBefore(16,0,0) ? sizeof(PdmAppletEventV1) : sizeof(PdmAppletEvent);
+        rc = serviceDispatchInOut(&g_pdmqrySrv, 0, in, *total_out,
+            .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+            .buffers = { { events, count*entrysize } },
+        );
+    }
 
-    return serviceDispatchInOut(&g_pdmqrySrv, 0, in, *total_out,
-        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
-        .buffers = { { events, count*sizeof(PdmAppletEvent) } },
-    );
+    if (R_SUCCEEDED(rc) && hosversionBefore(16,0,0)) {
+        s32 end = count;
+        if (total_out && *total_out < end) end = *total_out;
+        PdmAppletEventV1 *v1_in = (PdmAppletEventV1*)events;
+        for (s32 i=end-1; i>=0; i--) { // V1 is smaller than latest, so loop backwards.
+            PdmAppletEventV1 tmp = v1_in[i];
+            _pdmConvertAppletEventFromV1(&tmp, &events[i]);
+        }
+    }
+
+    return rc;
 }
 
 Result pdmqryQueryPlayStatisticsByApplicationId(u64 application_id, bool flag, PdmPlayStatistics *stats) {
+    PdmPlayStatisticsV1 tmp={};
+    Result rc=0;
+
     if (hosversionBefore(10,0,0)) {
-        return serviceDispatchInOut(&g_pdmqrySrv, 4, application_id, *stats);
+        rc = serviceDispatchInOut(&g_pdmqrySrv, 4, application_id, tmp);
+        if (R_SUCCEEDED(rc)) _pdmConvertPlayStatisticsFromV1(&tmp, stats);
+        return rc;
     }
 
     const struct {
@@ -71,17 +146,28 @@ Result pdmqryQueryPlayStatisticsByApplicationId(u64 application_id, bool flag, P
         u64 application_id;
     } in = { flag!=0, {0}, application_id };
 
-    return serviceDispatchInOut(&g_pdmqrySrv, 4, in, *stats);
+    if (hosversionBefore(16,0,0)) {
+        Result rc = serviceDispatchInOut(&g_pdmqrySrv, 4, in, tmp);
+        if (R_SUCCEEDED(rc)) _pdmConvertPlayStatisticsFromV1(&tmp, stats);
+    }
+    else
+        rc = serviceDispatchInOut(&g_pdmqrySrv, 4, in, *stats);
+    return rc;
 }
 
 Result pdmqryQueryPlayStatisticsByApplicationIdAndUserAccountId(u64 application_id, AccountUid uid, bool flag, PdmPlayStatistics *stats) {
+    PdmPlayStatisticsV1 tmp={};
+    Result rc=0;
+
     if (hosversionBefore(10,0,0)) {
         const struct {
             u64 application_id;
             AccountUid uid;
         } in = { application_id, uid };
 
-        return serviceDispatchInOut(&g_pdmqrySrv, 5, in, *stats);
+        rc = serviceDispatchInOut(&g_pdmqrySrv, 5, in, tmp);
+        if (R_SUCCEEDED(rc)) _pdmConvertPlayStatisticsFromV1(&tmp, stats);
+        return rc;
     }
 
     const struct {
@@ -91,7 +177,13 @@ Result pdmqryQueryPlayStatisticsByApplicationIdAndUserAccountId(u64 application_
         AccountUid uid;
     } in = { flag!=0, {0}, application_id, uid };
 
-    return serviceDispatchInOut(&g_pdmqrySrv, 5, in, *stats);
+    if (hosversionBefore(16,0,0)) {
+        Result rc = serviceDispatchInOut(&g_pdmqrySrv, 5, in, tmp);
+        if (R_SUCCEEDED(rc)) _pdmConvertPlayStatisticsFromV1(&tmp, stats);
+    }
+    else
+        rc = serviceDispatchInOut(&g_pdmqrySrv, 5, in, *stats);
+    return rc;
 }
 
 Result pdmqryQueryLastPlayTime(bool flag, PdmLastPlayTime *playtimes, const u64 *application_ids, s32 count, s32 *total_out) {
@@ -142,7 +234,50 @@ Result pdmqryGetAvailablePlayEventRange(s32 *total_entries, s32 *start_entry_ind
 }
 
 Result pdmqryQueryAccountEvent(s32 entry_index, PdmAccountEvent *events, s32 count, s32 *total_out) {
-    return _pdmqryQueryEvent(entry_index, events, sizeof(PdmAccountEvent), count, total_out, 10);
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    size_t entrysize = sizeof(PdmAccountEventV3);
+    u32 ver=0;
+    if (hosversionBetween(10, 16)) {
+        entrysize = sizeof(PdmAccountEventV10);
+        ver=1;
+    }
+    else if (hosversionAtLeast(16,0,0)) {
+        entrysize = sizeof(PdmAccountEvent);
+        ver=2;
+    }
+
+    Result rc=0;
+    if (ver!=1) rc = _pdmqryQueryEvent(entry_index, events, entrysize, count, total_out, 10);
+    if (R_SUCCEEDED(rc) && ver==0) {
+        s32 end = count;
+        if (total_out && *total_out < end) end = *total_out;
+        PdmAccountEventV3 *v3_in = (PdmAccountEventV3*)events;
+        for (s32 i=0; i<end; i++) {
+            PdmAccountEventV3 tmp = v3_in[i];
+            _pdmConvertAccountEventFromV3(&tmp, &events[i]);
+        }
+    }
+    else if (ver==1) { // V10 needs special handling since it's larger than latest.
+        PdmAccountEventV10 v10_tmp[4]={};
+        s32 tmp_out=0;
+        if (total_out) *total_out = 0;
+
+        for (s32 i=0; i<count; i+=4) {
+            size_t cur_count = 4;
+            if (count-i < cur_count) cur_count = count-i;
+            rc = _pdmqryQueryEvent(entry_index+i, v10_tmp, entrysize, cur_count, &tmp_out, 10);
+            if (R_FAILED(rc) || tmp_out<=0) break;
+            if (tmp_out>cur_count) tmp_out = cur_count;
+            if (total_out) *total_out += tmp_out;
+            for (s32 j=0; j<tmp_out; j++) {
+                _pdmConvertAccountEventFromV10(&v10_tmp[j], &events[i+j]);
+            }
+            if (tmp_out < 4) break;
+        }
+    }
+    return rc;
 }
 
 Result pdmqryQueryAccountPlayEvent(s32 entry_index, AccountUid uid, PdmAccountPlayEvent *events, s32 count, s32 *total_out) {

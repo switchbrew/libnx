@@ -38,41 +38,71 @@ typedef enum {
     PdmPlayLogPolicy_Unknown3   = 3,        ///< [10.0.0+] The cmds which require ::PdmPlayLogPolicy_All, now also allow value 3 if the cmd input flag is set.
 } PdmPlayLogPolicy;
 
-/// AppletEvent.
+/// AppletEventV1. AppletEvent for [1.0.0-15.0.1], converted to \ref PdmAppletEvent when needed.
 /// Timestamp format, converted from PosixTime: total minutes since epoch UTC 1999/12/31 00:00:00.
 /// See \ref pdmPlayTimestampToPosix.
 typedef struct {
     u64 program_id;                   ///< ProgramId.
     u32 entry_index;                  ///< Entry index.
-    u32 timestampUser;                ///< See PdmPlayEvent::timestampUser, with the above timestamp format.
-    u32 timestampNetwork;             ///< See PdmPlayEvent::timestampNetwork, with the above timestamp format.
-    u8 eventType;                     ///< \ref PdmAppletEventType
+    u32 timestamp_user;               ///< See PdmPlayEvent::timestamp_user, with the above timestamp format.
+    u32 timestamp_network;            ///< See PdmPlayEvent::timestamp_network, with the above timestamp format.
+    u8 event_type;                    ///< \ref PdmAppletEventType
     u8 pad[3];                        ///< Padding.
+} PdmAppletEventV1;
+
+/// AppletEvent. AppletEvent for [16.0.0+], converted from \ref PdmAppletEventV1 on [1.0.0-15.0.1].
+typedef struct {
+    u64 program_id;                   ///< ProgramId.
+    u32 entry_index;                  ///< Entry index.
+    u32 pad;                          ///< Padding
+    u64 timestamp_user;               ///< See PdmPlayEvent::timestamp_user.
+    u64 timestamp_network;            ///< See PdmPlayEvent::timestamp_network.
+    u8 event_type;                    ///< \ref PdmAppletEventType
+    u8 pad2[7];                       ///< Padding.
 } PdmAppletEvent;
 
-/// PlayStatistics
+/// PlayStatisticsV1. PlayStatistics for [1.0.0-15.0.1], converted to \ref PdmPlayStatistics when needed.
 typedef struct {
-    u64 application_id;               ///< ApplicationId.
+    u64 program_id;                   ///< ProgramId.
 
-    u32 first_entry_index;            ///< Entry index for the first time the application was played.
-    u32 first_timestampUser;          ///< See PdmAppletEvent::timestampUser. This is for the first time the application was played.
-    u32 first_timestampNetwork;       ///< See PdmAppletEvent::timestampNetwork. This is for the first time the application was played.
+    u32 first_entry_index;            ///< Entry index for the first time the program was played.
+    u32 first_timestamp_user;         ///< See PdmAppletEventV1::timestamp_user. This is for the first time the program was played.
+    u32 first_timestamp_network;      ///< See PdmAppletEventV1::timestamp_network. This is for the first time the program was played.
 
-    u32 last_entry_index;             ///< Entry index for the last time the application was played.
-    u32 last_timestampUser;           ///< See PdmAppletEvent::timestampUser. This is for the last time the application was played.
-    u32 last_timestampNetwork;        ///< See PdmAppletEvent::timestampNetwork. This is for the last time the application was played.
+    u32 last_entry_index;             ///< Entry index for the last time the program was played.
+    u32 last_timestamp_user;          ///< See PdmAppletEventV1::timestamp_user. This is for the last time the program was played.
+    u32 last_timestamp_network;       ///< See PdmAppletEventV1::timestamp_network. This is for the last time the program was played.
 
-    u32 playtimeMinutes;              ///< Total play-time in minutes.
-    u32 totalLaunches;                ///< Total times the application was launched.
+    u32 playtime_minutes;             ///< Total play-time in minutes.
+    u32 total_launches;               ///< Total times the program was launched.
+} PdmPlayStatisticsV1;
+
+/// PlayStatistics. PlayStatistics for [16.0.0+], converted from \ref PdmPlayStatisticsV1 on [1.0.0-15.0.1].
+typedef struct {
+    u64 program_id;                   ///< ProgramId.
+
+    u32 first_entry_index;            ///< Entry index for the first time the program was played.
+    u32 pad;                          ///< Padding
+    u64 first_timestamp_user;         ///< See PdmAppletEvent::timestamp_user. This is for the first time the program was played, in PosixTime.
+    u64 first_timestamp_network;      ///< See PdmAppletEvent::timestamp_network. This is for the first time the program was played, in PosixTime.
+
+    u32 last_entry_index;             ///< Entry index for the last time the program was played.
+    u32 pad2;                         ///< Padding
+    u64 last_timestamp_user;          ///< See PdmAppletEvent::timestamp_user. This is for the last time the program was played, in PosixTime.
+    u64 last_timestamp_network;       ///< See PdmAppletEvent::timestamp_network. This is for the last time the program was played, in PosixTime.
+
+    u64 playtime;                     ///< Total play-time in nanoseconds.
+    u32 total_launches;               ///< Total times the program was launched.
+    u32 pad3;                         ///< Padding
 } PdmPlayStatistics;
 
 /// LastPlayTime.
 /// This contains data from the last time the application was played.
 typedef struct {
     u64 application_id;               ///< ApplicationId.
-    u32 timestampUser;                ///< See PdmAppletEvent::timestampUser.
-    u32 timestampNetwork;             ///< See PdmAppletEvent::timestampNetwork.
-    u32 lastPlayedMinutes;            ///< Total minutes since the application was last played.
+    u32 timestamp_user;               ///< See PdmAppletEventV1::timestamp_user.
+    u32 timestamp_network;            ///< See PdmAppletEventV1::timestamp_network.
+    u32 last_played_minutes;          ///< Total minutes since the application was last played.
     u8 flag;                          ///< Flag indicating whether the above field is set.
     u8 pad[3];                        ///< Padding.
 } PdmLastPlayTime;
@@ -98,10 +128,10 @@ typedef struct {
                 u32 data;
             } unk_x8;
 
-            u8 appletId;              ///< \ref AppletId
-            u8 storageId;             ///< \ref NcmStorageId
-            u8 logPolicy;             ///< \ref PdmPlayLogPolicy
-            u8 eventType;             ///< \ref PdmAppletEventType
+            u8 applet_id;             ///< \ref AppletId
+            u8 storage_id;            ///< \ref NcmStorageId
+            u8 log_policy;            ///< \ref PdmPlayLogPolicy
+            u8 event_type;            ///< \ref PdmAppletEventType
             u8 unused[0xc];           ///< Unused.
         } applet;
 
@@ -114,34 +144,59 @@ typedef struct {
         struct {
             u8 value;                 ///< Input value from the pdm:ntfy command.
             u8 unused[0x1b];          ///< Unused.
-        } powerStateChange;
+        } power_state_change;
 
         struct {
             u8 value;                 ///< Input value from the pdm:ntfy command.
             u8 unused[0x1b];          ///< Unused.
-        } operationModeChange;
+        } operation_mode_change;
 
         u8 data[0x1c];
-    } eventData;                      ///< ProgramId/ApplicationId/userId stored within here have the u32 low/high swapped in each u64.
+    } event_data;                      ///< ProgramId/ApplicationId/userId stored within here have the u32 low/high swapped in each u64.
 
-    u8 playEventType;                 ///< \ref PdmPlayEventType. Controls which struct in the above eventData is used. ::PdmPlayEventType_Initialize doesn't use eventData.
+    u8 play_event_type;               ///< \ref PdmPlayEventType. Controls which struct in the above event_data is used. ::PdmPlayEventType_Initialize doesn't use event_data.
     u8 pad[3];                        ///< Padding.
 
-    u64 timestampUser;                ///< PosixTime timestamp from StandardUserSystemClock.
-    u64 timestampNetwork;             ///< PosixTime timestamp from StandardNetworkSystemClock.
-    u64 timestampSteady;              ///< Timestamp in seconds derived from StandardSteadyClock.
+    u64 timestamp_user;               ///< PosixTime timestamp from StandardUserSystemClock.
+    u64 timestamp_network;            ///< PosixTime timestamp from StandardNetworkSystemClock.
+    u64 timestamp_steady;             ///< Timestamp in seconds derived from StandardSteadyClock.
 } PdmPlayEvent;
 
-/// AccountEvent
+/// AccountEventV3. AccountEvent for [3.0.0-9.2.0], converted to \ref PdmAccountEvent when needed.
 typedef struct {
     AccountUid uid;                   ///< \ref AccountUid
     u32 entry_index;                  ///< Entry index.
     u8 pad[4];                        ///< Padding.
-    u64 timestampUser;                ///< See PdmPlayEvent::timestampUser.
-    u64 timestampNetwork;             ///< See PdmPlayEvent::timestampNetwork.
-    u64 timestampSteady;              ///< See PdmPlayEvent::timestampSteady.
-    u8 type;                          ///< See PdmPlayEvent::eventData::account::type.
-    u8 pad_x31[7];                    ///< Padding.
+    u64 timestamp_user;               ///< See PdmPlayEvent::timestamp_user.
+    u64 timestamp_network;            ///< See PdmPlayEvent::timestamp_network.
+    u64 timestamp_steady;             ///< See PdmPlayEvent::timestamp_steady.
+    u8 type;                          ///< See PdmPlayEvent::event_data::account::type.
+    u8 pad2[7];                       ///< Padding.
+} PdmAccountEventV3;
+
+/// AccountEventV10. AccountEvent for [10.0.0-15.0.1], converted to \ref PdmAccountEvent when needed.
+typedef struct {
+    AccountUid uid;                   ///< \ref AccountUid
+    u64 program_id;                   ///< ProgramId
+    u32 entry_index;                  ///< Entry index.
+    u8 pad[4];                        ///< Padding.
+    u64 timestamp_user;               ///< See PdmPlayEvent::timestamp_user.
+    u64 timestamp_network;            ///< See PdmPlayEvent::timestamp_network.
+    u64 timestamp_steady;             ///< See PdmPlayEvent::timestamp_steady.
+    u8 type;                          ///< See PdmPlayEvent::event_data::account::type.
+    u8 pad2[7];                       ///< Padding.
+} PdmAccountEventV10;
+
+/// AccountEvent. AccountEvent for [16.0.0+], converted from the older structs when needed.
+typedef struct {
+    AccountUid uid;                   ///< \ref AccountUid
+    u64 program_id;                   ///< [10.0.0+] ProgramId
+    u32 entry_index;                  ///< Entry index.
+    u8 pad[4];                        ///< Padding.
+    u64 timestamp_user;               ///< See PdmPlayEvent::timestamp_user.
+    u64 timestamp_network;            ///< See PdmPlayEvent::timestamp_network.
+    u8 type;                          ///< See PdmPlayEvent::event_data::account::type.
+    u8 pad2[7];                       ///< Padding.
 } PdmAccountEvent;
 
 /// AccountPlayEvent.
@@ -157,8 +212,8 @@ typedef struct {
 /// ApplicationPlayStatistics
 typedef struct {
     u64 application_id;               ///< ApplicationId.
-    u64 totalPlayTime;                ///< Total play-time in nanoseconds.
-    u64 totalLaunches;                ///< Total times the application was launched.
+    u64 playtime;                     ///< Total play-time in nanoseconds.
+    u64 total_launches;               ///< Total times the application was launched.
 } PdmApplicationPlayStatistics;
 
 /// Initialize pdm:qry.
@@ -226,6 +281,7 @@ Result pdmqryGetAvailablePlayEventRange(s32 *total_entries, s32 *start_entry_ind
 
 /**
  * @brief Gets a list of \ref PdmAccountEvent.
+ * @note Only available with [3.0.0+].
  * @param[in] entry_index Start entry index.
  * @param[out] events Output \ref PdmAccountEvent array.
  * @param[in] count Max entries in the output array.
@@ -265,7 +321,7 @@ Result pdmqryGetAvailableAccountPlayEventRange(AccountUid uid, s32 *total_entrie
 Result pdmqryQueryRecentlyPlayedApplication(AccountUid uid, bool flag, u64 *application_ids, s32 count, s32 *total_out);
 
 /**
- * @brief Gets an Event which is signaled when logging a new \ref PdmPlayEvent which would be available via \ref pdmqryQueryAccountEvent, where PdmPlayEvent::eventData::account::type is 0.
+ * @brief Gets an Event which is signaled when logging a new \ref PdmPlayEvent which would be available via \ref pdmqryQueryAccountEvent, where PdmPlayEvent::event_data::account::type is 0.
  * @note Only available with [6.0.0-14.1.2].
  * @note The Event must be closed by the user once finished with it.
  * @param[out] out_event Output Event with autoclear=false.
