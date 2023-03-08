@@ -440,6 +440,30 @@ struct cmsghdr {
 // socket credential stuff, we don't need this
 // cmsg macros, uses some obscure macro
 
+#define __ALIGNBYTES32 (sizeof(__uint32_t) - 1)
+#define __ALIGN32(p)   ((__size_t)((char *)(__size_t)(p) + __ALIGNBYTES32) &~ __ALIGNBYTES32)
+
+/*
+ * RFC 2292 requires to check msg_controllen, in case that the kernel returns
+ * an empty list for some reasons.
+ */
+#define	CMSG_FIRSTHDR(mhdr) \
+	((mhdr)->msg_controllen >= sizeof(struct cmsghdr) ? \
+	 (struct cmsghdr *)(mhdr)->msg_control : \
+	 (struct cmsghdr *)NULL)
+
+
+/*
+ * Given pointer to struct cmsghdr, return pointer to next cmsghdr
+ * RFC 2292 says that CMSG_NXTHDR(mhdr, NULL) is equivalent to CMSG_FIRSTHDR(mhdr)
+ */
+#define	CMSG_NXTHDR(mhdr, cmsg)	\
+	(((char *)(cmsg) + __ALIGN32((cmsg)->cmsg_len) + \
+			    __ALIGN32(sizeof(struct cmsghdr)) > \
+	    ((char *)(mhdr)->msg_control) + (mhdr)->msg_controllen) ? \
+	    (struct cmsghdr *)NULL : \
+	    (struct cmsghdr *)((char *)(cmsg) + __ALIGN32((cmsg)->cmsg_len)))
+
 /* "Socket"-level control message types: */
 #define	SCM_RIGHTS	0x01		/* access rights (array of int) */
 #if __BSD_VISIBLE
