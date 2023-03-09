@@ -20,6 +20,7 @@ typedef enum {
 
     SslCaCertificateId_NintendoCAG3                                           =    1,            ///< NintendoCAG3
     SslCaCertificateId_NintendoClass2CAG3                                     =    2,            ///< NintendoClass2CAG3
+    SslCaCertificateId_NintendoRootCAG4                                       =    3,            ///< [16.0.0+] "Nintendo Root CA G4"
 
     SslCaCertificateId_AmazonRootCA1                                          = 1000,            ///< AmazonRootCA1
     SslCaCertificateId_StarfieldServicesRootCertificateAuthorityG2            = 1001,            ///< StarfieldServicesRootCertificateAuthorityG2
@@ -55,6 +56,32 @@ typedef enum {
     SslCaCertificateId_VeriSignClass3PublicPrimaryCertificationAuthorityG5    = 1031,            ///< VeriSignClass3PublicPrimaryCertificationAuthorityG5 ([8.0.0+] ::SslTrustedCertStatus is ::SslTrustedCertStatus_EnabledNotTrusted)
     SslCaCertificateId_VeriSignUniversalRootCertificationAuthority            = 1032,            ///< VeriSignUniversalRootCertificationAuthority ([8.0.0+] ::SslTrustedCertStatus is ::SslTrustedCertStatus_EnabledNotTrusted)
     SslCaCertificateId_DSTRootCAX3                                            = 1033,            ///< [6.0.0+] DSTRootCAX3
+    SslCaCertificateId_USERTrustRsaCertificationAuthority                     = 1034,            ///< [10.0.3+] "USERTrust RSA Certification Authority"
+    SslCaCertificateId_ISRGRootX10                                            = 1035,            ///< [10.1.0+] "ISRG Root X10"
+    SslCaCertificateId_USERTrustEccCertificationAuthority                     = 1036,            ///< [10.1.0+] "USERTrust ECC Certification Authority"
+    SslCaCertificateId_COMODORsaCertificationAuthority                        = 1037,            ///< [10.1.0+] "COMODO RSA Certification Authority"
+    SslCaCertificateId_COMODOEccCertificationAuthority                        = 1038,            ///< [10.1.0+] "COMODO ECC Certification Authority"
+    SslCaCertificateId_AmazonRootCA2                                          = 1039,            ///< [11.0.0+] "Amazon Root CA 2"
+    SslCaCertificateId_AmazonRootCA3                                          = 1040,            ///< [11.0.0+] "Amazon Root CA 3"
+    SslCaCertificateId_AmazonRootCA4                                          = 1041,            ///< [11.0.0+] "Amazon Root CA 4"
+    SslCaCertificateId_DigiCertAssuredIDRootG3                                = 1042,            ///< [11.0.0+] "DigiCert Assured ID Root G3"
+    SslCaCertificateId_DigiCertGlobalRootG3                                   = 1043,            ///< [11.0.0+] "DigiCert Global Root G3"
+    SslCaCertificateId_DigiCertTrustedRootG4                                  = 1044,            ///< [11.0.0+] "DigiCert Trusted Root G4"
+    SslCaCertificateId_EntrustRootCertificationAuthorityEC1                   = 1045,            ///< [11.0.0+] "Entrust Root Certification Authority - EC1"
+    SslCaCertificateId_EntrustRootCertificationAuthorityG4                    = 1046,            ///< [11.0.0+] "Entrust Root Certification Authority - G4"
+    SslCaCertificateId_GlobalSignECCRootCAR4                                  = 1047,            ///< [11.0.0+] "GlobalSign ECC Root CA - R4"
+    SslCaCertificateId_GlobalSignECCRootCAR5                                  = 1048,            ///< [11.0.0+] "GlobalSign ECC Root CA - R5"
+    SslCaCertificateId_GlobalSignECCRootCAR6                                  = 1049,            ///< [11.0.0+] "GlobalSign ECC Root CA - R6"
+    SslCaCertificateId_GTSRootR1                                              = 1050,            ///< [11.0.0+] "GTS Root R1"
+    SslCaCertificateId_GTSRootR2                                              = 1051,            ///< [11.0.0+] "GTS Root R2"
+    SslCaCertificateId_GTSRootR3                                              = 1052,            ///< [11.0.0+] "GTS Root R3"
+    SslCaCertificateId_GTSRootR4                                              = 1053,            ///< [11.0.0+] "GTS Root R4"
+    SslCaCertificateId_SecurityCommunicationRootCA                            = 1054,            ///< [12.0.0+] "Security Communication RootCA"
+    SslCaCertificateId_GlobalSignRootE4                                       = 1055,            ///< [15.0.0+] "GlobalSign Root E4"
+    SslCaCertificateId_GlobalSignRootR4                                       = 1056,            ///< [15.0.0+] "GlobalSign Root R4"
+    SslCaCertificateId_TTeleSecGlobalRootClass2                               = 1057,            ///< [15.0.0+] "T-TeleSec GlobalRoot Class 2"
+    SslCaCertificateId_DigiCertTLSECCP384RootG5                               = 1058,            ///< [16.0.0+] "DigiCert TLS ECC P384 Root G5"
+    SslCaCertificateId_DigiCertTLSRSA4096RootG5                               = 1059,            ///< [16.0.0+] "DigiCert TLS RSA4096 Root G5"
 } SslCaCertificateId;
 
 /// TrustedCertStatus
