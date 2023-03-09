@@ -7,6 +7,7 @@
 
 static Service g_sslSrv;
 static SessionMgr g_sslSessionMgr;
+__attribute__((weak)) SslServiceType __nx_ssl_service_type = SslServiceType_Default;
 
 static Result _sslSetInterfaceVersion(u32 version);
 
@@ -70,7 +71,14 @@ Result _sslInitialize(u32 num_sessions) {
     if (num_sessions > 4)
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
-    Result rc = smGetService(&g_sslSrv, "ssl");
+    const char *serv = "ssl";
+    if (__nx_ssl_service_type == SslServiceType_System) {
+        if (hosversionAtLeast(15,0,0))
+            serv = "ssl:s";
+        else
+            __nx_ssl_service_type = SslServiceType_Default;
+    }
+    Result rc = smGetService(&g_sslSrv, serv);
 
     if (R_SUCCEEDED(rc)) {
         rc = serviceConvertToDomain(&g_sslSrv);
@@ -113,7 +121,15 @@ static Result _sslCmdInU32NoOut(Service* srv, u32 inval, u32 cmd_id) {
     return _sslObjectDispatchIn(srv, cmd_id, inval);
 }
 
+static Result _sslCmdInU64NoOut(Service* srv, u64 inval, u32 cmd_id) {
+    return _sslObjectDispatchIn(srv, cmd_id, inval);
+}
+
 static Result _sslCmdNoInOutU32(Service* srv, u32 *out, u32 cmd_id) {
+    return _sslObjectDispatchOut(srv, cmd_id, *out);
+}
+
+static Result _sslCmdNoInOutU64(Service* srv, u64 *out, u32 cmd_id) {
     return _sslObjectDispatchOut(srv, cmd_id, *out);
 }
 
@@ -165,7 +181,8 @@ Result sslCreateContext(SslContext *c, u32 ssl_version) {
         u64 pid_placeholder;
     } in = { ssl_version, 0, 0 };
 
-    return _sslObjectDispatchIn(&g_sslSrv, 0, in,
+    u32 cmd_id = __nx_ssl_service_type == SslServiceType_System ? 100 : 0;
+    return _sslObjectDispatchIn(&g_sslSrv, cmd_id, in,
         .in_send_pid = true,
         .out_num_objects = 1,
         .out_objects = &c->s,
@@ -320,6 +337,36 @@ Result sslGetDebugOption(void* buffer, size_t size, SslDebugOptionType type) {
     );
 }
 
+Result sslClearTls12FallbackFlag(void) {
+    if (hosversionBefore(14,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    if (!serviceIsActive(&g_sslSrv))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _sslCmdNoIO(&g_sslSrv, 9);
+}
+
+Result sslSetThreadCoreMask(u64 mask) {
+    if (hosversionBefore(15,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    if (!serviceIsActive(&g_sslSrv) || __nx_ssl_service_type != SslServiceType_System)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _sslCmdInU64NoOut(&g_sslSrv, mask, 101);
+}
+
+Result sslGetThreadCoreMask(u64 *out) {
+    if (hosversionBefore(15,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    if (!serviceIsActive(&g_sslSrv) || __nx_ssl_service_type != SslServiceType_System)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _sslCmdNoInOutU64(&g_sslSrv, out, 102);
+}
+
 // ISslContext
 
 void sslContextClose(SslContext *c) {
@@ -452,6 +499,19 @@ Result sslContextImportCrl(SslContext *c, const void* buffer, u32 size, u64 *id)
     return _sslObjectDispatchOut(&c->s, 10, *id,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
         .buffers = { { buffer, size } },
+    );
+}
+
+Result sslContextCreateConnectionForSystem(SslContext *c, SslConnection *conn) {
+    if (hosversionBefore(15,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    if (!serviceIsActive(&c->s) || __nx_ssl_service_type != SslServiceType_System)
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _sslObjectDispatch(&c->s, 100,
+        .out_num_objects = 1,
+        .out_objects = &conn->s,
     );
 }
 

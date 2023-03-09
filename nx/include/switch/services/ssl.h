@@ -8,6 +8,12 @@
 #include "../types.h"
 #include "../sf/service.h"
 
+/// Values for __nx_ssl_service_type, controls which ssl service to initialize.
+typedef enum {
+    SslServiceType_Default = 0,    ///< Initialize the ssl service.
+    SslServiceType_System  = 1,    ///< [15.0.0+] Initialize the ssl:s service. On older versions this is the same as ::SslServiceType_Default.
+} SslServiceType;
+
 /// CaCertificateId
 typedef enum {
     SslCaCertificateId_All                                                    =   -1,            ///< [3.0.0+] All
@@ -261,6 +267,26 @@ Result sslSetDebugOption(const void* buffer, size_t size, SslDebugOptionType typ
  */
 Result sslGetDebugOption(void* buffer, size_t size, SslDebugOptionType type);
 
+/**
+ * @brief ClearTls12FallbackFlag
+ * @note Only available on [14.0.0+].
+ */
+Result sslClearTls12FallbackFlag(void);
+
+/**
+ * @brief SetThreadCoreMask
+ * @param[in] mask CoreMask
+ * @note Only available on [15.0.0+] with ::SslServiceType_System.
+ */
+Result sslSetThreadCoreMask(u64 mask);
+
+/**
+ * @brief GetThreadCoreMask
+ * @param[out] out Output CoreMask.
+ * @note Only available on [15.0.0+] with ::SslServiceType_System.
+ */
+Result sslGetThreadCoreMask(u64 *out);
+
 ///@name ISslContext
 ///@{
 
@@ -359,6 +385,14 @@ Result sslContextAddPolicyOid(SslContext *c, const char *str, u32 str_bufsize);
  * @param[out] id Output Id. Optional, can be NULL.
  */
 Result sslContextImportCrl(SslContext *c, const void* buffer, u32 size, u64 *id);
+
+/**
+ * @brief CreateConnectionForSystem
+ * @note Only available on [15.0.0+] with ::SslServiceType_System.
+ * @param c \ref SslContext
+ * @param[out] conn Output \ref SslConnection.
+ */
+Result sslContextCreateConnectionForSystem(SslContext *c, SslConnection *conn);
 
 ///@}
 
