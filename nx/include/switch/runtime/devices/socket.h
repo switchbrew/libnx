@@ -46,8 +46,11 @@ int socketSslConnectionSetSocketDescriptor(SslConnection *c, int sockfd);
 /// Wrapper for \ref sslConnectionGetSocketDescriptor. Returns the output sockfd on success and -1 on error.
 int socketSslConnectionGetSocketDescriptor(SslConnection *c);
 
+#ifdef _SOCKLEN_T_DECLARED
+struct sockaddr;
 /// Wrapper for \ref sslConnectionSetDtlsSocketDescriptor. Returns the output sockfd on success and -1 on error. errno==ENOENT indicates that no sockfd was returned, this error must be ignored.
 int socketSslConnectionSetDtlsSocketDescriptor(SslConnection *c, int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+#endif
 
 /// Wrapper for \ref nifmRequestRegisterSocketDescriptor. Returns 0 on success and -1 on error.
 int socketNifmRequestRegisterSocketDescriptor(NifmRequest* r, int sockfd);
