@@ -199,6 +199,39 @@ int socketSslConnectionGetSocketDescriptor(SslConnection *c) {
     return fd;
 }
 
+int socketSslConnectionSetDtlsSocketDescriptor(SslConnection *c, int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
+    int dev;
+    int fd = _socketGetFd(sockfd);
+
+    if (fd==-1)
+        return -1;
+
+    int tmpfd=0;
+    Result rc = sslConnectionSetDtlsSocketDescriptor(c, fd, addr, addrlen, &tmpfd);
+    if (R_FAILED(rc)) {
+        g_bsdResult = rc;
+        errno = EIO;
+        return -1;
+    }
+
+    if (tmpfd==-1) { // The cmd didn't return a sockfd. This error must be ignored.
+        errno = ENOENT;
+        return -1;
+    }
+
+    dev = FindDevice("soc:");
+    if(dev == -1)
+        return -1;
+
+    fd = __alloc_handle(dev);
+    if(fd == -1)
+        return -1;
+
+    *(int *)__get_handle(fd)->fileStruct = tmpfd;
+
+    return fd;
+}
+
 int socketNifmRequestRegisterSocketDescriptor(NifmRequest* r, int sockfd) {
     int fd = _socketGetFd(sockfd);
 

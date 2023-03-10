@@ -125,6 +125,16 @@ static Result _sslCmdInU64NoOut(Service* srv, u64 inval, u32 cmd_id) {
     return _sslObjectDispatchIn(srv, cmd_id, inval);
 }
 
+static Result _sslCmdInU8U32NoOut(Service* srv, u8 val0, u32 val1, u32 cmd_id) {
+    const struct {
+        u8 val0;
+        u8 pad[3];
+        u32 val1;
+    } in = { val0, {0}, val1 };
+
+    return _sslObjectDispatchIn(srv, cmd_id, in);
+}
+
 static Result _sslCmdNoInOutU32(Service* srv, u32 *out, u32 cmd_id) {
     return _sslObjectDispatchOut(srv, cmd_id, *out);
 }
@@ -502,6 +512,57 @@ Result sslContextImportCrl(SslContext *c, const void* buffer, u32 size, u64 *id)
     );
 }
 
+Result sslContextImportClientCertKeyPki(SslContext *c, const void* cert, u32 cert_size, const void* key, u32 key_size, SslCertificateFormat format, u64 *id) {
+    if (!serviceIsActive(&c->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    if (hosversionBefore(16,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    u32 tmp=format;
+    return _sslObjectDispatchInOut(&c->s, 12, tmp, *id,
+        .buffer_attrs = {
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_In,
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_In,
+        },
+        .buffers = {
+            { cert, cert_size },
+            { key, key_size },
+        },
+    );
+}
+
+Result sslContextGeneratePrivateKeyAndCert(SslContext *c, void* cert, u32 cert_size, void* key, u32 key_size, u32 val, const SslKeyAndCertParams *params, u32 *out_certsize, u32 *out_keysize) {
+    if (!serviceIsActive(&c->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    if (hosversionBefore(16,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    struct {
+        u32 out_certsize;
+        u32 out_keysize;
+    } out;
+
+    Result rc = _sslObjectDispatchInOut(&c->s, 13, val, out,
+        .buffer_attrs = {
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_Out,
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_Out,
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_In,
+        },
+        .buffers = {
+            { cert, cert_size },
+            { key, key_size },
+            { params, sizeof(*params) },
+        },
+    );
+    if (R_SUCCEEDED(rc)) {
+        if (out_certsize) *out_certsize = out.out_certsize;
+        if (out_keysize) *out_keysize = out.out_keysize;
+    }
+    return rc;
+}
+
 Result sslContextCreateConnectionForSystem(SslContext *c, SslConnection *conn) {
     if (hosversionBefore(15,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
@@ -729,13 +790,7 @@ Result sslConnectionSetOption(SslConnection *c, SslOptionType option, bool flag)
     if (!serviceIsActive(&c->s))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
-    const struct {
-        u8 flag;
-        u8 pad[3];
-        u32 option;
-    } in = { flag!=0, {0}, option };
-
-    return _sslObjectDispatchIn(&c->s, 22, in);
+    return _sslCmdInU8U32NoOut(&c->s, flag!=0, option, 22);
 }
 
 Result sslConnectionGetOption(SslConnection *c, SslOptionType option, bool *out) {
@@ -810,5 +865,106 @@ Result sslConnectionGetNextAlpnProto(SslConnection *c, SslAlpnProtoState *state,
     Result rc = _sslCmdNoInOutBufTwoOutU32s(&c->s, &tmp, out, buffer, size, 27);
     if (R_SUCCEEDED(rc) && state) *state = tmp;
     return rc;
+}
+
+Result sslConnectionSetDtlsSocketDescriptor(SslConnection *c, int sockfd, const void* buf, size_t size, int *out_sockfd) {
+    if (!serviceIsActive(&c->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    if (hosversionBefore(16,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _sslObjectDispatchInOut(&c->s, 28, sockfd, *out_sockfd,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
+        .buffers = {
+            { buf, size },
+        },
+    );
+}
+
+Result sslConnectionGetDtlsHandshakeTimeout(SslConnection *c, u64 *out) {
+    if (!serviceIsActive(&c->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    if (hosversionBefore(16,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _sslObjectDispatch(&c->s, 29,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = {
+            { out, sizeof(*out) },
+        },
+    );
+}
+
+Result sslConnectionSetPrivateOption(SslConnection *c, SslPrivateOptionType option, bool flag) {
+    if (!serviceIsActive(&c->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    if (hosversionBefore(16,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _sslCmdInU8U32NoOut(&c->s, flag!=0, option, 30);
+}
+
+Result sslConnectionSetSrtpCiphers(SslConnection *c, const u16 *ciphers, u32 count) {
+    if (!serviceIsActive(&c->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    if (hosversionBefore(16,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _sslCmdInBufNoOut(&c->s, ciphers, count*sizeof(u16), 31);
+}
+
+Result sslConnectionGetSrtpCipher(SslConnection *c, u16 *out) {
+    if (!serviceIsActive(&c->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    if (hosversionBefore(16,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _sslObjectDispatchOut(&c->s, 32, *out);
+}
+
+Result sslConnectionExportKeyingMaterial(SslConnection *c, u8 *outbuf, u32 outbuf_size, const char *label, u32 label_size, const void* context, u32 context_size) {
+    if (!serviceIsActive(&c->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    if (hosversionBefore(16,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _sslObjectDispatch(&c->s, 33,
+        .buffer_attrs = {
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_Out,
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_In,
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_In,
+        },
+        .buffers = {
+            { outbuf, outbuf_size },
+            { label, label_size },
+            { context, context_size },
+        },
+    );
+}
+
+Result sslConnectionSetIoTimeout(SslConnection *c, u32 timeout) {
+    if (!serviceIsActive(&c->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    if (hosversionBefore(16,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _sslCmdInU32NoOut(&c->s, timeout, 34);
+}
+
+Result sslConnectionGetIoTimeout(SslConnection *c, u32 *out) {
+    if (!serviceIsActive(&c->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    if (hosversionBefore(16,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _sslCmdNoInOutU32(&c->s, out, 35);
 }
 

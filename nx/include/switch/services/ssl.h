@@ -177,6 +177,11 @@ typedef enum {
     SslOptionType_EnableAlpn                                                  = 3,               ///< [9.0.0+] EnableAlpn. Only available with \ref sslConnectionSetOption. \ref sslConnectionSetSocketDescriptor should have been used prior to this - this will optionally use state setup by that, without throwing an error if that cmd wasn't used.
 } SslOptionType;
 
+/// PrivateOptionType
+typedef enum {
+    SslPrivateOptionType_DtlsSession                                          = 1,               ///< \ref sslConnectionSetSessionCacheMode will throw an error if the input ::SslSessionCacheMode is non-zero and this option flag is set. 
+} SslPrivateOptionType;
+
 /// AlpnProtoState
 typedef enum {
     SslAlpnProtoState_NoSupport                                               = 0,               ///< NoSupport
@@ -222,6 +227,15 @@ typedef struct {
     char cipher[0x40];                          ///< Cipher string.
     char protocol_version[0x8];                 ///< Protocol version string.
 } SslCipherInfo;
+
+/// KeyAndCertParams
+typedef struct {
+    u32 unk_x0;                                 ///< Must be value 1.
+    s32 key_size;                               ///< Key size in bits.
+    u64 public_exponent;                        ///< Public exponent, must be non-zero. Only the low 4-bytes are used.
+    char common_name[0x40];                     ///< CN (Common Name) NUL-terminated string.
+    u32 common_name_len;                        ///< Length of common_name excluding NUL-terminator. Must be 0x1-0x3F.
+} SslKeyAndCertParams;
 
 /// Initialize ssl. A default value of 0x3 can be used for num_sessions. This must be 0x1-0x4.
 Result sslInitialize(u32 num_sessions);
@@ -412,6 +426,34 @@ Result sslContextAddPolicyOid(SslContext *c, const char *str, u32 str_bufsize);
  * @param[out] id Output Id. Optional, can be NULL.
  */
 Result sslContextImportCrl(SslContext *c, const void* buffer, u32 size, u64 *id);
+
+/**
+ * @brief ImportClientCertKeyPki
+ * @note Only available on [16.0.0+].
+ * @param c \ref SslContext
+ * @param[in] cert Input cert buffer,
+ * @param[in] cert_size Size of the cert buffer.
+ * @param[in] key Input key buffer.
+ * @param[in] key_size Size of the key buffer.
+ * @param[in] format \ref SslCertificateFormat for the cert and key.
+ * @param[out] id Output Id. Optional, can be NULL.
+ */
+Result sslContextImportClientCertKeyPki(SslContext *c, const void* cert, u32 cert_size, const void* key, u32 key_size, SslCertificateFormat format, u64 *id);
+
+/**
+ * @brief GeneratePrivateKeyAndCert
+ * @note Only available on [16.0.0+].
+ * @param c \ref SslContext
+ * @param[out] cert Output cert buffer,
+ * @param[in] cert_size Size of the cert buffer.
+ * @param[out] key Output key buffer.
+ * @param[in] key_size Size of the key buffer.
+ * @param[in] val Must be value 1.
+ * @param[in] params \ref SslKeyAndCertParams
+ * @param[out] out_certsize Actual size of the generated cert data.
+ * @param[out] out_keysize Actual size of the generated key data.
+ */
+Result sslContextGeneratePrivateKeyAndCert(SslContext *c, void* cert, u32 cert_size, void* key, u32 key_size, u32 val, const SslKeyAndCertParams *params, u32 *out_certsize, u32 *out_keysize);
 
 /**
  * @brief CreateConnectionForSystem
@@ -679,6 +721,81 @@ Result sslConnectionSetNextAlpnProto(SslConnection *c, const u8 *buffer, u32 siz
  * @param[in] size Output buffer size, must not be 0.
  */
 Result sslConnectionGetNextAlpnProto(SslConnection *c, SslAlpnProtoState *state, u32 *out, u8 *buffer, u32 size);
+
+/**
+ * @brief SetDtlsSocketDescriptor. Do not use directly, use \ref socketSslConnectionSetDtlsSocketDescriptor instead.
+ * @note Only available on [16.0.0+].
+ * @note An error is thrown if this was used previously.
+ * @param c \ref SslConnection
+ * @param[in] sockfd sockfd
+ * @param[in] Input sockaddr.
+ * @param[in] size Input sockaddr size.
+ * @param[out] out_sockfd sockfd. Prior to using \ref sslConnectionClose, this must be closed if it's not negative (it will be -1 if ::SslOptionType_DoNotCloseSocket is set).
+ */
+Result sslConnectionSetDtlsSocketDescriptor(SslConnection *c, int sockfd, const void* buf, size_t size, int *out_sockfd);
+
+/**
+ * @brief GetDtlsHandshakeTimeout
+ * @note Only available on [16.0.0+].
+ * @param c \ref SslConnection
+ * @param[out] out Output nanoseconds value.
+ */
+Result sslConnectionGetDtlsHandshakeTimeout(SslConnection *c, u64 *out);
+
+/**
+ * @brief SetPrivateOption
+ * @note Only available on [16.0.0+].
+ * @param c \ref SslConnection
+ * @param[in] option \ref SslPrivateOptionType
+ * @param[in] flag Input flag value.
+ */
+Result sslConnectionSetPrivateOption(SslConnection *c, SslPrivateOptionType option, bool flag);
+
+/**
+ * @brief SetSrtpCiphers
+ * @note Only available on [16.0.0+].
+ * @param c \ref SslConnection
+ * @param[in] ciphers Input array of u16s. Each entry must be value 1-2, otherwise the entry is ignored.
+ * @param[in] count Total entries in the ciphers array, the maximum is 4.
+ */
+Result sslConnectionSetSrtpCiphers(SslConnection *c, const u16 *ciphers, u32 count);
+
+/**
+ * @brief GetSrtpCipher
+ * @note Only available on [16.0.0+].
+ * @param c \ref SslConnection
+ * @param[out] out Output value.
+ */
+Result sslConnectionGetSrtpCipher(SslConnection *c, u16 *out);
+
+/**
+ * @brief ExportKeyingMaterial
+ * @note Only available on [16.0.0+].
+ * @param c \ref SslConnection
+ * @param[out] outbuf Output buffer.
+ * @param[in] outbuf_size Output buffer size.
+ * @param[in] label Input label string.
+ * @param[in] label_size Size of the label buffer excluding NUL-terminator.
+ * @param[in] context Optional input context buffer, can be NULL.
+ * @param[in] context_size Size of context, if specified this must be <0xFFFF.
+ */
+Result sslConnectionExportKeyingMaterial(SslConnection *c, u8 *outbuf, u32 outbuf_size, const char *label, u32 label_size, const void* context, u32 context_size);
+
+/**
+ * @brief SetIoTimeout
+ * @note Only available on [16.0.0+].
+ * @param c \ref SslConnection
+ * @param[in] timeout Input timeout value.
+ */
+Result sslConnectionSetIoTimeout(SslConnection *c, u32 timeout);
+
+/**
+ * @brief GetIoTimeout
+ * @note Only available on [16.0.0+].
+ * @param c \ref SslConnection
+ * @param[out] out Output timeout value.
+ */
+Result sslConnectionGetIoTimeout(SslConnection *c, u32 *out);
 
 ///@}
 
