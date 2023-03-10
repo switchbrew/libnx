@@ -179,7 +179,7 @@ typedef enum {
 
 /// PrivateOptionType
 typedef enum {
-    SslPrivateOptionType_DtlsSession                                          = 1,               ///< \ref sslConnectionSetSessionCacheMode will throw an error if the input ::SslSessionCacheMode is non-zero and this option flag is set. 
+    SslPrivateOptionType_DtlsSession                                          = 1,               ///< \ref sslConnectionSetSessionCacheMode will throw an error if the input ::SslSessionCacheMode is non-zero and this option flag is set.
 } SslPrivateOptionType;
 
 /// AlpnProtoState
