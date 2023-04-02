@@ -437,8 +437,35 @@ struct cmsghdr {
 /* followed by	u_char  cmsg_data[]; */
 };
 
-// socket credential stuff, we don't need this
-// cmsg macros, uses some obscure macro
+#define	_ALIGNBYTES		(sizeof(long) - 1)
+#define	_ALIGN(p)		(((unsigned long)(p) + _ALIGNBYTES) & ~_ALIGNBYTES)
+
+/* given pointer to struct cmsghdr, return pointer to data */
+#define	CMSG_DATA(cmsg) \
+	((unsigned char *)(cmsg) + _ALIGN(sizeof(struct cmsghdr)))
+
+/* given pointer to struct cmsghdr, return pointer to next cmsghdr */
+#define	CMSG_NXTHDR(mhdr, cmsg)	\
+	(((char *)(cmsg) + _ALIGN((cmsg)->cmsg_len) + \
+			    _ALIGN(sizeof(struct cmsghdr)) > \
+	    ((char *)(mhdr)->msg_control) + (mhdr)->msg_controllen) ? \
+	    (struct cmsghdr *)NULL : \
+	    (struct cmsghdr *)((char *)(cmsg) + _ALIGN((cmsg)->cmsg_len)))
+
+/*
+ * RFC 2292 requires to check msg_controllen, in case that the kernel returns
+ * an empty list for some reasons.
+ */
+#define	CMSG_FIRSTHDR(mhdr) \
+	((mhdr)->msg_controllen >= sizeof(struct cmsghdr) ? \
+	 (struct cmsghdr *)(mhdr)->msg_control : \
+	 (struct cmsghdr *)NULL)
+
+/* Length of the contents of a control message of length len */
+#define	CMSG_LEN(len)	(_ALIGN(sizeof(struct cmsghdr)) + (len))
+
+/* Length of the space taken up by a padded control message of length len */
+#define	CMSG_SPACE(len)	(_ALIGN(sizeof(struct cmsghdr)) + _ALIGN(len))
 
 /* "Socket"-level control message types: */
 #define	SCM_RIGHTS	0x01		/* access rights (array of int) */
