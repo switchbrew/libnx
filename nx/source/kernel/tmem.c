@@ -114,6 +114,21 @@ Result tmemClose(TransferMemory* t)
         }
 
         if (t->src_addr != NULL) {
+            if ((t->perm & Perm_Rw) != Perm_Rw) {
+                MemoryInfo m = {0};
+                u32 p = 0;
+                rc = svcQueryMemory(&m, &p, (u64)(t->src_addr));
+                if (R_FAILED(rc)) {
+                    return rc;
+                }
+                while ((m.perm & Perm_Rw) != Perm_Rw) {
+                    rc = svcQueryMemory(&m, &p, (u64)(t->src_addr));
+                    if (R_FAILED(rc)) {
+                        return rc;
+                    }
+                    svcSleepThread(100000);
+                }
+            }
             __libnx_free(t->src_addr);
         }
 
