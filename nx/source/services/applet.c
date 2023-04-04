@@ -2988,6 +2988,10 @@ AppletInfo *appletGetAppletInfo(void) {
     return &g_appletInfo;
 }
 
+Event *appletGetMessageEvent(void) {
+    return &g_appletMessageEvent;
+}
+
 Result appletGetMessage(u32 *msg) {
     Result rc=0;
     if (msg==NULL) return MAKERESULT(Module_Libnx, LibnxError_BadInput);
