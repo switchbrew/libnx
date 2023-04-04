@@ -42,7 +42,7 @@ static void _usbCommsUpdateInterfaceDescriptor(struct usb_interface_descriptor *
     }
 }
 
-Result usbCommsInitializeEx(u32 num_interfaces, const UsbCommsInterfaceInfo *infos)
+Result usbCommsInitializeEx(u32 num_interfaces, const UsbCommsInterfaceInfo *infos, u16 idVendor, u16 idProduct)
 {
     Result rc = 0;
     rwlockWriteLock(&g_usbCommsLock);
@@ -76,8 +76,8 @@ Result usbCommsInitializeEx(u32 num_interfaces, const UsbCommsInterfaceInfo *inf
                     .bDeviceSubClass = 0x00,
                     .bDeviceProtocol = 0x00,
                     .bMaxPacketSize0 = 0x40,
-                    .idVendor = 0x057e,
-                    .idProduct = 0x3000,
+                    .idVendor = idVendor,
+                    .idProduct = idProduct,
                     .bcdDevice = 0x0100,
                     .iManufacturer = iManufacturer,
                     .iProduct = iProduct,
@@ -157,7 +157,7 @@ Result usbCommsInitializeEx(u32 num_interfaces, const UsbCommsInterfaceInfo *inf
 
 Result usbCommsInitialize(void)
 {
-    return usbCommsInitializeEx(1, NULL);
+    return usbCommsInitializeEx(1, NULL, 0x057e, 0x3000);
 }
 
 static void _usbCommsInterfaceFree(usbCommsInterface *interface)
