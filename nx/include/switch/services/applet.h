@@ -2690,6 +2690,11 @@ Result appletSetHandlingHomeButtonShortPressedEnabled(bool flag);
 AppletInfo *appletGetAppletInfo(void);
 
 /**
+ * @brief Gets the event associated with notification messages.
+ */
+Event *appletGetMessageEvent(void);
+
+/**
  * @brief Gets a notification message, see \ref AppletMessage.
  */
 Result appletGetMessage(u32 *msg);
