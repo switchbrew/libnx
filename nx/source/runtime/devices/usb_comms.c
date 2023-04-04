@@ -462,6 +462,28 @@ static Result _usbCommsRead(usbCommsInterface *interface, void* buffer, size_t s
     return rc;
 }
 
+static Result _usbCommsReadAsync(usbCommsInterface *interface, void *buffer, size_t size, u32 *urbId)
+{
+    if (((uintptr_t)buffer) & 0xfff)
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+
+    // Start a host->device transfer.
+    return usbDsEndpoint_PostBufferAsync(interface->endpoint_out, buffer, size, urbId);
+}
+
+static Result _usbCommsGetReadResult(usbCommsInterface *interface, u32 urbId, u32 *transferredSize)
+{
+    Result rc=0;
+    UsbDsReportData reportdata;
+
+    eventClear(&interface->endpoint_out->CompletionEvent);
+
+    rc = usbDsEndpoint_GetReportData(interface->endpoint_out, &reportdata);
+    if (R_FAILED(rc)) return rc;
+
+    return usbDsParseReportData(&reportdata, urbId, NULL, transferredSize);
+}
+
 static Result _usbCommsWrite(usbCommsInterface *interface, const void* buffer, size_t size, size_t *transferredSize)
 {
     Result rc=0;
@@ -525,6 +547,28 @@ static Result _usbCommsWrite(usbCommsInterface *interface, const void* buffer, s
     return rc;
 }
 
+static Result _usbCommsWriteAsync(usbCommsInterface *interface, void *buffer, size_t size, u32 *urbId)
+{
+    if (((uintptr_t)buffer) & 0xfff)
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+
+    // Start a device->host transfer.
+    return usbDsEndpoint_PostBufferAsync(interface->endpoint_in, buffer, size, urbId);
+}
+
+static Result _usbCommsGetWriteResult(usbCommsInterface *interface, u32 urbId, u32 *transferredSize)
+{
+    Result rc=0;
+    UsbDsReportData reportdata;
+
+    eventClear(&interface->endpoint_in->CompletionEvent);
+
+    rc = usbDsEndpoint_GetReportData(interface->endpoint_in, &reportdata);
+    if (R_FAILED(rc)) return rc;
+
+    return usbDsParseReportData(&reportdata, urbId, NULL, transferredSize);
+}
+
 size_t usbCommsReadEx(void* buffer, size_t size, u32 interface)
 {
     size_t transferredSize=0;
@@ -560,6 +604,63 @@ size_t usbCommsReadEx(void* buffer, size_t size, u32 interface)
 size_t usbCommsRead(void* buffer, size_t size)
 {
     return usbCommsReadEx(buffer, size, 0);
+}
+
+Event *usbCommsGetReadCompletionEvent(u32 interface)
+{
+    usbCommsInterface *inter = &g_usbCommsInterfaces[interface];
+    bool initialized;
+
+    if (interface >= TOTAL_INTERFACES) return NULL;
+
+    rwlockReadLock(&inter->lock);
+    initialized = inter->initialized;
+    rwlockReadUnlock(&inter->lock);
+
+    if (!initialized) return NULL;
+    return &inter->endpoint_out->CompletionEvent;
+}
+
+Result usbCommsReadAsync(void *buffer, size_t size, u32 *urbId, u32 interface)
+{
+    Result rc;
+    usbCommsInterface *inter = &g_usbCommsInterfaces[interface];
+    bool initialized;
+
+    if (interface >= TOTAL_INTERFACES) return MAKERESULT(Module_Libnx, LibnxError_BadUsbCommsRead);
+
+    rwlockReadLock(&inter->lock);
+    initialized = inter->initialized;
+    rwlockReadUnlock(&inter->lock);
+
+    if (!initialized) return MAKERESULT(Module_Libnx, LibnxError_BadUsbCommsRead);
+
+    rwlockWriteLock(&inter->lock_out);
+    rc = _usbCommsReadAsync(inter, buffer, size, urbId);
+    rwlockWriteUnlock(&inter->lock_out);
+
+    return rc;
+}
+
+Result usbCommsGetReadResult(u32 urbId, u32 *transferredSize, u32 interface)
+{
+    Result rc;
+    usbCommsInterface *inter = &g_usbCommsInterfaces[interface];
+    bool initialized;
+
+    if (interface >= TOTAL_INTERFACES) return MAKERESULT(Module_Libnx, LibnxError_BadUsbCommsRead);
+
+    rwlockReadLock(&inter->lock);
+    initialized = inter->initialized;
+    rwlockReadUnlock(&inter->lock);
+
+    if (!initialized) return MAKERESULT(Module_Libnx, LibnxError_BadUsbCommsRead);
+
+    rwlockWriteLock(&inter->lock_out);
+    rc = _usbCommsGetReadResult(inter, urbId, transferredSize);
+    rwlockWriteUnlock(&inter->lock_out);
+
+    return rc;
 }
 
 size_t usbCommsWriteEx(const void* buffer, size_t size, u32 interface)
@@ -599,3 +700,59 @@ size_t usbCommsWrite(const void* buffer, size_t size)
     return usbCommsWriteEx(buffer, size, 0);
 }
 
+Event *usbCommsGetWriteCompletionEvent(u32 interface)
+{
+    usbCommsInterface *inter = &g_usbCommsInterfaces[interface];
+    bool initialized;
+
+    if (interface >= TOTAL_INTERFACES) return NULL;
+
+    rwlockWriteLock(&inter->lock);
+    initialized = inter->initialized;
+    rwlockWriteUnlock(&inter->lock);
+
+    if (!initialized) return NULL;
+    return &inter->endpoint_in->CompletionEvent;
+}
+
+Result usbCommsWriteAsync(void *buffer, size_t size, u32 *urbId, u32 interface)
+{
+    Result rc;
+    usbCommsInterface *inter = &g_usbCommsInterfaces[interface];
+    bool initialized;
+
+    if (interface >= TOTAL_INTERFACES) return MAKERESULT(Module_Libnx, LibnxError_BadUsbCommsWrite);
+
+    rwlockWriteLock(&inter->lock);
+    initialized = inter->initialized;
+    rwlockWriteUnlock(&inter->lock);
+
+    if (!initialized) return MAKERESULT(Module_Libnx, LibnxError_BadUsbCommsWrite);
+
+    rwlockWriteLock(&inter->lock_in);
+    rc = _usbCommsWriteAsync(inter, buffer, size, urbId);
+    rwlockWriteUnlock(&inter->lock_in);
+
+    return rc;
+}
+
+Result usbCommsGetWriteResult(u32 urbId, u32 *transferredSize, u32 interface)
+{
+    Result rc;
+    usbCommsInterface *inter = &g_usbCommsInterfaces[interface];
+    bool initialized;
+
+    if (interface >= TOTAL_INTERFACES) return MAKERESULT(Module_Libnx, LibnxError_BadUsbCommsWrite);
+
+    rwlockWriteLock(&inter->lock);
+    initialized = inter->initialized;
+    rwlockWriteUnlock(&inter->lock);
+
+    if (!initialized) return MAKERESULT(Module_Libnx, LibnxError_BadUsbCommsWrite);
+
+    rwlockWriteLock(&inter->lock_in);
+    rc = _usbCommsGetWriteResult(inter, urbId, transferredSize);
+    rwlockWriteUnlock(&inter->lock_in);
+
+    return rc;
+}
