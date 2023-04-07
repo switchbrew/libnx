@@ -17,7 +17,7 @@ NWindow* nwindowGetDefault(void)
     return &g_defaultWin;
 }
 
-void __nx_win_init(void)
+void __attribute__((weak)) __nx_win_init(void)
 {
     Result rc;
     rc = viInitialize(ViServiceType_Default);
@@ -45,7 +45,7 @@ void __nx_win_init(void)
         diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_BadGfxInit));
 }
 
-void __nx_win_exit(void)
+void __attribute__((weak)) __nx_win_exit(void)
 {
     nwindowClose(&g_defaultWin);
     viCloseLayer(&g_viLayer);
