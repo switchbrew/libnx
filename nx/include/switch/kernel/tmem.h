@@ -79,7 +79,6 @@ static inline void* tmemGetAddr(TransferMemory* t){
  */
 Result tmemCloseHandle(TransferMemory* t);
 
-
 /**
  * @brief Waits until source backing memory permissions match perm.
  * @param t Transfer memory information structure.
@@ -87,7 +86,6 @@ Result tmemCloseHandle(TransferMemory* t);
  * @return Result code.
  */
 Result tmemWaitForPermission(TransferMemory* t, Permission perm);
-
 
 /**
  * @brief Frees up resources used by a transfer memory object, unmapping and closing handles, etc.
