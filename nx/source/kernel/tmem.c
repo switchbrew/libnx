@@ -100,6 +100,45 @@ Result tmemUnmap(TransferMemory* t)
     return rc;
 }
 
+Result tmemCloseHandle(TransferMemory* t)
+{
+    Result rc = 0;
+
+    if (t->handle != INVALID_HANDLE) {
+        rc = svcCloseHandle(t->handle);
+        t->handle = INVALID_HANDLE;
+    }
+
+    return rc;
+}
+
+Result tmemWaitForPermission(TransferMemory* t, Permission perm)
+{
+    Result rc = 0;
+
+    if ((t->perm & perm) != perm) {
+        MemoryInfo m = {0};
+        u32 p = 0;
+        rc = svcQueryMemory(&m, &p, (u64)(t->src_addr));
+
+        if (R_FAILED(rc)) {
+            return rc;
+        }
+
+        while ((m.perm & perm) != perm) {
+            rc = svcQueryMemory(&m, &p, (u64)(t->src_addr));
+
+            if (R_FAILED(rc)) {
+                return rc;
+            }
+
+            svcSleepThread(100000);
+        }
+    }
+
+    return rc;
+}
+
 Result tmemClose(TransferMemory* t)
 {
     Result rc = 0;
@@ -114,21 +153,6 @@ Result tmemClose(TransferMemory* t)
         }
 
         if (t->src_addr != NULL) {
-            if ((t->perm & Perm_Rw) != Perm_Rw) {
-                MemoryInfo m = {0};
-                u32 p = 0;
-                rc = svcQueryMemory(&m, &p, (u64)(t->src_addr));
-                if (R_FAILED(rc)) {
-                    return rc;
-                }
-                while ((m.perm & Perm_Rw) != Perm_Rw) {
-                    rc = svcQueryMemory(&m, &p, (u64)(t->src_addr));
-                    if (R_FAILED(rc)) {
-                        return rc;
-                    }
-                    svcSleepThread(100000);
-                }
-            }
             __libnx_free(t->src_addr);
         }
 

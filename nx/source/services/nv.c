@@ -54,6 +54,9 @@ Result _nvInitialize(void) {
 
         if (R_SUCCEEDED(rc))
             rc = _nvCmdInitialize(CUR_PROCESS_HANDLE, g_nvTransfermem.handle, tmem_size);
+        
+        if (R_SUCCEEDED(rc))
+            rc = tmemCloseHandle(&g_nvTransfermem);
 
         // Clone the session handle - the cloned session is used to execute certain commands in parallel
         if (R_SUCCEEDED(rc))
@@ -73,6 +76,7 @@ Result _nvInitialize(void) {
 void _nvCleanup(void) {
     serviceClose(&g_nvSrvClone);
     serviceClose(&g_nvSrv);
+    tmemWaitForPermission(&g_nvTransfermem, Perm_Rw);
     tmemClose(&g_nvTransfermem);
 }
 
