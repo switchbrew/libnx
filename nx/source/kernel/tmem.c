@@ -148,16 +148,14 @@ Result tmemClose(TransferMemory* t)
     }
 
     if (R_SUCCEEDED(rc)) {
-        if (t->handle != INVALID_HANDLE) {
-            rc = svcCloseHandle(t->handle);
-        }
+
+        rc = tmemCloseHandle(t);
 
         if (t->src_addr != NULL) {
             __libnx_free(t->src_addr);
         }
 
         t->src_addr = NULL;
-        t->handle = INVALID_HANDLE;
     }
 
     return rc;
