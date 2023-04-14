@@ -148,7 +148,6 @@ Result tmemClose(TransferMemory* t)
     }
 
     if (R_SUCCEEDED(rc)) {
-
         rc = tmemCloseHandle(t);
 
         if (t->src_addr != NULL) {
