@@ -213,8 +213,9 @@ fsdev_fixpath(struct _reent *r,
   {
     const char* cwd = dev->cwd ? dev->cwd : "/";
     strncpy(__nx_dev_path_buf, cwd, PATH_MAX);
-    __nx_dev_path_buf[PATH_MAX] = '\0';
-    strncat(__nx_dev_path_buf, path, PATH_MAX - strlen(cwd));
+    size_t cwdlen = strlen(__nx_dev_path_buf);
+    strncat(__nx_dev_path_buf, "/", PATH_MAX - cwdlen);
+    strncat(__nx_dev_path_buf, path, PATH_MAX - cwdlen -1);
   }
 
   if(__nx_dev_path_buf[PATH_MAX] != 0)
