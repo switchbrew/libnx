@@ -91,13 +91,13 @@ typedef struct CmifResponse {
     Handle* move_handles;
 } CmifResponse;
 
-NX_CONSTEXPR void* cmifGetAlignedDataStart(u32* data_words, void* base)
+NX_INLINE void* cmifGetAlignedDataStart(u32* data_words, void* base)
 {
     intptr_t data_start = ((u8*)data_words - (u8*)base + 15) &~ 15;
     return (u8*)base + data_start;
 }
 
-NX_CONSTEXPR CmifRequest cmifMakeRequest(void* base, CmifRequestFormat fmt)
+NX_INLINE CmifRequest cmifMakeRequest(void* base, CmifRequestFormat fmt)
 {
     // First of all, we need to figure out what size we need.
     u32 actual_size = 16;
@@ -156,7 +156,7 @@ NX_CONSTEXPR CmifRequest cmifMakeRequest(void* base, CmifRequestFormat fmt)
     return req;
 }
 
-NX_CONSTEXPR void* cmifMakeControlRequest(void* base, u32 request_id, u32 size)
+NX_INLINE void* cmifMakeControlRequest(void* base, u32 request_id, u32 size)
 {
     u32 actual_size = 16 + sizeof(CmifInHeader) + size;
     HipcRequest hipc = hipcMakeRequestInline(base,
@@ -173,7 +173,7 @@ NX_CONSTEXPR void* cmifMakeControlRequest(void* base, u32 request_id, u32 size)
     return hdr+1;
 }
 
-NX_CONSTEXPR void cmifMakeCloseRequest(void* base, u32 object_id)
+NX_INLINE void cmifMakeCloseRequest(void* base, u32 object_id)
 {
     if (object_id) {
         HipcRequest hipc = hipcMakeRequestInline(base,
@@ -257,7 +257,7 @@ NX_CONSTEXPR void cmifRequestHandle(CmifRequest* req, Handle handle)
     *req->hipc.copy_handles++ = handle;
 }
 
-NX_CONSTEXPR Result cmifParseResponse(CmifResponse* res, void* base, bool is_domain, u32 size)
+NX_INLINE Result cmifParseResponse(CmifResponse* res, void* base, bool is_domain, u32 size)
 {
     HipcResponse hipc = hipcParseResponse(base);
     void* start = cmifGetAlignedDataStart(hipc.data_words, base);
