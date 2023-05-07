@@ -1270,7 +1270,7 @@ Result btdrvUnregisterGattNotification(u32 connection_handle, bool primary_servi
  * @param[in] size Output buffer size.
  * @oaram[out] type Output BleEventType.
  */
-Result btdrvGetLeHidEventInfo(void* buffer, size_t size, u32 *type);
+Result btdrvGetLeHidEventInfo(void* buffer, size_t size, BtdrvBleEventType *type);
 
 /**
  * @brief RegisterBleHidEvent
