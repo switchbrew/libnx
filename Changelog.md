@@ -1,5 +1,12 @@
 # Changelog
 
+## Version 4.4.1
+
+#### miscellaneous
+* add missing separator to local path 
+
+**Several issues were fixed, and usability and stability were improved.**
+
 ## Version 4.4.0
 
 #### services
@@ -8,7 +15,6 @@
 * usbcomms: expose VID:PID configuration
 
 #### miscellaneous
-
 * correct problems revealed by gcc 13
 * mitigate race condition bug in nvservices
 
