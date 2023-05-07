@@ -1,5 +1,19 @@
 # Changelog
 
+## Version 4.4.0
+
+#### services
+* applet: add appletGetMessageEvent
+* usbcomms: add async API
+* usbcomms: expose VID:PID configuration
+
+#### miscellaneous
+
+* correct problems revealed by gcc 13
+* mitigate race condition bug in nvservices
+
+**Several issues were fixed, and usability and stability were improved.**
+
 ## Version 4.3.0
 
 #### services
