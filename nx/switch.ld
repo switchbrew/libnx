@@ -134,7 +134,6 @@ SECTIONS
 		SORT(CONSTRUCTORS)
 	} :data
 
-	__bss_start__ = .;
 	.bss ALIGN(8) :
 	{
 		*(.dynbss)
@@ -147,7 +146,8 @@ SECTIONS
 		. += + SIZEOF(.tdata) + SIZEOF(.tbss);
 		__tls_end = .;
 	} : data
-	__bss_end__ = .;
+	__bss_start__ = ADDR(.bss);
+	__bss_end__ = ADDR(.bss) + SIZEOF(.bss);
 
 	__end__ = ABSOLUTE(.) ;
 
