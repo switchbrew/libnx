@@ -1,5 +1,14 @@
 # Changelog
 
+## Version 4.4.2
+
+#### system
+* ensure correct addresses for bss
+
+#### miscellaneous
+* fix timezone to allow +/- and alphanumrics
+* end compile_commmands generation when elf linked
+
 ## Version 4.4.1
 
 #### miscellaneous
