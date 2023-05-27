@@ -13,3 +13,5 @@ debug/
 release/
 lib/
 docs/
+compile_commands.json
+.clangd
