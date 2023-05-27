@@ -77,5 +77,6 @@ endif
 #---------------------------------------------------------------------------------
 %.elf:
 	@echo linking $(notdir $@)
+	$(ADD_COMPILE_COMMAND) end
 	@$(LD) $(LDFLAGS) $(OFILES) $(LIBPATHS) $(LIBS) -o $@
 	@$(NM) -CSn $@ > $(notdir $*.lst)
