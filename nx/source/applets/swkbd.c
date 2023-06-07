@@ -553,7 +553,7 @@ Result swkbdInlineGetImage(SwkbdInline* s, void* buffer, u64 size, bool *data_av
     if (!buffer || !size) return MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
     if (_swkbdInlineHandleFinished(s)) {
-        data_available = false;
+        *data_available = false;
         return 0;
     }
 
