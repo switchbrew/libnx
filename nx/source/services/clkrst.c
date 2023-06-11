@@ -44,3 +44,20 @@ Result clkrstSetClockRate(ClkrstSession* session, u32 hz) {
 Result clkrstGetClockRate(ClkrstSession* session, u32 *out_hz) {
     return serviceDispatchOut(&session->s, 8, *out_hz);
 }
+
+Result clkrstGetPossibleClockRates(ClkrstSession *session, u32 *rates, s32 max_count, PcvClockRatesListType *out_type, s32 *out_count) {
+    struct {
+        s32 type;
+        s32 count;
+    } out;
+
+    Result rc = serviceDispatchInOut(&session->s, 10, max_count, out,
+        .buffer_attrs = { SfBufferAttr_Out | SfBufferAttr_HipcAutoSelect, },
+        .buffers = { { rates, max_count * sizeof(u32) }, }
+    );
+
+    if (R_SUCCEEDED(rc) && out_type) *out_type = out.type;
+    if (R_SUCCEEDED(rc) && out_count) *out_count = out.count;
+
+    return rc;
+}

@@ -27,3 +27,4 @@ Result clkrstOpenSession(ClkrstSession* session_out, PcvModuleId module_id, u32 
 void clkrstCloseSession(ClkrstSession* session);
 Result clkrstSetClockRate(ClkrstSession* session, u32 hz);
 Result clkrstGetClockRate(ClkrstSession* session, u32 *out_hz);
+Result clkrstGetPossibleClockRates(ClkrstSession *session, u32 *rates, s32 max_count, PcvClockRatesListType *out_type, s32 *out_count);
