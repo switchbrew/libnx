@@ -191,6 +191,13 @@ typedef enum {
     PcvModuleId_EXTPERIPH2          = 0x40000057,
 } PcvModuleId;
 
+// Clock list type returned by GetPossibleClockRates
+typedef enum {
+    PcvClockRatesListType_Invalid  = 0,
+    PcvClockRatesListType_Discrete = 1,
+    PcvClockRatesListType_Range    = 2,
+} PcvClockRatesListType;
+
 /// Initialize pcv.
 Result pcvInitialize(void);
 
@@ -210,3 +217,5 @@ Result pcvSetClockRate(PcvModule module, u32 hz);
 Result pcvSetVoltageEnabled(u32 power_domain, bool state);
 /// Only available on [1.0.0-7.0.1].
 Result pcvGetVoltageEnabled(bool *isEnabled, u32 power_domain);
+/// Only available on [1.0.0-7.0.1].
+Result pcvGetPossibleClockRates(PcvModule module, u32 *rates, s32 max_count, PcvClockRatesListType *out_type, s32 *out_count);

@@ -94,3 +94,28 @@ Result pcvGetVoltageEnabled(bool *isEnabled, u32 power_domain) {
 
     return rc;
 }
+
+Result pcvGetPossibleClockRates(PcvModule module, u32 *rates, s32 max_count, PcvClockRatesListType *out_type, s32 *out_count) {
+    if(hosversionAtLeast(8,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    const struct {
+        PcvModule module;
+        s32 max_count;
+    } in = { module, max_count };
+
+    struct {
+        s32 type;
+        s32 count;
+    } out;
+
+    Result rc = serviceDispatchInOut(&g_pcvSrv, 5, in, out,
+        .buffer_attrs = { SfBufferAttr_Out | SfBufferAttr_HipcPointer, },
+        .buffers = { { rates, max_count * sizeof(u32) }, }
+    );
+
+    if (R_SUCCEEDED(rc) && out_type) *out_type = out.type;
+    if (R_SUCCEEDED(rc) && out_count) *out_count = out.count;
+
+    return rc;
+}
