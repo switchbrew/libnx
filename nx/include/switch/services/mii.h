@@ -113,6 +113,18 @@ typedef struct {
     u8 unk_x57;
 } MiiCharInfo;
 
+// Original Mii colors and types before Ver3StoreData conversion
+typedef struct {
+    u8 faceline_color;
+    u8 hair_color;
+    u8 eye_color;
+    u8 eyebrow_color;
+    u8 mouth_color;
+    u8 beard_color;
+    u8 glass_color;
+    u8 glass_type;
+} MiiNfpStoreDataExtension;
+
 /// Initialize mii.
 Result miiInitialize(MiiServiceType service_type);
 
