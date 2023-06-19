@@ -74,3 +74,46 @@ Result nacpGetLanguageEntry(NacpStruct* nacp, NacpLanguageEntry** langentry) {
     return rc;
 }
 
+Result nacpGetLanguageEntrySpecialLanguage(NacpStruct* nacp, NacpLanguageEntry** langentry, const u32 languageChoosen) {
+    Result rc=0;
+    SetLanguage Language= languageChoosen;
+    NacpLanguageEntry *entry = NULL;
+    u32 i=0;
+
+    if (nacp==NULL || langentry==NULL)
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+
+    *langentry = NULL;
+
+    rc = setInitialize();
+    if (R_FAILED(rc))
+        return rc;
+
+    if (Language < 0)
+        rc = MAKERESULT(Module_Libnx, LibnxError_BadInput);
+
+    if (R_SUCCEEDED(rc) && Language >= 15)
+        Language = SetLanguage_ENUS;//Use ENUS for unsupported system languages.
+
+    setExit();
+
+    if (R_FAILED(rc))
+        return rc;
+
+    entry = &nacp->lang[g_nacpLanguageTable[Language]];
+
+    if (entry->name[0]==0 && entry->author[0]==0) {
+        for(i=0; i<16; i++) {
+            entry = &nacp->lang[i];
+            if (entry->name[0] || entry->author[0]) break;
+        }
+    }
+
+    if (entry->name[0]==0 && entry->author[0]==0)
+        return rc;
+
+    *langentry = entry;
+
+    return rc;
+}
+

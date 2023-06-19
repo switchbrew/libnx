@@ -92,3 +92,7 @@ typedef struct {
 /// If you're using ns you may want to use \ref nsGetApplicationDesiredLanguage instead.
 Result nacpGetLanguageEntry(NacpStruct* nacp, NacpLanguageEntry** langentry);
 
+
+//Same thank nacpGetLanguageEntry, except this uses the input languageChoosen instead of the system language.
+Result nacpGetLanguageEntrySpecialLanguage(NacpStruct* nacp, NacpLanguageEntry** langentry, const u32 languageChoosen);
+
