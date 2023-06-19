@@ -74,7 +74,7 @@ Result nacpGetLanguageEntry(NacpStruct* nacp, NacpLanguageEntry** langentry) {
     return rc;
 }
 
-Result nacpGetLanguageEntrySpecialLanguage(NacpStruct* nacp, NacpLanguageEntry** langentry, const u32 languageChoosen) {
+Result nacpGetLanguageEntrySpecialLanguage(NacpStruct* nacp, NacpLanguageEntry** langentry, const SetLanguage languageChoosen) {
     Result rc=0;
     SetLanguage Language= languageChoosen;
     NacpLanguageEntry *entry = NULL;
