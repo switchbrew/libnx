@@ -102,6 +102,8 @@ void _nfcCleanup(void) {
     serviceClose(&g_nfcSrv);
 }
 
+NX_GENERATE_SERVICE_GUARD(nfcMf);
+
 Result _nfcMfInitialize() {
     Result rc = MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
