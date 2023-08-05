@@ -11,7 +11,7 @@ static Result _pctlCmdNoIO(u32 cmd_id);
 NX_GENERATE_SERVICE_GUARD(pctl);
 
 Result _pctlInitialize(void) {
-    Result rc=0;
+    Result rc = 0;
     bool sysverflag = hosversionBefore(4,0,0);
 
     rc = smGetService(&g_pctlSrv, "pctl:a");
@@ -42,7 +42,7 @@ Service* pctlGetServiceSession_Service(void) {
 }
 
 static Result _pctlCreateService(Service* srv_out, u32 cmd_id) {
-    u64 pid_reserved=0;
+    u64 pid_reserved = 0;
     serviceAssumeDomain(&g_pctlSrv);
     return serviceDispatchIn(&g_pctlSrv, cmd_id, pid_reserved,
         .in_send_pid = true,
@@ -61,11 +61,33 @@ static Result _pctlCmdNoInOutU8(u8 *out, u32 cmd_id) {
     return serviceDispatchOut(&g_pctlSession, cmd_id, *out);
 }
 
+static Result _pctlCmdNoInOutU32(u32 *out, u32 cmd_id) {
+    serviceAssumeDomain(&g_pctlSession);
+    return serviceDispatchOut(&g_pctlSession, cmd_id, *out);
+}
+
 static Result _pctlCmdNoInOutBool(bool *out, u32 cmd_id) {
-    u8 tmp=0;
+    u8 tmp = 0;
     Result rc = _pctlCmdNoInOutU8(&tmp, cmd_id);
     if (R_SUCCEEDED(rc) && out) *out = tmp & 1;
     return rc;
+}
+
+static Result _pctlCmdGetEvent(Event* out_event, u32 cmd_id) {
+    Result rc;
+    Handle tmp_handle = INVALID_HANDLE;
+
+    serviceAssumeDomain(&g_pctlSession);
+    rc = serviceDispatch(&g_pctlSession, cmd_id,
+        .out_handle_attrs = { SfOutHandleAttr_HipcCopy },
+        .out_handles = &tmp_handle,
+    );
+    if (R_SUCCEEDED(rc)) eventLoadRemote(out_event, tmp_handle, true);
+    return rc;
+}
+
+Result pctlIsRestrictionTemporaryUnlocked(bool *flag) {
+    return _pctlCmdNoInOutBool(flag, 1006);
 }
 
 Result pctlConfirmStereoVisionPermission(void) {
@@ -77,6 +99,19 @@ Result pctlConfirmStereoVisionPermission(void) {
 
 Result pctlIsRestrictionEnabled(bool *flag) {
     return _pctlCmdNoInOutBool(flag, 1031);
+}
+
+Result pctlGetSafetyLevel(u32 *safety_level) {
+    return _pctlCmdNoInOutU32(safety_level, 1032);
+}
+
+Result pctlGetCurrentSettings(PctlRestrictionSettings *settings) {
+    serviceAssumeDomain(&g_pctlSession);
+    return serviceDispatchOut(&g_pctlSession, 1035, *settings);
+}
+
+Result pctlGetFreeCommunicationApplicationListCount(u32 *count) {
+    return _pctlCmdNoInOutU32(count, 1039);
 }
 
 Result pctlResetConfirmedStereoVisionPermission(void) {
@@ -93,3 +128,25 @@ Result pctlIsStereoVisionPermitted(bool *flag) {
     return _pctlCmdNoInOutBool(flag, 1065);
 }
 
+Result pctlIsPairingActive(bool *flag) {
+    return _pctlCmdNoInOutBool(flag, 1403);
+}
+
+Result pctlGetSynchronizationEvent(Event* out_event) {
+	return _pctlCmdGetEvent(out_event, 1432);
+}
+
+Result pctlGetPlayTimerEventToRequestSuspension(Event* out_event) {
+	return _pctlCmdGetEvent(out_event, 1457);
+}
+
+Result pctlIsPlayTimerAlarmDisabled(bool *flag) {
+    if (hosversionBefore(4,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _pctlCmdNoInOutBool(flag, 1458);
+}
+
+Result pctlGetUnlinkedEvent(Event* out_event) {
+	return _pctlCmdGetEvent(out_event, 1473);
+}
