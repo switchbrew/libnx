@@ -81,6 +81,10 @@ static Result _hidsysCmdNoInOutU8(u8 *out, u32 cmd_id) {
     return serviceDispatchOut(&g_hidsysSrv, cmd_id, *out);
 }
 
+static Result _hidsysCmdNoInOutU32(u32 *out, u32 cmd_id) {
+    return serviceDispatchOut(&g_hidsysSrv, cmd_id, *out);
+}
+
 static Result _hidsysCmdNoInOutBool(bool *out, u32 cmd_id) {
     u8 tmp=0;
     Result rc = _hidsysCmdNoInOutU8(&tmp, cmd_id);
@@ -251,6 +255,14 @@ Result hidsysActivateCaptureButton(void) {
     return _hidsysCmdWithResIdAndPid(151);
 }
 
+Result hidsysApplyNpadSystemCommonPolicy(void) {
+    return _hidsysCmdNoIO(303);
+}
+
+Result hidsysGetLastActiveNpad(u32 *out) {
+    return _hidsysCmdNoInOutU32(out, 306);
+}
+
 static Result _hidsysGetMaskedSupportedNpadStyleSet(u64 AppletResourceUserId, u32 *out) {
     if (hosversionBefore(6,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
@@ -350,6 +362,10 @@ Result hidsysGetUniquePadIds(HidsysUniquePadId *unique_pad_ids, s32 count, s32 *
     return rc;
 }
 
+Result hidsysAcquireJoyDetachOnBluetoothOffEventHandle(Event *out_event, bool autoclear) {
+    return _hidsysCmdInPidAruidOutEvent(out_event, autoclear, 751);
+}
+
 Result hidsysGetUniquePadBluetoothAddress(HidsysUniquePadId unique_pad_id, BtdrvAddress *address) {
     if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
@@ -443,6 +459,13 @@ Result hidsysIsUsbConnected(HidsysUniquePadId unique_pad_id, bool *out) {
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return _hidsysCmdInU64OutBool(unique_pad_id.id, out, 852);
+}
+
+Result hidsysGetTouchScreenDefaultConfiguration(HidTouchScreenConfigurationForNx *touch_screen_configuration) {
+    if (hosversionBefore(9,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchOut(&g_hidsysSrv, 1153, *touch_screen_configuration);
 }
 
 Result hidsysIsFirmwareUpdateNeededForNotification(HidsysUniquePadId unique_pad_id, bool *out) {
