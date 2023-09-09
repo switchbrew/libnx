@@ -55,7 +55,7 @@ void mutexLock(Mutex* m) {
         }
 
         // Ask the kernel to arbitrate the lock for us.
-        if (UNLIKELY(R_FAILED(svcArbitrateLock(value & ~HANDLE_WAIT_MASK, m, cur_handle)))) {
+        if (UNLIKELY(R_FAILED(svcArbitrateLock(cur_handle, m, value & ~HANDLE_WAIT_MASK)))) {
             // This should be impossible under normal circumstances.
             svcBreak(BreakReason_Assert, 0, 0);
         }
