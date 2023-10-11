@@ -405,6 +405,8 @@ Result fsOpenSdCardDetectionEventNotifier(FsEventNotifier* out);
 
 Result fsIsSignedSystemPartitionOnSdCardValid(bool *out);
 
+Result fsGetProgramId(u64* out, const char *path, FsContentAttributes attr); ///< [17.0.0+]
+
 /// Retrieves the rights id corresponding to the content path. Only available on [2.0.0-15.0.1].
 Result fsGetRightsIdByPath(const char* path, FsRightsId* out_rights_id);
 

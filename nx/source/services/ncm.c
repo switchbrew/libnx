@@ -407,6 +407,16 @@ Result ncmContentStorageClearRegisteredPath(NcmContentStorage* cs) {
     return _ncmCmdNoIO(&cs->s, 29);
 }
 
+Result ncmContentStorageGetProgramId(NcmContentStorage* cs, u64* out, const NcmContentId* content_id, FsContentAttributes attr) {
+    if (hosversionBefore(17,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    const struct {
+        NcmContentId content_id;
+        u8 attr;
+    } in = { *content_id, attr };
+    return serviceDispatchInOut(&cs->s, 30, in, *out);
+}
+
 void ncmContentMetaDatabaseClose(NcmContentMetaDatabase* db) {
     serviceClose(&db->s);
 }
@@ -585,4 +595,10 @@ Result ncmContentMetaDatabaseGetContentIdByTypeAndIdOffset(NcmContentMetaDatabas
         NcmContentMetaKey key;
     } in = { type, id_offset, {0}, *key };
     return serviceDispatchInOut(&db->s, 20, in, *out_content_id);
+}
+
+Result ncmContentMetaDatabaseGetPlatform(NcmContentMetaDatabase* db, u8* out, const NcmContentMetaKey* key) {
+    if (hosversionBefore(17,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchInOut(&db->s, 26, *key, *out);
 }

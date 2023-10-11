@@ -83,6 +83,7 @@ Result ncmContentStorageRepairInvalidFileAttribute(NcmContentStorage* cs); ///< 
 Result ncmContentStorageGetRightsIdFromPlaceHolderIdWithCache(NcmContentStorage* cs, NcmRightsId* out_rights_id, const NcmPlaceHolderId* placeholder_id, const NcmContentId* cache_content_id, FsContentAttributes attr); ///< [8.0.0+]
 Result ncmContentStorageRegisterPath(NcmContentStorage* cs, const NcmContentId* content_id, const char *path);  ///< [13.0.0+]
 Result ncmContentStorageClearRegisteredPath(NcmContentStorage* cs);  ///< [13.0.0+]
+Result ncmContentStorageGetProgramId(NcmContentStorage* cs, u64* out, const NcmContentId* content_id, FsContentAttributes attr);  ///< [17.0.0+]
 
 void ncmContentMetaDatabaseClose(NcmContentMetaDatabase* db);
 Result ncmContentMetaDatabaseSet(NcmContentMetaDatabase* db, const NcmContentMetaKey* key, const void* data, u64 data_size);
@@ -106,3 +107,4 @@ Result ncmContentMetaDatabaseListContentMetaInfo(NcmContentMetaDatabase* db, s32
 Result ncmContentMetaDatabaseGetAttributes(NcmContentMetaDatabase* db, const NcmContentMetaKey* key, u8* out);
 Result ncmContentMetaDatabaseGetRequiredApplicationVersion(NcmContentMetaDatabase* db, u32* out_version, const NcmContentMetaKey* key); ///< [2.0.0+]
 Result ncmContentMetaDatabaseGetContentIdByTypeAndIdOffset(NcmContentMetaDatabase* db, NcmContentId* out_content_id, const NcmContentMetaKey* key, NcmContentType type, u8 id_offset); ///< [5.0.0+]
+Result ncmContentMetaDatabaseGetPlatform(NcmContentMetaDatabase* db, u8* out, const NcmContentMetaKey* key);  ///< [17.0.0+]
