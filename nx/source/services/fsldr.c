@@ -38,7 +38,26 @@ Result fsldrOpenCodeFileSystem(FsCodeInfo* out_code_info, u64 tid, const char *p
     char send_path[FS_MAX_PATH]={0};
     strncpy(send_path, path, FS_MAX_PATH-1);
 
-    if (hosversionAtLeast(16,0,0)) {
+    if (hosversionAtLeast(17,0,0)) {
+        const struct {
+            u8 attr;
+            u64 tid;
+        } in = { attr, tid };
+
+        serviceAssumeDomain(&g_fsldrSrv);
+        return serviceDispatchIn(&g_fsldrSrv, 0, in,
+            .buffer_attrs = {
+                SfBufferAttr_FixedSize | SfBufferAttr_HipcPointer | SfBufferAttr_In,
+                SfBufferAttr_HipcMapAlias | SfBufferAttr_Out,
+            },
+            .buffers = {
+                { send_path,  FS_MAX_PATH },
+                { out_code_info,  sizeof(*out_code_info) },
+            },
+            .out_num_objects = 1,
+            .out_objects = &out->s,
+        );
+    } else if (hosversionAtLeast(16,0,0)) {
         const struct {
             u8 attr;
             u64 tid;
