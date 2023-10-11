@@ -60,13 +60,17 @@ NX_INLINE Result _fsObjectDispatchImpl(
     _fsObjectDispatchImpl((_s),(_rid),NULL,0,NULL,0,(SfDispatchParams){ __VA_ARGS__ })
 
 #define _fsObjectDispatchIn(_s,_rid,_in,...) \
-    _fsObjectDispatchImpl((_s),(_rid),&(_in),sizeof(_in),NULL,0,(SfDispatchParams){ __VA_ARGS__ })
+    ({ _Static_assert(!(serviceMacroDetectIsPointer(_in))); \
+    _fsObjectDispatchImpl((_s),(_rid),&(_in),sizeof(_in),NULL,0,(SfDispatchParams){ __VA_ARGS__ }); })
 
 #define _fsObjectDispatchOut(_s,_rid,_out,...) \
-    _fsObjectDispatchImpl((_s),(_rid),NULL,0,&(_out),sizeof(_out),(SfDispatchParams){ __VA_ARGS__ })
+    ({ _Static_assert(!(serviceMacroDetectIsPointer(_out))); \
+    _fsObjectDispatchImpl((_s),(_rid),NULL,0,&(_out),sizeof(_out),(SfDispatchParams){ __VA_ARGS__ }); })
 
 #define _fsObjectDispatchInOut(_s,_rid,_in,_out,...) \
-    _fsObjectDispatchImpl((_s),(_rid),&(_in),sizeof(_in),&(_out),sizeof(_out),(SfDispatchParams){ __VA_ARGS__ })
+    ({ _Static_assert(!(serviceMacroDetectIsPointer(_in))); \
+    _Static_assert(!(serviceMacroDetectIsPointer(_out))); \
+    _fsObjectDispatchImpl((_s),(_rid),&(_in),sizeof(_in),&(_out),sizeof(_out),(SfDispatchParams){ __VA_ARGS__ }); })
 
 NX_GENERATE_SERVICE_GUARD(fs);
 
