@@ -109,7 +109,7 @@ Result capscGenerateApplicationAlbumEntry(CapsApplicationAlbumEntry *appEntry, c
 Result capscSaveAlbumScreenShotFile(const CapsAlbumFileId *file_id, const void* buffer, u64 buffer_size) {
     if (hosversionBefore(2,0,0) || hosversionAtLeast(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    return serviceDispatchIn(&g_capscSrv, 2201, file_id,
+    return serviceDispatchIn(&g_capscSrv, 2201, *file_id,
         .buffer_attrs = { SfBufferAttr_HipcMapTransferAllowsNonSecure | SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
         .buffers = { { buffer, buffer_size }, },
     );

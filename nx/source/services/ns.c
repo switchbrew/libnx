@@ -1503,7 +1503,7 @@ Result nsCompareApplicationDeliveryInfo(const NsApplicationDeliveryInfo *info0, 
     Service srv={0};
     Result rc = nsGetApplicationManagerInterface(&srv);
 
-    if (R_SUCCEEDED(rc)) rc = serviceDispatchOut(&srv, 2005, out,
+    if (R_SUCCEEDED(rc)) rc = serviceDispatchOut(&srv, 2005, *out,
         .buffer_attrs = {
             SfBufferAttr_HipcMapAlias | SfBufferAttr_In,
             SfBufferAttr_HipcMapAlias | SfBufferAttr_In,
@@ -1710,7 +1710,7 @@ Result nsCompareSystemDeliveryInfo(const NsSystemDeliveryInfo *info0, const NsSy
     Service srv={0};
     Result rc = nsGetApplicationManagerInterface(&srv);
 
-    if (R_SUCCEEDED(rc)) rc = serviceDispatchOut(&srv, 2015, out,
+    if (R_SUCCEEDED(rc)) rc = serviceDispatchOut(&srv, 2015, *out,
         .buffer_attrs = {
             SfBufferAttr_HipcMapAlias | SfBufferAttr_In,
             SfBufferAttr_HipcMapAlias | SfBufferAttr_In,
