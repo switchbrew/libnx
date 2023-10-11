@@ -60,6 +60,11 @@ typedef enum {
     NcmContentInstallType_Unknown      = 7, ///< Unknown
 } NcmContentInstallType;
 
+/// ContentMetaPlatform
+typedef enum  {
+    NcmContentMetaPlatform_Nx = 0, ///< Nx
+} NcmContentMetaPlatform;
+
 /// ContentId
 typedef struct {
     u8 c[0x10]; ///< Id

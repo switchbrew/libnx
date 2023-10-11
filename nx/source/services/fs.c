@@ -538,6 +538,20 @@ Result fsIsSignedSystemPartitionOnSdCardValid(bool *out) {
     return _fsCmdNoInOutBool(&g_fsSrv, out, 640);
 }
 
+Result fsGetProgramId(u64* out, const char *path, FsContentAttributes attr) {
+    if (hosversionBefore(17,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    char send_path[FS_MAX_PATH] = {0};
+    strncpy(send_path, path, FS_MAX_PATH-1);
+
+    const u8 in = attr;
+    return _fsObjectDispatchInOut(&g_fsSrv, 618, in, out,
+        .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_In },
+        .buffers = { { send_path, sizeof(send_path) } },
+    );
+}
+
 Result fsGetRightsIdByPath(const char* path, FsRightsId* out_rights_id) {
     if (!hosversionBetween(2, 16))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
