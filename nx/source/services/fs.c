@@ -546,7 +546,7 @@ Result fsGetProgramId(u64* out, const char *path, FsContentAttributes attr) {
     strncpy(send_path, path, FS_MAX_PATH-1);
 
     const u8 in = attr;
-    return _fsObjectDispatchInOut(&g_fsSrv, 618, in, out,
+    return _fsObjectDispatchInOut(&g_fsSrv, 618, in, *out,
         .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_In },
         .buffers = { { send_path, sizeof(send_path) } },
     );
