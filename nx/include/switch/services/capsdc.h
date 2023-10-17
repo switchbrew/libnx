@@ -30,3 +30,8 @@ Service* capsdcGetServiceSession(void);
  * @param[in] out_image_size Output image buffer size, should be at least large enough for RGBA8 width x height.
  */
 Result capsdcDecodeJpeg(u32 width, u32 height, const CapsScreenShotDecodeOption *opts, const void* jpeg, size_t jpeg_size, void* out_image, size_t out_image_size);
+
+/**
+ * @brief Shrinks a jpeg's dimensions by 2.
+ */
+Result capsdcShrinkJpeg(u32 width, u32 height, const CapsScreenShotDecodeOption *opts, const void* jpeg, size_t jpeg_size, void* out_jpeg, size_t out_jpeg_size, u64 *out_result_size);

@@ -39,3 +39,21 @@ Result capsdcDecodeJpeg(u32 width, u32 height, const CapsScreenShotDecodeOption 
         }
     );
 }
+
+Result capsdcShrinkJpeg(u32 width, u32 height, const CapsScreenShotDecodeOption *opts, const void* jpeg, size_t jpeg_size, void* out_jpeg, size_t out_jpeg_size, u64 *out_result_size) {
+    const struct {
+        u32 width;
+        u32 height;
+        CapsScreenShotDecodeOption opts;
+    } in = { width, height, *opts };
+    return serviceDispatchInOut(&g_capsdcSrv, 4001, in, *out_result_size,
+        .buffer_attrs = {
+            SfBufferAttr_In | SfBufferAttr_HipcMapAlias,
+            SfBufferAttr_Out | SfBufferAttr_HipcMapAlias | SfBufferAttr_HipcMapTransferAllowsNonSecure,
+        },
+        .buffers = {
+            { jpeg, jpeg_size },
+            { out_jpeg, out_jpeg_size },
+        }
+    );
+}
