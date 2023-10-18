@@ -69,10 +69,11 @@ typedef enum {
 
 /// Memory attribute bitmasks.
 typedef enum {
-    MemAttr_IsBorrowed=BIT(0),     ///< Is borrowed memory.
-    MemAttr_IsIpcMapped=BIT(1),    ///< Is IPC mapped (when IpcRefCount > 0).
-    MemAttr_IsDeviceMapped=BIT(2), ///< Is device mapped (when DeviceRefCount > 0).
-    MemAttr_IsUncached=BIT(3),     ///< Is uncached.
+    MemAttr_IsBorrowed=BIT(0),         ///< Is borrowed memory.
+    MemAttr_IsIpcMapped=BIT(1),        ///< Is IPC mapped (when IpcRefCount > 0).
+    MemAttr_IsDeviceMapped=BIT(2),     ///< Is device mapped (when DeviceRefCount > 0).
+    MemAttr_IsUncached=BIT(3),         ///< Is uncached.
+    MemAttr_IsPermissionLocked=BIT(4), ///< Is permission locked.
 } MemoryAttribute;
 
 /// Memory permission bitmasks.
