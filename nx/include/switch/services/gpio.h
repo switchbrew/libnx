@@ -64,8 +64,8 @@ Result gpioPadSetInterruptMode(GpioPadSession *p, GpioInterruptMode mode);
 Result gpioPadGetInterruptMode(GpioPadSession *p, GpioInterruptMode *out);
 Result gpioPadSetInterruptEnable(GpioPadSession *p, bool en);
 Result gpioPadGetInterruptEnable(GpioPadSession *p, bool *out);
-Result gpioPadGetInterruptStatus(GpioPadSession *p, GpioInterruptStatus *out);
-Result gpioPadClearInterruptStatus(GpioPadSession *p);
+Result gpioPadGetInterruptStatus(GpioPadSession *p, GpioInterruptStatus *out); ///< [1.0.0-16.1.0]
+Result gpioPadClearInterruptStatus(GpioPadSession *p); ///< [1.0.0-16.1.0]
 Result gpioPadSetValue(GpioPadSession *p, GpioValue val);
 Result gpioPadGetValue(GpioPadSession *p, GpioValue *out);
 Result gpioPadBindInterrupt(GpioPadSession *p, Event *out);

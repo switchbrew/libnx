@@ -123,10 +123,16 @@ Result gpioPadGetInterruptEnable(GpioPadSession *p, bool *out) {
 
 Result gpioPadGetInterruptStatus(GpioPadSession *p, GpioInterruptStatus *out) {
     _Static_assert(sizeof(*out) == sizeof(u32), "GpioInterruptStatus size");
+
+    if (hosversionAtLeast(17,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     return _gpioCmdNoInOutU32(&p->s, (u32 *)out, 6);
 }
 
 Result gpioPadClearInterruptStatus(GpioPadSession *p) {
+    if (hosversionAtLeast(17,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     return _gpioCmdNoInNoOut(&p->s, 7);
 }
 
