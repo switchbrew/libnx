@@ -25,6 +25,9 @@ static Result _tsCmdInU8Out32(u8 inval, u32 *out, u64 cmd_id) {
 }
 
 Result tsGetTemperatureRange(TsLocation location, s32 *min_temperature, s32 *max_temperature) {
+    if (hosversionAtLeast(17,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     u8 tmp_location = location;
 
     struct {
@@ -39,6 +42,8 @@ Result tsGetTemperatureRange(TsLocation location, s32 *min_temperature, s32 *max
 }
 
 Result tsGetTemperature(TsLocation location, s32 *temperature) {
+    if (hosversionAtLeast(17,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     return _tsCmdInU8Out32(location, (u32*)temperature, 1);
 }
 
@@ -48,3 +53,23 @@ Result tsGetTemperatureMilliC(TsLocation location, s32 *temperature) {
     return _tsCmdInU8Out32(location, (u32*)temperature, 3);
 }
 
+Result tsOpenSession(TsSession *s, u32 device_code) {
+    if (hosversionBefore(8,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchIn(&g_tsSrv, 4, device_code,
+        .out_num_objects = 1,
+        .out_objects = &s->s,
+    );
+}
+
+Result tsSessionGetTemperature(TsSession *s, float *temperature) {
+    if (hosversionBefore(10,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchOut(&s->s, 4, *temperature);
+}
+
+void tsSessionClose(TsSession *s) {
+    serviceClose(&s->s);
+}
