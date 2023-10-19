@@ -23,36 +23,20 @@ _start:
     b    __libnx_exception_entry
 
 .Lcrt0_main_entry:
-    // Get pointer to MOD0 struct (contains offsets to important places)
-    adr x28, __nx_mod0
-
-    // Calculate BSS address/size
-    ldp  w8, w9, [x28, #8] // load BSS start/end offset from MOD0
-    sub  w9, w9, w8        // calculate BSS size
-    add  w9, w9, #7        // round up to 8
-    bic  w9, w9, #7        // ^
-    add  x8, x28, x8       // fixup the start pointer
-
-    // Clear the BSS in 8-byte units
-1:  subs w9, w9, #8
-    str  xzr, [x8], #8
-    bne  1b
-
     // Preserve registers across function calls
     mov x25, x0  // entrypoint argument 0
     mov x26, x1  // entrypoint argument 1
     mov x27, x30 // loader return address
+    mov x28, sp  // initial stack pointer
+
+    // Perform runtime linking on ourselves (including relocations)
+    adr  x0, _start    // get aslr base
+    adr  x1, __nx_mod0 // get pointer to MOD0 struct
+    bl   __nx_dynamic
 
     // Save initial stack pointer
-    mov  x8, sp
     adrp x9, __stack_top
-    str  x8, [x9, #:lo12:__stack_top]
-
-    // Parse ELF .dynamic section (which applies relocations to our module)
-    adr  x0, _start    // get aslr base
-    ldr  w1, [x28, #4] // pointer to .dynamic section
-    add  x1, x28, x1
-    bl   __nx_dynamic
+    str  x28, [x9, #:lo12:__stack_top]
 
     // Perform system initialization
     mov  x0, x25
@@ -65,8 +49,8 @@ _start:
     ldr  w0, [x0, #:lo12:__system_argc]
     adrp x1, __system_argv // argv
     ldr  x1, [x1, #:lo12:__system_argv]
-    adrp x30, exit
-    add  x30, x30, #:lo12:exit
+    adrp x30, :got:exit
+    ldr  x30, [x30, #:got_lo12:exit]
     b    main
 
 .global __nx_exit
@@ -94,6 +78,10 @@ __nx_mod0:
     .ascii "LNY0"
     .word  __got_start__        - __nx_mod0
     .word  __got_end__          - __nx_mod0
+
+    .ascii "LNY1"
+    .word  __relro_start        - __nx_mod0
+    .word  __data_start         - __nx_mod0
 
 .section .bss.__stack_top, "aw", %nobits
 .global __stack_top
