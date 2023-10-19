@@ -261,8 +261,9 @@ static inline void _aes128CbcDecryptBlocks(Aes128CbcContext *ctx, u8 *dst_u8, co
               AES_ENC_DEC_INPUT_ROUND_KEY(10)
         );
 
-        /* Update IV. */
-        cur_iv = tmp0;
+        /* Do XOR for CBC. */
+        tmp0 = veorq_u8(tmp0, cur_iv);
+        cur_iv = block0;
 
         /* Store to output. */
         vst1q_u8(dst_u8, tmp0);
@@ -478,8 +479,9 @@ static inline void _aes192CbcDecryptBlocks(Aes192CbcContext *ctx, u8 *dst_u8, co
               AES_ENC_DEC_INPUT_ROUND_KEY(12)
         );
 
-        /* Update IV. */
-        cur_iv = tmp0;
+        /* Do XOR for CBC. */
+        tmp0 = veorq_u8(tmp0, cur_iv);
+        cur_iv = block0;
 
         /* Store to output. */
         vst1q_u8(dst_u8, tmp0);
@@ -711,8 +713,9 @@ static inline void _aes256CbcDecryptBlocks(Aes256CbcContext *ctx, u8 *dst_u8, co
               AES_ENC_DEC_INPUT_ROUND_KEY(14)
         );
 
-        /* Update IV. */
-        cur_iv = tmp0;
+        /* Do XOR for CBC. */
+        tmp0 = veorq_u8(tmp0, cur_iv);
+        cur_iv = block0;
 
         /* Store to output. */
         vst1q_u8(dst_u8, tmp0);
