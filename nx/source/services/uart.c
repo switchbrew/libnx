@@ -108,14 +108,14 @@ Result uartIsSupportedPortEventForDev(UartPortForDev port, UartPortEventType por
 }
 
 Result uartIsSupportedDeviceVariation(UartPort port, u32 device_variation, bool *out) {
-    if (hosversionBefore(7,0,0) || hosversionAtLeast(17,0,0))
+    if (!hosversionBetween(7,17))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return _uartCmdInTwoU32sOutBool(&g_uartSrv, port, device_variation, out, 9);
 }
 
 Result uartIsSupportedDeviceVariationForDev(UartPortForDev port, u32 device_variation, bool *out) {
-    if (hosversionBefore(7,0,0) || hosversionAtLeast(17,0,0))
+    if (!hosversionBetween(7,17))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return _uartCmdInTwoU32sOutBool(&g_uartSrv, port, device_variation, out, 10);
