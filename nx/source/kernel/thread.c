@@ -16,11 +16,6 @@
 #define USER_TLS_END   (0x200 - sizeof(ThreadVars))
 #define NUM_TLS_SLOTS ((USER_TLS_END - USER_TLS_BEGIN) / sizeof(void*))
 
-extern const u8 __tdata_lma[];
-extern const u8 __tdata_lma_end[];
-extern u8 __tls_start[];
-extern u8 __tls_end[];
-
 static Mutex g_threadMutex;
 static Thread* g_threadList;
 
@@ -45,7 +40,7 @@ static void _EntryWrap(ThreadEntryArgs* args) {
     tv->magic      = THREADVARS_MAGIC;
     tv->thread_ptr = args->t;
     tv->reent      = args->reent;
-    tv->tls_tp     = (u8*)args->tls-2*sizeof(void*); // subtract size of Thread Control Block (TCB)
+    tv->tls_tp     = (u8*)args->tls-getTlsStartOffset();
     tv->handle     = args->t->handle;
 
     // Initialize thread info
@@ -94,28 +89,35 @@ Result threadCreate(
     Thread* t, ThreadFunc entry, void* arg, void* stack_mem, size_t stack_sz,
     int prio, int cpuid)
 {
-
-    const size_t tls_sz = (__tls_end-__tls_start+0xF) &~ 0xF;
     const size_t reent_sz = (sizeof(struct _reent)+0xF) &~ 0xF;
+    const size_t tls_sz = (__tls_end-__tls_start+0xF) &~ 0xF;
+
+    // Verify stack size alignment
+    if (stack_sz & 0xFFF) {
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+    }
 
     bool owns_stack_mem;
     if (stack_mem == NULL) {
-        // Allocate new memory, stack then reent then tls.
-        stack_mem = __libnx_aligned_alloc(0x1000, stack_sz + reent_sz + tls_sz);
+        // Allocate new memory for the stack, tls and reent.
+        stack_mem = __libnx_aligned_alloc(0x1000, stack_sz + tls_sz + reent_sz);
 
         owns_stack_mem = true;
     } else {
-        // Use provided memory for stack, reent, and tls.
-        if (((uintptr_t)stack_mem & 0xFFF) || (stack_sz & 0xFFF)) {
+        // Verify alignment of provided memory.
+        if ((uintptr_t)stack_mem & 0xFFF) {
             return MAKERESULT(Module_Libnx, LibnxError_BadInput);
         }
 
         // Ensure we don't go out of bounds.
-        if (stack_sz <= tls_sz + reent_sz) {
+        size_t align_mask = getTlsStartOffset()-1;
+        size_t needed_sz = (tls_sz + reent_sz + align_mask) &~ align_mask;
+        if (stack_sz <= needed_sz + sizeof(ThreadEntryArgs)) {
             return MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
         }
 
-        stack_sz -= tls_sz + reent_sz;
+        // Use provided memory for the stack, tls and reent.
+        stack_sz -= needed_sz;
         owns_stack_mem = false;
     }
 
@@ -123,9 +125,9 @@ Result threadCreate(
         return MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
     }
 
-    // Stack size may be unaligned in either case.
+    // Total allocation size may be unaligned in either case.
     virtmemLock();
-    const size_t aligned_stack_sz = (stack_sz + tls_sz + reent_sz +0xFFF) & ~0xFFF;
+    const size_t aligned_stack_sz = (stack_sz + tls_sz + reent_sz + 0xFFF) & ~0xFFF;
     void* stack_mirror = virtmemFindStack(aligned_stack_sz, 0x4000);
     Result rc = svcMapMemory(stack_mirror, stack_mem, aligned_stack_sz);
     virtmemUnlock();
@@ -134,8 +136,9 @@ Result threadCreate(
     {
         uintptr_t stack_top = (uintptr_t)stack_mirror + stack_sz - sizeof(ThreadEntryArgs);
         ThreadEntryArgs* args = (ThreadEntryArgs*) stack_top;
-        void *reent = (void*)((uintptr_t)stack_mirror + stack_sz);
-        void *tls = (void*)((uintptr_t)reent + reent_sz);
+        void *tls = (void*)((uintptr_t)stack_mirror + stack_sz);
+        void *reent = (void*)((uintptr_t)tls + tls_sz);
+
         Handle handle;
 
         t->handle = INVALID_HANDLE;

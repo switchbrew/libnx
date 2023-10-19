@@ -30,10 +30,6 @@ struct __pthread_t
 
 void __attribute__((weak)) NORETURN __libnx_exit(int rc);
 
-extern const u8 __tdata_lma[];
-extern const u8 __tdata_lma_end[];
-extern u8 __tls_start[];
-
 /// TimeType passed to timeGetCurrentTime() during time initialization. If that fails and __nx_time_type isn't TimeType_Default, timeGetCurrentTime() will be called again with TimeType_Default.
 __attribute__((weak)) TimeType __nx_time_type = TimeType_Default;
 
@@ -438,7 +434,7 @@ void newlibSetup(void)
     tv->reent      = _impure_ptr;
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Warray-bounds"
-    tv->tls_tp     = __tls_start-2*sizeof(void*); // subtract size of Thread Control Block (TCB)
+    tv->tls_tp     = __tls_start-getTlsStartOffset();
 #pragma GCC diagnostic pop
     tv->handle     = envGetMainThreadHandle();
 
