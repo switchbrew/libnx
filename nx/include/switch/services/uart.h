@@ -54,6 +54,7 @@ Service* uartGetServiceSession(void);
 
 /**
  * @brief HasPort
+ * @note Only available on [1.0.0-16.1.0].
  * @param[in] port \ref UartPort
  * @param[out] out Output success flag.
  */
@@ -61,6 +62,7 @@ Result uartHasPort(UartPort port, bool *out);
 
 /**
  * @brief HasPortForDev
+ * @note Only available on [1.0.0-16.1.0].
  * @param[in] port \ref UartPortForDev
  * @param[out] out Output success flag.
  */
@@ -68,6 +70,7 @@ Result uartHasPortForDev(UartPortForDev port, bool *out);
 
 /**
  * @brief IsSupportedBaudRate
+ * @note Only available on [1.0.0-16.1.0].
  * @param[in] port \ref UartPort
  * @param[in] baud_rate BaudRate
  * @param[out] out Output success flag.
@@ -76,6 +79,7 @@ Result uartIsSupportedBaudRate(UartPort port, u32 baud_rate, bool *out);
 
 /**
  * @brief IsSupportedBaudRateForDev
+ * @note Only available on [1.0.0-16.1.0].
  * @param[in] port \ref UartPortForDev
  * @param[in] baud_rate BaudRate
  * @param[out] out Output success flag.
@@ -84,6 +88,7 @@ Result uartIsSupportedBaudRateForDev(UartPortForDev port, u32 baud_rate, bool *o
 
 /**
  * @brief IsSupportedFlowControlMode
+ * @note Only available on [1.0.0-16.1.0].
  * @param[in] port \ref UartPort
  * @param[in] flow_control_mode \ref UartFlowControlMode
  * @param[out] out Output success flag.
@@ -92,6 +97,7 @@ Result uartIsSupportedFlowControlMode(UartPort port, UartFlowControlMode flow_co
 
 /**
  * @brief IsSupportedFlowControlModeForDev
+ * @note Only available on [1.0.0-16.1.0].
  * @param[in] port \ref UartPortForDev
  * @param[in] flow_control_mode \ref UartFlowControlMode
  * @param[out] out Output success flag.
@@ -107,6 +113,7 @@ Result uartCreatePortSession(UartPortSession *s);
 
 /**
  * @brief IsSupportedPortEvent
+ * @note Only available on [1.0.0-16.1.0].
  * @param[in] port \ref UartPort
  * @param[in] port_event_type \ref UartPortEventType
  * @param[out] out Output success flag.
@@ -115,6 +122,7 @@ Result uartIsSupportedPortEvent(UartPort port, UartPortEventType port_event_type
 
 /**
  * @brief IsSupportedPortEventForDev
+ * @note Only available on [1.0.0-16.1.0].
  * @param[in] port \ref UartPortForDev
  * @param[in] port_event_type \ref UartPortEventType
  * @param[out] out Output success flag.
@@ -123,7 +131,7 @@ Result uartIsSupportedPortEventForDev(UartPortForDev port, UartPortEventType por
 
 /**
  * @brief IsSupportedDeviceVariation
- * @note Only available on [7.0.0+].
+ * @note Only available on [7.0.0-16.1.0].
  * @param[in] port \ref UartPort
  * @param[in] device_variation DeviceVariation
  * @param[out] out Output success flag.
@@ -132,7 +140,7 @@ Result uartIsSupportedDeviceVariation(UartPort port, u32 device_variation, bool 
 
 /**
  * @brief IsSupportedDeviceVariationForDev
- * @note Only available on [7.0.0+].
+ * @note Only available on [7.0.0-16.1.0].
  * @param[in] port \ref UartPortForDev
  * @param[in] device_variation DeviceVariation
  * @param[out] out Output success flag.

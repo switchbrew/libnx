@@ -45,26 +45,44 @@ static Result _uartCmdInTwoU32sOutBool(Service* srv, u32 inval0, u32 inval1, boo
 }
 
 Result uartHasPort(UartPort port, bool *out) {
+    if (hosversionAtLeast(17,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     return _uartCmdInU32OutBool(&g_uartSrv, port, out, 0);
 }
 
 Result uartHasPortForDev(UartPortForDev port, bool *out) {
+    if (hosversionAtLeast(17,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     return _uartCmdInU32OutBool(&g_uartSrv, port, out, 1);
 }
 
 Result uartIsSupportedBaudRate(UartPort port, u32 baud_rate, bool *out) {
+    if (hosversionAtLeast(17,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     return _uartCmdInTwoU32sOutBool(&g_uartSrv, port, baud_rate, out, 2);
 }
 
 Result uartIsSupportedBaudRateForDev(UartPortForDev port, u32 baud_rate, bool *out) {
+    if (hosversionAtLeast(17,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     return _uartCmdInTwoU32sOutBool(&g_uartSrv, port, baud_rate, out, 3);
 }
 
 Result uartIsSupportedFlowControlMode(UartPort port, UartFlowControlMode flow_control_mode, bool *out) {
+    if (hosversionAtLeast(17,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     return _uartCmdInTwoU32sOutBool(&g_uartSrv, port, flow_control_mode, out, 4);
 }
 
 Result uartIsSupportedFlowControlModeForDev(UartPortForDev port, UartFlowControlMode flow_control_mode, bool *out) {
+    if (hosversionAtLeast(17,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     return _uartCmdInTwoU32sOutBool(&g_uartSrv, port, flow_control_mode, out, 5);
 }
 
@@ -76,22 +94,28 @@ Result uartCreatePortSession(UartPortSession *s) {
 }
 
 Result uartIsSupportedPortEvent(UartPort port, UartPortEventType port_event_type, bool *out) {
+    if (hosversionAtLeast(17,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     return _uartCmdInTwoU32sOutBool(&g_uartSrv, port, port_event_type, out, 7);
 }
 
 Result uartIsSupportedPortEventForDev(UartPortForDev port, UartPortEventType port_event_type, bool *out) {
+    if (hosversionAtLeast(17,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     return _uartCmdInTwoU32sOutBool(&g_uartSrv, port, port_event_type, out, 8);
 }
 
 Result uartIsSupportedDeviceVariation(UartPort port, u32 device_variation, bool *out) {
-    if (hosversionBefore(7,0,0))
+    if (hosversionBefore(7,0,0) || hosversionAtLeast(17,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return _uartCmdInTwoU32sOutBool(&g_uartSrv, port, device_variation, out, 9);
 }
 
 Result uartIsSupportedDeviceVariationForDev(UartPortForDev port, u32 device_variation, bool *out) {
-    if (hosversionBefore(7,0,0))
+    if (hosversionBefore(7,0,0) || hosversionAtLeast(17,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return _uartCmdInTwoU32sOutBool(&g_uartSrv, port, device_variation, out, 10);
