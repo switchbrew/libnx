@@ -1309,6 +1309,29 @@ Result nsCleanupUnavailableAddOnContents(u64 application_id, AccountUid uid) {
     return rc;
 }
 
+Result nsEstimateSizeToMove(u8 *storage_ids, s32 count, NcmStorageId storage_id, u32 flags, u64 application_id, s64 *out) {
+    if (hosversionBefore(10,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    Service srv={0};
+    Result rc = nsGetApplicationManagerInterface(&srv);
+
+    const struct {
+        u8 storage_id;
+        u8 pad[3];
+        u32 flags;
+        u64 application_id;
+    } in = { storage_id, {0}, flags, application_id };
+
+    if (R_SUCCEEDED(rc)) rc = serviceDispatchInOut(&srv, 1311, in, *out,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
+        .buffers = { { storage_ids, count*sizeof(u8) } },
+    );
+
+    serviceClose(&srv);
+    return rc;
+}
+
 Result nsFormatSdCard(void) {
     if (hosversionBefore(2,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);

@@ -772,6 +772,18 @@ Result nsIsAnyApplicationEntityInstalled(u64 application_id, bool *out);
 Result nsCleanupUnavailableAddOnContents(u64 application_id, AccountUid uid);
 
 /**
+ * @brief EstimateSizeToMove
+ * @note Only available on [10.0.0+].
+ * @param[in] storage_ids Array of u8 \ref NcmStorageId.
+ * @param[in] count Size of the storage_ids array in entries.
+ * @param[in] storage_id storage_id \ref NcmStorageId
+ * @param[in] flags Flags
+ * @param[in] application_id ApplicationId.
+ * @param[out] Out Output value.
+ */
+Result nsEstimateSizeToMove(u8 *storage_ids, s32 count, NcmStorageId storage_id, u32 flags, u64 application_id, s64 *out);
+
+/**
  * @brief FormatSdCard
  * @note Only available on [2.0.0+].
  */
