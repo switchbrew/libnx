@@ -662,7 +662,7 @@ Result fsGetProgramIndexForAccessLog(u32 *out_program_index, u32 *out_program_co
 Result fsGetAndClearMemoryReportInfo(FsMemoryReportInfo* out) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    return _fsObjectDispatchOut(&g_fsSrv, 1008, *out);
+    return _fsObjectDispatchOut(&g_fsSrv, 1009, *out);
 }
 
 // Wrapper(s) for fsCreateSaveDataFileSystem.
