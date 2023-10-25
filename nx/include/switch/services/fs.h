@@ -350,9 +350,9 @@ typedef struct {
 
 /// FatFatError
 typedef struct {
-    int error;
-    int extra_error;
-    int drive_id;
+    s32 error;
+    s32 extra_error;
+    s32 drive_id;
     char name[16];
     u8 reserved[4];
 } FatFatError;
