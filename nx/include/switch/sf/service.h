@@ -6,6 +6,7 @@
  * @copyright libnx Authors
  */
 #pragma once
+#include <assert.h>
 #include "hipc.h"
 #include "cmif.h"
 
@@ -473,23 +474,45 @@ NX_INLINE Result serviceDispatchImpl(
     return rc;
 }
 
+#ifndef __cplusplus
+
 #define serviceMacroDetectIsSameType(a, b) __builtin_types_compatible_p(typeof(a), typeof(b))
 #define serviceMacroDetectIsPointerOrArray(p) (__builtin_classify_type(p) == 5)
 #define serviceMacroDecay(p) (&*__builtin_choose_expr(serviceMacroDetectIsPointerOrArray(p), p, NULL))
 #define serviceMacroDetectIsPointer(p) serviceMacroDetectIsSameType(p, serviceMacroDecay(p))
 
+#else
+
+extern "C++" {
+
+namespace libnx::impl {
+
+    template<typename T> struct is_pointer                    { static constexpr bool value = false; };
+    template<typename T> struct is_pointer<T*>                { static constexpr bool value = true;  };
+    template<typename T> struct is_pointer<T* const>          { static constexpr bool value = true;  };
+    template<typename T> struct is_pointer<T* volatile>       { static constexpr bool value = true;  };
+    template<typename T> struct is_pointer<T* const volatile> { static constexpr bool value = true;  };
+
+}
+
+}
+
+#define serviceMacroDetectIsPointer(p) (::libnx::impl::is_pointer<decltype(p)>::value)
+
+#endif
+
 #define serviceDispatch(_s,_rid,...) \
     serviceDispatchImpl((_s),(_rid),NULL,0,NULL,0,(SfDispatchParams){ __VA_ARGS__ })
 
 #define serviceDispatchIn(_s,_rid,_in,...) \
-    ({ _Static_assert(!(serviceMacroDetectIsPointer(_in))); \
+    ({ static_assert(!(serviceMacroDetectIsPointer(_in))); \
     serviceDispatchImpl((_s),(_rid),&(_in),sizeof(_in),NULL,0,(SfDispatchParams){ __VA_ARGS__ }); })
 
 #define serviceDispatchOut(_s,_rid,_out,...) \
-    ({ _Static_assert(!(serviceMacroDetectIsPointer(_out))); \
+    ({ static_assert(!(serviceMacroDetectIsPointer(_out))); \
     serviceDispatchImpl((_s),(_rid),NULL,0,&(_out),sizeof(_out),(SfDispatchParams){ __VA_ARGS__ }); })
 
 #define serviceDispatchInOut(_s,_rid,_in,_out,...) \
-    ({ _Static_assert(!(serviceMacroDetectIsPointer(_in))); \
-    _Static_assert(!(serviceMacroDetectIsPointer(_out))); \
+    ({ static_assert(!(serviceMacroDetectIsPointer(_in))); \
+    static_assert(!(serviceMacroDetectIsPointer(_out))); \
     serviceDispatchImpl((_s),(_rid),&(_in),sizeof(_in),&(_out),sizeof(_out),(SfDispatchParams){ __VA_ARGS__ }); })
