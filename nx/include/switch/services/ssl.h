@@ -180,6 +180,7 @@ typedef enum {
 /// PrivateOptionType
 typedef enum {
     SslPrivateOptionType_DtlsSession                                          = 1,               ///< \ref sslConnectionSetSessionCacheMode will throw an error if the input ::SslSessionCacheMode is non-zero and this option flag is set.
+    SslPrivateOptionType_SetCipher                                            = 2,               ///< [17.0.0+] This exclusively enables the cipher suite specified in the input u32 value passed to \ref sslConnectionSetPrivateOption (all other ciphers disabled).
 } SslPrivateOptionType;
 
 /// AlpnProtoState
@@ -747,9 +748,9 @@ Result sslConnectionGetDtlsHandshakeTimeout(SslConnection *c, u64 *out);
  * @note Only available on [16.0.0+].
  * @param c \ref SslConnection
  * @param[in] option \ref SslPrivateOptionType
- * @param[in] flag Input flag value.
+ * @param[in] value Input value.
  */
-Result sslConnectionSetPrivateOption(SslConnection *c, SslPrivateOptionType option, bool flag);
+Result sslConnectionSetPrivateOption(SslConnection *c, SslPrivateOptionType option, u32 value);
 
 /**
  * @brief SetSrtpCiphers

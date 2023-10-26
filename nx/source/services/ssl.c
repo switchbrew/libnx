@@ -135,6 +135,15 @@ static Result _sslCmdInU8U32NoOut(Service* srv, u8 val0, u32 val1, u32 cmd_id) {
     return _sslObjectDispatchIn(srv, cmd_id, in);
 }
 
+static Result _sslCmdInTwoU32sNoOut(Service* srv, u32 val0, u32 val1, u32 cmd_id) {
+    const struct {
+        u32 val0;
+        u32 val1;
+    } in = { val0, val1 };
+
+    return _sslObjectDispatchIn(srv, cmd_id, in);
+}
+
 static Result _sslCmdNoInOutU32(Service* srv, u32 *out, u32 cmd_id) {
     return _sslObjectDispatchOut(srv, cmd_id, *out);
 }
@@ -897,14 +906,17 @@ Result sslConnectionGetDtlsHandshakeTimeout(SslConnection *c, u64 *out) {
     );
 }
 
-Result sslConnectionSetPrivateOption(SslConnection *c, SslPrivateOptionType option, bool flag) {
+Result sslConnectionSetPrivateOption(SslConnection *c, SslPrivateOptionType option, u32 value) {
     if (!serviceIsActive(&c->s))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     if (hosversionBefore(16,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return _sslCmdInU8U32NoOut(&c->s, flag!=0, option, 30);
+    if (hosversionBefore(17,0,0))
+        return _sslCmdInU8U32NoOut(&c->s, value!=0, option, 30);
+    else
+        return _sslCmdInTwoU32sNoOut(&c->s, option, value, 30);
 }
 
 Result sslConnectionSetSrtpCiphers(SslConnection *c, const u16 *ciphers, u32 count) {
