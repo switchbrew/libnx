@@ -340,6 +340,108 @@ typedef enum {
     FsMountHostOptionFlag_PseudoCaseSensitive = BIT(0), ///< Host filesystem will be pseudo case sensitive.
 } FsMountHostOption;
 
+/// FsStorageErrorInfo
+typedef struct {
+    u32 num_activation_failures;
+    u32 num_activation_error_corrections;
+    u32 num_read_write_failures;
+    u32 num_read_write_error_corrections;
+} FsStorageErrorInfo;
+
+/// FatFatError
+typedef struct {
+    s32 error;
+    s32 extra_error;
+    s32 drive_id;
+    char name[16];
+    u8 reserved[4];
+} FatFatError;
+
+/// FatFatReportInfo1
+typedef struct {
+    u16 open_file_peak_count;
+    u16 open_directory_peak_count;
+} FatFatReportInfo1;
+
+/// FatFatReportInfo2
+typedef struct {
+    u16 open_unique_file_entry_peak_count;
+    u16 open_unique_directory_entry_peak_count;
+} FatFatReportInfo2;
+
+/// FatFatSafeInfo
+typedef struct {
+    u32 result;
+    u32 error_number;
+    u32 safe_error_number;
+} FatFatSafeInfo;
+
+/// FsFileSystemProxyErrorInfo
+typedef struct {
+    u32 rom_fs_remount_for_data_corruption_count;
+    u32 rom_fs_unrecoverable_data_corruption_by_remount_count;
+    FatFatError fat_fs_error;
+    u32 rom_fs_recovered_by_invalidate_cache_count;
+    u32 save_data_index_count;
+    FatFatReportInfo1 bis_system_fat_report_info_1;
+    FatFatReportInfo1 bis_user_fat_report_info_1;
+    FatFatReportInfo1 sd_card_fat_report_info_1;
+    FatFatReportInfo2 bis_system_fat_report_info_2;
+    FatFatReportInfo2 bis_user_fat_report_info_2;
+    FatFatReportInfo2 sd_card_fat_report_info_2;
+    u32 rom_fs_deep_retry_start_count;
+    u32 rom_fs_unrecoverable_by_game_card_access_failed_count;
+    FatFatSafeInfo bis_system_fat_safe_info;
+    FatFatSafeInfo bis_user_fat_safe_info;
+
+    u8 reserved[0x18];
+} FsFileSystemProxyErrorInfo;
+
+/// FsMemoryReportInfo
+typedef struct {
+    u64 pooled_buffer_peak_free_size;
+    u64 pooled_buffer_retried_count;
+    u64 pooled_buffer_reduce_allocation_count;
+    u64 buffer_manager_peak_free_size;
+    u64 buffer_manager_retried_count;
+    u64 exp_heap_peak_free_size;
+    u64 buffer_pool_peak_free_size;
+    u64 patrol_read_allocate_buffer_success_count;
+    u64 patrol_read_allocate_buffer_failure_count;
+    u64 buffer_manager_peak_total_allocatable_size;
+    u64 buffer_pool_max_allocate_size;
+    u64 pooled_buffer_failed_ideal_allocation_count_on_async_access;
+
+    u8 reserved[0x20];
+} FsMemoryReportInfo;
+
+/// FsGameCardErrorReportInfo
+typedef struct {
+    u16 game_card_crc_error_num;
+    u16 reserved1;
+    u16 asic_crc_error_num;
+    u16 reserved2;
+    u16 refresh_num;
+    u16 reserved3;
+    u16 retry_limit_out_num;
+    u16 timeout_retry_num;
+    u16 asic_reinitialize_failure_detail;
+    u16 insertion_count;
+    u16 removal_count;
+    u16 asic_reinitialize_num;
+    u32 initialize_count;
+    u16 asic_reinitialize_failure_num;
+    u16 awaken_failure_num;
+    u16 reserved4;
+    u16 refresh_succeeded_count;
+    u32 last_read_error_page_address;
+    u32 last_read_error_page_count;
+    u32 awaken_count;
+    u32 read_count_from_insert;
+    u32 read_count_from_awaken;
+    u8  reserved5[8];
+} FsGameCardErrorReportInfo;
+
 /// Initialize fsp-srv. Used automatically during app startup.
 Result fsInitialize(void);
 
@@ -418,6 +520,10 @@ Result fsDisableAutoSaveDataCreation(void);
 Result fsSetGlobalAccessLogMode(u32 mode);
 Result fsGetGlobalAccessLogMode(u32* out_mode);
 Result fsOutputAccessLogToSdCard(const char *log, size_t size);
+
+Result fsGetAndClearErrorInfo(FsFileSystemProxyErrorInfo *out); ///< [2.0.0+]
+
+Result fsGetAndClearMemoryReportInfo(FsMemoryReportInfo* out); ///< [4.0.0+]
 
 /// Only available on [7.0.0+].
 Result fsGetProgramIndexForAccessLog(u32 *out_program_index, u32 *out_program_count);
@@ -524,7 +630,20 @@ void fsEventNotifierClose(FsEventNotifier* e);
 
 // IDeviceOperator
 Result fsDeviceOperatorIsSdCardInserted(FsDeviceOperator* d, bool* out);
+Result fsDeviceOperatorGetSdCardSpeedMode(FsDeviceOperator* d, s64* out);
+Result fsDeviceOperatorGetSdCardCid(FsDeviceOperator* d, void* dst, size_t dst_size, s64 size);
+Result fsDeviceOperatorGetSdCardUserAreaSize(FsDeviceOperator* d, s64* out);
+Result fsDeviceOperatorGetSdCardProtectedAreaSize(FsDeviceOperator* d, s64* out);
+Result fsDeviceOperatorGetAndClearSdCardErrorInfo(FsDeviceOperator* d, FsStorageErrorInfo* out, s64 *out_log_size, void *dst, size_t dst_size, s64 size);
+Result fsDeviceOperatorGetMmcCid(FsDeviceOperator* d, void* dst, size_t dst_size, s64 size);
+Result fsDeviceOperatorGetMmcSpeedMode(FsDeviceOperator* d, s64* out);
+Result fsDeviceOperatorGetMmcPatrolCount(FsDeviceOperator* d, u32* out);
+Result fsDeviceOperatorGetAndClearMmcErrorInfo(FsDeviceOperator* d, FsStorageErrorInfo* out, s64 *out_log_size, void *dst, size_t dst_size, s64 size);
+Result fsDeviceOperatorGetMmcExtendedCsd(FsDeviceOperator* d, void* dst, size_t dst_size, s64 size);
 Result fsDeviceOperatorIsGameCardInserted(FsDeviceOperator* d, bool* out);
 Result fsDeviceOperatorGetGameCardHandle(FsDeviceOperator* d, FsGameCardHandle* out);
 Result fsDeviceOperatorGetGameCardAttribute(FsDeviceOperator* d, const FsGameCardHandle* handle, u8 *out);
+Result fsDeviceOperatorGetGameCardIdSet(FsDeviceOperator* d, void* dst, size_t dst_size, s64 size);
+Result fsDeviceOperatorGetGameCardErrorReportInfo(FsDeviceOperator* d, FsGameCardErrorReportInfo* out);
+Result fsDeviceOperatorGetGameCardDeviceId(FsDeviceOperator* d, void* dst, size_t dst_size, s64 size);
 void fsDeviceOperatorClose(FsDeviceOperator* d);
