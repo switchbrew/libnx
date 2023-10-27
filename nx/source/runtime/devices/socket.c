@@ -62,8 +62,6 @@ static const devoptab_t g_socketDevoptab = {
 };
 
 static const SocketInitConfig g_defaultSocketInitConfig = {
-    .bsdsockets_version = 1,
-
     .tcp_tx_buf_size        = 0x8000,
     .tcp_rx_buf_size        = 0x10000,
     .tcp_tx_buf_max_size    = 0x40000,
@@ -82,13 +80,35 @@ const SocketInitConfig *socketGetDefaultInitConfig(void) {
     return &g_defaultSocketInitConfig;
 }
 
+static u32 socketSelectVersion(void) {
+    if (hosversionBefore(3,0,0)) {
+        return 1;
+    } else if (hosversionBefore(4,0,0)) {
+        return 2;
+    } else if (hosversionBefore(5,0,0)) {
+        return 3;
+    } else if (hosversionBefore(6,0,0)) {
+        return 4;
+    } else if (hosversionBefore(8,0,0)) {
+        return 5;
+    } else if (hosversionBefore(9,0,0)) {
+        return 6;
+    } else if (hosversionBefore(13,0,0)) {
+        return 7;
+    } else if (hosversionBefore(16,0,0)) {
+        return 8;
+    } else /* latest known version */ {
+        return 9;
+    }
+}
+
 Result socketInitialize(const SocketInitConfig *config) {
     Result ret = 0;
     if (!config)
         config = &g_defaultSocketInitConfig;
 
     BsdInitConfig bcfg = {
-        .version = config->bsdsockets_version,
+        .version = socketSelectVersion(),
 
         .tcp_tx_buf_size        = config->tcp_tx_buf_size,
         .tcp_rx_buf_size        = config->tcp_rx_buf_size,
