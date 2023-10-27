@@ -9,8 +9,8 @@ endif
 include $(DEVKITPRO)/devkitA64/base_rules
 
 export LIBNX_MAJOR	:= 4
-export LIBNX_MINOR	:= 4
-export LIBNX_PATCH	:= 2
+export LIBNX_MINOR	:= 5
+export LIBNX_PATCH	:= 0
 
 
 VERSION	:=	$(LIBNX_MAJOR).$(LIBNX_MINOR).$(LIBNX_PATCH)

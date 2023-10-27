@@ -1,5 +1,31 @@
 # Changelog
 
+## Version 4.5.0
+
+#### services
+* btdrv: Missing definitions for ble were added
+* capsdc: Updated for [17.0.0+]
+* hidsys: Support was added for many commands
+* fs:
+    * Updated for [17.0.0+]
+    * Support was added for many fsDeviceOperator commands
+* ncm: Updated for [17.0.0+]
+* nfc: Support was added for all remaining commands
+* ns: Added nsEstimateSizeToMove
+* pctl: Support was added for many commands
+* ssl: Updated sslConnectionSetPrivateOption for [17.0.0+]
+* ts: Updated for [17.0.0+]
+
+#### devices
+* socket: Updated wrapper to automatically select latest available bsd service version (fixes multicast support)
+
+#### miscellaneous
+* The linker script/crt0 were updated to support relro
+* A bug was fixed in aes-cbc block decryption
+* A number of problems were corrected involving incorrect ipc serialization with pointer arguments
+
+**Several issues were fixed, and usability and stability were improved.**
+
 ## Version 4.4.2
 
 #### system
@@ -12,7 +38,7 @@
 ## Version 4.4.1
 
 #### miscellaneous
-* add missing separator to local path 
+* add missing separator to local path
 
 **Several issues were fixed, and usability and stability were improved.**
 
