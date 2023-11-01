@@ -514,7 +514,7 @@ SVC_BEGIN svcQueryPhysicalAddress
 	ret
 SVC_END
 
-SVC_BEGIN svcQueryIoMapping
+SVC_BEGIN svcQueryMemoryMapping
 	stp x0, x1, [sp, #-16]!
 	svc 0x55
 	ldp x3, x4, [sp], #16
@@ -799,12 +799,12 @@ SVC_BEGIN svcCallSecureMonitor
 	ret
 SVC_END
 
-SVC_BEGIN svcMapInsecureMemory
+SVC_BEGIN svcMapInsecurePhysicalMemory
 	svc 0x90
 	ret
 SVC_END
 
-SVC_BEGIN svcUnmapInsecureMemory
+SVC_BEGIN svcUnmapInsecurePhysicalMemory
 	svc 0x91
 	ret
 SVC_END
