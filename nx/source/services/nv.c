@@ -32,9 +32,12 @@ Result _nvInitialize(void) {
         rc = smGetService(&g_nvSrv, "nvdrv:s");
         break;
 
+    case AppletType_SystemApplication:
+        rc = smGetService(&g_nvSrv, "nvdrv:t");
+        break;
+
     case AppletType_Default:
     case AppletType_Application:
-    case AppletType_SystemApplication:
     default:
         rc = smGetService(&g_nvSrv, "nvdrv");
         break;
