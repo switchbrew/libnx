@@ -1226,6 +1226,17 @@ Result fsDeviceOperatorGetGameCardAttribute(FsDeviceOperator* d, const FsGameCar
     return _fsObjectDispatchInOut(&d->s, 205, *handle, *out);
 }
 
+Result fsDeviceOperatorGetGameCardDeviceCertificate(FsDeviceOperator* d, const FsGameCardHandle* handle, void* dst, size_t dst_size, s64 size) {
+    const struct {
+        FsGameCardHandle handle;
+        s64 buffer_size;
+    } in = { *handle, size };
+    
+    return _fsObjectDispatchIn(&d->s, 206, in,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { dst, dst_size } });
+}
+
 Result fsDeviceOperatorGetGameCardIdSet(FsDeviceOperator* d, void* dst, size_t dst_size, s64 size) {
     return _fsCmdInSizeOutBuffer(&d->s, dst, dst_size, size, 208);
 }
@@ -1240,6 +1251,24 @@ Result fsDeviceOperatorGetGameCardDeviceId(FsDeviceOperator* d, void* dst, size_
     if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     return _fsCmdInSizeOutBuffer(&d->s, dst, dst_size, size, 218);
+}
+
+Result fsDeviceOperatorChallengeCardExistence(FsDeviceOperator* d, const FsGameCardHandle* handle, void* dst, size_t dst_size, void* seed, size_t seed_size, void* value, size_t value_size) {
+    if (hosversionBefore(8,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    
+    return _fsObjectDispatchIn(&d->s, 219, *handle,
+        .buffer_attrs = {
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_Out,
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_In,
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_In,
+        },
+        .buffers = {
+            { dst,   dst_size   },
+            { seed,  seed_size  },
+            { value, value_size },
+        },
+    );
 }
 
 void fsDeviceOperatorClose(FsDeviceOperator* d) {
