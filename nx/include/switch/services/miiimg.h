@@ -20,7 +20,7 @@ typedef struct {
     MiiCreateId create_id;     ///< Mii's create ID.
     u32 unk;
     u16 mii_name[10+1];        ///< utf-16be, null-terminated
-} PACKED MiiimgImageAttribute;
+} NX_PACKED MiiimgImageAttribute;
 
 /// Initialize miiimg.
 Result miiimgInitialize(void);

@@ -11,7 +11,7 @@ typedef struct {
 } BqRect;
 
 typedef struct {
-    struct { s64 timestamp; } PACKED;
+    struct { s64 timestamp; } NX_PACKED;
     s32 isAutoTimestamp;
     BqRect crop;
     s32 scalingMode;

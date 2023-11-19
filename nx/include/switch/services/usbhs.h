@@ -60,7 +60,7 @@ typedef struct {
     u8 pad_x155[0x6];
     struct usb_ss_endpoint_companion_descriptor output_ss_endpoint_companion_descs[15]; ///< ?
     u8 pad_x1b5[0x3];
-} PACKED UsbHsInterfaceInfo;
+} NX_PACKED UsbHsInterfaceInfo;
 
 /// Interface struct. Note that devices have a seperate \ref UsbHsInterface for each interface.
 typedef struct {
@@ -75,7 +75,7 @@ typedef struct {
     u8 pad_x21b[0x5];
 
     u64 timestamp; ///< Unknown u64 timestamp for when the device was inserted?
-} PACKED UsbHsInterface;
+} NX_PACKED UsbHsInterface;
 
 typedef struct {
     u32 xferId;

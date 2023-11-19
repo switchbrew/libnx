@@ -468,7 +468,7 @@ typedef struct {
             u8 svd_index : 7;
             u8 native_flag : 1;
         } svd[0xC];
-    } PACKED video;
+    } NX_PACKED video;
     struct {
         u8 size : 5;
         SetSysBlockType block_type : 3;
@@ -477,7 +477,7 @@ typedef struct {
         u8 padding1 : 1;
         u8 sampling_rates_bitmap;
         u8 bitrate;
-    } PACKED audio;
+    } NX_PACKED audio;
     struct {
         u8 size : 5;
         SetSysBlockType block_type : 3;
@@ -486,7 +486,7 @@ typedef struct {
         u8 mode_bitmap;
         u8 max_tmds_frequency;
         u8 latency_bitmap;
-    } PACKED vendor_specific;
+    } NX_PACKED vendor_specific;
     u8 padding[2];
 } SetSysDataBlock;
 

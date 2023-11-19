@@ -45,7 +45,7 @@ enum {
 };
 
 /// Loader return function.
-typedef void NORETURN (*LoaderReturnFn)(int result_code);
+typedef void NX_NORETURN (*LoaderReturnFn)(int result_code);
 
 /**
  * @brief Parses the homebrew loader environment block (internally called).

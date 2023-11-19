@@ -116,7 +116,7 @@ typedef struct {
     u32 buffer_size;      ///< 0x1000-byte aligned buffer size.
     u64 entries[0x18];
     u16 total_entries;
-} PACKED SwkbdCustomizedDictionarySet;
+} NX_PACKED SwkbdCustomizedDictionarySet;
 
 /// Base swkbd arg struct.
 typedef struct {

@@ -7,7 +7,7 @@
 #include "services/acc.h"
 #include "runtime/diag.h"
 
-void NORETURN __nx_exit(Result rc, LoaderReturnFn retaddr);
+void NX_NORETURN __nx_exit(Result rc, LoaderReturnFn retaddr);
 
 static bool   g_isNso = false;
 static const char* g_loaderInfo = NULL;

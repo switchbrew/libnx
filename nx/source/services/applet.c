@@ -357,7 +357,7 @@ static void _appletInfiniteSleepLoop(void) {
     while(1) svcSleepThread(86400000000000ULL);
 }
 
-static void NORETURN _appletExitProcess(int result_code) {
+static void NX_NORETURN _appletExitProcess(int result_code) {
     appletInitialize();
     appletExit();
 

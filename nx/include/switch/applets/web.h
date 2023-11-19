@@ -95,21 +95,21 @@ typedef struct {
     u32 pad;                     ///< Padding
     char lastUrl[0x1000];        ///< LastUrl string
     u64 lastUrlSize;             ///< Size of LastUrl, including NUL-terminator.
-} PACKED WebCommonReturnValue;
+} NX_PACKED WebCommonReturnValue;
 
 /// Header struct at offset 0 in the web Arg storage (non-webWifi).
 typedef struct {
     u16 total_entries;     ///< Total \ref WebArgTLV entries following this struct.
     u16 pad;               ///< Padding
     WebShimKind shimKind;  ///< ShimKind
-} PACKED WebArgHeader;
+} NX_PACKED WebArgHeader;
 
 /// Web TLV used in the web Arg storage.
 typedef struct {
     u16 type;       ///< Type of this arg.
     u16 size;       ///< Size of the arg data following this struct.
     u8 pad[4];      ///< Padding
-} PACKED WebArgTLV;
+} NX_PACKED WebArgTLV;
 
 /// Config struct for web applets, non-WebWifi.
 typedef struct {
@@ -133,7 +133,7 @@ typedef struct {
     u8 visible;
     u16 unk_x5;
     u8 unk_x7;
-} PACKED WebBootFooterButtonEntry;
+} NX_PACKED WebBootFooterButtonEntry;
 
 /// StorageHandleQueue
 typedef struct {
