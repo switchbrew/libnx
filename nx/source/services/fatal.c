@@ -53,7 +53,7 @@ static void _fatalCmd(Result err, FatalPolicy type, FatalCpuContext *ctx, u32 cm
     }
 }
 
-void NORETURN fatalThrow(Result err) {
+void NX_NORETURN fatalThrow(Result err) {
     // By default, do not generate an error report.
     fatalThrowWithPolicy(err, FatalPolicy_ErrorScreen);
     svcExitProcess();

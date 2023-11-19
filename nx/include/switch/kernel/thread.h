@@ -52,7 +52,7 @@ Result threadStart(Thread* t);
 /**
  * @brief Exits the current thread immediately.
  */
-void NORETURN threadExit(void);
+void NX_NORETURN threadExit(void);
 
 /**
  * @brief Waits for a thread to finish executing.

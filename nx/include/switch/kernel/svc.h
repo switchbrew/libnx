@@ -109,7 +109,7 @@ typedef struct {
 /// Secure monitor arguments.
 typedef struct {
     u64 X[8]; ///< Values of X0 through X7.
-} PACKED SecmonArgs;
+} NX_PACKED SecmonArgs;
 
 /// Break reasons
 typedef enum {
@@ -362,7 +362,7 @@ Result svcQueryMemory(MemoryInfo* meminfo_ptr, u32 *pageinfo, u64 addr);
  * @note Syscall number 0x07.
  */
 
-void NORETURN svcExitProcess(void);
+void NX_NORETURN svcExitProcess(void);
 
 /**
  * @brief Creates a thread.
@@ -382,7 +382,7 @@ Result svcStartThread(Handle handle);
  * @brief Exits the current thread.
  * @note Syscall number 0x0A.
  */
-void NORETURN svcExitThread(void);
+void NX_NORETURN svcExitThread(void);
 
 /**
  * @brief Sleeps the current thread for the specified amount of time.
@@ -668,7 +668,7 @@ Result svcOutputDebugString(const char *str, u64 size);
  * @param[in] res Result code.
  * @note Syscall number 0x28.
  */
-void NORETURN svcReturnFromException(Result res);
+void NX_NORETURN svcReturnFromException(Result res);
 
 /**
  * @brief Retrieves information about the system, or a certain kernel object.

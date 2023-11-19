@@ -12,4 +12,4 @@
  * @brief Aborts program execution with a result code.
  * @param[in] res Result code.
  */
-void NORETURN diagAbortWithResult(Result res);
+void NX_NORETURN diagAbortWithResult(Result res);

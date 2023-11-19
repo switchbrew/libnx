@@ -10,7 +10,7 @@
 #include "runtime/diag.h"
 #include "runtime/devices/fs_dev.h"
 
-void NORETURN __nx_exit(Result rc, LoaderReturnFn retaddr);
+void NX_NORETURN __nx_exit(Result rc, LoaderReturnFn retaddr);
 
 void virtmemSetup(void);
 void newlibSetup(void);
@@ -187,7 +187,7 @@ void __attribute__((weak)) __libnx_init(void* ctx, Handle main_thread, void* sav
     __libc_init_array();
 }
 
-void __attribute__((weak)) NORETURN __libnx_exit(int rc)
+void __attribute__((weak)) NX_NORETURN __libnx_exit(int rc)
 {
     // Call destructors.
     void __libc_fini_array(void);

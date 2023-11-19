@@ -109,7 +109,7 @@ typedef struct {
     u32 protocol;
     u32 tag_type;
     u8  reserved2[0x30];
-} PACKED NfpTagInfo;
+} NX_PACKED NfpTagInfo;
 
 typedef struct {
     u8  uuid[10];
@@ -118,7 +118,7 @@ typedef struct {
     u32 protocol;
     u32 tag_type;
     u8  reserved2[0x30];
-} PACKED NfcTagInfo;
+} NX_PACKED NfcTagInfo;
 
 typedef struct {
     u16 last_write_year;
@@ -128,12 +128,12 @@ typedef struct {
     u16 version;
     u32 application_area_size;
     u8  reserved[0x34];
-} PACKED NfpCommonInfo;
+} NX_PACKED NfpCommonInfo;
 
 typedef struct {
     u8 amiibo_id[0x8];
     u8 reserved[0x38];
-} PACKED NfpModelInfo;
+} NX_PACKED NfpModelInfo;
 
 typedef struct {
     MiiCharInfo mii;
@@ -143,7 +143,7 @@ typedef struct {
     char amiibo_name[(10*4)+1]; ///< utf-8, null-terminated
     u8 font_region;
     u8 reserved[0x7A];
-} PACKED NfpRegisterInfo;
+} NX_PACKED NfpRegisterInfo;
 
 typedef struct {
     u8 mii_store_data[0x44];
@@ -153,7 +153,7 @@ typedef struct {
     char amiibo_name[(10*4)+1]; ///< utf-8, null-terminated
     u8 font_region;
     u8 reserved[0x8E];
-} PACKED NfpRegisterInfoPrivate;
+} NX_PACKED NfpRegisterInfoPrivate;
 
 typedef struct {
     u64 application_id;
@@ -163,7 +163,7 @@ typedef struct {
     u8 tag_type;
     u8 application_area_version;
     u8 reserved[0x2F];
-} PACKED NfpAdminInfo;
+} NX_PACKED NfpAdminInfo;
 
 typedef struct {
     u8 magic;
@@ -199,7 +199,7 @@ typedef struct {
     u8 application_id_byte; ///< (Original Program ID >> 0x24) & 0xF byte (Program ID has this byte swapped with console type)
     u8 reserved6[0x2E];
     u8 application_area[0xD8];
-} PACKED NfpData;
+} NX_PACKED NfpData;
 
 typedef struct {
     u8 mifare_command;
@@ -207,19 +207,19 @@ typedef struct {
     u8 reserved1[0x6];
     u8 sector_key[0x6];
     u8 reserved2[0x2];
-} PACKED NfcSectorKey;
+} NX_PACKED NfcSectorKey;
 
 typedef struct {
     u8 sector_number;
     u8 reserved[0x7];
     NfcSectorKey sector_key;
-} PACKED NfcMifareReadBlockParameter;
+} NX_PACKED NfcMifareReadBlockParameter;
 
 typedef struct {
     u8 data[0x10];
     u8 sector_number;
     u8 reserved[0x7];
-} PACKED NfcMifareReadBlockData;
+} NX_PACKED NfcMifareReadBlockData;
 
 typedef struct {
     u8 data[0x10];

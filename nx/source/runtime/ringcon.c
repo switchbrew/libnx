@@ -240,12 +240,12 @@ Result ringconReadId(RingCon *c, u64 *id_l, u64 *id_h) {
             struct {
               u32 data_x0;
               u16 data_x4;
-            } PACKED id_l;
+            } NX_PACKED id_l;
 
             struct {
               u32 data_x0;
               u16 data_x4;
-            } PACKED id_h;
+            } NX_PACKED id_h;
         } id;
     } reply;
 

@@ -111,7 +111,7 @@ typedef struct {
     u64 languageCode;                 ///< See set.h.
     char dialogMessage[0x800];        ///< UTF-8 Dialog message.
     char fullscreenMessage[0x800];    ///< UTF-8 Fullscreen message (displayed when the user clicks on "Details").
-} PACKED ErrorApplicationArg;
+} NX_PACKED ErrorApplicationArg;
 
 /// Error application config.
 typedef struct {

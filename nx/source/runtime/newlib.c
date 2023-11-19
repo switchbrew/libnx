@@ -28,7 +28,7 @@ struct __pthread_t
     void *rc;
 };
 
-void __attribute__((weak)) NORETURN __libnx_exit(int rc);
+void __attribute__((weak)) NX_NORETURN __libnx_exit(int rc);
 
 /// TimeType passed to timeGetCurrentTime() during time initialization. If that fails and __nx_time_type isn't TimeType_Default, timeGetCurrentTime() will be called again with TimeType_Default.
 __attribute__((weak)) TimeType __nx_time_type = TimeType_Default;

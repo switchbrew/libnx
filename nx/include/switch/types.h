@@ -59,26 +59,26 @@ typedef struct { float value[3]; } UtilFloat3;   ///< 3 floats.
 #endif
 
 /// Packs a struct so that it won't include padding bytes.
-#ifndef PACKED
-#define PACKED     __attribute__((packed))
+#ifndef NX_PACKED
+#define NX_PACKED     __attribute__((packed))
 #endif
 
 /// Marks a function as not returning, for the purposes of compiler optimization.
-#ifndef NORETURN
-#define NORETURN   __attribute__((noreturn))
+#ifndef NX_NORETURN
+#define NX_NORETURN   __attribute__((noreturn))
 #endif
 
 /// Performs a dummy operation on the specified argument in order to silence compiler warnings about unused arguments.
-#ifndef IGNORE_ARG
-#define IGNORE_ARG(x) (void)(x)
+#ifndef NX_IGNORE_ARG
+#define NX_IGNORE_ARG(x) (void)(x)
 #endif
 
 /// Flags a function as deprecated.
-#ifndef DEPRECATED
+#ifndef NX_DEPRECATED
 #ifndef LIBNX_NO_DEPRECATION
-#define DEPRECATED __attribute__ ((deprecated))
+#define NX_DEPRECATED __attribute__ ((deprecated))
 #else
-#define DEPRECATED
+#define NX_DEPRECATED
 #endif
 #endif
 

@@ -79,7 +79,7 @@ typedef struct {
  * @note This function does not return.
  * @note This uses \ref fatalThrowWithPolicy with \ref FatalPolicy_ErrorScreen internally.
  */
-void NORETURN fatalThrow(Result err);
+void NX_NORETURN fatalThrow(Result err);
 
 /**
  * @brief Triggers a system fatal error with a custom \ref FatalPolicy.
