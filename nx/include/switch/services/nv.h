@@ -9,6 +9,15 @@
 #include "../sf/service.h"
 #include "../kernel/event.h"
 
+/// NvServiceType, for __nx_nv_service_type.
+typedef enum {
+    NvServiceType_Auto                  = -1,  ///< This is the default. Automatically select the type using \ref appletGetAppletType.
+    NvServiceType_Application           = 0,   ///< Initializes nvdrv.
+    NvServiceType_Applet                = 1,   ///< Initializes nvdrv:a.
+    NvServiceType_System                = 2,   ///< Initializes nvdrv:s.
+    NvServiceType_Factory               = 3,   ///< Initializes nvdrv:t.
+} NvServiceType;
+
 /// Initialize nvdrv*.
 Result nvInitialize(void);
 

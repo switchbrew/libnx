@@ -7,6 +7,7 @@
 #include "services/nv.h"
 #include "nvidia/ioctl.h"
 
+__attribute__((weak)) NvServiceType __nx_nv_service_type = NvServiceType_Auto;
 __attribute__((weak)) u32 __nx_nv_transfermem_size = 0x800000;
 
 static Service g_nvSrv;
@@ -27,23 +28,46 @@ NX_GENERATE_SERVICE_GUARD(nv);
 Result _nvInitialize(void) {
     Result rc = MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
-    switch (appletGetAppletType()) {
-    case AppletType_None:
-        rc = smGetService(&g_nvSrv, "nvdrv:s");
-        break;
+    if (__nx_nv_service_type == NvServiceType_Auto) {
+        switch (appletGetAppletType()) {
+            case AppletType_None:
+                __nx_nv_service_type = NvServiceType_System;
+                break;
 
-    case AppletType_Default:
-    case AppletType_Application:
-    case AppletType_SystemApplication:
-    default:
-        rc = smGetService(&g_nvSrv, "nvdrv");
-        break;
+            case AppletType_Default:
+            case AppletType_Application:
+            case AppletType_SystemApplication:
+            default:
+                __nx_nv_service_type = NvServiceType_Application;
+                break;
 
-    case AppletType_SystemApplet:
-    case AppletType_LibraryApplet:
-    case AppletType_OverlayApplet:
-        rc = smGetService(&g_nvSrv, "nvdrv:a");
-        break;
+            case AppletType_SystemApplet:
+            case AppletType_LibraryApplet:
+            case AppletType_OverlayApplet:
+                __nx_nv_service_type = NvServiceType_Applet;
+            break;
+        }
+    }
+
+    switch (__nx_nv_service_type) {
+        case NvServiceType_Application:
+            rc = smGetService(&g_nvSrv, "nvdrv");
+            break;
+
+        case NvServiceType_Applet:
+            rc = smGetService(&g_nvSrv, "nvdrv:a");
+            break;
+
+        case NvServiceType_System:
+            rc = smGetService(&g_nvSrv, "nvdrv:s");
+            break;
+
+        case NvServiceType_Factory:
+            rc = smGetService(&g_nvSrv, "nvdrv:t");
+            break;
+
+        default:
+            break; // Leave rc at the error set above.
     }
 
     if (R_SUCCEEDED(rc)) {
