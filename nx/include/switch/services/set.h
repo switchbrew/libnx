@@ -31,7 +31,7 @@ typedef enum {
     SetSysProductModel_Iowa    = 3, ///< Mariko Model
     SetSysProductModel_Hoag    = 4, ///< Mariko Lite Model
     SetSysProductModel_Calcio  = 5, ///< Mariko "Simulation" Model
-    SetSysProductModel_Aula    = 6, ///< Mariko Pro Model(?)
+    SetSysProductModel_Aula    = 6, ///< Mariko OLED Model
 } SetSysProductModel;
 
 /// IDs for Language.
