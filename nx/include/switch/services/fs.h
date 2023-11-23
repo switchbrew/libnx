@@ -266,6 +266,12 @@ typedef struct {
 } FsGameCardHandle;
 
 typedef struct {
+    u32 version;
+    u8 pad[0x4];
+    u64 id;
+} FsGameCardUpdatePartitionInfo;
+
+typedef struct {
     u32 aes_ctr_key_type;           ///< Contains bitflags describing how data is AES encrypted.
     u32 speed_emulation_type;       ///< Contains bitflags describing how data is emulated.
     u32 reserved[0x38/sizeof(u32)];
@@ -642,6 +648,7 @@ Result fsDeviceOperatorGetAndClearMmcErrorInfo(FsDeviceOperator* d, FsStorageErr
 Result fsDeviceOperatorGetMmcExtendedCsd(FsDeviceOperator* d, void* dst, size_t dst_size, s64 size);
 Result fsDeviceOperatorIsGameCardInserted(FsDeviceOperator* d, bool* out);
 Result fsDeviceOperatorGetGameCardHandle(FsDeviceOperator* d, FsGameCardHandle* out);
+Result fsDeviceOperatorGetGameCardUpdatePartitionInfo(FsDeviceOperator* d, const FsGameCardHandle* handle, FsGameCardUpdatePartitionInfo* out);
 Result fsDeviceOperatorGetGameCardAttribute(FsDeviceOperator* d, const FsGameCardHandle* handle, u8 *out);
 Result fsDeviceOperatorGetGameCardIdSet(FsDeviceOperator* d, void* dst, size_t dst_size, s64 size);
 Result fsDeviceOperatorGetGameCardErrorReportInfo(FsDeviceOperator* d, FsGameCardErrorReportInfo* out);

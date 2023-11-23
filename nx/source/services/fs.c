@@ -1218,6 +1218,10 @@ Result fsDeviceOperatorGetGameCardHandle(FsDeviceOperator* d, FsGameCardHandle* 
     return _fsObjectDispatchOut(&d->s, 202, *out);
 }
 
+Result fsDeviceOperatorGetGameCardUpdatePartitionInfo(FsDeviceOperator* d, const FsGameCardHandle* handle, FsGameCardUpdatePartitionInfo* out) {
+    return _fsObjectDispatchInOut(&d->s, 203, *handle, *out);
+}
+
 Result fsDeviceOperatorGetGameCardAttribute(FsDeviceOperator* d, const FsGameCardHandle* handle, u8 *out) {
     return _fsObjectDispatchInOut(&d->s, 205, *handle, *out);
 }
