@@ -39,7 +39,7 @@ Service* auddGetServiceSession(void) {
 Result audaRequestSuspendAudio(u64 pid, u64 delay) {
     const struct {
         u64 pid;
-        u64 timespan;
+        u64 delay;
     } in = { pid, delay };
 
     return serviceDispatchIn(&g_audaSrv, 2, in);
@@ -48,7 +48,7 @@ Result audaRequestSuspendAudio(u64 pid, u64 delay) {
 Result audaRequestResumeAudio(u64 pid, u64 delay) {
     const struct {
         u64 pid;
-        u64 timespan;
+        u64 delay;
     } in = { pid, delay };
 
     return serviceDispatchIn(&g_audaSrv, 3, in);
@@ -62,7 +62,7 @@ Result audaSetAudioOutputProcessMasterVolume(u64 pid, u64 delay, float volume) {
     const struct {
         float volume;
         u64 pid;
-        u64 timespan;
+        u64 delay;
     } in = { volume, pid, delay };
 
     return serviceDispatchIn(&g_audaSrv, 5, in);
@@ -76,7 +76,7 @@ Result audaSetAudioInputProcessMasterVolume(u64 pid, u64 delay, float volume) {
     const struct {
         float volume;
         u64 pid;
-        u64 timespan;
+        u64 delay;
     } in = { volume, pid, delay };
 
     return serviceDispatchIn(&g_audaSrv, 7, in);
@@ -90,7 +90,7 @@ Result audaSetAudioOutputProcessRecordVolume(u64 pid, u64 delay, float volume) {
     const struct {
         float volume;
         u64 pid;
-        u64 timespan;
+        u64 delay;
     } in = { volume, pid, delay };
 
     return serviceDispatchIn(&g_audaSrv, 9, in);
@@ -99,7 +99,7 @@ Result audaSetAudioOutputProcessRecordVolume(u64 pid, u64 delay, float volume) {
 Result auddRequestSuspendAudioForDebug(u64 pid, u64 delay) {
     const struct {
         u64 pid;
-        u64 timespan;
+        u64 delay;
     } in = { pid, delay };
 
     return serviceDispatchIn(&g_auddSrv, 0, in);
@@ -108,7 +108,7 @@ Result auddRequestSuspendAudioForDebug(u64 pid, u64 delay) {
 Result auddRequestResumeAudioForDebug(u64 pid, u64 delay) {
     const struct {
         u64 pid;
-        u64 timespan;
+        u64 delay;
     } in = { pid, delay };
 
     return serviceDispatchIn(&g_auddSrv, 1, in);

@@ -300,7 +300,7 @@ Result audoutaRequestSuspendOld(u64 pid, u64 delay, Handle* handle_out) {
 
     const struct {
         u64 pid;
-        u64 timespan;
+        u64 delay;
     } in = { pid, delay };
 
     return serviceDispatchInOut(&g_audoutaSrv, 0, in, *handle_out);
@@ -312,7 +312,7 @@ Result audoutaRequestResumeOld(u64 pid, u64 delay, Handle* handle_out) {
 
     const struct {
         u64 pid;
-        u64 timespan;
+        u64 delay;
     } in = { pid, delay };
 
     return serviceDispatchInOut(&g_audoutaSrv, 1, in, *handle_out);
@@ -324,7 +324,7 @@ Result audoutaRequestSuspend(u64 pid, u64 delay) {
 
     const struct {
         u64 pid;
-        u64 timespan;
+        u64 delay;
     } in = { pid, delay };
 
     return serviceDispatchIn(&g_audoutaSrv, 0, in);
@@ -336,7 +336,7 @@ Result audoutaRequestResume(u64 pid, u64 delay) {
 
     const struct {
         u64 pid;
-        u64 timespan;
+        u64 delay;
     } in = { pid, delay };
 
     return serviceDispatchIn(&g_audoutaSrv, 1, in);
@@ -350,8 +350,8 @@ Result audoutaSetProcessMasterVolume(u64 pid, u64 delay, float volume) {
     const struct {
         float volume;
         u64 pid;
-        u64 timespan;
-    } in = { volume, pid, 0 };
+        u64 delay;
+    } in = { volume, pid, delay };
 
     return serviceDispatchIn(&g_audoutaSrv, 3, in);
 }
@@ -370,7 +370,7 @@ Result audoutaSetProcessRecordVolume(u64 pid, u64 delay, float volume) {
     const struct {
         float volume;
         u64 pid;
-        u64 timespan;
+        u64 delay;
     } in = { volume, pid, delay };
 
     return serviceDispatchIn(&g_audoutaSrv, 5, in);
@@ -379,7 +379,7 @@ Result audoutaSetProcessRecordVolume(u64 pid, u64 delay, float volume) {
 Result audoutdRequestSuspendForDebug(u64 pid, u64 delay) {
     const struct {
         u64 pid;
-        u64 timespan;
+        u64 delay;
     } in = { pid, delay };
 
     return serviceDispatchIn(&g_audoutdSrv, 0, in);
@@ -388,7 +388,7 @@ Result audoutdRequestSuspendForDebug(u64 pid, u64 delay) {
 Result audoutdRequestResumeForDebug(u64 pid, u64 delay) {
     const struct {
         u64 pid;
-        u64 timespan;
+        u64 delay;
     } in = { pid, delay };
 
     return serviceDispatchIn(&g_audoutdSrv, 1, in);
