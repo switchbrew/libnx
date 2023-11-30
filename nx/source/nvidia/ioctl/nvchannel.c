@@ -261,8 +261,8 @@ Result nvioctlChannel_GetModuleClockRate(u32 fd, u32 module_id, u32 *freq) {
         .module = module_id,
     };
 
-    u32 ioctl = _NV_IOWR(0, hosversionAtLeast(8,0,0) ? 0x14 : 0x23, data);
-    Result rc = nvIoctl(fd, ioctl, &data);
+    u32 nr = _NV_IOWR(0, hosversionBefore(8,0,0) ? 0x14 : 0x23, data);
+    Result rc = nvIoctl(fd, nr, &data);
 
     if (R_SUCCEEDED(rc) && freq)
         *freq = data.rate;
