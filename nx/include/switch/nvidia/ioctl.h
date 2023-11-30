@@ -161,6 +161,11 @@ typedef struct {
     u32 iova;
 } nvioctl_command_buffer_map;
 
+typedef struct {
+    uint32_t rate;
+    uint32_t moduleid;
+} nvioctl_clk_rate;
+
 #define NVGPU_ZBC_TYPE_INVALID     0
 #define NVGPU_ZBC_TYPE_COLOR       1
 #define NVGPU_ZBC_TYPE_DEPTH       2
@@ -284,5 +289,7 @@ Result nvioctlChannel_Submit(u32 fd, const nvioctl_cmdbuf *cmdbufs, u32 num_cmdb
     const nvioctl_syncpt_incr *syncpt_incrs, u32 num_syncpt_incrs, nvioctl_fence *fences, u32 num_fences);
 Result nvioctlChannel_GetSyncpt(u32 fd, u32 module_id, u32 *syncpt);
 Result nvioctlChannel_GetModuleClockRate(u32 fd, u32 module_id, u32 *freq);
+Result nvioctlChannel_SetModuleClockRate(u32 fd, u32 module_id, u32 freq);
 Result nvioctlChannel_MapCommandBuffer(u32 fd, nvioctl_command_buffer_map *maps, u32 num_maps, bool compressed);
 Result nvioctlChannel_UnmapCommandBuffer(u32 fd, const nvioctl_command_buffer_map *maps, u32 num_maps, bool compressed);
+Result nvioctlChannel_SetSubmitTimeout(u32 fd, u32 timeout);
