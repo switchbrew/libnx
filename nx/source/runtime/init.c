@@ -189,10 +189,6 @@ void __attribute__((weak)) __libnx_init(void* ctx, Handle main_thread, void* sav
 
 void __attribute__((weak)) NX_NORETURN __libnx_exit(int rc)
 {
-    // Call destructors.
-    void __libc_fini_array(void);
-    __libc_fini_array();
-
     // Clean up services.
     __appExit();
 
