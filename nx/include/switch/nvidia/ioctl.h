@@ -162,8 +162,8 @@ typedef struct {
 } nvioctl_command_buffer_map;
 
 typedef struct {
-    uint32_t rate;
-    uint32_t moduleid;
+    u32 rate;
+    u32 moduleid;
 } nvioctl_clk_rate;
 
 #define NVGPU_ZBC_TYPE_INVALID     0
