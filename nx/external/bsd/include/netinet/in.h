@@ -684,6 +684,14 @@ struct sockaddr_in6 {
 	uint32_t        sin6_scope_id; /* Scope ID */
 };
 
+/*
+ * Argument structure for IPV6_JOIN_GROUP and IPV6_LEAVE_GROUP.
+ */
+struct ipv6_mreq {
+	struct in6_addr ipv6mr_multiaddr;
+	unsigned int    ipv6mr_interface;
+};
+
 extern const struct in6_addr in6addr_any;
 extern const struct in6_addr in6addr_loopback;
 
