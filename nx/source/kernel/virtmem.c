@@ -160,6 +160,13 @@ void virtmemSetup(void) {
         diagAbortWithResult(MAKERESULT(Module_Libnx, LibnxError_WeirdKernel));
     }
 
+    // Account for the alias region extra size.
+    u64 alias_extra_size;
+    rc = svcGetInfo(&alias_extra_size, InfoType_AliasRegionExtraSize, CUR_PROCESS_HANDLE, 0);
+    if (R_SUCCEEDED(rc)) {
+        g_AliasRegion.end -= alias_extra_size;
+    }
+
     // Retrieve memory region information for the reserved heap region.
     rc = _memregionInitWithInfo(&g_HeapRegion, InfoType_HeapRegionAddress, InfoType_HeapRegionSize);
     if (R_FAILED(rc)) {
