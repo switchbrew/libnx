@@ -1339,8 +1339,8 @@ Result nsdevGetShellEventInfo(NsShellEventInfo* out); ///< [1.0.0-9.2.0]
 Result nsdevTerminateApplication(void);
 Result nsdevPrepareLaunchProgramFromHost(NsLaunchProperties* out, const char* path, size_t path_len); ///< [1.0.0-9.2.0]
 Result nsdevLaunchApplicationForDevelop(u64* out_pid, u64 application_id, u32 flags); ///< [1.0.0-9.2.0]
-Result nsdevLaunchApplicationFromHost(u64* out_pid, const char* path, size_t path_len, u32 flags); ///< [10.0.0+]
-Result nsdevLaunchApplicationWithStorageIdForDevelop(u64* out_pid, u64 application_id, u32 flags, u8 app_storage_id, u8 patch_storage_id);
+Result nsdevLaunchApplicationFromHost(u64* out_pid, const char* path, size_t path_len, u32 flags); ///< [10.0.0-17.0.1]
+Result nsdevLaunchApplicationWithStorageIdForDevelop(u64* out_pid, u64 application_id, u32 flags, u8 app_storage_id, u8 patch_storage_id); ///< [1.0.0-17.0.1]
 Result nsdevIsSystemMemoryResourceLimitBoosted(bool* out); ///< [6.0.0-8.1.0]
 Result nsdevGetRunningApplicationProcessIdForDevelop(u64* out_pid); ///< [6.0.0+]
 Result nsdevSetCurrentApplicationRightsEnvironmentCanBeActiveForDevelop(bool can_be_active); ///< [6.0.0+]
