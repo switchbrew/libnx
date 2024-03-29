@@ -448,7 +448,7 @@ Result hidsysIsFirmwareUpdateNeededForNotification(HidsysUniquePadId unique_pad_
 
 /**
  * @brief Legacy IsButtonConfigSupported.
- * @note Only available on [10.0.0-10.2.0]. On [11.0.0+], use \ref hidsysIsButtonConfigSupported instead.
+ * @note Only available on [10.0.0-10.2.0]. On [11.0.0-17.0.1], use \ref hidsysIsButtonConfigSupported instead.
  * @param[in] unique_pad_id \ref HidsysUniquePadId
  * @param[out] out Output bool flag.
  */
@@ -456,7 +456,7 @@ Result hidsysLegacyIsButtonConfigSupported(HidsysUniquePadId unique_pad_id, bool
 
 /**
  * @brief IsButtonConfigSupported
- * @note Only available on [11.0.0+]. On [10.0.0-10.2.0], use \ref hidsysLegacyIsButtonConfigSupported instead.
+ * @note Only available on [11.0.0-17.0.1]. On [10.0.0-10.2.0], use \ref hidsysLegacyIsButtonConfigSupported instead.
  * @param[in] addr \ref BtdrvAddress
  * @param[out] out Output bool flag.
  */
@@ -464,34 +464,34 @@ Result hidsysIsButtonConfigSupported(BtdrvAddress addr, bool *out);
 
 /**
  * @brief IsButtonConfigEmbeddedSupported
- * @note Only available on [11.0.0+].
+ * @note Only available on [11.0.0-17.0.1].
  * @param[out] out Output bool flag.
  */
 Result hidsysIsButtonConfigEmbeddedSupported(bool *out);
 
 /**
  * @brief Legacy DeleteButtonConfig.
- * @note Only available on [10.0.0-10.2.0]. On [11.0.0+], use \ref hidsysDeleteButtonConfig instead.
+ * @note Only available on [10.0.0-10.2.0]. On [11.0.0-17.0.1], use \ref hidsysDeleteButtonConfig instead.
  * @param[in] unique_pad_id \ref HidsysUniquePadId
  */
 Result hidsysLegacyDeleteButtonConfig(HidsysUniquePadId unique_pad_id);
 
 /**
  * @brief DeleteButtonConfig
- * @note Only available on [11.0.0+]. On [10.0.0-10.2.0], use \ref hidsysLegacyDeleteButtonConfig instead.
+ * @note Only available on [11.0.0-17.0.1]. On [10.0.0-10.2.0], use \ref hidsysLegacyDeleteButtonConfig instead.
  * @param[in] addr \ref BtdrvAddress
  */
 Result hidsysDeleteButtonConfig(BtdrvAddress addr);
 
 /**
  * @brief DeleteButtonConfigEmbedded
- * @note Only available on [11.0.0+].
+ * @note Only available on [11.0.0-17.0.1].
  */
 Result hidsysDeleteButtonConfigEmbedded(void);
 
 /**
  * @brief Legacy SetButtonConfigEnabled.
- * @note Only available on [10.0.0-10.2.0]. On [11.0.0+], use \ref hidsysSetButtonConfigEnabled instead.
+ * @note Only available on [10.0.0-10.2.0]. On [11.0.0-17.0.1], use \ref hidsysSetButtonConfigEnabled instead.
  * @param[in] unique_pad_id \ref HidsysUniquePadId
  * @param[in] flag Input flag.
  */
@@ -499,7 +499,7 @@ Result hidsysLegacySetButtonConfigEnabled(HidsysUniquePadId unique_pad_id, bool 
 
 /**
  * @brief SetButtonConfigEnabled
- * @note Only available on [11.0.0+]. On [10.0.0-10.2.0], use \ref hidsysLegacySetButtonConfigEnabled instead.
+ * @note Only available on [11.0.0-17.0.1]. On [10.0.0-10.2.0], use \ref hidsysLegacySetButtonConfigEnabled instead.
  * @param[in] addr \ref BtdrvAddress
  * @param[in] flag Input flag.
  */
@@ -507,14 +507,14 @@ Result hidsysSetButtonConfigEnabled(BtdrvAddress addr, bool flag);
 
 /**
  * @brief SetButtonConfigEmbeddedEnabled
- * @note Only available on [11.0.0+].
+ * @note Only available on [11.0.0-17.0.1].
  * @param[in] flag Input flag.
  */
 Result hidsysSetButtonConfigEmbeddedEnabled(bool flag);
 
 /**
  * @brief Legacy IsButtonConfigEnabled.
- * @note Only available on [10.0.0-10.2.0]. On [11.0.0+], use \ref hidsysIsButtonConfigEnabled instead.
+ * @note Only available on [10.0.0-10.2.0]. On [11.0.0-17.0.1], use \ref hidsysIsButtonConfigEnabled instead.
  * @param[in] unique_pad_id \ref HidsysUniquePadId
  * @param[out] out Output bool flag.
  */
@@ -522,7 +522,7 @@ Result hidsysLegacyIsButtonConfigEnabled(HidsysUniquePadId unique_pad_id, bool *
 
 /**
  * @brief IsButtonConfigEnabled
- * @note Only available on [11.0.0+]. On [10.0.0-10.2.0], use \ref hidsysLegacyIsButtonConfigEnabled instead.
+ * @note Only available on [11.0.0-17.0.1]. On [10.0.0-10.2.0], use \ref hidsysLegacyIsButtonConfigEnabled instead.
  * @param[in] addr \ref BtdrvAddress
  * @param[in] out Output bool flag.
  */
@@ -530,14 +530,14 @@ Result hidsysIsButtonConfigEnabled(BtdrvAddress addr, bool *out);
 
 /**
  * @brief IsButtonConfigEmbeddedEnabled
- * @note Only available on [11.0.0+].
+ * @note Only available on [11.0.0-17.0.1].
  * @param[out] out Output bool flag.
  */
 Result hidsysIsButtonConfigEmbeddedEnabled(bool *out);
 
 /**
  * @brief Legacy SetButtonConfigEmbedded.
- * @note Only available on [10.0.0-10.2.0]. On [11.0.0+], use \ref hidsysSetButtonConfigEmbedded instead.
+ * @note Only available on [10.0.0-10.2.0]. On [11.0.0-17.0.1], use \ref hidsysSetButtonConfigEmbedded instead.
  * @param[in] unique_pad_id \ref HidsysUniquePadId
  * @param[in] config \ref HidsysButtonConfigEmbedded
  */
@@ -545,14 +545,14 @@ Result hidsysLegacySetButtonConfigEmbedded(HidsysUniquePadId unique_pad_id, cons
 
 /**
  * @brief SetButtonConfigEmbedded
- * @note Only available on [11.0.0+]. On [10.0.0-10.2.0], use \ref hidsysLegacySetButtonConfigEmbedded instead.
+ * @note Only available on [11.0.0-17.0.1]. On [10.0.0-10.2.0], use \ref hidsysLegacySetButtonConfigEmbedded instead.
  * @param[in] config \ref HidsysButtonConfigEmbedded
  */
 Result hidsysSetButtonConfigEmbedded(const HidsysButtonConfigEmbedded *config);
 
 /**
  * @brief Legacy SetButtonConfigFull.
- * @note Only available on [10.0.0-10.2.0]. On [11.0.0+], use \ref hidsysSetButtonConfigFull instead.
+ * @note Only available on [10.0.0-10.2.0]. On [11.0.0-17.0.1], use \ref hidsysSetButtonConfigFull instead.
  * @param[in] unique_pad_id \ref HidsysUniquePadId
  * @param[in] config \ref HidsysButtonConfigFull
  */
@@ -560,7 +560,7 @@ Result hidsysLegacySetButtonConfigFull(HidsysUniquePadId unique_pad_id, const Hi
 
 /**
  * @brief SetButtonConfigFull
- * @note Only available on [11.0.0+]. On [10.0.0-10.2.0], use \ref hidsysLegacySetButtonConfigFull instead.
+ * @note Only available on [11.0.0-17.0.1]. On [10.0.0-10.2.0], use \ref hidsysLegacySetButtonConfigFull instead.
  * @param[in] addr \ref BtdrvAddress
  * @param[in] config \ref HidsysButtonConfigFull
  */
@@ -568,7 +568,7 @@ Result hidsysSetButtonConfigFull(BtdrvAddress addr, const HidsysButtonConfigFull
 
 /**
  * @brief Legacy SetButtonConfigLeft.
- * @note Only available on [10.0.0-10.2.0]. On [11.0.0+], use \ref hidsysSetButtonConfigLeft instead.
+ * @note Only available on [10.0.0-10.2.0]. On [11.0.0-17.0.1], use \ref hidsysSetButtonConfigLeft instead.
  * @param[in] unique_pad_id \ref HidsysUniquePadId
  * @param[in] config \ref HidsysButtonConfigLeft
  */
@@ -576,7 +576,7 @@ Result hidsysLegacySetButtonConfigLeft(HidsysUniquePadId unique_pad_id, const Hi
 
 /**
  * @brief SetButtonConfigLeft
- * @note Only available on [11.0.0+]. On [10.0.0-10.2.0], use \ref hidsysLegacySetButtonConfigLeft instead.
+ * @note Only available on [11.0.0-17.0.1]. On [10.0.0-10.2.0], use \ref hidsysLegacySetButtonConfigLeft instead.
  * @param[in] addr \ref BtdrvAddress
  * @param[in] config \ref HidsysButtonConfigLeft
  */
@@ -584,7 +584,7 @@ Result hidsysSetButtonConfigLeft(BtdrvAddress addr, const HidsysButtonConfigLeft
 
 /**
  * @brief Legacy SetButtonConfigRight.
- * @note Only available on [10.0.0-10.2.0]. On [11.0.0+], use \ref hidsysSetButtonConfigRight instead.
+ * @note Only available on [10.0.0-10.2.0]. On [11.0.0-17.0.1], use \ref hidsysSetButtonConfigRight instead.
  * @param[in] unique_pad_id \ref HidsysUniquePadId
  * @param[in] config \ref HidsysButtonConfigRight
  */
@@ -592,7 +592,7 @@ Result hidsysLegacySetButtonConfigRight(HidsysUniquePadId unique_pad_id, const H
 
 /**
  * @brief SetButtonConfigRight
- * @note Only available on [11.0.0+]. On [10.0.0-10.2.0], use \ref hidsysLegacySetButtonConfigRight instead.
+ * @note Only available on [11.0.0-17.0.1]. On [10.0.0-10.2.0], use \ref hidsysLegacySetButtonConfigRight instead.
  * @param[in] addr \ref BtdrvAddress
  * @param[in] config \ref HidsysButtonConfigRight
  */
@@ -600,7 +600,7 @@ Result hidsysSetButtonConfigRight(BtdrvAddress addr, const HidsysButtonConfigRig
 
 /**
  * @brief Legacy GetButtonConfigEmbedded.
- * @note Only available on [10.0.0-10.2.0]. On [11.0.0+], use \ref hidsysGetButtonConfigEmbedded instead.
+ * @note Only available on [10.0.0-10.2.0]. On [11.0.0-17.0.1], use \ref hidsysGetButtonConfigEmbedded instead.
  * @param[in] unique_pad_id \ref HidsysUniquePadId
  * @param[out] config \ref HidsysButtonConfigEmbedded
  */
@@ -608,14 +608,14 @@ Result hidsysLegacyGetButtonConfigEmbedded(HidsysUniquePadId unique_pad_id, Hids
 
 /**
  * @brief GetButtonConfigEmbedded
- * @note Only available on [11.0.0+]. On [10.0.0-10.2.0], use \ref hidsysLegacyGetButtonConfigEmbedded instead.
+ * @note Only available on [11.0.0-17.0.1]. On [10.0.0-10.2.0], use \ref hidsysLegacyGetButtonConfigEmbedded instead.
  * @param[out] config \ref HidsysButtonConfigEmbedded
  */
 Result hidsysGetButtonConfigEmbedded(HidsysButtonConfigEmbedded *config);
 
 /**
  * @brief Legacy GetButtonConfigFull.
- * @note Only available on [10.0.0-10.2.0]. On [11.0.0+], use \ref hidsysGetButtonConfigFull instead.
+ * @note Only available on [10.0.0-10.2.0]. On [11.0.0-17.0.1], use \ref hidsysGetButtonConfigFull instead.
  * @param[in] unique_pad_id \ref HidsysUniquePadId
  * @param[out] config \ref HidsysButtonConfigFull
  */
@@ -623,7 +623,7 @@ Result hidsysLegacyGetButtonConfigFull(HidsysUniquePadId unique_pad_id, HidsysBu
 
 /**
  * @brief GetButtonConfigFull
- * @note Only available on [11.0.0+]. On [10.0.0-10.2.0], use \ref hidsysLegacyGetButtonConfigFull instead.
+ * @note Only available on [11.0.0-17.0.1]. On [10.0.0-10.2.0], use \ref hidsysLegacyGetButtonConfigFull instead.
  * @param[in] addr \ref BtdrvAddress
  * @param[out] config \ref HidsysButtonConfigFull
  */
@@ -631,7 +631,7 @@ Result hidsysGetButtonConfigFull(BtdrvAddress addr, HidsysButtonConfigFull *conf
 
 /**
  * @brief Legacy GetButtonConfigLeft.
- * @note Only available on [10.0.0-10.2.0]. On [11.0.0+], use \ref hidsysGetButtonConfigLeft instead.
+ * @note Only available on [10.0.0-10.2.0]. On [11.0.0-17.0.1], use \ref hidsysGetButtonConfigLeft instead.
  * @param[in] unique_pad_id \ref HidsysUniquePadId
  * @param[out] config \ref HidsysButtonConfigLeft
  */
@@ -639,7 +639,7 @@ Result hidsysLegacyGetButtonConfigLeft(HidsysUniquePadId unique_pad_id, HidsysBu
 
 /**
  * @brief GetButtonConfigLeft
- * @note Only available on [11.0.0+]. On [10.0.0-10.2.0], use \ref hidsysLegacyGetButtonConfigLeft instead.
+ * @note Only available on [11.0.0-17.0.1]. On [10.0.0-10.2.0], use \ref hidsysLegacyGetButtonConfigLeft instead.
  * @param[in] addr \ref BtdrvAddress
  * @param[out] config \ref HidsysButtonConfigLeft
  */
@@ -647,7 +647,7 @@ Result hidsysGetButtonConfigLeft(BtdrvAddress addr, HidsysButtonConfigLeft *conf
 
 /**
  * @brief Legacy GetButtonConfigRight.
- * @note Only available on [10.0.0-10.2.0]. On [11.0.0+], use \ref hidsysGetButtonConfigRight instead.
+ * @note Only available on [10.0.0-10.2.0]. On [11.0.0-17.0.1], use \ref hidsysGetButtonConfigRight instead.
  * @param[in] unique_pad_id \ref HidsysUniquePadId
  * @param[out] config \ref HidsysButtonConfigRight
  */
@@ -655,7 +655,7 @@ Result hidsysLegacyGetButtonConfigRight(HidsysUniquePadId unique_pad_id, HidsysB
 
 /**
  * @brief GetButtonConfigRight
- * @note Only available on [11.0.0+]. On [10.0.0-10.2.0], use \ref hidsysLegacyGetButtonConfigRight instead.
+ * @note Only available on [11.0.0-17.0.1]. On [10.0.0-10.2.0], use \ref hidsysLegacyGetButtonConfigRight instead.
  * @param[in] addr \ref BtdrvAddress
  * @param[out] config \ref HidsysButtonConfigRight
  */
