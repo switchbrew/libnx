@@ -326,6 +326,38 @@ typedef enum {
     FsFileSystemQueryId_IsValidSignedSystemPartitionOnSdCard    = 2,  ///< [8.0.0+]
 } FsFileSystemQueryId;
 
+/// FileSystemAttribute
+typedef struct {
+    bool directory_name_length_max_has_value;
+    bool file_name_length_max_has_value;
+    bool directory_path_length_max_has_value;
+    bool file_path_length_max_has_value;
+    bool utf16_create_directory_path_length_max_has_value;
+    bool utf16_delete_directory_path_length_max_has_value;
+    bool utf16_rename_source_directory_path_length_max_has_value;
+    bool utf16_rename_destination_directory_path_length_max_has_value;
+    bool utf16_open_directory_path_length_max_has_value;
+    bool utf16_directory_name_length_max_has_value;
+    bool utf16_file_name_length_max_has_value;
+    bool utf16_directory_path_length_max_has_value;
+    bool utf16_file_path_length_max_has_value;
+    u8 reserved1[0x1B];
+    s32 directory_name_length_max;
+    s32 file_name_length_max;
+    s32 directory_path_length_max;
+    s32 file_path_length_max;
+    s32 utf16_create_directory_path_length_max;
+    s32 utf16_delete_directory_path_length_max;
+    s32 utf16_rename_source_directory_path_length_max;
+    s32 utf16_rename_destination_directory_path_length_max;
+    s32 utf16_open_directory_path_length_max;
+    s32 utf16_directory_name_length_max;
+    s32 utf16_file_name_length_max;
+    s32 utf16_directory_path_length_max;
+    s32 utf16_file_path_length_max;
+    u8 reserved2[0x64];
+} FsFileSystemAttribute;
+
 /// FsPriority
 typedef enum {
     FsPriority_Normal     = 0,
@@ -591,6 +623,7 @@ Result fsFsGetTotalSpace(FsFileSystem* fs, const char* path, s64* out);
 Result fsFsGetFileTimeStampRaw(FsFileSystem* fs, const char* path, FsTimeStampRaw *out); ///< [3.0.0+]
 Result fsFsCleanDirectoryRecursively(FsFileSystem* fs, const char* path); ///< [3.0.0+]
 Result fsFsQueryEntry(FsFileSystem* fs, void *out, size_t out_size, const void *in, size_t in_size, const char* path, FsFileSystemQueryId query_id); ///< [4.0.0+]
+Result fsFsGetFileSystemAttribute(FsFileSystem* fs, FsFileSystemAttribute *out); ///< [15.0.0+]
 void fsFsClose(FsFileSystem* fs);
 
 /// Uses \ref fsFsQueryEntry to set the archive bit on the specified absolute directory path.

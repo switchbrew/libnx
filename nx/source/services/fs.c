@@ -937,6 +937,13 @@ Result fsFsQueryEntry(FsFileSystem* fs, void *out, size_t out_size, const void *
     );
 }
 
+Result fsFsGetFileSystemAttribute(FsFileSystem* fs, FsFileSystemAttribute *out) {
+    if (hosversionBefore(15,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _fsObjectDispatchOut(&fs->s, 16, *out);
+}
+
 Result fsFsSetConcatenationFileAttribute(FsFileSystem* fs, const char *path) {
     return fsFsQueryEntry(fs, NULL, 0, NULL, 0, path, FsFileSystemQueryId_SetConcatenationFileAttribute);
 }
@@ -1231,7 +1238,7 @@ Result fsDeviceOperatorGetGameCardDeviceCertificate(FsDeviceOperator* d, const F
         FsGameCardHandle handle;
         s64 buffer_size;
     } in = { *handle, size };
-    
+
     return _fsObjectDispatchIn(&d->s, 206, in,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
         .buffers = { { dst, dst_size } });
@@ -1256,7 +1263,7 @@ Result fsDeviceOperatorGetGameCardDeviceId(FsDeviceOperator* d, void* dst, size_
 Result fsDeviceOperatorChallengeCardExistence(FsDeviceOperator* d, const FsGameCardHandle* handle, void* dst, size_t dst_size, void* seed, size_t seed_size, void* value, size_t value_size) {
     if (hosversionBefore(8,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    
+
     return _fsObjectDispatchIn(&d->s, 219, *handle,
         .buffer_attrs = {
             SfBufferAttr_HipcMapAlias | SfBufferAttr_Out,
