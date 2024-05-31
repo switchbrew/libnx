@@ -1,5 +1,20 @@
 # Changelog
 
+## Version 4.7.0
+
+#### system
+* Basic support for 18.0.0
+
+#### services
+* fs: add GetFileSystemAttribute cmd
+* fs: Implement "ChallengeCardExistence" and "GetGameCardDeviceCertificate"
+
+#### graphics
+* nvchannel: Fix SET_CLK_RATE, implement GET_CLK_RATE and SET_SUBMIT_TIMEOUT
+
+#### miscellaneous
+* Update SetSysProductModel_Aula comment
+
 ## Version 4.6.0
 
 #### system
