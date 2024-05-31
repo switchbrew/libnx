@@ -1,5 +1,15 @@
 # Changelog
 
+## Version 4.6.0
+
+#### system
+* svc: fix query/insecure names
+
+#### miscellaneous
+* add fsDeviceOperatorGetGameCardUpdatePartitionInfo
+* Add NX_ prefix to PACKED, NORETURN, IGNORE_ARG and DEPRECATED macros
+* Fix: avoid segfault at static destructors
+
 ## Version 4.5.0
 
 #### services
