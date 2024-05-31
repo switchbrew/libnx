@@ -9,7 +9,7 @@ endif
 include $(DEVKITPRO)/devkitA64/base_rules
 
 export LIBNX_MAJOR	:= 4
-export LIBNX_MINOR	:= 6
+export LIBNX_MINOR	:= 7
 export LIBNX_PATCH	:= 0
 
 
