@@ -1117,7 +1117,7 @@ Result btdrvEnableGattService(u8 server_if, const BtdrvGattAttributeUuid *uuid);
  * @param[in] permissions \ref BtdrvGattAttributePermission
  * @param[in] property \ref BtdrvGattCharacteristicProperty
  */
-Result btdrvAddGattCharacteristic(u8 server_if, const BtdrvGattAttributeUuid *serv_uuid, const BtdrvGattAttributeUuid *char_uuid, u8 permissions, u16 property);
+Result btdrvAddGattCharacteristic(u8 server_if, const BtdrvGattAttributeUuid *serv_uuid, const BtdrvGattAttributeUuid *char_uuid, u16 permissions, u8 property);
 
 /**
  * @brief AddGattDescriptor

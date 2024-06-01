@@ -944,17 +944,17 @@ Result btdrvEnableGattService(u8 server_if, const BtdrvGattAttributeUuid *uuid) 
     return serviceDispatchIn(&g_btdrvSrv, cmd_id, in);
 }
 
-Result btdrvAddGattCharacteristic(u8 server_if, const BtdrvGattAttributeUuid *serv_uuid, const BtdrvGattAttributeUuid *char_uuid, u8 permissions, u16 property) {
+Result btdrvAddGattCharacteristic(u8 server_if, const BtdrvGattAttributeUuid *serv_uuid, const BtdrvGattAttributeUuid *char_uuid, u16 permissions, u8 property) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     const struct {
         u8 server_if;
-        u8 permissions;
-        u16 property;
+        u8 property;
+        u16 permissions;
         BtdrvGattAttributeUuid serv_uuid;
         BtdrvGattAttributeUuid char_uuid;
-    } in = { server_if, permissions, property, *serv_uuid, *char_uuid };
+    } in = { server_if, property, permissions, *serv_uuid, *char_uuid };
 
     return serviceDispatchIn(&g_btdrvSrv, 77, in);
 }
