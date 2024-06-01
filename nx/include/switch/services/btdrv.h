@@ -439,21 +439,21 @@ typedef struct {
             u8 property;                        ///< Characteristic properties. Only set if attr_type is 1 \ref BtdrvGattCharacteristicProperty
             u8 is_primary;                      ///< Is a primary service or not
             u8 pad;                             ///< Padding
-        } server_add_characteristic;            ///< ::BtdrvBleEventType_ServerAddCharacteristic
+        } server_add_attribute;                 ///< ::BtdrvBleEventType_ServerAddAttribute
 
         struct {
             u32 result;                         ///< 0 for success, non-zero for error.
             u16 conn_id;                        ///< Connection ID
-            u8 unk_x6;                          ///< Unknown. Always 1
+            u8 operation;                       ///< Operation. 0 = Read, 1 = Write
             u8 pad;                             ///< Padding
             u16 service_id;                     ///< Service ID
             u16 attr_id;                        ///< Attribute ID
             u8 attr_type;                       ///< Attribute type \ref BtdrvGattAttributeType
-            u8 data[0x200];                     ///< Data
+            u8 data[0x200];                     ///< Data written during write operation
             u16 size;                           ///< Size of the above data
             u16 offset;                         ///< Offset
             u8 pad2[2];                         ///< Padding
-        } server_write;                         ///< ::BtdrvBleEventType_ServerWrite
+        } server_attribute_operation;           ///< ::BtdrvBleEventType_ServerAttributeOperation
     };
 } BtdrvBleEventInfo;
 

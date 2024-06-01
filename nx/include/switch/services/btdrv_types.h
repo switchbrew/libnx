@@ -137,8 +137,8 @@ typedef enum {
     BtdrvBleEventType_ClientCacheSave               =    9,    ///< GATT client cache save.
     BtdrvBleEventType_ClientCacheLoad               =   10,    ///< GATT client cache load.
     BtdrvBleEventType_ClientConfigureMtu            =   11,    ///< GATT client configure MTU.
-    BtdrvBleEventType_ServerAddCharacteristic       =   12,    ///< GATT server add characteristic.
-    BtdrvBleEventType_ServerWrite                   =   13,    ///< GATT server write.
+    BtdrvBleEventType_ServerAddAttribute            =   12,    ///< GATT server add attribute.
+    BtdrvBleEventType_ServerAttributeOperation      =   13,    ///< GATT server attribute operation.
 } BtdrvBleEventType;
 
 /// GattAttributeType
