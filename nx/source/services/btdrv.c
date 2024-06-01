@@ -930,47 +930,47 @@ Result btdrvAddGattService(u8 server_if, const BtdrvGattAttributeUuid *uuid, u8 
     return serviceDispatchIn(&g_btdrvSrv, 75, in);
 }
 
-Result btdrvEnableGattService(u8 service_id, const BtdrvGattAttributeUuid *uuid) {
+Result btdrvEnableGattService(u8 server_if, const BtdrvGattAttributeUuid *uuid) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     u32 cmd_id = hosversionBefore(5,1,0) ? 74 : 76;
 
     const struct {
-        u8 service_id;
+        u8 server_if;
         u8 pad[3];
         BtdrvGattAttributeUuid uuid;
-    } in = { service_id, {0}, *uuid };
+    } in = { server_if, {0}, *uuid };
 
     return serviceDispatchIn(&g_btdrvSrv, cmd_id, in);
 }
 
-Result btdrvAddGattCharacteristic(u8 service_id, const BtdrvGattAttributeUuid *serv_uuid, const BtdrvGattAttributeUuid *char_uuid, u8 permissions, u16 property) {
+Result btdrvAddGattCharacteristic(u8 server_if, const BtdrvGattAttributeUuid *serv_uuid, const BtdrvGattAttributeUuid *char_uuid, u8 permissions, u16 property) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     const struct {
-        u8 service_id;
+        u8 server_if;
         u8 permissions;
         u16 property;
         BtdrvGattAttributeUuid serv_uuid;
         BtdrvGattAttributeUuid char_uuid;
-    } in = { service_id, permissions, property, *serv_uuid, *char_uuid };
+    } in = { server_if, permissions, property, *serv_uuid, *char_uuid };
 
     return serviceDispatchIn(&g_btdrvSrv, 77, in);
 }
 
-Result btdrvAddGattDescriptor(u8 service_id, const BtdrvGattAttributeUuid *serv_uuid, const BtdrvGattAttributeUuid *desc_uuid, u16 permissions) {
+Result btdrvAddGattDescriptor(u8 server_if, const BtdrvGattAttributeUuid *serv_uuid, const BtdrvGattAttributeUuid *desc_uuid, u16 permissions) {
     if (hosversionBefore(5,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     u32 cmd_id = hosversionBefore(5,1,0) ? 76 : 78;
 
     const struct {
-        u8 service_id;
+        u8 server_if;
         u8 pad;
         u16 permissions;
         BtdrvGattAttributeUuid serv_uuid;
         BtdrvGattAttributeUuid desc_uuid;
-    } in = { service_id, 0, permissions, *serv_uuid, *desc_uuid };
+    } in = { server_if, 0, permissions, *serv_uuid, *desc_uuid };
 
     return serviceDispatchIn(&g_btdrvSrv, cmd_id, in);
 }

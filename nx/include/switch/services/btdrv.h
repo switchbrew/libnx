@@ -1099,31 +1099,31 @@ Result btdrvAddGattService(u8 server_if, const BtdrvGattAttributeUuid *uuid, u8 
 /**
  * @brief EnableGattService
  * @note Only available on [5.0.0+].
- * @param[in] service_id Service ID
+ * @param[in] server_if Server interface ID
  * @param[in] uuid \ref BtdrvGattAttributeUuid
  */
-Result btdrvEnableGattService(u8 service_id, const BtdrvGattAttributeUuid *uuid);
+Result btdrvEnableGattService(u8 server_if, const BtdrvGattAttributeUuid *uuid);
 
 /**
  * @brief AddGattCharacteristic
  * @note Only available on [5.0.0+].
- * @param[in] service_id Service ID
+ * @param[in] server_if Server interface ID
  * @param[in] serv_uuid Service UUID \ref BtdrvGattAttributeUuid
  * @param[in] char_uuid Characteristic UUID \ref BtdrvGattAttributeUuid
  * @param[in] permissions \ref BtdrvGattAttributePermission
  * @param[in] property \ref BtdrvGattCharacteristicProperty
  */
-Result btdrvAddGattCharacteristic(u8 service_id, const BtdrvGattAttributeUuid *serv_uuid, const BtdrvGattAttributeUuid *char_uuid, u8 permissions, u16 property);
+Result btdrvAddGattCharacteristic(u8 server_if, const BtdrvGattAttributeUuid *serv_uuid, const BtdrvGattAttributeUuid *char_uuid, u8 permissions, u16 property);
 
 /**
  * @brief AddGattDescriptor
  * @note Only available on [5.0.0+].
- * @param[in] service_id Service ID
+ * @param[in] server_if Server interface ID
  * @param[in] serv_uuid Service UUID \ref BtdrvGattAttributeUuid
  * @param[in] desc_uuid Descriptor UUID \ref BtdrvGattAttributeUuid
  * @param[in] permissions \ref BtdrvGattAttributePermission
  */
-Result btdrvAddGattDescriptor(u8 service_id, const BtdrvGattAttributeUuid *serv_uuid, const BtdrvGattAttributeUuid *desc_uuid, u16 permissions);
+Result btdrvAddGattDescriptor(u8 server_if, const BtdrvGattAttributeUuid *serv_uuid, const BtdrvGattAttributeUuid *desc_uuid, u16 permissions);
 
 /**
  * @brief GetBleManagedEventInfo
