@@ -22,6 +22,8 @@ typedef enum {
     RomfsSource_FsStorage,
 } RomfsSource;
 
+#define ROMFS_MOUNT_NAME_LIMIT 32
+
 typedef struct romfs_mount
 {
     devoptab_t         device;
@@ -36,7 +38,7 @@ typedef struct romfs_mount
     romfs_dir          *cwd;
     u32                *dirHashTable, *fileHashTable;
     void               *dirTable, *fileTable;
-    char               name[32];
+    char               name[ROMFS_MOUNT_NAME_LIMIT];
 } romfs_mount;
 
 extern int __system_argc;
@@ -138,22 +140,6 @@ static int       romfs_dirreset(struct _reent *r, DIR_ITER *dirState);
 static int       romfs_dirnext(struct _reent *r, DIR_ITER *dirState, char *filename, struct stat *filestat);
 static int       romfs_dirclose(struct _reent *r, DIR_ITER *dirState);
 
-typedef struct
-{
-    romfs_mount *mount;
-    romfs_file  *file;
-    u64         offset, pos;
-} romfs_fileobj;
-
-typedef struct
-{
-    romfs_mount *mount;
-    romfs_dir* dir;
-    u32        state;
-    u32        childDir;
-    u32        childFile;
-} romfs_diriter;
-
 static const devoptab_t romFS_devoptab =
 {
     .structSize   = sizeof(romfs_fileobj),
@@ -205,7 +191,7 @@ static void _romfsInit(void)
     }
 }
 
-static romfs_mount *romfsFindMount(const char *name)
+static romfs_mount *_romfsFindMount(const char *name)
 {
     u32 i;
     u32 total = sizeof(romfs_mounts) / sizeof(romfs_mount);
@@ -236,7 +222,7 @@ __attribute__((weak)) const char* __romfs_path = NULL;
 
 static romfs_mount* romfs_alloc(void)
 {
-    return romfsFindMount(NULL);
+    return _romfsFindMount(NULL);
 }
 
 static void romfs_free(romfs_mount *mount)
@@ -445,9 +431,9 @@ static void romfsInitMtime(romfs_mount *mount)
 Result romfsUnmount(const char *name)
 {
     romfs_mount *mount;
-    char tmpname[34];
+    char tmpname[ROMFS_MOUNT_NAME_LIMIT + 2]; // +2 for : and \0
 
-    mount = romfsFindMount(name);
+    mount = _romfsFindMount(name);
     if (mount == NULL)
         return MAKERESULT(Module_Libnx, LibnxError_NotFound);
 
@@ -612,6 +598,218 @@ static nlink_t dir_nlink(romfs_mount *mount, romfs_dir *dir)
 static ino_t file_inode(romfs_mount *mount, romfs_file *file)
 {
     return ((uint32_t*)file - (uint32_t*)mount->fileTable) + mount->header.dirTableSize/4;
+}
+
+//-----------------------------------------------------------------------------
+
+Result romfsFindMount(const char *name, romfs_mount **mount)
+{
+    if (name == NULL || mount == NULL)
+    {
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+    }
+
+    *mount = _romfsFindMount(name);
+    if (*mount == NULL)
+    {
+        return MAKERESULT(Module_Libnx, LibnxError_NotFound);
+    }
+
+    return 0;
+}
+
+Result romfsFindFile(const char *path, romfs_fileobj *file)
+{
+    // Get the mount name from the path if there is one, otherwise fallback on "romfs"
+    char mount_name[ROMFS_MOUNT_NAME_LIMIT] = "romfs";
+
+    char *colon_pos = strchr(path, ':');
+    if (colon_pos)
+    {
+        size_t len = (size_t) (colon_pos - path);
+        len = (len > ROMFS_MOUNT_NAME_LIMIT) ? ROMFS_MOUNT_NAME_LIMIT : len;
+
+        memset(mount_name, 0, sizeof(mount_name));
+        memcpy(mount_name, path, len);
+    }
+
+    // Search for the mount by name
+    romfs_mount *mount = _romfsFindMount(mount_name);
+    if (mount == NULL)
+    {
+        return MAKERESULT(Module_Libnx, LibnxError_NotFound);
+    }
+
+    return romfsFindFileInMount(mount, path, file);
+}
+
+Result romfsFindFileInMount(romfs_mount *mount, const char *path, romfs_fileobj *file)
+{
+    int ret;
+
+    // In the event the user has retrieved a handle to a RomFS mount but then unmounted
+    // it, the mount will no longer be setup so we return with a fail
+    if (!mount->setup)
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+
+    // Get the directory containing the file, navigateToDir already strips the mount name for us
+    romfs_dir *dir = 0;
+    ret = navigateToDir(mount, &dir, &path, false);
+    if (ret != 0)
+    {
+        if (ret == ENOENT)
+            return MAKERESULT(Module_Libnx, LibnxError_NotFound);
+
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+    }
+
+    // Get the file information from the directory
+    romfs_file *info = 0;
+    ret = searchForFile(mount, dir, (uint8_t *) path, strlen(path), &info);
+    if (ret != 0)
+    {
+        if (ret == ENOENT)
+            return MAKERESULT(Module_Libnx, LibnxError_NotFound);
+
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+    }
+
+    // Fill out the fileobj information
+    file->mount  = mount;
+    file->file   = info;
+    file->offset = mount->header.fileDataOff + info->dataOff;
+    file->pos    = 0;
+
+    return 0;
+}
+
+Result romfsReadFile(romfs_fileobj *file, void *buffer, u64 size, u64 offset, u64 *nread)
+{
+    if (nread == NULL || file == NULL || buffer == NULL)
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+
+    if (offset >= file->file->dataSize)
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+
+    // Truncate read if past end of file
+    u64 end = offset + size;
+    if (end > file->file->dataSize) end = file->file->dataSize;
+
+    size = end - offset;
+
+    ssize_t bytes_read = _romfs_read(file->mount, file->offset + offset, buffer, size);
+    if (bytes_read < 0)
+    {
+        return MAKERESULT(Module_Libnx, LibnxError_IoError);
+    }
+
+    *nread = bytes_read;
+    return 0;
+}
+
+Result romfsDirOpen(const char *path, romfs_diriter *iter)
+{
+    char mount_name[ROMFS_MOUNT_NAME_LIMIT] = "romfs";
+    char *colon_pos = strchr(path, ':');
+    if (colon_pos)
+    {
+        size_t len = (size_t) (colon_pos - path);
+        len = (len > ROMFS_MOUNT_NAME_LIMIT) ? ROMFS_MOUNT_NAME_LIMIT : len;
+
+        memset(mount_name, 0, sizeof(mount_name));
+        memcpy(mount_name, path, len);
+    }
+
+    romfs_mount *mount = _romfsFindMount(mount_name);
+    if (mount == NULL)
+        return MAKERESULT(Module_Libnx, LibnxError_NotFound);
+
+    return romfsDirOpenWithMount(mount, path, iter);
+}
+
+Result romfsDirOpenWithMount(romfs_mount *mount, const char *path, romfs_diriter *iter)
+{
+    romfs_dir *dir = 0;
+    int ret = navigateToDir(mount, &dir, &path, true);
+    if (ret != 0)
+    {
+        if (ret == ENOENT)
+            return MAKERESULT(Module_Libnx, LibnxError_NotFound);
+
+        return MAKERESULT(Module_Libnx, LibnxError_BadInput);
+    }
+
+    iter->mount     = mount;
+    iter->dir       = dir;
+    iter->state     = 0;
+    iter->childDir  = dir->childDir;
+    iter->childFile = dir->childFile;
+
+    return 0;
+}
+
+bool romfsDirNext(romfs_diriter *iter, romfs_direntry *entry)
+{
+    bool error = true;
+
+    iter->state += 1;
+
+    if (iter->state == 1)
+    {
+        // relative '.'
+        entry->type     = RomfsDirEntryType_Dir;
+        entry->dir      = iter->dir;
+        entry->name     = ".";
+        entry->name_len = 1;
+
+        error = false;
+    }
+    else if (iter->state == 2)
+    {
+        // relative '..'
+        romfs_dir *dir = romFS_dir(iter->mount, iter->dir->parent);
+        if (dir != NULL)
+        {
+            entry->type     = RomfsDirEntryType_Dir;
+            entry->dir      = dir;
+            entry->name     = "..";
+            entry->name_len = 2;
+
+            error = false;
+        }
+    }
+    else if (iter->childDir != romFS_none)
+    {
+        romfs_dir *dir = romFS_dir(iter->mount, iter->childDir);
+        if (dir != NULL)
+        {
+            entry->type     = RomfsDirEntryType_Dir;
+            entry->dir      = dir;
+            entry->name     = (const char *) dir->name;
+            entry->name_len = dir->nameLen;
+
+            iter->childDir = dir->sibling;
+
+            error = false;
+        }
+    }
+    else if (iter->childFile != romFS_none)
+    {
+        romfs_file *file = romFS_file(iter->mount, iter->childFile);
+        if (file != NULL)
+        {
+            entry->type     = RomfsDirEntryType_File;
+            entry->file     = file;
+            entry->name     = (const char *) file->name;
+            entry->name_len = file->nameLen;
+
+            iter->childFile = file->sibling;
+
+            error = false;
+        }
+    }
+
+    return !error;
 }
 
 //-----------------------------------------------------------------------------
