@@ -132,6 +132,8 @@ typedef struct
 
     u64 offset; ///< The starting offset in RomFS for file data.
     u64 pos;    ///< Current read position into the file.
+
+    int err;
 } romfs_fileobj;
 
 /**
@@ -174,7 +176,7 @@ typedef struct
 {
     romfs_mount *mount;    ///< The RomFS mount associated with the directory.
     romfs_dir   *dir;      ///< Information about the directory being searched.
-    u32         state;     ///< Current iteration count.
+    int         state;     ///< Current iteration count or error code
     u32         childDir;  ///< Next child directory of the directory.
     u32         childFile; ///< Next child file of the directory.
 } romfs_diriter;
@@ -190,8 +192,8 @@ typedef struct
     RomfsDirEntryType type; ///< Type of this entry.
     union
     {
-        const romfs_file *file;  ///< Entry information if type is RomfsDirEntryType_File.
-        const romfs_dir  *dir;   ///< Entry information if type is RomfsDirEntryType_Dir.
+        romfs_file *file;  ///< Entry information if type is RomfsDirEntryType_File.
+        romfs_dir  *dir;   ///< Entry information if type is RomfsDirEntryType_Dir.
     };
 
     const char *name; ///< Basename of the entry, not null-terminated, UTF-8 coded.
