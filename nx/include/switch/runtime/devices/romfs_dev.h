@@ -162,6 +162,14 @@ Result romfsFindFile(const char *path, romfs_fileobj *file);
 Result romfsFindFileInMount(romfs_mount *mount, const char *path, romfs_fileobj *file);
 
 /**
+ * @brief Wrapper function for turning a romfs_file into a romfs_fileobj to be operated on, this
+ *        is useful for creating readable files from a romfs_direntry
+ * @param mount The mount the file came from
+ * @param file The file information
+ */
+romfs_fileobj romfsFileObj(romfs_mount *mount, romfs_file *file);
+
+/**
  * @brief Reads data from the specified RomFS file.
  * @param file The RomFS file to read from.
  * @param buffer The buffer to read data into.

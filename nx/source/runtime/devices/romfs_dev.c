@@ -685,6 +685,16 @@ Result romfsFindFileInMount(romfs_mount *mount, const char *path, romfs_fileobj 
     return 0;
 }
 
+romfs_fileobj romfsFileObj(romfs_mount *mount, romfs_file *file)
+{
+    romfs_fileobj result = { 0 };
+    result.mount  = mount;
+    result.file   = file;
+    result.offset = mount->header.fileDataOff + file->dataOff;
+
+    return result;
+}
+
 Result romfsReadFile(romfs_fileobj *file, void *buffer, u64 size, u64 offset, u64 *nread)
 {
     if (nread == NULL || file == NULL || buffer == NULL)
