@@ -1539,6 +1539,48 @@ NX_CONSTEXPR bool hidKeyboardStateGetKey(const HidKeyboardState *state, HidKeybo
 
 ///@}
 
+///@name HomeButton
+///@{
+
+/**
+ * @brief Gets \ref HidHomeButtonState.
+ * @note Home button shmem must be activated with \ref hidsysActivateHomeButton
+ * @param[out] states Output array of \ref HidHomeButtonState.
+ * @param[in] count Size of the states array in entries.
+ * @return Total output entries.
+ */
+size_t hidGetHomeButtonStates(HidHomeButtonState *states, size_t count);
+
+///@}
+
+///@name SleepButton
+///@{
+
+/**
+ * @brief Gets \ref HidSleepButtonState.
+ * @note Sleep button shmem must be activated with \ref hidsysActivateSleepButton
+ * @param[out] states Output array of \ref HidSleepButtonState.
+ * @param[in] count Size of the states array in entries.
+ * @return Total output entries.
+ */
+size_t hidGetSleepButtonStates(HidSleepButtonState *states, size_t count);
+
+///@}
+
+///@name CaptureButton
+///@{
+
+/**
+ * @brief Gets \ref HidCaptureButtonState.
+ * @note Capture button shmem must be activated with \ref hidsysActivateCaptureButton
+ * @param[out] states Output array of \ref HidCaptureButtonState.
+ * @param[in] count Size of the states array in entries.
+ * @return Total output entries.
+ */
+size_t hidGetCaptureButtonStates(HidCaptureButtonState *states, size_t count);
+
+///@}
+
 ///@name Npad
 ///@{
 
