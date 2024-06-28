@@ -755,6 +755,297 @@ typedef struct HidKeyboardSharedMemoryFormat {
 
 // End HidKeyboard
 
+// Begin HidBasicXpad
+
+/// HidBasicXpadState
+typedef struct {
+    u64 sampling_number;
+    u32 attributes;
+    u32 buttons;
+    u64 analog_stick_left;
+    u64 analog_stick_right;
+} HidBasicXpadState;
+
+/// HidBasicXpadStateAtomicStorage
+typedef struct {
+    u64 sampling_number;
+    HidBasicXpadState state;
+} HidBasicXpadStateAtomicStorage;
+
+/// HidBasicXpadLifo
+typedef struct {
+    HidCommonLifoHeader header;
+    HidBasicXpadStateAtomicStorage storage[17];
+} HidBasicXpadLifo;
+
+/// HidBasicXpadSharedMemoryEntry
+typedef struct {
+    HidBasicXpadLifo lifo;
+    u8 padding[0x138];
+} HidBasicXpadSharedMemoryEntry;
+
+/// HidBasicXpadSharedMemoryFormat
+typedef struct {
+    HidBasicXpadSharedMemoryEntry entries[4];
+} HidBasicXpadSharedMemoryFormat;
+
+// End HidBasicXpad
+
+// Begin HidDigitizer
+
+/// HidDigitizerState
+typedef struct {
+    u64 sampling_number;
+    u32 unk_0x8;
+    u32 unk_0xC;
+    u32 attributes;
+    u32 buttons;
+    u32 unk_0x18;
+    u32 unk_0x1C;
+    u32 unk_0x20;
+    u32 unk_0x24;
+    u32 unk_0x28;
+    u32 unk_0x2C;
+    u32 unk_0x30;
+    u32 unk_0x34;
+    u32 unk_0x38;
+    u32 unk_0x3C;
+    u32 unk_0x40;
+    u32 unk_0x44;
+    u32 unk_0x48;
+    u32 unk_0x4C;
+    u32 unk_0x50;
+    u32 unk_0x54;
+} HidDigitizerState;
+
+/// HidDigitizerStateAtomicStorage
+typedef struct {
+    u64 sampling_number;
+    HidDigitizerState state;
+} HidDigitizerStateAtomicStorage;
+
+/// HidDigitizerLifo
+typedef struct {
+    HidCommonLifoHeader header;
+    HidDigitizerStateAtomicStorage storage[17];
+} HidDigitizerLifo;
+
+/// HidDigitizerSharedMemoryFormat
+typedef struct {
+    HidDigitizerLifo lifo;
+    u8 padding[0x980];
+} HidDigitizerSharedMemoryFormat;
+
+// End HidDigitizer
+
+// Begin HidHomeButton
+
+/// HidHomeButtonState
+typedef struct {
+    u64 sampling_number;
+    u64 buttons;
+} HidHomeButtonState;
+
+/// HidHomeButtonStateAtomicStorage
+typedef struct {
+    u64 sampling_number;
+    HidHomeButtonState state;
+} HidHomeButtonStateAtomicStorage;
+
+/// HidHomeButtonLifo
+typedef struct {
+    HidCommonLifoHeader header;
+    HidHomeButtonStateAtomicStorage storage[17];
+} HidHomeButtonLifo;
+
+/// HidHomeButtonSharedMemoryFormat
+typedef struct {
+    HidHomeButtonLifo lifo;
+    u8 padding[0x48];
+} HidHomeButtonSharedMemoryFormat;
+
+// End HidHomeButton
+
+// Begin HidSleepButton
+
+/// HidSleepButtonState
+typedef struct {
+    u64 sampling_number;
+    u64 buttons;
+} HidSleepButtonState;
+
+/// HidSleepButtonStateAtomicStorage
+typedef struct {
+    u64 sampling_number;
+    HidSleepButtonState state;
+} HidSleepButtonStateAtomicStorage;
+
+/// HidSleepButtonLifo
+typedef struct {
+    HidCommonLifoHeader header;
+    HidSleepButtonStateAtomicStorage storage[17];
+} HidSleepButtonLifo;
+
+/// HidSleepButtonSharedMemoryFormat
+typedef struct {
+    HidSleepButtonLifo lifo;
+    u8 padding[0x48];
+} HidSleepButtonSharedMemoryFormat;
+
+// End HidSleepButton
+
+// Begin HidCaptureButton
+
+/// HidCaptureButtonState
+typedef struct {
+    u64 sampling_number;
+    u64 buttons;
+} HidCaptureButtonState;
+
+/// HidCaptureButtonStateAtomicStorage
+typedef struct {
+    u64 sampling_number;
+    HidCaptureButtonState state;
+} HidCaptureButtonStateAtomicStorage;
+
+/// HidCaptureButtonLifo
+typedef struct {
+    HidCommonLifoHeader header;
+    HidCaptureButtonStateAtomicStorage storage[17];
+} HidCaptureButtonLifo;
+
+/// HidCaptureButtonSharedMemoryFormat
+typedef struct {
+    HidCaptureButtonLifo lifo;
+    u8 padding[0x48];
+} HidCaptureButtonSharedMemoryFormat;
+
+// End HidCaptureButton
+
+// Begin HidInputDetector
+
+/// HidInputDetectorState
+typedef struct {
+    u64 input_source_state;
+    u64 sampling_number;
+} HidInputDetectorState;
+
+/// HidInputDetectorStateAtomicStorage
+typedef struct {
+    u64 sampling_number;
+    HidInputDetectorState state;
+} HidInputDetectorStateAtomicStorage;
+
+/// HidInputDetectorLifo
+typedef struct {
+    HidCommonLifoHeader header;
+    HidInputDetectorStateAtomicStorage storage[2];
+} HidInputDetectorLifo;
+
+/// HidInputDetectorSharedMemoryEntry
+typedef struct {
+    HidInputDetectorLifo lifo;
+    u8 padding[0x30];
+} HidInputDetectorSharedMemoryEntry;
+
+/// HidInputDetectorSharedMemoryFormat
+typedef struct {
+    HidInputDetectorSharedMemoryEntry entries[16];
+} HidInputDetectorSharedMemoryFormat;
+
+// End HidInputDetector
+
+// Begin HidUniquePad
+
+/// HidUniquePadConfigMutex
+typedef struct {
+    u8 unk_0x0[0x20];
+} HidUniquePadConfigMutex;
+
+/// HidSixAxisSensorUserCalibrationState
+typedef struct {
+    u32 flags;
+    u8 reserved[4];
+    u64 stage;
+    u64 sampling_number;
+} HidSixAxisSensorUserCalibrationState;
+
+/// HidSixAxisSensorUserCalibrationStateAtomicStorage
+typedef struct {
+    u64 sampling_number;
+    HidSixAxisSensorUserCalibrationState calib_state;
+} HidSixAxisSensorUserCalibrationStateAtomicStorage;
+
+/// HidSixAxisSensorUserCalibrationStateLifo
+typedef struct {
+    HidCommonLifoHeader header;
+    HidSixAxisSensorUserCalibrationStateAtomicStorage storage[2];
+} HidSixAxisSensorUserCalibrationStateLifo;
+
+/// HidAnalogStickCalibrationStateImpl
+typedef struct {
+    u64 state;
+    u64 flags;
+    u64 stage;
+    u64 sampling_number;
+} HidAnalogStickCalibrationStateImpl;
+
+/// HidAnalogStickCalibrationStateImplAtomicStorage
+typedef struct {
+    u64 sampling_number;
+    HidAnalogStickCalibrationStateImpl calib_state;
+} HidAnalogStickCalibrationStateImplAtomicStorage;
+
+/// HidAnalogStickCalibrationStateImplLifo
+typedef struct {
+    HidCommonLifoHeader header;
+    HidAnalogStickCalibrationStateImplAtomicStorage storage[2];
+} HidAnalogStickCalibrationStateImplLifo;
+
+/// HidUniquePadConfig
+typedef struct {
+    u32 type;
+    u32 interface;
+    u8 serial_number[0x10];
+    u32 controller_number;
+    bool is_active;
+    u8 reserved[3];
+    u64 sampling_number;
+} HidUniquePadConfig;
+
+/// HidUniquePadConfigAtomicStorage
+typedef struct {
+    u64 sampling_number;
+    HidUniquePadConfig config;
+} HidUniquePadConfigAtomicStorage;
+
+/// HidUniquePadConfigLifo
+typedef struct {
+    HidCommonLifoHeader header;
+    HidUniquePadConfigAtomicStorage storage[2];
+} HidUniquePadConfigLifo;
+
+/// HidUniquePadLifo
+typedef struct {
+    HidUniquePadConfigLifo config_lifo;
+    HidAnalogStickCalibrationStateImplLifo analog_stick_calib_lifo[2];
+    HidSixAxisSensorUserCalibrationStateLifo sixaxis_calib_lifo;
+    HidUniquePadConfigMutex mutex;
+} HidUniquePadLifo;
+
+/// HidUniquePadSharedMemoryEntry
+typedef struct {
+    HidUniquePadLifo lifo;
+    u8 padding[0x220];
+} HidUniquePadSharedMemoryEntry;
+
+/// HidUniquePadSharedMemoryFormat
+typedef struct {
+    HidUniquePadSharedMemoryEntry entries[16];
+} HidUniquePadSharedMemoryFormat;
+
+// End HidUniquePad
+
 // Begin HidNpad
 
 /// Npad colors.
@@ -1080,12 +1371,15 @@ typedef struct HidSharedMemory {
     HidTouchScreenSharedMemoryFormat touchscreen;
     HidMouseSharedMemoryFormat mouse;
     HidKeyboardSharedMemoryFormat keyboard;
-    u8 digitizer[0x1000];                               ///< [10.0.0+] Digitizer [1.0.0-9.2.0] BasicXpad
-    u8 home_button[0x200];
-    u8 sleep_button[0x200];
-    u8 capture_button[0x200];
-    u8 input_detector[0x800];
-    u8 unique_pad[0x4000];                              ///< [1.0.0-4.1.0] UniquePad
+    union {
+        HidBasicXpadSharedMemoryFormat basic_xpad;      ///< [1.0.0-9.2.0] BasicXpad
+        HidDigitizerSharedMemoryFormat digitizer;       ///< [10.0.0+] Digitizer
+    };
+    HidHomeButtonSharedMemoryFormat home_button;
+    HidSleepButtonSharedMemoryFormat sleep_button;
+    HidCaptureButtonSharedMemoryFormat capture_button;
+    HidInputDetectorSharedMemoryFormat input_detector;
+    HidUniquePadSharedMemoryFormat unique_pad;          ///< [1.0.0-4.1.0] UniquePad
     HidNpadSharedMemoryFormat npad;
     HidGestureSharedMemoryFormat gesture;
     HidConsoleSixAxisSensor console_six_axis_sensor;    ///< [5.0.0+] ConsoleSixAxisSensor
@@ -1242,6 +1536,48 @@ size_t hidGetKeyboardStates(HidKeyboardState *states, size_t count);
 NX_CONSTEXPR bool hidKeyboardStateGetKey(const HidKeyboardState *state, HidKeyboardKey key) {
     return (state->keys[key / 64] & (1UL << (key & 63))) != 0;
 }
+
+///@}
+
+///@name HomeButton
+///@{
+
+/**
+ * @brief Gets \ref HidHomeButtonState.
+ * @note Home button shmem must be activated with \ref hidsysActivateHomeButton
+ * @param[out] states Output array of \ref HidHomeButtonState.
+ * @param[in] count Size of the states array in entries.
+ * @return Total output entries.
+ */
+size_t hidGetHomeButtonStates(HidHomeButtonState *states, size_t count);
+
+///@}
+
+///@name SleepButton
+///@{
+
+/**
+ * @brief Gets \ref HidSleepButtonState.
+ * @note Sleep button shmem must be activated with \ref hidsysActivateSleepButton
+ * @param[out] states Output array of \ref HidSleepButtonState.
+ * @param[in] count Size of the states array in entries.
+ * @return Total output entries.
+ */
+size_t hidGetSleepButtonStates(HidSleepButtonState *states, size_t count);
+
+///@}
+
+///@name CaptureButton
+///@{
+
+/**
+ * @brief Gets \ref HidCaptureButtonState.
+ * @note Capture button shmem must be activated with \ref hidsysActivateCaptureButton
+ * @param[out] states Output array of \ref HidCaptureButtonState.
+ * @param[in] count Size of the states array in entries.
+ * @return Total output entries.
+ */
+size_t hidGetCaptureButtonStates(HidCaptureButtonState *states, size_t count);
 
 ///@}
 
