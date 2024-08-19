@@ -27,6 +27,19 @@ static Result _nwindowConnect(NWindow* nw)
     return rc;
 }
 
+static Result _nwindowCancelBuffer(NWindow* nw, s32 slot, const NvMultiFence* fence)
+{
+    static const NvMultiFence s_emptyFence = {0};
+    if (!fence)
+        fence = &s_emptyFence;
+
+    Result rc = bqCancelBuffer(&nw->bq, slot, fence);
+    if (R_SUCCEEDED(rc))
+        nw->cur_slot = -1;
+
+    return rc;
+}
+
 static Result _nwindowDisconnect(NWindow* nw)
 {
     Result rc = bqDisconnect(&nw->bq, NATIVE_WINDOW_API_CPU);
@@ -267,13 +280,7 @@ Result nwindowCancelBuffer(NWindow* nw, s32 slot, const NvMultiFence* fence)
         return MAKERESULT(Module_Libnx, LibnxError_BadGfxQueueBuffer);
     }
 
-    static const NvMultiFence s_emptyFence = {0};
-    if (!fence)
-        fence = &s_emptyFence;
-
-    Result rc = bqCancelBuffer(&nw->bq, slot, fence);
-    if (R_SUCCEEDED(rc))
-        nw->cur_slot = -1;
+    Result rc = _nwindowCancelBuffer(nw, slot, fence);
 
     mutexUnlock(&nw->mutex);
     return rc;
@@ -323,8 +330,9 @@ Result nwindowReleaseBuffers(NWindow* nw)
     mutexLock(&nw->mutex);
 
     if (nw->cur_slot >= 0)
-        rc = MAKERESULT(Module_Libnx, LibnxError_BadInput);
-    else if (nw->is_connected && nw->slots_configured)
+        rc = _nwindowCancelBuffer(nw, nw->cur_slot, NULL);
+
+    if (R_SUCCEEDED(rc) && nw->is_connected && nw->slots_configured)
         rc = _nwindowDisconnect(nw);
 
     mutexUnlock(&nw->mutex);
