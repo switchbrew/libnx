@@ -7,6 +7,7 @@
 #pragma once
 #include "../types.h"
 #include "../kernel/event.h"
+#include "../sf/service.h"
 
 #define SPL_RSA_BUFFER_SIZE (0x100)
 
