@@ -36,11 +36,34 @@ static void _dynProcessRela(uintptr_t base, const Elf64_Rela* rela, size_t relas
 				break;
 			}
 
+			case R_AARCH64_NONE: {
+				break;
+			}
+
 			case R_AARCH64_RELATIVE: {
 				u64* ptr = (u64*)(base + rela->r_offset);
 				*ptr = base + rela->r_addend;
 				break;
 			}
+		}
+	}
+}
+
+static void _dynProcessRelr(uintptr_t base, const Elf64_Relr* relr, size_t relrsz)
+{
+	u64* ptr = NULL;
+	for (; relrsz--; relr++) {
+		if ((*relr & 1) == 0) {
+			ptr = (u64*)(base + *relr);
+			*ptr++ += base;
+		} else {
+			u64 bitmap = *relr >> 1;
+			while (bitmap) {
+				unsigned id = __builtin_ffsl(bitmap)-1;
+				bitmap &= ~(1UL << id);
+				ptr[id] += base;
+			}
+			ptr += 63;
 		}
 	}
 }
@@ -65,6 +88,8 @@ void __nx_dynamic(uintptr_t base, const Mod0Header* mod0)
 	// Extract relevant information from the ELF dynamic section
 	const Elf64_Rela* rela = NULL;
 	size_t relasz = 0;
+	const Elf64_Relr* relr = NULL;
+	size_t relrsz = 0;
 	for (; dyn->d_tag != DT_NULL; dyn++) {
 		switch (dyn->d_tag) {
 			case DT_RELA:
@@ -74,12 +99,25 @@ void __nx_dynamic(uintptr_t base, const Mod0Header* mod0)
 			case DT_RELASZ:
 				relasz = dyn->d_un.d_val / sizeof(Elf64_Rela);
 				break;
+
+			case DT_RELR:
+				relr = (const Elf64_Relr*)(base + dyn->d_un.d_ptr);
+				break;
+
+			case DT_RELRSZ:
+				relrsz = dyn->d_un.d_val / sizeof(Elf64_Relr);
+				break;
 		}
 	}
 
 	// Apply RELA relocations if present
 	if (rela && relasz) {
 		_dynProcessRela(base, rela, relasz);
+	}
+
+	// Apply RELR relocations if present
+	if (relr && relrsz) {
+		_dynProcessRelr(base, relr, relrsz);
 	}
 
 	// Return early if LNY0/LNY1 extensions are not present
