@@ -212,6 +212,8 @@ typedef enum {
     InfoType_IoRegionHint                   = 27, ///< [16.0.0+] Low bits of the physical address for a KIoRegion.
     InfoType_AliasRegionExtraSize           = 28, ///< [18.0.0+] Extra size added to the reserved region.
 
+    InfoType_TransferMemoryHint             = 34, ///< [19.0.0+] Low bits of the process address for a KTransferMemory.
+
     InfoType_ThreadTickCountDeprecated      = 0xF0000002, ///< [1.0.0-12.1.0] Number of ticks spent on thread.
 } InfoType;
 
