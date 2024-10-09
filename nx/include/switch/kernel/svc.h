@@ -267,7 +267,7 @@ typedef enum {
     ArbitrationType_WaitIfLessThan             = 0, ///< Wait if the 32-bit value is less than argument.
     ArbitrationType_DecrementAndWaitIfLessThan = 1, ///< Decrement the 32-bit value and wait if it is less than argument.
     ArbitrationType_WaitIfEqual                = 2, ///< Wait if the 32-bit value is equal to argument.
-    ArbitrationType_WaitIfEqual64              = 2, ///< [19.0.0+] Wait if the 64-bit value is equal to argument.
+    ArbitrationType_WaitIfEqual64              = 3, ///< [19.0.0+] Wait if the 64-bit value is equal to argument.
 } ArbitrationType;
 
 /// Context of a scheduled thread.
