@@ -212,6 +212,8 @@ typedef enum {
     InfoType_IoRegionHint                   = 27, ///< [16.0.0+] Low bits of the physical address for a KIoRegion.
     InfoType_AliasRegionExtraSize           = 28, ///< [18.0.0+] Extra size added to the reserved region.
 
+    InfoType_TransferMemoryHint             = 34, ///< [19.0.0+] Low bits of the process address for a KTransferMemory.
+
     InfoType_ThreadTickCountDeprecated      = 0xF0000002, ///< [1.0.0-12.1.0] Number of ticks spent on thread.
 } InfoType;
 
@@ -262,9 +264,10 @@ typedef enum {
 
 /// WaitForAddress behaviors.
 typedef enum {
-    ArbitrationType_WaitIfLessThan             = 0, ///< Wait if the value is less than argument.
-    ArbitrationType_DecrementAndWaitIfLessThan = 1, ///< Decrement the value and wait if it is less than argument.
-    ArbitrationType_WaitIfEqual                = 2, ///< Wait if the value is equal to argument.
+    ArbitrationType_WaitIfLessThan             = 0, ///< Wait if the 32-bit value is less than argument.
+    ArbitrationType_DecrementAndWaitIfLessThan = 1, ///< Decrement the 32-bit value and wait if it is less than argument.
+    ArbitrationType_WaitIfEqual                = 2, ///< Wait if the 32-bit value is equal to argument.
+    ArbitrationType_WaitIfEqual64              = 3, ///< [19.0.0+] Wait if the 64-bit value is equal to argument.
 } ArbitrationType;
 
 /// Context of a scheduled thread.
@@ -809,7 +812,7 @@ Result svcGetThreadContext3(ThreadContext* ctx, Handle thread);
  * @return Result code.
  * @note Syscall number 0x34.
  */
-Result svcWaitForAddress(void *address, u32 arb_type, s32 value, s64 timeout);
+Result svcWaitForAddress(void *address, u32 arb_type, s64 value, s64 timeout);
 
 /**
  * @brief Signals (and updates) an address depending on type and value. [4.0.0+]
