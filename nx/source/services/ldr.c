@@ -94,6 +94,19 @@ Result ldrPmCreateProcess(u64 pin_id, u32 flags, Handle reslimit_h, Handle *out_
 }
 
 Result ldrPmGetProgramInfo(const NcmProgramLocation *loc, LoaderProgramInfo *out_program_info) {
+    if (!hosversionIsAtmosphere() && hosversionBefore(19, 0, 0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return serviceDispatchIn(&g_ldrPmSrv, 1, *loc,
+        .buffer_attrs = { SfBufferAttr_Out | SfBufferAttr_HipcPointer | SfBufferAttr_FixedSize },
+        .buffers = { { out_program_info, sizeof(*out_program_info) } },
+    );
+}
+
+Result ldrPmGetProgramInfoV1(const NcmProgramLocation *loc, LoaderProgramInfoV1 *out_program_info) {
+    if (hosversionIsAtmosphere() || hosversionAtLeast(19,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     return serviceDispatchIn(&g_ldrPmSrv, 1, *loc,
         .buffer_attrs = { SfBufferAttr_Out | SfBufferAttr_HipcPointer | SfBufferAttr_FixedSize },
         .buffers = { { out_program_info, sizeof(*out_program_info) } },
