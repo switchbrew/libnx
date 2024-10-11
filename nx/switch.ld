@@ -181,11 +181,11 @@ SECTIONS
 	PROVIDE_HIDDEN( __bss_start__ = ADDR(.bss) );
 	PROVIDE_HIDDEN( __bss_end__   = __tls_end  );
 
-	PROVIDE_HIDDEN( __end__ = ABSOLUTE(.) );
+	PROVIDE_HIDDEN( __end__ = . );
 
 	/* =========== Argument buffer =========== */
 	. = ALIGN(0x1000);
-	PROVIDE_HIDDEN( __argdata__ = ABSOLUTE(.) );
+	PROVIDE_HIDDEN( __argdata__ = . );
 
 	/* ==================
 	   ==== Metadata ====
