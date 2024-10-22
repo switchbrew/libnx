@@ -19,4 +19,4 @@ jobs:
           persist-credentials: false
 
       - name: build
-        run: make -C nx -j2
+        run: make -C nx -j$(nproc)
