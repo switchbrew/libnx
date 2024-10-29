@@ -553,6 +553,8 @@ Result fsGetRightsIdByPath(const char* path, FsRightsId* out_rights_id);
 /// Retrieves the rights id and key generation corresponding to the content path. Only available on [3.0.0+], attr is ignored before [16.0.0].
 Result fsGetRightsIdAndKeyGenerationByPath(const char* path, FsContentAttributes attr, u8* out_key_generation, FsRightsId* out_rights_id);
 
+Result fsGetContentStorageInfoIndex(s32 *out); ///< [19.0.0+]
+
 Result fsDisableAutoSaveDataCreation(void);
 
 Result fsSetGlobalAccessLogMode(u32 mode);

@@ -623,6 +623,13 @@ Result fsGetAndClearErrorInfo(FsFileSystemProxyErrorInfo *out) {
     return _fsObjectDispatchOut(&g_fsSrv, 800, *out);
 }
 
+Result fsGetContentStorageInfoIndex(s32 *out) {
+    if (hosversionBefore(19,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _fsCmdNoInOutU32(&g_fsSrv, (u32 *)out, 820);
+}
+
 Result fsDisableAutoSaveDataCreation(void) {
     return _fsCmdNoIO(&g_fsSrv, 1003);
 }
@@ -1239,7 +1246,8 @@ Result fsDeviceOperatorGetGameCardDeviceCertificate(FsDeviceOperator* d, const F
         s64 buffer_size;
     } in = { *handle, size };
 
-    s64 os;
+    // Assume old gamecard certificate size on pre-19.0.0
+    s64 os = 0x200;
     Result rc;
 
     if (hosversionAtLeast(19,0,0)) {
@@ -1250,9 +1258,6 @@ Result fsDeviceOperatorGetGameCardDeviceCertificate(FsDeviceOperator* d, const F
         rc = _fsObjectDispatchIn(&d->s, 206, in,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
         .buffers = { { dst, dst_size } });
-
-        // Assume old gamecard certificate size on pre-19.0.0
-        os = 0x200;
     }
 
     if (R_SUCCEEDED(rc))
