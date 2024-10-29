@@ -1233,15 +1233,32 @@ Result fsDeviceOperatorGetGameCardAttribute(FsDeviceOperator* d, const FsGameCar
     return _fsObjectDispatchInOut(&d->s, 205, *handle, *out);
 }
 
-Result fsDeviceOperatorGetGameCardDeviceCertificate(FsDeviceOperator* d, const FsGameCardHandle* handle, void* dst, size_t dst_size, s64 size) {
+Result fsDeviceOperatorGetGameCardDeviceCertificate(FsDeviceOperator* d, const FsGameCardHandle* handle, void* dst, size_t dst_size, s64* out_size, s64 size) {
     const struct {
         FsGameCardHandle handle;
         s64 buffer_size;
     } in = { *handle, size };
 
-    return _fsObjectDispatchIn(&d->s, 206, in,
+    s64 os;
+    Result rc;
+
+    if (hosversionAtLeast(19,0,0)) {
+        rc = _fsObjectDispatchInOut(&d->s, 206, in, os,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
         .buffers = { { dst, dst_size } });
+    } else {
+        rc = _fsObjectDispatchIn(&d->s, 206, in,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { dst, dst_size } });
+
+        // Assume old gamecard certificate size on pre-19.0.0
+        os = 0x200;
+    }
+
+    if (R_SUCCEEDED(rc))
+        *out_size = os;
+
+    return rc;
 }
 
 Result fsDeviceOperatorGetGameCardIdSet(FsDeviceOperator* d, void* dst, size_t dst_size, s64 size) {
