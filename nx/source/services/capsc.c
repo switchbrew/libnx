@@ -80,12 +80,8 @@ Result capscGetApplicationIdFromAruid(CapsApplicationId *application_id, u64 aru
 
     if (hosversionAtLeast(19,0,0))
         return serviceDispatchInOut(&g_capscSrv, 2013, aruid, *application_id);
-
-    u64 old_application_id=0;
-    Result rc = serviceDispatchInOut(&g_capscSrv, 2013, aruid, old_application_id);
-    if (R_SUCCEEDED(rc))
-        *application_id = (CapsApplicationId){ old_application_id, 0, 0 };
-    return rc;
+    else
+        return serviceDispatchInOut(&g_capscSrv, 2013, aruid, application_id->application_id);
 }
 
 Result capscCheckApplicationIdRegistered(u64 application_id) {
