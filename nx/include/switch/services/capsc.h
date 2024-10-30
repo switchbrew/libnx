@@ -9,6 +9,13 @@
 #include "../sf/service.h"
 #include "../services/caps.h"
 
+typedef struct {
+    u64 application_id;
+    u8 unknown_08;
+    u8 unknown_09;
+    u8 reserved[6];
+} CapsApplicationId;
+
 /// Initialize caps:c
 Result capscInitialize(void);
 
@@ -40,7 +47,7 @@ Result capscNotifyAlbumStorageIsUnAvailable(CapsAlbumStorage storage);
  * @param[in] appletResourceUserId AppletResourceUserId.
  * @param[in] application_id ApplicationId.
  */
-Result capscRegisterAppletResourceUserId(u64 appletResourceUserId, u64 application_id);
+Result capscRegisterAppletResourceUserId(u64 appletResourceUserId, const CapsApplicationId *application_id);
 
 /**
  * @brief Unregister an applet.
@@ -49,7 +56,7 @@ Result capscRegisterAppletResourceUserId(u64 appletResourceUserId, u64 applicati
  * @param[in] appletResourceUserId AppletResourceUserId.
  * @param[in] application_id ApplicationId.
  */
-Result capscUnregisterAppletResourceUserId(u64 appletResourceUserId, u64 application_id);
+Result capscUnregisterAppletResourceUserId(u64 appletResourceUserId, const CapsApplicationId *application_id);
 
 /**
  * @brief Get an ApplicationId that corresponds to an AppletResourceUserId.
@@ -58,7 +65,7 @@ Result capscUnregisterAppletResourceUserId(u64 appletResourceUserId, u64 applica
  * @param[out] application_id ApplicationId.
  * @param[in] appletResourceUserId AppletResourceUserId.
  */
-Result capscGetApplicationIdFromAruid(u64 *application_id, u64 aruid);
+Result capscGetApplicationIdFromAruid(CapsApplicationId *application_id, u64 aruid);
 
 /**
  * @brief Checks whether an ApplicationId is registered.
@@ -74,7 +81,7 @@ Result capscCheckApplicationIdRegistered(u64 application_id);
  * @param[in] contents \ref CapsAlbumFileContents
  * @param[out] file_id \ref CapsAlbumFileId
  */
-Result capscGenerateCurrentAlbumFileId(u64 application_id, CapsAlbumFileContents contents, CapsAlbumFileId *file_id);
+Result capscGenerateCurrentAlbumFileId(const CapsApplicationId *application_id, CapsAlbumFileContents contents, CapsAlbumFileId *file_id);
 
 /**
  * @brief Generate an ApplicationAlbumEntry based on parameters.
