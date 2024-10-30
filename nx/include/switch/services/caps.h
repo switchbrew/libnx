@@ -93,7 +93,9 @@ typedef struct {
     CapsAlbumFileDateTime datetime;             ///< \ref CapsAlbumFileDateTime
     u8 storage;                                 ///< \ref CapsAlbumStorage
     u8 content;                                 ///< \ref CapsAlbumFileContents
-    u8 pad_x12[0x6];                            ///< padding
+    u8 unknown_12;                              ///< [19.0.0+]
+    u8 unknown_13;                              ///< [19.0.0+]
+    u8 pad_x14[0x4];                            ///< padding
 } CapsAlbumFileId;
 
 /// AlbumEntry
