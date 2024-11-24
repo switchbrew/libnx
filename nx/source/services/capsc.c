@@ -57,21 +57,41 @@ Result capscNotifyAlbumStorageIsUnAvailable(CapsAlbumStorage storage) {
 Result capscRegisterAppletResourceUserId(u64 appletResourceUserId, const CapsApplicationId *application_id) {
     if (hosversionBefore(2,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    const struct {
-        u64 appletResourceUserId;
-        CapsApplicationId applicationId;
-    } in = { appletResourceUserId, *application_id };
-    return serviceDispatchIn(&g_capscSrv, 2011, in);
+
+    if (hosversionAtLeast(19,0,0)) {
+        const struct {
+            u64 appletResourceUserId;
+            CapsApplicationId applicationId;
+        } in = { appletResourceUserId, *application_id };
+        return serviceDispatchIn(&g_capscSrv, 2011, in);
+    }
+    else {
+        const struct {
+            u64 appletResourceUserId;
+            u64 applicationId;
+        } in = { appletResourceUserId, application_id->application_id };
+        return serviceDispatchIn(&g_capscSrv, 2011, in);
+    }
 }
 
 Result capscUnregisterAppletResourceUserId(u64 appletResourceUserId, const CapsApplicationId *application_id) {
     if (hosversionBefore(2,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    const struct {
-        u64 appletResourceUserId;
-        CapsApplicationId applicationId;
-    } in = { appletResourceUserId, *application_id };
-    return serviceDispatchIn(&g_capscSrv, 2012, in);
+
+    if (hosversionAtLeast(19,0,0)) {
+        const struct {
+            u64 appletResourceUserId;
+            CapsApplicationId applicationId;
+        } in = { appletResourceUserId, *application_id };
+        return serviceDispatchIn(&g_capscSrv, 2012, in);
+    }
+    else {
+        const struct {
+            u64 appletResourceUserId;
+            u64 applicationId;
+        } in = { appletResourceUserId, application_id->application_id };
+        return serviceDispatchIn(&g_capscSrv, 2012, in);
+    }
 }
 
 Result capscGetApplicationIdFromAruid(CapsApplicationId *application_id, u64 aruid) {
@@ -93,11 +113,21 @@ Result capscCheckApplicationIdRegistered(u64 application_id) {
 Result capscGenerateCurrentAlbumFileId(const CapsApplicationId *application_id, CapsAlbumFileContents contents, CapsAlbumFileId *file_id) {
     if (hosversionBefore(2,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-    const struct {
-        u8 type;
-        CapsApplicationId applicationId;
-    } in = { contents, *application_id };
-    return serviceDispatchInOut(&g_capscSrv, 2101, in, *file_id);
+
+    if (hosversionAtLeast(19,0,0)) {
+        const struct {
+            u8 type;
+            CapsApplicationId applicationId;
+        } in = { contents, *application_id };
+        return serviceDispatchInOut(&g_capscSrv, 2101, in, *file_id);
+    }
+    else {
+        const struct {
+            u8 type;
+            u64 applicationId;
+        } in = { contents, application_id->application_id };
+        return serviceDispatchInOut(&g_capscSrv, 2101, in, *file_id);
+    }
 }
 
 Result capscGenerateApplicationAlbumEntry(CapsApplicationAlbumEntry *appEntry, const CapsAlbumEntry *entry, u64 application_id) {
