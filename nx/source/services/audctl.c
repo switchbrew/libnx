@@ -99,6 +99,9 @@ Result audctlSetTargetMute(AudioTarget target, bool mute) {
 }
 
 Result audctlIsTargetConnected(bool* connected_out, AudioTarget target) {
+    if (hosversionAtLeast(18,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     const struct {
         u32 target;
     } in = { target };
@@ -166,6 +169,9 @@ Result audctlSetAudioOutputMode(AudioTarget target, AudioOutputMode mode) {
 }
 
 Result audctlSetForceMutePolicy(AudioForceMutePolicy policy) {
+    if (hosversionAtLeast(14,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     const struct {
         u32 policy;
     } in = { policy };
@@ -174,6 +180,9 @@ Result audctlSetForceMutePolicy(AudioForceMutePolicy policy) {
 }
 
 Result audctlGetForceMutePolicy(AudioForceMutePolicy* policy_out) {
+    if (hosversionAtLeast(14,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     struct {
         u32 policy;
     } out;
@@ -256,7 +265,7 @@ Result audctlGetHeadphoneOutputLevelMode(AudioHeadphoneOutputLevelMode* mode_out
 }
 
 Result audctlAcquireAudioVolumeUpdateEventForPlayReport(Event* event_out) {
-    if (hosversionBefore(3,0,0))
+    if (!hosversionBetween(3,14))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     Handle tmp_handle;
@@ -274,7 +283,7 @@ Result audctlAcquireAudioVolumeUpdateEventForPlayReport(Event* event_out) {
 }
 
 Result audctlAcquireAudioOutputDeviceUpdateEventForPlayReport(Event* event_out) {
-     if (hosversionBefore(3,0,0))
+    if (!hosversionBetween(3,14))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     Handle tmp_handle;

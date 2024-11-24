@@ -48,21 +48,21 @@ Result audctlGetTargetVolumeMin(s32* volume_out);
 Result audctlGetTargetVolumeMax(s32* volume_out);
 Result audctlIsTargetMute(bool* mute_out, AudioTarget target);
 Result audctlSetTargetMute(AudioTarget target, bool mute);
-Result audctlIsTargetConnected(bool* connected_out, AudioTarget target);
+Result audctlIsTargetConnected(bool* connected_out, AudioTarget target); ///< [1.0.0-17.0.1]
 Result audctlSetDefaultTarget(AudioTarget target, u64 fade_in_ns, u64 fade_out_ns);
 Result audctlGetDefaultTarget(AudioTarget* target_out);
 Result audctlGetAudioOutputMode(AudioOutputMode* mode_out, AudioTarget target);
 Result audctlSetAudioOutputMode(AudioTarget target, AudioOutputMode mode);
-Result audctlSetForceMutePolicy(AudioForceMutePolicy policy);
-Result audctlGetForceMutePolicy(AudioForceMutePolicy* policy_out);
+Result audctlSetForceMutePolicy(AudioForceMutePolicy policy); ///< [1.0.0-13.2.1]
+Result audctlGetForceMutePolicy(AudioForceMutePolicy* policy_out); ///< [1.0.0-13.2.1]
 Result audctlGetOutputModeSetting(AudioOutputMode* mode_out, AudioTarget target);
 Result audctlSetOutputModeSetting(AudioTarget target, AudioOutputMode mode);
 Result audctlSetOutputTarget(AudioTarget target);
 Result audctlSetInputTargetForceEnabled(bool enable);
 Result audctlSetHeadphoneOutputLevelMode(AudioHeadphoneOutputLevelMode mode); ///< [3.0.0+]
 Result audctlGetHeadphoneOutputLevelMode(AudioHeadphoneOutputLevelMode* mode_out); ///< [3.0.0+]
-Result audctlAcquireAudioVolumeUpdateEventForPlayReport(Event* event_out); ///< [3.0.0+]
-Result audctlAcquireAudioOutputDeviceUpdateEventForPlayReport(Event* event_out); ///< [3.0.0+]
+Result audctlAcquireAudioVolumeUpdateEventForPlayReport(Event* event_out); ///< [3.0.0-13.2.1]
+Result audctlAcquireAudioOutputDeviceUpdateEventForPlayReport(Event* event_out); ///< [3.0.0-13.2.1]
 Result audctlGetAudioOutputTargetForPlayReport(AudioTarget* target_out); ///< [3.0.0+]
 Result audctlNotifyHeadphoneVolumeWarningDisplayedEvent(void); ///< [3.0.0+]
 Result audctlSetSystemOutputMasterVolume(float volume); ///< [4.0.0+]
