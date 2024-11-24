@@ -60,6 +60,7 @@ typedef enum {
 typedef enum {
     BtmProfile_None                = 0,    ///< None
     BtmProfile_Hid                 = 1,    ///< Hid
+    BtmProfile_Audio               = 2,    ///< [13.0.0+] Audio
 } BtmProfile;
 
 /// BdName
