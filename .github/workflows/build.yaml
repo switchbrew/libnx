@@ -14,9 +14,9 @@ jobs:
       image: 'devkitpro/devkita64'
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           persist-credentials: false
 
       - name: build
-        run: make -C nx -j2
+        run: make -C nx -j$(nproc)
