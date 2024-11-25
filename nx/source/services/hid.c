@@ -975,6 +975,8 @@ static Result _hidActivateNpad(void) {
         revision = 0x2; // [6.0.0+]
     if (hosversionAtLeast(8,0,0))
         revision = 0x3; // [8.0.0+]
+    if (hosversionAtLeast(18,0,0))
+        revision = 0x5; // [18.0.0+]
 
     return _hidCmdInU32AruidNoOut(revision, 109); // ActivateNpadWithRevision
 }
