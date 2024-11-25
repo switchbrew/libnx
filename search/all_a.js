@@ -1,0 +1,26 @@
+var searchData=
+[
+  ['jit_4258',['Jit',['../structJit.html',1,'']]],
+  ['jit_2eh_4259',['jit.h',['../jit_8h.html',1,'']]],
+  ['jit_5fconfiguration_4260',['jit_configuration',['../structNacpStruct.html#a77ef6f362c5afa98b72edbb6c36eadff',1,'NacpStruct']]],
+  ['jitclose_4261',['jitClose',['../jit_8h.html#a874636f211bd919bac5a58806640e55e',1,'jit.h']]],
+  ['jitcreate_4262',['jitCreate',['../jit_8h.html#a12601e99aaad5b23e405fbebbf87dfa4',1,'jit.h']]],
+  ['jitgetrwaddr_4263',['jitGetRwAddr',['../jit_8h.html#abd75e2f1bc229e303231b84943638641',1,'jit.h']]],
+  ['jitgetrxaddr_4264',['jitGetRxAddr',['../jit_8h.html#a29cb57930a0eb789c5b4f991aa25cd77',1,'jit.h']]],
+  ['jittransitiontoexecutable_4265',['jitTransitionToExecutable',['../jit_8h.html#a5698d206d20e80d764f26779a85339c1',1,'jit.h']]],
+  ['jittransitiontowritable_4266',['jitTransitionToWritable',['../jit_8h.html#ae878c8f659a8bf5a3942ca823b2d4905',1,'jit.h']]],
+  ['jittype_4267',['JitType',['../jit_8h.html#a35d64f85c128c4c58e61c24cf8175872',1,'jit.h']]],
+  ['jittype_5fcodememory_4268',['JitType_CodeMemory',['../jit_8h.html#a35d64f85c128c4c58e61c24cf8175872a64d499093babc8b73b12ef7e32a781e9',1,'jit.h']]],
+  ['jittype_5fsetprocessmemorypermission_4269',['JitType_SetProcessMemoryPermission',['../jit_8h.html#a35d64f85c128c4c58e61c24cf8175872a0b485e66e1fa34dccc98b6ff8488580c',1,'jit.h']]],
+  ['journal_5fsize_4270',['journal_size',['../structFsSaveDataCreationInfo.html#ab580d2edbac4ee4c1137ec3202dab336',1,'FsSaveDataCreationInfo::journal_size()'],['../structFsSaveDataExtraData.html#af1f69b662fef020d45bef547ba70fb1d',1,'FsSaveDataExtraData::journal_size()']]],
+  ['joy_5fassignment_5fmode_4271',['joy_assignment_mode',['../structHidNpadInternalState.html#a72ce181bb1d6094a2d0a338dbab6bf51',1,'HidNpadInternalState']]],
+  ['joy_5fcolor_4272',['joy_color',['../structHidNpadInternalState.html#a5150b58d2ca1279e0c6c0001ad21050d',1,'HidNpadInternalState']]],
+  ['joy_5fdual_5fleft_5fsix_5faxis_5fsensor_5flifo_4273',['joy_dual_left_six_axis_sensor_lifo',['../structHidNpadInternalState.html#ae490e97b52310015b2871f57295dec99',1,'HidNpadInternalState']]],
+  ['joy_5fdual_5flifo_4274',['joy_dual_lifo',['../structHidNpadInternalState.html#a496158cf3a308c5cc84cb8e788bd5920',1,'HidNpadInternalState']]],
+  ['joy_5fdual_5fright_5fsix_5faxis_5fsensor_5flifo_4275',['joy_dual_right_six_axis_sensor_lifo',['../structHidNpadInternalState.html#a19bf13cb887e0accb82a0cc2d2beca58',1,'HidNpadInternalState']]],
+  ['joy_5fleft_5flifo_4276',['joy_left_lifo',['../structHidNpadInternalState.html#af5b85ecc0c98fe46731184d5c1420951',1,'HidNpadInternalState']]],
+  ['joy_5fleft_5fsix_5faxis_5fsensor_5flifo_4277',['joy_left_six_axis_sensor_lifo',['../structHidNpadInternalState.html#aaf63afdca733d4f8ad5cb4a6bf0865a6',1,'HidNpadInternalState']]],
+  ['joy_5fright_5flifo_4278',['joy_right_lifo',['../structHidNpadInternalState.html#af41380c162e2b12a2d97ff644e5258ed',1,'HidNpadInternalState']]],
+  ['joy_5fright_5fsix_5faxis_5fsensor_5flifo_4279',['joy_right_six_axis_sensor_lifo',['../structHidNpadInternalState.html#ae880423bffedb2602d86cfb37e75c6ae',1,'HidNpadInternalState']]],
+  ['jumpflag_4280',['jumpFlag',['../structErrorCommonHeader.html#a5e49362689dcc04f70880265990169f0',1,'ErrorCommonHeader']]]
+];
