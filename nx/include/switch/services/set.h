@@ -560,7 +560,8 @@ typedef struct {
     SetSysModeLine extended_timing_descriptor[5];
     u8 padding[5];
     u8 extended_checksum;                   ///< Sum of 128 extended bytes should equal 0 mod 256.
-    char reserved[0x100];
+    u8 data2[0x80];                         ///< [13.0.0+]
+    u8 data3[0x80];                         ///< [13.0.0+]
 } SetSysEdid;
 
 /// DataDeletionSettings
