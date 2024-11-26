@@ -497,7 +497,7 @@ typedef struct {
     u16 product_code;
     u32 serial_number;
     u8 manufacture_week;
-    u8 manufacture_year;
+    u8 manufacture_year;                    ///< Real value is val - 10.
     u8 edid_version;
     u8 edid_revision;
     u8 video_input_parameters_bitmap;
@@ -560,6 +560,8 @@ typedef struct {
     SetSysModeLine extended_timing_descriptor[5];
     u8 padding[5];
     u8 extended_checksum;                   ///< Sum of 128 extended bytes should equal 0 mod 256.
+    u8 data2[0x80];                         ///< [13.0.0+]
+    u8 data3[0x80];                         ///< [13.0.0+]
 } SetSysEdid;
 
 /// DataDeletionSettings
