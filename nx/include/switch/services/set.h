@@ -440,8 +440,8 @@ typedef struct {
     u8 vertical_active_lines_msb : 4;
     u8 horizontal_sync_offset_pixels_lsb;
     u8 horizontal_sync_pulse_width_pixels_lsb;
-    u8 horizontal_sync_pulse_width_lines_lsb : 4;
-    u8 horizontal_sync_offset_lines_lsb : 4;
+    u8 vertical_sync_pulse_width_lines_lsb : 4;
+    u8 vertical_sync_offset_lines_lsb : 4;
     u8 vertical_sync_pulse_width_lines_msb : 2;
     u8 vertical_sync_offset_lines_msb : 2;
     u8 horizontal_sync_pulse_width_pixels_msb : 2;
