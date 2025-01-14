@@ -1,10 +1,10 @@
 #include "service_guard.h"
 #include <string.h>
 #include "arm/cache.h"
+#include "arm/counter.h"
 #include "services/usbds.h"
 #include "runtime/hosversion.h"
 #include "runtime/util/utf.h"
-#include "switch/arm/counter.h"
 
 #define TOTAL_INTERFACES 4
 #define TOTAL_ENDPOINTS_IN 16
