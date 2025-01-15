@@ -324,6 +324,51 @@ Result hidsysGetUniquePadsFromNpad(HidNpadIdType id, HidsysUniquePadId *unique_p
 Result hidsysEnableAppletToGetInput(bool enable);
 
 /**
+ * @brief EnableHandheldHids
+**/
+Result hidsysEnableHandheldHids(void);
+
+/**
+ * @brief DisableHandheldHids
+**/
+Result hidsysDisableHandheldHids(void);
+
+/**
+ * @brief SetJoyConRailEnabled
+ * @note Only available on [9.0.0+].
+ * @param[in] enable Input flag.
+**/
+Result hidsysSetJoyConRailEnabled(bool enable);
+
+/**
+ * @brief IsJoyConRailEnabled
+ * @note Only available on [9.0.0+].
+ * @param[out] out Output flag.
+**/
+Result hidsysIsJoyConRailEnabled(bool *out);
+
+/**
+ * @brief IsHandheldHidsEnabled
+ * @note Only available on [10.0.0+].
+ * @param[out] out Output flag.
+**/
+Result hidsysIsHandheldHidsEnabled(bool *out);
+
+/**
+ * @brief IsJoyConAttachedOnAllRail
+ * @note Only available on [11.0.0+].
+ * @param[out] out Output flag.
+**/
+Result hidsysIsJoyConAttachedOnAllRail(bool *out);
+
+/**
+ * @brief IsInvertedControllerConnectedOnRail
+ * @note Only available on [19.0.0+].
+ * @param[out] out Output flag.
+**/
+Result hidsysIsInvertedControllerConnectedOnRail(bool *out);
+
+/**
  * @brief AcquireUniquePadConnectionEventHandle
  * @param[out] out_event Output Event.
  */

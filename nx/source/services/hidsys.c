@@ -340,6 +340,49 @@ Result hidsysEnableAppletToGetInput(bool enable) {
     return serviceDispatchIn(&g_hidsysSrv, 503, in);
 }
 
+Result hidsysEnableHandheldHids(void) {
+    return _hidsysCmdNoIO(520);
+}
+
+Result hidsysDisableHandheldHids(void) {
+    return _hidsysCmdNoIO(521);
+}
+
+Result hidsysSetJoyConRailEnabled(bool enable) {
+    if (hosversionBefore(9,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _hidsysCmdInBoolNoOut(enable, 522);
+}
+
+Result hidsysIsJoyConRailEnabled(bool *out) {
+    if (hosversionBefore(9,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _hidsysCmdNoInOutBool(out, 523);
+}
+
+Result hidsysIsHandheldHidsEnabled(bool *out) {
+    if (hosversionBefore(10,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _hidsysCmdNoInOutBool(out, 524);
+}
+
+Result hidsysIsJoyConAttachedOnAllRail(bool *out) {
+    if (hosversionBefore(11,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _hidsysCmdNoInOutBool(out, 525);
+}
+
+Result hidsysIsInvertedControllerConnectedOnRail(bool *out) {
+    if (hosversionBefore(19,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _hidsysCmdNoInOutBool(out, 526);
+}
+
 Result hidsysAcquireUniquePadConnectionEventHandle(Event *out_event) {
     Handle tmp_handle = INVALID_HANDLE;
 
