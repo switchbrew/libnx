@@ -82,6 +82,11 @@ void _nvFenceCleanup(void)
     }
 }
 
+u32 nvFenceGetFd(void)
+{
+    return g_ctrl_fd;
+}
+
 static Result _nvFenceEventWaitCommon(Event* event, u32 event_id, s32 timeout_us)
 {
     u64 timeout_ns = UINT64_MAX;

@@ -10,6 +10,7 @@ typedef struct {
 
 Result nvFenceInit(void);
 void nvFenceExit(void);
+u32 nvFenceGetFd(void);
 
 Result nvFenceWait(NvFence* f, s32 timeout_us);
 
