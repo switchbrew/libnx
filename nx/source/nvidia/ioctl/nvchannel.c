@@ -204,16 +204,15 @@ Result nvioctlChannel_Submit(u32 fd, const nvioctl_cmdbuf *cmdbufs, u32 num_cmdb
         return MAKERESULT(Module_Libnx, LibnxError_OutOfMemory);
 
     struct {
-        __nv_in  u32                 num_cmdbufs;
-        __nv_in  u32                 num_relocs;
-        __nv_in  u32                 num_syncpt_incrs;
-        __nv_in  u32                 num_fences;
-        __nv_in  nvioctl_cmdbuf      cmdbufs     [num_cmdbufs];
-        __nv_in  nvioctl_reloc       relocs      [num_relocs];
-        __nv_in  nvioctl_reloc_shift reloc_shifts[num_relocs];
-        __nv_in  nvioctl_syncpt_incr syncpt_incrs[num_syncpt_incrs];
-        __nv_in  nvioctl_syncpt_incr wait_checks [num_syncpt_incrs];
-        __nv_out nvioctl_fence       fences      [num_fences];
+        __nv_in    u32                 num_cmdbufs;
+        __nv_in    u32                 num_relocs;
+        __nv_in    u32                 num_syncpt_incrs;
+        __nv_in    u32                 num_fences;
+        __nv_in    nvioctl_cmdbuf      cmdbufs     [num_cmdbufs];
+        __nv_in    nvioctl_reloc       relocs      [num_relocs];
+        __nv_in    nvioctl_reloc_shift reloc_shifts[num_relocs];
+        __nv_in    nvioctl_syncpt_incr syncpt_incrs[num_syncpt_incrs];
+        __nv_inout u32                 thresholds  [num_fences];
     } data;
 
     memset(&data, 0, sizeof(data));
@@ -229,9 +228,12 @@ Result nvioctlChannel_Submit(u32 fd, const nvioctl_cmdbuf *cmdbufs, u32 num_cmdb
     Result rc = nvIoctl(fd, _NV_IOWR(0, 0x01, data), &data);
 
     if (R_SUCCEEDED(rc)) {
-        memcpy(fences, data.fences, num_fences * sizeof(nvioctl_fence));
-        for (int i = 0; i < num_fences; ++i)
-            fences[i].id = data.syncpt_incrs[i].syncpt_id;
+        for (int i = 0; i < num_fences; ++i) {
+            fences[i] = (nvioctl_fence){
+                .id    = syncpt_incrs[i].syncpt_id,
+                .value = data.thresholds[i],
+            };
+        }
     }
 
     return rc;
