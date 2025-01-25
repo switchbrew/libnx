@@ -154,6 +154,9 @@ typedef struct {
 typedef struct {
     u32 syncpt_id;
     u32 syncpt_incrs;
+    u32 waitbase_id; // Always -1
+    u32 next; //< Next valid incr index, or -1
+    u32 prev; //< Previous valid incr index, or -1
 } nvioctl_syncpt_incr;
 
 typedef struct {
