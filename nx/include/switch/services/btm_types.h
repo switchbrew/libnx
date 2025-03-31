@@ -298,3 +298,8 @@ typedef struct {
     BtdrvGattAttributeUuid uuid;  ///< \ref BtdrvGattAttributeUuid
 } BtmBleDataPath;
 
+/// AudioDevice
+typedef struct {
+    BtdrvAddress addr;            ///< Device address
+    char name[0xF9];              ///< Device name
+} BtmAudioDevice;
