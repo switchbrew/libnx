@@ -21,6 +21,7 @@ extern struct in_addr __nxlink_host;
  * @param[in] redirStderr Whether to redirect stderr to nxlink output.
  * @return Socket fd on success, negative number on failure.
  * @note The socket should be closed with close() during application cleanup.
+ * The socket driver must be initialized, otherwise the call will fail.
  */
 int nxlinkConnectToHost(bool redirStdout, bool redirStderr);
 
