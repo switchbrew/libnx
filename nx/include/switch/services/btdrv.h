@@ -670,9 +670,9 @@ Result btdrvGetHidReport(BtdrvAddress addr, u8 report_id, BtdrvBluetoothHhReport
  * @brief TriggerConnection
  * @note This is used by btm-sysmodule.
  * @param[in] addr \ref BtdrvAddress
- * @param[in] unk [9.0.0+] Unknown
+ * @param[in] timeout [9.0.0+] Host trigger timeout
  */
-Result btdrvTriggerConnection(BtdrvAddress addr, u16 unk);
+Result btdrvTriggerConnection(BtdrvAddress addr, u16 timeout);
 
 /**
  * @brief AddPairedDeviceInfo

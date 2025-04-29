@@ -417,13 +417,13 @@ Result btdrvGetHidReport(BtdrvAddress addr, u8 report_id, BtdrvBluetoothHhReport
     return serviceDispatchIn(&g_btdrvSrv, 22, in);
 }
 
-Result btdrvTriggerConnection(BtdrvAddress addr, u16 unk) {
+Result btdrvTriggerConnection(BtdrvAddress addr, u16 timeout) {
     if (hosversionBefore(9,0,0)) return _btdrvCmdInAddrNoOut(addr, 23);
 
     const struct {
         BtdrvAddress addr;
-        u16 unk;
-    } in = { addr, unk };
+        u16 timeout;
+    } in = { addr, timeout };
 
     return serviceDispatchIn(&g_btdrvSrv, 23, in);
 }
