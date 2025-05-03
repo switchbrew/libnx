@@ -79,28 +79,57 @@ Result ldrDmntGetProcessModuleInfo(u64 pid, LoaderModuleInfo *out_module_infos, 
     );
 }
 
-Result ldrPmCreateProcess(u64 pin_id, u32 flags, Handle reslimit_h, Handle *out_process_h) {
-    const struct {
-        u32 flags;
-        u32 pad;
-        u64 pin_id;
-    } in = { flags, 0, pin_id };
-    return serviceDispatchIn(&g_ldrPmSrv, 0, in,
-        .in_num_handles = 1,
-        .in_handles = { reslimit_h },
-        .out_handle_attrs = { SfOutHandleAttr_HipcMove },
-        .out_handles = out_process_h,
-    );
+Result ldrPmCreateProcess(u64 pin_id, u32 flags, Handle reslimit_h, const LoaderProgramAttributes *attrs, Handle *out_process_h) {
+    if (hosversionIsAtmosphere() || hosversionAtLeast(20,0,0)) {
+        const struct {
+            LoaderProgramAttributes attr;
+            u16 pad;
+            u32 flags;
+            u64 pin_id;
+        } in = { *attrs, 0, flags, pin_id };
+        return serviceDispatchIn(&g_ldrPmSrv, 0, in,
+            .in_num_handles = 1,
+            .in_handles = { reslimit_h },
+            .out_handle_attrs = { SfOutHandleAttr_HipcMove },
+            .out_handles = out_process_h,
+        );
+    } else {
+        const struct {
+            u32 flags;
+            u32 pad;
+            u64 pin_id;
+        } in = { flags, 0, pin_id };
+        return serviceDispatchIn(&g_ldrPmSrv, 0, in,
+            .in_num_handles = 1,
+            .in_handles = { reslimit_h },
+            .out_handle_attrs = { SfOutHandleAttr_HipcMove },
+            .out_handles = out_process_h,
+        );
+    }
 }
 
-Result ldrPmGetProgramInfo(const NcmProgramLocation *loc, LoaderProgramInfo *out_program_info) {
+Result ldrPmGetProgramInfo(const NcmProgramLocation *loc, const LoaderProgramAttributes *attrs, LoaderProgramInfo *out_program_info) {
     if (!hosversionIsAtmosphere() && hosversionBefore(19, 0, 0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return serviceDispatchIn(&g_ldrPmSrv, 1, *loc,
-        .buffer_attrs = { SfBufferAttr_Out | SfBufferAttr_HipcPointer | SfBufferAttr_FixedSize },
-        .buffers = { { out_program_info, sizeof(*out_program_info) } },
-    );
+    if (hosversionIsAtmosphere() || hosversionAtLeast(20,0,0)) {
+        const struct {
+            LoaderProgramAttributes attr;
+            u16 pad1;
+            u32 pad2;
+            NcmProgramLocation loc;
+        } in = { *attrs, 0, 0, *loc };
+        _Static_assert(sizeof(in) == 0x18);
+        return serviceDispatchIn(&g_ldrPmSrv, 1, in,
+            .buffer_attrs = { SfBufferAttr_Out | SfBufferAttr_HipcPointer | SfBufferAttr_FixedSize },
+            .buffers = { { out_program_info, sizeof(*out_program_info) } },
+        );
+    } else {
+        return serviceDispatchIn(&g_ldrPmSrv, 1, *loc,
+            .buffer_attrs = { SfBufferAttr_Out | SfBufferAttr_HipcPointer | SfBufferAttr_FixedSize },
+            .buffers = { { out_program_info, sizeof(*out_program_info) } },
+        );
+    }
 }
 
 Result ldrPmGetProgramInfoV1(const NcmProgramLocation *loc, LoaderProgramInfoV1 *out_program_info) {
