@@ -42,6 +42,11 @@ typedef struct {
     u64 size;
 } LoaderModuleInfo;
 
+typedef struct {
+    u8 platform; ///< NcmContentMetaPlatform
+    u8 content_attributes; ///< FsContentAttributes
+} LoaderProgramAttributes;
+
 /// Initialize ldr:shel.
 Result ldrShellInitialize(void);
 
@@ -76,8 +81,8 @@ Result ldrDmntSetProgramArguments(u64 program_id, const void *args, size_t args_
 Result ldrDmntFlushArguments(void);
 Result ldrDmntGetProcessModuleInfo(u64 pid, LoaderModuleInfo *out_module_infos, size_t max_out_modules, s32 *num_out);
 
-Result ldrPmCreateProcess(u64 pin_id, u32 flags, Handle reslimit_h, Handle *out_process_h);
-Result ldrPmGetProgramInfo(const NcmProgramLocation *loc, LoaderProgramInfo *out_program_info); ///< [19.0.0+/Atmosphere]
+Result ldrPmCreateProcess(u64 pin_id, u32 flags, Handle reslimit_h, const LoaderProgramAttributes *attrs, Handle *out_process_h);
+Result ldrPmGetProgramInfo(const NcmProgramLocation *loc, const LoaderProgramAttributes *attrs, LoaderProgramInfo *out_program_info); ///< [19.0.0+/Atmosphere]
 Result ldrPmGetProgramInfoV1(const NcmProgramLocation *loc, LoaderProgramInfoV1 *out_program_info); ///< [1.0.0-18.1.0/Non-Atmosphere]
 Result ldrPmPinProgram(const NcmProgramLocation *loc, u64 *out_pin_id);
 Result ldrPmUnpinProgram(u64 pin_id);
