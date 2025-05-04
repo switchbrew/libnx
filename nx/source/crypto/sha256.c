@@ -163,7 +163,7 @@ static void _sha256ProcessBlocks(Sha256Context *ctx, const u8 *src_u8, size_t nu
               [cur_hash0]"+w"(cur_hash0), [cur_hash1]"+w"(cur_hash1),
               [prev_hash0]"+w"(prev_hash0), [prev_hash1]"+w"(prev_hash1),
               [tmp_hash]"=w"(tmp_hash), [src_u8]"+r"(src_u8)
-            : [round_constants]"r"(s_roundConstants)
+            : "m"(*(const u8 (*)[num_blocks*SHA256_BLOCK_SIZE])src_u8), [round_constants]"r"(s_roundConstants)
             :
         );
 

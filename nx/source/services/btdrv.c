@@ -273,7 +273,7 @@ Result btdrvStartInquiry(u32 services, s64 duration) {
         u32 services;
         s64 duration;
     } in = { services, duration };
-    
+
     return serviceDispatchIn(&g_btdrvSrv, 8, in);
 }
 
@@ -1493,7 +1493,7 @@ bool btdrvCircularBufferFree(BtdrvCircularBuffer *c) {
     if (read_offset == write_offset) return false;
 
     u8 *data_ptr = &c->data[read_offset];
-    if (read_offset >= sizeof(c->data)) false;
+    if (read_offset >= sizeof(c->data)) return false;
 
     u64 tmpsize = read_offset + 0x18;
     if (tmpsize < sizeof(c->data)) tmpsize += *((u64*)&data_ptr[0x10]);
