@@ -160,10 +160,7 @@ static int inet_pton4(const char *src, void *dst) {
  *	Paul Vixie, 1996.
  */
 static const char *
-inet_ntop6(src, dst, size)
-    const u_char *src;
-    char *dst;
-    size_t size;
+inet_ntop6(const u_char *src, char *dst, size_t size)
 {
     /*
      * Note that int32_t and int16_t need only be "at least" large enough
@@ -276,9 +273,7 @@ inet_ntop6(src, dst, size)
  *	Paul Vixie, 1996.
  */
 static int
-inet_pton6(src, dst)
-    const char *src;
-    u_char *dst;
+inet_pton6(const char *src, u_char *dst)
 {
     static const char xdigits_l[] = "0123456789abcdef",
               xdigits_u[] = "0123456789ABCDEF";
