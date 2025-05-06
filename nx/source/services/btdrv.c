@@ -1493,7 +1493,7 @@ bool btdrvCircularBufferFree(BtdrvCircularBuffer *c) {
     if (read_offset == write_offset) return false;
 
     u8 *data_ptr = &c->data[read_offset];
-    if (read_offset >= sizeof(c->data)) false;
+    if (read_offset >= sizeof(c->data)) return false;
 
     u64 tmpsize = read_offset + 0x18;
     if (tmpsize < sizeof(c->data)) tmpsize += *((u64*)&data_ptr[0x10]);
