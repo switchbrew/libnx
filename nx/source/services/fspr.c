@@ -32,7 +32,7 @@ Service* fsprGetServiceSession(void) {
 static const uint32_t g_fspr_default_fah[] = {0x1, 0xFFFFFFFF, 0xFFFFFFFF, 0x1C, 0, 0x1C, 0};
 static const uint32_t g_fspr_default_fac[] = {0x1, 0xFFFFFFFF, 0xFFFFFFFF, 0, 0, 0xFFFFFFFF, 0xFFFFFFFF, 0, 0, 0xFFFFFFFF, 0xFFFFFFFF};
 
-Result fsprRegisterProgram(u64 pid, u64 tid, NcmStorageId sid, const void *fs_access_header, size_t fah_size, const void *fs_access_control, size_t fac_size) {
+Result fsprRegisterProgram(u64 pid, u64 tid, NcmStorageId sid, const void *fs_access_header, size_t fah_size, const void *fs_access_control, size_t fac_size, u8 fs_access_control_restriction_mode) {
     if (fs_access_header == NULL) {
         fs_access_header = g_fspr_default_fah;
         fah_size = sizeof(g_fspr_default_fah);
@@ -44,12 +44,13 @@ Result fsprRegisterProgram(u64 pid, u64 tid, NcmStorageId sid, const void *fs_ac
 
     const struct {
         u8 sid;
-        u8 pad[7];
+        u8 fs_access_control_restriction_mode;
+        u8 pad[6];
         u64 pid;
         u64 tid;
         u64 fah_size;
         u64 fac_size;
-    } in = { sid, {0}, pid, tid, fah_size, fac_size };
+    } in = { sid, fs_access_control_restriction_mode, {0}, pid, tid, fah_size, fac_size };
     serviceAssumeDomain(&g_fsprSrv);
     return serviceDispatchIn(&g_fsprSrv, 0, in,
         .buffer_attrs = {
