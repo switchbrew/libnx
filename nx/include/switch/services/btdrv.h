@@ -242,7 +242,7 @@ typedef struct {
 
                 struct {
                     u32 res;                    ///< Always 0.
-                    u8 unk_x4;                  ///< Always 0.
+                    u8 proto_mode;              ///< Protocol mode. Always 0 (report mode).
                     BtdrvAddress addr;          ///< \ref BtdrvAddress
                     u8 pad;                     ///< Padding
                     BtdrvHidReport report;
