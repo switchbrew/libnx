@@ -24,11 +24,6 @@ typedef enum {
 } NfcServiceType;
 
 typedef enum {
-    NfpState_NonInitialized = 0,
-    NfpState_Initialized    = 1,
-} NfpState;
-
-typedef enum {
     NfcState_NonInitialized = 0,
     NfcState_Initialized    = 1,
 } NfcState;
@@ -40,7 +35,6 @@ typedef enum {
     NfpDeviceState_TagRemoved      = 3,
     NfpDeviceState_TagMounted      = 4,
     NfpDeviceState_Unavailable     = 5,
-    NfpDeviceState_Finalized       = 6,
 } NfpDeviceState;
 
 typedef enum {
@@ -49,16 +43,23 @@ typedef enum {
     NfcDeviceState_TagFound        = 2,
     NfcDeviceState_TagRemoved      = 3,
     NfcDeviceState_TagMounted      = 4,
-    NfcDeviceState_Unavailable     = 5,
-    NfcDeviceState_Finalized       = 6,
 } NfcDeviceState;
 
 typedef enum {
-    NfpApplicationAreaVersion_3DS    = 0,
-    NfpApplicationAreaVersion_WiiU   = 1,
-    NfpApplicationAreaVersion_3DSv2  = 2,
-    NfpApplicationAreaVersion_Switch = 3,
-    NfpApplicationAreaVersion_NotSet = 0xFF,
+    NfcMifareDeviceState_Initialized     = 0,
+    NfcMifareDeviceState_SearchingForTag = 1,
+    NfcMifareDeviceState_TagFound        = 2,
+    NfcMifareDeviceState_TagRemoved      = 3,
+    NfcMifareDeviceState_TagMounted      = 4,
+    NfcMifareDeviceState_Unavailable     = 5,
+} NfcMifareDeviceState;
+
+typedef enum {
+    NfpApplicationAreaVersion_3DS     = 0,     ///< Application area created by a 3DS game.
+    NfpApplicationAreaVersion_WiiU    = 1,     ///< Application area created by a Wii U game.
+    NfpApplicationAreaVersion_3DSv2   = 2,     ///< Application area created by a (new?) 3DS game.
+    NfpApplicationAreaVersion_Switch  = 3,     ///< Application area created by a Switch game.
+    NfpApplicationAreaVersion_Invalid = 0xFF,  ///< Invalid value (application area not created).
 } NfpApplicationAreaVersion;
 
 typedef enum {
@@ -66,9 +67,9 @@ typedef enum {
 } NfpDeviceType;
 
 typedef enum {
-    NfpMountTarget_Rom = 1,
-    NfpMountTarget_Ram = 2,
-    NfpMountTarget_All = 3,
+    NfpMountTarget_Rom = BIT(0),
+    NfpMountTarget_Ram = BIT(1),
+    NfpMountTarget_All = NfpMountTarget_Rom | NfpMountTarget_Ram,
 } NfpMountTarget;
 
 typedef enum {
@@ -102,104 +103,123 @@ typedef enum {
     NfcMifareCommand_Store     = 0xC2,
 } NfcMifareCommand;
 
-typedef struct {
-    u8  uuid[10];
-    u8  uuid_length;
-    u8  reserved1[0x15];
-    u32 protocol;
-    u32 tag_type;
-    u8  reserved2[0x30];
-} NX_PACKED NfpTagInfo;
+typedef enum {
+    NfpAmiiboFlag_Valid                 = BIT(0),   ///< Initialized in system settings.
+    NfpAmiiboFlag_ApplicationAreaExists = BIT(1),   ///< Application area exists.
+} NfpAmiiboFlag;
+
+typedef enum {
+    NfpBreakType_Flush  = 0,
+    NfpBreakType_Break1 = 1,
+    NfpBreakType_Break2 = 2,
+} NfpBreakType;
 
 typedef struct {
-    u8  uuid[10];
-    u8  uuid_length;
-    u8  reserved1[0x15];
-    u32 protocol;
-    u32 tag_type;
-    u8  reserved2[0x30];
-} NX_PACKED NfcTagInfo;
+    u16 year;
+    u8 month;
+    u8 day;
+} NfpDate;
 
 typedef struct {
-    u16 last_write_year;
-    u8  last_write_month;
-    u8  last_write_day;
+    u8 uid[10];             ///< UUID.
+    u8 uid_length;          ///< UUID length.
+    u8 reserved[0x15];
+} NfcTagUid;
+
+typedef struct {
+    NfcTagUid uid;       ///< UUID.
+    u32 protocol;        ///< \ref NfcProtocol
+    u32 tag_type;        ///< \ref NfcTagType
+    u8 reserved[0x30];
+} NfpTagInfo;
+
+typedef struct {
+    NfcTagUid uid;       ///< UUID.
+    u32 protocol;        ///< \ref NfcProtocol
+    u32 tag_type;        ///< \ref NfcTagType
+    u8 reserved[0x30];
+} NfcTagInfo;
+
+typedef struct {
+    NfpDate last_write_date;
     u16 write_counter;
     u16 version;
     u32 application_area_size;
-    u8  reserved[0x34];
-} NX_PACKED NfpCommonInfo;
+    u8 reserved[0x34];
+} NfpCommonInfo;
 
 typedef struct {
-    u8 amiibo_id[0x8];
-    u8 reserved[0x38];
-} NX_PACKED NfpModelInfo;
+    union {
+        u8 character_id[3];
+        struct {
+            u16 game_character_id;
+            u8 character_variant;
+        } NX_PACKED;
+    };
+    u8 series_id;       ///< Series.
+    u16 numbering_id;   ///< Model number.
+    u8 nfp_type;        ///< Figure type.
+    u8 reserved[0x39];
+} NfpModelInfo;
 
 typedef struct {
     MiiCharInfo mii;
-    u16 first_write_year;
-    u8 first_write_month;
-    u8 first_write_day;
-    char amiibo_name[(10*4)+1]; ///< utf-8, null-terminated
+    NfpDate first_write_date;
+    char amiibo_name[(10*4)+1];   ///< Amiibo name (utf-8, null-terminated).
     u8 font_region;
     u8 reserved[0x7A];
-} NX_PACKED NfpRegisterInfo;
+} NfpRegisterInfo;
 
 typedef struct {
-    u8 mii_store_data[0x44];
-    u16 first_write_year;
-    u8 first_write_month;
-    u8 first_write_day;
-    char amiibo_name[(10*4)+1]; ///< utf-8, null-terminated
+    MiiStoreData mii_store_data;
+    NfpDate first_write_date;
+    char amiibo_name[(10*4)+1];   ///< Amiibo name (utf-8, null-terminated).
     u8 font_region;
     u8 reserved[0x8E];
-} NX_PACKED NfpRegisterInfoPrivate;
+} NfpRegisterInfoPrivate;
 
 typedef struct {
     u64 application_id;
-    u32 application_area_id;
-    u16 crc_change_counter;
+    u32 access_id;
+    u16 crc32_change_counter;
     u8 flags;
     u8 tag_type;
     u8 application_area_version;
     u8 reserved[0x2F];
-} NX_PACKED NfpAdminInfo;
+} NfpAdminInfo;
 
 typedef struct {
-    u8 magic;
+    u8 tag_magic;                                         ///< Tag magic (always 0xA5: https://www.3dbrew.org/wiki/Amiibo#Page_layout).
     u8 reserved1[0x1];
-    u8 write_counter;
-    u8 reserved2[0x1];
-    u32 settings_crc;
-    u8 reserved3[0x38];
-    u16 last_write_year;
-    u8  last_write_month;
-    u8  last_write_day;
-    u16 application_write_counter;
-    u16 version;
-    u32 application_area_size;
-    u8  reserved4[0x34];
-    MiiCharInfo mii;
-    MiiNfpStoreDataExtension mii_store_data_extension;
-    u16 first_write_year;
-    u8 first_write_month;
-    u8 first_write_day;
-    u16 amiibo_name[10+1]; ///< utf-16, null-terminated
-    u8 settings_flag;      ///< bit4 = amiibo was initialized in console settings, bit5 = has application area
-    u8 unknown1;           ///< Normally zero
-    u32 register_info_crc;
-    u32 unknown2[0x5];     ///< Normally zero
-    u8 reserved5[0x64];
-    u64 application_id;
-    u32 access_id;
-    u16 settings_crc_counter;
-    u8 font_region;
-    u8 tag_type;
-    u8 console_type;
-    u8 application_id_byte; ///< (Original Program ID >> 0x24) & 0xF byte (Program ID has this byte swapped with console type)
-    u8 reserved6[0x2E];
-    u8 application_area[0xD8];
-} NX_PACKED NfpData;
+    u16 tag_write_counter;                                ///< Incremented every tag write.
+    u32 crc32_1;                                          ///< CRC32 of some internal 8-byte data.
+    u8 reserved2[0x38];
+    NfpDate last_write_date;                              ///< Updated every write.
+    u16 write_counter;                                    ///< Incremented every write, until it maxes out at 0xFFFF.
+    u16 version;                                          ///< Version.
+    u32 application_area_size;                            ///< Size of the application area.
+    u8 reserved3[0x34];
+    MiiVer3StoreData mii_v3;                              ///< Ver3StoreData (Mii format used in 3DS).
+    u8 pad[0x2];
+    u16 mii_v3_crc16;                                     ///< CRC16 of Ver3StoreData.
+    MiiNfpStoreDataExtension mii_store_data_extension;    ///< StoreDataExtension
+    NfpDate first_write_date;                             ///< Set when the amiibo is first written to.
+    u16 amiibo_name[10+1];                                ///< Amiibo name (utf-16, null-terminated).
+    u8 font_region;                                       ///< Font region.
+    u8 unknown1;                                          ///< Normally zero
+    u32 crc32_2;                                          ///< CRC32 of Ver3StoreData + application_id_byte + unknown1 + StoreDataExtension + unknown2 (0x7E bytes total)
+    u32 unknown2[0x5];                                    ///< Normally zero
+    u8 reserved4[0x64];
+    u64 application_id;                                   ///< Modified application ID (Application ID & 0xFFFFFFFF0FFFFFFF | 0x30000000)
+    u32 access_id;                                        ///< Application area access ID
+    u16 settings_crc32_change_counter;
+    u8 flags;                                             ///< \ref NfpAmiiboFlag
+    u8 tag_type;                                          ///< \ref NfcTagType
+    u8 application_area_version;                          ///< \ref NfpApplicationAreaVersion
+    u8 application_id_byte;                               ///< Application ID byte ((Application ID >> 28) & 0xFF)
+    u8 reserved5[0x2E];
+    u8 application_area[0xD8];                            ///< Application area.
+} NfpData;
 
 typedef struct {
     u8 mifare_command;
@@ -292,21 +312,29 @@ Result nfcMfStartDetection(const NfcDeviceHandle *handle);
 Result nfcMfStopDetection(const NfcDeviceHandle *handle);
 
 /// Not available with ::NfpServiceType_System.
+/// Requires the amiibo to be mounted with ::NfpMountTarget_Ram.
 Result nfpOpenApplicationArea(const NfcDeviceHandle *handle, u32 app_id);
 
 /// Not available with ::NfpServiceType_System.
+/// Requires the amiibo to be mounted with ::NfpMountTarget_Ram, and the application area to be opened.
 Result nfpGetApplicationArea(const NfcDeviceHandle *handle, void* buf, size_t buf_size, u32 *out_size);
 
 /// Not available with ::NfpServiceType_System.
+/// Requires the amiibo to be mounted with ::NfpMountTarget_Ram, and the application area to be opened.
 Result nfpSetApplicationArea(const NfcDeviceHandle *handle, const void* buf, size_t buf_size);
+
+/// Requires the amiibo to be mounted with ::NfpMountTarget_Ram.
 Result nfpFlush(const NfcDeviceHandle *handle);
+
 Result nfpRestore(const NfcDeviceHandle *handle);
 
 /// Not available with ::NfpServiceType_System.
+/// Requires the amiibo to be mounted with ::NfpMountTarget_Ram.
 Result nfpCreateApplicationArea(const NfcDeviceHandle *handle, u32 app_id, const void* buf, size_t buf_size);
 
 /// Not available with ::NfpServiceType_System.
 /// Only available with [3.0.0+].
+/// Requires the amiibo to be mounted with ::NfpMountTarget_Ram, and the application area to be opened.
 Result nfpRecreateApplicationArea(const NfcDeviceHandle *handle, u32 app_id, const void* buf, size_t buf_size);
 
 /// Not available with ::NfpServiceType_System.
@@ -319,10 +347,18 @@ Result nfpDeleteApplicationArea(const NfcDeviceHandle *handle);
 Result nfpExistsApplicationArea(const NfcDeviceHandle *handle, bool *out);
 
 Result nfpGetTagInfo(const NfcDeviceHandle *handle, NfpTagInfo *out);
+
+/// Requires the amiibo to be mounted with ::NfpMountTarget_Ram.
 Result nfpGetRegisterInfo(const NfcDeviceHandle *handle, NfpRegisterInfo *out);
+
+/// Requires the amiibo to be mounted with ::NfpMountTarget_Ram.
 Result nfpGetCommonInfo(const NfcDeviceHandle *handle, NfpCommonInfo *out);
+
+/// Requires the amiibo to be mounted with ::NfpMountTarget_Rom.
 Result nfpGetModelInfo(const NfcDeviceHandle *handle, NfpModelInfo *out);
+
 /// Not available with ::NfpServiceType_User.
+/// Requires the amiibo to be mounted with ::NfpMountTarget_Ram.
 Result nfpGetAdminInfo(const NfcDeviceHandle *handle, NfpAdminInfo *out);
 
 /// Only available with [4.0.0+].
@@ -347,7 +383,7 @@ Result nfcMfAttachActivateEvent(const NfcDeviceHandle *handle, Event *out_event)
 /// Returned event will have autoclear off.
 Result nfcMfAttachDeactivateEvent(const NfcDeviceHandle *handle, Event *out_event);
 
-Result nfpGetState(NfpState *out);
+Result nfpGetState(NfcState *out);
 Result nfpGetDeviceState(const NfcDeviceHandle *handle, NfpDeviceState *out);
 Result nfpGetNpadId(const NfcDeviceHandle *handle, u32 *out);
 
@@ -359,7 +395,7 @@ Result nfcGetDeviceState(const NfcDeviceHandle *handle, NfcDeviceState *out);
 Result nfcGetNpadId(const NfcDeviceHandle *handle, u32 *out);
 
 Result nfcMfGetState(NfcState *out);
-Result nfcMfGetDeviceState(const NfcDeviceHandle *handle, NfcDeviceState *out);
+Result nfcMfGetDeviceState(const NfcDeviceHandle *handle, NfcMifareDeviceState *out);
 Result nfcMfGetNpadId(const NfcDeviceHandle *handle, u32 *out);
 
 /// Returned event will have autoclear on.
@@ -375,25 +411,39 @@ Result nfcMfAttachAvailabilityChangeEvent(Event *out_event);
 Result nfpFormat(const NfcDeviceHandle *handle);
 
 /// Not available with ::NfpServiceType_User.
+/// Requires the amiibo to be mounted with ::NfpMountTarget_Ram.
 Result nfpGetRegisterInfoPrivate(const NfcDeviceHandle *handle, NfpRegisterInfoPrivate *out);
+
 /// Not available with ::NfpServiceType_User.
+/// Requires the amiibo to be mounted with ::NfpMountTarget_Ram.
 Result nfpSetRegisterInfoPrivate(const NfcDeviceHandle *handle, const NfpRegisterInfoPrivate *register_info_private);
+
 /// Not available with ::NfpServiceType_User.
+/// Requires the amiibo to be mounted with ::NfpMountTarget_Ram.
 Result nfpDeleteRegisterInfo(const NfcDeviceHandle *handle);
 
 /// Only available with ::NfpServiceType_Debug.
+/// Requires the amiibo to be mounted with ::NfpMountTarget_Ram.
 Result nfpGetAll(const NfcDeviceHandle *handle, NfpData *out);
+
 /// Only available with ::NfpServiceType_Debug.
+/// Requires the amiibo to be mounted with ::NfpMountTarget_Ram.
 Result nfpSetAll(const NfcDeviceHandle *handle, const NfpData *nfp_data);
 
 /// Only available with ::NfpServiceType_Debug.
+/// Requires the amiibo to be mounted with ::NfpMountTarget_Ram.
 Result nfpFlushDebug(const NfcDeviceHandle *handle);
+
 /// Only available with ::NfpServiceType_Debug.
-Result nfpBreakTag(const NfcDeviceHandle *handle, u32 break_type);
+/// Requires the amiibo to be mounted with ::NfpMountTarget_Ram.
+Result nfpBreakTag(const NfcDeviceHandle *handle, NfpBreakType break_type);
+
 /// Only available with ::NfpServiceType_Debug.
 Result nfpReadBackupData(const NfcDeviceHandle *handle, void* out_buf, size_t buf_size, u32 *out_size);
+
 /// Only available with ::NfpServiceType_Debug.
 Result nfpWriteBackupData(const NfcDeviceHandle *handle, const void* buf, size_t buf_size);
+
 /// Only available with ::NfpServiceType_Debug.
 Result nfpWriteNtf(const NfcDeviceHandle *handle, u32 write_type, const void* buf, size_t buf_size);
 

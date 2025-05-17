@@ -493,7 +493,7 @@ Result nfcMfAttachDeactivateEvent(const NfcDeviceHandle *handle, Event *out_even
     return _nfcCmdInDevhandleOutEvent(&g_nfcMfInterface, handle, out_event, 9);
 }
 
-Result nfpGetState(NfpState *out) {
+Result nfpGetState(NfcState *out) {
     u32 tmp=0;
     Result rc = _nfcCmdNoInOutU32(&g_nfpInterface, &tmp, 19);
     if (R_SUCCEEDED(rc) && out) *out = tmp;
@@ -531,7 +531,7 @@ Result nfcGetDeviceState(const NfcDeviceHandle *handle, NfcDeviceState *out) {
     return rc;
 }
 
-Result nfcMfGetDeviceState(const NfcDeviceHandle *handle, NfcDeviceState *out) {
+Result nfcMfGetDeviceState(const NfcDeviceHandle *handle, NfcMifareDeviceState *out) {
     u32 tmp=0;
     Result rc = _nfcCmdInDevhandleOutU32(&g_nfcMfInterface, handle, &tmp, 11);
     if (R_SUCCEEDED(rc) && out) *out = tmp;
@@ -620,7 +620,7 @@ Result nfpFlushDebug(const NfcDeviceHandle *handle) {
     return _nfcCmdInDevhandleNoOut(&g_nfcInterface, handle, 202);
 }
 
-Result nfpBreakTag(const NfcDeviceHandle *handle, u32 break_type) {
+Result nfpBreakTag(const NfcDeviceHandle *handle, NfpBreakType break_type) {
     if (g_nfpServiceType != NfpServiceType_Debug)
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     
