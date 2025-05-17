@@ -200,6 +200,8 @@ typedef struct {
     u32 application_area_size;                            ///< Size of the application area.
     u8 reserved3[0x34];
     MiiVer3StoreData mii_v3;                              ///< Ver3StoreData (Mii format used in 3DS).
+    u8 pad[0x2];
+    u16 mii_v3_crc16;                                     ///< CRC16 of Ver3StoreData.
     MiiNfpStoreDataExtension mii_store_data_extension;    ///< StoreDataExtension
     NfpDate first_write_date;                             ///< Set when the amiibo is first written to.
     u16 amiibo_name[10+1];                                ///< Amiibo name (utf-16, null-terminated).

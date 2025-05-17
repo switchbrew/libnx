@@ -119,7 +119,7 @@ typedef struct {
 
 // Mii format used in 3DS (https://www.3dbrew.org/wiki/Mii#Mii_format). 
 typedef struct {
-    u8 data[0x60];
+    u8 data[0x5C];
 } MiiVer3StoreData;
 
 // Original Mii colors and types before Ver3StoreData conversion
