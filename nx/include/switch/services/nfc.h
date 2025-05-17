@@ -118,27 +118,27 @@ typedef struct {
     u16 year;
     u8 month;
     u8 day;
-} NX_PACKED NfpDate;
+} NfpDate;
 
 typedef struct {
     u8 uid[10];             ///< UUID.
     u8 uid_length;          ///< UUID length.
-    u8 reserved1[0x15];
-} NX_PACKED NfcTagUid;
+    u8 reserved[0x15];
+} NfcTagUid;
 
 typedef struct {
     NfcTagUid uid;       ///< UUID.
     u32 protocol;        ///< \ref NfcProtocol
     u32 tag_type;        ///< \ref NfcTagType
-    u8 reserved2[0x30];
-} NX_PACKED NfpTagInfo;
+    u8 reserved[0x30];
+} NfpTagInfo;
 
 typedef struct {
     NfcTagUid uid;       ///< UUID.
     u32 protocol;        ///< \ref NfcProtocol
     u32 tag_type;        ///< \ref NfcTagType
-    u8 reserved2[0x30];
-} NX_PACKED NfcTagInfo;
+    u8 reserved[0x30];
+} NfcTagInfo;
 
 typedef struct {
     NfpDate last_write_date;
@@ -146,7 +146,7 @@ typedef struct {
     u16 version;
     u32 application_area_size;
     u8 reserved[0x34];
-} NX_PACKED NfpCommonInfo;
+} NfpCommonInfo;
 
 typedef struct {
     union {
@@ -159,8 +159,8 @@ typedef struct {
     u8 series_id;       ///< Series.
     u16 numbering_id;   ///< Model number.
     u8 nfp_type;        ///< Figure type.
-    u8 reserved1[0x39];
-} NX_PACKED NfpModelInfo;
+    u8 reserved[0x39];
+} NfpModelInfo;
 
 typedef struct {
     MiiCharInfo mii;
@@ -168,7 +168,7 @@ typedef struct {
     char amiibo_name[(10*4)+1];   ///< Amiibo name (utf-8, null-terminated).
     u8 font_region;
     u8 reserved[0x7A];
-} NX_PACKED NfpRegisterInfo;
+} NfpRegisterInfo;
 
 typedef struct {
     MiiStoreData mii_store_data;
@@ -176,7 +176,7 @@ typedef struct {
     char amiibo_name[(10*4)+1];   ///< Amiibo name (utf-8, null-terminated).
     u8 font_region;
     u8 reserved[0x8E];
-} NX_PACKED NfpRegisterInfoPrivate;
+} NfpRegisterInfoPrivate;
 
 typedef struct {
     u64 application_id;
@@ -186,7 +186,7 @@ typedef struct {
     u8 tag_type;
     u8 application_area_version;
     u8 reserved[0x2F];
-} NX_PACKED NfpAdminInfo;
+} NfpAdminInfo;
 
 typedef struct {
     u8 tag_magic;                                         ///< Tag magic (always 0xA5: https://www.3dbrew.org/wiki/Amiibo#Page_layout).
@@ -217,7 +217,7 @@ typedef struct {
     u8 application_id_byte;                               ///< Application ID byte ((Application ID >> 28) & 0xFF)
     u8 reserved5[0x2E];
     u8 application_area[0xD8];                            ///< Application area.
-} NX_PACKED NfpData;
+} NfpData;
 
 typedef struct {
     u8 mifare_command;
