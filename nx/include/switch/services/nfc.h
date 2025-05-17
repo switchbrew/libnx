@@ -108,6 +108,12 @@ typedef enum {
     NfpAmiiboFlag_ApplicationAreaExists = BIT(1),   ///< Application area exists.
 } NfpAmiiboFlag;
 
+typedef enum {
+    NfpBreakType_Flush  = 0,
+    NfpBreakType_Break1 = 1,
+    NfpBreakType_Break2 = 2,
+} NfpBreakType;
+
 typedef struct {
     u16 year;
     u8 month;
@@ -143,10 +149,16 @@ typedef struct {
 } NX_PACKED NfpCommonInfo;
 
 typedef struct {
-    u8 character_id[3];
-    u8 series_id;
-    u16 numbering_id;
-    u8 nfp_type;
+    union {
+        u8 character_id[3];
+        struct {
+            u16 game_character_id;
+            u8 character_variant;
+        } NX_PACKED;
+    };
+    u8 series_id;       ///< Series.
+    u16 numbering_id;   ///< Model number.
+    u8 nfp_type;        ///< Figure type.
     u8 reserved1[0x39];
 } NX_PACKED NfpModelInfo;
 
@@ -298,21 +310,29 @@ Result nfcMfStartDetection(const NfcDeviceHandle *handle);
 Result nfcMfStopDetection(const NfcDeviceHandle *handle);
 
 /// Not available with ::NfpServiceType_System.
+/// Requires the amiibo to be mounted with ::NfpMountTarget_Ram.
 Result nfpOpenApplicationArea(const NfcDeviceHandle *handle, u32 app_id);
 
 /// Not available with ::NfpServiceType_System.
+/// Requires the amiibo to be mounted with ::NfpMountTarget_Ram, and the application area to be opened.
 Result nfpGetApplicationArea(const NfcDeviceHandle *handle, void* buf, size_t buf_size, u32 *out_size);
 
 /// Not available with ::NfpServiceType_System.
+/// Requires the amiibo to be mounted with ::NfpMountTarget_Ram, and the application area to be opened.
 Result nfpSetApplicationArea(const NfcDeviceHandle *handle, const void* buf, size_t buf_size);
+
+/// Requires the amiibo to be mounted with ::NfpMountTarget_Ram.
 Result nfpFlush(const NfcDeviceHandle *handle);
+
 Result nfpRestore(const NfcDeviceHandle *handle);
 
 /// Not available with ::NfpServiceType_System.
+/// Requires the amiibo to be mounted with ::NfpMountTarget_Ram.
 Result nfpCreateApplicationArea(const NfcDeviceHandle *handle, u32 app_id, const void* buf, size_t buf_size);
 
 /// Not available with ::NfpServiceType_System.
 /// Only available with [3.0.0+].
+/// Requires the amiibo to be mounted with ::NfpMountTarget_Ram, and the application area to be opened.
 Result nfpRecreateApplicationArea(const NfcDeviceHandle *handle, u32 app_id, const void* buf, size_t buf_size);
 
 /// Not available with ::NfpServiceType_System.
@@ -325,10 +345,18 @@ Result nfpDeleteApplicationArea(const NfcDeviceHandle *handle);
 Result nfpExistsApplicationArea(const NfcDeviceHandle *handle, bool *out);
 
 Result nfpGetTagInfo(const NfcDeviceHandle *handle, NfpTagInfo *out);
+
+/// Requires the amiibo to be mounted with ::NfpMountTarget_Ram.
 Result nfpGetRegisterInfo(const NfcDeviceHandle *handle, NfpRegisterInfo *out);
+
+/// Requires the amiibo to be mounted with ::NfpMountTarget_Ram.
 Result nfpGetCommonInfo(const NfcDeviceHandle *handle, NfpCommonInfo *out);
+
+/// Requires the amiibo to be mounted with ::NfpMountTarget_Rom.
 Result nfpGetModelInfo(const NfcDeviceHandle *handle, NfpModelInfo *out);
+
 /// Not available with ::NfpServiceType_User.
+/// Requires the amiibo to be mounted with ::NfpMountTarget_Ram.
 Result nfpGetAdminInfo(const NfcDeviceHandle *handle, NfpAdminInfo *out);
 
 /// Only available with [4.0.0+].
@@ -381,25 +409,39 @@ Result nfcMfAttachAvailabilityChangeEvent(Event *out_event);
 Result nfpFormat(const NfcDeviceHandle *handle);
 
 /// Not available with ::NfpServiceType_User.
+/// Requires the amiibo to be mounted with ::NfpMountTarget_Ram.
 Result nfpGetRegisterInfoPrivate(const NfcDeviceHandle *handle, NfpRegisterInfoPrivate *out);
+
 /// Not available with ::NfpServiceType_User.
+/// Requires the amiibo to be mounted with ::NfpMountTarget_Ram.
 Result nfpSetRegisterInfoPrivate(const NfcDeviceHandle *handle, const NfpRegisterInfoPrivate *register_info_private);
+
 /// Not available with ::NfpServiceType_User.
+/// Requires the amiibo to be mounted with ::NfpMountTarget_Ram.
 Result nfpDeleteRegisterInfo(const NfcDeviceHandle *handle);
 
 /// Only available with ::NfpServiceType_Debug.
+/// Requires the amiibo to be mounted with ::NfpMountTarget_Ram.
 Result nfpGetAll(const NfcDeviceHandle *handle, NfpData *out);
+
 /// Only available with ::NfpServiceType_Debug.
+/// Requires the amiibo to be mounted with ::NfpMountTarget_Ram.
 Result nfpSetAll(const NfcDeviceHandle *handle, const NfpData *nfp_data);
 
 /// Only available with ::NfpServiceType_Debug.
+/// Requires the amiibo to be mounted with ::NfpMountTarget_Ram.
 Result nfpFlushDebug(const NfcDeviceHandle *handle);
+
 /// Only available with ::NfpServiceType_Debug.
-Result nfpBreakTag(const NfcDeviceHandle *handle, u32 break_type);
+/// Requires the amiibo to be mounted with ::NfpMountTarget_Ram.
+Result nfpBreakTag(const NfcDeviceHandle *handle, NfpBreakType break_type);
+
 /// Only available with ::NfpServiceType_Debug.
 Result nfpReadBackupData(const NfcDeviceHandle *handle, void* out_buf, size_t buf_size, u32 *out_size);
+
 /// Only available with ::NfpServiceType_Debug.
 Result nfpWriteBackupData(const NfcDeviceHandle *handle, const void* buf, size_t buf_size);
+
 /// Only available with ::NfpServiceType_Debug.
 Result nfpWriteNtf(const NfcDeviceHandle *handle, u32 write_type, const void* buf, size_t buf_size);
 

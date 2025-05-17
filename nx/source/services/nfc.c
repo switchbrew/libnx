@@ -620,7 +620,7 @@ Result nfpFlushDebug(const NfcDeviceHandle *handle) {
     return _nfcCmdInDevhandleNoOut(&g_nfcInterface, handle, 202);
 }
 
-Result nfpBreakTag(const NfcDeviceHandle *handle, u32 break_type) {
+Result nfpBreakTag(const NfcDeviceHandle *handle, NfpBreakType break_type) {
     if (g_nfpServiceType != NfpServiceType_Debug)
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     
