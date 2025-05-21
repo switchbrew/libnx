@@ -558,12 +558,12 @@ Result usbDsDisable(void) {
     return _usbDsCmdNoIO(&g_usbDsSrv, hosversionAtLeast(11,0,0) ? 10 : 11);
 }
 
-Result usbDsGetSpeed(UsbDeviceSpeed* out) {
+Result usbDsGetSpeed(UsbDeviceSpeed *out) {
     if (hosversionBefore(8,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     _Static_assert(sizeof(*out) == sizeof(u32));
-    return _usbDsCmdNoInOutU32(&g_usbDsSrv, (u32 *)out, hosversionAtLeast(11,0,0) ? 11 : 12);
+    return _usbDsCmdNoInOutU32(&g_usbDsSrv, (u32*)out, hosversionAtLeast(11,0,0) ? 11 : 12);
 }
 
 
