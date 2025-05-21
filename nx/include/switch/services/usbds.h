@@ -122,7 +122,7 @@ Result usbDsEnable(void);
 Result usbDsDisable(void);
 
 /// Only available on [8.0.0+].
-Result usbDsGetSpeed(UsbDeviceSpeed* out);
+Result usbDsGetSpeed(UsbDeviceSpeed *out);
 
 ///@}
 
