@@ -518,7 +518,7 @@ typedef struct {
     u16 product_code;
     u32 serial_number;
     u8 manufacture_week;
-    u8 manufacture_year;                    ///< Real value is val - 10.
+    u8 manufacture_year;                    ///< Real year is 1990 + val.
     u8 edid_version;
     u8 edid_revision;
     u8 video_input_parameters_bitmap;
@@ -569,7 +569,7 @@ typedef struct {
         u8 extended_timing_info;
         u8 padding[7];
     } display_descriptor_range_limits;
-    u8 extension_count;                     ///< Always 1.
+    u8 extension_count;
     u8 checksum;                            ///< Sum of all 128 bytes should equal 0 mod 256.
     ///< Extended data.
     SetSysExtensionBlock data1;
