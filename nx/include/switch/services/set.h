@@ -501,12 +501,12 @@ typedef struct {
         } NX_PACKED cea;                                     ///< CEA EDID timing extension
         struct {
             u8 data[0x7E];
-        } NX_PACKED display_id;                              ///< [13.0.0+] DisplayID Extension Block
+        } display_id;                              ///< [13.0.0+] DisplayID Extension Block
         struct {
             u8 second_block_extension_tag;
             u8 third_block_extension_tag;
             u8 padding[0x7C];
-        } NX_PACKED block_map;                               ///< [13.0.0+] EDID Extension Block Map
+        } block_map;                               ///< [13.0.0+] EDID Extension Block Map
     } extension_block;
     u8 extended_checksum;                                    ///< Sum of 128 extended bytes should equal 0 mod 256.
 } SetSysExtensionBlock;
