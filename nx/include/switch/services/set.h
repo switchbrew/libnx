@@ -487,6 +487,30 @@ typedef struct {
     u8 padding[2];
 } SetSysDataBlock;
 
+typedef struct {
+    u8 extension_tag;                                        ///< 2 = CEA EDID timing extension, 0x70 = DisplayID Extension Block, 0xF0 = EDID Extension Block Map
+    union {
+        struct {
+            u8 revision;
+            u8 dtd_start;
+            u8 native_dtd_count : 4;
+            u8 native_dtd_feature_bitmap : 4;
+            SetSysDataBlock data_block;
+            SetSysModeLine extended_timing_descriptor[5];
+            u8 padding[5];
+        } NX_PACKED cea;                                     ///< CEA EDID timing extension
+        struct {
+            u8 data[0x7E];
+        } display_id;                                        ///< [13.0.0+] DisplayID Extension Block
+        struct {
+            u8 second_block_extension_tag;
+            u8 third_block_extension_tag;
+            u8 padding[0x7C];
+        } block_map;                                         ///< [13.0.0+] EDID Extension Block Map
+    } extension_block;
+    u8 extended_checksum;                                    ///< Sum of 128 extended bytes should equal 0 mod 256.
+} SetSysExtensionBlock;
+
 /// Edid
 typedef struct {
     u8 pattern[8];                          ///< Fixed pattern 00 FF FF FF FF FF FF 00.
@@ -494,7 +518,7 @@ typedef struct {
     u16 product_code;
     u32 serial_number;
     u8 manufacture_week;
-    u8 manufacture_year;                    ///< Real value is val - 10.
+    u8 manufacture_year;                    ///< Real year is 1990 + val.
     u8 edid_version;
     u8 edid_revision;
     u8 video_input_parameters_bitmap;
@@ -545,20 +569,12 @@ typedef struct {
         u8 extended_timing_info;
         u8 padding[7];
     } display_descriptor_range_limits;
-    u8 extension_count;                     ///< Always 1.
+    u8 extension_count;
     u8 checksum;                            ///< Sum of all 128 bytes should equal 0 mod 256.
     ///< Extended data.
-    u8 extension_tag;                       ///< Always 2 = CEA EDID timing extension.
-    u8 revision;
-    u8 dtd_start;
-    u8 native_dtd_count : 4;
-    u8 native_dtd_feature_bitmap : 4;
-    SetSysDataBlock data_block;
-    SetSysModeLine extended_timing_descriptor[5];
-    u8 padding[5];
-    u8 extended_checksum;                   ///< Sum of 128 extended bytes should equal 0 mod 256.
-    u8 data2[0x80];                         ///< [13.0.0+]
-    u8 data3[0x80];                         ///< [13.0.0+]
+    SetSysExtensionBlock data1;
+    SetSysExtensionBlock data2;             ///< [13.0.0+]
+    SetSysExtensionBlock data3;             ///< [13.0.0+]
 } SetSysEdid;
 
 /// DataDeletionSettings
