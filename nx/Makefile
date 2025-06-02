@@ -8,13 +8,6 @@ endif
 
 include $(DEVKITPRO)/devkitA64/base_rules
 
-export LIBNX_MAJOR	:= 4
-export LIBNX_MINOR	:= 7
-export LIBNX_PATCH	:= 0
-
-
-VERSION	:=	$(LIBNX_MAJOR).$(LIBNX_MINOR).$(LIBNX_PATCH)
-
 #---------------------------------------------------------------------------------
 # TARGET is the name of the output
 # BUILD is the directory where object files & intermediate files will be placed
@@ -98,14 +91,12 @@ all: lib/libnx.a lib/libnxd.a
 dist-bin: all
 	@tar --exclude=*~ -cjf libnx-$(VERSION).tar.bz2 include lib default_icon.jpg switch_rules switch.ld switch.specs -C external/bsd include
 
-dist-src:
-	@tar --exclude=*~ -cjf libnx-src-$(VERSION).tar.bz2 include source data external Makefile default_icon.jpg switch_rules switch.ld switch.specs
 
-dist: dist-src dist-bin
-
-install: dist-bin
-	mkdir -p $(DESTDIR)$(DEVKITPRO)/libnx
-	bzip2 -cd libnx-$(VERSION).tar.bz2 | tar -xf - -C $(DESTDIR)$(DEVKITPRO)/libnx
+install: lib/libnx.a lib/libnxd.a
+	@mkdir -p $(DESTDIR)$(DEVKITPRO)/libnx
+	@cp -v default_icon.jpg switch_rules switch.ld switch.specs $(DESTDIR)$(DEVKITPRO)/libnx/
+	@cp -rv include $(DESTDIR)$(DEVKITPRO)/libnx/
+	@cp -rv external/bsd/include $(DESTDIR)$(DEVKITPRO)/libnx/
 
 #dox:
 #	@doxygen Doxyfile
