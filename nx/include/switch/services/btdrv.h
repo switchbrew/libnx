@@ -372,8 +372,8 @@ typedef struct {
         struct {
             u32 result;                         ///< 0 for success, non-zero for error.
             u8 status;                          ///< Connection status. 0 = Connected, 2 = Disconnected
-            u16 server_if;                      ///< Server interface handle
-            u8 pad;                             ///< Padding
+            u8 server_if;                       ///< Server interface handle
+            u8 pad[2];                          ///< Padding
             u32 conn_id;                        ///< Connection ID
             BtdrvAddress address;               ///< Device address
             u16 reason;                         ///< Disconnection reason
