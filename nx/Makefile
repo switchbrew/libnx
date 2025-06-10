@@ -98,6 +98,9 @@ install: lib/libnx.a lib/libnxd.a
 	@cp -rv include $(DESTDIR)$(DEVKITPRO)/libnx/
 	@cp -rv external/bsd/include $(DESTDIR)$(DEVKITPRO)/libnx/
 
+dist-src:
+	@tar -cjf libnx-`git describe --tags | sed 's/^v//'`.tar.bz2 include source data external Makefile default_icon.jpg switch_rules switch.ld switch.specs
+
 #dox:
 #	@doxygen Doxyfile
 #	@doxygen Doxyfile.internal
