@@ -88,10 +88,6 @@ export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 #---------------------------------------------------------------------------------
 all: lib/libnx.a lib/libnxd.a
 
-dist-bin: all
-	@tar --exclude=*~ -cjf libnx-$(VERSION).tar.bz2 include lib default_icon.jpg switch_rules switch.ld switch.specs -C external/bsd include
-
-
 install: lib/libnx.a lib/libnxd.a
 	@mkdir -p $(DESTDIR)$(DEVKITPRO)/libnx
 	@cp -v default_icon.jpg switch_rules switch.ld switch.specs $(DESTDIR)$(DEVKITPRO)/libnx/
