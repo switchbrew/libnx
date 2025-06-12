@@ -95,7 +95,7 @@ dist-bin: all
 install: lib/libnx.a lib/libnxd.a
 	@mkdir -p $(DESTDIR)$(DEVKITPRO)/libnx
 	@cp -v default_icon.jpg switch_rules switch.ld switch.specs $(DESTDIR)$(DEVKITPRO)/libnx/
-	@cp -rv include $(DESTDIR)$(DEVKITPRO)/libnx/
+	@cp -rv include lib $(DESTDIR)$(DEVKITPRO)/libnx/
 	@cp -rv external/bsd/include $(DESTDIR)$(DEVKITPRO)/libnx/
 
 dist-src:
