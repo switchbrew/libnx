@@ -289,6 +289,13 @@ Result ldnSetWirelessControllerRestriction(LdnWirelessControllerRestriction rest
     return _ldnCmdInU32NoOut(&g_ldnSrv, restriction, 104);
 }
 
+Result ldnSetProtocol(LdnProtocol protocol) {
+    if (hosversionBefore(18,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _ldnCmdInU32NoOut(&g_ldnSrv, protocol, 106);
+}
+
 Result ldnOpenAccessPoint(void) {
     return _ldnCmdNoIO(&g_ldnSrv, 200);
 }

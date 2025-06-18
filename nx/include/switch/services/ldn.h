@@ -67,6 +67,12 @@ typedef enum {
     LdnWirelessControllerRestriction_Unknown1 = 1,   ///< Unknown
 } LdnWirelessControllerRestriction;
 
+/// Protocol
+typedef enum {
+    LdnProtocol_NX       = 1,   ///< NX (default)
+    LdnProtocol_Unknown3 = 3,   ///< (NXAndOunce?)
+} LdnProtocol;
+
 /// Ipv4Address. This is essentially the same as struct in_addr - hence this can be used with standard sockets (byteswap required).
 typedef struct {
     u32 addr;                          ///< Address
@@ -330,6 +336,13 @@ Result ldnScanPrivate(s32 channel, const LdnScanFilter *filter, LdnNetworkInfo *
  * @param[in] restriction \ref LdnWirelessControllerRestriction
  */
 Result ldnSetWirelessControllerRestriction(LdnWirelessControllerRestriction restriction);
+
+/**
+ * @brief SetProtocol
+ * @note This is only usable with [20.0.0+] (with [18.0.0-19-0.1] this is available but not usable).
+ * @param[in] protocol \ref LdnProtocol
+ */
+Result ldnSetProtocol(LdnProtocol protocol);
 
 /**
  * @brief OpenAccessPoint
