@@ -83,7 +83,7 @@ export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 			-I. \
 			-iquote $(CURDIR)/include/switch/
 
-.PHONY: clean all
+.PHONY: clean all lib/libnx.a lib/libnxd.a
 
 #---------------------------------------------------------------------------------
 all: lib/libnx.a lib/libnxd.a
