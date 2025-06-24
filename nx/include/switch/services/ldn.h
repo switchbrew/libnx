@@ -340,6 +340,7 @@ Result ldnSetWirelessControllerRestriction(LdnWirelessControllerRestriction rest
 /**
  * @brief SetProtocol
  * @note This is only usable with [20.0.0+] (with [18.0.0-19-0.1] this is available but not usable).
+ * @note \ref LdnState must be ::LdnState_Initialized. If a non-default Protocol is wanted, use this after \ref ldnInitialize.
  * @param[in] protocol \ref LdnProtocol
  */
 Result ldnSetProtocol(LdnProtocol protocol);
