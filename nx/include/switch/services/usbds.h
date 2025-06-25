@@ -55,6 +55,8 @@ typedef enum {
 } UsbComplexId;
 
 typedef enum {
+    UsbDeviceSpeed_None = 0x0,
+    UsbDeviceSpeed_Low = 0x1,   ///< USB 1.0 Low Speed
     UsbDeviceSpeed_Full = 0x2,  ///< USB 1.1 Full Speed
     UsbDeviceSpeed_High = 0x3,  ///< USB 2.0 High Speed
     UsbDeviceSpeed_Super = 0x4, ///< USB 3.0 Super Speed
@@ -119,6 +121,9 @@ Result usbDsEnable(void);
 /// Only available on [5.0.0+].
 Result usbDsDisable(void);
 
+/// Only available on [8.0.0+].
+Result usbDsGetSpeed(UsbDeviceSpeed *out);
+
 ///@}
 
 ///@name IDsInterface
@@ -158,4 +163,3 @@ Result usbDsEndpoint_Stall(UsbDsEndpoint* endpoint);
 Result usbDsEndpoint_SetZlt(UsbDsEndpoint* endpoint, bool zlt); // Sets Zero Length Termination for endpoint
 
 ///@}
-
