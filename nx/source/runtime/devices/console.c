@@ -695,6 +695,8 @@ void consoleDrawChar(int c) {
 //---------------------------------------------------------------------------------
 void consolePrintChar(int c) {
 //---------------------------------------------------------------------------------
+	int tabspaces;
+
 	if (c==0) return;
 
 	switch(c) {
@@ -723,7 +725,10 @@ void consolePrintChar(int c) {
 			break;
 
 		case '\t':
-			currentConsole->cursorX  += currentConsole->tabSize - ((currentConsole->cursorX)%(currentConsole->tabSize));
+			tabspaces = currentConsole->tabSize - ((currentConsole->cursorX - 1) % currentConsole->tabSize);
+			if (currentConsole->cursorX + tabspaces > currentConsole->windowWidth)
+				tabspaces = currentConsole->windowWidth - currentConsole->cursorX;
+			for(int i=0; i<tabspaces; i++) consolePrintChar(' ');
 			break;
 		case '\n':
 			consoleNewRow();
