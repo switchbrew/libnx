@@ -193,6 +193,15 @@ typedef struct {
     u8 reserved_x16[0xA];              ///< Cleared to zero for the tmp struct.
 } LdnNetworkConfig;
 
+/// ActionFrameSettings
+typedef struct {
+    s64 local_communication_id;        ///< LocalCommunicationId (Same handling as LdnNetworkConfig::local_communication_id)
+    u8 reserved[0x34];                 ///< Reserved
+    u16 security_mode;                 ///< SecurityMode (Must be 1-2, internally this is overriden)
+    u16 passphrase_size;               ///< PassphraseSize (Must be 0x10-0x40)
+    u8 passphrase[0x40];               ///< Passphrase
+} LdnActionFrameSettings;
+
 ///@name ldn:m
 ///@{
 
@@ -475,6 +484,72 @@ Result ldnDisconnect(void);
  * @param[in] mode \ref LdnOperationMode
  */
 Result ldnSetOperationMode(LdnOperationMode mode);
+
+/**
+ * @brief EnableActionFrame
+ * @note Only available on [18.0.0+].
+ * @note \ref LdnState must be ::LdnState_Initialized.
+ * @param[in] settings \ref LdnActionFrameSettings
+ */
+Result ldnEnableActionFrame(const LdnActionFrameSettings *settings);
+
+/**
+ * @brief DisableActionFrame
+ * @note Only available on [18.0.0+].
+ * @note \ref LdnState must be ::LdnState_Initialized.
+ */
+Result ldnDisableActionFrame(void);
+
+/**
+ * @brief SendActionFrame
+ * @note Only available on [18.0.0+].
+ * @note \ref LdnState must be ::LdnState_AccessPointCreated / ::LdnState_StationOpened.
+ * @param[in] data Data buffer.
+ * @param[in] size Data buffer size.
+ * @param[in] destination Destination \ref LdnMacAddress.
+ * @param[in] bssid Bssid \ref LdnMacAddress.
+ * @param[in] channel Channel, must be non-zero.
+ * @param[in] flags MessageFlag bit0 clear = block until the data can be sent, set = return error when the data can't be sent.
+ */
+Result ldnSendActionFrame(const void* data, size_t size, LdnMacAddress destination, LdnMacAddress bssid, s16 channel, u32 flags);
+
+/**
+ * @brief RecvActionFrame
+ * @note Only available on [18.0.0+].
+ * @note \ref ldnEnableActionFrame must be used prior to this.
+ * @param[out] data Output data buffer.
+ * @param[in] size Max size of the data buffer.
+ * @param[out] addr0 First \ref LdnMacAddress.
+ * @param[out] addr1 Second \ref LdnMacAddress.
+ * @param[out] channel Channel
+ * @param[out] out_size Output size.
+ * @param[out] link_level LinkLevel
+ * @param[in] flags MessageFlag bit0 clear = block until data is available, set = return error when data is not available.
+ */
+Result ldnRecvActionFrame(void* data, size_t size, LdnMacAddress *addr0, LdnMacAddress *addr1, s16 *channel, u32 *out_size, s32 *link_level, u32 flags);
+
+/**
+ * @brief SetHomeChannel
+ * @note Only available on [18.0.0+].
+ * @note \ref LdnState must be ::LdnState_StationOpened.
+ * @param[in] channel Channel, must be non-zero.
+ */
+Result ldnSetHomeChannel(s16 channel);
+
+/**
+ * @brief SetTxPower
+ * @note Only available on [18.0.0+].
+ * @note \ref LdnState must be ::LdnState_AccessPoint* / ::LdnState_Station*.
+ * @param[in] power Power, must be 0x0..0xFF.
+ */
+Result ldnSetTxPower(s16 power);
+
+/**
+ * @brief ResetTxPower
+ * @note Only available on [18.0.0+].
+ * @note \ref LdnState must be ::LdnState_AccessPoint* / ::LdnState_Station*.
+ */
+Result ldnResetTxPower(void);
 
 ///@}
 
