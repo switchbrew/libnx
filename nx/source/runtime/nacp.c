@@ -22,10 +22,10 @@ static u32 g_nacpLanguageTable[18] = {
     [SetLanguage_RU]     = 11,
     [SetLanguage_KO]     = 12,
     [SetLanguage_ZHTW]   = 13,
-	[SetLanguage_ZHHANT] = 13,
+    [SetLanguage_ZHHANT] = 13,
     [SetLanguage_ZHCN]   = 14,
-	[SetLanguage_ZHHANS] = 14,
-	[SetLanguage_PTBR]   = 15
+    [SetLanguage_ZHHANS] = 14,
+    [SetLanguage_PTBR]   = 15
 };
 
 //Official sw uses nsam for this, but since that's a privileged service, use set-service instead for compatibility with newer system-versions.
