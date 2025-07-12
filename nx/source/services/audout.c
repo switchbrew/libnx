@@ -109,7 +109,8 @@ Result audoutWaitPlayFinish(AudioOutBuffer **released, u32* released_count, u64 
     eventClear(&g_audoutBufferEvent);
     Result rc = audoutGetReleasedAudioOutBuffer(released, released_count);
 
-    if (R_FAILED(rc) || !(*released_count)) {
+    // If the call didn't fail, but we don't have a buffer, wait until one is released
+    if (R_SUCCEEDED(rc) && !(*released_count)) {
         // Wait on the buffer event handle
         rc = eventWait(&g_audoutBufferEvent, timeout);
 
