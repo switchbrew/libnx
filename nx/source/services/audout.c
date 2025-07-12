@@ -105,12 +105,19 @@ static Result _audoutCmdNoInOutU32(Service* srv, u32 *out, u32 cmd_id) {
 }
 
 Result audoutWaitPlayFinish(AudioOutBuffer **released, u32* released_count, u64 timeout) {
-    // Wait on the buffer event handle
-    Result rc = eventWait(&g_audoutBufferEvent, timeout);
+    // Check if we already have a buffer free
+    eventClear(&g_audoutBufferEvent);
+    Result rc = audoutGetReleasedAudioOutBuffer(released, released_count);
 
-    if (R_SUCCEEDED(rc)) {
-        // Grab the released buffer
-        rc = audoutGetReleasedAudioOutBuffer(released, released_count);
+    // If the call didn't fail, but we don't have a buffer, wait until one is released
+    if (R_SUCCEEDED(rc) && !(*released_count)) {
+        // Wait on the buffer event handle
+        rc = eventWait(&g_audoutBufferEvent, timeout);
+
+        if (R_SUCCEEDED(rc)) {
+            // Grab the released buffer
+            rc = audoutGetReleasedAudioOutBuffer(released, released_count);
+        }
     }
 
     return rc;
@@ -203,7 +210,7 @@ Result audoutAppendAudioOutBuffer(AudioOutBuffer *Buffer) {
 }
 
 static Result _audoutRegisterBufferEvent(Event *BufferEvent) {
-    return _audoutCmdGetEvent(&g_audoutIAudioOut, BufferEvent, true, 4);
+    return _audoutCmdGetEvent(&g_audoutIAudioOut, BufferEvent, false, 4);
 }
 
 Result audoutGetReleasedAudioOutBuffer(AudioOutBuffer **Buffer, u32 *ReleasedBuffersCount) {
