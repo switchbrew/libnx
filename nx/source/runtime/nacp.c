@@ -7,22 +7,25 @@
 #include "services/set.h"
 #include "nacp.h"
 
-static u32 g_nacpLanguageTable[15] = {
-    [SetLanguage_JA]    = 2,
-    [SetLanguage_ENUS]  = 0,
-    [SetLanguage_ENGB]  = 1,
-    [SetLanguage_FR]    = 3,
-    [SetLanguage_DE]    = 4,
-    [SetLanguage_ES419] = 5,
-    [SetLanguage_ES]    = 6,
-    [SetLanguage_IT]    = 7,
-    [SetLanguage_NL]    = 8,
-    [SetLanguage_FRCA]  = 9,
-    [SetLanguage_PT]    = 10,
-    [SetLanguage_RU]    = 11,
-    [SetLanguage_KO]    = 12,
-    [SetLanguage_ZHTW]  = 13,
-    [SetLanguage_ZHCN]  = 14,
+static u32 g_nacpLanguageTable[18] = {
+    [SetLanguage_JA]     = 2,
+    [SetLanguage_ENUS]   = 0,
+    [SetLanguage_ENGB]   = 1,
+    [SetLanguage_FR]     = 3,
+    [SetLanguage_DE]     = 4,
+    [SetLanguage_ES419]  = 5,
+    [SetLanguage_ES]     = 6,
+    [SetLanguage_IT]     = 7,
+    [SetLanguage_NL]     = 8,
+    [SetLanguage_FRCA]   = 9,
+    [SetLanguage_PT]     = 10,
+    [SetLanguage_RU]     = 11,
+    [SetLanguage_KO]     = 12,
+    [SetLanguage_ZHTW]   = 13,
+    [SetLanguage_ZHHANT] = 13,
+    [SetLanguage_ZHCN]   = 14,
+    [SetLanguage_ZHHANS] = 14,
+    [SetLanguage_PTBR]   = 15
 };
 
 //Official sw uses nsam for this, but since that's a privileged service, use set-service instead for compatibility with newer system-versions.
@@ -49,7 +52,7 @@ Result nacpGetLanguageEntry(NacpStruct* nacp, NacpLanguageEntry** langentry) {
     if (Language < 0)
         rc = MAKERESULT(Module_Libnx, LibnxError_BadInput);
 
-    if (R_SUCCEEDED(rc) && Language >= 15)
+    if (R_SUCCEEDED(rc) && Language >= 18)
         Language = SetLanguage_ENUS;//Use ENUS for unsupported system languages.
 
     setExit();
