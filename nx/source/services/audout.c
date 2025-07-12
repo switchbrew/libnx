@@ -294,30 +294,6 @@ Result audoutGetAudioOutVolume(float *volume) {
     return serviceDispatchOut(&g_audoutIAudioOut, 13, *volume);
 }
 
-Result audoutaRequestSuspendOld(u64 pid, u64 delay, Handle* handle_out) {
-    if (hosversionAtLeast(4,0,0))
-        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-
-    const struct {
-        u64 pid;
-        u64 delay;
-    } in = { pid, delay };
-
-    return serviceDispatchInOut(&g_audoutaSrv, 0, in, *handle_out);
-}
-
-Result audoutaRequestResumeOld(u64 pid, u64 delay, Handle* handle_out) {
-    if (hosversionAtLeast(4,0,0))
-        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-
-    const struct {
-        u64 pid;
-        u64 delay;
-    } in = { pid, delay };
-
-    return serviceDispatchInOut(&g_audoutaSrv, 1, in, *handle_out);
-}
-
 Result audoutaRequestSuspend(u64 pid, u64 delay) {
     if (hosversionBefore(4,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);

@@ -1,7 +1,7 @@
 /**
  * @file audout.h
  * @brief Audio output service.
- * @author hexkyz
+ * @author hexkyz, TotalJustice
  * @copyright libnx Authors
  */
 #pragma once
@@ -104,8 +104,6 @@ u32 audoutGetChannelCount(void);                    ///< Supported channel count
 PcmFormat audoutGetPcmFormat(void);                 ///< Supported PCM format (Int16).
 AudioOutState audoutGetDeviceState(void);           ///< Initial device state (stopped).
 
-Result audoutaRequestSuspendOld(u64 pid, u64 delay, Handle* handle_out); // [1.0.0] - [4.0.0]
-Result audoutaRequestResumeOld(u64 pid, u64 delay, Handle* handle_out); // [1.0.0] - [4.0.0]
 Result audoutaRequestSuspend(u64 pid, u64 delay); // [4.0.0]+
 Result audoutaRequestResume(u64 pid, u64 delay); // [4.0.0]+
 Result audoutaGetProcessMasterVolume(u64 pid, float* volume_out);
