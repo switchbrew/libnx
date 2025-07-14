@@ -121,6 +121,8 @@ struct PrintConsole
 #define CONSOLE_CROSSED_OUT	(1<<8) ///< Crossed out text
 #define CONSOLE_FG_CUSTOM	(1<<9) ///< Foreground custom color
 #define CONSOLE_BG_CUSTOM	(1<<10) ///< Background custom color
+#define CONSOLE_COLOR_FG_BRIGHT (1<<11) ///< Bright foreground color
+#define CONSOLE_COLOR_BG_BRIGHT (1<<12) ///< Bright background color
 
 /// Console debug devices supported by libnx.
 typedef enum {
