@@ -21,6 +21,9 @@ void _audaCleanup(void) {
 }
 
 Result _auddInitialize(void) {
+    if (hosversionBefore(11,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
     return smGetService(&g_auddSrv, "aud:d");
 }
 

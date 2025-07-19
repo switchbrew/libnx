@@ -104,8 +104,8 @@ u32 audoutGetChannelCount(void);                    ///< Supported channel count
 PcmFormat audoutGetPcmFormat(void);                 ///< Supported PCM format (Int16).
 AudioOutState audoutGetDeviceState(void);           ///< Initial device state (stopped).
 
-Result audoutaRequestSuspend(u64 pid, u64 delay); // [4.0.0]+
-Result audoutaRequestResume(u64 pid, u64 delay); // [4.0.0]+
+Result audoutaRequestSuspend(u64 pid, u64 delay); // [4.0.0+]
+Result audoutaRequestResume(u64 pid, u64 delay); // [4.0.0+]
 Result audoutaGetProcessMasterVolume(u64 pid, float* volume_out);
 Result audoutaSetProcessMasterVolume(u64 pid, u64 delay, float volume);
 Result audoutaGetProcessRecordVolume(u64 pid, float* volume_out);
