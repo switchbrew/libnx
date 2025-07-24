@@ -41,9 +41,9 @@ typedef enum {
 
 /// LatestSystemUpdate
 typedef enum {
-    NsLatestSystemUpdate_Unknown0 = 0,                ///< Unknown.
-    NsLatestSystemUpdate_Unknown1 = 1,                ///< Unknown.
-    NsLatestSystemUpdate_Unknown2 = 2,                ///< Unknown.
+    NsLatestSystemUpdate_UpToDate      = 0,           ///< UpToDate
+    NsLatestSystemUpdate_Downloaded    = 1,           ///< Downloaded
+    NsLatestSystemUpdate_NeedsDownload = 2,           ///< NeedsDownload
 } NsLatestSystemUpdate;
 
 /// RequestServerStopper
@@ -83,8 +83,8 @@ typedef struct {
 typedef struct {
     u8 meta_type;                  ///< \ref NcmContentMetaType
     u8 storageID;                  ///< \ref NcmStorageId
-    u8 unk_x02;                    ///< Unknown.
-    u8 padding;                    ///< Padding.
+    u8 rights_check;               ///< RightsCheck.
+    u8 reserved;                   ///< Reserved.
     u32 version;                   ///< Application version.
     u64 application_id;            ///< ApplicationId.
 } NsApplicationContentMetaStatus;
@@ -92,11 +92,10 @@ typedef struct {
 /// ApplicationRecord
 typedef struct {
     u64 application_id;            ///< ApplicationId.
-    u8 type;                       ///< Type.
-    u8 unk_x09;                    ///< Unknown.
-    u8 unk_x0a[6];                 ///< Unknown.
-    u8 unk_x10;                    ///< Unknown.
-    u8 unk_x11[7];                 ///< Unknown.
+    u8 last_event;                 ///< LastEvent.
+    u8 attributes;                 ///< Attributes.
+    u8 reserved[6];                ///< Reserved.
+    u64 last_updated;              ///< LastUpdated.
 } NsApplicationRecord;
 
 /// ProgressForDeleteUserSaveDataAll
@@ -186,15 +185,20 @@ typedef struct {
 /// SystemDeliveryInfo
 typedef struct {
     struct {
-        u32 system_delivery_protocol_version;       ///< Must match a system-setting.
-        u32 application_delivery_protocol_version;  ///< Loaded from a system-setting. Unused by \ref nssuRequestSendSystemUpdate / \ref nssuControlRequestReceiveSystemUpdate, besides HMAC validation.
-        u32 includes_exfat;                         ///< Whether ExFat is included. Unused by \ref nssuRequestSendSystemUpdate / \ref nssuControlRequestReceiveSystemUpdate, besides HMAC validation.
-        u32 system_update_meta_version;             ///< SystemUpdate meta version.
-        u64 system_update_meta_id;                  ///< SystemUpdate meta Id.
-        u8 unk_x18;                                 ///< Copied into state by \ref nssuRequestSendSystemUpdate.
-        u8 unk_x19;                                 ///< Unused by \ref nssuRequestSendSystemUpdate / \ref nssuControlRequestReceiveSystemUpdate, besides HMAC validation.
-        u8 unk_x1a;                                 ///< Unknown.
-        u8 unk_x1b[0xc5];                           ///< Unused by \ref nssuRequestSendSystemUpdate / \ref nssuControlRequestReceiveSystemUpdate, besides HMAC validation.
+        u32 system_delivery_protocol_version;       ///< SystemDeliveryProtocolVersion.
+        u32 application_delivery_protocol_version;  ///< ApplicationDeliveryProtocolVersion.
+        u8 has_exfat;                               ///< HasExFat.
+        u8 reserved[0x3];                           ///< Reserved.
+        u32 system_update_version;                  ///< SystemUpdateVersion.
+        u64 old_system_update_id;                   ///< OldSystemUpdateId.
+        u8 firmware_variation_id;                   ///< FirmwareVariationId.
+        u8 updatable_firmware_group_id;             ///< UpdatableFirmwareGroupId.
+        u8 platform_region;                         ///< PlatformRegion.
+        u8 system_delivery_info_platform;           ///< [20.0.0+] SystemDeliveryInfoPlatform.
+        u8 system_update_id_flag;                   ///< [20.0.0+] SystemUpdateIdFlag. When non-zero, SystemUpdateId is used instead of OldSystemUpdateId.
+        u8 pad[0x3];                                ///< Padding.
+        u64 system_update_id;                       ///< [20.0.0+] SystemUpdateId.
+        u8 reserved_x28[0xb8];                      ///< Reserved.
     } data;                                         ///< Data used with the below hmac.
     u8 hmac[0x20];                                  ///< HMAC-SHA256 over the above data.
 } NsSystemDeliveryInfo;
@@ -202,12 +206,16 @@ typedef struct {
 /// ApplicationDeliveryInfo
 typedef struct {
     struct {
-        u8 unk_x0[0x10];                            ///< Unknown.
-        u32 application_version;                    ///< Application version.
-        u32 unk_x14;                                ///< Unknown.
-        u32 required_system_version;                ///< Required system version, see NsSystemDeliveryInfo::system_update_meta_version.
-        u32 unk_x1c;                                ///< Unknown.
-        u8 unk_x20[0xc0];                           ///< Unknown.
+        u32 application_delivery_protocol_version;  ///< ApplicationDeliveryProtocolVersion.
+        u8 pad[0x4];                                ///< Padding.
+        u64 application_id;                         ///< ApplicationId.
+        u32 application_version;                    ///< ApplicationVersion.
+        u32 required_application_version;           ///< RequiredApplicationVersion.
+        u32 required_system_version;                ///< RequiredSystemVersion.
+        u32 attributes;                             ///< Bitfield of ApplicationDeliveryAttributeTag.
+        u8 platform;                                ///< [20.0.0+] \ref NcmContentMetaPlatform
+        u8 proper_program_exists;                   ///< [20.0.0+] ProperProgramExists.
+        u8 reserved[0xbe];                          ///< Reserved.
     } data;                                         ///< Data used with the below hmac.
     u8 hmac[0x20];                                  ///< HMAC-SHA256 over the above data.
 } NsApplicationDeliveryInfo;
@@ -846,7 +854,7 @@ Result nsGetSystemDeliveryInfo(NsSystemDeliveryInfo *info);
 
 /**
  * @brief SelectLatestSystemDeliveryInfo
- * @note This selects the \ref NsSystemDeliveryInfo with the latest version from sys_list, using minimum versions determined from app_list/state and base_info. This also does various validation, etc.
+ * @note This selects the \ref NsSystemDeliveryInfo with the latest version from sys_list, using minimum versions determined from app_list/state and base_info, etc.
  * @note Only available on [4.0.0+].
  * @param[in] sys_list Input array of \ref NsSystemDeliveryInfo.
  * @param[in] sys_count Size of the sys_list array in entries.
@@ -919,7 +927,7 @@ Result nsCanDeliverApplication(const NsApplicationDeliveryInfo *info0, s32 count
 Result nsListContentMetaKeyToDeliverApplication(NcmContentMetaKey *meta, s32 meta_count, s32 meta_index, const NsApplicationDeliveryInfo *info, s32 info_count, s32 *total_out);
 
 /**
- * @brief After validation etc, this sets the output bool by comparing system-version fields in the \ref NsSystemDeliveryInfo / info-array and with a state field.
+ * @brief After validation, this sets the output bool by comparing system-version fields in the \ref NsSystemDeliveryInfo / info-array and with a state field, etc.
  * @note Only available on [4.0.0+].
  * @param[in] info Input array of \ref NsApplicationDeliveryInfo.
  * @param[in] count Size of the info array in entries. Must be value 1.
@@ -988,7 +996,7 @@ Result nsRequestSendApplication(AsyncResult *a, u32 addr, u16 port, u64 applicat
 Result nsGetSendApplicationProgress(u64 application_id, NsSendApplicationProgress *out);
 
 /**
- * @brief Both \ref NsSystemDeliveryInfo are validated, then the system_update_meta_version in the first/second \ref NsSystemDeliveryInfo are compared.
+ * @brief Both \ref NsSystemDeliveryInfo are validated, then the system_update_version in the first/second \ref NsSystemDeliveryInfo are compared.
  * @note Only available on [4.0.0+].
  * @param[in] info0 First \ref NsSystemDeliveryInfo.
  * @param[in] info1 Second \ref NsSystemDeliveryInfo.
@@ -1429,11 +1437,10 @@ Result nssuDestroySystemUpdateTask(void);
 
 /**
  * @brief RequestSendSystemUpdate
- * @note The system will use the input addr/port with bind(), the input addr will eventually be validated with the addr from accept(). addr/port are little-endian.
- * @note After the system accepts a connection etc, an error will be thrown if the system is Internet-connected.
+ * @note addr/port are little-endian.
  * @note Only available on [4.0.0+].
  * @param[out] a \ref AsyncResult
- * @param[in] addr Client IPv4 address. qlaunch uses a local-WLAN addr.
+ * @param[in] addr Client IPv4 address.
  * @param[in] port Socket port. qlaunch uses value 55556.
  * @param[in] info \ref NsSystemDeliveryInfo
  */
@@ -1589,11 +1596,11 @@ Result nssuControlHasReceived(NsSystemUpdateControl *c, bool* out);
 
 /**
  * @brief RequestReceiveSystemUpdate
- * @note The system will use the input addr/port with connect(). addr/port are little-endian.
+ * @note addr/port are little-endian.
  * @note Only available on [4.0.0+].
  * @param c \ref NsSystemUpdateControl
  * @param[out] a \ref AsyncResult
- * @param[in] addr Server IPv4 address. qlaunch uses a local-WLAN addr, however this can be any addr.
+ * @param[in] addr Server IPv4 address.
  * @param[in] port Socket port. qlaunch uses value 55556.
  * @param[in] info \ref NsSystemDeliveryInfo
  */
