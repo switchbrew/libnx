@@ -1,7 +1,7 @@
 /**
  * @file audout.h
  * @brief Audio output service.
- * @author hexkyz
+ * @author hexkyz, TotalJustice
  * @copyright libnx Authors
  */
 #pragma once
@@ -9,6 +9,8 @@
 #include "../types.h"
 #include "../audio/audio.h"
 #include "../sf/service.h"
+
+#define AUDOUT_MAX_DELAY (1000000000ULL)
 
 typedef enum {
     AudioOutState_Started = 0,
@@ -33,11 +35,29 @@ Result audoutInitialize(void);
 /// Exit audout.
 void audoutExit(void);
 
+/// Initialize audout:a. Removed in [11.0.0].
+Result audoutaInitialize(void);
+
+/// Exit audout:a.
+void audoutaExit(void);
+
+/// Initialize audout:d. Removed in [11.0.0].
+Result audoutdInitialize(void);
+
+/// Exit audout:d.
+void audoutdExit(void);
+
 /// Gets the Service object for the actual audout service session.
 Service* audoutGetServiceSession(void);
 
 /// Gets the Service object for IAudioOut.
 Service* audoutGetServiceSession_AudioOut(void);
+
+/// Gets the Service for audout:a.
+Service* audoutaGetServiceSession(void);
+
+/// Gets the Service for audout:d.
+Service* audoutdGetServiceSession(void);
 
 Result audoutListAudioOuts(char *DeviceNames, s32 count, u32 *DeviceNamesCount);
 Result audoutOpenAudioOut(const char *DeviceNameIn, char *DeviceNameOut, u32 SampleRateIn, u32 ChannelCountIn, u32 *SampleRateOut, u32 *ChannelCountOut, PcmFormat *Format, AudioOutState *State);
@@ -83,3 +103,13 @@ u32 audoutGetSampleRate(void);                      ///< Supported sample rate (
 u32 audoutGetChannelCount(void);                    ///< Supported channel count (2 channels).
 PcmFormat audoutGetPcmFormat(void);                 ///< Supported PCM format (Int16).
 AudioOutState audoutGetDeviceState(void);           ///< Initial device state (stopped).
+
+Result audoutaRequestSuspend(u64 pid, u64 delay); // [4.0.0+]
+Result audoutaRequestResume(u64 pid, u64 delay); // [4.0.0+]
+Result audoutaGetProcessMasterVolume(u64 pid, float* volume_out);
+Result audoutaSetProcessMasterVolume(u64 pid, u64 delay, float volume);
+Result audoutaGetProcessRecordVolume(u64 pid, float* volume_out); // [4.0.0+]
+Result audoutaSetProcessRecordVolume(u64 pid, u64 delay, float volume); // [4.0.0+]
+
+Result audoutdRequestSuspendForDebug(u64 pid, u64 delay);
+Result audoutdRequestResumeForDebug(u64 pid, u64 delay);
