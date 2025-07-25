@@ -339,8 +339,8 @@ typedef struct {
     BtdrvAddress addr;         ///< \ref BtdrvAddress
     u16 min_conn_interval;     ///< Minimum connection interval
     u16 max_conn_interval;     ///< Maximum connection interval
-    u16 scan_interval;         ///< Scan interval
-    u16 scan_window;           ///< Scan window
+    u16 min_ce_length;         ///< Minimum connection event length
+    u16 max_ce_length;         ///< Maximum connection event length
     u16 slave_latency;         ///< Slave latency
     u16 supervision_tout;      ///< Connection supervision timeout multiplier
     u8 preference;             ///< Unused
@@ -351,8 +351,8 @@ typedef struct {
 typedef struct {
     u16 min_conn_interval;     ///< Minimum connection interval
     u16 max_conn_interval;     ///< Maximum connection interval
-    u16 scan_interval;         ///< Scan interval
-    u16 scan_window;           ///< Scan window
+    u16 min_ce_length;         ///< Minimum connection event length
+    u16 max_ce_length;         ///< Maximum connection event length
     u16 slave_latency;         ///< Slave latency
     u16 supervision_tout;      ///< Connection supervision timeout multiplier
 } BtdrvBleConnectionParameter;
