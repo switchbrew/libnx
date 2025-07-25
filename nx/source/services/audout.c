@@ -210,7 +210,7 @@ Result audoutAppendAudioOutBuffer(AudioOutBuffer *Buffer) {
 }
 
 static Result _audoutRegisterBufferEvent(Event *BufferEvent) {
-    return _audoutCmdGetEvent(&g_audoutIAudioOut, BufferEvent, false, 4);
+    return _audoutCmdGetEvent(&g_audoutIAudioOut, BufferEvent, true, 4);
 }
 
 Result audoutGetReleasedAudioOutBuffer(AudioOutBuffer **Buffer, u32 *ReleasedBuffersCount) {
