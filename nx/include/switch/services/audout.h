@@ -108,8 +108,8 @@ Result audoutaRequestSuspend(u64 pid, u64 delay); // [4.0.0+]
 Result audoutaRequestResume(u64 pid, u64 delay); // [4.0.0+]
 Result audoutaGetProcessMasterVolume(u64 pid, float* volume_out);
 Result audoutaSetProcessMasterVolume(u64 pid, u64 delay, float volume);
-Result audoutaGetProcessRecordVolume(u64 pid, float* volume_out);
-Result audoutaSetProcessRecordVolume(u64 pid, u64 delay, float volume);
+Result audoutaGetProcessRecordVolume(u64 pid, float* volume_out); // [4.0.0+]
+Result audoutaSetProcessRecordVolume(u64 pid, u64 delay, float volume); // [4.0.0+]
 
 Result audoutdRequestSuspendForDebug(u64 pid, u64 delay);
 Result audoutdRequestResumeForDebug(u64 pid, u64 delay);
