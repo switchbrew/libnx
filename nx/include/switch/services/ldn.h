@@ -19,9 +19,9 @@ typedef enum {
 typedef enum {
     LdnState_None                 = 0, ///< None
     LdnState_Initialized          = 1, ///< Initialized
-    LdnState_AccessPointOpened    = 2, ///< AccessPointOpened (\ref ldnOpenAccessPoint)
+    LdnState_AccessPoint          = 2, ///< AccessPoint (\ref ldnOpenAccessPoint)
     LdnState_AccessPointCreated   = 3, ///< AccessPointCreated (\ref ldnCreateNetwork / \ref ldnCreateNetworkPrivate)
-    LdnState_StationOpened        = 4, ///< StationOpened (\ref ldnOpenStation)
+    LdnState_Station              = 4, ///< Station (\ref ldnOpenStation)
     LdnState_StationConnected     = 5, ///< StationConnected (\ref ldnConnect / \ref ldnConnectPrivate)
     LdnState_Error                = 6, ///< Error
 } LdnState;
@@ -29,42 +29,52 @@ typedef enum {
 /// DisconnectReason loaded by \ref ldnGetDisconnectReason.
 typedef enum {
     LdnDisconnectReason_None                     = 0, ///< None
-    LdnDisconnectReason_User                     = 1, ///< User
-    LdnDisconnectReason_SystemRequest            = 2, ///< SystemRequest
-    LdnDisconnectReason_DestroyedByAdmin         = 3, ///< DestroyedByAdmin
-    LdnDisconnectReason_DestroyedBySystemRequest = 4, ///< DestroyedBySystemRequest
-    LdnDisconnectReason_Admin                    = 5, ///< Admin
+    LdnDisconnectReason_DisconnectedByUser       = 1, ///< DisconnectedByUser
+    LdnDisconnectReason_DisconnectedBySystem     = 2, ///< DisconnectedBySystem
+    LdnDisconnectReason_DestroyedByUser          = 3, ///< DestroyedByUser
+    LdnDisconnectReason_DestroyedBySystem        = 4, ///< DestroyedBySystem
+    LdnDisconnectReason_Rejected                 = 5, ///< Rejected
     LdnDisconnectReason_SignalLost               = 6, ///< SignalLost
 } LdnDisconnectReason;
 
-/// ScanFilterFlags
+/// ScanFilterFlag
 typedef enum {
-    LdnScanFilterFlags_LocalCommunicationId      = BIT(0),  ///< When set, enables using LdnScanFilter::local_communication_id.
-    LdnScanFilterFlags_NetworkId                 = BIT(1),  ///< When set, enables using LdnScanFilter::network_id.
-    LdnScanFilterFlags_Unknown2                  = BIT(2),  ///< When set, enables using LdnScanFilter::unk_x20.
-    LdnScanFilterFlags_MacAddr                   = BIT(3),  ///< When set, enables using LdnScanFilter::mac_addr. Only available with \ref ldnScanPrivate.
-    LdnScanFilterFlags_Ssid                      = BIT(4),  ///< When set, enables using the LdnScanFilter::ssid.
-    LdnScanFilterFlags_UserData                  = BIT(5),  ///< When set, enables using LdnScanFilter::userdata_filter.
-} LdnScanFilterFlags;
+    LdnScanFilterFlag_LocalCommunicationId      = BIT(0),                                                               ///< Enables using LdnScanFilter::network_id LdnIntentId::local_communication_id.
+    LdnScanFilterFlag_SessionId                 = BIT(1),                                                               ///< Enables using LdnScanFilter::network_id session_id.
+    LdnScanFilterFlag_NetworkType               = BIT(2),                                                               ///< Enables using LdnScanFilter::network_type.
+    LdnScanFilterFlag_Bssid                     = BIT(3),                                                               ///< Enables using LdnScanFilter::bssid. Only available with \ref ldnScanPrivate.
+    LdnScanFilterFlag_Ssid                      = BIT(4),                                                               ///< Enables using LdnScanFilter::ssid.
+    LdnScanFilterFlag_SceneId                   = BIT(5),                                                               ///< Enables using LdnScanFilter::network_id LdnIntentId::scene_id.
+    LdnScanFilterFlag_IntentId                  = LdnScanFilterFlag_LocalCommunicationId | LdnScanFilterFlag_SceneId,   ///< Enables using LdnScanFilter::network_id intent_id.
+    LdnScanFilterFlag_NetworkId                 = LdnScanFilterFlag_IntentId | LdnScanFilterFlag_SessionId,             ///< Enables using LdnScanFilter::network_id.
+} LdnScanFilterFlag;
 
 /// AcceptPolicy
 typedef enum {
-    LdnAcceptPolicy_AllowAll       = 0, ///< Allow all.
-    LdnAcceptPolicy_DenyAll        = 1, ///< Deny all.
-    LdnAcceptPolicy_Blacklist      = 2, ///< Blacklist, addresses in the list (\ref ldnAddAcceptFilterEntry) are not allowed.
-    LdnAcceptPolicy_Whitelist      = 3, ///< Whitelist, only addresses in the list (\ref ldnAddAcceptFilterEntry) are allowed.
+    LdnAcceptPolicy_AlwaysAccept   = 0, ///< AlwaysAccept
+    LdnAcceptPolicy_AlwaysReject   = 1, ///< AlwaysReject
+    LdnAcceptPolicy_BlackList      = 2, ///< BlackList, addresses in the list (\ref ldnAddAcceptFilterEntry) are not allowed.
+    LdnAcceptPolicy_WhiteList      = 3, ///< WhiteList, only addresses in the list (\ref ldnAddAcceptFilterEntry) are allowed.
 } LdnAcceptPolicy;
+
+/// SecurityMode. LdnSecurityMode_Product can be used as the default value. The ldn cmds which use an input SecurityMode normally overwrite the SecurityMode.
+typedef enum {
+    LdnSecurityMode_Any            = 0, ///< Any
+    LdnSecurityMode_Product        = 1, ///< Product
+    LdnSecurityMode_Debug          = 2, ///< Debug
+    LdnSecurityMode_SystemDebug    = 3, ///< SystemDebug
+} LdnSecurityMode;
 
 /// OperationMode
 typedef enum {
-    LdnOperationMode_Unknown0     = 0, ///< Unknown
-    LdnOperationMode_Unknown1     = 1, ///< Unknown
+    LdnOperationMode_Stable        = 0, ///< Stable
+    LdnOperationMode_HighSpeed     = 1, ///< HighSpeed
 } LdnOperationMode;
 
 /// WirelessControllerRestriction
 typedef enum {
-    LdnWirelessControllerRestriction_Unknown0 = 0,   ///< Unknown
-    LdnWirelessControllerRestriction_Unknown1 = 1,   ///< Unknown
+    LdnWirelessControllerRestriction_Disabled = 0,   ///< Disabled
+    LdnWirelessControllerRestriction_Enabled  = 1,   ///< Enabled
 } LdnWirelessControllerRestriction;
 
 /// Protocol
@@ -96,98 +106,111 @@ typedef struct {
 
 /// NodeLatestUpdate
 typedef struct {
-    u8 val;                            ///< The field in state is reset to zero by \ref ldnGetNetworkInfoLatestUpdate after loading it.
-    u8 reserved[0x7];                  ///< Not initialized with \ref ldnGetNetworkInfoLatestUpdate.
+    u8 state_change;                   ///< StateChange. The field in state is reset to zero by \ref ldnGetNetworkInfoLatestUpdate after loading it.
+    u8 reserved[0x7];                  ///< Reserved
 } LdnNodeLatestUpdate;
 
 /// AddressEntry
 typedef struct {
     LdnIpv4Address ip_addr;            ///< \ref LdnIpv4Address
     LdnMacAddress mac_addr;            ///< \ref LdnMacAddress
-    u8 pad[0x2];                       ///< Padding
+    u8 reserved[0x2];                  ///< Reserved
 } LdnAddressEntry;
 
 /// NodeInfo
 typedef struct {
     LdnIpv4Address ip_addr;            ///< \ref LdnIpv4Address
     LdnMacAddress mac_addr;            ///< \ref LdnMacAddress
-    s8 id;                             ///< ID / index
+    s8 node_id;                        ///< NodeId
     u8 is_connected;                   ///< IsConnected flag
-    char nickname[0x20];               ///< LdnUserConfig::nickname
-    u8 reserved_x2C[0x2];              ///< Reserved
+    char user_name[0x21];              ///< LdnUserConfig::user_name
+    u8 platform;                       ///< [19.0.0+] Platform? (0 = NX, 1 = Ounce)
     s16 local_communication_version;   ///< LocalCommunicationVersion
     u8 reserved_x30[0x10];             ///< Reserved
 } LdnNodeInfo;
 
 /// UserConfig. The input struct is copied to a tmp struct, which is then used with the cmd.
 typedef struct {
-    char nickname[0x20];               ///< NUL-terminated string for the user nickname.
-    u8 reserved[0x10];                 ///< Cleared to zero for the tmp struct.
+    char user_name[0x21];             ///< UserName (NUL-terminated string for the user name)
+    u8 reserved[0xF];                 ///< Reserved
 } LdnUserConfig;
+
+/// IntentId
+typedef struct {
+    s64 local_communication_id;        ///< LocalCommunicationId. \ref ldnCreateNetwork, \ref ldnCreateNetworkPrivate, \ref ldnConnect, \ref ldnConnectPrivate (also \ref LdnScanFilter when enabled): When -1, this is overwritten with the first LocalCommunicationId from the user-process NACP, if loading fails value 0 is written instead. Otherwise when not -1, if NACP loading is successful, this field must match one of the LocalCommunicationIds from there.
+    u8 reserved_x8[0x2];               ///< Reserved
+    u16 scene_id;                      ///< SceneId. Arbitrary user data, this can be used for filtering with \ref LdnScanFilter (::LdnScanFilterFlag_SceneId) for example.
+    u8 reserved_xC[0x4];               ///< Reserved
+} LdnIntentId;
+
+/// SessionId
+typedef struct {
+    u8 random[0x10];                   ///< Random. Used to generate/overwrite the ssid when needed.
+} LdnSessionId;
+
+/// NetworkId
+typedef struct {
+    LdnIntentId intent_id;             ///< IntentId
+    LdnSessionId session_id;           ///< SessionId
+} LdnNetworkId;
+
+/// CommonNetworkInfo
+typedef struct {
+    LdnMacAddress bssid;               ///< \ref LdnMacAddress
+    LdnSsid ssid;                      ///< \ref LdnSsid
+    s16 channel;                       ///< Channel
+    s8 link_level;                     ///< LinkLevel
+    u8 network_type;                   ///< NetworkType
+    u8 reserved[0x4];                  ///< Reserved
+} LdnCommonNetworkInfo;
 
 /// NetworkInfo
 typedef struct {
-    u64 local_communication_id;        ///< LocalCommunicationId
-    u8 reserved_x8[0x2];               ///< Reserved
-    u16 userdata_filter;               ///< Arbitrary user data which can be used for filtering with \ref LdnScanFilter.
-    u8 reserved_xC[0x4];               ///< Reserved
-    u8 network_id[0x10];               ///< LdnSecurityParameter::network_id. NetworkId which is used to generate/overwrite the ssid. With \ref ldnScan / \ref ldnScanPrivate, this is only done after filtering when unk_x4B is value 0x2.
-    LdnMacAddress mac_addr;            ///< \ref LdnMacAddress
-    LdnSsid ssid;                      ///< \ref LdnSsid
-    s16 network_channel;               ///< NetworkChannel
-    s8 link_level;                     ///< LinkLevel
-    u8 unk_x4B;                        ///< Unknown. Set to hard-coded value 0x2 with output structs, except with \ref ldnScan / \ref ldnScanPrivate which can also set value 0x1 in certain cases.
-    u8 pad_x4C[0x4];                   ///< Padding
-    u8 sec_param_data[0x10];           ///< LdnSecurityParameter::data
-    u16 sec_type;                      ///< LdnSecurityConfig::type
-    u8 accept_policy;                  ///< \ref LdnAcceptPolicy
-    u8 unk_x63;                        ///< Only set with \ref ldnScan / \ref ldnScanPrivate, when unk_x4B is value 0x2.
-    u8 pad_x64[0x2];                   ///< Padding
-    s8 participant_max;                ///< Maximum participants, for nodes.
-    u8 participant_num;                ///< ParticipantNum, number of set entries in nodes. If unk_x4B is not 0x2, ParticipantNum should be handled as if it's 0.
+    LdnNetworkId network_id;           ///< NetworkId
+    LdnCommonNetworkInfo common;       ///< CommonNetworkInfo
+    u8 server_random[0x10];            ///< LdnSecurityParameter::server_random
+    u16 security_mode;                 ///< LdnSecurityConfig::security_mode
+    u8 station_accept_policy;          ///< \ref LdnAcceptPolicy
+    u8 version;                        ///< Version
+    u8 reserved_x14[0x2];              ///< Reserved
+    s8 node_count_max;                 ///< NodeCountMax
+    u8 node_count;                     ///< NodeCount, number of set entries in nodes.
     LdnNodeInfo nodes[8];              ///< Array of \ref LdnNodeInfo, starting with the AccessPoint node.
-    u8 reserved_x268[0x2];             ///< Reserved
-    u16 advertise_data_size;           ///< AdvertiseData size (\ref ldnSetAdvertiseData)
+    u8 reserved_x218[0x2];             ///< Reserved
+    u16 advertise_data_size;           ///< AdvertiseDataSize (\ref ldnSetAdvertiseData)
     u8 advertise_data[0x180];          ///< AdvertiseData (\ref ldnSetAdvertiseData)
-    u8 reserved_x3EC[0x8C];            ///< Reserved
-    u64 auth_id;                       ///< Random AuthenticationId.
+    u8 reserved_x39C[0x8C];            ///< Reserved
+    u64 reserved_x428;                 ///< Reserved
 } LdnNetworkInfo;
 
-/// ScanFilter. The input struct is copied to a tmp struct, which is then used with the cmd (\ref ldnScan and \ref ldnScanPrivate).
+/// ScanFilter. \ref ldnScan / \ref ldnScanPrivate will only return the \ref LdnNetworkInfo when validating the \ref LdnNetworkInfo with LdnScanFilter was sucessful, with the fields enabled by \ref LdnScanFilterFlag.
 typedef struct {
-    s64 local_communication_id;        ///< See ::LdnScanFilterFlags_LocalCommunicationId. When enabled, this will be overwritten if it's -1 (written data is from the user-process control.nacp, with value 0 used instead if loading fails). During filtering if enabled, LdnNetworkInfo::unk_x4B must match 0x2, and this ScanFilter field must match LdnNetworkInfo::local_communication_id.
-    u8 pad_x8[0x2];                    ///< Padding
-    u16 userdata_filter;               ///< See ::LdnScanFilterFlags_UserData. During filtering if enabled, LdnNetworkInfo::unk_x4B must match 0x2, and this ScanFilter field must match LdnNetworkInfo::userdata_filter.
-    u8 pad_xC[0x4];                    ///< Padding
-    u8 network_id[0x10];               ///< See ::LdnScanFilterFlags_NetworkId. During filtering if enabled, LdnNetworkInfo::unk_x4B must match 0x2, and this ScanFilter data must match LdnNetworkInfo::network_id.
-    u32 unk_x20;                       ///< See ::LdnScanFilterFlags_Unknown2. When enabled, this must be <=0x3, and during filtering must match LdnNetworkInfo::unk_x4B.
-    LdnMacAddress mac_addr;            ///< \ref LdnMacAddress (::LdnScanFilterFlags_MacAddr, during filtering if enabled this must match LdnNetworkInfo::mac_addr)
-    LdnSsid ssid;                      ///< \ref LdnSsid (::LdnScanFilterFlags_Ssid, during filtering if enabled this must match LdnNetworkInfo::ssid)
-    u8 reserved[0x10];                 ///< Cleared to zero for the tmp struct.
-    u32 flags;                         ///< Bitmask for \ref LdnScanFilterFlags. Masked with value 0x37 for \ref ldnScan, with \ref ldnScanPrivate this is masked with 0x3F.
+    LdnNetworkId network_id;           ///< NetworkId
+    u32 network_type;                  ///< NetworkType (::LdnScanFilterFlag_NetworkType)
+    LdnMacAddress bssid;               ///< Bssid (::LdnScanFilterFlag_Bssid)
+    LdnSsid ssid;                      ///< Ssid (::LdnScanFilterFlag_Ssid)
+    u8 reserved[0x10];                 ///< Reserved
+    u32 flags;                         ///< Bitmask for \ref LdnScanFilterFlag.
 } LdnScanFilter;
 
 /// SecurityConfig
 typedef struct {
-    u16 type;                          ///< Type, a default of value 0x1 can be used here. Overwritten by \ref ldnCreateNetwork, \ref ldnCreateNetworkPrivate, \ref ldnConnect, \ref ldnConnectPrivate.
-    u16 data_size;                     ///< Data size. Must be 0x10-0x40.
-    u8 data[0x40];                     ///< Data, used with key derivation.
+    u16 security_mode;                 ///< \ref LdnSecurityMode Overwritten by \ref ldnCreateNetwork, \ref ldnCreateNetworkPrivate, \ref ldnConnect, \ref ldnConnectPrivate.
+    u16 passphrase_size;               ///< PassphraseSize. Must be 0x10-0x40.
+    u8 passphrase[0x40];               ///< Passphrase, used with key derivation.
 } LdnSecurityConfig;
 
 /// SecurityParameter. The struct used by \ref ldnCreateNetwork internally is randomly-generated.
 typedef struct {
-    u8 data[0x10];                     ///< Data, used with the same key derivation as \ref LdnSecurityConfig.
-    u8 network_id[0x10];               ///< LdnNetworkInfo::network_id
+    u8 server_random[0x10];            ///< ServerRandom, used with the same key derivation as \ref LdnSecurityConfig.
+    LdnSessionId session_id;           ///< SessionId
 } LdnSecurityParameter;
 
 /// NetworkConfig. The input struct is copied to a tmp struct, which is then used with the cmd (\ref ldnCreateNetwork, \ref ldnCreateNetworkPrivate, \ref ldnConnectPrivate).
 typedef struct {
-    s64 local_communication_id;        ///< LdnNetworkInfo::local_communication_id. \ref ldnCreateNetwork, \ref ldnCreateNetworkPrivate, \ref ldnConnect, \ref ldnConnectPrivate: When -1, this is overwritten with the first LocalCommunicationId from the user-process control.nacp, if loading fails value 0 is written instead. Otherwise when not -1, if control.nacp loading is successful, this field must match one of the LocalCommunicationIds from there.
-    u8 reserved_x8[2];                 ///< Cleared to zero for the tmp struct.
-    u16 userdata_filter;               ///< LdnNetworkInfo::userdata_filter
-    u8 reserved_xC[4];                 ///< Cleared to zero for the tmp struct.
-    s16 network_channel;               ///< LdnNetworkInfo::network_channel. Channel, can be zero. Overwritten internally by \ref ldnCreateNetwork.
-    s8 participant_max;                ///< LdnNetworkInfo::participant_max. \ref ldnCreateNetwork / \ref ldnCreateNetworkPrivate: Must be 0x1-0x8.
+    LdnIntentId intent_id;             ///< IntentId
+    s16 channel;                       ///< LdnCommonNetworkInfo::channel. Channel, can be zero. Overwritten internally by \ref ldnCreateNetwork.
+    s8 node_count_max;                 ///< LdnNetworkInfo::node_count_max. \ref ldnCreateNetwork / \ref ldnCreateNetworkPrivate: Must be 0x1-0x8.
     u8 reserved_x13;                   ///< Cleared to zero for the tmp struct.
     s16 local_communication_version;   ///< LdnNodeInfo::local_communication_version, for the first entry in LdnNetworkInfo::nodes. Must not be negative.
     u8 reserved_x16[0xA];              ///< Cleared to zero for the tmp struct.
@@ -195,9 +218,9 @@ typedef struct {
 
 /// ActionFrameSettings
 typedef struct {
-    s64 local_communication_id;        ///< LocalCommunicationId (Same handling as LdnNetworkConfig::local_communication_id)
+    s64 local_communication_id;        ///< LocalCommunicationId (Same handling as LdnIntentId::local_communication_id)
     u8 reserved[0x34];                 ///< Reserved
-    u16 security_mode;                 ///< SecurityMode (Must be 1-2, internally this is overriden)
+    u16 security_mode;                 ///< \ref LdnSecurityMode (Must be ::LdnSecurityMode_Product or ::LdnSecurityMode_Debug, internally this is overriden)
     u16 passphrase_size;               ///< PassphraseSize (Must be 0x10-0x40)
     u8 passphrase[0x40];               ///< Passphrase
 } LdnActionFrameSettings;
@@ -316,7 +339,7 @@ Result ldnGetNetworkInfoLatestUpdate(LdnNetworkInfo *network_info, LdnNodeLatest
 
 /**
  * @brief Scan
- * @note \ref LdnState must be ::LdnState_AccessPointCreated, ::LdnState_StationOpened, or ::LdnState_StationConnected.
+ * @note \ref LdnState must be ::LdnState_AccessPointCreated, ::LdnState_Station, or ::LdnState_StationConnected.
  * @note This is the same as \ref ldnScanPrivate (minus the masking for LdnScanFilter::flags), except this has the same channel-override functionality as \ref ldnCreateNetwork.
  * @param[in] channel Channel, value 0 can be used for this.
  * @param[in] filter \ref LdnScanFilter
@@ -328,7 +351,7 @@ Result ldnScan(s32 channel, const LdnScanFilter *filter, LdnNetworkInfo *network
 
 /**
  * @brief ScanPrivate
- * @note \ref LdnState must be ::LdnState_AccessPointCreated, ::LdnState_StationOpened, or ::LdnState_StationConnected.
+ * @note \ref LdnState must be ::LdnState_AccessPointCreated, ::LdnState_Station, or ::LdnState_StationConnected.
  * @note See \ref ldnScan.
  * @param[in] channel Channel, value 0 can be used for this.
  * @param[in] filter \ref LdnScanFilter
@@ -356,20 +379,20 @@ Result ldnSetProtocol(LdnProtocol protocol);
 
 /**
  * @brief OpenAccessPoint
- * @note \ref LdnState must be ::LdnState_Initialized, this eventually sets the State to ::LdnState_AccessPointOpened.
+ * @note \ref LdnState must be ::LdnState_Initialized, this eventually sets the State to ::LdnState_AccessPoint.
  */
 Result ldnOpenAccessPoint(void);
 
 /**
  * @brief CloseAccessPoint
- * @note \ref LdnState must be ::LdnState_AccessPointOpened or ::LdnState_AccessPointCreated, this eventually sets the State to ::LdnState_Initialized.
+ * @note \ref LdnState must be ::LdnState_AccessPoint or ::LdnState_AccessPointCreated, this eventually sets the State to ::LdnState_Initialized.
  * @note Used automatically internally by \ref ldnExit if needed.
  */
 Result ldnCloseAccessPoint(void);
 
 /**
  * @brief CreateNetwork
- * @note \ref LdnState must be ::LdnState_AccessPointOpened, this eventually sets the State to ::LdnState_AccessPointCreated.
+ * @note \ref LdnState must be ::LdnState_AccessPoint, this eventually sets the State to ::LdnState_AccessPointCreated.
  * @param[in] sec_config \ref LdnSecurityConfig
  * @param[in] user_config \ref LdnUserConfig
  * @param[in] network_config \ref LdnNetworkConfig
@@ -378,7 +401,7 @@ Result ldnCreateNetwork(const LdnSecurityConfig *sec_config, const LdnUserConfig
 
 /**
  * @brief CreateNetworkPrivate
- * @note \ref LdnState must be ::LdnState_AccessPointOpened, this eventually sets the State to ::LdnState_AccessPointCreated.
+ * @note \ref LdnState must be ::LdnState_AccessPoint, this eventually sets the State to ::LdnState_AccessPointCreated.
  * @note This is the same as \ref ldnCreateNetwork besides the additional user-specified params, and with this cmd LdnNetworkConfig::channel is not overwritten (unlike \ref ldnCreateNetwork).
  * @param[in] sec_config \ref LdnSecurityConfig
  * @param[in] sec_param \ref LdnSecurityParameter
@@ -391,7 +414,7 @@ Result ldnCreateNetworkPrivate(const LdnSecurityConfig *sec_config, const LdnSec
 
 /**
  * @brief DestroyNetwork
- * @note \ref LdnState must be ::LdnState_AccessPointCreated, this eventually sets the State to ::LdnState_AccessPointOpened.
+ * @note \ref LdnState must be ::LdnState_AccessPointCreated, this eventually sets the State to ::LdnState_AccessPoint.
  */
 Result ldnDestroyNetwork(void);
 
@@ -405,22 +428,22 @@ Result ldnReject(LdnIpv4Address addr);
 /**
  * @brief SetAdvertiseData
  * @note An empty buffer (buffer=NULL/size=0) can be used to reset the AdvertiseData size in state to zero.
- * @note \ref LdnState must be ::LdnState_AccessPointOpened or ::LdnState_AccessPointCreated.
+ * @note \ref LdnState must be ::LdnState_AccessPoint or ::LdnState_AccessPointCreated.
  * @param[in] buffer Input buffer containing arbitrary user data.
- * @param[in] size Input buffer size, must be <=0x180. If this isn't enough space, you can for example also periodically use this cmd with different regions of your data with some sequence_number field (or use sockets while connected to the network).
+ * @param[in] size Input buffer size, must be <=0x180.
  */
 Result ldnSetAdvertiseData(const void* buffer, size_t size);
 
 /**
  * @brief SetStationAcceptPolicy
- * @note \ref LdnState must be ::LdnState_AccessPointOpened or ::LdnState_AccessPointCreated.
+ * @note \ref LdnState must be ::LdnState_AccessPoint or ::LdnState_AccessPointCreated.
  * @param[in] policy \ref LdnAcceptPolicy
  */
 Result ldnSetStationAcceptPolicy(LdnAcceptPolicy policy);
 
 /**
  * @brief AddAcceptFilterEntry
- * @note \ref LdnState must be ::LdnState_AccessPointOpened or ::LdnState_AccessPointCreated.
+ * @note \ref LdnState must be ::LdnState_AccessPoint or ::LdnState_AccessPointCreated.
  * @note See \ref LdnAcceptPolicy.
  * @param[in] addr \ref LdnMacAddress. If you want, you can also pass LdnNodeInfo::mac_addr for this.
  */
@@ -428,26 +451,26 @@ Result ldnAddAcceptFilterEntry(LdnMacAddress addr);
 
 /**
  * @brief ClearAcceptFilter
- * @note \ref LdnState must be ::LdnState_AccessPointOpened or ::LdnState_AccessPointCreated.
+ * @note \ref LdnState must be ::LdnState_AccessPoint or ::LdnState_AccessPointCreated.
  */
 Result ldnClearAcceptFilter(void);
 
 /**
  * @brief OpenStation
- * @note \ref LdnState must be ::LdnState_Initialized, this eventually sets the State to ::LdnState_StationOpened.
+ * @note \ref LdnState must be ::LdnState_Initialized, this eventually sets the State to ::LdnState_Station.
  */
 Result ldnOpenStation(void);
 
 /**
  * @brief CloseStation
- * @note \ref LdnState must be ::LdnState_StationOpened or ::LdnState_StationConnected, this eventually sets the State to ::LdnState_Initialized.
+ * @note \ref LdnState must be ::LdnState_Station or ::LdnState_StationConnected, this eventually sets the State to ::LdnState_Initialized.
  * @note Used automatically internally by \ref ldnExit if needed.
  */
 Result ldnCloseStation(void);
 
 /**
  * @brief Connect
- * @note \ref LdnState must be ::LdnState_StationOpened, this eventually sets the State to ::LdnState_StationConnected.
+ * @note \ref LdnState must be ::LdnState_Station, this eventually sets the State to ::LdnState_StationConnected.
  * @note This is identical to \ref ldnConnectPrivate besides the used params, the code overwriting LdnSecurityConfig::type also differs.
  * @param[in] sec_config \ref LdnSecurityConfig
  * @param[in] user_config \ref LdnUserConfig
@@ -459,7 +482,7 @@ Result ldnConnect(const LdnSecurityConfig *sec_config, const LdnUserConfig *user
 
 /**
  * @brief ConnectPrivate
- * @note \ref LdnState must be ::LdnState_StationOpened, this eventually sets the State to ::LdnState_StationConnected.
+ * @note \ref LdnState must be ::LdnState_Station, this eventually sets the State to ::LdnState_StationConnected.
  * @note See \ref ldnConnect.
  * @param[in] sec_config \ref LdnSecurityConfig
  * @param[in] sec_param \ref LdnSecurityParameter
@@ -472,7 +495,7 @@ Result ldnConnectPrivate(const LdnSecurityConfig *sec_config, const LdnSecurityP
 
 /**
  * @brief Disconnect
- * @note \ref LdnState must be ::LdnState_StationConnected, this eventually sets the State to ::LdnState_StationOpened.
+ * @note \ref LdnState must be ::LdnState_StationConnected, this eventually sets the State to ::LdnState_Station.
  */
 Result ldnDisconnect(void);
 
@@ -503,7 +526,7 @@ Result ldnDisableActionFrame(void);
 /**
  * @brief SendActionFrame
  * @note Only available on [18.0.0+].
- * @note \ref LdnState must be ::LdnState_AccessPointCreated / ::LdnState_StationOpened.
+ * @note \ref LdnState must be ::LdnState_AccessPointCreated / ::LdnState_Station.
  * @param[in] data Data buffer.
  * @param[in] size Data buffer size.
  * @param[in] destination Destination \ref LdnMacAddress.
@@ -531,7 +554,7 @@ Result ldnRecvActionFrame(void* data, size_t size, LdnMacAddress *addr0, LdnMacA
 /**
  * @brief SetHomeChannel
  * @note Only available on [18.0.0+].
- * @note \ref LdnState must be ::LdnState_StationOpened.
+ * @note \ref LdnState must be ::LdnState_Station.
  * @param[in] channel Channel, must be non-zero.
  */
 Result ldnSetHomeChannel(s16 channel);

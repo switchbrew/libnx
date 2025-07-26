@@ -223,10 +223,10 @@ static Result _ldnScan(s32 channel, const LdnScanFilter *filter, LdnNetworkInfo 
 static void _ldnCopyNetworkConfig(const LdnNetworkConfig *in, LdnNetworkConfig *out) {
     memset(out, 0, sizeof(*out));
 
-    out->local_communication_id = in->local_communication_id;
-    out->userdata_filter = in->userdata_filter;
-    out->network_channel = in->network_channel;
-    out->participant_max = in->participant_max;
+    out->intent_id.local_communication_id = in->intent_id.local_communication_id;
+    out->intent_id.scene_id = in->intent_id.scene_id;
+    out->channel = in->channel;
+    out->node_count_max = in->node_count_max;
     out->local_communication_version = in->local_communication_version;
 }
 
@@ -331,7 +331,7 @@ Result ldnCloseAccessPoint(void) {
 Result ldnCreateNetwork(const LdnSecurityConfig *sec_config, const LdnUserConfig *user_config, const LdnNetworkConfig *network_config) {
     LdnNetworkConfig tmp_network_config;
     LdnUserConfig tmp_user={0};
-    memcpy(tmp_user.nickname, user_config->nickname, sizeof(tmp_user.nickname));
+    memcpy(tmp_user.user_name, user_config->user_name, sizeof(tmp_user.user_name)-1);
     _ldnCopyNetworkConfig(network_config, &tmp_network_config);
 
     const struct {
@@ -347,7 +347,7 @@ Result ldnCreateNetwork(const LdnSecurityConfig *sec_config, const LdnUserConfig
 Result ldnCreateNetworkPrivate(const LdnSecurityConfig *sec_config, const LdnSecurityParameter *sec_param, const LdnUserConfig *user_config, const LdnNetworkConfig *network_config, const LdnAddressEntry *addrs, s32 count) {
     LdnNetworkConfig tmp_network_config;
     LdnUserConfig tmp_user={0};
-    memcpy(tmp_user.nickname, user_config->nickname, sizeof(tmp_user.nickname));
+    memcpy(tmp_user.user_name, user_config->user_name, sizeof(tmp_user.user_name)-1);
     _ldnCopyNetworkConfig(network_config, &tmp_network_config);
 
     const struct {
@@ -402,7 +402,7 @@ Result ldnCloseStation(void) {
 
 Result ldnConnect(const LdnSecurityConfig *sec_config, const LdnUserConfig *user_config, s32 version, u32 option, const LdnNetworkInfo *network_info) {
     LdnUserConfig tmp_user={0};
-    memcpy(tmp_user.nickname, user_config->nickname, sizeof(tmp_user.nickname));
+    memcpy(tmp_user.user_name, user_config->user_name, sizeof(tmp_user.user_name)-1);
 
     const struct {
         LdnSecurityConfig sec_config;
@@ -420,7 +420,7 @@ Result ldnConnect(const LdnSecurityConfig *sec_config, const LdnUserConfig *user
 Result ldnConnectPrivate(const LdnSecurityConfig *sec_config, const LdnSecurityParameter *sec_param, const LdnUserConfig *user_config, s32 version, u32 option, const LdnNetworkConfig *network_config) {
     LdnNetworkConfig tmp_network_config;
     LdnUserConfig tmp_user={0};
-    memcpy(tmp_user.nickname, user_config->nickname, sizeof(tmp_user.nickname));
+    memcpy(tmp_user.user_name, user_config->user_name, sizeof(tmp_user.user_name)-1);
     _ldnCopyNetworkConfig(network_config, &tmp_network_config);
 
     const struct {
