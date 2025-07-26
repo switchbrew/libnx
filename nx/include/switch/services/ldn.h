@@ -238,37 +238,37 @@ void ldnmExit(void);
 Service* ldnmGetServiceSession_MonitorService(void);
 
 /**
- * @brief GetStateForMonitor
+ * @brief GetState
  * @param[out] out \ref LdnState
  */
-Result ldnmGetStateForMonitor(LdnState *out);
+Result ldnmGetState(LdnState *out);
 
 /**
- * @brief GetNetworkInfoForMonitor
+ * @brief GetNetworkInfo
  * @param[out] out \ref LdnNetworkInfo
  */
-Result ldnmGetNetworkInfoForMonitor(LdnNetworkInfo *out);
+Result ldnmGetNetworkInfo(LdnNetworkInfo *out);
 
 /**
- * @brief GetIpv4AddressForMonitor
+ * @brief GetIpv4Address
  * @param[out] addr \ref LdnIpv4Address
  * @param[out] mask \ref LdnSubnetMask
  */
-Result ldnmGetIpv4AddressForMonitor(LdnIpv4Address *addr, LdnSubnetMask *mask);
+Result ldnmGetIpv4Address(LdnIpv4Address *addr, LdnSubnetMask *mask);
 
 /**
- * @brief GetSecurityParameterForMonitor
-  * @note Not exposed by official sw.
+ * @brief GetSecurityParameter
+ * @note Not exposed by official sw.
  * @param[out] out \ref LdnSecurityParameter
  */
-Result ldnmGetSecurityParameterForMonitor(LdnSecurityParameter *out);
+Result ldnmGetSecurityParameter(LdnSecurityParameter *out);
 
 /**
- * @brief GetNetworkConfigForMonitor
-  * @note Not exposed by official sw.
+ * @brief GetNetworkConfig
+ * @note Not exposed by official sw.
  * @param[out] out \ref LdnNetworkConfig
  */
-Result ldnmGetNetworkConfigForMonitor(LdnNetworkConfig *out);
+Result ldnmGetNetworkConfig(LdnNetworkConfig *out);
 
 ///@}
 
@@ -322,20 +322,20 @@ Result ldnGetSecurityParameter(LdnSecurityParameter *out);
 Result ldnGetNetworkConfig(LdnNetworkConfig *out);
 
 /**
- * @brief AttachStateChangeEvent
+ * @brief GetStateChangeEvent
  * @note The Event must be closed by the user once finished with it.
  * @note This is signaled when the data returned by \ref ldnGetNetworkInfo / \ref ldnGetNetworkInfoLatestUpdate is updated.
  * @param[out] out_event Output Event with autoclear=true.
  */
-Result ldnAttachStateChangeEvent(Event* out_event);
+Result ldnGetStateChangeEvent(Event* out_event);
 
 /**
- * @brief GetNetworkInfoLatestUpdate
+ * @brief GetNetworkInfoAndHistory
  * @param[out] network_info \ref LdnNetworkInfo
  * @param[out] nodes Output array of \ref LdnNodeLatestUpdate.
  * @param[in] count Size of the nodes array in entries, must be 8.
  */
-Result ldnGetNetworkInfoLatestUpdate(LdnNetworkInfo *network_info, LdnNodeLatestUpdate *nodes, s32 count);
+Result ldnGetNetworkInfoAndHistory(LdnNetworkInfo *network_info, LdnNodeLatestUpdate *nodes, s32 count);
 
 /**
  * @brief Scan

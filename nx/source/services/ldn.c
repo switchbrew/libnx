@@ -50,26 +50,26 @@ Service* ldnmGetServiceSession_MonitorService(void) {
     return &g_ldnmSrv;
 }
 
-Result ldnmGetStateForMonitor(LdnState *out) {
+Result ldnmGetState(LdnState *out) {
     u32 tmp=0;
     Result rc = _ldnCmdNoInOutU32(&g_ldnmSrv, &tmp, 0);
     if (R_SUCCEEDED(rc) && out) *out = tmp;
     return rc;
 }
 
-Result ldnmGetNetworkInfoForMonitor(LdnNetworkInfo *out) {
+Result ldnmGetNetworkInfo(LdnNetworkInfo *out) {
     return _ldnGetNetworkInfo(&g_ldnmSrv, out);
 }
 
-Result ldnmGetIpv4AddressForMonitor(LdnIpv4Address *addr, LdnSubnetMask *mask) {
+Result ldnmGetIpv4Address(LdnIpv4Address *addr, LdnSubnetMask *mask) {
     return _ldnGetIpv4Address(&g_ldnmSrv, addr, mask);
 }
 
-Result ldnmGetSecurityParameterForMonitor(LdnSecurityParameter *out) {
+Result ldnmGetSecurityParameter(LdnSecurityParameter *out) {
     return _ldnGetSecurityParameter(&g_ldnmSrv, out);
 }
 
-Result ldnmGetNetworkConfigForMonitor(LdnNetworkConfig *out) {
+Result ldnmGetNetworkConfig(LdnNetworkConfig *out) {
     return _ldnGetNetworkConfig(&g_ldnmSrv, out);
 }
 
@@ -277,11 +277,11 @@ Result ldnGetNetworkConfig(LdnNetworkConfig *out) {
     return _ldnGetNetworkConfig(&g_ldnSrv, out);
 }
 
-Result ldnAttachStateChangeEvent(Event* out_event) {
+Result ldnGetStateChangeEvent(Event* out_event) {
     return _ldnCmdGetEvent(&g_ldnSrv, out_event, true, 100);
 }
 
-Result ldnGetNetworkInfoLatestUpdate(LdnNetworkInfo *network_info, LdnNodeLatestUpdate *nodes, s32 count) {
+Result ldnGetNetworkInfoAndHistory(LdnNetworkInfo *network_info, LdnNodeLatestUpdate *nodes, s32 count) {
     return serviceDispatch(&g_ldnSrv, 101,
         .buffer_attrs = {
             SfBufferAttr_FixedSize | SfBufferAttr_HipcPointer | SfBufferAttr_Out,
