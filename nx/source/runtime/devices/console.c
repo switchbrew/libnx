@@ -761,6 +761,9 @@ void consoleSetWindow(PrintConsole* console, int x, int y, int width, int height
 	if (x < 1) x = 1;
 	if (y < 1) y = 1;
 
+	if (x + width > console->consoleWidth ) width = console->consoleWidth + 1 - x;
+	if (y + height > console->consoleHeight ) height = console->consoleHeight + 1 - y;
+
 	console->windowWidth = width;
 	console->windowHeight = height;
 	console->windowX = x;
