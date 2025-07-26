@@ -28,12 +28,12 @@ static PrintConsole defaultConsole =
 		16, //tile height
 	},
 	NULL,   //renderer
-	0,0,	//cursorX cursorY
-	0,0,	//prevcursorX prevcursorY
+	1,1,	//cursorX cursorY
+	1,1,	//prevcursorX prevcursorY
 	80,		//console width
 	45,		//console height
-	0,		//window x
-	0,		//window y
+	1,		//window x
+	1,		//window y
 	80,		//window width
 	45,		//window height
 	3,		//tab size
@@ -43,64 +43,6 @@ static PrintConsole defaultConsole =
 	false	//console initialized
 };
 
-static bool parseColor (char **esc, int *escLen, u16 *color, bool *custom)
-{
-	unsigned int p;
-	unsigned int n;
-	unsigned int r;
-	unsigned int g;
-	unsigned int b;
-	int consumed;
-
-	if (sscanf (*esc, "%d;%n", &p, &consumed) != 1)
-		return false;
-
-	*esc    += consumed;
-	*escLen -= consumed;
-
-	if (p == 5) {
-		if (sscanf (*esc, "%u%n", &n, &consumed) != 1)
-			return false;
-
-		*esc    += consumed;
-		*escLen -= consumed;
-
-		if (n <= 15) {
-			*color  = n;
-			*custom = false;
-		} else if (n <= 231) {
-			n -= 16;
-			r = n / 36;
-			g = (n - r * 36) / 6;
-			b = n - r * 36 - g * 6;
-
-			*color  = RGB565_FROM_RGB8 (colorCube[r], colorCube[g], colorCube[b]);
-			*custom = true;
-		} else if (n <= 255) {
-			n -= 232;
-
-			*color  = RGB565_FROM_RGB8 (grayScale[n], grayScale[n], grayScale[n]);
-			*custom = true;
-		} else {
-			return false;
-		}
-
-		return true;
-	} else if (p == 2) {
-		if (sscanf (*esc, "%u;%u;%u%n", &r, &g, &b, &consumed) != 3)
-			return false;
-
-		*esc    += consumed;
-		*escLen -= consumed;
-
-		*color  = RGB565_FROM_RGB8 (r, g, b);
-		*custom = true;
-
-		return true;
-	}
-
-	return false;
-}
 
 static PrintConsole currentCopy;
 
@@ -113,7 +55,7 @@ static void consolePrintChar(int c);
 static void consoleDrawChar(int c);
 
 //---------------------------------------------------------------------------------
-static void consoleCls(char mode) {
+static void consoleCls(int mode) {
 //---------------------------------------------------------------------------------
 
 	int i = 0;
@@ -121,26 +63,25 @@ static void consoleCls(char mode) {
 
 	switch (mode)
 	{
-	case '[':
-	case '0':
+		case 0:
 		{
 			colTemp = currentConsole->cursorX ;
 			rowTemp = currentConsole->cursorY ;
 
-			while(i++ < ((currentConsole->windowHeight * currentConsole->windowWidth) - (rowTemp * currentConsole->consoleWidth + colTemp)))
+			while(i++ < ((currentConsole->windowHeight * currentConsole->windowWidth) - (rowTemp * currentConsole->windowWidth + colTemp)))
 				consolePrintChar(' ');
 
 			currentConsole->cursorX  = colTemp;
 			currentConsole->cursorY  = rowTemp;
 			break;
 		}
-	case '1':
+		case 1:
 		{
 			colTemp = currentConsole->cursorX ;
 			rowTemp = currentConsole->cursorY ;
 
-			currentConsole->cursorY  = 0;
-			currentConsole->cursorX  = 0;
+			currentConsole->cursorY  = 1;
+			currentConsole->cursorX  = 1;
 
 			while (i++ < (rowTemp * currentConsole->windowWidth + colTemp))
 				consolePrintChar(' ');
@@ -149,22 +90,22 @@ static void consoleCls(char mode) {
 			currentConsole->cursorY  = rowTemp;
 			break;
 		}
-	case '2':
+		case 2:
 		{
-			currentConsole->cursorY  = 0;
-			currentConsole->cursorX  = 0;
+			currentConsole->cursorY  = 1;
+			currentConsole->cursorX  = 1;
 
 			while(i++ < currentConsole->windowHeight * currentConsole->windowWidth)
 				consolePrintChar(' ');
 
-			currentConsole->cursorY  = 0;
-			currentConsole->cursorX  = 0;
+			currentConsole->cursorY  = 1;
+			currentConsole->cursorX  = 1;
 			break;
 		}
 	}
 }
 //---------------------------------------------------------------------------------
-static void consoleClearLine(char mode) {
+static void consoleClearLine(int mode) {
 //---------------------------------------------------------------------------------
 
 	int i = 0;
@@ -172,50 +113,42 @@ static void consoleClearLine(char mode) {
 
 	switch (mode)
 	{
-	case '[':
-	case '0':
-		{
-			colTemp = currentConsole->cursorX ;
+		case 0:
+			colTemp = currentConsole->cursorX;
 
-			while(i++ < (currentConsole->windowWidth - colTemp)) {
+			for (i=0; i < currentConsole->windowWidth - colTemp + 1; i++) {
 				consolePrintChar(' ');
 			}
 
 			currentConsole->cursorX  = colTemp;
 
 			break;
-		}
-	case '1':
-		{
+		case 1:
 			colTemp = currentConsole->cursorX ;
 
-			currentConsole->cursorX  = 0;
+			currentConsole->cursorX  = 1;
 
-			while(i++ < ((currentConsole->windowWidth - colTemp)-2)) {
+			for(i=0; i < colTemp - 1; i++) {
 				consolePrintChar(' ');
 			}
 
 			currentConsole->cursorX  = colTemp;
 
 			break;
-		}
-	case '2':
-		{
+		case 2:
 			colTemp = currentConsole->cursorX ;
 
-			currentConsole->cursorX  = 0;
+			currentConsole->cursorX  = 1;
 
-			while(i++ < currentConsole->windowWidth) {
+			for(i=0; i < currentConsole->windowWidth; i++) {
 				consolePrintChar(' ');
 			}
 
 			currentConsole->cursorX  = colTemp;
 
 			break;
-		}
 	}
 }
-
 
 //---------------------------------------------------------------------------------
 static inline void consolePosition(int x, int y) {
@@ -236,9 +169,251 @@ static inline void consolePosition(int x, int y) {
 	if(y > currentConsole->windowHeight)
 		y = currentConsole->windowHeight;
 
-	// 1-based adjustment
-	currentConsole->cursorX = x - 1;
-	currentConsole->cursorY = y - 1;
+	currentConsole->cursorX = x;
+	currentConsole->cursorY = y;
+}
+
+#define _ANSI_MAXARGS 16
+
+static struct
+{
+	struct
+	{
+		int flags;
+		u32 fg;
+		u32 bg;
+	} color;
+	int argIdx;
+	int args[_ANSI_MAXARGS];
+	int colorArgCount;
+	unsigned int colorArgs[3];
+	bool hasArg;
+	enum
+	{
+		ESC_NONE,
+		ESC_START,
+		ESC_BUILDING_UNKNOWN,
+		ESC_BUILDING_FORMAT_FG,
+		ESC_BUILDING_FORMAT_BG,
+		ESC_BUILDING_FORMAT_FG_NONRGB,
+		ESC_BUILDING_FORMAT_BG_NONRGB,
+		ESC_BUILDING_FORMAT_FG_RGB,
+		ESC_BUILDING_FORMAT_BG_RGB,
+	} state;
+} escapeSeq;
+
+static void consoleSetColorState(int code)
+{
+	switch(code)
+	{
+	case 0: // reset
+		escapeSeq.color.flags = 0;
+		escapeSeq.color.bg    = 0;
+		escapeSeq.color.fg    = 7;
+		break;
+
+	case 1: // bold
+		escapeSeq.color.flags &= ~CONSOLE_COLOR_FAINT;
+		escapeSeq.color.flags |= CONSOLE_COLOR_BOLD;
+		break;
+
+	case 2: // faint
+		escapeSeq.color.flags &= ~CONSOLE_COLOR_BOLD;
+		escapeSeq.color.flags |= CONSOLE_COLOR_FAINT;
+		break;
+
+	case 3: // italic
+		escapeSeq.color.flags |= CONSOLE_ITALIC;
+		break;
+
+	case 4: // underline
+		escapeSeq.color.flags |= CONSOLE_UNDERLINE;
+		break;
+	case 5: // blink slow
+		escapeSeq.color.flags &= ~CONSOLE_BLINK_FAST;
+		escapeSeq.color.flags |= CONSOLE_BLINK_SLOW;
+		break;
+	case 6: // blink fast
+		escapeSeq.color.flags &= ~CONSOLE_BLINK_SLOW;
+		escapeSeq.color.flags |= CONSOLE_BLINK_FAST;
+		break;
+	case 7: // reverse video
+		escapeSeq.color.flags |= CONSOLE_COLOR_REVERSE;
+		break;
+	case 8: // conceal
+		escapeSeq.color.flags |= CONSOLE_CONCEAL;
+		break;
+	case 9: // crossed-out
+		escapeSeq.color.flags |= CONSOLE_CROSSED_OUT;
+		break;
+	case 21: // bold off
+		escapeSeq.color.flags &= ~CONSOLE_COLOR_BOLD;
+		break;
+
+	case 22: // normal color
+		escapeSeq.color.flags &= ~CONSOLE_COLOR_BOLD;
+		escapeSeq.color.flags &= ~CONSOLE_COLOR_FAINT;
+		break;
+
+	case 23: // italic off
+		escapeSeq.color.flags &= ~CONSOLE_ITALIC;
+		break;
+
+	case 24: // underline off
+		escapeSeq.color.flags &= ~CONSOLE_UNDERLINE;
+		break;
+
+	case 25: // blink off
+		escapeSeq.color.flags &= ~CONSOLE_BLINK_SLOW;
+		escapeSeq.color.flags &= ~CONSOLE_BLINK_FAST;
+		break;
+
+	case 27: // reverse off
+		escapeSeq.color.flags &= ~CONSOLE_COLOR_REVERSE;
+		break;
+
+	case 29: // crossed-out off
+		escapeSeq.color.flags &= ~CONSOLE_CROSSED_OUT;
+		break;
+
+	case 30 ... 37: // writing color
+		escapeSeq.color.flags &= ~CONSOLE_FG_CUSTOM;
+		escapeSeq.color.fg     = code - 30;
+		break;
+
+	case 38: // custom foreground color
+		escapeSeq.state = ESC_BUILDING_FORMAT_FG;
+		escapeSeq.colorArgCount = 0;
+		break;
+
+	case 39: // reset foreground color
+		escapeSeq.color.flags &= ~CONSOLE_FG_CUSTOM;
+		escapeSeq.color.fg     = 7;
+		break;
+	case 40 ... 47: // screen color
+		escapeSeq.color.flags &= ~CONSOLE_BG_CUSTOM;
+		escapeSeq.color.bg = code - 40;
+		break;
+	case 48: // custom background color
+		escapeSeq.state = ESC_BUILDING_FORMAT_BG;
+		escapeSeq.colorArgCount = 0;
+		break;
+	case 49: // reset background color
+		escapeSeq.color.flags &= ~CONSOLE_BG_CUSTOM;
+		escapeSeq.color.bg = 0;
+		break;
+	case 90 ... 97: // bright foreground
+		escapeSeq.color.flags &= ~CONSOLE_COLOR_FAINT;
+		escapeSeq.color.flags |= CONSOLE_COLOR_FG_BRIGHT;
+		escapeSeq.color.flags &= ~CONSOLE_BG_CUSTOM;
+		escapeSeq.color.fg = code - 90;
+		break;
+	case 100 ... 107: // bright background
+		escapeSeq.color.flags &= ~CONSOLE_COLOR_FAINT;
+		escapeSeq.color.flags |= CONSOLE_COLOR_BG_BRIGHT;
+		escapeSeq.color.flags &= ~CONSOLE_BG_CUSTOM;
+		escapeSeq.color.bg = code - 100;
+		break;
+	}
+}
+
+static void consoleHandleColorEsc(int argCount)
+{
+	escapeSeq.color.bg = currentConsole->bg;
+	escapeSeq.color.fg = currentConsole->fg;
+	escapeSeq.color.flags = currentConsole->flags;
+
+	for (int arg = 0; arg < argCount; arg++)
+	{
+		int code = escapeSeq.args[arg];
+		switch (escapeSeq.state)
+		{
+		case ESC_BUILDING_UNKNOWN:
+			consoleSetColorState(code);
+			break;
+		case ESC_BUILDING_FORMAT_FG:
+			if (code == 5)
+				escapeSeq.state = ESC_BUILDING_FORMAT_FG_NONRGB;
+			else if (code == 2)
+				escapeSeq.state = ESC_BUILDING_FORMAT_FG_RGB;
+			else
+				escapeSeq.state = ESC_BUILDING_UNKNOWN;
+			break;
+		case ESC_BUILDING_FORMAT_BG:
+			if (code == 5)
+				escapeSeq.state = ESC_BUILDING_FORMAT_BG_NONRGB;
+			else if (code == 2)
+				escapeSeq.state = ESC_BUILDING_FORMAT_BG_RGB;
+			else
+				escapeSeq.state = ESC_BUILDING_UNKNOWN;
+			break;
+		case ESC_BUILDING_FORMAT_FG_NONRGB:
+			if (code <= 15) {
+				escapeSeq.color.fg  = code;
+				escapeSeq.color.flags &= ~CONSOLE_FG_CUSTOM;
+			} else if (code <= 231) {
+				code -= 16;
+				unsigned int r = code / 36;
+				unsigned int g = (code - r * 36) / 6;
+				unsigned int b = code - r * 36 - g * 6;
+
+				escapeSeq.color.fg  = RGB565_FROM_RGB8 (colorCube[r], colorCube[g], colorCube[b]);
+				escapeSeq.color.flags |= CONSOLE_FG_CUSTOM;
+			} else if (code <= 255) {
+				code -= 232;
+
+				escapeSeq.color.fg  = RGB565_FROM_RGB8 (grayScale[code], grayScale[code], grayScale[code]);
+				escapeSeq.color.flags |= CONSOLE_FG_CUSTOM;
+			}
+			escapeSeq.state = ESC_BUILDING_UNKNOWN;
+			break;
+		case ESC_BUILDING_FORMAT_BG_NONRGB:
+			if (code <= 15) {
+				escapeSeq.color.bg  = code;
+				escapeSeq.color.flags &= ~CONSOLE_BG_CUSTOM;
+			} else if (code <= 231) {
+				code -= 16;
+				unsigned int r = code / 36;
+				unsigned int g = (code - r * 36) / 6;
+				unsigned int b = code - r * 36 - g * 6;
+
+				escapeSeq.color.bg  = RGB565_FROM_RGB8 (colorCube[r], colorCube[g], colorCube[b]);
+				escapeSeq.color.flags |= CONSOLE_BG_CUSTOM;
+			} else if (code <= 255) {
+				code -= 232;
+
+				escapeSeq.color.bg  = RGB565_FROM_RGB8 (grayScale[code], grayScale[code], grayScale[code]);
+				escapeSeq.color.flags |= CONSOLE_BG_CUSTOM;
+			}
+			escapeSeq.state = ESC_BUILDING_UNKNOWN;
+			break;
+		case ESC_BUILDING_FORMAT_FG_RGB:
+			escapeSeq.colorArgs[escapeSeq.colorArgCount++] = code;
+			if(escapeSeq.colorArgCount == 3)
+			{
+				escapeSeq.color.fg = RGB565_FROM_RGB8(escapeSeq.colorArgs[0], escapeSeq.colorArgs[1], escapeSeq.colorArgs[2]);
+				escapeSeq.color.flags |= CONSOLE_FG_CUSTOM;
+				escapeSeq.state = ESC_BUILDING_UNKNOWN;
+			}
+			break;
+		case ESC_BUILDING_FORMAT_BG_RGB:
+			escapeSeq.colorArgs[escapeSeq.colorArgCount++] = code;
+			if(escapeSeq.colorArgCount == 3)
+			{
+				escapeSeq.color.bg = RGB565_FROM_RGB8(escapeSeq.colorArgs[0], escapeSeq.colorArgs[1], escapeSeq.colorArgs[2]);
+				escapeSeq.color.flags |= CONSOLE_BG_CUSTOM;
+				escapeSeq.state = ESC_BUILDING_UNKNOWN;
+			}
+		default:
+			break;
+		}
+	}
+	escapeSeq.argIdx = 0;
+
+	currentConsole->bg = escapeSeq.color.bg;
+	currentConsole->fg = escapeSeq.color.fg;
+	currentConsole->flags = escapeSeq.color.flags;
+
 }
 
 //---------------------------------------------------------------------------------
@@ -258,306 +433,151 @@ static ssize_t con_write(struct _reent *r,void *fd,const char *ptr, size_t len) 
 
 		chr = *(tmp++);
 		i++; count++;
-
-		if ( chr == 0x1b && len > 1 && *tmp == '[' ) {
-			bool escaping = true;
-			char *escapeseq	= tmp++;
-			int escapelen = 1;
-			i++; count++;
-
-			do {
-				chr = *(tmp++);
-				i++; count++; escapelen++;
-				int parameter, assigned, consumed;
-
-				// make sure parameters are positive values and delimited by semicolon
-				if((chr >= '0' && chr <= '9') || chr == ';')
-					continue;
-
-				switch (chr) {
-					//---------------------------------------
-					// Cursor directional movement
-					//---------------------------------------
-					case 'A':
-						consumed = 0;
-						assigned = sscanf(escapeseq,"[%dA%n", &parameter, &consumed);
-						if (assigned==0) parameter = 1;
-						if (consumed)
-							currentConsole->cursorY  =  (currentConsole->cursorY  - parameter) < 0 ? 0 : currentConsole->cursorY  - parameter;
-						escaping = false;
-						break;
-					case 'B':
-						consumed = 0;
-						assigned = sscanf(escapeseq,"[%dB%n", &parameter, &consumed);
-						if (assigned==0) parameter = 1;
-						if (consumed)
-							currentConsole->cursorY  =  (currentConsole->cursorY  + parameter) > currentConsole->windowHeight - 1 ? currentConsole->windowHeight - 1 : currentConsole->cursorY  + parameter;
-						escaping = false;
-						break;
-					case 'C':
-						consumed = 0;
-						assigned = sscanf(escapeseq,"[%dC%n", &parameter, &consumed);
-						if (assigned==0) parameter = 1;
-						if (consumed)
-							currentConsole->cursorX  =  (currentConsole->cursorX  + parameter) > currentConsole->windowWidth - 1 ? currentConsole->windowWidth - 1 : currentConsole->cursorX  + parameter;
-						escaping = false;
-						break;
-					case 'D':
-						consumed = 0;
-						assigned = sscanf(escapeseq,"[%dD%n", &parameter, &consumed);
-						if (assigned==0) parameter = 1;
-						if (consumed)
-							currentConsole->cursorX  =  (currentConsole->cursorX  - parameter) < 0 ? 0 : currentConsole->cursorX  - parameter;
-						escaping = false;
-						break;
-					//---------------------------------------
-					// Cursor position movement
-					//---------------------------------------
-					case 'H':
-					case 'f':
-					{
-						int  x, y;
-						char c;
-						if(sscanf(escapeseq,"[%d;%d%c", &y, &x, &c) == 3 && (c == 'f' || c == 'H')) {
-							consolePosition(x, y);
-							escaping = false;
-							break;
-						}
-
-						x = y = 1;
-						if(sscanf(escapeseq,"[%d;%c", &y, &c) == 2 && (c == 'f' || c == 'H')) {
-							consolePosition(x, y);
-							escaping = false;
-							break;
-						}
-
-						x = y = 1;
-						if(sscanf(escapeseq,"[;%d%c", &x, &c) == 2 && (c == 'f' || c == 'H')) {
-							consolePosition(x, y);
-							escaping = false;
-							break;
-						}
-
-						x = y = 1;
-						if(sscanf(escapeseq,"[;%c", &c) == 1 && (c == 'f' || c == 'H')) {
-							consolePosition(x, y);
-							escaping = false;
-							break;
-						}
-
-						// invalid format
-						escaping = false;
-						break;
+		switch (escapeSeq.state)
+		{
+		case ESC_NONE:
+			if (chr == 0x1b)
+				escapeSeq.state = ESC_START;
+			else
+				consolePrintChar(chr);
+			break;
+		case ESC_START:
+			if (chr == '[')
+			{
+				escapeSeq.state = ESC_BUILDING_UNKNOWN;
+				escapeSeq.hasArg = false;
+				memset(escapeSeq.args, 0, sizeof(escapeSeq.args));
+				escapeSeq.color.bg = currentConsole->bg;
+				escapeSeq.color.fg = currentConsole->fg;
+				escapeSeq.color.flags = currentConsole->flags;
+				escapeSeq.argIdx = 0;
+			}
+			else
+			{
+				consolePrintChar(0x1b);
+				consolePrintChar(chr);
+				escapeSeq.state = ESC_NONE;
+			}
+			break;
+		case ESC_BUILDING_UNKNOWN:
+			switch (chr)
+			{
+			case '0':
+			case '1':
+			case '2':
+			case '3':
+			case '4':
+			case '5':
+			case '6':
+			case '7':
+			case '8':
+			case '9':
+				escapeSeq.hasArg = true;
+				escapeSeq.args[escapeSeq.argIdx] = escapeSeq.args[escapeSeq.argIdx] * 10 + (chr - '0');
+				break;
+			case ';':
+				if (escapeSeq.hasArg) {
+					if (escapeSeq.argIdx < _ANSI_MAXARGS) {
+						escapeSeq.argIdx++;
 					}
-					//---------------------------------------
-					// Screen clear
-					//---------------------------------------
-					case 'J':
-						if(escapelen <= 3)
-							consoleCls(escapeseq[escapelen-2]);
-						escaping = false;
-						break;
-					//---------------------------------------
-					// Line clear
-					//---------------------------------------
-					case 'K':
-						if(escapelen <= 3)
-							consoleClearLine(escapeseq[escapelen-2]);
-						escaping = false;
-						break;
-					//---------------------------------------
-					// Save cursor position
-					//---------------------------------------
-					case 's':
-						if(escapelen == 2) {
-							currentConsole->prevCursorX  = currentConsole->cursorX ;
-							currentConsole->prevCursorY  = currentConsole->cursorY ;
-						}
-						escaping = false;
-						break;
-					//---------------------------------------
-					// Load cursor position
-					//---------------------------------------
-					case 'u':
-						if(escapelen == 2) {
-							currentConsole->cursorX  = currentConsole->prevCursorX ;
-							currentConsole->cursorY  = currentConsole->prevCursorY ;
-						}
-						escaping = false;
-						break;
-					//---------------------------------------
-					// Color scan codes
-					//---------------------------------------
-					case 'm':
-						escapeseq++;
-						escapelen--;
-
-						do {
-							bool custom;
-							parameter = 0;
-							if (escapelen == 1) {
-								consumed = 1;
-							} else if (memchr(escapeseq,';',escapelen)) {
-								sscanf(escapeseq,"%d;%n", &parameter, &consumed);
-							} else {
-								sscanf(escapeseq,"%dm%n", &parameter, &consumed);
-							}
-
-							escapeseq += consumed;
-							escapelen -= consumed;
-
-							switch(parameter) {
-							case 0: // reset
-								currentConsole->flags = 0;
-								currentConsole->bg    = 0;
-								currentConsole->fg    = 7;
-								break;
-
-							case 1: // bold
-								currentConsole->flags &= ~CONSOLE_COLOR_FAINT;
-								currentConsole->flags |= CONSOLE_COLOR_BOLD;
-								break;
-
-							case 2: // faint
-								currentConsole->flags &= ~CONSOLE_COLOR_BOLD;
-								currentConsole->flags |= CONSOLE_COLOR_FAINT;
-								break;
-
-							case 3: // italic
-								currentConsole->flags |= CONSOLE_ITALIC;
-								break;
-
-							case 4: // underline
-								currentConsole->flags |= CONSOLE_UNDERLINE;
-								break;
-
-							case 5: // blink slow
-								currentConsole->flags &= ~CONSOLE_BLINK_FAST;
-								currentConsole->flags |= CONSOLE_BLINK_SLOW;
-								break;
-
-							case 6: // blink fast
-								currentConsole->flags &= ~CONSOLE_BLINK_SLOW;
-								currentConsole->flags |= CONSOLE_BLINK_FAST;
-								break;
-
-							case 7: // reverse video
-								currentConsole->flags |= CONSOLE_COLOR_REVERSE;
-								break;
-
-							case 8: // conceal
-								currentConsole->flags |= CONSOLE_CONCEAL;
-								break;
-
-							case 9: // crossed-out
-								currentConsole->flags |= CONSOLE_CROSSED_OUT;
-								break;
-
-							case 21: // bold off
-								currentConsole->flags &= ~CONSOLE_COLOR_BOLD;
-								break;
-
-							case 22: // normal color
-								currentConsole->flags &= ~CONSOLE_COLOR_BOLD;
-								currentConsole->flags &= ~CONSOLE_COLOR_FAINT;
-								break;
-
-							case 23: // italic off
-								currentConsole->flags &= ~CONSOLE_ITALIC;
-								break;
-
-							case 24: // underline off
-								currentConsole->flags &= ~CONSOLE_UNDERLINE;
-								break;
-
-							case 25: // blink off
-								currentConsole->flags &= ~CONSOLE_BLINK_SLOW;
-								currentConsole->flags &= ~CONSOLE_BLINK_FAST;
-								break;
-
-							case 27: // reverse off
-								currentConsole->flags &= ~CONSOLE_COLOR_REVERSE;
-								break;
-
-							case 29: // crossed-out off
-								currentConsole->flags &= ~CONSOLE_CROSSED_OUT;
-								break;
-
-							case 30 ... 37: // writing color
-								currentConsole->flags &= ~CONSOLE_FG_CUSTOM;
-								currentConsole->fg     = parameter - 30;
-								break;
-
-							case 38: // custom foreground color
-								if (parseColor (&escapeseq, &escapelen, &currentConsole->fg, &custom)) {
-									if (custom)
-										currentConsole->flags |= CONSOLE_FG_CUSTOM;
-									else
-										currentConsole->flags &= ~CONSOLE_FG_CUSTOM;
-
-									if (!custom && currentConsole->fg < 16) {
-										currentConsole->flags &= ~CONSOLE_COLOR_FAINT;
-										if (currentConsole->fg < 8)
-											currentConsole->flags &= ~CONSOLE_COLOR_BOLD;
-										else
-											currentConsole->flags |= CONSOLE_COLOR_BOLD;
-									}
-
-									// consume next ; or m
-									++escapeseq;
-									--escapelen;
-								} else {
-									// stop processing
-									escapelen = 0;
-								}
-								break;
-
-							case 39: // reset foreground color
-								currentConsole->flags &= ~CONSOLE_FG_CUSTOM;
-								currentConsole->fg     = 7;
-								break;
-
-							case 40 ... 47: // screen color
-								currentConsole->flags &= ~CONSOLE_BG_CUSTOM;
-								currentConsole->bg     = parameter - 40;
-								break;
-
-							case 48: // custom background color
-								if (parseColor (&escapeseq, &escapelen, &currentConsole->bg, &custom)) {
-									if (custom)
-										currentConsole->flags |= CONSOLE_BG_CUSTOM;
-									else
-										currentConsole->flags &= ~CONSOLE_BG_CUSTOM;
-
-									// consume next ; or m
-									++escapeseq;
-									--escapelen;
-								} else {
-									// stop processing
-									escapelen = 0;
-								}
-								break;
-
-							case 49: // reset background color
-								currentConsole->flags &= ~CONSOLE_BG_CUSTOM;
-								currentConsole->bg     = 0;
-								break;
-							}
-						} while (escapelen > 0);
-
-						escaping = false;
-						break;
-
-					default:
-						// some sort of unsupported escape; just gloss over it
-						escaping = false;
-						break;
 				}
-			} while (escaping);
-			continue;
+				escapeSeq.hasArg = false;
+				break;
+			//---------------------------------------			// Cursor directional movement
+			//---------------------------------------
+			case 'A':
+				if (!escapeSeq.hasArg && !escapeSeq.argIdx)
+					escapeSeq.args[0] = 1;
+				currentConsole->cursorY  =  currentConsole->cursorY - escapeSeq.args[0];
+				if (currentConsole->cursorY < 1)
+					currentConsole->cursorY = 1;
+				escapeSeq.state = ESC_NONE;
+				break;
+			case 'B':
+				if (!escapeSeq.hasArg && !escapeSeq.argIdx)
+					escapeSeq.args[0] = 1;
+				currentConsole->cursorY  =  currentConsole->cursorY + escapeSeq.args[0];
+				if (currentConsole->cursorY > currentConsole->windowHeight)
+					currentConsole->cursorY = currentConsole->windowHeight;
+				escapeSeq.state = ESC_NONE;
+				break;
+			case 'C':
+				if (!escapeSeq.hasArg && !escapeSeq.argIdx)
+					escapeSeq.args[0] = 1;
+				currentConsole->cursorX  =  currentConsole->cursorX  + escapeSeq.args[0];
+				if (currentConsole->cursorX > currentConsole->windowWidth)
+					currentConsole->cursorX = currentConsole->windowWidth;
+				escapeSeq.state = ESC_NONE;
+				break;
+			case 'D':
+				if (!escapeSeq.hasArg && !escapeSeq.argIdx)
+					escapeSeq.args[0] = 1;
+				currentConsole->cursorX  =  currentConsole->cursorX  - escapeSeq.args[0];
+				if (currentConsole->cursorX < 1)
+					currentConsole->cursorX = 1;
+				escapeSeq.state = ESC_NONE;
+				break;
+			//---------------------------------------
+			// Cursor position movement
+			//---------------------------------------
+			case 'H':
+			case 'f':
+				consolePosition(escapeSeq.args[1], escapeSeq.args[0]);
+				escapeSeq.state = ESC_NONE;
+				break;
+			//---------------------------------------
+			// Screen clear
+			//---------------------------------------
+			case 'J':
+				if (escapeSeq.argIdx == 0 && !escapeSeq.hasArg) {
+					escapeSeq.args[0] = 0;
+				}
+				consoleCls(escapeSeq.args[0]);
+				escapeSeq.state = ESC_NONE;
+				break;
+			//---------------------------------------
+			// Line clear
+			//---------------------------------------
+			case 'K':
+				if (escapeSeq.argIdx == 0 && !escapeSeq.hasArg) {
+					escapeSeq.args[0] = 0;
+				}
+				consoleClearLine(escapeSeq.args[0]);
+				escapeSeq.state = ESC_NONE;
+				break;
+			//---------------------------------------
+			// Save cursor position
+			//---------------------------------------
+			case 's':
+				currentConsole->prevCursorX  = currentConsole->cursorX ;
+				currentConsole->prevCursorY  = currentConsole->cursorY ;
+				escapeSeq.state = ESC_NONE;
+				break;
+			//---------------------------------------
+			// Load cursor position
+			//---------------------------------------
+			case 'u':
+				currentConsole->cursorX  = currentConsole->prevCursorX ;
+				currentConsole->cursorY  = currentConsole->prevCursorY ;
+				escapeSeq.state = ESC_NONE;
+				break;
+			//---------------------------------------
+			// Color scan codes
+			//---------------------------------------
+			case 'm':
+				if (escapeSeq.argIdx == 0 && !escapeSeq.hasArg) escapeSeq.args[escapeSeq.argIdx++] = 0;
+				if (escapeSeq.hasArg) escapeSeq.argIdx++;
+				consoleHandleColorEsc(escapeSeq.argIdx);
+				escapeSeq.state = ESC_NONE;
+				break;
+			default:
+				// some sort of unsupported escape; just gloss over it
+				escapeSeq.state = ESC_NONE;
+				break;
+			}
+		default:
+			break;
 		}
-
-		consolePrintChar(chr);
 	}
 
 	return count;
@@ -650,12 +670,12 @@ void consoleSetFont(PrintConsole* console, ConsoleFont* font) {
 //---------------------------------------------------------------------------------
 void consoleNewRow(void) {
 //---------------------------------------------------------------------------------
-	currentConsole->cursorY ++;
+	currentConsole->cursorY++;
 
-	if(currentConsole->cursorY  >= currentConsole->windowHeight)  {
-		currentConsole->cursorY --;
+	if(currentConsole->cursorY  > currentConsole->windowHeight)  {
 		currentConsole->renderer->scrollWindow(currentConsole);
-		consoleClearLine('2');
+		currentConsole->cursorY = currentConsole->windowHeight;
+		consoleClearLine(2);
 	}
 }
 
@@ -667,21 +687,17 @@ void consoleDrawChar(int c) {
 
 	currentConsole->renderer->drawChar(
 		currentConsole,
-		currentConsole->cursorX + currentConsole->windowX,
-		currentConsole->cursorY + currentConsole->windowY,
+		currentConsole->cursorX - 1 + currentConsole->windowX - 1,
+		currentConsole->cursorY - 1 + currentConsole->windowY - 1,
 		c);
 }
 
 //---------------------------------------------------------------------------------
 void consolePrintChar(int c) {
 //---------------------------------------------------------------------------------
+	int tabspaces;
+
 	if (c==0) return;
-
-	if(currentConsole->cursorX  >= currentConsole->windowWidth) {
-		currentConsole->cursorX  = 0;
-
-		consoleNewRow();
-	}
 
 	switch(c) {
 		/*
@@ -696,12 +712,12 @@ void consolePrintChar(int c) {
 		case '\b':
 			currentConsole->cursorX--;
 
-			if(currentConsole->cursorX < 0) {
-				if(currentConsole->cursorY > 0) {
-					currentConsole->cursorX = currentConsole->windowX - 1;
+			if(currentConsole->cursorX < 1) {
+				if(currentConsole->cursorY > 1) {
+					currentConsole->cursorX = currentConsole->windowWidth;
 					currentConsole->cursorY--;
 				} else {
-					currentConsole->cursorX = 0;
+					currentConsole->cursorX = 1;
 				}
 			}
 
@@ -709,14 +725,21 @@ void consolePrintChar(int c) {
 			break;
 
 		case '\t':
-			currentConsole->cursorX  += currentConsole->tabSize - ((currentConsole->cursorX)%(currentConsole->tabSize));
+			tabspaces = currentConsole->tabSize - ((currentConsole->cursorX - 1) % currentConsole->tabSize);
+			if (currentConsole->cursorX + tabspaces > currentConsole->windowWidth)
+				tabspaces = currentConsole->windowWidth - currentConsole->cursorX;
+			for(int i=0; i<tabspaces; i++) consolePrintChar(' ');
 			break;
 		case '\n':
 			consoleNewRow();
 		case '\r':
-			currentConsole->cursorX  = 0;
+			currentConsole->cursorX  = 1;
 			break;
 		default:
+			if(currentConsole->cursorX  > currentConsole->windowWidth) {
+				currentConsole->cursorX  = 1;
+				consoleNewRow();
+			}
 			consoleDrawChar(c);
 			++currentConsole->cursorX ;
 			break;
@@ -735,12 +758,18 @@ void consoleSetWindow(PrintConsole* console, int x, int y, int width, int height
 
 	if(!console) console = currentConsole;
 
+	if (x < 1) x = 1;
+	if (y < 1) y = 1;
+
+	if (x + width > console->consoleWidth ) width = console->consoleWidth + 1 - x;
+	if (y + height > console->consoleHeight ) height = console->consoleHeight + 1 - y;
+
 	console->windowWidth = width;
 	console->windowHeight = height;
 	console->windowX = x;
 	console->windowY = y;
 
-	console->cursorX = 0;
-	console->cursorY = 0;
+	console->cursorX = 1;
+	console->cursorY = 1;
 
 }

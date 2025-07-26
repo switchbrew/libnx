@@ -172,8 +172,8 @@ static void ConsoleSwRenderer_scrollWindow(PrintConsole* con)
     int i,j;
     u32 x, y;
 
-    x = con->windowX * 16;
-    y = con->windowY * 16;
+    x = (con->windowX - 1) * 16;
+    y = (con->windowY - 1) * 16;
 
     for (i=0; i<con->windowWidth*16; i+=sizeof(u128)/sizeof(u16)) {
         u128 *from;
