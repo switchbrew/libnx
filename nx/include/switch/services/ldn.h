@@ -284,6 +284,9 @@ void ldnExit(void);
 /// Gets the Service object for IUserLocalCommunicationService/ISystemLocalCommunicationService.
 Service* ldnGetServiceSession_LocalCommunicationService(void);
 
+/// Gets the Service object for IClientProcessMonitor, only valid with [18.0.0+].
+Service* ldnGetServiceSession_IClientProcessMonitor(void);
+
 /**
  * @brief GetState
  * @param[out] out \ref LdnState
@@ -373,6 +376,7 @@ Result ldnSetWirelessControllerRestriction(LdnWirelessControllerRestriction rest
  * @brief SetProtocol
  * @note This is only usable with [20.0.0+] (with [18.0.0-19-0.1] this is available but not usable).
  * @note \ref LdnState must be ::LdnState_Initialized. If a non-default Protocol is wanted, use this after \ref ldnInitialize.
+ * @note This is used by \ref ldnInitialize with LdnProtocol_NX on [20.0.0+].
  * @param[in] protocol \ref LdnProtocol
  */
 Result ldnSetProtocol(LdnProtocol protocol);
@@ -501,8 +505,8 @@ Result ldnDisconnect(void);
 
 /**
  * @brief SetOperationMode
- * @note Only available on [4.0.0+].
- * @note Only available with ::LdnServiceType_System.
+ * @note With ::LdnServiceType_System this is only available on [4.0.0+].
+ * @note With ::LdnServiceType_User this is only available on [19.0.0+].
  * @note \ref LdnState must be ::LdnState_Initialized.
  * @param[in] mode \ref LdnOperationMode
  */

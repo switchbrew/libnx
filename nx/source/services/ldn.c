@@ -9,14 +9,17 @@ static LdnServiceType g_ldnServiceType;
 static Service g_ldnSrv;
 static Service g_ldnmSrv;
 
+static Service g_ldnIClientProcessMonitor;
+
 static Result _ldnGetSession(Service* srv, Service* srv_out, u32 cmd_id);
 
 static Result _ldnCmdNoIO(Service* srv, u32 cmd_id);
 
 static Result _ldnCmdNoInOutU32(Service* srv, u32 *out, u32 cmd_id);
 
-static Result _ldnCmdInitialize(void);
-static Result _ldnCmdInitialize2(u32 inval);
+static Result _ldnCmdInitialize(Service* srv, u32 cmd_id);
+static Result _ldnCmdInitializeWithVersion(s32 version);
+static Result _ldnCmdInitializeWithPriority(s32 version, s32 priority);
 
 static Result _ldnGetNetworkInfo(Service* srv, LdnNetworkInfo *out);
 
@@ -80,6 +83,8 @@ NX_GENERATE_SERVICE_GUARD_PARAMS(ldn, (LdnServiceType service_type), (service_ty
 Result _ldnInitialize(LdnServiceType service_type) {
     Service srv_creator={0};
     Result rc = MAKERESULT(Module_Libnx, LibnxError_BadInput);
+    s32 version=0;
+    s32 priority=0x38;
     g_ldnServiceType = service_type;
     switch (g_ldnServiceType) {
         case LdnServiceType_User:
@@ -91,14 +96,37 @@ Result _ldnInitialize(LdnServiceType service_type) {
     }
 
     if (R_SUCCEEDED(rc)) rc = _ldnGetSession(&srv_creator, &g_ldnSrv, 0); // CreateSystemLocalCommunicationService/CreateUserLocalCommunicationService
-    serviceClose(&srv_creator);
 
     if (R_SUCCEEDED(rc)) {
-        if (hosversionAtLeast(7,0,0))
-            rc = _ldnCmdInitialize2(0x1);
+        if (hosversionAtLeast(7,0,0)) {
+            version = 0x1;
+
+            if (hosversionAtLeast(18,0,0))
+                version = 0x2;
+            if (hosversionAtLeast(19,0,0))
+                version = 0x3;
+            if (hosversionAtLeast(20,0,0))
+                version = 0x4;
+
+            if (g_ldnServiceType == LdnServiceType_System && hosversionAtLeast(19,0,0))
+                rc = _ldnCmdInitializeWithPriority(version, priority);
+            else
+                rc = _ldnCmdInitializeWithVersion(version);
+        }
         else
-            rc = _ldnCmdInitialize();
+            rc = _ldnCmdInitialize(&g_ldnSrv, 400);
     }
+
+    if (R_SUCCEEDED(rc) && hosversionAtLeast(20,0,0))
+        rc = ldnSetProtocol(LdnProtocol_NX);
+
+    if (R_SUCCEEDED(rc) && hosversionAtLeast(18,0,0)) {
+        rc = _ldnGetSession(&srv_creator, &g_ldnIClientProcessMonitor, 1); // CreateClientProcessMonitor
+        if (R_SUCCEEDED(rc))
+            rc = _ldnCmdInitialize(&g_ldnIClientProcessMonitor, 0); // RegisterClient
+    }
+
+    serviceClose(&srv_creator);
 
     return rc;
 }
@@ -106,10 +134,15 @@ Result _ldnInitialize(LdnServiceType service_type) {
 void _ldnCleanup(void) {
     if (serviceIsActive(&g_ldnSrv)) _ldnCmdNoIO(&g_ldnSrv, 401); // Finalize(System)
     serviceClose(&g_ldnSrv);
+    serviceClose(&g_ldnIClientProcessMonitor);
 }
 
 Service* ldnGetServiceSession_LocalCommunicationService(void) {
     return &g_ldnSrv;
+}
+
+Service* ldnGetServiceSession_IClientProcessMonitor(void) {
+    return &g_ldnIClientProcessMonitor;
 }
 
 static Result _ldnGetSession(Service* srv, Service* srv_out, u32 cmd_id) {
@@ -148,22 +181,34 @@ static Result _ldnCmdNoInOutU32(Service* srv, u32 *out, u32 cmd_id) {
     return serviceDispatchOut(srv, cmd_id, *out);
 }
 
-static Result _ldnCmdInitialize(void) {
+static Result _ldnCmdInitialize(Service* srv, u32 cmd_id) {
     u64 reserved=0;
-    return serviceDispatchIn(&g_ldnSrv, 400, reserved,
+    return serviceDispatchIn(srv, cmd_id, reserved,
         .in_send_pid = true,
     );
 }
 
-static Result _ldnCmdInitialize2(u32 inval) {
+static Result _ldnCmdInitializeWithVersion(s32 version) {
     const struct {
-        u32 inval;
+        s32 version;
         u32 pad;
         u64 reserved;
-    } in = { inval, 0, 0};
+    } in = { version, 0, 0};
 
     u32 cmd_id = g_ldnServiceType == LdnServiceType_User ? 402 : 403;
     return serviceDispatchIn(&g_ldnSrv, cmd_id, in,
+        .in_send_pid = true,
+    );
+}
+
+static Result _ldnCmdInitializeWithPriority(s32 version, s32 priority) {
+    const struct {
+        s32 version;
+        s32 priority;
+        u64 reserved;
+    } in = { version, priority, 0};
+
+    return serviceDispatchIn(&g_ldnSrv, 404, in,
         .in_send_pid = true,
     );
 }
@@ -441,13 +486,13 @@ Result ldnDisconnect(void) {
 }
 
 Result ldnSetOperationMode(LdnOperationMode mode) {
-    if (!serviceIsActive(&g_ldnSrv) || g_ldnServiceType != LdnServiceType_System)
+    if (!serviceIsActive(&g_ldnSrv))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
-
-    if (hosversionBefore(4,0,0))
+    if ((g_ldnServiceType == LdnServiceType_System && hosversionBefore(4,0,0)) ||
+        (g_ldnServiceType == LdnServiceType_User && hosversionBefore(19,0,0)))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return _ldnCmdInU32NoOut(&g_ldnSrv, mode, 402);
+    return _ldnCmdInU32NoOut(&g_ldnSrv, mode, g_ldnServiceType == LdnServiceType_System ? 402 : 403);
 }
 
 Result ldnEnableActionFrame(const LdnActionFrameSettings *settings) {
