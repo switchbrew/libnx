@@ -53,6 +53,7 @@ extern "C" {
 #include "switch/services/apm.h"
 #include "switch/services/applet.h"
 #include "switch/services/async.h"
+#include "switch/services/aud.h"
 #include "switch/services/audctl.h"
 #include "switch/services/audin.h"
 #include "switch/services/audout.h"
@@ -194,4 +195,3 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
-
