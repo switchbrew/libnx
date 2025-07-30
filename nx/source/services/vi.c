@@ -451,7 +451,7 @@ Result viCloseLayer(ViLayer *layer) {
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
     }
 
-    Result rc = serviceDispatchIn(&g_viIApplicationDisplayService, layer->stray_layer ? 2021 : 2031, layer->layer_id);
+    Result rc = serviceDispatchIn(&g_viIApplicationDisplayService, layer->stray_layer ? 2031 : 2021, layer->layer_id);
 
     if (R_SUCCEEDED(rc)) {
         memset(layer, 0, sizeof(*layer));
