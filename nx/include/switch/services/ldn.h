@@ -10,6 +10,9 @@
 #include "../sf/service.h"
 #include "../kernel/event.h"
 
+#define LDN_PRIORITY_SYSTEM 0x38       ///< System priority for __nx_ldn_priority.
+#define LDN_PRIORITY_USER 0x5A         ///< User priority for __nx_ldn_priority.
+
 typedef enum {
     LdnServiceType_User           = 0, ///< Initializes ldn:u.
     LdnServiceType_System         = 1, ///< Initializes ldn:s.
@@ -276,6 +279,7 @@ Result ldnmGetNetworkConfig(LdnNetworkConfig *out);
 ///@{
 
 /// Initialize ldn.
+/// The priority is only used with ::LdnServiceType_System on [19.0.0+]. To optionally set this, define "s32 __nx_ldn_priority". The priority must be \ref LDN_PRIORITY_SYSTEM (default) or \ref LDN_PRIORITY_USER.
 Result ldnInitialize(LdnServiceType service_type);
 
 /// Exit ldn.

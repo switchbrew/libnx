@@ -6,6 +6,8 @@
 
 static LdnServiceType g_ldnServiceType;
 
+__attribute__((weak)) s32 __nx_ldn_priority = LDN_PRIORITY_SYSTEM;
+
 static Service g_ldnSrv;
 static Service g_ldnmSrv;
 
@@ -84,7 +86,6 @@ Result _ldnInitialize(LdnServiceType service_type) {
     Service srv_creator={0};
     Result rc = MAKERESULT(Module_Libnx, LibnxError_BadInput);
     s32 version=0;
-    s32 priority=0x38;
     g_ldnServiceType = service_type;
     switch (g_ldnServiceType) {
         case LdnServiceType_User:
@@ -109,7 +110,7 @@ Result _ldnInitialize(LdnServiceType service_type) {
                 version = 0x4;
 
             if (g_ldnServiceType == LdnServiceType_System && hosversionAtLeast(19,0,0))
-                rc = _ldnCmdInitializeWithPriority(version, priority);
+                rc = _ldnCmdInitializeWithPriority(version, __nx_ldn_priority);
             else
                 rc = _ldnCmdInitializeWithVersion(version);
         }
