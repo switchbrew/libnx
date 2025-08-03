@@ -120,3 +120,115 @@ static inline Result romfsExit(void)
 {
     return romfsUnmount("romfs");
 }
+
+/// Opaque handle to a RomFS mount
+typedef struct romfs_mount romfs_mount;
+
+/// Object for interacting with a romfs_file
+typedef struct
+{
+    romfs_mount *mount; ///< The RomFS mount the file is associated with.
+    romfs_file  *file;  ///< Detail about the actual RomFS file.
+
+    u64 offset; ///< The starting offset in RomFS for file data.
+    u64 pos;    ///< Current read position into the file.
+
+    int err;
+} romfs_fileobj;
+
+/**
+ * @brief Finds a RomFS mount by the given name, the default mount name is "romfs"
+ * @param name The name of the mount to search for
+ * @param mount A pointer to a romfs_mount pointer to fill out with the mount information
+ */
+Result romfsFindMount(const char *name, romfs_mount **mount);
+
+/**
+ * @brief Finds a file in RomFS automatically determining the mount
+ * @param path The path to the file
+ * @param file A pointer to a romfs_fileobj structure to fill out
+ * @remark The path structure should follow <mount name>:<path> (i.e. romfs:/data/file.txt)
+ *         If no mount name is provided the default of "romfs" will be used.
+ */
+Result romfsFindFile(const char *path, romfs_fileobj *file);
+
+/**
+ * @brief Finds a file in a specific RomFS mount
+ * @param mount The mount to search in
+ * @param path The path to the file
+ * @param file A pointer to a romfs_fileobj structure to fill out
+ * @remark The mount name prefix is not required and is ignored if provided
+ */
+Result romfsFindFileInMount(romfs_mount *mount, const char *path, romfs_fileobj *file);
+
+/**
+ * @brief Wrapper function for turning a romfs_file into a romfs_fileobj to be operated on, this
+ *        is useful for creating readable files from a romfs_direntry
+ * @param mount The mount the file came from
+ * @param file The file information
+ */
+romfs_fileobj romfsFileObj(romfs_mount *mount, romfs_file *file);
+
+/**
+ * @brief Reads data from the specified RomFS file.
+ * @param file The RomFS file to read from.
+ * @param buffer The buffer to read data into.
+ * @param size The number of bytes to read.
+ * @param offset The offset in bytes from the beginning of the file to start reading from.
+ * @param nread A pointer in which the number of total bytes read will be written to.
+ * @remark The file's position pointer is not updated by this function.
+ */
+Result romfsReadFile(romfs_fileobj *file, void *buffer, u64 size, u64 offset, u64 *nread);
+
+typedef struct
+{
+    romfs_mount *mount;    ///< The RomFS mount associated with the directory.
+    romfs_dir   *dir;      ///< Information about the directory being searched.
+    int         state;     ///< Current iteration count or error code
+    u32         childDir;  ///< Next child directory of the directory.
+    u32         childFile; ///< Next child file of the directory.
+} romfs_diriter;
+
+typedef enum
+{
+    RomfsDirEntryType_File = 0,
+    RomfsDirEntryType_Dir
+} RomfsDirEntryType;
+
+typedef struct
+{
+    RomfsDirEntryType type; ///< Type of this entry.
+    union
+    {
+        romfs_file *file;  ///< Entry information if type is RomfsDirEntryType_File.
+        romfs_dir  *dir;   ///< Entry information if type is RomfsDirEntryType_Dir.
+    };
+
+    const char *name; ///< Basename of the entry, not null-terminated, UTF-8 coded.
+    u32 name_len;     ///< Length in bytes of the basename.
+} romfs_direntry;
+
+/**
+ * @brief Initialises the directory iterator for seaching at the given path, automatically determines mount.
+ * @param path The directory path to search.
+ * @param iter The directory iterator to fill out with found information.
+ * @remark The path structure should follow <mount name>:<path> (i.e. romfs:/data/folder).
+ *         If no mount name is provided the default of "romfs" will be used.
+ */
+Result romfsDirOpen(const char *path, romfs_diriter *iter);
+
+/**
+ * @brief Initialises the directory iterator for seaching at the given path in the supplied mount.
+ * @param mount The RomFS mount to search in.
+ * @param path The directory path to search.
+ * @param iter The directory iterator to fill out with found information.
+ * @remark The mount does not need to be specified in the path and is ignored if provided.
+ */
+Result romfsDirOpenWithMount(romfs_mount *mount, const char *path, romfs_diriter *iter);
+
+/**
+ * @brief Gets the next entry in the directory, returns false on error or when no more entries are found.
+ * @param iter The directory iterator.
+ * @param entry The entry to fill out with information.
+ */
+bool romfsDirNext(romfs_diriter *iter, romfs_direntry *entry);
