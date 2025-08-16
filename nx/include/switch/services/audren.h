@@ -7,6 +7,7 @@
 #pragma once
 
 #include "../types.h"
+#include "../kernel/event.h"
 #include "../audio/audio.h"
 #include "../sf/service.h"
 
@@ -323,6 +324,9 @@ void audrenExit(void);
 
 /// Gets the Service object for IAudioRenderer.
 Service* audrenGetServiceSession_AudioRenderer(void);
+
+/// Returns event that is signalled on new frame (autoclear=true).
+Event* audrenGetFrameEvent(void);
 
 void audrenWaitFrame(void);
 Result audrenGetState(u32* out_state);
