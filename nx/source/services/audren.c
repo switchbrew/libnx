@@ -111,6 +111,10 @@ Service* audrenGetServiceSession_AudioRenderer(void) {
     return &g_audrenIAudioRenderer;
 }
 
+Event* audrenGetFrameEvent(void) {
+    return &g_audrenEvent;
+}
+
 static Result _audrenCmdGetHandle(Service* srv, Handle* handle_out, u32 cmd_id) {
     return serviceDispatch(srv, cmd_id,
         .out_handle_attrs = { SfOutHandleAttr_HipcCopy },
