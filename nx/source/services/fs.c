@@ -538,12 +538,28 @@ Result fsOpenPatchDataStorageByCurrentProcess(FsStorage* out) {
     return _fsCmdGetSession(&g_fsSrv, &out->s, 203);
 }
 
+Result fsOpenGameCardStorage(FsStorage* out, const FsGameCardHandle* handle, FsGameCardStoragePartition partition) {
+    const struct {
+        FsGameCardHandle handle;
+        u32 partition;
+    } in = { *handle, (u32)partition };
+
+    return serviceDispatchIn(&g_fsSrv, 30, in,
+        .out_num_objects = 1,
+        .out_objects = &out->s
+    );
+}
+
 Result fsOpenDeviceOperator(FsDeviceOperator* out) {
     return _fsCmdGetSession(&g_fsSrv, &out->s, 400);
 }
 
 Result fsOpenSdCardDetectionEventNotifier(FsEventNotifier* out) {
     return _fsCmdGetSession(&g_fsSrv, &out->s, 500);
+}
+
+Result fsOpenGameCardDetectionEventNotifier(FsEventNotifier* out) {
+    return _fsCmdGetSession(&g_fsSrv, &out->s, 501);
 }
 
 Result fsIsSignedSystemPartitionOnSdCardValid(bool *out) {
