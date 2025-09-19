@@ -262,9 +262,9 @@ typedef enum {
 } FsGameCardPartition;
 
 typedef enum {
-    FsGameCardStoragePartition_Normal = 0,
-    FsGameCardStoragePartition_Secure = 1,
-} FsGameCardStoragePartition;
+    FsGameCardPartitionRaw_Normal = 0,
+    FsGameCardPartitionRaw_Secure = 1,
+} FsGameCardPartitionRaw;
 
 typedef struct {
     u32 value;
@@ -545,7 +545,7 @@ Result fsOpenDataStorageByProgramId(FsStorage *out, u64 program_id); /// <[3.0.0
 Result fsOpenDataStorageByDataId(FsStorage* out, u64 dataId, NcmStorageId storageId);
 Result fsOpenPatchDataStorageByCurrentProcess(FsStorage* out);
 
-Result fsOpenGameCardStorage(FsStorage* out, const FsGameCardHandle* handle, FsGameCardStoragePartition partition);
+Result fsOpenGameCardPartition(FsStorage* out, const FsGameCardHandle* handle, FsGameCardPartitionRaw partition);
 
 Result fsOpenDeviceOperator(FsDeviceOperator* out);
 Result fsOpenSdCardDetectionEventNotifier(FsEventNotifier* out);

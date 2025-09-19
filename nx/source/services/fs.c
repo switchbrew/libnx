@@ -538,7 +538,7 @@ Result fsOpenPatchDataStorageByCurrentProcess(FsStorage* out) {
     return _fsCmdGetSession(&g_fsSrv, &out->s, 203);
 }
 
-Result fsOpenGameCardStorage(FsStorage* out, const FsGameCardHandle* handle, FsGameCardStoragePartition partition) {
+Result fsOpenGameCardPartition(FsStorage* out, const FsGameCardHandle* handle, FsGameCardPartitionRaw partition) {
     const struct {
         FsGameCardHandle handle;
         u32 partition;
