@@ -192,7 +192,7 @@ typedef enum {
     InfoType_UsedMemorySize                 = 7,  ///< Amount of memory currently used by process.
     InfoType_DebuggerAttached               = 8,  ///< Whether current process is being debugged.
     InfoType_ResourceLimit                  = 9,  ///< Current process's resource limit handle.
-    InfoType_IdleTickCount                  = 10, ///< Number of idle ticks on CPU.
+    InfoType_IdleTickCount                  = 10, ///< Number of idle ticks on CPU (only usable with current thread's core).
     InfoType_RandomEntropy                  = 11, ///< [2.0.0+] Random entropy for current process.
     InfoType_AslrRegionAddress              = 12, ///< [2.0.0+] Base of the process's address space.
     InfoType_AslrRegionSize                 = 13, ///< [2.0.0+] Size of the process's address space.
@@ -231,7 +231,7 @@ typedef enum {
     TickCountInfo_Core2 = 2,       ///< Tick count on core 2.
     TickCountInfo_Core3 = 3,       ///< Tick count on core 3.
 
-    TickCountInfo_Total = UINT64_MAX, ///< Tick count on all cores.
+    TickCountInfo_Total = UINT64_MAX, ///< ThreadTickCount: Tick count on all cores, IdleTickCount: Thread's current core.
 } TickCountInfo;
 
 /// GetInfo InitialProcessIdRange Sub IDs.
