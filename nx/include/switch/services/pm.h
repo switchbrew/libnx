@@ -138,3 +138,4 @@ Result pmshellGetApplicationProcessIdForShell(u64* pid_out);
 Result pmshellBoostSystemMemoryResourceLimit(u64 boost_size);
 Result pmshellBoostApplicationThreadResourceLimit(void);
 Result pmshellBoostSystemThreadResourceLimit(void);
+Result pmshellGetProcessId(u64* pid_out, u64 program_id);
