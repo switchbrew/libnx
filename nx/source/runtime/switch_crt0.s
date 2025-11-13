@@ -83,6 +83,10 @@ __nx_mod0:
     .word  __relro_start        - __nx_mod0
     .word  __data_start         - __nx_mod0
 
+    .ascii "LNY2"
+    .word  0x1 // Version/Fix field, increment on recompile-the-worlds as needed
+    .word  0x0 // Reserved
+
 .section .bss.__stack_top, "aw", %nobits
 .global __stack_top
 .align 3
