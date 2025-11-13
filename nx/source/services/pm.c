@@ -199,3 +199,8 @@ Result pmshellBoostSystemThreadResourceLimit(void) {
     if (!hosversionIsAtmosphere() && hosversionBefore(14,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     return _pmCmdVoid(&g_pmshellSrv, 10);
 }
+
+Result pmshellGetProcessId(u64* pid_out, u64 program_id) {
+    if (!hosversionIsAtmosphere() && hosversionBefore(19,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    return _pmCmdInU64OutU64(pid_out, program_id, &g_pmshellSrv, 12);
+}
