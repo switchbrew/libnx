@@ -1,5 +1,49 @@
 # Changelog
 
+## Version 4.10.0
+
+* btdrv: label proto_mode field in data_report event info by @ndeadly in https://github.com/switchbrew/libnx/pull/673
+* nfp: Improve types and enums by @XorTroll in https://github.com/switchbrew/libnx/pull/675
+* btdrv: fix struct alignment issue in BtdrvBleEventInfo by @ndeadly in https://github.com/switchbrew/libnx/pull/680
+* remove unused version number in Makefile by @WinterMute in https://github.com/switchbrew/libnx/pull/679
+* add usbDsGetSpeed and missing speed enum entries. by @ITotalJustice in https://github.com/switchbrew/libnx/pull/676
+* Update SetSysEdid to include different types of Extension blocks by @masagrator in https://github.com/switchbrew/libnx/pull/677
+* Cover new Chinese and Brazilian Portuguese language IDs for nacpGetLanguageEntry by @masagrator in https://github.com/switchbrew/libnx/pull/684
+* btdrv: fix incorrectly labelled LE connection parameters by @ndeadly in https://github.com/switchbrew/libnx/pull/686
+* fix audout events being missed. by @ITotalJustice in https://github.com/switchbrew/libnx/pull/683
+* add audout:a audout:d aud:a aud:d by @ITotalJustice in https://github.com/switchbrew/libnx/pull/636
+* refactor console code for better ansi escape-code handling by @WinterMute in https://github.com/switchbrew/libnx/pull/682
+* fix missing include in switch.h for aud.h by @ITotalJustice in https://github.com/switchbrew/libnx/pull/687
+* Update TickCountInfo and IdleTickCount notes by @masagrator in https://github.com/switchbrew/libnx/pull/696
+* Basic support for 21.0.0 by @SciresM in https://github.com/switchbrew/libnx/pull/697
+* Fix svcSetHeapSize note by @masagrator in https://github.com/switchbrew/libnx/pull/694
+* vi: swap close layer commands by @SamoZ256 in https://github.com/switchbrew/libnx/pull/688
+* audren: expose frame event. by @ITotalJustice in https://github.com/switchbrew/libnx/pull/689
+
+## Version 4.9.0
+
+* Fixes for GCC 15 by @SciresM in https://github.com/switchbrew/libnx/pull/672
+* Basic support for 20.0.0 by @SciresM in https://github.com/switchbrew/libnx/pull/671
+* Update setsysEdid struct by @masagrator in https://github.com/switchbrew/libnx/pull/654
+* Fix wrong names in SetSysModeLine by @masagrator in https://github.com/switchbrew/libnx/pull/656
+* nvchannel: fix submit ioctl by @averne in https://github.com/switchbrew/libnx/pull/662
+* nvfence: expose nvhost-ctrl fd by @averne in https://github.com/switchbrew/libnx/pull/660
+* hidsys: add commands for setting/checking state of joycons attached via rails by @ndeadly in https://github.com/switchbrew/libnx/pull/657
+* btdrv: misc. fixes and updates to BLE related functions and type definitions by @ndeadly in https://github.com/switchbrew/libnx/pull/658
+* btdrv: document timeout parameter to btdrvTriggerConnection by @ndeadly in https://github.com/switchbrew/libnx/pull/669
+* set: update SetSysBluetoothDevicesSettings with new fields found in recent firmwares by @ndeadly in https://github.com/switchbrew/libnx/pull/667
+* btmsys: add missing 13.0.0 commands by @ndeadly in https://github.com/switchbrew/libnx/pull/664
+* update capsdc for 18.0.0 by @HookedBehemoth in https://github.com/switchbrew/libnx/pull/665
+
+## Version 4.8.0
+
+* Add missing hid shared memory structures and accessor functions for system buttons by @ndeadly in https://github.com/switchbrew/libnx/pull/647
+* bt: fill in unknowns and update function parameters to match their btdrv counterparts by @ndeadly in https://github.com/switchbrew/libnx/pull/644
+* spl: add missing service header by @IrneRacoonovich in https://github.com/switchbrew/libnx/pull/649
+* Basic support for 19.0.0 by @SciresM in https://github.com/switchbrew/libnx/pull/651
+* btm: add audio profile by @ndeadly in https://github.com/switchbrew/libnx/pull/650
+* use nproc for max jobs on github workflow by @WinterMute in https://github.com/switchbrew/libnx/pull/652
+
 ## Version 4.7.0
 
 #### system
