@@ -1,0 +1,19 @@
+var searchData=
+[
+  ['capsalbumcontentsusageflag_5fhasgreaterusage_0',['CapsAlbumContentsUsageFlag_HasGreaterUsage',['../caps_8h.html#aa6f881d2da8ace09fdfec12f4d7a0494a03574b09f9a81c5538b611f662d6d6d2',1,'caps.h']]],
+  ['capsalbumcontentsusageflag_5fisunknowncontents_1',['CapsAlbumContentsUsageFlag_IsUnknownContents',['../caps_8h.html#aa6f881d2da8ace09fdfec12f4d7a0494ade409c577dd2ac001141c9b57edf93b9',1,'caps.h']]],
+  ['capsalbumfilecontentsflag_5fmovie_2',['CapsAlbumFileContentsFlag_Movie',['../caps_8h.html#a27c55cabf47f419200d622892b899e4badbb69a8521d991018c91a72ad86c6da9',1,'caps.h']]],
+  ['capsalbumfilecontentsflag_5fscreenshot_3',['CapsAlbumFileContentsFlag_ScreenShot',['../caps_8h.html#a27c55cabf47f419200d622892b899e4ba1537871e1b40ce7f54375bcf89986af0',1,'caps.h']]],
+  ['capsalbumstorage_5fnand_4',['CapsAlbumStorage_Nand',['../caps_8h.html#a80784e26273432b661166cf56aaa08c2a269c2ea3c9dc8750f52abb10f109c6f5',1,'caps.h']]],
+  ['capsalbumstorage_5fsd_5',['CapsAlbumStorage_Sd',['../caps_8h.html#a80784e26273432b661166cf56aaa08c2a1853a3a406e49e247eed9b3d585363e6',1,'caps.h']]],
+  ['capscontenttype_5fextramovie_6',['CapsContentType_ExtraMovie',['../caps_8h.html#a4d1f64f7c43190661e31776616372fcbad6754c49591a4767bdc6454583709131',1,'caps.h']]],
+  ['capscontenttype_5fmovie_7',['CapsContentType_Movie',['../caps_8h.html#a4d1f64f7c43190661e31776616372fcba8d32f1073bb460c130fefa83dd3e2d5b',1,'caps.h']]],
+  ['capscontenttype_5fscreenshot_8',['CapsContentType_Screenshot',['../caps_8h.html#a4d1f64f7c43190661e31776616372fcba93278c58c8e093ad6b4780aa67eec61a',1,'caps.h']]],
+  ['capsscreenshotdecoderflag_5fenableblocksmoothing_9',['CapsScreenShotDecoderFlag_EnableBlockSmoothing',['../caps_8h.html#a0088da3a50425450d374dbfbf9dd0dedae562ce564ac06b2482f08add7fb98d1e',1,'caps.h']]],
+  ['capsscreenshotdecoderflag_5fenablefancyupsampling_10',['CapsScreenShotDecoderFlag_EnableFancyUpsampling',['../caps_8h.html#a0088da3a50425450d374dbfbf9dd0deda38d6253d0f7c6f9e2464bdb07bb70423',1,'caps.h']]],
+  ['capsscreenshotdecoderflag_5fnone_11',['CapsScreenShotDecoderFlag_None',['../caps_8h.html#a0088da3a50425450d374dbfbf9dd0deda6754c0b9f7a1f9d24fc6304346548dd5',1,'caps.h']]],
+  ['codemapoperation_5fmapowner_12',['CodeMapOperation_MapOwner',['../svc_8h.html#a5ac06bbd87fd051b1e77b11666f84f1bae935148188388b1cfcd8a8380fe5bdc0',1,'svc.h']]],
+  ['codemapoperation_5fmapslave_13',['CodeMapOperation_MapSlave',['../svc_8h.html#a5ac06bbd87fd051b1e77b11666f84f1ba9cbd5c8acb4dba09ac740ef4cb0d0429',1,'svc.h']]],
+  ['codemapoperation_5funmapowner_14',['CodeMapOperation_UnmapOwner',['../svc_8h.html#a5ac06bbd87fd051b1e77b11666f84f1ba39fd7f1fdc109b0408006618298bc52a',1,'svc.h']]],
+  ['codemapoperation_5funmapslave_15',['CodeMapOperation_UnmapSlave',['../svc_8h.html#a5ac06bbd87fd051b1e77b11666f84f1ba271d36d2f1665df321b652ef9f01c7da',1,'svc.h']]]
+];

@@ -1,0 +1,27 @@
+var searchData=
+[
+  ['pcmformat_0',['PcmFormat',['../audio_8h.html#af852a505c66e89e10c8d44d059e7b20d',1,'audio.h']]],
+  ['pctlauthtype_1',['PctlAuthType',['../pctlauth_8h.html#aed618d6c5f844570c8533eff2fd8b39c',1,'pctlauth.h']]],
+  ['pcvmoduleid_2',['PcvModuleId',['../pcv_8h.html#afd246b124412cde35300ba568abaa041',1,'pcv.h']]],
+  ['pdmappleteventtype_3',['PdmAppletEventType',['../pdm_8h.html#afd65db9b9e16a41fdefd61980a8c2fbe',1,'pdm.h']]],
+  ['pdmplayeventtype_4',['PdmPlayEventType',['../pdm_8h.html#a28b8288e0206f81c715c5deb4b623e6f',1,'pdm.h']]],
+  ['pdmplaylogpolicy_5',['PdmPlayLogPolicy',['../pdm_8h.html#afc90e227c29d9301bbb60fd189761095',1,'pdm.h']]],
+  ['permission_6',['Permission',['../svc_8h.html#a1474fa581c530fcdc28ca0a11770200c',1,'svc.h']]],
+  ['pgllaunchflag_7',['PglLaunchFlag',['../pgl_8h.html#aaf1696c3c1c73c83678fe8c84bd6c2ef',1,'pgl.h']]],
+  ['pglsnapshotdumptype_8',['PglSnapShotDumpType',['../pgl_8h.html#a9e04efdf43f078ab50f6f96d7720a79c',1,'pgl.h']]],
+  ['physicalmemorysysteminfo_9',['PhysicalMemorySystemInfo',['../svc_8h.html#a360acc04616a478566b89ad9f537c6e2',1,'svc.h']]],
+  ['plservicetype_10',['PlServiceType',['../pl_8h.html#a723f1be7c4ef6b95e6d0de8d10228cbc',1,'pl.h']]],
+  ['plsharedfonttype_11',['PlSharedFontType',['../pl_8h.html#affc844358c0fe823ec5e33aa9d7be0fc',1,'pl.h']]],
+  ['pmbootmode_12',['PmBootMode',['../pm_8h.html#a4bc710c44ca11ce4b651f5d0e1b10808',1,'pm.h']]],
+  ['pmlaunchflag_13',['PmLaunchFlag',['../pm_8h.html#a7edbf6fc33aabe6b4c9ae21a5f6f3ddd',1,'pm.h']]],
+  ['pmprocessevent_14',['PmProcessEvent',['../pm_8h.html#a8637ba6a64286e3234c9c6568d0667da',1,'pm.h']]],
+  ['processactivity_15',['ProcessActivity',['../svc_8h.html#a59ab632d9c688e1bdcdeec59f8dcce7f',1,'svc.h']]],
+  ['processinfotype_16',['ProcessInfoType',['../svc_8h.html#ab26ba3b814f7567b853380aa9964a695',1,'svc.h']]],
+  ['processstate_17',['ProcessState',['../svc_8h.html#a373a58178f69d5e3e1de7516d105675e',1,'svc.h']]],
+  ['pscpmstate_18',['PscPmState',['../psc_8h.html#a8d1e078850069432b202d7b656ed1715',1,'psc.h']]],
+  ['pselnintendoaccountstartupdialogtype_19',['PselNintendoAccountStartupDialogType',['../psel_8h.html#a353316e9df3b6a001d02db426de57d49',1,'psel.h']]],
+  ['pseluimode_20',['PselUiMode',['../psel_8h.html#acdf774a2bc292af90b61dcc95f694931',1,'psel.h']]],
+  ['pseluserselectionpurpose_21',['PselUserSelectionPurpose',['../psel_8h.html#a0cd8ae3d46eabd8fdf5cae364cfa2bf5',1,'psel.h']]],
+  ['psmbatteryvoltagestate_22',['PsmBatteryVoltageState',['../psm_8h.html#a17f73497c4397e7a57a0c4e24671427f',1,'psm.h']]],
+  ['psmchargertype_23',['PsmChargerType',['../psm_8h.html#a950035b62563a7469af439b38948ce82',1,'psm.h']]]
+];
