@@ -532,7 +532,7 @@ static ssize_t con_write(struct _reent *r,void *fd,const char *ptr, size_t len) 
 				if (escapeSeq.argIdx == 0 && !escapeSeq.hasArg) {
 					escapeSeq.args[0] = 0;
 				}
-				consoleCls(escapeSeq.args[0]);
+				consoleCls(escapeSeq.args[0] - '0');
 				escapeSeq.state = ESC_NONE;
 				break;
 			//---------------------------------------
@@ -542,7 +542,7 @@ static ssize_t con_write(struct _reent *r,void *fd,const char *ptr, size_t len) 
 				if (escapeSeq.argIdx == 0 && !escapeSeq.hasArg) {
 					escapeSeq.args[0] = 0;
 				}
-				consoleClearLine(escapeSeq.args[0]);
+				consoleClearLine(escapeSeq.args[0] - '0');
 				escapeSeq.state = ESC_NONE;
 				break;
 			//---------------------------------------
@@ -619,7 +619,7 @@ PrintConsole* consoleInit(PrintConsole* console) {
 
 	if (!console->consoleInitialised && console->renderer->init(console)) {
 		console->consoleInitialised = true;
-		consoleCls('2');
+		consoleCls(2);
 		return console;
 	}
 
@@ -749,7 +749,7 @@ void consolePrintChar(int c) {
 //---------------------------------------------------------------------------------
 void consoleClear(void) {
 //---------------------------------------------------------------------------------
-	consoleCls ('2');
+	consoleCls (2);
 }
 
 //---------------------------------------------------------------------------------
