@@ -566,7 +566,7 @@ Result ldnSetOperationMode(LdnOperationMode mode) {
 }
 
 Result ldnEnableActionFrame(const LdnActionFrameSettings *settings) {
-    if (!serviceIsActive(&g_ldnSrv) || g_ldnServiceType != LdnServiceType_System)
+    if (!serviceIsActive(&g_ldnSrv))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     if (hosversionBefore(18,0,0))
@@ -576,7 +576,7 @@ Result ldnEnableActionFrame(const LdnActionFrameSettings *settings) {
 }
 
 Result ldnDisableActionFrame(void) {
-    if (!serviceIsActive(&g_ldnSrv) || g_ldnServiceType != LdnServiceType_System)
+    if (!serviceIsActive(&g_ldnSrv))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     if (hosversionBefore(18,0,0))
@@ -586,7 +586,7 @@ Result ldnDisableActionFrame(void) {
 }
 
 Result ldnSendActionFrame(const void* data, size_t size, LdnMacAddress destination, LdnMacAddress bssid, s16 channel, u32 flags) {
-    if (!serviceIsActive(&g_ldnSrv) || g_ldnServiceType != LdnServiceType_System)
+    if (!serviceIsActive(&g_ldnSrv))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     if (hosversionBefore(18,0,0))
@@ -615,7 +615,7 @@ Result ldnSendActionFrame(const void* data, size_t size, LdnMacAddress destinati
 }
 
 Result ldnRecvActionFrame(void* data, size_t size, LdnMacAddress *addr0, LdnMacAddress *addr1, s16 *channel, u32 *out_size, s32 *link_level, u32 flags) {
-    if (!serviceIsActive(&g_ldnSrv) || g_ldnServiceType != LdnServiceType_System)
+    if (!serviceIsActive(&g_ldnSrv))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     if (hosversionBefore(18,0,0))
@@ -650,7 +650,7 @@ Result ldnRecvActionFrame(void* data, size_t size, LdnMacAddress *addr0, LdnMacA
 }
 
 Result ldnSetHomeChannel(s16 channel) {
-    if (!serviceIsActive(&g_ldnSrv) || g_ldnServiceType != LdnServiceType_System)
+    if (!serviceIsActive(&g_ldnSrv))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     if (hosversionBefore(18,0,0))
@@ -675,7 +675,7 @@ Result ldnSetHomeChannel(s16 channel) {
 }
 
 Result ldnSetTxPower(s16 power) {
-    if (!serviceIsActive(&g_ldnSrv) || g_ldnServiceType != LdnServiceType_System)
+    if (!serviceIsActive(&g_ldnSrv))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     if (hosversionBefore(18,0,0))
@@ -685,7 +685,7 @@ Result ldnSetTxPower(s16 power) {
 }
 
 Result ldnResetTxPower(void) {
-    if (!serviceIsActive(&g_ldnSrv) || g_ldnServiceType != LdnServiceType_System)
+    if (!serviceIsActive(&g_ldnSrv))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     if (hosversionBefore(18,0,0))
