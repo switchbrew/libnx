@@ -318,11 +318,14 @@ Result nsGetApplicationControlData(NsApplicationControlSource source, u64 applic
  * @param[in] source Source, official sw uses ::NsApplicationControlSource_Storage.
  * @param[in] application_id ApplicationId.
  * @param[out] buffer \ref NsApplicationControlData
+ * @param[in] flag1 Default is 0. 0xFF speeds up execution.
+ * @param[in] flag2 Default is 0.
+ * @param[in] application_id ApplicationId.
  * @param[in] size Size of the buffer.
  * @param[out] actual_size Actual output size.
  * @param[out] unk Returned with size, always 0.
  */
-Result nsGetApplicationControlData2(NsApplicationControlSource source, u64 application_id, NsApplicationControlData* buffer, size_t size, u64* actual_size, u32* unk);
+Result nsGetApplicationControlData2(NsApplicationControlSource source, u64 application_id, NsApplicationControlData* buffer, u8 flag1, u8 flag2, size_t size, u64* actual_size, u32* unk);
 
 /**
  * @brief GetApplicationDesiredLanguage. Selects a \ref NacpLanguageEntry to use from the specified \ref NacpStruct.
