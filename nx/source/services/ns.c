@@ -488,7 +488,7 @@ Result nsGetApplicationControlData(NsApplicationControlSource source, u64 applic
     return rc;
 }
 
-Result nsGetApplicationControlData2(NsApplicationControlSource source, u64 application_id, NsApplicationControlData* buffer, size_t size, u64* actual_size) {
+Result nsGetApplicationControlData2(NsApplicationControlSource source, u64 application_id, NsApplicationControlData* buffer, size_t size, u64* actual_size, u32 unk) {
     if (hosversionBefore(19,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     Service srv={0}, *srv_ptr = &srv;
@@ -509,7 +509,10 @@ Result nsGetApplicationControlData2(NsApplicationControlSource source, u64 appli
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
         .buffers = { { buffer, size } },
     );
-    if (R_SUCCEEDED(rc) && actual_size) *actual_size = tmp >> 32;
+    if (R_SUCCEEDED(rc)) {
+        if (actual_size) *actual_size = tmp >> 32;
+        if (unk) *unk = (u32)tmp;
+    }
 
     serviceClose(&srv);
     return rc;
