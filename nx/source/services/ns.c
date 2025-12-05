@@ -501,7 +501,7 @@ Result nsGetApplicationControlData2(NsApplicationControlSource source, u64 appli
         u8 flags[2];
         u8 pad[5];
         u64 application_id;
-    } in = { source, {0}, application_id };
+    } in = { source, {0}, {0}, application_id };
 
     u64 tmp=0;
 
