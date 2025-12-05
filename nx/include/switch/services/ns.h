@@ -320,7 +320,6 @@ Result nsGetApplicationControlData(NsApplicationControlSource source, u64 applic
  * @param[out] buffer \ref NsApplicationControlData
  * @param[in] flag1 Default is 0. 0xFF speeds up execution.
  * @param[in] flag2 Default is 0.
- * @param[in] application_id ApplicationId.
  * @param[in] size Size of the buffer.
  * @param[out] actual_size Actual output size.
  * @param[out] unk Returned with size, always 0.
