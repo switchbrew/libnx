@@ -313,6 +313,17 @@ Result nsGetDocumentInterface(Service* srv_out);
 Result nsGetApplicationControlData(NsApplicationControlSource source, u64 application_id, NsApplicationControlData* buffer, size_t size, u64* actual_size);
 
 /**
+ * @brief Gets the \ref NsApplicationControlData for the specified application.
+ * @note Only available on [19.0.0+].
+ * @param[in] source Source, official sw uses ::NsApplicationControlSource_Storage.
+ * @param[in] application_id ApplicationId.
+ * @param[out] buffer \ref NsApplicationControlData
+ * @param[in] size Size of the buffer.
+ * @param[out] unk It returns always 0.
+ */
+Result nsGetApplicationControlData2(NsApplicationControlSource source, u64 application_id, NsApplicationControlData* buffer, size_t size, u64* unk);
+
+/**
  * @brief GetApplicationDesiredLanguage. Selects a \ref NacpLanguageEntry to use from the specified \ref NacpStruct.
  * @note Uses \ref nsGetReadOnlyApplicationControlDataInterface on [5.1.0+], otherwise IApplicationManagerInterface is used.
  * @param[in] nacp \ref NacpStruct
