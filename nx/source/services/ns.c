@@ -502,7 +502,7 @@ Result nsGetApplicationControlData2(NsApplicationControlSource source, u64 appli
         u64 application_id;
     } in = { source, {0}, application_id };
 
-    u32 tmp=0;
+    u64 tmp=0;
 
     if (R_SUCCEEDED(rc)) rc = serviceDispatchInOut(srv_ptr, cmd_id, in, tmp,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
