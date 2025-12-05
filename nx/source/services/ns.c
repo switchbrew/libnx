@@ -488,6 +488,32 @@ Result nsGetApplicationControlData(NsApplicationControlSource source, u64 applic
     return rc;
 }
 
+Result nsGetApplicationControlData2(NsApplicationControlSource source, u64 application_id, NsApplicationControlData* buffer, size_t size, u64* actual_size) {
+    if (hosversionBefore(19,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    Service srv={0}, *srv_ptr = &srv;
+    Result rc=0;
+    u32 cmd_id = 6;
+    rc = nsGetReadOnlyApplicationControlDataInterface(&srv);
+
+    const struct {
+        u8 source;
+        u8 pad[7];
+        u64 application_id;
+    } in = { source, {0}, application_id };
+
+    u32 tmp=0;
+
+    if (R_SUCCEEDED(rc)) rc = serviceDispatchInOut(srv_ptr, cmd_id, in, tmp,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { buffer, size } },
+    );
+    if (R_SUCCEEDED(rc) && actual_size) *actual_size = tmp >> 32;
+
+    serviceClose(&srv);
+    return rc;
+}
+
 Result nsGetApplicationDesiredLanguage(NacpStruct *nacp, NacpLanguageEntry **langentry) {
     if (nacp==NULL || langentry==NULL)
         return MAKERESULT(Module_Libnx, LibnxError_BadInput);
