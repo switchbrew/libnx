@@ -498,7 +498,8 @@ Result nsGetApplicationControlData2(NsApplicationControlSource source, u64 appli
 
     const struct {
         u8 source;
-        u8 pad[7];
+        u8 flags[2];
+        u8 pad[5];
         u64 application_id;
     } in = { source, {0}, application_id };
 
