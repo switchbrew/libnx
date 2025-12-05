@@ -320,8 +320,9 @@ Result nsGetApplicationControlData(NsApplicationControlSource source, u64 applic
  * @param[out] buffer \ref NsApplicationControlData
  * @param[in] size Size of the buffer.
  * @param[out] actual_size Actual output size.
+ * @param[out] unk Returned with size, always 0.
  */
-Result nsGetApplicationControlData2(NsApplicationControlSource source, u64 application_id, NsApplicationControlData* buffer, size_t size, u64* actual_size);
+Result nsGetApplicationControlData2(NsApplicationControlSource source, u64 application_id, NsApplicationControlData* buffer, size_t size, u64* actual_size, u32* unk);
 
 /**
  * @brief GetApplicationDesiredLanguage. Selects a \ref NacpLanguageEntry to use from the specified \ref NacpStruct.
