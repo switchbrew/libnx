@@ -367,7 +367,7 @@ typedef union {
         u32 optimize_memory_allocation: 1;         ///< [7.0.0+] Only allowed in combination with is_application
         u32 disable_device_address_space_merge: 1; ///< [11.0.0+]
         u32 enable_alias_region_extra_size: 1;     ///< [18.0.0+]
-        u32 reserved: 17;
+        u32 reserved: 18;
     } flags;
     u32 raw;
 } CreateProcessFlags;
