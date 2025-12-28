@@ -401,7 +401,7 @@ typedef struct {
         struct {
             u32 type;                                      ///< \ref DebugException
             void* address;
-            union 
+            union {
                 /// DebugException_UndefinedInstruction
                 struct {
                     u32 insn;
