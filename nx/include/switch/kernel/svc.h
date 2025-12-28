@@ -336,7 +336,7 @@ typedef enum {
 
 /// DebugEvent flags
 typedef enum {
-    DebugEventFlag_Stopped = 1,
+    DebugEventFlag_Stopped = BIT(1),
 } DebugEventFlag;
 
 /// Address space types for CreateProcessFlags
