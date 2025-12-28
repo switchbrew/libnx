@@ -365,6 +365,7 @@ typedef union {
     u32 raw;
 } CreateProcessFlags;
 
+/// DebugEventInfo structure
 typedef struct {
     u32 type;                                              ///< \ref DebugEvent
     u32 flags;                                             ///< \ref DebugEventFlag
