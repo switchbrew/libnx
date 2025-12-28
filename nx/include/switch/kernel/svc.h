@@ -292,12 +292,12 @@ typedef enum {
 
 /// DebugEvent types
 typedef enum {
-    DebugEvent_CreateProcess = 0,
-    DebugEvent_CreateThread  = 1,
-    DebugEvent_ExitProcess   = 2,
-    DebugEvent_ExitThread    = 3,
-    DebugEvent_Exception     = 4,
-} DebugEvent;
+    DebugEventType_CreateProcess = 0,
+    DebugEventType_CreateThread  = 1,
+    DebugEventType_ExitProcess   = 2,
+    DebugEventType_ExitThread    = 3,
+    DebugEventType_Exception     = 4,
+} DebugEventType;
 
 /// Process exit reasons
 typedef enum {
@@ -364,9 +364,9 @@ typedef union {
     u32 raw;
 } CreateProcessFlags;
 
-/// DebugEventInfo structure
+/// DebugEvent structure
 typedef struct {
-    u32 type;                                              ///< \ref DebugEvent
+    u32 type;                                              ///< \ref DebugEventType
     u32 flags;                                             ///< \ref DebugEventFlag
     u64 thread_id;
 
@@ -444,7 +444,7 @@ typedef struct {
             } specific;
         } exception;
     } info;
-} DebugEventInfo;
+} DebugEvent;
 
 ///@name Memory management
 ///@{
@@ -1421,7 +1421,7 @@ Result svcTerminateDebugProcess(Handle debug);
  * @note Syscall number 0x63.
  * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
  */
-Result svcGetDebugEvent(DebugEventInfo* event_out, Handle debug);
+Result svcGetDebugEvent(DebugEvent* event_out, Handle debug);
 
 /**
  * @brief Continues a debugging session.
