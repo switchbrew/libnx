@@ -371,7 +371,7 @@ typedef struct {
     u64 thread_id;
 
     union {
-        /// DebugEvent_CreateProcess
+        /// DebugEventType_CreateProcess
         struct {
             u64 program_id;
             u64 process_id;
@@ -380,24 +380,24 @@ typedef struct {
             void* user_exception_context_address;          ///< [5.0.0+]
         } create_process; 
 
-        /// DebugEvent_CreateThread
+        /// DebugEventType_CreateThread
         struct {
             u64 thread_id;
             void* tls_address;
             void* entrypoint;                              ///< [1.0.0-10.2.0]
         } create_thread;
 
-        /// DebugEvent_ExitProcess
+        /// DebugEventType_ExitProcess
         struct {
             u32 reason;                                    ///< \ref ProcessExitReason
         } exit_process;
 
-        /// DebugEvent_ExitThread
+        /// DebugEventType_ExitThread
         struct {
             u32 reason;                                    ///< \ref ThreadExitReason
         } exit_thread;
 
-        /// DebugEvent_Exception
+        /// DebugEventType_Exception
         struct {
             u32 type;                                      ///< \ref DebugException
             void* address;
