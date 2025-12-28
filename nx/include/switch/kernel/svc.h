@@ -290,6 +290,7 @@ typedef enum {
     IoPoolType_PcieA2 = 0, ///< Physical address range 0x12000000-0x1FFFFFFF
 } IoPoolType;
 
+/// DebugEvent types
 typedef enum {
     DebugEvent_CreateProcess = 0,
     DebugEvent_CreateThread  = 1,
@@ -298,12 +299,14 @@ typedef enum {
     DebugEvent_Exception     = 4,
 } DebugEvent;
 
+/// Process exit reasons
 typedef enum {
     ProcessExitReason_ExitProcess      = 0,
     ProcessExitReason_TerminateProcess = 1,
     ProcessExitReason_Exception        = 2,
 } ProcessExitReason;
 
+/// Thread exit reasons
 typedef enum {
     ThreadExitReason_ExitThread       = 0,
     ThreadExitReason_TerminateThread  = 1,
@@ -311,6 +314,7 @@ typedef enum {
     ThreadExitReason_TerminateProcess = 3,
 } ThreadExitReason;
 
+/// 
 typedef enum {
     DebugException_UndefinedInstruction = 0,
     DebugException_InstructionAbort     = 1,
@@ -321,7 +325,7 @@ typedef enum {
     DebugException_UserBreak            = 6,
     DebugException_DebuggerBreak        = 7,
     DebugException_UndefinedSystemCall  = 8,
-    DebugException_MemorySystemError    = 9,
+    DebugException_MemorySystemError    = 9, ///< [2.0.0+]
 } DebugException;
 
 typedef enum {
