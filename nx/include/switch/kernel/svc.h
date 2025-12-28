@@ -401,37 +401,44 @@ typedef struct {
         struct {
             u32 type;                                      ///< \ref DebugException
             void* address;
-            union {
+            union 
+                /// DebugException_UndefinedInstruction
                 struct {
                     u32 insn;
-                } undefined_instruction;                   ///< DebugException_UndefinedInstruction
+                } undefined_instruction;
 
+                /// DebugException_DataAbort
                 struct {
                     void* address;
-                } data_abort;                              ///< DebugException_DataAbort
+                } data_abort;
 
+                /// DebugException_AlignmentFault
                 struct {
                     void* address;
-                } alignment_fault;                         ///< DebugException_AlignmentFault
+                } alignment_fault;
 
+                /// DebugException_BreakPoint
                 struct {
                     u32 type;                              ///< \ref BreakPointType
                     void* address;
-                } break_point;                             ///< \ref DebugException_BreakPoint
+                } break_point;
 
+                /// DebugException_UserBreak
                 struct {
                     u32 break_reason;                      ///< \ref BreakReason
                     void* address;
                     size_t size;
-                } user_break;                              ///< \ref DebugException_UserBreak
+                } user_break;
 
+                /// DebugException_DebuggerBreak
                 struct {
                     u64 active_thread_ids[4];
-                } debugger_break;                          ///< DebugException_DebuggerBreak
+                } debugger_break;
 
+                /// DebugException_UndefinedSystemCall
                 struct {
                     u32 id;
-                } undefined_system_call;                   ///< DebugException_UndefinedSystemCall
+                } undefined_system_call;
 
                 u64 raw;
             } specific;
