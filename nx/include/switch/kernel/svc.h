@@ -314,7 +314,7 @@ typedef enum {
     ThreadExitReason_TerminateProcess = 3,
 } ThreadExitReason;
 
-/// 
+/// Debug exception types
 typedef enum {
     DebugException_UndefinedInstruction = 0,
     DebugException_InstructionAbort     = 1,
@@ -328,15 +328,18 @@ typedef enum {
     DebugException_MemorySystemError    = 9, ///< [2.0.0+]
 } DebugException;
 
+/// Break point types
 typedef enum {
     BreakPointType_HardwareInstruction = 0,
     BreakPointType_HardwareData        = 1,
 } BreakPointType;
 
+/// DebugEvent flags
 typedef enum {
     DebugEventFlag_Stopped = 1,
 } DebugEventFlag;
 
+/// Address space types for CreateProcessFlags
 typedef enum {
     CreateProcessFlagAddressSpace_32bit = 0,
     CreateProcessFlagAddressSpace_64bitDeprecated = 1,
@@ -344,12 +347,23 @@ typedef enum {
     CreateProcessFlagAddressSpace_64bit = 3,
 } CreateProcessFlagAddressSpace;
 
-typedef enum {
-    CreateProcessFlagPoolPartition_Application = 0,
-    CreateProcessFlagPoolPartition_Applet = 1,
-    CreateProcessFlagPoolPartition_System = 2,
-    CreateProcessFlagPoolPartition_SystemUnsafe = 3,
-} CreateProcessFlagPoolPartition;
+/// Flags for svcCreateProcess and CreateProcess event
+typedef union {
+    struct {
+        u32 is_64bit: 1;
+        u32 address_space: 3;                      ///< \ref CreateProcessFlagAddressSpace
+        u32 enable_debug: 1;                       ///< [2.0.0+]
+        u32 enable_aslr: 1;
+        u32 is_application: 1;
+        u32 use_secure_memory: 1;                  ///< [1.0.0-3.0.2]
+        u32 pool_partition: 4;                     ///< [5.0.0+] \ref PhysicalMemorySystemInfo
+        u32 optimize_memory_allocation: 1;         ///< [7.0.0+] Only allowed in combination with is_application
+        u32 disable_device_address_space_merge: 1; ///< [11.0.0+]
+        u32 enable_alias_region_extra_size: 1;     ///< [18.0.0+]
+        u32 reserved: 17;
+    } flags;
+    u32 raw;
+} CreateProcessFlags;
 
 typedef struct {
     u32 type;                                              ///< \ref DebugEvent
@@ -361,19 +375,7 @@ typedef struct {
             u64 program_id;
             u64 process_id;
             char name[0xC];
-            struct {
-                u32 is_64bit: 1;
-                u32 address_space: 3;                      ///< \ref CreateProcessFlagAddressSpace
-                u32 enable_debug: 1;
-                u32 enable_aslr: 1;
-                u32 is_application: 1;
-                u32 use_secure_memory: 1;                  ///< [1.0.0-3.0.2]
-                u32 pool_partition: 4;                     ///< [5.0.0+] \ref CreateProcessFlagPoolPartition
-                u32 optimize_memory_allocation: 1;         ///< [7.0.0+]
-                u32 disable_device_address_space_merge: 1; ///< [11.0.0+]
-                u32 enable_alias_region_extra_size: 1;     ///< [18.0.0+]
-                u32 reserved: 17;
-            } flags;
+            u32 flags;                                     ///< \ref CreateProcessFlags
             void* user_exception_context_address;          ///< [5.0.0+]
         } create_process;                                  ///< DebugEvent_CreateProcess
 
