@@ -348,20 +348,17 @@ typedef enum {
 } CreateProcessFlagAddressSpace;
 
 /// Flags for svcCreateProcess and CreateProcess event
-typedef union {
-    struct {
-        u32 is_64bit: 1;
-        u32 address_space: 3;                      ///< \ref CreateProcessFlagAddressSpace
-        u32 enable_debug: 1;                       ///< [2.0.0+]
-        u32 enable_aslr: 1;
-        u32 is_application: 1;
-        u32 pool_partition: 4;                     ///< [4.0.0-4.1.0] 1 = UseSecureMemory, [5.0.0+] \ref PhysicalMemorySystemInfo
-        u32 optimize_memory_allocation: 1;         ///< [7.0.0+] Only allowed in combination with is_application
-        u32 disable_device_address_space_merge: 1; ///< [11.0.0+]
-        u32 enable_alias_region_extra_size: 1;     ///< [18.0.0+]
-        u32 reserved: 18;
-    } flags;
-    u32 raw;
+typedef struct {
+    u32 is_64bit: 1;
+    u32 address_space: 3;                      ///< \ref CreateProcessFlagAddressSpace
+    u32 enable_debug: 1;                       ///< [2.0.0+]
+    u32 enable_aslr: 1;
+    u32 is_application: 1;
+    u32 pool_partition: 4;                     ///< [4.0.0-4.1.0] 1 = UseSecureMemory, [5.0.0+] \ref PhysicalMemorySystemInfo
+    u32 optimize_memory_allocation: 1;         ///< [7.0.0+] Only allowed in combination with is_application
+    u32 disable_device_address_space_merge: 1; ///< [11.0.0+]
+    u32 enable_alias_region_extra_size: 1;     ///< [18.0.0+]
+    u32 reserved: 18;
 } CreateProcessFlags;
 
 /// DebugEvent structure
