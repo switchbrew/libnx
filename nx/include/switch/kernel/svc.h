@@ -342,9 +342,9 @@ typedef enum {
 /// Address space types for CreateProcessFlags
 typedef enum {
     CreateProcessFlagAddressSpace_32bit             = 0,
-    CreateProcessFlagAddressSpace_64bitDeprecated   = 1,
+    CreateProcessFlagAddressSpace_64bitDeprecated   = 1, ///< 36-bit width
     CreateProcessFlagAddressSpace_32bitWithoutAlias = 2,
-    CreateProcessFlagAddressSpace_64bit             = 3,
+    CreateProcessFlagAddressSpace_64bit             = 3, ///< [2.0.0+] 39-bit width
 } CreateProcessFlagAddressSpace;
 
 /// Flags for svcCreateProcess and CreateProcess event
