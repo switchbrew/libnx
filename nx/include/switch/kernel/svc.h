@@ -347,6 +347,12 @@ typedef enum {
     CreateProcessFlagAddressSpace_64bit             = 3, ///< [2.0.0+] 39-bit width
 } CreateProcessFlagAddressSpace;
 
+/// Memory regions
+typedef enum {
+    MemoryRegion_Default = 0, ///< [1.0.0-4.1.0]
+    MemoryRegion_Secure  = 1, ///< [2.0.0-4.1.0]
+} MemoryRegion;
+
 /// Flags for svcCreateProcess and CreateProcess event
 typedef struct {
     u32 is_64bit: 1;
@@ -354,7 +360,7 @@ typedef struct {
     u32 enable_debug: 1;                       ///< [2.0.0+]
     u32 enable_aslr: 1;
     u32 is_application: 1;
-    u32 pool_partition: 4;                     ///< [4.0.0-4.1.0] 1 = UseSecureMemory, [5.0.0+] \ref PhysicalMemorySystemInfo
+    u32 pool_partition: 4;                     ///< [4.0.0-4.1.0] \ref MemoryRegion, [5.0.0+] \ref PhysicalMemorySystemInfo
     u32 optimize_memory_allocation: 1;         ///< [7.0.0+] Only allowed in combination with is_application
     u32 disable_device_address_space_merge: 1; ///< [11.0.0+]
     u32 enable_alias_region_extra_size: 1;     ///< [18.0.0+]
