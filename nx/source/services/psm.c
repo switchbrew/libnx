@@ -140,8 +140,10 @@ Result psmGetBatteryChargeInfoFields(PsmBatteryChargeInfoFields *out_fields) {
     if (hosversionBefore(17,0,0)) {
         PsmBatteryChargeInfoFieldsOld fields;
         Result rc = serviceDispatchOut(&g_psmSrv, 17, fields);
-        if (R_SUCCEEDED(rc))
+        if (R_SUCCEEDED(rc)) {
+            memset(out_fields, 0, sizeof(*out_fields));
             memcpy(out_fields, &fields, sizeof(fields));
+        }
         return rc;
     }
 
