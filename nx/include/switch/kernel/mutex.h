@@ -57,7 +57,6 @@ bool mutexIsLockedByCurrentThread(const Mutex* m);
 static inline void rmutexInit(RMutex* m)
 {
     m->lock = 0;
-    m->thread_tag = 0;
     m->counter = 0;
 }
 

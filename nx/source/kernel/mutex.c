@@ -139,20 +139,15 @@ bool mutexIsLockedByCurrentThread(const Mutex* m) {
 }
 
 void rmutexLock(RMutex* m) {
-    if (m->thread_tag != _GetTag()) {
+    if (!mutexIsLockedByCurrentThread(&m->lock)) {
         mutexLock(&m->lock);
-        m->thread_tag = _GetTag();
+        m->counter++;
     }
-
-    m->counter++;
 }
 
 bool rmutexTryLock(RMutex* m) {
-    if (m->thread_tag != _GetTag()) {
-        if (!mutexTryLock(&m->lock)) {
-            return false;
-        }
-        m->thread_tag = _GetTag();
+    if (!mutexIsLockedByCurrentThread(&m->lock)) {
+        return mutexTryLock(&m->lock);
     }
 
     m->counter++;
@@ -161,7 +156,6 @@ bool rmutexTryLock(RMutex* m) {
 
 void rmutexUnlock(RMutex* m) {
     if (--m->counter == 0) {
-        m->thread_tag = 0;
         mutexUnlock(&m->lock);
     }
 }

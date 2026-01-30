@@ -108,17 +108,13 @@ int __syscall_cond_wait(_COND_T *cond, _LOCK_T *lock, uint64_t timeout_ns)
 
 int __syscall_cond_wait_recursive(_COND_T *cond, _LOCK_RECURSIVE_T *lock, uint64_t timeout_ns)
 {
-    uint32_t thread_tag_backup = 0;
     if (lock->counter != 1)
         return EBADF;
 
-    thread_tag_backup = lock->thread_tag;
-    lock->thread_tag = 0;
     lock->counter = 0;
 
     int errcode = errno_from_result(condvarWaitTimeout(cond, &lock->lock, timeout_ns));
 
-    lock->thread_tag = thread_tag_backup;
     lock->counter = 1;
 
     return errcode;
