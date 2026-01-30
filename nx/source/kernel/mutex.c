@@ -138,18 +138,20 @@ bool mutexIsLockedByCurrentThread(const Mutex* m) {
     return (*m & ~HANDLE_WAIT_MASK) == cur_handle;
 }
 
+
 void rmutexLock(RMutex* m) {
     if (!mutexIsLockedByCurrentThread(&m->lock)) {
         mutexLock(&m->lock);
-        m->counter++;
     }
+    m->counter++;
 }
 
 bool rmutexTryLock(RMutex* m) {
     if (!mutexIsLockedByCurrentThread(&m->lock)) {
-        return mutexTryLock(&m->lock);
+        if (!mutexTryLock(&m->lock)) {
+            return false;
+        }
     }
-
     m->counter++;
     return true;
 }
