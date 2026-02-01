@@ -532,7 +532,7 @@ static ssize_t con_write(struct _reent *r,void *fd,const char *ptr, size_t len) 
 				if (escapeSeq.argIdx == 0 && !escapeSeq.hasArg) {
 					escapeSeq.args[0] = 0;
 				}
-				consoleCls(escapeSeq.args[0] - '0');
+				consoleCls(escapeSeq.args[0]);
 				escapeSeq.state = ESC_NONE;
 				break;
 			//---------------------------------------
@@ -542,7 +542,7 @@ static ssize_t con_write(struct _reent *r,void *fd,const char *ptr, size_t len) 
 				if (escapeSeq.argIdx == 0 && !escapeSeq.hasArg) {
 					escapeSeq.args[0] = 0;
 				}
-				consoleClearLine(escapeSeq.args[0] - '0');
+				consoleClearLine(escapeSeq.args[0]);
 				escapeSeq.state = ESC_NONE;
 				break;
 			//---------------------------------------
