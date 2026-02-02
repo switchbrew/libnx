@@ -1,5 +1,7 @@
 #define NX_SERVICE_ASSUME_NON_DOMAIN
+#include <string.h>
 #include "service_guard.h"
+#include "runtime/hosversion.h"
 #include "services/psm.h"
 
 static Service g_psmSrv;
@@ -75,6 +77,42 @@ Result psmGetChargerType(PsmChargerType *out) {
     return _psmCmdNoInOutU32(&g_psmSrv, out, 1);
 }
 
+Result psmEnableBatteryCharging(void) {
+    return _psmCmdNoIO(&g_psmSrv, 2);
+}
+
+Result psmDisableBatteryCharging(void) {
+    return _psmCmdNoIO(&g_psmSrv, 3);
+}
+
+Result psmIsBatteryChargingEnabled(bool *out) {
+    return _psmCmdNoInOutBool(&g_psmSrv, out, 4);
+}
+
+Result psmAcquireControllerPowerSupply(void) {
+    return _psmCmdNoIO(&g_psmSrv, 5);
+}
+
+Result psmReleaseControllerPowerSupply(void) {
+    return _psmCmdNoIO(&g_psmSrv, 6);
+}
+
+Result psmEnableEnoughPowerChargeEmulation(void) {
+    return _psmCmdNoIO(&g_psmSrv, 8);
+}
+
+Result psmDisableEnoughPowerChargeEmulation(void) {
+    return _psmCmdNoIO(&g_psmSrv, 9);
+}
+
+Result psmEnableFastBatteryCharging(void) {
+    return _psmCmdNoIO(&g_psmSrv, 10);
+}
+
+Result psmDisableFastBatteryCharging(void) {
+    return _psmCmdNoIO(&g_psmSrv, 11);
+}
+
 Result psmGetBatteryVoltageState(PsmBatteryVoltageState *out) {
     u32 state;
     Result rc = _psmCmdNoInOutU32(&g_psmSrv, &state, 12);
@@ -92,6 +130,31 @@ Result psmIsEnoughPowerSupplied(bool *out) {
 
 Result psmGetBatteryAgePercentage(double *out) {
     return _psmCmdNoInOutDouble(&g_psmSrv, out, 15);
+}
+
+Result psmGetBatteryChargeInfoEvent(Event* out_event, bool autoclear) {
+    return _psmCmdGetEvent(&g_psmSrv, out_event, autoclear, 16);
+}
+
+Result psmGetBatteryChargeInfoFields(PsmBatteryChargeInfoFields *out_fields) {
+    if (hosversionBefore(17,0,0)) {
+        PsmBatteryChargeInfoFieldsOld fields;
+        Result rc = serviceDispatchOut(&g_psmSrv, 17, fields);
+        if (R_SUCCEEDED(rc)) {
+            memset(out_fields, 0, sizeof(*out_fields));
+            memcpy(out_fields, &fields, sizeof(fields));
+        }
+        return rc;
+    }
+
+    return serviceDispatchOut(&g_psmSrv, 17, *out_fields);
+}
+
+Result psmGetBatteryChargeCalibratedEvent(Event* out_event, bool autoclear) {
+    if (hosversionBefore(3,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _psmCmdGetEvent(&g_psmSrv, out_event, autoclear, 18);
 }
 
 static Result _psmOpenSession(Service* srv_out) {
