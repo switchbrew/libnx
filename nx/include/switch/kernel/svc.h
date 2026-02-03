@@ -447,7 +447,7 @@ typedef struct {
             } specific;
         } exception;
     } info;
-} DebugEvent;
+} DebugEventInfo;
 
 ///@name Memory management
 ///@{
@@ -1424,7 +1424,7 @@ Result svcTerminateDebugProcess(Handle debug);
  * @note Syscall number 0x63.
  * @warning This is a privileged syscall. Use \ref envIsSyscallHinted to check if it is available.
  */
-Result svcGetDebugEvent(DebugEvent* event_out, Handle debug);
+Result svcGetDebugEvent(DebugEventInfo* event_out, Handle debug);
 
 /**
  * @brief Continues a debugging session.
