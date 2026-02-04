@@ -2642,6 +2642,35 @@ Result appletFriendInvitationClearApplicationParameter(void);
  */
 Result appletFriendInvitationPushApplicationParameter(AccountUid uid, const void* buffer, u64 size);
 
+/**
+ * @brief Creates a GeneralStorage with the specified Id and size.
+ * @note Only available on [18.0.0+].
+ * @param[in] id Id value, high-byte must be 0.
+ * @param[in] size Storage size.
+ */
+Result appletCreateGeneralStorageForDebug(u64 id, u64 size);
+
+/**
+ * @brief Reads data from the buffer previously allocated by \ref appletCreateGeneralStorageForDebug.
+ * @note Only available on [18.0.0+].
+ * @param[out] buffer Output buffer.
+ * @param[in] size Output buffer size.
+ * @param[in] id Id value which was previously used with \ref appletCreateGeneralStorageForDebug, high-byte must be 0.
+ * @param[in] offset Offset in the storage.
+ * @param[out] out_size Output size.
+ */
+Result appletReadGeneralStorageForDebug(void* buffer, size_t size, u64 id, u64 offset, u64 *out_size);
+
+/**
+ * @brief Writes data to the buffer previously allocated by \ref appletCreateGeneralStorageForDebug.
+ * @note Only available on [18.0.0+].
+ * @param[in] buffer Input buffer.
+ * @param[in] size Input buffer size.
+ * @param[in] id Id value which was previously used with \ref appletCreateGeneralStorageForDebug, high-byte must be 0.
+ * @param[in] offset Offset in the storage.
+ */
+Result appletWriteGeneralStorageForDebug(const void* buffer, size_t size, u64 id, u64 offset);
+
 ///@}
 
 ///@name Common cmds

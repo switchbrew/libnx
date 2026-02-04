@@ -2894,6 +2894,57 @@ IPC_MAKE_CMD_IMPL_HOSVER(Result appletFriendInvitationSetApplicationParameter(Ap
 IPC_MAKE_CMD_IMPL_HOSVER(Result appletFriendInvitationClearApplicationParameter(void),                                        &g_appletIDebugFunctions, 131, _appletCmdNoIO,                              (9,0,0))
 IPC_MAKE_CMD_IMPL_HOSVER(Result appletFriendInvitationPushApplicationParameter(AccountUid uid, const void* buffer, u64 size), &g_appletIDebugFunctions, 132, _appletPushToFriendInvitationStorageChannel, (9,0,0), uid, buffer, size)
 
+Result appletCreateGeneralStorageForDebug(u64 id, u64 size) {
+    if (!serviceIsActive(&g_appletIDebugFunctions))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(18,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    const struct {
+        u64 id;
+        u64 size;
+    } in = { id, size };
+
+    serviceAssumeDomain(&g_appletIDebugFunctions);
+    return serviceDispatchIn(&g_appletIDebugFunctions, 410, in);
+}
+
+Result appletReadGeneralStorageForDebug(void* buffer, size_t size, u64 id, u64 offset, u64 *out_size) {
+    if (!serviceIsActive(&g_appletIDebugFunctions))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(18,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    const struct {
+        u64 id;
+        u64 offset;
+    } in = { id, offset };
+
+    serviceAssumeDomain(&g_appletIDebugFunctions);
+    return serviceDispatchInOut(&g_appletIDebugFunctions, 411, in, *out_size,
+        .buffer_attrs = { SfBufferAttr_HipcAutoSelect | SfBufferAttr_Out },
+        .buffers = { { buffer, size } },
+    );
+}
+
+Result appletWriteGeneralStorageForDebug(const void* buffer, size_t size, u64 id, u64 offset) {
+    if (!serviceIsActive(&g_appletIDebugFunctions))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+    if (hosversionBefore(18,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    const struct {
+        u64 id;
+        u64 offset;
+    } in = { id, offset };
+
+    serviceAssumeDomain(&g_appletIDebugFunctions);
+    return serviceDispatchIn(&g_appletIDebugFunctions, 412, in,
+        .buffer_attrs = { SfBufferAttr_HipcAutoSelect | SfBufferAttr_In },
+        .buffers = { { buffer, size } },
+    );
+}
+
 // Common cmds
 Result appletSetTerminateResult(Result res) {
     if (!serviceIsActive(&g_appletSrv) || (!_appletIsApplication() && !serviceIsActive(&g_appletIAppletCommonFunctions)))
