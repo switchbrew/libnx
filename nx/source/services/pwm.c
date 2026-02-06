@@ -1,6 +1,7 @@
 #define NX_SERVICE_ASSUME_NON_DOMAIN
 #include "service_guard.h"
 #include "services/pwm.h"
+#include "runtime/hosversion.h"
 
 static Service g_pwmSrv;
 
@@ -19,7 +20,6 @@ Service* pwmGetServiceSession(void) {
 }
 
 Result pwmOpenSession2(PwmChannelSession *out, PwmChannelDeviceCode device_code) {
-
     if (hosversionBefore(6,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
@@ -44,3 +44,4 @@ Result pwmChannelSessionGetDutyCycle(PwmChannelSession *c, double* out) {
 void pwmChannelSessionClose(PwmChannelSession *c) {
     serviceClose(&c->s);
 }
+
