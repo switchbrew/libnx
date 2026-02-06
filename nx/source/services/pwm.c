@@ -35,7 +35,7 @@ Result pwmChannelSessionGetDutyCycle(PwmChannelSession *c, double* out) {
     if (hosversionBefore(6,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    if (!serviceIsActive(c->s))
+    if (!serviceIsActive(&c->s))
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     return serviceDispatchOut(&c->s, 7, *out);
@@ -44,4 +44,5 @@ Result pwmChannelSessionGetDutyCycle(PwmChannelSession *c, double* out) {
 void pwmChannelSessionClose(PwmChannelSession *c) {
     serviceClose(&c->s);
 }
+
 
