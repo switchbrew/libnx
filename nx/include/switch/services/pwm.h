@@ -35,5 +35,4 @@ Result pwmOpenSession2(PwmChannelSession *out, PwmChannelDeviceCode device_code)
 Result pwmChannelSessionGetDutyCycle(PwmChannelSession *c, double* out);
 
 /// Closes a PwmChannelSession.
-
 void pwmChannelSessionClose(PwmChannelSession *c);
