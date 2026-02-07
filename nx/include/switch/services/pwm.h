@@ -31,8 +31,8 @@ Service* pwmGetServiceSession(void);
 /// Takes a PwmChannelDeviceCode and returns a PwmChannelSession. Only available on [6.0.0+].
 Result pwmOpenSession2(PwmChannelSession *out, PwmChannelDeviceCode device_code);
 
-/// Takes a PwmChannelSession, returns an output double. Only available on [6.0.0+].
-Result pwmChannelSessionGetDutyCycle(PwmChannelSession *c, double* out);
-
 /// Closes a PwmChannelSession.
 void pwmChannelSessionClose(PwmChannelSession *c);
+
+/// Takes a PwmChannelSession, returns an output double. Only available on [6.0.0+].
+Result pwmChannelSessionGetDutyCycle(PwmChannelSession *c, double* out);
