@@ -44,5 +44,3 @@ Result pwmChannelSessionGetDutyCycle(PwmChannelSession *c, double* out) {
 void pwmChannelSessionClose(PwmChannelSession *c) {
     serviceClose(&c->s);
 }
-
-
