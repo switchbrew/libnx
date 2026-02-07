@@ -31,6 +31,10 @@ Result pwmOpenSession2(PwmChannelSession *out, PwmChannelDeviceCode device_code)
     );
 }
 
+void pwmChannelSessionClose(PwmChannelSession *c) {
+    serviceClose(&c->s);
+}
+
 Result pwmChannelSessionGetDutyCycle(PwmChannelSession *c, double* out) {
     if (hosversionBefore(6,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
@@ -39,8 +43,4 @@ Result pwmChannelSessionGetDutyCycle(PwmChannelSession *c, double* out) {
         return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
 
     return serviceDispatchOut(&c->s, 7, *out);
-}
-
-void pwmChannelSessionClose(PwmChannelSession *c) {
-    serviceClose(&c->s);
 }
