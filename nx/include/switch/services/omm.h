@@ -11,16 +11,16 @@
 
 ///OperationMode
 typedef enum {
-    ommOperationMode_Handheld   = 0,
-    ommOperationMode_Console    = 1
-} ommOperationMode;
+    OmmOperationMode_Handheld   = 0,
+    OmmOperationMode_Console    = 1
+} OmmOperationMode;
 
 ///OperationModePolicy
 typedef enum {
-    ommOperationModePolicy_Auto       = 0,
-    ommOperationModePolicy_Handheld   = 1,
-    ommOperationModePolicy_Console    = 2
-} ommOperationModePolicy;
+    OmmOperationModePolicy_Auto       = 0,
+    OmmOperationModePolicy_Handheld   = 1,
+    OmmOperationModePolicy_Console    = 2
+} OmmOperationModePolicy;
 
 /// Initialize omm.
 Result ommInitialize(void);
@@ -34,8 +34,8 @@ Service* ommGetServiceSession(void);
 /// Returns a DefaultDisplayResolution. Only available on [3.0.0+].
 Result ommGetDefaultDisplayResolution(s32* width, s32* height);
 
-/// Returns an ommOperationMode.
-Result ommGetOperationMode(ommOperationMode* s);
+/// Returns an OmmOperationMode.
+Result ommGetOperationMode(OmmOperationMode* s);
 
-/// Takes an ommOperationModePolicy. Only available on [3.0.0+].
-Result ommSetOperationModePolicy(ommOperationModePolicy value);
+/// Takes an OmmOperationModePolicy. Only available on [3.0.0+].
+Result ommSetOperationModePolicy(OmmOperationModePolicy value);
