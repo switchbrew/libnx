@@ -34,9 +34,8 @@ Service* ommGetServiceSession(void);
 /// Returns a DefaultDisplayResolution. Only available on [3.0.0+].
 Result ommGetDefaultDisplayResolution(s32* width, s32* height);
 
-/// Returns an ommOperationModePolicy.
+/// Returns an ommOperationMode.
 Result ommGetOperationMode(ommOperationMode* s);
 
 /// Takes an ommOperationModePolicy. Only available on [3.0.0+].
-
 Result ommSetOperationModePolicy(ommOperationModePolicy value);
