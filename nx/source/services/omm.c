@@ -38,7 +38,7 @@ Result ommGetDefaultDisplayResolution(s32* width, s32* height) {
     return rc;
 }
 
-Result ommGetOperationMode(ommOperationMode* s) {
+Result ommGetOperationMode(OmmOperationMode* s) {
     u8 out;
     Result rc = serviceDispatchOut(&g_ommSrv, 0, out);
 
@@ -49,7 +49,7 @@ Result ommGetOperationMode(ommOperationMode* s) {
     return rc;
 }
 
-Result ommSetOperationModePolicy(ommOperationModePolicy value) {
+Result ommSetOperationModePolicy(OmmOperationModePolicy value) {
     if (hosversionBefore(3,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
