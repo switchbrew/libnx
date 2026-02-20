@@ -261,6 +261,11 @@ typedef enum {
     FsGameCardPartition_Logo   = 3,  ///< [4.0.0+]
 } FsGameCardPartition;
 
+typedef enum {
+    FsGameCardPartitionRaw_Normal = 0,
+    FsGameCardPartitionRaw_Secure = 1,
+} FsGameCardPartitionRaw;
+
 typedef struct {
     u32 value;
 } FsGameCardHandle;
@@ -540,8 +545,11 @@ Result fsOpenDataStorageByProgramId(FsStorage *out, u64 program_id); /// <[3.0.0
 Result fsOpenDataStorageByDataId(FsStorage* out, u64 dataId, NcmStorageId storageId);
 Result fsOpenPatchDataStorageByCurrentProcess(FsStorage* out);
 
+Result fsOpenGameCardPartition(FsStorage* out, const FsGameCardHandle* handle, FsGameCardPartitionRaw partition);
+
 Result fsOpenDeviceOperator(FsDeviceOperator* out);
 Result fsOpenSdCardDetectionEventNotifier(FsEventNotifier* out);
+Result fsOpenGameCardDetectionEventNotifier(FsEventNotifier* out);
 
 Result fsIsSignedSystemPartitionOnSdCardValid(bool *out);
 
