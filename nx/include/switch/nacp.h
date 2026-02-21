@@ -42,9 +42,17 @@ typedef struct {
     u8 count;                                                                            ///< Count
 } NacpApplicationControlDataCondition;
 
+typedef union {
+    NacpLanguageEntry lang[16];                                                          ///< \ref NacpLanguageEntry, use only if TitlesDataFormat == 0
+    struct {
+        u16 buffer_size;
+        u8 buffer[0x2FFE];
+    } compressed_data;                                                                   ///< ///< \ref use only if TitlesDataFormat == 1, uncompressed data matches NacpLanguageEntry[32]
+} NacpLanguageEntryData;
+
 /// ns ApplicationControlProperty
 typedef struct {
-    NacpLanguageEntry lang[16];                                                          ///< \ref NacpLanguageEntry
+    NacpLanguageEntryData lang_data;                                                     ///< \ref NacpLanguageEntryData
     u8 isbn[0x25];                                                                       ///< Isbn
     u8 startup_user_account;                                                             ///< StartupUserAccount
     u8 user_account_switch_lock;                                                         ///< UserAccountSwitchLock
