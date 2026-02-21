@@ -320,11 +320,11 @@ Result nsGetApplicationControlData(NsApplicationControlSource source, u64 applic
  * @param[out] buffer \ref NsApplicationControlData
  * @param[in] size Size of the buffer.
  * @param[in] flag1 Default is 0. 0xFF speeds up execution.
- * @param[in] flag2 Default is 0.
+ * @param[in] acd_idx Default is 0. 1 tries to get NsApplicationControlData for Switch 2 Edition.
  * @param[out] actual_size Actual output size.
  * @param[out] unk Returned with size, always 0.
  */
-Result nsGetApplicationControlData2(NsApplicationControlSource source, u64 application_id, NsApplicationControlData* buffer, size_t size, u8 flag1, u8 flag2, u64* actual_size, u32* unk);
+Result nsGetApplicationControlData2(NsApplicationControlSource source, u64 application_id, NsApplicationControlData* buffer, size_t size, u8 flag1, u8 acd_idx, u64* actual_size, u32* unk);
 
 /**
  * @brief GetApplicationDesiredLanguage. Selects a \ref NacpLanguageEntry to use from the specified \ref NacpStruct.
