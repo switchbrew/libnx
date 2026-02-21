@@ -108,7 +108,7 @@ typedef struct {
     u8 application_error_code_prefix;                                                    ///< [20.0.0+] ApplicationErrorCodePrefix
     u8 titles_data_format;                                                               ///< [21.0.0+] TitlesDataFormat
     u8 acd_index;                                                                        ///< [20.0.0+] AcdIndex
-    u8 apparent_platform;                                                                ///< [21.0.0+] ApparentPlatform
+    u8 apparent_platform;                                                                ///< [20.0.0+] ApparentPlatform
     NacpNeighborDetectionClientConfiguration neighbor_detection_client_configuration;    ///< NeighborDetectionClientConfiguration
     NacpApplicationJitConfiguration jit_configuration;                                   ///< JitConfiguration
     u16 required_addon_contents_set_binary_descriptor[0x20];                             ///< RequiredAddOnContentsSetBinaryDescriptor
