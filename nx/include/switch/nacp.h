@@ -43,11 +43,11 @@ typedef struct {
 } NacpApplicationControlDataCondition;
 
 typedef union {
-    NacpLanguageEntry lang[16];                                                          ///< use only if TitlesDataFormat == 0, \ref NacpLanguageEntry
+    NacpLanguageEntry lang[16];                                                          ///< Use only if TitlesDataFormat == 0, \ref NacpLanguageEntry
     struct {
         u16 buffer_size;
-        u8 buffer[0x2FFE];
-    } compressed_data;                                                                   ///< use only if TitlesDataFormat == 1, uncompressed data matches NacpLanguageEntry[32]
+        u8 buffer[0x2FFE];                                                               ///< Compressed using DEFLATE with wbits set to -15
+    } compressed_data;                                                                   ///< Use only if TitlesDataFormat == 1, uncompressed data matches NacpLanguageEntry[32]
 } NacpLanguageEntryData;
 
 /// ns ApplicationControlProperty
