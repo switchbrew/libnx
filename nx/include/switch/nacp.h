@@ -46,7 +46,7 @@ typedef union {
     NacpLanguageEntry lang[16];                                                          ///< Use only if TitlesDataFormat == 0, \ref NacpLanguageEntry
     struct {
         u16 buffer_size;
-        u8 buffer[0x2FFE];                                                               ///< Compressed using DEFLATE with wbits set to -15
+        u8 buffer[0x2FFE];                                                               ///< Compressed using DEFLATE with wbits = -15
     } compressed_data;                                                                   ///< Use only if TitlesDataFormat == 1, uncompressed data matches NacpLanguageEntry[32]
 } NacpLanguageEntryData;
 
