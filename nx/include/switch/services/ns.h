@@ -656,7 +656,6 @@ Result nsRequestDownloadApplicationControlData(AsyncResult *a, u64 application_i
  */
 Result nsListApplicationTitle(AsyncValue *a, NsApplicationControlSource source, const u64 *application_ids, s32 count, void* buffer, size_t size);
 
-
 /**
  * @brief ListApplicationTitle2. Returns \ref NacpLanguageEntry matching currently set system language for each specified ApplicationId.
  * @note The data available with \ref asyncValueGet is a s32 for the offset within the buffer where the output data is located, \ref asyncValueGetSize returns the total byte-size of the data located here. The data located here is the \ref NacpLanguageEntry for each specified ApplicationId.
