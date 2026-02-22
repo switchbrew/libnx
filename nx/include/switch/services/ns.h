@@ -335,7 +335,7 @@ Result nsGetApplicationControlData2(NsApplicationControlSource source, u64 appli
 Result nsGetApplicationDesiredLanguage(NacpStruct *nacp, NacpLanguageEntry **langentry);
 
 /**
- * @brief GetApplicationTitle. Returns \ref NacpLanguageEntry matching currently set system language for specified application_ids.
+ * @brief GetApplicationTitle. Returns \ref NacpLanguageEntry matching currently set system language for each specified ApplicationId.
  * @note The data available with \ref asyncValueGet is a s32 for the offset within the buffer where the output data is located, \ref asyncValueGetSize returns the total byte-size of the data located here. The data located here is the \ref NacpLanguageEntry for each specified ApplicationId.
  * @note Only available on [20.0.0+].
  * @note NacpLanguageEntry is decompressed when necessary only on [21.0.0+].
