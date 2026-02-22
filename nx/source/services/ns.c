@@ -1003,7 +1003,6 @@ static Result _nsListApplicationTitleIcon(AsyncValue *a, NsApplicationControlSou
     if (R_SUCCEEDED(rc))
         eventLoadRemote(&a->event, event, false);
 
-    serviceClose(&srv);
     return rc;
 }
 
@@ -1019,7 +1018,10 @@ Result nsListApplicationTitle(AsyncValue *a, NsApplicationControlSource source, 
 	
     if (R_SUCCEEDED(rc)) {
 		rc = nsGetApplicationManagerInterface(&srv);
-		if (R_SUCCEEDED(rc)) rc = _nsListApplicationTitleIcon(a, source, application_ids, count, &tmem, 407, &srv);
+		if (R_SUCCEEDED(rc)) {
+			rc = _nsListApplicationTitleIcon(a, source, application_ids, count, &tmem, 407, &srv);
+			serviceClose(&srv);
+		}
 	}
     tmemClose(&tmem);
 
@@ -1038,7 +1040,10 @@ Result nsListApplicationTitle2(AsyncValue *a, NsApplicationControlSource source,
 	
     if (R_SUCCEEDED(rc)) {
 		rc = nsGetReadOnlyApplicationControlDataInterface(&srv);
-		if (R_SUCCEEDED(rc)) rc = _nsListApplicationTitleIcon(a, source, application_ids, count, &tmem, 10, &srv);
+		if (R_SUCCEEDED(rc)) {
+			rc = _nsListApplicationTitleIcon(a, source, application_ids, count, &tmem, 10, &srv);
+			serviceClose(&srv);
+		}
 	}
 
 	tmemClose(&tmem);
@@ -1057,7 +1062,10 @@ Result nsListApplicationIcon(AsyncValue *a, NsApplicationControlSource source, c
     rc = tmemCreateFromMemory(&tmem, buffer, size, Perm_R);
     if (R_SUCCEEDED(rc)) {
 		rc = nsGetApplicationManagerInterface(&srv);
-		if (R_SUCCEEDED(rc)) rc = _nsListApplicationTitleIcon(a, source, application_ids, count, &tmem, 408, &srv);
+		if (R_SUCCEEDED(rc)) {
+			rc = _nsListApplicationTitleIcon(a, source, application_ids, count, &tmem, 408, &srv);
+			serviceClose(&srv);
+		}
 	}
     tmemClose(&tmem);
 
