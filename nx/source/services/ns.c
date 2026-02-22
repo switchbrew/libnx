@@ -989,7 +989,7 @@ static Result _nsListApplicationTitleIcon(AsyncValue *a, NsApplicationControlSou
 
     memset(a, 0, sizeof(*a));
     Handle event = INVALID_HANDLE;
-    rc = serviceDispatchIn(srv, cmd_id, in,
+    Result rc = serviceDispatchIn(srv, cmd_id, in,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
         .buffers = { { application_ids, count*sizeof(u64) } },
         .in_num_handles = 1,
