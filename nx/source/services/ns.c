@@ -980,7 +980,7 @@ Result nsRequestDownloadApplicationControlData(AsyncResult *a, u64 application_i
     return _nsManCmdInU64OutAsyncResult(a, application_id, 402);
 }
 
-static Result _nsListApplicationTitleIcon(AsyncValue *a, NsApplicationControlSource source, const u64 *application_ids, s32 count, TransferMemory *tmem, u32 cmd_id, Service* srv) {
+static Result _nsListApplicationTitleIcon(Service* srv, AsyncValue *a, NsApplicationControlSource source, const u64 *application_ids, s32 count, TransferMemory *tmem, u32 cmd_id) {
     const struct {
         u8 source;
         u8 pad[7];
@@ -1019,7 +1019,7 @@ Result nsListApplicationTitle(AsyncValue *a, NsApplicationControlSource source, 
     if (R_SUCCEEDED(rc)) {
 		rc = nsGetApplicationManagerInterface(&srv);
 		if (R_SUCCEEDED(rc)) {
-			rc = _nsListApplicationTitleIcon(a, source, application_ids, count, &tmem, 407, &srv);
+			rc = _nsListApplicationTitleIcon(&srv, a, source, application_ids, count, &tmem, 407);
 			serviceClose(&srv);
 		}
 	}
@@ -1041,7 +1041,7 @@ Result nsListApplicationTitle2(AsyncValue *a, NsApplicationControlSource source,
     if (R_SUCCEEDED(rc)) {
 		rc = nsGetReadOnlyApplicationControlDataInterface(&srv);
 		if (R_SUCCEEDED(rc)) {
-			rc = _nsListApplicationTitleIcon(a, source, application_ids, count, &tmem, 10, &srv);
+			rc = _nsListApplicationTitleIcon(&srv, a, source, application_ids, count, &tmem, 10);
 			serviceClose(&srv);
 		}
 	}
@@ -1063,7 +1063,7 @@ Result nsListApplicationIcon(AsyncValue *a, NsApplicationControlSource source, c
     if (R_SUCCEEDED(rc)) {
 		rc = nsGetApplicationManagerInterface(&srv);
 		if (R_SUCCEEDED(rc)) {
-			rc = _nsListApplicationTitleIcon(a, source, application_ids, count, &tmem, 408, &srv);
+			rc = _nsListApplicationTitleIcon(&srv, a, source, application_ids, count, &tmem, 408);
 			serviceClose(&srv);
 		}
 	}
