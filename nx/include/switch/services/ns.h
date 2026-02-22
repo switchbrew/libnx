@@ -334,6 +334,20 @@ Result nsGetApplicationControlData2(NsApplicationControlSource source, u64 appli
  */
 Result nsGetApplicationDesiredLanguage(NacpStruct *nacp, NacpLanguageEntry **langentry);
 
+/**
+ * @brief GetApplicationTitle. Returns \ref NacpLanguageEntry matching currently set system language for specified application_ids.
+ * @note The data available with \ref asyncValueGet is a s32 for the offset within the buffer where the output data is located, \ref asyncValueGetSize returns the total byte-size of the data located here. The data located here is the \ref NacpLanguageEntry for each specified ApplicationId.
+ * @note Only available on [20.0.0+].
+ * @note NacpLanguageEntry is decompressed when necessary only on [21.0.0+].
+ * @param[out] a \ref AsyncValue
+ * @param[in] source Source, qlaunch uses ::NsApplicationControlSource_Storage.
+ * @param[in] application_ids Input array of ApplicationIds.
+ * @param[in] count Size of the application_ids array in entries.
+ * @param buffer 0x1000-byte aligned buffer for TransferMemory. This buffer must not be accessed until the async operation finishes.
+ * @param[in] size 0x1000-byte aligned buffer size for TransferMemory. This must be at least: count*sizeof(\ref NacpLanguageEntry) + count*sizeof(u64) + count*sizeof(\ref NsApplicationControlData).
+ */
+Result nsGetApplicationTitle(AsyncValue *a, NsApplicationControlSource source, const u64 *application_ids, s32 count, void* buffer, size_t size);
+
 ///@}
 
 ///@name IECommerceInterface
