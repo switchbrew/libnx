@@ -980,7 +980,7 @@ Result nsRequestDownloadApplicationControlData(AsyncResult *a, u64 application_i
     return _nsManCmdInU64OutAsyncResult(a, application_id, 402);
 }
 
-static Result _nsListApplicationTitleIcon(AsyncValue *a, NsApplicationControlSource source, const u64 *application_ids, s32 count, TransferMemory *tmem, u32 cmd_id, Service* srv) { // [8.0.0+]
+static Result _nsListApplicationTitleIcon(AsyncValue *a, NsApplicationControlSource source, const u64 *application_ids, s32 count, TransferMemory *tmem, u32 cmd_id, Service* srv) {
     const struct {
         u8 source;
         u8 pad[7];
