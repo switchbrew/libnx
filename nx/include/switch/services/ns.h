@@ -340,7 +340,7 @@ Result nsGetApplicationDesiredLanguage(NacpStruct *nacp, NacpLanguageEntry **lan
  * @note Only available on [20.0.0+].
  * @note NacpLanguageEntry is decompressed when necessary only on [21.0.0+].
  * @param[out] a \ref AsyncValue
- * @param[in] source Source, qlaunch uses ::NsApplicationControlSource_Storage.
+ * @param[in] source Source, official sw uses ::NsApplicationControlSource_Storage.
  * @param[in] application_ids Input array of ApplicationIds.
  * @param[in] count Size of the application_ids array in entries.
  * @param buffer 0x1000-byte aligned buffer for TransferMemory. This buffer must not be accessed until the async operation finishes.
