@@ -1006,26 +1006,6 @@ static Result _nsListApplicationTitleIcon(Service* srv, AsyncValue *a, NsApplica
     return rc;
 }
 
-static Result _nsListApplicationTitleIcon2(Service* srv, AsyncValue *a, const u64 *application_ids, s32 count, TransferMemory *tmem, u32 cmd_id) {
-    memset(a, 0, sizeof(*a));
-    Handle event = INVALID_HANDLE;
-    Result rc = serviceDispatchIn(srv, cmd_id, tmem->size,
-        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
-        .buffers = { { application_ids, count*sizeof(u64) } },
-        .in_num_handles = 1,
-        .in_handles = { tmem->handle },
-        .out_num_objects = 1,
-        .out_objects = &a->s,
-        .out_handle_attrs = { SfOutHandleAttr_HipcCopy },
-        .out_handles = &event,
-    );
-
-    if (R_SUCCEEDED(rc))
-        eventLoadRemote(&a->event, event, false);
-
-    return rc;
-}
-
 Result nsListApplicationTitle(AsyncValue *a, NsApplicationControlSource source, const u64 *application_ids, s32 count, void* buffer, size_t size) {
     if (hosversionBefore(8,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
@@ -1062,29 +1042,6 @@ Result nsListApplicationTitle2(AsyncValue *a, NsApplicationControlSource source,
 		rc = nsGetReadOnlyApplicationControlDataInterface(&srv);
 		if (R_SUCCEEDED(rc)) {
 			rc = _nsListApplicationTitleIcon(&srv, a, source, application_ids, count, &tmem, 10);
-			serviceClose(&srv);
-		}
-	}
-
-	tmemClose(&tmem);
-
-    return rc;
-}
-
-Result nsListApplicationTitle3(AsyncValue *a, const u64 *application_ids, s32 count, void* buffer, size_t size) {
-    if (hosversionBefore(20,0,0))
-        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
-
-    Result rc=0;
-    TransferMemory tmem={0};
-	Service srv={0};
-
-    rc = tmemCreateFromMemory(&tmem, buffer, size, Perm_R);
-	
-    if (R_SUCCEEDED(rc)) {
-		rc = nsGetReadOnlyApplicationControlDataInterface(&srv);
-		if (R_SUCCEEDED(rc)) {
-			rc = _nsListApplicationTitleIcon2(&srv, a, application_ids, count, &tmem, 13);
 			serviceClose(&srv);
 		}
 	}
