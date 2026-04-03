@@ -488,7 +488,7 @@ Result nsGetApplicationControlData(NsApplicationControlSource source, u64 applic
     return rc;
 }
 
-Result nsGetApplicationControlData2(NsApplicationControlSource source, u64 application_id, NsApplicationControlData* buffer, size_t size, u8 flag1, u8 flag2, u64* actual_size, u32* unk) {
+Result nsGetApplicationControlData2(NsApplicationControlSource source, u64 application_id, NsApplicationControlData* buffer, size_t size, u8 flag1, u8 acd_idx, u64* actual_size, u32* unk) {
     if (hosversionBefore(19,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
     Service srv={0}, *srv_ptr = &srv;
@@ -501,7 +501,7 @@ Result nsGetApplicationControlData2(NsApplicationControlSource source, u64 appli
         u8 flags[2];
         u8 pad[5];
         u64 application_id;
-    } in = { source, {flag1, flag2}, {0}, application_id };
+    } in = { source, {flag1, acd_idx}, {0}, application_id };
 
     u64 tmp=0;
 
