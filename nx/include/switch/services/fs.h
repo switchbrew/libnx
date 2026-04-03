@@ -555,7 +555,7 @@ Result fsGetRightsIdAndKeyGenerationByPath(const char* path, FsContentAttributes
 
 Result fsGetContentStorageInfoIndex(s32 *out); ///< [19.0.0+]
 
-Result fsDisableAutoSaveDataCreation(void);
+Result fsDisableAutoSaveDataCreation(void); ///< [1.0.0-21.2.0]
 
 Result fsSetGlobalAccessLogMode(u32 mode);
 Result fsGetGlobalAccessLogMode(u32* out_mode);

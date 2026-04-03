@@ -631,6 +631,9 @@ Result fsGetContentStorageInfoIndex(s32 *out) {
 }
 
 Result fsDisableAutoSaveDataCreation(void) {
+    if (hosversionAtLeast(22,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    
     return _fsCmdNoIO(&g_fsSrv, 1003);
 }
 
