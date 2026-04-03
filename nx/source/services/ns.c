@@ -541,11 +541,11 @@ Result nsGetApplicationDesiredLanguage(NacpStruct *nacp, NacpLanguageEntry **lan
 
     if (R_SUCCEEDED(rc)) {
         for (u32 i=0; i<16; i++) {
-            entry = &nacp->lang[i];
+            entry = &nacp->lang_data.lang[i];
             if (entry->name[0] || entry->author[0]) lang_bitmask |= BIT(i);
         }
         if (!lang_bitmask) {
-            *langentry = &nacp->lang[0];
+            *langentry = &nacp->lang_data.lang[0];
             return 0;
         }
     }
@@ -554,7 +554,7 @@ Result nsGetApplicationDesiredLanguage(NacpStruct *nacp, NacpLanguageEntry **lan
     if (R_SUCCEEDED(rc)) {
         if (out > 16) out = 0;
         if (lang_bitmask & BIT(out))
-            *langentry = &nacp->lang[out];
+            *langentry = &nacp->lang_data.lang[out];
         else
             rc = MAKERESULT(Module_Libnx, LibnxError_ShouldNotHappen);
     }
