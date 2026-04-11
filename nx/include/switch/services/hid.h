@@ -1871,8 +1871,8 @@ Result hidSetSixAxisSensorFusionParameters(HidSixAxisSensorHandle handle, float 
 
 /**
  * @brief GetSixAxisSensorFusionParameters
- * @param[in] handle \ref HidSixAxisSensorHandle
  * @note Applet services must be initialized.
+ * @param[in] handle \ref HidSixAxisSensorHandle
  * @param[out] unk0 Unknown
  * @param[out] unk1 Unknown
  */
