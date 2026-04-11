@@ -1485,6 +1485,7 @@ void* hidGetSharedmemAddr(void);
 ///@{
 
 /// Initialize TouchScreen. Must be called when TouchScreen is being used. Used automatically by \ref hidScanInput when required.
+/// Applet services must be initialized.
 void hidInitializeTouchScreen(void);
 
 /**
@@ -1501,6 +1502,7 @@ size_t hidGetTouchScreenStates(HidTouchScreenState *states, size_t count);
 ///@{
 
 /// Initialize Mouse. Must be called when Mouse is being used. Used automatically by \ref hidScanInput when required.
+/// Applet services must be initialized.
 void hidInitializeMouse(void);
 
 /**
@@ -1517,6 +1519,7 @@ size_t hidGetMouseStates(HidMouseState *states, size_t count);
 ///@{
 
 /// Initialize Keyboard. Must be called when Keyboard is being used. Used automatically by \ref hidScanInput when required.
+/// Applet services must be initialized.
 void hidInitializeKeyboard(void);
 
 /**
@@ -1585,6 +1588,7 @@ size_t hidGetCaptureButtonStates(HidCaptureButtonState *states, size_t count);
 ///@{
 
 /// Initialize Npad. Must be called when Npad is being used. Used automatically by \ref hidScanInput when required.
+/// Applet services must be initialized.
 void hidInitializeNpad(void);
 
 /**
@@ -1794,6 +1798,7 @@ size_t hidGetSixAxisSensorStates(HidSixAxisSensorHandle handle, HidSixAxisSensor
 ///@{
 
 /// Initialize Gesture. Must be called when Gesture is being used.
+/// Applet services must be initialized.
 void hidInitializeGesture(void);
 
 /**
@@ -1810,6 +1815,7 @@ size_t hidGetGestureStates(HidGestureState *states, size_t count);
  * @brief SendKeyboardLockKeyEvent
  * @note Same as \ref hidsysSendKeyboardLockKeyEvent.
  * @note Only available on [6.0.0+].
+ * @note Applet services must be initialized.
  * @param[in] events Bitfield of \ref HidKeyboardLockKeyEvent.
  */
 Result hidSendKeyboardLockKeyEvent(u32 events);
@@ -1826,18 +1832,21 @@ Result hidGetSixAxisSensorHandles(HidSixAxisSensorHandle *handles, s32 total_han
 
 /**
  * @brief Starts the SixAxisSensor for the specified handle.
+ * @note Applet services must be initialized.
  * @param[in] handle \ref HidSixAxisSensorHandle
  */
 Result hidStartSixAxisSensor(HidSixAxisSensorHandle handle);
 
 /**
  * @brief Stops the SixAxisSensor for the specified handle.
+ * @note Applet services must be initialized.
  * @param[in] handle \ref HidSixAxisSensorHandle
  */
 Result hidStopSixAxisSensor(HidSixAxisSensorHandle handle);
 
 /**
  * @brief IsSixAxisSensorFusionEnabled
+ * @note Applet services must be initialized.
  * @param[in] handle \ref HidSixAxisSensorHandle
  * @param[out] out Output flag.
  */
@@ -1845,6 +1854,7 @@ Result hidIsSixAxisSensorFusionEnabled(HidSixAxisSensorHandle handle, bool *out)
 
 /**
  * @brief EnableSixAxisSensorFusion
+ * @note Applet services must be initialized.
  * @param[in] handle \ref HidSixAxisSensorHandle
  * @param[in] flag Flag
  */
@@ -1852,6 +1862,7 @@ Result hidEnableSixAxisSensorFusion(HidSixAxisSensorHandle handle, bool flag);
 
 /**
  * @brief SetSixAxisSensorFusionParameters
+ * @note Applet services must be initialized.
  * @param[in] handle \ref HidSixAxisSensorHandle
  * @param[in] unk0 Must be 0.0f-1.0f.
  * @param[in] unk1 Unknown
@@ -1861,6 +1872,7 @@ Result hidSetSixAxisSensorFusionParameters(HidSixAxisSensorHandle handle, float 
 /**
  * @brief GetSixAxisSensorFusionParameters
  * @param[in] handle \ref HidSixAxisSensorHandle
+ * @note Applet services must be initialized.
  * @param[out] unk0 Unknown
  * @param[out] unk1 Unknown
  */
@@ -1868,12 +1880,14 @@ Result hidGetSixAxisSensorFusionParameters(HidSixAxisSensorHandle handle, float 
 
 /**
  * @brief ResetSixAxisSensorFusionParameters
+ * @note Applet services must be initialized.
  * @param[in] handle \ref HidSixAxisSensorHandle
  */
 Result hidResetSixAxisSensorFusionParameters(HidSixAxisSensorHandle handle);
 
 /**
  * @brief Sets the ::HidGyroscopeZeroDriftMode for the specified SixAxisSensorHandle.
+ * @note Applet services must be initialized.
  * @param[in] handle \ref HidSixAxisSensorHandle
  * @param[in] mode \ref HidGyroscopeZeroDriftMode
  */
@@ -1881,6 +1895,7 @@ Result hidSetGyroscopeZeroDriftMode(HidSixAxisSensorHandle handle, HidGyroscopeZ
 
 /**
  * @brief Gets the ::HidGyroscopeZeroDriftMode for the specified SixAxisSensorHandle.
+ * @note Applet services must be initialized.
  * @param[in] handle \ref HidSixAxisSensorHandle
  * @param[out] mode \ref HidGyroscopeZeroDriftMode
  */
@@ -1888,12 +1903,14 @@ Result hidGetGyroscopeZeroDriftMode(HidSixAxisSensorHandle handle, HidGyroscopeZ
 
 /**
  * @brief Resets the ::HidGyroscopeZeroDriftMode for the specified SixAxisSensorHandle to ::HidGyroscopeZeroDriftMode_Standard.
+ * @note Applet services must be initialized.
  * @param[in] handle \ref HidSixAxisSensorHandle
  */
 Result hidResetGyroscopeZeroDriftMode(HidSixAxisSensorHandle handle);
 
 /**
  * @brief IsSixAxisSensorAtRest
+ * @note Applet services must be initialized.
  * @param[in] handle \ref HidSixAxisSensorHandle
  * @param[out] out Output flag.
  */
@@ -1902,6 +1919,7 @@ Result hidIsSixAxisSensorAtRest(HidSixAxisSensorHandle handle, bool *out);
 /**
  * @brief IsFirmwareUpdateAvailableForSixAxisSensor
  * @note Only available on [6.0.0+].
+ * @note Applet services must be initialized.
  * @param[in] handle \ref HidSixAxisSensorHandle
  * @param[out] out Output flag.
  */
@@ -1910,12 +1928,14 @@ Result hidIsFirmwareUpdateAvailableForSixAxisSensor(HidSixAxisSensorHandle handl
 /**
  * @brief Sets which controller styles are supported.
  * @note This is automatically called with the needed styles in \ref hidScanInput when required.
+ * @note Applet services must be initialized.
  * @param[in] style_set Bitfield of \ref HidNpadStyleTag.
  */
 Result hidSetSupportedNpadStyleSet(u32 style_set);
 
 /**
  * @brief Gets which controller styles are supported.
+ * @note Applet services must be initialized.
  * @param[out] style_set Bitfield of \ref HidNpadStyleTag.
  */
 Result hidGetSupportedNpadStyleSet(u32 *style_set);
@@ -1923,6 +1943,7 @@ Result hidGetSupportedNpadStyleSet(u32 *style_set);
 /**
  * @brief Sets which \ref HidNpadIdType are supported.
  * @note This is automatically called with HidNpadIdType_No{1-8} and HidNpadIdType_Handheld when required in \ref hidScanInput.
+ * @note Applet services must be initialized.
  * @param[in] ids Input array of \ref HidNpadIdType.
  * @param[in] count Total entries in the ids array. Must be <=10.
  */
@@ -1931,6 +1952,7 @@ Result hidSetSupportedNpadIdType(const HidNpadIdType *ids, size_t count);
 /**
  * @brief Gets an Event which is signaled when the \ref hidGetNpadStyleSet output is updated for the specified controller.
  * @note The Event must be closed by the user once finished with it.
+ * @note Applet services must be initialized.
  * @param[in] id \ref HidNpadIdType
  * @param[out] out_event Output Event.
  * @param[in] autoclear The autoclear for the Event.
@@ -1939,6 +1961,7 @@ Result hidAcquireNpadStyleSetUpdateEventHandle(HidNpadIdType id, Event* out_even
 
 /**
  * @brief DisconnectNpad
+ * @note Applet services must be initialized.
  * @param[in] id \ref HidNpadIdType
  */
 Result hidDisconnectNpad(HidNpadIdType id);
@@ -1953,24 +1976,28 @@ Result hidGetPlayerLedPattern(HidNpadIdType id, u8 *out);
 /**
  * @brief Sets the \ref HidNpadJoyHoldType.
  * @note Used automatically by \ref hidScanInput when required.
+ * @note Applet services must be initialized.
  * @param[in] type \ref HidNpadJoyHoldType
  */
 Result hidSetNpadJoyHoldType(HidNpadJoyHoldType type);
 
 /**
  * @brief Gets the \ref HidNpadJoyHoldType.
+ * @note Applet services must be initialized.
  * @param[out] type \ref HidNpadJoyHoldType
  */
 Result hidGetNpadJoyHoldType(HidNpadJoyHoldType *type);
 
 /**
  * @brief This is the same as \ref hidSetNpadJoyAssignmentModeSingle, except ::HidNpadJoyDeviceType_Left is used for the type.
+ * @note Applet services must be initialized.
  * @param[in] id \ref HidNpadIdType, must be HidNpadIdType_No*.
  */
 Result hidSetNpadJoyAssignmentModeSingleByDefault(HidNpadIdType id);
 
 /**
  * @brief This is the same as \ref hidSetNpadJoyAssignmentModeSingleWithDestination, except without the output params.
+ * @note Applet services must be initialized.
  * @param[in] id \ref HidNpadIdType, must be HidNpadIdType_No*.
  * @param[in] type \ref HidNpadJoyDeviceType
  */
@@ -1979,6 +2006,7 @@ Result hidSetNpadJoyAssignmentModeSingle(HidNpadIdType id, HidNpadJoyDeviceType 
 /**
  * @brief Use this if you want to use a pair of joy-cons as a single HidNpadIdType_No*. When used, both joy-cons in a pair should be used with this (HidNpadIdType_No1 and HidNpadIdType_No2 for example).
  * @note Used automatically by \ref hidScanInput when required.
+ * @note Applet services must be initialized.
  * @param[in] id \ref HidNpadIdType, must be HidNpadIdType_No*.
  */
 Result hidSetNpadJoyAssignmentModeDual(HidNpadIdType id);
@@ -1987,6 +2015,7 @@ Result hidSetNpadJoyAssignmentModeDual(HidNpadIdType id);
  * @brief Merge two single joy-cons into a dual-mode controller. Use this after \ref hidSetNpadJoyAssignmentModeDual, when \ref hidSetNpadJoyAssignmentModeSingleByDefault was previously used (this includes using this manually at application exit).
  * @brief To be successful, id0/id1 must correspond to controllers supporting styles HidNpadStyleTag_NpadJoyLeft/Right, or HidNpadStyleTag_NpadJoyRight/Left.
  * @brief If successful, the id of the resulting dual controller is set to id0.
+ * @note Applet services must be initialized.
  * @param[in] id0 \ref HidNpadIdType
  * @param[in] id1 \ref HidNpadIdType
  */
@@ -1994,22 +2023,26 @@ Result hidMergeSingleJoyAsDualJoy(HidNpadIdType id0, HidNpadIdType id1);
 
 /**
  * @brief StartLrAssignmentMode
+ * @note Applet services must be initialized.
  */
 Result hidStartLrAssignmentMode(void);
 
 /**
  * @brief StopLrAssignmentMode
+ * @note Applet services must be initialized.
  */
 Result hidStopLrAssignmentMode(void);
 
 /**
  * @brief Sets the \ref HidNpadHandheldActivationMode.
+ * @note Applet services must be initialized.
  * @param[in] mode \ref HidNpadHandheldActivationMode
  */
 Result hidSetNpadHandheldActivationMode(HidNpadHandheldActivationMode mode);
 
 /**
  * @brief Gets the \ref HidNpadHandheldActivationMode.
+ * @note Applet services must be initialized.
  * @param[out] out \ref HidNpadHandheldActivationMode
  */
 Result hidGetNpadHandheldActivationMode(HidNpadHandheldActivationMode *out);
@@ -2024,6 +2057,7 @@ Result hidSwapNpadAssignment(HidNpadIdType id0, HidNpadIdType id1);
 /**
  * @brief EnableUnintendedHomeButtonInputProtection
  * @note To get the state of this, use \ref hidGetNpadSystemButtonProperties to access HidNpadSystemButtonProperties::is_unintended_home_button_input_protection_enabled.
+ * @note Applet services must be initialized.
  * @param[in] id \ref HidNpadIdType
  * @param[in] flag Whether UnintendedHomeButtonInputProtection is enabled.
  */
@@ -2032,6 +2066,7 @@ Result hidEnableUnintendedHomeButtonInputProtection(HidNpadIdType id, bool flag)
 /**
  * @brief Use this if you want to use a single joy-con as a dedicated HidNpadIdType_No*. When used, both joy-cons in a pair should be used with this (HidNpadIdType_No1 and HidNpadIdType_No2 for example).
  * @note Only available on [5.0.0+].
+ * @note Applet services must be initialized.
  * @param[in] id \ref HidNpadIdType, must be HidNpadIdType_No*.
  * @param[in] type \ref HidNpadJoyDeviceType
  * @param[out] flag Whether the dest output is set.
@@ -2042,6 +2077,7 @@ Result hidSetNpadJoyAssignmentModeSingleWithDestination(HidNpadIdType id, HidNpa
 /**
  * @brief SetNpadAnalogStickUseCenterClamp
  * @note Only available on [6.1.0+].
+ * @note Applet services must be initialized.
  * @param[in] flag Flag
  */
 Result hidSetNpadAnalogStickUseCenterClamp(bool flag);
@@ -2049,6 +2085,7 @@ Result hidSetNpadAnalogStickUseCenterClamp(bool flag);
 /**
  * @brief Assigns the button(s) which trigger the CaptureButton.
  * @note Only available on [8.0.0+].
+ * @note Applet services must be initialized.
  * @param[in] style \ref HidNpadStyleTag, exactly 1 bit must be set.
  * @param[in] buttons Bitfield of \ref HidNpadButton, multiple bits can be set.
  */
@@ -2057,6 +2094,7 @@ Result hidSetNpadCaptureButtonAssignment(HidNpadStyleTag style, u64 buttons);
 /**
  * @brief ClearNpadCaptureButtonAssignment
  * @note Only available on [8.0.0+].
+ * @note Applet services must be initialized.
  */
 Result hidClearNpadCaptureButtonAssignment(void);
 
@@ -2080,6 +2118,7 @@ Result hidGetVibrationDeviceInfo(HidVibrationDeviceHandle handle, HidVibrationDe
 /**
  * @brief Sends the \ref HidVibrationDeviceHandle to the specified device.
  * @note With ::HidVibrationDeviceType_GcErm, use \ref hidSendVibrationGcErmCommand instead.
+ * @note Applet services must be initialized.
  * @param[in] handle \ref HidVibrationDeviceHandle
  * @param[in] value \ref HidVibrationValue
  */
@@ -2088,6 +2127,7 @@ Result hidSendVibrationValue(HidVibrationDeviceHandle handle, const HidVibration
 /**
  * @brief Gets the current \ref HidVibrationValue for the specified device.
  * @note With ::HidVibrationDeviceType_GcErm, use \ref hidGetActualVibrationGcErmCommand instead.
+ * @note Applet services must be initialized.
  * @param[in] handle \ref HidVibrationDeviceHandle
  * @param[out] out \ref HidVibrationValue
  */
@@ -2108,6 +2148,7 @@ Result hidIsVibrationPermitted(bool *flag);
 /**
  * @brief Send vibration values[index] to handles[index].
  * @note With ::HidVibrationDeviceType_GcErm, use \ref hidSendVibrationGcErmCommand instead.
+ * @note Applet services must be initialized.
  * @param[in] handles Input array of \ref HidVibrationDeviceHandle.
  * @param[in] values Input array of \ref HidVibrationValue.
  * @param[in] count Total entries in the handles/values arrays.
@@ -2117,6 +2158,7 @@ Result hidSendVibrationValues(const HidVibrationDeviceHandle *handles, const Hid
 /**
  * @brief Send \ref HidVibrationGcErmCommand to the specified device, for ::HidVibrationDeviceType_GcErm.
  * @note Only available on [4.0.0+].
+ * @note Applet services must be initialized.
  * @param[in] handle \ref HidVibrationDeviceHandle
  * @param[in] cmd \ref HidVibrationGcErmCommand
  */
@@ -2125,6 +2167,7 @@ Result hidSendVibrationGcErmCommand(HidVibrationDeviceHandle handle, HidVibratio
 /**
  * @brief Get \ref HidVibrationGcErmCommand for the specified device, for ::HidVibrationDeviceType_GcErm.
  * @note Only available on [4.0.0+].
+ * @note Applet services must be initialized.
  * @param[in] handle \ref HidVibrationDeviceHandle
  * @param[out] out \ref HidVibrationGcErmCommand
  */
@@ -2133,6 +2176,7 @@ Result hidGetActualVibrationGcErmCommand(HidVibrationDeviceHandle handle, HidVib
 /**
  * @brief Begins a forced-permitted vibration session.
  * @note Only available on [4.0.0+].
+ * @note Applet services must be initialized.
  */
 Result hidBeginPermitVibrationSession(void);
 
@@ -2145,6 +2189,7 @@ Result hidEndPermitVibrationSession(void);
 /**
  * @brief Gets whether vibration is available with the specified device.
  * @note Only available on [7.0.0+].
+ * @note Applet services must be initialized.
  * @param[in] handle \ref HidVibrationDeviceHandle
  * @param[out] flag Flag
  */
@@ -2153,12 +2198,14 @@ Result hidIsVibrationDeviceMounted(HidVibrationDeviceHandle handle, bool *flag);
 /**
  * @brief Starts the SevenSixAxisSensor.
  * @note Only available on [5.0.0+].
+ * @note Applet services must be initialized.
  */
 Result hidStartSevenSixAxisSensor(void);
 
 /**
  * @brief Stops the SevenSixAxisSensor.
  * @note Only available on [5.0.0+].
+ * @note Applet services must be initialized.
  */
 Result hidStopSevenSixAxisSensor(void);
 
@@ -2172,12 +2219,14 @@ Result hidInitializeSevenSixAxisSensor(void);
  * @brief Finalizes the SevenSixAxisSensor.
  * @note This must be called before \ref hidExit.
  * @note Only available on [5.0.0+].
+ * @note Applet services must be initialized.
  */
 Result hidFinalizeSevenSixAxisSensor(void);
 
 /**
  * @brief Sets the SevenSixAxisSensor FusionStrength.
  * @note Only available on [5.0.0+].
+ * @note Applet services must be initialized.
  * @param[in] strength Strength
  */
 Result hidSetSevenSixAxisSensorFusionStrength(float strength);
@@ -2185,6 +2234,7 @@ Result hidSetSevenSixAxisSensorFusionStrength(float strength);
 /**
  * @brief Gets the SevenSixAxisSensor FusionStrength.
  * @note Only available on [5.0.0+].
+ * @note Applet services must be initialized.
  * @param[out] strength Strength
  */
 Result hidGetSevenSixAxisSensorFusionStrength(float *strength);
@@ -2192,6 +2242,7 @@ Result hidGetSevenSixAxisSensorFusionStrength(float *strength);
 /**
  * @brief Resets the timestamp for the SevenSixAxisSensor.
  * @note Only available on [6.0.0+].
+ * @note Applet services must be initialized.
  */
 Result hidResetSevenSixAxisSensorTimestamp(void);
 
@@ -2259,6 +2310,7 @@ Result hidGetNpadInterfaceType(HidNpadIdType id, u8 *out);
 /**
  * @brief GetNpadOfHighestBatteryLevel
  * @note Only available on [10.0.0+].
+ * @note Applet services must be initialized.
  * @param[in] ids Input array of \ref HidNpadIdType, ::HidNpadIdType_Handheld is ignored.
  * @param[in] count Total entries in the ids array.
  * @param[out] out \ref HidNpadIdType
@@ -2271,6 +2323,7 @@ Result hidGetNpadOfHighestBatteryLevel(const HidNpadIdType *ids, size_t count, H
 /**
  * @brief GetPalmaConnectionHandle
  * @note Only available on [5.0.0+].
+ * @note Applet services must be initialized.
  * @param[in] id \ref HidNpadIdType
  * @param[out] out \ref HidPalmaConnectionHandle
  */
@@ -2464,6 +2517,7 @@ Result hidResetPalmaPlayLog(HidPalmaConnectionHandle handle, u16 unk);
 /**
  * @brief Sets whether any Palma can connect.
  * @note Only available on [5.1.0+].
+ * @note Applet services must be initialized.
  * @param[in] flag Flag
  */
 Result hidSetIsPalmaAllConnectable(bool flag);
@@ -2471,6 +2525,7 @@ Result hidSetIsPalmaAllConnectable(bool flag);
 /**
  * @brief Sets whether paired Palma can connect.
  * @note Only available on [5.1.0+].
+ * @note Applet services must be initialized.
  * @param[in] flag Flag
  */
 Result hidSetIsPalmaPairedConnectable(bool flag);
@@ -2492,6 +2547,7 @@ Result hidCancelWritePalmaWaveEntry(HidPalmaConnectionHandle handle);
 /**
  * @brief EnablePalmaBoostMode
  * @note Only available on [5.1.0+]. Uses cmd EnablePalmaBoostMode on [8.0.0+], otherwise cmd SetPalmaBoostMode is used.
+ * @note Applet services must be initialized.
  * @param[in] flag Flag
  */
 Result hidEnablePalmaBoostMode(bool flag);
@@ -2507,6 +2563,7 @@ Result hidGetPalmaBluetoothAddress(HidPalmaConnectionHandle handle, BtdrvAddress
 /**
  * @brief SetDisallowedPalmaConnection
  * @note Only available on [8.0.0+].
+ * @note Applet services must be initialized.
  * @param[in] addrs Input array of \ref BtdrvAddress.
  * @param[in] count Total entries in the addrs array.
  */
@@ -2517,6 +2574,7 @@ Result hidSetDisallowedPalmaConnection(const BtdrvAddress *addrs, s32 count);
 /**
  * @brief SetNpadCommunicationMode
  * @note [2.0.0+] Stubbed, just returns 0.
+ * @note Applet services must be initialized.
  * @param[in] mode \ref HidNpadCommunicationMode
  */
 Result hidSetNpadCommunicationMode(HidNpadCommunicationMode mode);
@@ -2531,6 +2589,7 @@ Result hidGetNpadCommunicationMode(HidNpadCommunicationMode *out);
 /**
  * @brief SetTouchScreenConfiguration
  * @note Only available on [9.0.0+].
+ * @note Applet services must be initialized.
  * @param[in] config \ref HidTouchScreenConfigurationForNx
  */
 Result hidSetTouchScreenConfiguration(const HidTouchScreenConfigurationForNx *config);
@@ -2538,6 +2597,7 @@ Result hidSetTouchScreenConfiguration(const HidTouchScreenConfigurationForNx *co
 /**
  * @brief IsFirmwareUpdateNeededForNotification
  * @note Only available on [9.0.0+].
+ * @note Applet services must be initialized.
  * @param[out] out Output flag.
  */
 Result hidIsFirmwareUpdateNeededForNotification(bool *out);
