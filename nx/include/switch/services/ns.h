@@ -319,7 +319,7 @@ Result nsGetApplicationControlData(NsApplicationControlSource source, u64 applic
  * @param[in] application_id ApplicationId.
  * @param[out] buffer \ref NsApplicationControlData
  * @param[in] size Size of the buffer.
- * @param[in] flag1 Default is 0. 0xFF speeds up execution.
+ * @param[in] flag1 Default is 0. 1 retrieves 174x174 icon instead of 256x256. 0xFF uses an unknown alternative path.
  * @param[in] acd_idx Default is 0. 1 tries to get NsApplicationControlData for Switch 2 Edition.
  * @param[out] actual_size Actual output size.
  * @param[out] unk Returned with size, always 0.
