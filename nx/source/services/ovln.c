@@ -2,19 +2,11 @@
 #include "service_guard.h"
 #include "services/ovln.h"
 
-static Service g_ovlnsndSrv;
 static Service g_ovlnrcvSrv;
+static Service g_ovlnsndSrv;
 
-NX_GENERATE_SERVICE_GUARD(ovlnsnd);
 NX_GENERATE_SERVICE_GUARD(ovlnrcv);
-
-Result _ovlnsndInitialize(void) {
-    return smGetService(&g_ovlnsndSrv, "ovln:snd");
-}
-
-void _ovlnsndCleanup(void) {
-    serviceClose(&g_ovlnsndSrv);
-}
+NX_GENERATE_SERVICE_GUARD(ovlnsnd);
 
 Result _ovlnrcvInitialize(void) {
     return smGetService(&g_ovlnrcvSrv, "ovln:rcv");
@@ -24,66 +16,45 @@ void _ovlnrcvCleanup(void) {
     serviceClose(&g_ovlnrcvSrv);
 }
 
-Service* ovlnsndGetServiceSession(void) {
-    return &g_ovlnsndSrv;
+Result _ovlnsndInitialize(void) {
+    return smGetService(&g_ovlnsndSrv, "ovln:snd");
+}
+
+void _ovlnsndCleanup(void) {
+    serviceClose(&g_ovlnsndSrv);
 }
 
 Service* ovlnrcvGetServiceSession(void) {
     return &g_ovlnrcvSrv;
 }
 
-Result ovlnsndOpenSender(OvlnSenderSession *sender, const OvlnName *name, u64 queue_length) {
-    const struct {
-        OvlnName name;
-        u64 queue_length;
-    } in = { *name, queue_length };
-
-    return serviceDispatchIn(&g_ovlnsndSrv, 0, in,
-        .out_num_objects = 1,
-        .out_objects = &sender->s,
-    );
+Service* ovlnsndGetServiceSession(void) {
+    return &g_ovlnsndSrv;
 }
 
-void ovlnsndCloseSender(OvlnSenderSession *sender) {
-    serviceClose(&sender->s);
-}
-
-Result ovlnsndSend(OvlnSenderSession *sender, u64 id, const OvlnMessage *message) {
-    const struct {
-        u64 id;
-        OvlnMessage message;
-    } in = { id, *message };
-
-    return serviceDispatchIn(&sender->s, 0, in);
-}
-
-Result ovlnsndGetUnreceivedMessageCount(OvlnSenderSession *sender, u32 *count) {
-    return serviceDispatchOut(&sender->s, 1, *count);
-}
-
-Result ovlnrcvOpenReceiver(OvlnReceiverSession *receiver) {
+Result ovlnrcvOpenReceiver(OvlnReceiver *receiver) {
     return serviceDispatch(&g_ovlnrcvSrv, 0,
         .out_num_objects = 1,
         .out_objects = &receiver->s,
     );
 }
 
-void ovlnrcvCloseReceiver(OvlnReceiverSession *receiver) {
-    serviceClose(&receiver->s);
+void ovlnrcvCloseReceiver(OvlnReceiver *r) {
+    serviceClose(&r->s);
 }
 
-Result ovlnrcvAddSource(OvlnReceiverSession *receiver, const OvlnName *source) {
-    return serviceDispatchIn(&receiver->s, 0, *source);
+Result ovlnrcvAddSource(OvlnReceiver *r, const OvlnSourceName *name) {
+    return serviceDispatchIn(&r->s, 0, *name);
 }
 
-Result ovlnrcvRemoveSource(OvlnReceiverSession *receiver, const OvlnName *source) {
-    return serviceDispatchIn(&receiver->s, 1, *source);
+Result ovlnrcvRemoveSource(OvlnReceiver *r, const OvlnSourceName *name) {
+    return serviceDispatchIn(&r->s, 1, *name);
 }
 
-Result ovlnrcvGetReceiveEventHandle(OvlnReceiverSession *receiver, Event* out_event) {
+Result ovlnrcvGetReceiveEventHandle(OvlnReceiver *r, Event* out_event) {
     Handle tmp_handle = INVALID_HANDLE;
 
-    Result rc = serviceDispatch(&receiver->s, 2,
+    Result rc = serviceDispatch(&r->s, 2,
         .out_handle_attrs = { SfOutHandleAttr_HipcCopy },
         .out_handles = &tmp_handle,
     );
@@ -91,21 +62,50 @@ Result ovlnrcvGetReceiveEventHandle(OvlnReceiverSession *receiver, Event* out_ev
     return rc;
 }
 
-Result ovlnrcvReceive(OvlnReceiverSession *receiver, OvlnMessage *message) {
-    return serviceDispatchOut(&receiver->s, 3, *message);
+Result ovlnrcvReceive(OvlnReceiver *r, OvlnRawMessage *message) {
+    return serviceDispatchOut(&r->s, 3, *message);
 }
 
-Result ovlnrcvReceiveWithTick(OvlnReceiverSession *receiver, OvlnMessage *message, s64 *tick) {
+Result ovlnrcvReceiveWithTick(OvlnReceiver *r, OvlnRawMessage *message, s64 *tick) {
     struct {
-        OvlnMessage message;
+        OvlnRawMessage message;
         s64 tick;
     } out;
 
-    Result rc =  serviceDispatchOut(&receiver->s, 4, out);
+    Result rc =  serviceDispatchOut(&r->s, 4, out);
     if (R_SUCCEEDED(rc)) {
         *message = out.message;
         *tick = out.tick;
     }
 
     return rc;
+}
+
+Result ovlnsndOpenSender(OvlnSender *s, const OvlnSourceName *name, OvlnQueueAttribute attribute) {
+    const struct {
+        OvlnSourceName name;
+        OvlnQueueAttribute attribute;
+    } in = { *name, attribute };
+
+    return serviceDispatchIn(&g_ovlnsndSrv, 0, in,
+        .out_num_objects = 1,
+        .out_objects = &s->s,
+    );
+}
+
+void ovlnsndCloseSender(OvlnSender *s) {
+    serviceClose(&s->s);
+}
+
+Result ovlnsndSend(OvlnSender *s, OvlnSendOption option, const OvlnRawMessage *message) {
+    const struct {
+        OvlnSendOption option;
+        OvlnRawMessage message;
+    } in = { option, *message };
+
+    return serviceDispatchIn(&s->s, 0, in);
+}
+
+Result ovlnsndGetUnreceivedMessageCount(OvlnSender *s, u32 *count) {
+    return serviceDispatchOut(&s->s, 1, *count);
 }
