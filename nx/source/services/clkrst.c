@@ -45,6 +45,10 @@ Result clkrstGetClockRate(ClkrstSession* session, u32 *out_hz) {
     return serviceDispatchOut(&session->s, 8, *out_hz);
 }
 
+Result clkrstSetMinimumVoltageClockRate(ClkrstSession* session, u32 voltage) {
+    return serviceDispatchIn(&session->s, 9, voltage);
+}
+
 Result clkrstGetPossibleClockRates(ClkrstSession *session, u32 *rates, s32 max_count, PcvClockRatesListType *out_type, s32 *out_count) {
     struct {
         s32 type;
