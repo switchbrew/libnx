@@ -217,6 +217,15 @@ Result nifmGetCurrentNetworkProfile(NifmNetworkProfileData *profile) {
     return rc;
 }
 
+Result nifmEnumerateNetworkProfiles(NifmNetworkProfileGroup group, NifmNetworkProfile* buffer, size_t max_entries, u32* total_entries) {
+    u8 in = (u8)group;
+    serviceAssumeDomain(&g_nifmIGS);
+    return serviceDispatchInOut(&g_nifmIGS, 7, in, *total_entries,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out},
+        .buffers = { { buffer, sizeof(buffer[0]) * max_entries } },
+    );
+}
+
 Result nifmGetNetworkProfile(Uuid uuid, NifmNetworkProfileData *profile) {
     NifmSfNetworkProfileData tmp={0};
     serviceAssumeDomain(&g_nifmIGS);
