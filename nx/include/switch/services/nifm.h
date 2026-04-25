@@ -186,13 +186,13 @@ typedef struct {
 typedef struct {
     Uuid uuid;                                           ///< Uuid
     char network_name[0x40];                             ///< NUL-terminated Network Name string.
-    u32 profile_type;                                    ///< \ref NifmNetworkProfileType
-    u32 connection_type;                                 ///< \ref NifmInternetConnectionType
+    NifmNetworkProfileType profile_type;                 ///< \ref NifmNetworkProfileType
+    NifmInternetConnectionType connection_type;          ///< \ref NifmInternetConnectionType
     u8 ssid_len;                                         ///< SSID length.
     char ssid[0x20];                                     ///< SSID string.
     u8 pad[3];                                           ///< Padding
-    u32 authentication;                                  ///< \ref NifmAuthentication
-    u32 encryption;                                      ///< \ref NifmEncryption
+    NifmAuthentication authentication;                   ///< \ref NifmAuthentication
+    NifmEncryption encryption;                           ///< \ref NifmEncryption
 } NifmNetworkProfileBasicInfo;
 
 /// Initialize nifm. This is used automatically by gethostid().
