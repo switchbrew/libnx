@@ -39,27 +39,27 @@ typedef enum {
 } NifmRequestState;
 
 typedef enum {
-    NifmWirelessSecurityType_Invalid     = 0, ///< Invalid
-    NifmWirelessSecurityType_Open        = 1, ///< Open
-    NifmWirelessSecurityType_Shared      = 2, ///< Shared
-    NifmWirelessSecurityType_Unk3        = 3, ///< Unknown
-    NifmWirelessSecurityType_Wpa         = 4, ///< WPA
-    NifmWirelessSecurityType_Unk5        = 5, ///< Unknown
-    NifmWirelessSecurityType_Wpa2        = 6, ///< WPA2
+    NifmWirelessSecurityType_Invalid                    = 0, ///< Invalid
+    NifmWirelessSecurityType_Open                       = 1, ///< Open
+    NifmWirelessSecurityType_Shared                     = 2, ///< Shared
+    NifmWirelessSecurityType_Unk3                       = 3, ///< Unknown
+    NifmWirelessSecurityType_Wpa                        = 4, ///< WPA
+    NifmWirelessSecurityType_Unk5                       = 5, ///< Unknown
+    NifmWirelessSecurityType_Wpa2                       = 6, ///< WPA2
 } NifmWirelessSecurityType;
 
 typedef enum {
-    NifmWirelessSecurityStandard_Invalid = 0, ///< Invalid
-    NifmWirelessSecurityStandard_None    = 1, ///< No password
-    NifmWirelessSecurityStandard_Wep     = 2, ///< WEP 
-    NifmWirelessSecurityStandard_Unk3    = 3, ///< Unknown
-    NifmWirelessSecurityStandard_Wpa     = 4, ///< WPA/WPA2
+    NifmWirelessSecurityStandard_Invalid                = 0, ///< Invalid
+    NifmWirelessSecurityStandard_None                   = 1, ///< No password
+    NifmWirelessSecurityStandard_Wep                    = 2, ///< WEP 
+    NifmWirelessSecurityStandard_Unk3                   = 3, ///< Unknown
+    NifmWirelessSecurityStandard_Wpa                    = 4, ///< WPA/WPA2
 } NifmWirelessSecurityStandard;
 
 typedef enum {
-    NifmNetworkProfileGroup_User     = BIT(0), ///< Saved by user
-    NifmNetworkProfileGroup_Nintendo = BIT(1), ///< Hardcoded list of Nintendo hotspots
-    NifmNetworkProfileGroup_Unknown  = BIT(2), ///< Unknown
+    NifmNetworkProfileGroup_User                        = BIT(0), ///< Saved by user
+    NifmNetworkProfileGroup_Nintendo                    = BIT(1), ///< Hardcoded list of Nintendo hotspots
+    NifmNetworkProfileGroup_Unknown                     = BIT(2), ///< Unknown
 } NifmNetworkProfileGroup;
 
 /// Request
@@ -169,14 +169,14 @@ typedef struct {
 
 /// NetworkProfile
 typedef struct {
-    Uuid uuid;               ///< Uuid
-    char network_name[0x40]; ///< NUL-terminated Network Name string.
-    u8 unk_x50;              ///< Unknown
-    u8 connection_type;      ///< NifmInternetConnectionType
-    u8 ssid_len;             ///< SSID length.
-    char ssid[0x20];         ///< SSID string.
-    u8 security_type;        ///< NifmWirelessSecurityType
-    u8 security_standard;    ///< NifmWirelessSecurityStandard
+    Uuid uuid;                                           ///< Uuid
+    char network_name[0x40];                             ///< NUL-terminated Network Name string.
+    u8 unk_x50;                                          ///< Unknown
+    u8 connection_type;                                  ///< \ref NifmInternetConnectionType
+    u8 ssid_len;                                         ///< SSID length.
+    char ssid[0x20];                                     ///< SSID string.
+    u8 security_type;                                    ///< \ref NifmWirelessSecurityType
+    u8 security_standard;                                ///< \ref NifmWirelessSecurityStandard
 } NifmNetworkProfile;
 
 /// Initialize nifm. This is used automatically by gethostid().
