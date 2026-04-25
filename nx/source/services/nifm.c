@@ -173,7 +173,7 @@ static void _nifmConvertSfToNetworkProfileBasicInfo(const NifmSfNetworkProfileBa
     out->connection_type = in->connection_type;
 
     out->ssid_len = in->ssid_len;
-    if (out->ssid_len > sizeof(out->ssid)-1) out->ssid_len = sizeof(out->ssid)-1;
+    if (out->ssid_len > sizeof(out->ssid)) out->ssid_len = sizeof(out->ssid);
     if (out->ssid_len) memcpy(out->ssid, in->ssid, out->ssid_len);
     out->authentication = in->authentication;
     out->encryption = in->encryption;
