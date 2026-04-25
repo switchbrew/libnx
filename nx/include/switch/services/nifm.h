@@ -193,7 +193,7 @@ typedef struct {
     u8 pad[3];                                           ///< Padding
     u32 authentication;                                  ///< \ref NifmAuthentication
     u32 encryption;                                      ///< \ref NifmEncryption
-} NifmSfNetworkProfileBasicInfo;
+} NifmNetworkProfileBasicInfo;
 
 /// Initialize nifm. This is used automatically by gethostid().
 Result nifmInitialize(NifmServiceType service_type);
