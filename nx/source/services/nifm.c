@@ -104,6 +104,11 @@ static Result _nifmCmdInU32NoOut(Service* srv, u32 inval, u64 cmd_id) {
     return serviceDispatchIn(srv, cmd_id, inval);
 }
 
+static Result _nifmCmdInUuidNoOut(Service* srv, const Uuid inval, u32 cmd_id) {
+    serviceAssumeDomain(srv);
+    return serviceDispatchIn(srv, cmd_id, inval);
+}
+
 static Result _nifmCreateGeneralServiceOld(Service* srv_out) {
     return _nifmCmdGetSession(&g_nifmSrv, srv_out, 4);
 }
@@ -491,3 +496,9 @@ Result nifmRequestUnregisterSocketDescriptor(NifmRequest* r, int sockfd) {
     return _nifmCmdInU32NoOut(&r->s, (u32)sockfd, 25);
 }
 
+Result nifmRequestSetNetworkProfileId(NifmRequest* r, Uuid uuid) {
+    if (!serviceIsActive(&r->s))
+        return MAKERESULT(Module_Libnx, LibnxError_NotInitialized);
+
+    return _nifmCmdInUuidNoOut(&r->s, uuid, 9);
+}
