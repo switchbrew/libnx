@@ -317,5 +317,13 @@ Result nifmRequestRegisterSocketDescriptor(NifmRequest* r, int sockfd);
  */
 Result nifmRequestUnregisterSocketDescriptor(NifmRequest* r, int sockfd);
 
+/**
+ * @brief SetNetworkProfileId
+ * @param r \ref NifmRequest
+ * @param[in] uuid Uuid
+ */
+
+Result nifmRequestSetNetworkProfileId(NifmRequest* r, Uuid uuid);
+
 ///@}
 
