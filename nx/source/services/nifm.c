@@ -163,6 +163,22 @@ static void _nifmConvertSfFromNetworkProfileData(const NifmNetworkProfileData *i
     memcpy(&out->ip_setting_data, &in->ip_setting_data, sizeof(out->ip_setting_data));
 }
 
+static void _nifmConvertSfToNetworkProfileBasicInfo(const NifmSfNetworkProfileBasicInfo *in, NifmNetworkProfileBasicInfo *out) {
+    memset(out, 0, sizeof(*out));
+
+    out->uuid = in->uuid;
+    memcpy(out->network_name, in->network_name, sizeof(in->network_name));
+    out->network_name[sizeof(out->network_name)-1] = 0;
+    out->profile_type = in->profile_type;
+    out->connection_type = in->connection_type;
+
+    out->ssid_len = in->ssid_len;
+    if (out->ssid_len > sizeof(out->ssid)-1) out->ssid_len = sizeof(out->ssid)-1;
+    if (out->ssid_len) memcpy(out->ssid, in->ssid, out->ssid_len);
+    out->authentication = in->authentication;
+    out->encryption = in->encryption;
+}
+
 NifmClientId nifmGetClientId(void) {
     NifmClientId id={0};
     serviceAssumeDomain(&g_nifmIGS);
@@ -217,13 +233,22 @@ Result nifmGetCurrentNetworkProfile(NifmNetworkProfileData *profile) {
     return rc;
 }
 
-Result nifmEnumerateNetworkProfiles(NifmNetworkProfileType type, NifmSfNetworkProfileBasicInfo* buffer, size_t max_entries, u32* total_entries) {
+Result nifmEnumerateNetworkProfiles(NifmNetworkProfileType type, NifmNetworkProfileBasicInfo* buffer, s32 max_entries, s32* total_entries) {
+    NifmSfNetworkProfileBasicInfo* tmp_ptr = buffer;
     u8 in = (u8)type;
     serviceAssumeDomain(&g_nifmIGS);
-    return serviceDispatchInOut(&g_nifmIGS, 7, in, *total_entries,
+    Result rc = serviceDispatchInOut(&g_nifmIGS, 7, in, *total_entries,
         .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out},
-        .buffers = { { buffer, sizeof(buffer[0]) * max_entries } },
+        .buffers = { { buffer, sizeof(tmp_ptr[0]) * max_entries } },
     );
+    if (R_FAILED(rc)) return rc;
+    s32 returned_entries = *total_entries < max_entries ? *total_entries : max_entries;
+    for (s32 i = (returned_entries-1); i >= 0; i--) {
+        NifmSfNetworkProfileBasicInfo tmp;
+        memcpy(&tmp, &tmp_ptr[i], sizeof(tmp));
+        _nifmConvertSfToNetworkProfileBasicInfo(&tmp, &buffer[i]);
+    }
+    return rc;
 }
 
 Result nifmGetNetworkProfile(Uuid uuid, NifmNetworkProfileData *profile) {
