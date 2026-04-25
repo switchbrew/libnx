@@ -234,7 +234,7 @@ Result nifmGetCurrentNetworkProfile(NifmNetworkProfileData *profile) {
 }
 
 Result nifmEnumerateNetworkProfiles(NifmNetworkProfileType type, NifmNetworkProfileBasicInfo* buffer, s32 max_entries, s32* total_entries) {
-    NifmSfNetworkProfileBasicInfo* tmp_ptr = buffer;
+    NifmSfNetworkProfileBasicInfo* tmp_ptr = (NifmSfNetworkProfileBasicInfo*)buffer;
     u8 in = (u8)type;
     serviceAssumeDomain(&g_nifmIGS);
     Result rc = serviceDispatchInOut(&g_nifmIGS, 7, in, *total_entries,
