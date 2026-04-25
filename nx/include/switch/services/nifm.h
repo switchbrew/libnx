@@ -38,6 +38,30 @@ typedef enum {
     NifmRequestState_Unknown5                           = 5, ///< Unknown
 } NifmRequestState;
 
+typedef enum {
+    NifmWirelessSecurityType_Invalid     = 0, ///< Invalid
+    NifmWirelessSecurityType_Open        = 1, ///< Open
+    NifmWirelessSecurityType_Shared      = 2, ///< Shared
+    NifmWirelessSecurityType_Unk3        = 3, ///< Unknown
+    NifmWirelessSecurityType_Wpa         = 4, ///< WPA
+    NifmWirelessSecurityType_Unk5        = 5, ///< Unknown
+    NifmWirelessSecurityType_Wpa2        = 6, ///< WPA2
+} NifmWirelessSecurityType;
+
+typedef enum {
+    NifmWirelessSecurityStandard_Invalid = 0, ///< Invalid
+    NifmWirelessSecurityStandard_None    = 1, ///< No password
+    NifmWirelessSecurityStandard_Wep     = 2, ///< WEP 
+    NifmWirelessSecurityStandard_Unk3    = 3, ///< Unknown
+    NifmWirelessSecurityStandard_Wpa     = 4, ///< WPA/WPA2
+} NifmWirelessSecurityStandard;
+
+typedef enum {
+    NifmNetworkProfileGroup_User     = BIT(0), ///< Saved by user
+    NifmNetworkProfileGroup_Nintendo = BIT(1), ///< Hardcoded list of Nintendo hotspots
+    NifmNetworkProfileGroup_Unknown  = BIT(2), ///< Unknown
+} NifmNetworkProfileGroup;
+
 /// Request
 typedef struct {
     Service s;                                           ///< IRequest
@@ -143,6 +167,18 @@ typedef struct {
     NifmIpSettingData ip_setting_data;                   ///< \ref NifmIpSettingData
 } NifmNetworkProfileData;
 
+/// NetworkProfile
+typedef struct {
+    Uuid uuid;               ///< Uuid
+    char network_name[0x40]; ///< NUL-terminated Network Name string.
+    u8 unk_x50;              ///< Unknown
+    u8 connection_type;      ///< NifmInternetConnectionType
+    u8 ssid_len;             ///< SSID length.
+    char ssid[0x20];         ///< SSID string.
+    u8 security_type;        ///< NifmWirelessSecurityType
+    u8 security_standard;    ///< NifmWirelessSecurityStandard
+} NifmNetworkProfile;
+
 /// Initialize nifm. This is used automatically by gethostid().
 Result nifmInitialize(NifmServiceType service_type);
 
@@ -172,6 +208,17 @@ Result nifmCreateRequest(NifmRequest* r, bool autoclear);
  * @param[out] profile \ref NifmNetworkProfileData
  */
 Result nifmGetCurrentNetworkProfile(NifmNetworkProfileData *profile);
+
+/**
+ * @brief Returns saved NetworkProfiles
+ * @note NifmServiceType User and System have access only to NifmNetworkProfileGroup_User
+ * @param[in] group \ref NifmNetworkProfileGroup
+ * @param[out] buffer \ref NifmNetworkProfile
+ * @param[in] max_entries How many \ref NifmNetworkProfile can fit into buffer
+ * @param[in] total_entries How many \ref NifmNetworkProfile is available
+ */
+
+Result nifmEnumerateNetworkProfiles(NifmNetworkProfileGroup group, struct NifmNetworkProfile* buffer, size_t max_entries, u32* total_entries);
 
 /**
  * @brief GetNetworkProfile
