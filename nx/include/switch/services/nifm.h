@@ -177,7 +177,7 @@ typedef struct {
     char ssid[0x20];                                     ///< SSID string.
     u8 security_type;                                    ///< \ref NifmWirelessSecurityType
     u8 security_standard;                                ///< \ref NifmWirelessSecurityStandard
-} NifmNetworkProfile;
+} NifmNetworkProfileBasicInfo;
 
 /// Initialize nifm. This is used automatically by gethostid().
 Result nifmInitialize(NifmServiceType service_type);
@@ -210,15 +210,15 @@ Result nifmCreateRequest(NifmRequest* r, bool autoclear);
 Result nifmGetCurrentNetworkProfile(NifmNetworkProfileData *profile);
 
 /**
- * @brief Returns saved NetworkProfiles
+ * @brief Returns saved network profiles
  * @note NifmServiceType User and System have access only to NifmNetworkProfileGroup_User
  * @param[in] group \ref NifmNetworkProfileGroup
- * @param[out] buffer \ref NifmNetworkProfile
- * @param[in] max_entries How many \ref NifmNetworkProfile can fit into buffer
- * @param[in] total_entries How many \ref NifmNetworkProfile is available
+ * @param[out] buffer \ref NifmNetworkProfileBasicInfo
+ * @param[in] max_entries How many \ref NifmNetworkProfileBasicInfo can fit into buffer
+ * @param[in] total_entries How many \ref NifmNetworkProfileBasicInfo is available
  */
 
-Result nifmEnumerateNetworkProfiles(NifmNetworkProfileGroup group, NifmNetworkProfile* buffer, size_t max_entries, u32* total_entries);
+Result nifmEnumerateNetworkProfiles(NifmNetworkProfileGroup group, NifmNetworkProfileBasicInfo* buffer, size_t max_entries, u32* total_entries);
 
 /**
  * @brief GetNetworkProfile
