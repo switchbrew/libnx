@@ -14,7 +14,7 @@ void _idlesysCleanup(void) {
     serviceClose(&g_idlesysSrv);
 }
 
-Service* pwmGetServiceSession(void) {
+Service* idlesysGetServiceSession(void) {
     return &g_idlesysSrv;
 }
 
