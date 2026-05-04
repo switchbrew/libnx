@@ -331,7 +331,7 @@ Result hidsysGetUniquePadsFromNpad(HidNpadIdType id, HidsysUniquePadId *unique_p
     return rc;
 }
 
-Result hidsysSetAppletResourceUserId() {
+Result hidsysSetAppletResourceUserId(void) {
     return serviceDispatchIn(&g_hidsysSrv, 500, g_hidsysAppletResourceUserId);
 }
 
