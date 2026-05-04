@@ -322,7 +322,7 @@ Result hidsysGetUniquePadsFromNpad(HidNpadIdType id, HidsysUniquePadId *unique_p
  * @note This is automatically used by am-sysmodule, don't use it if your AppletType is other than None.
  * @note Using it with uninitialized applet services results in your process being tied to currently focused applet.
  */
-Result hidsysSetAppletResourceUserId();
+Result hidsysSetAppletResourceUserId(void);
 
 /**
  * @brief EnableAppletToGetInput
