@@ -18,6 +18,6 @@ Service* idlesysGetServiceSession(void) {
     return &g_idlesysSrv;
 }
 
-Result idlesysReportUserIsActive() {
+Result idlesysReportUserIsActive(void) {
     return serviceDispatch(&g_idlesysSrv, 5);
 }
