@@ -18,4 +18,4 @@ void idlesysExit(void);
 Service* idlesysGetServiceSession(void);
 
 /// Resets sleep counter.
-Result idlesysReportUserIsActive();
+Result idlesysReportUserIsActive(void);
