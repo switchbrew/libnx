@@ -1,6 +1,7 @@
 /**
  * @file hid.h
  * @brief Human input device (hid) service IPC wrapper.
+ * @note Applet services must be initialized.
  * @author shinyquagsire23
  * @author yellows8
  * @copyright libnx Authors

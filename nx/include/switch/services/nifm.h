@@ -38,6 +38,33 @@ typedef enum {
     NifmRequestState_Unknown5                           = 5, ///< Unknown
 } NifmRequestState;
 
+/// Authentication
+typedef enum {
+    NifmAuthentication_Invalid                          = 0, ///< Invalid
+    NifmAuthentication_Open                             = 1, ///< Open
+    NifmAuthentication_Shared                           = 2, ///< Shared
+    NifmAuthentication_Wpa                              = 3, ///< WPA
+    NifmAuthentication_WpaPsk                           = 4, ///< WPA-PSK
+    NifmAuthentication_Wpa2                             = 5, ///< WPA2
+    NifmAuthentication_Wpa2Psk                          = 6, ///< WPA2-PSK
+    NifmAuthentication_Unk7                             = 7, ///< Unknown
+} NifmAuthentication;
+
+/// Encryption
+typedef enum {
+    NifmEncryption_Invalid                              = 0, ///< Invalid
+    NifmEncryption_None                                 = 1, ///< No password
+    NifmEncryption_Wep                                  = 2, ///< WEP 
+    NifmEncryption_Tkip                                 = 3, ///< TKIP
+    NifmEncryption_Aes                                  = 4, ///< AES
+} NifmEncryption;
+
+typedef enum {
+    NifmNetworkProfileType_User                         = BIT(0), ///< Saved by user
+    NifmNetworkProfileType_SsidList                     = BIT(1), ///< Hardcoded list of Nintendo hotspots
+    NifmNetworkProfileType_Temporary                    = BIT(2), ///< Temporary
+} NifmNetworkProfileType;
+
 /// Request
 typedef struct {
     Service s;                                           ///< IRequest
@@ -143,6 +170,31 @@ typedef struct {
     NifmIpSettingData ip_setting_data;                   ///< \ref NifmIpSettingData
 } NifmNetworkProfileData;
 
+/// SfNetworkProfileBasicInfo. Converted from/to \ref NifmNetworkProfileBasicInfo.
+typedef struct {
+    Uuid uuid;                                           ///< Uuid
+    char network_name[0x40];                             ///< NUL-terminated Network Name string.
+    u8 profile_type;                                     ///< \ref NifmNetworkProfileType
+    u8 connection_type;                                  ///< \ref NifmInternetConnectionType
+    u8 ssid_len;                                         ///< SSID length.
+    char ssid[0x20];                                     ///< SSID string.
+    u8 authentication;                                   ///< \ref NifmAuthentication
+    u8 encryption;                                       ///< \ref NifmEncryption
+} NifmSfNetworkProfileBasicInfo;
+
+/// NetworkProfileBasicInfo. Converted from/to \ref NifmSfNetworkProfileBasicInfo.
+typedef struct {
+    Uuid uuid;                                           ///< Uuid
+    char network_name[0x40];                             ///< NUL-terminated Network Name string.
+    NifmNetworkProfileType profile_type;                 ///< \ref NifmNetworkProfileType
+    NifmInternetConnectionType connection_type;          ///< \ref NifmInternetConnectionType
+    u8 ssid_len;                                         ///< SSID length.
+    char ssid[0x20];                                     ///< SSID string.
+    u8 pad[3];                                           ///< Padding
+    NifmAuthentication authentication;                   ///< \ref NifmAuthentication
+    NifmEncryption encryption;                           ///< \ref NifmEncryption
+} NifmNetworkProfileBasicInfo;
+
 /// Initialize nifm. This is used automatically by gethostid().
 Result nifmInitialize(NifmServiceType service_type);
 
@@ -172,6 +224,17 @@ Result nifmCreateRequest(NifmRequest* r, bool autoclear);
  * @param[out] profile \ref NifmNetworkProfileData
  */
 Result nifmGetCurrentNetworkProfile(NifmNetworkProfileData *profile);
+
+/**
+ * @brief Returns saved network profiles
+ * @note NifmServiceType User and System have access only to NifmNetworkProfileType_User
+ * @param[in] type \ref NifmNetworkProfileType
+ * @param[out] buffer \ref NifmNetworkProfileBasicInfo
+ * @param[in] max_entries How many \ref NifmNetworkProfileBasicInfo can fit into buffer
+ * @param[out] total_entries How many \ref NifmNetworkProfileBasicInfo is available
+ */
+
+Result nifmEnumerateNetworkProfiles(NifmNetworkProfileType type, NifmNetworkProfileBasicInfo* buffer, s32 max_entries, s32* total_entries);
 
 /**
  * @brief GetNetworkProfile
@@ -316,6 +379,14 @@ Result nifmRequestRegisterSocketDescriptor(NifmRequest* r, int sockfd);
  * @param[in] sockfd Socket fd, must match the fd previously registered with \ref nifmRequestRegisterSocketDescriptor.
  */
 Result nifmRequestUnregisterSocketDescriptor(NifmRequest* r, int sockfd);
+
+/**
+ * @brief SetNetworkProfileId
+ * @param r \ref NifmRequest
+ * @param[in] uuid Uuid
+ */
+
+Result nifmRequestSetNetworkProfileId(NifmRequest* r, Uuid uuid);
 
 ///@}
 

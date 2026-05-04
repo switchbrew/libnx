@@ -318,6 +318,13 @@ Result hidsysHasLeftRightBattery(HidNpadIdType id, bool *out0, bool *out1);
 Result hidsysGetUniquePadsFromNpad(HidNpadIdType id, HidsysUniquePadId *unique_pad_ids, s32 count, s32 *total_out);
 
 /**
+ * @brief Sets information that your AppletResourceUserId is in focus.
+ * @note This is automatically used by am-sysmodule, don't use it if your AppletType is other than None.
+ * @note Using it with uninitialized applet services results in your process being tied to currently focused applet.
+ */
+Result hidsysSetAppletResourceUserId(void);
+
+/**
  * @brief EnableAppletToGetInput
  * @param[in] enable Input flag.
 **/

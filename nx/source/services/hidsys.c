@@ -331,6 +331,10 @@ Result hidsysGetUniquePadsFromNpad(HidNpadIdType id, HidsysUniquePadId *unique_p
     return rc;
 }
 
+Result hidsysSetAppletResourceUserId(void) {
+    return serviceDispatchIn(&g_hidsysSrv, 500, g_hidsysAppletResourceUserId);
+}
+
 Result hidsysEnableAppletToGetInput(bool enable) {
     const struct {
         u8 permitInput;

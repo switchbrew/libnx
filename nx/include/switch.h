@@ -134,6 +134,7 @@ extern "C" {
 #include "switch/services/mm.h"
 #include "switch/services/omm.h"
 #include "switch/services/idlesys.h"
+#include "switch/services/ovln.h"
 
 #include "switch/display/binder.h"
 #include "switch/display/parcel.h"
