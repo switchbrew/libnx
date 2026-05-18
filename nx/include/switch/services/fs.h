@@ -453,6 +453,39 @@ typedef struct {
     u8 reserved[0x20];
 } FsMemoryReportInfo;
 
+/// FsSdCardHostControllerStatus (cmd 6, 0xC bytes out)
+typedef struct {
+    u32 port;
+    u32 bus_width;
+    u32 speed_mode;
+} FsSdCardHostControllerStatus;
+
+/// FsSdCardInfo (cmd 8 output buffer)
+typedef struct {
+    u8 data[0x100];
+} FsSdCardInfo;
+
+/// FsRmaInformation (cmd 207 output buffer, 0x200 bytes)
+typedef struct {
+    u8 data[0x200];
+} FsRmaInformation;
+
+/// FsGameCardErrorInfo (cmd 216, 0x10 bytes out)
+typedef struct {
+    u64 error_flags;
+    u64 error_count;
+} FsGameCardErrorInfo;
+
+/// FsGameCardAsicCertificateSet (cmd 221 output buffer, 0x513 bytes)
+typedef struct {
+    u8 data[0x513];
+} FsGameCardAsicCertificateSet;
+
+/// FsGameCardDetailedErrorReportInfo (cmd 226 output buffer, 0xa80 bytes)
+typedef struct {
+    u8 data[0xa80];
+} FsGameCardDetailedErrorReportInfo;
+
 /// FsGameCardErrorReportInfo
 typedef struct {
     u16 game_card_crc_error_num;
@@ -670,24 +703,127 @@ Result fsEventNotifierGetEventHandle(FsEventNotifier* e, Event* out, bool autocl
 void fsEventNotifierClose(FsEventNotifier* e);
 
 // IDeviceOperator
+// cmd 0
 Result fsDeviceOperatorIsSdCardInserted(FsDeviceOperator* d, bool* out);
+// cmd 1
 Result fsDeviceOperatorGetSdCardSpeedMode(FsDeviceOperator* d, s64* out);
+// cmd 2
 Result fsDeviceOperatorGetSdCardCid(FsDeviceOperator* d, void* dst, size_t dst_size, s64 size);
+// cmd 3
 Result fsDeviceOperatorGetSdCardUserAreaSize(FsDeviceOperator* d, s64* out);
+// cmd 4
 Result fsDeviceOperatorGetSdCardProtectedAreaSize(FsDeviceOperator* d, s64* out);
+// cmd 5
 Result fsDeviceOperatorGetAndClearSdCardErrorInfo(FsDeviceOperator* d, FsStorageErrorInfo* out, s64 *out_log_size, void *dst, size_t dst_size, s64 size);
+// cmd 6
+Result fsDeviceOperatorGetSdCardHostControllerStatus(FsDeviceOperator* d, FsSdCardHostControllerStatus* out);
+// cmd 7
+Result fsDeviceOperatorSetSdCardActivationMode(FsDeviceOperator* d, u8 mode);
+// cmd 8
+Result fsDeviceOperatorTryGetSdCardInfo(FsDeviceOperator* d, FsSdCardInfo* out, u64 out_size);
+// cmd 100
 Result fsDeviceOperatorGetMmcCid(FsDeviceOperator* d, void* dst, size_t dst_size, s64 size);
+// cmd 101
 Result fsDeviceOperatorGetMmcSpeedMode(FsDeviceOperator* d, s64* out);
+// cmd 110
+Result fsDeviceOperatorEraseMmc(FsDeviceOperator* d, u32 partition);
+// cmd 111
+Result fsDeviceOperatorGetMmcPartitionSize(FsDeviceOperator* d, u64* out_size, u32 partition);
+// cmd 112
 Result fsDeviceOperatorGetMmcPatrolCount(FsDeviceOperator* d, u32* out);
+// cmd 113
 Result fsDeviceOperatorGetAndClearMmcErrorInfo(FsDeviceOperator* d, FsStorageErrorInfo* out, s64 *out_log_size, void *dst, size_t dst_size, s64 size);
+// cmd 114
 Result fsDeviceOperatorGetMmcExtendedCsd(FsDeviceOperator* d, void* dst, size_t dst_size, s64 size);
+// cmd 115
+Result fsDeviceOperatorSuspendMmcPatrol(FsDeviceOperator* d);
+// cmd 116
+Result fsDeviceOperatorResumeMmcPatrol(FsDeviceOperator* d);
+// cmd 117
+Result fsDeviceOperatorEraseMmcWithRange(FsDeviceOperator* d, u64 offset, u64 size, u64 end);
+// cmd 118
+Result fsDeviceOperatorMarkBeforeEraseMmcPartitionUserData(FsDeviceOperator* d);
+// cmd 119
+Result fsDeviceOperatorCheckAfterEraseMmcPartitionUserData(FsDeviceOperator* d);
+// cmd 200
 Result fsDeviceOperatorIsGameCardInserted(FsDeviceOperator* d, bool* out);
+// cmd 201
+Result fsDeviceOperatorEraseGameCard(FsDeviceOperator* d, u32 gc_size, u64 gc_handle);
+// cmd 202
 Result fsDeviceOperatorGetGameCardHandle(FsDeviceOperator* d, FsGameCardHandle* out);
-Result fsDeviceOperatorGetGameCardUpdatePartitionInfo(FsDeviceOperator* d, const FsGameCardHandle* handle, FsGameCardUpdatePartitionInfo* out);
+// cmd 203
+Result fsDeviceOperatorGetGameCardUpdatePartitionInfo(FsDeviceOperator* d, u32* out_version, u64* out_id, u32 handle);
+// cmd 204
+Result fsDeviceOperatorFinalizeGameCardDriver(FsDeviceOperator* d);
+// cmd 205
 Result fsDeviceOperatorGetGameCardAttribute(FsDeviceOperator* d, const FsGameCardHandle* handle, u8 *out);
+// cmd 206
 Result fsDeviceOperatorGetGameCardDeviceCertificate(FsDeviceOperator* d, const FsGameCardHandle* handle, void* dst, size_t dst_size, s64* out_size, s64 size);
+// cmd 207
+Result fsDeviceOperatorGetGameCardAsicInfo(FsDeviceOperator* d, FsRmaInformation* out, u64 out_size, const void* in_buf, u64 in_size);
+// cmd 208
 Result fsDeviceOperatorGetGameCardIdSet(FsDeviceOperator* d, void* dst, size_t dst_size, s64 size);
+// cmd 209
+Result fsDeviceOperatorWriteToGameCardDirectly(FsDeviceOperator* d, u64 offset, void* out_buf, u64 out_size);
+// cmd 210
+Result fsDeviceOperatorSetVerifyWriteEnableFlag(FsDeviceOperator* d, bool flag);
+// cmd 211
+Result fsDeviceOperatorGetGameCardImageHash(FsDeviceOperator* d, void* out_hash, u64 hash_size, u32 handle);
+// cmd 212
+Result fsDeviceOperatorGetGameCardDeviceIdForProdCard(FsDeviceOperator* d, void* out_buf, u64 out_size, const void* in_buf, u64 in_size);
+// cmd 213
+Result fsDeviceOperatorEraseAndWriteParamDirectly(FsDeviceOperator* d, const void* in_buf, u64 in_size);
+// cmd 214
+Result fsDeviceOperatorReadParamDirectly(FsDeviceOperator* d, void* out_buf, u64 out_size);
+// cmd 215
+Result fsDeviceOperatorForceEraseGameCard(FsDeviceOperator* d);
+// cmd 216
+Result fsDeviceOperatorGetGameCardErrorInfo(FsDeviceOperator* d, FsGameCardErrorInfo* out);
+// cmd 217
 Result fsDeviceOperatorGetGameCardErrorReportInfo(FsDeviceOperator* d, FsGameCardErrorReportInfo* out);
+// cmd 218
 Result fsDeviceOperatorGetGameCardDeviceId(FsDeviceOperator* d, void* dst, size_t dst_size, s64 size);
+// cmd 219
 Result fsDeviceOperatorChallengeCardExistence(FsDeviceOperator* d, const FsGameCardHandle* handle, void* dst, size_t dst_size, void* seed, size_t seed_size, void* value, size_t value_size);
+// cmd 220
+Result fsDeviceOperatorGetGameCardCompatibilityType(FsDeviceOperator* d, u32 handle, u8* out);
+// cmd 221
+Result fsDeviceOperatorGetGameCardAsicCertificate(FsDeviceOperator* d, FsGameCardAsicCertificateSet* out, u64 out_size);
+// cmd 222
+Result fsDeviceOperatorGetGameCardCardHeader(FsDeviceOperator* d, void* out_buf, u64 out_size, u32 handle);
+// cmd 223
+Result fsDeviceOperatorSetGameCardSessionCreationDelay(FsDeviceOperator* d, bool enabled, u32 delay, bool flag);
+// cmd 224
+Result fsDeviceOperatorGetGameCardApplicationIdList(FsDeviceOperator* d, u16* out_count, void* out_buf, u64 out_size, u32 handle);
+// cmd 225
+Result fsDeviceOperatorRegisterGameCardConfigurationData(FsDeviceOperator* d, const void* in_buf, u64 in_size);
+// cmd 226
+Result fsDeviceOperatorGetGameCardDetailedErrorReportInfo(FsDeviceOperator* d, FsGameCardDetailedErrorReportInfo* out, u64 out_size);
+// cmd 300
+Result fsDeviceOperatorSetSpeedEmulationMode(FsDeviceOperator* d, u32 mode);
+// cmd 301
+Result fsDeviceOperatorGetSpeedEmulationMode(FsDeviceOperator* d, u32* out_mode);
+// cmd 302
+Result fsDeviceOperatorSetApplicationStorageSpeed(FsDeviceOperator* d, u32 speed);
+// cmd 303
+Result fsDeviceOperatorSetGameCardClockRateForSpeedEmulation(FsDeviceOperator* d, u32 clock_rate);
+// cmd 304
+Result fsDeviceOperatorClearGameCardClockRateForSpeedEmulation(FsDeviceOperator* d);
+// cmd 400
+Result fsDeviceOperatorSuspendSdmmcControl(FsDeviceOperator* d);
+// cmd 401
+Result fsDeviceOperatorResumeSdmmcControl(FsDeviceOperator* d);
+// cmd 402
+Result fsDeviceOperatorGetSdmmcConnectionStatus(FsDeviceOperator* d, u32* out_speed_mode, u32* out_bus_width, u32 port);
+// cmd 500 (base + convenience wrappers)
+Result fsDeviceOperatorSetDeviceSimulationEvent(FsDeviceOperator* d, u32 device_type, u32 target_op, u32 failure_type, u32 result_value, u8 flag);
+Result fsDeviceOperatorSetSdCardSimulationEvent(FsDeviceOperator* d, u32 target_op, u32 failure_type, bool flag);
+Result fsDeviceOperatorSetSdCardSimulationEventWithResult(FsDeviceOperator* d, u32 target_op, u32 result_value, bool flag);
+Result fsDeviceOperatorSetGameCardSimulationEvent(FsDeviceOperator* d, u32 target_op, u32 failure_type, bool flag);
+Result fsDeviceOperatorSetGameCardSimulationEventWithResult(FsDeviceOperator* d, u32 target_op, u32 result_value, bool flag);
+// cmd 501 (base + convenience wrappers)
+Result fsDeviceOperatorClearDeviceSimulationEvent(FsDeviceOperator* d, u32 device_type);
+Result fsDeviceOperatorClearSdCardSimulationEvent(FsDeviceOperator* d);
+Result fsDeviceOperatorClearGameCardSimulationEvent(FsDeviceOperator* d);
+
 void fsDeviceOperatorClose(FsDeviceOperator* d);

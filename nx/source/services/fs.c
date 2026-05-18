@@ -1201,12 +1201,35 @@ Result fsDeviceOperatorGetAndClearSdCardErrorInfo(FsDeviceOperator* d, FsStorage
     return _fsCmdGetAndClearStorageErrorInfo(&d->s, out, out_log_size, dst, dst_size, size, 5);
 }
 
+Result fsDeviceOperatorGetSdCardHostControllerStatus(FsDeviceOperator* d, FsSdCardHostControllerStatus* out) {
+    return _fsObjectDispatchOut(&d->s, 6, *out);
+}
+
+Result fsDeviceOperatorSetSdCardActivationMode(FsDeviceOperator* d, u8 mode) {
+    return _fsObjectDispatchIn(&d->s, 7, mode);
+}
+
+Result fsDeviceOperatorTryGetSdCardInfo(FsDeviceOperator* d, FsSdCardInfo* out, u64 out_size) {
+    return _fsObjectDispatchIn(&d->s, 8, out_size,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { out, out_size } },
+    );
+}
+
 Result fsDeviceOperatorGetMmcCid(FsDeviceOperator* d, void* dst, size_t dst_size, s64 size) {
     return _fsCmdInSizeOutBuffer(&d->s, dst, dst_size, size, 100);
 }
 
 Result fsDeviceOperatorGetMmcSpeedMode(FsDeviceOperator* d, s64* out) {
     return _fsCmdNoInOutS64(&d->s, out, 101);
+}
+
+Result fsDeviceOperatorEraseMmc(FsDeviceOperator* d, u32 partition) {
+    return _fsObjectDispatchIn(&d->s, 110, partition);
+}
+
+Result fsDeviceOperatorGetMmcPartitionSize(FsDeviceOperator* d, u64* out_size, u32 partition) {
+    return _fsObjectDispatchInOut(&d->s, 111, partition, *out_size);
 }
 
 Result fsDeviceOperatorGetMmcPatrolCount(FsDeviceOperator* d, u32* out) {
@@ -1227,16 +1250,52 @@ Result fsDeviceOperatorGetMmcExtendedCsd(FsDeviceOperator* d, void* dst, size_t 
     return _fsCmdInSizeOutBuffer(&d->s, dst, dst_size, size, 114);
 }
 
+Result fsDeviceOperatorSuspendMmcPatrol(FsDeviceOperator* d) {
+    return _fsObjectDispatch(&d->s, 115);
+}
+
+Result fsDeviceOperatorResumeMmcPatrol(FsDeviceOperator* d) {
+    return _fsObjectDispatch(&d->s, 116);
+}
+
+Result fsDeviceOperatorEraseMmcWithRange(FsDeviceOperator* d, u64 offset, u64 size, u64 end) {
+    const struct { u64 offset; u64 size; u64 end; } in = { offset, size, end };
+    return _fsObjectDispatchIn(&d->s, 117, in);
+}
+
+Result fsDeviceOperatorMarkBeforeEraseMmcPartitionUserData(FsDeviceOperator* d) {
+    return _fsObjectDispatch(&d->s, 118);
+}
+
+Result fsDeviceOperatorCheckAfterEraseMmcPartitionUserData(FsDeviceOperator* d) {
+    return _fsObjectDispatch(&d->s, 119);
+}
+
 Result fsDeviceOperatorIsGameCardInserted(FsDeviceOperator* d, bool* out) {
     return _fsCmdNoInOutBool(&d->s, out, 200);
+}
+
+Result fsDeviceOperatorEraseGameCard(FsDeviceOperator* d, u32 gc_size, u64 gc_handle) {
+    const struct { u32 gc_size; u32 pad; u64 gc_handle; } in = { gc_size, 0, gc_handle };
+    return _fsObjectDispatchIn(&d->s, 201, in);
 }
 
 Result fsDeviceOperatorGetGameCardHandle(FsDeviceOperator* d, FsGameCardHandle* out) {
     return _fsObjectDispatchOut(&d->s, 202, *out);
 }
 
-Result fsDeviceOperatorGetGameCardUpdatePartitionInfo(FsDeviceOperator* d, const FsGameCardHandle* handle, FsGameCardUpdatePartitionInfo* out) {
-    return _fsObjectDispatchInOut(&d->s, 203, *handle, *out);
+Result fsDeviceOperatorGetGameCardUpdatePartitionInfo(FsDeviceOperator* d, u32* out_version, u64* out_id, u32 handle) {
+    struct { u32 version; u32 pad; u64 id; } out;
+    Result rc = _fsObjectDispatchInOut(&d->s, 203, handle, out);
+    if (R_SUCCEEDED(rc)) {
+        if (out_version) *out_version = out.version;
+        if (out_id)      *out_id      = out.id;
+    }
+    return rc;
+}
+
+Result fsDeviceOperatorFinalizeGameCardDriver(FsDeviceOperator* d) {
+    return _fsObjectDispatch(&d->s, 204);
 }
 
 Result fsDeviceOperatorGetGameCardAttribute(FsDeviceOperator* d, const FsGameCardHandle* handle, u8 *out) {
@@ -1269,8 +1328,79 @@ Result fsDeviceOperatorGetGameCardDeviceCertificate(FsDeviceOperator* d, const F
     return rc;
 }
 
+Result fsDeviceOperatorGetGameCardAsicInfo(FsDeviceOperator* d, FsRmaInformation* out, u64 out_size, const void* in_buf, u64 in_size) {
+    const struct { u64 out_size; u64 in_size; } in_args = { out_size, in_size };
+    return _fsObjectDispatchIn(&d->s, 207, in_args,
+        .buffer_attrs = {
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_Out,
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_In,
+        },
+        .buffers = {
+            { out,    out_size },
+            { in_buf, in_size  },
+        },
+    );
+}
+
 Result fsDeviceOperatorGetGameCardIdSet(FsDeviceOperator* d, void* dst, size_t dst_size, s64 size) {
     return _fsCmdInSizeOutBuffer(&d->s, dst, dst_size, size, 208);
+}
+
+Result fsDeviceOperatorWriteToGameCardDirectly(FsDeviceOperator* d, u64 offset, void* out_buf, u64 out_size) {
+    const struct { u64 offset; u64 out_size; } in = { offset, out_size };
+    return _fsObjectDispatchIn(&d->s, 209, in,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { out_buf, out_size } },
+    );
+}
+
+Result fsDeviceOperatorSetVerifyWriteEnableFlag(FsDeviceOperator* d, bool flag) {
+    u8 tmp = flag ? 1 : 0;
+    return _fsObjectDispatchIn(&d->s, 210, tmp);
+}
+
+Result fsDeviceOperatorGetGameCardImageHash(FsDeviceOperator* d, void* out_hash, u64 hash_size, u32 handle) {
+    const struct { s64 hash_size; u32 handle; u32 pad; } in = { (s64)hash_size, handle, 0 };
+    return _fsObjectDispatchIn(&d->s, 211, in,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { out_hash, hash_size } },
+    );
+}
+
+Result fsDeviceOperatorGetGameCardDeviceIdForProdCard(FsDeviceOperator* d, void* out_buf, u64 out_size, const void* in_buf, u64 in_size) {
+    const struct { u64 in_size; u64 out_size; } in_args = { in_size, out_size };
+    return _fsObjectDispatchIn(&d->s, 212, in_args,
+        .buffer_attrs = {
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_Out,
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_In,
+        },
+        .buffers = {
+            { out_buf, out_size },
+            { in_buf,  in_size  },
+        },
+    );
+}
+
+Result fsDeviceOperatorEraseAndWriteParamDirectly(FsDeviceOperator* d, const void* in_buf, u64 in_size) {
+    return _fsObjectDispatchIn(&d->s, 213, in_size,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
+        .buffers = { { in_buf, in_size } },
+    );
+}
+
+Result fsDeviceOperatorReadParamDirectly(FsDeviceOperator* d, void* out_buf, u64 out_size) {
+    return _fsObjectDispatchIn(&d->s, 214, out_size,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { out_buf, out_size } },
+    );
+}
+
+Result fsDeviceOperatorForceEraseGameCard(FsDeviceOperator* d) {
+    return _fsObjectDispatch(&d->s, 215);
+}
+
+Result fsDeviceOperatorGetGameCardErrorInfo(FsDeviceOperator* d, FsGameCardErrorInfo* out) {
+    return _fsObjectDispatchOut(&d->s, 216, *out);
 }
 
 Result fsDeviceOperatorGetGameCardErrorReportInfo(FsDeviceOperator* d, FsGameCardErrorReportInfo* out) {
@@ -1301,6 +1431,135 @@ Result fsDeviceOperatorChallengeCardExistence(FsDeviceOperator* d, const FsGameC
             { value, value_size },
         },
     );
+}
+
+Result fsDeviceOperatorGetGameCardCompatibilityType(FsDeviceOperator* d, u32 handle, u8* out) {
+    return _fsObjectDispatchInOut(&d->s, 220, handle, *out);
+}
+
+Result fsDeviceOperatorGetGameCardAsicCertificate(FsDeviceOperator* d, FsGameCardAsicCertificateSet* out, u64 out_size) {
+    return _fsObjectDispatchIn(&d->s, 221, out_size,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { out, out_size } },
+    );
+}
+
+Result fsDeviceOperatorGetGameCardCardHeader(FsDeviceOperator* d, void* out_buf, u64 out_size, u32 handle) {
+    const struct { u64 out_size; u32 handle; u32 pad; } in = { out_size, handle, 0 };
+    return _fsObjectDispatchIn(&d->s, 222, in,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { out_buf, out_size } },
+    );
+}
+
+Result fsDeviceOperatorSetGameCardSessionCreationDelay(FsDeviceOperator* d, bool enabled, u32 delay, bool flag) {
+    const struct { u8 enabled; u8 flag; u8 pad[2]; u32 delay; } in = {
+        (u8)enabled, (u8)flag, {0}, delay
+    };
+    return _fsObjectDispatchIn(&d->s, 223, in);
+}
+
+Result fsDeviceOperatorGetGameCardApplicationIdList(FsDeviceOperator* d, u16* out_count, void* out_buf, u64 out_size, u32 handle) {
+    const struct { u64 out_size; u32 handle; u32 pad; } in = { out_size, handle, 0 };
+    return _fsObjectDispatchInOut(&d->s, 224, in, *out_count,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { out_buf, out_size } },
+    );
+}
+
+Result fsDeviceOperatorRegisterGameCardConfigurationData(FsDeviceOperator* d, const void* in_buf, u64 in_size) {
+    return _fsObjectDispatchIn(&d->s, 225, in_size,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In },
+        .buffers = { { in_buf, in_size } },
+    );
+}
+
+Result fsDeviceOperatorGetGameCardDetailedErrorReportInfo(FsDeviceOperator* d, FsGameCardDetailedErrorReportInfo* out, u64 out_size) {
+    return _fsObjectDispatchIn(&d->s, 226, out_size,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out },
+        .buffers = { { out, out_size } },
+    );
+}
+
+Result fsDeviceOperatorSetSpeedEmulationMode(FsDeviceOperator* d, u32 mode) {
+    return _fsObjectDispatchIn(&d->s, 300, mode);
+}
+
+Result fsDeviceOperatorGetSpeedEmulationMode(FsDeviceOperator* d, u32* out_mode) {
+    return _fsObjectDispatchOut(&d->s, 301, *out_mode);
+}
+
+Result fsDeviceOperatorSetApplicationStorageSpeed(FsDeviceOperator* d, u32 speed) {
+    return _fsObjectDispatchIn(&d->s, 302, speed);
+}
+
+Result fsDeviceOperatorSetGameCardClockRateForSpeedEmulation(FsDeviceOperator* d, u32 clock_rate) {
+    return _fsObjectDispatchIn(&d->s, 303, clock_rate);
+}
+
+Result fsDeviceOperatorClearGameCardClockRateForSpeedEmulation(FsDeviceOperator* d) {
+    return _fsObjectDispatch(&d->s, 304);
+}
+
+Result fsDeviceOperatorSuspendSdmmcControl(FsDeviceOperator* d) {
+    return _fsObjectDispatch(&d->s, 400);
+}
+
+Result fsDeviceOperatorResumeSdmmcControl(FsDeviceOperator* d) {
+    return _fsObjectDispatch(&d->s, 401);
+}
+
+Result fsDeviceOperatorGetSdmmcConnectionStatus(FsDeviceOperator* d, u32* out_speed_mode, u32* out_bus_width, u32 port) {
+    struct { u32 speed_mode; u32 bus_width; } out;
+    Result rc = _fsObjectDispatchInOut(&d->s, 402, port, out);
+    if (R_SUCCEEDED(rc)) {
+        if (out_speed_mode) *out_speed_mode = out.speed_mode;
+        if (out_bus_width)  *out_bus_width  = out.bus_width;
+    }
+    return rc;
+}
+
+// cmd 500 — SetDeviceSimulationEvent (base)
+Result fsDeviceOperatorSetDeviceSimulationEvent(FsDeviceOperator* d, u32 device_type, u32 target_op, u32 failure_type, u32 result_value, u8 flag) {
+    const struct { u32 device_type; u32 target_op; u32 failure_type; u32 result_value; u8 flag; u8 pad[3]; } in = {
+        device_type, target_op, failure_type, result_value, flag, {0}
+    };
+    return _fsObjectDispatchIn(&d->s, 500, in);
+}
+
+// cmd 500 — SetSdCardSimulationEvent (device_type=1, AccessFailureEventType variant)
+Result fsDeviceOperatorSetSdCardSimulationEvent(FsDeviceOperator* d, u32 target_op, u32 failure_type, bool flag) {
+    return fsDeviceOperatorSetDeviceSimulationEvent(d, 1, target_op, failure_type, 0, flag ? 1 : 0);
+}
+
+// cmd 500 — SetSdCardSimulationEventWithResult (device_type=1, Result variant: failure_type=2)
+Result fsDeviceOperatorSetSdCardSimulationEventWithResult(FsDeviceOperator* d, u32 target_op, u32 result_value, bool flag) {
+    return fsDeviceOperatorSetDeviceSimulationEvent(d, 1, target_op, 2, result_value & 0x3fffff, flag ? 1 : 0);
+}
+
+// cmd 500 — SetGameCardSimulationEvent (device_type=2, AccessFailureEventType variant)
+Result fsDeviceOperatorSetGameCardSimulationEvent(FsDeviceOperator* d, u32 target_op, u32 failure_type, bool flag) {
+    return fsDeviceOperatorSetDeviceSimulationEvent(d, 2, target_op, failure_type, 0, flag ? 1 : 0);
+}
+
+// cmd 500 — SetGameCardSimulationEventWithResult (device_type=2, Result variant: failure_type=2)
+Result fsDeviceOperatorSetGameCardSimulationEventWithResult(FsDeviceOperator* d, u32 target_op, u32 result_value, bool flag) {
+    return fsDeviceOperatorSetDeviceSimulationEvent(d, 2, target_op, 2, result_value & 0x3fffff, flag ? 1 : 0);
+}
+
+// cmd 501 — ClearDeviceSimulationEvent (base)
+Result fsDeviceOperatorClearDeviceSimulationEvent(FsDeviceOperator* d, u32 device_type) {
+    return _fsObjectDispatchIn(&d->s, 501, device_type);
+}
+
+// cmd 501 — ClearSdCardSimulationEvent (device_type=1)
+Result fsDeviceOperatorClearSdCardSimulationEvent(FsDeviceOperator* d) {
+    return fsDeviceOperatorClearDeviceSimulationEvent(d, 1);
+}
+
+// cmd 501 — ClearGameCardSimulationEvent (device_type=2)
+Result fsDeviceOperatorClearGameCardSimulationEvent(FsDeviceOperator* d) {
+    return fsDeviceOperatorClearDeviceSimulationEvent(d, 2);
 }
 
 void fsDeviceOperatorClose(FsDeviceOperator* d) {
