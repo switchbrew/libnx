@@ -73,6 +73,7 @@ typedef struct {
     u32 battery_charge_percentage;    ///< Raw battery charged capacity per cent-mille
     u32 battery_charge_milli_voltage; ///< Voltage average in mV
     u32 battery_age_percentage;       ///< Battery age per cent-mille
+    u32 unk_x2c;                      ///< It's the same value as charger_input_voltage_limit
     u32 usb_power_role;
     u32 usb_charger_type;
     u32 charger_input_voltage_limit;  ///< Charger and external device voltage limit in mV
@@ -81,7 +82,7 @@ typedef struct {
     bool controller_power_supply;
     bool otg_request;
     u8 reserved;
-    u8 unk_x40[0x14];
+    u8 unk_x44[0x10];
 } PsmBatteryChargeInfoFields;
 
 /// IPsmSession
