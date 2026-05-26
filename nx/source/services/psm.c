@@ -143,6 +143,14 @@ Result psmGetBatteryChargeInfoFields(PsmBatteryChargeInfoFields *out_fields) {
         if (R_SUCCEEDED(rc)) {
             memset(out_fields, 0, sizeof(*out_fields));
             memcpy(out_fields, &fields, sizeof(fields));
+            out_fields->reserved = fields.reserved;
+            out_fields->otg_request = fields.otg_request;
+            out_fields->controller_power_supply = fields.controller_power_supply;
+            out_fields->fast_battery_charging = fields.fast_battery_charging;
+            out_fields->charger_input_current_limit = fields.charger_input_current_limit;
+            out_fields->charger_input_voltage_limit = fields.charger_input_voltage_limit;
+            out_fields->usb_charger_type = fields.usb_charger_type;
+            out_fields->usb_power_role = fields.usb_power_role;
         }
         return rc;
     }
