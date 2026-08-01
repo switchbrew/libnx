@@ -2624,3 +2624,29 @@ Result setcalGetDeviceId(u64 *out_device_id);
  * @param[out] out_type Output ConsoleSixAxisSensorMountType.
  */
 Result setcalGetConsoleSixAxisSensorMountType(u8 *out_type);
+
+/// Initialize setfd.
+/// [4.0.0+] Only exposed if in development mode.
+Result setfdInitialize(void);
+
+/// Exit setfd.
+void setfdExit(void);
+
+/// Gets the Service object for the actual setfd service session.
+Service* setfdGetServiceSession(void);
+
+/**
+ * @brief Sets the value of a settings item.
+ * @param name Name string.
+ * @param item_key Item key string.
+ * @param value_in Pointer to input value.
+ * @param value_in_size Size of the value_in buffer.
+ */
+Result setfdSetSettingsItemValue(const char *name, const char *item_key, const void *value_in, s64 value_in_size);
+
+/**
+ * @brief Resets the value of a settings item.
+ * @param name Name string.
+ * @param item_key Item key string.
+ */
+Result setfdResetSettingsItemValue(const char *name, const char *item_key);

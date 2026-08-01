@@ -8,6 +8,7 @@
 static Service g_setSrv;
 static Service g_setsysSrv;
 static Service g_setcalSrv;
+static Service g_setfdSrv;
 
 static bool g_setLanguageCodesInitialized;
 static u64 g_setLanguageCodes[0x40];
@@ -57,6 +58,20 @@ void _setcalCleanup(void) {
 
 Service* setcalGetServiceSession(void) {
     return &g_setcalSrv;
+}
+
+NX_GENERATE_SERVICE_GUARD(setfd);
+
+Result _setfdInitialize(void) {
+    return smGetService(&g_setfdSrv, "set:fd");
+}
+
+void _setfdCleanup(void) {
+    serviceClose(&g_setfdSrv);
+}
+
+Service* setfdGetServiceSession(void) {
+    return &g_setfdSrv;
 }
 
 static Result _setCmdGetHandle(Service* srv, Handle* handle_out, u32 cmd_id) {
@@ -1822,4 +1837,48 @@ Result setcalGetConsoleSixAxisSensorMountType(u8 *out_type) {
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     return _setCmdNoInOutU8(&g_setcalSrv, out_type, 43);
+}
+
+Result setfdSetSettingsItemValue(const char *name, const char *item_key, const void *value_in, s64 value_in_size) {
+    char send_name[SET_MAX_NAME_SIZE];
+    char send_item_key[SET_MAX_NAME_SIZE];
+
+    memset(send_name, 0, SET_MAX_NAME_SIZE);
+    memset(send_item_key, 0, SET_MAX_NAME_SIZE);
+    strncpy(send_name, name, SET_MAX_NAME_SIZE-1);
+    strncpy(send_item_key, item_key, SET_MAX_NAME_SIZE-1);
+
+    return serviceDispatch(&g_setfdSrv, 2,
+        .buffer_attrs = {
+            SfBufferAttr_HipcPointer | SfBufferAttr_In,
+            SfBufferAttr_HipcPointer | SfBufferAttr_In,
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_In,
+        },
+        .buffers = {
+            { send_name, SET_MAX_NAME_SIZE },
+            { send_item_key, SET_MAX_NAME_SIZE },
+            { item_key, value_in_size },
+        }
+    );
+}
+
+Result setfdResetSettingsItemValue(const char *name, const char *item_key) {
+    char send_name[SET_MAX_NAME_SIZE];
+    char send_item_key[SET_MAX_NAME_SIZE];
+
+    memset(send_name, 0, SET_MAX_NAME_SIZE);
+    memset(send_item_key, 0, SET_MAX_NAME_SIZE);
+    strncpy(send_name, name, SET_MAX_NAME_SIZE-1);
+    strncpy(send_item_key, item_key, SET_MAX_NAME_SIZE-1);
+
+    return serviceDispatch(&g_setfdSrv, 3,
+        .buffer_attrs = {
+            SfBufferAttr_HipcPointer | SfBufferAttr_In,
+            SfBufferAttr_HipcPointer | SfBufferAttr_In
+        },
+        .buffers = {
+            { send_name, SET_MAX_NAME_SIZE },
+            { send_item_key, SET_MAX_NAME_SIZE },
+        }
+    );
 }
