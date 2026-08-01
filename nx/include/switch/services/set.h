@@ -2625,12 +2625,15 @@ Result setcalGetDeviceId(u64 *out_device_id);
  */
 Result setcalGetConsoleSixAxisSensorMountType(u8 *out_type);
 
-// Initialize setfd.
-// [4.0.0+] Only exposed if in development mode.
+/// Initialize setfd.
+/// [4.0.0+] Only exposed if in development mode.
 Result setfdInitialize(void);
 
-// Exit setfd.
+/// Exit setfd.
 void setfdExit(void);
+
+/// Gets the Service object for the actual setfd service session.
+Service* setfdGetServiceSession(void);
 
 /**
  * @brief Sets the value of a settings item.

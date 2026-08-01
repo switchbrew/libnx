@@ -56,6 +56,10 @@ void _setcalCleanup(void) {
     serviceClose(&g_setcalSrv);
 }
 
+Service* setcalGetServiceSession(void) {
+    return &g_setcalSrv;
+}
+
 NX_GENERATE_SERVICE_GUARD(setfd);
 
 Result _setfdInitialize(void) {
@@ -66,8 +70,8 @@ void _setfdCleanup(void) {
     serviceClose(&g_setfdSrv);
 }
 
-Service* setcalGetServiceSession(void) {
-    return &g_setcalSrv;
+Service* setfdGetServiceSession(void) {
+    return &g_setfdSrv;
 }
 
 static Result _setCmdGetHandle(Service* srv, Handle* handle_out, u32 cmd_id) {
