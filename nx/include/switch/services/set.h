@@ -2626,6 +2626,7 @@ Result setcalGetDeviceId(u64 *out_device_id);
 Result setcalGetConsoleSixAxisSensorMountType(u8 *out_type);
 
 // Initialize setfd.
+// [4.0.0+] Only exposed if in development mode.
 Result setfdInitialize(void);
 
 // Exit setfd.
