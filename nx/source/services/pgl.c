@@ -120,7 +120,7 @@ Result pglLaunchProgramFromHost(u64 *out_pid, const char *content_path, u32 pm_l
     }
 }
 
-Result pglGetHostContentMetaInfo(PglContentMetaInfo *out, const char *content_path) {
+Result pglGetHostProgramLaunchProperty(PglContentMetaInfo *out, const char *content_path) {
     if (_pglShouldUseTipc()) {
         return tipcDispatchOut(&g_pglSrv.tipc, 4, *out,
             .buffer_attrs = { SfBufferAttr_In | SfBufferAttr_HipcMapAlias },
@@ -134,11 +134,11 @@ Result pglGetHostContentMetaInfo(PglContentMetaInfo *out, const char *content_pa
     }
 }
 
-Result pglGetApplicationProcessId(u64 *out) {
+Result pglGetRunningApplicationProcessId(u64 *out_pid) {
     if (_pglShouldUseTipc()) {
-        return tipcDispatchOut(&g_pglSrv.tipc, 5, *out);
+        return tipcDispatchOut(&g_pglSrv.tipc, 5, *out_pid);
     } else {
-        return serviceDispatchOut(&g_pglSrv.cmif, 5, *out);
+        return serviceDispatchOut(&g_pglSrv.cmif, 5, *out_pid);
     }
 }
 
@@ -146,7 +146,7 @@ Result pglBoostSystemMemoryResourceLimit(u64 size) {
     return _pglCmdInU64(size, 6);
 }
 
-Result pglIsProcessTracked(bool *out, u64 pid) {
+Result pglIsRunningProcess(bool *out, u64 pid) {
     u8 outval = 0;
     Result rc;
 
@@ -174,8 +174,16 @@ Result pglEnableApplicationAllThreadDumpOnCrash(bool en) {
     return _pglCmdInBool(en, 10);
 }
 
-Result pglTriggerApplicationSnapShotDumper(PglSnapShotDumpType dump_type, const char *arg) {
-    if (hosversionAtLeast(12,0,0)) return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+Result pglGetProcessId(u64 *out_pid, u64 program_id) {
+    if (hosversionBefore(19,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    
+    return tipcDispatchInOut(&g_pglSrv.tipc, 11, program_id, *out_pid);
+}
+
+Result pglTriggerSnapShotDumper(PglSnapShotDumpType dump_type, const char *arg) {
+    if (hosversionAtLeast(12,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
     _Static_assert(sizeof(dump_type) == sizeof(u32), "PglSnapShotDumpType");
     return serviceDispatchIn(&g_pglSrv.cmif, 12, dump_type,
@@ -184,7 +192,7 @@ Result pglTriggerApplicationSnapShotDumper(PglSnapShotDumpType dump_type, const 
     );
 }
 
-Result pglGetEventObserver(PglEventObserver *out) {
+Result pglCreateShellEvent(PglEventObserver *out) {
     if (_pglShouldUseTipc()) {
         return tipcDispatch(&g_pglSrv.tipc, 20,
             .out_num_objects = 1,
@@ -198,7 +206,20 @@ Result pglGetEventObserver(PglEventObserver *out) {
     }
 }
 
-Result pglEventObserverGetProcessEvent(PglEventObserver *observer, Event *out) {
+Result pglEnableApplicationCrashReport2(u64 pid, bool en) {
+    if (hosversionBefore(23,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    
+    const struct {
+        u64 pid;
+        u8 en;
+        u8 pad[3];
+    } in = { pid, en, {0} };
+    
+    return tipcDispatchIn(&g_pglSrv.tipc, 31, in);
+}
+
+Result pglEventObserverGetShellEvent(PglEventObserver *observer, Event *out) {
     Handle evt_handle;
     Result rc;
 
@@ -221,7 +242,7 @@ Result pglEventObserverGetProcessEvent(PglEventObserver *observer, Event *out) {
     return rc;
 }
 
-Result pglEventObserverGetProcessEventInfo(PglEventObserver *observer, PmProcessEventInfo *out) {
+Result pglEventObserverGetShellEventInfo(PglEventObserver *observer, PmProcessEventInfo *out) {
     if (_pglShouldUseTipc()) {
         return tipcDispatchOut(&observer->t, 1, *out);
     } else {

@@ -27,12 +27,13 @@ typedef enum {
 } PglSnapShotDumpType;
 
 typedef struct {
-    u64 id;            ///< Program Id
-    u32 version;       ///< Version
-    u8 content_type;   ///< NcmContentType
-    u8 id_offset;      ///< Id Offset
-    u8 reserved_0E[2]; ///< Padding
-} PglContentMetaInfo;
+    u64 id;                     ///< Program Id
+    u32 version;                ///< Version
+    u8 content_type;            ///< NcmContentType
+    u8 id_offset;               ///< Id Offset
+    u8 content_meta_type;       ///< NcmContentMetaType
+    u8 reserved_0F;             ///< Padding
+} PglProgramLaunchProperty;
 
 typedef union {
     Service s;
@@ -54,16 +55,18 @@ TipcService* pglGetServiceSessionTipc(void);
 Result pglLaunchProgram(u64 *out_pid, const NcmProgramLocation *loc, u32 pm_launch_flags, u8 pgl_launch_flags);
 Result pglTerminateProcess(u64 pid);
 Result pglLaunchProgramFromHost(u64 *out_pid, const char *content_path, u32 pm_launch_flags);
-Result pglGetHostContentMetaInfo(PglContentMetaInfo *out, const char *content_path);
-Result pglGetApplicationProcessId(u64 *out);
+Result pglGetHostProgramLaunchProperty(PglProgramLaunchProperty *out, const char *content_path);
+Result pglGetRunningApplicationProcessId(u64 *out_pid);
 Result pglBoostSystemMemoryResourceLimit(u64 size);
-Result pglIsProcessTracked(bool *out, u64 pid);
+Result pglIsRunningProcess(bool *out, u64 pid);
 Result pglEnableApplicationCrashReport(bool en);
 Result pglIsApplicationCrashReportEnabled(bool *out);
 Result pglEnableApplicationAllThreadDumpOnCrash(bool en);
-Result pglTriggerApplicationSnapShotDumper(PglSnapShotDumpType dump_type, const char *arg);
-Result pglGetEventObserver(PglEventObserver *out);
+Result pglGetProcessId(u64 *out_pid, u64 program_id); ///< [19.0.0+]
+Result pglTriggerSnapShotDumper(PglSnapShotDumpType dump_type, const char *arg); ///< [10.0.0-11.0.1]
+Result pglCreateShellEvent(PglEventObserver *out);
+Result pglEnableApplicationCrashReport2(u64 pid, bool en); ///< [23.0.0+]
 
-Result pglEventObserverGetProcessEvent(PglEventObserver *observer, Event *out);
-Result pglEventObserverGetProcessEventInfo(PglEventObserver *observer, PmProcessEventInfo *out);
+Result pglEventObserverGetShellEvent(PglEventObserver *observer, Event *out);
+Result pglEventObserverGetShellEventInfo(PglEventObserver *observer, PmProcessEventInfo *out);
 void   pglEventObserverClose(PglEventObserver *observer);
