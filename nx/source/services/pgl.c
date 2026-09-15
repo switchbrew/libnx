@@ -120,7 +120,7 @@ Result pglLaunchProgramFromHost(u64 *out_pid, const char *content_path, u32 pm_l
     }
 }
 
-Result pglGetHostProgramLaunchProperty(PglContentMetaInfo *out, const char *content_path) {
+Result pglGetHostProgramLaunchProperty(PglProgramLaunchProperty *out, const char *content_path) {
     if (_pglShouldUseTipc()) {
         return tipcDispatchOut(&g_pglSrv.tipc, 4, *out,
             .buffer_attrs = { SfBufferAttr_In | SfBufferAttr_HipcMapAlias },
