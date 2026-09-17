@@ -29,6 +29,7 @@ typedef enum {
     SplConfigItem_NewHardwareType = 15,
     SplConfigItem_NewKeyGeneration = 16,
     SplConfigItem_Package2Hash = 17,
+    SplConfigItem_Unknown18 = 18,
 } SplConfigItem;
 
 typedef enum {

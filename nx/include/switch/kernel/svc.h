@@ -42,6 +42,7 @@ typedef enum {
     MemType_CodeWritable=0x15,        ///< Mapped in kernel during \ref svcControlCodeMemory.
     MemType_Coverage=0x16,            ///< Not available.
     MemType_Insecure=0x17,            ///< Mapped in kernel during \ref svcMapInsecurePhysicalMemory.
+    MemType_ShadowStack=0x1A,         ///< Mapped in kernel.
 } MemoryType;
 
 /// Memory state bitmasks.
@@ -213,6 +214,10 @@ typedef enum {
     InfoType_AliasRegionExtraSize           = 28, ///< [18.0.0+] Extra size added to the reserved region.
 
     InfoType_TransferMemoryHint             = 34, ///< [19.0.0+] Low bits of the process address for a KTransferMemory.
+    
+    InfoType_AddressSpaceSize               = 36, ///< [23.0.0+]
+    InfoType_ShadowStackRegionAddress       = 37, ///< [23.0.0+]
+    InfoType_ShadowStackRegionSize          = 38, ///< [23.0.0+]
 
     InfoType_ThreadTickCountDeprecated      = 0xF0000002, ///< [1.0.0-12.1.0] Number of ticks spent on thread.
 } InfoType;
@@ -341,10 +346,11 @@ typedef enum {
 
 /// Address space types for CreateProcessFlags
 typedef enum {
-    CreateProcessFlagAddressSpace_32bit             = 0,
-    CreateProcessFlagAddressSpace_64bitDeprecated   = 1, ///< 36-bit width
-    CreateProcessFlagAddressSpace_32bitWithoutAlias = 2,
-    CreateProcessFlagAddressSpace_64bit             = 3, ///< [2.0.0+] 39-bit width
+    CreateProcessFlagAddressSpace_32bit               = 0,
+    CreateProcessFlagAddressSpace_64Bit36             = 1, ///< 36-bit width
+    CreateProcessFlagAddressSpace_32BitNoReserved     = 2,
+    CreateProcessFlagAddressSpace_64Bit39             = 3, ///< [2.0.0+] 39-bit width
+    CreateProcessFlagAddressSpace_64Bit42             = 4, ///< [23.0.0+] 42-bit width
 } CreateProcessFlagAddressSpace;
 
 /// Memory regions
@@ -364,7 +370,9 @@ typedef struct {
     u32 optimize_memory_allocation: 1;         ///< [7.0.0+] Only allowed in combination with is_application
     u32 disable_device_address_space_merge: 1; ///< [11.0.0+]
     u32 enable_alias_region_extra_size: 1;     ///< [18.0.0+]
-    u32 reserved: 18;
+    u32 unk: 4;
+    u32 enable_shadow_stack: 1;                ///< [23.0.0+]
+    u32 reserved: 13;
 } CreateProcessFlags;
 
 /// DebugEvent structure
