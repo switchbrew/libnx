@@ -45,6 +45,10 @@ Result clkrstGetClockRate(ClkrstSession* session, u32 *out_hz) {
     return serviceDispatchOut(&session->s, 8, *out_hz);
 }
 
+Result clkrstSetMinimumVoltageClockRate(ClkrstSession *session, u32 hz) {
+    return serviceDispatchIn(&session->s, 9, hz);
+}
+
 Result clkrstGetPossibleClockRates(ClkrstSession *session, u32 *rates, s32 max_count, PcvClockRatesListType *out_type, s32 *out_count) {
     struct {
         s32 type;
@@ -58,6 +62,31 @@ Result clkrstGetPossibleClockRates(ClkrstSession *session, u32 *rates, s32 max_c
 
     if (R_SUCCEEDED(rc) && out_type) *out_type = out.type;
     if (R_SUCCEEDED(rc) && out_count) *out_count = out.count;
+
+    return rc;
+}
+
+Result clkrstGetDvfsTable(ClkrstSession *session, u32 *out_rate_table, s32 in_rate_count, u32 *out_voltage_table, s32 in_voltage_count, s32 *out_count) {
+    const struct {
+        s32 rate_count;
+        s32 voltage_count;
+    } in = { in_rate_count, in_voltage_count };
+
+    s32 out = 0;
+    Result rc = serviceDispatchInOut(&session->s, 11, in, out,
+        .buffer_attrs = {
+            SfBufferAttr_Out | SfBufferAttr_HipcAutoSelect,
+            SfBufferAttr_Out | SfBufferAttr_HipcAutoSelect,
+        },
+        .buffers = {
+            { out_rate_table,    in_rate_count    * sizeof(u32) },
+            { out_voltage_table, in_voltage_count * sizeof(u32) },
+        },
+    );
+
+    if (R_SUCCEEDED(rc) && out_count) {
+        *out_count = out;
+    }
 
     return rc;
 }
