@@ -74,4 +74,6 @@ Result gpioPadSetDebounceEnabled(GpioPadSession *p, bool en);
 Result gpioPadGetDebounceEnabled(GpioPadSession *p, bool *out);
 Result gpioPadSetDebounceTime(GpioPadSession *p, s32 ms);
 Result gpioPadGetDebounceTime(GpioPadSession *p, s32 *out);
+Result gpioPadSetUnknownEnabled(GpioPadSession *p, bool en); ///< [23.0.0+]
+Result gpioPadGetUnknownEnabled(GpioPadSession *p, bool *out); ///< [23.0.0+]
 void gpioPadClose(GpioPadSession *p);

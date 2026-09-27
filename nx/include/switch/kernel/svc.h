@@ -152,6 +152,7 @@ typedef enum {
 /// Process Information.
 typedef enum {
     ProcessInfoType_ProcessState=0,       ///<What state is a process in.
+    ProcessInfoType_Unknown1=1,           ///< [23.0.0+] Only set on process Exit/Terminate (likely an exit tag).
 } ProcessInfoType;
 
 /// Process States.
@@ -179,6 +180,7 @@ typedef enum {
     DebugThreadParam_IdealCore=2,
     DebugThreadParam_CurrentCore=3,
     DebugThreadParam_CoreMask=4,
+    DebugThreadParam_Unknown5=5,        ///< [23.0.0+]
 } DebugThreadParam;
 
 /// GetInfo IDs.

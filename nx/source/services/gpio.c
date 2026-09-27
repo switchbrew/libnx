@@ -181,6 +181,18 @@ Result gpioPadGetDebounceTime(GpioPadSession *p, s32 *out) {
     return _gpioCmdNoInOutU32(&p->s, (u32 *)out, 15);
 }
 
+Result gpioPadSetUnknownEnabled(GpioPadSession *p, bool en) {
+    if (hosversionBefore(23,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    return _gpioCmdInBoolNoOut(&p->s, en, 20);
+}
+
+Result gpioPadGetUnknownEnabled(GpioPadSession *p, bool *out) {
+    if (hosversionBefore(23,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    return _gpioCmdNoInOutBool(&p->s, out, 21);
+}
+
 void gpioPadClose(GpioPadSession *p) {
     serviceClose(&p->s);
 }
