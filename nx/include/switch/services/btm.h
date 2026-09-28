@@ -495,3 +495,22 @@ Result btmUnregisterAppletResourceUserId(u64 AppletResourceUserId);
  */
 Result btmSetAppletResourceUserId(u64 AppletResourceUserId);
 
+/**
+ * @brief GetShortenedDeviceInfo
+ * @note Only available on [13.0.0+].
+ * @param[in] profile \ref BtmProfile, when not ::BtmProfile_None entries are only returned which match this profile.
+ * @param[out] out \ref BtmShortenedDeviceInfo
+ * @param[in] count Size of the out array in entries.
+ * @param[out] total_out Total output entries.
+ */
+Result btmGetShortenedDeviceInfo(BtmProfile profile, BtmShortenedDeviceInfo *out, size_t count, s32 *total_out);
+
+/**
+ * @brief GetShortenedDeviceCondition
+ * @note Only available on [14.0.0+].
+ * @param[in] profile \ref BtmProfile, when not ::BtmProfile_None entries are only returned which match this profile.
+ * @param[out] out \ref BtmShortenedDeviceCondition
+ * @param[in] count Size of the out array in entries.
+ * @param[out] total_out Total output entries.
+ */
+Result btmGetShortenedDeviceCondition(BtmProfile profile, BtmShortenedDeviceCondition *out, size_t count, s32 *total_out);
