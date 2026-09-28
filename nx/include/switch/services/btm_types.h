@@ -103,7 +103,7 @@ typedef struct {
     };
 } BtmHostDeviceProperty;
 
-/// BtmConnectedDevice [1.0.0-12.1.0]
+/// DeviceCondition [1.0.0-12.1.0]
 typedef struct {
     BtdrvAddress address;
     u8 pad[2];
@@ -113,9 +113,9 @@ typedef struct {
     u16 vid;
     u16 pid;
     u8 unk_x4C[0x20];
-} BtmConnectedDeviceV1;
+} BtmDeviceConditionV1;
 
-/// BtmConnectedDevice [13.0.0+]
+/// DeviceCondition [13.0.0+]
 typedef struct {
     BtdrvAddress address;
     u8 pad[2];
@@ -124,9 +124,9 @@ typedef struct {
     char name[0x20];
     u8 unk_x6C[0xD9];
     u8 pad2[3];
-} BtmConnectedDeviceV13;
+} BtmDeviceConditionV13;
 
-/// DeviceCondition [1.0.0-5.0.2]
+/// DeviceConditionList [1.0.0-5.0.2]
 typedef struct {
     u32 unk_x0;
     u32 unk_x4;
@@ -134,10 +134,10 @@ typedef struct {
     u8 unk_x9;
     u8 max_count;
     u8 connected_count;
-    BtmConnectedDeviceV1 devices[8];
-} BtmDeviceConditionV100;
+    BtmDeviceConditionV1 devices[8];
+} BtmDeviceConditionListV100;
 
-/// DeviceCondition [5.1.0-7.0.1]
+/// DeviceConditionList [5.1.0-7.0.1]
 typedef struct {
     u32 unk_x0;
     u32 unk_x4;
@@ -146,10 +146,10 @@ typedef struct {
     u8 max_count;
     u8 connected_count;
     u8 pad[3];
-    BtmConnectedDeviceV1 devices[8];
-} BtmDeviceConditionV510;
+    BtmDeviceConditionV1 devices[8];
+} BtmDeviceConditionListV510;
 
-/// DeviceCondition [8.0.0-8.1.1]
+/// DeviceConditionList [8.0.0-8.1.1]
 typedef struct {
     u32 unk_x0;
     u32 unk_x4;
@@ -157,26 +157,26 @@ typedef struct {
     u8 unk_x9;
     u8 max_count;
     u8 connected_count;
-    BtmConnectedDeviceV1 devices[8];
-} BtmDeviceConditionV800;
+    BtmDeviceConditionV1 devices[8];
+} BtmDeviceConditionListV800;
 
-/// DeviceCondition [9.0.0-12.1.0]
+/// DeviceConditionList [9.0.0-12.1.0]
 typedef struct {
     u32 unk_x0;
     u8 unk_x4;
     u8 unk_x5;
     u8 max_count;
     u8 connected_count;
-    BtmConnectedDeviceV1 devices[8];
-} BtmDeviceConditionV900;
+    BtmDeviceConditionV1 devices[8];
+} BtmDeviceConditionListV900;
 
-/// DeviceCondition [1.0.0-12.1.0]
+/// DeviceConditionList [1.0.0-12.1.0]
 typedef union {
-    BtmDeviceConditionV100 v100;
-    BtmDeviceConditionV510 v510;
-    BtmDeviceConditionV800 v800;
-    BtmDeviceConditionV900 v900;
-} BtmDeviceCondition;
+    BtmDeviceConditionListV100 v100;
+    BtmDeviceConditionListV510 v510;
+    BtmDeviceConditionListV800 v800;
+    BtmDeviceConditionListV900 v900;
+} BtmDeviceConditionList;
 
 /// DeviceSlotMode
 typedef struct {
