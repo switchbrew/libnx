@@ -181,6 +181,21 @@ typedef struct {
     u8 pad2[3];                                   ///< Padding
 } BtmDeviceCondition;
 
+/// ShortenedDeviceCondition [14.0.0+]
+typedef struct {
+    BtdrvAddress address;                         ///< \ref BtdrvAddress
+    u8 pad[2];                                    ///< Padding
+    u32 profile;                                  ///< \ref BtmProfile
+    union {
+        u8 data[0x20];                            ///< Empty (Profile = None)
+        BtmHidDeviceCondition hid;                ///< \ref BtmHidDeviceCondition (Profile = Hid)
+        BtmAudioDeviceCondition audio;            ///< \ref BtmAudioDeviceCondition (Profile = Audio)
+    } profile_condition;
+    u8 reserved[0x20];                            ///< Reserved
+    char name[0x15];                              ///< Name
+    u8 pad2[3];                                   ///< Padding
+} BtmShortenedDeviceCondition;
+
 /// DeviceConditionList [1.0.0-5.0.2]
 typedef struct {
     u32 bluetooth_mode;                     ///< \ref BtmBluetoothMode
@@ -278,6 +293,23 @@ typedef struct {
     char name[0xF9];                      ///< Name
     u8 pad[3];                            ///< Padding
 } BtmDeviceInfo;
+
+/// ShortenedDeviceInfo [13.0.0+]
+typedef struct {
+    BtdrvAddress addr;                    ///< \ref BtdrvAddress
+    BtmClassOfDevice class_of_device;     ///< ClassOfDevice
+    BtmLinkKey link_key;                  ///< LinkKey
+    u8 key_type;                          ///< KeyType
+    u8 reserved[2];                       ///< Reserved
+    u32 profile;                          ///< \ref BtmProfile
+    union {
+        u8 data[0x20];                    ///< Empty (Profile = None)
+        BtmHidDeviceInfo hid;             ///< \ref BtmHidDeviceInfo (Profile = Hid)
+        BtmAudioDeviceInfo audio;         ///< \ref BtmAudioDeviceInfo (Profile = Audio)
+    } profile_info;
+    char name[0x15];                      ///< Name
+    u8 pad[2];                            ///< Padding
+} BtmShortenedDeviceInfo;
 
 /// DeviceInfoList
 typedef struct {

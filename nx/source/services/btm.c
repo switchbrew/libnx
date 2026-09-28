@@ -640,3 +640,16 @@ Result btmSetAppletResourceUserId(u64 AppletResourceUserId) {
     return _btmCmdInU64NoOut(AppletResourceUserId, cmd_id);
 }
 
+Result btmGetShortenedDeviceInfo(BtmProfile profile, BtmShortenedDeviceInfo *out, size_t count, s32 *total_out) {
+    if (hosversionBefore(13,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _btmCmdInIdOutBufPtr(profile, out, sizeof(BtmShortenedDeviceInfo)*count, total_out, 110);
+}
+
+Result btmGetShortenedDeviceCondition(BtmProfile profile, BtmShortenedDeviceCondition *out, size_t count, s32 *total_out) {
+    if (hosversionBefore(14,0,0))
+    return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+
+    return _btmCmdInIdOutBufPtr(profile, out, sizeof(BtmShortenedDeviceCondition)*count, total_out, 115);
+}
