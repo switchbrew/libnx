@@ -212,7 +212,8 @@ typedef struct {
     BtdrvAddress addr;                    ///< \ref BtdrvAddress
     BtmClassOfDevice class_of_device;     ///< ClassOfDevice
     BtmLinkKey link_key;                  ///< LinkKey
-    u8 reserved[3];                       ///< Reserved
+    u8 key_type;                          ///< KeyType
+    u8 reserved[2];                       ///< Reserved
     u32 profile;                          ///< \ref BtmProfile
     union {
         u8 data[0x4];                     ///< Empty (Profile = None)
