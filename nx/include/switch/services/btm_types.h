@@ -164,7 +164,7 @@ typedef struct {
         BtmHidDeviceCondition hid;                ///< \ref BtmHidDeviceCondition (Profile = Hid)
     } profile_condition;
     u8 reserved[0x20];                            ///< Reserved
-} BtmDeviceConditionV1;
+} BtmDeviceConditionLegacy;
 
 /// DeviceCondition [13.0.0+]
 typedef struct {
@@ -179,51 +179,51 @@ typedef struct {
     u8 reserved[0x20];                            ///< Reserved
     char name[0xF9];                              ///< Name
     u8 pad2[3];                                   ///< Padding
-} BtmDeviceConditionV13;
+} BtmDeviceCondition;
 
 /// DeviceConditionList [1.0.0-5.0.2]
 typedef struct {
-    u32 bluetooth_mode;                 ///< \ref BtmBluetoothMode
-    u32 wlan_mode;                      ///< \ref BtmWlanMode
-    bool is_slot_saving_for_pairing;    ///< IsSlotSavingForPairing
-    bool is_slot_saving;                ///< IsSlotSaving
-    u8 connection_capacity;             ///< ConnectionCapacity
-    u8 device_count;                    ///< DeviceCount
-    BtmDeviceConditionV1 devices[8];    ///< Array of \ref BtmDeviceConditionV1 with the above count.
+    u32 bluetooth_mode;                     ///< \ref BtmBluetoothMode
+    u32 wlan_mode;                          ///< \ref BtmWlanMode
+    bool is_slot_saving_for_pairing;        ///< IsSlotSavingForPairing
+    bool is_slot_saving;                    ///< IsSlotSaving
+    u8 connection_capacity;                 ///< ConnectionCapacity
+    u8 device_count;                        ///< DeviceCount
+    BtmDeviceConditionLegacy devices[8];    ///< Array of \ref BtmDeviceConditionLegacy with the above count.
 } BtmDeviceConditionListV100;
 
 /// DeviceConditionList [5.1.0-7.0.1]
 typedef struct {
-    u32 bluetooth_mode;                 ///< \ref BtmBluetoothMode
-    u32 wlan_mode;                      ///< \ref BtmWlanMode
-    bool is_slot_saving_for_pairing;    ///< IsSlotSavingForPairing
-    bool is_slot_saving;                ///< IsSlotSaving
-    u8 unk_0xA;                         ///< Unknown
-    u8 connection_capacity;             ///< ConnectionCapacity
-    u8 device_count;                    ///< DeviceCount
-    u8 pad[3];                          ///< Padding
-    BtmDeviceConditionV1 devices[8];    ///< Array of \ref BtmDeviceConditionV1 with the above count.
+    u32 bluetooth_mode;                     ///< \ref BtmBluetoothMode
+    u32 wlan_mode;                          ///< \ref BtmWlanMode
+    bool is_slot_saving_for_pairing;        ///< IsSlotSavingForPairing
+    bool is_slot_saving;                    ///< IsSlotSaving
+    u8 unk_0xA;                             ///< Unknown
+    u8 connection_capacity;                 ///< ConnectionCapacity
+    u8 device_count;                        ///< DeviceCount
+    u8 pad[3];                              ///< Padding
+    BtmDeviceConditionLegacy devices[8];    ///< Array of \ref BtmDeviceConditionLegacy with the above count.
 } BtmDeviceConditionListV510;
 
 /// DeviceConditionList [8.0.0-8.1.1]
 typedef struct {
-    u32 bluetooth_mode;                 ///< \ref BtmBluetoothMode
-    u32 wlan_mode;                      ///< \ref BtmWlanMode
-    bool is_slot_saving_for_pairing;    ///< IsSlotSavingForPairing
-    bool is_slot_saving;                ///< IsSlotSaving
-    u8 connection_capacity;             ///< ConnectionCapacity
-    u8 device_count;                    ///< DeviceCount
-    BtmDeviceConditionV1 devices[8];    ///< Array of \ref BtmDeviceConditionV1 with the above count.
+    u32 bluetooth_mode;                     ///< \ref BtmBluetoothMode
+    u32 wlan_mode;                          ///< \ref BtmWlanMode
+    bool is_slot_saving_for_pairing;        ///< IsSlotSavingForPairing
+    bool is_slot_saving;                    ///< IsSlotSaving
+    u8 connection_capacity;                 ///< ConnectionCapacity
+    u8 device_count;                        ///< DeviceCount
+    BtmDeviceConditionLegacy devices[8];    ///< Array of \ref BtmDeviceConditionLegacy with the above count.
 } BtmDeviceConditionListV800;
 
 /// DeviceConditionList [9.0.0-12.1.0]
 typedef struct {
-    u32 wlan_mode;                      ///< \ref BtmWlanMode
-    bool is_slot_saving_for_pairing;    ///< IsSlotSavingForPairing
-    bool is_slot_saving;                ///< IsSlotSaving
-    u8 connection_capacity;             ///< ConnectionCapacity
-    u8 device_count;                    ///< DeviceCount
-    BtmDeviceConditionV1 devices[8];    ///< Array of \ref BtmDeviceConditionV1 with the above count.
+    u32 wlan_mode;                          ///< \ref BtmWlanMode
+    bool is_slot_saving_for_pairing;        ///< IsSlotSavingForPairing
+    bool is_slot_saving;                    ///< IsSlotSaving
+    u8 connection_capacity;                 ///< ConnectionCapacity
+    u8 device_count;                        ///< DeviceCount
+    BtmDeviceConditionLegacy devices[8];    ///< Array of \ref BtmDeviceConditionLegacy with the above count.
 } BtmDeviceConditionListV900;
 
 /// DeviceConditionList [1.0.0-12.1.0]
@@ -260,7 +260,7 @@ typedef struct {
         u8 data[0x20];                    ///< Empty (Profile = None)
         BtmHidDeviceInfo hid;             ///< \ref BtmHidDeviceInfo (Profile = Hid)
     } profile_info;
-} BtmDeviceInfoV1;
+} BtmDeviceInfoLegacy;
 
 /// DeviceInfo [13.0.0+]
 typedef struct {
@@ -277,19 +277,13 @@ typedef struct {
     } profile_info;
     char name[0xF9];                      ///< Name
     u8 pad[3];                            ///< Padding
-} BtmDeviceInfoV13;
-
-/// DeviceInfo [1.0.0-13.0.0]
-typedef union {
-    BtmDeviceInfoV1 v1;
-    BtmDeviceInfoV13 v13;
 } BtmDeviceInfo;
 
 /// DeviceInfoList
 typedef struct {
-    u8 device_count;              ///< DeviceCount
-    u8 reserved[3];               ///< Reserved
-    BtmDeviceInfoV1 devices[10];  ///< Array of \ref BtmDeviceInfoV1 with the above count.
+    u8 device_count;                      ///< DeviceCount
+    u8 reserved[3];                       ///< Reserved
+    BtmDeviceInfoLegacy devices[10];      ///< Array of \ref BtmDeviceInfoLegacy with the above count.
 } BtmDeviceInfoList;
 
 /// DeviceProperty

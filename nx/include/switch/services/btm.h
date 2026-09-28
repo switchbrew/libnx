@@ -48,11 +48,11 @@ Result btmLegacyGetDeviceCondition(BtmDeviceConditionList *out);
 /**
  * @brief GetDeviceCondition [13.0.0+]
  * @param[in] profile \ref BtmProfile, when not ::BtmProfile_None entries are only returned which match this profile.
- * @param[out] out \ref BtmDeviceConditionV13
+ * @param[out] out \ref BtmDeviceCondition
  * @param[in] count Size of the out array in entries.
  * @param[out] total_out Total output entries.
  */
-Result btmGetDeviceCondition(BtmProfile profile, BtmDeviceConditionV13 *out, size_t count, s32 *total_out);
+Result btmGetDeviceCondition(BtmProfile profile, BtmDeviceCondition *out, size_t count, s32 *total_out);
 
 /**
  * @brief SetBurstMode
@@ -96,14 +96,20 @@ Result btmLegacyGetDeviceInfo(BtmDeviceInfoList *out);
 /**
  * @brief GetDeviceInfo [13.0.0+]
  * @param[in] profile \ref BtmProfile, when not ::BtmProfile_None entries are only returned which match this profile.
- * @param[out] out \ref BtmDeviceInfoV13
+ * @param[out] out \ref BtmDeviceInfo
  * @param[in] count Size of the out array in entries.
  * @param[out] total_out Total output entries.
  */
-Result btmGetDeviceInfo(BtmProfile profile, BtmDeviceInfoV13 *out, size_t count, s32 *total_out);
+Result btmGetDeviceInfo(BtmProfile profile, BtmDeviceInfo *out, size_t count, s32 *total_out);
 
 /**
- * @brief AddDeviceInfo
+ * @brief AddDeviceInfo [1.0.0-12.1.0]
+ * @param[in] info \ref BtmDeviceInfo
+ */
+Result btmLegacyAddDeviceInfo(const BtmDeviceInfoLegacy *info);
+
+/**
+ * @brief AddDeviceInfo [13.0.0+]
  * @param[in] info \ref BtmDeviceInfo
  */
 Result btmAddDeviceInfo(const BtmDeviceInfo *info);
