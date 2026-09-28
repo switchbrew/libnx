@@ -41,18 +41,18 @@ Result btmAcquireDeviceConditionEvent(Event* out_event);
 
 /**
  * @brief GetDeviceCondition [1.0.0-12.1.0]
- * @param[out] out \ref BtmDeviceCondition
+ * @param[out] out \ref BtmDeviceConditionList
  */
-Result btmLegacyGetDeviceCondition(BtmDeviceCondition *out);
+Result btmLegacyGetDeviceCondition(BtmDeviceConditionList *out);
 
 /**
  * @brief GetDeviceCondition [13.0.0+]
  * @param[in] profile \ref BtmProfile, when not ::BtmProfile_None entries are only returned which match this profile.
- * @param[out] out \ref BtmConnectedDeviceV13
+ * @param[out] out \ref BtmDeviceConditionV13
  * @param[in] count Size of the out array in entries.
  * @param[out] total_out Total output entries.
  */
-Result btmGetDeviceCondition(BtmProfile profile, BtmConnectedDeviceV13 *out, size_t count, s32 *total_out);
+Result btmGetDeviceCondition(BtmProfile profile, BtmDeviceConditionV13 *out, size_t count, s32 *total_out);
 
 /**
  * @brief SetBurstMode
