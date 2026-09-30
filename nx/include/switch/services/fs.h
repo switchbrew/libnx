@@ -42,6 +42,10 @@ typedef struct {
 
 typedef struct {
     Service s;
+} FsStorageForBatchRead;
+
+typedef struct {
+    Service s;
 } FsSaveDataInfoReader;
 
 typedef struct {
@@ -540,6 +544,11 @@ Result fsOpenDataStorageByProgramId(FsStorage *out, u64 program_id); /// <[3.0.0
 Result fsOpenDataStorageByDataId(FsStorage* out, u64 dataId, NcmStorageId storageId);
 Result fsOpenPatchDataStorageByCurrentProcess(FsStorage* out);
 
+Result fsOpenDataStorageByCurrentProcessForBatchRead(FsStorageForBatchRead* out); /// <[23.0.0+]
+Result fsOpenDataStorageByProgramIdForBatchRead(FsStorageForBatchRead* out, u64 id); /// <[23.0.0+]
+Result fsOpenDataStorageWithProgramIndexForBatchRead(FsStorageForBatchRead* out, u8 program_index); /// <[23.0.0+]
+Result fsOpenDataStorageByPathForBatchRead(FsStorageForBatchRead* out, const char* contentPath, FsContentAttributes attributes, FsFileSystemType fsType); /// <[23.0.0+]
+
 Result fsOpenDeviceOperator(FsDeviceOperator* out);
 Result fsOpenSdCardDetectionEventNotifier(FsEventNotifier* out);
 
@@ -658,6 +667,16 @@ Result fsStorageSetSize(FsStorage* s, s64 sz);
 Result fsStorageGetSize(FsStorage* s, s64* out);
 Result fsStorageOperateRange(FsStorage* s, FsOperationId op_id, s64 off, s64 len, FsRangeInfo* out); ///< [4.0.0+]
 void fsStorageClose(FsStorage* s);
+
+// IStorageForBatchRead
+Result fsStorageForBatchReadRead(FsStorageForBatchRead* s, s64 off, void* buf, u64 read_size);
+Result fsStorageForBatchReadWrite(FsStorageForBatchRead* s, s64 off, const void* buf, u64 write_size);
+Result fsStorageForBatchReadFlush(FsStorageForBatchRead* s);
+Result fsStorageForBatchReadSetSize(FsStorageForBatchRead* s, s64 sz);
+Result fsStorageForBatchReadGetSize(FsStorageForBatchRead* s, s64* out);
+Result fsStorageForBatchReadOperateRange(FsStorageForBatchRead* s, FsOperationId op_id, s64 off, s64 len, FsRangeInfo* out);
+Result fsStorageForBatchReadBatchRead(FsStorageForBatchRead* s, void* out0, void* out1, void* out2, void* out3, void* out4, void* out5, void* out6, const void* in);
+void fsStorageForBatchReadClose(FsStorageForBatchRead* s);
 
 // ISaveDataInfoReader
 
