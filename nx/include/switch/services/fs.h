@@ -540,14 +540,14 @@ Result fsOpenContentStorageFileSystem(FsFileSystem* out, FsContentStorageId cont
 Result fsOpenCustomStorageFileSystem(FsFileSystem* out, FsCustomStorageId custom_storage_id); ///< [7.0.0+]
 
 Result fsOpenDataStorageByCurrentProcess(FsStorage* out);
-Result fsOpenDataStorageByProgramId(FsStorage *out, u64 program_id); /// <[3.0.0+]
+Result fsOpenDataStorageByProgramId(FsStorage *out, u64 program_id); ///< [3.0.0+]
 Result fsOpenDataStorageByDataId(FsStorage* out, u64 dataId, NcmStorageId storageId);
 Result fsOpenPatchDataStorageByCurrentProcess(FsStorage* out);
 
-Result fsOpenDataStorageByCurrentProcessForBatchRead(FsStorageForBatchRead* out); /// <[23.0.0+]
-Result fsOpenDataStorageByProgramIdForBatchRead(FsStorageForBatchRead* out, u64 id); /// <[23.0.0+]
-Result fsOpenDataStorageWithProgramIndexForBatchRead(FsStorageForBatchRead* out, u8 program_index); /// <[23.0.0+]
-Result fsOpenDataStorageByPathForBatchRead(FsStorageForBatchRead* out, const char* contentPath, FsContentAttributes attributes, FsFileSystemType fsType); /// <[23.0.0+]
+Result fsOpenDataStorageByCurrentProcessForBatchRead(FsStorageForBatchRead* out); ///< [23.0.0+]
+Result fsOpenDataStorageByProgramIdForBatchRead(FsStorageForBatchRead* out, u64 id); ///< [23.0.0+]
+Result fsOpenDataStorageWithProgramIndexForBatchRead(FsStorageForBatchRead* out, u8 program_index); ///< [23.0.0+]
+Result fsOpenDataStorageByPathForBatchRead(FsStorageForBatchRead* out, const char* contentPath, FsContentAttributes attributes, FsFileSystemType fsType); ///< [23.0.0+]
 
 Result fsOpenDeviceOperator(FsDeviceOperator* out);
 Result fsOpenSdCardDetectionEventNotifier(FsEventNotifier* out);
