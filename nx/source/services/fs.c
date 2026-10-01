@@ -538,6 +538,51 @@ Result fsOpenPatchDataStorageByCurrentProcess(FsStorage* out) {
     return _fsCmdGetSession(&g_fsSrv, &out->s, 203);
 }
 
+Result fsOpenDataStorageByCurrentProcessForBatchRead(FsStorageForBatchRead* out) {
+    if (hosversionBefore(23,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    
+    return _fsCmdGetSession(&g_fsSrv, &out->s, 210);
+}
+
+Result fsOpenDataStorageByProgramIdForBatchRead(FsStorageForBatchRead* out, u64 id) {
+    if (hosversionBefore(23,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    
+    return _fsObjectDispatchIn(&g_fsSrv, 211, id,
+        .out_num_objects = 1,
+        .out_objects = &out->s,
+    );
+}
+
+Result fsOpenDataStorageWithProgramIndexForBatchRead(FsStorageForBatchRead* out, u8 program_index) {
+    if (hosversionBefore(23,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    
+    return _fsObjectDispatchIn(&g_fsSrv, 212, program_index,
+        .out_num_objects = 1,
+        .out_objects = &out->s,
+    );
+}
+
+Result fsOpenDataStorageByPathForBatchRead(FsStorageForBatchRead* out, const char* contentPath, FsContentAttributes attributes, FsFileSystemType fsType) {
+    if (hosversionBefore(23,0,0))
+        return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
+    
+    const struct {
+        u8 attributes;
+        u8 pad[3];
+        u32 fsType;
+    } in = { attributes, {0}, fsType };
+
+    return _fsObjectDispatchIn(&g_fsSrv, 213, in,
+        .buffer_attrs = { SfBufferAttr_HipcPointer | SfBufferAttr_In },
+        .buffers = { { contentPath, FS_MAX_PATH } },
+        .out_num_objects = 1,
+        .out_objects = &out->s
+    );
+}
+
 Result fsOpenDeviceOperator(FsDeviceOperator* out) {
     return _fsCmdGetSession(&g_fsSrv, &out->s, 400);
 }
@@ -1106,6 +1151,86 @@ Result fsStorageOperateRange(FsStorage* s, FsOperationId op_id, s64 off, s64 len
 }
 
 void fsStorageClose(FsStorage* s) {
+    _fsObjectClose(&s->s);
+}
+
+//-----------------------------------------------------------------------------
+// IStorageForBatchRead
+//-----------------------------------------------------------------------------
+
+Result fsStorageForBatchReadRead(FsStorageForBatchRead* s, s64 off, void* buf, u64 read_size) {
+    const struct {
+        s64 offset;
+        u64 read_size;
+    } in = { off, read_size };
+
+    return _fsObjectDispatchIn(&s->s, 0, in,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_Out | SfBufferAttr_HipcMapTransferAllowsNonSecure },
+        .buffers = { { buf, read_size } },
+    );
+}
+
+Result fsStorageForBatchReadWrite(FsStorageForBatchRead* s, s64 off, const void* buf, u64 write_size) {
+    const struct {
+        s64 offset;
+        u64 write_size;
+    } in = { off, write_size };
+
+    return _fsObjectDispatchIn(&s->s, 1, in,
+        .buffer_attrs = { SfBufferAttr_HipcMapAlias | SfBufferAttr_In | SfBufferAttr_HipcMapTransferAllowsNonSecure },
+        .buffers = { { buf, write_size } },
+    );
+}
+
+Result fsStorageForBatchReadFlush(FsStorageForBatchRead* s) {
+    return _fsCmdNoIO(&s->s, 2);
+}
+
+Result fsStorageForBatchReadSetSize(FsStorageForBatchRead* s, s64 sz) {
+    return _fsObjectDispatchIn(&s->s, 3, sz);
+}
+
+Result fsStorageForBatchReadGetSize(FsStorageForBatchRead* s, s64* out) {
+    return _fsObjectDispatchOut(&s->s, 4, *out);
+}
+
+Result fsStorageForBatchReadOperateRange(FsStorageForBatchRead* s, FsOperationId op_id, s64 off, s64 len, FsRangeInfo* out) {
+    const struct {
+        u32 op_id;
+        u32 pad;
+        s64 off;
+        s64 len;
+    } in = { op_id, 0, off, len };
+
+    return _fsObjectDispatchInOut(&s->s, 5, in, *out);
+}
+
+Result fsStorageForBatchReadBatchRead(FsStorageForBatchRead* s, void* out0, void* out1, void* out2, void* out3, void* out4, void* out5, void* out6, const void* in) {
+    return _fsObjectDispatch(&g_fsSrv, 10,
+        .buffer_attrs = {
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_Out | SfBufferAttr_HipcMapTransferAllowsNonSecure,
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_Out | SfBufferAttr_HipcMapTransferAllowsNonSecure,
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_Out | SfBufferAttr_HipcMapTransferAllowsNonSecure,
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_Out | SfBufferAttr_HipcMapTransferAllowsNonSecure,
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_Out | SfBufferAttr_HipcMapTransferAllowsNonSecure,
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_Out | SfBufferAttr_HipcMapTransferAllowsNonSecure,
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_Out | SfBufferAttr_HipcMapTransferAllowsNonSecure,
+            SfBufferAttr_HipcMapAlias | SfBufferAttr_In,
+        },
+        .buffers = {
+            { out0, sizeof(u64)},
+            { out1, sizeof(u64)},
+            { out2, sizeof(u64)},
+            { out3, sizeof(u64)},
+            { out4, sizeof(u64)},
+            { out5, sizeof(u64)},
+            { out6, sizeof(u64)},
+            { in,   7*sizeof(u64)},
+        },
+    );
+}
+
+void fsStorageForBatchReadClose(FsStorageForBatchRead* s) {
     _fsObjectClose(&s->s);
 }
 
