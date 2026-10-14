@@ -398,7 +398,7 @@ typedef struct {
         struct {
             u32 result;                         ///< 0 for success, non-zero for error.
             u32 conn_id;                        ///< Connection ID
-            u8 type;                            ///< Notification type. 4 = Notification, 5 = Indication.
+            u8 op_type;                         ///< GATT Operation Type \ref BtdrvGattOperationType
             u8 pad[3];                          ///< Padding
             BtdrvGattAttributeUuid serv_uuid;   ///< GATT Service UUID \ref BtdrvGattAttributeUuid
             BtdrvGattAttributeUuid char_uuid;   ///< GATT Characteristic UUID \ref BtdrvGattAttributeUuid

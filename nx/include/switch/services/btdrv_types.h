@@ -193,6 +193,16 @@ typedef enum {
     BtdrvGattAuthReqType_SignedMitm     =    4,
 } BtdrvGattAuthReqType;
 
+/// GattOperationType
+typedef enum {
+    BtdrvGattOperationType_CharacteristicRead   =    0,
+    BtdrvGattOperationType_CharacteristicWrite  =    1,
+    BtdrvGattOperationType_DescriptorRead       =    2,
+    BtdrvGattOperationType_DescriptorWrite      =    3,
+    BtdrvGattOperationType_Notification         =    4,
+    BtdrvGattOperationType_Indication           =    5,
+} BtdrvGattOperationType;
+
 /// BtdrvBleAdBit
 typedef enum {
     BtdrvBleAdBit_DeviceName    =  BIT(0),
