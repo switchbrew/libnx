@@ -141,6 +141,15 @@ typedef enum {
     BtdrvBleEventType_ServerAttributeOperation      =   13,    ///< GATT server attribute operation.
 } BtdrvBleEventType;
 
+/// BleScanFilterAction
+typedef enum {
+    BtdrvBleScanFilterAction_Add               =    0,
+    BtdrvBleScanFilterAction_Delete            =    1,
+    BtdrvBleScanFilterAction_Clear             =    2,
+    BtdrvBleScanFilterAction_Enable            =    3,
+    BtdrvBleScanFilterAction_Disable           =    4,
+} BtdrvBleScanFilterAction;
+
 /// GattAttributeType
 typedef enum {
     BtdrvGattAttributeType_IncludedService  =    0,    ///< Included service
