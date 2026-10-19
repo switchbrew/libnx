@@ -392,7 +392,8 @@ typedef struct {
 
         struct {
             u32 result;                         ///< 0 for success, non-zero for error.
-            u32 action;                         ///< Scan filter action. 0 = Add, 1 = Delete, 2 = Clear, 3 = Enable, 4 = Disable
+            u8 action;                          ///< \ref BtdrvBleScanFilterAction
+            u8 pad[3];                          ///< Padding
         } scan_filter;                          ///< ::BtdrvBleEventType_ScanFilter
 
         struct {
