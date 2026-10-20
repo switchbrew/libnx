@@ -331,9 +331,27 @@ typedef struct {
     BtmDeviceProperty devices[15];  ///< Array of \ref BtmDeviceProperty.
 } BtmDevicePropertyList;
 
+/// GattClientCondition
+typedef struct {
+    u8 client_if;                   ///< Client interface handle
+    u8 pad[3];                      ///< Padding
+    BtdrvAddress address;           ///< \ref BtdrvAddress
+    u8 pad2[2];                     ///< Padding
+    u32 conn_id;                    ///< Connection ID
+    u16 conn_interval;              ///< Connection interval
+    u16 slave_latency;              ///< Slave latency
+    u16 supervision_tout;           ///< Connection supervision timeout multiplier
+    u16 mtu;                        ///< MTU value
+    u8 max_ce_length;               ///< Maximum connection event length
+    bool has_max_ce_length;         ///< Indicates whether the above value is configured or not
+    u8 pad3[2];                     ///< Padding
+} BtmGattClientCondition;
+
 /// GattClientConditionList
 typedef struct {
-    u8 unk_x0[0x74];              ///< Unknown
+    BtmGattClientCondition clients[4];  ///< Array of \ref BtmGattClientCondition.
+    u8 client_count;                    ///< ClientCount
+    u8 pad[3];                          ///< Padding
 } BtmGattClientConditionList;
 
 /// GattService
