@@ -361,7 +361,7 @@ typedef struct {
 
         struct {
             u32 result;                         ///< 0 for success, non-zero for error.
-            u8 status;                          ///< Connection status. 0 = Connected, 2 = Disconnected
+            u8 status;                          ///< \ref BtdrvBleConnectionStatus
             u8 client_if;                       ///< Client interface handle
             u8 pad[2];                          ///< Padding
             u32 conn_id;                        ///< Connection ID
@@ -371,7 +371,7 @@ typedef struct {
 
         struct {
             u32 result;                         ///< 0 for success, non-zero for error.
-            u8 status;                          ///< Connection status. 0 = Connected, 2 = Disconnected
+            u8 status;                          ///< \ref BtdrvBleConnectionStatus
             u8 server_if;                       ///< Server interface handle
             u8 pad[2];                          ///< Padding
             u32 conn_id;                        ///< Connection ID
@@ -381,9 +381,9 @@ typedef struct {
 
         struct {
             u32 result;                         ///< 0 for success, non-zero for error.
-            u8 status;                          ///< BLE scan status. 1 = Scan complete, 2 = New device found, 0xFF = Scan started
-            u8 device_type;                     ///< Device type. 0 = BD/EDR, 1 = BLE, 2 = Dual Mode
-            u8 ble_addr_type;                   ///< BLE address type. 0 = Public, 1 = Random, 2 = Public ID, 3 = Random ID
+            u8 status;                          ///< \ref BtdrvBleScanStatus
+            u8 device_type;                     ///< \ref BtdrvBluetoothDeviceType
+            u8 ble_addr_type;                   ///< \ref BtdrvBleAddressType
             BtdrvAddress address;               ///< Device address
             BtdrvBleAdvertisement ad_list[10];  ///< BLE Advertisement list \ref BtdrvBleAdvertisement
             u8 count;                           ///< Number of entries above
