@@ -63,6 +63,13 @@ typedef enum {
     BtdrvConnectionEventType_Suspended           =     2,   ///< ACL Link is now Suspended.
 } BtdrvConnectionEventType;
 
+/// BluetoothDeviceType
+typedef enum {
+    BtdrvBluetoothDeviceType_BdEdr               =     0,   ///< BD/EDR device.
+    BtdrvBluetoothDeviceType_Ble                 =     1,   ///< BLE device.
+    BtdrvBluetoothDeviceType_DualMode            =     2,   ///< Dual mode device.
+} BtdrvBluetoothDeviceType;
+
 /// ExtEventType [1.0.0-11.0.1]
 typedef enum {
     BtdrvExtEventType_SetTsi                     =     0,   ///< SetTsi (\ref btdrvSetTsi)
@@ -140,6 +147,28 @@ typedef enum {
     BtdrvBleEventType_ServerAddAttribute            =   12,    ///< GATT server add attribute.
     BtdrvBleEventType_ServerAttributeOperation      =   13,    ///< GATT server attribute operation.
 } BtdrvBleEventType;
+
+/// BleConnectionStatus
+typedef enum {
+    BtdrvBleConnectionStatus_Opened             =    0,    ///< Connection opened.
+    BtdrvBleConnectionStatus_Cancelled          =    1,    ///< Connection cancelled.
+    BtdrvBleConnectionStatus_Closed             =    2,    ///< Connection closed.
+} BtdrvBleConnectionStatus;
+
+/// BleScanStatus
+typedef enum {
+    BtdrvBleScanStatus_ScanCompleted            =    1,    ///< Scan completed.
+    BtdrvBleScanStatus_DeviceFound              =    2,    ///< New device found.
+    BtdrvBleScanStatus_ScanStarted              =  255,    ///< Scan started.
+} BtdrvBleScanStatus;
+
+/// BleAddressType
+typedef enum {
+    BtdrvBleAddressType_Public                  =    0,    ///< Public address.
+    BtdrvBleAddressType_Random                  =    1,    ///< Random address.
+    BtdrvBleAddressType_PublicId                =    2,    ///< Public identity.
+    BtdrvBleAddressType_RandomId                =    3,    ///< Random identity.
+} BtdrvBleAddressType;
 
 /// BleScanFilterAction
 typedef enum {
