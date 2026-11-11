@@ -599,6 +599,14 @@ typedef struct HidDirectionState {
     float direction[3][3];                      ///< 3x3 matrix
 } HidDirectionState;
 
+/// HidColor 
+typedef struct HidColor {
+    u32 body_color;                             ///< Body Color
+    u32 button_color;                           ///< Button Color
+    u32 left_grip_color;                        ///< Left Grip Color
+    u32 right_grip_color;                       ///< Right Grip Color
+} HidColor;
+
 #define JOYSTICK_MAX (0x7FFF)
 #define JOYSTICK_MIN (-0x7FFF)
 
