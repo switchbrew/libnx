@@ -670,9 +670,9 @@ struct group_source_req {
 
 struct in6_addr {
 	union {
+		unsigned char   s6_addr[16];   /* IPv6 address */
 		uint16_t	__u6_addr16[8];
 		uint32_t	__u6_addr32[4];
-		unsigned char   s6_addr[16];   /* IPv6 address */
 	};
 };
 
