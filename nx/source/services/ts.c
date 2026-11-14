@@ -53,11 +53,11 @@ Result tsGetTemperatureMilliC(TsLocation location, s32 *temperature) {
     return _tsCmdInU8Out32(location, (u32*)temperature, 3);
 }
 
-Result tsOpenSession(TsSession *s, u32 device_code) {
+Result tsOpenSession(TsSession *s, TsDeviceCode device_code) {
     if (hosversionBefore(8,0,0))
         return MAKERESULT(Module_Libnx, LibnxError_IncompatSysVer);
 
-    return serviceDispatchIn(&g_tsSrv, 4, device_code,
+    return serviceDispatchIn(&g_tsSrv, 4, ((u32)device_code),
         .out_num_objects = 1,
         .out_objects = &s->s,
     );

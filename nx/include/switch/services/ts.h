@@ -54,7 +54,7 @@ Result tsGetTemperature(TsLocation location, s32 *temperature);
  */
 Result tsGetTemperatureMilliC(TsLocation location, s32 *temperature);
 
-Result tsOpenSession(TsSession *s, u32 device_code); ///< [8.0.0+]
+Result tsOpenSession(TsSession *s, TsDeviceCode device_code); ///< [8.0.0+]
 
 Result tsSessionGetTemperature(TsSession *s, float *temperature); ///< [10.0.0+]
 void tsSessionClose(TsSession *s);
